@@ -8,18 +8,11 @@
  *
  * If set to null, the game runs in local mode (browser only).
  */
-// Project pokesurvivor-free (since 2026-10-12): normal Firebase authentication,
-// WITHOUT Identity Platform, so accounts are free with no limit. Never click
-// "Upgrade to Identity Platform" in its console! (The old one was pokesurvivor-jpter.)
-G.FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyB1LpJcsnT7gj7c8cpRMGjhswLPr8-dnBw',
-  authDomain: 'pokesurvivor-free.firebaseapp.com',
-  projectId: 'pokesurvivor-free',
-  storageBucket: 'pokesurvivor-free.firebasestorage.app',
-  messagingSenderId: '798271504277',
-  appId: '1:798271504277:web:dcac4409f969239e87009c',
-  databaseURL: 'https://pokesurvivor-free-default-rtdb.europe-west1.firebasedatabase.app'
-};
+// Local-only fork: no Firebase project connected, so the game saves to the
+// browser's localStorage (no accounts, cloud save, friends, leaderboard or co-op).
+// To enable the cloud on your own copy, create a free Firebase project and paste
+// its config here, replacing null. Full steps in docs/FIREBASE.md.
+G.FIREBASE_CONFIG = null;
 
 /* Example of how it should look:
 G.FIREBASE_CONFIG = {
