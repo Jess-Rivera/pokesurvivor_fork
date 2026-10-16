@@ -589,23 +589,38 @@
     }
 
     healAround() {
-      // 7% of health (it was 15%: with several healers they healed more than you
-      // dealt), and more the harder you hit, but less and less each time: with
-      // double attack it heals 27% more, with 10 times more a 124%, and at
-      // most x2.5. (Like the enemies that have more health if you deal more damage.)
+      // Heal amount per target: 7% of max HP, scaled up by the player's attack
+      // power (so healers stay relevant as you get stronger) to at most x2.5.
       const pow = Math.max(1, ...G.Game.everyone().map(p => (p.atk > 0 && p.baseAtk > 0 ? p.atk / p.baseAtk : 1)));
       const k = 0.07 * Math.min(2.5, Math.pow(pow, 0.35));
-      let n = 0;
-      for (const e of G.EnemyMgr.queryCircle(this.x, this.y, 150)) {
-        if (e.dead || e.hp >= e.maxHp) continue;
+
+      // Self-preservation: below 35% HP the healer panics and patches ITSELF
+      // only this turn (it skips the group). A one-off, so you can still finish
+      // it off by out-damaging a single heal tick.
+      if (this.hp < this.maxHp * 0.35) {
+        this.hp = Math.min(this.maxHp, this.hp + this.maxHp * k);
+        this.anim.play('Charge');
+        G.FX.burst(this.x, this.y - this.bodyH * 0.6, '#ffe066', 8, 90);   // yellow = self-heal
+        G.FX.ring(this.x, this.y, 6, 90, '#ffe066', 0.5, 3);
+        if (G.Coop.isHost) G.Coop.broadcast(['fxr', Math.round(this.x), Math.round(this.y), 90, '#ffe066']);
+        if (G.Camera.sees(this.x, this.y, 0)) G.Audio.sfx('heal');
+        return;
+      }
+
+      // Otherwise heal the 3 MOST-WOUNDED allies in range. Never heals other
+      // healers (so a healer cluster can't self-sustain and can be broken apart).
+      const hurt = G.EnemyMgr.queryCircle(this.x, this.y, 150)
+        .filter(e => !e.dead && e.hp < e.maxHp && e.behavior !== 'healer' && e !== this)
+        .sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))
+        .slice(0, 3);
+      for (const e of hurt) {
         e.hp = Math.min(e.maxHp, e.hp + e.maxHp * k);
         G.FX.burst(e.x, e.y - e.bodyH * 0.6, '#7dffb0', 5, 60);
-        n++;
       }
       this.anim.play('Charge');
       G.FX.ring(this.x, this.y, 8, 150, '#5fe08a', 0.5, 3);
       if (G.Coop.isHost) G.Coop.broadcast(['fxr', Math.round(this.x), Math.round(this.y), 150, '#5fe08a']);
-      if (n && G.Camera.sees(this.x, this.y, 0)) G.Audio.sfx('heal');
+      if (hurt.length && G.Camera.sees(this.x, this.y, 0)) G.Audio.sfx('heal');
     }
 
     castShields() {

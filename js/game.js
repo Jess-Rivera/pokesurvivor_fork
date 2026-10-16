@@ -109,7 +109,7 @@ G.Game = (() => {
     G.World.setBiome(0, true);
     biome = 0;
     time = 0; pendingLevels = 0;
-    runReal = performance.now(); tampered = false;
+    runReal = performance.now(); tampered = debugDirty;
 
     pl = new G.Player(mon, perks, !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
     banked = { t1: 0, t10: 0 };
@@ -344,7 +344,7 @@ G.Game = (() => {
    *   - the test functions were used (skip the clock...)
    * If anything trips, that game does not go to the ranking (silently) and nothing more.
    */
-  let runReal = 0, tampered = false;
+  let runReal = 0, tampered = false, debugDirty = false;
   function clean() {
     if (tampered) return false;
     if (time > (performance.now() - runReal) / 1000 + 10) return false;
@@ -525,20 +525,20 @@ G.Game = (() => {
     }
     if (state === 'levelup') {
       for (let i = 0; i < 3; i++) {
-        if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) G.RunUI.pick(i);
+        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pick(i);
       }
       if (G.Input.tap('keyr')) G.RunUI.reroll();
       return;
     }
     if (G.UI.isOpen('scr-bond')) {
       for (let i = 0; i < 4; i++) {
-        if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) G.RunUI.pickBond(i);
+        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pickBond(i);
       }
       return;
     }
     if (G.UI.isOpen('scr-item')) {
       for (let i = 0; i < 2; i++) {
-        if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) document.querySelectorAll('#item-cards .card')[i].click();
+        if (G.Input.action('attack_' + (i + 1))) document.querySelectorAll('#item-cards .card')[i].click();
       }
       return;
     }
@@ -548,13 +548,13 @@ G.Game = (() => {
           && document.getElementById('pull-fx').classList.contains('hidden')) G.MenuUI.open();
       return;
     }
-    if (G.Input.tap('escape') || G.Input.tap('keyp')) { togglePause(); return; }
+    if (G.Input.action('pause')) { togglePause(); return; }
     if (state !== 'playing' || !pl) return;
     for (let i = 0; i < 4; i++) {
-      if (G.Input.tap('digit' + (i + 1)) || G.Input.tap('numpad' + (i + 1))) pl.setActive(i);
+      if (G.Input.action('attack_' + (i + 1))) pl.setActive(i);
     }
-    if (G.Input.tap('keyq')) pl.cycle(-1);
-    if (G.Input.tap('keye') || G.Input.tap('tab')) pl.cycle(1);
+    if (G.Input.action('cycle_prev')) pl.cycle(-1);
+    if (G.Input.action('cycle_next')) pl.cycle(1);
   }
 
   // ---------------- loop ----------------
@@ -873,6 +873,8 @@ G.Game = (() => {
     quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
     /** For recording videos: opens the level-up cards. */
     debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
+    /** Debug sandbox (G.Debug.maxAll): permanently flag this session's runs out of the ranking. */
+    debugMaxed() { debugDirty = true; tampered = true; },
     toUI() { state = 'ui'; Backdrop.restore(); },
     get state() { return state; }, get player() { return pl; }, st
   };

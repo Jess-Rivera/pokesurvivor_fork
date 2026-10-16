@@ -318,11 +318,11 @@ G.HUD = (() => {
         }
       }
 
-      // tecla
+      // key
       ctx.font = F(800, 9);
       ctx.fillStyle = fused ? BOND : on ? col : 'rgba(180,200,230,.6)';
       ctx.textAlign = 'left';
-      ctx.fillText(String(i + 1), x + 3, y + 10);
+      ctx.fillText(G.Input.keyLabel('attack_' + (i + 1)) || String(i + 1), x + 3, y + 10);
 
       // name above the active one (with a link: "Ascuas +2")
       if (on) {

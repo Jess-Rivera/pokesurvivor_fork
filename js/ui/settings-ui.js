@@ -65,6 +65,50 @@ G.SettingsUI = (() => {
     return `<div class="chips set-chips">${opts.map(([v, l]) => `<button class="chip ${v === cur ? 'on' : ''}" data-k="${key}" data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
   }
 
+  // --- key remapping (Controls tab) ---
+  const ACTION_LABEL = {
+    move_up: 'Up', move_down: 'Down', move_left: 'Left', move_right: 'Right',
+    attack_1: 'Attack 1', attack_2: 'Attack 2', attack_3: 'Attack 3', attack_4: 'Attack 4',
+    cycle_prev: 'Previous attack', cycle_next: 'Next attack', pause: 'Pause'
+  };
+  // Pretty-print a key code (e.g. 'keyw' -> 'W', 'arrowup' -> '↑').
+  function keyName(code) {
+    if (!code) return '—';
+    const MAP = { arrowup: '↑', arrowdown: '↓', arrowleft: '←', arrowright: '→',
+      space: 'Space', escape: 'Esc', tab: 'Tab', enter: 'Enter' };
+    if (MAP[code]) return MAP[code];
+    let m;
+    if ((m = /^key([a-z])$/.exec(code))) return m[1].toUpperCase();
+    if ((m = /^digit(\d)$/.exec(code))) return m[1];
+    if ((m = /^numpad(\d)$/.exec(code))) return 'Num' + m[1];
+    return code;
+  }
+  let capturing = null;   // action name currently waiting for a keypress, or null
+  function keymapRows() {
+    return `<div class="set-keys">` + G.Input.actionList.map(a => {
+      const keys = G.Input.bindingsOf(a).map(keyName).join(' / ') || '—';
+      const live = capturing === a;
+      return `<div class="set-row"><div class="grow"><b>${esc(ACTION_LABEL[a] || a)}</b></div>
+        <button class="btn small ${live ? 'gold' : ''}" data-rebind="${a}">${live ? 'Press a key…' : esc(keys)}</button></div>`;
+    }).join('') + `</div>`;
+  }
+  function startCapture(action) {
+    capturing = action;
+    render();
+    const onKey = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const code = (e.code || e.key).toLowerCase();
+      removeEventListener('keydown', onKey, true);
+      capturing = null;
+      if (code === 'escape') { render(); return; }       // cancel
+      if (G.Input.isReserved(code)) { G.UI.toast('That key cannot be used', 2000); render(); return; }
+      G.Input.rebind(action, code);
+      render();
+    };
+    addEventListener('keydown', onKey, true);
+  }
+
   function render() {
     document.querySelectorAll('#set-tabs .gen-tab').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
     const box = $('set-body');
@@ -94,12 +138,12 @@ G.SettingsUI = (() => {
         + `<div class="set-row"><div class="grow"><b>Colocar los botones</b><small>Pon los ataques, la pausa y el joystick (fijo, si quieres) donde quieras de la pantalla.</small></div>
              <button class="btn small" id="set-layout">Colocar</button></div>`
         + section('En PC')
-        + `<div class="keys">
-             <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas</div><span>moverse</span>
-             <div><kbd>1</kbd>–<kbd>4</kbd> o clic en el icono</div><span>elegir ataque</span>
-             <div><kbd>Q</kbd> / <kbd>E</kbd></div><span>ataque anterior / siguiente</span>
-             <div><kbd>Esc</kbd> o <kbd>P</kbd></div><span>pausa</span>
-             <div><kbd>1</kbd>–<kbd>3</kbd></div><span>elegir carta al subir de nivel</span>
+        + `<p class="sub">Click a control to change its key. Press Esc to cancel.</p>`
+        + keymapRows()
+        + `<div class="row" style="margin-top:10px"><button class="btn small" id="set-keys-reset">Reset keys</button></div>`
+        + `<div class="keys" style="margin-top:12px">
+             <div><kbd>1</kbd>–<kbd>4</kbd> or click the icon</div><span>choose attack</span>
+             <div><kbd>1</kbd>–<kbd>3</kbd></div><span>choose level-up card</span>
            </div>`;
     } else if (tab === 'acc') {
       renderAccount(box);
@@ -152,6 +196,8 @@ G.SettingsUI = (() => {
     });
     const full = $('set-full'); if (full) full.onclick = toggleFull;
     const lay = $('set-layout'); if (lay) lay.onclick = () => G.LayoutUI.open();
+    box.querySelectorAll('[data-rebind]').forEach(b => { b.onclick = () => startCapture(b.dataset.rebind); });
+    const kr = $('set-keys-reset'); if (kr) kr.onclick = () => { G.Input.resetBindings(); render(); };
     box.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => { if (b.dataset.lang !== G.I18n.lang) G.I18n.set(b.dataset.lang); }; });
     const lo = $('set-login'); if (lo) lo.onclick = () => { close(); leave(); };
     const out = $('set-logout'); if (out) out.onclick = () => { close(); leave(); };
