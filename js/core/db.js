@@ -77,6 +77,7 @@ G.DB = (() => {
       shiny: {},              // dex -> { at, from } — shiny variants obtained
       partner: null,          // dex of the Pokemon you play with
       partnerShiny: false,    // play with its shiny version (if you have it)
+      team: [],               // up to 6 { dex, shiny } — the active team (slot 0 mirrors partner)
       starter: null,          // dex you got in the test
       personality: null,      // { trait, scores }
       upgrades: {},           // (old) account upgrades; now they go per Pokemon
@@ -108,6 +109,10 @@ G.DB = (() => {
         s.pupg[s.partner] = Object.assign({}, s.upgrades);
       }
       s.pupgDone = true;
+    }
+    // Team: seed from the single partner if not set yet (keeps older saves working).
+    if (!Array.isArray(s.team) || !s.team.length) {
+      s.team = s.partner ? [{ dex: s.partner, shiny: !!s.partnerShiny }] : [];
     }
     s.tickets = Object.assign({ t1: 0, t10: 0 }, s.tickets);
     sanitize(s);

@@ -25,60 +25,85 @@ G.HUD = (() => {
     }
   }
 
-  /** Team box (lower-left): one HP bar per roster member, active highlighted,
-   *  fainted greyed. The WHOLE box uses the same cooldown overlay the attack
-   *  buttons use — a dark fill over the top that drains bottom-to-top as the
-   *  5s swap lockout elapses. No text countdown. */
+  /** Draw a Pokemon's Idle frame fit into a size x size box centered at (cx,cy). */
+  /** Draw a Pokemon's Idle frame to fill a `size` box centered at (cx,cy),
+   *  clipped to the box. Scaled by the frame's smaller dimension so it fills
+   *  (overflow is cropped), and centered on the character's body, not the
+   *  frame center — PMD frames anchor the body low (ground anchor m.ay), which
+   *  is why a naive center made the sprite ride high with empty space below. */
+  function teamIcon(ctx, f, cx, cy, size, clipR) {
+    const s = G.Sprites.sheet(f.dex, 'Idle', f.shiny);
+    const m = G.Sprites.animMeta(f.dex, 'Idle', f.shiny);
+    if (!s || !s.ready || !m) {
+      ctx.fillStyle = f.dead ? 'rgba(120,130,145,.6)' : (G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94');
+      ctx.beginPath(); ctx.arc(cx, cy, size * 0.4, 0, 6.2832); ctx.fill();
+      return;
+    }
+    // Fill the box (scale by the SMALLER side) so the sprite is large; crop the rest.
+    const scale = size / Math.min(m.w, m.h);
+    const dw = m.w * scale, dh = m.h * scale;
+    // Body center: horizontally the frame center, vertically ~55% up from the
+    // ground anchor (ay) so the Pokemon's torso lands in the middle of the box.
+    const bodyCx = m.w / 2;
+    const bodyCy = m.ay != null ? m.ay - (m.ay * 0.42) : m.h * 0.5;
+    const prev = ctx.globalAlpha;
+    ctx.save();
+    roundRect(ctx, cx - size / 2, cy - size / 2, size, size, clipR || 8);
+    ctx.clip();
+    if (f.dead) ctx.globalAlpha = prev * 0.4;
+    ctx.drawImage(s.img, 0, 0, m.w, m.h,
+      Math.round(cx - bodyCx * scale), Math.round(cy - bodyCy * scale), dw, dh);
+    ctx.restore();
+    ctx.globalAlpha = prev;
+  }
+
+  /** Team (lower-left): each member is a square icon box the size of an attack
+   *  button, with its HP bar underneath. Non-active members that cannot be
+   *  swapped to yet show the same bottom-to-top cooldown fill the attacks use. */
   function drawTeam(ctx, w, h) {
     const roster = G.Game.roster;
     if (!roster || roster.length < 2) return;
     const activeIdx = G.Game.activeIndex;
-    const BW = 150, BH = 14, GAP = 7, ROW = BH + GAP;
-    const LABEL = 42, PAD = 8;
-    const px = 16;
-    const rowsH = roster.length * ROW - GAP;
-    const boxW = LABEL + BW + 20 + PAD * 2;
-    const boxH = rowsH + PAD * 2;
-    const bx = px, by = h - boxH - 14;          // lower-left anchor
-    const ox = bx + PAD, oy = by + PAD;         // inner origin for rows
-
-    // panel background
-    roundRect(ctx, bx, by, boxW, boxH, 10);
-    ctx.fillStyle = 'rgba(10,16,28,.55)'; ctx.fill();
-    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(140,170,210,.22)'; ctx.stroke();
-
-    ctx.textAlign = 'left';
-    roster.forEach((f, i) => {
-      const ry = oy + i * ROW;
-      const on = i === activeIdx;
-      const nm = (f.mon.name || '').slice(0, 4).toUpperCase();
-      ctx.font = F(800, 15);
-      ctx.fillStyle = on ? '#ffd23f' : f.dead ? 'rgba(255,138,150,.7)' : 'rgba(200,215,235,.7)';
-      ctx.fillText(nm, ox, ry + BH - 2);
-      const frac = f.dead ? 0 : f.hp / f.maxHp;
-      const col = f.dead ? 'rgba(120,130,145,.6)' : on ? '#ff5f6d' : '#c85059';
-      bar(ctx, ox + LABEL, ry, BW, BH, frac, col);
-      if (on) {
-        ctx.fillStyle = '#9fe8ff';
-        ctx.beginPath();
-        ctx.moveTo(ox + LABEL + BW + 7, ry); ctx.lineTo(ox + LABEL + BW + 7, ry + BH); ctx.lineTo(ox + LABEL + BW + 16, ry + BH / 2);
-        ctx.closePath(); ctx.fill();
-      }
-      if (f.dead) {
-        ctx.font = F(800, 12); ctx.fillStyle = 'rgba(255,138,150,.95)'; ctx.textAlign = 'center';
-        ctx.fillText('KO', ox + LABEL + BW / 2, ry + BH - 2); ctx.textAlign = 'left';
-      }
-    });
-
-    // swap cooldown overlay over the whole box (drains bottom-to-top).
+    const S = 54, GAP = 10, BH = 7, R = 12;       // S matches the attack buttons
+    const ROW = S + 5 + BH;                        // icon box + gap + hp bar per member
+    const x = 16;                                  // fixed left column
+    const totalH = roster.length * ROW + (roster.length - 1) * (GAP - 5);
+    const startY = h - totalH - 16;                // stack downward from here (anchored bottom)
     const cdFrac = G.U.clamp(G.Game.swapCooldown / G.Game.swapMax, 0, 1);
-    if (cdFrac > 0) {
-      ctx.save();
-      roundRect(ctx, bx, by, boxW, boxH, 10); ctx.clip();
-      ctx.fillStyle = 'rgba(0,0,0,.55)';
-      ctx.fillRect(bx, by, boxW, boxH * cdFrac);
-      ctx.restore();
-    }
+    roster.forEach((f, i) => {
+      const y = startY + i * (ROW + GAP - 5);
+      const on = i === activeIdx;
+      const col = f.dead ? 'rgba(120,130,145,.6)' : (G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94');
+      // box background + border (active = bright type border, like the active attack)
+      roundRect(ctx, x, y, S, S, R);
+      ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
+      ctx.fill();
+      ctx.lineWidth = on ? 2.5 : 1.2;
+      ctx.strokeStyle = on ? col : 'rgba(140,170,210,.22)';
+      ctx.stroke();
+      // sprite icon: fills the box, centered on the body, overflow cropped
+      teamIcon(ctx, f, x + S / 2, y + S / 2, S - 4, R - 2);
+      // slot key hint, top-left corner
+      ctx.font = F(800, 9); ctx.textAlign = 'left';
+      ctx.fillStyle = on ? '#ffd23f' : 'rgba(180,200,230,.6)';
+      ctx.fillText(G.Input.keyLabel('swap_' + (i + 1)) || String(i + 1), x + 4, y + 11);
+      // cooldown overlay on NON-active members during the swap lockout
+      if (!on && !f.dead && cdFrac > 0) {
+        ctx.save();
+        roundRect(ctx, x, y, S, S, R); ctx.clip();
+        ctx.fillStyle = 'rgba(0,0,0,.6)';
+        ctx.fillRect(x, y, S, S * cdFrac);
+        ctx.restore();
+      }
+      // KO overlay
+      if (f.dead) {
+        ctx.font = F(800, 11); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,138,150,.95)';
+        ctx.fillText('KO', x + S / 2, y + S / 2 + 4); ctx.textAlign = 'left';
+      }
+      // hp bar under the box
+      const frac = f.dead ? 0 : f.hp / f.maxHp;
+      bar(ctx, x, y + S + 5, S, BH, frac, f.dead ? 'rgba(120,130,145,.6)' : on ? '#ff5f6d' : '#c85059');
+    });
   }
 
   function draw(ctx, w, h, pl, st) {

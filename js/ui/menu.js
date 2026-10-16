@@ -209,6 +209,17 @@ G.MenuUI = (() => {
         ${usingThis
           ? '<button class="btn grow" disabled style="width:100%">Es tu compañero</button>'
           : `<button id="dex-pick" class="btn gold" data-sfx="confirm" style="width:100%">Elegir de compañero${viewShiny ? ' (shiny)' : ''}</button>`}
+        <div class="team-assign" style="margin-top:10px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Team (click a slot to add or remove)</div>
+          <div class="team-slots" style="display:flex;gap:5px;justify-content:center">
+            ${[0,1,2,3,4,5].map(i => {
+              const t = (s.team || [])[i];
+              const here = t && t.dex === dex;
+              const label = t ? (G.DEX_BY[t.dex].name || '').slice(0,4).toUpperCase() : '+';
+              return `<button class="team-slot btn small ${here ? 'gold' : ''}" data-slot="${i}" style="min-width:40px;padding:4px 2px;font-size:11px">${label}</button>`;
+            }).join('')}
+          </div>
+        </div>
       ` : `<p class="center" style="color:var(--muted)">Aún no lo tienes.<br>Consíguelo en el banner de <b class="gold">${GEN_NAMES[p.gen - 1]}</b>
             o derrotándolo cuando salga shiny.</p>`}
     `;
@@ -222,10 +233,41 @@ G.MenuUI = (() => {
     if (pick) pick.onclick = () => {
       s.partner = dex;
       s.partnerShiny = hasSh && viewShiny;
+      syncTeamSlot0();
       G.DB.commit();
       G.UI.toast(p.name + (s.partnerShiny ? ' shiny' : '') + ' es ahora tu compañero');
       renderGrid(); showDetail(dex);
     };
+    box.querySelectorAll('.team-slot').forEach(btn => {
+      btn.onclick = () => {
+        const slot = +btn.dataset.slot;
+        s.team = s.team || [];
+        const existing = s.team[slot];
+        if (existing && existing.dex === dex) {
+          // Click the slot this Pokemon is in -> remove it.
+          s.team[slot] = null;
+        } else {
+          // Remove this Pokemon from any other slot (no duplicates), then place it.
+          s.team = s.team.map(t => (t && t.dex === dex) ? null : t);
+          s.team[slot] = { dex, shiny: hasSh && viewShiny };
+        }
+        // Compact: drop empty holes so the team is a clean list, keep order.
+        s.team = s.team.filter(Boolean);
+        // Slot 0 (first member) stays in sync with the single-partner fields.
+        if (s.team[0]) { s.partner = s.team[0].dex; s.partnerShiny = !!s.team[0].shiny; }
+        G.DB.commit();
+        renderGrid(); showDetail(dex);
+      };
+    });
+  }
+
+  /** Keep team slot 0 aligned with the chosen companion. */
+  function syncTeamSlot0() {
+    const s = G.DB.save;
+    s.team = s.team || [];
+    s.team = s.team.filter(t => t && t.dex !== s.partner);
+    s.team.unshift({ dex: s.partner, shiny: !!s.partnerShiny });
+    s.team = s.team.slice(0, 6);
   }
 
   // ---------------- mejoras ----------------
