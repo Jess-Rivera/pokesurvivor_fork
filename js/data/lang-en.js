@@ -336,6 +336,12 @@ G.I18n.add({
   'Aguanta 5 minutos.': 'Survive 5 minutes.', 'Aguanta 10 minutos.': 'Survive 10 minutes.', 'Aguanta 15 minutos.': 'Survive 15 minutes.', 'Aguanta 20 minutos.': 'Survive 20 minutes.',
   'Creciendo': 'Growing up', 'Veterano': 'Veteran', 'Llega al nivel 20 en una run.': 'Reach level 20 in a run.', 'Llega al nivel 40 en una run.': 'Reach level 40 in a run.', 'Llega al nivel 15 en una run.': 'Reach level 15 in a run.', 'Llega al nivel 30 en una run.': 'Reach level 30 in a run.',
   'Primeros combates': 'First battles', 'Valiente': 'Brave', 'Leyenda': 'Legend', 'Leyenda viva': 'Living legend',
+  // personality traits (shown on the starter / companion card)
+  'Valiente': 'Brave', 'Impulsivo': 'Impulsive', 'Prudente': 'Cautious', 'Leal': 'Loyal',
+  'Alegre': 'Cheerful', 'Dulce': 'Sweet', 'Tímido': 'Shy', 'Sereno': 'Serene',
+  'Tranquilo': 'Calm', 'Travieso': 'Mischievous', 'Tenaz': 'Tenacious', 'Astuto': 'Cunning',
+  'Caótico': 'Chaotic', 'Orgulloso': 'Proud', 'Solitario': 'Solitary', 'Paciente': 'Patient',
+
   'Derrota a 1.000 Pokémon.': 'Defeat 1,000 Pokémon.', 'Derrota a 10.000 Pokémon.': 'Defeat 10,000 Pokémon.', 'Derrota a 100.000 Pokémon.': 'Defeat 100,000 Pokémon.',
   'Derrota a un jefe.': 'Defeat a boss.', 'Derrota a 25 jefes.': 'Defeat 25 bosses.', 'Derrota a 100 jefes.': 'Defeat 100 bosses.',
   'Cazajefes': 'Boss hunter', 'Matagigantes': 'Giant slayer', 'Terror de los jefes': 'Terror of bosses',
