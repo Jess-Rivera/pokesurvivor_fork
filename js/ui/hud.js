@@ -25,6 +25,62 @@ G.HUD = (() => {
     }
   }
 
+  /** Team box (lower-left): one HP bar per roster member, active highlighted,
+   *  fainted greyed. The WHOLE box uses the same cooldown overlay the attack
+   *  buttons use — a dark fill over the top that drains bottom-to-top as the
+   *  5s swap lockout elapses. No text countdown. */
+  function drawTeam(ctx, w, h) {
+    const roster = G.Game.roster;
+    if (!roster || roster.length < 2) return;
+    const activeIdx = G.Game.activeIndex;
+    const BW = 150, BH = 14, GAP = 7, ROW = BH + GAP;
+    const LABEL = 42, PAD = 8;
+    const px = 16;
+    const rowsH = roster.length * ROW - GAP;
+    const boxW = LABEL + BW + 20 + PAD * 2;
+    const boxH = rowsH + PAD * 2;
+    const bx = px, by = h - boxH - 14;          // lower-left anchor
+    const ox = bx + PAD, oy = by + PAD;         // inner origin for rows
+
+    // panel background
+    roundRect(ctx, bx, by, boxW, boxH, 10);
+    ctx.fillStyle = 'rgba(10,16,28,.55)'; ctx.fill();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(140,170,210,.22)'; ctx.stroke();
+
+    ctx.textAlign = 'left';
+    roster.forEach((f, i) => {
+      const ry = oy + i * ROW;
+      const on = i === activeIdx;
+      const nm = (f.mon.name || '').slice(0, 4).toUpperCase();
+      ctx.font = F(800, 15);
+      ctx.fillStyle = on ? '#ffd23f' : f.dead ? 'rgba(255,138,150,.7)' : 'rgba(200,215,235,.7)';
+      ctx.fillText(nm, ox, ry + BH - 2);
+      const frac = f.dead ? 0 : f.hp / f.maxHp;
+      const col = f.dead ? 'rgba(120,130,145,.6)' : on ? '#ff5f6d' : '#c85059';
+      bar(ctx, ox + LABEL, ry, BW, BH, frac, col);
+      if (on) {
+        ctx.fillStyle = '#9fe8ff';
+        ctx.beginPath();
+        ctx.moveTo(ox + LABEL + BW + 7, ry); ctx.lineTo(ox + LABEL + BW + 7, ry + BH); ctx.lineTo(ox + LABEL + BW + 16, ry + BH / 2);
+        ctx.closePath(); ctx.fill();
+      }
+      if (f.dead) {
+        ctx.font = F(800, 12); ctx.fillStyle = 'rgba(255,138,150,.95)'; ctx.textAlign = 'center';
+        ctx.fillText('KO', ox + LABEL + BW / 2, ry + BH - 2); ctx.textAlign = 'left';
+      }
+    });
+
+    // swap cooldown overlay over the whole box (drains bottom-to-top).
+    const cdFrac = G.U.clamp(G.Game.swapCooldown / G.Game.swapMax, 0, 1);
+    if (cdFrac > 0) {
+      ctx.save();
+      roundRect(ctx, bx, by, boxW, boxH, 10); ctx.clip();
+      ctx.fillStyle = 'rgba(0,0,0,.55)';
+      ctx.fillRect(bx, by, boxW, boxH * cdFrac);
+      ctx.restore();
+    }
+  }
+
   function draw(ctx, w, h, pl, st) {
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -40,24 +96,25 @@ G.HUD = (() => {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
 
-    // ---------- health + level ----------
-    const px = 16, py = 20;
-    ctx.font = F(800, 13);
+    // ---------- health + level (sized to match the team box) ----------
+    const px = 16, py = 22;
+    ctx.font = F(800, 20);
     ctx.fillStyle = '#eaf2ff';
     ctx.textAlign = 'left';
-    ctx.fillText(pl.mon.name, px, py + 10);
+    ctx.fillText(pl.mon.name, px, py + 14);
 
-    ctx.font = F(700, 11);
+    ctx.font = F(700, 15);
     ctx.fillStyle = '#ffcb3d';
-    ctx.fillText('Nv. ' + pl.level, px, py + 26);
+    ctx.fillText('Lv. ' + pl.level, px, py + 40);
 
-    bar(ctx, px + 48, py + 17, 168, 11, pl.hp / pl.maxHp, '#ff5f6d');
-    ctx.font = F(700, 10);
+    const HPW = 240, HPH = 16, HPX = px + 70, HPY = py + 26;
+    bar(ctx, HPX, HPY, HPW, HPH, pl.hp / pl.maxHp, '#ff5f6d');
+    ctx.font = F(700, 13);
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.textAlign = 'center';
-    ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), px + 48 + 84, py + 26);
+    ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), HPX + HPW / 2, HPY + HPH - 3);
 
-    // buffs activos
+    // active buffs
     const COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
     const LBL = { atk: 'ATK', spd: 'VEL', def: 'DEF', regen: 'REG' };
     let bx = px;
@@ -65,15 +122,18 @@ G.HUD = (() => {
     for (const k in pl.buffs) {
       const b = pl.buffs[k];
       if (b.n <= 0) continue;
-      ctx.font = F(800, 9);
+      ctx.font = F(800, 12);
       const txt = LBL[k] + ' ×' + b.n;
-      const tw = ctx.measureText(txt).width + 12;
-      roundRect(ctx, bx, py + 34, tw, 15, 7);
+      const tw = ctx.measureText(txt).width + 16;
+      roundRect(ctx, bx, py + 52, tw, 20, 9);
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fill();
       ctx.fillStyle = COL[k];
-      ctx.fillText(txt, bx + 6, py + 45);
-      bx += tw + 5;
+      ctx.fillText(txt, bx + 8, py + 66);
+      bx += tw + 6;
     }
+
+    // ---------- team strip (lower-left, only with a real team) ----------
+    drawTeam(ctx, w, h);
 
     // ---------- reloj / bioma / kills ----------
     ctx.textAlign = 'center';

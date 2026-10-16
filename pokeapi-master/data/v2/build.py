@@ -1,0 +1,2295 @@
+#  To build out the data you'll need to jump into the Django shell
+#
+#     $ uv run manage.py shell
+#
+#  and run the build script with
+#
+#     $ from data.v2.build import build_all
+#     $ build_all()
+#
+#  Each time the build script is run it will iterate over each table in the database,
+#  wipe it and rewrite each row using the data found in data/v2/csv.
+
+
+import contextlib
+import csv
+import gzip
+import json
+import os
+import os.path
+import pathlib
+import re
+import urllib.error
+import urllib.request
+from collections.abc import Callable
+from copy import deepcopy
+from email.utils import parsedate_to_datetime
+from typing import Any
+
+from django.db import connection
+
+from pokemon_v2.models import *
+
+# why this way? how about use `__file__`
+DATA_LOCATION = "data/v2/csv/"
+DATA_LOCATION2 = os.path.join(os.path.dirname(__file__), "csv")
+GROUP_RGX = r"\[(.*?)\]\{(.*?)\}"
+SUB_RGX = r"\[.*?\]\{.*?\}"
+
+DB_CURSOR = connection.cursor()
+DB_VENDOR = connection.vendor
+
+
+MEDIA_DIR = "{prefix}{{file_name}}".format(
+    prefix=os.environ.get(
+        "POKEAPI_SPRITES_PREFIX",
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/",
+    )
+)
+SOUND_DIR = "{prefix}{{file_name}}".format(
+    prefix=os.environ.get(
+        "POKEAPI_CRIES_PREFIX",
+        "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/",
+    )
+)
+IMAGE_DIR = os.getcwd() + "/data/v2/sprites/sprites/"
+CRIES_DIR = os.getcwd() + "/data/v2/cries/cries/"
+
+
+def _load_manifest_from_path(path: str) -> set[str] | None:
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            return set(json.load(f))
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"Warning: Failed to read local sprite manifest at {path}: {e}")
+        return None
+
+
+def _fetch_manifest(url: str, cache_file: str) -> set[str] | None:
+    try:
+        # Check freshness if cache_file exists
+        if os.path.isfile(cache_file):
+            try:
+                head_req = urllib.request.Request(url, method="HEAD")
+                with urllib.request.urlopen(head_req, timeout=10) as head_resp:
+                    last_mod_header = head_resp.headers.get("Last-Modified")
+                    if last_mod_header:
+                        remote_mtime = parsedate_to_datetime(last_mod_header).timestamp()
+                        if os.path.getmtime(cache_file) >= remote_mtime:
+                            return _load_manifest_from_path(cache_file)
+            except (OSError, urllib.error.URLError, ValueError):
+                pass
+
+        # Update manifest
+        with urllib.request.urlopen(url, timeout=30) as resp:
+            raw_bytes: bytes = resp.read()
+            data = json.loads(gzip.decompress(raw_bytes).decode("utf-8"))
+
+            with contextlib.suppress(OSError):
+                pathlib.Path(cache_file).write_bytes(raw_bytes)
+                last_mod = resp.headers.get("Last-Modified")
+                if last_mod:
+                    mtime = parsedate_to_datetime(last_mod).timestamp()
+                    os.utime(cache_file, (mtime, mtime))
+
+            return set(data)
+    except (OSError, urllib.error.URLError, json.JSONDecodeError, gzip.BadGzipFile) as e:
+        print(f"Warning: Failed to fetch sprite manifest from {url}: {e}")
+        return None
+
+
+def _load_local_sprites() -> set[str]:
+    """Scan the local cloned sprites submodule directory."""
+    if not (os.path.isdir(IMAGE_DIR) and os.listdir(IMAGE_DIR)):
+        return set()
+
+    images: set[str] = set()
+    for root, _dirs, files in os.walk(IMAGE_DIR):
+        for file in files:
+            image_path = os.path.join(root.replace(IMAGE_DIR, ""), file)
+            images.add(image_path.replace("\\", "/"))
+    return images
+
+
+def _load_resource_images() -> set[str]:
+    use_local = os.environ.get("POKEAPI_USE_LOCAL_SPRITES", "").lower() in ("1", "true", "yes")
+    if use_local and (local_images := _load_local_sprites()):
+        return local_images
+
+    cache_file = os.path.join(os.path.dirname(__file__), "manifest.json.gz")
+    manifest_urls: list[str] = list(
+        filter(
+            None,
+            [
+                os.environ.get("POKEAPI_SPRITES_MANIFEST_URL", ""),
+                "https://pokeapi.github.io/sprites/manifest.json.gz",
+                "https://github.com/PokeAPI/sprites/releases/latest/download/manifest.json.gz",
+            ],
+        )
+    )
+
+    for url in manifest_urls:
+        if (data := _fetch_manifest(url, cache_file)) is not None:
+            return data
+
+    # If offline / all remote requests failed, use cached manifest if available
+    if os.path.isfile(cache_file) and (cached := _load_manifest_from_path(cache_file)) is not None:
+        return cached
+
+    # Fallback to local files if manifest is completely unavailable
+    if local_images := _load_local_sprites():
+        return local_images
+
+    print("Warning: Could not load sprite resources from local files or remote manifest. Sprites will be empty.")
+    return set()
+
+
+RESOURCE_IMAGES: set[str] = _load_resource_images()
+RESOURCE_CRIES: set[str] = set()
+
+for root, _dirs, files in os.walk(CRIES_DIR):
+    for file in files:
+        cry_path = os.path.join(root.replace(CRIES_DIR, ""), file)
+        cry_path = cry_path.replace("\\", "/")  # convert Windows-style path to Unix
+        RESOURCE_CRIES.add(cry_path)
+
+
+POKEMON_SPRITE_CONFIG: dict[str, Any] = {
+    "front_default": ("pokemon/", "png"),
+    "front_female": ("pokemon/female/", "png"),
+    "front_shiny": ("pokemon/shiny/", "png"),
+    "front_shiny_female": ("pokemon/shiny/female/", "png"),
+    "back_default": ("pokemon/back/", "png"),
+    "back_female": ("pokemon/back/female/", "png"),
+    "back_shiny": ("pokemon/back/shiny/", "png"),
+    "back_shiny_female": ("pokemon/back/shiny/female/", "png"),
+    "other": {
+        "dream_world": {
+            "front_default": ("pokemon/other/dream-world/", "svg"),
+            "front_female": ("pokemon/other/dream-world/female/", "svg"),
+        },
+        "home": {
+            "front_default": ("pokemon/other/home/", "png"),
+            "front_female": ("pokemon/other/home/female/", "png"),
+            "front_shiny": ("pokemon/other/home/shiny/", "png"),
+            "front_shiny_female": ("pokemon/other/home/shiny/female/", "png"),
+        },
+        "official-artwork": {
+            "front_default": ("pokemon/other/official-artwork/", "png"),
+            "front_shiny": ("pokemon/other/official-artwork/shiny/", "png"),
+            "versions": {
+                "generation-i": {
+                    "red-and-blue": {
+                        "front_default": ("pokemon/other/official-artwork/versions/generation-i/red-and-blue/", "png")
+                    },
+                    "red-and-green": {
+                        "front_default": ("pokemon/other/official-artwork/versions/generation-i/red-and-green/", "png")
+                    },
+                },
+                "generation-ii": {
+                    "gold-and-silver": {
+                        "front_default": (
+                            "pokemon/other/official-artwork/versions/generation-ii/gold-and-silver/",
+                            "png",
+                        )
+                    }
+                },
+            },
+        },
+        "showdown": {
+            "front_default": ("pokemon/other/showdown/", "gif"),
+            "front_female": ("pokemon/other/showdown/female/", "gif"),
+            "front_shiny": ("pokemon/other/showdown/shiny/", "gif"),
+            "front_shiny_female": ("pokemon/other/showdown/shiny/female/", "gif"),
+            "back_default": ("pokemon/other/showdown/back/", "gif"),
+            "back_female": ("pokemon/other/showdown/back/female/", "gif"),
+            "back_shiny": ("pokemon/other/showdown/back/shiny/", "gif"),
+            "back_shiny_female": ("pokemon/other/showdown/back/shiny/female/", "gif"),
+        },
+    },
+    "versions": {
+        "generation-i": {
+            "red-blue": {
+                "front_default": ("pokemon/versions/generation-i/red-blue/", "png"),
+                "front_gray": ("pokemon/versions/generation-i/red-blue/gray/", "png"),
+                "front_transparent": ("pokemon/versions/generation-i/red-blue/transparent/", "png"),
+                "front_transparent_gray": ("pokemon/versions/generation-i/red-blue/transparent/gray/", "png"),
+                "back_default": ("pokemon/versions/generation-i/red-blue/back/", "png"),
+                "back_gray": ("pokemon/versions/generation-i/red-blue/back/gray/", "png"),
+                "back_transparent": ("pokemon/versions/generation-i/red-blue/transparent/back/", "png"),
+                "back_transparent_gray": ("pokemon/versions/generation-i/red-blue/transparent/back/gray/", "png"),
+            },
+            "red-green-japan": {
+                "front_default": ("pokemon/versions/generation-i/red-green-japan/", "png"),
+                "front_gray": ("pokemon/versions/generation-i/red-green-japan/gray/", "png"),
+                "back_default": ("pokemon/versions/generation-i/red-green-japan/back/", "png"),
+                "back_gray": ("pokemon/versions/generation-i/red-green-japan/back/gray/", "png"),
+            },
+            "yellow": {
+                "front_default": ("pokemon/versions/generation-i/yellow/", "png"),
+                "front_gbc": ("pokemon/versions/generation-i/yellow/gbc/", "png"),
+                "front_gray": ("pokemon/versions/generation-i/yellow/gray/", "png"),
+                "front_transparent": ("pokemon/versions/generation-i/yellow/transparent/", "png"),
+                "front_transparent_gray": ("pokemon/versions/generation-i/yellow/transparent/gray/", "png"),
+                "back_default": ("pokemon/versions/generation-i/yellow/back/", "png"),
+                "back_gbc": ("pokemon/versions/generation-i/yellow/back/gbc/", "png"),
+                "back_gray": ("pokemon/versions/generation-i/yellow/back/gray/", "png"),
+                "back_transparent": ("pokemon/versions/generation-i/yellow/transparent/back/", "png"),
+                "back_transparent_gray": ("pokemon/versions/generation-i/yellow/transparent/back/gray/", "png"),
+            },
+        },
+        "generation-ii": {
+            "crystal": {
+                "front_default": ("pokemon/versions/generation-ii/crystal/", "png"),
+                "front_shiny": ("pokemon/versions/generation-ii/crystal/shiny/", "png"),
+                "front_transparent": ("pokemon/versions/generation-ii/crystal/transparent/", "png"),
+                "front_shiny_transparent": ("pokemon/versions/generation-ii/crystal/transparent/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-ii/crystal/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-ii/crystal/back/shiny/", "png"),
+                "back_transparent": ("pokemon/versions/generation-ii/crystal/transparent/back/", "png"),
+                "back_shiny_transparent": ("pokemon/versions/generation-ii/crystal/transparent/back/shiny/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-ii/crystal/animated/", "gif"),
+                    "front_shiny": ("pokemon/versions/generation-ii/crystal/animated/shiny/", "gif"),
+                },
+            },
+            "gold": {
+                "front_default": ("pokemon/versions/generation-ii/gold/", "png"),
+                "front_shiny": ("pokemon/versions/generation-ii/gold/shiny/", "png"),
+                "front_transparent": ("pokemon/versions/generation-ii/gold/transparent/", "png"),
+                "front_shiny_transparent": ("pokemon/versions/generation-ii/gold/transparent/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-ii/gold/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-ii/gold/back/shiny/", "png"),
+                "back_transparent": ("pokemon/versions/generation-ii/gold/transparent/back/", "png"),
+                "back_shiny_transparent": ("pokemon/versions/generation-ii/gold/transparent/back/shiny/", "png"),
+            },
+            "silver": {
+                "front_default": ("pokemon/versions/generation-ii/silver/", "png"),
+                "front_shiny": ("pokemon/versions/generation-ii/silver/shiny/", "png"),
+                "front_transparent": ("pokemon/versions/generation-ii/silver/transparent/", "png"),
+                "front_shiny_transparent": ("pokemon/versions/generation-ii/silver/transparent/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-ii/silver/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-ii/silver/back/shiny/", "png"),
+                "back_transparent": ("pokemon/versions/generation-ii/silver/transparent/back/", "png"),
+                "back_shiny_transparent": ("pokemon/versions/generation-ii/silver/transparent/back/shiny/", "png"),
+            },
+        },
+        "generation-iii": {
+            "emerald": {
+                "front_default": ("pokemon/versions/generation-iii/emerald/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iii/emerald/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-iii/emerald/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iii/emerald/back/shiny/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-iii/emerald/animated/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-iii/emerald/animated/shiny/", "png"),
+                    "back_default": ("pokemon/versions/generation-iii/emerald/animated/back/", "png"),
+                    "back_shiny": ("pokemon/versions/generation-iii/emerald/animated/back/shiny/", "png"),
+                },
+            },
+            "firered-leafgreen": {
+                "front_default": ("pokemon/versions/generation-iii/firered-leafgreen/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iii/firered-leafgreen/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-iii/firered-leafgreen/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iii/firered-leafgreen/back/shiny/", "png"),
+            },
+            "icons": {
+                "front_default": ("pokemon/versions/generation-iii/icons/", "png"),
+            },
+            "ruby-sapphire": {
+                "front_default": ("pokemon/versions/generation-iii/ruby-sapphire/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iii/ruby-sapphire/shiny/", "png"),
+                "back_default": ("pokemon/versions/generation-iii/ruby-sapphire/back/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iii/ruby-sapphire/back/shiny/", "png"),
+            },
+        },
+        "generation-iv": {
+            "diamond-pearl": {
+                "front_default": ("pokemon/versions/generation-iv/diamond-pearl/", "png"),
+                "front_female": ("pokemon/versions/generation-iv/diamond-pearl/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iv/diamond-pearl/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-iv/diamond-pearl/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-iv/diamond-pearl/back/", "png"),
+                "back_female": ("pokemon/versions/generation-iv/diamond-pearl/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iv/diamond-pearl/back/shiny/", "png"),
+                "back_shiny_female": ("pokemon/versions/generation-iv/diamond-pearl/back/shiny/female/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-iv/diamond-pearl/animated/", "png"),
+                    "front_female": ("pokemon/versions/generation-iv/diamond-pearl/animated/female/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-iv/diamond-pearl/animated/shiny/", "png"),
+                    "front_shiny_female": (
+                        "pokemon/versions/generation-iv/diamond-pearl/animated/shiny/female/",
+                        "png",
+                    ),
+                },
+            },
+            "heartgold-soulsilver": {
+                "front_default": ("pokemon/versions/generation-iv/heartgold-soulsilver/", "png"),
+                "front_female": ("pokemon/versions/generation-iv/heartgold-soulsilver/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iv/heartgold-soulsilver/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-iv/heartgold-soulsilver/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-iv/heartgold-soulsilver/back/", "png"),
+                "back_female": ("pokemon/versions/generation-iv/heartgold-soulsilver/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iv/heartgold-soulsilver/back/shiny/", "png"),
+                "back_shiny_female": ("pokemon/versions/generation-iv/heartgold-soulsilver/back/shiny/female/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-iv/heartgold-soulsilver/animated/", "png"),
+                    "front_female": ("pokemon/versions/generation-iv/heartgold-soulsilver/animated/female/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-iv/heartgold-soulsilver/animated/shiny/", "png"),
+                    "front_shiny_female": (
+                        "pokemon/versions/generation-iv/heartgold-soulsilver/animated/shiny/female/",
+                        "png",
+                    ),
+                },
+            },
+            "icons": {
+                "front_default": ("pokemon/versions/generation-iv/icons/", "png"),
+            },
+            "platinum": {
+                "front_default": ("pokemon/versions/generation-iv/platinum/", "png"),
+                "front_female": ("pokemon/versions/generation-iv/platinum/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-iv/platinum/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-iv/platinum/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-iv/platinum/back/", "png"),
+                "back_female": ("pokemon/versions/generation-iv/platinum/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-iv/platinum/back/shiny/", "png"),
+                "back_shiny_female": ("pokemon/versions/generation-iv/platinum/back/shiny/female/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-iv/platinum/animated/", "png"),
+                    "front_female": ("pokemon/versions/generation-iv/platinum/animated/female/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-iv/platinum/animated/shiny/", "png"),
+                    "front_shiny_female": ("pokemon/versions/generation-iv/platinum/animated/shiny/female/", "png"),
+                },
+            },
+        },
+        "generation-v": {
+            "black-white": {
+                "front_default": ("pokemon/versions/generation-v/black-white/", "png"),
+                "front_female": ("pokemon/versions/generation-v/black-white/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-v/black-white/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-v/black-white/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-v/black-white/back/", "png"),
+                "back_female": ("pokemon/versions/generation-v/black-white/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-v/black-white/back/shiny/", "png"),
+                "back_shiny_female": ("pokemon/versions/generation-v/black-white/back/shiny/female/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-v/black-white/animated/", "gif"),
+                    "front_female": ("pokemon/versions/generation-v/black-white/animated/female/", "gif"),
+                    "front_shiny": ("pokemon/versions/generation-v/black-white/animated/shiny/", "gif"),
+                    "front_shiny_female": ("pokemon/versions/generation-v/black-white/animated/shiny/female/", "gif"),
+                    "back_default": ("pokemon/versions/generation-v/black-white/animated/back/", "gif"),
+                    "back_female": ("pokemon/versions/generation-v/black-white/animated/back/female/", "gif"),
+                    "back_shiny": ("pokemon/versions/generation-v/black-white/animated/back/shiny/", "gif"),
+                    "back_shiny_female": (
+                        "pokemon/versions/generation-v/black-white/animated/back/shiny/female/",
+                        "gif",
+                    ),
+                },
+            },
+            "icons": {
+                "front_default": ("pokemon/versions/generation-v/icons/", "png"),
+                "animated": {
+                    "front_default": ("pokemon/versions/generation-v/icons/animated/", "png"),
+                },
+            },
+        },
+        "generation-vi": {
+            "icons": {
+                "front_default": ("pokemon/versions/generation-vi/icons/", "png"),
+                "front_female": ("pokemon/versions/generation-vi/icons/female/", "png"),
+            },
+            "omega-ruby-alpha-sapphire": {
+                "front_default": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/", "png"),
+                "front_female": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/back/", "png"),
+                "back_female": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/back/shiny/", "png"),
+                "back_shiny_female": (
+                    "pokemon/versions/generation-vi/omega-ruby-alpha-sapphire/back/shiny/female/",
+                    "png",
+                ),
+            },
+            "x-y": {
+                "front_default": ("pokemon/versions/generation-vi/x-y/", "png"),
+                "front_female": ("pokemon/versions/generation-vi/x-y/female/", "png"),
+                "front_shiny": ("pokemon/versions/generation-vi/x-y/shiny/", "png"),
+                "front_shiny_female": ("pokemon/versions/generation-vi/x-y/shiny/female/", "png"),
+                "back_default": ("pokemon/versions/generation-vi/x-y/back/", "png"),
+                "back_female": ("pokemon/versions/generation-vi/x-y/back/female/", "png"),
+                "back_shiny": ("pokemon/versions/generation-vi/x-y/back/shiny/", "png"),
+                "back_shiny_female": ("pokemon/versions/generation-vi/x-y/back/shiny/female/", "png"),
+            },
+        },
+        "generation-vii": {
+            "icons": {
+                "front_default": ("pokemon/versions/generation-vii/icons/", "png"),
+                "front_female": ("pokemon/versions/generation-vii/icons/female/", "png"),
+            },
+            "lets-go-pikachu-lets-go-eevee": {
+                "front_default": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/", "gif"),
+                "front_female": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/female/", "gif"),
+                "front_shiny": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/shiny/", "gif"),
+                "front_shiny_female": (
+                    "pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/shiny/female/",
+                    "gif",
+                ),
+                "back_default": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/back/", "gif"),
+                "back_female": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/back/female/", "gif"),
+                "back_shiny": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/back/shiny/", "gif"),
+                "back_shiny_female": (
+                    "pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/back/shiny/female/",
+                    "gif",
+                ),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-vii/lets-go-pikachu-lets-go-eevee/icons/", "png")
+                },
+            },
+            "ultra-sun-ultra-moon": {
+                "front_default": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/", "gif"),
+                "front_female": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/female/", "gif"),
+                "front_shiny": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/shiny/", "gif"),
+                "front_shiny_female": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/shiny/female/", "gif"),
+                "back_default": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/back/", "gif"),
+                "back_female": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/back/female/", "gif"),
+                "back_shiny": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/back/shiny/", "gif"),
+                "back_shiny_female": ("pokemon/versions/generation-vii/ultra-sun-ultra-moon/back/shiny/female/", "gif"),
+            },
+        },
+        "generation-viii": {
+            "brilliant-diamond-shining-pearl": {
+                "front_default": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/", "webp"),
+                "front_female": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/shiny/", "webp"),
+                "front_shiny_female": (
+                    "pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/shiny/female/",
+                    "webp",
+                ),
+                "back_default": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/back/", "webp"),
+                "back_female": (
+                    "pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/back/female/",
+                    "webp",
+                ),
+                "back_shiny": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/back/shiny/", "webp"),
+                "back_shiny_female": (
+                    "pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/back/shiny/female/",
+                    "webp",
+                ),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-viii/brilliant-diamond-shining-pearl/icons/", "png"),
+                },
+            },
+            "legends-arceus": {
+                "front_default": ("pokemon/versions/generation-viii/legends-arceus/", "webp"),
+                "front_female": ("pokemon/versions/generation-viii/legends-arceus/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-viii/legends-arceus/shiny/", "webp"),
+                "front_shiny_female": ("pokemon/versions/generation-viii/legends-arceus/shiny/female/", "webp"),
+                "back_default": ("pokemon/versions/generation-viii/legends-arceus/back/", "webp"),
+                "back_female": ("pokemon/versions/generation-viii/legends-arceus/back/female/", "webp"),
+                "back_shiny": ("pokemon/versions/generation-viii/legends-arceus/back/shiny/", "webp"),
+                "back_shiny_female": ("pokemon/versions/generation-viii/legends-arceus/back/shiny/female/", "webp"),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-viii/legends-arceus/icons/", "png"),
+                    "front_female": ("pokemon/versions/generation-viii/legends-arceus/icons/female/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-viii/legends-arceus/icons/shiny/", "png"),
+                    "front_shiny_female": (
+                        "pokemon/versions/generation-viii/legends-arceus/icons/shiny/female/",
+                        "png",
+                    ),
+                },
+            },
+            "sword-shield": {
+                "front_default": ("pokemon/versions/generation-viii/sword-shield/", "webp"),
+                "front_female": ("pokemon/versions/generation-viii/sword-shield/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-viii/sword-shield/shiny/", "webp"),
+                "front_shiny_female": ("pokemon/versions/generation-viii/sword-shield/shiny/female/", "webp"),
+                "back_default": ("pokemon/versions/generation-viii/sword-shield/back/", "webp"),
+                "back_female": ("pokemon/versions/generation-viii/sword-shield/back/female/", "webp"),
+                "back_shiny": ("pokemon/versions/generation-viii/sword-shield/back/shiny/", "webp"),
+                "back_shiny_female": ("pokemon/versions/generation-viii/sword-shield/back/shiny/female/", "webp"),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-viii/sword-shield/icons/", "png"),
+                    "front_female": ("pokemon/versions/generation-viii/sword-shield/icons/female/", "png"),
+                },
+            },
+        },
+        "generation-ix": {
+            "champions": {
+                "front_default": ("pokemon/versions/generation-ix/champions/", "webp"),
+                "front_female": ("pokemon/versions/generation-ix/champions/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-ix/champions/shiny/", "webp"),
+                "front_shiny_female": ("pokemon/versions/generation-ix/champions/shiny/female/", "webp"),
+                "back_default": ("pokemon/versions/generation-ix/champions/back/", "webp"),
+                "back_female": ("pokemon/versions/generation-ix/champions/back/female/", "webp"),
+                "back_shiny": ("pokemon/versions/generation-ix/champions/back/shiny/", "webp"),
+                "back_shiny_female": ("pokemon/versions/generation-ix/champions/back/shiny/female/", "webp"),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-ix/champions/icons/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-ix/champions/icons/shiny/", "png"),
+                },
+            },
+            "legends-za": {
+                "front_default": ("pokemon/versions/generation-ix/legends-za/", "webp"),
+                "front_female": ("pokemon/versions/generation-ix/legends-za/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-ix/legends-za/shiny/", "webp"),
+                "front_shiny_female": ("pokemon/versions/generation-ix/legends-za/shiny/female/", "webp"),
+                "back_default": ("pokemon/versions/generation-ix/legends-za/back/", "webp"),
+                "back_female": ("pokemon/versions/generation-ix/legends-za/back/female/", "webp"),
+                "back_shiny": ("pokemon/versions/generation-ix/legends-za/back/shiny/", "webp"),
+                "back_shiny_female": ("pokemon/versions/generation-ix/legends-za/back/shiny/female/", "webp"),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-ix/legends-za/icons/", "png"),
+                    "front_female": ("pokemon/versions/generation-ix/legends-za/icons/female/", "png"),
+                    "front_shiny": ("pokemon/versions/generation-ix/legends-za/icons/shiny/", "png"),
+                    "front_shiny_female": ("pokemon/versions/generation-ix/legends-za/icons/shiny/female/", "png"),
+                },
+            },
+            "scarlet-violet": {
+                "front_default": ("pokemon/versions/generation-ix/scarlet-violet/", "webp"),
+                "front_female": ("pokemon/versions/generation-ix/scarlet-violet/female/", "webp"),
+                "front_shiny": ("pokemon/versions/generation-ix/scarlet-violet/shiny/", "webp"),
+                "front_shiny_female": ("pokemon/versions/generation-ix/scarlet-violet/shiny/female/", "webp"),
+                "back_default": ("pokemon/versions/generation-ix/scarlet-violet/back/", "webp"),
+                "back_female": ("pokemon/versions/generation-ix/scarlet-violet/back/female/", "webp"),
+                "back_shiny": ("pokemon/versions/generation-ix/scarlet-violet/back/shiny/", "webp"),
+                "back_shiny_female": ("pokemon/versions/generation-ix/scarlet-violet/back/shiny/female/", "webp"),
+                "icons": {
+                    "front_default": ("pokemon/versions/generation-ix/scarlet-violet/icons/", "png"),
+                    "front_female": ("pokemon/versions/generation-ix/scarlet-violet/icons/female/", "png"),
+                },
+            },
+        },
+    },
+}
+
+
+def file_path_or_none(file_name, image_file=True):
+    if not image_file:
+        return SOUND_DIR.format(file_name=file_name) if file_name in RESOURCE_CRIES else None
+    return MEDIA_DIR.format(file_name=file_name) if file_name in RESOURCE_IMAGES else None
+
+
+def with_iter(context, iterable=None):
+    if iterable is None:
+        iterable = context
+    with context:
+        yield from iterable
+
+
+def load_data(file_name):
+    # with_iter closes the file when it has finished
+    return csv.reader(with_iter(open(DATA_LOCATION + file_name, encoding="utf8")), delimiter=",")
+
+
+def clear_table(model):
+    table_name = model._meta.db_table
+    model.objects.all().delete()
+    print("building " + table_name)
+    # Reset DB auto increments to start at 1
+    if DB_VENDOR == "sqlite":
+        DB_CURSOR.execute("DELETE FROM sqlite_sequence WHERE name = " + "'" + table_name + "'")
+    else:
+        DB_CURSOR.execute("SELECT setval(pg_get_serial_sequence(" + "'" + table_name + "'" + ",'id'), 1, false);")
+
+
+def build_generic(model_classes, file_name, csv_record_to_objects):
+    batches = {}
+    for model_class in model_classes:
+        clear_table(model_class)
+        batches[model_class] = []  # one batch per model class
+
+    csv_data = load_data(file_name)
+    next(csv_data, None)  # skip header
+
+    for csv_record in csv_data:
+        for obj in csv_record_to_objects(csv_record):
+            model_class = type(obj)
+            batches[model_class].append(obj)
+
+            # Limit the batch size
+            if len(batches[model_class]) > 200:
+                model_class.objects.bulk_create(batches[model_class])
+                batches[model_class] = []
+
+    for model_class, batch in batches.items():
+        model_class.objects.bulk_create(batch)
+
+
+##############
+#  LANGUAGE  #
+##############
+
+
+def _build_languages():
+    def csv_record_to_objects(info):
+        yield Language(
+            id=int(info[0]),
+            iso639=info[1],
+            iso3166=info[2],
+            name=info[3],
+            official=bool(int(info[4])),
+            order=info[5],
+        )
+
+    build_generic((Language,), "languages.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield LanguageName(language_id=int(info[0]), local_language_id=int(info[1]), name=info[2])
+
+    build_generic((LanguageName,), "language_names.csv", csv_record_to_objects)
+
+
+############
+#  REGION  #
+############
+
+
+def _build_regions():
+    def csv_record_to_objects(info):
+        yield Region(id=int(info[0]), name=info[1])
+
+    build_generic((Region,), "regions.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield RegionName(region_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((RegionName,), "region_names.csv", csv_record_to_objects)
+
+
+################
+#  GENERATION  #
+################
+
+
+def _build_generations():
+    def csv_record_to_objects(info):
+        yield Generation(id=int(info[0]), region_id=int(info[1]), name=info[2])
+
+    build_generic((Generation,), "generations.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield GenerationName(generation_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((GenerationName,), "generation_names.csv", csv_record_to_objects)
+
+
+#############
+#  VERSION  #
+#############
+
+
+def _build_versions():
+    def csv_record_to_objects(info):
+        yield VersionGroup(
+            id=int(info[0]),
+            name=info[1],
+            generation_id=int(info[2]),
+            order=int(info[3]),
+        )
+
+    build_generic((VersionGroup,), "version_groups.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield VersionGroupRegion(version_group_id=int(info[0]), region_id=int(info[1]))
+
+    build_generic((VersionGroupRegion,), "version_group_regions.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield Version(id=int(info[0]), version_group_id=int(info[1]), name=info[2])
+
+    build_generic((Version,), "versions.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield VersionName(version_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((VersionName,), "version_names.csv", csv_record_to_objects)
+
+
+##################
+#  DAMAGE CLASS  #
+##################
+
+
+def _build_damage_classes():
+    def csv_record_to_objects(info):
+        yield MoveDamageClass(id=int(info[0]), name=info[1])
+
+    build_generic((MoveDamageClass,), "move_damage_classes.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveDamageClassName(move_damage_class_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield MoveDamageClassDescription(
+            move_damage_class_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[3],
+        )
+
+    build_generic(
+        (MoveDamageClassName, MoveDamageClassDescription),
+        "move_damage_class_prose.csv",
+        csv_record_to_objects,
+    )
+
+
+###########
+#  STATS  #
+###########
+
+
+def _build_stats():
+    def csv_record_to_objects(info):
+        yield Stat(
+            id=int(info[0]),
+            move_damage_class_id=int(info[1]) if info[1] != "" else None,
+            name=info[2],
+            is_battle_only=bool(int(info[3])),
+            game_index=int(info[4]) if info[4] else 0,
+        )
+
+    build_generic((Stat,), "stats.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield StatName(stat_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((StatName,), "stat_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokeathlonStat(id=int(info[0]), name=info[1])
+
+    build_generic((PokeathlonStat,), "pokeathlon_stats.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokeathlonStatName(pokeathlon_stat_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((PokeathlonStatName,), "pokeathlon_stat_names.csv", csv_record_to_objects)
+
+
+# ###############
+# #  ABILITIES  #
+# ###############
+
+
+def _build_abilities():
+    def csv_record_to_objects(info):
+        yield Ability(
+            id=int(info[0]),
+            name=info[1],
+            generation_id=int(info[2]),
+            is_main_series=bool(int(info[3])),
+        )
+
+    build_generic((Ability,), "abilities.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield AbilityName(ability_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((AbilityName,), "ability_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield AbilityChange(id=int(info[0]), ability_id=int(info[1]), version_group_id=int(info[2]))
+
+    build_generic((AbilityChange,), "ability_changelog.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield AbilityEffectText(
+            ability_id=int(info[0]),
+            language_id=int(info[1]),
+            short_effect=info[2],
+            effect=info[3],
+        )
+
+    build_generic((AbilityEffectText,), "ability_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield AbilityChangeEffectText(
+            ability_change_id=int(info[0]),
+            language_id=int(info[1]),
+            effect=info[2],
+        )
+
+    build_generic((AbilityChangeEffectText,), "ability_changelog_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield AbilityFlavorText(
+            ability_id=int(info[0]),
+            version_group_id=int(info[1]),
+            language_id=int(info[2]),
+            flavor_text=info[3],
+        )
+
+    build_generic((AbilityFlavorText,), "ability_flavor_text.csv", csv_record_to_objects)
+
+
+####################
+#  CHARACTERISTIC  #
+####################
+
+
+def _build_characteristics():
+    def csv_record_to_objects(info):
+        yield Characteristic(id=int(info[0]), stat_id=int(info[1]), gene_mod_5=int(info[2]))
+
+    build_generic((Characteristic,), "characteristics.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield CharacteristicDescription(
+            characteristic_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[2],
+        )
+
+    build_generic((CharacteristicDescription,), "characteristic_text.csv", csv_record_to_objects)
+
+
+###############
+#  EGG GROUP  #
+###############
+
+
+def _build_egg_groups():
+    def csv_record_to_objects(info):
+        yield EggGroup(id=int(info[0]), name=info[1])
+
+    build_generic((EggGroup,), "egg_groups.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EggGroupName(egg_group_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((EggGroupName,), "egg_group_prose.csv", csv_record_to_objects)
+
+
+#################
+#  GROWTH RATE  #
+#################
+
+
+def _build_growth_rates():
+    def csv_record_to_objects(info):
+        yield GrowthRate(id=int(info[0]), name=info[1], formula=info[2])
+
+    build_generic((GrowthRate,), "growth_rates.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield GrowthRateDescription(growth_rate_id=int(info[0]), language_id=int(info[1]), description=info[2])
+
+    build_generic((GrowthRateDescription,), "growth_rate_prose.csv", csv_record_to_objects)
+
+
+# ###########
+# #  ITEMS  #
+# ###########
+
+
+def _build_items():
+    def csv_record_to_objects(info):
+        yield Currency(id=int(info[0]), name=info[1])
+
+    build_generic((Currency,), "currencies.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield CurrencyName(currency_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((CurrencyName,), "currency_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemPocket(id=int(info[0]), name=info[1])
+
+    build_generic((ItemPocket,), "item_pockets.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemPocketName(item_pocket_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((ItemPocketName,), "item_pocket_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemFlingEffect(id=int(info[0]), name=info[1])
+
+    build_generic((ItemFlingEffect,), "item_fling_effects.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemFlingEffectEffectText(
+            item_fling_effect_id=int(info[0]),
+            language_id=int(info[1]),
+            effect=info[2],
+        )
+
+    build_generic(
+        (ItemFlingEffectEffectText,),
+        "item_fling_effect_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield ItemCategory(id=int(info[0]), item_pocket_id=int(info[1]), name=info[2])
+
+    build_generic((ItemCategory,), "item_categories.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemCategoryName(item_category_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((ItemCategoryName,), "item_category_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield Item(
+            id=int(info[0]),
+            name=info[1],
+            item_category_id=int(info[2]),
+            fling_power=int(info[4]) if info[4] != "" else None,
+            item_fling_effect_id=int(info[5]) if info[5] != "" else None,
+        )
+
+    build_generic((Item,), "items.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        if re.search(r"^data-card", info[1]):
+            file_name = "data-card.png"
+        elif re.search(r"^tm[0-9]", info[1]):
+            file_name = "tm-normal.png"
+        elif re.search(r"^hm[0-9]", info[1]):
+            file_name = "hm-normal.png"
+        else:
+            file_name = f"{info[1]}.png"
+
+        item_sprites = "items/{0}"
+        sprites = {"default": file_path_or_none(item_sprites.format(file_name))}
+        yield ItemSprites(id=int(info[0]), item_id=int(info[0]), sprites=sprites)
+
+    build_generic((ItemSprites,), "items.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemName(item_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((ItemName,), "item_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemEffectText(
+            item_id=int(info[0]),
+            language_id=int(info[1]),
+            short_effect=info[2],
+            effect=info[3],
+        )
+
+    build_generic((ItemEffectText,), "item_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemGameIndex(item_id=int(info[0]), generation_id=int(info[1]), game_index=int(info[2]))
+
+    build_generic((ItemGameIndex,), "item_game_indices.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        # Keep backward compatibility with 4-column files (no currency_id).
+        has_currency_id = len(info) >= 5
+        purchase_price_index = 3 if has_currency_id else 2
+        sell_price_index = 4 if has_currency_id else 3
+
+        yield ItemPrice(
+            item_id=int(info[0]),
+            version_group_id=int(info[1]),
+            currency_id=int(info[2]) if has_currency_id and info[2] else 1,
+            purchase_price=(int(info[purchase_price_index]) if info[purchase_price_index] else None),
+            sell_price=int(info[sell_price_index]) if info[sell_price_index] else None,
+        )
+
+    build_generic((ItemPrice,), "item_prices.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemFlavorText(
+            item_id=int(info[0]),
+            version_group_id=int(info[1]),
+            language_id=int(info[2]),
+            flavor_text=info[3],
+        )
+
+    build_generic((ItemFlavorText,), "item_flavor_text.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemAttribute(id=int(info[0]), name=info[1])
+
+    build_generic((ItemAttribute,), "item_flags.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ItemAttributeName(item_attribute_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield ItemAttributeDescription(
+            item_attribute_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[3],
+        )
+
+    build_generic(
+        (ItemAttributeName, ItemAttributeDescription),
+        "item_flag_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield ItemAttributeMap(item_id=int(info[0]), item_attribute_id=int(info[1]))
+
+    build_generic((ItemAttributeMap,), "item_flag_map.csv", csv_record_to_objects)
+
+
+###########
+#  TYPES  #
+###########
+
+
+def _build_types():
+    def csv_record_to_objects(info):
+        yield Type(
+            id=int(info[0]),
+            name=info[1],
+            generation_id=int(info[2]),
+            move_damage_class_id=int(info[3]) if info[3] != "" else None,
+        )
+
+    build_generic((Type,), "types.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield TypeName(type_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((TypeName,), "type_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield TypeGameIndex(type_id=int(info[0]), generation_id=int(info[1]), game_index=int(info[2]))
+
+    build_generic((TypeGameIndex,), "type_game_indices.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield TypeEfficacy(
+            damage_type_id=int(info[0]),
+            target_type_id=int(info[1]),
+            damage_factor=int(info[2]),
+        )
+
+    build_generic((TypeEfficacy,), "type_efficacy.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield TypeEfficacyPast(
+            damage_type_id=int(info[0]),
+            target_type_id=int(info[1]),
+            damage_factor=int(info[2]),
+            generation_id=int(info[3]),
+        )
+
+    build_generic((TypeEfficacyPast,), "type_efficacy_past.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        game_map = {
+            "generation-iii": [
+                "colosseum",
+                "emerald",
+                "firered-leafgreen",
+                "ruby-sapphire",
+                "xd",
+            ],
+            "generation-iv": ["diamond-pearl", "heartgold-soulsilver", "platinum"],
+            "generation-v": ["black-2-white-2", "black-white"],
+            "generation-vi": ["omega-ruby-alpha-sapphire", "x-y"],
+            "generation-vii": [
+                "lets-go-pikachu-lets-go-eevee",
+                "sun-moon",
+                "ultra-sun-ultra-moon",
+            ],
+            "generation-viii": [
+                "brilliant-diamond-shining-pearl",
+                "legends-arceus",
+                "sword-shield",
+            ],
+            "generation-ix": ["scarlet-violet"],
+        }
+        sprites = {}
+        for generation, games in game_map.items():
+            for game in games:
+                if generation not in sprites:
+                    sprites[generation] = {}
+                sprites[generation][game] = {
+                    "name_icon": file_path_or_none(f"types/{generation}/{game}/{info[0]}.png"),
+                    "symbol_icon": file_path_or_none(f"types/{generation}/{game}/small/{info[0]}.png"),
+                }
+
+        yield TypeSprites(type_id=int(info[0]), sprites=sprites)
+
+    build_generic((TypeSprites,), "types.csv", csv_record_to_objects)
+
+
+#############
+#  CONTEST  #
+#############
+
+
+def _build_contests():
+    def csv_record_to_objects(info):
+        yield ContestType(id=int(info[0]), name=info[1])
+
+    build_generic((ContestType,), "contest_types.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ContestTypeName(
+            contest_type_id=int(info[0]),
+            language_id=int(info[1]),
+            name=info[2],
+            flavor=info[3],
+            color=info[4],
+        )
+
+    build_generic((ContestTypeName,), "contest_type_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ContestEffect(id=int(info[0]), appeal=int(info[1]), jam=int(info[2]))
+
+    build_generic((ContestEffect,), "contest_effects.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ContestEffectEffectText(contest_effect_id=int(info[0]), language_id=int(info[1]), effect=info[3])
+        yield ContestEffectFlavorText(
+            contest_effect_id=int(info[0]),
+            language_id=int(info[1]),
+            flavor_text=info[2],
+        )
+
+    build_generic(
+        (ContestEffectEffectText, ContestEffectFlavorText),
+        "contest_effect_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield SuperContestEffect(id=int(info[0]), appeal=int(info[1]))
+
+    build_generic((SuperContestEffect,), "super_contest_effects.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield SuperContestEffectFlavorText(
+            super_contest_effect_id=int(info[0]),
+            language_id=int(info[1]),
+            flavor_text=info[2],
+        )
+
+    build_generic(
+        (SuperContestEffectFlavorText,),
+        "super_contest_effect_prose.csv",
+        csv_record_to_objects,
+    )
+
+
+###########
+#  MOVES  #
+###########
+
+
+def _build_moves():
+    def csv_record_to_objects(info):
+        yield MoveEffect(id=int(info[0]))
+
+    build_generic((MoveEffect,), "move_effects.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveEffectEffectText(
+            move_effect_id=int(info[0]),
+            language_id=int(info[1]),
+            short_effect=info[2],
+            effect=info[3],
+        )
+
+    build_generic((MoveEffectEffectText,), "move_effect_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveEffectChange(id=int(info[0]), move_effect_id=int(info[1]), version_group_id=int(info[2]))
+
+    build_generic((MoveEffectChange,), "move_effect_changelog.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveEffectChangeEffectText(
+            move_effect_change_id=int(info[0]),
+            language_id=int(info[1]),
+            effect=info[2],
+        )
+
+    build_generic(
+        (MoveEffectChangeEffectText,),
+        "move_effect_changelog_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield MoveLearnMethod(id=int(info[0]), name=info[1])
+
+    build_generic((MoveLearnMethod,), "pokemon_move_methods.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield VersionGroupMoveLearnMethod(version_group_id=int(info[0]), move_learn_method_id=int(info[1]))
+
+    build_generic(
+        (VersionGroupMoveLearnMethod,),
+        "version_group_pokemon_move_methods.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield MoveLearnMethodName(move_learn_method_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield MoveLearnMethodDescription(
+            move_learn_method_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[3],
+        )
+
+    build_generic(
+        (MoveLearnMethodName, MoveLearnMethodDescription),
+        "pokemon_move_method_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield MoveTarget(id=int(info[0]), name=info[1])
+
+    build_generic((MoveTarget,), "move_targets.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveTargetName(move_target_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield MoveTargetDescription(move_target_id=int(info[0]), language_id=int(info[1]), description=info[3])
+
+    build_generic(
+        (MoveTargetName, MoveTargetDescription),
+        "move_target_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield Move(
+            id=int(info[0]),
+            name=info[1],
+            generation_id=int(info[2]),
+            type_id=int(info[3]),
+            power=int(info[4]) if info[4] != "" else None,
+            pp=int(info[5]) if info[5] != "" else None,
+            accuracy=int(info[6]) if info[6] != "" else None,
+            priority=int(info[7]) if info[7] != "" else None,
+            move_target_id=int(info[8]) if info[8] != "" else None,
+            move_damage_class_id=int(info[9]) if info[9] != "" else None,
+            move_effect_id=int(info[10]) if info[10] != "" else None,
+            move_effect_chance=int(info[11]) if info[11] != "" else None,
+            contest_type_id=int(info[12]) if info[12] != "" else None,
+            contest_effect_id=int(info[13]) if info[13] != "" else None,
+            super_contest_effect_id=int(info[14]) if info[14] != "" else None,
+        )
+
+    build_generic((Move,), "moves.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveName(move_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((MoveName,), "move_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveFlavorText(
+            move_id=int(info[0]),
+            version_group_id=int(info[1]),
+            language_id=int(info[2]),
+            flavor_text=info[3],
+        )
+
+    build_generic((MoveFlavorText,), "move_flavor_text.csv", csv_record_to_objects)
+
+    existing_effect_ids = set(MoveEffect.objects.values_list("pk", flat=True))
+
+    def csv_record_to_objects(info):
+        effect_id = int(info[8]) if info[8] != "" else None
+        if effect_id not in existing_effect_ids:
+            effect_id = None
+
+        yield MoveChange(
+            move_id=int(info[0]),
+            version_group_id=int(info[1]),
+            type_id=int(info[2]) if info[2] != "" else None,
+            power=int(info[3]) if info[3] != "" else None,
+            pp=int(info[4]) if info[4] != "" else None,
+            accuracy=int(info[5]) if info[5] != "" else None,
+            move_effect_id=effect_id,
+            move_effect_chance=int(info[9]) if info[9] != "" else None,
+        )
+
+    build_generic((MoveChange,), "move_changelog.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveBattleStyle(id=int(info[0]), name=info[1])
+
+    build_generic((MoveBattleStyle,), "move_battle_styles.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveBattleStyleName(move_battle_style_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((MoveBattleStyleName,), "move_battle_style_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveAttribute(id=int(info[0]), name=info[1])
+
+    build_generic((MoveAttribute,), "move_flags.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveAttributeMap(move_id=int(info[0]), move_attribute_id=int(info[1]))
+
+    build_generic((MoveAttributeMap,), "move_flag_map.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveAttributeName(move_attribute_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield MoveAttributeDescription(
+            move_attribute_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[3],
+        )
+
+    build_generic(
+        (MoveAttributeName, MoveAttributeDescription),
+        "move_flag_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield MoveMetaAilment(id=int(info[0]), name=info[1])
+
+    build_generic((MoveMetaAilment,), "move_meta_ailments.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveMetaAilmentName(move_meta_ailment_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((MoveMetaAilmentName,), "move_meta_ailment_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveMetaCategory(id=int(info[0]), name=info[1])
+
+    build_generic((MoveMetaCategory,), "move_meta_categories.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveMetaCategoryDescription(
+            move_meta_category_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[2],
+        )
+
+    build_generic(
+        (MoveMetaCategoryDescription,),
+        "move_meta_category_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield MoveMeta(
+            move_id=int(info[0]),
+            move_meta_category_id=int(info[1]),
+            move_meta_ailment_id=int(info[2]),
+            min_hits=int(info[3]) if info[3] != "" else None,
+            max_hits=int(info[4]) if info[4] != "" else None,
+            min_turns=int(info[5]) if info[5] != "" else None,
+            max_turns=int(info[6]) if info[6] != "" else None,
+            drain=int(info[7]) if info[7] != "" else None,
+            healing=int(info[8]) if info[8] != "" else None,
+            crit_rate=int(info[9]) if info[9] != "" else None,
+            ailment_chance=int(info[10]) if info[10] != "" else None,
+            flinch_chance=int(info[11]) if info[11] != "" else None,
+            stat_chance=int(info[12]) if info[12] != "" else None,
+        )
+
+    build_generic((MoveMeta,), "move_meta.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield MoveMetaStatChange(move_id=int(info[0]), stat_id=int(info[1]), change=int(info[2]))
+
+    build_generic((MoveMetaStatChange,), "move_meta_stat_changes.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield ContestCombo(first_move_id=int(info[0]), second_move_id=int(info[1]))
+
+    build_generic((ContestCombo,), "contest_combos.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield SuperContestCombo(first_move_id=int(info[0]), second_move_id=int(info[1]))
+
+    build_generic((SuperContestCombo,), "super_contest_combos.csv", csv_record_to_objects)
+
+
+#############
+#  BERRIES  #
+#############
+
+
+def _build_berries():
+    def csv_record_to_objects(info):
+        yield BerryFirmness(id=int(info[0]), name=info[1])
+
+    build_generic((BerryFirmness,), "berry_firmness.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield BerryFirmnessName(berry_firmness_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((BerryFirmnessName,), "berry_firmness_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        item = Item.objects.get(pk=int(info[1]))
+        yield Berry(
+            id=int(info[0]),
+            item_id=int(info[1]),
+            name=item.name.split("-berry")[0],
+            berry_firmness_id=int(info[2]) if info[2] else None,
+            natural_gift_power=int(info[3]) if info[3] else None,
+            natural_gift_type_id=int(info[4]) if info[4] else None,
+            size=int(info[5]) if info[5] else None,
+            max_harvest=int(info[6]) if info[6] else None,
+            growth_time=int(info[7]) if info[7] else None,
+            soil_dryness=int(info[8]) if info[8] else None,
+            smoothness=int(info[9]) if info[9] else None,
+        )
+
+    build_generic((Berry,), "berries.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        # Get the english name for this contest type
+        contest_type_name = ContestTypeName.objects.get(contest_type_id=int(info[0]), language_id=9)
+        yield BerryFlavor(
+            id=int(info[0]),
+            name=contest_type_name.flavor.lower(),
+            contest_type=ContestType.objects.get(pk=int(info[0])),
+        )
+
+    # This is not an error
+    build_generic((BerryFlavor,), "contest_types.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield BerryFlavorName(berry_flavor_id=int(info[0]), language_id=int(info[1]), name=info[3])
+
+    # This is not an error
+    build_generic((BerryFlavorName,), "contest_type_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield BerryFlavorMap(berry_id=int(info[0]), berry_flavor_id=int(info[1]), potency=int(info[2]))
+
+    # This is not an error
+    build_generic((BerryFlavorMap,), "berry_flavors.csv", csv_record_to_objects)
+
+
+############
+#  NATURE  #
+############
+
+
+def _build_natures():
+    def csv_record_to_objects(info):
+        decreased_stat = None
+        increased_stat = None
+        hates_flavor = None
+        likes_flavor = None
+
+        if info[2] != info[3]:
+            decreased_stat = Stat.objects.get(pk=int(info[2]))
+            increased_stat = Stat.objects.get(pk=int(info[3]))
+
+        if info[4] != info[5]:
+            hates_flavor = BerryFlavor.objects.get(pk=int(info[4]))
+            likes_flavor = BerryFlavor.objects.get(pk=int(info[5]))
+
+        yield Nature(
+            id=int(info[0]),
+            name=info[1],
+            decreased_stat=decreased_stat,
+            increased_stat=increased_stat,
+            hates_flavor=hates_flavor,
+            likes_flavor=likes_flavor,
+            game_index=info[6],
+        )
+
+    build_generic((Nature,), "natures.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield NatureName(nature_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((NatureName,), "nature_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield NaturePokeathlonStat(nature_id=(info[0]), pokeathlon_stat_id=(info[1]), max_change=info[2])
+
+    build_generic((NaturePokeathlonStat,), "nature_pokeathlon_stats.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield NatureBattleStylePreference(
+            nature_id=int(info[0]),
+            move_battle_style_id=int(info[1]),
+            low_hp_preference=info[2],
+            high_hp_preference=info[3],
+        )
+
+    build_generic(
+        (NatureBattleStylePreference,),
+        "nature_battle_style_preferences.csv",
+        csv_record_to_objects,
+    )
+
+
+###########
+# GENDER  #
+###########
+
+
+def _build_genders():
+    def csv_record_to_objects(info):
+        yield Gender(id=int(info[0]), name=info[1])
+
+    build_generic((Gender,), "genders.csv", csv_record_to_objects)
+
+
+################
+#  EXPERIENCE  #
+################
+
+
+def _build_experiences():
+    def csv_record_to_objects(info):
+        yield Experience(growth_rate_id=int(info[0]), level=int(info[1]), experience=int(info[2]))
+
+    build_generic((Experience,), "experience.csv", csv_record_to_objects)
+
+
+##############
+#  MACHINES  #
+##############
+
+
+def _build_machines():
+    def csv_record_to_objects(info):
+        yield Machine(
+            machine_number=int(info[0]),
+            version_group_id=int(info[1]),
+            item_id=int(info[2]),
+            move_id=int(info[3]),
+        )
+
+    build_generic((Machine,), "machines.csv", csv_record_to_objects)
+
+
+###############
+#  EVOLUTION  #
+###############
+
+
+def _build_evolutions():
+    def csv_record_to_objects(info):
+        yield EvolutionChain(
+            id=int(info[0]),
+            baby_trigger_item_id=int(info[1]) if info[1] != "" else None,
+        )
+
+    build_generic((EvolutionChain,), "evolution_chains.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EvolutionTrigger(id=int(info[0]), name=info[1])
+
+    build_generic((EvolutionTrigger,), "evolution_triggers.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EvolutionTriggerName(evolution_trigger_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((EvolutionTriggerName,), "evolution_trigger_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EvolutionVariable(
+            id=int(info[0]),
+            name=info[1],
+            symbol=info[2],
+            data_type=info[3],
+            version_group_id=int(info[4]),
+            source=info[5],
+        )
+
+    build_generic((EvolutionVariable,), "evolution_variables.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EvolutionVariableName(
+            evolution_variable_id=int(info[0]),
+            language_id=int(info[1]),
+            name=info[2],
+        )
+        yield EvolutionVariableDescription(
+            evolution_variable_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[3],
+        )
+
+    build_generic(
+        (EvolutionVariableName, EvolutionVariableDescription),
+        "evolution_variable_prose.csv",
+        csv_record_to_objects,
+    )
+
+
+#############
+#  POKEDEX  #
+#############
+
+
+def _build_pokedexes():
+    def csv_record_to_objects(info):
+        yield Pokedex(
+            id=int(info[0]),
+            region_id=int(info[1]) if info[1] != "" else None,
+            name=info[2],
+            is_main_series=bool(int(info[3])),
+        )
+
+    build_generic((Pokedex,), "pokedexes.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokedexName(pokedex_id=int(info[0]), language_id=int(info[1]), name=info[2])
+        yield PokedexDescription(pokedex_id=int(info[0]), language_id=int(info[1]), description=info[3])
+
+    build_generic((PokedexName, PokedexDescription), "pokedex_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokedexVersionGroup(pokedex_id=int(info[0]), version_group_id=int(info[1]))
+
+    build_generic((PokedexVersionGroup,), "pokedex_version_groups.csv", csv_record_to_objects)
+
+
+##############
+#  LOCATION  #
+##############
+
+
+def _build_locations():
+    def csv_record_to_objects(info):
+        yield Location(
+            id=int(info[0]),
+            region_id=int(info[1]) if info[1] != "" else None,
+            name=info[2],
+        )
+
+    build_generic((Location,), "locations.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield LocationName(location_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((LocationName,), "location_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield LocationGameIndex(
+            location_id=int(info[0]),
+            generation_id=int(info[1]),
+            game_index=int(info[2]),
+        )
+
+    build_generic((LocationGameIndex,), "location_game_indices.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        location = Location.objects.get(pk=int(info[1]))
+        yield LocationArea(
+            id=int(info[0]),
+            location_id=int(info[1]),
+            game_index=int(info[2]),
+            name=(f"{location.name}-{info[3]}" if info[3] else "{}-{}".format(location.name, "area")),
+        )
+
+    build_generic((LocationArea,), "location_areas.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield LocationAreaName(location_area_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((LocationAreaName,), "location_area_prose.csv", csv_record_to_objects)
+
+
+#############
+#  POKEMON  #
+#############
+
+
+def _resolve_sprite_config(config: dict[str, Any], lookup: Callable[[str, str], str | None]) -> dict[str, Any]:
+    resolved: dict[str, Any] = {}
+    for name, value in config.items():
+        if isinstance(value, dict):
+            resolved[name] = _resolve_sprite_config(value, lookup)
+        else:
+            path, extension = value
+            resolved[name] = lookup(path, extension)
+    return resolved
+
+
+def _pokemon_sprite_lookup(info: list[str]) -> Callable[[str, str], str | None]:
+    pokemon_id, identifier, species_id = info[:3]
+    file_names = [pokemon_id]
+    if "-" in identifier:
+        file_names.append(f"{species_id}-{identifier.split('-', 1)[1]}")
+
+    def lookup(path: str, extension: str) -> str | None:
+        for file_name in file_names:
+            sprite = file_path_or_none(f"{path}{file_name}.{extension}")
+            if sprite:
+                return sprite
+        return None
+
+    return lookup
+
+
+def _pokemon_form_sprite_lookup(info: list[str]) -> Callable[[str, str], str | None]:
+    form_identifier = info[2]
+    pokemon_id = int(info[3])
+    is_default = info[5] == "1"
+
+    file_names: list[str] = []
+    if form_identifier:
+        file_names.append(f"{pokemon_id}-{form_identifier}")
+    if is_default or not form_identifier:
+        file_names.append(str(pokemon_id))
+
+    def lookup(path: str, extension: str) -> str | None:
+        for file_name in file_names:
+            sprite = file_path_or_none(f"{path}{file_name}.{extension}")
+            if sprite:
+                return sprite
+        return None
+
+    return lookup
+
+
+def _build_pokemons():
+    def csv_record_to_objects(info):
+        yield PokemonColor(id=int(info[0]), name=info[1])
+
+    build_generic((PokemonColor,), "pokemon_colors.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonColorName(pokemon_color_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((PokemonColorName,), "pokemon_color_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonShape(id=int(info[0]), name=info[1])
+
+    build_generic((PokemonShape,), "pokemon_shapes.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonShapeName(
+            pokemon_shape_id=int(info[0]),
+            language_id=int(info[1]),
+            name=info[2],
+            awesome_name=info[3],
+        )
+
+    build_generic((PokemonShapeName,), "pokemon_shape_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonHabitat(id=int(info[0]), name=info[1])
+
+    build_generic((PokemonHabitat,), "pokemon_habitats.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonSpecies(
+            id=int(info[0]),
+            name=info[1],
+            generation_id=int(info[2]) if info[2] != "" else None,
+            evolves_from_species=None,
+            evolution_chain_id=int(info[4]) if info[4] != "" else None,
+            pokemon_color_id=int(info[5]) if info[5] != "" else None,
+            pokemon_shape_id=int(info[6]) if info[6] != "" else None,
+            pokemon_habitat_id=int(info[7]) if info[7] != "" else None,
+            gender_rate=int(info[8]) if info[8] != "" else None,
+            capture_rate=int(info[9]) if info[9] != "" else None,
+            base_happiness=int(info[10]) if info[10] != "" else None,
+            is_baby=bool(int(info[11])) if info[11] != "" else None,
+            hatch_counter=int(info[12]) if info[12] != "" else None,
+            has_gender_differences=bool(int(info[13])) if info[13] != "" else False,
+            growth_rate_id=int(info[14]) if info[14] != "" else None,
+            forms_switchable=bool(int(info[15])) if info[15] != "" else None,
+            is_legendary=bool(int(info[16])) if info[16] != "" else None,
+            is_mythical=bool(int(info[17])) if info[17] != "" else None,
+            order=int(info[18]) if info[18] != "" else None,
+        )
+
+    build_generic((PokemonSpecies,), "pokemon_species.csv", csv_record_to_objects)
+
+    # PokemonSpecies.evolves_from_species can't be set until all the species are created
+    data = load_data("pokemon_species.csv")
+    for index, info in enumerate(data):
+        if index > 0:
+            evolves = PokemonSpecies.objects.get(pk=int(info[3])) if info[3] != "" else None
+            if evolves:
+                species = PokemonSpecies.objects.get(pk=int(info[0]))
+                species.evolves_from_species = evolves
+                species.save()
+
+    def csv_record_to_objects(info):
+        yield PokemonSpeciesName(
+            pokemon_species_id=int(info[0]),
+            language_id=int(info[1]),
+            name=info[2],
+            genus=info[3],
+        )
+
+    build_generic((PokemonSpeciesName,), "pokemon_species_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonSpeciesDescription(
+            pokemon_species_id=int(info[0]),
+            language_id=int(info[1]),
+            description=info[2],
+        )
+
+    build_generic((PokemonSpeciesDescription,), "pokemon_species_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonSpeciesFlavorText(
+            pokemon_species_id=int(info[0]),
+            version_id=int(info[1]),
+            language_id=int(info[2]),
+            flavor_text=info[3],
+        )
+
+    build_generic(
+        (PokemonSpeciesFlavorText,),
+        "pokemon_species_flavor_text.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield Pokemon(
+            id=int(info[0]),
+            name=info[1],
+            pokemon_species_id=int(info[2]) if info[2] != "" else None,
+            height=int(info[3]) if info[3] != "" else None,
+            weight=int(info[4]) if info[4] != "" else None,
+            base_experience=int(info[5]) if info[5] != "" else None,
+            order=int(info[6]) if info[6] != "" else -1,
+            is_default=bool(int(info[7])) if info[7] != "" else None,
+        )
+
+    build_generic((Pokemon,), "pokemon.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        sprites = _resolve_sprite_config(POKEMON_SPRITE_CONFIG, _pokemon_sprite_lookup(info))
+        yield PokemonSprites(
+            id=int(info[0]),
+            pokemon=Pokemon.objects.get(pk=int(info[0])),
+            sprites=sprites,
+        )
+
+    build_generic((PokemonSprites,), "pokemon.csv", csv_record_to_objects)
+
+    def try_cry_names(path, info, extension):
+        file_name = f"{info[0]}.{extension}"
+        return file_path_or_none(path + file_name, image_file=False)
+
+    def csv_record_to_objects(info):
+        poke_cries = "pokemon"
+        latest = f"{poke_cries}/latest/"
+        legacy = f"{poke_cries}/legacy/"
+        cries = {
+            "latest": try_cry_names(latest, info, "ogg"),
+            "legacy": try_cry_names(legacy, info, "ogg"),
+        }
+        yield PokemonCries(
+            id=int(info[0]),
+            pokemon=Pokemon.objects.get(pk=int(info[0])),
+            cries=cries,
+        )
+
+    build_generic((PokemonCries,), "pokemon.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonAbility(
+            pokemon_id=int(info[0]),
+            ability_id=int(info[1]),
+            is_hidden=bool(int(info[2])),
+            slot=int(info[3]),
+        )
+
+    build_generic((PokemonAbility,), "pokemon_abilities.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonAbilityPast(
+            pokemon_id=int(info[0]),
+            generation_id=int(info[1]),
+            ability_id=int(info[2]) if info[2] != "" else None,
+            is_hidden=bool(int(info[3])),
+            slot=int(info[4]),
+        )
+
+    build_generic((PokemonAbilityPast,), "pokemon_abilities_past.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonDexNumber(
+            pokemon_species_id=int(info[0]),
+            pokedex_id=int(info[1]),
+            pokedex_number=int(info[2]),
+        )
+
+    build_generic((PokemonDexNumber,), "pokemon_dex_numbers.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonEggGroup(pokemon_species_id=int(info[0]), egg_group_id=int(info[1]))
+
+    build_generic((PokemonEggGroup,), "pokemon_egg_groups.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonForm(
+            id=int(info[0]),
+            name=info[1],
+            form_name=info[2],
+            pokemon_id=int(info[3]),
+            version_group_id=int(info[4]),
+            is_default=bool(int(info[5])),
+            is_battle_only=bool(int(info[6])),
+            is_mega=bool(int(info[7])),
+            form_order=int(info[8]),
+            order=int(info[9]),
+        )
+
+    build_generic((PokemonForm,), "pokemon_forms.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonEvolution(
+            id=int(info[0]),
+            evolved_species_id=int(info[1]),
+            evolution_trigger_id=int(info[2]),
+            version_group_id=int(info[3]),
+            is_default=bool(int(info[4])),
+            evolution_item_id=int(info[5]) if info[5] != "" else None,
+            min_level=int(info[6]) if info[6] != "" else None,
+            gender_id=int(info[7]) if info[7] != "" else None,
+            location_id=int(info[8]) if info[8] != "" else None,
+            held_item_id=int(info[9]) if info[9] != "" else None,
+            time_of_day=info[10],
+            known_move_id=int(info[11]) if info[11] != "" else None,
+            known_move_type_id=int(info[12]) if info[12] != "" else None,
+            min_happiness=int(info[13]) if info[13] != "" else None,
+            min_beauty=int(info[14]) if info[14] != "" else None,
+            min_affection=int(info[15]) if info[15] != "" else None,
+            relative_physical_stats=int(info[16]) if info[16] != "" else None,
+            party_species_id=int(info[17]) if info[17] != "" else None,
+            party_type_id=int(info[18]) if info[18] != "" else None,
+            trade_species_id=int(info[19]) if info[19] != "" else None,
+            needs_overworld_rain=bool(int(info[20])),
+            turn_upside_down=bool(int(info[21])),
+            needs_multiplayer=bool(int(info[22])),
+            near_special_rock=bool(int(info[23])),
+            region_id=int(info[24]) if info[24] != "" else None,
+            required_pokemon_form_id=int(info[25]) if info[25] != "" else None,
+            evolved_pokemon_form_id=int(info[26]) if info[26] != "" else None,
+            used_move_id=int(info[27]) if info[27] != "" else None,
+            min_move_count=int(info[28]) if info[28] != "" else None,
+            min_steps=int(info[29]) if info[29] != "" else None,
+            min_damage_taken=int(info[30]) if info[30] != "" else None,
+            nature_bitmask=int(info[31]) if info[31] != "" else None,
+            condition_expression=info[32],
+            percentage_chance=(float(info[33]) if len(info) > 33 and info[33] != "" else None),
+        )
+
+    build_generic((PokemonEvolution,), "pokemon_evolution.csv", csv_record_to_objects)
+
+    pokemon_sprites_by_id = dict(PokemonSprites.objects.values_list("pokemon_id", "sprites"))
+
+    def csv_record_to_objects(info):
+        if info[2]:
+            lookup = _pokemon_form_sprite_lookup(info)
+            sprites = _resolve_sprite_config(POKEMON_SPRITE_CONFIG, lookup)
+        else:
+            sprites = deepcopy(pokemon_sprites_by_id.get(int(info[3]), {}))
+        yield PokemonFormSprites(id=int(info[0]), pokemon_form_id=int(info[0]), sprites=sprites)
+
+    build_generic((PokemonFormSprites,), "pokemon_forms.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormName(
+            pokemon_form=PokemonForm.objects.get(pk=int(info[0])),
+            language=Language.objects.get(pk=int(info[1])),
+            name=info[2],
+            pokemon_name=info[3],
+        )
+
+    build_generic((PokemonFormName,), "pokemon_form_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormGeneration(
+            pokemon_form_id=int(info[0]),
+            generation_id=int(info[1]),
+            game_index=int(info[2]),
+        )
+
+    build_generic((PokemonFormGeneration,), "pokemon_form_generations.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormType(pokemon_form_id=int(info[0]), type_id=int(info[1]), slot=int(info[2]))
+
+    build_generic((PokemonFormType,), "pokemon_form_types.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormTrigger(id=int(info[0]), name=info[1])
+
+    build_generic((PokemonFormTrigger,), "pokemon_form_triggers.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormCondition(
+            pokemon_form_id=int(info[0]),
+            form_trigger_id=int(info[1]),
+            item_id=int(info[2]) if info[2] != "" else None,
+            ability_id=int(info[3]) if info[3] != "" else None,
+            move_id=int(info[4]) if info[4] != "" else None,
+            base_form_id=int(info[5]) if info[5] != "" else None,
+        )
+
+    build_generic((PokemonFormCondition,), "pokemon_form_conditions.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonFormFlavorText(
+            pokemon_form_id=int(info[0]),
+            version_id=int(info[1]),
+            language_id=int(info[2]),
+            flavor_text=info[3],
+        )
+
+    build_generic(
+        (PokemonFormFlavorText,),
+        "pokemon_form_flavor_text.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield PokemonGameIndex(pokemon_id=int(info[0]), version_id=int(info[1]), game_index=int(info[2]))
+
+    build_generic((PokemonGameIndex,), "pokemon_game_indices.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonHabitatName(pokemon_habitat_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((PokemonHabitatName,), "pokemon_habitat_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonItem(
+            pokemon_id=int(info[0]),
+            version_id=int(info[1]),
+            item_id=int(info[2]),
+            rarity=int(info[3]),
+        )
+
+    build_generic((PokemonItem,), "pokemon_items.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonMove(
+            pokemon_id=int(info[0]),
+            version_group_id=int(info[1]),
+            move_id=int(info[2]),
+            move_learn_method_id=int(info[3]),
+            level=int(info[4]),
+            order=int(info[5]) if info[5] != "" else None,
+        )
+
+    build_generic((PokemonMove,), "pokemon_moves.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonStat(
+            pokemon_id=int(info[0]),
+            stat_id=int(info[1]),
+            base_stat=int(info[2]),
+            effort=int(info[3]),
+        )
+
+    build_generic((PokemonStat,), "pokemon_stats.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonStatPast(
+            pokemon_id=int(info[0]),
+            generation_id=int(info[1]),
+            stat_id=int(info[2]),
+            base_stat=int(info[3]),
+            effort=int(info[4]),
+        )
+
+    build_generic((PokemonStatPast,), "pokemon_stats_past.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonType(pokemon_id=int(info[0]), type_id=int(info[1]), slot=int(info[2]))
+
+    build_generic((PokemonType,), "pokemon_types.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PokemonTypePast(
+            pokemon_id=int(info[0]),
+            generation_id=int(info[1]),
+            type_id=int(info[2]),
+            slot=int(info[3]),
+        )
+
+    build_generic((PokemonTypePast,), "pokemon_types_past.csv", csv_record_to_objects)
+
+
+###############
+#  ENCOUNTER  #
+###############
+
+
+def _build_encounters():
+    def csv_record_to_objects(info):
+        yield EncounterMethod(id=int(info[0]), name=info[1], order=int(info[2]))
+
+    build_generic((EncounterMethod,), "encounter_methods.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield LocationAreaEncounterRate(
+            location_area_id=int(info[0]),
+            encounter_method_id=int(info[1]),
+            version_id=int(info[2]),
+            rate=int(info[3]),
+        )
+
+    build_generic(
+        (LocationAreaEncounterRate,),
+        "location_area_encounter_rates.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield EncounterMethodName(encounter_method_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((EncounterMethodName,), "encounter_method_prose.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EncounterCondition(id=int(info[0]), name=info[1])
+
+    build_generic((EncounterCondition,), "encounter_conditions.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EncounterConditionName(encounter_condition_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic(
+        (EncounterConditionName,),
+        "encounter_condition_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield EncounterSlot(
+            id=int(info[0]),
+            version_group_id=int(info[1]),
+            encounter_method_id=int(info[2]),
+            slot=int(info[3]) if info[3] != "" else None,
+            rarity=int(info[4]),
+        )
+
+    build_generic((EncounterSlot,), "encounter_slots.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield Encounter(
+            id=int(info[0]),
+            version_id=int(info[1]),
+            location_area_id=int(info[2]),
+            encounter_slot_id=int(info[3]),
+            pokemon_id=int(info[4]),
+            min_level=int(info[5]),
+            max_level=int(info[6]),
+        )
+
+    build_generic((Encounter,), "encounters.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield EncounterConditionValue(
+            id=int(info[0]),
+            encounter_condition_id=int(info[1]),
+            name=info[2],
+            is_default=bool(int(info[3])),
+        )
+
+    build_generic(
+        (EncounterConditionValue,),
+        "encounter_condition_values.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield EncounterConditionValueName(
+            encounter_condition_value_id=int(info[0]),
+            language_id=int(info[1]),
+            name=info[2],
+        )
+
+    build_generic(
+        (EncounterConditionValueName,),
+        "encounter_condition_value_prose.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield EncounterConditionValueMap(encounter_id=int(info[0]), encounter_condition_value_id=int(info[1]))
+
+    build_generic(
+        (EncounterConditionValueMap,),
+        "encounter_condition_value_map.csv",
+        csv_record_to_objects,
+    )
+
+    def csv_record_to_objects(info):
+        yield EncounterPokemonDetail(
+            encounter_id=int(info[0]),
+            min_perfect_ivs=int(info[1]) if info[1] != "" else None,
+            always_shiny=bool(int(info[2])),
+            never_shiny=bool(int(info[3])),
+            is_alpha=bool(int(info[4])),
+        )
+
+    build_generic(
+        (EncounterPokemonDetail,),
+        "encounter_pokemon_details.csv",
+        csv_record_to_objects,
+    )
+
+
+##############
+#  PAL PARK  #
+##############
+
+
+def _build_pal_parks():
+    def csv_record_to_objects(info):
+        yield PalParkArea(id=int(info[0]), name=info[1])
+
+    build_generic((PalParkArea,), "pal_park_areas.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PalParkAreaName(pal_park_area_id=int(info[0]), language_id=int(info[1]), name=info[2])
+
+    build_generic((PalParkAreaName,), "pal_park_area_names.csv", csv_record_to_objects)
+
+    def csv_record_to_objects(info):
+        yield PalPark(
+            pokemon_species_id=int(info[0]),
+            pal_park_area_id=int(info[1]),
+            base_score=int(info[2]),
+            rate=int(info[3]),
+        )
+
+    build_generic((PalPark,), "pal_park.csv", csv_record_to_objects)
+
+
+def build_all():
+    _build_languages()
+    _build_regions()
+    _build_generations()
+    _build_versions()
+    _build_damage_classes()
+    _build_stats()
+    _build_abilities()
+    _build_characteristics()
+    _build_egg_groups()
+    _build_growth_rates()
+    _build_items()
+    _build_types()
+    _build_contests()
+    _build_moves()
+    _build_berries()
+    _build_natures()
+    _build_genders()
+    _build_experiences()
+    _build_machines()
+    _build_evolutions()
+    _build_pokedexes()
+    _build_locations()
+    _build_pokemons()
+    _build_encounters()
+    _build_pal_parks()
+
+
+if __name__ == "__main__":
+    build_all()

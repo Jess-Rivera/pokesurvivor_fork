@@ -19,6 +19,11 @@ G.Game = (() => {
   let state = 'ui';
   let time = 0, last = 0, pendingLevels = 0;
   let pl = null;
+  // ---- team (Phase A) ----
+  let roster = [];          // up to 6 fighter Players; pl === roster[activeIdx]
+  let activeIdx = 0;
+  let swapLock = 0;         // seconds until you can swap again (5s lockout)
+  const SWAP_LOCK = 5, SWAP_IFRAME = 0.5;
   let caught = [];          // shinies obtained in this run
   let biome = -1;
 
@@ -88,8 +93,6 @@ G.Game = (() => {
   function startRun(coop = null) {
     holdBy = []; awayBy = null;
     const save = G.DB.save;
-    const mon = G.DEX_BY[save.partner];
-    const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
 
     G.UI.hideAll();
     G.UI.chrome(false);
@@ -111,21 +114,17 @@ G.Game = (() => {
     time = 0; pendingLevels = 0;
     runReal = performance.now(); tampered = debugDirty;
 
-    pl = new G.Player(mon, perks, !!save.partnerShiny && G.DB.ownsShiny(mon.dex));
+    // Build the team roster. save.team is up to 6 { dex, shiny }; fall back to
+    // the single partner so older saves (and the current UI) still work.
+    const teamDef = (Array.isArray(save.team) && save.team.length)
+      ? save.team.slice(0, 6).filter(t => t && G.DEX_BY[t.dex])
+      : [{ dex: save.partner, shiny: !!save.partnerShiny }];
+    roster = teamDef.map(t => buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex)));
+    activeIdx = 0;
+    pl = roster[0];
+    swapLock = 0;
     banked = { t1: 0, t10: 0 };
     caught = [];
-    // Shortcuts: moves with a fixed slot (save.pbind[dex] = [id of 1, id of 2, ...]),
-    // before learning anything: addMove places them.
-    (save.pbind && save.pbind[mon.dex] || []).forEach((id, i) => { if (id) pl.bind[id] = i; });
-    pl.addMove(G.startMoveOf(mon.dex));
-    // "Veto" upgrade: moves you do not want to be offered.
-    pl.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
-    // "Repertoire" upgrade: a second random attack move.
-    if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter(id => !pl.hasMove(id) && !pl.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
-      if (pool.length) pl.addMove(G.U.pick(pool));
-      pl.setActive(0);
-    }
 
     if (coop) {
       G.Coop.begin(coop, pl, coopApi);
@@ -133,7 +132,7 @@ G.Game = (() => {
     }
     G.Camera.x = pl.x; G.Camera.y = pl.y; G.Camera.shake = 0;
     // Local sprite sheets: the companion and the first enemies.
-    G.Sprites.preload([mon.dex], 8000, pl.shiny);
+    G.Sprites.preload([pl.dex], 8000, pl.shiny);
     G.Audio.music(G.BIOME_MUSIC[0]);
     // For the ranking: the server records when the game starts (anti-cheat).
     if (!coop || G.Coop.isHost) G.Ranking.runStarted(coop ? 'g' : 's');
@@ -145,6 +144,63 @@ G.Game = (() => {
   function quitRun() {
     if (G.Coop.active) G.Coop.leave();
     endRun(false);
+  }
+
+  /** Build one team member (a Player) with its moves, binds and bans applied. */
+  function buildFighter(mon, shiny) {
+    const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
+    const f = new G.Player(mon, perks, shiny);
+    const save = G.DB.save;
+    (save.pbind && save.pbind[mon.dex] || []).forEach((id, i) => { if (id) f.bind[id] = i; });
+    f.addMove(G.startMoveOf(mon.dex));
+    f.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
+    if (perks.startMoves >= 2) {
+      const pool = G.Moves.poolFor(mon).filter(id => !f.hasMove(id) && !f.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
+      if (pool.length) f.addMove(G.U.pick(pool));
+      f.setActive(0);
+    }
+    return f;
+  }
+
+  /** Living (not fainted) team members. */
+  function livingRoster() { return roster.filter(f => !f.dead); }
+
+  /**
+   * Swap the active Pokemon to roster slot i. Instant: the new one takes the
+   * old one's position, gets a short invuln window, and swapping is locked for
+   * a few seconds. Shared level/XP are carried onto the incoming member.
+   */
+  function swapTo(i) {
+    if (i < 0 || i >= roster.length || i === activeIdx) return false;
+    const next = roster[i];
+    if (!next || next.dead) return false;
+    if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
+    // Position + run-shared state move to the incoming Pokemon.
+    next.x = pl.x; next.y = pl.y; next.aim = pl.aim;
+    next.level = pl.level; next.xp = pl.xp; next.xpNext = pl.xpNext;
+    next.kills = pl.kills; next.bosses = pl.bosses; next.coins = pl.coins;
+    next.t1 = pl.t1; next.t10 = pl.t10;
+    next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
+    activeIdx = i;
+    pl = next;
+    swapLock = SWAP_LOCK;
+    G.Camera.shake = 0;
+    G.Sprites.preload([pl.dex], 4000, pl.shiny);
+    G.FX.ring(pl.x, pl.y, 6, 70, '#9fe8ff', 0.4, 4);
+    G.Audio.sfx('confirm');
+    return true;
+  }
+
+  /** Keyboard swap: cycle prev/next (skipping fainted) and direct-to-slot. */
+  function handleSwap() {
+    if (roster.length < 2 || swapLock > 0 || state !== 'playing' || pl.dead) return;
+    for (let i = 0; i < 6; i++) if (G.Input.action('swap_' + (i + 1))) { swapTo(i); return; }
+    const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;
+    if (!dir) return;
+    for (let step = 1; step <= roster.length; step++) {
+      const j = (activeIdx + dir * step + roster.length * step) % roster.length;
+      if (!roster[j].dead && j !== activeIdx) { swapTo(j); return; }
+    }
   }
 
   /** All players in the game (you first). */
@@ -624,6 +680,24 @@ G.Game = (() => {
     // After going down, let the Faint animation play before the summary.
     // (Not in the rift arena: there, going down just throws you back.)
     if (pl.dead && !coop && !G.Rift.inArena) {
+      // Team: if another member is still up, bench the fainted one and swap in.
+      const alive = roster.filter(f => !f.dead && f !== pl);
+      if (alive.length) {
+        const next = alive[0];
+        const i = roster.indexOf(next);
+        next.x = pl.x; next.y = pl.y; next.aim = pl.aim;
+        next.level = pl.level; next.xp = pl.xp; next.xpNext = pl.xpNext;
+        next.kills = pl.kills; next.bosses = pl.bosses; next.coins = pl.coins;
+        next.t1 = pl.t1; next.t10 = pl.t10;
+        next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
+        activeIdx = i; pl = next; swapLock = 0; deathT = 0;
+        G.Sprites.preload([pl.dex], 4000, pl.shiny);
+        G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
+        G.Audio.sfx('shiny');
+        G.Spawner.say('¡' + pl.mon.name + ' entra en combate!', 2, true);
+        return;
+      }
+      // Whole team down: play the faint beat, then end the run.
       deathT += dt;
       pl.update(dt);
       G.EnemyMgr.update(dt * 0.3, pl);
@@ -633,6 +707,8 @@ G.Game = (() => {
       return;
     }
     time += dt;
+    if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
+    handleSwap();
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {
@@ -876,7 +952,13 @@ G.Game = (() => {
     /** Debug sandbox (G.Debug.maxAll): permanently flag this session's runs out of the ranking. */
     debugMaxed() { debugDirty = true; tampered = true; },
     toUI() { state = 'ui'; Backdrop.restore(); },
-    get state() { return state; }, get player() { return pl; }, st
+    get state() { return state; }, get player() { return pl; }, st,
+    // team (Phase A)
+    get roster() { return roster; },
+    get activeIndex() { return activeIdx; },
+    get swapCooldown() { return swapLock; },
+    get swapMax() { return SWAP_LOCK; },
+    swap(i) { return swapTo(i); }
   };
 })();
 

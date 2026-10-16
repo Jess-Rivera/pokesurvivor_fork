@@ -6,6 +6,15 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-16', title: ['Controls, balance and a sandbox', 'Controls, balance and a sandbox'], new: [
+    ['Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.',
+     'Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.'],
+    ['Developer sandbox (open the game with ?dev): press Shift+D to unlock every Pokemon and shiny, max coins and tickets, and max every upgrade. Debug runs never count toward the ranking.',
+     'Developer sandbox (open the game with ?dev): press Shift+D to unlock every Pokemon and shiny, max coins and tickets, and max every upgrade. Debug runs never count toward the ranking.']
+  ], chg: [
+    ['Healers reworked so a cluster of them can no longer make a mob unkillable: each healer now heals at most the 3 most-wounded allies in range, never other healers. Below 35% health a healer panics and heals only itself that turn.',
+     'Healers reworked so a cluster of them can no longer make a mob unkillable: each healer now heals at most the 3 most-wounded allies in range, never other healers. Below 35% health a healer panics and heals only itself that turn.']
+  ] },
   { d: '2026-10-14', title: ['Recupera tu cuenta con Gmail', 'Recover your account with Gmail'], new: [
     ['Si juegas con nombre y contraseña, puedes vincular tu Gmail: si un día olvidas la contraseña, entras con Google y es tu misma cuenta. Te lo ofrecemos al entrar.',
      'If you play with a name and password, you can link your Gmail: if you ever forget your password, sign in with Google and it is the same account. We offer it when you sign in.'],

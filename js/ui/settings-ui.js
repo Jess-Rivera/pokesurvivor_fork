@@ -69,7 +69,10 @@ G.SettingsUI = (() => {
   const ACTION_LABEL = {
     move_up: 'Up', move_down: 'Down', move_left: 'Left', move_right: 'Right',
     attack_1: 'Attack 1', attack_2: 'Attack 2', attack_3: 'Attack 3', attack_4: 'Attack 4',
-    cycle_prev: 'Previous attack', cycle_next: 'Next attack', pause: 'Pause'
+    cycle_prev: 'Previous attack', cycle_next: 'Next attack', pause: 'Pause',
+    swap_prev: 'Swap to previous', swap_next: 'Swap to next',
+    swap_1: 'Swap to slot 1', swap_2: 'Swap to slot 2', swap_3: 'Swap to slot 3',
+    swap_4: 'Swap to slot 4', swap_5: 'Swap to slot 5', swap_6: 'Swap to slot 6'
   };
   // Pretty-print a key code (e.g. 'keyw' -> 'W', 'arrowup' -> '↑').
   function keyName(code) {
@@ -85,7 +88,7 @@ G.SettingsUI = (() => {
   }
   let capturing = null;   // action name currently waiting for a keypress, or null
   function keymapRows() {
-    return `<div class="set-keys">` + G.Input.actionList.map(a => {
+    return `<div class="set-keys" style="max-height:46vh;overflow-y:auto">` + G.Input.actionList.map(a => {
       const keys = G.Input.bindingsOf(a).map(keyName).join(' / ') || '—';
       const live = capturing === a;
       return `<div class="set-row"><div class="grow"><b>${esc(ACTION_LABEL[a] || a)}</b></div>
