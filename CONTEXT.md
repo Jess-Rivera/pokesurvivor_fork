@@ -36,6 +36,10 @@ suspect the other tool skipped it.
   (code, js/data/*.js, dev.html, build config, assets) is PROPOSED as a diff with the rationale.
   Jess approves or denies; on approval the assistant applies the edit itself. Jess does NOT type
   code in by hand, and the assistant does NOT apply game-code changes before approval.
+  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational, does not
+    affect mechanics). The assistant edits it directly WITHOUT approval, but MUST verify it still
+    parses as valid JS (balanced quotes/brackets/commas) after editing, since a syntax error there
+    would break the bundle. This is the ONLY js/data/*.js file that is free-edit.
 - **Free-edit for project docs:** the Markdown project docs (this file, DEVLOG, DECISIONS,
   BALANCE, TODO/ISSUES) do NOT affect the game, so an assistant edits them directly, no proposal.
   Dividing line: "does this change what the game does when you run it?" No = edit freely. Yes = propose.

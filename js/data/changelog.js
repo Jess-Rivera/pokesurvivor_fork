@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Movement reflects base Speed', 'Movement reflects base Speed'], chg: [
+    ['Movement speed now comes from each Pokemon\'s real base Speed stat. Fast Pokemon are noticeably quicker and slow ones slower, instead of everyone moving at nearly the same pace. Your Pokemon\'s Speed is a fixed trait for the run; items, upgrades and buffs still change it.',
+     'Movement speed now comes from each Pokemon\'s real base Speed stat. Fast Pokemon are noticeably quicker and slow ones slower, instead of everyone moving at nearly the same pace. Your Pokemon\'s Speed is a fixed trait for the run; items, upgrades and buffs still change it.']
+  ] },
   { d: '2026-10-16', title: ['Teams, controls and balance', 'Teams, controls and balance'], new: [
     ['Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.',
      'Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.'],

@@ -58,7 +58,38 @@ They stay dormant and untouched until Jess picks a host and decides on public di
 point the hardcoded URLs would need rewriting. Their output (tools/cache/gamedata.json and the es/en
 SEO page folders) is not maintained by us.
 
+## 2026-10-17, Base-stats model: Speed is identity (fixed), the other five scale with run level
+Core rule for the base-stats implementation (see docs/stat-model-design-notes.md for the full analysis):
+- The other five stats (HP, Atk, Def, SpA, SpD) scale with the player's IN-RUN LEVEL via the mainline
+  formula (level plays the role of the Pokemon's level), so you get stronger as a run progresses. That
+  IS the survivor-like power-fantasy ramp.
+- SPEED is the deliberate exception: movement reflects the species' Speed IDENTITY and is constant
+  within a run (the identity ratio r = Speed/Speed_median cancels level). It changes ONLY via items or
+  upgrades (spdMul, Agility-type buffs, liquid/weather), never from leveling up mid-run. Rationale:
+  movement that climbs with level would wreck control feel and readability and blur each mon's Speed
+  identity.
+- Consequence: Speed is also the one stat SHAPED by the transfer function g(r) (bounds 0.25x-2.0x) from
+  day one; the other five start raw (single fallback bounding point at the damage site if raw feels bad).
+- First coding slice: Speed stat -> movement px/s. 1.0x movement = ~107 px/s (median species; verified
+  median base Speed = 65, see below). IV/EV are in the mainline formula but FIXED AT 0 this slice and
+  NOT stored (deferred, see the IV/EV ruling below). No save change in slice 1.
+
 ## 2026-10-17, Performance stance
 Vision first, trim fat later. Ignore small per-frame millisecond differences at this stage. BUT a
 visible framerate collapse (e.g. 60fps to ~22fps at high enemy density) is a FEEL problem and is
 addressed immediately, not deferred.
+
+## 2026-10-17, changelog.js is a free-edit exception
+js/data/changelog.js is the ONE js/data/*.js file exempt from propose-and-approve: it is purely
+informational patch notes and does not affect mechanics, so the agent edits it directly without
+approval (like the Markdown project docs). Caveat: it IS parsed as JS, so the agent must verify it
+still parses after editing (balanced quotes/brackets/commas), since a syntax error there breaks the
+bundle. Every other js/data/*.js stays propose-and-approve.
+
+## 2026-10-17, IV/EV deferred pending a persistent-storage design
+Slice 1 (Speed -> movement) does NOT read or store IV/EV. They are part of the mainline stat formula
+(statValue takes iv/ev params) but are fixed at 0 for now. Reason: IV/EV need a proper per-species
+persistent-storage design (how they are earned/trained, how they are keyed and saved, likely alongside
+pbind/pban/pupg which key by dex), and that deserves its own slice rather than bolting an all-zero map
+onto the save now. No save-schema change was made for IV/EV this slice, so slice 1 is fully save-safe.
+When training/EV is designed, that slice adds the storage + migration.

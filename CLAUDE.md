@@ -45,6 +45,9 @@ Dividing line: "does this change what the game does when you run it?"
   build config, assets. The assistant shows the diff and the rationale, Jess approves or denies, and
   ONLY on approval the assistant applies the edit itself. Jess does not type code by hand; the
   assistant does not apply game-code changes before approval.
+  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). The assistant
+    edits it directly without approval, but must verify it still parses as valid JS after editing
+    (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO, edit directly (no proposal needed): the Markdown project docs, CONTEXT/DEVLOG/DECISIONS/BALANCE/
   TODO/ISSUES/CLAUDE. They do not affect the running game.
 

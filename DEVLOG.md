@@ -5,6 +5,24 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (base-stats slice 1: Speed -> movement)
+- Branched (or to branch) feature/base-stats off main. Implemented the first base-stats slice:
+  the player's movement speed now derives from the REAL base Speed stat (stats[5]) instead of the
+  old pre-baked `78 + 0.42*Speed` value.
+- Model (js/entities/player.js, module scope): statValue (mainline formula), moveTransfer (soft-
+  saturating g(r)), speedToPx. Constants SPEED_MEDIAN=65, BASE_PX=107, MOVE_K=1.0, MOVE_MAX=3.0,
+  MOVE_MIN=0.5 (locked via the interactive tuner; see BALANCE.md). Constructor seeds this.baseSpd =
+  speedToPx(mon.stats[5]), with fallback to mon.spd if stats absent. Everything downstream (get spd(),
+  update() movement, walk-anim rate) unchanged since baseSpd is still px/s.
+- Speed is fixed species identity (level cancels in the ratio), constant within a run; only items/
+  upgrades/buffs move it. The other five stats (deferred to later slices) will scale with run level.
+- Verified px/s against the tuner: median 107, Shuckle 54 (floored), Regieleki 245. (~2% off the
+  pure-ratio tuner at extremes because statValue's +5 does not perfectly cancel; kept the faithful
+  mainline formula.)
+- IV/EV deferred (see DECISIONS.md): in the formula but fixed 0, no save change this slice.
+- Not yet done: changelog.js entry (game-data file, propose-and-approve), in-browser playtest, commit.
+- Where we stopped: slice-1 code applied to player.js; ready for playtest + changelog.
+
 ## 2026-10-17 (Team Roster merged)
 - Merged the Team Roster feature into main via --no-ff ("Merge Team Roster feature") and pushed.
 - Went source-only: gitignored the generated build output (index.html, js/app.min.js, version.json;

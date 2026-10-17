@@ -109,3 +109,15 @@ Open:
 
 ## 5. Housekeeping
 Uncommitted: stats, hexagon, BST stars, changelog. Untracked: `js/ui/statchart.js`, `tools/add_base_stats.py`. Rebuild needed: `node tools/build.js && node tools/export_data.js && python tools/make_seo_pages.py`.
+
+## 6. Verification: median base Speed = 65 (corrects the 70 above) (2026-10-17)
+The "median value 70" for Speed in section 3 was the median over ALL 1351 rows in pokeapi-master,
+which includes alternate forms, megas, regional/battle-only forms that are NOT in the game. Recomputed
+against the data that actually governs feel:
+- Game roster (js/data/pokedex.js, stats[5]), n=966: median 65, mean 67.1, min 5, max 200, p25 45, p75 87.
+- pokeapi-master default forms only (is_default=1), n=1025: median 65, mean 67.2.
+- pokeapi-master all rows, n=1351: median 70, mean 72.0 (the old figure).
+The game roster and the default-forms API agree (median 65), confirming pokedex.js is a clean
+default-forms set. DECISION: SPEED_MEDIAN = 65 is the reference for the movement identity ratio
+r = Speed/SPEED_MEDIAN (not 70). Using 70 would benchmark against a median faster than the roster's
+actual middle and make the whole cast feel slightly sluggish.

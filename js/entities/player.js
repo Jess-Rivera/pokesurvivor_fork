@@ -3,6 +3,28 @@
  * on its own and is changed with 1-4 / Q / E. Each shot plays the animation of
  * Mystery Dungeon attack that applies (Attack, Shoot or Charge).
  */
+/* --- Base-stats movement model (slice 1: Speed -> movement px/s) ---
+ * See docs/stat-model-design-notes.md and BALANCE.md. Speed is a FIXED species
+ * identity (constant within a run); only items/upgrades/buffs move it off baseline.
+ * r = Speed / SPEED_MEDIAN (level cancels, so this is pure base-stat identity).
+ * g(r) soft-saturates toward asymmetric bounds. px/s = BASE_PX * g(r).
+ * IV/EV are part of the mainline formula but fixed at 0 this slice; a future
+ * slice adds them with their own persistent storage. */
+const SPEED_MEDIAN = 65, BASE_PX = 107, MOVE_K = 1.0, MOVE_MAX = 3.0, MOVE_MIN = 0.5;
+
+function statValue(base, level, iv = 0, ev = 0) {
+  return Math.floor((2 * base + iv + Math.floor(ev / 4)) * level / 100) + 5;
+}
+function moveTransfer(r) {
+  if (r <= 0) return MOVE_MIN;
+  const lr = Math.log(r);
+  const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
+  return Math.exp(w * Math.tanh(MOVE_K * lr / w));
+}
+function speedToPx(baseSpe) {
+  const r = statValue(baseSpe, 50) / statValue(SPEED_MEDIAN, 50);
+  return BASE_PX * moveTransfer(r);
+}
 G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
@@ -28,7 +50,9 @@ G.Player = class Player {
 
     this.maxHp = mon.hp + (perks.hp || 0);
     this.hp = this.maxHp;
-    this.baseSpd = mon.spd;
+    // Movement from the real base Speed stat (stats[5]) via the identity model;
+    // fall back to the old pre-derived mon.spd if stats are somehow absent.
+    this.baseSpd = (mon.stats && mon.stats[5] != null) ? speedToPx(mon.stats[5]) : mon.spd;
     this.baseAtk = mon.atk;
 
     this.moves = [];           // todos los movimientos aprendidos
