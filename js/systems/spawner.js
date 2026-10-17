@@ -66,7 +66,10 @@ G.Spawner = (() => {
     return alive.length ? G.U.pick(alive) : players[0];
   }
 
-  function scaled(sc, k) { return k === 1 ? sc : Object.assign({}, sc, { hp: sc.hp * k }); }
+  // HP is no longer scaled here: wild-enemy HP comes from the mainline formula
+  // (G.Enemies.enemyHp) inside the Enemy constructor. This passes sc through unchanged
+  // (the co-op/density k no longer multiplies HP; it stays dormant with deferred MP).
+  function scaled(sc, k) { return sc; }
 
   function isFlyer(def) { return G.Sprites.hovers(def.dex); }
 
@@ -81,9 +84,12 @@ G.Spawner = (() => {
     const pt = freePoint(pl, angle == null ? Math.random() * 6.2832 : angle, isFlyer(def));
     if (!pt) return null;
     const shiny = rollShiny(def.dex);
-    const e = new G.Enemy(def, pt[0], pt[1], scaled(G.Enemies.scale(t), G.Coop.scaleHp(players.length) * hpK(t)));
+    const e = new G.Enemy(def, pt[0], pt[1], G.Enemies.scale(t));
     e.dmg *= DMG_K; e.xp = Math.round(e.xp * XP_K);
-    if (G.EnemyMgr.count >= CAP * ELITE_FROM) { e.maxHp = e.hp = Math.round(e.maxHp * 1.6); e.dmg *= 1.25; e.xp = Math.round(e.xp * 1.6); }
+    // Elite (crowded screen): dmg/xp bump only. HP bump removed this slice; a future
+    // elite will be "current enemy level + X", i.e. a higher-level spawn (HP falls out
+    // of the formula), not an HP multiplier. See DECISIONS.md.
+    if (G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xp = Math.round(e.xp * 1.6); }
     if (shiny) e.makeShiny();
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);

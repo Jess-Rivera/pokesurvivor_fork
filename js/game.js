@@ -556,7 +556,12 @@ G.Game = (() => {
     if (G.Coop.active) G.Coop.collected(p, who);
     if (mine || p.kind === 'bomb') G.Audio.sfx(PICK_SFX[p.kind]);
     if (p.kind === 'xp' || p.kind === 'xpBig') {
+      const before = pl.level;
       pendingLevels += pl.gainXp(p.value * (G.Coop.active ? G.Coop.xpFactor() : 1));
+      // Keep benched teammates' level/maxHp in sync with the shared run level, so a
+      // swap-in isn't carrying a stale level-1 maxHp (the active fighter already
+      // recomputed inside gainXp). Preserves each teammate's current-hp fraction.
+      if (pl.level !== before) for (const f of roster) if (f !== pl) f.syncLevel(pl.level);
       return;
     }
     if (p.kind === 'coin') {

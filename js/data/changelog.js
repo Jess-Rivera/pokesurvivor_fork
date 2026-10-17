@@ -6,9 +6,41 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Enemy attacks use real stats', 'Enemy attacks use real stats'], chg: [
+    ['Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.',
+     'Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.']
+  ] },
+  { d: '2026-10-17', title: ['Moves rebuilt on canonical data', 'Moves rebuilt on canonical data'], chg: [
+    ['Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.',
+     'Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.']
+  ] },
   { d: '2026-10-17', title: ['Pokedex search and filters', 'Pokedex search and filters'], new: [
     ['The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.',
      'The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.']
+  ] },
+  { d: '2026-10-17', title: ['Move damage rebuilt on the real stat formula', 'Move damage rebuilt on the real stat formula'], chg: [
+    ['Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.',
+     'Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.']
+  ] },
+  { d: '2026-10-17', title: ['Enemy speed from base Speed', 'Enemy speed from base Speed'], chg: [
+    ['Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.',
+     'Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.']
+  ] },
+  { d: '2026-10-17', title: ['Enemy level shown on the HUD', 'Enemy level shown on the HUD'], new: [
+    ['The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.',
+     'The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.']
+  ] },
+  { d: '2026-10-17', title: ['Enemy HP rebuilt on base stats', 'Enemy HP rebuilt on base stats'], chg: [
+    ['Wild enemy HP now comes from each Pokemon\'s real base HP stat and scales with how far into the run you are, the same way your own HP works. This is an early pass: enemies are much less spongy than before while the rest of the combat stats are rebuilt, so expect them to feel easy for now.',
+     'Wild enemy HP now comes from each Pokemon\'s real base HP stat and scales with how far into the run you are, the same way your own HP works. This is an early pass: enemies are much less spongy than before while the rest of the combat stats are rebuilt, so expect them to feel easy for now.']
+  ] },
+  { d: '2026-10-17', title: ['HP scales with your base stat and level', 'HP scales with your base stat and level'], chg: [
+    ['Your Pokemon\'s HP now comes from its real base HP stat and grows as you level up during a run, instead of a fixed value. High-HP Pokemon are tankier and low-HP ones are frailer, and leveling up raises your max HP (and tops you up a little). Early runs are leaner on purpose while the rest of the combat stats are built out.',
+     'Your Pokemon\'s HP now comes from its real base HP stat and grows as you level up during a run, instead of a fixed value. High-HP Pokemon are tankier and low-HP ones are frailer, and leveling up raises your max HP (and tops you up a little). Early runs are leaner on purpose while the rest of the combat stats are built out.']
+  ] },
+  { d: '2026-10-17', title: ['Movement reflects base Speed', 'Movement reflects base Speed'], chg: [
+    ['Movement speed now comes from each Pokemon\'s real base Speed stat. Fast Pokemon are noticeably quicker and slow ones slower, instead of everyone moving at nearly the same pace. Your Pokemon\'s Speed is a fixed trait for the run; items, upgrades and buffs still change it.',
+     'Movement speed now comes from each Pokemon\'s real base Speed stat. Fast Pokemon are noticeably quicker and slow ones slower, instead of everyone moving at nearly the same pace. Your Pokemon\'s Speed is a fixed trait for the run; items, upgrades and buffs still change it.']
   ] },
   { d: '2026-10-16', title: ['Teams, controls and balance', 'Teams, controls and balance'], new: [
     ['Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.',

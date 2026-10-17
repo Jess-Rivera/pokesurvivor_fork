@@ -5,6 +5,79 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (sub-slice C: enemy -> player damage, APPLIED, feature/base-stats, not committed)
+- WHAT: enemy->player damage now runs through the mainline A/D ratio, the mirror of sub-slice B.
+  Fixes the mismatch that made the opening a ~2s death (enemies were still on the flat def.dmg model
+  while player HP had dropped to ~24 at L1 and player Def/SpD did nothing).
+- RULES (all per the locked sub-slice C decision): (1) category per species from the HIGHER offensive
+  stat, SpA>Atk => special else physical (G.Stats.enemyCat). (2) enemy offense uses the REAL stat
+  (Atk stats[1] / SpA stats[3]) scaled to enemy level-for-run-time. (3) player base Def/SpD (stats[2]/
+  stats[4]) completes the ratio in pl.hurt. (4) WILD ENEMIES ONLY; bosses keep the flat def.dmg path
+  (atkFactor = null for bosses -> every site falls back to flat), mirrors the HP slice.
+- PLACEHOLDER: enemy "Power" is a flat ENEMY_POWER=40 (Tackle-ish), TEMPORARY until enemies draw
+  canonical move power (the learnset plan). ENEMY_DMG_SCALAR=0.35, solved so an early contact hit is
+  ~5.7% of L1 HP (24), matching the measured ORIGINAL feel (~6.1%, old flat-99-HP era). Natural ramp:
+  absolute hit grows (1.4@L1 -> 6.9@L50) but EASES as %-of-HP for a player who keeps pace (5.7%->2.7%);
+  late threat is DENSITY, not per-hit lethality (genre-correct, Jess's choice).
+- FILES: js/core/stats.js (ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor,
+  applyPlayerDefense + exports). js/entities/enemy.js (construct: atkBase/spaBase/atkCat/atkFactor from
+  G.DEX_BY stats, boss => atkFactor null; shoot() stashes atkFactor/atkCat on shots; 9 G.Hazards.add
+  zone/beam calls stash atkFactor/atkCat). js/entities/player.js (hurt() gains 4th param atk={factor,
+  cat}; when set and not pure, converts the factor via applyPlayerDefense using the player's Def/SpD
+  + category BEFORE the existing type/weather/reduction/melee-cushion chain). js/systems/combat.js
+  (contact + enemy-projectile sites: pass factor+cat when atkFactor!=null, else flat). js/systems/
+  hazards.js (enemy-origin hazards with atkFactor route through the ratio; pure/terrain stay flat).
+- NON-ENEMY damage stays FLAT (verified by caller audit): lava/liquid (player.js), altar self-damage
+  (interact.js), Arceus Judgment (judgment.js, already pure), burn/poison DoT ticks. Only the 3 enemy
+  channels (contact, shot, enemy hazard) got the ratio.
+- VERIFIED: all 5 files balance-check clean (node --check blocked in sandbox). Numeric sanity: base-65
+  enemy vs base-65 player contact = 5.7% @L1 ramping as designed. changelog.js entry added (chg,
+  English) + re-verified.
+- DEFERRED HOOKS (noted, not built): (a) BOSSES still flat def.dmg -> a boss damage slice later.
+  (b) COOP: G.Hazards.add's network broadcast serializes a fixed field set, so atkFactor/atkCat do NOT
+  cross the wire -- fine under local-first, revisit in the MP phase. (c) flat ENEMY_POWER=40 -> swap to
+  canonical move power when enemies draw real moves.
+- NOT done: in-browser playtest (expect to fine-tune ENEMY_DMG_SCALAR by feel, like the player scalar),
+  commit. Where we stopped: sub-slice C applied + verified on disk; the full base-stats + damage loop
+  (HP, speed, player->enemy, enemy->player) is now coherent for wild enemies.
+
+## 2026-10-17 (canonical move-power migration: APPLIED, feature/base-stats, not yet playtested/committed)
+- WHAT: migrated all 64 moves in js/data/moves.js to canonical mainline data (Approach B: keep the
+  field NAMED `dmg`, change its VALUES to canonical base power; the field is already the Power term the
+  A/D formula reads, so no rename ripple through MULT/ladders/EVO_MODS).
+  Per move: name -> English (from move_names.csv lang 9); desc -> English short_effect
+  (move_effect_prose.csv lang 9); dmg -> canonical power from moves.csv (status moves dmg: 0); and
+  ANNOTATE-only new fields ailment / ailmentChance / flinch / statChance (from move_meta.csv +
+  move_meta_ailments.csv). Existing gameplay flags (burn/poison/slow/hex) and all tuning numbers
+  (cd/radius/count/speed/...) preserved verbatim. Removed the melee `m.dmg = Math.round(m.dmg*1.2)`
+  baseline bump (canonical power is the new baseline); kept the melee radius/arc 1.25 bumps.
+- preserve-then-annotate (Jess's choice): the 4 annotate fields are DATA ONLY, nothing reads them yet.
+  burn/poison/slow still play exactly as before. A future slice can switch to canonical procs
+  (ailment + chance, flinch, stat-drop) when wanted. The dry-run showed `slow` is overloaded in the
+  fork (it stands in for speed-drop vs freeze vs paralysis vs weather) -> that split is deferred to the
+  procs slice; recorded in the annotate fields for now.
+- stats.js: DMG_SCALAR 2.0 -> 0.47. Re-centered because canonical power raised the median damaging-move
+  power from fork ~14 to ~60 (so 2.0 * 14/60 ~= 0.47, median-based). attackFactor UNCHANGED (still reads
+  move.dmg; Approach B kept the field name). HP_SCALAR untouched (orthogonal dials: power is a damage
+  term, never touches HP; enemy HP NOT re-solved, correct).
+- BALANCE SHIFT (intended, playtest-worthy): canonical power is not a uniform rescale, per-move
+  canon/fork ratio ranged 1.88x (poison-sting) to 12.86x (flamethrower 7->90). The fork had heavily
+  nerfed the big special moves; canonical restores mainline proportions, so weak utility moves get
+  weaker and signature nukes (flamethrower, bug-buzz, psychic, discharge, bubble-beam) get much
+  stronger relative to today. 0.47 only re-centers the AVERAGE; expect to fine-tune by feel.
+- i18n: switching move `name` to English makes each move's former Spanish name (a lang-en.js key) go
+  DEAD/unused. Harmless and correct per the English-native rule (new strings authored in English, not
+  via lang-en.js). The lang-en.js entries can be pruned later; left in place for now.
+- VERIFIED: moves.js + stats.js + changelog.js balance-check clean (node --check blocked in sandbox).
+  All 64 entries annotated; MULT list, level-up ladder mults, and EVO_MODS untouched (they multiply
+  `dmg`, which now carries canonical power, so upgrades/evolutions scale correctly). changelog.js entry
+  added (chg, English) and re-verified.
+- NOT done: in-browser playtest (expect the new spread + possibly re-tune DMG_SCALAR by feel), commit.
+- Where we stopped: canonical power migration applied + verified on disk (feature/base-stats). Next:
+  playtest, tune DMG_SCALAR if needed, commit. Then the deferred work: canonical-procs slice (wire the
+  annotate fields; split the overloaded `slow`), full canonical learnsets, and sub-slice C (enemy->
+  player, now cleaner since enemies can draw the same canonical move/power data).
+
 ## 2026-10-17 (Pokedex UI redesign, APPLIED on feature/pokedex-ui, not yet playtested/committed)
 - LAYOUT TWEAK (same session, after first visual check): (1) widened the dex screen, scoped so other
   screens keep their cap: `#scr-dex .box.wide { width: min(1600px, 98vw) }` (extra-wide, Jess's pick).
@@ -57,6 +130,183 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - Where we stopped: Pokedex redesign fully applied + verified on disk on feature/pokedex-ui, awaiting
   Jess's in-browser check. Next after that: commit, then back to the damage track (the "fix before
   enemy->player" was this Pokedex task; sub-slice C still pending the enemy-attack-category decision).
+
+## 2026-10-17 (damage slice, sub-slice B: APPLIED + verified, not yet playtested/committed)
+- Sub-slice A was committed by Jess first (confirmed). Then applied sub-slice B: player->enemy
+  damage on the mainline A/D ratio, split cast-half + impact-half, mathematically identical to the
+  single formula. SCALAR 2.0 (locked). Rollout: ALL sites at once (Jess approved all-at-once).
+- stats.js (G.Stats): added DMG_SCALAR=2.0, STAB=1.5, PROP_DEF=50, and three functions:
+    attackFactor(atkBase, spaBase, level, move, extraMul) -> attacker half = ((2L/5+2)*m.dmg*AtkStat)/50*extraMul
+       (AtkStat = Atk for physical / SpA for special via moveCat; extraMul folds in the old pl.atk
+        upgrade+buff layer so the ratio stays proportional)
+    applyDamage(factor, defBase, spdBase, move, level, stab) -> (factor/DefStat + 2) * STAB? * SCALAR
+       (DefStat = Def/SpD via moveCat; +2 after the division, before the multipliers; type*crit stay
+        at the call site). STATUS-cat damaging moves route through the NEUTRAL PROP_DEF denominator
+        and never get STAB (Jess picked "neutral denominator for status moves", so no phys/spec label
+        is forced on toxic/spikes/toxic-spikes/string-shot/substitute/hail/will-o-wisp). No moves.js
+        edit needed: they already carry cat:'status'.
+    applyDamageProp(factor) -> (factor/PROP_DEF + 2) * SCALAR  (rocks/chests/grass have no Def stat)
+- player.js: added baseAtkStat (stats[1]) + baseSpAStat (stats[3]) (fallback 50), myTypes; added
+    get atkMulAll (atkMul * atk-buff), moveFactor(m) (attacker half), stabFor(m) (type match). get atk()
+    kept as-is for items etc. Atk/SpA now scale with run level via the formula (HP already did).
+- combat.js: replaced m.dmg*pl.atk at ALL ~15 attacker sites with pl.moveFactor(m); the ~6 prop sites
+    with G.Stats.applyDamageProp(pl.moveFactor(m)). hit() now takes the attacker FACTOR and completes
+    the ratio against the enemy's real base Def/SpD via new enemyDefStats(e) (G.DEX_BY[e.dex].stats,
+    fallback 50/50 for bosses/minions w/o stats). The resolve() projectile-impact block completes the
+    same way; projectile/orb/field spawns now stash move+level+stab so the impact knows cat/STAB.
+    Chain keeps its *k*hex on the factor; mine partial-trigger keeps *0.5 on the factor.
+- IMPLEMENTATION HICCUP worth noting for next time: several multi-hunk file_edit calls on combat.js
+    reported success but did NOT persist (applied against a stale snapshot). Caught it by grepping the
+    live file on-device; the real remaining sites (fireProjectiles, nova, boomerang, chain, orbit x2,
+    turret-proj stash) were then fixed with a direct on-device write with uniqueness asserts. Final
+    guard: 0 occurrences of 'm.dmg * pl.atk' remain. Lesson: after batch edits on a device file, grep
+    the live file to confirm, don't trust the success return alone.
+- VERIFIED: brace/paren/bracket balance OK on stats.js, player.js, combat.js (node --check is blocked
+    in the sandbox, so used a string-aware balance checker). Numeric sanity (Ember pow18 STAB special,
+    atk60 vs def65): L1 ~2.8 hits-to-kill -> L50 ~8.9, inside the intended ~3->~12 ramp band. No
+    double-division. changelog.js entry added (chg, English both slots) and re-verified parsing.
+- NOT done: in-browser playtest; commit. Jess runs git.
+- Where we stopped: sub-slice B fully applied + verified on disk, awaiting Jess's playtest. Expect it
+    to feel easy (enemies still not balanced vs player damage; damage-vs-enemy-HP tuning is a later
+    pass). The naked ramp is intended, do NOT rebalance base stats to flatten it (see DECISIONS).
+- Still OPEN / next: (1) playtest on dev.html (hard reload; save-safe, no schema change this slice);
+    (2) commit sub-slice B; (3) sub-slice C = enemy->player damage (needs the enemy-attack category
+    design gap resolved, see the 2026-10-17 DECISIONS entry on behavior-driven enemy attacks).
+
+## 2026-10-17 (damage slice, sub-slice B: SCOPED + mid-approval, NOTHING APPLIED YET)
+- STATUS: sub-slice A is COMPLETE but UNCOMMITTED. sub-slice B is fully designed and approved in
+  principle (STAB yes, 2.0x scalar locked) but NO combat.js/player.js/stats.js edits have been made.
+  A fresh chat picks up by laying out the sub-slice B diff for approval, then applying it.
+- COMMIT THE UNCOMMITTED SUB-SLICE A FIRST (run before starting B):
+    git add js/data/moves.js js/core/stats.js tools/gen_move_cats.py DEVLOG.md
+    git commit -m "Damage sub-slice A: move physical/special/status categories + moveCat fallback + generator"
+- Damage model decided (start mainline, tune toward survivor):
+    base = ((2*L/5 + 2) * Power * (Atk/Def)) / 50 + 2, then * STAB(1.5) * type * crit * SCALAR
+    SCALAR = 2.0 (locked via the naked-baseline tuner: median move ~3 hits early, ramps to ~12 by 30 min).
+  The naked baseline is INTENTIONALLY upgrade-dependent: the ramp is headroom that the draft / move
+  upgrades / crit / items fill later. Do NOT "fix" the ramp by rebalancing base stats (see DECISIONS).
+- Why the ramp exists (diagnosed, not a bug): enemy HP grows ~10.4x over a run (L1->L50) while mainline
+  damage grows ~2.6x, so hits-to-kill climbs on the naked line. In a survivor-like the base character is
+  not meant to keep pace alone; the build does. Confirmed with the user; logged as a design decision.
+- Player Atk/SpA will scale with level this slice (completes stat-scaling; HP already does, Speed never).
+- TWO-PART IMPLEMENTATION (mathematically identical to mainline, split only by spawn-then-impact timing):
+    at cast (attacker half, replaces `m.dmg * pl.atk` at ~15 combat.js spawn sites):
+       factor = ((2*L/5 + 2) * Power * AtkStat) / 50       // AtkStat = Atk for physical, SpA for special
+    at impact (in hit(), where the specific enemy's defense is known):
+       dmg = (factor / DefStat + 2) * STAB * type * crit * SCALAR   // DefStat = Def(phys) or SpD(spec)
+  The +2 stays on the impact side AFTER the division and BEFORE the multipliers, exactly as mainline.
+- Planned functions (single source of truth in js/core/stats.js):
+    G.Stats.attackFactor(baseAtk, baseSpA, level, move, scalar?) -> attacker half (picks Atk/SpA via moveCat)
+    G.Stats.applyDefense(factor, enemyDef, enemySpD, move) -> (factor/DefStat + 2); type*crit*STAB stay in hit()
+- player.js: add baseAtkStat from stats[1] and baseSpAStat from stats[3], scaling with level via G.Stats.
+  enemy.js already exposes real base stats via G.DEX_BY[def.dex].stats ([2]=Def, [4]=SpD) at its level-for-time.
+- combat.js: replace `m.dmg * pl.atk` at ALL ~15 spawn sites (projectile x3, melee/cone, beam, aura, chain,
+  mines, meteor, turret, dash, trail, orbit, patch) with the attacker-factor helper; complete the ratio in hit().
+  DECIDED to replace all sites at once (user has not answered the all-at-once vs phased question yet, but the
+  recommendation stands: all at once so every move kind is consistent to playtest). CONFIRM on the fresh chat.
+- STAB = 1.5x when the move's type matches one of the ACTIVE fighter's species types (G.DEX_BY[pl.dex].types).
+- Still OPEN on the fresh chat before applying: (1) confirm all-at-once vs phased rollout; (2) then produce the
+  full propose-and-approve diff (stats.js + player.js + combat.js) for approval; (3) apply on approval;
+  (4) changelog.js entry (fix/chg) in English; (5) in-browser playtest; (6) commit sub-slice B.
+- The 7 "status-but-damaging" moves still need their real phys/spec cat decided when the formula goes live
+  (deferred from sub-slice A): toxic, string-shot, spikes, toxic-spikes, hail, will-o-wisp, substitute.
+- Damage tuner artifact built this session (naked baseline, scalar knob). NOT yet saved to the repo; user
+  was offered docs/tools/ save but chose "give me the scalar" instead. Re-offer if wanted.
+
+## 2026-10-17 (damage slice, sub-slice A: move category data)
+- Prep for the damage model (mainline A/D ratio). Added a physical/special/status category to every
+  move. All 64 moves in js/data/moves.js use real mainline move IDs, so categories were pulled
+  directly from pokeapi-master (move_damage_classes.csv + moves.csv) by ID: 20 physical, 32 special,
+  12 status. Each RAW entry now has a `cat` field (after `kind`). moves.js parse-verified.
+- G.Stats.moveCat(m) fallback added (js/core/stats.js): returns m.cat if set, else buff->status,
+  melee/dash/mine->physical, else special. So a future move missing cat never breaks the damage model.
+- tools/gen_move_cats.py (report-only, Python): re-reports each move's correct category from pokeapi
+  and flags MISSING/MISMATCH/CUSTOM. Does NOT edit moves.js (stays propose-and-approve). Verified: all
+  64 report ok.
+- 7 "status-but-damaging" moves (toxic, string-shot, spikes, toxic-spikes, hail, will-o-wisp,
+  substitute — pokeapi=status but implemented as damaging field effects) are stamped 'status' for now;
+  their real physical/special cat is DEFERRED to sub-slice B when the damage formula needs it.
+- ZERO in-game behavior change this sub-slice (nothing reads cat yet). Playtest-neutral.
+- Next: sub-slice B (player->enemy damage via the A/D ratio using Atk/SpA vs Def/SpD + cat).
+## 2026-10-17 (refactor: shared G.Stats module + enemy speed on identity model)
+- Unified all base-stats formulas into a new js/core/stats.js (G.Stats): HP_SCALAR, SPEED_MEDIAN,
+  BASE_PX, MOVE_K/MAX/MIN, statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, plus
+  scaffold stubs attack/defense/spAtk/spDef for future slices. Single source of truth; retune once.
+- Load order: stats.js added right after core/util.js in dev.html AND 'Stats' added to NEED in
+  main.js (right after 'U'). New-script-file build rule followed.
+- player.js and enemies.js now call G.Stats.* (removed their local duplicate constants/functions).
+  Verified all pre-refactor values unchanged (player HP 24->250, speed 54/107/245; enemy HP 24/137/250).
+- Enemy SPEED moved onto the identity model (G.Stats.speedToPx from real stats[5]): fixed per species,
+  same px/s scale as the player, NO run-time ramp (dropped the old sc.spd = 1+t/1400 enemy speed-up).
+  A base-65 enemy and base-65 player now move at the same 107 px/s. Bosses keep their own spd path.
+  Runner behavior keeps its x1.6 speed (it's a behavior archetype 'the fast one', not a base-stat).
+- Done against a clean commit (easy rollback). Not yet done: in-browser playtest, commit.
+## 2026-10-17 (base-stats slice 3: enemy HP, wild only)
+- HUD: added the current enemy level as a big number in the TOP-RIGHT corner (hud.js), mirroring the
+  run timer's font/color (F(800,26), rgba(255,255,255,.95)) with an "ENEMY LV" subtitle (F(600,10),
+  #8fa3c4). Reads G.Enemies.levelForTime(st.time); textAlign reset to left after. Makes the HP/
+  difficulty scaling legible to the player (ties to the "escalation should be visible" principle).
+- Wild-enemy HP now uses the same mainline formula + 2.0 scalar as the player, from real base HP
+  (stats[0]) at a run-time-derived level. enemies.js: added levelForTime (linear L1->L50 over 30 min)
+  and enemyHp(); defFor carries baseHp instead of a derived hp; scale(t) drops the hp ramp (carries t).
+  enemy.js constructor: wild = G.Enemies.enemyHp(baseHp, sc.t); bosses keep def.hp*bossScale.
+  spawner.js: removed the density hpK (3.3-5x), the co-op scaleHp on HP (dormant), and the elite x1.6
+  HP bump (kept its dmg/xp bump). Summoner minion fixed to carry baseHp + use the formula (was 0.35x
+  summoner hp under the old model). Removed now-dead role HP mults (tank/bomber/runner).
+- Consistency verified: base-65 enemy and base-65 player have identical HP at every level (24/134/250
+  at L1/25/50). Enemies ~2x-100x less tanky than the old stacked model; INTENDED (not balanced vs
+  player damage yet — will feel very easy this slice).
+- Phase 2 (post-30-min: [Standard Run] fixed accelerating ramp vs [Unlock Safeties] opt-in DDA with
+  boosted rewards, behind the planned 30-min boss gate) is specced in DECISIONS.md, not built.
+- Not yet done: in-browser playtest, changelog, commit.
+- Where we stopped: wild-enemy HP on the formula; bosses + rift legendary deferred.
+## 2026-10-17 (base-stats slice 2: player HP)
+- Bugfix (found in playtest): benched teammates kept a stale level-1 maxHp because only the active
+  fighter (pl) runs gainXp. Shuckle's HP didn't rise on level-up, only the active Regieleki's did.
+  Fix: player.js adds syncLevel(level) (recompute maxHp for the new level, PRESERVING current-hp
+  fraction, so swapping is neither a free heal nor a penalty); game.js, after pl.gainXp levels up,
+  calls f.syncLevel(pl.level) on every other roster member. Co-op level sync not touched (deferred MP).
+- Added a ?dev debug toggle (js/core/debug.js): Shift+U calls toggleUpgrades(), which clears every
+  per-Pokemon upgrade to 0 if any are set, else re-maxes them. Lets you see true base-stat values
+  (e.g. raw HP) without maxed perks on top. Also exposed clearUpgrades()/toggleUpgrades() on G.Debug.
+  Shift+D/maxAll unchanged. NOTE: it edits the save like maxAll does (not a runtime overlay), fine for
+  the ?dev sandbox. No changelog entry (developer-only tool, not player-facing).
+  (Context: the earlier "Shuckle showing 102 HP" was the ?dev maxAll perks piled on the new formula,
+  not a bug in the HP code. Chespin baseHP 56: L1=24, L2=28 with no upgrades, confirmed correct.)
+- Player max HP now derives from the real mainline HP formula and scales with in-run level (1:1).
+  js/entities/player.js: added HP_SCALAR=2.0 and hpForLevel(); constructor seeds maxHp from stats[0]
+  at level 1; gainXp recomputes maxHp as level rises and tops up current HP by the gain (Option A).
+  Full formula (2B + IV + floor(EV/4)) with IV/EV = 0 (deferred); perks.hp still adds on top.
+- Verified vs tuner: median mon 24 HP (L1) -> 250 (L50), ~10x run growth. Scalar 2.0 chosen lean on
+  purpose. Healing NOT touched this slice (flat heals left as-is; %-conversion is a later slice).
+- Enemy HP deliberately NOT converted this slice: enemies still use the tier-scale model (def.hp *
+  sc.hp) with no 'level'. Enemy HP via level-from-run-time is the NEXT slice (needs its own level curve;
+  entangles tier/elite/boss/co-op scaling).
+- Known intended lean-state: fragile early game (24 vs old 99), flat heals strong early / weak late.
+- Not yet done: in-browser playtest, commit on feature/base-stats.
+- Where we stopped: player HP slice applied + changelog updated; enemy-HP slice is next.
+
+## 2026-10-17 (base-stats slice 1: Speed -> movement)
+- PLAYTESTED and feel-approved: movement feels "really slick"; the Shuckle vs Regieleki difference
+  reads beautifully. The locked tuning (SPEED_MEDIAN=65, BASE_PX=107, k=1.0, MOVE_MIN=0.5,
+  MOVE_MAX=3.0) is confirmed by feel, not just on paper. 0.5x floor = slow-as-identity (not
+  miserable), 3.0x ceiling + tanh saturation = dramatic-but-controllable fast mons. Keep as-is.
+- Branched (or to branch) feature/base-stats off main. Implemented the first base-stats slice:
+  the player's movement speed now derives from the REAL base Speed stat (stats[5]) instead of the
+  old pre-baked `78 + 0.42*Speed` value.
+- Model (js/entities/player.js, module scope): statValue (mainline formula), moveTransfer (soft-
+  saturating g(r)), speedToPx. Constants SPEED_MEDIAN=65, BASE_PX=107, MOVE_K=1.0, MOVE_MAX=3.0,
+  MOVE_MIN=0.5 (locked via the interactive tuner; see BALANCE.md). Constructor seeds this.baseSpd =
+  speedToPx(mon.stats[5]), with fallback to mon.spd if stats absent. Everything downstream (get spd(),
+  update() movement, walk-anim rate) unchanged since baseSpd is still px/s.
+- Speed is fixed species identity (level cancels in the ratio), constant within a run; only items/
+  upgrades/buffs move it. The other five stats (deferred to later slices) will scale with run level.
+- Verified px/s against the tuner: median 107, Shuckle 54 (floored), Regieleki 245. (~2% off the
+  pure-ratio tuner at extremes because statValue's +5 does not perfectly cancel; kept the faithful
+  mainline formula.)
+- IV/EV deferred (see DECISIONS.md): in the formula but fixed 0, no save change this slice.
+- Not yet done: changelog.js entry (game-data file, propose-and-approve), in-browser playtest, commit.
+- Where we stopped: slice-1 code applied to player.js; ready for playtest + changelog.
 
 ## 2026-10-17 (Team Roster merged)
 - Merged the Team Roster feature into main via --no-ff ("Merge Team Roster feature") and pushed.

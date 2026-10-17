@@ -53,6 +53,12 @@ G.Enemies = (() => {
   const baseHp = p => (p.hp - 70) / 0.45;
   const baseSpd = p => (p.spd - 78) / 0.42;
 
+  // Enemy HP/level/speed use the shared base-stats model in js/core/stats.js (G.Stats),
+  // the SAME formulas as the player. enemyHp(baseHP, t) = HP at the level-for-run-time.
+  // See DECISIONS.md and BALANCE.md.
+  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t));
+  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
+
   const H = (d, s) => G.U.hash(d, 7, s);
 
   // Fixed personalities of some Pokemon.
@@ -86,13 +92,15 @@ G.Enemies = (() => {
 
   /** Builds a Pokemon's enemy definition for a tier. */
   function defFor(p, tier, ti) {
-    const hpK = G.U.clamp(baseHp(p) / 65, 0.7, 1.6);
-    const spdK = G.U.clamp(0.75 + baseSpd(p) / 260, 0.75, 1.3);
     const behavior = behaviorOf(p);
     const d = {
       dex: p.dex, name: p.name, behavior,
-      hp: Math.round(tier.hp * hpK * (behavior === 'tank' ? 1.5 : 1)),
-      spd: Math.round(tier.spd * spdK * (behavior === 'tank' ? 0.7 : 1)),
+      // Real base HP (stats[0]); HP itself is computed from the mainline formula at
+      // spawn (see enemyHp). No tier-template HP, no tank/role HP multiplier (removed).
+      baseHp: (G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[0] : 50,
+      // Speed = fixed species identity via the shared model (real base Speed stat[5]),
+      // same px/s scale as the player. No tier template, no role mult, no time ramp.
+      spd: G.Stats.speedToPx((G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[5] : 65),
       dmg: Math.round(tier.dmg * (behavior === 'tank' ? 1.2 : 1)),
       xp: Math.max(3, Math.round(tier.xp * (behavior === 'tank' ? 1.3 : 1)))
     };
@@ -107,7 +115,7 @@ G.Enemies = (() => {
     if (behavior === 'summoner') d.minion = SUMMON[p.dex];
     if (behavior === 'fan') d.fanN = ti < 2 ? 3 : 5;             // wider fan later on
     if (behavior === 'zoner') d.zones = ti < 2 ? 1 : ti < 4 ? 2 : 3;   // more zones later on
-    if (behavior === 'bomber') { d.spd = Math.round(d.spd * 1.25); d.hp = Math.round(d.hp * 0.8); }
+    if (behavior === 'bomber') { d.spd = Math.round(d.spd * 1.25); }
     return d;
   }
 
@@ -150,7 +158,7 @@ G.Enemies = (() => {
     for (const tier of cast) {
       const plain = tier.list.filter(d => d.behavior === 'chase' || d.behavior === 'charger' || d.behavior === 'tank');
       const r = plain.sort((a, b) => b.spd - a.spd)[0];
-      if (r) { r.behavior = 'runner'; r.spd = Math.round(r.spd * 1.6); r.hp = Math.round(r.hp * 0.7); }
+      if (r) { r.behavior = 'runner'; r.spd = Math.round(r.spd * 1.6); }
     }
     const used = new Set();
     bosses = BOSS_SLOTS.map(slot => {
@@ -174,7 +182,9 @@ G.Enemies = (() => {
   // (The minute-60 "extra time" was removed when Arceus's Judgment arrived,
   //  that ends every game at minute 30: see systems/judgment.js.)
   function scale(t) {
-    return { hp: 1 + t / 95, dmg: 1 + t / 420, spd: 1 + Math.min(0.35, t / 1400) };
+    // HP now comes from enemyHp(baseHp, t) at spawn; carry t through. dmg/spd ramps
+    // unchanged (damage is a later slice).
+    return { t, dmg: 1 + t / 420, spd: 1 + Math.min(0.35, t / 1400) };
   }
 
   /**
@@ -225,6 +235,7 @@ G.Enemies = (() => {
 
   return {
     TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs,
+    enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
     get cast() { if (!cast) rollRun(); return cast; }
   };

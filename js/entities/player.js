@@ -3,6 +3,8 @@
  * on its own and is changed with 1-4 / Q / E. Each shot plays the animation of
  * Mystery Dungeon attack that applies (Attack, Shoot or Charge).
  */
+/* Base-stats model (Speed -> movement px/s, HP -> maxHp) lives in js/core/stats.js
+ * as G.Stats, shared with enemies. See docs/stat-model-design-notes.md, BALANCE.md. */
 G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
@@ -26,10 +28,21 @@ G.Player = class Player {
     this.xpMul = perks.xpMul || 1;
     this.coinMul = perks.coinMul || 1;
 
-    this.maxHp = mon.hp + (perks.hp || 0);
+    // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
+    // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
+    this.perksHp = perks.hp || 0;
+    this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
+    this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
-    this.baseSpd = mon.spd;
+    // Movement from the real base Speed stat (stats[5]) via the identity model;
+    // fall back to the old pre-derived mon.spd if stats are somehow absent.
+    this.baseSpd = (mon.stats && mon.stats[5] != null) ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
     this.baseAtk = mon.atk;
+    // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
+    // via G.Stats. Fallback 50 keeps a mon with no stats array working.
+    this.baseAtkStat = (mon.stats && mon.stats[1] != null) ? mon.stats[1] : 50;
+    this.baseSpAStat = (mon.stats && mon.stats[3] != null) ? mon.stats[3] : 50;
+    this.myTypes = mon.types || [];
 
     this.moves = [];           // todos los movimientos aprendidos
     this.slots = [];           // huecos: cada uno, una lista de movimientos que se lanzan a la vez
@@ -87,6 +100,14 @@ G.Player = class Player {
 
   // ---------------- stats efectivos ----------------
   get atk() { return this.baseAtk * this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
+  // Multiplier layer that used to be folded into the flat pl.atk (upgrades + atk buffs),
+  // now passed into the A/D attacker factor so the ratio stays proportional.
+  get atkMulAll() { return this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
+  // Attacker half of the damage formula for move `m` (see G.Stats.attackFactor). The
+  // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
+  moveFactor(m) { return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll); }
+  // STAB flag: the move's type matches one of the active mon's species types.
+  stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() {
     const s = this.baseSpd * this.spdMul * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
@@ -225,8 +246,16 @@ G.Player = class Player {
    * @param type  attack type (type chart and weather); with no type, damage as-is
    * @param pure  damage not reduced by defense or melee (Arceus)
    */
-  hurt(amount, type = null, pure = false) {
+  hurt(amount, type = null, pure = false, atk = null) {
     if (this.invuln > 0 || this.dead) return;
+    // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
+    // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
+    // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
+    if (atk && !pure) {
+      const st = this.mon.stats;
+      const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level);
+    }
     let eff = null;
     if (type) {
       const k = G.Types.mult(type, this.mon.types);
@@ -278,7 +307,26 @@ G.Player = class Player {
       this.xpNext = Player.xpFor(this.level);
       leveled++;
     }
+    // HP scales with run level (mainline formula). Leveling tops up current HP by the
+    // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
+    if (leveled && this.baseHpStat != null) {
+      const newMax = G.Stats.hpForLevel(this.baseHpStat, this.level) + this.perksHp;
+      const gain = newMax - this.maxHp;
+      if (gain > 0) { this.maxHp = newMax; this.hp += gain; }
+    }
     return leveled;
+  }
+
+  /** Bring a benched teammate up to the shared run level: recompute maxHp for the
+   *  new level, preserving current-hp fraction (so swapping is neither a free heal
+   *  nor a penalty). The ACTIVE fighter uses gainXp instead. */
+  syncLevel(level) {
+    if (this.baseHpStat == null || level <= this.level) { this.level = level; this.xpNext = Player.xpFor(level); return; }
+    const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
+    this.level = level;
+    this.xpNext = Player.xpFor(level);
+    this.maxHp = G.Stats.hpForLevel(this.baseHpStat, level) + this.perksHp;
+    this.hp = Math.round(this.maxHp * frac);
   }
 
   // ---------------- objeto equipado ----------------

@@ -240,6 +240,17 @@ G.HUD = (() => {
     ctx.fillStyle = '#8fa3c4';
     ctx.fillText(G.World.biomeName().toUpperCase() + '  ·  ' + pl.kills + ' DERROTADOS  ·  ' + pl.coins + ' MONEDAS', w / 2, 58);
 
+    // Enemy level (top-right): same size/color as the run timer, with an "ENEMY LV"
+    // subtitle. Shows the level enemies currently spawn at (see G.Enemies.levelForTime).
+    ctx.textAlign = 'right';
+    ctx.font = F(800, 26);
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
+    ctx.fillText(Math.floor(G.Enemies.levelForTime(st.time)), w - 16, 42);
+    ctx.font = F(600, 10);
+    ctx.fillStyle = '#8fa3c4';
+    ctx.fillText('ENEMY LV', w - 16, 58);
+    ctx.textAlign = 'left';
+
     // ---------- clima (arriba a la derecha) ----------
     const wx = G.Weather.current;
     if (wx) {

@@ -34,9 +34,15 @@
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
 
-      this.maxHp = Math.round(def.hp * sc.hp);
+      // Enemy HP = real base HP through the mainline formula at the level-for-run-time
+      // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
+      // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
       this.hp = this.maxHp;
-      this.spd = def.spd * sc.spd;
+      // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
+      // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
+      // the player. Bosses keep their own def.spd (unchanged this slice).
+      this.spd = boss ? def.spd * (sc.spd || 1) : def.spd;
       this.dmg = def.dmg * sc.dmg;
       this.xp = def.xp;
       this.behavior = def.behavior;
@@ -44,6 +50,14 @@
       const types = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].types) || [];
       this.types = types.length ? types : ['normal'];
       this.atkType = this.types[0];         // tipo de sus golpes (tabla de tipos)
+      // Sub-slice C: enemy attack category + offensive base stat, from real species stats.
+      // Category = higher of Atk(stats[1]) / SpA(stats[3]). Bosses are EXCLUDED this slice
+      // (they keep the flat def.dmg path); only wild enemies carry an atkFactor.
+      const _st = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].stats) || null;
+      this.atkBase = _st ? _st[1] : 50;
+      this.spaBase = _st ? _st[3] : 50;
+      this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
+      this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, G.Stats.levelForTime(sc.t || 0));
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
       this.flying = boss || G.Sprites.hovers(def.dex);
@@ -470,18 +484,18 @@
       switch (id) {
         case 'slam':       // stomp: a wave around
           c.wind = 0.85 * f;
-          G.Hazards.add({ kind: 'zone', x: this.x, y: this.y, r: 96 + this.r, delay: c.wind, dmg: this.dmg * 1.3, type, color: col });
+          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: this.x, y: this.y, r: 96 + this.r, delay: c.wind, dmg: this.dmg * 1.3, type, color: col });
           this.anim.play('Charge', { speed: 1.2 });
           break;
         case 'dash':       // dash in a straight line
           c.wind = 0.75 * f; c.len = 330; c.dur = 0.32;
-          G.Hazards.add({ kind: 'beam', x: this.x, y: this.y, angle: ang, len: c.len + this.r, w: this.r * 2 + 16,
+          G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, x: this.x, y: this.y, angle: ang, len: c.len + this.r, w: this.r * 2 + 16,
                           delay: c.wind + c.dur, dmg: this.dmg * 1.2, type, color: col });
           this.anim.play('Charge', { speed: 1.3 });
           break;
         case 'leap':       // jump and land on you
           this.jump = { sx: this.x, sy: this.y, tx: pl.x, ty: pl.y, t: -0.5 * f, dur: 0.65 };
-          G.Hazards.add({ kind: 'zone', x: pl.x, y: pl.y, r: 82, delay: 0.5 * f + 0.65, dmg: this.dmg * 1.25, type, color: col });
+          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: pl.x, y: pl.y, r: 82, delay: 0.5 * f + 0.65, dmg: this.dmg * 1.25, type, color: col });
           this.anim.play('Charge', { speed: 1.4 });
           ai.cast = null; ai.cd = G.U.rand(1.4, 2) + 0.6;
           break;
@@ -489,7 +503,7 @@
           const n = ai.fury ? 6 : 4;
           for (let i = 0; i < n; i++) {
             const a = i ? Math.random() * 6.2832 : 0, d = i ? G.U.rand(40, 120) : 0;
-            G.Hazards.add({ kind: 'zone', x: pl.x + Math.cos(a) * d, y: pl.y + Math.sin(a) * d * 0.8, r: 50,
+            G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: pl.x + Math.cos(a) * d, y: pl.y + Math.sin(a) * d * 0.8, r: 50,
                             delay: 1.05 + i * 0.12, dmg: this.shotDmg() * 1.15, type, color: col });
           }
           c.wind = 0.5; this.anim.play('Shoot');
@@ -498,7 +512,7 @@
         case 'beam': {     // rayos en abanico
           const n = ai.fury ? 5 : 3, sp = ai.fury ? 0.42 : 0.5;
           for (let i = 0; i < n; i++) {
-            G.Hazards.add({ kind: 'beam', x: this.x, y: this.y, angle: ang + (i - (n - 1) / 2) * sp, len: 400, w: 26,
+            G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, x: this.x, y: this.y, angle: ang + (i - (n - 1) / 2) * sp, len: 400, w: 26,
                             delay: 1.0, dmg: this.shotDmg() * 1.2, type, color: col });
           }
           c.wind = 1.0; c.after = 0.25; this.anim.play('Charge', { speed: 1.1 });
@@ -554,6 +568,7 @@
         const shot = G.Projectiles.spawn({
           x: this.x, y: this.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
           dmg: this.shotDmg() * k, r: 7, life: 2.4, friendly: false, color: '#ff7a9e', mtype: type,
+          atkFactor: this.atkFactor, atkCat: this.atkCat,
           vis: G.VFX.forType(type)
         });
         if (G.Coop.isHost) G.Coop.enemyShot(shot, type);
@@ -569,14 +584,14 @@
         case 'fan': { const n = this.def.fanN || 5; this.shoot(dx, dy, n === 3 ? 0.6 : 0.9, n, 0.65); break; }
         case 'beamer':
           // Warned beam: first the strip is shown on the ground.
-          G.Hazards.add({ kind: 'beam', x: this.x, y: this.y, angle: Math.atan2(dy, dx), len: 360, w: 22,
+          G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, x: this.x, y: this.y, angle: Math.atan2(dy, dx), len: 360, w: 22,
                           delay: 1.0, dmg: this.shotDmg() * 1.05, type: this.atkType, color: col });
           this.anim.play('Charge', { speed: 1.2 });
           break;
         case 'zoner': {
           const n = G.U.randInt(1, this.def.zones || 3);
           for (let i = 0; i < n; i++) {
-            G.Hazards.add({ kind: 'zone', x: pl.x + (i ? G.U.rand(-70, 70) : 0), y: pl.y + (i ? G.U.rand(-55, 55) : 0), r: 44,
+            G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: pl.x + (i ? G.U.rand(-70, 70) : 0), y: pl.y + (i ? G.U.rand(-55, 55) : 0), r: 44,
                             delay: 1.2, dmg: this.shotDmg() * 0.95, type: this.atkType, color: col });
           }
           this.anim.play('Shoot');
@@ -638,7 +653,9 @@
       if (this.minions.length >= 4 || G.EnemyMgr.count > G.Spawner.CAP + 15) return;
       const dex = this.def.minion || this.dex;
       const mon = G.DEX_BY[dex];
-      const def = { dex, name: mon ? mon.name : '', hp: Math.round(this.def.hp * 0.35), spd: Math.round(this.def.spd * 1.1),
+      // Minion HP comes from the mainline formula at spawn (via its own baseHp), like any
+      // wild enemy. (Was 0.35x the summoner's HP under the old flat model.)
+      const def = { dex, name: mon ? mon.name : '', baseHp: (mon && mon.stats) ? mon.stats[0] : 50, spd: Math.round(this.def.spd * 1.1),
                     dmg: Math.round(this.def.dmg * 0.6), xp: Math.max(1, Math.round(this.def.xp * 0.25)), behavior: 'chase' };
       for (let i = 0; i < 2; i++) {
         const a = Math.random() * 6.2832;
@@ -653,14 +670,14 @@
 
     startFuse() {
       this.phase = 'fuse'; this.pt = 1.0;
-      G.Hazards.add({ kind: 'zone', x: this.x, y: this.y, r: 62, delay: 1.0, dmg: this.dmg * 1.4, type: this.atkType, color: '#ff7b3d' });
+      G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: this.x, y: this.y, r: 62, delay: 1.0, dmg: this.dmg * 1.4, type: this.atkType, color: '#ff7b3d' });
     }
 
     startJump(pl) {
       const tx = pl.x, ty = pl.y;
       this.jump = { sx: this.x, sy: this.y, tx, ty, t: -0.45, dur: 0.6 };
       this.anim.play('Charge', { speed: 1.4 });
-      G.Hazards.add({ kind: 'zone', x: tx, y: ty, r: 50, delay: 1.05, dmg: this.dmg * 1.2, type: this.atkType,
+      G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, x: tx, y: ty, r: 50, delay: 1.05, dmg: this.dmg * 1.2, type: this.atkType,
                       color: G.U.TYPE_COLOR[this.atkType] || '#ff7a9e' });
     }
 
