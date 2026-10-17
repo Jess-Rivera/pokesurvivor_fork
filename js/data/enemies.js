@@ -53,17 +53,11 @@ G.Enemies = (() => {
   const baseHp = p => (p.hp - 70) / 0.45;
   const baseSpd = p => (p.spd - 78) / 0.42;
 
-  // --- Enemy HP (base-stats model, Phase 1) ---
-  // Enemy HP uses the SAME mainline formula + scalar as the player, from the enemy's
-  // REAL base HP (stats[0]). Phase 1 level curve: linear L1 (0:00) -> L50 (30:00), then
-  // holds at 50 until Phase 2 (the 30-min boss gate) extends it. No role/elite/co-op/
-  // density multipliers (removed this slice). See DECISIONS.md and BALANCE.md.
-  const HP_SCALAR = 2.0;
-  function levelForTime(t) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
-  function enemyHp(baseHP, t) {
-    const L = levelForTime(t);
-    return Math.round((Math.floor(2 * baseHP * L / 100) + L + 10) * HP_SCALAR);
-  }
+  // Enemy HP/level/speed use the shared base-stats model in js/core/stats.js (G.Stats),
+  // the SAME formulas as the player. enemyHp(baseHP, t) = HP at the level-for-run-time.
+  // See DECISIONS.md and BALANCE.md.
+  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t));
+  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
 
   const H = (d, s) => G.U.hash(d, 7, s);
 
@@ -98,14 +92,15 @@ G.Enemies = (() => {
 
   /** Builds a Pokemon's enemy definition for a tier. */
   function defFor(p, tier, ti) {
-    const spdK = G.U.clamp(0.75 + baseSpd(p) / 260, 0.75, 1.3);
     const behavior = behaviorOf(p);
     const d = {
       dex: p.dex, name: p.name, behavior,
       // Real base HP (stats[0]); HP itself is computed from the mainline formula at
       // spawn (see enemyHp). No tier-template HP, no tank/role HP multiplier (removed).
       baseHp: (G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[0] : 50,
-      spd: Math.round(tier.spd * spdK * (behavior === 'tank' ? 0.7 : 1)),
+      // Speed = fixed species identity via the shared model (real base Speed stat[5]),
+      // same px/s scale as the player. No tier template, no role mult, no time ramp.
+      spd: G.Stats.speedToPx((G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[5] : 65),
       dmg: Math.round(tier.dmg * (behavior === 'tank' ? 1.2 : 1)),
       xp: Math.max(3, Math.round(tier.xp * (behavior === 'tank' ? 1.3 : 1)))
     };

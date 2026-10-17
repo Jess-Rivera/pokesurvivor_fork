@@ -39,7 +39,10 @@
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
       this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
       this.hp = this.maxHp;
-      this.spd = def.spd * sc.spd;
+      // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
+      // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
+      // the player. Bosses keep their own def.spd (unchanged this slice).
+      this.spd = boss ? def.spd * (sc.spd || 1) : def.spd;
       this.dmg = def.dmg * sc.dmg;
       this.xp = def.xp;
       this.behavior = def.behavior;

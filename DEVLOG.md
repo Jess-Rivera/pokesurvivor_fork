@@ -5,6 +5,19 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (refactor: shared G.Stats module + enemy speed on identity model)
+- Unified all base-stats formulas into a new js/core/stats.js (G.Stats): HP_SCALAR, SPEED_MEDIAN,
+  BASE_PX, MOVE_K/MAX/MIN, statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, plus
+  scaffold stubs attack/defense/spAtk/spDef for future slices. Single source of truth; retune once.
+- Load order: stats.js added right after core/util.js in dev.html AND 'Stats' added to NEED in
+  main.js (right after 'U'). New-script-file build rule followed.
+- player.js and enemies.js now call G.Stats.* (removed their local duplicate constants/functions).
+  Verified all pre-refactor values unchanged (player HP 24->250, speed 54/107/245; enemy HP 24/137/250).
+- Enemy SPEED moved onto the identity model (G.Stats.speedToPx from real stats[5]): fixed per species,
+  same px/s scale as the player, NO run-time ramp (dropped the old sc.spd = 1+t/1400 enemy speed-up).
+  A base-65 enemy and base-65 player now move at the same 107 px/s. Bosses keep their own spd path.
+  Runner behavior keeps its x1.6 speed (it's a behavior archetype 'the fast one', not a base-stat).
+- Done against a clean commit (easy rollback). Not yet done: in-browser playtest, commit.
 ## 2026-10-17 (base-stats slice 3: enemy HP, wild only)
 - HUD: added the current enemy level as a big number in the TOP-RIGHT corner (hud.js), mirroring the
   run timer's font/color (F(800,26), rgba(255,255,255,.95)) with an "ENEMY LV" subtitle (F(600,10),

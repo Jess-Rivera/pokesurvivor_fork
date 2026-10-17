@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Enemy speed from base Speed', 'Enemy speed from base Speed'], chg: [
+    ['Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.',
+     'Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.']
+  ] },
   { d: '2026-10-17', title: ['Enemy level shown on the HUD', 'Enemy level shown on the HUD'], new: [
     ['The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.',
      'The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.']

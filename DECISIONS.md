@@ -117,3 +117,19 @@ persistent-storage design (how they are earned/trained, how they are keyed and s
 pbind/pban/pupg which key by dex), and that deserves its own slice rather than bolting an all-zero map
 onto the save now. No save-schema change was made for IV/EV this slice, so slice 1 is fully save-safe.
 When training/EV is designed, that slice adds the storage + migration.
+
+## 2026-10-17, Stat formulas centralized in G.Stats (js/core/stats.js)
+All base-stats formulas live in ONE module, G.Stats (js/core/stats.js): the mainline statValue, HP
+(hpForLevel), Speed identity (speedToPx/moveTransfer), the enemy levelForTime curve, the tunable
+constants, and scaffold stubs for Attack/Defense/SpA/SpD. Both the player and enemies call G.Stats.*;
+neither keeps its own copy. Rule going forward: new combat-stat formulas (and any retuning of
+constants like HP_SCALAR or SPEED_MEDIAN) happen in G.Stats, not duplicated per entity. stats.js must
+load after core/util.js (listed right after util in dev.html and as 'Stats' in main.js NEED).
+
+## 2026-10-17, Enemy Speed = fixed species identity (matches the player)
+Enemy speed now uses the same Speed-identity model as the player (G.Stats.speedToPx from the enemy's
+real base Speed stat[5]), fixed per species, same px/s scale as the player, with NO in-run time ramp
+(the old sc.spd = 1 + t/1400 enemy speed-up is removed). Supersedes the pre-identity enemy speed
+(tier.spd x spdK reverse-derivation). Difficulty comes from HP/damage/density, not creeping enemy
+speed. Exceptions kept: bosses retain their own spd path (out of scope); the 'runner' behavior keeps
+its x1.6 (it is a behavior archetype, not a base-stat multiplier).

@@ -3,35 +3,8 @@
  * on its own and is changed with 1-4 / Q / E. Each shot plays the animation of
  * Mystery Dungeon attack that applies (Attack, Shoot or Charge).
  */
-/* --- Base-stats movement model (slice 1: Speed -> movement px/s) ---
- * See docs/stat-model-design-notes.md and BALANCE.md. Speed is a FIXED species
- * identity (constant within a run); only items/upgrades/buffs move it off baseline.
- * r = Speed / SPEED_MEDIAN (level cancels, so this is pure base-stat identity).
- * g(r) soft-saturates toward asymmetric bounds. px/s = BASE_PX * g(r).
- * IV/EV are part of the mainline formula but fixed at 0 this slice; a future
- * slice adds them with their own persistent storage. */
-const SPEED_MEDIAN = 65, BASE_PX = 107, MOVE_K = 1.0, MOVE_MAX = 3.0, MOVE_MIN = 0.5;
-
-function statValue(base, level, iv = 0, ev = 0) {
-  return Math.floor((2 * base + iv + Math.floor(ev / 4)) * level / 100) + 5;
-}
-function moveTransfer(r) {
-  if (r <= 0) return MOVE_MIN;
-  const lr = Math.log(r);
-  const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
-  return Math.exp(w * Math.tanh(MOVE_K * lr / w));
-}
-function speedToPx(baseSpe) {
-  const r = statValue(baseSpe, 50) / statValue(SPEED_MEDIAN, 50);
-  return BASE_PX * moveTransfer(r);
-}
-/* HP scalar: mainline HP x this. 2.0 = lean early game (deliberately fragile for now;
- * healing and enemy-damage balance come in later slices). See BALANCE.md. */
-const HP_SCALAR = 2.0;
-/** Mainline HP: (floor((2B + IV + floor(EV/4)) * L/100) + L + 10) * HP_SCALAR. IV/EV 0 this slice. */
-function hpForLevel(baseHp, level, iv = 0, ev = 0) {
-  return Math.round((Math.floor((2 * baseHp + iv + Math.floor(ev / 4)) * level / 100) + level + 10) * HP_SCALAR);
-}
+/* Base-stats model (Speed -> movement px/s, HP -> maxHp) lives in js/core/stats.js
+ * as G.Stats, shared with enemies. See docs/stat-model-design-notes.md, BALANCE.md. */
 G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
@@ -59,11 +32,11 @@ G.Player = class Player {
     // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
     this.perksHp = perks.hp || 0;
     this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
-    this.maxHp = (this.baseHpStat != null ? hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
+    this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
-    this.baseSpd = (mon.stats && mon.stats[5] != null) ? speedToPx(mon.stats[5]) : mon.spd;
+    this.baseSpd = (mon.stats && mon.stats[5] != null) ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
     this.baseAtk = mon.atk;
 
     this.moves = [];           // todos los movimientos aprendidos
@@ -316,7 +289,7 @@ G.Player = class Player {
     // HP scales with run level (mainline formula). Leveling tops up current HP by the
     // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
     if (leveled && this.baseHpStat != null) {
-      const newMax = hpForLevel(this.baseHpStat, this.level) + this.perksHp;
+      const newMax = G.Stats.hpForLevel(this.baseHpStat, this.level) + this.perksHp;
       const gain = newMax - this.maxHp;
       if (gain > 0) { this.maxHp = newMax; this.hp += gain; }
     }
@@ -331,7 +304,7 @@ G.Player = class Player {
     const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
     this.level = level;
     this.xpNext = Player.xpFor(level);
-    this.maxHp = hpForLevel(this.baseHpStat, level) + this.perksHp;
+    this.maxHp = G.Stats.hpForLevel(this.baseHpStat, level) + this.perksHp;
     this.hp = Math.round(this.maxHp * frac);
   }
 
