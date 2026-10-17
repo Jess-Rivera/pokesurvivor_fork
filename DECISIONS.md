@@ -30,6 +30,14 @@ The AI assistant never runs git, ever. It provides commands and strategy only; J
 All project docs live in-repo (not in a tool's private memory) so git pull carries them to Claude
 Desktop at home. The repo is the single shared source of truth between the two tools.
 
+## 2026-10-17, Remote visibility via local checkout (not a GitHub connector)
+There is no GitHub connector available, and GitHub's dynamic pages (commits, branches, issues, PRs)
+are JS-rendered and cannot be fetched reliably even though the repo (Jess-Rivera/pokesurvivor_fork)
+is public (only the static landing page / README fetches). So the bridge between work and home stays
+the LOCAL CHECKOUT: when the agent needs to see remote state, Jess pulls or checks out the branch
+locally and the agent reads the working tree and git metadata directly. This does not change the Git
+rule (Jess still runs all git himself) or the local-first scope.
+
 ## 2026-10-17, Performance stance
 Vision first, trim fat later. Ignore small per-frame millisecond differences at this stage. BUT a
 visible framerate collapse (e.g. 60fps to ~22fps at high enemy density) is a FEEL problem and is
