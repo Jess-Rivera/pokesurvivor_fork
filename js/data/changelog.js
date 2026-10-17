@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Pokedex search and filters', 'Pokedex search and filters'], new: [
+    ['The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.',
+     'The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.']
+  ] },
   { d: '2026-10-17', title: ['Move damage rebuilt on the real stat formula', 'Move damage rebuilt on the real stat formula'], chg: [
     ['Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.',
      'Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.']

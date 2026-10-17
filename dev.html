@@ -442,10 +442,24 @@
   <div class="box wide">
     <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="dex-back" data-back>Volver</button></div>
     <div class="pick-banner hidden" id="dex-pick-banner"></div>
-    <div class="gen-tabs" id="dex-gens"></div>
+    <div class="dex-controls">
+      <div class="row ctrl-row">
+        <input id="dex-search" class="field dex-search" type="text" placeholder="Search name or #" translate="no" />
+        <select id="dex-region" class="field dex-sel" title="Region"></select>
+        <select id="dex-own" class="field dex-sel" title="Ownership"></select>
+        <select id="dex-sort" class="field dex-sel" title="Sort by"></select>
+        <button id="dex-dir" class="btn ghost small dex-dir" title="Sort direction">↓</button>
+        <button id="dex-clear" class="btn ghost small" title="Clear all filters">Clear</button>
+      </div>
+      <div class="dex-chipset" id="dex-types"></div>
+      <div class="row dex-filter-rows">
+        <div class="dex-chipset" id="dex-rarity"></div>
+        <div class="dex-chipset" id="dex-bst"></div>
+      </div>
+    </div>
     <div class="split" style="margin-top:8px">
       <div>
-        <div class="filters" id="dex-filters"></div>
+        <div class="dex-count sub" id="dex-shown"></div>
         <div class="grid" id="dex-grid"></div>
       </div>
       <div class="panel" id="dex-detail"></div>
