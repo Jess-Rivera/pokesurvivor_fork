@@ -5,7 +5,37 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (base-stats slice 2: player HP)
+- Bugfix (found in playtest): benched teammates kept a stale level-1 maxHp because only the active
+  fighter (pl) runs gainXp. Shuckle's HP didn't rise on level-up, only the active Regieleki's did.
+  Fix: player.js adds syncLevel(level) (recompute maxHp for the new level, PRESERVING current-hp
+  fraction, so swapping is neither a free heal nor a penalty); game.js, after pl.gainXp levels up,
+  calls f.syncLevel(pl.level) on every other roster member. Co-op level sync not touched (deferred MP).
+- Added a ?dev debug toggle (js/core/debug.js): Shift+U calls toggleUpgrades(), which clears every
+  per-Pokemon upgrade to 0 if any are set, else re-maxes them. Lets you see true base-stat values
+  (e.g. raw HP) without maxed perks on top. Also exposed clearUpgrades()/toggleUpgrades() on G.Debug.
+  Shift+D/maxAll unchanged. NOTE: it edits the save like maxAll does (not a runtime overlay), fine for
+  the ?dev sandbox. No changelog entry (developer-only tool, not player-facing).
+  (Context: the earlier "Shuckle showing 102 HP" was the ?dev maxAll perks piled on the new formula,
+  not a bug in the HP code. Chespin baseHP 56: L1=24, L2=28 with no upgrades, confirmed correct.)
+- Player max HP now derives from the real mainline HP formula and scales with in-run level (1:1).
+  js/entities/player.js: added HP_SCALAR=2.0 and hpForLevel(); constructor seeds maxHp from stats[0]
+  at level 1; gainXp recomputes maxHp as level rises and tops up current HP by the gain (Option A).
+  Full formula (2B + IV + floor(EV/4)) with IV/EV = 0 (deferred); perks.hp still adds on top.
+- Verified vs tuner: median mon 24 HP (L1) -> 250 (L50), ~10x run growth. Scalar 2.0 chosen lean on
+  purpose. Healing NOT touched this slice (flat heals left as-is; %-conversion is a later slice).
+- Enemy HP deliberately NOT converted this slice: enemies still use the tier-scale model (def.hp *
+  sc.hp) with no 'level'. Enemy HP via level-from-run-time is the NEXT slice (needs its own level curve;
+  entangles tier/elite/boss/co-op scaling).
+- Known intended lean-state: fragile early game (24 vs old 99), flat heals strong early / weak late.
+- Not yet done: in-browser playtest, commit on feature/base-stats.
+- Where we stopped: player HP slice applied + changelog updated; enemy-HP slice is next.
+
 ## 2026-10-17 (base-stats slice 1: Speed -> movement)
+- PLAYTESTED and feel-approved: movement feels "really slick"; the Shuckle vs Regieleki difference
+  reads beautifully. The locked tuning (SPEED_MEDIAN=65, BASE_PX=107, k=1.0, MOVE_MIN=0.5,
+  MOVE_MAX=3.0) is confirmed by feel, not just on paper. 0.5x floor = slow-as-identity (not
+  miserable), 3.0x ceiling + tanh saturation = dramatic-but-controllable fast mons. Keep as-is.
 - Branched (or to branch) feature/base-stats off main. Implemented the first base-stats slice:
   the player's movement speed now derives from the REAL base Speed stat (stats[5]) instead of the
   old pre-baked `78 + 0.42*Speed` value.

@@ -25,6 +25,13 @@ function speedToPx(baseSpe) {
   const r = statValue(baseSpe, 50) / statValue(SPEED_MEDIAN, 50);
   return BASE_PX * moveTransfer(r);
 }
+/* HP scalar: mainline HP x this. 2.0 = lean early game (deliberately fragile for now;
+ * healing and enemy-damage balance come in later slices). See BALANCE.md. */
+const HP_SCALAR = 2.0;
+/** Mainline HP: (floor((2B + IV + floor(EV/4)) * L/100) + L + 10) * HP_SCALAR. IV/EV 0 this slice. */
+function hpForLevel(baseHp, level, iv = 0, ev = 0) {
+  return Math.round((Math.floor((2 * baseHp + iv + Math.floor(ev / 4)) * level / 100) + level + 10) * HP_SCALAR);
+}
 G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
@@ -48,7 +55,11 @@ G.Player = class Player {
     this.xpMul = perks.xpMul || 1;
     this.coinMul = perks.coinMul || 1;
 
-    this.maxHp = mon.hp + (perks.hp || 0);
+    // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
+    // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
+    this.perksHp = perks.hp || 0;
+    this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
+    this.maxHp = (this.baseHpStat != null ? hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
@@ -302,7 +313,26 @@ G.Player = class Player {
       this.xpNext = Player.xpFor(this.level);
       leveled++;
     }
+    // HP scales with run level (mainline formula). Leveling tops up current HP by the
+    // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
+    if (leveled && this.baseHpStat != null) {
+      const newMax = hpForLevel(this.baseHpStat, this.level) + this.perksHp;
+      const gain = newMax - this.maxHp;
+      if (gain > 0) { this.maxHp = newMax; this.hp += gain; }
+    }
     return leveled;
+  }
+
+  /** Bring a benched teammate up to the shared run level: recompute maxHp for the
+   *  new level, preserving current-hp fraction (so swapping is neither a free heal
+   *  nor a penalty). The ACTIVE fighter uses gainXp instead. */
+  syncLevel(level) {
+    if (this.baseHpStat == null || level <= this.level) { this.level = level; this.xpNext = Player.xpFor(level); return; }
+    const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
+    this.level = level;
+    this.xpNext = Player.xpFor(level);
+    this.maxHp = hpForLevel(this.baseHpStat, level) + this.perksHp;
+    this.hp = Math.round(this.maxHp * frac);
   }
 
   // ---------------- objeto equipado ----------------

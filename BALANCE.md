@@ -29,6 +29,20 @@ re-tune later.
 ## XP curve / run pacing
 (none tuned yet)
 
+## HP (base-stats feature, slice 2: player HP) — slice applied 2026-10-17
+Player max HP now comes from the real mainline HP formula, scaling with in-run level (1:1 run level
+= mainline level). Enemy HP is NOT yet converted (still the tier-scale model); that is the next slice.
+- Formula (js/entities/player.js hpForLevel): HP = (floor((2*baseHP + IV + floor(EV/4)) * L/100)
+  + L + 10) * HP_SCALAR. baseHP = stats[0]. IV/EV = 0 (deferred).
+- HP_SCALAR = 2.0 (chosen deliberately lean via the full-formula tuner; starting floor is low on
+  purpose, to be balanced up later with healing + enemy-damage passes).
+- Resulting player HP (IV/EV 0): median mon (baseHP 65) L1=24, L10=66, L25=134, L50=250. Run growth
+  ~10x L1->L50. Reference: Shuckle(20) L1=22/L50=160; Snorlax(160) L1=28/L50=440; Blissey(255) L1=32/L50=630.
+- Level-up behavior: Option A (leveling adds the max-HP gain to current HP too, a small heal each level).
+- KNOWN lean-state after this slice (intended, not a bug): early game is fragile (24 vs old flat 99),
+  and flat heals/regen still feel strong early / weak late. Fixed by the deferred healing %-conversion.
+- perks.hp (flat HP upgrades) still adds on top of the formula.
+
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by
 feel with the interactive tuner over the real 966-species roster:

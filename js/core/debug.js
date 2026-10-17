@@ -46,6 +46,47 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Clears every per-Pokemon upgrade back to 0 (keeps unlocks/currency). The
+   *  counterpart to maxAll's upgrade maxing: lets you see true base-stat values
+   *  (e.g. raw HP) without the maxed perks piled on. ?dev only. */
+  function clearUpgrades() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const save = G.DB.save;
+    if (!save) { console.warn('[Debug] no active save.'); return false; }
+    for (const p of G.DEX) {
+      const u = G.DB.upgradesOf(p.dex);
+      for (const up of G.Upgrades.LIST) u[up.id] = 0;
+    }
+    G.DB.commit(true);
+    if (G.UI && G.UI.toast) G.UI.toast('Debug: upgrades cleared to 0', 2500);
+    console.log('[Debug] all per-Pokemon upgrades cleared to 0.');
+    return true;
+  }
+
+  /** Toggle: if any upgrade is above 0, clear them all; otherwise max them all.
+   *  One key flips maxed-upgrades off and on, to compare base vs upgraded stats. */
+  function toggleUpgrades() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const save = G.DB.save;
+    if (!save) { console.warn('[Debug] no active save.'); return false; }
+    let anyUp = false;
+    for (const p of G.DEX) {
+      const u = G.DB.upgradesOf(p.dex);
+      for (const up of G.Upgrades.LIST) if ((u[up.id] || 0) > 0) { anyUp = true; break; }
+      if (anyUp) break;
+    }
+    if (anyUp) return clearUpgrades();
+    for (const p of G.DEX) {
+      const u = G.DB.upgradesOf(p.dex);
+      for (const up of G.Upgrades.LIST) u[up.id] = up.max;
+    }
+    if (G.Game && G.Game.debugMaxed) G.Game.debugMaxed();
+    G.DB.commit(true);
+    if (G.UI && G.UI.toast) G.UI.toast('Debug: upgrades maxed', 2500);
+    console.log('[Debug] all per-Pokemon upgrades maxed.');
+    return true;
+  }
+
   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
   if (on) {
     addEventListener('keydown', e => {
@@ -53,9 +94,14 @@ G.Debug = (() => {
         e.preventDefault();
         maxAll();
       }
+      // Shift+U: toggle maxed per-Pokemon upgrades off/on (to see base-stat values).
+      if (e.shiftKey && (e.code || '').toLowerCase() === 'keyu' && !/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || '')) {
+        e.preventDefault();
+        toggleUpgrades();
+      }
     });
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll };
+  return { on, maxAll, clearUpgrades, toggleUpgrades };
 })();
