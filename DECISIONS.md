@@ -38,6 +38,26 @@ the LOCAL CHECKOUT: when the agent needs to see remote state, Jess pulls or chec
 locally and the agent reads the working tree and git metadata directly. This does not change the Git
 rule (Jess still runs all git himself) or the local-first scope.
 
+## 2026-10-17, Source-only repo: gitignore the build output (Option A)
+Decision: do NOT version-control generated build output. Jess runs the game locally via dev.html and
+only builds (`node tools/build.js`) when he is ready to publish to a host (chosen later). GitHub Pages
+is explicitly NOT used ("i dont want Pages"). So the three generated files are now gitignored:
+index.html, js/app.min.js, version.json (tools/cache/ was already ignored). They are regenerated at
+publish time, not tracked. To stop tracking the already-committed copies, Jess runs (git is his):
+  git rm --cached index.html js/app.min.js version.json
+This removes them from tracking but keeps them on disk. Rationale: generated artifacts cause pointless
+merge conflicts (minified/obfuscated output cannot be meaningfully merged); keeping source-only is the
+cleaner practice and ends that friction. If Jess later hosts somewhere that needs committed build
+output (e.g. GitHub Pages serving files directly), revisit, the better path then is a CI build step.
+
+## 2026-10-17, SEO/publishing pipeline is inherited and dormant
+tools/export_data.js and tools/make_seo_pages.py are the ORIGINAL owner's SEO/publishing pipeline
+(generate text pages from game data so a canvas game is crawlable; hardcoded to pokesurvivor.com and
+the original repo JPTER78/pokesurvivor). Jess has never run them and only runs `node tools/build.js`.
+They stay dormant and untouched until Jess picks a host and decides on public discoverability, at which
+point the hardcoded URLs would need rewriting. Their output (tools/cache/gamedata.json and the es/en
+SEO page folders) is not maintained by us.
+
 ## 2026-10-17, Performance stance
 Vision first, trim fat later. Ignore small per-frame millisecond differences at this stage. BUT a
 visible framerate collapse (e.g. 60fps to ~22fps at high enemy density) is a FEEL problem and is
