@@ -578,7 +578,8 @@ G.Combat = (() => {
           continue;
         }
         if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
-          pl.hurt(p.dmg, p.mtype);
+          if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat });
+          else pl.hurt(p.dmg, p.mtype);
           G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
           projectiles.splice(i, 1);
         }
@@ -686,7 +687,9 @@ G.Combat = (() => {
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
       e.touchCd = 0.55;
       e.strike(pl);
-      pl.hurt(e.dmg, e.atkType);
+      // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
+      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat });
+      else pl.hurt(e.dmg, e.atkType);
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);
       e.kx += nx * 150; e.ky += ny * 150;

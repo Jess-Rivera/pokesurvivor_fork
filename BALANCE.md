@@ -30,7 +30,22 @@ re-tune later.
   baseline); melee radius/arc x1.25 bumps kept.
 
 ## Enemies
-(none tuned yet)
+### Enemy -> player damage (sub-slice C) — applied 2026-10-17
+- Enemy damage now uses the mainline A/D ratio (mirror of player sub-slice B): enemy real Atk/SpA
+  (stats[1]/[3], category = higher stat) scaled to enemy level-for-time, vs player Def/SpD (stats[2]/[4]).
+- ENEMY_DMG_SCALAR = 0.5 (js/core/stats.js). Started at 0.35 (early hit ~5.7% of L1 HP, matching the
+  measured original ~6.1%), but playtest read as too soft vs SMALL mobs (density-based threat needs a
+  crowd; a thin mob left frail mons like Charmander barely scratched at ~7%/hit). Bumped 0.35 -> 0.5
+  on 2026-10-17 (frail-mon hit now ~8-10% of HP). Mewtwo still tanks (defense path confirmed working),
+  so this raised the overall level without breaking bulky-vs-frail differentiation. Still tune by feel.
+- ENEMY_POWER = 40 — flat PLACEHOLDER (no per-enemy move yet). Temporary until enemies draw canonical
+  move power. All enemy attacks (contact/shot/hazard) share this flat power; species variety comes from
+  the real Atk/SpA stat, not from power (yet).
+- Natural ramp (chosen): single-hit absolute damage grows with enemy level (1.4@L1 -> 6.9@L50 for a
+  base-65 enemy), but as a %-of-HP it EASES for a player who keeps pace (5.7% -> 2.7%). Late-game threat
+  is intended to come from enemy DENSITY, not per-hit lethality.
+- Scope: WILD enemies only. Bosses keep their bespoke flat def.dmg (atkFactor null) until a boss slice.
+- Non-enemy damage (lava, altar, Judgment, burn/poison DoT) is unchanged/flat — does NOT use the ratio.
 
 ## Upgrades
 (none tuned yet)

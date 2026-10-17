@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Enemy attacks use real stats', 'Enemy attacks use real stats'], chg: [
+    ['Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.',
+     'Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.']
+  ] },
   { d: '2026-10-17', title: ['Moves rebuilt on canonical data', 'Moves rebuilt on canonical data'], chg: [
     ['Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.',
      'Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.']

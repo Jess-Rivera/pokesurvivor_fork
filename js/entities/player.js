@@ -246,8 +246,16 @@ G.Player = class Player {
    * @param type  attack type (type chart and weather); with no type, damage as-is
    * @param pure  damage not reduced by defense or melee (Arceus)
    */
-  hurt(amount, type = null, pure = false) {
+  hurt(amount, type = null, pure = false, atk = null) {
     if (this.invuln > 0 || this.dead) return;
+    // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
+    // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
+    // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
+    if (atk && !pure) {
+      const st = this.mon.stats;
+      const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level);
+    }
     let eff = null;
     if (type) {
       const k = G.Types.mult(type, this.mon.types);

@@ -87,6 +87,32 @@ G.Stats = (() => {
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
   function applyDamageProp(factor) { return (factor / PROP_DEF + 2) * DMG_SCALAR; }
 
+  // ---- enemy -> player damage (sub-slice C), mirror of the player A/D ratio ----
+  // Enemy "Power" is a flat placeholder for now (no per-enemy move yet). TEMPORARY:
+  // swap to canonical move power when enemies draw real moves (see DECISIONS). Gentle
+  // opening (~6% of L1 HP), natural ramp; late threat comes from density, not per-hit %.
+  const ENEMY_DMG_SCALAR = 0.5;
+  const ENEMY_POWER = 40;
+
+  // Enemy attack category from the higher offensive stat: SpA > Atk => 'special'.
+  function enemyCat(atkBase, spaBase) { return (spaBase > atkBase) ? 'special' : 'physical'; }
+
+  // Attacker half for an enemy at its level, using its winning offensive stat and the
+  // flat placeholder Power. Mirrors attackFactor (no extraMul; enemies have no upgrades).
+  function enemyAttackFactor(atkBase, spaBase, level) {
+    const special = enemyCat(atkBase, spaBase) === 'special';
+    const aStat = special ? spAtk(spaBase, level) : attack(atkBase, level);
+    return ((2 * level / 5 + 2) * ENEMY_POWER * aStat) / 50;
+  }
+
+  // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
+  // (stats[2]/stats[4]) matching the attack category. Returns damage BEFORE type/weather/
+  // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
+  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel) {
+    const dStat = cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel);
+    return (factor / Math.max(1, dStat) + 2) * ENEMY_DMG_SCALAR;
+  }
+
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
   // own cat (stamped in js/data/moves.js from pokeapi). Fallback for a move missing it
   // (e.g. a future custom move): buffs are status; contact-y behaviors physical; the
@@ -103,5 +129,6 @@ G.Stats = (() => {
     statValue, hpForLevel, moveTransfer, speedToPx, levelForTime,
     attack, defense, spAtk, spDef, moveCat,
     DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp,
+    ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor, applyPlayerDefense,
   };
 })();

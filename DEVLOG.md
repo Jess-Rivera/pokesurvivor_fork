@@ -5,6 +5,42 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (sub-slice C: enemy -> player damage, APPLIED, feature/base-stats, not committed)
+- WHAT: enemy->player damage now runs through the mainline A/D ratio, the mirror of sub-slice B.
+  Fixes the mismatch that made the opening a ~2s death (enemies were still on the flat def.dmg model
+  while player HP had dropped to ~24 at L1 and player Def/SpD did nothing).
+- RULES (all per the locked sub-slice C decision): (1) category per species from the HIGHER offensive
+  stat, SpA>Atk => special else physical (G.Stats.enemyCat). (2) enemy offense uses the REAL stat
+  (Atk stats[1] / SpA stats[3]) scaled to enemy level-for-run-time. (3) player base Def/SpD (stats[2]/
+  stats[4]) completes the ratio in pl.hurt. (4) WILD ENEMIES ONLY; bosses keep the flat def.dmg path
+  (atkFactor = null for bosses -> every site falls back to flat), mirrors the HP slice.
+- PLACEHOLDER: enemy "Power" is a flat ENEMY_POWER=40 (Tackle-ish), TEMPORARY until enemies draw
+  canonical move power (the learnset plan). ENEMY_DMG_SCALAR=0.35, solved so an early contact hit is
+  ~5.7% of L1 HP (24), matching the measured ORIGINAL feel (~6.1%, old flat-99-HP era). Natural ramp:
+  absolute hit grows (1.4@L1 -> 6.9@L50) but EASES as %-of-HP for a player who keeps pace (5.7%->2.7%);
+  late threat is DENSITY, not per-hit lethality (genre-correct, Jess's choice).
+- FILES: js/core/stats.js (ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor,
+  applyPlayerDefense + exports). js/entities/enemy.js (construct: atkBase/spaBase/atkCat/atkFactor from
+  G.DEX_BY stats, boss => atkFactor null; shoot() stashes atkFactor/atkCat on shots; 9 G.Hazards.add
+  zone/beam calls stash atkFactor/atkCat). js/entities/player.js (hurt() gains 4th param atk={factor,
+  cat}; when set and not pure, converts the factor via applyPlayerDefense using the player's Def/SpD
+  + category BEFORE the existing type/weather/reduction/melee-cushion chain). js/systems/combat.js
+  (contact + enemy-projectile sites: pass factor+cat when atkFactor!=null, else flat). js/systems/
+  hazards.js (enemy-origin hazards with atkFactor route through the ratio; pure/terrain stay flat).
+- NON-ENEMY damage stays FLAT (verified by caller audit): lava/liquid (player.js), altar self-damage
+  (interact.js), Arceus Judgment (judgment.js, already pure), burn/poison DoT ticks. Only the 3 enemy
+  channels (contact, shot, enemy hazard) got the ratio.
+- VERIFIED: all 5 files balance-check clean (node --check blocked in sandbox). Numeric sanity: base-65
+  enemy vs base-65 player contact = 5.7% @L1 ramping as designed. changelog.js entry added (chg,
+  English) + re-verified.
+- DEFERRED HOOKS (noted, not built): (a) BOSSES still flat def.dmg -> a boss damage slice later.
+  (b) COOP: G.Hazards.add's network broadcast serializes a fixed field set, so atkFactor/atkCat do NOT
+  cross the wire -- fine under local-first, revisit in the MP phase. (c) flat ENEMY_POWER=40 -> swap to
+  canonical move power when enemies draw real moves.
+- NOT done: in-browser playtest (expect to fine-tune ENEMY_DMG_SCALAR by feel, like the player scalar),
+  commit. Where we stopped: sub-slice C applied + verified on disk; the full base-stats + damage loop
+  (HP, speed, player->enemy, enemy->player) is now coherent for wild enemies.
+
 ## 2026-10-17 (canonical move-power migration: APPLIED, feature/base-stats, not yet playtested/committed)
 - WHAT: migrated all 64 moves in js/data/moves.js to canonical mainline data (Approach B: keep the
   field NAMED `dmg`, change its VALUES to canonical base power; the field is already the Power term the
