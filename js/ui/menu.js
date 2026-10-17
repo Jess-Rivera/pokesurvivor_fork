@@ -134,14 +134,16 @@ G.MenuUI = (() => {
     G.UI.show('scr-region', true);
     const grid = $('region-grid');
     grid.innerHTML = '';
-    const card = (label, onclick) => {
+    const card = (label, onclick, cls) => {
       const b = document.createElement('button');
-      b.className = 'region-card';
+      b.className = 'region-card' + (cls ? ' ' + cls : '');
       b.innerHTML = `<b>${label}</b>`;
       b.dataset.sfx = 'confirm';
       b.onclick = onclick;
       grid.appendChild(b);
     };
+    // Random: rolls a gen 1-9 at click time; the run then shows the actual region it landed on.
+    card('Random', () => startRegion(G.U.randInt(1, GEN_NAMES.length)), 'all');
     // One card per generation. (No "All regions" card: Paldea (gen 9) already = every
     // earlier gen = the full dex.)
     GEN_NAMES.forEach((name, i) => {

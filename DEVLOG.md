@@ -32,6 +32,19 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - NOT done: in-browser playtest (hard reload; pick a few regions, confirm only that gen-and-earlier
   spawns; try Kanto for the thin-top-tier edge; try All), commit. Jess runs git.
 - Where we stopped: region-select fully applied + verified on feature/region-select, awaiting playtest.
+- Follow-ups applied same session: removed the "All regions" card (Paldea = gen9 = full dex already) and
+  the (owned/total) subline on region cards (label-only now); fixed the changelog wording accordingly.
+  Added a read-only hook `G.Enemies.region` getter (returns the chosen gen 1-9, or null = full dex) so a
+  future HUD label / results-screen "Kanto run" / per-region records can read the run's region. No
+  behavior change; purely a future-proof hook.
+- Used the hook: the end-run/death screen (#scr-over, js/ui/run-ui.js showOver) now shows a region line
+  (e.g. "Kanto Run") at the top of over-stats, reading G.Enemies.region via G.MenuUI.GEN_NAMES. Only
+  rendered when a region is set (always for solo runs; omitted if null). English per the new-string
+  rule (sits among the inherited Spanish stat labels, which render English at runtime via lang-en.js).
+- Added a Random region card (js/ui/menu.js openRegionPicker): full-width gold card (reuses the old
+  `.all` style) above the 9 gen cards; rolls G.U.randInt(1, GEN_NAMES.length) and calls startRegion with
+  the ACTUAL rolled gen, so the end-run line shows the real region you got (not just "Random"). The
+  `card` helper gained an optional cls arg. changelog entry added (new, English).
 
 ## 2026-10-17 (sub-slice C: enemy -> player damage, APPLIED, feature/base-stats, not committed)
 - WHAT: enemy->player damage now runs through the mainline A/D ratio, the mirror of sub-slice B.
