@@ -6,9 +6,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-- Team Roster feature: merge-reviewed, merge-ready pending (1) applying the one i18n fix
-  (game.js ~L718, Spanish "entra en combate" -> English "enters the fight!") and
-  (2) a git diff against main before merging.
+(nothing yet)
 
 ## Up next (local single-player)
 (add the first real features/bugs here)
@@ -25,3 +23,6 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ## Done
 - 2026-10-17: Set up AI collaborator agent + in-repo project-docs scaffold (CONTEXT, DEVLOG,
   DECISIONS, BALANCE, TODO) + CLAUDE.md rewrite for the two-tool workflow.
+- 2026-10-17: Team Roster feature reviewed, i18n fix applied (English swap-in line), merged to
+  main (--no-ff) and pushed; feature/team branch deleted. Repo went source-only (build output
+  gitignored).

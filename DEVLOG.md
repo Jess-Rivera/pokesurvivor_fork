@@ -5,6 +5,16 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (Team Roster merged)
+- Merged the Team Roster feature into main via --no-ff ("Merge Team Roster feature") and pushed.
+- Went source-only: gitignored the generated build output (index.html, js/app.min.js, version.json;
+  tools/cache/ already ignored) and untracked the committed copies with `git rm --cached`. Build is
+  regenerated locally at publish time, not version-controlled. GitHub Pages is not used.
+- Deleted the merged feature/team branch (local + origin). git branch -a now shows only main.
+- SEO/publishing pipeline (export_data.js, make_seo_pages.py) confirmed inherited and dormant; Jess
+  only runs `node tools/build.js`.
+- Where we stopped: main is clean with Team Roster in. Ready to branch for the next feature.
+
 ## 2026-10-17 (later)
 - Reviewed the Team Roster feature (changelog-dated 2026-10-16) for merge readiness.
   Spans game.js (roster runtime: 6 slots, manual swap with 5s lockout + 0.5s i-frame,
