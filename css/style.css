@@ -159,6 +159,45 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
   text-shadow: 3px 3px 0 #a55f00, 6px 6px 0 var(--shadow); letter-spacing: 1px; }
 .logo .t2 { font-size: 18px; color: #fff; margin-top: 6px; letter-spacing: 3px; text-transform: uppercase; }
 
+/* ============ PokeSurvivor REDUX menu-logo treatment ============ */
+/* Container must be inline-block so the stamp overlays the title and the
+   subtitle can width-match the title exactly (width:100%). */
+.logo.redux .t1 {
+  position: relative;
+  display: inline-block;
+  padding: 0 6px;            /* a little room so REDUX can hang past the edges */
+}
+/* "REDUX" slapped over the title at an angle, bright red, graffiti-stamp feel */
+.logo.redux .redux-stamp {
+  position: absolute;
+  left: 10%; top: 30%;                        /* raised; positioned so REDUX's D sits between P and o */
+  transform: translate(-50%, -50%) rotate(-8deg);  /* gentler angle */
+  font-size: 1.15em;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #ff2a2a;
+  -webkit-text-stroke: 4px #000;              /* strong black outline */
+  paint-order: stroke fill;                   /* stroke behind the fill so red stays bright */
+  text-shadow: 0 3px 0 #000, 0 0 4px #000;    /* black depth only, no red glow */
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+/* Collector subtitle spans the SAME width as the title (width:100% of the
+   inline-block title box) and justifies edge-to-edge. */
+.logo.redux .redux-sub {
+  display: flex;                 /* each letter is a flex child, evenly spread */
+  justify-content: space-between;
+  width: 100%;
+  margin: 6px auto 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.logo.redux .redux-sub span { display: inline-block; }
+
+
 /* ---------- test de personalidad ---------- */
 .test-box { width: min(620px, 100%); }
 .progress { height: 8px; background: rgba(0,0,0,.35); border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
@@ -238,10 +277,37 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
   flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
   padding: 30px; min-width: 0;
 }
-.menu-left .logo .t1 { font-size: clamp(36px, 6vw, 64px); }
-.partner-card { text-align: center; margin-top: 10px; }
-.partner-card .nm { font-size: 24px; font-weight: 700; text-shadow: 3px 3px 0 var(--shadow); }
-.partner-card .lv { color: var(--muted); font-size: 14px; text-shadow: 2px 2px 0 var(--shadow); }
+.menu-left .logo .t1 { font-size: clamp(46px, 7.4vw, 80px); }
+/* Home roster: the 6 fixed team slots, each a button that opens the Pokédex to pick for that slot. */
+.roster { --rc-w: 104px; display: grid; grid-template-columns: repeat(3, var(--rc-w)); gap: 8px;
+  justify-content: center; margin-top: 12px; }
+.roster-card {
+  position: relative; appearance: none; cursor: pointer; font: inherit; color: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 4px 6px;
+  border-radius: 12px; background: rgba(10,20,50,.7); border: 2px solid rgba(244,248,255,.28);
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+.roster-card:hover { border-color: var(--edge); }
+.roster-card.lead { border-color: var(--gold); background: rgba(255,210,63,.12); }
+.roster-card.empty { border-style: dashed; background: rgba(0,0,0,.22); }
+.roster-card canvas, .roster-card .rslot { width: 100%; aspect-ratio: 92 / 80; display: block; }
+.roster-card .rslot { display: flex; align-items: center; justify-content: center; font-size: 34px; color: var(--muted); }
+.roster-card .rn { position: absolute; top: 3px; left: 6px; z-index: 1; display: flex; gap: 3px; align-items: center;
+  font-size: 12px; font-weight: 700; color: var(--muted); }
+.roster-card.lead .rn { color: var(--gold); }
+.roster-card .rsh { position: absolute; top: 3px; right: 5px; z-index: 1; }
+.roster-card .rname { max-width: 100%; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roster-card.empty .rname { color: var(--muted); font-weight: 400; }
+/* Pokédex pick mode. */
+.pick-banner { margin: 8px 0 2px; padding: 8px 12px; border-radius: 10px; text-align: center; font-weight: 700;
+  color: var(--gold); background: rgba(255,210,63,.14); border: 2px solid var(--gold); }
+.rarity-line { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 2px 8px; }
+.bst-stars { display: inline-flex; align-items: center; gap: 2px; }
+.hex-wrap { display: flex; justify-content: center; margin: 6px 0 2px; }
+.stat-hex { display: block; max-width: 100%; height: auto !important; }
+.roster-note { font-size: 13px; color: var(--muted); text-align: center; margin: 6px 0; }
+.badge-slot { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold);
+  color: #10131a; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; text-shadow: none; }
 .menu-right {
   width: min(380px, 100%); display: flex; flex-direction: column;
   /* Arriba deja sitio a la barra superior; si no cabe todo, se desplaza
@@ -265,7 +331,7 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
   .menu-item.play { grid-column: span 2; }
   .menu-item small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .menu-left .logo .t1 { font-size: clamp(32px, 5vw, 52px); }
-  #menu-partner { height: min(30vh, 200px); width: auto; }
+  .roster { --rc-w: 90px; margin-top: 8px; }
 }
 .topbar {
   position: fixed; top: 14px; right: 16px; z-index: 25;
@@ -734,10 +800,10 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   .menu-left .logo { margin-bottom: 2px; }
   .menu-left .logo .t1 { font-size: 28px; }
   .logo .t2 { font-size: 10px; margin-top: 2px; letter-spacing: 2px; }
-  #menu-partner { height: min(34vh, 130px); width: auto; }
-  .partner-card { margin-top: 2px; }
-  .partner-card .nm { font-size: 17px; }
-  .partner-card .lv { font-size: 12px; }
+  .roster { --rc-w: 72px; gap: 5px; margin-top: 4px; }
+  .roster-card { padding: 2px 2px 3px; border-radius: 9px; }
+  .roster-card .rname { font-size: 11px; }
+  .roster-card .rslot { font-size: 24px; }
   .menu-right { width: min(54vw, 420px); padding: 50px 8px 6px; gap: 6px; justify-content: flex-start; overflow-y: auto; }
   .menu-right .box { padding: 6px 8px; }
   .menu-right > .box:last-child { display: none; }
@@ -758,7 +824,8 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   .menu-item { font-size: 14px; padding: 5px 6px; }
   .menu-item.play { font-size: 19px; }
   .menu-item.play small { display: block; }
-  #menu-partner { height: min(30vh, 110px); }
+  .roster { --rc-w: 60px; }
+  .roster-card .rname { display: none; }
 }
 
 /* ---------- pantalla de carga (lo primero que se ve y lo que lee Google) ---------- */

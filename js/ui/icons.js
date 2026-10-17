@@ -179,6 +179,11 @@ G.Icons = (() => {
   };
   // Variantes de paleta.
   UI.starDim = { rows: UI.star.rows, pal: { y: '#3a4870', o: '#2a3458', w: '#4a5a88' } };
+  // Half star: the left half bright, the right half dim (capital letters = the dim colors).
+  UI.starHalf = {
+    rows: UI.star.rows.map(r => [...r].map((ch, x) => (x >= 6 && 'yow'.includes(ch) ? ch.toUpperCase() : ch)).join('')),
+    pal: { y: '#ffd23f', o: '#c08a10', w: '#fff4b0', Y: '#3a4870', O: '#2a3458', W: '#4a5a88' }
+  };
 
   // ---------------- type glyphs (8x8, white over the emblem) ----------------
   const TYPE_GLYPH = {
@@ -413,6 +418,21 @@ G.Icons = (() => {
     return `<span class="rarity-ball" title="${(G.Gacha && G.Gacha.RARITY_NAME[n]) || ''}">${html(RARITY_BALL[n] || 'ball', size)}</span>`;
   }
 
+  /**
+   * Base Stat Total as a 7-star rating: each star is 100 BST and a half star is 50,
+   * rounded to the NEAREST 50. Unfilled stars are shown dim so Pokemon compare at a glance.
+   * (BST tops out at 720, Arceus, which is exactly 7 stars.)
+   */
+  function bstStars(bst, size = 12) {
+    const halves = Math.max(0, Math.min(14, Math.round(bst / 50)));
+    let out = '';
+    for (let i = 0; i < 7; i++) {
+      const name = halves >= (i + 1) * 2 ? 'star' : halves === i * 2 + 1 ? 'starHalf' : 'starDim';
+      out += html(name, size);
+    }
+    return `<span class="bst-stars" title="BST ${bst} · ${halves / 2} / 7 stars">${out}</span>`;
+  }
+
   /** Publishes to CSS the icons used by the stylesheets. */
   function installCss() {
     const r = document.documentElement.style;
@@ -420,5 +440,5 @@ G.Icons = (() => {
     r.setProperty('--ico-cursor', `url("${url('cursor')}")`);
   }
 
-  return { canvas, url, html, draw, twinkle, rarity, RARITY_BALL, installCss, UI, TYPE_GLYPH };
+  return { canvas, url, html, draw, twinkle, rarity, bstStars, RARITY_BALL, installCss, UI, TYPE_GLYPH };
 })();

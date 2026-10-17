@@ -1,0 +1,96 @@
+name: Database
+
+on:
+  pull_request:
+    paths: &paths
+      - "**.py"
+      - "**.toml"
+      - "**.lock"
+      - "data/**"
+      - "Resources/docker/app/Dockerfile"
+      - "Resources/nginx/**"
+      - "docker-compose**"
+      - Makefile
+      - .github/actions/setup-uv/action.yml
+      - .github/workflows/database.yml
+  push:
+    branches-ignore:
+      - master
+      - staging
+    paths: *paths
+
+jobs:
+  csv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Lint
+        run: |
+          set -e
+          curl -sSL https://github.com/Clever/csvlint/releases/download/v0.3.0/csvlint-v0.3.0-linux-amd64.tar.gz | tar xz  --strip-components=1
+          for filename in data/v2/csv/*.csv; do
+            echo "$filename"
+            ./csvlint -lazyquotes "$filename" # TODO: remove lazyquotes when https://github.com/Clever/csvlint/issues/45 will be addressed
+          done
+  openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup uv
+        uses: ./.github/actions/setup-uv
+      - name: Generate OpenAPI schema
+        run: |
+          make install-base
+          make openapi-generate
+  sqlite:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Pull cries submodule
+        run: git submodule update --init data/v2/cries
+      - name: Setup uv
+        uses: ./.github/actions/setup-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Start pokeapi
+        run: |
+          make install-base
+          make setup
+          make build-db
+          nohup make serve &
+          sleep 3
+      - name: Dump DB
+        run: stat db.sqlite3
+      - name: Test data
+        run: curl -Ss http://localhost:8000/api/v2/pokemon/1/ | grep -q 'bulbasaur'
+  postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Pull cries submodule
+        run: git submodule update --init data/v2/cries
+      - name: Setup uv
+        uses: ./.github/actions/setup-uv
+      - name: Build and start services
+        run: make docker-dev-up
+      - name: Run migrations and build database
+        run: |
+          make docker-migrate
+          make docker-build-db
+      - name: Dump DB
+        run: make docker-dump-db
+      - name: Import database
+        run: make docker-restore-db
+      - name: Test data
+        run: curl -Ss http://localhost/api/v2/pokemon/1/ | grep -q 'bulbasaur'
+      - name: Crawl API
+        run: |
+          uvx --from pokeapi-ditto ditto clone --src-url http://localhost/ --dest-dir ./out

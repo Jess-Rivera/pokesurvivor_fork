@@ -28,13 +28,24 @@ G.Input = (() => {
     attack_4:   ['digit4', 'numpad4'],
     cycle_prev: ['keyq'],
     cycle_next: ['keye', 'tab'],
-    pause:      ['keyp', 'escape']
+    pause:      ['keyp', 'escape'],
+    // team: swap the active Pokemon (Phase A). cycle + direct-to-slot.
+    swap_prev:  ['keyz'],
+    swap_next:  ['keyc'],
+    swap_1:     ['keyh'],
+    swap_2:     ['keyj'],
+    swap_3:     ['keyk'],
+    swap_4:     ['keyl'],
+    swap_5:     ['semicolon'],
+    swap_6:     ['quote']
   };
   // The order and labels used by the Settings rebind screen.
   const ACTIONS = [
     'move_up', 'move_down', 'move_left', 'move_right',
     'attack_1', 'attack_2', 'attack_3', 'attack_4',
-    'cycle_prev', 'cycle_next', 'pause'
+    'cycle_prev', 'cycle_next', 'pause',
+    'swap_prev', 'swap_next',
+    'swap_1', 'swap_2', 'swap_3', 'swap_4', 'swap_5', 'swap_6'
   ];
 
   // Keys that must never be bound (would soft-lock or fight the browser).

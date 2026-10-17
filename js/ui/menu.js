@@ -3,6 +3,8 @@ G.MenuUI = (() => {
   const $ = G.UI.$;
   const GEN_NAMES = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Teselia', 'Kalos', 'Alola', 'Galar', 'Paldea'];
   let dexFilter = 'all', dexGen = 1, dexSel = null;
+  // null = the Pokédex is browse-only; 0-5 = choosing a Pokémon for that team slot.
+  let pickSlot = null;
 
   function init() {
     const ICON = { play: 'ball', dex: 'book', upgrades: 'up', gacha: 'ball4', goals: 'medal3', friends: 'friends', rank: 'trophy', settings: 'gear' };
@@ -12,7 +14,7 @@ G.MenuUI = (() => {
       b.onclick = () => {
         const go = b.dataset.go;
         if (go === 'play') { if (G.Social.room) G.LobbyUI.open(); else G.Flow.play(); }
-        else if (go === 'dex') openDex();
+        else if (go === 'dex') browseDex();
         else if (go === 'upgrades') openUpgrades();
         else if (go === 'gacha') G.GachaUI.open();
         else if (go === 'goals') G.GoalsUI.open();
@@ -34,29 +36,10 @@ G.MenuUI = (() => {
 
   function open() {
     const s = G.DB.save;
-    const mon = G.DEX_BY[s.partner];
-    const shiny = !!s.partnerShiny && G.DB.ownsShiny(mon.dex);
+    pickSlot = null;
     G.UI.chrome(true);
     G.UI.show('scr-menu');
-    G.UI.sprite($('menu-partner'), mon.dex, { lively: true, scale: 4, hero: true, shiny });
-    $('menu-partner').style.setProperty('--stage-c', shiny ? '#9ae6ff' : G.U.TYPE_COLOR[mon.types[0]]);
-    $('menu-partner').classList.toggle('shiny', shiny);
-    $('menu-partner-name').innerHTML = mon.name + (shiny ? ' ' + G.Icons.html('shiny', 24) : '');
-    $('menu-partner-info').innerHTML = G.UI.typeChips(mon.types) + ' ' + G.UI.stars(mon.rarity);
-    // Normal / shiny by hand, right here (on mobile it was not found on the card).
-    const seg = $('menu-shiny');
-    seg.classList.toggle('hidden', !G.DB.ownsShiny(mon.dex));
-    seg.lastChild.innerHTML = G.Icons.html('shiny', 12) + ' Shiny';
-    seg.querySelectorAll('button').forEach(b => {
-      b.classList.toggle('on', (b.dataset.v === '1') === shiny);
-      b.onclick = () => {
-        if ((b.dataset.v === '1') === shiny) return;
-        s.partnerShiny = b.dataset.v === '1';
-        G.DB.commit();
-        G.Audio.sfx('confirm');
-        open();
-      };
-    });
+    renderRoster();
 
     const owned = Object.keys(s.owned).filter(d => G.DEX_BY[d]).length;
     const shinies = Object.keys(s.shiny || {}).length;
@@ -99,7 +82,90 @@ G.MenuUI = (() => {
     $('menu-friends-sub').classList.toggle('gold', req > 0);
   }
 
+  /** Home screen: the 6 fixed team slots as buttons. Each opens the Pokédex to choose for that slot. */
+  function renderRoster() {
+    const s = G.DB.save;
+    G.DB.normalizeTeam(s);
+    const box = $('menu-roster');
+    box.innerHTML = '';
+    s.team.forEach((t, slot) => {
+      const b = document.createElement('button');
+      const mon = t && G.DEX_BY[t.dex];
+      const shiny = !!(mon && t.shiny && G.DB.ownsShiny(t.dex));
+      b.className = 'roster-card' + (mon ? '' : ' empty') + (slot === 0 ? ' lead' : '');
+      b.title = mon ? `Slot ${slot + 1}: ${mon.name} (click to change)` : `Slot ${slot + 1}: empty (click to add)`;
+      b.insertAdjacentHTML('beforeend',
+        `<span class="rn">${slot === 0 ? G.Icons.html('crown', 12) : ''}${slot + 1}</span>`);
+      if (shiny) b.insertAdjacentHTML('beforeend', `<span class="rsh">${G.Icons.html('shiny', 12)}</span>`);
+      if (mon) {
+        b.appendChild(G.UI.spriteCanvas(mon.dex, 92, 80, { lively: true, scale: 2, hero: true, shiny }));
+        b.insertAdjacentHTML('beforeend', `<span class="rname">${mon.name}</span>`);
+      } else {
+        b.insertAdjacentHTML('beforeend', '<span class="rslot">+</span><span class="rname">Empty</span>');
+      }
+      b.onclick = () => pickDex(slot);
+      box.appendChild(b);
+    });
+  }
+
   // ---------------- collection ----------------
+
+  /** Pokédex from the menu button: browse only, nothing to pick. */
+  function browseDex() {
+    pickSlot = null;
+    showDetail.last = null;            // re-read the shiny variant from the team
+    openDex();
+  }
+
+  /** Pokédex opened from a roster card: browse, then Commit to Roster for that slot. */
+  function pickDex(slot) {
+    const s = G.DB.save;
+    const cur = s.team[slot];
+    pickSlot = slot;
+    dexSel = cur ? cur.dex : (dexSel != null ? dexSel : s.partner);
+    dexGen = G.DEX_BY[dexSel].gen;
+    viewShiny = !!(cur && cur.shiny && G.DB.ownsShiny(cur.dex));
+    showDetail.last = dexSel;          // keep the variant just chosen
+    openDex();
+  }
+
+  /**
+   * Put `dex` in fixed slot `slot`. A Pokémon already on the team in another slot
+   * SWAPS places with whoever is in `slot`, so nobody drops off the team. Slot 1
+   * (the lead) can never be left empty.
+   */
+  function commitToSlot(slot, dex, shiny) {
+    const s = G.DB.save;
+    const team = s.team.slice();
+    const from = team.findIndex(t => t && t.dex === dex);
+    const displaced = team[slot] || null;
+    if (from >= 0 && from !== slot) {
+      if (from === 0 && !displaced) { G.UI.toast('Slot 1 is the lead and cannot be left empty'); return; }
+      team[from] = displaced;
+    }
+    team[slot] = { dex, shiny: !!shiny };
+    s.team = team;
+    s.partner = team[0].dex;                  // the lead is the companion
+    s.partnerShiny = !!team[0].shiny;
+    G.DB.commit();
+    const name = G.DEX_BY[dex].name;
+    G.UI.toast(from >= 0 && from !== slot && displaced
+      ? `${name} and ${G.DEX_BY[displaced.dex].name} swapped slots`
+      : `${name} is now in Slot ${slot + 1}`);
+    open();
+  }
+
+  function removeFromSlot(slot) {
+    if (slot === 0) return;
+    const s = G.DB.save;
+    const t = s.team[slot];
+    if (!t) return;
+    s.team = s.team.slice();
+    s.team[slot] = null;
+    G.DB.commit();
+    G.UI.toast(`${G.DEX_BY[t.dex].name} removed from Slot ${slot + 1}`);
+    open();
+  }
 
   function openDex() {
     G.UI.show('scr-dex', true);
@@ -107,6 +173,14 @@ G.MenuUI = (() => {
     if (dexSel == null) { dexSel = s.partner; dexGen = G.DEX_BY[s.partner].gen; }
     const owned = Object.keys(s.owned).filter(d => G.DEX_BY[d]).length;
     $('dex-total').textContent = `${owned} / ${G.DEX.length}`;
+    const banner = $('dex-pick-banner');
+    banner.classList.toggle('hidden', pickSlot == null);
+    if (pickSlot != null) {
+      const cur = s.team[pickSlot];
+      banner.textContent = `Choosing for Slot ${pickSlot + 1}` + (pickSlot === 0 ? ' (lead)' : '')
+        + ' · ' + (cur ? 'now ' + G.DEX_BY[cur.dex].name : 'empty');
+    }
+    $('dex-back').textContent = pickSlot != null ? 'Cancel' : 'Volver';
 
     // Generation tabs, with how many you have of each.
     const tabs = $('dex-gens');
@@ -153,9 +227,11 @@ G.MenuUI = (() => {
       const cell = document.createElement('div');
       cell.className = 'cell' + (own ? '' : ' locked') + (p.dex === dexSel ? ' on' : '');
       cell.insertAdjacentHTML('beforeend', `<span class="no">${String(p.dex).padStart(3, '0')}</span>`);
-      if (p.dex === s.partner) cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Compañero">${G.Icons.html('crown', 14)}</span>`);
+      const ts = s.team.findIndex(t => t && t.dex === p.dex);   // roster slot, or -1
+      if (ts === 0) cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Lead (slot 1)">${G.Icons.html('crown', 14)}</span>`);
+      else if (ts > 0) cell.insertAdjacentHTML('beforeend', `<span class="badge-r badge-slot" title="Roster slot ${ts + 1}">${ts + 1}</span>`);
       else if (sh) cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Tienes su shiny">${G.Icons.html('shiny', 12)}</span>`);
-      const useShiny = sh && p.dex === s.partner && s.partnerShiny;
+      const useShiny = sh && ts >= 0 && !!s.team[ts].shiny;
       cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, silhouette: !own, shadow: own, shiny: useShiny }));
       cell.insertAdjacentHTML('beforeend', `<b>${own ? p.name : '???'}</b>${G.UI.stars(p.rarity, 9)}`);
       cell.onclick = () => {
@@ -177,15 +253,14 @@ G.MenuUI = (() => {
     const p = G.DEX_BY[dex];
     const own = !!s.owned[dex];
     const hasSh = G.DB.ownsShiny(dex);
-    const isPartner = dex === s.partner;
+    const slotOf = s.team.findIndex(t => t && t.dex === dex);   // roster slot of this Pokémon, or -1
     if (!hasSh) viewShiny = false;
-    else if (isPartner && dex !== showDetail.last) viewShiny = !!s.partnerShiny;
+    else if (slotOf >= 0 && dex !== showDetail.last) viewShiny = !!s.team[slotOf].shiny;
     showDetail.last = dex;
 
     const max = { hp: 183, atk: 1.55, spd: 137 };
     const bar = (label, v, m, txt) =>
       `<div class="stat"><span>${label}</span><div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div><span>${txt}</span></div>`;
-    const usingThis = isPartner && (!hasSh || !!s.partnerShiny === viewShiny);
 
     const box = $('dex-detail');
     box.innerHTML = `
@@ -196,36 +271,56 @@ G.MenuUI = (() => {
       <div class="center">
         <div style="color:var(--muted);font-size:13px">Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</div>
         <h3>${own ? p.name : '???'}</h3>
-        <div style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)} ${G.Gacha.RARITY_NAME[p.rarity]}</div>
+        <div class="rarity-line" style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)}<span>${G.Gacha.RARITY_NAME[p.rarity]}</span>${own ? G.Icons.bstStars(p.bst) : ''}</div>
         <div style="margin:6px 0">${own ? G.UI.typeChips(p.types) : ''}</div>
       </div>
       ${own ? `
         ${bar('Vida', p.hp, max.hp, p.hp)}
         ${bar('Ataque', p.atk, max.atk, '×' + p.atk.toFixed(2))}
         ${bar('Velocidad', p.spd, max.spd, p.spd)}
+        ${p.stats ? '<div id="dex-hex" class="hex-wrap"></div>' : ''}
         <p style="font-size:14px;margin:10px 0 4px">Empieza con <b class="gold">${G.Moves.BY_ID[G.startMoveOf(dex)].name}</b></p>
         <p class="move-icons" title="Movimientos que puede aprender">
           ${G.Moves.poolFor(p).map(id => `<span title="${G.Moves.BY_ID[id].name}">${G.Icons.html('move:' + id, 16)}</span>`).join('')}</p>
-        ${usingThis
-          ? '<button class="btn grow" disabled style="width:100%">Es tu compañero</button>'
-          : `<button id="dex-pick" class="btn gold" data-sfx="confirm" style="width:100%">Elegir de compañero${viewShiny ? ' (shiny)' : ''}</button>`}
+        ${rosterPanel(dex, slotOf, hasSh)}
       ` : `<p class="center" style="color:var(--muted)">Aún no lo tienes.<br>Consíguelo en el banner de <b class="gold">${GEN_NAMES[p.gen - 1]}</b>
             o derrotándolo cuando salga shiny.</p>`}
     `;
     $('dex-big').style.setProperty('--stage-c', !own ? '#5b83d6' : viewShiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]]);
     $('dex-big').classList.toggle('shiny', own && viewShiny);
+    // Base stats as a hexagon, like the main games (only for Pokémon you have).
+    const hex = $('dex-hex');
+    if (hex) hex.appendChild(G.StatChart.make(p.stats, viewShiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]]));
     G.UI.sprite($('dex-big'), dex, { lively: own, spin: own, silhouette: !own, scale: 3, hero: true, shiny: own && viewShiny });
     box.querySelectorAll('.seg button').forEach(b => {
       b.onclick = () => { viewShiny = b.dataset.v === '1'; showDetail(dex); };
     });
-    const pick = $('dex-pick');
-    if (pick) pick.onclick = () => {
-      s.partner = dex;
-      s.partnerShiny = hasSh && viewShiny;
-      G.DB.commit();
-      G.UI.toast(p.name + (s.partnerShiny ? ' shiny' : '') + ' es ahora tu compañero');
-      renderGrid(); showDetail(dex);
-    };
+    const commit = $('dex-commit');
+    if (commit) commit.onclick = () => commitToSlot(pickSlot, dex, hasSh && viewShiny);
+    const rm = $('dex-remove');
+    if (rm) rm.onclick = () => removeFromSlot(pickSlot);
+  }
+
+  /**
+   * The roster area of the detail card. Browse mode: plain text only, no buttons.
+   * Pick mode: Commit to Roster (and Remove from Roster for a filled non-lead slot).
+   */
+  function rosterPanel(dex, slotOf, hasSh) {
+    const s = G.DB.save;
+    if (pickSlot == null) {
+      return slotOf >= 0 ? `<p class="roster-note">On your roster · Slot ${slotOf + 1}${slotOf === 0 ? ' (lead)' : ''}</p>` : '';
+    }
+    const cur = s.team[pickSlot];
+    const same = !!cur && cur.dex === dex && !!cur.shiny === (hasSh && viewShiny);
+    let note = '';
+    if (slotOf >= 0 && slotOf !== pickSlot) {
+      note = `<p class="roster-note">Currently in Slot ${slotOf + 1}: committing swaps it with Slot ${pickSlot + 1}.</p>`;
+    }
+    return note
+      + `<button id="dex-commit" class="btn gold" data-sfx="confirm" style="width:100%"${same ? ' disabled' : ''}>`
+      + (same ? `Already in Slot ${pickSlot + 1}` : 'Commit to Roster' + (hasSh && viewShiny ? ' (shiny)' : '')) + '</button>'
+      + (cur && pickSlot !== 0
+          ? '<button id="dex-remove" class="btn ghost" style="width:100%;margin-top:6px">Remove from Roster</button>' : '');
   }
 
   // ---------------- mejoras ----------------

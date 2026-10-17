@@ -10,6 +10,8 @@ G.LayoutUI = (() => {
   const S = 54, GAP = 9, ITEM_GAP = 18, N = 4;          // como en hud.js
   const BAR_W = S + ITEM_GAP + N * S + (N - 1) * GAP;
   let el = null, pos = null, moved = null, mode = 'float';
+  /** How far the HUD lifts the action bar above the bottom HP strip (see hud.js BAR_LIFT). */
+  const lift = () => (G.HUD && G.HUD.BAR_LIFT) || 0;
 
   /** Where each thing is right now (center in px), with the saved values or the defaults. */
   function current(k, w, h) {
@@ -20,7 +22,7 @@ G.LayoutUI = (() => {
       if (p) return [p[0] * w, p[1] * h];
       const totalW = N * S + (N - 1) * GAP;
       const left = (w - totalW) / 2 - S - ITEM_GAP;
-      return [left + BAR_W / 2, h - S - 18 - Math.min(28, sa.bottom) + S / 2];
+      return [left + BAR_W / 2, h - S - 18 - Math.min(28, sa.bottom) - lift() + S / 2];
     }
     if (p) return [p[0] * w, p[1] * h];
     return [w - 52 - Math.min(44, sa.right) + 20, 12 + Math.min(20, sa.top) + 20];
@@ -28,7 +30,7 @@ G.LayoutUI = (() => {
 
   /** The same thing the HUD does so it does not go off the screen. */
   function fit(k, x, y, w, h) {
-    if (k === 'bar') return [G.U.clamp(x, 6 + BAR_W / 2, Math.max(6 + BAR_W / 2, w - BAR_W / 2 - 6)), G.U.clamp(y, 24 + S / 2, h - S / 2 - 6)];
+    if (k === 'bar') return [G.U.clamp(x, 6 + BAR_W / 2, Math.max(6 + BAR_W / 2, w - BAR_W / 2 - 6)), G.U.clamp(y, 24 + S / 2, h - S / 2 - 6 - lift())];
     if (k === 'pause') return [G.U.clamp(x, 24, w - 24), G.U.clamp(y, 30, h - 24)];
     const r = G.Touch.R();
     return [G.U.clamp(x, r + 4, w - r - 4), G.U.clamp(y, r + 4, h - r - 4)];

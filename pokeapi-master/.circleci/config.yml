@@ -1,0 +1,138 @@
+version: 2.1
+
+jobs:
+  static-checks:
+    docker:
+      - image: cimg/python:3.14
+    steps:
+      - checkout
+      - run:
+          name: Pull Cries Submodule
+          command: |
+            git submodule init data/v2/cries
+            git submodule update --remote data/v2/cries
+      - run:
+          name: Install deps
+          command: make install
+      - run:
+          name: Pre-commit checks
+          command: SKIP=ruff-format,ruff-check,ty-check,generate-openapi uv run pre-commit run --all-files --show-diff-on-failure
+      - run:
+          name: Format Check
+          command: make format-check
+      - run:
+          name: Generate OpenAPI schema
+          command: make openapi-generate
+
+  run-tests:
+    parameters:
+      python_version:
+        type: string
+    docker:
+      - image: cimg/python:<< parameters.python_version >>
+    steps:
+      - checkout
+      - run:
+          name: Pull Cries Submodule
+          command: |
+            git submodule init data/v2/cries
+            git submodule update --remote data/v2/cries
+      - run:
+          name: Install deps
+          command: make install
+      - run:
+          name: Run tests
+          command: make test
+
+  test:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: All tests passed
+          command: echo "All matrix tests completed successfully"
+
+  build:
+    docker:
+      - image: cimg/python:3.14
+    steps:
+      - checkout
+      - run:
+          name: Pull Cries Submodule
+          command: |
+            git submodule init data/v2/cries
+            git submodule update --remote data/v2/cries
+      - run:
+          name: Install deps
+          command: make install-base
+      - run:
+          name: Run migrations
+          command: make setup
+      - run:
+          name: Build database
+          command: make build-db
+
+  deploy:
+    machine:
+      image: ubuntu-2204:2024.11.1
+    resource_class: large
+    steps:
+      - checkout
+      - run:
+          name: Pull Cries Submodule
+          command: |
+            git submodule init data/v2/cries
+            git submodule update --remote data/v2/cries
+      - add_ssh_keys:
+          fingerprints:
+            - "d3:5f:9d:68:ea:12:9a:42:d3:d3:e1:db:b0:6a:fc:d2"
+      - run:
+          name: Generate new data, push to PokeAPI/api-data's staging branch, if master open a Pull Request towards PokeAPI/api-data's master branch
+          command: bash -x Resources/scripts/updater.sh
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - static-checks
+      - run-tests:
+          matrix:
+            parameters:
+              python_version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+      - test:
+          requires:
+            - run-tests
+      - build
+      - deploy:
+          requires:
+            - static-checks
+            - test
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - staging
+  weekly:
+    jobs:
+      - static-checks
+      - run-tests:
+          matrix:
+            parameters:
+              python_version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+      - test:
+          requires:
+            - run-tests
+      - build
+      - deploy:
+          requires:
+            - static-checks
+            - test
+            - build
+    triggers:
+      - schedule:
+          cron: "0 0 * * 1"
+          filters:
+            branches:
+              only:
+                - staging

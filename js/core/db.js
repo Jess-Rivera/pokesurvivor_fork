@@ -77,6 +77,7 @@ G.DB = (() => {
       shiny: {},              // dex -> { at, from } — shiny variants obtained
       partner: null,          // dex of the Pokemon you play with
       partnerShiny: false,    // play with its shiny version (if you have it)
+      team: [null, null, null, null, null, null], // 6 FIXED slots, each { dex, shiny } or null (slot 0 = lead = partner)
       starter: null,          // dex you got in the test
       personality: null,      // { trait, scores }
       upgrades: {},           // (old) account upgrades; now they go per Pokemon
@@ -156,6 +157,36 @@ G.DB = (() => {
         else u[id] = Math.min(G.Upgrades.BY[id].max, n(u[id]));
       }
     }
+    normalizeTeam(s);
+  }
+
+  const TEAM_SIZE = 6;
+
+  /**
+   * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny } or null.
+   *   - older saves (a short, compact list or nothing at all) load into the
+   *     first slots, padded with empty ones;
+   *   - a Pokemon that does not exist, or that repeats, becomes an empty slot;
+   *   - slot 0 is always the lead: it mirrors the chosen companion
+   *     (partner / partnerShiny), which wins if the two ever disagree.
+   * Safe to call as often as needed (it is called on load, on merge and on commit).
+   */
+  function normalizeTeam(s) {
+    const src = Array.isArray(s.team) ? s.team : [];
+    const seen = new Set();
+    const out = [];
+    for (let i = 0; i < TEAM_SIZE; i++) {
+      const t = src[i];
+      const ok = t && t.dex != null && !seen.has(t.dex) && (!G.DEX_BY || G.DEX_BY[t.dex]);
+      if (!ok) { out.push(null); continue; }
+      seen.add(t.dex);
+      out.push({ dex: t.dex, shiny: !!t.shiny });
+    }
+    if (s.partner != null) {
+      for (let i = 1; i < TEAM_SIZE; i++) if (out[i] && out[i].dex === s.partner) out[i] = null;
+      out[0] = { dex: s.partner, shiny: !!s.partnerShiny };
+    }
+    s.team = out;
   }
 
   /**
@@ -638,6 +669,7 @@ G.DB = (() => {
    *                'run': on finishing a game (at most every 30 min) · false: every 2 h
    */
   function commit(urgent = false) {
+    if (save) normalizeTeam(save);   // before the guest check: guests play with a team too
     if (guest || !key || !save) return false;
     save.updated = Date.now();
     if (mode === 'local') return write(K_SAVE + key, save);
@@ -758,7 +790,7 @@ G.DB = (() => {
 
   return {
     ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow,
-    owns, grant, ownsShiny, grantShiny, merge, setName, upgradesOf,
+    owns, grant, ownsShiny, grantShiny, merge, setName, upgradesOf, normalizeTeam,
     onSync(fn) { listeners.add(fn); },
     onLeave(fn) { leaveHooks.push(fn); },
     /** Low-level access for the network modules (cloud mode only). */
