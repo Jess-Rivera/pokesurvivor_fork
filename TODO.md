@@ -6,7 +6,9 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-(nothing yet)
+- Team Roster feature: merge-reviewed, merge-ready pending (1) applying the one i18n fix
+  (game.js ~L718, Spanish "entra en combate" -> English "enters the fight!") and
+  (2) a git diff against main before merging.
 
 ## Up next (local single-player)
 (add the first real features/bugs here)

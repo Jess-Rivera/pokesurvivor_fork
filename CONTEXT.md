@@ -32,13 +32,15 @@ suspect the other tool skipped it.
 - **English-native:** Jess develops in English. Author new user-facing strings directly in English.
   Leave inherited Spanish string literals as-is (they are the i18n keys). Do not add lang-en.js
   entries or Spanish translations for our own new strings.
-- **Propose-first for game code:** anything that changes what the game does when you run it
-  (code, js/data/*.js, dev.html, build config, assets) is PROPOSED as a diff for Jess to apply.
-  He applies all game changes by hand.
+- **Propose-and-approve for game code:** anything that changes what the game does when you run it
+  (code, js/data/*.js, dev.html, build config, assets) is PROPOSED as a diff with the rationale.
+  Jess approves or denies; on approval the assistant applies the edit itself. Jess does NOT type
+  code in by hand, and the assistant does NOT apply game-code changes before approval.
 - **Free-edit for project docs:** the Markdown project docs (this file, DEVLOG, DECISIONS,
   BALANCE, TODO/ISSUES) do NOT affect the game, so an assistant edits them directly, no proposal.
   Dividing line: "does this change what the game does when you run it?" No = edit freely. Yes = propose.
-- **Git:** the assistant NEVER runs git. It gives Jess the commands and strategy; Jess runs them.
+- **Git:** the assistant NEVER runs git (not even to answer a merge-readiness question). It inspects
+  the filesystem directly or gives Jess the commands and strategy; Jess runs all git himself.
 - **No em-dashes** in any prose. Use commas, parentheses, "since"/"because" instead.
 
 ## Where things live

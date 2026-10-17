@@ -41,8 +41,10 @@ side only and note any deferred hook in TODO.md.
 
 ## Edit boundary, propose-first vs free-edit
 Dividing line: "does this change what the game does when you run it?"
-- YES, propose-first (Jess applies by hand): game code, js/data/*.js (it IS game data, the game loads
-  it), dev.html, build config, assets.
+- YES, propose-and-approve: game code, js/data/*.js (it IS game data, the game loads it), dev.html,
+  build config, assets. The assistant shows the diff and the rationale, Jess approves or denies, and
+  ONLY on approval the assistant applies the edit itself. Jess does not type code by hand; the
+  assistant does not apply game-code changes before approval.
 - NO, edit directly (no proposal needed): the Markdown project docs, CONTEXT/DEVLOG/DECISIONS/BALANCE/
   TODO/ISSUES/CLAUDE. They do not affect the running game.
 

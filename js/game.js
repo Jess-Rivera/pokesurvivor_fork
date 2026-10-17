@@ -715,7 +715,7 @@ G.Game = (() => {
         swapLock = 0; deathT = 0;
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
         G.Audio.sfx('shiny');
-        G.Spawner.say('¡' + pl.mon.name + ' entra en combate!', 2, true);
+        G.Spawner.say(pl.mon.name + ' enters the fight!', 2, true);
         return;
       }
       // Whole team down: play the faint beat, then end the run.
