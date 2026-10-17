@@ -5,6 +5,43 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (canonical move-power migration: APPLIED, feature/base-stats, not yet playtested/committed)
+- WHAT: migrated all 64 moves in js/data/moves.js to canonical mainline data (Approach B: keep the
+  field NAMED `dmg`, change its VALUES to canonical base power; the field is already the Power term the
+  A/D formula reads, so no rename ripple through MULT/ladders/EVO_MODS).
+  Per move: name -> English (from move_names.csv lang 9); desc -> English short_effect
+  (move_effect_prose.csv lang 9); dmg -> canonical power from moves.csv (status moves dmg: 0); and
+  ANNOTATE-only new fields ailment / ailmentChance / flinch / statChance (from move_meta.csv +
+  move_meta_ailments.csv). Existing gameplay flags (burn/poison/slow/hex) and all tuning numbers
+  (cd/radius/count/speed/...) preserved verbatim. Removed the melee `m.dmg = Math.round(m.dmg*1.2)`
+  baseline bump (canonical power is the new baseline); kept the melee radius/arc 1.25 bumps.
+- preserve-then-annotate (Jess's choice): the 4 annotate fields are DATA ONLY, nothing reads them yet.
+  burn/poison/slow still play exactly as before. A future slice can switch to canonical procs
+  (ailment + chance, flinch, stat-drop) when wanted. The dry-run showed `slow` is overloaded in the
+  fork (it stands in for speed-drop vs freeze vs paralysis vs weather) -> that split is deferred to the
+  procs slice; recorded in the annotate fields for now.
+- stats.js: DMG_SCALAR 2.0 -> 0.47. Re-centered because canonical power raised the median damaging-move
+  power from fork ~14 to ~60 (so 2.0 * 14/60 ~= 0.47, median-based). attackFactor UNCHANGED (still reads
+  move.dmg; Approach B kept the field name). HP_SCALAR untouched (orthogonal dials: power is a damage
+  term, never touches HP; enemy HP NOT re-solved, correct).
+- BALANCE SHIFT (intended, playtest-worthy): canonical power is not a uniform rescale, per-move
+  canon/fork ratio ranged 1.88x (poison-sting) to 12.86x (flamethrower 7->90). The fork had heavily
+  nerfed the big special moves; canonical restores mainline proportions, so weak utility moves get
+  weaker and signature nukes (flamethrower, bug-buzz, psychic, discharge, bubble-beam) get much
+  stronger relative to today. 0.47 only re-centers the AVERAGE; expect to fine-tune by feel.
+- i18n: switching move `name` to English makes each move's former Spanish name (a lang-en.js key) go
+  DEAD/unused. Harmless and correct per the English-native rule (new strings authored in English, not
+  via lang-en.js). The lang-en.js entries can be pruned later; left in place for now.
+- VERIFIED: moves.js + stats.js + changelog.js balance-check clean (node --check blocked in sandbox).
+  All 64 entries annotated; MULT list, level-up ladder mults, and EVO_MODS untouched (they multiply
+  `dmg`, which now carries canonical power, so upgrades/evolutions scale correctly). changelog.js entry
+  added (chg, English) and re-verified.
+- NOT done: in-browser playtest (expect the new spread + possibly re-tune DMG_SCALAR by feel), commit.
+- Where we stopped: canonical power migration applied + verified on disk (feature/base-stats). Next:
+  playtest, tune DMG_SCALAR if needed, commit. Then the deferred work: canonical-procs slice (wire the
+  annotate fields; split the overloaded `slow`), full canonical learnsets, and sub-slice C (enemy->
+  player, now cleaner since enemies can draw the same canonical move/power data).
+
 ## 2026-10-17 (Pokedex UI redesign, APPLIED on feature/pokedex-ui, not yet playtested/committed)
 - LAYOUT TWEAK (same session, after first visual check): (1) widened the dex screen, scoped so other
   screens keep their cap: `#scr-dex .box.wide { width: min(1600px, 98vw) }` (extra-wide, Jess's pick).

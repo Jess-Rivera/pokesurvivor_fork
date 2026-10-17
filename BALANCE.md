@@ -15,7 +15,19 @@ re-tune later.
   from Vampire Survivors, Brotato, and Halls of Torment where useful.
 
 ## Moves
-(none tuned yet)
+### Canonical power migration (2026-10-17)
+- All 64 moves now carry canonical mainline base power in the `dmg` field (Approach B: field name kept,
+  values migrated). Status moves = dmg 0 (they route through the neutral denominator, no A/D ratio).
+- DMG_SCALAR: 2.0 -> 0.47 (js/core/stats.js). Reason: median damaging-move power rose from fork ~14 to
+  canonical ~60, so the global damage dial is divided by ~that ratio to hold the early hits-to-kill band
+  (~3-4, playtest-confirmed pre-migration). 0.47 is median-based; mean-based was ~0.46 (within 2%).
+  THIS IS A STARTING POINT: canonical power widened the move-to-move spread (per-move ratio 1.88x-12.86x
+  vs fork), so re-tune DMG_SCALAR by feel after playtest.
+- Representative canonical powers now in use: tackle 40, ember 40, flamethrower 90, hydro-pump 110,
+  leaf-storm 130, hyper-voice 90, psychic 90, bug-buzz 90, poison-sting 15. (Fork values were ~7-34.)
+- Annotate-only fields added (ailment/ailmentChance/flinch/statChance) but NOT yet wired; current
+  burn/poison/slow gameplay unchanged. The melee x1.2 dmg bump was removed (canonical power is the
+  baseline); melee radius/arc x1.25 bumps kept.
 
 ## Enemies
 (none tuned yet)

@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Moves rebuilt on canonical data', 'Moves rebuilt on canonical data'], chg: [
+    ['Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.',
+     'Every move now uses its real mainline base power, English name, and an English effect description. This rebalances attacks toward the official games: utility moves hit a bit softer and signature attacks (Flamethrower, Psychic, Bug Buzz and the like) hit much harder, so move choice matters more. Overall damage was re-centered so early fights still take a few hits. Status effects play the same as before for now.']
+  ] },
   { d: '2026-10-17', title: ['Pokedex search and filters', 'Pokedex search and filters'], new: [
     ['The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.',
      'The Pokedex now has a search bar (by name or number), plus Region, Ownership and Sort-by dropdowns and multi-select Type, Rarity and BST filters, so you can find and compare Pokemon across every region at once instead of flipping through one region at a time. Sorting by a stat sinks Pokemon you do not own to the bottom.']
