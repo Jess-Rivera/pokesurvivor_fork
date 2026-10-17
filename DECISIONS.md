@@ -5,6 +5,49 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-17, HP scalars and damage scalars are ORTHOGONAL dials (move-power migration note)
+Mental model to avoid re-tuning the wrong thing. There are three independent scalars:
+  (1) HP_SCALAR = 2.0  -> multiplies the HP formula. SHARED by player AND enemy HP (G.Stats.hpForLevel).
+      Its job is HP consistency (a base-65 player and base-65 enemy have identical HP). Nothing to do
+      with damage.
+  (2) DMG_SCALAR = 2.0 -> multiplies player->enemy DAMAGE (the A/D ratio, sub-slice B). A damage dial.
+  (3) (future) an enemy->player damage scalar when sub-slice C lands (may reuse DMG_SCALAR or get its own).
+RULE: move "Power" (m.dmg) is a DAMAGE-side term. Changing it (e.g. the planned migration to canonical
+mainline move powers) touches ONLY the damage dial, never HP. So:
+  - Migrating move power does NOT require re-solving enemy HP (or player HP, or HP_SCALAR). HP is a
+    separate formula; power never enters it. Jess's instinct confirmed, but the reason is "power is a
+    damage term, HP is its own formula" -- NOT "player and enemy share the HP scalar" (that shared
+    scalar is about HP consistency, unrelated to power).
+  - What DOES need re-solving after a power migration: the PLAYER DMG_SCALAR, re-centered once so the
+    naked baseline still lands in the target hits-to-kill band (~3-4 early, playtest-confirmed) against
+    the UNCHANGED enemy HP curve. Think: Power = relative balance BETWEEN moves; DMG_SCALAR = overall
+    damage LEVEL. Orthogonal.
+  - When sub-slice C lands, its enemy-damage scalar is solved against PLAYER HP (also unchanged). Same
+    mirror logic: HP untouched, tune the damage dial.
+Canonical-power migration consequence for C: if enemies also draw canonical move power (the planned
+full-learnset system), the enemy-"Power" question (flat vs per-behavior vs signature) largely dissolves
+-- both sides use real move powers. So do NOT hand-tune throwaway per-behavior enemy Power constants for
+C; either build C AFTER the canonical-power migration, or use an explicitly-temporary flat placeholder.
+Also at migration time: review the global `m.dmg = Math.round(m.dmg * 1.2)` baseline bump and the fork's
+current ~13-18 power scale vs canonical ~40-150 (median 80) -- it is a scale change, re-solve DMG_SCALAR
+once, do not mix the two scales.
+
+## 2026-10-17, Region-select scope + sparse-band fallback (DESIGNED, not built)
+Planned local feature: on Play, the player picks a region (or All); only that region's Pokemon spawn
+as wild enemies and bosses for the run. The eligible pool for a chosen region = that region's gen AND
+all previous gens (Kanto = gen 1 only; Hoenn = gens 1-3; Paldea = full dex; All = no filter, today's
+behavior). This "gen-and-earlier" rule IS the sparse-band fallback: thin BST tiers in a later region
+are backfilled by earlier gens automatically, so no separate fallback branch is needed. The one edge
+is gen 1 (Kanto), which has no earlier gens: its top wild tier T5 (BST 530-620) holds exactly 7
+species (= the cast size, zero variety buffer) and its high boss bands are thin. Jess's ruling:
+ACCEPT the gen-1 edge as-is (no special-case code; 7 is enough to fill the cast, late-game variety is
+just tight and bosses may repeat). Data backing (wild-eligible, rarity<5): T5 counts per gen were
+Kanto 7, Johto 5, Hoenn 6, Sinnoh 10, Unova 4, Kalos 6, Alola 14, Galar 6, Paldea 17 — every gen but
+Kanto is rescued by the gen-and-earlier pool. Per-run only, NOT persisted (save-safe). Co-op region
+choice is deferred (local-first). Independent of the damage slices. Open sub-questions left for build
+time: unlocked-only vs free region pick; whether rifts/legendaries are region-gated; confirm pickN
+handles want>available (gen-1 T5 fits exactly).
+
 ## 2026-10-17, Local-first scope
 Build and perfect the LOCAL single-player game before any cloud/online work. Deferred until Jess
 explicitly switches phase: Firebase (auth, Firestore, RTDB, cloud saves), Cloudflare TURN worker,
