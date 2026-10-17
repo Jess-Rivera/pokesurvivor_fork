@@ -909,3 +909,19 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   #dex-detail .btn { position: sticky; bottom: 0; order: 9; margin-top: auto; padding: 8px 6px; font-size: 15px;
     box-shadow: 0 -6px 10px rgba(5,10,25,.6); }
 }
+
+
+/* ---------- Pokedex controls (redesign 2026-10-17) ---------- */
+#scr-dex .box.wide { width: min(1600px, 98vw); }
+.dex-controls { margin: 6px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.dex-controls .ctrl-row { flex-wrap: nowrap; }
+.dex-controls .ctrl-row .field { flex: 1 1 0; width: auto; min-width: 0; font-size: 14px; padding: 7px 10px; }
+.dex-dir { flex: 0 0 auto; min-width: 34px; font-weight: 700; }
+.dex-controls .ctrl-row #dex-clear { flex: 0 0 auto; }
+.dex-chipset { display: flex; gap: 6px; flex-wrap: wrap; }
+.dex-filter-rows { gap: 18px; align-items: flex-start; }
+.chip.type-chip.on { border-color: var(--tc); color: var(--tc); }
+.dex-count { margin: 0 0 6px; font-size: 12px; opacity: .8; }
+.chip.bst-chip { display: inline-flex; align-items: center; gap: 1px; padding: 3px 8px; }
+.chip.bst-chip img, .chip.bst-chip canvas { vertical-align: middle; }
+@media (max-width: 760px) { .dex-controls .ctrl-row { flex-wrap: wrap; } .dex-controls .ctrl-row .field { flex: 1 1 140px; } }
