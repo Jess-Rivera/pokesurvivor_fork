@@ -31,7 +31,7 @@ G.MenuUI = (() => {
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
         const go = b.dataset.go;
-        if (go === 'play') { if (G.Social.room) G.LobbyUI.open(); else G.Flow.play(); }
+        if (go === 'play') { if (G.Social.room) G.LobbyUI.open(); else openRegionPicker(); }
         else if (go === 'dex') browseDex();
         else if (go === 'upgrades') openUpgrades();
         else if (go === 'gacha') G.GachaUI.open();
@@ -127,6 +127,34 @@ G.MenuUI = (() => {
   }
 
   // ---------------- collection ----------------
+
+  /** Region select before a solo run. Pick a region (or All); only that region's
+   *  Pokemon (and earlier gens) spawn this run. Per-run, not saved. See DECISIONS.md. */
+  function openRegionPicker() {
+    G.UI.show('scr-region', true);
+    const grid = $('region-grid');
+    grid.innerHTML = '';
+    const card = (label, onclick) => {
+      const b = document.createElement('button');
+      b.className = 'region-card';
+      b.innerHTML = `<b>${label}</b>`;
+      b.dataset.sfx = 'confirm';
+      b.onclick = onclick;
+      grid.appendChild(b);
+    };
+    // One card per generation. (No "All regions" card: Paldea (gen 9) already = every
+    // earlier gen = the full dex.)
+    GEN_NAMES.forEach((name, i) => {
+      const g = i + 1;
+      card(`[Gen. ${g}] ${name}`, () => startRegion(g));
+    });
+  }
+
+  /** Commit the region choice and start the run. */
+  function startRegion(gen) {
+    G.Enemies.setRegion(gen);
+    G.Flow.play();
+  }
 
   /** Pokédex from the menu button: browse only, nothing to pick. */
   function browseDex() {

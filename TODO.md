@@ -6,7 +6,8 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-(nothing active)
+- Region-select (feature/region-select): APPLIED + verified, awaiting in-browser playtest + commit.
+  Opened + built 2026-10-17.
 
 ## Up next (local single-player)
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on
@@ -21,6 +22,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - Merge feature/base-stats to main when ready. It now contains the damage work (A+B) AND the Pokedex
   UI (main was merged into base-stats on 2026-10-17), so merging it to main brings main fully current.
 - Region-select on Play: see Backlog (designed 2026-10-17, not built).
+  (NOW BUILT — see In progress.)
 
 ## Backlog
 - Region-select on Play (local single-player). DESIGNED 2026-10-17, not built. Player picks a region
@@ -46,6 +48,9 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - Co-op hazard sync: G.Hazards.add's network broadcast serializes a fixed field set, so the sub-slice C
   atkFactor/atkCat on enemy hazards do NOT cross the wire. Revisit when MP resumes (enemy->player
   damage would need the attacker context synced, or recomputed on each client).
+- Co-op region choice: startCoop() does not run the region picker, so a co-op run inherits the last
+  solo region (harmless while MP is dormant). Decide region handling for co-op in the MP phase
+  (host picks? reset to All?).
 
 ## Done
 - 2026-10-17: Pokedex UI redesign (search + region/ownership/sort dropdowns + multi-select
