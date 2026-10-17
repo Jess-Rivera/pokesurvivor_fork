@@ -925,3 +925,15 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
 .chip.bst-chip { display: inline-flex; align-items: center; gap: 1px; padding: 3px 8px; }
 .chip.bst-chip img, .chip.bst-chip canvas { vertical-align: middle; }
 @media (max-width: 760px) { .dex-controls .ctrl-row { flex-wrap: wrap; } .dex-controls .ctrl-row .field { flex: 1 1 140px; } }
+
+
+/* ---------- Region select (2026-10-17) ---------- */
+.region-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 8px; }
+.region-card { appearance: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 14px 10px; border-radius: 10px; background: rgba(0,0,0,.25); border: 2px solid rgba(244,248,255,.22);
+  color: var(--ink); font-family: 'Pixelify', system-ui, sans-serif; text-shadow: 1px 1px 0 var(--shadow); }
+.region-card:hover { border-color: var(--gold); }
+.region-card b { font-size: 15px; }
+.region-card small { color: var(--muted); font-size: 12px; }
+.region-card.all { grid-column: 1 / -1; background: rgba(255,210,63,.14); border-color: var(--gold); }
+.region-card.all b { color: var(--gold); }

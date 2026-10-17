@@ -6,6 +6,14 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Random region option', 'Random region option'], new: [
+    ['Added a Random option to the region select: it rolls a region for you, and the end-of-run screen tells you which one you got.',
+     'Added a Random option to the region select: it rolls a region for you, and the end-of-run screen tells you which one you got.']
+  ] },
+  { d: '2026-10-17', title: ['Pick your region before a run', 'Pick your region before a run'], new: [
+    ['When you start a solo run you now choose a region first. Only Pokemon from that region and the regions before it will show up as enemies and bosses, so you can run a pure Kanto game, a Johto-and-earlier game, and so on, up to Paldea for the full roster.',
+     'When you start a solo run you now choose a region first. Only Pokemon from that region and the regions before it will show up as enemies and bosses, so you can run a pure Kanto game, a Johto-and-earlier game, and so on, up to Paldea for the full roster.']
+  ] },
   { d: '2026-10-17', title: ['Enemy attacks use real stats', 'Enemy attacks use real stats'], chg: [
     ['Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.',
      'Enemy damage to you now runs through the same stat-based formula your own attacks use: an enemy hits with its real Attack or Special Attack (whichever is higher for that species), and your Defense or Special Defense now actually reduces it, so a bulky Pokemon survives noticeably longer than a frail one. The opening is gentler and the threat grows as the horde thickens rather than from any single hit. Bosses are unchanged for now.']

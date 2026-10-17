@@ -5,6 +5,47 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (region-select: APPLIED on feature/region-select, not yet playtested/committed)
+- NEW BRANCH feature/region-select off main (main now carries the full base-stats feature + Pokedex UI
+  after that merge earlier today).
+- WHAT: on a SOLO run, the player picks a region (or All) before the run; only that region's Pokemon
+  (and all EARLIER gens) spawn as wild enemies + bosses. Implements the design logged in DECISIONS
+  (gen-and-earlier pool; gen-1 thin-top-tier accepted as-is).
+- FILES: js/data/enemies.js (module-scope `region` + setRegion(gen) + regionOK(p)=region==null||
+  p.gen<=region; regionOK added to candidates() and the boss-pool ok(); plus a final boss-pool safety
+  net that falls back to ALL gens if a band is still empty, so bosses never come up empty; setRegion
+  exported). js/ui/ui.js (registered 'scr-region' in SCREENS). dev.html (#scr-region section with
+  #region-grid + a data-back button). js/ui/menu.js (Play button for solo now calls openRegionPicker()
+  instead of G.Flow.play() directly; openRegionPicker builds an "All regions" card + one card per gen
+  with owned/total counts, each -> startRegion(gen) -> G.Enemies.setRegion(gen) + G.Flow.play()).
+  css/style.css (.region-grid / .region-card; note: game CSS goes in style.css, NOT pages.css).
+- Hordes/events inherit the filter for free (they call candidates()). Rifts/legendaries untouched
+  (rarity5/leg, already excluded from wild spawns). Per-run, NOT persisted -> save-safe.
+- BEHAVIOR NOTE: `region` persists in the enemies.js module until setRegion is called again. The solo
+  Play path ALWAYS goes through the picker (which always calls setRegion, incl. null for All), so no
+  stale-value bug there. Co-op (startCoop) does NOT call the picker -> it would inherit the last solo
+  region; harmless under local-first (MP dormant), noted as a deferred hook (reset/ignore region in
+  the MP phase).
+- VERIFIED: enemies.js / menu.js / ui.js / style.css balance-check clean; dev.html has #scr-region +
+  #region-grid; data-back wiring (menu.js init querySelectorAll) catches #region-back; GEN_NAMES in
+  menu scope; setRegion exported + called. changelog.js entry (new, English) added + re-verified.
+- NOT done: in-browser playtest (hard reload; pick a few regions, confirm only that gen-and-earlier
+  spawns; try Kanto for the thin-top-tier edge; try All), commit. Jess runs git.
+- Where we stopped: region-select fully applied + verified on feature/region-select, awaiting playtest.
+- Follow-ups applied same session: removed the "All regions" card (Paldea = gen9 = full dex already) and
+  the (owned/total) subline on region cards (label-only now); fixed the changelog wording accordingly.
+  Added a read-only hook `G.Enemies.region` getter (returns the chosen gen 1-9, or null = full dex) so a
+  future HUD label / results-screen "Kanto run" / per-region records can read the run's region. No
+  behavior change; purely a future-proof hook.
+- Used the hook: the end-run/death screen (#scr-over, js/ui/run-ui.js showOver) now shows a region line
+  (e.g. "Kanto Run") at the top of over-stats, reading G.Enemies.region via G.MenuUI.GEN_NAMES. Only
+  rendered when a region is set (always for solo runs; omitted if null). English per the new-string
+  rule (sits among the inherited Spanish stat labels, which render English at runtime via lang-en.js).
+- Added a Random region card (js/ui/menu.js openRegionPicker): full-width gold card (reuses the old
+  `.all` style) above the 9 gen cards; rolls G.U.randInt(1, GEN_NAMES.length) and calls startRegion with
+  the ACTUAL rolled gen, so the end-run line shows the real region you got (not just "Random"). The
+  `card` helper gained an optional cls arg. changelog entry added (new, English).
+
 ## 2026-10-17 (sub-slice C: enemy -> player damage, APPLIED, feature/base-stats, not committed)
 - WHAT: enemy->player damage now runs through the mainline A/D ratio, the mirror of sub-slice B.
   Fixes the mismatch that made the opening a ~2s death (enemies were still on the flat def.dmg model

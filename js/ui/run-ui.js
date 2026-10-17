@@ -105,6 +105,7 @@ G.RunUI = (() => {
   function showOver(r, onBack) {
     $('over-title').textContent = r.dead ? 'Has caído…' : 'Run terminada';
     $('over-stats').innerHTML = `
+      ${G.Enemies.region ? `<div style="grid-column:1/-1"><span>Region</span><b class="gold">${G.MenuUI.GEN_NAMES[G.Enemies.region - 1]} Run</b></div>` : ''}
       <div><span>Tiempo</span><b>${G.U.mmss(r.time)}</b></div>
       <div><span>Nivel</span><b>${r.level}</b></div>
       <div><span>Derrotados</span><b>${r.kills}</b></div>

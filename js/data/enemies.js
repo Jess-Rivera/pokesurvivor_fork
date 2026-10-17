@@ -61,6 +61,13 @@ G.Enemies = (() => {
 
   const H = (d, s) => G.U.hash(d, 7, s);
 
+  // Region filter for the run: null = All regions; otherwise a gen number (1-9).
+  // A region's eligible pool = that gen AND all previous gens (p.gen <= region). Per-run,
+  // not persisted. Gen-1 edge (thin top tier) accepted as-is. See DECISIONS.md.
+  let region = null;
+  function setRegion(gen) { region = gen || null; }
+  function regionOK(p) { return region == null || p.gen <= region; }
+
   // Fixed personalities of some Pokemon.
   const HEAL = new Set([35, 36, 113, 173, 183, 184, 242, 301, 440, 531, 594, 700, 764, 858]);
   const SHIELD = new Set([95, 122, 208, 213, 227, 306, 375, 410, 411, 436, 437, 439, 476, 703]);
@@ -121,7 +128,7 @@ G.Enemies = (() => {
 
   /** All candidates of a tier (no legendaries or mythicals). */
   function candidates(tier) {
-    return G.DEX.filter(p => p.rarity < 5 && p.bst >= tier.bst[0] && p.bst <= tier.bst[1] && G.SPRITE_META[p.dex]);
+    return G.DEX.filter(p => regionOK(p) && p.rarity < 5 && p.bst >= tier.bst[0] && p.bst <= tier.bst[1] && G.SPRITE_META[p.dex]);
   }
 
   // ---------------- the run's cast ----------------
@@ -162,9 +169,12 @@ G.Enemies = (() => {
     }
     const used = new Set();
     bosses = BOSS_SLOTS.map(slot => {
-      const ok = p => !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);
+      const ok = p => regionOK(p) && !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);
       let pool = G.DEX.filter(p => ok(p) && p.bst >= slot.bst[0] && p.bst <= slot.bst[1]);
       if (!pool.length) pool = G.DEX.filter(p => ok(p) && p.bst >= 580);
+      // Safety: if a region is too thin to fill a boss band at all, fall back to ALL gens
+      // (keeps bosses from ever coming up empty; normal tiers still honor the region rule).
+      if (!pool.length) pool = G.DEX.filter(p => !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex) && p.bst >= 580);
       const p = G.U.pick(pool);
       used.add(p.dex);
       return {
@@ -234,7 +244,8 @@ G.Enemies = (() => {
   }
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion,
+    get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
     get cast() { if (!cast) rollRun(); return cast; }
