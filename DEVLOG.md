@@ -5,6 +5,25 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (base-stats slice 3: enemy HP, wild only)
+- HUD: added the current enemy level as a big number in the TOP-RIGHT corner (hud.js), mirroring the
+  run timer's font/color (F(800,26), rgba(255,255,255,.95)) with an "ENEMY LV" subtitle (F(600,10),
+  #8fa3c4). Reads G.Enemies.levelForTime(st.time); textAlign reset to left after. Makes the HP/
+  difficulty scaling legible to the player (ties to the "escalation should be visible" principle).
+- Wild-enemy HP now uses the same mainline formula + 2.0 scalar as the player, from real base HP
+  (stats[0]) at a run-time-derived level. enemies.js: added levelForTime (linear L1->L50 over 30 min)
+  and enemyHp(); defFor carries baseHp instead of a derived hp; scale(t) drops the hp ramp (carries t).
+  enemy.js constructor: wild = G.Enemies.enemyHp(baseHp, sc.t); bosses keep def.hp*bossScale.
+  spawner.js: removed the density hpK (3.3-5x), the co-op scaleHp on HP (dormant), and the elite x1.6
+  HP bump (kept its dmg/xp bump). Summoner minion fixed to carry baseHp + use the formula (was 0.35x
+  summoner hp under the old model). Removed now-dead role HP mults (tank/bomber/runner).
+- Consistency verified: base-65 enemy and base-65 player have identical HP at every level (24/134/250
+  at L1/25/50). Enemies ~2x-100x less tanky than the old stacked model; INTENDED (not balanced vs
+  player damage yet — will feel very easy this slice).
+- Phase 2 (post-30-min: [Standard Run] fixed accelerating ramp vs [Unlock Safeties] opt-in DDA with
+  boosted rewards, behind the planned 30-min boss gate) is specced in DECISIONS.md, not built.
+- Not yet done: in-browser playtest, changelog, commit.
+- Where we stopped: wild-enemy HP on the formula; bosses + rift legendary deferred.
 ## 2026-10-17 (base-stats slice 2: player HP)
 - Bugfix (found in playtest): benched teammates kept a stale level-1 maxHp because only the active
   fighter (pl) runs gainXp. Shuckle's HP didn't rise on level-up, only the active Regieleki's did.

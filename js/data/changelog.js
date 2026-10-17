@@ -6,6 +6,14 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Enemy level shown on the HUD', 'Enemy level shown on the HUD'], new: [
+    ['The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.',
+     'The current enemy level now shows in the top-right corner during a run, next to the run timer, so you can see how the difficulty is scaling.']
+  ] },
+  { d: '2026-10-17', title: ['Enemy HP rebuilt on base stats', 'Enemy HP rebuilt on base stats'], chg: [
+    ['Wild enemy HP now comes from each Pokemon\'s real base HP stat and scales with how far into the run you are, the same way your own HP works. This is an early pass: enemies are much less spongy than before while the rest of the combat stats are rebuilt, so expect them to feel easy for now.',
+     'Wild enemy HP now comes from each Pokemon\'s real base HP stat and scales with how far into the run you are, the same way your own HP works. This is an early pass: enemies are much less spongy than before while the rest of the combat stats are rebuilt, so expect them to feel easy for now.']
+  ] },
   { d: '2026-10-17', title: ['HP scales with your base stat and level', 'HP scales with your base stat and level'], chg: [
     ['Your Pokemon\'s HP now comes from its real base HP stat and grows as you level up during a run, instead of a fixed value. High-HP Pokemon are tankier and low-HP ones are frailer, and leveling up raises your max HP (and tops you up a little). Early runs are leaner on purpose while the rest of the combat stats are built out.',
      'Your Pokemon\'s HP now comes from its real base HP stat and grows as you level up during a run, instead of a fixed value. High-HP Pokemon are tankier and low-HP ones are frailer, and leveling up raises your max HP (and tops you up a little). Early runs are leaner on purpose while the rest of the combat stats are built out.']

@@ -34,7 +34,10 @@
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
 
-      this.maxHp = Math.round(def.hp * sc.hp);
+      // Enemy HP = real base HP through the mainline formula at the level-for-run-time
+      // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
+      // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
       this.hp = this.maxHp;
       this.spd = def.spd * sc.spd;
       this.dmg = def.dmg * sc.dmg;
@@ -638,7 +641,9 @@
       if (this.minions.length >= 4 || G.EnemyMgr.count > G.Spawner.CAP + 15) return;
       const dex = this.def.minion || this.dex;
       const mon = G.DEX_BY[dex];
-      const def = { dex, name: mon ? mon.name : '', hp: Math.round(this.def.hp * 0.35), spd: Math.round(this.def.spd * 1.1),
+      // Minion HP comes from the mainline formula at spawn (via its own baseHp), like any
+      // wild enemy. (Was 0.35x the summoner's HP under the old flat model.)
+      const def = { dex, name: mon ? mon.name : '', baseHp: (mon && mon.stats) ? mon.stats[0] : 50, spd: Math.round(this.def.spd * 1.1),
                     dmg: Math.round(this.def.dmg * 0.6), xp: Math.max(1, Math.round(this.def.xp * 0.25)), behavior: 'chase' };
       for (let i = 0; i < 2; i++) {
         const a = Math.random() * 6.2832;

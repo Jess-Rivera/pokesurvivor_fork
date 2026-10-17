@@ -43,6 +43,25 @@ Player max HP now comes from the real mainline HP formula, scaling with in-run l
   and flat heals/regen still feel strong early / weak late. Fixed by the deferred healing %-conversion.
 - perks.hp (flat HP upgrades) still adds on top of the formula.
 
+## Enemy HP (base-stats feature, slice 3: wild enemies) — slice applied 2026-10-17
+Wild-enemy HP now uses the SAME mainline formula + HP_SCALAR 2.0 as the player, from the enemy's
+real base HP (stats[0]), at a level derived from run time. A base-65 enemy and a base-65 player mon
+have identical HP at the same level (consistency goal met).
+- js/data/enemies.js: levelForTime(t) = 1 + 49*clamp(t/1800,0,1)  (linear L1 at 0:00 -> L50 at 30:00,
+  then holds at 50 until Phase 2). enemyHp(baseHP,t) = (floor(2*baseHP*L/100)+L+10)*2.0.
+- Resulting wild-enemy HP (base 65): 0:00=24, 5:00=60, 10:00=99, 15:00=137, 30:00=250.
+- REMOVED (all HP multipliers; HP is now purely the formula): tier.hp flat templates, the baseHp()
+  reverse-derivation on the HP path, scale(t).hp ramp (1+t/95), the spawner density hpK (3.3-5x),
+  the elite x1.6 HP bump, tank/bomber/runner role HP mults, and the co-op scaleHp on HP (dormant with
+  deferred MP). dmg/spd ramps and dmg/xp elite/role mults are UNCHANGED (damage is a later slice).
+- Magnitude note: this makes enemies ~2x less tanky early rising to ~100x less by 30:00 vs the old
+  stacked-multiplier model. Intended: enemies are NOT balanced against player damage yet, so they will
+  feel trivially easy this slice. Enemy damage + density/reward balance are later slices.
+- Scope: wild enemies only. BOSSES keep their bespoke BOSS_SLOTS hp (def.hp * bossScale) for now.
+  Rift legendary untouched (rifts planned for removal).
+- Future elite: NOT an HP multiplier — it will be "current enemy level + X" (a higher-level spawn),
+  so HP falls out of the formula. (DECISIONS.md.)
+
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by
 feel with the interactive tuner over the real 966-species roster:

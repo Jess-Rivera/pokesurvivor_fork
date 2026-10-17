@@ -86,6 +86,30 @@ approval (like the Markdown project docs). Caveat: it IS parsed as JS, so the ag
 still parses after editing (balanced quotes/brackets/commas), since a syntax error there breaks the
 bundle. Every other js/data/*.js stays propose-and-approve.
 
+## 2026-10-17, Enemy HP model: mainline formula, two-phase difficulty
+Enemy HP uses the SAME mainline formula + 2.0x scalar as the player (HP = (floor(2*baseHP*L/100)
++ L + 10) * 2.0), from the enemy's REAL base HP (stats[0]). This retires the old enemy HP model
+(tier.hp flat templates, the baseHp() reverse-derivation `(p.hp-70)/0.45`, and scale(t).hp). The
+tier SYSTEM stays for spawn variety/pacing/behaviors/cast selection; only the HP computation moves
+to the formula. Levels may exceed mainline 100 (survivor-like); the formula still holds.
+
+Difficulty is two-phase, gated by the planned 30-minute boss:
+- PHASE 1 (0-30 min), BUILD NOW: enemy level grows LINEARLY from L1 (0:00) to L50 (30:00). i.e.
+  level(t) = 1 + 49 * clamp(t/1800, 0, 1). HP follows via the formula. (Base-65 enemy: ~24 HP at
+  start, ~124 HP at 30 min.)
+- PHASE 2 (post-30-min), SPEC ONLY until the 30-min boss exists: beating the 30-min boss presents a
+  choice:
+    * [Standard Run]: a FIXED accelerating ramp (the level-growth slope steepens on a schedule, e.g.
+      every 15 min). Predictable, never reactive. Pure skill race.
+    * [Unlock Safeties]: "safeties off" (like a safety catch released, NOT a safety net) - enemies
+      scale UP to the player's performance (DDA), with boosted rewards (exp, gold, tickets, items) as
+      the risk payoff. Opt-in + rewarded, so it does NOT violate the power-fantasy (the player CHOSE
+      the danger for loot; genre-legit like VS Curse / Brotato Danger).
+      DDA signal: a BLEND (to be finalized when built) of player level-vs-expected, kill rate, and
+      HP comfort margin. Composite with tunable weights.
+  Phase 2 depends on the 30-min boss (planned, not built) and a reward-multiplier system (not built),
+  so it is captured here as design and built when the boss lands.
+
 ## 2026-10-17, IV/EV deferred pending a persistent-storage design
 Slice 1 (Speed -> movement) does NOT read or store IV/EV. They are part of the mainline stat formula
 (statValue takes iv/ev params) but are fixed at 0 for now. Reason: IV/EV need a proper per-species
