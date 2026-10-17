@@ -38,6 +38,11 @@ G.Player = class Player {
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
     this.baseSpd = (mon.stats && mon.stats[5] != null) ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
     this.baseAtk = mon.atk;
+    // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
+    // via G.Stats. Fallback 50 keeps a mon with no stats array working.
+    this.baseAtkStat = (mon.stats && mon.stats[1] != null) ? mon.stats[1] : 50;
+    this.baseSpAStat = (mon.stats && mon.stats[3] != null) ? mon.stats[3] : 50;
+    this.myTypes = mon.types || [];
 
     this.moves = [];           // todos los movimientos aprendidos
     this.slots = [];           // huecos: cada uno, una lista de movimientos que se lanzan a la vez
@@ -95,6 +100,14 @@ G.Player = class Player {
 
   // ---------------- stats efectivos ----------------
   get atk() { return this.baseAtk * this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
+  // Multiplier layer that used to be folded into the flat pl.atk (upgrades + atk buffs),
+  // now passed into the A/D attacker factor so the ratio stays proportional.
+  get atkMulAll() { return this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
+  // Attacker half of the damage formula for move `m` (see G.Stats.attackFactor). The
+  // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
+  moveFactor(m) { return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll); }
+  // STAB flag: the move's type matches one of the active mon's species types.
+  stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() {
     const s = this.baseSpd * this.spdMul * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);

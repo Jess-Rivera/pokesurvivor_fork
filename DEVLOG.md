@@ -5,6 +5,48 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (damage slice, sub-slice B: APPLIED + verified, not yet playtested/committed)
+- Sub-slice A was committed by Jess first (confirmed). Then applied sub-slice B: player->enemy
+  damage on the mainline A/D ratio, split cast-half + impact-half, mathematically identical to the
+  single formula. SCALAR 2.0 (locked). Rollout: ALL sites at once (Jess approved all-at-once).
+- stats.js (G.Stats): added DMG_SCALAR=2.0, STAB=1.5, PROP_DEF=50, and three functions:
+    attackFactor(atkBase, spaBase, level, move, extraMul) -> attacker half = ((2L/5+2)*m.dmg*AtkStat)/50*extraMul
+       (AtkStat = Atk for physical / SpA for special via moveCat; extraMul folds in the old pl.atk
+        upgrade+buff layer so the ratio stays proportional)
+    applyDamage(factor, defBase, spdBase, move, level, stab) -> (factor/DefStat + 2) * STAB? * SCALAR
+       (DefStat = Def/SpD via moveCat; +2 after the division, before the multipliers; type*crit stay
+        at the call site). STATUS-cat damaging moves route through the NEUTRAL PROP_DEF denominator
+        and never get STAB (Jess picked "neutral denominator for status moves", so no phys/spec label
+        is forced on toxic/spikes/toxic-spikes/string-shot/substitute/hail/will-o-wisp). No moves.js
+        edit needed: they already carry cat:'status'.
+    applyDamageProp(factor) -> (factor/PROP_DEF + 2) * SCALAR  (rocks/chests/grass have no Def stat)
+- player.js: added baseAtkStat (stats[1]) + baseSpAStat (stats[3]) (fallback 50), myTypes; added
+    get atkMulAll (atkMul * atk-buff), moveFactor(m) (attacker half), stabFor(m) (type match). get atk()
+    kept as-is for items etc. Atk/SpA now scale with run level via the formula (HP already did).
+- combat.js: replaced m.dmg*pl.atk at ALL ~15 attacker sites with pl.moveFactor(m); the ~6 prop sites
+    with G.Stats.applyDamageProp(pl.moveFactor(m)). hit() now takes the attacker FACTOR and completes
+    the ratio against the enemy's real base Def/SpD via new enemyDefStats(e) (G.DEX_BY[e.dex].stats,
+    fallback 50/50 for bosses/minions w/o stats). The resolve() projectile-impact block completes the
+    same way; projectile/orb/field spawns now stash move+level+stab so the impact knows cat/STAB.
+    Chain keeps its *k*hex on the factor; mine partial-trigger keeps *0.5 on the factor.
+- IMPLEMENTATION HICCUP worth noting for next time: several multi-hunk file_edit calls on combat.js
+    reported success but did NOT persist (applied against a stale snapshot). Caught it by grepping the
+    live file on-device; the real remaining sites (fireProjectiles, nova, boomerang, chain, orbit x2,
+    turret-proj stash) were then fixed with a direct on-device write with uniqueness asserts. Final
+    guard: 0 occurrences of 'm.dmg * pl.atk' remain. Lesson: after batch edits on a device file, grep
+    the live file to confirm, don't trust the success return alone.
+- VERIFIED: brace/paren/bracket balance OK on stats.js, player.js, combat.js (node --check is blocked
+    in the sandbox, so used a string-aware balance checker). Numeric sanity (Ember pow18 STAB special,
+    atk60 vs def65): L1 ~2.8 hits-to-kill -> L50 ~8.9, inside the intended ~3->~12 ramp band. No
+    double-division. changelog.js entry added (chg, English both slots) and re-verified parsing.
+- NOT done: in-browser playtest; commit. Jess runs git.
+- Where we stopped: sub-slice B fully applied + verified on disk, awaiting Jess's playtest. Expect it
+    to feel easy (enemies still not balanced vs player damage; damage-vs-enemy-HP tuning is a later
+    pass). The naked ramp is intended, do NOT rebalance base stats to flatten it (see DECISIONS).
+- Still OPEN / next: (1) playtest on dev.html (hard reload; save-safe, no schema change this slice);
+    (2) commit sub-slice B; (3) sub-slice C = enemy->player damage (needs the enemy-attack category
+    design gap resolved, see the 2026-10-17 DECISIONS entry on behavior-driven enemy attacks).
+
 ## 2026-10-17 (damage slice, sub-slice B: SCOPED + mid-approval, NOTHING APPLIED YET)
 - STATUS: sub-slice A is COMPLETE but UNCOMMITTED. sub-slice B is fully designed and approved in
   principle (STAB yes, 2.0x scalar locked) but NO combat.js/player.js/stats.js edits have been made.

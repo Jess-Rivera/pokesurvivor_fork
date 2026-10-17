@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-17', title: ['Move damage rebuilt on the real stat formula', 'Move damage rebuilt on the real stat formula'], chg: [
+    ['Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.',
+     'Your attacks now use the mainline damage formula: a move\'s damage scales with your Attack or Special Attack (depending on the move) against each enemy\'s matching Defense or Special Defense, and grows as you level up during a run. Same-type moves get a damage bonus (STAB). Early hits feel modest on purpose, your upgrades and criticals are what turn the ramp into a power fantasy.']
+  ] },
   { d: '2026-10-17', title: ['Enemy speed from base Speed', 'Enemy speed from base Speed'], chg: [
     ['Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.',
      'Enemy movement speed now comes from each Pokemon\'s real base Speed stat, the same way your own does, so fast Pokemon are genuinely fast and slow ones slow. Enemies no longer simply speed up as the run goes on.']

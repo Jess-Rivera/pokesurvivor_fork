@@ -47,14 +47,45 @@ G.Stats = (() => {
   // ---- enemy level from run time (Phase 1: linear L1 at 0:00 -> L50 at 30:00) ----
   function levelForTime(t) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
 
-  // ---- future stats (scaffold; wired in when their slices land) ----
-  // Attack / Defense / Sp.Atk / Sp.Def will scale with level via statValue, then
-  // feed the damage model (A/D ratio) in a later slice. Placeholders so callers
-  // have a single home to extend. Not used yet.
+  // ---- Atk/Def/SpA/SpD: scale with level via the mainline statValue ----
   function attack(base, level, iv = 0, ev = 0)  { return statValue(base, level, iv, ev); }
   function defense(base, level, iv = 0, ev = 0) { return statValue(base, level, iv, ev); }
   function spAtk(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
   function spDef(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
+
+  // ---- damage model (mainline A/D ratio, split into cast + impact halves) ----
+  // Single survivor-feel scalar (locked). STAB = same-type attack bonus. PROP_DEF is the
+  // neutral denominator for things without a Def stat: destructible props AND status-cat
+  // damaging moves (toxic/spikes/etc. have no phys/spec class, so they do not swing on an
+  // enemy's Def/SpD split). See DECISIONS.md / BALANCE.md.
+  const DMG_SCALAR = 2.0;
+  const STAB = 1.5;
+  const PROP_DEF = 50;
+
+  // Attacker half, computed at cast. `power` is the move's tuned base dmg (m.dmg).
+  // atkBase/spaBase = attacker real base Atk/SpA (stats[1]/stats[3]). extraMul folds in the
+  // upgrade/buff layer that used to live in pl.atk (atkMul * atk buffs). A status-cat move
+  // uses Atk as its attacker stat (arbitrary but stable; its denominator is neutral anyway).
+  function attackFactor(atkBase, spaBase, level, move, extraMul = 1) {
+    const aStat = moveCat(move) === 'special' ? spAtk(spaBase, level) : attack(atkBase, level);
+    return ((2 * level / 5 + 2) * (move.dmg || 0) * aStat) / 50 * extraMul;
+  }
+
+  // Defender half, computed at impact against a specific enemy's real base Def/SpD
+  // (stats[2]/stats[4]). Returns damage INCLUDING STAB and the scalar but BEFORE type/crit
+  // (those stay at the call site). A status-cat move divides by the neutral PROP_DEF and
+  // never gets STAB. The +2 is mainline: after the division, before the multipliers.
+  function applyDamage(factor, defBase, spdBase, move, level, stab) {
+    const cat = moveCat(move);
+    const dStat = cat === 'status' ? PROP_DEF
+                : cat === 'special' ? spDef(spdBase, level)
+                : defense(defBase, level);
+    const stabMul = (stab && cat !== 'status') ? STAB : 1;
+    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
+  }
+
+  // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
+  function applyDamageProp(factor) { return (factor / PROP_DEF + 2) * DMG_SCALAR; }
 
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
   // own cat (stamped in js/data/moves.js from pokeapi). Fallback for a move missing it
@@ -71,5 +102,6 @@ G.Stats = (() => {
     HP_SCALAR, SPEED_MEDIAN, BASE_PX, MOVE_K, MOVE_MAX, MOVE_MIN,
     statValue, hpForLevel, moveTransfer, speedToPx, levelForTime,
     attack, defense, spAtk, spDef, moveCat,
+    DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp,
   };
 })();
