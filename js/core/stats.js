@@ -56,9 +56,20 @@ G.Stats = (() => {
   function spAtk(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
   function spDef(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
 
+  // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
+  // own cat (stamped in js/data/moves.js from pokeapi). Fallback for a move missing it
+  // (e.g. a future custom move): buffs are status; contact-y behaviors physical; the
+  // rest (ranged/elemental) special. So a missing cat never breaks the damage model.
+  function moveCat(m) {
+    if (m && m.cat) return m.cat;
+    if (!m) return 'physical';
+    if (m.kind === 'buff') return 'status';
+    return (m.kind === 'melee' || m.kind === 'dash' || m.kind === 'mine') ? 'physical' : 'special';
+  }
+
   return {
     HP_SCALAR, SPEED_MEDIAN, BASE_PX, MOVE_K, MOVE_MAX, MOVE_MIN,
     statValue, hpForLevel, moveTransfer, speedToPx, levelForTime,
-    attack, defense, spAtk, spDef,
+    attack, defense, spAtk, spDef, moveCat,
   };
 })();

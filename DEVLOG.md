@@ -5,6 +5,21 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (damage slice, sub-slice A: move category data)
+- Prep for the damage model (mainline A/D ratio). Added a physical/special/status category to every
+  move. All 64 moves in js/data/moves.js use real mainline move IDs, so categories were pulled
+  directly from pokeapi-master (move_damage_classes.csv + moves.csv) by ID: 20 physical, 32 special,
+  12 status. Each RAW entry now has a `cat` field (after `kind`). moves.js parse-verified.
+- G.Stats.moveCat(m) fallback added (js/core/stats.js): returns m.cat if set, else buff->status,
+  melee/dash/mine->physical, else special. So a future move missing cat never breaks the damage model.
+- tools/gen_move_cats.py (report-only, Python): re-reports each move's correct category from pokeapi
+  and flags MISSING/MISMATCH/CUSTOM. Does NOT edit moves.js (stays propose-and-approve). Verified: all
+  64 report ok.
+- 7 "status-but-damaging" moves (toxic, string-shot, spikes, toxic-spikes, hail, will-o-wisp,
+  substitute — pokeapi=status but implemented as damaging field effects) are stamped 'status' for now;
+  their real physical/special cat is DEFERRED to sub-slice B when the damage formula needs it.
+- ZERO in-game behavior change this sub-slice (nothing reads cat yet). Playtest-neutral.
+- Next: sub-slice B (player->enemy damage via the A/D ratio using Atk/SpA vs Def/SpD + cat).
 ## 2026-10-17 (refactor: shared G.Stats module + enemy speed on identity model)
 - Unified all base-stats formulas into a new js/core/stats.js (G.Stats): HP_SCALAR, SPEED_MEDIAN,
   BASE_PX, MOVE_K/MAX/MIN, statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, plus

@@ -123,280 +123,280 @@
 
   const RAW = [
     // ---------------- NORMAL (pool common to all) ----------------
-    { id: 'tackle', name: 'Placaje', type: 'normal', kind: 'melee',
+    { id: 'tackle', name: 'Placaje', type: 'normal', kind: 'melee', cat: 'physical',
       desc: 'Embiste en arco a todo lo que tengas delante.',
       cd: 0.50, dmg: 13, radius: 48, arc: 1.7, knock: 90 },
 
-    { id: 'quick-attack', name: 'Ataque Rápido', type: 'normal', kind: 'dash',
+    { id: 'quick-attack', name: 'Ataque Rápido', type: 'normal', kind: 'dash', cat: 'physical',
       desc: 'Cruzas como un rayo hacia el enemigo y golpeas todo el camino.',
       cd: 0.75, dmg: 20, radius: 110, width: 34, knock: 40 },
 
-    { id: 'swords-dance', name: 'Danza Espada', type: 'normal', kind: 'buff',
+    { id: 'swords-dance', name: 'Danza Espada', type: 'normal', kind: 'buff', cat: 'status',
       desc: 'No hace daño: acumula ATAQUE mientras esté activo.',
       cd: 0.85, stat: 'atk', amount: 0.13, dur: 7, stacks: 5 },
 
-    { id: 'agility', name: 'Agilidad', type: 'normal', kind: 'buff',
+    { id: 'agility', name: 'Agilidad', type: 'normal', kind: 'buff', cat: 'status',
       desc: 'No hace daño: acumula VELOCIDAD mientras esté activo.',
       cd: 0.85, stat: 'spd', amount: 0.10, dur: 7, stacks: 5 },
 
-    { id: 'harden', name: 'Fortaleza', type: 'normal', kind: 'buff',
+    { id: 'harden', name: 'Fortaleza', type: 'normal', kind: 'buff', cat: 'status',
       desc: 'No hace daño: acumula DEFENSA mientras esté activo.',
       cd: 0.85, stat: 'def', amount: 0.07, dur: 7, stacks: 5 },
 
     // ---------------- FUEGO ----------------
-    { id: 'ember', name: 'Ascuas', type: 'fire', kind: 'projectile',
+    { id: 'ember', name: 'Ascuas', type: 'fire', kind: 'projectile', cat: 'special',
       desc: 'Bola de fuego al enemigo más cercano.',
       cd: 0.52, dmg: 18, speed: 310, count: 1, spread: 0.12, pierce: 0, life: 1.6, size: 7, burn: 1 },
 
-    { id: 'flamethrower', name: 'Lanzallamas', type: 'fire', kind: 'cone',
+    { id: 'flamethrower', name: 'Lanzallamas', type: 'fire', kind: 'cone', cat: 'special',
       desc: 'Chorro de llamas en abanico corto que quema.',
       cd: 0.70, dmg: 7, count: 7, arc: 0.9, speed: 380, life: 0.42, size: 6, pierce: 1, burn: 1 },
 
-    { id: 'fire-spin', name: 'Giro Fuego', type: 'fire', kind: 'orbit',
+    { id: 'fire-spin', name: 'Giro Fuego', type: 'fire', kind: 'orbit', cat: 'special',
       desc: 'Llamas que giran a tu alrededor. Defensa constante.',
       cd: 0.30, dmg: 14, count: 3, radius: 62, speed: 2.4, size: 9, burn: 1 },
 
-    { id: 'heat-wave', name: 'Onda Ígnea', type: 'fire', kind: 'nova',
+    { id: 'heat-wave', name: 'Onda Ígnea', type: 'fire', kind: 'nova', cat: 'special',
       desc: 'Explota en llamas en todas las direcciones.',
       cd: 1.25, dmg: 13, speed: 250, count: 10, pierce: 1, life: 1.1, size: 7, burn: 1 },
 
     // ---------------- AGUA ----------------
-    { id: 'water-gun', name: 'Pistola Agua', type: 'water', kind: 'projectile',
+    { id: 'water-gun', name: 'Pistola Agua', type: 'water', kind: 'projectile', cat: 'special',
       desc: 'Chorro perforante. Fiable a cualquier distancia.',
       cd: 0.44, dmg: 14, speed: 350, count: 1, spread: 0.10, pierce: 1, life: 1.5, size: 6 },
 
-    { id: 'bubble', name: 'Burbuja', type: 'water', kind: 'nova',
+    { id: 'bubble', name: 'Burbuja', type: 'water', kind: 'nova', cat: 'special',
       desc: 'Burbujas en abanico que ralentizan a quien tocan.',
       cd: 1.00, dmg: 9, speed: 210, count: 8, pierce: 0, life: 1.3, size: 8, slow: 0.45 },
 
-    { id: 'hydro-pump', name: 'Hidrobomba', type: 'water', kind: 'beam',
+    { id: 'hydro-pump', name: 'Hidrobomba', type: 'water', kind: 'beam', cat: 'special',
       desc: 'Cañonazo de agua lento pero devastador.',
       cd: 1.50, dmg: 29, radius: 250, width: 30 },
 
-    { id: 'aqua-ring', name: 'Acua Aro', type: 'water', kind: 'buff',
+    { id: 'aqua-ring', name: 'Acua Aro', type: 'water', kind: 'buff', cat: 'status',
       desc: 'No hace daño: acumula REGENERACIÓN de vida.',
       cd: 0.90, stat: 'regen', amount: 1.6, dur: 8, stacks: 4 },
 
     // ---------------- PLANTA ----------------
-    { id: 'vine-whip', name: 'Látigo Cepa', type: 'grass', kind: 'melee',
+    { id: 'vine-whip', name: 'Látigo Cepa', type: 'grass', kind: 'melee', cat: 'physical',
       desc: 'Látigos de largo alcance en arco amplio.',
       cd: 0.62, dmg: 16, radius: 68, arc: 1.3, knock: 60 },
 
-    { id: 'razor-leaf', name: 'Hoja Afilada', type: 'grass', kind: 'boomerang',
+    { id: 'razor-leaf', name: 'Hoja Afilada', type: 'grass', kind: 'boomerang', cat: 'physical',
       desc: 'Dos hojas que van y vuelven cortando a la ida y a la vuelta.',
       cd: 0.90, dmg: 10, speed: 330, count: 2, spread: 0.5, radius: 210, size: 6 },
 
-    { id: 'leaf-storm', name: 'Tormenta Floral', type: 'grass', kind: 'orbit',
+    { id: 'leaf-storm', name: 'Tormenta Floral', type: 'grass', kind: 'orbit', cat: 'special',
       desc: 'Un ciclón de hojas gira amplio a tu alrededor.',
       cd: 0.26, dmg: 14, count: 4, radius: 74, speed: 2.6, size: 8 },
 
     // (Formerly Giga Drain: it healed with every hit and was broken. Same id so as not to break saves.)
-    { id: 'giga-drain', name: 'Hierba Lazo', type: 'grass', kind: 'aura',
+    { id: 'giga-drain', name: 'Hierba Lazo', type: 'grass', kind: 'aura', cat: 'special',
       desc: 'Raíces que atrapan y machacan todo lo que tienes cerca.',
       cd: 0.55, dmg: 9, radius: 76 },
 
     // ---------------- ELECTRIC ----------------
-    { id: 'thunder-shock', name: 'Impactrueno', type: 'electric', kind: 'projectile',
+    { id: 'thunder-shock', name: 'Impactrueno', type: 'electric', kind: 'projectile', cat: 'special',
       desc: 'Descarga rapidísima que atraviesa varios enemigos.',
       cd: 0.40, dmg: 13, speed: 480, count: 1, spread: 0.08, pierce: 2, life: 1.1, size: 5 },
 
-    { id: 'discharge', name: 'Chispazo', type: 'electric', kind: 'aura',
+    { id: 'discharge', name: 'Chispazo', type: 'electric', kind: 'aura', cat: 'special',
       desc: 'Campo eléctrico permanente alrededor de ti.',
       cd: 0.45, dmg: 8, radius: 70 },
 
-    { id: 'thunderbolt', name: 'Rayo', type: 'electric', kind: 'chain',
+    { id: 'thunderbolt', name: 'Rayo', type: 'electric', kind: 'chain', cat: 'special',
       desc: 'Un rayo que salta de un enemigo a otro.',
       cd: 0.95, dmg: 21, count: 4, radius: 140 },
 
     // ---------------- PSYCHIC ----------------
     // (2026-10-11: -22/-30% damage and they chase less; they filled the ranking.)
-    { id: 'confusion', name: 'Confusión', type: 'psychic', kind: 'projectile',
+    { id: 'confusion', name: 'Confusión', type: 'psychic', kind: 'projectile', cat: 'special',
       desc: 'Onda que persigue sola a su objetivo.',
       cd: 0.58, dmg: 13, speed: 280, count: 1, spread: 0.1, pierce: 0, life: 2.2, size: 8, homing: 2.0 },
 
-    { id: 'psybeam', name: 'Psicorrayo', type: 'psychic', kind: 'beam',
+    { id: 'psybeam', name: 'Psicorrayo', type: 'psychic', kind: 'beam', cat: 'special',
       desc: 'Rayo psíquico ancho y contundente.',
       cd: 1.15, dmg: 17, radius: 215, width: 40 },
 
-    { id: 'psychic', name: 'Psíquico', type: 'psychic', kind: 'nova',
+    { id: 'psychic', name: 'Psíquico', type: 'psychic', kind: 'nova', cat: 'special',
       desc: 'Estallido mental radial que busca enemigos.',
       cd: 1.35, dmg: 10, speed: 230, count: 12, pierce: 1, life: 1.6, size: 7, homing: 1.0 },
 
     // ---------------- TIPOS SECUNDARIOS ----------------
-    { id: 'sludge', name: 'Residuos', type: 'poison', kind: 'projectile',
+    { id: 'sludge', name: 'Residuos', type: 'poison', kind: 'projectile', cat: 'special',
       desc: 'Lodo tóxico que envenena al impactar.',
       cd: 0.60, dmg: 17, speed: 290, count: 1, spread: 0.12, pierce: 0, life: 1.5, size: 8, poison: 1 },
 
-    { id: 'mud-shot', name: 'Disparo Lodo', type: 'ground', kind: 'nova',
+    { id: 'mud-shot', name: 'Disparo Lodo', type: 'ground', kind: 'nova', cat: 'special',
       desc: 'Salpica lodo alrededor y ralentiza.',
       cd: 1.10, dmg: 11, speed: 200, count: 7, pierce: 0, life: 1.0, size: 9, slow: 0.4 },
 
-    { id: 'gust', name: 'Tornado', type: 'flying', kind: 'orbit',
+    { id: 'gust', name: 'Tornado', type: 'flying', kind: 'orbit', cat: 'special',
       desc: 'Remolinos de viento que te escoltan.',
       cd: 0.26, dmg: 13, count: 3, radius: 72, speed: 2.8, size: 8, knock: 40 },
 
-    { id: 'wing-attack', name: 'Ataque Ala', type: 'flying', kind: 'melee',
+    { id: 'wing-attack', name: 'Ataque Ala', type: 'flying', kind: 'melee', cat: 'physical',
       desc: 'Barrido de alas amplio que empuja.',
       cd: 0.55, dmg: 14, radius: 58, arc: 1.9, knock: 70 },
 
     // ---------------- NORMAL (extra) ----------------
-    { id: 'body-slam', name: 'Golpe Cuerpo', type: 'normal', kind: 'melee',
+    { id: 'body-slam', name: 'Golpe Cuerpo', type: 'normal', kind: 'melee', cat: 'physical',
       desc: 'Placaje con todo el peso: lento, corto y brutal.',
       cd: 0.95, dmg: 30, radius: 46, arc: 2.2, knock: 140 },
 
-    { id: 'hyper-voice', name: 'Vozarrón', type: 'normal', kind: 'nova',
+    { id: 'hyper-voice', name: 'Vozarrón', type: 'normal', kind: 'nova', cat: 'special',
       desc: 'Onda sonora que sale en todas direcciones.',
       cd: 1.15, dmg: 12, speed: 260, count: 9, pierce: 1, life: 0.9, size: 7 },
 
     // ---------------- VENENO (extra) ----------------
-    { id: 'poison-sting', name: 'Picotazo Veneno', type: 'poison', kind: 'projectile',
+    { id: 'poison-sting', name: 'Picotazo Veneno', type: 'poison', kind: 'projectile', cat: 'physical',
       desc: 'Aguijón rápido que envenena.',
       cd: 0.34, dmg: 8, speed: 420, count: 1, spread: 0.08, pierce: 0, life: 1.0, size: 4, poison: 1 },
 
-    { id: 'toxic', name: 'Tóxico', type: 'poison', kind: 'trail',
+    { id: 'toxic', name: 'Tóxico', type: 'poison', kind: 'trail', cat: 'status',
       desc: 'Vas dejando charcos de veneno que intoxican a quien los pisa.',
       cd: 0.3, dmg: 6, radius: 26, dur: 3, poison: 1 },
 
     // ---------------- TIERRA (extra) ----------------
-    { id: 'bulldoze', name: 'Terratemblor', type: 'ground', kind: 'aura',
+    { id: 'bulldoze', name: 'Terratemblor', type: 'ground', kind: 'aura', cat: 'physical',
       desc: 'Sacude el suelo: daña y frena a lo cercano.',
       cd: 0.7, dmg: 11, radius: 80, slow: 0.35 },
 
     // ---------------- BICHO ----------------
-    { id: 'bug-bite', name: 'Picadura', type: 'bug', kind: 'melee',
+    { id: 'bug-bite', name: 'Picadura', type: 'bug', kind: 'melee', cat: 'physical',
       desc: 'Mordisco rápido en arco corto.',
       cd: 0.42, dmg: 11, radius: 44, arc: 1.6, knock: 40 },
 
-    { id: 'string-shot', name: 'Disparo Demora', type: 'bug', kind: 'mine',
+    { id: 'string-shot', name: 'Disparo Demora', type: 'bug', kind: 'mine', cat: 'status',
       desc: 'Deja telarañas en el suelo que atrapan y frenan mucho al que las pisa.',
       cd: 1.1, dmg: 14, count: 2, radius: 56, dur: 7, slow: 0.6 },
 
-    { id: 'bug-buzz', name: 'Zumbido', type: 'bug', kind: 'aura',
+    { id: 'bug-buzz', name: 'Zumbido', type: 'bug', kind: 'aura', cat: 'special',
       desc: 'Vibración constante que machaca lo cercano.',
       cd: 0.45, dmg: 8, radius: 66 },
 
     // ---------------- ROCA ----------------
-    { id: 'rock-throw', name: 'Lanzarrocas', type: 'rock', kind: 'projectile',
+    { id: 'rock-throw', name: 'Lanzarrocas', type: 'rock', kind: 'projectile', cat: 'physical',
       desc: 'Pedrusco pesado que empuja al enemigo.',
       cd: 0.7, dmg: 24, speed: 260, count: 1, spread: 0.12, pierce: 0, life: 1.4, size: 9, knock: 90 },
 
-    { id: 'rock-slide', name: 'Avalancha', type: 'rock', kind: 'meteor',
+    { id: 'rock-slide', name: 'Avalancha', type: 'rock', kind: 'meteor', cat: 'physical',
       desc: 'Caen rocas del cielo sobre los enemigos cercanos.',
       cd: 1.3, dmg: 21, count: 3, radius: 46, knock: 50 },     // (12-10-2026: era 26; mataba el doble que la media)
 
     // ---------------- HIELO ----------------
-    { id: 'ice-beam', name: 'Rayo Hielo', type: 'ice', kind: 'beam',
+    { id: 'ice-beam', name: 'Rayo Hielo', type: 'ice', kind: 'beam', cat: 'special',
       desc: 'Rayo helado que congela casi del todo.',
       cd: 1.1, dmg: 20, radius: 220, width: 30, slow: 0.7 },
 
-    { id: 'powder-snow', name: 'Nieve Polvo', type: 'ice', kind: 'aura',
+    { id: 'powder-snow', name: 'Nieve Polvo', type: 'ice', kind: 'aura', cat: 'special',
       desc: 'Ventisca a tu alrededor que ralentiza.',
       cd: 0.55, dmg: 8, radius: 76, slow: 0.45 },
 
     // ---------------- LUCHA ----------------
-    { id: 'karate-chop', name: 'Golpe Kárate', type: 'fighting', kind: 'melee',
+    { id: 'karate-chop', name: 'Golpe Kárate', type: 'fighting', kind: 'melee', cat: 'physical',
       desc: 'Golpe seco y potente al frente.',
       cd: 0.5, dmg: 18, radius: 50, arc: 1.2, knock: 110 },
 
-    { id: 'aura-sphere', name: 'Esfera Aural', type: 'fighting', kind: 'projectile',
+    { id: 'aura-sphere', name: 'Esfera Aural', type: 'fighting', kind: 'projectile', cat: 'special',
       desc: 'Esfera de energía que nunca falla.',
       cd: 0.62, dmg: 17, speed: 300, count: 1, spread: 0.1, pierce: 0, life: 2.0, size: 8, homing: 4 },
 
     // ---------------- FANTASMA ----------------
-    { id: 'lick', name: 'Lengüetazo', type: 'ghost', kind: 'melee',
+    { id: 'lick', name: 'Lengüetazo', type: 'ghost', kind: 'melee', cat: 'physical',
       desc: 'Lametazo espectral que paraliza un poco.',
       cd: 0.48, dmg: 12, radius: 48, arc: 1.8, slow: 0.4 },
 
-    { id: 'shadow-ball', name: 'Bola Sombra', type: 'ghost', kind: 'projectile',
+    { id: 'shadow-ball', name: 'Bola Sombra', type: 'ghost', kind: 'projectile', cat: 'special',
       desc: 'Esfera oscura que atraviesa a varios.',
       cd: 0.66, dmg: 19, speed: 280, count: 1, spread: 0.1, pierce: 2, life: 1.6, size: 9 },
 
     // ---------------- DRAGON ----------------
-    { id: 'dragon-rage', name: 'Furia Dragón', type: 'dragon', kind: 'beam',
+    { id: 'dragon-rage', name: 'Furia Dragón', type: 'dragon', kind: 'beam', cat: 'special',
       desc: 'Llamarada dracónica en línea recta.',
       cd: 1.0, dmg: 24, radius: 230, width: 34 },
 
-    { id: 'dragon-dance', name: 'Danza Dragón', type: 'dragon', kind: 'buff',
+    { id: 'dragon-dance', name: 'Danza Dragón', type: 'dragon', kind: 'buff', cat: 'status',
       desc: 'No hace daño: acumula ATAQUE más rápido que Danza Espada.',
       cd: 0.7, stat: 'atk', amount: 0.11, dur: 7, stacks: 5 },
 
     // ---------------- HADA ----------------
-    { id: 'fairy-wind', name: 'Viento Feérico', type: 'fairy', kind: 'nova',
+    { id: 'fairy-wind', name: 'Viento Feérico', type: 'fairy', kind: 'nova', cat: 'special',
       desc: 'Brisa mágica en todas direcciones.',
       cd: 1.0, dmg: 11, speed: 230, count: 10, pierce: 0, life: 1.2, size: 7 },
 
-    { id: 'dazzling-gleam', name: 'Brillo Mágico', type: 'fairy', kind: 'aura',
+    { id: 'dazzling-gleam', name: 'Brillo Mágico', type: 'fairy', kind: 'aura', cat: 'special',
       desc: 'Destello a tu alrededor.',
       cd: 0.5, dmg: 9, radius: 72 },
 
     // ---------------- ACERO ----------------
-    { id: 'metal-claw', name: 'Garra Metal', type: 'steel', kind: 'melee',
+    { id: 'metal-claw', name: 'Garra Metal', type: 'steel', kind: 'melee', cat: 'physical',
       desc: 'Zarpazo de acero en arco.',
       cd: 0.5, dmg: 15, radius: 50, arc: 1.6, knock: 60 },
 
-    { id: 'flash-cannon', name: 'Foco Resplandor', type: 'steel', kind: 'beam',
+    { id: 'flash-cannon', name: 'Foco Resplandor', type: 'steel', kind: 'beam', cat: 'special',
       desc: 'Rayo de luz metálica que perfora.',
       cd: 1.05, dmg: 23, radius: 220, width: 30 },
 
     // ---------------- SINIESTRO ----------------
-    { id: 'bite', name: 'Mordisco', type: 'dark', kind: 'melee',
+    { id: 'bite', name: 'Mordisco', type: 'dark', kind: 'melee', cat: 'physical',
       desc: 'Dentellada rápida que hace retroceder.',
       cd: 0.45, dmg: 14, radius: 46, arc: 1.5, knock: 70 },
 
-    { id: 'dark-pulse', name: 'Pulso Umbrío', type: 'dark', kind: 'nova',
+    { id: 'dark-pulse', name: 'Pulso Umbrío', type: 'dark', kind: 'nova', cat: 'special',
       desc: 'Onda de energía oscura en todas direcciones.',
       cd: 1.15, dmg: 14, speed: 240, count: 10, pierce: 1, life: 1.1, size: 8 },
 
-    { id: 'night-shade', name: 'Tinieblas', type: 'dark', kind: 'aura',
+    { id: 'night-shade', name: 'Tinieblas', type: 'dark', kind: 'aura', cat: 'special',
       desc: 'Una sombra te rodea y consume lo cercano.',
       cd: 0.5, dmg: 9, radius: 72 },
 
     // ---------------- NEW (2026-10-10): same shapes, different mechanics ----------------
-    { id: 'bonemerang', name: 'Huesomerang', type: 'ground', kind: 'boomerang',
+    { id: 'bonemerang', name: 'Huesomerang', type: 'ground', kind: 'boomerang', cat: 'physical',
       desc: 'Un hueso que va y vuelve golpeando fuerte.',
       cd: 0.95, dmg: 16, speed: 300, count: 1, radius: 230, size: 8, knock: 40 },
 
-    { id: 'psycho-cut', name: 'Psicocorte', type: 'psychic', kind: 'boomerang',
+    { id: 'psycho-cut', name: 'Psicocorte', type: 'psychic', kind: 'boomerang', cat: 'physical',
       desc: 'Cuchillas psíquicas que vuelven a ti.',
       cd: 0.8, dmg: 9, speed: 360, count: 2, spread: 0.6, radius: 200, size: 7 },
 
-    { id: 'spikes', name: 'Púas', type: 'ground', kind: 'mine',
+    { id: 'spikes', name: 'Púas', type: 'ground', kind: 'mine', cat: 'status',
       desc: 'Siembra púas que estallan al pisarlas.',
       cd: 1.2, dmg: 18, count: 2, radius: 60, dur: 8 },
 
-    { id: 'toxic-spikes', name: 'Púas Tóxicas', type: 'poison', kind: 'mine',
+    { id: 'toxic-spikes', name: 'Púas Tóxicas', type: 'poison', kind: 'mine', cat: 'status',
       desc: 'Púas venenosas que envenenan mucho al estallar.',
       cd: 1.1, dmg: 11, count: 2, radius: 56, dur: 8, poison: 2 },
 
-    { id: 'hail', name: 'Granizo', type: 'ice', kind: 'meteor',
+    { id: 'hail', name: 'Granizo', type: 'ice', kind: 'meteor', cat: 'status',
       desc: 'Bolas de hielo caen sobre los enemigos y los frenan.',
       cd: 1.2, dmg: 18, count: 4, radius: 40, slow: 0.4 },
 
-    { id: 'meteor-mash', name: 'Puño Meteoro', type: 'steel', kind: 'meteor',
+    { id: 'meteor-mash', name: 'Puño Meteoro', type: 'steel', kind: 'meteor', cat: 'physical',
       desc: 'Dos meteoros de acero que aplastan donde caen.',
       cd: 1.4, dmg: 34, count: 2, radius: 54, knock: 80 },
 
-    { id: 'will-o-wisp', name: 'Fuego Fatuo', type: 'fire', kind: 'turret',
+    { id: 'will-o-wisp', name: 'Fuego Fatuo', type: 'fire', kind: 'turret', cat: 'status',
       desc: 'Deja una llama flotante que dispara sola y quema.',
       cd: 3.5, dmg: 15, rate: 0.55, dur: 6, count: 1, range: 300, speed: 300, size: 7, burn: 1 },
 
-    { id: 'substitute', name: 'Sustituto', type: 'normal', kind: 'turret',
+    { id: 'substitute', name: 'Sustituto', type: 'normal', kind: 'turret', cat: 'status',
       desc: 'Un muñeco que se queda disparando por ti.',
       cd: 4.0, dmg: 14, rate: 0.4, dur: 6, count: 1, range: 280, speed: 320, size: 6 },
 
-    { id: 'aerial-ace', name: 'Golpe Aéreo', type: 'flying', kind: 'dash',
+    { id: 'aerial-ace', name: 'Golpe Aéreo', type: 'flying', kind: 'dash', cat: 'physical',
       desc: 'Te lanzas en picado y cortas todo lo que cruzas.',
       cd: 0.75, dmg: 18, radius: 120, width: 40, knock: 60 },
 
-    { id: 'flame-wheel', name: 'Rueda Fuego', type: 'fire', kind: 'trail',
+    { id: 'flame-wheel', name: 'Rueda Fuego', type: 'fire', kind: 'trail', cat: 'physical',
       desc: 'Corres envuelto en fuego y dejas un rastro de llamas.',
       cd: 0.28, dmg: 10, radius: 28, dur: 2.6, burn: 1 },
 
-    { id: 'bubble-beam', name: 'Rayo Burbuja', type: 'water', kind: 'cone',
+    { id: 'bubble-beam', name: 'Rayo Burbuja', type: 'water', kind: 'cone', cat: 'special',
       desc: 'Chorro de burbujas en abanico corto que frena.',
       cd: 0.65, dmg: 6, count: 7, arc: 1.0, speed: 340, life: 0.45, size: 6, slow: 0.3 },
 
-    { id: 'hex', name: 'Infortunio', type: 'ghost', kind: 'chain',
+    { id: 'hex', name: 'Infortunio', type: 'ghost', kind: 'chain', cat: 'special',
       desc: 'Maldición que salta entre enemigos. Mucho más daño si están quemados, envenenados o frenados.',
       cd: 0.9, dmg: 17, count: 4, radius: 150, hex: 1.7 }
   ];
