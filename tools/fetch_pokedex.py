@@ -101,6 +101,7 @@ def one(dex):
         'spd': spd,
         'atk': atk,
         'bst': bst,
+        'stats': [base[k] for k in ('hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed')],
         'height': p['height'],
         'rarity': rarity(bst, dex, s.get('is_legendary'), s.get('is_mythical')),
         'starter': dex in STARTERS,
@@ -128,6 +129,7 @@ def main():
         ' * PokeAPI y viven aqui: el juego no hace ninguna peticion a internet.',
         ' *',
         ' * hp/spd/atk son stats de juego derivados de los stats base.',
+        ' * stats = the six base stats [HP, Atk, Def, SpA, SpD, Spe] (PokeAPI, current generation).',
         ' * rarity 1-5 para el gacha · gen = generación (banner) · starter = test',
         ' * leg = legendario o singular (sólo salen en las grietas)',
         ' */',
@@ -137,7 +139,7 @@ def main():
         o = {
             'dex': r['dex'], 'name': r['name'], 'types': r['types'],
             'hp': r['hp'], 'spd': r['spd'], 'atk': r['atk'],
-            'rarity': r['rarity'], 'bst': r['bst'],
+            'rarity': r['rarity'], 'bst': r['bst'], 'stats': r['stats'],
             'starter': r['starter'], 'gen': r['gen'],
         }
         if r['leg']:

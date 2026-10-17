@@ -271,13 +271,14 @@ G.MenuUI = (() => {
       <div class="center">
         <div style="color:var(--muted);font-size:13px">Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</div>
         <h3>${own ? p.name : '???'}</h3>
-        <div style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)} ${G.Gacha.RARITY_NAME[p.rarity]}</div>
+        <div class="rarity-line" style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)}<span>${G.Gacha.RARITY_NAME[p.rarity]}</span>${own ? G.Icons.bstStars(p.bst) : ''}</div>
         <div style="margin:6px 0">${own ? G.UI.typeChips(p.types) : ''}</div>
       </div>
       ${own ? `
         ${bar('Vida', p.hp, max.hp, p.hp)}
         ${bar('Ataque', p.atk, max.atk, '×' + p.atk.toFixed(2))}
         ${bar('Velocidad', p.spd, max.spd, p.spd)}
+        ${p.stats ? '<div id="dex-hex" class="hex-wrap"></div>' : ''}
         <p style="font-size:14px;margin:10px 0 4px">Empieza con <b class="gold">${G.Moves.BY_ID[G.startMoveOf(dex)].name}</b></p>
         <p class="move-icons" title="Movimientos que puede aprender">
           ${G.Moves.poolFor(p).map(id => `<span title="${G.Moves.BY_ID[id].name}">${G.Icons.html('move:' + id, 16)}</span>`).join('')}</p>
@@ -287,6 +288,9 @@ G.MenuUI = (() => {
     `;
     $('dex-big').style.setProperty('--stage-c', !own ? '#5b83d6' : viewShiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]]);
     $('dex-big').classList.toggle('shiny', own && viewShiny);
+    // Base stats as a hexagon, like the main games (only for Pokémon you have).
+    const hex = $('dex-hex');
+    if (hex) hex.appendChild(G.StatChart.make(p.stats, viewShiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]]));
     G.UI.sprite($('dex-big'), dex, { lively: own, spin: own, silhouette: !own, scale: 3, hero: true, shiny: own && viewShiny });
     box.querySelectorAll('.seg button').forEach(b => {
       b.onclick = () => { viewShiny = b.dataset.v === '1'; showDetail(dex); };

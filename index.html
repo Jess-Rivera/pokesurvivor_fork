@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PokéSurvivor Redux</title>
 <meta name="description" content="Sobrevive a hordas de Pokémon con tu compañero en este fan game gratis para navegador y móvil: 966 Pokémon, shinies, legendarios y cooperativo con amigos. Sin descargas ni anuncios.">
-
 <link rel="canonical" href="https://pokesurvivor.com/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#0a1430">
@@ -27,7 +26,6 @@
 <meta name="twitter:description" content="Fan game gratis para navegador y móvil, con cooperativo hasta 4. Sin descargas ni anuncios.">
 <meta name="twitter:image" content="https://pokesurvivor.com/assets/og-image.jpg">
 <script>window.PS_PAGES = true;</script>
-
 <link rel="manifest" href="manifest.webmanifest">
 <!-- Google sólo enseña en los resultados iconos de 48 px o múltiplos -->
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -42,7 +40,6 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preload" href="assets/fonts/PixelifyPS-400.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/fonts/PixelifyPS-700.ttf" as="font" type="font/ttf" crossorigin>
-
 <!-- Datos estructurados para Google (tipo de página: videojuego gratuito) -->
 <script type="application/ld+json">
 {
@@ -76,7 +73,6 @@
   ]
 }
 </script>
-
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -169,12 +165,7 @@
       <div class="t1">PokéSurvivor<span class="redux-stamp">REDUX</span></div>
       <div class="redux-sub"><span>R</span><span>e</span><span>m</span><span>a</span><span>s</span><span>t</span><span>e</span><span>r</span><span>e</span><span>d</span><span>&nbsp;</span><span>C</span><span>o</span><span>l</span><span>l</span><span>e</span><span>c</span><span>t</span><span>o</span><span>r</span><span>'</span><span>s</span><span>&nbsp;</span><span>R</span><span>e</span><span>d</span><span>&nbsp;</span><span>E</span><span>d</span><span>i</span><span>t</span><span>i</span><span>o</span><span>n</span></div>
     </div>
-    <div class="partner-card">
-      <canvas id="menu-partner" class="stage" width="260" height="200"></canvas>
-      <div class="nm" id="menu-partner-name"></div>
-      <div class="lv" id="menu-partner-info"></div>
-      <div class="seg hidden" id="menu-shiny"><button data-v="0">Normal</button><button data-v="1"></button></div>
-    </div>
+    <div class="roster" id="menu-roster"></div>
   </div>
   <div class="menu-right">
     <div class="box">
@@ -331,8 +322,7 @@
       <h1>PokéSurvivor</h1>
       <p>PokéSurvivor necesita JavaScript para funcionar. Actívalo para jugar.</p>
       <p>Fan game gratuito de supervivencia con 966 Pokémon de las 9 regiones: elige tu compañero, sobrevive a las hordas, evoluciona tus ataques, enfréntate a legendarios y juega en cooperativo con hasta 4 amigos.</p>
-      <p><a href="guia/">Guía del juego</a> · <a href="pokedex/">Pokédex: todos los Pokémon jugables</a></p>
-    </div>
+      <p><a href="guia/">Guía del juego</a> · <a href="pokedex/">Pokédex: todos los Pokémon jugables</a></p>    </div>
   </div>
 </noscript>
 
@@ -444,7 +434,8 @@
 <!-- ====== Colección ====== -->
 <section id="scr-dex" class="scr dim hidden">
   <div class="box wide">
-    <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" data-back>Volver</button></div>
+    <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="dex-back" data-back>Volver</button></div>
+    <div class="pick-banner hidden" id="dex-pick-banner"></div>
     <div class="gen-tabs" id="dex-gens"></div>
     <div class="split" style="margin-top:8px">
       <div>
@@ -559,6 +550,6 @@
 </section>
 
 <!-- datos generados -->
-<script defer src="js/app.min.js?v=0162ef1120"></script>
+<script defer src="js/app.min.js?v=b3e0da37d3"></script>
 </body>
 </html>

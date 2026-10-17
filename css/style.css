@@ -301,6 +301,10 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
 /* Pokédex pick mode. */
 .pick-banner { margin: 8px 0 2px; padding: 8px 12px; border-radius: 10px; text-align: center; font-weight: 700;
   color: var(--gold); background: rgba(255,210,63,.14); border: 2px solid var(--gold); }
+.rarity-line { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 2px 8px; }
+.bst-stars { display: inline-flex; align-items: center; gap: 2px; }
+.hex-wrap { display: flex; justify-content: center; margin: 6px 0 2px; }
+.stat-hex { display: block; max-width: 100%; height: auto !important; }
 .roster-note { font-size: 13px; color: var(--muted); text-align: center; margin: 6px 0; }
 .badge-slot { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold);
   color: #10131a; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; text-shadow: none; }
