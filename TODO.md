@@ -84,6 +84,42 @@ Keep it simple: move items between sections as they progress. Add a date when an
   a full rewrite or runaway server CPU cost. Do a real cost/feasibility estimate (concurrent rooms per
   $5 VPS, bandwidth per room at this game's entity counts) before committing.
 
+  HOSTING PROVIDER RESEARCH (2026-10-17, deferred — numbers verified via web, will drift, re-check at
+  phase start):
+  - Context: 2026 saw broad budget-VPS price hikes (Hetzner shared vCPU +30-50%). "Cheap VPS" is less
+    stable than it was; prefer providers with monthly price caps / flat pricing.
+  - The binding metric for the SIM role is SINGLE-CORE performance. The cheap SHARED-vCPU boxes bench
+    poorly on raw CPU (vpsbenchmarks: Hetzner CX22 raw-CPU grade E on old Skylake; Vultr "High
+    Frequency" 2GB graded F at $12/mo — pricier did NOT win single-core). Shared vCPU = noisy
+    neighbors. For a RELAY role, CPU grade is irrelevant — any $4-6 box over-serves; pick on
+    location + billing (Hetzner CX23 ~€5.49 EU-only, or Contabo 4vCPU/8GB <$5 with US regions).
+  - THE ANSWER for the sim role = DEDICATED-vCPU Ryzen VPS (not shared). Look for "dedicated vCPU" +
+    high-clock Ryzen (7950X/9950X/X3D). Standout: AlphaVPS Ryzen — dedicated Ryzen 9 9950X/7950X,
+    claimed PassMark single-thread 4000+ (≈2-3x a shared Skylake vCPU, near desktop class), DDR5 ECC,
+    Gen4 NVMe, FROM ~€2.99/mo (~€2.54 annual), EU + LA. Also Lumadock (dedicated 7950X core), Hetzner
+    CCX (dedicated tier, pricier post-hike), and game-server hosts (eugamehost/gameserverkings/
+    pingperfect: overclocked 7950X3D up to 5.8GHz + DDoS protection, built for exactly modded-MC/Rust/
+    game-sim workloads, often 6-mo intro rates — check renewal price). Caveats: PassMark 4000+ is a
+    marketing figure (benchmark the real ms/tick), "from €2.99" is likely the smallest tier (confirm
+    cores/RAM), AlphaVPS is a smaller provider (weigh reliability).
+  - AWS: wrong shape for a capped ~$5/mo hobby backend. Usage-based + egress (~$0.09/GB out) risks bill
+    surprises for a traffic-relaying game. Only Lightsail fits (flat pricing, bundled transfer) if you
+    want the AWS ecosystem, still pricier/weaker-per-$ than budget hosts. EC2 free tier = $0 for year 1
+    (weak box, expires). GameLift = enterprise overkill.
+  - Self-hosted mini-PC (considered, rejected-ish): best raw price/perf for the SIM (real dedicated
+    fast core, ~$1-4/mo electricity, break-even vs VPS ~6-18mo) BUT reintroduces the exact reachability
+    problem — home NAT/port-forwarding, CGNAT (may be impossible on some ISPs), dynamic IP (needs
+    DDNS), plus home-network security exposure + you own uptime + residential upload cap. Clean hybrid
+    if ever wanted: mini-PC runs the sim, cheap VPS is the public relay (strong core at home, stable
+    reachability + unexposed home net). For now VPS alone is simpler.
+  - 5-rooms-per-core math (the whole thing hinges on T = sim ms/tick/room, UNMEASURED): rooms/core ≈
+    1000/(60*T), derate ~65%. On a PassMark-4000 dedicated Ryzen core: T≤2ms -> ~5 rooms @60Hz;
+    T≈3-4ms -> 2-3 @60Hz but ~4-5 if the server tick drops to 30Hz (clients interpolate). So 2 rooms is
+    a conservative floor at ~€3/mo (great value); 5 rooms is realistic with 30Hz + entity budget.
+    ACTION at phase start: rent a dedicated-Ryzen VPS HOURLY, run the extracted-sim ms/tick benchmark
+    on it, plug in real T. Hardware class is right; the engineering (tick rate + entity budget) decides
+    the room count, not the wallet.
+
   FPS / CPU / COST reasoning (same 2026-10-17 thinking-ahead chat, all deferred):
   - FPS vs host: in the CURRENT P2P model each client simulates its OWN view ("each computer executes
     the attacks of ITS player"), so a player's FPS depends on THEIR machine, not a central host. Under

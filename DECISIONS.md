@@ -5,6 +5,53 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-17, Massive density is a FEATURE, not a thing to budget down (design north star)
+Jess's explicit goal: the game should deliver "holy f*** I've got 200 mon after me / ME TOO / SHIT
+ONLY 200?!" chaos. Absurd on-screen density IS the identity, not a problem to tame. So wherever earlier
+notes say "co-op entity budget" / "cap the horde to keep it cheap/sane", reinterpret: entity count is a
+FIXED REQUIREMENT to design AROUND, not a knob to shrink. Do NOT nerf the horde to fit a cheap server
+or to hit a frame target by subtraction. Instead preserve the carnage and pay for it / engineer for it:
+  - Keep density maximal; solve performance with the levers that DON'T reduce monster count:
+    (1) server tick 30Hz + client interpolation (halves server CPU, horde unchanged, looks 60fps);
+    (2) interest management / culling (server simulates the full horde but only SYNCS each client what's
+        near them — keeps bandwidth sane without thinning the swarm);
+    (3) spatial-grid / object-pool / draw-batching optimization on the hot path;
+    (4) stronger hardware (dedicated-Ryzen VPS) and/or fewer rooms per core — buy capacity, don't cut mobs.
+  - Consequence for MP sizing: a maximal-density room has a HIGHER T (sim ms/tick), so expect maybe 1-2
+    rooms per dedicated-Ryzen core at 60Hz rather than 5 — and that is a GOOD trade (1-2 rooms of true
+    carnage at ~€3-6/mo). Scale by adding cores, not by shrinking hordes.
+  - The ONE exception where reducing entities is still legit: a genuine FEEL failure (unreadable screen,
+    framerate COLLAPSE e.g. 60->22fps) per the existing performance-stance ruling. Even then, prefer
+    readability fixes (culling, visual clarity) over simply spawning fewer enemies.
+This supersedes any earlier phrasing that implied trimming entity counts for tidiness/cost as the
+default. Default = keep the horde huge; optimize and pay around it.
+
+## 2026-10-17, Likely MP shape: ONE deliberate high-density room (not multi-room matchmaking) [deferred]
+Jess's leaning for the MP phase (not built; captured so it isn't lost): rather than a general
+5-rooms/matchmaking service, the pitch is a SINGLE room — "I spin it up, who's joining me?" — and the
+payoff is getting buried in hundreds-to-thousands of mobs. This is a BETTER-scoped goal than multi-room
+MP on every axis we worked through:
+  - Cost: one room = one sim, so 100% of a dedicated-Ryzen core (~€3/mo, AlphaVPS-class) serves that
+    ONE horde. Maximal density gets maximal hardware — can push entity counts far harder than if the
+    core were split across 5 rooms. Reframes sizing from "fit 5 rooms on a core" to "how many thousands
+    of mobs can one WHOLE core push at a playable tick."
+  - Simplicity: no matchmaking/lobby/ranking layer (skips a big chunk of the deferred js/net/ stack).
+    "Who's joining me" = share a link/code to a few invited friends. Minimal to build.
+  - Reliability: one known host + one relay + a few invited friends = the most tractable form of the
+    connection problem.
+  - Fits the identity: it's not "a multiplayer service," it's "come get swarmed with me." The
+    constraint IS the pitch.
+  Still gated by the same benchmark (T = sim ms/tick at the target entity count on the real core); go
+  bigger via 30Hz tick + culling + spatial-grid/object-pool optimization, never fewer mobs. One full
+  core on one room = the most headroom possible to chase "thousands." Revisit vs multi-room at MP phase.
+  6-PLAYER cap idea (Jess, 2026-10-17): with only one room to host, make it a 6-player room to MIRROR
+  the 6-slot team roster (nice thematic symmetry). Feasible in the single-room/whole-core model, with
+  the honest caveat that players scale load: ~6 players pulling their own swarms ≈ 1.5x the entities of
+  4, so T and bandwidth rise accordingly (not "4 plus two free cursors"). Fine here because the whole
+  core serves ONE room and the levers (30Hz tick, culling, optimization) absorb it like any density.
+  Bonus: a hard 6-player cap IS the game's whole concurrency limit — supersedes the earlier "20 players
+  / 5 rooms" framing with an even cleaner, cheaper model: up to 6 players, one room, one core. ACTION
+  at MP phase: benchmark T at 6-PLAYER density (not 4), since that's the real worst case.
 ## 2026-10-17, HP scalars and damage scalars are ORTHOGONAL dials (move-power migration note)
 Mental model to avoid re-tuning the wrong thing. There are three independent scalars:
   (1) HP_SCALAR = 2.0  -> multiplies the HP formula. SHARED by player AND enemy HP (G.Stats.hpForLevel).
