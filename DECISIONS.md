@@ -79,6 +79,28 @@ Vision first, trim fat later. Ignore small per-frame millisecond differences at 
 visible framerate collapse (e.g. 60fps to ~22fps at high enemy density) is a FEEL problem and is
 addressed immediately, not deferred.
 
+## 2026-10-17, Damage model: mainline formula + a single survivor scalar
+Player->enemy damage uses the real mainline damage formula, tuned toward survivor feel by ONE scalar:
+    base = ((2*L/5 + 2) * Power * (Atk/Def)) / 50 + 2, then * STAB(1.5) * type * crit * SCALAR
+    SCALAR = 2.0 (locked).
+- L = attacker level (player's in-run level). Atk/Def are the real base stats scaled to level via the
+  mainline statValue formula: physical moves use Atk(stats[1]) vs enemy Def(stats[2]); special moves use
+  SpA(stats[3]) vs enemy SpD(stats[4]). Category comes from move.cat (sub-slice A) via G.Stats.moveCat.
+- STAB = 1.5x when the move type matches one of the active fighter's species types.
+- Player Atk/SpA scale with in-run level (like HP); this is required for the ratio to stay proportional.
+- Implementation is split (attacker half at cast, defender half at impact) but is mathematically identical
+  to the single formula; the +2 stays after the division and before the STAB/type/crit/scalar multipliers.
+
+## 2026-10-17, The naked base-stat layer is intentionally upgrade-dependent (do not "fix" the ramp)
+With base stats only (no upgrades), hits-to-kill a common enemy RAMPS over a run (~3 hits early -> ~12 by
+30 min at scalar 2.0). This is BY DESIGN, not a balance bug. Root cause is structural and known: enemy HP
+grows ~10.4x over a run while mainline damage grows ~2.6x, so the naked line cannot keep pace on its own.
+In a survivor-like it is not supposed to: the power fantasy comes from the upgrade stack (level-up draft,
+move upgrades, crit, items), which multiplies damage on top of this baseline and fills the headroom. If a
+future session sees the naked ramp and is tempted to rebalance base stats to flatten it, DON'T, that would
+leave no room for upgrades to matter. The base layer's only job is a sane early hit-count (~2-4) with a
+moderate ramp. Tune the upgrade systems to fill the gap, not the base stats to erase it.
+
 ## 2026-10-17, changelog.js is a free-edit exception
 js/data/changelog.js is the ONE js/data/*.js file exempt from propose-and-approve: it is purely
 informational patch notes and does not affect mechanics, so the agent edits it directly without
@@ -133,3 +155,17 @@ real base Speed stat[5]), fixed per species, same px/s scale as the player, with
 (tier.spd x spdK reverse-derivation). Difficulty comes from HP/damage/density, not creeping enemy
 speed. Exceptions kept: bosses retain their own spd path (out of scope); the 'runner' behavior keeps
 its x1.6 (it is a behavior archetype, not a base-stat multiplier).
+
+## 2026-10-17, Enemy attacks are behavior-driven, NOT move-catalog (finding, affects sub-slice C)
+Enemies do NOT use the js/data/moves.js catalog. An enemy attacks from its behavior (fan/beamer/
+zoner/healer/summoner/default shoot, plus a richer boss set) using raw numbers on its def: this.dmg
+(contact), shotDmg() (ranged = def.shotDmg * dmg/def.dmg), and this.atkType = the enemy's PRIMARY
+Pokemon type (types[0]), which already feeds the type chart on enemy->player hits. There is NO
+physical/special category and NO base attack stat anywhere on the enemy attack path today.
+Consequence for the damage redesign:
+- Sub-slice B (player->enemy) is clean: player moves have cat + type + base power; we just need the
+  enemy's real Def/SpD (stats[2]/stats[4]) as the A/D denominator.
+- Sub-slice C (enemy->player) has a design gap to resolve THEN: enemy attacks need a category (to pick
+  the enemy's Atk vs SpA and the player's Def vs SpD) OR stay flat-damage with only the player's
+  defense applying. Likely derive an enemy attack category from behavior/type (like G.Stats.moveCat
+  does for custom moves). Decide when scoping C.

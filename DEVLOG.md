@@ -5,6 +5,46 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-17 (damage slice, sub-slice B: SCOPED + mid-approval, NOTHING APPLIED YET)
+- STATUS: sub-slice A is COMPLETE but UNCOMMITTED. sub-slice B is fully designed and approved in
+  principle (STAB yes, 2.0x scalar locked) but NO combat.js/player.js/stats.js edits have been made.
+  A fresh chat picks up by laying out the sub-slice B diff for approval, then applying it.
+- COMMIT THE UNCOMMITTED SUB-SLICE A FIRST (run before starting B):
+    git add js/data/moves.js js/core/stats.js tools/gen_move_cats.py DEVLOG.md
+    git commit -m "Damage sub-slice A: move physical/special/status categories + moveCat fallback + generator"
+- Damage model decided (start mainline, tune toward survivor):
+    base = ((2*L/5 + 2) * Power * (Atk/Def)) / 50 + 2, then * STAB(1.5) * type * crit * SCALAR
+    SCALAR = 2.0 (locked via the naked-baseline tuner: median move ~3 hits early, ramps to ~12 by 30 min).
+  The naked baseline is INTENTIONALLY upgrade-dependent: the ramp is headroom that the draft / move
+  upgrades / crit / items fill later. Do NOT "fix" the ramp by rebalancing base stats (see DECISIONS).
+- Why the ramp exists (diagnosed, not a bug): enemy HP grows ~10.4x over a run (L1->L50) while mainline
+  damage grows ~2.6x, so hits-to-kill climbs on the naked line. In a survivor-like the base character is
+  not meant to keep pace alone; the build does. Confirmed with the user; logged as a design decision.
+- Player Atk/SpA will scale with level this slice (completes stat-scaling; HP already does, Speed never).
+- TWO-PART IMPLEMENTATION (mathematically identical to mainline, split only by spawn-then-impact timing):
+    at cast (attacker half, replaces `m.dmg * pl.atk` at ~15 combat.js spawn sites):
+       factor = ((2*L/5 + 2) * Power * AtkStat) / 50       // AtkStat = Atk for physical, SpA for special
+    at impact (in hit(), where the specific enemy's defense is known):
+       dmg = (factor / DefStat + 2) * STAB * type * crit * SCALAR   // DefStat = Def(phys) or SpD(spec)
+  The +2 stays on the impact side AFTER the division and BEFORE the multipliers, exactly as mainline.
+- Planned functions (single source of truth in js/core/stats.js):
+    G.Stats.attackFactor(baseAtk, baseSpA, level, move, scalar?) -> attacker half (picks Atk/SpA via moveCat)
+    G.Stats.applyDefense(factor, enemyDef, enemySpD, move) -> (factor/DefStat + 2); type*crit*STAB stay in hit()
+- player.js: add baseAtkStat from stats[1] and baseSpAStat from stats[3], scaling with level via G.Stats.
+  enemy.js already exposes real base stats via G.DEX_BY[def.dex].stats ([2]=Def, [4]=SpD) at its level-for-time.
+- combat.js: replace `m.dmg * pl.atk` at ALL ~15 spawn sites (projectile x3, melee/cone, beam, aura, chain,
+  mines, meteor, turret, dash, trail, orbit, patch) with the attacker-factor helper; complete the ratio in hit().
+  DECIDED to replace all sites at once (user has not answered the all-at-once vs phased question yet, but the
+  recommendation stands: all at once so every move kind is consistent to playtest). CONFIRM on the fresh chat.
+- STAB = 1.5x when the move's type matches one of the ACTIVE fighter's species types (G.DEX_BY[pl.dex].types).
+- Still OPEN on the fresh chat before applying: (1) confirm all-at-once vs phased rollout; (2) then produce the
+  full propose-and-approve diff (stats.js + player.js + combat.js) for approval; (3) apply on approval;
+  (4) changelog.js entry (fix/chg) in English; (5) in-browser playtest; (6) commit sub-slice B.
+- The 7 "status-but-damaging" moves still need their real phys/spec cat decided when the formula goes live
+  (deferred from sub-slice A): toxic, string-shot, spikes, toxic-spikes, hail, will-o-wisp, substitute.
+- Damage tuner artifact built this session (naked baseline, scalar knob). NOT yet saved to the repo; user
+  was offered docs/tools/ save but chose "give me the scalar" instead. Re-offer if wanted.
+
 ## 2026-10-17 (damage slice, sub-slice A: move category data)
 - Prep for the damage model (mainline A/D ratio). Added a physical/special/status category to every
   move. All 64 moves in js/data/moves.js use real mainline move IDs, so categories were pulled
