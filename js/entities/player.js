@@ -38,10 +38,10 @@ G.Player = class Player {
     this.bonds = 0;            // links to use (reward from the legendaries)
 
     this.buffs = {
-      atk: { n: 0, t: 0, amount: 0 },
-      spd: { n: 0, t: 0, amount: 0 },
-      def: { n: 0, t: 0, amount: 0 },
-      regen: { n: 0, t: 0, amount: 0 }
+      atk: { n: 0, t: 0, dur: 0, amount: 0 },     // dur = full length, so the HUD can draw the timer
+      spd: { n: 0, t: 0, dur: 0, amount: 0 },
+      def: { n: 0, t: 0, dur: 0, amount: 0 },
+      regen: { n: 0, t: 0, dur: 0, amount: 0 }
     };
 
     this.level = 1;
@@ -309,6 +309,7 @@ G.Player = class Player {
     b.amount = amount;
     b.n = Math.min(maxStacks, b.n + 1);
     b.t = dur;
+    b.dur = dur;
   }
 
   // ---------------- ciclo ----------------

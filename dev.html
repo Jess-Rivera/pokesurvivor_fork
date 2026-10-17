@@ -170,12 +170,7 @@
       <div class="t1">PokéSurvivor<span class="redux-stamp">REDUX</span></div>
       <div class="redux-sub"><span>R</span><span>e</span><span>m</span><span>a</span><span>s</span><span>t</span><span>e</span><span>r</span><span>e</span><span>d</span><span>&nbsp;</span><span>C</span><span>o</span><span>l</span><span>l</span><span>e</span><span>c</span><span>t</span><span>o</span><span>r</span><span>'</span><span>s</span><span>&nbsp;</span><span>R</span><span>e</span><span>d</span><span>&nbsp;</span><span>E</span><span>d</span><span>i</span><span>t</span><span>i</span><span>o</span><span>n</span></div>
     </div>
-    <div class="partner-card">
-      <canvas id="menu-partner" class="stage" width="260" height="200"></canvas>
-      <div class="nm" id="menu-partner-name"></div>
-      <div class="lv" id="menu-partner-info"></div>
-      <div class="seg hidden" id="menu-shiny"><button data-v="0">Normal</button><button data-v="1"></button></div>
-    </div>
+    <div class="roster" id="menu-roster"></div>
   </div>
   <div class="menu-right">
     <div class="box">
@@ -445,7 +440,8 @@
 <!-- ====== Colección ====== -->
 <section id="scr-dex" class="scr dim hidden">
   <div class="box wide">
-    <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" data-back>Volver</button></div>
+    <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="dex-back" data-back>Volver</button></div>
+    <div class="pick-banner hidden" id="dex-pick-banner"></div>
     <div class="gen-tabs" id="dex-gens"></div>
     <div class="split" style="margin-top:8px">
       <div>

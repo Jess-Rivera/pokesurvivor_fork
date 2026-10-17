@@ -62,17 +62,35 @@ G.HUD = (() => {
    *  swapped to yet show the same bottom-to-top cooldown fill the attacks use. */
   function drawTeam(ctx, w, h) {
     const roster = G.Game.roster;
-    if (!roster || roster.length < 2) return;
+    if (!roster || roster.length < 2) return 0;
     const activeIdx = G.Game.activeIndex;
-    const S = 54, GAP = 10, BH = 7, R = 12;       // S matches the attack buttons
-    const ROW = S + 5 + BH;                        // icon box + gap + hp bar per member
+    const SLOTS = 6, GAP = 10, BH = 7, R = 12;
+    // S matches the attack buttons (54), but shrinks on short screens so all 6 slots fit.
+    const stackH = sz => SLOTS * (sz + 5 + BH) + (SLOTS - 1) * (GAP - 5);
+    let S = 54;
+    while (S > 30 && stackH(S) > h - 130) S -= 2;
+    const ROW = S + 5 + BH;                        // icon box + gap + hp bar per slot
     const x = 16;                                  // fixed left column
-    const totalH = roster.length * ROW + (roster.length - 1) * (GAP - 5);
-    const startY = h - totalH - 16;                // stack downward from here (anchored bottom)
+    const startY = h - stackH(S) - 16;             // stack downward from here (anchored bottom)
     const cdFrac = G.U.clamp(G.Game.swapCooldown / G.Game.swapMax, 0, 1);
-    roster.forEach((f, i) => {
-      const y = startY + i * (ROW + GAP - 5);
-      const on = i === activeIdx;
+    // One row per FIXED team slot, in slot order. An empty slot shows a dim placeholder.
+    for (let slot = 0; slot < SLOTS; slot++) {
+      const f = roster.find(m => m.teamSlot === slot);
+      const y = startY + slot * (ROW + GAP - 5);
+      if (!f) {
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        roundRect(ctx, x, y, S, S, R);
+        ctx.fillStyle = 'rgba(10,16,28,.35)'; ctx.fill();
+        ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(140,170,210,.22)'; ctx.stroke();
+        ctx.restore();
+        ctx.font = F(800, 9); ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(180,200,230,.35)';
+        ctx.fillText(G.Input.keyLabel('swap_' + (slot + 1)) || String(slot + 1), x + 4, y + 11);
+        bar(ctx, x, y + S + 5, S, BH, 0, 'rgba(120,130,145,.3)', 'rgba(0,0,0,.25)');
+        continue;
+      }
+      const on = roster.indexOf(f) === activeIdx;
       const col = f.dead ? 'rgba(120,130,145,.6)' : (G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94');
       // box background + border (active = bright type border, like the active attack)
       roundRect(ctx, x, y, S, S, R);
@@ -86,7 +104,8 @@ G.HUD = (() => {
       // slot key hint, top-left corner
       ctx.font = F(800, 9); ctx.textAlign = 'left';
       ctx.fillStyle = on ? '#ffd23f' : 'rgba(180,200,230,.6)';
-      ctx.fillText(G.Input.keyLabel('swap_' + (i + 1)) || String(i + 1), x + 4, y + 11);
+      const slotNo = slot + 1;   // the key hint follows the SLOT
+      ctx.fillText(G.Input.keyLabel('swap_' + slotNo) || String(slotNo), x + 4, y + 11);
       // cooldown overlay on NON-active members during the swap lockout
       if (!on && !f.dead && cdFrac > 0) {
         ctx.save();
@@ -103,7 +122,89 @@ G.HUD = (() => {
       // hp bar under the box
       const frac = f.dead ? 0 : f.hp / f.maxHp;
       bar(ctx, x, y + S + 5, S, BH, frac, f.dead ? 'rgba(120,130,145,.6)' : on ? '#ff5f6d' : '#c85059');
-    });
+    }
+    return x + S;                                  // right edge, so the buffs can sit beside the strip
+  }
+
+  // ---------- bottom strip: name (left) · HP bar (center) · level (right) ----------
+  const HP_ROW = 26;          // height of the strip
+  const HP_GAP = 10;          // space between the bottom of the screen and the strip
+  // How far the action bar is lifted to make room for the strip. layout-ui.js reads it too.
+  const BAR_LIFT = 28;
+
+  function drawHpStrip(ctx, w, h, pl, safeB) {
+    const BW = G.U.clamp(w * 0.34, 160, 300), BH = 18;
+    const bx = (w - BW) / 2;
+    const cy = h - HP_GAP - safeB - HP_ROW / 2;      // vertical center of the strip
+    const by = cy - BH / 2;
+    bar(ctx, bx, by, BW, BH, pl.hp / pl.maxHp, '#ff5f6d');
+    ctx.font = F(700, 13);
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), w / 2, by + BH - 4);
+
+    // Name: right-aligned against the left end of the bar. Shrinks to fit narrow screens.
+    let size = 20;
+    const room = bx - 12 - 8;
+    ctx.font = F(800, size);
+    while (size > 12 && ctx.measureText(pl.mon.name).width > room) { size--; ctx.font = F(800, size); }
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#eaf2ff';
+    ctx.fillText(pl.mon.name, bx - 12, cy + size * 0.35);
+
+    // Level: left-aligned against the right end of the bar.
+    ctx.font = F(700, 16);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffcb3d';
+    ctx.fillText('Lv. ' + pl.level, bx + BW + 12, cy + 6);
+  }
+
+  // ---------- active buffs: bottom-left, stacking upward ----------
+  const BUFF_COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
+  const BUFF_LBL = { atk: 'ATK', spd: 'SPD', def: 'DEF', regen: 'REG' };
+
+  function drawBuffs(ctx, h, pl, x0) {
+    const CH = 32, GAPV = 6;
+    let y = h - 16;                                  // bottom edge of the lowest chip
+    ctx.textAlign = 'left';
+    for (const k in pl.buffs) {
+      const b = pl.buffs[k];
+      if (b.n <= 0) continue;
+      ctx.font = F(800, 18);
+      const txt = BUFF_LBL[k] + ' ×' + b.n;
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20;
+      const top = y - CH;
+      roundRect(ctx, x0, top, tw, CH, 9);
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = BUFF_COL[k]; ctx.stroke();
+      ctx.fillStyle = BUFF_COL[k];
+      ctx.fillText(txt, x0 + 10, top + 21);
+      // Timer: how long is left before this buff runs out (it keeps ticking while benched).
+      const frac = b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
+      ctx.fillStyle = 'rgba(255,255,255,.18)';
+      ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
+      ctx.fillStyle = BUFF_COL[k];
+      ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+      y = top - GAPV;
+    }
+    // Active altar power (Fury, Thunder, Magnet, Haste): same stack, on top of the stat buffs.
+    if (pl.power) {
+      const pw = pl.power;
+      ctx.font = F(800, 18);
+      const txt = pw.def.name.toUpperCase() + ' ' + Math.ceil(pw.t) + 's';
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20;
+      const top = y - CH;
+      roundRect(ctx, x0, top, tw, CH, 9);
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = pw.def.color; ctx.stroke();
+      ctx.fillStyle = pw.def.color;
+      ctx.fillText(txt, x0 + 10, top + 21);
+      const frac = pw.dur > 0 ? G.U.clamp(pw.t / pw.dur, 0, 1) : 0;
+      ctx.fillStyle = 'rgba(255,255,255,.18)';
+      ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
+      ctx.fillStyle = pw.def.color;
+      ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+    }
   }
 
   function draw(ctx, w, h, pl, st) {
@@ -121,44 +222,14 @@ G.HUD = (() => {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
 
-    // ---------- health + level (sized to match the team box) ----------
+    // Name / HP / level now live in the bottom strip (drawn below); top-left is free.
     const px = 16, py = 22;
-    ctx.font = F(800, 20);
-    ctx.fillStyle = '#eaf2ff';
-    ctx.textAlign = 'left';
-    ctx.fillText(pl.mon.name, px, py + 14);
-
-    ctx.font = F(700, 15);
-    ctx.fillStyle = '#ffcb3d';
-    ctx.fillText('Lv. ' + pl.level, px, py + 40);
-
-    const HPW = 240, HPH = 16, HPX = px + 70, HPY = py + 26;
-    bar(ctx, HPX, HPY, HPW, HPH, pl.hp / pl.maxHp, '#ff5f6d');
-    ctx.font = F(700, 13);
-    ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.textAlign = 'center';
-    ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), HPX + HPW / 2, HPY + HPH - 3);
-
-    // active buffs
-    const COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
-    const LBL = { atk: 'ATK', spd: 'VEL', def: 'DEF', regen: 'REG' };
-    let bx = px;
-    ctx.textAlign = 'left';
-    for (const k in pl.buffs) {
-      const b = pl.buffs[k];
-      if (b.n <= 0) continue;
-      ctx.font = F(800, 12);
-      const txt = LBL[k] + ' ×' + b.n;
-      const tw = ctx.measureText(txt).width + 16;
-      roundRect(ctx, bx, py + 52, tw, 20, 9);
-      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fill();
-      ctx.fillStyle = COL[k];
-      ctx.fillText(txt, bx + 8, py + 66);
-      bx += tw + 6;
-    }
+    const safeB = touch ? Math.min(28, G.Touch.safeArea().bottom) : 0;
+    drawHpStrip(ctx, w, h, pl, safeB);
 
     // ---------- team strip (lower-left, only with a real team) ----------
-    drawTeam(ctx, w, h);
+    const teamRight = drawTeam(ctx, w, h);
+    drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : 16);
 
     // ---------- reloj / bioma / kills ----------
     ctx.textAlign = 'center';
@@ -217,20 +288,7 @@ G.HUD = (() => {
       ctx.restore();
     }
 
-    // Poder de altar activo.
-    if (pl.power) {
-      const pw = pl.power, txt = pw.def.name.toUpperCase() + ' ' + Math.ceil(pw.t) + 's';
-      ctx.font = F(800, 9);
-      ctx.textAlign = 'left';
-      const tw = ctx.measureText(txt).width + 12;
-      roundRect(ctx, bx, py + 34, tw, 15, 7);
-      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fill();
-      ctx.fillStyle = pw.def.color;
-      ctx.fillText(txt, bx + 6, py + 45);
-      bx += tw + 5;
-    }
-
-    if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + (bx > px ? 56 : 40));
+    if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
     // Rift: a big arrow pulsing at the edge if off-screen, and if visible, a
     // an arrow bouncing above; in the arena, a countdown.
@@ -331,7 +389,7 @@ G.HUD = (() => {
     const totalW = n * S + (n - 1) * GAP;
     let sx = (w - totalW) / 2;
     // Above the iPhone home bar (there the touches sometimes do not arrive).
-    let sy = h - S - 18 - (touch ? Math.min(28, G.Touch.safeArea().bottom) : 0);
+    let sy = h - S - 18 - safeB - BAR_LIFT;   // lifted to leave room for the HP strip
     // On mobile, where the player placed it: the item block + all the
     // slots (even if not yet full), by their center, as in the editor
     // (layout-ui.js); the new attacks appear toward the right.
@@ -339,7 +397,7 @@ G.HUD = (() => {
     if (pb) {
       const nAll = Math.max(n, pl.maxMoves), bw = S + 18 + nAll * S + (nAll - 1) * GAP;
       sx = G.U.clamp(pb[0] * w - bw / 2, 6, Math.max(6, w - bw - 6)) + S + 18;
-      sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6);
+      sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6 - BAR_LIFT);   // never covers the HP strip
     }
     const BOND = '#ff8ad8';
     const cdOf = m => m.kind === 'orbit' ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
@@ -558,5 +616,5 @@ G.HUD = (() => {
     }
   }
 
-  return { draw, roundRect, bar };
+  return { draw, roundRect, bar, BAR_LIFT };
 })();

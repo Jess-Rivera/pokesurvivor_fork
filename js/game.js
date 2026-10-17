@@ -114,12 +114,23 @@ G.Game = (() => {
     time = 0; pendingLevels = 0;
     runReal = performance.now(); tampered = debugDirty;
 
-    // Build the team roster. save.team is up to 6 { dex, shiny }; fall back to
-    // the single partner so older saves (and the current UI) still work.
-    const teamDef = (Array.isArray(save.team) && save.team.length)
-      ? save.team.slice(0, 6).filter(t => t && G.DEX_BY[t.dex])
-      : [{ dex: save.partner, shiny: !!save.partnerShiny }];
-    roster = teamDef.map(t => buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex)));
+    // Build the team roster from the 6 fixed slots of save.team ({ dex, shiny } or
+    // null). Empty slots are skipped, but each fighter remembers the slot it came
+    // from (teamSlot, 0-5): the swap keys and the faint order work by slot number.
+    G.DB.normalizeTeam(save);
+    roster = [];
+    save.team.forEach((t, slot) => {
+      if (!t || !G.DEX_BY[t.dex]) return;
+      const f = buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex));
+      f.teamSlot = slot;
+      roster.push(f);
+    });
+    // Team buffs: every member points at ONE shared buffs object, so a buff cast
+    // by one Pokemon (Swords Dance, Agility, Harden, Aqua Ring) stays active on
+    // whoever is on the field until its own timer runs out. Only the active
+    // member runs Player.update(), so the shared timers still tick exactly once
+    // per frame, including while the caster sits on the bench.
+    roster.forEach(f => { f.buffs = roster[0].buffs; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
@@ -166,16 +177,14 @@ G.Game = (() => {
   function livingRoster() { return roster.filter(f => !f.dead); }
 
   /**
-   * Swap the active Pokemon to roster slot i. Instant: the new one takes the
-   * old one's position, gets a short invuln window, and swapping is locked for
-   * a few seconds. Shared level/XP are carried onto the incoming member.
+   * Put roster member i on the field. Shared by the manual swap and the
+   * faint auto-swap so the carried-over state can never drift between them.
+   * The incoming member takes the outgoing one's position and aim, plus the
+   * run-shared progress (level/XP, kills, bosses, coins, tickets), and gets a
+   * short invulnerability window.
    */
-  function swapTo(i) {
-    if (i < 0 || i >= roster.length || i === activeIdx) return false;
+  function takeField(i) {
     const next = roster[i];
-    if (!next || next.dead) return false;
-    if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
-    // Position + run-shared state move to the incoming Pokemon.
     next.x = pl.x; next.y = pl.y; next.aim = pl.aim;
     next.level = pl.level; next.xp = pl.xp; next.xpNext = pl.xpNext;
     next.kills = pl.kills; next.bosses = pl.bosses; next.coins = pl.coins;
@@ -183,9 +192,20 @@ G.Game = (() => {
     next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
     activeIdx = i;
     pl = next;
+    G.Sprites.preload([pl.dex], 4000, pl.shiny);
+  }
+
+  /**
+   * Manual swap to roster slot i. Instant, and locks swapping for a few seconds.
+   */
+  function swapTo(i) {
+    if (i < 0 || i >= roster.length || i === activeIdx) return false;
+    const next = roster[i];
+    if (!next || next.dead) return false;
+    if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
+    takeField(i);
     swapLock = SWAP_LOCK;
     G.Camera.shake = 0;
-    G.Sprites.preload([pl.dex], 4000, pl.shiny);
     G.FX.ring(pl.x, pl.y, 6, 70, '#9fe8ff', 0.4, 4);
     G.Audio.sfx('confirm');
     return true;
@@ -194,7 +214,13 @@ G.Game = (() => {
   /** Keyboard swap: cycle prev/next (skipping fainted) and direct-to-slot. */
   function handleSwap() {
     if (roster.length < 2 || swapLock > 0 || state !== 'playing' || pl.dead) return;
-    for (let i = 0; i < 6; i++) if (G.Input.action('swap_' + (i + 1))) { swapTo(i); return; }
+    // Direct keys are by SLOT number; an empty slot (or a fainted member) does nothing.
+    for (let n = 0; n < 6; n++) {
+      if (!G.Input.action('swap_' + (n + 1))) continue;
+      const j = roster.findIndex(f => f.teamSlot === n);
+      if (j >= 0) swapTo(j);
+      return;
+    }
     const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;
     if (!dir) return;
     for (let step = 1; step <= roster.length; step++) {
@@ -680,18 +706,13 @@ G.Game = (() => {
     // After going down, let the Faint animation play before the summary.
     // (Not in the rift arena: there, going down just throws you back.)
     if (pl.dead && !coop && !G.Rift.inArena) {
-      // Team: if another member is still up, bench the fainted one and swap in.
+      // Team: if another member is still up, bench the fainted one and swap in the
+      // living member with the LOWEST slot number (slot 1 first, then 2, and so on).
       const alive = roster.filter(f => !f.dead && f !== pl);
       if (alive.length) {
-        const next = alive[0];
-        const i = roster.indexOf(next);
-        next.x = pl.x; next.y = pl.y; next.aim = pl.aim;
-        next.level = pl.level; next.xp = pl.xp; next.xpNext = pl.xpNext;
-        next.kills = pl.kills; next.bosses = pl.bosses; next.coins = pl.coins;
-        next.t1 = pl.t1; next.t10 = pl.t10;
-        next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
-        activeIdx = i; pl = next; swapLock = 0; deathT = 0;
-        G.Sprites.preload([pl.dex], 4000, pl.shiny);
+        const next = alive.reduce((a, b) => (b.teamSlot < a.teamSlot ? b : a));
+        takeField(roster.indexOf(next));
+        swapLock = 0; deathT = 0;
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
         G.Audio.sfx('shiny');
         G.Spawner.say('¡' + pl.mon.name + ' entra en combate!', 2, true);

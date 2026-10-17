@@ -6,12 +6,22 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
-  { d: '2026-10-16', title: ['Controls, balance and a sandbox', 'Controls, balance and a sandbox'], new: [
+  { d: '2026-10-16', title: ['Teams, controls and balance', 'Teams, controls and balance'], new: [
     ['Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.',
      'Rebindable keyboard controls: in Settings > Controls, click any control (move, attacks, cycle, pause) and press a new key. Your attack keys also pick level-up cards, and the on-screen key labels follow whatever you bind.'],
     ['Developer sandbox (open the game with ?dev): press Shift+D to unlock every Pokemon and shiny, max coins and tickets, and max every upgrade. Debug runs never count toward the ranking.',
-     'Developer sandbox (open the game with ?dev): press Shift+D to unlock every Pokemon and shiny, max coins and tickets, and max every upgrade. Debug runs never count toward the ranking.']
+     'Developer sandbox (open the game with ?dev): press Shift+D to unlock every Pokemon and shiny, max coins and tickets, and max every upgrade. Debug runs never count toward the ranking.'],
+    ['Teams: build a team of up to 6 Pokemon in fixed slots. On the main menu, click a roster card, choose a Pokemon in the Pokedex and press Commit to Roster. During a run, swap with Z / C (previous / next) or jump straight to a slot with H J K L ; and \' (all rebindable in Settings). Swapping is instant, brings a short invulnerability window, and has a 5 second lockout.',
+     'Teams: build a team of up to 6 Pokemon in fixed slots. On the main menu, click a roster card, choose a Pokemon in the Pokedex and press Commit to Roster. During a run, swap with Z / C (previous / next) or jump straight to a slot with H J K L ; and \' (all rebindable in Settings). Swapping is instant, brings a short invulnerability window, and has a 5 second lockout.'],
+    ['Buffs (Swords Dance, Agility, Harden, Aqua Ring) now belong to the whole team: they stay active after you swap, until their own timer runs out, so a teammate can be your buffer.',
+     'Buffs (Swords Dance, Agility, Harden, Aqua Ring) now belong to the whole team: they stay active after you swap, until their own timer runs out, so a teammate can be your buffer.']
   ], chg: [
+    ['When your active Pokemon faints, the living teammate with the lowest slot number takes its place. The run only ends when the whole team is down.',
+     'When your active Pokemon faints, the living teammate with the lowest slot number takes its place. The run only ends when the whole team is down.'],
+    ['New in-run layout: your Pokemon\'s name, health bar and level now sit in a strip at the bottom center, and the attack bar moves up to make room. Active buffs and altar powers are bigger, stack up from the bottom left (beside the team), and show a small timer bar for how long they have left.',
+     'New in-run layout: your Pokemon\'s name, health bar and level now sit in a strip at the bottom center, and the attack bar moves up to make room. Active buffs and altar powers are bigger, stack up from the bottom left (beside the team), and show a small timer bar for how long they have left.'],
+    ['The Pokedex button on the main menu is now browse-only; teams are changed from the roster cards. Pokemon already on your roster show their slot.',
+     'The Pokedex button on the main menu is now browse-only; teams are changed from the roster cards. Pokemon already on your roster show their slot.'],
     ['Healers reworked so a cluster of them can no longer make a mob unkillable: each healer now heals at most the 3 most-wounded allies in range, never other healers. Below 35% health a healer panics and heals only itself that turn.',
      'Healers reworked so a cluster of them can no longer make a mob unkillable: each healer now heals at most the 3 most-wounded allies in range, never other healers. Below 35% health a healer panics and heals only itself that turn.']
   ] },
