@@ -540,7 +540,7 @@
    */
   function instance(id, lvl = 1) {
     const def = BY_ID[id];
-    const s = Object.assign({}, def, { id, def, lvl, t: 0 });
+    const s = Object.assign({}, def, { id, def, lvl, t: 0, mods: {} });
     delete s.ups;
     for (let i = 0; i < lvl - 1; i++) applyMods(s, def.ups[i].m);
     return s;
@@ -556,6 +556,47 @@
       else s[k] = m[k];
     }
   }
+
+  /**
+   * Rebuilds the live fields of a move instance from its base definition plus its `mods` stacks
+   * (G.Mechanics, upgrade rework). Always starts from `def`, never from the previous value, so the
+   * result does not depend on the order the cards were taken. `norm` and `floor` are NOT touched:
+   * they stay frozen at the base count, so added pellets add real damage.
+   * Slice 2a: the Lv 1-5 ladders still exist and write fields directly, so a laddered move is not derived.
+   */
+  function derive(s) {
+    const d = s.def, M = G.Mechanics, byKey = {};
+    for (const id in s.mods) {
+      const mech = M.BY_ID[id], n = s.mods[id];
+      if (!mech || !(n > 0)) continue;
+      const key = mech.keyFor(d);
+      const g = byKey[key] || (byKey[key] = { add: 0, inc: 0, rate: 0 });
+      g[mech.mode] += n * mech.step;
+    }
+    for (const key in byKey) {
+      const g = byKey[key];
+      let v = ((d[key] == null ? 0 : d[key]) + g.add) * (1 + g.inc);
+      if (g.rate) v /= 1 + g.rate;
+      if (key === 'arc') v = Math.min(v, M.TWO_PI);
+      s[key] = v;
+    }
+    return s;
+  }
+
+  /**
+   * Adds one stack of mechanic `id` to move instance `s` if it is eligible right now.
+   * @returns {boolean} whether the stack was added
+   */
+  function addStack(s, id) {
+    const mech = G.Mechanics.BY_ID[id];
+    if (!mech || s.lvl > 1 || !G.Mechanics.check(s, mech).ok) return false;
+    s.mods[id] = (s.mods[id] || 0) + 1;
+    derive(s);
+    return true;
+  }
+
+  /** Total mechanic stacks on a move instance (for the HUD badge, slice 2b). */
+  function stackTotal(s) { let n = 0; for (const id in s.mods) n += s.mods[id]; return n; }
 
   /** Levels up an already-created instance. */
   function levelUp(s) {
@@ -584,5 +625,5 @@
     return 'tackle';
   }
 
-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor };
+  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor, derive, addStack, stackTotal };
 })();

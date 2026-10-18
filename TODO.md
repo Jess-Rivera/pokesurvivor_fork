@@ -37,6 +37,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
   than one group can grow, HUD, and rebalancing late-game damage (a 4-move bond was ~4x sustained damage).
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess
   2026-10-17, dev logger first. Would reuse the same G.Log records. Not designed further.
+- Upgrade rework SLICE 2: 2a APPLIED 2026-10-18 (data layer: js/data/kinds.js, mechanics.js, mods/derive in moves.js; no visible change; needs Jess's dev.html?dev smoke test + commit). NEXT: 2b mechanic cards + three-step UI + fan-spread cap (proposal: docs/proposals/upgrade-slice2-proposal.md), then 2c stat/scoped cards. Open: vitamin names are placeholders.
 - Upgrade system rework (IN DESIGN 2026-10-18, rulings in DECISIONS 2026-10-18 upgrade rework; in-run first, meta-progression on its own branch later). Open design decisions:
   card identity (generic stat cards vs Kind/Type-targeted cards), the first-5-minutes pacing target, in-run
   skip/banish. Known issues to fix in it: flat HP cards (+20 max HP is 83% of L1 HP), unbounded Potencia
