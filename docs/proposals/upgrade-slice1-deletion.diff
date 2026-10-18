@@ -1,0 +1,385 @@
+diff a/js/data/achievements.js new/js/data/achievements.js
+--- a/js/data/achievements.js	2026-10-18 18:52:01.324488930 +0000
++++ b/js/data/achievements.js	2026-10-18 18:52:18.253487450 +0000
+@@ -50,9 +50,6 @@
+     { id: 'boss1', cat: 'combate', tier: 1, name: 'Matagigantes', desc: 'Derrota a un jefe.', value: st('bossesTotal'), goal: 1, reward: { t1: 2 } },
+     { id: 'boss25', cat: 'combate', tier: 2, name: 'Cazajefes', desc: 'Derrota a 25 jefes.', value: st('bossesTotal'), goal: 25, reward: { t10: 1 }, title: 'Cazajefes' },
+     { id: 'boss100', cat: 'combate', tier: 3, name: 'Terror de los jefes', desc: 'Derrota a 100 jefes.', value: st('bossesTotal'), goal: 100, reward: { t10: 2 } },
+-    { id: 'evo1', cat: 'combate', tier: 1, name: 'Evolución', desc: 'Evoluciona un movimiento.', value: st('evolutions'), goal: 1, reward: { t1: 3 } },
+-    { id: 'evo25', cat: 'combate', tier: 2, name: 'Evolucionista', desc: 'Evoluciona 25 movimientos.', value: st('evolutions'), goal: 25, reward: { t10: 1 }, title: 'Evolucionista' },
+-    { id: 'evoAll', cat: 'combate', tier: 3, name: 'Maestro de movimientos', desc: 'Evoluciona los 47 movimientos distintos.', value: count('evoMoves'), goal: 47, reward: { t10: 3 }, title: 'Maestro de movimientos' },
+     { id: 'items5', cat: 'combate', tier: 1, name: 'Bolsa llena', desc: 'Encuentra 5 objetos distintos.', value: count('itemsFound'), goal: 5, reward: { t1: 3 } },
+     { id: 'itemsAll', cat: 'combate', tier: 2, name: 'Coleccionista de objetos', desc: 'Encuentra los 11 objetos.', value: count('itemsFound'), goal: 11, reward: { t10: 1 }, title: 'Anticuario' },
+ 
+@@ -83,8 +80,6 @@
+   for (const a of LIST) if (a.id === 'legAll') { a.goal = totalLegends; a.desc = `Vence a los ${totalLegends} legendarios.`; }
+   // Goals that depend on the game data.
+   for (const a of LIST) if (a.id === 'ownAll') { a.goal = G.DEX.length; a.desc = `Ten los ${G.DEX.length} Pokémon del juego.`; }
+-  const evoTotal = Object.keys(G.Moves.EVO).length;
+-  for (const a of LIST) if (a.id === 'evoAll') { a.goal = evoTotal; a.desc = `Evoluciona los ${evoTotal} movimientos distintos.`; }
+ 
+   const BY = {};
+   for (const a of LIST) BY[a.id] = a;
+diff a/js/data/missions.js new/js/data/missions.js
+--- a/js/data/missions.js	2026-10-18 18:52:01.337488929 +0000
++++ b/js/data/missions.js	2026-10-18 18:52:18.253487450 +0000
+@@ -31,9 +31,7 @@
+     { id: 'playType', ev: 'runEnd', param: 'type', mode: 'max', value: min, goals: [3], reward: { t1: 3, coins: 200 },
+       match: (d, t) => d.types.includes(t), text: (n, t) => `Aguanta ${n} minutos con un Pokémon de tipo ${T(t)}` },
+     { id: 'item', ev: 'item', goals: [1], reward: { t1: 2, coins: 150 },
+-      text: () => 'Encuentra un objeto equipable' },
+-    { id: 'evolve', ev: 'evolve', goals: [1], reward: { t1: 3, coins: 250 },
+-      text: () => 'Evoluciona un movimiento' }
++      text: () => 'Encuentra un objeto equipable' }
+   ];
+ 
+   const weekly = [
+@@ -45,8 +43,6 @@
+       text: n => `Derrota a ${n} jefes` },
+     { id: 'wsurvive', ev: 'runEnd', mode: 'max', value: min, goals: [12, 15], reward: { t10: 1, coins: 1000 },
+       text: n => `Aguanta ${n} minutos en una run` },
+-    { id: 'wevolve', ev: 'evolve', goals: [3, 5], reward: { t10: 1, coins: 900 },
+-      text: n => `Evoluciona ${n} movimientos` },
+     { id: 'wdaily', ev: 'missionDone', match: d => d.daily, goals: [8, 12], reward: { t10: 1, coins: 800 },
+       text: n => `Completa ${n} misiones diarias` }
+   ];
+diff a/js/data/moves.js new/js/data/moves.js
+--- a/js/data/moves.js	2026-10-18 18:52:01.251488937 +0000
++++ b/js/data/moves.js	2026-10-18 18:52:18.251487450 +0000
+@@ -584,84 +584,5 @@
+     return 'tackle';
+   }
+ 
+-  // ---------------- move evolution ----------------
+-  /*
+-   * A move at MAX LEVEL evolves if in that run you have ever taken
+-   * its condition upgrade (`needs`, a LevelUp.STATS id). A
+-   * carta dorada. Los potenciadores (buff) no evolucionan.
+-   */
+-  const NEED_NAME = { hp: 'Vigor', atk: 'Potencia', spd: 'Carrera', cd: 'Reflejos', def: 'Coraza',
+-                      rgn: 'Síntesis', mag: 'Imán', xp: 'Aprendizaje' };
+-  const EVO = {
+-    'tackle': ['Derribo', 'hp'],             'quick-attack': ['Velocidad Extrema', 'spd'],
+-    'body-slam': ['Gigaimpacto', 'atk'],     'hyper-voice': ['Alboroto', 'cd'],
+-    'ember': ['Llamarada', 'atk'],           'flamethrower': ['Sofoco', 'cd'],
+-    'fire-spin': ['Fuego Sagrado', 'rgn'],   'heat-wave': ['Erupción', 'hp'],
+-    'water-gun': ['Escaldar', 'atk'],        'bubble': ['Surf', 'spd'],
+-    'hydro-pump': ['Hidrocañón', 'atk'],     'vine-whip': ['Latigazo', 'atk'],
+-    'razor-leaf': ['Lluevehojas', 'cd'],     'leaf-storm': ['Danza Pétalo', 'rgn'],
+-    'giga-drain': ['Planta Feroz', 'hp'],    'thunder-shock': ['Trueno', 'atk'],
+-    'discharge': ['Campo Eléctrico', 'def'], 'thunderbolt': ['Electrocañón', 'cd'],
+-    'confusion': ['Psicocarga', 'cd'],       'psybeam': ['Premonición', 'atk'],
+-    'psychic': ['Vasta Fuerza', 'mag'],      'sludge': ['Bomba Lodo', 'atk'],
+-    'poison-sting': ['Puya Nociva', 'spd'],  'toxic': ['Gas Venenoso', 'rgn'],
+-    'mud-shot': ['Tierra Viva', 'atk'],      'bulldoze': ['Terremoto', 'atk'],
+-    'gust': ['Vendaval', 'spd'],             'wing-attack': ['Pájaro Osado', 'atk'],
+-    'bug-bite': ['Tijera X', 'atk'],         'string-shot': ['Red Viscosa', 'cd'],
+-    'bug-buzz': ['Enjambre', 'rgn'],         'rock-throw': ['Roca Afilada', 'atk'],
+-    'rock-slide': ['Trampa Rocas', 'cd'],    'ice-beam': ['Ventisca', 'atk'],
+-    'powder-snow': ['Viento Hielo', 'spd'],  'karate-chop': ['A Bocajarro', 'atk'],
+-    'aura-sphere': ['Onda Certera', 'cd'],   'lick': ['Puño Sombra', 'atk'],
+-    'shadow-ball': ['Golpe Fantasma', 'cd'], 'dragon-rage': ['Cometa Draco', 'atk'],
+-    'fairy-wind': ['Fuerza Lunar', 'atk'],   'dazzling-gleam': ['Campo de Niebla', 'rgn'],
+-    'metal-claw': ['Cabeza de Hierro', 'atk'], 'flash-cannon': ['Rayo Metálico', 'def'],
+-    'bite': ['Triturar', 'atk'],             'dark-pulse': ['Alarido', 'spd'],
+-    'night-shade': ['Pesadilla', 'rgn'],
+-    'bonemerang': ['Ataque Óseo', 'atk'],    'psycho-cut': ['Psicocolmillo', 'cd'],
+-    'spikes': ['Fisura', 'atk'],             'toxic-spikes': ['Lanza Mugre', 'rgn'],
+-    'hail': ['Alud', 'cd'],                  'meteor-mash': ['Bomba Imán', 'atk'],
+-    'will-o-wisp': ['Infierno', 'cd'],       'substitute': ['Doble Equipo', 'def'],
+-    'aerial-ace': ['Acróbata', 'spd'],       'flame-wheel': ['Envite Ígneo', 'spd'],
+-    'bubble-beam': ['Acua Cola', 'atk'],     'hex': ['Poltergeist', 'mag']
+-  };
+-  // What it gains on evolving, based on how it works.
+-  const EVO_MODS = {
+-    projectile: { t: '×1,8 daño, +2 proyectiles, +2 perforación y más grandes', m: { dmg: 1.8, count: 2, pierce: 2, size: 1.3, spread: 1.1 } },
+-    melee:      { t: '×1,9 daño, más alcance y golpea en 360°', m: { dmg: 1.9, radius: 1.3, arc: 9 } },
+-    beam:       { t: '×1,8 daño, rayo un 50% más grueso y más largo', m: { dmg: 1.8, width: 1.5, radius: 1.2, cd: 0.85 } },
+-    orbit:      { t: '+2 orbes, ×1,7 daño y más radio', m: { count: 2, dmg: 1.7, radius: 1.15 } },
+-    nova:       { t: '+6 proyectiles, ×1,6 daño y +1 perforación', m: { count: 6, dmg: 1.6, pierce: 1 } },
+-    aura:       { t: '×1,8 daño y un 35% más de radio', m: { dmg: 1.8, radius: 1.35 } },
+-    boomerang:  { t: '×1,8 daño, +1 bumerán y más alcance', m: { dmg: 1.8, count: 1, radius: 1.2, size: 1.2 } },
+-    chain:      { t: '×1,7 daño y +3 saltos', m: { dmg: 1.7, count: 3, radius: 1.2 } },
+-    mine:       { t: '×1,8 daño, +2 minas y explosión más grande', m: { dmg: 1.8, count: 2, radius: 1.25 } },
+-    meteor:     { t: '×1,7 daño, +2 meteoros y más radio', m: { dmg: 1.7, count: 2, radius: 1.2 } },
+-    turret:     { t: '×1,8 daño, +1 a la vez y dispara más rápido', m: { dmg: 1.8, count: 1, rate: 0.8 } },
+-    dash:       { t: '×1,9 daño, más distancia y menos recarga', m: { dmg: 1.9, radius: 1.25, cd: 0.8 } },
+-    trail:      { t: '×1,8 daño, charcos más grandes y duraderos', m: { dmg: 1.8, radius: 1.25, dur: 1.3 } },
+-    cone:       { t: '×1,7 daño, +4 disparos y +1 perforación', m: { dmg: 1.7, count: 4, pierce: 1 } }
+-  };
+-
+-  /** Can it evolve yet? -> { name, needs, needName, text, ready } or null */
+-  function evoInfo(m, statsTaken) {
+-    const e = EVO[m.id];
+-    if (!e || m.evolved || m.lvl < m.def.maxLvl || !EVO_MODS[m.kind]) return null;
+-    const [name, needs] = e;
+-    return { name, needs, needName: NEED_NAME[needs], text: EVO_MODS[m.kind].t,
+-             ready: !!(statsTaken && statsTaken[needs]) };
+-  }
+-
+-  /** Evolves an instance (changes name and power; it stays the same type). */
+-  function evolve(m) {
+-    const e = EVO[m.id];
+-    if (!e || m.evolved) return false;
+-    applyMods(m, EVO_MODS[m.kind].m);
+-    m.baseName = m.name;
+-    m.name = e[0];
+-    m.evolved = true;
+-    return true;
+-  }
+-
+-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor,
+-              EVO, NEED_NAME, evoInfo, evolve };
++  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor };
+ })();
+diff a/js/entities/player.js new/js/entities/player.js
+--- a/js/entities/player.js	2026-10-18 18:52:01.276488935 +0000
++++ b/js/entities/player.js	2026-10-18 18:52:18.252487450 +0000
+@@ -86,7 +86,6 @@
+     this.item = null;          // objeto equipado (data/items.js), uno por run
+     this.sashT = -999;         // last time the Focus Band saved you
+     this.bellHeal = 0;         // pending healing from the Shell Bell
+-    this.statsTaken = {};      // stat upgrades taken (evolution condition)
+   }
+ 
+   /** Seconds you must stay next to a downed teammate to lift them. */
+diff a/js/game.js new/js/game.js
+--- a/js/game.js	2026-10-18 18:52:01.359488927 +0000
++++ b/js/game.js	2026-10-18 18:52:18.253487450 +0000
+@@ -450,10 +450,13 @@
+     }
+     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
+     if (pl.dead) return;
++    const cards = G.LevelUp.offer(pl);
+     pendingLevels--;
++    // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
++    if (!cards.length) return;
+     state = 'levelup';
+     G.Audio.sfx('levelup');
+-    G.RunUI.showLevelUp(pl.level, G.LevelUp.offer(pl), card => {
++    G.RunUI.showLevelUp(pl.level, cards, card => {
+       G.Audio.sfx('confirm');
+       card.apply(pl);
+       state = 'playing';
+diff a/js/systems/combat.js new/js/systems/combat.js
+--- a/js/systems/combat.js	2026-10-18 18:52:01.288488933 +0000
++++ b/js/systems/combat.js	2026-10-18 18:52:18.252487450 +0000
+@@ -513,11 +513,10 @@
+   }
+ 
+   /** Replays a teammate's attack just to see it (no damage). */
+-  function ghostCast(pl, id, lvl, aim, evolved) {
++  function ghostCast(pl, id, lvl, aim) {
+     const def = G.Moves.BY_ID[id];
+     if (!def || def.kind === 'orbit') return;
+     const m = G.Moves.instance(id, lvl);
+-    if (evolved) G.Moves.evolve(m);
+     pl.aim = aim;
+     ghost = true;
+     try {
+diff a/js/systems/levelup.js new/js/systems/levelup.js
+--- a/js/systems/levelup.js	2026-10-18 18:52:01.264488936 +0000
++++ b/js/systems/levelup.js	2026-10-18 18:52:26.137486761 +0000
+@@ -1,32 +1,12 @@
+ /* ============ levelup.js — the three level-up cards ============
+- * Tipos de carta:
++ * Card types (upgrade rework in progress, see DECISIONS 2026-10-18):
+  *   new   learn a new move (only if there are free slots of the 4; a link frees slots)
+- *   up    upgrade a move you already have
+- *   stat  permanent upgrade for the run
++ *   up    upgrade a move you already have (the Lv 1-5 ladder; mechanic cards replace it next)
++ * The old stat cards (Vigor, Potencia, Carrera, Reflejos, Coraza, Sintesis, Iman,
++ * Aprendizaje, Baya Zidra) and move evolutions were removed on 2026-10-18.
+  */
+ G.LevelUp = (() => {
+ 
+-  const STATS = [
+-    { id: 'hp',   icon: 'heart', title: 'Vigor',        desc: '+20 de vida máxima (y la recupera).',
+-      apply: pl => pl.addMaxHp(20) },
+-    { id: 'atk',  icon: 'fist', title: 'Potencia',     desc: '+10% de daño con todos los movimientos.',
+-      apply: pl => pl.atkMul *= 1.10, max: 40 },
+-    { id: 'spd',  icon: 'boot', title: 'Carrera',      desc: '+7% de velocidad de movimiento.',
+-      apply: pl => pl.spdMul *= 1.07, max: 8 },
+-    { id: 'cd',   icon: 'clock', title: 'Reflejos',     desc: '-8% de recarga en todos los movimientos.',
+-      apply: pl => pl.cdMul *= 0.92, max: 10 },
+-    { id: 'def',  icon: 'shield', title: 'Coraza',       desc: '+6% de reducción de daño recibido.',
+-      apply: pl => pl.dmgReduce = Math.min(0.7, pl.dmgReduce + 0.06), max: 12 },
+-    { id: 'rgn',  icon: 'sprout', title: 'Síntesis',     desc: '+0.9 de vida regenerada por segundo.',
+-      apply: pl => pl.regenFlat += 0.9 },
+-    { id: 'mag',  icon: 'magnet', title: 'Imán',         desc: '+30% de radio de recogida de experiencia.',
+-      apply: pl => pl.magnet *= 1.30, max: 6 },
+-    { id: 'xp',   icon: 'book', title: 'Aprendizaje',  desc: '+12% de experiencia ganada.',
+-      apply: pl => pl.xpMul *= 1.12, max: 8 },
+-    { id: 'heal', icon: 'berry', title: 'Baya Zidra',   desc: 'Recupera el 45% de tu vida ahora mismo.',
+-      apply: pl => pl.heal(pl.maxHp * 0.45) }
+-  ];
+-
+   /** Builds the set of candidate cards, with weights. */
+   function candidates(pl) {
+     const out = [];
+@@ -50,26 +30,6 @@
+       }
+     }
+ 
+-    // --- evolutions: move at max + its condition met ---
+-    const waiting = {};                   // stat -> movimiento que la espera para evolucionar
+-    for (const m of pl.moves) {
+-      const ev = G.Moves.evoInfo(m, pl.statsTaken);
+-      if (!ev) continue;
+-      if (!ev.ready) { waiting[ev.needs] = m; continue; }
+-      out.push({
+-        w: 40, type: 'evo', key: 'evo:' + m.id,
+-        icon: 'move:' + m.id, color: '#ffd23f', tag: 'EVOLUCIÓN',
+-        title: m.name + ' → ' + ev.name, desc: ev.text,
+-        apply: p => {
+-          G.Moves.evolve(m);
+-          G.FX.ring(p.x, p.y, 8, 120, '#ffd23f', 0.8, 6);
+-          G.FX.burst(p.x, p.y - p.bodyH * 0.5, '#ffe14d', 40, 240);
+-          G.Audio.sfx('legend');
+-          G.Progress.event('evolve', { move: m.id });
+-        }
+-      });
+-    }
+-
+     // --- upgrades of moves you already have ---
+     for (const m of pl.moves) {
+       const txt = G.Moves.nextUpText(m);
+@@ -83,36 +43,14 @@
+       });
+     }
+ 
+-    // --- stats ---
+-    // The ones that unlock an evolution always appear and with a notice.
+-    // Each upgrade has a cap on times (`max`): in very long games they
+-    // piled up endlessly (speed, cooldown and experience sky-high) and the
+-    // game ended up hanging. The ones that require an evolution always appear.
+-    const room = s => !s.max || (pl.statsTaken[s.id] || 0) < s.max;
+-    const pickStats = G.U.pickN(STATS.filter(s => !waiting[s.id] && room(s)), 5).concat(STATS.filter(s => waiting[s.id]));
+-    for (const s of pickStats) {
+-      const evoFor = waiting[s.id];
+-      out.push({
+-        w: evoFor ? 14 : pl.slots.length < pl.maxMoves ? 4 : 7,
+-        type: 'stat', key: 'stat:' + s.id,
+-        icon: s.icon, color: evoFor ? '#ffd23f' : '#8fa3c4', tag: evoFor ? 'Evoluciona ' + evoFor.name : 'Mejora',
+-        title: s.title, desc: s.desc,
+-        apply: p => { s.apply(p); p.statsTaken[s.id] = (p.statsTaken[s.id] || 0) + 1; }
+-      });
+-    }
+-
+     return out;
+   }
+ 
+-  /** Devuelve 3 cartas distintas, elegidas por peso. */
++  /** Returns up to 3 different cards, chosen by weight (an empty list when nothing is left to offer). */
+   function offer(pl, n = 3) {
+     const pool = candidates(pl);
+     const picked = [];
+     const used = new Set();
+-    // If an evolution is ready, its golden card always appears.
+-    const evo = pool.findIndex(c => c.type === 'evo');
+-    if (evo >= 0) { const c = pool.splice(evo, 1)[0]; used.add(c.key); picked.push(c); }
+-
+     while (picked.length < n && pool.length) {
+       const total = pool.reduce((a, c) => a + c.w, 0);
+       let r = Math.random() * total, idx = 0;
+@@ -129,5 +67,5 @@
+     return picked;
+   }
+ 
+-  return { offer, STATS };
++  return { offer };
+ })();
+diff a/js/systems/progress.js new/js/systems/progress.js
+--- a/js/systems/progress.js	2026-10-18 18:52:01.348488928 +0000
++++ b/js/systems/progress.js	2026-10-18 18:52:18.253487450 +0000
+@@ -4,7 +4,6 @@
+  *   kill      { types, boss, legend }  (also in the co-op copies)
+  *   chest     cofre con candado abierto
+  *   item      { id }        objeto equipado
+- *   evolve    { move }      movimiento evolucionado
+  *   rift      { type }      rift fight won
+  *   runEnd    { time, level, coins, types, group }
+  *   judge     you reach Arceus's Judgment (minute 30)
+@@ -61,6 +60,15 @@
+       M.week = ids.w;
+       M.weekly = pickSet(G.MissionDefs.weekly, 2, rng(ids.w + key));
+     }
++    // Saves from before 2026-10-18 can hold missions that no longer exist (evolve, wevolve):
++    // drop them and top the list back up so nothing reads a missing definition.
++    const known = m => !!G.MissionDefs.BY[m.id];
++    const topUp = (list, defs, n, seed) => {
++      const keep = (list || []).filter(known);
++      return keep.length >= n ? keep : keep.concat(pickSet(defs, n - keep.length, rng(seed), keep.map(x => x.id)));
++    };
++    M.daily = topUp(M.daily, G.MissionDefs.daily, 3, ids.d + key + 'x');
++    M.weekly = topUp(M.weekly, G.MissionDefs.weekly, 2, ids.w + key + 'x');
+   }
+ 
+   function text(m) { return G.MissionDefs.BY[m.id].text(m.goal, m.param); }
+@@ -143,10 +151,6 @@
+         S.riftWins = (S.riftWins || 0) + 1;
+         if (d.type) { s.arenas = s.arenas || {}; s.arenas[d.type] = s.arenas[d.type] || Date.now(); }
+         break;
+-      case 'evolve':
+-        S.evolutions = (S.evolutions || 0) + 1;
+-        s.evoMoves = s.evoMoves || {}; s.evoMoves[d.move] = s.evoMoves[d.move] || Date.now();
+-        break;
+       case 'item':
+         s.itemsFound = s.itemsFound || {}; s.itemsFound[d.id] = s.itemsFound[d.id] || Date.now();
+         break;
+diff a/js/ui/hud.js new/js/ui/hud.js
+--- a/js/ui/hud.js	2026-10-18 18:52:01.313488931 +0000
++++ b/js/ui/hud.js	2026-10-18 18:52:18.252487450 +0000
+@@ -428,9 +428,9 @@
+       roundRect(ctx, x, y, S, S, 12);
+       ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
+       ctx.fill();
+-      ctx.lineWidth = on ? 2.5 : fused || (m && m.evolved) ? 2 : 1.2;
+-      // Link: pink border. Evolved: gold.
+-      ctx.strokeStyle = fused ? BOND : m && m.evolved ? '#ffd23f' : on ? col : 'rgba(140,170,210,.22)';
++      ctx.lineWidth = on ? 2.5 : fused ? 2 : 1.2;
++      // Link: pink border.
++      ctx.strokeStyle = fused ? BOND : on ? col : 'rgba(140,170,210,.22)';
+       ctx.stroke();
+ 
+       if (!m) continue;
+@@ -443,7 +443,6 @@
+           G.Icons.draw(ctx, 'move:' + gm.id, cx, cy, C);
+           const f = cdOf(gm);
+           if (f > 0) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(cx, cy, C, C * f); }
+-          if (gm.evolved) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, C - 1, C - 1); }
+           // Destello al lanzarse.
+           const fl = 1 - (performance.now() - (gm.castAt || 0)) / 180;
+           if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (fl * 0.55).toFixed(2) + ')'; ctx.fillRect(cx, cy, C, C); }
+diff a/js/ui/run-ui.js new/js/ui/run-ui.js
+--- a/js/ui/run-ui.js	2026-10-18 18:52:01.301488932 +0000
++++ b/js/ui/run-ui.js	2026-10-18 18:52:18.252487450 +0000
+@@ -45,10 +45,9 @@
+       el.className = 'card';
+       const tag = c.type === 'new'
+         ? `<span class="tag-chip" style="background:${c.color}">Nuevo · ${c.tag}</span>`
+-        : c.type === 'up' || c.type === 'evo'
++        : c.type === 'up'
+           ? `<span class="tag-chip" style="background:${c.color}">${c.tag}</span>`
+           : `<span class="tag-chip" style="background:${c.color === '#ffd23f' ? '#ffd23f' : '#9fb1c9'}">${c.tag}</span>`;
+-      if (c.type === 'evo') el.classList.add('evo');
+       el.innerHTML =
+         `<div class="ico" style="background:${c.color}33">${G.Icons.html(c.icon, 32)}</div>
+          <div class="txt"><div class="nm">${c.title} ${tag}</div><div class="ds">${c.desc}</div></div>
+diff a/tools/export_data.js new/tools/export_data.js
+--- a/tools/export_data.js	2026-10-18 18:52:01.369488926 +0000
++++ b/tools/export_data.js	2026-10-18 18:52:18.256487450 +0000
+@@ -25,11 +25,8 @@
+                  'js/data/items.js', 'js/data/achievements.js', 'js/world/tiles.js', 'js/data/funding.js']) {
+   try { load(f); } catch (e) { console.warn('aviso', f, e.message); }
+ }
+-const moves = Object.values(G.Moves.BY_ID).map(m => {
+-  const inst = G.Moves.instance(m.id, m.maxLvl || 5);
+-  const evo = G.Moves.evoInfo(inst, {});
+-  return { id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: m.maxLvl, evo: evo ? { name: evo.name, needs: evo.needName, text: evo.text } : null };
+-});
++// evo stays in the export as null: tools/make_seo_pages.py still reads it (SEO copy pass is a TODO).
++const moves = Object.values(G.Moves.BY_ID).map(m => ({ id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: m.maxLvl, evo: null }));
+ const out = {
+   dex: G.DEX,
+   legends: G.DEX.filter(p => p.leg).map(p => p.dex),

@@ -230,10 +230,8 @@ Egg, Life Orb, Choice Scarf, Rocky Helmet and Assault Vest. They are dropped by
 **all bosses**, locked chests (50%) and sometimes the normal ones (8%). If you
 already carry one, you choose (solo the game pauses).
 
-### 7.2c Move evolution
-A move at max level evolves if in that run you have taken its condition upgrade
-(Ember + Power -> Flamethrower, Bubble + Run -> Surf...): a **golden card**
-appears (always, if it is ready). The 47 attack moves evolve.
+### 7.2c Move evolution (REMOVED 2026-10-18)
+Move evolutions and the original stat cards were removed in the upgrade rework (see DECISIONS 2026-10-18). Moves grow through mechanic cards chosen per move: card, then Pokemon, then move (slice 2b, 2026-10-18; data layer in js/data/kinds.js and mechanics.js). Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos; per Pokemon, +5%) and Type/Kind scoped damage cards (+15%, per move) shipped in slice 2c. The pause screen is a team summary sheet (slice 2d-1); the level-up choose mode follows in 2d-2. Design in DECISIONS.
 
 ### 7.2d Quests, achievements and profile
 - **3 daily + 2 weekly** (prize in tickets and coins); one daily can be
@@ -477,7 +475,7 @@ plucked guitar, bass, pad, lead and drums, with reverb). Zero files.
 **2026-10-08 . quests, achievements, items, evolutions and enemies with personality**
 - Quests 3+2, achievements with a prize and title, public profile (everyone sees it).
 - One-use-per-run equippable items (chests and bosses).
-- Move evolution: max level + condition, golden card.
+- Move evolution: max level + condition, golden card. (Removed 2026-10-18.)
 - Enemies with personality: healers, shields, summoners and attacks with a
   warning (beams, zones, kamikazes, fan, jumps). Tuned with an autopilot:
   the average survival is similar to before (89 s versus 60 s).

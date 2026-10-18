@@ -31,6 +31,8 @@ G.Player = class Player {
     // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
     // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
     this.perksHp = perks.hp || 0;
+    // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
+    this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
     this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
@@ -86,7 +88,6 @@ G.Player = class Player {
     this.item = null;          // objeto equipado (data/items.js), uno por run
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
-    this.statsTaken = {};      // stat upgrades taken (evolution condition)
   }
 
   /** Seconds you must stay next to a downed teammate to lift them. */
@@ -107,11 +108,29 @@ G.Player = class Player {
   get atkMulAll() { return this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
   // Attacker half of the damage formula for move `m` (see G.Stats.attackFactor). The
   // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
-  moveFactor(m) { return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll); }
+  moveFactor(m) {
+    const c = G.Stats.moveCat(m);
+    const si = c === 'special' ? this.inc.spa : c === 'status' ? 0 : this.inc.atk;     // Protein / Calcium
+    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si));
+  }
+  /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
+  maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.inc.hp)) + this.perksHp; }
+  /** Take one stat card (HP Up, Protein, Iron, Calcium, Zinc, Carbos). */
+  addStat(id) {
+    const st = G.Mechanics.STAT_BY[id];
+    if (!st || !(id in this.inc)) return false;
+    this.inc[id] += st.step;
+    if (id === 'hp' && this.baseHpStat != null) {
+      const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+      this.maxHp = newMax;
+      if (gain > 0 && !this.dead) this.hp += gain;       // tops up like a level-up; a fainted mon is not revived
+    }
+    return true;
+  }
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() {
-    const s = this.baseSpd * this.spdMul * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
+    const s = this.baseSpd * this.spdMul * (1 + this.inc.spe) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
     return s * slow * w;
@@ -268,12 +287,13 @@ G.Player = class Player {
     if (atk && !pure) {
       const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
+      const defMul = 1 + (atk.cat === 'special' ? this.inc.spd : this.inc.def);     // Iron / Zinc
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
-        dStat = cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level);
+        dStat = (cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level)) * defMul;
       }
-      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level) * mul;
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul) * mul;
     }
     const afterDef = amount;
     let eff = null, tk = 1, wk = 1;
@@ -337,7 +357,7 @@ G.Player = class Player {
     // HP scales with run level (mainline formula). Leveling tops up current HP by the
     // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
     if (leveled && this.baseHpStat != null) {
-      const newMax = G.Stats.hpForLevel(this.baseHpStat, this.level) + this.perksHp;
+      const newMax = this.maxHpAt(this.level);
       const gain = newMax - this.maxHp;
       if (gain > 0) { this.maxHp = newMax; this.hp += gain; }
     }
@@ -352,7 +372,7 @@ G.Player = class Player {
     const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
     this.level = level;
     this.xpNext = Player.xpFor(level);
-    this.maxHp = G.Stats.hpForLevel(this.baseHpStat, level) + this.perksHp;
+    this.maxHp = this.maxHpAt(level);
     this.hp = Math.round(this.maxHp * frac);
   }
 
@@ -493,8 +513,8 @@ G.Player = class Player {
     if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
     // Active move (for the halo, the HUD and the orbs).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv || this.moves[0].lvl !== n.ml) && G.Moves.BY_ID[n.mv]) {
-      this.moves = [G.Moves.instance(n.mv, n.ml || 1)];
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {
+      this.moves = [G.Moves.instance(n.mv)];
       this.slots = [this.moves.slice()];
       this.active = 0;
       G.Projectiles.clearOrbs(this);

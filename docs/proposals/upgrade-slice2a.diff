@@ -1,0 +1,266 @@
+--- a/js/data/moves.js
++++ b/js/data/moves.js
+@@ -540,7 +540,7 @@
+    */
+   function instance(id, lvl = 1) {
+     const def = BY_ID[id];
+-    const s = Object.assign({}, def, { id, def, lvl, t: 0 });
++    const s = Object.assign({}, def, { id, def, lvl, t: 0, mods: {} });
+     delete s.ups;
+     for (let i = 0; i < lvl - 1; i++) applyMods(s, def.ups[i].m);
+     return s;
+@@ -557,6 +557,47 @@
+     }
+   }
+ 
++  /**
++   * Rebuilds the live fields of a move instance from its base definition plus its `mods` stacks
++   * (G.Mechanics, upgrade rework). Always starts from `def`, never from the previous value, so the
++   * result does not depend on the order the cards were taken. `norm` and `floor` are NOT touched:
++   * they stay frozen at the base count, so added pellets add real damage.
++   * Slice 2a: the Lv 1-5 ladders still exist and write fields directly, so a laddered move is not derived.
++   */
++  function derive(s) {
++    const d = s.def, M = G.Mechanics, byKey = {};
++    for (const id in s.mods) {
++      const mech = M.BY_ID[id], n = s.mods[id];
++      if (!mech || !(n > 0)) continue;
++      const key = mech.keyFor(d);
++      const g = byKey[key] || (byKey[key] = { add: 0, inc: 0, rate: 0 });
++      g[mech.mode] += n * mech.step;
++    }
++    for (const key in byKey) {
++      const g = byKey[key];
++      let v = ((d[key] == null ? 0 : d[key]) + g.add) * (1 + g.inc);
++      if (g.rate) v /= 1 + g.rate;
++      if (key === 'arc') v = Math.min(v, M.TWO_PI);
++      s[key] = v;
++    }
++    return s;
++  }
++
++  /**
++   * Adds one stack of mechanic `id` to move instance `s` if it is eligible right now.
++   * @returns {boolean} whether the stack was added
++   */
++  function addStack(s, id) {
++    const mech = G.Mechanics.BY_ID[id];
++    if (!mech || s.lvl > 1 || !G.Mechanics.check(s, mech).ok) return false;
++    s.mods[id] = (s.mods[id] || 0) + 1;
++    derive(s);
++    return true;
++  }
++
++  /** Total mechanic stacks on a move instance (for the HUD badge, slice 2b). */
++  function stackTotal(s) { let n = 0; for (const id in s.mods) n += s.mods[id]; return n; }
++
+   /** Levels up an already-created instance. */
+   function levelUp(s) {
+     if (s.lvl >= s.def.maxLvl) return false;
+@@ -584,5 +625,5 @@
+     return 'tackle';
+   }
+ 
+-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor };
++  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor, derive, addStack, stackTotal };
+ })();
+--- a/dev.html
++++ b/dev.html
+@@ -598,6 +598,8 @@
+ <script defer src="js/core/sprites.js"></script>
+ <script defer src="js/core/camera.js"></script>
+ <!-- datos de juego -->
++<script defer src="js/data/kinds.js"></script>
++<script defer src="js/data/mechanics.js"></script>
+ <script defer src="js/data/moves.js"></script>
+ <script defer src="js/data/types.js"></script>
+ <script defer src="js/data/starters.js"></script>
+--- a/js/main.js
++++ b/js/main.js
+@@ -2,7 +2,7 @@
+ (() => {
+   // If a file fails to load (a mobile connection that drops), it is better
+   // to warn than to boot halfway.
+-  const NEED = ['U', 'Stats', 'Log', 'I18n', 'Settings', 'DB', 'Audio', 'Input', 'Touch', 'Sprites', 'Camera', 'Moves', 'ENEMY_CLASSES', 'Enemies', 'Upgrades', 'Items',
++  const NEED = ['U', 'Stats', 'Log', 'I18n', 'Settings', 'DB', 'Audio', 'Input', 'Touch', 'Sprites', 'Camera', 'Kinds', 'Mechanics', 'Moves', 'ENEMY_CLASSES', 'Enemies', 'Upgrades', 'Items',
+                 'World', 'FX', 'Projectiles', 'EnemyMgr', 'Pickups', 'Player', 'Combat', 'Spawner', 'LevelUp', 'Gacha',
+                 'Rift', 'Weather', 'Progress', 'Hazards', 'Social', 'Net', 'Coop', 'Ranking', 'Icons', 'UI', 'HUD',
+                 'MenuUI', 'RunUI', 'SettingsUI', 'Funding', 'SupportUI', 'Game', 'Flow'];
+--- /dev/null
++++ b/js/data/kinds.js
+@@ -0,0 +1,69 @@
++/* ============ kinds.js — what each move kind supports (upgrade rework, slice 2a) ============
++ *
++ * One entry per delivery kind that systems/combat.js implements. A kind lists the stat keys its
++ * engine hook actually reads (`keys`), the card wording for it (`nouns`), and its `payload`:
++ *   damage  the kind's number is `dmg` (Power)      buff  the kind's number is `amount` (a stat boost)
++ * G.Mechanics (data/mechanics.js) decides which upgrade mechanics a move can take from these key
++ * lists plus the move's own fields, never from a kind name or a move id. So a move imported later
++ * (for example from PokeAPI) becomes upgradeable by getting a `kind` and the stat keys it has.
++ *
++ * Stat-key vocabulary (fixed, engine-owned):
++ *   dmg cd count pierce speed radius width arc size life dur rate stacks amount knock
++ * Keys the engine does not honor yet are NOT here (spread is a layout detail; slow, burn, poison,
++ * homing, flinch, ailments, crit stage, drain, multi-hit wait for the status rework).
++ *
++ * `wkind` is the name used in docs/move_kind_rules.xlsx. Mend, Ward, Control and Field are in that
++ * workbook but have no engine hook yet, so they are not here until they get one.
++ * `nouns`: count = what Count is called for this kind, area = what Area (radius) is called,
++ * recharge / speed only where the default wording does not fit.
++ */
++G.Kinds = (() => {
++  const BY = {
++    projectile: { wkind: 'Projectile', payload: 'damage', keys: ['dmg', 'cd', 'count', 'pierce', 'speed', 'size', 'life', 'knock'],
++                  nouns: { count: 'Projectile' } },
++    cone:       { wkind: 'Spray',      payload: 'damage', keys: ['dmg', 'cd', 'count', 'pierce', 'speed', 'arc', 'size', 'life'],
++                  nouns: { count: 'Shot' } },
++    nova:       { wkind: 'Burst',      payload: 'damage', keys: ['dmg', 'cd', 'count', 'pierce', 'speed', 'size', 'life'],
++                  nouns: { count: 'Projectile' } },
++    melee:      { wkind: 'Melee',      payload: 'damage', keys: ['dmg', 'cd', 'radius', 'arc', 'knock'],
++                  nouns: { area: 'Reach' } },
++    dash:       { wkind: 'Dash',       payload: 'damage', keys: ['dmg', 'cd', 'radius', 'width', 'knock'],
++                  nouns: { area: 'Distance' } },
++    beam:       { wkind: 'Beam',       payload: 'damage', keys: ['dmg', 'cd', 'radius', 'width'],
++                  nouns: { area: 'Length' } },
++    aura:       { wkind: 'Aura',       payload: 'damage', keys: ['dmg', 'cd', 'radius'],
++                  nouns: { area: 'Radius' } },
++    orbit:      { wkind: 'Orbit',      payload: 'damage', keys: ['dmg', 'cd', 'count', 'speed', 'radius', 'size', 'knock'],
++                  nouns: { count: 'Orb', area: 'Orbit Radius', recharge: 'Re-hit Speed', speed: 'Spin Speed' } },
++    boomerang:  { wkind: 'Boomerang',  payload: 'damage', keys: ['dmg', 'cd', 'count', 'speed', 'radius', 'size', 'knock'],
++                  nouns: { count: 'Boomerang', area: 'Range' } },
++    chain:      { wkind: 'Chain',      payload: 'damage', keys: ['dmg', 'cd', 'count', 'radius'],
++                  nouns: { count: 'Jump', area: 'Jump Range' } },
++    trail:      { wkind: 'Trail',      payload: 'damage', keys: ['dmg', 'cd', 'radius', 'dur'],
++                  nouns: { area: 'Puddle Size', recharge: 'Puddle Rate' } },
++    mine:       { wkind: 'Mines',      payload: 'damage', keys: ['dmg', 'cd', 'count', 'radius', 'dur'],
++                  nouns: { count: 'Mine', area: 'Blast Radius' } },
++    meteor:     { wkind: 'Meteors',    payload: 'damage', keys: ['dmg', 'cd', 'count', 'radius', 'knock'],
++                  nouns: { count: 'Strike', area: 'Impact Radius' } },
++    turret:     { wkind: 'Turret',     payload: 'damage', keys: ['dmg', 'cd', 'count', 'speed', 'size', 'dur', 'rate'],
++                  nouns: { count: 'Turret' } },
++    buff:       { wkind: 'Buff',       payload: 'buff',   keys: ['dmg', 'cd', 'dur', 'stacks', 'amount'],
++                  nouns: {} }
++  };
++
++  const VOCAB = ['dmg', 'cd', 'count', 'pierce', 'speed', 'radius', 'width', 'arc', 'size', 'life', 'dur', 'rate', 'stacks', 'amount', 'knock'];
++
++  /** Does this kind's engine hook read `key`? */
++  function hasKey(kind, key) { const k = BY[kind]; return !!k && k.keys.includes(key); }
++
++  /** The stat that "Increased Effect" scales for a kind: Power for damage kinds, amount for buffs. */
++  function effectKey(kind) { const k = BY[kind]; return k && k.payload === 'buff' ? 'amount' : 'dmg'; }
++
++  /** Card noun for a mechanic on a kind (e.g. count on orbit is "Orb"). Falls back to `dflt`. */
++  function noun(kind, slot, dflt) { const k = BY[kind]; return (k && k.nouns[slot]) || dflt; }
++
++  // Shape check on static data (also run offline): a typo in a key list fails loudly, not silently in play.
++  for (const id in BY) for (const key of BY[id].keys) if (!VOCAB.includes(key)) throw new Error('kinds.js: ' + id + ' lists unknown key ' + key);
++
++  return { BY, VOCAB, hasKey, effectKey, noun };
++})();
+--- /dev/null
++++ b/js/data/mechanics.js
+@@ -0,0 +1,103 @@
++/* ============ mechanics.js — upgrade mechanics catalogue (upgrade rework, slice 2a) ============
++ *
++ * A mechanic is a card that raises ONE stat key of ONE move. Which moves can take it is decided from
++ * the move's own fields and G.Kinds (never from a kind name or a move id), so imported moves work
++ * with no change here.
++ *
++ *   mode 'add'   value = base + stacks x step              (Count, Pierce, Buff Stacks)
++ *   mode 'inc'   value = base x (1 + stacks x step)        (Increased Effect, Area, Width, ...)
++ *   mode 'rate'  value = base / (1 + stacks x step)        (a PERIOD in seconds: Recharge, Fire Rate;
++ *                                                           additive in rate, so it never reaches 0)
++ * Several mechanics on the same key share one pool: all `inc` stacks on a key are SUMMED
++ * (x(1 + sum)); then `add` stacks are added to the base first. Order: (base + adds) x (1 + incs).
++ * A 'rate' key divides by (1 + sum).
++ *
++ *   class  DPS | Coverage | Utility   (the three value classes; used for the card draw)
++ *   live   false = registered but never offered (the engine cannot honor it yet)
++ *   keyFor(m)   the stat key this mechanic raises on move `m`
++ *   needs(m, base)  extra eligibility beyond "the kind supports the key"; returns a reason string
++ *                   when NOT eligible, else null. `base` is the key's current value (0 when absent).
++ *
++ * Steps are PLACEHOLDERS, tuned after the catalogue works (see DECISIONS 2026-10-18).
++ * A move instance keeps `mods = { mechanicId: stacks }`; G.Moves.derive(m) rebuilds the live fields.
++ */
++G.Mechanics = (() => {
++  const TWO_PI = 6.2832;
++
++  const ALL = [
++    // --- DPS ---
++    { id: 'effect',   label: 'Increased Effect', cls: 'DPS', mode: 'inc',  step: 0.10, live: true,
++      keyFor: m => G.Kinds.effectKey(m.kind),
++      needs: (m, base) => (base > 0 ? null : 'power 0, nothing to increase') },
++    { id: 'recharge', label: 'Recharge Speed',   cls: 'DPS', mode: 'rate', step: 0.15, live: true,
++      keyFor: () => 'cd', needs: () => null },
++    { id: 'count',    label: 'Count',            cls: 'DPS', mode: 'add',  step: 1,    live: true,
++      keyFor: () => 'count', needs: () => null },
++    { id: 'firerate', label: 'Fire Rate',        cls: 'DPS', mode: 'rate', step: 0.15, live: true,
++      keyFor: () => 'rate', needs: () => null },
++    // --- Coverage ---
++    { id: 'pierce',   label: 'Pierce',           cls: 'Coverage', mode: 'add', step: 1, live: true,
++      keyFor: () => 'pierce', needs: () => null },
++    { id: 'area',     label: 'Area',             cls: 'Coverage', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'radius', needs: () => null },
++    { id: 'width',    label: 'Width',            cls: 'Coverage', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'width', needs: () => null },
++    { id: 'arc',      label: 'Arc',              cls: 'Coverage', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'arc', needs: (m, base) => (base >= TWO_PI - 0.01 ? 'arc already at 360 degrees' : null) },
++    { id: 'size',     label: 'Size',             cls: 'Coverage', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'size', needs: () => null },
++    { id: 'range',    label: 'Shot Range',       cls: 'Coverage', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'life', needs: () => null },
++    // --- Utility ---
++    { id: 'speed',    label: 'Projectile Speed', cls: 'Utility', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'speed', needs: () => null },
++    { id: 'duration', label: 'Duration',         cls: 'Utility', mode: 'inc', step: 0.15, live: true,
++      keyFor: () => 'dur', needs: () => null },
++    { id: 'knock',    label: 'Knockback',        cls: 'Utility', mode: 'inc', step: 0.20, live: true,
++      keyFor: () => 'knock', needs: (m, base) => (base > 0 ? null : 'knockback is 0') },
++    { id: 'stacks',   label: 'Buff Stacks',      cls: 'Utility', mode: 'add', step: 1, live: true,
++      keyFor: () => 'stacks', needs: () => null }
++  ];
++  const BY_ID = {};
++  for (const x of ALL) BY_ID[x.id] = x;
++
++  /** Current value of `key` on `m`, treating an absent key as 0 (the kind default for 'add' mechanics). */
++  const cur = (m, key) => (m[key] == null ? 0 : m[key]);
++
++  /**
++   * Can move `m` (a definition or an instance) take one more stack of `mech`?
++   * @returns {{ok:boolean, why?:string, defaulted?:boolean}}
++   */
++  function check(m, mech) {
++    if (!mech.live) return { ok: false, why: 'not live yet' };
++    const key = mech.keyFor(m);
++    if (!G.Kinds.hasKey(m.kind, key)) return { ok: false, why: 'kind has no ' + key };
++    const has = m[key] != null;
++    // 'add' mechanics default to 0 when the kind supports the key (a cone without `pierce` can take Pierce).
++    if (!has && mech.mode !== 'add') return { ok: false, why: 'move has no ' + key };
++    const why = mech.needs(m, cur(m, key));
++    return why ? { ok: false, why } : { ok: true, defaulted: !has };
++  }
++
++  /** Every live mechanic move `m` can take now. */
++  function eligibleFor(m) { return ALL.filter(x => check(m, x).ok); }
++
++  /** Card wording: noun table lives in G.Kinds, step in the mechanic. */
++  function noun(m, mech) {
++    switch (mech.id) {
++      case 'effect':   return G.Kinds.BY[m.kind] && G.Kinds.BY[m.kind].payload === 'buff' ? 'Potency' : 'Damage';
++      case 'recharge': return G.Kinds.noun(m.kind, 'recharge', 'Recharge Speed');
++      case 'count':    return G.Kinds.noun(m.kind, 'count', 'Count');
++      case 'area':     return G.Kinds.noun(m.kind, 'area', 'Area');
++      case 'speed':    return G.Kinds.noun(m.kind, 'speed', 'Projectile Speed');
++      case 'range':    return 'Range';
++      case 'stacks':   return 'Max Stack';
++      default:         return mech.label;
++    }
++  }
++  function text(m, mech) {
++    return (mech.mode === 'add' ? '+' + mech.step : '+' + Math.round(mech.step * 100) + '%') + ' ' + noun(m, mech);
++  }
++
++  return { ALL, BY_ID, check, eligibleFor, text, noun, TWO_PI };
++})();

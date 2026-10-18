@@ -68,7 +68,7 @@ re-tune later.
 - Non-enemy damage (lava, altar, Judgment, burn/poison DoT) is unchanged/flat — does NOT use the ratio.
 
 ## Upgrades
-(none tuned yet)
+(none tuned yet) 2026-10-18: the old in-run stat cards and move evolutions were removed; the new stat cards and mechanic cards (slice 2) get their first numbers then, from G.Log.pacing().
 
 ## Drops / economy
 (none tuned yet)

@@ -6,27 +6,15 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-- Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (DONE 2026-10-18) ->
-  feature/xp-curve (APPLIED 2026-10-18, needs playtest) -> fix/attack-calc -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
-  Why attack-calc is next: the 2026-10-18 slice 1c logs show player damage is the bottleneck (Squirtle water-gun 1.8 vs ~22 HP enemies, 150 hits for 14 kills in 48 s; Charmander L3 at 1:42).
-- refactor/enemy-behavior: DONE 2026-10-18, playtested, Jess: "feels good". Shipped: class table + 9-species cast, charger warning line, spacing bands (BANDS),
-  shooter shot life x2 (SHOT_LIFE), crowd-seeking shielder/healer with weak shot + melee (SEEK), contact gap (CONTACT), flankers replace runners (FLANK),
-  spawn weight by family (FAMILY_SHARE), dev logger additions (class tags, s + alive per hit, G.Log.cast/bands). Specs: docs/proposals/enemy-behavior-game-proposal.md,
-  logger-and-spacing-bands-proposal.md, support-contact-flanker-proposal.md. Tuning knobs are the tables at the end of js/data/enemies.js; numbers in BALANCE.md.
-  Left on purpose: slice 2 Status mechanics (below); per-class shot reach for fans and others (only the plain shooter changed); an alive-by-class logger sample
-  (build only if the ranged mix still feels heavy); flat boss damage stays in the Boss damage slice. Class damage weights: CLOSED, answered by the final-damage
-  multiplier (weak support x0.5, flanker strike x1.2; DECISIONS 2026-10-18 slice 1c).
-- Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
-  2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
-  Open logger gap: burn/poison ticks unlogged. (Live-enemy count per hit and class tags added 2026-10-18.)
+- Upgrade rework (in-run): slice 1 (delete evolutions + old stat cards) APPLIED 2026-10-18, needs playtest + commit. Slice 2 = mechanic catalogue + six stat cards + 3-step targeting (needs card text, family weights, fan rule for high counts). Rulings: DECISIONS 2026-10-18 "Upgrade rework".
+- Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior, feature/xp-curve and fix/attack-calc are all DONE, playtested, committed and merged to main
+  (Jess, 2026-10-18; branches deleted). Remaining order: status/DoT rework -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night) and 2026-10-18.
+- Tuning knobs for enemy behavior are the tables at the end of js/data/enemies.js; numbers in BALANCE.md. Class damage weights: CLOSED (final-damage multiplier, DECISIONS 2026-10-18 slice 1c).
+- Dev logger: merged with the above. Open logger gap: alive-by-class sample (build only if the ranged mix still feels heavy).
 
 ## Up next (local single-player)
 - LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
 - Rift legendaries are not region-gated (rift.js line 92 filters on p.leg only): a Gen 5 Tornadus appeared in a Kanto run at 2:47 and its flat 55 zone hit one-shot a 53.9 HP player. Jess 2026-10-18: LEAVE THE RIFT FIX ALONE (rifts are planned for removal). The flat boss and legendary damage stays in the Boss damage slice below.
-- fix/attack-calc (IN PROGRESS, design talk 2026-10-18, see DECISIONS 2026-10-18): scope = cast + tick normalization by move geometry
-  (volley kinds divide by base pellet count; one-hit kinds keep full power; continuous kinds become ticked DPS budgets), defender-level bug
-  (enemy Def/SpD at the enemy's level, boss fallback), fractional enemy HP, accuracy folded into power, burn/poison tick logging. Next step: work out the math per
-  Move kind (Jess's draft spreadsheet is in docs/). OUT of scope: cooldown-from-PP + swap rule (next branch), burn/poison/ailment rework (branch after that).
 - tune/damage-hp: raise player damage for one-vs-many; retune HP/damage scalars from logs, last. Opened 2026-10-17.
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on
   the A/D ratio (and decide boss "Power": flat vs a boss-move) when ready. Opened 2026-10-17.
@@ -37,10 +25,11 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - Canonical move procs slice: wire the annotate-only ailment/ailmentChance/flinch/statChance fields on
   moves (added 2026-10-17) into real probabilistic effects; split the overloaded fork `slow` flag
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
-- Merge feature/base-stats to main when ready. It now contains the damage work (A+B) AND the Pokedex
-  UI (main was merged into base-stats on 2026-10-17), so merging it to main brings main fully current.
 
 ## Backlog
+- SEO copy pass (opened 2026-10-18): tools/make_seo_pages.py still claims move evolutions (about lines 195, 200, 242, 418-428, 465, 471, 504) and renders an empty evolution column (export sends evo: null). Also prune dormant save fields (stats.evolutions, evoMoves), unused Player.addMaxHp, dead lang-en.js keys.
+- Engine ceilings + endgame performance audit (opened 2026-10-18): unbounded upgrades are intended and endgame collapse is accepted, but fix inefficiencies that make it arrive early (projectile array splice, no projectile cap, fan spread = spread x n wraps at high counts, meaningless ceilings like arc 360 make a card ineligible). Do after the card pipeline exists.
+- Pause menu redesign / pokemon inspect screen: slice 2d-1 APPLIED 2026-10-18 (uncommitted): js/ui/sheet.js team summary sheet used by the pause screen and a Team summary view from the end-of-run screen (roster strip, moves grouped by bond with stacks / numbers / one-hit damage, two-layer hexagon white base + 60% yellow card bonus with +X%, held item). 2d-2 APPLIED 2026-10-18 (uncommitted): level-up choose mode through the sheet (scr-choose; Confirm / double-click / Enter, 1-4 pick a move, Backspace back, ineligible Pokemon dimmed with reason; auto-advance removed; New Move cards still single-step; level-up screen in English). Open: touch untested; co-op uses the same sheet mouse-only. Open / deferred: per-Pokemon kills and damage dealt on the end screen (Jess: later); a rough DPS line (misleading for orbit/aura/trail ticks); hexagon clamps at the outer edge (MAX 200) once a build passes it, numbers stay true (revisit when players optimize); meta-progression perks (flat HP, atk/spd multipliers) and temporary buff stacks are not shown in the hexagon; sheet does not live-update while open in a group game; touch/phone layout only checked in a headless narrow viewport; stale Spanish keys left in lang-en.js on purpose (chunk matching could change other texts); a full Spanish-to-English source sweep is its own slice.
 - Bond rework (its own branch). Opened 2026-10-18, decided with Jess: Bond = Slot Compression + Synergy. Slot compression (a bond frees slots, so you carry more
   moves than the 4 slots; max today 7 moves with one group of 4) stays and grows in value as more moves are added. Synergy (bonded moves interact, for example
   cast-triggered cooldown cuts or same-type bonuses) is new and needs designing. The old job, firing several moves at once, goes away: with independent
@@ -48,7 +37,8 @@ Keep it simple: move items between sections as they progress. Add a date when an
   than one group can grow, HUD, and rebalancing late-game damage (a 4-move bond was ~4x sustained damage).
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess
   2026-10-17, dev logger first. Would reuse the same G.Log records. Not designed further.
-- Upgrade system rework (in-run first, meta-progression on its own branch later). Open design decisions:
+- Upgrade rework SLICE 2: 2a committed; 2b APPLIED 2026-10-18 (uncommitted); 2c APPLIED 2026-10-18 (six per-Pokemon stat cards + Type/Kind scoped damage cards; uncommitted; harness + headless run pass). Open: vitamin names are placeholders; tune FAMILY_W (Stats 8, new moves ~25% of cards), stat step 5%, scoped step 15%, Protein/Calcium weight floor 0.25; scoped scope is picked uniformly (not by how many moves match); stat gains are shown on the team summary sheet (2d-1) and not on the bond screen; mechanic card art; key labels 'SEMICOLON'/'QUOTE' in the Pokemon step; co-op ghosts ignore stat cards and scoped damage; touch not tested. Analysis only (no change wanted): the family-then-card draw over-represents a thin family's lone mechanic (Projectile Speed ~39% of offers for an Ember-only team).
+- Upgrade system rework (IN DESIGN 2026-10-18, rulings in DECISIONS 2026-10-18 upgrade rework; in-run first, meta-progression on its own branch later). Open design decisions:
   card identity (generic stat cards vs Kind/Type-targeted cards), the first-5-minutes pacing target, in-run
   skip/banish. Known issues to fix in it: flat HP cards (+20 max HP is 83% of L1 HP), unbounded Potencia
   stacking (up to x45), cards not mapped to Atk/SpA/Def/SpD. The dev logger's pacing() table is the first step.
@@ -68,6 +58,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
   T5 fits exactly at 7).
 
 ## Deferred, cloud / multiplayer phase (do NOT start until Jess switches phase)
+- Co-op levelStart (game.js) has no empty-offer guard (solo maybeLevelUp does since 2026-10-18); add it when MP resumes.
 - Firebase layer (auth, Firestore, RTDB, cloud saves)
 - Cloudflare TURN worker
 - Multiplayer / co-op / networking (js/net/: social, net, coop, ranking, signups)
@@ -82,6 +73,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - MP connection reliability, hosting-provider research, and FPS/CPU/cost reasoning (parked design notes, 2026-10-17): moved to docs/MP-PARKED-NOTES.md. Not read at session start. Open it when the cloud/MP phase begins.
 
 ## Done
+- 2026-10-18: feature/xp-curve and fix/attack-calc (slices 1, 2, 3a+3b, 3c) playtested, committed, merged to main, branches deleted (Jess). Leftovers from them: Dragon Rage / Night Shade fixed-damage path (dmg 0 today), treasure imp XP (events.js spawnThief flat xp 10), prune unused TIERS xp / defFor xp.
 - 2026-10-18: feature/xp-curve APPLIED (uncommitted until Jess commits): Medium Fast cost, Gen 5 yield from species base_experience (pokedex.js bx), XP_SCALAR 0.035, big orb = 5% of next level, rock = 1% of next level. TO DO: playtest and retune K from G.Log.pacing(). Bosses/Judgment XP left flat on purpose (boss rework). Legacy: TIERS xp and defFor xp are now unused for wild enemies (prune later).
 - 2026-10-18: Region-select confirmed merged to main (Jess).
 - 2026-10-17: Pokedex UI redesign (search + region/ownership/sort dropdowns + multi-select
@@ -91,7 +83,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
   css/style.css (dev.html does not load css/pages.css).
 - 2026-10-17: Merged main (Pokedex UI) INTO feature/base-stats via a merge commit (resolved the
   changelog.js + DEVLOG.md "both appended at top" conflicts, kept both sides), pushed. base-stats now
-  carries both tracks. (base-stats -> main merge still pending.)
+  carries both tracks. (base-stats later merged to main.)
 - 2026-10-17: Damage sub-slice B (player->enemy on the mainline A/D ratio, STAB, scalar 2.0) applied,
   verified, committed + pushed on feature/base-stats.
 - 2026-10-17: Set up AI collaborator agent + in-repo project-docs scaffold (CONTEXT, DEVLOG,
@@ -99,7 +91,3 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - 2026-10-17: Team Roster feature reviewed, i18n fix applied (English swap-in line), merged to
   main (--no-ff) and pushed; feature/team branch deleted. Repo went source-only (build output
   gitignored).
-- fix/attack-calc slice 1 APPLIED 2026-10-18 (needs playtest: check DOT lines and Def levels in the dev log). Slice 2 = geometry normalization.
-- fix/attack-calc slice 2 APPLIED 2026-10-18 (needs playtest: Flamethrower/Bubble Beam/Razor Leaf feel; check 'per-cast' step in OUT lines). Slice 3 = PP cooldowns + orbit/trail/aura divisors + swap rule.
-- fix/attack-calc slices 3a+3b APPLIED 2026-10-18 (needs playtest: starter fire rate, Hydro Pump, aura pulses). Remaining: 3c swap rule; Dragon Rage / Night Shade fixed-damage item.
-- fix/attack-calc slice 3c APPLIED 2026-10-18 (needs playtest: 0.4 s hold, dropped presses, banked moves). Small follow-ups: treasure imp XP (events.js spawnThief flat xp 10, bypasses xpYield); Dragon Rage / Night Shade dmg 0.

@@ -31,9 +31,7 @@ G.MissionDefs = (() => {
     { id: 'playType', ev: 'runEnd', param: 'type', mode: 'max', value: min, goals: [3], reward: { t1: 3, coins: 200 },
       match: (d, t) => d.types.includes(t), text: (n, t) => `Aguanta ${n} minutos con un Pokémon de tipo ${T(t)}` },
     { id: 'item', ev: 'item', goals: [1], reward: { t1: 2, coins: 150 },
-      text: () => 'Encuentra un objeto equipable' },
-    { id: 'evolve', ev: 'evolve', goals: [1], reward: { t1: 3, coins: 250 },
-      text: () => 'Evoluciona un movimiento' }
+      text: () => 'Encuentra un objeto equipable' }
   ];
 
   const weekly = [
@@ -45,8 +43,6 @@ G.MissionDefs = (() => {
       text: n => `Derrota a ${n} jefes` },
     { id: 'wsurvive', ev: 'runEnd', mode: 'max', value: min, goals: [12, 15], reward: { t10: 1, coins: 1000 },
       text: n => `Aguanta ${n} minutos en una run` },
-    { id: 'wevolve', ev: 'evolve', goals: [3, 5], reward: { t10: 1, coins: 900 },
-      text: n => `Evoluciona ${n} movimientos` },
     { id: 'wdaily', ev: 'missionDone', match: d => d.daily, goals: [8, 12], reward: { t10: 1, coins: 800 },
       text: n => `Completa ${n} misiones diarias` }
   ];

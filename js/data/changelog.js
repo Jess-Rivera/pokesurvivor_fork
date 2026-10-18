@@ -6,6 +6,26 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Choose upgrades on the team summary', 'Choose upgrades on the team summary'], new: [
+    ['Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.',
+     'Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.']
+  ] },
+  { d: '2026-10-18', title: ['Team summary screen', 'Team summary screen'], new: [
+    ['The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.',
+     'The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.']
+  ] },
+  { d: '2026-10-18', title: ['Stat cards and type damage cards', 'Stat cards and type damage cards'], new: [
+    ['Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.',
+     'Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.']
+  ] },
+  { d: '2026-10-18', title: ['Upgrades you aim at a move', 'Upgrades you aim at a move'], new: [
+    ['Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.',
+     'Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.']
+  ] },
+  { d: '2026-10-18', title: ['Move evolutions and stat cards removed', 'Move evolutions and stat cards removed'], chg: [
+    ['Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.',
+     'Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.']
+  ] },
   { d: '2026-10-18', title: ['Independent move cooldowns', 'Independent move cooldowns'], chg: [
     ['Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.',
      'Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.']

@@ -96,8 +96,10 @@ G.Combat = (() => {
     const vis = G.VFX.forMove(m);
     const n = Math.max(1, m.count | 0);
     const spread = m.spread || 0;
+    // The fan widens with the count but stops just short of a full circle, so a huge count never wraps over itself.
+    const fan = Math.min(spread * n, 6.2832 * (n - 1) / n);
     for (let i = 0; i < n; i++) {
-      const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * spread * n;
+      const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan;
       const a = pl.aim + off + G.U.rand(-0.03, 0.03);
       G.Projectiles.spawn(Object.assign({
         x: pl.x + Math.cos(a) * 3, y: pl.y + Math.sin(a) * 3,
@@ -513,11 +515,10 @@ G.Combat = (() => {
   }
 
   /** Replays a teammate's attack just to see it (no damage). */
-  function ghostCast(pl, id, lvl, aim, evolved) {
+  function ghostCast(pl, id, stacks, aim) {   // `stacks` arrives on the wire but ghosts replay the base move (co-op parked)
     const def = G.Moves.BY_ID[id];
     if (!def || def.kind === 'orbit') return;
-    const m = G.Moves.instance(id, lvl);
-    if (evolved) G.Moves.evolve(m);
+    const m = G.Moves.instance(id);
     pl.aim = aim;
     ghost = true;
     try {

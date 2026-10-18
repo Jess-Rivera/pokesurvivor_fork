@@ -4,7 +4,6 @@
  *   kill      { types, boss, legend }  (also in the co-op copies)
  *   chest     cofre con candado abierto
  *   item      { id }        objeto equipado
- *   evolve    { move }      movimiento evolucionado
  *   rift      { type }      rift fight won
  *   runEnd    { time, level, coins, types, group }
  *   judge     you reach Arceus's Judgment (minute 30)
@@ -61,6 +60,15 @@ G.Progress = (() => {
       M.week = ids.w;
       M.weekly = pickSet(G.MissionDefs.weekly, 2, rng(ids.w + key));
     }
+    // Saves from before 2026-10-18 can hold missions that no longer exist (evolve, wevolve):
+    // drop them and top the list back up so nothing reads a missing definition.
+    const known = m => !!G.MissionDefs.BY[m.id];
+    const topUp = (list, defs, n, seed) => {
+      const keep = (list || []).filter(known);
+      return keep.length >= n ? keep : keep.concat(pickSet(defs, n - keep.length, rng(seed), keep.map(x => x.id)));
+    };
+    M.daily = topUp(M.daily, G.MissionDefs.daily, 3, ids.d + key + 'x');
+    M.weekly = topUp(M.weekly, G.MissionDefs.weekly, 2, ids.w + key + 'x');
   }
 
   function text(m) { return G.MissionDefs.BY[m.id].text(m.goal, m.param); }
@@ -142,10 +150,6 @@ G.Progress = (() => {
       case 'rift':
         S.riftWins = (S.riftWins || 0) + 1;
         if (d.type) { s.arenas = s.arenas || {}; s.arenas[d.type] = s.arenas[d.type] || Date.now(); }
-        break;
-      case 'evolve':
-        S.evolutions = (S.evolutions || 0) + 1;
-        s.evoMoves = s.evoMoves || {}; s.evoMoves[d.move] = s.evoMoves[d.move] || Date.now();
         break;
       case 'item':
         s.itemsFound = s.itemsFound || {}; s.itemsFound[d.id] = s.itemsFound[d.id] || Date.now();

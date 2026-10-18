@@ -123,8 +123,9 @@ G.Stats = (() => {
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
   // (stats[2]/stats[4]) matching the attack category. Returns damage BEFORE type/weather/
   // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
-  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel) {
-    const dStat = cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel);
+  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1) {
+    // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
+    const dStat = (cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel)) * defMul;
     return (factor / Math.max(1, dStat) + 2) * ENEMY_DMG_SCALAR;
   }
 

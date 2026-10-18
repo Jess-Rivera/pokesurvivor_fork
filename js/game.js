@@ -286,9 +286,9 @@ G.Game = (() => {
       state = 'levelup';
       G.UI.hide('scr-pause');
       G.Audio.sfx('levelup');
-      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl), card => {
+      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl, 3, roster), (card, t) => {
         G.Audio.sfx('confirm');
-        card.apply(pl);
+        card.apply(pl, t && t.pl, t && t.move);
         G.Coop.localPicked();
       }, true);
     },
@@ -412,7 +412,7 @@ G.Game = (() => {
 
     G.RunUI.showOver({
       dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, judge,
-      moves: pl.moves, caught,
+      moves: pl.moves, roster, caught,
       breakdown: Object.entries(parts).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') +
                  (mul > 1 ? ` · ×${mul.toFixed(2)} Fortuna` : '')
     }, () => { pl = null; G.Flow.afterRun(); });
@@ -450,12 +450,15 @@ G.Game = (() => {
     }
     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
     if (pl.dead) return;
+    const cards = G.LevelUp.offer(pl, 3, roster);
     pendingLevels--;
+    // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
+    if (!cards.length) return;
     state = 'levelup';
     G.Audio.sfx('levelup');
-    G.RunUI.showLevelUp(pl.level, G.LevelUp.offer(pl), card => {
+    G.RunUI.showLevelUp(pl.level, cards, (card, t) => {
       G.Audio.sfx('confirm');
-      card.apply(pl);
+      card.apply(pl, t && t.pl, t && t.move);
       state = 'playing';
     });
   }
@@ -471,7 +474,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.Rift.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-choose'].some(G.UI.isOpen)) return;
     const opt = pl.bondOptions();
     if (!opt) {
       if (!quiet) G.Spawner.say('Guardas el vínculo: aprende otro movimiento para usarlo', 3, true);
@@ -519,7 +522,7 @@ G.Game = (() => {
   /** You picked up an item: if you carry none you equip it; otherwise, you choose. */
   function offerItem(id) {
     if (!pl || !G.Items.BY[id]) return;
-    if (state === 'levelup' || G.UI.isOpen('scr-levelup')) { laterItems.push(id); return; }
+    if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
     let mine = false;            // this choice is the one that stopped the game
     const take = got => {
       openItem = null;
@@ -614,10 +617,7 @@ G.Game = (() => {
       return;
     }
     if (state === 'levelup') {
-      for (let i = 0; i < 3; i++) {
-        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pick(i);
-      }
-      if (G.Input.tap('keyr')) G.RunUI.reroll();
+      G.RunUI.levelKeys();
       return;
     }
     if (G.UI.isOpen('scr-bond')) {
@@ -639,6 +639,7 @@ G.Game = (() => {
       return;
     }
     if (G.Input.action('pause')) { togglePause(); return; }
+    if (state === 'paused' || state === 'over') { G.RunUI.pauseKeys(); return; }          // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
     for (let i = 0; i < 4; i++) {
       if (G.Input.action('attack_' + (i + 1))) pl.setActive(i);

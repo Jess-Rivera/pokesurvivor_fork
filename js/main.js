@@ -2,9 +2,9 @@
 (() => {
   // If a file fails to load (a mobile connection that drops), it is better
   // to warn than to boot halfway.
-  const NEED = ['U', 'Stats', 'Log', 'I18n', 'Settings', 'DB', 'Audio', 'Input', 'Touch', 'Sprites', 'Camera', 'Moves', 'ENEMY_CLASSES', 'Enemies', 'Upgrades', 'Items',
+  const NEED = ['U', 'Stats', 'Log', 'I18n', 'Settings', 'DB', 'Audio', 'Input', 'Touch', 'Sprites', 'Camera', 'Kinds', 'Mechanics', 'Moves', 'ENEMY_CLASSES', 'Enemies', 'Upgrades', 'Items',
                 'World', 'FX', 'Projectiles', 'EnemyMgr', 'Pickups', 'Player', 'Combat', 'Spawner', 'LevelUp', 'Gacha',
-                'Rift', 'Weather', 'Progress', 'Hazards', 'Social', 'Net', 'Coop', 'Ranking', 'Icons', 'UI', 'HUD',
+                'Rift', 'Weather', 'Progress', 'Hazards', 'Social', 'Net', 'Coop', 'Ranking', 'Icons', 'UI', 'HUD', 'Sheet',
                 'MenuUI', 'RunUI', 'SettingsUI', 'Funding', 'SupportUI', 'Game', 'Flow'];
   function broken() {
     // (In the published version G is not on window: it is wrapped, see tools/build.js.)

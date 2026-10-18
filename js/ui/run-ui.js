@@ -2,10 +2,11 @@
 G.RunUI = (() => {
   const $ = G.UI.$;
   let offers = null, offerCb = null, coopMode = false;
+  let flow = null;            // a mechanic / stat card being applied on the choose sheet: { card, idx, info }
 
   /** @param coop  in a group: after choosing, it waits for the others */
   function showLevelUp(level, list, cb, coop = false) {
-    offerCb = cb; coopMode = coop;
+    offerCb = cb; coopMode = coop; flow = null;
     $('lvl-num').textContent = level;
     $('lvl-wait').textContent = '';
     $('lvl-wait').classList.toggle('hidden', !coop);
@@ -26,14 +27,32 @@ G.RunUI = (() => {
   }
 
   function reroll() {
-    if (!offers || rerollsLeft() <= 0) return;
+    if (!offers || flow || rerollsLeft() <= 0) return;
     const p = G.Game.player;
     p.rerolls = (p.rerolls || 0) + 1;
     G.Audio.sfx('select');
-    renderCards(G.LevelUp.offer(p));
+    renderCards(G.LevelUp.offer(p, 3, G.Game.roster));
   }
 
-  function renderCards(list) {
+  /** One row of the level-up screen (card, Pokemon or move). */
+  function row(o) {
+    const el = document.createElement('div');
+    el.className = 'card' + (o.dim ? ' dim' : '') + (o.flash ? ' flash' : '');
+    const chip = o.chip ? `<span class="tag-chip" style="background:${o.chipColor || '#9fb1c9'}">${o.chip}</span>` : '';
+    el.innerHTML =
+      `<div class="ico" style="background:${o.color}33"></div>
+       <div class="txt"><div class="nm">${o.title} ${chip}</div><div class="ds">${o.desc}</div></div>
+       <div class="key">${o.key || ''}</div>`;
+    const ico = el.querySelector('.ico');
+    if (o.icoNode) ico.appendChild(o.icoNode);
+    else if (o.icoHtml) ico.innerHTML = o.icoHtml;
+    else { ico.textContent = o.icoText || ''; ico.style.color = o.color; ico.style.fontWeight = '800'; ico.style.fontSize = '15px'; }
+    el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
+    if (!o.dim && o.onclick) el.onclick = o.onclick;
+    return el;
+  }
+
+  function renderCards(list, doneIdx = null) {
     offers = list;
     const left = rerollsLeft();
     $('lvl-rr-n').textContent = left;
@@ -41,52 +60,106 @@ G.RunUI = (() => {
     const box = $('cards');
     box.innerHTML = '';
     list.forEach((c, i) => {
-      const el = document.createElement('div');
-      el.className = 'card';
-      const tag = c.type === 'new'
-        ? `<span class="tag-chip" style="background:${c.color}">Nuevo · ${c.tag}</span>`
-        : c.type === 'up' || c.type === 'evo'
-          ? `<span class="tag-chip" style="background:${c.color}">${c.tag}</span>`
-          : `<span class="tag-chip" style="background:${c.color === '#ffd23f' ? '#ffd23f' : '#9fb1c9'}">${c.tag}</span>`;
-      if (c.type === 'evo') el.classList.add('evo');
-      el.innerHTML =
-        `<div class="ico" style="background:${c.color}33">${G.Icons.html(c.icon, 32)}</div>
-         <div class="txt"><div class="nm">${c.title} ${tag}</div><div class="ds">${c.desc}</div></div>
-         <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
-      el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
-      el.onclick = () => pick(i);
+      const el = row({
+        title: c.title, desc: c.desc, color: c.color, key: G.Input.keyLabel('attack_' + (i + 1)),
+        chip: c.type === 'new' ? 'New · ' + c.tag : c.tag, chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
+        icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '', icoText: c.ico, onclick: () => pick(i)
+      });
+      if (doneIdx === i) el.classList.add('picked');
       box.appendChild(el);
     });
+    if (doneIdx != null) box.classList.add('done');
   }
 
+  // ---- card -> choose sheet (Pokemon strip + move block) -> Confirm ----
+
   function pick(i) {
-    if (!offers || !offers[i]) return;
-    const c = offers[i], cb = offerCb;
-    offers = null; offerCb = null;
+    if (!offers || !offers[i] || flow) return;
+    const c = offers[i];
+    if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }
+    G.Audio.sfx('select');
+    openChoose(c, i);
+  }
+
+  /** Open the summary sheet in choose mode for card `c`: pick a Pokemon (and, for a mechanic card, one of its moves). */
+  function openChoose(c, idx) {
+    const roster = G.Game.roster;
+    flow = { card: c, idx, info: { ok: false, why: '' } };
+    $('choose-title').textContent = 'Apply ' + c.title;
+    $('choose-sub').textContent = 'Level ' + $('lvl-num').textContent;
+    $('btn-choose-back').onclick = back;
+    $('btn-choose-ok').onclick = confirm;
+    G.Sheet.render($('choose-sheet'), roster, {
+      sel: Math.max(0, roster.indexOf(G.Game.player)),
+      choose: {
+        card: c, targets: c.targets(roster), onConfirm: confirm,
+        onChange: info => { if (!flow) return; flow.info = info; $('btn-choose-ok').disabled = !info.ok; $('choose-note').textContent = info.ok ? '' : info.why; }
+      }
+    });
+    G.UI.show('scr-choose');
+  }
+
+  function confirm() {
+    if (!flow || !flow.info.ok) return;
+    const ch = G.Sheet.chosen($('choose-sheet'));
+    finish(flow.card, { pl: ch.pl, move: ch.move }, flow.idx);
+  }
+
+  /** Back to the three cards (same offer, nothing spent). */
+  function back() {
+    if (!flow) return;
+    G.Audio.sfx('select');
+    flow = null;
+    G.UI.show('scr-levelup');
+  }
+
+  function finish(c, tgt, idx) {
+    const cb = offerCb, list = offers;
+    offers = null; offerCb = null; flow = null;
     $('lvl-reroll').classList.add('hidden');
+    G.UI.hide('scr-choose');
     if (coopMode) {
       // The chosen card stays in view while the others choose.
-      $('cards').querySelectorAll('.card').forEach((el, j) => el.classList.toggle('picked', j === i));
-      $('cards').classList.add('done');
+      renderCards(list, idx);
+      offers = null;
+      G.UI.show('scr-levelup');
     } else G.UI.hide('scr-levelup');
-    cb(c);
+    cb(c, tgt);
+  }
+
+  /** Keyboard for the level-up screens. Cards: slot keys 1-3, R reroll. Choose sheet: swap keys / arrows switch Pokemon,
+   *  1-4 pick a move and confirm, Enter confirm, Backspace back. */
+  function levelKeys() {
+    if (!offers && !flow) return;
+    if (!flow) {
+      for (let i = 0; i < 3; i++) if (G.Input.action('attack_' + (i + 1))) pick(i);
+      if (G.Input.tap('keyr')) reroll();
+      return;
+    }
+    if (G.Input.tap('backspace')) { back(); return; }
+    if (G.Input.tap('enter')) { confirm(); return; }
+    G.Sheet.keys($('choose-sheet'));
+    if (flow && flow.card.type === 'mech') {
+      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1)) && G.Sheet.pickMoveIndex($('choose-sheet'), i)) { confirm(); return; }
+    }
   }
 
   /** Co-op: who still has to choose. */
   function setWaiting(names) {
     const me = G.Social.me ? G.Social.me.name : '';
     const others = names.filter(n => n !== me);
-    const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : a[0];
+    const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
     $('lvl-wait').textContent = !names.length ? ''
-      : !others.length ? 'Elige tu carta'
-      : names.includes(me) ? 'Faltan por elegir: ' + list([...others, 'tú'])
-      : 'Esperando a ' + list(others) + '…';
+      : !others.length ? 'Choose your card'
+      : names.includes(me) ? 'Still choosing: ' + list([...others, 'you'])
+      : 'Waiting for ' + list(others) + '…';
   }
 
   function closeLevelUp() {
-    offers = null; offerCb = null;
+    offers = null; offerCb = null; flow = null;
     $('cards').classList.remove('done');
     G.UI.hide('scr-levelup');
+    G.UI.hide('scr-choose');
   }
 
   /**
@@ -103,38 +176,44 @@ G.RunUI = (() => {
   }
 
   function showOver(r, onBack) {
-    $('over-title').textContent = r.dead ? 'Has caído…' : 'Run terminada';
+    $('over-title').textContent = r.dead ? 'You fell…' : 'Run over';
     $('over-stats').innerHTML = `
       ${G.Enemies.region ? `<div style="grid-column:1/-1"><span>Region</span><b class="gold">${G.MenuUI.GEN_NAMES[G.Enemies.region - 1]} Run</b></div>` : ''}
-      <div><span>Tiempo</span><b>${G.U.mmss(r.time)}</b></div>
-      <div><span>Nivel</span><b>${r.level}</b></div>
-      <div><span>Derrotados</span><b>${r.kills}</b></div>
-      <div><span>Jefes</span><b>${r.bosses}</b></div>
-      ${r.judge ? `<div style="grid-column:1/-1"><span>Ante Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendario' : 'legendarios'}</b></div>` : ''}
-      <div style="grid-column:1/-1"><span>Pokémonedas ganadas</span>
+      <div><span>Time</span><b>${G.U.mmss(r.time)}</b></div>
+      <div><span>Level</span><b>${r.level}</b></div>
+      <div><span>Defeated</span><b>${r.kills}</b></div>
+      <div><span>Bosses</span><b>${r.bosses}</b></div>
+      ${r.judge ? `<div style="grid-column:1/-1"><span>Against Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendary' : 'legendaries'}</b></div>` : ''}
+      <div style="grid-column:1/-1"><span>PokéCoins earned</span>
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
-      ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Tickets del gacha</span><b>
+      ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Gacha tickets</span><b>
         ${r.t1 ? G.Icons.html('ticket', 22) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ticket10', 22) + ' +' + r.t10 + ' ×10' : ''}</b></div>` : ''}
-      <div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
-        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${m.name} Nv.${m.lvl}`).join(' · ') || '—'}</b></div>
-      ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies conseguidos</span>
+      ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies caught</span>
         <div class="caught-row" id="over-caught"></div></div>` : ''}
-      ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">¡Nuevo récord de tiempo!</div>' : ''}
+      ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">New time record!</div>' : ''}
       ${askSupport(r) ? `<div class="support-ask" id="over-ask" style="grid-column:1/-1">
-        <button class="x" type="button" aria-label="Cerrar">×</button>
-        <p>¿Te está gustando PokéSurvivor? Lo hago yo solo y los servidores cuestan dinero. Si quieres, puedes ayudarme a mantenerlo en línea.</p>
-        <a class="btn small gold" href="${G.Funding.url}" target="_blank" rel="noopener">${G.Icons.html('heart', 14)} Apoyar en Ko-fi</a>
+        <button class="x" type="button" aria-label="Close">×</button>
+        <p>Enjoying PokéSurvivor? I make it on my own and the servers cost money. If you'd like, you can help keep it online.</p>
+        <a class="btn small gold" href="${G.Funding.url}" target="_blank" rel="noopener">${G.Icons.html('heart', 14)} Support on Ko-fi</a>
       </div>` : ''}`;
     const ask = $('over-ask');
     if (ask) ask.querySelector('.x').onclick = () => ask.remove();
     $('btn-again').onclick = onBack;
+    // Team summary: every Pokemon's moves, upgrades and stat cards (the results card keeps only the run totals).
+    const roster = r.roster || [];
+    $('btn-team').classList.toggle('hidden', !roster.length);
+    $('btn-team').onclick = () => {
+      G.Sheet.render($('team-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
+      G.UI.show('scr-team');
+    };
+    $('btn-team-back').onclick = () => G.UI.show('scr-over');
     if (r.caught && r.caught.length) {
       const row = $('over-caught');
       for (const c of r.caught) {
         const w = document.createElement('div');
         w.appendChild(G.UI.spriteCanvas(c.dex, 90, 72, { shiny: true, lively: true, scale: 2 }));
-        w.insertAdjacentHTML('beforeend', `<small>${G.DEX_BY[c.dex].name}${c.isNew ? ' · ¡nuevo!' : ''}</small>`);
+        w.insertAdjacentHTML('beforeend', `<small>${G.DEX_BY[c.dex].name}${c.isNew ? ' · new!' : ''}</small>`);
         row.appendChild(w);
       }
     }
@@ -192,7 +271,7 @@ G.RunUI = (() => {
       el.className = 'card' + (opt.mode === 'add' || step2 ? ' bond' : '');
       el.innerHTML =
         `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
-         <div class="txt"><div class="nm">${m.name} <span class="tag-chip" style="background:${col}">Nv.${m.lvl}</span></div><div class="ds">${desc}</div></div>
+         <div class="txt"><div class="nm">${m.name} ${G.Moves.stackTotal(m) ? `<span class="tag-chip" style="background:${col}">+${G.Moves.stackTotal(m)}</span>` : ''}</div><div class="ds">${desc}</div></div>
          <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
       el.dataset.sfx = 'none';
       el.onclick = () => pickBond(i);
@@ -223,10 +302,16 @@ G.RunUI = (() => {
   }
 
   function showPause(coop = false) {
-    G.UI.soundControls($('pause-sound'));
     $('pause-coop').classList.toggle('hidden', !coop);
-    $('btn-quit').textContent = coop ? 'Salir de la partida' : 'Abandonar run';
+    $('btn-quit').textContent = coop ? 'Leave the game' : 'Quit run';
+    const roster = G.Game.roster || [];
+    G.Sheet.render($('pause-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
     G.UI.show('scr-pause');
+  }
+  /** Solo pause: keyboard for the sheet (switch Pokemon, scroll the moves). */
+  function pauseKeys() {
+    if (G.UI.isOpen('scr-pause')) G.Sheet.keys($('pause-sheet'));
+    else if (G.UI.isOpen('scr-team')) G.Sheet.keys($('team-sheet'));
   }
 
   function wirePause(onResume, onQuit) {
@@ -234,5 +319,5 @@ G.RunUI = (() => {
     $('btn-quit').onclick = onQuit;
   }
 
-  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, setWaiting, closeLevelUp, showOver, wirePause, showPause };
+  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause, pauseKeys };
 })();

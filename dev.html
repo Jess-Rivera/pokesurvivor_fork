@@ -529,10 +529,10 @@
 <!-- ====== Durante la run ====== -->
 <section id="scr-levelup" class="scr dim hidden">
   <div class="box center">
-    <h2>¡Nivel <span id="lvl-num">2</span>!</h2>
-    <p class="sub">Elige una recompensa · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></p>
+    <h2>Level <span id="lvl-num">2</span>!</h2>
+    <p id="lvl-sub" class="sub">Choose a reward · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></p>
     <div id="cards" class="cards"></div>
-    <button id="lvl-reroll" class="btn small ghost hidden" data-sfx="none" style="margin-top:10px">Cambiar opciones (<span id="lvl-rr-n">1</span>) · <kbd>R</kbd></button>
+    <button id="lvl-reroll" class="btn small ghost hidden" data-sfx="none" style="margin-top:10px">Reroll (<span id="lvl-rr-n">1</span>) · <kbd>R</kbd></button>
     <p id="lvl-wait" class="note hidden"></p>
   </div>
 </section>
@@ -556,25 +556,61 @@
 </section>
 
 <section id="scr-pause" class="scr dim hidden">
-  <div class="box center" style="width:min(460px,100%)">
-    <h2>Pausa</h2>
-    <p class="sub kbd-hint"><kbd>WASD</kbd> moverse · <kbd>1</kbd>–<kbd>4</kbd> movimiento · <kbd>Q</kbd>/<kbd>E</kbd> ciclar · <kbd>Esc</kbd> pausa</p>
-    <p class="sub touch-hint">Arrastra el dedo para moverte · toca un ataque para cambiarlo</p>
-    <p id="pause-coop" class="note hidden">Partida en grupo: el juego sigue mientras estás aquí.</p>
-    <div id="pause-sound" class="sound-inline"></div>
-    <div class="row" style="justify-content:center">
-      <button id="btn-resume" class="btn gold">Continuar</button>
-      <button id="btn-pause-settings" class="btn">Ajustes</button>
-      <button id="btn-quit" class="btn">Abandonar run</button>
+  <div class="box sheet">
+    <div class="sh-top"><h2>Team summary</h2><span class="sh-state">Paused</span><div class="sh-strip-slot"></div></div>
+    <div id="pause-sheet" class="sh-mount"></div>
+    <div class="sh-foot">
+      <div class="sh-foot-l">
+        <p class="sub kbd-hint"><kbd>WASD</kbd> move · <kbd>1</kbd>–<kbd>4</kbd> select move · <kbd>Q</kbd>/<kbd>E</kbd> cycle · <kbd>←</kbd>/<kbd>→</kbd> switch Pokémon · <kbd>Esc</kbd> pause</p>
+        <p class="sub touch-hint">Drag to move · tap an attack to switch it · tap a Pokémon above to inspect it</p>
+        <p id="pause-coop" class="note hidden">Group game: the game keeps running while you are here.</p>
+      </div>
+      <div class="row">
+        <button id="btn-resume" class="btn gold">Continue</button>
+        <button id="btn-pause-settings" class="btn">Settings</button>
+        <button id="btn-quit" class="btn">Quit run</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="scr-choose" class="scr dim hidden">
+  <div class="box sheet">
+    <div class="sh-top"><h2 id="choose-title">Apply</h2><span id="choose-sub" class="sh-state"></span><div class="sh-strip-slot"></div></div>
+    <div id="choose-sheet" class="sh-mount"></div>
+    <div class="sh-foot">
+      <div class="sh-foot-l">
+        <p class="sub kbd-hint"><kbd>←</kbd>/<kbd>→</kbd> switch Pokémon · <kbd>1</kbd>–<kbd>4</kbd> pick a move · <kbd>Enter</kbd> confirm · <kbd>Backspace</kbd> back</p>
+        <p class="sub touch-hint">Tap a Pokémon above and a move, then Confirm</p>
+        <p id="choose-note" class="note choose-note"></p>
+      </div>
+      <div class="row">
+        <button id="btn-choose-back" class="btn" data-sfx="none">Back</button>
+        <button id="btn-choose-ok" class="btn gold" data-sfx="none">Confirm</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="scr-team" class="scr dim hidden">
+  <div class="box sheet">
+    <div class="sh-top"><h2>Team summary</h2><span class="sh-state">Run over</span><div class="sh-strip-slot"></div></div>
+    <div id="team-sheet" class="sh-mount"></div>
+    <div class="sh-foot">
+      <div class="sh-foot-l"><p class="sub kbd-hint"><kbd>←</kbd>/<kbd>→</kbd> switch Pokémon</p></div>
+      <div class="row"><button id="btn-team-back" class="btn gold">Back to results</button></div>
     </div>
   </div>
 </section>
 
 <section id="scr-over" class="scr dim hidden">
   <div class="box center" style="width:min(480px,100%)">
-    <h2 id="over-title">Has caído…</h2>
+    <h2 id="over-title">You fell…</h2>
     <div id="over-stats" class="stats"></div>
-    <button id="btn-again" class="btn gold">Volver al menú</button>
+    <div class="row" style="justify-content:center">
+      <button id="btn-team" class="btn">Team summary</button>
+      <button id="btn-again" class="btn gold">Back to menu</button>
+    </div>
   </div>
 </section>
 
@@ -598,6 +634,8 @@
 <script defer src="js/core/sprites.js"></script>
 <script defer src="js/core/camera.js"></script>
 <!-- datos de juego -->
+<script defer src="js/data/kinds.js"></script>
+<script defer src="js/data/mechanics.js"></script>
 <script defer src="js/data/moves.js"></script>
 <script defer src="js/data/types.js"></script>
 <script defer src="js/data/starters.js"></script>
@@ -642,6 +680,7 @@
 <script defer src="js/ui/icons.js"></script>
 <script defer src="js/ui/ui.js"></script>
 <script defer src="js/ui/statchart.js"></script>
+<script defer src="js/ui/sheet.js"></script>
 <script defer src="js/ui/hud.js"></script>
 <script defer src="js/ui/login.js"></script>
 <script defer src="js/ui/test.js"></script>
