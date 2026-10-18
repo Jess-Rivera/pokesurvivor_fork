@@ -8,6 +8,17 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (morning, Claude Desktop, second session) slice 1 APPLIED, charger warning line added (UNCOMMITTED, not playtested)
+- WHAT: applied the four slice 1 diffs (enemies.js, enemy.js, dev.html, main.js) and the generated table js/data/enemy-classes.js (879 entries, checksum 00327d337b).
+  Diffs applied with `patch --binary` since the repo is CRLF. Classifier moved to tools/classify_species.py (+ tools/hand-overrides.json); the old HEAL/SHIELD/BOMB/SUMMON
+  hash lists are embedded in it as seed evidence because enemies.js no longer holds them. `--write` regenerates js/data/enemy-classes.js; verified byte-identical to the applied table.
+- CHARGER (reconciled with Jess's copy): only the warning beam was new. Aim start now locks the dash direction and adds a warn-only beam hazard (new `warn` flag in
+  hazards.js: no damage, removed at its delay, skipped by the co-op broadcast). Beam length = spd x 3.4 x 0.42 + radius, width = body width, red.
+- VERIFIED: node --check on all touched JS. Offline sim on the real tree: 18,000 tier casts across 9 regions + All, zero violations (size 9, family mix, specials, plain/shooter
+  baseline from tier 2, no duplicate support class, one runner max, never a Tank), minionFromCast and hordes work. NOT run in a browser.
+- DOCS: changelog.js entry (English), TODO In progress tidied (region-select merged, branch renamed), DECISIONS and BALANCE entries, proposal status updated.
+- NEXT: Jess commits, playtests every region with ?dev, sends logs; I check the data. Slice 1b (spacing bands) after that. Logger gaps (burn/poison, live-enemy count) if needed.
+
 ## 2026-10-18 (late morning, Claude Desktop) ranged and support spacing bands designed (NOTHING APPLIED)
 - WHAT: design only. Answered "is smarter enemy AI survivor-like?" (no: keep it simple, readable, cheap) and designed per-class distance bands for
   ranged and support units. Added a "Spacing bands" section to docs/proposals/enemy-behavior-game-proposal.md (slice 1b), decisions 6-8, apply step 5.

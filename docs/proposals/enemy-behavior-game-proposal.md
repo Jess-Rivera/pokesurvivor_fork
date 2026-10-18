@@ -1,6 +1,6 @@
 # Proposal: enemy behavior refactor, slice 1 (class table, 9-species cast, modifiers)
 
-Status: PROPOSED. Nothing in js/ or dev.html has been changed. Awaiting Jess's approval.
+Status: slice 1 APPLIED 2026-10-18 (uncommitted, awaiting playtest), together with the charger warning line. Slice 1b and slice 2 are still proposals.
 Branch suggestion: `refactor/enemy-behavior` off an up-to-date `main` (Jess runs git).
 Slice 2 (the Status mechanics on the player) is outlined at the end and is NOT part of this approval.
 Slice 1b (per-class spacing bands for ranged and support units) was designed with Jess on 2026-10-18; its section is below. No diff is drafted for it yet.
@@ -29,7 +29,7 @@ built from the classifier plus Jess's hand tuning). On top of the table it adds 
 6. Ranged and support units hold a per-class distance band instead of one shared range (section "Spacing bands"): YES. The numbers are first guesses, tuned by playtest.
 7. Two cheap fixes ride with it: a narrow hold band, and a side-step when a retreating unit is cornered: YES.
 8. Shielder joins the spacing logic at a mid band, for movement only: YES.
-Open before applying: Jess is still reviewing what each class does now (section below) and has fixed the charger in his own copy of the table; reconcile that with the charger row below before this is applied.
+Reconciled 2026-10-18: Jess's charger text matched the code on every number (200 px, 0.55 s aim, 0.42 s dash at 3.4x, 1.1 s recharge); the only addition was the warned beam, built with slice 1.
 
 ## Files
 | file | change |
@@ -353,7 +353,7 @@ Slice 1 does not change how any class fights; it only changes which species get 
 | class | what it does | key numbers |
 |---|---|---|
 | plain | walks straight at you (path-aware), hurts on contact | contact hit every 0.55 s |
-| charger | walks, then within 200 px stops and aims, then dashes in a straight line | aim pause 0.55 s, dash 0.42 s at 3.4x speed, 1.1 s before it can charge again |
+| charger | walks, then within 200 px stops and aims for 0.55 s showing a warned beam (the dash line, locked at aim start), then dashes | dash 0.42 s at 3.4x speed, 1.1 s before it can charge again. CHANGES: warning line added |
 | jumper | crouches, leaps in an arc and lands where you WERE; the landing shows on the ground first | needs you within 250 px, every 5-7 s, 0.45 s crouch, 0.6 s flight, landing zone r50 with a 1.05 s warning |
 | bomber | runs at you, and when touching range lights a 1 s fuse with a warned blast, then dies | blast r62, 1.0 s warning. CHANGES: loses its x1.25 speed |
 | shooter | keeps its distance and fires one projectile | range 190+6ti, shot every 2.2-0.15ti s, shot speed 190 px/s |
@@ -376,7 +376,7 @@ Things to check while reviewing:
   Tank in practice means +30% XP only. Worth deciding whether class damage weights should come back.
 - Shielder is a support class that walks into melee, while healer and summoner stay back. Answered: it gets a mid band (see Spacing bands).
 - Healers and summoners deal no damage themselves. They are priority targets, marked with an icon.
-- Charger has only the aim pause as warning (no ground marking), unlike jumper, bomber, beamer and zoner.
+- Charger now has a ground warning line like the other warned classes (added at apply time).
 - Fan and zoner scale with tier (3 to 5 shots, 1 to 3 zones), the others do not.
 - Enemy damage still scales with run time (x(1 + t/420)) and HP with the level formula, regardless of class.
 

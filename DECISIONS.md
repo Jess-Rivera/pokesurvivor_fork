@@ -5,6 +5,15 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-18, Slice 1 approved and applied; charger gets a warning line [applied, uncommitted, awaiting playtest]
+Jess answered all 8 proposal decisions YES and approved applying slice 1 on refactor/enemy-behavior (the enemy-behavior-game-proposal.md diffs, unchanged,
+plus the generated table js/data/enemy-classes.js, checksum 00327d337b). The classifier now lives in tools/classify_species.py with tools/hand-overrides.json
+beside it; `python tools/classify_species.py . --write` regenerates the table. The old hash lists (HEAL/SHIELD/BOMB/SUMMON) are kept inside the script as seed evidence.
+- Charger (Jess's ruling): within 200 px it stops and aims for 0.55 s showing a WARNED BEAM, then dashes for 0.42 s at 3.4x speed, and cannot charge again for 1.1 s.
+  Only the beam is new. Implementation: the dash direction is now locked at the START of the aim (so the line tells the truth), and a warn-only beam hazard
+  (flag `warn`, no damage, local only, never broadcast) is drawn for the aim time, length = the dash distance. Hazards.update removes warn hazards without detonating.
+- Spacing bands (slice 1b) are NOT part of this application.
+
 ## 2026-10-18, ranged and support spacing bands [agreed, game change pending]
 Jess's rulings while reviewing what each class does (full design in docs/proposals/enemy-behavior-game-proposal.md, "Spacing bands"):
 - Enemy AI stays simple and readable (survivor-like reference): no dodging, no group tactics. Identity comes from WHERE a class stands and what it telegraphs.
@@ -231,7 +240,7 @@ English-only, and that is intended. Jess is not maintaining the Spanish side.
 
 ## 2026-10-17, Edit boundary (propose-first vs free-edit)
 Dividing line: "does this change what the game does when you run it?"
-- Yes (game code, js/data/*.js, dev.html, build config, assets): PROPOSE-first, Jess applies by hand.
+- Yes (game code, js/data/*.js, dev.html, build config, assets): PROPOSE-first; on Jess's approval the assistant applies the edit itself (CLAUDE.md governs; Jess does not hand-edit code).
 - No (Markdown project docs: CONTEXT/DEVLOG/DECISIONS/BALANCE/TODO/ISSUES): assistant edits directly.
 Note: js/data/*.js looks like docs but IS game data (the game loads it), so it is propose-first.
 

@@ -27,3 +27,24 @@ docs/CONTACTOS_CREADORES.md
 
 # Caché local de wrangler (Cloudflare)
 .wrangler/
+
+# Regenerable scratch from the class-review tooling (tools/classify_species.py); never commit
+docs/proposals/review-build/
+
+# Editor, patch and AI-tool leftovers
+.vscode/
+.idea/
+*.orig
+*.rej
+*.bak
+*.tmp
+*~
+.claude/settings.local.json
+
+#docs/proposals
+docs/proposals/old-bottom-up/
+docs/proposals/enemy-behavior-report.*
+docs/proposals/enemy-class-review.md
+docs/proposals/enemy-classes.draft.js
+docs/proposals/classify_species.py
+docs/proposals/hand-overrides.json

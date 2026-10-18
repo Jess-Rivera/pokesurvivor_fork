@@ -310,7 +310,7 @@
         return;
       }
       // Runner: it goes where you ARE GOING to be (it cuts you off if you only flee).
-      if (this.behavior === 'runner' && pl._vx != null) {
+      if (this.def.runner && pl._vx != null) {
         const lead = G.U.clamp(dist / Math.max(60, spd), 0, 1.4);
         [dx, dy] = G.U.norm(pl.x + pl._vx * lead - this.x, pl.y + pl._vy * lead - this.y);
         if (G.Camera.sees(this.x, this.y, 0) && Math.random() < dt * 10) G.FX.px(this.x - dx * 8 + G.U.rand(-4, 4), this.y, '#e8dcc0', { vy: -12, life: 0.35 });
@@ -359,13 +359,16 @@
         if (this.phase === 'walk') {
           if (dist < 200 && this.pt <= 0) {
             this.phase = 'aim'; this.pt = 0.55;
+            this.dx = dx; this.dy = dy;      // the line is locked now, so the warning shows exactly where the dash goes
             this.anim.play('Charge', { speed: 1.6 });
+            // Warning only (warn: true = no damage). Its length is the dash distance: 0.42 s at 3.4x speed.
+            G.Hazards.add({ kind: 'beam', warn: true, src: this, x: this.x, y: this.y, angle: Math.atan2(dy, dx),
+                            len: spd * 3.4 * 0.42 + this.r, w: this.r * 2, delay: 0.55, dmg: 0, type: this.atkType, color: '#ff6b6b' });
           }
         } else if (this.phase === 'aim') {
           vx = vy = 0; animBase = 'Idle';
           if (this.pt <= 0) {
             this.phase = 'dash'; this.pt = 0.42;
-            this.dx = dx; this.dy = dy;
             this.anim.play('Attack', { speed: 1.4 });
             G.FX.ring(this.x, this.y, this.r, this.r * 2.4, '#ff6b6b', 0.25, 2);
           }
@@ -652,7 +655,7 @@
       this.minions = this.minions.filter(m => !m.dead && G.EnemyMgr.get(m.id));
       // With the general enemy cap (fewer Pokemon on screen), with a small margin.
       if (this.minions.length >= 4 || G.EnemyMgr.count > G.Spawner.CAP + 15) return;
-      const dex = this.def.minion || this.dex;
+      const dex = this.def.unique === 'summon-from-cast' ? G.Enemies.minionFromCast((this.sc && this.sc.t) || 0, this.dex) : (this.def.minion || this.dex);
       const mon = G.DEX_BY[dex];
       // Minion HP comes from the mainline formula at spawn (via its own baseHp), like any
       // wild enemy. (Was 0.35x the summoner's HP under the old flat model.)

@@ -6,6 +6,13 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Enemy roles rebuilt', 'Enemy roles rebuilt'], chg: [
+    ['Every enemy species now has a fixed role chosen from its real stats and moves: melee fighters, ranged attackers or support units. Each stage now draws 9 species instead of 7, always with a mix of melee, ranged and support. Runners and bombers no longer get a speed bonus, and Tank is now a trait any enemy can have (tougher and worth more XP).',
+     'Every enemy species now has a fixed role chosen from its real stats and moves: melee fighters, ranged attackers or support units. Each stage now draws 9 species instead of 7, always with a mix of melee, ranged and support. Runners and bombers no longer get a speed bonus, and Tank is now a trait any enemy can have (tougher and worth more XP).']
+  ], new: [
+    ['Chargers now show a red warning line on the ground before they dash, so you can sidestep it.',
+     'Chargers now show a red warning line on the ground before they dash, so you can sidestep it.']
+  ] },
   { d: '2026-10-17', title: ['Random region option', 'Random region option'], new: [
     ['Added a Random option to the region select: it rolls a region for you, and the end-of-run screen tells you which one you got.',
      'Added a Random option to the region select: it rolls a region for you, and the end-of-run screen tells you which one you got.']

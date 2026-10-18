@@ -6,21 +6,23 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-- Balance pass, one branch at a time (DECISIONS 2026-10-17): fix/enemy-speed (CURRENT, empty) -> fix/attack-calc ->
-  feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
+- Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (CURRENT, was fix/enemy-speed) ->
+  fix/attack-calc -> feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
+- refactor/enemy-behavior slice 1 (class table, 9-species cast, runner/tank/bomber changes, Ditto, charger warning line): APPLIED
+  2026-10-18, uncommitted. Awaiting Jess's playtest of every region with ?dev, then log review. Spec: docs/proposals/enemy-behavior-game-proposal.md.
 - Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
   2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
-  Open logger gaps: burn/poison ticks unlogged; add live-enemy count per hit.
-- Region-select (feature/region-select): APPLIED + verified, awaiting in-browser playtest + commit.
-  Opened + built 2026-10-17.
+  Open logger gaps (add later this session if needed): burn/poison ticks unlogged; add live-enemy count per hit.
 
 ## Up next (local single-player)
-- DONE 2026-10-18: class review (hand tuning in docs/proposals/hand-overrides.json).
-- REVIEW (Jess): docs/proposals/enemy-behavior-game-proposal.md (slice 1: class table, 9-species cast, runner/tank/bomber changes, Ditto). 5 decisions listed at the top. Nothing applied yet.
+- DONE 2026-10-18: class review (hand tuning in tools/hand-overrides.json).
+- DONE 2026-10-18: slice 1 decisions answered and slice 1 applied (see In progress).
 - LATER (slice 1b, after the slice 1 playtest): per-class spacing bands for ranged and support units (proposal section "Spacing bands"). Before drafting: check player weapon reach vs the 0.80-0.92 bands and every reader of def.range (bosses).
 - LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
-- fix/enemy-speed (WIDENED to refactor/enemy-behavior, see DECISIONS 2026-10-17 "Enemy behavior becomes stat-derived"): replace runner x1.6 / bomber x1.25 with a clamp tied to player speed; audit the other class
-  multipliers (list in DEVLOG 2026-10-17 night). Opened 2026-10-17.
+- refactor/enemy-behavior leftovers: the runner x1.6 and bomber x1.25 multipliers are GONE (slice 1). Still to decide from the class multiplier
+  audit (DEVLOG 2026-10-17 night): per-class damage factors (fan x0.65, bomber blast x1.4, jump x1.2, tank dmg x1.2) are ignored by the atkFactor
+  path, so decide whether class damage weights come back. Opened 2026-10-17.
+- Charger warning line (built in slice 1): check in the playtest that the line length (= dash distance) and the locked aim direction feel fair. Opened 2026-10-18.
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
   normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
   the ailmentChance field; Enemy.hurt rounds to integers. Opened 2026-10-17.
@@ -38,8 +40,6 @@ Keep it simple: move items between sections as they progress. Add a date when an
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 - Merge feature/base-stats to main when ready. It now contains the damage work (A+B) AND the Pokedex
   UI (main was merged into base-stats on 2026-10-17), so merging it to main brings main fully current.
-- Region-select on Play: see Backlog (designed 2026-10-17, not built).
-  (NOW BUILT — see In progress.)
 
 ## Backlog
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess
@@ -78,6 +78,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - MP connection reliability, hosting-provider research, and FPS/CPU/cost reasoning (parked design notes, 2026-10-17): moved to docs/MP-PARKED-NOTES.md. Not read at session start. Open it when the cloud/MP phase begins.
 
 ## Done
+- 2026-10-18: Region-select confirmed merged to main (Jess).
 - 2026-10-17: Pokedex UI redesign (search + region/ownership/sort dropdowns + multi-select
   type/rarity/BST filters, extra-wide layout, BST shown as star tiers, region options as
   "[Gen. #] Region (owned/total)"). Committed on feature/pokedex-ui and merged to main via --no-ff

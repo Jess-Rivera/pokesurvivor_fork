@@ -12,7 +12,7 @@
  *   chase    goes straight for you
  *   charger  stops, aims and charges
  *   ranged   keeps its distance and shoots
- *   tank     lento, mucha vida
+ *   (tank is no longer a behavior: it is a modifier on any class, flag t in js/data/enemy-classes.js)
  *   ---- with personality ----
  *   healer   heals those around (Chansey, Blissey, Audino...)
  *   shielder puts shields on its teammates (Shuckle, Bronzong, Mr. Mime...)
@@ -22,8 +22,11 @@
  *   zoner    damage zones under your feet that burst shortly after
  *   fan      shoots in a fan
  *   jumper   jumps and lands on you (the landing shows on the ground first)
- *   runner   runner: very fast and fragile, goes where you are going to be (cuts
- *            off whoever only flees). One per tier: the fastest of the cast.
+ *   status   (slice 2) applies sleep / paralysis / slow to you, or hastes its allies
+ *   runner   not a class: a flag on the fastest plain or charger of each tier's cast, at its own
+ *            speed. It goes where you are going to be (cuts off whoever only flees).
+ *
+ * Every species' class comes from the generated table js/data/enemy-classes.js (G.ENEMY_CLASSES).
  * The warned attacks are in systems/hazards.js.
  *
  * Bosses: strong NON-legendary Pokemon (pseudo-legendaries, Slaking...), at
@@ -32,12 +35,12 @@
  */
 G.Enemies = (() => {
   const TIERS = [
-    { from: 0,   bst: [180, 330], hp: 17,  spd: 56, dmg: 6,  xp: 3.5, cast: 7 },
-    { from: 70,  bst: [300, 405], hp: 32,  spd: 62, dmg: 8.5, xp: 5,  cast: 7 },
-    { from: 160, bst: [385, 465], hp: 52,  spd: 60, dmg: 11, xp: 8,  cast: 7 },
-    { from: 260, bst: [445, 515], hp: 88,  spd: 70, dmg: 14, xp: 13, cast: 7 },
-    { from: 380, bst: [495, 560], hp: 150, spd: 66, dmg: 22, xp: 24, cast: 7 },
-    { from: 500, bst: [530, 620], hp: 250, spd: 72, dmg: 28, xp: 38, cast: 7 }
+    { from: 0,   bst: [180, 330], hp: 17,  spd: 56, dmg: 6,  xp: 3.5, cast: 9 },
+    { from: 70,  bst: [300, 405], hp: 32,  spd: 62, dmg: 8.5, xp: 5,  cast: 9 },
+    { from: 160, bst: [385, 465], hp: 52,  spd: 60, dmg: 11, xp: 8,  cast: 9 },
+    { from: 260, bst: [445, 515], hp: 88,  spd: 70, dmg: 14, xp: 13, cast: 9 },
+    { from: 380, bst: [495, 560], hp: 150, spd: 66, dmg: 22, xp: 24, cast: 9 },
+    { from: 500, bst: [530, 620], hp: 250, spd: 72, dmg: 28, xp: 38, cast: 9 }
   ];
 
   // Boss bands: the minute they appear, base HP and BST band.
@@ -68,38 +71,24 @@ G.Enemies = (() => {
   function setRegion(gen) { region = gen || null; }
   function regionOK(p) { return region == null || p.gen <= region; }
 
-  // Fixed personalities of some Pokemon.
-  const HEAL = new Set([35, 36, 113, 173, 183, 184, 242, 301, 440, 531, 594, 700, 764, 858]);
-  const SHIELD = new Set([95, 122, 208, 213, 227, 306, 375, 410, 411, 436, 437, 439, 476, 703]);
-  const BOMB = new Set([74, 75, 76, 100, 101, 102, 109, 110, 337, 338, 343, 344]);
-  // Summoner -> Pokemon of its pack.
-  const SUMMON = { 15: 13, 18: 16, 24: 23, 28: 27, 31: 29, 34: 32, 42: 41, 51: 50, 53: 52, 57: 56, 59: 58,
-                   62: 60, 68: 66, 73: 72, 78: 77, 82: 81, 85: 84, 91: 90, 117: 116, 130: 129, 168: 167, 169: 41,
-                   199: 79, 230: 116, 262: 261, 334: 333, 405: 403, 416: 415, 462: 81, 466: 239, 553: 551, 637: 636 };
-
-  function behaviorOf(p) {
-    const t = p.types, h = H(p.dex, 11);
-    const has = (...xs) => xs.some(x => t.includes(x));
-    if (HEAL.has(p.dex)) return 'healer';
-    if (SHIELD.has(p.dex)) return 'shielder';
-    if (BOMB.has(p.dex)) return 'bomber';
-    if (SUMMON[p.dex] && G.SPRITE_META[SUMMON[p.dex]]) return 'summoner';
-    // Swarms: some Bug ones call more of their own (from the start).
-    if (has('bug') && h >= 0.6 && h < 0.78) return 'summoner';
-    if (has('electric', 'psychic', 'dragon', 'ice') && h < 0.18) return 'beamer';
-    if (has('fire', 'ground', 'poison') && h < 0.18) return 'zoner';
-    if (has('water', 'grass', 'bug', 'fairy') && h >= 0.18 && h < 0.32) return 'fan';
-    if (has('fighting', 'ground', 'normal', 'rock') && h >= 0.42 && h < 0.56) return 'jumper';
-    if (has('psychic', 'electric', 'ghost', 'fairy') && h < 0.4) return 'ranged';
-    if (has('fire', 'water', 'poison', 'ice') && h < 0.22) return 'ranged';
-    if (has('fighting', 'normal', 'ground', 'rock', 'dragon', 'steel', 'dark') && h < 0.4) return 'charger';
-    if (baseHp(p) > 95 && baseSpd(p) < 50) return 'tank';
-    return 'chase';
-  }
+  // ---------------- class table ----------------
+  // Every wild species has a fixed class in js/data/enemy-classes.js (generated, see DECISIONS.md
+  // 2026-10-17 / 2026-10-18): c = class, t = Tank modifier, s = secondary class, fx = status effects,
+  // m = summoner minion dex, u = unique behavior. This replaces the old dex hash.
+  // Class -> the behavior id enemy.js already understands (every other class is its own id).
+  // Slice 1: status enemies fight as shooters until their mechanics land (slice 2).
+  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'ranged' };
+  const FAMILY = { plain: 'melee', charger: 'melee', jumper: 'melee', bomber: 'melee',
+                   shooter: 'range', beamer: 'range', zoner: 'range', fan: 'range',
+                   healer: 'support', shielder: 'support', summoner: 'support', status: 'support' };
+  // A species the table does not know (added to the pokedex later): family by stats, default class.
+  const infoOf = p => G.ENEMY_CLASSES[p.dex] || { c: (p.stats && p.stats[3] > p.stats[1]) ? 'shooter' : 'plain' };
+  const classOf = p => infoOf(p).c;
+  const behaviorOf = p => { const c = classOf(p); return BEHAVIOR[c] || c; };
 
   /** Builds a Pokemon's enemy definition for a tier. */
   function defFor(p, tier, ti) {
-    const behavior = behaviorOf(p);
+    const behavior = behaviorOf(p), info = infoOf(p);
     const d = {
       dex: p.dex, name: p.name, behavior,
       // Real base HP (stats[0]); HP itself is computed from the mainline formula at
@@ -108,9 +97,10 @@ G.Enemies = (() => {
       // Speed = fixed species identity via the shared model (real base Speed stat[5]),
       // same px/s scale as the player. No tier template, no role mult, no time ramp.
       spd: G.Stats.speedToPx((G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[5] : 65),
-      dmg: Math.round(tier.dmg * (behavior === 'tank' ? 1.2 : 1)),
-      xp: Math.max(3, Math.round(tier.xp * (behavior === 'tank' ? 1.3 : 1)))
+      dmg: Math.round(tier.dmg * (info.t ? 1.2 : 1)),
+      xp: Math.max(3, Math.round(tier.xp * (info.t ? 1.3 : 1)))
     };
+    if (info.t) d.tank = true;
     // The ones that fight from range: shot damage, cooldown and distance.
     const CD = { ranged: 2.2 - ti * 0.15, fan: 3.2 - ti * 0.15, beamer: 4.4 - ti * 0.2, zoner: 4.6 - ti * 0.2,
                  healer: 3.5, summoner: 7 };
@@ -119,10 +109,10 @@ G.Enemies = (() => {
       d.shotCd = +CD[behavior].toFixed(2);
       d.range = (behavior === 'beamer' ? 260 : behavior === 'healer' || behavior === 'summoner' ? 230 : 190) + ti * 6;
     }
-    if (behavior === 'summoner') d.minion = SUMMON[p.dex];
+    if (behavior === 'summoner') d.minion = info.m || p.dex;
+    if (info.u) d.unique = info.u;
     if (behavior === 'fan') d.fanN = ti < 2 ? 3 : 5;             // wider fan later on
     if (behavior === 'zoner') d.zones = ti < 2 ? 1 : ti < 4 ? 2 : 3;   // more zones later on
-    if (behavior === 'bomber') { d.spd = Math.round(d.spd * 1.25); }
     return d;
   }
 
@@ -133,24 +123,63 @@ G.Enemies = (() => {
 
   // ---------------- the run's cast ----------------
 
-  const PLAIN = ['chase', 'charger', 'ranged', 'tank'];
-  const SUPPORT = ['healer', 'shielder', 'summoner'];
+  const SUPPORT = ['healer', 'shielder', 'summoner', 'status'];
+  const MELEE_SPECIAL = ['charger', 'jumper', 'bomber'], RANGE_SPECIAL = ['beamer', 'zoner', 'fan'];
+  const famCount = pool => { const c = { melee: 0, range: 0, support: 0 }; for (const p of pool) c[FAMILY[classOf(p)]]++; return c; };
+
+  /** The tier's candidates. If the region leaves too few (Kanto and Johto, tier 6), borrow from the next lower band. */
+  function poolFor(tier, ti) {
+    let pool = candidates(tier);
+    const short = () => { const c = famCount(pool); return pool.length < tier.cast || c.melee < 3 || c.range < 3 || c.support < 2; };
+    for (let k = ti - 1; k >= 0 && short(); k--) {
+      const have = new Set(pool.map(p => p.dex));
+      pool = pool.concat(candidates(TIERS[k]).filter(p => !have.has(p.dex)));
+    }
+    return pool;
+  }
 
   /**
-   * A tier's cast: always one "support" (healer, shield or summoner)
-   * and, from the second tier on, also one of the ones that attack with a warning.
-   * In the first there are no more personalities (to ease you in).
+   * A tier's cast: 9 species, 1-2 support, 3-5 melee, 3-5 range (usually 1 / 4 / 4). From tier 2 on
+   * each family holds at least one special (melee: charger, jumper, bomber; range: beamer, zoner, fan)
+   * AND at least one baseline (plain / shooter); tier 1 eases in with plain and shooter first.
+   * Two supports never share a class.
    */
-  function castFor(tier) {
-    const all = candidates(tier);
-    const kind = p => behaviorOf(p);
-    // First the support type (evenly) and then the Pokemon.
-    const kinds = SUPPORT.filter(k => all.some(p => kind(p) === k));
-    const sk = kinds.length ? kinds[Math.floor(Math.random() * kinds.length)] : null;
-    const pick = sk ? G.U.pickN(all.filter(p => kind(p) === sk), 1) : [];
-    if (tier.from > 0) pick.push(...G.U.pickN(all.filter(p => !PLAIN.includes(kind(p)) && !SUPPORT.includes(kind(p))), 1));
-    if (tier.from === 0) return pick.concat(G.U.pickN(all.filter(p => !pick.includes(p) && PLAIN.includes(kind(p))), tier.cast - pick.length));
-    return pick.concat(G.U.pickN(all.filter(p => !pick.includes(p)), tier.cast - pick.length));
+  function castFor(tier, ti) {
+    const pool = poolFor(tier, ti);
+    const fam = f => pool.filter(p => FAMILY[classOf(p)] === f);
+    const sup = fam('support'), mel = fam('melee'), ran = fam('range');
+    // How many of each: 1-2 support (30% two), then 3-5 melee and 3-5 range.
+    let s = Math.random() < 0.3 ? 2 : 1, m;
+    if (s === 1) { const x = Math.random(); m = x < 0.6 ? 4 : x < 0.8 ? 3 : 5; } else m = Math.random() < 0.5 ? 3 : 4;
+    let r = tier.cast - s - m;
+    // A family the pool cannot fill hands its slots to the other one, then to support.
+    s = Math.min(s, sup.length); m = Math.min(m, mel.length); r = Math.min(r, ran.length);
+    let need = tier.cast - s - m - r;
+    const takeM = () => { const a = Math.min(need, mel.length - m); m += a; need -= a; };
+    const takeR = () => { const a = Math.min(need, ran.length - r); r += a; need -= a; };
+    if (mel.length - m >= ran.length - r) { takeM(); takeR(); } else { takeR(); takeM(); }
+    { const a = Math.min(need, sup.length - s); s += a; need -= a; }
+
+    // Support: the class first (evenly), then the species.
+    const picked = [], used = [];
+    for (let i = 0; i < s; i++) {
+      const left = k => sup.some(p => classOf(p) === k && !picked.includes(p));
+      const fresh = SUPPORT.filter(k => !used.includes(k) && left(k));
+      const k = G.U.pick(fresh.length ? fresh : SUPPORT.filter(left));
+      used.push(k);
+      picked.push(G.U.pick(sup.filter(p => classOf(p) === k && !picked.includes(p))));
+    }
+    const fill = (list, n, specials) => {
+      if (ti === 0) {      // tier 1 eases in: no specials unless the pool is short of plain ones
+        const base = list.filter(p => !specials.includes(classOf(p)));
+        return G.U.pickN(base, n).concat(G.U.pickN(list.filter(p => !base.includes(p)), Math.max(0, n - base.length)));
+      }
+      // One special and one baseline (plain / shooter) are guaranteed, the rest is random.
+      const first = G.U.pickN(list.filter(p => specials.includes(classOf(p))), 1)
+        .concat(G.U.pickN(list.filter(p => !specials.includes(classOf(p))), 1)).slice(0, n);
+      return first.concat(G.U.pickN(list.filter(p => !first.includes(p)), n - first.length));
+    };
+    return picked.concat(fill(mel, m, MELEE_SPECIAL), fill(ran, r, RANGE_SPECIAL));
   }
 
   let cast = null;      // [{ from, list: [def] }]
@@ -160,12 +189,13 @@ G.Enemies = (() => {
   function rollRun() {
     cast = TIERS.map((tier, ti) => ({
       from: tier.from,
-      list: castFor(tier).map(p => defFor(p, tier, ti))
+      list: castFor(tier, ti).map(p => defFor(p, tier, ti))
     }));
     for (const tier of cast) {
-      const plain = tier.list.filter(d => d.behavior === 'chase' || d.behavior === 'charger' || d.behavior === 'tank');
-      const r = plain.sort((a, b) => b.spd - a.spd)[0];
-      if (r) { r.behavior = 'runner'; r.spd = Math.round(r.spd * 1.6); }
+      // Runner: the fastest plain or charger of the cast (relative, no speed multiplier), never a tank.
+      const fast = tier.list.filter(d => (d.behavior === 'chase' || d.behavior === 'charger') && !d.tank);
+      const r = fast.sort((a, b) => b.spd - a.spd)[0];
+      if (r) r.runner = true;
     }
     const used = new Set();
     bosses = BOSS_SLOTS.map(slot => {
@@ -182,7 +212,7 @@ G.Enemies = (() => {
         // (Since 2026-10-10 tougher: x1.35 health and x1.2 damage.)
         hp: Math.round(slot.hp * 1.35), spd: Math.round(G.U.clamp(40 + baseSpd(p) * 0.5, 40, 100)),
         dmg: Math.round(slot.dmg * 1.2), xp: slot.xp,
-        behavior: behaviorOf(p) === 'ranged' ? 'ranged' : (baseSpd(p) > 90 ? 'charger' : 'chase'),
+        behavior: FAMILY[classOf(p)] === 'range' ? 'ranged' : (baseSpd(p) > 90 ? 'charger' : 'chase'),
         shotDmg: Math.round(slot.dmg * 0.55), shotCd: 1.1, range: 260
       };
     });
@@ -206,16 +236,16 @@ G.Enemies = (() => {
   /** The tier that applies at second `t`. */
   function tierAt(t) { let ti = 0; TIERS.forEach((tr, i) => { if (t >= tr.from) ti = i; }); return ti; }
 
-  const NO_HORDE = new Set(['bomber', 'healer', 'shielder', 'summoner']);
+  const NO_HORDE = new Set(['bomber', 'healer', 'shielder', 'summoner', 'status']);   // by class
   /** Types with enough Pokemon in the current tier for a horde (events.js). */
   function hordeTypes(t) {
-    const all = candidates(TIERS[tierAt(t)]).filter(p => !NO_HORDE.has(behaviorOf(p)));
+    const all = candidates(TIERS[tierAt(t)]).filter(p => !NO_HORDE.has(classOf(p)));
     return Object.keys(G.U.TYPE_COLOR).filter(ty => all.filter(p => p.types.includes(ty)).length >= 3);
   }
   /** Up to 4 Pokemon of a type, with the current tier's stats. */
   function hordeDefs(type, t) {
     const ti = tierAt(t);
-    const pool = candidates(TIERS[ti]).filter(p => p.types.includes(type) && !NO_HORDE.has(behaviorOf(p)));
+    const pool = candidates(TIERS[ti]).filter(p => p.types.includes(type) && !NO_HORDE.has(classOf(p)));
     return G.U.pickN(pool, 4).map(p => defFor(p, TIERS[ti], ti));
   }
 
@@ -234,6 +264,17 @@ G.Enemies = (() => {
     return bag.length ? bag : cast[0].list;
   }
 
+  /** Ditto's summon: a random melee or range member of the cast drawn for this tier or an earlier one (never support or bomber). */
+  function minionFromCast(t, selfDex) {
+    if (!cast) rollRun();
+    const out = [];
+    for (let i = 0; i <= tierAt(t); i++) for (const d of cast[i].list) {
+      const c = classOf(G.DEX_BY[d.dex]);
+      if (d.dex !== selfDex && FAMILY[c] !== 'support' && c !== 'bomber') out.push(d.dex);
+    }
+    return out.length ? G.U.pick(out) : selfDex;
+  }
+
   /** dex of the cast that will appear soon (to preload sprites). */
   function upcomingDex(t, ahead = 60) {
     if (!cast) rollRun();
@@ -244,7 +285,7 @@ G.Enemies = (() => {
   }
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
