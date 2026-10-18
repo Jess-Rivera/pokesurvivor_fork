@@ -428,9 +428,9 @@ G.HUD = (() => {
       roundRect(ctx, x, y, S, S, 12);
       ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
       ctx.fill();
-      ctx.lineWidth = on ? 2.5 : fused || (m && m.evolved) ? 2 : 1.2;
-      // Link: pink border. Evolved: gold.
-      ctx.strokeStyle = fused ? BOND : m && m.evolved ? '#ffd23f' : on ? col : 'rgba(140,170,210,.22)';
+      ctx.lineWidth = on ? 2.5 : fused ? 2 : 1.2;
+      // Link: pink border.
+      ctx.strokeStyle = fused ? BOND : on ? col : 'rgba(140,170,210,.22)';
       ctx.stroke();
 
       if (!m) continue;
@@ -443,7 +443,6 @@ G.HUD = (() => {
           G.Icons.draw(ctx, 'move:' + gm.id, cx, cy, C);
           const f = cdOf(gm);
           if (f > 0) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(cx, cy, C, C * f); }
-          if (gm.evolved) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, C - 1, C - 1); }
           // Destello al lanzarse.
           const fl = 1 - (performance.now() - (gm.castAt || 0)) / 180;
           if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (fl * 0.55).toFixed(2) + ')'; ctx.fillRect(cx, cy, C, C); }

@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Move evolutions and stat cards removed', 'Move evolutions and stat cards removed'], chg: [
+    ['Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.',
+     'Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.']
+  ] },
   { d: '2026-10-18', title: ['Independent move cooldowns', 'Independent move cooldowns'], chg: [
     ['Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.',
      'Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.']

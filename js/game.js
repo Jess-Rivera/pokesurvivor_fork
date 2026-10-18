@@ -450,10 +450,13 @@ G.Game = (() => {
     }
     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
     if (pl.dead) return;
+    const cards = G.LevelUp.offer(pl);
     pendingLevels--;
+    // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
+    if (!cards.length) return;
     state = 'levelup';
     G.Audio.sfx('levelup');
-    G.RunUI.showLevelUp(pl.level, G.LevelUp.offer(pl), card => {
+    G.RunUI.showLevelUp(pl.level, cards, card => {
       G.Audio.sfx('confirm');
       card.apply(pl);
       state = 'playing';

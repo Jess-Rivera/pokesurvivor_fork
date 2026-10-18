@@ -86,7 +86,6 @@ G.Player = class Player {
     this.item = null;          // objeto equipado (data/items.js), uno por run
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
-    this.statsTaken = {};      // stat upgrades taken (evolution condition)
   }
 
   /** Seconds you must stay next to a downed teammate to lift them. */
