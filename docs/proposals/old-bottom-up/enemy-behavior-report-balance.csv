@@ -1,0 +1,967 @@
+dex,name,types,bst,hp,atk,spa,df,spd,spe,spe_pct,legendary,delivery,mixed,tank,support_role,support_conf,support_evidence,runner_up,pattern,pattern_conf,pattern_evidence,pattern_conflict,gen,in_hand_list,final_class,class_source,balanced_from
+1,bulbasaur,grass/poison,318,45,49,65,49,65,45,29,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,1,,beamer,pattern,
+2,ivysaur,grass/poison,405,60,62,80,63,80,60,49,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,1,,beamer,pattern,
+3,venusaur,grass/poison,525,80,82,100,83,100,80,73,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,1,,beamer,pattern,
+4,charmander,fire,309,39,52,60,43,50,65,57,0,ranged,1,0,,,,,charger,low,flare-blitz,1,1,,plain,none,
+5,charmeleon,fire,405,58,64,80,58,65,80,73,0,ranged,0,0,,,,,charger,low,flare-blitz,1,1,,plain,none,
+6,charizard,fire/flying,534,78,84,109,78,85,100,90,0,ranged,0,0,,,,,charger,low,flare-blitz,1,1,,zoner,balanced,zoner:1
+7,squirtle,water,314,44,48,50,65,64,43,24,0,ranged,1,0,healer,low,rain-dish,,charger,low,wave-crash headbutt,1,1,,beamer,balanced,healer:1 beamer:1
+8,wartortle,water,405,59,63,65,80,80,58,43,0,ranged,1,0,healer,low,rain-dish,,charger,low,wave-crash headbutt,1,1,,beamer,balanced,healer:1 beamer:1
+9,blastoise,water,530,79,83,85,100,105,78,70,0,ranged,1,0,healer,low,rain-dish,,charger,low,wave-crash headbutt,1,1,,beamer,balanced,healer:1 beamer:1
+10,caterpie,bug,195,45,30,20,35,20,45,29,0,melee,1,0,,,,,,,,0,1,,plain,none,
+11,metapod,bug,205,50,20,25,55,25,30,11,0,ranged,1,0,healer,low,shed-skin,,,,,0,1,,healer,balanced,healer:1
+12,butterfree,bug/flying,395,60,45,90,50,80,70,64,0,ranged,0,0,shielder,medium,safeguard,summoner,beamer,low,psybeam,0,1,,shielder,support,
+13,weedle,bug/poison,195,40,35,20,30,20,50,37,0,melee,1,0,,,,,,,,0,1,,plain,none,
+14,kakuna,bug/poison,205,45,25,25,50,25,35,16,0,melee,1,0,healer,low,shed-skin,,,,,0,1,,healer,balanced,healer:1
+15,beedrill,bug/poison,395,65,90,45,40,80,75,68,0,melee,0,0,summoner,high,hand list -> minion 13,,fan,low,pin-missile twineedle,1,1,,summoner,support,
+16,pidgey,normal/flying,251,40,45,35,40,35,56,42,0,melee,1,0,,,,,,,,0,1,,plain,none,
+17,pidgeotto,normal/flying,349,63,60,50,55,50,71,64,0,melee,1,0,,,,,,,,0,1,,plain,none,
+18,pidgeot,normal/flying,479,83,80,70,75,70,101,91,0,melee,1,0,summoner,high,hand list -> minion 16,,zoner,low,heat-wave,1,1,,summoner,support,
+19,rattata,normal,253,30,56,25,35,35,72,65,0,melee,0,0,,,,,charger,low,double-edge take-down,0,1,,charger,balanced,charger:2
+20,raticate,normal,413,55,81,50,60,70,97,88,0,melee,0,0,,,,,charger,low,double-edge take-down,0,1,,charger,balanced,charger:2
+21,spearow,normal/flying,262,40,60,31,30,31,70,64,0,melee,0,0,,,,,charger,low,take-down,0,1,,charger,balanced,charger:1
+22,fearow,normal/flying,442,65,90,61,65,61,100,90,0,melee,0,0,,,,,jumper,low,sky-attack,0,1,,jumper,balanced,jumper:1 charger:1
+23,ekans,poison,288,35,60,40,44,54,55,41,0,melee,0,0,healer,low,shed-skin,,,,,0,1,,healer,balanced,healer:1
+24,arbok,poison,448,60,95,65,69,79,80,73,0,melee,0,0,summoner,high,hand list -> minion 23,healer,,,,0,1,,summoner,support,
+25,pikachu,electric,320,35,55,50,40,50,90,83,0,melee,1,0,shielder,medium,light-screen,,charger,medium,wild-charge,0,1,,shielder,support,
+26,raichu,electric,485,60,90,90,55,80,110,95,0,melee,1,0,shielder,medium,light-screen,,zoner,low,discharge,1,1,,shielder,support,
+27,sandshrew,ground,300,50,75,20,85,30,40,22,0,melee,0,0,,,,,zoner,low,earthquake magnitude bulldoze sand-tomb,1,1,,plain,none,
+28,sandslash,ground,450,75,100,45,110,55,65,57,0,melee,0,0,summoner,high,hand list -> minion 27,,zoner,low,earthquake magnitude bulldoze sand-tomb,1,1,,summoner,support,
+29,nidoran-f,poison,275,55,47,40,52,40,41,22,0,melee,1,0,,,,,,,,0,1,,plain,none,
+30,nidorina,poison,365,70,62,55,67,55,56,42,0,melee,1,0,,,,,,,,0,1,,plain,none,
+31,nidoqueen,poison/ground,505,90,92,75,87,85,76,69,0,melee,0,0,summoner,high,hand list -> minion 29,,zoner,low,sludge-wave,1,1,,summoner,support,
+32,nidoran-m,poison,273,46,57,40,40,40,50,37,0,melee,0,0,,,,,,,,0,1,,plain,none,
+33,nidorino,poison,365,61,72,55,57,55,65,57,0,melee,0,0,,,,,,,,0,1,,plain,none,
+34,nidoking,poison/ground,505,81,102,85,77,75,85,79,0,melee,0,0,summoner,high,hand list -> minion 32,,zoner,low,sludge-wave,1,1,,summoner,support,
+35,clefairy,fairy,323,70,45,60,48,65,35,16,0,ranged,1,0,healer,hand,in current hand list life-dew,,charger,low,double-edge,1,1,healer,healer,support,
+36,clefable,fairy,483,95,70,95,73,90,60,49,0,ranged,0,0,healer,hand,in current hand list life-dew,summoner,charger,low,double-edge,1,1,healer,healer,support,
+37,vulpix,fire,299,38,41,50,40,65,65,57,0,ranged,1,0,shielder,medium,safeguard,,,,,0,1,,shielder,support,
+38,ninetales,fire,505,73,76,81,75,100,100,90,0,ranged,1,0,shielder,medium,safeguard,,,,,0,1,,shielder,support,
+39,jigglypuff,normal/fairy,270,115,45,45,20,25,20,4,0,melee,1,1,,,,,charger,low,double-edge,0,1,,tank,stat,
+40,wigglytuff,normal/fairy,435,140,70,85,45,50,45,29,0,ranged,1,1,,,,,charger,low,double-edge,1,1,,tank,stat,
+41,zubat,poison/flying,245,40,45,30,35,40,55,41,0,melee,1,0,,,,,fan,low,air-cutter,1,1,,plain,none,
+42,golbat,poison/flying,455,75,80,65,70,75,90,83,0,melee,1,0,summoner,high,hand list -> minion 41,,fan,low,air-cutter,1,1,,summoner,support,
+43,oddish,grass/poison,320,45,50,75,55,65,30,11,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,1,,beamer,pattern,
+44,gloom,grass/poison,395,60,65,85,70,75,40,22,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,1,,beamer,pattern,
+45,vileplume,grass/poison,490,75,80,110,85,90,50,37,0,ranged,0,0,healer,medium,aromatherapy,,beamer,medium,solar-beam,0,1,,healer,support,
+46,paras,bug/grass,285,35,70,45,55,55,25,6,0,melee,0,0,healer,medium,aromatherapy,bomber,,,,0,1,,healer,support,
+47,parasect,bug/grass,405,60,95,60,80,80,30,11,0,melee,0,0,healer,medium,aromatherapy,summoner,,,,0,1,,healer,support,
+48,venonat,bug/poison,305,60,55,40,50,55,45,29,0,melee,1,0,,,,,beamer,low,psybeam signal-beam,1,1,,plain,none,
+49,venomoth,bug/poison,450,70,65,90,60,75,90,83,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,beamer,low,psybeam signal-beam,0,1,,beamer,balanced,beamer:2 summoner:1
+50,diglett,ground,265,10,55,35,25,45,95,87,0,melee,0,0,,,,,zoner,low,earthquake magnitude fissure bulldoze,1,1,,plain,none,
+51,dugtrio,ground,425,35,100,50,50,70,120,97,0,melee,0,0,summoner,high,hand list -> minion 50,,zoner,low,earthquake magnitude fissure bulldoze sand-tomb,1,1,,summoner,support,
+52,meowth,normal,290,40,45,40,35,40,90,83,0,melee,1,0,,,,,,,,0,1,,plain,none,
+53,persian,normal,440,65,70,65,60,65,115,96,0,melee,1,0,summoner,high,hand list -> minion 52,,,,,0,1,,summoner,support,
+54,psyduck,water,320,50,52,65,48,50,55,41,0,ranged,1,0,bomber,low,damp,,beamer,low,psybeam,0,1,,zoner,balanced,bomber:1 beamer:1 zoner:1
+55,golduck,water,500,80,82,95,78,80,85,79,0,ranged,1,0,bomber,low,damp,,beamer,low,psybeam,0,1,,zoner,balanced,bomber:1 beamer:1 zoner:1
+56,mankey,fighting,305,40,80,35,35,45,70,64,0,melee,0,0,,,,,,,,0,1,,plain,none,
+57,primeape,fighting,455,65,105,60,60,70,95,87,0,melee,0,0,summoner,high,hand list -> minion 56,,,,,0,1,,summoner,support,
+58,growlithe,fire,350,55,70,70,45,50,60,49,0,melee,1,0,,,,,charger,medium,flare-blitz take-down,0,1,,charger,pattern,
+59,arcanine,fire,555,90,110,100,80,80,95,87,0,melee,1,0,summoner,high,hand list -> minion 58,,charger,high,flare-blitz double-edge take-down extreme-speed,0,1,,summoner,support,
+60,poliwag,water,300,40,50,40,40,40,90,83,0,melee,1,0,bomber,low,damp,,beamer,low,bubble-beam,1,1,,charger,balanced,bomber:1 charger:1
+61,poliwhirl,water,385,65,65,50,65,50,90,83,0,melee,1,0,bomber,low,damp,,beamer,low,bubble-beam,1,1,,charger,balanced,bomber:1 charger:1
+62,poliwrath,water/fighting,510,90,95,70,95,90,70,64,0,melee,0,0,summoner,high,hand list -> minion 60,bomber,beamer,low,bubble-beam,1,1,,summoner,support,
+63,abra,psychic,310,25,20,105,15,55,90,83,0,ranged,0,0,shielder,low,magic-guard,,,,,0,1,,shielder,balanced,shielder:1
+64,kadabra,psychic,400,40,35,120,30,70,105,93,0,ranged,0,0,shielder,medium,reflect magic-guard,,beamer,low,psybeam,0,1,,shielder,support,
+65,alakazam,psychic,500,55,50,135,45,95,120,97,0,ranged,0,0,shielder,high,reflect barrier magic-guard,summoner,beamer,low,psybeam,0,1,,shielder,support,
+66,machop,fighting,305,70,80,35,50,35,35,16,0,melee,0,0,,,,,charger,low,double-edge,0,1,,charger,balanced,charger:1
+67,machoke,fighting,405,80,100,50,70,60,45,29,0,melee,0,0,,,,,charger,low,double-edge,0,1,,charger,balanced,charger:1
+68,machamp,fighting,505,90,130,65,80,85,55,41,0,melee,0,0,summoner,high,hand list -> minion 66,shielder,charger,low,double-edge,0,1,,summoner,support,
+69,bellsprout,grass/poison,300,50,75,70,35,30,40,22,0,melee,1,0,,,,,fan,low,razor-leaf,1,1,,plain,none,
+70,weepinbell,grass/poison,390,65,90,85,50,45,55,41,0,melee,1,0,,,,,fan,low,razor-leaf,1,1,,plain,none,
+71,victreebel,grass/poison,490,80,105,100,65,70,70,64,0,melee,1,0,,,,,fan,low,razor-leaf leaf-tornado,1,1,,plain,none,
+72,tentacool,water/poison,335,40,40,50,35,100,70,64,0,ranged,1,0,shielder,medium,barrier,healer,zoner,medium,sludge-wave surf,0,1,,shielder,support,
+73,tentacruel,water/poison,515,80,70,80,65,120,100,90,0,ranged,1,0,summoner,high,hand list -> minion 72,shielder,zoner,medium,sludge-wave surf,0,1,,summoner,support,
+74,geodude,rock/ground,300,40,80,30,100,30,20,4,0,melee,0,0,bomber,hand,in current hand list self-destruct explosion,shielder,zoner,low,earthquake magnitude bulldoze rock-slide,1,1,bomber,bomber,support,
+75,graveler,rock/ground,390,55,95,45,115,45,35,16,0,melee,0,0,bomber,hand,in current hand list self-destruct explosion,shielder,zoner,low,earthquake magnitude bulldoze rock-slide,1,1,bomber,bomber,support,
+76,golem,rock/ground,495,80,120,55,130,65,45,29,0,melee,0,0,bomber,hand,in current hand list self-destruct explosion,shielder,zoner,low,earthquake magnitude bulldoze rock-slide,1,1,bomber,bomber,support,
+77,ponyta,fire,410,50,85,65,55,65,90,83,0,melee,0,0,,,,,charger,high,flare-blitz double-edge take-down,0,1,,charger,pattern,
+78,rapidash,fire,500,65,100,80,70,80,105,93,0,melee,0,0,summoner,high,hand list -> minion 77,,charger,high,flare-blitz double-edge take-down,0,1,,summoner,support,
+79,slowpoke,water/psychic,315,90,65,40,65,40,15,2,0,melee,0,0,healer,high,heal-pulse regenerator,,zoner,low,surf,1,1,,healer,support,
+80,slowbro,water/psychic,490,95,75,100,110,80,30,11,0,ranged,0,1,healer,high,heal-pulse regenerator,,zoner,low,surf,0,1,,healer,support,
+81,magnemite,electric/steel,325,25,35,95,70,55,45,29,0,ranged,0,0,shielder,medium,light-screen sturdy,,zoner,low,discharge,0,1,,shielder,support,
+82,magneton,electric/steel,465,50,60,120,95,70,70,64,0,ranged,0,0,summoner,high,hand list -> minion 81,shielder,zoner,low,discharge,0,1,,summoner,support,
+83,farfetchd,normal/flying,377,52,90,58,55,62,60,49,0,melee,0,0,,,,,fan,low,razor-leaf air-cutter,1,1,,jumper,balanced,charger:2 jumper:1
+84,doduo,normal/flying,310,35,85,35,45,35,75,68,0,melee,0,0,,,,,jumper,medium,jump-kick,0,1,,jumper,pattern,
+85,dodrio,normal/flying,470,60,110,60,70,60,110,95,0,melee,0,0,summoner,high,hand list -> minion 84,,jumper,medium,jump-kick,0,1,,summoner,support,
+86,seel,water,325,65,45,45,55,70,45,29,0,melee,1,0,shielder,medium,safeguard thick-fat,healer,charger,low,double-edge take-down headbutt,0,1,,shielder,support,
+87,dewgong,water/ice,475,90,70,70,80,95,70,64,0,melee,1,0,shielder,medium,safeguard thick-fat,healer,beamer,low,ice-beam signal-beam aurora-beam bubble-beam,1,1,,shielder,support,
+88,grimer,poison,325,80,80,40,50,50,25,6,0,melee,0,0,,,,,zoner,low,sludge-wave,1,1,,plain,none,
+89,muk,poison,500,105,105,65,75,100,50,37,0,melee,0,1,,,,,zoner,low,sludge-wave,1,1,,tank,stat,
+90,shellder,water,305,30,65,45,100,25,40,22,0,melee,0,0,shielder,low,shell-armor,,beamer,low,ice-beam aurora-beam,1,1,,shielder,balanced,shielder:1
+91,cloyster,water/ice,525,50,95,85,180,45,70,64,0,melee,1,0,summoner,high,hand list -> minion 90,shielder,fan,low,icicle-spear spike-cannon twineedle,1,1,,summoner,support,
+92,gastly,ghost/poison,310,30,35,100,30,35,80,73,0,ranged,0,0,,,,,,,,0,1,,plain,none,
+93,haunter,ghost/poison,405,45,50,115,45,55,95,87,0,ranged,0,0,,,,,,,,0,1,,plain,none,
+94,gengar,ghost/poison,500,60,65,130,60,75,110,95,0,ranged,0,0,,,,,,,,0,1,,plain,none,
+95,onix,rock/ground,385,35,45,30,160,45,70,64,0,melee,1,0,shielder,hand,in current hand list sturdy,,zoner,low,earthquake bulldoze rock-slide sand-tomb,1,1,shielder,shielder,support,
+96,drowzee,psychic,328,60,48,43,45,90,42,23,0,melee,1,0,,,,,beamer,low,psybeam,1,1,,charger,balanced,charger:1
+97,hypno,psychic,483,85,73,73,70,115,67,58,0,melee,1,0,shielder,medium,barrier,,beamer,low,psybeam,1,1,,shielder,support,
+98,krabby,water,325,30,105,25,90,25,50,37,0,melee,0,0,shielder,low,shell-armor,,beamer,low,bubble-beam,1,1,,shielder,balanced,shielder:1
+99,kingler,water,475,55,130,50,115,50,75,68,0,melee,0,0,shielder,medium,wide-guard shell-armor,,beamer,low,bubble-beam,1,1,,shielder,support,
+100,voltorb,electric,330,40,30,55,50,55,100,90,0,ranged,0,0,bomber,hand,in current hand list self-destruct explosion aftermath,shielder,beamer,low,charge-beam,0,1,bomber,bomber,support,
+101,electrode,electric,490,60,50,80,70,80,150,100,0,ranged,0,0,bomber,hand,in current hand list self-destruct explosion aftermath,shielder,beamer,low,charge-beam,0,1,bomber,bomber,support,
+102,exeggcute,grass/psychic,325,60,40,60,80,45,40,22,0,ranged,0,0,shielder,medium,reflect,,beamer,medium,solar-beam psybeam,0,1,,shielder,support,
+103,exeggutor,grass/psychic,530,95,95,125,85,75,55,41,0,ranged,0,0,shielder,medium,reflect,,beamer,medium,solar-beam,0,1,,shielder,support,
+104,cubone,ground,320,50,50,40,95,50,35,16,0,melee,1,0,shielder,low,battle-armor,,charger,low,double-edge headbutt,0,1,,charger,balanced,charger:2 shielder:1
+105,marowak,ground,425,60,80,50,110,80,45,29,0,melee,0,0,shielder,low,battle-armor,,charger,low,double-edge headbutt,0,1,,charger,balanced,charger:2 shielder:1
+106,hitmonlee,fighting,455,50,120,35,53,110,87,80,0,melee,0,0,shielder,medium,wide-guard,summoner,jumper,high,high-jump-kick jump-kick,0,1,,shielder,support,
+107,hitmonchan,fighting,455,50,105,35,79,110,76,69,0,melee,0,0,summoner,medium,final stage + helping-hand,,,,,0,1,,summoner,support,
+108,lickitung,normal,385,90,55,60,75,75,30,11,0,ranged,1,0,,,,,charger,low,double-edge giga-impact,1,1,,zoner,balanced,zoner:1
+109,koffing,poison,340,40,65,60,95,45,35,16,0,melee,1,0,bomber,hand,in current hand list self-destruct explosion,,,,,0,1,bomber,bomber,support,
+110,weezing,poison,490,65,90,85,120,70,60,49,0,melee,1,0,bomber,hand,in current hand list self-destruct explosion,,beamer,low,psybeam,1,1,bomber,bomber,support,
+111,rhyhorn,ground/rock,345,80,85,30,95,30,25,6,0,melee,0,0,,,,,zoner,low,earthquake bulldoze rock-slide,1,1,,charger,balanced,charger:3
+112,rhydon,ground/rock,485,105,130,45,120,45,40,22,0,melee,0,1,,,,,zoner,low,earthquake bulldoze rock-slide,1,1,,tank,stat,
+113,chansey,normal,450,250,5,35,5,105,50,37,0,ranged,0,1,healer,hand,in current hand list heal-pulse life-dew healer natural-cure,shielder,charger,low,double-edge take-down,1,1,healer,healer,support,
+114,tangela,grass,435,65,55,100,115,40,60,49,0,ranged,0,0,healer,medium,regenerator,,,,,0,1,,healer,support,
+115,kangaskhan,normal,490,105,95,40,80,80,90,83,0,melee,0,0,,,,,charger,low,headbutt,0,1,,charger,balanced,charger:1
+116,horsea,water,295,30,40,70,70,25,60,49,0,ranged,0,0,bomber,low,damp,,beamer,low,bubble-beam,0,1,,bomber,balanced,bomber:1 beamer:1
+117,seadra,water,440,55,65,95,95,45,85,79,0,ranged,0,0,summoner,high,hand list -> minion 116,bomber,beamer,low,bubble-beam,0,1,,summoner,support,
+118,goldeen,water,320,45,67,35,60,50,63,51,0,melee,0,0,,,,,,,,0,1,,plain,none,
+119,seaking,water,450,80,92,65,65,80,68,59,0,melee,0,0,,,,,beamer,low,psybeam,1,1,,plain,none,
+120,staryu,water,340,30,45,70,55,55,85,79,0,ranged,0,0,shielder,medium,light-screen,healer,beamer,low,psybeam bubble-beam,0,1,,shielder,support,
+121,starmie,water/psychic,520,60,75,100,85,85,115,96,0,ranged,0,0,shielder,medium,light-screen,healer,beamer,low,psybeam bubble-beam,0,1,,shielder,support,
+122,mr-mime,psychic/fairy,460,40,45,100,65,120,90,83,0,ranged,0,0,shielder,hand,in current hand list reflect light-screen safeguard wide-guard barrier filter,,beamer,low,psybeam,0,1,shielder,shielder,support,
+123,scyther,bug/flying,500,70,110,55,80,80,105,93,0,melee,0,0,,,,,,,,0,1,,plain,none,
+124,jynx,ice/psychic,455,65,50,115,35,95,95,87,0,ranged,0,0,,,,,zoner,low,blizzard,0,1,,zoner,balanced,zoner:1
+125,electabuzz,electric,490,65,83,95,57,85,105,93,0,ranged,1,0,shielder,medium,light-screen,,zoner,low,discharge,0,1,,shielder,support,
+126,magmar,fire,495,65,95,100,57,85,93,84,0,ranged,1,0,,,,,beamer,medium,hyper-beam,0,1,,beamer,pattern,
+127,pinsir,bug,500,65,125,55,100,70,85,79,0,melee,0,0,,,,,,,,0,1,,plain,none,
+128,tauros,normal,490,75,100,40,95,70,110,95,0,melee,0,0,,,,,charger,low,double-edge take-down giga-impact,0,1,,charger,balanced,charger:3
+129,magikarp,water,200,20,10,15,55,20,80,73,0,ranged,1,0,,,,,,,,0,1,,plain,none,
+130,gyarados,water/flying,540,95,125,60,79,100,81,74,0,melee,0,0,summoner,high,hand list -> minion 129,,beamer,low,hyper-beam,1,1,,summoner,support,
+131,lapras,water/ice,535,130,85,85,80,95,60,49,0,melee,1,0,shielder,medium,safeguard shell-armor,healer,zoner,low,surf blizzard,1,1,,shielder,support,
+132,ditto,normal,288,48,48,48,48,48,48,30,0,melee,1,0,,,,,,,,0,1,,plain,none,
+133,eevee,normal,325,55,55,45,50,65,55,41,0,melee,1,0,,,,,charger,low,double-edge take-down,0,1,,charger,balanced,charger:2
+134,vaporeon,water,525,130,65,110,60,95,65,57,0,ranged,0,0,summoner,medium,final stage + helping-hand,,charger,low,double-edge take-down,1,1,,summoner,support,
+135,jolteon,electric,525,65,65,110,60,95,130,99,0,ranged,0,0,summoner,medium,final stage + helping-hand,,fan,medium,pin-missile,0,1,,summoner,support,
+136,flareon,fire,525,65,130,95,60,110,65,57,0,melee,0,0,summoner,medium,final stage + helping-hand,,charger,high,flare-blitz double-edge take-down,0,1,,summoner,support,
+137,porygon,normal,395,65,60,85,70,75,40,22,0,ranged,0,0,shielder,medium,barrier,,beamer,high,hyper-beam psybeam signal-beam,0,1,,shielder,support,
+138,omanyte,rock/water,355,35,40,90,100,55,35,16,0,ranged,0,0,shielder,low,shell-armor,,fan,medium,spike-cannon rock-blast,0,1,,fan,pattern,
+139,omastar,rock/water,495,70,60,115,125,70,55,41,0,ranged,0,0,shielder,low,shell-armor,,fan,medium,spike-cannon rock-blast,0,1,,fan,pattern,
+140,kabuto,rock/water,355,30,80,55,90,45,55,41,0,melee,0,0,shielder,low,battle-armor,,zoner,low,rock-slide,1,1,,shielder,balanced,shielder:1
+141,kabutops,rock/water,495,60,115,65,105,70,80,73,0,melee,0,0,shielder,low,battle-armor,,zoner,low,rock-slide,1,1,,shielder,balanced,shielder:1
+142,aerodactyl,rock/flying,515,80,105,60,65,75,130,99,0,melee,0,0,,,,,jumper,medium,sky-drop fly,0,1,,jumper,pattern,
+143,snorlax,normal,540,160,110,65,65,110,30,11,0,melee,0,1,shielder,low,thick-fat,,charger,low,double-edge giga-impact headbutt,0,1,,tank,stat,
+144,articuno,ice/flying,580,90,85,95,100,125,85,79,1,ranged,1,0,shielder,medium,reflect,,beamer,low,ice-beam,0,1,,,,
+145,zapdos,electric/flying,580,90,90,125,85,90,100,90,1,ranged,0,0,shielder,medium,light-screen,,zoner,low,discharge,0,1,,,,
+146,moltres,fire/flying,580,90,100,125,90,85,90,83,1,ranged,0,0,shielder,medium,safeguard,,beamer,medium,solar-beam,0,1,,,,
+147,dratini,dragon,300,41,64,50,45,50,50,37,0,melee,1,0,shielder,medium,safeguard,healer,beamer,low,hyper-beam,1,1,,shielder,support,
+148,dragonair,dragon,420,61,84,70,65,70,70,64,0,melee,1,0,shielder,medium,safeguard,healer,beamer,low,hyper-beam,1,1,,shielder,support,
+149,dragonite,dragon/flying,600,91,134,100,95,100,80,73,0,melee,0,0,shielder,high,safeguard multiscale,,beamer,low,hyper-beam,1,1,,shielder,support,
+150,mewtwo,psychic,680,106,110,154,90,90,130,99,1,ranged,0,0,shielder,medium,safeguard barrier,healer,beamer,low,psybeam,0,1,,,,
+151,mew,psychic,600,100,100,100,100,100,100,90,1,melee,1,0,healer,medium,life-dew,shielder,,,,0,1,,,,
+152,chikorita,grass,318,45,49,49,65,65,45,29,0,melee,1,0,shielder,medium,reflect light-screen safeguard,healer,fan,low,razor-leaf magical-leaf,1,2,,shielder,support,
+153,bayleef,grass,405,60,62,63,80,80,60,49,0,ranged,1,0,shielder,medium,reflect light-screen safeguard,healer,fan,medium,razor-leaf magical-leaf,0,2,,shielder,support,
+154,meganium,grass,525,80,82,83,100,100,80,73,0,ranged,1,0,shielder,medium,reflect light-screen safeguard,healer,fan,medium,razor-leaf magical-leaf,0,2,,shielder,support,
+155,cyndaquil,fire,309,39,52,60,43,50,65,57,0,ranged,1,0,,,,,zoner,high,eruption lava-plume,0,2,,zoner,pattern,
+156,quilava,fire,405,58,64,80,58,65,80,73,0,ranged,0,0,,,,,zoner,high,eruption lava-plume,0,2,,zoner,pattern,
+157,typhlosion,fire,534,78,84,109,78,85,100,90,0,ranged,0,0,,,,,zoner,high,eruption lava-plume,0,2,,zoner,pattern,
+158,totodile,water,314,50,65,44,64,48,43,24,0,melee,0,0,,,,,,,,0,2,,plain,none,
+159,croconaw,water,405,65,80,59,80,63,58,43,0,melee,0,0,,,,,,,,0,2,,plain,none,
+160,feraligatr,water,530,85,105,79,100,83,78,70,0,melee,0,0,,,,,,,,0,2,,plain,none,
+161,sentret,normal,215,35,46,35,34,45,20,4,0,melee,1,0,,,,,charger,low,double-edge,0,2,,charger,balanced,charger:1
+162,furret,normal,415,85,76,45,64,55,90,83,0,melee,0,0,summoner,medium,"final stage + helping-hand,follow-me",,charger,low,double-edge,0,2,,summoner,support,
+163,hoothoot,normal/flying,262,60,30,36,30,56,50,37,0,ranged,1,0,shielder,medium,reflect,,charger,low,take-down,1,2,,shielder,support,
+164,noctowl,normal/flying,452,100,50,86,50,96,70,64,0,ranged,0,0,shielder,medium,reflect,,jumper,low,sky-attack,1,2,,shielder,support,
+165,ledyba,bug/flying,265,40,20,40,30,80,55,41,0,ranged,0,0,shielder,medium,reflect light-screen safeguard,,charger,low,double-edge,1,2,,shielder,support,
+166,ledian,bug/flying,390,55,35,55,50,110,85,79,0,ranged,0,0,shielder,medium,reflect light-screen safeguard,summoner,charger,low,double-edge,1,2,,shielder,support,
+167,spinarak,bug/poison,250,40,60,40,40,40,30,11,0,melee,0,0,,,,,fan,low,pin-missile,1,2,,plain,none,
+168,ariados,bug/poison,400,70,90,60,70,70,40,22,0,melee,0,0,summoner,high,hand list -> minion 167,,fan,low,pin-missile,1,2,,summoner,support,
+169,crobat,poison/flying,535,85,90,70,80,80,130,99,0,melee,0,0,summoner,high,hand list -> minion 41,,fan,low,air-cutter,1,2,,summoner,support,
+170,chinchou,water/electric,330,75,38,56,38,56,67,58,0,ranged,0,0,,,,,beamer,low,signal-beam bubble-beam,0,2,,beamer,balanced,beamer:2 zoner:1
+171,lanturn,water/electric,460,125,58,76,58,76,67,58,0,ranged,0,0,,,,,beamer,low,signal-beam bubble-beam,0,2,,beamer,balanced,beamer:2 zoner:1
+172,pichu,electric,205,20,40,35,15,35,60,49,0,melee,1,0,,,,,,,,0,2,,plain,none,
+173,cleffa,fairy,218,50,25,45,28,55,15,2,0,ranged,0,0,shielder,low,magic-guard,,fan,low,magical-leaf,0,2,,fan,balanced,shielder:1 fan:1
+174,igglybuff,normal/fairy,210,90,30,40,15,20,15,2,0,ranged,1,0,,,,,,,,0,2,,plain,none,
+175,togepi,fairy,245,35,20,40,65,65,20,4,0,ranged,0,0,healer,medium,wish life-dew,shielder,charger,low,double-edge,1,2,,healer,support,
+176,togetic,fairy/flying,405,55,40,80,85,105,40,22,0,ranged,0,0,healer,medium,wish life-dew,shielder,fan,medium,air-cutter magical-leaf,0,2,,healer,support,
+177,natu,psychic/flying,320,40,50,70,45,45,70,64,0,ranged,0,0,healer,medium,wish,shielder,,,,0,2,,healer,support,
+178,xatu,psychic/flying,470,65,75,95,70,70,95,87,0,ranged,0,0,healer,medium,wish,shielder,,,,0,2,,healer,support,
+179,mareep,electric,280,55,40,65,40,45,35,16,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,signal-beam charge-beam,0,2,,shielder,support,
+180,flaaffy,electric,365,70,55,80,55,60,45,29,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,signal-beam charge-beam,0,2,,shielder,support,
+181,ampharos,electric,510,90,75,115,85,90,55,41,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,signal-beam charge-beam,0,2,,shielder,support,
+182,bellossom,grass,490,75,80,90,95,100,50,37,0,ranged,1,0,healer,medium,healer,,beamer,medium,solar-beam,0,2,,healer,support,
+183,marill,water/fairy,250,70,20,20,50,50,40,22,0,melee,1,0,shielder,low,thick-fat,,jumper,medium,bounce,0,2,,jumper,pattern,
+184,azumarill,water/fairy,420,100,50,60,80,80,50,37,0,ranged,1,1,summoner,medium,final stage + helping-hand,shielder,jumper,low,bounce,1,2,,summoner,support,
+185,sudowoodo,rock,410,70,100,30,115,65,30,11,0,melee,0,0,shielder,low,sturdy,,charger,high,head-smash wood-hammer double-edge,0,2,,charger,pattern,
+186,politoed,water,500,90,75,90,75,100,70,64,0,ranged,1,0,bomber,low,damp,,jumper,low,bounce,1,2,,bomber,balanced,bomber:1 beamer:1
+187,hoppip,grass/flying,250,35,35,35,40,55,50,37,0,melee,1,0,,,,,fan,low,bullet-seed,1,2,,jumper,balanced,jumper:2
+188,skiploom,grass/flying,340,55,45,45,50,65,80,73,0,melee,1,0,,,,,fan,low,bullet-seed,1,2,,jumper,balanced,jumper:2
+189,jumpluff,grass/flying,460,75,55,55,70,95,110,95,0,melee,1,0,summoner,medium,final stage + rage-powder,,fan,low,bullet-seed,1,2,,summoner,support,
+190,aipom,normal,360,55,70,40,55,55,85,79,0,melee,0,0,,,,,charger,low,double-edge,0,2,,charger,balanced,charger:1
+191,sunkern,grass,180,30,30,30,30,30,30,11,0,melee,1,0,,,,,beamer,low,solar-beam,1,2,,charger,balanced,charger:1
+192,sunflora,grass,425,75,75,105,55,85,30,11,0,ranged,0,0,,,,,fan,high,razor-leaf bullet-seed,0,2,,fan,pattern,
+193,yanma,bug/flying,390,65,65,75,45,45,95,87,0,ranged,1,0,,,,,fan,medium,air-cutter,0,2,,fan,pattern,
+194,wooper,water/ground,210,55,45,25,45,25,15,2,0,melee,0,0,bomber,low,damp,,zoner,low,earthquake muddy-water,1,2,,bomber,balanced,bomber:1
+195,quagsire,water/ground,430,95,85,65,85,65,35,16,0,melee,0,1,bomber,low,damp,,zoner,low,earthquake muddy-water,1,2,,tank,stat,
+196,espeon,psychic,525,65,65,130,60,95,110,95,0,ranged,0,0,shielder,medium,magic-bounce,summoner,charger,low,double-edge take-down,1,2,,shielder,support,
+197,umbreon,dark,525,95,65,60,110,130,65,57,0,melee,1,0,summoner,medium,final stage + helping-hand,,charger,low,double-edge take-down,0,2,,summoner,support,
+198,murkrow,dark/flying,405,60,85,85,42,42,91,83,0,melee,1,0,,,,,fan,low,air-cutter,1,2,,plain,none,
+199,slowking,water/psychic,490,95,75,100,80,110,30,11,0,ranged,0,1,healer,high,heal-pulse regenerator,summoner,zoner,low,surf,0,2,,healer,support,
+200,misdreavus,ghost,435,60,60,85,60,85,85,79,0,ranged,0,0,,,,,beamer,low,psybeam,0,2,,beamer,balanced,beamer:1
+201,unown,psychic,336,48,72,72,48,48,48,30,0,melee,1,0,,,,,,,,0,2,,plain,none,
+202,wobbuffet,psychic,405,190,33,33,58,58,33,12,0,melee,1,1,shielder,medium,safeguard,,,,,0,2,,shielder,support,
+203,girafarig,normal/psychic,455,70,80,90,65,65,85,79,0,ranged,1,0,,,,,beamer,low,psybeam,0,2,,beamer,balanced,beamer:1
+204,pineco,bug,290,50,65,35,90,35,15,2,0,melee,0,0,bomber,medium,self-destruct explosion,shielder,charger,low,double-edge take-down,0,2,,bomber,support,
+205,forretress,bug/steel,465,75,90,60,140,60,40,22,0,melee,0,0,shielder,medium,reflect sturdy,bomber,charger,low,double-edge take-down,0,2,,shielder,support,
+206,dunsparce,normal,415,100,70,65,70,65,45,29,0,melee,1,1,,,,,charger,low,double-edge take-down,0,2,,tank,stat,
+207,gligar,ground/flying,430,65,75,35,105,65,85,79,0,melee,0,0,,,,,zoner,low,earthquake,1,2,,plain,none,
+208,steelix,steel/ground,510,75,85,55,200,65,30,11,0,melee,0,0,shielder,hand,in current hand list sturdy,,zoner,low,bulldoze rock-slide sand-tomb,1,2,shielder,shielder,support,
+209,snubbull,fairy,300,60,80,40,50,40,30,11,0,melee,0,0,,,,,charger,low,take-down headbutt,0,2,,charger,balanced,charger:2
+210,granbull,fairy,450,90,120,60,75,60,45,29,0,melee,0,0,,,,,charger,low,take-down headbutt,0,2,,charger,balanced,charger:2
+211,qwilfish,water/poison,440,65,95,55,85,55,85,79,0,melee,0,0,,,,,fan,low,pin-missile,1,2,,charger,balanced,charger:1
+212,scizor,bug/steel,500,70,130,55,100,80,65,57,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,2,,summoner,balanced,summoner:1
+213,shuckle,bug/rock,505,20,10,10,230,230,5,0,0,melee,1,0,shielder,hand,in current hand list safeguard sturdy,,zoner,low,rock-slide,1,2,shielder,shielder,support,
+214,heracross,bug/fighting,500,80,125,40,75,95,85,79,0,melee,0,0,,,,,fan,low,bullet-seed pin-missile,1,2,,charger,balanced,charger:2
+215,sneasel,dark/ice,430,55,95,35,55,75,115,96,0,melee,0,0,,,,,zoner,low,blizzard,1,2,,plain,none,
+216,teddiursa,normal,330,60,80,50,50,50,40,22,0,melee,0,0,,,,,zoner,low,bulldoze,1,2,,charger,balanced,charger:1
+217,ursaring,normal,500,90,130,75,75,75,55,41,0,melee,0,0,,,,,zoner,low,bulldoze,1,2,,charger,balanced,charger:1
+218,slugma,fire,250,40,40,70,40,40,20,4,0,ranged,0,0,,,,,zoner,medium,lava-plume rock-slide,0,2,,zoner,pattern,
+219,magcargo,fire/rock,430,60,50,90,120,80,30,11,0,ranged,0,0,,,,,zoner,medium,lava-plume rock-slide,0,2,,zoner,pattern,
+220,swinub,ice/ground,250,50,50,30,40,30,50,37,0,melee,0,0,shielder,low,thick-fat,,zoner,low,earthquake bulldoze blizzard,1,2,,charger,balanced,charger:2 shielder:1
+221,piloswine,ice/ground,450,100,100,60,80,60,50,37,0,melee,0,1,shielder,low,thick-fat,,zoner,low,earthquake bulldoze blizzard,1,2,,tank,stat,
+222,corsola,water/rock,410,65,55,65,95,95,35,16,0,ranged,1,0,healer,high,life-dew regenerator natural-cure,,fan,medium,spike-cannon rock-blast,0,2,,healer,support,
+223,remoraid,water,300,35,65,65,35,35,65,57,0,melee,1,0,,,,,beamer,low,hyper-beam ice-beam psybeam signal-beam aurora-beam charge-beam bubble-beam,1,2,,plain,none,
+224,octillery,water,480,75,105,105,75,75,45,29,0,melee,1,0,summoner,medium,final stage + helping-hand,,beamer,low,hyper-beam ice-beam psybeam signal-beam aurora-beam charge-beam bubble-beam,1,2,,summoner,support,
+225,delibird,ice/flying,330,45,55,65,45,45,75,68,0,ranged,1,0,,,,,,,,0,2,,plain,none,
+226,mantine,water/flying,485,85,40,80,70,140,70,64,0,ranged,0,0,shielder,medium,wide-guard,,beamer,low,psybeam signal-beam bubble-beam,0,2,,shielder,support,
+227,skarmory,steel/flying,465,65,80,40,140,70,70,64,0,melee,0,0,shielder,hand,in current hand list sturdy,,fan,low,air-cutter,1,2,shielder,shielder,support,
+228,houndour,dark/fire,330,45,60,80,30,50,65,57,0,ranged,0,0,,,,,,,,0,2,,plain,none,
+229,houndoom,dark/fire,500,75,90,110,50,80,95,87,0,ranged,0,0,summoner,medium,final stage + beat-up,,,,,0,2,,summoner,support,
+230,kingdra,water/dragon,540,75,95,95,95,95,85,79,0,melee,1,0,summoner,high,hand list -> minion 116,bomber,charger,medium,wave-crash,0,2,,summoner,support,
+231,phanpy,ground,330,90,60,40,60,40,40,22,0,melee,0,0,,,,,charger,low,double-edge take-down,0,2,,charger,balanced,charger:2
+232,donphan,ground,500,90,120,60,120,60,50,37,0,melee,0,0,shielder,low,sturdy,,zoner,low,earthquake magnitude bulldoze,1,2,,charger,balanced,charger:3 shielder:1
+233,porygon2,normal,515,85,80,105,90,95,60,49,0,ranged,0,0,,,,,beamer,high,hyper-beam psybeam signal-beam,0,2,,beamer,pattern,
+234,stantler,normal,465,73,95,85,62,65,85,79,0,melee,1,0,,,,,jumper,medium,jump-kick,0,2,,jumper,pattern,
+235,smeargle,normal,250,55,20,20,35,45,75,68,0,melee,1,0,,,,,,,,0,2,,plain,none,
+236,tyrogue,fighting,210,35,35,35,35,35,35,16,0,melee,1,0,,,,,,,,0,2,,plain,none,
+237,hitmontop,fighting,455,50,95,35,95,110,70,64,0,melee,0,0,shielder,medium,wide-guard,summoner,,,,0,2,,shielder,support,
+238,smoochum,ice/psychic,305,45,30,85,15,65,65,57,0,ranged,0,0,,,,,zoner,low,blizzard,0,2,,zoner,balanced,zoner:1
+239,elekid,electric,360,45,63,65,37,55,95,87,0,ranged,1,0,shielder,medium,light-screen,,zoner,low,discharge,0,2,,shielder,support,
+240,magby,fire,365,45,75,70,37,55,83,75,0,melee,1,0,,,,,zoner,low,lava-plume,1,2,,plain,none,
+241,miltank,normal,490,95,80,40,105,70,100,90,0,melee,0,0,shielder,low,thick-fat,,charger,low,headbutt,0,2,,charger,balanced,shielder:1 charger:1
+242,blissey,normal,540,255,10,75,10,135,55,41,0,ranged,0,0,healer,hand,in current hand list heal-pulse life-dew healer natural-cure,shielder,charger,low,double-edge take-down,1,2,healer,healer,support,
+243,raikou,electric,580,90,85,115,75,100,115,96,1,ranged,0,0,shielder,medium,reflect,,zoner,low,discharge,0,2,,,,
+244,entei,fire,580,115,115,90,85,75,100,90,1,melee,0,0,,,,,zoner,low,eruption lava-plume,1,2,,,,
+245,suicune,water,580,100,75,90,115,115,85,79,1,ranged,1,0,,,,,beamer,low,aurora-beam bubble-beam,0,2,,,,
+246,larvitar,rock/ground,300,50,64,45,50,50,41,22,0,melee,0,0,,,,,zoner,low,earthquake rock-slide,1,2,,plain,none,
+247,pupitar,rock/ground,410,70,84,65,70,70,51,37,0,melee,0,0,healer,low,shed-skin,,zoner,low,earthquake rock-slide,1,2,,healer,balanced,healer:1
+248,tyranitar,rock/dark,600,100,134,95,110,100,61,50,0,melee,0,0,,,,,zoner,low,earthquake rock-slide,1,2,,charger,balanced,charger:1
+249,lugia,psychic/flying,680,106,90,90,130,154,110,95,1,melee,1,0,shielder,high,safeguard multiscale,,jumper,low,sky-attack,0,2,,,,
+250,ho-oh,fire/flying,680,106,130,110,90,154,90,83,1,melee,0,0,healer,high,life-dew regenerator,shielder,charger,medium,brave-bird,0,2,,,,
+251,celebi,psychic/grass,600,100,100,100,100,100,100,90,1,melee,1,0,healer,medium,life-dew natural-cure,shielder,fan,low,magical-leaf,1,2,,,,
+252,treecko,grass,310,40,45,65,35,55,70,64,0,ranged,0,0,,,,,,,,0,3,,plain,none,
+253,grovyle,grass,405,50,65,85,45,65,95,87,0,ranged,0,0,,,,,,,,0,3,,plain,none,
+254,sceptile,grass,530,70,85,105,65,85,120,97,0,ranged,0,0,,,,,,,,0,3,,plain,none,
+255,torchic,fire,310,45,60,70,40,50,45,29,0,ranged,1,0,,,,,jumper,low,bounce,1,3,,plain,none,
+256,combusken,fire/fighting,405,60,85,85,60,60,55,41,0,melee,1,0,,,,,jumper,medium,bounce,0,3,,jumper,pattern,
+257,blaziken,fire/fighting,530,80,120,110,70,70,80,73,0,melee,1,0,,,,,jumper,high,bounce high-jump-kick,0,3,,jumper,pattern,
+258,mudkip,water,310,50,70,50,50,50,40,22,0,melee,0,0,bomber,low,damp,,zoner,low,rock-slide surf,1,3,,charger,balanced,bomber:1 charger:1
+259,marshtomp,water/ground,405,70,85,60,70,70,50,37,0,melee,0,0,bomber,low,damp,,zoner,low,earthquake rock-slide surf muddy-water,1,3,,charger,balanced,bomber:1 charger:1
+260,swampert,water/ground,535,100,110,85,90,90,60,49,0,melee,0,0,bomber,low,damp,,zoner,low,earthquake rock-slide surf muddy-water,1,3,,charger,balanced,bomber:1 charger:1
+261,poochyena,dark,220,35,55,30,35,30,35,16,0,melee,0,0,,,,,charger,low,take-down headbutt,0,3,,charger,balanced,charger:2
+262,mightyena,dark,420,70,90,60,70,60,70,64,0,melee,0,0,summoner,high,hand list -> minion 261,,charger,low,take-down headbutt,0,3,,summoner,support,
+263,zigzagoon,normal,240,38,30,30,41,41,60,49,0,melee,1,0,,,,,charger,low,double-edge take-down headbutt,0,3,,charger,balanced,charger:3
+264,linoone,normal,420,78,70,50,61,61,100,90,0,melee,0,0,,,,,charger,low,double-edge take-down headbutt,0,3,,charger,balanced,charger:3
+265,wurmple,bug,195,45,45,20,35,30,20,4,0,melee,0,0,,,,,,,,0,3,,plain,none,
+266,silcoon,bug,205,50,35,25,55,25,15,2,0,melee,1,0,healer,low,shed-skin,,,,,0,3,,healer,balanced,healer:1
+267,beautifly,bug/flying,395,60,70,100,50,50,65,57,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,fan,medium,air-cutter,0,3,,fan,pattern,
+268,cascoon,bug,205,50,35,25,55,25,15,2,0,melee,1,0,healer,low,shed-skin,,,,,0,3,,healer,balanced,healer:1
+269,dustox,bug/poison,385,60,50,50,70,90,65,57,0,melee,1,0,shielder,medium,light-screen,summoner,beamer,low,psybeam,1,3,,shielder,support,
+270,lotad,water/grass,220,40,30,40,30,50,30,11,0,ranged,1,0,healer,low,rain-dish,,beamer,low,bubble-beam,0,3,,beamer,balanced,healer:1 beamer:1
+271,lombre,water/grass,340,60,50,60,50,70,50,37,0,ranged,1,0,healer,low,rain-dish,,beamer,low,bubble-beam,0,3,,beamer,balanced,healer:1 beamer:1
+272,ludicolo,water/grass,480,80,70,90,70,100,70,64,0,ranged,0,0,healer,low,rain-dish,,beamer,low,bubble-beam,0,3,,beamer,balanced,healer:1 beamer:1
+273,seedot,grass,220,40,40,30,50,30,30,11,0,melee,1,0,bomber,medium,explosion,,charger,low,headbutt,0,3,,bomber,support,
+274,nuzleaf,grass/dark,340,70,70,60,40,40,60,49,0,melee,1,0,bomber,medium,explosion,,fan,low,razor-leaf air-cutter,1,3,,bomber,support,
+275,shiftry,grass/dark,480,90,100,90,60,60,80,73,0,melee,1,0,bomber,medium,explosion,,fan,low,razor-leaf air-cutter leaf-tornado,1,3,,bomber,support,
+276,taillow,normal/flying,270,40,55,30,30,30,85,79,0,melee,0,0,,,,,charger,medium,brave-bird,0,3,,charger,pattern,
+277,swellow,normal/flying,455,60,85,75,60,50,125,99,0,melee,1,0,,,,,charger,medium,brave-bird,0,3,,charger,pattern,
+278,wingull,water/flying,270,40,30,55,30,30,85,79,0,ranged,0,0,healer,low,rain-dish,,fan,medium,air-cutter,0,3,,fan,pattern,
+279,pelipper,water/flying,440,60,50,95,100,70,65,57,0,ranged,0,0,healer,low,rain-dish,,,,,0,3,,healer,balanced,healer:1
+280,ralts,psychic/fairy,198,28,25,45,25,35,40,22,0,ranged,0,0,healer,medium,heal-pulse life-dew,,beamer,low,psybeam,0,3,,healer,support,
+281,kirlia,psychic/fairy,278,38,35,65,35,55,50,37,0,ranged,0,0,healer,medium,heal-pulse life-dew,,beamer,low,psybeam,0,3,,healer,support,
+282,gardevoir,psychic/fairy,518,68,65,125,65,115,80,73,0,ranged,0,0,healer,medium,heal-pulse wish life-dew,,beamer,low,psybeam,0,3,,healer,support,
+283,surskit,bug/water,269,40,30,50,32,52,65,57,0,ranged,0,0,healer,low,rain-dish,,beamer,low,bubble-beam,0,3,,beamer,balanced,healer:1 beamer:1
+284,masquerain,bug/flying,454,70,60,100,62,82,80,73,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,fan,medium,air-cutter,0,3,,fan,pattern,
+285,shroomish,grass,295,60,40,40,60,60,35,16,0,melee,1,0,healer,low,poison-heal,,charger,low,headbutt,0,3,,charger,balanced,healer:1 charger:1
+286,breloom,grass/fighting,460,60,130,60,80,60,70,64,0,melee,0,0,healer,low,poison-heal,,charger,low,headbutt,0,3,,healer,balanced,healer:1 charger:1
+287,slakoth,normal,280,60,60,35,60,35,30,11,0,melee,0,0,,,,,charger,low,headbutt,0,3,,charger,balanced,charger:1
+288,vigoroth,normal,440,80,80,55,80,55,90,83,0,melee,0,0,,,,,charger,low,headbutt,0,3,,charger,balanced,charger:1
+289,slaking,normal,670,150,160,95,100,65,100,90,0,melee,0,0,,,,,charger,low,headbutt,0,3,,charger,balanced,charger:1
+290,nincada,bug/ground,266,31,45,30,90,30,40,22,0,melee,1,0,,,,,,,,0,3,,plain,none,
+291,ninjask,bug/flying,456,61,90,50,45,50,160,100,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,3,,summoner,balanced,summoner:1
+292,shedinja,bug/ghost,236,1,90,30,45,30,40,22,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,3,,summoner,balanced,summoner:1
+293,whismur,normal,240,64,51,51,23,23,28,7,0,melee,1,0,,,,,,,,0,3,,plain,none,
+294,loudred,normal,360,84,71,71,43,43,48,30,0,melee,1,0,,,,,,,,0,3,,plain,none,
+295,exploud,normal,490,104,91,91,63,73,68,59,0,melee,1,0,,,,,beamer,low,hyper-beam,1,3,,plain,none,
+296,makuhita,fighting,237,72,60,20,30,30,25,6,0,melee,0,0,shielder,low,thick-fat,,,,,0,3,,shielder,balanced,shielder:1
+297,hariyama,fighting,474,144,120,40,60,60,50,37,0,melee,0,1,shielder,low,thick-fat,,,,,0,3,,tank,stat,
+298,azurill,normal/fairy,190,50,20,20,40,40,20,4,0,melee,1,0,shielder,low,thick-fat,,jumper,medium,bounce,0,3,,jumper,pattern,
+299,nosepass,rock,375,30,45,45,135,90,30,11,0,melee,1,0,shielder,low,sturdy,,zoner,low,rock-slide discharge,1,3,,shielder,balanced,shielder:1
+300,skitty,normal,260,50,45,35,45,35,50,37,0,melee,1,0,,,,,charger,low,double-edge,0,3,,charger,balanced,charger:1
+301,delcatty,normal,400,70,65,55,65,55,90,83,0,melee,1,0,,,,,charger,low,double-edge,0,3,,charger,balanced,charger:1
+302,sableye,dark/ghost,380,50,75,65,75,65,50,37,0,melee,1,0,,,,,,,,0,3,,plain,none,
+303,mawile,steel/fairy,380,50,85,55,85,55,50,37,0,melee,0,0,,,,,,,,0,3,,plain,none,
+304,aron,steel/rock,330,50,70,40,100,40,30,11,0,melee,0,0,shielder,low,sturdy,,charger,low,double-edge take-down headbutt,0,3,,shielder,balanced,charger:3 shielder:1
+305,lairon,steel/rock,430,60,90,50,140,50,40,22,0,melee,0,0,shielder,low,sturdy,,charger,low,double-edge take-down headbutt,0,3,,shielder,balanced,charger:3 shielder:1
+306,aggron,steel/rock,530,70,110,60,180,60,50,37,0,melee,0,0,shielder,hand,in current hand list sturdy,,charger,low,double-edge take-down headbutt,0,3,shielder,shielder,support,
+307,meditite,fighting/psychic,280,30,40,40,55,55,60,49,0,melee,1,0,,,,,jumper,medium,high-jump-kick,0,3,,jumper,pattern,
+308,medicham,fighting/psychic,410,60,60,60,75,75,80,73,0,melee,1,0,,,,,jumper,medium,high-jump-kick,0,3,,jumper,pattern,
+309,electrike,electric,295,40,45,65,40,40,65,57,0,ranged,0,0,,,,,charger,low,wild-charge,1,3,,zoner,balanced,zoner:1
+310,manectric,electric,475,70,75,105,60,60,105,93,0,ranged,0,0,,,,,charger,low,wild-charge,1,3,,zoner,balanced,zoner:1
+311,plusle,electric,405,60,50,85,40,75,95,87,0,ranged,0,0,,,,,zoner,low,discharge,0,3,,zoner,balanced,zoner:1
+312,minun,electric,405,60,40,75,50,85,95,87,0,ranged,0,0,,,,,zoner,low,discharge,0,3,,zoner,balanced,zoner:1
+313,volbeat,bug,430,65,73,47,75,85,85,79,0,melee,0,0,,,,,beamer,low,signal-beam,1,3,,charger,balanced,charger:1
+314,illumise,bug,430,65,47,73,75,85,85,79,0,ranged,0,0,healer,medium,wish,,,,,0,3,,healer,support,
+315,roselia,grass/poison,400,50,60,100,45,80,65,57,0,ranged,0,0,healer,medium,aromatherapy natural-cure,,fan,low,magical-leaf,0,3,,healer,support,
+316,gulpin,poison,302,70,43,43,53,53,40,22,0,melee,1,0,,,,,,,,0,3,,plain,none,
+317,swalot,poison,467,100,73,73,83,83,55,41,0,melee,1,0,,,,,,,,0,3,,plain,none,
+318,carvanha,water/dark,305,45,90,65,20,20,65,57,0,melee,0,0,,,,,charger,low,take-down,0,3,,charger,balanced,charger:1
+319,sharpedo,water/dark,460,70,120,95,40,40,95,87,0,melee,0,0,,,,,charger,low,take-down,0,3,,charger,balanced,charger:1
+320,wailmer,water,400,130,70,70,35,35,60,49,0,melee,1,0,,,,,zoner,low,water-spout,1,3,,jumper,balanced,jumper:2
+321,wailord,water,500,170,90,90,45,45,60,49,0,melee,1,0,,,,,zoner,low,water-spout,1,3,,jumper,balanced,jumper:2
+322,numel,fire/ground,305,60,60,65,40,45,35,16,0,ranged,1,0,,,,,zoner,high,earthquake magnitude lava-plume bulldoze,0,3,,zoner,pattern,
+323,camerupt,fire/ground,460,70,100,105,70,75,40,22,0,ranged,1,0,shielder,medium,solid-rock,,zoner,high,earthquake eruption magnitude lava-plume fissure bulldoze rock-slide,0,3,,shielder,support,
+324,torkoal,fire,470,70,85,85,140,70,20,4,0,melee,1,0,shielder,low,shell-armor,,zoner,low,eruption lava-plume heat-wave,1,3,,shielder,balanced,shielder:1
+325,spoink,psychic,330,60,25,70,35,80,60,49,0,ranged,0,0,shielder,low,thick-fat,,jumper,low,bounce,1,3,,beamer,balanced,shielder:1 beamer:1
+326,grumpig,psychic,470,80,45,90,65,110,80,73,0,ranged,0,0,shielder,low,thick-fat,,jumper,low,bounce,1,3,,beamer,balanced,shielder:1 beamer:1
+327,spinda,normal,360,60,60,60,60,60,60,49,0,melee,1,0,,,,,beamer,low,psybeam,1,3,,charger,balanced,charger:1
+328,trapinch,ground,290,45,100,45,45,45,10,1,0,melee,0,0,,,,,zoner,low,earthquake fissure bulldoze rock-slide sand-tomb,1,3,,plain,none,
+329,vibrava,ground/dragon,340,50,70,50,50,50,70,64,0,melee,0,0,,,,,zoner,low,earthquake fissure bulldoze rock-slide sand-tomb,1,3,,plain,none,
+330,flygon,ground/dragon,520,80,100,80,80,80,100,90,0,melee,0,0,,,,,zoner,low,earthquake fissure bulldoze rock-slide sand-tomb,1,3,,plain,none,
+331,cacnea,grass,335,50,85,85,40,40,35,16,0,melee,1,0,,,,,fan,low,bullet-seed pin-missile needle-arm,1,3,,plain,none,
+332,cacturne,grass/dark,475,70,115,115,60,60,55,41,0,melee,1,0,,,,,fan,low,bullet-seed pin-missile needle-arm,1,3,,plain,none,
+333,swablu,normal/flying,310,45,40,40,60,75,50,37,0,melee,1,0,shielder,medium,safeguard,healer,charger,low,take-down,0,3,,shielder,support,
+334,altaria,dragon/flying,490,75,70,70,90,105,80,73,0,melee,1,0,summoner,high,hand list -> minion 333,shielder,jumper,low,sky-attack,0,3,,summoner,support,
+335,zangoose,normal,458,73,115,60,60,60,90,83,0,melee,0,0,,,,,,,,0,3,,plain,none,
+336,seviper,poison,458,73,100,100,60,60,65,57,0,melee,1,0,healer,low,shed-skin,,,,,0,3,,healer,balanced,healer:1
+337,lunatone,rock/psychic,460,90,55,95,65,85,70,64,0,ranged,0,0,bomber,hand,in current hand list explosion,,zoner,low,rock-slide,0,3,bomber,bomber,support,
+338,solrock,rock/psychic,460,90,95,55,85,65,70,64,0,melee,0,0,bomber,hand,in current hand list explosion,,beamer,low,solar-beam,1,3,bomber,bomber,support,
+339,barboach,water/ground,288,50,48,46,43,41,60,49,0,melee,1,0,,,,,zoner,low,earthquake magnitude fissure muddy-water,1,3,,plain,none,
+340,whiscash,water/ground,468,110,78,76,73,71,60,49,0,melee,1,0,,,,,zoner,low,earthquake magnitude fissure muddy-water,1,3,,plain,none,
+341,corphish,water,308,43,80,50,65,35,35,16,0,melee,0,0,shielder,low,shell-armor,,beamer,low,bubble-beam,1,3,,shielder,balanced,shielder:1
+342,crawdaunt,water/dark,468,63,120,90,85,55,55,41,0,melee,0,0,shielder,low,shell-armor,,beamer,low,bubble-beam,1,3,,shielder,balanced,shielder:1
+343,baltoy,ground/psychic,300,40,40,40,55,70,55,41,0,melee,1,0,bomber,hand,in current hand list self-destruct explosion,,beamer,low,psybeam,1,3,bomber,bomber,support,
+344,claydol,ground/psychic,500,60,70,70,105,120,75,68,0,melee,1,0,bomber,hand,in current hand list self-destruct explosion,,beamer,low,hyper-beam psybeam,1,3,bomber,bomber,support,
+345,lileep,rock/grass,355,66,41,61,77,87,23,5,0,ranged,0,0,,,,,,,,0,3,,plain,none,
+346,cradily,rock/grass,495,86,81,81,97,107,43,24,0,melee,1,0,,,,,,,,0,3,,plain,none,
+347,anorith,rock/bug,355,45,95,40,50,50,75,68,0,melee,0,0,shielder,low,battle-armor,,fan,low,rock-blast,1,3,,shielder,balanced,shielder:1
+348,armaldo,rock/bug,495,75,125,70,100,80,45,29,0,melee,0,0,shielder,low,battle-armor,summoner,fan,low,rock-blast,1,3,,summoner,balanced,shielder:1 summoner:1
+349,feebas,water,200,20,15,10,20,55,80,73,0,melee,1,0,,,,,,,,0,3,,plain,none,
+350,milotic,water,540,95,60,100,79,125,81,74,0,ranged,0,0,healer,medium,life-dew,shielder,zoner,low,surf,0,3,,healer,support,
+351,castform,normal,420,70,70,70,70,70,70,64,0,melee,1,0,,,,,zoner,low,blizzard,1,3,,charger,balanced,charger:1
+352,kecleon,normal,440,60,90,60,70,120,40,22,0,melee,0,0,,,,,beamer,low,psybeam,1,3,,plain,none,
+353,shuppet,ghost,295,44,75,63,35,33,45,29,0,melee,1,0,,,,,,,,0,3,,plain,none,
+354,banette,ghost,455,64,115,83,65,63,65,57,0,melee,0,0,,,,,,,,0,3,,plain,none,
+355,duskull,ghost,295,20,40,30,90,90,25,6,0,melee,1,0,,,,,,,,0,3,,plain,none,
+356,dusclops,ghost,455,40,70,60,130,130,25,6,0,melee,1,0,,,,,,,,0,3,,plain,none,
+357,tropius,grass/flying,460,99,68,72,83,87,51,37,0,ranged,1,0,shielder,medium,wide-guard,,fan,high,razor-leaf leaf-tornado magical-leaf,0,3,,shielder,support,
+358,chimecho,psychic,455,75,50,95,80,90,65,57,0,ranged,0,0,shielder,medium,light-screen safeguard,healer,charger,low,double-edge take-down,1,3,,shielder,support,
+359,absol,dark,465,65,130,75,60,60,75,68,0,melee,0,0,,,,,,,,0,3,,plain,none,
+360,wynaut,psychic,260,95,23,23,48,48,23,5,0,melee,1,1,shielder,medium,safeguard,,,,,0,3,,shielder,support,
+361,snorunt,ice,300,50,50,50,50,50,50,37,0,melee,1,0,healer,low,ice-body,,beamer,low,ice-beam,1,3,,healer,balanced,healer:1 charger:1
+362,glalie,ice,480,80,80,80,80,80,80,73,0,melee,1,0,healer,low,ice-body,,beamer,low,ice-beam,1,3,,healer,balanced,healer:1 charger:1
+363,spheal,ice/water,290,70,40,55,50,50,25,6,0,ranged,1,0,healer,low,ice-body,shielder,beamer,low,ice-beam aurora-beam,0,3,,zoner,balanced,beamer:2 zoner:2 healer:1 shielder:1
+364,sealeo,ice/water,410,90,60,75,70,70,45,29,0,ranged,1,0,healer,low,ice-body,shielder,beamer,low,ice-beam aurora-beam,0,3,,beamer,balanced,beamer:2 zoner:2 healer:1 shielder:1
+365,walrein,ice/water,530,110,80,95,90,90,65,57,0,ranged,1,0,healer,low,ice-body,shielder,beamer,low,ice-beam aurora-beam,0,3,,zoner,balanced,beamer:2 zoner:2 healer:1 shielder:1
+366,clamperl,water,345,35,64,74,85,55,32,12,0,ranged,1,0,shielder,low,shell-armor,,,,,0,3,,shielder,balanced,shielder:1
+367,huntail,water,485,55,104,94,105,75,52,38,0,melee,1,0,,,,,,,,0,3,,plain,none,
+368,gorebyss,water,485,55,84,114,105,75,52,38,0,ranged,0,0,shielder,medium,safeguard,,,,,0,3,,shielder,support,
+369,relicanth,water/rock,485,100,90,45,130,65,55,41,0,melee,0,0,shielder,low,sturdy,,charger,high,head-smash double-edge take-down,0,3,,charger,pattern,
+370,luvdisc,water,330,43,30,40,55,65,97,88,0,ranged,1,0,healer,medium,wish,shielder,charger,low,take-down,1,3,,healer,support,
+371,bagon,dragon,300,45,75,40,60,30,50,37,0,melee,0,0,,,,,charger,low,double-edge headbutt,0,3,,charger,balanced,charger:2
+372,shelgon,dragon,420,65,95,60,100,50,50,37,0,melee,0,0,,,,,charger,low,double-edge headbutt,0,3,,charger,balanced,charger:2
+373,salamence,dragon/flying,600,95,135,110,80,80,100,90,0,melee,0,0,,,,,charger,low,double-edge headbutt,0,3,,jumper,balanced,charger:2 jumper:1
+374,beldum,steel/psychic,300,40,55,35,80,60,30,11,0,melee,0,0,,,,,charger,low,take-down,0,3,,charger,balanced,charger:1
+375,metang,steel/psychic,420,60,75,55,100,80,50,37,0,melee,0,0,,,,,beamer,low,hyper-beam,1,3,,charger,balanced,charger:1
+376,metagross,steel/psychic,600,80,135,95,130,90,70,64,0,melee,0,0,,,,,beamer,low,hyper-beam,1,3,,charger,balanced,charger:1
+377,regirock,rock,580,80,100,50,200,100,50,37,1,melee,0,0,bomber,medium,explosion,shielder,beamer,low,hyper-beam charge-beam,1,3,,,,
+378,regice,ice,580,80,50,100,100,200,50,37,1,ranged,0,0,bomber,medium,explosion,healer,beamer,high,hyper-beam ice-beam charge-beam,0,3,,,,
+379,registeel,steel,580,80,75,75,150,150,50,37,1,melee,1,0,bomber,medium,explosion,,beamer,low,hyper-beam charge-beam,1,3,,,,
+380,latias,dragon/psychic,600,80,80,110,90,130,110,95,1,ranged,0,0,healer,medium,heal-pulse wish,shielder,,,,0,3,,,,
+381,latios,dragon/psychic,600,80,90,130,80,110,110,95,1,ranged,0,0,healer,medium,heal-pulse,shielder,,,,0,3,,,,
+382,kyogre,water,670,100,100,150,90,140,90,83,1,ranged,0,0,,,,,zoner,medium,water-spout muddy-water,0,3,,,,
+383,groudon,ground,670,100,150,100,140,90,90,83,1,melee,0,0,,,,,zoner,low,earthquake eruption precipice-blades lava-plume fissure,1,3,,,,
+384,rayquaza,dragon/flying,680,105,150,150,90,90,95,87,1,melee,1,0,,,,,beamer,low,hyper-beam,1,3,,,,
+385,jirachi,steel/psychic,600,100,100,100,100,100,100,90,1,melee,1,0,healer,medium,wish life-dew,,charger,low,double-edge,0,3,,,,
+386,deoxys,psychic,600,50,150,150,50,50,150,100,1,melee,1,0,,,,,beamer,low,hyper-beam,1,3,,,,
+387,turtwig,grass,318,55,68,45,64,55,31,12,0,melee,0,0,shielder,low,shell-armor,,fan,low,razor-leaf,1,4,,charger,balanced,shielder:1 charger:1
+388,grotle,grass,405,75,89,55,85,65,36,17,0,melee,0,0,shielder,low,shell-armor,,fan,low,razor-leaf,1,4,,charger,balanced,shielder:1 charger:1
+389,torterra,grass/ground,525,95,109,75,105,85,56,42,0,melee,0,0,shielder,low,shell-armor,,zoner,low,earthquake bulldoze,1,4,,charger,balanced,charger:3 shielder:1
+390,chimchar,fire,309,44,58,58,44,44,61,50,0,melee,1,0,,,,,charger,low,double-edge,0,4,,charger,balanced,charger:1
+391,monferno,fire/fighting,405,64,78,78,52,52,81,74,0,melee,1,0,,,,,charger,medium,flare-blitz double-edge,0,4,,charger,pattern,
+392,infernape,fire/fighting,534,76,104,104,71,71,108,93,0,melee,1,0,,,,,charger,medium,flare-blitz double-edge,0,4,,charger,pattern,
+393,piplup,water,314,53,51,61,53,56,40,22,0,ranged,1,0,,,,,beamer,low,bubble-beam,0,4,,beamer,balanced,beamer:1
+394,prinplup,water,405,64,66,81,68,76,50,37,0,ranged,1,0,,,,,beamer,low,bubble-beam,0,4,,beamer,balanced,beamer:1
+395,empoleon,water/steel,530,84,86,111,88,101,60,49,0,ranged,0,0,,,,,charger,low,wave-crash double-edge,1,4,,beamer,balanced,beamer:1
+396,starly,normal/flying,245,40,55,30,30,30,60,49,0,melee,0,0,,,,,charger,high,brave-bird double-edge take-down giga-impact,0,4,,charger,pattern,
+397,staravia,normal/flying,340,55,75,40,50,40,80,73,0,melee,0,0,,,,,charger,high,brave-bird double-edge take-down giga-impact,0,4,,charger,pattern,
+398,staraptor,normal/flying,485,85,120,50,70,60,100,90,0,melee,0,0,,,,,charger,high,brave-bird double-edge take-down giga-impact,0,4,,charger,pattern,
+399,bidoof,normal,250,59,45,35,40,40,31,12,0,melee,1,0,,,,,charger,low,double-edge take-down headbutt,0,4,,charger,balanced,charger:3
+400,bibarel,normal/water,410,79,85,55,60,60,71,64,0,melee,0,0,,,,,charger,low,double-edge take-down headbutt,0,4,,charger,balanced,charger:3
+401,kricketot,bug,194,37,25,25,41,41,25,6,0,melee,1,0,healer,low,shed-skin,,,,,0,4,,healer,balanced,healer:1
+402,kricketune,bug,384,77,85,55,51,51,65,57,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,4,,summoner,balanced,summoner:1
+403,shinx,electric,263,45,65,40,34,34,45,29,0,melee,0,0,,,,,charger,medium,wild-charge,0,4,,charger,pattern,
+404,luxio,electric,363,60,85,60,49,49,60,49,0,melee,0,0,,,,,charger,medium,wild-charge,0,4,,charger,pattern,
+405,luxray,electric,523,80,120,95,79,79,70,64,0,melee,0,0,summoner,high,hand list -> minion 403,,charger,medium,wild-charge,0,4,,summoner,support,
+406,budew,grass/poison,280,40,30,50,35,70,55,41,0,ranged,0,0,healer,low,natural-cure,,,,,0,4,,healer,balanced,healer:1
+407,roserade,grass/poison,515,60,70,125,65,105,90,83,0,ranged,0,0,healer,medium,aromatherapy natural-cure,,fan,low,magical-leaf,0,4,,healer,support,
+408,cranidos,rock,350,67,125,30,40,30,58,43,0,melee,0,0,,,,,charger,high,head-smash double-edge take-down headbutt,0,4,,charger,pattern,
+409,rampardos,rock,495,97,165,65,60,50,58,43,0,melee,0,0,,,,,charger,high,head-smash double-edge take-down headbutt,0,4,,charger,pattern,
+410,shieldon,rock/steel,350,30,42,42,118,88,30,11,0,melee,1,0,shielder,hand,in current hand list sturdy,,charger,low,double-edge take-down,0,4,shielder,shielder,support,
+411,bastiodon,rock/steel,495,60,52,47,168,138,30,11,0,melee,1,0,shielder,hand,in current hand list sturdy,,charger,low,double-edge take-down,0,4,shielder,shielder,support,
+412,burmy,bug,224,40,29,29,45,45,36,17,0,melee,1,0,healer,low,shed-skin,,,,,0,4,,healer,balanced,healer:1
+413,wormadam,bug/grass,424,60,59,79,85,105,36,17,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,fan,medium,razor-leaf,0,4,,fan,pattern,
+414,mothim,bug/flying,424,70,94,94,50,50,66,57,0,melee,1,0,summoner,low,bug final stage with a pre-evolution,,beamer,low,psybeam,1,4,,summoner,balanced,summoner:1
+415,combee,bug/flying,244,30,30,30,42,42,70,64,0,melee,1,0,,,,,,,,0,4,,plain,none,
+416,vespiquen,bug/flying,474,70,80,80,102,102,40,22,0,melee,1,0,summoner,high,hand list -> minion 415,healer,fan,low,pin-missile,1,4,,summoner,support,
+417,pachirisu,electric,405,60,45,45,70,90,95,87,0,melee,1,0,,,,,zoner,low,discharge,1,4,,plain,none,
+418,buizel,water,330,55,65,60,35,30,85,79,0,melee,1,0,,,,,charger,medium,wave-crash,0,4,,charger,pattern,
+419,floatzel,water,495,85,105,85,55,50,115,96,0,melee,0,0,,,,,charger,medium,wave-crash,0,4,,charger,pattern,
+420,cherubi,grass,275,45,35,62,45,53,35,16,0,ranged,0,0,,,,,beamer,medium,solar-beam,0,4,,beamer,pattern,
+421,cherrim,grass,450,70,60,87,70,78,85,79,0,ranged,0,0,summoner,medium,final stage + helping-hand,,beamer,medium,solar-beam,0,4,,summoner,support,
+422,shellos,water,325,76,48,57,48,62,34,13,0,ranged,1,0,,,,,zoner,low,muddy-water,0,4,,zoner,balanced,zoner:1
+423,gastrodon,water/ground,475,111,83,92,68,82,39,18,0,ranged,1,1,,,,,zoner,low,muddy-water,0,4,,tank,stat,
+424,ambipom,normal,482,75,100,60,66,66,115,96,0,melee,0,0,,,,,charger,low,double-edge,0,4,,charger,balanced,charger:1
+425,drifloon,ghost/flying,348,90,50,60,34,44,70,64,0,ranged,1,0,bomber,high,self-destruct explosion aftermath,,,,,0,4,,bomber,support,
+426,drifblim,ghost/flying,498,150,80,90,44,54,80,73,0,ranged,1,0,bomber,high,self-destruct explosion aftermath,,,,,0,4,,bomber,support,
+427,buneary,normal,350,55,66,44,44,56,85,79,0,melee,0,0,,,,,jumper,high,bounce jump-kick,0,4,,jumper,pattern,
+428,lopunny,normal,480,65,76,54,84,96,105,93,0,melee,0,0,,,,,jumper,high,bounce high-jump-kick jump-kick,0,4,,jumper,pattern,
+429,mismagius,ghost,495,60,60,105,60,105,105,93,0,ranged,0,0,,,,,beamer,low,psybeam,0,4,,fan,balanced,beamer:1 fan:1
+430,honchkrow,dark/flying,505,100,125,105,52,52,71,64,0,melee,0,0,,,,,fan,low,air-cutter,1,4,,charger,balanced,charger:2
+431,glameow,normal,310,49,55,42,42,37,85,79,0,melee,1,0,,,,,charger,low,double-edge,0,4,,charger,balanced,charger:1
+432,purugly,normal,452,71,82,64,64,59,112,95,0,melee,0,0,shielder,low,thick-fat,,charger,low,double-edge,0,4,,shielder,balanced,shielder:1 charger:1
+433,chingling,psychic,285,45,30,65,50,50,45,29,0,ranged,0,0,,,,,charger,low,double-edge,1,4,,plain,none,
+434,stunky,poison/dark,329,63,63,41,47,41,74,66,0,melee,0,0,bomber,high,explosion aftermath,,charger,low,double-edge,0,4,,bomber,support,
+435,skuntank,poison/dark,479,103,93,71,67,61,84,75,0,melee,0,0,bomber,high,explosion aftermath,,charger,low,double-edge,0,4,,bomber,support,
+436,bronzor,steel/psychic,300,57,24,24,86,86,23,5,0,melee,1,0,shielder,hand,in current hand list safeguard,,,,,0,4,shielder,shielder,support,
+437,bronzong,steel/psychic,500,67,89,79,116,116,33,12,0,melee,1,0,shielder,hand,in current hand list safeguard,,,,,0,4,shielder,shielder,support,
+438,bonsly,rock,290,50,80,10,95,45,10,1,0,melee,0,0,shielder,low,sturdy,,charger,medium,head-smash double-edge,0,4,,charger,pattern,
+439,mime-jr,psychic/fairy,310,20,25,70,45,90,60,49,0,ranged,0,0,shielder,hand,in current hand list reflect light-screen safeguard barrier filter,,beamer,low,psybeam,0,4,shielder,shielder,support,
+440,happiny,normal,220,100,5,15,5,65,30,11,0,ranged,1,1,healer,hand,in current hand list natural-cure,,charger,low,double-edge,1,4,healer,healer,support,
+441,chatot,normal/flying,411,76,65,92,45,42,91,83,0,ranged,0,0,,,,,fan,medium,air-cutter,0,4,,fan,pattern,
+442,spiritomb,ghost/dark,485,50,92,92,108,108,35,16,0,melee,1,0,,,,,,,,0,4,,plain,none,
+443,gible,dragon/ground,300,58,70,40,45,45,42,23,0,melee,0,0,,,,,zoner,low,bulldoze sand-tomb,1,4,,charger,balanced,charger:2
+444,gabite,dragon/ground,410,68,90,50,65,55,82,74,0,melee,0,0,,,,,zoner,low,bulldoze sand-tomb,1,4,,charger,balanced,charger:2
+445,garchomp,dragon/ground,600,108,130,80,95,85,102,91,0,melee,0,0,,,,,zoner,low,bulldoze sand-tomb,1,4,,charger,balanced,charger:2
+446,munchlax,normal,390,135,85,40,40,85,5,0,0,melee,0,1,shielder,low,thick-fat,,charger,low,double-edge giga-impact,0,4,,tank,stat,
+447,riolu,fighting,285,40,70,35,40,40,60,49,0,melee,0,0,,,,,,,,0,4,,plain,none,
+448,lucario,fighting/steel,525,70,110,115,70,70,90,83,0,ranged,1,0,healer,medium,heal-pulse life-dew,summoner,charger,low,extreme-speed,1,4,,healer,support,
+449,hippopotas,ground,330,68,72,38,78,42,32,12,0,melee,0,0,,,,,zoner,low,earthquake fissure sand-tomb,1,4,,charger,balanced,charger:2
+450,hippowdon,ground,525,108,112,68,118,72,47,30,0,melee,0,1,,,,,zoner,low,earthquake fissure sand-tomb,1,4,,tank,stat,
+451,skorupi,poison/bug,330,40,50,30,90,55,65,57,0,melee,0,0,shielder,low,battle-armor,,fan,low,pin-missile,1,4,,shielder,balanced,shielder:1
+452,drapion,poison/dark,500,70,90,60,110,75,95,87,0,melee,0,0,shielder,low,battle-armor,,fan,low,pin-missile,1,4,,shielder,balanced,shielder:1
+453,croagunk,poison/fighting,300,48,61,61,40,40,50,37,0,melee,1,0,,,,,,,,0,4,,plain,none,
+454,toxicroak,poison/fighting,490,83,106,86,65,65,85,79,0,melee,0,0,,,,,,,,0,4,,plain,none,
+455,carnivine,grass,454,74,100,90,72,72,46,29,0,melee,1,0,,,,,fan,low,leaf-tornado,1,4,,plain,none,
+456,finneon,water,330,49,49,49,56,61,66,57,0,melee,1,0,shielder,medium,safeguard,,jumper,medium,bounce,0,4,,shielder,support,
+457,lumineon,water,460,69,69,69,76,86,91,83,0,melee,1,0,shielder,medium,safeguard,,jumper,medium,bounce,0,4,,shielder,support,
+458,mantyke,water/flying,345,45,20,60,50,120,50,37,0,ranged,0,0,shielder,medium,wide-guard,,charger,low,double-edge take-down headbutt,1,4,,shielder,support,
+459,snover,grass/ice,334,60,62,62,50,60,40,22,0,melee,1,0,,,,,fan,low,razor-leaf,1,4,,charger,balanced,charger:2
+460,abomasnow,grass/ice,494,90,92,92,75,85,60,49,0,melee,1,0,shielder,medium,aurora-veil,,fan,low,razor-leaf,1,4,,shielder,support,
+461,weavile,dark/ice,510,70,120,45,65,85,125,99,0,melee,0,0,summoner,medium,final stage + beat-up,,zoner,low,blizzard,1,4,,summoner,support,
+462,magnezone,electric/steel,535,70,70,130,115,90,60,49,0,ranged,0,0,shielder,high,light-screen barrier sturdy,summoner,zoner,low,discharge,0,4,,shielder,support,
+463,lickilicky,normal,515,110,85,80,95,95,50,37,0,melee,1,1,,,,,charger,low,double-edge giga-impact,0,4,,tank,stat,
+464,rhyperior,ground/rock,535,115,140,55,130,55,40,22,0,melee,0,1,shielder,medium,solid-rock,,charger,high,rock-wrecker double-edge take-down giga-impact,0,4,,shielder,support,
+465,tangrowth,grass,535,100,100,110,125,50,50,37,0,ranged,1,1,healer,medium,regenerator,,,,,0,4,,healer,support,
+466,electivire,electric,540,75,123,95,67,85,95,87,0,melee,0,0,summoner,high,hand list -> minion 239,shielder,charger,medium,wild-charge giga-impact,0,4,,summoner,support,
+467,magmortar,fire,540,75,95,125,67,95,83,75,0,ranged,0,0,,,,,beamer,medium,hyper-beam,0,4,,beamer,pattern,
+468,togekiss,fairy/flying,545,85,50,120,95,115,80,73,0,ranged,0,0,healer,medium,wish life-dew,shielder,fan,medium,air-cutter,0,4,,healer,support,
+469,yanmega,bug/flying,515,86,76,116,86,56,95,87,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,4,,summoner,balanced,summoner:1
+470,leafeon,grass,525,65,110,60,130,65,95,87,0,melee,0,0,summoner,medium,final stage + helping-hand,,fan,low,razor-leaf magical-leaf,1,4,,summoner,support,
+471,glaceon,ice,525,65,60,130,110,95,65,57,0,ranged,0,0,shielder,medium,barrier,summoner,charger,low,double-edge take-down,1,4,,shielder,support,
+472,gliscor,ground/flying,510,75,95,45,125,75,95,87,0,melee,0,0,healer,low,poison-heal,,zoner,low,earthquake,1,4,,healer,balanced,healer:1
+473,mamoswine,ice/ground,530,110,130,70,80,60,80,73,0,melee,0,0,shielder,low,thick-fat,,zoner,low,earthquake bulldoze blizzard,1,4,,shielder,balanced,charger:2 shielder:1
+474,porygon-z,normal,535,85,80,135,70,75,90,83,0,ranged,0,0,,,,,beamer,high,hyper-beam psybeam signal-beam,0,4,,beamer,pattern,
+475,gallade,psychic/fighting,518,68,125,65,65,115,80,73,0,melee,0,0,healer,medium,heal-pulse life-dew,shielder,beamer,low,psybeam,1,4,,healer,support,
+476,probopass,rock/steel,525,60,55,75,145,150,40,22,0,ranged,0,0,shielder,hand,in current hand list wide-guard sturdy,,zoner,low,rock-slide discharge,0,4,shielder,shielder,support,
+477,dusknoir,ghost,525,45,100,65,135,135,45,29,0,melee,0,0,,,,,,,,0,4,,plain,none,
+478,froslass,ice/ghost,480,70,80,80,70,70,110,95,0,melee,1,0,shielder,medium,aurora-veil,,zoner,low,blizzard,1,4,,shielder,support,
+479,rotom,electric/ghost,440,50,50,95,77,77,91,83,0,ranged,0,0,,,,,beamer,low,charge-beam,0,4,,zoner,balanced,beamer:1 zoner:1
+480,uxie,psychic,580,75,75,75,130,130,95,87,1,melee,1,0,,,,,beamer,low,psybeam,1,4,,,,
+481,mesprit,psychic,580,80,105,105,105,105,80,73,1,melee,1,0,,,,,beamer,low,psybeam,1,4,,,,
+482,azelf,psychic,580,75,125,125,70,70,115,96,1,melee,1,0,bomber,medium,self-destruct explosion,,beamer,low,psybeam,1,4,,,,
+483,dialga,steel/dragon,680,100,120,150,120,100,90,83,1,ranged,0,0,,,,,,,,0,4,,,,
+484,palkia,water/dragon,680,90,120,150,100,120,100,90,1,ranged,0,0,,,,,,,,0,4,,,,
+485,heatran,fire/steel,600,91,90,130,106,106,77,69,1,ranged,0,0,,,,,zoner,medium,lava-plume heat-wave,0,4,,,,
+486,regigigas,normal,670,110,160,80,110,110,100,90,1,melee,0,0,shielder,medium,wide-guard,,zoner,low,bulldoze,1,4,,,,
+487,giratina,ghost/dragon,680,150,100,100,120,120,90,83,1,melee,1,0,,,,,,,,0,4,,,,
+488,cresselia,psychic,580,120,70,75,110,120,85,79,1,ranged,1,0,shielder,medium,safeguard,,beamer,low,psybeam aurora-beam,0,4,,,,
+489,phione,water,480,80,80,80,80,80,80,73,1,melee,1,0,,,,,beamer,low,bubble-beam,1,4,,,,
+490,manaphy,water,600,100,100,100,100,100,100,90,1,melee,1,0,,,,,beamer,low,bubble-beam,1,4,,,,
+491,darkrai,dark,600,70,90,135,90,90,125,99,1,ranged,0,0,,,,,,,,0,4,,,,
+492,shaymin,grass,600,100,100,100,100,100,100,90,1,melee,1,0,healer,medium,aromatherapy natural-cure,,fan,low,magical-leaf,1,4,,,,
+493,arceus,normal,720,120,120,120,120,120,120,97,1,melee,1,0,,,,,beamer,low,hyper-beam,1,4,,,,
+494,victini,psychic/fire,600,100,100,100,100,100,100,90,1,melee,1,0,,,,,charger,high,flare-blitz double-edge headbutt,0,5,,,,
+495,snivy,grass,308,45,45,45,55,55,63,51,0,melee,1,0,,,,,fan,low,leaf-tornado magical-leaf,1,5,,plain,none,
+496,servine,grass,413,60,60,60,75,75,83,75,0,melee,1,0,,,,,fan,low,leaf-tornado magical-leaf,1,5,,plain,none,
+497,serperior,grass,528,75,75,75,95,95,113,95,0,melee,1,0,,,,,fan,low,leaf-tornado magical-leaf,1,5,,plain,none,
+498,tepig,fire,308,65,63,45,45,45,45,29,0,melee,0,0,shielder,low,thick-fat,,charger,high,flare-blitz head-smash take-down,0,5,,charger,pattern,
+499,pignite,fire/fighting,418,90,93,70,55,55,55,41,0,melee,0,0,shielder,low,thick-fat,,charger,high,flare-blitz head-smash take-down,0,5,,charger,pattern,
+500,emboar,fire/fighting,528,110,123,100,65,65,65,57,0,melee,0,0,,,,,charger,high,flare-blitz head-smash take-down,0,5,,charger,pattern,
+501,oshawott,water,308,55,55,63,45,45,45,29,0,ranged,1,0,shielder,low,shell-armor,,,,,0,5,,shielder,balanced,shielder:1
+502,dewott,water,413,75,75,83,60,60,60,49,0,ranged,1,0,shielder,low,shell-armor,,,,,0,5,,shielder,balanced,shielder:1
+503,samurott,water,528,95,100,108,85,70,70,64,0,ranged,1,0,shielder,low,shell-armor,,,,,0,5,,shielder,balanced,shielder:1
+504,patrat,normal,255,45,55,35,39,39,42,23,0,melee,0,0,,,,,,,,0,5,,plain,none,
+505,watchog,normal,420,60,85,60,69,69,77,69,0,melee,0,0,,,,,,,,0,5,,plain,none,
+506,lillipup,normal,275,45,60,25,45,45,55,41,0,melee,0,0,,,,,charger,low,take-down giga-impact,0,5,,charger,balanced,charger:2
+507,herdier,normal,370,65,80,35,65,65,60,49,0,melee,0,0,,,,,charger,low,take-down giga-impact,0,5,,charger,balanced,charger:2
+508,stoutland,normal,500,85,110,45,90,90,80,73,0,melee,0,0,summoner,medium,final stage + helping-hand,,charger,low,take-down giga-impact,0,5,,summoner,support,
+509,purrloin,dark,281,41,50,50,37,37,66,57,0,melee,1,0,,,,,,,,0,5,,plain,none,
+510,liepard,dark,446,64,88,88,50,50,106,93,0,melee,1,0,,,,,,,,0,5,,plain,none,
+511,pansage,grass,316,50,53,53,48,48,64,51,0,melee,1,0,,,,,,,,0,5,,plain,none,
+512,simisage,grass,498,75,98,98,63,63,101,91,0,melee,1,0,,,,,,,,0,5,,plain,none,
+513,pansear,fire,316,50,53,53,48,48,64,51,0,melee,1,0,,,,,,,,0,5,,plain,none,
+515,panpour,water,316,50,53,53,48,48,64,51,0,melee,1,0,,,,,,,,0,5,,plain,none,
+517,munna,psychic,292,76,25,67,45,55,24,5,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+518,musharna,psychic,487,116,55,107,85,95,29,7,0,ranged,0,1,,,,,beamer,low,psybeam,0,5,,tank,stat,
+519,pidove,normal/flying,264,50,55,36,50,30,43,24,0,melee,0,0,,,,,fan,low,air-cutter,1,5,,jumper,balanced,jumper:1
+521,unfezant,normal/flying,488,80,115,65,80,55,93,84,0,melee,0,0,,,,,fan,low,air-cutter,1,5,,jumper,balanced,jumper:1
+524,roggenrola,rock,280,55,75,25,85,25,15,2,0,melee,0,0,bomber,medium,explosion,shielder,zoner,low,rock-slide,1,5,,bomber,support,
+525,boldore,rock,390,70,105,50,105,40,20,4,0,melee,0,0,bomber,medium,explosion,shielder,zoner,low,rock-slide,1,5,,bomber,support,
+526,gigalith,rock,515,85,135,60,130,80,25,6,0,melee,0,0,bomber,medium,explosion,shielder,zoner,low,rock-slide,1,5,,bomber,support,
+527,woobat,psychic/flying,323,65,45,55,43,43,72,65,0,ranged,1,0,,,,,fan,medium,air-cutter,0,5,,fan,pattern,
+528,swoobat,psychic/flying,425,67,57,77,55,55,114,95,0,ranged,0,0,,,,,fan,medium,air-cutter,0,5,,fan,pattern,
+529,drilbur,ground,328,60,85,30,40,45,68,59,0,melee,0,0,,,,,zoner,low,earthquake fissure rock-slide,1,5,,plain,none,
+530,excadrill,ground/steel,508,110,135,50,60,65,88,80,0,melee,0,0,,,,,zoner,low,earthquake fissure rock-slide,1,5,,plain,none,
+531,audino,normal,445,103,60,60,86,86,50,37,0,melee,1,1,healer,hand,in current hand list heal-pulse life-dew healer regenerator,,charger,low,double-edge take-down,0,5,healer,healer,support,
+532,timburr,fighting,305,75,80,25,55,35,35,16,0,melee,0,0,,,,,zoner,low,rock-slide,1,5,,plain,none,
+533,gurdurr,fighting,405,85,105,40,85,50,40,22,0,melee,0,0,,,,,zoner,low,rock-slide,1,5,,plain,none,
+534,conkeldurr,fighting,505,105,140,55,95,65,45,29,0,melee,0,1,,,,,zoner,low,rock-slide,1,5,,tank,stat,
+535,tympole,water,294,50,50,50,40,40,64,51,0,melee,1,0,,,,,beamer,low,bubble-beam,1,5,,plain,none,
+536,palpitoad,water/ground,384,75,65,65,55,55,69,59,0,melee,1,0,,,,,beamer,low,bubble-beam,1,5,,plain,none,
+537,seismitoad,water/ground,509,105,95,85,75,75,74,66,0,melee,1,0,,,,,beamer,low,bubble-beam,1,5,,plain,none,
+539,sawk,fighting,465,75,125,30,75,75,85,79,0,melee,0,0,shielder,low,sturdy,,,,,0,5,,shielder,balanced,shielder:1
+540,sewaddle,bug/grass,310,45,53,40,70,60,42,23,0,melee,1,0,,,,,fan,low,razor-leaf,1,5,,plain,none,
+541,swadloon,bug/grass,380,55,63,50,90,80,42,23,0,melee,1,0,,,,,fan,low,razor-leaf,1,5,,plain,none,
+542,leavanny,bug/grass,500,75,103,70,80,80,92,84,0,melee,0,0,summoner,medium,final stage + helping-hand,,fan,low,razor-leaf,1,5,,summoner,support,
+543,venipede,bug/poison,260,30,45,30,59,39,57,42,0,melee,1,0,,,,,charger,low,double-edge take-down,0,5,,charger,balanced,charger:2
+544,whirlipede,bug/poison,360,40,55,40,99,79,47,30,0,melee,1,0,,,,,charger,low,double-edge take-down,0,5,,charger,balanced,charger:2
+545,scolipede,bug/poison,485,60,100,55,89,69,112,95,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,charger,low,double-edge take-down,0,5,,summoner,balanced,charger:2 summoner:1
+546,cottonee,grass/fairy,280,40,27,37,60,50,66,57,0,ranged,1,0,,,,,beamer,medium,solar-beam,0,5,,beamer,pattern,
+547,whimsicott,grass/fairy,480,60,67,77,85,75,116,96,0,ranged,1,0,summoner,medium,final stage + helping-hand,,beamer,medium,solar-beam,0,5,,summoner,support,
+548,petilil,grass,280,45,35,70,50,50,30,11,0,ranged,0,0,healer,medium,aromatherapy,,fan,low,magical-leaf,0,5,,healer,support,
+549,lilligant,grass,480,70,60,110,75,75,90,83,0,ranged,0,0,healer,medium,aromatherapy,summoner,fan,low,magical-leaf,0,5,,healer,support,
+550,basculin,water,460,70,92,80,65,55,98,88,0,melee,1,0,,,,,charger,high,wave-crash head-smash double-edge take-down headbutt,0,5,,charger,pattern,
+551,sandile,ground/dark,292,50,72,35,35,35,65,57,0,melee,0,0,,,,,zoner,low,earthquake sand-tomb,1,5,,plain,none,
+552,krokorok,ground/dark,351,60,82,45,45,45,74,66,0,melee,0,0,,,,,zoner,low,earthquake sand-tomb,1,5,,plain,none,
+553,krookodile,ground/dark,519,95,117,65,80,70,92,84,0,melee,0,0,summoner,high,hand list -> minion 551,,zoner,low,earthquake sand-tomb,1,5,,summoner,support,
+554,darumaka,fire,315,70,90,15,45,45,50,37,0,melee,0,0,,,,,charger,medium,flare-blitz headbutt,0,5,,charger,pattern,
+555,darmanitan,fire,480,105,140,30,55,55,95,87,0,melee,0,0,,,,,charger,medium,flare-blitz headbutt,0,5,,charger,pattern,
+556,maractus,grass,461,75,86,106,67,67,60,49,0,ranged,0,0,,,,,fan,medium,pin-missile needle-arm,0,5,,fan,pattern,
+557,dwebble,bug/rock,325,50,65,35,85,35,55,41,0,melee,0,0,shielder,low,sturdy shell-armor,,charger,medium,rock-wrecker,0,5,,charger,pattern,
+559,scraggy,dark/fighting,348,50,75,35,70,70,48,30,0,melee,0,0,healer,low,shed-skin,,charger,medium,head-smash headbutt,0,5,,charger,pattern,
+560,scrafty,dark/fighting,488,65,90,45,115,115,58,43,0,melee,0,0,summoner,medium,final stage + beat-up,healer,charger,medium,head-smash headbutt,0,5,,summoner,support,
+561,sigilyph,psychic/flying,490,72,58,103,80,80,97,88,0,ranged,0,0,shielder,high,reflect light-screen magic-guard,,fan,medium,air-cutter,0,5,,shielder,support,
+562,yamask,ghost,303,38,30,55,85,65,30,11,0,ranged,0,0,,,,,,,,0,5,,plain,none,
+563,cofagrigus,ghost,483,58,50,95,145,105,30,11,0,ranged,0,0,,,,,,,,0,5,,plain,none,
+566,archen,rock/flying,401,55,112,74,45,45,70,64,0,melee,0,0,,,,,zoner,low,rock-slide,1,5,,plain,none,
+567,archeops,rock/flying,567,75,140,112,65,65,110,95,0,melee,0,0,,,,,zoner,low,rock-slide,1,5,,plain,none,
+568,trubbish,poison,329,50,50,40,62,62,65,57,0,melee,1,0,bomber,high,explosion aftermath,,charger,low,take-down,0,5,,bomber,support,
+569,garbodor,poison,474,80,95,60,82,82,75,68,0,melee,0,0,bomber,high,explosion aftermath,,charger,low,take-down,0,5,,bomber,support,
+570,zorua,dark,330,40,65,80,40,40,65,57,0,ranged,1,0,,,,,,,,0,5,,plain,none,
+571,zoroark,dark,510,60,105,120,60,60,105,93,0,ranged,1,0,,,,,,,,0,5,,plain,none,
+572,minccino,normal,300,55,50,40,40,40,75,68,0,melee,1,0,,,,,,,,0,5,,plain,none,
+573,cinccino,normal,470,75,95,65,60,60,115,96,0,melee,0,0,summoner,medium,final stage + helping-hand,,fan,low,bullet-seed rock-blast,1,5,,summoner,support,
+574,gothita,psychic,290,45,30,55,50,65,45,29,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+575,gothorita,psychic,390,60,45,75,70,85,55,41,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+576,gothitelle,psychic,490,70,55,95,95,110,65,57,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+577,solosis,psychic,290,45,30,105,40,50,20,4,0,ranged,0,0,shielder,high,reflect light-screen magic-guard,healer,beamer,low,psybeam,0,5,,shielder,support,
+578,duosion,psychic,370,65,40,125,50,60,30,11,0,ranged,0,0,shielder,high,reflect light-screen magic-guard,healer,beamer,low,psybeam,0,5,,shielder,support,
+579,reuniclus,psychic,490,110,65,125,75,85,30,11,0,ranged,0,1,shielder,high,reflect light-screen magic-guard,healer,beamer,low,psybeam,0,5,,shielder,support,
+580,ducklett,water/flying,305,62,44,44,50,50,55,41,0,melee,1,0,,,,,charger,medium,brave-bird,0,5,,charger,pattern,
+581,swanna,water/flying,473,75,87,87,63,63,98,88,0,melee,1,0,,,,,charger,medium,brave-bird,0,5,,charger,pattern,
+582,vanillite,ice,305,36,50,65,50,60,44,25,0,ranged,1,0,healer,low,ice-body,,fan,medium,icicle-spear,0,5,,fan,pattern,
+583,vanillish,ice,395,51,65,80,65,75,59,44,0,ranged,1,0,healer,low,ice-body,,fan,medium,icicle-spear,0,5,,fan,pattern,
+584,vanilluxe,ice,535,71,95,110,85,95,79,70,0,ranged,1,0,healer,low,ice-body,,fan,medium,icicle-spear,0,5,,fan,pattern,
+585,deerling,normal/grass,335,60,60,40,50,50,75,68,0,melee,0,0,healer,medium,aromatherapy,,beamer,low,solar-beam,1,5,,healer,support,
+586,sawsbuck,normal/grass,475,80,100,60,70,70,95,87,0,melee,0,0,healer,medium,aromatherapy,,beamer,low,solar-beam,1,5,,healer,support,
+587,emolga,electric/flying,428,55,75,75,60,60,103,91,0,melee,1,0,shielder,medium,light-screen,,zoner,low,discharge,1,5,,shielder,support,
+588,karrablast,bug,315,50,75,40,45,45,60,49,0,melee,0,0,healer,low,shed-skin,,charger,low,double-edge take-down headbutt,0,5,,healer,balanced,charger:3 healer:1
+589,escavalier,bug/steel,495,70,135,60,105,105,20,4,0,melee,0,0,shielder,low,shell-armor,summoner,charger,low,double-edge take-down giga-impact headbutt,0,5,,summoner,balanced,charger:4 shielder:1 summoner:1
+590,foongus,grass/poison,294,69,55,55,45,55,15,2,0,melee,1,0,healer,medium,regenerator,,beamer,low,solar-beam,1,5,,healer,support,
+594,alomomola,water,470,165,75,40,80,45,65,57,0,melee,0,0,healer,hand,in current hand list heal-pulse wish healer regenerator,shielder,,,,0,5,healer,healer,support,
+595,joltik,bug/electric,319,50,47,57,50,50,65,57,0,ranged,1,0,,,,,beamer,low,signal-beam,0,5,,zoner,balanced,beamer:1 zoner:1
+596,galvantula,bug/electric,472,70,77,97,60,60,108,93,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,beamer,low,signal-beam,0,5,,zoner,balanced,summoner:1 beamer:1 zoner:1
+597,ferroseed,grass/steel,305,44,50,24,91,86,10,1,0,melee,0,0,bomber,medium,self-destruct explosion,,fan,low,pin-missile,1,5,,bomber,support,
+598,ferrothorn,grass/steel,489,74,94,54,131,116,20,4,0,melee,0,0,bomber,medium,self-destruct explosion,,fan,low,pin-missile,1,5,,bomber,support,
+599,klink,steel,300,40,55,45,70,60,30,11,0,melee,1,0,,,,,beamer,low,hyper-beam charge-beam,1,5,,plain,none,
+600,klang,steel,440,60,80,70,95,85,50,37,0,melee,1,0,,,,,beamer,low,hyper-beam charge-beam,1,5,,plain,none,
+601,klinklang,steel,520,60,100,70,115,85,90,83,0,melee,0,0,,,,,beamer,low,hyper-beam charge-beam,1,5,,plain,none,
+602,tynamo,electric,275,35,55,45,40,40,60,49,0,melee,1,0,,,,,beamer,low,charge-beam,1,5,,plain,none,
+603,eelektrik,electric,405,65,85,75,70,70,40,22,0,melee,1,0,,,,,charger,medium,wild-charge headbutt,0,5,,charger,pattern,
+604,eelektross,electric,515,85,115,105,80,80,50,37,0,melee,1,0,,,,,charger,medium,wild-charge headbutt,0,5,,charger,pattern,
+605,elgyem,psychic,335,55,55,85,55,55,30,11,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+606,beheeyem,psychic,485,75,75,125,75,95,40,22,0,ranged,0,0,,,,,beamer,low,psybeam,0,5,,beamer,balanced,beamer:1
+607,litwick,ghost/fire,275,50,30,65,55,55,20,4,0,ranged,0,0,,,,,,,,0,5,,plain,none,
+608,lampent,ghost/fire,370,60,40,95,60,60,55,41,0,ranged,0,0,,,,,,,,0,5,,plain,none,
+609,chandelure,ghost/fire,520,60,55,145,90,90,80,73,0,ranged,0,0,,,,,,,,0,5,,plain,none,
+610,axew,dragon,320,46,87,30,60,40,57,42,0,melee,0,0,,,,,charger,low,giga-impact,0,5,,charger,balanced,charger:1
+611,fraxure,dragon,410,66,117,40,70,50,67,58,0,melee,0,0,,,,,charger,low,giga-impact,0,5,,charger,balanced,charger:1
+612,haxorus,dragon,540,76,147,60,90,70,97,88,0,melee,0,0,,,,,charger,low,giga-impact,0,5,,charger,balanced,charger:1
+613,cubchoo,ice,305,55,70,60,40,40,40,22,0,melee,1,0,,,,,zoner,low,blizzard,1,5,,plain,none,
+614,beartic,ice,505,95,130,70,80,80,50,37,0,melee,0,1,,,,,zoner,low,blizzard,1,5,,tank,stat,
+615,cryogonal,ice,515,80,50,95,50,135,105,93,0,ranged,0,0,shielder,medium,reflect light-screen,,beamer,high,solar-beam ice-beam aurora-beam,0,5,,shielder,support,
+617,accelgor,bug,495,80,70,100,40,60,145,100,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,fan,medium,water-shuriken,0,5,,fan,pattern,
+619,mienfoo,fighting,350,45,85,55,50,50,65,57,0,melee,0,0,healer,medium,regenerator,,jumper,high,bounce high-jump-kick jump-kick,0,5,,healer,support,
+620,mienshao,fighting,510,65,125,95,60,60,105,93,0,melee,0,0,healer,medium,regenerator,shielder,jumper,high,bounce high-jump-kick jump-kick,0,5,,healer,support,
+621,druddigon,dragon,485,77,120,60,90,90,48,30,0,melee,0,0,,,,,,,,0,5,,plain,none,
+622,golett,ground/ghost,303,59,74,35,50,50,35,16,0,melee,0,0,,,,,zoner,low,earthquake magnitude,1,5,,plain,none,
+623,golurk,ground/ghost,483,89,124,55,80,80,55,41,0,melee,0,0,,,,,zoner,low,earthquake magnitude,1,5,,plain,none,
+624,pawniard,dark/steel,340,45,85,40,70,40,60,49,0,melee,0,0,,,,,,,,0,5,,plain,none,
+625,bisharp,dark/steel,490,65,125,60,100,70,70,64,0,melee,0,0,,,,,,,,0,5,,plain,none,
+627,rufflet,normal/flying,350,70,83,37,50,50,60,49,0,melee,0,0,,,,,charger,medium,brave-bird double-edge,0,5,,charger,pattern,
+628,braviary,normal/flying,510,100,123,57,75,75,80,73,0,melee,0,0,,,,,jumper,medium,sky-drop sky-attack,0,5,,jumper,pattern,
+629,vullaby,dark/flying,370,70,55,45,75,65,60,49,0,melee,1,0,,,,,charger,medium,brave-bird,0,5,,charger,pattern,
+630,mandibuzz,dark/flying,510,110,65,55,105,95,80,73,0,melee,1,0,,,,,charger,medium,brave-bird,0,5,,charger,pattern,
+631,heatmor,fire,484,85,97,105,66,66,65,57,0,ranged,1,0,,,,,charger,low,flare-blitz,1,5,,plain,none,
+632,durant,bug/steel,484,58,109,48,112,48,109,94,0,melee,0,0,,,,,,,,0,5,,plain,none,
+633,deino,dark/dragon,300,52,65,45,50,50,38,17,0,melee,0,0,,,,,charger,low,headbutt,0,5,,charger,balanced,charger:1
+634,zweilous,dark/dragon,420,72,85,65,70,70,58,43,0,melee,0,0,,,,,charger,low,headbutt,0,5,,charger,balanced,charger:1
+635,hydreigon,dark/dragon,600,92,105,125,90,90,98,88,0,ranged,0,0,,,,,beamer,medium,hyper-beam,0,5,,beamer,pattern,
+636,larvesta,bug/fire,360,55,85,50,55,55,60,49,0,melee,0,0,,,,,charger,high,flare-blitz double-edge take-down,0,5,,charger,pattern,
+637,volcarona,bug/fire,550,85,60,135,65,105,100,90,0,ranged,0,0,summoner,high,hand list -> minion 636,,charger,low,flare-blitz double-edge take-down,1,5,,summoner,support,
+638,cobalion,steel/fighting,580,91,90,90,129,72,108,93,1,melee,1,0,,,,,charger,low,take-down,0,5,,,,
+639,terrakion,rock/fighting,580,91,129,72,90,90,108,93,1,melee,0,0,,,,,zoner,low,rock-slide,1,5,,,,
+640,virizion,grass/fighting,580,91,90,90,72,129,108,93,1,melee,1,0,,,,,fan,low,magical-leaf,1,5,,,,
+641,tornadus,flying,580,79,115,125,70,80,111,95,1,ranged,1,0,,,,,fan,medium,air-cutter,0,5,,,,
+642,thundurus,electric/flying,580,79,115,125,70,80,111,95,1,ranged,1,0,,,,,zoner,low,discharge,0,5,,,,
+643,reshiram,dragon/fire,680,100,120,150,100,120,90,83,1,ranged,0,0,,,,,,,,0,5,,,,
+644,zekrom,dragon/electric,680,100,150,120,120,100,90,83,1,melee,0,0,,,,,,,,0,5,,,,
+645,landorus,ground/flying,600,89,125,115,90,80,101,91,1,melee,1,0,,,,,zoner,low,earthquake fissure bulldoze rock-slide sand-tomb,1,5,,,,
+646,kyurem,dragon/ice,660,125,130,130,90,90,95,87,1,melee,1,0,,,,,beamer,low,ice-beam,1,5,,,,
+647,keldeo,water/fighting,580,91,72,129,90,90,108,93,1,ranged,0,0,,,,,beamer,low,bubble-beam,0,5,,,,
+648,meloetta,normal/psychic,600,100,77,128,77,128,90,83,1,ranged,0,0,,,,,beamer,low,psybeam,0,5,,,,
+649,genesect,bug/steel,600,71,120,120,95,95,99,88,1,melee,1,0,bomber,medium,self-destruct,,beamer,low,hyper-beam signal-beam,1,5,,,,
+650,chespin,grass,313,56,61,48,65,45,38,17,0,melee,1,0,,,,,charger,medium,wood-hammer take-down,0,6,,charger,pattern,
+651,quilladin,grass,405,61,78,56,95,58,57,42,0,melee,0,0,,,,,fan,low,pin-missile needle-arm,1,6,,charger,balanced,charger:3
+652,chesnaught,grass/fighting,530,88,107,74,122,75,64,51,0,melee,0,0,,,,,charger,high,wood-hammer take-down giga-impact,0,6,,charger,pattern,
+653,fennekin,fire,307,40,45,62,40,60,60,49,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,psybeam,0,6,,shielder,support,
+654,braixen,fire,409,59,59,90,58,70,73,66,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,psybeam,0,6,,shielder,support,
+655,delphox,fire/psychic,534,75,69,114,72,100,104,91,0,ranged,0,0,shielder,medium,light-screen,,beamer,low,psybeam,0,6,,shielder,support,
+656,froakie,water,314,41,56,62,40,44,71,64,0,ranged,1,0,,,,,jumper,low,bounce,1,6,,plain,none,
+657,frogadier,water,405,54,63,83,52,56,97,88,0,ranged,0,0,,,,,jumper,low,bounce,1,6,,plain,none,
+658,greninja,water/dark,530,72,95,103,67,71,122,98,0,ranged,1,0,,,,,fan,medium,water-shuriken,0,6,,fan,pattern,
+659,bunnelby,normal,237,38,36,32,38,36,57,42,0,melee,1,0,,,,,zoner,low,earthquake bulldoze,1,6,,jumper,balanced,jumper:2 charger:1
+660,diggersby,normal/ground,423,85,56,50,77,77,78,70,0,melee,1,0,,,,,zoner,low,earthquake bulldoze,1,6,,jumper,balanced,jumper:2 charger:1
+661,fletchling,normal/flying,278,45,50,40,43,38,62,50,0,melee,1,0,,,,,jumper,low,fly,0,6,,jumper,balanced,jumper:1
+662,fletchinder,fire/flying,382,62,73,56,55,52,84,75,0,melee,0,0,,,,,jumper,low,fly,0,6,,jumper,balanced,jumper:1
+663,talonflame,fire/flying,499,78,81,74,71,69,126,99,0,melee,1,0,,,,,charger,high,flare-blitz brave-bird,0,6,,charger,pattern,
+664,scatterbug,bug,200,38,35,27,40,25,35,16,0,melee,1,0,,,,,,,,0,6,,plain,none,
+665,spewpa,bug,213,45,22,27,60,30,29,7,0,ranged,1,0,healer,low,shed-skin,,,,,0,6,,healer,balanced,healer:1
+666,vivillon,bug/flying,411,80,52,90,50,50,89,80,0,ranged,0,0,shielder,medium,light-screen safeguard,healer,beamer,low,psybeam,0,6,,shielder,support,
+667,litleo,fire/normal,369,62,50,73,58,54,72,65,0,ranged,0,0,,,,,charger,low,take-down headbutt,1,6,,plain,none,
+669,flabebe,fairy,303,44,38,61,39,79,42,23,0,ranged,0,0,healer,medium,wish aromatherapy,shielder,fan,medium,razor-leaf magical-leaf,0,6,,healer,support,
+670,floette,fairy,371,54,45,75,47,98,52,38,0,ranged,0,0,healer,medium,wish aromatherapy,shielder,fan,medium,razor-leaf magical-leaf,0,6,,healer,support,
+671,florges,fairy,552,78,65,112,68,154,75,68,0,ranged,0,0,healer,medium,wish aromatherapy,shielder,beamer,medium,solar-beam,0,6,,healer,support,
+672,skiddo,grass,350,66,65,62,48,57,52,38,0,melee,1,0,,,,,fan,low,razor-leaf,1,6,,charger,balanced,charger:2
+673,gogoat,grass,531,123,100,97,62,81,68,59,0,melee,1,0,,,,,zoner,low,earthquake bulldoze,1,6,,charger,balanced,charger:2
+674,pancham,fighting,348,67,82,46,62,48,43,24,0,melee,0,0,,,,,,,,0,6,,plain,none,
+675,pangoro,fighting/dark,495,95,124,69,78,71,58,43,0,melee,0,0,,,,,,,,0,6,,plain,none,
+676,furfrou,normal,472,75,80,65,60,90,102,91,0,melee,1,0,shielder,low,fur-coat,,charger,low,take-down headbutt,0,6,,charger,balanced,charger:2 shielder:1
+677,espurr,psychic,355,62,48,63,54,60,68,59,0,ranged,1,0,shielder,medium,reflect light-screen,,beamer,low,psybeam,0,6,,shielder,support,
+678,meowstic,psychic,466,74,48,83,76,81,104,91,0,ranged,0,0,shielder,medium,reflect light-screen,summoner,beamer,low,psybeam,0,6,,shielder,support,
+679,honedge,steel/ghost,325,45,80,35,100,37,28,7,0,melee,0,0,,,,,,,,0,6,,plain,none,
+680,doublade,steel/ghost,448,59,110,45,150,49,35,16,0,melee,0,0,,,,,,,,0,6,,plain,none,
+681,aegislash,steel/ghost,500,60,50,50,140,140,60,49,0,melee,1,0,,,,,charger,medium,head-smash,0,6,,charger,pattern,
+682,spritzee,fairy,341,78,52,63,60,65,23,5,0,ranged,1,0,healer,high,aromatherapy healer,,,,,0,6,,healer,support,
+684,swirlix,fairy,341,62,48,59,66,57,49,31,0,ranged,1,0,healer,medium,wish aromatherapy,shielder,,,,0,6,,healer,support,
+685,slurpuff,fairy,480,82,80,85,86,75,72,65,0,ranged,1,0,healer,medium,wish aromatherapy,shielder,,,,0,6,,healer,support,
+686,inkay,dark/psychic,288,53,54,37,53,46,45,29,0,melee,0,0,shielder,medium,reflect light-screen,,beamer,low,psybeam,1,6,,shielder,support,
+687,malamar,dark/psychic,482,86,92,68,88,75,73,66,0,melee,0,0,shielder,medium,reflect light-screen,,beamer,low,psybeam,1,6,,shielder,support,
+688,binacle,rock/water,306,42,52,39,67,56,50,37,0,melee,1,0,,,,,,,,0,6,,plain,none,
+689,barbaracle,rock/water,500,72,105,54,115,86,68,59,0,melee,0,0,,,,,,,,0,6,,plain,none,
+690,skrelp,poison/water,320,50,60,60,60,60,30,11,0,melee,1,0,,,,,,,,0,6,,plain,none,
+691,dragalge,poison/dragon,494,65,75,97,90,123,44,25,0,ranged,0,0,,,,,,,,0,6,,plain,none,
+692,clauncher,water,330,50,53,58,62,63,44,25,0,ranged,1,0,,,,,jumper,low,bounce,1,6,,beamer,balanced,beamer:1 zoner:1
+693,clawitzer,water,500,71,73,120,88,89,59,44,0,ranged,0,0,healer,medium,heal-pulse,,jumper,low,bounce,1,6,,healer,support,
+694,helioptile,electric/normal,289,44,38,61,33,43,70,64,0,ranged,0,0,,,,,zoner,low,bulldoze,0,6,,zoner,balanced,zoner:1
+695,heliolisk,electric/normal,481,62,55,109,52,94,109,94,0,ranged,0,0,,,,,zoner,low,bulldoze discharge,0,6,,zoner,balanced,zoner:2
+696,tyrunt,rock/dragon,362,58,89,45,77,45,48,30,0,melee,0,0,shielder,low,sturdy,,zoner,low,earthquake rock-slide,1,6,,shielder,balanced,shielder:1
+697,tyrantrum,rock/dragon,521,82,121,69,119,59,71,64,0,melee,0,0,,,,,zoner,low,earthquake rock-slide,1,6,,charger,balanced,charger:3
+698,amaura,rock/ice,362,77,59,67,50,63,46,29,0,ranged,1,0,shielder,medium,light-screen,,beamer,high,hyper-beam ice-beam aurora-beam,0,6,,shielder,support,
+699,aurorus,rock/ice,521,123,77,99,72,92,58,43,0,ranged,0,0,shielder,medium,light-screen,,beamer,high,hyper-beam ice-beam aurora-beam,0,6,,shielder,support,
+700,sylveon,fairy,525,95,65,110,65,130,60,49,0,ranged,0,0,shielder,medium,light-screen,summoner,charger,low,double-edge take-down,1,6,,shielder,support,
+701,hawlucha,fighting/flying,500,78,92,74,75,63,118,97,0,melee,0,0,,,,,jumper,high,bounce high-jump-kick sky-drop flying-press sky-attack,0,6,,jumper,pattern,
+702,dedenne,electric/fairy,431,67,58,81,57,67,101,91,0,ranged,0,0,,,,,beamer,low,charge-beam,0,6,,beamer,balanced,beamer:1 zoner:1
+703,carbink,rock/fairy,500,50,50,50,150,150,50,37,0,melee,1,0,shielder,hand,in current hand list reflect light-screen safeguard sturdy,,zoner,low,rock-slide,1,6,shielder,shielder,support,
+704,goomy,dragon,300,45,50,55,35,75,40,22,0,ranged,1,0,,,,,zoner,low,muddy-water,0,6,,zoner,balanced,zoner:1
+705,sliggoo,dragon,452,68,75,83,53,113,60,49,0,ranged,1,0,,,,,zoner,low,muddy-water,0,6,,zoner,balanced,zoner:1
+706,goodra,dragon,600,90,100,110,70,150,80,73,0,ranged,1,0,,,,,zoner,low,muddy-water,0,6,,zoner,balanced,zoner:1
+707,klefki,steel/fairy,470,57,80,80,91,87,75,68,0,melee,1,0,,,,,zoner,low,spikes,1,6,,plain,none,
+708,phantump,ghost/grass,309,43,70,50,48,60,38,17,0,melee,0,0,healer,low,natural-cure,,charger,medium,wood-hammer,0,6,,charger,pattern,
+709,trevenant,ghost/grass,474,85,110,65,76,82,56,42,0,melee,0,0,healer,low,natural-cure,,charger,medium,wood-hammer,0,6,,charger,pattern,
+710,pumpkaboo,ghost/grass,335,49,66,44,70,55,51,37,0,melee,0,0,,,,,fan,low,razor-leaf bullet-seed,1,6,,plain,none,
+711,gourgeist,ghost/grass,494,65,90,58,122,75,84,75,0,melee,0,0,bomber,medium,explosion,,fan,low,razor-leaf bullet-seed,1,6,,bomber,support,
+712,bergmite,ice,304,55,69,32,85,35,28,7,0,melee,0,0,healer,low,ice-body,shielder,charger,low,double-edge take-down,0,6,,healer,balanced,charger:2 healer:1 shielder:1
+713,avalugg,ice,514,95,117,44,184,46,28,7,0,melee,0,1,shielder,medium,wide-guard sturdy,healer,charger,low,double-edge take-down,0,6,,shielder,support,
+714,noibat,flying/dragon,245,40,30,45,35,40,55,41,0,ranged,1,0,,,,,fan,medium,air-cutter,0,6,,fan,pattern,
+715,noivern,flying/dragon,535,85,70,97,80,80,123,98,0,ranged,0,0,,,,,fan,medium,air-cutter,0,6,,fan,pattern,
+716,xerneas,fairy,680,126,131,131,95,98,99,88,1,melee,1,0,healer,medium,heal-pulse aromatherapy,shielder,charger,low,take-down giga-impact,0,6,,,,
+717,yveltal,dark/flying,680,126,131,131,95,98,99,88,1,melee,1,0,,,,,beamer,low,hyper-beam,1,6,,,,
+718,zygarde,dragon/ground,600,108,100,81,121,95,95,87,1,melee,0,0,shielder,medium,safeguard,,zoner,low,earthquake thousand-arrows thousand-waves bulldoze,1,6,,,,
+719,diancie,rock/fairy,600,50,100,100,150,150,50,37,1,melee,1,0,shielder,medium,reflect light-screen safeguard,,zoner,low,rock-slide,1,6,,,,
+720,hoopa,psychic/ghost,600,80,110,150,60,130,70,64,1,ranged,0,0,shielder,medium,light-screen,,beamer,low,psybeam,0,6,,,,
+721,volcanion,fire/water,600,80,110,130,120,90,70,64,1,ranged,0,0,bomber,medium,explosion,,charger,low,flare-blitz take-down,1,6,,,,
+722,rowlet,grass/flying,320,68,55,50,55,50,42,23,0,melee,1,0,,,,,fan,low,razor-leaf magical-leaf,1,7,,charger,balanced,charger:2
+723,dartrix,grass/flying,420,78,75,70,75,70,52,38,0,melee,1,0,,,,,fan,low,razor-leaf magical-leaf,1,7,,charger,balanced,charger:2
+724,decidueye,grass/ghost,530,78,107,100,75,100,70,64,0,melee,1,0,,,,,fan,low,razor-leaf,1,7,,charger,balanced,charger:2
+725,litten,fire,320,45,65,60,40,40,70,64,0,melee,1,0,,,,,charger,medium,flare-blitz,0,7,,charger,pattern,
+726,torracat,fire,420,65,85,80,50,50,90,83,0,melee,1,0,,,,,charger,medium,flare-blitz,0,7,,charger,pattern,
+727,incineroar,fire/dark,530,95,115,80,90,90,60,49,0,melee,0,0,,,,,charger,medium,flare-blitz,0,7,,charger,pattern,
+728,popplio,water,320,50,54,66,54,56,40,22,0,ranged,1,0,,,,,beamer,low,bubble-beam,0,7,,beamer,balanced,beamer:1
+729,brionne,water,420,60,69,91,69,81,50,37,0,ranged,0,0,,,,,beamer,low,bubble-beam,0,7,,beamer,balanced,beamer:1
+730,primarina,water/fairy,530,80,74,126,74,116,60,49,0,ranged,0,0,,,,,beamer,low,bubble-beam,0,7,,beamer,balanced,beamer:1
+731,pikipek,normal/flying,265,35,75,30,30,30,65,57,0,melee,0,0,,,,,fan,low,bullet-seed,1,7,,plain,none,
+734,yungoos,normal,253,48,70,30,30,30,45,29,0,melee,0,0,,,,,charger,low,take-down,0,7,,charger,balanced,charger:1
+736,grubbin,bug,300,47,62,55,45,45,46,29,0,melee,1,0,,,,,,,,0,7,,plain,none,
+737,charjabug,bug/electric,400,57,82,55,95,75,36,17,0,melee,0,0,,,,,zoner,low,discharge,1,7,,plain,none,
+738,vikavolt,bug/electric,500,77,70,145,90,75,43,24,0,ranged,0,0,summoner,low,bug final stage with a pre-evolution,,zoner,low,discharge,0,7,,zoner,balanced,summoner:1 zoner:1
+739,crabrawler,fighting,338,47,82,42,57,47,63,51,0,melee,0,0,,,,,beamer,low,bubble-beam,1,7,,plain,none,
+740,crabominable,fighting/ice,478,97,132,62,77,67,43,24,0,melee,0,1,,,,,beamer,low,bubble-beam,1,7,,tank,stat,
+741,oricorio,fire/flying,476,75,70,98,70,70,93,84,0,ranged,0,0,,,,,fan,medium,air-cutter,0,7,,fan,pattern,
+742,cutiefly,bug/fairy,304,40,45,55,40,40,84,75,0,ranged,1,0,healer,medium,aromatherapy,,,,,0,7,,healer,support,
+743,ribombee,bug/fairy,464,60,55,95,60,70,124,98,0,ranged,0,0,healer,medium,aromatherapy,summoner,,,,0,7,,healer,support,
+744,rockruff,rock,280,45,65,30,40,40,60,49,0,melee,0,0,,,,,zoner,low,rock-slide,1,7,,plain,none,
+745,lycanroc,rock,487,75,115,55,65,65,112,95,0,melee,0,0,,,,,zoner,low,rock-slide,1,7,,plain,none,
+746,wishiwashi,water,175,45,20,25,20,25,40,22,0,ranged,1,0,,,,,charger,low,double-edge take-down,1,7,,plain,none,
+747,mareanie,poison/water,305,50,53,43,62,52,45,29,0,melee,1,0,healer,medium,regenerator,shielder,fan,low,pin-missile spike-cannon,1,7,,healer,support,
+748,toxapex,poison/water,495,50,63,53,152,142,35,16,0,melee,1,0,healer,medium,regenerator,shielder,fan,low,pin-missile spike-cannon,1,7,,healer,support,
+749,mudbray,ground,385,70,100,45,70,55,45,29,0,melee,0,0,,,,,zoner,low,earthquake bulldoze,1,7,,plain,none,
+750,mudsdale,ground,500,100,125,55,100,85,35,16,0,melee,0,1,,,,,zoner,low,earthquake bulldoze,1,7,,tank,stat,
+751,dewpider,water/bug,269,38,40,40,52,72,27,6,0,melee,1,0,,,,,beamer,low,bubble-beam,1,7,,charger,balanced,charger:1
+752,araquanid,water/bug,454,68,70,50,92,132,42,23,0,melee,0,0,shielder,medium,wide-guard,summoner,beamer,low,bubble-beam,1,7,,shielder,support,
+753,fomantis,grass,250,40,55,50,35,35,35,16,0,melee,1,0,,,,,beamer,low,solar-beam,1,7,,plain,none,
+754,lurantis,grass,480,70,105,80,90,90,45,29,0,melee,0,0,,,,,beamer,low,solar-beam,1,7,,plain,none,
+755,morelull,grass/fairy,285,40,35,65,55,75,15,2,0,ranged,0,0,healer,low,rain-dish,,,,,0,7,,healer,balanced,healer:1
+757,salandit,poison/fire,320,48,44,71,40,40,77,69,0,ranged,0,0,,,,,,,,0,7,,plain,none,
+758,salazzle,poison/fire,480,68,64,111,60,60,117,96,0,ranged,0,0,,,,,,,,0,7,,plain,none,
+759,stufful,normal/fighting,340,70,75,45,50,50,50,37,0,melee,0,0,,,,,charger,low,double-edge take-down,0,7,,charger,balanced,charger:2
+760,bewear,normal/fighting,500,120,125,55,80,60,60,49,0,melee,0,0,,,,,charger,low,double-edge take-down,0,7,,charger,balanced,charger:2
+761,bounsweet,grass,210,42,30,30,38,38,32,12,0,melee,1,0,healer,medium,aromatherapy,,fan,low,razor-leaf magical-leaf,1,7,,healer,support,
+762,steenee,grass,290,52,40,40,48,48,62,50,0,melee,1,0,healer,medium,aromatherapy,,fan,low,razor-leaf magical-leaf,1,7,,healer,support,
+763,tsareena,grass,510,72,120,50,98,98,72,65,0,melee,0,0,healer,medium,aromatherapy,,fan,low,razor-leaf magical-leaf,1,7,,healer,support,
+764,comfey,fairy,485,51,52,82,90,110,100,90,0,ranged,0,0,healer,hand,in current hand list floral-healing aromatherapy natural-cure,,fan,low,magical-leaf,0,7,healer,healer,support,
+766,passimian,fighting,490,100,120,40,90,60,80,73,0,melee,0,0,,,,,charger,low,double-edge take-down giga-impact,0,7,,charger,balanced,charger:3
+767,wimpod,bug/water,230,25,35,20,40,30,80,73,0,melee,1,0,,,,,,,,0,7,,plain,none,
+768,golisopod,bug/water,530,75,125,60,140,90,40,22,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,fan,low,pin-missile,1,7,,summoner,balanced,summoner:1
+769,sandygast,ghost/ground,320,55,55,70,80,45,15,2,0,ranged,1,0,,,,,zoner,low,bulldoze sand-tomb,0,7,,zoner,balanced,zoner:2
+770,palossand,ghost/ground,480,85,75,100,110,75,35,16,0,ranged,0,0,,,,,zoner,low,bulldoze sand-tomb,0,7,,zoner,balanced,zoner:2
+771,pyukumuku,water,410,55,60,30,130,130,5,0,0,melee,0,0,shielder,medium,safeguard,,,,,0,7,,shielder,support,
+772,type-null,normal,534,95,95,95,95,95,59,44,1,melee,1,0,shielder,low,battle-armor,,charger,low,double-edge take-down,0,7,,,,
+773,silvally,normal,570,95,95,95,95,95,95,87,1,melee,1,0,bomber,medium,explosion,,charger,low,double-edge take-down,0,7,,,,
+774,minior,rock/flying,440,60,60,60,100,100,60,49,0,melee,1,0,bomber,medium,self-destruct explosion,,charger,low,double-edge take-down,0,7,,bomber,support,
+775,komala,normal,480,65,115,75,65,95,65,57,0,melee,0,0,,,,,charger,medium,wood-hammer,0,7,,charger,pattern,
+776,turtonator,fire/dragon,485,60,78,91,135,85,36,17,0,ranged,1,0,bomber,medium,explosion,shielder,,,,0,7,,bomber,support,
+777,togedemaru,electric/steel,435,65,98,40,63,73,96,87,0,melee,0,0,shielder,low,sturdy,,fan,low,pin-missile,1,7,,shielder,balanced,charger:2 shielder:1
+778,mimikyu,ghost/fairy,476,55,90,50,80,105,96,87,0,melee,0,0,,,,,charger,medium,wood-hammer,0,7,,charger,pattern,
+779,bruxish,water/psychic,475,68,105,70,70,70,92,84,0,melee,0,0,,,,,charger,medium,wave-crash,0,7,,charger,pattern,
+780,drampa,normal/dragon,485,78,60,135,85,91,36,17,0,ranged,0,0,shielder,medium,light-screen safeguard,,jumper,low,fly,1,7,,shielder,support,
+781,dhelmise,ghost/grass,517,70,131,86,100,90,40,22,0,melee,0,0,,,,,,,,0,7,,plain,none,
+782,jangmo-o,dragon,300,45,55,45,65,45,45,29,0,melee,1,0,,,,,charger,low,headbutt,0,7,,charger,balanced,charger:1
+783,hakamo-o,dragon/fighting,420,55,75,65,90,70,65,57,0,melee,1,0,,,,,charger,low,headbutt,0,7,,charger,balanced,charger:1
+784,kommo-o,dragon/fighting,600,75,110,100,125,105,85,79,0,melee,1,0,,,,,charger,low,headbutt,0,7,,charger,balanced,charger:1
+785,tapu-koko,electric/fairy,570,70,115,95,85,75,130,99,1,melee,0,0,,,,,charger,high,wild-charge brave-bird,0,7,,,,
+786,tapu-lele,psychic/fairy,570,70,85,130,75,115,95,87,1,ranged,0,0,healer,medium,aromatherapy,,beamer,low,psybeam,0,7,,,,
+787,tapu-bulu,grass/fairy,570,70,130,85,115,95,75,68,1,melee,0,0,,,,,charger,medium,wood-hammer,0,7,,,,
+788,tapu-fini,water/fairy,570,70,75,95,115,130,85,79,1,ranged,0,0,healer,medium,heal-pulse,,zoner,low,surf muddy-water,0,7,,,,
+789,cosmog,psychic,200,43,29,29,31,31,37,17,1,melee,1,0,,,,,,,,0,7,,,,
+790,cosmoem,psychic,400,43,29,29,131,131,37,17,1,melee,1,0,shielder,low,sturdy,,,,,0,7,,,,
+791,solgaleo,psychic/steel,680,137,137,113,107,89,97,88,1,melee,0,0,shielder,medium,wide-guard,,charger,high,flare-blitz wild-charge giga-impact,0,7,,,,
+792,lunala,psychic/ghost,680,137,113,137,89,107,97,88,1,ranged,0,0,shielder,high,wide-guard shadow-shield,,beamer,medium,hyper-beam,0,7,,,,
+793,nihilego,rock/poison,570,109,53,127,47,131,103,91,0,ranged,0,0,shielder,medium,safeguard,,charger,low,head-smash headbutt,1,7,,shielder,support,
+794,buzzwole,bug/fighting,570,107,139,53,139,53,79,70,0,melee,0,0,,,,,,,,0,7,,plain,none,
+795,pheromosa,bug/fighting,570,71,137,137,37,37,151,100,0,melee,1,0,,,,,jumper,high,bounce high-jump-kick jump-kick,0,7,,jumper,pattern,
+796,xurkitree,electric,570,83,89,173,71,71,83,75,0,ranged,0,0,,,,,beamer,low,signal-beam,0,7,,beamer,balanced,beamer:1 zoner:1
+797,celesteela,steel/flying,570,97,101,107,103,101,61,50,0,ranged,1,0,shielder,medium,wide-guard,,charger,low,double-edge,1,7,,shielder,support,
+798,kartana,grass/steel,570,59,181,59,131,31,109,94,0,melee,0,0,,,,,fan,low,razor-leaf air-cutter,1,7,,plain,none,
+799,guzzlord,dark/dragon,570,223,101,97,53,53,43,24,0,melee,1,1,shielder,medium,wide-guard,,charger,low,giga-impact,0,7,,shielder,support,
+800,necrozma,psychic,600,97,107,127,101,89,79,70,1,ranged,0,0,shielder,medium,prism-armor,,beamer,high,prismatic-laser photon-geyser charge-beam,0,7,,,,
+801,magearna,steel/fairy,600,80,95,130,115,115,65,57,1,ranged,0,0,,,,,beamer,low,psybeam aurora-beam,0,7,,,,
+802,marshadow,fighting/ghost,600,90,125,90,80,90,125,99,1,melee,0,0,,,,,jumper,medium,jump-kick,0,7,,,,
+803,poipole,poison,420,67,73,73,67,67,73,66,0,melee,1,0,,,,,,,,0,7,,plain,none,
+804,naganadel,poison/dragon,540,73,73,127,73,73,121,98,0,ranged,0,0,summoner,medium,final stage + helping-hand,,fan,medium,air-cutter,0,7,,summoner,support,
+805,stakataka,rock/steel,570,61,131,53,211,101,13,1,0,melee,0,0,shielder,medium,wide-guard,,charger,low,double-edge take-down,0,7,,shielder,support,
+806,blacephalon,fire/ghost,570,53,127,151,53,79,107,93,0,ranged,0,0,shielder,medium,light-screen,bomber,,,,0,7,,shielder,support,
+807,zeraora,electric,600,88,112,102,75,80,143,100,1,melee,1,0,,,,,charger,medium,wild-charge,0,7,,,,
+808,meltan,steel,300,46,65,55,65,35,34,13,1,melee,1,0,,,,,charger,low,headbutt,0,7,,,,
+809,melmetal,steel,600,135,143,80,143,65,34,13,1,melee,0,1,,,,,beamer,low,hyper-beam,1,7,,,,
+810,grookey,grass,310,50,65,40,50,40,65,57,0,melee,0,0,,,,,fan,low,razor-leaf,1,8,,charger,balanced,charger:2
+811,thwackey,grass,420,70,85,55,70,60,80,73,0,melee,0,0,,,,,fan,low,razor-leaf,1,8,,charger,balanced,charger:2
+812,rillaboom,grass,530,100,125,60,90,70,85,79,0,melee,0,0,,,,,fan,low,razor-leaf,1,8,,charger,balanced,charger:2
+813,scorbunny,fire,310,50,71,40,40,40,69,59,0,melee,0,0,,,,,jumper,medium,bounce,0,8,,jumper,pattern,
+814,raboot,fire,420,65,86,55,60,60,94,84,0,melee,0,0,,,,,jumper,medium,bounce,0,8,,jumper,pattern,
+815,cinderace,fire,530,80,116,65,75,75,119,97,0,melee,0,0,,,,,jumper,medium,bounce,0,8,,jumper,pattern,
+816,sobble,water,310,50,40,70,40,40,70,64,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+817,drizzile,water,420,65,60,95,55,55,90,83,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+818,inteleon,water,530,70,85,125,65,65,120,97,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+819,skwovet,normal,275,70,55,35,55,35,25,6,0,melee,0,0,,,,,fan,low,bullet-seed,1,8,,plain,none,
+820,greedent,normal,460,120,95,55,95,75,20,4,0,melee,0,1,,,,,fan,low,bullet-seed,1,8,,tank,stat,
+821,rookidee,flying,245,38,47,33,35,35,57,42,0,melee,1,0,,,,,charger,medium,brave-bird,0,8,,charger,pattern,
+822,corvisquire,flying,365,68,67,43,55,55,77,69,0,melee,0,0,,,,,charger,medium,brave-bird,0,8,,charger,pattern,
+823,corviknight,flying/steel,495,98,87,53,105,85,67,58,0,melee,0,0,,,,,charger,medium,brave-bird,0,8,,charger,pattern,
+824,blipbug,bug,180,25,20,25,20,45,45,29,0,ranged,1,0,,,,,,,,0,8,,plain,none,
+825,dottler,bug/psychic,335,50,35,50,80,90,30,11,0,ranged,1,0,shielder,medium,reflect light-screen,,,,,0,8,,shielder,support,
+826,orbeetle,bug/psychic,505,60,45,80,110,120,90,83,0,ranged,0,0,shielder,medium,reflect light-screen,summoner,beamer,low,psybeam,0,8,,shielder,support,
+827,nickit,dark,245,40,28,47,28,52,50,37,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+828,thievul,dark,455,70,58,87,58,92,90,83,0,ranged,0,0,summoner,medium,final stage + beat-up,,,,,0,8,,summoner,support,
+829,gossifleur,grass,250,40,40,40,60,60,10,1,0,melee,1,0,healer,high,aromatherapy regenerator,,fan,low,razor-leaf leaf-tornado,1,8,,healer,support,
+830,eldegoss,grass,460,60,50,80,90,120,60,49,0,ranged,0,0,healer,high,aromatherapy regenerator,,fan,medium,razor-leaf leaf-tornado,0,8,,healer,support,
+831,wooloo,normal,270,42,40,40,55,45,48,30,0,melee,1,0,,,,,charger,low,double-edge take-down headbutt,0,8,,charger,balanced,charger:3
+832,dubwool,normal,490,72,80,60,100,90,88,80,0,melee,0,0,,,,,charger,low,double-edge take-down headbutt,0,8,,charger,balanced,charger:3
+833,chewtle,water,284,50,64,38,50,38,44,25,0,melee,0,0,shielder,low,shell-armor,,charger,low,headbutt,0,8,,shielder,balanced,shielder:1 charger:1
+834,drednaw,water/rock,485,90,115,48,90,68,74,66,0,melee,0,0,shielder,low,shell-armor,,charger,medium,head-smash headbutt,0,8,,charger,pattern,
+835,yamper,electric,270,59,45,40,50,50,26,6,0,melee,1,0,,,,,charger,medium,wild-charge,0,8,,charger,pattern,
+836,boltund,electric,490,69,90,90,60,60,121,98,0,melee,1,0,,,,,charger,medium,wild-charge,0,8,,charger,pattern,
+840,applin,grass/dragon,260,40,40,40,80,40,20,4,0,melee,1,0,,,,,,,,0,8,,plain,none,
+841,flapple,grass/dragon,485,70,110,95,80,60,70,64,0,melee,1,0,,,,,jumper,low,fly,0,8,,jumper,balanced,jumper:1
+842,appletun,grass/dragon,485,110,85,100,80,80,30,11,0,ranged,1,1,shielder,low,thick-fat,,fan,medium,bullet-seed,0,8,,fan,pattern,
+843,silicobra,ground,315,52,57,35,75,50,46,29,0,melee,0,0,healer,low,shed-skin,,zoner,low,bulldoze sand-tomb,1,8,,healer,balanced,healer:1 charger:1
+844,sandaconda,ground,510,72,107,65,125,70,71,64,0,melee,0,0,healer,low,shed-skin,,zoner,low,bulldoze sand-tomb,1,8,,healer,balanced,healer:1 charger:1
+845,cramorant,flying/water,475,70,85,85,55,95,85,79,0,melee,1,0,,,,,,,,0,8,,plain,none,
+846,arrokuda,water,280,41,63,40,40,30,66,57,0,melee,0,0,,,,,charger,low,double-edge,0,8,,charger,balanced,charger:1
+847,barraskewda,water,490,61,123,60,60,50,136,99,0,melee,0,0,,,,,charger,low,double-edge,0,8,,charger,balanced,charger:1
+848,toxel,electric/poison,242,40,38,54,35,35,40,22,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+849,toxtricity,electric/poison,502,75,98,114,70,70,75,68,0,ranged,0,0,,,,,zoner,low,discharge,0,8,,zoner,balanced,zoner:1
+850,sizzlipede,fire/bug,305,50,65,50,45,50,45,29,0,melee,1,0,,,,,,,,0,8,,plain,none,
+851,centiskorch,fire/bug,525,100,115,90,65,90,65,57,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,,,,0,8,,summoner,balanced,summoner:1
+852,clobbopus,fighting,310,50,68,50,60,50,32,12,0,melee,0,0,,,,,,,,0,8,,plain,none,
+853,grapploct,fighting,480,80,118,70,90,80,42,23,0,melee,0,0,,,,,,,,0,8,,plain,none,
+854,sinistea,ghost,308,40,45,74,45,54,50,37,0,ranged,0,0,healer,medium,aromatherapy,,,,,0,8,,healer,support,
+855,polteageist,ghost,508,60,65,134,65,114,70,64,0,ranged,0,0,healer,medium,aromatherapy,,,,,0,8,,healer,support,
+856,hatenna,psychic,265,42,30,56,45,53,39,18,0,ranged,0,0,healer,high,heal-pulse life-dew aromatherapy healer,shielder,beamer,low,psybeam,0,8,,healer,support,
+857,hattrem,psychic,370,57,40,86,65,73,49,31,0,ranged,0,0,healer,high,heal-pulse life-dew aromatherapy healer,shielder,beamer,low,psybeam,0,8,,healer,support,
+858,hatterene,psychic/fairy,510,57,90,136,95,103,29,7,0,ranged,0,0,healer,hand,in current hand list heal-pulse life-dew aromatherapy healer,shielder,beamer,low,psybeam,0,8,healer,healer,support,
+859,impidimp,dark/fairy,265,45,45,55,30,40,50,37,0,ranged,1,0,,,,,,,,0,8,,plain,none,
+860,morgrem,dark/fairy,370,65,60,75,45,55,70,64,0,ranged,1,0,,,,,,,,0,8,,plain,none,
+861,grimmsnarl,dark/fairy,510,95,120,95,65,75,60,49,0,melee,0,0,,,,,,,,0,8,,plain,none,
+862,obstagoon,dark/normal,520,93,90,60,101,81,95,87,0,melee,0,0,,,,,charger,low,double-edge take-down headbutt,0,8,,charger,balanced,charger:3
+863,perrserker,steel,440,70,110,50,100,60,50,37,0,melee,0,0,shielder,low,battle-armor,,,,,0,8,,shielder,balanced,shielder:1
+864,cursola,ghost,510,60,95,145,50,130,30,11,0,ranged,0,0,,,,,,,,0,8,,plain,none,
+867,runerigus,ground/ghost,483,58,95,50,145,105,30,11,0,melee,0,0,,,,,zoner,low,earthquake,1,8,,plain,none,
+868,milcery,fairy,270,45,40,50,40,61,34,13,0,ranged,1,0,healer,medium,aromatherapy,,,,,0,8,,healer,support,
+869,alcremie,fairy,495,65,60,110,75,121,64,51,0,ranged,0,0,healer,medium,aromatherapy,,,,,0,8,,healer,support,
+871,pincurchin,electric,435,48,101,91,95,85,15,2,0,melee,1,0,,,,,beamer,low,bubble-beam,1,8,,plain,none,
+872,snom,ice/bug,185,30,25,45,35,30,20,4,0,ranged,0,0,shielder,low,ice-scales,,,,,0,8,,shielder,balanced,shielder:1
+873,frosmoth,ice/bug,475,70,65,125,60,90,65,57,0,ranged,0,0,shielder,high,aurora-veil wide-guard ice-scales,summoner,beamer,low,aurora-beam,0,8,,shielder,support,
+874,stonjourner,rock,470,100,125,20,135,20,70,64,0,melee,0,0,shielder,medium,wide-guard,,zoner,low,rock-slide,1,8,,shielder,support,
+875,eiscue,ice,470,75,80,65,110,90,50,37,0,melee,1,0,shielder,medium,aurora-veil,,zoner,low,surf blizzard,1,8,,shielder,support,
+876,indeedee,psychic/normal,475,60,65,105,55,95,95,87,0,ranged,0,0,healer,medium,aromatherapy,,beamer,low,psybeam,0,8,,healer,support,
+877,morpeko,electric/dark,436,58,95,70,58,58,97,88,0,melee,0,0,,,,,fan,low,bullet-seed,1,8,,plain,none,
+880,dracozolt,electric/dragon,505,90,100,80,90,70,75,68,0,melee,0,0,,,,,zoner,low,discharge,1,8,,plain,none,
+881,arctozolt,electric/ice,505,90,100,90,90,80,55,41,0,melee,1,0,,,,,zoner,low,discharge blizzard,1,8,,plain,none,
+882,dracovish,water/dragon,505,90,90,70,100,80,75,68,0,melee,0,0,,,,,,,,0,8,,plain,none,
+883,arctovish,water/ice,505,90,90,80,100,90,55,41,0,melee,1,0,shielder,medium,aurora-veil,healer,zoner,low,blizzard,1,8,,shielder,support,
+884,duraludon,steel/dragon,535,70,95,120,115,50,85,79,0,ranged,0,0,,,,,beamer,medium,hyper-beam,0,8,,beamer,pattern,
+885,dreepy,dragon/ghost,270,28,60,40,30,30,82,74,0,melee,0,0,,,,,,,,0,8,,plain,none,
+886,drakloak,dragon/ghost,410,68,80,60,50,50,102,91,0,melee,0,0,,,,,charger,low,double-edge take-down,0,8,,charger,balanced,charger:2
+887,dragapult,dragon/ghost,600,88,120,100,75,75,142,100,0,melee,0,0,,,,,charger,low,double-edge take-down,0,8,,charger,balanced,charger:2
+888,zacian,fairy,660,92,120,80,115,115,138,99,1,melee,0,0,,,,,charger,low,giga-impact,0,8,,,,
+889,zamazenta,fighting,660,92,120,80,115,115,138,99,1,melee,0,0,shielder,medium,wide-guard,,charger,low,giga-impact,0,8,,,,
+890,eternatus,poison/dragon,690,140,85,145,95,95,130,99,1,ranged,0,0,,,,,beamer,high,hyper-beam eternabeam,0,8,,,,
+891,kubfu,fighting,385,60,90,53,60,50,72,65,1,melee,0,0,,,,,charger,low,headbutt,0,8,,,,
+892,urshifu,fighting/dark,550,100,130,63,100,60,97,88,1,melee,0,0,,,,,charger,low,headbutt,0,8,,,,
+894,regieleki,electric,580,80,100,100,50,50,200,100,1,melee,1,0,bomber,medium,explosion,,beamer,low,hyper-beam,1,8,,,,
+895,regidrago,dragon,580,200,100,100,50,50,80,73,1,melee,1,0,bomber,medium,explosion,,beamer,low,hyper-beam,1,8,,,,
+896,glastrier,ice,580,100,145,65,130,110,30,11,1,melee,0,1,,,,,charger,low,double-edge take-down,0,8,,,,
+897,spectrier,ghost,580,100,65,145,60,80,130,99,1,ranged,0,0,,,,,charger,low,double-edge take-down,1,8,,,,
+898,calyrex,psychic/grass,500,100,80,80,80,80,80,73,1,melee,1,0,healer,medium,heal-pulse life-dew aromatherapy,,beamer,low,solar-beam,1,8,,,,
+899,wyrdeer,normal/psychic,525,103,105,105,72,75,65,57,0,melee,1,0,,,,,charger,low,double-edge take-down,0,8,,charger,balanced,charger:2
+900,kleavor,bug/rock,500,70,135,45,95,70,85,79,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,zoner,low,rock-slide,1,8,,summoner,balanced,summoner:1
+901,ursaluna,ground/normal,550,130,140,45,105,80,50,37,0,melee,0,1,,,,,zoner,low,bulldoze,1,8,,tank,stat,
+902,basculegion,water/ghost,530,120,112,80,65,75,78,70,0,melee,0,0,,,,,charger,high,wave-crash head-smash double-edge take-down headbutt,0,8,,charger,pattern,
+903,sneasler,fighting/poison,510,80,130,40,60,80,120,97,0,melee,0,0,,,,,,,,0,8,,plain,none,
+904,overqwil,dark/poison,510,85,115,65,95,65,85,79,0,melee,0,0,bomber,medium,self-destruct,,fan,low,pin-missile,1,8,,bomber,support,
+905,enamorus,fairy/flying,580,74,115,135,70,80,106,93,1,ranged,0,0,,,,,,,,0,8,,,,
+906,sprigatito,grass,310,40,61,45,54,45,65,57,0,melee,0,0,,,,,fan,low,magical-leaf,1,9,,plain,none,
+907,floragato,grass,410,61,80,60,63,63,83,75,0,melee,0,0,,,,,fan,low,magical-leaf,1,9,,plain,none,
+908,meowscarada,grass/dark,530,76,110,81,70,70,123,98,0,melee,0,0,,,,,fan,low,magical-leaf,1,9,,plain,none,
+909,fuecoco,fire,310,67,45,63,59,40,36,17,0,ranged,0,0,,,,,,,,0,9,,plain,none,
+910,crocalor,fire,411,81,55,90,78,58,49,31,0,ranged,0,0,,,,,,,,0,9,,plain,none,
+911,skeledirge,fire/ghost,530,104,75,110,100,75,66,57,0,ranged,0,0,,,,,,,,0,9,,plain,none,
+912,quaxly,water,310,55,65,50,45,45,50,37,0,melee,1,0,,,,,,,,0,9,,plain,none,
+913,quaxwell,water,410,70,85,65,65,60,65,57,0,melee,0,0,,,,,,,,0,9,,plain,none,
+914,quaquaval,water/fighting,530,85,120,85,80,75,85,79,0,melee,0,0,,,,,charger,medium,wave-crash,0,9,,charger,pattern,
+915,lechonk,normal,254,54,45,35,40,45,35,16,0,melee,1,0,shielder,low,thick-fat,,charger,low,double-edge take-down headbutt,0,9,,shielder,balanced,charger:3 shielder:1
+916,oinkologne,normal,489,110,100,59,75,80,65,57,0,melee,0,0,shielder,low,thick-fat,,charger,low,double-edge take-down headbutt,0,9,,charger,balanced,charger:3 shielder:1
+917,tarountula,bug,210,35,41,29,45,40,20,4,0,melee,1,0,,,,,charger,low,headbutt,0,9,,charger,balanced,charger:1
+918,spidops,bug,404,60,79,52,92,86,35,16,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,charger,low,headbutt,0,9,,summoner,balanced,summoner:1 charger:1
+919,nymble,bug,210,33,46,21,40,25,45,29,0,melee,0,0,,,,,,,,0,9,,plain,none,
+920,lokix,bug/dark,450,71,102,52,78,55,92,84,0,melee,0,0,summoner,low,bug final stage with a pre-evolution,,jumper,medium,bounce,0,9,,jumper,pattern,
+921,pawmi,electric,240,45,50,40,20,25,60,49,0,melee,1,0,healer,low,natural-cure,,charger,medium,wild-charge,0,9,,charger,pattern,
+922,pawmo,electric/fighting,350,60,75,50,40,40,85,79,0,melee,0,0,healer,low,natural-cure,,charger,medium,wild-charge,0,9,,charger,pattern,
+923,pawmot,electric/fighting,490,70,115,70,70,60,105,93,0,melee,0,0,healer,low,natural-cure,,charger,medium,wild-charge,0,9,,charger,pattern,
+924,tandemaus,normal,305,50,50,40,45,45,75,68,0,melee,1,0,,,,,fan,low,bullet-seed,1,9,,plain,none,
+925,maushold,normal,470,74,75,65,70,75,111,95,0,melee,1,0,summoner,medium,"final stage + helping-hand,beat-up,follow-me",,fan,low,bullet-seed,1,9,,summoner,support,
+926,fidough,fairy,312,37,55,30,70,55,65,57,0,melee,0,0,,,,,charger,low,double-edge,0,9,,charger,balanced,charger:1
+927,dachsbun,fairy,477,57,80,50,115,80,95,87,0,melee,0,0,,,,,charger,low,double-edge,0,9,,charger,balanced,charger:1
+928,smoliv,grass/normal,260,41,35,58,45,51,30,11,0,ranged,0,0,,,,,fan,medium,razor-leaf,0,9,,fan,pattern,
+930,arboliva,grass/normal,510,78,69,125,90,109,39,18,0,ranged,0,0,shielder,medium,safeguard,summoner,fan,medium,razor-leaf,0,9,,shielder,support,
+932,nacli,rock,280,55,55,35,75,35,25,6,0,melee,0,0,shielder,low,sturdy,,zoner,low,earthquake rock-slide,1,9,,shielder,balanced,shielder:1 charger:1
+933,naclstack,rock,355,60,60,35,100,65,35,16,0,melee,0,0,shielder,low,sturdy,,zoner,low,earthquake rock-slide,1,9,,shielder,balanced,shielder:1 charger:1
+934,garganacl,rock,500,100,100,45,130,90,35,16,0,melee,0,1,shielder,medium,wide-guard sturdy,bomber,zoner,low,earthquake rock-slide,1,9,,shielder,support,
+935,charcadet,fire,255,40,50,50,40,40,35,16,0,melee,1,0,,,,,zoner,low,lava-plume,1,9,,plain,none,
+936,armarouge,fire/psychic,525,85,60,125,100,80,75,68,0,ranged,0,0,shielder,medium,wide-guard,summoner,zoner,medium,lava-plume,0,9,,shielder,support,
+937,ceruledge,fire/ghost,525,75,125,60,80,100,85,79,0,melee,0,0,summoner,medium,final stage + ally-switch,,zoner,low,lava-plume,1,9,,summoner,support,
+938,tadbulb,electric,272,61,31,59,41,35,45,29,0,ranged,0,0,bomber,low,damp,,zoner,low,discharge,0,9,,zoner,balanced,bomber:1 zoner:1
+939,bellibolt,electric,495,109,64,103,91,83,45,29,0,ranged,0,1,bomber,low,damp,,zoner,low,discharge,0,9,,tank,stat,
+940,wattrel,electric/flying,280,40,40,55,35,40,70,64,0,ranged,1,0,,,,,zoner,low,discharge,0,9,,zoner,balanced,zoner:1
+941,kilowattrel,electric/flying,490,70,70,105,60,60,125,99,0,ranged,0,0,,,,,zoner,low,discharge,0,9,,zoner,balanced,zoner:1
+946,bramblin,grass/ghost,275,40,65,45,30,35,60,49,0,melee,0,0,,,,,fan,low,bullet-seed,1,9,,plain,none,
+951,capsakid,grass,304,50,62,62,40,40,50,37,0,melee,1,0,,,,,fan,low,razor-leaf bullet-seed,1,9,,charger,balanced,charger:1
+952,scovillain,grass/fire,486,65,108,108,65,65,75,68,0,melee,1,0,,,,,fan,low,razor-leaf bullet-seed,1,9,,charger,balanced,charger:1
+953,rellor,bug,270,41,50,31,60,58,30,11,0,melee,0,0,healer,low,shed-skin,,charger,low,take-down,0,9,,healer,balanced,healer:1 charger:1
+955,flittle,psychic,255,30,35,55,30,30,75,68,0,ranged,0,0,,,,,beamer,low,psybeam,0,9,,beamer,balanced,beamer:1
+957,tinkatink,fairy/steel,297,50,45,35,45,64,58,43,0,melee,1,0,,,,,,,,0,9,,plain,none,
+958,tinkatuff,fairy/steel,380,65,55,45,55,82,78,70,0,melee,1,0,,,,,,,,0,9,,plain,none,
+959,tinkaton,fairy/steel,506,85,75,70,77,105,94,84,0,melee,1,0,,,,,,,,0,9,,plain,none,
+960,wiglett,water,245,10,55,35,25,25,95,87,0,melee,0,0,,,,,charger,low,headbutt,0,9,,charger,balanced,charger:1
+961,wugtrio,water,425,35,100,50,50,70,120,97,0,melee,0,0,,,,,charger,low,headbutt,0,9,,charger,balanced,charger:1
+963,finizen,water,315,70,45,45,40,40,75,68,0,melee,1,0,,,,,,,,0,9,,plain,none,
+964,palafin,water,457,100,70,53,72,62,100,90,0,melee,0,0,,,,,charger,medium,wave-crash,0,9,,charger,pattern,
+965,varoom,steel/poison,300,45,70,30,63,45,47,30,0,melee,0,0,,,,,charger,low,headbutt,0,9,,charger,balanced,charger:1
+966,revavroom,steel/poison,500,80,119,54,90,67,90,83,0,melee,0,0,shielder,medium,filter,,charger,low,headbutt,0,9,,shielder,support,
+967,cyclizar,dragon/normal,501,70,95,85,65,65,121,98,0,melee,1,0,healer,medium,regenerator shed-skin,,charger,low,double-edge,0,9,,healer,support,
+968,orthworm,steel,480,70,85,60,145,55,65,57,0,melee,0,0,,,,,zoner,low,earthquake bulldoze,1,9,,charger,balanced,charger:1
+969,glimmet,rock/poison,350,48,35,105,42,60,60,49,0,ranged,0,0,bomber,medium,self-destruct,,zoner,medium,sludge-wave rock-slide,0,9,,bomber,support,
+970,glimmora,rock/poison,525,83,55,130,90,81,86,79,0,ranged,0,0,bomber,medium,self-destruct,,zoner,medium,sludge-wave rock-slide,0,9,,bomber,support,
+971,greavard,ghost,290,50,61,30,60,55,34,13,0,melee,0,0,,,,,charger,low,double-edge headbutt,0,9,,charger,balanced,charger:2
+972,houndstone,ghost,488,72,101,50,100,97,68,59,0,melee,0,0,summoner,medium,final stage + helping-hand,,charger,low,double-edge headbutt,0,9,,summoner,support,
+974,cetoddle,ice,334,108,68,30,45,40,43,24,0,melee,0,1,shielder,low,thick-fat,,jumper,medium,bounce,0,9,,jumper,pattern,
+975,cetitan,ice,521,170,113,45,65,55,73,66,0,melee,0,0,shielder,low,thick-fat,,jumper,medium,bounce,0,9,,jumper,pattern,
+976,veluza,water/psychic,478,90,102,78,73,65,70,64,0,melee,0,0,,,,,,,,0,9,,plain,none,
+977,dondozo,water,530,150,100,65,115,65,35,16,0,melee,0,1,,,,,charger,medium,wave-crash double-edge,0,9,,charger,pattern,
+978,tatsugiri,dragon/water,475,68,50,120,60,95,82,74,0,ranged,0,0,,,,,zoner,low,muddy-water,0,9,,zoner,balanced,zoner:1
+979,annihilape,fighting/ghost,535,110,115,50,80,90,90,83,0,melee,0,0,,,,,,,,0,9,,plain,none,
+980,clodsire,poison/ground,430,130,75,45,60,100,20,4,0,melee,0,1,,,,,zoner,low,earthquake sludge-wave,1,9,,tank,stat,
+981,farigiraf,normal/psychic,520,120,90,110,70,70,60,49,0,ranged,0,0,,,,,beamer,low,psybeam,0,9,,beamer,balanced,beamer:1
+982,dudunsparce,normal,520,125,100,85,80,75,55,41,0,melee,1,0,,,,,charger,low,double-edge,0,9,,charger,balanced,charger:1
+983,kingambit,dark/steel,550,100,135,60,120,85,50,37,0,melee,0,1,,,,,,,,0,9,,tank,stat,
+984,great-tusk,ground/fighting,570,115,131,53,131,53,87,80,0,melee,0,0,,,,,zoner,low,earthquake bulldoze,1,9,,charger,balanced,charger:3
+985,scream-tail,fairy/psychic,570,115,65,65,99,115,111,95,0,melee,1,0,healer,medium,wish,,,,,0,9,,healer,support,
+987,flutter-mane,ghost/fairy,570,55,55,135,55,135,135,99,0,ranged,0,0,healer,medium,wish,,beamer,low,psybeam,0,9,,healer,support,
+988,slither-wing,bug/fighting,570,85,135,85,79,105,81,74,0,melee,0,0,,,,,,,,0,9,,plain,none,
+989,sandy-shocks,electric/ground,570,85,81,121,97,85,101,91,0,ranged,0,0,,,,,zoner,low,bulldoze discharge,0,9,,beamer,balanced,zoner:2 beamer:1
+991,iron-bundle,ice/water,570,56,80,124,114,60,136,99,0,ranged,0,0,shielder,medium,aurora-veil,,beamer,low,ice-beam,0,9,,shielder,support,
+992,iron-hands,fighting/electric,570,154,140,50,108,68,50,37,0,melee,0,1,,,,,charger,medium,wild-charge,0,9,,charger,pattern,
+994,iron-moth,fire/poison,570,80,70,140,60,110,110,95,0,ranged,0,0,,,,,zoner,medium,sludge-wave discharge,0,9,,zoner,pattern,
+995,iron-thorns,rock/electric,570,100,134,70,110,84,72,65,0,melee,0,0,,,,,zoner,low,earthquake rock-slide,1,9,,charger,balanced,charger:3
+996,frigibax,dragon/ice,320,65,75,35,45,45,55,41,0,melee,0,0,healer,low,ice-body,,beamer,low,ice-beam,1,9,,healer,balanced,healer:1 charger:1
+997,arctibax,dragon/ice,423,90,95,45,66,65,62,50,0,melee,0,0,healer,low,ice-body,,beamer,low,ice-beam,1,9,,healer,balanced,healer:1 charger:1
+998,baxcalibur,dragon/ice,600,115,145,75,92,86,87,80,0,melee,0,0,healer,low,ice-body,,beamer,low,ice-beam,1,9,,healer,balanced,healer:1 charger:1
+1000,gholdengo,steel/ghost,550,87,60,133,95,91,84,75,0,ranged,0,0,,,,,,,,0,9,,plain,none,
+1004,chi-yu,dark/fire,570,55,80,135,80,120,100,90,1,ranged,0,0,,,,,zoner,medium,lava-plume,0,9,,,,
+1005,roaring-moon,dragon/dark,590,105,139,55,71,101,119,97,0,melee,0,0,,,,,charger,low,double-edge headbutt,0,9,,jumper,balanced,charger:2 jumper:1
+1006,iron-valiant,fairy/fighting,590,74,130,120,90,60,116,96,0,melee,1,0,shielder,medium,wide-guard,,,,,0,9,,shielder,support,
+1007,koraidon,fighting/dragon,670,100,135,85,115,100,135,99,1,melee,0,0,,,,,charger,medium,flare-blitz giga-impact,0,9,,,,
+1009,walking-wake,water/dragon,590,99,83,125,91,83,109,94,0,ranged,0,0,,,,,,,,0,9,,plain,none,
+1010,iron-leaves,grass/psychic,590,90,130,70,88,108,104,91,0,melee,0,0,,,,,fan,low,magical-leaf,1,9,,plain,none,
+1011,dipplin,grass/dragon,485,80,80,95,110,80,40,22,0,ranged,1,0,,,,,fan,medium,bullet-seed,0,9,,fan,pattern,
+1012,poltchageist,grass/ghost,308,40,45,74,45,54,50,37,0,ranged,0,0,healer,medium,life-dew,,,,,0,9,,healer,support,
+1013,sinistcha,grass/ghost,508,71,60,121,106,80,70,64,0,ranged,0,0,healer,medium,life-dew,summoner,,,,0,9,,healer,support,
+1015,munkidori,poison/psychic,555,88,75,130,66,90,106,93,1,ranged,0,0,,,,,zoner,medium,sludge-wave,0,9,,,,
+1016,fezandipiti,poison/fairy,555,88,91,70,82,125,99,88,1,melee,0,0,,,,,,,,0,9,,,,
+1017,ogerpon,grass,550,80,120,60,84,96,110,95,1,melee,0,0,,,,,charger,medium,wood-hammer,0,9,,,,
+1018,archaludon,steel/dragon,600,90,105,125,130,65,85,79,0,ranged,0,0,shielder,low,sturdy,,beamer,medium,hyper-beam,0,9,,beamer,pattern,
+1019,hydrapple,grass/dragon,540,106,80,120,110,80,44,25,0,ranged,0,1,healer,medium,regenerator,,fan,medium,bullet-seed,0,9,,healer,support,
+1024,terapagos,normal,450,90,65,65,85,85,60,49,1,melee,1,0,,,,,charger,low,double-edge headbutt,0,9,,,,

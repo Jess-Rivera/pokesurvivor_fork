@@ -5,6 +5,71 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-17, Cast composition rule (9 per tier) and the profile fallback [agreed, script + game change pending]
+Jess's rulings:
+- Each tier's cast is 9 species: 3-5 Melee, 3-5 Range, 1-2 Support, always totalling 9 (target 4 / 4 / 1). Runner and Tank
+  modifiers are applied AFTER the draw (Runner = fastest relative within the drawn cast).
+- From tier 2 on, at least 1 of the melee slots is a Charger, Jumper or Bomber, and at least 1 of the range slots is a
+  Beamer, Zoner or Fan (the existing "one warned attacker per tier" rule, made per family). Tier 1 stays plain (ease-in).
+- Region pools are cumulative (a run of generation N draws from generations 1..N), so only Kanto has no larger pool to
+  borrow from. Measured: every pool from Hoenn up can supply 4/4/1 in every tier; Johto T6 fits the flex range; Kanto T6
+  has only 8 species (1 melee, 3 range, 4 support) and cannot fill 9. Shortage rule: fill from the other family first,
+  then the adjacent tier, and allow repeats.
+- Profile fallback ("profile" confidence tier, below "attested"): a species with no confident attested evidence gets a
+  deterministic class from type + body (height/weight) + stats instead of silently becoming Plain/Shooter. Plain and
+  Shooter stay as real baseline mobs (the density identity); target roughly 30% of the pool. Support stays evidence-only.
+  No hash anywhere. Attested evidence (moves, abilities, text) always wins over profile.
+- Attack patterns: one signature move is enough to be confident (the two-layer corroboration rule stays for SUPPORT roles
+  only). Two or more spread-damage moves count as one Zoner signal.
+
+## 2026-10-17, Enemy taxonomy: top-down families, then class, then body modifiers [agreed, script rework pending]
+Supersedes the flat class list. Decided top-down (Jess, 2026-10-17). One class per species, plus optional body modifiers.
+- Families and classes:
+  - SUPPORT: Healer, Shielder, Summoner. Chosen FIRST, by evidence of a support role. Support units keep their distance
+    in the game, so no stat check is needed for the family.
+  - MELEE (Atk >= SpA): Plain (chase, the default), Charger, Jumper, Bomber. Bomber is a kamikaze that walks up and
+    explodes, so it is Melee and is picked on evidence regardless of stats (Electrode has SpA > Atk but still runs at you).
+  - RANGE (SpA > Atk): Shooter (plain ranged, the default), Beamer, Zoner, Fan.
+  - MODIFIERS (not classes, stat-derived only): Tank (high HP, low Speed; keeps dmg x1.2 / xp x1.3) and Runner (fastest
+    relative within the drawn cast; speed x1.6 / bomber x1.25 multipliers are dropped). A charger can also be a tank.
+- Decision order: (1) confident support evidence -> Support; (2) otherwise the stats set the family; (3) evidence picks the
+  class inside the family, else the family default (Plain or Shooter); (4) modifiers from stats.
+- Because the family is fixed before the class, a class can never contradict the stat delivery (the 131 and 87 conflicts
+  from the bottom-up sort cannot occur).
+- Evidence rules: prose is used. Move DESCRIPTIONS (effect text + target) are a strong layer. Species Pokedex text is a
+  WEAK layer, capped, and is NOT used for the family choice (it agreed with the stat rule only 61% of the time). A
+  species needs two independent layers to agree to be CONFIDENT (move + strong ability, or move + species text); a
+  signature move alone is LOW. Shielder needs three moves or corroboration (its moves are learned very widely).
+- Cast draw (to design next): per-cast quotas (for example at most 1 support per tier and 1 to 2 patterns, the rest
+  Plain/Shooter) so class population sizes matter less. Sprites: cast per tier becomes 9 (was 7).
+- Evidence data: docs/proposals/classify_species.py and its generated reports (draft; bottom-up version, to be reworked).
+
+## 2026-10-17, Enemy behavior becomes stat-derived (replaces the dex-hash classes) [direction agreed, proposal pending]
+Finding: there are no true "classes" chosen from the bag. behaviorOf() in js/data/enemies.js assigns each species a FIXED
+behavior from its dex number (HEAL/SHIELD/BOMB/SUMMON lists) plus a hash of the dex number gated by type. The cast itself
+(6 tiers x 7 species, drawn per run from BST bands) is a sprite-loading and readability device and STAYS.
+Jess's rulings:
+- Cast: keep the small drawn cast (6x7 is fine, maybe 6x9). Tiers by BST stay. Guaranteed slots stay (one support per tier,
+  one warned attacker from tier 2 on).
+- Behavior is derived from the mainline stats, not the hash: the higher of Atk/SpA picks contact vs ranged (the SAME rule
+  the damage code uses for category, which also closes the sub-slice C "no enemy category" gap); Speed relative to the cast
+  picks the fast flanker; high HP with low Speed is the tank.
+- Drop the runner x1.6 and bomber x1.25 speed multipliers (speed is already species identity).
+- Species exceptions (healer, shielder, bomber, summoner) stay as character. The roster may EXPAND by lore (see below).
+- Lore check (pokeapi-master, 1018 species): of 419 species with Atk ahead of SpA by 15+, only 3 learn mostly special moves;
+  of 274 with SpA ahead by 15+, 97 learn mostly special and 21 mostly physical (TM breadth pollutes learnsets, so use the
+  STATS, not learnsets). Contact moves are 56% of damaging learnsets for Atk-leaders, 45% for mixed, 37% for SpA-leaders.
+  Alakazam/Gengar/Gardevoir/Mewtwo read ranged, Machamp/Golem/Garchomp/Slaking read melee. 325 species (32%) sit within 15
+  points (mixed). Caveat: physical = contact is a GAMEPLAY mapping (Rock Blast, Bullet Seed are physical but ranged in fiction).
+- Roster expansion by lore: raw learnsets are far too broad (Reflect 311 species, Explosion 89). Level-up learners of the
+  signature moves: healer 79, shielder 148, bomber 44; ability-based sets: 66 / 65 / 28; both together: 21 / 22 / 8. The
+  current hand lists are mostly consistent (bomber 11/12 learn it by level-up, healer 8/14, shielder 7/14).
+- RESOLVED 2026-10-17 (Jess): mixed-stat species follow the higher stat (same rule as damage category); "fast" is Speed
+  relative within the drawn cast; tank keeps its dmg x1.2 / xp x1.3; cast size becomes 9 per tier (6x9); roster-expansion
+  rule (level-up learner AND ability vs either) is DEFERRED. Branch fix/enemy-speed is renamed in intent to
+  refactor/enemy-behavior.
+- STILL OPEN: whether delivery (contact vs ranged) is strictly tied to the higher stat or can differ inside the mixed band.
+
 ## 2026-10-17, Balance pass: order and intent (Jess's rulings)
 - One branch per concern, merged before the next is cut, in this order: fix/enemy-speed, fix/attack-calc,
   feature/xp-curve, tune/damage-hp (pure scalar tuning, last), then the upgrade redesign. Each step is validated

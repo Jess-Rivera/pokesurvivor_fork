@@ -15,7 +15,8 @@ Keep it simple: move items between sections as they progress. Add a date when an
   Opened + built 2026-10-17.
 
 ## Up next (local single-player)
-- fix/enemy-speed: replace runner x1.6 / bomber x1.25 with a clamp tied to player speed; audit the other class
+- REVIEW (Jess): docs/proposals/enemy-class-review.md (flags F1-F7 + the 124 new support/bomber species), then the game-side proposal. Opened 2026-10-17.
+- fix/enemy-speed (WIDENED to refactor/enemy-behavior, see DECISIONS 2026-10-17 "Enemy behavior becomes stat-derived"): replace runner x1.6 / bomber x1.25 with a clamp tied to player speed; audit the other class
   multipliers (list in DEVLOG 2026-10-17 night). Opened 2026-10-17.
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
   normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores

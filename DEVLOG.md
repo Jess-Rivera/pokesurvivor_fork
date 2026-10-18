@@ -8,6 +8,27 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-17 (late night, Claude Desktop) enemy taxonomy designed top-down; full class assignments generated for review
+- WHAT: no game code changed. Design + tooling only. Dropped the fix/enemy-speed idea of clamping multipliers; the real finding is that
+  enemy "classes" are a fixed function of dex number + a hash (behaviorOf in js/data/enemies.js), with stats used only for tank.
+  Replaced by a top-down taxonomy (DECISIONS 2026-10-17 "Enemy taxonomy" and "Cast composition rule"): Support (healer, shielder,
+  summoner) > Melee (plain, charger, jumper, bomber) / Range (shooter, beamer, zoner, fan) by Atk vs SpA, plus Tank and Runner as
+  stat-derived modifiers. Cast per tier = 9 (3-5 melee, 3-5 range, 1-2 support; from T2 at least 1 melee special and 1 range special).
+- TOOL: docs/proposals/classify_species.py (offline, NOT in the game, not yet in tools/). Reads pokeapi-master (stats, level-up moves,
+  move descriptions + targets, abilities, Pokedex text, evolution, height/weight). Evidence layers: attested (moves/abilities/text),
+  then a deterministic type+body+stats "profile" fallback, then the family default. Support needs two agreeing layers; patterns need one
+  signature move. Tunables at the top (profile thresholds: tuned 2026-10-17, plain+shooter about 35% of the pool).
+- OUTPUT: docs/proposals/enemy-class-review.md (full assignments + 7 review flag categories + 124 NEW support/bomber species for
+  a yes/no), enemy-behavior-report.md/.csv (counts, per-tier and per-region tables, cast feasibility). Old bottom-up versions are in
+  docs/proposals/old-bottom-up/.
+- FINDINGS: enemy level comes from run time at spawn, not tier (G.Stats.levelForTime), so a species borrowed from a lower BST band
+  is only ~7% weaker in base stats (about +1 to +4 levels to match). Shortage rule (Kanto T6 has only 8 species): fill the other
+  family first, then widen one band down, repeats last. Only Kanto T6 cannot fill a cast of 9. Text layer is strong for bomber
+  and healer (hand-list lift 26x and 6x), weak for shielder and summoner, and agrees with the stat rule on melee/ranged only 61%.
+- NOT done / next: Jess reviews enemy-class-review.md (flags F1 to F7 and section N), then: write the game-side proposal
+  (refactor/enemy-behavior: generated per-species class table, 9-species cast with family quotas, drop runner x1.6 and bomber x1.25,
+  Runner = fastest in the drawn cast) as a propose-and-approve diff. Nothing is committed from this session.
+
 ## 2026-10-17 (night) first real logs reviewed: balance findings + plan (branch order set)
 - WHAT: logger follow-up applied (combat.js ~667: the PROJECTILE damage path now logs HIT_OUT, it was missed in slice 1;
   hit lines gain `speed <attacker px/s> vs you <your px/s>`; displayed multipliers and levels rounded, log.js NF 16->18).
