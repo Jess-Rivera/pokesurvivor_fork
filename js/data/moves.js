@@ -410,6 +410,91 @@
     if (m.arc) m.arc = Math.min(3, +(m.arc * 1.25).toFixed(2));
   }
 
+  // Canonical move metadata (PokeAPI). pp = Power Points (cooldown source, used by the cooldown slice),
+  // acc = accuracy when below 100, hits = hits per use for true multi-hit moves.
+  const CANON = {
+    'tackle': { pp: 35 },
+    'quick-attack': { pp: 30 },
+    'swords-dance': { pp: 20 },
+    'agility': { pp: 30 },
+    'harden': { pp: 30 },
+    'ember': { pp: 25 },
+    'flamethrower': { pp: 15 },
+    'fire-spin': { pp: 15, acc: 85 },
+    'heat-wave': { pp: 10, acc: 90 },
+    'water-gun': { pp: 25 },
+    'bubble': { pp: 30 },
+    'hydro-pump': { pp: 5, acc: 80 },
+    'aqua-ring': { pp: 20 },
+    'vine-whip': { pp: 25 },
+    'razor-leaf': { pp: 25, acc: 95 },
+    'leaf-storm': { pp: 5, acc: 90 },
+    'giga-drain': { pp: 10 },
+    'thunder-shock': { pp: 30 },
+    'discharge': { pp: 15 },
+    'thunderbolt': { pp: 15 },
+    'confusion': { pp: 25 },
+    'psybeam': { pp: 20 },
+    'psychic': { pp: 10 },
+    'sludge': { pp: 20 },
+    'mud-shot': { pp: 15, acc: 95 },
+    'gust': { pp: 35 },
+    'wing-attack': { pp: 35 },
+    'body-slam': { pp: 15 },
+    'hyper-voice': { pp: 10 },
+    'poison-sting': { pp: 35 },
+    'toxic': { pp: 10, acc: 90 },
+    'bulldoze': { pp: 20 },
+    'bug-bite': { pp: 20 },
+    'string-shot': { pp: 40, acc: 95 },
+    'bug-buzz': { pp: 10 },
+    'rock-throw': { pp: 15, acc: 90 },
+    'rock-slide': { pp: 10, acc: 90 },
+    'ice-beam': { pp: 10 },
+    'powder-snow': { pp: 25 },
+    'karate-chop': { pp: 25 },
+    'aura-sphere': { pp: 20 },
+    'lick': { pp: 30 },
+    'shadow-ball': { pp: 15 },
+    'dragon-rage': { pp: 10 },
+    'dragon-dance': { pp: 20 },
+    'fairy-wind': { pp: 30 },
+    'dazzling-gleam': { pp: 10 },
+    'metal-claw': { pp: 35, acc: 95 },
+    'flash-cannon': { pp: 10 },
+    'bite': { pp: 25 },
+    'dark-pulse': { pp: 15 },
+    'night-shade': { pp: 15 },
+    'bonemerang': { pp: 10, acc: 90, hits: 2 },
+    'psycho-cut': { pp: 20 },
+    'spikes': { pp: 20 },
+    'toxic-spikes': { pp: 20 },
+    'hail': { pp: 10 },
+    'meteor-mash': { pp: 10, acc: 90 },
+    'will-o-wisp': { pp: 15, acc: 85 },
+    'substitute': { pp: 10 },
+    'aerial-ace': { pp: 20 },
+    'flame-wheel': { pp: 25 },
+    'bubble-beam': { pp: 20 },
+    'hex': { pp: 10 }
+  };
+
+  // Per-cast normalization (DECISIONS 2026-10-18, fix/attack-calc slice 2).
+  //   norm = (acc/100) * hits / E     multiplies FINAL per-event damage (Stats.applyDamage)
+  //   floor = 1 / E                   smallest per-event damage, so one cast always does >= 1 HP in total
+  // E = events ONE target takes per cast at the move's BASE config (upgrades that add pellets or
+  // orbs add damage; they do not change E). The game has no miss roll, so accuracy is folded in here.
+  // Cone: pellets a target takes at typical range, not the full fan. Boomerang: out and back.
+  // Orbit, trail and aura are still E = 1: their E depends on the final cooldown (PP slice).
+  const CONE_E = 3;
+  for (const m of RAW) {
+    const c = CANON[m.id] || {};
+    m.pp = c.pp; m.acc = c.acc || 100; m.hits = c.hits || 1;
+    const E = m.kind === 'cone' ? Math.min(m.count || 1, CONE_E) : m.kind === 'boomerang' ? 2 : 1;
+    m.norm = (m.acc / 100) * m.hits / E;
+    m.floor = 1 / E;
+  }
+
   // Move pool by type. The `normal` pool is shared by all.
   const POOL = {};
   for (const m of RAW) (POOL[m.type] = POOL[m.type] || []).push(m.id);

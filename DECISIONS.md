@@ -443,3 +443,12 @@ Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE ta
 - Enemy HP is fractional. Enemy.hurt takes float damage; shown number and co-op packet stay whole. The min-1 floor moved to combat call sites (floorHit) so slice 2 can floor per cast.
 - Type immunity stays softened (x0.3 per types.js); "immunity deals 0" dropped.
 - Burn/poison ticks log as DOT lines. Formulas untouched (status rework is a later branch).
+
+## 2026-10-18 — fix/attack-calc decisions (BETA, aura/trail, slicing)
+- BETA = 1.0: cooldown = 0.5 * (35 / PP). Applied in the PP-cooldown slice (slice 3).
+- Aura and trail keep pulse delivery (aura one pulse per cooldown, puddle one pulse per 0.5 s); no conversion to ticks.
+- Slicing: slice 2 = accuracy fold + cone (E = min(pellets, 3)) + boomerang (E = 2), because those divisors do not depend on cooldown. Orbit / trail / aura E depend on the final cooldown, so they ship with slice 3 (PP cooldowns + swap rule).
+- Per-cast floor implemented as per-event floor of 1/E.
+
+## 2026-10-18 — fix/attack-calc slice 2 APPLIED
+- Per-cast normalization live: move.norm = (acc/100)*hits/E on FINAL per-event damage (Stats.applyDamage); floor = 1/E per event. E: cone min(pellets,3), boomerang 2, others 1. CANON table (pp/acc/hits) added to moves.js. Orbit/trail/aura wait for slice 3.

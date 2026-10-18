@@ -94,7 +94,9 @@ G.Stats = (() => {
                 : cat === 'special' ? spDef(spdBase, level)
                 : defense(defBase, level);
     const stabMul = (stab && cat !== 'status') ? STAB : 1;
-    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
+    // move.norm = per-cast normalization (accuracy x hits / events), see data/moves.js. Applied to the FINAL
+    // per-event damage because the mainline +2 is per event.
+    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR * (move.norm || 1);
   }
 
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).

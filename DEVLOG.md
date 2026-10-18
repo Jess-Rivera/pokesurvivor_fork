@@ -208,3 +208,6 @@ WATCH / LOOSE ENDS:
 
 ## 2026-10-18 — fix/attack-calc slice 1 APPLIED
 Defender-level fix (combat.js x2), fractional enemy HP + per-hit floor, DOT log lines (log.js kind 10, Enemy.dot). Proposal: docs/proposals/fix-attack-calc-slice1-proposal.md. Next: slice 2 (geometry normalization on final damage). Open: BETA, aura/trail ticks vs pulses, swap rule.
+
+## 2026-10-18 — fix/attack-calc slice 2 APPLIED
+Accuracy fold + cone + boomerang normalization (moves.js norm/floor, stats.js, combat.js floorHit(d, m), log.js per-cast step). Proposal: docs/proposals/fix-attack-calc-slice2-proposal.md. Next: slice 3 = PP cooldowns (BETA 1.0) + orbit/trail/aura E + swap rule (needs decision).

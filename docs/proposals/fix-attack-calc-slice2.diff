@@ -1,0 +1,197 @@
+diff -ruN a/js/core/stats.js b/js/core/stats.js
+--- a/js/core/stats.js
++++ b/js/core/stats.js
+@@ -94,7 +94,9 @@
+                 : cat === 'special' ? spDef(spdBase, level)
+                 : defense(defBase, level);
+     const stabMul = (stab && cat !== 'status') ? STAB : 1;
+-    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
++    // move.norm = per-cast normalization (accuracy x hits / events), see data/moves.js. Applied to the FINAL
++    // per-event damage because the mainline +2 is per event.
++    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR * (move.norm || 1);
+   }
+ 
+   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
+diff -ruN a/js/data/moves.js b/js/data/moves.js
+--- a/js/data/moves.js
++++ b/js/data/moves.js
+@@ -410,6 +410,91 @@
+     if (m.arc) m.arc = Math.min(3, +(m.arc * 1.25).toFixed(2));
+   }
+ 
++  // Canonical move metadata (PokeAPI). pp = Power Points (cooldown source, used by the cooldown slice),
++  // acc = accuracy when below 100, hits = hits per use for true multi-hit moves.
++  const CANON = {
++    'tackle': { pp: 35 },
++    'quick-attack': { pp: 30 },
++    'swords-dance': { pp: 20 },
++    'agility': { pp: 30 },
++    'harden': { pp: 30 },
++    'ember': { pp: 25 },
++    'flamethrower': { pp: 15 },
++    'fire-spin': { pp: 15, acc: 85 },
++    'heat-wave': { pp: 10, acc: 90 },
++    'water-gun': { pp: 25 },
++    'bubble': { pp: 30 },
++    'hydro-pump': { pp: 5, acc: 80 },
++    'aqua-ring': { pp: 20 },
++    'vine-whip': { pp: 25 },
++    'razor-leaf': { pp: 25, acc: 95 },
++    'leaf-storm': { pp: 5, acc: 90 },
++    'giga-drain': { pp: 10 },
++    'thunder-shock': { pp: 30 },
++    'discharge': { pp: 15 },
++    'thunderbolt': { pp: 15 },
++    'confusion': { pp: 25 },
++    'psybeam': { pp: 20 },
++    'psychic': { pp: 10 },
++    'sludge': { pp: 20 },
++    'mud-shot': { pp: 15, acc: 95 },
++    'gust': { pp: 35 },
++    'wing-attack': { pp: 35 },
++    'body-slam': { pp: 15 },
++    'hyper-voice': { pp: 10 },
++    'poison-sting': { pp: 35 },
++    'toxic': { pp: 10, acc: 90 },
++    'bulldoze': { pp: 20 },
++    'bug-bite': { pp: 20 },
++    'string-shot': { pp: 40, acc: 95 },
++    'bug-buzz': { pp: 10 },
++    'rock-throw': { pp: 15, acc: 90 },
++    'rock-slide': { pp: 10, acc: 90 },
++    'ice-beam': { pp: 10 },
++    'powder-snow': { pp: 25 },
++    'karate-chop': { pp: 25 },
++    'aura-sphere': { pp: 20 },
++    'lick': { pp: 30 },
++    'shadow-ball': { pp: 15 },
++    'dragon-rage': { pp: 10 },
++    'dragon-dance': { pp: 20 },
++    'fairy-wind': { pp: 30 },
++    'dazzling-gleam': { pp: 10 },
++    'metal-claw': { pp: 35, acc: 95 },
++    'flash-cannon': { pp: 10 },
++    'bite': { pp: 25 },
++    'dark-pulse': { pp: 15 },
++    'night-shade': { pp: 15 },
++    'bonemerang': { pp: 10, acc: 90, hits: 2 },
++    'psycho-cut': { pp: 20 },
++    'spikes': { pp: 20 },
++    'toxic-spikes': { pp: 20 },
++    'hail': { pp: 10 },
++    'meteor-mash': { pp: 10, acc: 90 },
++    'will-o-wisp': { pp: 15, acc: 85 },
++    'substitute': { pp: 10 },
++    'aerial-ace': { pp: 20 },
++    'flame-wheel': { pp: 25 },
++    'bubble-beam': { pp: 20 },
++    'hex': { pp: 10 }
++  };
++
++  // Per-cast normalization (DECISIONS 2026-10-18, fix/attack-calc slice 2).
++  //   norm = (acc/100) * hits / E     multiplies FINAL per-event damage (Stats.applyDamage)
++  //   floor = 1 / E                   smallest per-event damage, so one cast always does >= 1 HP in total
++  // E = events ONE target takes per cast at the move's BASE config (upgrades that add pellets or
++  // orbs add damage; they do not change E). The game has no miss roll, so accuracy is folded in here.
++  // Cone: pellets a target takes at typical range, not the full fan. Boomerang: out and back.
++  // Orbit, trail and aura are still E = 1: their E depends on the final cooldown (PP slice).
++  const CONE_E = 3;
++  for (const m of RAW) {
++    const c = CANON[m.id] || {};
++    m.pp = c.pp; m.acc = c.acc || 100; m.hits = c.hits || 1;
++    const E = m.kind === 'cone' ? Math.min(m.count || 1, CONE_E) : m.kind === 'boomerang' ? 2 : 1;
++    m.norm = (m.acc / 100) * m.hits / E;
++    m.floor = 1 / E;
++  }
++
+   // Move pool by type. The `normal` pool is shared by all.
+   const POOL = {};
+   for (const m of RAW) (POOL[m.type] = POOL[m.type] || []).push(m.id);
+diff -ruN a/js/systems/combat.js b/js/systems/combat.js
+--- a/js/systems/combat.js
++++ b/js/systems/combat.js
+@@ -539,9 +539,9 @@
+   /** Level the DEFENDER's stats are computed at: the enemy's own (it scales with the clock),
+    *  not the attacker's. Bosses carry atkLvl 0, so they fall back to `fallback`. */
+   function defLevel(e, fallback) { return e.atkLvl > 0 ? e.atkLvl : fallback; }
+-  /** A connecting hit always does at least 1 HP (what Enemy.hurt used to enforce by rounding).
+-   *  Lives here, per hit, so Enemy.hurt can take fractional damage. */
+-  function floorHit(d) { return d < 1 ? 1 : d; }
++  /** A cast always does at least 1 HP in total: each event is floored at m.floor (= 1 / events per cast;
++   *  1 for single-event moves). Lives here so Enemy.hurt can take fractional damage. */
++  function floorHit(d, m) { const f = m.floor || 1; return d < f ? f : d; }
+ 
+   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
+   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
+@@ -551,13 +551,13 @@
+     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m));
+     const k = typeK(m.type, e);
+     const crit = isCrit(pl);
+-    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1));
++    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
+     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
+     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
+     if (LOG) {
+       const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
+       const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+-      G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
++      G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), m.norm || 1);
+     }
+     if (!ghost) pl.onDealt(dmg);
+     pl.dmgDealt += dmg;
+@@ -675,14 +675,14 @@
+         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab);
+         const tk = p.mtype ? typeK(p.mtype, e) : 1;
+         const k = tk * (crit ? CRIT_MUL : 1);
+-        dmg = floorHit(dmg * k);
++        dmg = floorHit(dmg * k, pm);
+         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
+         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
+                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
+         if (LOG) {
+           const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
+           const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+-          G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
++          G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), pm.norm || 1);
+         }
+         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
+         pl.dmgDealt += dmg;
+diff -ruN a/js/systems/log.js b/js/systems/log.js
+--- a/js/systems/log.js
++++ b/js/systems/log.js
+@@ -56,11 +56,11 @@
+     F[o + 18] = e && me ? Math.hypot((e.x - me.x) / (G.Camera.w / 2), (e.y - me.y) / (G.Camera.h / 2)) : 0;
+     F[o + 19] = G.EnemyMgr.count;
+   };
+-  api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed) => {
++  api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed, norm) => {
+     const o = rec(HIT_OUT);
+     F[o] = pl.mon.dex; F[o + 1] = S(m.id); F[o + 2] = S(m.type); F[o + 3] = cat; F[o + 4] = pl.level;
+     F[o + 5] = factor; F[o + 6] = dStat; F[o + 7] = stab; F[o + 8] = typeK; F[o + 9] = crit ? 1 : 0;
+-    F[o + 10] = fin; F[o + 11] = e.dex; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = absorbed; F[o + 15] = e.boss ? 1 : 0;
++    F[o + 10] = fin; F[o + 11] = e.dex; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = absorbed; F[o + 15] = e.boss ? 1 : 0; F[o + 16] = norm || 1;
+   };
+   api.kill = e => {
+     const o = rec(KILL);
+@@ -128,15 +128,17 @@
+            ' | FINAL ' + n1(fin) + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
+   }
+   function lineOut(v) {
+-    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss] = v;
++    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss, nm] = v, norm = nm || 1;
+     const sc = G.Stats.DMG_SCALAR;
+     const neu = (factor / 50 + 2) * sc, st = neu * stab, aD = (factor / Math.max(1, dS) + 2) * stab * sc;
+     const p = ['neutral ' + n1(neu)];
+     if (stab !== 1) p.push('STAB x' + r2(stab) + ' ' + sd(st - neu));
+     p.push((cat === 1 ? 'SpD ' : cat === 0 ? 'Def ' : 'prop ') + Math.round(dS) + ' ' + sd(aD - st));
+-    if (tK !== 1) p.push('type x' + r2(tK) + ' ' + sd(aD * tK - aD));
+-    if (crit) p.push('crit x1.5 ' + sd(aD * tK * 0.5));
+-    p.push('FINAL ' + n1(fin) + ' (applied ' + Math.max(1, Math.round(fin)) + (abs ? ', shield took ' + Math.round(abs) : '') + ')');
++    const aN = aD * norm;
++    if (norm !== 1) p.push('per-cast x' + r2(norm) + ' ' + sd(aN - aD));
++    if (tK !== 1) p.push('type x' + r2(tK) + ' ' + sd(aN * tK - aN));
++    if (crit) p.push('crit x1.5 ' + sd(aN * tK * 0.5));
++    p.push('FINAL ' + n1(fin) + (abs ? ' (shield took ' + Math.round(abs) + ')' : ''));
+     return 'OUT  ' + dexName(pdex) + ' L' + lvl + ' ' + strs[mS] + ' [' + strs[tyS] + ' ' + CAT[cat] + '] > ' +
+            dexName(edex) + (boss ? ' (boss)' : '') + ' | ' + p.join(' | ') + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
+   }

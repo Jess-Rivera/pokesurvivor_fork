@@ -135,3 +135,6 @@ feel with the interactive tuner over the real 966-species roster:
 ## 2026-10-18 — fix/attack-calc slice 1 (needs playtest)
 - Expect player->enemy damage down ~15-18% from 1:00-10:00 (defender level fix), fading to 0 at level parity. Kill times rise accordingly; DMG_SCALAR retune is tune/damage-hp, last.
 - Fractional enemy HP removes rounding noise (average damage unchanged).
+
+## 2026-10-18 — fix/attack-calc slice 2 (needs playtest)
+- Flamethrower / Bubble Beam x0.333 per pellet (3 landing = canon power; point blank 2.3x). Razor Leaf x0.475, Psycho Cut x0.5, Bonemerang x0.9. Accuracy-only: Hydro Pump x0.8, Fire Spin x0.85, 0.9 on Heat Wave/Leaf Storm/Rock Throw/Rock Slide/Meteor Mash/Toxic, 0.95 Mud Shot/Metal Claw.

@@ -56,11 +56,11 @@ G.Log = (() => {
     F[o + 18] = e && me ? Math.hypot((e.x - me.x) / (G.Camera.w / 2), (e.y - me.y) / (G.Camera.h / 2)) : 0;
     F[o + 19] = G.EnemyMgr.count;
   };
-  api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed) => {
+  api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed, norm) => {
     const o = rec(HIT_OUT);
     F[o] = pl.mon.dex; F[o + 1] = S(m.id); F[o + 2] = S(m.type); F[o + 3] = cat; F[o + 4] = pl.level;
     F[o + 5] = factor; F[o + 6] = dStat; F[o + 7] = stab; F[o + 8] = typeK; F[o + 9] = crit ? 1 : 0;
-    F[o + 10] = fin; F[o + 11] = e.dex; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = absorbed; F[o + 15] = e.boss ? 1 : 0;
+    F[o + 10] = fin; F[o + 11] = e.dex; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = absorbed; F[o + 15] = e.boss ? 1 : 0; F[o + 16] = norm || 1;
   };
   api.kill = e => {
     const o = rec(KILL);
@@ -128,15 +128,17 @@ G.Log = (() => {
            ' | FINAL ' + n1(fin) + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
   }
   function lineOut(v) {
-    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss] = v;
+    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss, nm] = v, norm = nm || 1;
     const sc = G.Stats.DMG_SCALAR;
     const neu = (factor / 50 + 2) * sc, st = neu * stab, aD = (factor / Math.max(1, dS) + 2) * stab * sc;
     const p = ['neutral ' + n1(neu)];
     if (stab !== 1) p.push('STAB x' + r2(stab) + ' ' + sd(st - neu));
     p.push((cat === 1 ? 'SpD ' : cat === 0 ? 'Def ' : 'prop ') + Math.round(dS) + ' ' + sd(aD - st));
-    if (tK !== 1) p.push('type x' + r2(tK) + ' ' + sd(aD * tK - aD));
-    if (crit) p.push('crit x1.5 ' + sd(aD * tK * 0.5));
-    p.push('FINAL ' + n1(fin) + ' (applied ' + Math.max(1, Math.round(fin)) + (abs ? ', shield took ' + Math.round(abs) : '') + ')');
+    const aN = aD * norm;
+    if (norm !== 1) p.push('per-cast x' + r2(norm) + ' ' + sd(aN - aD));
+    if (tK !== 1) p.push('type x' + r2(tK) + ' ' + sd(aN * tK - aN));
+    if (crit) p.push('crit x1.5 ' + sd(aN * tK * 0.5));
+    p.push('FINAL ' + n1(fin) + (abs ? ' (shield took ' + Math.round(abs) + ')' : ''));
     return 'OUT  ' + dexName(pdex) + ' L' + lvl + ' ' + strs[mS] + ' [' + strs[tyS] + ' ' + CAT[cat] + '] > ' +
            dexName(edex) + (boss ? ' (boss)' : '') + ' | ' + p.join(' | ') + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
   }

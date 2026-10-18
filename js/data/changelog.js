@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Move balance pass', 'Move balance pass'], chg: [
+    ['Sprays and boomerangs now split one attack\'s damage across their pellets or passes (Flamethrower, Bubble Beam, Razor Leaf, Psycho Cut), and moves that can miss in the games (Hydro Pump, Heat Wave, Leaf Storm and others) now hit a bit softer.',
+     'Sprays and boomerangs now split one attack\'s damage across their pellets or passes (Flamethrower, Bubble Beam, Razor Leaf, Psycho Cut), and moves that can miss in the games (Hydro Pump, Heat Wave, Leaf Storm and others) now hit a bit softer.']
+  ] },
   { d: '2026-10-18', title: ['Fairer enemy defense', 'Fairer enemy defense'], fix: [
     ['Enemy defense now scales with the enemy\'s own level instead of yours, so early hits are a little weaker and damage is no longer rounded up on small hits.',
      'Enemy defense now scales with the enemy\'s own level instead of yours, so early hits are a little weaker and damage is no longer rounded up on small hits.']

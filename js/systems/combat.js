@@ -539,9 +539,9 @@ G.Combat = (() => {
   /** Level the DEFENDER's stats are computed at: the enemy's own (it scales with the clock),
    *  not the attacker's. Bosses carry atkLvl 0, so they fall back to `fallback`. */
   function defLevel(e, fallback) { return e.atkLvl > 0 ? e.atkLvl : fallback; }
-  /** A connecting hit always does at least 1 HP (what Enemy.hurt used to enforce by rounding).
-   *  Lives here, per hit, so Enemy.hurt can take fractional damage. */
-  function floorHit(d) { return d < 1 ? 1 : d; }
+  /** A cast always does at least 1 HP in total: each event is floored at m.floor (= 1 / events per cast;
+   *  1 for single-event moves). Lives here so Enemy.hurt can take fractional damage. */
+  function floorHit(d, m) { const f = m.floor || 1; return d < f ? f : d; }
 
   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
@@ -551,13 +551,13 @@ G.Combat = (() => {
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m));
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
-    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1));
+    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
       const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
       const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
-      G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+      G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), m.norm || 1);
     }
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
@@ -675,14 +675,14 @@ G.Combat = (() => {
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
         const k = tk * (crit ? CRIT_MUL : 1);
-        dmg = floorHit(dmg * k);
+        dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
         if (LOG) {
           const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
           const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
-          G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+          G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), pm.norm || 1);
         }
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
         pl.dmgDealt += dmg;
