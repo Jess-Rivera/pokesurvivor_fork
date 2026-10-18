@@ -6,27 +6,22 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-- Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (CURRENT, was fix/enemy-speed) ->
-  fix/attack-calc -> feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
-- refactor/enemy-behavior slice 1 (class table, 9-species cast, runner/tank/bomber changes, Ditto, charger warning line): APPLIED and
-  COMMITTED 2026-10-18, playtested (Squirtle/Kanto 2:56, Charmander/Paldea 1:21). Jess: charger line great, 9 species great, no framedrops
-  (one single freeze, probably his PC). Runner and shielder need tweaking (Jess has not said how yet). Spec: docs/proposals/enemy-behavior-game-proposal.md.
-- Logger additions + slice 1b spacing bands: APPLIED 2026-10-18 (uncommitted), awaiting playtest. Use G.Log.bands() mid-run and G.Log.cast(); band numbers
-  are one table, G.Enemies.BANDS. Open: Decision B (what to tweak on runner and shielder, Jess has not said yet).
-- Slice 1c (shot life, shielder/healer crowd-seeking, contact gap, flanker): APPLIED 2026-10-18 (uncommitted), awaiting playtest
-  (docs/proposals/support-contact-flanker-proposal.md). Decision B is answered by it. Playtested once (Jess: feels good); spawn mix by family applied after (FAMILY_SHARE, uncommitted). Tune the FLANK / SEEK / CONTACT / SHOT_LIFE / FAMILY_SHARE tables in enemies.js. Open idea: log an alive-by-class sample every 10 s to measure the real on-screen mix. Watch: flanker danger (raise FLANK.strike if weak), shooter shot reach, support standing at the floor, contact flicker gone.
+- Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (DONE 2026-10-18) ->
+  fix/attack-calc (NEXT) -> feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
+  Why attack-calc is next: the 2026-10-18 slice 1c logs show player damage is the bottleneck (Squirtle water-gun 1.8 vs ~22 HP enemies, 150 hits for 14 kills in 48 s; Charmander L3 at 1:42).
+- refactor/enemy-behavior: DONE 2026-10-18, playtested, Jess: "feels good". Shipped: class table + 9-species cast, charger warning line, spacing bands (BANDS),
+  shooter shot life x2 (SHOT_LIFE), crowd-seeking shielder/healer with weak shot + melee (SEEK), contact gap (CONTACT), flankers replace runners (FLANK),
+  spawn weight by family (FAMILY_SHARE), dev logger additions (class tags, s + alive per hit, G.Log.cast/bands). Specs: docs/proposals/enemy-behavior-game-proposal.md,
+  logger-and-spacing-bands-proposal.md, support-contact-flanker-proposal.md. Tuning knobs are the tables at the end of js/data/enemies.js; numbers in BALANCE.md.
+  Left on purpose: slice 2 Status mechanics (below); per-class shot reach for fans and others (only the plain shooter changed); an alive-by-class logger sample
+  (build only if the ranged mix still feels heavy); flat boss damage stays in the Boss damage slice. Class damage weights: CLOSED, answered by the final-damage
+  multiplier (weak support x0.5, flanker strike x1.2; DECISIONS 2026-10-18 slice 1c).
 - Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
   2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
   Open logger gap: burn/poison ticks unlogged. (Live-enemy count per hit and class tags added 2026-10-18.)
 
 ## Up next (local single-player)
-- DONE 2026-10-18: class review (hand tuning in tools/hand-overrides.json).
-- DONE 2026-10-18: slice 1 decisions answered and slice 1 applied (see In progress).
-- Slice 1b applied (see In progress). Watch in the playtest: shooters at the screen edge vs melee, dash, cone, beam and chain reach.
 - LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
-- refactor/enemy-behavior leftovers: the runner x1.6 and bomber x1.25 multipliers are GONE (slice 1). Still to decide from the class multiplier
-  audit (DEVLOG 2026-10-17 night): per-class damage factors (fan x0.65, bomber blast x1.4, jump x1.2, tank dmg x1.2) are ignored by the atkFactor
-  path, so decide whether class damage weights come back. Opened 2026-10-17.
 - Rift legendaries are not region-gated (rift.js line 92 filters on p.leg only): a Gen 5 Tornadus appeared in a Kanto run at 2:47 and its flat 55 zone hit one-shot a 53.9 HP player. Jess 2026-10-18: LEAVE THE RIFT FIX ALONE (rifts are planned for removal). The flat boss and legendary damage stays in the Boss damage slice below.
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
   normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
