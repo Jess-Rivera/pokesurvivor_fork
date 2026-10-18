@@ -23,9 +23,10 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ## Up next (local single-player)
 - LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
 - Rift legendaries are not region-gated (rift.js line 92 filters on p.leg only): a Gen 5 Tornadus appeared in a Kanto run at 2:47 and its flat 55 zone hit one-shot a 53.9 HP player. Jess 2026-10-18: LEAVE THE RIFT FIX ALONE (rifts are planned for removal). The flat boss and legendary damage stays in the Boss damage slice below.
-- fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
-  normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
-  the ailmentChance field; Enemy.hurt rounds to integers. Opened 2026-10-17.
+- fix/attack-calc (IN PROGRESS, design talk 2026-10-18, see DECISIONS 2026-10-18): scope = cast + tick normalization by move geometry
+  (volley kinds divide by base pellet count; one-hit kinds keep full power; continuous kinds become ticked DPS budgets), defender-level bug
+  (enemy Def/SpD at the enemy's level, boss fallback), fractional enemy HP, accuracy folded into power, burn/poison tick logging. Next step: work out the math per
+  Move kind (Jess's draft spreadsheet is in docs/). OUT of scope: cooldown-from-PP + swap rule (next branch), burn/poison/ailment rework (branch after that).
 - tune/damage-hp: raise player damage for one-vs-many; retune HP/damage scalars from logs, last. Opened 2026-10-17.
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on
   the A/D ratio (and decide boss "Power": flat vs a boss-move) when ready. Opened 2026-10-17.
@@ -93,3 +94,4 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - 2026-10-17: Team Roster feature reviewed, i18n fix applied (English swap-in line), merged to
   main (--no-ff) and pushed; feature/team branch deleted. Repo went source-only (build output
   gitignored).
+- fix/attack-calc slice 1 APPLIED 2026-10-18 (needs playtest: check DOT lines and Def levels in the dev log). Slice 2 = geometry normalization.

@@ -131,3 +131,7 @@ feel with the interactive tuner over the real 966-species roster:
 - Reference points (k=1.0): Spe100 Charizard 161, Spe130 Mewtwo/Jolteon 198, Spe160 Ninjask 225.
 - Watch item: 3.0x upper mostly gives Regieleki a dramatic solo top (250); next fast tier sits ~210-225.
   If fast mons feel slippery/hard to control at high density, the upper bound is the first knob to lower.
+
+## 2026-10-18 — fix/attack-calc slice 1 (needs playtest)
+- Expect player->enemy damage down ~15-18% from 1:00-10:00 (defender level fix), fading to 0 at level parity. Kill times rise accordingly; DMG_SCALAR retune is tune/damage-hp, last.
+- Fractional enemy HP removes rounding noise (average damage unchanged).

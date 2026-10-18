@@ -1,0 +1,155 @@
+diff -ruN a/js/entities/enemy.js b/js/entities/enemy.js
+--- a/js/entities/enemy.js
++++ b/js/entities/enemy.js
+@@ -124,7 +124,9 @@
+ 
+     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
+     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
+-      if (this.dead) return;
++      if (this.dead || !(amount > 0)) return;
++      // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
++      // `d` is only what is SHOWN and what goes over the network (whole numbers).
+       const d = Math.max(1, Math.round(amount));
+       // Copy of a host's enemy: the hit is sent to the host, who
+       // decides if it falls. Here it is only shown (number, flash and animation).
+@@ -136,12 +138,12 @@
+       }
+       // Escudo: absorbe primero.
+       if (this.shield > 0) {
+-        const a = Math.min(this.shield, d);
++        const a = Math.min(this.shield, amount);
+         this.shield -= a;
+-        if (a >= d) { G.FX.dmgText(this.x, this.y - this.bodyH - 4, d, '#9fd8ff'); this.flash = 0.05; return; }
+-        amount = d - a;
++        if (a >= amount) { G.FX.dmgText(this.x, this.y - this.bodyH - 4, d, '#9fd8ff'); this.flash = 0.05; return; }
++        amount -= a;
+       }
+-      this.hp -= Math.max(1, Math.round(amount));
++      this.hp -= amount;
+       G.Judgment.noteDmg(amount, this);
+       this.showHurt(d, color, dirX, dirY, eff);
+       if (knock > 0 && !this.boss) {
+@@ -153,6 +155,13 @@
+       if (this.hp <= 0) this.die();
+     }
+ 
++    /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
++    dot(kind, amount, color) {
++      const hp0 = this.hp;
++      this.hurt(amount, color);
++      if (G.Log.on) G.Log.dot(this, kind, amount, hp0, Math.max(0, this.hp));
++    }
++
+     /** What is SEEN when taking a hit. */
+     showHurt(d, color, dirX = 0, dirY = 0, eff = null) {
+       this.flash = 0.09;
+@@ -286,12 +295,12 @@
+       if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slow = 0; }
+       if (this.burn > 0) {
+         this.burnT -= dt; this.burnTick -= dt;
+-        if (this.burnTick <= 0) { this.burnTick = 0.5; this.hurt(1.6 * this.burn * (1 + pl.level * 0.06), '#ff9a4d'); }
++        if (this.burnTick <= 0) { this.burnTick = 0.5; this.dot('burn', 1.6 * this.burn * (1 + pl.level * 0.06), '#ff9a4d'); }
+         if (this.burnT <= 0) this.burn = 0;
+       }
+       if (this.poison > 0) {
+         this.poisonT -= dt; this.poisonTick -= dt;
+-        if (this.poisonTick <= 0) { this.poisonTick = 0.6; this.hurt(this.maxHp * 0.012 * this.poison + 1, '#d47cf0'); }
++        if (this.poisonTick <= 0) { this.poisonTick = 0.6; this.dot('poison', this.maxHp * 0.012 * this.poison + 1, '#d47cf0'); }
+         if (this.poisonT <= 0) this.poison = 0;
+       }
+       if (this.dead) return;
+diff -ruN a/js/systems/combat.js b/js/systems/combat.js
+--- a/js/systems/combat.js
++++ b/js/systems/combat.js
+@@ -536,20 +536,27 @@
+     return { def: s && s[2] != null ? s[2] : 50, spd: s && s[4] != null ? s[4] : 50 };
+   }
+ 
++  /** Level the DEFENDER's stats are computed at: the enemy's own (it scales with the clock),
++   *  not the attacker's. Bosses carry atkLvl 0, so they fall back to `fallback`. */
++  function defLevel(e, fallback) { return e.atkLvl > 0 ? e.atkLvl : fallback; }
++  /** A connecting hit always does at least 1 HP (what Enemy.hurt used to enforce by rounding).
++   *  Lives here, per hit, so Enemy.hurt can take fractional damage. */
++  function floorHit(d) { return d < 1 ? 1 : d; }
++
+   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
+   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
+   // type x crit on top, exactly where they were before.
+   function hit(pl, e, factor, col, dx, dy, knock, m) {
+-    const ds = enemyDefStats(e);
+-    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, pl.level, pl.stabFor(m));
++    const ds = enemyDefStats(e), dl = defLevel(e, pl.level);
++    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m));
+     const k = typeK(m.type, e);
+     const crit = isCrit(pl);
+-    dmg *= k * (crit ? CRIT_MUL : 1);
++    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1));
+     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
+     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
+     if (LOG) {
+       const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
+-      const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, pl.level) : G.Stats.defense(ds.def, pl.level);
++      const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+       G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+     }
+     if (!ghost) pl.onDealt(dmg);
+@@ -664,16 +671,17 @@
+         // (e.g. a turret projectile with no move context -> status cat, neutral denominator).
+         const ds = enemyDefStats(e);
+         const pm = p.move || { type: p.mtype, cat: 'status', dmg: 0 };
+-        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, p.level || pl.level, !!p.stab);
++        const dl = defLevel(e, p.level || pl.level);
++        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab);
+         const tk = p.mtype ? typeK(p.mtype, e) : 1;
+         const k = tk * (crit ? CRIT_MUL : 1);
+-        dmg *= k;
++        dmg = floorHit(dmg * k);
+         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
+         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
+                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
+         if (LOG) {
+-          const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0, lv = p.level || pl.level;
+-          const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, lv) : G.Stats.defense(ds.def, lv);
++          const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
++          const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+           G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+         }
+         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
+diff -ruN a/js/systems/log.js b/js/systems/log.js
+--- a/js/systems/log.js
++++ b/js/systems/log.js
+@@ -26,8 +26,8 @@
+     if (i === undefined) { i = strs.length; strs.push(s); strIx.set(s, i); }
+     return i;
+   };
+-  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9;
+-  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK'];
++  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10;
++  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT'];
+   const api = { on: /[?&]dev\b/.test(location.search), t: 0 };
+ 
+   function rec(kind) {
+@@ -86,6 +86,10 @@
+     const o = rec(BLOCK), e = w && w.e;
+     F[o] = e ? e.dex : 0; F[o + 1] = S(w ? w.kind : 'flat'); F[o + 2] = factor; F[o + 3] = invuln;
+   };
++  api.dot = (e, kind, amount, hp0, hp1) => {
++    const o = rec(DOT);
++    F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0;
++  };
+   api.clear = () => { head = 0; count = 0; };
+ 
+   // ---------------- text (built only on request) ----------------
+@@ -148,10 +152,11 @@
+     else if (k === HEAL) s = 'HEAL +' + n1(v[1]) + ' (asked ' + n1(v[0]) + ')  HP ' + n1(v[2]) + '/' + n1(v[3]);
+     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
+     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
++    else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
+     else s = '?';
+     return mmss(T[i]) + '  ' + s;
+   }
+-  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3' };
++  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d' };
+   function color(i) {
+     const k = K[i];
+     if (k === HIT_IN || k === HIT_OUT) {

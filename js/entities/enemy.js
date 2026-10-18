@@ -124,7 +124,9 @@
 
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
-      if (this.dead) return;
+      if (this.dead || !(amount > 0)) return;
+      // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
+      // `d` is only what is SHOWN and what goes over the network (whole numbers).
       const d = Math.max(1, Math.round(amount));
       // Copy of a host's enemy: the hit is sent to the host, who
       // decides if it falls. Here it is only shown (number, flash and animation).
@@ -136,12 +138,12 @@
       }
       // Escudo: absorbe primero.
       if (this.shield > 0) {
-        const a = Math.min(this.shield, d);
+        const a = Math.min(this.shield, amount);
         this.shield -= a;
-        if (a >= d) { G.FX.dmgText(this.x, this.y - this.bodyH - 4, d, '#9fd8ff'); this.flash = 0.05; return; }
-        amount = d - a;
+        if (a >= amount) { G.FX.dmgText(this.x, this.y - this.bodyH - 4, d, '#9fd8ff'); this.flash = 0.05; return; }
+        amount -= a;
       }
-      this.hp -= Math.max(1, Math.round(amount));
+      this.hp -= amount;
       G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
       if (knock > 0 && !this.boss) {
@@ -151,6 +153,13 @@
       }
       if (G.Coop.isHost) G.Coop.hurtShown(this, d, color);
       if (this.hp <= 0) this.die();
+    }
+
+    /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
+    dot(kind, amount, color) {
+      const hp0 = this.hp;
+      this.hurt(amount, color);
+      if (G.Log.on) G.Log.dot(this, kind, amount, hp0, Math.max(0, this.hp));
     }
 
     /** What is SEEN when taking a hit. */
@@ -286,12 +295,12 @@
       if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slow = 0; }
       if (this.burn > 0) {
         this.burnT -= dt; this.burnTick -= dt;
-        if (this.burnTick <= 0) { this.burnTick = 0.5; this.hurt(1.6 * this.burn * (1 + pl.level * 0.06), '#ff9a4d'); }
+        if (this.burnTick <= 0) { this.burnTick = 0.5; this.dot('burn', 1.6 * this.burn * (1 + pl.level * 0.06), '#ff9a4d'); }
         if (this.burnT <= 0) this.burn = 0;
       }
       if (this.poison > 0) {
         this.poisonT -= dt; this.poisonTick -= dt;
-        if (this.poisonTick <= 0) { this.poisonTick = 0.6; this.hurt(this.maxHp * 0.012 * this.poison + 1, '#d47cf0'); }
+        if (this.poisonTick <= 0) { this.poisonTick = 0.6; this.dot('poison', this.maxHp * 0.012 * this.poison + 1, '#d47cf0'); }
         if (this.poisonT <= 0) this.poison = 0;
       }
       if (this.dead) return;

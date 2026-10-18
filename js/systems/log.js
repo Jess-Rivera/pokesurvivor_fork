@@ -26,8 +26,8 @@ G.Log = (() => {
     if (i === undefined) { i = strs.length; strs.push(s); strIx.set(s, i); }
     return i;
   };
-  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9;
-  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK'];
+  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10;
+  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT'];
   const api = { on: /[?&]dev\b/.test(location.search), t: 0 };
 
   function rec(kind) {
@@ -85,6 +85,10 @@ G.Log = (() => {
   api.block = (w, factor, invuln) => {
     const o = rec(BLOCK), e = w && w.e;
     F[o] = e ? e.dex : 0; F[o + 1] = S(w ? w.kind : 'flat'); F[o + 2] = factor; F[o + 3] = invuln;
+  };
+  api.dot = (e, kind, amount, hp0, hp1) => {
+    const o = rec(DOT);
+    F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0;
   };
   api.clear = () => { head = 0; count = 0; };
 
@@ -148,10 +152,11 @@ G.Log = (() => {
     else if (k === HEAL) s = 'HEAL +' + n1(v[1]) + ' (asked ' + n1(v[0]) + ')  HP ' + n1(v[2]) + '/' + n1(v[3]);
     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
+    else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
     else s = '?';
     return mmss(T[i]) + '  ' + s;
   }
-  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3' };
+  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d' };
   function color(i) {
     const k = K[i];
     if (k === HIT_IN || k === HIT_OUT) {

@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Fairer enemy defense', 'Fairer enemy defense'], fix: [
+    ['Enemy defense now scales with the enemy\'s own level instead of yours, so early hits are a little weaker and damage is no longer rounded up on small hits.',
+     'Enemy defense now scales with the enemy\'s own level instead of yours, so early hits are a little weaker and damage is no longer rounded up on small hits.']
+  ] },
   { d: '2026-10-18', title: ['Mainline XP and leveling', 'Mainline XP and leveling'], chg: [
     ['Leveling now follows the main games: each level costs more than the last (the classic Medium Fast curve), and every kill pays XP based on the enemy species and level compared with yours. Strong species are worth more, and kills are worth less as you outlevel the wave. Boss XP is unchanged. XP orbs now show as big when they are worth a good share of your next level, and breaking a rock gives 1% of your next level.',
      'Leveling now follows the main games: each level costs more than the last (the classic Medium Fast curve), and every kill pays XP based on the enemy species and level compared with yours. Strong species are worth more, and kills are worth less as you outlevel the wave. Boss XP is unchanged. XP orbs now show as big when they are worth a good share of your next level, and breaking a rock gives 1% of your next level.']

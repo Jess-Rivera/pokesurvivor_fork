@@ -418,3 +418,28 @@ Consequence for the damage redesign:
 - XP orb is "big" when worth at least 5% of the next level (BIG_XP_SHARE, tunable). Breaking a rock drops a flat 1% of the next level's XP (before the xpMul perk and co-op factor).
 - Summoner minions pay a quarter of a normal kill of their own species. Tank/elite/shiny/golden are multipliers (xpMul) on the formula result.
 - Design source: docs/proposals/xp-curve-proposal.md and xp-curve.diff.
+
+## 2026-10-18, fix/attack-calc: design talk (NO code yet), Jess's rulings and the agreed scope
+Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE target. The game applies it at every event (pellet, tick, orb contact, chain link) and pairs it with a hand-set cooldown, so the per-use damage, the cadence and the multiplicity are each decided outside the equation.
+- Cast normalization (Jess's rule): compute the raw cast damage (no upgrades, no STAB), normalize it to the move's BASE pellet count; that is the base of the move. STAB and upgrades multiply every pellet equally. Upgrade-added pellets add real damage (divisor frozen at the base count).
+- Division by pellet count applies only to VOLLEY kinds (projectile with count > 1, cone). One-hit-per-target kinds (melee, beam, dash, chain, mine, meteor, nova) keep full power per target, count is coverage. Continuous kinds (orbit, aura, trail, turret) deliver a damage-per-second budget as small ticks (tick damage = budget x tick interval); orbit rehit currently equals the move cooldown (combat.js, rehit: max(0.12, m.cd)).
+- Model: every move = a damage-per-second budget per target + a shape (burst chunks at cd, or continuous ticks).
+- Cooldown from PP (Jess's idea, agreed): mainline tunes power x PP to roughly 1000-1400 for most moves, so cd proportional to 1/PP (maybe 1/PP^beta, compressed) gives near-equal sustained single-target DPS across moves. NOT yet verified against moves.csv for the 64 moves. This is the move rework, NOT part of fix/attack-calc.
+- Swap behavior today (verified): only the active move's timer ticks; setActive caps the incoming move's wait at 35% of its cd. With long PP-derived cooldowns that is a bypass. Needs a ruling in the cooldown branch: independent background cooldowns + a swap lock (Claude's lean), or keep the cap, or compress the cd range.
+- Accuracy: no miss roll in the game. Fold it into the data as expected power (power x accuracy/100); few moves affected, never-miss counts as 100.
+- Defender level: a BUG, fix in fix/attack-calc. Player->enemy computes the enemy's Def/SpD at the player's level (combat.js hit(), applyDamage(..., pl.level, ...)); it must use the enemy's own level (e.atkLvl). Bosses have atkLvl 0, so they need a fallback. The logger's dStat uses the same level and must follow.
+- Rounding: Enemy.hurt rounds to integers; fix with fractional HP and display-only rounding.
+- Status/DoT (burn, poison, ailmentChance, stacking): a separate rework, a NEW branch AFTER the cooldown work, because mainline DoT is per turn (burn 1/16 max HP per turn) and the cooldown scale defines our turn length. Evidence it matters: in the 2026-10-18 Arcanine log burn did roughly half to two-thirds of Ember's damage (Mankey 10 of 22 HP, Dratini 14 of 22, Vulpix about 17 of 25), outside the formula and unlogged.
+- Interim: log burn and poison ticks in the dev logger inside fix/attack-calc (measurement only) so tuning logs are honest.
+- Branch order: fix/attack-calc (cast + tick normalization, defender level, fractional HP, accuracy fold-in, burn/poison tick logging) -> move cooldowns (PP) + swap rule -> status/DoT rework -> tune/damage-hp -> upgrade redesign.
+
+- 2026-10-18 (later, geometry math): Unified rule d = C_cast / E (C_cast = mainline damage of a full use, multi-hit moves count their hits; E = events one target is expected to take per cast, or per cooldown period for continuous kinds, frozen at the move's BASE config). Upgrades that add events add damage, upgrades that add coverage do not.
+- Cone (Spray) divisor: design for TYPICAL range (E about 3 for Flamethrower), not point blank (E = pellet count). Point blank therefore overshoots (risk and reward), far targets get less.
+- Accuracy: use the Move kind rules workbook mapping (accuracy -> size/area/pierce and Beam kind selection) for geometry, AND fold expected power (power x accuracy/100) into damage. Never-miss counts as 100. No miss roll in the game.
+- Aura/Trail delivery (pulse per cooldown vs fixed ticks) is OPEN until the per-move table shows the PP-derived cooldowns.
+
+## 2026-10-18 — fix/attack-calc slice 1 APPLIED
+- Enemy Def/SpD now computed at the enemy's own level (e.atkLvl; bosses atkLvl 0 fall back to the attacker's level). Both damage sites in combat.js.
+- Enemy HP is fractional. Enemy.hurt takes float damage; shown number and co-op packet stay whole. The min-1 floor moved to combat call sites (floorHit) so slice 2 can floor per cast.
+- Type immunity stays softened (x0.3 per types.js); "immunity deals 0" dropped.
+- Burn/poison ticks log as DOT lines. Formulas untouched (status rework is a later branch).

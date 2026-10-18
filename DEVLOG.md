@@ -205,3 +205,6 @@ WATCH / LOOSE ENDS:
   region picker (inherits last solo region). Both fine under local-first.
 - Reminder: game CSS lives in css/style.css ONLY (dev.html does not load css/pages.css).
 
+
+## 2026-10-18 — fix/attack-calc slice 1 APPLIED
+Defender-level fix (combat.js x2), fractional enemy HP + per-hit floor, DOT log lines (log.js kind 10, Enemy.dot). Proposal: docs/proposals/fix-attack-calc-slice1-proposal.md. Next: slice 2 (geometry normalization on final damage). Open: BETA, aura/trail ticks vs pulses, swap rule.
