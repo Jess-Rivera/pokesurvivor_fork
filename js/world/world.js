@@ -381,7 +381,7 @@ G.World = (() => {
       G.FX.burst(p.x, p.y - 10, B.rock[1], 14, 140);
       G.FX.ring(p.x, p.y - 8, 4, 26, B.rock[2], 0.3, 3);
       const r = Math.random();
-      if (r < 0.40) G.Pickups.dropXp(p.x, p.y, 6);
+      if (r < 0.40) G.Pickups.dropXp(p.x, p.y, G.Game.everyone()[0].xpNext * 0.01);   // flat 1% of the next level
       if (r > 0.75) G.Pickups.drop('coin', p.x, p.y, 2);
       if (r > 0.94) G.Pickups.drop('heal', p.x + 8, p.y);
       return;

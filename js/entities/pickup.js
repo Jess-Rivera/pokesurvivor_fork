@@ -26,6 +26,7 @@ G.Pickups = (() => {
   /** Chance that a normal Pokemon drops a gacha ticket. */
   const BOSS_T10 = 1 / 3;               // ticket ×10 de un jefe normal
   const LEGEND_T10 = 1 / 2;             // ticket ×10 del legendario de la grieta
+  const BIG_XP_SHARE = 0.05;           // an orb worth >= 5% of the next level draws as the big one
   const TICKET_RATE = 1 / 400;          // (was 1/260; rarer since 2026-10-10)
 
   function clear() { list = []; }
@@ -85,7 +86,9 @@ G.Pickups = (() => {
       if (Math.random() < (legend ? LEGEND_T10 : BOSS_T10)) push(orb('ticket10', x, y - 20, 1));
       return;
     }
-    push(orb(value >= 20 ? 'xpBig' : 'xp', x, y, value));
+    // Big orb = worth at least BIG_XP_SHARE of the next level (was a flat 20 XP).
+    const lead = G.Game.everyone()[0];
+    push(orb(lead && value >= lead.xpNext * BIG_XP_SHARE ? 'xpBig' : 'xp', x, y, value));
     if (Math.random() < TICKET_RATE) push(orb('ticket', x + G.U.rand(-6, 6), y, 1));
 
     // Drops ocasionales.

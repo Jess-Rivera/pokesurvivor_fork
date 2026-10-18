@@ -73,8 +73,15 @@ re-tune later.
 ## Drops / economy
 (none tuned yet)
 
-## XP curve / run pacing
-(none tuned yet)
+## XP curve / run pacing (feature/xp-curve, applied 2026-10-18)
+- Cost: mainline Medium Fast, total n^3. xpToNext(L) = 3L^2 + 3L + 1 (G.Stats.xpToNext): L1 7, L10 331, L20 1261, L50 7651. Replaced floor((8 + 6L + 1.6 L^1.75) * 4).
+- Yield per wild kill: XP_SCALAR * ((bx * Le / 5) * ((2Le + 10) / (Le + Lp + 10))^2.5 + 1) * xpMul (G.Stats.xpYield, computed in Enemy.die). bx = species base_experience (pokedex.js "bx", 966 species, 36 to 608).
+  Le = enemy spawn level (levelForTime), Lp = highest player level at the kill.
+- XP_SCALAR = 0.035 (the one XP knob, js/core/stats.js). Jess chose 0.035 over 0.044 because 63 levels at 30:00 was too fast (that was the Gen 1-4 variant); target is roughly level with the waves at 30:00.
+- xpMul: tank 1.3, elite 1.6, shiny 5, golden 2, summoner minion 0.25. Bosses and Judgment legendaries keep flat def.xp (untouched on purpose).
+- Orbs: xpBig when value >= BIG_XP_SHARE 0.05 of the lead player's xpNext (pickup.js). Rock drop = 1% of xpNext (world.js).
+- Offline replay (real functions + real bx, tier BST bands, K 0.035), player level at 0:19 / 1:00 / 5:00 / 10:00 / 20:00 / 30:00: 1.0 kills/s 2/3/10/19/32/43, 1.7 kills/s 2/4/12/21/36/49, 2.5 kills/s 2/4/13/23/40/54.
+  Enemy level 1.5 / 2.6 / 9.2 / 17.3 / 33.7 / 50. NOT yet validated against a real run: retune K from G.Log.pacing().
 
 ## HP (base-stats feature, slice 2: player HP) — slice applied 2026-10-17
 Player max HP now comes from the real mainline HP formula, scaling with in-run level (1:1 run level

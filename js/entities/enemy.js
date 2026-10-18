@@ -47,6 +47,11 @@
       this.spd = boss ? def.spd * (sc.spd || 1) : def.spd;
       this.dmg = def.dmg * sc.dmg;
       this.xp = def.xp;
+      // Wild enemies: XP is computed at the kill from the species base_experience (die()). Bosses
+      // and Judgment legendaries (def.bx undefined) keep the flat def.xp. xpMul collects the
+      // tank / elite / shiny / golden multipliers.
+      this.bx = def.bx != null ? def.bx : null;
+      this.xpMul = def.xpMul || 1;
       this.behavior = def.behavior;
 
       const types = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].types) || [];
@@ -106,7 +111,7 @@
       this.shiny = true;
       this.anim = new G.Sprites.Animator(this.dex, this.scale, true);
       this.maxHp *= 2; this.hp = this.maxHp;
-      this.xp *= 5;
+      this.xp *= 5; this.xpMul *= 5;
       G.Sprites.preload([this.dex], 4000, true);
     }
 
@@ -114,7 +119,7 @@
     makeGolden() {
       if (this.golden || this.boss || this.behavior === 'thief') return;
       this.golden = true;
-      this.xp *= 2;
+      this.xp *= 2; this.xpMul *= 2;
     }
 
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
@@ -195,6 +200,12 @@
         for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
         // Bosses always drop an equippable item.
         G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+      }
+      // Wild enemy: Gen 5 yield from its species base_experience, its spawn level and the player's
+      // level right now (shared run level, so the highest among the players).
+      if (!this.boss && this.bx != null) {
+        const lvl = Math.max(1, ...G.Game.everyone().map(p => p.level || 1));
+        this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul;
       }
       G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
@@ -845,7 +856,8 @@
       // Minion HP comes from the mainline formula at spawn (via its own baseHp), like any
       // wild enemy. (Was 0.35x the summoner's HP under the old flat model.)
       const def = { dex, name: mon ? mon.name : '', baseHp: (mon && mon.stats) ? mon.stats[0] : 50, spd: Math.round(this.def.spd * 1.1),
-                    dmg: Math.round(this.def.dmg * 0.6), xp: Math.max(1, Math.round(this.def.xp * 0.25)), behavior: 'chase' };
+                    dmg: Math.round(this.def.dmg * 0.6), xp: Math.max(1, Math.round(this.def.xp * 0.25)), behavior: 'chase',
+                    bx: (mon && mon.bx != null) ? mon.bx : 100, xpMul: 0.25 };   // minions pay a quarter of a normal kill
       for (let i = 0; i < 2; i++) {
         const a = Math.random() * 6.2832;
         const m = new Enemy(def, this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 22, this.sc || { hp: 1, spd: 1, dmg: 1 });

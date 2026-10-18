@@ -7,7 +7,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 
 ## In progress
 - Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (DONE 2026-10-18) ->
-  fix/attack-calc (NEXT) -> feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
+  feature/xp-curve (APPLIED 2026-10-18, needs playtest) -> fix/attack-calc -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
   Why attack-calc is next: the 2026-10-18 slice 1c logs show player damage is the bottleneck (Squirtle water-gun 1.8 vs ~22 HP enemies, 150 hits for 14 kills in 48 s; Charmander L3 at 1:42).
 - refactor/enemy-behavior: DONE 2026-10-18, playtested, Jess: "feels good". Shipped: class table + 9-species cast, charger warning line, spacing bands (BANDS),
   shooter shot life x2 (SHOT_LIFE), crowd-seeking shielder/healer with weak shot + melee (SEEK), contact gap (CONTACT), flankers replace runners (FLANK),
@@ -26,8 +26,6 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
   normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
   the ailmentChance field; Enemy.hurt rounds to integers. Opened 2026-10-17.
-- feature/xp-curve: Gen-style yield + Medium Fast (n^3) cost curve + scalar (K ~ 0.044 as a start); add real
-  base_experience to the dex data. Opened 2026-10-17.
 - tune/damage-hp: raise player damage for one-vs-many; retune HP/damage scalars from logs, last. Opened 2026-10-17.
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on
   the A/D ratio (and decide boss "Power": flat vs a boss-move) when ready. Opened 2026-10-17.
@@ -78,6 +76,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - MP connection reliability, hosting-provider research, and FPS/CPU/cost reasoning (parked design notes, 2026-10-17): moved to docs/MP-PARKED-NOTES.md. Not read at session start. Open it when the cloud/MP phase begins.
 
 ## Done
+- 2026-10-18: feature/xp-curve APPLIED (uncommitted until Jess commits): Medium Fast cost, Gen 5 yield from species base_experience (pokedex.js bx), XP_SCALAR 0.035, big orb = 5% of next level, rock = 1% of next level. TO DO: playtest and retune K from G.Log.pacing(). Bosses/Judgment XP left flat on purpose (boss rework). Legacy: TIERS xp and defFor xp are now unused for wild enemies (prune later).
 - 2026-10-18: Region-select confirmed merged to main (Jess).
 - 2026-10-17: Pokedex UI redesign (search + region/ownership/sort dropdowns + multi-select
   type/rarity/BST filters, extra-wide layout, BST shown as star tiers, region options as

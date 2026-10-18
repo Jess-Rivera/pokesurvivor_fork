@@ -17,7 +17,7 @@ G.Spawner = (() => {
   const CAP = 64, ELITE_FROM = 0.85;
   // Fewer Pokemon but stronger (the screen does not get crowded): ~24% of
   // the previous number spawn, each with more health, damage and experience.
-  const DENSITY = 0.24, DMG_K = 2.4, XP_K = 5.6;
+  const DENSITY = 0.24, DMG_K = 2.4;
   // The extra toughness grows with the run: x3.3 at first and up to x5
   // toward minute 6, when you already have attacks to take them down.
   const hpK = t => 3.3 + Math.min(1.7, t / 210);
@@ -85,11 +85,11 @@ G.Spawner = (() => {
     if (!pt) return null;
     const shiny = rollShiny(def.dex);
     const e = new G.Enemy(def, pt[0], pt[1], G.Enemies.scale(t));
-    e.dmg *= DMG_K; e.xp = Math.round(e.xp * XP_K);
+    e.dmg *= DMG_K;
     // Elite (crowded screen): dmg/xp bump only. HP bump removed this slice; a future
     // elite will be "current enemy level + X", i.e. a higher-level spawn (HP falls out
     // of the formula), not an HP multiplier. See DECISIONS.md.
-    if (G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xp = Math.round(e.xp * 1.6); }
+    if (G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xpMul *= 1.6; }
     if (shiny) e.makeShiny();
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);

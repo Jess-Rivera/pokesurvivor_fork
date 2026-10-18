@@ -17,15 +17,18 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV = os.path.join(ROOT, 'pokeapi-master', 'data', 'v2', 'csv')
 OUT = os.path.join(ROOT, 'js', 'data', 'pokedex.js')
 NOTE = ' * stats = the six base stats [HP, Atk, Def, SpA, SpD, Spe] (PokeAPI, current generation).'
+NOTE_BX = ' * bx = base_experience (PokeAPI pokemon.csv, default form); blank in PokeAPI -> round(bst * 0.4). Feeds the XP yield.'
 
 
 def main():
     # species -> id of its default form
     default = {}
+    base_exp = {}   # pokemon id -> base_experience (None when blank)
     with io.open(os.path.join(CSV, 'pokemon.csv'), encoding='utf-8') as f:
         for r in csv.DictReader(f):
             if r['is_default'] == '1':
                 default[int(r['species_id'])] = int(r['id'])
+            base_exp[int(r['id'])] = int(r['base_experience']) if r['base_experience'] else None
     # pokemon id -> {stat id: base stat}; stat ids 1..6 are HP, Atk, Def, SpA, SpD, Spe
     stats = {}
     with io.open(os.path.join(CSV, 'pokemon_stats.csv'), encoding='utf-8') as f:
@@ -37,6 +40,7 @@ def main():
 
     row_re = re.compile(r'^  (\{.*\}),$', re.M)
     missing = []
+    fallback = []
 
     def patch(m):
         o = json.loads(m.group(1))
@@ -46,11 +50,16 @@ def main():
             return m.group(0)
         new = {}
         for k, v in o.items():
-            if k == 'stats':
+            if k in ('stats', 'bx'):
                 continue
             new[k] = v
             if k == 'bst':
                 new['stats'] = [st[i] for i in range(1, 7)]
+                bx = base_exp.get(default.get(o['dex']))
+                if bx is None:
+                    bx = round(o['bst'] * 0.4)
+                    fallback.append(o['dex'])
+                new['bx'] = bx
         if sum(new['stats']) != o.get('bst'):
             print(f"  ! {o['dex']} {o['name']}: stats sum {sum(new['stats'])} != bst {o.get('bst')}")
         return '  ' + json.dumps(new, ensure_ascii=False, separators=(',', ':')) + ','
@@ -59,6 +68,9 @@ def main():
     if NOTE not in text:
         text = text.replace(' * hp/spd/atk are game stats derived from the base stats.\n',
                             ' * hp/spd/atk are game stats derived from the base stats.\n' + NOTE + '\n', 1)
+    if NOTE_BX not in text:
+        text = text.replace(NOTE + '\n', NOTE + '\n' + NOTE_BX + '\n', 1)
+    print(f'base_experience: {len(fallback)} species used the BST x 0.4 fallback')
     if missing:
         print('No stats found for:', missing)
         sys.exit(1)
