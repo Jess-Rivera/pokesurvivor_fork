@@ -1,0 +1,68 @@
+diff -ruN a/js/entities/player.js b/js/entities/player.js
+--- a/js/entities/player.js
++++ b/js/entities/player.js
+@@ -47,6 +47,7 @@
+     this.moves = [];           // todos los movimientos aprendidos
+     this.slots = [];           // huecos: cada uno, una lista de movimientos que se lanzan a la vez
+     this.active = 0;           // hueco activo
++    this.swapT = 0;            // hold left (s) before you may swap slots again
+     this.maxMoves = 4;         // huecos
+     this.bonds = 0;            // links to use (reward from the legendaries)
+ 
+@@ -127,7 +128,7 @@
+     this.slots.push(group);
+     this.arrange();
+     // It switches to the new one, unless you are using a link (it does not take the group off you).
+-    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group));
++    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group), true);
+     return true;
+   }
+ 
+@@ -157,8 +158,15 @@
+ 
+   hasMove(id) { return this.moves.some(m => m.id === id); }
+ 
+-  setActive(i) {
++  /** Minimum time (s) you stay on a slot after switching to it by hand. The new move fires at once if it is
++   *  ready; this only stops instant back-and-forth swapping. Every move keeps its own cooldown (Combat.tick),
++   *  so it is a feel limit, not a throughput limit. */
++  static get SWAP_LOCK() { return 0.4; }
++
++  /** @param free  true for switches the game makes itself (learning a move, run start): never blocked, no hold. */
++  setActive(i, free = false) {
+     if (i < 0 || i >= this.slots.length || i === this.active) return;
++    if (!free && this.swapT > 0) return;           // still holding the slot you just switched to
+     // Choice Band: you cannot switch moves.
+     if (this.hasItem('choiceband') && this.slots[this.active]) {
+       G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Cinta Elección', '#ff8ad8');
+@@ -167,7 +175,7 @@
+     this.active = i;
+     G.Projectiles.clearOrbs(this);
+     G.Audio.sfx('select');
+-    for (const m of this.slots[i]) m.t = Math.min(m.t, m.cd * 0.35);
++    if (!free) this.swapT = Player.SWAP_LOCK;
+     const m = this.slots[i][0];
+     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
+   }
+diff -ruN a/js/systems/combat.js b/js/systems/combat.js
+--- a/js/systems/combat.js
++++ b/js/systems/combat.js
+@@ -20,8 +20,16 @@
+ 
+   function tick(dt, pl, now) {
+     if (pl.dead) return;
+-    // Links: all the moves in the active slot, each with its own cooldown.
+-    for (const m of pl.activeGroup()) tickMove(dt, pl, m, now);
++    // Every slotted move runs its own cooldown, active or not (swap rule, DECISIONS 2026-10-18).
++    // Only the active group fires. A move that finishes recharging while inactive waits, ready,
++    // and fires the moment its slot becomes active. swapT only limits how soon you can swap AGAIN.
++    if (pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt);
++    const act = pl.activeGroup();
++    for (const g of pl.slots) {
++      if (g === act) continue;
++      for (const m of g) if (m.t > 0) m.t = Math.max(0, m.t - dt);
++    }
++    for (const m of act) tickMove(dt, pl, m, now);
+   }
+ 
+   function tickMove(dt, pl, m, now) {

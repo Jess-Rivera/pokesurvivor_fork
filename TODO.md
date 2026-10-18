@@ -41,6 +41,11 @@ Keep it simple: move items between sections as they progress. Add a date when an
   UI (main was merged into base-stats on 2026-10-17), so merging it to main brings main fully current.
 
 ## Backlog
+- Bond rework (its own branch). Opened 2026-10-18, decided with Jess: Bond = Slot Compression + Synergy. Slot compression (a bond frees slots, so you carry more
+  moves than the 4 slots; max today 7 moves with one group of 4) stays and grows in value as more moves are added. Synergy (bonded moves interact, for example
+  cast-triggered cooldown cuts or same-type bonuses) is new and needs designing. The old job, firing several moves at once, goes away: with independent
+  cooldowns (swap rule, fix/attack-calc slice 3c) every slotted move recharges on its own. Open: synergy rules, bond count per run, BOND_MAX, whether more
+  than one group can grow, HUD, and rebalancing late-game damage (a 4-move bond was ~4x sustained damage).
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess
   2026-10-17, dev logger first. Would reuse the same G.Log records. Not designed further.
 - Upgrade system rework (in-run first, meta-progression on its own branch later). Open design decisions:
@@ -97,3 +102,4 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - fix/attack-calc slice 1 APPLIED 2026-10-18 (needs playtest: check DOT lines and Def levels in the dev log). Slice 2 = geometry normalization.
 - fix/attack-calc slice 2 APPLIED 2026-10-18 (needs playtest: Flamethrower/Bubble Beam/Razor Leaf feel; check 'per-cast' step in OUT lines). Slice 3 = PP cooldowns + orbit/trail/aura divisors + swap rule.
 - fix/attack-calc slices 3a+3b APPLIED 2026-10-18 (needs playtest: starter fire rate, Hydro Pump, aura pulses). Remaining: 3c swap rule; Dragon Rage / Night Shade fixed-damage item.
+- fix/attack-calc slice 3c APPLIED 2026-10-18 (needs playtest: 0.4 s hold, dropped presses, banked moves). Small follow-ups: treasure imp XP (events.js spawnThief flat xp 10, bypasses xpYield); Dragon Rage / Night Shade dmg 0.

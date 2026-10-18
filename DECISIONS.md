@@ -458,3 +458,12 @@ Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE ta
 - E: orbit = orbs*(speed/2pi)*period (can be < 1); trail = 2*period/0.5; aura = 1 (full pulse per cooldown). floor = 1/max(1,E).
 - Swap rule (slice 3c) NOT done: setActive still caps incoming wait at 35% of cd, now exploitable with long cds (Hydro Pump 3.5 s).
 - Found: Dragon Rage / Night Shade have dmg 0 and no fixed-damage path (~0.9 per hit). Needs its own item.
+
+## 2026-10-18 — Swap rule decided (Jess)
+- Every slotted move runs its own independent cooldown, active or not. Only the active group fires. The 35% incoming-wait cap in setActive is removed (it was the swap exploit).
+- A short hold after swapping stops instant back-and-forth swapping (swap-in fires immediately); length is a constant (proposed 0.4 s hold after swapping before you may swap again; the new move fires at once). Built as fix/attack-calc slice 3c.
+- Bond is reworked in its own branch: Slot Compression + Synergy (TODO Backlog). The old "fire several moves at once" role is gone once cooldowns are independent.
+
+## 2026-10-18 — fix/attack-calc slice 3c APPLIED (swap rule)
+- Every slotted move recharges independently (combat.js tick); only the active group fires; a recharged inactive move fires the moment its slot becomes active. The 35% incoming cap is removed.
+- After a manual swap you must hold the slot Player.SWAP_LOCK = 0.4 s; swap presses during the hold are dropped (no buffering yet). Game-made switches (learning a move) pass free = true.

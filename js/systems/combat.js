@@ -20,8 +20,16 @@ G.Combat = (() => {
 
   function tick(dt, pl, now) {
     if (pl.dead) return;
-    // Links: all the moves in the active slot, each with its own cooldown.
-    for (const m of pl.activeGroup()) tickMove(dt, pl, m, now);
+    // Every slotted move runs its own cooldown, active or not (swap rule, DECISIONS 2026-10-18).
+    // Only the active group fires. A move that finishes recharging while inactive waits, ready,
+    // and fires the moment its slot becomes active. swapT only limits how soon you can swap AGAIN.
+    if (pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt);
+    const act = pl.activeGroup();
+    for (const g of pl.slots) {
+      if (g === act) continue;
+      for (const m of g) if (m.t > 0) m.t = Math.max(0, m.t - dt);
+    }
+    for (const m of act) tickMove(dt, pl, m, now);
   }
 
   function tickMove(dt, pl, m, now) {

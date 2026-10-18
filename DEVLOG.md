@@ -214,3 +214,6 @@ Accuracy fold + cone + boomerang normalization (moves.js norm/floor, stats.js, c
 
 ## 2026-10-18 — fix/attack-calc slices 3a+3b APPLIED
 PP cooldowns (BETA 1.0) + orbit/trail divisors, all in data/moves.js. Proposal: docs/proposals/fix-attack-calc-slice3-proposal.md. Next: 3c swap rule (background cooldowns + swap lock vs 35% cap, undecided), then status/DoT branch, then tune/damage-hp.
+
+## 2026-10-18 — fix/attack-calc slice 3c APPLIED
+Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK). Bond rework added to TODO (Slot Compression + Synergy). Branch fix/attack-calc is now: slices 1, 2, 3a+3b, 3c. Remaining before merge: playtest; then status/DoT branch, Dragon Rage/Night Shade, treasure imp XP, tune/damage-hp.

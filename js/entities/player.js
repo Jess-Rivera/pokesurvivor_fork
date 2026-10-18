@@ -47,6 +47,7 @@ G.Player = class Player {
     this.moves = [];           // todos los movimientos aprendidos
     this.slots = [];           // huecos: cada uno, una lista de movimientos que se lanzan a la vez
     this.active = 0;           // hueco activo
+    this.swapT = 0;            // hold left (s) before you may swap slots again
     this.maxMoves = 4;         // huecos
     this.bonds = 0;            // links to use (reward from the legendaries)
 
@@ -127,7 +128,7 @@ G.Player = class Player {
     this.slots.push(group);
     this.arrange();
     // It switches to the new one, unless you are using a link (it does not take the group off you).
-    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group));
+    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group), true);
     return true;
   }
 
@@ -157,8 +158,15 @@ G.Player = class Player {
 
   hasMove(id) { return this.moves.some(m => m.id === id); }
 
-  setActive(i) {
+  /** Minimum time (s) you stay on a slot after switching to it by hand. The new move fires at once if it is
+   *  ready; this only stops instant back-and-forth swapping. Every move keeps its own cooldown (Combat.tick),
+   *  so it is a feel limit, not a throughput limit. */
+  static get SWAP_LOCK() { return 0.4; }
+
+  /** @param free  true for switches the game makes itself (learning a move, run start): never blocked, no hold. */
+  setActive(i, free = false) {
     if (i < 0 || i >= this.slots.length || i === this.active) return;
+    if (!free && this.swapT > 0) return;           // still holding the slot you just switched to
     // Choice Band: you cannot switch moves.
     if (this.hasItem('choiceband') && this.slots[this.active]) {
       G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Cinta Elección', '#ff8ad8');
@@ -167,7 +175,7 @@ G.Player = class Player {
     this.active = i;
     G.Projectiles.clearOrbs(this);
     G.Audio.sfx('select');
-    for (const m of this.slots[i]) m.t = Math.min(m.t, m.cd * 0.35);
+    if (!free) this.swapT = Player.SWAP_LOCK;
     const m = this.slots[i][0];
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
   }

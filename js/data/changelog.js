@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Independent move cooldowns', 'Independent move cooldowns'], chg: [
+    ['Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.',
+     'Every move you carry now recharges on its own, even while you use another one, and a ready move fires the moment you switch to it. After switching you must wait a moment before switching again.']
+  ] },
   { d: '2026-10-18', title: ['Move cooldowns follow PP', 'Move cooldowns follow PP'], chg: [
     ['Attack cooldowns now come from each move\'s PP, like the main games: strong low-PP moves (Hydro Pump, Giga Drain, Bug Buzz) fire much slower, high-PP basics stay quick. Orbiting orbs and trails split their damage across their hits.',
      'Attack cooldowns now come from each move\'s PP, like the main games: strong low-PP moves (Hydro Pump, Giga Drain, Bug Buzz) fire much slower, high-PP basics stay quick. Orbiting orbs and trails split their damage across their hits.']

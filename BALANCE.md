@@ -143,3 +143,6 @@ feel with the interactive tuner over the real 966-species roster:
 - Cooldowns from PP: Ember 0.52->0.70, Water Gun 0.44->0.70, Thunder Shock 0.40->0.58, Flamethrower 0.70->1.17, Hydro Pump 1.5->3.5; Tackle unchanged. Starters fire 25-40% slower; DMG_SCALAR retune (tune/damage-hp) is what restores it.
 - Sustained budget (power*acc/period) spans 25-120/s, median 69; lowest Hydro Pump 25, Fire Spin 26, Leaf Storm 33. BETA is one constant in moves.js.
 - Orbit per pass: Gust x1.50, Fire Spin x0.64, Leaf Storm x0.155. Flame Wheel x0.357 per puddle pulse.
+
+## 2026-10-18 — fix/attack-calc slice 3c (needs playtest)
+- Swap rule: independent cooldowns + 0.4 s hold. Swapping no longer speeds up cooldowns; banked moves fire on swap-in. Watch: does 0.4 s feel right, do dropped presses feel bad (buffer is the fix).
