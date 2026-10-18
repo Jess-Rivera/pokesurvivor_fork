@@ -13,6 +13,8 @@ Keep it simple: move items between sections as they progress. Add a date when an
   (one single freeze, probably his PC). Runner and shielder need tweaking (Jess has not said how yet). Spec: docs/proposals/enemy-behavior-game-proposal.md.
 - Logger additions + slice 1b spacing bands: APPLIED 2026-10-18 (uncommitted), awaiting playtest. Use G.Log.bands() mid-run and G.Log.cast(); band numbers
   are one table, G.Enemies.BANDS. Open: Decision B (what to tweak on runner and shielder, Jess has not said yet).
+- Slice 1c (shot life, shielder/healer crowd-seeking, contact gap, flanker): designed with Jess 2026-10-18, proposal written, WAITING FOR HIS APPROVAL
+  (docs/proposals/support-contact-flanker-proposal.md). Decision B (runner and shielder tweaks) is answered by it. After applying: playtest, tune the FLANK / SEEK / CONTACT tables.
 - Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
   2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
   Open logger gap: burn/poison ticks unlogged. (Live-enemy count per hit and class tags added 2026-10-18.)

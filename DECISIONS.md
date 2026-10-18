@@ -5,6 +5,14 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-18, Slice 1c design answered: shots, support crowd-seeking, contact gap, flanker [Jess]
+After the slice 1b playtest ("i really really like how they all play out") Jess answered the four fixes in chat. Proposal drafted, NOT applied yet: docs/proposals/support-contact-flanker-proposal.md.
+- Shots: for now ONLY the plain shooter's shot life doubles (2.4 s to 4.8 s, speed unchanged). Everything else stays. Jess and Claude will do the per-class "deeper dive" together later. Life is a per-class table (`SHOT_LIFE`) so bosses and fans are not affected.
+- Shielder and healer: both seek the largest group of allies (instead of a band) and keep a floor of 0.30 screens from the player. Each gets a weak shot AND a weak melee (0.5x of the final damage), chosen by whether the player is in touching range. Approved as designed.
+- Contact gap: walkers stop at 1.15x the radius sum, the hit test reaches 1.3x. Approved.
+- Runner is renamed FLANKER and rebuilt: fastest non-Tank plain and fastest non-Tank shooter per tier; max 2 active at once; speed formula `max(own, min(own x mult, 2.0 x player))` with approach x1.6 and retreat x1.2; picks the emptiest of 8 wedges around the player; spirals in at about 140 px; one strike at 1.2x damage (adjustable, raise if it feels weak), holding and retrying up to 1.5 s if the player's i-frames swallow it; then runs to the screen edge and repeats.
+- Damage multipliers (weak support, flanker strike) apply to the FINAL damage, after the defense step. Scaling the attack factor would not work (the "+2" dominates at low level). This is the narrow, agreed answer to "do class damage weights come back": a multiplier on final damage, per case, not a return of the old per-class table.
+
 ## 2026-10-18, Logger additions and slice 1b approved and applied [Jess]
 Approved "as written" with Decision A kept at the agreed band numbers for the first playtest (fallback shooter 0.62/0.74, zoner 0.58/0.70 if edge shooters feel unreachable for beam, cone, dash and melee kits). Decision B (runner and shielder tweaks) is still waiting for Jess's description; nothing was changed for it beyond the shielder band.
 Applied: spacing bands in `G.Enemies.BANDS`, `Enemy.bandOf()` / `screenDist()`, ability gate follows the band, shielder moves but never shoots, cornered retreat slides along walls. Dev logger: class/runner tags, `s` and alive count per hit, `G.Log.cast()`, `G.Log.bands()`, CAST row in download.

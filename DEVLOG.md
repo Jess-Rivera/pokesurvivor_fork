@@ -8,6 +8,11 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (late morning, Claude Desktop, second session) slice 1c designed and PROPOSED (nothing applied, repo code untouched)
+- WHAT: slice 1b playtested (Jess likes the bands). Jess answered the four fixes (shots, shielder/healer, contact gap, flanker); wrote docs/proposals/support-contact-flanker-proposal.md with real diffs (enemies.js, enemy.js, combat.js, player.js, log.js). Dry-run patch applies to the CRLF tree; patched copy passes an offline simulation (real game files, stubbed rendering): contact gap, flanker cycle on both sides with a crowd, cap of 2, shielder/healer grouping and floor, shot life by class.
+- FOUND while testing: a shooter flanker re-approached at once because its band is almost at the screen edge (fired every 1.7 s), so I added FLANK.rest 1.5 s and moved the retreat edge to 1.15 screens; the melee hold timer originally counted the dive time and timed out, now it starts when the flanker reaches the player. Enemy shots are culled 260 px outside the view, which limits the real gain from the doubled shot life (about 580 px past you sideways, 480 vertically).
+- NEXT: Jess approves (or changes rest / retreat speed), assistant applies, Jess commits and playtests with logs. Then BALANCE/changelog entries for what lands.
+
 ## 2026-10-18 (morning, Claude Desktop, second session) slice 1b + logger APPLIED after slice 1 (UNCOMMITTED, not playtested)
 - WHAT: applied the combined proposal (patched files byte-identical to the dry-run copies): enemies.js (BANDS), enemy.js (bandOf, screenDist, band movement and gate, cornered fix), log.js (class tags, s + alive per hit, cast(), bands(), CAST row). English changelog entry added; BALANCE, DECISIONS, TODO updated. Offline cast check rerun on the real tree: 18,000 casts, zero violations.
 - NEXT: Jess commits, playtests, runs G.Log.bands() mid-run, sends logs. Decision B (runner and shielder tweaks) still needs his description. Then fix/attack-calc.
