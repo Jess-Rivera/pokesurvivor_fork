@@ -75,7 +75,7 @@ G.Sheet = (() => {
     const st = pl.mon.stats || [0, 0, 0, 0, 0, 0];
     const bonus = STAT_ORDER.map(k => pl.inc[k] || 0);
     const hp = Math.max(0, Math.ceil(pl.hp)) + '/' + Math.round(pl.maxHp);
-    return G.StatChart.make(st, '#ffffff', 360, 290, { bonus, hpText: hp, layered: true });
+    return G.StatChart.make(st, '#ffffff', 340, 262, { bonus, hpText: hp, layered: true });
   }
 
   function rosterStrip(S) {
@@ -114,8 +114,12 @@ G.Sheet = (() => {
     const S = state.get(mount); if (!S) return;
     const pl = S.roster[S.sel]; if (!pl) { mount.innerHTML = ''; return; }
     const item = pl.item && G.Items.BY[pl.item];
+    // The roster strip sits in the title row when the screen provides a slot for it (right-aligned), else above the card.
+    const slot = mount.parentElement && mount.parentElement.querySelector('.sh-strip-slot');
+    const strip = `<div class="sh-strip">${rosterStrip(S)}</div>`;
+    if (slot) slot.innerHTML = strip;
     mount.innerHTML = `
-      <div class="sh-strip">${rosterStrip(S)}</div>
+      ${slot ? '' : strip}
       <div class="sh-card">
         <div class="sh-head">
           <span class="sh-face"></span>
@@ -132,9 +136,9 @@ G.Sheet = (() => {
           </div>
         </div>
       </div>`;
-    mount.querySelector('.sh-face').appendChild(G.UI.spriteCanvas(pl.dex, 56, 56, { scale: 1, shiny: pl.shiny }));
+    mount.querySelector('.sh-face').appendChild(G.UI.spriteCanvas(pl.dex, 96, 96, { scale: 3, hero: true, shiny: pl.shiny }));
     mount.querySelector('.sh-hex').appendChild(statBlock(pl));
-    mount.querySelectorAll('.sh-tab').forEach(b => {
+    (slot || mount).querySelectorAll('.sh-tab').forEach(b => {
       const f = S.roster[+b.dataset.i];
       b.querySelector('.sh-sp').appendChild(G.UI.spriteCanvas(f.dex, 44, 44, { scale: 1, shiny: f.shiny }));
       b.onclick = () => select(mount, +b.dataset.i);
