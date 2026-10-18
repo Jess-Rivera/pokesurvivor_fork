@@ -412,11 +412,7 @@ G.Game = (() => {
 
     G.RunUI.showOver({
       dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, judge,
-      moves: pl.moves, caught,
-      stats: roster.map(f => {
-        const bits = G.Mechanics.STATS.filter(s => f.inc[s.id] > 0).map(s => s.label + ' +' + Math.round(f.inc[s.id] * 100) + '%');
-        return bits.length ? f.mon.name + ': ' + bits.join(', ') : '';
-      }).filter(Boolean),
+      moves: pl.moves, roster, caught,
       breakdown: Object.entries(parts).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') +
                  (mul > 1 ? ` · ×${mul.toFixed(2)} Fortuna` : '')
     }, () => { pl = null; G.Flow.afterRun(); });
@@ -643,6 +639,7 @@ G.Game = (() => {
       return;
     }
     if (G.Input.action('pause')) { togglePause(); return; }
+    if (state === 'paused' || state === 'over') { G.RunUI.pauseKeys(); return; }          // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
     for (let i = 0; i < 4; i++) {
       if (G.Input.action('attack_' + (i + 1))) pl.setActive(i);

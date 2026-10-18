@@ -242,3 +242,9 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Files: js/entities/player.js (inc, maxHpAt, addStat, moveFactor, spd, hurt), js/core/stats.js (applyPlayerDefense defMul), js/data/mechanics.js (SCOPED, STATS, STAT_BY), js/systems/levelup.js (statCard, Stats family, one scoped card per offer), js/ui/run-ui.js (stat cards skip the move step; summary row), js/game.js (run summary stats), js/core/debug.js (G.Debug.stat), js/data/changelog.js, docs/proposals/upgrade-slice2c-harness.js.
 - Found while testing: a 5% Def bonus on the base stat vanished at level 1 (statValue floors), so Iron/Zinc multiply the final stat instead.
 - No git commands run. Where we stopped: 2b and 2c both applied and UNCOMMITTED. Next: Jess looks at dev.html?dev (G.Debug.stat('atk', 3) gives stat cards), commits.
+
+## 2026-10-18 (evening), upgrade rework: slice 2d-1 APPLIED (team summary sheet)
+- Built per Jess's reference image and answers (one component for pause and end-run; white base + 60% yellow hexagon layers with +X%; summaries from current state, no pick history; level-up integration deferred to 2d-2).
+- Files: js/ui/sheet.js (new), js/ui/statchart.js (layers), js/ui/run-ui.js (showPause, showOver English + Team summary, pauseKeys), js/game.js (keys for paused/over, roster passed to showOver), js/ui/ui.js (scr-team), js/main.js (NEED), dev.html (scr-pause rebuilt, scr-team, script tag), css/style.css (.sheet), js/data/changelog.js.
+- Found while testing: the pixel font draws "~" like "-" ("Hits for -4"), so the line says "about"; the first narrow layout overlapped (grid rows collapsed) and was changed to a scrolling column.
+- No git commands run. Where we stopped: 2b, 2c done and committed; 2d-1 applied and UNCOMMITTED. Next: Jess looks at it (Esc on dev.html?dev), commits, then the 2d-2 plan (level-up choose mode).

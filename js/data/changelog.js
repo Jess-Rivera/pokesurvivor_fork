@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Team summary screen', 'Team summary screen'], new: [
+    ['The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.',
+     'The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.']
+  ] },
   { d: '2026-10-18', title: ['Stat cards and type damage cards', 'Stat cards and type damage cards'], new: [
     ['Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.',
      'Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.']

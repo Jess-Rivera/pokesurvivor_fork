@@ -233,39 +233,44 @@ G.RunUI = (() => {
   }
 
   function showOver(r, onBack) {
-    $('over-title').textContent = r.dead ? 'Has caído…' : 'Run terminada';
+    $('over-title').textContent = r.dead ? 'You fell…' : 'Run over';
     $('over-stats').innerHTML = `
       ${G.Enemies.region ? `<div style="grid-column:1/-1"><span>Region</span><b class="gold">${G.MenuUI.GEN_NAMES[G.Enemies.region - 1]} Run</b></div>` : ''}
-      <div><span>Tiempo</span><b>${G.U.mmss(r.time)}</b></div>
-      <div><span>Nivel</span><b>${r.level}</b></div>
-      <div><span>Derrotados</span><b>${r.kills}</b></div>
-      <div><span>Jefes</span><b>${r.bosses}</b></div>
-      ${r.judge ? `<div style="grid-column:1/-1"><span>Ante Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendario' : 'legendarios'}</b></div>` : ''}
-      <div style="grid-column:1/-1"><span>Pokémonedas ganadas</span>
+      <div><span>Time</span><b>${G.U.mmss(r.time)}</b></div>
+      <div><span>Level</span><b>${r.level}</b></div>
+      <div><span>Defeated</span><b>${r.kills}</b></div>
+      <div><span>Bosses</span><b>${r.bosses}</b></div>
+      ${r.judge ? `<div style="grid-column:1/-1"><span>Against Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendary' : 'legendaries'}</b></div>` : ''}
+      <div style="grid-column:1/-1"><span>PokéCoins earned</span>
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
-      ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Tickets del gacha</span><b>
+      ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Gacha tickets</span><b>
         ${r.t1 ? G.Icons.html('ticket', 22) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ticket10', 22) + ' +' + r.t10 + ' ×10' : ''}</b></div>` : ''}
-      ${r.stats && r.stats.length ? `<div style="grid-column:1/-1"><span>Stat cards</span><b style="font-size:14px">${r.stats.join(' · ')}</b></div>` : ''}
-      <div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
-        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${m.name}${G.Moves.stackTotal(m) ? ' +' + G.Moves.stackTotal(m) : ''}`).join(' · ') || '—'}</b></div>
-      ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies conseguidos</span>
+      ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies caught</span>
         <div class="caught-row" id="over-caught"></div></div>` : ''}
-      ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">¡Nuevo récord de tiempo!</div>' : ''}
+      ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">New time record!</div>' : ''}
       ${askSupport(r) ? `<div class="support-ask" id="over-ask" style="grid-column:1/-1">
-        <button class="x" type="button" aria-label="Cerrar">×</button>
-        <p>¿Te está gustando PokéSurvivor? Lo hago yo solo y los servidores cuestan dinero. Si quieres, puedes ayudarme a mantenerlo en línea.</p>
-        <a class="btn small gold" href="${G.Funding.url}" target="_blank" rel="noopener">${G.Icons.html('heart', 14)} Apoyar en Ko-fi</a>
+        <button class="x" type="button" aria-label="Close">×</button>
+        <p>Enjoying PokéSurvivor? I make it on my own and the servers cost money. If you'd like, you can help keep it online.</p>
+        <a class="btn small gold" href="${G.Funding.url}" target="_blank" rel="noopener">${G.Icons.html('heart', 14)} Support on Ko-fi</a>
       </div>` : ''}`;
     const ask = $('over-ask');
     if (ask) ask.querySelector('.x').onclick = () => ask.remove();
     $('btn-again').onclick = onBack;
+    // Team summary: every Pokemon's moves, upgrades and stat cards (the results card keeps only the run totals).
+    const roster = r.roster || [];
+    $('btn-team').classList.toggle('hidden', !roster.length);
+    $('btn-team').onclick = () => {
+      G.Sheet.render($('team-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
+      G.UI.show('scr-team');
+    };
+    $('btn-team-back').onclick = () => G.UI.show('scr-over');
     if (r.caught && r.caught.length) {
       const row = $('over-caught');
       for (const c of r.caught) {
         const w = document.createElement('div');
         w.appendChild(G.UI.spriteCanvas(c.dex, 90, 72, { shiny: true, lively: true, scale: 2 }));
-        w.insertAdjacentHTML('beforeend', `<small>${G.DEX_BY[c.dex].name}${c.isNew ? ' · ¡nuevo!' : ''}</small>`);
+        w.insertAdjacentHTML('beforeend', `<small>${G.DEX_BY[c.dex].name}${c.isNew ? ' · new!' : ''}</small>`);
         row.appendChild(w);
       }
     }
@@ -354,10 +359,16 @@ G.RunUI = (() => {
   }
 
   function showPause(coop = false) {
-    G.UI.soundControls($('pause-sound'));
     $('pause-coop').classList.toggle('hidden', !coop);
-    $('btn-quit').textContent = coop ? 'Salir de la partida' : 'Abandonar run';
+    $('btn-quit').textContent = coop ? 'Leave the game' : 'Quit run';
+    const roster = G.Game.roster || [];
+    G.Sheet.render($('pause-sheet'), roster, { sel: Math.max(0, roster.indexOf(G.Game.player)) });
     G.UI.show('scr-pause');
+  }
+  /** Solo pause: keyboard for the sheet (switch Pokemon, scroll the moves). */
+  function pauseKeys() {
+    if (G.UI.isOpen('scr-pause')) G.Sheet.keys($('pause-sheet'));
+    else if (G.UI.isOpen('scr-team')) G.Sheet.keys($('team-sheet'));
   }
 
   function wirePause(onResume, onQuit) {
@@ -365,5 +376,5 @@ G.RunUI = (() => {
     $('btn-quit').onclick = onQuit;
   }
 
-  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause };
+  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause, pauseKeys };
 })();
