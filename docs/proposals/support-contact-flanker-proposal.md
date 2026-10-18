@@ -1,6 +1,6 @@
 # Proposal: shot reach, crowd-seeking support, contact gap, flanker (slice 1c)
 
-Status: PROPOSED 2026-10-18, NOT APPLIED. Waiting for Jess's approval. Every design choice below was answered by Jess in chat on 2026-10-18 (see DECISIONS).
+Status: APPROVED AND APPLIED 2026-10-18 as written (retreat speed formula confirmed; rest and edge kept). Uncommitted, awaiting playtest. Every design choice below was answered by Jess in chat on 2026-10-18 (see DECISIONS).
 Branch suggestion: stay on `refactor/enemy-behavior` (slice 1b is committed there).
 The diff at the bottom is real: built on copies of the current tree (clean, slice 1b committed), `node --check` clean, `patch --binary --dry-run` applies it to the real CRLF files, and the patched copy passes the offline simulation described under Tests. NOT run in a browser.
 

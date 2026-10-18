@@ -12,6 +12,8 @@
  */
 (() => {
   let nextId = 1;
+  /** Signed difference a - b of two angles, in [-PI, PI). */
+  const angDiff = (a, b) => ((a - b + Math.PI) % 6.2832 + 6.2832) % 6.2832 - Math.PI;
   /** Bosses are enlarged up to ~110 tall, based on how big their sprite already is. */
   function bossScale(dex) {
     const m = G.Sprites.animMeta(dex, 'Idle');
@@ -91,6 +93,10 @@
       // Stragglers: if they fall behind, out of sight, while you flee,
       // come back out ahead (see EnemyMgr.update).
       this.lagT = 0;
+      // Class from the table (null for bosses); active flanker state (flankCheck); crowd-seeking state (seekMove).
+      this.cls = boss || !G.DEX_BY[def.dex] ? null : G.Enemies.classOf(G.DEX_BY[def.dex]);
+      this.fl = null; this.flT = 0;
+      this.seekT = 0; this.seekTarget = null; this.weakCd = G.U.rand(1, G.Enemies.SEEK.shotCd);
     }
 
     cy() { return this.y; }
@@ -310,12 +316,8 @@
         this.anim.loop('Walk', 1.4);
         return;
       }
-      // Runner: it goes where you ARE GOING to be (it cuts you off if you only flee).
-      if (this.def.runner && pl._vx != null) {
-        const lead = G.U.clamp(dist / Math.max(60, spd), 0, 1.4);
-        [dx, dy] = G.U.norm(pl.x + pl._vx * lead - this.x, pl.y + pl._vy * lead - this.y);
-        if (G.Camera.sees(this.x, this.y, 0) && Math.random() < dt * 10) G.FX.px(this.x - dx * 8 + G.U.rand(-4, 4), this.y, '#e8dcc0', { vy: -12, life: 0.35 });
-      }
+      // Flanker: only a few individuals of the species are active at a time (FLANK.cap).
+      if (this.def.flanker && !this.boss) this.flankCheck(dt);
 
       // --- personality (shields, jumps, explosion) ---
       if (this.shieldT > 0 && (this.shieldT -= dt) <= 0) this.shield = 0;
@@ -345,7 +347,7 @@
       }
 
       // Path around the obstacles (the ones that do not fly).
-      if (!this.flying && this.phase !== 'dash' && this.sideT <= 0) {
+      if (!this.flying && this.phase !== 'dash' && this.sideT <= 0 && !this.fl && !this.isSeeker()) {
         const pd = G.Path.dirFor(this, pl);
         // Inside its band a unit moves straight (no path-following); bosses keep the old range test.
         const near = band ? s < band[1] : this.keepsDistance() && dist < (this.def.range || 200) * 0.82;
@@ -357,6 +359,10 @@
 
       if (this.boss) {
         [vx, vy, animBase] = this.bossMove(dt, pl, dist, dx, dy, spd);
+      } else if (this.fl) {
+        [vx, vy, animBase] = this.flankMove(dt, pl, spd, dist);
+      } else if (this.isSeeker()) {
+        [vx, vy, animBase] = this.seekMove(dt, pl, spd, dist);
       } else if (this.behavior === 'charger') {
         this.pt -= dt;
         if (this.phase === 'walk') {
@@ -381,7 +387,6 @@
         }
       } else if (band) {
         // Spacing band (slice 1b): approach beyond band[1], hold between the two numbers, back away (0.8x) below band[0].
-        // The shielder moves with its band but never shoots: only keepsDistance() classes fire.
         // Straight toward you (not the path) to move away.
         const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
         if (s < band[0]) {
@@ -398,6 +403,9 @@
           }
         }
       }
+
+      // Contact gap: a melee walker stops a little short of overlapping you; the hit test (combat.js) reaches farther.
+      if (this.meleeWalker() && dist <= (this.r + pl.r) * G.Enemies.CONTACT.stop) { vx = 0; vy = 0; }
 
       // --- integration ---
       const ox = this.x, oy = this.y;
@@ -568,7 +576,7 @@
       return [0, 0, 'Idle'];
     }
 
-    keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'healer', 'summoner'].includes(this.behavior); }
+    keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner'].includes(this.behavior); }
 
     /** Spacing band [retreat below, approach above] in screen units, or null. Bosses keep their own movement. */
     bandOf() { return this.boss ? null : (G.Enemies.BANDS[this.behavior] || null); }
@@ -578,15 +586,178 @@
 
     shotDmg() { return (this.def.shotDmg || 10) * (this.dmg / this.def.dmg); }
 
+    /** Life (seconds) of this enemy's normal shot: by class, see G.Enemies.SHOT_LIFE. */
+    shotLife() { return (this.cls && G.Enemies.SHOT_LIFE[this.cls]) || G.Enemies.SHOT_LIFE_BASE; }
+
+    /** Shielder and healer: they seek the biggest group of allies instead of holding a band. */
+    isSeeker() { return !this.boss && (this.behavior === 'shielder' || this.behavior === 'healer'); }
+
+    /** Walkers that stop at the contact gap: plain chasers, a charger while walking, a flanker only while striking. */
+    meleeWalker() {
+      if (this.boss) return false;
+      if (this.fl) return this.fl.ph === 'strike' && this.behavior === 'chase';
+      return this.behavior === 'chase' || (this.behavior === 'charger' && this.phase === 'walk');
+    }
+
+    /** Multiplier on the FINAL damage of this enemy's touch (combat.js): weak support melee, the flanker's strike. */
+    contactMul() {
+      if (this.fl) return G.Enemies.FLANK.strike;
+      if (this.isSeeker()) return G.Enemies.SEEK.weakMelee;
+      return 1;
+    }
+
+    /** Pixels from you, along direction `a`, of the middle of the shooter band (screen units to pixels). */
+    bandPx(a) {
+      const b = G.Enemies.BANDS.ranged;
+      return ((b[0] + b[1]) / 2) / Math.hypot(Math.cos(a) / (G.Camera.w / 2), Math.sin(a) / (G.Camera.h / 2));
+    }
+
+    // ---------------- crowd-seeking support (shielder, healer) ----------------
+
+    /** Picks the group of allies to stand by: the one with most allies inside its effect radius (healer: most WOUNDED). */
+    seekPick() {
+      const K = G.Enemies.SEEK, heal = this.behavior === 'healer', R = heal ? 150 : 160;
+      let pool = G.EnemyMgr.queryCircle(this.x, this.y, K.scanR).filter(e => !e.dead && !e.boss && e !== this && !(heal && e.behavior === 'healer'));
+      const hurt = heal ? pool.filter(e => e.hp < e.maxHp) : pool;
+      if (hurt.length) pool = hurt;           // healer with nobody wounded just stays with the crowd
+      if (!pool.length) { this.seekTarget = null; return; }
+      const score = c => { let n = 0; for (const e of pool) if (G.U.dist2(e.x, e.y, c.x, c.y) <= R * R) n++; return n; };
+      const cand = pool.slice().sort((a, b) => G.U.dist2(a.x, a.y, this.x, this.y) - G.U.dist2(b.x, b.y, this.x, this.y)).slice(0, K.sample);
+      let best = null, bs = -1;
+      for (const c of cand) { const sc = score(c); if (sc > bs) { bs = sc; best = c; } }
+      const cur = this.seekTarget && !this.seekTarget.dead && pool.includes(this.seekTarget) ? this.seekTarget : null;
+      if (!cur || bs - score(cur) >= K.switchBy) this.seekTarget = best;
+    }
+
+    /** Shielder / healer movement and attacks. Returns [vx, vy, anim]. */
+    seekMove(dt, pl, spd, dist) {
+      const K = G.Enemies.SEEK, s = this.screenDist(pl);
+      this.seekT -= dt;
+      if (this.seekT <= 0) { this.seekT = K.every; this.seekPick(); }
+      const tg = this.seekTarget && !this.seekTarget.dead ? this.seekTarget : null;
+      const [px, py] = G.U.norm(pl.x - this.x, pl.y - this.y);           // toward you
+      let vx = 0, vy = 0;
+      if (s < K.floor) { vx = -px * spd * 0.8; vy = -py * spd * 0.8; }   // too close: back away
+      else if (tg) {
+        const [tx, ty] = G.U.norm(tg.x - this.x, tg.y - this.y);
+        const R = this.behavior === 'healer' ? 150 : 160;
+        const intoFloor = s < K.floor * 1.15 && tx * px + ty * py > 0;   // the group is on your side of the floor: wait
+        if (!intoFloor && G.U.dist(this.x, this.y, tg.x, tg.y) > R * K.stopK) { vx = tx * spd; vy = ty * spd; }
+      } else if (s > K.alone) { vx = px * spd; vy = py * spd; }          // no allies in sight: stand off at `alone`
+      if ((vx || vy) && this.sideT > 0) {
+        const a = Math.atan2(vy, vx) + this.side * 1.25, m = Math.hypot(vx, vy);
+        vx = Math.cos(a) * m; vy = Math.sin(a) * m;
+      }
+      if (this.behavior === 'healer') {
+        this.shotCd -= dt;
+        if (this.shotCd <= 0) { this.shotCd = this.def.shotCd || 2; this.healAround(); }
+      }
+      // Weak shot from range; touching you is the weak melee (combat.js, contactMul). Never both at once.
+      this.weakCd -= dt;
+      if (this.weakCd <= 0 && s < K.shotS && dist > this.r + pl.r + K.meleeGap) {
+        this.weakCd = K.shotCd;
+        this.shoot(px, py, 0, 1, 1, G.Enemies.SHOT_LIFE_BASE, K.weakShot);
+      }
+      return [vx, vy, vx || vy ? 'Walk' : 'Idle'];
+    }
+
+    // ---------------- flanker ----------------
+
+    /** An individual becomes an ACTIVE flanker only while fewer than FLANK.cap are alive; the rest act as their base class. */
+    flankCheck(dt) {
+      if (this.fl) return;                    // once active it stays active until it dies
+      this.flT -= dt;
+      if (this.flT > 0) return;
+      this.flT = 2;
+      let n = 0;
+      for (const e of G.EnemyMgr.all()) if (e.fl && !e.dead) n++;
+      if (n < G.Enemies.FLANK.cap) this.fl = { ph: 'approach', sector: -1, scanT: 0, t: 0, holdT: 0 };
+    }
+
+    /** Enemies around you per wedge, within FLANK.scanR (it does not count itself). */
+    flankSector(pl) {
+      const F = G.Enemies.FLANK, cnt = new Array(F.sectors).fill(0);
+      for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, F.scanR)) {
+        if (e === this || e.dead) continue;
+        cnt[Math.floor((Math.atan2(e.y - pl.y, e.x - pl.x) + Math.PI) / 6.2832 * F.sectors) % F.sectors]++;
+      }
+      return cnt;
+    }
+
+    /** Chooses the emptiest wedge; keeps the current one unless the best is FLANK.switchBy emptier. */
+    flankPick(pl) {
+      const F = G.Enemies.FLANK, fl = this.fl, cnt = this.flankSector(pl);
+      const me = Math.atan2(this.y - pl.y, this.x - pl.x);
+      let best = 0, bs = Infinity;
+      for (let k = 0; k < cnt.length; k++) {
+        const c = -Math.PI + (k + 0.5) * 6.2832 / F.sectors;
+        const score = cnt[k] + Math.abs(angDiff(c, me)) * 0.01;         // fewest first, the nearer wedge breaks ties
+        if (score < bs) { bs = score; best = k; }
+      }
+      if (fl.sector < 0 || cnt[fl.sector] - cnt[best] >= F.switchBy) fl.sector = best;
+    }
+
+    /** Called by combat.js when its strike landed: now it runs. */
+    flankStruck() { this.fl.ph = 'retreat'; this.fl.t = 0; }
+
+    /**
+     * Phases: approach (curve round to the emptiest wedge, then dive to its stand point) > strike (ONE attack: a hit for
+     * a melee flanker, waiting out your invulnerability up to FLANK.hold s; one shot for a shooter) > retreat (run to the
+     * screen edge) > rest (FLANK.rest s) > approach again. Returns [vx, vy, anim].
+     */
+    flankMove(dt, pl, spd, dist) {
+      const F = G.Enemies.FLANK, fl = this.fl, shooter = this.behavior === 'ranged';
+      const speedAt = m => Math.max(spd, Math.min(spd * m, F.maxVsPlayer * (pl.spd || spd)));
+      const ix = (pl.x - this.x) / (dist || 1), iy = (pl.y - this.y) / (dist || 1);     // toward you
+      const ang = Math.atan2(this.y - pl.y, this.x - pl.x);                              // where it stands around you
+      let vx = 0, vy = 0, sp = speedAt(F.approach);
+      fl.t += dt;
+      if (fl.ph === 'approach') {
+        fl.scanT -= dt;
+        if (fl.sector < 0 || fl.scanT <= 0) { fl.scanT = F.recheck; this.flankPick(pl); }
+        const th = -Math.PI + (fl.sector + 0.5) * 6.2832 / F.sectors;
+        const stand = shooter ? this.bandPx(th) : F.meleeStand;
+        const dth = angDiff(th, ang), aligned = Math.abs(dth) < F.alignTol;
+        // Not yet on its side: spiral inward to the orbit ring while circling toward the wedge. On it: dive to the stand point.
+        const wantR = aligned ? stand : Math.max(stand, F.orbit);
+        const wr = G.U.clamp((dist - wantR) / 80, -1, 1), sg = dth >= 0 ? 1 : -1, wt = aligned ? 0 : 1;
+        const mx = ix * wr - Math.sin(ang) * sg * wt, my = iy * wr + Math.cos(ang) * sg * wt, m = Math.hypot(mx, my) || 1;
+        vx = mx / m * sp; vy = my / m * sp;
+        if (aligned && dist <= stand + 30) { fl.ph = 'strike'; fl.t = 0; fl.holdT = F.hold; }
+      } else if (fl.ph === 'strike') {
+        if (shooter) {
+          this.shoot(ix, iy, 0, 1, 1, this.shotLife(), F.strike);
+          fl.ph = 'retreat'; fl.t = 0;
+        } else {
+          vx = ix * sp; vy = iy * sp;            // dive on you; the contact gap stops it and combat.js lands the hit
+          // The hold timer only runs once it is next to you; fl.t also caps the dive itself.
+          if (dist <= (this.r + pl.r) * G.Enemies.CONTACT.hit + 2) fl.holdT -= dt;
+          if (fl.holdT <= 0 || fl.t > F.hold + 3) { fl.ph = 'retreat'; fl.t = 0; }
+        }
+      } else if (fl.ph === 'rest') {
+        if (fl.t >= F.rest) { fl.ph = 'approach'; fl.sector = -1; fl.scanT = 0; fl.t = 0; }
+      } else {
+        sp = speedAt(F.retreat);
+        vx = -ix * sp; vy = -iy * sp;
+        if (this.screenDist(pl) >= F.edge || fl.t > F.maxRetreat) { fl.ph = 'rest'; fl.t = 0; }
+      }
+      if ((vx || vy) && this.sideT > 0) {
+        const a = Math.atan2(vy, vx) + this.side * 1.25, m = Math.hypot(vx, vy);
+        vx = Math.cos(a) * m; vy = Math.sin(a) * m;
+      }
+      if ((vx || vy) && G.Camera.sees(this.x, this.y, 0) && Math.random() < dt * 10) G.FX.px(this.x - vx / sp * 8 + G.U.rand(-4, 4), this.y, '#e8dcc0', { vy: -12, life: 0.35 });
+      return [vx, vy, vx || vy ? 'Walk' : 'Idle'];
+    }
+
     /** Normal enemy shot (one, or several in a fan). */
-    shoot(ax, ay, spread = 0, n = 1, k = 1) {
+    shoot(ax, ay, spread = 0, n = 1, k = 1, life = G.Enemies.SHOT_LIFE_BASE, mul = 1) {
       const sp = 190, type = this.atkType;
       const base = Math.atan2(ay, ax);
       for (let i = 0; i < n; i++) {
         const a = base + (n === 1 ? 0 : (i / (n - 1) - 0.5) * spread);
         const shot = G.Projectiles.spawn({
           x: this.x, y: this.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-          dmg: this.shotDmg() * k, r: 7, life: 2.4, friendly: false, color: '#ff7a9e', mtype: type,
+          dmg: this.shotDmg() * k, r: 7, life, mul, friendly: false, color: '#ff7a9e', mtype: type,
           atkFactor: this.atkFactor, atkCat: this.atkCat, src: this,
           vis: G.VFX.forType(type)
         });
@@ -616,9 +787,8 @@
           this.anim.play('Shoot');
           break;
         }
-        case 'healer': this.healAround(); break;
         case 'summoner': this.summon(); break;
-        default: this.shoot(dx, dy);
+        default: this.shoot(dx, dy, 0, 1, 1, this.shotLife());
       }
     }
 

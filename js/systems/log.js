@@ -47,7 +47,7 @@ G.Log = (() => {
     const o = rec(HIT_IN), e = w && w.e;
     F[o] = e ? e.dex : 0; F[o + 1] = (e && e.atkLvl) || 0; F[o + 2] = S(w ? w.kind : 'flat');
     F[o + 3] = cat; F[o + 4] = neutral; F[o + 5] = dStat; F[o + 6] = afterDef; F[o + 7] = typeK; F[o + 8] = wxK;
-    F[o + 9] = red; F[o + 10] = close; F[o + 11] = fin; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = flags | (e && e.def && e.def.runner ? 8 : 0) | (e && e.boss ? 32 : 0);    // 8 = runner, 32 = boss
+    F[o + 9] = red; F[o + 10] = close; F[o + 11] = fin; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = flags | (e && e.fl ? 8 : 0) | (e && e.boss ? 32 : 0);    // 8 = active flanker, 32 = boss
     F[o + 15] = S(type);
     F[o + 16] = e ? e.spd : 0; F[o + 17] = myPx || 0;   // attacker and your px/s at the moment of the hit
     // Where the attacker stood relative to you, in screen units (1.0 = screen edge; for a shot, where the shooter is when it lands),
@@ -99,10 +99,10 @@ G.Log = (() => {
   const dexName = d => (G.DEX_BY[d] && G.DEX_BY[d].name) || (d ? '#' + d : 'env');
   const CAT = ['physical', 'special', 'status'];
 
-  // Class tag from the class table: " (shielder)", " (plain+tank)", " (charger+runner)". Empty for bosses and anything not in the table.
-  const tagOf = (dex, boss, runner) => {
+  // Class tag from the class table: " (shielder)", " (plain+tank)", " (shooter+flanker)". Empty for bosses and anything not in the table.
+  const tagOf = (dex, boss, flanker) => {
     const c = dex && !boss && G.ENEMY_CLASSES && G.ENEMY_CLASSES[dex];
-    return c ? ' (' + c.c + (c.t ? '+tank' : '') + (runner ? '+runner' : '') + ')' : '';
+    return c ? ' (' + c.c + (c.t ? '+tank' : '') + (flanker ? '+flanker' : '') + ')' : '';
   };
 
   function lineIn(v) {
@@ -180,7 +180,7 @@ G.Log = (() => {
   };
   api.cast = () => {
     const rows = [];
-    G.Enemies.cast.forEach((t, ti) => { for (const d of t.list) rows.push({ tier: ti + 1, species: d.name, class: G.Enemies.classOf(G.DEX_BY[d.dex]), tank: d.tank ? 'yes' : '', runner: d.runner ? 'yes' : '' }); });
+    G.Enemies.cast.forEach((t, ti) => { for (const d of t.list) rows.push({ tier: ti + 1, species: d.name, class: G.Enemies.classOf(G.DEX_BY[d.dex]), tank: d.tank ? 'yes' : '', flanker: d.flanker ? 'yes' : '' }); });
     console.table(rows);
     return rows;
   };
@@ -194,7 +194,7 @@ G.Log = (() => {
     const rows = Object.keys(by).map(k => {
       const a = by[k].sort((x, y) => x - y), b = B[k];
       return { behavior: k, n: a.length, min: +a[0].toFixed(2), median: +a[a.length >> 1].toFixed(2), max: +a[a.length - 1].toFixed(2),
-               band: b ? b[0] + ' to ' + b[1] : '-', inBand: b ? a.filter(x => x >= b[0] && x <= b[1] * 1.05).length : '-' };
+               band: b ? b[0] + ' to ' + b[1] : (k === 'shielder' || k === 'healer' ? 'floor ' + G.Enemies.SEEK.floor : '-'), inBand: b ? a.filter(x => x >= b[0] && x <= b[1] * 1.05).length : '-' };
     });
     console.table(rows);
     return rows;
@@ -203,7 +203,7 @@ G.Log = (() => {
     const rows = order(count).map(i => ({ t: +T[i].toFixed(2), kind: KIND_NAME[K[i]], text: fmt(i), v: Array.from(F.subarray(i * NF, i * NF + NF)) }));
     // First row: this run's cast with class and modifier flags, so a log can be read without the game open.
     rows.unshift({ t: 0, kind: 'CAST', v: [], text: 'region ' + (G.Enemies.region == null ? 'all' : G.Enemies.region) + '\n' +
-      G.Enemies.cast.map((t, ti) => 'T' + (ti + 1) + ': ' + t.list.map(d => d.name + ' (' + G.Enemies.classOf(G.DEX_BY[d.dex]) + (d.tank ? '+tank' : '') + (d.runner ? '+runner' : '') + ')').join(', ')).join('\n') });
+      G.Enemies.cast.map((t, ti) => 'T' + (ti + 1) + ': ' + t.list.map(d => d.name + ' (' + G.Enemies.classOf(G.DEX_BY[d.dex]) + (d.tank ? '+tank' : '') + (d.flanker ? '+flanker' : '') + ')').join(', ')).join('\n') });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(rows)], { type: 'application/json' }));
     a.download = 'pokesurvivor-log-' + Date.now() + '.json';

@@ -257,14 +257,14 @@ G.Player = class Player {
     // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
     // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
     if (atk && !pure) {
-      const st = this.mon.stats;
+      const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
       if (LOG) {
-        neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR;
+        neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
         dStat = cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level);
       }
-      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level);
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level) * mul;
     }
     const afterDef = amount;
     let eff = null, tk = 1, wk = 1;

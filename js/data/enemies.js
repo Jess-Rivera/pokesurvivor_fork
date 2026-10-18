@@ -23,8 +23,9 @@
  *   fan      shoots in a fan
  *   jumper   jumps and lands on you (the landing shows on the ground first)
  *   status   (slice 2) applies sleep / paralysis / slow to you, or hastes its allies
- *   runner   not a class: a flag on the fastest plain or charger of each tier's cast, at its own
- *            speed. It goes where you are going to be (cuts off whoever only flees).
+ *   flanker  not a class: a flag on the fastest plain and the fastest shooter (never a Tank) of each tier's cast.
+ *            At most FLANK.cap of them act as flankers at a time: they curve round to the emptiest side of you,
+ *            strike once and run to the screen edge (Enemy.flankMove). The rest of the species act as plain / shooter.
  *
  * Every species' class comes from the generated table js/data/enemy-classes.js (G.ENEMY_CLASSES).
  * The warned attacks are in systems/hazards.js.
@@ -182,20 +183,33 @@ G.Enemies = (() => {
     return picked.concat(fill(mel, m, MELEE_SPECIAL), fill(ran, r, RANGE_SPECIAL));
   }
 
+  // Share of the spawns each family gets inside a tier, whatever the species count (a 5-shooter cast no longer
+  // means 5/9 shooters on screen). A family a tier lacks gives its share to the others pro rata. Status counts as support.
+  const FAMILY_SHARE = { melee: 0.45, range: 0.40, support: 0.15 };
+  const BAG_UNIT = 4;     // bag copies per weight point, so the shares survive rounding
+
   let cast = null;      // [{ from, list: [def] }]
+  let bagCache = null, bagKey = '';
   let bosses = null;    // [def de jefe]
 
   /** Draws the cast of a new run. */
   function rollRun() {
+    bagCache = null;
     cast = TIERS.map((tier, ti) => ({
       from: tier.from,
       list: castFor(tier, ti).map(p => defFor(p, tier, ti))
     }));
     for (const tier of cast) {
-      // Runner: the fastest plain or charger of the cast (relative, no speed multiplier), never a tank.
-      const fast = tier.list.filter(d => (d.behavior === 'chase' || d.behavior === 'charger') && !d.tank);
-      const r = fast.sort((a, b) => b.spd - a.spd)[0];
-      if (r) r.runner = true;
+      // Flanker: the fastest plain and the fastest shooter of the cast (own speed, no multiplier), never a tank.
+      // Spawn weight by family: the species count no longer sets the spawn share (see FAMILY_SHARE). d.wt averages 1 per tier.
+      const cnt = { melee: 0, range: 0, support: 0 }, fam = d => FAMILY[classOf(G.DEX_BY[d.dex])];
+      for (const d of tier.list) cnt[fam(d)]++;
+      const tot = Object.keys(cnt).reduce((a, f) => a + (cnt[f] ? FAMILY_SHARE[f] : 0), 0);
+      for (const d of tier.list) d.wt = FAMILY_SHARE[fam(d)] / tot * tier.list.length / cnt[fam(d)];
+      for (const k of ['plain', 'shooter']) {
+        const f = tier.list.filter(d => classOf(G.DEX_BY[d.dex]) === k && !d.tank).sort((a, b) => b.spd - a.spd)[0];
+        if (f) f.flanker = true;
+      }
     }
     const used = new Set();
     bosses = BOSS_SLOTS.map(slot => {
@@ -255,13 +269,17 @@ G.Enemies = (() => {
     const horde = G.Events && G.Events.bag();
     if (horde) return horde;
     if (!cast) rollRun();
+    // The bag only changes when a tier starts or turns old, so it is cached by that.
+    const key = cast.map(tier => t < tier.from ? 'x' : t - tier.from > 260 ? 'o' : 'n').join('');
+    if (bagCache && key === bagKey) return bagCache;
     const bag = [];
     for (const tier of cast) {
       if (t < tier.from) continue;
       const w = t - tier.from > 260 ? 3 : 10;       // los tramos viejos pierden peso
-      for (const e of tier.list) for (let i = 0; i < w; i++) bag.push(e);
+      for (const e of tier.list) for (let i = Math.max(1, Math.round(w * BAG_UNIT * (e.wt || 1))); i > 0; i--) bag.push(e);
     }
-    return bag.length ? bag : cast[0].list;
+    bagKey = key; bagCache = bag.length ? bag : cast[0].list;
+    return bagCache;
   }
 
   /** Ditto's summon: a random melee or range member of the cast drawn for this tier or an earlier one (never support or bomber). */
@@ -288,10 +306,41 @@ G.Enemies = (() => {
   // [retreat below, approach above]; in between the unit holds. Keyed by behavior id, so status species share the
   // shooter band ('ranged') until slice 2. Tuned by playtest: change the numbers here, nowhere else.
   const BANDS = { fan: [0.30, 0.40], beamer: [0.50, 0.62], zoner: [0.72, 0.82], ranged: [0.80, 0.92],
-                  shielder: [0.45, 0.58], healer: [0.70, 0.82], summoner: [0.70, 0.82] };
+                  summoner: [0.70, 0.82] };
+
+  // Shielder and healer hold no band: they seek the biggest group of allies (Enemy.seekMove / seekPick). Screen units.
+  //   floor      never closer to you than this (backs away at 0.8x below it)
+  //   alone      with no allies in sight they approach to this and hold
+  //   scanR/every/sample/switchBy   look for allies within scanR px every `every` s, test the `sample` nearest as group centres,
+  //              and only change target when the new group has `switchBy` more allies in reach
+  //   stopK      they stop once within stopK x their effect radius of the group centre
+  //   weakShot / weakMelee   damage multipliers (on the final damage) of their shot and of touching you; shotCd between
+  //              shots; the shot only fires within shotS of you and while you are not in touching range (meleeGap px more)
+  const SEEK = { floor: 0.30, alone: 0.55, scanR: 420, every: 0.75, sample: 8, switchBy: 2, stopK: 0.4,
+                 weakShot: 0.5, weakMelee: 0.5, shotCd: 2.5, shotS: 0.95, meleeGap: 30 };
+
+  // Melee contact: a walker stops at `stop` x (its radius + yours); the hit test reaches `hit` x that sum.
+  const CONTACT = { stop: 1.15, hit: 1.3 };
+
+  // Flanker. Speed = max(own speed, min(own speed x mult, maxVsPlayer x your speed)): lifts slow species, never slows fast ones.
+  //   approach / retreat   speed multipliers (1.6 curving round, 1.2 running off)
+  //   strike               damage multiplier of its single attack (on the final damage)
+  //   sectors / scanR / recheck / switchBy   the area around you is cut into `sectors` wedges; enemies within scanR px are
+  //              counted every `recheck` s and the emptiest wedge wins (a new one must be `switchBy` emptier to replace it)
+  //   orbit / meleeStand / alignTol   it circles you at `orbit` px (outside the crowd), melee flankers dive in to
+  //              `meleeStand` px (just outside your melee reach); alignTol = radians of the wedge it must face before diving
+  //   hold       seconds a melee flanker, once next to you, waits for your hit-invulnerability to end before giving up
+  //   edge / maxRetreat   it runs until `edge` screens from you (1.0 = the screen edge, 1.15 = just off it), or gives up after maxRetreat s
+  //   rest       seconds it waits at the edge before the next approach (0 = straight back; a shooter's edge is close to its band)
+  const FLANK = { cap: 2, approach: 1.6, strike: 1.2, retreat: 1.2, maxVsPlayer: 2.0, sectors: 8, scanR: 300, recheck: 0.5,
+                  switchBy: 2, orbit: 140, meleeStand: 130, alignTol: 0.35, hold: 1.5, edge: 1.15, maxRetreat: 5, rest: 1.5 };
+
+  // Enemy shot life in seconds by class (shot speed stays 190 px/s). Anything not listed keeps SHOT_LIFE_BASE.
+  // Bosses, fans and everything else call shoot() with the base life.
+  const SHOT_LIFE_BASE = 2.4, SHOT_LIFE = { shooter: 4.8 };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, BANDS,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY_SHARE, BANDS, SEEK, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

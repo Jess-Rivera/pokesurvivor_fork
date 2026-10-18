@@ -585,7 +585,7 @@ G.Combat = (() => {
         }
         if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
           const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
-          if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat }, w);
+          if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
           else pl.hurt(p.dmg, p.mtype, false, null, w);
           G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
           projectiles.splice(i, 1);
@@ -697,14 +697,19 @@ G.Combat = (() => {
     // --- enemy <-> player contact ---
     if (pl.dead) return;
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, pl.r + 40)) {
-      if (G.U.dist2(e.x, e.y, pl.x, pl.y) > (e.r + pl.r) * (e.r + pl.r)) continue;
+      // Contact gap: wild melee reaches CONTACT.hit x the radius sum (it stops at CONTACT.stop x); bosses keep 1.0.
+      const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
+      if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
+      // An active flanker only hits in its strike phase, and waits out your invulnerability instead of wasting the hit.
+      if (e.fl && (e.fl.ph !== 'strike' || pl.invuln > 0)) continue;
       e.touchCd = 0.55;
       e.strike(pl);
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
-      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat }, w);
+      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
       else pl.hurt(e.dmg, e.atkType, false, null, w);
+      if (e.fl) e.flankStruck();
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);
       e.kx += nx * 150; e.ky += ny * 150;

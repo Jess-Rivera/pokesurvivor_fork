@@ -6,6 +6,14 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['More even enemy mix', 'More even enemy mix'], chg: [
+    ['Each stage now spawns a steady share of melee, ranged and support enemies, so a shooter-heavy roll no longer fills the screen with shooters.',
+     'Each stage now spawns a steady share of melee, ranged and support enemies, so a shooter-heavy roll no longer fills the screen with shooters.']
+  ] },
+  { d: '2026-10-18', title: ['Flankers, crowd-seeking support, tighter melee', 'Flankers, crowd-seeking support, tighter melee'], chg: [
+    ['Runners are now Flankers: a couple of the fastest plain and shooter enemies circle round to the emptiest side of you, strike once, then run to the screen edge and come back from a new side. Shielders and healers now stand with the biggest group of their allies and fight back weakly. Melee enemies stop just short of overlapping you, and plain shooters\' shots now travel twice as far.',
+     'Runners are now Flankers: a couple of the fastest plain and shooter enemies circle round to the emptiest side of you, strike once, then run to the screen edge and come back from a new side. Shielders and healers now stand with the biggest group of their allies and fight back weakly. Melee enemies stop just short of overlapping you, and plain shooters\' shots now travel twice as far.']
+  ] },
   { d: '2026-10-18', title: ['Enemies keep their distance by role', 'Enemies keep their distance by role'], chg: [
     ['Ranged and support enemies now stand at a distance that matches their role instead of one shared range: fans stay close, beamers a step back, healers, summoners and zoners further out, shooters at the edge of the screen. Shielders no longer walk into you. Units back away at 80% speed so you can still chase them down, and they no longer freeze in place or jam against walls.',
      'Ranged and support enemies now stand at a distance that matches their role instead of one shared range: fans stay close, beamers a step back, healers, summoners and zoners further out, shooters at the edge of the screen. Shielders no longer walk into you. Units back away at 80% speed so you can still chase them down, and they no longer freeze in place or jam against walls.']

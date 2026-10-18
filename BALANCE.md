@@ -30,6 +30,13 @@ re-tune later.
   baseline); melee radius/arc x1.25 bumps kept.
 
 ## Enemies
+### Slice 1c: shots, support, contact, flanker (applied 2026-10-18)
+- 2026-10-18, plain shooter shot life: 2.4 s -> 4.8 s (speed 190 px/s unchanged; G.Enemies.SHOT_LIFE, per class). Fans, beamers, zoners, status and bosses unchanged. Real reach is limited by the 260 px off-view cull.
+- 2026-10-18, shielder and healer: band 0.45/0.58 and 0.70/0.82 -> seek the biggest ally group (SEEK table), floor 0.30 screens; new weak shot (x0.5 final damage, every 2.5 s) and weak melee (x0.5).
+- 2026-10-18, melee contact: stop at 1.15 x radius sum, hit reach 1.3 x (was overlap at 1.0 x). Bosses unchanged. CONTACT table.
+- 2026-10-18, runner -> flanker: fastest non-Tank plain and shooter per tier (was fastest plain/charger); max 2 active; speed max(own, min(own x1.6, 2.0 x player)), retreat same formula x1.2; one strike at x1.2 final damage; 1.5 s hold/retry; rest 1.5 s at 1.15 screens. FLANK table. Lead intercept removed.
+- 2026-10-18, Player.hurt: atk.mul applies to the final damage after the defense step (weak support, flanker strike).
+- 2026-10-18, spawn mix: per-species equal weight -> weight by family inside each tier (G.Enemies.FAMILY_SHARE: melee 0.45, range 0.40, support 0.15; a missing family gives its share to the others). Why: a 5-shooter Tier 1 cast (14% of casts) meant 56% shooters; now a fixed 40%. Status counts as support. Bag cached per tier state, BAG_UNIT 4.
 ### Enemy behavior refactor, slice 1 (applied 2026-10-18)
 - 2026-10-18, enemy cast, tier cast size: 7 -> 9 per tier (1-2 support, 3-5 melee, 3-5 range, one special and one baseline per family from tier 2). Why: room for the class mix without repeating classes.
 - 2026-10-18, enemy runner, speed: x1.6 on the fastest plain -> none (a flag on the fastest plain/charger that is not a Tank; its own speed). Why: speed is species identity (Eevee measured 147 vs 92 px/s). Confirmed in the 2026-10-18 playtest logs (Kadabra 164, Magikarp 130 are plain species speed).
