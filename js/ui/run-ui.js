@@ -2,18 +2,15 @@
 G.RunUI = (() => {
   const $ = G.UI.$;
   let offers = null, offerCb = null, coopMode = false;
-  let flow = null;            // mechanic card in progress: { card, idx, targets, step, target, monSkipped }
-  let autoT = 0;              // auto-advance timer (a single legal choice is shown for a beat, then taken)
-  const AUTO_MS = 700;
+  let flow = null;            // a mechanic / stat card being applied on the choose sheet: { card, idx, info }
 
   /** @param coop  in a group: after choosing, it waits for the others */
   function showLevelUp(level, list, cb, coop = false) {
-    offerCb = cb; coopMode = coop; flow = null; clearAuto();
+    offerCb = cb; coopMode = coop; flow = null;
     $('lvl-num').textContent = level;
     $('lvl-wait').textContent = '';
     $('lvl-wait').classList.toggle('hidden', !coop);
     $('cards').classList.remove('done');
-    $('lvl-back').onclick = back;
     renderCards(list);
     $('lvl-reroll').onclick = reroll;
     G.UI.show('scr-levelup');
@@ -37,8 +34,6 @@ G.RunUI = (() => {
     renderCards(G.LevelUp.offer(p, 3, G.Game.roster));
   }
 
-  function clearAuto() { if (autoT) { clearTimeout(autoT); autoT = 0; } }
-
   /** One row of the level-up screen (card, Pokemon or move). */
   function row(o) {
     const el = document.createElement('div');
@@ -57,16 +52,8 @@ G.RunUI = (() => {
     return el;
   }
 
-  function setHeader(step) {
-    $('lvl-sub').classList.toggle('hidden', !!step);
-    $('lvl-step').classList.toggle('hidden', !step);
-    $('lvl-step').textContent = step || '';
-    $('lvl-back').classList.toggle('hidden', !step);
-  }
-
   function renderCards(list, doneIdx = null) {
     offers = list;
-    setHeader('');
     const left = rerollsLeft();
     $('lvl-rr-n').textContent = left;
     $('lvl-reroll').classList.toggle('hidden', left <= 0);
@@ -75,7 +62,7 @@ G.RunUI = (() => {
     list.forEach((c, i) => {
       const el = row({
         title: c.title, desc: c.desc, color: c.color, key: G.Input.keyLabel('attack_' + (i + 1)),
-        chip: c.type === 'new' ? 'Nuevo · ' + c.tag : c.tag, chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
+        chip: c.type === 'new' ? 'New · ' + c.tag : c.tag, chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
         icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '', icoText: c.ico, onclick: () => pick(i)
       });
       if (doneIdx === i) el.classList.add('picked');
@@ -84,106 +71,64 @@ G.RunUI = (() => {
     if (doneIdx != null) box.classList.add('done');
   }
 
-  // ---- card -> Pokemon -> move ----
+  // ---- card -> choose sheet (Pokemon strip + move block) -> Confirm ----
 
   function pick(i) {
-    if (!offers || !offers[i]) return;
-    if (flow) return;                       // rows of the later steps have their own handlers
+    if (!offers || !offers[i] || flow) return;
     const c = offers[i];
     if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }
     G.Audio.sfx('select');
-    flow = { card: c, idx: i, targets: c.targets(G.Game.roster), step: 'pokemon', target: null, monSkipped: false };
-    renderMonStep();
+    openChoose(c, i);
   }
 
-  function renderMonStep() {
-    clearAuto();
-    flow.step = 'pokemon';
-    setHeader('Choose a Pokémon for ' + flow.card.title);
-    $('lvl-reroll').classList.add('hidden');
-    const ok = flow.targets.filter(t => t.ok);
-    const only = ok.length === 1 ? ok[0] : null;
-    const box = $('cards');
-    box.innerHTML = '';
-    flow.targets.forEach((t, ti) => {
-      const n = t.moves.filter(x => x.ok).length;
-      const f = t.pl;
-      box.appendChild(row({
-        title: f.mon.name, color: G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94',
-        desc: flow.card.type === 'stat' ? t.note : n ? n + (n === 1 ? ' move can take it' : ' moves can take it') : 'No move can take it',
-        chip: f.dead ? 'Fainted' : (G.Game.player === f ? 'On field' : ''), chipColor: f.dead ? '#8a93a3' : '#5fcb6a',
-        key: G.Input.keyLabel('swap_' + ((f.teamSlot != null ? f.teamSlot : ti) + 1)),
-        icoNode: G.UI.spriteCanvas(f.dex, 46, 46, { scale: 1, shiny: f.shiny }),
-        dim: !t.ok, flash: t === only, onclick: () => pickMon(ti)
-      }));
+  /** Open the summary sheet in choose mode for card `c`: pick a Pokemon (and, for a mechanic card, one of its moves). */
+  function openChoose(c, idx) {
+    const roster = G.Game.roster;
+    flow = { card: c, idx, info: { ok: false, why: '' } };
+    $('choose-title').textContent = 'Apply ' + c.title;
+    $('choose-sub').textContent = 'Level ' + $('lvl-num').textContent;
+    $('btn-choose-back').onclick = back;
+    $('btn-choose-ok').onclick = confirm;
+    G.Sheet.render($('choose-sheet'), roster, {
+      sel: Math.max(0, roster.indexOf(G.Game.player)),
+      choose: {
+        card: c, targets: c.targets(roster), onConfirm: confirm,
+        onChange: info => { if (!flow) return; flow.info = info; $('btn-choose-ok').disabled = !info.ok; $('choose-note').textContent = info.ok ? '' : info.why; }
+      }
     });
-    if (only) autoT = setTimeout(() => { autoT = 0; if (flow && flow.step === 'pokemon') pickMon(flow.targets.indexOf(only), true); }, AUTO_MS);
+    G.UI.show('scr-choose');
   }
 
-  function pickMon(ti, auto = false) {
-    if (!flow || flow.step !== 'pokemon' || !flow.targets[ti] || !flow.targets[ti].ok) return;
-    clearAuto();
-    flow.target = flow.targets[ti];
-    flow.monSkipped = auto || flow.targets.filter(t => t.ok).length === 1;
-    if (flow.card.type === 'stat') { finish(flow.card, { pl: flow.target.pl }, flow.idx); return; }     // stat cards: no move step
-    G.Audio.sfx('select');
-    renderMoveStep();
+  function confirm() {
+    if (!flow || !flow.info.ok) return;
+    const ch = G.Sheet.chosen($('choose-sheet'));
+    finish(flow.card, { pl: ch.pl, move: ch.move }, flow.idx);
   }
 
-  function renderMoveStep() {
-    clearAuto();
-    flow.step = 'move';
-    const { card, target } = flow;
-    setHeader('Choose a move for ' + target.pl.mon.name + ': ' + card.title);
-    const ok = target.moves.filter(x => x.ok);
-    const only = ok.length === 1 ? ok[0] : null;
-    const box = $('cards');
-    box.innerHTML = '';
-    target.moves.forEach((x, mi) => {
-      const m = x.m, n = G.Moves.stackTotal(m);
-      box.appendChild(row({
-        title: m.name, color: G.U.TYPE_COLOR[m.type],
-        desc: x.ok ? G.Mechanics.text(m, card.mech) + ' (' + G.Mechanics.preview(m, card.mech) + ')' : x.why,
-        chip: n ? '+' + n : '', chipColor: G.U.TYPE_COLOR[m.type],
-        key: mi < 4 ? G.Input.keyLabel('attack_' + (mi + 1)) : '',
-        icoHtml: G.Icons.html('move:' + m.id, 32), dim: !x.ok, flash: x === only, onclick: () => pickMove(mi)
-      }));
-    });
-    if (only) autoT = setTimeout(() => { autoT = 0; if (flow && flow.step === 'move') pickMove(flow.target.moves.indexOf(only)); }, AUTO_MS);
-  }
-
-  function pickMove(mi) {
-    if (!flow || flow.step !== 'move') return;
-    const x = flow.target.moves[mi];
-    if (!x || !x.ok) return;
-    finish(flow.card, { pl: flow.target.pl, move: x.m }, flow.idx);
-  }
-
-  /** One step back. From the first step it returns to the cards. */
+  /** Back to the three cards (same offer, nothing spent). */
   function back() {
     if (!flow) return;
-    clearAuto();
     G.Audio.sfx('select');
-    if (flow.step === 'move' && !flow.monSkipped) { renderMonStep(); return; }
-    const list = offers;
     flow = null;
-    renderCards(list);
+    G.UI.show('scr-levelup');
   }
 
   function finish(c, tgt, idx) {
-    clearAuto();
     const cb = offerCb, list = offers;
     offers = null; offerCb = null; flow = null;
     $('lvl-reroll').classList.add('hidden');
+    G.UI.hide('scr-choose');
     if (coopMode) {
       // The chosen card stays in view while the others choose.
       renderCards(list, idx);
       offers = null;
+      G.UI.show('scr-levelup');
     } else G.UI.hide('scr-levelup');
     cb(c, tgt);
   }
 
-  /** Keyboard for the level-up screen: slot keys 1-3 (cards), team keys (Pokemon), 1-4 (moves), R reroll, Backspace back. */
+  /** Keyboard for the level-up screens. Cards: slot keys 1-3, R reroll. Choose sheet: swap keys / arrows switch Pokemon,
+   *  1-4 pick a move and confirm, Enter confirm, Backspace back. */
   function levelKeys() {
     if (!offers && !flow) return;
     if (!flow) {
@@ -192,13 +137,10 @@ G.RunUI = (() => {
       return;
     }
     if (G.Input.tap('backspace')) { back(); return; }
-    if (flow.step === 'pokemon') {
-      flow.targets.forEach((t, ti) => {
-        const slot = t.pl.teamSlot != null ? t.pl.teamSlot : ti;
-        if (G.Input.action('swap_' + (slot + 1))) pickMon(ti);
-      });
-    } else {
-      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) pickMove(i);
+    if (G.Input.tap('enter')) { confirm(); return; }
+    G.Sheet.keys($('choose-sheet'));
+    if (flow && flow.card.type === 'mech') {
+      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1)) && G.Sheet.pickMoveIndex($('choose-sheet'), i)) { confirm(); return; }
     }
   }
 
@@ -206,17 +148,18 @@ G.RunUI = (() => {
   function setWaiting(names) {
     const me = G.Social.me ? G.Social.me.name : '';
     const others = names.filter(n => n !== me);
-    const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : a[0];
+    const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
     $('lvl-wait').textContent = !names.length ? ''
-      : !others.length ? 'Elige tu carta'
-      : names.includes(me) ? 'Faltan por elegir: ' + list([...others, 'tú'])
-      : 'Esperando a ' + list(others) + '…';
+      : !others.length ? 'Choose your card'
+      : names.includes(me) ? 'Still choosing: ' + list([...others, 'you'])
+      : 'Waiting for ' + list(others) + '…';
   }
 
   function closeLevelUp() {
-    offers = null; offerCb = null; flow = null; clearAuto();
+    offers = null; offerCb = null; flow = null;
     $('cards').classList.remove('done');
     G.UI.hide('scr-levelup');
+    G.UI.hide('scr-choose');
   }
 
   /**

@@ -7,6 +7,8 @@
  *                  as the lower layer and a 60% yellow shape (base x (1 + bonus)) on top of it, and each number gets
  *                  a yellow "+10%" beside it. The yellow layer is skipped while every bonus is 0.
  *     opts.hpText  replaces the HP number (for example "105/105")
+ *     opts.after   six in-run percentages AFTER a pending change (level-up preview): a lighter dashed outline of the
+ *                  new shape, and "+10% to +15%" on the axes that change
  *
  * `stats` is the pokedex array [HP, Atk, Def, SpA, SpD, Spe]. The outer edge of the
  * hexagon is MAX (200): bigger values (Blissey's 255 HP) are clamped to the edge, so
@@ -69,6 +71,15 @@ G.StatChart = (() => {
       ctx.lineWidth = 2; ctx.strokeStyle = '#ffd23f'; ctx.stroke();
     }
 
+    // preview of a pending change: the new shape as a lighter dashed outline on top
+    const after = opts.after;
+    if (after && AXES.some(([k]) => (after[k] || 0) !== (bonus[k] || 0))) {
+      const fa = AXES.map(([k]) => Math.max(0, Math.min(1, (stats[k] || 0) * (1 + (after[k] || 0)) / MAX)));
+      poly(fa);
+      ctx.fillStyle = 'rgba(255,243,176,.28)'; ctx.fill();
+      ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeStyle = '#fff3b0'; ctx.stroke(); ctx.setLineDash([]);
+    }
+
     // labels: name (small, muted) over value (bold), pushed outward from each corner
     ctx.textBaseline = 'alphabetic';
     AXES.forEach(([k, label], i) => {
@@ -82,12 +93,15 @@ G.StatChart = (() => {
       // value, then (layered) the yellow "+10%". Laid out as one line so it stays aligned on either side.
       const val = k === 0 && opts.hpText ? opts.hpText : String(stats[k]);
       const bon = opts.layered && bonus[k] > 0 ? ' +' + Math.round(bonus[k] * 100) + '%' : '';
+      const chg = after && (after[k] || 0) !== (bonus[k] || 0) ? (bon ? ' to +' : ' +') + Math.round((after[k] || 0) * 100) + '%' : '';
       ctx.font = `800 14px ${FONT}`; const w1 = ctx.measureText(val).width;
-      ctx.font = `700 11px ${FONT}`; const w2 = bon ? ctx.measureText(bon).width : 0;
-      const x0 = al === 'left' ? lx : al === 'right' ? lx - w1 - w2 : lx - (w1 + w2) / 2;
+      ctx.font = `700 11px ${FONT}`; const w2 = bon ? ctx.measureText(bon).width : 0, w3 = chg ? ctx.measureText(chg).width : 0;
+      const x0 = al === 'left' ? lx : al === 'right' ? lx - w1 - w2 - w3 : lx - (w1 + w2 + w3) / 2;
       ctx.textAlign = 'left';
       ctx.font = `800 14px ${FONT}`; ctx.fillStyle = '#ffffff'; ctx.fillText(val, x0, y + 12);
-      if (bon) { ctx.font = `700 11px ${FONT}`; ctx.fillStyle = '#ffd23f'; ctx.fillText(bon, x0 + w1, y + 12); }
+      ctx.font = `700 11px ${FONT}`;
+      if (bon) { ctx.fillStyle = '#ffd23f'; ctx.fillText(bon, x0 + w1, y + 12); }
+      if (chg) { ctx.fillStyle = '#fff3b0'; ctx.fillText(chg, x0 + w1 + w2, y + 12); }
     });
     return cv;
   }

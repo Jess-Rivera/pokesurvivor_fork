@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Choose upgrades on the team summary', 'Choose upgrades on the team summary'], new: [
+    ['Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.',
+     'Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.']
+  ] },
   { d: '2026-10-18', title: ['Team summary screen', 'Team summary screen'], new: [
     ['The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.',
      'The pause screen is now a team summary. Pick any Pokémon in the strip to see its moves with their upgrades and current numbers (including how hard one hit lands), its stat hexagon with the bonuses from stat cards in yellow, and its held item. The end-of-run screen has a Team summary button that shows the same sheet for your whole team. Pause, results and the Continue / Settings / Quit buttons are now in English.']

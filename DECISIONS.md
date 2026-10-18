@@ -517,3 +517,10 @@ Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE ta
 - Keys: solo pause only (state 'paused') and the end-of-run team view: swap keys and Left/Right switch Pokemon, Up/Down scroll the moves. In a group game the sheet is click/touch only because the swap keys act in the live game.
 - Spanish: only the strings on the screens touched were rewritten as English in source (pause, buttons, run-end results card). lang-en.js entries were NOT removed (chunk matching could alter other texts). Full sweep is a separate slice.
 - Verified: headless Chromium run on the real game (open/close pause, strip clicks, swap keys, Left/Right wrap, fainted target, bonded group, buff move lines, Continue, group-style pause, run-end results -> team -> back, narrow viewport overflow) with no errors; sheet damage line equals applyDamage computed directly. Not tested: touch devices, co-op play.
+
+## 2026-10-18, Slice 2d-2 APPLIED (level-up choose mode through the team summary)
+- Mechanic, scoped and stat cards open the sheet (scr-choose, title "Apply <card>") instead of the old Pokemon and move steps. New Move cards stay single-step.
+- Active Pokemon preselected if eligible, else the first eligible; first eligible move preselected. Ineligible Pokemon are dimmed but viewable; Confirm is disabled and the reason shows.
+- Preview: selected move shows before -> after for the stat and one-hit damage; stat cards show a dashed outline on the hexagon and "+10% to +15%" labels.
+- Controls: click select, Confirm / double-click / Enter, digits 1-4 pick and confirm a move, swap keys and Left/Right switch Pokemon, Backspace = Back to cards (same offer, no reroll spent). Reroll only on the card step. Auto-advance removed.
+- Level-up screen strings translated to English; lang-en.js entries left in place on purpose. Co-op: after confirming, the cards screen returns in its done/waiting state.

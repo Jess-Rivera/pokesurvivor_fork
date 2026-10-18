@@ -1004,3 +1004,16 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   .sh-strip { justify-content: center; }
 }
 
+/* ---------- choose mode (level-up cards applied through the sheet) ---------- */
+.sh-move { position: relative; }
+.sh-move.pickable { cursor: pointer; }
+.sh-move.pickable:hover { background: rgba(255,255,255,.12); }
+.sh-move.pick { border-color: var(--gold); background: rgba(255,210,63,.14); }
+.sh-move.dim { opacity: .5; }
+.sh-move .why { font-size: 13px; color: #ff9b8a; }
+.sh-move .pv { font-size: 13px; font-weight: 700; color: #fff3b0; }
+.sh-move .mk { position: absolute; right: 10px; top: 6px; font-style: normal; font-size: 11px; color: var(--muted); border: 1px solid rgba(244,248,255,.3); border-radius: 4px; padding: 0 5px; }
+.sh-tab.dimmed { opacity: .45; }
+.sh-legend i.p { border-color: #fff3b0; border-style: dashed; background: rgba(255,243,176,.28); margin-left: 8px; }
+.choose-note { color: #ff9b8a; min-height: 1.3em; }
+
