@@ -6,6 +6,8 @@
  *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
+ *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
+ *   G.Game.debugLevelUp()  queue a level-up now (already exists)
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -87,6 +89,28 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Give the active Pokemon a move (needs a free slot). Flags the run as tampered. ?dev only. */
+  function give(id) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const pl = G.Game && G.Game.player;
+    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
+    G.Game.debugMaxed();
+    return pl.addMove(id);
+  }
+
+  /** Put `n` stacks of mechanic `mechId` on a move of the active Pokemon (default: its first move).
+   *  Returns how many were accepted. Flags the run as tampered. ?dev only. */
+  function stack(mechId, n = 1, moveId) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    const m = pl && (moveId ? pl.moves.find(x => x.id === moveId) : pl.moves[0]);
+    if (!m) { console.warn('[Debug] no such move on the active Pokemon.'); return 0; }
+    G.Game.debugMaxed();
+    let k = 0;
+    for (let i = 0; i < n; i++) if (G.Moves.addStack(m, mechId)) k++;
+    return k;
+  }
+
   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
   if (on) {
     addEventListener('keydown', e => {
@@ -103,5 +127,5 @@ G.Debug = (() => {
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll, clearUpgrades, toggleUpgrades };
+  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack };
 })();

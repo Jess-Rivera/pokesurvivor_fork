@@ -616,6 +616,9 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .rk-me { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: rgba(0,0,0,.25); font-size: 15px; min-height: 20px; }
 
 .cards.done .card { pointer-events: none; opacity: .45; }
+.card.dim { opacity: .38; pointer-events: none; filter: grayscale(.7); }
+.card.flash { border-color: var(--gold); background: rgba(255,210,63,.12); animation: cardflash .35s ease-in-out 2; }
+@keyframes cardflash { 50% { transform: translateX(6px); } }
 .cards.done .card.picked { opacity: 1; border-color: var(--gold); }
 #lvl-wait { color: var(--gold); font-size: 15px; }
 

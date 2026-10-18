@@ -231,7 +231,7 @@ Egg, Life Orb, Choice Scarf, Rocky Helmet and Assault Vest. They are dropped by
 already carry one, you choose (solo the game pauses).
 
 ### 7.2c Move evolution (REMOVED 2026-10-18)
-Move evolutions and the original stat cards were removed in the upgrade rework (see DECISIONS 2026-10-18). Moves now grow through mechanic upgrades chosen per move; design in DECISIONS, build in progress.
+Move evolutions and the original stat cards were removed in the upgrade rework (see DECISIONS 2026-10-18). Moves grow through mechanic cards chosen per move: card, then Pokemon, then move (slice 2b, 2026-10-18; data layer in js/data/kinds.js and mechanics.js). Stat cards and Type/Kind scoped cards follow in slice 2c. Design in DECISIONS.
 
 ### 7.2d Quests, achievements and profile
 - **3 daily + 2 weekly** (prize in tickets and coins); one daily can be

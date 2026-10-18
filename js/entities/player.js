@@ -492,8 +492,8 @@ G.Player = class Player {
     if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
     // Active move (for the halo, the HUD and the orbs).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv || this.moves[0].lvl !== n.ml) && G.Moves.BY_ID[n.mv]) {
-      this.moves = [G.Moves.instance(n.mv, n.ml || 1)];
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {
+      this.moves = [G.Moves.instance(n.mv)];
       this.slots = [this.moves.slice()];
       this.active = 0;
       G.Projectiles.clearOrbs(this);

@@ -286,9 +286,9 @@ G.Game = (() => {
       state = 'levelup';
       G.UI.hide('scr-pause');
       G.Audio.sfx('levelup');
-      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl), card => {
+      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl, 3, roster), (card, t) => {
         G.Audio.sfx('confirm');
-        card.apply(pl);
+        card.apply(pl, t && t.pl, t && t.move);
         G.Coop.localPicked();
       }, true);
     },
@@ -450,15 +450,15 @@ G.Game = (() => {
     }
     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
     if (pl.dead) return;
-    const cards = G.LevelUp.offer(pl);
+    const cards = G.LevelUp.offer(pl, 3, roster);
     pendingLevels--;
     // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
     if (!cards.length) return;
     state = 'levelup';
     G.Audio.sfx('levelup');
-    G.RunUI.showLevelUp(pl.level, cards, card => {
+    G.RunUI.showLevelUp(pl.level, cards, (card, t) => {
       G.Audio.sfx('confirm');
-      card.apply(pl);
+      card.apply(pl, t && t.pl, t && t.move);
       state = 'playing';
     });
   }
@@ -617,10 +617,7 @@ G.Game = (() => {
       return;
     }
     if (state === 'levelup') {
-      for (let i = 0; i < 3; i++) {
-        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pick(i);
-      }
-      if (G.Input.tap('keyr')) G.RunUI.reroll();
+      G.RunUI.levelKeys();
       return;
     }
     if (G.UI.isOpen('scr-bond')) {

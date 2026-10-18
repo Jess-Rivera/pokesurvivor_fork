@@ -231,3 +231,8 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Slice 2a built, harness-tested and applied (see DECISIONS). Files: js/data/kinds.js, js/data/mechanics.js (new); js/data/moves.js, dev.html, js/main.js (edited); docs/proposals/upgrade-slice2a-{proposal.md,.diff,harness.js}.
 - Process slip: I ran read-only `git rev-parse` once while writing the proposal (AI never runs git). Disclosed to Jess; no changes made. Earlier today `git status --short` was the same kind of slip.
 - Where we stopped: slice 2a applied and uncommitted, together with slice 1. Jess still owes a dev.html?dev smoke test and the commit/push (slice 1 branch command suggested earlier). Next: 2b proposal (mechanic cards, three-step UI, family draw, fan-spread cap, HUD badge).
+
+## 2026-10-18 (late), upgrade rework: slice 2b APPLIED
+- Built in a work copy, tested offline (docs/proposals/upgrade-slice2b-harness.js) and in headless Chromium against the real screens, then applied on Jess's OK. Files: moves.js, mechanics.js, levelup.js (rewrite), run-ui.js, hud.js, combat.js, game.js, player.js, coop.js, debug.js, dev.html, style.css, tools/export_data.js; changelog entry added; GDD 7.2c, TODO, DECISIONS updated.
+- Process: no git commands run this time. Jess asked for a way to test without 5-minute playtests: G.Game.debugLevelUp() plus G.Debug.give/stack, and the headless run, cover that.
+- Where we stopped: 2a is committed; 2b applied and UNCOMMITTED. Next: Jess looks at it on dev.html?dev, commits, then slice 2c (stat cards + Type/Kind scoped cards) proposal.

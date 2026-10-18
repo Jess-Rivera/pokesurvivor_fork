@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Upgrades you aim at a move', 'Upgrades you aim at a move'], new: [
+    ['Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.',
+     'Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.']
+  ] },
   { d: '2026-10-18', title: ['Move evolutions and stat cards removed', 'Move evolutions and stat cards removed'], chg: [
     ['Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.',
      'Move evolutions and the old stat cards (Power, Sprint, Armor, Vigor and the rest) are gone while the upgrade system is rebuilt. Level-ups now offer new moves and move upgrades only. The evolution achievements and missions were removed.']

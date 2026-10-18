@@ -1,0 +1,847 @@
+--- a/css/style.css
++++ b/css/style.css
+@@ -616,6 +616,9 @@
+ .rk-me { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: rgba(0,0,0,.25); font-size: 15px; min-height: 20px; }
+ 
+ .cards.done .card { pointer-events: none; opacity: .45; }
++.card.dim { opacity: .38; pointer-events: none; filter: grayscale(.7); }
++.card.flash { border-color: var(--gold); background: rgba(255,210,63,.12); animation: cardflash .35s ease-in-out 2; }
++@keyframes cardflash { 50% { transform: translateX(6px); } }
+ .cards.done .card.picked { opacity: 1; border-color: var(--gold); }
+ #lvl-wait { color: var(--gold); font-size: 15px; }
+ 
+--- a/dev.html
++++ b/dev.html
+@@ -530,8 +530,10 @@
+ <section id="scr-levelup" class="scr dim hidden">
+   <div class="box center">
+     <h2>¡Nivel <span id="lvl-num">2</span>!</h2>
+-    <p class="sub">Elige una recompensa · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></p>
++    <p id="lvl-sub" class="sub">Elige una recompensa · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></p>
++    <p id="lvl-step" class="sub hidden"></p>
+     <div id="cards" class="cards"></div>
++    <button id="lvl-back" class="btn small ghost hidden" data-sfx="none" style="margin-top:10px">Back · <kbd>Backspace</kbd></button>
+     <button id="lvl-reroll" class="btn small ghost hidden" data-sfx="none" style="margin-top:10px">Cambiar opciones (<span id="lvl-rr-n">1</span>) · <kbd>R</kbd></button>
+     <p id="lvl-wait" class="note hidden"></p>
+   </div>
+--- a/js/core/debug.js
++++ b/js/core/debug.js
+@@ -6,6 +6,8 @@
+  *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
+  *                      and max every per-Pokemon upgrade. Writes to the
+  *                      current save (local or guest).
++ *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
++ *   G.Game.debugLevelUp()  queue a level-up now (already exists)
+  *   G.Debug.on         true when ?dev is present.
+  *
+  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
+@@ -87,6 +89,28 @@
+     return true;
+   }
+ 
++  /** Give the active Pokemon a move (needs a free slot). Flags the run as tampered. ?dev only. */
++  function give(id) {
++    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
++    const pl = G.Game && G.Game.player;
++    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
++    G.Game.debugMaxed();
++    return pl.addMove(id);
++  }
++
++  /** Put `n` stacks of mechanic `mechId` on a move of the active Pokemon (default: its first move).
++   *  Returns how many were accepted. Flags the run as tampered. ?dev only. */
++  function stack(mechId, n = 1, moveId) {
++    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
++    const pl = G.Game && G.Game.player;
++    const m = pl && (moveId ? pl.moves.find(x => x.id === moveId) : pl.moves[0]);
++    if (!m) { console.warn('[Debug] no such move on the active Pokemon.'); return 0; }
++    G.Game.debugMaxed();
++    let k = 0;
++    for (let i = 0; i < n; i++) if (G.Moves.addStack(m, mechId)) k++;
++    return k;
++  }
++
+   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
+   if (on) {
+     addEventListener('keydown', e => {
+@@ -103,5 +127,5 @@
+     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
+   }
+ 
+-  return { on, maxAll, clearUpgrades, toggleUpgrades };
++  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack };
+ })();
+--- a/js/data/mechanics.js
++++ b/js/data/mechanics.js
+@@ -99,5 +99,32 @@
+     return (mech.mode === 'add' ? '+' + mech.step : '+' + Math.round(mech.step * 100) + '%') + ' ' + noun(m, mech);
+   }
+ 
+-  return { ALL, BY_ID, check, eligibleFor, text, noun, TWO_PI };
++  const f = x => { const v = +x; return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toFixed(Math.abs(v) < 1 ? 3 : 2)); };
++
++  /** "before to after" for one more stack on `m`, computed with the real derive() so it can never disagree with it. */
++  function preview(m, mech) {
++    const key = mech.keyFor(m), base = cur(m, key);
++    const c = Object.assign({}, m, { mods: Object.assign({}, m.mods) });
++    c.mods[mech.id] = (c.mods[mech.id] || 0) + 1;
++    G.Moves.derive(c);
++    const next = c[key];
++    if (mech.id === 'effect') return key === 'amount' ? 'Potency ' + f(base * 100) + '% to ' + f(next * 100) + '% per stack' : 'Power ' + f(base) + ' to ' + f(next);
++    if (mech.id === 'recharge') return f(base) + ' s to ' + f(next) + ' s';
++    if (mech.id === 'firerate') return 'shoots every ' + f(base) + ' s to ' + f(next) + ' s';
++    return f(base) + ' to ' + f(next);
++  }
++
++  /** Short player-facing reason a move cannot take `mech` (for dimmed rows). */
++  function reason(m, mech) {
++    const c = check(m, mech);
++    if (c.ok) return '';
++    const w = c.why || '';
++    if (/^power 0/.test(w)) return 'Does no damage';
++    if (/^arc already/.test(w)) return 'Arc is already 360\u00b0';
++    if (/^knockback/.test(w)) return 'Has no knockback';
++    if (/^(kind|move) has no/.test(w)) return 'Has no ' + noun(m, mech).toLowerCase();
++    return w;
++  }
++
++  return { ALL, BY_ID, check, eligibleFor, text, noun, preview, reason, TWO_PI };
+ })();
+--- a/js/data/moves.js
++++ b/js/data/moves.js
+@@ -23,104 +23,10 @@
+  * The icon is not stored here: G.Icons composes it (type emblem +
+  * family badge), see ui/icons.js.
+  *
+- * The upgrades (lvl 1 -> 5) come from a common ladder per `kind`:
+- *   mods multiplicativos -> dmg, cd, speed, radius, dur, amount, arc
+- *   mods aditivos        -> count, pierce, stacks
++ * Upgrades are mechanic cards (data/mechanics.js): an instance keeps `mods = { mechanicId: stacks }`
++ * and derive() rebuilds its live fields from the base definition. Moves have no level.
+  */
+ (() => {
+-  const LADDERS = {
+-    projectile: [
+-      { t: '+1 proyectil',                  m: { count: 1, spread: 1.4 } },
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: '+1 proyectil y +1 perforación',   m: { count: 1, pierce: 1, spread: 1.2 } }
+-    ],
+-    melee: [
+-      { t: '+40% daño',                     m: { dmg: 1.40 } },
+-      { t: '+25% alcance',                  m: { radius: 1.25 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: 'Golpea en 360° y +50% daño',    m: { arc: 9, dmg: 1.50 } }
+-    ],
+-    beam: [
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: '+30% alcance y grosor',         m: { radius: 1.30, width: 1.30 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: '+50% daño',                     m: { dmg: 1.50 } }
+-    ],
+-    orbit: [
+-      { t: '+1 orbe',                       m: { count: 1 } },
+-      { t: '+55% daño',                     m: { dmg: 1.55 } },
+-      { t: '+25% radio y gira más rápido',  m: { radius: 1.25, speed: 1.35 } },
+-      { t: '+1 orbe y +55% daño',           m: { count: 1, dmg: 1.55 } }
+-    ],
+-    nova: [
+-      { t: '+4 proyectiles',                m: { count: 4 } },
+-      { t: '+40% daño',                     m: { dmg: 1.40 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: '+4 proyectiles y +1 perforación', m: { count: 4, pierce: 1 } }
+-    ],
+-    aura: [
+-      { t: '+30% radio',                    m: { radius: 1.30 } },
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: 'Golpea un 40% más a menudo',    m: { cd: 0.70 } },
+-      { t: '+30% radio y +50% daño',        m: { radius: 1.30, dmg: 1.50 } }
+-    ],
+-    boomerang: [
+-      { t: '+1 bumerán',                    m: { count: 1 } },
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: '+30% alcance',                  m: { radius: 1.30 } },
+-      { t: '+1 bumerán y +40% daño',        m: { count: 1, dmg: 1.40 } }
+-    ],
+-    chain: [
+-      { t: '+2 saltos',                     m: { count: 2 } },
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: '+2 saltos y +40% daño',         m: { count: 2, dmg: 1.40 } }
+-    ],
+-    mine: [
+-      { t: '+1 mina',                       m: { count: 1 } },
+-      { t: '+50% daño',                     m: { dmg: 1.50 } },
+-      { t: '+30% radio de explosión',       m: { radius: 1.30 } },
+-      { t: '+1 mina y -25% recarga',        m: { count: 1, cd: 0.75 } }
+-    ],
+-    meteor: [
+-      { t: '+1 meteoro',                    m: { count: 1 } },
+-      { t: '+45% daño',                     m: { dmg: 1.45 } },
+-      { t: '+30% radio',                    m: { radius: 1.30 } },
+-      { t: '+2 meteoros y -20% recarga',    m: { count: 2, cd: 0.80 } }
+-    ],
+-    turret: [
+-      { t: '+50% daño',                     m: { dmg: 1.50 } },
+-      { t: 'Dispara un 35% más rápido',     m: { rate: 0.74 } },
+-      { t: '+1 a la vez',                   m: { count: 1 } },
+-      { t: '+50% duración y +40% daño',     m: { dur: 1.50, dmg: 1.40 } }
+-    ],
+-    dash: [
+-      { t: '+40% daño',                     m: { dmg: 1.40 } },
+-      { t: '+30% distancia',                m: { radius: 1.30 } },
+-      { t: '-25% recarga',                  m: { cd: 0.75 } },
+-      { t: '+60% daño y más ancho',         m: { dmg: 1.60, width: 1.40 } }
+-    ],
+-    trail: [
+-      { t: '+40% daño',                     m: { dmg: 1.40 } },
+-      { t: '+40% duración',                 m: { dur: 1.40 } },
+-      { t: 'Charcos un 30% más grandes',    m: { radius: 1.30 } },
+-      { t: '+50% daño y +30% radio',        m: { dmg: 1.50, radius: 1.30 } }
+-    ],
+-    cone: [
+-      { t: '+3 disparos',                   m: { count: 3 } },
+-      { t: '+40% daño',                     m: { dmg: 1.40 } },
+-      { t: '+30% alcance',                  m: { life: 1.30 } },
+-      { t: '+3 disparos y +1 perforación',  m: { count: 3, pierce: 1 } }
+-    ],
+-    buff: [
+-      { t: '+1 acumulación máxima',         m: { stacks: 1 } },
+-      { t: '+40% potencia',                 m: { amount: 1.40 } },
+-      { t: '+50% duración',                 m: { dur: 1.50 } },
+-      { t: '+1 acumulación y +40% potencia', m: { stacks: 1, amount: 1.40 } }
+-    ]
+-  };
+-
+   const RAW = [
+     // ---------------- NORMAL (pool common to all) ----------------
+     { id: 'tackle', name: 'Tackle', type: 'normal', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
+@@ -522,8 +428,6 @@
+ 
+   const BY_ID = {};
+   for (const m of RAW) {
+-    m.ups = LADDERS[m.kind];
+-    m.maxLvl = m.ups.length + 1;
+     BY_ID[m.id] = m;
+   }
+ 
+@@ -534,27 +438,10 @@
+     return [...ids];
+   }
+ 
+-  /**
+-   * A move instance in a run: the base numbers of `def` with all
+-   * the ladder upgrades up to `lvl` already applied.
+-   */
+-  function instance(id, lvl = 1) {
++  /** A move instance in a run: the base definition plus its upgrade stacks (none yet). */
++  function instance(id) {
+     const def = BY_ID[id];
+-    const s = Object.assign({}, def, { id, def, lvl, t: 0, mods: {} });
+-    delete s.ups;
+-    for (let i = 0; i < lvl - 1; i++) applyMods(s, def.ups[i].m);
+-    return s;
+-  }
+-
+-  const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate'];
+-  const ADD = ['count', 'pierce', 'stacks'];
+-
+-  function applyMods(s, m) {
+-    for (const k in m) {
+-      if (MULT.includes(k) && s[k] != null) s[k] *= m[k];
+-      else if (ADD.includes(k)) s[k] = (s[k] || 0) + m[k];
+-      else s[k] = m[k];
+-    }
++    return Object.assign({}, def, { id, def, t: 0, mods: {} });
+   }
+ 
+   /**
+@@ -562,7 +449,6 @@
+    * (G.Mechanics, upgrade rework). Always starts from `def`, never from the previous value, so the
+    * result does not depend on the order the cards were taken. `norm` and `floor` are NOT touched:
+    * they stay frozen at the base count, so added pellets add real damage.
+-   * Slice 2a: the Lv 1-5 ladders still exist and write fields directly, so a laddered move is not derived.
+    */
+   function derive(s) {
+     const d = s.def, M = G.Mechanics, byKey = {};
+@@ -589,7 +475,7 @@
+    */
+   function addStack(s, id) {
+     const mech = G.Mechanics.BY_ID[id];
+-    if (!mech || s.lvl > 1 || !G.Mechanics.check(s, mech).ok) return false;
++    if (!mech || !G.Mechanics.check(s, mech).ok) return false;
+     s.mods[id] = (s.mods[id] || 0) + 1;
+     derive(s);
+     return true;
+@@ -598,19 +484,6 @@
+   /** Total mechanic stacks on a move instance (for the HUD badge, slice 2b). */
+   function stackTotal(s) { let n = 0; for (const id in s.mods) n += s.mods[id]; return n; }
+ 
+-  /** Levels up an already-created instance. */
+-  function levelUp(s) {
+-    if (s.lvl >= s.def.maxLvl) return false;
+-    applyMods(s, s.def.ups[s.lvl - 1].m);
+-    s.lvl++;
+-    return true;
+-  }
+-
+-  /** Text of the next upgrade, for the level-up card. */
+-  function nextUpText(s) {
+-    return s.lvl >= s.def.maxLvl ? null : s.def.ups[s.lvl - 1].t;
+-  }
+-
+   /** Starting move based on the main type (if the Pokemon does not bring one). */
+   const START = {
+     fire: 'ember', water: 'water-gun', grass: 'vine-whip', electric: 'thunder-shock',
+@@ -625,5 +498,5 @@
+     return 'tackle';
+   }
+ 
+-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor, derive, addStack, stackTotal };
++  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, startFor, derive, addStack, stackTotal };
+ })();
+--- a/js/entities/player.js
++++ b/js/entities/player.js
+@@ -492,8 +492,8 @@
+     if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
+     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
+     // Active move (for the halo, the HUD and the orbs).
+-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv || this.moves[0].lvl !== n.ml) && G.Moves.BY_ID[n.mv]) {
+-      this.moves = [G.Moves.instance(n.mv, n.ml || 1)];
++    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {
++      this.moves = [G.Moves.instance(n.mv)];
+       this.slots = [this.moves.slice()];
+       this.active = 0;
+       G.Projectiles.clearOrbs(this);
+--- a/js/game.js
++++ b/js/game.js
+@@ -286,9 +286,9 @@
+       state = 'levelup';
+       G.UI.hide('scr-pause');
+       G.Audio.sfx('levelup');
+-      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl), card => {
++      G.RunUI.showLevelUp(level, G.LevelUp.offer(pl, 3, roster), (card, t) => {
+         G.Audio.sfx('confirm');
+-        card.apply(pl);
++        card.apply(pl, t && t.pl, t && t.move);
+         G.Coop.localPicked();
+       }, true);
+     },
+@@ -450,15 +450,15 @@
+     }
+     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
+     if (pl.dead) return;
+-    const cards = G.LevelUp.offer(pl);
++    const cards = G.LevelUp.offer(pl, 3, roster);
+     pendingLevels--;
+     // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
+     if (!cards.length) return;
+     state = 'levelup';
+     G.Audio.sfx('levelup');
+-    G.RunUI.showLevelUp(pl.level, cards, card => {
++    G.RunUI.showLevelUp(pl.level, cards, (card, t) => {
+       G.Audio.sfx('confirm');
+-      card.apply(pl);
++      card.apply(pl, t && t.pl, t && t.move);
+       state = 'playing';
+     });
+   }
+@@ -617,10 +617,7 @@
+       return;
+     }
+     if (state === 'levelup') {
+-      for (let i = 0; i < 3; i++) {
+-        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pick(i);
+-      }
+-      if (G.Input.tap('keyr')) G.RunUI.reroll();
++      G.RunUI.levelKeys();
+       return;
+     }
+     if (G.UI.isOpen('scr-bond')) {
+--- a/js/net/coop.js
++++ b/js/net/coop.js
+@@ -134,7 +134,7 @@
+     const g = local.activeGroup();
+     const m = g.find(x => x.kind === 'orbit') || g[0];
+     return [r1(local.x), r1(local.y), r2(local.moveAngle), local.walking ? 1 : 0, r1(local.hp), r1(local.maxHp),
+-            local.dead ? 1 : 0, m ? m.id : '', m ? m.lvl : 1, r1(local.magnet), r2(local.aim), r2(local.xpMul),
++            local.dead ? 1 : 0, m ? m.id : '', m ? G.Moves.stackTotal(m) : 0, r1(local.magnet), r2(local.aim), r2(local.xpMul),
+             r2(local.reviveT || 0), api.choosing && api.choosing() ? 1 : 0, doneSeq];
+   }
+ 
+@@ -388,8 +388,8 @@
+   /** Your attack: the others replay it as a ghost. */
+   function cast(pl, m) {
+     if (!active || pl !== local) return;
+-    if (host) emit(['c', me, m.id, m.lvl, r2(pl.aim), m.evolved ? 1 : 0]);
+-    else outEv.push(['c', m.id, m.lvl, r2(pl.aim), m.evolved ? 1 : 0]);
++    if (host) emit(['c', me, m.id, G.Moves.stackTotal(m), r2(pl.aim), m.evolved ? 1 : 0]);
++    else outEv.push(['c', m.id, G.Moves.stackTotal(m), r2(pl.aim), m.evolved ? 1 : 0]);
+   }
+ 
+   // invitado
+--- a/js/systems/combat.js
++++ b/js/systems/combat.js
+@@ -96,8 +96,10 @@
+     const vis = G.VFX.forMove(m);
+     const n = Math.max(1, m.count | 0);
+     const spread = m.spread || 0;
++    // The fan widens with the count but stops just short of a full circle, so a huge count never wraps over itself.
++    const fan = Math.min(spread * n, 6.2832 * (n - 1) / n);
+     for (let i = 0; i < n; i++) {
+-      const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * spread * n;
++      const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan;
+       const a = pl.aim + off + G.U.rand(-0.03, 0.03);
+       G.Projectiles.spawn(Object.assign({
+         x: pl.x + Math.cos(a) * 3, y: pl.y + Math.sin(a) * 3,
+@@ -513,10 +515,10 @@
+   }
+ 
+   /** Replays a teammate's attack just to see it (no damage). */
+-  function ghostCast(pl, id, lvl, aim) {
++  function ghostCast(pl, id, stacks, aim) {   // `stacks` arrives on the wire but ghosts replay the base move (co-op parked)
+     const def = G.Moves.BY_ID[id];
+     if (!def || def.kind === 'orbit') return;
+-    const m = G.Moves.instance(id, lvl);
++    const m = G.Moves.instance(id);
+     pl.aim = aim;
+     ghost = true;
+     try {
+--- a/js/systems/levelup.js
++++ b/js/systems/levelup.js
+@@ -1,27 +1,65 @@
+ /* ============ levelup.js — the three level-up cards ============
+- * Card types (upgrade rework in progress, see DECISIONS 2026-10-18):
+- *   new   learn a new move (only if there are free slots of the 4; a link frees slots)
+- *   up    upgrade a move you already have (the Lv 1-5 ladder; mechanic cards replace it next)
+- * The old stat cards (Vigor, Potencia, Carrera, Reflejos, Coraza, Sintesis, Iman,
+- * Aprendizaje, Baya Zidra) and move evolutions were removed on 2026-10-18.
++ * Upgrade rework (DECISIONS 2026-10-18). Two kinds of card:
++ *   new   learn a new move (active Pokemon only; only if there is a free slot; a link frees slots)
++ *   mech  a mechanic card (data/mechanics.js): +1 Projectile, +15% Area, ... It is MOVE-SPECIFIC: after
++ *         picking it the player chooses a Pokemon, then one of its moves (run-ui.js does the steps).
++ * The draw rolls a FAMILY first, then a card inside it, so the 14 mechanics cannot swamp new moves.
++ * A card is only offered if at least one move on the team can take it. Weights are a draft (balance later).
+  */
+ G.LevelUp = (() => {
+ 
+-  /** Builds the set of candidate cards, with weights. */
+-  function candidates(pl) {
+-    const out = [];
++  // Family weights: new move, then the three mechanic value classes.
++  const FAMILY_W = { newmove: 10, DPS: 14, Coverage: 10, Utility: 6 };
++  const CLASS_COLOR = { DPS: '#ff8a4d', Coverage: '#6ea4ff', Utility: '#b99dff' };
++  const NEW_CANDIDATES = 6;
++
++  /** For every team member, which of its moves can take `mech` (and why not, for the dimmed rows). */
++  function targetsOf(roster, mech) {
++    return roster.map(f => {
++      const moves = f.moves.map(m => {
++        const c = G.Mechanics.check(m, mech);
++        return { m, ok: c.ok, why: c.ok ? '' : G.Mechanics.reason(m, mech) };
++      });
++      return { pl: f, moves, ok: moves.some(x => x.ok) };
++    });
++  }
++
++  const stepText = mech => (mech.mode === 'add' ? '+' + mech.step : '+' + Math.round(mech.step * 100) + '%');
++
++  function mechCard(mech, roster) {
++    const ts = targetsOf(roster, mech);
++    const ok = [];
++    for (const t of ts) for (const x of t.moves) if (x.ok) ok.push(x.m);
++    if (!ok.length) return null;
++    const texts = [...new Set(ok.map(m => G.Mechanics.text(m, mech)))];
++    const names = [...new Set(ok.map(m => m.name))];
++    const shown = names.slice(0, 3).join(', ') + (names.length > 3 ? ' +' + (names.length - 3) + ' more' : '');
++    return {
++      w: mech.w || 1, family: mech.cls, type: 'mech', key: 'mech:' + mech.id, mech,
++      icon: null, ico: stepText(mech), color: CLASS_COLOR[mech.cls] || '#9fb1c9', tag: mech.cls,
++      title: texts.length === 1 ? texts[0] : mech.label + ' ' + stepText(mech),
++      desc: 'Applies to one move. Works on: ' + shown,
++      targets: r => targetsOf(r, mech),
++      apply: (active, tp, m) => G.Moves.addStack(m, mech.id)
++    };
++  }
+ 
+-    // --- movimientos nuevos ---
++  /** The candidate cards grouped by family (empty families are left out). */
++  function families(pl, roster) {
++    const fam = {};
++    const add = (k, c) => { if (c) (fam[k] = fam[k] || []).push(c); };
++
++    // --- new moves (active Pokemon only) ---
+     if (pl.slots.length < pl.maxMoves) {
+       // With 2 buffs no more are offered: buffs do no damage and
+       // filling the 4 slots with them leaves the run with no way out.
+       const buffs = pl.moves.filter(m => m.kind === 'buff').length;
+       const pool = G.Moves.poolFor(pl.mon).filter(id =>
+         !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.Moves.BY_ID[id].kind === 'buff'));
+-      for (const id of G.U.pickN(pool, 6)) {
++      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) {
+         const d = G.Moves.BY_ID[id];
+-        out.push({
+-          w: 10, type: 'new', key: 'new:' + id,
++        add('newmove', {
++          w: 1, family: 'newmove', type: 'new', key: 'new:' + id,
+           icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
+           tag: G.U.TYPE_NAME[d.type],
+           title: d.name, desc: d.desc,
+@@ -30,42 +68,44 @@
+       }
+     }
+ 
+-    // --- upgrades of moves you already have ---
+-    for (const m of pl.moves) {
+-      const txt = G.Moves.nextUpText(m);
+-      if (!txt) continue;
+-      out.push({
+-        w: 8, type: 'up', key: 'up:' + m.id,
+-        icon: 'move:' + m.id, color: G.U.TYPE_COLOR[m.type],
+-        tag: 'Nv.' + m.lvl + ' > ' + (m.lvl + 1),
+-        title: m.name, desc: txt,
+-        apply: () => G.Moves.levelUp(m)
+-      });
++    // --- mechanic cards, by value class ---
++    for (const mech of G.Mechanics.ALL) {
++      if (mech.live) add(mech.cls, mechCard(mech, roster));
+     }
++    return fam;
++  }
+ 
+-    return out;
++  /** Weighted pick of an index: `ws` is a list of weights. */
++  function rollIndex(ws) {
++    const total = ws.reduce((a, b) => a + b, 0);
++    let r = Math.random() * total;
++    for (let i = 0; i < ws.length; i++) { r -= ws[i]; if (r <= 0) return i; }
++    return ws.length - 1;
+   }
+ 
+-  /** Returns up to 3 different cards, chosen by weight (an empty list when nothing is left to offer). */
+-  function offer(pl, n = 3) {
+-    const pool = candidates(pl);
++  /**
++   * Returns up to `n` different cards (an empty list when nothing is left to offer).
++   * @param roster  the team (every member's moves count as targets); defaults to just `pl`
++   */
++  function offer(pl, n = 3, roster = [pl]) {
++    const fam = families(pl, roster);
+     const picked = [];
+-    const used = new Set();
+-    while (picked.length < n && pool.length) {
+-      const total = pool.reduce((a, c) => a + c.w, 0);
+-      let r = Math.random() * total, idx = 0;
+-      for (let i = 0; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) { idx = i; break; } }
+-      const c = pool.splice(idx, 1)[0];
+-      if (used.has(c.key)) continue;
+-      used.add(c.key);
+-      picked.push(c);
++    while (picked.length < n) {
++      const names = Object.keys(fam).filter(k => fam[k].length);
++      if (!names.length) break;
++      const k = names[rollIndex(names.map(x => FAMILY_W[x] || 1))];
++      const cards = fam[k];
++      picked.push(cards.splice(rollIndex(cards.map(c => c.w)), 1)[0]);
+     }
+     if (G.Log.on) {
+       G.Log.offer(pl.level, picked, pl.rerolls || 0);
+-      for (const c of picked) { const f = c.apply; c.apply = function (p) { G.Log.pick(c.key); return f.call(this, p); }; }
++      for (const c of picked) {
++        const f = c.apply;
++        c.apply = function (p, tp, m) { G.Log.pick(c.key + (m ? '>' + m.id : '')); return f.apply(this, arguments); };
++      }
+     }
+     return picked;
+   }
+ 
+-  return { offer };
++  return { offer, families, targetsOf, FAMILY_W };
+ })();
+--- a/js/ui/hud.js
++++ b/js/ui/hud.js
+@@ -461,13 +461,13 @@
+         // type emblem + family badge
+         G.Icons.draw(ctx, 'move:' + m.id, x + (S - 32) / 2, y + (S - 32) / 2 - 2, 32);
+ 
+-        // move level (little dots)
+-        const dots = m.def.maxLvl;
+-        const dw = 4, dgap = 2;
+-        const tw = dots * dw + (dots - 1) * dgap;
+-        for (let d = 0; d < dots; d++) {
+-          ctx.fillStyle = d < m.lvl ? col : 'rgba(255,255,255,.18)';
+-          ctx.fillRect(x + (S - tw) / 2 + d * (dw + dgap), y + S - 9, dw, 3);
++        // upgrade stacks taken on this move (badge, hidden at 0)
++        const stk = G.Moves.stackTotal(m);
++        if (stk > 0) {
++          ctx.save();
++          ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = col;
++          ctx.fillText('+' + stk, x + S / 2, y + S - 4);
++          ctx.restore();
+         }
+       }
+ 
+--- a/js/ui/run-ui.js
++++ b/js/ui/run-ui.js
+@@ -2,14 +2,18 @@
+ G.RunUI = (() => {
+   const $ = G.UI.$;
+   let offers = null, offerCb = null, coopMode = false;
++  let flow = null;            // mechanic card in progress: { card, idx, targets, step, target, monSkipped }
++  let autoT = 0;              // auto-advance timer (a single legal choice is shown for a beat, then taken)
++  const AUTO_MS = 700;
+ 
+   /** @param coop  in a group: after choosing, it waits for the others */
+   function showLevelUp(level, list, cb, coop = false) {
+-    offerCb = cb; coopMode = coop;
++    offerCb = cb; coopMode = coop; flow = null; clearAuto();
+     $('lvl-num').textContent = level;
+     $('lvl-wait').textContent = '';
+     $('lvl-wait').classList.toggle('hidden', !coop);
+     $('cards').classList.remove('done');
++    $('lvl-back').onclick = back;
+     renderCards(list);
+     $('lvl-reroll').onclick = reroll;
+     G.UI.show('scr-levelup');
+@@ -26,49 +30,175 @@
+   }
+ 
+   function reroll() {
+-    if (!offers || rerollsLeft() <= 0) return;
++    if (!offers || flow || rerollsLeft() <= 0) return;
+     const p = G.Game.player;
+     p.rerolls = (p.rerolls || 0) + 1;
+     G.Audio.sfx('select');
+-    renderCards(G.LevelUp.offer(p));
++    renderCards(G.LevelUp.offer(p, 3, G.Game.roster));
+   }
+ 
+-  function renderCards(list) {
++  function clearAuto() { if (autoT) { clearTimeout(autoT); autoT = 0; } }
++
++  /** One row of the level-up screen (card, Pokemon or move). */
++  function row(o) {
++    const el = document.createElement('div');
++    el.className = 'card' + (o.dim ? ' dim' : '') + (o.flash ? ' flash' : '');
++    const chip = o.chip ? `<span class="tag-chip" style="background:${o.chipColor || '#9fb1c9'}">${o.chip}</span>` : '';
++    el.innerHTML =
++      `<div class="ico" style="background:${o.color}33"></div>
++       <div class="txt"><div class="nm">${o.title} ${chip}</div><div class="ds">${o.desc}</div></div>
++       <div class="key">${o.key || ''}</div>`;
++    const ico = el.querySelector('.ico');
++    if (o.icoNode) ico.appendChild(o.icoNode);
++    else if (o.icoHtml) ico.innerHTML = o.icoHtml;
++    else { ico.textContent = o.icoText || ''; ico.style.color = o.color; ico.style.fontWeight = '800'; ico.style.fontSize = '15px'; }
++    el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
++    if (!o.dim && o.onclick) el.onclick = o.onclick;
++    return el;
++  }
++
++  function setHeader(step) {
++    $('lvl-sub').classList.toggle('hidden', !!step);
++    $('lvl-step').classList.toggle('hidden', !step);
++    $('lvl-step').textContent = step || '';
++    $('lvl-back').classList.toggle('hidden', !step);
++  }
++
++  function renderCards(list, doneIdx = null) {
+     offers = list;
++    setHeader('');
+     const left = rerollsLeft();
+     $('lvl-rr-n').textContent = left;
+     $('lvl-reroll').classList.toggle('hidden', left <= 0);
+     const box = $('cards');
+     box.innerHTML = '';
+     list.forEach((c, i) => {
+-      const el = document.createElement('div');
+-      el.className = 'card';
+-      const tag = c.type === 'new'
+-        ? `<span class="tag-chip" style="background:${c.color}">Nuevo · ${c.tag}</span>`
+-        : c.type === 'up'
+-          ? `<span class="tag-chip" style="background:${c.color}">${c.tag}</span>`
+-          : `<span class="tag-chip" style="background:${c.color === '#ffd23f' ? '#ffd23f' : '#9fb1c9'}">${c.tag}</span>`;
+-      el.innerHTML =
+-        `<div class="ico" style="background:${c.color}33">${G.Icons.html(c.icon, 32)}</div>
+-         <div class="txt"><div class="nm">${c.title} ${tag}</div><div class="ds">${c.desc}</div></div>
+-         <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
+-      el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
+-      el.onclick = () => pick(i);
++      const el = row({
++        title: c.title, desc: c.desc, color: c.color, key: G.Input.keyLabel('attack_' + (i + 1)),
++        chip: c.type === 'new' ? 'Nuevo · ' + c.tag : c.tag, chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
++        icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '', icoText: c.ico, onclick: () => pick(i)
++      });
++      if (doneIdx === i) el.classList.add('picked');
+       box.appendChild(el);
+     });
++    if (doneIdx != null) box.classList.add('done');
+   }
+ 
++  // ---- card -> Pokemon -> move ----
++
+   function pick(i) {
+     if (!offers || !offers[i]) return;
+-    const c = offers[i], cb = offerCb;
+-    offers = null; offerCb = null;
++    if (flow) return;                       // rows of the later steps have their own handlers
++    const c = offers[i];
++    if (c.type !== 'mech') { finish(c, null, i); return; }
++    G.Audio.sfx('select');
++    flow = { card: c, idx: i, targets: c.targets(G.Game.roster), step: 'pokemon', target: null, monSkipped: false };
++    renderMonStep();
++  }
++
++  function renderMonStep() {
++    clearAuto();
++    flow.step = 'pokemon';
++    setHeader('Choose a Pokémon for ' + flow.card.title);
++    $('lvl-reroll').classList.add('hidden');
++    const ok = flow.targets.filter(t => t.ok);
++    const only = ok.length === 1 ? ok[0] : null;
++    const box = $('cards');
++    box.innerHTML = '';
++    flow.targets.forEach((t, ti) => {
++      const n = t.moves.filter(x => x.ok).length;
++      const f = t.pl;
++      box.appendChild(row({
++        title: f.mon.name, color: G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94',
++        desc: n ? n + (n === 1 ? ' move can take it' : ' moves can take it') : 'No move can take it',
++        chip: f.dead ? 'Fainted' : (G.Game.player === f ? 'On field' : ''), chipColor: f.dead ? '#8a93a3' : '#5fcb6a',
++        key: G.Input.keyLabel('swap_' + ((f.teamSlot != null ? f.teamSlot : ti) + 1)),
++        icoNode: G.UI.spriteCanvas(f.dex, 46, 46, { scale: 1, shiny: f.shiny }),
++        dim: !t.ok, flash: t === only, onclick: () => pickMon(ti)
++      }));
++    });
++    if (only) autoT = setTimeout(() => { autoT = 0; if (flow && flow.step === 'pokemon') pickMon(flow.targets.indexOf(only), true); }, AUTO_MS);
++  }
++
++  function pickMon(ti, auto = false) {
++    if (!flow || flow.step !== 'pokemon' || !flow.targets[ti] || !flow.targets[ti].ok) return;
++    clearAuto();
++    flow.target = flow.targets[ti];
++    flow.monSkipped = auto || flow.targets.filter(t => t.ok).length === 1;
++    G.Audio.sfx('select');
++    renderMoveStep();
++  }
++
++  function renderMoveStep() {
++    clearAuto();
++    flow.step = 'move';
++    const { card, target } = flow;
++    setHeader('Choose a move for ' + target.pl.mon.name + ': ' + card.title);
++    const ok = target.moves.filter(x => x.ok);
++    const only = ok.length === 1 ? ok[0] : null;
++    const box = $('cards');
++    box.innerHTML = '';
++    target.moves.forEach((x, mi) => {
++      const m = x.m, n = G.Moves.stackTotal(m);
++      box.appendChild(row({
++        title: m.name, color: G.U.TYPE_COLOR[m.type],
++        desc: x.ok ? G.Mechanics.text(m, card.mech) + ' (' + G.Mechanics.preview(m, card.mech) + ')' : x.why,
++        chip: n ? '+' + n : '', chipColor: G.U.TYPE_COLOR[m.type],
++        key: mi < 4 ? G.Input.keyLabel('attack_' + (mi + 1)) : '',
++        icoHtml: G.Icons.html('move:' + m.id, 32), dim: !x.ok, flash: x === only, onclick: () => pickMove(mi)
++      }));
++    });
++    if (only) autoT = setTimeout(() => { autoT = 0; if (flow && flow.step === 'move') pickMove(flow.target.moves.indexOf(only)); }, AUTO_MS);
++  }
++
++  function pickMove(mi) {
++    if (!flow || flow.step !== 'move') return;
++    const x = flow.target.moves[mi];
++    if (!x || !x.ok) return;
++    finish(flow.card, { pl: flow.target.pl, move: x.m }, flow.idx);
++  }
++
++  /** One step back. From the first step it returns to the cards. */
++  function back() {
++    if (!flow) return;
++    clearAuto();
++    G.Audio.sfx('select');
++    if (flow.step === 'move' && !flow.monSkipped) { renderMonStep(); return; }
++    const list = offers;
++    flow = null;
++    renderCards(list);
++  }
++
++  function finish(c, tgt, idx) {
++    clearAuto();
++    const cb = offerCb, list = offers;
++    offers = null; offerCb = null; flow = null;
+     $('lvl-reroll').classList.add('hidden');
+     if (coopMode) {
+       // The chosen card stays in view while the others choose.
+-      $('cards').querySelectorAll('.card').forEach((el, j) => el.classList.toggle('picked', j === i));
+-      $('cards').classList.add('done');
++      renderCards(list, idx);
++      offers = null;
+     } else G.UI.hide('scr-levelup');
+-    cb(c);
++    cb(c, tgt);
++  }
++
++  /** Keyboard for the level-up screen: slot keys 1-3 (cards), team keys (Pokemon), 1-4 (moves), R reroll, Backspace back. */
++  function levelKeys() {
++    if (!offers && !flow) return;
++    if (!flow) {
++      for (let i = 0; i < 3; i++) if (G.Input.action('attack_' + (i + 1))) pick(i);
++      if (G.Input.tap('keyr')) reroll();
++      return;
++    }
++    if (G.Input.tap('backspace')) { back(); return; }
++    if (flow.step === 'pokemon') {
++      flow.targets.forEach((t, ti) => {
++        const slot = t.pl.teamSlot != null ? t.pl.teamSlot : ti;
++        if (G.Input.action('swap_' + (slot + 1))) pickMon(ti);
++      });
++    } else {
++      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) pickMove(i);
++    }
+   }
+ 
+   /** Co-op: who still has to choose. */
+@@ -83,7 +213,7 @@
+   }
+ 
+   function closeLevelUp() {
+-    offers = null; offerCb = null;
++    offers = null; offerCb = null; flow = null; clearAuto();
+     $('cards').classList.remove('done');
+     G.UI.hide('scr-levelup');
+   }
+@@ -116,7 +246,7 @@
+       ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Tickets del gacha</span><b>
+         ${r.t1 ? G.Icons.html('ticket', 22) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ticket10', 22) + ' +' + r.t10 + ' ×10' : ''}</b></div>` : ''}
+       <div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
+-        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${m.name} Nv.${m.lvl}`).join(' · ') || '—'}</b></div>
++        ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${m.name}${G.Moves.stackTotal(m) ? ' +' + G.Moves.stackTotal(m) : ''}`).join(' · ') || '—'}</b></div>
+       ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies conseguidos</span>
+         <div class="caught-row" id="over-caught"></div></div>` : ''}
+       ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">¡Nuevo récord de tiempo!</div>' : ''}
+@@ -191,7 +321,7 @@
+       el.className = 'card' + (opt.mode === 'add' || step2 ? ' bond' : '');
+       el.innerHTML =
+         `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
+-         <div class="txt"><div class="nm">${m.name} <span class="tag-chip" style="background:${col}">Nv.${m.lvl}</span></div><div class="ds">${desc}</div></div>
++         <div class="txt"><div class="nm">${m.name} ${G.Moves.stackTotal(m) ? `<span class="tag-chip" style="background:${col}">+${G.Moves.stackTotal(m)}</span>` : ''}</div><div class="ds">${desc}</div></div>
+          <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
+       el.dataset.sfx = 'none';
+       el.onclick = () => pickBond(i);
+@@ -233,5 +363,5 @@
+     $('btn-quit').onclick = onQuit;
+   }
+ 
+-  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, setWaiting, closeLevelUp, showOver, wirePause, showPause };
++  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause };
+ })();
+--- a/tools/export_data.js
++++ b/tools/export_data.js
+@@ -26,7 +26,7 @@
+   try { load(f); } catch (e) { console.warn('aviso', f, e.message); }
+ }
+ // evo stays in the export as null: tools/make_seo_pages.py still reads it (SEO copy pass is a TODO).
+-const moves = Object.values(G.Moves.BY_ID).map(m => ({ id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: m.maxLvl, evo: null }));
++const moves = Object.values(G.Moves.BY_ID).map(m => ({ id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: 0, evo: null }));
+ const out = {
+   dex: G.DEX,
+   legends: G.DEX.filter(p => p.leg).map(p => p.dex),

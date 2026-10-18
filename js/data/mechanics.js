@@ -99,5 +99,32 @@ G.Mechanics = (() => {
     return (mech.mode === 'add' ? '+' + mech.step : '+' + Math.round(mech.step * 100) + '%') + ' ' + noun(m, mech);
   }
 
-  return { ALL, BY_ID, check, eligibleFor, text, noun, TWO_PI };
+  const f = x => { const v = +x; return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toFixed(Math.abs(v) < 1 ? 3 : 2)); };
+
+  /** "before to after" for one more stack on `m`, computed with the real derive() so it can never disagree with it. */
+  function preview(m, mech) {
+    const key = mech.keyFor(m), base = cur(m, key);
+    const c = Object.assign({}, m, { mods: Object.assign({}, m.mods) });
+    c.mods[mech.id] = (c.mods[mech.id] || 0) + 1;
+    G.Moves.derive(c);
+    const next = c[key];
+    if (mech.id === 'effect') return key === 'amount' ? 'Potency ' + f(base * 100) + '% to ' + f(next * 100) + '% per stack' : 'Power ' + f(base) + ' to ' + f(next);
+    if (mech.id === 'recharge') return f(base) + ' s to ' + f(next) + ' s';
+    if (mech.id === 'firerate') return 'shoots every ' + f(base) + ' s to ' + f(next) + ' s';
+    return f(base) + ' to ' + f(next);
+  }
+
+  /** Short player-facing reason a move cannot take `mech` (for dimmed rows). */
+  function reason(m, mech) {
+    const c = check(m, mech);
+    if (c.ok) return '';
+    const w = c.why || '';
+    if (/^power 0/.test(w)) return 'Does no damage';
+    if (/^arc already/.test(w)) return 'Arc is already 360\u00b0';
+    if (/^knockback/.test(w)) return 'Has no knockback';
+    if (/^(kind|move) has no/.test(w)) return 'Has no ' + noun(m, mech).toLowerCase();
+    return w;
+  }
+
+  return { ALL, BY_ID, check, eligibleFor, text, noun, preview, reason, TWO_PI };
 })();

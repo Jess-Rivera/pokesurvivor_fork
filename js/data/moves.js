@@ -23,104 +23,10 @@
  * The icon is not stored here: G.Icons composes it (type emblem +
  * family badge), see ui/icons.js.
  *
- * The upgrades (lvl 1 -> 5) come from a common ladder per `kind`:
- *   mods multiplicativos -> dmg, cd, speed, radius, dur, amount, arc
- *   mods aditivos        -> count, pierce, stacks
+ * Upgrades are mechanic cards (data/mechanics.js): an instance keeps `mods = { mechanicId: stacks }`
+ * and derive() rebuilds its live fields from the base definition. Moves have no level.
  */
 (() => {
-  const LADDERS = {
-    projectile: [
-      { t: '+1 proyectil',                  m: { count: 1, spread: 1.4 } },
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: '+1 proyectil y +1 perforación',   m: { count: 1, pierce: 1, spread: 1.2 } }
-    ],
-    melee: [
-      { t: '+40% daño',                     m: { dmg: 1.40 } },
-      { t: '+25% alcance',                  m: { radius: 1.25 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: 'Golpea en 360° y +50% daño',    m: { arc: 9, dmg: 1.50 } }
-    ],
-    beam: [
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: '+30% alcance y grosor',         m: { radius: 1.30, width: 1.30 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: '+50% daño',                     m: { dmg: 1.50 } }
-    ],
-    orbit: [
-      { t: '+1 orbe',                       m: { count: 1 } },
-      { t: '+55% daño',                     m: { dmg: 1.55 } },
-      { t: '+25% radio y gira más rápido',  m: { radius: 1.25, speed: 1.35 } },
-      { t: '+1 orbe y +55% daño',           m: { count: 1, dmg: 1.55 } }
-    ],
-    nova: [
-      { t: '+4 proyectiles',                m: { count: 4 } },
-      { t: '+40% daño',                     m: { dmg: 1.40 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: '+4 proyectiles y +1 perforación', m: { count: 4, pierce: 1 } }
-    ],
-    aura: [
-      { t: '+30% radio',                    m: { radius: 1.30 } },
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: 'Golpea un 40% más a menudo',    m: { cd: 0.70 } },
-      { t: '+30% radio y +50% daño',        m: { radius: 1.30, dmg: 1.50 } }
-    ],
-    boomerang: [
-      { t: '+1 bumerán',                    m: { count: 1 } },
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: '+30% alcance',                  m: { radius: 1.30 } },
-      { t: '+1 bumerán y +40% daño',        m: { count: 1, dmg: 1.40 } }
-    ],
-    chain: [
-      { t: '+2 saltos',                     m: { count: 2 } },
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: '+2 saltos y +40% daño',         m: { count: 2, dmg: 1.40 } }
-    ],
-    mine: [
-      { t: '+1 mina',                       m: { count: 1 } },
-      { t: '+50% daño',                     m: { dmg: 1.50 } },
-      { t: '+30% radio de explosión',       m: { radius: 1.30 } },
-      { t: '+1 mina y -25% recarga',        m: { count: 1, cd: 0.75 } }
-    ],
-    meteor: [
-      { t: '+1 meteoro',                    m: { count: 1 } },
-      { t: '+45% daño',                     m: { dmg: 1.45 } },
-      { t: '+30% radio',                    m: { radius: 1.30 } },
-      { t: '+2 meteoros y -20% recarga',    m: { count: 2, cd: 0.80 } }
-    ],
-    turret: [
-      { t: '+50% daño',                     m: { dmg: 1.50 } },
-      { t: 'Dispara un 35% más rápido',     m: { rate: 0.74 } },
-      { t: '+1 a la vez',                   m: { count: 1 } },
-      { t: '+50% duración y +40% daño',     m: { dur: 1.50, dmg: 1.40 } }
-    ],
-    dash: [
-      { t: '+40% daño',                     m: { dmg: 1.40 } },
-      { t: '+30% distancia',                m: { radius: 1.30 } },
-      { t: '-25% recarga',                  m: { cd: 0.75 } },
-      { t: '+60% daño y más ancho',         m: { dmg: 1.60, width: 1.40 } }
-    ],
-    trail: [
-      { t: '+40% daño',                     m: { dmg: 1.40 } },
-      { t: '+40% duración',                 m: { dur: 1.40 } },
-      { t: 'Charcos un 30% más grandes',    m: { radius: 1.30 } },
-      { t: '+50% daño y +30% radio',        m: { dmg: 1.50, radius: 1.30 } }
-    ],
-    cone: [
-      { t: '+3 disparos',                   m: { count: 3 } },
-      { t: '+40% daño',                     m: { dmg: 1.40 } },
-      { t: '+30% alcance',                  m: { life: 1.30 } },
-      { t: '+3 disparos y +1 perforación',  m: { count: 3, pierce: 1 } }
-    ],
-    buff: [
-      { t: '+1 acumulación máxima',         m: { stacks: 1 } },
-      { t: '+40% potencia',                 m: { amount: 1.40 } },
-      { t: '+50% duración',                 m: { dur: 1.50 } },
-      { t: '+1 acumulación y +40% potencia', m: { stacks: 1, amount: 1.40 } }
-    ]
-  };
-
   const RAW = [
     // ---------------- NORMAL (pool common to all) ----------------
     { id: 'tackle', name: 'Tackle', type: 'normal', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
@@ -522,8 +428,6 @@
 
   const BY_ID = {};
   for (const m of RAW) {
-    m.ups = LADDERS[m.kind];
-    m.maxLvl = m.ups.length + 1;
     BY_ID[m.id] = m;
   }
 
@@ -534,27 +438,10 @@
     return [...ids];
   }
 
-  /**
-   * A move instance in a run: the base numbers of `def` with all
-   * the ladder upgrades up to `lvl` already applied.
-   */
-  function instance(id, lvl = 1) {
+  /** A move instance in a run: the base definition plus its upgrade stacks (none yet). */
+  function instance(id) {
     const def = BY_ID[id];
-    const s = Object.assign({}, def, { id, def, lvl, t: 0, mods: {} });
-    delete s.ups;
-    for (let i = 0; i < lvl - 1; i++) applyMods(s, def.ups[i].m);
-    return s;
-  }
-
-  const MULT = ['dmg', 'cd', 'speed', 'radius', 'dur', 'amount', 'arc', 'width', 'spread', 'life', 'size', 'rate'];
-  const ADD = ['count', 'pierce', 'stacks'];
-
-  function applyMods(s, m) {
-    for (const k in m) {
-      if (MULT.includes(k) && s[k] != null) s[k] *= m[k];
-      else if (ADD.includes(k)) s[k] = (s[k] || 0) + m[k];
-      else s[k] = m[k];
-    }
+    return Object.assign({}, def, { id, def, t: 0, mods: {} });
   }
 
   /**
@@ -562,7 +449,6 @@
    * (G.Mechanics, upgrade rework). Always starts from `def`, never from the previous value, so the
    * result does not depend on the order the cards were taken. `norm` and `floor` are NOT touched:
    * they stay frozen at the base count, so added pellets add real damage.
-   * Slice 2a: the Lv 1-5 ladders still exist and write fields directly, so a laddered move is not derived.
    */
   function derive(s) {
     const d = s.def, M = G.Mechanics, byKey = {};
@@ -589,7 +475,7 @@
    */
   function addStack(s, id) {
     const mech = G.Mechanics.BY_ID[id];
-    if (!mech || s.lvl > 1 || !G.Mechanics.check(s, mech).ok) return false;
+    if (!mech || !G.Mechanics.check(s, mech).ok) return false;
     s.mods[id] = (s.mods[id] || 0) + 1;
     derive(s);
     return true;
@@ -597,19 +483,6 @@
 
   /** Total mechanic stacks on a move instance (for the HUD badge, slice 2b). */
   function stackTotal(s) { let n = 0; for (const id in s.mods) n += s.mods[id]; return n; }
-
-  /** Levels up an already-created instance. */
-  function levelUp(s) {
-    if (s.lvl >= s.def.maxLvl) return false;
-    applyMods(s, s.def.ups[s.lvl - 1].m);
-    s.lvl++;
-    return true;
-  }
-
-  /** Text of the next upgrade, for the level-up card. */
-  function nextUpText(s) {
-    return s.lvl >= s.def.maxLvl ? null : s.def.ups[s.lvl - 1].t;
-  }
 
   /** Starting move based on the main type (if the Pokemon does not bring one). */
   const START = {
@@ -625,5 +498,5 @@
     return 'tackle';
   }
 
-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, levelUp, nextUpText, startFor, derive, addStack, stackTotal };
+  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, startFor, derive, addStack, stackTotal };
 })();

@@ -461,13 +461,13 @@ G.HUD = (() => {
         // type emblem + family badge
         G.Icons.draw(ctx, 'move:' + m.id, x + (S - 32) / 2, y + (S - 32) / 2 - 2, 32);
 
-        // move level (little dots)
-        const dots = m.def.maxLvl;
-        const dw = 4, dgap = 2;
-        const tw = dots * dw + (dots - 1) * dgap;
-        for (let d = 0; d < dots; d++) {
-          ctx.fillStyle = d < m.lvl ? col : 'rgba(255,255,255,.18)';
-          ctx.fillRect(x + (S - tw) / 2 + d * (dw + dgap), y + S - 9, dw, 3);
+        // upgrade stacks taken on this move (badge, hidden at 0)
+        const stk = G.Moves.stackTotal(m);
+        if (stk > 0) {
+          ctx.save();
+          ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = col;
+          ctx.fillText('+' + stk, x + S / 2, y + S - 4);
+          ctx.restore();
         }
       }
 

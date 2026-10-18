@@ -134,7 +134,7 @@ G.Coop = (() => {
     const g = local.activeGroup();
     const m = g.find(x => x.kind === 'orbit') || g[0];
     return [r1(local.x), r1(local.y), r2(local.moveAngle), local.walking ? 1 : 0, r1(local.hp), r1(local.maxHp),
-            local.dead ? 1 : 0, m ? m.id : '', m ? m.lvl : 1, r1(local.magnet), r2(local.aim), r2(local.xpMul),
+            local.dead ? 1 : 0, m ? m.id : '', m ? G.Moves.stackTotal(m) : 0, r1(local.magnet), r2(local.aim), r2(local.xpMul),
             r2(local.reviveT || 0), api.choosing && api.choosing() ? 1 : 0, doneSeq];
   }
 
@@ -388,8 +388,8 @@ G.Coop = (() => {
   /** Your attack: the others replay it as a ghost. */
   function cast(pl, m) {
     if (!active || pl !== local) return;
-    if (host) emit(['c', me, m.id, m.lvl, r2(pl.aim), m.evolved ? 1 : 0]);
-    else outEv.push(['c', m.id, m.lvl, r2(pl.aim), m.evolved ? 1 : 0]);
+    if (host) emit(['c', me, m.id, G.Moves.stackTotal(m), r2(pl.aim), m.evolved ? 1 : 0]);
+    else outEv.push(['c', m.id, G.Moves.stackTotal(m), r2(pl.aim), m.evolved ? 1 : 0]);
   }
 
   // invitado
