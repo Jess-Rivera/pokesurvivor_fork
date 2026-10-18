@@ -6,7 +6,7 @@ const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'));
 global.G = { U: { TYPE_COLOR: new Proxy({}, { get: () => '#888' }), TYPE_NAME: new Proxy({}, { get: (_, k) => String(k) }), pickN(a, n) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b.slice(0, n); } }, Log: { on: false } };
-['js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
+['js/core/stats.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
 let fail = 0; const bad = m => { fail++; if (fail < 25) console.log('FAIL', m); };
 const cat = JSON.parse(fs.readFileSync(R + '/docs/move-catalogue-preview.json', 'utf8'));
 
@@ -31,10 +31,10 @@ console.log('2 preview text matches export:', n2);
 console.log('3 preview is read-only and tracks stacks');
 
 // 4. draw: build a team from real moves and simulate many offers
-const mk = (ids, types = ['fire']) => ({ mon: { types }, slots: ids.map(() => []), maxMoves: 4, moves: ids.map(i => G.Moves.instance(i)), banned: new Set(), hasMove(id) { return this.moves.some(m => m.id === id); }, level: 3, rerolls: 0 });
+const mk = (ids, types = ['fire']) => ({ mon: { types }, slots: ids.map(() => []), maxMoves: 4, moves: ids.map(i => G.Moves.instance(i)), banned: new Set(), hasMove(id) { return this.moves.some(m => m.id === id); }, level: 3, rerolls: 0, inc: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 } });
 const byKind = {}; for (const m of G.Moves.ALL) (byKind[m.kind] = byKind[m.kind] || []).push(m.id);
 const team = [mk(['ember', byKind.melee[0]]), mk([byKind.orbit[0], byKind.beam[0]], ['water']), mk([byKind.buff[0]], ['psychic']), mk([byKind.turret[0], byKind.cone[0]], ['dragon'])];
-const fam = { newmove: 0, DPS: 0, Coverage: 0, Utility: 0 }; let cards = 0, mechCards = 0;
+const fam = { newmove: 0, DPS: 0, Coverage: 0, Utility: 0, Stats: 0 }; let cards = 0, mechCards = 0;
 const N = 20000;
 for (let i = 0; i < N; i++) {
   const offer = G.LevelUp.offer(team[0], 3, team);
@@ -42,7 +42,7 @@ for (let i = 0; i < N; i++) {
   if (new Set(offer.map(c => c.key)).size !== offer.length) bad('duplicate card in one offer');
   for (const c of offer) {
     cards++; fam[c.family]++;
-    if (c.type === 'mech') { mechCards++; const ts = c.targets(team); if (!ts.some(t => t.ok)) bad('card ' + c.key + ' has no legal target'); }
+    if (c.type === 'mech' || c.type === 'stat') { mechCards++; const ts = c.targets(team); if (!ts.some(t => t.ok)) bad('card ' + c.key + ' has no legal target'); }
   }
 }
 console.log('4 offers:', N, 'cards:', cards, 'family share:', Object.entries(fam).map(([k, v]) => k + ' ' + (100 * v / cards).toFixed(1) + '%').join(', '));
@@ -59,7 +59,7 @@ for (const [k, w] of Object.entries(G.LevelUp.FAMILY_W)) { const want = w / wsum
   if (o.some(c => c.type === 'mech' && !c.targets([t]).some(x => x.ok))) bad('illegal card offered to maxed team'); }
 { const t = mk(['ember']); t.maxMoves = 1; const m = t.moves[0]; const keysBefore = G.Mechanics.eligibleFor(m).length;
   const o = G.LevelUp.offer(t, 3, [t]); if (o.some(c => c.type === 'new')) bad('new card with no slot'); if (!keysBefore || !o.length) bad('expected mechanic cards for ember'); }
-{ const t = mk([]); t.slots = []; t.maxMoves = 0; const o = G.LevelUp.offer(t, 3, [t]); if (o.length) bad('offer for a Pokemon with no moves and no slots should be empty'); }
+{ const t = mk([]); t.slots = []; t.maxMoves = 0; const o = G.LevelUp.offer(t, 3, [t]); if (o.some(c => c.type !== 'stat')) bad('a Pokemon with no moves and no slots may only be offered stat cards (slice 2c: HP/Def/SpD/Speed cards need no move)'); }
 console.log('5 slot rules, legality under ceilings, empty offer');
 
 // 6. apply() path

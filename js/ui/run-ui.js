@@ -90,7 +90,7 @@ G.RunUI = (() => {
     if (!offers || !offers[i]) return;
     if (flow) return;                       // rows of the later steps have their own handlers
     const c = offers[i];
-    if (c.type !== 'mech') { finish(c, null, i); return; }
+    if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }
     G.Audio.sfx('select');
     flow = { card: c, idx: i, targets: c.targets(G.Game.roster), step: 'pokemon', target: null, monSkipped: false };
     renderMonStep();
@@ -110,7 +110,7 @@ G.RunUI = (() => {
       const f = t.pl;
       box.appendChild(row({
         title: f.mon.name, color: G.U.TYPE_COLOR[f.mon.types[0]] || '#6b7a94',
-        desc: n ? n + (n === 1 ? ' move can take it' : ' moves can take it') : 'No move can take it',
+        desc: flow.card.type === 'stat' ? t.note : n ? n + (n === 1 ? ' move can take it' : ' moves can take it') : 'No move can take it',
         chip: f.dead ? 'Fainted' : (G.Game.player === f ? 'On field' : ''), chipColor: f.dead ? '#8a93a3' : '#5fcb6a',
         key: G.Input.keyLabel('swap_' + ((f.teamSlot != null ? f.teamSlot : ti) + 1)),
         icoNode: G.UI.spriteCanvas(f.dex, 46, 46, { scale: 1, shiny: f.shiny }),
@@ -125,6 +125,7 @@ G.RunUI = (() => {
     clearAuto();
     flow.target = flow.targets[ti];
     flow.monSkipped = auto || flow.targets.filter(t => t.ok).length === 1;
+    if (flow.card.type === 'stat') { finish(flow.card, { pl: flow.target.pl }, flow.idx); return; }     // stat cards: no move step
     G.Audio.sfx('select');
     renderMoveStep();
   }
@@ -245,6 +246,7 @@ G.RunUI = (() => {
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
       ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Tickets del gacha</span><b>
         ${r.t1 ? G.Icons.html('ticket', 22) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ticket10', 22) + ' +' + r.t10 + ' ×10' : ''}</b></div>` : ''}
+      ${r.stats && r.stats.length ? `<div style="grid-column:1/-1"><span>Stat cards</span><b style="font-size:14px">${r.stats.join(' · ')}</b></div>` : ''}
       <div style="grid-column:1/-1"><span>Movimientos</span><b style="font-size:15px">
         ${r.moves.map(m => `${G.Icons.html('move:' + m.id, 16)} ${m.name}${G.Moves.stackTotal(m) ? ' +' + G.Moves.stackTotal(m) : ''}`).join(' · ') || '—'}</b></div>
       ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies conseguidos</span>

@@ -236,3 +236,9 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Built in a work copy, tested offline (docs/proposals/upgrade-slice2b-harness.js) and in headless Chromium against the real screens, then applied on Jess's OK. Files: moves.js, mechanics.js, levelup.js (rewrite), run-ui.js, hud.js, combat.js, game.js, player.js, coop.js, debug.js, dev.html, style.css, tools/export_data.js; changelog entry added; GDD 7.2c, TODO, DECISIONS updated.
 - Process: no git commands run this time. Jess asked for a way to test without 5-minute playtests: G.Game.debugLevelUp() plus G.Debug.give/stack, and the headless run, cover that.
 - Where we stopped: 2a is committed; 2b applied and UNCOMMITTED. Next: Jess looks at it on dev.html?dev, commits, then slice 2c (stat cards + Type/Kind scoped cards) proposal.
+
+## 2026-10-18 (evening), upgrade rework: slice 2c APPLIED
+- New workflow from Jess: prose plan in chat, then build and write straight into the repo (no diff file, no separate apply). Slice 2c built that way.
+- Files: js/entities/player.js (inc, maxHpAt, addStat, moveFactor, spd, hurt), js/core/stats.js (applyPlayerDefense defMul), js/data/mechanics.js (SCOPED, STATS, STAT_BY), js/systems/levelup.js (statCard, Stats family, one scoped card per offer), js/ui/run-ui.js (stat cards skip the move step; summary row), js/game.js (run summary stats), js/core/debug.js (G.Debug.stat), js/data/changelog.js, docs/proposals/upgrade-slice2c-harness.js.
+- Found while testing: a 5% Def bonus on the base stat vanished at level 1 (statValue floors), so Iron/Zinc multiply the final stat instead.
+- No git commands run. Where we stopped: 2b and 2c both applied and UNCOMMITTED. Next: Jess looks at dev.html?dev (G.Debug.stat('atk', 3) gives stat cards), commits.

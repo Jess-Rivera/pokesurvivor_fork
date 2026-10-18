@@ -111,6 +111,17 @@ G.Debug = (() => {
     return k;
   }
 
+  /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
+  function stat(id, n = 1, idx) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const g = G.Game, f = idx != null ? g.roster[idx] : g.player;
+    if (!f) { console.warn('[Debug] no such Pokemon.'); return 0; }
+    g.debugMaxed();
+    let k = 0;
+    for (let i = 0; i < n; i++) if (f.addStat(id)) k++;
+    return k;
+  }
+
   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
   if (on) {
     addEventListener('keydown', e => {
@@ -127,5 +138,5 @@ G.Debug = (() => {
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack };
+  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat };
 })();

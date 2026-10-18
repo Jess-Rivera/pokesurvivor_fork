@@ -61,6 +61,37 @@ G.Mechanics = (() => {
   const BY_ID = {};
   for (const x of ALL) BY_ID[x.id] = x;
 
+  // --- Scoped cards (slice 2c): "+15% Fire Damage", "+15% Projectile Damage". They raise the SAME key as
+  // Increased Effect, so they sum with it in one pool. Kept out of ALL: the draw offers ONE random scope per
+  // offer (levelup.js), so 18 types + 14 kinds cannot flood the DPS family.
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const SCOPED = [];
+  const scoped = (id, name, test, scope) => {
+    const x = { id, label: name + ' Damage', cls: 'DPS', mode: 'inc', step: 0.15, live: true, scoped: true, scope,
+      keyFor: m => G.Kinds.effectKey(m.kind),
+      needs: (m, base) => {
+        const k = G.Kinds.BY[m.kind];
+        if (!k || k.payload !== 'damage') return 'not a damage move';
+        if (!test(m)) return 'not a ' + name + ' move';
+        return base > 0 ? null : 'power 0, nothing to increase';
+      } };
+    SCOPED.push(x); BY_ID[id] = x;
+  };
+  for (const t of Object.keys(G.U.TYPE_COLOR)) scoped('t:' + t, cap(t), m => m.type === t, { type: t });
+  for (const k of Object.keys(G.Kinds.BY)) if (G.Kinds.BY[k].payload === 'damage') scoped('k:' + k, cap(G.Kinds.BY[k].wkind), m => m.kind === k, { kind: k });
+
+  // --- Stat cards (slice 2c): per Pokemon, percentage only. Names are PLACEHOLDERS. cat = which moves make it useful.
+  const STATS = [
+    { id: 'hp',  label: 'HP Up',   stat: 'HP',      step: 0.05, color: '#5fcb6a', cat: null },
+    { id: 'atk', label: 'Protein', stat: 'Attack',  step: 0.05, color: '#ff8a4d', cat: 'physical' },
+    { id: 'def', label: 'Iron',    stat: 'Defense', step: 0.05, color: '#ffd23f', cat: null },
+    { id: 'spa', label: 'Calcium', stat: 'Sp. Atk', step: 0.05, color: '#b99dff', cat: 'special' },
+    { id: 'spd', label: 'Zinc',    stat: 'Sp. Def', step: 0.05, color: '#6ea4ff', cat: null },
+    { id: 'spe', label: 'Carbos',  stat: 'Speed',   step: 0.05, color: '#4dd6c8', cat: null }
+  ];
+  const STAT_BY = {};
+  for (const s of STATS) STAT_BY[s.id] = s;
+
   /** Current value of `key` on `m`, treating an absent key as 0 (the kind default for 'add' mechanics). */
   const cur = (m, key) => (m[key] == null ? 0 : m[key]);
 
@@ -108,7 +139,7 @@ G.Mechanics = (() => {
     c.mods[mech.id] = (c.mods[mech.id] || 0) + 1;
     G.Moves.derive(c);
     const next = c[key];
-    if (mech.id === 'effect') return key === 'amount' ? 'Potency ' + f(base * 100) + '% to ' + f(next * 100) + '% per stack' : 'Power ' + f(base) + ' to ' + f(next);
+    if (mech.id === 'effect' || mech.scoped) return key === 'amount' ? 'Potency ' + f(base * 100) + '% to ' + f(next * 100) + '% per stack' : 'Power ' + f(base) + ' to ' + f(next);
     if (mech.id === 'recharge') return f(base) + ' s to ' + f(next) + ' s';
     if (mech.id === 'firerate') return 'shoots every ' + f(base) + ' s to ' + f(next) + ' s';
     return f(base) + ' to ' + f(next);
@@ -122,9 +153,10 @@ G.Mechanics = (() => {
     if (/^power 0/.test(w)) return 'Does no damage';
     if (/^arc already/.test(w)) return 'Arc is already 360\u00b0';
     if (/^knockback/.test(w)) return 'Has no knockback';
+    if (/^not a /.test(w)) return w.charAt(0).toUpperCase() + w.slice(1);
     if (/^(kind|move) has no/.test(w)) return 'Has no ' + noun(m, mech).toLowerCase();
     return w;
   }
 
-  return { ALL, BY_ID, check, eligibleFor, text, noun, preview, reason, TWO_PI };
+  return { ALL, SCOPED, STATS, STAT_BY, BY_ID, check, eligibleFor, text, noun, preview, reason, TWO_PI };
 })();

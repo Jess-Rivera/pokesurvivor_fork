@@ -1,6 +1,7 @@
 /* ============ levelup.js — the three level-up cards ============
  * Upgrade rework (DECISIONS 2026-10-18). Two kinds of card:
  *   new   learn a new move (active Pokemon only; only if there is a free slot; a link frees slots)
+ *   stat  a per-Pokemon stat card (HP Up, Protein, ...): after picking it the player chooses a Pokemon (no move step)
  *   mech  a mechanic card (data/mechanics.js): +1 Projectile, +15% Area, ... It is MOVE-SPECIFIC: after
  *         picking it the player chooses a Pokemon, then one of its moves (run-ui.js does the steps).
  * The draw rolls a FAMILY first, then a card inside it, so the 14 mechanics cannot swamp new moves.
@@ -9,7 +10,7 @@
 G.LevelUp = (() => {
 
   // Family weights: new move, then the three mechanic value classes.
-  const FAMILY_W = { newmove: 10, DPS: 14, Coverage: 10, Utility: 6 };
+  const FAMILY_W = { newmove: 10, DPS: 14, Coverage: 10, Utility: 6, Stats: 8 };
   const CLASS_COLOR = { DPS: '#ff8a4d', Coverage: '#6ea4ff', Utility: '#b99dff' };
   const NEW_CANDIDATES = 6;
 
@@ -44,6 +45,29 @@ G.LevelUp = (() => {
     };
   }
 
+  /** A stat card: applies to one Pokemon. Protein / Calcium are only offered when a Pokemon has moves of that category,
+   *  and are drawn lighter when few of the team's moves are (share floored at 0.25). */
+  function statCard(st, roster) {
+    const pct = v => Math.round(v * 100) + '%';
+    const targets = r => r.map(f => {
+      const dmg = f.moves.filter(m => G.Stats.moveCat(m) !== 'status');
+      const n = st.cat ? dmg.filter(m => G.Stats.moveCat(m) === st.cat).length : 1;
+      const ok = n > 0, cur = f.inc[st.id];
+      return { pl: f, moves: [], ok, share: dmg.length ? n / dmg.length : 0,
+        note: ok ? st.stat + ' +' + pct(cur) + ' to +' + pct(cur + st.step) : 'No ' + st.cat + ' moves' };
+    });
+    const ts = targets(roster);
+    if (!ts.some(t => t.ok)) return null;
+    return {
+      w: st.cat ? Math.max(0.25, ...ts.map(t => t.share)) : 1, family: 'Stats', type: 'stat', key: 'stat:' + st.id, stat: st,
+      icon: null, ico: '+' + pct(st.step), color: st.color, tag: 'Stat',
+      title: st.label + ' +' + pct(st.step),
+      desc: 'Raises one Pokémon\'s ' + st.stat + ' by ' + pct(st.step),
+      targets,
+      apply: (active, tp) => tp.addStat(st.id)
+    };
+  }
+
   /** The candidate cards grouped by family (empty families are left out). */
   function families(pl, roster) {
     const fam = {};
@@ -72,6 +96,13 @@ G.LevelUp = (() => {
     for (const mech of G.Mechanics.ALL) {
       if (mech.live) add(mech.cls, mechCard(mech, roster));
     }
+
+    // --- scoped damage: ONE random scope per offer (all scopes together count as a single DPS entry) ---
+    const sc = G.Mechanics.SCOPED.map(x => mechCard(x, roster)).filter(Boolean);
+    if (sc.length) add('DPS', sc[Math.floor(Math.random() * sc.length)]);
+
+    // --- stat cards ---
+    for (const st of G.Mechanics.STATS) add('Stats', statCard(st, roster));
     return fam;
   }
 
@@ -101,7 +132,7 @@ G.LevelUp = (() => {
       G.Log.offer(pl.level, picked, pl.rerolls || 0);
       for (const c of picked) {
         const f = c.apply;
-        c.apply = function (p, tp, m) { G.Log.pick(c.key + (m ? '>' + m.id : '')); return f.apply(this, arguments); };
+        c.apply = function (p, tp, m) { G.Log.pick(c.key + (m ? '>' + m.id : c.type === 'stat' && tp ? '>' + tp.mon.name : '')); return f.apply(this, arguments); };
       }
     }
     return picked;

@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Stat cards and type damage cards', 'Stat cards and type damage cards'], new: [
+    ['Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.',
+     'Two new kinds of level-up card. Stat cards (HP Up, Protein, Iron, Calcium, Zinc, Carbos) give one Pokémon +5% to a stat; you choose the Pokémon. Damage cards for a type or a kind (+15% Fire Damage, +15% Projectile Damage) go on one move and stack with Increased Effect. Protein only helps physical moves and Calcium only special ones. The run summary lists the stat cards each Pokémon took.']
+  ] },
   { d: '2026-10-18', title: ['Upgrades you aim at a move', 'Upgrades you aim at a move'], new: [
     ['Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.',
      'Level-up cards are now upgrades you aim: pick a card (+1 Projectile, +15% Recharge Speed, +15% Area and more), then a Pokémon, then one of its moves. Moves no longer have levels. Pokémon or moves that cannot take a card are dimmed, and a single choice is picked for you after a short flash. Moves show how many upgrades they have as +N.']
