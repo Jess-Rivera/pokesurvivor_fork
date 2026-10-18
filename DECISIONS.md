@@ -5,6 +5,33 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-18, ranged and support spacing bands [agreed, game change pending]
+Jess's rulings while reviewing what each class does (full design in docs/proposals/enemy-behavior-game-proposal.md, "Spacing bands"):
+- Enemy AI stays simple and readable (survivor-like reference): no dodging, no group tactics. Identity comes from WHERE a class stands and what it telegraphs.
+- Ranged and support units hold a per-class distance band, measured on screen (s = hypot(dx/(w/2), dy/(h/2)), 1.0 = screen edge), not one shared range.
+  They approach at full speed and RETREAT at 0.8x speed (so you can chase them down), with a narrow hold band so they do not freeze.
+  First-guess bands (retreat below / approach above): fan 0.30/0.40, beamer 0.50/0.62, zoner 0.72/0.82, shooter 0.80/0.92 (status shares it
+  until slice 2), shielder 0.45/0.58 (movement only), healer 0.70/0.82, summoner 0.70/0.82. Tuned by playtest.
+- Cornered units side-step instead of pushing into the wall (retreat direction uses the existing sideT rotation).
+- Ability gates follow the band, not def.range. Shielder moves with the band but must never fire shots (its shield stays on its 6 s timer).
+- Class damage factors are ignored today (atkFactor path) and the charger has no ground marking; Jess is handling the charger in his own table copy.
+  Not yet decided: whether class damage weights come back.
+
+## 2026-10-18, Status support class, secondary Status, and Jess's hand tuning [agreed, game change pending]
+Jess's rulings (after reviewing the generated assignments in the class-review page):
+- Support gets a 4th class: STATUS (debuffs/ailments on the player, e.g. sleep, paralysis, slow, or buffs on allies, e.g. a speed aura).
+  Evidence: sleep/paralysis/confusion/ally-buff moves (strong), DoT ailments and plain debuffs (weaker), abilities (Intimidate, Gooey,
+  Plus/Minus...), Pokedex text. A strong attacker (Atk or SpA > 100) with a Status kit stays an attacker and gets Status as a SECONDARY.
+- One kind of secondary class is allowed: Status. It rides on top of any primary class; the PRIMARY class alone sets family and cast quota.
+  A secondary Status should be weaker than a primary Status (about half duration), so dual-role enemies are not strictly stronger.
+- Generated rules are kept as they are (Tank rule HP >= 95 and Speed <= 50, shielder rule, etc.). Jess's hand tuning is layered on top
+  and lives in docs/proposals/hand-overrides.json: 26 class changes, 7 extra Tanks (kakuna, forretress, miltank, blissey, wailord,
+  drifblim, gigalith), secondary Status on sylveon and pheromosa, and Ditto as a unique behavior (summon-from-cast).
+- Ditto: a summoner whose minions are random members of the drawn cast, not copies of itself. Guardrails to build in: minions from the same
+  tier or lower, never summoner/healer/bomber, same minion cap as other summoners.
+- Game-side notes: the player already has a slow state (slowT, half speed); sleep/paralysis on the player are NEW mechanics and need short
+  durations plus a grace window against stunlock. Ally buff = an aura on nearby enemies.
+
 ## 2026-10-17, Cast composition rule (9 per tier) and the profile fallback [agreed, script + game change pending]
 Jess's rulings:
 - Each tier's cast is 9 species: 3-5 Melee, 3-5 Range, 1-2 Support, always totalling 9 (target 4 / 4 / 1). Runner and Tank

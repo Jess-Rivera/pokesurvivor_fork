@@ -28,7 +28,7 @@ TAXONOMY (DECISIONS 2026-10-17 "Enemy taxonomy"), decided top-down:
 Confident = two independent evidence layers agree (move + strong ability, or move + species text, ...);
 a signature move alone is LOW and falls back to the family default (shown as 'leaning' for review).
 """
-import csv, re, sys, collections, os
+import csv, re, sys, collections, os, json
 
 ROOT = sys.argv[1] if len(sys.argv) > 1 else '.'
 MODE = sys.argv[2] if len(sys.argv) > 2 else 'single'      # 'single' (default: one signature move is enough for a PATTERN) or 'strict' (two layers); support is always strict
@@ -52,6 +52,14 @@ SUPPORT = {
   'bomber':   dict(moves=['self-destruct','explosion','misty-explosion','mind-blown'],
                    strong=['aftermath'], weak=['damp']),
 }
+# STATUS support: applies debuffs/ailments to the player or buffs to allies (other than heal / shield)
+STATUS_AB_STRONG = ['intimidate','gooey','tangling-hair','cotton-down','power-spot','steely-spirit','battery','plus','minus']
+STATUS_AB_WEAK = ['effect-spore','static','poison-point','flame-body','cute-charm','stench','mummy']
+STATUS_DISABLE = {'sleep','paralysis','confusion','freeze','infatuation','yawn'}   # takes control away from the player: the core of the Status class
+STATUS_DOT = {'poison','burn','leech-seed','nightmare'}                           # damage-over-time ailments: weaker identity
+STATUS_OFFENSE_CAP = 100   # a strong attacker with a few status moves stays in its attack family
+STATUS_NEED_SIG = 2        # disable / ally-buff moves needed for 'multi'
+STATUS_NEED_ALL = 4        # ... and this many status moves counting DoT ailments and plain debuffs
 SUMMON_MOVES = ['helping-hand','beat-up','follow-me','rage-powder','ally-switch','coaching']
 
 # attack pattern -> (strong signature moves = 2 pts, weak/common moves = 1 pt, delivery family)
@@ -67,13 +75,14 @@ PATTERN = {
   'charger': (['flare-blitz','wild-charge','head-charge','brave-bird','wave-crash','volt-tackle','head-smash',
                'wood-hammer','rock-wrecker'], ['double-edge','take-down','giga-impact','extreme-speed','headbutt'], 'melee'),
 }
-CLASSES = ['healer', 'shielder', 'bomber', 'summoner', 'beamer', 'zoner', 'fan', 'jumper', 'charger']
+CLASSES = ['healer', 'shielder', 'status', 'bomber', 'summoner', 'beamer', 'zoner', 'fan', 'jumper', 'charger']
 
 # Species flavor-text keywords (WEAK layer). 1-2 distinct matching entries = 1 pt, 3+ = 2 pts.
 I = re.I
 TEXT_RE = {
   'healer':   re.compile(r"\b(heal(s|ed|ing)?|cur(e|es|ed|ing)|restor(e|es|ed|ing)|nurs(e|es|ed|ing)|mend(s|ed|ing)?|soothe[sd]?|soothing|tends? to|cares? for|medicin\w*|remed(y|ies)|nutritious)\b", I),
   'shielder': re.compile(r"\b(protect(s|ed|ing|ive)?|shield(s|ed|ing)?|guard(s|ed|ing)?|defen[cs]\w*|barrier|armor(ed)?|impenetrable|impregnable|withdraw\w*|retract\w*|hard shell|rock-hard)\b", I),
+  'status':   re.compile(r"\b(sleep\w*|lull\w*|drows\w*|hypnoti\w*|paraly\w*|numb\w*|stun\w*|mesmeri\w*|entranc\w*|dazzl\w*|bewitch\w*|confus\w*|sluggish|slow(s|ed|ing)? (down|its|the|them)|saps?|puts? .{0,25} to sleep|sings?|lullaby)\b", I),
   'bomber':   re.compile(r"\b(explod\w*|explosi\w*|self-destruct\w*|detonat\w*|blows? up|go(es)? off|volatile|set off|burst(s)? (open|apart))\b", I),
   'summoner': re.compile(r"\b(packs?|swarm\w*|colon(y|ies)|flocks?|herds?|horde|hive|queen|summon\w*|calls? (out )?for (help|friends|allies)|calls? (its|their) (friends|allies|comrades|pack|kind|companions|mates)|rall(y|ies)|in (large )?groups)\b", I),
   'beamer':   re.compile(r"\b(beam\w*|laser\w*|rays? (of|that|from)|(fires|shoots|emits|releases|unleashes) (a |an |powerful |intense )?(beam|ray|blast|bolt|energy|light|laser))\b", I),
@@ -144,6 +153,20 @@ mdata = {}
 for r in rd('moves.csv'):
     mdata[int(r['id'])] = (r['identifier'], eff_text.get(int(r['effect_id'] or 0), ''), tgt_name.get(int(r['target_id'] or 0), ''), int(r['power']) if r['power'] else 0)
 mname = {k: v[0] for k, v in mdata.items()}
+_ail = {r['id']: r['identifier'] for r in rd('move_meta_ailments.csv')}
+_mm = {int(r['move_id']): r for r in rd('move_meta.csv')}
+_sc = collections.defaultdict(list)
+for r in rd('move_meta_stat_changes.csv'): _sc[int(r['move_id'])].append(int(r['change']))
+_dmg = {int(r['id']): r['damage_class_id'] for r in rd('moves.csv')}
+STATUS_AIL = {}       # move identifier -> ailment name (for the status effect the enemy applies)
+STATUS_KIND = {}      # move identifier -> 'ailment' | 'allybuff' | 'debuff' (status-class moves only)
+for _i, _m in _mm.items():
+    if _dmg.get(_i) != '1' or _i not in mdata: continue
+    _t = mdata[_i][2]; _a = _ail[_m['meta_ailment_id']]; _c = _sc.get(_i, [])
+    if _a in STATUS_DISABLE and _t not in ('user', 'users-field'): STATUS_KIND[mdata[_i][0]] = 'ailment'; STATUS_AIL[mdata[_i][0]] = _a
+    elif _a in STATUS_DOT and _t not in ('user', 'users-field'): STATUS_KIND[mdata[_i][0]] = 'dot'
+    elif _c and all(x < 0 for x in _c) and _t in ('selected-pokemon', 'all-opponents', 'all-other-pokemon', 'random-opponent'): STATUS_KIND[mdata[_i][0]] = 'debuff'
+    elif _c and all(x > 0 for x in _c) and _t in ('user-and-allies', 'ally', 'all-allies'): STATUS_KIND[mdata[_i][0]] = 'allybuff'
 lvl = collections.defaultdict(set)
 for r in rd('pokemon_moves.csv'):
     if r['pokemon_move_method_id'] == '1': lvl[int(r['pokemon_id'])].add(int(r['move_id']))
@@ -197,9 +220,9 @@ FAMILY_PATTERNS = {'melee': ['charger', 'jumper'], 'range': ['beamer', 'zoner', 
 FAMILY_DEFAULT = {'melee': 'plain', 'range': 'shooter', 'support': ''}
 NEED = {'healer': 2, 'shielder': 3, 'bomber': 2}          # signature moves that count as "multi" on their own
 RANK = {'hand': 3, 'high': 2, 'medium': 1, 'low': 0, '': -1}
-CONFIDENT = ('hand', 'high', 'medium')
+CONFIDENT = ('hand', 'high', 'medium', 'jess')
 GEN_REGION = {1: 'Kanto', 2: 'Johto', 3: 'Hoenn', 4: 'Sinnoh', 5: 'Unova', 6: 'Kalos', 7: 'Alola', 8: 'Galar', 9: 'Paldea'}
-ALL_CLASSES = ['healer', 'shielder', 'summoner', 'plain', 'charger', 'jumper', 'bomber', 'shooter', 'beamer', 'zoner', 'fan']
+ALL_CLASSES = ['healer', 'shielder', 'summoner', 'status', 'plain', 'charger', 'jumper', 'bomber', 'shooter', 'beamer', 'zoner', 'fan']
 
 rows = []
 for d in dexes:
@@ -234,6 +257,25 @@ for d in dexes:
         if role in handed: conf = 'hand'
         ev = m_all + s_ab + w_ab + (['text:' + '/'.join(k for k, _ in tp[role][1].most_common(2))] if tp[role][0] else []) + ['desc:' + x for x in sorted(mt_weak[role])[:2]]
         roles[role] = dict(conf=conf, layers=layers, n=len(m_all), ev=ev)
+    # ---- status (debuffs / ailments on the player, buffs on allies) ----
+    sig = sorted(x for x in moves if STATUS_KIND.get(x) in ('ailment', 'allybuff'))
+    deb = sorted(x for x in moves if STATUS_KIND.get(x) in ('debuff', 'dot'))
+    s_ab = [x for x in STATUS_AB_STRONG if x in abil]; w_ab = [x for x in STATUS_AB_WEAK if x in abil]
+    l_move, l_ab, l_txt = len(sig) >= 1, bool(s_ab), tp['status'][0] > 0 or bool(w_ab)
+    layers = int(l_move) + int(l_ab) + int(l_txt)
+    multi = len(sig) >= STATUS_NEED_SIG and len(sig) + len(deb) >= STATUS_NEED_ALL
+    conf = 'high' if (layers == 3 or (layers >= 2 and multi)) else 'medium' if (multi and layers >= 2) or (len(sig) >= 3) else 'low' if layers >= 1 else ''
+    status_capped = conf in CONFIDENT and max(atk, spa) > STATUS_OFFENSE_CAP   # strong attacker: stays an attacker, gets Status as a secondary
+    if status_capped: conf = 'low'
+    _fx = collections.Counter()
+    for x in sorted(moves):
+        k = STATUS_KIND.get(x)
+        if k == 'ailment': _fx['drowsy' if STATUS_AIL.get(x) in ('sleep', 'yawn') else 'daze'] += 1
+        elif k == 'allybuff': _fx['haste'] += 1
+        elif k in ('debuff', 'dot'): _fx['slow'] += 1
+    status_fx = sorted(_fx, key=lambda e: (-_fx[e], ['drowsy', 'daze', 'haste', 'slow'].index(e)))[:2] or ['slow']
+    roles['status'] = dict(conf=conf, layers=layers, n=len(sig) + len(deb),
+        ev=sig + deb[:2] + s_ab + w_ab + (['text:' + '/'.join(k for k, _ in tp['status'][1].most_common(2))] if tp['status'][0] else []))
     # ---- summoner ----
     pre = sp['evolves_from_species_id']
     is_final = not any(s['evolves_from_species_id'] == str(d) for s in species.values())
@@ -247,7 +289,7 @@ for d in dexes:
 
     # ---- STEP 1: support / bomber ----
     key = lambda r: (RANK[roles[r]['conf']], roles[r]['layers'], roles[r]['n'])
-    sup_best = max(['healer', 'shielder', 'summoner'], key=key)
+    sup_best = max(['healer', 'shielder', 'summoner', 'status'], key=key)
     sup_ok = roles[sup_best]['conf'] in CONFIDENT
     bomb_ok = roles['bomber']['conf'] in CONFIDENT
     family_stat = 'melee' if atk >= spa else 'range'
@@ -282,7 +324,7 @@ for d in dexes:
         cand = [(n, pats[n]) for n in pats if pats[n]['conf'] == 'low']
         if cand: lean = max(cand, key=lambda kv: kv[1]['score'])[0]
     if not lean and family in ('melee', 'range') and conf in ('default', 'profile'):
-        lows = [r for r in ('healer', 'shielder', 'summoner', 'bomber') if roles[r]['conf'] == 'low']
+        lows = [r for r in ('healer', 'shielder', 'summoner', 'status', 'bomber') if roles[r]['conf'] == 'low']
         if lows: lean = max(lows, key=key)
     layers_used = roles[cls]['layers'] if cls in roles else 0
     palt, pwhy = profile_class(family_stat, ptypes[pid], body[d], spe_pct, atk, spa)
@@ -293,7 +335,57 @@ for d in dexes:
         family=family, cls=cls, confidence=conf, tank=int(tank), mixed=int(mixed), leaning=lean, evidence=' '.join(ev),
         text_delivery=text_delivery, stat_family=family_stat, text_keywords=kw,
         in_hand_list=','.join(handed), layers=layers_used, profile_alt=palt, profile_why=pwhy, h=body[d][0], w=body[d][1],
+        secondary=('status' if status_capped else ''), unique='', status_fx='+'.join(status_fx), handtuned=0, was='',
         _tp={c: tp[c][0] for c in tp}, _mts={c: len(v) for c, v in mt_strong.items()}))
+
+# ====================== Jess's hand tuning (docs/proposals/hand-overrides.json), applied on top of the generated classes ======================
+FAM_OF = {}
+for _f, _l in (('melee', ['plain', 'charger', 'jumper', 'bomber']), ('range', ['shooter', 'beamer', 'zoner', 'fan']), ('support', ['healer', 'shielder', 'summoner', 'status'])):
+    for _c in _l: FAM_OF[_c] = _f
+_ovp = os.path.join(OUT, 'hand-overrides.json')
+OV = json.load(open(_ovp, encoding='utf-8')) if os.path.exists(_ovp) else {}
+for r in rows:
+    k = str(r['dex']); new = OV.get('classes', {}).get(k)
+    if new and new != r['cls']:
+        r['was'] = r['cls']; r['cls'] = new; r['family'] = FAM_OF[new]; r['confidence'] = 'jess'; r['handtuned'] = 1
+        r['evidence'] = (r['evidence'] + ' [hand-tuned from %s]' % r['was']).strip()
+    if r['dex'] in OV.get('tank', []): r['tank'] = 1; r['handtuned'] = 1
+    if r['dex'] in OV.get('secondary_status', []): r['secondary'] = 'status'; r['handtuned'] = 1
+    if k in OV.get('unique', {}): r['unique'] = OV['unique'][k]; r['handtuned'] = 1
+    if r['secondary'] and r['cls'] == 'status': r['secondary'] = ''
+
+# ====================== frozen class table (draft of js/data/enemy-classes.js) ======================
+import hashlib
+def _minion(r):
+    if r['cls'] != 'summoner': return 0
+    if r['dex'] in SUMMON_HAND: return SUMMON_HAND[r['dex']]
+    return int(species[r['dex']]['evolves_from_species_id'] or 0)
+def emit_table():
+    body = []
+    wild = [r for r in rows if not r['legendary']]
+    for r in sorted(wild, key=lambda r: r['dex']):
+        o = ["c:'%s'" % r['cls']]
+        if r['tank']: o.append('t:1')
+        if r['secondary']: o.append("s:'%s'" % r['secondary'])
+        if r['cls'] == 'status' or r['secondary'] == 'status': o.append("fx:'%s'" % r['status_fx'])
+        m = _minion(r)
+        if m: o.append('m:%d' % m)
+        if r['unique']: o.append("u:'%s'" % r['unique'])
+        body.append('  %d:{%s}' % (r['dex'], ','.join(o)))
+    text = ',\n'.join(body)
+    digest = hashlib.sha1(text.encode()).hexdigest()[:10]
+    hdr = ('/* ============ enemy-classes.js — GENERATED, do not edit by hand ============\n'
+           ' * Source of truth for the enemy class of every wild (non-legendary) species: %d entries.\n'
+           ' * Produced by classify_species.py from the pokeapi data + hand-overrides.json. To change a species,\n'
+           ' * edit hand-overrides.json and regenerate. Table checksum: %s\n'
+           ' *   c  class: plain charger jumper bomber | shooter beamer zoner fan | healer shielder summoner status\n'
+           ' *   t  1 = Tank modifier        s  secondary class (only \'status\')\n'
+           ' *   fx status effects it applies (drowsy daze slow haste), strongest first\n'
+           ' *   m  summoner: dex of the minion  u  unique behavior key\n'
+           ' */\n') % (len(wild), digest)
+    open(os.path.join(OUT, 'enemy-classes.draft.js'), 'w', encoding='utf-8').write(hdr + 'G.ENEMY_CLASSES = {\n' + text + '\n};\n')
+    print('class table draft: %d entries, checksum %s' % (len(wild), digest))
+emit_table()
 
 # ====================== output ======================
 cols = [c for c in rows[0].keys() if not c.startswith('_')]
@@ -324,7 +416,7 @@ for i, (lo, hi) in enumerate(TIERS):
     L.append('| T%d | %d-%d | %d | %s | %d |' % (i + 1, lo, hi, len(T), ' | '.join(str(cnt(T, c)) for c in ALL_CLASSES), sum(r['tank'] for r in T)))
 L.append('\n## Region pools (a run of region N draws from generations 1..N) \n')
 L.append('Species per family in each region pool, and the classes with fewest candidates in the smallest tier cells. '
-         'Support = healer + shielder + summoner.\n')
+         'Support = healer + shielder + summoner + status.\n')
 L.append('| region pool | species | support | melee | range | bomber | charger | jumper | beamer | zoner | fan |'); L.append('|---|---|---|---|---|---|---|---|---|---|---|')
 for g, name in GEN_REGION.items():
     P = [r for r in E if r['gen'] <= g]
@@ -381,17 +473,17 @@ def desc(r):
     ev = r['evidence'].strip()
     return (ev[:70] + '...') if len(ev) > 72 else ev
 def line(r, extra=''):
-    return '| %d | %s | %s | %s/%s | %s | %s | %s %s |' % (r['dex'], r['name'], r['types'], r['atk'], r['spa'], r['family'] + ' ' + r['cls'] + (' +tank' if r['tank'] else ''), r['confidence'], desc(r), extra)
+    return '| %d | %s | %s | %s/%s | %s | %s | %s %s |' % (r['dex'], r['name'], r['types'], r['atk'], r['spa'], r['family'] + ' ' + r['cls'] + (' +tank' if r['tank'] else '') + (' +' + r['secondary'] if r['secondary'] else '') + (' *' + r['unique'] if r['unique'] else ''), r['confidence'], desc(r), extra)
 HDR = '| dex | species | types | Atk/SpA | assigned | confidence | evidence |\n|---|---|---|---|---|---|---|'
 PATS = ('charger', 'jumper', 'beamer', 'zoner', 'fan')
 flags = collections.OrderedDict()
-flags['F1 High-offense support (not hand-listed): Atk or SpA >= 110 but assigned a support role'] = [r for r in E if r['family'] == 'support' and r['confidence'] != 'hand' and max(r['atk'], r['spa']) >= 110]
-flags['F2 Support from a single evidence layer (moves alone, not hand-listed): healer/shielder with no ability or text backing'] = [r for r in E if r['cls'] in ('healer', 'shielder') and r['confidence'] in ('medium', 'high') and r['layers'] <= 1]
-flags['F3 Pokedex text disagrees with a CLEAR stat lean (|Atk-SpA| >= 40 but the text reads the other way)'] = [r for r in E if abs(r['atk'] - r['spa']) >= 40 and r['text_delivery'] and r['text_delivery'] != ('melee' if r['stat_family'] == 'melee' else 'ranged')]
-flags['F4 Attested pattern vs body/type profile disagree in character (charger vs jumper, or two different range patterns)'] = [r for r in E if r['confidence'] in ('medium', 'high') and r['cls'] in PATS and r['profile_alt'] in PATS and r['profile_alt'] != r['cls']]
-flags['F5 Coin-flip family: |Atk - SpA| <= 3, so melee vs range is decided by a hair'] = [r for r in E if abs(r['atk'] - r['spa']) <= 3 and r['family'] != 'support']
-flags['F6 Heavy species (>= 100 kg) assigned Jumper, or very light (<= 5 kg) assigned Charger'] = [r for r in E if (r['cls'] == 'jumper' and r['w'] >= 1000) or (r['cls'] == 'charger' and r['w'] <= 50)]
-flags['F7 Tanks that also hold an attack pattern or support role (tank is a modifier, so this is expected, listed for a sanity check)'] = [r for r in E if r['tank'] and r['cls'] not in ('plain', 'shooter')]
+flags['F1 High-offense support (not hand-listed): Atk or SpA >= 110 but assigned a support role'] = [r for r in E if not r['handtuned'] and r['family'] == 'support' and r['confidence'] != 'hand' and max(r['atk'], r['spa']) >= 110]
+flags['F2 Support from a single evidence layer (moves alone, not hand-listed): healer/shielder with no ability or text backing'] = [r for r in E if not r['handtuned'] and r['cls'] in ('healer', 'shielder', 'status') and r['confidence'] in ('medium', 'high') and r['layers'] <= 1]
+flags['F3 Pokedex text disagrees with a CLEAR stat lean (|Atk-SpA| >= 40 but the text reads the other way)'] = [r for r in E if not r['handtuned'] and abs(r['atk'] - r['spa']) >= 40 and r['text_delivery'] and r['text_delivery'] != ('melee' if r['stat_family'] == 'melee' else 'ranged')]
+flags['F4 Attested pattern vs body/type profile disagree in character (charger vs jumper, or two different range patterns)'] = [r for r in E if not r['handtuned'] and r['confidence'] in ('medium', 'high') and r['cls'] in PATS and r['profile_alt'] in PATS and r['profile_alt'] != r['cls']]
+flags['F5 Coin-flip family: |Atk - SpA| <= 3, so melee vs range is decided by a hair'] = [r for r in E if not r['handtuned'] and abs(r['atk'] - r['spa']) <= 3 and r['family'] != 'support']
+flags['F6 Heavy species (>= 100 kg) assigned Jumper, or very light (<= 5 kg) assigned Charger'] = [r for r in E if not r['handtuned'] and (r['cls'] == 'jumper' and r['w'] >= 1000) or (r['cls'] == 'charger' and r['w'] <= 50)]
+flags['F7 Tanks that also hold an attack pattern or support role (tank is a modifier, so this is expected, listed for a sanity check)'] = [r for r in E if not r['handtuned'] and r['tank'] and r['cls'] not in ('plain', 'shooter')]
 R = []
 R.append('# Enemy class assignments and review flags (generated)\n')
 R.append('Generated by docs/proposals/classify_species.py (mode=%s). Wild pool only: %d non-legendary species with sprites. '
@@ -399,14 +491,14 @@ R.append('Generated by docs/proposals/classify_species.py (mode=%s). Wild pool o
 R.append('How to read: **assigned** = family + class (+tank if it also has the Tank modifier). **confidence**: hand = already in the game\'s hand lists; '
          'high/medium = attested by moves, abilities, move descriptions or Pokedex text; profile = no attested evidence, class chosen from type + body + stats; '
          'default = nothing fit, so Plain (melee) or Shooter (range). Plain = the current "chase" behavior, Shooter = the current "ranged" behavior.\n')
-R.append('Classes: ' + ', '.join('%s %d' % (c, cnt(E, c)) for c in ALL_CLASSES) + '. Tank modifier on %d. Total %d.\n' % (sum(r['tank'] for r in E), len(E)))
+R.append('Classes: ' + ', '.join('%s %d' % (c, cnt(E, c)) for c in ALL_CLASSES) + '. Tank modifier on %d. Secondary Status on %d. Hand-tuned by Jess: %d. Total %d.\n' % (sum(r['tank'] for r in E), sum(1 for r in E if r['secondary']), sum(r['handtuned'] for r in E), len(E)))
 R.append('## Review flags (%d categories)\n' % len(flags))
 for k, v in flags.items(): R.append('- **%s**: %d species' % (k.split(' ')[0], len(v)) + ' (' + k.split(' ', 1)[1] + ')')
 R.append('')
 newlist = [r for r in E if r['family'] == 'support' and r['confidence'] != 'hand' or (r['cls'] == 'bomber' and r['confidence'] != 'hand')]
 R.append('### N. NEW support and bomber species (not in the original hand lists): %d\n' % len(newlist))
 R.append('These are the roster expansion by lore. Each one needs a yes/no from you.\n')
-for role in ('healer', 'shielder', 'summoner', 'bomber'):
+for role in ('healer', 'shielder', 'summoner', 'status', 'bomber'):
     sub = [r for r in newlist if r['cls'] == role]
     R.append('**%s (%d new):** ' % (role, len(sub)) + ', '.join('%s (%s)' % (r['name'], r['confidence']) for r in sub) + '\n')
 for k, v in flags.items():
@@ -425,3 +517,27 @@ for fam_name in ('support', 'melee', 'range'):
         R.append('')
 open(os.path.join(OUT, 'enemy-class-review.md'), 'w', encoding='utf-8').write('\n'.join(R) + '\n')
 print('review doc:', {k.split(' ')[0]: len(v) for k, v in flags.items()}, 'new support/bomber:', len(newlist))
+
+# ====================== review-data JSON (feeds the interactive review page) ======================
+import json
+FLAG_WHY = {
+ 'F1': 'Strong attacker (Atk or Sp.Atk 110+) but given a support job',
+ 'F2': 'Support role rests on one kind of evidence only (moves)',
+ 'F3': 'Pokedex text reads one way, stats lean clearly the other',
+ 'F4': 'Move/lore evidence and body/type profile suggest different behaviours',
+ 'F5': 'Atk and Sp.Atk are within 3 points, so melee vs range is a coin flip',
+ 'F6': 'Body size looks odd for the class (heavy jumper or featherweight charger)',
+ 'F7': 'Tank modifier on top of a special class (sanity check)'}
+fl_by = collections.defaultdict(list)
+for k, v in flags.items():
+    for r in v: fl_by[r['dex']].append(k.split(' ')[0])
+newset = {r['dex'] for r in newlist}
+out_rows = []
+for r in E:
+    out_rows.append(dict(d=r['dex'], n=r['name'], t=r['types'], b=r['bst'], hp=r['hp'], a=r['atk'], s=r['spa'], sp=r['spe'], g=r['gen'],
+        tr=tiers_of(r['bst']), fam=r['family'], c=r['cls'], cf=r['confidence'], tk=r['tank'], ev=r['evidence'].strip(), pa=r['profile_alt'],
+        fl=fl_by.get(r['dex'], []), nw=int(r['dex'] in newset), hd=int(bool(r['in_hand_list'])), sec=r['secondary'], un=r['unique'], ht=r['handtuned'], was=r['was'], w=r['w'], h=r['h']))
+os.makedirs(os.path.join(OUT, 'review-build'), exist_ok=True)
+json.dump(dict(rows=out_rows, flagWhy=FLAG_WHY, flagTitle={k.split(' ')[0]: k.split(' ', 1)[1] for k in flags}),
+          open(os.path.join(OUT, 'review-build', 'review-data.json'), 'w'), separators=(',', ':'))
+print('review json rows:', len(out_rows))

@@ -15,7 +15,10 @@ Keep it simple: move items between sections as they progress. Add a date when an
   Opened + built 2026-10-17.
 
 ## Up next (local single-player)
-- REVIEW (Jess): docs/proposals/enemy-class-review.md (flags F1-F7 + the 124 new support/bomber species), then the game-side proposal. Opened 2026-10-17.
+- DONE 2026-10-18: class review (hand tuning in docs/proposals/hand-overrides.json).
+- REVIEW (Jess): docs/proposals/enemy-behavior-game-proposal.md (slice 1: class table, 9-species cast, runner/tank/bomber changes, Ditto). 5 decisions listed at the top. Nothing applied yet.
+- LATER (slice 1b, after the slice 1 playtest): per-class spacing bands for ranged and support units (proposal section "Spacing bands"). Before drafting: check player weapon reach vs the 0.80-0.92 bands and every reader of def.range (bosses).
+- LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
 - fix/enemy-speed (WIDENED to refactor/enemy-behavior, see DECISIONS 2026-10-17 "Enemy behavior becomes stat-derived"): replace runner x1.6 / bomber x1.25 with a clamp tied to player speed; audit the other class
   multipliers (list in DEVLOG 2026-10-17 night). Opened 2026-10-17.
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to

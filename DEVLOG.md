@@ -8,6 +8,37 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (late morning, Claude Desktop) ranged and support spacing bands designed (NOTHING APPLIED)
+- WHAT: design only. Answered "is smarter enemy AI survivor-like?" (no: keep it simple, readable, cheap) and designed per-class distance bands for
+  ranged and support units. Added a "Spacing bands" section to docs/proposals/enemy-behavior-game-proposal.md (slice 1b), decisions 6-8, apply step 5.
+- FINDINGS: the camera is about 384 px half-width but only about 210-216 px half-height, so bands must be measured on screen, not as a circle.
+  def.range also gates healer/summoner abilities (backing out of range stops them). Adding shielder to keepsDistance() as-is would make it
+  shoot (special() falls through to a shot). The stuck side-step never reaches the retreat, so cornered units push into walls. Current hold band
+  is about 20% of range wide (the freeze zone).
+- NOT CHECKED: player weapon reach against the 0.80-0.92 bands, and every reader of def.range (bosses included).
+- NEXT: Jess commits the design. Then slice 1 apply, playtest, then draft the slice 1b diff.
+
+## 2026-10-18 (midday, Claude Desktop) game-side proposal written for the enemy refactor (NOTHING APPLIED)
+- WHAT: docs/proposals/enemy-behavior-game-proposal.md, real unified diffs for enemies.js, enemy.js, dev.html, main.js plus a new generated
+  table (draft: docs/proposals/enemy-classes.draft.js, 879 entries, checksum 00327d337b, deterministic across runs). classify_species.py now also
+  emits that table and records each Status species' effects (fx). Verified offline in node (8,100 simulated casts, all rules hold); not run in a browser.
+- FINDING: the game's wild pool is G.DEX entries with rarity < 5, so the 16 pseudo-legendaries (Dragonite, Garchomp...) are boss-only. Earlier
+  feasibility numbers had wrongly counted them; with the real pool only Kanto and Johto tier 6 need to borrow from the band below.
+- NEXT: Jess answers the 5 decisions at the top of the proposal, then I apply on refactor/enemy-behavior and Jess playtests every region.
+
+## 2026-10-18 (morning, Claude Desktop) review done in an interactive page; Status class added; hand tuning captured
+- WHAT: no game code changed. The markdown review was too heavy, so the flagged species were reviewed in a private interactive page
+  (keep / change / drop per species). Jess made 26 effective class changes, added +Tank to 7 species, Ditto as summon-from-cast, and
+  a secondary Status on Sylveon and Pheromosa. Dropped none.
+- NEW CLASS: Status (4th support class), 47 species after hand tuning. docs/proposals/classify_species.py now detects it from
+  sleep/paralysis/confusion/ally-buff moves, abilities and text; Atk or SpA > 100 species stay attackers and get Status as a secondary
+  (14 automatic + 2 hand = 16). Healer dropped 59 -> 50 as Status took the powder-kit species.
+- HAND TUNING lives in docs/proposals/hand-overrides.json and is applied by the script after its own pass (so regeneration keeps it).
+  Hand-tuned rows are excluded from the review flags. Pre-change script saved nowhere in the repo (scratch only).
+- NEXT: the game-side proposal for refactor/enemy-behavior (propose-and-approve, nothing applied): per-species class table incl.
+  secondary Status and Ditto's unique, 9-species cast with quotas and the shortage rule, drop runner x1.6 and bomber x1.25,
+  Runner = fastest in cast, Tank modifier, Status mechanics on the player. docs/proposals/review-build/ is regenerable, do not commit.
+
 ## 2026-10-17 (late night, Claude Desktop) enemy taxonomy designed top-down; full class assignments generated for review
 - WHAT: no game code changed. Design + tooling only. Dropped the fix/enemy-speed idea of clamping multipliers; the real finding is that
   enemy "classes" are a fixed function of dex number + a hash (behaviorOf in js/data/enemies.js), with stats used only for tank.
