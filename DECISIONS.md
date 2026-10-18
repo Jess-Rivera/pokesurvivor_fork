@@ -5,7 +5,22 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
-## 2026-10-17, Dev logger: dev-facing, full-granularity, numeric ring buffer (design locked, not yet built)
+## 2026-10-17, Balance pass: order and intent (Jess's rulings)
+- One branch per concern, merged before the next is cut, in this order: fix/enemy-speed, fix/attack-calc,
+  feature/xp-curve, tune/damage-hp (pure scalar tuning, last), then the upgrade redesign. Each step is validated
+  against a dev-logger run. Reason: each change moves the baseline the next one is tuned on.
+- Player damage goes UP to reflect one-versus-many, not 1v1 (intent; the numbers are set last, from log data).
+- Enemy speed: a speed bonus must never stack on an already-fast species. Replace the runner x1.6 / bomber x1.25
+  multipliers with a clamp tied to the player's speed (exact form decided in the fix/enemy-speed proposal).
+- Enemy classes stay as a concept (no per-enemy signature move needed, and they keep the screen readable), but the
+  class multipliers get a redesign. Audit list is in the DEVLOG 2026-10-17 (night) entry.
+- Attack damage calculation gets fixed: each projectile of a multi-pellet move currently carries the full damage.
+- XP direction: move toward mainline-style XP (Gen-style yield with a level-difference term and a turn-based to survivor
+  scalar). Finding that informs it: the mainline cost curve (Medium Fast n^3) is what closes the player/enemy level gap;
+  the level-difference term alone barely does (DEVLOG finding 11).
+- The upgrade redesign is deeper than the card-identity options offered so far; Jess will describe it. Nothing settled yet.
+
+## 2026-10-17, Dev logger: dev-facing, full-granularity, numeric ring buffer (built 2026-10-17)
 Jess's ruling: the battle logger is a DEVELOPER tool only. A player-facing view (for example a last-3-seconds
 breakdown on the death screen) was discussed and is explicitly DEFERRED, do not build it now.
 - Granularity: full, one record per hit, color-coded by attack type. Damage lines are a waterfall: a neutral

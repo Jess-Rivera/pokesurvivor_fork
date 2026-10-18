@@ -8,7 +8,50 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
-## 2026-10-17 (evening) dev logger slice 1: APPLIED on feature/upgrades-inrun, not yet playtested or committed
+## 2026-10-17 (night) first real logs reviewed: balance findings + plan (branch order set)
+- WHAT: logger follow-up applied (combat.js ~667: the PROJECTILE damage path now logs HIT_OUT, it was missed in slice 1;
+  hit lines gain `speed <attacker px/s> vs you <your px/s>`; displayed multipliers and levels rounded, log.js NF 16->18).
+  Then reviewed three logs: Scorbunny 5:23, Squirtle (died 0:38.7), Scorbunny 1:21. No game-logic code changed.
+- FINDINGS (numbers from the logs and the code):
+  1. Pacing: first level 0:19, gaps 10-20s to L12, a 52s hole at 2:36-3:28 (boss window, normal spawns pause), then
+     L20->L25 in 8s. XP per minute 762 / 1876 / 2629 / 1649 / 6532 / 8650: the late burst is kill density
+     (31 -> 102 kills per 30s) plus the 117-xp tier, not the formula's per-kill yield.
+  2. Player L24 vs enemy L9 at 5:20. HP = 4L+20 (base 50, HP_SCALAR 2), series-faithful, but the player's level
+     (XP clock) outruns the enemies' level (time clock). Player level is the main survival factor.
+  3. Threat: 271 total damage in 323s; 70 of 76 hits were 1.3-5.8. Three flat boss hits = 86 (32%); Jolteon 55.5 = 69% of
+     HP in one hit. Flat boss damage ignores Def. Player Def/SpD (6-24) sit below the neutral 50, so the defense step
+     ADDS damage at low level. 4 regen picks (+0.9/s each) out-heal average incoming (0.84 HP/s).
+  4. Cards: stat:atk offered 1 of 25 offers. up:ember offered 11x, picked 0x, because only the ACTIVE slot fires
+     (Player.addMove switches active to the new move; activeGroup() = what fires).
+  5. Squirtle death: Eevee 147 px/s vs 76 px/s. 17 of 21 hits came from faster enemies, 11 from >1.5x faster; 22
+     i-frame blocks (mobbed). Water Gun ~2.8/hit vs enemy HP 25-28, 6 kills in 38s. Starter parity at L1 is near total
+     (HP 24 vs 22, Def 5 vs 6) because the flat +5 in statValue swamps base stats at low level.
+  6. Eevee's species speed is ~92 px/s; 147 = 92 x 1.6 from the RUNNER promotion (enemies.js 167-168: fastest plain
+     enemy in a tier's cast gets x1.6). Bomber gets x1.25. Bonuses are multiplicative on whatever species is picked.
+  7. Pellets: cone(), fireProjectiles() and nova() spawn `count` projectiles that EACH carry the full moveFactor.
+     Flamethrower (power 90, 7 pellets, pierce 1) measured 3.0 hits per cast (max 16), ~21 DPS at L2 vs Ember ~5.8.
+     32 moves have count >= 2. Per-hit power ratio is damped by the formula's +2 (90 vs 40 power = ~1.7x per hit).
+  8. Ember burn: every hit adds a stack (max 8, 3s refresh), tick every 0.5s = 1.6 x stacks x (1 + 0.06 x player
+     level), ignores SpD and type. The ailmentChance field is not read. Burn ticks call hurt() directly: NOT in the log.
+  9. Enemy.hurt rounds damage to an integer (min 1): 1.66 -> 2, 2.76 -> 3, 1.4 -> 1. At 1-3 damage per hit,
+     feel-tuning is partly tuning rounding.
+  10. Opening luck: Scorbunny's L2 offer included Flamethrower, Squirtle's did not. The L2 card decides the run.
+  11. XP replay of the 549 real kills (BST x 0.4 as base-exp proxy, no kill-rate feedback): the Gen 5 level-difference
+     term alone moves L@5:00 from 21 to 20. Gen 5 yield + mainline Medium Fast (n^3) cost curve, scaled for a 0:19 first
+     level (K ~ 0.044), gives L13 at 5:00 and L15 at run end vs enemy L9 (gap +4 instead of +11). The cost curve is the lever.
+- DECIDED: see DECISIONS 2026-10-17 "Balance pass". Branch order: fix/enemy-speed, fix/attack-calc, feature/xp-curve,
+  tune/damage-hp, then the upgrade redesign (Jess's redesign is deeper than the card-identity options offered; not yet described).
+- WHERE WE STOPPED: on fix/enemy-speed, empty. Next: draft the speed proposal (replace runner x1.6 / bomber x1.25 with a
+  clamp tied to the player's speed) together with an enemy-class multiplier audit (below).
+- ENEMY CLASS MULTIPLIER AUDIT (verified in code unless marked): runner spd x1.6 and bomber spd x1.25 (enemies.js 125,
+  167-168); tank dmg x1.2, xp x1.3 (defFor); ranged shot dmg x0.8, fan x0.7; summoner minion spd x1.1, dmg x0.6,
+  xp x0.25 (enemy.js 659-660); boss enrage spd x1.15 below 50% HP (enemy.js ~473); bosses x1.35 HP and x1.2 dmg
+  ("tougher" since 10-10); boss speed = clamp(40 + 0.5 x base, 40, 100); first tier has no personalities, one support
+  type per tier. TO VERIFY: whether scale(t) dmg ramp (1 + t/420) and the zone/hazard multipliers (x1.05-1.4 on tier
+  dmg, enemy.js 488-596) still apply after the A/D damage move, or are dead/flat leftovers.
+- LOG GAPS: burn/poison ticks unlogged; no live-enemy count per hit (needed to test mobbing vs fast-enemy).
+
+## 2026-10-17 (evening) dev logger slice 1: APPLIED (playtested the same night, see the entry above this one)
 - WHAT: dev-only event log, G.Log (js/systems/log.js). Active only with ?dev. Per-hit damage lines in both
   directions as a waterfall (neutral baseline with defender stat 50, then signed deltas for Def/SpD, STAB, type,
   weather, reduction, melee cushion, crit, floor, summing to FINAL), plus kills with XP dropped, XP collected

@@ -6,12 +6,23 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ---
 
 ## In progress
-- Dev logger slice 1: APPLIED 2026-10-17 on feature/upgrades-inrun (docs/proposals/dev-logger-slice1.md), verified on
-  disk, awaiting in-browser playtest (dev.html?dev) + commit. Dev-only, console API.
+- Balance pass, one branch at a time (DECISIONS 2026-10-17): fix/enemy-speed (CURRENT, empty) -> fix/attack-calc ->
+  feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
+- Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
+  2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
+  Open logger gaps: burn/poison ticks unlogged; add live-enemy count per hit.
 - Region-select (feature/region-select): APPLIED + verified, awaiting in-browser playtest + commit.
   Opened + built 2026-10-17.
 
 ## Up next (local single-player)
+- fix/enemy-speed: replace runner x1.6 / bomber x1.25 with a clamp tied to player speed; audit the other class
+  multipliers (list in DEVLOG 2026-10-17 night). Opened 2026-10-17.
+- fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
+  normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
+  the ailmentChance field; Enemy.hurt rounds to integers. Opened 2026-10-17.
+- feature/xp-curve: Gen-style yield + Medium Fast (n^3) cost curve + scalar (K ~ 0.044 as a start); add real
+  base_experience to the dex data. Opened 2026-10-17.
+- tune/damage-hp: raise player damage for one-vs-many; retune HP/damage scalars from logs, last. Opened 2026-10-17.
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on
   the A/D ratio (and decide boss "Power": flat vs a boss-move) when ready. Opened 2026-10-17.
 - Swap enemy placeholder Power: ENEMY_POWER=40 (flat) -> canonical move power once enemies draw real
