@@ -6,6 +6,8 @@
  *   G.Log.text(n)      last n records as text (default 40)
  *   G.Log.print(n)     console output, colored by attack type
  *   G.Log.pacing()     table: level reached, run time, seconds since the previous level
+ *   G.Log.cast()       table: this run's cast, tier by tier, with class, Tank and Runner flags
+ *   G.Log.bands()      table: where live enemies stand right now, by behavior, in screen units, against their spacing band
  *   G.Log.download()   JSON of every buffered record (text plus raw slots)
  *   G.Log.clear()
  *
@@ -14,7 +16,7 @@
  * neutral value props use). The buffer keeps the newest 8192 records.
  */
 G.Log = (() => {
-  const CAP = 8192, NF = 18;
+  const CAP = 8192, NF = 20;
   const F = new Float32Array(CAP * NF), K = new Uint8Array(CAP), T = new Float32Array(CAP);
   let head = 0, count = 0;
   const strs = [''], strIx = new Map([['', 0]]);
@@ -45,9 +47,14 @@ G.Log = (() => {
     const o = rec(HIT_IN), e = w && w.e;
     F[o] = e ? e.dex : 0; F[o + 1] = (e && e.atkLvl) || 0; F[o + 2] = S(w ? w.kind : 'flat');
     F[o + 3] = cat; F[o + 4] = neutral; F[o + 5] = dStat; F[o + 6] = afterDef; F[o + 7] = typeK; F[o + 8] = wxK;
-    F[o + 9] = red; F[o + 10] = close; F[o + 11] = fin; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = flags;
+    F[o + 9] = red; F[o + 10] = close; F[o + 11] = fin; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = flags | (e && e.def && e.def.runner ? 8 : 0) | (e && e.boss ? 32 : 0);    // 8 = runner, 32 = boss
     F[o + 15] = S(type);
     F[o + 16] = e ? e.spd : 0; F[o + 17] = myPx || 0;   // attacker and your px/s at the moment of the hit
+    // Where the attacker stood relative to you, in screen units (1.0 = screen edge; for a shot, where the shooter is when it lands),
+    // and how many enemies were alive.
+    const me = G.Game.player;
+    F[o + 18] = e && me ? Math.hypot((e.x - me.x) / (G.Camera.w / 2), (e.y - me.y) / (G.Camera.h / 2)) : 0;
+    F[o + 19] = G.EnemyMgr.count;
   };
   api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed) => {
     const o = rec(HIT_OUT);
@@ -92,9 +99,15 @@ G.Log = (() => {
   const dexName = d => (G.DEX_BY[d] && G.DEX_BY[d].name) || (d ? '#' + d : 'env');
   const CAT = ['physical', 'special', 'status'];
 
+  // Class tag from the class table: " (shielder)", " (plain+tank)", " (charger+runner)". Empty for bosses and anything not in the table.
+  const tagOf = (dex, boss, runner) => {
+    const c = dex && !boss && G.ENEMY_CLASSES && G.ENEMY_CLASSES[dex];
+    return c ? ' (' + c.c + (c.t ? '+tank' : '') + (runner ? '+runner' : '') + ')' : '';
+  };
+
   function lineIn(v) {
-    const [dex, lvl, kS, cat, neu, dS, aD, tK, wK, red, cl, fin, hp0, hp1, fl, tyS, aPx, myPx] = v;
-    const who = (dex ? dexName(dex) + (lvl ? ' L' + n1(lvl) : '') + ' ' : '') + strs[kS];
+    const [dex, lvl, kS, cat, neu, dS, aD, tK, wK, red, cl, fin, hp0, hp1, fl, tyS, aPx, myPx, sCr, live] = v;
+    const who = (dex ? dexName(dex) + (lvl ? ' L' + n1(lvl) : '') + tagOf(dex, fl & 32, fl & 8) + ' ' : '') + strs[kS];
     const p = ['neutral ' + n1(neu)];
     let cur = neu;
     if (dS > 0) { p.push((cat === 1 ? 'SpD ' : 'Def ') + Math.round(dS) + ' ' + sd(aD - cur)); cur = aD; }
@@ -106,6 +119,7 @@ G.Log = (() => {
     if (fl & 1) p.push('floor ' + sd(fin - cur));
     if (fl & 4) p.push('pure');
     if (aPx > 0 && myPx > 0) p.push('speed ' + Math.round(aPx) + ' vs you ' + Math.round(myPx));
+    if (sCr > 0) p.push('s ' + sCr.toFixed(2) + ', ' + live + ' alive');
     return 'IN   ' + who + ' [' + (strs[tyS] || 'none') + '] > you | ' + p.join(' | ') +
            ' | FINAL ' + n1(fin) + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
   }
@@ -127,7 +141,7 @@ G.Log = (() => {
     let s;
     if (k === HIT_IN) s = lineIn(v);
     else if (k === HIT_OUT) s = lineOut(v);
-    else if (k === KILL) s = 'KILL ' + dexName(v[0]) + (v[1] ? ' (boss)' : '') + (v[2] ? ' L' + n1(v[2]) : '') + ' dropped ' + v[3] + ' xp' + (v[4] ? ' (golden)' : '') + (v[5] ? ' (shiny)' : '');
+    else if (k === KILL) s = 'KILL ' + dexName(v[0]) + (v[1] ? ' (boss)' : tagOf(v[0], 0, 0)) + (v[2] ? ' L' + n1(v[2]) : '') + ' dropped ' + v[3] + ' xp' + (v[4] ? ' (golden)' : '') + (v[5] ? ' (shiny)' : '');
     else if (k === XP) s = 'XP   +' + n1(v[0] * v[1] * v[2]) + ' (orb ' + v[0] + ' x coop ' + v[1] + ' x bonus ' + n1(v[2]) + ')  ' + Math.round(v[5]) + '/' + v[6] + (v[4] > v[3] ? '  LEVEL ' + v[3] + ' > ' + v[4] : '');
     else if (k === OFFER) s = 'OFFER L' + v[0] + ' [' + [v[1], v[2], v[3]].slice(0, v[5]).map(x => strs[x]).join(', ') + '] rerolls used ' + v[4];
     else if (k === PICK) s = 'PICK  ' + strs[v[0]];
@@ -164,8 +178,32 @@ G.Log = (() => {
     console.table(rows);
     return rows;
   };
+  api.cast = () => {
+    const rows = [];
+    G.Enemies.cast.forEach((t, ti) => { for (const d of t.list) rows.push({ tier: ti + 1, species: d.name, class: G.Enemies.classOf(G.DEX_BY[d.dex]), tank: d.tank ? 'yes' : '', runner: d.runner ? 'yes' : '' }); });
+    console.table(rows);
+    return rows;
+  };
+  api.bands = () => {
+    const pl = G.Game.player, B = G.Enemies.BANDS, by = {};
+    if (!pl) return [];
+    for (const e of G.EnemyMgr.all()) {
+      if (e.dead || e.boss) continue;
+      (by[e.behavior] = by[e.behavior] || []).push(Math.hypot((e.x - pl.x) / (G.Camera.w / 2), (e.y - pl.y) / (G.Camera.h / 2)));
+    }
+    const rows = Object.keys(by).map(k => {
+      const a = by[k].sort((x, y) => x - y), b = B[k];
+      return { behavior: k, n: a.length, min: +a[0].toFixed(2), median: +a[a.length >> 1].toFixed(2), max: +a[a.length - 1].toFixed(2),
+               band: b ? b[0] + ' to ' + b[1] : '-', inBand: b ? a.filter(x => x >= b[0] && x <= b[1] * 1.05).length : '-' };
+    });
+    console.table(rows);
+    return rows;
+  };
   api.download = () => {
     const rows = order(count).map(i => ({ t: +T[i].toFixed(2), kind: KIND_NAME[K[i]], text: fmt(i), v: Array.from(F.subarray(i * NF, i * NF + NF)) }));
+    // First row: this run's cast with class and modifier flags, so a log can be read without the game open.
+    rows.unshift({ t: 0, kind: 'CAST', v: [], text: 'region ' + (G.Enemies.region == null ? 'all' : G.Enemies.region) + '\n' +
+      G.Enemies.cast.map((t, ti) => 'T' + (ti + 1) + ': ' + t.list.map(d => d.name + ' (' + G.Enemies.classOf(G.DEX_BY[d.dex]) + (d.tank ? '+tank' : '') + (d.runner ? '+runner' : '') + ')').join(', ')).join('\n') });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(rows)], { type: 'application/json' }));
     a.download = 'pokesurvivor-log-' + Date.now() + '.json';

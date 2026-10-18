@@ -5,6 +5,16 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-18, Logger additions and slice 1b approved and applied [Jess]
+Approved "as written" with Decision A kept at the agreed band numbers for the first playtest (fallback shooter 0.62/0.74, zoner 0.58/0.70 if edge shooters feel unreachable for beam, cone, dash and melee kits). Decision B (runner and shielder tweaks) is still waiting for Jess's description; nothing was changed for it beyond the shielder band.
+Applied: spacing bands in `G.Enemies.BANDS`, `Enemy.bandOf()` / `screenDist()`, ability gate follows the band, shielder moves but never shoots, cornered retreat slides along walls. Dev logger: class/runner tags, `s` and alive count per hit, `G.Log.cast()`, `G.Log.bands()`, CAST row in download.
+
+## 2026-10-18, Slice 1 playtest results and two rulings [Jess]
+Playtest (Squirtle/Kanto, Charmander/Paldea): the charger warning line is "great", 9 species per tier "felt good, plenty of variety", no framedrops (one single one-second freeze, probably his PC). Runner and shielders "need tweaking" (details pending).
+- Rift legendaries stay UN-gated by region. A Kanto run met a Gen 5 Tornadus (rift.js picks from every legendary); Jess ruled to leave it alone since rifts are planned for removal. Do not propose a region filter for rifts.
+- Logger additions (class and flags on log lines, a cast dump, a screen-distance and live-count field) and slice 1b (spacing bands) are to be built as ONE proposal: docs/proposals/logger-and-spacing-bands-proposal.md.
+- Findings that stay open: normal enemy damage is tiny against the player's level (Squirtle took 57 damage in 2:47 outside one flat 55 boss hit; L12 vs enemy L5 at 2:33), which feeds feature/xp-curve and the Boss damage slice. The cast draw ignores types (a Charmander run drew 5 water types of 9).
+
 ## 2026-10-18, Slice 1 approved and applied; charger gets a warning line [applied, uncommitted, awaiting playtest]
 Jess answered all 8 proposal decisions YES and approved applying slice 1 on refactor/enemy-behavior (the enemy-behavior-game-proposal.md diffs, unchanged,
 plus the generated table js/data/enemy-classes.js, checksum 00327d337b). The classifier now lives in tools/classify_species.py with tools/hand-overrides.json

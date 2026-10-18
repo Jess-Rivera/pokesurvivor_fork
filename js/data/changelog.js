@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Enemies keep their distance by role', 'Enemies keep their distance by role'], chg: [
+    ['Ranged and support enemies now stand at a distance that matches their role instead of one shared range: fans stay close, beamers a step back, healers, summoners and zoners further out, shooters at the edge of the screen. Shielders no longer walk into you. Units back away at 80% speed so you can still chase them down, and they no longer freeze in place or jam against walls.',
+     'Ranged and support enemies now stand at a distance that matches their role instead of one shared range: fans stay close, beamers a step back, healers, summoners and zoners further out, shooters at the edge of the screen. Shielders no longer walk into you. Units back away at 80% speed so you can still chase them down, and they no longer freeze in place or jam against walls.']
+  ] },
   { d: '2026-10-18', title: ['Enemy roles rebuilt', 'Enemy roles rebuilt'], chg: [
     ['Every enemy species now has a fixed role chosen from its real stats and moves: melee fighters, ranged attackers or support units. Each stage now draws 9 species instead of 7, always with a mix of melee, ranged and support. Runners and bombers no longer get a speed bonus, and Tank is now a trait any enemy can have (tougher and worth more XP).',
      'Every enemy species now has a fixed role chosen from its real stats and moves: melee fighters, ranged attackers or support units. Each stage now draws 9 species instead of 7, always with a mix of melee, ranged and support. Runners and bombers no longer get a speed bonus, and Tank is now a trait any enemy can have (tougher and worth more XP).']

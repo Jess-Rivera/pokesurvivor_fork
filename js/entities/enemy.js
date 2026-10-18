@@ -294,6 +294,7 @@
       const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types);
       let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       const dist = G.U.dist(this.x, this.y, pl.x, pl.y);
+      const band = this.bandOf(), s = band ? this.screenDist(pl) : 0;     // spacing band (slice 1b)
       // Treasure imp: it flees from you (zigzagging) as soon as you approach.
       if (this.behavior === 'thief') {
         this.zig = (this.zig || 0) + dt;
@@ -346,7 +347,9 @@
       // Path around the obstacles (the ones that do not fly).
       if (!this.flying && this.phase !== 'dash' && this.sideT <= 0) {
         const pd = G.Path.dirFor(this, pl);
-        if (pd && !(this.keepsDistance() && dist < (this.def.range || 200) * 0.82)) { dx = pd[0]; dy = pd[1]; }
+        // Inside its band a unit moves straight (no path-following); bosses keep the old range test.
+        const near = band ? s < band[1] : this.keepsDistance() && dist < (this.def.range || 200) * 0.82;
+        if (pd && !near) { dx = pd[0]; dy = pd[1]; }
       }
 
       let vx = dx * spd, vy = dy * spd;
@@ -376,17 +379,23 @@
           vx = this.dx * spd * 3.4; vy = this.dy * spd * 3.4;
           if (this.pt <= 0) { this.phase = 'walk'; this.pt = 1.1; }
         }
-      } else if (this.keepsDistance()) {
-        const range = this.def.range || 200;
-        const keep = range * 0.82;
+      } else if (band) {
+        // Spacing band (slice 1b): approach beyond band[1], hold between the two numbers, back away (0.8x) below band[0].
+        // The shielder moves with its band but never shoots: only keepsDistance() classes fire.
         // Straight toward you (not the path) to move away.
         const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-        if (dist < keep * 0.75) { vx = -ddx * spd * 0.8; vy = -ddy * spd * 0.8; }
-        else if (dist < keep) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
-        this.shotCd -= dt;
-        if (this.shotCd <= 0 && dist < range) {
-          this.shotCd = this.def.shotCd || 2;
-          this.special(pl, ddx, ddy);
+        if (s < band[0]) {
+          let rx = -ddx, ry = -ddy;
+          // Cornered: the stuck side-step also turns the retreat, so the unit slides along the wall instead of pushing into it.
+          if (this.sideT > 0) { const a = Math.atan2(ry, rx) + this.side * 1.25; rx = Math.cos(a); ry = Math.sin(a); }
+          vx = rx * spd * 0.8; vy = ry * spd * 0.8;
+        } else if (s < band[1]) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
+        if (this.keepsDistance()) {
+          this.shotCd -= dt;
+          if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
+            this.shotCd = this.def.shotCd || 2;
+            this.special(pl, ddx, ddy);
+          }
         }
       }
 
@@ -560,6 +569,12 @@
     }
 
     keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'healer', 'summoner'].includes(this.behavior); }
+
+    /** Spacing band [retreat below, approach above] in screen units, or null. Bosses keep their own movement. */
+    bandOf() { return this.boss ? null : (G.Enemies.BANDS[this.behavior] || null); }
+
+    /** Distance to the player in screen units: 1.0 = the edge of the screen in that direction (the view is wider than tall). */
+    screenDist(pl) { return Math.hypot((pl.x - this.x) / (G.Camera.w / 2), (pl.y - this.y) / (G.Camera.h / 2)); }
 
     shotDmg() { return (this.def.shotDmg || 10) * (this.dmg / this.def.dmg); }
 

@@ -30,6 +30,19 @@ re-tune later.
   baseline); melee radius/arc x1.25 bumps kept.
 
 ## Enemies
+### Enemy behavior refactor, slice 1 (applied 2026-10-18)
+- 2026-10-18, enemy cast, tier cast size: 7 -> 9 per tier (1-2 support, 3-5 melee, 3-5 range, one special and one baseline per family from tier 2). Why: room for the class mix without repeating classes.
+- 2026-10-18, enemy runner, speed: x1.6 on the fastest plain -> none (a flag on the fastest plain/charger that is not a Tank; its own speed). Why: speed is species identity (Eevee measured 147 vs 92 px/s). Confirmed in the 2026-10-18 playtest logs (Kadabra 164, Magikarp 130 are plain species speed).
+- 2026-10-18, enemy bomber, speed: x1.25 -> none (same reason).
+- 2026-10-18, enemy tank: dmg x1.2 / xp x1.3 kept, now a flag from the class table on ANY class (49 species) instead of a walking behavior. Note: the dmg x1.2 is currently ignored by the atkFactor damage path.
+- 2026-10-18, charger: values unchanged (aim 0.55 s, dash 0.42 s at 3.4x, 1.1 s recharge, trigger 200 px); added a warning line the length of the dash (playtest: "great").
+- Offline check on the real tree: 18,000 tier casts (10 region settings x 6 tiers x 300 runs), zero rule violations, including Kanto and Johto tier 6.
+
+### Spacing bands, slice 1b (applied 2026-10-18)
+- 2026-10-18, ranged and support units, hold distance: one shared `def.range x 0.82` (about 156-176 px, hold zone about 20% of range) -> per-behavior bands in screen units (1.0 = screen edge), table `G.Enemies.BANDS` in js/data/enemies.js: fan 0.30/0.40, beamer 0.50/0.62, zoner 0.72/0.82, ranged (shooter, status) 0.80/0.92, shielder 0.45/0.58 (movement only), healer and summoner 0.70/0.82. Retreat 0.8x speed, hold zone creeps at 0.1x, approach at full speed. First guesses, tune by playtest with G.Log.bands(). Why: spacing tells you what a unit is; the old single range froze chased units.
+- 2026-10-18, ability gate: `dist < def.range` -> `s < outer x 1.05`. Bosses and rift legendaries keep the old range logic.
+- Known consequence: shooters now stand about 307 px sideways / 173 px up or down (16:9), out of reach for melee, dash, cone, beam and chain kits (reach 90-280 px). Fallback if it feels bad: shooter 0.62/0.74, zoner 0.58/0.70.
+
 ### Enemy -> player damage (sub-slice C) — applied 2026-10-17
 - Enemy damage now uses the mainline A/D ratio (mirror of player sub-slice B): enemy real Atk/SpA
   (stats[1]/[3], category = higher stat) scaled to enemy level-for-time, vs player Def/SpD (stats[2]/[4]).

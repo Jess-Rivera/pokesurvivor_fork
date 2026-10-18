@@ -8,21 +8,24 @@ Keep it simple: move items between sections as they progress. Add a date when an
 ## In progress
 - Balance pass, one branch at a time (DECISIONS 2026-10-17): refactor/enemy-behavior (CURRENT, was fix/enemy-speed) ->
   fix/attack-calc -> feature/xp-curve -> tune/damage-hp -> upgrade redesign. Findings and numbers: DEVLOG 2026-10-17 (night).
-- refactor/enemy-behavior slice 1 (class table, 9-species cast, runner/tank/bomber changes, Ditto, charger warning line): APPLIED
-  2026-10-18, uncommitted. Awaiting Jess's playtest of every region with ?dev, then log review. Spec: docs/proposals/enemy-behavior-game-proposal.md.
+- refactor/enemy-behavior slice 1 (class table, 9-species cast, runner/tank/bomber changes, Ditto, charger warning line): APPLIED and
+  COMMITTED 2026-10-18, playtested (Squirtle/Kanto 2:56, Charmander/Paldea 1:21). Jess: charger line great, 9 species great, no framedrops
+  (one single freeze, probably his PC). Runner and shielder need tweaking (Jess has not said how yet). Spec: docs/proposals/enemy-behavior-game-proposal.md.
+- Logger additions + slice 1b spacing bands: APPLIED 2026-10-18 (uncommitted), awaiting playtest. Use G.Log.bands() mid-run and G.Log.cast(); band numbers
+  are one table, G.Enemies.BANDS. Open: Decision B (what to tweak on runner and shielder, Jess has not said yet).
 - Dev logger: slice 1 plus follow-up (projectile-path HIT_OUT, speeds on hit lines) APPLIED and playtested
   2026-10-17 (branch feature/dev-logger, confirm it is merged to main). Dev-only, console API.
-  Open logger gaps (add later this session if needed): burn/poison ticks unlogged; add live-enemy count per hit.
+  Open logger gap: burn/poison ticks unlogged. (Live-enemy count per hit and class tags added 2026-10-18.)
 
 ## Up next (local single-player)
 - DONE 2026-10-18: class review (hand tuning in tools/hand-overrides.json).
 - DONE 2026-10-18: slice 1 decisions answered and slice 1 applied (see In progress).
-- LATER (slice 1b, after the slice 1 playtest): per-class spacing bands for ranged and support units (proposal section "Spacing bands"). Before drafting: check player weapon reach vs the 0.80-0.92 bands and every reader of def.range (bosses).
+- Slice 1b applied (see In progress). Watch in the playtest: shooters at the screen edge vs melee, dash, cone, beam and chain reach.
 - LATER (slice 2): Status mechanics on the player (slow, daze, drowsy, haste aura, secondary Status). DEFERRED HOOK for the cloud phase: the co-op `hz` broadcast must carry the hazard's status field (js/net/coop.js), not touched until the MP phase.
 - refactor/enemy-behavior leftovers: the runner x1.6 and bomber x1.25 multipliers are GONE (slice 1). Still to decide from the class multiplier
   audit (DEVLOG 2026-10-17 night): per-class damage factors (fan x0.65, bomber blast x1.4, jump x1.2, tank dmg x1.2) are ignored by the atkFactor
   path, so decide whether class damage weights come back. Opened 2026-10-17.
-- Charger warning line (built in slice 1): check in the playtest that the line length (= dash distance) and the locked aim direction feel fair. Opened 2026-10-18.
+- Rift legendaries are not region-gated (rift.js line 92 filters on p.leg only): a Gen 5 Tornadus appeared in a Kanto run at 2:47 and its flat 55 zone hit one-shot a 53.9 HP player. Jess 2026-10-18: LEAVE THE RIFT FIX ALONE (rifts are planned for removal). The flat boss and legendary damage stays in the Boss damage slice below.
 - fix/attack-calc: multi-pellet moves give every projectile full damage (32 moves have count >= 2). Decide how to
   normalize (divide by count or sqrt(count)), and check which upgrade ladders add pellets. Also: Ember burn ignores
   the ailmentChance field; Enemy.hurt rounds to integers. Opened 2026-10-17.

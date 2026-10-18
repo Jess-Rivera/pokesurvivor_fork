@@ -284,8 +284,14 @@ G.Enemies = (() => {
     return out;
   }
 
+  // Spacing bands (slice 1b), in SCREEN units: 1.0 = the edge of the screen in that direction (see Enemy.screenDist).
+  // [retreat below, approach above]; in between the unit holds. Keyed by behavior id, so status species share the
+  // shooter band ('ranged') until slice 2. Tuned by playtest: change the numbers here, nowhere else.
+  const BANDS = { fan: [0.30, 0.40], beamer: [0.50, 0.62], zoner: [0.72, 0.82], ranged: [0.80, 0.92],
+                  shielder: [0.45, 0.58], healer: [0.70, 0.82], summoner: [0.70, 0.82] };
+
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, BANDS,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

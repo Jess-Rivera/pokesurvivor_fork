@@ -8,6 +8,10 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (morning, Claude Desktop, second session) slice 1b + logger APPLIED after slice 1 (UNCOMMITTED, not playtested)
+- WHAT: applied the combined proposal (patched files byte-identical to the dry-run copies): enemies.js (BANDS), enemy.js (bandOf, screenDist, band movement and gate, cornered fix), log.js (class tags, s + alive per hit, cast(), bands(), CAST row). English changelog entry added; BALANCE, DECISIONS, TODO updated. Offline cast check rerun on the real tree: 18,000 casts, zero violations.
+- NEXT: Jess commits, playtests, runs G.Log.bands() mid-run, sends logs. Decision B (runner and shielder tweaks) still needs his description. Then fix/attack-calc.
+
 ## 2026-10-18 (morning, Claude Desktop, second session) slice 1 APPLIED, charger warning line added (UNCOMMITTED, not playtested)
 - WHAT: applied the four slice 1 diffs (enemies.js, enemy.js, dev.html, main.js) and the generated table js/data/enemy-classes.js (879 entries, checksum 00327d337b).
   Diffs applied with `patch --binary` since the repo is CRLF. Classifier moved to tools/classify_species.py (+ tools/hand-overrides.json); the old HEAL/SHIELD/BOMB/SUMMON
@@ -17,7 +21,9 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - VERIFIED: node --check on all touched JS. Offline sim on the real tree: 18,000 tier casts across 9 regions + All, zero violations (size 9, family mix, specials, plain/shooter
   baseline from tier 2, no duplicate support class, one runner max, never a Tank), minionFromCast and hordes work. NOT run in a browser.
 - DOCS: changelog.js entry (English), TODO In progress tidied (region-select merged, branch renamed), DECISIONS and BALANCE entries, proposal status updated.
-- NEXT: Jess commits, playtests every region with ?dev, sends logs; I check the data. Slice 1b (spacing bands) after that. Logger gaps (burn/poison, live-enemy count) if needed.
+- NEXT (was): Jess commits, playtests every region with ?dev, sends logs; I check the data. Slice 1b (spacing bands) after that. Logger gaps (burn/poison, live-enemy count) if needed.
+- PLAYTEST (same morning, Jess committed first): logs Squirtle/Kanto (died-and-revived at 2:47, ran to 2:56) and Charmander/Paldea (82 s). Confirmed: 9 distinct species in tier 1 both runs, no speed bonus (Kadabra 164 and Magikarp 130 are plain species speed; last night's Eevee 147 and Rattata 188 were the old x1.6). Found: a Gen 5 Tornadus rift legendary in a Kanto run, its flat 55 zone one-shot 53.9 HP (Jess: leave the rift alone); normal incoming damage tiny (57 total in 2:47, 1.36 per hit, 30 of 43 hits were shots, mostly resisted water); player L12 vs enemy L5 at 2:33; Charmander drew 5 of 9 water types. Jess's feel: charger line great, 9 species great, no framedrops, runner and shielders need tweaking (pending detail).
+- APPLIED 09:26 (Jess approved as written, Decision A = agreed numbers): docs/proposals/logger-and-spacing-bands-proposal.md, logger additions + slice 1b as one change. Key finding inside: at the agreed bands shooters stand 307 px sideways / 173 px up or down, out of reach for melee, dash, cone, beam and chain kits (today 156 to 176 px). Decision A in the doc. Offline sim: all seven behaviors settle at their inner band edge, the cornered fix un-jams a unit against a wall.
 
 ## 2026-10-18 (late morning, Claude Desktop) ranged and support spacing bands designed (NOTHING APPLIED)
 - WHAT: design only. Answered "is smarter enemy AI survivor-like?" (no: keep it simple, readable, cheap) and designed per-class distance bands for
