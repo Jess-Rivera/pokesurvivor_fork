@@ -452,3 +452,9 @@ Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE ta
 
 ## 2026-10-18 — fix/attack-calc slice 2 APPLIED
 - Per-cast normalization live: move.norm = (acc/100)*hits/E on FINAL per-event damage (Stats.applyDamage); floor = 1/E per event. E: cone min(pellets,3), boomerang 2, others 1. CANON table (pp/acc/hits) added to moves.js. Orbit/trail/aura wait for slice 3.
+
+## 2026-10-18 — fix/attack-calc slices 3a+3b APPLIED
+- cd = period = 0.5*(35/PP) (BETA 1.0) for every damaging move except orbit and trail. Status moves (dmg 0) keep hand-tuned cd. Orbit cd stays the re-hit lock; trail cd stays puddle spacing; both use `period` only for the damage budget.
+- E: orbit = orbs*(speed/2pi)*period (can be < 1); trail = 2*period/0.5; aura = 1 (full pulse per cooldown). floor = 1/max(1,E).
+- Swap rule (slice 3c) NOT done: setActive still caps incoming wait at 35% of cd, now exploitable with long cds (Hydro Pump 3.5 s).
+- Found: Dragon Rage / Night Shade have dmg 0 and no fixed-damage path (~0.9 per hit). Needs its own item.

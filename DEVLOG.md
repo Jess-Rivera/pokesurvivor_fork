@@ -211,3 +211,6 @@ Defender-level fix (combat.js x2), fractional enemy HP + per-hit floor, DOT log 
 
 ## 2026-10-18 — fix/attack-calc slice 2 APPLIED
 Accuracy fold + cone + boomerang normalization (moves.js norm/floor, stats.js, combat.js floorHit(d, m), log.js per-cast step). Proposal: docs/proposals/fix-attack-calc-slice2-proposal.md. Next: slice 3 = PP cooldowns (BETA 1.0) + orbit/trail/aura E + swap rule (needs decision).
+
+## 2026-10-18 — fix/attack-calc slices 3a+3b APPLIED
+PP cooldowns (BETA 1.0) + orbit/trail divisors, all in data/moves.js. Proposal: docs/proposals/fix-attack-calc-slice3-proposal.md. Next: 3c swap rule (background cooldowns + swap lock vs 35% cap, undecided), then status/DoT branch, then tune/damage-hp.

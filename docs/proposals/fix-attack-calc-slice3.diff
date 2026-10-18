@@ -1,0 +1,55 @@
+diff -ruN a/js/data/moves.js b/js/data/moves.js
+--- a/js/data/moves.js
++++ b/js/data/moves.js
+@@ -479,20 +479,41 @@
+     'hex': { pp: 10 }
+   };
+ 
+-  // Per-cast normalization (DECISIONS 2026-10-18, fix/attack-calc slice 2).
+-  //   norm = (acc/100) * hits / E     multiplies FINAL per-event damage (Stats.applyDamage)
+-  //   floor = 1 / E                   smallest per-event damage, so one cast always does >= 1 HP in total
+-  // E = events ONE target takes per cast at the move's BASE config (upgrades that add pellets or
+-  // orbs add damage; they do not change E). The game has no miss roll, so accuracy is folded in here.
+-  // Cone: pellets a target takes at typical range, not the full fan. Boomerang: out and back.
+-  // Orbit, trail and aura are still E = 1: their E depends on the final cooldown (PP slice).
+-  const CONE_E = 3;
++  // Cooldown and per-cast normalization (DECISIONS 2026-10-18, fix/attack-calc slices 2-3).
++  //
++  //   period = ANCHOR_CD * (ANCHOR_PP / PP)^BETA     the time one use of the move "costs" (Tackle = 0.5 s)
++  //   cd     = period for every DAMAGING move except orbit and trail (see below). Status moves
++  //            (dmg 0: buffs, mines, turrets, Dragon Rage, Night Shade...) keep their hand-tuned cd.
++  //   norm   = (acc/100) * hits / E     multiplies FINAL per-event damage (Stats.applyDamage)
++  //   floor  = 1 / max(1, E)            smallest per-event damage, so one cast always does >= 1 HP in total
++  //
++  // E = events ONE target takes per cast (or per period for continuous moves) at the move's BASE
++  // config: upgrades that add pellets or orbs add damage, they do not change E. The game has no miss
++  // roll, so accuracy is folded into norm.
++  //   cone       MIN(pellets, CONE_E): pellets a target takes at typical range, not the full fan
++  //   boomerang  2 (out and back)
++  //   orbit      orbs * (speed / 2pi) * period: passes a target on the ring takes per period.
++  //              Its cd is only the re-hit lock, so cd stays hand-set. E can be < 1 (norm > 1).
++  //   trail      TRAIL_OVERLAP * period / TAU: puddles overlapping a target, each pulsing every TAU.
++  //              Its cd is puddle SPACING (a distance), so cd stays hand-set; Flame Wheel is the only damaging trail.
++  //   aura       1: one full pulse per cooldown (pulse mode, decided 2026-10-18)
++  //   others     1
++  const ANCHOR_CD = 0.5, ANCHOR_PP = 35, BETA = 1.0, CONE_E = 3, TRAIL_OVERLAP = 2, TAU = 0.5;
+   for (const m of RAW) {
+     const c = CANON[m.id] || {};
+     m.pp = c.pp; m.acc = c.acc || 100; m.hits = c.hits || 1;
+-    const E = m.kind === 'cone' ? Math.min(m.count || 1, CONE_E) : m.kind === 'boomerang' ? 2 : 1;
++    if (m.pp && m.dmg > 0) {
++      m.period = +(ANCHOR_CD * Math.pow(ANCHOR_PP / m.pp, BETA)).toFixed(3);
++      if (m.kind !== 'orbit' && m.kind !== 'trail') m.cd = m.period;
++    }
++    const per = m.period || m.cd;
++    const E = m.kind === 'cone' ? Math.min(m.count || 1, CONE_E)
++            : m.kind === 'boomerang' ? 2
++            : m.kind === 'orbit' ? (m.count || 1) * (m.speed / (2 * Math.PI)) * per
++            : m.kind === 'trail' ? TRAIL_OVERLAP * per / TAU
++            : 1;
+     m.norm = (m.acc / 100) * m.hits / E;
+-    m.floor = 1 / E;
++    m.floor = 1 / Math.max(1, E);
+   }
+ 
+   // Move pool by type. The `normal` pool is shared by all.

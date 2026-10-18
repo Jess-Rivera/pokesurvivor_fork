@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Move cooldowns follow PP', 'Move cooldowns follow PP'], chg: [
+    ['Attack cooldowns now come from each move\'s PP, like the main games: strong low-PP moves (Hydro Pump, Giga Drain, Bug Buzz) fire much slower, high-PP basics stay quick. Orbiting orbs and trails split their damage across their hits.',
+     'Attack cooldowns now come from each move\'s PP, like the main games: strong low-PP moves (Hydro Pump, Giga Drain, Bug Buzz) fire much slower, high-PP basics stay quick. Orbiting orbs and trails split their damage across their hits.']
+  ] },
   { d: '2026-10-18', title: ['Move balance pass', 'Move balance pass'], chg: [
     ['Sprays and boomerangs now split one attack\'s damage across their pellets or passes (Flamethrower, Bubble Beam, Razor Leaf, Psycho Cut), and moves that can miss in the games (Hydro Pump, Heat Wave, Leaf Storm and others) now hit a bit softer.',
      'Sprays and boomerangs now split one attack\'s damage across their pellets or passes (Flamethrower, Bubble Beam, Razor Leaf, Psycho Cut), and moves that can miss in the games (Hydro Pump, Heat Wave, Leaf Storm and others) now hit a bit softer.']

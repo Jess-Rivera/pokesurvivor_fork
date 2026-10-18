@@ -96,3 +96,4 @@ Keep it simple: move items between sections as they progress. Add a date when an
   gitignored).
 - fix/attack-calc slice 1 APPLIED 2026-10-18 (needs playtest: check DOT lines and Def levels in the dev log). Slice 2 = geometry normalization.
 - fix/attack-calc slice 2 APPLIED 2026-10-18 (needs playtest: Flamethrower/Bubble Beam/Razor Leaf feel; check 'per-cast' step in OUT lines). Slice 3 = PP cooldowns + orbit/trail/aura divisors + swap rule.
+- fix/attack-calc slices 3a+3b APPLIED 2026-10-18 (needs playtest: starter fire rate, Hydro Pump, aura pulses). Remaining: 3c swap rule; Dragon Rage / Night Shade fixed-damage item.
