@@ -88,7 +88,7 @@ G.Log = (() => {
   };
   api.dot = (e, kind, amount, hp0, hp1) => {
     const o = rec(DOT);
-    F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0;
+    F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0; F[o + 6] = e ? e.maxHp : 0;
   };
   api.clear = () => { head = 0; count = 0; };
 
@@ -154,7 +154,7 @@ G.Log = (() => {
     else if (k === HEAL) s = 'HEAL +' + n1(v[1]) + ' (asked ' + n1(v[0]) + ')  HP ' + n1(v[2]) + '/' + n1(v[3]);
     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
-    else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
+    else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + (v[6] ? ' (' + n1(100 * v[2] / v[6]) + '% of max)' : '') + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
     else s = '?';
     return mmss(T[i]) + '  ' + s;
   }

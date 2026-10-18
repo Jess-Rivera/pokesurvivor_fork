@@ -161,7 +161,7 @@
 
     { id: 'toxic', name: 'Toxic', type: 'poison', kind: 'trail', cat: 'status', ailment: 'poison', ailmentChance: 0, flinch: 0, statChance: 0,
       desc: 'Badly poisons the target, inflicting more damage every turn.',
-      cd: 0.3, dmg: 0, radius: 26, dur: 3, poison: 1 },
+      cd: 0.3, dmg: 0, radius: 26, dur: 3, poison: 2 },
 
     // ---------------- TIERRA (extra) ----------------
     { id: 'bulldoze', name: 'Bulldoze', type: 'ground', kind: 'aura', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,

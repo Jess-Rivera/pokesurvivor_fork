@@ -29,6 +29,14 @@ re-tune later.
   burn/poison/slow gameplay unchanged. The melee x1.2 dmg bump was removed (canonical power is the
   baseline); melee radius/arc x1.25 bumps kept.
 
+## Status / DoT (status rework slice A, applied 2026-10-18)
+- 2026-10-18, burn damage: 1.6 x stacks x (1 + 0.06 x player level) every 0.5 s, 3 s, up to 8 stacks, applied on EVERY hit -> 1/16 of the enemy's max HP per turn, one state, 4 ticks (G.Enemies.STATUS.burn). Why: the old tick scaled with the player's level, not the enemy's HP, and sat outside the damage model; with a 100% proc Ember reached 8 stacks in about 4 s (33 HP/s at player level 5 against ~22 HP enemies), which is why burn did half to two thirds of Ember's damage in the Arcanine log.
+- 2026-10-18, poison damage: 1.2% max HP x stacks + 1 every 0.6 s, 4 s, up to 8 stacks, 100% proc -> 1/8 of max HP per turn, one state, 4 ticks (STATUS.poison). Toxic (badly poisoned: Toxic, Toxic Spikes, the poison trap) -> N/16 on turn N, N capped at 15, 8 ticks (STATUS.toxic); it kills any enemy nobody heals at tick 6 (21/16 of max HP, 12 s).
+- 2026-10-18, turn length: 2 s for every status (STATUS rows each have their own `turn`). The faithful anchor is 0.5 s (one Tackle, PP 35, cooldown 0.5 s); 2 s is a deliberate 4x discount because DoT works on a whole crowd with no aiming. Per application: burn 25% of max HP (3.1%/s), poison 50% (6.25%/s).
+- 2026-10-18, ailment chance: ignored (every hit applied it) -> rolled per hit from the move's ailmentChance (PokeAPI move_meta): Ember, Flamethrower, Heat Wave, Flame Wheel 10%, Sludge and Poison Sting 30%, Fire Spin 100% (ailment trap). Status moves (Will-O-Wisp, Toxic, Toxic Spikes) always apply. A move rolls at most once per 0.5 s per target (STATUS.rollGap), so a multi-pellet cast and trail/orbit/aura ticks are one roll. Expected burn per Ember hit is now 2.5% of max HP; per Poison Sting hit 15%.
+- 2026-10-18, type immunities (mainline, not in PokeAPI): Fire cannot be burned; Poison and Steel cannot be poisoned or badly poisoned. Fire Spin's trap damage rides on the burn flag and ignores the Fire immunity until the trap status exists (slice C).
+- Expect: fire starters lose most of their old burn damage (restoring player damage is tune/damage-hp), poison beats burn 2:1 (mainline ratio), Toxic is lethal to everything unhealed. Boss and rift legendary DoT is not special-cased (the boss rework owns it).
+
 ## Enemies
 ### Slice 1c: shots, support, contact, flanker (applied 2026-10-18)
 - 2026-10-18, plain shooter shot life: 2.4 s -> 4.8 s (speed 190 px/s unchanged; G.Enemies.SHOT_LIFE, per class). Fans, beamers, zoners, status and bosses unchanged. Real reach is limited by the 260 px off-view cull.

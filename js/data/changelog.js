@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Burn and poison reworked', 'Burn and poison reworked'], chg: [
+    ['Burn and poison now work like the main games. They only land with the real chance of the move (Ember burns 10% of the time, Sludge and Poison Sting poison 30%), they take a fraction of the max HP of the enemy each turn (burn 1/16, poison 1/8), and they no longer stack. Toxic builds up more damage every turn. Fire types cannot be burned, and Poison and Steel types cannot be poisoned.',
+     'Burn and poison now work like the main games. They only land with the real chance of the move (Ember burns 10% of the time, Sludge and Poison Sting poison 30%), they take a fraction of the max HP of the enemy each turn (burn 1/16, poison 1/8), and they no longer stack. Toxic builds up more damage every turn. Fire types cannot be burned, and Poison and Steel types cannot be poisoned.'],
+  ] },
   { d: '2026-10-18', title: ['Choose upgrades on the team summary', 'Choose upgrades on the team summary'], new: [
     ['Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.',
      'Picking a move upgrade or a stat card now opens the team summary in Apply mode: choose the Pokémon in the strip and the move in the block, see the change before and after (including how hard one hit lands and a dashed outline on the hexagon for stat cards), then Confirm, double-click a move or press Enter. Back (Backspace) returns to the same cards without spending a reroll. The level-up screen is now in English.']
