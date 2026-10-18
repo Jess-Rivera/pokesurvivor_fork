@@ -8,6 +8,14 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (late morning, Claude Desktop, third session) feature/xp-curve APPLIED (UNCOMMITTED, not playtested)
+- WHAT: Jess cut feature/xp-curve and approved docs/proposals/xp-curve-proposal.md as written. Applied docs/proposals/xp-curve.diff (patch --binary, 8 JS files + tools/add_base_stats.py) and ran tools/add_base_stats.py (pokedex.js now has "bx" for all 966 species, zero BST fallbacks; CRLF line endings restored after the script wrote LF).
+- DECIDED (details in DECISIONS 2026-10-18): Medium Fast cost; Gen 5 yield with each species' own base_experience; XP_SCALAR 0.035 (Gen 1-4 variant reached L63 at 30:00, too fast); bosses and Judgment untouched; no level cap; big orb = 5% of next level; rock = 1% of next level; minions x0.25.
+- VERIFIED: node --check on the 8 JS files and pokedex.js; replay rerun against the REAL tree files (matches the proposal table: 1.7 kills/s gives L12 at 5:00, L21 at 10:00, L49 at 30:00). NOT run in a browser.
+- NEXT: Jess commits, playtests on dev.html?dev, sends G.Log.pacing() plus G.Log.print(30). Retune XP_SCALAR from real kill rate. Then fix/attack-calc (the damage bottleneck), tune/damage-hp, upgrade redesign. Order note: TODO still lists fix/attack-calc first by evidence, but Jess picked xp-curve next today.
+- WATCH: early levels make most orbs draw as big (cheap L1-L3); legacy TIERS xp is dead for wild enemies; co-op path untested (MP deferred).
+- REMINDER: Jess commits and pushes (code, pokedex.js, docs, changelog.js all changed).
+
 ## 2026-10-18 (late morning, Claude Desktop, second session) SESSION CLOSE: refactor/enemy-behavior DONE
 - STATE: the enemy-behavior rework is complete and playtested ("feels good"): class table and 9-species cast, charger warning line, spacing bands, shooter shot life x2, crowd-seeking shielder/healer (weak shot + weak melee), contact gap, flankers (replace runners), spawn weight by family. Slice 1c plus the family spawn mix were committed by Jess before this entry; only this TODO tidy and this entry remain uncommitted.
 - DECIDED THIS SESSION (details in DECISIONS 2026-10-18): damage multipliers apply to FINAL damage (answers the class-damage-weights question); spawn share by family 0.45/0.40/0.15; rifts left alone; Decision B answered by slice 1c.

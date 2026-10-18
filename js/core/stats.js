@@ -18,6 +18,7 @@ G.Stats = (() => {
   const SPEED_MEDIAN = 65;                                 // roster median base Speed (verified)
   const BASE_PX = 107;                                     // px/s at movement r = 1.0 (median mon)
   const MOVE_K = 1.0, MOVE_MAX = 3.0, MOVE_MIN = 0.5;      // movement transfer: slope + asymptotes
+  const XP_SCALAR = 0.035;                                 // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
   // ---- mainline stat core ----
   /** Mainline non-HP stat value. IV/EV additive, default 0. */
@@ -46,6 +47,18 @@ G.Stats = (() => {
 
   // ---- enemy level from run time (Phase 1: linear L1 at 0:00 -> L50 at 30:00) ----
   function levelForTime(t) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
+
+  // ---- XP (feature/xp-curve) ----
+  // Cost: mainline Medium Fast. Total XP to reach level n is n^3, so L -> L+1 costs (L+1)^3 - L^3.
+  function xpToNext(level) { return 3 * level * level + 3 * level + 1; }
+  // Yield: Gen 5 scaled formula. bx = species base_experience (PokeAPI), enemyLevel = the level
+  // the enemy spawned at, playerLevel = the player's level at the kill. The ((2Le+10)/(Le+Lp+10))^2.5
+  // term shrinks the reward as you outlevel the cast. Multipliers (tank, elite, shiny, golden) are
+  // applied by the caller. Returns a float (do not round, early levels would quantize).
+  function xpYield(bx, enemyLevel, playerLevel) {
+    const a = 2 * enemyLevel + 10, b = enemyLevel + playerLevel + 10;
+    return XP_SCALAR * ((bx * enemyLevel / 5) * Math.pow(a / b, 2.5) + 1);
+  }
 
   // ---- Atk/Def/SpA/SpD: scale with level via the mainline statValue ----
   function attack(base, level, iv = 0, ev = 0)  { return statValue(base, level, iv, ev); }
@@ -127,6 +140,7 @@ G.Stats = (() => {
   return {
     HP_SCALAR, SPEED_MEDIAN, BASE_PX, MOVE_K, MOVE_MAX, MOVE_MIN,
     statValue, hpForLevel, moveTransfer, speedToPx, levelForTime,
+    XP_SCALAR, xpToNext, xpYield,
     attack, defense, spAtk, spDef, moveCat,
     DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp,
     ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor, applyPlayerDefense,

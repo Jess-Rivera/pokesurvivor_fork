@@ -141,8 +141,8 @@ G.Log = (() => {
     let s;
     if (k === HIT_IN) s = lineIn(v);
     else if (k === HIT_OUT) s = lineOut(v);
-    else if (k === KILL) s = 'KILL ' + dexName(v[0]) + (v[1] ? ' (boss)' : tagOf(v[0], 0, 0)) + (v[2] ? ' L' + n1(v[2]) : '') + ' dropped ' + v[3] + ' xp' + (v[4] ? ' (golden)' : '') + (v[5] ? ' (shiny)' : '');
-    else if (k === XP) s = 'XP   +' + n1(v[0] * v[1] * v[2]) + ' (orb ' + v[0] + ' x coop ' + v[1] + ' x bonus ' + n1(v[2]) + ')  ' + Math.round(v[5]) + '/' + v[6] + (v[4] > v[3] ? '  LEVEL ' + v[3] + ' > ' + v[4] : '');
+    else if (k === KILL) s = 'KILL ' + dexName(v[0]) + (v[1] ? ' (boss)' : tagOf(v[0], 0, 0)) + (v[2] ? ' L' + n1(v[2]) : '') + ' dropped ' + v[3].toFixed(2) + ' xp' + (v[4] ? ' (golden)' : '') + (v[5] ? ' (shiny)' : '');
+    else if (k === XP) s = 'XP   +' + n1(v[0] * v[1] * v[2]) + ' (orb ' + v[0].toFixed(2) + ' x coop ' + v[1] + ' x bonus ' + n1(v[2]) + ')  ' + Math.round(v[5]) + '/' + v[6] + (v[4] > v[3] ? '  LEVEL ' + v[3] + ' > ' + v[4] : '');
     else if (k === OFFER) s = 'OFFER L' + v[0] + ' [' + [v[1], v[2], v[3]].slice(0, v[5]).map(x => strs[x]).join(', ') + '] rerolls used ' + v[4];
     else if (k === PICK) s = 'PICK  ' + strs[v[0]];
     else if (k === HEAL) s = 'HEAL +' + n1(v[1]) + ' (asked ' + n1(v[0]) + ')  HP ' + n1(v[2]) + '/' + n1(v[3]);

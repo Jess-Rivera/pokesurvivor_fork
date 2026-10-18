@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Mainline XP and leveling', 'Mainline XP and leveling'], chg: [
+    ['Leveling now follows the main games: each level costs more than the last (the classic Medium Fast curve), and every kill pays XP based on the enemy species and level compared with yours. Strong species are worth more, and kills are worth less as you outlevel the wave. Boss XP is unchanged. XP orbs now show as big when they are worth a good share of your next level, and breaking a rock gives 1% of your next level.',
+     'Leveling now follows the main games: each level costs more than the last (the classic Medium Fast curve), and every kill pays XP based on the enemy species and level compared with yours. Strong species are worth more, and kills are worth less as you outlevel the wave. Boss XP is unchanged. XP orbs now show as big when they are worth a good share of your next level, and breaking a rock gives 1% of your next level.']
+  ] },
   { d: '2026-10-18', title: ['More even enemy mix', 'More even enemy mix'], chg: [
     ['Each stage now spawns a steady share of melee, ranged and support enemies, so a shooter-heavy roll no longer fills the screen with shooters.',
      'Each stage now spawns a steady share of melee, ranged and support enemies, so a shooter-heavy roll no longer fills the screen with shooters.']

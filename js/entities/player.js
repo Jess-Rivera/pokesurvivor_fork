@@ -91,9 +91,10 @@ G.Player = class Player {
   /** Seconds you must stay next to a downed teammate to lift them. */
   static get REVIVE_TIME() { return 3; }
 
-  // (x2 and then x4 on 2026-10-10: you leveled up too fast.)
+  // Mainline Medium Fast cost curve (total n^3), see G.Stats.xpToNext. The old hand-made
+  // curve was floor((8 + 6L + 1.6 L^1.75) * 4).
   static xpFor(level) {
-    return Math.floor((8 + level * 6 + Math.pow(level, 1.75) * 1.6) * 4);
+    return G.Stats.xpToNext(level);
   }
 
   cy() { return this.y; }

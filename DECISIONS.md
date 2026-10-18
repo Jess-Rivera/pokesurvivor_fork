@@ -409,3 +409,12 @@ Consequence for the damage redesign:
   the enemy's Atk vs SpA and the player's Def vs SpD) OR stay flat-damage with only the player's
   defense applying. Likely derive an enemy attack category from behavior/type (like G.Stats.moveCat
   does for custom moves). Decide when scoping C.
+
+## 2026-10-18, XP curve (feature/xp-curve), Jess's rulings
+- Cost curve is mainline Medium Fast (n^3 total). Yield is the Gen 5 scaled formula using each enemy's own species base_experience (PokeAPI), enemy spawn level and the player's level at the kill. XP_SCALAR = 0.035.
+- Reason for 0.035 over 0.044: players ending ahead of the waves (the Gen 1-4 variant reached L63 at 30:00) is too fast. The Gen 5 level-difference term is the brake, K sets the pace.
+- Bosses and Arceus Judgment legendaries are NOT touched, flat def.xp stays. They get their own feature rework later.
+- No player level cap.
+- XP orb is "big" when worth at least 5% of the next level (BIG_XP_SHARE, tunable). Breaking a rock drops a flat 1% of the next level's XP (before the xpMul perk and co-op factor).
+- Summoner minions pay a quarter of a normal kill of their own species. Tank/elite/shiny/golden are multipliers (xpMul) on the formula result.
+- Design source: docs/proposals/xp-curve-proposal.md and xp-curve.diff.

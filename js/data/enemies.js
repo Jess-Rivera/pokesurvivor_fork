@@ -99,7 +99,10 @@ G.Enemies = (() => {
       // same px/s scale as the player. No tier template, no role mult, no time ramp.
       spd: G.Stats.speedToPx((G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats) ? G.DEX_BY[p.dex].stats[5] : 65),
       dmg: Math.round(tier.dmg * (info.t ? 1.2 : 1)),
-      xp: Math.max(3, Math.round(tier.xp * (info.t ? 1.3 : 1)))
+      xp: Math.max(3, Math.round(tier.xp * (info.t ? 1.3 : 1))),   // LEGACY for wild enemies (bosses still use their slot xp); XP now comes from bx
+      // XP (feature/xp-curve): base_experience of the species, and the tank bonus as a multiplier.
+      bx: (G.DEX_BY[p.dex] && G.DEX_BY[p.dex].bx != null) ? G.DEX_BY[p.dex].bx : 100,
+      xpMul: info.t ? 1.3 : 1
     };
     if (info.t) d.tank = true;
     // The ones that fight from range: shot damage, cooldown and distance.
