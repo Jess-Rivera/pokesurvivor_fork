@@ -545,7 +545,13 @@ G.Combat = (() => {
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
     dmg *= k * (crit ? CRIT_MUL : 1);
+    const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
+    if (LOG) {
+      const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
+      const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, pl.level) : G.Stats.defense(ds.def, pl.level);
+      G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+    }
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
     if (m.burn) e.applyBurn(m.burn);
@@ -578,8 +584,9 @@ G.Combat = (() => {
           continue;
         }
         if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
-          if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat });
-          else pl.hurt(p.dmg, p.mtype);
+          const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
+          if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat }, w);
+          else pl.hurt(p.dmg, p.mtype, false, null, w);
           G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
           projectiles.splice(i, 1);
         }
@@ -658,10 +665,17 @@ G.Combat = (() => {
         const ds = enemyDefStats(e);
         const pm = p.move || { type: p.mtype, cat: 'status', dmg: 0 };
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, p.level || pl.level, !!p.stab);
-        const k = (p.mtype ? typeK(p.mtype, e) : 1) * (crit ? CRIT_MUL : 1);
+        const tk = p.mtype ? typeK(p.mtype, e) : 1;
+        const k = tk * (crit ? CRIT_MUL : 1);
         dmg *= k;
+        const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
+        if (LOG) {
+          const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0, lv = p.level || pl.level;
+          const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, lv) : G.Stats.defense(ds.def, lv);
+          G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)));
+        }
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
@@ -688,8 +702,9 @@ G.Combat = (() => {
       e.touchCd = 0.55;
       e.strike(pl);
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
-      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat });
-      else pl.hurt(e.dmg, e.atkType);
+      const w = G.Log.on ? G.Log.who(e, 'contact') : null;
+      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat }, w);
+      else pl.hurt(e.dmg, e.atkType, false, null, w);
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);
       e.kx += nx * 150; e.ky += ny * 150;

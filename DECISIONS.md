@@ -5,6 +5,21 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-17, Dev logger: dev-facing, full-granularity, numeric ring buffer (design locked, not yet built)
+Jess's ruling: the battle logger is a DEVELOPER tool only. A player-facing view (for example a last-3-seconds
+breakdown on the death screen) was discussed and is explicitly DEFERRED, do not build it now.
+- Granularity: full, one record per hit, color-coded by attack type. Damage lines are a waterfall: a neutral
+  baseline (defender stat = 50, the same neutral value props use), then one signed delta per stage (Def/SpD,
+  STAB, type, weather, reduction, melee cushion, crit, floor), summing exactly to FINAL.
+- Also logged: hits blocked by i-frames, heals, faints and Focus Band saves, kills with XP dropped, XP collected
+  (orb value x coop x XP bonus), level-up offers and the card picked (rerolls log as new offers).
+- Performance rule (density is the identity, see the density ruling): records are numbers in preallocated typed
+  arrays (newest 8192), no strings or allocation at record time, text built only on request. Inert without ?dev.
+- Access is the console API (G.Log.text/print/pacing/download/clear), no HUD or CSS in this slice.
+- Enemies do not use the move catalog yet, so incoming lines name the attack kind (contact/shot/zone/beam) and
+  type, not a move. When canonical learnsets land, the record gains the move id.
+- Proposal with exact diffs: docs/proposals/dev-logger-slice1.md (propose-and-approve applies).
+
 ## 2026-10-17, Massive density is a FEATURE, not a thing to budget down (design north star)
 Jess's explicit goal: the game should deliver "holy f*** I've got 200 mon after me / ME TOO / SHIT
 ONLY 200?!" chaos. Absurd on-screen density IS the identity, not a problem to tame. So wherever earlier

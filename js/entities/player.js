@@ -246,27 +246,42 @@ G.Player = class Player {
    * @param type  attack type (type chart and weather); with no type, damage as-is
    * @param pure  damage not reduced by defense or melee (Arceus)
    */
-  hurt(amount, type = null, pure = false, atk = null) {
-    if (this.invuln > 0 || this.dead) return;
+  hurt(amount, type = null, pure = false, atk = null, who = null) {
+    if (this.invuln > 0 || this.dead) {
+      if (G.Log.on && !this.dead) G.Log.block(who, atk ? atk.factor : amount, this.invuln);
+      return;
+    }
+    const LOG = G.Log.on, hp0 = this.hp;
+    let neutral = amount, dStat = 0, cat = -1;
     // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
     // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
     // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
     if (atk && !pure) {
       const st = this.mon.stats;
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
+      if (LOG) {
+        neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR;
+        cat = atk.cat === 'special' ? 1 : 0;
+        dStat = cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level);
+      }
       amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level);
     }
-    let eff = null;
+    const afterDef = amount;
+    let eff = null, tk = 1, wk = 1;
     if (type) {
-      const k = G.Types.mult(type, this.mon.types);
-      eff = G.Types.label(k);
-      amount *= k * G.Weather.mult(type);
+      tk = G.Types.mult(type, this.mon.types);
+      wk = G.Weather.mult(type);
+      eff = G.Types.label(tk);
+      amount *= tk * wk;
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
     const close = this.activeGroup().some(m => m.kind === 'melee') ? 0.75 : 1;
-    const d = pure ? Math.max(1, amount) : Math.max(1, amount * (1 - this.reduction) * close);
+    const raw = pure ? amount : amount * (1 - this.reduction) * close;
+    const d = Math.max(1, raw);
     this.hp -= d;
+    if (LOG) G.Log.hitIn(who, type, cat, neutral, dStat, afterDef, tk, wk, pure ? 0 : this.reduction, pure ? 1 : close, d,
+                         hp0, Math.max(0, this.hp), (d > raw ? 1 : 0) | (pure ? 4 : 0), this.spd);
     this.invuln = 0.45;
     this.flash = 0.14;
     G.Audio.sfx('hurt');
@@ -277,11 +292,13 @@ G.Player = class Player {
     if (this.hp <= 0 && this.hasItem('focussash') && performance.now() - this.sashT > 60000) {
       this.sashT = performance.now();
       this.hp = 1; this.invuln = 1.2;
+      if (LOG) G.Log.faint(true, 1);
       G.FX.dmgText(this.x, this.y - this.bodyH - 16, '¡Banda Focus!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
     if (this.hp <= 0) {
       this.hp = 0; this.dead = true;
+      if (LOG) G.Log.faint(false, 0);
       this.anim.play('Faint', { hold: true });
       G.Projectiles.clearOrbs(this);
       this.reviveT = 0;
@@ -292,6 +309,7 @@ G.Player = class Player {
     const before = this.hp;
     this.hp = Math.min(this.maxHp, this.hp + amount);
     const got = Math.round(this.hp - before);
+    if (G.Log.on) G.Log.heal(amount, this.hp - before, this.hp, this.maxHp);
     if (got >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 6, '+' + got, '#5fe08a');
   }
 

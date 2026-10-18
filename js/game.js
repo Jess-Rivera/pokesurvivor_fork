@@ -91,6 +91,7 @@ G.Game = (() => {
 
   /** @param coop  { seed, host, members } for a group game */
   function startRun(coop = null) {
+    G.Log.clear(); G.Log.t = 0;
     holdBy = []; awayBy = null;
     const save = G.DB.save;
 
@@ -557,7 +558,9 @@ G.Game = (() => {
     if (mine || p.kind === 'bomb') G.Audio.sfx(PICK_SFX[p.kind]);
     if (p.kind === 'xp' || p.kind === 'xpBig') {
       const before = pl.level;
-      pendingLevels += pl.gainXp(p.value * (G.Coop.active ? G.Coop.xpFactor() : 1));
+      const coopK = G.Coop.active ? G.Coop.xpFactor() : 1;
+      pendingLevels += pl.gainXp(p.value * coopK);
+      if (G.Log.on) G.Log.xp(p.value, coopK, pl.xpMul, before, pl.level, pl.xp, pl.xpNext);
       // Keep benched teammates' level/maxHp in sync with the shared run level, so a
       // swap-in isn't carrying a stale level-1 maxHp (the active fighter already
       // recomputed inside gainXp). Preserves each teammate's current-hp fraction.
@@ -733,6 +736,7 @@ G.Game = (() => {
       return;
     }
     time += dt;
+    G.Log.t = time;
     if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
     handleSwap();
 

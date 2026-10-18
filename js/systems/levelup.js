@@ -122,6 +122,10 @@ G.LevelUp = (() => {
       used.add(c.key);
       picked.push(c);
     }
+    if (G.Log.on) {
+      G.Log.offer(pl.level, picked, pl.rerolls || 0);
+      for (const c of picked) { const f = c.apply; c.apply = function (p) { G.Log.pick(c.key); return f.call(this, p); }; }
+    }
     return picked;
   }
 

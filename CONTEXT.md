@@ -54,3 +54,4 @@ suspect the other tool skipped it.
 - Canonical Pokemon data: pokesurvivor_fork/pokeapi-master (full mainline series data), the source
   of truth when translating mainline mechanics into survivor-style.
 - Architecture map, build pipeline, module routing: ONBOARDING.md and CLAUDE.md.
+- Archives (NOT read at session start): docs/DEVLOG-archive.md (older session entries) and docs/MP-PARKED-NOTES.md (parked multiplayer and hosting notes).
