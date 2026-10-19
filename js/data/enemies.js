@@ -315,6 +315,29 @@ G.Enemies = (() => {
   const BANDS = { fan: [0.30, 0.40], beamer: [0.50, 0.62], zoner: [0.72, 0.82], ranged: [0.80, 0.92],
                   summoner: [0.70, 0.82] };
 
+  // Band jitter (2026-10-19): so the shooters do not all stop on the same line and form a ring around you.
+  //   spread      each unit scales BOTH numbers of its band by 1 + a random value in +-spread, fixed at spawn
+  //               (the band centre stays the average; 0.20 on the shooter band is about +-0.17 screens)
+  //   recheckMin/Max   a unit decides approach / hold / back away only every random min..max seconds and keeps that
+  //               decision in between (random starting phase), instead of re-deciding every frame
+  const BAND_JITTER = { spread: 0.20, recheckMin: 0.3, recheckMax: 0.7 };
+
+  // Morale of the band-holding (ranged) units and the healers / shielders, 0..1 (Enemy.moraleNow). morale = (1 - fearWeight x fear) x (1 - painWeight x pain):
+  //   fear   0..1. When a wild enemy dies, every band-holder within fearRadiusK x the DEAD enemy's body radius (capped at
+  //          fearMaxPx) gets killFear, fading linearly to 0 at the edge of that radius (a big one dying scares farther than a
+  //          small one). It decays with time constant fearTau s (your 1 to 3 s window).
+  //   pain   0..1. The HP it has lost recently as a fraction of its max HP (decays with time constant painTau s), over painFull:
+  //          losing painFull of its max HP inside about painTau s is full pain. Shield damage does not count. Stored pain is
+  //          capped at painFull, so an overkill hit does not prolong panic.
+  //   weights  fearWeight / painWeight: how much of morale a full fear / full pain takes away (0.6 each: either alone can
+  //          leave morale at 0.4 at worst, so it takes both together to get under panicBelow).
+  //   retreat  a band-holder backs away ONLY while panicking (inside its band; a panicking unit never approaches). There is no
+  //          standard retreat and no retreat delay any more (2026-10-19). Healers and shielders follow the same rule (they back
+  //          away only while panicking, inside SEEK.alone; the SEEK floor retreat is gone); panic halves their weak shot too.
+  //   panic  morale below panicBelow: it fires at panicFireMul of its normal rate (shot interval / panicFireMul)
+  const MORALE = { killFear: 0.35, fearRadiusK: 6, fearMaxPx: 240, fearTau: 1.2, painTau: 1.0, painFull: 0.6, fearWeight: 0.6, painWeight: 0.6,
+                   panicBelow: 0.25, panicFireMul: 0.5 };
+
   // Shielder and healer hold no band: they seek the biggest group of allies (Enemy.seekMove / seekPick). Screen units.
   //   floor      never closer to you than this (backs away at 0.8x below it)
   //   alone      with no allies in sight they approach to this and hold
@@ -364,7 +387,7 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, BANDS, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

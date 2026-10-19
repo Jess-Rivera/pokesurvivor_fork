@@ -87,6 +87,10 @@
       this.phase = 'walk'; this.pt = 0; this.dx = 0; this.dy = 0;
       // distancia
       this.shotCd = def.shotCd ? G.U.rand(0.3, def.shotCd) : 0;
+      // spacing band: own scale (so the shooters do not all hold the same line) and the last decision (0 approach, 1 hold, 2 back away)
+      const BJ = G.Enemies.BAND_JITTER;
+      this.bandK = 1 + G.U.rand(-BJ.spread, BJ.spread);
+      this.bandT = G.U.rand(0, BJ.recheckMax); this.bandMode = 0; this.fear = 0; this.pain = 0; this.panic = false; this._bandSrc = null; this._band = null;
       // desatasco
       this.stuckT = 0; this.sideT = 0; this.side = 1;
       this.bob = Math.random() * 6.28;
@@ -147,6 +151,7 @@
         amount -= a;
       }
       this.hp -= amount;
+      if (!this.boss) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
       G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
       if (knock > 0 && !this.boss) {
@@ -215,6 +220,7 @@
       if (this.dead) return;
       this.dead = true;
       this.fade = 0.9;
+      if (!this.boss) this.spreadFear();
       this.anim.play('Faint', { hold: true });
       const col = this.boss ? '#ffd95e' : '#ffffff';
       const cy = this.y - this.bodyH * 0.5;
@@ -446,17 +452,27 @@
           if (this.pt <= 0) { this.phase = 'walk'; this.pt = 1.1; }
         }
       } else if (band) {
-        // Spacing band (slice 1b): approach beyond band[1], hold between the two numbers, back away (0.8x) below band[0].
+        // Spacing band: approach beyond band[1], hold inside it. It backs away (0.8x) ONLY while panicking (morale, see MORALE):
+        // a panicking unit retreats while inside band[1] and never approaches. (band[0], the old retreat line, is no longer used.)
         // Straight toward you (not the path) to move away.
         const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-        if (s < band[0]) {
+        if (this.fear > 0.005) this.fear *= Math.exp(-dt / G.Enemies.MORALE.fearTau); else this.fear = 0;
+        if (this.pain > 0.005) this.pain *= Math.exp(-dt / G.Enemies.MORALE.painTau); else this.pain = 0;
+        // Decide only every recheckMin..recheckMax s; in between it keeps the last decision.
+        if ((this.bandT -= dt) <= 0) {
+          const BJ = G.Enemies.BAND_JITTER;
+          this.bandT = G.U.rand(BJ.recheckMin, BJ.recheckMax);
+          this.panic = this.moraleNow() < G.Enemies.MORALE.panicBelow;
+          this.bandMode = this.panic ? (s < band[1] ? 2 : 1) : (s < band[1] ? 1 : 0);      // 0 approach, 1 hold, 2 back away
+        }
+        if (this.bandMode === 2) {
           let rx = -ddx, ry = -ddy;
           // Cornered: the stuck side-step also turns the retreat, so the unit slides along the wall instead of pushing into it.
           if (this.sideT > 0) { const a = Math.atan2(ry, rx) + this.side * 1.25; rx = Math.cos(a); ry = Math.sin(a); }
           vx = rx * spd * 0.8; vy = ry * spd * 0.8;
-        } else if (s < band[1]) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
+        } else if (this.bandMode !== 0) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
         if (this.keepsDistance()) {
-          this.shotCd -= dt;
+          this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate
           if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
             this.shotCd = this.def.shotCd || 2;
             this.special(pl, ddx, ddy);
@@ -638,8 +654,30 @@
 
     keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner'].includes(this.behavior); }
 
+    /** When this one dies, band-holders within fearRadiusK x ITS body radius take fright: fear += killFear, fading with distance. */
+    spreadFear() {
+      const M = G.Enemies.MORALE, reach = Math.min(M.fearMaxPx, M.fearRadiusK * this.r);
+      for (const e of G.EnemyMgr.queryCircle(this.x, this.y, reach)) {
+        if (e === this || e.dead || e.boss || !(e.keepsDistance() || e.isSeeker())) continue;
+        const d = Math.hypot(e.x - this.x, e.y - this.y);
+        if (d < reach) e.fear = Math.min(1, e.fear + M.killFear * (1 - d / reach));
+      }
+    }
+
+    /** Morale 0..1 of a band-holder: scared by kills close to it, and by losing a lot of its HP fast. */
+    moraleNow() {
+      const M = G.Enemies.MORALE;
+      return (1 - M.fearWeight * this.fear) * (1 - M.painWeight * Math.min(1, this.pain / M.painFull));
+    }
+
     /** Spacing band [retreat below, approach above] in screen units, or null. Bosses keep their own movement. */
-    bandOf() { return this.boss ? null : (G.Enemies.BANDS[this.behavior] || null); }
+    bandOf() {
+      if (this.boss) return null;
+      const b = G.Enemies.BANDS[this.behavior];
+      if (!b) return null;
+      if (this._bandSrc !== b) { this._bandSrc = b; this._band = [b[0] * (this.bandK || 1), b[1] * (this.bandK || 1)]; }   // this unit's own copy
+      return this._band;
+    }
 
     /** Distance to the player in screen units: 1.0 = the edge of the screen in that direction (the view is wider than tall). */
     screenDist(pl) { return Math.hypot((pl.x - this.x) / (G.Camera.w / 2), (pl.y - this.y) / (G.Camera.h / 2)); }
@@ -693,11 +731,15 @@
     seekMove(dt, pl, spd, dist) {
       const K = G.Enemies.SEEK, s = this.screenDist(pl);
       this.seekT -= dt;
-      if (this.seekT <= 0) { this.seekT = K.every; this.seekPick(); }
+      if (this.seekT <= 0) { this.seekT = K.every; this.seekPick(); this.panic = this.moraleNow() < G.Enemies.MORALE.panicBelow; }
+      if (this.fear > 0.005) this.fear *= Math.exp(-dt / G.Enemies.MORALE.fearTau); else this.fear = 0;
+      if (this.pain > 0.005) this.pain *= Math.exp(-dt / G.Enemies.MORALE.painTau); else this.pain = 0;
       const tg = this.seekTarget && !this.seekTarget.dead ? this.seekTarget : null;
       const [px, py] = G.U.norm(pl.x - this.x, pl.y - this.y);           // toward you
       let vx = 0, vy = 0;
-      if (s < K.floor) { vx = -px * spd * 0.8; vy = -py * spd * 0.8; }   // too close: back away
+      // No standard retreat: they back away ONLY while panicking (inside `alone`), and a panicking one never walks toward you.
+      if (this.panic && s < K.alone) { vx = -px * spd * 0.8; vy = -py * spd * 0.8; }
+      else if (this.panic) { /* panicking, out of reach: stand still */ }
       else if (tg) {
         const [tx, ty] = G.U.norm(tg.x - this.x, tg.y - this.y);
         const R = this.behavior === 'healer' ? 150 : 160;
@@ -713,7 +755,7 @@
         if (this.shotCd <= 0) { this.shotCd = this.def.shotCd || 2; this.healAround(); }
       }
       // Weak shot from range; touching you is the weak melee (combat.js, contactMul). Never both at once.
-      this.weakCd -= dt;
+      this.weakCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate (heals / shields unchanged)
       if (this.weakCd <= 0 && s < K.shotS && dist > this.r + pl.r + K.meleeGap) {
         this.weakCd = K.shotCd;
         this.shoot(px, py, 0, 1, 1, G.Enemies.SHOT_LIFE_BASE, K.weakShot);

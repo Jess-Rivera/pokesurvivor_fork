@@ -101,6 +101,7 @@ G.Log = (() => {
     const me = G.Game.player;
     if (!me) return;
     _mn.fill(0); _mnear.fill(0); _mds.fill(0);
+    let holders = 0, panics = 0, mor = 0;
     const hw = G.Camera.w / 2, hh = G.Camera.h / 2;
     for (const e of G.EnemyMgr.all()) {
       if (e.dead || e.boss) continue;
@@ -109,10 +110,12 @@ G.Log = (() => {
       const dx = e.x - me.x, dy = e.y - me.y;
       _mn[fx]++; _mds[fx] += Math.hypot(dx / hw, dy / hh);
       if (dx * dx + dy * dy <= NEAR_PX * NEAR_PX) _mnear[fx]++;
+      if (e.keepsDistance() || e.isSeeker()) { holders++; if (e.panic) panics++; mor += e.moraleNow(); }
     }
     const o = rec(MIX);
     F[o] = _mn[0] + _mn[1] + _mn[2];
     for (let i = 0; i < 3; i++) { F[o + 1 + i] = _mn[i]; F[o + 4 + i] = _mnear[i]; F[o + 7 + i] = _mn[i] ? _mds[i] / _mn[i] : 0; }
+    F[o + 10] = holders; F[o + 11] = panics; F[o + 12] = holders ? mor / holders : 0;
   };
   // Called every frame from the game loop; records a MIX line at most once per MIX_EVERY seconds of run time.
   api.sample = () => { if (api.t - lastMix >= MIX_EVERY) { lastMix = api.t; api.mix(); } };
@@ -181,7 +184,7 @@ G.Log = (() => {
     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
     else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + (v[6] ? ' (' + n1(100 * v[2] / v[6]) + '% of max)' : '') + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
-    else if (k === MIX) { const fam = ['melee', 'range', 'support']; s = 'MIX  alive ' + v[0] + ' | ' + fam.map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')').join(' | ') + '  [near = within ' + NEAR_PX + ' px]'; }
+    else if (k === MIX) { const fam = ['melee', 'range', 'support']; s = 'MIX  alive ' + v[0] + ' | ' + fam.map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')').join(' | ') + ' | morale units (ranged + healers/shielders) ' + v[10] + ', panicking ' + v[11] + ', avg morale ' + v[12].toFixed(2) + '  [near = within ' + NEAR_PX + ' px]'; }
     else s = '?';
     return mmss(T[i]) + '  ' + s;
   }
