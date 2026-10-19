@@ -8,6 +8,13 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (night) status slices A and B merged, playtest log read, tune/damage-hp next
+- WHAT: slice A (burn and poison with type immunities, 2 s turn) and slice B (Ailment Chance card, DoT follows the damage pool, ailment line on the team sheet) are committed; Jess merges feature/status-dot to main and cuts tune/damage-hp. Read a playtest log (Typhlosion L5, region 2, 3:06, 686 records).
+- FOUND: burn ticks at 6.3% of max HP every 2 s as designed; DoT was 93 of 1962 total damage (4.8%). Ember about 10 dmg/s. Magmar (boss, ~2450 HP, SpD 13, fire x0.6) took 12 damage total. Shielded Wooper absorbed a full hit. Kills per minute 28 / 70 / 14: the minute-2 drop is unexplained. Only 4 offers and 4 picks, incoming damage 68 over 35 hits.
+- DECIDED: tune/damage-hp before slice C; the DoT numbers stay as they are.
+- NOT DONE: browser check of the sheet ailment line, Apply preview and level-up card (offline harness only).
+- WHERE WE STOPPED: Jess to branch tune/damage-hp; next chat opens with the tuning plan as prose.
+
 ## 2026-10-18 (late morning, Claude Desktop, third session) feature/xp-curve APPLIED (UNCOMMITTED, not playtested)
 - WHAT: Jess cut feature/xp-curve and approved docs/proposals/xp-curve-proposal.md as written. Applied docs/proposals/xp-curve.diff (patch --binary, 8 JS files + tools/add_base_stats.py) and ran tools/add_base_stats.py (pokedex.js now has "bx" for all 966 species, zero BST fallbacks; CRLF line endings restored after the script wrote LF).
 - DECIDED (details in DECISIONS 2026-10-18): Medium Fast cost; Gen 5 yield with each species' own base_experience; XP_SCALAR 0.035 (Gen 1-4 variant reached L63 at 30:00, too fast); bosses and Judgment untouched; no level cap; big orb = 5% of next level; rock = 1% of next level; minions x0.25.
