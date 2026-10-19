@@ -37,6 +37,7 @@ re-tune later.
 - Wild cap 32 (50%) and spawn rate 50% for 60 s after an elite spawns, back to 100% over the next 30 s. Excess wild units walk off and are deleted, no XP.
 - Reward: XP = wild yield x HP multiplier x 1.2, a guaranteed Berry, 50% chance at an item.
 - Cadence (TEMP): 2:00 then every 6:00.
+- First feel-test readings (2026-10-19, small sample, NOT used to retune): TTK 2.7 to 15.7 s at 0:10 to 1:11, 7.4 s at 2:10 (HP 169), 3.3 s at 5:00 (HP 273, but Pikachu vs Gyarados was x4 and the screen was nearly empty, so best case; about 21 neutral damage per second against the model's 12). The 10:00 and 20:00 readings were invalid (a stale-clock bug in G.Debug.elite(), since fixed). Jess's call: leave the HP model and power as they are until real playtesting gives more data. Tools for later: G.Debug.skipTo(min), G.Debug.levelUp(n), and the [Elite] readout now prints the type matchup.
 - Density Bonus: x1.6 XP while 54 or more are alive, from 180 s (damage part removed).
 
 ## Run opening (tune/damage, applied 2026-10-18 to 2026-10-19, CLOSED; each change feel-tested by Jess, logs 1 to 4)

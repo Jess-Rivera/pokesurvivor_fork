@@ -103,6 +103,13 @@ G.Elites = (() => {
   function noteDeath(e) {
     const x = e.elite;
     lastTtk = x.engagedAt == null ? null : +(runT - x.engagedAt).toFixed(1);
+    // Matchup, so a 4x result is not read as a weak model: the player's best type multiplier against the elite.
+    let match = '';
+    try {
+      const pl = G.Game.player, pt = (pl && pl.types) || (G.DEX_BY[pl.dex] && G.DEX_BY[pl.dex].types) || [];
+      const best = Math.max(...pt.map(t => G.Types.mult(t, e.types)));
+      match = ', ' + ((G.DEX_BY[pl.dex] && G.DEX_BY[pl.dex].name) || 'player') + ' (' + pt.join('/') + ') vs ' + e.types.join('/') + ' x' + best + ', player L' + pl.level;
+    } catch (x) { }
     if (G.Log && G.Log.on) console.log('[Elite] ' + e.name + ' down at ' + runT.toFixed(0) + ' s: TTK ' + lastTtk + ' s (target ' + K.ttk + '), HP ' + e.maxHp + ', x' + x.hpMul.toFixed(1) + ' wild HP, enrage x' + x.enrage.toFixed(2));
   }
 
@@ -112,6 +119,9 @@ G.Elites = (() => {
     current() { return alive && !alive.dead ? alive : null; },
     now() { return runT; },
     get lastTtk() { return lastTtk; },
-    debugSpawn() { return spawn(runT || 0); }
+    /** Dev: the clock was jumped (G.Debug.skipTo). Syncs our clock and pushes the natural cadence a full interval out, so a skip
+     *  never drops a surprise elite on top of a test one. */
+    setClock(t) { runT = t; pending = null; if (!alive) nextAt = t + K.every; },
+    debugSpawn() { return spawn(G.Game.st.time); }
   };
 })();
