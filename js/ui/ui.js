@@ -8,7 +8,7 @@
 G.UI = (() => {
   const $ = id => document.getElementById(id);
   const SCREENS = ['scr-login', 'scr-test', 'scr-result', 'scr-starters', 'scr-menu',
-                   'scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-levelup', 'scr-choose', 'scr-pause', 'scr-team', 'scr-over',
+                   'scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-levelup', 'scr-choose', 'scr-pause', 'scr-team', 'scr-roster', 'scr-over',
                    'scr-nick', 'scr-friends', 'scr-lobby', 'scr-rank', 'scr-item', 'scr-goals', 'scr-bond', 'scr-mod', 'scr-region'];
 
   function show(id, keepMenu = false) {

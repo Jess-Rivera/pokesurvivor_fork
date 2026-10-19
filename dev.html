@@ -170,12 +170,12 @@
       <div class="t1">PokéSurvivor<span class="redux-stamp">REDUX</span></div>
       <div class="redux-sub"><span>R</span><span>e</span><span>m</span><span>a</span><span>s</span><span>t</span><span>e</span><span>r</span><span>e</span><span>d</span><span>&nbsp;</span><span>C</span><span>o</span><span>l</span><span>l</span><span>e</span><span>c</span><span>t</span><span>o</span><span>r</span><span>'</span><span>s</span><span>&nbsp;</span><span>R</span><span>e</span><span>d</span><span>&nbsp;</span><span>E</span><span>d</span><span>i</span><span>t</span><span>i</span><span>o</span><span>n</span></div>
     </div>
-    <div class="roster" id="menu-roster"></div>
   </div>
   <div class="menu-right">
     <div class="box">
       <div class="menu-list">
         <button class="menu-item play" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
+        <button class="menu-item" data-go="team">Team<small>Choose your party of 6</small></button>
         <button class="menu-item" data-go="dex">Pokémon<small id="menu-dex-count">Tu colección</small></button>
         <button class="menu-item" data-go="upgrades">Mejoras<small>Haz más fuerte cada run</small></button>
         <button class="menu-item" data-go="gacha">Gacha<small>9 regiones · Pokémon y shinies</small></button>
@@ -441,7 +441,6 @@
 <section id="scr-dex" class="scr dim hidden">
   <div class="box wide">
     <div class="row between"><h2>Pokémon <span id="dex-total" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="dex-back" data-back>Volver</button></div>
-    <div class="pick-banner hidden" id="dex-pick-banner"></div>
     <div class="dex-controls">
       <div class="row ctrl-row">
         <input id="dex-search" class="field dex-search" type="text" placeholder="Search name or #" translate="no" />
@@ -463,6 +462,40 @@
         <div class="grid" id="dex-grid"></div>
       </div>
       <div class="panel" id="dex-detail"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== Team (fullscreen team editor, opened from the main menu) ====== -->
+<section id="scr-roster" class="scr hidden">
+  <div class="ros">
+    <div class="ros-main">
+      <aside class="ros-team" id="ros-slots"></aside>
+      <div class="ros-center">
+        <div class="dex-controls">
+          <div class="row ctrl-row">
+            <input id="ros-search" class="field dex-search" type="text" placeholder="Search name or #" translate="no" />
+            <select id="ros-region" class="field dex-sel" title="Region"></select>
+            <select id="ros-own" class="field dex-sel" title="Ownership"></select>
+            <select id="ros-sort" class="field dex-sel" title="Sort by"></select>
+            <button id="ros-dir" class="btn ghost small dex-dir" title="Sort direction">↓</button>
+            <button id="ros-clear" class="btn ghost small" title="Clear all filters">Clear</button>
+          </div>
+          <div class="ros-filters">
+            <div class="dex-chipset" id="ros-types"></div>
+            <div class="dex-chipset" id="ros-rarity"></div>
+            <div class="dex-chipset" id="ros-bst"></div>
+          </div>
+        </div>
+        <div class="dex-count sub" id="ros-shown"></div>
+        <div class="grid ros-grid" id="ros-grid"></div>
+      </div>
+      <aside class="ros-detail" id="ros-detail"></aside>
+    </div>
+    <div class="ros-bar">
+      <span class="ros-tip">Click a Pokémon to preview it. Put it in the highlighted slot with the button, a double-click, or by dragging it onto a slot.</span>
+      <button class="btn" id="ros-back" data-back>Back</button>
+      <button class="btn gold" id="ros-commit" data-sfx="confirm" disabled>Commit Team</button>
     </div>
   </div>
 </section>

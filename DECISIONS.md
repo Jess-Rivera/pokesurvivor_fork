@@ -2,6 +2,13 @@
 
 Standing design and workflow rulings. Once something is here, treat it as settled, do not relitigate it.
 
+## 2026-10-19, Team screen: fullscreen party editor on the home menu [Jess decided]
+- The six roster cards on the home screen are gone. A `Team` item sits right under Play and opens a fullscreen screen (scr-roster, no topbar): the six slots on the left, the Pokedex filters and grid in the middle, the selected Pokemon on the right (stat hexagon, an Ability line stubbed as 'Coming soon', its moves as a scrollable two-column list). Bottom bar: Back and Commit Team. No held item, no All Boxes or Search.
+- It edits a COPY of the team. Nothing is saved until Commit Team (which sets team, partner and partnerShiny like the old commit did); Back discards, and asks first only when there are unsaved edits.
+- Three ways to place a Pokemon in the highlighted slot (Jess: allow all three): the 'Put in Slot N' button on the detail card, a double-click on the list cell, or dragging the cell onto any slot. Dragging a team card onto another slot swaps them. Rules kept from before: a Pokemon already on the team swaps with the target slot, Slot 1 can never be empty, only owned Pokemon can be placed, non-lead slots get 'Remove from team'.
+- The Pokedex (menu item Pokemon) is now strictly browse-only: pick mode, the pick banner, Commit to Roster and Remove from Roster there are deleted. The Team screen has its own filter state, separate from the Pokedex's. Shared code: the filter bar and grid in menu.js take a view (element-id prefix, filter state, team, selection).
+- Touch: HTML5 drag and drop does not fire on touch screens, so the button is the touch path (touch layout stacks the three columns, not tested on a device).
+
 ## 2026-10-19, Status Slice C: control statuses on one shared engine [Jess decided]
 - One status engine (G.Status) for enemies, elites, bosses, gym leaders and the player; the player is a host in Slice C, so no separate boss or player status system.
 - Only one major status at a time: burn, poison (toxic), paralysis, sleep, freeze. Confusion and trap are not major and stack on top.

@@ -6,6 +6,7 @@
  *     opts.bonus   six in-run percentages (same order as `stats`, 0.1 = +10%). With opts.layered the base shape is drawn
  *                  as the lower layer and a 60% yellow shape (base x (1 + bonus)) on top of it, and each number gets
  *                  a yellow "+10%" beside it. The yellow layer is skipped while every bonus is 0.
+ *     opts.radius  hexagon radius as a fraction of the smaller canvas side (default 0.30; the Team screen uses 0.40 on a 340 x 400 canvas)
  *     opts.hpText  replaces the HP number (for example "105/105")
  *     opts.after   six in-run percentages AFTER a pending change (level-up preview): a lighter dashed outline of the
  *                  new shape, and "+10% to +15%" on the axes that change
@@ -29,7 +30,7 @@ G.StatChart = (() => {
     const ctx = cv.getContext('2d');
     ctx.scale(SCALE, SCALE);
 
-    const cx = w / 2, cy = h / 2 + 2, R = Math.min(w, h) * 0.30;
+    const cx = w / 2, cy = h / 2 + 2, R = Math.min(w, h) * (opts.radius || 0.30);
     const pt = (i, frac) => {
       const a = -Math.PI / 2 + i * Math.PI / 3;          // 6 axes, 60 degrees apart, starting at the top
       return [cx + Math.cos(a) * R * frac, cy + Math.sin(a) * R * frac];

@@ -6,6 +6,15 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Team screen', 'Team screen'], new: [
+    ['The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).',
+     'The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).'],
+    ['Put a Pokémon in the highlighted slot with the button, a double-click, or by dragging it onto any slot; dragging one team card onto another swaps them. Nothing is saved until you press Commit Team, and Back discards your changes.',
+     'Put a Pokémon in the highlighted slot with the button, a double-click, or by dragging it onto any slot; dragging one team card onto another swaps them. Nothing is saved until you press Commit Team, and Back discards your changes.'],
+  ], chg: [
+    ['The Pokémon button is now a browse-only Pokédex: picking a team slot from there is gone.',
+     'The Pokémon button is now a browse-only Pokédex: picking a team slot from there is gone.'],
+  ] },
   { d: '2026-10-19', title: ['Control statuses', 'Control statuses'], new: [
     ['Paralysis, freeze, sleep, confusion and trap are in. Paralysis halves speed and makes a quarter of attacks fizzle; frozen and sleeping Pokémon cannot move or attack; confused ones wander and half their attacks fizzle; trapped ones take damage over time and crawl.',
      'Paralysis, freeze, sleep, confusion and trap are in. Paralysis halves speed and makes a quarter of attacks fizzle; frozen and sleeping Pokémon cannot move or attack; confused ones wander and half their attacks fizzle; trapped ones take damage over time and crawl.'],
