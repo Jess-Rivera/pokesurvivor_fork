@@ -27,6 +27,7 @@ G.Spawner = (() => {
   const XP_BOOST = 2.0;
   let acc = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0, runT = 0;
   let forceShiny = 0;           // for testing: the next N spawn shiny
+  let debugMul = 1;             // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
 
   function reset() {
     acc = 0; surgeT = 32; preloadT = 0; runT = 0;
@@ -146,20 +147,20 @@ G.Spawner = (() => {
     if (preloadT <= 0) { preloadT = 10; G.Sprites.preload(G.Enemies.upcomingDex(t, 60)); }
 
     // --- elites (systems/elites.js): spawn, enrage, and the lowered wild cap / rate around them ---
-    G.Elites.update(dt, t);
+    if (debugMul > 0) G.Elites.update(dt, t);
     const capNow = Math.floor(CAP * G.Elites.capMul());
     const eliteOn = !!G.Elites.current();
 
     // --- goteo normal ---
     if (G.EnemyMgr.count < capNow) {
-      acc += rate(t) * G.Coop.scaleRate(players.length) * G.Elites.rateMul() * dt;
+      acc += rate(t) * G.Coop.scaleRate(players.length) * G.Elites.rateMul() * debugMul * dt;
       let n = Math.floor(acc);
       acc -= n;
       while (n-- > 0 && G.EnemyMgr.count < capNow) spawnOne(anchor(), t);
     }
 
     // --- marea (no tides while an elite is alive) ---
-    if (!eliteOn) surgeT -= dt;
+    if (!eliteOn && debugMul > 0) surgeT -= dt;
     if (surgeT <= 0) {
       surgeT = G.U.rand(38, 56);
       const base = Math.random() * 6.2832;
@@ -173,6 +174,7 @@ G.Spawner = (() => {
 
   /** A handful at once from one side (when starting a horde). */
   function burst(n) {
+    if (debugMul <= 0) return;
     const base = Math.random() * 6.2832, target = anchor() || G.Game.player, t = G.Game.st.time;
     for (let i = 0; i < n && G.EnemyMgr.count < CAP + 10; i++) spawnOne(target, t, base + G.U.rand(-0.6, 0.6));
   }
@@ -207,5 +209,6 @@ G.Spawner = (() => {
   /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1. */
   function xpBoost() { return runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1; }
   return { reset, update, ahead, placeElite, burst, tickBanner, banner, say, rate, xpBoost, SHINY_RATE, CAP,
-           debugForceShiny(n = 1) { forceShiny = n; } };
+           debugForceShiny(n = 1) { forceShiny = n; },
+           debugRate(k) { debugMul = Math.max(0, +k); if (!isFinite(debugMul)) debugMul = 1; return debugMul; } };
 })();

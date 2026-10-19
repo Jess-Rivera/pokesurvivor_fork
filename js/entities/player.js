@@ -86,6 +86,9 @@ G.Player = class Player {
     this.dead = false;
     this.power = null;         // poder de altar activo: { def, t, dur }
     this.slowT = 0;            // pegado por una trampa
+    // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
+    this.isPlayer = true;
+    this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null;
     this.item = null;          // objeto equipado (data/items.js), uno por run
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
@@ -147,7 +150,7 @@ G.Player = class Player {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return s * slow * w;
+    return s * slow * w * G.Status.speedMul(this);
   }
   get reduction() { return Math.min(0.8, this.dmgReduce + this.buffs.def.n * this.buffs.def.amount); }
   get regen() { return this.regenFlat + this.buffs.regen.n * this.buffs.regen.amount; }
@@ -284,6 +287,15 @@ G.Player = class Player {
   }
 
   // ---------------- damage and healing ----------------
+  /** Damage over time from G.Status (burn, poison, trap): a share of max HP, not reduced by defense, and it ignores the post-hit invulnerability. */
+  statusDot(kind, amount, color) {
+    if (this.dead) return;
+    const inv = this.invuln;
+    this.invuln = 0;
+    this.hurt(amount, null, true);
+    if (!this.dead) this.invuln = inv;
+  }
+
   /**
    * @param type  attack type (type chart and weather); with no type, damage as-is
    * @param pure  damage not reduced by defense or melee (Arceus)
@@ -434,13 +446,19 @@ G.Player = class Player {
       if (b.n > 0) { b.t -= dt; if (b.t <= 0) b.n = 0; }
     }
     if (this.slowT > 0) this.slowT -= dt;
+    G.Status.tick(this, dt);
+    if (this.dead) return;
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
-    const [ax, ay] = this.frozen ? [0, 0] : G.Input.axis();
+    let [ax, ay] = this.frozen || G.Status.stunned(this) ? [0, 0] : G.Input.axis();     // frozen or asleep: you cannot move
+    if (this.stCnf && (ax || ay)) {                                                    // confused: your heading drifts (half weight)
+      const m = Math.hypot(ax, ay), w = G.Status.wander(this, ax / m, ay / m, 0.5);
+      ax = w[0] * m; ay = w[1] * m;
+    }
     this.walking = ax !== 0 || ay !== 0;
     const s = this.spd;
     // Ice: you slide (the velocity changes slowly).

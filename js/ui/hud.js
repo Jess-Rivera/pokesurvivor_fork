@@ -132,6 +132,28 @@ G.HUD = (() => {
   // How far the action bar is lifted to make room for the strip. layout-ui.js reads it too.
   const BAR_LIFT = 28;
 
+  /** Active statuses (G.Status.list) as small chips centered above the HP bar: label and seconds left. */
+  function drawStatus(ctx, w, by, pl) {
+    const L = G.Status.list(pl);
+    if (!L.length) return;
+    ctx.font = F(700, 11);
+    const items = L.map(s => ({ s, txt: s.label + (s.t != null ? ' ' + Math.ceil(s.t) + 's' : '') }));
+    const pad = 6, gap = 4, hgt = 16;
+    const widths = items.map(i => ctx.measureText(i.txt).width + pad * 2);
+    let x = (w - (widths.reduce((a, b) => a + b, 0) + gap * (items.length - 1))) / 2;
+    const y = by - hgt - 6;
+    ctx.textAlign = 'center';
+    items.forEach((i, n) => {
+      ctx.fillStyle = i.s.color;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.roundRect(x, y, widths[n], hgt, 6); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#111';
+      ctx.fillText(i.txt, x + widths[n] / 2, y + hgt - 4);
+      x += widths[n] + gap;
+    });
+  }
+
   function drawHpStrip(ctx, w, h, pl, safeB) {
     const BW = G.U.clamp(w * 0.34, 160, 300), BH = 18;
     const bx = (w - BW) / 2;
@@ -142,6 +164,7 @@ G.HUD = (() => {
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.textAlign = 'center';
     ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), w / 2, by + BH - 4);
+    drawStatus(ctx, w, by, pl);
 
     // Name: right-aligned against the left end of the bar. Shrinks to fit narrow screens.
     let size = 20;
