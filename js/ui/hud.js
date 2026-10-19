@@ -276,6 +276,19 @@ G.HUD = (() => {
       ctx.fillText(boss.name.toUpperCase(), w / 2, 80);
     }
 
+    // ---------- elite bar (an overworld elite; the boss bar wins if both are up) ----------
+    const elite = !boss && G.Elites.current();
+    if (elite) {
+      const bw = Math.min(380, w - 80), left = G.Elites.enrageIn(elite), enr = left === 0;
+      bar(ctx, (w - bw) / 2, 70, bw, 12, elite.hp / elite.maxHp, enr ? '#ff5050' : '#ff9f43');
+      ctx.font = F(800, 10);
+      ctx.fillStyle = '#20160a';
+      ctx.fillText('ELITE ' + elite.name.toUpperCase(), w / 2, 80);
+      ctx.font = F(700, 10);
+      ctx.fillStyle = enr ? '#ff7070' : '#ffd9a8';
+      ctx.fillText(enr ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE', w / 2, 98);
+    }
+
     // ---------- aviso ----------
     // ---------- off-screen shinies: a glint at the edge ----------
     const cam = G.Camera, pulse = 0.6 + Math.sin(performance.now() / 160) * 0.4;
@@ -297,6 +310,28 @@ G.HUD = (() => {
       ctx.globalAlpha = 1;
       G.Icons.draw(ctx, 'shiny', -12, -12, 24);
       ctx.restore();
+    }
+
+    // Elite: an orange arrow at the edge while it is off screen.
+    if (elite) {
+      const sx = (elite.x - cam.left()) * cam.scale, sy = (elite.y - cam.top()) * cam.scale;
+      if (!(sx > 0 && sx < w && sy > 0 && sy < h)) {
+        const M = 38, ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 60, h - M - 70);
+        const a = Math.atan2(sy - ey, sx - ex);
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.translate(ex, ey);
+        ctx.fillStyle = '#ff9f43';
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 26, Math.sin(a) * 26);
+        ctx.lineTo(Math.cos(a + 2.5) * 14, Math.sin(a + 2.5) * 14);
+        ctx.lineTo(Math.cos(a - 2.5) * 14, Math.sin(a - 2.5) * 14);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+        ctx.fillText('ELITE', -Math.cos(a) * 20, -Math.sin(a) * 20 + 4);
+        ctx.restore();
+      }
     }
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);

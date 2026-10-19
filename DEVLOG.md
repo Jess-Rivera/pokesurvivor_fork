@@ -8,6 +8,13 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-19 (Claude Desktop) feature/boss-rework: Overworld Elites built
+- WHAT: the elite slice. New js/systems/elites.js; enemies.js (eliteDef species draw, openingHpK reads the shared constant), stats.js (XP_BOOST_END, three-state levelForTime signature), spawner.js (placeElite, elite-aware cap/rate/tides, Density Bonus, boss spawn removed), enemy.js (elite descriptor, size 1.5 to 2, HP from the descriptor, XP multiplier, engage on first hit, exclusions from morale/knockback/fear/stragglers/golden/lava, walk-off for excess wild units, elite drops and TTK readout, name tag), hud.js (elite bar with enrage countdown, off-screen arrow), judgment.js (unhooked), progress.js (elite counts as a boss kill), debug.js (G.Debug.elite()), dev.html (script tag), changelog.js (entry), docs/proposals/elites-harness.js.
+- CHECKED: node --check on every edited file; the offline harness passes (window constant, species draw by band/region/no repeats, HP model, enrage ramp, wild cap window, trim, update paths for six behaviors). NOT run in a browser: Jess's 1-minute feel test is the browser check.
+- FEEL TEST: open dev.html with ?dev, press play, call G.Debug.elite() in the console. Watch the orange HP bar, hit it, see the enrage countdown, and read the [Elite] TTK line in the console on its death (target 20 to 30 s).
+- NOT DONE: tune the HP model and power multiplier from real TTK readouts; Brock pilot gym; gates; status Slice C; cleanup list in BOSS-REWORK.md section 5.
+- WHERE WE STOPPED: elite slice built, waiting on the feel test.
+
 ## 2026-10-19 (Claude Desktop) tune/damage CLOSED: opening, ranged behavior, morale, band-holder ceiling
 - WHAT: branch closed at Jess's call after a feel test of the last change ("feels good"); Jess commits and merges. Final values are the 'FINAL STATE' bullet at the top of BALANCE 'Run opening'. The entry below this one lists the changes in the order they were built; several early numbers were retuned or removed afterwards (retreat delay, DPS part of morale, kill radius side, weights, decays).
 - RESULT: last log (one Charizard, region 1) 3:39, level 8, 278 kills; logs 1 to 3 ended at 0:56 to 1:29. Level-ups every 20 to 45 s; damage taken 66% contact and 34% shots, and two flat Nidoking boss shots (17.3 each) ended the run.

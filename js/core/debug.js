@@ -8,6 +8,7 @@
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
+ *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -156,5 +157,11 @@ G.Debug = (() => {
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
+  /** Spawns an overworld elite right now (dev only): 1-minute feel check for the elite slice. */
+  function elite() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    return G.Elites.debugSpawn();
+  }
+
+  return { on, elite, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
 })();

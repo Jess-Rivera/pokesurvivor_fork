@@ -5,6 +5,66 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-19, Overworld Elites BUILT (first slice of the boss rework) [Jess approved the three defaults, branch feature/boss-rework]
+- Built to the locked design in BOSS-REWORK.md section 2. An elite is a regular (non-boss) wild Enemy with an `elite` descriptor on a copy of the def, so it reuses wild AI and the ratio damage path. New file js/systems/elites.js (G.Elites).
+- Temporary cadence until gyms exist: first elite at 2:00, then every 6:00, one alive at a time. Arceus's Judgment is unhooked (ENABLED = false in judgment.js, nothing else removed yet). Enrage: damage x1.0 to x2.0 over 30 s, starting 60 s after the first hit; no speed bonus.
+- BOSS_SLOTS no longer spawns anything (the data stays until the cleanup list). The 25% boss-fight spawn rule is gone; the wild cap and rate are 50% for 60 s after an elite spawns, then ramp back over 30 s.
+- Density Bonus replaces the crowd bump: XP only, x1.6 while 54 or more are alive, from 180 s. The XP boost, its banner and the opening HP discount share G.Stats.XP_BOOST_END = 180.
+- levelForTime now takes an optional gym-complete argument; it still clamps at L50 past 30:00 (the post-gym ramp is TBD).
+- Elite kills still count as boss kills for missions and achievements (progress.js), so those do not go dead while gyms are unbuilt.
+
+## 2026-10-19, Boss rework design: gyms, elites, region completion [Jess + Claude, DESIGN ONLY, branch feature/boss-rework, nothing built]
+- Flow: the three old boss systems are replaced. (1) Rifts with legendaries are replaced by GYM fights: a gate on the map leads to a type-matched arena, against that gym leader's signature Pokemon, in the mainline order of the chosen region (Kanto: Brock rock / Geodude, Misty water / Staryu, Lt. Surge electric / Voltorb, and so on). (2) The five BOSS_SLOTS bosses are replaced by overworld ELITES (level offset +1 or +2, sized up). (3) The Arceus fight (judgment.js) is removed entirely.
+- Region Complete = finishing the region's main story, as an ORDERED ENCOUNTER LIST stored per region (not a hardcoded 8 + 4, since Alola has no gyms and Galar has no Elite Four). Kanto: 8 gyms then the Elite Four (Champion not decided, adding one later is just another list entry). Target: all 8 gyms done by the 30:00 mark; the Elite Four come after it and are the endgame.
+- Gym level = run-time level at the fight + 4, sized up. Species do NOT carry the threat, the +4 offset and the tier table do. Signature Pokemon use HAND-AUTHORED REAL MOVES (real power, type, category, damage via the A/D ratio), not the wild AI and not the old slam / dash / leap + type-picked ranged template.
+- Elites: while an elite is alive, wild spawn is halved (replaces the old boss-fight 25% rule). Elites and gym tier values live in one TIER TABLE (level offset, size, HP multiplier, move power rules).
+- Badges (gym win): a run-long boost, a guaranteed item, a guaranteed level, a Bond, and a full team revive to 100% HP (fainted members included).
+- Death commits EVs and progress (unchanged). Return Home on Region Complete pays a completion bonus. Keep Going (restart the gym roster; each gym fields its first two signatures at once; a bonus per loop) is DEFERRED to its own branch feature/continue-option.
+- Level beyond L50 at 30:00 (linear to exponential ramp) stays DEFERRED. Until then the level clamps at L50 and the Elite Four sit on the clamp plus their offset.
+- Legendaries return as something else, to be designed later. Do NOT delete the legendary flags, data or rift code in the cleanup; unhook rift spawning only.
+- SUPERSEDED: the 'PHASE 2' post-30-minute-boss spec in the 2026-10-17 difficulty entry (Standard Run / Unlock Safeties choice after the Arceus fight). Arceus is gone, so the Region Complete choice replaces it. The linear-to-L50 phase 1 stands.
+- OPEN (not decided): gate schedule and elite cadence; arena visuals per type; badge boost definitions (mainline-accurate per region or uniform stat bumps); what a 'Bond' badge reward means until the Bond rework decides; Elite Four rewards; the authored-moves data format; how move Kinds (projectile / zone / beam) translate into telegraphed boss attacks; stat-stage and status moves on bosses (wait for status slices C and D); how multiple casting bosses avoid stacked telegraphs (continue-option).
+- Build order: (1) tier table plus elites on the wild ratio path plus the halved spawn; (2) boss HP and size; (3) ONE pilot gym end to end (gate, arena, Brock with authored moves, badge package); (4) Kanto roster; (5) Region Complete and Return Home; (6) cleanup of Arceus and rift spawning.
+
+## 2026-10-19 (late morning, addendum) [Jess, design only]
+- A gym's level locks when its gate spawns and is shown on the gate. Elites continue through the Elite Four phase (one elite 2:00 after each return from any gate, none while one is alive). Elite Four give the badge package without the guaranteed full revive.
+
+## 2026-10-19 (midday, gym rules) [Jess]
+- Pilot gym is Brock with Geodude only (Tackle, Rock Throw, Harden). Gym failure = the run ends (death is death, commits EVs and progress); the original rift 'spit out at 35% health' is not used. No arena timer; the gym boss enrages 120 s after engagement (TUNE). Type chart untouched for now.
+
+## 2026-10-19 (midday, addendum) [Jess]
+- Mainline stat STAGES adopted (-6 to +6, mainline multiplier table, fixed duration per application, TUNE). Boss fury phase is OFF for now.
+- Fact: Harden's cooldown is hand-tuned (0.85 s), not PP-derived. Only damaging moves use cd = 0.5 x 35 / PP. Status move cooldowns under stages are a Slice D question.
+
+## 2026-10-19 (midday), Status phasing and DoT on base HP [Jess, design only, tracker: BOSS-REWORK.md 3c]
+- Boss status phasing approved: the pilot gym uses damage moves and Harden only; a minimal player status core comes before Gym 3; control statuses and the rest wait for Slice C, which is promoted to right after the pilot.
+- DoT percentages (burn, poison, Toxic) apply to the target's base HP, before the tier HP multiplier. Bosses are NOT given blanket status immunity; hard CC and paralysis on bosses and elites are decided in Slice C.
+- Stat stages (mainline table, -6 to +6) proposed for all stat buffs and debuffs; awaiting Jess's confirmation.
+
+## 2026-10-19 (late morning), Run flow, Elite Four phase, Return Home, Density Bonus [Jess, design only, tracker: BOSS-REWORK.md sections 1, 2 and 4]
+- Run flow: under 30:00 enemy level is linear L1 to L50; from 30:00 it is clamped at L50 until all gyms are beaten; then the slow ramp starts (linear into exponential, math TBD) and the Elite Four phase begins.
+- Elite Four phase: all four gates open at once when the player returns from Gym 8, spread out and off screen from each other; gate and direction arrow show the level. Elite Four levels are hard-set per encounter, not time-based, so the player picks the order by difficulty.
+- Region Complete = all 8 gym leaders and all 4 Elite Four. Return Home bonus multiplier rises for a total time under 60 min and falls over 90 min. Keep Going (deferred): XP, damage and HP multipliers all go up.
+- Density Bonus (the renamed crowd bump) is XP only (x1.6 at 54+ alive, from 180 s). The damage half is dropped. The XP boost, its banner and the opening HP discount read a shared run-time constant (180 s).
+
+## 2026-10-19 (end of morning), Enemy level curve, Density Bonus, run-time constant [Jess, design only, tracker: BOSS-REWORK.md]
+- Enemy level: linear L1 to L50 over 0 to 30:00, then clamped at L50 until the region's gym list is complete, then a slow ramp (DEFERRED numbers). levelForTime must take the gym-list completion time as an input, not just the clock. This corrects my earlier note that the post-30 ramp was load-bearing: it only starts after Gym 8, so it affects the Elite Four phase and Keep Going, not the main run. The 'Phase 2' wording in the 2026-10-17 entry stays superseded.
+- The crowd bump is KEPT after all, renamed DENSITY BONUS (reverses the 'removed entirely' line above). Open: XP only (recommended) or XP and damage.
+- The 3:00 XP boost, its banner and the opening enemy HP discount read a shared run-time constant (XP_BOOST_END = 180 s) instead of BOSS_SLOTS[0].at. No behavior change.
+
+## 2026-10-19 (later still), Gym timing, elite XP and the crowd bump [Jess, design only, tracker: BOSS-REWORK.md]
+- Gym timing: Option A. Gym 1 at 4:00, each later gym 4:00 after the previous one is beaten and the player is back on the map. The 'all 8 gyms by 30:00' target is dropped (Gym 8 lands at about 39 to 46 min). The post-30 level ramp stays deferred but becomes the next load-bearing item, since enemy level sits on the L50 clamp afterwards.
+- Elite XP = wild yield x the elite's HP multiplier x 1.2.
+- The crowd bump (x1.25 damage, x1.6 XP at 54+ alive; DECISIONS 2026-10-18 'elite gate') is REMOVED ENTIRELY, no rename. Supersedes that entry. Needs a constant for the 180 s XP boost and opening HP discount window (both currently read BOSS_SLOTS[0].at).
+
+## 2026-10-19 (later), Overworld Elites LOCKED [Jess, design only, tracker: BOSS-REWORK.md section 2]
+- Elites have NO level offset (+1/+2 levels is only +14% stats at L10, +6% at L30). Species region accurate, one BST tier above the highest active wild tier, sized up (0.5 steps, 1.5x to 2x), with an HP multiplier and a power multiplier. HP multiplier is set by a 20 to 30 s focused-fire time-to-kill, not hand-typed. This lifts the 2026-10-18 note that an elite should not be an HP multiplier (that note was about the crowd bump).
+- Engagement (first player hit) starts a 60 s timer, then the elite ENRAGES (damage multiplier ramps, maybe move speed).
+- On spawn: wild cap 50% (32 of 64) and wild spawn rate halved for 60 s, then ramps back to normal; time-based from the spawn so the swarm cannot be held down by leaving an elite alive. Excess wild units walk off screen and are deleted.
+- Cadence: first elite at 2:00, then 2:00 after each return from a gym. Reward: XP, a chance at an item, a guaranteed Berry.
+- Gyms: Gym 1 spawns at 4:00, each later gym 4:00 after the previous one is beaten and the player is back on the map. FLAGGED: this puts Gym 8 at 32:00 at the very earliest and about 39 to 46 min in practice, so 'all 8 by 30:00' does not hold. Needs a ruling (BOSS-REWORK.md section 7).
+- The crowd bump (x1.25 damage, x1.6 XP at 54+ alive) is renamed SWARM BONUS.
+
 ## 2026-10-18, Opening pacing: XP boost and elite gate [Jess, applied, uncommitted, not playtested]
 - Jess's read: after DMG_SCALAR 1.0 the opening is fine on damage, and weak early Pokemon are by design (the lean start stays). The problem is XP cadence (first offer at 1:07 to 1:25, 4 offers in 3:38), not HP or damage.
 - Time-based spawn cap: discussed and DROPPED for now. It treats the symptom and would not raise the kill rate. Revisit only if the early swarm still feels unfair.

@@ -63,7 +63,7 @@ G.Enemies = (() => {
   // Opening discount: wild-enemy HP starts at OPENING_HP_START x the formula and rises linearly to 1.0 at the
   // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
   const OPENING_HP_START = 0.55;
-  const openingHpK = t => { const end = BOSS_SLOTS[0].at; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
+  const openingHpK = t => { const end = G.Stats.XP_BOOST_END; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
   const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t)) * openingHpK(t);
   const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
 
@@ -261,6 +261,23 @@ G.Enemies = (() => {
   function bossScale(t) { return { hp: 1 + t / 600, dmg: 1 + t / 600, spd: 1 }; }
 
   /** The tier that applies at second `t`. */
+  /**
+   * An elite's species (feature/boss-rework): region-accurate, one BST tier above the highest active wild tier; once the top tier is
+   * active, the old boss band (600 to 700). No legendaries, no repeats (`used` = dex numbers). Returns a wild-style def
+   * (defFor) built with the tier above, or null if nothing is left.
+   */
+  function eliteDef(t, used) {
+    const ti = Math.min(tierAt(t) + 1, TIERS.length - 1);
+    const band = tierAt(t) >= TIERS.length - 1 ? [600, 700] : TIERS[ti].bst;
+    const ok = p => regionOK(p) && !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);
+    let pool = G.DEX.filter(p => ok(p) && p.bst >= band[0] && p.bst <= band[1]);
+    // A thin region (Gen 1's top end): widen the band downward inside the region before ever leaving it.
+    for (const w of [40, 100, 200, 400]) if (!pool.length) pool = G.DEX.filter(p => ok(p) && p.bst >= band[0] - w);
+    if (!pool.length) pool = G.DEX.filter(p => !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex));   // last resort: any region
+    if (!pool.length) return null;
+    return defFor(G.U.pick(pool), TIERS[ti], ti);
+  }
+
   function tierAt(t) { let ti = 0; TIERS.forEach((tr, i) => { if (t >= tr.from) ti = i; }); return ti; }
 
   const NO_HORDE = new Set(['bomber', 'healer', 'shielder', 'summoner', 'status']);   // by class
@@ -311,7 +328,6 @@ G.Enemies = (() => {
     if (!cast) rollRun();
     const out = [];
     for (const tier of cast) if (tier.from <= t + ahead) for (const e of tier.list) out.push(e.dex);
-    for (const b of bosses) if (b.at <= t + ahead) out.push(b.dex);
     return out;
   }
 
@@ -394,7 +410,7 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, eliteDef, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

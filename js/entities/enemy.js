@@ -31,7 +31,8 @@
       this.name = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].name) || def.name;
       this.x = x; this.y = y;
       this.boss = boss;
-      this.scale = boss ? bossScale(def.dex) : 1;
+      this.elite = def.elite || null;      // overworld elite descriptor (systems/elites.js); a regular wild Enemy otherwise
+      this.scale = boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
       this.anim = new G.Sprites.Animator(def.dex, this.scale);
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
@@ -39,7 +40,7 @@
       // Enemy HP = real base HP through the mainline formula at the level-for-run-time
       // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
-      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
       this.hp = this.maxHp;
       // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
       // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
@@ -51,7 +52,7 @@
       // and Judgment legendaries (def.bx undefined) keep the flat def.xp. xpMul collects the
       // tank / elite / shiny / golden multipliers.
       this.bx = def.bx != null ? def.bx : null;
-      this.xpMul = def.xpMul || 1;
+      this.xpMul = (def.xpMul || 1) * (this.elite ? this.elite.xpMul : 1);
       this.behavior = def.behavior;
 
       const types = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].types) || [];
@@ -66,6 +67,7 @@
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
       this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0);
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
+      this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
       this.flying = boss || G.Sprites.hovers(def.dex);
@@ -124,7 +126,7 @@
 
     /** Golden hour (events.js): double experience and sometimes coins. */
     makeGolden() {
-      if (this.golden || this.boss || this.behavior === 'thief') return;
+      if (this.golden || this.boss || this.elite || this.behavior === 'thief') return;
       this.golden = true;
       this.xp *= 2; this.xpMul *= 2;
     }
@@ -151,10 +153,11 @@
         amount -= a;
       }
       this.hp -= amount;
-      if (!this.boss) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
+      if (this.elite && !this.remote) G.Elites.engage(this);
+      if (!this.boss && !this.elite) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
       G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
-      if (knock > 0 && !this.boss) {
+      if (knock > 0 && !this.boss && !this.elite) {
         const [nx, ny] = G.U.norm(dirX, dirY);
         this.kx += nx * knock;
         this.ky += ny * knock;
@@ -220,12 +223,13 @@
       if (this.dead) return;
       this.dead = true;
       this.fade = 0.9;
-      if (!this.boss) this.spreadFear();
+      if (!this.boss && !this.elite) this.spreadFear();
       this.anim.play('Faint', { hold: true });
-      const col = this.boss ? '#ffd95e' : '#ffffff';
+      const big = this.boss || this.elite;
+      const col = big ? '#ffd95e' : '#ffffff';
       const cy = this.y - this.bodyH * 0.5;
-      G.FX.burst(this.x, cy, col, this.boss ? 34 : 9, this.boss ? 260 : 120);
-      G.FX.ring(this.x, this.y, this.r, this.r * (this.boss ? 6 : 2.6), col, this.boss ? 0.6 : 0.3, this.boss ? 6 : 3);
+      G.FX.burst(this.x, cy, col, big ? 34 : 9, big ? 260 : 120);
+      G.FX.ring(this.x, this.y, this.r, this.r * (big ? 6 : 2.6), col, big ? 0.6 : 0.3, big ? 6 : 3);
       // In a copy, the loot and the shinies are distributed by the host.
       if (this.remote) {
         if (this.boss) G.Camera.kick(0.9);
@@ -246,6 +250,14 @@
         const lvl = Math.max(1, ...G.Game.everyone().map(p => p.level || 1));
         this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul * G.Spawner.xpBoost();
       }
+      // Elite: a burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout.
+      if (this.elite) {
+        G.Camera.kick(0.6);
+        G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
+        G.Pickups.drop('heal', this.x + 24, this.y, 0);
+        if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+        G.Elites.noteDeath(this);
+      } else
       G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
@@ -350,11 +362,13 @@
         if (!any) this.ailRoll = null;
       }
       if (this.dead) return;
+      // An excess wild unit leaving for an elite (Elites.trim): it walks away from you, harmless, until the manager removes it off screen.
+      if (this.leaving) { this.leaveMove(dt, pl); return; }
 
       // --- terreno ---
       let terrainMul = 1;
       // (The legendary is at home: its arena does not affect it. Arceus's ones, neither.)
-      if (!this.flying && !this.legend && !this.judge && G.World.isLiquid(this.x, this.y)) {
+      if (!this.flying && !this.legend && !this.judge && !this.elite && G.World.isLiquid(this.x, this.y)) {
         const le = G.World.liquidEffect(this.types);
         if (le.dmg) {
           this.lavaTick -= dt;
@@ -652,13 +666,25 @@
       return [0, 0, 'Idle'];
     }
 
+    /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */
+    leaveMove(dt, pl) {
+      const [dx, dy] = G.U.norm(this.x - pl.x, this.y - pl.y);
+      const spd = Math.max(40, this.spd) * (1 - this.slow);
+      this.touchCd = Math.max(this.touchCd, 0.5);
+      this.x += (dx * spd + this.kx) * dt; this.y += (dy * spd + this.ky) * dt;
+      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      G.World.collide(this);
+      this.anim.dir = G.Sprites.dirFromAngle(Math.atan2(dy, dx));
+      this.anim.loop('Walk');
+    }
+
     keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner'].includes(this.behavior); }
 
     /** When this one dies, band-holders within fearRadiusK x ITS body radius take fright: fear += killFear, fading with distance. */
     spreadFear() {
       const M = G.Enemies.MORALE, reach = Math.min(M.fearMaxPx, M.fearRadiusK * this.r);
       for (const e of G.EnemyMgr.queryCircle(this.x, this.y, reach)) {
-        if (e === this || e.dead || e.boss || !(e.keepsDistance() || e.isSeeker())) continue;
+        if (e === this || e.dead || e.boss || e.elite || !(e.keepsDistance() || e.isSeeker())) continue;
         const d = Math.hypot(e.x - this.x, e.y - this.y);
         if (d < reach) e.fear = Math.min(1, e.fear + M.killFear * (1 - d / reach));
       }
@@ -666,6 +692,7 @@
 
     /** Morale 0..1 of a band-holder: scared by kills close to it, and by losing a lot of its HP fast. */
     moraleNow() {
+      if (this.elite) return 1;       // elites never panic
       const M = G.Enemies.MORALE;
       return (1 - M.fearWeight * this.fear) * (1 - M.painWeight * Math.min(1, this.pain / M.painFull));
     }
@@ -1045,16 +1072,25 @@
       const SUP = { healer: 'heart', shielder: 'shield', summoner: 'friends' };
       if (SUP[this.behavior]) G.Icons.draw(ctx, SUP[this.behavior], Math.round(this.x - 6), Math.round(this.y - this.bodyH - (this.hp < this.maxHp ? 26 : 18)), 12);
 
-      if (this.boss || this.hp < this.maxHp) {
-        const w = this.boss ? 90 : Math.max(22, this.r * 2);
+      if (this.boss || this.elite || this.hp < this.maxHp) {
+        const w = this.boss || this.elite ? 90 : Math.max(22, this.r * 2);
         const y = this.y - this.bodyH - 10;
         ctx.fillStyle = 'rgba(0,0,0,.6)';
         ctx.fillRect(this.x - w / 2, y, w, 3.4);
-        ctx.fillStyle = this.boss ? '#ffcb3d' : '#ff5f6d';
+        ctx.fillStyle = this.boss ? '#ffcb3d' : this.elite ? '#ff9f43' : '#ff5f6d';
         ctx.fillRect(this.x - w / 2, y, w * Math.max(0, this.hp / this.maxHp), 3.4);
         // Panic meter: a thin bar under the HP bar, only on damaged morale units that are at least meterShow of the way to
         // panic (100% = the panic line). A panicking unit shows it full.
-        if (!this.boss && (this.keepsDistance() || this.isSeeker())) {
+        if (this.elite) {
+          // Name tag over the bar; it turns red with the enrage countdown once engaged.
+          const left = G.Elites.enrageIn(this), enr = left === 0;
+          ctx.save();
+          ctx.font = '700 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillText(this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''), this.x + 1, y - 2 + 1);
+          ctx.fillStyle = enr ? '#ff5050' : '#ffd9a8'; ctx.fillText(this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''), this.x, y - 2);
+          ctx.restore();
+        }
+        if (!this.boss && !this.elite && (this.keepsDistance() || this.isSeeker())) {
           const M = G.Enemies.MORALE, p = this.panic ? 1 : Math.min(1, (1 - this.moraleNow()) / (1 - M.panicBelow));
           if (p >= M.meterShow) {
             ctx.fillStyle = 'rgba(0,0,0,.6)';
@@ -1243,7 +1279,7 @@
         if (e.dead) {
           pl.kills++;
           if (G.Log.on) G.Log.kill(e);
-          if (e.boss && !e.judge) pl.bosses++;
+          if ((e.boss || e.elite) && !e.judge) pl.bosses++;
           G.Progress.kill(e);
           corpses.push(e);
           list.splice(i, 1);
@@ -1260,7 +1296,15 @@
           if (G.Coop.isHost) G.Coop.enemyGone(e, false);
           continue;
         }
-        if (e.boss || e.shiny || G.Rift.inArena) continue;
+        if (e.leaving) {       // an excess wild unit walking off for an elite: gone once it is out of sight (no XP, no drops)
+          const R2 = G.Camera.outerRadius() + 40;
+          if (G.U.dist2(e.x, e.y, near.x, near.y) > R2 * R2 && !G.Camera.sees(e.x, e.y, 60)) {
+            list.splice(i, 1); byId.delete(e.id);
+            if (G.Coop.isHost) G.Coop.enemyGone(e, false);
+          }
+          continue;
+        }
+        if (e.boss || e.elite || e.shiny || G.Rift.inArena) continue;
         // Stragglers: the ones that fall behind while you run and have been a while
         // OUT OF SIGHT (of everyone) come back out ahead of you. This way
         // you cannot just flee, and one you are looking at never disappears.

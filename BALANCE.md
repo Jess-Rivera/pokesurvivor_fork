@@ -29,6 +29,16 @@ re-tune later.
   burn/poison/slow gameplay unchanged. The melee x1.2 dmg bump was removed (canonical power is the
   baseline); melee radius/arc x1.25 bumps kept.
 
+## Overworld Elites (feature/boss-rework, built 2026-10-19; all numbers TUNE by the [Elite] TTK readout)
+- Species: one BST tier above the highest active wild tier; top tier active means BST 600 to 700. Region-accurate (widens downward inside the region before leaving it), no legendaries, no repeats.
+- HP: reference model hp = max(refDps x 25 s, 3 x wild HP). refDps = hit / 0.7 s x (1 + 0.2 x minutes) x 0.7 uptime, hit from a base-40, SpAtk-65 attacker at the run level against the elite's own average Def/SpD. First guess: about 170 HP at 2:00, about 640 at 10:00, about 3150 at 30:00 (4x to 13x a wild unit). No opening HP discount.
+- Power x1.5 on the wild ratio attack path. Size 1.5 to 2 (the boss sizing, floor 1.5).
+- Enrage: 60 s after the first hit, damage x1.0 to x2.0 over 30 s; no speed bonus.
+- Wild cap 32 (50%) and spawn rate 50% for 60 s after an elite spawns, back to 100% over the next 30 s. Excess wild units walk off and are deleted, no XP.
+- Reward: XP = wild yield x HP multiplier x 1.2, a guaranteed Berry, 50% chance at an item.
+- Cadence (TEMP): 2:00 then every 6:00.
+- Density Bonus: x1.6 XP while 54 or more are alive, from 180 s (damage part removed).
+
 ## Run opening (tune/damage, applied 2026-10-18 to 2026-10-19, CLOSED; each change feel-tested by Jess, logs 1 to 4)
 - FINAL STATE at branch close (2026-10-19; the dated bullets below are the history and some early numbers were retuned): DMG_SCALAR 1.0; XP_BOOST 2.0 until 180 s; elite bump only after the first boss and at 54+ alive; wild-enemy HP x0.55 to x1.0 over 0 to 180 s; FAMILY_SHARE 0.60 / 0.30 / 0.10 (status class counts as melee); HOLDER_CAP share 0.35, floor 2, rerolls 8; BANDS unchanged (shooter 0.80 / 0.92); BAND_JITTER spread 0.20, recheck 0.3 to 0.7 s; NO standard retreat and NO retreat delay; MORALE killFear 0.35, fearRadiusK 6 x the DEAD enemy's body radius (cap 240 px), fearTau 1.2 s, painTau 1.0 s, painFull 0.6 (stored pain capped there), fearWeight 0.6, painWeight 0.6, panicBelow 0.25, panicFireMul 0.5, meterShow 0.5 (morale = (1 - fearWeight x fear) x (1 - painWeight x pain); ranged back away only while panicking, healers / shielders likewise inside SEEK.alone; the DPS part of morale and the retreat delay were removed); status class enemies are chasers; MIX log record every 5 s.
 - 2026-10-18, DMG_SCALAR: 0.47 -> 1.0 (js/core/stats.js). Why: slices A and B removed the unlogged burn that carried half to two thirds of Ember's damage. Check log (Typhlosion L1, region 1): neutral Ember 6.4 to 7.0, super effective 11.3, resisted 3.5 against enemy HP 24 to 30, so 4 to 5 hits neutral, 3 super effective, 6 to 7 resisted (target band 3 to 4). The scalar back-solved from the log is 1.01. Only validated at L1 to L2; a 3-minute log is the next check.

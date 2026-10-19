@@ -6,6 +6,19 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Elites replace bosses', 'Elites replace bosses'], new: [
+    ['Elite Pokémon now roam the map: bigger, tougher, and one tier stronger than the wild ones. The first shows up at 2:00, then one every 6 minutes.',
+     'Elite Pokémon now roam the map: bigger, tougher, and one tier stronger than the wild ones. The first shows up at 2:00, then one every 6 minutes.'],
+    ['Hit an elite and a 60 second clock starts; after that it enrages and hits harder and harder. Beat it for a pile of XP, a Berry and maybe an item.',
+     'Hit an elite and a 60 second clock starts; after that it enrages and hits harder and harder. Beat it for a pile of XP, a Berry and maybe an item.'],
+    ['While an elite is around, fewer wild Pokémon appear, and the extras walk off screen.',
+     'While an elite is around, fewer wild Pokémon appear, and the extras walk off screen.'],
+  ], chg: [
+    ['The old timed bosses and Arceus\'s Judgment at 30:00 are gone for now; gyms and the Elite Four are coming to replace them.',
+     'The old timed bosses and Arceus\'s Judgment at 30:00 are gone for now; gyms and the Elite Four are coming to replace them.'],
+    ['The crowd bonus is now the Density Bonus: a crowded screen only pays more XP, it no longer makes enemies hit harder.',
+     'The crowd bonus is now the Density Bonus: a crowded screen only pays more XP, it no longer makes enemies hit harder.'],
+  ] },
   { d: '2026-10-19', title: ['A gentler opening', 'A gentler opening'], chg: [
     ['Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.',
      'Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.'],
