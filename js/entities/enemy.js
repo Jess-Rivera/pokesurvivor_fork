@@ -74,8 +74,8 @@
       this.slow = 0; this.slowT = 0;
       // Status (slice A, G.Enemies.STATUS): burn is 0/1; poison is 0 none, 1 poisoned, 2 badly poisoned (Toxic, N/16 per turn).
       // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter, ailRoll = per-move roll gap.
-      this.burn = 0; this.burnLeft = 0; this.burnTick = 0;
-      this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0;
+      this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
+      this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
       this.ailRoll = null;
       this.lavaTick = 0;
       this.kx = 0; this.ky = 0;
@@ -190,20 +190,22 @@
 
     /** Burn: one state; a re-hit refreshes the duration and leaves the tick timer alone (constant re-hits cannot stall it).
      *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
-    applyBurn(lv = 1, ignoreImmune = false) {
+    applyBurn(lv = 1, ignoreImmune = false, mul = 1) {
       if (!ignoreImmune && this.statusImmune('burn')) { this.immuneText(); return; }
       if (this.remote) { G.Coop.status(this, 'b', 1); return; }
       const S = G.Enemies.STATUS.burn;
-      if (this.burn <= 0) { this.burn = 1; this.burnTick = S.turn; }
+      if (this.burn <= 0) { this.burn = 1; this.burnTick = S.turn; this.burnMul = mul; }
+      else if (mul > this.burnMul) this.burnMul = mul;          // the strongest source wins while the state lasts
       this.burnLeft = S.turns;
     }
     /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades. */
-    applyPoison(lv = 1) {
+    applyPoison(lv = 1, mul = 1) {
       const bad = lv >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
       if (this.statusImmune(bad ? 'toxic' : 'poison')) { this.immuneText(); return; }
       if (this.remote) { G.Coop.status(this, 'p', bad ? 2 : 1); return; }
       const was = this.poison;
-      if (was <= 0) this.poisonTick = S.turn;
+      if (was <= 0) { this.poisonTick = S.turn; this.poisonMul = mul; }
+      else if (mul > this.poisonMul) this.poisonMul = mul;
       if (bad && was !== 2) { this.poison = 2; this.poisonN = 0; }
       else if (!bad && was <= 0) this.poison = 1;
       this.poisonLeft = Math.max(this.poisonLeft, S.turns);
@@ -321,7 +323,7 @@
         if (this.burnTick <= 0) {
           const S = G.Enemies.STATUS.burn;
           this.burnTick += S.turn;
-          this.dot('burn', this.maxHp * S.frac, S.color);
+          this.dot('burn', this.maxHp * S.frac * this.burnMul, S.color);
           if (--this.burnLeft <= 0) this.burn = 0;
         }
       }
@@ -332,7 +334,7 @@
           this.poisonTick += S.turn;
           let frac = S.frac;
           if (bad) { this.poisonN = Math.min(S.cap, this.poisonN + 1); frac = S.step * this.poisonN; }
-          this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac, S.color);
+          this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
           if (--this.poisonLeft <= 0) { this.poison = 0; this.poisonN = 0; }
         }
       }

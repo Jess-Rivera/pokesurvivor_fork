@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-18', title: ['Ailment Chance cards', 'Ailment Chance cards'], new: [
+    ['New level-up card: Ailment Chance. It adds 10 points to the burn or poison chance of one move (Ember goes from 10% to 20%, up to 100%). Burn and poison now also get stronger with your damage cards (Increased Effect and the Fire, Poison and kind damage cards), and the team summary shows each burn or poison move with its chance and how much of the max HP of the enemy it takes.',
+     'New level-up card: Ailment Chance. It adds 10 points to the burn or poison chance of one move (Ember goes from 10% to 20%, up to 100%). Burn and poison now also get stronger with your damage cards (Increased Effect and the Fire, Poison and kind damage cards), and the team summary shows each burn or poison move with its chance and how much of the max HP of the enemy it takes.'],
+  ] },
   { d: '2026-10-18', title: ['Burn and poison reworked', 'Burn and poison reworked'], chg: [
     ['Burn and poison now work like the main games. They only land with the real chance of the move (Ember burns 10% of the time, Sludge and Poison Sting poison 30%), they take a fraction of the max HP of the enemy each turn (burn 1/16, poison 1/8), and they no longer stack. Toxic builds up more damage every turn. Fire types cannot be burned, and Poison and Steel types cannot be poisoned.',
      'Burn and poison now work like the main games. They only land with the real chance of the move (Ember burns 10% of the time, Sludge and Poison Sting poison 30%), they take a fraction of the max HP of the enemy each turn (burn 1/16, poison 1/8), and they no longer stack. Toxic builds up more damage every turn. Fire types cannot be burned, and Poison and Steel types cannot be poisoned.'],

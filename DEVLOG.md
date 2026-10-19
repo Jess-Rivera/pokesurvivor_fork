@@ -261,3 +261,11 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - VERIFIED: node --check on 7 files; docs/proposals/status-sliceA-harness.js ALL PASS against the real files. NOT run in a browser.
 - NEXT: Jess commits, then checks in dev.html?dev: G.Debug.ignite('burn') / ('poison') / ('toxic') on a crowd, then G.Log.print(30) for the DOT lines (% of max HP), and plays a Charmander run to feel the fire nerf. Then slice B design talk (ailment cards), then tune/damage-hp.
 - REMINDER: Jess commits and pushes (7 code files, harness, docs, changelog.js).
+
+## 2026-10-18 (night, Claude Desktop), status rework slice B APPLIED (UNCOMMITTED, not playtested)
+- WHAT: slice A was committed first (reflog). Slice B: the Ailment Chance upgrade card (+10 points per stack, cap 100%, 6 eligible moves), DoT strength follows the damage pool (dotMul), and a one-line ailment summary per move on the team sheet. Jess asked what "+10 points" means (answered: percentage points added flat), then approved +10 and decisions 2 and 3.
+- BUILT: kinds.js (ailmentChance key on all damage kinds), mechanics.js (card, reasons, text, preview, ailmentText), moves.js (derive clamp, dotMul), enemy.js (burnMul, poisonMul, strongest source wins), combat.js (procAilments passes the multiplier), sheet.js + css (ailment line, also in Apply preview), changelog entry (parses). New docs/proposals/status-sliceB-harness.js.
+- FOUND: buff moves first showed "Has no burn chance" as their reason (kind has no key); fixed to "Has no ailment". The slice 2a harness no longer loads (stub lacks G.U.TYPE_COLOR since 2c); not caused by this slice.
+- VERIFIED: node --check on 6 files; slice B harness ALL PASS; slice 2b, 2c and A harnesses ALL PASS. NOT run in a browser.
+- NEXT: Jess commits, opens dev.html?dev: G.Debug.give('ember'), level up until an Ailment Chance card shows up (or G.Debug.stack('ailchance', 3)), look at the team sheet line and the Apply preview. Then tune/damage-hp (after he has felt the fire nerf) or the slice C design talk (control statuses).
+- REMINDER: Jess commits and pushes (6 code files, css, harness, docs, changelog.js).

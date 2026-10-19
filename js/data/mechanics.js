@@ -24,6 +24,18 @@
 G.Mechanics = (() => {
   const TWO_PI = 6.2832;
 
+  // Burn / poison flags stand for the ailment ('trap' moves such as Fire Spin ride on burn until slice C).
+  const ailOf = m => (m.poison ? 'poison' : m.burn ? 'burn' : null);
+  const ailName = m => (ailOf(m) === 'poison' ? 'Poison' : 'Burn');
+  /** Why `m` cannot take Ailment Chance (a reason string), or null when it can. */
+  function ailNeeds(m, base) {
+    if (!ailOf(m)) return !m.ailment || m.ailment === 'none' ? 'has no ailment' : 'its ailment is not wired yet';
+    if (m.cat === 'status') return 'always applies';
+    if (!(base > 0)) return 'no chance to raise';
+    if (base >= 100) return 'chance already 100%';
+    return null;
+  }
+
   const ALL = [
     // --- DPS ---
     { id: 'effect',   label: 'Increased Effect', cls: 'DPS', mode: 'inc',  step: 0.10, live: true,
@@ -35,6 +47,9 @@ G.Mechanics = (() => {
       keyFor: () => 'count', needs: () => null },
     { id: 'firerate', label: 'Fire Rate',        cls: 'DPS', mode: 'rate', step: 0.15, live: true,
       keyFor: () => 'rate', needs: () => null },
+    // Percentage POINTS added to the move's burn / poison chance (a multiplier on a 10% chance would be worthless); capped at 100.
+    { id: 'ailchance', label: 'Ailment Chance',  cls: 'DPS', mode: 'add',  step: 10,   live: true,
+      keyFor: () => 'ailmentChance', needs: (m, base) => ailNeeds(m, base) },
     // --- Coverage ---
     { id: 'pierce',   label: 'Pierce',           cls: 'Coverage', mode: 'add', step: 1, live: true,
       keyFor: () => 'pierce', needs: () => null },
@@ -122,11 +137,13 @@ G.Mechanics = (() => {
       case 'area':     return G.Kinds.noun(m.kind, 'area', 'Area');
       case 'speed':    return G.Kinds.noun(m.kind, 'speed', 'Projectile Speed');
       case 'range':    return 'Range';
+      case 'ailchance': return ailName(m) + ' Chance';
       case 'stacks':   return 'Max Stack';
       default:         return mech.label;
     }
   }
   function text(m, mech) {
+    if (mech.id === 'ailchance') return '+' + mech.step + ' points ' + ailName(m) + ' Chance';
     return (mech.mode === 'add' ? '+' + mech.step : '+' + Math.round(mech.step * 100) + '%') + ' ' + noun(m, mech);
   }
 
@@ -139,6 +156,7 @@ G.Mechanics = (() => {
     c.mods[mech.id] = (c.mods[mech.id] || 0) + 1;
     G.Moves.derive(c);
     const next = c[key];
+    if (mech.id === 'ailchance') return f(base) + '% to ' + f(next) + '%';
     if (mech.id === 'effect' || mech.scoped) return key === 'amount' ? 'Potency ' + f(base * 100) + '% to ' + f(next * 100) + '% per stack' : 'Power ' + f(base) + ' to ' + f(next);
     if (mech.id === 'recharge') return f(base) + ' s to ' + f(next) + ' s';
     if (mech.id === 'firerate') return 'shoots every ' + f(base) + ' s to ' + f(next) + ' s';
@@ -153,10 +171,33 @@ G.Mechanics = (() => {
     if (/^power 0/.test(w)) return 'Does no damage';
     if (/^arc already/.test(w)) return 'Arc is already 360\u00b0';
     if (/^knockback/.test(w)) return 'Has no knockback';
+    if (/^kind has no ailmentChance/.test(w)) return 'Has no ailment';     // buff kinds never roll one
+    if (/^always applies/.test(w)) return 'Always applies';
+    if (/^has no ailment/.test(w)) return 'Has no ailment';
+    if (/^its ailment/.test(w)) return 'Ailment not in the game yet';
+    if (/^chance already/.test(w)) return 'Chance is already 100%';
+    if (/^no chance/.test(w)) return 'No chance to raise';
     if (/^not a /.test(w)) return w.charAt(0).toUpperCase() + w.slice(1);
     if (/^(kind|move) has no/.test(w)) return 'Has no ' + noun(m, mech).toLowerCase();
     return w;
   }
 
-  return { ALL, SCOPED, STATS, STAT_BY, BY_ID, check, eligibleFor, text, noun, preview, reason, TWO_PI };
+  /**
+   * One line about a move's burn / poison for the team sheet (chance, DoT per tick as % of max HP, ticks), built from
+   * the LIVE move so cards show up in it. '' for moves with no live ailment. Toxic (poison 2) rises by its first-tick amount
+   * every turn, so it has no flat total.
+   */
+  function ailmentText(m) {
+    const a = ailOf(m);
+    if (!a) return '';
+    const bad = a === 'poison' && m.poison >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : a];
+    const r = x => String(+(+x).toFixed(1));
+    const per = (bad ? S.step : S.frac) * 100 * G.Moves.dotMul(m);
+    const head = bad ? 'Bad poison' : a === 'poison' ? 'Poison' : 'Burn';
+    const when = m.cat === 'status' ? ' chance always' : ' chance ' + r(m.ailmentChance) + '% per hit';
+    if (bad) return head + when + ': ' + r(per) + '% max HP, rising by ' + r(per) + '% every ' + S.turn + ' s, up to ' + S.turns + ' times';
+    return head + when + ': ' + r(per) + '% max HP every ' + S.turn + ' s, ' + S.turns + ' times';
+  }
+
+  return { ALL, SCOPED, STATS, STAT_BY, BY_ID, check, eligibleFor, text, noun, preview, reason, ailmentText, TWO_PI };
 })();

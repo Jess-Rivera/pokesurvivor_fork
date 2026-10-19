@@ -8,9 +8,10 @@
  * (for example from PokeAPI) becomes upgradeable by getting a `kind` and the stat keys it has.
  *
  * Stat-key vocabulary (fixed, engine-owned):
- *   dmg cd count pierce speed radius width arc size life dur rate stacks amount knock
- * Keys the engine does not honor yet are NOT here (spread is a layout detail; slow, burn, poison,
- * homing, flinch, ailments, crit stage, drain, multi-hit wait for the status rework).
+ *   dmg cd count pierce speed radius width arc size life dur rate stacks amount knock ailmentChance
+ * Keys the engine does not honor yet are NOT here (spread is a layout detail; slow, homing, flinch,
+ * the other ailments, crit stage, drain, multi-hit wait for the status rework; burn and poison are live
+ * since slice A, and their chance, `ailmentChance`, is a key since slice B).
  *
  * `wkind` is the name used in docs/move_kind_rules.xlsx. Mend, Ward, Control and Field are in that
  * workbook but have no engine hook yet, so they are not here until they get one.
@@ -51,7 +52,11 @@ G.Kinds = (() => {
                   nouns: {} }
   };
 
-  const VOCAB = ['dmg', 'cd', 'count', 'pierce', 'speed', 'radius', 'width', 'arc', 'size', 'life', 'dur', 'rate', 'stacks', 'amount', 'knock'];
+  // Status rework slice B: combat.js procAilments rolls `ailmentChance` on every hit of every damage kind, so every damage kind
+  // lists it. Whether a given MOVE can take the Ailment Chance card is decided by the card (needs() in mechanics.js).
+  for (const k in BY) if (BY[k].payload === 'damage') BY[k].keys.push('ailmentChance');
+
+  const VOCAB = ['dmg', 'cd', 'count', 'pierce', 'speed', 'radius', 'width', 'arc', 'size', 'life', 'dur', 'rate', 'stacks', 'amount', 'knock', 'ailmentChance'];
 
   /** Does this kind's engine hook read `key`? */
   function hasKey(kind, key) { const k = BY[kind]; return !!k && k.keys.includes(key); }

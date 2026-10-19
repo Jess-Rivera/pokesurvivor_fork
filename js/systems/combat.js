@@ -99,8 +99,9 @@ G.Combat = (() => {
     r[key] = S.rollGap;
     const c = !m || m.cat === 'status' ? 1 : (m.ailmentChance == null ? 100 : m.ailmentChance) / 100;
     if (c < 1 && Math.random() >= c) return;
-    if (burn) e.applyBurn(burn, !!m && m.ailment === 'trap');
-    if (poison) e.applyPoison(poison);
+    const mul = G.Moves.dotMul(m);     // Power over base Power: damage cards strengthen the DoT (slice B)
+    if (burn) e.applyBurn(burn, !!m && m.ailment === 'trap', mul);
+    if (poison) e.applyPoison(poison, mul);
   }
 
   /** Type chart x weather for an attack of type `type` against `e`. */
