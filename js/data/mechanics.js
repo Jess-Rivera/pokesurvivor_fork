@@ -24,9 +24,10 @@
 G.Mechanics = (() => {
   const TWO_PI = 6.2832;
 
-  // Burn / poison flags stand for the ailment ('trap' moves such as Fire Spin ride on burn until slice C).
-  const ailOf = m => (m.poison ? 'poison' : m.burn ? 'burn' : null);
-  const ailName = m => (ailOf(m) === 'poison' ? 'Poison' : 'Burn');
+  // Burn / poison flags stand for their ailment; paralysis, freeze, sleep, confusion and trap come from the move's ailment name (G.Status, slice C).
+  const ailOf = m => (m.poison ? 'poison' : m.burn ? 'burn' : G.Status.isControl(m.ailment) ? m.ailment : null);
+  const AIL_NAME = { poison: 'Poison', burn: 'Burn', paralysis: 'Paralysis', freeze: 'Freeze', sleep: 'Sleep', confusion: 'Confusion', trap: 'Trap' };
+  const ailName = m => AIL_NAME[ailOf(m)] || 'Burn';
   /** Why `m` cannot take Ailment Chance (a reason string), or null when it can. */
   function ailNeeds(m, base) {
     if (!ailOf(m)) return !m.ailment || m.ailment === 'none' ? 'has no ailment' : 'its ailment is not wired yet';
@@ -190,6 +191,19 @@ G.Mechanics = (() => {
   function ailmentText(m) {
     const a = ailOf(m);
     if (!a) return '';
+    if (G.Status.isControl(a)) {
+      const C = G.Status.CONTROL[a], rr = x => String(+(+x).toFixed(1));
+      const wc = m.cat === 'status' ? ' chance always' : ' chance ' + rr(m.ailmentChance) + '% per hit';
+      const secs = Array.isArray(C.dur) ? C.dur[0] + '-' + C.dur[1] + ' s' : C.dur + ' s';
+      const eff = {
+        paralysis: () => 'half speed, 25% of attacks fizzle, ' + secs,
+        freeze: () => 'cannot act for ' + secs + ' (a Fire hit thaws it; bosses and elites only 25% as long)',
+        sleep: () => 'cannot act for ' + secs + ' (hits do not wake it; bosses and elites only 25% as long)',
+        confusion: () => 'wanders and 50% of attacks fizzle, ' + secs,
+        trap: () => rr(C.frac * 100 * G.Moves.dotMul(m)) + '% max HP every ' + G.Status.TURN + ' s, ' + C.turns + ' times, and moves at quarter speed'
+      }[a]();
+      return AIL_NAME[a] + wc + ': ' + eff;
+    }
     const bad = a === 'poison' && m.poison >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : a];
     const r = x => String(+(+x).toFixed(1));
     const per = (bad ? S.step : S.frac) * 100 * G.Moves.dotMul(m);

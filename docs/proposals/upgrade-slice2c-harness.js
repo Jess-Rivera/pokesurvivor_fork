@@ -8,7 +8,7 @@ const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'));
 const TYPES = ['normal','fire','water','grass','electric','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
 const tc = {}; TYPES.forEach(t => tc[t] = '#888');
 global.G = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), pickN(a, n) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b.slice(0, n); } }, Log: { on: false } };
-['js/core/stats.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
+['js/core/stats.js', 'js/systems/status.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
 let fail = 0; const bad = m => { fail++; if (fail < 25) console.log('FAIL', m); };
 const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 

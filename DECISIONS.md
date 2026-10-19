@@ -1,6 +1,15 @@
 # DECISIONS
 
 Standing design and workflow rulings. Once something is here, treat it as settled, do not relitigate it.
+
+## 2026-10-19, Status Slice C: control statuses on one shared engine [Jess decided]
+- One status engine (G.Status) for enemies, elites, bosses, gym leaders and the player; the player is a host in Slice C, so no separate boss or player status system.
+- Only one major status at a time: burn, poison (toxic), paralysis, sleep, freeze. Confusion and trap are not major and stack on top.
+- Bosses, elites, gym leaders AND the player: freeze and sleep last 25% as long, then a 10 s no-reapply window (prevents infinite stun-lock). Paralysis, slow, trap and confusion work at full strength.
+- Freeze 2 s (wild: then a 4 s refreeze window; Fire hit thaws it, never the same instant; Ice immune). Sleep 2-6 s, damage never wakes. Paralysis 10 s, x0.5 movement, 25% of attacks fizzle, Electric immune. Confusion 2-8 s, wander + 50% fizzle. Trap: own state, 1/16 max HP per 2 s turn for 4 turns, x0.25 movement, Ghost immune. A turn is 2 s.
+- Trapped and paralysed enemies still attack. Frozen and sleeping ones do not move or attack.
+- Fire Spin is a trap (no longer rides on burn); Lick paralyzes for real; the Ailment Chance card works on every wired ailment.
+- Slice E keeps: player status sources, cures, the Status support class, drowsy, daze, haste aura, HUD icons beyond the minimal chips, co-op sync.
 Add a dated entry whenever a durable decision is made.
 
 ---

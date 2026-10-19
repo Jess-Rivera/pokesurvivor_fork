@@ -12,6 +12,10 @@
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
+ *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
+ *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
+ *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
+ *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -118,7 +122,7 @@ G.Debug = (() => {
   /** Put a status on every enemy around the active Pokemon, for a one-minute check of the DoT numbers:
    *  G.Debug.ignite('burn' | 'poison' | 'toxic', radius = 600). Then G.Log.print(30) shows the DOT lines with % of max HP.
    *  Returns how many enemies were in range. Flags the run as tampered. ?dev only. */
-  function ignite(kind = 'burn', radius = 600) {
+  function status(kind = 'burn', radius = 600) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
     const pl = G.Game && G.Game.player;
     if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
@@ -128,10 +132,36 @@ G.Debug = (() => {
       if (e.remote) continue;
       if (kind === 'burn') e.applyBurn(1);
       else if (kind === 'toxic') e.applyPoison(2);
-      else e.applyPoison(1);
+      else if (kind === 'poison') e.applyPoison(1);
+      else if (G.Status.isControl(kind)) e.applyStatus(kind);
+      else { console.warn('[Debug] unknown status: ' + kind); return 0; }
     }
     return list.length;
   }
+  const ignite = status;
+
+  /** The same statuses on the active Pokemon. Returns the result ('ok' | 'refresh' | 'immune' | 'blocked' | 'window'). Flags the run as tampered. ?dev only. */
+  function statusSelf(kind = 'burn') {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return null; }
+    G.Game.debugMaxed();
+    if (kind === 'burn' || kind === 'poison' || kind === 'toxic') return G.Status.applyDot(pl, kind);
+    if (G.Status.isControl(kind)) return G.Status.apply(pl, kind);
+    console.warn('[Debug] unknown status: ' + kind);
+    return null;
+  }
+
+  /** Scale every wild spawn by k (0 = none: drip, tides, bursts and elites all stop; 1 = normal). Enemies already alive stay. Flags the run as tampered. ?dev only. */
+  function spawn(k = 1) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    if (G.Game && G.Game.debugMaxed) G.Game.debugMaxed();
+    const v = G.Spawner.debugRate(k);
+    console.log('[Debug] spawn rate x' + v + (v === 0 ? ' (spawning stopped; G.Debug.spawnOn() resumes)' : ''));
+    return v;
+  }
+  const noSpawn = () => spawn(0);
+  const spawnOn = () => spawn(1);
 
   /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
   function stat(id, n = 1, idx) {
@@ -192,5 +222,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, statusSelf, spawn, noSpawn, spawnOn };
 })();

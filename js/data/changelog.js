@@ -6,6 +6,19 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Control statuses', 'Control statuses'], new: [
+    ['Paralysis, freeze, sleep, confusion and trap are in. Paralysis halves speed and makes a quarter of attacks fizzle; frozen and sleeping Pokémon cannot move or attack; confused ones wander and half their attacks fizzle; trapped ones take damage over time and crawl.',
+     'Paralysis, freeze, sleep, confusion and trap are in. Paralysis halves speed and makes a quarter of attacks fizzle; frozen and sleeping Pokémon cannot move or attack; confused ones wander and half their attacks fizzle; trapped ones take damage over time and crawl.'],
+    ['Elites, gym leaders and your own Pokémon are hit by the same statuses. Freeze and sleep last only a quarter as long on them, then they cannot be frozen or put to sleep again for 10 seconds.',
+     'Elites, gym leaders and your own Pokémon are hit by the same statuses. Freeze and sleep last only a quarter as long on them, then they cannot be frozen or put to sleep again for 10 seconds.'],
+    ['Only one of burn, poison, paralysis, sleep and freeze can be on a Pokémon at a time. Electric types resist paralysis, Ice types resist freeze, Ghost types resist trap, and a Fire hit thaws ice.',
+     'Only one of burn, poison, paralysis, sleep and freeze can be on a Pokémon at a time. Electric types resist paralysis, Ice types resist freeze, Ghost types resist trap, and a Fire hit thaws ice.'],
+    ['The Ailment Chance card now works on moves that paralyze, freeze or confuse, and your active status shows above your health bar.',
+     'The Ailment Chance card now works on moves that paralyze, freeze or confuse, and your active status shows above your health bar.'],
+  ], chg: [
+    ['Fire Spin now traps instead of burning, and Lick paralyzes for real instead of just slowing.',
+     'Fire Spin now traps instead of burning, and Lick paralyzes for real instead of just slowing.'],
+  ] },
   { d: '2026-10-19', title: ['Gym 1: Brock', 'Gym 1: Brock'], new: [
     ['A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.',
      'A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.'],

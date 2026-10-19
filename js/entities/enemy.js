@@ -88,6 +88,8 @@
       this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
       this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
       this.ailRoll = null;
+      // Control statuses (slice C, see G.Status): major (paralysis | freeze | sleep), confusion, trap, and the hard-CC no-reapply windows.
+      this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null;
       this.lavaTick = 0;
       this.kx = 0; this.ky = 0;
       this.touchCd = 0;
@@ -213,6 +215,7 @@
      *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
     applyBurn(lv = 1, ignoreImmune = false, mul = 1) {
       if (!ignoreImmune && this.statusImmune('burn')) { this.immuneText(); return; }
+      if (G.Status.blocked(this, 'burn')) return;           // one major status at a time (slice C)
       if (this.remote) { G.Coop.status(this, 'b', 1); return; }
       const S = G.Enemies.STATUS.burn;
       if (this.burn <= 0) { this.burn = 1; this.burnTick = S.turn; this.burnMul = mul; }
@@ -223,6 +226,7 @@
     applyPoison(lv = 1, mul = 1) {
       const bad = lv >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
       if (this.statusImmune(bad ? 'toxic' : 'poison')) { this.immuneText(); return; }
+      if (G.Status.blocked(this, bad ? 'toxic' : 'poison')) return;     // one major status at a time (slice C)
       if (this.remote) { G.Coop.status(this, 'p', bad ? 2 : 1); return; }
       const was = this.poison;
       if (was <= 0) { this.poisonTick = S.turn; this.poisonMul = mul; }
@@ -230,6 +234,12 @@
       if (bad && was !== 2) { this.poison = 2; this.poisonN = 0; }
       else if (!bad && was <= 0) this.poison = 1;
       this.poisonLeft = Math.max(this.poisonLeft, S.turns);
+    }
+
+    /** Control statuses: 'paralysis' | 'freeze' | 'sleep' | 'confusion' | 'trap' (see G.Status). Co-op copies are not synced yet (deferred hook). */
+    applyStatus(kind, mul = 1) {
+      if (this.remote) return 'none';
+      return G.Status.apply(this, kind, mul);
     }
 
     die() {
@@ -375,9 +385,18 @@
         for (const k in this.ailRoll) { if ((this.ailRoll[k] -= dt) <= 0) delete this.ailRoll[k]; else any = true; }
         if (!any) this.ailRoll = null;
       }
+      G.Status.tick(this, dt);
       if (this.dead) return;
       // An excess wild unit leaving for an elite (Elites.trim): it walks away from you, harmless, until the manager removes it off screen.
       if (this.leaving) { this.leaveMove(dt, pl); return; }
+      // Frozen or asleep (G.Status): no movement and no attacks; only knockback it already had keeps sliding it.
+      if (G.Status.stunned(this)) {
+        this.x += this.kx * dt; this.y += this.ky * dt;
+        this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+        if (!this.flying) G.World.collide(this);
+        this.anim.loop('Idle');
+        return;
+      }
 
       // --- terreno ---
       let terrainMul = 1;
@@ -391,8 +410,9 @@
         } else if (le.slow) terrainMul = le.slow < 0.5 ? 0.45 : 0.55;
       }
 
-      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types);
+      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types) * G.Status.speedMul(this);
       let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
+      if (this.stCnf) [dx, dy] = G.Status.wander(this, dx, dy);     // confusion: the heading drifts
       const dist = G.U.dist(this.x, this.y, pl.x, pl.y);
       const band = this.bandOf(), s = band ? this.screenDist(pl) : 0;     // spacing band (slice 1b)
       // Treasure imp: it flees from you (zigzagging) as soon as you approach.
@@ -503,7 +523,7 @@
           this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate
           if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
             this.shotCd = this.def.shotCd || 2;
-            this.special(pl, ddx, ddy);
+            if (!G.Status.fizzle(this)) this.special(pl, ddx, ddy);      // paralysis / confusion: the attempt can fizzle
           }
         }
       }
@@ -582,6 +602,7 @@
         if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
         else if (dist < 300) { vx = -ddy * spd * circle * ai.side; vy = ddx * spd * circle * ai.side; }   // te rodea
       }
+      if (ai.cd <= 0 && G.Status.fizzle(this)) ai.cd = 1;       // paralysis / confusion: the attempt fails, it tries again in a second
       if (ai.cd <= 0 && this.gym) {
         const id = this.gymPick(dist);
         if (id) this.gymStart(id, pl); else ai.cd = 0.3;
@@ -1197,6 +1218,16 @@
         ctx.globalAlpha = 0.45;
         ctx.fillStyle = this.burn > 0 || (this.net && this.net.st & 1) ? '#ff8a3d' : '#c86bdc';
         ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.2, this.r * 0.5, 0, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+
+      // Control statuses (slice C): a colored ring under the feet, like burn and poison.
+      const cs = this.stMajor ? G.Status.CONTROL[this.stMajor.k] : this.stTrap ? G.Status.CONTROL.trap : this.stCnf ? G.Status.CONTROL.confusion : null;
+      if (cs) {
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = cs.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832); ctx.stroke();
         ctx.restore();
       }
 

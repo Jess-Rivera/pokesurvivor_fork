@@ -14,7 +14,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   DEX_BY: { 1: { name: 'Normie', types: ['normal'] } }, DEX: [],
   Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemies.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
+['js/core/stats.js', 'js/data/kinds.js', 'js/systems/status.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemies.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 const Enemy = G.Enemy || (G.Enemies && G.Enemies.Enemy) || G.Entities && G.Entities.Enemy;
 Enemy.prototype.die = function () { this.dead = true; };
@@ -29,7 +29,7 @@ const stack = (m, id, n) => { let k = 0; for (let i = 0; i < n; i++) if (G.Moves
 // 1. who can take it: exactly the six damage moves with a live burn / poison and a chance under 100; reasons for the rest
 { const ok = [], why = {};
   for (const d of G.Moves.ALL) { const m = inst(d.id), c = M.check(m, AC); if (c.ok) ok.push(d.id); else (why[M.reason(m, AC)] = why[M.reason(m, AC)] || []).push(d.id); }
-  const want = ['ember', 'flamethrower', 'flame-wheel', 'heat-wave', 'poison-sting', 'sludge'].sort();
+  const want = ['ember', 'flamethrower', 'flame-wheel', 'heat-wave', 'poison-sting', 'sludge', 'thunder-shock', 'discharge', 'thunderbolt', 'body-slam', 'lick', 'confusion', 'psybeam', 'ice-beam', 'powder-snow'].sort();   // slice C: the control ailments are wired too
   if (JSON.stringify(ok.slice().sort()) !== JSON.stringify(want)) bad('eligible set: ' + ok.sort());
   const rs = r => (why[r] || []);
   if (!rs('Chance is already 100%').includes('fire-spin')) bad('fire-spin should be capped at 100%');
@@ -37,9 +37,9 @@ const stack = (m, id, n) => { let k = 0; for (let i = 0; i < n; i++) if (G.Moves
   if (!rs('Has no ailment').includes('tackle')) bad('tackle should say Has no ailment');
   const buffs = G.Moves.ALL.filter(d => G.Kinds.BY[d.kind] && G.Kinds.BY[d.kind].payload === 'buff').map(d => d.id);
   for (const id of buffs) if (!rs('Has no ailment').includes(id)) bad('buff move ' + id + ' reason: ' + M.reason(inst(id), AC));
-  const unw = G.Moves.ALL.filter(d => d.ailment && !['none', 'burn', 'poison', 'trap'].includes(d.ailment) && !d.burn && !d.poison).map(d => d.id);
+  const unw = G.Moves.ALL.filter(d => d.ailment && !['none', 'burn', 'poison', 'trap', 'paralysis', 'freeze', 'sleep', 'confusion'].includes(d.ailment) && !d.burn && !d.poison).map(d => d.id);
   for (const id of unw) { const r = M.reason(inst(id), AC); if (r !== 'Ailment not in the game yet') bad(id + ' (' + G.Moves.BY_ID[id].ailment + ') reason: ' + r); }
-  console.log('1 eligibility: 6 moves (' + ok.join(', ') + ');', Object.keys(why).map(k => k + ' x' + why[k].length).join(', ')); }
+  console.log('1 eligibility: ' + ok.length + ' moves (' + ok.join(', ') + ');', Object.keys(why).map(k => k + ' x' + why[k].length).join(', ')); }
 
 // 2. the step: +10 points, cap 100, clamp, text, preview
 { const e = inst('ember'), s = inst('sludge');
@@ -89,7 +89,8 @@ const rate = (id, n, N = 40000) => { let hit = 0; const m = inst(id); stack(m, '
 { const T = id => M.ailmentText(inst(id));
   const want = { ember: 'Burn chance 10% per hit: 6.3% max HP every 2 s, 4 times', sludge: 'Poison chance 30% per hit: 12.5% max HP every 2 s, 4 times',
     toxic: 'Bad poison chance always: 6.3% max HP, rising by 6.3% every 2 s, up to 8 times', 'will-o-wisp': 'Burn chance always: 6.3% max HP every 2 s, 4 times',
-    'fire-spin': 'Burn chance 100% per hit: 6.3% max HP every 2 s, 4 times', tackle: '' };
+    'fire-spin': 'Trap chance 100% per hit: 6.3% max HP every 2 s, 4 times, and moves at quarter speed', tackle: '',
+    'thunder-shock': 'Paralysis chance 10% per hit: half speed, 25% of attacks fizzle, 10 s' };
   for (const id in want) if (T(id) !== want[id]) bad('ailment line ' + id + ': ' + JSON.stringify(T(id)));
   const m = inst('ember'); stack(m, 'ailchance', 5); stack(m, 'effect', 3);
   if (M.ailmentText(m) !== 'Burn chance 60% per hit: 8.1% max HP every 2 s, 4 times') bad('scaled line: ' + M.ailmentText(m));

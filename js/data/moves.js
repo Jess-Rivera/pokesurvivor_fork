@@ -60,7 +60,7 @@
 
     { id: 'fire-spin', name: 'Fire Spin', type: 'fire', kind: 'orbit', cat: 'special', ailment: 'trap', ailmentChance: 100, flinch: 0, statChance: 0,
       desc: 'Prevents the target from fleeing and inflicts damage for 2-5 turns.',
-      cd: 0.30, dmg: 35, count: 3, radius: 62, speed: 2.4, size: 9, burn: 1 },
+      cd: 0.30, dmg: 35, count: 3, radius: 62, speed: 2.4, size: 9 },
 
     { id: 'heat-wave', name: 'Heat Wave', type: 'fire', kind: 'nova', cat: 'special', ailment: 'burn', ailmentChance: 10, flinch: 0, statChance: 0,
       desc: 'Has a chance to burn the target.',
@@ -211,7 +211,7 @@
     // ---------------- FANTASMA ----------------
     { id: 'lick', name: 'Lick', type: 'ghost', kind: 'melee', cat: 'physical', ailment: 'paralysis', ailmentChance: 30, flinch: 0, statChance: 0,
       desc: 'Has a chance to paralyze the target.',
-      cd: 0.48, dmg: 30, radius: 48, arc: 1.8, slow: 0.4 },
+      cd: 0.48, dmg: 30, radius: 48, arc: 1.8 },
 
     { id: 'shadow-ball', name: 'Shadow Ball', type: 'ghost', kind: 'projectile', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20,
       desc: 'Has a chance to lower the target\'s Special Defense by one stage.',

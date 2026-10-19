@@ -37,12 +37,15 @@ G.Combat = (() => {
 
     m.t -= dt;
     if (m.t > 0) return;
+    // Frozen or asleep (G.Status): nothing casts until it wears off; the move stays ready.
+    if (G.Status.stunned(pl)) { m.t = 0.05; return; }
     // Attacks that need a target wait to have one (do not waste the animation on the air).
     if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m))) {
       m.t = 0.05;
       return;
     }
     m.t = Math.max(0.05, m.cd * pl.cdMul);
+    if (G.Status.fizzle(pl)) return;          // paralysis / confusion: the cast fails and the cooldown is still spent
     pl.cast(m);
     if (G.Coop.active) G.Coop.cast(pl, m);
     // Link: its icon flashes in the HUD when cast (one that explodes stuck to the
@@ -90,9 +93,10 @@ G.Combat = (() => {
 
   /** Roll the ailments of a hit (status rework, slice A). Chance = the move's PokeAPI ailmentChance (status moves always apply).
    *  A move rolls at most once per STATUS.rollGap seconds per target, so a multi-pellet cast, or a trail / orbit / aura tick, is ONE
-   *  roll. Fire Spin (ailment 'trap') rides on the burn flag as its trap damage, so it bypasses the Fire immunity. */
+   *  roll. Control ailments (paralysis, freeze, sleep, confusion, trap) are read from the move's ailment name and go through G.Status. */
   function procAilments(e, burn, poison, m) {
-    if (!burn && !poison) return;
+    const ctl = m && G.Status.isControl(m.ailment) ? m.ailment : null;     // paralysis | freeze | sleep | confusion | trap (slice C)
+    if (!burn && !poison && !ctl) return;
     const S = G.Enemies.STATUS, key = (m && (m.id || m.type)) || 'x';
     const r = e.ailRoll || (e.ailRoll = {});
     if (r[key] > 0) return;
@@ -100,8 +104,9 @@ G.Combat = (() => {
     const c = !m || m.cat === 'status' ? 1 : (m.ailmentChance == null ? 100 : m.ailmentChance) / 100;
     if (c < 1 && Math.random() >= c) return;
     const mul = G.Moves.dotMul(m);     // Power over base Power: damage cards strengthen the DoT (slice B)
-    if (burn) e.applyBurn(burn, !!m && m.ailment === 'trap', mul);
+    if (burn) e.applyBurn(burn, false, mul);
     if (poison) e.applyPoison(poison, mul);
+    if (ctl) e.applyStatus(ctl, mul);
   }
 
   /** Type chart x weather for an attack of type `type` against `e`. */
@@ -587,6 +592,7 @@ G.Combat = (() => {
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
+    G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
   }
 
@@ -712,6 +718,7 @@ G.Combat = (() => {
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
+        G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);
 
         if (!p.orb) {
@@ -732,9 +739,11 @@ G.Combat = (() => {
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
+      if (G.Status.stunned(e)) continue;        // frozen or asleep enemies do not hit
       // An active flanker only hits in its strike phase, and waits out your invulnerability instead of wasting the hit.
       if (e.fl && (e.fl.ph !== 'strike' || pl.invuln > 0)) continue;
       e.touchCd = 0.55;
+      if (G.Status.fizzle(e)) continue;         // paralysis / confusion: the strike fizzles
       e.strike(pl);
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;

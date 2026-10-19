@@ -1,7 +1,7 @@
 // Status rework slice A, offline checks (Node only). Usage from the repo root:  node docs/proposals/status-sliceA-harness.js .
 // Loads the REAL stats.js, enemies.js, moves.js, enemy.js and combat.js with stubbed engine globals and checks: the STATUS table,
 // type immunities, burn / poison / Toxic tick math, refresh rules, the chance roll (ailmentChance, status moves, throttle, multi-pellet),
-// Fire Spin's trap bypass, and the logger line. Rendering and the live game loop are NOT covered (no browser).
+// Fire Spin as a trap (slice C), and the logger line. Rendering and the live game loop are NOT covered (no browser).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -14,7 +14,7 @@ global.window = global; global.location = { search: '?dev' };
 const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), rand: () => 0.5, pickN: a => a },
   DEX_BY, DEX: [], Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/enemies.js', 'js/data/moves.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
+['js/core/stats.js', 'js/data/enemies.js', 'js/data/moves.js', 'js/systems/status.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 try { load('js/entities/enemy.js'); } catch (e) { console.log('enemy.js load failed:', e.message); process.exit(1); }
 try { load('js/systems/combat.js'); } catch (e) { console.log('combat.js load failed:', e.message); process.exit(1); }
 const Enemy = G.Enemy || (G.Enemies && G.Enemies.Enemy) || G.Entities && G.Entities.Enemy;
@@ -36,14 +36,13 @@ console.log('1 STATUS table: burn 1/16, poison 1/8, toxic N/16 cap 15; turn', S.
 // 2. immunities
 { const f = mk(2), t = mk(3), s = mk(4), n = mk(1);
   f.applyBurn(1); if (f.burn) bad('fire enemy got burned');
-  f.applyBurn(1, true); if (!f.burn) bad('trap bypass did not burn a fire enemy');
   f.applyPoison(1); if (!f.poison) bad('fire/flying enemy should be poisonable');
   t.applyPoison(1); t.applyPoison(2); if (t.poison) bad('poison/grass enemy got poisoned');
   t.applyBurn(1); if (!t.burn) bad('poison/grass enemy should burn');
   s.applyPoison(2); if (s.poison) bad('steel/psychic got badly poisoned');
-  n.applyBurn(1); n.applyPoison(1); if (!n.burn || n.poison !== 1) bad('normal enemy should take both');
+  n.applyBurn(1); n.applyPoison(1); if (!n.burn || n.poison) bad('one major at a time: poison must not stack on burn (slice C)');
   const w = mk(5); w.applyPoison(2); if (w.poison !== 2) bad('toxic not applied to a water enemy'); }
-console.log('2 immunities: fire vs burn, poison+steel vs poison/toxic, trap bypass');
+console.log('2 immunities: fire vs burn, poison+steel vs poison/toxic');
 
 // 3. burn math: 4 ticks of 1/16 max HP at 2 s, 8 s total, then clears
 { const e = mk(1, 160), log = []; e.applyBurn(1);
@@ -91,10 +90,10 @@ const N = 40000;
   const before = e.ailRoll.ember; run(e, 0.6, 0.05);
   if (e.ailRoll && e.ailRoll.ember > 0) bad('roll gap did not expire'); G.Combat.procAilments(e, 1, 0, m);
   console.log('7b throttle: 1000 same-frame hits = 1 roll; gap', before, 's, expires after 0.5 s'); }
-{ const fs_ = G.Moves.instance('fire-spin'); let ok = 0; for (let i = 0; i < 200; i++) { const e = mk(2); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (e.burn) ok++; }
+{ const fs_ = G.Moves.instance('fire-spin'); let ok = 0; for (let i = 0; i < 200; i++) { const e = mk(2); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (e.stTrap && !e.burn) ok++; }
   const em = G.Moves.instance('ember'); let blocked = 0; for (let i = 0; i < 2000; i++) { const e = mk(2); G.Combat.procAilments(e, em.burn, 0, em); if (e.burn) blocked++; }
-  if (ok !== 200) bad('fire spin should burn (trap) fire enemies, did ' + ok + '/200'); if (blocked) bad('ember burned a fire enemy');
-  console.log('7c fire enemy: Fire Spin trap burns it 200/200, Ember 0/2000 (immune)'); }
+  if (ok !== 200) bad('fire spin should trap (not burn) fire enemies, did ' + ok + '/200'); if (blocked) bad('ember burned a fire enemy');
+  console.log('7c fire enemy: Fire Spin traps it 200/200 (slice C: its own trap state, no burn), Ember 0/2000 (immune)'); }
 
 // 8. data
 { if (G.Moves.instance('toxic').poison !== 2 || G.Moves.instance('toxic-spikes').poison !== 2) bad('toxic / toxic-spikes should be poison 2');

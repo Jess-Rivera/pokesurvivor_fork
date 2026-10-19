@@ -6,7 +6,7 @@ const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'));
 global.G = { U: { TYPE_COLOR: new Proxy({}, { get: () => '#888' }), TYPE_NAME: new Proxy({}, { get: (_, k) => String(k) }), pickN(a, n) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b.slice(0, n); } }, Log: { on: false } };
-['js/core/stats.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
+['js/core/stats.js', 'js/systems/status.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(load);
 let fail = 0; const bad = m => { fail++; if (fail < 25) console.log('FAIL', m); };
 const cat = JSON.parse(fs.readFileSync(R + '/docs/move-catalogue-preview.json', 'utf8'));
 
