@@ -88,6 +88,22 @@ G.Combat = (() => {
     return { burn: m.burn || 0, poison: m.poison || 0, slow: m.slow || 0, knock: m.knock || 0, mtype: m.type };
   }
 
+  /** Roll the ailments of a hit (status rework, slice A). Chance = the move's PokeAPI ailmentChance (status moves always apply).
+   *  A move rolls at most once per STATUS.rollGap seconds per target, so a multi-pellet cast, or a trail / orbit / aura tick, is ONE
+   *  roll. Fire Spin (ailment 'trap') rides on the burn flag as its trap damage, so it bypasses the Fire immunity. */
+  function procAilments(e, burn, poison, m) {
+    if (!burn && !poison) return;
+    const S = G.Enemies.STATUS, key = (m && (m.id || m.type)) || 'x';
+    const r = e.ailRoll || (e.ailRoll = {});
+    if (r[key] > 0) return;
+    r[key] = S.rollGap;
+    const c = !m || m.cat === 'status' ? 1 : (m.ailmentChance == null ? 100 : m.ailmentChance) / 100;
+    if (c < 1 && Math.random() >= c) return;
+    const mul = G.Moves.dotMul(m);     // Power over base Power: damage cards strengthen the DoT (slice B)
+    if (burn) e.applyBurn(burn, !!m && m.ailment === 'trap', mul);
+    if (poison) e.applyPoison(poison, mul);
+  }
+
   /** Type chart x weather for an attack of type `type` against `e`. */
   function typeK(type, e) { return G.Types.mult(type, e.types) * G.Weather.mult(type); }
 
@@ -570,8 +586,7 @@ G.Combat = (() => {
     }
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
-    if (m.burn) e.applyBurn(m.burn);
-    if (m.poison) e.applyPoison(m.poison);
+    procAilments(e, m.burn, m.poison, m);
     if (m.slow) e.applySlow(m.slow);
   }
 
@@ -696,8 +711,7 @@ G.Combat = (() => {
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
-        if (p.burn) e.applyBurn(p.burn);
-        if (p.poison) e.applyPoison(p.poison);
+        procAilments(e, p.burn, p.poison, pm);
         if (p.slow) e.applySlow(p.slow);
 
         if (!p.orb) {
@@ -733,6 +747,6 @@ G.Combat = (() => {
     }
   }
 
-  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields,
+  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments,
            get fieldCount() { return fields.length; } };
 })();

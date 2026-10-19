@@ -72,8 +72,11 @@
 
       this.flash = 0;
       this.slow = 0; this.slowT = 0;
-      this.burn = 0; this.burnT = 0; this.burnTick = 0;
-      this.poison = 0; this.poisonT = 0; this.poisonTick = 0;
+      // Status (slice A, G.Enemies.STATUS): burn is 0/1; poison is 0 none, 1 poisoned, 2 badly poisoned (Toxic, N/16 per turn).
+      // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter, ailRoll = per-move roll gap.
+      this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
+      this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
+      this.ailRoll = null;
       this.lavaTick = 0;
       this.kx = 0; this.ky = 0;
       this.touchCd = 0;
@@ -178,13 +181,34 @@
       this.slow = Math.max(this.slow, factor);
       this.slowT = Math.max(this.slowT, dur);
     }
-    applyBurn(stacks = 1) {
-      if (this.remote) { G.Coop.status(this, 'b', stacks); return; }
-      this.burn = Math.min(8, this.burn + stacks); this.burnT = 3;
+    /** Mainline type immunity to a status ('burn' | 'poison' | 'toxic', see G.Enemies.STATUS). */
+    statusImmune(kind) {
+      const S = G.Enemies.STATUS[kind];
+      return !!S && this.types.some(t => S.immune.includes(t));
     }
-    applyPoison(stacks = 1) {
-      if (this.remote) { G.Coop.status(this, 'p', stacks); return; }
-      this.poison = Math.min(8, this.poison + stacks); this.poisonT = 4;
+    immuneText() { G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Immune', '#a3abb8'); }
+
+    /** Burn: one state; a re-hit refreshes the duration and leaves the tick timer alone (constant re-hits cannot stall it).
+     *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
+    applyBurn(lv = 1, ignoreImmune = false, mul = 1) {
+      if (!ignoreImmune && this.statusImmune('burn')) { this.immuneText(); return; }
+      if (this.remote) { G.Coop.status(this, 'b', 1); return; }
+      const S = G.Enemies.STATUS.burn;
+      if (this.burn <= 0) { this.burn = 1; this.burnTick = S.turn; this.burnMul = mul; }
+      else if (mul > this.burnMul) this.burnMul = mul;          // the strongest source wins while the state lasts
+      this.burnLeft = S.turns;
+    }
+    /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades. */
+    applyPoison(lv = 1, mul = 1) {
+      const bad = lv >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
+      if (this.statusImmune(bad ? 'toxic' : 'poison')) { this.immuneText(); return; }
+      if (this.remote) { G.Coop.status(this, 'p', bad ? 2 : 1); return; }
+      const was = this.poison;
+      if (was <= 0) { this.poisonTick = S.turn; this.poisonMul = mul; }
+      else if (mul > this.poisonMul) this.poisonMul = mul;
+      if (bad && was !== 2) { this.poison = 2; this.poisonN = 0; }
+      else if (!bad && was <= 0) this.poison = 1;
+      this.poisonLeft = Math.max(this.poisonLeft, S.turns);
     }
 
     die() {
@@ -293,15 +317,31 @@
 
       // --- estados ---
       if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slow = 0; }
+      // Burn and poison (slice A): a fraction of MAX HP per turn, one tick per turn, see G.Enemies.STATUS.
       if (this.burn > 0) {
-        this.burnT -= dt; this.burnTick -= dt;
-        if (this.burnTick <= 0) { this.burnTick = 0.5; this.dot('burn', 1.6 * this.burn * (1 + pl.level * 0.06), '#ff9a4d'); }
-        if (this.burnT <= 0) this.burn = 0;
+        this.burnTick -= dt;
+        if (this.burnTick <= 0) {
+          const S = G.Enemies.STATUS.burn;
+          this.burnTick += S.turn;
+          this.dot('burn', this.maxHp * S.frac * this.burnMul, S.color);
+          if (--this.burnLeft <= 0) this.burn = 0;
+        }
       }
-      if (this.poison > 0) {
-        this.poisonT -= dt; this.poisonTick -= dt;
-        if (this.poisonTick <= 0) { this.poisonTick = 0.6; this.dot('poison', this.maxHp * 0.012 * this.poison + 1, '#d47cf0'); }
-        if (this.poisonT <= 0) this.poison = 0;
+      if (this.poison > 0 && !this.dead) {
+        this.poisonTick -= dt;
+        if (this.poisonTick <= 0) {
+          const bad = this.poison === 2, S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
+          this.poisonTick += S.turn;
+          let frac = S.frac;
+          if (bad) { this.poisonN = Math.min(S.cap, this.poisonN + 1); frac = S.step * this.poisonN; }
+          this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
+          if (--this.poisonLeft <= 0) { this.poison = 0; this.poisonN = 0; }
+        }
+      }
+      if (this.ailRoll) {
+        let any = false;
+        for (const k in this.ailRoll) { if ((this.ailRoll[k] -= dt) <= 0) delete this.ailRoll[k]; else any = true; }
+        if (!any) this.ailRoll = null;
       }
       if (this.dead) return;
 

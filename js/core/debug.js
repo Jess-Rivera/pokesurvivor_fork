@@ -111,6 +111,24 @@ G.Debug = (() => {
     return k;
   }
 
+  /** Put a status on every enemy around the active Pokemon, for a one-minute check of the DoT numbers:
+   *  G.Debug.ignite('burn' | 'poison' | 'toxic', radius = 600). Then G.Log.print(30) shows the DOT lines with % of max HP.
+   *  Returns how many enemies were in range. Flags the run as tampered. ?dev only. */
+  function ignite(kind = 'burn', radius = 600) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    G.Game.debugMaxed();
+    const list = G.EnemyMgr.queryCircle(pl.x, pl.y, radius);
+    for (const e of list) {
+      if (e.remote) continue;
+      if (kind === 'burn') e.applyBurn(1);
+      else if (kind === 'toxic') e.applyPoison(2);
+      else e.applyPoison(1);
+    }
+    return list.length;
+  }
+
   /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
   function stat(id, n = 1, idx) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
@@ -138,5 +156,5 @@ G.Debug = (() => {
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat };
+  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
 })();

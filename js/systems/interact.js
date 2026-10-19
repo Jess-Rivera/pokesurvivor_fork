@@ -103,7 +103,7 @@ G.Interact = (() => {
     if (authority()) {
       for (const e of G.EnemyMgr.queryCircle(x, y, TRAP_R)) {
         if (e.remote) continue;
-        if (k === 0) { e.applyPoison(5); e.hurt(14 + lvl * 3, '#d47cf0'); }
+        if (k === 0) { e.applyPoison(2); e.hurt(14 + lvl * 3, '#d47cf0'); }
         else if (k === 1) { e.applySlow(0.65, 4.5); e.hurt(4, '#8bd94a'); }
         else e.hurt(90 + lvl * 18, '#ff7b3d', e.x - x, e.y - y, 220);
       }

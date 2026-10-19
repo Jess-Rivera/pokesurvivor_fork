@@ -80,7 +80,7 @@ G.Sheet = (() => {
       if (mech && n > 0) stacks.push(mech.label + ' +' + n);
     }
     const d = hitOf(pl, m);
-    return { raw: bits.join(' · '), hit: d == null ? '' : 'Hits for about ' + r1d(d), stacks: stacks.join(' · ') };
+    return { raw: bits.join(' · '), hit: d == null ? '' : 'Hits for about ' + r1d(d), stacks: stacks.join(' · '), ail: G.Mechanics.ailmentText(m) };
   }
 
   /** A copy of move `m` with one more stack of `mech`, rebuilt by the real derive(). */
@@ -134,7 +134,7 @@ G.Sheet = (() => {
     return groups.map((g, gi) => {
       const rows = g.map(m => {
         const t = moveLines(pl, m), n = G.Moves.stackTotal(m), col = G.U.TYPE_COLOR[m.type];
-        let cls = '', pv = '', raw = t.raw, hit = t.hit, key = '', tail = '';
+        let cls = '', pv = '', raw = t.raw, hit = t.hit, ail = t.ail, key = '', tail = '';
         if (card && card.type === 'mech') {
           const x = T && T.moves.find(v => v.m === m);
           const ok = !!(x && x.ok);
@@ -146,7 +146,7 @@ G.Sheet = (() => {
             const mech = card.mech, a = moveLines(pl, withStack(m, mech)), d0 = hitOf(pl, m), d1 = hitOf(pl, withStack(m, mech));
             pv = `<div class="pv">${E(G.Mechanics.text(m, mech))}: ${E(G.Mechanics.preview(m, mech))}</div>`;
             if (d0 != null && d1 != null) hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1);
-            raw = a.raw;
+            raw = a.raw; ail = a.ail;
           }
         } else if (card && card.type === 'stat') {
           const d0 = hitOf(pl, m), d1 = d0 == null ? null : withInc(pl, card.stat, () => hitOf(pl, m));
@@ -157,6 +157,7 @@ G.Sheet = (() => {
           <div class="txt"><div class="nm">${E(m.name)} <span class="type" style="background:${col}">${E(G.U.TYPE_NAME[m.type])}</span>${n ? ` <span class="tag-chip" style="background:${col}">+${n}</span>` : ''}</div>
             ${t.stacks ? `<div class="stk">${E(t.stacks)}</div>` : ''}
             <div class="ds">${E(raw)}</div>
+            ${ail ? `<div class="ail">${E(ail)}</div>` : ''}
             ${pv}${hit ? `<div class="hit">${E(hit)}</div>` : ''}${tail}
           </div>${key}</div>`;
       }).join('');

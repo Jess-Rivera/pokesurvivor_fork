@@ -976,6 +976,7 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
 .sh-move .stk { font-size: 13px; color: var(--gold); }
 .sh-move .ds { font-size: 13px; color: var(--muted); }
 .sh-move .hit { font-size: 13px; font-weight: 700; color: #9fe8ff; }
+.sh-move .ail { font-size: 13px; color: #ffb27a; }
 .sh-stats { align-items: center; }
 .sh-stats h3 { align-self: stretch; }
 .sh-hex { display: grid; place-items: center; }

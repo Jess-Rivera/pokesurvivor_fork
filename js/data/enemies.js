@@ -342,8 +342,25 @@ G.Enemies = (() => {
   // Bosses, fans and everything else call shoot() with the base life.
   const SHOT_LIFE_BASE = 2.4, SHOT_LIFE = { shooter: 4.8 };
 
+  // Status table (status rework, slice A). Damage over time is a fraction of the enemy's MAX HP per turn, from the mainline games:
+  // burn 1/16, poison 1/8, Toxic (badly poisoned) N/16 on turn N, N capped at 15 (PokeAPI: Toxic min/max turns = 15). One state per
+  // status; a re-hit only refreshes the duration. Every row is its own tuning knob.
+  //   frac / step   max-HP fraction per turn (toxic: step x the turn counter N, N capped at `cap`)
+  //   turn          seconds per turn. The faithful anchor is 0.5 s (one Tackle at PP 35); 2 s is a deliberate 4x discount because
+  //                 DoT works on a whole crowd at once with no aiming
+  //   turns         ticks one application lasts (a re-hit refreshes it and never resets the tick timer)
+  //   immune        enemy types that cannot get it (mainline type immunities; not in PokeAPI)
+  // rollGap: seconds before the same move may roll its ailment chance again on the same target (one roll per cast, and tick kinds
+  // such as trail, orbit and aura roll at most this often).
+  const STATUS = {
+    burn:   { frac: 1 / 16, turn: 2, turns: 4, immune: ['fire'],            color: '#ff9a4d' },
+    poison: { frac: 1 / 8,  turn: 2, turns: 4, immune: ['poison', 'steel'], color: '#d47cf0' },
+    toxic:  { step: 1 / 16, cap: 15, turn: 2, turns: 8, immune: ['poison', 'steel'], color: '#b44fd6' },
+    rollGap: 0.5
+  };
+
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY_SHARE, BANDS, SEEK, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY_SHARE, BANDS, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

@@ -161,7 +161,7 @@
 
     { id: 'toxic', name: 'Toxic', type: 'poison', kind: 'trail', cat: 'status', ailment: 'poison', ailmentChance: 0, flinch: 0, statChance: 0,
       desc: 'Badly poisons the target, inflicting more damage every turn.',
-      cd: 0.3, dmg: 0, radius: 26, dur: 3, poison: 1 },
+      cd: 0.3, dmg: 0, radius: 26, dur: 3, poison: 2 },
 
     // ---------------- TIERRA (extra) ----------------
     { id: 'bulldoze', name: 'Bulldoze', type: 'ground', kind: 'aura', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,
@@ -464,9 +464,20 @@
       let v = ((d[key] == null ? 0 : d[key]) + g.add) * (1 + g.inc);
       if (g.rate) v /= 1 + g.rate;
       if (key === 'arc') v = Math.min(v, M.TWO_PI);
+      if (key === 'ailmentChance') v = Math.min(v, 100);
       s[key] = v;
     }
     return s;
+  }
+
+  /**
+   * DoT strength of a move's burn / poison (status rework slice B): its current Power over its base Power, so every
+   * increased-damage source (Increased Effect, Type and Kind damage cards) strengthens the DoT too. Status moves (Power 0)
+   * stay at 1. Attack and Sp. Atk do not scale it (mainline DoT ignores attack).
+   */
+  function dotMul(m) {
+    const b = m && m.def && m.def.dmg;
+    return b > 0 && m.dmg > 0 ? m.dmg / b : 1;
   }
 
   /**
@@ -498,5 +509,5 @@
     return 'tackle';
   }
 
-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, startFor, derive, addStack, stackTotal };
+  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, startFor, derive, addStack, stackTotal, dotMul };
 })();
