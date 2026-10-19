@@ -238,7 +238,7 @@
       // level right now (shared run level, so the highest among the players).
       if (!this.boss && this.bx != null) {
         const lvl = Math.max(1, ...G.Game.everyone().map(p => p.level || 1));
-        this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul;
+        this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul * G.Spawner.xpBoost();
       }
       G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);

@@ -8,6 +8,13 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-18 (night, Claude Desktop) tune/damage: scalar bump, opening XP boost, elite gate APPLIED (UNCOMMITTED, not playtested)
+- WHAT: DMG_SCALAR 0.47 -> 1.0 (stats.js). Wild-kill XP x2 until the first boss slot, with a "3 Min XP boost!" banner (spawner.js reset/update, G.Spawner.xpBoost, one line in enemy.js die). Elite bump only after the first boss has spawned. changelog.js entry added (parses).
+- FOUND (two logs, 73 s Kanto and 3:49 region 2): the scalar landed (back-solved 1.01), neutral Ember is 4 to 5 hits to kill. Kills 0.27 to 0.40 per second against spawn demand 0.9 to 2.3, cap of 64 reached by 1:30, first offer at 1:07 and 1:25, 4 offers by 3:38. The XP bar rounds up (7/7 shows 13 s early). First boss shot does 31.6 (flat), one-shotting 30-36 HP mons.
+- DECIDED: opening damage is fine; early weakness stays; spawn cap idea dropped; canonical type chart agreed but ON HOLD.
+- NOT DONE: browser playtest of the boost and banner (only a stubbed logic check); canonical type chart; XP bar rounding.
+- WHERE WE STOPPED: Jess to play a normal 3-minute run; next chat reads first-offer time and G.Log.pacing(), then decides whether XP_BOOST 2.0 is right.
+
 ## 2026-10-18 (night) status slices A and B merged, playtest log read, tune/damage-hp next
 - WHAT: slice A (burn and poison with type immunities, 2 s turn) and slice B (Ailment Chance card, DoT follows the damage pool, ailment line on the team sheet) are committed; Jess merges feature/status-dot to main and cuts tune/damage-hp. Read a playtest log (Typhlosion L5, region 2, 3:06, 686 records).
 - FOUND: burn ticks at 6.3% of max HP every 2 s as designed; DoT was 93 of 1962 total damage (4.8%). Ember about 10 dmg/s. Magmar (boss, ~2450 HP, SpD 13, fire x0.6) took 12 damage total. Shielded Wooper absorbed a full hit. Kills per minute 28 / 70 / 14: the minute-2 drop is unexplained. Only 4 offers and 4 picks, incoming damage 68 over 35 hits.

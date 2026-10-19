@@ -5,6 +5,14 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-18, Opening pacing: XP boost and elite gate [Jess, applied, uncommitted, not playtested]
+- Jess's read: after DMG_SCALAR 1.0 the opening is fine on damage, and weak early Pokemon are by design (the lean start stays). The problem is XP cadence (first offer at 1:07 to 1:25, 4 offers in 3:38), not HP or damage.
+- Time-based spawn cap: discussed and DROPPED for now. It treats the symptom and would not raise the kill rate. Revisit only if the early swarm still feels unfair.
+- 2x XP for wild kills from 0:00 until the first boss slot (3:00), flat, with a "3 Min XP boost!" banner at run start. XP_BOOST is the tuning knob. XP_SCALAR is untouched.
+- Elites (the crowded-screen bump) only spawn after the first boss has spawned.
+- Canonical type chart (x2, x0.5, immune, no clamp): agreed in principle, ON HOLD at Jess's request. Needs before applying: immune must mean zero damage past the per-hit floors (floorHit in combat.js, Math.max(1) in Player.hurt), a rule for bosses that are immune to a whole team, and an optional "Immune" popup. Two logs show the chart change alone moves mean outgoing damage by about 0.6 to 3%, so it does not confound the scalar test.
+- Next: play a normal 3-minute run, note the first-offer time and read G.Log.pacing().
+
 ## 2026-10-18, Slice 1c design answered: shots, support crowd-seeking, contact gap, flanker [Jess]
 After the slice 1b playtest ("i really really like how they all play out") Jess answered the four fixes in chat. APPROVED "as written" and APPLIED 2026-10-18 (patched files byte-identical to the tested copies; offline simulation passes): docs/proposals/support-contact-flanker-proposal.md. Jess confirmed retreat = the same speed formula at 1.2, and kept FLANK.rest 1.5 s and the 1.15 retreat edge. Uncommitted code, not yet playtested.
 - Shots: for now ONLY the plain shooter's shot life doubles (2.4 s to 4.8 s, speed unchanged). Everything else stays. Jess and Claude will do the per-class "deeper dive" together later. Life is a per-class table (`SHOT_LIFE`) so bosses and fans are not affected.

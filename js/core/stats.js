@@ -71,7 +71,7 @@ G.Stats = (() => {
   // neutral denominator for things without a Def stat: destructible props AND status-cat
   // damaging moves (toxic/spikes/etc. have no phys/spec class, so they do not swing on an
   // enemy's Def/SpD split). See DECISIONS.md / BALANCE.md.
-  const DMG_SCALAR = 0.47;  // re-centered 2026-10-17 for canonical move power (median fork dmg 14 -> canon 60); tune by feel
+  const DMG_SCALAR = 1.0;   // re-centered 2026-10-17 for canonical move power (median fork dmg 14 -> canon 60); tune by feel
   const STAB = 1.5;
   const PROP_DEF = 50;
 
