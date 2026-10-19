@@ -9,8 +9,8 @@ G.CHANGELOG = [
   { d: '2026-10-19', title: ['Gym 1: Brock', 'Gym 1: Brock'], new: [
     ['A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.',
      'A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.'],
-    ['Beat the gym to earn the Boulder Badge: a guaranteed item, a free level, a Bond and a full revive for your whole team.',
-     'Beat the gym to earn the Boulder Badge: a guaranteed item, a free level, a Bond and a full revive for your whole team.'],
+    ['Beat the gym to earn the Boulder Badge: +10% Attack for your whole team for the rest of the run, a guaranteed item, a free level, a Bond and a full revive. The leader drops no XP.',
+     'Beat the gym to earn the Boulder Badge: +10% Attack for your whole team for the rest of the run, a guaranteed item, a free level, a Bond and a full revive. The leader drops no XP.'],
     ['Lose a gym fight and the run is over. After 2 minutes of fighting, the leader enrages and hits harder and harder.',
      'Lose a gym fight and the run is over. After 2 minutes of fighting, the leader enrages and hits harder and harder.'],
   ], chg: [

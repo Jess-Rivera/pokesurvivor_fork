@@ -89,6 +89,7 @@ Loop 1 uses the FIRST signature only, so the pilot is Geodude alone. Canon has T
 ### kanto-gym-1: Brock (rock)
 kind: gym
 badge: Boulder Badge
+boost: atk +10%   (run-long, whole team; stat is hp, atk, def, spa, spd or spe)
 signatures:
 1. Geodude
    stance: mixed

@@ -16,7 +16,10 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - TUNING after the first gym feel test: not threatening (Squirtle dual-weak and Charmander). Added per-gym power and tempo knobs (Brock 2.0 and 1.4) and a [Gym] fight readout; numbers in BALANCE.
 - Jess's diagnosis of the harmless feel: the leader's moves had no upgrades. Added authored upgrade stacks per gym move (same G.Moves.addStack rules as the player's cards, validated) and STAB; Brock's v1 stacks are in BALANCE. power and tempo knobs kept but neutral.
 - FEEL TEST ACCEPTED: at level 8 (the realistic level) Butterfree and Ghastly both found Brock tough but fair; he died once. Baseline kept.
-- NOT DONE: badge boost (stub), HP/damage tuning of Brock, other move kinds' boss forms, Kanto roster, Elite Four, Region Complete, cleanup list.
+- WIN PATH CHECKED offline (docs/proposals/gym-reward-harness.js, real rift.js / gym.js / enemy.js): gate persists, enter, leader spawns, kill -> level grant, team revive, Bond (and the offer on return), guaranteed item, 10 coins, boss XP burst, items pulled in, badge message, return after 5 s, no second gate. The real game.js cards / Bond screen / visuals are not covered.
+- SUPERSEDED (Jess, 2026-10-19): the gym leader drops NO XP (def.xp 0, die() skips dropXp for gyms); the win is a toast plus the guaranteed level (the normal level-up cards still open).
+- BADGE BOOST BUILT: Boulder Badge = +10% Attack for the whole team, benched members included. Player.badge + incOf(k) (stat cards plus badge) replace inc reads in moveFactor, maxHpAt, speed and hurt; sheet bonus shows it; G.Game.badgeBoost(stat, pct); gyms.js entry field boost { stat, pct } (validated). Toast: 'Boulder Badge earned! +10% Attack for the whole team, and a level up'. Reward harness updated (no XP orbs, boost atk:0.1); all three harnesses pass; NOT run in a browser.
+- NOT DONE: other badges' boosts, HP/damage tuning of Brock, other move kinds' boss forms, Kanto roster, Elite Four, Region Complete, cleanup list.
 - WHERE WE STOPPED: pilot built, waiting on the feel test.
 
 ## 2026-10-19 (Claude Desktop) feature/boss-rework: Overworld Elites built

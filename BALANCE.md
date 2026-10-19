@@ -196,3 +196,5 @@ feel with the interactive tuner over the real 966-species roster:
 
 ## 2026-10-18 — fix/attack-calc slice 3c (needs playtest)
 - Swap rule: independent cooldowns + 0.4 s hold. Swapping no longer speeds up cooldowns; banked moves fire on swap-in. Watch: does 0.4 s feel right, do dropped presses feel bad (buffer is the fix).
+
+- BADGE BOOST (2026-10-19): Boulder Badge +10% Atk for the whole team, same multiplier path as an Atk stat card (additive with cards). Leader XP is 0 (the free level replaces it).

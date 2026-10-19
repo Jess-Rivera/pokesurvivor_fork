@@ -12,7 +12,8 @@ G.Gyms = (() => {
   const TTK = 60;                 // target seconds of focused fire (Jess, 2026-10-19: about 60 s for the pilot)
   const ENRAGE_AFTER = 120;       // seconds after engagement
   const KANTO = [
-    { id: 'kanto-gym-1', leader: 'Brock', badge: 'Boulder Badge', arena: 'rock',
+    // boost: the badge's run-long team buff (mainline: Boulder = +10% Attack). stat is one of hp, atk, def, spa, spd, spe.
+    { id: 'kanto-gym-1', leader: 'Brock', badge: 'Boulder Badge', arena: 'rock', boost: { stat: 'atk', pct: 0.10 },
       signatures: [
         // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (shorter wind-up/recovery/cooldown). Both TUNE, default 1.
         { species: 'Geodude', dex: 74, stance: 'mixed', power: 1, tempo: 1, moves: [
@@ -31,6 +32,7 @@ G.Gyms = (() => {
   function validate(g) {
     const bad = [];
     if (!g.leader || !g.badge || !g.arena) bad.push('missing leader, badge or arena');
+    if (g.boost && (!['hp', 'atk', 'def', 'spa', 'spd', 'spe'].includes(g.boost.stat) || !(g.boost.pct > 0 && g.boost.pct <= 1))) bad.push('boost needs a stat (hp, atk, def, spa, spd, spe) and a pct in (0, 1]');
     if (!g.signatures || !g.signatures.length || g.signatures.length > 6) bad.push('signatures must be 1 to 6');
     for (const s of g.signatures || []) for (const k of ['power', 'tempo']) if (s[k] != null && !(s[k] > 0 && s[k] <= 5)) bad.push(s.species + ': ' + k + ' must be in (0, 5]');
     for (const s of g.signatures || []) {
@@ -52,5 +54,7 @@ G.Gyms = (() => {
     return bad;
   }
 
-  return { LEVEL_OFFSET, TTK, ENRAGE_AFTER, KANTO, listFor, validate };
+  const STAT_LABEL = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
+
+  return { STAT_LABEL, LEVEL_OFFSET, TTK, ENRAGE_AFTER, KANTO, listFor, validate };
 })();

@@ -4,7 +4,7 @@
  * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored catalog moves (G.Gyms). Losing (team wipe)
  * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps).
  * The arena itself is the rift arena (systems/rift.js); this module owns the schedule, the leader's def and the rewards.
- * Pilot scope: Kanto gym 1 (Brock). The badge run boost is a STUB. See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
+ * Pilot scope: Kanto gym 1 (Brock). The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
  */
 G.Gym = (() => {
   const FIRST_AT = 240, GAP = 240;       // seconds
@@ -23,7 +23,7 @@ G.Gym = (() => {
     if (gate || G.Rift.inArena || G.Rift.rift || beaten >= list().length || nextAt == null || t < nextAt) return;
     const entry = list()[beaten], sig = entry.signatures[0];
     const level = Math.round(G.Stats.levelForTime(t)) + G.Gyms.LEVEL_OFFSET;
-    gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, dex: sig.dex, species: sig.species, level };
+    gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, boost: entry.boost || null, dex: sig.dex, species: sig.species, level };
     if (!G.Rift.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
   }
 
@@ -57,7 +57,7 @@ G.Gym = (() => {
     const hp = G.Elites.hpFor(base, tEq, G.Gyms.TTK).hp;
     return {
       dex: sig.dex, name: mon.name, hp, spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
-      dmg: 20, xp: Math.round(400 + g.level * 30), behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
+      dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
       gym: { level: g.level, leader: g.leader, badge: g.badge, species: sig.species, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1, moves: sig.moves.map(m => Object.assign({}, m, { inst: buildMove(m) })), engagedAt: null }
     };
   }
@@ -76,16 +76,19 @@ G.Gym = (() => {
     return Math.max(0, G.Gyms.ENRAGE_AFTER - (now() - x.engagedAt));
   }
 
-  /** Badge package on a win (the item and the Bond come from the existing boss drop / rift win; see Rift.won). */
+  /** Badge package on a win: level, team revive, the run-long team boost. The item and the Bond come from the boss drop / rift win (Rift.won). */
   function onWin(g) {
     badges.push(g.badge);
     report('won');
     fight = null;
-    G.Game.grantLevels(1);                 // guaranteed level
+    G.Game.grantLevels(1);                 // guaranteed level (no XP is dropped; the leader pays a level, not orbs)
     G.Game.reviveTeam();                   // full team revive, fainted members included
-    // Run-long boost: STUB until the Bond rework / badge boost decision (Jess, 2026-10-19). Logged so it is visible in the console.
-    if (G.Log && G.Log.on) console.log('[Gym] ' + g.badge + ' earned: run boost is a stub, item/level/Bond/revive granted');
-    G.Spawner.say(g.badge + ' earned!', 3, true);
+    let boostText = '';
+    if (g.boost) {                         // the badge's run-long team buff (mainline Boulder Badge: +10% Attack)
+      G.Game.badgeBoost(g.boost.stat, g.boost.pct);
+      boostText = ' +' + Math.round(g.boost.pct * 100) + '% ' + G.Gyms.STAT_LABEL[g.boost.stat] + ' for the whole team,';
+    }
+    G.Spawner.say(g.badge + ' earned!' + boostText + ' and a level up', 3.6, true);
   }
 
   /** Back on the map after the arena: schedule the next gate and the next elite. */

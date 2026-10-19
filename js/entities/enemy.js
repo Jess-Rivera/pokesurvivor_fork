@@ -270,8 +270,9 @@
         G.Pickups.drop('heal', this.x + 24, this.y, 0);
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
         G.Elites.noteDeath(this);
-      } else
-      G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
+      }
+      else if (this.gym) { /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin) */ }
+      else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {

@@ -982,6 +982,8 @@ G.Game = (() => {
         if (pl.level !== before) for (const f of roster) if (f !== pl) f.syncLevel(pl.level);
       }
     },
+    /** Badge package: a run-long +pct on a stat for EVERY team member, benched ones included. */
+    badgeBoost(stat, pct) { for (const f of roster) f.addBadgeBoost(stat, pct); },
     /** Badge package: every team member back to 100% HP, fainted ones included. */
     reviveTeam() {
       for (const f of roster) { if (f.dead) f.revive(1); else f.hp = f.maxHp; }
