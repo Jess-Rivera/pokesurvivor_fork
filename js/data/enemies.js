@@ -60,7 +60,11 @@ G.Enemies = (() => {
   // Enemy HP/level/speed use the shared base-stats model in js/core/stats.js (G.Stats),
   // the SAME formulas as the player. enemyHp(baseHP, t) = HP at the level-for-run-time.
   // See DECISIONS.md and BALANCE.md.
-  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t));
+  // Opening discount: wild-enemy HP starts at OPENING_HP_START x the formula and rises linearly to 1.0 at the
+  // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
+  const OPENING_HP_START = 0.55;
+  const openingHpK = t => { const end = BOSS_SLOTS[0].at; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
+  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t)) * openingHpK(t);
   const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
 
   const H = (d, s) => G.U.hash(d, 7, s);
@@ -188,7 +192,7 @@ G.Enemies = (() => {
 
   // Share of the spawns each family gets inside a tier, whatever the species count (a 5-shooter cast no longer
   // means 5/9 shooters on screen). A family a tier lacks gives its share to the others pro rata. Status counts as support.
-  const FAMILY_SHARE = { melee: 0.45, range: 0.40, support: 0.15 };
+  const FAMILY_SHARE = { melee: 0.60, range: 0.30, support: 0.10 };   // was 0.45 / 0.40 / 0.15 until 2026-10-19 (ranged units were piling up, see BALANCE)
   const BAG_UNIT = 4;     // bag copies per weight point, so the shares survive rounding
 
   let cast = null;      // [{ from, list: [def] }]
@@ -360,9 +364,9 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY_SHARE, BANDS, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, BANDS, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
-    enemyHp, levelForTime,
+    enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
     get cast() { if (!cast) rollRun(); return cast; }
   };

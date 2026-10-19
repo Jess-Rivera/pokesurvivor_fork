@@ -6,6 +6,12 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['A gentler opening', 'A gentler opening'], chg: [
+    ['Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.',
+     'Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.'],
+    ['More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.',
+     'More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.'],
+  ] },
   { d: '2026-10-18', title: ['A faster start', 'A faster start'], new: [
     ['Every run now starts with a 3 Min XP boost: wild enemies give double XP until the first boss shows up, so your first level-ups come sooner.',
      'Every run now starts with a 3 Min XP boost: wild enemies give double XP until the first boss shows up, so your first level-ups come sooner.'],

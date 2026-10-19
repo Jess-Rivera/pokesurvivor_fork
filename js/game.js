@@ -738,6 +738,7 @@ G.Game = (() => {
     }
     time += dt;
     G.Log.t = time;
+    if (G.Log.on) G.Log.sample();
     if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
     handleSwap();
 

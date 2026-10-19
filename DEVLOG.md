@@ -8,6 +8,14 @@ Append an entry at the end of every session: what changed, what was decided, wha
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
+## 2026-10-19 (morning, Claude Desktop) tune/damage: opening enemy HP discount APPLIED (UNCOMMITTED, not playtested)
+- WHAT: wild-enemy HP x0.55 at 0:00 rising linearly to x1.0 at 3:00 (enemies.js, openingHpK inside enemyHp; one call site; boss HP untouched). enemies.js parses; the real stats.js check gives 13.2 / 21.7 / 33.2 / 46 HP for a base-65 enemy at 0:00 / 1:00 / 2:00 / 3:00. changelog.js entry added (parses).
+- ALSO APPLIED (same morning): spawn mix 0.45/0.40/0.15 -> 0.60/0.30/0.10 (FAMILY_SHARE in enemies.js, FAMILY now exported) and a MIX logger record every 5 s (log.js mix/sample, one line in game.js; stubbed run checked, parses). Jess does a one-minute feel test after each code change and does not send logs each time.
+- FOUND: compared with the original upstream code: early hits-to-kill 2.4 (rising to 4.3 at 1:00) vs ours 4 to 5, and about 3 to 4x faster early leveling (L5 near 1:00 vs 3:38 in our log). The ranged pile-up is real: about 90% of kills were melee-family against a 45% melee spawn share.
+- DECIDED: time-based fade, same window as the XP boost. Dash ability idea parked for its own design talk (Halls of Torment does not seem to have one per two controls guides).
+- NOT DONE: browser playtest of the XP boost, elite gate and HP discount together; ranged bands and cull at the cap (held until a MIX log shows whether the new ratio is enough); canonical type chart (on hold).
+- WHERE WE STOPPED: Jess to play a normal 3-minute run; read first-offer time, kills per second and the alive count from the log.
+
 ## 2026-10-18 (night, Claude Desktop) tune/damage: scalar bump, opening XP boost, elite gate APPLIED (UNCOMMITTED, not playtested)
 - WHAT: DMG_SCALAR 0.47 -> 1.0 (stats.js). Wild-kill XP x2 until the first boss slot, with a "3 Min XP boost!" banner (spawner.js reset/update, G.Spawner.xpBoost, one line in enemy.js die). Elite bump only after the first boss has spawned. changelog.js entry added (parses).
 - FOUND (two logs, 73 s Kanto and 3:49 region 2): the scalar landed (back-solved 1.01), neutral Ember is 4 to 5 hits to kill. Kills 0.27 to 0.40 per second against spawn demand 0.9 to 2.3, cap of 64 reached by 1:30, first offer at 1:07 and 1:25, 4 offers by 3:38. The XP bar rounds up (7/7 shows 13 s early). First boss shot does 31.6 (flat), one-shotting 30-36 HP mons.
