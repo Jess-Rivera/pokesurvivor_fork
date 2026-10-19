@@ -45,23 +45,28 @@ const pl = { level: 5, x: 600, y: 0, hp: 100, r: 10 };
 const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, true); e.flying = false; return e; };
 { const e = mk();
   if (!e.boss || !e.gym) bad('not a gym boss'); if (e.maxHp !== def.hp) bad('maxHp');
-  const mt = G.Moves.BY_ID['tackle'], mr = G.Moves.BY_ID['rock-throw'];
-  const ft = e.gymFactor(mt), fr = e.gymFactor(mr); if (!near(fr / ft, 50 / 40)) bad('power ratio ' + fr / ft);
+  const I = id => e.gym.moves.find(x => x.id === id).inst;
+  const mt = I('tackle'), mr = I('rock-throw');
+  // authored stacks went through the real upgrade rules: Effect +10% each, Count +1, Area/Arc/Size/Speed +15%, Recharge divides the cd
+  if (!near(mr.dmg, 50 * 1.3) || mr.count !== 3 || !near(mr.size, 9 * 1.15) || !near(mr.speed, 260 * 1.15) || !near(mr.cd, G.Moves.BY_ID['rock-throw'].cd / 1.3)) bad('Rock Throw stacks: ' + JSON.stringify([mr.dmg, mr.count, mr.size, mr.speed, mr.cd]));
+  if (!near(mt.dmg, 40 * 1.2) || !near(mt.radius, G.Moves.BY_ID['tackle'].radius * 1.15) || !near(mt.arc, G.Moves.BY_ID['tackle'].arc * 1.15)) bad('Tackle stacks: ' + JSON.stringify([mt.dmg, mt.radius, mt.arc]));
+  const ft = e.gymFactor(mt), fr = e.gymFactor(mr);
+  if (!near(fr / ft, (mr.dmg * 1.5) / mt.dmg)) bad('power ratio incl. STAB ' + fr / ft);
   if (e.atkFactor == null || e.atkCat !== 'physical') bad('contact factor / cat'); if (e.atkType !== 'normal') bad('contact type ' + e.atkType);
   // the player's Harden: 7% x stacks (cap 5) of damage cut, one shared 7 s timer refreshed by each cast, reduction capped at 80%
-  const hd = G.Moves.BY_ID['harden']; if (hd.amount !== 0.07 || hd.dur !== 7 || hd.stacks !== 5 || hd.stat !== 'def') bad('Harden catalog values changed: ' + JSON.stringify([hd.amount, hd.dur, hd.stacks, hd.stat]));
+  const hd = I('harden'); if (hd.amount !== 0.07 || !near(hd.dur, 7 * 1.3) || hd.stacks !== 6 || hd.stat !== 'def') bad('Harden values: ' + JSON.stringify([hd.amount, hd.dur, hd.stacks, hd.stat]));
   if (e.defCut() !== 1) bad('no buff, no cut');
   e.addBuff(hd.amount, hd.dur, hd.stacks); if (!near(e.defCut(), 0.93)) bad('1 stack ' + e.defCut());
-  for (let i = 0; i < 9; i++) e.addBuff(hd.amount, hd.dur, hd.stacks); if (!near(e.defCut(), 0.65)) bad('5 stacks cap ' + e.defCut());
-  const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 65)) bad('damage cut ' + taken);
-  e.buffTick(6.9); if (e.buff.n !== 5) bad('buff expired early'); e.buffTick(0.2); if (e.buff.n !== 0 || e.defCut() !== 1) bad('buff did not expire');
+  for (let i = 0; i < 9; i++) e.addBuff(hd.amount, hd.dur, hd.stacks); if (!near(e.defCut(), 0.58)) bad('6 stacks cap ' + e.defCut());
+  const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 58)) bad('damage cut ' + taken);
+  e.buffTick(hd.dur - 0.1); if (e.buff.n !== 6) bad('buff expired early'); e.buffTick(0.2); if (e.buff.n !== 0 || e.defCut() !== 1) bad('buff did not expire');
   // enrage clock (engaged by the hit above at clock 240)
   const t0 = e.gym.engagedAt; if (t0 !== 240) bad('engagement ' + t0);
   const f = s => { clock = t0 + s; return e.gymFactor(mt) / ft; };
   const r = [f(60), f(120), f(135), f(150), f(400)];
   if (!near(r[0], 1) || !near(r[1], 1) || !near(r[2], 1.5) || !near(r[3], 2) || !near(r[4], 2)) bad('enrage ramp ' + r);
   clock = 240;
-  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = player buff (1 stack -7%, 5 stacks -35%, 7 s), enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
+  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = player buff with its stacks (1 stack -7%, 6 stacks -42%, 9.1 s), STAB on Rock Throw, enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
 
 // 4. move picker
 { const e = mk(); e.ai = null; e.bossInit(); const cnt = {};
@@ -73,14 +78,15 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
 
 // 5. simulated fight through the real boss AI
 { const e = mk(); const seen = {}; let maxDef = 0; const origStart = e.gymStart.bind(e);
-  e.gymStart = function (id, p) { seen[id] = (seen[id] || 0) + 1; return origStart(id, p); };
+  let atRange = false;
+  e.gymStart = function (id, p) { seen[id] = (seen[id] || 0) + 1; if (atRange && id === 'tackle') bad('tackle STARTED at range'); return origStart(id, p); };
   let errs = [];
   for (let i = 0; i < 60 * 20; i++) {
     clock = 240 + i * 0.05;
+    atRange = i >= 640;       // a cast begun just before the switch may still be finishing
     e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 600 ? 55 : 420;      // 30 s up close, then 30 s at range (boss held in place to isolate the AI)
     try { pl.dead = false; pl.hurt = (...a) => hurts.push(a); e.update(0.05, pl); } catch (x) { errs.push(x.message); break; }
     maxDef = Math.max(maxDef, +(1 / e.defCut()).toFixed(2));
-    if (i >= 600 && e.ai.cast && e.ai.cast.id === 'tackle') bad('tackle cast at range');
   }
   const kinds = {}; hz.forEach(h => kinds[h.kind] = (kinds[h.kind] || 0) + 1);
   for (const id of Object.keys(seen)) if (!['tackle', 'rock-throw', 'harden'].includes(id)) bad('unauthored move ' + id);
@@ -88,11 +94,12 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   if (hz.some(h => h.atkFactor == null)) bad('a hazard without a ratio factor'); if (shots.some(s => s.atkFactor == null)) bad('a shot without a ratio factor');
   if (shots.some(s => s.mtype !== 'rock')) bad('shot type ' + shots.map(s => s.mtype)); if (hz.some(h => h.type !== 'normal')) bad('zone type');
   if (e.ai.fury) bad('fury should stay off');
-  const rt = G.Moves.BY_ID['rock-throw'], tk = G.Moves.BY_ID['tackle'];
-  if (shots.some(x => x.r !== rt.size || Math.hypot(x.vx, x.vy) < rt.speed - 1 || Math.hypot(x.vx, x.vy) > rt.speed + 1 || x.life !== rt.life || (x.pierce | 0) !== (rt.pierce | 0))) bad('Rock Throw shot differs from the player version');
+  const rt = e.gym.moves.find(x => x.id === 'rock-throw').inst, tk = e.gym.moves.find(x => x.id === 'tackle').inst;
+  if (shots.some(x => !near(x.r, rt.size) || Math.abs(Math.hypot(x.vx, x.vy) - rt.speed) > 1 || !near(x.life, rt.life) || (x.pierce | 0) !== (rt.pierce | 0))) bad('Rock Throw shot differs from the player version');
   if (!shots.every(x => x.vis && x.vis.id === 'rock-throw')) bad('shot visuals are not the move visuals');
-  if (!slashes.length) bad('no Tackle slash visual'); if (slashes.some(a => a[3] !== tk.radius + e.r || a[4] !== tk.arc)) bad('slash radius/arc differ from Tackle: ' + JSON.stringify(slashes[0].slice(3, 5)));
-  if (!hurts.length) bad('Tackle never hurt the player at point blank'); if (hurts.some(a => !near(a[0], e.gymFactor(tk), 0.3) || a[3].cat !== 'physical')) bad('tackle damage factor');
+  if (shots.length !== (seen['rock-throw'] || 0) * 3) bad('Rock Throw should fire 3 rocks per cast: ' + shots.length + ' vs ' + seen['rock-throw']);
+  if (!slashes.length) bad('no Tackle slash visual'); if (slashes.some(a => !near(a[3], tk.radius + e.r) || !near(a[4], tk.arc))) bad('slash radius/arc differ from Tackle: ' + JSON.stringify(slashes[0].slice(3, 5)));
+  if (!hurts.length) bad('Tackle never hurt the player at point blank'); if (hurts.some(a => !near(a[0], e.gymFactor(tk), 0.35) || a[3].cat !== 'physical')) bad('tackle damage factor');
   if (e.buff.n > 0 && Math.abs(e.defCut() - (1 - e.buff.n * 0.07)) > 1e-9) bad('buff math');
   e.ai.cast = null; e.gymRestore(); if (e.atkType !== 'normal') bad('type not restored after casts: ' + e.atkType);
   console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', zones ' + (kinds.zone || 0) + ', shots ' + shots.length + ', peak Harden cut x' + maxDef + ', Tackle slashes ' + slashes.length + ' hurting ' + hurts.length + ' times, shots r' + (shots[0] && shots[0].r) + ' at ' + (shots[0] && Math.round(Math.hypot(shots[0].vx, shots[0].vy))) + ' px/s' + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }

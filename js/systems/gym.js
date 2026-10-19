@@ -10,19 +10,43 @@ G.Gym = (() => {
   const FIRST_AT = 240, GAP = 240;       // seconds
   const ENRAGE_RAMP = 30, ENRAGE_MAX = 2;
   let beaten = 0, nextAt = FIRST_AT, gate = null, badges = [];
+  let fight = null;      // readout of the current gym fight: { t0, hp, minFrac, taken, casts }
   const list = () => G.Gyms.listFor(G.Enemies.region);
 
-  function reset() { beaten = 0; nextAt = FIRST_AT; gate = null; badges = []; }
+  function reset() { beaten = 0; nextAt = FIRST_AT; gate = null; badges = []; fight = null; }
 
   function now() { return G.Game.st.time; }
 
   /** Gate schedule: called every game frame (solo / host). */
   function update(dt, pl, t) {
+    if (G.Rift.isGym) trackFight(dt, pl, t);
     if (gate || G.Rift.inArena || G.Rift.rift || beaten >= list().length || nextAt == null || t < nextAt) return;
     const entry = list()[beaten], sig = entry.signatures[0];
     const level = Math.round(G.Stats.levelForTime(t)) + G.Gyms.LEVEL_OFFSET;
     gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, dex: sig.dex, species: sig.species, level };
     if (!G.Rift.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
+  }
+
+  /** Readout for tuning: how long, how much of your HP it took, the lowest you got, and what it cast. */
+  function trackFight(dt, pl, t) {
+    if (!fight) fight = { t0: t, hp: pl.hp, minFrac: 1, taken: 0, casts: {}, who: pl.mon && pl.mon.name };
+    if (pl.hp < fight.hp) fight.taken += (fight.hp - pl.hp) / (pl.maxHp || 1);
+    fight.hp = pl.hp;
+    if (pl.maxHp) fight.minFrac = Math.min(fight.minFrac, pl.hp / pl.maxHp);
+  }
+  function noteCast(id) { if (fight) fight.casts[id] = (fight.casts[id] || 0) + 1; }
+  function report(result) {
+    if (!fight) return null;
+    const secs = Math.round(now() - fight.t0), s = (result || 'fight') + ' after ' + secs + ' s: ' + (fight.who || 'player') + ' took ' + Math.round(fight.taken * 100) + '% of its max HP in total, lowest ' + Math.round(fight.minFrac * 100) + '% HP, casts ' + JSON.stringify(fight.casts);
+    console.log('[Gym] ' + s);
+    return s;
+  }
+
+  /** A leader's move as a live player-style move instance: the catalog move plus its authored upgrade stacks. */
+  function buildMove(m) {
+    const inst = G.Moves.instance(m.id);
+    for (const id in m.stacks || {}) for (let i = 0; i < m.stacks[id]; i++) G.Moves.addStack(inst, id);
+    return inst;
   }
 
   /** The leader's def: HP from the elite reference model with the gym's TTK target, at the gym level. */
@@ -34,7 +58,7 @@ G.Gym = (() => {
     return {
       dex: sig.dex, name: mon.name, hp, spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
       dmg: 20, xp: Math.round(400 + g.level * 30), behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
-      gym: { level: g.level, leader: g.leader, badge: g.badge, species: sig.species, stance: sig.stance, moves: sig.moves.map(m => Object.assign({}, m)), engagedAt: null }
+      gym: { level: g.level, leader: g.leader, badge: g.badge, species: sig.species, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1, moves: sig.moves.map(m => Object.assign({}, m, { inst: buildMove(m) })), engagedAt: null }
     };
   }
 
@@ -55,6 +79,8 @@ G.Gym = (() => {
   /** Badge package on a win (the item and the Bond come from the existing boss drop / rift win; see Rift.won). */
   function onWin(g) {
     badges.push(g.badge);
+    report('won');
+    fight = null;
     G.Game.grantLevels(1);                 // guaranteed level
     G.Game.reviveTeam();                   // full team revive, fainted members included
     // Run-long boost: STUB until the Bond rework / badge boost decision (Jess, 2026-10-19). Logged so it is visible in the console.
@@ -72,7 +98,7 @@ G.Gym = (() => {
   return {
     /** Dev: open the next gate on the next frame. */
     debugOpen() { nextAt = 0; },
-    FIRST_AT, GAP, reset, update, makeDef, enrageMul, enrageIn, onWin, onReturn, now,
+    FIRST_AT, GAP, reset, update, noteCast, report, makeDef, enrageMul, enrageIn, onWin, onReturn, now,
     get gate() { return gate; }, get beaten() { return beaten; }, get badges() { return badges; }
   };
 })();

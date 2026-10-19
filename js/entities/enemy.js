@@ -72,7 +72,7 @@
         this.buff = { n: 0, amount: 0, t: 0 };   // the Defense buff (the player's Harden), see defCut()
         this.atkLvl = this.gym.level;
         this.baseAtkType = this.atkType;
-        const cm = this.gym.moves.map(x => G.Moves.BY_ID[x.id]).filter(m => m && m.cat !== 'status');
+        const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
         this.contactMove = cm.find(m => m.kind === 'melee') || cm[0] || null;
         if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; this.baseAtkType = this.atkType; }
       }
@@ -695,7 +695,8 @@
 
     /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
     gymFactor(m) {
-      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * G.Gym.enrageMul(this);
+      const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
+      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this);
     }
 
     /** Same rule as the player: damage taken x (1 - min(0.8, stacks x amount)). */
@@ -711,7 +712,7 @@
     gymPick(dist) {
       // "close" = inside the player's own melee start range for the leader's melee move(s): move radius + body + 40 (combat.js rangeOf
       // starts a swing at radius + 30). With no melee move it is a flat 150.
-      const mel = this.gym.moves.map(x => G.Moves.BY_ID[x.id]).filter(m => m && m.kind === 'melee');
+      const mel = this.gym.moves.map(x => x.inst).filter(m => m && m.kind === 'melee');
       const close = dist < (mel.length ? Math.max(...mel.map(m => m.radius)) + this.r + 40 : 150), frac = this.hp / this.maxHp;
       const ok = this.gym.moves.filter(m => (m.range === 'any' || (m.range === 'close') === close) && (m.hpBelow == null || frac < m.hpBelow));
       if (!ok.length) return null;
@@ -724,11 +725,12 @@
     gymCd() {
       const m = this.ai.lastMove;
       if (!m) return 1.2;
-      return m.cat === 'status' ? (m.cd || 1) : Math.max(0.6, m.period || 0.5) + G.U.rand(0.2, 0.5);   // period = 0.5 x (35 / PP), see moves.js
+      const cd = Math.max(0.35, m.cd || 1) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
+      return cd / this.gym.tempo;
     }
 
     gymStart(id, pl) {
-      const ai = this.ai, m = G.Moves.BY_ID[id], type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
+      const ai = this.ai, m = this.gym.moves.find(x => x.id === id).inst, type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
       const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
       const c = ai.cast = { id, t: 0, wind: 0.5, after: 0.35, ang, kind: m.kind, m };
       ai.lastMove = m;
@@ -736,6 +738,8 @@
       if (m.cat !== 'status') { this.atkFactor = this.gymFactor(m); this.atkCat = m.cat === 'special' ? 'special' : 'physical'; }
       if (m.kind === 'buff') c.wind = 0.3;
       else if (m.kind === 'melee') c.wind = 0.45;
+      c.wind /= this.gym.tempo; c.after /= this.gym.tempo;
+      G.Gym.noteCast(id);
       this.anim.play('Charge', { speed: 1.4 });
       G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);       // the wind-up telegraph (the aim is locked now)
     }

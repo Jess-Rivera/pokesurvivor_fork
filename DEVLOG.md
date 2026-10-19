@@ -13,6 +13,9 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - CHECKED: node --check on every file; both offline harnesses pass (authoring validation, def and level lock, move power through the ratio path, stages and expiry, enrage clock, picker ranges and weights, a 60 s simulated fight, gate schedule). NOT run in a browser: the arena, gate, HUD and rewards are Jess's feel test.
 - FEEL TEST: ?dev, G.Debug.skipTo(4) or G.Debug.gym(), walk into the purple gate. Win: Boulder Badge text, a free level-up card, Bond offer, full revive, item drop. Lose: the run ends.
 - FIX after Jess's review: the leader first used my own zone / aimed shot / stat stage; it now casts the player's own Tackle, Rock Throw and Harden (same stats and visuals), only the damage is the ratio path.
+- TUNING after the first gym feel test: not threatening (Squirtle dual-weak and Charmander). Added per-gym power and tempo knobs (Brock 2.0 and 1.4) and a [Gym] fight readout; numbers in BALANCE.
+- Jess's diagnosis of the harmless feel: the leader's moves had no upgrades. Added authored upgrade stacks per gym move (same G.Moves.addStack rules as the player's cards, validated) and STAB; Brock's v1 stacks are in BALANCE. power and tempo knobs kept but neutral.
+- FEEL TEST ACCEPTED: at level 8 (the realistic level) Butterfree and Ghastly both found Brock tough but fair; he died once. Baseline kept.
 - NOT DONE: badge boost (stub), HP/damage tuning of Brock, other move kinds' boss forms, Kanto roster, Elite Four, Region Complete, cleanup list.
 - WHERE WE STOPPED: pilot built, waiting on the feel test.
 

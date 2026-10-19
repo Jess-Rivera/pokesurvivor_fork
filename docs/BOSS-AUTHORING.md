@@ -32,7 +32,13 @@ The game derives (never type these):
 | boost | stat and percent | optional override of the badge's run boost |
 | signatures | ordered list, 1 to 6 | order matters: Keep Going will use the first N at once |
 
+## Move stacks (added 2026-10-19)
+
+A move line may carry `stacks`: upgrade-card stacks the move has, by mechanic id (effect, recharge, count, pierce, area, width, arc, size, range, speed, duration, knock, stacks), for example `rock-throw | 3 | any | stacks: effect 3, count 2, recharge 2`. They use the same rules as the player's cards, so only stacks the move can really take are allowed (the validator checks each one in order). This is what makes a leader's move a leveled-up player move instead of a stat bump.
+
 ## Signature fields
+
+Optional tuning fields (added 2026-10-19, default 1, range above 0 up to 5): `power` multiplies the leader's damage and `tempo` multiplies its attack rate (shorter wind-up, recovery and cooldown). Brock uses power 2 and tempo 1.4.
 
 | Field | Values | Notes |
 |---|---|---|
