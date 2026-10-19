@@ -324,3 +324,4 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - VERIFIED: node --check on 6 files; slice B harness ALL PASS; slice 2b, 2c and A harnesses ALL PASS. NOT run in a browser.
 - NEXT: Jess commits, opens dev.html?dev: G.Debug.give('ember'), level up until an Ailment Chance card shows up (or G.Debug.stack('ailchance', 3)), look at the team sheet line and the Apply preview. Then tune/damage-hp (after he has felt the fire nerf) or the slice C design talk (control statuses).
 - REMINDER: Jess commits and pushes (6 code files, css, harness, docs, changelog.js).
+- 2026-10-19 (later): gym leader speed modifiers removed (enemy.js bossMove: chase 1.1x and circle 0.55x skipped for gyms). Retreat in 'far' mode was already base speed. Harnesses pass; not run in a browser.

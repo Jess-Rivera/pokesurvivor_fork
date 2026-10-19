@@ -109,3 +109,4 @@ Keep it simple: move items between sections as they progress. Add a date when an
 - 2026-10-17: Team Roster feature reviewed, i18n fix applied (English swap-in line), merged to
   main (--no-ff) and pushed; feature/team branch deleted. Repo went source-only (build output
   gitignored).
+- Gym leaders: the ONLY allowed speed change is a Speed-raising move (a stat stage via the Harden-style buff path), once status moves land. Never a built-in speed bonus (Jess, 2026-10-19).

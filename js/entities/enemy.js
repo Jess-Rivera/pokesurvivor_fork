@@ -574,11 +574,13 @@
         ai.modeT = (ai.mode === 'far') === (ai.farLike > 0.5) ? G.U.rand(7, 9) : G.U.rand(4, 5);
         ai.side = -ai.side;
       }
-      let vx = dx * spd * k * 1.1, vy = dy * spd * k * 1.1;
+      // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
+      const chase = this.gym ? 1 : 1.1, circle = this.gym ? 1 : 0.55;
+      let vx = dx * spd * k * chase, vy = dy * spd * k * chase;
       const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       if (ai.mode === 'far') {
         if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
-        else if (dist < 300) { vx = -ddy * spd * 0.55 * ai.side; vy = ddx * spd * 0.55 * ai.side; }   // te rodea
+        else if (dist < 300) { vx = -ddy * spd * circle * ai.side; vy = ddx * spd * circle * ai.side; }   // te rodea
       }
       if (ai.cd <= 0 && this.gym) {
         const id = this.gymPick(dist);

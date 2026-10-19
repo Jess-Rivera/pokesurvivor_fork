@@ -630,3 +630,4 @@ Diagnosis: the mainline equation gives the damage of ONE USE of a move on ONE ta
 ## 2026-10-19, Badge boosts and the gym reward (feature/boss-rework) [Jess decided]
 - Each gym badge carries a run-long team stat boost; Boulder Badge = +10% Attack for the whole team (all roster members). Stored in Player.badge, separate from stat cards, read through incOf().
 - The gym leader drops no XP. The win is a toast plus an automatic level bump (guaranteed level, normal level-up cards still open). Item, coins, Bond and full revive unchanged.
+- Gym leaders move at their species speed with no modifiers (Jess, 2026-10-19): no 1.1x chase bonus, no 0.55x circling (boss code kept for non-gym bosses); standing still while casting stays.
