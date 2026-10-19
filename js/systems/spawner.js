@@ -1,4 +1,4 @@
-/* ============ spawner.js — waves, bosses and shinies ============
+/* ============ spawner.js — waves, elites and shinies ============
  * Enemies appear in a ring just outside the view, so they never
  * materialize on screen. Every ~45 s there is a "tide": a concentrated
  * surge from one particular side, to break the rhythm.
@@ -12,9 +12,10 @@
  */
 G.Spawner = (() => {
   // Cap of enemies at once (was 420: with that many it slowed down). When
-  // the cap is reached, those that keep spawning are "elite" (more health, damage and
-  // experience), so the difficulty does not drop.
-  const CAP = 64, ELITE_FROM = 0.85;
+  // the cap is reached, the Density Bonus pays more XP (see DENSITY_FROM).
+  const CAP = 64;
+  // Density Bonus (was the "crowd bump"): XP only, x1.6 on a spawn while this many are alive, once the opening XP boost is over.
+  const DENSITY_FROM = 54, DENSITY_XP = 1.6;
   // Fewer Pokemon but stronger (the screen does not get crowded): ~24% of
   // the previous number spawn, each with more health, damage and experience.
   const DENSITY = 0.24, DMG_K = 2.4;
@@ -24,13 +25,14 @@ G.Spawner = (() => {
   const SHINY_RATE = 1 / 4096;
   // Opening XP boost: wild kills pay XP_BOOST x until the first boss slot (3:00).
   const XP_BOOST = 2.0;
-  let acc = 0, bossIdx = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0, runT = 0;
+  let acc = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0, runT = 0;
   let forceShiny = 0;           // for testing: the next N spawn shiny
 
   function reset() {
-    acc = 0; bossIdx = 0; surgeT = 32; preloadT = 0; runT = 0;
-    announce = Math.round(G.Enemies.BOSS_SLOTS[0].at / 60) + ' Min XP boost!'; announceT = 4;
+    acc = 0; surgeT = 32; preloadT = 0; runT = 0;
+    announce = Math.round(G.Stats.XP_BOOST_END / 60) + ' Min XP boost!'; announceT = 4;
     G.Enemies.rollRun();
+    G.Elites.reset();
     G.Sprites.preload(G.Enemies.upcomingDex(0, 80));
   }
 
@@ -85,7 +87,7 @@ G.Spawner = (() => {
   /** Band-holders alive and units alive (the ceiling in G.Enemies.HOLDER_CAP). */
   function holderCount() {
     let h = 0, n = 0;
-    for (const e of G.EnemyMgr.all()) if (!e.dead && !e.boss) { n++; if (e.keepsDistance()) h++; }
+    for (const e of G.EnemyMgr.all()) if (!e.dead && !e.boss && !e.elite && !e.leaving) { n++; if (e.keepsDistance()) h++; }
     return [h, n];
   }
 
@@ -103,10 +105,8 @@ G.Spawner = (() => {
     const shiny = rollShiny(def.dex);
     const e = new G.Enemy(def, pt[0], pt[1], G.Enemies.scale(t));
     e.dmg *= DMG_K;
-    // Elite (crowded screen): dmg/xp bump only. HP bump removed this slice; a future
-    // elite will be "current enemy level + X", i.e. a higher-level spawn (HP falls out
-    // of the formula), not an HP multiplier. See DECISIONS.md.
-    if (bossIdx > 0 && G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xpMul *= 1.6; }
+    // Density Bonus: XP only (the old x1.25 damage part is gone). Absolute count, from the end of the opening XP boost.
+    if (t >= G.Stats.XP_BOOST_END && G.EnemyMgr.count >= DENSITY_FROM) e.xpMul *= DENSITY_XP;
     if (shiny) e.makeShiny();
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);
@@ -117,13 +117,17 @@ G.Spawner = (() => {
     return e;
   }
 
-  function spawnBoss(pl, t, b) {
-    const [x, y] = ringPoint(pl, Math.random() * 6.2832);
-    const e = new G.Enemy(b, x, y, scaled(G.Enemies.bossScale(t), G.Coop.scaleHp(players.length) * (players.length > 1 ? 1.4 : 1)), true);
-    if (rollShiny(b.dex)) e.makeShiny();
+  /** Puts an elite (def carries the `elite` descriptor, see systems/elites.js) just outside the view. */
+  function placeElite(def, t) {
+    const pl = anchor();
+    let pt = null;
+    for (let i = 0; i < 6 && !pt; i++) pt = freePoint(pl, Math.random() * 6.2832, isFlyer(def));
+    if (!pt) pt = ringPoint(pl, Math.random() * 6.2832);
+    const e = new G.Enemy(def, pt[0], pt[1], G.Enemies.scale(t));
+    if (rollShiny(def.dex)) e.makeShiny();
     G.EnemyMgr.add(e);
-    say('¡' + e.name + (e.shiny ? ' shiny' : '') + ' salvaje apareció!', 3.2);
-    G.Camera.kick(1.1);
+    say('¡Un ' + e.name + ' élite apareció!', 3.2);
+    G.Camera.kick(0.8);
     G.Audio.sfx('boss');
     return e;
   }
@@ -141,29 +145,26 @@ G.Spawner = (() => {
     preloadT -= dt;
     if (preloadT <= 0) { preloadT = 10; G.Sprites.preload(G.Enemies.upcomingDex(t, 60)); }
 
-    // --- jefes ---
-    const b = G.Enemies.BOSSES[bossIdx];
-    if (b && t >= b.at) { spawnBoss(anchor(), t, b); bossIdx++; }
-
-    // Boss fight: the waves drop to 25% and there are no tides, so the
-    // boss is its own moment and can be targeted amid the crowd.
-    const bossFight = G.EnemyMgr.bossAlive();
+    // --- elites (systems/elites.js): spawn, enrage, and the lowered wild cap / rate around them ---
+    G.Elites.update(dt, t);
+    const capNow = Math.floor(CAP * G.Elites.capMul());
+    const eliteOn = !!G.Elites.current();
 
     // --- goteo normal ---
-    if (G.EnemyMgr.count < CAP) {
-      acc += rate(t) * G.Coop.scaleRate(players.length) * (bossFight ? 0.25 : 1) * dt;
+    if (G.EnemyMgr.count < capNow) {
+      acc += rate(t) * G.Coop.scaleRate(players.length) * G.Elites.rateMul() * dt;
       let n = Math.floor(acc);
       acc -= n;
-      while (n-- > 0 && G.EnemyMgr.count < CAP) spawnOne(anchor(), t);
+      while (n-- > 0 && G.EnemyMgr.count < capNow) spawnOne(anchor(), t);
     }
 
-    // --- marea ---
-    if (!bossFight) surgeT -= dt;
+    // --- marea (no tides while an elite is alive) ---
+    if (!eliteOn) surgeT -= dt;
     if (surgeT <= 0) {
       surgeT = G.U.rand(38, 56);
       const base = Math.random() * 6.2832;
       const target = anchor();
-      const n = Math.min(CAP - G.EnemyMgr.count, Math.round((14 + Math.floor(t / 22)) * G.Coop.scaleRate(players.length) * 0.4));
+      const n = Math.min(capNow - G.EnemyMgr.count, Math.round((14 + Math.floor(t / 22)) * G.Coop.scaleRate(players.length) * 0.4));
       for (let i = 0; i < n; i++) spawnOne(target, t, base + G.U.rand(-0.55, 0.55));
       say('¡Marea de Pokémon!', 2.2);
       G.Audio.sfx('surge');
@@ -204,7 +205,7 @@ G.Spawner = (() => {
   function tickBanner(dt) { if (announceT > 0) announceT -= dt; }
 
   /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1. */
-  function xpBoost() { return runT < G.Enemies.BOSS_SLOTS[0].at ? XP_BOOST : 1; }
-  return { reset, update, ahead, burst, tickBanner, banner, say, rate, xpBoost, SHINY_RATE, CAP,
+  function xpBoost() { return runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1; }
+  return { reset, update, ahead, placeElite, burst, tickBanner, banner, say, rate, xpBoost, SHINY_RATE, CAP,
            debugForceShiny(n = 1) { forceShiny = n; } };
 })();

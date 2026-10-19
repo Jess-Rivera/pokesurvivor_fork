@@ -23,6 +23,8 @@ G.Rift = (() => {
   // likely (20%, 40%, 60%, 80%, 100%): at most 2.5 min with no rift.
   // From 2 min before Arceus's Judgment (minute 30) they no longer open.
   const CHECK = 30, CHANCE = 0.2, TTL = 45;
+  // Random legendary rifts are OFF (feature/boss-rework: gym gates replace them). Flip to true to bring them back.
+  const RANDOM_RIFTS = false;
   const ARENA_R = 11, ARENA_TIME = 120, FROM = 75;
   let rift = null;          // { x, y, ttl, t }
   let arena = null;         // { tx, ty, r, dex, shiny, x, y, back, biome, t, phase, endT, bossId }
@@ -40,7 +42,7 @@ G.Rift = (() => {
       rift.ttl -= dt;
       if (rift.ttl <= 0) { rift = null; return; }
       if (!arena && !pl.dead && G.U.dist2(pl.x, pl.y, rift.x, rift.y - 10) < 30 * 30) enter();
-    } else if (!arena && authority() && time > FROM && time < G.Judgment.AT - 120) {
+    } else if (RANDOM_RIFTS && !arena && authority() && time > FROM && time < G.Judgment.AT - 120) {
       checkT -= dt;
       if (checkT <= 0) {
         checkT = CHECK;
@@ -63,6 +65,21 @@ G.Rift = (() => {
       if (G.Coop.isHost) G.Coop.broadcast(['rift', Math.round(x), Math.round(y), TTL]);
       return;
     }
+  }
+
+  /** A gym gate: a persistent rift (it never times out) that carries the gym info. Returns false if no free spot was found. */
+  function openGate(info) {
+    const near = G.Game.player;
+    for (let i = 0; i < 24; i++) {
+      const a = Math.random() * 6.2832, d = G.U.rand(380, 560);
+      const x = near.x + Math.cos(a) * d, y = near.y + Math.sin(a) * d * 0.85;
+      if (!G.World.isFree(x, y, 22)) continue;
+      show(x, y, Infinity);
+      rift.gym = info;
+      G.Spawner.say('A gym gate opened: ' + info.leader + ' (Lv ' + info.level + ')', 3.4, true);
+      return true;
+    }
+    return false;
   }
 
   /** The rift appears (also the one the host sends). */
@@ -88,6 +105,7 @@ G.Rift = (() => {
 
   function start(forceType) {
     if (arena) return;
+    if (rift && rift.gym) return startGym(rift.gym);
     forceType = forceType || nextType; nextType = null;
     let pool = G.DEX.filter(p => p.leg && G.SPRITE_META[p.dex]);
     if (forceType && pool.some(p => p.types.includes(forceType))) pool = pool.filter(p => p.types.includes(forceType));
@@ -106,6 +124,28 @@ G.Rift = (() => {
     if (G.Coop.isHost) G.Coop.broadcast(['arena', cfg]);
     begin(cfg);
     spawnLegend();
+  }
+
+  /** A gym: the arena of the gym's type and the authored leader instead of a random legendary. */
+  function startGym(g) {
+    const cfg = {
+      tx: 5000 + Math.floor(Math.random() * 3000), ty: 5000 + Math.floor(Math.random() * 3000), r: ARENA_R,
+      dex: g.dex, shiny: false, type: g.arena, gym: g
+    };
+    if (G.Coop.isHost) G.Coop.broadcast(['arena', cfg]);
+    begin(cfg);
+    spawnGymLeader(g);
+  }
+
+  function spawnGymLeader(g) {
+    const ts = TS();
+    const e = new G.Enemy(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5, { hp: 1, spd: 1, dmg: 1 }, true);
+    e.flying = false;                  // collides with walls like you, so your shots can reach it
+    G.EnemyMgr.add(e);
+    arena.bossId = e.id;
+    G.Spawner.say(g.leader + ' sends out ' + e.name + '!', 3.2);
+    G.Camera.kick(1.1);
+    G.Audio.sfx('boss');
   }
 
   /** On each computer: trip to the arena. */
@@ -132,7 +172,7 @@ G.Rift = (() => {
     G.Camera.x = pl.x; G.Camera.y = pl.y;
     G.Game.flash('#c9a6ff', 0.9);
     G.Audio.sfx('rift');
-    G.Spawner.say('Has entrado en la grieta…', 2.4, true);
+    G.Spawner.say(cfg.gym ? 'Gym Leader ' + cfg.gym.leader + ' wants to battle!' : 'Has entrado en la grieta…', 2.4, true);
   }
 
   function spawnLegend() {
@@ -178,6 +218,7 @@ G.Rift = (() => {
       keepInside();
       const boss = G.EnemyMgr.get(arena.bossId);
       if (!boss || boss.dead) { G.Coop.isHost && G.Coop.broadcast(['aw']); won(); return; }
+      if (arena.gym) return;           // gyms: no timer; a team wipe ends the run (game.js), the enrage clock is the pressure
       const allDown = G.Game.everyone().every(p => p.dead);
       downT = allDown ? downT + dt : 0;
       if (downT > 1.4 || arena.t > ARENA_TIME) { G.Coop.isHost && G.Coop.broadcast(['al']); lost(); }
@@ -191,6 +232,7 @@ G.Rift = (() => {
     if (!arena || arena.phase !== 'fight') return;
     arena.phase = 'won'; arena.endT = 5;
     G.Progress.event('rift', { type: arena.type });
+    if (arena.gym) G.Gym.onWin(arena.gym);
     G.Pickups.pullAll();
     G.Spawner.say('¡Has vencido a ' + G.DEX_BY[arena.dex].name + '! Recoge el premio…', 3.4, true);
     G.Audio.sfx('legend');
@@ -214,6 +256,7 @@ G.Rift = (() => {
     const pl = G.Game.player;
     const a = arena;
     arena = null;
+    if (a.gym) G.Gym.onReturn(a.gym);
     G.World.setBiome(a.biome, true);
     G.Weather.clear();
     // Guest: nothing is deleted. The host reports the arena ones that
@@ -269,9 +312,10 @@ G.Rift = (() => {
   }
 
   return {
-    reset, update, drawable, onEvent, enterRequest() { if (!arena) start(); },
+    reset, update, drawable, onEvent, openGate, enterRequest() { if (!arena) start(); },
     get rift() { return rift; }, get arena() { return arena; },
     get inArena() { return !!arena; },
+    get isGym() { return !!(arena && arena.gym); },
     get timeLeft() { return arena ? Math.max(0, ARENA_TIME - arena.t) : 0; },
     debugOpen() { open(); },
     /** For testing: a type's arena now. */

@@ -46,7 +46,12 @@ G.Stats = (() => {
   }
 
   // ---- enemy level from run time (Phase 1: linear L1 at 0:00 -> L50 at 30:00) ----
-  function levelForTime(t) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
+  // Enemy level for run time. Three states (feature/boss-rework): under 30:00 a linear ramp L1 to L50; past 30:00 it
+  // stays clamped at L50 until every gym is beaten (gymsDone false); the slow post-gym ramp is TBD, so for now
+  // gymsDone also clamps. Callers that know the gym state pass it as the second argument.
+  function levelForTime(t, gymsDone) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
+  // Wild XP boost / opening HP discount window end (seconds). Shared so the spawner banner, xpBoost and openingHpK agree.
+  const XP_BOOST_END = 180;
 
   // ---- XP (feature/xp-curve) ----
   // Cost: mainline Medium Fast. Total XP to reach level n is n^3, so L -> L+1 costs (L+1)^3 - L^3.
@@ -114,10 +119,11 @@ G.Stats = (() => {
 
   // Attacker half for an enemy at its level, using its winning offensive stat and the
   // flat placeholder Power. Mirrors attackFactor (no extraMul; enemies have no upgrades).
-  function enemyAttackFactor(atkBase, spaBase, level) {
-    const special = enemyCat(atkBase, spaBase) === 'special';
+  // power / cat are optional: a gym leader's authored move passes its catalog Power and its physical/special category.
+  function enemyAttackFactor(atkBase, spaBase, level, power = ENEMY_POWER, cat = null) {
+    const special = (cat || enemyCat(atkBase, spaBase)) === 'special';
     const aStat = special ? spAtk(spaBase, level) : attack(atkBase, level);
-    return ((2 * level / 5 + 2) * ENEMY_POWER * aStat) / 50;
+    return ((2 * level / 5 + 2) * power * aStat) / 50;
   }
 
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
@@ -142,7 +148,7 @@ G.Stats = (() => {
 
   return {
     HP_SCALAR, SPEED_MEDIAN, BASE_PX, MOVE_K, MOVE_MAX, MOVE_MIN,
-    statValue, hpForLevel, moveTransfer, speedToPx, levelForTime,
+    statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, XP_BOOST_END,
     XP_SCALAR, xpToNext, xpYield,
     attack, defense, spAtk, spDef, moveCat,
     DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp,

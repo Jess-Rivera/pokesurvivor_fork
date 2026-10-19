@@ -30,6 +30,8 @@
  */
 G.Judgment = (() => {
   const AT = 30 * 60;
+  // Arceus's Judgment is unhooked (feature/boss-rework: gyms and the Elite Four replace it). Flip to true to bring it back.
+  const ENABLED = false;
   const ARENA_R = 24;                 // in tiles (the rift arena: 11)
   const BOSS_EVERY = 5;               // no cap: they keep coming while you hold out
   const TOUCH = 0.4;                  // health lost from touching Arceus
@@ -209,7 +211,7 @@ G.Judgment = (() => {
   function update(dt, pl, time) {
     if (!phase) {
       sampleDps(dt);                        // (for the first legendary's health)
-      if (authority() && time >= AT && !G.Rift.inArena) start();
+      if (ENABLED && authority() && time >= AT && !G.Rift.inArena) start();
       return;
     }
     if (phase !== 'fight') return;

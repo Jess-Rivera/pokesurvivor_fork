@@ -273,7 +273,25 @@ G.HUD = (() => {
       bar(ctx, (w - bw) / 2, 70, bw, 12, boss.hp / boss.maxHp, '#ffcb3d');
       ctx.font = F(800, 10);
       ctx.fillStyle = '#20160a';
-      ctx.fillText(boss.name.toUpperCase(), w / 2, 80);
+      ctx.fillText(boss.gym ? (boss.gym.leader + "'S " + boss.name + ' · LV ' + boss.gym.level).toUpperCase() : boss.name.toUpperCase(), w / 2, 80);
+      if (boss.gym) {
+        const left = G.Gym.enrageIn(boss);
+        ctx.font = F(700, 10); ctx.fillStyle = left === 0 ? '#ff7070' : '#ffe9b0';
+        ctx.fillText(left === 0 ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE', w / 2, 98);
+      }
+    }
+
+    // ---------- elite bar (an overworld elite; the boss bar wins if both are up) ----------
+    const elite = !boss && G.Elites.current();
+    if (elite) {
+      const bw = Math.min(380, w - 80), left = G.Elites.enrageIn(elite), enr = left === 0;
+      bar(ctx, (w - bw) / 2, 70, bw, 12, elite.hp / elite.maxHp, enr ? '#ff5050' : '#ff9f43');
+      ctx.font = F(800, 10);
+      ctx.fillStyle = '#20160a';
+      ctx.fillText('ELITE ' + elite.name.toUpperCase(), w / 2, 80);
+      ctx.font = F(700, 10);
+      ctx.fillStyle = enr ? '#ff7070' : '#ffd9a8';
+      ctx.fillText(enr ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE', w / 2, 98);
     }
 
     // ---------- aviso ----------
@@ -299,6 +317,28 @@ G.HUD = (() => {
       ctx.restore();
     }
 
+    // Elite: an orange arrow at the edge while it is off screen.
+    if (elite) {
+      const sx = (elite.x - cam.left()) * cam.scale, sy = (elite.y - cam.top()) * cam.scale;
+      if (!(sx > 0 && sx < w && sy > 0 && sy < h)) {
+        const M = 38, ex = G.U.clamp(sx, M, w - M), ey = G.U.clamp(sy, M + 60, h - M - 70);
+        const a = Math.atan2(sy - ey, sx - ex);
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.translate(ex, ey);
+        ctx.fillStyle = '#ff9f43';
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 26, Math.sin(a) * 26);
+        ctx.lineTo(Math.cos(a + 2.5) * 14, Math.sin(a + 2.5) * 14);
+        ctx.lineTo(Math.cos(a - 2.5) * 14, Math.sin(a - 2.5) * 14);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+        ctx.fillText('ELITE', -Math.cos(a) * 20, -Math.sin(a) * 20 + 4);
+        ctx.restore();
+      }
+    }
+
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
     // Rift: a big arrow pulsing at the edge if off-screen, and if visible, a
@@ -307,7 +347,8 @@ G.HUD = (() => {
     if (rift) {
       const sx = (rift.x - cam.left()) * cam.scale, sy = (rift.y - 40 - cam.top()) * cam.scale;
       const now = performance.now() / 1000, beat = 0.5 + Math.sin(now * 7) * 0.5;
-      const label = 'GRIETA · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m · ' + Math.ceil(rift.ttl) + ' s';
+      const label = rift.gym ? 'GYM ' + (rift.gym.idx + 1) + ' · ' + rift.gym.leader.toUpperCase() + ' · LV ' + rift.gym.level + ' · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m'
+        : 'GRIETA · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m · ' + Math.ceil(rift.ttl) + ' s';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
       if (off) {
@@ -344,7 +385,7 @@ G.HUD = (() => {
         ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff'; ctx.fill();
         ctx.font = F(800, 11); ctx.textAlign = 'center';
         ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        const l2 = 'GRIETA · ' + Math.ceil(rift.ttl) + ' s';
+        const l2 = rift.gym ? 'GYM · LV ' + rift.gym.level : 'GRIETA · ' + Math.ceil(rift.ttl) + ' s';
         ctx.strokeText(l2, 0, -18); ctx.fillStyle = '#e2d0ff'; ctx.fillText(l2, 0, -18);
       }
       ctx.restore();
@@ -353,7 +394,7 @@ G.HUD = (() => {
       ctx.textAlign = 'center';
       ctx.font = F(800, 12);
       ctx.fillStyle = '#d9c2ff';
-      ctx.fillText('GRIETA · ' + G.U.mmss(G.Rift.timeLeft), w / 2, boss ? 98 : 76);
+      ctx.fillText(G.Rift.isGym ? 'GYM' : 'GRIETA · ' + G.U.mmss(G.Rift.timeLeft), w / 2, boss ? 112 : 76);
     }
 
     // Events: countdown, arrow to the lost Pokemon / to the mark and to the imps.
@@ -367,7 +408,7 @@ G.HUD = (() => {
       ctx.globalAlpha = a;
       ctx.translate(w / 2, y0); ctx.scale(pop, pop);
       ctx.font = F(800, 20);
-      const t1 = '¡SE HA ABIERTO UNA GRIETA!', t2 = 'Sigue la flecha morada: dentro te espera un legendario';
+      const t1 = rift.gym ? 'A GYM GATE HAS OPENED' : '¡SE HA ABIERTO UNA GRIETA!', t2 = rift.gym ? rift.gym.leader + ' waits inside (Lv ' + rift.gym.level + '). Follow the purple arrow.' : 'Sigue la flecha morada: dentro te espera un legendario';
       const bw = Math.min(w - 24, Math.max(ctx.measureText(t1).width, (ctx.font = F(700, 11), ctx.measureText(t2).width)) + 36);
       roundRect(ctx, -bw / 2, -26, bw, 52, 10);
       ctx.fillStyle = 'rgba(26,11,51,.88)'; ctx.fill();

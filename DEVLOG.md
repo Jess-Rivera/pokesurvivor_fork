@@ -5,8 +5,37 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-19 (Claude Desktop) feature/boss-rework: SESSION CLOSE, Overworld Elites + Brock pilot gym done
+- WHAT SHIPPED ON THE BRANCH: Overworld Elites (elites.js, eliteDef, wild-thinning, enrage, Density Bonus; Judgment off; five-boss spawn removed); Brock pilot gym (gate at 4:00, rock arena, player-accurate Tackle / Rock Throw / Harden with authored stacks and STAB, enrage, run ends on a loss); Boulder Badge package (+10% Atk to the whole team via Player.badge / incOf, guaranteed item, free level with toast, Bond, full revive); gym leader drops no XP; gym leader moves at plain species speed (no 1.1x chase, no 0.55x circling); debug tools (elite, skipTo, levelUp, gym).
+- TESTED: three offline harnesses pass (elites, gym, gym-reward). Jess feel-tested the gym and the win path in a browser and committed; the elite HP/power retune is parked for more playtest data.
+- DECIDED: badge boosts are per gym (boost field in gyms.js); the only allowed gym speed change is a Speed-raising move later (TODO).
+- NOT DONE: Kanto roster gyms 2-8 and the other move kinds' boss forms; Elite Four / Region Complete / Return Home; status Slice C (next); cleanup (BOSS_SLOTS / BOSSES data); elite retune; optional gate sprite.
+- WHERE WE STOPPED: feature closed and merged by Jess; next is status Slice C on its own branch.
+
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
+
+## 2026-10-19 (Claude Desktop) feature/boss-rework: Brock pilot gym built
+- WHAT: js/data/gyms.js (Brock entry + validator), js/systems/gym.js (gate schedule, leader def, enrage clock, badge package), stats.js (enemyAttackFactor power/cat), enemy.js (gym descriptor, ratio factor per authored move, picker, the player's melee / projectile / buff casts with a wind-up, engage), rift.js (openGate, startGym, no timer, RANDOM_RIFTS off), game.js (grantLevels, reviveTeam, gym death ends the run, Gym hooks), hud.js (gate label, leader bar with level and enrage countdown), elites.js (hpFor ttk argument, afterGate), debug.js (G.Debug.gym()), dev.html, changelog.js, docs/proposals/gym-harness.js.
+- CHECKED: node --check on every file; both offline harnesses pass (authoring validation, def and level lock, move power through the ratio path, stages and expiry, enrage clock, picker ranges and weights, a 60 s simulated fight, gate schedule). NOT run in a browser: the arena, gate, HUD and rewards are Jess's feel test.
+- FEEL TEST: ?dev, G.Debug.skipTo(4) or G.Debug.gym(), walk into the purple gate. Win: Boulder Badge text, a free level-up card, Bond offer, full revive, item drop. Lose: the run ends.
+- FIX after Jess's review: the leader first used my own zone / aimed shot / stat stage; it now casts the player's own Tackle, Rock Throw and Harden (same stats and visuals), only the damage is the ratio path.
+- TUNING after the first gym feel test: not threatening (Squirtle dual-weak and Charmander). Added per-gym power and tempo knobs (Brock 2.0 and 1.4) and a [Gym] fight readout; numbers in BALANCE.
+- Jess's diagnosis of the harmless feel: the leader's moves had no upgrades. Added authored upgrade stacks per gym move (same G.Moves.addStack rules as the player's cards, validated) and STAB; Brock's v1 stacks are in BALANCE. power and tempo knobs kept but neutral.
+- FEEL TEST ACCEPTED: at level 8 (the realistic level) Butterfree and Ghastly both found Brock tough but fair; he died once. Baseline kept.
+- WIN PATH CHECKED offline (docs/proposals/gym-reward-harness.js, real rift.js / gym.js / enemy.js): gate persists, enter, leader spawns, kill -> level grant, team revive, Bond (and the offer on return), guaranteed item, 10 coins, boss XP burst, items pulled in, badge message, return after 5 s, no second gate. The real game.js cards / Bond screen / visuals are not covered.
+- SUPERSEDED (Jess, 2026-10-19): the gym leader drops NO XP (def.xp 0, die() skips dropXp for gyms); the win is a toast plus the guaranteed level (the normal level-up cards still open).
+- BADGE BOOST BUILT: Boulder Badge = +10% Attack for the whole team, benched members included. Player.badge + incOf(k) (stat cards plus badge) replace inc reads in moveFactor, maxHpAt, speed and hurt; sheet bonus shows it; G.Game.badgeBoost(stat, pct); gyms.js entry field boost { stat, pct } (validated). Toast: 'Boulder Badge earned! +10% Attack for the whole team, and a level up'. Reward harness updated (no XP orbs, boost atk:0.1); all three harnesses pass; NOT run in a browser.
+- NOT DONE: other badges' boosts, HP/damage tuning of Brock, other move kinds' boss forms, Kanto roster, Elite Four, Region Complete, cleanup list.
+- WHERE WE STOPPED: (superseded, see SESSION CLOSE below)
+
+## 2026-10-19 (Claude Desktop) feature/boss-rework: Overworld Elites built
+- WHAT: the elite slice. New js/systems/elites.js; enemies.js (eliteDef species draw, openingHpK reads the shared constant), stats.js (XP_BOOST_END, three-state levelForTime signature), spawner.js (placeElite, elite-aware cap/rate/tides, Density Bonus, boss spawn removed), enemy.js (elite descriptor, size 1.5 to 2, HP from the descriptor, XP multiplier, engage on first hit, exclusions from morale/knockback/fear/stragglers/golden/lava, walk-off for excess wild units, elite drops and TTK readout, name tag), hud.js (elite bar with enrage countdown, off-screen arrow), judgment.js (unhooked), progress.js (elite counts as a boss kill), debug.js (G.Debug.elite()), dev.html (script tag), changelog.js (entry), docs/proposals/elites-harness.js.
+- CHECKED: node --check on every edited file; the offline harness passes (window constant, species draw by band/region/no repeats, HP model, enrage ramp, wild cap window, trim, update paths for six behaviors). NOT run in a browser: Jess's 1-minute feel test is the browser check.
+- FEEL TEST: open dev.html with ?dev, press play, call G.Debug.elite() in the console. Watch the orange HP bar, hit it, see the enrage countdown, and read the [Elite] TTK line in the console on its death (target 20 to 30 s).
+- ALSO ADDED after the first feel test: G.Debug.skipTo(min) and G.Debug.levelUp(n); G.Elites.setClock (fixes a stale-clock bug where debug elites spawned with level-1 HP after a skip, and stops a skip from dropping a surprise natural elite); the [Elite] readout prints the type matchup. Jess parked the HP/power retune: small samples, best-case fights.
+- NOT DONE: tune the HP model and power multiplier from real TTK readouts; Brock pilot gym; gates; status Slice C; cleanup list in BOSS-REWORK.md section 5.
+- WHERE WE STOPPED: elite slice built, waiting on the feel test.
 
 ## 2026-10-19 (Claude Desktop) tune/damage CLOSED: opening, ranged behavior, morale, band-holder ceiling
 - WHAT: branch closed at Jess's call after a feel test of the last change ("feels good"); Jess commits and merges. Final values are the 'FINAL STATE' bullet at the top of BALANCE 'Run opening'. The entry below this one lists the changes in the order they were built; several early numbers were retuned or removed afterwards (retreat delay, DPS part of morale, kill radius side, weights, decays).
@@ -302,3 +331,4 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - VERIFIED: node --check on 6 files; slice B harness ALL PASS; slice 2b, 2c and A harnesses ALL PASS. NOT run in a browser.
 - NEXT: Jess commits, opens dev.html?dev: G.Debug.give('ember'), level up until an Ailment Chance card shows up (or G.Debug.stack('ailchance', 3)), look at the team sheet line and the Apply preview. Then tune/damage-hp (after he has felt the fire nerf) or the slice C design talk (control statuses).
 - REMINDER: Jess commits and pushes (6 code files, css, harness, docs, changelog.js).
+- 2026-10-19 (later): gym leader speed modifiers removed (enemy.js bossMove: chase 1.1x and circle 0.55x skipped for gyms). Retreat in 'far' mode was already base speed. Harnesses pass; not run in a browser.

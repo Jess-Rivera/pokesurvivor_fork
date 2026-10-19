@@ -31,7 +31,8 @@
       this.name = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].name) || def.name;
       this.x = x; this.y = y;
       this.boss = boss;
-      this.scale = boss ? bossScale(def.dex) : 1;
+      this.elite = def.elite || null;      // overworld elite descriptor (systems/elites.js); a regular wild Enemy otherwise
+      this.scale = boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
       this.anim = new G.Sprites.Animator(def.dex, this.scale);
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
@@ -39,7 +40,7 @@
       // Enemy HP = real base HP through the mainline formula at the level-for-run-time
       // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
-      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
       this.hp = this.maxHp;
       // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
       // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
@@ -51,7 +52,7 @@
       // and Judgment legendaries (def.bx undefined) keep the flat def.xp. xpMul collects the
       // tank / elite / shiny / golden multipliers.
       this.bx = def.bx != null ? def.bx : null;
-      this.xpMul = def.xpMul || 1;
+      this.xpMul = (def.xpMul || 1) * (this.elite ? this.elite.xpMul : 1);
       this.behavior = def.behavior;
 
       const types = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].types) || [];
@@ -66,6 +67,16 @@
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
       this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0);
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
+      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
+      if (this.gym) {
+        this.buff = { n: 0, amount: 0, t: 0 };   // the Defense buff (the player's Harden), see defCut()
+        this.atkLvl = this.gym.level;
+        this.baseAtkType = this.atkType;
+        const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
+        this.contactMove = cm.find(m => m.kind === 'melee') || cm[0] || null;
+        if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; this.baseAtkType = this.atkType; }
+      }
+      this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
       this.flying = boss || G.Sprites.hovers(def.dex);
@@ -124,7 +135,7 @@
 
     /** Golden hour (events.js): double experience and sometimes coins. */
     makeGolden() {
-      if (this.golden || this.boss || this.behavior === 'thief') return;
+      if (this.golden || this.boss || this.elite || this.behavior === 'thief') return;
       this.golden = true;
       this.xp *= 2; this.xpMul *= 2;
     }
@@ -132,6 +143,10 @@
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
       if (this.dead || !(amount > 0)) return;
+      if (this.gym && !this.remote) {                 // gym leader: Defense stages cut incoming damage; the first hit engages (enrage clock)
+        amount *= this.defCut();
+        if (this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
+      }
       // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
       // `d` is only what is SHOWN and what goes over the network (whole numbers).
       const d = Math.max(1, Math.round(amount));
@@ -151,10 +166,11 @@
         amount -= a;
       }
       this.hp -= amount;
-      if (!this.boss) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
+      if (this.elite && !this.remote) G.Elites.engage(this);
+      if (!this.boss && !this.elite) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
       G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
-      if (knock > 0 && !this.boss) {
+      if (knock > 0 && !this.boss && !this.elite) {
         const [nx, ny] = G.U.norm(dirX, dirY);
         this.kx += nx * knock;
         this.ky += ny * knock;
@@ -220,12 +236,13 @@
       if (this.dead) return;
       this.dead = true;
       this.fade = 0.9;
-      if (!this.boss) this.spreadFear();
+      if (!this.boss && !this.elite) this.spreadFear();
       this.anim.play('Faint', { hold: true });
-      const col = this.boss ? '#ffd95e' : '#ffffff';
+      const big = this.boss || this.elite;
+      const col = big ? '#ffd95e' : '#ffffff';
       const cy = this.y - this.bodyH * 0.5;
-      G.FX.burst(this.x, cy, col, this.boss ? 34 : 9, this.boss ? 260 : 120);
-      G.FX.ring(this.x, this.y, this.r, this.r * (this.boss ? 6 : 2.6), col, this.boss ? 0.6 : 0.3, this.boss ? 6 : 3);
+      G.FX.burst(this.x, cy, col, big ? 34 : 9, big ? 260 : 120);
+      G.FX.ring(this.x, this.y, this.r, this.r * (big ? 6 : 2.6), col, big ? 0.6 : 0.3, big ? 6 : 3);
       // In a copy, the loot and the shinies are distributed by the host.
       if (this.remote) {
         if (this.boss) G.Camera.kick(0.9);
@@ -246,7 +263,16 @@
         const lvl = Math.max(1, ...G.Game.everyone().map(p => p.level || 1));
         this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul * G.Spawner.xpBoost();
       }
-      G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
+      // Elite: a burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout.
+      if (this.elite) {
+        G.Camera.kick(0.6);
+        G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
+        G.Pickups.drop('heal', this.x + 24, this.y, 0);
+        if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+        G.Elites.noteDeath(this);
+      }
+      else if (this.gym) { /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin) */ }
+      else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {
@@ -350,11 +376,13 @@
         if (!any) this.ailRoll = null;
       }
       if (this.dead) return;
+      // An excess wild unit leaving for an elite (Elites.trim): it walks away from you, harmless, until the manager removes it off screen.
+      if (this.leaving) { this.leaveMove(dt, pl); return; }
 
       // --- terreno ---
       let terrainMul = 1;
       // (The legendary is at home: its arena does not affect it. Arceus's ones, neither.)
-      if (!this.flying && !this.legend && !this.judge && G.World.isLiquid(this.x, this.y)) {
+      if (!this.flying && !this.legend && !this.judge && !this.elite && G.World.isLiquid(this.x, this.y)) {
         const le = G.World.liquidEffect(this.types);
         if (le.dmg) {
           this.lavaTick -= dt;
@@ -529,12 +557,14 @@
       const far = this.behavior === 'ranged';
       this.ai = { melee, ranged, farLike: far ? 0.65 : 0.35, mode: far ? 'far' : 'close', modeT: G.U.rand(6, 8),
                   cd: 1.6, cast: null, fury: false, side: Math.random() < 0.5 ? -1 : 1 };
+      if (this.gym) { const st = this.gym.stance; this.ai.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5; this.ai.mode = st === 'far' ? 'far' : 'close'; }
     }
 
     bossMove(dt, pl, dist, dx, dy, spd) {
       if (!this.ai) this.bossInit();
       const ai = this.ai;
-      if (!ai.fury && this.hp < this.maxHp * 0.5) this.enrage();
+      if (this.gym) this.buffTick(dt);
+      if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
       const k = ai.fury ? 1.25 : 1;
       if (ai.cast) return this.bossCast(dt, pl);
       ai.modeT -= dt; ai.cd -= dt * k;
@@ -544,13 +574,18 @@
         ai.modeT = (ai.mode === 'far') === (ai.farLike > 0.5) ? G.U.rand(7, 9) : G.U.rand(4, 5);
         ai.side = -ai.side;
       }
-      let vx = dx * spd * k * 1.1, vy = dy * spd * k * 1.1;
+      // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
+      const chase = this.gym ? 1 : 1.1, circle = this.gym ? 1 : 0.55;
+      let vx = dx * spd * k * chase, vy = dy * spd * k * chase;
       const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       if (ai.mode === 'far') {
         if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
-        else if (dist < 300) { vx = -ddy * spd * 0.55 * ai.side; vy = ddx * spd * 0.55 * ai.side; }   // te rodea
+        else if (dist < 300) { vx = -ddy * spd * circle * ai.side; vy = ddx * spd * circle * ai.side; }   // te rodea
       }
-      if (ai.cd <= 0) {
+      if (ai.cd <= 0 && this.gym) {
+        const id = this.gymPick(dist);
+        if (id) this.gymStart(id, pl); else ai.cd = 0.3;
+      } else if (ai.cd <= 0) {
         let id = null;
         if (ai.mode === 'close') {
           const ok = ai.melee.filter(m => m === 'slam' ? dist < 125 : dist < 320);
@@ -625,6 +660,7 @@
     }
 
     bossCast(dt, pl) {
+      if (this.gym) return this.gymCast(dt, pl);
       const ai = this.ai, c = ai.cast;
       c.t += dt;
       if (c.id === 'dash' && c.t >= c.wind) {
@@ -648,8 +684,130 @@
       const ai = this.ai;
       ai.cast = null;
       ai.cd = G.U.rand(1.3, 2.0);
+      if (this.gym) { ai.cd = this.gymCd(); this.gymRestore(); return [0, 0, 'Idle']; }
       if (ai.fury && Math.random() < 0.35) ai.cd = 0.3;    // encadena otro
       return [0, 0, 'Idle'];
+    }
+
+    // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
+    // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
+    // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
+    // player's Harden (a Defense buff: amount per stack, duration, max stacks; 7% x up to 5 = -35% damage taken). Only the damage is
+    // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
+    // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
+
+    /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
+    gymFactor(m) {
+      const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
+      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this);
+    }
+
+    /** Same rule as the player: damage taken x (1 - min(0.8, stacks x amount)). */
+    defCut() { const b = this.buff; return 1 - Math.min(0.8, b.n * b.amount); }
+    /** Same as Player.addBuff: one shared timer refreshed by every cast, stacks capped. */
+    addBuff(amount, dur, maxStacks) {
+      const b = this.buff;
+      b.amount = amount; b.n = Math.min(maxStacks, b.n + 1); b.t = dur;
+    }
+    buffTick(dt) { const b = this.buff; if (b.n > 0 && (b.t -= dt) <= 0) b.n = 0; }
+
+    /** Weighted pick among the moves allowed by range and HP gate; null if none. */
+    gymPick(dist) {
+      // "close" = inside the player's own melee start range for the leader's melee move(s): move radius + body + 40 (combat.js rangeOf
+      // starts a swing at radius + 30). With no melee move it is a flat 150.
+      const mel = this.gym.moves.map(x => x.inst).filter(m => m && m.kind === 'melee');
+      const close = dist < (mel.length ? Math.max(...mel.map(m => m.radius)) + this.r + 40 : 150), frac = this.hp / this.maxHp;
+      const ok = this.gym.moves.filter(m => (m.range === 'any' || (m.range === 'close') === close) && (m.hpBelow == null || frac < m.hpBelow));
+      if (!ok.length) return null;
+      let r = Math.random() * ok.reduce((a, m) => a + m.weight, 0);
+      for (const m of ok) if ((r -= m.weight) <= 0) return m.id;
+      return ok[ok.length - 1].id;
+    }
+
+    /** Cooldown after a cast: damaging moves use the catalog rule 0.5 x (35 / PP); status moves keep their catalog cd. */
+    gymCd() {
+      const m = this.ai.lastMove;
+      if (!m) return 1.2;
+      const cd = Math.max(0.35, m.cd || 1) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
+      return cd / this.gym.tempo;
+    }
+
+    gymStart(id, pl) {
+      const ai = this.ai, m = this.gym.moves.find(x => x.id === id).inst, type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
+      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
+      const c = ai.cast = { id, t: 0, wind: 0.5, after: 0.35, ang, kind: m.kind, m };
+      ai.lastMove = m;
+      this.atkType = type;
+      if (m.cat !== 'status') { this.atkFactor = this.gymFactor(m); this.atkCat = m.cat === 'special' ? 'special' : 'physical'; }
+      if (m.kind === 'buff') c.wind = 0.3;
+      else if (m.kind === 'melee') c.wind = 0.45;
+      c.wind /= this.gym.tempo; c.after /= this.gym.tempo;
+      G.Gym.noteCast(id);
+      this.anim.play('Charge', { speed: 1.4 });
+      G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);       // the wind-up telegraph (the aim is locked now)
+    }
+
+    gymCast(dt, pl) {
+      const ai = this.ai, c = ai.cast, m = c.m;
+      c.t += dt;
+      if (c.t >= c.wind && !c.fired) {
+        c.fired = true;
+        const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
+        if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
+          this.addBuff(m.amount, m.dur, m.stacks | 0);
+          const vis = G.VFX.forMove(m);
+          G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
+          for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });
+        } else if (c.kind === 'melee') {          // the player's melee: slash visual, a cone of radius m.radius (from the body edge) and arc m.arc
+          const reach = m.radius + this.r, half = Math.min(m.arc, 6.2832) / 2;
+          G.FX.slash(this.x, this.y - G.LIFT * 0.5, c.ang, reach, m.arc, col, G.VFX.forMove(m));
+          this.anim.play('Attack', { speed: 1.4 });
+          const a = Math.atan2(pl.y - this.y, pl.x - this.x);
+          const inArc = Math.abs(((a - c.ang + Math.PI * 3) % 6.2832) - Math.PI) <= half;
+          if (!pl.dead && inArc && G.U.dist2(this.x, this.y, pl.x, pl.y) <= (reach + pl.r) * (reach + pl.r)) {
+            const w = G.Log.on ? G.Log.who(this, 'contact') : null;
+            pl.hurt(this.atkFactor, this.atkType, false, { factor: this.atkFactor, cat: this.atkCat, mul: 1 }, w);
+          }
+        } else {
+          this.gymShoot(m, Math.cos(c.ang), Math.sin(c.ang));
+        }
+      }
+      if (c.t >= c.wind + c.after) return this.bossEnd();
+      return [0, 0, 'Idle'];
+    }
+
+    /** The player's projectile: speed, size, life, count, spread, pierce and visuals from the move; the aim was locked at wind-up. */
+    gymShoot(m, ax, ay) {
+      const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
+      const n = Math.max(1, m.count | 0), spread = m.spread || 0;
+      const fan = Math.min(spread * n, 6.2832 * (n - 1) / n), base = Math.atan2(ay, ax);
+      for (let i = 0; i < n; i++) {
+        const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan, a = base + off + G.U.rand(-0.03, 0.03);
+        G.Projectiles.spawn({
+          x: this.x + Math.cos(a) * 3, y: this.y + Math.sin(a) * 3, vx: Math.cos(a) * m.speed, vy: Math.sin(a) * m.speed,
+          dmg: this.shotDmg(), r: m.size, life: m.life, mul: 1, friendly: false, color: col, mtype: m.type,
+          atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, pierce: m.pierce | 0, vis
+        });
+      }
+      this.anim.play('Shoot');
+      G.FX.spark(this.x + Math.cos(base) * this.r, this.y - G.LIFT + Math.sin(base) * this.r, col, Math.cos(base), Math.sin(base), 3);
+    }
+
+    /** Back to the leader's idle attack (contact) after a cast. */
+    gymRestore() {
+      if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; }
+    }
+
+    /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */
+    leaveMove(dt, pl) {
+      const [dx, dy] = G.U.norm(this.x - pl.x, this.y - pl.y);
+      const spd = Math.max(40, this.spd) * (1 - this.slow);
+      this.touchCd = Math.max(this.touchCd, 0.5);
+      this.x += (dx * spd + this.kx) * dt; this.y += (dy * spd + this.ky) * dt;
+      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      G.World.collide(this);
+      this.anim.dir = G.Sprites.dirFromAngle(Math.atan2(dy, dx));
+      this.anim.loop('Walk');
     }
 
     keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner'].includes(this.behavior); }
@@ -658,7 +816,7 @@
     spreadFear() {
       const M = G.Enemies.MORALE, reach = Math.min(M.fearMaxPx, M.fearRadiusK * this.r);
       for (const e of G.EnemyMgr.queryCircle(this.x, this.y, reach)) {
-        if (e === this || e.dead || e.boss || !(e.keepsDistance() || e.isSeeker())) continue;
+        if (e === this || e.dead || e.boss || e.elite || !(e.keepsDistance() || e.isSeeker())) continue;
         const d = Math.hypot(e.x - this.x, e.y - this.y);
         if (d < reach) e.fear = Math.min(1, e.fear + M.killFear * (1 - d / reach));
       }
@@ -666,6 +824,7 @@
 
     /** Morale 0..1 of a band-holder: scared by kills close to it, and by losing a lot of its HP fast. */
     moraleNow() {
+      if (this.elite) return 1;       // elites never panic
       const M = G.Enemies.MORALE;
       return (1 - M.fearWeight * this.fear) * (1 - M.painWeight * Math.min(1, this.pain / M.painFull));
     }
@@ -1045,16 +1204,25 @@
       const SUP = { healer: 'heart', shielder: 'shield', summoner: 'friends' };
       if (SUP[this.behavior]) G.Icons.draw(ctx, SUP[this.behavior], Math.round(this.x - 6), Math.round(this.y - this.bodyH - (this.hp < this.maxHp ? 26 : 18)), 12);
 
-      if (this.boss || this.hp < this.maxHp) {
-        const w = this.boss ? 90 : Math.max(22, this.r * 2);
+      if (this.boss || this.elite || this.hp < this.maxHp) {
+        const w = this.boss || this.elite ? 90 : Math.max(22, this.r * 2);
         const y = this.y - this.bodyH - 10;
         ctx.fillStyle = 'rgba(0,0,0,.6)';
         ctx.fillRect(this.x - w / 2, y, w, 3.4);
-        ctx.fillStyle = this.boss ? '#ffcb3d' : '#ff5f6d';
+        ctx.fillStyle = this.boss ? '#ffcb3d' : this.elite ? '#ff9f43' : '#ff5f6d';
         ctx.fillRect(this.x - w / 2, y, w * Math.max(0, this.hp / this.maxHp), 3.4);
         // Panic meter: a thin bar under the HP bar, only on damaged morale units that are at least meterShow of the way to
         // panic (100% = the panic line). A panicking unit shows it full.
-        if (!this.boss && (this.keepsDistance() || this.isSeeker())) {
+        if (this.elite) {
+          // Name tag over the bar; it turns red with the enrage countdown once engaged.
+          const left = G.Elites.enrageIn(this), enr = left === 0;
+          ctx.save();
+          ctx.font = '700 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillText(this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''), this.x + 1, y - 2 + 1);
+          ctx.fillStyle = enr ? '#ff5050' : '#ffd9a8'; ctx.fillText(this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''), this.x, y - 2);
+          ctx.restore();
+        }
+        if (!this.boss && !this.elite && (this.keepsDistance() || this.isSeeker())) {
           const M = G.Enemies.MORALE, p = this.panic ? 1 : Math.min(1, (1 - this.moraleNow()) / (1 - M.panicBelow));
           if (p >= M.meterShow) {
             ctx.fillStyle = 'rgba(0,0,0,.6)';
@@ -1243,7 +1411,7 @@
         if (e.dead) {
           pl.kills++;
           if (G.Log.on) G.Log.kill(e);
-          if (e.boss && !e.judge) pl.bosses++;
+          if ((e.boss || e.elite) && !e.judge) pl.bosses++;
           G.Progress.kill(e);
           corpses.push(e);
           list.splice(i, 1);
@@ -1260,7 +1428,15 @@
           if (G.Coop.isHost) G.Coop.enemyGone(e, false);
           continue;
         }
-        if (e.boss || e.shiny || G.Rift.inArena) continue;
+        if (e.leaving) {       // an excess wild unit walking off for an elite: gone once it is out of sight (no XP, no drops)
+          const R2 = G.Camera.outerRadius() + 40;
+          if (G.U.dist2(e.x, e.y, near.x, near.y) > R2 * R2 && !G.Camera.sees(e.x, e.y, 60)) {
+            list.splice(i, 1); byId.delete(e.id);
+            if (G.Coop.isHost) G.Coop.enemyGone(e, false);
+          }
+          continue;
+        }
+        if (e.boss || e.elite || e.shiny || G.Rift.inArena) continue;
         // Stragglers: the ones that fall behind while you run and have been a while
         // OUT OF SIGHT (of everyone) come back out ahead of you. This way
         // you cannot just flee, and one you are looking at never disappears.

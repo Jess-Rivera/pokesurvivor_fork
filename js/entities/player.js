@@ -33,6 +33,7 @@ G.Player = class Player {
     this.perksHp = perks.hp || 0;
     // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+    this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };   // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
     this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
     this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
@@ -110,11 +111,24 @@ G.Player = class Player {
   // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
   moveFactor(m) {
     const c = G.Stats.moveCat(m);
-    const si = c === 'special' ? this.inc.spa : c === 'status' ? 0 : this.inc.atk;     // Protein / Calcium
+    const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk');     // Protein / Calcium
     return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si));
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
-  maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.inc.hp)) + this.perksHp; }
+  maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
+  /** Stat bonus fraction: the stat cards plus the gym badge boosts. */
+  incOf(k) { return this.inc[k] + this.badge[k]; }
+  /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
+  addBadgeBoost(stat, pct) {
+    if (!(stat in this.badge)) return false;
+    this.badge[stat] += pct;
+    if (stat === 'hp' && this.baseHpStat != null) {
+      const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+      this.maxHp = newMax;
+      if (gain > 0 && !this.dead) this.hp += gain;
+    }
+    return true;
+  }
   /** Take one stat card (HP Up, Protein, Iron, Calcium, Zinc, Carbos). */
   addStat(id) {
     const st = G.Mechanics.STAT_BY[id];
@@ -130,7 +144,7 @@ G.Player = class Player {
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() {
-    const s = this.baseSpd * this.spdMul * (1 + this.inc.spe) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
+    const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
     return s * slow * w;
@@ -287,7 +301,7 @@ G.Player = class Player {
     if (atk && !pure) {
       const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
-      const defMul = 1 + (atk.cat === 'special' ? this.inc.spd : this.inc.def);     // Iron / Zinc
+      const defMul = 1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'));     // Iron / Zinc
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;

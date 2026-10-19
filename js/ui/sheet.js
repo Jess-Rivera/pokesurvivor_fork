@@ -99,7 +99,7 @@ G.Sheet = (() => {
 
   function statBlock(pl, card) {
     const st = pl.mon.stats || [0, 0, 0, 0, 0, 0];
-    const bonus = STAT_ORDER.map(k => pl.inc[k] || 0);
+    const bonus = STAT_ORDER.map(k => pl.incOf ? pl.incOf(k) : (pl.inc[k] || 0));
     const o = { bonus, hpText: hpText(pl), layered: true };
     if (card && card.type === 'stat') {
       const s = card.stat, after = bonus.slice();

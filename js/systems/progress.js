@@ -178,7 +178,7 @@ G.Progress = (() => {
     // missions nor for boss achievements): they have their own counter.
     if (G.Judgment.active && e.boss) { G.Judgment.bossDown(); event('kill', { types: e.types || [], boss: false, legend: 0 }); return; }
     const legend = e.legend || (G.Rift.inArena && e.boss) ? e.dex : 0;
-    event('kill', { types: e.types || [], boss: !!e.boss, legend });
+    event('kill', { types: e.types || [], boss: !!(e.boss || e.elite), legend });   // overworld elites count as the old bosses did
   }
 
   // ---------------- logros ----------------

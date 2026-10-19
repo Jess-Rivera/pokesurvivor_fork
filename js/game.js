@@ -104,6 +104,7 @@ G.Game = (() => {
     G.Pickups.clear();
     G.Spawner.reset();
     G.Rift.reset();
+    G.Gym.reset();
     G.Judgment.reset();
     G.Events.reset();
     G.Weather.reset();
@@ -714,7 +715,7 @@ G.Game = (() => {
     }
     // After going down, let the Faint animation play before the summary.
     // (Not in the rift arena: there, going down just throws you back.)
-    if (pl.dead && !coop && !G.Rift.inArena) {
+    if (pl.dead && !coop && (!G.Rift.inArena || G.Rift.isGym)) {
       // Team: if another member is still up, bench the fainted one and swap in the
       // living member with the LOWEST slot number (slot 1 first, then 2, and so on).
       const alive = roster.filter(f => !f.dead && f !== pl);
@@ -773,6 +774,7 @@ G.Game = (() => {
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
     G.Rift.update(dt, pl, time);
+    if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Judgment.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
@@ -972,6 +974,20 @@ G.Game = (() => {
 
   return {
     init, startRun, everyone, levelXp, flash, offerBond,
+    /** Badge package: queue n guaranteed level-ups (not a debug call, so the run is NOT flagged). */
+    grantLevels(n = 1) {
+      for (let i = 0; i < n; i++) {
+        const before = pl.level;
+        pendingLevels += pl.gainXp(((pl.xpNext - pl.xp) + 0.001) / (pl.xpMul || 1));
+        if (pl.level !== before) for (const f of roster) if (f !== pl) f.syncLevel(pl.level);
+      }
+    },
+    /** Badge package: a run-long +pct on a stat for EVERY team member, benched ones included. */
+    badgeBoost(stat, pct) { for (const f of roster) f.addBadgeBoost(stat, pct); },
+    /** Badge package: every team member back to 100% HP, fainted ones included. */
+    reviveTeam() {
+      for (const f of roster) { if (f.dead) f.revive(1); else f.hp = f.maxHp; }
+    },
     /** For testing: skip the run clock. */
     debugTime(t) { tampered = true; time = t; },
     /** For recording videos: slow motion (0.5 = half speed). */

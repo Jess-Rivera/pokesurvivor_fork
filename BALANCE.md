@@ -29,6 +29,27 @@ re-tune later.
   burn/poison/slow gameplay unchanged. The melee x1.2 dmg bump was removed (canonical power is the
   baseline); melee radius/arc x1.25 bumps kept.
 
+## Overworld Elites (feature/boss-rework, built 2026-10-19; all numbers TUNE by the [Elite] TTK readout)
+- Species: one BST tier above the highest active wild tier; top tier active means BST 600 to 700. Region-accurate (widens downward inside the region before leaving it), no legendaries, no repeats.
+- HP: reference model hp = max(refDps x 25 s, 3 x wild HP). refDps = hit / 0.7 s x (1 + 0.2 x minutes) x 0.7 uptime, hit from a base-40, SpAtk-65 attacker at the run level against the elite's own average Def/SpD. First guess: about 170 HP at 2:00, about 640 at 10:00, about 3150 at 30:00 (4x to 13x a wild unit). No opening HP discount.
+- Power x1.5 on the wild ratio attack path. Size 1.5 to 2 (the boss sizing, floor 1.5).
+- Enrage: 60 s after the first hit, damage x1.0 to x2.0 over 30 s; no speed bonus.
+- Wild cap 32 (50%) and spawn rate 50% for 60 s after an elite spawns, back to 100% over the next 30 s. Excess wild units walk off and are deleted, no XP.
+- Reward: XP = wild yield x HP multiplier x 1.2, a guaranteed Berry, 50% chance at an item.
+- Cadence (TEMP): 2:00 then every 6:00.
+- First feel-test readings (2026-10-19, small sample, NOT used to retune): TTK 2.7 to 15.7 s at 0:10 to 1:11, 7.4 s at 2:10 (HP 169), 3.3 s at 5:00 (HP 273, but Pikachu vs Gyarados was x4 and the screen was nearly empty, so best case; about 21 neutral damage per second against the model's 12). The 10:00 and 20:00 readings were invalid (a stale-clock bug in G.Debug.elite(), since fixed). Jess's call: leave the HP model and power as they are until real playtesting gives more data. Tools for later: G.Debug.skipTo(min), G.Debug.levelUp(n), and the [Elite] readout now prints the type matchup.
+- Density Bonus: x1.6 XP while 54 or more are alive, from 180 s (damage part removed).
+
+## Gyms (feature/boss-rework, Brock pilot built 2026-10-19; all numbers TUNE)
+- Gate: 4:00, then 4:00 after each return. Level = run-time level at gate spawn + 4, locked.
+- HP: the elite reference model with TTK 60 s at the gym level (Brock: about 1030 HP at Lv 12, 16.6x a wild unit). Size up to 2x (boss sizing).
+- Damage: ratio path, Power and category from the catalog move (Tackle 40 physical, Rock Throw 50 physical). Enrage 120 s after the first hit, x1.0 to x2.0 over 30 s. Fury off.
+- FIRST RETUNE (Jess's feel test, Squirtle dual-weak and Charmander, 'not even a little threatened'): a Lv 12 Geodude hit for 5 to 18% of the player's HP per attack and attacked about once per 2.7 s, so the fight was over before it mattered. Jess's diagnosis: the leader's moves have no upgrades, so he is only a stat level-up. SO the real fix is authored upgrade STACKS per gym move (below). The crude per-gym knobs power (damage multiplier) and tempo (attack-rate multiplier) exist but are back at 1 for Brock so the stacks are measured cleanly. A [Gym] readout prints on a win (and G.Gym.report() after a loss): fight time, total and lowest HP, casts per move. Tune from those.
+- FEEL TEST RESULT (Jess, 2026-10-19, with the stacks, at the realistic level 7 to 9 versus Brock's 12): Butterfree level 8 was tough and he died once, not cheap, learnable; Ghastly level 8 about the same. Both felt doable with smart play. The earlier tests were at level 12 (no level gap) and before the stacks, hence 'harmless'. ACCEPTED as the Brock baseline; do not retune without new data.
+- Brock's stacks (v1, TUNE): Rock Throw = Effect x3 (+30% Power), Count x2 (3 rocks), Recharge x2, Size x1, Speed x1; Tackle = Effect x2, Area x1, Arc x1, Recharge x2; Harden = Buff Stacks x1 (6 stacks, up to -42%), Duration x1. Rock Throw gets STAB (x1.5) like the player's own-type moves.
+- Moves are the player's: Tackle (radius 48 from the body edge, arc 1.7), Rock Throw (260 px/s, size 9, life 1.4 s), Harden (7% damage cut per stack, 5 stacks, 7 s shared timer, so at most -35%). Each is telegraphed by a 0.3 to 0.45 s wind-up.
+- Cooldown: catalog period (0.5 x 35 / PP) plus 0.2 to 0.5 s of jitter; status moves keep their catalog cd.
+
 ## Run opening (tune/damage, applied 2026-10-18 to 2026-10-19, CLOSED; each change feel-tested by Jess, logs 1 to 4)
 - FINAL STATE at branch close (2026-10-19; the dated bullets below are the history and some early numbers were retuned): DMG_SCALAR 1.0; XP_BOOST 2.0 until 180 s; elite bump only after the first boss and at 54+ alive; wild-enemy HP x0.55 to x1.0 over 0 to 180 s; FAMILY_SHARE 0.60 / 0.30 / 0.10 (status class counts as melee); HOLDER_CAP share 0.35, floor 2, rerolls 8; BANDS unchanged (shooter 0.80 / 0.92); BAND_JITTER spread 0.20, recheck 0.3 to 0.7 s; NO standard retreat and NO retreat delay; MORALE killFear 0.35, fearRadiusK 6 x the DEAD enemy's body radius (cap 240 px), fearTau 1.2 s, painTau 1.0 s, painFull 0.6 (stored pain capped there), fearWeight 0.6, painWeight 0.6, panicBelow 0.25, panicFireMul 0.5, meterShow 0.5 (morale = (1 - fearWeight x fear) x (1 - painWeight x pain); ranged back away only while panicking, healers / shielders likewise inside SEEK.alone; the DPS part of morale and the retreat delay were removed); status class enemies are chasers; MIX log record every 5 s.
 - 2026-10-18, DMG_SCALAR: 0.47 -> 1.0 (js/core/stats.js). Why: slices A and B removed the unlogged burn that carried half to two thirds of Ember's damage. Check log (Typhlosion L1, region 1): neutral Ember 6.4 to 7.0, super effective 11.3, resisted 3.5 against enemy HP 24 to 30, so 4 to 5 hits neutral, 3 super effective, 6 to 7 resisted (target band 3 to 4). The scalar back-solved from the log is 1.01. Only validated at L1 to L2; a 3-minute log is the next check.
@@ -175,3 +196,6 @@ feel with the interactive tuner over the real 966-species roster:
 
 ## 2026-10-18 — fix/attack-calc slice 3c (needs playtest)
 - Swap rule: independent cooldowns + 0.4 s hold. Swapping no longer speeds up cooldowns; banked moves fire on swap-in. Watch: does 0.4 s feel right, do dropped presses feel bad (buffer is the fix).
+
+- BADGE BOOST (2026-10-19): Boulder Badge +10% Atk for the whole team, same multiplier path as an Atk stat card (additive with cards). Leader XP is 0 (the free level replaces it).
+- GYM SPEED (2026-10-19): plain species speed only (Geodude 57 px/s); the old boss 1.1x chase and 0.55x circling no longer apply to gyms; Fury already off.

@@ -8,6 +8,10 @@
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
+ *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
+ *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
+ *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
+ *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -156,5 +160,37 @@ G.Debug = (() => {
     console.log('[Debug] enabled (?dev). Press Shift+D or call G.Debug.maxAll() to unlock everything.');
   }
 
-  return { on, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
+  /** Spawns an overworld elite right now (dev only): 1-minute feel check for the elite slice. */
+  function elite() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    return G.Elites.debugSpawn();
+  }
+
+  /** Jumps the run clock to `min` minutes (dev only): enemy level, tiers and elite HP follow the clock. Flags the run as tampered. */
+  function skipTo(min) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const t = Math.max(0, +min * 60);
+    if (!isFinite(t)) return false;
+    G.Game.debugTime(t);
+    G.Elites.setClock(t);
+    G.Sprites.preload(G.Enemies.upcomingDex(t, 120));
+    console.log('[Debug] run clock set to ' + Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') + ' (enemy level ' + Math.floor(G.Stats.levelForTime(t)) + ')');
+    return true;
+  }
+
+  /** Queues n level-ups (dev only; flags the run as tampered). */
+  function levelUp(n = 1) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    for (let i = 0; i < n; i++) G.Game.debugLevelUp();
+    return true;
+  }
+
+  /** Opens the next gym gate now (dev only). Enter it to fight; a loss ends the run. */
+  function gym() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    G.Gym.debugOpen();
+    return true;
+  }
+
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
 })();
