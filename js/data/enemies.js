@@ -329,6 +329,7 @@ G.Enemies = (() => {
   //   pain   0..1. The HP it has lost recently as a fraction of its max HP (decays with time constant painTau s), over painFull:
   //          losing painFull of its max HP inside about painTau s is full pain. Shield damage does not count. Stored pain is
   //          capped at painFull, so an overkill hit does not prolong panic.
+  //   meter  a thin panic meter under the HP bar of a damaged unit once it is meterShow (0.5) of the way to panic (full = panic)
   //   weights  fearWeight / painWeight: how much of morale a full fear / full pain takes away (0.6 each: either alone can
   //          leave morale at 0.4 at worst, so it takes both together to get under panicBelow).
   //   retreat  a band-holder backs away ONLY while panicking (inside its band; a panicking unit never approaches). There is no
@@ -336,7 +337,7 @@ G.Enemies = (() => {
   //          away only while panicking, inside SEEK.alone; the SEEK floor retreat is gone); panic halves their weak shot too.
   //   panic  morale below panicBelow: it fires at panicFireMul of its normal rate (shot interval / panicFireMul)
   const MORALE = { killFear: 0.35, fearRadiusK: 6, fearMaxPx: 240, fearTau: 1.2, painTau: 1.0, painFull: 0.6, fearWeight: 0.6, painWeight: 0.6,
-                   panicBelow: 0.25, panicFireMul: 0.5 };
+                   panicBelow: 0.25, panicFireMul: 0.5, meterShow: 0.5 };
 
   // Shielder and healer hold no band: they seek the biggest group of allies (Enemy.seekMove / seekPick). Screen units.
   //   floor      never closer to you than this (backs away at 0.8x below it)

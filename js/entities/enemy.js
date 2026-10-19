@@ -1052,6 +1052,17 @@
         ctx.fillRect(this.x - w / 2, y, w, 3.4);
         ctx.fillStyle = this.boss ? '#ffcb3d' : '#ff5f6d';
         ctx.fillRect(this.x - w / 2, y, w * Math.max(0, this.hp / this.maxHp), 3.4);
+        // Panic meter: a thin bar under the HP bar, only on damaged morale units that are at least meterShow of the way to
+        // panic (100% = the panic line). A panicking unit shows it full.
+        if (!this.boss && (this.keepsDistance() || this.isSeeker())) {
+          const M = G.Enemies.MORALE, p = this.panic ? 1 : Math.min(1, (1 - this.moraleNow()) / (1 - M.panicBelow));
+          if (p >= M.meterShow) {
+            ctx.fillStyle = 'rgba(0,0,0,.6)';
+            ctx.fillRect(this.x - w / 2, y + 4.4, w, 2.2);
+            ctx.fillStyle = '#8f7bff';
+            ctx.fillRect(this.x - w / 2, y + 4.4, w * p, 2.2);
+          }
+        }
       }
     }
   }
