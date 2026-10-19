@@ -11,6 +11,7 @@
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
+ *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -184,5 +185,12 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
+  /** Opens the next gym gate now (dev only). Enter it to fight; a loss ends the run. */
+  function gym() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    G.Gym.debugOpen();
+    return true;
+  }
+
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite };
 })();

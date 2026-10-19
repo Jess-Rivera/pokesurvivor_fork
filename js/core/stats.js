@@ -119,10 +119,11 @@ G.Stats = (() => {
 
   // Attacker half for an enemy at its level, using its winning offensive stat and the
   // flat placeholder Power. Mirrors attackFactor (no extraMul; enemies have no upgrades).
-  function enemyAttackFactor(atkBase, spaBase, level) {
-    const special = enemyCat(atkBase, spaBase) === 'special';
+  // power / cat are optional: a gym leader's authored move passes its catalog Power and its physical/special category.
+  function enemyAttackFactor(atkBase, spaBase, level, power = ENEMY_POWER, cat = null) {
+    const special = (cat || enemyCat(atkBase, spaBase)) === 'special';
     const aStat = special ? spAtk(spaBase, level) : attack(atkBase, level);
-    return ((2 * level / 5 + 2) * ENEMY_POWER * aStat) / 50;
+    return ((2 * level / 5 + 2) * power * aStat) / 50;
   }
 
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD

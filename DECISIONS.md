@@ -5,6 +5,15 @@ Add a dated entry whenever a durable decision is made.
 
 ---
 
+## 2026-10-19, Brock pilot gym BUILT [Jess, branch feature/boss-rework]
+- First gym end to end: gate at 4:00 (level = run-time level then + 4, locked at spawn, shown on the gate), rock arena (the rift arena reused), Geodude with Tackle / Rock Throw / Harden from js/data/gyms.js, badge package on a win. New files js/data/gyms.js, js/systems/gym.js.
+- Jess's calls: the badge run boost is a STUB for now (item, level, Bond and full team revive are real); the pilot fight targets about 60 s of focused fire (HP from the elite reference model with TTK 60, not yet feel-tested).
+- A team wipe in a gym ends the run (game.js: the arena no longer throws you back for gyms). No arena timer; the enrage starts 120 s after the first hit (damage x1.0 to x2.0 over 30 s). Fury stays off for gyms.
+- Random legendary rifts are OFF (RANDOM_RIFTS = false in rift.js). The next elite comes 2:00 after returning from a gate (Elites.afterGate), none while one is alive.
+- Gym leaders use the PLAYER's version of each move (Jess, 2026-10-19): Tackle has the player's radius and arc and the same slash visual; Rock Throw has the player's speed, size, life, spread, pierce and projectile visuals; Harden is the player's Harden (7% damage cut per stack, 5 stacks, 7 s shared timer). Only the damage is different: the enemy ratio path with the catalog Power and category (stats.js enemyAttackFactor takes power and cat). A 0.3 to 0.45 s wind-up (Charge animation plus a ring) telegraphs every move, with the aim locked at its start.
+- Stat stages are NOT built (they were dropped for the pilot because Harden stays the player's version); they stay in BOSS-REWORK 3c for Slice D.
+- Boss forms built: melee = the player's cone swing, projectile (and any kind without a form yet) = the player's projectile, buff = the player's buff cast. The rest of the kinds come with the roster slice.
+
 ## 2026-10-19, Overworld Elites BUILT (first slice of the boss rework) [Jess approved the three defaults, branch feature/boss-rework]
 - Built to the locked design in BOSS-REWORK.md section 2. An elite is a regular (non-boss) wild Enemy with an `elite` descriptor on a copy of the def, so it reuses wild AI and the ratio damage path. New file js/systems/elites.js (G.Elites).
 - Temporary cadence until gyms exist: first elite at 2:00, then every 6:00, one alive at a time. Arceus's Judgment is unhooked (ENABLED = false in judgment.js, nothing else removed yet). Enrage: damage x1.0 to x2.0 over 30 s, starting 60 s after the first hit; no speed bonus.

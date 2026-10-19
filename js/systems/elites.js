@@ -24,13 +24,13 @@ G.Elites = (() => {
   function reset() { nextAt = K.first; alive = null; pending = null; used = new Set(); lastSpawn = -1e9; runT = 0; lastTtk = null; }
 
   /** HP for an elite of this species at run time t, from the reference damage model (no opening HP discount). */
-  function hpFor(def, t) {
+  function hpFor(def, t, ttk = K.ttk) {
     const L = G.Stats.levelForTime(t), st = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].stats) || [50, 50, 50, 50, 50, 50];
     const wild = G.Stats.hpForLevel(def.baseHp != null ? def.baseHp : 50, L);
     const dStat = (G.Stats.statValue(st[2], L) + G.Stats.statValue(st[4], L)) / 2;
     const hit = ((2 * L / 5 + 2) * 40 * G.Stats.spAtk(65, L) / 50) / Math.max(1, dStat) + 2;
     const dps = hit / K.hitGap * (1 + K.build * t / 60) * K.uptime;
-    const hp = Math.max(dps * K.ttk, wild * K.minHpMul);
+    const hp = Math.max(dps * ttk, wild * K.minHpMul);
     return { hp: Math.round(hp), mul: hp / wild };
   }
 
@@ -122,6 +122,8 @@ G.Elites = (() => {
     /** Dev: the clock was jumped (G.Debug.skipTo). Syncs our clock and pushes the natural cadence a full interval out, so a skip
      *  never drops a surprise elite on top of a test one. */
     setClock(t) { runT = t; pending = null; if (!alive) nextAt = t + K.every; },
+    /** After returning from a gate: the next elite comes 2:00 later (none while one is alive; timers never stack). */
+    afterGate(t) { if (!alive) nextAt = t + 120; },
     debugSpawn() { return spawn(G.Game.st.time); }
   };
 })();

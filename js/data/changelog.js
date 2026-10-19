@@ -6,6 +6,17 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Gym 1: Brock', 'Gym 1: Brock'], new: [
+    ['A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.',
+     'A gym gate now opens at 4:00. Walk in to face Brock\'s Geodude in a rock arena, using real moves: Tackle, Rock Throw and Harden.'],
+    ['Beat the gym to earn the Boulder Badge: a guaranteed item, a free level, a Bond and a full revive for your whole team.',
+     'Beat the gym to earn the Boulder Badge: a guaranteed item, a free level, a Bond and a full revive for your whole team.'],
+    ['Lose a gym fight and the run is over. After 2 minutes of fighting, the leader enrages and hits harder and harder.',
+     'Lose a gym fight and the run is over. After 2 minutes of fighting, the leader enrages and hits harder and harder.'],
+  ], chg: [
+    ['The random legendary rifts are gone for now; gyms take their place.',
+     'The random legendary rifts are gone for now; gyms take their place.'],
+  ] },
   { d: '2026-10-19', title: ['Elites replace bosses', 'Elites replace bosses'], new: [
     ['Elite Pokémon now roam the map: bigger, tougher, and one tier stronger than the wild ones. The first shows up at 2:00, then one every 6 minutes.',
      'Elite Pokémon now roam the map: bigger, tougher, and one tier stronger than the wild ones. The first shows up at 2:00, then one every 6 minutes.'],

@@ -67,6 +67,15 @@
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
       this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0);
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
+      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
+      if (this.gym) {
+        this.buff = { n: 0, amount: 0, t: 0 };   // the Defense buff (the player's Harden), see defCut()
+        this.atkLvl = this.gym.level;
+        this.baseAtkType = this.atkType;
+        const cm = this.gym.moves.map(x => G.Moves.BY_ID[x.id]).filter(m => m && m.cat !== 'status');
+        this.contactMove = cm.find(m => m.kind === 'melee') || cm[0] || null;
+        if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; this.baseAtkType = this.atkType; }
+      }
       this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
@@ -134,6 +143,10 @@
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
       if (this.dead || !(amount > 0)) return;
+      if (this.gym && !this.remote) {                 // gym leader: Defense stages cut incoming damage; the first hit engages (enrage clock)
+        amount *= this.defCut();
+        if (this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
+      }
       // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
       // `d` is only what is SHOWN and what goes over the network (whole numbers).
       const d = Math.max(1, Math.round(amount));
@@ -543,12 +556,14 @@
       const far = this.behavior === 'ranged';
       this.ai = { melee, ranged, farLike: far ? 0.65 : 0.35, mode: far ? 'far' : 'close', modeT: G.U.rand(6, 8),
                   cd: 1.6, cast: null, fury: false, side: Math.random() < 0.5 ? -1 : 1 };
+      if (this.gym) { const st = this.gym.stance; this.ai.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5; this.ai.mode = st === 'far' ? 'far' : 'close'; }
     }
 
     bossMove(dt, pl, dist, dx, dy, spd) {
       if (!this.ai) this.bossInit();
       const ai = this.ai;
-      if (!ai.fury && this.hp < this.maxHp * 0.5) this.enrage();
+      if (this.gym) this.buffTick(dt);
+      if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
       const k = ai.fury ? 1.25 : 1;
       if (ai.cast) return this.bossCast(dt, pl);
       ai.modeT -= dt; ai.cd -= dt * k;
@@ -564,7 +579,10 @@
         if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
         else if (dist < 300) { vx = -ddy * spd * 0.55 * ai.side; vy = ddx * spd * 0.55 * ai.side; }   // te rodea
       }
-      if (ai.cd <= 0) {
+      if (ai.cd <= 0 && this.gym) {
+        const id = this.gymPick(dist);
+        if (id) this.gymStart(id, pl); else ai.cd = 0.3;
+      } else if (ai.cd <= 0) {
         let id = null;
         if (ai.mode === 'close') {
           const ok = ai.melee.filter(m => m === 'slam' ? dist < 125 : dist < 320);
@@ -639,6 +657,7 @@
     }
 
     bossCast(dt, pl) {
+      if (this.gym) return this.gymCast(dt, pl);
       const ai = this.ai, c = ai.cast;
       c.t += dt;
       if (c.id === 'dash' && c.t >= c.wind) {
@@ -662,8 +681,114 @@
       const ai = this.ai;
       ai.cast = null;
       ai.cd = G.U.rand(1.3, 2.0);
+      if (this.gym) { ai.cd = this.gymCd(); this.gymRestore(); return [0, 0, 'Idle']; }
       if (ai.fury && Math.random() < 0.35) ai.cd = 0.3;    // encadena otro
       return [0, 0, 'Idle'];
+    }
+
+    // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
+    // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
+    // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
+    // player's Harden (a Defense buff: amount per stack, duration, max stacks; 7% x up to 5 = -35% damage taken). Only the damage is
+    // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
+    // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
+
+    /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
+    gymFactor(m) {
+      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * G.Gym.enrageMul(this);
+    }
+
+    /** Same rule as the player: damage taken x (1 - min(0.8, stacks x amount)). */
+    defCut() { const b = this.buff; return 1 - Math.min(0.8, b.n * b.amount); }
+    /** Same as Player.addBuff: one shared timer refreshed by every cast, stacks capped. */
+    addBuff(amount, dur, maxStacks) {
+      const b = this.buff;
+      b.amount = amount; b.n = Math.min(maxStacks, b.n + 1); b.t = dur;
+    }
+    buffTick(dt) { const b = this.buff; if (b.n > 0 && (b.t -= dt) <= 0) b.n = 0; }
+
+    /** Weighted pick among the moves allowed by range and HP gate; null if none. */
+    gymPick(dist) {
+      // "close" = inside the player's own melee start range for the leader's melee move(s): move radius + body + 40 (combat.js rangeOf
+      // starts a swing at radius + 30). With no melee move it is a flat 150.
+      const mel = this.gym.moves.map(x => G.Moves.BY_ID[x.id]).filter(m => m && m.kind === 'melee');
+      const close = dist < (mel.length ? Math.max(...mel.map(m => m.radius)) + this.r + 40 : 150), frac = this.hp / this.maxHp;
+      const ok = this.gym.moves.filter(m => (m.range === 'any' || (m.range === 'close') === close) && (m.hpBelow == null || frac < m.hpBelow));
+      if (!ok.length) return null;
+      let r = Math.random() * ok.reduce((a, m) => a + m.weight, 0);
+      for (const m of ok) if ((r -= m.weight) <= 0) return m.id;
+      return ok[ok.length - 1].id;
+    }
+
+    /** Cooldown after a cast: damaging moves use the catalog rule 0.5 x (35 / PP); status moves keep their catalog cd. */
+    gymCd() {
+      const m = this.ai.lastMove;
+      if (!m) return 1.2;
+      return m.cat === 'status' ? (m.cd || 1) : Math.max(0.6, m.period || 0.5) + G.U.rand(0.2, 0.5);   // period = 0.5 x (35 / PP), see moves.js
+    }
+
+    gymStart(id, pl) {
+      const ai = this.ai, m = G.Moves.BY_ID[id], type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
+      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
+      const c = ai.cast = { id, t: 0, wind: 0.5, after: 0.35, ang, kind: m.kind, m };
+      ai.lastMove = m;
+      this.atkType = type;
+      if (m.cat !== 'status') { this.atkFactor = this.gymFactor(m); this.atkCat = m.cat === 'special' ? 'special' : 'physical'; }
+      if (m.kind === 'buff') c.wind = 0.3;
+      else if (m.kind === 'melee') c.wind = 0.45;
+      this.anim.play('Charge', { speed: 1.4 });
+      G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);       // the wind-up telegraph (the aim is locked now)
+    }
+
+    gymCast(dt, pl) {
+      const ai = this.ai, c = ai.cast, m = c.m;
+      c.t += dt;
+      if (c.t >= c.wind && !c.fired) {
+        c.fired = true;
+        const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
+        if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
+          this.addBuff(m.amount, m.dur, m.stacks | 0);
+          const vis = G.VFX.forMove(m);
+          G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
+          for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });
+        } else if (c.kind === 'melee') {          // the player's melee: slash visual, a cone of radius m.radius (from the body edge) and arc m.arc
+          const reach = m.radius + this.r, half = Math.min(m.arc, 6.2832) / 2;
+          G.FX.slash(this.x, this.y - G.LIFT * 0.5, c.ang, reach, m.arc, col, G.VFX.forMove(m));
+          this.anim.play('Attack', { speed: 1.4 });
+          const a = Math.atan2(pl.y - this.y, pl.x - this.x);
+          const inArc = Math.abs(((a - c.ang + Math.PI * 3) % 6.2832) - Math.PI) <= half;
+          if (!pl.dead && inArc && G.U.dist2(this.x, this.y, pl.x, pl.y) <= (reach + pl.r) * (reach + pl.r)) {
+            const w = G.Log.on ? G.Log.who(this, 'contact') : null;
+            pl.hurt(this.atkFactor, this.atkType, false, { factor: this.atkFactor, cat: this.atkCat, mul: 1 }, w);
+          }
+        } else {
+          this.gymShoot(m, Math.cos(c.ang), Math.sin(c.ang));
+        }
+      }
+      if (c.t >= c.wind + c.after) return this.bossEnd();
+      return [0, 0, 'Idle'];
+    }
+
+    /** The player's projectile: speed, size, life, count, spread, pierce and visuals from the move; the aim was locked at wind-up. */
+    gymShoot(m, ax, ay) {
+      const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
+      const n = Math.max(1, m.count | 0), spread = m.spread || 0;
+      const fan = Math.min(spread * n, 6.2832 * (n - 1) / n), base = Math.atan2(ay, ax);
+      for (let i = 0; i < n; i++) {
+        const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan, a = base + off + G.U.rand(-0.03, 0.03);
+        G.Projectiles.spawn({
+          x: this.x + Math.cos(a) * 3, y: this.y + Math.sin(a) * 3, vx: Math.cos(a) * m.speed, vy: Math.sin(a) * m.speed,
+          dmg: this.shotDmg(), r: m.size, life: m.life, mul: 1, friendly: false, color: col, mtype: m.type,
+          atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, pierce: m.pierce | 0, vis
+        });
+      }
+      this.anim.play('Shoot');
+      G.FX.spark(this.x + Math.cos(base) * this.r, this.y - G.LIFT + Math.sin(base) * this.r, col, Math.cos(base), Math.sin(base), 3);
+    }
+
+    /** Back to the leader's idle attack (contact) after a cast. */
+    gymRestore() {
+      if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; }
     }
 
     /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */

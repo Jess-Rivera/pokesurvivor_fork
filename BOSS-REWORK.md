@@ -75,6 +75,7 @@ LOCKED 2026-10-19 (Jess: 'Adopt the Stages yes'; numbers and duration TUNE):
 - Mark GLOSSARY entries (jefe / grieta) and update ONBOARDING / GDD.
 
 ## 6. Change log (code and data changed on this branch)
+- 2026-10-19, Brock pilot gym BUILT (see DEVLOG): js/data/gyms.js, js/systems/gym.js, rift.js (gate, no timer, random rifts off), enemy.js (gym AI casting the player's own moves), stats.js (power/cat), game.js (grantLevels, reviveTeam, gym death ends the run), hud.js, elites.js (afterGate), debug.js (G.Debug.gym()). Boost is a stub; tuning pending the feel test.
 - 2026-10-19, Overworld Elites slice BUILT: new js/systems/elites.js; eliteDef() in enemies.js; XP_BOOST_END in stats.js; spawner.js (placeElite, elite cap/rate, Density Bonus, boss spawn and bossFight removed); enemy.js (elite descriptor, exclusions, walk-off, drops, name tag); hud.js (elite bar and arrow); judgment.js unhooked (ENABLED = false); progress.js (elite counts as boss kill); debug.js (G.Debug.elite()); dev.html; changelog.js; docs/proposals/elites-harness.js. Open: BOSS_SLOTS/BOSSES/bossScale data still present (cleanup list), TTK and power retune after feel tests.
 
 ### Code touch points found so far (baseline for the change log)
