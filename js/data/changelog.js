@@ -11,6 +11,8 @@ G.CHANGELOG = [
      'Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.'],
     ['More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.',
      'More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.'],
+    ['Fewer ranged enemies can crowd the screen at once, and status Pokémon now run at you instead of hanging back.',
+     'Fewer ranged enemies can crowd the screen at once, and status Pokémon now run at you instead of hanging back.'],
     ['Ranged enemies now spread out around you instead of lining up in a ring.',
      'Ranged enemies now spread out around you instead of lining up in a ring.'],
     ['Ranged enemies now hold their ground a moment before backing away, and panic (and shoot less) when you are cutting down the ones around them.',

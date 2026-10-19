@@ -82,8 +82,22 @@ G.Spawner = (() => {
     return Math.random() < SHINY_RATE;
   }
 
+  /** Band-holders alive and units alive (the ceiling in G.Enemies.HOLDER_CAP). */
+  function holderCount() {
+    let h = 0, n = 0;
+    for (const e of G.EnemyMgr.all()) if (!e.dead && !e.boss) { n++; if (e.keepsDistance()) h++; }
+    return [h, n];
+  }
+
   function spawnOne(pl, t, angle) {
-    const def = G.U.pick(G.Enemies.bagAt(t));
+    const bag = G.Enemies.bagAt(t), HC = G.Enemies.HOLDER_CAP;
+    let def = G.U.pick(bag);
+    if (G.Enemies.BANDS[def.behavior]) {                  // a band-holder: keep them to HC.share of what is alive
+      const [h, n] = holderCount();
+      if (h >= HC.floor && h + 1 > HC.share * (n + 1)) {
+        for (let i = 0; i < HC.rerolls && G.Enemies.BANDS[def.behavior]; i++) def = G.U.pick(bag);
+      }
+    }
     const pt = freePoint(pl, angle == null ? Math.random() * 6.2832 : angle, isFlyer(def));
     if (!pt) return null;
     const shiny = rollShiny(def.dex);

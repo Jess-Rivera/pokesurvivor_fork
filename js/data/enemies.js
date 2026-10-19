@@ -81,11 +81,12 @@ G.Enemies = (() => {
   // 2026-10-17 / 2026-10-18): c = class, t = Tank modifier, s = secondary class, fx = status effects,
   // m = summoner minion dex, u = unique behavior. This replaces the old dex hash.
   // Class -> the behavior id enemy.js already understands (every other class is its own id).
-  // Slice 1: status enemies fight as shooters until their mechanics land (slice 2).
-  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'ranged' };
+  // Status enemies have no status mechanics yet (slice 2 / status slice E), so until then they are plain chasers (2026-10-19;
+  // they used to fight as shooters and sat at the shooter band like the rest of the ranged units).
+  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'chase' };
   const FAMILY = { plain: 'melee', charger: 'melee', jumper: 'melee', bomber: 'melee',
                    shooter: 'range', beamer: 'range', zoner: 'range', fan: 'range',
-                   healer: 'support', shielder: 'support', summoner: 'support', status: 'support' };
+                   healer: 'support', shielder: 'support', summoner: 'support', status: 'melee' };   // status: melee while it is a plain chaser
   // A species the table does not know (added to the pokedex later): family by stats, default class.
   const infoOf = p => G.ENEMY_CLASSES[p.dex] || { c: (p.stats && p.stats[3] > p.stats[1]) ? 'shooter' : 'plain' };
   const classOf = p => infoOf(p).c;
@@ -193,6 +194,11 @@ G.Enemies = (() => {
   // Share of the spawns each family gets inside a tier, whatever the species count (a 5-shooter cast no longer
   // means 5/9 shooters on screen). A family a tier lacks gives its share to the others pro rata. Status counts as support.
   const FAMILY_SHARE = { melee: 0.60, range: 0.30, support: 0.10 };   // was 0.45 / 0.40 / 0.15 until 2026-10-19 (ranged units were piling up, see BALANCE)
+  // Ceiling on units that hold a spacing band (shooter, beamer, fan, zoner, summoner; Spawner.spawnOne): a spawn draw that
+  // would be a band-holder is re-drawn (up to `rerolls` times, then accepted) when band-holders are already at least `floor`
+  // and would pass `share` of the units alive. Relative to what is alive, not to the cap, so it also bites early in a run.
+  // Healers and shielders are not counted (they walk to allies). Spawn weights (FAMILY_SHARE) are unchanged.
+  const HOLDER_CAP = { share: 0.35, floor: 2, rerolls: 8 };
   const BAG_UNIT = 4;     // bag copies per weight point, so the shares survive rounding
 
   let cast = null;      // [{ from, list: [def] }]
@@ -388,7 +394,7 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
