@@ -22,11 +22,14 @@ G.Spawner = (() => {
   // toward minute 6, when you already have attacks to take them down.
   const hpK = t => 3.3 + Math.min(1.7, t / 210);
   const SHINY_RATE = 1 / 4096;
-  let acc = 0, bossIdx = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0;
+  // Opening XP boost: wild kills pay XP_BOOST x until the first boss slot (3:00).
+  const XP_BOOST = 2.0;
+  let acc = 0, bossIdx = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0, runT = 0;
   let forceShiny = 0;           // for testing: the next N spawn shiny
 
   function reset() {
-    acc = 0; bossIdx = 0; surgeT = 32; announce = null; announceT = 0; preloadT = 0;
+    acc = 0; bossIdx = 0; surgeT = 32; preloadT = 0; runT = 0;
+    announce = Math.round(G.Enemies.BOSS_SLOTS[0].at / 60) + ' Min XP boost!'; announceT = 4;
     G.Enemies.rollRun();
     G.Sprites.preload(G.Enemies.upcomingDex(0, 80));
   }
@@ -79,8 +82,22 @@ G.Spawner = (() => {
     return Math.random() < SHINY_RATE;
   }
 
+  /** Band-holders alive and units alive (the ceiling in G.Enemies.HOLDER_CAP). */
+  function holderCount() {
+    let h = 0, n = 0;
+    for (const e of G.EnemyMgr.all()) if (!e.dead && !e.boss) { n++; if (e.keepsDistance()) h++; }
+    return [h, n];
+  }
+
   function spawnOne(pl, t, angle) {
-    const def = G.U.pick(G.Enemies.bagAt(t));
+    const bag = G.Enemies.bagAt(t), HC = G.Enemies.HOLDER_CAP;
+    let def = G.U.pick(bag);
+    if (G.Enemies.BANDS[def.behavior]) {                  // a band-holder: keep them to HC.share of what is alive
+      const [h, n] = holderCount();
+      if (h >= HC.floor && h + 1 > HC.share * (n + 1)) {
+        for (let i = 0; i < HC.rerolls && G.Enemies.BANDS[def.behavior]; i++) def = G.U.pick(bag);
+      }
+    }
     const pt = freePoint(pl, angle == null ? Math.random() * 6.2832 : angle, isFlyer(def));
     if (!pt) return null;
     const shiny = rollShiny(def.dex);
@@ -89,7 +106,7 @@ G.Spawner = (() => {
     // Elite (crowded screen): dmg/xp bump only. HP bump removed this slice; a future
     // elite will be "current enemy level + X", i.e. a higher-level spawn (HP falls out
     // of the formula), not an HP multiplier. See DECISIONS.md.
-    if (G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xpMul *= 1.6; }
+    if (bossIdx > 0 && G.EnemyMgr.count >= CAP * ELITE_FROM) { e.dmg *= 1.25; e.xpMul *= 1.6; }
     if (shiny) e.makeShiny();
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);
@@ -114,6 +131,7 @@ G.Spawner = (() => {
   /** @param who  the player or the list of players (co-op) */
   function update(dt, who, t) {
     players = Array.isArray(who) ? who : [who];
+    runT = t;
     if (announceT > 0) announceT -= dt;
     // In the rift arena nothing else spawns (and the boss clock waits).
     // In Arceus's Judgment, only its legendaries (systems/judgment.js).
@@ -185,6 +203,8 @@ G.Spawner = (() => {
   /** Guest in co-op: only runs the notice clock. */
   function tickBanner(dt) { if (announceT > 0) announceT -= dt; }
 
-  return { reset, update, ahead, burst, tickBanner, banner, say, rate, SHINY_RATE, CAP,
+  /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1. */
+  function xpBoost() { return runT < G.Enemies.BOSS_SLOTS[0].at ? XP_BOOST : 1; }
+  return { reset, update, ahead, burst, tickBanner, banner, say, rate, xpBoost, SHINY_RATE, CAP,
            debugForceShiny(n = 1) { forceShiny = n; } };
 })();

@@ -60,7 +60,11 @@ G.Enemies = (() => {
   // Enemy HP/level/speed use the shared base-stats model in js/core/stats.js (G.Stats),
   // the SAME formulas as the player. enemyHp(baseHP, t) = HP at the level-for-run-time.
   // See DECISIONS.md and BALANCE.md.
-  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t));
+  // Opening discount: wild-enemy HP starts at OPENING_HP_START x the formula and rises linearly to 1.0 at the
+  // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
+  const OPENING_HP_START = 0.55;
+  const openingHpK = t => { const end = BOSS_SLOTS[0].at; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
+  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t)) * openingHpK(t);
   const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
 
   const H = (d, s) => G.U.hash(d, 7, s);
@@ -77,11 +81,12 @@ G.Enemies = (() => {
   // 2026-10-17 / 2026-10-18): c = class, t = Tank modifier, s = secondary class, fx = status effects,
   // m = summoner minion dex, u = unique behavior. This replaces the old dex hash.
   // Class -> the behavior id enemy.js already understands (every other class is its own id).
-  // Slice 1: status enemies fight as shooters until their mechanics land (slice 2).
-  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'ranged' };
+  // Status enemies have no status mechanics yet (slice 2 / status slice E), so until then they are plain chasers (2026-10-19;
+  // they used to fight as shooters and sat at the shooter band like the rest of the ranged units).
+  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'chase' };
   const FAMILY = { plain: 'melee', charger: 'melee', jumper: 'melee', bomber: 'melee',
                    shooter: 'range', beamer: 'range', zoner: 'range', fan: 'range',
-                   healer: 'support', shielder: 'support', summoner: 'support', status: 'support' };
+                   healer: 'support', shielder: 'support', summoner: 'support', status: 'melee' };   // status: melee while it is a plain chaser
   // A species the table does not know (added to the pokedex later): family by stats, default class.
   const infoOf = p => G.ENEMY_CLASSES[p.dex] || { c: (p.stats && p.stats[3] > p.stats[1]) ? 'shooter' : 'plain' };
   const classOf = p => infoOf(p).c;
@@ -188,7 +193,12 @@ G.Enemies = (() => {
 
   // Share of the spawns each family gets inside a tier, whatever the species count (a 5-shooter cast no longer
   // means 5/9 shooters on screen). A family a tier lacks gives its share to the others pro rata. Status counts as support.
-  const FAMILY_SHARE = { melee: 0.45, range: 0.40, support: 0.15 };
+  const FAMILY_SHARE = { melee: 0.60, range: 0.30, support: 0.10 };   // was 0.45 / 0.40 / 0.15 until 2026-10-19 (ranged units were piling up, see BALANCE)
+  // Ceiling on units that hold a spacing band (shooter, beamer, fan, zoner, summoner; Spawner.spawnOne): a spawn draw that
+  // would be a band-holder is re-drawn (up to `rerolls` times, then accepted) when band-holders are already at least `floor`
+  // and would pass `share` of the units alive. Relative to what is alive, not to the cap, so it also bites early in a run.
+  // Healers and shielders are not counted (they walk to allies). Spawn weights (FAMILY_SHARE) are unchanged.
+  const HOLDER_CAP = { share: 0.35, floor: 2, rerolls: 8 };
   const BAG_UNIT = 4;     // bag copies per weight point, so the shares survive rounding
 
   let cast = null;      // [{ from, list: [def] }]
@@ -311,6 +321,30 @@ G.Enemies = (() => {
   const BANDS = { fan: [0.30, 0.40], beamer: [0.50, 0.62], zoner: [0.72, 0.82], ranged: [0.80, 0.92],
                   summoner: [0.70, 0.82] };
 
+  // Band jitter (2026-10-19): so the shooters do not all stop on the same line and form a ring around you.
+  //   spread      each unit scales BOTH numbers of its band by 1 + a random value in +-spread, fixed at spawn
+  //               (the band centre stays the average; 0.20 on the shooter band is about +-0.17 screens)
+  //   recheckMin/Max   a unit decides approach / hold / back away only every random min..max seconds and keeps that
+  //               decision in between (random starting phase), instead of re-deciding every frame
+  const BAND_JITTER = { spread: 0.20, recheckMin: 0.3, recheckMax: 0.7 };
+
+  // Morale of the band-holding (ranged) units and the healers / shielders, 0..1 (Enemy.moraleNow). morale = (1 - fearWeight x fear) x (1 - painWeight x pain):
+  //   fear   0..1. When a wild enemy dies, every band-holder within fearRadiusK x the DEAD enemy's body radius (capped at
+  //          fearMaxPx) gets killFear, fading linearly to 0 at the edge of that radius (a big one dying scares farther than a
+  //          small one). It decays with time constant fearTau s (your 1 to 3 s window).
+  //   pain   0..1. The HP it has lost recently as a fraction of its max HP (decays with time constant painTau s), over painFull:
+  //          losing painFull of its max HP inside about painTau s is full pain. Shield damage does not count. Stored pain is
+  //          capped at painFull, so an overkill hit does not prolong panic.
+  //   meter  a thin panic meter under the HP bar of a damaged unit once it is meterShow (0.5) of the way to panic (full = panic)
+  //   weights  fearWeight / painWeight: how much of morale a full fear / full pain takes away (0.6 each: either alone can
+  //          leave morale at 0.4 at worst, so it takes both together to get under panicBelow).
+  //   retreat  a band-holder backs away ONLY while panicking (inside its band; a panicking unit never approaches). There is no
+  //          standard retreat and no retreat delay any more (2026-10-19). Healers and shielders follow the same rule (they back
+  //          away only while panicking, inside SEEK.alone; the SEEK floor retreat is gone); panic halves their weak shot too.
+  //   panic  morale below panicBelow: it fires at panicFireMul of its normal rate (shot interval / panicFireMul)
+  const MORALE = { killFear: 0.35, fearRadiusK: 6, fearMaxPx: 240, fearTau: 1.2, painTau: 1.0, painFull: 0.6, fearWeight: 0.6, painWeight: 0.6,
+                   panicBelow: 0.25, panicFireMul: 0.5, meterShow: 0.5 };
+
   // Shielder and healer hold no band: they seek the biggest group of allies (Enemy.seekMove / seekPick). Screen units.
   //   floor      never closer to you than this (backs away at 0.8x below it)
   //   alone      with no allies in sight they approach to this and hold
@@ -360,9 +394,9 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY_SHARE, BANDS, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
-    enemyHp, levelForTime,
+    enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },
     get cast() { if (!cast) rollRun(); return cast; }
   };

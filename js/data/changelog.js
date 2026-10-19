@@ -6,6 +6,25 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['A gentler opening', 'A gentler opening'], chg: [
+    ['Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.',
+     'Enemies are weaker at the start of a run and ramp up to full strength over the first 3 minutes, so the opening is less of a grind.'],
+    ['More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.',
+     'More melee and fewer ranged enemies now show up, so fewer shooters pile up out of your reach.'],
+    ['Fewer ranged enemies can crowd the screen at once, and status Pokémon now run at you instead of hanging back.',
+     'Fewer ranged enemies can crowd the screen at once, and status Pokémon now run at you instead of hanging back.'],
+    ['Ranged enemies now spread out around you instead of lining up in a ring.',
+     'Ranged enemies now spread out around you instead of lining up in a ring.'],
+    ['Ranged enemies now hold their ground a moment before backing away, and panic (and shoot less) when you are cutting down the ones around them.',
+     'Ranged enemies now hold their ground a moment before backing away, and panic (and shoot less) when you are cutting down the ones around them.'],
+  ] },
+  { d: '2026-10-18', title: ['A faster start', 'A faster start'], new: [
+    ['Every run now starts with a 3 Min XP boost: wild enemies give double XP until the first boss shows up, so your first level-ups come sooner.',
+     'Every run now starts with a 3 Min XP boost: wild enemies give double XP until the first boss shows up, so your first level-ups come sooner.'],
+  ], chg: [
+    ['Elite enemies no longer appear until the first boss has shown up. Your moves also hit about twice as hard.',
+     'Elite enemies no longer appear until the first boss has shown up. Your moves also hit about twice as hard.'],
+  ] },
   { d: '2026-10-18', title: ['Ailment Chance cards', 'Ailment Chance cards'], new: [
     ['New level-up card: Ailment Chance. It adds 10 points to the burn or poison chance of one move (Ember goes from 10% to 20%, up to 100%). Burn and poison now also get stronger with your damage cards (Increased Effect and the Fire, Poison and kind damage cards), and the team summary shows each burn or poison move with its chance and how much of the max HP of the enemy it takes.',
      'New level-up card: Ailment Chance. It adds 10 points to the burn or poison chance of one move (Ember goes from 10% to 20%, up to 100%). Burn and poison now also get stronger with your damage cards (Increased Effect and the Fire, Poison and kind damage cards), and the team summary shows each burn or poison move with its chance and how much of the max HP of the enemy it takes.'],

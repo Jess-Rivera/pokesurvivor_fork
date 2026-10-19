@@ -8,6 +8,7 @@
  *   G.Log.pacing()     table: level reached, run time, seconds since the previous level
  *   G.Log.cast()       table: this run's cast, tier by tier, with class, Tank and Runner flags
  *   G.Log.bands()      table: where live enemies stand right now, by behavior, in screen units, against their spacing band
+ *   MIX records        every 5 s: enemies alive by family (melee / range / support), how many are within NEAR_PX of you, and their average distance in screen units
  *   G.Log.download()   JSON of every buffered record (text plus raw slots)
  *   G.Log.clear()
  *
@@ -26,8 +27,12 @@ G.Log = (() => {
     if (i === undefined) { i = strs.length; strs.push(s); strIx.set(s, i); }
     return i;
   };
-  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10;
-  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT'];
+  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10, MIX = 11;
+  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT', 'MIX'];
+  const NEAR_PX = 120, MIX_EVERY = 5;           // "near" = within a typical melee reach of you; sample period in seconds
+  const FAM_IX = { melee: 0, range: 1, support: 2 };
+  const _mn = new Float64Array(3), _mnear = new Float64Array(3), _mds = new Float64Array(3);   // reused, no allocation per sample
+  let lastMix = -MIX_EVERY;
   const api = { on: /[?&]dev\b/.test(location.search), t: 0 };
 
   function rec(kind) {
@@ -90,7 +95,31 @@ G.Log = (() => {
     const o = rec(DOT);
     F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0; F[o + 6] = e ? e.maxHp : 0;
   };
-  api.clear = () => { head = 0; count = 0; };
+  // Alive enemies by family (melee / range / support; bosses skipped), how many sit within NEAR_PX of you, and the average distance
+  // in screen units (1.0 = screen edge). Shows whether a family is piling up out of reach.
+  api.mix = () => {
+    const me = G.Game.player;
+    if (!me) return;
+    _mn.fill(0); _mnear.fill(0); _mds.fill(0);
+    let holders = 0, panics = 0, mor = 0;
+    const hw = G.Camera.w / 2, hh = G.Camera.h / 2;
+    for (const e of G.EnemyMgr.all()) {
+      if (e.dead || e.boss) continue;
+      const p = G.DEX_BY[e.dex], fx = p && FAM_IX[G.Enemies.FAMILY[G.Enemies.classOf(p)]];
+      if (fx === undefined) continue;
+      const dx = e.x - me.x, dy = e.y - me.y;
+      _mn[fx]++; _mds[fx] += Math.hypot(dx / hw, dy / hh);
+      if (dx * dx + dy * dy <= NEAR_PX * NEAR_PX) _mnear[fx]++;
+      if (e.keepsDistance() || e.isSeeker()) { holders++; if (e.panic) panics++; mor += e.moraleNow(); }
+    }
+    const o = rec(MIX);
+    F[o] = _mn[0] + _mn[1] + _mn[2];
+    for (let i = 0; i < 3; i++) { F[o + 1 + i] = _mn[i]; F[o + 4 + i] = _mnear[i]; F[o + 7 + i] = _mn[i] ? _mds[i] / _mn[i] : 0; }
+    F[o + 10] = holders; F[o + 11] = panics; F[o + 12] = holders ? mor / holders : 0;
+  };
+  // Called every frame from the game loop; records a MIX line at most once per MIX_EVERY seconds of run time.
+  api.sample = () => { if (api.t - lastMix >= MIX_EVERY) { lastMix = api.t; api.mix(); } };
+  api.clear = () => { head = 0; count = 0; lastMix = -MIX_EVERY; };
 
   // ---------------- text (built only on request) ----------------
   const mmss = t => {
@@ -155,10 +184,11 @@ G.Log = (() => {
     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
     else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + (v[6] ? ' (' + n1(100 * v[2] / v[6]) + '% of max)' : '') + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
+    else if (k === MIX) { const fam = ['melee', 'range', 'support']; s = 'MIX  alive ' + v[0] + ' | ' + fam.map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')').join(' | ') + ' | morale units (ranged + healers/shielders) ' + v[10] + ', panicking ' + v[11] + ', avg morale ' + v[12].toFixed(2) + '  [near = within ' + NEAR_PX + ' px]'; }
     else s = '?';
     return mmss(T[i]) + '  ' + s;
   }
-  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d' };
+  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d', 11: '#7fb8ff' };
   function color(i) {
     const k = K[i];
     if (k === HIT_IN || k === HIT_OUT) {
