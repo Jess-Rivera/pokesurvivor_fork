@@ -5,6 +5,13 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-19 (Claude Desktop) feature/boss-rework: SESSION CLOSE, Overworld Elites + Brock pilot gym done
+- WHAT SHIPPED ON THE BRANCH: Overworld Elites (elites.js, eliteDef, wild-thinning, enrage, Density Bonus; Judgment off; five-boss spawn removed); Brock pilot gym (gate at 4:00, rock arena, player-accurate Tackle / Rock Throw / Harden with authored stacks and STAB, enrage, run ends on a loss); Boulder Badge package (+10% Atk to the whole team via Player.badge / incOf, guaranteed item, free level with toast, Bond, full revive); gym leader drops no XP; gym leader moves at plain species speed (no 1.1x chase, no 0.55x circling); debug tools (elite, skipTo, levelUp, gym).
+- TESTED: three offline harnesses pass (elites, gym, gym-reward). Jess feel-tested the gym and the win path in a browser and committed; the elite HP/power retune is parked for more playtest data.
+- DECIDED: badge boosts are per gym (boost field in gyms.js); the only allowed gym speed change is a Speed-raising move later (TODO).
+- NOT DONE: Kanto roster gyms 2-8 and the other move kinds' boss forms; Elite Four / Region Complete / Return Home; status Slice C (next); cleanup (BOSS_SLOTS / BOSSES data); elite retune; optional gate sprite.
+- WHERE WE STOPPED: feature closed and merged by Jess; next is status Slice C on its own branch.
+
 > Older entries (every session before the SESSION CLOSE below) are in docs/DEVLOG-archive.md, newest first, verbatim.
 > They are NOT read at session start. Open the archive only when you need the detail behind a past decision.
 
@@ -20,7 +27,7 @@ Append an entry at the end of every session: what changed, what was decided, wha
 - SUPERSEDED (Jess, 2026-10-19): the gym leader drops NO XP (def.xp 0, die() skips dropXp for gyms); the win is a toast plus the guaranteed level (the normal level-up cards still open).
 - BADGE BOOST BUILT: Boulder Badge = +10% Attack for the whole team, benched members included. Player.badge + incOf(k) (stat cards plus badge) replace inc reads in moveFactor, maxHpAt, speed and hurt; sheet bonus shows it; G.Game.badgeBoost(stat, pct); gyms.js entry field boost { stat, pct } (validated). Toast: 'Boulder Badge earned! +10% Attack for the whole team, and a level up'. Reward harness updated (no XP orbs, boost atk:0.1); all three harnesses pass; NOT run in a browser.
 - NOT DONE: other badges' boosts, HP/damage tuning of Brock, other move kinds' boss forms, Kanto roster, Elite Four, Region Complete, cleanup list.
-- WHERE WE STOPPED: pilot built, waiting on the feel test.
+- WHERE WE STOPPED: (superseded, see SESSION CLOSE below)
 
 ## 2026-10-19 (Claude Desktop) feature/boss-rework: Overworld Elites built
 - WHAT: the elite slice. New js/systems/elites.js; enemies.js (eliteDef species draw, openingHpK reads the shared constant), stats.js (XP_BOOST_END, three-state levelForTime signature), spawner.js (placeElite, elite-aware cap/rate/tides, Density Bonus, boss spawn removed), enemy.js (elite descriptor, size 1.5 to 2, HP from the descriptor, XP multiplier, engage on first hit, exclusions from morale/knockback/fear/stragglers/golden/lava, walk-off for excess wild units, elite drops and TTK readout, name tag), hud.js (elite bar with enrage countdown, off-screen arrow), judgment.js (unhooked), progress.js (elite counts as a boss kill), debug.js (G.Debug.elite()), dev.html (script tag), changelog.js (entry), docs/proposals/elites-harness.js.

@@ -98,3 +98,5 @@ LOCKED 2026-10-19 (Jess: 'Adopt the Stages yes'; numbers and duration TUNE):
 - Elites: enrage numbers and ramp length. Elites in the Elite Four phase: proposal is one elite 2:00 after each return from ANY gate (gym or Elite Four), none while one is alive, timers never stack.
 - Post-gym ramp (deferred): shape and numbers of the slow ramp that starts when the gym list is complete; it also needs the levelForTime change described in section 1.
 - Gyms and the rest: see sections 3 and 4.
+
+- 2026-10-19, FEATURE CLOSED: Overworld Elites + Brock pilot gym (Boulder Badge +10% Atk, no leader XP, plain species speed) feel-tested and merged. Remaining work moves to status Slice C, then Kanto roster / Elite Four / Region Complete.
