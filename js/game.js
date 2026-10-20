@@ -127,12 +127,12 @@ G.Game = (() => {
       f.teamSlot = slot;
       roster.push(f);
     });
-    // Team buffs: every member points at ONE shared buffs object, so a buff cast
-    // by one Pokemon (Swords Dance, Agility, Harden, Aqua Ring) stays active on
+    // Team buffs: every member points at ONE shared stage store (stgTeam), so a buff cast
+    // by one Pokemon (Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring) stays active on
     // whoever is on the field until its own timer runs out. Only the active
     // member runs Player.update(), so the shared timers still tick exactly once
-    // per frame, including while the caster sits on the bench.
-    roster.forEach(f => { f.buffs = roster[0].buffs; });
+    // per frame, including while the caster sits on the bench. The object is never reassigned.
+    roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;

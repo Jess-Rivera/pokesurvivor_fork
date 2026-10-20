@@ -245,8 +245,22 @@ G.Combat = (() => {
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
   }
 
+  /** A buff move's cast (slice E2a): one TEAM application per stat it raises (stages), or Aqua Ring's regen. Each lasts the move's own `dur`;
+   *  how many overlap is set by dur / cd (cooldown is the cap), the +-6 stage clamp is the only hard limit. */
+  const STAGE_STAT = { atk: 'atk', def: 'def', spa: 'spa', spd: 'spd', spe: 'spe' };
   function buff(pl, m) {
-    pl.addBuff(m.stat, m.amount, m.dur, m.stacks | 0);
+    if (m.stat === 'regen') pl.addTeamStage('regen', m.amount || 0, m.dur, m.id);
+    else {
+      const raises = [{ stat: m.stat === 'spd' ? 'spe' : m.stat, n: m.stageN || 1 }];      // the move data calls Speed 'spd' (the old player buff key)
+      if (m.stage2) raises.push({ stat: m.stage2.stat, n: m.stage2.n });
+      for (const r of raises) {
+        if (!STAGE_STAT[r.stat]) continue;
+        if (pl.addTeamStage(r.stat, r.n, m.dur, m.id)) {
+          const st = G.Stages.stage(pl, r.stat);
+          G.FX.dmgText(pl.x, pl.y - (pl.bodyH || 30) - 4, G.Stages.LABEL[r.stat] + (st > 0 ? ' +' : ' ') + st, G.Stages.UP);
+        }
+      }
+    }
     const col = G.U.TYPE_COLOR[m.type];
     G.FX.ring(pl.x, pl.y, pl.r * 2.4, pl.r * 1.1, col, 0.35, 2.5);
     const vis = G.VFX.forMove(m);

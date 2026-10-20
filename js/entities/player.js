@@ -54,12 +54,10 @@ G.Player = class Player {
     this.maxMoves = 4;         // huecos
     this.bonds = 0;            // links to use (reward from the legendaries)
 
-    this.buffs = {
-      atk: { n: 0, t: 0, dur: 0, amount: 0 },     // dur = full length, so the HUD can draw the timer
-      spd: { n: 0, t: 0, dur: 0, amount: 0 },
-      def: { n: 0, t: 0, dur: 0, amount: 0 },
-      regen: { n: 0, t: 0, dur: 0, amount: 0 }
-    };
+    // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
+    // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
+    // { stat: [{ n, t, dur, src }] } with stat in atk, def, spa, spd, spe, regen. See G.Stages.teamAdd.
+    this.stgTeam = {};
 
     this.level = 1;
     this.xp = 0;
@@ -107,16 +105,17 @@ G.Player = class Player {
   cy() { return this.y; }
 
   // ---------------- stats efectivos ----------------
-  get atk() { return this.baseAtk * this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
-  // Multiplier layer that used to be folded into the flat pl.atk (upgrades + atk buffs),
-  // now passed into the A/D attacker factor so the ratio stays proportional.
-  get atkMulAll() { return this.atkMul * (1 + this.buffs.atk.n * this.buffs.atk.amount); }
+  get atk() { return this.baseAtk * this.atkMul * G.Stages.mul(this, 'atk'); }
+  // Multiplier layer that used to be folded into the flat pl.atk (upgrades), now passed into the A/D attacker
+  // factor so the ratio stays proportional. The Attack / Sp. Atk STAGE is applied per move category in moveFactor.
+  get atkMulAll() { return this.atkMul; }
   // Attacker half of the damage formula for move `m` (see G.Stats.attackFactor). The
   // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
   moveFactor(m) {
     const c = G.Stats.moveCat(m);
     const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk');     // Protein / Calcium
-    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si));
+    const stg = c === 'special' ? G.Stages.mul(this, 'spa') : c === 'status' ? 1 : G.Stages.mul(this, 'atk');     // stage raises and drops (slice E2a)
+    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg);
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
@@ -148,13 +147,13 @@ G.Player = class Player {
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() {
-    const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
+    const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
     return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this);
   }
-  get reduction() { return Math.min(0.8, this.dmgReduce + this.buffs.def.n * this.buffs.def.amount); }
-  get regen() { return this.regenFlat + this.buffs.regen.n * this.buffs.regen.amount; }
+  get reduction() { return Math.min(0.8, this.dmgReduce); }
+  get regen() { return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen'); }
 
   // ---------------- movimientos ----------------
   addMove(id) {
@@ -331,7 +330,7 @@ G.Player = class Player {
     if (atk && !pure) {
       const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
-      const defMul = 1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'));     // Iron / Zinc
+      const defMul = (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) * G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def');     // Iron / Zinc, then the Def / Sp. Def stage (slice E2a)
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
@@ -442,13 +441,12 @@ G.Player = class Player {
     this.power = { def, t: dur, dur };
   }
 
-  addBuff(stat, amount, dur, maxStacks) {
-    const b = this.buffs[stat];
-    if (!b) return;
-    b.amount = amount;
-    b.n = Math.min(maxStacks, b.n + 1);
-    b.t = dur;
-    b.dur = dur;
+  /** A buff move's cast (slice E2a): one team application of `n` stages on `stat` (or `n` HP/s of regen), lasting `dur` s. Returns true when the effective stage changed. */
+  addTeamStage(stat, n, dur, src) {
+    const before = stat === 'regen' ? 0 : G.Stages.stage(this, stat);
+    G.Stages.teamAdd(this.stgTeam, stat, n, dur, src);
+    if (stat === 'regen') return true;
+    return G.Stages.stage(this, stat) !== before;
   }
 
   // ---------------- ciclo ----------------
@@ -459,10 +457,7 @@ G.Player = class Player {
     if (this.flash > 0) this.flash -= dt;
     if (this.attackFace > 0) this.attackFace -= dt;
 
-    for (const k in this.buffs) {
-      const b = this.buffs[k];
-      if (b.n > 0) { b.t -= dt; if (b.t <= 0) b.n = 0; }
-    }
+    G.Stages.teamTick(this.stgTeam, dt);       // the shared team raises: only the active member runs update(), so they tick exactly once per frame
     if (this.slowT > 0) this.slowT -= dt;
     G.Status.tick(this, dt);
     G.Stages.tick(this, dt);
@@ -608,17 +603,18 @@ G.Player = class Player {
     this.anim.draw(ctx, this.x, this.y, Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this)));
 
     // Buff arcs around the feet.
-    const COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
+    const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
     let i = 0;
-    for (const k in this.buffs) {
-      const b = this.buffs[k];
-      if (b.n <= 0) continue;
+    for (const k in this.stgTeam) {
+      const L = this.stgTeam[k];
+      if (!L.length) continue;
+      const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;
       ctx.strokeStyle = COL[k];
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.r * 1.8 + i * 5, (this.r * 1.8 + i * 5) * 0.42, 0, 0, 6.2832 * (b.n / 5));
+      ctx.ellipse(this.x, this.y, this.r * 1.8 + i * 5, (this.r * 1.8 + i * 5) * 0.42, 0, 0, 6.2832 * frac);
       ctx.stroke();
       ctx.restore();
       i++;

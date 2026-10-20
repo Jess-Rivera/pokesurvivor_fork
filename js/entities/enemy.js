@@ -760,7 +760,7 @@
     // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
     // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
     // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
-    // player's Harden (a Defense buff: amount per stack, duration, max stacks; 7% x up to 5 = -35% damage taken). Only the damage is
+    // player's Harden (slice E2a: a +1 Defense stage per cast lasting its duration; no stack cap, duration / recovery sets how many overlap). Only the damage is
     // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
     // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
 
@@ -776,6 +776,7 @@
     castBuff(m) {
       const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
       if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
+      if (m.stage2) G.Stages.add(this, m.stage2.stat, m.stage2.n, m.dur, G.Stages.MAX);
     }
 
     /** Weighted pick among the moves allowed by range and HP gate; null if none. */
@@ -795,7 +796,8 @@
     gymCd() {
       const m = this.ai.lastMove;
       if (!m) return 1.2;
-      const cd = Math.max(0.35, m.cd || 1) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
+      // A buff move's catalog cd is the PLAYER's recast timer (slice E2a: 8 s); a leader picks moves by weight, so its recovery after a buff cast stays 0.85 s.
+      const cd = (m.kind === 'buff' ? 0.85 : Math.max(0.35, m.cd || 1)) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
       return cd / this.gym.tempo;
     }
 

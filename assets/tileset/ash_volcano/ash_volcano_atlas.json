@@ -565,21 +565,9 @@
      "y": 98,
      "w": 16,
      "h": 16
-    },
-    "NE": {
-     "x": 50,
-     "y": 130,
-     "w": 16,
-     "h": 16
-    },
-    "NW": {
-     "x": 66,
-     "y": 130,
-     "w": 16,
-     "h": 16
     }
    },
-   "rule": "4x4 block: the north face is TWO tiles tall. depth = number of pool cells above in the same column (0 = top edge). row = no S ? 3 : depth 0 ? 0 : depth 1 ? 1 : 2. col = no W ? 0 : no E ? 3 : (1 or 2 by x parity). INTERIOR tiles (row 2 type) with one missing diagonal are replaced by the inner tile (inner piece is 2x3; middle row unused). Pools need height >= 3 (top pair + bottom row)"
+   "rule": "4x4 block: the north face is TWO tiles tall. depth = number of pool cells above in the same column (0 = top edge). row = no S ? 3 : depth 0 ? 0 : depth 1 ? 1 : 2. col = no W ? 0 : no E ? 3 : (1 or 2 by x parity). INTERIOR tiles (row 2 type) whose single missing diagonal is SE or SW are replaced by the top row of the inner piece (the 2x3 stump: only its top ring matches a lava-side corner). NE/NW concave corners (rock-face side) have no art and stay plain; the rim there is a straight seam. Pools need height >= 3 (top pair + bottom row)"
   },
   "wall": {
    "type": "wall_autotile_short_tall",

@@ -5,6 +5,15 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-20 (Claude Desktop) status Slice E2a: team stage buffs
+- WHAT CHANGED: stages.js (team store: teamAdd / teamTick / teamSum / teamTimer, stage() and speedMul() read the team raises, 0.1 s grace and renew rule), player.js (buffs object replaced by stgTeam; atk / spd / reduction / regen getters, Attack and Sp. Atk stage per move category in moveFactor, Def / SpD stage in the enemy hit ratio, addTeamStage, team tick, buff arcs), game.js (roster shares stgTeam), combat.js (buff cast applies team applications, Dragon Dance two stats, floating stage text), moves.js (five buff moves: cd 8, dur 8, no stacks / amount, fixed cards), gyms.js (Brock's Harden authors Duration x2 only), enemy.js (gym castBuff handles stage2, leader recovery after a buff cast stays 0.85 s), hud.js (buff chips read the team store: ATK +2, REG x1), sheet.js (stage line on buff moves), changelog.js.
+- BEHAVIOR: see DECISIONS 2026-10-20 Slice E2a.
+- CHECKED: node parse of every touched file; new harness status-sliceE2a-harness.js (8 groups) passes; harnesses A, B, C, D1 to D3, E1, 2b (buff moves skipped), 2c, gym (Brock Harden updated), gym-reward and elites pass. upgrade-slice2a-harness.js crashes on its stale stub, as before this slice. Not run in a browser.
+- TO FEEL-TEST: give a Pokemon Swords Dance or Harden (G.Debug.give) and bond or select it so it recasts: the chip should read ATK +2 / DEF +1 and never flicker at base; stack Recharge or Duration (G.Debug.stack('recharge', 4, 'harden')) and watch it alternate +1 and +2; swap Pokemon and the buff stays; Brock's Harden should climb slower than before the rework.
+- WHERE WE STOPPED: E2a built. Next: E2b (self-cast stat effects, benched ticking, revive and bench-death handling), then E2c and E2d.
+
+---
+
 ## 2026-10-20 (Claude Desktop) status Slice E1: statuses on the player
 - WHAT CHANGED: status.js (player full timers + 2.5 s grace, daze, drowsy, trap as swap lock, Shake off, jitter, sleepChance, durMul, list with timers), stages.js (stripPositive, remaining; player Speed stage), player.js (spd x stage, stage tick, daze jitter, inflict(), status ring and zzz), enemies.js (CARRIER table, CARRIER_OF 63 species, BANDS.carrier, defForDex), enemy.js (carrier state and cap, status shots, secondary payload, haste nova, shotGap, applyBurn durMul), combat.js (shot and contact payload, Fire Spin strip), moves.js (Fire Spin), mechanics.js (Fire Spin and trap text), game.js (trap swap lock, shake key), input.js (presets, shake_off, conflicts), settings-ui.js (preset buttons, labels), hud.js (debuff stack, shake prompt), debug.js (G.Debug.carrier, statusSelf slow).
 - BEHAVIOR: see DECISIONS 2026-10-20 Slice E1.
@@ -412,3 +421,10 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - Regenerated atlas/json/js and `Crystal_Cave_final_mockup.png`. No game code touched.
 - Crystal Cave wall inner corners (D527/E527): the sheet bakes a few ground-tinted pixels into the notch, which read as the floor showing through the wall. They are now filled from the plain interior tile at bake time (generator constant GROUND_TINT). Atlas/json/js and mockup regenerated.
 - Found: Crystal deep-water "inner" D534-E535 is a boulder-in-water island, not concave corners. The overlay rule still draws it at concave water corners; flagged to Jess.
+
+## 2026-10-20 — Ash Volcano tileset atlas baked (volcano_test_tileset.png)
+- `tools/make_tileset_ash_volcano.py` -> `assets/tileset/ash_volcano/ash_volcano_atlas.{png,json,js}` (`G.TILESETS.ash_volcano`). No filter. Mockup: `tools/tileset_mockup_ash_volcano.py` -> `catalog/Ash_Volcano_final_mockup.png`. No game code touched.
+- Terrains: 2x2 floor pattern; ground patch (3x3 + 4 notch corner tiles, replace); shallow lava (3x3 + 4 corner tiles from the stump ring, replace); deep lava (4x4: two-tile rock face on the north; SE/SW corners from the stump top ring, NE/NW none); walls short (4x4, 1-tile face) and tall (4x6, 2-tile face), chosen per vertical run (>= 4 cells = tall); trees t1/t2 (pass+base stacks); rocks r1-r6; grass clump gradient var1-var4.
+- Inner pieces were seam-matched against the blocks: short E17/F17/E18/F18 = SE/SW/NE/NW; tall K14+K15 = SE pair, L14+L15 = SW pair, K19 = NE, L19 = NW; patch and shallow quarters = SE/SW/NE/NW.
+- Spec typo handled: rocks r1/r4/r5 listed columns O..R; O/P hold lava stumps, so Q.. was used (Q0/R0 hold the rock tops).
+- Open: deep-lava NE/NW concave corners have no art (straight seam); deep inner pieces' middle row unused; tall-wall SE/SW pairs and short/tall mixing need the in-game generator to enforce run rules.

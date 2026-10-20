@@ -86,18 +86,25 @@ def replace_autotile(cv, B, rule):
 
 def deep_autotile(cv, B, rule):
     tiles = rule['tiles']; m = rule['inner_tile_for_missing_diagonal']; p = np.pad(B, 1)
-    for y in range(B.shape[0]):
-        for x in range(B.shape[1]):
+    h, w = B.shape
+    def depth(y, x):
+        d = 0
+        while y - d - 1 >= 0 and B[y - d - 1, x]: d += 1
+        return d
+    def rtype(y, x):                       # 0/1 = rock face rows at the top, 2 = lava, 3 = bottom rim
+        if not (0 <= y < h and 0 <= x < w and B[y, x]): return None
+        d = depth(y, x); S = y + 1 < h and B[y + 1, x]
+        return 3 if not S else (0 if d == 0 else (1 if d == 1 else 2))
+    for y in range(h):
+        for x in range(w):
             if not B[y, x]: continue
             N, S, Wn, E = nbrs(p, y, x)
-            depth = 0
-            while y - depth - 1 >= 0 and B[y - depth - 1, x]: depth += 1
-            row = 3 if not S else (0 if depth == 0 else (1 if depth == 1 else 2))
+            row = rtype(y, x)
             col = 0 if not Wn else (3 if not E else 1 + (x % 2))
             t = rect(tiles[row][col])
-            if N and S and Wn and E and depth >= 2:
-                for name, (dy, dx) in DIAGS.items():
-                    if not p[y + 1 + dy, x + 1 + dx]: t = rect(m[name])
+            if N and S and Wn and E and row == 2:
+                miss = [k for k, (dy, dx) in DIAGS.items() if not p[y + 1 + dy, x + 1 + dx]]
+                if len(miss) == 1 and miss[0] in ('SE', 'SW'): t = rect(m[miss[0]])
             cv.alpha_composite(t, (x * T, y * T))
 
 # ---------------- walls: cuts + pinch + stub deletion (same family as Shady Forest / Crystal Cave) ----------------

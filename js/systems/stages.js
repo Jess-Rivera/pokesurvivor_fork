@@ -11,8 +11,12 @@
  *
  * Where it is read: the defender half of the player's damage (Def or SpD, combat.js), the attacker half of a gym leader's
  * moves (Atk or SpA, enemy.js gymFactor) and enemy movement (Speed: multiplies the FINAL movement speed, no bounds, Jess 2026-10-19).
- * The player's own buff moves (Harden, Swords Dance...) are NOT stages yet: they stay on pl.buffs (slice E2 decides). Slice E1 gives the
- * player ONE stage use: Speed drops from enemy Status-class carriers ("slow"); pl.spd multiplies speedMul and Player.update ticks it.
+ * Slice E2a: the player's own buff moves (Harden, Swords Dance, Agility, Dragon Dance) are stages too. RAISES are TEAM-WIDE: one shared store
+ * (h.stgTeam, the same object on every roster member, ticked once per frame by the active member) holds the live applications of every raise
+ * and of Aqua Ring's regen. DROPS (enemy-cast or self-cast) stay on the Pokemon that took them (h.stg). The stage of a stat on a player is
+ * (team raises + own drops), clamped to +-6. There is NO explicit cap on a move: duration / cooldown is the cap, because every cast is its own
+ * timed application (cooldown >= duration means one live application; shorter cooldowns or longer durations overlap them). Slice E1 gave the
+ * player the first stage use: Speed drops from enemy Status-class carriers ("slow").
  */
 G.Stages = (() => {
   // Mainline multipliers for stage -6 .. +6 (index = stage + 6).
@@ -28,14 +32,45 @@ G.Stages = (() => {
 
   /** The stage of `stat` on `h` right now (-6 .. +6). */
   function stage(h, stat) {
-    const L = h.stg && h.stg[stat];
-    if (!L) return 0;
+    const L = h.stg && h.stg[stat], T = h.stgTeam && h.stgTeam[stat];
+    if (!L && !T) return 0;
     let s = 0;
-    for (const a of L) s += a.n;
+    if (L) for (const a of L) s += a.n;
+    if (T) for (const a of T) s += a.n;
     return clamp(s, -MAX, MAX);
   }
   /** The stat multiplier for `stat` on `h` (1 when it has no stage). */
-  function mul(h, stat) { return h.stg ? TABLE[stage(h, stat) + MAX] : 1; }
+  function mul(h, stat) { const s = (h.stg || h.stgTeam) ? stage(h, stat) : 0; return s ? TABLE[s + MAX] : 1; }
+
+  // ---- team store (slice E2a): shared by the whole roster, mutated in place, never reassigned ----
+  const TEAM_LIVE = 8;      // safety limit on live applications per (stat, move): a pathological build cannot grow the list forever
+  const TEAM_GRACE = 0.1;   // an application stays 0.1 s past its end, and a cast of the same move inside that last 0.1 s REFRESHES it instead of stacking:
+                            // at cooldown = duration the cast lands within a frame of the old one ending, and without this the stage would dip (or double) for a frame
+  /** Add one application of `n` (raise) of `stat` from move `src`, lasting `dur` s. Returns the number of live applications on `stat`. */
+  function teamAdd(store, stat, n, dur, src) {
+    const L = store[stat] || (store[stat] = []);
+    for (const a of L) if (a.src === src && a.t <= TEAM_GRACE) { a.n = n; a.t = dur; a.dur = dur; return L.length; }     // the old one is ending: renew it
+    let mine = 0; for (const a of L) if (a.src === src) mine++;
+    if (mine >= TEAM_LIVE) { const i = L.findIndex(a => a.src === src); if (i >= 0) L.splice(i, 1); }      // drop that move's oldest
+    L.push({ n, t: dur, dur, src });
+    return L.length;
+  }
+  /** Advance the team timers once per frame. In place: the roster shares this object. An application is removed TEAM_GRACE s after its time is up. */
+  function teamTick(store, dt) {
+    for (const s in store) {
+      const L = store[s];
+      for (let i = L.length - 1; i >= 0; i--) if ((L[i].t -= dt) <= -TEAM_GRACE) L.splice(i, 1);
+      if (!L.length) delete store[s];
+    }
+  }
+  /** The team's raise on `stat` (sum of live applications, before the +-6 clamp), and for HUD the longest time left with its full length. */
+  function teamSum(store, stat) { const L = store && store[stat]; let s = 0; if (L) for (const a of L) s += a.n; return s; }
+  function teamTimer(store, stat) {
+    const L = store && store[stat]; let best = null;
+    if (L) for (const a of L) if (!best || a.t > best.t) best = { t: a.t, dur: a.dur };
+    return best;
+  }
+  function teamClear(store) { for (const s in store) delete store[s]; }
 
   function text(h, msg, color) {
     if (G.FX && G.FX.dmgText) G.FX.dmgText(h.x, h.y - (h.bodyH || 30) - 4, msg, color);
@@ -76,7 +111,7 @@ G.Stages = (() => {
 
   /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19): -6 is x0.25, +6 is x4, no extra bounds. The species
    *  Speed shaping (0.5x to 3.0x identity bounds) is a different thing and is not involved. It multiplies with paralysis and trap. */
-  function speedMul(h) { return h.stg && h.stg.spe ? TABLE[stage(h, 'spe') + MAX] : 1; }
+  function speedMul(h) { return (h.stg && h.stg.spe) || (h.stgTeam && h.stgTeam.spe) ? TABLE[stage(h, 'spe') + MAX] : 1; }
 
   /**
    * Roll the stat stage of a hit on an enemy. `m.stage` = { stat, n } (data/moves.js, from PokeAPI move_meta_stat_changes) and
@@ -124,5 +159,6 @@ G.Stages = (() => {
     return out;
   }
 
-  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list };
+  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list,
+    teamAdd, teamTick, teamSum, teamTimer, teamClear, UP, DOWN };
 })();

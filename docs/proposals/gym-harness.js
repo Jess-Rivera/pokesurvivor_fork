@@ -54,7 +54,8 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   if (!near(fr / ft, (mr.dmg * 1.5) / mt.dmg)) bad('power ratio incl. STAB ' + fr / ft);
   if (e.atkFactor == null || e.atkCat !== 'physical') bad('contact factor / cat'); if (e.atkType !== 'normal') bad('contact type ' + e.atkType);
   // Harden is a mainline STAGE now (slice D1): +1 Def per cast, each application on its own timer (the move's dur), stage cap = the move's stacks (6)
-  const hd = I('harden'); if (hd.amount !== 0.07 || !near(hd.dur, 7 * 1.3) || hd.stacks !== 6 || hd.stat !== 'def') bad('Harden values: ' + JSON.stringify([hd.amount, hd.dur, hd.stacks, hd.stat]));
+  // Slice E2a: Harden is the player's stage version (8 s, +1 Def per cast, no Buff Stacks); Brock authors Duration x2 only, so no stage cap below the +-6 clamp
+  const hd = I('harden'); if (hd.amount != null || !near(hd.dur, 8 * 1.3) || hd.stacks != null || hd.stat !== 'def') bad('Harden values: ' + JSON.stringify([hd.amount, hd.dur, hd.stacks, hd.stat]));
   if (G.Stages.stage(e, 'def') !== 0 || G.Stages.mul(e, 'def') !== 1) bad('no cast, no stage');
   e.castBuff(hd); if (G.Stages.stage(e, 'def') !== 1 || !near(G.Stages.mul(e, 'def'), 1.5)) bad('1 cast ' + G.Stages.stage(e, 'def'));
   for (let i = 0; i < 9; i++) e.castBuff(hd); if (G.Stages.stage(e, 'def') !== 6 || !near(G.Stages.mul(e, 'def'), 4)) bad('stage cap ' + G.Stages.stage(e, 'def'));
@@ -70,7 +71,7 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   const r = [f(60), f(120), f(135), f(150), f(400)];
   if (!near(r[0], 1) || !near(r[1], 1) || !near(r[2], 1.5) || !near(r[3], 2) || !near(r[4], 2)) bad('enrage ramp ' + r);
   clock = 240;
-  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = +1 Def stage per cast (x1.5 at +1, x4 at the +6 cap, 9.1 s each), STAB on Rock Throw, enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
+  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = +1 Def stage per cast (x1.5 at +1, x4 at the +6 cap, 10.4 s each), STAB on Rock Throw, enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
 
 // 4. move picker
 { const e = mk(); e.ai = null; e.bossInit(); const cnt = {};

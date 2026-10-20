@@ -38,16 +38,16 @@
       cd: 0.75, dmg: 40, radius: 110, width: 34, knock: 40 },
 
     { id: 'swords-dance', name: 'Swords Dance', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
-      desc: 'Raises the user\'s Attack by two stages.',
-      cd: 0.85, stat: 'atk', amount: 0.13, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Attack by two stages (physical moves).',
+      cd: 8, stat: 'atk', dur: 8, fixed: ['amount', 'stacks'] },
 
     { id: 'agility', name: 'Agility', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
-      desc: 'Raises the user\'s Speed by two stages.',
-      cd: 0.85, stat: 'spd', amount: 0.10, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Speed by two stages.',
+      cd: 8, stat: 'spd', dur: 8, fixed: ['amount', 'stacks'] },
 
     { id: 'harden', name: 'Harden', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
-      desc: 'Raises the user\'s Defense by one stage.',
-      cd: 0.85, stat: 'def', amount: 0.07, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Defense by one stage.',
+      cd: 8, stat: 'def', dur: 8, fixed: ['amount', 'stacks'] },
 
     // ---------------- FUEGO ----------------
     { id: 'ember', name: 'Ember', type: 'fire', kind: 'projectile', cat: 'special', ailment: 'burn', ailmentChance: 10, flinch: 0, statChance: 0,
@@ -81,7 +81,7 @@
 
     { id: 'aqua-ring', name: 'Aqua Ring', type: 'water', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
       desc: 'Restores 1/16 of the user\'s max HP each turn.',
-      cd: 0.90, stat: 'regen', amount: 1.6, dur: 8, stacks: 4 },
+      cd: 8, stat: 'regen', amount: 1.6, dur: 8, fixed: ['stacks'] },
 
     // ---------------- PLANTA ----------------
     { id: 'vine-whip', name: 'Vine Whip', type: 'grass', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
@@ -224,8 +224,8 @@
       cd: 1.0, dmg: 0, radius: 230, width: 34 },
 
     { id: 'dragon-dance', name: 'Dragon Dance', type: 'dragon', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
-      desc: 'Raises the user\'s Attack and Speed by one stage.',
-      cd: 0.7, stat: 'atk', amount: 0.11, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Attack and Speed by one stage each.',
+      cd: 8, stat: 'atk', stageN: 1, stage2: { stat: 'spe', n: 1 }, dur: 8, fixed: ['amount', 'stacks'] },
 
     // ---------------- HADA ----------------
     { id: 'fairy-wind', name: 'Fairy Wind', type: 'fairy', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,

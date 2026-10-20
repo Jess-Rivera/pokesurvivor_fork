@@ -19,7 +19,8 @@ G.Gyms = (() => {
         { species: 'Geodude', dex: 74, stance: 'mixed', power: 1, tempo: 1, moves: [
           { id: 'tackle', weight: 2, range: 'close', stacks: { effect: 2, area: 1, arc: 1, recharge: 2 } },
           { id: 'rock-throw', weight: 3, range: 'any', stacks: { effect: 3, count: 2, recharge: 2, size: 1, speed: 1 } },
-          { id: 'harden', weight: 1, range: 'any', stacks: { stacks: 1, duration: 2 } }
+          // Slice E2a: Harden is the player's stage version now (+1 Defense per cast, 8 s). Buff Stacks no longer exists for it, so only Duration is authored.
+          { id: 'harden', weight: 1, range: 'any', stacks: { duration: 2 } }
         ] }
       ] }
   ];

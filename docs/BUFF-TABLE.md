@@ -1,0 +1,44 @@
+# BUFF-TABLE, authoring sheet for the player's buff moves
+
+Edit the numbers here, then tell Claude to convert them into `js/data/moves.js` (fields `cd`, `dur`, `stageN`, `stage2`, `amount`).
+Rules and reasoning: DECISIONS.md, 2026-10-20 Status Slice E2a.
+
+## How it works in one paragraph
+Every cast of a buff move is its own timed application on the TEAM (all raises are team-wide). Nothing caps the stage except the +-6 clamp,
+because how many casts overlap is set by duration / cooldown. At base the cooldown equals the duration, so exactly one application is
+live and the stage is what one cast gives. Recharge (cooldown / (1 + 0.15 n)) and Duration (duration x (1 + 0.15 n)) cards each multiply
+duration / cooldown, and the sustained stage is about: per-cast stages x (1 + 0.15 r) x (1 + 0.15 d). Only moves in the active slot group
+cast (selected or bonded).
+
+## Base table (current values)
+
+| Move | Per cast | Cooldown (s) | Duration (s) | Base sustained | Cards that apply |
+|---|---|---|---|---|---|
+| Swords Dance | +2 Attack (physical moves only) | 8 | 8 | +2 Attack | Recharge, Duration |
+| Agility | +2 Speed | 8 | 8 | +2 Speed (x2.0 movement) | Recharge, Duration |
+| Harden | +1 Defense | 8 | 8 | +1 Defense (x1.5) | Recharge, Duration |
+| Dragon Dance | +1 Attack and +1 Speed | 8 | 8 | +1 each | Recharge, Duration |
+| Aqua Ring | 1.6 HP/s regen per application (not a stage) | 8 | 8 | 1 application | Recharge, Duration, Increased Effect |
+
+Retired for these moves: Buff Stacks (all five), Increased Effect (the four stage moves).
+
+## Sustained stage by investment (r = Recharge stacks, d = Duration stacks)
+
+Multiplier = (1 + 0.15 r) x (1 + 0.15 d). Stage = per-cast x multiplier, rounded between the floor and ceiling (it alternates), clamped to +6.
+
+| r + d split | Multiplier | Harden (+1/cast) | Swords Dance, Agility (+2/cast) |
+|---|---|---|---|
+| none | 1.00 | +1 | +2 |
+| 2 | 1.30 | +1.3 | +2.6 |
+| 4 | 1.60 | +1.6 | +3.2 |
+| 7 | 2.05 | +2.05 | +4.1 |
+| 10 (5 and 5) | 3.06 | +3.1 | +6 (clamped) |
+| 10 (10 and 0) | 2.50 | +2.5 | +5 |
+
+Measured by the offline harness over 200 s with real casts: Harden 4 Recharge = average 1.61, Swords Dance 4 Recharge = 3.23.
+
+## Things to tune by feel
+- Cooldown and duration per move (all 8 / 8 to start; a cooldown a little above 8 s loses uptime at base, a little below stacks briefly).
+- The stage multiplier table (stages.js TABLE): mainline x0.25 to x4. Swords Dance +2 is x2.0 physical damage for the team.
+- Aqua Ring's 1.6 HP/s per application (the old four-stack ceiling of 6.4 HP/s is gone).
+- Brock's Harden: authored Duration x2 only, so 10.4 s per cast, +1 Defense each; his recovery after a buff cast is 0.85 s.

@@ -207,18 +207,22 @@ G.HUD = (() => {
   }
 
   // ---------- active buffs: bottom-left, stacking upward ----------
-  const BUFF_COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
-  const BUFF_LBL = { atk: 'ATK', spd: 'SPD', def: 'DEF', regen: 'REG' };
+  const BUFF_COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
+  const BUFF_LBL = { atk: 'ATK', spe: 'SPD', def: 'DEF', regen: 'REG', spa: 'SP.ATK', spd: 'SP.DEF' };
+  const BUFF_ORDER = ['atk', 'def', 'spa', 'spd', 'spe', 'regen'];
 
   function drawBuffs(ctx, h, pl, x0) {
     const CH = 32, GAPV = 6;
     let y = h - 16;                                  // bottom edge of the lowest chip
     ctx.textAlign = 'left';
-    for (const k in pl.buffs) {
-      const b = pl.buffs[k];
-      if (b.n <= 0) continue;
+    for (const k of BUFF_ORDER) {
+      const tm = pl.stgTeam && pl.stgTeam[k];
+      if (!tm || !tm.length) continue;
+      const b = G.Stages.teamTimer(pl.stgTeam, k);                       // longest time left among this stat's live applications
+      // Team RAISE of the stat (slice E2a): "ATK +2" for a stage, "REG ×2" for Aqua Ring's applications. Drops show in the status list below.
+      const raise = k === 'regen' ? tm.length : Math.min(6, G.Stages.teamSum(pl.stgTeam, k));
       ctx.font = F(800, 18);
-      const txt = BUFF_LBL[k] + ' ×' + b.n;
+      const txt = BUFF_LBL[k] + (k === 'regen' ? ' ×' : ' +') + raise;
       const tw = Math.ceil(ctx.measureText(txt).width) + 20;
       const top = y - CH;
       roundRect(ctx, x0, top, tw, CH, 9);
@@ -227,7 +231,7 @@ G.HUD = (() => {
       ctx.fillStyle = BUFF_COL[k];
       ctx.fillText(txt, x0 + 10, top + 21);
       // Timer: how long is left before this buff runs out (it keeps ticking while benched).
-      const frac = b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
+      const frac = b && b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
       ctx.fillStyle = 'rgba(255,255,255,.18)';
       ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
       ctx.fillStyle = BUFF_COL[k];
