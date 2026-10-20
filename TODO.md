@@ -72,6 +72,7 @@ Keep it simple: move items between sections as they progress. Add a date when an
   or any region freely? (b) are rifts/legendaries region-gated too? (c) co-op region choice =
   deferred (local-first). At build time, confirm pickN handles "want > available" gracefully (gen-1
   T5 fits exactly at 7).
+- More accurate hitboxes (opened 2026-10-19, Jess asked; NOT started, nothing decided). Today every unit is one circle: radius = 22% of the idle frame width, clamped 5 to 26 px, x2 pixel scale x unit scale (G.Sprites.bodyRadius), same for the player. All hit tests are circle-based (melee circle + arc, beam rectangle, projectile segment, cone, chain, contact at 1.3x the radius sum). Options in order of cost: (1) per-species tuned circle radius from the opaque pixels of the idle frame, measured once by an offline script into a data file, no runtime change, but shifts balance for every species, so playtest; first check whether the sheet meta already holds a tight bounding box per frame; (2) per-species ellipse or capsule with an offset for damage tests only (spacing and movement stay circles), touches about a dozen radius sites and the melee/contact reach just fixed; (3) per-frame pixel masks, not recommended (CPU, memory and inconsistent-feeling hits). Plan: do (1) first, then judge (2) only if species like long serpents still feel wrong.
 
 ## Deferred, cloud / multiplayer phase (do NOT start until Jess switches phase)
 - Co-op levelStart (game.js) has no empty-offer guard (solo maybeLevelUp does since 2026-10-18); add it when MP resumes.

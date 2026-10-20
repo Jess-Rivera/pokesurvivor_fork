@@ -4,8 +4,12 @@ Standing design and workflow rulings. Once something is here, treat it as settle
 
 ## 2026-10-19, Action bar without boxes + move search [Jess decided, branch feature/status-sliceD]
 - Action bar: a single move is the bare icon at 54 px (3x native, no distortion); cooldown shade and cast flash are masked to the icon pixels; the active move gets a yellow silhouette outline (plus the existing raise and name). Empty slots and BONDED groups keep the box (bond = pink border, 2x2 icons).
-- Pokedex/Team search also matches moves: a word of the move name starts with the query (min 3 chars) -> every Pokemon whose type pools contain it; Normal-type moves (learnable by all) match only on the full name. Union with name/# matches; unowned Pokemon included for move matches.
+- Pokedex/Team search also matches moves: a word of the move name starts with the query (min 3 chars) -> every Pokemon whose type pools contain it; Normal-type moves (learnable by all) match only on the full name. Union with name/# matches; unowned Pokemon included for move matches. Ranked: moves whose NAME starts with the query (and name/# hits) first, word-only matches (e.g. Bug Bite for "bit") below.
 - Team/Pokedex grids use align-content: start so few results keep their natural cell height.
+
+## 2026-10-19, Player melee reach matches wild contact reach [Jess reported, branch feature/status-sliceD]
+- Bug: wild melee hits at CONTACT.hit (1.3) x (e.r + pl.r) centre-to-centre, but the player's melee cast only started when the target centre was within m.radius + 30 (no body radii), and the hit circle was m.radius + e.r (no player radius). Big enemies could hit you before you could cast or reach them.
+- Fix (combat.js): the melee hit circle is m.radius + pl.r x CONTACT.hit (the enemy's body is already added by queryCircle), and the cast trigger for melee is that same reach with the target's radius. Holds for any m.radius >= 0.3 x (e.r + pl.r) (all authored melee moves, radius 44+). Other kinds untouched.
 
 ## 2026-10-19, Status Slice D2: flinch [Jess decided, branch feature/status-sliceD]
 - Flinch from the PokeAPI chance already on the move (Rock Slide 30, Bite 30, Dark Pulse 20; the bulk import will add more). One roll per move per target per 0.5 s (the same gap as ailments and stat drops), so a multi-pellet cast or a tick-kind move is one roll.

@@ -266,18 +266,20 @@ G.MenuUI = (() => {
 
   function toggle(arr, v) { const i = arr.indexOf(v); if (i < 0) arr.push(v); else arr.splice(i, 1); }
 
-  /** Move search (Pokedex and Team): the Pokemon that can learn a move whose name matches `q` (a word of the name starts with it, so 'pulse'
+  /** Move search (Pokedex and Team): the Pokemon that can learn a move whose name matches `q` (a word of the name starts with it (name-start matches rank first), so 'pulse'
    *  finds Dark Pulse). Learnable = the Pokemon's type pools plus the shared Normal pool (G.Moves.poolFor). A Normal-type move is learnable
    *  by everyone, so it matches only on its FULL name (typing 'bod' must not list the whole dex). Returns null when nothing applies. */
   function moveQuery(q) {
     if (!q || q.length < 3) return null;
-    const types = new Set(); let all = false;
+    const types = new Set(), weak = new Set(); let all = false;   // types: the move NAME starts with q (ranked first); weak: only a later word does ('bit' -> Bug Bite)
     for (const m of G.Moves.ALL) {
       const nm = m.name.toLowerCase();
       if (m.type === 'normal') { if (nm === q) all = true; }
-      else if (nm.split(/[\s-]+/).some(w => w.startsWith(q)) || nm.startsWith(q)) types.add(m.type);
+      else if (nm.startsWith(q)) types.add(m.type);
+      else if (nm.split(/[\s-]+/).some(w => w.startsWith(q))) weak.add(m.type);
     }
-    return all || types.size ? { all, types } : null;
+    for (const t of types) weak.delete(t);
+    return all || types.size || weak.size ? { all, types, weak } : null;
   }
 
   function filterSortDex(c) {
@@ -293,7 +295,7 @@ G.MenuUI = (() => {
       if (c.bst.length && !c.bst.some(k => { const b = BST_BANDS.find(x => x.k === k); return p.bst >= b.lo && p.bst <= b.hi; })) return false;
       if (c.q) {
         const num = String(p.dex).padStart(3, '0');
-        const byMove = !!mq && (mq.all || p.types.some(t => mq.types.has(t)));     // can learn a move that matches (shown for unowned too: the type filters already reveal types)
+        const byMove = !!mq && (mq.all || p.types.some(t => mq.types.has(t) || mq.weak.has(t)));     // can learn a move that matches (shown for unowned too: the type filters already reveal types)
         if (!(own && p.name.toLowerCase().includes(c.q)) && !num.includes(c.q) && String(p.dex) !== c.q && !byMove) return false;
       }
       return true;
@@ -302,7 +304,14 @@ G.MenuUI = (() => {
     // Stat/BST sorts are power-revealing: sink UNOWNED to the bottom (owned-first),
     // then order by the chosen stat within each group. Dex/name sorts are not sunk.
     const sinkUnowned = key !== 'dex' && key !== 'name';
+    // Ranking of a move search: name/# hits and moves whose NAME starts with the query first, word-only matches (Bug Bite for 'bit') below.
+    const tier = p => {
+      if (!mq || mq.all || p.types.some(t => mq.types.has(t))) return 0;
+      const num = String(p.dex).padStart(3, '0');
+      return (s.owned[p.dex] && p.name.toLowerCase().includes(c.q)) || num.includes(c.q) || String(p.dex) === c.q ? 0 : 1;
+    };
     list.sort((a, b) => {
+      if (mq) { const d = tier(a) - tier(b); if (d) return d; }
       if (sinkUnowned) {
         const oa = !!s.owned[a.dex], ob = !!s.owned[b.dex];
         if (oa !== ob) return oa ? -1 : 1;

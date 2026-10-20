@@ -40,7 +40,7 @@ G.Combat = (() => {
     // Frozen or asleep (G.Status): nothing casts until it wears off; the move stays ready.
     if (G.Status.stunned(pl)) { m.t = 0.05; return; }
     // Attacks that need a target wait to have one (do not waste the animation on the air).
-    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m))) {
+    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m) + meleeExtra(pl, m, pl.target))) {
       m.t = 0.05;
       return;
     }
@@ -76,6 +76,11 @@ G.Combat = (() => {
 
   const TARGETED = ['melee', 'beam', 'projectile', 'boomerang', 'chain', 'meteor', 'dash', 'cone'];
   function needsTarget(m) { return TARGETED.includes(m.kind); }
+  /** Melee reach on top of m.radius: the target's body (the hit circle is centre-to-centre PLUS its radius) and the player's own body at the
+   *  same CONTACT.hit factor wild melee uses against you, so you can always hit what is already close enough to hit you. */
+  function meleeExtra(pl, m, e) {
+    return m.kind === 'melee' ? pl.r * G.Enemies.CONTACT.hit + (e ? e.r : 0) - 30 : 0;
+  }
   function reach(m) {
     if (m.kind === 'melee') return m.radius + 30;
     if (m.kind === 'beam') return m.radius + 20;
@@ -174,7 +179,7 @@ G.Combat = (() => {
     G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius, m.arc, col, G.VFX.forMove(m));
     if (ghost) return;
 
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
+    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit)) {     // + the player's body: matches the reach wild melee has on you
       if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) continue;
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, m.knock || 0, m);
     }
