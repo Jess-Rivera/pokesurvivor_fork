@@ -40,8 +40,8 @@ G.Stats = (() => {
     return Math.exp(w * Math.tanh(MOVE_K * lr / w));
   }
   /** Base Speed stat -> movement px/s. Same for player and enemy. */
-  function speedToPx(baseSpe, statMul = 1) {      // statMul: a Speed STAGE multiplies the stat before the shaping (G.Stages.speedMul)
-    const r = statValue(baseSpe, 50) * statMul / statValue(SPEED_MEDIAN, 50);
+  function speedToPx(baseSpe) {
+    const r = statValue(baseSpe, 50) / statValue(SPEED_MEDIAN, 50);
     return BASE_PX * moveTransfer(r);
   }
 

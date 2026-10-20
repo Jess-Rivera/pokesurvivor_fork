@@ -29,7 +29,7 @@ const tickN = (h, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt
 
 // 1. table, constants, clamp
 { const T = S.TABLE; if (T.length !== 13 || T[6] !== 1 || T[0] !== 0.25 || T[12] !== 4 || T[7] !== 1.5 || T[8] !== 2 || T[5] !== 0.66) bad('table');
-  if (!(S.DUR === 6 && S.ROLL_GAP === 0.5 && S.APPLY_GAP === 2 && S.MAX === 6)) bad('constants');
+  if (!(S.DUR === 6 && S.ROLL_GAP === 0.5 && S.MAX === 6) || 'APPLY_GAP' in S) bad('constants (no lockout exists)');
   const e = mk(); if (S.stage(e, 'spe') !== 0 || S.mul(e, 'spe') !== 1) bad('no stage = x1');
   for (let i = 0; i < 9; i++) S.add(e, 'def', 1, 6); if (S.stage(e, 'def') !== 6 || S.mul(e, 'def') !== 4) bad('+6 clamp ' + S.stage(e, 'def'));
   const d = mk(); for (let i = 0; i < 9; i++) S.add(d, 'spd', -1, 6); if (S.stage(d, 'spd') !== -6 || S.mul(d, 'spd') !== 0.25) bad('-6 clamp');
@@ -43,12 +43,10 @@ const tickN = (h, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt
   tickN(e, 2.9); if (S.stage(e, 'def') !== -2) bad('first app expired early (t=6.0)'); tickN(e, 0.2); if (S.stage(e, 'def') !== -1) bad('first app should expire at 6 s -> -1, got ' + S.stage(e, 'def'));
   tickN(e, 3); if (S.stage(e, 'def') !== 0 || e.stg) bad('second app should expire at 9 s and clear the host state'); console.log('2 expiry: each application decays on its own 6 s timer; host state clears when empty'); }
 
-// 3. Speed through the movement shaping (stat x stage, then speedToPx)
-{ const rows = []; for (const dex of [1, 2, 3]) { const e = mk(dex), row = [DEX_BY[dex].name]; for (let n = 0; n <= 6; n++) { S.clear(e); for (let i = 0; i < n; i++) S.add(e, 'spe', -1, 99); row.push(S.speedMul(e).toFixed(2)); } rows.push(row.join(' ')); }
-  const e = mk(1); S.add(e, 'spe', -1, 99); const m1 = S.speedMul(e); if (!(m1 < 1 && m1 > 0.5)) bad('median -1 speed mul ' + m1);
-  const z = mk(1); for (let i = 0; i < 6; i++) S.add(z, 'spe', -1, 99); if (S.speedMul(z) < 0.45) bad('shaping floor should hold near 0.5, got ' + S.speedMul(z));
-  const u = mk(1); for (let i = 0; i < 6; i++) S.add(u, 'spe', 1, 99); if (S.speedMul(u) > 3.01) bad('shaping ceiling');
-  console.log('3 movement multiplier after shaping at stage -0..-6 (stat x table, then speedToPx):\n   ' + rows.join('\n   ')); }
+// 3. Speed stage = a multiplier on the FINAL movement speed (no shaping, no bounds): -6 is x0.25, +6 is x4, same for every species
+{ const rows = []; for (const dex of [1, 2, 3]) { const e = mk(dex), row = [DEX_BY[dex].name]; for (let n = -6; n <= 6; n += 1) { S.clear(e); for (let i = 0; i < Math.abs(n); i++) S.add(e, 'spe', n < 0 ? -1 : 1, 99); const v = S.speedMul(e); row.push(v.toFixed(2)); if (!near(v, S.TABLE[n + 6])) bad('speedMul ' + DEX_BY[dex].name + ' ' + n + ' = ' + v); } rows.push(row.join(' ')); }
+  const sp = mk(1); for (let i = 0; i < 6; i++) S.add(sp, 'spe', -1, 99); const px = G.Stats.speedToPx(DEX_BY[1].stats[5]); if (!near(px * S.speedMul(sp), px * 0.25)) bad('-6 on the final px/s');
+  console.log('3 Speed stage -6 .. +6 on the final speed, the same for every species:\n   ' + rows.join('\n   ')); }
 
 // 4. Def / SpD stage in the damage ratio
 { const f = 5000, mP = { cat: 'physical', dmg: 40, type: 'normal' }, mS = { cat: 'special', dmg: 40, type: 'normal' }, mT = { cat: 'status', dmg: 40, type: 'normal' };
@@ -62,16 +60,13 @@ const tickN = (h, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt
 { const wired = { bubble: ['spe', 10], psychic: ['spd', 10], 'mud-shot': ['spe', 100], bulldoze: ['spe', 100], 'bug-buzz': ['spd', 10], 'shadow-ball': ['spd', 20], 'flash-cannon': ['spd', 10], 'bubble-beam': ['spe', 10] };
   for (const id in wired) { const m = G.Moves.BY_ID[id]; if (!m || !m.stage || m.stage.stat !== wired[id][0] || m.stage.n !== -1 || m.statChance !== wired[id][1]) bad('data ' + id + ' ' + JSON.stringify(m && [m.stage, m.statChance])); }
   for (const id of ['leaf-storm', 'metal-claw', 'meteor-mash']) { const m = G.Moves.instance(id); const e = mk(); for (let i = 0; i < 200; i++) { S.procMove(e, m); tickN(e, 0.5); } if (e.stg) bad(id + ' (user-targeting) must stay inert in D1'); }
-  // A hit lands every frame. 100% moves: one application per 2 s lockout; the 6 s lifetime holds 3 apps (a one-frame overlap of 4 at the instant
-  // the oldest expires is allowed). Chance moves: renewal cycle = 2 s lockout + 0.5 s / chance of waiting for the next success.
-  const steady = (id, secs) => { const m = G.Moves.instance(id); const e = mk(); let apps = 0, sum = 0, n = 0, peak = 0; for (let t = 0; t < secs; t += 0.05) { const before = e.stg ? JSON.stringify(e.stg) : ''; S.procMove(e, m); const after = e.stg ? JSON.stringify(e.stg) : ''; if (after !== before) apps++; peak = Math.max(peak, -S.stage(e, m.stage.stat)); S.tick(e, 0.05); if (t > 12) { sum += -S.stage(e, m.stage.stat); n++; } } return { apps, peak, avg: sum / n }; };
+  // A hit lands every frame. No lockout: one roll per 0.5 s, every success is an application that lives 6 s. Expected applications alive = 12 x chance, clamped to 6.
+  const steady = (id, secs) => { const m = G.Moves.instance(id); const e = mk(); let sum = 0, n = 0, reach = null; for (let t = 0; t < secs; t += 0.05) { S.procMove(e, m); S.tick(e, 0.05); const v = -S.stage(e, m.stage.stat); if (reach == null && v >= 6) reach = t; if (t > 12) { sum += v; n++; } } return { avg: sum / n, reach }; };
   const ms = steady('mud-shot', 60), bd = steady('bulldoze', 60);
-  if (Math.abs(ms.apps - 30) > 1) bad('Mud Shot should apply once per 2 s -> ~30 in 60 s, got ' + ms.apps);
-  if (Math.abs(ms.avg - 3) > 0.1 || ms.peak > 4) bad('Mud Shot steady stage should be -3 (peak <= 4 for one frame): ' + JSON.stringify(ms));
+  if (ms.avg < 5.85 || ms.reach == null || ms.reach > 3.6) bad('Mud Shot should hold -6, reached within ~3 s: ' + JSON.stringify(ms)); if (bd.avg < 5.85) bad('Bulldoze should hold -6');
   const out = {}; for (const id of ['bubble', 'psychic', 'bug-buzz', 'shadow-ball', 'flash-cannon', 'bubble-beam']) { let tot = 0, n = 300; for (let r = 0; r < n; r++) tot += steady(id, 90).avg; out[id] = +(tot / n).toFixed(2); }
-  const expect = c => (6 / (2 + 0.5 / c));
-  for (const id in out) { const c = G.Moves.BY_ID[id].statChance / 100; if (Math.abs(out[id] - expect(c)) > 0.15) bad(id + ' average stage ' + out[id] + ' vs renewal ~' + expect(c).toFixed(2)); }
-  console.log('5 continuous contact for 60 s: Mud Shot ' + ms.apps + ' applications, steady -' + ms.avg.toFixed(1) + '; Bulldoze ' + bd.apps + '; average held stage for chance moves (10% ~0.9, 20% ~1.4): ' + JSON.stringify(out)); }
+  for (const id in out) { const c = G.Moves.BY_ID[id].statChance / 100; if (Math.abs(out[id] - 12 * c) > 0.3) bad(id + ' average stage ' + out[id] + ' vs ~' + (12 * c).toFixed(2)); }
+  console.log('5 continuous contact for 60 s: Mud Shot and Bulldoze hold -6 (reached at ' + ms.reach.toFixed(1) + ' s); average held stage for chance moves (10% ~1.1 to 1.2, 20% ~2.2 to 2.4; the 50 ms test step makes the 0.5 s roll gap 0.55 s): ' + JSON.stringify(out)); }
 
 // 6. a hit through the proc only lands once per roll gap and ignores dead / remote hosts
 { const m = G.Moves.instance('mud-shot'); const e = mk(); for (let i = 0; i < 10; i++) S.procMove(e, m); if (S.stage(e, 'spe') !== -1) bad('burst of hits = 1 application ' + S.stage(e, 'spe'));

@@ -7,10 +7,10 @@
  *
  * Host state (null until used):
  *   stg      { atk: [{ n, t }], def: [...], spa: [...], spd: [...], spe: [...] }   live applications per stat
- *   stgRoll  { moveId: seconds }   per-move roll gap and the one-application-per-2-s lockout (see procMove)
+ *   stgRoll  { moveId: seconds }   per-move roll gap (see procMove)
  *
  * Where it is read: the defender half of the player's damage (Def or SpD, combat.js), the attacker half of a gym leader's
- * moves (Atk or SpA, enemy.js gymFactor) and enemy movement (Speed, BEFORE the movement shaping in G.Stats.speedToPx).
+ * moves (Atk or SpA, enemy.js gymFactor) and enemy movement (Speed: multiplies the FINAL movement speed, no bounds, Jess 2026-10-19).
  * The player's own buff moves (Harden, Swords Dance...) are NOT stages yet: they stay on pl.buffs (slice E decides).
  */
 G.Stages = (() => {
@@ -20,7 +20,6 @@ G.Stages = (() => {
   const LABEL = { atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
   const DUR = 6;            // seconds one application lasts (stat-drop moves)
   const ROLL_GAP = 0.5;     // one chance roll per move per target per 0.5 s (same as the ailments)
-  const APPLY_GAP = 2;      // after a successful roll, that move cannot apply to that target again for 2 s (one turn)
   const MAX = 6;
   const UP = '#7fe08a', DOWN = '#f08a8a';
 
@@ -74,21 +73,15 @@ G.Stages = (() => {
     if (!live) h.stg = null;
   }
 
-  /** The Speed STAGE as a movement multiplier. The stage multiplies the Speed STAT, then the normal movement shaping applies
-   *  (G.Stats.speedToPx), so the shaping bounds still hold. A host with no species Speed falls back to the raw stage multiplier. */
-  function speedMul(h) {
-    if (!h.stg || !h.stg.spe) return 1;
-    const m = TABLE[stage(h, 'spe') + MAX];
-    if (m === 1) return 1;
-    const dx = G.DEX_BY && G.DEX_BY[h.dex], base = dx && dx.stats ? dx.stats[5] : null;
-    if (base == null) return m;
-    return G.Stats.speedToPx(base, m) / G.Stats.speedToPx(base);
-  }
+  /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19): -6 is x0.25, +6 is x4, no extra bounds. The species
+   *  Speed shaping (0.5x to 3.0x identity bounds) is a different thing and is not involved. It multiplies with paralysis and trap. */
+  function speedMul(h) { return h.stg && h.stg.spe ? TABLE[stage(h, 'spe') + MAX] : 1; }
 
   /**
    * Roll the stat stage of a hit on an enemy. `m.stage` = { stat, n } (data/moves.js, from PokeAPI move_meta_stat_changes) and
-   * `m.statChance` is the PokeAPI chance. One roll per move per target per ROLL_GAP, and after a success that move cannot apply again
-   * to that target for APPLY_GAP, so a 100% move (Mud Shot) stacks about one stage per 2 s, never one per hit.
+   * `m.statChance` is the PokeAPI chance. One roll per move per target per ROLL_GAP (the same gap the ailments use), so a multi-pellet
+   * cast or a tick-kind move is ONE roll. Every success is a new application; there is no lockout (Jess 2026-10-19). A 100% move
+   * therefore reaches the +-6 cap in about 3 s of contact (12 applications live at once, clamped).
    */
   function procMove(e, m) {
     const f = m && m.stage;
@@ -98,7 +91,6 @@ G.Stages = (() => {
     r[key] = ROLL_GAP;
     const c = (m.statChance == null ? 100 : m.statChance) / 100;
     if (c < 1 && Math.random() >= c) return;
-    r[key] = APPLY_GAP;
     add(e, f.stat, f.n, DUR);
   }
 
@@ -111,5 +103,5 @@ G.Stages = (() => {
     return out;
   }
 
-  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, APPLY_GAP, MAX, stage, mul, add, tick, speedMul, procMove, clear, list };
+  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, stage, mul, add, tick, speedMul, procMove, clear, list };
 })();
