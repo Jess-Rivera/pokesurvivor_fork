@@ -74,6 +74,10 @@ G.Sheet = (() => {
     const k = G.Kinds.BY[m.kind];
     const bits = [];
     if (k) for (const key of k.keys) { if (m[key] == null) continue; const t = FMT[key] && FMT[key](m[key], m); if (t) bits.push(t); }
+    if (m.kind === 'buff' && m.stat && m.stat !== 'regen') {          // team stage raise per cast (slice E2a); the move data calls Speed 'spd'
+      const LBL = { atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Speed', spe: 'Speed' };
+      bits.unshift('team ' + LBL[m.stat] + ' +' + (m.stageN || 1) + (m.stage2 ? ', ' + LBL[m.stage2.stat] + ' +' + m.stage2.n : '') + ' per cast');
+    }
     const stacks = [];
     for (const id in (m.mods || {})) {
       const mech = G.Mechanics.BY_ID[id], n = m.mods[id];

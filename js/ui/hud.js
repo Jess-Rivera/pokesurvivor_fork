@@ -189,7 +189,6 @@ G.HUD = (() => {
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.textAlign = 'center';
     ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), w / 2, by + BH - 4);
-    drawStatus(ctx, w, by, pl);
 
     // Name: right-aligned against the left end of the bar. Shrinks to fit narrow screens.
     let size = 20;
@@ -208,18 +207,22 @@ G.HUD = (() => {
   }
 
   // ---------- active buffs: bottom-left, stacking upward ----------
-  const BUFF_COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
-  const BUFF_LBL = { atk: 'ATK', spd: 'SPD', def: 'DEF', regen: 'REG' };
+  const BUFF_COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
+  const BUFF_LBL = { atk: 'ATK', spe: 'SPD', def: 'DEF', regen: 'REG', spa: 'SP.ATK', spd: 'SP.DEF' };
+  const BUFF_ORDER = ['atk', 'def', 'spa', 'spd', 'spe', 'regen'];
 
   function drawBuffs(ctx, h, pl, x0) {
     const CH = 32, GAPV = 6;
     let y = h - 16;                                  // bottom edge of the lowest chip
     ctx.textAlign = 'left';
-    for (const k in pl.buffs) {
-      const b = pl.buffs[k];
-      if (b.n <= 0) continue;
+    for (const k of BUFF_ORDER) {
+      const tm = pl.stgTeam && pl.stgTeam[k];
+      if (!tm || !tm.length) continue;
+      const b = G.Stages.teamTimer(pl.stgTeam, k);                       // longest time left among this stat's live applications
+      // Team RAISE of the stat (slice E2a): "ATK +2" for a stage, "REG ×2" for Aqua Ring's applications. Drops show in the status list below.
+      const raise = k === 'regen' ? tm.length : Math.min(6, G.Stages.teamSum(pl.stgTeam, k));
       ctx.font = F(800, 18);
-      const txt = BUFF_LBL[k] + ' ×' + b.n;
+      const txt = BUFF_LBL[k] + (k === 'regen' ? ' ×' : ' +') + raise;
       const tw = Math.ceil(ctx.measureText(txt).width) + 20;
       const top = y - CH;
       roundRect(ctx, x0, top, tw, CH, 9);
@@ -228,7 +231,7 @@ G.HUD = (() => {
       ctx.fillStyle = BUFF_COL[k];
       ctx.fillText(txt, x0 + 10, top + 21);
       // Timer: how long is left before this buff runs out (it keeps ticking while benched).
-      const frac = b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
+      const frac = b && b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
       ctx.fillStyle = 'rgba(255,255,255,.18)';
       ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
       ctx.fillStyle = BUFF_COL[k];
@@ -252,6 +255,51 @@ G.HUD = (() => {
       ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
       ctx.fillStyle = pw.def.color;
       ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+      y = top - GAPV;
+    }
+    drawDebuffs(ctx, pl, x0, y, CH, GAPV);
+  }
+
+  // Seconds each status started with, for its timer bar (the highest remaining time seen since it appeared).
+  const stMax = {};
+  /** Statuses on the player (slice E1), stacked above the buffs in the same lower-left column: red border, timer bar, and a "Tap H!" prompt while Shake off can help. */
+  function drawDebuffs(ctx, pl, x0, y, CH, GAPV) {
+    const L = G.Status.list(pl);
+    for (const k in stMax) if (!L.some(s => s.k === k)) delete stMax[k];
+    if (!L.length) return;
+    ctx.textAlign = 'left';
+    for (const s of L) {
+      if (s.t != null) stMax[s.k] = Math.max(stMax[s.k] || 0, s.t);
+      ctx.font = F(800, 18);
+      const txt = s.label.toUpperCase() + (s.t != null ? ' ' + Math.ceil(s.t) + 's' : '');
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20;
+      const top = y - CH;
+      roundRect(ctx, x0, top, tw, CH, 9);
+      ctx.fillStyle = 'rgba(40,0,6,.7)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ff5f6d'; ctx.stroke();
+      ctx.fillStyle = s.color;
+      ctx.fillText(txt, x0 + 10, top + 21);
+      if (s.t != null && stMax[s.k] > 0) {
+        const frac = G.U.clamp(s.t / stMax[s.k], 0, 1);
+        ctx.fillStyle = 'rgba(255,255,255,.18)';
+        ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
+        ctx.fillStyle = s.color;
+        ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+      }
+      y = top - GAPV;
+    }
+    if (G.Status.shakeable(pl)) {
+      const key = G.Input.keyLabel('shake_off') || '?';
+      const txt = G.Settings.get('autoShake') ? 'SHAKING OFF...' : 'TAP ' + key + ' TO SHAKE OFF!';
+      ctx.font = F(800, 16);
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20, top = y - 26;
+      ctx.globalAlpha = 0.65 + 0.35 * Math.sin(performance.now() / 90);
+      roundRect(ctx, x0, top, tw, 26, 8);
+      ctx.fillStyle = '#ffe14d'; ctx.fill();
+      ctx.fillStyle = '#2a1d00';
+      ctx.fillText(txt, x0 + 10, top + 18);
+      ctx.globalAlpha = 1;
+      if (G.Touch) G.Touch.addButton(x0, top, tw, 26, () => G.Status.shake(pl), 10);       // on a touch screen the prompt is the button
     }
   }
 
@@ -500,7 +548,8 @@ G.HUD = (() => {
       sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6 - BAR_LIFT);   // never covers the HP strip
     }
     const BOND = '#ff8ad8';
-    const cdOf = m => m.kind === 'orbit' ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
+    // A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove): that sawtooth is not a cooldown, so <= 0.05 s reads as ready.
+    const cdOf = m => m.kind === 'orbit' || m.t <= 0.05 ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
 
     for (let i = 0; i < n; i++) {
       const g = pl.slots[i] || [];

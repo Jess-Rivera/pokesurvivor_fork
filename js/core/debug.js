@@ -14,6 +14,7 @@
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
  *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
+ *   G.Debug.carrier(kind, n)       spawn n Status-class carriers of that status (slow|daze|paralysis|confusion|poison|trap|freeze|haste|sleep) just inside the view, to check the cap of 2, the close band and what a hit does
  *   G.Debug.flinch(radius)         flinch every enemy near you (lose the action; moving ones recoil half a sprite radius back, then stop 0.2 to 0.3 s)
  *   G.Debug.stage(stat, n, radius)  stat stage on every enemy near you: spe|def|spd|atk|spa, n = -1 (6 s each; repeat to stack, +-6 max)
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
@@ -173,9 +174,28 @@ G.Debug = (() => {
     if (!pl) { console.warn('[Debug] no run in progress.'); return null; }
     G.Game.debugMaxed();
     if (kind === 'burn' || kind === 'poison' || kind === 'toxic') return G.Status.applyDot(pl, kind);
+    if (kind === 'slow') { G.Stages.add(pl, 'spe', -1, G.Enemies.CARRIER.dur.slow); return 'ok'; }
     if (G.Status.isControl(kind)) return G.Status.apply(pl, kind);
     console.warn('[Debug] unknown status: ' + kind);
     return null;
+  }
+
+  /** Spawn n Status-class carriers of `kind` around you (slice E1). Primary Status species only, picked at random. Flags the run as tampered. ?dev only. */
+  function carrier(kind = 'paralysis', n = 4) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    const dexes = Object.keys(G.Enemies.CARRIER_OF).map(Number).filter(d => G.Enemies.CARRIER_OF[d] === kind && G.Enemies.classOf(G.DEX_BY[d]) === 'status');
+    if (!dexes.length) { console.warn('[Debug] no primary Status species for "' + kind + '".'); return 0; }
+    G.Game.debugMaxed();
+    let made = 0;
+    for (let i = 0; i < n; i++) {
+      const def = G.Enemies.defForDex(G.U.pick(dexes), G.Game.time), a = (i / n) * 6.2832 + Math.random() * 0.4;
+      if (!def) continue;
+      G.EnemyMgr.add(new G.Enemy(def, pl.x + Math.cos(a) * 380, pl.y + Math.sin(a) * 380, G.Enemies.scale(G.Game.time)));
+      made++;
+    }
+    return made;
   }
 
   /** Scale every wild spawn by k (0 = none: drip, tides, bursts and elites all stop; 1 = normal). Enemies already alive stay. Flags the run as tampered. ?dev only. */
@@ -248,5 +268,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, stage, flinch, statusSelf, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
 })();

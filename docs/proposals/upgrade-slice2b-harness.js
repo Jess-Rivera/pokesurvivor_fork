@@ -20,6 +20,7 @@ console.log('1 ladders and lvl removed');
 let n2 = 0;
 for (const cm of cat.moves) for (const e of cm.eligible) {
   if (cm.id === 'giga-drain') continue;   // reworked in status slice D3 (aura -> single projectile); the 2026-10 export predates it
+  if (['swords-dance', 'agility', 'harden', 'dragon-dance', 'aqua-ring'].includes(cm.id)) continue;   // reworked in status slice E2a (team stages, cd = dur = 8 s, Buff Stacks and Increased Effect retired); see status-sliceE2a-harness.js
   const m = G.Moves.instance(cm.id), mech = G.Mechanics.BY_ID[e.id];
   const want = e.preview.replace(' (kind default 0)', ''), got = G.Mechanics.preview(m, mech);
   n2++; if (got !== want) bad(`${cm.id} ${e.id} preview "${got}" vs "${want}"`);

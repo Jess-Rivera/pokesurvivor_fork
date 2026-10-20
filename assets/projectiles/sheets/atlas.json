@@ -1,0 +1,90 @@
+{
+ "scale": 4,
+ "frames": 8,
+ "shapes": {
+  "orb": {
+   "cw": 22,
+   "ch": 23,
+   "cw4": 88,
+   "ch4": 92,
+   "rows": [
+    "orange",
+    "blue",
+    "magenta",
+    "green"
+   ]
+  },
+  "shard": {
+   "cw": 27,
+   "ch": 23,
+   "cw4": 108,
+   "ch4": 92,
+   "rows": [
+    "blue",
+    "green",
+    "gray",
+    "orange"
+   ]
+  },
+  "rock": {
+   "cw": 30,
+   "ch": 23,
+   "cw4": 120,
+   "ch4": 92,
+   "rows": [
+    "brown",
+    "gray",
+    "orange",
+    "blue"
+   ]
+  },
+  "vine": {
+   "cw": 28,
+   "ch": 23,
+   "cw4": 112,
+   "ch4": 92,
+   "rows": [
+    "green",
+    "orange",
+    "blue",
+    "purple"
+   ]
+  },
+  "gust": {
+   "cw": 28,
+   "ch": 23,
+   "cw4": 112,
+   "ch4": 92,
+   "rows": [
+    "gray",
+    "brown",
+    "white",
+    "yellow"
+   ]
+  },
+  "ring": {
+   "cw": 19,
+   "ch": 23,
+   "cw4": 76,
+   "ch4": 92,
+   "rows": [
+    "purple",
+    "gray",
+    "green",
+    "orange"
+   ]
+  },
+  "bolt": {
+   "cw": 30,
+   "ch": 23,
+   "cw4": 120,
+   "ch4": 92,
+   "rows": [
+    "cyan",
+    "yellow",
+    "purple",
+    "red"
+   ]
+  }
+ }
+}

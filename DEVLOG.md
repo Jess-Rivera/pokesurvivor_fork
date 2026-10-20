@@ -5,6 +5,34 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-20 (Claude Desktop) status Slice E2b, E2d, E2e: slice E closed
+- WHAT CHANGED: stages.js procSelf (self-cast stat effects), moves.js `self` field on Leaf Storm / Metal Claw / Meteor Mash (+ descs), combat.js (procSelf calls in hit and the projectile hit, orbit drop while stunned, patch and turret hold while the owner is stunned), player.js (benchUpdate, clearEffects on faint and revive, silent hurt while benched), game.js (bench loop with the red toast, reviveTeam clears the living), ui.js toast tone + style.css .toast.bad, status.js autoShake + SHAKE.auto 3, settings.js autoShake (default false), settings-ui.js Accessibility toggle, hud.js 'SHAKING OFF...' prompt, changelog.js.
+- DECIDED BY ME, flag if wrong: a 100% self drop (Leaf Storm) is one renewed application so it holds at -2 instead of stacking to -6; 'freeze drops all orbs and status' built as orbs dropped plus trail patches and turrets held while stunned.
+- CHECKED: new harness docs/proposals/status-sliceE2b-harness.js (8 groups) passes; harnesses A, B, C, D1 to D3, E1, E2a, 2b, 2c, gym, gym-reward and elites still pass; node --check on every touched file. NOT run in a browser: the toast, settings toggle, HUD prompt, bench loop and the real hit path are untested in play.
+- NEXT: playtest E2b/E2d/E2e; then commit slice E (git add -A; the tree also holds the earlier Ash Volcano tileset edits and the Ember orb tryout). Open: status projectile visuals (parked), cures (item rework), per-Pokemon vs per-move cards.
+
+## 2026-10-20 (Claude Desktop) projectile art: sheets cut, Ember tryout
+- WHAT CHANGED: tools/cut_projectiles.py cuts assets/projectiles/uncut/frame_1..8.png (7 shapes x 4 colour rows x 8 frames) into assets/projectiles/sheets/x1 (art pixels, 1/4 of source) and x4 (source res), plus atlas.json (per-shape cell size and row colours) and contact_x1.png. vfx.js: new image-backed shape 'emberorb' (orange orb row, 8 frames, art 0.5 = 1 world unit per sheet pixel, falls back to 'fire' until the sheet loads). Ember (only) now uses it.
+- STATUS: visual tryout, not played yet. Other moves keep their code-drawn shapes. Sprite source/licence of the preview GIF is unknown: CREDITS.md note needed if third-party.
+- NEXT: Jess checks how it looks (0.5 vs 0.75 vs 1x), then E2c maps status shots to the other shapes/colours.
+
+## 2026-10-20 (Claude Desktop) status Slice E2a: team stage buffs
+- WHAT CHANGED: stages.js (team store: teamAdd / teamTick / teamSum / teamTimer, stage() and speedMul() read the team raises, 0.1 s grace and renew rule), player.js (buffs object replaced by stgTeam; atk / spd / reduction / regen getters, Attack and Sp. Atk stage per move category in moveFactor, Def / SpD stage in the enemy hit ratio, addTeamStage, team tick, buff arcs), game.js (roster shares stgTeam), combat.js (buff cast applies team applications, Dragon Dance two stats, floating stage text), moves.js (five buff moves: cd 8, dur 8, no stacks / amount, fixed cards), gyms.js (Brock's Harden authors Duration x2 only), enemy.js (gym castBuff handles stage2, leader recovery after a buff cast stays 0.85 s), hud.js (buff chips read the team store: ATK +2, REG x1), sheet.js (stage line on buff moves), changelog.js.
+- LATER SAME DAY: Agility +2 (x2.0 movement) played as 'nuts', so stages.js now has ONE base B per stat (ladder (B + s) / B for raises, B / (B + |s|) for drops): B = 2 mainline for Atk / Def / SpA / SpD, B = 4 for Speed (+2 x1.5, +6 x2.5, -2 x0.67, -6 x0.4), on every host including enemies. TABLE removed; G.Stages.BASE and G.Stages.ladder added. Harnesses D1, E1 and E2a updated to the ladders.
+- BEHAVIOR: see DECISIONS 2026-10-20 Slice E2a.
+- CHECKED: node parse of every touched file; new harness status-sliceE2a-harness.js (8 groups) passes; harnesses A, B, C, D1 to D3, E1, 2b (buff moves skipped), 2c, gym (Brock Harden updated), gym-reward and elites pass. upgrade-slice2a-harness.js crashes on its stale stub, as before this slice. Not run in a browser.
+- TO FEEL-TEST: give a Pokemon Swords Dance or Harden (G.Debug.give) and bond or select it so it recasts: the chip should read ATK +2 / DEF +1 and never flicker at base; stack Recharge or Duration (G.Debug.stack('recharge', 4, 'harden')) and watch it alternate +1 and +2; swap Pokemon and the buff stays; Brock's Harden should climb slower than before the rework.
+- WHERE WE STOPPED: E2a built. Next: E2b (self-cast stat effects, benched ticking, revive and bench-death handling), then E2c and E2d.
+
+---
+
+## 2026-10-20 (Claude Desktop) status Slice E1: statuses on the player
+- WHAT CHANGED: status.js (player full timers + 2.5 s grace, daze, drowsy, trap as swap lock, Shake off, jitter, sleepChance, durMul, list with timers), stages.js (stripPositive, remaining; player Speed stage), player.js (spd x stage, stage tick, daze jitter, inflict(), status ring and zzz), enemies.js (CARRIER table, CARRIER_OF 63 species, BANDS.carrier, defForDex), enemy.js (carrier state and cap, status shots, secondary payload, haste nova, shotGap, applyBurn durMul), combat.js (shot and contact payload, Fire Spin strip), moves.js (Fire Spin), mechanics.js (Fire Spin and trap text), game.js (trap swap lock, shake key), input.js (presets, shake_off, conflicts), settings-ui.js (preset buttons, labels), hud.js (debuff stack, shake prompt), debug.js (G.Debug.carrier, statusSelf slow).
+- BEHAVIOR: see DECISIONS 2026-10-20 Slice E1.
+- CHECKED: node --check on every touched file; harnesses E1, A, B, C, D1 to D3, 2b, 2c, elites and gym pass. Not run in a browser.
+- TO FEEL-TEST: G.Debug.carrier('paralysis', 5) (only 2 should come close and shoot), G.Debug.carrier('sleep', 4), carrier('haste', 3) next to a crowd, G.Debug.statusSelf('paralysis') then tap H, trap with G.Debug.statusSelf('trap') then try 1-6 / Z / C, Fire Spin on a boosted gym leader.
+- WHERE WE STOPPED: E1 built. Press "Reset keys" once in Settings > Controls. Next: E2. Reminder: delete docs/proposals/_tmp_gym_h2.js (scratch) before git add -A.
+
 ## 2026-10-20 (Claude Desktop) status Slice D closed
 Ranged shot timers (distance-keeper special shot, support weak shot) now wait out a flinch (enemy.js). D4 dropped (crit stage) / parked (multi-hit, with the bulk move import). Jess browser-tested D1 to D3.
 
@@ -384,3 +412,31 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - NEXT: Jess commits, opens dev.html?dev: G.Debug.give('ember'), level up until an Ailment Chance card shows up (or G.Debug.stack('ailchance', 3)), look at the team sheet line and the Apply preview. Then tune/damage-hp (after he has felt the fire nerf) or the slice C design talk (control statuses).
 - REMINDER: Jess commits and pushes (6 code files, css, harness, docs, changelog.js).
 - 2026-10-19 (later): gym leader speed modifiers removed (enemy.js bossMove: chase 1.1x and circle 0.55x skipped for gyms). Retreat in 'far' mode was already base speed. Harnesses pass; not run in a browser.
+
+## 2026-10-20 (Claude Desktop), tileset: Shady Forest atlas + mapping BAKED (no game code touched)
+- WHAT: first biome of the tileset project. tools/make_tileset_shady_forest.py bakes assets/tileset/shady_forest/shady_forest_atlas.png (256x150, 24 pieces, filters baked) plus shady_forest_atlas.json and .js (G.TILESETS.shady_forest, file://-safe). The 2x-enlarged Outside.png is not used; Project Gaia set.png stays as source only. tools/tileset_mockup_shady_forest.py draws a scene from atlas + json only (reference for the autotile rules). Mockup: assets/tileset/catalog/Shady_Forest_final_mockup.png.
+- DECIDED: hedge/bush grass occludes every Pokemon (player + enemies) at a fixed 9 art-px (18 screen px) from the feet anchor, jagged tufts from a world-X hash, no rim; projectiles/HUD draw above. Walls: pinch-point cut + thin-stub deletion (300-shape stress test, 0 unsupported). Full spec in the project doc design/shady-forest-tileset-spec.md.
+- NOT DONE: nothing in js/ loads the atlas yet; map generator cleanup (thin stubs) and the hedge occluder are not implemented. Sprite sizing in the mockups is a proposal only; Jess does the in-game sprite height fix as its own slice.
+- NEXT: Crystal Cave, then Ash Volcano (Jess picks rectangles from the catalog), then rift arenas via filters.
+- REMINDER: Jess commits (new: assets/tileset/shady_forest/*, tools/make_tileset_shady_forest.py, tools/tileset_mockup_shady_forest.py, catalog mockups, DEVLOG). Scratch files in assets/tileset (Gaia_16_*, Gaia_*test*, _*.png) still need deleting by hand.
+- 2026-10-20 (later): FIXED water inner corners in the Shady Forest atlas rules. The 2x2 water inner pieces (G51-H52, G47-H48) hold one corner per TILE (not 8px quadrants): SE-missing uses the top-left tile, SW the top-right, NE the bottom-left, NW the bottom-right, drawn over the edge tile with the plain-water pixels made transparent in the atlas. All four diagonals are used (without the south ones deep water shows square notches). Patch inner corners keep the quadrant rule. Floor edge/inner pieces are packed but their rule is unverified and unused.
+
+## 2026-10-20 — Crystal Cave tileset atlas baked
+- `tools/make_tileset_crystal_cave.py` -> `assets/tileset/crystal_cave/crystal_cave_atlas.{png,json,js}` (`G.TILESETS.crystal_cave`). No colour filter (Gaia art already on palette).
+- Terrains: floor (no ground patch, no grass), deep water (per-tile inner overlay, plain-water pixels transparent), wall (NE/NW inner wedges D527/E527; SE/SW corners use plain tile; Forest cut/pinch/stub rules), pit (behaves like a wall; outer black keyed transparent; interior tiles replaced by inner tile, edge tiles overlaid).
+- Trees t1/t2 (pass+base stacks), t3 base only; rocks r1, r2 (base + pass below, assumption).
+- `tools/tileset_mockup_crystal_cave.py` -> `assets/tileset/catalog/Crystal_Cave_final_mockup.png`. No game code touched.
+
+## 2026-10-20 — Crystal Cave: wall + pit rules corrected
+- Wall: D527 = SW concave corner, E527 = SE concave corner (seam-matched against the block; same job as Forest G446/H446 but in swapped order). NE/NW concave corners use the plain interior tile (no art exists for them). Cut/pinch/stub rules unchanged.
+- Pit: the sheet draws it inside-out (black ring = pit, centre tile = hole). Edge tiles use the block tile on the opposite side; convex corners use the 2x2 inner tiles; concave corners overlay glow-only fillets baked from the block corners (black keyed transparent). Nothing else is keyed. Verified against Jess's reference shape.
+- Regenerated atlas/json/js and `Crystal_Cave_final_mockup.png`. No game code touched.
+- Crystal Cave wall inner corners (D527/E527): the sheet bakes a few ground-tinted pixels into the notch, which read as the floor showing through the wall. They are now filled from the plain interior tile at bake time (generator constant GROUND_TINT). Atlas/json/js and mockup regenerated.
+- Found: Crystal deep-water "inner" D534-E535 is a boulder-in-water island, not concave corners. The overlay rule still draws it at concave water corners; flagged to Jess.
+
+## 2026-10-20 — Ash Volcano tileset atlas baked (volcano_test_tileset.png)
+- `tools/make_tileset_ash_volcano.py` -> `assets/tileset/ash_volcano/ash_volcano_atlas.{png,json,js}` (`G.TILESETS.ash_volcano`). No filter. Mockup: `tools/tileset_mockup_ash_volcano.py` -> `catalog/Ash_Volcano_final_mockup.png`. No game code touched.
+- Terrains: 2x2 floor pattern; ground patch (3x3 + 4 notch corner tiles, replace); shallow lava (3x3 + 4 corner tiles from the stump ring, replace); deep lava (4x4: two-tile rock face on the north; SE/SW corners from the stump top ring, NE/NW none); walls short (4x4, 1-tile face) and tall (4x6, 2-tile face), chosen per vertical run (>= 4 cells = tall); trees t1/t2 (pass+base stacks); rocks r1-r6; grass clump gradient var1-var4.
+- Inner pieces were seam-matched against the blocks: short E17/F17/E18/F18 = SE/SW/NE/NW; tall K14+K15 = SE pair, L14+L15 = SW pair, K19 = NE, L19 = NW; patch and shallow quarters = SE/SW/NE/NW.
+- Spec typo handled: rocks r1/r4/r5 listed columns O..R; O/P hold lava stumps, so Q.. was used (Q0/R0 hold the rock tops).
+- Open: deep-lava NE/NW concave corners have no art (straight seam); deep inner pieces' middle row unused; tall-wall SE/SW pairs and short/tall mixing need the in-game generator to enforce run rules.

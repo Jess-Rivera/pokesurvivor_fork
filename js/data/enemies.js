@@ -83,7 +83,7 @@ G.Enemies = (() => {
   // Class -> the behavior id enemy.js already understands (every other class is its own id).
   // Status enemies have no status mechanics yet (slice 2 / status slice E), so until then they are plain chasers (2026-10-19;
   // they used to fight as shooters and sat at the shooter band like the rest of the ranged units).
-  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'chase' };
+  const BEHAVIOR = { plain: 'chase', shooter: 'ranged', status: 'chase' };      // a Status carrier turns into 'carrier' while active (Enemy.carrierCheck)
   const FAMILY = { plain: 'melee', charger: 'melee', jumper: 'melee', bomber: 'melee',
                    shooter: 'range', beamer: 'range', zoner: 'range', fan: 'range',
                    healer: 'support', shielder: 'support', summoner: 'support', status: 'melee' };   // status: melee while it is a plain chaser
@@ -335,7 +335,7 @@ G.Enemies = (() => {
   // [retreat below, approach above]; in between the unit holds. Keyed by behavior id, so status species share the
   // shooter band ('ranged') until slice 2. Tuned by playtest: change the numbers here, nowhere else.
   const BANDS = { fan: [0.30, 0.40], beamer: [0.50, 0.62], zoner: [0.72, 0.82], ranged: [0.80, 0.92],
-                  summoner: [0.70, 0.82] };
+                  summoner: [0.70, 0.82], carrier: [0.30, 0.40] };
 
   // Band jitter (2026-10-19): so the shooters do not all stop on the same line and form a ring around you.
   //   spread      each unit scales BOTH numbers of its band by 1 + a random value in +-spread, fixed at spawn
@@ -392,6 +392,32 @@ G.Enemies = (() => {
   // Bosses, fans and everything else call shoot() with the base life.
   const SHOT_LIFE_BASE = 2.4, SHOT_LIFE = { shooter: 4.8 };
 
+  // Status class carriers (slice E1, Jess 2026-10-20). One status per species, hand-authored in the Status Roster (the 47 primary Status
+  // species plus the 16 secondary ones). CARRIER_OF = dex -> slow | daze | paralysis | confusion | poison | trap | freeze | haste | sleep.
+  //   Primary carrier: while ACTIVE it holds the close band (BANDS.carrier, dodgeable) and fires a status shot every `cd` s; otherwise
+  //     it acts as a plain chaser. Only `cap` carriers are active at a time (flankers' pattern); haste is exempt from the cap.
+  //   Secondary carrier: keeps its own class; its shots and touches carry the status at `secHalf` x the duration, at most one per `secCd` s.
+  //   shotMul     damage multiplier of the status shot (final damage)       sleepBase  chance a sleep shot puts you to sleep (drowsy x1.5)
+  //   weights     sleep species cast drowsy or sleep by weight                 dur        seconds a landed slow lasts (the other durations are G.Status.CONTROL)
+  //   nova        haste: allies within r px get Speed +1 for `dur` s (stack cap `stack`); the caster is excluded; it pulses every `every` s
+  const CARRIER = { cap: 2, cd: 3.2, shotMul: 0.5, sleepBase: 0.6, secHalf: 0.5, secCd: 4,
+                    weights: { sleep: { drowsy: 2, sleep: 1 } },
+                    dur: { slow: 6 },
+                    nova: { r: 170, every: 5, dur: 6, stack: 2 } };
+  const CARRIER_OF = {
+    25:'paralysis', 26:'paralysis', 34:'haste', 38:'confusion', 39:'sleep', 41:'confusion', 44:'poison', 45:'poison',
+    46:'paralysis', 47:'paralysis', 48:'poison', 49:'poison', 70:'poison', 81:'daze', 92:'sleep', 93:'poison',
+    97:'confusion', 102:'sleep', 124:'freeze', 170:'confusion', 171:'paralysis', 172:'paralysis', 173:'haste', 175:'haste',
+    179:'paralysis', 180:'paralysis', 181:'paralysis', 234:'confusion', 261:'trap', 284:'slow', 285:'slow', 286:'haste',
+    300:'slow', 301:'slow', 309:'paralysis', 310:'paralysis', 315:'poison', 336:'poison', 370:'daze', 403:'paralysis',
+    404:'paralysis', 405:'paralysis', 431:'haste', 432:'haste', 462:'daze', 505:'haste', 549:'haste', 551:'trap',
+    575:'sleep', 590:'poison', 601:'slow', 666:'sleep', 700:'slow', 755:'confusion', 763:'slow', 778:'slow',
+    795:'daze', 829:'slow', 830:'slow', 849:'poison', 869:'slow', 899:'confusion', 989:'paralysis'
+  };
+  const carrierOf = dex => CARRIER_OF[dex] || null;
+  /** Enemy definition of one species at run time t (debug spawner). */
+  function defForDex(dex, t) { const p = G.DEX_BY[dex], ti = tierAt(t); return p ? defFor(p, TIERS[ti], ti) : null; }
+
   // Status table (status rework, slice A). Damage over time is a fraction of the enemy's MAX HP per turn, from the mainline games:
   // burn 1/16, poison 1/8, Toxic (badly poisoned) N/16 on turn N, N capped at 15 (PokeAPI: Toxic min/max turns = 15). One state per
   // status; a re-hit only refreshes the duration. Every row is its own tuning knob.
@@ -410,7 +436,7 @@ G.Enemies = (() => {
   };
 
   return {
-    TIERS, BOSS_SLOTS, eliteDef, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
+    TIERS, BOSS_SLOTS, eliteDef, rollRun, scale, bossScale, bagAt, upcomingDex, candidates, hordeTypes, hordeDefs, setRegion, classOf, minionFromCast, FAMILY, FAMILY_SHARE, HOLDER_CAP, BANDS, BAND_JITTER, MORALE, SEEK, STATUS, CARRIER, CARRIER_OF, carrierOf, defForDex, CONTACT, FLANK, SHOT_LIFE, SHOT_LIFE_BASE,
     get region() { return region; },           // null = full dex (Paldea-equiv); else gen 1-9
     enemyHp, openingHpK, levelForTime,
     get BOSSES() { if (!bosses) rollRun(); return bosses; },

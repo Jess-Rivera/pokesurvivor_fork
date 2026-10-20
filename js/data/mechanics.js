@@ -25,8 +25,8 @@ G.Mechanics = (() => {
   const TWO_PI = 6.2832;
 
   // Burn / poison flags stand for their ailment; paralysis, freeze, sleep, confusion and trap come from the move's ailment name (G.Status, slice C).
-  const ailOf = m => (m.poison ? 'poison' : m.burn ? 'burn' : G.Status.isControl(m.ailment) ? m.ailment : null);
-  const AIL_NAME = { poison: 'Poison', burn: 'Burn', paralysis: 'Paralysis', freeze: 'Freeze', sleep: 'Sleep', confusion: 'Confusion', trap: 'Trap' };
+  const ailOf = m => (m.poison ? 'poison' : m.burn || m.strip ? 'burn' : G.Status.isControl(m.ailment) ? m.ailment : null);
+  const AIL_NAME = { poison: 'Poison', burn: 'Burn', paralysis: 'Paralysis', freeze: 'Freeze', sleep: 'Sleep', confusion: 'Confusion', trap: 'Trap', daze: 'Daze', drowsy: 'Drowsy' };
   const ailName = m => AIL_NAME[ailOf(m)] || 'Burn';
   /** Why `m` cannot take Ailment Chance (a reason string), or null when it can. */
   function ailNeeds(m, base) {
@@ -201,9 +201,15 @@ G.Mechanics = (() => {
         freeze: () => 'cannot act for ' + secs + ' (a Fire hit thaws it; bosses and elites only 25% as long)',
         sleep: () => 'cannot act for ' + secs + ' (hits do not wake it; bosses and elites only 25% as long)',
         confusion: () => 'wanders and 50% of attacks fizzle, ' + secs,
-        trap: () => rr(C.frac * 100 * G.Moves.dotMul(m)) + '% max HP every ' + G.Status.TURN + ' s, ' + C.turns + ' times, and moves at quarter speed'
+        trap: () => 'swapping is locked for ' + secs + ' (players only)',
+        daze: () => 'movement jitters for ' + secs,
+        drowsy: () => 'sleep chances x1.5 for ' + secs
       }[a]();
       return AIL_NAME[a] + wc + ': ' + eff;
+    }
+    if (m.strip) {      // Fire Spin: strips boosts, then a burn of half the usual length
+      const S0 = G.Enemies.STATUS.burn, r0 = x => String(+(+x).toFixed(1));
+      return 'Strips all stat boosts, then burn chance ' + r0(m.ailmentChance) + '% per hit: ' + r0(S0.frac * 100 * G.Moves.dotMul(m)) + '% max HP every ' + S0.turn + ' s, ' + Math.max(1, Math.round(S0.turns * (m.burnHalf ? 0.5 : 1))) + ' times';
     }
     const bad = a === 'poison' && m.poison >= 2, S = G.Enemies.STATUS[bad ? 'toxic' : a];
     const r = x => String(+(+x).toFixed(1));

@@ -122,6 +122,12 @@
       this.cls = boss || !G.DEX_BY[def.dex] ? null : G.Enemies.classOf(G.DEX_BY[def.dex]);
       this.fl = null; this.flT = 0;
       this.seekT = 0; this.seekTarget = null; this.weakCd = G.U.rand(1, G.Enemies.SEEK.shotCd);
+      // Status carrier (slice E1): one hand-authored status per species (G.Enemies.CARRIER_OF). A primary carrier turns into the close-band
+      // 'carrier' behavior while ACTIVE (carrierCheck, cap CARRIER.cap, haste exempt); a secondary one keeps its class and its shots / touches carry it.
+      this.carrier = boss || this.elite ? null : G.Enemies.carrierOf(def.dex);
+      this.carrierSec = !!this.carrier && this.cls !== 'status';
+      this.carrierOn = false; this.carrierT = G.U.rand(0, 2); this.secCd = G.U.rand(0, G.Enemies.CARRIER.secCd); this.pulseT = G.U.rand(1, G.Enemies.CARRIER.nova.every);
+      this._ail = null;
     }
 
     cy() { return this.y; }
@@ -212,14 +218,14 @@
 
     /** Burn: one state; a re-hit refreshes the duration and leaves the tick timer alone (constant re-hits cannot stall it).
      *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
-    applyBurn(lv = 1, ignoreImmune = false, mul = 1) {
+    applyBurn(lv = 1, ignoreImmune = false, mul = 1, durMul = 1) {
       if (!ignoreImmune && this.statusImmune('burn')) { this.immuneText(); return; }
       if (G.Status.blocked(this, 'burn')) return;           // one major status at a time (slice C)
       if (this.remote) { G.Coop.status(this, 'b', 1); return; }
       const S = G.Enemies.STATUS.burn;
       if (this.burn <= 0) { this.burn = 1; this.burnTick = S.turn; this.burnMul = mul; }
       else if (mul > this.burnMul) this.burnMul = mul;          // the strongest source wins while the state lasts
-      this.burnLeft = S.turns;
+      this.burnLeft = Math.max(this.burnLeft, Math.max(1, Math.round(S.turns * durMul)));     // durMul 0.5 = Fire Spin's half-length burn
     }
     /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades. */
     applyPoison(lv = 1, mul = 1) {
@@ -251,7 +257,7 @@
         else ai.cd = this.gym ? this.gymCd() : G.U.rand(1.3, 2.0);
       }
       if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
-      if (this.keepsDistance()) this.shotCd = this.def.shotCd || 2;
+      if (this.keepsDistance()) this.shotCd = this.shotGap();
       this.touchCd = Math.max(this.touchCd, 0.55);
       this.stFl = this.fsp > 0 ? { ph: 'back', dx: -this.fdx, dy: -this.fdy, sp: 2 * this.fsp, t: (this.r / 2) / (2 * this.fsp) }
                                 : { ph: 'hold', dx: 0, dy: 0, sp: 0, t: G.U.rand(0.2, 0.3) };      // a unit that was not moving only freezes
@@ -468,6 +474,7 @@
       }
       // Flanker: only a few individuals of the species are active at a time (FLANK.cap).
       if (this.def.flanker && !this.boss) this.flankCheck(dt);
+      if (this.carrier) this.carrierCheck(dt);
 
       // --- personality (shields, jumps, explosion) ---
       if (this.shieldT > 0 && (this.shieldT -= dt) <= 0) this.shield = 0;
@@ -558,7 +565,7 @@
         if (this.keepsDistance()) {
           if (!this.stFl) this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate; waits out a flinch (D2)
           if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
-            this.shotCd = this.def.shotCd || 2;
+            this.shotCd = this.shotGap();
             if (!G.Status.fizzle(this)) this.special(pl, ddx, ddy);      // paralysis / confusion: the attempt can fizzle
           }
         }
@@ -753,7 +760,7 @@
     // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
     // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
     // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
-    // player's Harden (a Defense buff: amount per stack, duration, max stacks; 7% x up to 5 = -35% damage taken). Only the damage is
+    // player's Harden (slice E2a: a +1 Defense stage per cast lasting its duration; no stack cap, duration / recovery sets how many overlap). Only the damage is
     // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
     // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
 
@@ -769,6 +776,7 @@
     castBuff(m) {
       const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
       if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
+      if (m.stage2) G.Stages.add(this, m.stage2.stat, m.stage2.n, m.dur, G.Stages.MAX);
     }
 
     /** Weighted pick among the moves allowed by range and HP gate; null if none. */
@@ -788,7 +796,8 @@
     gymCd() {
       const m = this.ai.lastMove;
       if (!m) return 1.2;
-      const cd = Math.max(0.35, m.cd || 1) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
+      // A buff move's catalog cd is the PLAYER's recast timer (slice E2a: 8 s); a leader picks moves by weight, so its recovery after a buff cast stays 0.85 s.
+      const cd = (m.kind === 'buff' ? 0.85 : Math.max(0.35, m.cd || 1)) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
       return cd / this.gym.tempo;
     }
 
@@ -870,7 +879,73 @@
       this.anim.loop('Walk');
     }
 
-    keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner'].includes(this.behavior); }
+    keepsDistance() { return ['ranged', 'fan', 'beamer', 'zoner', 'summoner', 'carrier'].includes(this.behavior); }
+
+    /** Seconds between this unit's special / shots. */
+    shotGap() {
+      if (this.behavior === 'carrier') return this.carrier === 'haste' ? G.Enemies.CARRIER.nova.every : G.Enemies.CARRIER.cd;
+      return this.def.shotCd || 2;
+    }
+
+    // ---------------- status carriers (slice E1) ----------------
+    /**
+     * Every frame for a carrier. A primary one becomes ACTIVE (behavior 'carrier') only while fewer than CARRIER.cap non-haste carriers are
+     * active; haste is exempt. Once active it stays active until it dies; the rest act as plain chasers. A secondary haste carrier just pulses.
+     */
+    carrierCheck(dt) {
+      if (this.secCd > 0) this.secCd -= dt;
+      if (this.carrierSec) { if (this.carrier === 'haste' && !G.Status.stunned(this)) { this.pulseT -= dt; if (this.pulseT <= 0) { this.pulseT = G.Enemies.CARRIER.nova.every; this.hasteNova(); } } return; }
+      if (this.carrierOn) return;
+      this.carrierT -= dt;
+      if (this.carrierT > 0) return;
+      this.carrierT = 2;
+      let ok = this.carrier === 'haste';
+      if (!ok) {
+        let n = 0;
+        for (const e of G.EnemyMgr.all()) if (e.carrierOn && e.carrier !== 'haste' && !e.dead) n++;
+        ok = n < G.Enemies.CARRIER.cap;
+      }
+      if (!ok) return;
+      this.carrierOn = true; this.behavior = 'carrier';
+      this.shotCd = G.U.rand(0.5, this.shotGap());
+    }
+
+    /** The status a shot / touch of this carrier carries right now: sleep species draw drowsy or sleep by weight. */
+    ailKind() {
+      if (!this.carrier || this.carrier === 'haste') return null;
+      if (this.carrier === 'sleep') {
+        const w = G.Enemies.CARRIER.weights.sleep, t = w.drowsy + w.sleep;
+        return Math.random() * t < w.drowsy ? 'drowsy' : 'sleep';
+      }
+      return this.carrier;
+    }
+    /** Secondary carriers: the status of this shot / touch, at most once per CARRIER.secCd s (null otherwise). */
+    secAil() {
+      if (!this.carrierSec || this.secCd > 0) return null;
+      const k = this.ailKind();
+      if (k) this.secCd = G.Enemies.CARRIER.secCd;
+      return k;
+    }
+
+    /** The active carrier's attack: a status shot, or for haste a nova that buffs the allies around it (never itself). */
+    carrierCast(pl, dx, dy) {
+      if (this.carrier === 'haste') { this.hasteNova(); return; }
+      this._ail = this.ailKind();
+      this.shoot(dx, dy, 0, 1, 1, this.shotLife(), G.Enemies.CARRIER.shotMul);
+      this._ail = null;
+    }
+
+    /** Haste nova: allies within N.r px get Speed +1 for N.dur s (stacks to N.stack). The caster is excluded. */
+    hasteNova() {
+      const N = G.Enemies.CARRIER.nova;
+      for (const e of G.EnemyMgr.queryCircle(this.x, this.y, N.r)) {
+        if (e === this || e.dead || e.boss || e.gym || e.remote) continue;
+        G.Stages.add(e, 'spe', 1, N.dur, N.stack);
+      }
+      this.anim.play('Charge');
+      G.FX.ring(this.x, this.y, 6, N.r, '#7fe08a', 0.5, 3);
+      if (G.Camera.sees(this.x, this.y, 0)) G.Audio.sfx('heal');
+    }
 
     /** When this one dies, band-holders within fearRadiusK x ITS body radius take fright: fear += killFear, fading with distance. */
     spreadFear() {
@@ -1072,13 +1147,14 @@
 
     /** Normal enemy shot (one, or several in a fan). */
     shoot(ax, ay, spread = 0, n = 1, k = 1, life = G.Enemies.SHOT_LIFE_BASE, mul = 1) {
-      const sp = 190, type = this.atkType;
+      const sp = 190, type = this.atkType, ail = this._ail || this.secAil();
       const base = Math.atan2(ay, ax);
       for (let i = 0; i < n; i++) {
         const a = base + (n === 1 ? 0 : (i / (n - 1) - 0.5) * spread);
         const shot = G.Projectiles.spawn({
           x: this.x, y: this.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-          dmg: this.shotDmg() * k, r: 7, life, mul, friendly: false, color: '#ff7a9e', mtype: type,
+          dmg: this.shotDmg() * k, r: 7, life, mul, friendly: false, color: ail ? G.Status.ailColor(ail) : '#ff7a9e', mtype: type,
+          ail, ailHalf: this.carrierSec,
           atkFactor: this.atkFactor, atkCat: this.atkCat, src: this,
           vis: G.VFX.forType(type)
         });
@@ -1109,6 +1185,7 @@
           break;
         }
         case 'summoner': this.summon(); break;
+        case 'carrier': this.carrierCast(pl, dx, dy); break;
         default: this.shoot(dx, dy, 0, 1, 1, this.shotLife());
       }
     }
@@ -1236,7 +1313,7 @@
       // Those that float are already in the air in their sprite: they only sway a bit.
       // (And the ones that jump, in an arc.)
       const lift = (this.flying && !this.boss ? 1 + Math.sin(this.bob) * 1.5 : 0) + (this.jumpLift || 0);
-      this.anim.draw(ctx, this.x, this.y - lift, { flash: this.flash > 0, alpha });
+      this.anim.draw(ctx, this.x, this.y - lift, Object.assign({ flash: this.flash > 0, alpha }, G.Status.tintOf(this)));
       ctx.restore();
 
       if (this.dead) return;

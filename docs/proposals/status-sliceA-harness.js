@@ -90,10 +90,12 @@ const N = 40000;
   const before = e.ailRoll.ember; run(e, 0.6, 0.05);
   if (e.ailRoll && e.ailRoll.ember > 0) bad('roll gap did not expire'); G.Combat.procAilments(e, 1, 0, m);
   console.log('7b throttle: 1000 same-frame hits = 1 roll; gap', before, 's, expires after 0.5 s'); }
-{ const fs_ = G.Moves.instance('fire-spin'); let ok = 0; for (let i = 0; i < 200; i++) { const e = mk(2); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (e.stTrap && !e.burn) ok++; }
+{ const fs_ = G.Moves.instance('fire-spin'); let ok = 0, burned = 0, half = 0;      // slice E1: strips boosts, half-length burn, Fire types immune to the burn only
+  for (let i = 0; i < 200; i++) { const e = mk(2); G.Stages.add(e, 'atk', 2); G.Stages.add(e, 'def', -1); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (!e.burn && !e.stg.atk && e.stg.def) ok++; }
+  for (let i = 0; i < 200; i++) { const e = mk(1); G.Stages.add(e, 'spe', 1); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (e.burn && !e.stg) burned++; if (e.burnLeft === 2) half++; }
   const em = G.Moves.instance('ember'); let blocked = 0; for (let i = 0; i < 2000; i++) { const e = mk(2); G.Combat.procAilments(e, em.burn, 0, em); if (e.burn) blocked++; }
-  if (ok !== 200) bad('fire spin should trap (not burn) fire enemies, did ' + ok + '/200'); if (blocked) bad('ember burned a fire enemy');
-  console.log('7c fire enemy: Fire Spin traps it 200/200 (slice C: its own trap state, no burn), Ember 0/2000 (immune)'); }
+  if (ok !== 200) bad('fire spin on a fire enemy: strip yes, burn no, drops stay: ' + ok + '/200'); if (burned !== 200 || half !== 200) bad('fire spin on a normal enemy: burn ' + burned + ' half ' + half); if (blocked) bad('ember burned a fire enemy');
+  console.log('7c Fire Spin (slice E1): strips every boost (drops stay), burns for 2 turns (half), a Fire enemy still gets stripped but not burned; Ember 0/2000 (immune)'); }
 
 // 8. data
 { if (G.Moves.instance('toxic').poison !== 2 || G.Moves.instance('toxic-spikes').poison !== 2) bad('toxic / toxic-spikes should be poison 2');

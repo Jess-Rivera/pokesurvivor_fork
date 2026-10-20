@@ -33,7 +33,9 @@ G.Combat = (() => {
   }
 
   function tickMove(dt, pl, m, now) {
-    if (m.kind === 'orbit') { orbit(pl, m, dt, now); return; }
+    // Frozen or asleep (slice E2d, Jess 2026-10-20): the orbs are DROPPED (they hit and roll ailments every tick, so they cannot stay up);
+    // they spin up again the moment the stun ends (orbit() respawns whatever is missing).
+    if (m.kind === 'orbit') { if (G.Status.stunned(pl)) G.Projectiles.clearOrbs(pl); else orbit(pl, m, dt, now); return; }
 
     m.t -= dt;
     if (m.t > 0) return;
@@ -101,7 +103,8 @@ G.Combat = (() => {
    *  roll. Control ailments (paralysis, freeze, sleep, confusion, trap) are read from the move's ailment name and go through G.Status. */
   function procAilments(e, burn, poison, m) {
     const ctl = m && G.Status.isControl(m.ailment) ? m.ailment : null;     // paralysis | freeze | sleep | confusion | trap (slice C)
-    if (!burn && !poison && !ctl) return;
+    const strip = !!(m && m.strip);                                       // Fire Spin (slice E1): remove every beneficial stat stage, then a short burn
+    if (!burn && !poison && !ctl && !strip) return;
     const S = G.Enemies.STATUS, key = (m && (m.id || m.type)) || 'x';
     const r = e.ailRoll || (e.ailRoll = {});
     if (r[key] > 0) return;
@@ -112,6 +115,10 @@ G.Combat = (() => {
     if (burn) e.applyBurn(burn, false, mul);
     if (poison) e.applyPoison(poison, mul);
     if (ctl) e.applyStatus(ctl, mul);
+    if (strip && !e.remote) {
+      if (G.Stages.stripPositive(e)) G.FX.dmgText(e.x, e.y - (e.bodyH || 30) - 4, 'Boosts stripped', '#f0b36a');
+      e.applyBurn(1, false, mul, m.burnHalf ? 0.5 : 1);
+    }
   }
 
   /** Roll the flinch of a hit (slice D2). Chance = the move's flinch percent (PokeAPI move_meta). One roll per move per target per 0.5 s, like the
@@ -240,8 +247,22 @@ G.Combat = (() => {
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
   }
 
+  /** A buff move's cast (slice E2a): one TEAM application per stat it raises (stages), or Aqua Ring's regen. Each lasts the move's own `dur`;
+   *  how many overlap is set by dur / cd (cooldown is the cap), the +-6 stage clamp is the only hard limit. */
+  const STAGE_STAT = { atk: 'atk', def: 'def', spa: 'spa', spd: 'spd', spe: 'spe' };
   function buff(pl, m) {
-    pl.addBuff(m.stat, m.amount, m.dur, m.stacks | 0);
+    if (m.stat === 'regen') pl.addTeamStage('regen', m.amount || 0, m.dur, m.id);
+    else {
+      const raises = [{ stat: m.stat === 'spd' ? 'spe' : m.stat, n: m.stageN || 1 }];      // the move data calls Speed 'spd' (the old player buff key)
+      if (m.stage2) raises.push({ stat: m.stage2.stat, n: m.stage2.n });
+      for (const r of raises) {
+        if (!STAGE_STAT[r.stat]) continue;
+        if (pl.addTeamStage(r.stat, r.n, m.dur, m.id)) {
+          const st = G.Stages.stage(pl, r.stat);
+          G.FX.dmgText(pl.x, pl.y - (pl.bodyH || 30) - 4, G.Stages.LABEL[r.stat] + (st > 0 ? ' +' : ' ') + st, G.Stages.UP);
+        }
+      }
+    }
     const col = G.U.TYPE_COLOR[m.type];
     G.FX.ring(pl.x, pl.y, pl.r * 2.4, pl.r * 1.1, col, 0.35, 2.5);
     const vis = G.VFX.forMove(m);
@@ -429,8 +450,9 @@ G.Combat = (() => {
           fields.splice(i, 1);
         }
       } else if (f.kind === 'turret') {
-        f.shotT -= dt;
-        if (f.shotT <= 0) {
+        const held = G.Status.stunned(f.owner);                 // E2d: a frozen or sleeping owner's turret holds fire (its life still runs out)
+        if (!held) f.shotT -= dt;
+        if (!held && f.shotT <= 0) {
           const m = f.m;
           const tg = G.Projectiles.nearest(G.EnemyMgr.all(), f.x, f.y, m.range || 300);
           f.shotT = tg ? m.rate || 0.6 : 0.15;
@@ -447,8 +469,10 @@ G.Combat = (() => {
         }
         if (f.kick > 0) f.kick -= dt;
       } else if (f.kind === 'patch') {
-        f.tick -= dt;
-        if (f.tick <= 0) { f.tick = 0.5; blast(f, f.r); }
+        if (!G.Status.stunned(f.owner)) {                      // E2d: no pulses (damage or ailments) while the owner is frozen or asleep
+          f.tick -= dt;
+          if (f.tick <= 0) { f.tick = 0.5; blast(f, f.r); }
+        }
         if (f.vis.aura && Math.random() < dt * 3 && G.Camera.sees(f.x, f.y, 20)) {
           G.FX.sp(f.vis.aura, f.vis.pal, f.x + G.U.rand(-f.r, f.r) * 0.6, f.y - 4, { vy: -40, life: 0.4 });
         }
@@ -624,6 +648,7 @@ G.Combat = (() => {
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
     G.Stages.procMove(e, m);                   // stat drop (slice D1)
+    if (!ghost) G.Stages.procSelf(pl, m);      // the user's own stat effect: Leaf Storm drop, Metal Claw / Meteor Mash team raise (slice E2b)
     procFlinch(e, m);                          // flinch (slice D2)
     G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
@@ -655,8 +680,10 @@ G.Combat = (() => {
         }
         if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
           const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
+          const landed = pl.invuln <= 0;
           if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
           else pl.hurt(p.dmg, p.mtype, false, null, w);
+          if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf);      // a Status carrier's shot (slice E1)
           G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
           projectiles.splice(i, 1);
         }
@@ -754,6 +781,7 @@ G.Combat = (() => {
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
         G.Stages.procMove(e, pm);                 // stat drop (slice D1)
+        if (!ghost && !p.ghost) G.Stages.procSelf(pl, pm);      // the user's own stat effect (slice E2b)
         procFlinch(e, pm);                        // flinch (slice D2)
         G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);
@@ -786,6 +814,7 @@ G.Combat = (() => {
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
       if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
       else pl.hurt(e.dmg, e.atkType, false, null, w);
+      if (e.carrierSec && !pl.dead) { const k = e.secAil(); if (k) pl.inflict(k, true); }      // a secondary carrier's touch (slice E1)
       if (e.fl) e.flankStruck();
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);

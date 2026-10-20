@@ -255,6 +255,24 @@ G.VFX = (() => {
     } }
   };
 
+  // Image-backed shapes: one colour row of a cut sheet (assets/projectiles/sheets, made by
+  // tools/cut_projectiles.py). `art` = world pixels per sheet pixel, in game pixels (0.5 = half size).
+  // Until the sheet has loaded it draws as `fallback`, so a shot never goes missing.
+  SHAPES.emberorb = { w: 22, h: 23, frames: 8, dir: true, fallback: 'fire', gen() {},
+    img: { src: 'assets/projectiles/sheets/x1/orb.png', cw: 22, ch: 23, row: 0, art: 0.5 } };
+
+  const sheetImgs = new Map();
+  function sheetOf(S) {
+    let e = sheetImgs.get(S.img.src);
+    if (!e) {
+      e = { ready: false, img: new Image() };
+      e.img.onload = () => { e.ready = true; };
+      e.img.src = S.img.src;
+      sheetImgs.set(S.img.src, e);
+    }
+    return e.ready ? e.img : null;
+  }
+
   // ---------------- cache and drawing ----------------
 
   const cache = new Map();
@@ -288,8 +306,13 @@ G.VFX = (() => {
 
   /** Draws centered at (x, y). opts: angle, scale (1 = game pixel), frame, alpha. */
   function draw(ctx, shape, pal, x, y, o = {}) {
-    const S = SHAPES[shape] || SHAPES.ball;
-    const cv = sprite(shape, pal, o.frame || 0);
+    let S = SHAPES[shape] || SHAPES.ball;
+    let sheet = null;
+    if (S.img) {
+      sheet = sheetOf(S);
+      if (!sheet) { shape = S.fallback; S = SHAPES[shape]; }
+    }
+    const cv = sheet ? null : sprite(shape, pal, o.frame || 0);
     const k = PX * (o.scale || 1);
     ctx.save();
     if (o.alpha != null && o.alpha < 1) ctx.globalAlpha *= o.alpha;
@@ -300,7 +323,10 @@ G.VFX = (() => {
       a = Math.round(a / (Math.PI / 8)) * (Math.PI / 8);          // 16 direcciones: menos parpadeo
       ctx.rotate(a);
     }
-    ctx.drawImage(cv, -S.w * k / 2, -S.h * k / 2, S.w * k, S.h * k);
+    if (sheet) {
+      const I = S.img, f = (o.frame | 0) % S.frames, d = k * I.art;
+      ctx.drawImage(sheet, f * I.cw, I.row * I.ch, I.cw, I.ch, -I.cw * d / 2, -I.ch * d / 2, I.cw * d, I.ch * d);
+    } else ctx.drawImage(cv, -S.w * k / 2, -S.h * k / 2, S.w * k, S.h * k);
     ctx.restore();
   }
 
@@ -317,7 +343,7 @@ G.VFX = (() => {
 
   const MOVE = {
     'quick-attack':  { proj: 'streak' },
-    'ember':         { proj: 'fire', trail: 'ember' },
+    'ember':         { proj: 'emberorb', trail: 'ember' },
     'heat-wave':     { proj: 'fire', trail: 'ember' },
     'fire-spin':     { proj: 'fire', trail: 'ember' },
     'flamethrower':  { proj: 'fire', trail: 'ember', beam: 'fire' },

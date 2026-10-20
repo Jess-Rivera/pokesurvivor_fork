@@ -127,12 +127,12 @@ G.Game = (() => {
       f.teamSlot = slot;
       roster.push(f);
     });
-    // Team buffs: every member points at ONE shared buffs object, so a buff cast
-    // by one Pokemon (Swords Dance, Agility, Harden, Aqua Ring) stays active on
+    // Team buffs: every member points at ONE shared stage store (stgTeam), so a buff cast
+    // by one Pokemon (Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring) stays active on
     // whoever is on the field until its own timer runs out. Only the active
     // member runs Player.update(), so the shared timers still tick exactly once
-    // per frame, including while the caster sits on the bench.
-    roster.forEach(f => { f.buffs = roster[0].buffs; });
+    // per frame, including while the caster sits on the bench. The object is never reassigned.
+    roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
@@ -200,11 +200,16 @@ G.Game = (() => {
   /**
    * Manual swap to roster slot i. Instant, and locks swapping for a few seconds.
    */
+  let swapNoteT = 0;
   function swapTo(i) {
     if (i < 0 || i >= roster.length || i === activeIdx) return false;
     const next = roster[i];
     if (!next || next.dead) return false;
     if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
+    if (G.Status.swapLocked(pl)) {                                // trapped (slice E1): no manual swaps until it wears off
+      if (!swapNoteT || time - swapNoteT > 0.8) { swapNoteT = time; G.FX.dmgText(pl.x, pl.y - 40, 'Trapped!', G.Status.CONTROL.trap.color); G.Audio.sfx('hurt'); }
+      return false;
+    }
     takeField(i);
     swapLock = SWAP_LOCK;
     G.Camera.shake = 0;
@@ -742,6 +747,8 @@ G.Game = (() => {
     if (G.Log.on) G.Log.sample();
     if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
     handleSwap();
+    if (G.Input.action('shake_off') && G.Status.shake(pl)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // Shake off (slice E1)
+    else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // accessibility auto-shake, 3 taps/s (E2e)
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {
@@ -754,6 +761,12 @@ G.Game = (() => {
 
     pl.frozen = coop && (G.UI.isOpen('scr-pause') || G.UI.isOpen('scr-item'));
     pl.update(dt);
+    // Benched teammates (slice E2b): statuses, DoT and stage drops keep ticking, so a poisoned or burning one can faint on the bench.
+    for (const f of roster) {
+      if (f === pl || f.dead) continue;
+      f.benchUpdate(dt);
+      if (f.dead) { G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad'); G.Audio.sfx('faint'); }
+    }
     if (coop) {
       for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
       if (pl.dead) reviveTick(dt);
@@ -986,7 +999,7 @@ G.Game = (() => {
     badgeBoost(stat, pct) { for (const f of roster) f.addBadgeBoost(stat, pct); },
     /** Badge package: every team member back to 100% HP, fainted ones included. */
     reviveTeam() {
-      for (const f of roster) { if (f.dead) f.revive(1); else f.hp = f.maxHp; }
+      for (const f of roster) { if (f.dead) f.revive(1); else { f.hp = f.maxHp; f.clearEffects(); } }       // full revive: 100% HP and a clean slate (slice E2b)
     },
     /** For testing: skip the run clock. */
     debugTime(t) { tampered = true; time = t; },

@@ -6,6 +6,30 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-20', title: ['Status effects hit you', 'Status effects hit you'], new: [
+    ['Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.',
+     'Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.'],
+    ['Shake off: tap H (Num+ on the full-keyboard layout, or the yellow button on a touch screen) fast to cut short sleep, freeze, paralysis, confusion, daze and trap.',
+     'Shake off: tap H (Num+ on the full-keyboard layout, or the yellow button on a touch screen) fast to cut short sleep, freeze, paralysis, confusion, daze and trap.'],
+    ['Your statuses show in the lower-left stack with a timer bar.', 'Your statuses show in the lower-left stack with a timer bar.'],
+    ['Auto shake off: Settings > Controls > Accessibility. When it is on, the game taps Shake off for you, 3 taps per second, so you never have to mash.',
+     'Auto shake off: Settings > Controls > Accessibility. When it is on, the game taps Shake off for you, 3 taps per second, so you never have to mash.'],
+    ['Statuses, poison and burn, and stat drops keep ticking on benched Pokémon. A benched Pokémon can faint to poison or burn, and you get a red message when it does.',
+     'Statuses, poison and burn, and stat drops keep ticking on benched Pokémon. A benched Pokémon can faint to poison or burn, and you get a red message when it does.'],
+  ], chg: [
+    ['Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.',
+     'Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.'],
+    ['Frozen or asleep, your orbiting attacks drop and your trail patches stop pulsing until you recover.',
+     'Frozen or asleep, your orbiting attacks drop and your trail patches stop pulsing until you recover.'],
+    ['Fainting and reviving clear every status and stat drop on a Pokémon. A revive brings it back at full HP.',
+     'Fainting and reviving clear every status and stat drop on a Pokémon. A revive brings it back at full HP.'],
+    ['New default controls: WASD to move, I J K L for your attacks, 1-6 to pick a team slot, Z and C to cycle the team. A full-keyboard layout (Num1-4 attacks) is in Settings > Controls. Press Reset keys once to get the new keys.',
+     'New default controls: WASD to move, I J K L for your attacks, 1-6 to pick a team slot, Z and C to cycle the team. A full-keyboard layout (Num1-4 attacks) is in Settings > Controls. Press Reset keys once to get the new keys.'],
+    ['Fire Spin now strips all stat boosts from the target and burns it for a short time. It no longer traps.',
+     'Fire Spin now strips all stat boosts from the target and burns it for a short time. It no longer traps.'],
+    ['Buff moves are now team stat stages. Swords Dance (+2 Attack, physical moves), Agility (+2 Speed, about x1.5 movement), Harden (+1 Defense) and Dragon Dance (+1 Attack and +1 Speed) raise your whole team, and the boost stays when you swap. Each cast lasts 8 s and recasts every 8 s, which holds exactly the stages one cast gives; Recharge and Duration cards overlap casts to go higher (up to +6). The Buff Stacks card is gone.',
+     'Buff moves are now team stat stages. Swords Dance (+2 Attack, physical moves), Agility (+2 Speed, about x1.5 movement), Harden (+1 Defense) and Dragon Dance (+1 Attack and +1 Speed) raise your whole team, and the boost stays when you swap. Each cast lasts 8 s and recasts every 8 s, which holds exactly the stages one cast gives; Recharge and Duration cards overlap casts to go higher (up to +6). The Buff Stacks card is gone.'],
+  ] },
   { d: '2026-10-19', title: ['Giga Drain', 'Giga Drain'], new: [
     ['Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.',
      'Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.'],

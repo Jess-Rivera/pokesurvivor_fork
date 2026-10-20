@@ -7,14 +7,19 @@
  * Host state (all null until used):
  *   stMajor  { k, t, age }              paralysis | freeze | sleep   (one major at a time, with burn / poison)
  *   stCnf    { t, wa, wt }              confusion: wander angle wa, retarget timer wt
- *   stTrap   { left, tick, mul }        trap: damage per turn, left = turns still to come
- *   stWin    { freeze, sleep }          seconds during which that hard CC cannot be applied again
+ *   stTrap   { t }                      trap (player only, Jess 2026-10-20): no damage, no slow; manual team swaps are locked for t s
+ *   stDaze   { t, a, ta, wt }           daze: the heading is jittered +-35 deg, re-rolled every 0.2 to 0.4 s and eased (a = current, ta = target)
+ *   stDrow   { t }                      drowsy: sleep-effect chance x1.5 (capped at 100%), shown as a floating zzz
+ *   stWin    { freeze, sleep, hard }    seconds during which that hard CC cannot be applied again (hard: the player's grace after any hard CC)
+ *   shakeCd  number                     player only: seconds until the next Shake off tap counts (12 taps/s cap)
  *   stDot    { k, left, tick, n, mul }  player only: burn | poison | toxic
  *
  * Rules (Jess 2026-10-19):
  *   - one major status at a time (burn, poison, paralysis, sleep, freeze); a new one never overwrites the old
- *   - bosses, elites, gym leaders and the player: freeze and sleep last 25% as long, then a 10 s no-reapply window;
- *     paralysis, slow, trap and confusion work at full strength
+ *   - bosses, elites, gym leaders: freeze and sleep last 25% as long, then a 10 s no-reapply window;
+ *     paralysis, slow, daze and confusion work at full strength
+ *   - the PLAYER (slice E1, Jess 2026-10-20): every timer is FULL, and the hard CC (sleep, freeze, paralysis, confusion, trap, daze) can be
+ *     cut short by Shake off taps (shake()). After a hard CC ends there is a 2.5 s grace in which no new hard CC lands.
  *   - wild enemies: freeze 2 s then a 4 s window; sleep 2-6 s; damage never wakes a sleeper, a Fire hit thaws ice
  *   - a "turn" is 2 s, as in G.Enemies.STATUS
  */
@@ -25,11 +30,18 @@ G.Status = (() => {
     freeze:    { major: true,  dur: 2,      immune: ['ice'],      window: 4,    thawBy: 'fire', color: '#8fd8f0', label: 'Frozen' },
     sleep:     { major: true,  dur: [2, 6], immune: [],           window: 0,    color: '#b9a3e8', label: 'Asleep' },
     confusion: { major: false, dur: [2, 8], immune: [],           fizzle: 0.5,  color: '#e57fc4', label: 'Confused' },
-    trap:      { major: false, turns: 4, immune: ['ghost'],       speed: 0.25, frac: 1 / 16, color: '#b0743a', label: 'Trapped' }
+    trap:      { major: false, dur: 8,      immune: ['ghost'],       color: '#b0743a', label: 'Trapped' },     // player only: swap lock
+    daze:      { major: false, dur: 6,      immune: [],           jitter: 35 * Math.PI / 180, color: '#e8b04a', label: 'Dazed' },
+    drowsy:    { major: false, dur: 8,      immune: [],           sleepMul: 1.5, color: '#9a8fd8', label: 'Drowsy' }
   };
-  const STRONG = { cut: 0.25, window: 10 };      // bosses, elites, gym leaders and the player: hard CC (freeze, sleep)
+  const STRONG = { cut: 0.25, window: 10 };      // bosses, elites, gym leaders: hard CC (freeze, sleep)
+  // Player only (slice E1): Shake off. Each tap takes `per` s off the status with the most time left among the mashable ones,
+  // never below `floor` s remaining; at most `rate` taps count per second. Order = most restrictive first.
+  const SHAKE = { per: 0.25, floor: 0.5, rate: 12, auto: 3, order: ['sleep', 'freeze', 'paralysis', 'confusion', 'trap', 'daze'] };
+  const GRACE = 2.5;                              // player: seconds after a hard CC ends in which no new hard CC lands
+  const HARD = ['sleep', 'freeze', 'paralysis'];
 
-  const strong = h => !!(h.boss || h.elite || h.gym || h.isPlayer);
+  const strong = h => !!(h.boss || h.elite || h.gym);                  // the player is NOT strong any more (full timers + Shake off)
   const typesOf = h => h.types || (h.mon && h.mon.types) || [];
   const fam = k => (k === 'toxic' ? 'poison' : k);
   const isControl = k => !!CONTROL[k];
@@ -66,37 +78,51 @@ G.Status = (() => {
    * Put a control status on `h`. Returns 'ok' | 'refresh' | 'immune' | 'blocked' (another major holds it) | 'window' (hard CC cooldown).
    * `mul` is the DoT strength of the source move (only trap uses it).
    */
-  function apply(h, kind, mul = 1) {
+  function apply(h, kind, mul = 1, durMul = 1) {
     const S = CONTROL[kind];
     if (!S || h.dead) return 'none';
+    if (kind === 'trap' && !h.isPlayer) return 'none';                 // trap is a player-only swap lock
     if (immune(h, kind)) { text(h, 'Immune', '#a3abb8'); return 'immune'; }
+    if (h.isPlayer && HARD.includes(kind) && h.stWin && h.stWin.hard > 0) return 'window';
     if (S.major) {
       const cur = majorKind(h);
       if (cur && cur !== kind) return 'blocked';
       if (cur === kind) {                                     // paralysis refreshes; freeze and sleep never extend (no lock)
-        if (kind === 'paralysis') h.stMajor.t = Math.max(h.stMajor.t, dur(h, kind));
+        if (kind === 'paralysis') h.stMajor.t = Math.max(h.stMajor.t, dur(h, kind) * durMul);
         return 'refresh';
       }
       if (h.stWin && h.stWin[kind] > 0) return 'window';
-      h.stMajor = { k: kind, t: dur(h, kind), age: 0 };
+      h.stMajor = { k: kind, t: dur(h, kind) * durMul, age: 0 };
       text(h, S.label, S.color);
       return 'ok';
     }
     if (kind === 'confusion') {
-      const t = dur(h, kind), was = !!h.stCnf;
+      const t = dur(h, kind) * durMul, was = !!h.stCnf;
       if (was) h.stCnf.t = Math.max(h.stCnf.t, t);
       else { h.stCnf = { t, wa: G.U.rand(0, 6.2832), wt: G.U.rand(0.5, 1.1) }; text(h, S.label, S.color); }
       return was ? 'refresh' : 'ok';
     }
-    // trap
-    const was = !!h.stTrap;
-    if (was) { h.stTrap.left = Math.max(h.stTrap.left, S.turns); if (mul > h.stTrap.mul) h.stTrap.mul = mul; }
-    else { h.stTrap = { left: S.turns, tick: TURN, mul }; text(h, S.label, S.color); }
+    if (kind === 'daze') {
+      const was = !!h.stDaze;
+      if (was) h.stDaze.t = Math.max(h.stDaze.t, S.dur * durMul);
+      else { h.stDaze = { t: S.dur * durMul, a: 0, ta: 0, wt: 0 }; text(h, S.label, S.color); }
+      return was ? 'refresh' : 'ok';
+    }
+    if (kind === 'drowsy') {
+      const was = !!h.stDrow;
+      if (was) h.stDrow.t = Math.max(h.stDrow.t, S.dur * durMul);
+      else { h.stDrow = { t: S.dur * durMul }; text(h, S.label, S.color); }
+      return was ? 'refresh' : 'ok';
+    }
+    // trap (player only): a swap lock
+    const was = !!h.stTrap, t = S.dur * durMul;
+    if (was) h.stTrap.t = Math.max(h.stTrap.t, t);
+    else { h.stTrap = { t }; text(h, S.label, S.color); }
     return was ? 'refresh' : 'ok';
   }
 
   /** Burn / poison / toxic on a host that has no slice A fields (the player). Same table, same immunities and numbers. */
-  function applyDot(h, kind, mul = 1) {
+  function applyDot(h, kind, mul = 1, durMul = 1) {
     const S = G.Enemies.STATUS[kind];
     if (!S || h.dead) return 'none';
     if (immune(h, kind)) { text(h, 'Immune', '#a3abb8'); return 'immune'; }
@@ -104,11 +130,11 @@ G.Status = (() => {
     const d = h.stDot;
     if (d) {
       if (kind === 'toxic' && d.k !== 'toxic') { d.k = 'toxic'; d.n = 0; }            // poison upgrades to toxic, never back
-      d.left = Math.max(d.left, S.turns);
+      d.left = Math.max(d.left, Math.max(1, Math.round(S.turns * durMul)));
       if (mul > d.mul) d.mul = mul;
       return 'refresh';
     }
-    h.stDot = { k: kind, left: S.turns, tick: S.turn, n: 0, mul };
+    h.stDot = { k: kind, left: Math.max(1, Math.round(S.turns * durMul)), tick: S.turn, n: 0, mul };
     return 'ok';
   }
 
@@ -121,6 +147,7 @@ G.Status = (() => {
     const M = h.stMajor; if (!M) return;
     const S = CONTROL[M.k], w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : (S.window || 0);
     if (w > 0) (h.stWin || (h.stWin = {}))[M.k] = w;
+    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = GRACE;
     h.stMajor = null;
   }
 
@@ -139,15 +166,19 @@ G.Status = (() => {
       if (C.wt <= 0) { C.wt = G.U.rand(0.5, 1.1); C.wa = G.U.rand(0, 6.2832); }
       if (C.t <= 0) h.stCnf = null;
     }
+    if (h.shakeCd > 0) h.shakeCd -= dt;
+    if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze');      // a frozen sprite stops animating
     const T = h.stTrap;
-    if (T) {
-      T.tick -= dt;
-      if (T.tick <= 0) {
-        T.tick += TURN;
-        damage(h, 'trap', h.maxHp * CONTROL.trap.frac * T.mul, CONTROL.trap.color);
-        if (--T.left <= 0) h.stTrap = null;
-      }
+    if (T && (T.t -= dt) <= 0) h.stTrap = null;
+    const Z = h.stDaze;
+    if (Z) {
+      Z.t -= dt; Z.wt -= dt;
+      if (Z.wt <= 0) { Z.wt = G.U.rand(0.2, 0.4); Z.ta = G.U.rand(-1, 1) * CONTROL.daze.jitter; }
+      Z.a += (Z.ta - Z.a) * Math.min(1, dt * 10);                          // eased toward the target angle
+      if (Z.t <= 0) h.stDaze = null;
     }
+    const R = h.stDrow;
+    if (R && (R.t -= dt) <= 0) h.stDrow = null;
     const D = h.stDot;
     if (D && !h.dead) {
       D.tick -= dt;
@@ -162,15 +193,72 @@ G.Status = (() => {
     }
   }
 
+  // Sprite tint of the major status (Jess 2026-10-20): freeze icy blue, sleep blue-purple, poison / toxic purple, burn red, paralysis yellow.
+  const TINT = { freeze: ['#4fc3ff', 0.85], sleep: ['#7a70e6', 0.75], poison: ['#a64fd6', 0.75], toxic: ['#a64fd6', 0.75], burn: ['#ff3a2a', 0.75], paralysis: ['#ffd92a', 0.75] };
+  /** { tint, tintA } for the sprite of `h` (its major status), or null. Draw options for Animator.draw. */
+  function tintOf(h) { const t = TINT[majorKind(h)]; return t ? { tint: t[0], tintA: t[1] } : null; }
+
   /** Frozen or asleep: no movement, no attacks, no casts. */
   function stunned(h) { const M = h.stMajor; return !!M && (M.k === 'freeze' || M.k === 'sleep'); }
 
-  /** Movement multiplier from paralysis (x0.5) and trap (x0.25); they multiply with each other and with the old `slow`. */
+  /** Movement multiplier from paralysis (x0.5); it multiplies with the old `slow` and the Speed stage. (Trap no longer slows.) */
   function speedMul(h) {
-    let m = 1;
-    if (h.stMajor && h.stMajor.k === 'paralysis') m *= CONTROL.paralysis.speed;
-    if (h.stTrap) m *= CONTROL.trap.speed;
-    return m;
+    return h.stMajor && h.stMajor.k === 'paralysis' ? CONTROL.paralysis.speed : 1;
+  }
+
+  /** Daze: rotate the heading (dx, dy) by the current eased jitter angle. */
+  function jitter(h, dx, dy) {
+    const Z = h.stDaze; if (!Z || !Z.a) return [dx, dy];
+    const c = Math.cos(Z.a), s = Math.sin(Z.a);
+    return [dx * c - dy * s, dx * s + dy * c];
+  }
+
+  /** Chance (0..1) of a sleep effect on `h`, given the base chance: drowsy x1.5, capped at 100%. */
+  function sleepChance(h, base) { return Math.min(1, h && h.stDrow ? base * CONTROL.drowsy.sleepMul : base); }
+
+  /** True while manual team swaps are locked (trap on the player). */
+  function swapLocked(h) { return !!h.stTrap; }
+
+  function timeOf(h, k) {
+    if (k === 'sleep' || k === 'freeze' || k === 'paralysis') return h.stMajor && h.stMajor.k === k ? h.stMajor : null;
+    if (k === 'confusion') return h.stCnf;
+    if (k === 'trap') return h.stTrap;
+    if (k === 'daze') return h.stDaze;
+    return null;
+  }
+
+  /** Is anything on `h` that Shake off can work on right now? (HUD prompt.) */
+  function shakeable(h) { return SHAKE.order.some(k => { const o = timeOf(h, k); return o && o.t > SHAKE.floor + 1e-6; }); }
+
+  /**
+   * One Shake off tap (player only). Takes SHAKE.per s off the most restrictive mashable status that still has more than SHAKE.floor s
+   * left. Returns true when the tap counted (rate cap respected and something was reduced).
+   */
+  function shake(h) {
+    if (!h.isPlayer || h.dead || h.shakeCd > 1e-4) return false;      // (1e-4: float slack so exactly 12 taps per second all count)
+    for (const k of SHAKE.order) {
+      const o = timeOf(h, k);
+      if (o && o.t > SHAKE.floor + 1e-6) {
+        o.t = Math.max(SHAKE.floor, o.t - SHAKE.per);
+        h.shakeCd = 1 / SHAKE.rate;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Accessibility auto-shake (slice E2e, Jess 2026-10-20): with the autoShake setting on, the game taps Shake off for the player at
+   * SHAKE.auto taps per second while anything is shakeable, so no mashing is needed. Same effect per tap as a real tap (only slower than the
+   * 12 taps/s a person can reach). Call once per frame; returns true when a tap counted.
+   */
+  function autoShake(h, dt) {
+    if (!shakeable(h)) { h.autoShakeT = 0; return false; }
+    h.autoShakeT = (h.autoShakeT || 0) - dt;
+    if (h.autoShakeT > 0) return false;
+    if (!shake(h)) return false;
+    h.autoShakeT = 1 / SHAKE.auto;
+    return true;
   }
 
   /** Roll whether an attack attempt fails: paralysis 25%, confusion 50% (both: 62.5%). */
@@ -196,18 +284,29 @@ G.Status = (() => {
     if (M && M.k === 'freeze' && type === CONTROL.freeze.thawBy && M.age > 0.2) endMajor(h);
   }
 
-  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = null; }
+  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = h.autoShakeT = 0; if (h.anim) h.anim.frozen = false; }
 
-  /** Active statuses for the HUD: [{ k, label, color, t }]. */
+  const AIL_COLOR = { slow: '#8ab4e8', poison: '#d47cf0', haste: '#7fe08a' };
+  /** Active statuses for the HUD: [{ k, label, color, t, mash }]. t = seconds left (null = unknown); mash = Shake off works on it. */
   function list(h) {
     const out = [];
-    if (h.stMajor) out.push({ k: h.stMajor.k, label: CONTROL[h.stMajor.k].label, color: CONTROL[h.stMajor.k].color, t: h.stMajor.t });
+    if (h.stMajor) { const k = h.stMajor.k; out.push({ k, label: CONTROL[k].label, color: CONTROL[k].color, t: h.stMajor.t, mash: SHAKE.order.includes(k) }); }
     const d = h.stDot || (h.burn > 0 ? { k: 'burn' } : h.poison > 0 ? { k: h.poison === 2 ? 'toxic' : 'poison' } : null);
-    if (d) { const S = G.Enemies.STATUS[d.k]; out.push({ k: d.k, label: d.k === 'burn' ? 'Burned' : d.k === 'toxic' ? 'Badly poisoned' : 'Poisoned', color: S.color, t: null }); }
-    if (h.stCnf) out.push({ k: 'confusion', label: CONTROL.confusion.label, color: CONTROL.confusion.color, t: h.stCnf.t });
-    if (h.stTrap) out.push({ k: 'trap', label: CONTROL.trap.label, color: CONTROL.trap.color, t: h.stTrap.left * TURN });
+    if (d) {
+      const S = G.Enemies.STATUS[d.k];
+      out.push({ k: d.k, label: d.k === 'burn' ? 'Burned' : d.k === 'toxic' ? 'Badly poisoned' : 'Poisoned', color: S.color, t: h.stDot ? Math.max(0, h.stDot.left - 1) * S.turn + h.stDot.tick : null, mash: false });
+    }
+    if (h.stCnf) out.push({ k: 'confusion', label: CONTROL.confusion.label, color: CONTROL.confusion.color, t: h.stCnf.t, mash: true });
+    if (h.stDaze) out.push({ k: 'daze', label: CONTROL.daze.label, color: CONTROL.daze.color, t: h.stDaze.t, mash: true });
+    if (h.stTrap) out.push({ k: 'trap', label: CONTROL.trap.label, color: CONTROL.trap.color, t: h.stTrap.t, mash: true });
+    const sl = G.Stages ? G.Stages.remaining(h, 'spe', -1) : 0;
+    if (sl > 0) out.push({ k: 'slow', label: 'Slowed', color: AIL_COLOR.slow, t: sl, mash: false });
+    if (h.stDrow) out.push({ k: 'drowsy', label: CONTROL.drowsy.label, color: CONTROL.drowsy.color, t: h.stDrow.t, mash: false });
     return out;
   }
 
-  return { CONTROL, STRONG, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, fizzle, wander, onHit, clear, list };
+  /** Shot colour of a carrier's status. */
+  function ailColor(k) { return AIL_COLOR[k] || (CONTROL[k] && CONTROL[k].color) || '#ff7a9e'; }
+
+  return { ailColor, tintOf, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, autoShake, fizzle, wander, onHit, clear, list };
 })();

@@ -38,16 +38,16 @@
       cd: 0.75, dmg: 40, radius: 110, width: 34, knock: 40 },
 
     { id: 'swords-dance', name: 'Swords Dance', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
-      desc: 'Raises the user\'s Attack by two stages.',
-      cd: 0.85, stat: 'atk', amount: 0.13, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Attack by two stages (physical moves).',
+      cd: 8, stat: 'atk', dur: 8, fixed: ['amount', 'stacks'] },
 
     { id: 'agility', name: 'Agility', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
-      desc: 'Raises the user\'s Speed by two stages.',
-      cd: 0.85, stat: 'spd', amount: 0.10, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Speed by two stages.',
+      cd: 8, stat: 'spd', dur: 8, fixed: ['amount', 'stacks'] },
 
     { id: 'harden', name: 'Harden', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
-      desc: 'Raises the user\'s Defense by one stage.',
-      cd: 0.85, stat: 'def', amount: 0.07, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Defense by one stage.',
+      cd: 8, stat: 'def', dur: 8, fixed: ['amount', 'stacks'] },
 
     // ---------------- FUEGO ----------------
     { id: 'ember', name: 'Ember', type: 'fire', kind: 'projectile', cat: 'special', ailment: 'burn', ailmentChance: 10, flinch: 0, statChance: 0,
@@ -58,8 +58,8 @@
       desc: 'Has a chance to burn the target.',
       cd: 0.70, dmg: 90, count: 7, arc: 0.9, speed: 380, life: 0.42, size: 6, pierce: 1, burn: 1 },
 
-    { id: 'fire-spin', name: 'Fire Spin', type: 'fire', kind: 'orbit', cat: 'special', ailment: 'trap', ailmentChance: 100, flinch: 0, statChance: 0,
-      desc: 'Prevents the target from fleeing and inflicts damage for 2-5 turns.',
+    { id: 'fire-spin', name: 'Fire Spin', type: 'fire', kind: 'orbit', cat: 'special', ailment: 'burn', ailmentChance: 100, strip: true, burnHalf: true, flinch: 0, statChance: 0,
+      desc: 'Strips every stat boost from the target and burns it for half the usual time. Fire types are immune to the burn, not to the strip.',
       cd: 0.30, dmg: 35, count: 3, radius: 62, speed: 2.4, size: 9 },
 
     { id: 'heat-wave', name: 'Heat Wave', type: 'fire', kind: 'nova', cat: 'special', ailment: 'burn', ailmentChance: 10, flinch: 0, statChance: 0,
@@ -81,7 +81,7 @@
 
     { id: 'aqua-ring', name: 'Aqua Ring', type: 'water', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
       desc: 'Restores 1/16 of the user\'s max HP each turn.',
-      cd: 0.90, stat: 'regen', amount: 1.6, dur: 8, stacks: 4 },
+      cd: 8, stat: 'regen', amount: 1.6, dur: 8, fixed: ['stacks'] },
 
     // ---------------- PLANTA ----------------
     { id: 'vine-whip', name: 'Vine Whip', type: 'grass', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
@@ -92,8 +92,8 @@
       desc: 'Has an increased chance for a critical hit.',
       cd: 0.90, dmg: 55, speed: 330, count: 2, spread: 0.5, radius: 210, size: 6 },
 
-    { id: 'leaf-storm', name: 'Leaf Storm', type: 'grass', kind: 'orbit', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,
-      desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage.',
+    { id: 'leaf-storm', name: 'Leaf Storm', type: 'grass', kind: 'orbit', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100, self: { stat: 'spa', n: -2 },
+      desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage (this Pokemon only).',
       cd: 0.26, dmg: 130, count: 4, radius: 74, speed: 2.6, size: 8 },
 
     // Giga Drain (slice D3): ONE heart-shaped shot (a former aura healed per enemy and was broken). Heals `drain` (50%) of the damage it
@@ -224,8 +224,8 @@
       cd: 1.0, dmg: 0, radius: 230, width: 34 },
 
     { id: 'dragon-dance', name: 'Dragon Dance', type: 'dragon', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
-      desc: 'Raises the user\'s Attack and Speed by one stage.',
-      cd: 0.7, stat: 'atk', amount: 0.11, dur: 7, stacks: 5 },
+      desc: 'Raises the team\'s Attack and Speed by one stage each.',
+      cd: 8, stat: 'atk', stageN: 1, stage2: { stat: 'spe', n: 1 }, dur: 8, fixed: ['amount', 'stacks'] },
 
     // ---------------- HADA ----------------
     { id: 'fairy-wind', name: 'Fairy Wind', type: 'fairy', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
@@ -237,8 +237,8 @@
       cd: 0.5, dmg: 80, radius: 72 },
 
     // ---------------- ACERO ----------------
-    { id: 'metal-claw', name: 'Metal Claw', type: 'steel', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
-      desc: 'Has a chance to raise the user\'s Attack by one stage.',
+    { id: 'metal-claw', name: 'Metal Claw', type: 'steel', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, self: { stat: 'atk', n: 1 },
+      desc: 'Has a chance to raise the team\'s Attack by one stage.',
       cd: 0.5, dmg: 50, radius: 50, arc: 1.6, knock: 60 },
 
     { id: 'flash-cannon', name: 'Flash Cannon', type: 'steel', kind: 'beam', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spd', n: -1 },
@@ -279,8 +279,8 @@
       desc: 'Changes the weather to a hailstorm for five turns.',
       cd: 1.2, dmg: 0, count: 4, radius: 40, slow: 0.4 },
 
-    { id: 'meteor-mash', name: 'Meteor Mash', type: 'steel', kind: 'meteor', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20,
-      desc: 'Has a chance to raise the user\'s Attack by one stage.',
+    { id: 'meteor-mash', name: 'Meteor Mash', type: 'steel', kind: 'meteor', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20, self: { stat: 'atk', n: 1 },
+      desc: 'Has a chance to raise the team\'s Attack by one stage.',
       cd: 1.4, dmg: 90, count: 2, radius: 54, knock: 80 },
 
     { id: 'will-o-wisp', name: 'Will-O-Wisp', type: 'fire', kind: 'turret', cat: 'status', ailment: 'burn', ailmentChance: 0, flinch: 0, statChance: 0,

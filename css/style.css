@@ -447,6 +447,7 @@ kbd {
   border-radius: 5px; font: inherit; font-size: 13px; text-shadow: none;
 }
 
+.toast.bad { background: rgba(120,14,28,.96); border-color: #ff5f6d; }
 .toast {
   position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 60;
   padding: 10px 18px; border-radius: 10px;

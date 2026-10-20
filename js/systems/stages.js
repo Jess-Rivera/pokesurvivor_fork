@@ -11,11 +11,21 @@
  *
  * Where it is read: the defender half of the player's damage (Def or SpD, combat.js), the attacker half of a gym leader's
  * moves (Atk or SpA, enemy.js gymFactor) and enemy movement (Speed: multiplies the FINAL movement speed, no bounds, Jess 2026-10-19).
- * The player's own buff moves (Harden, Swords Dance...) are NOT stages yet: they stay on pl.buffs (slice E decides).
+ * Slice E2a: the player's own buff moves (Harden, Swords Dance, Agility, Dragon Dance) are stages too. RAISES are TEAM-WIDE: one shared store
+ * (h.stgTeam, the same object on every roster member, ticked once per frame by the active member) holds the live applications of every raise
+ * and of Aqua Ring's regen. DROPS (enemy-cast or self-cast) stay on the Pokemon that took them (h.stg). The stage of a stat on a player is
+ * (team raises + own drops), clamped to +-6. There is NO explicit cap on a move: duration / cooldown is the cap, because every cast is its own
+ * timed application (cooldown >= duration means one live application; shorter cooldowns or longer durations overlap them). Slice E1 gave the
+ * player the first stage use: Speed drops from enemy Status-class carriers ("slow").
  */
 G.Stages = (() => {
-  // Mainline multipliers for stage -6 .. +6 (index = stage + 6).
-  const TABLE = [0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+  // Stage ladders (Jess 2026-10-20): ONE number per stat, B. A raise of s stages multiplies the stat by (B + s) / B (each raise adds 1 to the numerator),
+  // a drop of s stages by B / (B + s) (each drop adds 1 to the denominator). B = 2 is the mainline ladder (+2 = x2, +6 = x4, -2 = x0.5, -6 = x0.25) and is
+  // where Attack, Defense, Sp. Atk and Sp. Def start. Speed starts at B = 4 (+2 = x1.5, +4 = x2.0, +6 = x2.5, -2 = x0.67, -6 = x0.4): a gentler ladder for
+  // movement, tuned by feel. One shared ladder per stat for raises and drops, on every host (player, wild, elite, boss, gym leader). Raise B to soften a stat.
+  const BASE = { atk: 2, def: 2, spa: 2, spd: 2, spe: 4 };
+  /** The multiplier of `stat` at stage `s` (-6 .. +6) on its ladder. */
+  function ladder(stat, s) { const b = BASE[stat] || 2; return s >= 0 ? (b + s) / b : b / (b - s); }
   const STATS = ['atk', 'def', 'spa', 'spd', 'spe'];
   const LABEL = { atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
   const DUR = 6;            // seconds one application lasts (stat-drop moves)
@@ -27,14 +37,45 @@ G.Stages = (() => {
 
   /** The stage of `stat` on `h` right now (-6 .. +6). */
   function stage(h, stat) {
-    const L = h.stg && h.stg[stat];
-    if (!L) return 0;
+    const L = h.stg && h.stg[stat], T = h.stgTeam && h.stgTeam[stat];
+    if (!L && !T) return 0;
     let s = 0;
-    for (const a of L) s += a.n;
+    if (L) for (const a of L) s += a.n;
+    if (T) for (const a of T) s += a.n;
     return clamp(s, -MAX, MAX);
   }
   /** The stat multiplier for `stat` on `h` (1 when it has no stage). */
-  function mul(h, stat) { return h.stg ? TABLE[stage(h, stat) + MAX] : 1; }
+  function mul(h, stat) { const s = (h.stg || h.stgTeam) ? stage(h, stat) : 0; return s ? ladder(stat, s) : 1; }
+
+  // ---- team store (slice E2a): shared by the whole roster, mutated in place, never reassigned ----
+  const TEAM_LIVE = 8;      // safety limit on live applications per (stat, move): a pathological build cannot grow the list forever
+  const TEAM_GRACE = 0.1;   // an application stays 0.1 s past its end, and a cast of the same move inside that last 0.1 s REFRESHES it instead of stacking:
+                            // at cooldown = duration the cast lands within a frame of the old one ending, and without this the stage would dip (or double) for a frame
+  /** Add one application of `n` (raise) of `stat` from move `src`, lasting `dur` s. Returns the number of live applications on `stat`. */
+  function teamAdd(store, stat, n, dur, src) {
+    const L = store[stat] || (store[stat] = []);
+    for (const a of L) if (a.src === src && a.t <= TEAM_GRACE) { a.n = n; a.t = dur; a.dur = dur; return L.length; }     // the old one is ending: renew it
+    let mine = 0; for (const a of L) if (a.src === src) mine++;
+    if (mine >= TEAM_LIVE) { const i = L.findIndex(a => a.src === src); if (i >= 0) L.splice(i, 1); }      // drop that move's oldest
+    L.push({ n, t: dur, dur, src });
+    return L.length;
+  }
+  /** Advance the team timers once per frame. In place: the roster shares this object. An application is removed TEAM_GRACE s after its time is up. */
+  function teamTick(store, dt) {
+    for (const s in store) {
+      const L = store[s];
+      for (let i = L.length - 1; i >= 0; i--) if ((L[i].t -= dt) <= -TEAM_GRACE) L.splice(i, 1);
+      if (!L.length) delete store[s];
+    }
+  }
+  /** The team's raise on `stat` (sum of live applications, before the +-6 clamp), and for HUD the longest time left with its full length. */
+  function teamSum(store, stat) { const L = store && store[stat]; let s = 0; if (L) for (const a of L) s += a.n; return s; }
+  function teamTimer(store, stat) {
+    const L = store && store[stat]; let best = null;
+    if (L) for (const a of L) if (!best || a.t > best.t) best = { t: a.t, dur: a.dur };
+    return best;
+  }
+  function teamClear(store) { for (const s in store) delete store[s]; }
 
   function text(h, msg, color) {
     if (G.FX && G.FX.dmgText) G.FX.dmgText(h.x, h.y - (h.bodyH || 30) - 4, msg, color);
@@ -55,6 +96,35 @@ G.Stages = (() => {
     return true;
   }
 
+  /**
+   * Self-cast stat effect of a PLAYER move (slice E2b, Jess 2026-10-20): `m.self` = { stat, n }. Same roll rules as procMove (one chance roll per move per
+   * ROLL_GAP, chance = m.statChance). A RAISE is TEAM-WIDE (Metal Claw, Meteor Mash: one more team application per success, so chance moves stack toward the
+   * +6 clamp). A DROP stays on THIS Pokemon (Leaf Storm, per Pokemon): a guaranteed (100%) drop is ONE application per move that is renewed while the move keeps
+   * hitting (the stage holds at the per-cast value, like the buffs; without this an orbit would stack -6 in 1.5 s), a chance drop stacks like a raise.
+   */
+  function procSelf(pl, m) {
+    const f = m && m.self;
+    if (!f || !f.n || !STATS.includes(f.stat) || pl.dead || pl.remote) return;
+    const key = 'self:' + (m.id || 'x'), r = pl.stgRoll || (pl.stgRoll = {});
+    if (r[key] > 0) return;
+    r[key] = ROLL_GAP;
+    const c = (m.statChance == null ? 100 : m.statChance) / 100;
+    if (c < 1 && Math.random() >= c) return;
+    const src = m.id;
+    if (f.n > 0) {
+      if (!pl.stgTeam || stage(pl, f.stat) >= MAX) return;
+      teamAdd(pl.stgTeam, f.stat, f.n, DUR, src);
+    } else {
+      const g = pl.stg || (pl.stg = {}), L = g[f.stat] || (g[f.stat] = []);
+      const old = c >= 1 ? L.find(a => a.src === src) : null;
+      if (old) { const fresh = old.t < DUR - 1e-6; old.t = DUR; if (!fresh) return; }     // renewed: the text only shows when it had been running down
+      else if (stage(pl, f.stat) <= -MAX) return;
+      else L.push({ n: f.n, t: DUR, src });
+    }
+    const s = stage(pl, f.stat);
+    text(pl, LABEL[f.stat] + ' ' + (s > 0 ? '+' : '') + s, f.n > 0 ? UP : DOWN);
+  }
+
   /** Advance every application timer and the per-move roll gaps. Called once per frame from Enemy.update. */
   function tick(h, dt) {
     if (h.stgRoll) {
@@ -73,9 +143,9 @@ G.Stages = (() => {
     if (!live) h.stg = null;
   }
 
-  /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19): -6 is x0.25, +6 is x4, no extra bounds. The species
+  /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19), on the Speed ladder (B = 4: +2 x1.5, +6 x2.5, -2 x0.67, -6 x0.4). The species
    *  Speed shaping (0.5x to 3.0x identity bounds) is a different thing and is not involved. It multiplies with paralysis and trap. */
-  function speedMul(h) { return h.stg && h.stg.spe ? TABLE[stage(h, 'spe') + MAX] : 1; }
+  function speedMul(h) { return (h.stg && h.stg.spe) || (h.stgTeam && h.stgTeam.spe) ? ladder('spe', stage(h, 'spe')) : 1; }
 
   /**
    * Roll the stat stage of a hit on an enemy. `m.stage` = { stat, n } (data/moves.js, from PokeAPI move_meta_stat_changes) and
@@ -94,6 +164,26 @@ G.Stages = (() => {
     add(e, f.stat, f.n, DUR);
   }
 
+  /** Fire Spin (slice E1): remove every BENEFICIAL application (n > 0) on `h`, for all stats. Drops stay. Returns how many were removed. */
+  function stripPositive(h) {
+    const g = h.stg; if (!g) return 0;
+    let n = 0;
+    for (const s in g) {
+      const L = g[s];
+      for (let i = L.length - 1; i >= 0; i--) if (L[i].n > 0) { L.splice(i, 1); n++; }
+      if (!L.length) delete g[s];
+    }
+    if (!Object.keys(g).length) h.stg = null;
+    return n;
+  }
+
+  /** Longest time left (s) among the applications of `stat` that push the stage down (drop) or up; for the HUD timer bar. */
+  function remaining(h, stat, sign = -1) {
+    const L = h.stg && h.stg[stat]; let t = 0;
+    if (L) for (const a of L) if (Math.sign(a.n) === sign && a.t > t) t = a.t;
+    return t;
+  }
+
   function clear(h) { h.stg = h.stgRoll = null; }
 
   /** Active stages for the HUD / debug: [{ stat, label, stage }] for every stat that is not at 0. */
@@ -103,5 +193,6 @@ G.Stages = (() => {
     return out;
   }
 
-  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, stage, mul, add, tick, speedMul, procMove, clear, list };
+  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, procSelf, stripPositive, remaining, clear, list,
+    teamAdd, teamTick, teamSum, teamTimer, teamClear, UP, DOWN };
 })();
