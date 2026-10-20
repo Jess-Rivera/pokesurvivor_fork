@@ -48,3 +48,5 @@ docs/proposals/enemy-class-review.md
 docs/proposals/enemy-classes.draft.js
 docs/proposals/classify_species.py
 docs/proposals/hand-overrides.json
+# Pending-delete folder (website/SEO pages moved out of the game)
+_delete_/

@@ -5,6 +5,11 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-20 (Claude Desktop) website/SEO files moved to _delete_/
+- Moved the static website pages (apoyar, contacto, en, guia, legendarios, logros, movimientos, novedades, objetos, pokedex, shinies, tipos), 404.html, robots.txt, sitemap.xml, .nojekyll, css/pages.css, assets/og-image.jpg, tools/make_seo_pages.py, tools/activar_dominio.sh, docs/SEO.md, DOMINIO.md, PUBLICAR.md into `_delete_/` (same relative paths, so restoring is a plain move back). `_delete_/` is in .gitignore.
+- Left in place: dev.html, js/, css/style.css, assets (sprites, fonts, icons, tileset), manifest.webmanifest, sw.js, favicon.ico, tools/build.js, Firebase/Cloudflare/functions files (deferred multiplayer, not webpages).
+- Known leftovers: in-game Contacto button (js/ui/settings-ui.js) now points at a missing contacto/; PS_PAGES links (Guide, Pokedex, More info) in dev.html builds point at missing pages. Build the bundle with `node tools/build.js --sin-seo` to strip the gated ones.
+
 ## 2026-10-20 (Claude Desktop) status Slice E2b, E2d, E2e: slice E closed
 - WHAT CHANGED: stages.js procSelf (self-cast stat effects), moves.js `self` field on Leaf Storm / Metal Claw / Meteor Mash (+ descs), combat.js (procSelf calls in hit and the projectile hit, orbit drop while stunned, patch and turret hold while the owner is stunned), player.js (benchUpdate, clearEffects on faint and revive, silent hurt while benched), game.js (bench loop with the red toast, reviveTeam clears the living), ui.js toast tone + style.css .toast.bad, status.js autoShake + SHAKE.auto 3, settings.js autoShake (default false), settings-ui.js Accessibility toggle, hud.js 'SHAKING OFF...' prompt, changelog.js.
 - DECIDED BY ME, flag if wrong: a 100% self drop (Leaf Storm) is one renewed application so it holds at -2 instead of stacking to -6; 'freeze drops all orbs and status' built as orbs dropped plus trail patches and turrets held while stunned.
