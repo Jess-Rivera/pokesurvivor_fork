@@ -196,7 +196,7 @@ G.Status = (() => {
     if (M && M.k === 'freeze' && type === CONTROL.freeze.thawBy && M.age > 0.2) endMajor(h);
   }
 
-  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = null; }
+  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = null; }
 
   /** Active statuses for the HUD: [{ k, label, color, t }]. */
   function list(h) {

@@ -37,11 +37,11 @@
       desc: 'Inflicts regular damage with no additional effect.',
       cd: 0.75, dmg: 40, radius: 110, width: 34, knock: 40 },
 
-    { id: 'swords-dance', name: 'Swords Dance', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
+    { id: 'swords-dance', name: 'Swords Dance', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
       desc: 'Raises the user\'s Attack by two stages.',
       cd: 0.85, stat: 'atk', amount: 0.13, dur: 7, stacks: 5 },
 
-    { id: 'agility', name: 'Agility', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0,
+    { id: 'agility', name: 'Agility', type: 'normal', kind: 'buff', cat: 'status', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0, dmg: 0, stageN: 2,
       desc: 'Raises the user\'s Speed by two stages.',
       cd: 0.85, stat: 'spd', amount: 0.10, dur: 7, stacks: 5 },
 
@@ -71,7 +71,7 @@
       desc: 'Inflicts regular damage with no additional effect.',
       cd: 0.44, dmg: 40, speed: 350, count: 1, spread: 0.10, pierce: 1, life: 1.5, size: 6 },
 
-    { id: 'bubble', name: 'Bubble', type: 'water', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
+    { id: 'bubble', name: 'Bubble', type: 'water', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spe', n: -1 },
       desc: 'Has a chance to lower the target\'s Speed by one stage.',
       cd: 1.00, dmg: 40, speed: 210, count: 8, pierce: 0, life: 1.3, size: 8, slow: 0.45 },
 
@@ -96,10 +96,11 @@
       desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage.',
       cd: 0.26, dmg: 130, count: 4, radius: 74, speed: 2.6, size: 8 },
 
-    // (Formerly Giga Drain: it healed with every hit and was broken. Same id so as not to break saves.)
-    { id: 'giga-drain', name: 'Giga Drain', type: 'grass', kind: 'aura', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
+    // Giga Drain (slice D3): ONE heart-shaped shot (a former aura healed per enemy and was broken). Heals `drain` (50%) of the damage it
+    // actually deals, UNCAPPED on purpose (Jess: leave it and see if it is broken; `drainCap` is still honoured if a move sets it). `fixed` keys can never take upgrade cards: always one shot, no pierce.
+    { id: 'giga-drain', name: 'Giga Drain', type: 'grass', kind: 'projectile', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
       desc: 'Drains half the damage inflicted to heal the user.',
-      cd: 0.55, dmg: 75, radius: 76 },
+      cd: 0.55, dmg: 75, speed: 290, count: 1, spread: 0, pierce: 0, life: 1.5, size: 8, drain: 0.5, fixed: ['count', 'pierce'] },
 
     // ---------------- ELECTRIC ----------------
     { id: 'thunder-shock', name: 'Thunder Shock', type: 'electric', kind: 'projectile', cat: 'special', ailment: 'paralysis', ailmentChance: 10, flinch: 0, statChance: 0,
@@ -124,7 +125,7 @@
       desc: 'Has a chance to confuse the target.',
       cd: 1.15, dmg: 65, radius: 215, width: 40 },
 
-    { id: 'psychic', name: 'Psychic', type: 'psychic', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
+    { id: 'psychic', name: 'Psychic', type: 'psychic', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spd', n: -1 },
       desc: 'Has a chance to lower the target\'s Special Defense by one stage.',
       cd: 1.35, dmg: 90, speed: 230, count: 12, pierce: 1, life: 1.6, size: 7, homing: 1.0 },
 
@@ -133,7 +134,7 @@
       desc: 'Has a chance to poison the target.',
       cd: 0.60, dmg: 65, speed: 290, count: 1, spread: 0.12, pierce: 0, life: 1.5, size: 8, poison: 1 },
 
-    { id: 'mud-shot', name: 'Mud Shot', type: 'ground', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,
+    { id: 'mud-shot', name: 'Mud Shot', type: 'ground', kind: 'nova', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100, stage: { stat: 'spe', n: -1 },
       desc: 'Has a chance to lower the target\'s Speed by one stage.',
       cd: 1.10, dmg: 55, speed: 200, count: 7, pierce: 0, life: 1.0, size: 9, slow: 0.4 },
 
@@ -164,7 +165,7 @@
       cd: 0.3, dmg: 0, radius: 26, dur: 3, poison: 2 },
 
     // ---------------- TIERRA (extra) ----------------
-    { id: 'bulldoze', name: 'Bulldoze', type: 'ground', kind: 'aura', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,
+    { id: 'bulldoze', name: 'Bulldoze', type: 'ground', kind: 'aura', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100, stage: { stat: 'spe', n: -1 },
       desc: 'Has a chance to lower the target\'s Speed by one stage.',
       cd: 0.7, dmg: 60, radius: 80, slow: 0.35 },
 
@@ -177,7 +178,7 @@
       desc: 'Lowers the target\'s Speed by two stages.',
       cd: 1.1, dmg: 0, count: 2, radius: 56, dur: 7, slow: 0.6 },
 
-    { id: 'bug-buzz', name: 'Bug Buzz', type: 'bug', kind: 'aura', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
+    { id: 'bug-buzz', name: 'Bug Buzz', type: 'bug', kind: 'aura', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spd', n: -1 },
       desc: 'Has a chance to lower the target\'s Special Defense by one stage.',
       cd: 0.45, dmg: 90, radius: 66 },
 
@@ -213,7 +214,7 @@
       desc: 'Has a chance to paralyze the target.',
       cd: 0.48, dmg: 30, radius: 48, arc: 1.8 },
 
-    { id: 'shadow-ball', name: 'Shadow Ball', type: 'ghost', kind: 'projectile', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20,
+    { id: 'shadow-ball', name: 'Shadow Ball', type: 'ghost', kind: 'projectile', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20, stage: { stat: 'spd', n: -1 },
       desc: 'Has a chance to lower the target\'s Special Defense by one stage.',
       cd: 0.66, dmg: 80, speed: 280, count: 1, spread: 0.1, pierce: 2, life: 1.6, size: 9 },
 
@@ -240,7 +241,7 @@
       desc: 'Has a chance to raise the user\'s Attack by one stage.',
       cd: 0.5, dmg: 50, radius: 50, arc: 1.6, knock: 60 },
 
-    { id: 'flash-cannon', name: 'Flash Cannon', type: 'steel', kind: 'beam', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
+    { id: 'flash-cannon', name: 'Flash Cannon', type: 'steel', kind: 'beam', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spd', n: -1 },
       desc: 'Has a chance to lower the target\'s Special Defense by one stage.',
       cd: 1.05, dmg: 80, radius: 220, width: 30 },
 
@@ -298,7 +299,7 @@
       desc: 'Has a chance to burn the target. Lets frozen Pokémon thaw themselves.',
       cd: 0.28, dmg: 60, radius: 28, dur: 2.6, burn: 1 },
 
-    { id: 'bubble-beam', name: 'Bubble Beam', type: 'water', kind: 'cone', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
+    { id: 'bubble-beam', name: 'Bubble Beam', type: 'water', kind: 'cone', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spe', n: -1 },
       desc: 'Has a chance to lower the target\'s Speed by one stage.',
       cd: 0.65, dmg: 65, count: 7, arc: 1.0, speed: 340, life: 0.45, size: 6, slow: 0.3 },
 

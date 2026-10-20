@@ -40,7 +40,7 @@ G.Combat = (() => {
     // Frozen or asleep (G.Status): nothing casts until it wears off; the move stays ready.
     if (G.Status.stunned(pl)) { m.t = 0.05; return; }
     // Attacks that need a target wait to have one (do not waste the animation on the air).
-    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m))) {
+    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m) + meleeExtra(pl, m, pl.target))) {
       m.t = 0.05;
       return;
     }
@@ -76,6 +76,11 @@ G.Combat = (() => {
 
   const TARGETED = ['melee', 'beam', 'projectile', 'boomerang', 'chain', 'meteor', 'dash', 'cone'];
   function needsTarget(m) { return TARGETED.includes(m.kind); }
+  /** Melee reach on top of m.radius: the target's body (the hit circle is centre-to-centre PLUS its radius) and the player's own body at the
+   *  same CONTACT.hit factor wild melee uses against you, so you can always hit what is already close enough to hit you. */
+  function meleeExtra(pl, m, e) {
+    return m.kind === 'melee' ? pl.r * G.Enemies.CONTACT.hit + (e ? e.r : 0) - 30 : 0;
+  }
   function reach(m) {
     if (m.kind === 'melee') return m.radius + 30;
     if (m.kind === 'beam') return m.radius + 20;
@@ -107,6 +112,18 @@ G.Combat = (() => {
     if (burn) e.applyBurn(burn, false, mul);
     if (poison) e.applyPoison(poison, mul);
     if (ctl) e.applyStatus(ctl, mul);
+  }
+
+  /** Roll the flinch of a hit (slice D2). Chance = the move's flinch percent (PokeAPI move_meta). One roll per move per target per 0.5 s, like the
+   *  ailments, so a multi-pellet cast or a tick-kind move is ONE roll. Everyone can flinch; there is no window. */
+  function procFlinch(e, m) {
+    const c = m && m.flinch;
+    if (!(c > 0) || e.dead || e.remote || !e.applyFlinch) return;
+    const key = 'f:' + (m.id || m.type || 'x'), r = e.stgRoll || (e.stgRoll = {});
+    if (r[key] > 0) return;
+    r[key] = G.Stages.ROLL_GAP;
+    if (c < 100 && Math.random() * 100 >= c) return;
+    e.applyFlinch();
   }
 
   /** Type chart x weather for an attack of type `type` against `e`. */
@@ -162,7 +179,7 @@ G.Combat = (() => {
     G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius, m.arc, col, G.VFX.forMove(m));
     if (ghost) return;
 
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
+    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit)) {     // + the player's body: matches the reach wild melee has on you
       if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) continue;
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, m.knock || 0, m);
     }
@@ -217,13 +234,10 @@ G.Combat = (() => {
       }
     }
     if (ghost) return;
-    let healed = 0;
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m);
-      if (m.drain) healed += m.drain;
     }
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
-    if (healed > 0) pl.heal(Math.min(healed, 6));
   }
 
   function buff(pl, m) {
@@ -566,6 +580,13 @@ G.Combat = (() => {
     return { def: s && s[2] != null ? s[2] : 50, spd: s && s[4] != null ? s[4] : 50 };
   }
 
+  /** The defender's Def / SpD stage multiplier for a move (G.Stages). Status-category moves use the neutral denominator, so 1. */
+  function defStage(e, m) {
+    if (!e.stg) return 1;
+    const cat = G.Stats.moveCat(m);
+    return cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def');
+  }
+
   /** Level the DEFENDER's stats are computed at: the enemy's own (it scales with the clock),
    *  not the attacker's. Bosses carry atkLvl 0, so they fall back to `fallback`. */
   function defLevel(e, fallback) { return e.atkLvl > 0 ? e.atkLvl : fallback; }
@@ -576,9 +597,18 @@ G.Combat = (() => {
   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
   // type x crit on top, exactly where they were before.
+  /** Drain (slice D3): heal `m.drain` of the damage ACTUALLY taken (overkill past the enemy's HP excluded, shield counts), at most
+   *  `m.drainCap` of max HP per hit. Not for a teammate's ghost shot. */
+  function drainHeal(pl, m, e, hp0, sh0) {
+    if (!m || !m.drain || ghost || pl.dead) return;
+    const dealt = (hp0 - Math.max(0, e.hp)) + (sh0 - (e.shield || 0));
+    if (dealt <= 0) return;
+    pl.heal(Math.min(dealt * m.drain, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
+  }
+
   function hit(pl, e, factor, col, dx, dy, knock, m) {
-    const ds = enemyDefStats(e), dl = defLevel(e, pl.level);
-    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m));
+    const ds = enemyDefStats(e), dl = defLevel(e, pl.level), dm = defStage(e, m);
+    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
     dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
@@ -586,12 +616,15 @@ G.Combat = (() => {
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
       const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
-      const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+      const dS = c === 2 ? 50 : (c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl)) * dm;
       G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), m.norm || 1);
     }
+    drainHeal(pl, m, e, hp0, sh0);
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
+    G.Stages.procMove(e, m);                   // stat drop (slice D1)
+    procFlinch(e, m);                          // flinch (slice D2)
     G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
   }
@@ -702,7 +735,8 @@ G.Combat = (() => {
         const ds = enemyDefStats(e);
         const pm = p.move || { type: p.mtype, cat: 'status', dmg: 0 };
         const dl = defLevel(e, p.level || pl.level);
-        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab);
+        const dm = defStage(e, pm);
+        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
         const k = tk * (crit ? CRIT_MUL : 1);
         dmg = floorHit(dmg * k, pm);
@@ -711,13 +745,16 @@ G.Combat = (() => {
                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
         if (LOG) {
           const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
-          const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+          const dS = c === 2 ? 50 : (c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl)) * dm;
           G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), pm.norm || 1);
         }
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
+        drainHeal(pl, pm, e, hp0, sh0);
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
+        G.Stages.procMove(e, pm);                 // stat drop (slice D1)
+        procFlinch(e, pm);                        // flinch (slice D2)
         G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);
 
@@ -756,6 +793,6 @@ G.Combat = (() => {
     }
   }
 
-  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments,
+  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage, procFlinch, drainHeal,
            get fieldCount() { return fields.length; } };
 })();

@@ -16,7 +16,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Hazards: { add: h => hz.push(h) }, FX: new Proxy({ slash: (...a) => slashes.push(a) }, { get: (t, k) => (k in t ? t[k] : noop) }), LIFT: 0, VFX: { forMove: m => ({ id: m.id }), forType: () => null }, Projectiles: { spawn: s => { shots.push(s); return s; } }, Coop: { isHost: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
-['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/gym.js'].forEach(p => {
+['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/gym.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
@@ -53,20 +53,24 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   const ft = e.gymFactor(mt), fr = e.gymFactor(mr);
   if (!near(fr / ft, (mr.dmg * 1.5) / mt.dmg)) bad('power ratio incl. STAB ' + fr / ft);
   if (e.atkFactor == null || e.atkCat !== 'physical') bad('contact factor / cat'); if (e.atkType !== 'normal') bad('contact type ' + e.atkType);
-  // the player's Harden: 7% x stacks (cap 5) of damage cut, one shared 7 s timer refreshed by each cast, reduction capped at 80%
+  // Harden is a mainline STAGE now (slice D1): +1 Def per cast, each application on its own timer (the move's dur), stage cap = the move's stacks (6)
   const hd = I('harden'); if (hd.amount !== 0.07 || !near(hd.dur, 7 * 1.3) || hd.stacks !== 6 || hd.stat !== 'def') bad('Harden values: ' + JSON.stringify([hd.amount, hd.dur, hd.stacks, hd.stat]));
-  if (e.defCut() !== 1) bad('no buff, no cut');
-  e.addBuff(hd.amount, hd.dur, hd.stacks); if (!near(e.defCut(), 0.93)) bad('1 stack ' + e.defCut());
-  for (let i = 0; i < 9; i++) e.addBuff(hd.amount, hd.dur, hd.stacks); if (!near(e.defCut(), 0.58)) bad('6 stacks cap ' + e.defCut());
-  const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 58)) bad('damage cut ' + taken);
-  e.buffTick(hd.dur - 0.1); if (e.buff.n !== 6) bad('buff expired early'); e.buffTick(0.2); if (e.buff.n !== 0 || e.defCut() !== 1) bad('buff did not expire');
+  if (G.Stages.stage(e, 'def') !== 0 || G.Stages.mul(e, 'def') !== 1) bad('no cast, no stage');
+  e.castBuff(hd); if (G.Stages.stage(e, 'def') !== 1 || !near(G.Stages.mul(e, 'def'), 1.5)) bad('1 cast ' + G.Stages.stage(e, 'def'));
+  for (let i = 0; i < 9; i++) e.castBuff(hd); if (G.Stages.stage(e, 'def') !== 6 || !near(G.Stages.mul(e, 'def'), 4)) bad('stage cap ' + G.Stages.stage(e, 'def'));
+  const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 100)) bad('hurt() no longer cuts (the stage acts in the damage ratio): ' + taken);
+  G.Stages.tick(e, hd.dur - 0.1); if (G.Stages.stage(e, 'def') !== 6) bad('stage expired early'); G.Stages.tick(e, 0.2); if (G.Stages.stage(e, 'def') !== 0 || e.stg) bad('stage did not expire');
+  // a stage cap below 6 holds (an authored move with fewer stacks)
+  { const f2 = Object.assign({}, hd, { stacks: 3 }); for (let i = 0; i < 6; i++) e.castBuff(f2); if (G.Stages.stage(e, 'def') !== 3) bad('authored cap 3 ' + G.Stages.stage(e, 'def')); G.Stages.clear(e); }
+  // the attacker half: an Attack stage multiplies the leader's physical factor, a SpA stage the special one
+  { const f0 = e.gymFactor(mt); G.Stages.add(e, 'atk', 2, 5); if (!near(e.gymFactor(mt) / f0, 2)) bad('atk stage on the factor ' + e.gymFactor(mt) / f0); G.Stages.clear(e); }
   // enrage clock (engaged by the hit above at clock 240)
   const t0 = e.gym.engagedAt; if (t0 !== 240) bad('engagement ' + t0);
   const f = s => { clock = t0 + s; return e.gymFactor(mt) / ft; };
   const r = [f(60), f(120), f(135), f(150), f(400)];
   if (!near(r[0], 1) || !near(r[1], 1) || !near(r[2], 1.5) || !near(r[3], 2) || !near(r[4], 2)) bad('enrage ramp ' + r);
   clock = 240;
-  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = player buff with its stacks (1 stack -7%, 6 stacks -42%, 9.1 s), STAB on Rock Throw, enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
+  console.log('3 leader: contact factor ' + ft.toFixed(1) + ', rock-throw x' + (fr / ft).toFixed(2) + ', Harden = +1 Def stage per cast (x1.5 at +1, x4 at the +6 cap, 9.1 s each), STAB on Rock Throw, enrage x' + r.map(v => v.toFixed(2)).join(' / ') + ' at +60/120/135/150/400 s'); }
 
 // 4. move picker
 { const e = mk(); e.ai = null; e.bossInit(); const cnt = {};
@@ -86,7 +90,7 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
     atRange = i >= 640;       // a cast begun just before the switch may still be finishing
     e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 600 ? 55 : 420;      // 30 s up close, then 30 s at range (boss held in place to isolate the AI)
     try { pl.dead = false; pl.hurt = (...a) => hurts.push(a); e.update(0.05, pl); } catch (x) { errs.push(x.message); break; }
-    maxDef = Math.max(maxDef, +(1 / e.defCut()).toFixed(2));
+    maxDef = Math.max(maxDef, +G.Stages.mul(e, 'def').toFixed(2)); G.Stages.tick(e, 0);
   }
   const kinds = {}; hz.forEach(h => kinds[h.kind] = (kinds[h.kind] || 0) + 1);
   for (const id of Object.keys(seen)) if (!['tackle', 'rock-throw', 'harden'].includes(id)) bad('unauthored move ' + id);
@@ -101,9 +105,11 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
     bad('Rock Throw should fire 3 rocks per cast: ' + shots.length + ' vs ' + seen['rock-throw']);
   if (!slashes.length) bad('no Tackle slash visual'); if (slashes.some(a => !near(a[3], tk.radius + e.r) || !near(a[4], tk.arc))) bad('slash radius/arc differ from Tackle: ' + JSON.stringify(slashes[0].slice(3, 5)));
   if (!hurts.length) bad('Tackle never hurt the player at point blank'); if (hurts.some(a => !near(a[0], e.gymFactor(tk), 0.35) || a[3].cat !== 'physical')) bad('tackle damage factor');
-  if (e.buff.n > 0 && Math.abs(e.defCut() - (1 - e.buff.n * 0.07)) > 1e-9) bad('buff math');
+  if (maxDef < 1.5) bad('the leader never raised its Defense stage in 60 s');
+  // flinch (slice D2): a gym cast in progress is cancelled and the next-attack timer restarts as after a normal gym cast; no immunity
+  e.ai.cast = null; e.gymStart('rock-throw', pl); if (!e.ai.cast) bad('flinch test needs a cast'); else { const ok = e.applyFlinch(); if (!ok || e.ai.cast !== null) bad('flinch did not cancel the gym cast'); if (!(e.ai.cd > 0)) bad('flinch did not restart the gym attack timer ' + e.ai.cd); if (e.atkType !== 'normal') bad('type not restored after a flinched cast: ' + e.atkType); }
   e.ai.cast = null; e.gymRestore(); if (e.atkType !== 'normal') bad('type not restored after casts: ' + e.atkType);
-  console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', zones ' + (kinds.zone || 0) + ', shots ' + shots.length + ', peak Harden cut x' + maxDef + ', Tackle slashes ' + slashes.length + ' hurting ' + hurts.length + ' times, shots r' + (shots[0] && shots[0].r) + ' at ' + (shots[0] && Math.round(Math.hypot(shots[0].vx, shots[0].vy))) + ' px/s' + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
+  console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', zones ' + (kinds.zone || 0) + ', shots ' + shots.length + ', peak Def stage multiplier x' + maxDef + ', Tackle slashes ' + slashes.length + ' hurting ' + hurts.length + ' times, shots r' + (shots[0] && shots[0].r) + ' at ' + (shots[0] && Math.round(Math.hypot(shots[0].vx, shots[0].vy))) + ' px/s' + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
 
 // 6. schedule after the fight
 { G.Gym.onReturn(g); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('onReturn state'); G.Rift.rift = null; clock = 9999; G.Gym.update(0.1, {}, 9999); if (G.Gym.gate) bad('a second gate with one gym in the list');

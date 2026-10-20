@@ -118,6 +118,7 @@ G.Mechanics = (() => {
   function check(m, mech) {
     if (!mech.live) return { ok: false, why: 'not live yet' };
     const key = mech.keyFor(m);
+    if (m.fixed && m.fixed.includes(key)) return { ok: false, why: 'fixed on this move' };     // e.g. Giga Drain: always one shot, no pierce
     if (!G.Kinds.hasKey(m.kind, key)) return { ok: false, why: 'kind has no ' + key };
     const has = m[key] != null;
     // 'add' mechanics default to 0 when the kind supports the key (a cone without `pierce` can take Pierce).

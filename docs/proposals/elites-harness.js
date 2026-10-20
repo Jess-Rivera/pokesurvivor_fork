@@ -13,7 +13,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 ['js/core/util.js'].forEach(p => { try { load(p); } catch (e) { } });
 if (!G.U || !G.U.clamp) { console.log('util failed'); process.exit(1); }
-['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/entities/enemy.js', 'js/systems/elites.js'].forEach(p => {
+['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));

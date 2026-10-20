@@ -132,6 +132,31 @@ G.HUD = (() => {
   // How far the action bar is lifted to make room for the strip. layout-ui.js reads it too.
   const BAR_LIFT = 28;
 
+  // Action bar, single (unbonded) move: the bare icon, no box. The cooldown shade and the cast flash are masked to the icon's own
+  // pixels (source-atop on a scratch canvas), and the active move gets a yellow outline of its silhouette.
+  const PAD = 4;
+  let _ic = null, _ol = null;
+  function moveIcon(ctx, name, x, y, size, cd, flash, outline) {
+    const W = size + PAD * 2;
+    if (!_ic) { _ic = document.createElement('canvas'); _ol = document.createElement('canvas'); }
+    if (_ic.width !== W) { _ic.width = _ic.height = _ol.width = _ol.height = W; }
+    const c = _ic.getContext('2d'), o = _ol.getContext('2d');
+    c.clearRect(0, 0, W, W);
+    G.Icons.draw(c, name, PAD, PAD, size);
+    if (outline) {
+      o.clearRect(0, 0, W, W);
+      for (let dx = -2; dx <= 2; dx += 2) for (let dy = -2; dy <= 2; dy += 2) if (dx || dy) o.drawImage(_ic, dx, dy);
+      o.globalCompositeOperation = 'source-in'; o.fillStyle = '#ffd23f'; o.fillRect(0, 0, W, W);
+      o.globalCompositeOperation = 'source-over';
+      ctx.drawImage(_ol, x - PAD, y - PAD);
+    }
+    c.globalCompositeOperation = 'source-atop';
+    if (cd > 0) { c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(PAD, PAD, size, size * cd); }      // empties from bottom to top
+    if (flash > 0) { c.fillStyle = 'rgba(255,255,255,' + (flash * 0.55).toFixed(2) + ')'; c.fillRect(0, 0, W, W); }
+    c.globalCompositeOperation = 'source-over';
+    ctx.drawImage(_ic, x - PAD, y - PAD);
+  }
+
   /** Active statuses (G.Status.list) as small chips centered above the HP bar: label and seconds left. */
   function drawStatus(ctx, w, by, pl) {
     const L = G.Status.list(pl);
@@ -488,14 +513,15 @@ G.HUD = (() => {
       if (m) G.Touch.addButton(x, y, S, S, () => { if (G.Game.state === 'playing' && pl.active !== i) { pl.setActive(i); G.Audio.sfx('click'); } }, GAP / 2 + 3);
       const col = m ? G.U.TYPE_COLOR[m.type] : '#4a5468';
 
-      // fondo
-      roundRect(ctx, x, y, S, S, 12);
-      ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
-      ctx.fill();
-      ctx.lineWidth = on ? 2.5 : fused ? 2 : 1.2;
-      // Link: pink border.
-      ctx.strokeStyle = fused ? BOND : on ? col : 'rgba(140,170,210,.22)';
-      ctx.stroke();
+      // Box: only for an empty slot or a bonded group (pink border). A single move is the bare icon.
+      if (!m || fused) {
+        roundRect(ctx, x, y, S, S, 12);
+        ctx.fillStyle = on ? 'rgba(20,30,50,.95)' : 'rgba(10,16,28,.8)';
+        ctx.fill();
+        ctx.lineWidth = on ? 2.5 : fused ? 2 : 1.2;
+        ctx.strokeStyle = fused ? BOND : on ? col : 'rgba(140,170,210,.22)';
+        ctx.stroke();
+      }
 
       if (!m) continue;
 
@@ -512,24 +538,16 @@ G.HUD = (() => {
           if (fl > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (fl * 0.55).toFixed(2) + ')'; ctx.fillRect(cx, cy, C, C); }
         });
       } else {
-        // cooldown: it empties from bottom to top
-        const cdFrac = cdOf(m);
-        if (cdFrac > 0) {
-          ctx.save();
-          roundRect(ctx, x, y, S, S, 12); ctx.clip();
-          ctx.fillStyle = 'rgba(0,0,0,.6)';
-          ctx.fillRect(x, y, S, S * cdFrac);
-          ctx.restore();
-        }
-
-        // type emblem + family badge
-        G.Icons.draw(ctx, 'move:' + m.id, x + (S - 32) / 2, y + (S - 32) / 2 - 2, 32);
+        // type emblem + family badge at the box size (54 = 3x the 18 px native icon), cooldown and flash on the icon itself
+        moveIcon(ctx, 'move:' + m.id, x, y, S, cdOf(m), 1 - (performance.now() - (m.castAt || 0)) / 180, on);
 
         // upgrade stacks taken on this move (badge, hidden at 0)
         const stk = G.Moves.stackTotal(m);
         if (stk > 0) {
           ctx.save();
           ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = col;
+          ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+          ctx.strokeText('+' + stk, x + S / 2, y + S - 4);
           ctx.fillText('+' + stk, x + S / 2, y + S - 4);
           ctx.restore();
         }
@@ -539,7 +557,9 @@ G.HUD = (() => {
       ctx.font = F(800, 9);
       ctx.fillStyle = fused ? BOND : on ? col : 'rgba(180,200,230,.6)';
       ctx.textAlign = 'left';
-      ctx.fillText(G.Input.keyLabel('attack_' + (i + 1)) || String(i + 1), x + 3, y + 10);
+      const kl = G.Input.keyLabel('attack_' + (i + 1)) || String(i + 1);
+      ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeText(kl, x + 3, y + 10); ctx.restore();
+      ctx.fillText(kl, x + 3, y + 10);
 
       // name above the active one (with a link: "Ascuas +2")
       if (on) {

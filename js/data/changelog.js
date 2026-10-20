@@ -6,6 +6,34 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Giga Drain', 'Giga Drain'], new: [
+    ['Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.',
+     'Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.'],
+  ], fix: [
+    ['Your melee attacks now reach as far as enemy melee does, so a close enemy can no longer hit you before you can hit it.',
+     'Your melee attacks now reach as far as enemy melee does, so a close enemy can no longer hit you before you can hit it.'],
+  ] },
+  { d: '2026-10-19', title: ['Menus and action bar', 'Menus and action bar'], new: [
+    ['The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.',
+     'The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.'],
+  ], chg: [
+    ['The action bar shows each move as a bare, larger icon. The cooldown shades the icon itself and the active move has a yellow outline. Bonded moves keep their pink box.',
+     'The action bar shows each move as a bare, larger icon. The cooldown shades the icon itself and the active move has a yellow outline. Bonded moves keep their pink box.'],
+  ], fix: [
+    ['Team screen: a search with only one result no longer stretches that Pokémon into a tall column.',
+     'Team screen: a search with only one result no longer stretches that Pokémon into a tall column.'],
+  ] },
+  { d: '2026-10-19', title: ['Flinch', 'Flinch'], new: [
+    ['Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.',
+     'Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.'],
+  ] },
+  { d: '2026-10-19', title: ['Stat drops', 'Stat drops'], new: [
+    ['Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.',
+     'Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.'],
+  ], chg: [
+    ['Gym leaders now use Harden as a proper stat stage: each cast raises their Defense by one stage for a few seconds instead of a flat damage cut.',
+     'Gym leaders now use Harden as a proper stat stage: each cast raises their Defense by one stage for a few seconds instead of a flat damage cut.'],
+  ] },
   { d: '2026-10-19', title: ['Team screen', 'Team screen'], new: [
     ['The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).',
      'The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).'],

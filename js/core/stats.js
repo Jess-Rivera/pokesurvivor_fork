@@ -93,11 +93,12 @@ G.Stats = (() => {
   // (stats[2]/stats[4]). Returns damage INCLUDING STAB and the scalar but BEFORE type/crit
   // (those stay at the call site). A status-cat move divides by the neutral PROP_DEF and
   // never gets STAB. The +2 is mainline: after the division, before the multipliers.
-  function applyDamage(factor, defBase, spdBase, move, level, stab) {
+  function applyDamage(factor, defBase, spdBase, move, level, stab, defMul = 1) {
+    // defMul: the defender's Def / SpD STAGE multiplier (G.Stages.mul), applied to the final stat. A status-cat move ignores it.
     const cat = moveCat(move);
     const dStat = cat === 'status' ? PROP_DEF
-                : cat === 'special' ? spDef(spdBase, level)
-                : defense(defBase, level);
+                : cat === 'special' ? spDef(spdBase, level) * defMul
+                : defense(defBase, level) * defMul;
     const stabMul = (stab && cat !== 'status') ? STAB : 1;
     // move.norm = per-cast normalization (accuracy x hits / events), see data/moves.js. Applied to the FINAL
     // per-event damage because the mainline +2 is per event.

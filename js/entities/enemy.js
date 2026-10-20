@@ -69,7 +69,6 @@
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
       this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
       if (this.gym) {
-        this.buff = { n: 0, amount: 0, t: 0 };   // the Defense buff (the player's Harden), see defCut()
         this.atkLvl = this.gym.level;
         this.baseAtkType = this.atkType;
         const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
@@ -88,6 +87,7 @@
       this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
       this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
       this.ailRoll = null;
+      this.stFl = null; this.fsp = 0; this.fdx = 0; this.fdy = 0;     // flinch recoil state and the last moving heading (see applyFlinch)
       // Control statuses (slice C, see G.Status): major (paralysis | freeze | sleep), confusion, trap, and the hard-CC no-reapply windows.
       this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null;
       this.lavaTick = 0;
@@ -145,8 +145,7 @@
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
       if (this.dead || !(amount > 0)) return;
-      if (this.gym && !this.remote) {                 // gym leader: Defense stages cut incoming damage; the first hit engages (enrage clock)
-        amount *= this.defCut();
+      if (this.gym && !this.remote) {                 // gym leader: the first hit engages (enrage clock); its Def / SpD stages act in the damage ratio (combat.js)
         if (this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
       }
       // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
@@ -236,6 +235,41 @@
       this.poisonLeft = Math.max(this.poisonLeft, S.turns);
     }
 
+    /**
+     * Flinch (slice D2): the target loses its current action and, if it was moving, is knocked back. Nobody is immune and there is no
+     * window (Jess 2026-10-19). Losing the action: a boss or gym cast in progress is cancelled and its next-attack timer restarts as after a
+     * normal cast; a charger's aim or dash is cancelled; a ranged unit's shot timer restarts at its full period; the contact-hit timer
+     * restarts, and that timer does not run while the flinch lasts. Recoil: a unit that was moving goes back half its sprite radius at 2.0x its speed;
+     * every flinched unit, moving or not, then has zero move speed for 0.2 to 0.3 s.
+     * Frozen or asleep units cannot flinch. Zones already on the ground are not cancelled. Returns true when it applied.
+     */
+    applyFlinch() {
+      if (this.remote || this.dead || G.Status.stunned(this)) return false;
+      const ai = this.ai;
+      if (this.boss && ai) {
+        if (ai.cast) this.bossEnd();
+        else ai.cd = this.gym ? this.gymCd() : G.U.rand(1.3, 2.0);
+      }
+      if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
+      if (this.keepsDistance()) this.shotCd = this.def.shotCd || 2;
+      this.touchCd = Math.max(this.touchCd, 0.55);
+      this.stFl = this.fsp > 0 ? { ph: 'back', dx: -this.fdx, dy: -this.fdy, sp: 2 * this.fsp, t: (this.r / 2) / (2 * this.fsp) }
+                                : { ph: 'hold', dx: 0, dy: 0, sp: 0, t: G.U.rand(0.2, 0.3) };      // a unit that was not moving only freezes
+      G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Flinched', '#e8d5a0');
+      return true;
+    }
+    /** Velocity during the flinch: back at 2.0x for r/2 of distance, then still for 0.2 to 0.3 s. */
+    flinchMove(dt) {
+      const F = this.stFl;
+      F.t -= dt;
+      if (F.ph === 'back') {
+        if (F.t <= 0) { F.ph = 'hold'; F.t = G.U.rand(0.2, 0.3); }
+        return [F.dx * F.sp, F.dy * F.sp];
+      }
+      if (F.t <= 0) this.stFl = null;
+      return [0, 0];
+    }
+
     /** Control statuses: 'paralysis' | 'freeze' | 'sleep' | 'confusion' | 'trap' (see G.Status). Co-op copies are not synced yet (deferred hook). */
     applyStatus(kind, mul = 1) {
       if (this.remote) return 'none';
@@ -314,7 +348,7 @@
       this.anim.update(dt);
       if (this.flash > 0) this.flash -= dt;
       if (this.dead) { this.fade -= dt; return; }
-      if (this.touchCd > 0) this.touchCd -= dt;
+      if (this.touchCd > 0 && !this.stFl) this.touchCd -= dt;      // the contact timer waits out a flinch (slice D2)
       this.bob += dt * 6;
       if (this.shiny) {
         this.sparkT -= dt;
@@ -354,7 +388,7 @@
           G.FX.twinkle(this.x + G.U.rand(-this.r, this.r) * 1.2, this.y - G.U.rand(4, this.bodyH * 1.1));
         }
       }
-      if (this.touchCd > 0) this.touchCd -= dt;
+      if (this.touchCd > 0 && !this.stFl) this.touchCd -= dt;      // the contact timer waits out a flinch (slice D2)
       this.bob += dt * 6;
 
       // --- estados ---
@@ -386,11 +420,13 @@
         if (!any) this.ailRoll = null;
       }
       G.Status.tick(this, dt);
+      G.Stages.tick(this, dt);
       if (this.dead) return;
       // An excess wild unit leaving for an elite (Elites.trim): it walks away from you, harmless, until the manager removes it off screen.
       if (this.leaving) { this.leaveMove(dt, pl); return; }
       // Frozen or asleep (G.Status): no movement and no attacks; only knockback it already had keeps sliding it.
       if (G.Status.stunned(this)) {
+        this.stFl = null;
         this.x += this.kx * dt; this.y += this.ky * dt;
         this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
         if (!this.flying) G.World.collide(this);
@@ -410,7 +446,7 @@
         } else if (le.slow) terrainMul = le.slow < 0.5 ? 0.45 : 0.55;
       }
 
-      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types) * G.Status.speedMul(this);
+      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types) * G.Status.speedMul(this) * G.Stages.speedMul(this);
       let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       if (this.stCnf) [dx, dy] = G.Status.wander(this, dx, dy);     // confusion: the heading drifts
       const dist = G.U.dist(this.x, this.y, pl.x, pl.y);
@@ -520,7 +556,7 @@
           vx = rx * spd * 0.8; vy = ry * spd * 0.8;
         } else if (this.bandMode !== 0) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
         if (this.keepsDistance()) {
-          this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate
+          if (!this.stFl) this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate; waits out a flinch (D2)
           if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
             this.shotCd = this.def.shotCd || 2;
             if (!G.Status.fizzle(this)) this.special(pl, ddx, ddy);      // paralysis / confusion: the attempt can fizzle
@@ -530,6 +566,11 @@
 
       // Contact gap: a melee walker stops a little short of overlapping you; the hit test (combat.js) reaches farther.
       if (this.meleeWalker() && dist <= (this.r + pl.r) * G.Enemies.CONTACT.stop) { vx = 0; vy = 0; }
+
+      // Flinch recoil (slice D2): while it lasts, the intended velocity is replaced (back, then still). Otherwise remember the heading and
+      // the plain speed of a unit that is moving, so a flinch knows which way is back and how fast.
+      if (this.stFl) [vx, vy] = this.flinchMove(dt);
+      else { const sp = Math.hypot(vx, vy); if (sp > 2) { this.fdx = vx / sp; this.fdy = vy / sp; this.fsp = spd; } else this.fsp = 0; }
 
       // --- integration ---
       const ox = this.x, oy = this.y;
@@ -583,7 +624,6 @@
     bossMove(dt, pl, dist, dx, dy, spd) {
       if (!this.ai) this.bossInit();
       const ai = this.ai;
-      if (this.gym) this.buffTick(dt);
       if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
       const k = ai.fury ? 1.25 : 1;
       if (ai.cast) return this.bossCast(dt, pl);
@@ -720,17 +760,16 @@
     /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
     gymFactor(m) {
       const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
-      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this);
+      const special = m.cat === 'special';
+      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, special ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this) * G.Stages.mul(this, special ? 'spa' : 'atk');
     }
 
-    /** Same rule as the player: damage taken x (1 - min(0.8, stacks x amount)). */
-    defCut() { const b = this.buff; return 1 - Math.min(0.8, b.n * b.amount); }
-    /** Same as Player.addBuff: one shared timer refreshed by every cast, stacks capped. */
-    addBuff(amount, dur, maxStacks) {
-      const b = this.buff;
-      b.amount = amount; b.n = Math.min(maxStacks, b.n + 1); b.t = dur;
+    /** A leader's buff cast is a mainline STAGE change (G.Stages): +stageN (default 1) on the move's stat per cast, each application
+     *  lasting the move's dur on its own timer, up to the move's stacks as the stage cap (max 6). The player's Speed buff stat is 'spd'. */
+    castBuff(m) {
+      const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
+      if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
     }
-    buffTick(dt) { const b = this.buff; if (b.n > 0 && (b.t -= dt) <= 0) b.n = 0; }
 
     /** Weighted pick among the moves allowed by range and HP gate; null if none. */
     gymPick(dist) {
@@ -775,7 +814,7 @@
         c.fired = true;
         const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
         if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
-          this.addBuff(m.amount, m.dur, m.stacks | 0);
+          this.castBuff(m);
           const vis = G.VFX.forMove(m);
           G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
           for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });
@@ -935,7 +974,7 @@
         if (this.shotCd <= 0) { this.shotCd = this.def.shotCd || 2; this.healAround(); }
       }
       // Weak shot from range; touching you is the weak melee (combat.js, contactMul). Never both at once.
-      this.weakCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate (heals / shields unchanged)
+      if (!this.stFl) this.weakCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate (heals / shields unchanged); waits out a flinch (D2)
       if (this.weakCd <= 0 && s < K.shotS && dist > this.r + pl.r + K.meleeGap) {
         this.weakCd = K.shotCd;
         this.shoot(px, py, 0, 1, 1, G.Enemies.SHOT_LIFE_BASE, K.weakShot);

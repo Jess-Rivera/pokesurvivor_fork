@@ -79,6 +79,18 @@ re-tune later.
 - 2026-10-18, slice B, DoT strength: burn and poison ticks x (the source move's current Power / its base Power) (G.Moves.dotMul), so Increased Effect and the Type and Kind damage cards strengthen DoT in the same additive pool as direct damage. Attack, Sp. Atk and level do not scale it. Status moves (Power 0) stay at 1.0x. Strongest source wins while the state lasts, a new state starts from its own source.
 - Expect: fire starters lose most of their old burn damage (restoring player damage is tune/damage-hp), poison beats burn 2:1 (mainline ratio), Toxic is lethal to everything unhealed. Boss and rift legendary DoT is not special-cased (the boss rework owns it).
 
+## Flinch (status Slice D2, built 2026-10-19; all numbers TUNE)
+- Chance: the move's flinch percent (Rock Slide 30, Bite 30, Dark Pulse 20), one roll per move per target per 0.5 s. No immunity, no window, for every unit kind.
+- Lost action: cast cancelled and timer restarted (boss, gym), charger aim or dash cancelled, ranged shot timer back to its full period, contact timer back to 0.55 s.
+- Recoil (only if moving): half the sprite radius back at 2.0x plain speed. Then every flinched unit has zero move speed for 0.2 to 0.3 s. The contact timer (0.55 s) restarts and waits until the freeze is over.
+
+## Stat stages (status Slice D1, built 2026-10-19; all numbers TUNE)
+- Table: stage -6 .. +6 = x0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1, 1.5, 2, 2.5, 3, 3.5, 4. Each application lasts 6 s (G.Stages.DUR) on its own timer; the stage is the sum of the live applications, clamped to +-6.
+- Rolls: statChance from the move, one roll per move per target per 0.5 s, every success a new 6 s application, no lockout. Steady held stage: 100% moves reach -6 in about 3 s; 10% moves about -1.2; 20% (Shadow Ball) about -2.4.
+- Wired moves (enemy targets): Speed -1 from Bubble, Bubble Beam, Mud Shot, Bulldoze; Sp. Def -1 from Psychic, Bug Buzz, Shadow Ball, Flash Cannon. Leaf Storm, Metal Claw and Meteor Mash (user stats) are inert until slice E.
+- Speed stage multiplies the FINAL movement speed with the stage table, same for every species, no bounds (-6 is x0.25, +6 is x4), multiplied with paralysis and trap. Def or SpD at -2 about doubles the damage taken from the player's hits.
+- Gym leader Harden: +1 Def per cast, cap = the move's stacks (Brock 6), each application the move's dur (9.1 s with his Duration x1). Offline 60 s fight: +1 for 28 s, +2 for 9 s, +3 for 3 s, +4 for 5 s (average damage taken x0.68), versus the old flat -42% maximum.
+
 ## Enemies
 ### Slice 1c: shots, support, contact, flanker (applied 2026-10-18)
 - 2026-10-18, plain shooter shot life: 2.4 s -> 4.8 s (speed 190 px/s unchanged; G.Enemies.SHOT_LIFE, per class). Fans, beamers, zoners, status and bosses unchanged. Real reach is limited by the 260 px off-view cull.
