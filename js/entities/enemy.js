@@ -87,6 +87,7 @@
       this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
       this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
       this.ailRoll = null;
+      this.stFl = null; this.fsp = 0; this.fdx = 0; this.fdy = 0;     // flinch recoil state and the last moving heading (see applyFlinch)
       // Control statuses (slice C, see G.Status): major (paralysis | freeze | sleep), confusion, trap, and the hard-CC no-reapply windows.
       this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null;
       this.lavaTick = 0;
@@ -234,6 +235,41 @@
       this.poisonLeft = Math.max(this.poisonLeft, S.turns);
     }
 
+    /**
+     * Flinch (slice D2): the target loses its current action and, if it was moving, is knocked back. Nobody is immune and there is no
+     * window (Jess 2026-10-19). Losing the action: a boss or gym cast in progress is cancelled and its next-attack timer restarts as after a
+     * normal cast; a charger's aim or dash is cancelled; a ranged unit's shot timer restarts at its full period; the contact-hit timer
+     * restarts, and that timer does not run while the flinch lasts. Recoil: a unit that was moving goes back half its sprite radius at 2.0x its speed;
+     * every flinched unit, moving or not, then has zero move speed for 0.2 to 0.3 s.
+     * Frozen or asleep units cannot flinch. Zones already on the ground are not cancelled. Returns true when it applied.
+     */
+    applyFlinch() {
+      if (this.remote || this.dead || G.Status.stunned(this)) return false;
+      const ai = this.ai;
+      if (this.boss && ai) {
+        if (ai.cast) this.bossEnd();
+        else ai.cd = this.gym ? this.gymCd() : G.U.rand(1.3, 2.0);
+      }
+      if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
+      if (this.keepsDistance()) this.shotCd = this.def.shotCd || 2;
+      this.touchCd = Math.max(this.touchCd, 0.55);
+      this.stFl = this.fsp > 0 ? { ph: 'back', dx: -this.fdx, dy: -this.fdy, sp: 2 * this.fsp, t: (this.r / 2) / (2 * this.fsp) }
+                                : { ph: 'hold', dx: 0, dy: 0, sp: 0, t: G.U.rand(0.2, 0.3) };      // a unit that was not moving only freezes
+      G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Flinched', '#e8d5a0');
+      return true;
+    }
+    /** Velocity during the flinch: back at 2.0x for r/2 of distance, then still for 0.2 to 0.3 s. */
+    flinchMove(dt) {
+      const F = this.stFl;
+      F.t -= dt;
+      if (F.ph === 'back') {
+        if (F.t <= 0) { F.ph = 'hold'; F.t = G.U.rand(0.2, 0.3); }
+        return [F.dx * F.sp, F.dy * F.sp];
+      }
+      if (F.t <= 0) this.stFl = null;
+      return [0, 0];
+    }
+
     /** Control statuses: 'paralysis' | 'freeze' | 'sleep' | 'confusion' | 'trap' (see G.Status). Co-op copies are not synced yet (deferred hook). */
     applyStatus(kind, mul = 1) {
       if (this.remote) return 'none';
@@ -312,7 +348,7 @@
       this.anim.update(dt);
       if (this.flash > 0) this.flash -= dt;
       if (this.dead) { this.fade -= dt; return; }
-      if (this.touchCd > 0) this.touchCd -= dt;
+      if (this.touchCd > 0 && !this.stFl) this.touchCd -= dt;      // the contact timer waits out a flinch (slice D2)
       this.bob += dt * 6;
       if (this.shiny) {
         this.sparkT -= dt;
@@ -352,7 +388,7 @@
           G.FX.twinkle(this.x + G.U.rand(-this.r, this.r) * 1.2, this.y - G.U.rand(4, this.bodyH * 1.1));
         }
       }
-      if (this.touchCd > 0) this.touchCd -= dt;
+      if (this.touchCd > 0 && !this.stFl) this.touchCd -= dt;      // the contact timer waits out a flinch (slice D2)
       this.bob += dt * 6;
 
       // --- estados ---
@@ -390,6 +426,7 @@
       if (this.leaving) { this.leaveMove(dt, pl); return; }
       // Frozen or asleep (G.Status): no movement and no attacks; only knockback it already had keeps sliding it.
       if (G.Status.stunned(this)) {
+        this.stFl = null;
         this.x += this.kx * dt; this.y += this.ky * dt;
         this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
         if (!this.flying) G.World.collide(this);
@@ -529,6 +566,11 @@
 
       // Contact gap: a melee walker stops a little short of overlapping you; the hit test (combat.js) reaches farther.
       if (this.meleeWalker() && dist <= (this.r + pl.r) * G.Enemies.CONTACT.stop) { vx = 0; vy = 0; }
+
+      // Flinch recoil (slice D2): while it lasts, the intended velocity is replaced (back, then still). Otherwise remember the heading and
+      // the plain speed of a unit that is moving, so a flinch knows which way is back and how fast.
+      if (this.stFl) [vx, vy] = this.flinchMove(dt);
+      else { const sp = Math.hypot(vx, vy); if (sp > 2) { this.fdx = vx / sp; this.fdy = vy / sp; this.fsp = spd; } else this.fsp = 0; }
 
       // --- integration ---
       const ox = this.x, oy = this.y;

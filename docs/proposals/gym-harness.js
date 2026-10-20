@@ -106,6 +106,8 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   if (!slashes.length) bad('no Tackle slash visual'); if (slashes.some(a => !near(a[3], tk.radius + e.r) || !near(a[4], tk.arc))) bad('slash radius/arc differ from Tackle: ' + JSON.stringify(slashes[0].slice(3, 5)));
   if (!hurts.length) bad('Tackle never hurt the player at point blank'); if (hurts.some(a => !near(a[0], e.gymFactor(tk), 0.35) || a[3].cat !== 'physical')) bad('tackle damage factor');
   if (maxDef < 1.5) bad('the leader never raised its Defense stage in 60 s');
+  // flinch (slice D2): a gym cast in progress is cancelled and the next-attack timer restarts as after a normal gym cast; no immunity
+  e.ai.cast = null; e.gymStart('rock-throw', pl); if (!e.ai.cast) bad('flinch test needs a cast'); else { const ok = e.applyFlinch(); if (!ok || e.ai.cast !== null) bad('flinch did not cancel the gym cast'); if (!(e.ai.cd > 0)) bad('flinch did not restart the gym attack timer ' + e.ai.cd); if (e.atkType !== 'normal') bad('type not restored after a flinched cast: ' + e.atkType); }
   e.ai.cast = null; e.gymRestore(); if (e.atkType !== 'normal') bad('type not restored after casts: ' + e.atkType);
   console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', zones ' + (kinds.zone || 0) + ', shots ' + shots.length + ', peak Def stage multiplier x' + maxDef + ', Tackle slashes ' + slashes.length + ' hurting ' + hurts.length + ' times, shots r' + (shots[0] && shots[0].r) + ' at ' + (shots[0] && Math.round(Math.hypot(shots[0].vx, shots[0].vy))) + ' px/s' + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
 

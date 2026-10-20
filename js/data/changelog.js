@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Flinch', 'Flinch'], new: [
+    ['Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.',
+     'Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.'],
+  ] },
   { d: '2026-10-19', title: ['Stat drops', 'Stat drops'], new: [
     ['Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.',
      'Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.'],

@@ -109,6 +109,18 @@ G.Combat = (() => {
     if (ctl) e.applyStatus(ctl, mul);
   }
 
+  /** Roll the flinch of a hit (slice D2). Chance = the move's flinch percent (PokeAPI move_meta). One roll per move per target per 0.5 s, like the
+   *  ailments, so a multi-pellet cast or a tick-kind move is ONE roll. Everyone can flinch; there is no window. */
+  function procFlinch(e, m) {
+    const c = m && m.flinch;
+    if (!(c > 0) || e.dead || e.remote || !e.applyFlinch) return;
+    const key = 'f:' + (m.id || m.type || 'x'), r = e.stgRoll || (e.stgRoll = {});
+    if (r[key] > 0) return;
+    r[key] = G.Stages.ROLL_GAP;
+    if (c < 100 && Math.random() * 100 >= c) return;
+    e.applyFlinch();
+  }
+
   /** Type chart x weather for an attack of type `type` against `e`. */
   function typeK(type, e) { return G.Types.mult(type, e.types) * G.Weather.mult(type); }
 
@@ -600,6 +612,7 @@ G.Combat = (() => {
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
     G.Stages.procMove(e, m);                   // stat drop (slice D1)
+    procFlinch(e, m);                          // flinch (slice D2)
     G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
   }
@@ -728,6 +741,7 @@ G.Combat = (() => {
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
         G.Stages.procMove(e, pm);                 // stat drop (slice D1)
+        procFlinch(e, pm);                        // flinch (slice D2)
         G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);
 
@@ -766,6 +780,6 @@ G.Combat = (() => {
     }
   }
 
-  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage,
+  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage, procFlinch,
            get fieldCount() { return fields.length; } };
 })();
