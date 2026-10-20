@@ -6,20 +6,17 @@ The two tools cannot see each other's memory. This repo is the only shared brain
 everything that must survive a tool switch lives here as a file.
 
 ## Session start (do this first, every session)
-Read these, then state where we left off and the top open items:
-1. CONTEXT.md (this file)
-2. DEVLOG.md (what happened last session)
-3. DECISIONS.md (standing rulings, do not relitigate)
-4. BALANCE.md (tuned numbers)
-5. TODO.md (the backlog)
-
-When Jess says "catch me up," do exactly the above.
+1. Read this file and STATE.md (the short current handoff). Nothing else is required.
+2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
+3. Read TODO.md 'In progress' only if more detail is needed.
+Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (they are large). Search them by keyword when a topic comes up.
+Archives (search only): docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md.
 
 ## Session end (do this before stopping or switching machines)
-1. Append a DEVLOG.md entry: what changed, what was decided, what broke, where we stopped.
-2. Remind Jess to commit and push, so the other tool pulls a current tree.
-Both tools follow this symmetric discipline. If the DEVLOG looks stale after a git pull,
-suspect the other tool skipped it.
+1. Rewrite STATE.md (keep it under 3 KB; replace, do not append).
+2. Append a short DEVLOG.md entry at the end (about 6 lines: what changed, what was decided, what broke, where we stopped).
+3. Remind Jess to commit and push, so the other tool pulls a current tree.
+Both tools follow this symmetric discipline. If STATE.md looks stale after a git pull, suspect the other tool skipped it.
 
 ## The two tools, one repo
 - Jess works partially here (Amazon Quick, work machine) and partially at home (Claude Desktop).
@@ -27,32 +24,26 @@ suspect the other tool skipped it.
 
 ## Core working rules (full detail in CLAUDE.md)
 - **Local-first:** build and perfect the LOCAL single-player game first. All cloud/online and
-  multiplayer work (Firebase, Cloudflare TURN, js/net/) is DEFERRED. Do not touch it until Jess
-  says he is switching to that phase.
-- **English-native:** Jess develops in English. Author new user-facing strings directly in English.
-  Leave inherited Spanish string literals as-is (they are the i18n keys). Do not add lang-en.js
-  entries or Spanish translations for our own new strings.
-- **Propose-and-approve for game code:** anything that changes what the game does when you run it
-  (code, js/data/*.js, dev.html, build config, assets) is PROPOSED as a diff with the rationale.
-  Jess approves or denies; on approval the assistant applies the edit itself. Jess does NOT type
-  code in by hand, and the assistant does NOT apply game-code changes before approval.
-  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational, does not
-    affect mechanics). The assistant edits it directly WITHOUT approval, but MUST verify it still
-    parses as valid JS (balanced quotes/brackets/commas) after editing, since a syntax error there
-    would break the bundle. This is the ONLY js/data/*.js file that is free-edit.
-- **Free-edit for project docs:** the Markdown project docs (this file, DEVLOG, DECISIONS,
-  BALANCE, TODO/ISSUES) do NOT affect the game, so an assistant edits them directly, no proposal.
-  Dividing line: "does this change what the game does when you run it?" No = edit freely. Yes = propose.
-- **Git:** the assistant NEVER runs git (not even to answer a merge-readiness question). It inspects
-  the filesystem directly or gives Jess the commands and strategy; Jess runs all git himself.
+  multiplayer work (Firebase, Cloudflare TURN, js/net/) is DEFERRED until Jess says he is switching phase.
+- **English-native:** author new user-facing strings directly in English. Leave inherited Spanish string
+  literals as-is (they are the i18n keys). No lang-en.js entries or Spanish translations for our own new strings.
+- **Workflow (standing):** for anything that changes what the game does when you run it (code, js/data/*.js,
+  dev.html, build config, assets), the assistant gives a PROSE PLAN in chat (what changes, files, numbers,
+  decisions needed, risks). Jess replies with edits or OK. Then the assistant builds, runs the harness and
+  headless-browser tests, and writes straight into the repo in one step. No diff files, no separate apply step,
+  no code snippets in chat. Jess does not type code.
+  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes). Edit it directly, but verify it still parses as valid JS.
+- **Free-edit for project docs:** the Markdown docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, ISSUES, CLAUDE, docs/) do not
+  affect the game, so edit them directly, no proposal.
+- **Git:** the assistant NEVER runs git (not even read-only). It inspects the filesystem or gives Jess the commands
+  and strategy; Jess runs all git himself. Commit messages carry no Co-Authored-By or Claude-Session trailer lines.
 - **No em-dashes** in any prose. Use commas, parentheses, "since"/"because" instead.
+- **Keep docs lean:** DECISIONS entries about 10 lines, DEVLOG entries about 6 lines, STATE.md under 3 KB. Rotate to the archives when a file passes about 40 KB.
 
 ## Where things live
-- Design reference for the genre: the Quick agent has a cited survivor-like design reference
-  (Vampire Survivors / Brotato / Halls of Torment patterns + numbers). If working at home, ask
-  for it or see any copy committed under docs/.
-- Canonical Pokemon data: pokesurvivor_fork/pokeapi-master (full mainline series data), the source
-  of truth when translating mainline mechanics into survivor-style.
+- Design reference for the genre: docs/survivor-like-design-reference.md (Vampire Survivors / Brotato / Halls of Torment patterns and numbers). Search it, do not read it whole.
+- Canonical Pokemon data: pokeapi-master (full mainline series data), the source of truth when translating mainline mechanics into survivor-style.
 - Architecture map, build pipeline, module routing: ONBOARDING.md and CLAUDE.md.
-- Active branch tracker: BOSS-REWORK.md (design, decisions and change log for feature/boss-rework). Read it at session start while that branch is active.
-- Archives (NOT read at session start): docs/DEVLOG-archive.md (older session entries) and docs/MP-PARKED-NOTES.md (parked multiplayer and hosting notes).
+- Active branch tracker: BOSS-REWORK.md (boss rework design, decisions and change log).
+- Original owner's rules (publishing, servers, auto-update): docs/ORIGINAL-OWNER-RULES.md. Read it when publishing or when the cloud phase begins.
+- One-command checks: `node tools/check.js` (syntax of every file, then every harness).

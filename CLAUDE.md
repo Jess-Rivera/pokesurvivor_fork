@@ -19,9 +19,8 @@ must survive a tool switch lives here as a file. Commit before switching tools s
 a divergent tree.
 
 ## Session rituals
-- Start: read CONTEXT.md, DEVLOG.md, DECISIONS.md, BALANCE.md, TODO.md, then say where we left off
-  and the top open items. ("Catch me up" means exactly this.)
-- End: append a DEVLOG.md entry, then remind Jess to commit and push.
+- Start ("catch me up"): read CONTEXT.md and STATE.md only, then say where we left off and the top open items. Read TODO.md 'In progress' if more detail is needed. Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (large); search them by keyword. Archives: docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md.
+- End: rewrite STATE.md (under 3 KB), append a short DEVLOG.md entry (about 6 lines) at the end, then remind Jess to commit and push.
 
 ## Local-first (hard scope boundary)
 Build and perfect the LOCAL single-player game first. DEFERRED until Jess explicitly switches phase:
@@ -39,17 +38,11 @@ side only and note any deferred hook in TODO.md.
   translations for them. New features render English-only, intentionally.
 - Player-entered text (nicknames) stays marked translate="no".
 
-## Edit boundary, propose-first vs free-edit
+## Edit boundary and workflow
 Dividing line: "does this change what the game does when you run it?"
-- YES, propose-and-approve: game code, js/data/*.js (it IS game data, the game loads it), dev.html,
-  build config, assets. The assistant shows the diff and the rationale, Jess approves or denies, and
-  ONLY on approval the assistant applies the edit itself. Jess does not type code by hand; the
-  assistant does not apply game-code changes before approval.
-  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). The assistant
-    edits it directly without approval, but must verify it still parses as valid JS after editing
-    (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
-- NO, edit directly (no proposal needed): the Markdown project docs, CONTEXT/DEVLOG/DECISIONS/BALANCE/
-  TODO/ISSUES/CLAUDE. They do not affect the running game.
+- YES (game code, js/data/*.js, dev.html, build config, assets): the assistant gives a prose plan in chat (what changes, which files, numbers, decisions needed, risks) and waits for Jess's edits or OK. Then it builds, runs the harness and headless-browser tests, and writes straight into the repo in one step. No diff files, no separate apply step, no code snippets in chat. Jess does not type code. Risky changes are flagged in the plan; proceed assuming yes unless he denies or edits. A plan approves only the scope it describes.
+  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
+- NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, ISSUES, CLAUDE, docs/).
 
 ## Git, hard prohibition
 The AI assistant NEVER runs git, under any circumstances. It gives Jess exact commands, explains them,
@@ -84,34 +77,10 @@ to clear his save to test a feature unless there is genuinely no backward-compat
 
 ---
 
-# PART 2, original owner's rules (historical reference, not binding)
+# PART 2, original owner's rules (moved)
 
-Preserved from the upstream project. Useful context, but where it conflicts with Part 1, Part 1 wins.
-The one rule kept fully live from here is commit hygiene: no "Co-Authored-By" or any AI signature in commits.
-
-## Publishing a version
-1. Edit `dev.html` (never `index.html`, which is generated).
-2. `node tools/build.js && node tools/export_data.js && python tools/make_seo_pages.py`
-   - `build.js` generates `index.html`, `js/app.min.js` and **`version.json`** (the fingerprint of this version).
-3. Commit (without "Co-Authored-By" or any AI signature) and `git push origin main` only when asked.
-
-## Automatic player updates (mandatory, cloud phase)
-When publishing, every player must move to the new version without losing anything
-(`js/core/updater.js`, checks `version.json` every 5 min):
-- Outside a game (menu, including the co-op room): a 5 s notice and the page reloads. If the player is
-  in the gacha, the upgrade shop, the settings, or typing in a field, wait until they finish.
-- In a game: do not touch it. When it ends, the run is saved as always and, on returning to the menu, it reloads.
-- Before reloading, anything pending is uploaded to the cloud.
-Do not remove `updater.js` or the writing of `version.json` in `tools/build.js`.
-
-## News (changelog)
-Every game change or bug fix also goes in `js/data/changelog.js` for today's date (new / chg / fix).
-Changes to servers, database or costs do NOT go there. (Note, per Part 1 English-native rule: author new
-changelog entries in English.)
-
-## Servers (dormant until cloud phase)
-- Firebase: project **pokesurvivor-free** (free accounts, no limit). Never enable "Identity Platform" or
-  anything that enables it (blocking functions, MFA, "Upgrade to enable"): it charges per user. The old
-  pokesurvivor-jpter project was deleted on 2026-10-13.
-- Cloudflare (Worker `cloudflare/turn-worker.js`, $5 plan): must not go over $5 a month (the TURN has a cap).
-- Maintenance: `MAINTENANCE` in `js/main.js` (with `?dev` you can get in to test).
+The upstream project's rules (publishing a version, automatic player updates, news/changelog, servers) now live in docs/ORIGINAL-OWNER-RULES.md. Read it when publishing or when the cloud phase begins. Rules that stay live now:
+- Commit hygiene: no "Co-Authored-By" or any AI signature in commits. `git push` only when Jess asks.
+- Every game change or bug fix also gets a changelog entry in js/data/changelog.js for today's date (new / chg / fix), authored in English. Server, database and cost changes do NOT go there.
+- Edit dev.html, never the generated index.html. Do not remove js/core/updater.js or the version.json write in tools/build.js.
+- Cloud phase only: never enable Firebase "Identity Platform" or anything that enables it (it charges per user). Keep the Cloudflare worker under $5 a month.
