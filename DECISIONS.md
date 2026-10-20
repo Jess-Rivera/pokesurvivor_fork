@@ -2,6 +2,11 @@
 
 Standing design and workflow rulings. Once something is here, treat it as settled, do not relitigate it.
 
+## 2026-10-19, Action bar without boxes + move search [Jess decided, branch feature/status-sliceD]
+- Action bar: a single move is the bare icon at 54 px (3x native, no distortion); cooldown shade and cast flash are masked to the icon pixels; the active move gets a yellow silhouette outline (plus the existing raise and name). Empty slots and BONDED groups keep the box (bond = pink border, 2x2 icons).
+- Pokedex/Team search also matches moves: a word of the move name starts with the query (min 3 chars) -> every Pokemon whose type pools contain it; Normal-type moves (learnable by all) match only on the full name. Union with name/# matches; unowned Pokemon included for move matches.
+- Team/Pokedex grids use align-content: start so few results keep their natural cell height.
+
 ## 2026-10-19, Status Slice D2: flinch [Jess decided, branch feature/status-sliceD]
 - Flinch from the PokeAPI chance already on the move (Rock Slide 30, Bite 30, Dark Pulse 20; the bulk import will add more). One roll per move per target per 0.5 s (the same gap as ailments and stat drops), so a multi-pellet cast or a tick-kind move is one roll.
 - EVERYONE is unrestricted (Jess): wild units, elites, bosses and gym leaders can all flinch, with no window and no lockout. My earlier boss exemption and 3 s limit are dropped (Jess had already declined blanket boss immunity). Frozen or asleep units cannot flinch (they have no action to lose). Co-op copies are skipped (deferred).

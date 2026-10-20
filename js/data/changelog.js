@@ -6,6 +6,16 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Menus and action bar', 'Menus and action bar'], new: [
+    ['The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.',
+     'The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.'],
+  ], chg: [
+    ['The action bar shows each move as a bare, larger icon. The cooldown shades the icon itself and the active move has a yellow outline. Bonded moves keep their pink box.',
+     'The action bar shows each move as a bare, larger icon. The cooldown shades the icon itself and the active move has a yellow outline. Bonded moves keep their pink box.'],
+  ], fix: [
+    ['Team screen: a search with only one result no longer stretches that Pokémon into a tall column.',
+     'Team screen: a search with only one result no longer stretches that Pokémon into a tall column.'],
+  ] },
   { d: '2026-10-19', title: ['Flinch', 'Flinch'], new: [
     ['Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.',
      'Rock Slide, Bite and Dark Pulse can now make enemies flinch. A flinched Pokémon loses the attack it was about to make, and if it was moving it is knocked back a little and stops for a moment. Bosses, elites and gym leaders flinch too.'],

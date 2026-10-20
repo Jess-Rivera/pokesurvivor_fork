@@ -5,6 +5,9 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-19 (Claude Desktop) UI: borderless action bar, move search, Team grid fix
+hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js moveQuery() + filterSortDex; style.css align-content on .ros-grid and #scr-dex .grid; placeholders in dev.html. Not run in a browser.
+
 ## 2026-10-19 (Claude Desktop) status Slice D2: flinch
 - WHAT CHANGED: enemy.js (applyFlinch, flinchMove, stFl state, the recoil override before integration, last-heading capture, cleared by a freeze or sleep), combat.js (procFlinch beside the ailment and stage rolls at both player-hit sites, exported), status.js (clear resets stFl), debug.js (G.Debug.flinch), changelog.js, DECISIONS, BALANCE, TODO, new docs/proposals/status-sliceD2-harness.js, gym-harness.js (flinch cancels a gym cast).
 - BEHAVIOR: Rock Slide, Bite and Dark Pulse can flinch anything. Flinched units lose their action (cast, aim or dash, shot timer, contact timer) and, if moving, go back half their sprite radius at 2.0x speed; every flinched unit then stops for 0.2 to 0.3 s, moving or not. The contact timer (0.55 s) waits until the freeze is over. No immunity, no window.

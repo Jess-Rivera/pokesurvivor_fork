@@ -266,8 +266,23 @@ G.MenuUI = (() => {
 
   function toggle(arr, v) { const i = arr.indexOf(v); if (i < 0) arr.push(v); else arr.splice(i, 1); }
 
+  /** Move search (Pokedex and Team): the Pokemon that can learn a move whose name matches `q` (a word of the name starts with it, so 'pulse'
+   *  finds Dark Pulse). Learnable = the Pokemon's type pools plus the shared Normal pool (G.Moves.poolFor). A Normal-type move is learnable
+   *  by everyone, so it matches only on its FULL name (typing 'bod' must not list the whole dex). Returns null when nothing applies. */
+  function moveQuery(q) {
+    if (!q || q.length < 3) return null;
+    const types = new Set(); let all = false;
+    for (const m of G.Moves.ALL) {
+      const nm = m.name.toLowerCase();
+      if (m.type === 'normal') { if (nm === q) all = true; }
+      else if (nm.split(/[\s-]+/).some(w => w.startsWith(q)) || nm.startsWith(q)) types.add(m.type);
+    }
+    return all || types.size ? { all, types } : null;
+  }
+
   function filterSortDex(c) {
     const s = G.DB.save;
+    const mq = moveQuery(c.q);
     const list = G.DEX.filter(p => {
       if (c.region !== 'all' && p.gen !== c.region) return false;
       const own = !!s.owned[p.dex];
@@ -278,7 +293,8 @@ G.MenuUI = (() => {
       if (c.bst.length && !c.bst.some(k => { const b = BST_BANDS.find(x => x.k === k); return p.bst >= b.lo && p.bst <= b.hi; })) return false;
       if (c.q) {
         const num = String(p.dex).padStart(3, '0');
-        if (!(own && p.name.toLowerCase().includes(c.q)) && !num.includes(c.q) && String(p.dex) !== c.q) return false;
+        const byMove = !!mq && (mq.all || p.types.some(t => mq.types.has(t)));     // can learn a move that matches (shown for unowned too: the type filters already reveal types)
+        if (!(own && p.name.toLowerCase().includes(c.q)) && !num.includes(c.q) && String(p.dex) !== c.q && !byMove) return false;
       }
       return true;
     });
