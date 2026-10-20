@@ -69,7 +69,6 @@
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
       this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
       if (this.gym) {
-        this.buff = { n: 0, amount: 0, t: 0 };   // the Defense buff (the player's Harden), see defCut()
         this.atkLvl = this.gym.level;
         this.baseAtkType = this.atkType;
         const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
@@ -145,8 +144,7 @@
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
       if (this.dead || !(amount > 0)) return;
-      if (this.gym && !this.remote) {                 // gym leader: Defense stages cut incoming damage; the first hit engages (enrage clock)
-        amount *= this.defCut();
+      if (this.gym && !this.remote) {                 // gym leader: the first hit engages (enrage clock); its Def / SpD stages act in the damage ratio (combat.js)
         if (this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
       }
       // HP is fractional now (the per-hit 1 HP floor lives at the combat call sites);
@@ -386,6 +384,7 @@
         if (!any) this.ailRoll = null;
       }
       G.Status.tick(this, dt);
+      G.Stages.tick(this, dt);
       if (this.dead) return;
       // An excess wild unit leaving for an elite (Elites.trim): it walks away from you, harmless, until the manager removes it off screen.
       if (this.leaving) { this.leaveMove(dt, pl); return; }
@@ -410,7 +409,7 @@
         } else if (le.slow) terrainMul = le.slow < 0.5 ? 0.45 : 0.55;
       }
 
-      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types) * G.Status.speedMul(this);
+      const spd = this.spd * (1 - this.slow) * terrainMul * G.Weather.speedFor(this.types) * G.Status.speedMul(this) * G.Stages.speedMul(this);
       let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       if (this.stCnf) [dx, dy] = G.Status.wander(this, dx, dy);     // confusion: the heading drifts
       const dist = G.U.dist(this.x, this.y, pl.x, pl.y);
@@ -583,7 +582,6 @@
     bossMove(dt, pl, dist, dx, dy, spd) {
       if (!this.ai) this.bossInit();
       const ai = this.ai;
-      if (this.gym) this.buffTick(dt);
       if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
       const k = ai.fury ? 1.25 : 1;
       if (ai.cast) return this.bossCast(dt, pl);
@@ -720,17 +718,16 @@
     /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
     gymFactor(m) {
       const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
-      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, m.cat === 'special' ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this);
+      const special = m.cat === 'special';
+      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, special ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this) * G.Stages.mul(this, special ? 'spa' : 'atk');
     }
 
-    /** Same rule as the player: damage taken x (1 - min(0.8, stacks x amount)). */
-    defCut() { const b = this.buff; return 1 - Math.min(0.8, b.n * b.amount); }
-    /** Same as Player.addBuff: one shared timer refreshed by every cast, stacks capped. */
-    addBuff(amount, dur, maxStacks) {
-      const b = this.buff;
-      b.amount = amount; b.n = Math.min(maxStacks, b.n + 1); b.t = dur;
+    /** A leader's buff cast is a mainline STAGE change (G.Stages): +stageN (default 1) on the move's stat per cast, each application
+     *  lasting the move's dur on its own timer, up to the move's stacks as the stage cap (max 6). The player's Speed buff stat is 'spd'. */
+    castBuff(m) {
+      const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
+      if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
     }
-    buffTick(dt) { const b = this.buff; if (b.n > 0 && (b.t -= dt) <= 0) b.n = 0; }
 
     /** Weighted pick among the moves allowed by range and HP gate; null if none. */
     gymPick(dist) {
@@ -775,7 +772,7 @@
         c.fired = true;
         const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
         if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
-          this.addBuff(m.amount, m.dur, m.stacks | 0);
+          this.castBuff(m);
           const vis = G.VFX.forMove(m);
           G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
           for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });

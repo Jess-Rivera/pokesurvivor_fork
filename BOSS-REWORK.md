@@ -58,6 +58,7 @@ LOCKED 2026-10-19 (Jess: 'Adopt the Stages yes'; numbers and duration TUNE):
 - Boss Harden = +1 Def stage per cast (x1.5 Defense), stacking, instead of my earlier flat 14%.
 - Cooldown fact (verified 2026-10-19): damaging moves use cd = 0.5 x (35 / PP) (DECISIONS 2026-10-18, BETA 1.0), but STATUS moves (dmg 0) keep their hand-tuned catalog cd. Harden is hand-tuned 0.85 s (PP 30 would give 0.58 s). Boss rule proposal: cast period = the move's cd times the tier factor, never shorter than wind-up plus recovery (about 1.0 s), so a boss cannot spam a move that is fast for the player.
 - Consequence to decide later: moving the PLAYER's buff moves to stages makes an auto-cast Harden (cooldown 0.85 s) reach +6 (-75% damage taken) in about 5 s, versus a 35% cap today, so buff moves would need long cooldowns or a lower in-run stage cap. The pilot only needs the enemy-side structure.
+- BUILT 2026-10-19 (Slice D1): G.Stages with a 6 s per-application duration (the 12 s above was a placeholder), gym leader Harden = +1 Def stage per cast with the move's stacks as the stage cap, gym attacks read the Atk or SpA stage, player-side buffs still on pl.buffs. See DECISIONS 2026-10-19 Status Slice D1.
 
 ## 4. Elite Four phase, Region Complete, Return Home (flow LOCKED 2026-10-19, numbers TBD)
 - Trigger: Gym 8 beaten and the player back on the map. Then (1) the slow level ramp starts and (2) ALL FOUR Elite Four gates open at once, spread across the map so every gate is off screen from the others. The gate shows its level, and so does the direction arrow that points to it.

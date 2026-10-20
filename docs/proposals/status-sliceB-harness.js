@@ -14,7 +14,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   DEX_BY: { 1: { name: 'Normie', types: ['normal'] } }, DEX: [],
   Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/kinds.js', 'js/systems/status.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemies.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
+['js/core/stats.js', 'js/data/kinds.js', 'js/systems/status.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemies.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 const Enemy = G.Enemy || (G.Enemies && G.Enemies.Enemy) || G.Entities && G.Entities.Enemy;
 Enemy.prototype.die = function () { this.dead = true; };

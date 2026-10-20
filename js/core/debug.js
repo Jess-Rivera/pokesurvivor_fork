@@ -14,6 +14,7 @@
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
  *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
+ *   G.Debug.stage(stat, n, radius)  stat stage on every enemy near you: spe|def|spd|atk|spa, n = -1 (6 s each; repeat to stack, +-6 max)
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
  *   G.Debug.on         true when ?dev is present.
@@ -140,6 +141,19 @@ G.Debug = (() => {
   }
   const ignite = status;
 
+  /** Stat stage check (slice D1): G.Debug.stage('spe' | 'def' | 'spd' | 'atk' | 'spa', n = -1, radius = 600) puts one application of n stages
+   *  (6 s, then it expires) on every enemy near you. Call it several times to stack (clamped to +-6). Returns how many enemies were hit. ?dev only. */
+  function stage(stat = 'spe', n = -1, radius = 600) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    if (!G.Stages.STATS.includes(stat)) { console.warn('[Debug] unknown stat: ' + stat); return 0; }
+    G.Game.debugMaxed();
+    const list = G.EnemyMgr.queryCircle(pl.x, pl.y, radius);
+    for (const e of list) if (!e.remote) G.Stages.add(e, stat, n, G.Stages.DUR);
+    return list.length;
+  }
+
   /** The same statuses on the active Pokemon. Returns the result ('ok' | 'refresh' | 'immune' | 'blocked' | 'window'). Flags the run as tampered. ?dev only. */
   function statusSelf(kind = 'burn') {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
@@ -222,5 +236,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, statusSelf, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, stage, statusSelf, spawn, noSpawn, spawnOn };
 })();

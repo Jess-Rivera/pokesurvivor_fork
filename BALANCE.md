@@ -79,6 +79,13 @@ re-tune later.
 - 2026-10-18, slice B, DoT strength: burn and poison ticks x (the source move's current Power / its base Power) (G.Moves.dotMul), so Increased Effect and the Type and Kind damage cards strengthen DoT in the same additive pool as direct damage. Attack, Sp. Atk and level do not scale it. Status moves (Power 0) stay at 1.0x. Strongest source wins while the state lasts, a new state starts from its own source.
 - Expect: fire starters lose most of their old burn damage (restoring player damage is tune/damage-hp), poison beats burn 2:1 (mainline ratio), Toxic is lethal to everything unhealed. Boss and rift legendary DoT is not special-cased (the boss rework owns it).
 
+## Stat stages (status Slice D1, built 2026-10-19; all numbers TUNE)
+- Table: stage -6 .. +6 = x0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1, 1.5, 2, 2.5, 3, 3.5, 4. Each application lasts 6 s (G.Stages.DUR) on its own timer; the stage is the sum of the live applications, clamped to +-6.
+- Rolls: statChance from the move, one roll per move per target per 0.5 s, then a 2 s lockout for that move on that target. Steady held stage: 100% moves -3; 10% moves about -0.85; 20% (Shadow Ball) about -1.4.
+- Wired moves (enemy targets): Speed -1 from Bubble, Bubble Beam, Mud Shot, Bulldoze; Sp. Def -1 from Psychic, Bug Buzz, Shadow Ball, Flash Cannon. Leaf Storm, Metal Claw and Meteor Mash (user stats) are inert until slice E.
+- Speed stage goes through the movement shaping (stat x stage, then speedToPx, asymptotes 0.5x to 3.0x): median enemy x0.69 / 0.59 / 0.55 / 0.51 at -1 / -2 / -3 / -6; base-130 enemy x0.70 / 0.54 / 0.43 / 0.32; base-15 enemy x0.97 at -1. Def or SpD at -2 about doubles the damage taken from the player's hits.
+- Gym leader Harden: +1 Def per cast, cap = the move's stacks (Brock 6), each application the move's dur (9.1 s with his Duration x1). Offline 60 s fight: peak +3 (x2.5 Def), versus the old flat -42% maximum.
+
 ## Enemies
 ### Slice 1c: shots, support, contact, flanker (applied 2026-10-18)
 - 2026-10-18, plain shooter shot life: 2.4 s -> 4.8 s (speed 190 px/s unchanged; G.Enemies.SHOT_LIFE, per class). Fans, beamers, zoners, status and bosses unchanged. Real reach is limited by the 260 px off-view cull.

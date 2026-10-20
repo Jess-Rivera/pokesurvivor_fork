@@ -6,6 +6,13 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Stat drops', 'Stat drops'], new: [
+    ['Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.',
+     'Some moves now lower an enemy stat for 6 seconds: Bubble, Bubble Beam, Mud Shot and Bulldoze slow enemies down, and Psychic, Bug Buzz, Shadow Ball and Flash Cannon lower their Special Defense so you hit them harder. Effects stack up to six stages, each one wearing off on its own timer.'],
+  ], chg: [
+    ['Gym leaders now use Harden as a proper stat stage: each cast raises their Defense by one stage for a few seconds instead of a flat damage cut.',
+     'Gym leaders now use Harden as a proper stat stage: each cast raises their Defense by one stage for a few seconds instead of a flat damage cut.'],
+  ] },
   { d: '2026-10-19', title: ['Team screen', 'Team screen'], new: [
     ['The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).',
      'The home screen has a new Team button under Play, replacing the six team cards. It opens a fullscreen team editor with your six slots on the left, the Pokédex filters and list in the middle, and the selected Pokémon on the right (stat hexagon, ability line and its moves).'],

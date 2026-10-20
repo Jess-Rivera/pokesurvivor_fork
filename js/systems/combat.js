@@ -566,6 +566,13 @@ G.Combat = (() => {
     return { def: s && s[2] != null ? s[2] : 50, spd: s && s[4] != null ? s[4] : 50 };
   }
 
+  /** The defender's Def / SpD stage multiplier for a move (G.Stages). Status-category moves use the neutral denominator, so 1. */
+  function defStage(e, m) {
+    if (!e.stg) return 1;
+    const cat = G.Stats.moveCat(m);
+    return cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def');
+  }
+
   /** Level the DEFENDER's stats are computed at: the enemy's own (it scales with the clock),
    *  not the attacker's. Bosses carry atkLvl 0, so they fall back to `fallback`. */
   function defLevel(e, fallback) { return e.atkLvl > 0 ? e.atkLvl : fallback; }
@@ -577,8 +584,8 @@ G.Combat = (() => {
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
   // type x crit on top, exactly where they were before.
   function hit(pl, e, factor, col, dx, dy, knock, m) {
-    const ds = enemyDefStats(e), dl = defLevel(e, pl.level);
-    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m));
+    const ds = enemyDefStats(e), dl = defLevel(e, pl.level), dm = defStage(e, m);
+    let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
     dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
@@ -586,12 +593,13 @@ G.Combat = (() => {
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
       const cat = G.Stats.moveCat(m), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
-      const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+      const dS = c === 2 ? 50 : (c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl)) * dm;
       G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), m.norm || 1);
     }
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
+    G.Stages.procMove(e, m);                   // stat drop (slice D1)
     G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
   }
@@ -702,7 +710,8 @@ G.Combat = (() => {
         const ds = enemyDefStats(e);
         const pm = p.move || { type: p.mtype, cat: 'status', dmg: 0 };
         const dl = defLevel(e, p.level || pl.level);
-        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab);
+        const dm = defStage(e, pm);
+        let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
         const k = tk * (crit ? CRIT_MUL : 1);
         dmg = floorHit(dmg * k, pm);
@@ -711,13 +720,14 @@ G.Combat = (() => {
                crit ? 'crit' : p.mtype ? G.Types.label(G.Types.mult(p.mtype, e.types)) : null);
         if (LOG) {
           const cat = G.Stats.moveCat(pm), c = cat === 'status' ? 2 : cat === 'special' ? 1 : 0;
-          const dS = c === 2 ? 50 : c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl);
+          const dS = c === 2 ? 50 : (c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl)) * dm;
           G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), pm.norm || 1);
         }
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
+        G.Stages.procMove(e, pm);                 // stat drop (slice D1)
         G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);
 
@@ -756,6 +766,6 @@ G.Combat = (() => {
     }
   }
 
-  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments,
+  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage,
            get fieldCount() { return fields.length; } };
 })();
