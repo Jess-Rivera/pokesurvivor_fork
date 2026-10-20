@@ -19,8 +19,13 @@
  * player the first stage use: Speed drops from enemy Status-class carriers ("slow").
  */
 G.Stages = (() => {
-  // Mainline multipliers for stage -6 .. +6 (index = stage + 6).
-  const TABLE = [0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+  // Stage ladders (Jess 2026-10-20): ONE number per stat, B. A raise of s stages multiplies the stat by (B + s) / B (each raise adds 1 to the numerator),
+  // a drop of s stages by B / (B + s) (each drop adds 1 to the denominator). B = 2 is the mainline ladder (+2 = x2, +6 = x4, -2 = x0.5, -6 = x0.25) and is
+  // where Attack, Defense, Sp. Atk and Sp. Def start. Speed starts at B = 4 (+2 = x1.5, +4 = x2.0, +6 = x2.5, -2 = x0.67, -6 = x0.4): a gentler ladder for
+  // movement, tuned by feel. One shared ladder per stat for raises and drops, on every host (player, wild, elite, boss, gym leader). Raise B to soften a stat.
+  const BASE = { atk: 2, def: 2, spa: 2, spd: 2, spe: 4 };
+  /** The multiplier of `stat` at stage `s` (-6 .. +6) on its ladder. */
+  function ladder(stat, s) { const b = BASE[stat] || 2; return s >= 0 ? (b + s) / b : b / (b - s); }
   const STATS = ['atk', 'def', 'spa', 'spd', 'spe'];
   const LABEL = { atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
   const DUR = 6;            // seconds one application lasts (stat-drop moves)
@@ -40,7 +45,7 @@ G.Stages = (() => {
     return clamp(s, -MAX, MAX);
   }
   /** The stat multiplier for `stat` on `h` (1 when it has no stage). */
-  function mul(h, stat) { const s = (h.stg || h.stgTeam) ? stage(h, stat) : 0; return s ? TABLE[s + MAX] : 1; }
+  function mul(h, stat) { const s = (h.stg || h.stgTeam) ? stage(h, stat) : 0; return s ? ladder(stat, s) : 1; }
 
   // ---- team store (slice E2a): shared by the whole roster, mutated in place, never reassigned ----
   const TEAM_LIVE = 8;      // safety limit on live applications per (stat, move): a pathological build cannot grow the list forever
@@ -109,9 +114,9 @@ G.Stages = (() => {
     if (!live) h.stg = null;
   }
 
-  /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19): -6 is x0.25, +6 is x4, no extra bounds. The species
+  /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19), on the Speed ladder (B = 4: +2 x1.5, +6 x2.5, -2 x0.67, -6 x0.4). The species
    *  Speed shaping (0.5x to 3.0x identity bounds) is a different thing and is not involved. It multiplies with paralysis and trap. */
-  function speedMul(h) { return (h.stg && h.stg.spe) || (h.stgTeam && h.stgTeam.spe) ? TABLE[stage(h, 'spe') + MAX] : 1; }
+  function speedMul(h) { return (h.stg && h.stg.spe) || (h.stgTeam && h.stgTeam.spe) ? ladder('spe', stage(h, 'spe')) : 1; }
 
   /**
    * Roll the stat stage of a hit on an enemy. `m.stage` = { stat, n } (data/moves.js, from PokeAPI move_meta_stat_changes) and
@@ -159,6 +164,6 @@ G.Stages = (() => {
     return out;
   }
 
-  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list,
+  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list,
     teamAdd, teamTick, teamSum, teamTimer, teamClear, UP, DOWN };
 })();

@@ -89,7 +89,7 @@ function tickN(h, s, dt = 0.05) { for (let i = 0; i < Math.round(s / dt); i++) S
   if (!Player || !Player.prototype.inflict) bad('Player.inflict missing'); else {
     const p = mkp(); p.bodyH = 20; p.inflict = Player.prototype.inflict;
     for (let i = 0; i < 5; i++) p.inflict('slow'); if (Sg.stage(p, 'spe') !== -2) bad('slow from carriers stops at -2: ' + Sg.stage(p, 'spe'));
-    if (!near(Sg.speedMul(p), 0.5, 1e-9)) bad('speed multiplier at -2 is 0.5: ' + Sg.speedMul(p)); const L = St.list(p); if (!L.some(x => x.k === 'slow')) bad('slow shows in the HUD list');
+    if (!near(Sg.speedMul(p), 4 / 6, 1e-9)) bad('speed multiplier at -2 is 4/6 on the Speed ladder (B = 4): ' + Sg.speedMul(p)); const L = St.list(p); if (!L.some(x => x.k === 'slow')) bad('slow shows in the HUD list');
     const a = mkp(), b = mkp(); a.inflict = b.inflict = Player.prototype.inflict; a.inflict('paralysis'); b.inflict('paralysis', true); if (!near(a.stMajor.t, 10) || !near(b.stMajor.t, 5)) bad('secondary = half: ' + a.stMajor.t + ' / ' + b.stMajor.t);
     const c = mkp(); c.inflict = Player.prototype.inflict; c.inflict('poison', true); if (c.stDot.left !== 2) bad('secondary poison = 2 turns: ' + c.stDot.left);
     let hit = 0; for (let i = 0; i < 4000; i++) { const z = mkp(); z.inflict = Player.prototype.inflict; z.inflict('sleep'); if (z.stMajor) hit++; } if (Math.abs(hit / 4000 - C.sleepBase) > 0.03) bad('sleep chance ' + hit / 4000);

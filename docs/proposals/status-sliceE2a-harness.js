@@ -99,13 +99,13 @@ const fixed = () => 1 / 60, jit = () => 0.012 + rnd() * 0.012;
   const p = mkHost(), f0 = [phys, spec].map(m => p.moveFactor(m));
   p.addTeamStage('atk', 2, 8, 'swords-dance'); const f1 = [phys, spec].map(m => p.moveFactor(m));
   if (!near(f1[0] / f0[0], 2, 1e-6)) bad('Atk +2 doubles a physical move: ' + f1[0] / f0[0]); if (!near(f1[1] / f0[1], 1, 1e-6)) bad('Atk +2 does not touch a special move: ' + f1[1] / f0[1]);
-  Sg.add(p, 'spa', -1, 6); const f2 = p.moveFactor(spec); if (!near(f2 / f0[1], 0.66, 1e-6)) bad('own Sp. Atk -1 is x0.66 on a special move: ' + f2 / f0[1]);
+  Sg.add(p, 'spa', -1, 6); const f2 = p.moveFactor(spec); if (!near(f2 / f0[1], 2 / 3, 1e-6)) bad('own Sp. Atk -1 is x2/3 on a special move: ' + f2 / f0[1]);
   if (st) { const q = mkHost(); const a0 = q.moveFactor(st); q.addTeamStage('atk', 2, 8, 's'); if (!near(q.moveFactor(st), a0, 1e-9)) bad('a status move ignores the Attack stage'); }
   if (!near(p.atk / p.baseAtk, 2, 1e-6)) bad('pl.atk follows the Attack stage: ' + p.atk / p.baseAtk);
   const q = mkHost(); q.addTeamStage('regen', 1.6, 8, 'aqua-ring'); q.addTeamStage('regen', 1.6, 8, 'aqua-ring'); if (!near(q.regen, 3.2, 1e-9)) bad('regen = sum of applications: ' + q.regen);
-  const s = mkHost(); s.addTeamStage('spe', 2, 8, 'agility'); if (!near(Sg.speedMul(s), 2, 1e-9)) bad('Speed +2 is x2.0 on movement: ' + Sg.speedMul(s)); s.addTeamStage('spe', 4, 8, 'agility2'); if (!near(Sg.speedMul(s), 4, 1e-9)) bad('Speed +6 is x4');
+  const s = mkHost(); s.addTeamStage('spe', 2, 8, 'agility'); if (!near(Sg.speedMul(s), 1.5, 1e-9)) bad('Speed +2 is x1.5 on movement (Speed ladder B = 4): ' + Sg.speedMul(s)); s.addTeamStage('spe', 2, 8, 'agility2'); if (!near(Sg.speedMul(s), 2, 1e-9)) bad('Speed +4 is x2.0'); s.addTeamStage('spe', 2, 8, 'agility3'); if (!near(Sg.speedMul(s), 2.5, 1e-9)) bad('Speed +6 is x2.5');
   const d = mkHost(); d.addTeamStage('def', 1, 8, 'harden'); if (!near(Sg.mul(d, 'def'), 1.5, 1e-9)) bad('Defense +1 is x1.5');
-  console.log('6 stat reads: Atk +2 doubles physical moves only, own Sp. Atk -1 is x0.66, status moves ignore it, regen sums applications, Speed +2 is x2 (+6 x4), Def +1 is x1.5'); }
+  console.log('6 stat reads: Atk +2 doubles physical moves only, own Sp. Atk -1 is x0.67, status moves ignore it, regen sums applications, Speed +2 is x1.5 (+4 x2.0, +6 x2.5), Def +1 is x1.5'); }
 
 // 7. real cast hooks: Dragon Dance raises two stats; Aqua Ring regen; the same move recast refreshes at the end, stacks mid-way
 { const p = mkHost(), m = G.Moves.instance('dragon-dance'); m.t = 0; p.slots = [[m]]; G.Combat.tick(0.016, p, 0);
