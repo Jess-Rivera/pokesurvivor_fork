@@ -6,6 +6,7 @@
  *   dmgNumbers  true/false                        damage numbers
  *   calm        true/false                        less shake and flashing
  *   fps         true/false                        FPS counter
+ *   autoShake   true/false                        accessibility: Shake off taps itself at 3 taps/s (status slice E2e)
  *   stick       0.8 | 1 | 1.25                    touch joystick size
  *   stickMode   'float' | 'fixed'                 joystick where you put your finger, or always in place
  *   pad         { bar, pause, stick } | null      where the buttons go on mobile (centered, in
@@ -16,7 +17,7 @@
  */
 G.Settings = (() => {
   const KEY = 'ps.settings';
-  const DEF = { quality: 'auto', dmgNumbers: true, calm: false, fps: false, stick: 1, stickMode: 'float', pad: null };
+  const DEF = { quality: 'auto', dmgNumbers: true, calm: false, fps: false, autoShake: false, stick: 1, stickMode: 'float', pad: null };
   let s = Object.assign({}, DEF);
   try { Object.assign(s, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* nothing */ }
   const fns = new Set();

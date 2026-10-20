@@ -96,6 +96,35 @@ G.Stages = (() => {
     return true;
   }
 
+  /**
+   * Self-cast stat effect of a PLAYER move (slice E2b, Jess 2026-10-20): `m.self` = { stat, n }. Same roll rules as procMove (one chance roll per move per
+   * ROLL_GAP, chance = m.statChance). A RAISE is TEAM-WIDE (Metal Claw, Meteor Mash: one more team application per success, so chance moves stack toward the
+   * +6 clamp). A DROP stays on THIS Pokemon (Leaf Storm, per Pokemon): a guaranteed (100%) drop is ONE application per move that is renewed while the move keeps
+   * hitting (the stage holds at the per-cast value, like the buffs; without this an orbit would stack -6 in 1.5 s), a chance drop stacks like a raise.
+   */
+  function procSelf(pl, m) {
+    const f = m && m.self;
+    if (!f || !f.n || !STATS.includes(f.stat) || pl.dead || pl.remote) return;
+    const key = 'self:' + (m.id || 'x'), r = pl.stgRoll || (pl.stgRoll = {});
+    if (r[key] > 0) return;
+    r[key] = ROLL_GAP;
+    const c = (m.statChance == null ? 100 : m.statChance) / 100;
+    if (c < 1 && Math.random() >= c) return;
+    const src = m.id;
+    if (f.n > 0) {
+      if (!pl.stgTeam || stage(pl, f.stat) >= MAX) return;
+      teamAdd(pl.stgTeam, f.stat, f.n, DUR, src);
+    } else {
+      const g = pl.stg || (pl.stg = {}), L = g[f.stat] || (g[f.stat] = []);
+      const old = c >= 1 ? L.find(a => a.src === src) : null;
+      if (old) { const fresh = old.t < DUR - 1e-6; old.t = DUR; if (!fresh) return; }     // renewed: the text only shows when it had been running down
+      else if (stage(pl, f.stat) <= -MAX) return;
+      else L.push({ n: f.n, t: DUR, src });
+    }
+    const s = stage(pl, f.stat);
+    text(pl, LABEL[f.stat] + ' ' + (s > 0 ? '+' : '') + s, f.n > 0 ? UP : DOWN);
+  }
+
   /** Advance every application timer and the per-move roll gaps. Called once per frame from Enemy.update. */
   function tick(h, dt) {
     if (h.stgRoll) {
@@ -164,6 +193,6 @@ G.Stages = (() => {
     return out;
   }
 
-  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list,
+  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, procSelf, stripPositive, remaining, clear, list,
     teamAdd, teamTick, teamSum, teamTimer, teamClear, UP, DOWN };
 })();

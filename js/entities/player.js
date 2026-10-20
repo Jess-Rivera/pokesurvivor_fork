@@ -356,10 +356,12 @@ G.Player = class Player {
                          hp0, Math.max(0, this.hp), (d > raw ? 1 : 0) | (pure ? 4 : 0), this.spd);
     this.invuln = 0.45;
     this.flash = 0.14;
-    G.Audio.sfx('hurt');
-    G.Camera.kick(0.28);
-    G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(d), eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a', eff === 'super');
-    G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
+    if (!this.benched) {                      // a benched Pokemon taking DoT is silent: no shake, sound or numbers at its stale position (the toast says it fainted)
+      G.Audio.sfx('hurt');
+      G.Camera.kick(0.28);
+      G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(d), eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a', eff === 'super');
+      G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
+    }
     // Focus Band: survives the hit with 1 health (once every 60 s).
     if (this.hp <= 0 && this.hasItem('focussash') && performance.now() - this.sashT > 60000) {
       this.sashT = performance.now();
@@ -374,7 +376,24 @@ G.Player = class Player {
       this.anim.play('Faint', { hold: true });
       G.Projectiles.clearOrbs(this);
       this.reviveT = 0;
+      this.clearEffects();                    // slice E2b: fainting wipes every status and own stage drop
     }
+  }
+
+  /** Every status (major, confusion, trap, daze, drowsy, DoT, windows) and this Pokemon's own stage drops. The TEAM raises are shared and stay. */
+  clearEffects() { G.Status.clear(this); G.Stages.clear(this); }
+
+  /**
+   * A benched, standing team member (slice E2b, Jess 2026-10-20): statuses, DoT and its own stage drops keep ticking; only skill cooldowns do not
+   * (combat.js). DoT can faint it, silently: game.js shows the red toast. Called once per frame by the game loop for every non-active, non-fainted member.
+   */
+  benchUpdate(dt) {
+    if (this.dead) return;
+    this.benched = true;
+    if (this.slowT > 0) this.slowT -= dt;
+    G.Status.tick(this, dt);
+    G.Stages.tick(this, dt);
+    this.benched = false;
   }
 
   heal(amount) {
@@ -531,6 +550,7 @@ G.Player = class Player {
 
   /** Gets back up (revived by a teammate in co-op). */
   revive(frac = 0.5) {
+    this.clearEffects();                      // slice E2b: a revive starts clean
     this.dead = false;
     this.hp = Math.max(1, this.maxHp * frac);
     this.invuln = 2;

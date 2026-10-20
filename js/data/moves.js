@@ -92,8 +92,8 @@
       desc: 'Has an increased chance for a critical hit.',
       cd: 0.90, dmg: 55, speed: 330, count: 2, spread: 0.5, radius: 210, size: 6 },
 
-    { id: 'leaf-storm', name: 'Leaf Storm', type: 'grass', kind: 'orbit', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100,
-      desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage.',
+    { id: 'leaf-storm', name: 'Leaf Storm', type: 'grass', kind: 'orbit', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 100, self: { stat: 'spa', n: -2 },
+      desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage (this Pokemon only).',
       cd: 0.26, dmg: 130, count: 4, radius: 74, speed: 2.6, size: 8 },
 
     // Giga Drain (slice D3): ONE heart-shaped shot (a former aura healed per enemy and was broken). Heals `drain` (50%) of the damage it
@@ -237,8 +237,8 @@
       cd: 0.5, dmg: 80, radius: 72 },
 
     // ---------------- ACERO ----------------
-    { id: 'metal-claw', name: 'Metal Claw', type: 'steel', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10,
-      desc: 'Has a chance to raise the user\'s Attack by one stage.',
+    { id: 'metal-claw', name: 'Metal Claw', type: 'steel', kind: 'melee', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, self: { stat: 'atk', n: 1 },
+      desc: 'Has a chance to raise the team\'s Attack by one stage.',
       cd: 0.5, dmg: 50, radius: 50, arc: 1.6, knock: 60 },
 
     { id: 'flash-cannon', name: 'Flash Cannon', type: 'steel', kind: 'beam', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 10, stage: { stat: 'spd', n: -1 },
@@ -279,8 +279,8 @@
       desc: 'Changes the weather to a hailstorm for five turns.',
       cd: 1.2, dmg: 0, count: 4, radius: 40, slow: 0.4 },
 
-    { id: 'meteor-mash', name: 'Meteor Mash', type: 'steel', kind: 'meteor', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20,
-      desc: 'Has a chance to raise the user\'s Attack by one stage.',
+    { id: 'meteor-mash', name: 'Meteor Mash', type: 'steel', kind: 'meteor', cat: 'physical', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 20, self: { stat: 'atk', n: 1 },
+      desc: 'Has a chance to raise the team\'s Attack by one stage.',
       cd: 1.4, dmg: 90, count: 2, radius: 54, knock: 80 },
 
     { id: 'will-o-wisp', name: 'Will-O-Wisp', type: 'fire', kind: 'turret', cat: 'status', ailment: 'burn', ailmentChance: 0, flinch: 0, statChance: 0,

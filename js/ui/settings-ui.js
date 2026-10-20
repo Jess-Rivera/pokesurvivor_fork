@@ -147,6 +147,8 @@ G.SettingsUI = (() => {
         + choice('stick', [[0.8, 'Pequeño'], [1, 'Normal'], [1.25, 'Grande']])
         + `<div class="set-row"><div class="grow"><b>Colocar los botones</b><small>Pon los ataques, la pausa y el joystick (fijo, si quieres) donde quieras de la pantalla.</small></div>
              <button class="btn small" id="set-layout">Colocar</button></div>`
+        + section('Accessibility')
+        + toggle('autoShake', 'Auto shake off', 'Shakes off sleep, freeze, paralysis, confusion, trap and daze for you, 3 taps per second. No button mashing.')
         + section('En PC')
         + `<p class="sub">Click a control to change its key. Press Esc to cancel.</p>`
         + keymapRows()

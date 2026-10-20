@@ -748,6 +748,7 @@ G.Game = (() => {
     if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
     handleSwap();
     if (G.Input.action('shake_off') && G.Status.shake(pl)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // Shake off (slice E1)
+    else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // accessibility auto-shake, 3 taps/s (E2e)
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {
@@ -760,6 +761,12 @@ G.Game = (() => {
 
     pl.frozen = coop && (G.UI.isOpen('scr-pause') || G.UI.isOpen('scr-item'));
     pl.update(dt);
+    // Benched teammates (slice E2b): statuses, DoT and stage drops keep ticking, so a poisoned or burning one can faint on the bench.
+    for (const f of roster) {
+      if (f === pl || f.dead) continue;
+      f.benchUpdate(dt);
+      if (f.dead) { G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad'); G.Audio.sfx('faint'); }
+    }
     if (coop) {
       for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
       if (pl.dead) reviveTick(dt);
@@ -992,7 +999,7 @@ G.Game = (() => {
     badgeBoost(stat, pct) { for (const f of roster) f.addBadgeBoost(stat, pct); },
     /** Badge package: every team member back to 100% HP, fainted ones included. */
     reviveTeam() {
-      for (const f of roster) { if (f.dead) f.revive(1); else f.hp = f.maxHp; }
+      for (const f of roster) { if (f.dead) f.revive(1); else { f.hp = f.maxHp; f.clearEffects(); } }       // full revive: 100% HP and a clean slate (slice E2b)
     },
     /** For testing: skip the run clock. */
     debugTime(t) { tampered = true; time = t; },

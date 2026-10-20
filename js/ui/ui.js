@@ -43,8 +43,10 @@ G.UI = (() => {
   }
 
   let toastEl = null, toastT = 0;
-  function toast(msg, ms = 2200) {
+  /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
+  function toast(msg, ms = 2200, tone = '') {
     if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
+    toastEl.className = tone ? 'toast ' + tone : 'toast';
     toastEl.textContent = msg;
     toastEl.style.display = 'block';
     clearTimeout(toastT);

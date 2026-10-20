@@ -37,7 +37,7 @@ G.Status = (() => {
   const STRONG = { cut: 0.25, window: 10 };      // bosses, elites, gym leaders: hard CC (freeze, sleep)
   // Player only (slice E1): Shake off. Each tap takes `per` s off the status with the most time left among the mashable ones,
   // never below `floor` s remaining; at most `rate` taps count per second. Order = most restrictive first.
-  const SHAKE = { per: 0.25, floor: 0.5, rate: 12, order: ['sleep', 'freeze', 'paralysis', 'confusion', 'trap', 'daze'] };
+  const SHAKE = { per: 0.25, floor: 0.5, rate: 12, auto: 3, order: ['sleep', 'freeze', 'paralysis', 'confusion', 'trap', 'daze'] };
   const GRACE = 2.5;                              // player: seconds after a hard CC ends in which no new hard CC lands
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
@@ -247,6 +247,20 @@ G.Status = (() => {
     return false;
   }
 
+  /**
+   * Accessibility auto-shake (slice E2e, Jess 2026-10-20): with the autoShake setting on, the game taps Shake off for the player at
+   * SHAKE.auto taps per second while anything is shakeable, so no mashing is needed. Same effect per tap as a real tap (only slower than the
+   * 12 taps/s a person can reach). Call once per frame; returns true when a tap counted.
+   */
+  function autoShake(h, dt) {
+    if (!shakeable(h)) { h.autoShakeT = 0; return false; }
+    h.autoShakeT = (h.autoShakeT || 0) - dt;
+    if (h.autoShakeT > 0) return false;
+    if (!shake(h)) return false;
+    h.autoShakeT = 1 / SHAKE.auto;
+    return true;
+  }
+
   /** Roll whether an attack attempt fails: paralysis 25%, confusion 50% (both: 62.5%). */
   function fizzle(h) {
     let ok = 1;
@@ -270,7 +284,7 @@ G.Status = (() => {
     if (M && M.k === 'freeze' && type === CONTROL.freeze.thawBy && M.age > 0.2) endMajor(h);
   }
 
-  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = 0; if (h.anim) h.anim.frozen = false; }
+  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = h.autoShakeT = 0; if (h.anim) h.anim.frozen = false; }
 
   const AIL_COLOR = { slow: '#8ab4e8', poison: '#d47cf0', haste: '#7fe08a' };
   /** Active statuses for the HUD: [{ k, label, color, t, mash }]. t = seconds left (null = unknown); mash = Shake off works on it. */
@@ -294,5 +308,5 @@ G.Status = (() => {
   /** Shot colour of a carrier's status. */
   function ailColor(k) { return AIL_COLOR[k] || (CONTROL[k] && CONTROL[k].color) || '#ff7a9e'; }
 
-  return { ailColor, tintOf, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, fizzle, wander, onHit, clear, list };
+  return { ailColor, tintOf, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, autoShake, fizzle, wander, onHit, clear, list };
 })();

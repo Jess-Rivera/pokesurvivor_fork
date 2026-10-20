@@ -33,7 +33,9 @@ G.Combat = (() => {
   }
 
   function tickMove(dt, pl, m, now) {
-    if (m.kind === 'orbit') { orbit(pl, m, dt, now); return; }
+    // Frozen or asleep (slice E2d, Jess 2026-10-20): the orbs are DROPPED (they hit and roll ailments every tick, so they cannot stay up);
+    // they spin up again the moment the stun ends (orbit() respawns whatever is missing).
+    if (m.kind === 'orbit') { if (G.Status.stunned(pl)) G.Projectiles.clearOrbs(pl); else orbit(pl, m, dt, now); return; }
 
     m.t -= dt;
     if (m.t > 0) return;
@@ -448,8 +450,9 @@ G.Combat = (() => {
           fields.splice(i, 1);
         }
       } else if (f.kind === 'turret') {
-        f.shotT -= dt;
-        if (f.shotT <= 0) {
+        const held = G.Status.stunned(f.owner);                 // E2d: a frozen or sleeping owner's turret holds fire (its life still runs out)
+        if (!held) f.shotT -= dt;
+        if (!held && f.shotT <= 0) {
           const m = f.m;
           const tg = G.Projectiles.nearest(G.EnemyMgr.all(), f.x, f.y, m.range || 300);
           f.shotT = tg ? m.rate || 0.6 : 0.15;
@@ -466,8 +469,10 @@ G.Combat = (() => {
         }
         if (f.kick > 0) f.kick -= dt;
       } else if (f.kind === 'patch') {
-        f.tick -= dt;
-        if (f.tick <= 0) { f.tick = 0.5; blast(f, f.r); }
+        if (!G.Status.stunned(f.owner)) {                      // E2d: no pulses (damage or ailments) while the owner is frozen or asleep
+          f.tick -= dt;
+          if (f.tick <= 0) { f.tick = 0.5; blast(f, f.r); }
+        }
         if (f.vis.aura && Math.random() < dt * 3 && G.Camera.sees(f.x, f.y, 20)) {
           G.FX.sp(f.vis.aura, f.vis.pal, f.x + G.U.rand(-f.r, f.r) * 0.6, f.y - 4, { vy: -40, life: 0.4 });
         }
@@ -643,6 +648,7 @@ G.Combat = (() => {
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
     G.Stages.procMove(e, m);                   // stat drop (slice D1)
+    if (!ghost) G.Stages.procSelf(pl, m);      // the user's own stat effect: Leaf Storm drop, Metal Claw / Meteor Mash team raise (slice E2b)
     procFlinch(e, m);                          // flinch (slice D2)
     G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
     if (m.slow) e.applySlow(m.slow);
@@ -775,6 +781,7 @@ G.Combat = (() => {
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
         G.Stages.procMove(e, pm);                 // stat drop (slice D1)
+        if (!ghost && !p.ghost) G.Stages.procSelf(pl, pm);      // the user's own stat effect (slice E2b)
         procFlinch(e, pm);                        // flinch (slice D2)
         G.Status.onHit(e, p.mtype);
         if (p.slow) e.applySlow(p.slow);

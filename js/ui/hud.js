@@ -290,7 +290,7 @@ G.HUD = (() => {
     }
     if (G.Status.shakeable(pl)) {
       const key = G.Input.keyLabel('shake_off') || '?';
-      const txt = 'TAP ' + key + ' TO SHAKE OFF!';
+      const txt = G.Settings.get('autoShake') ? 'SHAKING OFF...' : 'TAP ' + key + ' TO SHAKE OFF!';
       ctx.font = F(800, 16);
       const tw = Math.ceil(ctx.measureText(txt).width) + 20, top = y - 26;
       ctx.globalAlpha = 0.65 + 0.35 * Math.sin(performance.now() / 90);
