@@ -5,6 +5,9 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-20 (Claude Desktop) status Slice D closed
+Ranged shot timers (distance-keeper special shot, support weak shot) now wait out a flinch (enemy.js). D4 dropped (crit stage) / parked (multi-hit, with the bulk move import). Jess browser-tested D1 to D3.
+
 ## 2026-10-19 (Claude Desktop) status Slice D3: drain, plus player melee reach fix
 Giga Drain -> single heart projectile with drain 0.5 uncapped / fixed count+pierce (moves.js, vfx.js, mechanics.js check, combat.js drainHeal at both player hit sites). Separate fix: player melee hit circle and cast trigger include body radii (matches wild contact reach 1.3x). Harness status-sliceD3-harness.js passes; not run in a browser.
 

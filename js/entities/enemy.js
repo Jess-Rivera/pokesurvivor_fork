@@ -556,7 +556,7 @@
           vx = rx * spd * 0.8; vy = ry * spd * 0.8;
         } else if (this.bandMode !== 0) { vx *= 0.1; vy *= 0.1; animBase = 'Idle'; }
         if (this.keepsDistance()) {
-          this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate
+          if (!this.stFl) this.shotCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate; waits out a flinch (D2)
           if (this.shotCd <= 0 && s < band[1] * 1.05) {      // the ability gate follows the band, not def.range
             this.shotCd = this.def.shotCd || 2;
             if (!G.Status.fizzle(this)) this.special(pl, ddx, ddy);      // paralysis / confusion: the attempt can fizzle
@@ -974,7 +974,7 @@
         if (this.shotCd <= 0) { this.shotCd = this.def.shotCd || 2; this.healAround(); }
       }
       // Weak shot from range; touching you is the weak melee (combat.js, contactMul). Never both at once.
-      this.weakCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate (heals / shields unchanged)
+      if (!this.stFl) this.weakCd -= this.panic ? dt * G.Enemies.MORALE.panicFireMul : dt;      // panicking: half the fire rate (heals / shields unchanged); waits out a flinch (D2)
       if (this.weakCd <= 0 && s < K.shotS && dist > this.r + pl.r + K.meleeGap) {
         this.weakCd = K.shotCd;
         this.shoot(px, py, 0, 1, 1, G.Enemies.SHOT_LIFE_BASE, K.weakShot);
