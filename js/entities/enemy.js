@@ -1311,7 +1311,7 @@
       // Those that float are already in the air in their sprite: they only sway a bit.
       // (And the ones that jump, in an arc.)
       const lift = (this.flying && !this.boss ? 1 + Math.sin(this.bob) * 1.5 : 0) + (this.jumpLift || 0);
-      this.anim.draw(ctx, this.x, this.y - lift, { flash: this.flash > 0, alpha });
+      this.anim.draw(ctx, this.x, this.y - lift, Object.assign({ flash: this.flash > 0, alpha }, G.Status.tintOf(this)));
       ctx.restore();
 
       if (this.dead) return;

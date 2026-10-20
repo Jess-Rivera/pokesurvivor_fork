@@ -544,7 +544,8 @@ G.HUD = (() => {
       sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6 - BAR_LIFT);   // never covers the HP strip
     }
     const BOND = '#ff8ad8';
-    const cdOf = m => m.kind === 'orbit' ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
+    // A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove): that sawtooth is not a cooldown, so <= 0.05 s reads as ready.
+    const cdOf = m => m.kind === 'orbit' || m.t <= 0.05 ? 0 : G.U.clamp(m.t / (m.cd * pl.cdMul), 0, 1);
 
     for (let i = 0; i < n; i++) {
       const g = pl.slots[i] || [];

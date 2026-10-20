@@ -167,6 +167,7 @@ G.Status = (() => {
       if (C.t <= 0) h.stCnf = null;
     }
     if (h.shakeCd > 0) h.shakeCd -= dt;
+    if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze');      // a frozen sprite stops animating
     const T = h.stTrap;
     if (T && (T.t -= dt) <= 0) h.stTrap = null;
     const Z = h.stDaze;
@@ -191,6 +192,11 @@ G.Status = (() => {
       }
     }
   }
+
+  // Sprite tint of the major status (Jess 2026-10-20): freeze icy blue, sleep blue-purple, poison / toxic purple, burn red, paralysis yellow.
+  const TINT = { freeze: ['#4fc3ff', 0.85], sleep: ['#7a70e6', 0.75], poison: ['#a64fd6', 0.75], toxic: ['#a64fd6', 0.75], burn: ['#ff3a2a', 0.75], paralysis: ['#ffd92a', 0.75] };
+  /** { tint, tintA } for the sprite of `h` (its major status), or null. Draw options for Animator.draw. */
+  function tintOf(h) { const t = TINT[majorKind(h)]; return t ? { tint: t[0], tintA: t[1] } : null; }
 
   /** Frozen or asleep: no movement, no attacks, no casts. */
   function stunned(h) { const M = h.stMajor; return !!M && (M.k === 'freeze' || M.k === 'sleep'); }
@@ -264,7 +270,7 @@ G.Status = (() => {
     if (M && M.k === 'freeze' && type === CONTROL.freeze.thawBy && M.age > 0.2) endMajor(h);
   }
 
-  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = 0; }
+  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = 0; if (h.anim) h.anim.frozen = false; }
 
   const AIL_COLOR = { slow: '#8ab4e8', poison: '#d47cf0', haste: '#7fe08a' };
   /** Active statuses for the HUD: [{ k, label, color, t, mash }]. t = seconds left (null = unknown); mash = Shake off works on it. */
@@ -288,5 +294,5 @@ G.Status = (() => {
   /** Shot colour of a carrier's status. */
   function ailColor(k) { return AIL_COLOR[k] || (CONTROL[k] && CONTROL[k].color) || '#ff7a9e'; }
 
-  return { ailColor, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, fizzle, wander, onHit, clear, list };
+  return { ailColor, tintOf, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, fizzle, wander, onHit, clear, list };
 })();

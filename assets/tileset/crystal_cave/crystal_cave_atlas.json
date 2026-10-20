@@ -1,0 +1,531 @@
+{
+ "name": "crystal_cave",
+ "tile": 16,
+ "image": "crystal_cave_atlas.png",
+ "size": [
+  192,
+  100
+ ],
+ "pieces": {
+  "floor": {
+   "x": 34,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "B532"
+  },
+  "deep_block": {
+   "x": 0,
+   "y": 0,
+   "w": 48,
+   "h": 48,
+   "src": "A534-C536"
+  },
+  "deep_inner": {
+   "x": 150,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "src": "D534-E535"
+  },
+  "wall_block": {
+   "x": 50,
+   "y": 0,
+   "w": 48,
+   "h": 48,
+   "src": "A526-C528"
+  },
+  "wall_inner_sw": {
+   "x": 52,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "D527"
+  },
+  "wall_inner_se": {
+   "x": 70,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "E527"
+  },
+  "pit_block": {
+   "x": 100,
+   "y": 0,
+   "w": 48,
+   "h": 48,
+   "src": "D531-F533"
+  },
+  "pit_inner": {
+   "x": 0,
+   "y": 50,
+   "w": 32,
+   "h": 32,
+   "src": "G531-H532"
+  },
+  "pit_concave": {
+   "x": 34,
+   "y": 50,
+   "w": 32,
+   "h": 32,
+   "src": "D531,F531,D533,F533 (black keyed)"
+  },
+  "tree1_pass": {
+   "x": 88,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "B537"
+  },
+  "tree1_base": {
+   "x": 106,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "B538"
+  },
+  "tree2_pass": {
+   "x": 68,
+   "y": 50,
+   "w": 32,
+   "h": 16,
+   "src": "C537-D537"
+  },
+  "tree2_base": {
+   "x": 102,
+   "y": 50,
+   "w": 32,
+   "h": 16,
+   "src": "C538-D538"
+  },
+  "tree3_base": {
+   "x": 124,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "A537"
+  },
+  "rock1": {
+   "x": 142,
+   "y": 84,
+   "w": 16,
+   "h": 16,
+   "src": "A539"
+  },
+  "rock2_base": {
+   "x": 136,
+   "y": 50,
+   "w": 32,
+   "h": 16,
+   "src": "B539-C539"
+  },
+  "rock2_pass": {
+   "x": 0,
+   "y": 84,
+   "w": 32,
+   "h": 16,
+   "src": "B540-C540"
+  }
+ },
+ "autotile": {
+  "floor": {
+   "type": "base_only",
+   "tile": {
+    "x": 34,
+    "y": 84,
+    "w": 16,
+    "h": 16
+   },
+   "note": "single ground tile; this biome has no ground patch and no grass"
+  },
+  "water_deep": {
+   "type": "edge_autotile_plus_inner_overlay",
+   "tiles": [
+    [
+     {
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 16,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 32,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     }
+    ],
+    [
+     {
+      "x": 0,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 16,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 32,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     }
+    ],
+    [
+     {
+      "x": 0,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 16,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 32,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     }
+    ]
+   ],
+   "inner": {
+    "x": 150,
+    "y": 0,
+    "w": 32,
+    "h": 32
+   },
+   "inner_tile_for_missing_diagonal": {
+    "SE": {
+     "x": 150,
+     "y": 0,
+     "w": 16,
+     "h": 16
+    },
+    "SW": {
+     "x": 166,
+     "y": 0,
+     "w": 16,
+     "h": 16
+    },
+    "NE": {
+     "x": 150,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    },
+    "NW": {
+     "x": 166,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    }
+   },
+   "rule": "pick the edge/interior tile from (N,S,W,E) presence ([row][col]; row 0 = no N, row 2 = no S; col 0 = no W, col 2 = no E); then for each diagonal D whose two orthogonal neighbours are present but whose diagonal cell is not water, draw inner_tile_for_missing_diagonal[D] on top (corner art only, rest transparent). Same rule as Shady Forest water"
+  },
+  "wall": {
+   "type": "wall_autotile",
+   "tiles": [
+    [
+     {
+      "x": 50,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 66,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 82,
+      "y": 0,
+      "w": 16,
+      "h": 16
+     }
+    ],
+    [
+     {
+      "x": 50,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 66,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 82,
+      "y": 16,
+      "w": 16,
+      "h": 16
+     }
+    ],
+    [
+     {
+      "x": 50,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 66,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     },
+     {
+      "x": 82,
+      "y": 32,
+      "w": 16,
+      "h": 16
+     }
+    ]
+   ],
+   "interior": {
+    "note": "tile has N,E,S,W (after cuts); look at which diagonals are missing. Only the SOUTH concave corners have art (cliff-face ends); NE/NW use the plain tile",
+    "none": {
+     "x": 66,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    },
+    "SE": {
+     "x": 70,
+     "y": 84,
+     "w": 16,
+     "h": 16
+    },
+    "SW": {
+     "x": 52,
+     "y": 84,
+     "w": 16,
+     "h": 16
+    },
+    "NE": {
+     "x": 66,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    },
+    "NW": {
+     "x": 66,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    },
+    "other": "unsupported (two or more missing diagonals other than the pinch): generator must not produce it"
+   },
+   "cuts": [
+    "edge tile (no N; W,E,S present) and SE diagonal missing  -> cut edge to E neighbour",
+    "edge tile (no N; W,E,S present) and SW diagonal missing  -> cut edge to W neighbour",
+    "edge tile (no W; N,E,S present) and SE diagonal missing  -> cut edge to S neighbour",
+    "edge tile (no E; N,W,S present) and SW diagonal missing  -> cut edge to S neighbour",
+    "interior pinch (NE+SW diagonals missing)  -> cut E and S edges",
+    "interior pinch (NW+SE diagonals missing)  -> cut W and S edges",
+    "repeat until stable. Cuts are VISUAL only; collision unchanged"
+   ],
+   "generator_cleanup": [
+    "delete 1-tile-wide stubs: (no N and no S) or (no E and no W), repeat until none",
+    "after cuts, delete any tile left thin"
+   ]
+  },
+  "pit": {
+   "type": "pit_autotile",
+   "center": {
+    "x": 116,
+    "y": 16,
+    "w": 16,
+    "h": 16
+   },
+   "edge": {
+    "no_N": {
+     "x": 116,
+     "y": 32,
+     "w": 16,
+     "h": 16
+    },
+    "no_S": {
+     "x": 116,
+     "y": 0,
+     "w": 16,
+     "h": 16
+    },
+    "no_W": {
+     "x": 132,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    },
+    "no_E": {
+     "x": 100,
+     "y": 16,
+     "w": 16,
+     "h": 16
+    }
+   },
+   "convex_corner": {
+    "no_N_no_W": {
+     "x": 16,
+     "y": 66,
+     "w": 16,
+     "h": 16
+    },
+    "no_N_no_E": {
+     "x": 0,
+     "y": 66,
+     "w": 16,
+     "h": 16
+    },
+    "no_S_no_W": {
+     "x": 16,
+     "y": 50,
+     "w": 16,
+     "h": 16
+    },
+    "no_S_no_E": {
+     "x": 0,
+     "y": 50,
+     "w": 16,
+     "h": 16
+    }
+   },
+   "concave_overlay": {
+    "SE": {
+     "x": 34,
+     "y": 50,
+     "w": 16,
+     "h": 16
+    },
+    "SW": {
+     "x": 50,
+     "y": 50,
+     "w": 16,
+     "h": 16
+    },
+    "NE": {
+     "x": 34,
+     "y": 66,
+     "w": 16,
+     "h": 16
+    },
+    "NW": {
+     "x": 50,
+     "y": 66,
+     "w": 16,
+     "h": 16
+    }
+   },
+   "rule": "The sheet draws the pit INSIDE-OUT: the black ring is the pit and the centre tile is the hole. So: all four neighbours -> centre tile (solid black); exactly one neighbour missing -> the block tile on the OPPOSITE side (no_N uses the block S tile, etc.); two adjacent neighbours missing (convex outer corner) -> the matching 2x2 inner tile; never two opposite or three missing (generator must delete such tiles, same cleanup as walls). Then for each diagonal D whose two orthogonal neighbours are present but whose cell is not pit, overlay concave_overlay[D] (glow only, black transparent). Rim light side is the outside edge"
+  }
+ },
+ "trees": {
+  "tree1": {
+   "size": [
+    16,
+    32
+   ],
+   "pass_piece": "tree1_pass",
+   "base_piece": "tree1_base",
+   "stack": "pass at (0,0), base at (0,16)",
+   "anchor_feet": [
+    8,
+    32
+   ],
+   "base_footprint_tiles": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  "tree2": {
+   "size": [
+    32,
+    32
+   ],
+   "pass_piece": "tree2_pass",
+   "base_piece": "tree2_base",
+   "stack": "pass at (0,0), base at (0,16)",
+   "anchor_feet": [
+    16,
+    32
+   ],
+   "base_footprint_tiles": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  "tree3": {
+   "size": [
+    16,
+    16
+   ],
+   "pass_piece": null,
+   "base_piece": "tree3_base",
+   "stack": "base only",
+   "anchor_feet": [
+    8,
+    16
+   ],
+   "base_footprint_tiles": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  "note": "base tiles must sit on plain floor: never on water, water edge, pit, pit edge, wall or rock"
+ },
+ "rocks": [
+  {
+   "piece": "rock1",
+   "size": [
+    16,
+    16
+   ]
+  },
+  {
+   "piece": "rock2_base",
+   "pass_piece": "rock2_pass",
+   "size": [
+    32,
+    32
+   ],
+   "stack": "base at (0,0), pass below it at (0,16)",
+   "note": "ASSUMPTION: the pass piece is the fringe hanging below the base (walkable); confirm in game"
+  }
+ ],
+ "terrain_rules": [
+  "no ground patch, no grass in this biome",
+  "pit is its own terrain: black void with glowing frame, behaves like a wall for generation"
+ ],
+ "generator": {
+  "source": "tools/make_tileset_crystal_cave.py",
+  "gaia_labels": "column A-H = x/16, row = absolute y/16"
+ }
+}

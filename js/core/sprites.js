@@ -40,6 +40,27 @@ G.Sprites = (() => {
     return c;
   }
 
+  /**
+   * The sprite recoloured with the 'color' blend (status tints: freeze, sleep, poison, burn, paralysis): same shading, same silhouette. Cached per sheet and colour, like white().
+   */
+  const tints = new WeakMap();
+  function tinted(img, color) {
+    let m = tints.get(img); if (!m) tints.set(img, m = new Map());
+    let c = m.get(color);
+    if (c) return c;
+    c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0);
+    x.globalCompositeOperation = 'color';            // hue + saturation of the colour, the sprite's own light and dark: it keeps the shading
+    x.fillStyle = color;
+    x.fillRect(0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in';   // back to the sprite's own silhouette (the fill also painted the empty pixels)
+    x.drawImage(img, 0, 0);
+    m.set(color, c);
+    return c;
+  }
+
   /** Does it have a shiny version? (assets/pokemon/{dex}/s/) */
   function hasShiny(dex) { const m = meta(dex); return !!(m && m.sh); }
 
@@ -206,7 +227,7 @@ G.Sprites = (() => {
 
     update(dt) {
       const m = animMeta(this.dex, this.cur, this.shiny);
-      if (!m || this.done) return;
+      if (!m || this.done || this.frozen) return;       // frozen (status): the animation stops on its current frame
       this.t += dt * 60 * this.speed;
       while (this.t >= m.d[this.frame]) {
         this.t -= m.d[this.frame];
@@ -224,7 +245,7 @@ G.Sprites = (() => {
       }
     }
 
-    /** Draws with the feet at (x, y). opts: { flash, alpha } */
+    /** Draws with the feet at (x, y). opts: { flash, alpha, tint: '#rrggbb', tintA: 0..1 (status colour laid over the sprite) } */
     draw(ctx, x, y, opts = {}) {
       let m = animMeta(this.dex, this.cur, this.shiny);
       let s = sheet(this.dex, this.cur, this.shiny);
@@ -253,6 +274,10 @@ G.Sprites = (() => {
       if (opts.flash) {
         if (opts.softFlash) ctx.globalAlpha = prev * alpha * 0.55;
         ctx.drawImage(white(s.img), sx, sy, m.w, m.h, dx, dy, m.w * k, m.h * k);
+      }
+      if (opts.tint) {
+        ctx.globalAlpha = prev * alpha * (opts.tintA == null ? 0.45 : opts.tintA);
+        ctx.drawImage(tinted(s.img, opts.tint), sx, sy, m.w, m.h, dx, dy, m.w * k, m.h * k);
       }
       ctx.globalAlpha = prev;
     }

@@ -605,7 +605,7 @@ G.Player = class Player {
     }
 
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
-    this.anim.draw(ctx, this.x, this.y, { flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' });
+    this.anim.draw(ctx, this.x, this.y, Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this)));
 
     // Buff arcs around the feet.
     const COL = { atk: '#ff6b4d', spd: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a' };
