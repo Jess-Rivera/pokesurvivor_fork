@@ -200,11 +200,16 @@ G.Game = (() => {
   /**
    * Manual swap to roster slot i. Instant, and locks swapping for a few seconds.
    */
+  let swapNoteT = 0;
   function swapTo(i) {
     if (i < 0 || i >= roster.length || i === activeIdx) return false;
     const next = roster[i];
     if (!next || next.dead) return false;
     if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
+    if (G.Status.swapLocked(pl)) {                                // trapped (slice E1): no manual swaps until it wears off
+      if (!swapNoteT || time - swapNoteT > 0.8) { swapNoteT = time; G.FX.dmgText(pl.x, pl.y - 40, 'Trapped!', G.Status.CONTROL.trap.color); G.Audio.sfx('hurt'); }
+      return false;
+    }
     takeField(i);
     swapLock = SWAP_LOCK;
     G.Camera.shake = 0;
@@ -742,6 +747,7 @@ G.Game = (() => {
     if (G.Log.on) G.Log.sample();
     if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
     handleSwap();
+    if (G.Input.action('shake_off') && G.Status.shake(pl)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // Shake off (slice E1)
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {

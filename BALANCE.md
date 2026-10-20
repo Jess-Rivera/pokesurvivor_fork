@@ -79,6 +79,12 @@ re-tune later.
 - 2026-10-18, slice B, DoT strength: burn and poison ticks x (the source move's current Power / its base Power) (G.Moves.dotMul), so Increased Effect and the Type and Kind damage cards strengthen DoT in the same additive pool as direct damage. Attack, Sp. Atk and level do not scale it. Status moves (Power 0) stay at 1.0x. Strongest source wins while the state lasts, a new state starts from its own source.
 - Expect: fire starters lose most of their old burn damage (restoring player damage is tune/damage-hp), poison beats burn 2:1 (mainline ratio), Toxic is lethal to everything unhealed. Boss and rift legendary DoT is not special-cased (the boss rework owns it).
 
+## Status carriers and player statuses (status Slice E1, built 2026-10-20; all numbers TUNE)
+- Carrier cap 2 active (haste exempt); shot every 3.2 s at x0.5 damage; band 0.30 / 0.40 of the screen. Secondary: half duration, one status per 4 s.
+- Sleep shot 0.6 chance (drowsy x1.5 = 0.9); sleep species draw drowsy : sleep = 2 : 1. Drowsy 8 s. Daze +-35 degrees, 6 s. Trap 8 s swap lock. Slow Speed -1 for 6 s (floor -2 from carriers). Haste nova 170 px every 5 s, +1 Speed 6 s, stack 2.
+- Player full timers: paralysis 10 s, freeze 2 s (4 s window), sleep 2-6 s, confusion 2-8 s. Grace 2.5 s after any hard CC. Shake off 0.25 s per tap, floor 0.5 s, 12 taps per second.
+- Fire Spin: strip + burn of 2 turns (half of 4).
+
 ## Flinch (status Slice D2, built 2026-10-19; all numbers TUNE)
 - Chance: the move's flinch percent (Rock Slide 30, Bite 30, Dark Pulse 20), one roll per move per target per 0.5 s. No immunity, no window, for every unit kind.
 - Lost action: cast cancelled and timer restarted (boss, gym), charger aim or dash cancelled, ranged shot timer back to its full period, contact timer back to 0.55 s.

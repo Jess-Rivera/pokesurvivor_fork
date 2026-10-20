@@ -11,7 +11,8 @@
  *
  * Where it is read: the defender half of the player's damage (Def or SpD, combat.js), the attacker half of a gym leader's
  * moves (Atk or SpA, enemy.js gymFactor) and enemy movement (Speed: multiplies the FINAL movement speed, no bounds, Jess 2026-10-19).
- * The player's own buff moves (Harden, Swords Dance...) are NOT stages yet: they stay on pl.buffs (slice E decides).
+ * The player's own buff moves (Harden, Swords Dance...) are NOT stages yet: they stay on pl.buffs (slice E2 decides). Slice E1 gives the
+ * player ONE stage use: Speed drops from enemy Status-class carriers ("slow"); pl.spd multiplies speedMul and Player.update ticks it.
  */
 G.Stages = (() => {
   // Mainline multipliers for stage -6 .. +6 (index = stage + 6).
@@ -94,6 +95,26 @@ G.Stages = (() => {
     add(e, f.stat, f.n, DUR);
   }
 
+  /** Fire Spin (slice E1): remove every BENEFICIAL application (n > 0) on `h`, for all stats. Drops stay. Returns how many were removed. */
+  function stripPositive(h) {
+    const g = h.stg; if (!g) return 0;
+    let n = 0;
+    for (const s in g) {
+      const L = g[s];
+      for (let i = L.length - 1; i >= 0; i--) if (L[i].n > 0) { L.splice(i, 1); n++; }
+      if (!L.length) delete g[s];
+    }
+    if (!Object.keys(g).length) h.stg = null;
+    return n;
+  }
+
+  /** Longest time left (s) among the applications of `stat` that push the stage down (drop) or up; for the HUD timer bar. */
+  function remaining(h, stat, sign = -1) {
+    const L = h.stg && h.stg[stat]; let t = 0;
+    if (L) for (const a of L) if (Math.sign(a.n) === sign && a.t > t) t = a.t;
+    return t;
+  }
+
   function clear(h) { h.stg = h.stgRoll = null; }
 
   /** Active stages for the HUD / debug: [{ stat, label, stage }] for every stat that is not at 0. */
@@ -103,5 +124,5 @@ G.Stages = (() => {
     return out;
   }
 
-  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, stage, mul, add, tick, speedMul, procMove, clear, list };
+  return { TABLE, STATS, LABEL, DUR, ROLL_GAP, MAX, stage, mul, add, tick, speedMul, procMove, stripPositive, remaining, clear, list };
 })();

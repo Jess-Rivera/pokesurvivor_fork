@@ -88,7 +88,8 @@ G.Player = class Player {
     this.slowT = 0;            // pegado por una trampa
     // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
     this.isPlayer = true;
-    this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null;
+    this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
+    this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
     this.item = null;          // objeto equipado (data/items.js), uno por run
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
@@ -150,7 +151,7 @@ G.Player = class Player {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return s * slow * w * G.Status.speedMul(this);
+    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this);
   }
   get reduction() { return Math.min(0.8, this.dmgReduce + this.buffs.def.n * this.buffs.def.amount); }
   get regen() { return this.regenFlat + this.buffs.regen.n * this.buffs.regen.amount; }
@@ -288,6 +289,23 @@ G.Player = class Player {
 
   // ---------------- damage and healing ----------------
   /** Damage over time from G.Status (burn, poison, trap): a share of max HP, not reduced by defense, and it ignores the post-hit invulnerability. */
+  /**
+   * An enemy Status-class carrier's shot or touch lands (slice E1). `half` = a secondary carrier: half the duration.
+   * slow = a Speed -1 stage (never below -2 from this source); sleep rolls CARRIER.sleepBase, x1.5 while drowsy.
+   */
+  inflict(kind, half = false) {
+    const C = G.Enemies.CARRIER, dm = half ? C.secHalf : 1;
+    switch (kind) {
+      case 'slow': if (G.Stages.stage(this, 'spe') > -2) G.Stages.add(this, 'spe', -1, C.dur.slow * dm); break;
+      case 'poison': G.Status.applyDot(this, 'poison', 1, dm); break;
+      case 'sleep':
+        if (Math.random() < G.Status.sleepChance(this, C.sleepBase)) G.Status.apply(this, 'sleep', 1, dm);
+        else G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Resisted', '#a3abb8');
+        break;
+      default: G.Status.apply(this, kind, 1, dm);          // paralysis, freeze, confusion, daze, drowsy, trap: the CONTROL table's durations
+    }
+  }
+
   statusDot(kind, amount, color) {
     if (this.dead) return;
     const inv = this.invuln;
@@ -447,6 +465,7 @@ G.Player = class Player {
     }
     if (this.slowT > 0) this.slowT -= dt;
     G.Status.tick(this, dt);
+    G.Stages.tick(this, dt);
     if (this.dead) return;
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
@@ -458,6 +477,10 @@ G.Player = class Player {
     if (this.stCnf && (ax || ay)) {                                                    // confused: your heading drifts (half weight)
       const m = Math.hypot(ax, ay), w = G.Status.wander(this, ax / m, ay / m, 0.5);
       ax = w[0] * m; ay = w[1] * m;
+    }
+    if (this.stDaze && (ax || ay)) {                                                   // dazed: the heading is jittered (slice E1)
+      const m = Math.hypot(ax, ay), j = G.Status.jitter(this, ax / m, ay / m);
+      ax = j[0] * m; ay = j[1] * m;
     }
     this.walking = ax !== 0 || ay !== 0;
     const s = this.spd;
@@ -599,6 +622,31 @@ G.Player = class Player {
       ctx.stroke();
       ctx.restore();
       i++;
+    }
+
+    // Statuses (slice E1): a coloured ring under the feet for the most restrictive one, and a floating zzz while drowsy or asleep.
+    if (!this.dead) {
+      const S = G.Status, cs = this.stMajor ? S.CONTROL[this.stMajor.k] : this.stCnf ? S.CONTROL.confusion : this.stDaze ? S.CONTROL.daze
+              : this.stTrap ? S.CONTROL.trap : this.stDrow ? S.CONTROL.drowsy : null;
+      if (cs) {
+        ctx.save();
+        ctx.globalAlpha = 0.55; ctx.strokeStyle = cs.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832); ctx.stroke();
+        ctx.restore();
+      }
+      if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
+        const t = performance.now() / 1000;
+        ctx.save();
+        ctx.font = '800 9px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#cfc6ff'; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          const ph = (t * 0.7 + i / 3) % 1;                      // three letters rising and fading in turn
+          ctx.globalAlpha = Math.sin(ph * Math.PI);
+          const zx = this.x + 8 + ph * 8, zy = this.y - this.bodyH - 4 - ph * 16;
+          ctx.strokeText('z', zx, zy); ctx.fillText('z', zx, zy);
+        }
+        ctx.restore();
+      }
     }
 
     // Co-op: a "reviving" ring and the name above.

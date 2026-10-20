@@ -16,36 +16,46 @@ G.Input = (() => {
   const pressed = new Set();   // cleared every frame
   let mx = 0, my = 0, mdown = false;
 
-  // Default bindings: action -> list of key codes (lowercased e.code).
-  const DEFAULTS = {
+  // Layout presets (slice E1, Jess 2026-10-20): action -> list of key codes (lowercased e.code).
+  //   compact  the default: one hand on WASD, the other on IJKL (skills) and H (Shake off); 1-6 pick a team slot, Z / C cycle the team
+  //   full     full keyboard: WASD, 1-6 team slots, Z / C, NUM1-4 skills, NUM+ Shake off
+  // Space is reserved for the planned dash and is not bound to anything.
+  const COMMON = {
     move_up:    ['keyw', 'arrowup'],
     move_down:  ['keys', 'arrowdown'],
     move_left:  ['keya', 'arrowleft'],
     move_right: ['keyd', 'arrowright'],
-    attack_1:   ['digit1', 'numpad1'],
-    attack_2:   ['digit2', 'numpad2'],
-    attack_3:   ['digit3', 'numpad3'],
-    attack_4:   ['digit4', 'numpad4'],
     cycle_prev: ['keyq'],
     cycle_next: ['keye', 'tab'],
     pause:      ['keyp', 'escape'],
-    // team: swap the active Pokemon (Phase A). cycle + direct-to-slot.
     swap_prev:  ['keyz'],
     swap_next:  ['keyc'],
-    swap_1:     ['keyh'],
-    swap_2:     ['keyj'],
-    swap_3:     ['keyk'],
-    swap_4:     ['keyl'],
-    swap_5:     ['semicolon'],
-    swap_6:     ['quote']
+    swap_1:     ['digit1'],
+    swap_2:     ['digit2'],
+    swap_3:     ['digit3'],
+    swap_4:     ['digit4'],
+    swap_5:     ['digit5'],
+    swap_6:     ['digit6']
   };
+  const PRESETS = {
+    compact: Object.assign({}, COMMON, {
+      attack_1: ['keyi', 'numpad1'], attack_2: ['keyj', 'numpad2'], attack_3: ['keyk', 'numpad3'], attack_4: ['keyl', 'numpad4'],
+      shake_off: ['keyh']
+    }),
+    full: Object.assign({}, COMMON, {
+      attack_1: ['numpad1'], attack_2: ['numpad2'], attack_3: ['numpad3'], attack_4: ['numpad4'],
+      shake_off: ['numpadadd']
+    })
+  };
+  const DEFAULTS = PRESETS.compact;
   // The order and labels used by the Settings rebind screen.
   const ACTIONS = [
     'move_up', 'move_down', 'move_left', 'move_right',
     'attack_1', 'attack_2', 'attack_3', 'attack_4',
     'cycle_prev', 'cycle_next', 'pause',
     'swap_prev', 'swap_next',
-    'swap_1', 'swap_2', 'swap_3', 'swap_4', 'swap_5', 'swap_6'
+    'swap_1', 'swap_2', 'swap_3', 'swap_4', 'swap_5', 'swap_6',
+    'shake_off'
   ];
 
   // Keys that must never be bound (would soft-lock or fight the browser).
@@ -60,6 +70,11 @@ G.Input = (() => {
       const saved = G.Settings && G.Settings.get('keybinds');
       if (saved && typeof saved === 'object') {
         for (const a of ACTIONS) if (Array.isArray(saved[a])) b[a] = saved[a].slice();
+        // An action added after the player saved their keys (shake_off) takes its default key only if no saved binding already uses it.
+        for (const a of ACTIONS) {
+          if (Array.isArray(saved[a])) continue;
+          b[a] = b[a].filter(k => !ACTIONS.some(o => o !== a && Array.isArray(saved[o]) && saved[o].includes(k)));
+        }
       }
     } catch (e) { /* defaults */ }
     return b;
@@ -120,12 +135,12 @@ G.Input = (() => {
       const c = (binds[name] || [])[0];
       if (!c) return '';
       const MAP = { arrowup: '↑', arrowdown: '↓', arrowleft: '←', arrowright: '→',
-        space: 'Spc', escape: 'Esc', tab: 'Tab', enter: 'Ent' };
+        space: 'Spc', escape: 'Esc', tab: 'Tab', enter: 'Ent', numpadadd: 'Num+' };
       if (MAP[c]) return MAP[c];
       let m;
       if ((m = /^key([a-z])$/.exec(c))) return m[1].toUpperCase();
       if ((m = /^digit(\d)$/.exec(c))) return m[1];
-      if ((m = /^numpad(\d)$/.exec(c))) return m[1];
+      if ((m = /^numpad(\d)$/.exec(c))) return 'N' + m[1];
       return c.toUpperCase();
     },
     /** Bind key `c` to `name` (removing it from any other action first). */
@@ -137,7 +152,21 @@ G.Input = (() => {
       saveBinds();
       return true;
     },
-    resetBindings() { binds = {}; for (const a of ACTIONS) binds[a] = DEFAULTS[a].slice(); saveBinds(); },
+    resetBindings() { this.applyPreset('compact'); },
+    /** Load a whole layout ('compact' | 'full') and save it. */
+    applyPreset(name) {
+      const P = PRESETS[name] || PRESETS.compact;
+      binds = {}; for (const a of ACTIONS) binds[a] = P[a].slice();
+      saveBinds();
+    },
+    /** Keys bound to more than one action: [{ key, actions }]. */
+    conflicts() {
+      const seen = {}, out = [];
+      for (const a of ACTIONS) for (const k of binds[a]) (seen[k] || (seen[k] = [])).push(a);
+      for (const k in seen) if (seen[k].length > 1) out.push({ key: k, actions: seen[k] });
+      return out;
+    },
+    presets() { return Object.keys(PRESETS); },
     defaultsFor(name) { return (DEFAULTS[name] || []).slice(); },
 
     mouse() { return { x: mx, y: my, down: mdown }; },

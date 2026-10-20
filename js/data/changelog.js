@@ -6,6 +6,18 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-20', title: ['Status effects hit you', 'Status effects hit you'], new: [
+    ['Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.',
+     'Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.'],
+    ['Shake off: tap H (Num+ on the full-keyboard layout, or the yellow button on a touch screen) fast to cut short sleep, freeze, paralysis, confusion, daze and trap.',
+     'Shake off: tap H (Num+ on the full-keyboard layout, or the yellow button on a touch screen) fast to cut short sleep, freeze, paralysis, confusion, daze and trap.'],
+    ['Your statuses show in the lower-left stack with a timer bar.', 'Your statuses show in the lower-left stack with a timer bar.'],
+  ], chg: [
+    ['New default controls: WASD to move, I J K L for your attacks, 1-6 to pick a team slot, Z and C to cycle the team. A full-keyboard layout (Num1-4 attacks) is in Settings > Controls. Press Reset keys once to get the new keys.',
+     'New default controls: WASD to move, I J K L for your attacks, 1-6 to pick a team slot, Z and C to cycle the team. A full-keyboard layout (Num1-4 attacks) is in Settings > Controls. Press Reset keys once to get the new keys.'],
+    ['Fire Spin now strips all stat boosts from the target and burns it for a short time. It no longer traps.',
+     'Fire Spin now strips all stat boosts from the target and burns it for a short time. It no longer traps.'],
+  ] },
   { d: '2026-10-19', title: ['Giga Drain', 'Giga Drain'], new: [
     ['Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.',
      'Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.'],

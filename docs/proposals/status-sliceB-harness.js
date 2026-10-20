@@ -89,7 +89,7 @@ const rate = (id, n, N = 40000) => { let hit = 0; const m = inst(id); stack(m, '
 { const T = id => M.ailmentText(inst(id));
   const want = { ember: 'Burn chance 10% per hit: 6.3% max HP every 2 s, 4 times', sludge: 'Poison chance 30% per hit: 12.5% max HP every 2 s, 4 times',
     toxic: 'Bad poison chance always: 6.3% max HP, rising by 6.3% every 2 s, up to 8 times', 'will-o-wisp': 'Burn chance always: 6.3% max HP every 2 s, 4 times',
-    'fire-spin': 'Trap chance 100% per hit: 6.3% max HP every 2 s, 4 times, and moves at quarter speed', tackle: '',
+    'fire-spin': 'Strips all stat boosts, then burn chance 100% per hit: 6.3% max HP every 2 s, 2 times', tackle: '',
     'thunder-shock': 'Paralysis chance 10% per hit: half speed, 25% of attacks fizzle, 10 s' };
   for (const id in want) if (T(id) !== want[id]) bad('ailment line ' + id + ': ' + JSON.stringify(T(id)));
   const m = inst('ember'); stack(m, 'ailchance', 5); stack(m, 'effect', 3);

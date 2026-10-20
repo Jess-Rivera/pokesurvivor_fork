@@ -101,7 +101,8 @@ G.Combat = (() => {
    *  roll. Control ailments (paralysis, freeze, sleep, confusion, trap) are read from the move's ailment name and go through G.Status. */
   function procAilments(e, burn, poison, m) {
     const ctl = m && G.Status.isControl(m.ailment) ? m.ailment : null;     // paralysis | freeze | sleep | confusion | trap (slice C)
-    if (!burn && !poison && !ctl) return;
+    const strip = !!(m && m.strip);                                       // Fire Spin (slice E1): remove every beneficial stat stage, then a short burn
+    if (!burn && !poison && !ctl && !strip) return;
     const S = G.Enemies.STATUS, key = (m && (m.id || m.type)) || 'x';
     const r = e.ailRoll || (e.ailRoll = {});
     if (r[key] > 0) return;
@@ -112,6 +113,10 @@ G.Combat = (() => {
     if (burn) e.applyBurn(burn, false, mul);
     if (poison) e.applyPoison(poison, mul);
     if (ctl) e.applyStatus(ctl, mul);
+    if (strip && !e.remote) {
+      if (G.Stages.stripPositive(e)) G.FX.dmgText(e.x, e.y - (e.bodyH || 30) - 4, 'Boosts stripped', '#f0b36a');
+      e.applyBurn(1, false, mul, m.burnHalf ? 0.5 : 1);
+    }
   }
 
   /** Roll the flinch of a hit (slice D2). Chance = the move's flinch percent (PokeAPI move_meta). One roll per move per target per 0.5 s, like the
@@ -655,8 +660,10 @@ G.Combat = (() => {
         }
         if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
           const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
+          const landed = pl.invuln <= 0;
           if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
           else pl.hurt(p.dmg, p.mtype, false, null, w);
+          if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf);      // a Status carrier's shot (slice E1)
           G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
           projectiles.splice(i, 1);
         }
@@ -786,6 +793,7 @@ G.Combat = (() => {
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
       if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
       else pl.hurt(e.dmg, e.atkType, false, null, w);
+      if (e.carrierSec && !pl.dead) { const k = e.secAil(); if (k) pl.inflict(k, true); }      // a secondary carrier's touch (slice E1)
       if (e.fl) e.flankStruck();
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);

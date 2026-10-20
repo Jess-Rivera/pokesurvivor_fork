@@ -72,13 +72,14 @@ G.SettingsUI = (() => {
     cycle_prev: 'Previous attack', cycle_next: 'Next attack', pause: 'Pause',
     swap_prev: 'Swap to previous', swap_next: 'Swap to next',
     swap_1: 'Swap to slot 1', swap_2: 'Swap to slot 2', swap_3: 'Swap to slot 3',
-    swap_4: 'Swap to slot 4', swap_5: 'Swap to slot 5', swap_6: 'Swap to slot 6'
+    swap_4: 'Swap to slot 4', swap_5: 'Swap to slot 5', swap_6: 'Swap to slot 6',
+    shake_off: 'Shake off (tap fast)'
   };
   // Pretty-print a key code (e.g. 'keyw' -> 'W', 'arrowup' -> '↑').
   function keyName(code) {
     if (!code) return '—';
     const MAP = { arrowup: '↑', arrowdown: '↓', arrowleft: '←', arrowright: '→',
-      space: 'Space', escape: 'Esc', tab: 'Tab', enter: 'Enter' };
+      space: 'Space', escape: 'Esc', tab: 'Tab', enter: 'Enter', numpadadd: 'Num+' };
     if (MAP[code]) return MAP[code];
     let m;
     if ((m = /^key([a-z])$/.exec(code))) return m[1].toUpperCase();
@@ -87,6 +88,12 @@ G.SettingsUI = (() => {
     return code;
   }
   let capturing = null;   // action name currently waiting for a keypress, or null
+  /** A warning line when two actions share a key. */
+  function keyConflicts() {
+    const c = G.Input.conflicts();
+    if (!c.length) return '';
+    return `<p class="note" style="color:#f08a8a">Shared keys: ${c.map(x => esc(keyName(x.key)) + ' (' + x.actions.map(a => esc(ACTION_LABEL[a] || a)).join(', ') + ')').join('; ')}. Use a layout button or rebind one.</p>`;
+  }
   function keymapRows() {
     return `<div class="set-keys" style="max-height:46vh;overflow-y:auto">` + G.Input.actionList.map(a => {
       const keys = G.Input.bindingsOf(a).map(keyName).join(' / ') || '—';
@@ -143,9 +150,13 @@ G.SettingsUI = (() => {
         + section('En PC')
         + `<p class="sub">Click a control to change its key. Press Esc to cancel.</p>`
         + keymapRows()
-        + `<div class="row" style="margin-top:10px"><button class="btn small" id="set-keys-reset">Reset keys</button></div>`
+        + keyConflicts()
+        + `<div class="row wrap" style="margin-top:10px;gap:8px"><button class="btn small" id="set-keys-compact">Compact layout</button>
+             <button class="btn small" id="set-keys-full">Full keyboard layout</button>
+             <button class="btn small" id="set-keys-reset">Reset keys</button></div>
+           <p class="sub">Compact (default): WASD move, I J K L skills, 1-6 team slot, Z / C team, H shake off. Full keyboard: WASD move, Num1-4 skills, 1-6 team slot, Z / C team, Num+ shake off. Space is kept for the dash.</p>`
         + `<div class="keys" style="margin-top:12px">
-             <div><kbd>1</kbd>–<kbd>4</kbd> or click the icon</div><span>choose attack</span>
+             <div>${esc(['attack_1', 'attack_2', 'attack_3', 'attack_4'].map(a => G.Input.keyLabel(a) || '—').join(' '))} or click the icon</div><span>choose attack</span>
              <div><kbd>1</kbd>–<kbd>3</kbd></div><span>choose level-up card</span>
            </div>`;
     } else if (tab === 'acc') {
@@ -201,6 +212,8 @@ G.SettingsUI = (() => {
     const lay = $('set-layout'); if (lay) lay.onclick = () => G.LayoutUI.open();
     box.querySelectorAll('[data-rebind]').forEach(b => { b.onclick = () => startCapture(b.dataset.rebind); });
     const kr = $('set-keys-reset'); if (kr) kr.onclick = () => { G.Input.resetBindings(); render(); };
+    const kc = $('set-keys-compact'); if (kc) kc.onclick = () => { G.Input.applyPreset('compact'); render(); };
+    const kf = $('set-keys-full'); if (kf) kf.onclick = () => { G.Input.applyPreset('full'); render(); };
     box.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => { if (b.dataset.lang !== G.I18n.lang) G.I18n.set(b.dataset.lang); }; });
     const lo = $('set-login'); if (lo) lo.onclick = () => { close(); leave(); };
     const out = $('set-logout'); if (out) out.onclick = () => { close(); leave(); };

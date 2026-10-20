@@ -189,7 +189,6 @@ G.HUD = (() => {
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     ctx.textAlign = 'center';
     ctx.fillText(Math.ceil(pl.hp) + ' / ' + Math.round(pl.maxHp), w / 2, by + BH - 4);
-    drawStatus(ctx, w, by, pl);
 
     // Name: right-aligned against the left end of the bar. Shrinks to fit narrow screens.
     let size = 20;
@@ -252,6 +251,51 @@ G.HUD = (() => {
       ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
       ctx.fillStyle = pw.def.color;
       ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+      y = top - GAPV;
+    }
+    drawDebuffs(ctx, pl, x0, y, CH, GAPV);
+  }
+
+  // Seconds each status started with, for its timer bar (the highest remaining time seen since it appeared).
+  const stMax = {};
+  /** Statuses on the player (slice E1), stacked above the buffs in the same lower-left column: red border, timer bar, and a "Tap H!" prompt while Shake off can help. */
+  function drawDebuffs(ctx, pl, x0, y, CH, GAPV) {
+    const L = G.Status.list(pl);
+    for (const k in stMax) if (!L.some(s => s.k === k)) delete stMax[k];
+    if (!L.length) return;
+    ctx.textAlign = 'left';
+    for (const s of L) {
+      if (s.t != null) stMax[s.k] = Math.max(stMax[s.k] || 0, s.t);
+      ctx.font = F(800, 18);
+      const txt = s.label.toUpperCase() + (s.t != null ? ' ' + Math.ceil(s.t) + 's' : '');
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20;
+      const top = y - CH;
+      roundRect(ctx, x0, top, tw, CH, 9);
+      ctx.fillStyle = 'rgba(40,0,6,.7)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#ff5f6d'; ctx.stroke();
+      ctx.fillStyle = s.color;
+      ctx.fillText(txt, x0 + 10, top + 21);
+      if (s.t != null && stMax[s.k] > 0) {
+        const frac = G.U.clamp(s.t / stMax[s.k], 0, 1);
+        ctx.fillStyle = 'rgba(255,255,255,.18)';
+        ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
+        ctx.fillStyle = s.color;
+        ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
+      }
+      y = top - GAPV;
+    }
+    if (G.Status.shakeable(pl)) {
+      const key = G.Input.keyLabel('shake_off') || '?';
+      const txt = 'TAP ' + key + ' TO SHAKE OFF!';
+      ctx.font = F(800, 16);
+      const tw = Math.ceil(ctx.measureText(txt).width) + 20, top = y - 26;
+      ctx.globalAlpha = 0.65 + 0.35 * Math.sin(performance.now() / 90);
+      roundRect(ctx, x0, top, tw, 26, 8);
+      ctx.fillStyle = '#ffe14d'; ctx.fill();
+      ctx.fillStyle = '#2a1d00';
+      ctx.fillText(txt, x0 + 10, top + 18);
+      ctx.globalAlpha = 1;
+      if (G.Touch) G.Touch.addButton(x0, top, tw, 26, () => G.Status.shake(pl), 10);       // on a touch screen the prompt is the button
     }
   }
 

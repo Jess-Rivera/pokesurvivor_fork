@@ -58,8 +58,8 @@
       desc: 'Has a chance to burn the target.',
       cd: 0.70, dmg: 90, count: 7, arc: 0.9, speed: 380, life: 0.42, size: 6, pierce: 1, burn: 1 },
 
-    { id: 'fire-spin', name: 'Fire Spin', type: 'fire', kind: 'orbit', cat: 'special', ailment: 'trap', ailmentChance: 100, flinch: 0, statChance: 0,
-      desc: 'Prevents the target from fleeing and inflicts damage for 2-5 turns.',
+    { id: 'fire-spin', name: 'Fire Spin', type: 'fire', kind: 'orbit', cat: 'special', ailment: 'burn', ailmentChance: 100, strip: true, burnHalf: true, flinch: 0, statChance: 0,
+      desc: 'Strips every stat boost from the target and burns it for half the usual time. Fire types are immune to the burn, not to the strip.',
       cd: 0.30, dmg: 35, count: 3, radius: 62, speed: 2.4, size: 9 },
 
     { id: 'heat-wave', name: 'Heat Wave', type: 'fire', kind: 'nova', cat: 'special', ailment: 'burn', ailmentChance: 10, flinch: 0, statChance: 0,

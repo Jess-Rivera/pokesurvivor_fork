@@ -5,6 +5,13 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-20 (Claude Desktop) status Slice E1: statuses on the player
+- WHAT CHANGED: status.js (player full timers + 2.5 s grace, daze, drowsy, trap as swap lock, Shake off, jitter, sleepChance, durMul, list with timers), stages.js (stripPositive, remaining; player Speed stage), player.js (spd x stage, stage tick, daze jitter, inflict(), status ring and zzz), enemies.js (CARRIER table, CARRIER_OF 63 species, BANDS.carrier, defForDex), enemy.js (carrier state and cap, status shots, secondary payload, haste nova, shotGap, applyBurn durMul), combat.js (shot and contact payload, Fire Spin strip), moves.js (Fire Spin), mechanics.js (Fire Spin and trap text), game.js (trap swap lock, shake key), input.js (presets, shake_off, conflicts), settings-ui.js (preset buttons, labels), hud.js (debuff stack, shake prompt), debug.js (G.Debug.carrier, statusSelf slow).
+- BEHAVIOR: see DECISIONS 2026-10-20 Slice E1.
+- CHECKED: node --check on every touched file; harnesses E1, A, B, C, D1 to D3, 2b, 2c, elites and gym pass. Not run in a browser.
+- TO FEEL-TEST: G.Debug.carrier('paralysis', 5) (only 2 should come close and shoot), G.Debug.carrier('sleep', 4), carrier('haste', 3) next to a crowd, G.Debug.statusSelf('paralysis') then tap H, trap with G.Debug.statusSelf('trap') then try 1-6 / Z / C, Fire Spin on a boosted gym leader.
+- WHERE WE STOPPED: E1 built. Press "Reset keys" once in Settings > Controls. Next: E2. Reminder: delete docs/proposals/_tmp_gym_h2.js (scratch) before git add -A.
+
 ## 2026-10-20 (Claude Desktop) status Slice D closed
 Ranged shot timers (distance-keeper special shot, support weak shot) now wait out a flinch (enemy.js). D4 dropped (crit stage) / parked (multi-hit, with the bulk move import). Jess browser-tested D1 to D3.
 
@@ -384,3 +391,24 @@ Independent cooldowns + swap hold (combat.js tick, player.js setActive/SWAP_LOCK
 - NEXT: Jess commits, opens dev.html?dev: G.Debug.give('ember'), level up until an Ailment Chance card shows up (or G.Debug.stack('ailchance', 3)), look at the team sheet line and the Apply preview. Then tune/damage-hp (after he has felt the fire nerf) or the slice C design talk (control statuses).
 - REMINDER: Jess commits and pushes (6 code files, css, harness, docs, changelog.js).
 - 2026-10-19 (later): gym leader speed modifiers removed (enemy.js bossMove: chase 1.1x and circle 0.55x skipped for gyms). Retreat in 'far' mode was already base speed. Harnesses pass; not run in a browser.
+
+## 2026-10-20 (Claude Desktop), tileset: Shady Forest atlas + mapping BAKED (no game code touched)
+- WHAT: first biome of the tileset project. tools/make_tileset_shady_forest.py bakes assets/tileset/shady_forest/shady_forest_atlas.png (256x150, 24 pieces, filters baked) plus shady_forest_atlas.json and .js (G.TILESETS.shady_forest, file://-safe). The 2x-enlarged Outside.png is not used; Project Gaia set.png stays as source only. tools/tileset_mockup_shady_forest.py draws a scene from atlas + json only (reference for the autotile rules). Mockup: assets/tileset/catalog/Shady_Forest_final_mockup.png.
+- DECIDED: hedge/bush grass occludes every Pokemon (player + enemies) at a fixed 9 art-px (18 screen px) from the feet anchor, jagged tufts from a world-X hash, no rim; projectiles/HUD draw above. Walls: pinch-point cut + thin-stub deletion (300-shape stress test, 0 unsupported). Full spec in the project doc design/shady-forest-tileset-spec.md.
+- NOT DONE: nothing in js/ loads the atlas yet; map generator cleanup (thin stubs) and the hedge occluder are not implemented. Sprite sizing in the mockups is a proposal only; Jess does the in-game sprite height fix as its own slice.
+- NEXT: Crystal Cave, then Ash Volcano (Jess picks rectangles from the catalog), then rift arenas via filters.
+- REMINDER: Jess commits (new: assets/tileset/shady_forest/*, tools/make_tileset_shady_forest.py, tools/tileset_mockup_shady_forest.py, catalog mockups, DEVLOG). Scratch files in assets/tileset (Gaia_16_*, Gaia_*test*, _*.png) still need deleting by hand.
+- 2026-10-20 (later): FIXED water inner corners in the Shady Forest atlas rules. The 2x2 water inner pieces (G51-H52, G47-H48) hold one corner per TILE (not 8px quadrants): SE-missing uses the top-left tile, SW the top-right, NE the bottom-left, NW the bottom-right, drawn over the edge tile with the plain-water pixels made transparent in the atlas. All four diagonals are used (without the south ones deep water shows square notches). Patch inner corners keep the quadrant rule. Floor edge/inner pieces are packed but their rule is unverified and unused.
+
+## 2026-10-20 — Crystal Cave tileset atlas baked
+- `tools/make_tileset_crystal_cave.py` -> `assets/tileset/crystal_cave/crystal_cave_atlas.{png,json,js}` (`G.TILESETS.crystal_cave`). No colour filter (Gaia art already on palette).
+- Terrains: floor (no ground patch, no grass), deep water (per-tile inner overlay, plain-water pixels transparent), wall (NE/NW inner wedges D527/E527; SE/SW corners use plain tile; Forest cut/pinch/stub rules), pit (behaves like a wall; outer black keyed transparent; interior tiles replaced by inner tile, edge tiles overlaid).
+- Trees t1/t2 (pass+base stacks), t3 base only; rocks r1, r2 (base + pass below, assumption).
+- `tools/tileset_mockup_crystal_cave.py` -> `assets/tileset/catalog/Crystal_Cave_final_mockup.png`. No game code touched.
+
+## 2026-10-20 — Crystal Cave: wall + pit rules corrected
+- Wall: D527 = SW concave corner, E527 = SE concave corner (seam-matched against the block; same job as Forest G446/H446 but in swapped order). NE/NW concave corners use the plain interior tile (no art exists for them). Cut/pinch/stub rules unchanged.
+- Pit: the sheet draws it inside-out (black ring = pit, centre tile = hole). Edge tiles use the block tile on the opposite side; convex corners use the 2x2 inner tiles; concave corners overlay glow-only fillets baked from the block corners (black keyed transparent). Nothing else is keyed. Verified against Jess's reference shape.
+- Regenerated atlas/json/js and `Crystal_Cave_final_mockup.png`. No game code touched.
+- Crystal Cave wall inner corners (D527/E527): the sheet bakes a few ground-tinted pixels into the notch, which read as the floor showing through the wall. They are now filled from the plain interior tile at bake time (generator constant GROUND_TINT). Atlas/json/js and mockup regenerated.
+- Found: Crystal deep-water "inner" D534-E535 is a boulder-in-water island, not concave corners. The overlay rule still draws it at concave water corners; flagged to Jess.
