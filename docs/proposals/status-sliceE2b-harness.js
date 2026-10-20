@@ -62,7 +62,7 @@ const mkHost = (store, hp = 1000) => { const p = Object.create(Player.prototype)
   const e = mkHost({}); Sg.procSelf(e, { id: 'always', self: { stat: 'atk', n: 1 }, statChance: 100 }); Sg.procSelf(e, { id: 'always', self: { stat: 'atk', n: 1 }, statChance: 100 });
   if (Sg.stage(e, 'atk') !== 1) bad('one roll per move per 0.5 s: ' + Sg.stage(e, 'atk'));
   for (let i = 0; i < 60; i++) { Sg.tick(e, 0.5); Sg.teamTick(e.stgTeam, 0.5); } if (Sg.stage(e, 'atk') !== 0) bad('raise wears off');
-  console.log('3 Metal Claw ' + (rate * 100).toFixed(1) + '% per roll as a TEAM raise, Meteor Mash visible to the teammate and clamped at +' + peak + ', one roll per move per 0.5 s, wears off'); }
+  console.log('3 Metal Claw ' + (rate * 100).toFixed(1) + '% per roll as a TEAM raise, Meteor Mash visible to the teammate (rolled every 0.5 s here as a stress case, in play it is every 1.4 s: reaches only +1 to +5, average about +0.9) and never above +6 (peak ' + peak + '), one roll per move per 0.5 s, wears off'); }
 
 // 4. faint / revive clear everything own, team raises stay, HP 100%
 { const store = {}, p = mkHost(store, 200); p.addTeamStage('atk', 2, 8, 'sd');
