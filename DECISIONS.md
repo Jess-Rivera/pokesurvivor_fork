@@ -2,6 +2,12 @@
 
 Standing design and workflow rulings. Once something is here, treat it as settled, do not relitigate it.
 
+## 2026-10-19, Status Slice D3: drain (Giga Drain) [Jess decided, branch feature/status-sliceD]
+- Giga Drain is now ONE projectile (kind projectile, heart-shaped shot) instead of an aura. Power stays at the API-based 75 (Jess: "we're leaving that"). It heals 50% of the damage it ACTUALLY takes off the enemy (overkill past the enemy's HP excluded, shield absorbed counts), UNCAPPED (Jess 2026-10-19: "leave uncapped and we'll see if it's broke"; watch the logs for sustain; the engine still honours an optional `drainCap` fraction of max HP per hit if a move sets one). The old flat cap of 6 and the aura per-enemy heal are removed. Not applied to a teammate's ghost shot.
+- Move field `fixed: ['count', 'pierce']`: keys listed can never take upgrade cards (mechanics.js check()); Giga Drain is always one shot and never pierces. Power, Recharge, Size, Range and Speed cards still apply. Reusable for other single-shot moves.
+- Jess: saves are not a concern (every run is fresh and no starter has Giga Drain). Move fields: `drain` (fraction of damage dealt), optional `drainCap` (fraction of max HP per hit, unused for now). Mega Drain, Absorb, Leech Life, Drain Punch, Horn Leech, Dream Eater come with the bulk move import.
+- Offline: docs/proposals/status-sliceD3-harness.js. NOT run in a browser.
+
 ## 2026-10-19, Action bar without boxes + move search [Jess decided, branch feature/status-sliceD]
 - Action bar: a single move is the bare icon at 54 px (3x native, no distortion); cooldown shade and cast flash are masked to the icon pixels; the active move gets a yellow silhouette outline (plus the existing raise and name). Empty slots and BONDED groups keep the box (bond = pink border, 2x2 icons).
 - Pokedex/Team search also matches moves: a word of the move name starts with the query (min 3 chars) -> every Pokemon whose type pools contain it; Normal-type moves (learnable by all) match only on the full name. Union with name/# matches; unowned Pokemon included for move matches. Ranked: moves whose NAME starts with the query (and name/# hits) first, word-only matches (e.g. Bug Bite for "bit") below.

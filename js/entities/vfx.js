@@ -328,7 +328,7 @@ G.VFX = (() => {
     'vine-whip':     { melee: 'vine' },
     'razor-leaf':    { proj: 'leaf' },
     'leaf-storm':    { proj: 'leaf' },
-    'giga-drain':    { aura: 'heart', inward: true },
+    'giga-drain':    { proj: 'heart' },
     'thunder-shock': { proj: 'bolt', trail: 'spark' },
     'discharge':     { aura: 'bolt' },
     'thunderbolt':   { beam: 'lightning' },

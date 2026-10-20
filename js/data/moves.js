@@ -96,10 +96,11 @@
       desc: 'Lowers the user\'s Special Attack by two stages after inflicting damage.',
       cd: 0.26, dmg: 130, count: 4, radius: 74, speed: 2.6, size: 8 },
 
-    // (Formerly Giga Drain: it healed with every hit and was broken. Same id so as not to break saves.)
-    { id: 'giga-drain', name: 'Giga Drain', type: 'grass', kind: 'aura', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
+    // Giga Drain (slice D3): ONE heart-shaped shot (a former aura healed per enemy and was broken). Heals `drain` (50%) of the damage it
+    // actually deals, UNCAPPED on purpose (Jess: leave it and see if it is broken; `drainCap` is still honoured if a move sets it). `fixed` keys can never take upgrade cards: always one shot, no pierce.
+    { id: 'giga-drain', name: 'Giga Drain', type: 'grass', kind: 'projectile', cat: 'special', ailment: 'none', ailmentChance: 0, flinch: 0, statChance: 0,
       desc: 'Drains half the damage inflicted to heal the user.',
-      cd: 0.55, dmg: 75, radius: 76 },
+      cd: 0.55, dmg: 75, speed: 290, count: 1, spread: 0, pierce: 0, life: 1.5, size: 8, drain: 0.5, fixed: ['count', 'pierce'] },
 
     // ---------------- ELECTRIC ----------------
     { id: 'thunder-shock', name: 'Thunder Shock', type: 'electric', kind: 'projectile', cat: 'special', ailment: 'paralysis', ailmentChance: 10, flinch: 0, statChance: 0,

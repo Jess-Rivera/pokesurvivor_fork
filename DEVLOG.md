@@ -5,6 +5,9 @@ Append an entry at the end of every session: what changed, what was decided, wha
 
 ---
 
+## 2026-10-19 (Claude Desktop) status Slice D3: drain, plus player melee reach fix
+Giga Drain -> single heart projectile with drain 0.5 uncapped / fixed count+pierce (moves.js, vfx.js, mechanics.js check, combat.js drainHeal at both player hit sites). Separate fix: player melee hit circle and cast trigger include body radii (matches wild contact reach 1.3x). Harness status-sliceD3-harness.js passes; not run in a browser.
+
 ## 2026-10-19 (Claude Desktop) UI: borderless action bar, move search, Team grid fix
 hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js moveQuery() + filterSortDex; style.css align-content on .ros-grid and #scr-dex .grid; placeholders in dev.html. Not run in a browser.
 

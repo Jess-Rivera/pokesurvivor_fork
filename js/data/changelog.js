@@ -6,6 +6,13 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-19', title: ['Giga Drain', 'Giga Drain'], new: [
+    ['Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.',
+     'Giga Drain is now a single shot that heals you for half of the damage it deals. It can\'t gain extra projectiles or pierce from upgrades.'],
+  ], fix: [
+    ['Your melee attacks now reach as far as enemy melee does, so a close enemy can no longer hit you before you can hit it.',
+     'Your melee attacks now reach as far as enemy melee does, so a close enemy can no longer hit you before you can hit it.'],
+  ] },
   { d: '2026-10-19', title: ['Menus and action bar', 'Menus and action bar'], new: [
     ['The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.',
      'The search box in the Pokédex and the Team screen also searches moves: type a move name (or part of a word, like "pulse") and you get every Pokémon that can learn it.'],

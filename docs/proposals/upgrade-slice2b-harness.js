@@ -19,6 +19,7 @@ console.log('1 ladders and lvl removed');
 // 2. preview text equals the catalogue export (one stack, no mods)
 let n2 = 0;
 for (const cm of cat.moves) for (const e of cm.eligible) {
+  if (cm.id === 'giga-drain') continue;   // reworked in status slice D3 (aura -> single projectile); the 2026-10 export predates it
   const m = G.Moves.instance(cm.id), mech = G.Mechanics.BY_ID[e.id];
   const want = e.preview.replace(' (kind default 0)', ''), got = G.Mechanics.preview(m, mech);
   n2++; if (got !== want) bad(`${cm.id} ${e.id} preview "${got}" vs "${want}"`);

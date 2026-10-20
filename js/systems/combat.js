@@ -234,13 +234,10 @@ G.Combat = (() => {
       }
     }
     if (ghost) return;
-    let healed = 0;
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m);
-      if (m.drain) healed += m.drain;
     }
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
-    if (healed > 0) pl.heal(Math.min(healed, 6));
   }
 
   function buff(pl, m) {
@@ -600,6 +597,15 @@ G.Combat = (() => {
   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
   // type x crit on top, exactly where they were before.
+  /** Drain (slice D3): heal `m.drain` of the damage ACTUALLY taken (overkill past the enemy's HP excluded, shield counts), at most
+   *  `m.drainCap` of max HP per hit. Not for a teammate's ghost shot. */
+  function drainHeal(pl, m, e, hp0, sh0) {
+    if (!m || !m.drain || ghost || pl.dead) return;
+    const dealt = (hp0 - Math.max(0, e.hp)) + (sh0 - (e.shield || 0));
+    if (dealt <= 0) return;
+    pl.heal(Math.min(dealt * m.drain, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
+  }
+
   function hit(pl, e, factor, col, dx, dy, knock, m) {
     const ds = enemyDefStats(e), dl = defLevel(e, pl.level), dm = defStage(e, m);
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
@@ -613,6 +619,7 @@ G.Combat = (() => {
       const dS = c === 2 ? 50 : (c === 1 ? G.Stats.spDef(ds.spd, dl) : G.Stats.defense(ds.def, dl)) * dm;
       G.Log.hitOut(pl, m, e, c, factor, dS, c !== 2 && pl.stabFor(m) ? G.Stats.STAB : 1, k, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), m.norm || 1);
     }
+    drainHeal(pl, m, e, hp0, sh0);
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
     procAilments(e, m.burn, m.poison, m);
@@ -742,6 +749,7 @@ G.Combat = (() => {
           G.Log.hitOut(pl, pm, e, c, p.dmg, dS, c !== 2 && p.stab ? G.Stats.STAB : 1, tk, crit, dmg, hp0, Math.max(0, e.hp), Math.max(0, sh0 - (e.shield || 0)), pm.norm || 1);
         }
         if (Math.random() < 0.5) G.FX.sp('impact', p.vis ? p.vis.pal : 'normal', e.x, e.y - e.bodyH * 0.5, { life: 0.12, scale: 1 });
+        drainHeal(pl, pm, e, hp0, sh0);
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
         procAilments(e, p.burn, p.poison, pm);
@@ -785,6 +793,6 @@ G.Combat = (() => {
     }
   }
 
-  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage, procFlinch,
+  return { tick, resolve, ghostCast, ghostOrbit, updateFields, drawGroundFields, drawAirFields, clearFields, procAilments, defStage, procFlinch, drainHeal,
            get fieldCount() { return fields.length; } };
 })();
