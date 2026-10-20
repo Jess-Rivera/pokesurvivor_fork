@@ -220,11 +220,14 @@ G.RunUI = (() => {
     G.UI.show('scr-over');
   }
 
-  /** You found an item while already carrying one: which do you keep? */
-  function showItemChoice(cur, next, cb) {
+  /** You found an item while the slot is full: which do you keep? `run` = a run-tier item (team-wide grid, not one Pokemon). */
+  function showItemChoice(cur, next, cb, run = false) {
     const box = $('item-cards');
     box.innerHTML = '';
-    [[cur, 'Quedarme con'], [next, 'Cambiar a']].forEach(([id, verb], i) => {
+    const scr = $('scr-item');
+    scr.querySelector('h2').textContent = run ? 'A run item!' : 'An item!';
+    scr.querySelector('.sub').innerHTML = (run ? 'Your run slots are full' : 'Only one per Pokemon') + ' · <kbd>1</kbd> <kbd>2</kbd>';
+    [[cur, 'Keep'], [next, 'Switch to']].forEach(([id, verb], i) => {
       const it = G.Items.BY[id];
       const el = document.createElement('div');
       el.className = 'card' + (i === 1 ? ' evo' : '');

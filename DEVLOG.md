@@ -6,6 +6,11 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 
 ---
 
+## 2026-10-20 (Claude Desktop) external links removed from game menus
+- dev.html: removed the PS_PAGES flag, the Guide/Pokedex links on the login screen and in the noscript text, the Source code (GitHub) line in the legal panel; SpriteCollab and PokeAPI credits are now plain text.
+- js/ui/settings-ui.js: removed the Guide, Pokedex, Contacto and GitHub buttons in the credits panel (Aviso legal button stays). js/ui/ui.js: removed the legal-repo wiring.
+- js/data/funding.js: kofi set to empty, so the Support button and the end-of-run Ko-fi ask stay hidden through their existing guards (restore the username to re-enable). The mailto contact line in the legal panel was kept.
+
 ## 2026-10-20 (Claude Desktop) website/SEO files moved to _delete_/
 - Moved the static website pages (apoyar, contacto, en, guia, legendarios, logros, movimientos, novedades, objetos, pokedex, shinies, tipos), 404.html, robots.txt, sitemap.xml, .nojekyll, css/pages.css, assets/og-image.jpg, tools/make_seo_pages.py, tools/activar_dominio.sh, docs/SEO.md, DOMINIO.md, PUBLICAR.md into `_delete_/` (same relative paths, so restoring is a plain move back). `_delete_/` is in .gitignore.
 - Left in place: dev.html, js/, css/style.css, assets (sprites, fonts, icons, tileset), manifest.webmanifest, sw.js, favicon.ico, tools/build.js, Firebase/Cloudflare/functions files (deferred multiplayer, not webpages).
@@ -176,3 +181,10 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - Found: _delete_/ is an intentional gitignored pending-delete pile (SEO pages), not stray leftovers. The 2a harness needs a work copy that no longer exists.
 - Where we stopped: waiting on Jess for the three open F1 questions (STATE.md), then cut feature/items.
 - REMINDER: Jess commits (docs, STATE.md, .ignore, .gitignore, tools/check.js, tileset files, slice E).
+
+## 2026-10-20 (night, Claude Desktop) Item rework F1 built
+- Rulings closed (DECISIONS): separate stat multiplier, 10% placeholder run chance, tsconfig OK, Stones ignore resist+immunity, Sharp Scissors 1.0x-2.0x speed linear on team HP applied last, Round Glasses as first proposed.
+- Built: items.js rewritten (tiers, English text, rollFor, runSlots); player.js hasItem ignores benched holders and reads shared runItems; game.js equipRun and tiered offerItem; run-ui prompt wording; HUD run strip; sheet run line; boss/gym drops via rollFor; dev.html scr-item text English.
+- Tests: docs/proposals/items-f1-harness.js (new) plus all 15 harnesses via tools/check.js; headless Chromium run on dev.html?dev (pickup flow, swap prompts, run item on whole team, replace, 2 slots, HUD, sheet): all pass, no page errors.
+- Fixed in passing: gym-reward-harness stub needed Items.rollFor. Found: G.Game has no item() (it is the coop api), so tests drop an item pickup instead.
+- Where we stopped: F1 waits for Jess's feel-test, then commit. REMINDER: commit and push (F1 files, docs, tsconfig.json, tools/globals.d.ts).

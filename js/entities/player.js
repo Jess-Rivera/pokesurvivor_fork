@@ -88,7 +88,8 @@ G.Player = class Player {
     this.isPlayer = true;
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
     this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
-    this.item = null;          // objeto equipado (data/items.js), uno por run
+    this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
+    this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
   }
@@ -205,7 +206,7 @@ G.Player = class Player {
     if (!free && this.swapT > 0) return;           // still holding the slot you just switched to
     // Choice Band: you cannot switch moves.
     if (this.hasItem('choiceband') && this.slots[this.active]) {
-      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Cinta Elección', '#ff8ad8');
+      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Choice Band', '#ff8ad8');
       return;
     }
     this.active = i;
@@ -367,7 +368,7 @@ G.Player = class Player {
       this.sashT = performance.now();
       this.hp = 1; this.invuln = 1.2;
       if (LOG) G.Log.faint(true, 1);
-      G.FX.dmgText(this.x, this.y - this.bodyH - 16, '¡Banda Focus!', '#ff9a3d', true);
+      G.FX.dmgText(this.x, this.y - this.bodyH - 16, 'Focus Sash!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
     if (this.hp <= 0) {
@@ -438,10 +439,12 @@ G.Player = class Player {
     this.hp = Math.round(this.maxHp * frac);
   }
 
-  // ---------------- objeto equipado ----------------
-  hasItem(id) { return this.item === id; }
+  // ---------------- held items ----------------
+  /** True when `id` is in effect for this Pokemon: its own held item while it is NOT benched (held effects only work
+   *  on the field), or any run-tier item the team carries. */
+  hasItem(id) { return (!this.benched && this.item === id) || this.runItems.includes(id); }
 
-  /** Equips an item (and removes whatever was carried). */
+  /** Equips a Pokemon-tier item on THIS Pokemon (and removes whatever it carried). Run-tier items go through G.Game. */
   equip(id) {
     if (this.item) G.Items.BY[this.item].off(this);
     this.item = id;
@@ -450,7 +453,7 @@ G.Player = class Player {
 
   /** Shell Bell: a little health for the damage you do (cap 4/s). */
   onDealt(dmg) {
-    if (this.item === 'shellbell') this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+    if (this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
   }
 
   /** An altar's power (see systems/interact.js): it applies and removes itself. */

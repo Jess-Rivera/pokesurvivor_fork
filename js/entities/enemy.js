@@ -304,8 +304,8 @@
       if (this.boss && !this.judge) {
         G.Camera.kick(0.9);
         for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
-        // Bosses always drop an equippable item.
-        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+        // Bosses always drop an item: a Pokemon item, with a small placeholder chance of a RUN item (Items.RUN_CHANCE).
+        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('boss', G.Game.player.runItems));
       }
       // Wild enemy: Gen 5 yield from its species base_experience, its spawn level and the player's
       // level right now (shared run level, so the highest among the players).
@@ -321,7 +321,11 @@
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
         G.Elites.noteDeath(this);
       }
-      else if (this.gym) { /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin) */ }
+      else if (this.gym) {
+        /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop one guaranteed item
+           (picked up by the arena's pullAll): a Pokemon item, or a RUN item with the placeholder Items.RUN_CHANCE.gym. */
+        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('gym', G.Game.player.runItems));
+      }
       else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.

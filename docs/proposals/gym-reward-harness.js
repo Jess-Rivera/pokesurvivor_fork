@@ -16,7 +16,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Game: { player: pl, st: { get time() { return clock; } }, everyone: () => [pl], grantLevels: n => { log.levels += n; }, reviveTeam: () => { log.revives++; }, badgeBoost: (st, pc) => log.boosts.push(st + ':' + pc), offerBond: () => { log.bondOffers++; }, flash() { } },
   Spawner: { CAP: 64, say: t => log.says.push(t) }, Progress: { event: (k, d) => log.progress.push(k) },
   Pickups: { drop: (k, x, y, v) => log.drops.push(k), dropXp: (x, y, v, boss, leg, plain) => log.dropXp.push({ v: Math.round(v), boss, plain }), pullAll() { log.pulled = true; } },
-  Items: { roll: () => 'x' }, Judgment: { AT: 1800, noteDmg() { } }, Log: { on: false } };
+  Items: { roll: () => 'x', rollFor: () => 'x' }, Judgment: { AT: 1800, noteDmg() { } }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/rift.js', 'js/systems/gym.js'].forEach(p => {

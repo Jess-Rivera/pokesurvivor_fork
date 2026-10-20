@@ -9,7 +9,7 @@
  *   costs     expenses [item, euros per month]; if the cost is not fixed, a text
  */
 G.Funding = {
-  kofi: 'jpter78',
+  kofi: '',
   sponsors: 'JPTER78',
   costs: [
     ['Servidores (partidas, cuentas, ranking y multijugador)', 'Según cuánta gente juegue'],

@@ -649,6 +649,25 @@ G.HUD = (() => {
       }
     }
 
+    // ---------- run items (team-wide, to the left of the held item); only filled slots are drawn ----------
+    if (pl.runItems && pl.runItems.length) {
+      pl.runItems.forEach((rid, k) => {
+        const rx = sx - S - 18 - (S + 8) * (k + 1), ry = sy, def = G.Items.BY[rid];
+        if (!def) return;
+        roundRect(ctx, rx, ry, S, S, 12);
+        ctx.fillStyle = 'rgba(30,14,44,.9)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#c47bff';
+        ctx.stroke();
+        G.Icons.draw(ctx, rid, rx + (S - 36) / 2, ry + (S - 36) / 2, 36);
+        ctx.font = F(700, 9);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#d9a6ff';
+        ctx.fillText(def.name, rx + S / 2, ry - 6);
+      });
+    }
+
     // ---------- pause button (touch) ----------
     if (touch) {
       const sa = G.Touch.safeArea();

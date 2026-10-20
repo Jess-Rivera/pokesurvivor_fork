@@ -133,6 +133,9 @@ G.Game = (() => {
     // member runs Player.update(), so the shared timers still tick exactly once
     // per frame, including while the caster sits on the bench. The object is never reassigned.
     roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
+    // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
+    const runItems = [];
+    roster.forEach(f => { f.runItems = runItems; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
@@ -519,22 +522,47 @@ G.Game = (() => {
     if (openItem && !G.UI.isOpen('scr-item')) {
       const o = openItem;
       if (o.mine) { state = 'choice'; if (G.Coop.active) G.Coop.holdStart(); }
-      G.RunUI.showItemChoice(o.cur, o.next, o.take);
+      G.RunUI.showItemChoice(o.cur, o.next, o.take, o.run);
       return;
     }
     if (laterItems.length) offerItem(laterItems.shift());
   }
 
-  /** You picked up an item: if you carry none you equip it; otherwise, you choose. */
+  /**
+   * Run tier: put `id` on the whole team (on() for EVERY roster member), optionally replacing `replace` first.
+   * Pokemon-tier items never come through here (they live on one Pokemon, pl.equip).
+   */
+  function equipRun(id, replace) {
+    const list = pl.runItems;
+    if (replace) {
+      const i = list.indexOf(replace);
+      if (i >= 0) { for (const f of roster) G.Items.BY[replace].off(f); list.splice(i, 1); }
+    }
+    for (const f of roster) G.Items.BY[id].on(f);
+    list.push(id);
+  }
+
+  /**
+   * You picked up an item. Pokemon tier: it goes to the ACTIVE Pokemon, and if that Pokemon already holds one you choose.
+   * Run tier: it takes a free run slot; with the grid full you choose against the last one added (the Inventory
+   * screen will replace this with a proper slot picker). Ground-tier items never come through here.
+   */
   function offerItem(id) {
-    if (!pl || !G.Items.BY[id]) return;
+    const def = pl && G.Items.BY[id];
+    if (!def) return;
     if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
+    const run = def.tier === 'run';
+    const owned = run ? pl.runItems : [pl.item];
+    if (owned.includes(id)) { G.Spawner.say('You already hold ' + def.name, 2, true); return; }
+    // What the new item would replace: nothing (free slot), or the item currently in the way.
+    const full = run ? pl.runItems.length >= G.Items.runSlots(G.DB.save) : !!pl.item;
+    const cur = !full ? null : run ? pl.runItems[pl.runItems.length - 1] : pl.item;
     let mine = false;            // this choice is the one that stopped the game
     const take = got => {
       openItem = null;
-      if (got !== pl.item) {
-        pl.equip(got);
-        G.Spawner.say('¡Llevas ' + G.Items.BY[got].name + '!', 2.6, true);
+      if (got !== cur) {
+        if (run) equipRun(got, cur); else pl.equip(got);
+        G.Spawner.say(run ? 'Picked up ' + G.Items.BY[got].name + '!' : pl.mon.name + ' got ' + G.Items.BY[got].name + '!', 2.6, true);
         G.Progress.event('item', { id: got });
       }
       if (!mine) { afterLevelUp(); return; }
@@ -542,8 +570,7 @@ G.Game = (() => {
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
-    if (!pl.item) { take(id); return; }
-    if (pl.item === id) { G.Spawner.say('Ya llevas ' + G.Items.BY[id].name, 2, true); return; }
+    if (!cur) { take(id); return; }
     // The game stops while you choose; in a group, for everyone (as with the
     // fusions). Before, in a group it continued and you got hit while choosing.
     if (state === 'playing' || state === 'held') {
@@ -551,8 +578,8 @@ G.Game = (() => {
       state = 'choice';
       if (G.Coop.active) G.Coop.holdStart();
     }
-    openItem = { cur: pl.item, next: id, take, get mine() { return mine; } };
-    G.RunUI.showItemChoice(pl.item, id, take);
+    openItem = { cur, next: id, take, run, get mine() { return mine; } };
+    G.RunUI.showItemChoice(cur, id, take, run);
   }
 
   /** @param who  who picked it up (in co-op it can be a teammate) */

@@ -1,25 +1,23 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep this file under 3 KB. Rewrite it at the end of every session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-20 (Claude Desktop, evening).
+Last updated: 2026-10-20 (Claude Desktop, night).
 
 ## Where we are
-- Status slices A to E are built and closed (offline harnesses pass; Jess feel-tests each change). Boss rework: Overworld Elites and the Brock pilot gym are merged.
+- Status slices A to E are built and closed. Boss rework: Overworld Elites and the Brock pilot gym are merged.
 - Tileset: atlases for Shady Forest, Crystal Cave and Ash Volcano are baked but nothing in js/ loads them yet.
-- Item rework (feature/items): DESIGN AGREED, nothing built. Three tiers: ground items (auto-activate on contact), Pokemon items (one per Pokemon, active only while it is on the field), run items (very rare, 2x2 inventory grid starting at 1 slot). Rulings: DECISIONS 2026-10-20 Item rework.
-- Repo hygiene pass done 2026-10-20: DECISIONS, DEVLOG, TODO rotated to docs/*-archive.md, this file added.
-- Git state is unknown to the assistant. Jess should commit (tileset files, slice E, these docs) and cut feature/items from main.
+- Item rework (feature/items): F1 BUILT 2026-10-20 night (harness + headless test pass, Jess has NOT feel-tested yet). Pokemon tier per holder (held effects only while active), run tier shared by the team (1 slot, save.runSlots), 11 items ported (9 Pokemon, Lucky Egg and Amulet Coin run), all item text now English. Gym leader drops one guaranteed item, boss and gym have a placeholder run-item chance (5% / 10%). Rulings: DECISIONS 2026-10-20 (three entries).
+- Not built yet: Stones (ignore resistance AND immunity), Sharp Scissors (speed x1.0 at full team HP to x2.0 at 1%, applied last), Round Glasses (crit over 100%, free re-cast after 0.2 s at -100 points). All rulings final.
+- tsconfig.json (checkJs, noEmit) added, scope is js/data/items.js only (`tsc -p tsconfig.json`).
+- Git state is unknown to the assistant. Jess commits (F1 files, tileset files, slice E, docs) on feature/items. _delete_/headless-stage.tgz is a scratch tarball from the headless test, safe to delete.
 
 ## Next (in order)
-1. Item framework slice F1: data-driven item hooks, per-holder state, run tier, ground tier, port the 11 items (9 to Pokemon tier, Lucky Egg and Amulet Coin to run tier). Then F2 team sheet reassignment plus HUD, F3 ground-item content, PokeAPI import via a rules table, Inventory screen and gacha.
+1. Feel-test F1 (dev.html?dev, one slot). Then F2: team sheet reassignment screen plus HUD polish. F3: ground-item content, PokeAPI import via a rules table, Inventory screen and gacha, run-item content (Stones, Sharp Scissors, Round Glasses).
 2. Boss damage slice (bosses still use flat def.dmg) and Gym 2 (Misty and Staryu).
 3. Tileset integration (loader, generator cleanup, hedge occluder).
 
-## Open questions for Jess (F1)
-- Stat items: separate multiplier (keeps today's port identical; assistant's lean) or fed into the additive increase pool?
-- Placeholder chance of a run item from a gym leader instead of the Pokemon item (assistant proposed 10%).
-- OK to add a tsconfig with checkJs and a tsc --noEmit check (config change)?
-- Run item details still open: Stone versus immunity and the soft type chart, Sharp Scissors curve and cap, Round Glasses repeat-chain reading.
+## Open questions for Jess
+- None blocking. Tune later: run-item drop chances, what a full run grid should compare against once there are 2+ slots.
 
 ## Standing rules (full text: CLAUDE.md)
 - Local-first: no Firebase, TURN or multiplayer work until Jess switches phase.

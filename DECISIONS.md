@@ -6,6 +6,11 @@ ARCHIVE: older and superseded entries (mostly 2026-10-17 and 2026-10-18 build re
 Search it by keyword (grep) before assuming a topic was never decided. If an archived entry conflicts with an entry here, this file wins.
 Convention: new entries stay at most about 10 lines (the rule and the why); long detail belongs in the harness or proposal doc.
 
+## 2026-10-20, No external links in game menus; website files parked
+- Menus show no links to outside sites. Ko-fi is disabled by blanking `kofi` in js/data/funding.js (guards hide the Support button and run-end ask); restore it to re-enable.
+- SpriteCollab and PokeAPI credits stay as plain text (attribution kept, no hyperlink). The mailto contact line stays.
+- SEO/website pages and their generators live in `_delete_/` (gitignored). Build the bundle with `--sin-seo`.
+
 Archived entries (heading only):
 - 2026-10-18, Opening pacing: XP boost and elite gate
 - 2026-10-18, Slice 1c design answered: shots, support crowd-seeking, contact gap, flanker
@@ -459,3 +464,12 @@ its x1.6 (it is a behavior archetype, not a base-stat multiplier).
 
 - RULINGS 2026-10-20 (later, Jess answered the open questions): (1) a found Pokemon item goes to the ACTIVE Pokemon; reassignment happens on the team sheet; a swap prompt appears if the holder already carries one. (2) Held effects work ONLY while the holder is the active Pokemon (no benched effects). (3) Lucky Egg and Amulet Coin move to the INVENTORY tier (very rare); a new account may get one or the other for free at start. (4) Drop tiers agreed: ground items from common drops and chests; Pokemon items from chests, elites (the 50% roll) and the gym guaranteed item; run items from a rare gym or boss chance plus the gacha. (5) Gacha run items are managed on an Inventory screen (pre-run loadout), a LATER slice, not part of the framework slice.
 - STILL OPEN: Stone vs immunity and the chart dependency, Sharp Scissors curve and cap, Round Glasses repeat-chain reading, TypeScript check experiment (offered, not answered).
+
+- RULINGS 2026-10-20 (evening, Jess closed the remaining opens): (1) Stat items use a SEPARATE multiplier (today's port stays identical), not the additive increase pool. (2) Placeholder gym-leader chance of a run item instead of the Pokemon item is OK (start at 10%). (3) tsconfig with checkJs plus a tsc --noEmit check is OK (config change, goes in the F1 plan). (4) Stones ignore resistance AND immunity for their type. (5) Sharp Scissors: movement speed multiplier scales linearly from 1.0x at 100% team HP to 2.0x at 1% team HP, applied LAST in the speed chain. (6) Round Glasses: keep the earlier reading (crit chance may exceed 100%; a crit on a move over 100% re-casts it 0.2 s later for free with the chance reduced by 100 points). All F1 questions are now closed.
+
+## 2026-10-20 (night), Item rework F1 built (feature/items)
+- Roster members are separate Player objects, so a Pokemon item's on()/off() only touches the holder, and `hasItem()` returns false for a benched holder (held effects only on the field). Per-holder state (Focus Sash timer, Shell Bell charge) needed no new storage.
+- Run tier: ONE id array shared by every roster member (`pl.runItems`), on()/off() applied to every member by `equipRun` in game.js. Slots: `G.Items.runSlots(save)` (save.runSlots, default 1, cap 4; absent in old saves). A full grid prompts against the LAST item added (placeholder until the Inventory screen).
+- Drops: chests and elite roll stay Pokemon items; boss always drops an item with a 5% run chance, gym leader now drops one guaranteed item with a 10% run chance (`G.Items.RUN_CHANCE`, placeholder). Lucky Egg and Amulet Coin no longer drop from chests.
+- Item text is now English (names, descs, toasts, scr-item screen). The old Spanish keys stay in lang-en.js, unused.
+- Stones, Sharp Scissors, Round Glasses are NOT built (content slice). tsconfig.json (checkJs, noEmit) added with only js/data/items.js in scope; run `tsc -p tsconfig.json`.
