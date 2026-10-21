@@ -1073,6 +1073,8 @@ G.Game = (() => {
     get state() { return state; }, get player() { return pl; }, st,
     // team (Phase A)
     get roster() { return roster; },
+    /** Equip a run-tier item on the whole team (debug / future inventory). Honors the group-exclusion rule. */
+    equipRun(id, replace) { equipRun(id, replace); },
     get activeIndex() { return activeIdx; },
     get swapCooldown() { return swapLock; },
     get swapMax() { return SWAP_LOCK; },
