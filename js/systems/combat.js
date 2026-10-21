@@ -649,7 +649,8 @@ G.Combat = (() => {
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
     const xb = (pl.expertBelt && k > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
-    dmg = floorHit(dmg * k * xb * (crit ? CRIT_MUL : 1), m);
+    const tb = (pl.typeBoost && pl.typeBoost === m.type) ? 1.2 : 1;      // type-damage item: +20% to its type (F3b)
+    dmg = floorHit(dmg * k * xb * tb * (crit ? CRIT_MUL : 1), m);
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
@@ -780,7 +781,8 @@ G.Combat = (() => {
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
         const xb = (pl.expertBelt && tk > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
-        const k = tk * xb * (crit ? CRIT_MUL : 1);
+        const tb = (pl.typeBoost && pl.typeBoost === p.mtype) ? 1.2 : 1;      // type-damage item: +20% to its type (F3b)
+        const k = tk * xb * tb * (crit ? CRIT_MUL : 1);
         dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,

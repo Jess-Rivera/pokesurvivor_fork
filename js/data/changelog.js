@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-21', title: ['Type-boosting held items', 'Type-boosting held items'], new: [
+    ['A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).',
+     'A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).'],
+  ] },
   { d: '2026-10-21', title: ['Cleaner move cards', 'Cleaner move cards'], chg: [
     ['Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.',
      'Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.'],

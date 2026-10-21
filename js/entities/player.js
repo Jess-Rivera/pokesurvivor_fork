@@ -24,6 +24,7 @@ G.Player = class Player {
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
     this.moveRadiusMul = 1;      // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
+    this.typeBoost = null;       // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
     this.regenFlat = perks.regen || 0;
     this.magnet = 78 * (perks.magnetMul || 1);
     this.xpMul = perks.xpMul || 1;
