@@ -19,19 +19,23 @@ try { load('js/entities/player.js'); P = G.Player; } catch (e) { console.log('pl
 if (!P) { console.log('G.Player missing'); process.exit(1); }
 const I = G.Items;
 const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
+  critChance: 0, expertBelt: false, bigRoot: false, sludgeHurt: false, myTypes: [], moveRadiusMul: 1,
   hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt, swapHeldItem: P.prototype.swapHeldItem });
 
 // 1. the port
 { const pk = I.LIST.filter(i => i.tier === 'pokemon').map(i => i.id), rn = I.LIST.filter(i => i.tier === 'run').map(i => i.id);
-  if (I.LIST.length !== 11 || pk.length !== 9) bad('counts ' + I.LIST.length + '/' + pk.length);
+  if (I.LIST.length !== 20 || pk.length !== 18) bad('counts ' + I.LIST.length + '/' + pk.length);
   if (rn.sort().join() !== 'amuletcoin,luckyegg') bad('run tier ' + rn);
   if (I.LIST.some(i => !['pokemon', 'run', 'ground'].includes(i.tier))) bad('unknown tier');
   const SPAN = /[ñáéíóúÁÉÍÓÚ¡¿]|\b(de|los|tu|un|el|la)\b/;
   for (const i of I.LIST) if (SPAN.test(i.name.replace(/Poké/g, 'Poke')) || SPAN.test(i.desc.replace(/Poké/g, 'Poke'))) bad('not English: ' + i.id + ' ' + i.name + ' / ' + i.desc);
-  console.log('1 port: 11 items (9 pokemon, 2 run), English text'); }
+  console.log('1 port: 20 items (18 pokemon, 2 run), English text'); }
 
 // 2. on/off symmetry (separate multiplier, no drift)
-{ for (const it of I.LIST) { const p = mk(), b = JSON.stringify(p); it.on(p); it.off(p);
+{ // F3b items use float multipliers (atkMul x1.1, critChance +-0.05) and flags that round-trip within tolerance, not exact
+  // JSON equality; they are checked in section 7 with near(). Section 2 stays the exact-snapshot guard for the F1 set.
+  const F3B = new Set(['muscleband', 'wiseglasses', 'scopelens', 'razorclaw', 'expertbelt', 'bigroot', 'blacksludge', 'widelens', 'zoomlens']);
+  for (const it of I.LIST) { if (F3B.has(it.id)) continue; const p = mk(), b = JSON.stringify(p); it.on(p); it.off(p);
     const a = JSON.stringify(p); if (a !== b && !(it.id === 'leftovers')) bad('drift ' + it.id + ' ' + b + ' -> ' + a);
     if (it.id === 'leftovers' && !near(p.regenFlat, 0)) bad('leftovers drift'); }
   const p = mk(); I.BY.choiceband.on(p); if (!near(p.atkMul, 1.4)) bad('choiceband 1.4'); I.BY.lifeorb.on(p); if (!near(p.atkMul, 1.4 * 1.3)) bad('multipliers stack multiplicatively');
@@ -87,6 +91,39 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
   const e = mk(), f = mk(); e.equip('leftovers'); f.maxHp = 400; e.swapHeldItem(f);
   if (!near(e.regenFlat, 0) || !near(f.regenFlat, 6)) bad('leftovers recomputed from the new holder: ' + e.regenFlat + '/' + f.regenFlat);
   console.log('6 swapHeldItem: move, swap, 50 round-trips clean, no-ops null, sash cooldown travels, Leftovers uses the new holder max HP'); }
+
+// 7. F3b imports: the 7 new held items (near()-based, since they use float multipliers and flags)
+{ // effect magnitudes
+  const ma = mk(); I.BY.muscleband.on(ma); if (!near(ma.atkMul, 1.1)) bad('muscle band +10% -> ' + ma.atkMul);
+  const wg = mk(); I.BY.wiseglasses.on(wg); if (!near(wg.atkMul, 1.1)) bad('wise glasses +10% -> ' + wg.atkMul);
+  const sc = mk(); I.BY.scopelens.on(sc); if (!near(sc.critChance, 0.05)) bad('scope lens +5% crit -> ' + sc.critChance);
+  const rz = mk(); I.BY.razorclaw.on(rz); if (!near(rz.critChance, 0.05)) bad('razor claw +5% crit -> ' + rz.critChance);
+  const eb = mk(); I.BY.expertbelt.on(eb); if (eb.expertBelt !== true) bad('expert belt flag on'); I.BY.expertbelt.off(eb); if (eb.expertBelt !== false) bad('expert belt flag off');
+  const br = mk(); I.BY.bigroot.on(br); if (br.bigRoot !== true) bad('big root flag on'); I.BY.bigroot.off(br); if (br.bigRoot !== false) bad('big root flag off');
+  // on/off round-trip within tolerance for the multiplier/crit items
+  for (const id of ['muscleband', 'wiseglasses', 'scopelens', 'razorclaw']) {
+    const p = mk(); I.BY[id].on(p); I.BY[id].off(p);
+    if (!near(p.atkMul, 1) || !near(p.critChance, 0)) bad('F3b round-trip ' + id + ' atkMul ' + p.atkMul + ' crit ' + p.critChance);
+  }
+  // Black Sludge: Poison holder heals (1.5% of maxHp), non-Poison chips (sludgeHurt), both clean off
+  const poi = mk(); poi.myTypes = ['poison']; I.BY.blacksludge.on(poi);
+  if (!near(poi.regenFlat, poi.maxHp * 0.015)) bad('black sludge poison regen -> ' + poi.regenFlat);
+  if (poi.sludgeHurt) bad('black sludge poison holder must not chip');
+  I.BY.blacksludge.off(poi); if (!near(poi.regenFlat, 0)) bad('black sludge off (poison) regen -> ' + poi.regenFlat);
+  const non = mk(); non.myTypes = ['fire']; I.BY.blacksludge.on(non);
+  if (non.sludgeHurt !== true) bad('black sludge non-poison must set sludgeHurt'); if (!near(non.regenFlat, 0)) bad('black sludge non-poison must not regen');
+  I.BY.blacksludge.off(non); if (non.sludgeHurt !== false) bad('black sludge off (non-poison) must clear sludgeHurt');
+  // every F3b item carries a ps: Pokesprite icon
+  for (const id of ['muscleband', 'wiseglasses', 'scopelens', 'razorclaw', 'expertbelt', 'bigroot', 'blacksludge', 'widelens', 'zoomlens'])
+    if (!/^ps:/.test(I.BY[id].icon || '')) bad('F3b item missing ps: icon: ' + id);
+  // lens items: Wide Lens scales moveRadiusMul up, Zoom Lens scales it down AND adds +20% damage; both round-trip
+  const wl = mk(); I.BY.widelens.on(wl); if (!near(wl.moveRadiusMul, 1.15)) bad('wide lens +15% area -> ' + wl.moveRadiusMul);
+  I.BY.widelens.off(wl); if (!near(wl.moveRadiusMul, 1)) bad('wide lens off -> ' + wl.moveRadiusMul);
+  const zl = mk(); I.BY.zoomlens.on(zl);
+  if (!near(zl.moveRadiusMul, 0.5)) bad('zoom lens -50% area -> ' + zl.moveRadiusMul);
+  if (!near(zl.atkMul, 1.2)) bad('zoom lens +20% dmg -> ' + zl.atkMul);
+  I.BY.zoomlens.off(zl); if (!near(zl.moveRadiusMul, 1) || !near(zl.atkMul, 1)) bad('zoom lens off -> radius ' + zl.moveRadiusMul + ' atk ' + zl.atkMul);
+  console.log('7 F3b imports: +10% dmg (band/glasses), +5% crit (scope/razor), Expert Belt & Big Root flags, Black Sludge heal/chip by type, Wide/Zoom Lens radius mul (+ Zoom +20% dmg), all ps: icons'); }
 
 console.log(fail ? fail + ' FAILURES' : 'ALL PASS');
 process.exit(fail ? 1 : 0);

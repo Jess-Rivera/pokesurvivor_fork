@@ -225,8 +225,8 @@ G.Sheet = (() => {
           <div class="sh-moves"><h3>Moves</h3><div class="sh-scroll">${moveRows(S, pl)}</div></div>
           <div class="sh-stats"><h3>Stats</h3><div class="sh-hex"></div>
             <div class="sh-legend"><i class="w"></i> base <i class="y"></i> from cards${card && card.type === 'stat' ? ' <i class="p"></i> after this card' : ''}</div>
-            ${item ? `<div class="sh-item"><span class="sh-itag">Held item</span><span class="sh-iico">${G.Icons.html(pl.item, 28)}</span><b>${E(item.name)}</b>${S.canMoveItems && S.roster.length > 1 ? `<button type="button" class="sh-mv${S.giving ? ' on' : ''}">${S.giving ? 'Cancel' : 'Move item'}</button>` : ''}<div class="ds">${S.giving ? 'Click a teammate in the top right to give it this item (they swap if it holds one).' : E(item.desc || '')}</div></div>` : ''}
-            ${pl.runItems && pl.runItems.length ? `<div class="sh-item"><span class="sh-itag">Run items</span> ${pl.runItems.map(rid => { const r = G.Items.BY[rid]; return r ? `<span class="sh-iico" title="${E(r.desc || '')}">${G.Icons.html(rid, 22)}</span> <b>${E(r.name)}</b>` : ''; }).join(' &nbsp; ')}</div>` : ''}
+            ${item ? `<div class="sh-item"><span class="sh-itag">Held item</span><span class="sh-iico">${G.Icons.html(item.icon || pl.item, 28)}</span><b>${E(item.name)}</b>${S.canMoveItems && S.roster.length > 1 ? `<button type="button" class="sh-mv${S.giving ? ' on' : ''}">${S.giving ? 'Cancel' : 'Move item'}</button>` : ''}<div class="ds">${S.giving ? 'Click a teammate in the top right to give it this item (they swap if it holds one).' : E(item.desc || '')}</div></div>` : ''}
+            ${pl.runItems && pl.runItems.length ? `<div class="sh-item"><span class="sh-itag">Run items</span> ${pl.runItems.map(rid => { const r = G.Items.BY[rid]; return r ? `<span class="sh-iico" title="${E(r.desc || '')}">${G.Icons.html(r.icon || rid, 22)}</span> <b>${E(r.name)}</b>` : ''; }).join(' &nbsp; ')}</div>` : ''}
             ${(() => {
               const bag = pl.berries || [], slots = G.Grounds.berrySlots(G.DB && G.DB.save), rows = [];
               for (let k = 0; k < slots; k++) {

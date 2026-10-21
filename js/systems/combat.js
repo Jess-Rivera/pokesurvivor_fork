@@ -42,7 +42,7 @@ G.Combat = (() => {
     // Frozen or asleep (G.Status): nothing casts until it wears off; the move stays ready.
     if (G.Status.stunned(pl)) { m.t = 0.05; return; }
     // Attacks that need a target wait to have one (do not waste the animation on the air).
-    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m) + meleeExtra(pl, m, pl.target))) {
+    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m, pl) + meleeExtra(pl, m, pl.target))) {
       m.t = 0.05;
       return;
     }
@@ -58,6 +58,15 @@ G.Combat = (() => {
   }
 
   function run(pl, m) {
+    // Wide Lens / Zoom Lens (F3b): scale this holder's move radius + arc for the cast, on a shallow copy so the
+    // shared move instance (and its derive()d base) is never mutated. radius=0.5..1.15, arc clamped to 2*PI.
+    const rm = pl.moveRadiusMul || 1;
+    if (rm !== 1) {
+      m = Object.assign({}, m, {
+        radius: m.radius != null ? m.radius * rm : m.radius,
+        arc: m.arc != null ? Math.min(m.arc * rm, 6.2832) : m.arc
+      });
+    }
     switch (m.kind) {
       case 'projectile': fireProjectiles(pl, m); break;
       case 'melee':      melee(pl, m); break;
@@ -83,13 +92,14 @@ G.Combat = (() => {
   function meleeExtra(pl, m, e) {
     return m.kind === 'melee' ? pl.r * G.Enemies.CONTACT.hit + (e ? e.r : 0) - 30 : 0;
   }
-  function reach(m) {
-    if (m.kind === 'melee') return m.radius + 30;
-    if (m.kind === 'beam') return m.radius + 20;
-    if (m.kind === 'boomerang') return m.radius + 40;
+  function reach(m, pl) {
+    const rm = (pl && pl.moveRadiusMul) || 1;      // Wide/Zoom Lens: targeting matches the scaled radius (F3b)
+    if (m.kind === 'melee') return m.radius * rm + 30;
+    if (m.kind === 'beam') return m.radius * rm + 20;
+    if (m.kind === 'boomerang') return m.radius * rm + 40;
     if (m.kind === 'chain') return 280;
     if (m.kind === 'meteor') return 340;
-    if (m.kind === 'dash') return m.radius + 60;
+    if (m.kind === 'dash') return m.radius * rm + 60;
     if (m.kind === 'cone') return m.speed * m.life + 30;
     return 520;
   }
@@ -293,7 +303,7 @@ G.Combat = (() => {
   /** Chain: hits an enemy and jumps to the nearest next ones (each jump, a bit less). */
   function chain(pl, m) {
     const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
-    let cur = pl.target && !pl.target.dead && pl.target.hurt ? pl.target : G.Projectiles.nearest(G.EnemyMgr.all(), pl.x, pl.y, reach(m));
+    let cur = pl.target && !pl.target.dead && pl.target.hurt ? pl.target : G.Projectiles.nearest(G.EnemyMgr.all(), pl.x, pl.y, reach(m, pl));
     if (!cur) return;
     let fx = pl.x, fy = pl.y - G.LIFT, k = 1;
     const done = new Set();
@@ -338,7 +348,7 @@ G.Combat = (() => {
   function meteors(pl, m) {
     const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
     const n = Math.max(1, m.count | 0);
-    const near = G.EnemyMgr.queryCircle(pl.x, pl.y, reach(m)).filter(e => !e.dead);
+    const near = G.EnemyMgr.queryCircle(pl.x, pl.y, reach(m, pl)).filter(e => !e.dead);
     G.U.shuffle ? G.U.shuffle(near) : near.sort(() => Math.random() - 0.5);
     for (let i = 0; i < n; i++) {
       const e = near[i];
@@ -540,6 +550,7 @@ G.Combat = (() => {
   function orbit(pl, m, dt, now, isGhost = false) {
     const col = G.U.TYPE_COLOR[m.type];
     const want = Math.max(1, m.count | 0);
+    const orad = (m.radius != null ? m.radius : 0) * (pl.moveRadiusMul || 1);     // Wide/Zoom Lens: orbit radius for this holder (F3b)
     // Each orbit move has its own orbs (there can be two in a link).
     const mine = p => p.orb && p.owner === pl && p.mid === m.id;
     const orbs = G.Projectiles.all().filter(mine);
@@ -554,7 +565,7 @@ G.Combat = (() => {
         owner: pl, ghost: isGhost, mid: m.id,
         x: pl.x, y: pl.y, r: m.size, color: col, vis: G.VFX.forMove(m),
         dmg: pl.moveFactor(m), move: m, level: pl.level, stab: pl.stabFor(m),
-        oa: (i / want) * 6.2832, orad: m.radius, ospeed: m.speed,
+        oa: (i / want) * 6.2832, orad: orad, ospeed: m.speed,
         rehit: Math.max(0.12, m.cd),
         knock: m.knock || 0, burn: m.burn || 0, poison: m.poison || 0, slow: m.slow || 0, mtype: m.type
       });
@@ -562,7 +573,7 @@ G.Combat = (() => {
     const live = G.Projectiles.all().filter(mine);
     live.forEach((p, i) => {
       p.dmg = pl.moveFactor(m);
-      p.orad = m.radius;
+      p.orad = orad;
       p.ospeed = m.speed;
       p.r = m.size;
       if (relayout) p.oa = base + (i / live.length) * 6.2832;
@@ -628,7 +639,8 @@ G.Combat = (() => {
     if (!m || !m.drain || ghost || pl.dead) return;
     const dealt = (hp0 - Math.max(0, e.hp)) + (sh0 - (e.shield || 0));
     if (dealt <= 0) return;
-    pl.heal(Math.min(dealt * m.drain, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
+    const root = pl.bigRoot ? 1.3 : 1;      // Big Root: +30% from draining moves (F3b)
+    pl.heal(Math.min(dealt * m.drain * root, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
   }
 
   function hit(pl, e, factor, col, dx, dy, knock, m) {
@@ -636,7 +648,8 @@ G.Combat = (() => {
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
-    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
+    const xb = (pl.expertBelt && k > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
+    dmg = floorHit(dmg * k * xb * (crit ? CRIT_MUL : 1), m);
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
@@ -766,7 +779,8 @@ G.Combat = (() => {
         const dm = defStage(e, pm);
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
-        const k = tk * (crit ? CRIT_MUL : 1);
+        const xb = (pl.expertBelt && tk > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
+        const k = tk * xb * (crit ? CRIT_MUL : 1);
         dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,

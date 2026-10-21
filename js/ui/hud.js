@@ -680,7 +680,7 @@ G.HUD = (() => {
       ctx.strokeStyle = pl.item ? '#ffd23f' : 'rgba(140,170,210,.18)';
       ctx.stroke();
       if (pl.item) {
-        G.Icons.draw(ctx, pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
+        G.Icons.draw(ctx, G.Items.BY[pl.item].icon || pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
         ctx.font = F(700, 9);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd23f';
@@ -699,7 +699,7 @@ G.HUD = (() => {
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#c47bff';
         ctx.stroke();
-        G.Icons.draw(ctx, rid, rx + (S - 36) / 2, ry + (S - 36) / 2, 36);
+        G.Icons.draw(ctx, def.icon || rid, rx + (S - 36) / 2, ry + (S - 36) / 2, 36);
         ctx.font = F(700, 9);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#d9a6ff';

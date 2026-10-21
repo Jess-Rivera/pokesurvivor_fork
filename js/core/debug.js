@@ -8,6 +8,7 @@
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
  *   G.Debug.ground(id) drop a ground item above you, outside pickup range but on screen (no id: logs every id; ids in data/ground-items.js, e.g. 'x-attack', 'sitrus', 'occa', 'pinap')
+ *   G.Debug.item(id)   equip a Pokemon-tier held item on the active Pokemon (no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
@@ -121,6 +122,19 @@ G.Debug = (() => {
     // Above you (the action bar sits below), spread sideways so several drops do not stack on one spot.
     const d = Math.min(260, (p.magnet || 80) + 90);
     G.Pickups.drop('ground', p.x + G.U.rand(-160, 160), p.y - d, id);
+    return true;
+  }
+
+  /** Equip Pokemon-tier item `id` on the active Pokemon (via Player.equip). With no id, logs and returns the pokemon-tier ids. ?dev only. */
+  function item(id) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const ids = G.Items.LIST.filter(i => i.tier === 'pokemon').map(i => i.id);
+    if (!id) { console.log('[Debug] pokemon item ids: ' + ids.join(', ')); return ids; }
+    if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'pokemon') { console.warn('[Debug] unknown pokemon-tier item ' + id); return false; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) return false;
+    pl.equip(id);
+    if (G.Spawner && G.Spawner.say) G.Spawner.say(pl.mon.name + ' got ' + G.Items.BY[id].name + '!', 2.2, true);
     return true;
   }
 
@@ -291,5 +305,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
 })();

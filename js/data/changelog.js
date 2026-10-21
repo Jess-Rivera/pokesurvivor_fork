@@ -6,6 +6,14 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-21', title: ['Lens held items', 'Lens held items'], new: [
+    ['Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).',
+     'Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).'],
+  ] },
+  { d: '2026-10-21', title: ['New held items', 'New held items'], new: [
+    ['Seven new Pokemon held items: Muscle Band and Wise Glasses (+10% damage), Scope Lens and Razor Claw (+5% critical hit chance), Expert Belt (+20% damage on super effective hits), Big Root (+30% HP recovered from draining moves), and Black Sludge (Poison types slowly heal, others slowly chip).',
+     'Seven new Pokemon held items: Muscle Band and Wise Glasses (+10% damage), Scope Lens and Razor Claw (+5% critical hit chance), Expert Belt (+20% damage on super effective hits), Big Root (+30% HP recovered from draining moves), and Black Sludge (Poison types slowly heal, others slowly chip).'],
+  ] },
   { d: '2026-10-20', title: ['Status effects hit you', 'Status effects hit you'], new: [
     ['Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.',
      'Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.'],

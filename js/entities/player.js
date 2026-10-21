@@ -23,6 +23,7 @@ G.Player = class Player {
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
+    this.moveRadiusMul = 1;      // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
     this.regenFlat = perks.regen || 0;
     this.magnet = 78 * (perks.magnetMul || 1);
     this.xpMul = perks.xpMul || 1;
@@ -508,6 +509,8 @@ G.Player = class Player {
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+    // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
+    if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
