@@ -1462,7 +1462,10 @@
     function key(cx, cy) { return cx * 73856093 ^ cy * 19349663; }
 
     function rebuildGrid() {
-      grid.clear();
+      // Reuse bucket arrays in place (empty with length=0, keep the array objects) instead of
+      // grid.clear() + new [] per cell every frame, which kills the per-frame GC churn (FG1). Prune
+      // buckets that end the frame empty so queryCircle never iterates stale empties.
+      for (const b of grid.values()) b.length = 0;
       for (const e of list) {
         if (e.dead) continue;
         const k = key(Math.floor(e.x / CELL), Math.floor(e.y / CELL));
@@ -1470,11 +1473,11 @@
         if (!b) grid.set(k, b = []);
         b.push(e);
       }
+      for (const [k, b] of grid) if (b.length === 0) grid.delete(k);
     }
 
-    /** Live enemies whose circle touches this circle. */
-    function queryCircle(x, y, r) {
-      const out = [];
+    /** Calls fn(e) for each live enemy whose circle touches this circle. No array allocated (FG2). */
+    function queryCircleEach(x, y, r, fn) {
       const c0x = Math.floor((x - r) / CELL) - 1, c1x = Math.floor((x + r) / CELL) + 1;
       const c0y = Math.floor((y - r) / CELL) - 1, c1y = Math.floor((y + r) / CELL) + 1;
       for (let cy = c0y; cy <= c1y; cy++) {
@@ -1484,10 +1487,15 @@
           for (const e of b) {
             if (e.dead) continue;
             const rr = r + e.r;
-            if (G.U.dist2(x, y, e.x, e.y) <= rr * rr) out.push(e);
+            if (G.U.dist2(x, y, e.x, e.y) <= rr * rr) fn(e);
           }
         }
       }
+    }
+    /** Live enemies whose circle touches this circle, as an array. Built on queryCircleEach (one traversal to maintain). */
+    function queryCircle(x, y, r) {
+      const out = [];
+      queryCircleEach(x, y, r, e => out.push(e));
       return out;
     }
 
@@ -1622,7 +1630,7 @@
     function bossAlive() { return list.some(e => e.boss && !e.dead); }
     function shinies() { return list.filter(e => e.shiny && !e.dead); }
 
-    return { clear, all, add, get, addRemote, removeRemote, stash, restore, clearRemote, update, drawables, queryCircle, rebuildGrid, bossAlive, shinies, nearestPlayer,
+    return { clear, all, add, get, addRemote, removeRemote, stash, restore, clearRemote, update, drawables, queryCircle, queryCircleEach, rebuildGrid, bossAlive, shinies, nearestPlayer,
              get count() { return list.length; } };
   })();
 })();

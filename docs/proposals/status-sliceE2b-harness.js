@@ -22,7 +22,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   Projectiles: { all: () => [], clearOrbs() { cnt.cleared++; }, spawnOrb() { cnt.spawned++; }, spawn() { }, remove() { } },
   VFX: { forMove: () => ({}) },
   World: { propsInCircle: () => [], damageProp() { } },
-  EnemyMgr: { queryCircle() { cnt.query++; return []; }, all: () => [] },
+  EnemyMgr: { queryCircle() { cnt.query++; return []; }, queryCircleEach() { cnt.query++; }, all: () => [] },
   Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } _start() { } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 ['js/core/stats.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/player.js', 'js/systems/combat.js'].forEach(p => {

@@ -196,10 +196,10 @@ G.Combat = (() => {
     G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius, m.arc, col, G.VFX.forMove(m));
     if (ghost) return;
 
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit)) {     // + the player's body: matches the reach wild melee has on you
-      if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) continue;
+    G.EnemyMgr.queryCircleEach(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit, e => {     // + the player's body: matches the reach wild melee has on you
+      if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) return;
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, m.knock || 0, m);
-    }
+    });
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) {
       if (inArc(pl.x, pl.y, p.x, p.y, pl.aim, half)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -226,9 +226,7 @@ G.Combat = (() => {
       if (along < -r || along > len + r) return false;
       return Math.abs(-px * sa + py * ca) <= w / 2 + r;
     };
-    for (const e of G.EnemyMgr.queryCircle(mx, my, len / 2 + w)) {
-      if (onBeam(e.x, e.y, e.r)) hit(pl, e, pl.moveFactor(m), col, ca, sa, 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(mx, my, len / 2 + w, e => { if (onBeam(e.x, e.y, e.r)) hit(pl, e, pl.moveFactor(m), col, ca, sa, 0, m); });
     for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) {
       if (onBeam(p.x, p.y, p.r)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -251,9 +249,7 @@ G.Combat = (() => {
       }
     }
     if (ghost) return;
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
-      hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(pl.x, pl.y, m.radius, e => hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m));
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
   }
 
@@ -388,9 +384,7 @@ G.Combat = (() => {
     pl.invuln = Math.max(pl.invuln || 0, 0.3);
     const w = m.width || 34;
     const mx = sx + ca * len / 2, my = sy + sa * len / 2;
-    for (const e of G.EnemyMgr.queryCircle(mx, my, len / 2 + w)) {
-      if (segDist2(sx, sy, pl.x, pl.y, e.x, e.y) <= (w / 2 + e.r) ** 2) hit(pl, e, pl.moveFactor(m), col, ca, sa, m.knock || 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(mx, my, len / 2 + w, e => { if (segDist2(sx, sy, pl.x, pl.y, e.x, e.y) <= (w / 2 + e.r) ** 2) hit(pl, e, pl.moveFactor(m), col, ca, sa, m.knock || 0, m); });
     for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) {
       if (segDist2(sx, sy, pl.x, pl.y, p.x, p.y) <= (w / 2 + p.r) ** 2) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -432,7 +426,7 @@ G.Combat = (() => {
   function blast(f, r, k = 1) {
     if (f.ghost) return;
     const pl = f.owner, m = f.m;
-    for (const e of G.EnemyMgr.queryCircle(f.x, f.y, r)) hit(pl, e, f.dmg * k, f.col, e.x - f.x, e.y - f.y, m.knock || 0, m);
+    G.EnemyMgr.queryCircleEach(f.x, f.y, r, e => hit(pl, e, f.dmg * k, f.col, e.x - f.x, e.y - f.y, m.knock || 0, m));
     for (const p of G.World.propsInCircle(f.x, f.y, r)) G.World.damageProp(p, G.Stats.applyDamageProp(f.dmg * k), f.col);
   }
 
