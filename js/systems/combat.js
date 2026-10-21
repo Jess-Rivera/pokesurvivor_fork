@@ -630,6 +630,24 @@ G.Combat = (() => {
    *  1 for single-event moves). Lives here so Enemy.hurt can take fractional damage. */
   function floorHit(d, m) { const f = m.floor || 1; return d < f ? f : d; }
 
+  // Shared on-hit effect sequence for a player hit landing on an enemy, called by BOTH hit paths
+  // (melee/aura/etc. in hit(), and the projectile resolve). Keeps the per-hit side effects in ONE
+  // place so a new on-hit item or proc is a single edit, not two. The damage calc, e.hurt, logging,
+  // impact FX and pierce stay at the call site (they differ per path); this is only the tail.
+  //   mv     the move object (m or p.move)
+  //   mtype  the move's type (m.type or p.mtype)
+  //   selfOk whether the user's own stat effect should proc (hit: !ghost; projectile: !ghost && !p.ghost)
+  // burn/poison/slow are passed EXPLICITLY (not read off mv) because a projectile carries its own
+  // copied burn/poison/slow and may run on a fallback move object where mv.slow would be undefined.
+  function applyHitEffects(e, pl, mv, mtype, burn, poison, slow, selfOk) {
+    procAilments(e, burn, poison, mv);
+    G.Stages.procMove(e, mv);                  // enemy stat drop (slice D1)
+    if (selfOk) G.Stages.procSelf(pl, mv);     // the user's own stat effect (Leaf Storm drop, Metal Claw / Meteor Mash team raise, slice E2b)
+    procFlinch(e, mv);                         // flinch (slice D2)
+    G.Status.onHit(e, mtype);                  // a Fire hit thaws ice
+    if (slow) e.applySlow(slow);
+  }
+
   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
   // type x crit on top, exactly where they were before.
@@ -659,12 +677,7 @@ G.Combat = (() => {
     drainHeal(pl, m, e, hp0, sh0);
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
-    procAilments(e, m.burn, m.poison, m);
-    G.Stages.procMove(e, m);                   // stat drop (slice D1)
-    if (!ghost) G.Stages.procSelf(pl, m);      // the user's own stat effect: Leaf Storm drop, Metal Claw / Meteor Mash team raise (slice E2b)
-    procFlinch(e, m);                          // flinch (slice D2)
-    G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
-    if (m.slow) e.applySlow(m.slow);
+    applyHitEffects(e, pl, m, m.type, m.burn, m.poison, m.slow, !ghost);
   }
 
   // ---------------- collisions ----------------
@@ -792,12 +805,7 @@ G.Combat = (() => {
         drainHeal(pl, pm, e, hp0, sh0);
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
-        procAilments(e, p.burn, p.poison, pm);
-        G.Stages.procMove(e, pm);                 // stat drop (slice D1)
-        if (!ghost && !p.ghost) G.Stages.procSelf(pl, pm);      // the user's own stat effect (slice E2b)
-        procFlinch(e, pm);                        // flinch (slice D2)
-        G.Status.onHit(e, p.mtype);
-        if (p.slow) e.applySlow(p.slow);
+        applyHitEffects(e, pl, pm, p.mtype, p.burn, p.poison, p.slow, !ghost && !p.ghost);
 
         if (!p.orb) {
           if (p.pierce > 0) { p.pierce--; }
