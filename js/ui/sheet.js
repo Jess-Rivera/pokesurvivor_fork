@@ -298,18 +298,34 @@ G.Sheet = (() => {
     const sc = mount.querySelector('.sh-scroll');
     if (sc) sc.scrollTop = keepTop;
     S.scrollFor = S.sel;
-    // Hover shows a move's detail panel via CSS. For touch, tap a row to toggle its panel (tap elsewhere / scroll closes).
+    // The detail panel is position:fixed (a top layer, never clipped by the scroll box). Show it on hover (mouse)
+    // or tap (touch), positioned next to the row and clamped to the viewport so it is never cut off.
     if (sc) {
-      const closeAll = () => sc.querySelectorAll('.sh-move.show-detail').forEach(el => el.classList.remove('show-detail'));
+      const hideAll = () => sc.querySelectorAll('.sh-detail').forEach(p => { p.style.display = 'none'; });
+      const showFor = row => {
+        const panel = row.querySelector('.sh-detail'); if (!panel) return;
+        hideAll();
+        panel.style.display = 'block';                       // show first so offsetHeight/Width are real
+        const r = row.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth, M = 8;
+        let top = r.top - ph - 4;                            // prefer above the row
+        if (top < M) top = r.bottom + 4;                     // no room above -> below
+        top = Math.max(M, Math.min(top, window.innerHeight - ph - M));   // clamp vertically
+        let left = r.left;
+        left = Math.max(M, Math.min(left, window.innerWidth - pw - M));  // clamp horizontally
+        panel.style.top = top + 'px';
+        panel.style.left = left + 'px';
+      };
       sc.querySelectorAll('.sh-move').forEach(row => {
+        row.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showFor(row); });
+        row.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideAll(); });
         row.addEventListener('pointerup', e => {
-          if (e.pointerType === 'mouse') return;                 // mouse uses hover, not tap
-          const open = row.classList.contains('show-detail');
-          closeAll();
-          if (!open) row.classList.add('show-detail');
+          if (e.pointerType === 'mouse') return;             // touch: tap toggles
+          const panel = row.querySelector('.sh-detail'), open = panel && panel.style.display === 'block';
+          hideAll();
+          if (!open) showFor(row);
         });
       });
-      sc.addEventListener('scroll', closeAll, { passive: true });
+      sc.addEventListener('scroll', hideAll, { passive: true });     // scrolling closes it (fixed panel would detach otherwise)
     }
     if (S.choose) {
       mount.querySelectorAll('.sh-move.pickable').forEach(el => {

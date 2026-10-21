@@ -1,35 +1,35 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
-Keep this file under 3 KB. Rewrite it at the end of every session (not append). History goes to DEVLOG.md.
+Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-10-21 (Amazon Quick, work machine).
 
 ## Where we are
-- Status slices A to E closed. Boss rework: Elites and Brock pilot gym merged. Tileset atlases baked, nothing loads them yet.
-- Item rework (feature/items): F1, F2 done and approved. F3a-1 (ground items, js/data/ground-items.js, pickup kind 'ground') and F3a-2 (status berries) BUILT and playtested 2026-10-20, approved.
-- F3a-2: Cheri/Chesto/Pecha/Rawst/Aspear/Persim/Lum drop as ground pickups into a team-wide berry bag (1 slot, upgradeable via save.berrySlots, cap 4; HUD boxes above the team stack, bottom-left for one Pokemon). A berry auto-consumes to block its status (benched Pokemon too); Lum covers the six main statuses, used last. Full bag or duplicate: pickup stays on the ground. Hooks in status.js. Pause sheet shows a Berry bag block (one row per slot with description). G.Debug.ground('pokeball'|'masterball') drops the gacha tickets (both drawn 32 px in the world; Great Ball x1, Master Ball x10). Sheet berry icons use 'ps:' + icon.
-- F3b part 1 BUILT + check.js-green 2026-10-21 (NOT yet feel-tested): 7 new Pokemon held items imported from PokeAPI into data/items.js: Muscle Band, Wise Glasses (+10% dmg), Scope Lens, Razor Claw (+5% crit, permanent while active), Expert Belt (+20% on super effective, combat.js both hit paths), Big Root (+30% drain, combat.js drainHeal), Black Sludge (Poison heals 1.5%/s, others chip 1%/s, player.js). All held items now carry a 'ps:' Pokesprite icon; HUD + pause sheet draw def.icon || id. New G.Debug.item(id) force-equips a Pokemon-tier item (separate from ground()). Harness: items-f1-harness.js section 7 added (F3b, near()-based); 16/16 harnesses pass.
-- F3b part 2 BUILT 2026-10-21 (NOT yet feel-tested): Wide Lens (+15% area) and Zoom Lens (-50% area + 1.2x dmg) via new Player.moveRadiusMul, applied in combat.js run() on a per-cast copy of m (radius + arc, arc scaling was Jess's call); orbit scaled at its orad reads; reach() takes pl and scales radius-based targeting. items.js now 20 items (18 pokemon, 2 run). Harness count 20/18, section 7 covers both lenses.
-- F3b item imports COMPLETE (9 new: 7 part-1 stat/crit/conditional items + 2 lens). Classification of the full PokeAPI held-item set was reviewed in an interactive HTML tool (import/adapt/skip); berries stay in the ground tier; weather rocks + 6-slot switch items parked as adapt for later.
-- Team sheet move cards SIMPLIFIED 2026-10-21 (NOT yet feel-tested): collapsed card = name + chips + upgrades + one summary line; hover (desktop) / tap (touch) opens a .sh-detail panel with the full breakdown and base (with item) deltas on cooldown/damage/area/arc. Choose mode keeps its inline preview. Files: js/ui/sheet.js (summaryOf/detailOf + row rewrite + tap wiring), css/style.css (.sum, .sh-detail). No harness covers the sheet.
-- F3b type-damage items BUILT 2026-10-21 (NOT yet feel-tested): 18 held items, one per type, +20% damage of that type via new Player.typeBoost read at both combat.js hit sites (next to Expert Belt). 17 type-enhancement items (Silk Scarf, Charcoal, Mystic Water, ...) + Pixie Plate for Fairy (the only type-enhancement gap). items.js now 38 total (36 pokemon, 2 run). Harness count 38/36, section 7 covers all 18.
-- Next in F3: F3c run items (Stones, Sharp Scissors, Round Glasses), then F3d Inventory screen + gacha.
-- CREDITS.md has no Pokesprite line yet (check license). _delete_/headless-stage.tgz is scratch, safe to delete.
-- Git: branch feature/items, remote Jess-Rivera/pokesurvivor_fork. F3a-1 and F3a-2 are playtested and approved (2026-10-20). Machine sync steps are in CONTEXT.md session start item 4: give them on every 'catch me up'.
+- Branch feature/items. check.js 16/16 green. NOT yet feel-tested by Jess.
+- Status A-E closed. Boss rework: Elites + Brock gym merged. Tileset atlases baked, nothing loads them.
+- Item rework: F1, F2, F3a (ground + berries) done + playtested.
+- F3b COMPLETE: all held items. 9 (Muscle Band, Wise Glasses, Scope/Razor crit, Expert Belt, Big Root, Black Sludge, Wide/Zoom lens) + 18 type-damage (one per type, Player.typeBoost, +20% their type). items.js = 61 (36 pokemon, 25 run).
+- Damage-layer refactor merged: G.Stats.itemDmgMul + combat.applyHitEffects (both hit sites unified). Behavior-preserving, mainline formula untouched.
+- Perf merged: FG1 grid bucket reuse (no per-frame GC); FG2 queryCircleEach zero-alloc (5 callers). FG4 (projectile broad-phase) documented, not built; projectiles stay uncapped by design.
+- F3c BUILT (6 of 8): Sharp Scissors + Brass Knuckles (team-HP-scaled speed/dmg, roster 3+ fixed), Snowball Badge (+dmg per killed HP/10000), Re-Do (full revive once/run), Pikachu's Tear (1.1x dmg+speed per fainted), 18 Power Stones (ignore resist+immunity, one-stone-max via group:'stone'). G.Debug.runitem(id) added.
+- UI: move cards = collapsed card + hover/tap detail panel (position:fixed overlay, never clipped, opaque).
 
 ## Next (in order)
-1. Run `node tools/check.js` and feel-test all 9 new held items on dev.html?dev (G.Debug.item('scopelens'|'expertbelt'|'blacksludge'|'widelens'|'zoomlens' etc.); for the lenses watch melee arc width, orbit ring size, cone focus). Then F3c run items (Stones, Sharp Scissors, Round Glasses), F3d Inventory + gacha. Also outside F3: boss damage slice, Gym 2 (Misty, Staryu), tileset integration.
+1. Jess: feel-test (dev.html?dev, G.Debug.item / runitem). Check: Stone exclusion (2nd replaces 1st), Re-Do full revive, lens arc/area, hover panel not clipped.
+2. F3d Inventory + gacha. gacha-ui.js pulls Pokemon; run-item OWNERSHIP + pre-run loadout is net-new (~2-3 slices). Quick half = in-run 2x2 full-grid chooser (replaces the placeholder prompt). Open Q below.
+3. HELD (own design pass): Amnesia Type (active type switches each cast), Paper Skin and Glass Bones (weak to all / all hits super-effective). Both do live type-chart manipulation.
+4. Outside F3: Kanto gym roster (feature/boss-rework, Misty next), boss damage slice, tileset integration.
+
+## Parked design docs (docs/, read when starting that work)
+RUN-ITEM-THINK-DOC.md, BULLET-TIME-DESIGN.md (prototype ready, solo-only, not built), SPEED-IVEV-SLICE.md (blocked on IV/EV storage), PERF-HOTPATH-NOTES.md.
 
 ## Open questions for Jess
-- None right now.
+- F3d acquisition: run items from the Pokemon gacha, a separate currency, or meta unlocks?
 
 ## Standing rules (full text: CLAUDE.md)
-- Local-first: no Firebase, TURN or multiplayer work until Jess switches phase.
-- English-native: new strings in English; inherited Spanish literals are i18n keys, leave them.
-- Workflow: prose plan, Jess OKs, then build straight into the repo (CLAUDE.md Edit boundary). changelog.js and the Markdown docs are free-edit.
-- The assistant NEVER runs git. No em-dashes in prose. New save fields must be backward compatible.
-- Test as a new player with one Pokemon slot. Debug on dev.html?dev, not index.html.
+- Local-first: no Firebase/TURN/MP until Jess switches phase. English-native (inherited Spanish literals are i18n keys, leave them).
+- Workflow: prose plan, Jess OKs, then build into the repo. changelog.js + Markdown docs free-edit.
+- Assistant NEVER runs git and cannot run node (Jess runs check.js). No em-dashes. New save fields backward compatible.
+- Test as a new player with one Pokemon slot. Debug on dev.html?dev.
 
 ## Where to look (search, do not read whole)
-- DECISIONS.md (rulings), DEVLOG.md (recent sessions), BALANCE.md (numbers), TODO.md (backlog), GDD.md, ONBOARDING.md, GLOSSARY.md, BOSS-REWORK.md.
-- Archives: docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md, docs/ORIGINAL-OWNER-RULES.md.
-- Check everything fast: node tools/check.js (syntax of every file, then every harness).
+DECISIONS.md, DEVLOG.md, BALANCE.md, TODO.md, BOSS-REWORK.md, the docs/ design files. Archives: docs/*-archive.md. Fast check: node tools/check.js.
