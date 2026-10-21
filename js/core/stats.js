@@ -108,6 +108,19 @@ G.Stats = (() => {
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
   function applyDamageProp(factor) { return (factor / PROP_DEF + 2) * DMG_SCALAR; }
 
+  // Held-item damage multiplier, applied at the hit site on top of the type/crit multipliers.
+  // Pure function of the holder's item fields + the move's type + the already-computed type
+  // effectiveness (k / tk). Keeps the per-item damage layer in ONE place so the two hit sites
+  // (combat.js hit() and the projectile resolve) cannot drift and new items slot in here.
+  //   expertBelt  +20% when the hit is super effective (typeMult > 1)
+  //   typeBoost   +20% when the move's type matches the held type-damage item
+  function itemDmgMul(pl, moveType, typeMult) {
+    let m = 1;
+    if (pl.expertBelt && typeMult > 1) m *= 1.2;
+    if (pl.typeBoost && pl.typeBoost === moveType) m *= 1.2;
+    return m;
+  }
+
   // ---- enemy -> player damage (sub-slice C), mirror of the player A/D ratio ----
   // Enemy "Power" is a flat placeholder for now (no per-enemy move yet). TEMPORARY:
   // swap to canonical move power when enemies draw real moves (see DECISIONS). Gentle
@@ -152,7 +165,7 @@ G.Stats = (() => {
     statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, XP_BOOST_END,
     XP_SCALAR, xpToNext, xpYield,
     attack, defense, spAtk, spDef, moveCat,
-    DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp,
+    DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp, itemDmgMul,
     ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor, applyPlayerDefense,
   };
 })();

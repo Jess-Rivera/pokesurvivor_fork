@@ -648,9 +648,7 @@ G.Combat = (() => {
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
     const k = typeK(m.type, e);
     const crit = isCrit(pl);
-    const xb = (pl.expertBelt && k > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
-    const tb = (pl.typeBoost && pl.typeBoost === m.type) ? 1.2 : 1;      // type-damage item: +20% to its type (F3b)
-    dmg = floorHit(dmg * k * xb * tb * (crit ? CRIT_MUL : 1), m);
+    dmg = floorHit(dmg * k * G.Stats.itemDmgMul(pl, m.type, k) * (crit ? CRIT_MUL : 1), m);      // held-item damage layer (Expert Belt, type items)
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
@@ -780,9 +778,7 @@ G.Combat = (() => {
         const dm = defStage(e, pm);
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
         const tk = p.mtype ? typeK(p.mtype, e) : 1;
-        const xb = (pl.expertBelt && tk > 1) ? 1.2 : 1;      // Expert Belt: +20% on super effective (F3b)
-        const tb = (pl.typeBoost && pl.typeBoost === p.mtype) ? 1.2 : 1;      // type-damage item: +20% to its type (F3b)
-        const k = tk * xb * tb * (crit ? CRIT_MUL : 1);
+        const k = tk * G.Stats.itemDmgMul(pl, p.mtype, tk) * (crit ? CRIT_MUL : 1);      // held-item damage layer (Expert Belt, type items)
         dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,

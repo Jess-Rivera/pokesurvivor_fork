@@ -14,6 +14,7 @@ let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); 
 const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 G.U = { pick: a => a[Math.floor(Math.random() * a.length)] };
 load('js/data/items.js');
+load('js/core/stats.js');      // for G.Stats.itemDmgMul (held-item damage layer, refactor/damage-layer)
 let P;
 try { load('js/entities/player.js'); P = G.Player; } catch (e) { console.log('player.js load failed', e.message); process.exit(1); }
 if (!P) { console.log('G.Player missing'); process.exit(1); }
@@ -137,6 +138,16 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
     if (!/^ps:/.test(it.icon || '')) bad('type item missing ps: icon: ' + id);
   }
   if (Object.keys(TYPEITEMS).length !== 18) bad('expected 18 type items');
+  // G.Stats.itemDmgMul: the centralized held-item damage layer (refactor/damage-layer). Pure fn of item fields + move type + type effectiveness.
+  if (G.Stats && G.Stats.itemDmgMul) {
+    const M = G.Stats.itemDmgMul;
+    if (!near(M({}, 'fire', 1), 1)) bad('itemDmgMul: no items -> 1');
+    if (!near(M({ expertBelt: true }, 'fire', 1.6), 1.2)) bad('itemDmgMul: Expert Belt + super-effective -> 1.2');
+    if (!near(M({ expertBelt: true }, 'fire', 1), 1)) bad('itemDmgMul: Expert Belt + neutral -> 1');
+    if (!near(M({ typeBoost: 'fire' }, 'fire', 1), 1.2)) bad('itemDmgMul: Charcoal + Fire move -> 1.2');
+    if (!near(M({ typeBoost: 'fire' }, 'water', 1), 1)) bad('itemDmgMul: Charcoal + Water move -> 1');
+    if (!near(M({ expertBelt: true, typeBoost: 'fire' }, 'fire', 1.6), 1.44)) bad('itemDmgMul: Expert Belt SE + matching typeBoost -> 1.44');
+  } else bad('G.Stats.itemDmgMul missing');
   console.log('7 F3b imports: +10% dmg (band/glasses), +5% crit (scope/razor), Expert Belt & Big Root flags, Black Sludge heal/chip by type, Wide/Zoom Lens radius mul (+ Zoom +20% dmg), all ps: icons'); }
 
 console.log(fail ? fail + ' FAILURES' : 'ALL PASS');
