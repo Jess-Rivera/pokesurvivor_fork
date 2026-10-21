@@ -6,6 +6,12 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-21', title: ['Cleaner move cards', 'Cleaner move cards'], chg: [
+    ['Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.',
+     'Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.'],
+    ['The detailed view shows how a held item changes a move: the base number first, then the value with your item in parentheses (cooldown for Quick Claw, damage for the damage items, area and arc for the lenses).',
+     'The detailed view shows how a held item changes a move: the base number first, then the value with your item in parentheses (cooldown for Quick Claw, damage for the damage items, area and arc for the lenses).'],
+  ] },
   { d: '2026-10-21', title: ['Lens held items', 'Lens held items'], new: [
     ['Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).',
      'Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).'],

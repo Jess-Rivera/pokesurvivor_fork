@@ -69,6 +69,44 @@ G.Sheet = (() => {
     return G.Stats.applyDamage(pl.moveFactor(m), t.def, t.spd, m, pl.level, pl.stabFor(m));
   }
 
+  /** One-line summary for the collapsed card: hit damage, heal, or a short effect. */
+  function summaryOf(pl, m) {
+    const d = hitOf(pl, m);
+    if (d != null) return 'Hits for about ' + r1d(d);
+    if (m.drain) return 'Heals from damage dealt';
+    if (m.kind === 'buff' && m.stat === 'regen') return 'Heals over time';
+    if (m.kind === 'buff' && m.stat) {
+      const LBL = { atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Speed', spe: 'Speed' };
+      return 'Team ' + (LBL[m.stat] || m.stat) + ' +' + (m.stageN || 1) + ' per cast';
+    }
+    const ail = G.Mechanics.ailmentText(m);
+    return ail || 'Support move';
+  }
+
+  /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes. */
+  function detailOf(pl, m) {
+    const k = G.Kinds.BY[m.kind];
+    const rm = (pl && pl.moveRadiusMul) || 1, cdm = (pl && pl.cdMul) || 1;
+    const rows = [];
+    if (k) for (const key of k.keys) {
+      if (m[key] == null) continue;
+      const t = FMT[key] && FMT[key](m[key], m); if (!t) continue;
+      // cooldown (Quick Claw), area + arc (Wide/Zoom Lens) are the only stat fields a held item changes
+      let withItem = null;
+      if (key === 'cd' && cdm !== 1) withItem = FMT.cd(m.cd * cdm);
+      else if ((key === 'radius' || key === 'arc') && rm !== 1) withItem = FMT[key](m[key] * rm, m);
+      rows.push(withItem && withItem !== t ? t + ' (' + withItem + ')' : t);
+    }
+    // hit damage, with the held-item atkMul delta (Muscle Band / Wise Glasses / Life Orb / Zoom Lens)
+    const d = hitOf(pl, m);
+    let hit = '';
+    if (d != null) {
+      const am = (pl && pl.atkMul) || 1, base = am !== 1 ? d / am : d;      // strip the item multiplier for the base figure
+      hit = am !== 1 ? 'Hits for about ' + r1d(base) + ' (' + r1d(d) + ')' : 'Hits for about ' + r1d(d);
+    }
+    return { raw: rows.join(' · '), hit, ail: G.Mechanics.ailmentText(m) };
+  }
+
   /** Text for one move: raw numbers (what the cards change), stack list, and one-hit damage. */
   function moveLines(pl, m) {
     const k = G.Kinds.BY[m.kind];
@@ -137,8 +175,11 @@ G.Sheet = (() => {
     const order = shownMoves(pl);
     return groups.map((g, gi) => {
       const rows = g.map(m => {
-        const t = moveLines(pl, m), n = G.Moves.stackTotal(m), col = G.U.TYPE_COLOR[m.type];
-        let cls = '', pv = '', raw = t.raw, hit = t.hit, ail = t.ail, key = '', tail = '';
+        const n = G.Moves.stackTotal(m), col = G.U.TYPE_COLOR[m.type];
+        const det = detailOf(pl, m);                 // full breakdown for the hover/tap panel (base + item deltas)
+        const summary = summaryOf(pl, m);            // the one collapsed line
+        const stacksTxt = moveLines(pl, m).stacks;
+        let cls = '', pv = '', hit = '', key = '', tail = '', preview = false;
         if (card && card.type === 'mech') {
           const x = T && T.moves.find(v => v.m === m);
           const ok = !!(x && x.ok);
@@ -147,23 +188,29 @@ G.Sheet = (() => {
           if (ix < 4) key = `<i class="mk">${E(G.Input.keyLabel('attack_' + (ix + 1)))}</i>`;
           if (!ok) tail = `<div class="why">${E(x ? x.why : '')}</div>`;
           else if (S.move === m) {
-            const mech = card.mech, a = moveLines(pl, withStack(m, mech)), d0 = hitOf(pl, m), d1 = hitOf(pl, withStack(m, mech));
+            const mech = card.mech, d0 = hitOf(pl, m), d1 = hitOf(pl, withStack(m, mech));
             pv = `<div class="pv">${E(G.Mechanics.text(m, mech))}: ${E(G.Mechanics.preview(m, mech))}</div>`;
             if (d0 != null && d1 != null) hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1);
-            raw = a.raw; ail = a.ail;
+            preview = true;
           }
         } else if (card && card.type === 'stat') {
           const d0 = hitOf(pl, m), d1 = d0 == null ? null : withInc(pl, card.stat, () => hitOf(pl, m));
-          if (d0 != null && Math.abs(d1 - d0) > 1e-9) { hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1); pv = `<div class="pv">${E(card.stat.label)} ${E(card.stat.stat)} +${Math.round((pl.inc[card.stat.id] + card.stat.step) * 100)}%</div>`; }
+          if (d0 != null && Math.abs(d1 - d0) > 1e-9) { hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1); pv = `<div class="pv">${E(card.stat.label)} ${E(card.stat.stat)} +${Math.round((pl.inc[card.stat.id] + card.stat.step) * 100)}%</div>`; preview = true; }
         }
-        return `<div class="sh-move${cls}" data-mi="${order.indexOf(m)}">
+        // Collapsed card: icon, name + chips, upgrades taken, one summary line. Full detail lives in the hover/tap panel.
+        // In choose mode the card's inline preview (pv + before/after hit) still shows, that is the decision the screen exists for.
+        const panel = `<div class="sh-detail" role="tooltip">`
+          + (det.raw ? `<div class="ds">${E(det.raw)}</div>` : '')
+          + (det.ail ? `<div class="ail">${E(det.ail)}</div>` : '')
+          + (det.hit ? `<div class="hit">${E(det.hit)}</div>` : '')
+          + `</div>`;
+        return `<div class="sh-move${cls}" data-mi="${order.indexOf(m)}" tabindex="0">
           <div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
           <div class="txt"><div class="nm">${E(m.name)} <span class="type" style="background:${col}">${E(G.U.TYPE_NAME[m.type])}</span>${n ? ` <span class="tag-chip" style="background:${col}">+${n}</span>` : ''}</div>
-            ${t.stacks ? `<div class="stk">${E(t.stacks)}</div>` : ''}
-            <div class="ds">${E(raw)}</div>
-            ${ail ? `<div class="ail">${E(ail)}</div>` : ''}
-            ${pv}${hit ? `<div class="hit">${E(hit)}</div>` : ''}${tail}
-          </div>${key}</div>`;
+            ${stacksTxt ? `<div class="stk">${E(stacksTxt)}</div>` : ''}
+            <div class="sum">${E(summary)}</div>
+            ${preview ? `${pv}${hit ? `<div class="hit">${E(hit)}</div>` : ''}` : ''}${tail}
+          </div>${key}${panel}</div>`;
       }).join('');
       const bonded = g.length > 1;
       return `<div class="sh-group${bonded ? ' bonded' : ''}${gi === act ? ' on' : ''}">${bonded ? '<div class="sh-bond">Cast together</div>' : ''}${rows}</div>`;
@@ -251,6 +298,19 @@ G.Sheet = (() => {
     const sc = mount.querySelector('.sh-scroll');
     if (sc) sc.scrollTop = keepTop;
     S.scrollFor = S.sel;
+    // Hover shows a move's detail panel via CSS. For touch, tap a row to toggle its panel (tap elsewhere / scroll closes).
+    if (sc) {
+      const closeAll = () => sc.querySelectorAll('.sh-move.show-detail').forEach(el => el.classList.remove('show-detail'));
+      sc.querySelectorAll('.sh-move').forEach(row => {
+        row.addEventListener('pointerup', e => {
+          if (e.pointerType === 'mouse') return;                 // mouse uses hover, not tap
+          const open = row.classList.contains('show-detail');
+          closeAll();
+          if (!open) row.classList.add('show-detail');
+        });
+      });
+      sc.addEventListener('scroll', closeAll, { passive: true });
+    }
     if (S.choose) {
       mount.querySelectorAll('.sh-move.pickable').forEach(el => {
         el.onclick = () => pickMove(mount, shownMoves(pl)[+el.dataset.mi]);
