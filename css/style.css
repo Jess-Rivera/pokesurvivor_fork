@@ -958,6 +958,14 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
 .sh-item { align-self: stretch; border-top: 2px solid rgba(244,248,255,.14); padding-top: 8px; }
 .sh-itag { display: inline-block; padding: 1px 8px; margin-right: 8px; border-radius: 4px; background: var(--ink); color: #14181f; font-size: 12px; font-weight: 700; text-shadow: none; }
 .sh-iico { vertical-align: middle; margin-right: 6px; }
+.sh-bag { margin-top: 6px; }
+.sh-bag.empty { opacity: .55; }
+.sh-bagbox { display: inline-block; width: 22px; height: 22px; border: 2px dashed rgba(244,248,255,.35); border-radius: 5px; box-sizing: border-box; }
+.sh-mv { appearance: none; float: right; margin-top: 2px; padding: 2px 10px; border-radius: 6px; border: 2px solid var(--edge); background: rgba(255,255,255,.08); color: inherit; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.sh-mv:hover { border-color: var(--gold); }
+.sh-mv.on { border-color: var(--gold); background: rgba(255,210,63,.2); }
+.sh-strip.giving .sh-tab:not(.on) { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255,210,63,.35); animation: shGive .8s ease-in-out infinite alternate; }
+@keyframes shGive { to { box-shadow: 0 0 0 5px rgba(255,210,63,.15); } }
 .sh-foot { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
 .sh-foot-l { flex: 1; min-width: 220px; }
 .sh-foot .sub, .sh-foot .note { margin: 0 0 4px; font-size: 13px; }

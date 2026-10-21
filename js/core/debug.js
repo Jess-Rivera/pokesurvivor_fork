@@ -7,6 +7,7 @@
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
+ *   G.Debug.ground(id) drop a ground item above you, outside pickup range but on screen (no id: logs every id; ids in data/ground-items.js, e.g. 'x-attack', 'sitrus', 'occa', 'pinap')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
@@ -101,6 +102,28 @@ G.Debug = (() => {
   }
 
   /** Give the active Pokemon a move (needs a free slot). Flags the run as tampered. ?dev only. */
+  /** Drop ground item `id` above the active Pokemon, outside its pickup range and on screen (it applies on contact). With no id, logs and returns the list of ids. */
+  function ground(id) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    if (!id) { const ids = G.Grounds.LIST.map(i => i.id).concat(['pokeball', 'masterball']); console.log('[Debug] ground ids: ' + ids.join(', ')); return ids; }
+    const BALL = { pokeball: 'ticket', masterball: 'ticket10' };      // gacha tickets: drawn as a Great Ball (x1) and a Master Ball (x10)
+    if (BALL[id]) {
+      const p = G.Game.player;
+      if (!p) return false;
+      G.Game.debugMaxed();
+      G.Pickups.drop(BALL[id], p.x + G.U.rand(-160, 160), p.y - Math.min(260, (p.magnet || 80) + 90), 1);
+      return true;
+    }
+    if (!G.Grounds.BY[id]) { console.warn('[Debug] unknown ground item ' + id); return false; }
+    const p = G.Game.player;
+    if (!p) return false;
+    G.Game.debugMaxed();
+    // Above you (the action bar sits below), spread sideways so several drops do not stack on one spot.
+    const d = Math.min(260, (p.magnet || 80) + 90);
+    G.Pickups.drop('ground', p.x + G.U.rand(-160, 160), p.y - d, id);
+    return true;
+  }
+
   function give(id) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const pl = G.Game && G.Game.player;
@@ -268,5 +291,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
 })();

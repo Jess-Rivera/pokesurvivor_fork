@@ -19,9 +19,10 @@ G.Pickups = (() => {
     magnet:{ color: '#ff9ed8', glow: '#b03d84', r: 6.5 },
     bomb:  { color: '#ff7b3d', glow: '#b03d10', r: 6.5 },
     coin:  { color: '#ffd23f', glow: '#b8860b', r: 5.5 },
-    ticket:   { color: '#ffd23f', glow: '#c08a10', r: 7 },
+    ticket:   { color: '#ffd23f', glow: '#c08a10', r: 8 },
     ticket10: { color: '#c47bff', glow: '#8a3fd0', r: 8 },
-    item:     { color: '#ffd23f', glow: '#c08a10', r: 9 }       // value = id del objeto
+    item:     { color: '#ffd23f', glow: '#c08a10', r: 9 },      // value = id del objeto
+    ground:   { color: '#ffffff', glow: '#9fe8ff', r: 8 }       // ground item (data/ground-items.js), value = its id
   };
   /** Chance that a normal Pokemon drops a gacha ticket. */
   const BOSS_T10 = 1 / 3;               // ticket ×10 de un jefe normal
@@ -96,6 +97,9 @@ G.Pickups = (() => {
     if (r < 0.012) push(orb('heal', x + G.U.rand(-8, 8), y, 0));
     else if (r < 0.020) push(orb('magnet', x, y, 0));
     else if (r < 0.026) push(orb('bomb', x, y, 0));
+
+    // Ground item (data/ground-items.js): its own roll, 1% plus the live Pinap bonus.
+    if (Math.random() < G.Grounds.dropRate(lead)) push(orb('ground', x + G.U.rand(-10, 10), y + G.U.rand(-6, 6), G.Grounds.roll()));
   }
 
   /** Suelta un objeto suelto: 'heal' | 'magnet' | 'bomb' | 'coin'. */
@@ -133,7 +137,9 @@ G.Pickups = (() => {
       const dx = pl.x - p.x, dy = pl.y - p.y;
       const mag2 = pl.magnet * pl.magnet;
 
-      if (p.pulled || d2 < mag2) {
+      // A status berry the team cannot take (bag full, or already holding that one) just sits there: no pull, no pickup.
+      const stuck = p.kind === 'ground' && !G.Grounds.canTake(p.value, pl);
+      if (!stuck && (p.pulled || d2 < mag2)) {
         p.pulled = true;
         const d = Math.sqrt(d2) || 1;
         const pull = 240 + 1400 / d;
@@ -147,7 +153,7 @@ G.Pickups = (() => {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
 
-      if (d2 < 15 * 15) {
+      if (!stuck && d2 < 15 * 15) {
         list.splice(i, 1);
         onCollect(p, pl);
       }
@@ -186,7 +192,14 @@ G.Pickups = (() => {
       } else {
         // Berry, magnet and bomb: their pixel-art icon.
         const ICON = { heal: 'berry', magnet: 'magnet', bomb: 'bomb', ticket: 'ticket', ticket10: 'ticket10' };
-        const sz = p.kind === 'ticket10' || p.kind === 'item' ? 24 : 18;
+        const sz = (p.kind === 'ticket10' || p.kind === 'ticket') ? 32 : p.kind === 'item' ? 24 : p.kind === 'ground' ? 22 : 18;
+        if (p.kind === 'ground') {
+          // Ground item: a soft white pulse under its Pokesprite icon.
+          ctx.globalAlpha = 0.18 + Math.sin(p.t * 1.5) * 0.08;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(p.x, y, 13, 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
         if (p.kind === 'item') {
           // Item: a pulsing golden glow, so it is seen from afar.
           ctx.globalAlpha = 0.35 + Math.sin(p.t * 1.5) * 0.15;
@@ -194,7 +207,7 @@ G.Pickups = (() => {
           ctx.beginPath(); ctx.arc(p.x, y, 18, 0, 6.2832); ctx.fill();
           ctx.globalAlpha = 1;
         }
-        G.Icons.draw(ctx, p.kind === 'item' ? p.value : ICON[p.kind], p.x - sz / 2, y - sz / 2 - 1, sz);
+        G.Icons.draw(ctx, p.kind === 'item' ? p.value : p.kind === 'ground' ? 'ps:' + ((G.Grounds.BY[p.value] || {}).icon || 'berry.oran') : ICON[p.kind], p.x - sz / 2, y - sz / 2 - 1, sz);
         continue;
       }
       ctx.fillStyle = 'rgba(255,255,255,.8)';

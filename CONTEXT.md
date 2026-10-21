@@ -9,6 +9,13 @@ everything that must survive a tool switch lives here as a file.
 1. Read this file and STATE.md (the short current handoff). Nothing else is required.
 2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
 3. Read TODO.md 'In progress' only if more detail is needed.
+4. Tell Jess how to bring THIS machine's repo up to date (the assistant never runs git; Jess runs these, the assistant lists them and what to check):
+   - The remote is https://github.com/Jess-Rivera/pokesurvivor_fork.git. Work happens on a feature branch (STATE.md names the current one, e.g. feature/items), not on main.
+   - `git status` (must be clean; if not, commit or stash first, never edit on a dirty tree after a tool switch).
+   - `git fetch origin`, then `git checkout <branch>` (use `git checkout -b <branch> origin/<branch>` if it does not exist locally), then `git pull --ff-only`. If ff-only fails, the two machines diverged: stop and tell the assistant.
+   - Compare with main: `git log --oneline main..<branch>` (what the branch adds) and `git log --oneline <branch>..origin/main` (what main gained, so the branch may need a merge of main).
+   - Sanity check after the pull: `node tools/check.js` must end with all harnesses passed, then open dev.html?dev.
+   - Before leaving a machine: commit and push, so the other side starts from the same tree.
 Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (they are large). Search them by keyword when a topic comes up.
 Archives (search only): docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md.
 

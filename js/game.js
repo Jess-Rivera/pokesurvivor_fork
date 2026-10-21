@@ -136,6 +136,8 @@ G.Game = (() => {
     // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
     const runItems = [];
     roster.forEach(f => { f.runItems = runItems; });
+    const berries = [];       // the team berry bag (data/ground-items.js, status berries): one shared array too
+    roster.forEach(f => { f.berries = berries; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
@@ -506,7 +508,7 @@ G.Game = (() => {
 
   // ---------------- pickup ----------------
 
-  const PICK_SFX = { xp: 'xp', xpBig: 'xp', coin: 'coin', heal: 'heal', bomb: 'break', magnet: 'confirm', ticket: 'shiny', ticket10: 'legend', item: 'legend' };
+  const PICK_SFX = { xp: 'xp', xpBig: 'xp', coin: 'coin', heal: 'heal', bomb: 'break', magnet: 'confirm', ticket: 'shiny', ticket10: 'legend', item: 'legend', ground: 'heal' };
 
   /*
    * Co-op: the item choice and the level cards cannot cover each other.
@@ -612,10 +614,15 @@ G.Game = (() => {
       if (mine) offerItem(p.value);
       return;
     }
+    if (p.kind === 'ground') {
+      // Ground item: applied to the team at once (the active Pokemon touched it); nothing is stored. Co-op copies are the host's call, as with heal.
+      if (mine) G.Grounds.apply(pl, p.value);
+      return;
+    }
     if (p.kind === 'ticket' || p.kind === 'ticket10') {
       if (p.kind === 'ticket') pl.t1++; else pl.t10++;
       bankTickets();
-      G.FX.dmgText(who.x, who.y - who.bodyH - 8, p.kind === 'ticket' ? '+1 ticket' : '¡Ticket ×10!', p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff', true);
+      G.FX.dmgText(who.x, who.y - who.bodyH - 8, p.kind === 'ticket' ? '+1 Pokeball' : 'Master Ball!', p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff', true);
       G.FX.ring(who.x, who.y, 6, 50, p.kind === 'ticket' ? '#ffd23f' : '#c47bff', 0.4, 3);
       return;
     }

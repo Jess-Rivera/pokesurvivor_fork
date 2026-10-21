@@ -62,14 +62,14 @@ G.GachaUI = (() => {
        <p class="note">· La tirada ×10 garantiza al menos una Épica.<br>
        · A las ${G.Gacha.PITY_5} tiradas sin Legendaria en un banner, la siguiente lo es.<br>
        · Los repetidos dan Pokémonedas. Los shiny no se repiten.<br>
-       · Los tickets se consiguen jugando: algunos Pokémon los sueltan al caer, y
-         los jefes y los legendarios de las grietas, a veces, tickets ×10.</p>`;
+       · Pokeballs are earned by playing: some Pokémon drop them when defeated, and
+         bosses and rift legendaries sometimes drop Master Balls.</p>`;
 
     const t = s.tickets;
-    $('cost-1').innerHTML = `${G.Icons.html('ticket', 18)} 1`;
-    $('cost-10').innerHTML = `${G.Icons.html('ticket', 18)} 10`;
-    $('cost-10b').innerHTML = `${G.Icons.html('ticket10', 18)} 1`;
-    $('gacha-tickets').innerHTML = `Tienes ${G.Icons.html('ticket', 18)} <b>${t.t1}</b> tickets y ${G.Icons.html('ticket10', 18)} <b>${t.t10}</b> tickets ×10`;
+    $('cost-1').innerHTML = `${G.Icons.html('ball', 24)} 1`;
+    $('cost-10').innerHTML = `${G.Icons.html('ball', 24)} 10`;
+    $('cost-10b').innerHTML = `${G.Icons.html('ball4', 24)} 1`;
+    $('gacha-tickets').innerHTML = `You have ${G.Icons.html('ball', 24)} <b>${t.t1}</b> Pokeballs and ${G.Icons.html('ball4', 24)} <b>${t.t10}</b> Master Balls`;
     $('pull-1').disabled = !G.Gacha.costOf(s, 1);
     $('pull-10').disabled = !G.Gacha.costOf(s, 10, 't1');
     $('pull-10b').disabled = !G.Gacha.costOf(s, 10, 't10');
@@ -81,7 +81,7 @@ G.GachaUI = (() => {
   async function pull(n, use = 't1') {
     if (busy) return;
     const res = G.Gacha.pull(G.DB.save, n, gen, use);
-    if (!res) { G.Audio.sfx('error'); G.UI.toast('No tienes tickets suficientes: consíguelos jugando'); return; }
+    if (!res) { G.Audio.sfx('error'); G.UI.toast('Not enough Pokeballs or Master Balls: earn them by playing'); return; }
     G.Progress.checkAch();
     G.DB.commit(true);
     busy = true;

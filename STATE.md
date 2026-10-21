@@ -1,23 +1,21 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep this file under 3 KB. Rewrite it at the end of every session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-20 (Claude Desktop, night).
+Last updated: 2026-10-20 (Claude Desktop, late night).
 
 ## Where we are
-- Status slices A to E are built and closed. Boss rework: Overworld Elites and the Brock pilot gym are merged.
-- Tileset: atlases for Shady Forest, Crystal Cave and Ash Volcano are baked but nothing in js/ loads them yet.
-- Item rework (feature/items): F1 BUILT 2026-10-20 night (harness + headless test pass, Jess has NOT feel-tested yet). Pokemon tier per holder (held effects only while active), run tier shared by the team (1 slot, save.runSlots), 11 items ported (9 Pokemon, Lucky Egg and Amulet Coin run), all item text now English. Gym leader drops one guaranteed item, boss and gym have a placeholder run-item chance (5% / 10%). Rulings: DECISIONS 2026-10-20 (three entries).
-- Not built yet: Stones (ignore resistance AND immunity), Sharp Scissors (speed x1.0 at full team HP to x2.0 at 1%, applied last), Round Glasses (crit over 100%, free re-cast after 0.2 s at -100 points). All rulings final.
-- tsconfig.json (checkJs, noEmit) added, scope is js/data/items.js only (`tsc -p tsconfig.json`).
-- Git state is unknown to the assistant. Jess commits (F1 files, tileset files, slice E, docs) on feature/items. _delete_/headless-stage.tgz is a scratch tarball from the headless test, safe to delete.
+- Status slices A to E closed. Boss rework: Elites and Brock pilot gym merged. Tileset atlases baked, nothing loads them yet.
+- Item rework (feature/items): F1, F2 done and approved. F3a-1 (ground items, js/data/ground-items.js, pickup kind 'ground') and F3a-2 (status berries) BUILT and playtested 2026-10-20, approved.
+- F3a-2: Cheri/Chesto/Pecha/Rawst/Aspear/Persim/Lum drop as ground pickups into a team-wide berry bag (1 slot, upgradeable via save.berrySlots, cap 4; HUD boxes above the team stack, bottom-left for one Pokemon). A berry auto-consumes to block its status (benched Pokemon too); Lum covers the six main statuses, used last. Full bag or duplicate: pickup stays on the ground. Hooks in status.js. Pause sheet shows a Berry bag block (one row per slot with description). G.Debug.ground('pokeball'|'masterball') drops the gacha tickets (both drawn 32 px in the world; Great Ball x1, Master Ball x10). Sheet berry icons use 'ps:' + icon.
+- Next in F3: F3b Pokemon item import (rules table), F3c run items (Stones, Sharp Scissors, Round Glasses), F3d Inventory screen + gacha.
+- CREDITS.md has no Pokesprite line yet (check license). _delete_/headless-stage.tgz is scratch, safe to delete.
+- Git: branch feature/items, remote Jess-Rivera/pokesurvivor_fork. F3a-1 and F3a-2 are playtested and approved (2026-10-20). Machine sync steps are in CONTEXT.md session start item 4: give them on every 'catch me up'.
 
 ## Next (in order)
-1. Feel-test F1 (dev.html?dev, one slot). Then F2: team sheet reassignment screen plus HUD polish. F3: ground-item content, PokeAPI import via a rules table, Inventory screen and gacha, run-item content (Stones, Sharp Scissors, Round Glasses).
-2. Boss damage slice (bosses still use flat def.dmg) and Gym 2 (Misty and Staryu).
-3. Tileset integration (loader, generator cleanup, hedge occluder).
+1. F3b Pokemon item import (rules table). Also: boss damage slice, Gym 2 (Misty, Staryu), tileset integration.
 
 ## Open questions for Jess
-- None blocking. Tune later: run-item drop chances, what a full run grid should compare against once there are 2+ slots.
+- None right now.
 
 ## Standing rules (full text: CLAUDE.md)
 - Local-first: no Firebase, TURN or multiplayer work until Jess switches phase.

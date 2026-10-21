@@ -188,7 +188,8 @@ G.Sheet = (() => {
   }
 
   function render(mount, roster, opts = {}) {
-    const S = { roster, sel: Math.max(0, Math.min(roster.length - 1, opts.sel != null ? opts.sel : 0)), onSelect: opts.onSelect, choose: opts.choose || null, move: null, scrollFor: -1 };
+    const S = { roster, sel: Math.max(0, Math.min(roster.length - 1, opts.sel != null ? opts.sel : 0)), onSelect: opts.onSelect, choose: opts.choose || null, move: null, scrollFor: -1,
+      canMoveItems: !!opts.canMoveItems && !opts.choose, giving: false };
     if (S.choose) {
       // start on the wanted Pokemon if it can take the card, else the first one that can
       const ok = i => S.choose.targets[i] && S.choose.targets[i].ok;
@@ -207,7 +208,7 @@ G.Sheet = (() => {
     const item = pl.item && G.Items.BY[pl.item];
     // The roster strip sits in the title row when the screen provides a slot for it (right-aligned), else above the card.
     const slot = mount.parentElement && mount.parentElement.querySelector('.sh-strip-slot');
-    const strip = `<div class="sh-strip">${rosterStrip(S)}</div>`;
+    const strip = `<div class="sh-strip${S.giving ? ' giving' : ''}">${rosterStrip(S)}</div>`;
     if (slot) slot.innerHTML = strip;
     const card = S.choose && S.choose.card;
     mount.innerHTML = `
@@ -224,8 +225,17 @@ G.Sheet = (() => {
           <div class="sh-moves"><h3>Moves</h3><div class="sh-scroll">${moveRows(S, pl)}</div></div>
           <div class="sh-stats"><h3>Stats</h3><div class="sh-hex"></div>
             <div class="sh-legend"><i class="w"></i> base <i class="y"></i> from cards${card && card.type === 'stat' ? ' <i class="p"></i> after this card' : ''}</div>
-            ${item ? `<div class="sh-item"><span class="sh-itag">Held item</span><span class="sh-iico">${G.Icons.html(pl.item, 28)}</span><b>${E(item.name)}</b><div class="ds">${E(item.desc || '')}</div></div>` : ''}
+            ${item ? `<div class="sh-item"><span class="sh-itag">Held item</span><span class="sh-iico">${G.Icons.html(pl.item, 28)}</span><b>${E(item.name)}</b>${S.canMoveItems && S.roster.length > 1 ? `<button type="button" class="sh-mv${S.giving ? ' on' : ''}">${S.giving ? 'Cancel' : 'Move item'}</button>` : ''}<div class="ds">${S.giving ? 'Click a teammate in the top right to give it this item (they swap if it holds one).' : E(item.desc || '')}</div></div>` : ''}
             ${pl.runItems && pl.runItems.length ? `<div class="sh-item"><span class="sh-itag">Run items</span> ${pl.runItems.map(rid => { const r = G.Items.BY[rid]; return r ? `<span class="sh-iico" title="${E(r.desc || '')}">${G.Icons.html(rid, 22)}</span> <b>${E(r.name)}</b>` : ''; }).join(' &nbsp; ')}</div>` : ''}
+            ${(() => {
+              const bag = pl.berries || [], slots = G.Grounds.berrySlots(G.DB && G.DB.save), rows = [];
+              for (let k = 0; k < slots; k++) {
+                const b = G.Grounds.BY[bag[k]];
+                rows.push(b ? `<div class="sh-bag"><span class="sh-iico">${G.Icons.html('ps:' + b.icon, 22)}</span><b>${E(b.name)}</b><div class="ds">${E(b.desc || '')}</div></div>`
+                  : `<div class="sh-bag empty"><span class="sh-iico sh-bagbox"></span><b>Berry slot</b> (empty)</div>`);
+              }
+              return `<div class="sh-item"><span class="sh-itag">Berry bag</span> <span class="ds">Team-wide, used automatically</span>${rows.join('')}</div>`;
+            })()}
           </div>
         </div>
       </div>`;
@@ -234,8 +244,10 @@ G.Sheet = (() => {
     (slot || mount).querySelectorAll('.sh-tab').forEach(b => {
       const f = S.roster[+b.dataset.i];
       b.querySelector('.sh-sp').appendChild(G.UI.spriteCanvas(f.dex, 44, 44, { scale: 1, shiny: f.shiny }));
-      b.onclick = () => select(mount, +b.dataset.i);
+      b.onclick = () => { if (S.giving) giveTo(mount, +b.dataset.i); else select(mount, +b.dataset.i); };
     });
+    const mv = mount.querySelector('.sh-mv');
+    if (mv) mv.onclick = () => { S.giving = !S.giving; G.Audio.sfx('select'); paint(mount); };
     const sc = mount.querySelector('.sh-scroll');
     if (sc) sc.scrollTop = keepTop;
     S.scrollFor = S.sel;
@@ -248,8 +260,24 @@ G.Sheet = (() => {
     }
   }
 
+  /** Team sheet (pause only): hand the selected Pokemon's item to roster member i (swap if it holds one). Clicking itself cancels. */
+  function giveTo(mount, i) {
+    const S = state.get(mount); if (!S || !S.giving) return;
+    const from = S.roster[S.sel], to = S.roster[i];
+    S.giving = false;
+    if (!to || to === from) { paint(mount); return; }
+    const r = from.swapHeldItem(to);
+    if (r) {
+      const nm = id => G.Items.BY[id].name;
+      G.UI.toast(r.a && r.b ? `${from.mon.name} and ${to.mon.name} swapped ${nm(r.a)} and ${nm(r.b)}` : `${nm(r.a || r.b)} moved to ${(r.a ? to : from).mon.name}`, 2200);
+      G.Audio.sfx('confirm');
+    }
+    paint(mount);
+  }
+
   function select(mount, i) {
     const S = state.get(mount); if (!S || !S.roster[i] || i === S.sel) return;
+    S.giving = false;                      // keyboard / any other switch cancels a pending item move
     S.sel = i;
     if (S.choose) S.move = firstOk(S, i);
     G.Audio.sfx('select');

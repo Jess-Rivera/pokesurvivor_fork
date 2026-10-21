@@ -2,7 +2,7 @@
 // Real js/data/items.js and the Player item methods (hasItem, equip, onDealt) with stubbed engine globals. Covers: tiers and the
 // 11-item port (9 Pokemon, 2 run), English names, on/off symmetry for every stat item, the run-slot count with old saves,
 // tier-aware rolls and the run-chance drop, held effects only while the holder is not benched, run items for the whole team,
-// per-holder state (Focus Sash timer, Shell Bell charge). The live pickup flow and the HUD are NOT covered (no browser).
+// per-holder state (Focus Sash timer, Shell Bell charge), and F2 swapHeldItem (move, swap, no stat drift, sash cooldown travels). The live pickup flow and the HUD are NOT covered (no browser).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -19,7 +19,7 @@ try { load('js/entities/player.js'); P = G.Player; } catch (e) { console.log('pl
 if (!P) { console.log('G.Player missing'); process.exit(1); }
 const I = G.Items;
 const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
-  hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt });
+  hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt, swapHeldItem: P.prototype.swapHeldItem });
 
 // 1. the port
 { const pk = I.LIST.filter(i => i.tier === 'pokemon').map(i => i.id), rn = I.LIST.filter(i => i.tier === 'run').map(i => i.id);
@@ -69,6 +69,24 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
   for (let i = 0; i < 2000; i++) if (I.BY[I.rollFor('gym', ['luckyegg', 'amuletcoin'])].tier !== 'pokemon') bad('all run items owned falls back to pokemon');
   for (let i = 0; i < 2000; i++) if (I.rollFor('gym', ['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
   console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; gym ~10%, boss ~5%, others 0%'); }
+
+// 6. F2: moving and swapping held items between Pokemon
+{ const a = mk(), b = mk();
+  a.equip('choiceband'); a.equip('lifeorb'); const r1 = a.swapHeldItem(b);
+  if (!r1 || r1.a !== 'lifeorb' || r1.b !== null) bad('move result ' + JSON.stringify(r1));
+  if (a.item !== null || b.item !== 'lifeorb' || !near(a.atkMul, 1) || !near(b.atkMul, 1.3)) bad('move: stats follow the item ' + a.atkMul + '/' + b.atkMul);
+  b.equip('quickclaw'); a.equip('choicescarf');             // a: scarf, b: claw
+  const r2 = a.swapHeldItem(b);
+  if (a.item !== 'quickclaw' || b.item !== 'choicescarf') bad('swap items');
+  if (!near(a.spdMul, 1) || !near(a.cdMul, 0.8) || !near(b.spdMul, 1.35) || !near(b.cdMul, 1)) bad('swap stats a:' + a.spdMul + '/' + a.cdMul + ' b:' + b.spdMul + '/' + b.cdMul);
+  for (let i = 0; i < 50; i++) { a.swapHeldItem(b); }             // 50 more swaps: no drift
+  if (!near(a.spdMul, 1) || !near(b.spdMul, 1.35) || !near(a.cdMul, 0.8) || !near(b.cdMul, 1)) bad('drift after 50 swaps');
+  if (a.swapHeldItem(a) !== null || mk().swapHeldItem(mk()) !== null || a.swapHeldItem(null) !== null) bad('no-op cases must return null');
+  const c = mk(), d = mk(); c.equip('focussash'); c.sashT = 5000; c.swapHeldItem(d);
+  if (d.item !== 'focussash' || d.sashT !== 5000 || c.sashT !== -999) bad('sash cooldown must travel: ' + d.sashT + '/' + c.sashT);
+  const e = mk(), f = mk(); e.equip('leftovers'); f.maxHp = 400; e.swapHeldItem(f);
+  if (!near(e.regenFlat, 0) || !near(f.regenFlat, 6)) bad('leftovers recomputed from the new holder: ' + e.regenFlat + '/' + f.regenFlat);
+  console.log('6 swapHeldItem: move, swap, 50 round-trips clean, no-ops null, sash cooldown travels, Leftovers uses the new holder max HP'); }
 
 console.log(fail ? fail + ' FAILURES' : 'ALL PASS');
 process.exit(fail ? 1 : 0);

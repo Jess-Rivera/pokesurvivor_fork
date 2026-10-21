@@ -595,7 +595,8 @@ G.Combat = (() => {
 
   // Critical hit (Upgrades -> Critical Hit): x1.5 damage, big orange number.
   const CRIT_MUL = 1.5;
-  const isCrit = pl => !ghost && pl.critChance > 0 && Math.random() < pl.critChance;
+  const critOf = pl => pl.critChance + (pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'crit') : 0);   // + Lansat Berry (timed team crit chance)
+  const isCrit = pl => !ghost && critOf(pl) > 0 && Math.random() < critOf(pl);
 
   // An enemy's real base Def/SpD (stats[2]/stats[4]) via its species dex. Fallback 50/50
   // (e.g. a boss or minion whose dex lacks a stats array).

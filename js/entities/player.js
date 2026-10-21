@@ -89,6 +89,7 @@ G.Player = class Player {
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
     this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
     this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
+    this.berries = [];         // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
@@ -121,7 +122,7 @@ G.Player = class Player {
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
   /** Stat bonus fraction: the stat cards plus the gym badge boosts. */
-  incOf(k) { return this.inc[k] + this.badge[k]; }
+  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
   /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
   addBadgeBoost(stat, pct) {
     if (!(stat in this.badge)) return false;
@@ -345,7 +346,9 @@ G.Player = class Player {
       tk = G.Types.mult(type, this.mon.types);
       wk = G.Weather.mult(type);
       eff = G.Types.label(tk);
-      amount *= tk * wk;
+      // Type-guard berry (ground item, 10 s): a super-effective hit of its type is halved (Chilan: every Normal hit).
+      const guard = this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
+      amount *= tk * wk * guard;
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
@@ -449,6 +452,24 @@ G.Player = class Player {
     if (this.item) G.Items.BY[this.item].off(this);
     this.item = id;
     if (id) G.Items.BY[id].on(this);
+  }
+
+  /**
+   * Move this Pokemon's held item to `other`, or swap items when `other` holds one too (team sheet, F2). Each item is
+   * unequipped from its old holder (off) and equipped on its new one (on), so every stat multiplier stays exact.
+   * The Focus Sash cooldown (sashT) travels with the item, so passing a spent sash gives no instant second save.
+   * @returns {{a: string|null, b: string|null}|null} items this one held / other held before the swap; null if nothing happened
+   */
+  swapHeldItem(other) {
+    if (!other || other === this || (!this.item && !other.item)) return null;
+    const a = this.item, b = other.item, ta = this.sashT, tb = other.sashT;
+    if (a) G.Items.BY[a].off(this);
+    if (b) G.Items.BY[b].off(other);
+    this.item = b; other.item = a;
+    if (b) G.Items.BY[b].on(this);
+    if (a) G.Items.BY[a].on(other);
+    this.sashT = tb; other.sashT = ta;
+    return { a, b };
   }
 
   /** Shell Bell: a little health for the damage you do (cap 4/s). */
@@ -630,7 +651,7 @@ G.Player = class Player {
     let i = 0;
     for (const k in this.stgTeam) {
       const L = this.stgTeam[k];
-      if (!L.length) continue;
+      if (!L.length || !COL[k]) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
       const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;

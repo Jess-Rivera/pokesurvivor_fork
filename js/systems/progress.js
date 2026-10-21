@@ -129,8 +129,8 @@ G.Progress = (() => {
 
   function rewardText(r) {
     const p = [];
-    if (r.t10) p.push(G.Icons.html('ticket10', 12) + ' ' + r.t10 + ' ×10');
-    if (r.t1) p.push(G.Icons.html('ticket', 12) + ' ' + r.t1);
+    if (r.t10) p.push(G.Icons.html('ball4', 24) + ' ' + r.t10 + ' Master Ball' + (r.t10 > 1 ? 's' : ''));
+    if (r.t1) p.push(G.Icons.html('ball', 24) + ' ' + r.t1 + ' Pokeball' + (r.t1 > 1 ? 's' : ''));
     if (r.coins) p.push('<span class="coin"></span> ' + r.coins);
     return p.join(' &nbsp;');
   }

@@ -317,7 +317,8 @@
       if (this.elite) {
         G.Camera.kick(0.6);
         G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
-        G.Pickups.drop('heal', this.x + 24, this.y, 0);
+        G.Pickups.drop('heal', this.x + 24, this.y, 0);                                    // the guaranteed Oran Berry (the plain 'heal' pickup, 30%)
+        G.Pickups.drop('ground', this.x + 4, this.y + 22, G.Grounds.roll());               // plus one ground roll
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
         G.Elites.noteDeath(this);
       }

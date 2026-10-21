@@ -1,0 +1,5422 @@
+{
+ "frames": {
+  "blank_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_diamond 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  }
+ },
+ "meta": {
+  "app": "mintmark",
+  "version": "1.0.0",
+  "image": "bounce_diamond.png",
+  "format": "I8",
+  "size": {
+   "w": 338,
+   "h": 1248
+  },
+  "scale": "1",
+  "padding": 2,
+  "cell": {
+   "w": 32,
+   "h": 48
+  },
+  "frameTags": [
+   {
+    "name": "blank_diamond",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   },
+   {
+    "name": "ringed_diamond",
+    "from": 10,
+    "to": 19,
+    "direction": "forward"
+   },
+   {
+    "name": "sunburst_diamond",
+    "from": 20,
+    "to": 29,
+    "direction": "forward"
+   },
+   {
+    "name": "bossed_diamond",
+    "from": 30,
+    "to": 39,
+    "direction": "forward"
+   },
+   {
+    "name": "deathmark_diamond",
+    "from": 40,
+    "to": 49,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_i_diamond",
+    "from": 50,
+    "to": 59,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_v_diamond",
+    "from": 60,
+    "to": 69,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_x_diamond",
+    "from": 70,
+    "to": 79,
+    "direction": "forward"
+   },
+   {
+    "name": "pierced_diamond",
+    "from": 80,
+    "to": 89,
+    "direction": "forward"
+   },
+   {
+    "name": "halo_diamond",
+    "from": 90,
+    "to": 99,
+    "direction": "forward"
+   },
+   {
+    "name": "cash_diamond",
+    "from": 100,
+    "to": 109,
+    "direction": "forward"
+   },
+   {
+    "name": "cash_cross_diamond",
+    "from": 110,
+    "to": 119,
+    "direction": "forward"
+   },
+   {
+    "name": "oblong_diamond",
+    "from": 120,
+    "to": 129,
+    "direction": "forward"
+   },
+   {
+    "name": "oblong_cross_diamond",
+    "from": 130,
+    "to": 139,
+    "direction": "forward"
+   },
+   {
+    "name": "royal_diamond",
+    "from": 140,
+    "to": 149,
+    "direction": "forward"
+   },
+   {
+    "name": "lozenge_diamond",
+    "from": 150,
+    "to": 159,
+    "direction": "forward"
+   },
+   {
+    "name": "watcher_diamond",
+    "from": 160,
+    "to": 169,
+    "direction": "forward"
+   },
+   {
+    "name": "pentad_diamond",
+    "from": 170,
+    "to": 179,
+    "direction": "forward"
+   },
+   {
+    "name": "trine_diamond",
+    "from": 180,
+    "to": 189,
+    "direction": "forward"
+   },
+   {
+    "name": "hacksilver_diamond",
+    "from": 190,
+    "to": 199,
+    "direction": "forward"
+   },
+   {
+    "name": "pilgrim_diamond",
+    "from": 200,
+    "to": 209,
+    "direction": "forward"
+   },
+   {
+    "name": "broken_diamond",
+    "from": 210,
+    "to": 219,
+    "direction": "forward"
+   },
+   {
+    "name": "scalloped_diamond",
+    "from": 220,
+    "to": 229,
+    "direction": "forward"
+   },
+   {
+    "name": "pinched_diamond",
+    "from": 230,
+    "to": 239,
+    "direction": "forward"
+   },
+   {
+    "name": "amulet_diamond",
+    "from": 240,
+    "to": 249,
+    "direction": "forward"
+   }
+  ]
+ }
+}

@@ -1,0 +1,50 @@
+MINTMARK ASSET LICENCE
+version 1.0.0
+
+This licence covers every image, sprite sheet, palette and data file in this
+package.
+
+The most common complaint about bought game art is not the art - it is a licence
+that says one thing inside the download and something else on the store page.
+This file is the licence. If a store page ever disagrees with it, this file wins.
+
+
+YOU MAY
+
+  * Use these assets in any project, personal or commercial, with no limit on
+    revenue, team size, or number of projects.
+  * Use them in a game you sell, a game you give away, a game jam entry, a
+    prototype, a portfolio piece, a client project, or a tutorial.
+  * Modify them freely - recolour, resize, cut apart, re-animate, combine with
+    other art, feed them to a shader.
+  * Ship them inside your game's files, including inside an asset bundle or a
+    packed texture atlas that your game loads.
+  * Use them in a game that is itself sold on a marketplace.
+
+  No credit is required. It is appreciated, and "Coins: Mintmark" is plenty.
+
+
+YOU MAY NOT
+
+  * Resell, sublicense, or redistribute the assets AS ASSETS - whether as this
+    pack, as part of another asset pack, in a bundle of art resources, or on any
+    marketplace, free or paid.
+  * Publish them to an asset library, sprite repository, or "free assets" site.
+  * Claim authorship of the original artwork.
+  * Register them, or anything substantially derived from them, as a trademark.
+
+  The line is simple: SHIP THEM IN A GAME, yes. SELL THEM AS ART, no. Modifying
+  them does not move that line - a recoloured Mintmark coin is still a Mintmark
+  coin for the purpose of resale.
+
+
+NO WARRANTY
+
+  These assets are provided "as is", without warranty of any kind, express or
+  implied. The author is not liable for any claim, damage or other liability
+  arising from their use.
+
+
+This licence is perpetual and irrevocable for any copy you have lawfully
+obtained. Future versions of the pack may ship under a different licence; that
+never retroactively changes the terms on a copy you already have.

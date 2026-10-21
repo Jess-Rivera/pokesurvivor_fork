@@ -1,0 +1,5422 @@
+{
+ "frames": {
+  "blank_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "blank_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "ringed_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 50,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "sunburst_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "bossed_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "deathmark_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_i_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 250,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_v_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 300,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "mark_x_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 350,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pierced_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 400,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "halo_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 450,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 500,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "cash_cross_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 550,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 600,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "oblong_cross_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 650,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "royal_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 700,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "lozenge_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 750,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "watcher_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 800,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pentad_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 850,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "trine_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 900,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "hacksilver_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 950,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pilgrim_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1000,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "broken_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1050,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "scalloped_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1100,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "pinched_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1150,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 0.png": {
+   "frame": {
+    "x": 0,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 1.png": {
+   "frame": {
+    "x": 34,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 2.png": {
+   "frame": {
+    "x": 68,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 3.png": {
+   "frame": {
+    "x": 102,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 4.png": {
+   "frame": {
+    "x": 136,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 5.png": {
+   "frame": {
+    "x": 170,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 6.png": {
+   "frame": {
+    "x": 204,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 7.png": {
+   "frame": {
+    "x": 238,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 8.png": {
+   "frame": {
+    "x": 272,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  },
+  "amulet_emerald 9.png": {
+   "frame": {
+    "x": 306,
+    "y": 1200,
+    "w": 32,
+    "h": 48
+   },
+   "rotated": false,
+   "trimmed": false,
+   "spriteSourceSize": {
+    "x": 0,
+    "y": 0,
+    "w": 32,
+    "h": 48
+   },
+   "sourceSize": {
+    "w": 32,
+    "h": 48
+   },
+   "duration": 100
+  }
+ },
+ "meta": {
+  "app": "mintmark",
+  "version": "1.0.0",
+  "image": "bounce_emerald.png",
+  "format": "I8",
+  "size": {
+   "w": 338,
+   "h": 1248
+  },
+  "scale": "1",
+  "padding": 2,
+  "cell": {
+   "w": 32,
+   "h": 48
+  },
+  "frameTags": [
+   {
+    "name": "blank_emerald",
+    "from": 0,
+    "to": 9,
+    "direction": "forward"
+   },
+   {
+    "name": "ringed_emerald",
+    "from": 10,
+    "to": 19,
+    "direction": "forward"
+   },
+   {
+    "name": "sunburst_emerald",
+    "from": 20,
+    "to": 29,
+    "direction": "forward"
+   },
+   {
+    "name": "bossed_emerald",
+    "from": 30,
+    "to": 39,
+    "direction": "forward"
+   },
+   {
+    "name": "deathmark_emerald",
+    "from": 40,
+    "to": 49,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_i_emerald",
+    "from": 50,
+    "to": 59,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_v_emerald",
+    "from": 60,
+    "to": 69,
+    "direction": "forward"
+   },
+   {
+    "name": "mark_x_emerald",
+    "from": 70,
+    "to": 79,
+    "direction": "forward"
+   },
+   {
+    "name": "pierced_emerald",
+    "from": 80,
+    "to": 89,
+    "direction": "forward"
+   },
+   {
+    "name": "halo_emerald",
+    "from": 90,
+    "to": 99,
+    "direction": "forward"
+   },
+   {
+    "name": "cash_emerald",
+    "from": 100,
+    "to": 109,
+    "direction": "forward"
+   },
+   {
+    "name": "cash_cross_emerald",
+    "from": 110,
+    "to": 119,
+    "direction": "forward"
+   },
+   {
+    "name": "oblong_emerald",
+    "from": 120,
+    "to": 129,
+    "direction": "forward"
+   },
+   {
+    "name": "oblong_cross_emerald",
+    "from": 130,
+    "to": 139,
+    "direction": "forward"
+   },
+   {
+    "name": "royal_emerald",
+    "from": 140,
+    "to": 149,
+    "direction": "forward"
+   },
+   {
+    "name": "lozenge_emerald",
+    "from": 150,
+    "to": 159,
+    "direction": "forward"
+   },
+   {
+    "name": "watcher_emerald",
+    "from": 160,
+    "to": 169,
+    "direction": "forward"
+   },
+   {
+    "name": "pentad_emerald",
+    "from": 170,
+    "to": 179,
+    "direction": "forward"
+   },
+   {
+    "name": "trine_emerald",
+    "from": 180,
+    "to": 189,
+    "direction": "forward"
+   },
+   {
+    "name": "hacksilver_emerald",
+    "from": 190,
+    "to": 199,
+    "direction": "forward"
+   },
+   {
+    "name": "pilgrim_emerald",
+    "from": 200,
+    "to": 209,
+    "direction": "forward"
+   },
+   {
+    "name": "broken_emerald",
+    "from": 210,
+    "to": 219,
+    "direction": "forward"
+   },
+   {
+    "name": "scalloped_emerald",
+    "from": 220,
+    "to": 229,
+    "direction": "forward"
+   },
+   {
+    "name": "pinched_emerald",
+    "from": 230,
+    "to": 239,
+    "direction": "forward"
+   },
+   {
+    "name": "amulet_emerald",
+    "from": 240,
+    "to": 249,
+    "direction": "forward"
+   }
+  ]
+ }
+}

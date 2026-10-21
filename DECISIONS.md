@@ -11,6 +11,10 @@ Convention: new entries stay at most about 10 lines (the rule and the why); long
 - SpriteCollab and PokeAPI credits stay as plain text (attribution kept, no hyperlink). The mailto contact line stays.
 - SEO/website pages and their generators live in `_delete_/` (gitignored). Build the bundle with `--sin-seo`.
 
+## 2026-10-20, Gacha tickets are Pokeballs and Master Balls
+- x1 ticket = Great Ball icon, labelled "Pokeball"; x10 ticket = Master Ball icon, labelled "Master Ball". Applies to menus and world pickups. Code/save names (`ticket`, `ticket10`, `t1`, `t10`) are unchanged.
+- Ball icons are drawn at 16 or 32 px only, to stay crisp.
+
 Archived entries (heading only):
 - 2026-10-18, Opening pacing: XP boost and elite gate
 - 2026-10-18, Slice 1c design answered: shots, support crowd-seeking, contact gap, flanker
@@ -473,3 +477,17 @@ its x1.6 (it is a behavior archetype, not a base-stat multiplier).
 - Drops: chests and elite roll stay Pokemon items; boss always drops an item with a 5% run chance, gym leader now drops one guaranteed item with a 10% run chance (`G.Items.RUN_CHANCE`, placeholder). Lucky Egg and Amulet Coin no longer drop from chests.
 - Item text is now English (names, descs, toasts, scr-item screen). The old Spanish keys stay in lang-en.js, unused.
 - Stones, Sharp Scissors, Round Glasses are NOT built (content slice). tsconfig.json (checkJs, noEmit) added with only js/data/items.js in scope; run `tsc -p tsconfig.json`.
+
+- 2026-10-20 (night), F2 rulings: held items move on the pause team sheet only (not the end-of-run summary or level-up choose mode); recipient can be any teammate incl. benched or fainted; the Focus Sash cooldown (sashT) travels with the item (Jess agreed). Toasts: "<Pokemon> got <Item>!" and "Picked up <Item>!".
+
+## 2026-10-20 (night), Item rework F3a-1: ground items
+- Scope (Jess): ground tier = X stat items + medicine berries + the berry families below. No cures, revives, Rare Candy or vitamins. Status berries (Cheri, Chesto, Pecha, Rawst, Aspear, Persim, Lum) go in a LATER slice as a berry slot that auto-consumes to negate the status.
+- Effects: X Attack/Defense/Sp. Atk/Sp. Def/Speed +1 stage 30 s team-wide; Oran 30%, Sitrus 50% (immediate); type-guard berries (18 types, Chilan = Normal) halve super-effective hits of their type for a flat 10 s (Chilan: every Normal hit); Liechi/Ganlon/Salac/Petaya/Apicot +1 stage 10 s; Starf +2 on one random stat 10 s; Lansat +20% crit 10 s; Kee/Maranga +10% Def/Sp. Def 10 s (stat-card pool); Pinap/Silver/Golden +1/+5/+10 points on the ground drop chance for 60 s. Micle and Custap skipped (no matching mechanic), X Accuracy / Guard Spec / Dire Hit / Max Mushrooms skipped.
+- Stacking: the same item renews its timer, different items stack (X Attack + Liechi = +2). All of it lives in the shared team store, so it ticks while benched.
+- Drops: wild kill 1% extra roll (+ Pinap bonus), small chest guaranteed Sitrus, big chest guaranteed roll, elite guaranteed Oran (the plain heal pickup) + one roll, bosses and gym leaders unchanged. Roll weights: X 30, heals 25, guards 20, pinch 15, Kee/Maranga 6, Pinaps 4.
+- Art: Pokesprite sheet already in assets/items; credit line still to add to CREDITS.md after checking its license.
+
+## 2026-10-20 Item rework F3a-2: status berries (Jess)
+- Berry bag: auto-consume to negate the matching status (option A). One team-wide slot at the start, upgradeable (save.berrySlots, default 1, cap 4). Lum covers the six main statuses and is spent last. Toxic counts as Poison. A berry protects benched teammates too.
+- A full bag or an already held berry leaves the pickup on the ground (no pull). Roll weights: Cheri, Chesto, Pecha, Rawst, Aspear, Persim 1.5 each, Lum 0.5.
+- HUD: bag boxes directly above the first team slot, bottom-left when the team is one Pokemon.

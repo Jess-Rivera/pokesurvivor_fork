@@ -31,7 +31,7 @@ G.UI = (() => {
     const s = G.DB.save;
     $('coins').textContent = s ? s.coins.toLocaleString('es') : '0';
     const t = (s && s.tickets) || { t1: 0, t10: 0 };
-    $('tickets-pill').innerHTML = `${G.Icons.html('ticket', 18)} ${t.t1} &nbsp;${G.Icons.html('ticket10', 18)} ${t.t10}`;
+    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1} &nbsp;${G.Icons.html('ball4', 24)} ${t.t10}`;
     // Sync dot: green = saved in the cloud, yellow = saving,
     // red = no connection (saved locally and uploaded on return).
     const st = G.DB.guest ? 'guest' : G.DB.syncState;

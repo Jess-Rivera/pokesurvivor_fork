@@ -6,6 +6,13 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 
 ---
 
+## 2026-10-20 (Claude Desktop) gacha tickets drawn as Great Ball / Master Ball
+- js/ui/icons.js: ALIAS table maps `ticket` to `ps:ball.great` and `ticket10` to `ps:ball.master`, so menus and world pickups both use the Pokesprite balls. Empty the table to restore the old pixel tickets (their definitions are still there).
+- tools/gen_pokesprite_index.py: added the `ball` category; js/data/pokesprite-index.js regenerated (342 sprites).
+- Sizes moved to 16 or 32 px (half or native scale of the 32 px cells): pill, gacha screen, reward text now 32 (doubled from 16 on request); run-over summary 32; pickups 16 (Pokeball) and 32 (Master Ball).
+- Menus then switched to the existing rarity balls from assets/icons/pokeball (`ball` Poke Ball for x1, `ball4` purple Master Ball for x10), drawn at 24 px (2x the 12 px art; 36 px was too large) in the pill, gacha screen, reward text and run-over row. Only the world pickups keep the Pokesprite Great Ball / Master Ball through the ALIAS table.
+- Labels now English: Pokeballs (x1) and Master Balls (x10) in the gacha screen, run-over summary, reward text, pickup popups, boss event banner, pill tooltip and mod panel.
+
 ## 2026-10-20 (Claude Desktop) external links removed from game menus
 - dev.html: removed the PS_PAGES flag, the Guide/Pokedex links on the login screen and in the noscript text, the Source code (GitHub) line in the legal panel; SpriteCollab and PokeAPI credits are now plain text.
 - js/ui/settings-ui.js: removed the Guide, Pokedex, Contacto and GitHub buttons in the credits panel (Aviso legal button stays). js/ui/ui.js: removed the legal-repo wiring.
@@ -188,3 +195,23 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - Tests: docs/proposals/items-f1-harness.js (new) plus all 15 harnesses via tools/check.js; headless Chromium run on dev.html?dev (pickup flow, swap prompts, run item on whole team, replace, 2 slots, HUD, sheet): all pass, no page errors.
 - Fixed in passing: gym-reward-harness stub needed Items.rollFor. Found: G.Game has no item() (it is the coop api), so tests drop an item pickup instead.
 - Where we stopped: F1 waits for Jess's feel-test, then commit. REMINDER: commit and push (F1 files, docs, tsconfig.json, tools/globals.d.ts).
+
+## 2026-10-20 (night, later) Item rework F2 built
+- Toasts: Pokemon item "<Pokemon> got <Item>!", run item "Picked up <Item>!" (Jess).
+- F2: Player.swapHeldItem (move or swap via off/on, Focus Sash cooldown travels), pause sheet Move item button + gold highlighted roster tabs (sheet.js, opts.canMoveItems only from the pause screen), css. (HUD team-list item icons were built then removed: too big, unreadable when small.)
+- Tests: harness section 6 (move, swap, 50 round-trips no drift, Leftovers recomputed), all 15 harnesses pass, headless pause-sheet flow (move, swap, cancel) passes, no page errors.
+- Where we stopped: F2 waits for Jess's feel-test. REMINDER: commit and push.
+
+## 2026-10-20 (night, later) Item rework F3a-1 built: ground items
+- Jess rulings: only stat-boost and medicine-berry families; X items +1 stage 30 s; Oran/Sitrus immediate; type-guard berries 10 s flat window; pinch berries 10 s; Kee/Maranga +10% 10 s; Pinaps +1/+5/+10 points on the ground roll for 60 s; status berries deferred; Lum to the later berry slot.
+- Built: data/ground-items.js (37 items, weights 30/25/20/15/6/4), pickup kind 'ground', timed team effects in stgTeam (keys guard_<type>, pct_def, pct_spd, crit, drop; same item refreshes, different items stack), hooks in Player.incOf / Player.hurt / combat isCrit, HUD buff chips, 'ps:' Pokesprite icons (tools/gen_pokesprite_index.py), G.Debug.ground, drops (wild 1%, small chest Sitrus, big chest roll, elite Oran + roll).
+- Tests: docs/proposals/ground-items-harness.js (new) + all harnesses via tools/check.js; headless run: pickups through the real path, stacking/refresh, guard halving (Occa/Chilan), Kee incOf, base 1% and Pinap 11% drop rates, all 37 apply, no page errors.
+- Where we stopped: waiting for Jess's feel-test. REMINDER: commit and push (new files: ground-items.js, pokesprite-index.js, tools/gen_pokesprite_index.py, ground-items-harness.js).
+
+## 2026-10-20 (night, later) Item rework F3a-2 built: status berries
+- Rulings (Jess): berry bag A (auto-consume to negate), 1 team-wide slot upgradeable, Lum covers the six main statuses, bag above the team slot in the HUD.
+- Built: Cheri, Chesto, Pecha, Rawst, Aspear, Persim (weight 1.5 each) and Lum (0.5) in ground-items.js; G.Grounds.berryGuard/berrySlots/canTake; hooks in status.js apply (major, confusion) and applyDot; Toxic counts as Poison; HUD drawBerryBag; stuck pickup when full or duplicate.
+- Tests: ground-items harness sections 6 to 7, headless run (single and 3-Pokemon teams, benched protection), 16 of 16 harnesses pass, screenshots checked.
+- Where we stopped: awaiting feel-test. REMINDER: commit and push.
+- F3a-2 follow-up (Jess): Berry bag block on the pause team sheet (icon, name, description per slot, empty slots dashed); G.Debug.ground accepts 'pokeball' (x1 ticket) and 'masterball' (x10). Harness 7b + headless sheet check pass.
+- Close-out 2026-10-20: Pokeball pickup resized 16 to 32 px (glow r 8) to match the Master Ball; sheet berry icon fixed ('ps:' prefix, was a default star). 16/16 harnesses pass. Not feel-tested: F3a-1, F3a-2, sheet berry bag. REMINDER: commit and push; delete _delete_/headless-stage.tgz; add Pokesprite line to CREDITS.md after checking license.
