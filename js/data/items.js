@@ -103,7 +103,55 @@ G.Items = (() => {
     { id: 'amuletcoin', tier: 'run', name: 'Amulet Coin', desc: '+50% PokéCoins at the end of the run.',
       on: p => { p.coinMul *= 1.5; }, off: p => { p.coinMul /= 1.5; } },
     { id: 'luckyegg', tier: 'run', name: 'Lucky Egg', desc: '+30% experience.',
-      on: p => { p.xpMul *= 1.3; }, off: p => { p.xpMul /= 1.3; } }
+      on: p => { p.xpMul *= 1.3; }, off: p => { p.xpMul /= 1.3; } },
+    // ---- F3c run items (2026-10-21): team-wide, whole-run. See docs/RUN-ITEM-THINK-DOC.md. ----
+    { id: 'sharpscissors', tier: 'run', name: 'Sharp Scissors', icon: 'ps:hold-item.scope-lens', desc: 'The lower your team HP, the faster you move (up to 2x). Needs a team of 3+.',
+      on: p => { p.sharpScissors = true; }, off: p => { p.sharpScissors = false; } },
+    { id: 'brassknuckles', tier: 'run', name: 'Brass Knuckles', icon: 'ps:hold-item.punching-glove', desc: 'The lower your team HP, the more damage you deal (up to 2x). Needs a team of 3+.',
+      on: p => { p.brassKnuckles = true; }, off: p => { p.brassKnuckles = false; } },
+    { id: 'snowballbadge', tier: 'run', name: 'Snowball Badge', icon: 'ps:hold-item.muscle-band', desc: 'Every kill feeds the Snowball: +damage for the total HP of everything you have slain.',
+      on: p => { p.snowball = true; }, off: p => { p.snowball = false; } },
+    { id: 'redo', tier: 'run', name: 'Re-Do', icon: 'ps:hold-item.shell-bell', desc: 'When your last Pokemon faints, revive your whole team to full HP. Once per run.',
+      on: p => { p.redo = true; }, off: p => { p.redo = false; } },
+    { id: 'pikachustear', tier: 'run', name: "Pikachu's Tear", icon: 'ps:hold-item.cell-battery', desc: 'Each fainted teammate boosts your damage and speed by 1.1x.',
+      on: p => { p.pikaTear = true; }, off: p => { p.pikaTear = false; } },
+    // Power Stones: one per type; group 'stone' = only ONE may ever be carried (mutual exclusion, enforced in game.equipRun).
+    { id: 'normalstone', tier: 'run', name: 'Normal Stone', icon: 'ps:gem.normal', group: 'stone', desc: 'Your Normal attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'normal'; }, off: p => { if (p.stoneType === 'normal') p.stoneType = null; } },
+    { id: 'firestone', tier: 'run', name: 'Flame Stone', icon: 'ps:gem.fire', group: 'stone', desc: 'Your Fire attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'fire'; }, off: p => { if (p.stoneType === 'fire') p.stoneType = null; } },
+    { id: 'waterstone', tier: 'run', name: 'Wave Stone', icon: 'ps:gem.water', group: 'stone', desc: 'Your Water attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'water'; }, off: p => { if (p.stoneType === 'water') p.stoneType = null; } },
+    { id: 'electricstone', tier: 'run', name: 'Lightning Stone', icon: 'ps:gem.electric', group: 'stone', desc: 'Your Electric attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'electric'; }, off: p => { if (p.stoneType === 'electric') p.stoneType = null; } },
+    { id: 'grassstone', tier: 'run', name: 'Leaf Stone', icon: 'ps:gem.grass', group: 'stone', desc: 'Your Grass attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'grass'; }, off: p => { if (p.stoneType === 'grass') p.stoneType = null; } },
+    { id: 'icestone', tier: 'run', name: 'Frost Stone', icon: 'ps:gem.ice', group: 'stone', desc: 'Your Ice attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'ice'; }, off: p => { if (p.stoneType === 'ice') p.stoneType = null; } },
+    { id: 'fightingstone', tier: 'run', name: 'Fist Stone', icon: 'ps:gem.fighting', group: 'stone', desc: 'Your Fighting attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'fighting'; }, off: p => { if (p.stoneType === 'fighting') p.stoneType = null; } },
+    { id: 'poisonstone', tier: 'run', name: 'Venom Stone', icon: 'ps:gem.poison', group: 'stone', desc: 'Your Poison attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'poison'; }, off: p => { if (p.stoneType === 'poison') p.stoneType = null; } },
+    { id: 'groundstone', tier: 'run', name: 'Earth Stone', icon: 'ps:gem.ground', group: 'stone', desc: 'Your Ground attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'ground'; }, off: p => { if (p.stoneType === 'ground') p.stoneType = null; } },
+    { id: 'flyingstone', tier: 'run', name: 'Gale Stone', icon: 'ps:gem.flying', group: 'stone', desc: 'Your Flying attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'flying'; }, off: p => { if (p.stoneType === 'flying') p.stoneType = null; } },
+    { id: 'psychicstone', tier: 'run', name: 'Mind Stone', icon: 'ps:gem.psychic', group: 'stone', desc: 'Your Psychic attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'psychic'; }, off: p => { if (p.stoneType === 'psychic') p.stoneType = null; } },
+    { id: 'bugstone', tier: 'run', name: 'Bug Stone', icon: 'ps:gem.bug', group: 'stone', desc: 'Your Bug attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'bug'; }, off: p => { if (p.stoneType === 'bug') p.stoneType = null; } },
+    { id: 'rockstone', tier: 'run', name: 'Rock Stone', icon: 'ps:gem.rock', group: 'stone', desc: 'Your Rock attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'rock'; }, off: p => { if (p.stoneType === 'rock') p.stoneType = null; } },
+    { id: 'ghoststone', tier: 'run', name: 'Spirit Stone', icon: 'ps:gem.ghost', group: 'stone', desc: 'Your Ghost attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'ghost'; }, off: p => { if (p.stoneType === 'ghost') p.stoneType = null; } },
+    { id: 'dragonstone', tier: 'run', name: 'Dragon Stone', icon: 'ps:gem.dragon', group: 'stone', desc: 'Your Dragon attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'dragon'; }, off: p => { if (p.stoneType === 'dragon') p.stoneType = null; } },
+    { id: 'darkstone', tier: 'run', name: 'Shadow Stone', icon: 'ps:gem.dark', group: 'stone', desc: 'Your Dark attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'dark'; }, off: p => { if (p.stoneType === 'dark') p.stoneType = null; } },
+    { id: 'steelstone', tier: 'run', name: 'Steel Stone', icon: 'ps:gem.steel', group: 'stone', desc: 'Your Steel attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'steel'; }, off: p => { if (p.stoneType === 'steel') p.stoneType = null; } },
+    { id: 'fairystone', tier: 'run', name: 'Fae Stone', icon: 'ps:gem.fairy', group: 'stone', desc: 'Your Fairy attacks ignore enemy resistance and immunity. Only one Stone at a time.',
+      on: p => { p.stoneType = 'fairy'; }, off: p => { if (p.stoneType === 'fairy') p.stoneType = null; } },
   ];
   const BY = {};
   for (const it of LIST) BY[it.id] = it;
@@ -138,5 +186,37 @@ G.Items = (() => {
     return roll();
   }
 
-  return { LIST, BY, roll, rollFor, runSlots, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX };
+  // ---- F3c run-item shared math (team-wide; read by Player.runSpeedMul / runDmgMul) ----
+  const HP_SCALE_MIN = 0.10;          // at or below 10% team HP, the HP-scaled bonus is maxed (2x)
+  const HP_TEAM_MIN = 3;              // Sharp Scissors / Brass Knuckles need a roster of 3+ (fixed at run start)
+  const SNOWBALL_DIV = 10000;         // Snowball: +damage = total killed HP / this (TUNE)
+  const FAINT_STEP = 1.1;             // Pikachu's Tear: x this per fainted teammate
+  let snowballHp = 0;                 // total max HP of enemies killed this run (reset in resetRun)
+
+  /** Team-HP-scaled multiplier 1.0 (full) -> 2.0 (<=10%), linear; OFF (1.0) unless the roster has HP_TEAM_MIN+ members. */
+  function teamHpMul(pl) {
+    const roster = (G.Game && G.Game.roster && G.Game.roster()) || [];
+    if (roster.length < HP_TEAM_MIN) return 1;
+    let hp = 0, max = 0;
+    for (const f of roster) { hp += Math.max(0, f.hp); max += f.maxHp; }
+    if (max <= 0) return 1;
+    const frac = hp / max;
+    if (frac >= 1) return 1;
+    if (frac <= HP_SCALE_MIN) return 2;
+    return 1 + (1 - frac) / (1 - HP_SCALE_MIN);      // 100% -> 1.0, 10% -> 2.0, linear between
+  }
+  /** Pikachu's Tear: FAINT_STEP ^ (number of fainted teammates). */
+  function faintMul(pl) {
+    const roster = (G.Game && G.Game.roster && G.Game.roster()) || [];
+    let n = 0; for (const f of roster) if (f.dead) n++;
+    return Math.pow(FAINT_STEP, n);
+  }
+  /** Snowball Badge: x (1 + total killed HP / SNOWBALL_DIV). */
+  function snowballMul() { return 1 + snowballHp / SNOWBALL_DIV; }
+  /** Called from enemy.die() when a Snowball Badge is held by the team. */
+  function snowballAdd(hp) { snowballHp += Math.max(0, hp || 0); }
+  function resetRun() { snowballHp = 0; }
+
+  return { LIST, BY, roll, rollFor, runSlots, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
+           teamHpMul, faintMul, snowballMul, snowballAdd, resetRun };
 })();

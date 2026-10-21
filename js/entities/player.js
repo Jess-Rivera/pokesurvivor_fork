@@ -25,6 +25,13 @@ G.Player = class Player {
     this.dmgReduce = perks.dmgReduce || 0;
     this.moveRadiusMul = 1;      // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
     this.typeBoost = null;       // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
+    // ---- F3c run-item flags (team-wide; set by equipRun on/off). Effects read in get spd / G.Combat / typeK. ----
+    this.sharpScissors = false;  // team-HP-scaled speed (needs roster 3+)
+    this.brassKnuckles = false;  // team-HP-scaled damage (needs roster 3+)
+    this.snowball = false;       // damage scales with total HP of enemies killed this run
+    this.redo = false;           // once-per-run full-team revive on final death
+    this.pikaTear = false;       // +1.1x damage & speed per fainted teammate
+    this.stoneType = null;       // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
     this.magnet = 78 * (perks.magnetMul || 1);
     this.xpMul = perks.xpMul || 1;
@@ -119,7 +126,7 @@ G.Player = class Player {
     const c = G.Stats.moveCat(m);
     const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk');     // Protein / Calcium
     const stg = c === 'special' ? G.Stages.mul(this, 'spa') : c === 'status' ? 1 : G.Stages.mul(this, 'atk');     // stage raises and drops (slice E2a)
-    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg);
+    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg * this.runDmgMul());     // run items (Brass Knuckles, Pikachu's Tear, Snowball)
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
@@ -154,7 +161,22 @@ G.Player = class Player {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this);
+    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();
+  }
+  /** Run-item SPEED multipliers, applied last: Sharp Scissors (team-HP-scaled, roster 3+) and Pikachu's Tear (1.1x per fainted). */
+  runSpeedMul() {
+    let m = 1;
+    if (this.sharpScissors) m *= G.Items.teamHpMul(this);
+    if (this.pikaTear) m *= G.Items.faintMul(this);
+    return m;
+  }
+  /** Run-item DAMAGE multiplier: Brass Knuckles (team-HP-scaled, roster 3+), Pikachu's Tear, Snowball Badge. Folded into moveFactor. */
+  runDmgMul() {
+    let m = 1;
+    if (this.brassKnuckles) m *= G.Items.teamHpMul(this);
+    if (this.pikaTear) m *= G.Items.faintMul(this);
+    if (this.snowball) m *= G.Items.snowballMul();
+    return m;
   }
   get reduction() { return Math.min(0.8, this.dmgReduce); }
   get regen() { return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen'); }

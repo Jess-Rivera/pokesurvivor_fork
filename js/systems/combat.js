@@ -145,6 +145,12 @@ G.Combat = (() => {
 
   /** Type chart x weather for an attack of type `type` against `e`. */
   function typeK(type, e) { return G.Types.mult(type, e.types) * G.Weather.mult(type); }
+  // Power Stone (F3c run item): the holder's matching-type moves ignore resistance AND immunity, so the
+  // type multiplier is floored at 1.0 (super-effective still applies). pl may be null for non-player hits.
+  function typeKFor(pl, type, e) {
+    const k = typeK(type, e);
+    return (pl && pl.stoneType && pl.stoneType === type) ? Math.max(1, k) : k;
+  }
 
   function fireProjectiles(pl, m) {
     const col = G.U.TYPE_COLOR[m.type];
@@ -658,7 +664,7 @@ G.Combat = (() => {
   function hit(pl, e, factor, col, dx, dy, knock, m) {
     const ds = enemyDefStats(e), dl = defLevel(e, pl.level), dm = defStage(e, m);
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
-    const k = typeK(m.type, e);
+    const k = typeKFor(pl, m.type, e);
     const crit = isCrit(pl);
     dmg = floorHit(dmg * k * G.Stats.itemDmgMul(pl, m.type, k) * (crit ? CRIT_MUL : 1), m);      // held-item damage layer (Expert Belt, type items)
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
@@ -784,7 +790,7 @@ G.Combat = (() => {
         const dl = defLevel(e, p.level || pl.level);
         const dm = defStage(e, pm);
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
-        const tk = p.mtype ? typeK(p.mtype, e) : 1;
+        const tk = p.mtype ? typeKFor(pl, p.mtype, e) : 1;
         const k = tk * G.Stats.itemDmgMul(pl, p.mtype, tk) * (crit ? CRIT_MUL : 1);      // held-item damage layer (Expert Belt, type items)
         dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;

@@ -93,6 +93,8 @@ G.Game = (() => {
   function startRun(coop = null) {
     G.Log.clear(); G.Log.t = 0;
     holdBy = []; awayBy = null;
+    redoUsed = false;                 // Re-Do available again this run
+    if (G.Items.resetRun) G.Items.resetRun();      // reset the Snowball Badge counter
     const save = G.DB.save;
 
     G.UI.hideAll();
@@ -540,6 +542,15 @@ G.Game = (() => {
       const i = list.indexOf(replace);
       if (i >= 0) { for (const f of roster) G.Items.BY[replace].off(f); list.splice(i, 1); }
     }
+    // Group exclusion (F3c Power Stones, group 'stone'): only one item of a group may be held at once.
+    // Equipping another of the same group removes the one already carried.
+    const grp = G.Items.BY[id].group;
+    if (grp) {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const held = G.Items.BY[list[i]];
+        if (held && held.group === grp) { for (const f of roster) held.off(f); list.splice(i, 1); }
+      }
+    }
     for (const f of roster) G.Items.BY[id].on(f);
     list.push(id);
   }
@@ -691,6 +702,7 @@ G.Game = (() => {
   // ---------------- loop ----------------
 
   let deathT = 0;
+  let redoUsed = false;      // Re-Do run item: spent once per run (reset in startRun)
 
   let frameDt = 0, speedK = 1;
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
@@ -765,6 +777,17 @@ G.Game = (() => {
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
         G.Audio.sfx('shiny');
         G.Spawner.say(pl.mon.name + ' enters the fight!', 2, true);
+        return;
+      }
+      // Re-Do (F3c run item): on the final faint, revive the WHOLE team to full HP, once per run.
+      if (pl.runItems.includes('redo') && !redoUsed) {
+        redoUsed = true;
+        for (const f of roster) { f.revive(1); }      // revive(frac): 1 = full HP
+        takeField(roster.findIndex(f => !f.dead));
+        swapLock = 0; deathT = 0;
+        G.FX.ring(pl.x, pl.y, 10, 120, '#ffe08a', 0.7, 6);
+        G.Audio.sfx('shiny');
+        G.Spawner.say('Re-Do! The team is revived!', 2.4, true);
         return;
       }
       // Whole team down: play the faint beat, then end the run.

@@ -286,6 +286,8 @@
       if (this.dead) return;
       this.dead = true;
       this.fade = 0.9;
+      // Snowball Badge (F3c run item): feed this enemy's max HP into the run-long damage snowball.
+      if (!this.remote && G.Game) { const q = typeof G.Game.player === 'function' ? G.Game.player() : G.Game.player; if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp); }
       if (!this.boss && !this.elite) this.spreadFear();
       this.anim.play('Faint', { hold: true });
       const big = this.boss || this.elite;

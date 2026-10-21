@@ -21,16 +21,19 @@ if (!P) { console.log('G.Player missing'); process.exit(1); }
 const I = G.Items;
 const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
   critChance: 0, expertBelt: false, bigRoot: false, sludgeHurt: false, myTypes: [], moveRadiusMul: 1, typeBoost: null,
+  sharpScissors: false, brassKnuckles: false, snowball: false, redo: false, pikaTear: false, stoneType: null,
   hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt, swapHeldItem: P.prototype.swapHeldItem });
 
 // 1. the port
 { const pk = I.LIST.filter(i => i.tier === 'pokemon').map(i => i.id), rn = I.LIST.filter(i => i.tier === 'run').map(i => i.id);
-  if (I.LIST.length !== 38 || pk.length !== 36) bad('counts ' + I.LIST.length + '/' + pk.length);
-  if (rn.sort().join() !== 'amuletcoin,luckyegg') bad('run tier ' + rn);
+  if (I.LIST.length !== 61 || pk.length !== 36) bad('counts ' + I.LIST.length + '/' + pk.length);
+  if (rn.length !== 25) bad('run tier count ' + rn.length);
+  for (const id of ['amuletcoin', 'luckyegg', 'sharpscissors', 'brassknuckles', 'snowballbadge', 'redo', 'pikachustear']) if (!rn.includes(id)) bad('missing run item ' + id);
+  if (rn.filter(id => id.endsWith('stone')).length !== 18) bad('expected 18 Power Stones, got ' + rn.filter(id => id.endsWith('stone')).length);
   if (I.LIST.some(i => !['pokemon', 'run', 'ground'].includes(i.tier))) bad('unknown tier');
   const SPAN = /[ñáéíóúÁÉÍÓÚ¡¿]|\b(de|los|tu|un|el|la)\b/;
   for (const i of I.LIST) if (SPAN.test(i.name.replace(/Poké/g, 'Poke')) || SPAN.test(i.desc.replace(/Poké/g, 'Poke'))) bad('not English: ' + i.id + ' ' + i.name + ' / ' + i.desc);
-  console.log('1 port: 38 items (36 pokemon, 2 run), English text'); }
+  console.log('1 port: 61 items (36 pokemon, 25 run), English text'); }
 
 // 2. on/off symmetry (separate multiplier, no drift)
 { // F3b items use float multipliers (atkMul x1.1, critChance +-0.05) and flags that round-trip within tolerance, not exact
@@ -73,7 +76,8 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
   if (Math.abs(cnt.gym / N - 0.10) > 0.01) bad('gym run chance ' + cnt.gym / N);
   if (Math.abs(cnt.boss / N - 0.05) > 0.01) bad('boss run chance ' + cnt.boss / N);
   if (cnt.chest !== 0) bad('other sources never give run items');
-  for (let i = 0; i < 2000; i++) if (I.BY[I.rollFor('gym', ['luckyegg', 'amuletcoin'])].tier !== 'pokemon') bad('all run items owned falls back to pokemon');
+  const allRun = I.LIST.filter(it => it.tier === 'run').map(it => it.id);
+  for (let i = 0; i < 2000; i++) if (I.BY[I.rollFor('gym', allRun)].tier !== 'pokemon') bad('all run items owned falls back to pokemon');
   for (let i = 0; i < 2000; i++) if (I.rollFor('gym', ['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
   console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; gym ~10%, boss ~5%, others 0%'); }
 
