@@ -76,8 +76,8 @@ G.MenuUI = (() => {
     });
     document.querySelectorAll('[data-back]').forEach(b => { b.onclick = open; });
     G.Social.on(() => { if (G.UI.isOpen('scr-menu')) socialLine(); });
-    $('btn-logout').onclick = () => {
-      if (G.DB.guest && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
+    $('btn-logout').onclick = async () => {
+      if (G.DB.guest && !(await G.UI.ask(G.T('Eres invitado: se perderá todo el progreso. ¿Salir?'), { title: 'Sign out', ok: 'Sign out' }))) return;
       G.Audio.music(null);
       G.DB.logout().then(() => G.Flow.toLogin());
     };
@@ -562,8 +562,8 @@ G.MenuUI = (() => {
     rosSelectSlot(0);
   }
 
-  function rosBack() {
-    if (rosDirty() && !confirm('Discard your team changes?')) return;
+  async function rosBack() {
+    if (rosDirty() && !(await G.UI.ask('Discard your team changes?', { title: 'Unsaved team', ok: 'Discard', cancel: 'Keep editing' }))) return;
     open();
   }
 

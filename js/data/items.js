@@ -196,6 +196,31 @@ G.Items = (() => {
     return out;
   }
 
+  // ---- F3d-3: Shop prices (PLACEHOLDERS, tune here). Team items are a flat price (a bad-luck valve against the rare drops); slots are bought in order. ----
+  const TEAM_ITEM_PRICE = 100000;
+  const SLOT_PRICES = { 2: 9000, 3: 23000, 4: 60000 };    // price of owning the Nth team item slot (slot 1 is free)
+  const slotPrice = n => SLOT_PRICES[n] || null;
+  /** Buy a team item with PokeCoins: -> { ok:true } or { ok:false, error:'unknown'|'owned'|'poor' }. Unlocks it for good (the Inventory equips it). */
+  function buyTeamItem(save, id) {
+    if (!save || !isTeamItem(id)) return { ok: false, error: 'unknown' };
+    if (unlocked(save, id)) return { ok: false, error: 'owned' };
+    if (!(save.coins >= TEAM_ITEM_PRICE)) return { ok: false, error: 'poor' };
+    save.coins -= TEAM_ITEM_PRICE;
+    unlock(save, id, 'shop');
+    return { ok: true };
+  }
+  /** Buy the NEXT team item slot (slots go in order): -> { ok:true, slots } or { ok:false, error:'max'|'poor' }. */
+  function buySlot(save) {
+    if (!save) return { ok: false, error: 'unknown' };
+    const n = runSlots(save);
+    if (n >= RUN_SLOTS_MAX) return { ok: false, error: 'max' };
+    const price = slotPrice(n + 1);
+    if (!(save.coins >= price)) return { ok: false, error: 'poor' };
+    save.coins -= price;
+    save.runSlots = n + 1;
+    return { ok: true, slots: n + 1 };
+  }
+
   /** Placeholder chance that a drop source gives a RUN item instead of a Pokemon item (tune later). */
   const RUN_CHANCE = { gym: 0.10, boss: 0.05 };
 
@@ -255,6 +280,6 @@ G.Items = (() => {
   function snowballAdd(hp) { snowballHp += Math.max(0, hp || 0); }
   function resetRun() { snowballHp = 0; }
 
-  return { LIST, BY, roll, rollFor, runSlots, STARTER_TEAM_ITEMS, unlocked, unlock, grantStarters, cleanLoadout, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
+  return { LIST, BY, roll, rollFor, runSlots, STARTER_TEAM_ITEMS, unlocked, unlock, grantStarters, cleanLoadout, TEAM_ITEM_PRICE, SLOT_PRICES, slotPrice, buyTeamItem, buySlot, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
            teamHpMul, faintMul, snowballMul, snowballAdd, resetRun };
 })();

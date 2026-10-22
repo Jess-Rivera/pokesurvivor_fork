@@ -11,6 +11,7 @@
  *   G.Debug.item(id[, force])   give a Pokemon-tier held item through the real pickup path, chooser included (force=true equips directly; no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
+ *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
@@ -154,6 +155,16 @@ G.Debug = (() => {
     G.Game.equipRun(id);
     if (G.Spawner && G.Spawner.say) G.Spawner.say('Picked up ' + G.Items.BY[id].name + '!', 2.2, true);
     return true;
+  }
+
+  /** Set PokeCoins to `n` (or log the balance). ?dev only. */
+  function coins(n) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const s = G.DB && G.DB.save;
+    if (!s) { console.warn('[Debug] no save loaded.'); return false; }
+    if (n != null) { s.coins = Math.max(0, Math.floor(+n) || 0); G.DB.commit(); if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins(); }
+    console.log('[Debug] PokeCoins: ' + s.coins);
+    return s.coins;
   }
 
   /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
@@ -360,5 +371,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
 })();

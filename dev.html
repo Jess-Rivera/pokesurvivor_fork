@@ -177,7 +177,7 @@
         <button class="menu-item" data-go="team">Team<small id="menu-dex-count"></small></button>
         <button class="menu-item" data-go="inventory">Inventory<small>Team items for your run</small></button>
         <button class="menu-item" data-go="upgrades">Mejoras<small>Haz más fuerte cada run</small></button>
-        <button class="menu-item" data-go="gacha">Gacha<small>9 regiones · Pokémon y shinies</small></button>
+        <button class="menu-item" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
         <button class="menu-item" data-go="goals">Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small></button>
         <button class="menu-item" data-go="friends">Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small></button>
         <button class="menu-item" data-go="rank">Ranking<small>Quién aguanta más</small></button>
@@ -540,26 +540,45 @@
 <!-- ====== Gacha ====== -->
 <section id="scr-gacha" class="scr dim hidden">
   <div class="box wide">
-    <div class="row between"><h2>Gacha</h2><button class="btn small ghost" data-back>Volver</button></div>
-    <div class="gen-tabs" id="gacha-gens"></div>
-    <div class="split" style="margin-top:8px">
-      <div>
-        <div class="banner" id="banner">
-          <h3 id="banner-title"></h3>
-          <p id="banner-desc" style="margin:4px 0 6px"></p>
-          <p class="sub" id="gacha-owned" style="margin:0"></p>
-          <div class="feat" id="gacha-feat"></div>
+    <div class="row between"><h2>Shop</h2><button class="btn small ghost" data-back>Volver</button></div>
+    <div class="gen-tabs" id="shop-tabs"></div>
+
+    <!-- Pokemon: the old Gacha, with the regions down the left side -->
+    <div id="shop-pokemon" class="shop-pane">
+      <div class="shop-split">
+        <div class="shop-regions" id="gacha-gens"></div>
+        <div class="split">
+          <div>
+            <div class="banner" id="banner">
+              <h3 id="banner-title"></h3>
+              <p id="banner-desc" style="margin:4px 0 6px"></p>
+              <p class="sub" id="gacha-owned" style="margin:0"></p>
+              <div class="feat" id="gacha-feat"></div>
+            </div>
+            <div class="row" style="margin-top:14px">
+              <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
+              <button id="pull-10" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10"></span></button>
+              <button id="pull-10b" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10b"></span></button>
+            </div>
+            <p class="note tickets-line" id="gacha-tickets"></p>
+            <p class="note" id="gacha-pity"></p>
+          </div>
+          <div class="panel rates" id="gacha-rates"></div>
         </div>
-        <div class="row" style="margin-top:14px">
-          <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
-          <button id="pull-10" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10"></span></button>
-          <button id="pull-10b" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10b"></span></button>
-        </div>
-        <p class="note tickets-line" id="gacha-tickets"></p>
-        <p class="note" id="gacha-pity"></p>
       </div>
-      <div class="panel rates" id="gacha-rates"></div>
     </div>
+
+    <!-- Team Items: buy an unlock for the Inventory -->
+    <div id="shop-items" class="shop-pane hidden">
+      <p class="sub" style="margin:4px 0 8px">Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span></p>
+      <div class="shop-items-main">
+        <div class="grid inv-grid" id="shop-items-grid"></div>
+        <aside class="panel inv-detail" id="shop-items-detail"></aside>
+      </div>
+    </div>
+
+    <!-- Team Upgrades: team item slots -->
+    <div id="shop-upgrades" class="shop-pane hidden"></div>
   </div>
 </section>
 
@@ -598,6 +617,19 @@
     <div class="row" style="justify-content:center;margin-top:12px">
       <button id="item-confirm" class="btn gold" disabled>Confirm</button>
       <button id="item-leave" class="btn">Leave it</button>
+    </div>
+  </div>
+</section>
+
+<!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
+<section id="scr-ask" class="scr dim hidden">
+  <div class="box center ask">
+    <h2 id="ask-title">Are you sure?</h2>
+    <p id="ask-msg" class="ask-msg"></p>
+    <p id="ask-note" class="sub ask-note"></p>
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="ask-ok" class="btn gold" data-sfx="confirm">Confirm</button>
+      <button id="ask-no" class="btn">Cancel</button>
     </div>
   </div>
 </section>

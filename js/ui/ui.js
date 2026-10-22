@@ -44,6 +44,41 @@ G.UI = (() => {
 
   let toastEl = null, toastT = 0;
   /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
+  /**
+   * In-game confirm dialog (the matching-UI replacement for the browser confirm()). Resolves true on Confirm / Enter, false on Cancel / Esc.
+   * @param o  { title, ok, cancel, note }  (note = a small second line, e.g. what you will have left)
+   * It is NOT one of the SCREENS, so it opens on top of the current screen and leaves it as it was. A second call cancels the first.
+   */
+  let askDone = null;
+  function ask(msg, o = {}) {
+    return new Promise(resolve => {
+      if (askDone) askDone(false);
+      const scr = $('scr-ask'), ok = $('ask-ok'), no = $('ask-no');
+      $('ask-title').textContent = o.title || 'Are you sure?';
+      $('ask-msg').textContent = msg;
+      $('ask-note').textContent = o.note || '';
+      ok.textContent = o.ok || 'Confirm';
+      no.textContent = o.cancel || 'Cancel';
+      const onKey = e => {
+        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+        e.preventDefault(); e.stopPropagation();                // the game must not also read this Esc / Enter
+        done(e.key === 'Enter');
+      };
+      const done = v => {
+        if (askDone !== done) return;
+        askDone = null;
+        scr.classList.add('hidden');
+        removeEventListener('keydown', onKey, true);
+        resolve(v);
+      };
+      askDone = done;
+      ok.onclick = () => done(true);
+      no.onclick = () => done(false);
+      addEventListener('keydown', onKey, true);
+      scr.classList.remove('hidden');
+    });
+  }
+
   function toast(msg, ms = 2200, tone = '') {
     if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
     toastEl.className = tone ? 'toast ' + tone : 'toast';
@@ -123,7 +158,7 @@ G.UI = (() => {
    * Returns { pass } or null if cancelled.
    */
   function confirmDelete() {
-    if (!G.DB.nameAccount) return Promise.resolve(confirm(G.T('Se borrarán tu cuenta y toda tu partida, para siempre. ¿Seguro?')) ? { pass: '' } : null);
+    if (!G.DB.nameAccount) return ask(G.T('Se borrarán tu cuenta y toda tu partida, para siempre. ¿Seguro?'), { title: 'Delete account', ok: 'Delete' }).then(y => y ? { pass: '' } : null);
     return new Promise(done => {
       const el = document.createElement('section');
       el.className = 'scr dim';
@@ -281,6 +316,6 @@ G.UI = (() => {
     return cv;
   }
 
-  return { $, show, hide, hideAll, isOpen, chrome, refreshCoins, toast, typeChips, stars, confirmDelete,
+  return { $, show, hide, hideAll, isOpen, chrome, refreshCoins, toast, ask, typeChips, stars, confirmDelete,
            sprite, spriteCanvas, tick, initChrome, soundControls };
 })();

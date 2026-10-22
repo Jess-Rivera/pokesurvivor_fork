@@ -6,6 +6,13 @@ ARCHIVE: older and superseded entries (mostly 2026-10-17 and 2026-10-18 build re
 Search it by keyword (grep) before assuming a topic was never decided. If an archived entry conflicts with an entry here, this file wins.
 Convention: new entries stay at most about 10 lines (the rule and the why); long detail belongs in the harness or proposal doc.
 
+## 2026-10-21, Item rework F3d-3 built: the Shop (feature/items) [Jess decided]
+- The Gacha screen is now the SHOP (menu entry "Shop"). Tabs along the top: Pokemon | Team Items | Team Upgrades. The Pokemon tab is the old gacha untouched, with the region (generation) picker moved to a vertical column down the left (widens the shop; below 820 px it is a horizontal scroll again).
+- TEAM ITEMS tab: every team item you have NOT unlocked, 100,000 PokeCoins each (flat, Jess will tweak; the Stones are separate listings). Buying unlocks it for good (equip it in Inventory). Owned items are hidden. An in-game confirm dialog guards each purchase (see CONFIRM DIALOG below).
+- TEAM UPGRADES tab: team item slots 2, 3, 4 at 9,000 / 23,000 / 60,000 PokeCoins (starting values), bought IN ORDER, saved as save.runSlots. Prices are constants in js/data/items.js (TEAM_ITEM_PRICE, SLOT_PRICES). Logic: G.Items.buyTeamItem / buySlot (harness docs/proposals/items-f3d3-harness.js). Debug: G.Debug.coins(n).
+- CONFIRM DIALOG (Jess 2026-10-21): purchases use an IN-GAME dialog, not the browser confirm(): `G.UI.ask(message, { title, ok, cancel, note })` -> Promise<boolean> (dev.html #scr-ask, opens on top of any screen, Enter = confirm, Esc = cancel and the game does not also read that key). Other screens still use the native confirm() (Team discard, logout, delete account, mod tools); convert them with G.UI.ask when wanted.
+- NOT DONE: berry bag slots (G.Grounds.berrySlots) are not in Team Upgrades yet; touch layout of the bottom-right team item column still unchecked.
+
 ## 2026-10-21, Item rework F3d-2 built: unlocked team items, loadout, Inventory window; Pokemon menu entry removed (feature/items) [Jess decided]
 - SAVE: `save.teamItems` { id: { at, from } } = unlocked team items; `save.teamLoadout` [ids] = equipped at run start, in slot order. Old saves get both from migrate (newSave grants the starters, the migrate fill copies them). `G.Items.cleanLoadout` keeps the loadout valid (unlocked only, no duplicates, one per group, within `runSlots`); db.js sanitize calls it.
 - STARTERS: every account (new and existing) starts with Lucky Egg AND Amulet Coin unlocked (Jess OK'd the default).
@@ -509,3 +516,6 @@ its x1.6 (it is a behavior archetype, not a base-stat multiplier).
 - Berry bag: auto-consume to negate the matching status (option A). One team-wide slot at the start, upgradeable (save.berrySlots, default 1, cap 4). Lum covers the six main statuses and is spent last. Toxic counts as Poison. A berry protects benched teammates too.
 - A full bag or an already held berry leaves the pickup on the ground (no pull). Roll weights: Cheri, Chesto, Pecha, Rawst, Aspear, Persim 1.5 each, Lum 0.5.
 - HUD: bag boxes directly above the first team slot, bottom-left when the team is one Pokemon.
+
+## 2026-10-21, no native browser dialogs
+All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.ask, never confirm/alert/prompt. Spanish messages stay G.T() keys; titles and buttons are English.

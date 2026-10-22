@@ -229,8 +229,8 @@ G.SettingsUI = (() => {
   }
 
   /** Sign out (if you are in a game, it is abandoned). */
-  function leave() {
-    if (G.DB.guest && !confirm('Eres invitado: se perderá todo el progreso. ¿Salir?')) return;
+  async function leave() {
+    if (G.DB.guest && !(await G.UI.ask(G.T('Eres invitado: se perderá todo el progreso. ¿Salir?'), { title: 'Sign out', ok: 'Sign out' }))) return;
     if (G.Game.state !== 'ui') G.Game.quit && G.Game.quit();
     G.Audio.music(null);
     G.DB.logout().then(() => G.Flow.toLogin());

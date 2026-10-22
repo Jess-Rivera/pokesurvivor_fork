@@ -274,3 +274,20 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - Where we stopped: F3d-2 built, needs Jess's browser test. Next F3d-3 (Shop tab, slot upgrades). REMINDER: commit and push.
 - UX fix: Inventory and Team screens decoupled slot focus from the selected item/Pokemon (button joins them); loadout is now by slot with null holes. Harness updated for holes. check.js 17/17, NOT browser-tested.
 - Menu icons: switched to PokeSprite atlas icons (see DECISIONS). Added key-item / valuable-item / hm to tools/gen_pokesprite_index.py CATS and regenerated js/data/pokesprite-index.js (602 sprites). A first attempt with loose PNGs in assets/items/extra was dropped (the atlas already had them) and deleted. NOT browser-tested.
+
+## 2026-10-21 (Claude Desktop, home), F3d-3: the Shop
+- Built: Gacha screen became the Shop (dev.html scr-gacha, gacha-ui.js tabs, style.css): Pokemon tab with regions down the left, Team Items tab (100k flat, unlocks for the Inventory), Team Upgrades tab (slots 2/3/4 at 9k/23k/60k, in order). G.Items.buyTeamItem / buySlot + price constants, G.Debug.coins(n), menu entry renamed Shop, changelog entry.
+- Check: node tools/check.js 18/18 (new items-f3d3-harness.js covers prices, charges, order, max, poor). NOT browser-tested: the Shop screen (tabs, left region column, confirm dialogs, buttons).
+- Open: berry bag slots under Team Upgrades later; touch layout of the bottom-right column still unchecked.
+- Where we stopped: F3d-3 built, needs Jess's browser test. REMINDER: commit and push.
+- Shop purchases now use an in-game confirm dialog (G.UI.ask, dev.html #scr-ask) instead of the browser confirm(). Touch layout check deferred until around MP. NOT browser-tested.
+
+## 2026-10-21, all browser confirm() calls replaced by G.UI.ask
+- Converted every remaining native confirm(): guest sign-out (menu.js, settings-ui.js), discard team changes (menu.js rosBack), delete account (ui.js confirmDelete), ranking purge and ban (mod-ui.js), report mark (ranking-ui.js), remove friend (social-ui.js). Handlers are now async/await. Spanish messages kept as G.T() keys; new button labels are English.
+- Check: node tools/check.js 18/18, node --check on all six files. NOT browser-tested (each dialog). No native alert/prompt call sites exist.
+- REMINDER: commit and push.
+
+## 2026-10-21 night, F3d closed, handoff
+- F3d-1/2/3 and the confirm() conversion tested good by Jess in the browser. Amnesia Type and Paper Skin + Glass Bones deferred.
+- Jess's log a1189320 shows the final faint at 47.7s with no revive: Re-Do either was not equipped or did not fire. Unresolved, first item for next session (STATE Next 1).
+- REMINDER: commit and push.

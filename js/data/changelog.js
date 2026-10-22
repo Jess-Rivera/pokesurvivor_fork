@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-21', title: ['The Shop', 'The Shop'], new: [
+    ['The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).',
+     'The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).'],
+  ] },
   { d: '2026-10-21', title: ['Inventory and a simpler menu', 'Inventory and a simpler menu'], new: [
     ['New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.',
      'New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.'],
