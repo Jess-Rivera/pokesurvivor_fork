@@ -27,8 +27,8 @@ G.Log = (() => {
     if (i === undefined) { i = strs.length; strs.push(s); strIx.set(s, i); }
     return i;
   };
-  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10, MIX = 11;
-  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT', 'MIX'];
+  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10, MIX = 11, ITEM = 12, REDO = 13;
+  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT', 'MIX', 'ITEM', 'REDO'];
   const NEAR_PX = 120, MIX_EVERY = 5;           // "near" = within a typical melee reach of you; sample period in seconds
   const FAM_IX = { melee: 0, range: 1, support: 2 };
   const _mn = new Float64Array(3), _mnear = new Float64Array(3), _mds = new Float64Array(3);   // reused, no allocation per sample
@@ -94,6 +94,13 @@ G.Log = (() => {
   api.dot = (e, kind, amount, hp0, hp1) => {
     const o = rec(DOT);
     F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0; F[o + 6] = e ? e.maxHp : 0;
+  };
+  // Team (run-tier) item equipped: which id, and how many run items the team holds afterwards. Diagnostic for Re-Do (and any run item) actually being on the team.
+  api.item = (id, n) => { const o = rec(ITEM); F[o] = S(id); F[o + 1] = n || 0; };
+  // Final-faint decision: whether 'redo' was in runItems, whether it was already spent, roster size, living members (excluding the just-fainted active), and the branch taken (0 bench-swap, 1 re-do fired, 2 end-run).
+  api.redo = (hasItem, used, rosterN, aliveN, branch) => {
+    const o = rec(REDO);
+    F[o] = hasItem ? 1 : 0; F[o + 1] = used ? 1 : 0; F[o + 2] = rosterN || 0; F[o + 3] = aliveN || 0; F[o + 4] = branch || 0;
   };
   // Alive enemies by family (melee / range / support; bosses skipped), how many sit within NEAR_PX of you, and the average distance
   // in screen units (1.0 = screen edge). Shows whether a family is piling up out of reach.
@@ -185,10 +192,12 @@ G.Log = (() => {
     else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
     else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + (v[6] ? ' (' + n1(100 * v[2] / v[6]) + '% of max)' : '') + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
     else if (k === MIX) { const fam = ['melee', 'range', 'support']; s = 'MIX  alive ' + v[0] + ' | ' + fam.map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')').join(' | ') + ' | morale units (ranged + healers/shielders) ' + v[10] + ', panicking ' + v[11] + ', avg morale ' + v[12].toFixed(2) + '  [near = within ' + NEAR_PX + ' px]'; }
+    else if (k === ITEM) s = 'ITEM equip ' + strs[v[0]] + ' (team now holds ' + v[1] + ' run item' + (v[1] === 1 ? '' : 's') + ')';
+    else if (k === REDO) { const br = ['bench-swap', 'RE-DO fired', 'end-run']; s = 'REDO final-faint | has redo ' + v[0] + ' | already used ' + v[1] + ' | roster ' + v[2] + ' | alive(others) ' + v[3] + ' | branch ' + (br[v[4]] || v[4]); }
     else s = '?';
     return mmss(T[i]) + '  ' + s;
   }
-  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d', 11: '#7fb8ff' };
+  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d', 11: '#7fb8ff', 12: '#d9a6ff', 13: '#ffe08a' };
   function color(i) {
     const k = K[i];
     if (k === HIT_IN || k === HIT_OUT) {

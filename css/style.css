@@ -933,7 +933,7 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
 .sh-lv { font-size: 22px; color: var(--gold); font-weight: 700; }
 .sh-fainted { padding: 2px 8px; border-radius: 6px; background: #8a93a3; color: #14181f; font-size: 13px; font-weight: 700; text-shadow: none; }
 .sh-types { margin-left: auto; display: flex; gap: 6px; }
-.sh-cols { flex: 0 1 430px; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; padding: 12px 16px; }
+.sh-cols { flex: 0 1 560px; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; padding: 12px 16px; }
 .sh-moves, .sh-stats { min-height: 0; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; }
 .sh-cols h3 { font-size: 16px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid rgba(244,248,255,.14); padding-bottom: 4px; margin: 0 0 8px; }
 .sh-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 6px; }
@@ -948,16 +948,39 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
 .sh-move .ds { font-size: 13px; color: var(--muted); }
 .sh-move .hit { font-size: 13px; font-weight: 700; color: #9fe8ff; }
 .sh-move .ail { font-size: 13px; color: #ffb27a; }
+.sh-move .sum { font-size: 13px; font-weight: 700; color: #9fe8ff; }
+/* Hover / tap detail panel: full stat breakdown with base (with item) deltas. Matches the sheet chrome. */
+.sh-move .txt { min-width: 0; }
+.sh-detail {
+  /* position: fixed escapes the nested overflow clipping of .sh-scroll / .sh-moves, so the panel is a top
+     layer that is never cut off. JS (sheet.js placePanel) sets top/left to the hovered row. */
+  position: fixed; z-index: 200; width: 300px; max-width: 70vw;
+  background: #0e1422; border: 2px solid var(--gold);
+  border-radius: 10px; padding: 8px 10px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  display: none; pointer-events: none;
+}
+.sh-detail .ds { font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.sh-detail .ail { font-size: 13px; color: #ffb27a; }
+.sh-detail .hit { font-size: 13px; font-weight: 700; color: #9fe8ff; margin-top: 2px; }
+/* display is driven by JS (sheet.js showFor/hideAll) since the fixed panel must be positioned to the row; no CSS :hover rule. */
 .sh-stats { align-items: center; }
 .sh-stats h3 { align-self: stretch; }
 .sh-hex { display: grid; place-items: center; }
-.sh-hex canvas { height: min(262px, 30vh) !important; width: auto !important; max-width: 100%; }
+.sh-hex canvas { height: min(240px, 28vh) !important; width: auto !important; max-width: 100%; }
 .sh-legend { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
 .sh-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 2px solid #fff; background: rgba(255,255,255,.3); }
 .sh-legend i.y { border-color: #ffd23f; background: rgba(255,210,63,.6); margin-left: 8px; }
 .sh-item { align-self: stretch; border-top: 2px solid rgba(244,248,255,.14); padding-top: 8px; }
 .sh-itag { display: inline-block; padding: 1px 8px; margin-right: 8px; border-radius: 4px; background: var(--ink); color: #14181f; font-size: 12px; font-weight: 700; text-shadow: none; }
 .sh-iico { vertical-align: middle; margin-right: 6px; }
+.sh-bag { margin-top: 6px; }
+.sh-bag.empty { opacity: .55; }
+.sh-bagbox { display: inline-block; width: 22px; height: 22px; border: 2px dashed rgba(244,248,255,.35); border-radius: 5px; box-sizing: border-box; }
+.sh-mv { appearance: none; float: right; margin-top: 2px; padding: 2px 10px; border-radius: 6px; border: 2px solid var(--edge); background: rgba(255,255,255,.08); color: inherit; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.sh-mv:hover { border-color: var(--gold); }
+.sh-mv.on { border-color: var(--gold); background: rgba(255,210,63,.2); }
+.sh-strip.giving .sh-tab:not(.on) { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255,210,63,.35); animation: shGive .8s ease-in-out infinite alternate; }
+@keyframes shGive { to { box-shadow: 0 0 0 5px rgba(255,210,63,.15); } }
 .sh-foot { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
 .sh-foot-l { flex: 1; min-width: 220px; }
 .sh-foot .sub, .sh-foot .note { margin: 0 0 4px; font-size: 13px; }
@@ -1097,3 +1120,67 @@ a.btn { text-decoration: none; display: inline-block; color: var(--ink); }
   .ros-detail { border-left: 0; min-height: 80vh; }
   .ros-tip { display: none; }
 }
+
+
+/* ---- Item chooser (run + pokemon tier): NEW item on row 1, your held item(s) on row 2; the highlighted card is your pick ---- */
+.item-chip { flex: 0 0 auto; align-self: center; font-size: 12px; font-weight: 700; text-shadow: none; color: var(--muted);
+  border: 2px solid rgba(244,248,255,.3); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.card.evo .item-chip { color: var(--gold); border-color: var(--gold); }
+.card.dim .item-chip { opacity: .7; }
+.item-row-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin: 2px 2px -4px; }
+#item-cards { margin-left: auto; margin-right: auto; }    /* center the 560px card column in the wider box */
+#scr-item .box { max-height: calc(100dvh - 24px); overflow-y: auto; }    /* 4 run slots = 5 wide cards: scroll instead of clipping on short windows */
+#scr-item .box { width: min(620px, 100%); }    /* 560px cards + box padding; without it the box sizes to the longest description line */
+
+/* Team sheet item area: mini tabs (Berry | Held Item | Team Items), one panel at a time */
+.sh-itabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.sh-itab { appearance: none; flex: 1 1 0; padding: 3px 6px; border-radius: 6px; border: 2px solid rgba(244,248,255,.25); background: rgba(255,255,255,.05); color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 700; text-shadow: none; cursor: pointer; }
+.sh-itab:hover { border-color: var(--edge); }
+.sh-itab.on { border-color: var(--gold); color: var(--gold); background: rgba(255,210,63,.14); }
+
+/* ---- Inventory window (pre-run team item loadout): slots | unlocked items | detail ---- */
+.box.inv { width: min(860px, 100%); }
+.inv-main { display: grid; grid-template-columns: 92px 1fr 250px; gap: 14px; min-height: 300px; }
+.inv-slots { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.inv-slot { width: 76px; height: 76px; border-radius: 12px; border: 2px dashed rgba(140,170,210,.3); background: rgba(10,16,28,.35); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; cursor: pointer; position: relative; }
+.inv-slot.full { border-style: solid; background: rgba(20,30,50,.95); border-color: rgba(140,170,210,.4); }
+.inv-slot.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255,210,63,.3); }
+.inv-sn { font-size: 10px; color: var(--muted); text-shadow: none; }
+.inv-grid { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); align-content: start; max-height: 52vh; }
+.inv-cell { padding: 8px 4px 8px; }
+.inv-ico { display: flex; justify-content: center; margin-bottom: 4px; }
+.inv-eq { display: block; font-size: 10px; color: var(--gold); text-shadow: none; }
+.inv-detail { text-align: center; }
+.inv-dico { display: flex; justify-content: center; }
+.inv-detail .ds { color: var(--muted); font-size: 14px; text-align: left; margin: 6px 0 12px; }
+.inv-act { display: flex; justify-content: center; }
+@media (max-width: 720px) { .inv-main { grid-template-columns: 80px 1fr; } .inv-detail { grid-column: 1 / -1; } }
+.inv-note { color: var(--gold); font-size: 13px; margin: -4px 0 10px; }
+.inv-act { flex-direction: column; gap: 8px; align-items: center; }
+
+/* ---- Shop (was Gacha): top tabs, regions down the left, Team Items, Team Upgrades ---- */
+#scr-gacha .box.wide { width: min(1240px, 98vw); }
+.shop-split { display: grid; grid-template-columns: 150px 1fr; gap: 14px; margin-top: 8px; }
+.shop-regions { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: 62vh; padding: 2px; }
+.shop-regions .gen-tab { width: 100%; align-items: flex-start; }
+.shop-items-main { display: grid; grid-template-columns: 1fr 280px; gap: 14px; }
+.shop-price { display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; margin: 6px 0 10px; }
+.shop-up { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.shop-up-t { flex: 1; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.shop-up-t .ds { color: var(--muted); font-size: 14px; }
+.shop-up .shop-price { margin: 0; min-width: 110px; }
+.shop-up.owned { opacity: .6; }
+@media (max-width: 820px) {
+  .shop-split { grid-template-columns: 1fr; }
+  .shop-regions { flex-direction: row; overflow-x: auto; max-height: none; }
+  .shop-regions .gen-tab { width: auto; align-items: center; }
+  .shop-items-main { grid-template-columns: 1fr; }
+}
+
+/* ---- In-game confirm dialog (G.UI.ask) ---- */
+#scr-ask { z-index: 62; }
+.box.ask { width: min(440px, 100%); }
+.ask-msg { font-size: 17px; margin: 6px 0 4px; }
+.ask-note { margin: 0; }

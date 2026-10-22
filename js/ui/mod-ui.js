@@ -17,7 +17,7 @@ G.ModUI = (() => {
   function init() {
     $('mod-back').onclick = () => G.RankingUI.open();
     $('mod-purge').onclick = async () => {
-      if (!confirm('¿Quitar del ranking TODAS las marcas de más de 1 hora (todas las tablas)? No se puede deshacer.')) return;
+      if (!(await G.UI.ask(G.T('¿Quitar del ranking TODAS las marcas de más de 1 hora (todas las tablas)? No se puede deshacer.'), { title: 'Purge', ok: 'Purge' }))) return;
       const b = $('mod-purge');
       b.disabled = true;
       try {
@@ -94,8 +94,8 @@ G.ModUI = (() => {
           await G.Ranking.removeEverywhere(g.e, mode, [], g.board);
           await G.Ranking.dismiss(g.ids);
         }, 'Marca borrada')),
-        btn('Banear', 'danger', () => {
-          if (!confirm('¿Banear a ' + g.names.join(', ') + '? No podrán volver a salir en el ranking y se borra su marca.')) return;
+        btn('Banear', 'danger', async () => {
+          if (!(await G.UI.ask(G.T('¿Banear a ') + g.names.join(', ') + G.T('? No podrán volver a salir en el ranking y se borra su marca.'), { title: 'Ban', ok: 'Ban' }))) return;
           busy(async () => {
             const uids = g.e.split('_');
             for (const u of uids) await G.Ranking.setMarked(u, true).catch(() => {});
@@ -117,7 +117,7 @@ G.ModUI = (() => {
       const row = document.createElement('div');
       row.className = 'rk-row mod-row';
       row.innerHTML = `<span class="pos"></span>
-        <span class="who"><b translate="no">${esc(a.name)}</b><small translate="no">${a.coins.toLocaleString('es')} monedas · ${a.t1} tickets · ${a.t10} ×10 · ${a.owned} Pokémon · ${esc(a.uid)}</small></span>`;
+        <span class="who"><b translate="no">${esc(a.name)}</b><small translate="no">${a.coins.toLocaleString('es')} monedas · ${a.t1} Pokeballs · ${a.t10} Master Balls · ${a.owned} Pokémon · ${esc(a.uid)}</small></span>`;
       const acts = document.createElement('span');
       acts.className = 'mod-acts';
       acts.append(btn('Desbanear', 'ghost', async () => {

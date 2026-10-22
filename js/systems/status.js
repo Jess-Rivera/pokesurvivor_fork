@@ -92,11 +92,13 @@ G.Status = (() => {
         return 'refresh';
       }
       if (h.stWin && h.stWin[kind] > 0) return 'window';
+      if (h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry';        // a stored status berry blocks it (ground items, F3a-2)
       h.stMajor = { k: kind, t: dur(h, kind) * durMul, age: 0 };
       text(h, S.label, S.color);
       return 'ok';
     }
     if (kind === 'confusion') {
+      if (!h.stCnf && h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry';
       const t = dur(h, kind) * durMul, was = !!h.stCnf;
       if (was) h.stCnf.t = Math.max(h.stCnf.t, t);
       else { h.stCnf = { t, wa: G.U.rand(0, 6.2832), wt: G.U.rand(0.5, 1.1) }; text(h, S.label, S.color); }
@@ -134,6 +136,7 @@ G.Status = (() => {
       if (mul > d.mul) d.mul = mul;
       return 'refresh';
     }
+    if (h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry';
     h.stDot = { k: kind, left: Math.max(1, Math.round(S.turns * durMul)), tick: S.turn, n: 0, mul };
     return 'ok';
   }

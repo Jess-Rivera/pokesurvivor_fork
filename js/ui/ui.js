@@ -9,7 +9,7 @@ G.UI = (() => {
   const $ = id => document.getElementById(id);
   const SCREENS = ['scr-login', 'scr-test', 'scr-result', 'scr-starters', 'scr-menu',
                    'scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-levelup', 'scr-choose', 'scr-pause', 'scr-team', 'scr-roster', 'scr-over',
-                   'scr-nick', 'scr-friends', 'scr-lobby', 'scr-rank', 'scr-item', 'scr-goals', 'scr-bond', 'scr-mod', 'scr-region'];
+                   'scr-nick', 'scr-friends', 'scr-lobby', 'scr-rank', 'scr-item', 'scr-goals', 'scr-bond', 'scr-mod', 'scr-region', 'scr-inventory'];
 
   function show(id, keepMenu = false) {
     for (const s of SCREENS) if (s !== id && !(keepMenu && s === 'scr-menu')) $(s).classList.add('hidden');
@@ -31,7 +31,7 @@ G.UI = (() => {
     const s = G.DB.save;
     $('coins').textContent = s ? s.coins.toLocaleString('es') : '0';
     const t = (s && s.tickets) || { t1: 0, t10: 0 };
-    $('tickets-pill').innerHTML = `${G.Icons.html('ticket', 18)} ${t.t1} &nbsp;${G.Icons.html('ticket10', 18)} ${t.t10}`;
+    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1} &nbsp;${G.Icons.html('ball4', 24)} ${t.t10}`;
     // Sync dot: green = saved in the cloud, yellow = saving,
     // red = no connection (saved locally and uploaded on return).
     const st = G.DB.guest ? 'guest' : G.DB.syncState;
@@ -44,6 +44,41 @@ G.UI = (() => {
 
   let toastEl = null, toastT = 0;
   /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
+  /**
+   * In-game confirm dialog (the matching-UI replacement for the browser confirm()). Resolves true on Confirm / Enter, false on Cancel / Esc.
+   * @param o  { title, ok, cancel, note }  (note = a small second line, e.g. what you will have left)
+   * It is NOT one of the SCREENS, so it opens on top of the current screen and leaves it as it was. A second call cancels the first.
+   */
+  let askDone = null;
+  function ask(msg, o = {}) {
+    return new Promise(resolve => {
+      if (askDone) askDone(false);
+      const scr = $('scr-ask'), ok = $('ask-ok'), no = $('ask-no');
+      $('ask-title').textContent = o.title || 'Are you sure?';
+      $('ask-msg').textContent = msg;
+      $('ask-note').textContent = o.note || '';
+      ok.textContent = o.ok || 'Confirm';
+      no.textContent = o.cancel || 'Cancel';
+      const onKey = e => {
+        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+        e.preventDefault(); e.stopPropagation();                // the game must not also read this Esc / Enter
+        done(e.key === 'Enter');
+      };
+      const done = v => {
+        if (askDone !== done) return;
+        askDone = null;
+        scr.classList.add('hidden');
+        removeEventListener('keydown', onKey, true);
+        resolve(v);
+      };
+      askDone = done;
+      ok.onclick = () => done(true);
+      no.onclick = () => done(false);
+      addEventListener('keydown', onKey, true);
+      scr.classList.remove('hidden');
+    });
+  }
+
   function toast(msg, ms = 2200, tone = '') {
     if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'toast'; document.body.appendChild(toastEl); }
     toastEl.className = tone ? 'toast ' + tone : 'toast';
@@ -104,15 +139,12 @@ G.UI = (() => {
   // ---------------- aviso legal ----------------
 
   const CONTACT = 'jpieratorregrosa@gmail.com';
-  const REPO = 'https://github.com/JPTER78/pokesurvivor';
   let legalBack = null;
 
   function openLegal() {
     legalBack = SCREENS.find(s => isOpen(s)) || null;
     $('legal-mail').textContent = CONTACT;
     $('legal-mail').href = 'mailto:' + CONTACT + '?subject=Pok%C3%A9Survivor';
-    $('legal-repo').textContent = REPO.replace('https://', '');
-    $('legal-repo').href = REPO;
     const canDelete = G.DB.loggedIn && !G.DB.guest;
     $('legal-delete').disabled = !canDelete;
     $('legal-del-msg').textContent = canDelete ? '' : 'Inicia sesión para poder borrar tu cuenta.';
@@ -126,7 +158,7 @@ G.UI = (() => {
    * Returns { pass } or null if cancelled.
    */
   function confirmDelete() {
-    if (!G.DB.nameAccount) return Promise.resolve(confirm(G.T('Se borrarán tu cuenta y toda tu partida, para siempre. ¿Seguro?')) ? { pass: '' } : null);
+    if (!G.DB.nameAccount) return ask(G.T('Se borrarán tu cuenta y toda tu partida, para siempre. ¿Seguro?'), { title: 'Delete account', ok: 'Delete' }).then(y => y ? { pass: '' } : null);
     return new Promise(done => {
       const el = document.createElement('section');
       el.className = 'scr dim';
@@ -284,6 +316,6 @@ G.UI = (() => {
     return cv;
   }
 
-  return { $, show, hide, hideAll, isOpen, chrome, refreshCoins, toast, typeChips, stars, confirmDelete,
+  return { $, show, hide, hideAll, isOpen, chrome, refreshCoins, toast, ask, typeChips, stars, confirmDelete,
            sprite, spriteCanvas, tick, initChrome, soundControls };
 })();

@@ -1,0 +1,14 @@
+# ripgrep reads this file (not git). Broad searches skip bulk or generated paths.
+# To search one of them, name the path explicitly: rg PATTERN pokeapi-master/data/v2/csv/items.csv
+pokeapi-master/
+assets/
+tools/out/
+tools/cache/
+_delete_/
+docs/proposals/old-bottom-up/
+docs/proposals/shots2b/
+docs/proposals/review-build/
+js/data/sprites-meta.js
+js/data/pokedex.js
+js/data/lang-en.js
+~$*

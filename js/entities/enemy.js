@@ -286,6 +286,8 @@
       if (this.dead) return;
       this.dead = true;
       this.fade = 0.9;
+      // Snowball Badge (F3c run item): feed this enemy's max HP into the run-long damage snowball.
+      if (!this.remote && G.Game) { const q = typeof G.Game.player === 'function' ? G.Game.player() : G.Game.player; if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp); }
       if (!this.boss && !this.elite) this.spreadFear();
       this.anim.play('Faint', { hold: true });
       const big = this.boss || this.elite;
@@ -304,8 +306,8 @@
       if (this.boss && !this.judge) {
         G.Camera.kick(0.9);
         for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
-        // Bosses always drop an equippable item.
-        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+        // Bosses always drop an item: a Pokemon item, with a small placeholder chance of a RUN item (Items.RUN_CHANCE).
+        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('boss', G.Game.player.runItems));
       }
       // Wild enemy: Gen 5 yield from its species base_experience, its spawn level and the player's
       // level right now (shared run level, so the highest among the players).
@@ -317,11 +319,16 @@
       if (this.elite) {
         G.Camera.kick(0.6);
         G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
-        G.Pickups.drop('heal', this.x + 24, this.y, 0);
+        G.Pickups.drop('heal', this.x + 24, this.y, 0);                                    // the guaranteed Oran Berry (the plain 'heal' pickup, 30%)
+        G.Pickups.drop('ground', this.x + 4, this.y + 22, G.Grounds.roll());               // plus one ground roll
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
         G.Elites.noteDeath(this);
       }
-      else if (this.gym) { /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin) */ }
+      else if (this.gym) {
+        /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop one guaranteed item
+           (picked up by the arena's pullAll): a Pokemon item, or a RUN item with the placeholder Items.RUN_CHANCE.gym. */
+        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('gym', G.Game.player.runItems));
+      }
       else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
@@ -1457,7 +1464,10 @@
     function key(cx, cy) { return cx * 73856093 ^ cy * 19349663; }
 
     function rebuildGrid() {
-      grid.clear();
+      // Reuse bucket arrays in place (empty with length=0, keep the array objects) instead of
+      // grid.clear() + new [] per cell every frame, which kills the per-frame GC churn (FG1). Prune
+      // buckets that end the frame empty so queryCircle never iterates stale empties.
+      for (const b of grid.values()) b.length = 0;
       for (const e of list) {
         if (e.dead) continue;
         const k = key(Math.floor(e.x / CELL), Math.floor(e.y / CELL));
@@ -1465,11 +1475,11 @@
         if (!b) grid.set(k, b = []);
         b.push(e);
       }
+      for (const [k, b] of grid) if (b.length === 0) grid.delete(k);
     }
 
-    /** Live enemies whose circle touches this circle. */
-    function queryCircle(x, y, r) {
-      const out = [];
+    /** Calls fn(e) for each live enemy whose circle touches this circle. No array allocated (FG2). */
+    function queryCircleEach(x, y, r, fn) {
       const c0x = Math.floor((x - r) / CELL) - 1, c1x = Math.floor((x + r) / CELL) + 1;
       const c0y = Math.floor((y - r) / CELL) - 1, c1y = Math.floor((y + r) / CELL) + 1;
       for (let cy = c0y; cy <= c1y; cy++) {
@@ -1479,10 +1489,15 @@
           for (const e of b) {
             if (e.dead) continue;
             const rr = r + e.r;
-            if (G.U.dist2(x, y, e.x, e.y) <= rr * rr) out.push(e);
+            if (G.U.dist2(x, y, e.x, e.y) <= rr * rr) fn(e);
           }
         }
       }
+    }
+    /** Live enemies whose circle touches this circle, as an array. Built on queryCircleEach (one traversal to maintain). */
+    function queryCircle(x, y, r) {
+      const out = [];
+      queryCircleEach(x, y, r, e => out.push(e));
       return out;
     }
 
@@ -1617,7 +1632,7 @@
     function bossAlive() { return list.some(e => e.boss && !e.dead); }
     function shinies() { return list.filter(e => e.shiny && !e.dead); }
 
-    return { clear, all, add, get, addRemote, removeRemote, stash, restore, clearRemote, update, drawables, queryCircle, rebuildGrid, bossAlive, shinies, nearestPlayer,
+    return { clear, all, add, get, addRemote, removeRemote, stash, restore, clearRemote, update, drawables, queryCircle, queryCircleEach, rebuildGrid, bossAlive, shinies, nearestPlayer,
              get count() { return list.length; } };
   })();
 })();

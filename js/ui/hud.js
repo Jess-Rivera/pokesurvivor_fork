@@ -126,6 +126,34 @@ G.HUD = (() => {
     return x + S;                                  // right edge, so the buffs can sit beside the strip
   }
 
+  /** Team berry bag (status berries, F3a-2): one box per slot, directly above the team list (bottom-left corner when the team is a single Pokemon).
+   *  A stored berry shows its icon; it is used up on its own when the matching status would land. Returns the right edge when there is no team strip
+   *  to sit above (so the buff chips can start after it), else 0. */
+  function drawBerryBag(ctx, w, h, hasTeam) {
+    const pl = G.Game.player;
+    if (!pl || !pl.berries) return 0;
+    const slots = G.Grounds.berrySlots(G.DB.save), bs = 44, gap = 8, x = 16;
+    let top;
+    if (hasTeam) {                                  // same stack maths as drawTeam
+      const SL = 6, GAP = 10, BH = 7, stackH = sz => SL * (sz + 5 + BH) + (SL - 1) * (GAP - 5);
+      let S = 54;
+      while (S > 30 && stackH(S) > h - 130) S -= 2;
+      top = h - stackH(S) - 16;
+    } else top = h - 16;
+    const y = top - bs - (hasTeam ? 12 : 0);
+    for (let i = 0; i < slots; i++) {
+      const bx = x + i * (bs + gap), id = pl.berries[i], def = id && G.Grounds.BY[id];
+      roundRect(ctx, bx, y, bs, bs, 10);
+      ctx.fillStyle = def ? 'rgba(10,30,44,.9)' : 'rgba(10,16,28,.55)';
+      ctx.fill();
+      ctx.lineWidth = def ? 2 : 1; ctx.strokeStyle = def ? '#9fe8ff' : 'rgba(140,170,210,.22)';
+      ctx.stroke();
+      if (def) G.Icons.draw(ctx, 'ps:' + def.icon, bx + (bs - 32) / 2, y + (bs - 32) / 2, 32);
+      else { ctx.font = F(800, 9); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(180,200,230,.35)'; ctx.fillText('BERRY', bx + bs / 2, y + bs / 2 + 3); ctx.textAlign = 'left'; }
+    }
+    return hasTeam ? 0 : x + slots * (bs + gap) - gap;
+  }
+
   // ---------- bottom strip: name (left) · HP bar (center) · level (right) ----------
   const HP_ROW = 26;          // height of the strip
   const HP_GAP = 10;          // space between the bottom of the screen and the strip
@@ -215,26 +243,36 @@ G.HUD = (() => {
     const CH = 32, GAPV = 6;
     let y = h - 16;                                  // bottom edge of the lowest chip
     ctx.textAlign = 'left';
+    // One chip per live team buff: the stat stages, then the berry effects (type guards, Kee / Maranga, Lansat, Pinap drop bonus).
+    const chips = [];
     for (const k of BUFF_ORDER) {
       const tm = pl.stgTeam && pl.stgTeam[k];
       if (!tm || !tm.length) continue;
-      const b = G.Stages.teamTimer(pl.stgTeam, k);                       // longest time left among this stat's live applications
       // Team RAISE of the stat (slice E2a): "ATK +2" for a stage, "REG ×2" for Aqua Ring's applications. Drops show in the status list below.
       const raise = k === 'regen' ? tm.length : Math.min(6, G.Stages.teamSum(pl.stgTeam, k));
+      chips.push({ txt: BUFF_LBL[k] + (k === 'regen' ? ' ×' : ' +') + raise, col: BUFF_COL[k], k });
+    }
+    for (const k in (pl.stgTeam || {})) {
+      if (BUFF_ORDER.includes(k) || !pl.stgTeam[k].length) continue;
+      const c = G.Grounds.chip(k, G.Stages.teamSum(pl.stgTeam, k));
+      if (c) chips.push({ txt: c.label, col: c.color, k });
+    }
+    for (const c of chips) {
+      const b = G.Stages.teamTimer(pl.stgTeam, c.k);                     // longest time left among this buff's live applications
       ctx.font = F(800, 18);
-      const txt = BUFF_LBL[k] + (k === 'regen' ? ' ×' : ' +') + raise;
+      const txt = c.txt;
       const tw = Math.ceil(ctx.measureText(txt).width) + 20;
       const top = y - CH;
       roundRect(ctx, x0, top, tw, CH, 9);
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fill();
-      ctx.lineWidth = 1.5; ctx.strokeStyle = BUFF_COL[k]; ctx.stroke();
-      ctx.fillStyle = BUFF_COL[k];
+      ctx.lineWidth = 1.5; ctx.strokeStyle = c.col; ctx.stroke();
+      ctx.fillStyle = c.col;
       ctx.fillText(txt, x0 + 10, top + 21);
       // Timer: how long is left before this buff runs out (it keeps ticking while benched).
       const frac = b && b.dur > 0 ? G.U.clamp(b.t / b.dur, 0, 1) : 0;
       ctx.fillStyle = 'rgba(255,255,255,.18)';
       ctx.fillRect(x0 + 8, top + CH - 6, tw - 16, 3);
-      ctx.fillStyle = BUFF_COL[k];
+      ctx.fillStyle = c.col;
       ctx.fillRect(x0 + 8, top + CH - 6, (tw - 16) * frac, 3);
       y = top - GAPV;
     }
@@ -325,7 +363,8 @@ G.HUD = (() => {
 
     // ---------- team strip (lower-left, only with a real team) ----------
     const teamRight = drawTeam(ctx, w, h);
-    drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : 16);
+    const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
+    drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
 
     // ---------- reloj / bioma / kills ----------
     ctx.textAlign = 'center';
@@ -641,11 +680,70 @@ G.HUD = (() => {
       ctx.strokeStyle = pl.item ? '#ffd23f' : 'rgba(140,170,210,.18)';
       ctx.stroke();
       if (pl.item) {
-        G.Icons.draw(ctx, pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
+        G.Icons.draw(ctx, G.Items.BY[pl.item].icon || pl.item, ix + (S - 36) / 2, iy + (S - 36) / 2, 36);
         ctx.font = F(700, 9);
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd23f';
         ctx.fillText(G.Items.BY[pl.item].name, ix + S / 2, iy - 6);
+      }
+    }
+
+    // ---------- run items (team-wide): a 1-wide column, bottom-right, mirroring the team column. ONLY unlocked slots are drawn
+    // (G.Items.runSlots: 1 by default, up to 4). Slot 1 sits at the bottom and each unlocked slot stacks above it. ----------
+    {
+      const nSlots = G.Items.runSlots(G.DB.save), GAPR = 10, list = pl.runItems || [];
+      let RS = 54;
+      while (RS > 30 && nSlots * RS + (nSlots - 1) * GAPR > h - 130) RS -= 2;      // shrink on short screens, like the team column
+      // Wide slots on desktop: icon (left RS square) | separator | name + live/description (right 2*RS).
+      // On touch or a narrow window, collapse back to the icon-only square column so phones stay compact.
+      const wide = !touch && w >= 720;
+      const RW = wide ? RS * 3 : RS;
+      const rx = w - RW - 16, bottom = h - 16 - safeB;
+      for (let k = 0; k < nSlots; k++) {
+        const ry = bottom - (k + 1) * RS - k * GAPR, rid = list[k], def = rid && G.Items.BY[rid];
+        roundRect(ctx, rx, ry, RW, RS, 12);
+        if (!def) {                                   // empty unlocked slot: dim dashed box
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.fillStyle = 'rgba(10,16,28,.35)'; ctx.fill();
+          ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(140,170,210,.22)'; ctx.stroke();
+          ctx.restore();
+          continue;
+        }
+        ctx.fillStyle = 'rgba(20,30,50,.95)';           // same neutral dark blue as the team boxes
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(140,170,210,.4)';
+        ctx.stroke();
+        const IS = Math.round(RS * 0.67);
+        G.Icons.draw(ctx, def.icon || rid, rx + (RS - IS) / 2, ry + (RS - IS) / 2, IS);
+        if (!wide) continue;                            // collapsed: icon only
+        // separator between icon and text
+        ctx.save();
+        ctx.strokeStyle = 'rgba(140,170,210,.25)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(rx + RS, ry + 6); ctx.lineTo(rx + RS, ry + RS - 6); ctx.stroke();
+        ctx.restore();
+        // right panel: clipped so long text can't bleed into the play area
+        const tx = rx + RS + 8, tw = RW - RS - 14;
+        const hud = G.Items.runHud ? G.Items.runHud(rid, pl) : { name: def.name, desc: def.desc, live: null };
+        ctx.save();
+        ctx.beginPath(); ctx.rect(rx + RS, ry, RW - RS, RS); ctx.clip();
+        ctx.textAlign = 'left';
+        ctx.font = F(800, 11); ctx.fillStyle = '#ffd23f';
+        ctx.fillText(hud.name, tx, ry + 16);
+        if (hud.live) {                                 // live tracker (counter -> bonus), or the inactive reason
+          ctx.font = F(700, 11); ctx.fillStyle = '#9fe8ff';
+          ctx.fillText(hud.live, tx, ry + 34);
+        } else if (hud.desc) {                          // static: wrap the description to two short lines
+          ctx.font = F(600, 9); ctx.fillStyle = 'rgba(200,214,235,.75)';
+          const words = hud.desc.split(' '); let line = '', ly = ry + 32;
+          for (const word of words) {
+            if (ctx.measureText(line + word + ' ').width > tw && line) { ctx.fillText(line.trim(), tx, ly); line = ''; ly += 11; if (ly > ry + RS - 3) break; }
+            line += word + ' ';
+          }
+          if (line.trim() && ly <= ry + RS - 3) ctx.fillText(line.trim(), tx, ly);
+        }
+        ctx.restore();
       }
     }
 

@@ -1,0 +1,16 @@
+{
+  // Type-check experiment (checkJs, no emit). Run: tsc -p tsconfig.json
+  // Scope is deliberately small: files listed in "include" are checked, everything else is ignored.
+  // Add a file here once it is clean. Not part of the game build and not run by tools/check.js yet.
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true
+  },
+  "include": ["tools/globals.d.ts", "js/data/items.js"]
+}

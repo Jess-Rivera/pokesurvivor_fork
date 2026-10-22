@@ -27,7 +27,6 @@
 <meta name="twitter:title" content="PokéSurvivor – Sobrevive a las hordas Pokémon">
 <meta name="twitter:description" content="Fan game gratis para navegador y móvil, con cooperativo hasta 4. Sin descargas ni anuncios.">
 <meta name="twitter:image" content="https://pokesurvivor.com/assets/og-image.jpg">
-<script>window.PS_PAGES = true;</script>
 <!-- seo:end -->
 <link rel="manifest" href="manifest.webmanifest">
 <!-- Google sólo enseña en los resultados iconos de 48 px o múltiplos -->
@@ -120,7 +119,7 @@
       <button id="btn-guest" class="btn ghost grow" type="button">Jugar como invitado</button>
     </div>
     <p class="note center" id="login-mode"></p>
-    <p class="note center"><!-- seo:begin --><a href="guia/">Guía</a> · <a href="pokedex/">Pokédex</a> · <!-- seo:end --><a href="#" class="legal-link" data-legal>Aviso legal y privacidad</a></p>
+    <p class="note center"><a href="#" class="legal-link" data-legal>Aviso legal y privacidad</a></p>
   </div>
 </section>
 
@@ -175,10 +174,10 @@
     <div class="box">
       <div class="menu-list">
         <button class="menu-item play" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
-        <button class="menu-item" data-go="team">Team<small>Choose your party of 6</small></button>
-        <button class="menu-item" data-go="dex">Pokémon<small id="menu-dex-count">Tu colección</small></button>
+        <button class="menu-item" data-go="team">Team<small id="menu-dex-count"></small></button>
+        <button class="menu-item" data-go="inventory">Inventory<small>Team items for your run</small></button>
         <button class="menu-item" data-go="upgrades">Mejoras<small>Haz más fuerte cada run</small></button>
-        <button class="menu-item" data-go="gacha">Gacha<small>9 regiones · Pokémon y shinies</small></button>
+        <button class="menu-item" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
         <button class="menu-item" data-go="goals">Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small></button>
         <button class="menu-item" data-go="friends">Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small></button>
         <button class="menu-item" data-go="rank">Ranking<small>Quién aguanta más</small></button>
@@ -193,7 +192,7 @@
 
 <div id="topbar" class="topbar hidden">
   <div class="pill"><span class="coin"></span><span id="coins">0</span></div>
-  <div class="pill" id="tickets-pill" title="Tickets del gacha"></div>
+  <div class="pill" id="tickets-pill" title="Pokeballs and Master Balls"></div>
   <div class="pill" id="user-pill"></div>
   <button id="btn-news" class="btn small ghost news-btn" title="Novedades"></button>
   <button id="btn-support" class="btn small gold hidden" title="Apoyar el proyecto"></button>
@@ -265,14 +264,13 @@
     <h3>Criptomonedas</h3>
     <p>PokéSurvivor no tiene ninguna criptomoneda, token ni NFT oficial, y su autor no ha creado ninguno. Cualquier token que use el nombre del juego lo han creado terceros: no nos hacemos cargo de ninguna compra, venta o inversión que hagas con ellos, y nada de lo que hay aquí es una recomendación de inversión.</p>
     <h3>Contenido de terceros</h3>
-    <p>Sprites de <a href="https://github.com/PMDCollab/SpriteCollab" target="_blank" rel="noopener">SpriteCollab</a>
+    <p>Sprites de SpriteCollab (github.com/PMDCollab/SpriteCollab)
       (CC BY-NC 4.0, créditos completos en CREDITS.md del repositorio). Datos de la Pokédex de
-      <a href="https://pokeapi.co/" target="_blank" rel="noopener">PokeAPI</a>. Fuente Pixelify Sans (OFL).
+      PokeAPI. Fuente Pixelify Sans (OFL).
       La música y los efectos de sonido son originales del proyecto.</p>
     <h3>Contacto y retirada de contenido</h3>
     <p>Si eres titular de derechos y quieres que retiremos algo, escríbenos y lo quitaremos lo
       antes posible: <a id="legal-mail" href="#"></a></p>
-    <p>Código fuente: <a id="legal-repo" href="#" target="_blank" rel="noopener"></a></p>
     <p>Licencia del código: PolyForm Noncommercial 1.0.0 (se puede usar, estudiar y modificar, pero no para ganar dinero). Las versiones hasta el 14-10-2026 siguen bajo MIT.</p>
     <h3>Privacidad</h3>
     <p>Si creas una cuenta, guardamos tu nombre de jugador y tu partida (colección, monedas,
@@ -327,7 +325,6 @@
       <h1>PokéSurvivor</h1>
       <p>PokéSurvivor necesita JavaScript para funcionar. Actívalo para jugar.</p>
       <p>Fan game gratuito de supervivencia con 966 Pokémon de las 9 regiones: elige tu compañero, sobrevive a las hordas, evoluciona tus ataques, enfréntate a legendarios y juega en cooperativo con hasta 4 amigos.</p>
-      <!-- seo:begin --><p><a href="guia/">Guía del juego</a> · <a href="pokedex/">Pokédex: todos los Pokémon jugables</a></p><!-- seo:end -->
     </div>
   </div>
 </noscript>
@@ -466,6 +463,19 @@
   </div>
 </section>
 
+<!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
+<section id="scr-inventory" class="scr dim hidden">
+  <div class="box inv">
+    <div class="row between"><h2>Inventory <span id="inv-count" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="inv-back" data-back>Back</button></div>
+    <p class="sub" style="margin:2px 0 10px">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
+    <div class="inv-main">
+      <aside class="inv-slots" id="inv-slots"></aside>
+      <div class="grid inv-grid" id="inv-grid"></div>
+      <aside class="panel inv-detail" id="inv-detail"></aside>
+    </div>
+  </div>
+</section>
+
 <!-- ====== Team (fullscreen team editor, opened from the main menu) ====== -->
 <section id="scr-roster" class="scr hidden">
   <div class="ros">
@@ -493,7 +503,7 @@
       <aside class="ros-detail" id="ros-detail"></aside>
     </div>
     <div class="ros-bar">
-      <span class="ros-tip">Click a Pokémon to preview it. Put it in the highlighted slot with the button, a double-click, or by dragging it onto a slot.</span>
+      <span class="ros-tip">Click a Pokémon to preview it and a slot to target it. Put it in the highlighted slot with the button, a double-click, or by dragging it onto a slot. Double-click a slot to inspect its Pokémon.</span>
       <button class="btn" id="ros-back" data-back>Back</button>
       <button class="btn gold" id="ros-commit" data-sfx="confirm" disabled>Commit Team</button>
     </div>
@@ -530,26 +540,45 @@
 <!-- ====== Gacha ====== -->
 <section id="scr-gacha" class="scr dim hidden">
   <div class="box wide">
-    <div class="row between"><h2>Gacha</h2><button class="btn small ghost" data-back>Volver</button></div>
-    <div class="gen-tabs" id="gacha-gens"></div>
-    <div class="split" style="margin-top:8px">
-      <div>
-        <div class="banner" id="banner">
-          <h3 id="banner-title"></h3>
-          <p id="banner-desc" style="margin:4px 0 6px"></p>
-          <p class="sub" id="gacha-owned" style="margin:0"></p>
-          <div class="feat" id="gacha-feat"></div>
+    <div class="row between"><h2>Shop</h2><button class="btn small ghost" data-back>Volver</button></div>
+    <div class="gen-tabs" id="shop-tabs"></div>
+
+    <!-- Pokemon: the old Gacha, with the regions down the left side -->
+    <div id="shop-pokemon" class="shop-pane">
+      <div class="shop-split">
+        <div class="shop-regions" id="gacha-gens"></div>
+        <div class="split">
+          <div>
+            <div class="banner" id="banner">
+              <h3 id="banner-title"></h3>
+              <p id="banner-desc" style="margin:4px 0 6px"></p>
+              <p class="sub" id="gacha-owned" style="margin:0"></p>
+              <div class="feat" id="gacha-feat"></div>
+            </div>
+            <div class="row" style="margin-top:14px">
+              <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
+              <button id="pull-10" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10"></span></button>
+              <button id="pull-10b" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10b"></span></button>
+            </div>
+            <p class="note tickets-line" id="gacha-tickets"></p>
+            <p class="note" id="gacha-pity"></p>
+          </div>
+          <div class="panel rates" id="gacha-rates"></div>
         </div>
-        <div class="row" style="margin-top:14px">
-          <button id="pull-1" class="btn grow" data-sfx="none">Tirar ×1 · <span id="cost-1"></span></button>
-          <button id="pull-10" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10"></span></button>
-          <button id="pull-10b" class="btn gold grow" data-sfx="none">Tirar ×10 · <span id="cost-10b"></span></button>
-        </div>
-        <p class="note tickets-line" id="gacha-tickets"></p>
-        <p class="note" id="gacha-pity"></p>
       </div>
-      <div class="panel rates" id="gacha-rates"></div>
     </div>
+
+    <!-- Team Items: buy an unlock for the Inventory -->
+    <div id="shop-items" class="shop-pane hidden">
+      <p class="sub" style="margin:4px 0 8px">Unlock a team item for good (equip it in Inventory). <span id="shop-items-count"></span></p>
+      <div class="shop-items-main">
+        <div class="grid inv-grid" id="shop-items-grid"></div>
+        <aside class="panel inv-detail" id="shop-items-detail"></aside>
+      </div>
+    </div>
+
+    <!-- Team Upgrades: team item slots -->
+    <div id="shop-upgrades" class="shop-pane hidden"></div>
   </div>
 </section>
 
@@ -582,9 +611,26 @@
 
 <section id="scr-item" class="scr dim hidden">
   <div class="box center">
-    <h2>¡Un objeto!</h2>
-    <p class="sub">Sólo puedes llevar uno · <kbd>1</kbd> <kbd>2</kbd></p>
+    <h2>An item!</h2>
+    <p class="sub">Only one per Pokemon · <kbd>1</kbd> <kbd>2</kbd></p>
     <div id="item-cards" class="cards"></div>
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="item-confirm" class="btn gold" disabled>Confirm</button>
+      <button id="item-leave" class="btn">Leave it</button>
+    </div>
+  </div>
+</section>
+
+<!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
+<section id="scr-ask" class="scr dim hidden">
+  <div class="box center ask">
+    <h2 id="ask-title">Are you sure?</h2>
+    <p id="ask-msg" class="ask-msg"></p>
+    <p id="ask-note" class="sub ask-note"></p>
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="ask-ok" class="btn gold" data-sfx="confirm">Confirm</button>
+      <button id="ask-no" class="btn">Cancel</button>
+    </div>
   </div>
 </section>
 
@@ -677,6 +723,8 @@
 <script defer src="js/data/gyms.js"></script>
 <script defer src="js/data/upgrades.js"></script>
 <script defer src="js/data/items.js"></script>
+<script defer src="js/data/ground-items.js"></script>
+<script defer src="js/data/pokesprite-index.js"></script>
 <script defer src="js/data/missions.js"></script>
 <script defer src="js/data/achievements.js"></script>
 <script defer src="js/data/funding.js"></script>

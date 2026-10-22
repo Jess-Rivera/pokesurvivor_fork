@@ -6,6 +6,46 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], fix: [
+    ['Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.',
+     'Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.'],
+  ], chg: [
+    ['Team item slots are now wider and show what each item is doing: the icon on the left, then the name and a live readout (for example Snowball Badge shows the HP collected and the damage bonus so far). On phones the slots stay as compact icons.',
+     'Team item slots are now wider and show what each item is doing: the icon on the left, then the name and a live readout (for example Snowball Badge shows the HP collected and the damage bonus so far). On phones the slots stay as compact icons.'],
+  ] },
+  { d: '2026-10-21', title: ['The Shop', 'The Shop'], new: [
+    ['The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).',
+     'The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).'],
+  ] },
+  { d: '2026-10-21', title: ['Inventory and a simpler menu', 'Inventory and a simpler menu'], new: [
+    ['New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.',
+     'New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.'],
+  ], chg: [
+    ['The separate Pokémon entry is gone from the main menu (the Team screen already has the full Pokédex). Under Team you now see how many Pokémon you own and how many are shiny.',
+     'The separate Pokémon entry is gone from the main menu (the Team screen already has the full Pokédex). Under Team you now see how many Pokémon you own and how many are shiny.'],
+  ] },
+  { d: '2026-10-21', title: ['Team item slots and chooser', 'Team item slots and chooser'], chg: [
+    ['Team items now live in a column in the bottom-right corner (only the slots you have unlocked show). When your slots are full, or you find a second Stone, a new chooser shows the NEW item on top and your held items below: click the one to replace and press Confirm, or Leave it. The held-item chooser for Pokemon uses the same layout.',
+     'Team items now live in a column in the bottom-right corner (only the slots you have unlocked show). When your slots are full, or you find a second Stone, a new chooser shows the NEW item on top and your held items below: click the one to replace and press Confirm, or Leave it. The held-item chooser for Pokemon uses the same layout.'],
+  ] },
+  { d: '2026-10-21', title: ['Type-boosting held items', 'Type-boosting held items'], new: [
+    ['A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).',
+     'A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).'],
+  ] },
+  { d: '2026-10-21', title: ['Cleaner move cards', 'Cleaner move cards'], chg: [
+    ['Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.',
+     'Move cards in the team and pause sheets are simpler now: name, the upgrades you have taken, and a one-line summary (how hard it hits, that it heals, or what it does). Hover a move (or tap it on a touch screen) to see the full breakdown.'],
+    ['The detailed view shows how a held item changes a move: the base number first, then the value with your item in parentheses (cooldown for Quick Claw, damage for the damage items, area and arc for the lenses).',
+     'The detailed view shows how a held item changes a move: the base number first, then the value with your item in parentheses (cooldown for Quick Claw, damage for the damage items, area and arc for the lenses).'],
+  ] },
+  { d: '2026-10-21', title: ['Lens held items', 'Lens held items'], new: [
+    ['Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).',
+     'Two more held items: Wide Lens (+15% area on all your moves) and Zoom Lens (-50% area but +20% damage, so your attacks hit a smaller spot harder).'],
+  ] },
+  { d: '2026-10-21', title: ['New held items', 'New held items'], new: [
+    ['Seven new Pokemon held items: Muscle Band and Wise Glasses (+10% damage), Scope Lens and Razor Claw (+5% critical hit chance), Expert Belt (+20% damage on super effective hits), Big Root (+30% HP recovered from draining moves), and Black Sludge (Poison types slowly heal, others slowly chip).',
+     'Seven new Pokemon held items: Muscle Band and Wise Glasses (+10% damage), Scope Lens and Razor Claw (+5% critical hit chance), Expert Belt (+20% damage on super effective hits), Big Root (+30% HP recovered from draining moves), and Black Sludge (Poison types slowly heal, others slowly chip).'],
+  ] },
   { d: '2026-10-20', title: ['Status effects hit you', 'Status effects hit you'], new: [
     ['Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.',
      'Status enemies now use their status on you: slow, daze (your movement jitters), drowsy (sleep gets more likely), paralysis, confusion, poison, sleep, freeze, trap (you cannot swap Pokémon for a while) and haste (they speed up the enemies around them). Only two of them attack at once.'],
@@ -17,6 +57,18 @@ G.CHANGELOG = [
     ['Statuses, poison and burn, and stat drops keep ticking on benched Pokémon. A benched Pokémon can faint to poison or burn, and you get a red message when it does.',
      'Statuses, poison and burn, and stat drops keep ticking on benched Pokémon. A benched Pokémon can faint to poison or burn, and you get a red message when it does.'],
   ], chg: [
+    ['Ground items: berries and battle items now drop and apply the moment you touch them. X Attack, X Defense, X Sp. Atk, X Sp. Def and X Speed give your whole team +1 stage for 30 s. Oran and Sitrus Berries heal 30% and 50%. Type-guard berries (Occa, Passho and friends, Chilan for Normal) halve hits of their type for 10 s. Liechi, Ganlon, Salac, Petaya and Apicot give +1 to a stat for 10 s, Starf gives +2 to a random stat, and Lansat adds crit chance. Kee and Maranga add 10% Defense / Sp. Def for 10 s. Pinap Berries raise the ground drop chance for 60 s.',
+     'Ground items: berries and battle items now drop and apply the moment you touch them. X Attack, X Defense, X Sp. Atk, X Sp. Def and X Speed give your whole team +1 stage for 30 s. Oran and Sitrus Berries heal 30% and 50%. Type-guard berries (Occa, Passho and friends, Chilan for Normal) halve hits of their type for 10 s. Liechi, Ganlon, Salac, Petaya and Apicot give +1 to a stat for 10 s, Starf gives +2 to a random stat, and Lansat adds crit chance. Kee and Maranga add 10% Defense / Sp. Def for 10 s. Pinap Berries raise the ground drop chance for 60 s.'],
+    ['Status berries: Cheri, Chesto, Pecha, Rawst, Aspear and Persim Berries now drop and go into a team berry bag (shown above your team list). When a matching status would hit anyone on your team, the berry is used up and blocks it. Lum Berry, very rare, blocks any of the six main statuses.',
+     'Status berries: Cheri, Chesto, Pecha, Rawst, Aspear and Persim Berries now drop and go into a team berry bag (shown above your team list). When a matching status would hit anyone on your team, the berry is used up and blocks it. Lum Berry, very rare, blocks any of the six main statuses.'],
+    ['Wild enemies have a 1% extra chance to drop a ground item. Small chests always hold a Sitrus Berry, big chests always hold a ground item, and elites drop an Oran Berry plus one ground roll. Active berry effects show as chips in the lower-left buff stack.',
+     'Wild enemies have a 1% extra chance to drop a ground item. Small chests always hold a Sitrus Berry, big chests always hold a ground item, and elites drop an Oran Berry plus one ground roll. Active berry effects show as chips in the lower-left buff stack.'],
+    ['You can now move a held item to another Pokémon: open the pause menu, pick the Pokémon, press Move item and click a teammate (they swap if it holds one). The Focus Sash cooldown moves with the item.',
+     'You can now move a held item to another Pokémon: open the pause menu, pick the Pokémon, press Move item and click a teammate (they swap if it holds one). The Focus Sash cooldown moves with the item.'],
+    ['Items now have three tiers. Pokémon items (Leftovers, Choice Band, Quick Claw, Focus Sash, Shell Bell, Life Orb, Choice Scarf, Rocky Helmet, Assault Vest) are held one per Pokémon and only work while that Pokémon is on the field. A new item goes to the Pokémon on the field, and you choose if it already holds one.',
+     'Items now have three tiers. Pokémon items (Leftovers, Choice Band, Quick Claw, Focus Sash, Shell Bell, Life Orb, Choice Scarf, Rocky Helmet, Assault Vest) are held one per Pokémon and only work while that Pokémon is on the field. A new item goes to the Pokémon on the field, and you choose if it already holds one.'],
+    ['Team items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now team items (they no longer drop from chests). You start with one team item slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a team item instead (placeholder rate). Item names and messages are now in English.',
+     'Team items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now team items (they no longer drop from chests). You start with one team item slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a team item instead (placeholder rate). Item names and messages are now in English.'],
     ['Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.',
      'Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.'],
     ['Frozen or asleep, your orbiting attacks drop and your trail patches stop pulsing until you recover.',

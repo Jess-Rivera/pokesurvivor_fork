@@ -42,7 +42,7 @@ G.Combat = (() => {
     // Frozen or asleep (G.Status): nothing casts until it wears off; the move stays ready.
     if (G.Status.stunned(pl)) { m.t = 0.05; return; }
     // Attacks that need a target wait to have one (do not waste the animation on the air).
-    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m) + meleeExtra(pl, m, pl.target))) {
+    if (needsTarget(m) && !(pl.target && G.U.dist(pl.x, pl.y, pl.target.x, pl.target.y) <= reach(m, pl) + meleeExtra(pl, m, pl.target))) {
       m.t = 0.05;
       return;
     }
@@ -58,6 +58,15 @@ G.Combat = (() => {
   }
 
   function run(pl, m) {
+    // Wide Lens / Zoom Lens (F3b): scale this holder's move radius + arc for the cast, on a shallow copy so the
+    // shared move instance (and its derive()d base) is never mutated. radius=0.5..1.15, arc clamped to 2*PI.
+    const rm = pl.moveRadiusMul || 1;
+    if (rm !== 1) {
+      m = Object.assign({}, m, {
+        radius: m.radius != null ? m.radius * rm : m.radius,
+        arc: m.arc != null ? Math.min(m.arc * rm, 6.2832) : m.arc
+      });
+    }
     switch (m.kind) {
       case 'projectile': fireProjectiles(pl, m); break;
       case 'melee':      melee(pl, m); break;
@@ -83,13 +92,14 @@ G.Combat = (() => {
   function meleeExtra(pl, m, e) {
     return m.kind === 'melee' ? pl.r * G.Enemies.CONTACT.hit + (e ? e.r : 0) - 30 : 0;
   }
-  function reach(m) {
-    if (m.kind === 'melee') return m.radius + 30;
-    if (m.kind === 'beam') return m.radius + 20;
-    if (m.kind === 'boomerang') return m.radius + 40;
+  function reach(m, pl) {
+    const rm = (pl && pl.moveRadiusMul) || 1;      // Wide/Zoom Lens: targeting matches the scaled radius (F3b)
+    if (m.kind === 'melee') return m.radius * rm + 30;
+    if (m.kind === 'beam') return m.radius * rm + 20;
+    if (m.kind === 'boomerang') return m.radius * rm + 40;
     if (m.kind === 'chain') return 280;
     if (m.kind === 'meteor') return 340;
-    if (m.kind === 'dash') return m.radius + 60;
+    if (m.kind === 'dash') return m.radius * rm + 60;
     if (m.kind === 'cone') return m.speed * m.life + 30;
     return 520;
   }
@@ -135,6 +145,12 @@ G.Combat = (() => {
 
   /** Type chart x weather for an attack of type `type` against `e`. */
   function typeK(type, e) { return G.Types.mult(type, e.types) * G.Weather.mult(type); }
+  // Power Stone (F3c run item): the holder's matching-type moves ignore resistance AND immunity, so the
+  // type multiplier is floored at 1.0 (super-effective still applies). pl may be null for non-player hits.
+  function typeKFor(pl, type, e) {
+    const k = typeK(type, e);
+    return (pl && pl.stoneType && pl.stoneType === type) ? Math.max(1, k) : k;
+  }
 
   function fireProjectiles(pl, m) {
     const col = G.U.TYPE_COLOR[m.type];
@@ -186,10 +202,10 @@ G.Combat = (() => {
     G.FX.slash(pl.x, pl.y - G.LIFT * 0.5, pl.aim, m.radius, m.arc, col, G.VFX.forMove(m));
     if (ghost) return;
 
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit)) {     // + the player's body: matches the reach wild melee has on you
-      if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) continue;
+    G.EnemyMgr.queryCircleEach(pl.x, pl.y, m.radius + pl.r * G.Enemies.CONTACT.hit, e => {     // + the player's body: matches the reach wild melee has on you
+      if (!inArc(pl.x, pl.y, e.x, e.y, pl.aim, half)) return;
       hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, m.knock || 0, m);
-    }
+    });
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) {
       if (inArc(pl.x, pl.y, p.x, p.y, pl.aim, half)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -216,9 +232,7 @@ G.Combat = (() => {
       if (along < -r || along > len + r) return false;
       return Math.abs(-px * sa + py * ca) <= w / 2 + r;
     };
-    for (const e of G.EnemyMgr.queryCircle(mx, my, len / 2 + w)) {
-      if (onBeam(e.x, e.y, e.r)) hit(pl, e, pl.moveFactor(m), col, ca, sa, 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(mx, my, len / 2 + w, e => { if (onBeam(e.x, e.y, e.r)) hit(pl, e, pl.moveFactor(m), col, ca, sa, 0, m); });
     for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) {
       if (onBeam(p.x, p.y, p.r)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -241,9 +255,7 @@ G.Combat = (() => {
       }
     }
     if (ghost) return;
-    for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, m.radius)) {
-      hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(pl.x, pl.y, m.radius, e => hit(pl, e, pl.moveFactor(m), col, e.x - pl.x, e.y - pl.y, 0, m));
     for (const p of G.World.propsInCircle(pl.x, pl.y, m.radius)) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
   }
 
@@ -293,7 +305,7 @@ G.Combat = (() => {
   /** Chain: hits an enemy and jumps to the nearest next ones (each jump, a bit less). */
   function chain(pl, m) {
     const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
-    let cur = pl.target && !pl.target.dead && pl.target.hurt ? pl.target : G.Projectiles.nearest(G.EnemyMgr.all(), pl.x, pl.y, reach(m));
+    let cur = pl.target && !pl.target.dead && pl.target.hurt ? pl.target : G.Projectiles.nearest(G.EnemyMgr.all(), pl.x, pl.y, reach(m, pl));
     if (!cur) return;
     let fx = pl.x, fy = pl.y - G.LIFT, k = 1;
     const done = new Set();
@@ -338,7 +350,7 @@ G.Combat = (() => {
   function meteors(pl, m) {
     const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
     const n = Math.max(1, m.count | 0);
-    const near = G.EnemyMgr.queryCircle(pl.x, pl.y, reach(m)).filter(e => !e.dead);
+    const near = G.EnemyMgr.queryCircle(pl.x, pl.y, reach(m, pl)).filter(e => !e.dead);
     G.U.shuffle ? G.U.shuffle(near) : near.sort(() => Math.random() - 0.5);
     for (let i = 0; i < n; i++) {
       const e = near[i];
@@ -378,9 +390,7 @@ G.Combat = (() => {
     pl.invuln = Math.max(pl.invuln || 0, 0.3);
     const w = m.width || 34;
     const mx = sx + ca * len / 2, my = sy + sa * len / 2;
-    for (const e of G.EnemyMgr.queryCircle(mx, my, len / 2 + w)) {
-      if (segDist2(sx, sy, pl.x, pl.y, e.x, e.y) <= (w / 2 + e.r) ** 2) hit(pl, e, pl.moveFactor(m), col, ca, sa, m.knock || 0, m);
-    }
+    G.EnemyMgr.queryCircleEach(mx, my, len / 2 + w, e => { if (segDist2(sx, sy, pl.x, pl.y, e.x, e.y) <= (w / 2 + e.r) ** 2) hit(pl, e, pl.moveFactor(m), col, ca, sa, m.knock || 0, m); });
     for (const p of G.World.propsInCircle(mx, my, len / 2 + w)) {
       if (segDist2(sx, sy, pl.x, pl.y, p.x, p.y) <= (w / 2 + p.r) ** 2) G.World.damageProp(p, G.Stats.applyDamageProp(pl.moveFactor(m)), col);
     }
@@ -422,7 +432,7 @@ G.Combat = (() => {
   function blast(f, r, k = 1) {
     if (f.ghost) return;
     const pl = f.owner, m = f.m;
-    for (const e of G.EnemyMgr.queryCircle(f.x, f.y, r)) hit(pl, e, f.dmg * k, f.col, e.x - f.x, e.y - f.y, m.knock || 0, m);
+    G.EnemyMgr.queryCircleEach(f.x, f.y, r, e => hit(pl, e, f.dmg * k, f.col, e.x - f.x, e.y - f.y, m.knock || 0, m));
     for (const p of G.World.propsInCircle(f.x, f.y, r)) G.World.damageProp(p, G.Stats.applyDamageProp(f.dmg * k), f.col);
   }
 
@@ -540,6 +550,7 @@ G.Combat = (() => {
   function orbit(pl, m, dt, now, isGhost = false) {
     const col = G.U.TYPE_COLOR[m.type];
     const want = Math.max(1, m.count | 0);
+    const orad = (m.radius != null ? m.radius : 0) * (pl.moveRadiusMul || 1);     // Wide/Zoom Lens: orbit radius for this holder (F3b)
     // Each orbit move has its own orbs (there can be two in a link).
     const mine = p => p.orb && p.owner === pl && p.mid === m.id;
     const orbs = G.Projectiles.all().filter(mine);
@@ -554,7 +565,7 @@ G.Combat = (() => {
         owner: pl, ghost: isGhost, mid: m.id,
         x: pl.x, y: pl.y, r: m.size, color: col, vis: G.VFX.forMove(m),
         dmg: pl.moveFactor(m), move: m, level: pl.level, stab: pl.stabFor(m),
-        oa: (i / want) * 6.2832, orad: m.radius, ospeed: m.speed,
+        oa: (i / want) * 6.2832, orad: orad, ospeed: m.speed,
         rehit: Math.max(0.12, m.cd),
         knock: m.knock || 0, burn: m.burn || 0, poison: m.poison || 0, slow: m.slow || 0, mtype: m.type
       });
@@ -562,7 +573,7 @@ G.Combat = (() => {
     const live = G.Projectiles.all().filter(mine);
     live.forEach((p, i) => {
       p.dmg = pl.moveFactor(m);
-      p.orad = m.radius;
+      p.orad = orad;
       p.ospeed = m.speed;
       p.r = m.size;
       if (relayout) p.oa = base + (i / live.length) * 6.2832;
@@ -595,7 +606,8 @@ G.Combat = (() => {
 
   // Critical hit (Upgrades -> Critical Hit): x1.5 damage, big orange number.
   const CRIT_MUL = 1.5;
-  const isCrit = pl => !ghost && pl.critChance > 0 && Math.random() < pl.critChance;
+  const critOf = pl => pl.critChance + (pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'crit') : 0);   // + Lansat Berry (timed team crit chance)
+  const isCrit = pl => !ghost && critOf(pl) > 0 && Math.random() < critOf(pl);
 
   // An enemy's real base Def/SpD (stats[2]/stats[4]) via its species dex. Fallback 50/50
   // (e.g. a boss or minion whose dex lacks a stats array).
@@ -618,6 +630,24 @@ G.Combat = (() => {
    *  1 for single-event moves). Lives here so Enemy.hurt can take fractional damage. */
   function floorHit(d, m) { const f = m.floor || 1; return d < f ? f : d; }
 
+  // Shared on-hit effect sequence for a player hit landing on an enemy, called by BOTH hit paths
+  // (melee/aura/etc. in hit(), and the projectile resolve). Keeps the per-hit side effects in ONE
+  // place so a new on-hit item or proc is a single edit, not two. The damage calc, e.hurt, logging,
+  // impact FX and pierce stay at the call site (they differ per path); this is only the tail.
+  //   mv     the move object (m or p.move)
+  //   mtype  the move's type (m.type or p.mtype)
+  //   selfOk whether the user's own stat effect should proc (hit: !ghost; projectile: !ghost && !p.ghost)
+  // burn/poison/slow are passed EXPLICITLY (not read off mv) because a projectile carries its own
+  // copied burn/poison/slow and may run on a fallback move object where mv.slow would be undefined.
+  function applyHitEffects(e, pl, mv, mtype, burn, poison, slow, selfOk) {
+    procAilments(e, burn, poison, mv);
+    G.Stages.procMove(e, mv);                  // enemy stat drop (slice D1)
+    if (selfOk) G.Stages.procSelf(pl, mv);     // the user's own stat effect (Leaf Storm drop, Metal Claw / Meteor Mash team raise, slice E2b)
+    procFlinch(e, mv);                         // flinch (slice D2)
+    G.Status.onHit(e, mtype);                  // a Fire hit thaws ice
+    if (slow) e.applySlow(slow);
+  }
+
   // `factor` is the attacker half (pl.moveFactor(m)); the defender half completes here
   // against THIS enemy's real base Def/SpD (STAB + scalar are inside applyDamage), then
   // type x crit on top, exactly where they were before.
@@ -627,15 +657,16 @@ G.Combat = (() => {
     if (!m || !m.drain || ghost || pl.dead) return;
     const dealt = (hp0 - Math.max(0, e.hp)) + (sh0 - (e.shield || 0));
     if (dealt <= 0) return;
-    pl.heal(Math.min(dealt * m.drain, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
+    const root = pl.bigRoot ? 1.3 : 1;      // Big Root: +30% from draining moves (F3b)
+    pl.heal(Math.min(dealt * m.drain * root, pl.maxHp * (m.drainCap == null ? 1 : m.drainCap)));
   }
 
   function hit(pl, e, factor, col, dx, dy, knock, m) {
     const ds = enemyDefStats(e), dl = defLevel(e, pl.level), dm = defStage(e, m);
     let dmg = G.Stats.applyDamage(factor, ds.def, ds.spd, m, dl, pl.stabFor(m), dm);
-    const k = typeK(m.type, e);
+    const k = typeKFor(pl, m.type, e);
     const crit = isCrit(pl);
-    dmg = floorHit(dmg * k * (crit ? CRIT_MUL : 1), m);
+    dmg = floorHit(dmg * k * G.Stats.itemDmgMul(pl, m.type, k) * (crit ? CRIT_MUL : 1), m);      // held-item damage layer (Expert Belt, type items)
     const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
     e.hurt(dmg, col, dx, dy, knock, crit ? 'crit' : G.Types.label(G.Types.mult(m.type, e.types)));
     if (LOG) {
@@ -646,12 +677,7 @@ G.Combat = (() => {
     drainHeal(pl, m, e, hp0, sh0);
     if (!ghost) pl.onDealt(dmg);
     pl.dmgDealt += dmg;
-    procAilments(e, m.burn, m.poison, m);
-    G.Stages.procMove(e, m);                   // stat drop (slice D1)
-    if (!ghost) G.Stages.procSelf(pl, m);      // the user's own stat effect: Leaf Storm drop, Metal Claw / Meteor Mash team raise (slice E2b)
-    procFlinch(e, m);                          // flinch (slice D2)
-    G.Status.onHit(e, m.type);                 // a Fire hit thaws ice
-    if (m.slow) e.applySlow(m.slow);
+    applyHitEffects(e, pl, m, m.type, m.burn, m.poison, m.slow, !ghost);
   }
 
   // ---------------- collisions ----------------
@@ -764,8 +790,8 @@ G.Combat = (() => {
         const dl = defLevel(e, p.level || pl.level);
         const dm = defStage(e, pm);
         let dmg = G.Stats.applyDamage(p.dmg, ds.def, ds.spd, pm, dl, !!p.stab, dm);
-        const tk = p.mtype ? typeK(p.mtype, e) : 1;
-        const k = tk * (crit ? CRIT_MUL : 1);
+        const tk = p.mtype ? typeKFor(pl, p.mtype, e) : 1;
+        const k = tk * G.Stats.itemDmgMul(pl, p.mtype, tk) * (crit ? CRIT_MUL : 1);      // held-item damage layer (Expert Belt, type items)
         dmg = floorHit(dmg * k, pm);
         const LOG = G.Log.on && !ghost, hp0 = e.hp, sh0 = e.shield || 0;
         e.hurt(dmg, p.color, p.vx || (e.x - pl.x), p.vy || (e.y - pl.y), p.knock,
@@ -779,12 +805,7 @@ G.Combat = (() => {
         drainHeal(pl, pm, e, hp0, sh0);
         pl.dmgDealt += dmg;
         pl.onDealt(dmg);
-        procAilments(e, p.burn, p.poison, pm);
-        G.Stages.procMove(e, pm);                 // stat drop (slice D1)
-        if (!ghost && !p.ghost) G.Stages.procSelf(pl, pm);      // the user's own stat effect (slice E2b)
-        procFlinch(e, pm);                        // flinch (slice D2)
-        G.Status.onHit(e, p.mtype);
-        if (p.slow) e.applySlow(p.slow);
+        applyHitEffects(e, pl, pm, p.mtype, p.burn, p.poison, p.slow, !ghost && !p.ghost);
 
         if (!p.orb) {
           if (p.pierce > 0) { p.pierce--; }

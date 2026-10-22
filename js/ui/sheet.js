@@ -69,6 +69,44 @@ G.Sheet = (() => {
     return G.Stats.applyDamage(pl.moveFactor(m), t.def, t.spd, m, pl.level, pl.stabFor(m));
   }
 
+  /** One-line summary for the collapsed card: hit damage, heal, or a short effect. */
+  function summaryOf(pl, m) {
+    const d = hitOf(pl, m);
+    if (d != null) return 'Hits for about ' + r1d(d);
+    if (m.drain) return 'Heals from damage dealt';
+    if (m.kind === 'buff' && m.stat === 'regen') return 'Heals over time';
+    if (m.kind === 'buff' && m.stat) {
+      const LBL = { atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Speed', spe: 'Speed' };
+      return 'Team ' + (LBL[m.stat] || m.stat) + ' +' + (m.stageN || 1) + ' per cast';
+    }
+    const ail = G.Mechanics.ailmentText(m);
+    return ail || 'Support move';
+  }
+
+  /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes. */
+  function detailOf(pl, m) {
+    const k = G.Kinds.BY[m.kind];
+    const rm = (pl && pl.moveRadiusMul) || 1, cdm = (pl && pl.cdMul) || 1;
+    const rows = [];
+    if (k) for (const key of k.keys) {
+      if (m[key] == null) continue;
+      const t = FMT[key] && FMT[key](m[key], m); if (!t) continue;
+      // cooldown (Quick Claw), area + arc (Wide/Zoom Lens) are the only stat fields a held item changes
+      let withItem = null;
+      if (key === 'cd' && cdm !== 1) withItem = FMT.cd(m.cd * cdm);
+      else if ((key === 'radius' || key === 'arc') && rm !== 1) withItem = FMT[key](m[key] * rm, m);
+      rows.push(withItem && withItem !== t ? t + ' (' + withItem + ')' : t);
+    }
+    // hit damage, with the held-item atkMul delta (Muscle Band / Wise Glasses / Life Orb / Zoom Lens)
+    const d = hitOf(pl, m);
+    let hit = '';
+    if (d != null) {
+      const am = (pl && pl.atkMul) || 1, base = am !== 1 ? d / am : d;      // strip the item multiplier for the base figure
+      hit = am !== 1 ? 'Hits for about ' + r1d(base) + ' (' + r1d(d) + ')' : 'Hits for about ' + r1d(d);
+    }
+    return { raw: rows.join(' · '), hit, ail: G.Mechanics.ailmentText(m) };
+  }
+
   /** Text for one move: raw numbers (what the cards change), stack list, and one-hit damage. */
   function moveLines(pl, m) {
     const k = G.Kinds.BY[m.kind];
@@ -137,8 +175,11 @@ G.Sheet = (() => {
     const order = shownMoves(pl);
     return groups.map((g, gi) => {
       const rows = g.map(m => {
-        const t = moveLines(pl, m), n = G.Moves.stackTotal(m), col = G.U.TYPE_COLOR[m.type];
-        let cls = '', pv = '', raw = t.raw, hit = t.hit, ail = t.ail, key = '', tail = '';
+        const n = G.Moves.stackTotal(m), col = G.U.TYPE_COLOR[m.type];
+        const det = detailOf(pl, m);                 // full breakdown for the hover/tap panel (base + item deltas)
+        const summary = summaryOf(pl, m);            // the one collapsed line
+        const stacksTxt = moveLines(pl, m).stacks;
+        let cls = '', pv = '', hit = '', key = '', tail = '', preview = false;
         if (card && card.type === 'mech') {
           const x = T && T.moves.find(v => v.m === m);
           const ok = !!(x && x.ok);
@@ -147,23 +188,29 @@ G.Sheet = (() => {
           if (ix < 4) key = `<i class="mk">${E(G.Input.keyLabel('attack_' + (ix + 1)))}</i>`;
           if (!ok) tail = `<div class="why">${E(x ? x.why : '')}</div>`;
           else if (S.move === m) {
-            const mech = card.mech, a = moveLines(pl, withStack(m, mech)), d0 = hitOf(pl, m), d1 = hitOf(pl, withStack(m, mech));
+            const mech = card.mech, d0 = hitOf(pl, m), d1 = hitOf(pl, withStack(m, mech));
             pv = `<div class="pv">${E(G.Mechanics.text(m, mech))}: ${E(G.Mechanics.preview(m, mech))}</div>`;
             if (d0 != null && d1 != null) hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1);
-            raw = a.raw; ail = a.ail;
+            preview = true;
           }
         } else if (card && card.type === 'stat') {
           const d0 = hitOf(pl, m), d1 = d0 == null ? null : withInc(pl, card.stat, () => hitOf(pl, m));
-          if (d0 != null && Math.abs(d1 - d0) > 1e-9) { hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1); pv = `<div class="pv">${E(card.stat.label)} ${E(card.stat.stat)} +${Math.round((pl.inc[card.stat.id] + card.stat.step) * 100)}%</div>`; }
+          if (d0 != null && Math.abs(d1 - d0) > 1e-9) { hit = 'Hits for about ' + r1d(d0) + ' to ' + r1d(d1); pv = `<div class="pv">${E(card.stat.label)} ${E(card.stat.stat)} +${Math.round((pl.inc[card.stat.id] + card.stat.step) * 100)}%</div>`; preview = true; }
         }
-        return `<div class="sh-move${cls}" data-mi="${order.indexOf(m)}">
+        // Collapsed card: icon, name + chips, upgrades taken, one summary line. Full detail lives in the hover/tap panel.
+        // In choose mode the card's inline preview (pv + before/after hit) still shows, that is the decision the screen exists for.
+        const panel = `<div class="sh-detail" role="tooltip">`
+          + (det.raw ? `<div class="ds">${E(det.raw)}</div>` : '')
+          + (det.ail ? `<div class="ail">${E(det.ail)}</div>` : '')
+          + (det.hit ? `<div class="hit">${E(det.hit)}</div>` : '')
+          + `</div>`;
+        return `<div class="sh-move${cls}" data-mi="${order.indexOf(m)}" tabindex="0">
           <div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
           <div class="txt"><div class="nm">${E(m.name)} <span class="type" style="background:${col}">${E(G.U.TYPE_NAME[m.type])}</span>${n ? ` <span class="tag-chip" style="background:${col}">+${n}</span>` : ''}</div>
-            ${t.stacks ? `<div class="stk">${E(t.stacks)}</div>` : ''}
-            <div class="ds">${E(raw)}</div>
-            ${ail ? `<div class="ail">${E(ail)}</div>` : ''}
-            ${pv}${hit ? `<div class="hit">${E(hit)}</div>` : ''}${tail}
-          </div>${key}</div>`;
+            ${stacksTxt ? `<div class="stk">${E(stacksTxt)}</div>` : ''}
+            <div class="sum">${E(summary)}</div>
+            ${preview ? `${pv}${hit ? `<div class="hit">${E(hit)}</div>` : ''}` : ''}${tail}
+          </div>${key}${panel}</div>`;
       }).join('');
       const bonded = g.length > 1;
       return `<div class="sh-group${bonded ? ' bonded' : ''}${gi === act ? ' on' : ''}">${bonded ? '<div class="sh-bond">Cast together</div>' : ''}${rows}</div>`;
@@ -188,7 +235,8 @@ G.Sheet = (() => {
   }
 
   function render(mount, roster, opts = {}) {
-    const S = { roster, sel: Math.max(0, Math.min(roster.length - 1, opts.sel != null ? opts.sel : 0)), onSelect: opts.onSelect, choose: opts.choose || null, move: null, scrollFor: -1 };
+    const S = { roster, sel: Math.max(0, Math.min(roster.length - 1, opts.sel != null ? opts.sel : 0)), onSelect: opts.onSelect, choose: opts.choose || null, move: null, scrollFor: -1,
+      canMoveItems: !!opts.canMoveItems && !opts.choose, giving: false };
     if (S.choose) {
       // start on the wanted Pokemon if it can take the card, else the first one that can
       const ok = i => S.choose.targets[i] && S.choose.targets[i].ok;
@@ -207,7 +255,7 @@ G.Sheet = (() => {
     const item = pl.item && G.Items.BY[pl.item];
     // The roster strip sits in the title row when the screen provides a slot for it (right-aligned), else above the card.
     const slot = mount.parentElement && mount.parentElement.querySelector('.sh-strip-slot');
-    const strip = `<div class="sh-strip">${rosterStrip(S)}</div>`;
+    const strip = `<div class="sh-strip${S.giving ? ' giving' : ''}">${rosterStrip(S)}</div>`;
     if (slot) slot.innerHTML = strip;
     const card = S.choose && S.choose.card;
     mount.innerHTML = `
@@ -224,7 +272,35 @@ G.Sheet = (() => {
           <div class="sh-moves"><h3>Moves</h3><div class="sh-scroll">${moveRows(S, pl)}</div></div>
           <div class="sh-stats"><h3>Stats</h3><div class="sh-hex"></div>
             <div class="sh-legend"><i class="w"></i> base <i class="y"></i> from cards${card && card.type === 'stat' ? ' <i class="p"></i> after this card' : ''}</div>
-            ${item ? `<div class="sh-item"><span class="sh-itag">Held item</span><span class="sh-iico">${G.Icons.html(pl.item, 28)}</span><b>${E(item.name)}</b><div class="ds">${E(item.desc || '')}</div></div>` : ''}
+            ${(() => {
+              // Mini tabs for the item area: Berry | Held Item | Team Items (one panel at a time, so the column does not scroll).
+              const tab = S.itemTab || 'held';
+              const tabs = [['berry', 'Berry'], ['held', 'Held Item'], ['team', 'Team Items']]
+                .map(([k, n]) => `<button type="button" class="sh-itab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('');
+              let body = '';
+              if (tab === 'held') {
+                body = item
+                  ? `<span class="sh-iico">${G.Icons.html(item.icon || pl.item, 28)}</span><b>${E(item.name)}</b>${S.canMoveItems && S.roster.length > 1 ? `<button type="button" class="sh-mv${S.giving ? ' on' : ''}">${S.giving ? 'Cancel' : 'Move item'}</button>` : ''}<div class="ds">${S.giving ? 'Click a teammate in the top right to give it this item (they swap if it holds one).' : E(item.desc || '')}</div>`
+                  : `<div class="sh-bag empty"><span class="sh-iico sh-bagbox"></span><b>Held item</b> (none)</div>`;
+              } else if (tab === 'team') {
+                const have = pl.runItems || [], n = G.Items.runSlots(G.DB && G.DB.save), rows = [];
+                for (let k = 0; k < n; k++) {
+                  const r = G.Items.BY[have[k]];
+                  rows.push(r ? `<div class="sh-bag"><span class="sh-iico">${G.Icons.html(r.icon || r.id, 22)}</span><b>${E(r.name)}</b><div class="ds">${E(r.desc || '')}</div></div>`
+                    : `<div class="sh-bag empty"><span class="sh-iico sh-bagbox"></span><b>Team item slot</b> (empty)</div>`);
+                }
+                body = `<span class="ds">Team-wide, whole run</span>${rows.join('')}`;
+              } else {
+                const bag = pl.berries || [], slots = G.Grounds.berrySlots(G.DB && G.DB.save), rows = [];
+                for (let k = 0; k < slots; k++) {
+                  const b = G.Grounds.BY[bag[k]];
+                  rows.push(b ? `<div class="sh-bag"><span class="sh-iico">${G.Icons.html('ps:' + b.icon, 22)}</span><b>${E(b.name)}</b><div class="ds">${E(b.desc || '')}</div></div>`
+                    : `<div class="sh-bag empty"><span class="sh-iico sh-bagbox"></span><b>Berry slot</b> (empty)</div>`);
+                }
+                body = `<span class="ds">Team-wide, used automatically</span>${rows.join('')}`;
+              }
+              return `<div class="sh-item"><div class="sh-itabs">${tabs}</div><div class="sh-ipanel">${body}</div></div>`;
+            })()}
           </div>
         </div>
       </div>`;
@@ -233,11 +309,45 @@ G.Sheet = (() => {
     (slot || mount).querySelectorAll('.sh-tab').forEach(b => {
       const f = S.roster[+b.dataset.i];
       b.querySelector('.sh-sp').appendChild(G.UI.spriteCanvas(f.dex, 44, 44, { scale: 1, shiny: f.shiny }));
-      b.onclick = () => select(mount, +b.dataset.i);
+      b.onclick = () => { if (S.giving) giveTo(mount, +b.dataset.i); else select(mount, +b.dataset.i); };
     });
+    mount.querySelectorAll('.sh-itab').forEach(b => {
+      b.onclick = () => { S.itemTab = b.dataset.tab; S.giving = false; G.Audio.sfx('select'); paint(mount); };
+    });
+    const mv = mount.querySelector('.sh-mv');
+    if (mv) mv.onclick = () => { S.giving = !S.giving; G.Audio.sfx('select'); paint(mount); };
     const sc = mount.querySelector('.sh-scroll');
     if (sc) sc.scrollTop = keepTop;
     S.scrollFor = S.sel;
+    // The detail panel is position:fixed (a top layer, never clipped by the scroll box). Show it on hover (mouse)
+    // or tap (touch), positioned next to the row and clamped to the viewport so it is never cut off.
+    if (sc) {
+      const hideAll = () => sc.querySelectorAll('.sh-detail').forEach(p => { p.style.display = 'none'; });
+      const showFor = row => {
+        const panel = row.querySelector('.sh-detail'); if (!panel) return;
+        hideAll();
+        panel.style.display = 'block';                       // show first so offsetHeight/Width are real
+        const r = row.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth, M = 8;
+        let top = r.top - ph - 4;                            // prefer above the row
+        if (top < M) top = r.bottom + 4;                     // no room above -> below
+        top = Math.max(M, Math.min(top, window.innerHeight - ph - M));   // clamp vertically
+        let left = r.left;
+        left = Math.max(M, Math.min(left, window.innerWidth - pw - M));  // clamp horizontally
+        panel.style.top = top + 'px';
+        panel.style.left = left + 'px';
+      };
+      sc.querySelectorAll('.sh-move').forEach(row => {
+        row.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showFor(row); });
+        row.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideAll(); });
+        row.addEventListener('pointerup', e => {
+          if (e.pointerType === 'mouse') return;             // touch: tap toggles
+          const panel = row.querySelector('.sh-detail'), open = panel && panel.style.display === 'block';
+          hideAll();
+          if (!open) showFor(row);
+        });
+      });
+      sc.addEventListener('scroll', hideAll, { passive: true });     // scrolling closes it (fixed panel would detach otherwise)
+    }
     if (S.choose) {
       mount.querySelectorAll('.sh-move.pickable').forEach(el => {
         el.onclick = () => pickMove(mount, shownMoves(pl)[+el.dataset.mi]);
@@ -247,8 +357,24 @@ G.Sheet = (() => {
     }
   }
 
+  /** Team sheet (pause only): hand the selected Pokemon's item to roster member i (swap if it holds one). Clicking itself cancels. */
+  function giveTo(mount, i) {
+    const S = state.get(mount); if (!S || !S.giving) return;
+    const from = S.roster[S.sel], to = S.roster[i];
+    S.giving = false;
+    if (!to || to === from) { paint(mount); return; }
+    const r = from.swapHeldItem(to);
+    if (r) {
+      const nm = id => G.Items.BY[id].name;
+      G.UI.toast(r.a && r.b ? `${from.mon.name} and ${to.mon.name} swapped ${nm(r.a)} and ${nm(r.b)}` : `${nm(r.a || r.b)} moved to ${(r.a ? to : from).mon.name}`, 2200);
+      G.Audio.sfx('confirm');
+    }
+    paint(mount);
+  }
+
   function select(mount, i) {
     const S = state.get(mount); if (!S || !S.roster[i] || i === S.sel) return;
+    S.giving = false;                      // keyboard / any other switch cancels a pending item move
     S.sel = i;
     if (S.choose) S.move = firstOk(S, i);
     G.Audio.sfx('select');

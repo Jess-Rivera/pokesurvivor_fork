@@ -93,6 +93,8 @@ G.Game = (() => {
   function startRun(coop = null) {
     G.Log.clear(); G.Log.t = 0;
     holdBy = []; awayBy = null;
+    redoUsed = false;                 // Re-Do available again this run
+    if (G.Items.resetRun) G.Items.resetRun();      // reset the Snowball Badge counter
     const save = G.DB.save;
 
     G.UI.hideAll();
@@ -133,9 +135,16 @@ G.Game = (() => {
     // member runs Player.update(), so the shared timers still tick exactly once
     // per frame, including while the caster sits on the bench. The object is never reassigned.
     roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
+    // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
+    const runItems = [];
+    roster.forEach(f => { f.runItems = runItems; });
+    const berries = [];       // the team berry bag (data/ground-items.js, status berries): one shared array too
+    roster.forEach(f => { f.berries = berries; });
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
+    // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
+    for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
     caught = [];
 
@@ -503,7 +512,7 @@ G.Game = (() => {
 
   // ---------------- pickup ----------------
 
-  const PICK_SFX = { xp: 'xp', xpBig: 'xp', coin: 'coin', heal: 'heal', bomb: 'break', magnet: 'confirm', ticket: 'shiny', ticket10: 'legend', item: 'legend' };
+  const PICK_SFX = { xp: 'xp', xpBig: 'xp', coin: 'coin', heal: 'heal', bomb: 'break', magnet: 'confirm', ticket: 'shiny', ticket10: 'legend', item: 'legend', ground: 'heal' };
 
   /*
    * Co-op: the item choice and the level cards cannot cover each other.
@@ -512,38 +521,82 @@ G.Game = (() => {
    * finishing. (Before, one closed the other, no one could finish choosing and the
    * game stayed stuck for everyone.)
    */
-  let openItem = null;           // { cur, next, take } unfinished item choice
+  let openItem = null;           // { held, next, take, run, lock } unfinished item choice
   const laterItems = [];         // objetos recogidos con las cartas de nivel abiertas
   function afterLevelUp() {
     if (state !== 'playing' && state !== 'held') return;
     if (openItem && !G.UI.isOpen('scr-item')) {
       const o = openItem;
       if (o.mine) { state = 'choice'; if (G.Coop.active) G.Coop.holdStart(); }
-      G.RunUI.showItemChoice(o.cur, o.next, o.take);
+      G.RunUI.showItemChoice(o.next, o.held, o.take, o.run, o.lock);
       return;
     }
     if (laterItems.length) offerItem(laterItems.shift());
   }
 
-  /** You picked up an item: if you carry none you equip it; otherwise, you choose. */
+  /**
+   * Run tier: put `id` on the whole team (on() for EVERY roster member), optionally replacing `replace` first.
+   * Pokemon-tier items never come through here (they live on one Pokemon, pl.equip).
+   */
+  function equipRun(id, replace) {
+    const list = pl.runItems;
+    if (replace) {
+      const i = list.indexOf(replace);
+      if (i >= 0) { for (const f of roster) G.Items.BY[replace].off(f); list.splice(i, 1); }
+    }
+    // Group exclusion (F3c Power Stones, group 'stone'): only one item of a group may be held at once.
+    // Equipping another of the same group removes the one already carried.
+    const grp = G.Items.BY[id].group;
+    if (grp) {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const held = G.Items.BY[list[i]];
+        if (held && held.group === grp) { for (const f of roster) held.off(f); list.splice(i, 1); }
+      }
+    }
+    for (const f of roster) G.Items.BY[id].on(f);
+    list.push(id);
+    if (G.Log.on) G.Log.item(id, list.length);
+  }
+
+  /**
+   * You picked up an item. Pokemon tier: it goes to the ACTIVE Pokemon, and if that Pokemon already holds one you choose.
+   * Run tier: it takes a free run slot; with the grid full (or a same-group clash, e.g. a second Stone) the chooser asks which held item it replaces,
+   * or Leave it. Ground-tier items never come through here.
+   */
   function offerItem(id) {
-    if (!pl || !G.Items.BY[id]) return;
+    const def = pl && G.Items.BY[id];
+    if (!def) return;
     if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
+    const run = def.tier === 'run';
+    // F3d-2: finding a team item unlocks it for good (pre-run loadout), even if you then choose Leave it.
+    if (run && G.Items.unlock(G.DB.save, id)) { G.DB.commit(); G.Spawner.say('Team item unlocked: ' + def.name, 3, true); }
+    const owned = run ? pl.runItems : [pl.item];
+    if (owned.includes(id)) { G.Spawner.say('You already hold ' + def.name, 2, true); return; }
+    // What the new item could replace. Run tier: nothing while a slot is free, except a same-group item (a second Stone),
+    // which can ONLY replace the one already held (lock). Pokemon tier: the Pokemon's current item.
+    let held, lock = null;
+    if (run) {
+      const clash = def.group ? pl.runItems.find(r => G.Items.BY[r] && G.Items.BY[r].group === def.group) : null;
+      const full = pl.runItems.length >= G.Items.runSlots(G.DB.save);
+      if (clash) { held = pl.runItems.slice(); lock = clash; }
+      else if (full) held = pl.runItems.slice();
+      else held = [];
+    } else held = pl.item ? [pl.item] : [];
     let mine = false;            // this choice is the one that stopped the game
-    const take = got => {
+    // replace: the id being swapped out (null = Leave it). With a free slot it is undefined and the item is simply taken.
+    const take = replace => {
       openItem = null;
-      if (got !== pl.item) {
-        pl.equip(got);
-        G.Spawner.say('¡Llevas ' + G.Items.BY[got].name + '!', 2.6, true);
-        G.Progress.event('item', { id: got });
+      if (replace !== null) {
+        if (run) equipRun(id, replace); else pl.equip(id);
+        G.Spawner.say(run ? 'Picked up ' + def.name + '!' : pl.mon.name + ' got ' + def.name + '!', 2.6, true);
+        G.Progress.event('item', { id });
       }
       if (!mine) { afterLevelUp(); return; }
       if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
-    if (!pl.item) { take(id); return; }
-    if (pl.item === id) { G.Spawner.say('Ya llevas ' + G.Items.BY[id].name, 2, true); return; }
+    if (!held.length) { take(undefined); return; }
     // The game stops while you choose; in a group, for everyone (as with the
     // fusions). Before, in a group it continued and you got hit while choosing.
     if (state === 'playing' || state === 'held') {
@@ -551,8 +604,8 @@ G.Game = (() => {
       state = 'choice';
       if (G.Coop.active) G.Coop.holdStart();
     }
-    openItem = { cur: pl.item, next: id, take, get mine() { return mine; } };
-    G.RunUI.showItemChoice(pl.item, id, take);
+    openItem = { held, next: id, take, run, lock, get mine() { return mine; } };
+    G.RunUI.showItemChoice(id, held, take, run, lock);
   }
 
   /** @param who  who picked it up (in co-op it can be a teammate) */
@@ -585,10 +638,15 @@ G.Game = (() => {
       if (mine) offerItem(p.value);
       return;
     }
+    if (p.kind === 'ground') {
+      // Ground item: applied to the team at once (the active Pokemon touched it); nothing is stored. Co-op copies are the host's call, as with heal.
+      if (mine) G.Grounds.apply(pl, p.value);
+      return;
+    }
     if (p.kind === 'ticket' || p.kind === 'ticket10') {
       if (p.kind === 'ticket') pl.t1++; else pl.t10++;
       bankTickets();
-      G.FX.dmgText(who.x, who.y - who.bodyH - 8, p.kind === 'ticket' ? '+1 ticket' : '¡Ticket ×10!', p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff', true);
+      G.FX.dmgText(who.x, who.y - who.bodyH - 8, p.kind === 'ticket' ? '+1 Pokeball' : 'Master Ball!', p.kind === 'ticket' ? '#ffd23f' : '#d9a6ff', true);
       G.FX.ring(who.x, who.y, 6, 50, p.kind === 'ticket' ? '#ffd23f' : '#c47bff', 0.4, 3);
       return;
     }
@@ -633,14 +691,13 @@ G.Game = (() => {
       return;
     }
     if (G.UI.isOpen('scr-item')) {
-      for (let i = 0; i < 2; i++) {
-        if (G.Input.action('attack_' + (i + 1))) document.querySelectorAll('#item-cards .card')[i].click();
-      }
+      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) G.RunUI.itemKey(i);
+      if (G.Input.tap('enter')) G.RunUI.itemConfirm();
       return;
     }
     if (state === 'ui') {
       // Esc on a menu subscreen returns to the menu.
-      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-inventory', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
           && document.getElementById('pull-fx').classList.contains('hidden')) G.MenuUI.open();
       return;
     }
@@ -657,6 +714,7 @@ G.Game = (() => {
   // ---------------- loop ----------------
 
   let deathT = 0;
+  let redoUsed = false;      // Re-Do run item: spent once per run (reset in startRun)
 
   let frameDt = 0, speedK = 1;
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
@@ -726,6 +784,7 @@ G.Game = (() => {
       const alive = roster.filter(f => !f.dead && f !== pl);
       if (alive.length) {
         const next = alive.reduce((a, b) => (b.teamSlot < a.teamSlot ? b : a));
+        if (G.Log.on) G.Log.redo(pl.runItems.includes('redo'), redoUsed, roster.length, alive.length, 0);
         takeField(roster.indexOf(next));
         swapLock = 0; deathT = 0;
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
@@ -733,7 +792,21 @@ G.Game = (() => {
         G.Spawner.say(pl.mon.name + ' enters the fight!', 2, true);
         return;
       }
+      // Re-Do (F3c run item): on the final faint, revive the WHOLE team to full HP, once per run.
+      if (pl.runItems.includes('redo') && !redoUsed) {
+        redoUsed = true;
+        if (G.Log.on) G.Log.redo(true, false, roster.length, 0, 1);
+        const reviveIdx = activeIdx;                   // the Pokemon that just fainted (the final faint); resume on it, not slot 1
+        for (const f of roster) { f.revive(1); }       // revive(frac): 1 = full HP
+        takeField(reviveIdx);
+        swapLock = 0; deathT = 0;
+        G.FX.ring(pl.x, pl.y, 10, 120, '#ffe08a', 0.7, 6);
+        G.Audio.sfx('shiny');
+        G.Spawner.say('Re-Do! The team is revived!', 2.4, true);
+        return;
+      }
       // Whole team down: play the faint beat, then end the run.
+      if (G.Log.on && deathT === 0) G.Log.redo(pl.runItems.includes('redo'), redoUsed, roster.length, 0, 2);
       deathT += dt;
       pl.update(dt);
       G.EnemyMgr.update(dt * 0.3, pl);
@@ -1016,6 +1089,10 @@ G.Game = (() => {
     get state() { return state; }, get player() { return pl; }, st,
     // team (Phase A)
     get roster() { return roster; },
+    /** Equip a run-tier item on the whole team (debug / future inventory). Honors the group-exclusion rule. */
+    equipRun(id, replace) { equipRun(id, replace); },
+    /** Give an item through the real pickup path (free slot = equipped, otherwise the chooser). Used by G.Debug.item / runitem. */
+    offerItem(id) { offerItem(id); },
     get activeIndex() { return activeIdx; },
     get swapCooldown() { return swapLock; },
     get swapMax() { return SWAP_LOCK; },

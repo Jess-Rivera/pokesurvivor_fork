@@ -67,7 +67,7 @@ G.DB = (() => {
   // ---------------- save ----------------
 
   function newSave(name) {
-    return {
+    const save = {
       v: VERSION,
       name,
       created: Date.now(),
@@ -92,8 +92,12 @@ G.DB = (() => {
       missions: {},           // daily / weekly missions (systems/progress.js)
       profile: { favs: [], title: '' },   // public profile: 3 favorites and title
       stats: { runs: 0, bestTime: 0, bestLevel: 0, totalKills: 0, pulls: 0, coinsEarned: 0, shinies: 0,
-               bossesTotal: 0, riftWins: 0, evolutions: 0, missionsDone: 0, groupRuns: 0, bestGroupTime: 0 }
+               bossesTotal: 0, riftWins: 0, evolutions: 0, missionsDone: 0, groupRuns: 0, bestGroupTime: 0 },
+      teamItems: {},          // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
+      teamLoadout: []         // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
     };
+    if (G.Items) G.Items.grantStarters(save);       // Lucky Egg + Amulet Coin
+    return save;
   }
 
   /** Fills in missing fields in saves from earlier versions. */
@@ -127,6 +131,12 @@ G.DB = (() => {
     s.coins = n(s.coins);
     s.tickets.t1 = n(s.tickets.t1);
     s.tickets.t10 = n(s.tickets.t10);
+    // F3d-2 team items: keep only real team-tier ids, then a clean loadout (unlocked, no duplicates, one per group, within the unlocked slots).
+    if (G.Items) {
+      if (!s.teamItems || typeof s.teamItems !== 'object') s.teamItems = {};
+      for (const id of Object.keys(s.teamItems)) if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'run') delete s.teamItems[id];
+      G.Items.cleanLoadout(s);
+    }
     if (G.DEX_BY) for (const coll of ['owned', 'shiny']) {
       for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
     }

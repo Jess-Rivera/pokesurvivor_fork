@@ -23,6 +23,15 @@ G.Player = class Player {
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
+    this.moveRadiusMul = 1;      // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
+    this.typeBoost = null;       // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
+    // ---- F3c run-item flags (team-wide; set by equipRun on/off). Effects read in get spd / G.Combat / typeK. ----
+    this.sharpScissors = false;  // team-HP-scaled speed (needs roster 3+)
+    this.brassKnuckles = false;  // team-HP-scaled damage (needs roster 3+)
+    this.snowball = false;       // damage scales with total HP of enemies killed this run
+    this.redo = false;           // once-per-run full-team revive on final death
+    this.pikaTear = false;       // +1.1x damage & speed per fainted teammate
+    this.stoneType = null;       // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
     this.magnet = 78 * (perks.magnetMul || 1);
     this.xpMul = perks.xpMul || 1;
@@ -88,7 +97,9 @@ G.Player = class Player {
     this.isPlayer = true;
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
     this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
-    this.item = null;          // objeto equipado (data/items.js), uno por run
+    this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
+    this.berries = [];         // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
+    this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.sashT = -999;         // last time the Focus Band saved you
     this.bellHeal = 0;         // pending healing from the Shell Bell
   }
@@ -115,12 +126,12 @@ G.Player = class Player {
     const c = G.Stats.moveCat(m);
     const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk');     // Protein / Calcium
     const stg = c === 'special' ? G.Stages.mul(this, 'spa') : c === 'status' ? 1 : G.Stages.mul(this, 'atk');     // stage raises and drops (slice E2a)
-    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg);
+    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg * this.runDmgMul());     // run items (Brass Knuckles, Pikachu's Tear, Snowball)
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
   /** Stat bonus fraction: the stat cards plus the gym badge boosts. */
-  incOf(k) { return this.inc[k] + this.badge[k]; }
+  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
   /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
   addBadgeBoost(stat, pct) {
     if (!(stat in this.badge)) return false;
@@ -150,7 +161,22 @@ G.Player = class Player {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this);
+    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();
+  }
+  /** Run-item SPEED multipliers, applied last: Sharp Scissors (team-HP-scaled, roster 3+) and Pikachu's Tear (1.1x per fainted). */
+  runSpeedMul() {
+    let m = 1;
+    if (this.sharpScissors) m *= G.Items.teamHpMul(this);
+    if (this.pikaTear) m *= G.Items.faintMul(this);
+    return m;
+  }
+  /** Run-item DAMAGE multiplier: Brass Knuckles (team-HP-scaled, roster 3+), Pikachu's Tear, Snowball Badge. Folded into moveFactor. */
+  runDmgMul() {
+    let m = 1;
+    if (this.brassKnuckles) m *= G.Items.teamHpMul(this);
+    if (this.pikaTear) m *= G.Items.faintMul(this);
+    if (this.snowball) m *= G.Items.snowballMul();
+    return m;
   }
   get reduction() { return Math.min(0.8, this.dmgReduce); }
   get regen() { return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen'); }
@@ -205,7 +231,7 @@ G.Player = class Player {
     if (!free && this.swapT > 0) return;           // still holding the slot you just switched to
     // Choice Band: you cannot switch moves.
     if (this.hasItem('choiceband') && this.slots[this.active]) {
-      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Cinta Elección', '#ff8ad8');
+      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Choice Band', '#ff8ad8');
       return;
     }
     this.active = i;
@@ -344,7 +370,9 @@ G.Player = class Player {
       tk = G.Types.mult(type, this.mon.types);
       wk = G.Weather.mult(type);
       eff = G.Types.label(tk);
-      amount *= tk * wk;
+      // Type-guard berry (ground item, 10 s): a super-effective hit of its type is halved (Chilan: every Normal hit).
+      const guard = this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
+      amount *= tk * wk * guard;
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
@@ -367,7 +395,7 @@ G.Player = class Player {
       this.sashT = performance.now();
       this.hp = 1; this.invuln = 1.2;
       if (LOG) G.Log.faint(true, 1);
-      G.FX.dmgText(this.x, this.y - this.bodyH - 16, '¡Banda Focus!', '#ff9a3d', true);
+      G.FX.dmgText(this.x, this.y - this.bodyH - 16, 'Focus Sash!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
     if (this.hp <= 0) {
@@ -438,19 +466,39 @@ G.Player = class Player {
     this.hp = Math.round(this.maxHp * frac);
   }
 
-  // ---------------- objeto equipado ----------------
-  hasItem(id) { return this.item === id; }
+  // ---------------- held items ----------------
+  /** True when `id` is in effect for this Pokemon: its own held item while it is NOT benched (held effects only work
+   *  on the field), or any run-tier item the team carries. */
+  hasItem(id) { return (!this.benched && this.item === id) || this.runItems.includes(id); }
 
-  /** Equips an item (and removes whatever was carried). */
+  /** Equips a Pokemon-tier item on THIS Pokemon (and removes whatever it carried). Run-tier items go through G.Game. */
   equip(id) {
     if (this.item) G.Items.BY[this.item].off(this);
     this.item = id;
     if (id) G.Items.BY[id].on(this);
   }
 
+  /**
+   * Move this Pokemon's held item to `other`, or swap items when `other` holds one too (team sheet, F2). Each item is
+   * unequipped from its old holder (off) and equipped on its new one (on), so every stat multiplier stays exact.
+   * The Focus Sash cooldown (sashT) travels with the item, so passing a spent sash gives no instant second save.
+   * @returns {{a: string|null, b: string|null}|null} items this one held / other held before the swap; null if nothing happened
+   */
+  swapHeldItem(other) {
+    if (!other || other === this || (!this.item && !other.item)) return null;
+    const a = this.item, b = other.item, ta = this.sashT, tb = other.sashT;
+    if (a) G.Items.BY[a].off(this);
+    if (b) G.Items.BY[b].off(other);
+    this.item = b; other.item = a;
+    if (b) G.Items.BY[b].on(this);
+    if (a) G.Items.BY[a].on(other);
+    this.sashT = tb; other.sashT = ta;
+    return { a, b };
+  }
+
   /** Shell Bell: a little health for the damage you do (cap 4/s). */
   onDealt(dmg) {
-    if (this.item === 'shellbell') this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+    if (this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
   }
 
   /** An altar's power (see systems/interact.js): it applies and removes itself. */
@@ -484,6 +532,8 @@ G.Player = class Player {
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
+    // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
+    if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
@@ -627,7 +677,7 @@ G.Player = class Player {
     let i = 0;
     for (const k in this.stgTeam) {
       const L = this.stgTeam[k];
-      if (!L.length) continue;
+      if (!L.length || !COL[k]) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
       const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;

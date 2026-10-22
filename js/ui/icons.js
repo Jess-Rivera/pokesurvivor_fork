@@ -389,7 +389,13 @@ G.Icons = (() => {
     return cv;
   }
 
+  // The ticket pickups in the world are drawn as Pokesprite balls: 'ticket' (x1) is a Great Ball, 'ticket10' (x10) a Master Ball.
+  // The menus do not use these names: they draw 'ball' (Poke Ball) and 'ball4' (the purple Master Ball) from assets/icons/pokeball.
+  // To go back to the pixel-art tickets in the world, empty this table (their definitions are still in UI above).
+  const ALIAS = { ticket: 'ps:ball.great', ticket10: 'ps:ball.master' };
+
   function canvas(name) {
+    name = ALIAS[name] || name;
     let cv = cache.get(name);
     if (cv) return cv;
     if (name.startsWith('move:')) {
@@ -397,10 +403,37 @@ G.Icons = (() => {
       cv = emblem(m ? m.type : 'normal', m ? m.kind : null);
     } else if (name.startsWith('type:')) {
       cv = emblem(name.slice(5));
+    } else if (name.startsWith('ps:')) {
+      cv = psCanvas(name.slice(3));
     } else {
       cv = fromRows(UI[name] || UI.star);
     }
     cache.set(name, cv);
+    return cv;
+  }
+
+  // 'ps:<category>.<name>': a 32x32 cell of the Pokesprite sheet (assets/items/pokesprite-inventory.png, positions in data/pokesprite-index.js).
+  // The canvas is created at once and filled when the sheet has loaded, so a draw before that shows nothing for a moment.
+  const PS_URL = 'assets/items/pokesprite-inventory.png', PS_CELL = 32, PS_W = 2174, PS_H = 576;
+  let psImg = null;
+  const psWait = [];
+  function psPaint(cv, pos) {
+    const c = cv.getContext('2d');
+    c.imageSmoothingEnabled = false;
+    c.clearRect(0, 0, PS_CELL, PS_CELL);
+    c.drawImage(psImg, pos[0], pos[1], PS_CELL, PS_CELL, 0, 0, PS_CELL, PS_CELL);
+  }
+  function psCanvas(key) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = PS_CELL;
+    const pos = G.PokeSprite && G.PokeSprite[key];
+    if (!pos) return cv;
+    if (!psImg) {
+      psImg = new Image();
+      psImg.onload = () => { for (const w of psWait.splice(0)) psPaint(w[0], w[1]); };
+      psImg.src = PS_URL;
+    }
+    if (psImg.complete && psImg.naturalWidth) psPaint(cv, pos); else psWait.push([cv, pos]);
     return cv;
   }
 
@@ -466,22 +499,30 @@ G.Icons = (() => {
    * 16 px icon painted at 24 would double some pixels and not others.
    */
   function snap(name, size) {
+    name = ALIAS[name] || name;
+    if (name.startsWith('ps:')) return size;           // Pokesprite cells scale freely (smoothed when drawn)
     const w = canvas(name).width;
     return w * Math.max(1, Math.round(size / w));
   }
 
   /** Pixelated <img> for the DOM. */
   function html(name, size = 20, cls = '') {
+    name = ALIAS[name] || name;
+    if (name.startsWith('ps:')) {
+      const pos = G.PokeSprite && G.PokeSprite[name.slice(3)] || [0, 0], k = size / PS_CELL;
+      return `<span class="pix ${cls}" style="display:inline-block;width:${size}px;height:${size}px;background:url(${PS_URL}) -${pos[0] * k}px -${pos[1] * k}px / ${PS_W * k}px ${PS_H * k}px no-repeat;image-rendering:pixelated"></span>`;
+    }
     const cv = canvas(name), w = snap(name, size), h = w * cv.height / cv.width;
     return `<img class="pix ${cls}" src="${url(name)}" width="${w}" height="${h}" alt="" draggable="false">`;
   }
 
   function draw(ctx, name, x, y, size) {
+    name = ALIAS[name] || name;
     const cv = canvas(name);
     const s2 = snap(name, size);
     x += (size - s2) / 2; y += (size - s2) / 2; size = s2;
     const prev = ctx.imageSmoothingEnabled;
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = name.startsWith('ps:') && size !== PS_CELL;
     ctx.drawImage(cv, Math.round(x), Math.round(y), size, size * cv.height / cv.width);
     ctx.imageSmoothingEnabled = prev;
   }

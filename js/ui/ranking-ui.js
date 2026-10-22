@@ -123,7 +123,7 @@ G.RankingUI = (() => {
       rep.innerHTML = G.Icons.html('flag', 16);
       rep.onclick = async () => {
         if (rep.classList.contains('sent')) { G.UI.toast('Ya has reportado esta marca'); return; }
-        if (!confirm('¿Reportar la marca de ' + r.names.join(', ') + ' como trampa?')) return;
+        if (!(await G.UI.ask(G.T('¿Reportar la marca de ') + r.names.join(', ') + G.T(' como trampa?'), { title: 'Report', ok: 'Report' }))) return;
         rep.classList.add('sent'); rep.title = 'Ya la has reportado';
         await G.Ranking.report(b, r);
         G.UI.toast('Gracias: la revisaremos');
