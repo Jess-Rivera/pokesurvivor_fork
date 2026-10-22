@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], fix: [
+    ['Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.',
+     'Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.'],
+  ] },
   { d: '2026-10-21', title: ['The Shop', 'The Shop'], new: [
     ['The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).',
      'The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).'],

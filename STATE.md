@@ -17,6 +17,9 @@ Last updated: 2026-10-21 night (Claude Desktop, home).
 ## Parked design docs (docs/)
 RUN-ITEM-THINK-DOC.md, BULLET-TIME-DESIGN.md, SPEED-IVEV-SLICE.md (blocked on IV/EV storage), PERF-HOTPATH-NOTES.md.
 
+## Architecture direction (2026-10-22): sim/present boundary
+Client stays JS forever; server language (Node vs Go) deferred to MP phase. Standing SP discipline: converge sim toward a sim/present-EVENT boundary (sim emits events, presentation renders FX/Audio/Animator/HUD), keep collision radius out of sprite metadata, keep the clock injected. Pays off 3 ways: real headless harness coverage now, Web-Worker sim for perf, authoritative server later. DIRECTION not a refactor slice; pay down as you touch files. Worked example: Enemy.hurt(). Full: DECISIONS 2026-10-22 + docs/SIM-PRESENT-BOUNDARY.md.
+
 ## Open questions for Jess
 - Berry bag slots: also buyable under Team Upgrades later?
 

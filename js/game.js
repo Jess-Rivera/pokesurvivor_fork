@@ -555,6 +555,7 @@ G.Game = (() => {
     }
     for (const f of roster) G.Items.BY[id].on(f);
     list.push(id);
+    if (G.Log.on) G.Log.item(id, list.length);
   }
 
   /**
@@ -783,6 +784,7 @@ G.Game = (() => {
       const alive = roster.filter(f => !f.dead && f !== pl);
       if (alive.length) {
         const next = alive.reduce((a, b) => (b.teamSlot < a.teamSlot ? b : a));
+        if (G.Log.on) G.Log.redo(pl.runItems.includes('redo'), redoUsed, roster.length, alive.length, 0);
         takeField(roster.indexOf(next));
         swapLock = 0; deathT = 0;
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
@@ -793,8 +795,10 @@ G.Game = (() => {
       // Re-Do (F3c run item): on the final faint, revive the WHOLE team to full HP, once per run.
       if (pl.runItems.includes('redo') && !redoUsed) {
         redoUsed = true;
-        for (const f of roster) { f.revive(1); }      // revive(frac): 1 = full HP
-        takeField(roster.findIndex(f => !f.dead));
+        if (G.Log.on) G.Log.redo(true, false, roster.length, 0, 1);
+        const reviveIdx = activeIdx;                   // the Pokemon that just fainted (the final faint); resume on it, not slot 1
+        for (const f of roster) { f.revive(1); }       // revive(frac): 1 = full HP
+        takeField(reviveIdx);
         swapLock = 0; deathT = 0;
         G.FX.ring(pl.x, pl.y, 10, 120, '#ffe08a', 0.7, 6);
         G.Audio.sfx('shiny');
@@ -802,6 +806,7 @@ G.Game = (() => {
         return;
       }
       // Whole team down: play the faint beat, then end the run.
+      if (G.Log.on && deathT === 0) G.Log.redo(pl.runItems.includes('redo'), redoUsed, roster.length, 0, 2);
       deathT += dt;
       pl.update(dt);
       G.EnemyMgr.update(dt * 0.3, pl);
