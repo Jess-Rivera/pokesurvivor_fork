@@ -35,6 +35,14 @@ Agreed so far: gate on the map reusing the rift flow (portal, closed arena, stas
 Jess's gate spec (2026-10-19): Gym 1 spawns at 4:00; each later gym spawns 4:00 after the previous gym is beaten AND the player has returned to the overworld; gates stay open and are done in order. LOCKED as 'Option A' (2026-10-19): the 30:00 target for Gym 8 is DROPPED. Gym 8 spawns at 4:00 + 7 x (4:00 + fight time), so about 39 to 46 min. Consequence: enemy level sits on the L50 clamp from 30:00 until Gym 8 is beaten (see the enemy level curve in section 1), so Gyms 6 to 8 (about) are all clamp + 4. The slow ramp only starts after the gym list is complete. Open: arena visuals per type, authored-move data format, move Kind -> telegraphed attack translation, badge boost definitions, Bond reward, Elite Four rewards and level offset, Champion.
 
 ### 3d. Pilot gym: Brock (2026-10-19)
+### 3e. Multi-mon gyms (LOCKED 2026-10-22, Jess) — ALL AT ONCE
+Loops field the leader's first N mons SIMULTANEOUSLY (not sequential): loop 1 = slot 1 alone,
+loop 6 = all six on screen together, a brawl. Arena size scales with the mon count (ARENA_R becomes
+count-based, not the constant 11). Win = every leader mon down (arenaTick tracks a SET of boss ids,
+won() only when all are dead, not a single arena.bossId). Enrage = one SHARED gym clock from the first
+hit on any leader mon (proposed, TUNE), not per-mon. Difficulty is multiplicative (N simultaneous attack
+patterns), so loop 6 is a tuning watch item; pairs with the gate-escalation pressure. Rosters + the
+six-line / loop-N-fields-first-N data live in docs/GYM-ROSTERS.md (Brock locked 2026-10-22).
 Loop 1 fields the first signature only: Geodude alone. Moves: Tackle, Harden (stands in for Defense Curl, which is not in the catalog) and Rock Throw (Jess's addition). Entry is in docs/BOSS-AUTHORING.md. Geodude is Rock/Ground, stats 40/80/100/30/30/20, BST 300. RESOLVED 2026-10-19: (1) a near-stationary Geodude is accepted, Rock Throw carries the fight. (2) GYM FAILURE = RUN ENDS: a team wipe in a gym is death, which commits EVs and progress (the original rift behavior of being spat out at 35% health is NOT used). (3) No arena timer; the gym boss ENRAGES 120 s after engagement (TUNE), same mechanism as elites, which also prevents stalling. (4) The canonical type chart stays ON HOLD and untouched; its boss-immunity rule must be settled before it goes live, since a Rock/Ground boss is Electric-immune.
 
 ### 3a. Gym move vocabulary (LOCKED 2026-10-19 rule, boss forms DRAFT)
