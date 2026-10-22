@@ -6,7 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
-  { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], fix: [
+  { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], new: [
+    ['Gym gates now have a timer. You have a short grace period to enter; if you ignore the gate, the Gym Leader and the wild Pokemon on the map keep getting stronger (and stronger, with no limit) until you go in. Clear the gym and the world returns to normal.',
+     'Gym gates now have a timer. You have a short grace period to enter; if you ignore the gate, the Gym Leader and the wild Pokemon on the map keep getting stronger (and stronger, with no limit) until you go in. Clear the gym and the world returns to normal.'],
+  ], fix: [
     ['Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.',
      'Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.'],
   ], chg: [

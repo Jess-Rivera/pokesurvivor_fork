@@ -482,7 +482,13 @@ G.HUD = (() => {
     if (rift) {
       const sx = (rift.x - cam.left()) * cam.scale, sy = (rift.y - 40 - cam.top()) * cam.scale;
       const now = performance.now() / 1000, beat = 0.5 + Math.sin(now * 7) * 0.5;
-      const label = rift.gym ? 'GYM ' + (rift.gym.idx + 1) + ' · ' + rift.gym.leader.toUpperCase() + ' · LV ' + rift.gym.level + ' · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m'
+      const gymGauge = () => {   // grace countdown, then the escalation readout (+N and climbing)
+        const g = G.Gym.graceLeft(), b = G.Gym.escBump();
+        if (b > 0) return ' · +' + b + ' ESCALATING';
+        if (g != null && g > 0) return ' · ' + Math.ceil(g) + ' s';
+        return '';
+      };
+      const label = rift.gym ? 'GYM ' + (rift.gym.idx + 1) + ' · ' + rift.gym.leader.toUpperCase() + ' · LV ' + (rift.gym.level + G.Gym.escBump()) + gymGauge() + ' · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m'
         : 'GRIETA · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m · ' + Math.ceil(rift.ttl) + ' s';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
@@ -520,7 +526,7 @@ G.HUD = (() => {
         ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff'; ctx.fill();
         ctx.font = F(800, 11); ctx.textAlign = 'center';
         ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        const l2 = rift.gym ? 'GYM · LV ' + rift.gym.level : 'GRIETA · ' + Math.ceil(rift.ttl) + ' s';
+        const l2 = rift.gym ? 'GYM · LV ' + (rift.gym.level + G.Gym.escBump()) + (G.Gym.escBump() > 0 ? ' +' + G.Gym.escBump() : '') : 'GRIETA · ' + Math.ceil(rift.ttl) + ' s';
         ctx.strokeText(l2, 0, -18); ctx.fillStyle = '#e2d0ff'; ctx.fillText(l2, 0, -18);
       }
       ctx.restore();
@@ -543,7 +549,7 @@ G.HUD = (() => {
       ctx.globalAlpha = a;
       ctx.translate(w / 2, y0); ctx.scale(pop, pop);
       ctx.font = F(800, 20);
-      const t1 = rift.gym ? 'A GYM GATE HAS OPENED' : '¡SE HA ABIERTO UNA GRIETA!', t2 = rift.gym ? rift.gym.leader + ' waits inside (Lv ' + rift.gym.level + '). Follow the purple arrow.' : 'Sigue la flecha morada: dentro te espera un legendario';
+      const t1 = rift.gym ? 'A GYM GATE HAS OPENED' : '¡SE HA ABIERTO UNA GRIETA!', t2 = rift.gym ? rift.gym.leader + ' waits inside (Lv ' + rift.gym.level + '). Enter soon: after ' + G.Gym.GRACE + ' s the gym and the world start getting stronger.' : 'Sigue la flecha morada: dentro te espera un legendario';
       const bw = Math.min(w - 24, Math.max(ctx.measureText(t1).width, (ctx.font = F(700, 11), ctx.measureText(t2).width)) + 36);
       roundRect(ctx, -bw / 2, -26, bw, 52, 10);
       ctx.fillStyle = 'rgba(26,11,51,.88)'; ctx.fill();

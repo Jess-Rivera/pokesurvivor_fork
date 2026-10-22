@@ -40,7 +40,11 @@
       // Enemy HP = real base HP through the mainline formula at the level-for-run-time
       // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
-      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
+      // Gym-gate escalation (rework/gym-progression): a PLAIN wild enemy (not boss, not gym, not elite) spawned while a
+      // gate has been ignored past its grace period gets +escBump levels. Read once at spawn (level is frozen here),
+      // so escalation ramps as new spawns come in hot and snaps back when the bump clears on the win. 0 otherwise.
+      const wildBump = (!boss && !def.gym && !this.elite && G.Gym) ? G.Gym.escBump() : 0;
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0, wildBump);
       this.hp = this.maxHp;
       // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
       // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
@@ -65,7 +69,7 @@
       this.atkBase = _st ? _st[1] : 50;
       this.spaBase = _st ? _st[3] : 50;
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
-      this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0);
+      this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0) + wildBump;   // escalation makes hot wilds hit harder too, not just tankier
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
       this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
       if (this.gym) {

@@ -64,8 +64,10 @@ G.Enemies = (() => {
   // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
   const OPENING_HP_START = 0.55;
   const openingHpK = t => { const end = G.Stats.XP_BOOST_END; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
-  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t)) * openingHpK(t);
-  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
+  // lvlBump (rework/gym-progression): extra levels from gym-gate escalation, applied to wild spawns only (the caller
+  // decides who is a wild enemy and passes G.Gym.escBump()). The opening HP discount still keys off real run time t.
+  const enemyHp = (baseHP, t, lvlBump = 0) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t) + (lvlBump || 0)) * openingHpK(t);
+  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers (NO bump: HUD shows true run level)
 
   const H = (d, s) => G.U.hash(d, 7, s);
 

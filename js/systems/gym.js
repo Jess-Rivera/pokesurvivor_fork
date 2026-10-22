@@ -9,23 +9,56 @@
 G.Gym = (() => {
   const FIRST_AT = 240, GAP = 240;       // seconds
   const ENRAGE_RAMP = 30, ENRAGE_MAX = 2;
+  // Gate escalation (rework/gym-progression): a gate opens, GRACE s of come-when-ready, then every ESC_STEP s
+  // both the wild spawn level and the gym leader's locked level climb by 1 (UNCAPPED by design: ignoring the gate
+  // is meant to end the run). The bump is a single shared integer read by the wild spawner and the leader build.
+  const GRACE = 37, ESC_STEP = 10;       // seconds
   let beaten = 0, nextAt = FIRST_AT, gate = null, badges = [];
   let fight = null;      // readout of the current gym fight: { t0, hp, minFrac, taken, casts }
+  let esc = null;        // escalation state while a gate is open past grace: { bump, acc } (null = grace or no gate)
   const list = () => G.Gyms.listFor(G.Enemies.region);
 
-  function reset() { beaten = 0; nextAt = FIRST_AT; gate = null; badges = []; fight = null; }
+  function reset() { beaten = 0; nextAt = FIRST_AT; gate = null; badges = []; fight = null; esc = null; }
 
   function now() { return G.Game.st.time; }
 
   /** Gate schedule: called every game frame (solo / host). */
   function update(dt, pl, t) {
     if (G.Rift.isGym) trackFight(dt, pl, t);
+    // Escalation clock: runs while the gate is open on the map (not once you are in the arena). Anchored to run-time
+    // (dt is the run clock), so a pause screen or draft does not tick it. Starts after GRACE s since the gate opened.
+    if (gate && G.Rift.rift && !G.Rift.inArena) escalate(dt);
     if (gate || G.Rift.inArena || G.Rift.rift || beaten >= list().length || nextAt == null || t < nextAt) return;
     const entry = list()[beaten], sig = entry.signatures[0];
     const level = Math.round(G.Stats.levelForTime(t)) + G.Gyms.LEVEL_OFFSET;
-    gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, boost: entry.boost || null, dex: sig.dex, species: sig.species, level };
+    gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, boost: entry.boost || null, dex: sig.dex, species: sig.species, level, openedAt: t };
     if (!G.Rift.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
+    esc = null;   // fresh gate: grace first
   }
+
+  /** The escalation clock. After GRACE s open, start climbing the shared bump by 1 every ESC_STEP s. Uncapped. */
+  function escalate(dt) {
+    const since = now() - gate.openedAt;
+    if (since < GRACE) return;              // grace period: no penalty yet
+    if (!esc) { esc = { bump: 0, acc: 0 }; }
+    esc.acc += dt;
+    while (esc.acc >= ESC_STEP) {
+      esc.acc -= ESC_STEP;
+      esc.bump++;
+      // SIM/PRESENT DEBT (rework/gym-progression, 2026-10-22): these fire presentation (toast + sfx) straight from
+      // the sim clock. When refactor/sim-present lands, this should EMIT an 'esc-tick' event the presentation layer
+      // renders, not call Spawner/Audio inline. See docs/SIM-PRESENT-BOUNDARY.md offender list. Same for the
+      // 'world calms' toast in onReturn().
+      G.Spawner.say(gate.leader + ' gets stronger, and so does the world!', 3, true);
+      G.Audio.sfx('rift');
+    }
+  }
+
+  /** Shared escalation bump (integer levels). Read by the wild spawner (enemy.js) and the leader build (makeDef).
+   *  0 during grace or when no gate is open. This is the single source of truth for 'how much have you dawdled'. */
+  function escBump() { return esc ? esc.bump : 0; }
+  /** Seconds left in the grace period (0 once escalating), or null when no gate is open. For the gate gauge (hud.js). */
+  function graceLeft() { return gate ? Math.max(0, GRACE - (now() - gate.openedAt)) : null; }
 
   /** Readout for tuning: how long, how much of your HP it took, the lowest you got, and what it cast. */
   function trackFight(dt, pl, t) {
@@ -52,13 +85,18 @@ G.Gym = (() => {
   /** The leader's def: HP from the elite reference model with the gym's TTK target, at the gym level. */
   function makeDef(g) {
     const entry = list()[g.idx], sig = entry.signatures[0], mon = G.DEX_BY[sig.dex];
-    const tEq = Math.max(0, (g.level - 1) / 49 * 1800);
+    // Effective level = the locked base plus however far escalation has climbed by the moment you enter.
+    // Read once here (the leader is only instantiated at entry), so 'Brock got stronger while you waited' is baked in.
+    const bump = escBump();
+    const lvl = g.level + bump;
+    if (bump > 0) g.escBumpSeen = true;   // remembered on the gate so onReturn can play the 'world calms' line
+    const tEq = Math.max(0, (lvl - 1) / 49 * 1800);
     const base = { dex: sig.dex, baseHp: mon.stats ? mon.stats[0] : 50 };
     const hp = G.Elites.hpFor(base, tEq, G.Gyms.TTK).hp;
     return {
       dex: sig.dex, name: mon.name, hp, spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
       dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
-      gym: { level: g.level, leader: g.leader, badge: g.badge, species: sig.species, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1, moves: sig.moves.map(m => Object.assign({}, m, { inst: buildMove(m) })), engagedAt: null }
+      gym: { level: lvl, leader: g.leader, badge: g.badge, species: sig.species, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1, moves: sig.moves.map(m => Object.assign({}, m, { inst: buildMove(m) })), engagedAt: null }
     };
   }
 
@@ -93,15 +131,19 @@ G.Gym = (() => {
 
   /** Back on the map after the arena: schedule the next gate and the next elite. */
   function onReturn(g) {
-    beaten++; gate = null;
+    beaten++; gate = null; esc = null;     // snap-back: bump cleared, next wild spawns read 0 -> correct run-time level
     nextAt = beaten < list().length ? now() + GAP : null;
     G.Elites.afterGate(now());
+    if (g && g.escBumpSeen) G.Spawner.say('The world calms with ' + g.leader + ' defeated.', 3, true);
   }
 
   return {
     /** Dev: open the next gate on the next frame. */
     debugOpen() { nextAt = 0; },
-    FIRST_AT, GAP, reset, update, noteCast, report, makeDef, enrageMul, enrageIn, onWin, onReturn, now,
+    FIRST_AT, GAP, GRACE, ESC_STEP, reset, update, noteCast, report, makeDef, enrageMul, enrageIn, onWin, onReturn, now,
+    escBump, graceLeft,
+    /** Dev: force the gate past grace and set the bump directly. */
+    debugEsc(n) { if (gate) { gate.openedAt = now() - GRACE - 1; esc = { bump: n | 0, acc: 0 }; } },
     get gate() { return gate; }, get beaten() { return beaten; }, get badges() { return badges; }
   };
 })();

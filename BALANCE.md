@@ -217,3 +217,10 @@ feel with the interactive tuner over the real 966-species roster:
 
 - BADGE BOOST (2026-10-19): Boulder Badge +10% Atk for the whole team, same multiplier path as an Atk stat card (additive with cards). Leader XP is 0 (the free level replaces it).
 - GYM SPEED (2026-10-19): plain species speed only (Geodude 57 px/s); the old boss 1.1x chase and 0.55x circling no longer apply to gyms; Fury already off.
+
+## Gym gate escalation (rework/gym-progression, built 2026-10-22; all numbers TUNE by feel)
+- GRACE = 37 s (js/systems/gym.js): come-when-ready window after a gate opens, no penalty. Chosen to roughly match the current per-level wild timing (~37 s/level) so grace is about "one free level".
+- ESC_STEP = 10 s: after grace, both the wild spawn level and the gym leader's locked level climb by +1 every 10 s. UNCAPPED (Jess's call: the world should be able to end an ignored run).
+- Wild effect: +bump is added to the wild HP (enemyHp 3rd arg -> hpForLevel at level+bump) AND atkLvl (enemyAttackFactor), PLAIN wilds only (not boss/gym/elite). Frozen at spawn, so the ramp expresses over spawn turnover (seconds of lag near the enemy cap, by design).
+- Gym leader effect: effective level = locked base + escBump() at the moment of entry; flows through makeDef (HP via the elite reference model at the higher tEq, and every gymFactor move via gym.level). Read once (leader built at entry).
+- Levers if it feels wrong: GRACE (longer = more generous), ESC_STEP (smaller = faster spiral), or add a cap later if uncapped proves too punishing in real play. No playtest data yet.
