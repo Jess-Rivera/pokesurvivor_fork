@@ -100,9 +100,9 @@ G.Items = (() => {
     { id: 'pixieplate', tier: 'pokemon', name: 'Pixie Plate', icon: 'ps:plate.pixie', desc: '+20% Fairy-type move damage.',
       on: p => { p.typeBoost = 'fairy'; }, off: p => { if (p.typeBoost === 'fairy') p.typeBoost = null; } },
     // ---- run tier (whole team, whole run) ----
-    { id: 'amuletcoin', tier: 'run', name: 'Amulet Coin', desc: '+50% PokéCoins at the end of the run.',
+    { id: 'amuletcoin', tier: 'run', name: 'Amulet Coin', icon: 'ps:hold-item.amulet-coin', desc: '+50% PokéCoins at the end of the run.',
       on: p => { p.coinMul *= 1.5; }, off: p => { p.coinMul /= 1.5; } },
-    { id: 'luckyegg', tier: 'run', name: 'Lucky Egg', desc: '+30% experience.',
+    { id: 'luckyegg', tier: 'run', name: 'Lucky Egg', icon: 'ps:hold-item.lucky-egg', desc: '+30% experience.',
       on: p => { p.xpMul *= 1.3; }, off: p => { p.xpMul /= 1.3; } },
     // ---- F3c run items (2026-10-21): team-wide, whole-run. See docs/RUN-ITEM-THINK-DOC.md. ----
     { id: 'sharpscissors', tier: 'run', name: 'Sharp Scissors', icon: 'ps:hold-item.grip-claw', desc: 'The lower your team HP, the faster you move (up to 2x). Needs a team of 3+.',
@@ -163,6 +163,39 @@ G.Items = (() => {
     return Math.max(RUN_SLOTS_DEFAULT, Math.min(RUN_SLOTS_MAX, n || RUN_SLOTS_DEFAULT));
   }
 
+  // ---- F3d-2: unlocked team items + the pre-run loadout. save.teamItems { id: { at, from } } (absent in old saves, filled by db.js migrate),
+  // save.teamLoadout [id, ...] in slot order. "Team items" is the player-facing name for the run tier. ----
+  const STARTER_TEAM_ITEMS = ['luckyegg', 'amuletcoin'];
+  const isTeamItem = id => !!(BY[id] && BY[id].tier === 'run');
+  function unlocked(save, id) { return !!(save && save.teamItems && save.teamItems[id]); }
+  /** Permanently unlock a team item on `save`. True only the first time (so the caller can toast it). */
+  function unlock(save, id, from = 'found') {
+    if (!save || !isTeamItem(id)) return false;
+    const t = save.teamItems = save.teamItems || {};
+    if (t[id]) return false;
+    t[id] = { at: Date.now(), from };
+    return true;
+  }
+  function grantStarters(save) { for (const id of STARTER_TEAM_ITEMS) unlock(save, id, 'starter'); }
+  /**
+   * Clean save.teamLoadout IN PLACE and return it. Slots KEEP THEIR POSITION (an empty slot in the middle is null): only unlocked team
+   * items stay, no duplicates, at most one per group (one Power Stone), nothing past the unlocked run slots, trailing empties trimmed.
+   * Callers that equip it (run start) skip the nulls.
+   */
+  function cleanLoadout(save) {
+    const raw = Array.isArray(save.teamLoadout) ? save.teamLoadout : [];
+    const cap = runSlots(save), out = [], groups = {};
+    for (let k = 0; k < Math.min(raw.length, cap); k++) {
+      const id = raw[k];
+      let keep = isTeamItem(id) && unlocked(save, id) && !out.includes(id);
+      if (keep) { const g = BY[id].group; if (g) { if (groups[g]) keep = false; else groups[g] = true; } }
+      out.push(keep ? id : null);
+    }
+    while (out.length && out[out.length - 1] == null) out.pop();
+    save.teamLoadout = out;
+    return out;
+  }
+
   /** Placeholder chance that a drop source gives a RUN item instead of a Pokemon item (tune later). */
   const RUN_CHANCE = { gym: 0.10, boss: 0.05 };
 
@@ -193,9 +226,14 @@ G.Items = (() => {
   const FAINT_STEP = 1.1;             // Pikachu's Tear: x this per fainted teammate
   let snowballHp = 0;                 // total max HP of enemies killed this run (reset in resetRun)
 
+  /** The run roster. G.Game.roster is a GETTER that returns the array (game.js), not a function; tolerate both so a test stub can use either. */
+  function rosterOf() {
+    const r = G.Game && G.Game.roster;
+    return (typeof r === 'function' ? r() : r) || [];
+  }
   /** Team-HP-scaled multiplier 1.0 (full) -> 2.0 (<=10%), linear; OFF (1.0) unless the roster has HP_TEAM_MIN+ members. */
   function teamHpMul(pl) {
-    const roster = (G.Game && G.Game.roster && G.Game.roster()) || [];
+    const roster = rosterOf();
     if (roster.length < HP_TEAM_MIN) return 1;
     let hp = 0, max = 0;
     for (const f of roster) { hp += Math.max(0, f.hp); max += f.maxHp; }
@@ -207,7 +245,7 @@ G.Items = (() => {
   }
   /** Pikachu's Tear: FAINT_STEP ^ (number of fainted teammates). */
   function faintMul(pl) {
-    const roster = (G.Game && G.Game.roster && G.Game.roster()) || [];
+    const roster = rosterOf();
     let n = 0; for (const f of roster) if (f.dead) n++;
     return Math.pow(FAINT_STEP, n);
   }
@@ -217,6 +255,6 @@ G.Items = (() => {
   function snowballAdd(hp) { snowballHp += Math.max(0, hp || 0); }
   function resetRun() { snowballHp = 0; }
 
-  return { LIST, BY, roll, rollFor, runSlots, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
+  return { LIST, BY, roll, rollFor, runSlots, STARTER_TEAM_ITEMS, unlocked, unlock, grantStarters, cleanLoadout, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
            teamHpMul, faintMul, snowballMul, snowballAdd, resetRun };
 })();

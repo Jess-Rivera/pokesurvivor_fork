@@ -688,23 +688,32 @@ G.HUD = (() => {
       }
     }
 
-    // ---------- run items (team-wide, to the left of the held item); only filled slots are drawn ----------
-    if (pl.runItems && pl.runItems.length) {
-      pl.runItems.forEach((rid, k) => {
-        const rx = sx - S - 18 - (S + 8) * (k + 1), ry = sy, def = G.Items.BY[rid];
-        if (!def) return;
-        roundRect(ctx, rx, ry, S, S, 12);
-        ctx.fillStyle = 'rgba(30,14,44,.9)';
+    // ---------- run items (team-wide): a 1-wide column, bottom-right, mirroring the team column. ONLY unlocked slots are drawn
+    // (G.Items.runSlots: 1 by default, up to 4). Slot 1 sits at the bottom and each unlocked slot stacks above it. ----------
+    {
+      const nSlots = G.Items.runSlots(G.DB.save), GAPR = 10, list = pl.runItems || [];
+      let RS = 54;
+      while (RS > 30 && nSlots * RS + (nSlots - 1) * GAPR > h - 130) RS -= 2;      // shrink on short screens, like the team column
+      const rx = w - RS - 16, bottom = h - 16 - safeB;
+      for (let k = 0; k < nSlots; k++) {
+        const ry = bottom - (k + 1) * RS - k * GAPR, rid = list[k], def = rid && G.Items.BY[rid];
+        roundRect(ctx, rx, ry, RS, RS, 12);
+        if (!def) {                                   // empty unlocked slot: dim dashed box
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.fillStyle = 'rgba(10,16,28,.35)'; ctx.fill();
+          ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(140,170,210,.22)'; ctx.stroke();
+          ctx.restore();
+          continue;
+        }
+        ctx.fillStyle = 'rgba(20,30,50,.95)';           // same neutral dark blue as the team boxes
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#c47bff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(140,170,210,.4)';
         ctx.stroke();
-        G.Icons.draw(ctx, def.icon || rid, rx + (S - 36) / 2, ry + (S - 36) / 2, 36);
-        ctx.font = F(700, 9);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#d9a6ff';
-        ctx.fillText(def.name, rx + S / 2, ry - 6);
-      });
+        const IS = Math.round(RS * 0.67);
+        G.Icons.draw(ctx, def.icon || rid, rx + (RS - IS) / 2, ry + (RS - IS) / 2, IS);
+      }
     }
 
     // ---------- pause button (touch) ----------

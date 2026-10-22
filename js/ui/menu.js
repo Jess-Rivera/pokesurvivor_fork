@@ -55,14 +55,16 @@ G.MenuUI = (() => {
   };
 
   function init() {
-    const ICON = { play: 'ball', team: 'crown', dex: 'book', upgrades: 'up', gacha: 'ball4', goals: 'medal3', friends: 'friends', rank: 'trophy', settings: 'gear' };
+    // Menu icons: PokeSprite atlas names ('ps:<category>.<name>', js/data/pokesprite-index.js).
+    const ICON = { play: 'ps:ball.poke', team: 'ps:key-item.adventure-guide', inventory: 'ps:key-item.explorer-kit', upgrades: 'ps:valuable-item.pearl-string', gacha: 'ps:ball.master', goals: 'ps:key-item.point-card', friends: 'ps:key-item.vs-recorder', rank: 'ps:key-item.contest-pass', settings: 'ps:hm.normal', dex: 'book' };
     document.querySelectorAll('#scr-menu [data-go]').forEach(b => {
-      b.insertAdjacentHTML('afterbegin', `<span class="mi-ico">${G.Icons.html(ICON[b.dataset.go], 26)}</span>`);
+      b.insertAdjacentHTML('afterbegin', `<span class="mi-ico">${G.Icons.html(ICON[b.dataset.go], 32)}</span>`);
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
         const go = b.dataset.go;
         if (go === 'play') { if (G.Social.room) G.LobbyUI.open(); else openRegionPicker(); }
         else if (go === 'team') openRoster();
+        else if (go === 'inventory') openInventory();
         else if (go === 'dex') browseDex();
         else if (go === 'upgrades') openUpgrades();
         else if (go === 'gacha') G.GachaUI.open();
@@ -90,7 +92,7 @@ G.MenuUI = (() => {
 
     const owned = Object.keys(s.owned).filter(d => G.DEX_BY[d]).length;
     const shinies = Object.keys(s.shiny || {}).length;
-    $('menu-dex-count').textContent = `${owned} / ${G.DEX.length}` + (shinies ? ` · ${shinies} shiny` : '');
+    $('menu-dex-count').textContent = `${owned}/${G.DEX.length} - ${shinies} shiny`;      // under Team (the separate Pokémon menu entry is gone)
 
     const st = s.stats;
     $('menu-stats').innerHTML =
@@ -437,6 +439,104 @@ G.MenuUI = (() => {
     });
   }
 
+  // ---------------- inventory: the pre-run team item loadout (F3d-2) ----------------
+  // save.teamItems = unlocked ids, save.teamLoadout = equipped ids BY SLOT (null = empty; G.Items.cleanLoadout keeps it valid). Saves at once.
+  // Two INDEPENDENT highlights: inv.sel = the item shown in the detail column, inv.slot = the target slot. The button joins them.
+  const inv = { slot: 0, sel: null };
+  const invUnlocked = () => G.Items.LIST.filter(i => i.tier === 'run' && G.Items.unlocked(G.DB.save, i.id));
+
+  function openInventory() {
+    const s = G.DB.save;
+    G.Items.cleanLoadout(s);
+    inv.slot = 0;
+    inv.sel = s.teamLoadout.find(Boolean) || (invUnlocked()[0] || {}).id || null;
+    G.UI.show('scr-inventory', true);
+    renderInventory();
+  }
+
+  function invSave() { G.Items.cleanLoadout(G.DB.save); G.DB.commit(); renderInventory(); }
+
+  /** Put `id` in the highlighted slot (replacing what is there). It leaves any other slot it was in; a same-group item (a second Stone) is removed. */
+  function invEquip(id) {
+    const s = G.DB.save, load = s.teamLoadout, def = G.Items.BY[id], n = G.Items.runSlots(s);
+    if (!def || !G.Items.unlocked(s, id) || inv.slot >= n) return;
+    for (let k = 0; k < load.length; k++) {
+      const x = load[k];
+      if (x === id || (x && def.group && G.Items.BY[x] && G.Items.BY[x].group === def.group)) load[k] = null;
+    }
+    while (load.length < inv.slot) load.push(null);
+    load[inv.slot] = id;
+    inv.sel = id;
+    G.Audio.sfx('select');
+    invSave();
+  }
+
+  function invUnequip(id) {
+    const load = G.DB.save.teamLoadout, i = load.indexOf(id);
+    if (i < 0) return;
+    load[i] = null;
+    G.Audio.sfx('select');
+    invSave();
+  }
+
+  function renderInventory() {
+    const s = G.DB.save, load = s.teamLoadout, n = G.Items.runSlots(s);
+    inv.slot = Math.min(inv.slot, n - 1);
+    const total = G.Items.LIST.filter(i => i.tier === 'run').length, have = invUnlocked();
+    $('inv-count').textContent = `${have.length} of ${total} unlocked`;
+    const icon = (it, sz) => G.Icons.html(it.icon || it.id, sz);
+
+    // Left: the unlocked slots (only those), slot 1 on top. Clicking one only moves the target slot; the selected item does not change.
+    const slots = $('inv-slots');
+    slots.innerHTML = '';
+    for (let k = 0; k < n; k++) {
+      const it = G.Items.BY[load[k]];
+      const el = document.createElement('div');
+      el.className = 'inv-slot' + (it ? ' full' : '') + (k === inv.slot ? ' on' : '');
+      el.innerHTML = (it ? icon(it, 36) : '') + `<span class="inv-sn">Slot ${k + 1}</span>`;
+      el.title = it ? it.name : 'Empty slot';
+      el.onclick = () => { inv.slot = k; G.Audio.sfx('click'); renderInventory(); };
+      el.ondblclick = () => { if (it) { inv.sel = it.id; renderInventory(); } };      // double-click a filled slot to inspect its item
+      slots.appendChild(el);
+    }
+
+    // Middle: everything you have unlocked.
+    const grid = $('inv-grid');
+    grid.innerHTML = '';
+    if (!have.length) grid.innerHTML = '<div class="sub" style="grid-column:1/-1;padding:12px">Nothing unlocked yet. Gym leaders and bosses can drop team items.</div>';
+    for (const it of have) {
+      const k = load.indexOf(it.id);
+      const el = document.createElement('div');
+      el.className = 'cell inv-cell' + (inv.sel === it.id ? ' on' : '');
+      el.innerHTML = `<div class="inv-ico">${icon(it, 36)}</div><b>${it.name}</b>` + (k >= 0 ? `<span class="inv-eq">Slot ${k + 1}</span>` : '');
+      el.onclick = () => { inv.sel = it.id; G.Audio.sfx('click'); renderInventory(); };
+      el.ondblclick = () => { if (load.includes(it.id)) invUnequip(it.id); else invEquip(it.id); };
+      grid.appendChild(el);
+    }
+
+    // Right: the selected item. The button always names the HIGHLIGHTED slot.
+    const det = $('inv-detail');
+    const it = G.Items.BY[inv.sel];
+    if (!it || !G.Items.unlocked(s, it.id)) { det.innerHTML = '<div class="sub">Pick an item to see what it does.</div>'; return; }
+    const k = load.indexOf(it.id), T = inv.slot;
+    const here = G.Items.BY[load[T]];
+    const clashId = it.group ? load.find((x, i) => x && x !== it.id && i !== T && G.Items.BY[x] && G.Items.BY[x].group === it.group) : null;
+    let note = '';
+    if (k !== T && here) note = `Replaces ${here.name} in Slot ${T + 1}.`;
+    if (clashId) note += (note ? ' ' : '') + `Only one ${it.group === 'stone' ? 'Stone' : 'of this kind'} at a time: ${G.Items.BY[clashId].name} is removed.`;
+    det.innerHTML = `<div class="inv-dico">${icon(it, 56)}</div><h3 style="margin:6px 0 4px">${it.name}</h3>
+      <div class="ds">${it.desc}</div>
+      ${note ? `<div class="ds inv-note">${note}</div>` : ''}
+      <div class="inv-act"></div>`;
+    const act = det.querySelector('.inv-act');
+    const btn = (label, cls, fn, off) => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.textContent = label; b.disabled = !!off; b.onclick = fn; act.appendChild(b); };
+    if (k === T) btn(`Unequip from Slot ${T + 1}`, '', () => invUnequip(it.id));
+    else {
+      btn(k >= 0 ? `Move to Slot ${T + 1}` : `Equip to Slot ${T + 1}`, 'gold', () => invEquip(it.id));
+      if (k >= 0) btn('Unequip', '', () => invUnequip(it.id));
+    }
+  }
+
   // ---------------- team screen ----------------
   // A fullscreen editor for the 6 fixed team slots. It works on a COPY of the team (ros.team);
   // nothing is saved until Commit Team, and Back discards the edits.
@@ -484,6 +584,17 @@ G.MenuUI = (() => {
     const t = ros.team[slot];
     ros.dex = t ? t.dex : null;
     ros.shiny = !!(t && t.shiny && G.DB.ownsShiny(t.dex));
+    rosRenderAll();
+    markGrid(rosView);
+  }
+
+  /**
+   * Target a slot WITHOUT touching the preview: the Pokémon on the right stays, and its Put button re-labels for this slot.
+   * Only when nothing is previewed does a filled slot show its own Pokémon (so there is still something to look at).
+   */
+  function rosFocusSlot(slot) {
+    if (ros.dex == null) { rosSelectSlot(slot); return; }
+    ros.slot = slot;
     rosRenderAll();
     markGrid(rosView);
   }
@@ -566,7 +677,9 @@ G.MenuUI = (() => {
       } else {
         b.insertAdjacentHTML('beforeend', '<div class="rinfo"><b>Empty</b></div><span class="rplus">+</span>');
       }
-      b.onclick = () => { rosSelectSlot(slot); markGrid(rosView); };
+      // Click = target this slot (the previewed Pokémon stays, so the Put button can name it). Double-click = inspect the Pokémon in it.
+      b.onclick = () => { rosFocusSlot(slot); };
+      b.ondblclick = () => { rosSelectSlot(slot); markGrid(rosView); };
       // Drop a Pokémon from the list (or another slot) here.
       b.ondragover = e => { if (ros.drag != null) { e.preventDefault(); b.classList.add('drop'); } };
       b.ondragleave = () => b.classList.remove('drop');

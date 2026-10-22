@@ -220,25 +220,75 @@ G.RunUI = (() => {
     G.UI.show('scr-over');
   }
 
-  /** You found an item while the slot is full: which do you keep? `run` = a run-tier item (team-wide grid, not one Pokemon). */
-  function showItemChoice(cur, next, cb, run = false) {
+  /**
+   * You found an item and something is in the way: the NEW item is row 1, what you hold is row 2. Pick the one it replaces and Confirm, or Leave it.
+   * @param held  item ids that could be replaced (the Pokemon's item, or the filled run slots)
+   * @param cb    receives the id being replaced, or null for Leave it
+   * @param lock  run tier only: the one held id that MUST be the one replaced (same-group rule, e.g. a second Stone); the others are dimmed
+   */
+  function showItemChoice(next, held, cb, run = false, lock = null) {
     const box = $('item-cards');
     box.innerHTML = '';
     const scr = $('scr-item');
-    scr.querySelector('h2').textContent = run ? 'A run item!' : 'An item!';
-    scr.querySelector('.sub').innerHTML = (run ? 'Your run slots are full' : 'Only one per Pokemon') + ' · <kbd>1</kbd> <kbd>2</kbd>';
-    [[cur, 'Keep'], [next, 'Switch to']].forEach(([id, verb], i) => {
+    scr.querySelector('h2').textContent = run ? 'A team item!' : 'An item!';
+    scr.querySelector('.sub').textContent = lock && run ? 'Only one Stone at a time'
+      : run ? 'Your team item slots are full' : 'Only one per Pokemon';
+    const confirm = $('item-confirm'), leave = $('item-leave');
+    // SINGLE: one thing can be replaced (a lone held item, or a Stone lock). The held card starts highlighted (= keep it);
+    // click the new card to take it instead. MULTI: several run slots; click the slot to replace (nothing is highlighted at first).
+    const target = lock || (held.length === 1 ? held[0] : null);
+    const single = !!target;
+    const mk = (id, chip, k, extra = '') => {
       const it = G.Items.BY[id];
       const el = document.createElement('div');
-      el.className = 'card' + (i === 1 ? ' evo' : '');
-      el.innerHTML = `<div class="ico">${G.Icons.html(id, 36)}</div>
-        <div class="txt"><div class="nm">${verb} ${it.name}</div><div class="ds">${it.desc}</div></div>
-        <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
-      el.onclick = () => { G.UI.hide('scr-item'); cb(id); };
+      el.className = 'card' + extra;
+      el.dataset.id = id; el.dataset.k = k;
+      el.innerHTML = `<div class="ico">${G.Icons.html(it.icon || it.id, 36)}</div>
+        <div class="txt"><div class="nm">${it.name}</div><div class="ds">${it.desc}</div></div>
+        <span class="item-chip">${chip}</span>`;
       box.appendChild(el);
+      return el;
+    };
+    // Row 1: the incoming item.
+    const newEl = mk(next, 'New', single ? 2 : 0);
+    // Row 2: what you hold now (one wide card per item).
+    const lab = document.createElement('div');
+    lab.className = 'item-row-label';
+    lab.textContent = single ? 'You are holding' : 'Click the item to replace';
+    box.appendChild(lab);
+    const heldEls = held.map((id, i) => {
+      const chip = run ? 'Slot ' + (i + 1) : 'Held';
+      const el = mk(id, chip, single ? (id === target ? 1 : 0) : i + 1, lock && id !== lock ? ' dim' : '');
+      return el;
     });
+    let sel = null;                 // single: 'new' or the held id.  multi: the held id to replace.
+    const paint = () => {
+      newEl.classList.toggle('evo', single && sel === 'new');
+      heldEls.forEach(e => e.classList.toggle('evo', sel === e.dataset.id));
+      confirm.disabled = sel == null;
+    };
+    if (single) {
+      sel = target;
+      newEl.onclick = () => { sel = 'new'; paint(); };
+      heldEls.forEach(e => { if (e.dataset.id === target) e.onclick = () => { sel = target; paint(); }; });
+    } else {
+      newEl.style.cursor = 'default';
+      heldEls.forEach(e => { e.onclick = () => { sel = e.dataset.id; paint(); }; });
+    }
+    paint();
+    const done = replace => { G.UI.hide('scr-item'); cb(replace); };
+    // single + held highlighted = keep what you have (same as Leave it); single + new highlighted = swap; multi = replace the clicked slot.
+    confirm.onclick = () => { if (sel == null) return; done(single ? (sel === 'new' ? target : null) : sel); };
+    leave.onclick = () => done(null);
     G.UI.show('scr-item');
   }
+
+  /** Keyboard on the item chooser: 1 to 4 pick a card (single: 1 = held, 2 = new; multi: the slot number); Enter confirms. */
+  function itemKey(i) {
+    const el = document.querySelector('#item-cards .card[data-k="' + (i + 1) + '"]');
+    if (el && !el.classList.contains('dim')) el.click();
+  }
+  function itemConfirm() { const b = $('item-confirm'); if (b && !b.disabled) b.click(); }
 
   // ---------------- link: which moves fuse ----------------
 
@@ -322,5 +372,5 @@ G.RunUI = (() => {
     $('btn-quit').onclick = onQuit;
   }
 
-  return { showLevelUp, reroll, showItemChoice, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause, pauseKeys };
+  return { showLevelUp, reroll, showItemChoice, itemKey, itemConfirm, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause, pauseKeys };
 })();

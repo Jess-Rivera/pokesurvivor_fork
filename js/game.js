@@ -143,6 +143,8 @@ G.Game = (() => {
     activeIdx = 0;
     pl = roster[0];
     swapLock = 0;
+    // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
+    for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
     caught = [];
 
@@ -519,14 +521,14 @@ G.Game = (() => {
    * finishing. (Before, one closed the other, no one could finish choosing and the
    * game stayed stuck for everyone.)
    */
-  let openItem = null;           // { cur, next, take } unfinished item choice
+  let openItem = null;           // { held, next, take, run, lock } unfinished item choice
   const laterItems = [];         // objetos recogidos con las cartas de nivel abiertas
   function afterLevelUp() {
     if (state !== 'playing' && state !== 'held') return;
     if (openItem && !G.UI.isOpen('scr-item')) {
       const o = openItem;
       if (o.mine) { state = 'choice'; if (G.Coop.active) G.Coop.holdStart(); }
-      G.RunUI.showItemChoice(o.cur, o.next, o.take, o.run);
+      G.RunUI.showItemChoice(o.next, o.held, o.take, o.run, o.lock);
       return;
     }
     if (laterItems.length) offerItem(laterItems.shift());
@@ -557,33 +559,43 @@ G.Game = (() => {
 
   /**
    * You picked up an item. Pokemon tier: it goes to the ACTIVE Pokemon, and if that Pokemon already holds one you choose.
-   * Run tier: it takes a free run slot; with the grid full you choose against the last one added (the Inventory
-   * screen will replace this with a proper slot picker). Ground-tier items never come through here.
+   * Run tier: it takes a free run slot; with the grid full (or a same-group clash, e.g. a second Stone) the chooser asks which held item it replaces,
+   * or Leave it. Ground-tier items never come through here.
    */
   function offerItem(id) {
     const def = pl && G.Items.BY[id];
     if (!def) return;
     if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
     const run = def.tier === 'run';
+    // F3d-2: finding a team item unlocks it for good (pre-run loadout), even if you then choose Leave it.
+    if (run && G.Items.unlock(G.DB.save, id)) { G.DB.commit(); G.Spawner.say('Team item unlocked: ' + def.name, 3, true); }
     const owned = run ? pl.runItems : [pl.item];
     if (owned.includes(id)) { G.Spawner.say('You already hold ' + def.name, 2, true); return; }
-    // What the new item would replace: nothing (free slot), or the item currently in the way.
-    const full = run ? pl.runItems.length >= G.Items.runSlots(G.DB.save) : !!pl.item;
-    const cur = !full ? null : run ? pl.runItems[pl.runItems.length - 1] : pl.item;
+    // What the new item could replace. Run tier: nothing while a slot is free, except a same-group item (a second Stone),
+    // which can ONLY replace the one already held (lock). Pokemon tier: the Pokemon's current item.
+    let held, lock = null;
+    if (run) {
+      const clash = def.group ? pl.runItems.find(r => G.Items.BY[r] && G.Items.BY[r].group === def.group) : null;
+      const full = pl.runItems.length >= G.Items.runSlots(G.DB.save);
+      if (clash) { held = pl.runItems.slice(); lock = clash; }
+      else if (full) held = pl.runItems.slice();
+      else held = [];
+    } else held = pl.item ? [pl.item] : [];
     let mine = false;            // this choice is the one that stopped the game
-    const take = got => {
+    // replace: the id being swapped out (null = Leave it). With a free slot it is undefined and the item is simply taken.
+    const take = replace => {
       openItem = null;
-      if (got !== cur) {
-        if (run) equipRun(got, cur); else pl.equip(got);
-        G.Spawner.say(run ? 'Picked up ' + G.Items.BY[got].name + '!' : pl.mon.name + ' got ' + G.Items.BY[got].name + '!', 2.6, true);
-        G.Progress.event('item', { id: got });
+      if (replace !== null) {
+        if (run) equipRun(id, replace); else pl.equip(id);
+        G.Spawner.say(run ? 'Picked up ' + def.name + '!' : pl.mon.name + ' got ' + def.name + '!', 2.6, true);
+        G.Progress.event('item', { id });
       }
       if (!mine) { afterLevelUp(); return; }
       if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
       if (G.Coop.active) G.Coop.holdEnd();
       afterLevelUp();
     };
-    if (!cur) { take(id); return; }
+    if (!held.length) { take(undefined); return; }
     // The game stops while you choose; in a group, for everyone (as with the
     // fusions). Before, in a group it continued and you got hit while choosing.
     if (state === 'playing' || state === 'held') {
@@ -591,8 +603,8 @@ G.Game = (() => {
       state = 'choice';
       if (G.Coop.active) G.Coop.holdStart();
     }
-    openItem = { cur, next: id, take, run, get mine() { return mine; } };
-    G.RunUI.showItemChoice(cur, id, take, run);
+    openItem = { held, next: id, take, run, lock, get mine() { return mine; } };
+    G.RunUI.showItemChoice(id, held, take, run, lock);
   }
 
   /** @param who  who picked it up (in co-op it can be a teammate) */
@@ -678,14 +690,13 @@ G.Game = (() => {
       return;
     }
     if (G.UI.isOpen('scr-item')) {
-      for (let i = 0; i < 2; i++) {
-        if (G.Input.action('attack_' + (i + 1))) document.querySelectorAll('#item-cards .card')[i].click();
-      }
+      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) G.RunUI.itemKey(i);
+      if (G.Input.tap('enter')) G.RunUI.itemConfirm();
       return;
     }
     if (state === 'ui') {
       // Esc on a menu subscreen returns to the menu.
-      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
+      if (G.Input.tap('escape') && !G.UI.isOpen('scr-profile') && ['scr-dex', 'scr-inventory', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen)
           && document.getElementById('pull-fx').classList.contains('hidden')) G.MenuUI.open();
       return;
     }
@@ -1075,6 +1086,8 @@ G.Game = (() => {
     get roster() { return roster; },
     /** Equip a run-tier item on the whole team (debug / future inventory). Honors the group-exclusion rule. */
     equipRun(id, replace) { equipRun(id, replace); },
+    /** Give an item through the real pickup path (free slot = equipped, otherwise the chooser). Used by G.Debug.item / runitem. */
+    offerItem(id) { offerItem(id); },
     get activeIndex() { return activeIdx; },
     get swapCooldown() { return swapLock; },
     get swapMax() { return SWAP_LOCK; },

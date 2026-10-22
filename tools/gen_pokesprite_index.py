@@ -4,7 +4,7 @@ Usage (repo root): python tools/gen_pokesprite_index.py
 """
 import re, json, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CATS = {'ball', 'berry', 'battle-item', 'medicine', 'hold-item', 'evo-item', 'gem', 'plate'}
+CATS = {'ball', 'berry', 'battle-item', 'medicine', 'hold-item', 'evo-item', 'gem', 'plate', 'key-item', 'valuable-item', 'hm'}   # key-item / valuable-item / hm added for the main menu icons
 rx = re.compile(r'^\.pokesprite\.([a-z0-9-]+)\.([a-z0-9-]+) \{ background-position: -(\d+)px -(\d+)px \}')
 out = {}
 for line in open(os.path.join(ROOT, 'assets/items/pokesprite-inventory.css'), encoding='utf-8'):

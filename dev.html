@@ -174,8 +174,8 @@
     <div class="box">
       <div class="menu-list">
         <button class="menu-item play" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
-        <button class="menu-item" data-go="team">Team<small>Choose your party of 6</small></button>
-        <button class="menu-item" data-go="dex">Pokémon<small id="menu-dex-count">Tu colección</small></button>
+        <button class="menu-item" data-go="team">Team<small id="menu-dex-count"></small></button>
+        <button class="menu-item" data-go="inventory">Inventory<small>Team items for your run</small></button>
         <button class="menu-item" data-go="upgrades">Mejoras<small>Haz más fuerte cada run</small></button>
         <button class="menu-item" data-go="gacha">Gacha<small>9 regiones · Pokémon y shinies</small></button>
         <button class="menu-item" data-go="goals">Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small></button>
@@ -463,6 +463,19 @@
   </div>
 </section>
 
+<!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
+<section id="scr-inventory" class="scr dim hidden">
+  <div class="box inv">
+    <div class="row between"><h2>Inventory <span id="inv-count" class="sub" style="font-size:15px"></span></h2><button class="btn small ghost" id="inv-back" data-back>Back</button></div>
+    <p class="sub" style="margin:2px 0 10px">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
+    <div class="inv-main">
+      <aside class="inv-slots" id="inv-slots"></aside>
+      <div class="grid inv-grid" id="inv-grid"></div>
+      <aside class="panel inv-detail" id="inv-detail"></aside>
+    </div>
+  </div>
+</section>
+
 <!-- ====== Team (fullscreen team editor, opened from the main menu) ====== -->
 <section id="scr-roster" class="scr hidden">
   <div class="ros">
@@ -490,7 +503,7 @@
       <aside class="ros-detail" id="ros-detail"></aside>
     </div>
     <div class="ros-bar">
-      <span class="ros-tip">Click a Pokémon to preview it. Put it in the highlighted slot with the button, a double-click, or by dragging it onto a slot.</span>
+      <span class="ros-tip">Click a Pokémon to preview it and a slot to target it. Put it in the highlighted slot with the button, a double-click, or by dragging it onto a slot. Double-click a slot to inspect its Pokémon.</span>
       <button class="btn" id="ros-back" data-back>Back</button>
       <button class="btn gold" id="ros-commit" data-sfx="confirm" disabled>Commit Team</button>
     </div>
@@ -582,6 +595,10 @@
     <h2>An item!</h2>
     <p class="sub">Only one per Pokemon · <kbd>1</kbd> <kbd>2</kbd></p>
     <div id="item-cards" class="cards"></div>
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="item-confirm" class="btn gold" disabled>Confirm</button>
+      <button id="item-leave" class="btn">Leave it</button>
+    </div>
   </div>
 </section>
 

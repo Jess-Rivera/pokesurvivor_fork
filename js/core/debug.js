@@ -8,8 +8,11 @@
  *                      current save (local or guest).
  *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
  *   G.Debug.ground(id) drop a ground item above you, outside pickup range but on screen (no id: logs every id; ids in data/ground-items.js, e.g. 'x-attack', 'sitrus', 'occa', 'pinap')
- *   G.Debug.item(id)   equip a Pokemon-tier held item on the active Pokemon (no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
- *   G.Debug.runitem(id) equip a run-tier item on the whole team (no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
+ *   G.Debug.item(id[, force])   give a Pokemon-tier held item through the real pickup path, chooser included (force=true equips directly; no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
+ *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
+ *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
+ *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
+ *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
@@ -126,29 +129,68 @@ G.Debug = (() => {
     return true;
   }
 
-  /** Equip Pokemon-tier item `id` on the active Pokemon (via Player.equip). With no id, logs and returns the pokemon-tier ids. ?dev only. */
-  function item(id) {
+  /** Give Pokemon-tier item `id` to the active Pokemon through the REAL pickup path (chooser if it already holds one); force=true equips directly. With no id, logs and returns the pokemon-tier ids. ?dev only. */
+  function item(id, force) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const ids = G.Items.LIST.filter(i => i.tier === 'pokemon').map(i => i.id);
     if (!id) { console.log('[Debug] pokemon item ids: ' + ids.join(', ')); return ids; }
     if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'pokemon') { console.warn('[Debug] unknown pokemon-tier item ' + id); return false; }
     const pl = G.Game && G.Game.player;
     if (!pl) return false;
-    pl.equip(id);
+    if (force) pl.equip(id);                       // bypass: no chooser
+    else { G.Game.offerItem(id); return true; }         // the real pickup path (chooser when the Pokemon already holds one)
     if (G.Spawner && G.Spawner.say) G.Spawner.say(pl.mon.name + ' got ' + G.Items.BY[id].name + '!', 2.2, true);
     return true;
   }
 
-  /** Equip run-tier item `id` on the whole team (via G.Game.equipRun). With no id, logs and returns the run-tier ids. ?dev only. */
-  function runitem(id) {
+  /** Run-tier item `id` through the REAL pickup path (G.Game.offerItem): free slot = equipped, full grid or Stone clash = the chooser. Pass force=true to equip on the team directly (ignores slot limits, no chooser). With no id, logs and returns the run-tier ids. ?dev only. */
+  function runitem(id, force) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const ids = G.Items.LIST.filter(i => i.tier === 'run').map(i => i.id);
     if (!id) { console.log('[Debug] run item ids: ' + ids.join(', ')); return ids; }
     if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'run') { console.warn('[Debug] unknown run-tier item ' + id); return false; }
     if (!(G.Game && G.Game.equipRun)) return false;
+    if (!force) { G.Game.offerItem(id); return true; }
     G.Game.equipRun(id);
     if (G.Spawner && G.Spawner.say) G.Spawner.say('Picked up ' + G.Items.BY[id].name + '!', 2.2, true);
     return true;
+  }
+
+  /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
+  function runslots(n) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const s = G.DB && G.DB.save;
+    if (!s) { console.warn('[Debug] no save loaded.'); return false; }
+    if (n == null) { const cur = G.Items.runSlots(s); console.log('[Debug] run slots: ' + cur); return cur; }
+    s.runSlots = Math.max(G.Items.RUN_SLOTS_DEFAULT, Math.min(G.Items.RUN_SLOTS_MAX, Math.floor(+n) || 1));
+    G.DB.commit();
+    console.log('[Debug] run slots set to ' + s.runSlots);
+    return s.runSlots;
+  }
+
+  /** Unlock a team item (or 'all') on this save for the pre-run loadout. ?dev only. */
+  function unlockitem(id) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const ids = G.Items.LIST.filter(i => i.tier === 'run').map(i => i.id), s = G.DB.save;
+    if (!id) { console.log('[Debug] team item ids: ' + ids.join(', ')); return ids; }
+    const list = id === 'all' ? ids : [id];
+    let n = 0;
+    for (const x of list) {
+      if (!G.Items.BY[x] || G.Items.BY[x].tier !== 'run') { console.warn('[Debug] unknown team item ' + x); continue; }
+      if (G.Items.unlock(s, x, 'debug')) n++;
+    }
+    G.DB.commit();
+    console.log('[Debug] unlocked ' + n + ' new team item(s); total ' + Object.keys(s.teamItems).length);
+    return n;
+  }
+
+  /** Set the pre-run loadout directly. ?dev only. */
+  function loadout(...ids) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
+    const s = G.DB.save;
+    if (ids.length) { s.teamLoadout = ids; G.Items.cleanLoadout(s); G.DB.commit(); }
+    console.log('[Debug] loadout: ' + (s.teamLoadout.join(', ') || '(empty)') + '  (slots: ' + G.Items.runSlots(s) + ')');
+    return s.teamLoadout.slice();
   }
 
   function give(id) {
@@ -318,5 +360,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
 })();

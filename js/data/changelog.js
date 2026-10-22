@@ -6,6 +6,17 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-21', title: ['Inventory and a simpler menu', 'Inventory and a simpler menu'], new: [
+    ['New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.',
+     'New Inventory screen on the main menu: pick the team items you start every run with (you begin with Lucky Egg and Amulet Coin). Find more by picking up team items dropped by gym leaders and bosses: each one you pick up is unlocked for good.'],
+  ], chg: [
+    ['The separate Pokémon entry is gone from the main menu (the Team screen already has the full Pokédex). Under Team you now see how many Pokémon you own and how many are shiny.',
+     'The separate Pokémon entry is gone from the main menu (the Team screen already has the full Pokédex). Under Team you now see how many Pokémon you own and how many are shiny.'],
+  ] },
+  { d: '2026-10-21', title: ['Team item slots and chooser', 'Team item slots and chooser'], chg: [
+    ['Team items now live in a column in the bottom-right corner (only the slots you have unlocked show). When your slots are full, or you find a second Stone, a new chooser shows the NEW item on top and your held items below: click the one to replace and press Confirm, or Leave it. The held-item chooser for Pokemon uses the same layout.',
+     'Team items now live in a column in the bottom-right corner (only the slots you have unlocked show). When your slots are full, or you find a second Stone, a new chooser shows the NEW item on top and your held items below: click the one to replace and press Confirm, or Leave it. The held-item chooser for Pokemon uses the same layout.'],
+  ] },
   { d: '2026-10-21', title: ['Type-boosting held items', 'Type-boosting held items'], new: [
     ['A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).',
      'A held item for every type that gives +20% damage to that type: Silk Scarf (Normal), Charcoal (Fire), Mystic Water (Water), Magnet (Electric), Miracle Seed (Grass), Never-Melt Ice (Ice), Black Belt (Fighting), Poison Barb (Poison), Soft Sand (Ground), Sharp Beak (Flying), Twisted Spoon (Psychic), Silver Powder (Bug), Hard Stone (Rock), Spell Tag (Ghost), Dragon Fang (Dragon), Black Glasses (Dark), Metal Coat (Steel) and Pixie Plate (Fairy).'],
@@ -45,8 +56,8 @@ G.CHANGELOG = [
      'You can now move a held item to another Pokémon: open the pause menu, pick the Pokémon, press Move item and click a teammate (they swap if it holds one). The Focus Sash cooldown moves with the item.'],
     ['Items now have three tiers. Pokémon items (Leftovers, Choice Band, Quick Claw, Focus Sash, Shell Bell, Life Orb, Choice Scarf, Rocky Helmet, Assault Vest) are held one per Pokémon and only work while that Pokémon is on the field. A new item goes to the Pokémon on the field, and you choose if it already holds one.',
      'Items now have three tiers. Pokémon items (Leftovers, Choice Band, Quick Claw, Focus Sash, Shell Bell, Life Orb, Choice Scarf, Rocky Helmet, Assault Vest) are held one per Pokémon and only work while that Pokémon is on the field. A new item goes to the Pokémon on the field, and you choose if it already holds one.'],
-    ['Run items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now run items (they no longer drop from chests). You start with one run slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a run item instead (placeholder rate). Item names and messages are now in English.',
-     'Run items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now run items (they no longer drop from chests). You start with one run slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a run item instead (placeholder rate). Item names and messages are now in English.'],
+    ['Team items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now team items (they no longer drop from chests). You start with one team item slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a team item instead (placeholder rate). Item names and messages are now in English.',
+     'Team items are very rare and help the whole team for the whole run. Lucky Egg and Amulet Coin are now team items (they no longer drop from chests). You start with one team item slot. Gym leaders now always drop an item, and bosses and gym leaders have a small chance to drop a team item instead (placeholder rate). Item names and messages are now in English.'],
     ['Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.',
      'Leaf Storm now lowers its user\'s Sp. Atk by 2 stages while it keeps hitting (only that Pokémon). Metal Claw and Meteor Mash can raise the whole team\'s Attack by 1 stage.'],
     ['Frozen or asleep, your orbiting attacks drop and your trail patches stop pulsing until you recover.',

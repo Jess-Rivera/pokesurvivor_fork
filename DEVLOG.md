@@ -257,3 +257,20 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - Design docs added (docs/): RUN-ITEM-THINK-DOC.md (all run items incl. the 2 held + brainstorm), BULLET-TIME-DESIGN.md (speed-reactive world dilation, solo-only, prototype ready, NOT built), SPEED-IVEV-SLICE.md (IV/EV Speed investment, blocked on IV/EV storage), PERF-HOTPATH-NOTES.md (FG1-FG4).
 - Verified: node tools/check.js 16/16 after each slice (two syntax slips caught by check.js mid-session: an orphaned queryCircle header, and two harness-stub gaps for queryCircleEach / G.Game.player shape, all fixed). STATE.md rewritten.
 - Where we stopped: F3b + damage refactor + perf FG1/FG2 + F3c (6 items) + hover fix all on feature/items, check.js green. NOT yet feel-tested by Jess. Next: F3d Inventory + gacha (gacha-ui.js exists but pulls Pokemon; run-item ownership/loadout is net-new, ~2-3 slices; the quick half is the in-run 2x2 full-grid chooser). Then the 2 held items, Kanto roster, boss damage slice, tileset. REMINDER: commit and push.
+
+## 2026-10-21 (Claude Desktop, home), F3d-1: run-item column + item chooser
+- Built: bottom-right 1x4 run-item column (hud.js, unlocked slots only), new chooser for both item tiers (run-ui.js showItemChoice, dev.html, style.css), Stone same-group lock in offerItem, G.Debug.runslots(n), changelog entry.
+- Decided: see DECISIONS 2026-10-21. F3d-2 (unlock save field, loadout, Inventory window) and F3d-3 (Shop tab, slot upgrades) planned, not built.
+- Check: node tools/check.js 16/16. NOT browser-tested (harnesses do not cover HUD or the chooser).
+- Open: Stone rule wording (Jess's message was cut off), slot-upgrade source.
+- Where we stopped: F3d-1 done, needs Jess's feel-test on dev.html?dev (G.Debug.runslots(4), G.Debug.runitem(...)). REMINDER: commit and push.
+- Fix (same day): Sharp Scissors crashed the game. items.js teamHpMul and faintMul called G.Game.roster() but roster is a getter returning the array (TypeError every move update). Added rosterOf() that accepts a getter or a function. Also fixes Brass Knuckles and Pikachu's Tear. Chooser/HUD polish rounds with Jess also done (wide cards, centered 620px box, no slot labels, neutral blue boxes). G.Debug.item / runitem now use G.Game.offerItem (real pickup path); pass true as 2nd arg to force-equip.
+- Later same day: team sheet item area now mini tabs (Berry | Held Item | Team Items), .sh-cols base 560px, hex 240px; run items renamed TEAM ITEMS in player-facing text. F3d-1 approved by Jess (Stone lock accepted by use). Not checked: touch layout of the bottom-right column. Where we stopped: F3d-1 closed. Next F3d-2. REMINDER: commit and push.
+
+## 2026-10-21 (Claude Desktop, home), F3d-2: team item unlocks, loadout, Inventory window; menu cleanup
+- Built: save.teamItems / teamLoadout (db.js newSave + sanitize, items.js unlock / grantStarters / cleanLoadout), unlock on pickup (game.js offerItem), loadout equipped in startRun, Inventory window (dev.html scr-inventory, menu.js, style.css), G.Debug.unlockitem / loadout. Pokemon menu entry removed, Team subtext = N/X - Y shiny.
+- Decided: see DECISIONS 2026-10-21 (F3d-2). Starters = both Lucky Egg and Amulet Coin. Inventory saves immediately.
+- Check: node tools/check.js 17/17 (new docs/proposals/items-f3d2-harness.js covers migration, unlock, cleanLoadout, sanitize). NOT browser-tested: Inventory window, loadout at run start, menu change.
+- Where we stopped: F3d-2 built, needs Jess's browser test. Next F3d-3 (Shop tab, slot upgrades). REMINDER: commit and push.
+- UX fix: Inventory and Team screens decoupled slot focus from the selected item/Pokemon (button joins them); loadout is now by slot with null holes. Harness updated for holes. check.js 17/17, NOT browser-tested.
+- Menu icons: switched to PokeSprite atlas icons (see DECISIONS). Added key-item / valuable-item / hm to tools/gen_pokesprite_index.py CATS and regenerated js/data/pokesprite-index.js (602 sprites). A first attempt with loose PNGs in assets/items/extra was dropped (the atlas already had them) and deleted. NOT browser-tested.
