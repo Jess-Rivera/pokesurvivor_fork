@@ -291,3 +291,11 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - F3d-1/2/3 and the confirm() conversion tested good by Jess in the browser. Amnesia Type and Paper Skin + Glass Bones deferred.
 - Jess's log a1189320 shows the final faint at 47.7s with no revive: Re-Do either was not equipped or did not fire. Unresolved, first item for next session (STATE Next 1).
 - REMINDER: commit and push.
+
+## 2026-10-22 (Amazon Quick, work machine) Re-Do fixed, run-item HUD readouts, sim/present direction logged
+- Re-Do: diagnosed with new diagnostic log kinds (ITEM + REDO in log.js; equip + final-faint-decision lines in game.js, KEPT IN, dev-only). It fires; the earlier no-revive was most likely it not being equipped. Then fixed the UX so Re-Do resumes on the Pokemon that just fainted (capture activeIdx before the team revive in game.js), not slot 1. changelog.js fix line.
+- Run-item HUD: slots widened to 3x on desktop (icon | separator | name + live readout), collapse to icon-only on touch or width < 720. New G.Items.runHud(id, pl) returns {name, desc, live}; Snowball/Brass Knuckles/Sharp Scissors/Pikachu's Tear show live counter->bonus, static items show name + wrapped desc. Exposed G.Items.snowballTotal. changelog.js chg line.
+- Decided (DECISIONS 2026-10-22): client stays JS forever, server language (Node vs Go) deferred to the MP phase; standing SP discipline = converge toward a sim/present-EVENT boundary. Wrote docs/SIM-PRESENT-BOUNDARY.md (hurt() is the worked example; offenders: hurt/showHurt/die, collision-radius-from-sprite, the rAF clock). This is direction, not a slice.
+- Split the 2 type-chart items (Amnesia Type; Paper Skin + Glass Bones) out of feature/items to their own TODO entry so the branch can merge.
+- Files touched: js/game.js, js/systems/log.js, js/data/items.js, js/ui/hud.js, js/data/changelog.js, + docs (STATE, DECISIONS, TODO, DEVLOG, docs/SIM-PRESENT-BOUNDARY.md). Assistant cannot run node; all five JS files verified to parse. NOT re-run through check.js or browser this session beyond Jess's feel-tests. Next: commit + merge feature/items, then cut refactor/sim-present.
+- REMINDER: commit and push.

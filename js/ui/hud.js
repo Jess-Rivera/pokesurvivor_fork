@@ -694,10 +694,14 @@ G.HUD = (() => {
       const nSlots = G.Items.runSlots(G.DB.save), GAPR = 10, list = pl.runItems || [];
       let RS = 54;
       while (RS > 30 && nSlots * RS + (nSlots - 1) * GAPR > h - 130) RS -= 2;      // shrink on short screens, like the team column
-      const rx = w - RS - 16, bottom = h - 16 - safeB;
+      // Wide slots on desktop: icon (left RS square) | separator | name + live/description (right 2*RS).
+      // On touch or a narrow window, collapse back to the icon-only square column so phones stay compact.
+      const wide = !touch && w >= 720;
+      const RW = wide ? RS * 3 : RS;
+      const rx = w - RW - 16, bottom = h - 16 - safeB;
       for (let k = 0; k < nSlots; k++) {
         const ry = bottom - (k + 1) * RS - k * GAPR, rid = list[k], def = rid && G.Items.BY[rid];
-        roundRect(ctx, rx, ry, RS, RS, 12);
+        roundRect(ctx, rx, ry, RW, RS, 12);
         if (!def) {                                   // empty unlocked slot: dim dashed box
           ctx.save();
           ctx.setLineDash([4, 4]);
@@ -713,6 +717,33 @@ G.HUD = (() => {
         ctx.stroke();
         const IS = Math.round(RS * 0.67);
         G.Icons.draw(ctx, def.icon || rid, rx + (RS - IS) / 2, ry + (RS - IS) / 2, IS);
+        if (!wide) continue;                            // collapsed: icon only
+        // separator between icon and text
+        ctx.save();
+        ctx.strokeStyle = 'rgba(140,170,210,.25)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(rx + RS, ry + 6); ctx.lineTo(rx + RS, ry + RS - 6); ctx.stroke();
+        ctx.restore();
+        // right panel: clipped so long text can't bleed into the play area
+        const tx = rx + RS + 8, tw = RW - RS - 14;
+        const hud = G.Items.runHud ? G.Items.runHud(rid, pl) : { name: def.name, desc: def.desc, live: null };
+        ctx.save();
+        ctx.beginPath(); ctx.rect(rx + RS, ry, RW - RS, RS); ctx.clip();
+        ctx.textAlign = 'left';
+        ctx.font = F(800, 11); ctx.fillStyle = '#ffd23f';
+        ctx.fillText(hud.name, tx, ry + 16);
+        if (hud.live) {                                 // live tracker (counter -> bonus), or the inactive reason
+          ctx.font = F(700, 11); ctx.fillStyle = '#9fe8ff';
+          ctx.fillText(hud.live, tx, ry + 34);
+        } else if (hud.desc) {                          // static: wrap the description to two short lines
+          ctx.font = F(600, 9); ctx.fillStyle = 'rgba(200,214,235,.75)';
+          const words = hud.desc.split(' '); let line = '', ly = ry + 32;
+          for (const word of words) {
+            if (ctx.measureText(line + word + ' ').width > tw && line) { ctx.fillText(line.trim(), tx, ly); line = ''; ly += 11; if (ly > ry + RS - 3) break; }
+            line += word + ' ';
+          }
+          if (line.trim() && ly <= ry + RS - 3) ctx.fillText(line.trim(), tx, ly);
+        }
+        ctx.restore();
       }
     }
 

@@ -280,6 +280,31 @@ G.Items = (() => {
   function snowballAdd(hp) { snowballHp += Math.max(0, hp || 0); }
   function resetRun() { snowballHp = 0; }
 
+  /**
+   * HUD readout for a run item slot. Returns { name, desc, live } where `live` is a short
+   * live-tracking string for the stateful items (counter -> bonus), or null for static items
+   * (the HUD then shows name + desc). Kept here so the shared math (teamHpMul, snowballHp,
+   * faintMul) is in scope; the HUD only renders what this returns (sim/present boundary).
+   */
+  function runHud(id, pl) {
+    const def = BY[id];
+    if (!def) return null;
+    const out = { name: def.name, desc: def.desc, live: null };
+    const roster = rosterOf();
+    const pct = m => Math.round((m - 1) * 100);
+    if (id === 'snowballbadge') {
+      out.live = Math.round(snowballHp).toLocaleString() + ' HP \u2192 +' + pct(snowballMul()) + '% dmg';
+    } else if (id === 'brassknuckles' || id === 'sharpscissors') {
+      const what = id === 'brassknuckles' ? 'dmg' : 'spd';
+      out.live = roster.length < HP_TEAM_MIN ? 'inactive \u2014 needs ' + HP_TEAM_MIN + '+ team'
+               : '+' + pct(teamHpMul(pl)) + '% ' + what;
+    } else if (id === 'pikachustear') {
+      let n = 0; for (const f of roster) if (f.dead) n++;
+      out.live = n + ' fainted \u2192 +' + pct(faintMul(pl)) + '% dmg/spd';
+    }
+    return out;
+  }
+
   return { LIST, BY, roll, rollFor, runSlots, STARTER_TEAM_ITEMS, unlocked, unlock, grantStarters, cleanLoadout, TEAM_ITEM_PRICE, SLOT_PRICES, slotPrice, buyTeamItem, buySlot, RUN_CHANCE, RUN_SLOTS_DEFAULT, RUN_SLOTS_MAX,
-           teamHpMul, faintMul, snowballMul, snowballAdd, resetRun };
+           teamHpMul, faintMul, snowballMul, snowballAdd, snowballTotal: () => snowballHp, runHud, resetRun };
 })();

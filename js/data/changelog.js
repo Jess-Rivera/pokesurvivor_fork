@@ -9,6 +9,9 @@ G.CHANGELOG = [
   { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], fix: [
     ['Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.',
      'Re-Do now brings you back as the Pokemon that just fainted, instead of always switching you to the first team slot.'],
+  ], chg: [
+    ['Team item slots are now wider and show what each item is doing: the icon on the left, then the name and a live readout (for example Snowball Badge shows the HP collected and the damage bonus so far). On phones the slots stay as compact icons.',
+     'Team item slots are now wider and show what each item is doing: the icon on the left, then the name and a live readout (for example Snowball Badge shows the HP collected and the damage bonus so far). On phones the slots stay as compact icons.'],
   ] },
   { d: '2026-10-21', title: ['The Shop', 'The Shop'], new: [
     ['The Gacha is now the Shop, with three tabs: Pokemon (the gacha, regions now down the left side), Team Items (buy any team item you have not found for 100,000 PokéCoins) and Team Upgrades (buy team item slots 2, 3 and 4 for 9,000, 23,000 and 60,000 PokéCoins, in order).',
