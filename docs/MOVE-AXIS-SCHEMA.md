@@ -1,222 +1,236 @@
+# Move Axis Schema (from-scratch design)
 
-## Kinds are presets, not types (Jess, review 2026-10-23)
+Oct 23, 2026. The move representation for feature/all-moves-import, derived from two facts: the source is PokeAPI, the target is a survivor-like. Design proposal, nothing built in js/ yet. Supersedes the eleven-flat-attribute sketch in MOVES-REFACTOR-PLAN.md.
 
-A "kind" (beam, nova, melee, the 19 names) is NOT a runtime type the engine switches on. It is a PRESET: a named bundle of default attribute values, pure authoring shorthand. This is the core of the refactor.
+This is the field-renamed, collapsed revision from the 2026-10-23 review pass. Naming and structure are settled with Jess; the Optimization log at the end records each collapse with its disproof so they are not re-litigated.
 
-- TODAY: `kind` is a discriminator. combat.js branches on it (`if kind==='beam' ... else if kind==='nova'`) and each branch is a hand-written function. The kind IS the behavior.
-- NEW: the engine never sees "beam". It sees `shape:line, motion:static, pierce:N` and runs the line primitive. "beam" has no runtime meaning. It exists only so you (and the classifier) can write `preset: beam` and have it expand to the eleven attributes, then override just what differs (Ice Beam = the beam preset + a freeze ailment payload). That is the move-classification.js layer: "kind preset plus only the attributes that differ".
+## The one framing decision
 
-Two definition files, different jobs (do not conflate):
-- move-attributes.js = the GRAMMAR: every legal value of every axis, its engine-primitive id, defaults, and legal co-values (needs/allow/reject, the validator-as-data). Describes what an attribute CAN be. The engine and check.js read this.
-- move-classification.js = the PRESETS: "beam = {these attribute values}", a dictionary of named starting points. Pure sugar; the resolver expands it into attributes at load, then applies per-move overrides on top. After load there is no "beam" in G.MOVES, only resolved attribute sets.
+A turn-based move is an EVENT (one target, one accuracy roll, resolved and done). A survivor-like move is a standing EMITTER (auto-fires on a cooldown, faces a crowd, judged by throughput and readability). The import is the translation event -> emitter. A move's identity here is geometry + cadence + effect.
 
-THE RULE that keeps presets from silently becoming types again: `kind` / `preset` is consumed ONLY by the resolver at load time, NEVER by the executor at runtime. The moment the executor reads `kind` for anything other than load-time default expansion, the if-ladder is back. Test: two moves with identical attributes must behave identically regardless of their kind label, and any move must be reclassifiable to a different preset without touching engine code. Presets may be lossy shorthand; they may not carry behavior.
+## Why axes (what the data says)
 
-## From schema to screen (Jess, review 2026-10-23)
+Of ~238 approved moves scanned cleanly: 157 are `[damage]`, 44 `[damage, ailment]`, 6 `[damage, multihit]`, 12 status-only, the rest a ~15-move long tail. ~85% is "damage, maybe one rider." So effect is factored OUT of geometry: moves share a payload and differ in how they reach the target. Coverage becomes "is each axis complete," not "did we enumerate every combination."
 
-How a resolved move becomes pixels, and the discipline that stops rendering from re-introducing a per-kind switch.
+## Top-level move fields
 
-The chain: move-attributes + move-classification -> (resolver, at load) -> G.MOVES[id] = resolved attribute set -> (executor, at cast: `executor(caster, move, aim)`) -> a live INSTANCE in the world (a hitbox at position P, angle, size, born at T) -> (present layer, every frame) -> a DRAWABLE the renderer paints. This is the existing G.SimBus sim/present boundary: the executor is sim (owns the hitbox and what it touches), the drawable is present (renders from instance state).
+Every move entry carries these at the top level (not in an axis):
 
-What you draw is a function of the SHAPE primitive, NOT the kind. The renderer never asks "is this Ice Beam" or "is this a beam". It asks the instance "what shape are you and what is your current geometry/state" and draws that. One draw routine per shape (5 total): a `line` instance draws a rectangle from origin along its angle, length = current reach, width W; a `circle` draws a disc of radius R (and if `expanding`, R grows over the lifetime so the ring animates for free); a `point` draws a sprite at its position; etc.
+| field | meaning |
+| --- | --- |
+| id, name | identity |
+| type | the element (fire, water, ...). STAB and the type chart read this. NOT a payload entry. |
+| cd | cooldown (seconds). Every move has one; derived from PP in the resolver, override-able. |
+| rehit | seconds (optional). The DAMAGE TICK cadence of a PERSISTENT / re-hitting hitbox: how often one instance may damage the SAME enemy again (orb, aura, trail, a sustained beam). A SEPARATE clock from cd (which is the re-cast / re-layout cadence) and from moveSpeed (spin/travel). Confirmed in code: orbs carry a `rehit` field (default ~0.34s) with a per-enemy hitLog; cd (e.g. Gust 0.26) is the re-layout cadence, NOT the damage tick. Absent on one-shot hitboxes (a projectile hits each enemy once). |
+| cardLock | optional list of fields a move locks against upgrade cards (e.g. Giga Drain `['count','pierce']`). Default none. |
 
-A move's look has three INDEPENDENT inputs, and keeping them independent is what removes the per-move switch:
-1. SHAPE -> the hitbox geometry drawing. Finite (5 shapes), generic. Expansion, lifetime fade and tick pulses fall out of instance state, not the move id.
-2. TYPE -> the skin (palette + particle sprites + impact FX). Ice Beam and Hydro Pump are the SAME line primitive; type is what makes one frost and one water. A lookup table (18 types -> palette+particles), the same principle as G.Icons composing the move icon from the type emblem today.
-3. OVERRIDE -> the rare bespoke look. An optional `vfx` field in the OVERRIDES file (same layer as hand-tuned numbers). Present = renderer uses it; absent (the default) = compose from shape+type. Keeps special visuals as data, not draw-code branches.
+Then the three axes + the caster-state group.
 
-So 833 moves render from 5 shape-draw routines x an 18-entry type palette + a short override list. No `switch(kind)` in the draw code.
+## Axis 1: SPACE (the hit geometry)
 
-Worked proof it reaches pixels: Thunderbolt (smite: shape point, anchor target) draws the strike sprite AT the target, no travel. Thunder Shock (shape point, anchor caster, motion travels) draws the same sprite but tweens it across the screen. The visual difference between a smite and a projectile is produced entirely by anchor+motion driving where the instance lives and whether it moves; the renderer never knew either move's name. Ice Beam vs Hydro Pump: identical line draw routine, different type skin, zero extra draw code. Heat Wave (circle, expanding) animates its ring just by reading its live radius each frame.
+Shape is TWO families. radial covers circle / arc / point; linear covers beam. Field names are prefixed by family so there is never ambiguity about which applies.
 
-THE RENDERER DISCIPLINE (twin of the presets rule): the renderer may read shape, instance state, type, and the optional vfx override, and nothing else. Never kind or move id. If a move needs a look those four cannot produce, the answer is a new shape primitive (rare: field, wall) or a vfx override entry (data), never a branch in the draw routine.
-
-
-Oct 23, 2026. A concrete schema for the data-driven, one-way-generation move system, derived from two facts only: the source is PokeAPI, and the target is a survivor-like. This is a design proposal, nothing is built. It is meant to sit beside MOVES-REFACTOR-PLAN.md and make the attribute layer concrete enough to build or to argue with.
-
-Grounded in the real data: the 373 approved moves in docs/move_rework_holding/moves.generated.js already carry a first-pass delivery + payload split and the full PokeAPI fact set. A scan of them is what the numbers below are based on.
-
-## The one framing decision everything hangs on
-
-A turn-based move is an EVENT: one target, one accuracy roll, one PP decrement, resolved and done. A survivor-like move is a standing EMITTER: it auto-fires on a cooldown, faces a crowd, and is judged by sustained throughput and screen readability. The whole import is the translation event -> emitter. Written down first because otherwise it leaks into a hundred per-move guesses.
-
-Consequence: a move's identity in this game is geometry + cadence + effect, not "what it does on a turn." The axes exist to capture exactly those three.
-
-## Why axes at all (what the data says)
-
-Of the ~238 approved moves the scan parsed cleanly, the payload distribution is:
-
-- 157 are `[damage]`
-- 44 are `[damage, ailment]`
-- 6 are `[damage, multihit]`
-- 12 are status-only `[]` (buff / heal / ward, payload sits elsewhere)
-- the entire rest (stat combos, drain, shield, recoil, charge, crit) is a ~15-move long tail, each 1 to 2 moves.
-
-So about 85% of the catalog is "damage, maybe one rider." That is the empirical proof that effect should be factored OUT of geometry: nearly every move shares one of two payloads and differs only in how it reaches the target. A kind enum re-encodes the geometry into the payload and loses that; axes keep them independent, so coverage becomes "is each axis complete," not "did we enumerate every combination."
-
-## Three primary axes, not eleven flat attributes
-
-Same expressive power as the eleven-attribute list in MOVES-REFACTOR-PLAN.md, but structured as three questions with sub-parameters hanging off each. The hierarchy is the point: it tells you where a new attribute belongs and stops the schema flattening into flag-soup (the splash/tracking-as-lonely-booleans smell).
-
-The three independent questions:
-
-1. SPACE. Where does the hit happen and how is it shaped? -> the `shape` axis + its size/count sub-params. This is the hit test itself, not a projectile-pattern label.
-2. DELIVERY. How does that shape get there and what is it pinned to? -> `anchor` + `motion` + `lifetime`, plus `expanding` / `tracking` as sub-flags of motion.
-3. PAYLOAD. What happens to whatever it touches? -> an ordered list of effects, fully decoupled from space and delivery.
-
-Orthogonality check: any shape can carry any payload and move any way. A cone can damage (Flamethrower), a cone could heal (a frontal mend), a circle can damage (nova) or buff (a team aura). Because that holds, the three axes are genuinely independent and the factoring is cut at the joint.
-
-### Axis 1: SPACE
-
-| Field | Values | Meaning |
+| family | fields | meaning |
 | --- | --- | --- |
-| shape | point, line, cone, circle, arc | The hit-test geometry. point = a dot (a projectile or a melee contact test), line = a beam/segment, cone = a wedge, circle = a disc, arc = a partial ring. |
-| radius / width / length | numbers | Size of the shape. Which ones apply is a property of the shape (cone uses radius+arc, line uses length+width, circle uses radius). |
-| count | number | How many instances of the shape (3 for a Razor Leaf fan, 1 for Ember). |
-| spread | number (radians) | Angular spread when count > 1. |
-| hitCap | number, or UNLIMITED | How many primary targets ONE instance may hit. 1 = a rocket that stops at the first. 5 = a piercing shot through five. UNLIMITED = an area. Folds in the old single/multi/area/pierce. |
-| pierce | number | Longitudinal penetration: how many bodies a DIRECTIONAL shape passes through along its axis before stopping. Its own value, NOT an alias of hitCap. Allowed on point and line only (rejected on circle/cone/arc: areas cover, they do not penetrate). For a beam it sets how far down the lane the box extends (length is an output of pierce up to a max range). For a width-0 point the two coincide (hitCap = pierce + 1), which is the degenerate case, not the general rule. |
-| chainHops | number | How many extra targets a hit bounces to after its first. Only meaningful when `shape: point` (chain is a point that re-targets, not its own geometry). 0 = no chaining. |
+| radial | `radArc` (radians), `radRadius` (px) | radArc = how much of the circle the shape covers (2*pi = full disc, ~1.57 = a 90deg wedge, tiny = a sliver). radRadius = how far out from the center. A POINT is the degenerate radial: radArc is unused (a dot has no angle), only radRadius applies (its collision radius, e.g. Ember radRadius 7). |
+| linear | `linLength` (px), `linWidth` (px) | linLength = anchor -> end distance. linWidth = width of the band (constant along the length; a linear does NOT fan, which is why it is its own family). |
 
-Every sub-param is conditionally relevant to the shape, which is normal for this axis and the attribute record declares the gating (its `needs` / `allow` lists): `arc` only means something for cone, `length` only for line, `spread` only when `count > 1`, `chainHops` only for point. So `chainHops` is an ordinary SPACE sub-param (same category as radius/count/spread/hitCap), NOT a bolted-on chain-specific field. It just happens to be legal on one shape.
+Prefixes are ONLY on these shape-size fields (that is where the family ambiguity was). Everything else (anchor, motion, payload, knockback) is bare.
 
-shape does real work: it is the hit test. chain is therefore NOT a shape, it is `shape: point` + `chainHops`. That keeps the shape axis to five true geometries.
+Count and arrangement (separate from one shape's size):
 
-pierce and hitCap are DIFFERENT fields (Jess, review 2026-10-23), because once a shape has width they measure different things: pierce is longitudinal (how deep down the axis it penetrates, which sets a beam's length), hitCap is a total-body ceiling across the whole area this tick, and width is lateral coverage (the Area card scales it). The disproof of folding them: a beam of `width: wide, pierce: 1, hitCap: 4` stops one body deep on its axis, catches off-axis bodies by width, and still caps total hits at 4, three independent numbers that no single field can carry. Beams typically default hitCap to UNLIMITED (the thread-the-needle fantasy: aim down a packed lane and melt everything), with pierce as the primary limiter, but hitCap stays authorable so a capped beam remains legal. The `hitCap = pierce + 1` identity holds ONLY for a width-0 point.
+| field | meaning |
+| --- | --- |
+| count | how many instances of the shape (1 Ember, 3 a Razor Leaf fan). |
+| spread | radians; angular fan BETWEEN instances, only when count>1. Clamped just short of a full circle so a huge count never overlaps. High count + large spread = a radial nova made of points. |
+| pierce | how many enemies a directional shape passes THROUGH before stopping. pierce 0 = dies on the first enemy. pierce OWNS enemy-contact ending (see endOn below): it is NOT an endOn condition, because enemy-contact and pierce would otherwise be two mechanisms deciding the same event. |
+| chainHops | extra targets a hit bounces to after its first. Point only. 0 = none. Pairs with `hopRange` (px, how far each bounce can reach to find the next target). A chain is `chainHops` + `hopRange`, NOT `count` (count = separate instances; a chain is one strike that re-targets). radRadius stays the strike's own hit size, small, distinct from hopRange. |
+| splash | `{ radius, falloff }`, default radius 0 = off. A SECONDARY area hit at the impact point, never counts against pierce/hitCap. The upgrade path that turns a single-target shot into an AoE (Ember/Water Gun start at 0, a card raises it). |
 
-### Axis 2: DELIVERY
+All size numbers are GEOMETRY, not render (confirmed in combat.js: a projectile's `r` = radRadius is used in every hit test). Rendering reads them downstream but that is a consequence. Every numeric field is card-upgradeable by default; `cardLock` is how you lock specific ones.
 
-| Field | Values | Meaning |
+## Axis 2: DELIVERY (how the shape gets there)
+
+| field | values | meaning |
 | --- | --- | --- |
-| anchor | caster, target, world | What the shape is pinned to. caster = moves with you (orbit, aura). target = lands on a foe (meteor). world = fixed in space (mine, trail, field). Replaces "follows user / follows target". |
-| motion | static, travels, falls, returns, orbits, repositions | How the shape moves relative to its anchor. travels = a projectile, falls = a meteor drop, returns = a boomerang, orbits = a satellite, repositions = a dash that moves the CASTER. |
-| lifetime | instant, timed, persistent, untilTriggered | How long the shape lives. instant = one resolve (projectile hit), timed = a duration (cone spray, aura), persistent = stays until killed (turret), untilTriggered = waits (mine). |
-| expanding | bool | Does the shape grow over its lifetime (a nova ring). Sub-flag of motion; requires circle/arc/cone. |
-| tracking + turnRate | bool + number | Does it steer toward a target. Off by default, never guessed by the importer, rejected on static shapes (mines). |
+| anchor | caster, target, world | What the shape is pinned to. caster = moves with you / fired from you. target = lands on a foe (meteor, smite). world = fixed in space (mine, trail). anchor encodes a TARGETING MODEL: caster = a skill-shot aimed in a direction (can spatially miss, can line up pierce); target = homing / auto-assigned (cannot spatially miss). |
+| motion | static, travels, falls, returns, orbits, repositions | How the shape moves relative to its anchor. travels = a projectile, falls = a meteor drop, returns = a boomerang, orbits = a satellite, repositions = moves the CASTER (dash). |
+| moveSpeed | px/s | How fast the shape travels (projectile speed, arc travel speed). Lives on motion, where speed has always belonged. A static shape has none. |
+| orbitRadius | px | ONLY on motion:orbits. How far from the caster the orbs circle (the ring they trace). Distinct from radRadius (each orb's own hit size) and from moveSpeed (the spin RATE, rad/s for an orbit). Confirmed needed via code read: orbs anchor to the owner and spin at this distance. |
+| path | `{ curve?, oscillate? }` (optional, default straight) | HOW a traveling shape weaves through space, independent of any target. A SET of optional, composable perturbations (NOT one mutually-exclusive type): `curve: <rad/s>` steadily rotates the heading (arcs/spirals); `oscillate: {amplitude: <px off-axis>, frequency: <Hz>}` applies a sine weave perpendicular to travel. A shot can have curve only, oscillate only, BOTH at once (a spiral-with-wobble), or neither (omit = straight). They are independent velocity perturbations applied each frame, so they coexist. ORTHOGONAL to turnRate (homing/target-seeking) and grow (expansion); path is target-independent and composes with both (a curving shot can still home and still pierce). NOTE: two DIFFERENT path patterns within one move (e.g. 6 shots curve left, 6 right) is NOT a second path field, it is multiplicity, a count-group or a multi-cast/bond concern, each group carrying its own path. |
+| repositionMode | teleport, swept | ONLY on motion:repositions. teleport = jump to the end (today's dash). swept = real traversal at dashSpeedMult. Per-move choice. |
+| grow | `{ growSpeed, dim? }` (optional) | The shape EXPANDS one dimension over its life. growSpeed = px/s of expansion. `dim` DEFAULTS to radRadius and is omitted on novas (a ring only grows outward); specify it only to grow a different dimension (radArc for a widening arc, linLength for an extending beam). ONLY the expansion rate lives here; travel is moveSpeed's job. A nova = static center + grow (an expanding ring); the Psychic arc = travels (moveSpeed) AND grows at once. |
+| turnRate | number, 0 = off | Homing steering stiffness (damp coefficient toward the nearest enemy). One number; the old `tracking` bool was just turnRate>0. Rejected on static shapes. |
+| aimTrack | rad/s, 0 = off | For a STATIC-aimed shape (cone, beam): how fast its AIM ANGLE rotates to follow the nearest enemy. Same units as a turn rate, but it rotates the shape's facing, not a projectile's velocity (that is turnRate's job, and turnRate stays rejected on static shapes). Flamethrower aimTrack 1.4 = the cone swivels toward the nearest enemy at 1.4 rad/s. 0 = fires in the fixed aim direction. Distinct from turnRate so steering-a-bullet and swiveling-a-cone stay separate mechanisms. |
 
-### Axis 3: PAYLOAD
+### Lifetime: endOn (a list of end-conditions)
 
-An ordered list of effect records applied to whatever the shape hits. Decoupled from space and delivery, so the same handler serves a melee hit, a beam tick and a nova pulse.
+There is NO separate `lifetime` enum. An instance runs until the FIRST condition in its `endOn` list fires. The timer is just one condition, `{time: N}`. Default `endOn: [{time: <duration>}]` (a plain timer) so simple moves stay terse.
 
-| effect `t` | carries | Meaning |
+| condition | meaning |
+| --- | --- |
+| `{time: N}` | ends at N seconds. `{time: 0}` = instant (resolves and vanishes this frame: a melee swing, a smite). The common fallback for everything. |
+| `{contact: wall}` | hits terrain/prop. Distinct from enemy-contact (a projectile dies on a wall regardless of pierce). |
+| `{ownerDeath}` | the source ended (turret whose owner died / move was replaced). |
+| `{notActive}` | the move is no longer the ACTIVE selected skill. The persistence condition for ORBITS (and any always-on-while-selected move): the orbs live while the move is active and are cleared when another move is selected (code: clearOrbs on move-switch). This is how "persistent while selected" is expressed, NOT a timer and NOT cd:null. |
+| `{offScreen}` | left the view (the cull). |
+
+ENEMY-CONTACT IS NOT AN endOn CONDITION. It is owned by `pierce` (pierce 0 = ends on first enemy hit, pierce 2 = ends on the third). Putting `contactEnemy` in endOn would duplicate pierce and the two could contradict on the same hit. So: pierce owns the COUNTED enemy-contact ender; endOn carries the UNCOUNTED enders (time, wall, offScreen, ownerDeath). A projectile that hits NOTHING ends on its `{time}`; a projectile that hits enemies ends via pierce.
+
+This also folds the old turret/mine lifetimes in: a turret is `endOn: [{ownerDeath}, {time: 6}]` (owner death OR a 6s cap); a mine is `endOn: [{contact: enemy-is-pierce... no}, {time: 7}]` -- a mine detonates on proximity, which is its own trigger, plus a 7s timeout. (Mine proximity is a placement trigger, not pierce; see emit below.)
+
+## Axis 3: PAYLOAD (what happens to whatever it hits)
+
+An ordered list of effect records. Decoupled from geometry, so one handler serves a melee hit, a beam tick and a nova pulse.
+
+| effect `t` | carries | meaning |
 | --- | --- | --- |
-| damage | (uses the move's power + your equations) | The default. 221 of the parsed moves have it. |
-| ailment | ailment id, chance | burn/poison/para/etc. Chance comes from PokeAPI; your roll-gap model owns how chance becomes application. |
-| stat | stat id, stages, side (self/foe) | A stage change. side says who. |
-| heal | amount `{ from, value/frac }` | The single recovery effect. `from` selects the source: `dealt` (frac x damage this hit = a drain), `flat` (a fixed number), `maxFraction` (frac x max HP = Recover / Roost / Aqua Ring). drain is NOT a separate primitive, it is `heal` with `from: dealt`. |
-| shield | amount | Temporary HP. |
-| flinch | chance | Lost-action roll. |
-| multihit | count range | Rolls the mainline pellet count; total normalized by your equations. |
-| crit | stage | Crit-rate bump. |
-| recoil | fraction | Self-damage. |
-| field | field id | Places a world effect (collapses into anchor:world + a field payload). |
-| emit | move id, every, dur, trigger | Places an EMITTER: a positioned object with no AI that re-casts a move on a timer (trigger: timer) or on contact (trigger: contact), for `dur`. Folds in turret (timer), mine and trail (contact / once). NOT a combatant. |
-| spawn | entity id, allegiance, lifetime | Places a COMBATANT: a full entity with HP, AI, movement and its own moveset. `allegiance` hostile = targets the player (enemy summoner), friendly = targets enemies (a future player summon). References the SHARED species+moveset+AI entity definition, not a bespoke summon format. |
-| special | handler id | Named escape hatch, see below. |
+| damage | (power + your equations) | the default. |
+| knockback | px (default 0) | push applied to the target. Promoted to a payload effect (it acts on whoever is hit). Default 0 = no push. |
+| ailment | ailment id, chance, side | burn/poison/para/trap/etc. chance from PokeAPI; your roll-gap model owns application. |
+| stat | stat id, stages, side | a stage change. SCOPE FOLLOWS SIGN (DECISIONS Slice E2a): a RAISE is team-wide, a DROP is per-Pokemon. The resolver derives team-vs-individual from the sign. |
+| heal | `amount { from, value/frac }` | the single recovery effect. from = dealt (= a drain), flat, or maxFraction. drain is heal with from:dealt, not a separate primitive. Aqua Ring = maxFraction 0.0625, side:self (ACTIVE caster only, NOT team; regen is not a stage so the team rule does not apply). |
+| shield | `{ amount, max?, regen?, absorbsAll?, overflow?, blocksStatus? }` | a temporary HP pool, richer than flat temp HP. `amount`/`max` = the pool and its cap. `regen` = HP/s the pool refills while active. `absorbsAll` = ALL incoming HP loss (contact, shots, AND status DoT ticks) drains the shield before real HP (damage only; does NOT stop the status being applied). `overflow` = a hit bigger than the current shield absorbs what the shield has, the rest carries to real HP (so the cap matters). `blocksStatus` = no ailment can be applied at all while it holds (application-immunity; distinct from absorbsAll which is damage-only). |
+| flinch | chance | lost-action roll. |
+| multihit | `{ hits: N or min/max, normalize: true }` | N hits on ONE target from a single hitbox (Wing Attack's two wing-strikes, Fury Attack 2-5). Fixed count = `hits: N`; rolled = `min/max`. `normalize` (default TRUE) splits power across the hits so total = power (genre-safe: 2 hits of power/2, and upgrades scale power so both grow); `normalize: false` = each hit does FULL power (a real Nx nuke, the canonical mainline model) for a deliberate build-defining multihit. Normalization is a POLICY, not intrinsic to multihit. Distinct from `count` (N separate hitboxes in SPACE, a shotgun); multihit is same-target repeat ticks, they compose. |
 
-### emit vs spawn: two placement primitives, not one (Jess, review 2026-10-23)
+NORMALIZE IS A BASE SCALAR, not a live re-division (Jess, 2026-10-23, matches the code's `move.norm`). `normalize: true` sets the move's BASE per-hit/per-tick damage once at author/resolve time = power / (base hit-or-tick count). It is applied ONCE in the damage formula as the `move.norm` factor; it is NOT recomputed per cast. Upgrades (Attack mul, damage cards) and DURATION/rehit upgrades layer on AFTER, so adding ticks via a Duration card DOES increase total damage (more ticks, each at the normalized base), it does not claw back to keep the total at power. So on any `normalize`d move (multihit, rehit cone like Flamethrower, count-burst like Bubble/Mud Shot): normalize tames the BASE (so the move is not a firehose at base), and Duration/count still scale damage from that base. `normalize: false` leaves each hit/tick at full power.
+| crit | stage | crit-rate bump. |
+| recoil | fraction | self-damage. |
+| emit | `move` (id OR inline), every, endOn, trigger | places an EMITTER: a positioned object, no AI, that fires `move` every `every` s (or on `trigger: contact`) until its own endOn fires. `move` is EITHER a named catalog move id (reusable/shared bolt) OR an inline sub-move (a one-off bolt that is an implementation detail, e.g. Will-O-Wisp's burning bolt). The emitter has NO shape and no direct damage; the emitted `move` carries the shape + payload. Folds in turret / mine / trail. |
+| spawn | `entity` (id OR inline), allegiance, endOn | places a COMBATANT (HP, AI, moveset). `entity` is EITHER a named entity id (the shared species+moveset+AI definition gyms/wild spawns use) OR an inline entity for a one-off summon. allegiance hostile = targets player (summoner), friendly = targets enemies. |
+| special | handler id (+ params) | named escape hatch for bespoke semantics. Keeps coverage finite: every move is (shape x motion x anchor x payload) OR a named special. The handler FAMILY so far: `fixedDamage` {amount} (Dragon Rage = flat 40); `levelDamage` (Night Shade = damage = caster level); `conditionalDamage` {condition, mult} (Hex = 1.7x if condition `targetHasStatus`); `setWeather` {weather, duration?} (Hail = snow, held while active); plus the reserved bespoke ones (OHKO, Bide, Counter, Metronome, Transform). A damage handler computes damage by a RULE instead of flat power (power 0 on those moves). |
 
-The representability test on the 19 current kinds classified 18 cleanly and found ONE real gap: `turret` is not shape+payload, it is a persistent object that CASTS ANOTHER MOVE on a timer. The axes could not express "this move places a thing that runs moves." Closing that gap generalized into two payload primitives that also absorb mine, trail and the enemy summoner class:
+### STATE-change moves (weather / terrain): shapeless, a special handler (Jess, 2026-10-23)
 
-- `emit` places an EMITTER: position + a move + an interval/trigger + a lifetime. No AI, no HP, no allegiance logic. It just fires move X every N seconds (or on contact) for `dur`. turret = emit on a timer; mine = emit once on contact; trail = emit a short-lived damage tick along a path.
-- `spawn` places a COMBATANT: a full entity with HP, AI, movement and a moveset, plus an `allegiance` bit. Enemy summoner = spawn hostile (chases the player); a future friendly summon = spawn friendly (chases enemies). Jess's insight: a summoned minion and a hostile summon are the SAME primitive with the allegiance flag flipped.
+Some moves do not hit anything in space, they flip a GLOBAL game-state system for a duration. They have NO shape, NO radius, NO target; forcing them into radial/linear is wrong (that is why the merge left Hail with an empty payload). They are `anchor: self` + a `special` state-change handler, no SPACE fields at all.
 
-Why two and not one: forcing a turret through `spawn` means giving it a null AI, no movement and no allegiance, a pile of N/A fields (the sentinel smell). An emitter has a genuinely smaller contract than a combatant, so different inputs -> different primitives (same reasoning as heal vs drain). But they COMPOSE and bottom out together: both ultimately "run a move entry", and a spawned combatant's own moveset may itself contain an emit or spawn payload (a minion that drops turrets). Both are payload types so a move can damage AND place (a damaging shot that also leaves a turret).
+- WEATHER: `{t: special, handler: setWeather, weather: <kind>, duration: N}` -> calls G.Weather.start(kind, N). The existing weather system (js/systems/weather.js) already has sun/rain/sand/snow/fog with type multipliers, chip damage, slow and tint. Hail = snow (snow already is "damages all except Ice, boosts Ice, slows"; it IS the Hail effect). A player weather-cast OVERRIDES the ambient random weather for its duration.
+- TERRAIN / FIELD (Electric/Grassy/Misty/Psychic Terrain, Trick Room): same shape, a setTerrain/setField handler, when those are built.
+- This is a small move FAMILY (weather moves: Hail/Rain Dance/Sunny Day/Sandstorm; terrains; field moves). All shapeless, all anchor:self + a special. Keeps the shape axes strictly about hitboxes.
 
-Shared-entity rule: `spawn` references the same species+moveset+AI entity definition that gym rosters and wild spawns use (the "species + moveset + AI profile" shape the moves import is moving toward), so there is ONE entity model across wild / gym / summoned, not a separate summon format.
+`side` (self / ally / foe) is a payload property (a move can damage the foe AND buff itself). effect+side enforce: damage/foe-debuff target foes; heal/buff/shield target self/ally.
 
-This retroactively folds four kinds: turret / mine / trail -> `emit`; enemy summoner -> `spawn`. Field and wall (deferred) are the only remaining true-new geometry.
+emit vs spawn stay TWO primitives (an emitter has no AI/HP/allegiance; forcing a turret through spawn means a pile of null fields). They compose: a spawned combatant's moveset may itself contain emit/spawn.
 
-### drain is heal composed, not a third primitive (Jess, review 2026-10-23)
+## Group 4: CASTER-STATE (true of the caster while firing)
 
-drain and heal both add HP, but they are one effect with different SOURCES, not two effects. The defining trait of a drain is that its output is a function of damage dealt; the defining trait of a flat heal is that its output is independent of damage. So `heal.amount.from` selects the source, and drain drops out of the primitive list entirely:
+Not an axis (acts on the caster, not the hit). Optional, absent on most moves.
+
+| field | meaning |
+| --- | --- |
+| iframes | seconds of invulnerability (reuses `pl.invuln`). Supports `travel + N` for a swept dash (spans the travel plus N trailing; Quick Attack = travel + 0.5). Teleport dash = a flat value on arrival. |
+| commitment.movement | none / slowed / rooted, during a long cast. |
+| commitment.cooldown | `tick` / `freeze` / `freeze(ids)`. `freeze` alone = ALL cooldowns lock; `freeze(ids)` = only the listed moves (default; Quick Attack freezes only its own, the rest of the kit keeps ticking). |
+| delay | seconds of wind-up before the effect lands (charge moves). Same field as a meteor drop-delay. The telegraph the unified executor shows for hostile casters. Interrupted mid-delay reuses the flinch-cancels-cast rule. |
+
+Charge dissolves into delay + commitment; it is not its own payload.
+
+## Worked example: Ember (the canonical entry)
+
+Exercises shape, delivery, pierce-vs-endOn, splash, and a rider payload:
 
 ```
-heal.amount = { from: 'dealt',       frac: 0.5 }   // Giga Drain: 50% of damage this hit
-heal.amount = { from: 'flat',        value: 20  }   // a fixed restore
-heal.amount = { from: 'maxFraction', frac: 0.25 }   // Recover / Roost / Aqua Ring tick
-```
-
-A drain move is then the payload LIST `[ {t:damage}, {t:heal, amount:{from:'dealt', frac:0.5}} ]`: damage the foe, then heal the caster from what the prior effect dealt. That is the payload-list doing its job (composition), and it reduces the primitive count by one.
-
-Rejected alternative (considered and dropped): a single additive equation `HP += (dmg_out + base_heal) * drain_frac`, with drain = `(dmg,0)*0.5` and heal = `(0,amount)*1.0`. It unifies them too, but it forces a sentinel in every move (heal must pin `drain_frac` to 1.0 as a no-op, or it silently scales the authored amount) and models a `dmg_out + base_heal` sum that no real move ever uses (every move is drain XOR heal, never both). The typed-source form says the same thing with no magic constant and no dead input quadrant, and it gives `maxFraction` recovery for free.
-
-side (self / ally / foe) is a payload property, not a top-level axis, because different effects in the same move can target differently (a damage+self-buff move). effect + side together enforce the only hard rule: damage and foe-debuff target foes; heal/buff/shield target self or ally.
-
-This is where the five "unbuilt kinds" evaporate: control = any shape + an ailment payload. mend = `shape:point, anchor:caster, side:self` + a heal payload. ward = same + a shield payload. None of them is new geometry. Only field and wall need genuinely new shapes, and both are deferrable.
-
-## The validator is the product, and it is DATA not branches
-
-An orthogonal space is combinatorially large and most of it is nonsense (a world-anchored returns motion is meaningless). The component that makes this engineering rather than a data pile is the constraint layer. Design it as data: each axis value declares, in move-attributes.js, its own (a) engine-primitive id, (b) default sub-params, and (c) legal co-values. Adding `cone` to the shape axis is adding one record ("cone is an area, allows expanding, rejects splash"), not editing the validator. check.js runs a GENERIC constraint checker that never changes as moves are added.
-
-Example shape of one attribute record (illustrative, not final):
-
-```
-shape: {
-  cone:   { prim: 'hitCone',   needs: ['radius','arc'], area: true,  allow: ['expanding'], reject: ['splash'] },
-  point:  { prim: 'hitPoint',  needs: ['size'],         area: false, allow: ['count','spread','pierce','chainHops','tracking'] },
-  circle: { prim: 'hitCircle', needs: ['radius'],       area: true,  allow: ['expanding'], reject: ['splash'] },
-  ...
+ember {
+  type: fire
+  cd: 0.52
+  shape: radial            // point = degenerate radial (radArc unused)
+  radRadius: 7
+  count: 1
+  pierce: 0                // dies on first enemy contact (pierce owns enemy-contact)
+  anchor: caster
+  motion: travels
+  moveSpeed: 310           // travel ~= moveSpeed x the endOn timer = 310 x 1.6 ~= 496px
+  endOn: [ {time: 1.6} ]   // ends on timeout if it hits NOTHING; enemy hits end it via pierce
+  splash: { radius: 0, falloff: 0 }   // starts off; a card raises it (every number is upgradeable unless cardLock'd)
+  payload: [
+    { damage },
+    { ailment: burn, chance: 10, side: foe }
+  ]
 }
 ```
 
-Invariants become data each value owns, instead of a growing if-ladder: expanding needs circle/arc/cone; returns needs point/line; falls needs point/scatter/circle; untilTriggered needs anchor:world + motion:static; orbits/repositions need anchor:caster; tracking rejected on static; area shapes reject splash. Every one of those is a `needs`/`allow`/`reject` entry on the value that owns it.
+A fire-type single 7px projectile fired from the caster, travels 310px/s for up to 1.6s (~496px), dies on the first enemy (pierce 0) or on timeout, with an upgradeable splash starting at 0, dealing damage + a 10% burn to the foe. Note: `type` is top-level (not a `damageType` payload entry); `side: foe` (not `ailmentHits`); no `upgradeable` flag is needed (everything is upgradeable unless locked by `cardLock`).
 
-## The named-special escape hatch (coverage gets a finite boundary)
+## Worked example: the expanding-ring nova
 
-Some moves are not geometry+payload, they are bespoke semantics the axes should not try to express:
+```
+heat-wave {
+  type: fire
+  cd: 1.25
+  shape: radial            // nova = expanding ring
+  radArc: 6.2832           // full circle
+  radRadius: 275           // the MAX radius it grows to (growSpeed 250 x 1.1s)
+  anchor: caster
+  motion: static           // center fixed; only the radius grows
+  grow: { growSpeed: 250 } // dim defaults to radRadius; expands 0 -> 275px at 250px/s
+  endOn: [ {time: 1.1} ]   // lifespan: ~1.1s to finish expanding, then done
+  payload: [
+    { damage },
+    { ailment: burn, chance: 10, side: foe }
+  ]
+}
+```
 
-- Horn Drill, Fissure, Sheer Cold, Guillotine: OHKO.
-- Bide: delayed reflected damage.
-- Counter / Mirror Coat: reflect the last hit.
-- Metronome, Assist, Sleep Talk: call another move.
-- Transform, Mimic: copy.
-- Beat Up, Reversal, Final Gambit: power is a formula, not a number (the review already flags these 5 as varPower).
+A nova is an expanding ring: radArc full, radRadius grows from 0 to its max via grow.growSpeed, hitting each enemy once as the edge crosses. No pierce (areas do not penetrate), no count, no moveSpeed (the center is static). Upgrade growSpeed = expands faster; upgrade radRadius = grows bigger. Note radRadius is the MAX it grows to (275px here), NOT a point size. Converting Heat Wave from its current burst-of-10-pellets to this ring is a deliberate behavior change the conversion harness will (correctly) flag. (Psychic is the TRAVELING version: same but motion:travels with a moveSpeed, so it moves AND grows at once.)
 
-Rather than contort the axes or footnote them, declare a payload value `t: special, handler: 'hornDrill'`. They live INSIDE the schema as named handlers. Coverage then has a precise, finite, visible boundary: every move is `(shape x motion x anchor x payload)` OR a named special, and the special list is a short enumerated set, not an open-ended "and some edge cases."
+## Worked example: Substitute (a defensive / shield move)
+
+Exercises a self-cast defensive cooldown: a recoil HP-cost + a rich regenerating shield, no shape/target.
+
+```
+substitute {
+  type: normal
+  cd: 30                    // long cooldown: a panic button, not sustained
+  power: 0
+  anchor: self              // shapeless self-cast; no shape/radius/target
+  endOn: [ {time: 6} ]      // the shield lasts 6s
+  payload: [
+    { "t": "recoil", "fraction": 0.25 },   // pay 1/4 max HP on cast
+    { "t": "shield",
+      "amount": "2 * paid",                 // = 1/2 max HP (twice what you paid)
+      "max": "2 * paid",                    // capped at that value
+      "regen": "= max",                     // regens its own cap per second (50 cap -> 50/s)
+      "absorbsAll": true,                   // ALL damage incl. status DoT drains the shield first
+      "overflow": true }                    // a hit > the shield: shield eats what it has, the rest carries to real HP
+  ]
+}
+```
+
+Worked (100 max HP): pay 25 -> a 50-HP shield regenerating 50/s for 6s, cd 30. Under ~50 DPS you are effectively untouchable for the window; a 150 burst drains the 50 shield and 100 overflows to real HP (the cap matters). Status still APPLIES but its DoT drains the shield (absorbsAll is damage-only, not blocksStatus). Self-scaling: cap and regen are both 1/2 max HP, so it stays relevant at every level with no retune. This is the schema's first move that pairs a cost (recoil on side:self) with a rich shield, and the first self-cast defensive cooldown.
+
+## Kinds are presets, not types
+
+A "kind" (beam, nova, melee) is a PRESET: a named bundle of default field values, authoring shorthand. The engine never sees it. You write `preset: beam`, the resolver expands it to fields, overrides apply, and after load there is only resolved field sets. THE RULE: kind/preset is consumed ONLY by the resolver at load, NEVER by the executor at runtime. Two files: move-attributes.js (the GRAMMAR: every legal value + primitive id + needs/allow/reject) and move-classification.js (the PRESETS). The engine and check.js read the grammar.
+
+## The validator is DATA, not branches
+
+Each field value declares its own primitive id, defaults, and legal co-values (needs/allow/reject) in move-attributes.js. check.js runs a generic checker that never changes as moves are added. Invariants are data the value owns: grow needs a non-zero life; returns needs point/linear; radial rejects pierce (areas do not penetrate); turnRate rejected on static.
+
+Schema principle from the collapses: NO bool derivable from whether its companion number is present (killed `tracking`, killed `expanding`). A field that must reference another field to mean anything belongs TO that field (killed `contactEnemy(pierce)` -> pierce owns it).
 
 ## The resolver is a pure fold
 
-Load order, later wins: raw facts -> interpretation formulas (your equations: pp->cooldown, accuracy->multiplier, power->dmg, proc->roll model) -> classification (the axis values) -> overrides (hand-tuned numbers). The resolver is a pure function (same inputs -> same G.MOVES), so it runs at load from file:// like the tilesets, and check.js runs THE SAME resolver to validate (no second implementation to drift). One-way generation is then structural: the generator writes only the raw facts file; the resolver only reads; nothing but you writes classification and overrides.
+Load order, later wins: raw facts (generated) -> interpretation formulas (pp->cd, accuracy->multiplier, power->dmg, proc->roll model) -> classification (presets + field values) -> overrides (hand-tuned numbers). Pure function, runs at load from file:// like the tilesets, and check.js runs the SAME resolver. One-way generation is structural: the generator writes only the raw facts file; nothing but you writes classification and overrides.
 
-The interpretation layer is named here deliberately even though the equations live elsewhere already. Siting them as a layer (not an unlabeled load step) is what guarantees both regeneration and the resolver route through the same translation, instead of per-move hand-conversion.
+## Coverage test (run BEFORE the importer)
 
-## Coverage test, done right (run BEFORE the importer)
+Bucket every approved move into its realized (shape, motion, anchor, payload-set) tuple; every tuple must map to a built primitive OR a named special; the moves in neither bucket are the missing axes. Run it against the unbuilt gym-roster depth (Fighting, Dragon, Ice), the moves that did not inform the design, so "optimally covering" is earned.
 
-Not "can the axes express the 19 built kinds" (circular: the axes were derived from those). The real test, in order:
+## Optimization log (collapses, with disproofs)
 
-1. Run every approved move through the classifier, bucket each into its realized `(shape, motion, anchor, payload-set)` tuple.
-2. Every tuple must map to a built primitive OR a named special. Count distinct tuples: that is the actual surface area, and the data above says it is SMALL (two payload sets cover 85%).
-3. The moves that land in neither bucket are the missing axes. Specifically run the unbuilt gym-roster depth (Fighting, Dragon, Ice), because those are the moves that did not inform the axis design.
+- SHAPE five -> TWO families. cone/circle/arc/melee-swing = radial (radArc+radRadius); linear (linLength+linWidth) is separate; point = degenerate radial. Disproof of going to ONE: radial FANS (width grows with distance), linear is PARALLEL (width constant). A radius-0 sector is a ray, not a beam. No single parameter is both proportional-to and constant-with distance, so two is the floor.
+- FIELD RENAMES: extent->radArc, reach->radRadius, (beam) length/width -> linLength/linWidth. Prefixes only on shape-size fields.
+- LIFETIME enum -> `endOn` list of conditions; the timer is `{time:N}`, `{time:0}` = instant. No privileged field, no magic sentinel. Default `[{time:duration}]` keeps the common case terse.
+- ENEMY-CONTACT -> owned by `pierce`, NOT an endOn condition (they would contradict on the same hit). endOn carries only uncounted enders (time, wall, offScreen, ownerDeath). wall-contact and enemy-contact are distinct events.
+- `expanding` bool -> `grow {dim, growSpeed}`. `moveSpeed` lives on MOTION (travel is universal), grow carries only the expansion rate (conditional). Keeps each number with its real owner.
+- `tracking` bool -> dropped; just `turnRate` (0=off).
+- NOVA = an expanding ring (radial, static center, grow radRadius), not an instant pulse and not a burst. speed is the grow rate, lifetime is timed.
+- drain -> heal with from:dealt. emit vs spawn -> two primitives. charge -> delay + commitment. knockback -> a payload effect.
 
-If the schema survives step 3 against moves it was not shaped around, "optimally covering" is earned, not asserted.
+## Open
 
-## Classification findings from real moves (Jess review 2026-10-23)
-
-First live test of the schema: hand-classifying real moves from their PokeAPI facts and seeing whether the attributes fall out. Verdict so far: the classifier is mostly working. Facts (type, power, pp, acc, ailment, flags, target) auto-classify DELIVERY and PAYLOAD at high confidence. The one axis the facts can never settle is SHAPE, which is the human-feel call. That split IS the answer to the plan's low-confidence open question: auto-accept lane = facts + delivery + payload; human-review lane = shape (and the nova/burst fork).
-
-Settled while classifying:
-
-- SMITE IDIOM. `anchor: target` + `motion: static` + `lifetime: instant` = a hit that appears ON the target, nothing travels (Thunderbolt, Jess's read). Distinct from anchor:caster + travels (a dodgeable skill-shot bolt) and anchor:target + falls (a delayed meteor). All three are already expressible, no new attribute. IMPORTANT: `anchor` encodes a TARGETING MODEL, not just visuals, caster = skill-shot aimed in a direction (positioning matters, can spatially miss, can line up pierce); target = homing/auto-assigned (the game picks who it hits, cannot spatially miss). Choosing anchor is a feel decision about agency, not art.
-- CHARGE DISSOLVES into two existing parameters, it is not its own payload (Jess): `delay: t` (the effect lands t seconds after the cast, the SAME field as a meteor drop-delay or a mine arm-time) + a `commitment` flag "pause other cooldowns during the charge". Generalizes to every charge move (Solar Beam, Sky Attack, Skull Bash, Razor Wind). This IS the telegraph parameter the unified executor uses: a boss and a player Solar Blade are one move, the boss just shows a warning shape during `delay`.
-  - commitment is TWO independent axes, not one enum: MOVEMENT commitment (none / slowed / rooted, can you walk while charging) and COOLDOWN commitment (do your other moves tick during the charge, or freeze). A move can root you but let other moves cool, or let you walk but freeze your kit.
-  - INTERRUPTION: a charge interrupted mid-`delay` reuses the existing flinch-cancels-cast-in-progress rule (DECISIONS slice D2). No new behavior. Confirmed by Jess 2026-10-23.
-- PULSE / SOUND FLAG -> NOVA about 90% of the time (Jess). The classifier drafts a move carrying the pulse or sound flag as nova (shape circle, motion static, expanding true); Jess's feel overrides the ~10% where a single-target blast reads better as a projectile. So the flag is a STRONG DEFAULT applied automatically but kept in the review lane, not a hard rule. Worked example: Dragon Pulse (single-target 85, no spread) classified as NOVA by this rule, Jess accepted.
-
-Classified and accepted this session: Thunderbolt (smite: point, anchor target, static, instant, payload damage + 10% paralysis, chainHops 0 upgradeable, the electric-arc fantasy), Solar Blade (line, caster, static, timed, delay + commitment charge, payload damage), Dragon Pulse (nova per the pulse-flag rule, payload damage).
-
-## What this differs from MOVES-REFACTOR-PLAN.md
-
-- Three primary axes with sub-params, instead of eleven flat peers. Same power, but a hierarchy that resists flag-soup drift and tells you where new attributes go.
-- Validator-as-data from day one: constraints live on each attribute value (needs/allow/reject + primitive id + defaults), so check.js is a generic checker and extension is pure data.
-- A declared `special` payload handler so OHKO/Bide/Counter/Metronome are named members of the schema, giving coverage a finite boundary.
-- Interpretation formulas promoted to a named layer, so the event->emitter translation has one home.
-
-Everything else (four files, one-way generation, one caster-agnostic executor, interning words to ints) is identical, because it falls directly out of the two facts.
-
-## Open, same as the refactor plan
-
-- UNLIMITED hitCap as 0 or a named constant (lean: named constant, 0 is a misread waiting to happen).
-- SETTLED 2026-10-23: commitment is two caster-side fields (movement none/slowed/rooted + cooldown tick/freeze), not a shape property. See the classification-findings section.
-- SETTLED 2026-10-23: nova vs burst split = pulse/sound flag -> nova ~90% (auto-draft, review-lane, Jess's feel overrides). Heat Wave still a judgment call.
-- Does splash carry riders or damage-only (lean: damage-only at reduced strength).
+- UNLIMITED on an uncapped pierce / hitCap: 0 or a named constant (lean: named constant).
+- splash carries riders or damage-only (lean: damage-only, reduced).
+- grow on a traveling arc: grow radRadius only, or radArc too (lean: name the dims in grow when needed).
+- size x pierce edge-clip (Size card on a pierce-0 point is a sometimes-weak/edge-clip case): decide by feel-test when the Size card is built.

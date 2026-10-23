@@ -1,29 +1,25 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-22 night (Claude Desktop, home).
+Last updated: 2026-10-23 evening (Quick, work machine).
 
 ## Where we are
-- GYM PROGRESSION IS PAUSED. Jess is switching to a new branch, feature/all-moves-import (plan: docs/MOVES-IMPORT-PLAN.md). Reason: gyms 2 to 8 and the Elite Four need moves the catalog lacks (64 imported, 833 classified in docs/move-import-review-v2.json), and there is no learnset data.
-- Branch rework/gym-progression holds everything built so far. Jess commits (the assistant never runs git). Pending docs from tonight: GYM-ROSTERS, STATE, TODO, DEVLOG, MOVES-IMPORT-PLAN.
-- node tools/check.js: 89 files OK, 18/18 harnesses pass (2026-10-22). Not run in a browser.
-- Roster DESIGN done: docs/GYM-ROSTERS.md has all 8 Kanto gyms and the Elite Four locked. Slice A built (data model, SimBus). Only Brock is authored in js/data/gyms.js.
+- ON BRANCH feature/all-moves-import (gym progression PAUSED). NO game code touched this session, docs/design only. check.js not run (nothing in js/ changed).
+- THE MOVE SCHEMA is built and optimized in docs/MOVE-AXIS-SCHEMA.md: shape = TWO families (radial radArc+radRadius / linear linLength+linWidth; point = degenerate radial); three axes SPACE/DELIVERY/PAYLOAD + a caster-state group; lifetime is the `endOn` end-condition list ({time:N}, {notActive}, {ownerDeath}, {contact}, {returned}, {offScreen}); enemy-contact owned by pierce. Fields incl. grow, moveSpeed, path (curve/oscillate), turnRate vs aimTrack, orbitRadius, rehit, returnDistance/hopRange, knockback (payload), splash, shield props, multihit+normalize (base scalar = move.norm), emit/spawn (id-or-inline), and a special-handler family (fixedDamage/levelDamage/conditionalDamage/setWeather) + STATE-change (weather) moves. Optimization log holds the disproofs.
+- PER-MOVE DECISIONS live in docs/move-decisions.json (durable, in-repo). ~40 of 64 moves locked in the two-family vocab this session; stat-payload blobs all flattened. Tally ~ 15 approved / 30 changed / 19 pending.
+- TOOL: docs/move-decisions-dashboard.html, a standalone load/edit/download JSON dashboard (works offline from file://, has a live plain-English schema interpreter). REPLACES the old session-tab reviewer (its export was blocked and stranded edits). Use the LOCAL file (open from Desktop) so download works.
 
 ## Next (in order)
-1. Jess: commit, branch to feature/all-moves-import.
-2. Answer the three open decisions in docs/MOVES-IMPORT-PLAN.md (import all 833 as unbuilt? low-confidence handling? learnset cap).
-3. Importer slice (data only), then behavior by kind, then learnsets.
-4. RESUME gym-progression after that: author gyms 2 to 8 and E4, then slice B (all-at-once arena flow), gym-sprite display fix, escalation clock harness, regional forms (Alolan Sandslash, Marowak, Golem line), E4 trigger flow and hard-set levels.
+1. Jess: commit + push docs/MOVE-AXIS-SCHEMA.md, docs/move-decisions.json, docs/move-decisions-dashboard.html (+ DEVLOG/STATE). The old docs/'move schema review json.txt' is superseded by move-decisions.json.
+2. Finish reviewing the 19 PENDING moves in the local dashboard. In the dashboard: filter to "changed" then Approve-all is SAFE (those are reworked+correct); do NOT blanket-approve the 19 pending unreviewed (they may still carry merge bugs like empty payloads / wrong shapes — scrutinize each).
+3. Settle open feel-calls: Flamethrower normalize true(90/cast) vs false(270 firehose); Night Shade single-target vs full-circle aura; Psycho Cut crit amount (or none per the D4 no-move-crit lean); Bubble/Mud Shot normalize (done = true).
+4. THEN the importer slice (code, prose-plan-then-approve): resolver + the four files (move-data-raw, move-attributes, move-classification, move-overrides) + a 64-move CONVERSION HARNESS proving the current 64 resolve unchanged (the go/no-go gate). Only after it passes: wire the one caster-agnostic executor; then behavior-by-kind; then learnsets; then RESUME gyms.
 
-## Architecture direction: sim/present boundary
-G.SimBus exists. Convert sim calls to FX/Audio/Spawner into events as you touch them; log in docs/SIM-PRESENT-BOUNDARY.md. New pure data functions: no clock, no randomness.
-
-## Open questions for Jess
-- Moves import decisions above. Escalation uncapped or capped? Gate gauge ring or bar?
-- Berry bag slots buyable under Team Upgrades? Run-item acquisition?
+## Open schema questions
+- UNLIMITED hitCap as 0 or a named constant (lean: named constant). splash riders vs damage-only (lean: damage-only). hitCap kept but rarely used (pierce owns directional caps; areas unlimited).
 
 ## Standing rules (full text: CLAUDE.md)
-Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js and Markdown docs are free-edit. Never run git. New save fields backward compatible. Debug on dev.html?dev.
+Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js + Markdown docs free-edit. Never run git. New save fields backward compatible. Debug on dev.html?dev.
 
 ## Where to look (search, do not read whole)
-DECISIONS.md, DEVLOG.md, BALANCE.md, TODO.md, BOSS-REWORK.md, docs/. Archives: docs/*-archive.md. Fast check: node tools/check.js.
+docs/MOVE-AXIS-SCHEMA.md (the schema + Optimization log + worked examples Ember/Heat Wave/Substitute), docs/move-decisions.json (per-move decisions), docs/move-decisions-dashboard.html (the tool), MOVES-REFACTOR-PLAN.md / MOVES-IMPORT-PLAN.md (the import plan). DECISIONS.md, BALANCE.md, TODO.md. Fast check: node tools/check.js.

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Move Decisions Dashboard</title>
+<style>
+:root{
+  --bg:#faf9fc; --card:#ffffff; --surf:#f9fafb; --text:#1a1a1a; --muted:#9ca3af; --sub:#5e5e5e;
+  --border:rgba(0,0,0,.12); --borderL:rgba(0,0,0,.06);
+  --primary:#9333ea; --primaryBg:#f3e8ff;
+  --ok:#22c55e; --okBg:rgba(34,197,94,.12); --okDk:#16a34a;
+  --warn:#f59e0b; --warnBg:rgba(245,158,11,.14); --warnTx:#92400e;
+  --mono:'SF Mono','Monaco','Consolas',monospace; --sans:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --rmd:10px; --rsm:6px; --rpill:17px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);margin:0;padding:0 0 40px}
+header{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--border);padding:14px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h1{font-size:18px;margin:0 0 2px}.sub{color:var(--sub);font-size:12.5px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:11px}
+.btn{border:1px solid var(--primary);background:var(--primary);color:#fff;border-radius:var(--rsm);padding:8px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--primary)}
+.btn.ok{border-color:var(--ok);background:var(--ok);color:#fff}
+input[type=file]{display:none}
+.filelabel{border:1px dashed var(--primary);color:var(--primary);background:var(--primaryBg);border-radius:var(--rsm);padding:8px 15px;font-size:13px;font-weight:600;cursor:pointer}
+.search{flex:1;min-width:160px;padding:8px 11px;border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;font-family:inherit}
+.chip{border:1px solid var(--border);background:var(--surf);border-radius:var(--rpill);padding:5px 11px;font-size:12px;cursor:pointer;color:var(--sub)}
+.chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.counts{font-size:12px;color:var(--sub);font-family:var(--mono)}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 22px}
+.empty{text-align:center;color:var(--muted);padding:80px 20px;font-size:15px}
+.empty .big{font-size:40px;margin-bottom:12px}
+.dirty{color:var(--warnTx);background:var(--warnBg);border:1px solid var(--warn);border-radius:var(--rpill);padding:3px 10px;font-size:11px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--borderL);border-left-width:4px;border-radius:var(--rmd);margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden}
+.card.approved{border-left-color:var(--ok)}.card.changed{border-left-color:var(--warn)}.card.pending{border-left-color:var(--border)}
+.head{display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer;flex-wrap:wrap}
+.name{font-weight:700;font-size:15px}
+.tag{font-size:10.5px;font-family:var(--mono);padding:2px 7px;border-radius:var(--rpill);background:var(--surf);color:var(--sub);border:1px solid var(--borderL)}
+.tag.type{text-transform:capitalize}.tag.pow{background:#1a1a1a;color:#fcd34d}
+.pill{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--rpill)}
+.pill.approved{background:var(--okBg);color:var(--okDk)}.pill.changed{background:var(--warnBg);color:var(--warnTx)}.pill.pending{background:var(--surf);color:var(--muted)}
+.body{display:none;padding:0 15px 15px}.card.open .body{display:block}
+.note{font-size:12.5px;color:var(--sub);margin:4px 0 8px}.note b{color:var(--text)}
+.plain{background:var(--primaryBg);border:1px solid var(--primary);border-radius:var(--rsm);padding:10px 13px;margin-bottom:10px;font-size:13px;line-height:1.5;color:#3b0764}
+.plain b{color:var(--primary)}
+.entry{background:#1a1a1a;border-radius:var(--rsm);padding:12px 14px;margin-bottom:10px}
+.entry pre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.6;color:#e5e7eb;white-space:pre-wrap;word-break:break-word}
+.entry .k{color:#93c5fd}.entry .s{color:#86efac}.entry .n{color:#fcd34d}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.acts .btn.sm{padding:6px 12px;font-size:12px}
+.acts .btn.sm.ok{border-color:var(--ok);background:var(--ok);color:#fff}
+.acts .btn.sm.gh{background:transparent;color:var(--sub);border-color:var(--border)}
+.acts .btn.sm.ok.gh{background:transparent;color:var(--okDk);border-color:var(--ok)}
+.acts .btn.sm.warn{border-color:var(--warn);background:var(--warn);color:#fff}
+.acts .btn.sm.warn.gh{background:transparent;color:var(--warnTx);border-color:var(--warn)}
+textarea{width:100%;margin-top:9px;min-height:56px;border:1px solid var(--border);border-radius:var(--rsm);padding:8px;font-family:var(--mono);font-size:12px;resize:vertical}
+.rawnote{font-size:11px;color:var(--muted);margin-top:14px}
+</style></head>
+<body>
+<header>
+  <h1>Move Decisions Dashboard</h1>
+  <div class="sub">Load a JSON, edit statuses &amp; notes, download it back. Works offline from a local file — no server, no copy-paste.</div>
+  <div class="toolbar">
+    <label class="filelabel" for="file">\u2191 Load JSON</label>
+    <input type="file" id="file" accept=".json,application/json">
+    <button class="btn ok" id="dl" disabled onclick="download()">\u2193 Download JSON</button>
+    <input type="text" class="search" id="q" placeholder="filter by name / type / status..." disabled>
+    <span class="chip" data-f="all">all</span>
+    <span class="chip" data-f="pending">pending</span>
+    <span class="chip" data-f="changed">changed</span>
+    <span class="chip" data-f="approved">approved</span>
+    <span class="counts" id="counts"></span>
+    <span class="dirty" id="dirty" style="display:none">unsaved changes</span>
+  </div>
+</header>
+<div class="wrap" id="wrap">
+  <div class="empty"><div class="big">\u2191</div>Load a decisions JSON to begin.<br><span style="font-size:12px">(e.g. docs/move-decisions.json)</span></div>
+</div>
+<script>
+let DATA=null, LIST=[], state={}, filter='all', q='', dirty=false;
+const $=id=>document.getElementById(id);
+function esc(s){return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+$('file').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ ingest(JSON.parse(r.result)); }catch(err){ alert('Not valid JSON: '+err.message); } };
+  r.readAsText(f);
+});
+function ingest(json){
+  DATA=json;
+  // accept {decisions:[...]} or a bare array
+  LIST = Array.isArray(json) ? json : (json.decisions || json.moves || []);
+  state={}; dirty=false;
+  LIST.forEach((m,i)=>{ const id=m.id||('row'+i); state[id]={status:m.status||'pending', note:m.note||m.change_note||'', open:false, editing:false, idx:i}; });
+  $('dl').disabled=false; $('q').disabled=false;
+  render();
+}
+function markDirty(){ dirty=true; $('dirty').style.display=''; }
+
+
+function art(w){ return /^[aeiou]/i.test(w)?'an':'a'; }
+function num(n){ return (n===0||n)?n:'?'; }
+function describe(m){
+  const t=m.topLevel||{}, s=m.shape||{}, sp=m.space||{}, d=m.delivery||{}, pay=m.payload||[];
+  const parts=[];
+  const type=t.type?esc(t.type):'';
+  // ---- SPECIAL handlers short-circuit ----
+  const special=pay.find(e=>e.t==='special');
+  if(special){
+    const h=special.handler;
+    if(h==='setWeather') return `Sets the weather to <b>${esc(special.weather)}</b> ${d.endOn&&JSON.stringify(d.endOn).includes('notActive')?'for as long as this move stays selected':'for a time'} (a global state effect, no hitbox).`;
+    if(h==='fixedDamage') return `Deals a flat <b>${esc(special.amount)}</b> damage (fixed, ignores power/stats) along its shape.`;
+    if(h==='levelDamage') return `Deals damage equal to the caster's level (fixed, ignores power), hitting everything in its area.`;
+    if(h==='conditionalDamage') return `Deals ${type} damage, <b>${esc(special.mult)}x</b> if the target ${special.condition==='targetHasStatus'?'has a status ailment':esc(special.condition)}${num(sp.chainHops)!=='?'&&sp.chainHops?`, bouncing to up to ${sp.chainHops} nearby enemies`:''}.`;
+    return `Special effect: <b>${esc(h)}</b>.`;
+  }
+  // ---- geometry phrase ----
+  let geo='';
+  const shape=s.shape;
+  const motion=d.motion;
+  if(shape===null||shape===undefined){
+    // shapeless self-cast
+    geo = d.anchor==='self' ? 'A self-cast effect' : 'An effect';
+  } else if(shape==='radial'){
+    const isFull = s.radArc && Math.abs(s.radArc-6.2832)<0.01;
+    const isPoint = !s.radArc && s.radRadius!=null;
+    if(motion==='orbits'){
+      geo = `${num(sp.count)||1} orb${(sp.count||1)>1?'s':''} (${num(s.radRadius)}px) that circle the caster at ${num(d.orbitRadius)}px`;
+    } else if(motion==='travels' && sp.count>1){
+      geo = `${sp.count} ${type} projectiles ${num(sp.spread)>0&&Math.abs(sp.spread-6.2832)<0.01?'in a full ring':(sp.spread?'in a spread':'in a stream')}`;
+    } else if(motion==='travels'){
+      geo = `${art(type||'a')} ${type} projectile (${num(s.radRadius)}px)`;
+    } else if(motion==='falls'){
+      geo = `${num(sp.count)||1} ${type} strike${(sp.count||1)>1?'s':''} that fall onto enemy positions`;
+    } else if(d.grow){
+      geo = `${art(type||'a')} ${type} ring that expands outward to ${num(s.radRadius)}px`;
+    } else if(isFull){
+      geo = `${art(type||'a')} ${type} burst around the caster (${num(s.radRadius)}px)`;
+    } else if(s.radArc){
+      geo = `${art(type||'a')} ${type} cone/arc (${(s.radArc*57.3).toFixed(0)}\u00b0, ${num(s.radRadius)}px reach)`;
+    } else {
+      geo = `${art(type||'a')} ${type} hit (${num(s.radRadius)}px)`;
+    }
+  } else if(shape==='linear'){
+    if(motion==='repositions') geo = `a dash along a ${num(s.linLength)}\u00d7${num(s.linWidth)}px path`;
+    else geo = `${art(type||'a')} ${type} beam (${num(s.linLength)}\u00d7${num(s.linWidth)}px)`;
+  } else geo = `${esc(shape)} shape`;
+  // ---- motion/path extras ----
+  const extra=[];
+  if(d.moveSpeed && motion==='travels') extra.push(`at ${d.moveSpeed}px/s`);
+  if(d.path){ const pp=[]; if(d.path.curve)pp.push('curving'); if(d.path.oscillate)pp.push('weaving'); if(pp.length)extra.push(pp.join(' and ')); }
+  if(d.aimTrack) extra.push('tracking the nearest enemy');
+  if(d.turnRate) extra.push('homing');
+  if(sp.pierce) extra.push(`piercing ${sp.pierce}`);
+  if(d.repositionMode==='swept') extra.push('as a fast charge-through');
+  else if(d.repositionMode==='teleport') extra.push('as a blink');
+  // ---- lifetime phrase ----
+  let life='';
+  const eo=d.endOn;
+  if(Array.isArray(eo)){
+    const times=eo.filter(x=>x.time!=null).map(x=>x.time);
+    const ev=eo.filter(x=>x.time==null).map(x=>Object.keys(x)[0]);
+    const evtxt={notActive:'while this move stays selected',ownerDeath:'until the caster dies',contact:'on contact',returned:'until it returns',offScreen:'until off-screen',travelComplete:'over the dash'};
+    const bits=[];
+    if(times.length){ bits.push(times[0]===0?'resolving instantly':`lasting ${times[0]}s`); }
+    ev.forEach(e=>bits.push(evtxt[e]||e));
+    life=bits.join(', or ');
+  }
+  // ---- payload phrase ----
+  const eff=[];
+  pay.forEach(e=>{
+    if(e.t==='damage') eff.push('damage');
+    else if(e.t==='ailment') eff.push(`${e.chance&&e.chance<100?e.chance+'% ':''}${esc(e.ailment)}${e.duration?` (${e.duration}s)`:''}`);
+    else if(e.t==='stat'){ const dir=e.stages>0?'+':''; eff.push(`${e.chance&&e.chance<100?e.chance+'% ':''}${esc(e.stat)} ${dir}${e.stages} on ${esc(e.side||'foe')}`); }
+    else if(e.t==='knockback') eff.push(`knockback ${e.px}`);
+    else if(e.t==='flinch') eff.push(`${e.chance||''}% flinch`);
+    else if(e.t==='multihit') eff.push(`hits ${e.hits||(e.min+'-'+e.max)}\u00d7${e.normalize===false?' (full power each)':' (normalized)'}`);
+    else if(e.t==='heal') eff.push(`heal (${e.amount&&e.amount.from||'self'})`);
+    else if(e.t==='shield') eff.push('a regenerating shield');
+    else if(e.t==='recoil') eff.push(`costs ${Math.round((e.fraction||0)*100)}% max HP`);
+    else if(e.t==='crit') eff.push(`+${e.bonus}% crit`);
+    else if(e.t==='emit') eff.push(`emits a sub-move every ${e.every}s`);
+    else if(e.t==='spawn') eff.push('spawns a combatant');
+    else eff.push(esc(e.t));
+  });
+  // ---- assemble ----
+  let sentence = `Fires ${geo}`;
+  if(extra.length) sentence += ' '+extra.join(', ');
+  if(life) sentence += `, ${life}`;
+  sentence += '.';
+  if(eff.length) sentence += ` Applies: ${eff.join(', ')}.`;
+  if(d.rehit) sentence += ` Re-hits every ${d.rehit}s while active.`;
+  if(d.normalize) sentence += ` Base damage is normalized to its power (per-hit = power ÷ hit count); Duration/count upgrades still add damage on top.`;
+  if(t.cd!=null) sentence += ` Cooldown ${t.cd}s.`;
+  return sentence;
+}
+
+function entryBlock(m){
+  const order=['topLevel','shape','space','delivery','casterState','cardLock','payload'];
+  let out=[];
+  const t=m.topLevel||{};
+  out.push(`<span class="k">type</span>: <span class="s">${esc(t.type)}</span>`+(t.cd!=null?`   <span class="k">cd</span>: <span class="n">${esc(t.cd)}</span>`:'')+(t.power!=null?`   <span class="k">power</span>: <span class="n">${esc(t.power)}</span>`:''));
+  const dump=(label,o)=>{ if(!o||typeof o!=='object'||Array.isArray(o)) { if(o!=null) out.push(`<span class="k">${label}</span>: ${esc(JSON.stringify(o))}`); return;} const ent=Object.entries(o).filter(([k,v])=>v!==null&&v!==undefined&&v!==''&&!(typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0)); if(ent.length) out.push(`<span class="k">${label}</span>: `+ent.map(([k,v])=>`${esc(k)}=${esc(typeof v==='object'?JSON.stringify(v):v)}`).join('  ')); };
+  dump('shape',m.shape); dump('space',m.space); dump('delivery',m.delivery); dump('casterState',m.casterState);
+  if(m.cardLock) out.push(`<span class="k">cardLock</span>: ${esc(JSON.stringify(m.cardLock))}`);
+  if(m.payload) out.push(`<span class="k">payload</span>: <span class="s">${esc(JSON.stringify(m.payload))}</span>`);
+  return out.join('\n');
+}
+function render(){
+  if(!LIST.length){ $('wrap').innerHTML='<div class="empty">No decisions found in that JSON.</div>'; return; }
+  let shown=0;
+  const rows=LIST.filter(m=>{
+    const id=m.id||('row'+LIST.indexOf(m)); const st=state[id].status;
+    if(q){ const h=((m.name||'')+' '+(m.id||'')+' '+((m.topLevel&&m.topLevel.type)||'')+' '+st).toLowerCase(); if(!h.includes(q))return false; }
+    if(filter!=='all'&&st!==filter)return false; return true;
+  }).map(m=>{
+    const id=m.id||('row'+LIST.indexOf(m)); const S=state[id]; const st=S.status; shown++;
+    const t=m.topLevel||{};
+    return `<div class="card ${st} ${S.open?'open':''}">
+      <div class="head" onclick="tog('${id}')">
+        <span class="name">${esc(m.name||id)}</span>
+        ${t.type?`<span class="tag type">${esc(t.type)}</span>`:''}
+        ${m.shape&&m.shape.shape?`<span class="tag">${esc(m.shape.shape)}</span>`:''}
+        ${t.power!=null?`<span class="tag pow">pow ${esc(t.power)}</span>`:''}
+        <span class="pill ${st}">${st}</span>
+      </div>
+      <div class="body">
+        ${S.note?`<div class="note"><b>Note:</b> ${esc(S.note)}</div>`:''}
+        <div class="plain">${describe(m)}</div>
+        <div class="entry"><pre>${entryBlock(m)}</pre></div>
+        <div class="acts">
+          <button class="btn sm ok ${st==='approved'?'':'gh'}" onclick="setS('${id}','approved',event)">${st==='approved'?'\u2713 Approved':'Approve'}</button>
+          <button class="btn sm warn ${st==='changed'?'':'gh'}" onclick="setS('${id}','changed',event)">Changed</button>
+          <button class="btn sm gh" onclick="setS('${id}','pending',event)">Pending</button>
+          <button class="btn sm gh" onclick="editNote('${id}',event)">Edit note</button>
+        </div>
+        ${S.editing?`<textarea id="ta-${id}" oninput="onNote('${id}')">${esc(S.note)}</textarea>`:''}
+      </div></div>`;
+  }).join('');
+  $('wrap').innerHTML=rows;
+  const v=Object.values(state); const a=v.filter(x=>x.status==='approved').length,c=v.filter(x=>x.status==='changed').length,p=v.filter(x=>x.status==='pending').length;
+  $('counts').textContent=`showing ${shown} · ${a} approved · ${c} changed · ${p} pending (of ${LIST.length})`;
+}
+function tog(id){ state[id].open=!state[id].open; render(); }
+function setS(id,s,e){ e.stopPropagation(); state[id].status=s; markDirty(); render(); }
+function editNote(id,e){ e.stopPropagation(); state[id].editing=!state[id].editing; state[id].open=true; render(); setTimeout(()=>{const t=$('ta-'+id); if(t)t.focus();},0); }
+function onNote(id){ const t=$('ta-'+id); if(t){ state[id].note=t.value; markDirty(); } }
+$('q').addEventListener('input',e=>{q=e.target.value.toLowerCase().trim();render();});
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');filter=c.dataset.f;render();}));
+document.querySelector('.chip[data-f=all]').classList.add('on');
+
+function download(){
+  // write edited status/note back onto each decision, preserve everything else and the wrapper
+  LIST.forEach(m=>{ const id=m.id||('row'+LIST.indexOf(m)); const S=state[id]; m.status=S.status; m.note=S.note; });
+  let outObj;
+  if(Array.isArray(DATA)) outObj=LIST;
+  else { outObj=DATA; outObj.decisions=LIST; if(outObj.summary){ const v=Object.values(state); outObj.summary.by_status={approved:v.filter(x=>x.status==='approved').length,changed:v.filter(x=>x.status==='changed').length,pending:v.filter(x=>x.status==='pending').length}; } outObj.generated_edit=new Date().toISOString(); }
+  const blob=new Blob([JSON.stringify(outObj,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='move-decisions.json'; a.click();
+  dirty=false; $('dirty').style.display='none';
+}
+window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+</script></body></html>
