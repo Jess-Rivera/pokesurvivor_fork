@@ -1,35 +1,31 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-22 (Amazon Quick, work machine).
+Last updated: 2026-10-22 evening (Claude Desktop, home).
 
 ## Where we are
-- feature/items was MERGED to main (Jess). Now on branch rework/gym-progression (Jess cut it with git switch -c).
-- This session (2026-10-22, work machine): gym-gate ESCALATION built (first slice of the gym-progression work).
-  - Design (DECISIONS 2026-10-22 "Gym gate is a pressure mechanic"): gate opens -> 37 s grace -> every 10 s the wild level AND the gym leader level climb +1, UNCAPPED. Toast each tick. Snap-back to true run level on the win. Gauge on the gate (grace countdown, then "+N ESCALATING").
-  - Mechanism: one shared bump G.Gym.escBump(); levelForTime stays pure; read at 2 sites (wild spawn in enemy.js HP+atkLvl, PLAIN wilds only; gym leader in makeDef at entry).
-  - Files: js/systems/gym.js, js/data/enemies.js, js/entities/enemy.js, js/ui/hud.js, js/data/changelog.js, + docs. All 5 JS verified to parse (bracket/quote balance); assistant cannot run node. NOT run through check.js or browser yet. No harness yet.
-  - Dev test hooks: G.Gym.debugOpen() then wait past 37 s, or G.Gym.debugEsc(n) to jump the bump.
+- Branch rework/gym-progression. UNCOMMITTED (Jess commits): gate escalation, Kanto roster docs, slice A code. The assistant never runs git.
+- node tools/check.js: 89 files OK, 18/18 harnesses pass (run 2026-10-22). Not run in a browser.
+- Roster DESIGN done: docs/GYM-ROSTERS.md has all 8 Kanto gyms and the Elite Four locked (Mewtwo rejected, E4 may reuse species and use canon-passing non-Gen-1 ones, Alolan forms IN, Lance's second Dratini slot pinned).
+- Slice A BUILT, game behavior unchanged: gyms.js stage ladders, stageFor, lineup, stricter validate, Brock's six slots (2 to 6 provisional moves); gym.js makeDef(g, slot), G.Gym.loop / debugLoop / roster; G.SimBus + ui/gym-present.js (gym.js emits events now). See DECISIONS 2026-10-22 and DEVLOG pt.3.
 
 ## Next (in order)
-1. Jess: node tools/check.js, then browser feel-test the escalation on dev.html?dev. Commit when happy (assistant gives git commands).
-2. Gym-sprite DISPLAY FIX (same branch): the gate still draws the rift prop + purple tint in rift.js drawable(); make it read as a gym when rift.gym is set. (This was the original slice-1 idea; escalation jumped ahead of it.)
-3. Harness for the escalation clock/bump.
-4. Misty + Staryu (next Kanto gym, feature/boss-rework roster).
-5. Outside: boss damage slice, tileset integration.
+1. Jess: commit, then feel-test escalation and Brock on dev.html?dev (G.Debug.gym(), G.Gym.debugEsc(n)).
+2. Slice B: all-at-once arena flow (arena size by count, win = SET of boss ids, one shared enrage clock, field G.Gym.roster). Convert enemy.js gymStart/gymCast and rift.js gym toasts to SimBus events as touched.
+3. Gym-sprite DISPLAY FIX (the gate still draws the rift prop).
+4. Escalation clock harness; author moves and stacks for gyms 2 to 8.
+5. Regional-forms plan (Alolan Sandslash, Marowak, maybe Golem): needed before Lorelei and Agatha can be built (TODO).
 
-## Architecture direction (2026-10-22): sim/present boundary
-Client JS forever; server lang deferred to MP. Standing SP discipline: converge toward a sim/present-EVENT boundary, collision radius out of sprite metadata, injected clock. DIRECTION, pay down as you touch files. Full: DECISIONS 2026-10-22 + docs/SIM-PRESENT-BOUNDARY.md.
+## Architecture direction: sim/present boundary
+The event channel exists (G.SimBus). Convert sim calls to FX/Audio/Spawner into events as you touch them and log it in docs/SIM-PRESENT-BOUNDARY.md. New pure data functions: no clock, no randomness.
 
 ## Open questions for Jess
-- Escalation: leave it uncapped, or add a cap after real play? (Built uncapped per Jess.)
-- Gym gauge: grace shown as text only; want a visible ring/bar too?
-- Berry bag slots buyable under Team Upgrades later? Run-item acquisition (gacha / currency / meta unlocks)?
+- Bruno's Golem: regular form (stand-in) or Alolan Rock/Electric?
+- Escalation uncapped (as built) or capped after play? Gate gauge: add a ring or bar?
+- Berry bag slots buyable under Team Upgrades? Run-item acquisition?
 
 ## Standing rules (full text: CLAUDE.md)
-- Local-first: no Firebase/TURN/MP. English-native (inherited Spanish literals are i18n keys). No em-dashes.
-- Workflow: prose plan, Jess OKs, then build into the repo. changelog.js + Markdown docs free-edit. Assistant NEVER runs git. New save fields backward compatible.
-- Test as a new player with one Pokemon slot. Debug on dev.html?dev.
+Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js and Markdown docs are free-edit. Never run git. New save fields backward compatible. Debug on dev.html?dev.
 
 ## Where to look (search, do not read whole)
 DECISIONS.md, DEVLOG.md, BALANCE.md, TODO.md, BOSS-REWORK.md, docs/. Archives: docs/*-archive.md. Fast check: node tools/check.js.

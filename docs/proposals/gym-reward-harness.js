@@ -19,11 +19,12 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Items: { roll: () => 'x', rollFor: () => 'x' }, Judgment: { AT: 1800, noteDmg() { } }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
-['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/rift.js', 'js/systems/gym.js'].forEach(p => {
+['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/rift.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 
 G.Rift.reset(); G.Gym.reset(); G.Elites.reset();
+const tape = G.SimBus.record();          // the sim's events; the toast text below is asserted through the REAL gym-present subscriber
 // gate at 4:00
 clock = 240; G.Gym.update(0.1, pl, 240); const gate = G.Gym.gate, rift = G.Rift.rift;
 if (!gate || !rift || !rift.gym) bad('no gate'); else if (rift.ttl !== Infinity) bad('the gate should not expire');
@@ -48,6 +49,7 @@ if (drops.filter(k => k === 'coin').length < 10) bad('coins ' + drops.filter(k =
 if (log.dropXp.length) bad('a gym leader must drop no XP: ' + JSON.stringify(log.dropXp));
 if (log.boosts.join() !== 'atk:0.1') bad('Boulder Badge boost: ' + log.boosts); if (!log.pulled) bad('pickups not pulled to the player');
 if (!log.says.some(t => /Boulder Badge earned.*10% Attack.*level up/.test(t))) bad('no badge message: ' + log.says);
+{ const ev = tape.filter(e => e.type === 'gym:badge'); if (ev.length !== 1 || ev[0].badge !== 'Boulder Badge' || ev[0].stat !== 'atk' || ev[0].pct !== 0.1) bad('gym:badge event: ' + JSON.stringify(ev)); else if (JSON.stringify(JSON.parse(JSON.stringify(ev[0]))) !== JSON.stringify(ev[0])) bad('gym:badge payload is not plain data'); }
 if (log.levels === 1 && G.Gym.beaten !== 0) bad('beaten counted before the return');
 // 5 s later: back on the map
 G.Rift.update(5.1, pl, 786);

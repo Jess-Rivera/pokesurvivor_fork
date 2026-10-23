@@ -42,3 +42,14 @@ These are the concrete places where sim reaches into presentation. They are the 
 - Worked examples live in js/entities/enemy.js (hurt, showHurt, die, update) and js/game.js (loop, frame, update, render, drawScene).
 - Related TODO: "More accurate hitboxes" (per-species collision radius from opaque pixels, offline into a data file) is the same work as offender #2, do them together.
 - MP background: docs/MP-PARKED-NOTES.md (read when the cloud/MP phase begins).
+
+## Paid down (log)
+- 2026-10-22, rework/gym-progression: the event channel EXISTS now: js/core/simbus.js (G.SimBus: on, off, emit, record, stopRecording). Named SimBus because G.Events is the mid-game events system (horde, golden hour). Rules for events are in the simbus.js header: type 'area:name', plain-data payload that carries facts never display text, synchronous, a throwing subscriber is isolated, subscribers register once at boot.
+- 2026-10-22: systems/gym.js is now sim-only. Its four presentation calls (escalation toast and sound, the badge line, the calm line) are events: 'gym:escalate' { leader, bump }, 'gym:calm' { leader }, 'gym:badge' { badge, stat, pct }. js/ui/gym-present.js subscribes and owns the words and the sound. The gym harness asserts the events with Spawner and Audio rigged to throw if the sim touches them, and asserts the exact toast text through the real subscriber.
+- The first concrete candidate (Enemy.hurt / showHurt onto the bus) is unblocked now that the channel exists.
+
+## Remaining gym-side offenders (convert when the next slice touches them)
+- entities/enemy.js gymStart (G.FX.ring, anim.play) and gymCast (G.FX.slash, G.FX.ring, G.FX.sp, anim.play, G.FX.spark in gymShoot): the cast sim and its visuals are interleaved.
+- systems/rift.js: openGate and startGym toasts (G.Spawner.say), the arena tick and won() presentation. The multi-mon arena flow (next slice) rewrites the arena tick, so convert these then.
+- Reading sim state from presentation (hud.js reads G.Gym.graceLeft, escBump, enrageIn) is the allowed direction and stays.
+- New pure data functions follow the same rule: G.Gyms.stageFor and G.Gyms.lineup touch no engine global except the dex table, no clock, no randomness.

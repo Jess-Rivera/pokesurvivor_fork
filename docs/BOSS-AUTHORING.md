@@ -1,7 +1,7 @@
 # BOSS-AUTHORING, how to write a gym or Elite Four encounter (DRAFT schema, 2026-10-19)
 
 This is the human-friendly form you fill in. Claude turns it into game data later (js/data/gyms.js, propose-first since it is game data).
-Design background: BOSS-REWORK.md sections 3, 3a and 4. Nothing here is built yet.
+Design background: BOSS-REWORK.md sections 3, 3a and 4. Built so far (2026-10-22): Kanto gym 1, Brock, with the full six-slot roster in js/data/gyms.js (slots 2 to 6 have provisional moves). Roster design for every gym and Elite Four member: docs/GYM-ROSTERS.md.
 
 ## What you author and what the game derives
 
@@ -30,7 +30,7 @@ The game derives (never type these):
 | badge | display name | gyms and Elite Four both give the package |
 | level | a number | ELITE FOUR ONLY, hard-set. Leave out for gyms. |
 | boost | stat and percent | optional override of the badge's run boost |
-| signatures | ordered list, 1 to 6 | order matters: Keep Going will use the first N at once |
+| signatures | ordered list, 1 to 6 | order matters: loop N fields the first N at once (G.Gyms.lineup) |
 
 ## Move stacks (added 2026-10-19)
 
@@ -42,10 +42,22 @@ Optional tuning fields (added 2026-10-19, default 1, range above 0 up to 5): `po
 
 | Field | Values | Notes |
 |---|---|---|
-| species | Pokemon name as shown in the game | must exist in the Pokedex and have a sprite |
+| line | the evolution line, base form first, for example Geodude > Graveler > Golem | stored in gyms.js as a stage ladder of national dex numbers, each with the level it appears at; every dex must exist in the Pokedex |
 | stance | close, far, mixed | where it likes to fight. Default mixed. |
 | moves | 1 to 4 lines, see below | catalog moves only |
 | fury | optional: hpBelow 50, plus any of speed, cooldown, damage percents | OFF by default. Pending your OK. |
+
+## Stage ladders (added 2026-10-22)
+
+A signature is a roster SLOT, and a slot is an evolution LINE. The stage it shows is the last stage whose level is at or below the gym's effective level (the locked gym level plus any gate-escalation bump), so a slot evolves as the level climbs and evolution requirements are ignored. Default bands (placeholder, TUNE): a 2-stage line shows its final form at level 35, a 3-stage line shows its mid form at 20 and its final form at 35. A line can override the levels. The first stage always starts at level 1. Moves, stance, power and tempo belong to the slot, so one move set serves every stage.
+
+## Validation rules (enforced by G.Gyms.validate, swept by docs/proposals/gym-harness.js)
+
+- every move id exists in the catalog; the move's kind must have a BOSS FORM that is built. Today only melee, projectile and buff are built (Enemy.gymCast: melee and buff have their own form, every other kind falls through to the projectile path), so G.Gyms.BOSS_FORMS lists exactly those three. Add a kind there only when its boss form is built and tested.
+- 1 to 4 moves per slot, at least one damaging move, weight above 0, range close, far or any, optional hpBelow, stacks accepted by the real upgrade rules
+- stance close, far or mixed; power and tempo above 0 up to 5
+- stage ladder non-empty, first stage at level 1, levels strictly increasing integers, every dex real
+- unknown fields on a gym, slot or move are rejected (catches typos)
 
 ## Move line fields
 

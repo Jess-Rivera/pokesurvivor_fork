@@ -533,3 +533,11 @@ its x1.6 (it is a behavior archetype, not a base-stat multiplier).
 
 ## 2026-10-21, no native browser dialogs
 All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.ask, never confirm/alert/prompt. Spanish messages stay G.T() keys; titles and buttons are English.
+
+## 2026-10-22 Gym roster data model (slice A) and the first sim/present step
+- A gym signature is a roster SLOT = an evolution LINE: a stage ladder of dex numbers with the level each stage appears at (G.Gyms.stageFor), default bands 20 and 35 (placeholder). Stage follows the effective level (locked gym level plus the escalation bump), read at entry. Moves, stance, power and tempo are per slot, one set for every stage (Jess ok; per-stage overrides can be added later without breaking data).
+- G.Gyms.lineup(entry, loop, level) is the one place "loop N fields the first N" lives (pure, clamps N to 1..roster size). G.Gym.loop is a dev-set accessor (G.Gym.debugLoop, cleared by reset) until the real loop counter exists. G.Gym.roster(g) joins them. The game still fields slot 1 only: the all-at-once arena flow is slice B.
+- Brock's six slots are authored (Geodude line, Rhyhorn line, Omanyte line, Kabuto line, Onix to Steelix, Aerodactyl); slots 2 to 6 carry PROVISIONAL move sets (TUNE, no stacks). The default single-mon path is guarded by a regression test (Geodude, Lv 12, HP 1029).
+- Validation got stricter (Jess ok): every move kind must be in G.Gyms.BOSS_FORMS (melee, projectile, buff), because Enemy.gymCast only builds those and silently sends every other kind down the projectile path. Also 1 to 4 moves, at least one damaging, unknown fields rejected, ladders checked.
+- Sim/present: new js/core/simbus.js (G.SimBus) and js/ui/gym-present.js. systems/gym.js emits 'gym:escalate', 'gym:badge', 'gym:calm' (plain data) and no longer calls Spawner or Audio. Named SimBus because G.Events is the mid-game events system. Details and the remaining offender list: docs/SIM-PRESENT-BOUNDARY.md.
+- Roster rulings recorded in docs/GYM-ROSTERS.md the same day: no legendary gym mons (Mewtwo considered and rejected), the Elite Four may reuse gym species and use non-Gen-1 species that pass the canon test, Alolan forms are IN (need dex support, see TODO), Lance's second Dratini-line slot is a pinned stage.
