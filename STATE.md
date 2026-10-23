@@ -1,27 +1,25 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-22 evening (Claude Desktop, home).
+Last updated: 2026-10-22 night (Claude Desktop, home).
 
 ## Where we are
-- Branch rework/gym-progression. UNCOMMITTED (Jess commits): gate escalation, Kanto roster docs, slice A code. The assistant never runs git.
-- node tools/check.js: 89 files OK, 18/18 harnesses pass (run 2026-10-22). Not run in a browser.
-- Roster DESIGN done: docs/GYM-ROSTERS.md has all 8 Kanto gyms and the Elite Four locked (Mewtwo rejected, E4 may reuse species and use canon-passing non-Gen-1 ones, Alolan forms IN, Lance's second Dratini slot pinned).
-- Slice A BUILT, game behavior unchanged: gyms.js stage ladders, stageFor, lineup, stricter validate, Brock's six slots (2 to 6 provisional moves); gym.js makeDef(g, slot), G.Gym.loop / debugLoop / roster; G.SimBus + ui/gym-present.js (gym.js emits events now). See DECISIONS 2026-10-22 and DEVLOG pt.3.
+- GYM PROGRESSION IS PAUSED. Jess is switching to a new branch, feature/all-moves-import (plan: docs/MOVES-IMPORT-PLAN.md). Reason: gyms 2 to 8 and the Elite Four need moves the catalog lacks (64 imported, 833 classified in docs/move-import-review-v2.json), and there is no learnset data.
+- Branch rework/gym-progression holds everything built so far. Jess commits (the assistant never runs git). Pending docs from tonight: GYM-ROSTERS, STATE, TODO, DEVLOG, MOVES-IMPORT-PLAN.
+- node tools/check.js: 89 files OK, 18/18 harnesses pass (2026-10-22). Not run in a browser.
+- Roster DESIGN done: docs/GYM-ROSTERS.md has all 8 Kanto gyms and the Elite Four locked. Slice A built (data model, SimBus). Only Brock is authored in js/data/gyms.js.
 
 ## Next (in order)
-1. Jess: commit, then feel-test escalation and Brock on dev.html?dev (G.Debug.gym(), G.Gym.debugEsc(n)).
-2. Slice B: all-at-once arena flow (arena size by count, win = SET of boss ids, one shared enrage clock, field G.Gym.roster). Convert enemy.js gymStart/gymCast and rift.js gym toasts to SimBus events as touched.
-3. Gym-sprite DISPLAY FIX (the gate still draws the rift prop).
-4. Escalation clock harness; author moves and stacks for gyms 2 to 8.
-5. Regional-forms plan (Alolan Sandslash, Marowak, maybe Golem): needed before Lorelei and Agatha can be built (TODO).
+1. Jess: commit, branch to feature/all-moves-import.
+2. Answer the three open decisions in docs/MOVES-IMPORT-PLAN.md (import all 833 as unbuilt? low-confidence handling? learnset cap).
+3. Importer slice (data only), then behavior by kind, then learnsets.
+4. RESUME gym-progression after that: author gyms 2 to 8 and E4, then slice B (all-at-once arena flow), gym-sprite display fix, escalation clock harness, regional forms (Alolan Sandslash, Marowak, Golem line), E4 trigger flow and hard-set levels.
 
 ## Architecture direction: sim/present boundary
-The event channel exists (G.SimBus). Convert sim calls to FX/Audio/Spawner into events as you touch them and log it in docs/SIM-PRESENT-BOUNDARY.md. New pure data functions: no clock, no randomness.
+G.SimBus exists. Convert sim calls to FX/Audio/Spawner into events as you touch them; log in docs/SIM-PRESENT-BOUNDARY.md. New pure data functions: no clock, no randomness.
 
 ## Open questions for Jess
-- Bruno's Golem: regular form (stand-in) or Alolan Rock/Electric?
-- Escalation uncapped (as built) or capped after play? Gate gauge: add a ring or bar?
+- Moves import decisions above. Escalation uncapped or capped? Gate gauge ring or bar?
 - Berry bag slots buyable under Team Upgrades? Run-item acquisition?
 
 ## Standing rules (full text: CLAUDE.md)

@@ -323,3 +323,8 @@ hud.js moveIcon() (scratch canvases, source-atop mask, yellow outline); menu.js 
 - Sim/present step: new js/core/simbus.js (G.SimBus) and js/ui/gym-present.js; gym.js now emits gym:escalate, gym:badge, gym:calm instead of calling Spawner/Audio. dev.html and main.js NEED updated. Found: Enemy.gymCast only builds melee and buff, every other kind goes down the projectile path.
 - Verified: node tools/check.js, 89 files OK and 18/18 harnesses (gym-harness now has 12 sections, reward harness runs the real event path). Default leader def unchanged (Geodude Lv 12 HP 1029). Not run in a browser.
 - Where we stopped: slice B (all-at-once arena flow) is next; escalation and Brock still need Jess's dev.html?dev feel-test. REMINDER: commit and push.
+
+## 2026-10-22 (Claude Desktop, home) pt.4: gym wiring blocked on moves, pivot to moves import
+- Tried to wire the other 11 bosses into gyms.js; Jess stopped it: the moves they need are not imported. Audit: catalog has 64 moves, review file has 833 classified, only 99 signed off; per-type depth is 2 to 3 for rock, fighting, dragon, fairy, flying, ice, ghost (Bruno, Lance, Lorelei cannot be built). No learnset data exists. Boss forms are only melee, projectile, buff.
+- Decision: pause rework/gym-progression, open feature/all-moves-import. Plan written to docs/MOVES-IMPORT-PLAN.md (importer as data only with unbuilt kinds, behavior by kind, learnsets, then resume gyms). Three decisions still open for Jess.
+- No game code changed this part. STATE.md rewritten. REMINDER: commit and push.

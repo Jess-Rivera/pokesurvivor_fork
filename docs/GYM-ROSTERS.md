@@ -474,8 +474,9 @@ Steel weak; Electric-IMMUNE) and Alolan Sandslash (Ice/Steel: Fire and Fighting 
 Source: core-series teams. His Let's Go rematch is Onix, Hitmonchan, Hitmonlee, Poliwrath,
 Golem (Alolan there), Machamp, which is Jess's list plus Hitmonchan; Steelix is the FRLG
 rematch form of Onix. All Gen-1 except Steelix (Onix line-completion, already allowed).
-Hitmontop (Johto Bruno) was considered and left out. Golem is the regular form (Rock/Ground)
-standing in for the Alolan Rock/Electric Golem.
+Hitmontop (Johto Bruno) was considered and left out. Slot 6 is the ALOLAN Geodude line
+(Rock/Electric), decided by Jess 2026-10-22: it needs regional-form support in the dex (TODO),
+and until then gym data uses the regular Geodude line as the stand-in.
 
 Slot | Line (base -> final)               | Types (final)  | BST (final) | Role / canon
 -----|------------------------------------|----------------|-------------|---------------------------
@@ -485,7 +486,7 @@ Slot | Line (base -> final)               | Types (final)  | BST (final) | Role 
   4  | Poliwag -> Poliwhirl -> Poliwrath  | Water/Fighting | 510         | Let's Go canon; shared with Misty
   5  | Onix                               | Rock/Ground    | 385         | canon in every game
      |   -> Steelix (line-completion; FRLG rematch) | Steel/Ground | 510 | Def-200 wall; shared with Brock slot 5
-  6  | Geodude -> Graveler -> Golem       | Rock/Ground    | 495         | Let's Go rematch (Alolan there); shared with Brock slot 1
+  6  | Alolan Geodude -> Alolan Graveler -> Alolan Golem | Rock/Electric | 495 | Let's Go rematch canon; ALOLAN form (needs dex support); not Brock's Golem
 
 Base-stat reference (pokeapi-master; HP/Atk/Def/SpA/SpD/Spe):
   Machop     70/ 80/ 50/ 35/ 35/ 35 (305)   Machoke   80/100/ 70/ 50/ 60/ 45 (405)
@@ -493,8 +494,8 @@ Base-stat reference (pokeapi-master; HP/Atk/Def/SpA/SpD/Spe):
   Hitmonchan 50/105/ 79/ 35/110/ 76 (455)   Poliwag   40/ 50/ 40/ 40/ 40/ 90 (300)
   Poliwhirl  65/ 65/ 65/ 50/ 50/ 90 (385)   Poliwrath 90/ 95/ 95/ 70/ 90/ 70 (510)
   Onix       35/ 45/160/ 30/ 45/ 70 (385)   Steelix   75/ 85/200/ 55/ 65/ 30 (510)
-  Geodude    40/ 80/100/ 30/ 30/ 20 (300)   Graveler  55/ 95/115/ 45/ 45/ 35 (390)
-  Golem      80/120/130/ 55/ 65/ 45 (495)
+  A-Geodude  40/ 80/100/ 30/ 30/ 20 (300)   A-Graveler 55/ 95/115/ 45/ 45/ 35 (390)
+  A-Golem    80/120/130/ 55/ 65/ 45 (495)
 
 Per-loop lineup (count = loop number; ALL fielded at once; stage per the authored level):
   Loop 1: Machop/Machoke/Machamp
@@ -502,16 +503,17 @@ Per-loop lineup (count = loop number; ALL fielded at once; stage per the authore
   Loop 3: + Hitmonchan
   Loop 4: + Poliwag line
   Loop 5: + Onix/Steelix
-  Loop 6: Machamp, Hitmonlee, Hitmonchan, Poliwrath, Steelix, Golem   (full team)
+  Loop 6: Machamp, Hitmonlee, Hitmonchan, Poliwrath, Steelix, Alolan Golem   (full team)
 
-Reuse: Poliwrath (Misty), Steelix (Brock), Golem (Brock). Fresh: Machamp, Hitmonlee,
-Hitmonchan. Average final BST ~488.
+Reuse: Poliwrath (Misty), Steelix (Brock). Fresh: Machamp, Hitmonlee, Hitmonchan, Alolan
+Golem (a different form from Brock's Golem). Average final BST ~488.
 Defensive spread (design note): three pure Fighting plus Poliwrath (Water/Fighting) means
-FLYING and PSYCHIC each hit four of six (Steelix and Golem resist Flying), and Fairy hits
-the same four. Steelix (Steel/Ground: Fire, Water, Fighting, Ground weak) and Golem
-(Rock/Ground: Water and Grass 4x) are the ground-and-rock half; Steelix is Electric- and
-Poison-immune. A Flying or Psychic starter clears the Fighting four, a Water starter
-clears the back two, so no single type sweeps.
+FLYING and PSYCHIC each hit four of six (Steelix and Alolan Golem resist Flying), and Fairy
+hits the same four. Steelix (Steel/Ground: Fire, Water, Fighting, Ground weak) and Alolan
+Golem (Rock/Electric: Ground 4x, Water, Grass and Fighting 2x) are the back half; Steelix is
+Electric- and Poison-immune and Alolan Golem resists Electric. A Flying or Psychic starter
+clears the Fighting four, a Water or Ground starter clears the back two, so no single type
+sweeps.
 
 ### Elite Four 3 - Agatha (Ghost)   [ROSTER LOCKED 2026-10-22; moves/stacks still in gyms.js]
 
