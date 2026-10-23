@@ -27,3 +27,31 @@ Status: PLAN, agreed in outline 2026-10-22, nothing built. Jess pauses rework/gy
 
 ## Rules to carry over
 Prose plan then Jess OKs before touching moves.js or gyms.js. Never run git. No em-dashes. Backward compatible saves. Keep harnesses green (node tools/check.js).
+
+
+## Update 10/23/2026
+Unify the executor
+
+A boss is a combatant with a moveset and an AI controller, and the player is the same combatant with an input controller. There should be one move executor that takes (caster, move, aim) and does the thing. Only the thing choosing the move and the aim differs.
+
+BOSS_FORMS and Enemy.gymCast then go away as separate code paths. That also removes the bug where unknown kinds fall through to the projectile path.
+Each kind gets built once and works for starters, wild enemies, and bosses.
+Gym rosters become “species + moveset + AI profile”, which is what the learnset slice wants to feed anyway.
+Telegraphing is the one real difference. Bosses need a wind-up the player does not. Make it a per-move parameter (windup, warning shape) that the executor honors only when the caster is hostile, rather than a separate boss version of the move.
+The risk is balance. Player moves are tuned for auto-fire cadence, so expect to tune cooldowns per caster type. The stat model design already routes damage through one A/D path, which helps.
+
+We're planning to split a move into three layers
+
+Facts from PokeAPI: type, power, accuracy, class, priority, target, ailment, drain, and so on. Generated, never hand-edited.
+Game behavior, as two axes instead of one kind enum:
+    Delivery: melee, projectile, beam, cone, nova, meteor, dash, orbit, boomerang, mine, trail, turret, chain, wall, field, aura. These are geometry and movement, written once in code.
+    Payload: damage, heal, status, buff, shield, control. These are effects, applied through the status system.
+Overrides: hand-tuned per-move values (range, cooldown, width, count), in their own file so regeneration never clobbers them.
+
+Precedence is facts, then classifier output, then human override. Your existing 64 moves become override entries, and the harness proves they are unchanged.
+
+The two-axis split matters because several “unbuilt kinds” are not really kinds. Mend is self-target plus a heal payload. Ward is self-target plus a shield. Control is any delivery plus a status payload. Under the single-enum plan, ward, mend, control, field, and wall are blocked on the status system. With two axes, most of that collapses into a few payload handlers, and only field and wall stay as true new geometry.
+
+On the file format
+
+Keep a generated .js (like your tileset atlases, which work from file:// with no fetch), but treat it as a build artifact. The source of truth is the review JSON plus the overrides file, and a script emits G.MOVES. Nobody edits 833 entries by hand. Learnsets are a separate generated file of move ids per species.
