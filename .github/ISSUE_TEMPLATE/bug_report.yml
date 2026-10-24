@@ -1,0 +1,66 @@
+name: Bug report
+description: Something in the game is broken or behaving wrong
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for playtesting PokeSurvivor! Please fill this out so the bug can be reproduced.
+  - type: dropdown
+    id: build
+    attributes:
+      label: Which build?
+      description: Were you playing the built game or the dev build?
+      options:
+        - index.html (the normal built game)
+        - dev.html (development build)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What went wrong, and what did you expect instead?
+      placeholder: e.g. "Picked up a Lucky Egg and the run-item slot stayed empty. Expected it to show in the bottom-right column."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: How can this be made to happen again? Number the steps.
+      placeholder: |
+        1. Start a run with Charmander
+        2. Reach the first gym gate
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: run-context
+    attributes:
+      label: Run context
+      description: Starter / team, run time, region, anything relevant about the run.
+      placeholder: e.g. "Solo Squirtle, ~4:00 into a Kanto run"
+  - type: checkboxes
+    id: state-checks
+    attributes:
+      label: Before filing, did you try
+      description: The save lives in localStorage; some bugs are stale-state.
+      options:
+        - label: Hard reload (Ctrl+Shift+R)
+        - label: Reproduced it a second time
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Open DevTools (F12) → Console, copy any red errors here. This will be auto-formatted as code.
+      render: text
+  - type: input
+    id: browser-os
+    attributes:
+      label: Browser and OS
+      placeholder: e.g. "Chrome 142, Windows 11"
+    validations:
+      required: true
