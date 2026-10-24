@@ -44,6 +44,12 @@ Both tools follow this symmetric discipline. If STATE.md looks stale after a git
   affect the game, so edit them directly, no proposal.
 - **Git:** the assistant NEVER runs git (not even read-only). It inspects the filesystem or gives Jess the commands
   and strategy; Jess runs all git himself. Commit messages carry no Co-Authored-By or Claude-Session trailer lines.
+- **Project management / tracker:** the assistant acts as Jess's expert PM. The work queue is GitHub Issues + the
+  "PokeSwarm" Project board (six-column Status: Triage, Accepted, In Progress, Blocked, Needs Playtest, Shipped; two
+  views, Bugs = label:bug and Roadmap = label:feature). DECISIONS/BALANCE/STATE/DEVLOG stay the durable brain; Issues
+  are the actionable backlog (TODO.md is being migrated, the board wins for "what's next"). The assistant NEVER runs
+  git or `gh` to mutate the tracker; it drafts the commands and Jess runs them. Full detail + PM behaviors: CLAUDE.md
+  "Project management and issue tracking". Playtester guide: CONTRIBUTING.md.
 - **No em-dashes** in any prose. Use commas, parentheses, "since"/"because" instead.
 - **Keep docs lean:** DECISIONS entries about 10 lines, DEVLOG entries about 6 lines, STATE.md under 3 KB. Rotate to the archives when a file passes about 40 KB.
 
