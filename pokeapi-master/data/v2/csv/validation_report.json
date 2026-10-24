@@ -1,0 +1,16 @@
+{
+  "input_directory": "C:\\Users\\boric\\OneDrive\\Desktop\\reduxsurvivor\\pokesurvivor_fork\\pokeapi-master\\data\\v2\\csv",
+  "language_id": 9,
+  "counts": {
+    "moves_in_source": 937,
+    "moves_exported": 937,
+    "version_groups_loaded": 32,
+    "localized_names": 937,
+    "localized_effect_prose": 457,
+    "localized_flavor_text_rows_before_version_selection": 9635,
+    "flavor_text_rows_selected": 914,
+    "moves_with_changelog_changes": 168,
+    "warnings": 0
+  },
+  "warnings": []
+}
