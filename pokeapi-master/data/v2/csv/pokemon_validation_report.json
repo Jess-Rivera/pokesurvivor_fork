@@ -1,0 +1,15 @@
+{
+  "input_directory": "C:\\Users\\jessvri\\Desktop\\pokesurvivor_fork\\pokeapi-master\\data\\v2\\csv",
+  "language_id": 9,
+  "counts": {
+    "species_in_source": 1025,
+    "species_exported": 1025,
+    "pokemon_rows_in_source": 1351,
+    "functional_forms_nested": 244,
+    "localized_species_names": 1025,
+    "flavor_text_species_selected": 1025,
+    "national_pokedex_id": 1,
+    "warnings": 0
+  },
+  "warnings": []
+}
