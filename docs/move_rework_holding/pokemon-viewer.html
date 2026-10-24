@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokemon Dataset Viewer</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel2:#eef0f4; --line:#d9dde4; --text:#1b1f27; --dim:#6b7380;
+  --accent:#3b6df0; --accent-bg:#e6edff; --bad:#d23b3b; --good:#1f9d55; --row-hover:#f1f5ff; --row-sel:#dfe8ff;
+  --shadow:0 8px 28px rgba(20,30,60,.18); --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#14171c; --panel:#1b1f26; --panel2:#232831; --line:#303743; --text:#e6e9ef; --dim:#8b94a3;
+    --accent:#6c93ff; --accent-bg:#26324f; --bad:#ff6b6b; --good:#4cd08a; --row-hover:#222a38; --row-sel:#2b3a5c; --shadow:0 8px 28px rgba(0,0,0,.5);}
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+input[type=text],input[type=search],select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 11px;cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:transparent}
+button:hover{border-color:var(--accent)}
+
+#top{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+#top h1{font-size:15px;margin:0 8px 0 0;font-weight:650}
+#top .status{color:var(--dim);font-size:12.5px;margin-left:auto}
+
+#app{display:grid;grid-template-columns:380px 1fr;height:calc(100% - 52px)}
+@media(max-width:820px){#app{grid-template-columns:1fr}}
+
+/* left list */
+#left{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+#filters{padding:10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+#filters .row{display:flex;gap:6px;flex-wrap:wrap}
+#filters select,#filters input{flex:1;min-width:0}
+.rangewrap{display:flex;gap:6px;align-items:center}
+.rangewrap input{width:70px;flex:none}
+#list{overflow:auto;min-height:0;flex:1}
+.lrow{display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.lrow:hover{background:var(--row-hover)}
+.lrow.sel{background:var(--row-sel)}
+.lrow .dex{color:var(--dim);font:12px var(--mono);min-width:42px}
+.lrow .nm{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .chips{display:flex;gap:3px}
+
+/* type chips */
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:650;color:#fff;letter-spacing:.2px;text-transform:capitalize}
+
+/* right detail */
+#right{overflow:auto;min-height:0;padding:0}
+#empty{display:flex;height:100%;align-items:center;justify-content:center;color:var(--dim);flex-direction:column;gap:8px;text-align:center;padding:30px}
+#detail{padding:18px 22px;max-width:760px}
+.dhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dhead h2{margin:0;font-size:24px}
+.dhead .dex{font:14px var(--mono);color:var(--dim)}
+.dhead .genus{color:var(--dim);font-style:italic}
+.badges{display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:650;padding:2px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.badge.leg{background:#fff3cd;border-color:#e0c060;color:#7a5a00}
+.badge.myth{background:#e7d6ff;border-color:#b08ae0;color:#5a2d8a}
+.badge.baby{background:#ffe0ec;border-color:#e08ab0;color:#8a2d5a}
+@media (prefers-color-scheme:dark){
+  .badge.leg{background:#4a3c10;color:#f0d890;border-color:#7a6020}
+  .badge.myth{background:#3a2a55;color:#d0b0ff;border-color:#6a4d8a}
+  .badge.baby{background:#4a2035;color:#ff9ac0;border-color:#8a4d6a}
+}
+.section{margin-top:20px}
+.section h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin:0 0 8px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.chips-lg{display:flex;gap:6px}
+.chip-lg{padding:3px 12px;font-size:13px}
+
+/* forms switcher */
+.forms{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.formbtn{font-size:12.5px;padding:4px 12px;border-radius:999px}
+.formbtn.on{background:var(--accent);color:#fff;border-color:transparent}
+
+/* stat bars */
+.stats{display:grid;grid-template-columns:62px 42px 1fr;gap:5px 10px;align-items:center}
+.stats .lbl{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px}
+.stats .num{font:13px var(--mono);text-align:right}
+.bar{height:11px;border-radius:6px;background:var(--panel2);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:6px}
+.stats .total .lbl,.stats .total .num{font-weight:700;color:var(--text)}
+
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 12px}
+.kv .k{color:var(--dim)}
+.abil{display:flex;flex-direction:column;gap:4px}
+.abil .a{display:flex;gap:8px;align-items:center}
+.abil .hidden{font-size:10.5px;font-weight:650;color:#fff;background:var(--dim);padding:0 6px;border-radius:999px}
+.evo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.evo .node{padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.evo .arr{color:var(--dim)}
+.flavor{color:var(--text);background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-size:13.5px}
+
+#drop{position:fixed;inset:0;background:rgba(59,109,240,.12);border:3px dashed var(--accent);display:none;align-items:center;justify-content:center;font-size:20px;font-weight:650;color:var(--accent);z-index:50}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="top">
+  <h1>Pokemon Dataset Viewer</h1>
+  <button class="primary" id="btnOpen">Open JSON…</button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
+  <span class="status" id="status">No file loaded. Drop api_pokemon_dataset.json anywhere, or Open JSON…</span>
+</div>
+
+<div id="app">
+  <div id="left">
+    <div id="filters">
+      <input type="search" id="q" placeholder="Search name or dex #…">
+      <div class="row">
+        <select id="fType"><option value="">All types</option></select>
+        <select id="fGen"><option value="">All generations</option></select>
+      </div>
+      <div class="row">
+        <select id="fSpecial">
+          <option value="">Any rarity</option>
+          <option value="legendary">Legendary</option>
+          <option value="mythical">Mythical</option>
+          <option value="baby">Baby</option>
+          <option value="normal">Ordinary only</option>
+        </select>
+        <span class="rangewrap">BST <input type="number" id="fMin" placeholder="min"> – <input type="number" id="fMax" placeholder="max"></span>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div id="right">
+    <div id="empty">
+      <div style="font-size:34px">📇</div>
+      <div><b>Pick a Pokemon on the left</b></div>
+      <div style="color:var(--dim)">Local only. Nothing is uploaded. API data only (no sprites).</div>
+    </div>
+    <div id="detail" class="hide"></div>
+  </div>
+</div>
+
+<div id="drop">Drop api_pokemon_dataset.json to load</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap = s => s==null?'':String(s).replace(/(^|[-_ ])([a-z])/g,(m,a,b)=>a+b.toUpperCase()).replace(/[-_]/g,' ');
+
+const TYPE_COLORS={normal:'#8a8a59',fire:'#e8651a',water:'#4a7ee0',electric:'#d9a800',grass:'#4fa83d',ice:'#4fb8b8',fighting:'#b8281f',poison:'#9a3a9a',ground:'#c9a34a',flying:'#8a73d9',psychic:'#e83e72',bug:'#8aa318',rock:'#a38f26',ghost:'#6a4d8a',dragon:'#5a22e0',dark:'#5d4638',steel:'#8b8bab',fairy:'#d9708a',stellar:'#3a9a9a',unknown:'#5f8f8f',shadow:'#403055'};
+const typeChip=(t,lg)=>`<span class="chip${lg?' chip-lg':''}" style="background:${TYPE_COLORS[t]||'#777'}">${esc(t)}</span>`;
+
+// canonical stat order + short labels
+const STAT_ORDER=['hp','attack','defense','special-attack','special-defense','speed'];
+const STAT_LBL={hp:'HP',attack:'Atk',defense:'Def','special-attack':'SpA','special-defense':'SpD',speed:'Spe'};
+const statColor=v=>{ // 0..255 low->high red->green
+  const x=Math.max(0,Math.min(1,v/200));
+  const h=Math.round(x*120); return `hsl(${h} 70% 45%)`;
+};
+
+const state={all:[],view:[],sel:-1,form:0,byDex:new Map(),speciesById:new Map()};
+
+/* ---------- loading ---------- */
+function ingest(data){
+  let arr=null;
+  if(Array.isArray(data)) arr=data;
+  else if(data && Array.isArray(data.pokemon)) arr=data.pokemon;
+  else if(data && typeof data==='object'){ // fallback: largest array of objects
+    for(const v of Object.values(data)) if(Array.isArray(v)&&v.length&&typeof v[0]==='object'&&(!arr||v.length>arr.length)) arr=v;
+  }
+  if(!arr){ setStatus('Could not find a pokemon array in that file.'); return; }
+  state.all=arr;
+  state.speciesById.clear();
+  for(const p of arr){ const sid=p.species_source&&p.species_source.id; if(sid!=null) state.speciesById.set(sid,p); }
+  buildFilterOptions();
+  applyFilters();
+  setStatus(`${arr.length.toLocaleString()} species loaded.`);
+  $('#empty').classList.remove('hide'); $('#detail').classList.add('hide'); state.sel=-1;
+}
+function setStatus(t){ $('#status').textContent=t; }
+function loadText(txt){
+  let data; try{ data=JSON.parse(txt.replace(/^\uFEFF/,'')); }catch(e){ setStatus('Invalid JSON: '+e.message); return; }
+  ingest(data);
+}
+
+/* ---------- helpers on an entry ---------- */
+const bst=p=>(p.stats||[]).reduce((a,s)=>a+(s.base_stat||0),0);
+const primaryTypes=p=>(p.types||[]).map(t=>t.type);
+function activeView(p){ // returns {types,stats,abilities,label} for current form index
+  if(!p) return null;
+  if(state.form===0 || !p.forms || !p.forms[state.form-1]){
+    return {types:p.types||[],stats:p.stats||[],abilities:p.abilities||[],label:'Default'};
+  }
+  const f=p.forms[state.form-1];
+  const lbl=(f.source&&(f.source.identifier))||('Form '+state.form);
+  return {types:f.types||[],stats:f.stats||[],abilities:f.abilities||[],label:lbl};
+}
+
+/* ---------- filter UI ---------- */
+function buildFilterOptions(){
+  const types=new Set(),gens=new Set();
+  for(const p of state.all){ primaryTypes(p).forEach(t=>types.add(t)); if(p.generation) gens.add(p.generation); }
+  const ft=$('#fType'); ft.innerHTML='<option value="">All types</option>'+[...types].sort().map(t=>`<option value="${esc(t)}">${esc(cap(t))}</option>`).join('');
+  const genArr=[...gens].sort((a,b)=>{const na=(''+a).match(/\d+|[ivx]+$/i);return (''+a).localeCompare(''+b);});
+  const fg=$('#fGen'); fg.innerHTML='<option value="">All generations</option>'+genArr.map(g=>`<option value="${esc(g)}">${esc(cap(g))}</option>`).join('');
+}
+
+function applyFilters(){
+  const q=$('#q').value.trim().toLowerCase();
+  const ft=$('#fType').value, fg=$('#fGen').value, fs=$('#fSpecial').value;
+  const mn=parseInt($('#fMin').value,10), mx=parseInt($('#fMax').value,10);
+  state.view=state.all.filter(p=>{
+    if(q){ const nm=(p.name||'').toLowerCase(), dex=(''+(p.national_dex||'')); if(!nm.includes(q)&&!dex.includes(q)) return false; }
+    if(ft && !primaryTypes(p).includes(ft)) return false;
+    if(fg && p.generation!==fg) return false;
+    if(fs){ const f=p.flags||{};
+      if(fs==='legendary'&&!f.is_legendary) return false;
+      if(fs==='mythical'&&!f.is_mythical) return false;
+      if(fs==='baby'&&!f.is_baby) return false;
+      if(fs==='normal'&&(f.is_legendary||f.is_mythical||f.is_baby)) return false;
+    }
+    const b=bst(p);
+    if(!isNaN(mn)&&b<mn) return false;
+    if(!isNaN(mx)&&b>mx) return false;
+    return true;
+  });
+  renderList();
+}
+
+function renderList(){
+  const L=$('#list');
+  if(!state.view.length){ L.innerHTML='<div style="padding:16px;color:var(--dim)">No matches.</div>'; return; }
+  L.innerHTML=state.view.map((p,i)=>{
+    const sid=p.species_source&&p.species_source.id;
+    const chips=primaryTypes(p).map(t=>typeChip(t)).join('');
+    const dex=p.national_dex!=null?('#'+String(p.national_dex).padStart(3,'0')):'—';
+    return `<div class="lrow" data-sid="${esc(sid)}"><span class="dex">${esc(dex)}</span><span class="nm">${esc(p.name||p.species_source&&p.species_source.identifier||'?')}</span><span class="chips">${chips}</span></div>`;
+  }).join('');
+  // re-mark selection
+  if(state.sel!=null){ const el=L.querySelector(`.lrow[data-sid="${state.sel}"]`); if(el) el.classList.add('sel'); }
+}
+
+/* ---------- detail ---------- */
+function select(sid){
+  state.sel=sid; state.form=0;
+  document.querySelectorAll('.lrow').forEach(r=>r.classList.toggle('sel',r.dataset.sid==String(sid)));
+  renderDetail();
+}
+function statRow(s){
+  const v=s.base_stat||0;
+  return `<div class="lbl">${esc(STAT_LBL[s.stat]||s.stat)}</div><div class="num">${v}</div><div class="bar"><i style="width:${Math.min(100,v/255*100)}%;background:${statColor(v)}"></i></div>`;
+}
+function renderDetail(){
+  const p=state.speciesById.get(state.sel);
+  if(!p){ $('#detail').classList.add('hide'); $('#empty').classList.remove('hide'); return; }
+  $('#empty').classList.add('hide'); const D=$('#detail'); D.classList.remove('hide');
+  const view=activeView(p);
+  const f=p.flags||{};
+  const badges=[];
+  if(f.is_legendary) badges.push('<span class="badge leg">Legendary</span>');
+  if(f.is_mythical) badges.push('<span class="badge myth">Mythical</span>');
+  if(f.is_baby) badges.push('<span class="badge baby">Baby</span>');
+  if(p.generation) badges.push('<span class="badge">'+esc(cap(p.generation))+'</span>');
+
+  // forms switcher
+  let formsHtml='';
+  if(p.forms&&p.forms.length){
+    const btns=['<button class="formbtn'+(state.form===0?' on':'')+'" data-f="0">Default</button>']
+      .concat(p.forms.map((fm,i)=>{
+        const lbl=cap((fm.source&&fm.source.identifier)||('form-'+(i+1)));
+        return `<button class="formbtn${state.form===i+1?' on':''}" data-f="${i+1}">${esc(lbl)}</button>`;
+      }));
+    formsHtml=`<div class="section"><h3>Forms</h3><div class="forms">${btns.join('')}</div></div>`;
+  }
+
+  const total=view.stats.reduce((a,s)=>a+(s.base_stat||0),0);
+  // order stats canonically
+  const sstats=STAT_ORDER.map(k=>view.stats.find(s=>s.stat===k)).filter(Boolean)
+    .concat(view.stats.filter(s=>!STAT_ORDER.includes(s.stat)));
+
+  const abil=view.abilities.map(a=>`<div class="a"><span>${esc(cap(a.ability))}</span>${a.is_hidden?'<span class="hidden">HIDDEN</span>':''}</div>`).join('')||'<span style="color:var(--dim)">—</span>';
+
+  const eggs=(p.egg_groups||[]).map(e=>esc(cap(e.egg_group))).join(', ')||'—';
+  const br=p.breeding||{};
+  const evo=p.evolution||{};
+  const from=evo.evolves_from_species_id!=null?state.speciesById.get(evo.evolves_from_species_id):null;
+  const evoDetails=(evo.evolution_details||[]).map(d=>{
+    const bits=[];
+    if(d.minimum_level) bits.push('Lv '+d.minimum_level);
+    if(d.evolution_trigger) bits.push(cap(d.evolution_trigger));
+    if(d.time_of_day) bits.push(d.time_of_day);
+    if(d.minimum_happiness) bits.push('happiness '+d.minimum_happiness);
+    return bits.join(', ');
+  }).filter(Boolean);
+
+  let evoHtml='<span style="color:var(--dim)">No evolution data</span>';
+  if(from||evoDetails.length){
+    const parts=[];
+    if(from) parts.push(`<span class="node">${esc(from.name||'#'+evo.evolves_from_species_id)}</span><span class="arr">→</span>`);
+    parts.push(`<span class="node"><b>${esc(p.name)}</b></span>`);
+    evoHtml='<div class="evo">'+parts.join('')+'</div>'+(evoDetails.length?`<div style="color:var(--dim);font-size:12.5px;margin-top:6px">${esc(evoDetails.join('  •  '))}</div>`:'');
+  }
+
+  const dexList=(p.dex_numbers||[]).map(d=>`${esc(cap(d.pokedex))} #${d.number}`).join(', ');
+
+  D.innerHTML=`
+    <div class="dhead">
+      <h2>${esc(p.name||'?')}</h2>
+      <span class="dex">${p.national_dex!=null?'#'+String(p.national_dex).padStart(3,'0'):'—'}</span>
+      ${p.genus?`<span class="genus">${esc(p.genus)}</span>`:''}
+    </div>
+    <div class="badges">${badges.join('')}</div>
+
+    ${formsHtml}
+
+    <div class="section"><h3>Type${view.label!=='Default'?' · '+esc(cap(view.label)):''}</h3>
+      <div class="chips-lg">${view.types.map(t=>typeChip(t.type,true)).join('')||'—'}</div>
+    </div>
+
+    <div class="section"><h3>Base stats · total ${total}</h3>
+      <div class="stats">
+        ${sstats.map(statRow).join('')}
+        <div class="lbl total">Total</div><div class="num total">${total}</div><div class="bar"><i style="width:${Math.min(100,total/720*100)}%;background:${statColor(total/6)}"></i></div>
+      </div>
+    </div>
+
+    <div class="section"><h3>Abilities</h3><div class="abil">${abil}</div></div>
+
+    <div class="section"><h3>Breeding & misc</h3>
+      <div class="kv">
+        <div class="k">Egg groups</div><div>${eggs}</div>
+        <div class="k">Gender rate</div><div>${br.gender_rate==null?'—':(br.gender_rate<0?'Genderless':(br.gender_rate/8*100)+'% female')}</div>
+        <div class="k">Capture rate</div><div>${br.capture_rate==null?'—':br.capture_rate}</div>
+        <div class="k">Base happiness</div><div>${br.base_happiness==null?'—':br.base_happiness}</div>
+        <div class="k">Hatch counter</div><div>${br.hatch_counter==null?'—':br.hatch_counter}</div>
+        <div class="k">Growth rate</div><div>${p.growth_rate?esc(cap(p.growth_rate.identifier)):'—'}</div>
+        <div class="k">Color / shape</div><div>${esc(cap(p.color&&p.color.identifier||'—'))} / ${esc(cap(p.shape&&p.shape.identifier||'—'))}</div>
+        <div class="k">Habitat</div><div>${esc(cap(p.habitat&&p.habitat.identifier||'—'))}</div>
+      </div>
+    </div>
+
+    <div class="section"><h3>Evolution</h3>${evoHtml}</div>
+
+    ${p.flavor_text&&p.flavor_text.flavor_text?`<div class="section"><h3>Flavor</h3><div class="flavor">${esc((p.flavor_text.flavor_text||'').replace(/[\n\f]/g,' '))}</div></div>`:''}
+
+    ${dexList?`<div class="section"><h3>Dex numbers</h3><div style="color:var(--dim);font-size:12.5px">${esc(dexList)}</div></div>`:''}
+  `;
+}
+
+/* ---------- events ---------- */
+$('#list').addEventListener('click',e=>{ const r=e.target.closest('.lrow'); if(r) select(isNaN(+r.dataset.sid)?r.dataset.sid:+r.dataset.sid); });
+$('#detail').addEventListener('click',e=>{ const b=e.target.closest('.formbtn'); if(b){ state.form=+b.dataset.f; renderDetail(); } });
+['#q','#fType','#fGen','#fSpecial','#fMin','#fMax'].forEach(sel=>{ const el=$(sel); el.addEventListener('input',applyFilters); el.addEventListener('change',applyFilters); });
+
+$('#btnOpen').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{ const f=e.target.files[0]; if(f){ loadText(await f.text()); } e.target.value=''; };
+
+let dd=0;
+addEventListener('dragenter',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){ dd++; $('#drop').style.display='flex'; }});
+addEventListener('dragleave',e=>{ if(--dd<=0){ dd=0; $('#drop').style.display='none'; }});
+addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+addEventListener('drop',async e=>{ e.preventDefault(); dd=0; $('#drop').style.display='none'; const f=e.dataTransfer.files[0]; if(f) loadText(await f.text()); });
+</script>
+</body>
+</html>
