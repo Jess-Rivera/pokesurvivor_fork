@@ -29,29 +29,15 @@ Both tools follow this symmetric discipline. If STATE.md looks stale after a git
 - Jess works partially here (Amazon Quick, work machine) and partially at home (Claude Desktop).
 - The git repo bridges them. Commit before switching tools so neither side edits a divergent tree.
 
-## Core working rules (full detail in CLAUDE.md)
-- **Local-first:** build and perfect the LOCAL single-player game first. All cloud/online and
-  multiplayer work (Firebase, Cloudflare TURN, js/net/) is DEFERRED until Jess says he is switching phase.
-- **English-native:** author new user-facing strings directly in English. Leave inherited Spanish string
-  literals as-is (they are the i18n keys). No lang-en.js entries or Spanish translations for our own new strings.
-- **Workflow (standing):** for anything that changes what the game does when you run it (code, js/data/*.js,
-  dev.html, build config, assets), the assistant gives a PROSE PLAN in chat (what changes, files, numbers,
-  decisions needed, risks). Jess replies with edits or OK. Then the assistant builds, runs the harness and
-  headless-browser tests, and writes straight into the repo in one step. No diff files, no separate apply step,
-  no code snippets in chat. Jess does not type code.
-  - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes). Edit it directly, but verify it still parses as valid JS.
-- **Free-edit for project docs:** the Markdown docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, ISSUES, CLAUDE, docs/) do not
-  affect the game, so edit them directly, no proposal.
-- **Git:** the assistant NEVER runs git (not even read-only). It inspects the filesystem or gives Jess the commands
-  and strategy; Jess runs all git himself. Commit messages carry no Co-Authored-By or Claude-Session trailer lines.
-- **Project management / tracker:** the assistant acts as Jess's expert PM. The work queue is GitHub Issues + the
-  "PokeSwarm" Project board (six-column Status: Triage, Accepted, In Progress, Blocked, Needs Playtest, Shipped; two
-  views, Bugs = label:bug and Roadmap = label:feature). DECISIONS/BALANCE/STATE/DEVLOG stay the durable brain; Issues
-  are the actionable backlog (TODO.md is being migrated, the board wins for "what's next"). The assistant NEVER runs
-  git or `gh` to mutate the tracker; it drafts the commands and Jess runs them. Full detail + PM behaviors: CLAUDE.md
-  "Project management and issue tracking". Playtester guide: CONTRIBUTING.md.
-- **No em-dashes** in any prose. Use commas, parentheses, "since"/"because" instead.
-- **Keep docs lean:** DECISIONS entries about 10 lines, DEVLOG entries about 6 lines, STATE.md under 3 KB. Rotate to the archives when a file passes about 40 KB.
+## Core working rules (one-line reminders, full detail in CLAUDE.md)
+- **Local-first:** local single-player first; all cloud/MP (Firebase, Cloudflare TURN, js/net/) DEFERRED until Jess switches phase.
+- **English-native:** new strings authored in English; leave inherited Spanish literals as-is (they are the i18n keys); no lang-en.js entries for our own strings.
+- **Workflow (standing):** game-affecting change (code, js/data/*.js, dev.html, build, assets) = prose plan, then Jess OKs, then assistant builds/tests/writes in one step. Jess never types code. EXCEPTION: js/data/changelog.js is free-edit (verify valid JS).
+- **Free-edit for project docs:** the Markdown docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, ISSUES, CLAUDE, docs/) edit directly, no proposal.
+- **Git:** assistant NEVER runs git (not even read-only); gives Jess the commands. No Co-Authored-By / AI trailer in commit messages.
+- **PM / tracker:** assistant is Jess's PM; work queue is GitHub Issues + the "PokeSwarm" board (board wins for "what's next"). Assistant NEVER runs git/`gh` to mutate the tracker, drafts commands for Jess. Detail: docs/PM-WORKFLOW.md. Playtester guide: CONTRIBUTING.md.
+- **No em-dashes** in any prose. Use commas, parentheses, "since"/"because".
+- **Keep docs lean:** DECISIONS ~10 lines/entry, DEVLOG ~6 lines/entry, STATE.md under 3 KB. Rotate to archives past ~40 KB.
 
 ## Where things live
 - Design reference for the genre: docs/survivor-like-design-reference.md (Vampire Survivors / Brotato / Halls of Torment patterns and numbers). Search it, do not read it whole.
