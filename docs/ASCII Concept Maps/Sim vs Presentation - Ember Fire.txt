@@ -1,0 +1,166 @@
+SIM vs PRESENTATION  —  one Ember shot, moment by moment
+PokeSurvivor English Fork   |   drawn 2026-10-24
+Companion to: docs/SIM-PRESENT-BOUNDARY.md (sim emits events, presentation renders them)
+
+Reading guide:
+  [SIM] = authoritative. Decides state. Must be deterministic. Co-op syncs THIS.
+  [PRE] = presentation. Cosmetic only. Reads sim state / consumes events. Co-op NEVER depends on this.
+  ═══════ THE BOUNDARY ═══════  everything above is truth, everything below is a picture of it.
+
+=====================================================================================
+THE ONE RULE
+=====================================================================================
+  SIM decides WHAT happened and WHEN.   PRESENTATION decides how it LOOKS.
+  Sim never draws. Presentation never decides a hit. They talk ONLY through:
+     • live state reads  (continuous things: "where is the projectile right now?")
+     • events            (discrete things:   "a hit just happened, here")
+
+=====================================================================================
+TIMELINE OF ONE EMBER  (enemy wanders into range → Ember fires → burns it)
+=====================================================================================
+
+t = every frame, BEFORE anything fires: the cooldown is ticking
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  Combat.tick(dt):  m.t -= dt           // cooldown counts down          │
+│        is there a target in reach? (needsTarget + dist <= reach)              │
+│        not yet → m.t = 0.05, return           // wait, don't fire at air      │
+│ [PRE]  HUD: the Ember skill icon sits ready/greyed. that's all.               │
+└───────────────────────────────────────────────────────────────────────────── ┘
+                                    │
+                                    ▼
+───────────────────────────────────────────────────────────────────  MOMENT 1: ENEMY ENTERS RANGE
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  dist(player, enemy) <= reach(m)  AND  m.t <= 0                          │
+│        → the gate opens. this is a SIM fact: a target exists and cd is ready.  │
+│ [PRE]  nothing yet. the enemy being "in range" is invisible to the player     │
+│        (no indicator today). sim knows before anything is drawn.              │
+└───────────────────────────────────────────────────────────────────────────── ┘
+                                    │
+                                    ▼
+───────────────────────────────────────────────────────────────────  MOMENT 2: THE CAST
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  m.t = m.cd * cdMul          // reset cooldown (0.52s for Ember)        │
+│        fizzle check (paralysis/confusion) — may cancel. SIM decides.          │
+│        pl.cast(m)  →  fireProjectiles(pl, m):                                  │
+│          spawn 1 projectile object: {x,y at caster, aim angle,                │
+│             speed 310, size 7, pierce 0, life 1.6, dmg 40, burn 10%}          │
+│          this object is SIM STATE. it exists whether or not anyone looks.     │
+│        emit EVENT: 'cast'  (move id, caster, position, angle)                 │
+│ ═════════════════════════════ BOUNDARY ═════════════════════════════════════ │
+│ [PRE]  hears 'cast' → play the cast SFX, muzzle flash at the caster,          │
+│        flash the HUD skill icon. NONE of this changes the projectile.         │
+└───────────────────────────────────────────────────────────────────────────── ┘
+                                    │
+                                    ▼
+───────────────────────────────────────────────────────────────────  MOMENT 3: TRAVEL (many frames)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  each frame: proj.x += cos(a)*310*dt;  proj.y += sin(a)*310*dt          │
+│        proj.life -= dt                                                        │
+│        THE SIM IS THE ONLY INTEGRATOR of position. one source of truth.       │
+│ ═════════════════════════════ BOUNDARY ═════════════════════════════════════ │
+│ [PRE]  each render frame: draw the fire sprite AT proj.x, proj.y              │
+│        (READS sim position, does NOT compute its own). trail/glow/particles.  │
+│        if the frame hitches, next frame it re-reads proj.x and snaps — it     │
+│        never keeps its own copy of the position, so it can't drift.           │
+└───────────────────────────────────────────────────────────────────────────── ┘
+                                    │
+                                    ▼
+───────────────────────────────────────────────────────────────────  MOMENT 4: COLLISION + HIT
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  each frame, test proj vs enemies (circle overlap, size 7 + enemy r)    │
+│        overlap! → this is a HIT. SIM decides it, nobody else.                 │
+│          apply damage 40 (type chart, def, crit) → enemy.hp -= dealt          │
+│          roll 10% burn → maybe add burn status (own duration, ticks later)    │
+│          pierce 0 → the projectile terminates (remove from sim)               │
+│        emit EVENT: 'hit' { enemy, dealt, atX, atY, wasCrit, burnApplied }     │
+│        the event CARRIES where/what so PRE never recomputes the hit.          │
+│ ═════════════════════════════ BOUNDARY ═════════════════════════════════════ │
+│ [PRE]  hears 'hit' → hit spark at (atX,atY), damage number "40" floats up,    │
+│        hit SFX, tiny screen shake, enemy flashes white.                       │
+│        if burnApplied → start the burn FX loop on that enemy.                 │
+│        ALL cosmetic. the enemy's hp was already changed by SIM above.         │
+└───────────────────────────────────────────────────────────────────────────── ┘
+                                    │
+                                    ▼
+───────────────────────────────────────────────────────────────────  MOMENT 5: AFTERMATH (burn ticks, death)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [SIM]  burn status ticks every N s → enemy.hp -= burnDmg  (its OWN lifetime,  │
+│        NOT tied to the projectile, which is long gone). emit 'statusTick'.    │
+│        enemy.hp <= 0 → enemy dies in sim NOW, drops xp. emit 'death'.         │
+│ ═════════════════════════════ BOUNDARY ═════════════════════════════════════ │
+│ [PRE]  burn FX flickers each tick; on 'death' plays the death animation       │
+│        (the enemy is ALREADY dead in sim while this anim plays — that lag     │
+│        is fine, it's interpolation, not desync). xp gem sprite appears.       │
+└───────────────────────────────────────────────────────────────────────────── ┘
+
+=====================================================================================
+THE SIM RUNS PER-FRAME, IT DOES NOT RUN AHEAD   (the 3ms vs 1s confusion, cleared)
+=====================================================================================
+  THE TRAP (what it feels like):
+    "the computer does the sim calc in ~3ms, then presentation slowly plays a 1s
+     movie of the result."  → that would mean sim finishes first and PRE lags a
+     whole second behind. NOT how it works.
+
+  WHAT ACTUALLY HAPPENS: the projectile's 1s of travel IS simulated in real time,
+  one small step per frame, in lockstep with the drawing. The sim does NOT compute
+  the whole shot up front. It moves the shot ~5px, checks collision, and stops —
+  then does it again next frame.
+
+    frame 1  (t=0ms)    SIM move +5px → 5px     PRE draw at 5px
+    frame 2  (t=16ms)   SIM move +5px → 10px    PRE draw at 10px
+    frame 3  (t=32ms)   SIM move +5px → 15px    PRE draw at 15px
+       ...   ~60 frames, ONE sim step + ONE draw each ...
+    frame 60 (t≈1000ms) SIM +5px → ~496px, overlap → HIT, deal 40   PRE spark + "40"
+
+  So the two numbers are NOT two views of one event:
+    • 3ms  = how long the sim MATH takes WITHIN one frame (eats ~3 of the frame's
+             ~16ms budget; the projectile moves one 5px step, one collision check).
+    • 1s   = how many frames the travel LASTS (~60 frames, one step each).
+  The sim spends 3ms of work PER FRAME, 60 times, spread across the same 1s you watch.
+  The shot does not "know" at t=0 that it hits at frame 60 — it just steps + checks
+  until a step happens to overlap an enemy. The hit lands at ~1s because that is how
+  many 5px steps it takes to cross the gap.
+
+  THE ONE-LINER:  the animation is NOT a playback of a finished sim result.
+                  the animation IS the sim, drawn once per frame as it runs.
+
+  WHERE YOUR INSTINCT IS RIGHT (the genuine sub-step case): a move that resolves
+  with NO travel — a teleport dash, or a multihit that lands 5 hits "on contact" —
+  really does finish in one frame (~3ms, zero spread). THOSE are the moves where PRE
+  must INVENT motion the sim didn't spread over time (a dash streak, staggered hit
+  sparks). A traveling projectile like Ember is not that case: its 1s is 1s of actual
+  simulation, not a replay.
+
+=====================================================================================
+WHO ANSWERS WHICH QUESTION
+=====================================================================================
+   "is the enemy in range?"      ─ SIM   (dist check)
+   "did the cooldown finish?"     ─ SIM   (m.t)
+   "did it fire?"                 ─ SIM   (cast, fizzle check)
+   "where is the projectile?"     ─ SIM owns it; PRE reads it to draw
+   "what does the shot look like?"─ PRE   (sprite, trail, light)
+   "did it hit? for how much?"    ─ SIM   (collision + damage)
+   "did it crit / burn?"          ─ SIM rolls it; PRE shows the result
+   "spark, number, shake, SFX"    ─ PRE   (all from the 'hit' event)
+   "is the enemy dead?"           ─ SIM   (hp<=0); PRE plays the anim after
+
+=====================================================================================
+WHY LAG IS OK BUT DRIFT IS NOT   (the thing you asked about earlier)
+=====================================================================================
+  LAG  (fine):  the drawn shot / death anim trails a few ms behind the sim truth.
+                PRE re-reads sim state every frame, so it always catches up.
+  DRIFT (bug):  PRE keeps its OWN copy of a number and integrates it itself
+                (e.g. proj_x += speed*dt on the render side). Two integrators,
+                two dts, they slowly disagree forever. FIX: PRE never integrates
+                sim state — it reads position live and consumes events for hits.
+  single-player: drift is only cosmetic. co-op: drift = real desync. keep PRE
+                read-only now and co-op is safe later for free.
+
+=====================================================================================
+THE SHAPE IN ONE LINE
+=====================================================================================
+   SIM:   tick cooldown → target in range? → cast → move projectile → collide →
+          damage + burn → death.     (emits: cast, hit, statusTick, death)
+   PRE:   muzzle flash → draw+trail the shot → hit spark + number + shake →
+          burn flicker → death anim.  (listens to those events, reads live pos)
+   They share a frame, but SIM runs first and decides; PRE runs after and shows.
