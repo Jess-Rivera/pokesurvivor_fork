@@ -1,12 +1,41 @@
 # TODO / ISSUES
 
-The backlog. Canonical and in-repo so both tools see the same list.
-Keep it simple: move items between sections as they progress. Add a date when an item is opened or closed.
+The actionable backlog now lives in GitHub Issues + the "PokeSwarm" Project board (set up 2026-10-24).
+The BOARD is the source of truth for "what to work on next". This file is a MIRROR (for whoever/whatever
+has only the repo, e.g. Claude at home before its GitHub access is wired up) plus the long-form design
+notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
+Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
+
+## Board mirror (synced from the GitHub API 2026-10-24; re-sync at session end)
+Open and closed issues as of this sync. Labels shown as type/area/status.
+
+OPEN:
+- #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
+- #3  Review the ~19 pending moves in move-decisions.json  [design / moves / ready]  (marked blocked_by #2, now closed; see note)
+- #4  Settle move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (marked blocked_by #2, now closed; see note)
+- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked on moves import]
+- #6  Harness for the gym-gate escalation clock/bump  [feature / gyms / ready]
+- #8  Tileset loader + map generator cleanup  [feature / engine / ready]
+- #9  Regional forms (blocks Lorelei, Agatha, Bruno)  [feature / gyms / blocked]
+- #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]
+- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (marked blocked_by #2, now closed; see note)
+- #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
+
+CLOSED (by Jess, intentional 2026-10-24):
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves]  (had been blocking #3, #4, #11)
+- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]
+
+INCONSISTENCY TO RESOLVE (flagged by the PM pass): #2 is CLOSED but #3, #4 and #11 still list "blocked_by #2".
+Either those three are now unblocked (clear the stale dependency links) or #2 should be reopened. Decide on the board.
 
 ---
 
 ## In progress
 Full history of the closed items below: docs/TODO-archive.md (search by keyword). Rulings: DECISIONS.md. Current state and next step: STATE.md.
+
+NOTE: the items below are the LONG-FORM design detail behind the issues above (and older in-flight work not yet
+converted to issues). They are kept for context; the board carries the live status. Do not treat these as the
+live queue, cross-reference the issue number.
 
 - Item rework, branch feature/items (design agreed 2026-10-20). F1, F2, F3a (ground + berries) playtested. F3b COMPLETE 2026-10-21 (9 held + 18 type-damage items). F3c run items BUILT (6 of 8: Sharp Scissors, Brass Knuckles, Snowball Badge, Re-Do, Pikachu's Tear, 18 Power Stones); all feel-tested OK. The remaining 2 type-chart items (Amnesia Type; Paper Skin + Glass Bones) are SPLIT OUT to their own backlog entry (see "Type-chart held items" below) so feature/items can merge. F3d-1/2/3 BUILT + browser-tested 2026-10-21 (run-item column + chooser; unlock/loadout/Inventory; Shop). All browser confirm() replaced by G.UI.ask. 2026-10-22: Re-Do fire bug FIXED (it fires; also now resumes on the Pokemon that just fainted, not slot 1); diagnostic ITEM/REDO log kinds added (kept in, dev-only); run-item HUD slots widened to 3x with live readouts (G.Items.runHud). Deferred hook (cloud phase): db.js merge does not union save.runSlots / save.teamItems; co-op does not sync loadouts. check.js was 16/16 at branch open, 18/18 per latest STATE. feature/items is ready to merge once committed. Three tiers: ground items (auto-activate on contact), Pokemon items (one per Pokemon, effect only while it is the active one), run items (very rare, custom, inventory grid that starts at 1 slot).
 - Type-chart held items (SPLIT from feature/items 2026-10-22, own branch when started): the 2 run items that do LIVE type-chart manipulation, deferred because they need a type-chart design pass, not just an item hook. (1) Amnesia Type: the active Pokemon's attack type switches each cast. (2) Paper Skin + Glass Bones (one item): the player is weak to all types / every hit on the player is super-effective. These touch the type chart and the hit-resolution path (combat.js floorHit, Player.hurt), unlike the other F3c items which only plug into the item damage layer. Design the type-chart rules first (interaction with the softened SOFT chart, the per-hit 1-damage floors, boss immunity), then build on a branch cut from main after feature/items merges.
