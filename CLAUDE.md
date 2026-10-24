@@ -37,7 +37,7 @@ side only and note any deferred hook in TODO.md.
 Dividing line: "does this change what the game does when you run it?"
 - YES (game code, js/data/*.js, dev.html, build config, assets): the assistant gives a prose plan in chat (what changes, which files, numbers, decisions needed, risks) and waits for Jess's edits or OK. Then it builds, runs the harness and headless-browser tests, and writes straight into the repo in one step. No diff files, no separate apply step, no code snippets in chat. Jess does not type code. Risky changes are flagged in the plan; proceed assuming yes unless he denies or edits. A plan approves only the scope it describes.
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
-- NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, ISSUES, CLAUDE, docs/).
+- NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 
 ## Git, hard prohibition
 The AI assistant NEVER runs git, under any circumstances. It gives Jess exact commands, explains them,
