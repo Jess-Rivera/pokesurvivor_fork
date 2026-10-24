@@ -1,0 +1,15 @@
+{
+  "input_directory": "C:\\Users\\jessvri\\Desktop\\pokesurvivor_fork\\pokeapi-master\\data\\v2\\csv",
+  "language_id": 9,
+  "counts": {
+    "pokemon_rows_in_source": 1351,
+    "pokemon_moves_rows_in_source": 638321,
+    "pokemon_with_learnsets_exported": 1303,
+    "learnset_move_entries_emitted": 75243,
+    "moves_loaded": 937,
+    "version_groups_loaded": 32,
+    "moves_missing_localized_name": 0,
+    "warnings": 0
+  },
+  "warnings": []
+}
