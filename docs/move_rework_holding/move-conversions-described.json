@@ -1,0 +1,1171 @@
+{
+  "schema": "MOVE-AXIS-SCHEMA.md (canonical, 2026-10-24)",
+  "note": "Feel-first conversions. Jess describes the intended feel per move; agent maps to schema values. One move at a time. Source of truth for the #2 importer alongside move-conversions-final.json.",
+  "generated_by": "hand (feel-described pass)",
+  "moves": {
+    "tackle": {
+      "id": "tackle",
+      "name": "Tackle",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Melee cone swing in front of the character, quick jab. Static hitbox anchored to caster, aimed at nearest. Hits everything in the wedge once, with knockback.",
+      "type": "normal",
+      "category": "physical",
+      "power": 40,
+      "pp": 35,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "A physical attack in which the user charges and slams into the target with its whole body.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.7,
+        "radRadius": 48,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 90
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "swords-dance": {
+      "id": "swords-dance",
+      "name": "Swords Dance",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Self-cast buff. Raises atk by 2 stage(s), team-wide per the settled scope rule. No hitbox, no target. cd 8 / dur 8 are hand-set (overrides layer in #2).",
+      "type": "normal",
+      "category": "status",
+      "power": null,
+      "pp": 20,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "A frenetic dance to uplift the fighting spirit. This sharply boosts the user's Attack stat.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "stat",
+          "stat": "atk",
+          "stages": 2,
+          "side": "self",
+          "scope": "team",
+          "duration": 8
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "agility": {
+      "id": "agility",
+      "name": "Agility",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Self-cast buff. Raises spd by 2 stage(s), team-wide per the settled scope rule. No hitbox, no target. cd 8 / dur 8 are hand-set (overrides layer in #2).",
+      "type": "psychic",
+      "category": "status",
+      "power": null,
+      "pp": 30,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user relaxes and lightens its body to move faster. This sharply boosts its Speed stat.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "stat",
+          "stat": "spd",
+          "stages": 2,
+          "side": "self",
+          "scope": "team",
+          "duration": 8
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "harden": {
+      "id": "harden",
+      "name": "Harden",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Self-cast buff. Raises def by 1 stage(s), team-wide per the settled scope rule. No hitbox, no target. cd 8 / dur 8 are hand-set (overrides layer in #2).",
+      "type": "normal",
+      "category": "status",
+      "power": null,
+      "pp": 30,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user stiffens all the muscles in its body to boost its Defense stat.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "stat",
+          "stat": "def",
+          "stages": 1,
+          "side": "self",
+          "scope": "team",
+          "duration": 8
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "water-gun": {
+      "id": "water-gun",
+      "name": "Water Gun",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Single water projectile fired in the aim direction, slight spread. Pierces 1 enemy (a deliberate difference from Ember's pierce 0). Damage only, no status. Same projectile template as Ember otherwise.",
+      "type": "water",
+      "category": "special",
+      "power": 40,
+      "pp": 25,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The target is blasted with a forceful shot of water.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 6,
+        "count": 1,
+        "pierce": 1,
+        "spread": 0.1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 350,
+        "endOn": [
+          {
+            "time": 1.5
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "ember": {
+      "id": "ember",
+      "name": "Ember",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Single fire projectile in the aim direction, slight spread. Pierce 0 (dies on first enemy, canonical). 10% burn rider on hit. The canonical projectile template.",
+      "type": "fire",
+      "category": "special",
+      "power": 40,
+      "pp": 25,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The target is attacked with small flames. This may also leave the target with a burn.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 7,
+        "count": 1,
+        "pierce": 0,
+        "spread": 0.12
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 310,
+        "endOn": [
+          {
+            "time": 1.6
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "burn",
+          "chance": 10,
+          "side": "foe"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "hydro-pump": {
+      "id": "hydro-pump",
+      "name": "Hydro Pump",
+      "kind": "beam",
+      "balanceClass": "ranged",
+      "feel": "Straight water beam aimed at nearest. Unlimited pierce, hits everyone in the beam once. Static (no travel), lives 0.5s.",
+      "type": "water",
+      "category": "special",
+      "power": 110,
+      "pp": 5,
+      "accuracy": 80,
+      "priority": 0,
+      "flavor_text": "The target is blasted by a huge volume of water launched under great pressure.",
+      "space": {
+        "shape": "linear",
+        "linLength": 250,
+        "linWidth": 30,
+        "pierce": "UNLIMITED"
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.5
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "vine-whip": {
+      "id": "vine-whip",
+      "name": "Vine Whip",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Melee cone in front, grass version of Tackle. Static hitbox, aims at nearest, slightly longer reach (radRadius 68) and tighter arc (1.3) than Tackle. Knockback 60.",
+      "type": "grass",
+      "category": "physical",
+      "power": 45,
+      "pp": 25,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The target is struck with slender, whiplike vines to inflict damage.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.3,
+        "radRadius": 68,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 60
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "aqua-ring": {
+      "id": "aqua-ring",
+      "name": "Aqua Ring",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Self-cast heal-over-time veil. Regenerates the caster's HP each tick for 8s. SELF scope (a heal, not a +stage stat, so not team-wide). Converted from the seed's stat:regen to a proper heal payload. cd 8 hand-set (overrides layer, #2).",
+      "type": "water",
+      "category": "status",
+      "power": null,
+      "pp": 20,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user envelops itself in a veil made of water. It regains some HP every turn.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "heal",
+          "amount": {
+            "fraction": 0.0625,
+            "of": "maxHP"
+          },
+          "per": 1.0,
+          "side": "self",
+          "duration": 8
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "razor-leaf": {
+      "id": "razor-leaf",
+      "name": "Razor Leaf",
+      "kind": "boomerang",
+      "balanceClass": "ranged",
+      "feel": "Two leaves thrown in a boomerang (motion returns), spread 0.5 between them. CHANGE: pierce UNLIMITED (was 0) so each leaf cuts through the whole crowd, striking on BOTH the outward and return legs (returnHits outAndBack). Heightened crit is the flavor; modeled as damage (crit handling TBD per the no-move-crit lean).",
+      "type": "grass",
+      "category": "physical",
+      "power": 55,
+      "pp": 25,
+      "accuracy": 95,
+      "priority": 0,
+      "flavor_text": "Sharp-edged leaves are launched to slash at opposing Pokemon. This move has a heightened chance of landing a critical hit.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 6,
+        "count": 2,
+        "pierce": "UNLIMITED",
+        "spread": 0.5
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "returns",
+        "moveSpeed": 330,
+        "returnHits": "outAndBack",
+        "endOn": [
+          {
+            "time": 2.0
+          },
+          {
+            "returned": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "giga-drain": {
+      "id": "giga-drain",
+      "name": "Giga Drain",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Single grass projectile, pierce 0. Drains: heals the caster for half the damage dealt (heal from:dealt fraction 0.5). cardLocked on count+pierce so upgrade cards can't multiply or pierce it (preserves the fork's fixed:[count,pierce]).",
+      "type": "grass",
+      "category": "special",
+      "power": 75,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "A nutrient-draining attack. The user's HP is restored by up to half the damage taken by the target.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 8,
+        "count": 1,
+        "pierce": 0
+      },
+      "cardLock": [
+        "count",
+        "pierce"
+      ],
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 290,
+        "endOn": [
+          {
+            "time": 1.5
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "heal",
+          "amount": {
+            "from": "dealt",
+            "fraction": 0.5
+          },
+          "side": "self"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "body-slam": {
+      "id": "body-slam",
+      "name": "Body Slam",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Extra-wide Tackle (widest melee arc, 2.2) with shorter reach (46). 30% paralysis, high knockback (140). Static cone, aims at nearest.",
+      "type": "normal",
+      "category": "physical",
+      "power": 85,
+      "pp": 15,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user attacks by dropping onto the target with its full body weight. This may also leave the target with paralysis.",
+      "space": {
+        "shape": "radial",
+        "radArc": 2.2,
+        "radRadius": 46,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "paralysis",
+          "chance": 30,
+          "side": "foe"
+        },
+        {
+          "t": "knockback",
+          "distance": 140
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "poison-sting": {
+      "id": "poison-sting",
+      "name": "Poison Sting",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Tiny (radRadius 4), near-zero spread (0.08), very fast (moveSpeed 420) projectile. 30% poison. A rapid dart.",
+      "type": "poison",
+      "category": "physical",
+      "power": 15,
+      "pp": 35,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user stabs the target with a poisonous stinger to inflict damage. This may also poison the target.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 4,
+        "count": 1,
+        "pierce": 0,
+        "spread": 0.08
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 420,
+        "endOn": [
+          {
+            "time": 1.0
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "poison",
+          "chance": 30,
+          "side": "foe"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "bug-bite": {
+      "id": "bug-bite",
+      "name": "Bug Bite",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Tackle but narrower (arc 1.6), shorter (radRadius 44), and faster. 'Faster' is the cooldown (fork cd 0.42), which lives in the overrides layer (#2); hitbox geometry is the narrower+shorter cone. Knockback 40. Berry steal IS kept: a conditional-damage special, if the struck enemy is carrying a berry/consumable the hit deals double damage and consumes it. No survivor hold-item system yet, so this is a deferred hook for the #2 importer to wire (or stub) against whatever drop/holdable model exists.",
+      "type": "bug",
+      "category": "physical",
+      "power": 60,
+      "pp": 20,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user attacks by biting the target. If the target is holding a Berry, the user eats it and gains its effect.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.6,
+        "radRadius": 44,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 40
+        },
+        {
+          "t": "special",
+          "handler": "berrySteal",
+          "condition": "targetHasBerry",
+          "damageMult": 2,
+          "consumesBerry": true,
+          "deferred": "no holdable/berry system in local build yet; #2 wires or stubs"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "rock-throw": {
+      "id": "rock-throw",
+      "name": "Rock Throw",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Rock version of Ember: single chunky projectile (radRadius 9), pierce 0, but with a knockback rider (90) instead of a status. Slower (moveSpeed 260), heavier feel.",
+      "type": "rock",
+      "category": "physical",
+      "power": 50,
+      "pp": 15,
+      "accuracy": 90,
+      "priority": 0,
+      "flavor_text": "The user picks up and throws a small rock at the target to inflict damage.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 9,
+        "count": 1,
+        "pierce": 0,
+        "spread": 0.12
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 260,
+        "endOn": [
+          {
+            "time": 1.4
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 90
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "ice-beam": {
+      "id": "ice-beam",
+      "name": "Ice Beam",
+      "kind": "beam",
+      "balanceClass": "ranged",
+      "feel": "Longer, narrower Hydro Pump (linLength 290 vs 250, linWidth 20 vs 30). UNLIMITED pierce, hits everyone in the beam. 10% freeze + a slow 0.7 rider (icy chill, restored from fork data). Static, nearest.",
+      "type": "ice",
+      "category": "special",
+      "power": 90,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The target is struck with an icy-cold beam of energy. This may also leave the target frozen.",
+      "space": {
+        "shape": "linear",
+        "linLength": 290,
+        "linWidth": 20,
+        "pierce": "UNLIMITED"
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.5
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "freeze",
+          "chance": 10,
+          "side": "foe"
+        },
+        {
+          "t": "slow",
+          "factor": 0.7,
+          "side": "foe"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "karate-chop": {
+      "id": "karate-chop",
+      "name": "Karate Chop",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Normal-type Tackle, focused narrow chop (arc 1.2, narrowest melee) with higher knockback (110 vs Tackle's 90). Static cone, aims at nearest. 'Increased crit' flavor dropped (no-move-crit lean). Type kept normal per Jess. NOTE: seed's flavor_text was a 'this move can't be used' error string, blanked.",
+      "type": "normal",
+      "category": "physical",
+      "power": 50,
+      "pp": 25,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.2,
+        "radRadius": 50,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 110
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "aura-sphere": {
+      "id": "aura-sphere",
+      "name": "Aura Sphere",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "CHANGED from single homing orb to a curving slow burst: 6 orbs fired full-circle (spread 6.2832), very slow (moveSpeed 120), each following a gentle curve path (path.curve 1.5 rad/s) so they spiral outward. Homing (turnRate 4) DROPPED, the curve defines the motion now, not target-seeking. 'Never misses' identity is gone with the homing (deliberate tradeoff for the burst feel).",
+      "type": "fighting",
+      "category": "special",
+      "power": 80,
+      "pp": 20,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user lets loose a pulse of aura power from deep within its body at the target. This attack never misses.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 8,
+        "count": 6,
+        "pierce": 0,
+        "spread": 6.2832
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "none",
+        "motion": "travels",
+        "moveSpeed": 120,
+        "path": {
+          "curve": 1.5
+        },
+        "endOn": [
+          {
+            "time": 2.0
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "lick": {
+      "id": "lick",
+      "name": "Lick",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Ghost Tackle, super narrow (arc 0.8) but longer reach (radRadius 64 vs Tackle's 48) to compensate for the 30% paralysis. Static cone, aims at nearest.",
+      "type": "ghost",
+      "category": "physical",
+      "power": 30,
+      "pp": 30,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user licks the target with a long tongue to inflict damage. This may also leave the target with paralysis.",
+      "space": {
+        "shape": "radial",
+        "radArc": 0.8,
+        "radRadius": 64,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "ailment",
+          "id": "paralysis",
+          "chance": 30,
+          "side": "foe"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "shadow-ball": {
+      "id": "shadow-ball",
+      "name": "Shadow Ball",
+      "kind": "projectile",
+      "balanceClass": "ranged",
+      "feel": "Ghost Ember: single projectile, pierce 1 initially (down from seed's 2), keeps the Sp. Def-down debuff. Compensation for the debuff = shorter lifetime (endOn 1.2 vs seed 1.6) AND longer cooldown (cd lives in the overrides file, #2). CORRECTED: debuff stat is spDef (Special Defense), matching the fork description; the seed had wrongly carried spd (speed).",
+      "type": "ghost",
+      "category": "special",
+      "power": 80,
+      "pp": 15,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user attacks by hurling a shadowy blob at the target. This may also lower the target\u2019s Sp. Def stat.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 9,
+        "count": 1,
+        "pierce": 1,
+        "spread": 0.1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 280,
+        "endOn": [
+          {
+            "time": 1.2
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "stat",
+          "stat": "spDef",
+          "stages": -1,
+          "side": "foe",
+          "scope": "individual"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "dragon-rage": {
+      "id": "dragon-rage",
+      "name": "Dragon Rage",
+      "kind": "beam",
+      "balanceClass": "ranged",
+      "feel": "Hydro Pump dimensions (linLength 250, linWidth 30, matched exactly per Jess), UNLIMITED pierce, static beam aimed at nearest. But deals a FLAT 40 damage ignoring the type chart AND defenses, modeled as a fixed-damage special, not the normal damage formula. NOTE: seed's flavor_text was a 'this move can't be used' error string, blanked.",
+      "type": "dragon",
+      "category": "special",
+      "power": null,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "",
+      "space": {
+        "shape": "linear",
+        "linLength": 250,
+        "linWidth": 30,
+        "pierce": "UNLIMITED"
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.5
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "special",
+          "handler": "fixedDamage",
+          "amount": 40,
+          "ignoresType": true,
+          "ignoresDefense": true
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "dragon-dance": {
+      "id": "dragon-dance",
+      "name": "Dragon Dance",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Self-cast buff raising BOTH Attack and Speed by 1 stage, team-wide (settled scope rule). Compensation for the double buff = shorter duration (4s vs the normal 8s). Seed had dropped the speed stage; both restored here. cd 8 hand-set (overrides layer, #2).",
+      "type": "dragon",
+      "category": "status",
+      "power": null,
+      "pp": 20,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user vigorously performs a mystic, powerful dance that boosts its Attack and Speed stats.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "stat",
+          "stat": "atk",
+          "stages": 1,
+          "side": "self",
+          "scope": "team",
+          "duration": 4
+        },
+        {
+          "t": "stat",
+          "stat": "spd",
+          "stages": 1,
+          "side": "self",
+          "scope": "team",
+          "duration": 4
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "metal-claw": {
+      "id": "metal-claw",
+      "name": "Metal Claw",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Steel cone melee (arc 1.6, reach 50) with an Attack buff rider (atk +1, team scope per the buff rule) and knockback 60. Static, aims at nearest. The atk buff on-hit is the move's identity.",
+      "type": "steel",
+      "category": "physical",
+      "power": 50,
+      "pp": 35,
+      "accuracy": 95,
+      "priority": 0,
+      "flavor_text": "The target is raked with steel claws. This may also boost the user's Attack stat.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.6,
+        "radRadius": 50,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "stat",
+          "stat": "atk",
+          "stages": 1,
+          "side": "team",
+          "scope": "team"
+        },
+        {
+          "t": "knockback",
+          "distance": 60
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "flash-cannon": {
+      "id": "flash-cannon",
+      "name": "Flash Cannon",
+      "kind": "beam",
+      "balanceClass": "ranged",
+      "feel": "Steel Hydro Pump: linear beam (220x30), UNLIMITED pierce, static, nearest, with a Sp. Def-down debuff rider. CORRECTED to spDef to match its 'lower Sp. Def' description, consistent with the Shadow Ball fix; the seed had wrongly carried spd (speed).",
+      "type": "steel",
+      "category": "special",
+      "power": 80,
+      "pp": 10,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user gathers all its light energy and releases it at once. This may also lower the target's Sp. Def stat.",
+      "space": {
+        "shape": "linear",
+        "linLength": 220,
+        "linWidth": 30,
+        "pierce": "UNLIMITED"
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.5
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "stat",
+          "stat": "spDef",
+          "stages": -1,
+          "side": "foe",
+          "scope": "individual"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "bite": {
+      "id": "bite",
+      "name": "Bite",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "Bug Bite's cone shape (static melee, arc 1.5, reach 46) but NO berry special, plus a knockback (70) and a 30% flinch. Flinch restored from fork data (flinch 30); seed had dropped it. Static, aims at nearest. NOTE: type fixed to dark (seed wrongly carried normal; Bite is a dark move).",
+      "type": "dark",
+      "category": "physical",
+      "power": 60,
+      "pp": 25,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The target is bitten with viciously sharp fangs. This may also make the target flinch.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.5,
+        "radRadius": 46,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 70
+        },
+        {
+          "t": "flinch",
+          "chance": 30
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "bonemerang": {
+      "id": "bonemerang",
+      "name": "Bonemerang",
+      "kind": "boomerang",
+      "balanceClass": "ranged",
+      "feel": "Ground Razor Leaf: 2 bones thrown as a boomerang (motion returns, spread 0.5), UNLIMITED pierce, striking on BOTH legs (returnHits outAndBack), matching Razor Leaf. Count raised 1->2 (seed had 1) to be the 2-projectile 'ground Razor Leaf'. Knockback 40 directional (along each bone's travel vector, not radial from caster).",
+      "type": "ground",
+      "category": "physical",
+      "power": 50,
+      "pp": 10,
+      "accuracy": 90,
+      "priority": 0,
+      "flavor_text": "The user throws the bone it holds. The bone loops around to hit the target twice\u2014coming and going.",
+      "space": {
+        "shape": "radial",
+        "radRadius": 8,
+        "count": 2,
+        "pierce": "UNLIMITED",
+        "spread": 0.5
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "direction",
+        "motion": "returns",
+        "moveSpeed": 300,
+        "returnHits": "outAndBack",
+        "endOn": [
+          {
+            "time": 2.0
+          },
+          {
+            "returned": true
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "knockback",
+          "distance": 40,
+          "direction": "travel"
+        }
+      ],
+      "reviewStatus": "reviewed"
+    },
+    "psycho-cut": {
+      "id": "psycho-cut",
+      "name": "Psycho Cut",
+      "kind": "melee",
+      "balanceClass": "melee",
+      "feel": "CHANGED from boomerang to a melee cone (Tackle dims: arc 1.7, reach 48). +15% crit, kept as a real effect this time (flat additive critChance per the settled crit mechanic), not dropped like Razor Leaf/Karate Chop, because Jess wants the crit identity and the mechanic exists in combat.js. Static, aims at nearest.",
+      "type": "psychic",
+      "category": "physical",
+      "power": 70,
+      "pp": 20,
+      "accuracy": 100,
+      "priority": 0,
+      "flavor_text": "The user tears at the target with blades formed by psychic power. This move has a heightened chance of landing a critical hit.",
+      "space": {
+        "shape": "radial",
+        "radArc": 1.7,
+        "radRadius": 48,
+        "count": 1
+      },
+      "delivery": {
+        "anchor": "caster",
+        "targeting": "nearest",
+        "motion": "static",
+        "endOn": [
+          {
+            "time": 0.15
+          }
+        ]
+      },
+      "hitPolicy": "oncePerInstance",
+      "payload": [
+        {
+          "t": "damage"
+        },
+        {
+          "t": "crit",
+          "critChance": 15
+        }
+      ],
+      "reviewStatus": "reviewed"
+    }
+  }
+}

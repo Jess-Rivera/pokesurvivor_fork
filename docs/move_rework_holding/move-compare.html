@@ -9,24 +9,46 @@
   body{margin:0;font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
   header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   header h1{font-size:15px;margin:0;color:var(--acc);font-weight:700;letter-spacing:.3px}
-  .nav{display:flex;align-items:center;gap:8px}
   button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
   button:hover{border-color:var(--accb)}
   button.primary{background:var(--accb);border-color:var(--accb);color:#fff;font-weight:600}
   button.warn{background:var(--warn);border-color:var(--warn);color:#fff}
-  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:260px}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
   .pos{color:var(--mut);font-variant-numeric:tabular-nums}
   .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
   .badge.high{background:#20351f;color:var(--ok);border:1px solid var(--ok)}
   .badge.low{background:#3a2015;color:var(--warn);border:1px solid var(--warn)}
   .badge.edited{background:#2a2410;color:var(--acc);border:1px solid var(--acc)}
-  main{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;max-width:1500px;margin:0 auto}
+  /* master-detail layout */
+  main{display:grid;grid-template-columns:320px 1fr;gap:0;height:calc(100vh - 53px)}
+  #listPane{border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;background:var(--panel)}
+  #filterBar{padding:8px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+  #filterBar .frow{display:flex;gap:6px;align-items:center}
+  #filterBar select{flex:1;font-size:12px;padding:4px 6px;max-width:none}
+  #filterBar label{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;flex:0 0 46px}
+  #moveList{overflow-y:auto;flex:1}
+  .mrow{padding:7px 10px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:7px;font-size:12.5px}
+  .mrow:hover{background:var(--panel2)}
+  .mrow.sel{background:#1a2740;border-left:3px solid var(--acc);padding-left:7px}
+  .mrow .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrow .kd{color:var(--mut);font-size:11px}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+  .dot.high{background:var(--ok)} .dot.low{background:var(--warn)}
+  .rs{font-size:9.5px;padding:1px 5px;border-radius:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .rs.reviewed{background:#20351f;color:var(--ok);border:1px solid var(--ok)}
+  .rs.needs-more{background:#3a2015;color:var(--warn);border:1px solid var(--warn)}
+  .bc{font-size:9.5px;padding:1px 5px;border-radius:4px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)}
+  .bc.melee{color:#e0a85a;border-color:#e0a85a} .bc.ranged{color:#5aa6e0;border-color:#5aa6e0}
+  .listFoot{padding:6px 10px;border-top:1px solid var(--line);font-size:11px;color:var(--mut)}
+  /* editor pane */
+  #editPane{overflow-y:auto;padding:14px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1300px}
   .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .col h2{margin:0;padding:10px 14px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--line)}
   .col.old h2{background:var(--old)}
   .col.new h2{background:var(--new)}
   .body{padding:12px 14px}
-  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin-bottom:5px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:6px 10px;align-items:center;margin-bottom:5px}
   .kv label{color:var(--mut);font-size:12px}
   .kv .val{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-word}
   input,.minput{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:12.5px ui-monospace,Consolas,monospace}
@@ -35,48 +57,71 @@
   .notes{background:#2a2015;border:1px solid var(--warn);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:12px;color:#f0c9a8}
   .notes b{color:var(--warn)}
   .rawbox{background:#161a20;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--mut);white-space:pre-wrap;max-height:160px;overflow:auto;margin-top:8px}
-  .payload-row,.endon-row{display:flex;gap:6px;margin-bottom:5px;align-items:center}
+  .payload-row,.endon-row{display:flex;gap:6px;margin-bottom:5px;align-items:center;flex-wrap:wrap}
+  .payload-row .phead{display:flex;gap:6px;width:100%;align-items:center}
   .payload-row input{flex:1}
+  .subfields{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%;padding:6px 8px;margin-top:4px;background:#161a20;border:1px solid var(--line);border-radius:6px}
+  .subfields .kv{grid-template-columns:90px 1fr;margin-bottom:0}
+  .edithdr{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;flex-wrap:wrap;max-width:1300px}
+  .edithdr .nm{font-size:16px;font-weight:700;color:var(--acc)}
+  .edithdr .grp{display:flex;align-items:center;gap:6px}
+  .edithdr .grp label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
   .diff-added{color:var(--ok)} .diff-removed{color:var(--warn)} .diff-changed{color:var(--acc)}
-  .foot{grid-column:1/3;text-align:center;color:var(--mut);font-size:12px;padding:6px}
   dialog{background:var(--panel);color:var(--ink);border:1px solid var(--accb);border-radius:10px;max-width:90vw;width:900px;max-height:85vh;overflow:auto}
   dialog::backdrop{background:rgba(0,0,0,.6)}
   pre{white-space:pre-wrap;font-size:12px}
   .hint{color:var(--mut);font-size:11.5px;margin-top:2px}
   .changed-field input{border-color:var(--acc)}
+  .empty{color:var(--mut);padding:40px;text-align:center}
 </style>
 </head>
 <body>
 <header>
   <h1>Move Conversion Review</h1>
-  <div class="nav">
-    <button id="prev">&larr; Prev</button>
-    <span class="pos"><span id="idx">0</span>/<span id="total">0</span></span>
-    <button id="next">Next &rarr;</button>
-  </div>
-  <select id="picker"></select>
-  <span id="confBadge" class="badge high">high</span>
-  <span id="editBadge" class="badge edited" style="display:none">edited</span>
-  <div style="flex:1"></div>
+  <span class="pos"><span id="shownCount">0</span>/<span id="total">0</span> shown</span>
   <span class="pos" id="editCount">0 edited</span>
-  <button id="reset">Reset move</button>
-  <button class="primary" id="export">Export diff &darr;</button>
+  <span class="pos" id="revCount">0 reviewed</span>
+  <div style="flex:1"></div>
+  <button id="export">Export &darr;</button>
 </header>
 
 <main>
-  <section class="col old">
-    <h2>Current (moves.js) &mdash; read only</h2>
-    <div class="body" id="oldBody"></div>
+  <section id="listPane">
+    <div id="filterBar">
+      <div class="frow"><label>Sort</label>
+        <select id="sortBy">
+          <option value="order">Tool order</option>
+          <option value="name">Name</option>
+          <option value="kind">Kind</option>
+          <option value="confidence">Confidence</option>
+          <option value="review">Review status</option>
+        </select>
+      </div>
+      <div class="frow"><label>Kind</label><select id="fKind"></select></div>
+      <div class="frow"><label>Conf</label>
+        <select id="fConf"><option value="">all</option><option value="high">high</option><option value="low">low</option></select>
+      </div>
+      <div class="frow"><label>Status</label>
+        <select id="fRev"><option value="">all</option><option value="reviewed">reviewed</option><option value="needs-more">needs-more</option><option value="untouched">untouched</option></select>
+      </div>
+      <div class="frow"><label>Class</label>
+        <select id="fBal"><option value="">all</option><option value="melee">melee</option><option value="ranged">ranged</option><option value="other">other</option><option value="unset">unset</option></select>
+      </div>
+      <div class="frow"><label>Edited</label>
+        <select id="fEdit"><option value="">all</option><option value="yes">edited only</option><option value="no">unedited only</option></select>
+      </div>
+    </div>
+    <div id="moveList"></div>
+    <div class="listFoot" id="listFoot"></div>
   </section>
-  <section class="col new">
-    <h2>Proposed (new schema) &mdash; editable</h2>
-    <div class="body" id="newBody"></div>
+
+  <section id="editPane">
+    <div id="editInner"><div class="empty">Select a move from the list.</div></div>
   </section>
-  <div class="foot">Load <code>move-conversions.json</code> if it did not auto-load. Edits are kept in memory until you Export.</div>
 </main>
 
 <dialog id="dlg"><h3 style="margin-top:0;color:var(--acc)">Export</h3>
-  <p class="hint">Full record per move: current + autoSeed + your final + changedFields. Download writes <code>move-conversions-final.json</code>.</p>
+  <p class="hint">Full record per move: current + autoSeed + your final + changedFields. balanceClass is top-level; reviewStatus lives in final{}. Download writes <code>move-conversions-final.json</code>.</p>
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <button class="primary" id="dl">Download JSON</button>
     <button id="copy">Copy to clipboard</button>
@@ -98,23 +143,103 @@ const BOOL_OPTS=["","true","false"];
 const HITPOLICY_OPTS=["","oncePerInstance","interval","onReentry"];
 const PAYLOAD_T=["damage","ailment","knockback","stat","heal","shield","flinch","multihit","crit","recoil","emit","spawn","special"];
 const ENDON_KEYS=["time","contact","ownerDeath","notActive","offScreen","returned"];
+const SPLASH_TRIG_OPTS=["","enemyHit","terrainHit","termination"];
+const GROW_PER_OPTS=["","time","distance"];
+const GROW_DIM_OPTS=["","radRadius","radArc","linLength"];
+const COMMIT_MOVE_OPTS=["","none","slowed","rooted"];
+const COMMIT_CD_OPTS=["","tick","freeze","freeze(ids)"];
+const EMIT_TRIG_OPTS=["","interval","contact","timeout","cast"];
+const SPAWN_ALLEG_OPTS=["","ally","enemy","neutral"];
+const BALANCE_OPTS=["","melee","ranged","other"];
+const REVIEW_OPTS=["needs-more","reviewed"];
 
-let DATA=null, i=0, edits={}, autoSeed={};
+let DATA=null, selId=null, edits={}, autoSeed={}, balance={}, review={};
 
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function cur(){return DATA.moves[i]}
-function proposed(){const id=cur().id; if(!edits[id]) edits[id]=clone(cur().proposed); return edits[id]}
+function moveById(id){return DATA.moves.find(m=>m.id===id)}
+function cur(){return moveById(selId)}
+function proposed(){ if(!edits[selId]) edits[selId]=clone(cur().proposed); return edits[selId]}
 
 function load(doc){
-  DATA=doc; i=0; edits={}; autoSeed={};
-  DATA.moves.forEach(m=>autoSeed[m.id]=clone(m.proposed));
-  const p=document.getElementById("picker"); p.innerHTML="";
-  DATA.moves.forEach((m,k)=>{const o=document.createElement("option");o.value=k;o.textContent=(k+1)+". "+m.name+"  ["+m.confidence+"]";p.appendChild(o)});
+  DATA=doc; selId=null; edits={}; autoSeed={}; balance={}; review={};
+  DATA.moves.forEach(m=>{
+    autoSeed[m.id]=clone(m.proposed);
+    // seed balance/review from the record if a prior export carried them back in
+    balance[m.id]=m.balanceClass||"";
+    review[m.id]=(m.proposed&&m.proposed.reviewStatus)|| (m.final&&m.final.reviewStatus) || "";
+  });
   document.getElementById("total").textContent=DATA.moves.length;
-  render();
+  // populate kind filter
+  const kinds=[...new Set(DATA.moves.map(m=>m.kind))].sort();
+  const fk=document.getElementById("fKind");
+  fk.innerHTML='<option value="">all</option>'+kinds.map(k=>`<option value="${k}">${k}</option>`).join("");
+  if(DATA.moves.length){selId=DATA.moves[0].id}
+  renderList(); renderEditor();
 }
 function kv(label,val){return `<div class="kv"><label>${label}</label><div class="val">${val===undefined||val===null?'<span style="color:#555">&mdash;</span>':(typeof val==='object'?JSON.stringify(val):val)}</div></div>`}
 
+/* ---------- LIST PANE ---------- */
+function visibleMoves(){
+  const fKind=document.getElementById("fKind").value;
+  const fConf=document.getElementById("fConf").value;
+  const fRev=document.getElementById("fRev").value;
+  const fBal=document.getElementById("fBal").value;
+  const fEdit=document.getElementById("fEdit").value;
+  let list=DATA.moves.map((m,idx)=>({m,idx}));
+  list=list.filter(({m})=>{
+    if(fKind&&m.kind!==fKind)return false;
+    if(fConf&&m.confidence!==fConf)return false;
+    if(fRev){
+      const rs=review[m.id]||"untouched";
+      if(fRev==="untouched"&&rs!=="untouched"&&rs!=="")return false;
+      if(fRev!=="untouched"&&rs!==fRev)return false;
+    }
+    if(fBal){
+      const bc=balance[m.id]||"unset";
+      if(fBal==="unset"&&bc!=="unset"&&bc!=="")return false;
+      if(fBal!=="unset"&&bc!==fBal)return false;
+    }
+    if(fEdit==="yes"&&!isEdited(m.id))return false;
+    if(fEdit==="no"&&isEdited(m.id))return false;
+    return true;
+  });
+  const sort=document.getElementById("sortBy").value;
+  const confRank={low:0,high:1};
+  const revRank={"needs-more":0,"":1,"untouched":1,"reviewed":2};
+  list.sort((a,b)=>{
+    if(sort==="name")return a.m.name.localeCompare(b.m.name);
+    if(sort==="kind")return a.m.kind.localeCompare(b.m.kind)|| a.idx-b.idx;
+    if(sort==="confidence")return confRank[a.m.confidence]-confRank[b.m.confidence]|| a.idx-b.idx;
+    if(sort==="review")return (revRank[review[a.m.id]||""]-revRank[review[b.m.id]||""])|| a.idx-b.idx;
+    return a.idx-b.idx;
+  });
+  return list;
+}
+function renderList(){
+  const box=document.getElementById("moveList"); box.innerHTML="";
+  const list=visibleMoves();
+  list.forEach(({m,idx})=>{
+    const row=document.createElement("div");
+    row.className="mrow"+(m.id===selId?" sel":"");
+    const rs=review[m.id]||"";
+    const bc=balance[m.id]||"";
+    row.innerHTML=
+      `<span class="dot ${m.confidence}" title="${m.confidence} confidence"></span>`+
+      `<span class="nm">${idx+1}. ${m.name} ${isEdited(m.id)?'<span style="color:var(--acc)">&#9998;</span>':''}<br><span class="kd">${m.kind}</span></span>`+
+      (bc?`<span class="bc ${bc}">${bc}</span>`:"")+
+      (rs?`<span class="rs ${rs}">${rs==="needs-more"?"needs":"rev"}</span>`:"");
+    row.onclick=()=>{selId=m.id;renderList();renderEditor()};
+    box.appendChild(row);
+  });
+  document.getElementById("shownCount").textContent=list.length;
+  const nrev=Object.values(review).filter(r=>r==="reviewed").length;
+  const ned=DATA.moves.filter(m=>isEdited(m.id)).length;
+  document.getElementById("revCount").textContent=nrev+" reviewed";
+  document.getElementById("editCount").textContent=ned+" edited";
+  document.getElementById("listFoot").textContent=`${list.length} shown of ${DATA.moves.length}`;
+}
+
+/* ---------- EDITOR: OLD SIDE ---------- */
 function renderOld(){
   const m=cur(), c=m.current, r=m.raw||{};
   let h="";
@@ -125,27 +250,27 @@ function renderOld(){
   h+='<div class="sec">Raw source facts (api_move_dataset)</div>';
   h+=kv("type",r.type)+kv("category",r.category)+kv("power",r.power)+kv("pp",r.pp)+kv("accuracy",r.accuracy)+kv("priority",r.priority)+kv("target",r.target)+kv("meta_category",r.meta_category)+kv("ailment",r.ailment)+kv("ailment_chance",r.ailment_chance);
   h+='<div class="rawbox">'+(r.flavor_text||"(no flavor text)")+'</div>';
-  document.getElementById("oldBody").innerHTML=h;
+  return h;
 }
 
 function fieldChanged(path,id){const a=autoSeed[id],b=edits[id]; return JSON.stringify(getPath(a,path))!==JSON.stringify(getPath(b,path))}
 function getPath(o,path){return path.split(".").reduce((x,k)=>x==null?x:x[k],o)}
 
+/* ---------- EDITOR: NEW SIDE ---------- */
 function renderNew(){
   const m=cur(), p=proposed(), id=m.id;
   let h="";
-  // top-level source lifts (read-only: verbatim)
   h+='<div class="sec">Source facts (verbatim, not editable)</div>';
   ["type","category","power","pp","accuracy","priority"].forEach(k=>h+=kv(k,p[k]));
   h+='<div class="rawbox">'+(p.flavor_text||"(none)")+'</div>';
 
-  // TOP-LEVEL collision (hitPolicy + rehit)
   h+='<div class="sec">COLLISION (top-level)</div>';
   h+=selRow("hitPolicy","hitPolicy",HITPOLICY_OPTS,p.hitPolicy,id);
   h+=numRow("rehit","rehit",p.rehit,id);
   h+='<div class="hint">interval needs a rehit (seconds between re-hits on the same enemy); oncePerInstance/onReentry leave rehit unset.</div>';
+  h+=listRow("cardLock","cardLock",p.cardLock,id);
+  h+='<div class="hint">cardLock: comma-separated fields upgrade cards cannot modify (e.g. count,pierce). Blank = none.</div>';
 
-  // SPACE
   h+='<div class="sec">SPACE</div>';
   const sp=p.space||{};
   h+=selRow("space.shape","shape",SHAPE_OPTS,sp.shape,id);
@@ -158,22 +283,22 @@ function renderNew(){
   h+=numRow("space.pierce","pierce",sp.pierce,id);
   h+=numRow("space.chainHops","chainHops",sp.chainHops,id);
   h+=numRow("space.hopRange","hopRange",sp.hopRange,id);
+  h+=numRow("space.splash.radius","splash.radius",(sp.splash||{}).radius,id);
+  h+=numRow("space.splash.falloff","splash.falloff",(sp.splash||{}).falloff,id);
+  h+=selRow("space.splash.trigger","splash.trigger",SPLASH_TRIG_OPTS,(sp.splash||{}).trigger,id);
+  h+='<div class="hint">splash: secondary burst at impact. radius 0 = disabled (default). trigger = enemyHit (default) | terrainHit | termination. Carries payload riders at HALF chance; never consumes pierce.</div>';
 
-  // DELIVERY
   h+='<div class="sec">DELIVERY</div>';
   const d=p.delivery||{};
   h+=selRow("delivery.anchor","anchor",ANCHOR_OPTS,d.anchor,id);
   h+=selRow("delivery.targeting","targeting",TARGET_OPTS,d.targeting,id);
   h+=selRow("delivery.motion","motion",MOTION_OPTS,d.motion,id);
-  // repositionMode + return sub-fields (only meaningful when motion=repositions)
   if(d.motion==="repositions"){
     h+=selRow("delivery.repositionMode","repositionMode",REPOMODE_OPTS,d.repositionMode,id);
-    // dashMult: speed multiplier for swept + *Return modes (teleport ignores it)
     if(d.repositionMode && d.repositionMode!=="teleport"){
       h+=numRow("delivery.dashMult","dashMult",d.dashMult,id);
       h+='<div class="hint">dashMult: traversal speed = dashMult &times; caster final move speed. Duration is derived (distance/speed); end on {returned}, not a fixed time.</div>';
     }
-    // returnToOrigin: boolean, orthogonal to the mode. When true, the dash comes back to the launch point.
     if(d.repositionMode){
       h+=boolRow("delivery.returnToOrigin","returnToOrigin",d.returnToOrigin,id);
       if(d.returnToOrigin===true){
@@ -186,29 +311,71 @@ function renderNew(){
   h+=numRow("delivery.angularSpeed","angularSpeed",d.angularSpeed,id);
   h+=numRow("delivery.orbitRadius","orbitRadius",d.orbitRadius,id);
   h+=numRow("delivery.turnRate","turnRate",d.turnRate,id);
+  const pa=d.path||{}, osc=pa.oscillate||{};
+  h+=numRow("delivery.path.curve","path.curve",pa.curve,id);
+  h+=numRow("delivery.path.oscillate.amplitude","path.osc.amplitude",osc.amplitude,id);
+  h+=numRow("delivery.path.oscillate.frequency","path.osc.frequency",osc.frequency,id);
+  h+='<div class="hint">path (optional, default straight): curve = rad/s heading rotation (arcs/spirals); oscillate = sine weave perpendicular to travel (amplitude px, frequency Hz). Composable: curve, oscillate, both, or neither.</div>';
+  const gr=d.grow||{};
+  h+=numRow("delivery.grow.growSpeed","grow.growSpeed",gr.growSpeed,id);
+  h+=selRow("delivery.grow.dim","grow.dim",GROW_DIM_OPTS,gr.dim,id);
+  h+=selRow("delivery.grow.per","grow.per",GROW_PER_OPTS,gr.per,id);
+  h+='<div class="hint">grow: expands ONE dimension. growSpeed = rate; dim = which dimension (default radRadius); per = time (px/s, default) or distance (px growth per px travelled). A nova is grow on radRadius.</div>';
   h+=numRow("delivery.aimTrack","aimTrack",d.aimTrack,id);
-  // endOn editor
   h+='<div class="kv"><label>endOn</label><div id="endon"></div></div>';
 
-  // PAYLOAD
+  h+='<div class="sec">CASTER-STATE</div>';
+  const cs=p.casterState||{}, cm=cs.commitment||{};
+  h+=numRow("casterState.iframes","iframes",cs.iframes,id);
+  h+=selRow("casterState.commitment.movement","commitment.movement",COMMIT_MOVE_OPTS,cm.movement,id);
+  h+=selRow("casterState.commitment.cooldown","commitment.cooldown",COMMIT_CD_OPTS,cm.cooldown,id);
+  h+=numRow("casterState.delay","delay",cs.delay,id);
+  h+='<div class="hint">caster-state (optional): iframes = invuln seconds; commitment.movement = none|slowed|rooted during cast; commitment.cooldown = tick|freeze|freeze(ids); delay = wind-up before resolve (meteor telegraph, charge). Blank on most moves.</div>';
+
   h+='<div class="sec">PAYLOAD</div><div id="payload"></div><button id="addPay" style="margin-top:6px">+ payload effect</button>';
 
   if(m.seedNotes&&m.seedNotes.length){h+='<div class="notes"><b>seed notes:</b><br>'+m.seedNotes.join("<br>")+'</div>'}
-  document.getElementById("newBody").innerHTML=h;
+  return h;
+}
+
+function renderEditor(){
+  if(!selId){document.getElementById("editInner").innerHTML='<div class="empty">Select a move from the list.</div>';return}
+  const m=cur();
+  let h="";
+  // header strip: name + balanceClass + reviewStatus + reset
+  h+='<div class="edithdr">';
+  h+=`<span class="nm">${m.name}</span><span class="badge ${m.confidence}">${m.confidence}</span>`;
+  h+=`<div class="grp"><label>class</label><select id="balSel">${BALANCE_OPTS.map(o=>`<option value="${o}" ${o===(balance[m.id]||"")?"selected":""}>${o||"(unset)"}</option>`).join("")}</select></div>`;
+  h+=`<div class="grp"><label>review</label><select id="revSel"><option value="" ${!review[m.id]?"selected":""}>(untouched)</option>${REVIEW_OPTS.map(o=>`<option value="${o}" ${o===review[m.id]?"selected":""}>${o}</option>`).join("")}</select></div>`;
+  h+='<div style="flex:1"></div>';
+  h+=`<button id="resetMove">Reset edits</button>`;
+  h+='</div>';
+  h+='<div class="cols">';
+  h+=`<section class="col old"><h2>Current (moves.js) &mdash; read only</h2><div class="body">${renderOld()}</div></section>`;
+  h+=`<section class="col new"><h2>Proposed (new schema) &mdash; editable</h2><div class="body" id="newBody">${renderNew()}</div></section>`;
+  h+='</div>';
+  document.getElementById("editInner").innerHTML=h;
 
   renderEndOn(); renderPayload();
-  // wire inputs
-  document.querySelectorAll("[data-path]").forEach(el=>{
-    el.addEventListener("change",e=>{
+  wireInputs();
+
+  document.getElementById("balSel").onchange=e=>{balance[m.id]=e.target.value;renderList()};
+  document.getElementById("revSel").onchange=e=>{review[m.id]=e.target.value;renderList()};
+  document.getElementById("resetMove").onclick=()=>{delete edits[m.id];renderEditor();renderList()};
+  document.getElementById("addPay").onclick=()=>{proposed().payload=proposed().payload||[];proposed().payload.push({t:"damage"});markEdited();renderEditor()};
+}
+
+function wireInputs(){
+  document.querySelectorAll("#newBody [data-path]").forEach(el=>{
+    el.addEventListener("change",()=>{
       let v=el.value;
       if(el.dataset.type==="num"){ v = v===""?undefined:Number(v); }
       else if(el.dataset.type==="bool"){ v = v===""?undefined:(v==="true"); }
+      else if(el.dataset.type==="list"){ v = v.trim()===""?undefined:v.split(",").map(s=>s.trim()).filter(Boolean); }
       setPath(proposed(),el.dataset.path,v);
-      markEdited(); renderNewBadges(); renderPicker();
-      // motion / repositionMode toggle which conditional fields show -> re-render the panel
-      if(el.dataset.path==="delivery.motion" || el.dataset.path==="delivery.repositionMode" || el.dataset.path==="delivery.returnToOrigin"){ renderNew(); }
+      markEdited(); renderList();
+      if(el.dataset.path==="delivery.motion" || el.dataset.path==="delivery.repositionMode" || el.dataset.path==="delivery.returnToOrigin"){ renderEditor(); }
     });
-    // live radian viz redraw as the number changes (input = every keystroke)
     if(el.dataset.type==="num"){
       el.addEventListener("input",()=>{
         const n=Number(el.value);
@@ -219,26 +386,26 @@ function renderNew(){
       });
     }
   });
-  document.getElementById("addPay").onclick=()=>{proposed().payload=proposed().payload||[];proposed().payload.push({t:"damage"});markEdited();renderNew()};
-  renderNewBadges();
 }
+
 function selRow(path,label,opts,val,id){
-  if(val===undefined && ["linLength","linWidth","radArc","chainHops","hopRange"].includes(label)) {}
   const ch=fieldChanged(path,id)?"changed-field":"";
   let o=opts.map(x=>`<option ${x===(val||"")?"selected":""} value="${x}">${x||"(unset)"}</option>`).join("");
   return `<div class="kv ${ch}"><label>${label}</label><select class="minput" data-path="${path}">${o}</select></div>`;
 }
 function boolRow(path,label,val,id){
-  // boolean select: stores real true/false (data-type="bool"), "" = unset
   const ch=fieldChanged(path,id)?"changed-field":"";
-  const cur = (val===true?"true":val===false?"false":"");
-  const o=["","true","false"].map(x=>`<option ${x===cur?"selected":""} value="${x}">${x||"(unset)"}</option>`).join("");
+  const c = (val===true?"true":val===false?"false":"");
+  const o=["","true","false"].map(x=>`<option ${x===c?"selected":""} value="${x}">${x||"(unset)"}</option>`).join("");
   return `<div class="kv ${ch}"><label>${label}</label><select class="minput" data-path="${path}" data-type="bool">${o}</select></div>`;
 }
-// angular SIZE fields draw a wedge (a static slice of N radians);
-// angular RATE fields (rad/s) show a deg/s readout, not a slice.
+function listRow(path,label,val,id){
+  const ch=fieldChanged(path,id)?"changed-field":"";
+  const str=Array.isArray(val)?val.join(","):(val==null?"":val);
+  return `<div class="kv ${ch}"><label${str===""?' style="opacity:.5"':''}>${label}</label><input class="minput" data-path="${path}" data-type="list" placeholder="(unset)" value="${str}"></div>`;
+}
 const RAD_SIZE=["radArc","spread"];
-const RAD_RATE=["angularSpeed","aimTrack","turnRate","curve"];
+const RAD_RATE=["angularSpeed","aimTrack","turnRate","curve","path.curve"];
 function isRadSize(label){return RAD_SIZE.includes(label)}
 function isRadRate(label){return RAD_RATE.includes(label)}
 function radSvg(path,val){
@@ -246,9 +413,9 @@ function radSvg(path,val){
   return `<span class="radviz" data-radviz="${path}" title="${v} rad = ${(v*180/Math.PI).toFixed(0)}&deg;">${wedge(v)}</span>`;
 }
 function wedge(v){
-  const R=17, cx=19, cy=19; // 38x38 box
+  const R=17, cx=19, cy=19;
   const full = Math.abs(v) >= 6.2831;
-  const a0 = -Math.PI/2 - v/2;      // center the wedge on "up"
+  const a0 = -Math.PI/2 - v/2;
   const a1 = -Math.PI/2 + v/2;
   const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0);
   const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
@@ -281,7 +448,7 @@ function renderEndOn(){
     const sel=document.createElement("select"); sel.className="minput"; sel.style.flex="0 0 130px";
     ENDON_KEYS.forEach(kk=>{const o=document.createElement("option");o.value=kk;o.textContent=kk;if(kk===key)o.selected=true;sel.appendChild(o)});
     const inp=document.createElement("input"); inp.className="minput"; inp.value=(typeof val==="boolean"?"":val); inp.placeholder=(key==="time"?"sec":key==="contact"?"wall":"true");
-    const del=document.createElement("button"); del.textContent="×"; del.style.flex="0 0 32px";
+    const del=document.createElement("button"); del.textContent="\u00d7"; del.style.flex="0 0 32px";
     sel.onchange=()=>{const nk=sel.value; const nv=(nk==="time")?Number(inp.value||0):(nk==="contact"?(inp.value||"wall"):true); d.endOn[k]={[nk]:nv}; markEdited(); renderEndOn()};
     inp.onchange=()=>{const nv=(key==="time")?Number(inp.value||0):(key==="contact"?inp.value:(inp.value==="false"?false:true)); d.endOn[k]={[key]:nv}; markEdited()};
     del.onclick=()=>{d.endOn.splice(k,1);markEdited();renderEndOn()};
@@ -290,25 +457,67 @@ function renderEndOn(){
   const add=document.createElement("button"); add.textContent="+ endOn"; add.onclick=()=>{d.endOn.push({time:1.0});markEdited();renderEndOn()};
   box.appendChild(add);
 }
+/* structured sub-field editors for emit / spawn / multihit-normalize */
+function subKV(parent,label,el){const w=document.createElement("div");w.className="kv";const l=document.createElement("label");l.textContent=label;w.appendChild(l);w.appendChild(el);parent.appendChild(w);return w}
+function miniSelect(opts,val,on){const s=document.createElement("select");s.className="minput";opts.forEach(o=>{const op=document.createElement("option");op.value=o;op.textContent=o||"(unset)";if(o===(val||""))op.selected=true;s.appendChild(op)});s.onchange=()=>on(s.value===""?undefined:s.value);return s}
+function miniNum(val,on){const i=document.createElement("input");i.className="minput";i.type="text";i.value=(val==null?"":val);i.placeholder="(unset)";i.onchange=()=>on(i.value.trim()===""?undefined:Number(i.value));return i}
+function miniText(val,on,ph){const i=document.createElement("input");i.className="minput";i.value=(val==null?"":val);i.placeholder=ph||"(unset)";i.onchange=()=>on(i.value.trim()===""?undefined:i.value);return i}
+function miniBool(val,on){const s=document.createElement("select");s.className="minput";["","true","false"].forEach(o=>{const op=document.createElement("option");op.value=o;op.textContent=o||"(unset)";const c=(val===true?"true":val===false?"false":"");if(o===c)op.selected=true;s.appendChild(op)});s.onchange=()=>on(s.value===""?undefined:s.value==="true");return s}
+
 function renderPayload(){
   const p=proposed(); p.payload=p.payload||[];
   const box=document.getElementById("payload"); if(!box)return; box.innerHTML="";
   p.payload.forEach((eff,k)=>{
     const row=document.createElement("div"); row.className="payload-row";
+    const head=document.createElement("div"); head.className="phead";
     const sel=document.createElement("select"); sel.className="minput"; sel.style.flex="0 0 110px";
     PAYLOAD_T.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;if(t===eff.t)o.selected=true;sel.appendChild(o)});
-    sel.onchange=()=>{eff.t=sel.value;markEdited();renderPayload()};
-    const extra=document.createElement("input"); extra.className="minput";
-    const rest=Object.assign({},eff); delete rest.t;
-    extra.value=JSON.stringify(rest); extra.placeholder='{"id":"burn","chance":10,"side":"foe"}';
-    extra.onchange=()=>{try{const o=JSON.parse(extra.value||"{}");p.payload[k]=Object.assign({t:eff.t},o);markEdited();extra.style.borderColor=""}catch(e){extra.style.borderColor="var(--warn)"}};
-    const del=document.createElement("button"); del.textContent="×"; del.style.flex="0 0 32px";
+    sel.onchange=()=>{const keep={t:sel.value};p.payload[k]=keep;markEdited();renderPayload()};
+    head.appendChild(sel);
+
+    // structured editors for emit / spawn / multihit; raw JSON for the rest
+    if(eff.t==="emit"||eff.t==="spawn"||eff.t==="multihit"){
+      const spacer=document.createElement("span");spacer.style.flex="1";spacer.style.color="var(--mut)";spacer.style.fontSize="11px";
+      spacer.textContent=eff.t==="emit"?"emitter (no HP)":eff.t==="spawn"?"combatant (HP+AI)":"repeat hits on one target";
+      head.appendChild(spacer);
+    } else {
+      const extra=document.createElement("input"); extra.className="minput";
+      const rest=Object.assign({},eff); delete rest.t;
+      extra.value=JSON.stringify(rest); extra.placeholder='{"id":"burn","chance":10,"side":"foe"}';
+      extra.onchange=()=>{try{const o=JSON.parse(extra.value||"{}");p.payload[k]=Object.assign({t:eff.t},o);markEdited();extra.style.borderColor=""}catch(e){extra.style.borderColor="var(--warn)"}};
+      head.appendChild(extra);
+    }
+    const del=document.createElement("button"); del.textContent="\u00d7"; del.style.flex="0 0 32px";
     del.onclick=()=>{p.payload.splice(k,1);markEdited();renderPayload()};
-    row.appendChild(sel);row.appendChild(extra);row.appendChild(del);box.appendChild(row);
+    head.appendChild(del);
+    row.appendChild(head);
+
+    if(eff.t==="emit"){
+      const sub=document.createElement("div");sub.className="subfields";
+      subKV(sub,"move",miniText(eff.move,v=>{eff.move=v;markEdited()},"move id or inline"));
+      subKV(sub,"every (s)",miniNum(eff.every,v=>{eff.every=v;markEdited()}));
+      subKV(sub,"trigger",miniSelect(EMIT_TRIG_OPTS,eff.trigger,v=>{eff.trigger=v;markEdited()}));
+      subKV(sub,"endOn",miniText(eff.endOn?JSON.stringify(eff.endOn):"",v=>{try{eff.endOn=v?JSON.parse(v):undefined;markEdited()}catch(_){}} ,'[{"time":8}]'));
+      row.appendChild(sub);
+    } else if(eff.t==="spawn"){
+      const sub=document.createElement("div");sub.className="subfields";
+      subKV(sub,"entity",miniText(eff.entity,v=>{eff.entity=v;markEdited()},"entity id or inline"));
+      subKV(sub,"allegiance",miniSelect(SPAWN_ALLEG_OPTS,eff.allegiance,v=>{eff.allegiance=v;markEdited()}));
+      subKV(sub,"endOn",miniText(eff.endOn?JSON.stringify(eff.endOn):"",v=>{try{eff.endOn=v?JSON.parse(v):undefined;markEdited()}catch(_){}} ,'[{"ownerDeath":true}]'));
+      row.appendChild(sub);
+    } else if(eff.t==="multihit"){
+      const sub=document.createElement("div");sub.className="subfields";
+      subKV(sub,"hits",miniNum(eff.hits,v=>{eff.hits=v;markEdited()}));
+      subKV(sub,"min",miniNum(eff.min,v=>{eff.min=v;markEdited()}));
+      subKV(sub,"max",miniNum(eff.max,v=>{eff.max=v;markEdited()}));
+      subKV(sub,"normalize",miniBool(eff.normalize,v=>{eff.normalize=v;markEdited()}));
+      row.appendChild(sub);
+    }
+    box.appendChild(row);
   });
 }
 function setPath(o,path,v){const ks=path.split(".");let x=o;for(let j=0;j<ks.length-1;j++){if(x[ks[j]]==null)x[ks[j]]={};x=x[ks[j]]}const last=ks[ks.length-1];if(v===undefined)delete x[last];else x[last]=v}
-function markEdited(){cur()._edited=true}
+function markEdited(){}
 function isEdited(id){return JSON.stringify(autoSeed[id])!==JSON.stringify(edits[id]||autoSeed[id])}
 function changedFields(id){
   const a=autoSeed[id],b=edits[id]||a,out=[];
@@ -320,34 +529,23 @@ function changedFields(id){
   }
   walk(a,b,""); return out;
 }
-function renderNewBadges(){
-  const id=cur().id;
-  document.getElementById("editBadge").style.display=isEdited(id)?"":"none";
-  const n=Object.keys(edits).filter(k=>isEdited(k)).length;
-  document.getElementById("editCount").textContent=n+" edited";
-}
-function renderPicker(){
-  const p=document.getElementById("picker");
-  [...p.options].forEach((o,k)=>{const m=DATA.moves[k];o.textContent=(k+1)+". "+m.name+"  ["+m.confidence+"]"+(isEdited(m.id)?"  ✎":"")});
-  p.value=i;
-}
-function render(){
-  document.getElementById("idx").textContent=i+1;
-  const b=document.getElementById("confBadge"); b.textContent=cur().confidence; b.className="badge "+cur().confidence;
-  renderOld(); renderNew(); renderPicker();
-}
 
-document.getElementById("prev").onclick=()=>{i=(i-1+DATA.moves.length)%DATA.moves.length;render()};
-document.getElementById("next").onclick=()=>{i=(i+1)%DATA.moves.length;render()};
-document.getElementById("picker").onchange=e=>{i=+e.target.value;render()};
-document.getElementById("reset").onclick=()=>{delete edits[cur().id];render()};
-document.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;if(e.key==="ArrowLeft")document.getElementById("prev").click();if(e.key==="ArrowRight")document.getElementById("next").click()});
+/* ---------- filters/sort wiring ---------- */
+["sortBy","fKind","fConf","fRev","fBal","fEdit"].forEach(idd=>{
+  document.getElementById(idd).addEventListener("change",renderList);
+});
 
 function buildExport(){
   return {schema:DATA.schema,generated:new Date().toISOString(),count:DATA.moves.length,
-    moves:DATA.moves.map(m=>({id:m.id,name:m.name,kind:m.kind,confidence:m.confidence,
-      current:m.current, autoSeed:autoSeed[m.id], final:edits[m.id]||autoSeed[m.id],
-      changedFields:changedFields(m.id)}))};
+    moves:DATA.moves.map(m=>{
+      const final=clone(edits[m.id]||autoSeed[m.id]);
+      // reviewStatus lives INSIDE final{}
+      if(review[m.id]) final.reviewStatus=review[m.id];
+      return {id:m.id,name:m.name,kind:m.kind,confidence:m.confidence,
+        balanceClass:balance[m.id]||undefined,   // top-level
+        current:m.current, autoSeed:autoSeed[m.id], final:final,
+        changedFields:changedFields(m.id)};
+    })};
 }
 document.getElementById("export").onclick=()=>{
   const ex=buildExport();
@@ -361,9 +559,8 @@ document.getElementById("dl").onclick=()=>{
 };
 document.getElementById("copy").onclick=()=>navigator.clipboard.writeText(JSON.stringify(buildExport(),null,2));
 
-// auto-load sibling JSON (works over http; file:// may block fetch -> fallback to picker)
 fetch("move-conversions.json").then(r=>r.json()).then(load).catch(()=>{
-  document.getElementById("oldBody").innerHTML='<p class="hint">Could not auto-load (file:// blocks fetch). Click to pick <code>move-conversions.json</code>.</p><button onclick="document.getElementById(\'file\').click()" class="primary">Choose move-conversions.json</button>';
+  document.getElementById("editInner").innerHTML='<div class="empty"><p class="hint">Could not auto-load (file:// blocks fetch). Click to pick <code>move-conversions.json</code>.</p><button onclick="document.getElementById(\'file\').click()" class="primary">Choose move-conversions.json</button></div>';
 });
 document.getElementById("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>load(JSON.parse(fr.result));fr.readAsText(f)};
 </script>
