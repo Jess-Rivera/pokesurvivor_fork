@@ -1,0 +1,48 @@
+name: Feature request / idea
+description: Suggest a feature, change, or balance tweak
+title: "[Idea]: "
+labels: ["feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas and balance feedback are welcome. The more concrete, the better.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem or itch is this solving?
+      description: What feels missing, annoying, or off right now?
+      placeholder: e.g. "The mid-run lull after the first gym has nothing to chase."
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would you add or change? Rough is fine.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the game?
+      options:
+        - Moves
+        - Gyms / bosses / elites
+        - Enemies / spawning
+        - Items / shop / inventory
+        - UI / menus / HUD
+        - Core / engine / performance
+        - Other / not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Is this a feature or a balance tweak?
+      options:
+        - New feature
+        - Balance / tuning
+        - Quality-of-life change
+    validations:
+      required: true
