@@ -1,25 +1,31 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-24 morning (Quick, work machine).
+Last updated: 2026-10-24 midday (Quick, work machine).
 
 ## Where we are
-- ON BRANCH feature/all-moves-import (gym progression PAUSED). NO game code touched this session (and none the prior session). check.js not run (nothing in js/ changed).
-- NEW THIS SESSION, the project now has a real tracker: GitHub Issues + a Project board named "PokeSwarm" replace the Slack Kanban. The assistant now acts as Jess's PM (this was a founding ask that had been lost; it is written into CLAUDE.md now so it survives tool switches). Playtesters file via issue templates. Full detail: CLAUDE.md "Project management and issue tracking"; playtester guide: CONTRIBUTING.md.
-- PokeSwarm = one board, six-column Status (Triage, Accepted, In Progress, Blocked, Needs Playtest, Shipped), two filtered views (Bugs = label:bug, Roadmap = label:feature). 15 labels. 12 issues live (#1 gym sprite fix filed by hand; 11 seeded from TODO.md via tools/seed_issues.sh), all in Triage. TODO.md is being migrated to Issues: the BOARD wins for "what's next".
-- MOVE IMPORT is still the active engineering thread. Jess hand-built pokeapi-master/data/v2/csv/api_dataset.json (937 moves, denormalized PokeAPI dump) = the move-data-raw source for the importer. The schema (docs/MOVE-AXIS-SCHEMA.md) and per-move decisions (docs/move-decisions.json, edited via docs/move-decisions-dashboard.html) are built; ~15 approved / ~30 changed / ~19 pending of 64.
+- ON BRANCH feature/all-moves-import (gym progression PAUSED). NO game code touched; check.js not run (nothing in js/ changed). All work was docs + a build tool + a viewer.
+- MOVE-AXIS-SCHEMA is FINALIZED and canonical at docs/MOVE-AXIS-SCHEMA.md. The old REVISED copy and stale pre-today move-import files were cleaned out; anything move-related Jess kept now lives in docs/move_rework_holding/ (api_move_dataset.json = the 937-move source, two xlsx, json-table-viewer.html, new pokemon-viewer.html).
+- NEW: a Pokemon SPECIES dataset builder, pokeapi-master/data/v2/csv/build_pokemon_dataset.py (sibling of build_dataset.py). NOT RUN YET. Outputs api_pokemon_dataset.json + pokemon_validation_report.json into that csv folder.
+
+## Schema decisions settled this session (still need recording in DECISIONS.md)
+- SPLASH: carries riders at HALF chance (supersedes the damage-only lean). {radius, falloff, trigger}, default trigger enemyHit, never consumes pierce/hitCap, falloff linear center-to-edge. Non-chance riders (stat/knockback) at half magnitude.
+- UNLIMITED pierce/hitCap = named constant, never overload 0.
+- grow expands ONE grow.dim (default radRadius); rate via grow.per (time=px/s default, distance=px per px travelled).
+- hitPolicy = three values: oncePerInstance (default), interval (needs rehit), onReentry.
+- Folded back in: grow.per, iframes (travel+N swept / flat teleport), commitment.cooldown freeze vs freeze(ids).
+- PARKED: Size-card-on-pierce-0 edge clip (feel-test); growing-ring collision tolerance (collision code).
+
+## Pokemon dataset spec (frozen, for build_pokemon_dataset.py)
+API data ONLY (no sprites, no game fields). One entry per SPECIES off the default pokemon row; functional forms (non-default rows differing in stats/types/abilities) nested in forms[]; cosmetic dropped. resolved_source = current values only (no _past). All generations. National dex called out, all regional dex numbers included. Evolution per-node. Flavor text = highest version_id. Learnsets EXCLUDED (own dataset, #11). Mirrors build_dataset.py + a validation report.
 
 ## Next (in order)
-1. Jess: commit + push this session. Two groups: (a) DEVLOG.md + docs/MOVES-IMPORT-PLAN.md (api_dataset.json logged/wired in); (b) CONTRIBUTING.md + CLAUDE.md + CONTEXT.md + tools/seed_issues.sh + .github/ISSUE_TEMPLATE/config.yml (tracker workflow). Issue templates were already committed to main earlier.
-2. Triage the board: everything is in Triage but labels already carry state. Drag the `blocked` issues (arena flow slice B, regional forms, type chart, learnsets) to Blocked; the `ready` ones to Accepted. Optional: create the `needs-playtest` label if not done.
-3. Resume the MOVE IMPORT thread: finish reviewing the 19 PENDING moves in the local dashboard (filter to "changed" -> Approve-all is safe; do NOT blanket-approve the pending ones). Settle open feel-calls: Flamethrower normalize true(90)/false(270), Night Shade single vs AoE, Psycho Cut crit (or none per D4 lean).
-4. THEN the importer slice (code, prose-plan-then-approve): resolver (null-guard: 110/937 null meta, 1 no flavor_text, stat_chance 0 = guaranteed on status moves, ~13 out-of-model ailments) + four files + a 64-move CONVERSION HARNESS proving the current 64 resolve unchanged (go/no-go gate). Then one caster-agnostic executor; behavior-by-kind; learnsets; RESUME gyms.
-
-## Open schema questions
-- UNLIMITED hitCap as 0 or a named constant (lean: named constant). splash riders vs damage-only (lean: damage-only).
+1. Jess: COMMIT + PUSH this session (assistant's commands below). Then RUN build_pokemon_dataset.py, sanity-check pokemon_validation_report.json (expect ~1025 species, forms nested, ~0 warnings; spot-check Charizard forms + Pikachu). Drop the JSON onto pokemon-viewer.html.
+2. Record the schema decisions above in DECISIONS.md (note they supersede old KG/doc leans). Board still all-in-Triage; drag ready->Accepted, blocked->Blocked when convenient.
+3. Resume MOVE IMPORT (board #2, blocked by #3 + #4): settle feel-calls (#4), finish ~19 pending moves (#3), THEN importer slice + 64-move conversion harness (go/no-go gate). Then learnsets (#11), RESUME gyms (#5).
 
 ## Standing rules (full text: CLAUDE.md)
-Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js + Markdown docs free-edit. Never run git OR gh to mutate the tracker (draft commands, Jess runs them). New save fields backward compatible. Debug on dev.html?dev.
+Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js + Markdown docs free-edit. Never run git OR gh (draft commands, Jess runs them). New save fields backward compatible. Debug on dev.html?dev.
 
 ## Where to look (search, do not read whole)
-GitHub: the PokeSwarm board + Issues (the live backlog). docs/MOVE-AXIS-SCHEMA.md, docs/move-decisions.json, docs/move-decisions-dashboard.html, docs/MOVES-IMPORT-PLAN.md. DECISIONS.md, BALANCE.md, TODO.md. CONTRIBUTING.md (playtesters). Fast check: node tools/check.js.
+PokeSwarm board + Issues (live backlog, 10 open). docs/MOVE-AXIS-SCHEMA.md. docs/move_rework_holding/. pokeapi-master/data/v2/csv/ (both builders). docs/MOVES-IMPORT-PLAN.md, move-decisions.json/-dashboard.html. DECISIONS.md, BALANCE.md. Fast check: node tools/check.js.
