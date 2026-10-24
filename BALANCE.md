@@ -133,6 +133,7 @@ re-tune later.
   base-65 enemy), but as a %-of-HP it EASES for a player who keeps pace (5.7% -> 2.7%). Late-game threat
   is intended to come from enemy DENSITY, not per-hit lethality.
 - Scope: WILD enemies only. Bosses keep their bespoke flat def.dmg (atkFactor null) until a boss slice.
+- RESOLVED 2026-10-24 (GitHub issue #7, closed as stale): gym leaders / bosses now use the correct A/D ratio damage path, validated multiple times in play. The "bosses keep flat def.dmg until a boss slice" caveat above (and the "biggest known balance hole" framing in the old Boss damage slice TODO) is OUTDATED. Leaving the historical lines in place for the record; this note supersedes them for gym leaders.
 - Non-enemy damage (lava, altar, Judgment, burn/poison DoT) is unchanged/flat — does NOT use the ratio.
 
 ## Upgrades
