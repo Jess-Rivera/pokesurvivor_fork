@@ -1,0 +1,5014 @@
+{
+  "schema": "docs/MOVE-AXIS-SCHEMA.md",
+  "generated_by": "build_move_conversions.py",
+  "count": 64,
+  "moves": [
+    {
+      "id": "tackle",
+      "name": "Tackle",
+      "kind": "melee",
+      "current": {
+        "id": "tackle",
+        "name": "Tackle",
+        "type": "normal",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.5,
+        "dmg": 40,
+        "radius": 48,
+        "arc": 1.7,
+        "knock": 90
+      },
+      "raw": {
+        "type": "normal",
+        "category": "physical",
+        "power": 40,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "A physical attack in which the user charges and slams into the target with its whole body."
+      },
+      "proposed": {
+        "id": "tackle",
+        "name": "Tackle",
+        "type": "normal",
+        "category": "physical",
+        "power": 40,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "A physical attack in which the user charges and slams into the target with its whole body.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.7,
+          "radRadius": 48,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 90
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "quick-attack",
+      "name": "Quick Attack",
+      "kind": "dash",
+      "current": {
+        "id": "quick-attack",
+        "name": "Quick Attack",
+        "type": "normal",
+        "kind": "dash",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.75,
+        "dmg": 40,
+        "radius": 110,
+        "width": 34,
+        "knock": 40
+      },
+      "raw": {
+        "type": "normal",
+        "category": "physical",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 1,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user lunges at the target to inflict damage, moving at blinding speed. This move always goes first."
+      },
+      "proposed": {
+        "id": "quick-attack",
+        "name": "Quick Attack",
+        "type": "normal",
+        "category": "physical",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 1,
+        "flavor_text": "The user lunges at the target to inflict damage, moving at blinding speed. This move always goes first.",
+        "space": {
+          "shape": "linear",
+          "linLength": 110,
+          "linWidth": 34,
+          "pierce": 0
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "repositions",
+          "repositionMode": "swept",
+          "dashMult": 10,
+          "returnToOrigin": true,
+          "returnHits": "outAndBack",
+          "endOn": [
+            {
+              "returned": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 40
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "dash default = pierce 0 (single-target lunge). Bump pierce up (or UNLIMITED) only for a deliberate line-clearing dash. motion:repositions + iframes (caster-state); swept vs teleport?",
+        "Return-dash worked example: repositionMode swept + returnToOrigin true + dashMult 10 (10x final move speed) out to nearest enemy and back to the launch point, striking on both legs; ends on {returned} (speed-driven, no fixed time)."
+      ]
+    },
+    {
+      "id": "swords-dance",
+      "name": "Swords Dance",
+      "kind": "buff",
+      "current": {
+        "id": "swords-dance",
+        "name": "Swords Dance",
+        "type": "normal",
+        "kind": "buff",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "dmg": 0,
+        "stageN": 2,
+        "desc": "Raises the team's Attack by two stages (physical moves).",
+        "cd": 8,
+        "stat": "atk",
+        "dur": 8,
+        "fixed": [
+          "amount",
+          "stacks"
+        ]
+      },
+      "raw": {
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "net-good-stats",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "A frenetic dance to uplift the fighting spirit. This sharply boosts the user's Attack stat."
+      },
+      "proposed": {
+        "id": "swords-dance",
+        "name": "Swords Dance",
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "A frenetic dance to uplift the fighting spirit. This sharply boosts the user's Attack stat.",
+        "delivery": {
+          "anchor": "self",
+          "targeting": "self"
+        },
+        "payload": [
+          {
+            "t": "stat",
+            "stat": "atk",
+            "stages": 2,
+            "side": "self",
+            "scope": "team",
+            "duration": 8
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "self-buff; no hitbox"
+      ]
+    },
+    {
+      "id": "agility",
+      "name": "Agility",
+      "kind": "buff",
+      "current": {
+        "id": "agility",
+        "name": "Agility",
+        "type": "normal",
+        "kind": "buff",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "dmg": 0,
+        "stageN": 2,
+        "desc": "Raises the team's Speed by two stages.",
+        "cd": 8,
+        "stat": "spd",
+        "dur": 8,
+        "fixed": [
+          "amount",
+          "stacks"
+        ]
+      },
+      "raw": {
+        "type": "psychic",
+        "category": "status",
+        "power": null,
+        "pp": 30,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "net-good-stats",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user relaxes and lightens its body to move faster. This sharply boosts its Speed stat."
+      },
+      "proposed": {
+        "id": "agility",
+        "name": "Agility",
+        "type": "psychic",
+        "category": "status",
+        "power": null,
+        "pp": 30,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user relaxes and lightens its body to move faster. This sharply boosts its Speed stat.",
+        "delivery": {
+          "anchor": "self",
+          "targeting": "self"
+        },
+        "payload": [
+          {
+            "t": "stat",
+            "stat": "spd",
+            "stages": 2,
+            "side": "self",
+            "scope": "team",
+            "duration": 8
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "self-buff; no hitbox"
+      ]
+    },
+    {
+      "id": "harden",
+      "name": "Harden",
+      "kind": "buff",
+      "current": {
+        "id": "harden",
+        "name": "Harden",
+        "type": "normal",
+        "kind": "buff",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "dmg": 0,
+        "desc": "Raises the team's Defense by one stage.",
+        "cd": 8,
+        "stat": "def",
+        "dur": 8,
+        "fixed": [
+          "amount",
+          "stacks"
+        ]
+      },
+      "raw": {
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 30,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "net-good-stats",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user stiffens all the muscles in its body to boost its Defense stat."
+      },
+      "proposed": {
+        "id": "harden",
+        "name": "Harden",
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 30,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user stiffens all the muscles in its body to boost its Defense stat.",
+        "delivery": {
+          "anchor": "self",
+          "targeting": "self"
+        },
+        "payload": [
+          {
+            "t": "stat",
+            "stat": "def",
+            "stages": 1,
+            "side": "self",
+            "scope": "team",
+            "duration": 8
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "self-buff; no hitbox"
+      ]
+    },
+    {
+      "id": "ember",
+      "name": "Ember",
+      "kind": "projectile",
+      "current": {
+        "id": "ember",
+        "name": "Ember",
+        "type": "fire",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "burn",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to burn the target.",
+        "cd": 0.52,
+        "dmg": 40,
+        "speed": 310,
+        "count": 1,
+        "spread": 0.12,
+        "pierce": 0,
+        "life": 1.6,
+        "size": 7,
+        "burn": 1
+      },
+      "raw": {
+        "type": "fire",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "burn",
+        "ailment_chance": 10,
+        "flavor_text": "The target is attacked with small flames. This may also leave the target with a burn."
+      },
+      "proposed": {
+        "id": "ember",
+        "name": "Ember",
+        "type": "fire",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is attacked with small flames. This may also leave the target with a burn.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 7,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.12
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 310,
+          "endOn": [
+            {
+              "time": 1.6
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "burn",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "flamethrower",
+      "name": "Flamethrower",
+      "kind": "cone",
+      "current": {
+        "id": "flamethrower",
+        "name": "Flamethrower",
+        "type": "fire",
+        "kind": "cone",
+        "cat": "special",
+        "ailment": "burn",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to burn the target.",
+        "cd": 0.7,
+        "dmg": 90,
+        "count": 7,
+        "arc": 0.9,
+        "speed": 380,
+        "life": 0.42,
+        "size": 6,
+        "pierce": 1,
+        "burn": 1
+      },
+      "raw": {
+        "type": "fire",
+        "category": "special",
+        "power": 90,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "burn",
+        "ailment_chance": 10,
+        "flavor_text": "The target is scorched with an intense blast of fire. This may also leave the target with a burn."
+      },
+      "proposed": {
+        "id": "flamethrower",
+        "name": "Flamethrower",
+        "type": "fire",
+        "category": "special",
+        "power": 90,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is scorched with an intense blast of fire. This may also leave the target with a burn.",
+        "space": {
+          "shape": "radial",
+          "radArc": 0.9,
+          "radRadius": 159.6,
+          "count": 7,
+          "pierce": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "aimTrack": 1.4,
+          "endOn": [
+            {
+              "time": 0.42
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "burn",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "cone: schema models as aimTrack cone (NOT count pellets). Flamethrower-class feel-call."
+      ]
+    },
+    {
+      "id": "fire-spin",
+      "name": "Fire Spin",
+      "kind": "orbit",
+      "current": {
+        "id": "fire-spin",
+        "name": "Fire Spin",
+        "type": "fire",
+        "kind": "orbit",
+        "cat": "special",
+        "ailment": "burn",
+        "ailmentChance": 100,
+        "strip": true,
+        "burnHalf": true,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Strips every stat boost from the target and burns it for half the usual time. Fire types are immune to the burn, not to the strip.",
+        "cd": 0.3,
+        "dmg": 35,
+        "count": 3,
+        "radius": 62,
+        "speed": 2.4,
+        "size": 9
+      },
+      "raw": {
+        "type": "fire",
+        "category": "special",
+        "power": 35,
+        "pp": 15,
+        "accuracy": 85,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "trap",
+        "ailment_chance": 100,
+        "flavor_text": "The user traps the target inside a fierce vortex of fire that inflicts damage for four to five turns."
+      },
+      "proposed": {
+        "id": "fire-spin",
+        "name": "Fire Spin",
+        "type": "fire",
+        "category": "special",
+        "power": 35,
+        "pp": 15,
+        "accuracy": 85,
+        "priority": 0,
+        "flavor_text": "The user traps the target inside a fierce vortex of fire that inflicts damage for four to five turns.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radRadius": 9,
+          "count": 3
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "orbits",
+          "orbitRadius": 62,
+          "angularSpeed": 2.4,
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "burn",
+            "chance": 100,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "orbit orbs are persistent; use rehit + hitPolicy:interval, not pierce. angularSpeed reused from current 'speed' (rad/s), confirm.",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "heat-wave",
+      "name": "Heat Wave",
+      "kind": "nova",
+      "current": {
+        "id": "heat-wave",
+        "name": "Heat Wave",
+        "type": "fire",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "burn",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to burn the target.",
+        "cd": 1.25,
+        "dmg": 95,
+        "speed": 250,
+        "count": 10,
+        "pierce": 1,
+        "life": 1.1,
+        "size": 7,
+        "burn": 1
+      },
+      "raw": {
+        "type": "fire",
+        "category": "special",
+        "power": 95,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage-ailment",
+        "ailment": "burn",
+        "ailment_chance": 10,
+        "flavor_text": "The user attacks by exhaling hot breath on opposing Pokémon. This may also leave them with a burn."
+      },
+      "proposed": {
+        "id": "heat-wave",
+        "name": "Heat Wave",
+        "type": "fire",
+        "category": "special",
+        "power": 95,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "The user attacks by exhaling hot breath on opposing Pokémon. This may also leave them with a burn.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 7
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.1
+            }
+          ],
+          "moveSpeed": 250
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "burn",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=10 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce."
+      ]
+    },
+    {
+      "id": "water-gun",
+      "name": "Water Gun",
+      "kind": "projectile",
+      "current": {
+        "id": "water-gun",
+        "name": "Water Gun",
+        "type": "water",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.44,
+        "dmg": 40,
+        "speed": 350,
+        "count": 1,
+        "spread": 0.1,
+        "pierce": 1,
+        "life": 1.5,
+        "size": 6
+      },
+      "raw": {
+        "type": "water",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is blasted with a forceful shot of water."
+      },
+      "proposed": {
+        "id": "water-gun",
+        "name": "Water Gun",
+        "type": "water",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is blasted with a forceful shot of water.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 6,
+          "count": 1,
+          "pierce": 1,
+          "spread": 0.1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 350,
+          "endOn": [
+            {
+              "time": 1.5
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "bubble",
+      "name": "Bubble",
+      "kind": "nova",
+      "current": {
+        "id": "bubble",
+        "name": "Bubble",
+        "type": "water",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "stage": {
+          "stat": "spe",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Speed by one stage.",
+        "cd": 1.0,
+        "dmg": 40,
+        "speed": 210,
+        "count": 8,
+        "pierce": 0,
+        "life": 1.3,
+        "size": 8,
+        "slow": 0.45
+      },
+      "raw": {
+        "type": "water",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered."
+      },
+      "proposed": {
+        "id": "bubble",
+        "name": "Bubble",
+        "type": "water",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 8
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.3
+            }
+          ],
+          "moveSpeed": 210
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spe",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=8 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce.",
+        "statChance 10 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "hydro-pump",
+      "name": "Hydro Pump",
+      "kind": "beam",
+      "current": {
+        "id": "hydro-pump",
+        "name": "Hydro Pump",
+        "type": "water",
+        "kind": "beam",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 1.5,
+        "dmg": 110,
+        "radius": 250,
+        "width": 30
+      },
+      "raw": {
+        "type": "water",
+        "category": "special",
+        "power": 110,
+        "pp": 5,
+        "accuracy": 80,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is blasted by a huge volume of water launched under great pressure."
+      },
+      "proposed": {
+        "id": "hydro-pump",
+        "name": "Hydro Pump",
+        "type": "water",
+        "category": "special",
+        "power": 110,
+        "pp": 5,
+        "accuracy": 80,
+        "priority": 0,
+        "flavor_text": "The target is blasted by a huge volume of water launched under great pressure.",
+        "space": {
+          "shape": "linear",
+          "linLength": 250,
+          "linWidth": 30,
+          "pierce": "UNLIMITED"
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.5
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "beam is a directional instance that passes through all enemies: pierce=UNLIMITED (named constant, resolver maps it; never 999/0)."
+      ]
+    },
+    {
+      "id": "aqua-ring",
+      "name": "Aqua Ring",
+      "kind": "buff",
+      "current": {
+        "id": "aqua-ring",
+        "name": "Aqua Ring",
+        "type": "water",
+        "kind": "buff",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "dmg": 0,
+        "desc": "Restores 1/16 of the user's max HP each turn.",
+        "cd": 8,
+        "stat": "regen",
+        "amount": 1.6,
+        "dur": 8,
+        "fixed": [
+          "stacks"
+        ]
+      },
+      "raw": {
+        "type": "water",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "unique",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user envelops itself in a veil made of water. It regains some HP every turn."
+      },
+      "proposed": {
+        "id": "aqua-ring",
+        "name": "Aqua Ring",
+        "type": "water",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user envelops itself in a veil made of water. It regains some HP every turn.",
+        "delivery": {
+          "anchor": "self",
+          "targeting": "self"
+        },
+        "payload": [
+          {
+            "t": "stat",
+            "stat": "regen",
+            "stages": 1,
+            "side": "self",
+            "scope": "team",
+            "duration": 8
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "self-buff; no hitbox"
+      ]
+    },
+    {
+      "id": "vine-whip",
+      "name": "Vine Whip",
+      "kind": "melee",
+      "current": {
+        "id": "vine-whip",
+        "name": "Vine Whip",
+        "type": "grass",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.62,
+        "dmg": 45,
+        "radius": 68,
+        "arc": 1.3,
+        "knock": 60
+      },
+      "raw": {
+        "type": "grass",
+        "category": "physical",
+        "power": 45,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is struck with slender, whiplike vines to inflict damage."
+      },
+      "proposed": {
+        "id": "vine-whip",
+        "name": "Vine Whip",
+        "type": "grass",
+        "category": "physical",
+        "power": 45,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is struck with slender, whiplike vines to inflict damage.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.3,
+          "radRadius": 68,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 60
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "razor-leaf",
+      "name": "Razor Leaf",
+      "kind": "boomerang",
+      "current": {
+        "id": "razor-leaf",
+        "name": "Razor Leaf",
+        "type": "grass",
+        "kind": "boomerang",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has an increased chance for a critical hit.",
+        "cd": 0.9,
+        "dmg": 55,
+        "speed": 330,
+        "count": 2,
+        "spread": 0.5,
+        "radius": 210,
+        "size": 6
+      },
+      "raw": {
+        "type": "grass",
+        "category": "physical",
+        "power": 55,
+        "pp": 25,
+        "accuracy": 95,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "Sharp-edged leaves are launched to slash at opposing Pokémon. This move has a heightened chance of landing a critical hit."
+      },
+      "proposed": {
+        "id": "razor-leaf",
+        "name": "Razor Leaf",
+        "type": "grass",
+        "category": "physical",
+        "power": 55,
+        "pp": 25,
+        "accuracy": 95,
+        "priority": 0,
+        "flavor_text": "Sharp-edged leaves are launched to slash at opposing Pokémon. This move has a heightened chance of landing a critical hit.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 6,
+          "count": 2,
+          "pierce": 0,
+          "spread": 0.5
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "returns",
+          "moveSpeed": 330,
+          "endOn": [
+            {
+              "time": 2.0
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "boomerang is directional (out-and-back): pierce default 0 (confirm how many it cuts through). motion:returns; confirm max range 210."
+      ]
+    },
+    {
+      "id": "leaf-storm",
+      "name": "Leaf Storm",
+      "kind": "orbit",
+      "current": {
+        "id": "leaf-storm",
+        "name": "Leaf Storm",
+        "type": "grass",
+        "kind": "orbit",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 100,
+        "self": {
+          "stat": "spa",
+          "n": -2
+        },
+        "desc": "Lowers the user's Special Attack by two stages after inflicting damage (this Pokemon only).",
+        "cd": 0.26,
+        "dmg": 130,
+        "count": 4,
+        "radius": 74,
+        "speed": 2.6,
+        "size": 8
+      },
+      "raw": {
+        "type": "grass",
+        "category": "special",
+        "power": 130,
+        "pp": 5,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-raise",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user whips up a storm of leaves around the target. The recoil from this move harshly lowers the user's Sp. Atk stat."
+      },
+      "proposed": {
+        "id": "leaf-storm",
+        "name": "Leaf Storm",
+        "type": "grass",
+        "category": "special",
+        "power": 130,
+        "pp": 5,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "The user whips up a storm of leaves around the target. The recoil from this move harshly lowers the user's Sp. Atk stat.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 4
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "orbits",
+          "orbitRadius": 74,
+          "angularSpeed": 2.6,
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spa",
+            "stages": -2,
+            "side": "team",
+            "scope": "team"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "orbit orbs are persistent; use rehit + hitPolicy:interval, not pierce. angularSpeed reused from current 'speed' (rad/s), confirm.",
+        "statChance 100 present; confirm stat payload chance",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "giga-drain",
+      "name": "Giga Drain",
+      "kind": "projectile",
+      "current": {
+        "id": "giga-drain",
+        "name": "Giga Drain",
+        "type": "grass",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Drains half the damage inflicted to heal the user.",
+        "cd": 0.55,
+        "dmg": 75,
+        "speed": 290,
+        "count": 1,
+        "spread": 0,
+        "pierce": 0,
+        "life": 1.5,
+        "size": 8,
+        "drain": 0.5,
+        "fixed": [
+          "count",
+          "pierce"
+        ]
+      },
+      "raw": {
+        "type": "grass",
+        "category": "special",
+        "power": 75,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-heal",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "A nutrient-draining attack. The user's HP is restored by up to half the damage taken by the target."
+      },
+      "proposed": {
+        "id": "giga-drain",
+        "name": "Giga Drain",
+        "type": "grass",
+        "category": "special",
+        "power": 75,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "A nutrient-draining attack. The user's HP is restored by up to half the damage taken by the target.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 290,
+          "endOn": [
+            {
+              "time": 1.5
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "thunder-shock",
+      "name": "Thunder Shock",
+      "kind": "projectile",
+      "current": {
+        "id": "thunder-shock",
+        "name": "Thunder Shock",
+        "type": "electric",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "paralysis",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to paralyze the target.",
+        "cd": 0.4,
+        "dmg": 40,
+        "speed": 480,
+        "count": 1,
+        "spread": 0.08,
+        "pierce": 2,
+        "life": 1.1,
+        "size": 5
+      },
+      "raw": {
+        "type": "electric",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "paralysis",
+        "ailment_chance": 10,
+        "flavor_text": "The user attacks the target with a jolt of electricity. This may also leave the target with paralysis."
+      },
+      "proposed": {
+        "id": "thunder-shock",
+        "name": "Thunder Shock",
+        "type": "electric",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks the target with a jolt of electricity. This may also leave the target with paralysis.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 5,
+          "count": 1,
+          "pierce": 2,
+          "spread": 0.08
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 480,
+          "endOn": [
+            {
+              "time": 1.1
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "paralysis",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "discharge",
+      "name": "Discharge",
+      "kind": "aura",
+      "current": {
+        "id": "discharge",
+        "name": "Discharge",
+        "type": "electric",
+        "kind": "aura",
+        "cat": "special",
+        "ailment": "paralysis",
+        "ailmentChance": 30,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to paralyze the target.",
+        "cd": 0.45,
+        "dmg": 80,
+        "radius": 70
+      },
+      "raw": {
+        "type": "electric",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-other-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "paralysis",
+        "ailment_chance": 30,
+        "flavor_text": "The user strikes everything around it by letting loose a flare of electricity. This may also leave those hit by the attack with paralysis."
+      },
+      "proposed": {
+        "id": "discharge",
+        "name": "Discharge",
+        "type": "electric",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user strikes everything around it by letting loose a flare of electricity. This may also leave those hit by the attack with paralysis.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 70
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "paralysis",
+            "chance": 30,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "thunderbolt",
+      "name": "Thunderbolt",
+      "kind": "chain",
+      "current": {
+        "id": "thunderbolt",
+        "name": "Thunderbolt",
+        "type": "electric",
+        "kind": "chain",
+        "cat": "special",
+        "ailment": "paralysis",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to paralyze the target.",
+        "cd": 0.95,
+        "dmg": 90,
+        "count": 4,
+        "radius": 140
+      },
+      "raw": {
+        "type": "electric",
+        "category": "special",
+        "power": 90,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "paralysis",
+        "ailment_chance": 10,
+        "flavor_text": "The user attacks the target with a strong electric blast. This may also leave the target with paralysis."
+      },
+      "proposed": {
+        "id": "thunderbolt",
+        "name": "Thunderbolt",
+        "type": "electric",
+        "category": "special",
+        "power": 90,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks the target with a strong electric blast. This may also leave the target with paralysis.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0,
+          "chainHops": 4,
+          "hopRange": 140
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "travels",
+          "moveSpeed": 400,
+          "endOn": [
+            {
+              "time": 0.3
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "paralysis",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "chain: count reused as chainHops; confirm hop range"
+      ]
+    },
+    {
+      "id": "confusion",
+      "name": "Confusion",
+      "kind": "projectile",
+      "current": {
+        "id": "confusion",
+        "name": "Confusion",
+        "type": "psychic",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "confusion",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to confuse the target.",
+        "cd": 0.58,
+        "dmg": 50,
+        "speed": 280,
+        "count": 1,
+        "spread": 0.1,
+        "pierce": 0,
+        "life": 2.2,
+        "size": 8,
+        "homing": 2.0
+      },
+      "raw": {
+        "type": "psychic",
+        "category": "special",
+        "power": 50,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "confusion",
+        "ailment_chance": 10,
+        "flavor_text": "The target is hit with a weak telekinetic force to inflict damage. This may also confuse the target."
+      },
+      "proposed": {
+        "id": "confusion",
+        "name": "Confusion",
+        "type": "psychic",
+        "category": "special",
+        "power": 50,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is hit with a weak telekinetic force to inflict damage. This may also confuse the target.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "travels",
+          "moveSpeed": 280,
+          "endOn": [
+            {
+              "time": 2.2
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ],
+          "turnRate": 2.0
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "confusion",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "psybeam",
+      "name": "Psybeam",
+      "kind": "beam",
+      "current": {
+        "id": "psybeam",
+        "name": "Psybeam",
+        "type": "psychic",
+        "kind": "beam",
+        "cat": "special",
+        "ailment": "confusion",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to confuse the target.",
+        "cd": 1.15,
+        "dmg": 65,
+        "radius": 215,
+        "width": 40
+      },
+      "raw": {
+        "type": "psychic",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "confusion",
+        "ailment_chance": 10,
+        "flavor_text": "The target is attacked with a peculiar ray. This may also confuse the target."
+      },
+      "proposed": {
+        "id": "psybeam",
+        "name": "Psybeam",
+        "type": "psychic",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is attacked with a peculiar ray. This may also confuse the target.",
+        "space": {
+          "shape": "linear",
+          "linLength": 215,
+          "linWidth": 40,
+          "pierce": "UNLIMITED"
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.5
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "confusion",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "beam is a directional instance that passes through all enemies: pierce=UNLIMITED (named constant, resolver maps it; never 999/0)."
+      ]
+    },
+    {
+      "id": "psychic",
+      "name": "Psychic",
+      "kind": "nova",
+      "current": {
+        "id": "psychic",
+        "name": "Psychic",
+        "type": "psychic",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "stage": {
+          "stat": "spd",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Special Defense by one stage.",
+        "cd": 1.35,
+        "dmg": 90,
+        "speed": 230,
+        "count": 12,
+        "pierce": 1,
+        "life": 1.6,
+        "size": 7,
+        "homing": 1.0
+      },
+      "raw": {
+        "type": "psychic",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is hit with a strong telekinetic force to inflict damage. This may also lower the target’s Sp. Def stat."
+      },
+      "proposed": {
+        "id": "psychic",
+        "name": "Psychic",
+        "type": "psychic",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is hit with a strong telekinetic force to inflict damage. This may also lower the target’s Sp. Def stat.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 7
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.6
+            }
+          ],
+          "moveSpeed": 230
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spd",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=12 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce.",
+        "statChance 10 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "sludge",
+      "name": "Sludge",
+      "kind": "projectile",
+      "current": {
+        "id": "sludge",
+        "name": "Sludge",
+        "type": "poison",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "poison",
+        "ailmentChance": 30,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to poison the target.",
+        "cd": 0.6,
+        "dmg": 65,
+        "speed": 290,
+        "count": 1,
+        "spread": 0.12,
+        "pierce": 0,
+        "life": 1.5,
+        "size": 8,
+        "poison": 1
+      },
+      "raw": {
+        "type": "poison",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "poison",
+        "ailment_chance": 30,
+        "flavor_text": "The user hurls unsanitary sludge at the target to inflict damage. This may also poison the target."
+      },
+      "proposed": {
+        "id": "sludge",
+        "name": "Sludge",
+        "type": "poison",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user hurls unsanitary sludge at the target to inflict damage. This may also poison the target.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.12
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 290,
+          "endOn": [
+            {
+              "time": 1.5
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "poison",
+            "chance": 30,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "mud-shot",
+      "name": "Mud Shot",
+      "kind": "nova",
+      "current": {
+        "id": "mud-shot",
+        "name": "Mud Shot",
+        "type": "ground",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 100,
+        "stage": {
+          "stat": "spe",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Speed by one stage.",
+        "cd": 1.1,
+        "dmg": 55,
+        "speed": 200,
+        "count": 7,
+        "pierce": 0,
+        "life": 1.0,
+        "size": 9,
+        "slow": 0.4
+      },
+      "raw": {
+        "type": "ground",
+        "category": "special",
+        "power": 55,
+        "pp": 15,
+        "accuracy": 95,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user attacks by hurling a blob of mud at the target. This also lowers the target's Speed stat."
+      },
+      "proposed": {
+        "id": "mud-shot",
+        "name": "Mud Shot",
+        "type": "ground",
+        "category": "special",
+        "power": 55,
+        "pp": 15,
+        "accuracy": 95,
+        "priority": 0,
+        "flavor_text": "The user attacks by hurling a blob of mud at the target. This also lowers the target's Speed stat.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 9
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.0
+            }
+          ],
+          "moveSpeed": 200
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spe",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=7 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce.",
+        "statChance 100 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "gust",
+      "name": "Gust",
+      "kind": "orbit",
+      "current": {
+        "id": "gust",
+        "name": "Gust",
+        "type": "flying",
+        "kind": "orbit",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage and can hit Pokémon in the air.",
+        "cd": 0.26,
+        "dmg": 40,
+        "count": 3,
+        "radius": 72,
+        "speed": 2.8,
+        "size": 8,
+        "knock": 40
+      },
+      "raw": {
+        "type": "normal",
+        "category": "special",
+        "power": 40,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "A gust of wind is whipped up by wings and launched at the target to inflict damage."
+      },
+      "proposed": {
+        "id": "gust",
+        "name": "Gust",
+        "type": "normal",
+        "category": "special",
+        "power": 40,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "A gust of wind is whipped up by wings and launched at the target to inflict damage.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 3
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "orbits",
+          "orbitRadius": 72,
+          "angularSpeed": 2.8,
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 40
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "orbit orbs are persistent; use rehit + hitPolicy:interval, not pierce. angularSpeed reused from current 'speed' (rad/s), confirm.",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "wing-attack",
+      "name": "Wing Attack",
+      "kind": "melee",
+      "current": {
+        "id": "wing-attack",
+        "name": "Wing Attack",
+        "type": "flying",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.55,
+        "dmg": 60,
+        "radius": 58,
+        "arc": 1.9,
+        "knock": 70
+      },
+      "raw": {
+        "type": "flying",
+        "category": "physical",
+        "power": 60,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is struck with large, imposing wings spread wide to inflict damage."
+      },
+      "proposed": {
+        "id": "wing-attack",
+        "name": "Wing Attack",
+        "type": "flying",
+        "category": "physical",
+        "power": 60,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is struck with large, imposing wings spread wide to inflict damage.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.9,
+          "radRadius": 58,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 70
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "body-slam",
+      "name": "Body Slam",
+      "kind": "melee",
+      "current": {
+        "id": "body-slam",
+        "name": "Body Slam",
+        "type": "normal",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "paralysis",
+        "ailmentChance": 30,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to paralyze the target.",
+        "cd": 0.95,
+        "dmg": 85,
+        "radius": 46,
+        "arc": 2.2,
+        "knock": 140
+      },
+      "raw": {
+        "type": "normal",
+        "category": "physical",
+        "power": 85,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "paralysis",
+        "ailment_chance": 30,
+        "flavor_text": "The user attacks by dropping onto the target with its full body weight. This may also leave the target with paralysis."
+      },
+      "proposed": {
+        "id": "body-slam",
+        "name": "Body Slam",
+        "type": "normal",
+        "category": "physical",
+        "power": 85,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by dropping onto the target with its full body weight. This may also leave the target with paralysis.",
+        "space": {
+          "shape": "radial",
+          "radArc": 2.2,
+          "radRadius": 46,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "paralysis",
+            "chance": 30,
+            "side": "foe"
+          },
+          {
+            "t": "knockback",
+            "distance": 140
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "hyper-voice",
+      "name": "Hyper Voice",
+      "kind": "nova",
+      "current": {
+        "id": "hyper-voice",
+        "name": "Hyper Voice",
+        "type": "normal",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 1.15,
+        "dmg": 90,
+        "speed": 260,
+        "count": 9,
+        "pierce": 1,
+        "life": 0.9,
+        "size": 7
+      },
+      "raw": {
+        "type": "normal",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user attacks by letting loose a horribly loud, resounding cry."
+      },
+      "proposed": {
+        "id": "hyper-voice",
+        "name": "Hyper Voice",
+        "type": "normal",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by letting loose a horribly loud, resounding cry.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 7
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 0.9
+            }
+          ],
+          "moveSpeed": 260
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=9 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce."
+      ]
+    },
+    {
+      "id": "poison-sting",
+      "name": "Poison Sting",
+      "kind": "projectile",
+      "current": {
+        "id": "poison-sting",
+        "name": "Poison Sting",
+        "type": "poison",
+        "kind": "projectile",
+        "cat": "physical",
+        "ailment": "poison",
+        "ailmentChance": 30,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to poison the target.",
+        "cd": 0.34,
+        "dmg": 15,
+        "speed": 420,
+        "count": 1,
+        "spread": 0.08,
+        "pierce": 0,
+        "life": 1.0,
+        "size": 4,
+        "poison": 1
+      },
+      "raw": {
+        "type": "poison",
+        "category": "physical",
+        "power": 15,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "poison",
+        "ailment_chance": 30,
+        "flavor_text": "The user stabs the target with a poisonous stinger to inflict damage. This may also poison the target."
+      },
+      "proposed": {
+        "id": "poison-sting",
+        "name": "Poison Sting",
+        "type": "poison",
+        "category": "physical",
+        "power": 15,
+        "pp": 35,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user stabs the target with a poisonous stinger to inflict damage. This may also poison the target.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 4,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.08
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 420,
+          "endOn": [
+            {
+              "time": 1.0
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "poison",
+            "chance": 30,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "toxic",
+      "name": "Toxic",
+      "kind": "trail",
+      "current": {
+        "id": "toxic",
+        "name": "Toxic",
+        "type": "poison",
+        "kind": "trail",
+        "cat": "status",
+        "ailment": "poison",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Badly poisons the target, inflicting more damage every turn.",
+        "cd": 0.3,
+        "dmg": 0,
+        "radius": 26,
+        "dur": 3,
+        "poison": 2
+      },
+      "raw": {
+        "type": "poison",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "ailment",
+        "ailment": "poison",
+        "ailment_chance": 0,
+        "flavor_text": "A move that leaves the target badly poisoned. Its poison damage worsens every turn."
+      },
+      "proposed": {
+        "id": "toxic",
+        "name": "Toxic",
+        "type": "poison",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "A move that leaves the target badly poisoned. Its poison damage worsens every turn.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radRadius": 26
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "self",
+          "motion": "static"
+        },
+        "payload": [
+          {
+            "t": "emit",
+            "every": 0.2,
+            "trigger": "interval"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "trail = emitter that drops puddles as caster moves",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "bulldoze",
+      "name": "Bulldoze",
+      "kind": "aura",
+      "current": {
+        "id": "bulldoze",
+        "name": "Bulldoze",
+        "type": "ground",
+        "kind": "aura",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 100,
+        "stage": {
+          "stat": "spe",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Speed by one stage.",
+        "cd": 0.7,
+        "dmg": 60,
+        "radius": 80,
+        "slow": 0.35
+      },
+      "raw": {
+        "type": "ground",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-other-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user strikes everything around it by stomping down on the ground. This lowers the Speed stats of those hit."
+      },
+      "proposed": {
+        "id": "bulldoze",
+        "name": "Bulldoze",
+        "type": "ground",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user strikes everything around it by stomping down on the ground. This lowers the Speed stats of those hit.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 80
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spe",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "statChance 100 present; confirm stat payload chance",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "bug-bite",
+      "name": "Bug Bite",
+      "kind": "melee",
+      "current": {
+        "id": "bug-bite",
+        "name": "Bug Bite",
+        "type": "bug",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "If target has a berry, inflicts double damage and uses the berry.",
+        "cd": 0.42,
+        "dmg": 60,
+        "radius": 44,
+        "arc": 1.6,
+        "knock": 40
+      },
+      "raw": {
+        "type": "bug",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user attacks by biting the target. If the target is holding a Berry, the user eats it and gains its effect."
+      },
+      "proposed": {
+        "id": "bug-bite",
+        "name": "Bug Bite",
+        "type": "bug",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by biting the target. If the target is holding a Berry, the user eats it and gains its effect.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.6,
+          "radRadius": 44,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 40
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "string-shot",
+      "name": "String Shot",
+      "kind": "mine",
+      "current": {
+        "id": "string-shot",
+        "name": "String Shot",
+        "type": "bug",
+        "kind": "mine",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Lowers the target's Speed by two stages.",
+        "cd": 1.1,
+        "dmg": 0,
+        "count": 2,
+        "radius": 56,
+        "dur": 7,
+        "slow": 0.6
+      },
+      "raw": {
+        "type": "bug",
+        "category": "status",
+        "power": null,
+        "pp": 40,
+        "accuracy": 95,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "net-good-stats",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user blows silk from its mouth that binds opposing Pokémon and harshly lowers their Speed stats."
+      },
+      "proposed": {
+        "id": "string-shot",
+        "name": "String Shot",
+        "type": "bug",
+        "category": "status",
+        "power": null,
+        "pp": 40,
+        "accuracy": 95,
+        "priority": 0,
+        "flavor_text": "The user blows silk from its mouth that binds opposing Pokémon and harshly lowers their Speed stats.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 56,
+          "count": 2
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "location",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 7
+            },
+            {
+              "contact": "wall"
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "mine: detonation is a trigger:contact emitter, not pierce; schema says mine uses trigger+timeout"
+      ]
+    },
+    {
+      "id": "bug-buzz",
+      "name": "Bug Buzz",
+      "kind": "aura",
+      "current": {
+        "id": "bug-buzz",
+        "name": "Bug Buzz",
+        "type": "bug",
+        "kind": "aura",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "stage": {
+          "stat": "spd",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Special Defense by one stage.",
+        "cd": 0.45,
+        "dmg": 90,
+        "radius": 66
+      },
+      "raw": {
+        "type": "bug",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user vibrates to generate a damaging sound wave. This may also lower the target's Sp. Def stat."
+      },
+      "proposed": {
+        "id": "bug-buzz",
+        "name": "Bug Buzz",
+        "type": "bug",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user vibrates to generate a damaging sound wave. This may also lower the target's Sp. Def stat.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 66
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spd",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "statChance 10 present; confirm stat payload chance",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "rock-throw",
+      "name": "Rock Throw",
+      "kind": "projectile",
+      "current": {
+        "id": "rock-throw",
+        "name": "Rock Throw",
+        "type": "rock",
+        "kind": "projectile",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.7,
+        "dmg": 50,
+        "speed": 260,
+        "count": 1,
+        "spread": 0.12,
+        "pierce": 0,
+        "life": 1.4,
+        "size": 9,
+        "knock": 90
+      },
+      "raw": {
+        "type": "rock",
+        "category": "physical",
+        "power": 50,
+        "pp": 15,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user picks up and throws a small rock at the target to inflict damage."
+      },
+      "proposed": {
+        "id": "rock-throw",
+        "name": "Rock Throw",
+        "type": "rock",
+        "category": "physical",
+        "power": 50,
+        "pp": 15,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "The user picks up and throws a small rock at the target to inflict damage.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 9,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.12
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 260,
+          "endOn": [
+            {
+              "time": 1.4
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 90
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "rock-slide",
+      "name": "Rock Slide",
+      "kind": "meteor",
+      "current": {
+        "id": "rock-slide",
+        "name": "Rock Slide",
+        "type": "rock",
+        "kind": "meteor",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 30,
+        "statChance": 0,
+        "desc": "Has a chance to make the target flinch.",
+        "cd": 1.3,
+        "dmg": 75,
+        "count": 3,
+        "radius": 46,
+        "knock": 50
+      },
+      "raw": {
+        "type": "rock",
+        "category": "physical",
+        "power": 75,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "Large boulders are hurled at opposing Pokémon to inflict damage. This may also make the opposing Pokémon flinch."
+      },
+      "proposed": {
+        "id": "rock-slide",
+        "name": "Rock Slide",
+        "type": "rock",
+        "category": "physical",
+        "power": 75,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "Large boulders are hurled at opposing Pokémon to inflict damage. This may also make the opposing Pokémon flinch.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 46,
+          "count": 3
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "nearest",
+          "motion": "falls",
+          "endOn": [
+            {
+              "time": 0.1
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 50
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "meteor: each impact is a static radial burst (no pierce); falls + delay wind-up (telegraph shadow); set caster delay."
+      ]
+    },
+    {
+      "id": "ice-beam",
+      "name": "Ice Beam",
+      "kind": "beam",
+      "current": {
+        "id": "ice-beam",
+        "name": "Ice Beam",
+        "type": "ice",
+        "kind": "beam",
+        "cat": "special",
+        "ailment": "freeze",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to freeze the target.",
+        "cd": 1.1,
+        "dmg": 90,
+        "radius": 220,
+        "width": 30,
+        "slow": 0.7
+      },
+      "raw": {
+        "type": "ice",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "freeze",
+        "ailment_chance": 10,
+        "flavor_text": "The target is struck with an icy-cold beam of energy. This may also leave the target frozen."
+      },
+      "proposed": {
+        "id": "ice-beam",
+        "name": "Ice Beam",
+        "type": "ice",
+        "category": "special",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is struck with an icy-cold beam of energy. This may also leave the target frozen.",
+        "space": {
+          "shape": "linear",
+          "linLength": 220,
+          "linWidth": 30,
+          "pierce": "UNLIMITED"
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.5
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "freeze",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "beam is a directional instance that passes through all enemies: pierce=UNLIMITED (named constant, resolver maps it; never 999/0)."
+      ]
+    },
+    {
+      "id": "powder-snow",
+      "name": "Powder Snow",
+      "kind": "aura",
+      "current": {
+        "id": "powder-snow",
+        "name": "Powder Snow",
+        "type": "ice",
+        "kind": "aura",
+        "cat": "special",
+        "ailment": "freeze",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to freeze the target.",
+        "cd": 0.55,
+        "dmg": 40,
+        "radius": 76,
+        "slow": 0.45
+      },
+      "raw": {
+        "type": "ice",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage-ailment",
+        "ailment": "freeze",
+        "ailment_chance": 10,
+        "flavor_text": "The user attacks with a chilling gust of powdery snow. This may also leave opposing Pokémon frozen."
+      },
+      "proposed": {
+        "id": "powder-snow",
+        "name": "Powder Snow",
+        "type": "ice",
+        "category": "special",
+        "power": 40,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks with a chilling gust of powdery snow. This may also leave opposing Pokémon frozen.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 76
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "freeze",
+            "chance": 10,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "karate-chop",
+      "name": "Karate Chop",
+      "kind": "melee",
+      "current": {
+        "id": "karate-chop",
+        "name": "Karate Chop",
+        "type": "fighting",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has an increased chance for a critical hit.",
+        "cd": 0.5,
+        "dmg": 50,
+        "radius": 50,
+        "arc": 1.2,
+        "knock": 110
+      },
+      "raw": {
+        "type": "normal",
+        "category": "physical",
+        "power": 50,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered."
+      },
+      "proposed": {
+        "id": "karate-chop",
+        "name": "Karate Chop",
+        "type": "normal",
+        "category": "physical",
+        "power": 50,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.2,
+          "radRadius": 50,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 110
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "aura-sphere",
+      "name": "Aura Sphere",
+      "kind": "projectile",
+      "current": {
+        "id": "aura-sphere",
+        "name": "Aura Sphere",
+        "type": "fighting",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Never misses.",
+        "cd": 0.62,
+        "dmg": 80,
+        "speed": 300,
+        "count": 1,
+        "spread": 0.1,
+        "pierce": 0,
+        "life": 2.0,
+        "size": 8,
+        "homing": 4
+      },
+      "raw": {
+        "type": "fighting",
+        "category": "special",
+        "power": 80,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user lets loose a pulse of aura power from deep within its body at the target. This attack never misses."
+      },
+      "proposed": {
+        "id": "aura-sphere",
+        "name": "Aura Sphere",
+        "type": "fighting",
+        "category": "special",
+        "power": 80,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user lets loose a pulse of aura power from deep within its body at the target. This attack never misses.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0,
+          "spread": 0.1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "travels",
+          "moveSpeed": 300,
+          "endOn": [
+            {
+              "time": 2.0
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ],
+          "turnRate": 4
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": []
+    },
+    {
+      "id": "lick",
+      "name": "Lick",
+      "kind": "melee",
+      "current": {
+        "id": "lick",
+        "name": "Lick",
+        "type": "ghost",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "paralysis",
+        "ailmentChance": 30,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to paralyze the target.",
+        "cd": 0.48,
+        "dmg": 30,
+        "radius": 48,
+        "arc": 1.8
+      },
+      "raw": {
+        "type": "ghost",
+        "category": "physical",
+        "power": 30,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "paralysis",
+        "ailment_chance": 30,
+        "flavor_text": "The user licks the target with a long tongue to inflict damage. This may also leave the target with paralysis."
+      },
+      "proposed": {
+        "id": "lick",
+        "name": "Lick",
+        "type": "ghost",
+        "category": "physical",
+        "power": 30,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user licks the target with a long tongue to inflict damage. This may also leave the target with paralysis.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.8,
+          "radRadius": 48,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "ailment",
+            "id": "paralysis",
+            "chance": 30,
+            "side": "foe"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "shadow-ball",
+      "name": "Shadow Ball",
+      "kind": "projectile",
+      "current": {
+        "id": "shadow-ball",
+        "name": "Shadow Ball",
+        "type": "ghost",
+        "kind": "projectile",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 20,
+        "stage": {
+          "stat": "spd",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Special Defense by one stage.",
+        "cd": 0.66,
+        "dmg": 80,
+        "speed": 280,
+        "count": 1,
+        "spread": 0.1,
+        "pierce": 2,
+        "life": 1.6,
+        "size": 9
+      },
+      "raw": {
+        "type": "ghost",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user attacks by hurling a shadowy blob at the target. This may also lower the target’s Sp. Def stat."
+      },
+      "proposed": {
+        "id": "shadow-ball",
+        "name": "Shadow Ball",
+        "type": "ghost",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by hurling a shadowy blob at the target. This may also lower the target’s Sp. Def stat.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 9,
+          "count": 1,
+          "pierce": 2,
+          "spread": 0.1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "travels",
+          "moveSpeed": 280,
+          "endOn": [
+            {
+              "time": 1.6
+            },
+            {
+              "contact": "wall"
+            },
+            {
+              "offScreen": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spd",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "statChance 20 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "dragon-rage",
+      "name": "Dragon Rage",
+      "kind": "beam",
+      "current": {
+        "id": "dragon-rage",
+        "name": "Dragon Rage",
+        "type": "dragon",
+        "kind": "beam",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts 40 points of damage.",
+        "cd": 1.0,
+        "dmg": 0,
+        "radius": 230,
+        "width": 34
+      },
+      "raw": {
+        "type": "dragon",
+        "category": "special",
+        "power": null,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered."
+      },
+      "proposed": {
+        "id": "dragon-rage",
+        "name": "Dragon Rage",
+        "type": "dragon",
+        "category": "special",
+        "power": null,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "This move can’t be used.\r\nIt’s recommended that this move is forgotten.\r\nOnce forgotten, this move can’t be remembered.",
+        "space": {
+          "shape": "linear",
+          "linLength": 230,
+          "linWidth": 34,
+          "pierce": "UNLIMITED"
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.5
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "beam is a directional instance that passes through all enemies: pierce=UNLIMITED (named constant, resolver maps it; never 999/0)."
+      ]
+    },
+    {
+      "id": "dragon-dance",
+      "name": "Dragon Dance",
+      "kind": "buff",
+      "current": {
+        "id": "dragon-dance",
+        "name": "Dragon Dance",
+        "type": "dragon",
+        "kind": "buff",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "dmg": 0,
+        "desc": "Raises the team's Attack and Speed by one stage each.",
+        "cd": 8,
+        "stat": "atk",
+        "stageN": 1,
+        "stage2": {
+          "stat": "spe",
+          "n": 1
+        },
+        "dur": 8,
+        "fixed": [
+          "amount",
+          "stacks"
+        ]
+      },
+      "raw": {
+        "type": "dragon",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "net-good-stats",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user vigorously performs a mystic, powerful dance that boosts its Attack and Speed stats."
+      },
+      "proposed": {
+        "id": "dragon-dance",
+        "name": "Dragon Dance",
+        "type": "dragon",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user vigorously performs a mystic, powerful dance that boosts its Attack and Speed stats.",
+        "delivery": {
+          "anchor": "self",
+          "targeting": "self"
+        },
+        "payload": [
+          {
+            "t": "stat",
+            "stat": "atk",
+            "stages": 1,
+            "side": "self",
+            "scope": "team",
+            "duration": 8
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "self-buff; no hitbox"
+      ]
+    },
+    {
+      "id": "fairy-wind",
+      "name": "Fairy Wind",
+      "kind": "nova",
+      "current": {
+        "id": "fairy-wind",
+        "name": "Fairy Wind",
+        "type": "fairy",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 1.0,
+        "dmg": 40,
+        "speed": 230,
+        "count": 10,
+        "pierce": 0,
+        "life": 1.2,
+        "size": 7
+      },
+      "raw": {
+        "type": "fairy",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user attacks by stirring up a fairy wind to strike the target."
+      },
+      "proposed": {
+        "id": "fairy-wind",
+        "name": "Fairy Wind",
+        "type": "fairy",
+        "category": "special",
+        "power": 40,
+        "pp": 30,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by stirring up a fairy wind to strike the target.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 7
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.2
+            }
+          ],
+          "moveSpeed": 230
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=10 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce."
+      ]
+    },
+    {
+      "id": "dazzling-gleam",
+      "name": "Dazzling Gleam",
+      "kind": "aura",
+      "current": {
+        "id": "dazzling-gleam",
+        "name": "Dazzling Gleam",
+        "type": "fairy",
+        "kind": "aura",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts regular damage with no additional effect.",
+        "cd": 0.5,
+        "dmg": 80,
+        "radius": 72
+      },
+      "raw": {
+        "type": "fairy",
+        "category": "special",
+        "power": 80,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "all-opponents",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user damages opposing Pokémon by emitting a powerful flash."
+      },
+      "proposed": {
+        "id": "dazzling-gleam",
+        "name": "Dazzling Gleam",
+        "type": "fairy",
+        "category": "special",
+        "power": 80,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user damages opposing Pokémon by emitting a powerful flash.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 72
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "metal-claw",
+      "name": "Metal Claw",
+      "kind": "melee",
+      "current": {
+        "id": "metal-claw",
+        "name": "Metal Claw",
+        "type": "steel",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "self": {
+          "stat": "atk",
+          "n": 1
+        },
+        "desc": "Has a chance to raise the team's Attack by one stage.",
+        "cd": 0.5,
+        "dmg": 50,
+        "radius": 50,
+        "arc": 1.6,
+        "knock": 60
+      },
+      "raw": {
+        "type": "steel",
+        "category": "physical",
+        "power": 50,
+        "pp": 35,
+        "accuracy": 95,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-raise",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is raked with steel claws. This may also boost the user's Attack stat."
+      },
+      "proposed": {
+        "id": "metal-claw",
+        "name": "Metal Claw",
+        "type": "steel",
+        "category": "physical",
+        "power": 50,
+        "pp": 35,
+        "accuracy": 95,
+        "priority": 0,
+        "flavor_text": "The target is raked with steel claws. This may also boost the user's Attack stat.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.6,
+          "radRadius": 50,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "atk",
+            "stages": 1,
+            "side": "team",
+            "scope": "team"
+          },
+          {
+            "t": "knockback",
+            "distance": 60
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field).",
+        "statChance 10 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "flash-cannon",
+      "name": "Flash Cannon",
+      "kind": "beam",
+      "current": {
+        "id": "flash-cannon",
+        "name": "Flash Cannon",
+        "type": "steel",
+        "kind": "beam",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "stage": {
+          "stat": "spd",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Special Defense by one stage.",
+        "cd": 1.05,
+        "dmg": 80,
+        "radius": 220,
+        "width": 30
+      },
+      "raw": {
+        "type": "steel",
+        "category": "special",
+        "power": 80,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user gathers all its light energy and releases it at once. This may also lower the target's Sp. Def stat."
+      },
+      "proposed": {
+        "id": "flash-cannon",
+        "name": "Flash Cannon",
+        "type": "steel",
+        "category": "special",
+        "power": 80,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user gathers all its light energy and releases it at once. This may also lower the target's Sp. Def stat.",
+        "space": {
+          "shape": "linear",
+          "linLength": 220,
+          "linWidth": 30,
+          "pierce": "UNLIMITED"
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.5
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spd",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "beam is a directional instance that passes through all enemies: pierce=UNLIMITED (named constant, resolver maps it; never 999/0).",
+        "statChance 10 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "bite",
+      "name": "Bite",
+      "kind": "melee",
+      "current": {
+        "id": "bite",
+        "name": "Bite",
+        "type": "dark",
+        "kind": "melee",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 30,
+        "statChance": 0,
+        "desc": "Has a chance to make the target flinch.",
+        "cd": 0.45,
+        "dmg": 60,
+        "radius": 46,
+        "arc": 1.5,
+        "knock": 70
+      },
+      "raw": {
+        "type": "normal",
+        "category": "physical",
+        "power": 60,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is bitten with viciously sharp fangs. This may also make the target flinch."
+      },
+      "proposed": {
+        "id": "bite",
+        "name": "Bite",
+        "type": "normal",
+        "category": "physical",
+        "power": 60,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The target is bitten with viciously sharp fangs. This may also make the target flinch.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.5,
+          "radRadius": 46,
+          "count": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 0.15
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 70
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "melee arc = static area; hits all overlapping enemies once (hitPolicy:oncePerInstance). No pierce (directional-only field)."
+      ]
+    },
+    {
+      "id": "dark-pulse",
+      "name": "Dark Pulse",
+      "kind": "nova",
+      "current": {
+        "id": "dark-pulse",
+        "name": "Dark Pulse",
+        "type": "dark",
+        "kind": "nova",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 20,
+        "statChance": 0,
+        "desc": "Has a chance to make the target flinch.",
+        "cd": 1.15,
+        "dmg": 80,
+        "speed": 240,
+        "count": 10,
+        "pierce": 1,
+        "life": 1.1,
+        "size": 8
+      },
+      "raw": {
+        "type": "dark",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user releases a horrible aura imbued with ill intent. This may also make the target flinch."
+      },
+      "proposed": {
+        "id": "dark-pulse",
+        "name": "Dark Pulse",
+        "type": "dark",
+        "category": "special",
+        "power": 80,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user releases a horrible aura imbued with ill intent. This may also make the target flinch.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 8
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "travels",
+          "endOn": [
+            {
+              "time": 1.1
+            }
+          ],
+          "moveSpeed": 240
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "nova current uses count=10 pellets; schema nova is one expanding ring (grow). CONVERSION CHANGES BEHAVIOR.",
+        "nova = static expanding ring; hitPolicy:oncePerInstance as the edge crosses each enemy. No pierce."
+      ]
+    },
+    {
+      "id": "night-shade",
+      "name": "Night Shade",
+      "kind": "aura",
+      "current": {
+        "id": "night-shade",
+        "name": "Night Shade",
+        "type": "dark",
+        "kind": "aura",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Inflicts damage equal to the user's level.",
+        "cd": 0.5,
+        "dmg": 0,
+        "radius": 72
+      },
+      "raw": {
+        "type": "ghost",
+        "category": "special",
+        "power": null,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user makes the target see a frightening mirage. It inflicts damage equal to the user's level."
+      },
+      "proposed": {
+        "id": "night-shade",
+        "name": "Night Shade",
+        "type": "ghost",
+        "category": "special",
+        "power": null,
+        "pp": 15,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user makes the target see a frightening mirage. It inflicts damage equal to the user's level.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 72
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "none",
+          "motion": "static",
+          "endOn": [
+            {
+              "notActive": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "aura = persistent static circle; needs rehit interval + hitPolicy:interval. No pierce (static).",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "bonemerang",
+      "name": "Bonemerang",
+      "kind": "boomerang",
+      "current": {
+        "id": "bonemerang",
+        "name": "Bonemerang",
+        "type": "ground",
+        "kind": "boomerang",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Hits twice in one turn.",
+        "cd": 0.95,
+        "dmg": 50,
+        "speed": 300,
+        "count": 1,
+        "radius": 230,
+        "size": 8,
+        "knock": 40
+      },
+      "raw": {
+        "type": "ground",
+        "category": "physical",
+        "power": 50,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user throws the bone it holds. The bone loops\r\naround to hit the target twice—coming and going."
+      },
+      "proposed": {
+        "id": "bonemerang",
+        "name": "Bonemerang",
+        "type": "ground",
+        "category": "physical",
+        "power": 50,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "The user throws the bone it holds. The bone loops\r\naround to hit the target twice—coming and going.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "returns",
+          "moveSpeed": 300,
+          "endOn": [
+            {
+              "time": 2.0
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 40
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "boomerang is directional (out-and-back): pierce default 0 (confirm how many it cuts through). motion:returns; confirm max range 230."
+      ]
+    },
+    {
+      "id": "psycho-cut",
+      "name": "Psycho Cut",
+      "kind": "boomerang",
+      "current": {
+        "id": "psycho-cut",
+        "name": "Psycho Cut",
+        "type": "psychic",
+        "kind": "boomerang",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has an increased chance for a critical hit.",
+        "cd": 0.8,
+        "dmg": 70,
+        "speed": 360,
+        "count": 2,
+        "spread": 0.6,
+        "radius": 200,
+        "size": 7
+      },
+      "raw": {
+        "type": "psychic",
+        "category": "physical",
+        "power": 70,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user tears at the target with blades formed by psychic power. This move has a heightened chance of landing a critical hit."
+      },
+      "proposed": {
+        "id": "psycho-cut",
+        "name": "Psycho Cut",
+        "type": "psychic",
+        "category": "physical",
+        "power": 70,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user tears at the target with blades formed by psychic power. This move has a heightened chance of landing a critical hit.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 7,
+          "count": 2,
+          "pierce": 0,
+          "spread": 0.6
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "returns",
+          "moveSpeed": 360,
+          "endOn": [
+            {
+              "time": 2.0
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "high",
+      "seedNotes": [
+        "boomerang is directional (out-and-back): pierce default 0 (confirm how many it cuts through). motion:returns; confirm max range 200."
+      ]
+    },
+    {
+      "id": "spikes",
+      "name": "Spikes",
+      "kind": "mine",
+      "current": {
+        "id": "spikes",
+        "name": "Spikes",
+        "type": "ground",
+        "kind": "mine",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Scatters Spikes, hurting opposing Pokémon that switch in.",
+        "cd": 1.2,
+        "dmg": 0,
+        "count": 2,
+        "radius": 60,
+        "dur": 8
+      },
+      "raw": {
+        "type": "ground",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "opponents-field",
+        "meta_category": "field-effect",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user lays a trap of spikes at the feet of the opposing team. The spikes will damage opposing Pokémon that switch into battle."
+      },
+      "proposed": {
+        "id": "spikes",
+        "name": "Spikes",
+        "type": "ground",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user lays a trap of spikes at the feet of the opposing team. The spikes will damage opposing Pokémon that switch into battle.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 60,
+          "count": 2
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "location",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 8
+            },
+            {
+              "contact": "wall"
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "mine: detonation is a trigger:contact emitter, not pierce; schema says mine uses trigger+timeout"
+      ]
+    },
+    {
+      "id": "toxic-spikes",
+      "name": "Toxic Spikes",
+      "kind": "mine",
+      "current": {
+        "id": "toxic-spikes",
+        "name": "Toxic Spikes",
+        "type": "poison",
+        "kind": "mine",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Scatters poisoned spikes, poisoning opposing Pokémon that switch in.",
+        "cd": 1.1,
+        "dmg": 0,
+        "count": 2,
+        "radius": 56,
+        "dur": 8,
+        "poison": 2
+      },
+      "raw": {
+        "type": "poison",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "opponents-field",
+        "meta_category": "field-effect",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user lays a trap of poison spikes at the feet of the opposing team. The spikes will poison opposing Pokémon that switch into battle."
+      },
+      "proposed": {
+        "id": "toxic-spikes",
+        "name": "Toxic Spikes",
+        "type": "poison",
+        "category": "status",
+        "power": null,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user lays a trap of poison spikes at the feet of the opposing team. The spikes will poison opposing Pokémon that switch into battle.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 56,
+          "count": 2
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "location",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 8
+            },
+            {
+              "contact": "wall"
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "mine: detonation is a trigger:contact emitter, not pierce; schema says mine uses trigger+timeout"
+      ]
+    },
+    {
+      "id": "hail",
+      "name": "Hail",
+      "kind": "meteor",
+      "current": {
+        "id": "hail",
+        "name": "Hail",
+        "type": "ice",
+        "kind": "meteor",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Changes the weather to a hailstorm for five turns.",
+        "cd": 1.2,
+        "dmg": 0,
+        "count": 4,
+        "radius": 40,
+        "slow": 0.4
+      },
+      "raw": {
+        "type": "ice",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": null,
+        "priority": 0,
+        "target": "entire-field",
+        "meta_category": "whole-field-effect",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user summons a hailstorm lasting five turns.\r\nIt damages all Pokémon except Ice types."
+      },
+      "proposed": {
+        "id": "hail",
+        "name": "Hail",
+        "type": "ice",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user summons a hailstorm lasting five turns.\r\nIt damages all Pokémon except Ice types.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 40,
+          "count": 4
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "nearest",
+          "motion": "falls",
+          "endOn": [
+            {
+              "time": 0.1
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "meteor: each impact is a static radial burst (no pierce); falls + delay wind-up (telegraph shadow); set caster delay."
+      ]
+    },
+    {
+      "id": "meteor-mash",
+      "name": "Meteor Mash",
+      "kind": "meteor",
+      "current": {
+        "id": "meteor-mash",
+        "name": "Meteor Mash",
+        "type": "steel",
+        "kind": "meteor",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 20,
+        "self": {
+          "stat": "atk",
+          "n": 1
+        },
+        "desc": "Has a chance to raise the team's Attack by one stage.",
+        "cd": 1.4,
+        "dmg": 90,
+        "count": 2,
+        "radius": 54,
+        "knock": 80
+      },
+      "raw": {
+        "type": "steel",
+        "category": "physical",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-raise",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The target is hit with a hard punch fired like a meteor. This may also boost the user’s Attack stat."
+      },
+      "proposed": {
+        "id": "meteor-mash",
+        "name": "Meteor Mash",
+        "type": "steel",
+        "category": "physical",
+        "power": 90,
+        "pp": 10,
+        "accuracy": 90,
+        "priority": 0,
+        "flavor_text": "The target is hit with a hard punch fired like a meteor. This may also boost the user’s Attack stat.",
+        "space": {
+          "shape": "radial",
+          "radArc": 6.2832,
+          "radRadius": 54,
+          "count": 2
+        },
+        "delivery": {
+          "anchor": "world",
+          "targeting": "nearest",
+          "motion": "falls",
+          "endOn": [
+            {
+              "time": 0.1
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "atk",
+            "stages": 1,
+            "side": "team",
+            "scope": "team"
+          },
+          {
+            "t": "knockback",
+            "distance": 80
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "meteor: each impact is a static radial burst (no pierce); falls + delay wind-up (telegraph shadow); set caster delay.",
+        "statChance 20 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "will-o-wisp",
+      "name": "Will-O-Wisp",
+      "kind": "turret",
+      "current": {
+        "id": "will-o-wisp",
+        "name": "Will-O-Wisp",
+        "type": "fire",
+        "kind": "turret",
+        "cat": "status",
+        "ailment": "burn",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Burns the target.",
+        "cd": 3.5,
+        "dmg": 0,
+        "rate": 0.55,
+        "dur": 6,
+        "count": 1,
+        "range": 300,
+        "speed": 300,
+        "size": 7,
+        "burn": 1
+      },
+      "raw": {
+        "type": "fire",
+        "category": "status",
+        "power": null,
+        "pp": 15,
+        "accuracy": 85,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "ailment",
+        "ailment": "burn",
+        "ailment_chance": 0,
+        "flavor_text": "The user shoots a sinister flame at the target to inflict a burn."
+      },
+      "proposed": {
+        "id": "will-o-wisp",
+        "name": "Will-O-Wisp",
+        "type": "fire",
+        "category": "status",
+        "power": null,
+        "pp": 15,
+        "accuracy": 85,
+        "priority": 0,
+        "flavor_text": "The user shoots a sinister flame at the target to inflict a burn.",
+        "delivery": {
+          "anchor": "world",
+          "targeting": "location",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 6
+            },
+            {
+              "ownerDeath": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "emit",
+            "every": 0.55,
+            "trigger": "interval"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "turret = emit primitive (emitter has no HP); substitute is actually a shield self-cast, re-check"
+      ]
+    },
+    {
+      "id": "substitute",
+      "name": "Substitute",
+      "kind": "turret",
+      "current": {
+        "id": "substitute",
+        "name": "Substitute",
+        "type": "normal",
+        "kind": "turret",
+        "cat": "status",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Transfers 1/4 of the user's max HP into a doll, protecting the user from further damage or status changes until it breaks.",
+        "cd": 4.0,
+        "dmg": 0,
+        "rate": 0.4,
+        "dur": 6,
+        "count": 1,
+        "range": 280,
+        "speed": 320,
+        "size": 6
+      },
+      "raw": {
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": null,
+        "priority": 0,
+        "target": "user",
+        "meta_category": "unique",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user creates a substitute for itself using some of its own HP. The substitute serves as the user's decoy."
+      },
+      "proposed": {
+        "id": "substitute",
+        "name": "Substitute",
+        "type": "normal",
+        "category": "status",
+        "power": null,
+        "pp": 10,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user creates a substitute for itself using some of its own HP. The substitute serves as the user's decoy.",
+        "delivery": {
+          "anchor": "world",
+          "targeting": "location",
+          "motion": "static",
+          "endOn": [
+            {
+              "time": 6
+            },
+            {
+              "ownerDeath": true
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "emit",
+            "every": 0.4,
+            "trigger": "interval"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "turret = emit primitive (emitter has no HP); substitute is actually a shield self-cast, re-check"
+      ]
+    },
+    {
+      "id": "aerial-ace",
+      "name": "Aerial Ace",
+      "kind": "dash",
+      "current": {
+        "id": "aerial-ace",
+        "name": "Aerial Ace",
+        "type": "flying",
+        "kind": "dash",
+        "cat": "physical",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Never misses.",
+        "cd": 0.75,
+        "dmg": 60,
+        "radius": 120,
+        "width": 40,
+        "knock": 60
+      },
+      "raw": {
+        "type": "flying",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "The user confounds the target with speed, then slashes. This attack never misses."
+      },
+      "proposed": {
+        "id": "aerial-ace",
+        "name": "Aerial Ace",
+        "type": "flying",
+        "category": "physical",
+        "power": 60,
+        "pp": 20,
+        "accuracy": null,
+        "priority": 0,
+        "flavor_text": "The user confounds the target with speed, then slashes. This attack never misses.",
+        "space": {
+          "shape": "linear",
+          "linLength": 120,
+          "linWidth": 40,
+          "pierce": 0
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "direction",
+          "motion": "repositions",
+          "repositionMode": "swept",
+          "endOn": [
+            {
+              "time": 0.2
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "knockback",
+            "distance": 60
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "dash default = pierce 0 (single-target lunge). Bump pierce up (or UNLIMITED) only for a deliberate line-clearing dash. motion:repositions + iframes (caster-state); swept vs teleport?"
+      ]
+    },
+    {
+      "id": "flame-wheel",
+      "name": "Flame Wheel",
+      "kind": "trail",
+      "current": {
+        "id": "flame-wheel",
+        "name": "Flame Wheel",
+        "type": "fire",
+        "kind": "trail",
+        "cat": "physical",
+        "ailment": "burn",
+        "ailmentChance": 10,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has a chance to burn the target. Lets frozen Pokémon thaw themselves.",
+        "cd": 0.28,
+        "dmg": 60,
+        "radius": 28,
+        "dur": 2.6,
+        "burn": 1
+      },
+      "raw": {
+        "type": "fire",
+        "category": "physical",
+        "power": 60,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-ailment",
+        "ailment": "burn",
+        "ailment_chance": 10,
+        "flavor_text": "The user attacks by cloaking itself in fire and charging at the target. This may also leave the target with a burn."
+      },
+      "proposed": {
+        "id": "flame-wheel",
+        "name": "Flame Wheel",
+        "type": "fire",
+        "category": "physical",
+        "power": 60,
+        "pp": 25,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "The user attacks by cloaking itself in fire and charging at the target. This may also leave the target with a burn.",
+        "hitPolicy": "interval",
+        "rehit": 0.4,
+        "space": {
+          "shape": "radial",
+          "radRadius": 28
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "self",
+          "motion": "static"
+        },
+        "payload": [
+          {
+            "t": "emit",
+            "every": 0.2,
+            "trigger": "interval"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "trail = emitter that drops puddles as caster moves",
+        "persistent area: hitPolicy=interval, rehit=0.4 s (seeded; confirm tick cadence)."
+      ]
+    },
+    {
+      "id": "bubble-beam",
+      "name": "Bubble Beam",
+      "kind": "cone",
+      "current": {
+        "id": "bubble-beam",
+        "name": "Bubble Beam",
+        "type": "water",
+        "kind": "cone",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 10,
+        "stage": {
+          "stat": "spe",
+          "n": -1
+        },
+        "desc": "Has a chance to lower the target's Speed by one stage.",
+        "cd": 0.65,
+        "dmg": 65,
+        "count": 7,
+        "arc": 1.0,
+        "speed": 340,
+        "life": 0.45,
+        "size": 6,
+        "slow": 0.3
+      },
+      "raw": {
+        "type": "water",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage-lower",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "A spray of bubbles is forcefully ejected at the target. This may also lower the target's Speed stat."
+      },
+      "proposed": {
+        "id": "bubble-beam",
+        "name": "Bubble Beam",
+        "type": "water",
+        "category": "special",
+        "power": 65,
+        "pp": 20,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "A spray of bubbles is forcefully ejected at the target. This may also lower the target's Speed stat.",
+        "space": {
+          "shape": "radial",
+          "radArc": 1.0,
+          "radRadius": 153.0,
+          "count": 7,
+          "pierce": 1
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "static",
+          "aimTrack": 1.4,
+          "endOn": [
+            {
+              "time": 0.45
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          },
+          {
+            "t": "stat",
+            "stat": "spe",
+            "stages": -1,
+            "side": "foe",
+            "scope": "individual"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "cone: schema models as aimTrack cone (NOT count pellets). Flamethrower-class feel-call.",
+        "statChance 10 present; confirm stat payload chance"
+      ]
+    },
+    {
+      "id": "hex",
+      "name": "Hex",
+      "kind": "chain",
+      "current": {
+        "id": "hex",
+        "name": "Hex",
+        "type": "ghost",
+        "kind": "chain",
+        "cat": "special",
+        "ailment": "none",
+        "ailmentChance": 0,
+        "flinch": 0,
+        "statChance": 0,
+        "desc": "Has double power if the target has a major status ailment.",
+        "cd": 0.9,
+        "dmg": 65,
+        "count": 4,
+        "radius": 150,
+        "hex": 1.7
+      },
+      "raw": {
+        "type": "ghost",
+        "category": "special",
+        "power": 65,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "target": "selected-pokemon",
+        "meta_category": "damage",
+        "ailment": "none",
+        "ailment_chance": 0,
+        "flavor_text": "This relentless attack does massive damage to a target affected by status conditions."
+      },
+      "proposed": {
+        "id": "hex",
+        "name": "Hex",
+        "type": "ghost",
+        "category": "special",
+        "power": 65,
+        "pp": 10,
+        "accuracy": 100,
+        "priority": 0,
+        "flavor_text": "This relentless attack does massive damage to a target affected by status conditions.",
+        "space": {
+          "shape": "radial",
+          "radRadius": 8,
+          "count": 1,
+          "pierce": 0,
+          "chainHops": 4,
+          "hopRange": 150
+        },
+        "delivery": {
+          "anchor": "caster",
+          "targeting": "nearest",
+          "motion": "travels",
+          "moveSpeed": 400,
+          "endOn": [
+            {
+              "time": 0.3
+            }
+          ]
+        },
+        "payload": [
+          {
+            "t": "damage"
+          }
+        ]
+      },
+      "confidence": "low",
+      "seedNotes": [
+        "chain: count reused as chainHops; confirm hop range"
+      ]
+    }
+  ]
+}

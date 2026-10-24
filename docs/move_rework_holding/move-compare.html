@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Move Conversion Review</title>
+<style>
+  :root{--bg:#14161a;--panel:#1d2026;--panel2:#23272f;--ink:#e8eaed;--mut:#9aa3b2;--acc:#ffcb05;--accb:#2a75bb;--old:#3a2730;--new:#1f2e22;--line:#30353f;--warn:#e0533a;--ok:#57a05a}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;color:var(--acc);font-weight:700;letter-spacing:.3px}
+  .nav{display:flex;align-items:center;gap:8px}
+  button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accb)}
+  button.primary{background:var(--accb);border-color:var(--accb);color:#fff;font-weight:600}
+  button.warn{background:var(--warn);border-color:var(--warn);color:#fff}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:260px}
+  .pos{color:var(--mut);font-variant-numeric:tabular-nums}
+  .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .badge.high{background:#20351f;color:var(--ok);border:1px solid var(--ok)}
+  .badge.low{background:#3a2015;color:var(--warn);border:1px solid var(--warn)}
+  .badge.edited{background:#2a2410;color:var(--acc);border:1px solid var(--acc)}
+  main{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;max-width:1500px;margin:0 auto}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .col h2{margin:0;padding:10px 14px;font-size:13px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .col.old h2{background:var(--old)}
+  .col.new h2{background:var(--new)}
+  .body{padding:12px 14px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin-bottom:5px}
+  .kv label{color:var(--mut);font-size:12px}
+  .kv .val{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-word}
+  input,.minput{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:12.5px ui-monospace,Consolas,monospace}
+  input:focus{outline:none;border-color:var(--acc)}
+  .sec{margin:12px 0 6px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--accb);border-top:1px dashed var(--line);padding-top:8px;font-weight:700}
+  .notes{background:#2a2015;border:1px solid var(--warn);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:12px;color:#f0c9a8}
+  .notes b{color:var(--warn)}
+  .rawbox{background:#161a20;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--mut);white-space:pre-wrap;max-height:160px;overflow:auto;margin-top:8px}
+  .payload-row,.endon-row{display:flex;gap:6px;margin-bottom:5px;align-items:center}
+  .payload-row input{flex:1}
+  .diff-added{color:var(--ok)} .diff-removed{color:var(--warn)} .diff-changed{color:var(--acc)}
+  .foot{grid-column:1/3;text-align:center;color:var(--mut);font-size:12px;padding:6px}
+  dialog{background:var(--panel);color:var(--ink);border:1px solid var(--accb);border-radius:10px;max-width:90vw;width:900px;max-height:85vh;overflow:auto}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  pre{white-space:pre-wrap;font-size:12px}
+  .hint{color:var(--mut);font-size:11.5px;margin-top:2px}
+  .changed-field input{border-color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Move Conversion Review</h1>
+  <div class="nav">
+    <button id="prev">&larr; Prev</button>
+    <span class="pos"><span id="idx">0</span>/<span id="total">0</span></span>
+    <button id="next">Next &rarr;</button>
+  </div>
+  <select id="picker"></select>
+  <span id="confBadge" class="badge high">high</span>
+  <span id="editBadge" class="badge edited" style="display:none">edited</span>
+  <div style="flex:1"></div>
+  <span class="pos" id="editCount">0 edited</span>
+  <button id="reset">Reset move</button>
+  <button class="primary" id="export">Export diff &darr;</button>
+</header>
+
+<main>
+  <section class="col old">
+    <h2>Current (moves.js) &mdash; read only</h2>
+    <div class="body" id="oldBody"></div>
+  </section>
+  <section class="col new">
+    <h2>Proposed (new schema) &mdash; editable</h2>
+    <div class="body" id="newBody"></div>
+  </section>
+  <div class="foot">Load <code>move-conversions.json</code> if it did not auto-load. Edits are kept in memory until you Export.</div>
+</main>
+
+<dialog id="dlg"><h3 style="margin-top:0;color:var(--acc)">Export</h3>
+  <p class="hint">Full record per move: current + autoSeed + your final + changedFields. Download writes <code>move-conversions-final.json</code>.</p>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="primary" id="dl">Download JSON</button>
+    <button id="copy">Copy to clipboard</button>
+    <button id="closeDlg">Close</button>
+  </div>
+  <pre id="exportPre"></pre>
+</dialog>
+
+<input type="file" id="file" accept="application/json" style="display:none">
+
+<script>
+const SHAPE_OPTS=["","radial","linear"];
+const ANCHOR_OPTS=["caster","target","world","self"];
+const TARGET_OPTS=["direction","nearest","selected","location","self","none"];
+const MOTION_OPTS=["static","travels","falls","returns","orbits","repositions"];
+const REPOMODE_OPTS=["","teleport","swept"];
+const RETURNHITS_OPTS=["","out","outAndBack"];
+const BOOL_OPTS=["","true","false"];
+const HITPOLICY_OPTS=["","oncePerInstance","interval","onReentry"];
+const PAYLOAD_T=["damage","ailment","knockback","stat","heal","shield","flinch","multihit","crit","recoil","emit","spawn","special"];
+const ENDON_KEYS=["time","contact","ownerDeath","notActive","offScreen","returned"];
+
+let DATA=null, i=0, edits={}, autoSeed={};
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function cur(){return DATA.moves[i]}
+function proposed(){const id=cur().id; if(!edits[id]) edits[id]=clone(cur().proposed); return edits[id]}
+
+function load(doc){
+  DATA=doc; i=0; edits={}; autoSeed={};
+  DATA.moves.forEach(m=>autoSeed[m.id]=clone(m.proposed));
+  const p=document.getElementById("picker"); p.innerHTML="";
+  DATA.moves.forEach((m,k)=>{const o=document.createElement("option");o.value=k;o.textContent=(k+1)+". "+m.name+"  ["+m.confidence+"]";p.appendChild(o)});
+  document.getElementById("total").textContent=DATA.moves.length;
+  render();
+}
+function kv(label,val){return `<div class="kv"><label>${label}</label><div class="val">${val===undefined||val===null?'<span style="color:#555">&mdash;</span>':(typeof val==='object'?JSON.stringify(val):val)}</div></div>`}
+
+function renderOld(){
+  const m=cur(), c=m.current, r=m.raw||{};
+  let h="";
+  h+='<div class="sec">Identity</div>';
+  h+=kv("id",c.id)+kv("name",c.name)+kv("kind",c.kind)+kv("type (fork)",c.type)+kv("cat",c.cat);
+  h+='<div class="sec">In-game fields</div>';
+  ["cd","dmg","radius","arc","width","count","spread","pierce","size","speed","life","homing","knock","stat","stageN","dur","rate","range","ailment","ailmentChance","flinch","statChance","slow"].forEach(k=>{if(c[k]!==undefined)h+=kv(k,c[k])});
+  h+='<div class="sec">Raw source facts (api_move_dataset)</div>';
+  h+=kv("type",r.type)+kv("category",r.category)+kv("power",r.power)+kv("pp",r.pp)+kv("accuracy",r.accuracy)+kv("priority",r.priority)+kv("target",r.target)+kv("meta_category",r.meta_category)+kv("ailment",r.ailment)+kv("ailment_chance",r.ailment_chance);
+  h+='<div class="rawbox">'+(r.flavor_text||"(no flavor text)")+'</div>';
+  document.getElementById("oldBody").innerHTML=h;
+}
+
+function fieldChanged(path,id){const a=autoSeed[id],b=edits[id]; return JSON.stringify(getPath(a,path))!==JSON.stringify(getPath(b,path))}
+function getPath(o,path){return path.split(".").reduce((x,k)=>x==null?x:x[k],o)}
+
+function renderNew(){
+  const m=cur(), p=proposed(), id=m.id;
+  let h="";
+  // top-level source lifts (read-only: verbatim)
+  h+='<div class="sec">Source facts (verbatim, not editable)</div>';
+  ["type","category","power","pp","accuracy","priority"].forEach(k=>h+=kv(k,p[k]));
+  h+='<div class="rawbox">'+(p.flavor_text||"(none)")+'</div>';
+
+  // TOP-LEVEL collision (hitPolicy + rehit)
+  h+='<div class="sec">COLLISION (top-level)</div>';
+  h+=selRow("hitPolicy","hitPolicy",HITPOLICY_OPTS,p.hitPolicy,id);
+  h+=numRow("rehit","rehit",p.rehit,id);
+  h+='<div class="hint">interval needs a rehit (seconds between re-hits on the same enemy); oncePerInstance/onReentry leave rehit unset.</div>';
+
+  // SPACE
+  h+='<div class="sec">SPACE</div>';
+  const sp=p.space||{};
+  h+=selRow("space.shape","shape",SHAPE_OPTS,sp.shape,id);
+  h+=numRow("space.radArc","radArc",sp.radArc,id);
+  h+=numRow("space.radRadius","radRadius",sp.radRadius,id);
+  h+=numRow("space.linLength","linLength",sp.linLength,id);
+  h+=numRow("space.linWidth","linWidth",sp.linWidth,id);
+  h+=numRow("space.count","count",sp.count,id);
+  h+=numRow("space.spread","spread",sp.spread,id);
+  h+=numRow("space.pierce","pierce",sp.pierce,id);
+  h+=numRow("space.chainHops","chainHops",sp.chainHops,id);
+  h+=numRow("space.hopRange","hopRange",sp.hopRange,id);
+
+  // DELIVERY
+  h+='<div class="sec">DELIVERY</div>';
+  const d=p.delivery||{};
+  h+=selRow("delivery.anchor","anchor",ANCHOR_OPTS,d.anchor,id);
+  h+=selRow("delivery.targeting","targeting",TARGET_OPTS,d.targeting,id);
+  h+=selRow("delivery.motion","motion",MOTION_OPTS,d.motion,id);
+  // repositionMode + return sub-fields (only meaningful when motion=repositions)
+  if(d.motion==="repositions"){
+    h+=selRow("delivery.repositionMode","repositionMode",REPOMODE_OPTS,d.repositionMode,id);
+    // dashMult: speed multiplier for swept + *Return modes (teleport ignores it)
+    if(d.repositionMode && d.repositionMode!=="teleport"){
+      h+=numRow("delivery.dashMult","dashMult",d.dashMult,id);
+      h+='<div class="hint">dashMult: traversal speed = dashMult &times; caster final move speed. Duration is derived (distance/speed); end on {returned}, not a fixed time.</div>';
+    }
+    // returnToOrigin: boolean, orthogonal to the mode. When true, the dash comes back to the launch point.
+    if(d.repositionMode){
+      h+=boolRow("delivery.returnToOrigin","returnToOrigin",d.returnToOrigin,id);
+      if(d.returnToOrigin===true){
+        h+=selRow("delivery.returnHits","returnHits",RETURNHITS_OPTS,d.returnHits,id);
+        h+='<div class="hint">returnToOrigin: caster returns to the launch point. returnHits: out = strike only outward, outAndBack = both legs. Ends on {returned}.</div>';
+      }
+    }
+  }
+  h+=numRow("delivery.moveSpeed","moveSpeed",d.moveSpeed,id);
+  h+=numRow("delivery.angularSpeed","angularSpeed",d.angularSpeed,id);
+  h+=numRow("delivery.orbitRadius","orbitRadius",d.orbitRadius,id);
+  h+=numRow("delivery.turnRate","turnRate",d.turnRate,id);
+  h+=numRow("delivery.aimTrack","aimTrack",d.aimTrack,id);
+  // endOn editor
+  h+='<div class="kv"><label>endOn</label><div id="endon"></div></div>';
+
+  // PAYLOAD
+  h+='<div class="sec">PAYLOAD</div><div id="payload"></div><button id="addPay" style="margin-top:6px">+ payload effect</button>';
+
+  if(m.seedNotes&&m.seedNotes.length){h+='<div class="notes"><b>seed notes:</b><br>'+m.seedNotes.join("<br>")+'</div>'}
+  document.getElementById("newBody").innerHTML=h;
+
+  renderEndOn(); renderPayload();
+  // wire inputs
+  document.querySelectorAll("[data-path]").forEach(el=>{
+    el.addEventListener("change",e=>{
+      let v=el.value;
+      if(el.dataset.type==="num"){ v = v===""?undefined:Number(v); }
+      else if(el.dataset.type==="bool"){ v = v===""?undefined:(v==="true"); }
+      setPath(proposed(),el.dataset.path,v);
+      markEdited(); renderNewBadges(); renderPicker();
+      // motion / repositionMode toggle which conditional fields show -> re-render the panel
+      if(el.dataset.path==="delivery.motion" || el.dataset.path==="delivery.repositionMode" || el.dataset.path==="delivery.returnToOrigin"){ renderNew(); }
+    });
+    // live radian viz redraw as the number changes (input = every keystroke)
+    if(el.dataset.type==="num"){
+      el.addEventListener("input",()=>{
+        const n=Number(el.value);
+        const viz=document.querySelector(`[data-radviz="${el.dataset.path}"]`);
+        if(viz){ viz.innerHTML=wedge(isNaN(n)?0:n); viz.title=`${el.value||0} rad = ${((n||0)*180/Math.PI).toFixed(0)}\u00b0`; }
+        const rate=document.querySelector(`[data-radrate="${el.dataset.path}"]`);
+        if(rate){ rate.innerHTML=radRateLabel(el.value===""?undefined:n); }
+      });
+    }
+  });
+  document.getElementById("addPay").onclick=()=>{proposed().payload=proposed().payload||[];proposed().payload.push({t:"damage"});markEdited();renderNew()};
+  renderNewBadges();
+}
+function selRow(path,label,opts,val,id){
+  if(val===undefined && ["linLength","linWidth","radArc","chainHops","hopRange"].includes(label)) {}
+  const ch=fieldChanged(path,id)?"changed-field":"";
+  let o=opts.map(x=>`<option ${x===(val||"")?"selected":""} value="${x}">${x||"(unset)"}</option>`).join("");
+  return `<div class="kv ${ch}"><label>${label}</label><select class="minput" data-path="${path}">${o}</select></div>`;
+}
+function boolRow(path,label,val,id){
+  // boolean select: stores real true/false (data-type="bool"), "" = unset
+  const ch=fieldChanged(path,id)?"changed-field":"";
+  const cur = (val===true?"true":val===false?"false":"");
+  const o=["","true","false"].map(x=>`<option ${x===cur?"selected":""} value="${x}">${x||"(unset)"}</option>`).join("");
+  return `<div class="kv ${ch}"><label>${label}</label><select class="minput" data-path="${path}" data-type="bool">${o}</select></div>`;
+}
+// angular SIZE fields draw a wedge (a static slice of N radians);
+// angular RATE fields (rad/s) show a deg/s readout, not a slice.
+const RAD_SIZE=["radArc","spread"];
+const RAD_RATE=["angularSpeed","aimTrack","turnRate","curve"];
+function isRadSize(label){return RAD_SIZE.includes(label)}
+function isRadRate(label){return RAD_RATE.includes(label)}
+function radSvg(path,val){
+  const v = (val===undefined||val===null||isNaN(val))?0:Number(val);
+  return `<span class="radviz" data-radviz="${path}" title="${v} rad = ${(v*180/Math.PI).toFixed(0)}&deg;">${wedge(v)}</span>`;
+}
+function wedge(v){
+  const R=17, cx=19, cy=19; // 38x38 box
+  const full = Math.abs(v) >= 6.2831;
+  const a0 = -Math.PI/2 - v/2;      // center the wedge on "up"
+  const a1 = -Math.PI/2 + v/2;
+  const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0);
+  const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
+  const large = v>Math.PI?1:0;
+  let path;
+  if(full){ path=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#2a75bb55" stroke="#2a75bb"/>`; }
+  else if(v<=0.001){ path=`<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-R}" stroke="#ffcb05" stroke-width="2"/>`; }
+  else { path=`<path d="M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 ${large} 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="#ffcb0533" stroke="#ffcb05"/>`; }
+  return `<svg width="38" height="38" viewBox="0 0 38 38" style="vertical-align:middle">`+
+         `<circle cx="19" cy="19" r="17" fill="none" stroke="#30353f"/>`+path+`</svg>`;
+}
+function numRow(path,label,val,id){
+  let viz = "";
+  if(isRadSize(label)) viz = radSvg(path,val);
+  else if(isRadRate(label)) viz = `<span class="radrate" data-radrate="${path}" style="color:var(--mut);font-size:11px;white-space:nowrap">${radRateLabel(val)}</span>`;
+  if(val===undefined) return `<div class="kv"><label style="opacity:.5">${label}</label><div style="display:flex;gap:6px;align-items:center"><input class="minput" data-path="${path}" data-type="num" placeholder="(unset)" value="">${viz}</div></div>`;
+  const ch=fieldChanged(path,id)?"changed-field":"";
+  return `<div class="kv ${ch}"><label>${label}</label><div style="display:flex;gap:6px;align-items:center"><input class="minput" data-path="${path}" data-type="num" value="${val}">${viz}</div></div>`;
+}
+function radRateLabel(val){
+  if(val===undefined||val===null||isNaN(val)||Number(val)===0) return "(no rotation)";
+  return `${(Number(val)*180/Math.PI).toFixed(0)}&deg;/s`;
+}
+function renderEndOn(){
+  const d=proposed().delivery||(proposed().delivery={}); d.endOn=d.endOn||[];
+  const box=document.getElementById("endon"); if(!box)return; box.innerHTML="";
+  d.endOn.forEach((cond,k)=>{
+    const key=Object.keys(cond)[0]; const val=cond[key];
+    const row=document.createElement("div"); row.className="endon-row";
+    const sel=document.createElement("select"); sel.className="minput"; sel.style.flex="0 0 130px";
+    ENDON_KEYS.forEach(kk=>{const o=document.createElement("option");o.value=kk;o.textContent=kk;if(kk===key)o.selected=true;sel.appendChild(o)});
+    const inp=document.createElement("input"); inp.className="minput"; inp.value=(typeof val==="boolean"?"":val); inp.placeholder=(key==="time"?"sec":key==="contact"?"wall":"true");
+    const del=document.createElement("button"); del.textContent="×"; del.style.flex="0 0 32px";
+    sel.onchange=()=>{const nk=sel.value; const nv=(nk==="time")?Number(inp.value||0):(nk==="contact"?(inp.value||"wall"):true); d.endOn[k]={[nk]:nv}; markEdited(); renderEndOn()};
+    inp.onchange=()=>{const nv=(key==="time")?Number(inp.value||0):(key==="contact"?inp.value:(inp.value==="false"?false:true)); d.endOn[k]={[key]:nv}; markEdited()};
+    del.onclick=()=>{d.endOn.splice(k,1);markEdited();renderEndOn()};
+    row.appendChild(sel);row.appendChild(inp);row.appendChild(del);box.appendChild(row);
+  });
+  const add=document.createElement("button"); add.textContent="+ endOn"; add.onclick=()=>{d.endOn.push({time:1.0});markEdited();renderEndOn()};
+  box.appendChild(add);
+}
+function renderPayload(){
+  const p=proposed(); p.payload=p.payload||[];
+  const box=document.getElementById("payload"); if(!box)return; box.innerHTML="";
+  p.payload.forEach((eff,k)=>{
+    const row=document.createElement("div"); row.className="payload-row";
+    const sel=document.createElement("select"); sel.className="minput"; sel.style.flex="0 0 110px";
+    PAYLOAD_T.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;if(t===eff.t)o.selected=true;sel.appendChild(o)});
+    sel.onchange=()=>{eff.t=sel.value;markEdited();renderPayload()};
+    const extra=document.createElement("input"); extra.className="minput";
+    const rest=Object.assign({},eff); delete rest.t;
+    extra.value=JSON.stringify(rest); extra.placeholder='{"id":"burn","chance":10,"side":"foe"}';
+    extra.onchange=()=>{try{const o=JSON.parse(extra.value||"{}");p.payload[k]=Object.assign({t:eff.t},o);markEdited();extra.style.borderColor=""}catch(e){extra.style.borderColor="var(--warn)"}};
+    const del=document.createElement("button"); del.textContent="×"; del.style.flex="0 0 32px";
+    del.onclick=()=>{p.payload.splice(k,1);markEdited();renderPayload()};
+    row.appendChild(sel);row.appendChild(extra);row.appendChild(del);box.appendChild(row);
+  });
+}
+function setPath(o,path,v){const ks=path.split(".");let x=o;for(let j=0;j<ks.length-1;j++){if(x[ks[j]]==null)x[ks[j]]={};x=x[ks[j]]}const last=ks[ks.length-1];if(v===undefined)delete x[last];else x[last]=v}
+function markEdited(){cur()._edited=true}
+function isEdited(id){return JSON.stringify(autoSeed[id])!==JSON.stringify(edits[id]||autoSeed[id])}
+function changedFields(id){
+  const a=autoSeed[id],b=edits[id]||a,out=[];
+  function walk(pa,pb,prefix){
+    const keys=new Set([...Object.keys(pa||{}),...Object.keys(pb||{})]);
+    keys.forEach(k=>{const va=(pa||{})[k],vb=(pb||{})[k];
+      if(typeof va==="object"&&va&&!Array.isArray(va)){walk(va,vb||{},prefix+k+".")}
+      else if(JSON.stringify(va)!==JSON.stringify(vb)){out.push(prefix+k)}});
+  }
+  walk(a,b,""); return out;
+}
+function renderNewBadges(){
+  const id=cur().id;
+  document.getElementById("editBadge").style.display=isEdited(id)?"":"none";
+  const n=Object.keys(edits).filter(k=>isEdited(k)).length;
+  document.getElementById("editCount").textContent=n+" edited";
+}
+function renderPicker(){
+  const p=document.getElementById("picker");
+  [...p.options].forEach((o,k)=>{const m=DATA.moves[k];o.textContent=(k+1)+". "+m.name+"  ["+m.confidence+"]"+(isEdited(m.id)?"  ✎":"")});
+  p.value=i;
+}
+function render(){
+  document.getElementById("idx").textContent=i+1;
+  const b=document.getElementById("confBadge"); b.textContent=cur().confidence; b.className="badge "+cur().confidence;
+  renderOld(); renderNew(); renderPicker();
+}
+
+document.getElementById("prev").onclick=()=>{i=(i-1+DATA.moves.length)%DATA.moves.length;render()};
+document.getElementById("next").onclick=()=>{i=(i+1)%DATA.moves.length;render()};
+document.getElementById("picker").onchange=e=>{i=+e.target.value;render()};
+document.getElementById("reset").onclick=()=>{delete edits[cur().id];render()};
+document.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;if(e.key==="ArrowLeft")document.getElementById("prev").click();if(e.key==="ArrowRight")document.getElementById("next").click()});
+
+function buildExport(){
+  return {schema:DATA.schema,generated:new Date().toISOString(),count:DATA.moves.length,
+    moves:DATA.moves.map(m=>({id:m.id,name:m.name,kind:m.kind,confidence:m.confidence,
+      current:m.current, autoSeed:autoSeed[m.id], final:edits[m.id]||autoSeed[m.id],
+      changedFields:changedFields(m.id)}))};
+}
+document.getElementById("export").onclick=()=>{
+  const ex=buildExport();
+  document.getElementById("exportPre").textContent=JSON.stringify(ex,null,2);
+  document.getElementById("dlg").showModal();
+};
+document.getElementById("closeDlg").onclick=()=>document.getElementById("dlg").close();
+document.getElementById("dl").onclick=()=>{
+  const blob=new Blob([JSON.stringify(buildExport(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="move-conversions-final.json";a.click();
+};
+document.getElementById("copy").onclick=()=>navigator.clipboard.writeText(JSON.stringify(buildExport(),null,2));
+
+// auto-load sibling JSON (works over http; file:// may block fetch -> fallback to picker)
+fetch("move-conversions.json").then(r=>r.json()).then(load).catch(()=>{
+  document.getElementById("oldBody").innerHTML='<p class="hint">Could not auto-load (file:// blocks fetch). Click to pick <code>move-conversions.json</code>.</p><button onclick="document.getElementById(\'file\').click()" class="primary">Choose move-conversions.json</button>';
+});
+document.getElementById("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>load(JSON.parse(fr.result));fr.readAsText(f)};
+</script>
+</body>
+</html>

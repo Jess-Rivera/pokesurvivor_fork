@@ -6,14 +6,13 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-24; re-sync at session end)
+## Board mirror (synced from the GitHub API 2026-10-24 midday; re-sync at session end)
 Open and closed issues as of this sync. Labels shown as type/area/status.
 
 OPEN:
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocking #3, #4, #11)
-- #3  Review the ~19 pending moves in move-decisions.json  [design / moves / ready]  (marked blocked_by #2, now closed; see note)
-- #4  Settle move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (marked blocked_by #2, now closed; see note)
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by #3; blocking #11)
+- #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking #2)
 - #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked on moves import]
 - #6  Harness for the gym-gate escalation clock/bump  [feature / gyms / ready]
 - #8  Tileset loader + map generator cleanup  [feature / engine / ready]
@@ -24,8 +23,9 @@ OPEN:
 
 CLOSED (by Jess, intentional 2026-10-24):
 - #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]  (STALE: gym leaders already use the correct A/D damage path, validated multiple times. Note: BALANCE.md still lists this as an open hole, that text is now outdated.)
+- #4  Settle move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves]  (FOLDED into #3: the three feel-calls are three of the 64 moves and are decided in the full 64-move pass against MOVE-AXIS-SCHEMA.md.)
 
-NOTE: #2 was briefly closed then REOPENED (2026-10-24), it is the real next build gate and correctly blocks #3, #4, #11. Board automation was also fixed this session: closing an issue now moves it to the Shipped column (was mis-pointed at the relabeled In Progress column).
+NOTE: The old move-decisions.json / move-decisions-dashboard.html are GONE (cleaned out this session); the verdicts they held were made against a superseded move model and do not port to the new SPACE/DELIVERY/PAYLOAD axis schema. So #3 was rewritten from "review ~19 pending" into a full from-scratch pass over all 64 in-game moves (js/data/moves.js), and #4 was folded into it. Chain is now: #2 blocked_by #3 only; #3 blocks #2; #2 blocks #11. (If the board still lists #2 blocked_by the closed #4, that stale edge is being cleared in the board UI.) Board automation fix still stands: closing an issue moves it to Shipped.
 
 ---
 
