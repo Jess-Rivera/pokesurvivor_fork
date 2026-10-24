@@ -636,7 +636,7 @@
       "name": "Ice Beam",
       "kind": "beam",
       "balanceClass": "ranged",
-      "feel": "Longer, narrower Hydro Pump (linLength 290 vs 250, linWidth 20 vs 30). UNLIMITED pierce, hits everyone in the beam. 10% freeze + a slow 0.7 rider (icy chill, restored from fork data). Static, nearest.",
+      "feel": "Longer, narrower Hydro Pump (linLength 290 vs 250, linWidth 20 vs 30). UNLIMITED pierce, hits everyone in the beam. 10% freeze + spd -1 rider (icy chill as a stat debuff, side foe, scope individual, maxStacks 1). Static, nearest.",
       "type": "ice",
       "category": "special",
       "power": 90,
@@ -672,9 +672,12 @@
           "side": "foe"
         },
         {
-          "t": "slow",
-          "factor": 0.7,
-          "side": "foe"
+          "t": "stat",
+          "stat": "spd",
+          "stages": -1,
+          "side": "foe",
+          "scope": "individual",
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
