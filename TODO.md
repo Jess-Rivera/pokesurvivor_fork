@@ -6,26 +6,27 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-24 midday; re-sync at session end)
+## Board mirror (synced from the GitHub API 2026-10-24 ~4:45 PM; re-sync at session end)
 Open and closed issues as of this sync. Labels shown as type/area/status.
 
 OPEN:
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by #3; blocking #11)
-- #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking #2)
-- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked on moves import]
+- #3  Review the remaining pending moves (full 64-move axis pass)  [design / moves / ready]  (blocked_by 1)
+- #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (blocked_by 1)
+- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]
 - #6  Harness for the gym-gate escalation clock/bump  [feature / gyms / ready]
 - #8  Tileset loader + map generator cleanup  [feature / engine / ready]
 - #9  Regional forms (blocks Lorelei, Agatha, Bruno)  [feature / gyms / blocked]
 - #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]
-- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (marked blocked_by #2, now closed; see note)
+- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 1)
 - #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
 
-CLOSED (by Jess, intentional 2026-10-24):
-- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]  (STALE: gym leaders already use the correct A/D damage path, validated multiple times. Note: BALANCE.md still lists this as an open hole, that text is now outdated.)
-- #4  Settle move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves]  (FOLDED into #3: the three feel-calls are three of the 64 moves and are decided in the full 64-move pass against MOVE-AXIS-SCHEMA.md.)
+CLOSED (completed 2026-10-24):
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves]  (blocking 3: #3, #4, #11)
+- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]  (gym leaders already use the correct A/D damage path; BALANCE.md's "open hole" text is outdated.)
 
-NOTE: The old move-decisions.json / move-decisions-dashboard.html are GONE (cleaned out this session); the verdicts they held were made against a superseded move model and do not port to the new SPACE/DELIVERY/PAYLOAD axis schema. So #3 was rewritten from "review ~19 pending" into a full from-scratch pass over all 64 in-game moves (js/data/moves.js), and #4 was folded into it. Chain is now: #2 blocked_by #3 only; #3 blocks #2; #2 blocks #11. (If the board still lists #2 blocked_by the closed #4, that stale edge is being cleared in the board UI.) Board automation fix still stands: closing an issue moves it to Shipped.
+DISCREPANCY TO RESOLVE ON THE BOARD: the GitHub API returns #2 as CLOSED (state_reason completed, blocking #3/#4/#11), but Jess reports #2 was REOPENED ~6h before this sync (the API read was cached/stale). Treat #2 as OPEN per Jess: the moves work (the 64-move feel pass) is what's actually in flight and is NOT done at the issue level until the importer lands. If the board now shows #2 open, this mirror's CLOSED placement for #2 is the stale side; fix on next sync.
+NOTE: the feel-first 64-move conversion pass (#3) is COMPLETE as of this session: 63 of 64 moves converted in docs/move_rework_holding/move-conversions-described.json (all reviewStatus: reviewed), bubble intentionally logged as a forgotten-move skip (forgottenSkips block) for the later purge. #4's three feel-calls (Flamethrower / Night Shade / Psycho Cut) were all decided in that pass. Board automation: closing an issue moves it to Shipped.
 
 ---
 
