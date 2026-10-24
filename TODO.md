@@ -11,6 +11,7 @@ Open and closed issues as of this sync. Labels shown as type/area/status.
 
 OPEN:
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocking #3, #4, #11)
 - #3  Review the ~19 pending moves in move-decisions.json  [design / moves / ready]  (marked blocked_by #2, now closed; see note)
 - #4  Settle move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (marked blocked_by #2, now closed; see note)
 - #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked on moves import]
@@ -22,11 +23,9 @@ OPEN:
 - #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
 
 CLOSED (by Jess, intentional 2026-10-24):
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves]  (had been blocking #3, #4, #11)
-- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]
+- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]  (STALE: gym leaders already use the correct A/D damage path, validated multiple times. Note: BALANCE.md still lists this as an open hole, that text is now outdated.)
 
-INCONSISTENCY TO RESOLVE (flagged by the PM pass): #2 is CLOSED but #3, #4 and #11 still list "blocked_by #2".
-Either those three are now unblocked (clear the stale dependency links) or #2 should be reopened. Decide on the board.
+NOTE: #2 was briefly closed then REOPENED (2026-10-24), it is the real next build gate and correctly blocks #3, #4, #11. Board automation was also fixed this session: closing an issue now moves it to the Shipped column (was mis-pointed at the relabeled In Progress column).
 
 ---
 
