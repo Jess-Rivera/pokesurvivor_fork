@@ -55,3 +55,14 @@ The two-axis split matters because several “unbuilt kinds” are not really ki
 On the file format
 
 Keep a generated .js (like your tileset atlases, which work from file:// with no fetch), but treat it as a build artifact. The source of truth is the review JSON plus the overrides file, and a script emits G.MOVES. Nobody edits 833 entries by hand. Learnsets are a separate generated file of move ids per species.
+
+## Update 10/24/2026: the move-data-raw layer already exists (Jess built it by hand)
+The "Facts from PokeAPI" layer does NOT need a fresh CSV join. Jess hand-built `pokeapi-master/data/v2/csv/api_dataset.json` (2.68 MB, no AI): the denormalized PokeAPI move dump, one record per move with every aspect pre-joined. This IS the move-data-raw source; the generator reads it instead of joining moves.csv + move_meta.csv + move_effect_prose.csv + move_meta_stat_changes.csv + move_flags.
+- Shape: top-level { dataset, language_id 9 (English), version_selection "highest version_groups.order", moves: [...] }. 937 moves. Per move: `source`/`resolved_source` (raw ids: power, pp, accuracy, type_id, damage_class_id, target_id, effect_id, effect_chance, priority), resolved `type`/`damage_class`/`target`, `effect` {short_effect, description}, `meta` {category, ailment, ailment_chance, flinch_chance, stat_chance, drain, healing, crit_rate, min/max_hits, min/max_turns}, `stat_changes` [{stat_id, change}], `flags`, `flavor_text`.
+- Coverage: 395 physical / 265 special / 277 status; 174 with stat_changes, 124 with a real ailment, 30 flinch, 28 multi-hit, 22 drain, 18 healing. 937 > the 833 in move-import-review-v2.json, so it is a superset of the classified set.
+- RESOLVER MUST null-guard (make these conversion-harness assertions):
+  - 110 of 937 moves have `meta == null`. Default ailment "none", all chances 0, no multi-hit.
+  - 1 move has no `flavor_text` key.
+  - `stat_chance == 0` on a STATUS move means the stat change is GUARANTEED (String Shot/Scary Face/Cotton Spore = -2 spd always), not "never". Distinguish deterministic status-move stat changes from %-chance riders on damaging moves.
+  - ~13 ailments are outside our status model (disable, leech-seed, nightmare, yawn, embargo, torment, ingrain, heal-block, perish-song, infatuation, silence, tar-shot, no-type-immunity). Classifier maps the supported set and ignores the rest.
+- stat_id map for stat_changes: 1 hp, 2 atk, 3 def, 4 spatk, 5 spdef, 6 speed, 7 accuracy, 8 evasion.
