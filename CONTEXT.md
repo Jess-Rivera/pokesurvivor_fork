@@ -32,7 +32,7 @@ Both tools follow this symmetric discipline. If STATE.md looks stale after a git
 ## Core working rules (one-line reminders, full detail in CLAUDE.md)
 - **Local-first:** local single-player first; all cloud/MP (Firebase, Cloudflare TURN, js/net/) DEFERRED until Jess switches phase.
 - **English-native:** new strings authored in English; leave inherited Spanish literals as-is (they are the i18n keys); no lang-en.js entries for our own strings.
-- **Workflow (standing):** game-affecting change (code, js/data/*.js, dev.html, build, assets) = prose plan, then Jess OKs, then assistant builds/tests/writes in one step. Jess never types code. EXCEPTION: js/data/changelog.js is free-edit (verify valid JS).
+- **Workflow (standing):** game-affecting change (code, js/data/*.js, dev.html, build, assets) = prose plan (words only, NO code, not even a snippet or one line, describe files/locations/numbers/risks), then Jess OKs, then assistant builds/tests/writes in one step. Code appears only when written to the repo, never in chat. Jess never types code. EXCEPTION: js/data/changelog.js is free-edit (verify valid JS).
 - **Free-edit for project docs:** the Markdown docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/) edit directly, no proposal.
 - **Git:** assistant NEVER runs git (not even read-only); gives Jess the commands. No Co-Authored-By / AI trailer in commit messages.
 - **PM / tracker:** assistant is Jess's PM; work queue is GitHub Issues + the "PokeSwarm" board (board wins for "what's next"). Assistant NEVER runs git/`gh` to mutate the tracker, drafts commands for Jess. Detail: docs/PM-WORKFLOW.md. Playtester guide: CONTRIBUTING.md.
