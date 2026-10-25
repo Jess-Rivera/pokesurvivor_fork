@@ -276,3 +276,13 @@ load after core/util.js (listed right after util in dev.html and as 'Stats' in m
 ## 2026-10-21, no native browser dialogs
 All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.ask, never confirm/alert/prompt. Spanish messages stay G.T() keys; titles and buttons are English.
 
+
+## 2026-10-25, Move schema slice 1 (feature-test/new-move-schema) [Jess decided]
+- docs/move_rework_holding/move-conversions-described.json is the single source of move facts (move-conversions-final.json never existed). tools/export_moves.js generates js/data/moves-generated.js from it; never hand-edit the output.
+- `kind` is no longer a schema field and is stripped from the export. Behavior is read from the axes. A legacy kind is derived in the resolver's bridge projection only (slice 2) and deleted with the legacy path (slice 7). balanceClass stays.
+- The resolver runs eagerly at load (one pure fold, the same code check.js runs), since gyms and menus read Moves.BY_ID as a plain property.
+- Pierce: omitted means UNLIMITED, 0 means dies on the first hit, n means dies after passing through n enemies. hitCap is removed. Quick Attack keeps 0 (single target by default, so the pierce upgrade card lets it dash through enemies); Aerial Ace and Psychic omit it (they hit everything in their circle or arc).
+- Spread stays in the data at any count; the executor ignores it when count is 1 (legacy behavior), so a count upgrade has a fan to use.
+- Spikes: a placed mine lasts until triggered and detonates once on contact. A timeout is optional; a triggered instance only needs some endOn.
+- Schema additions: grow.max and grow.per, stat chance/duration/maxStacks, casterState as the container for iframes and delay. metal-claw's team buff is side self, like Swords Dance.
+- The groundwork files stay out of dev.html and the main.js NEED array until slice 3; check.js already runs the export freshness check and the validator.

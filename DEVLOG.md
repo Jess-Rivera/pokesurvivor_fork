@@ -121,3 +121,11 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Architecture per Jess: raw JSON -> export script -> generated js; handler js + resolver js; combat.js thin. Flat projection bridges the old fields during migration.
 - Decisions: derived cd/damage, individual buffs active-only, emit deferred to slice 4. Engine gaps found: emit (8 moves), individual buffs (11 effects), 6 specials, ~10 delivery extras.
 - Stopped before slice 1 deep dive (to be done in a fresh chat). REMINDER: commit + push (the plan doc, STATE.md, DEVLOG.md).
+
+
+## 2026-10-25 (Claude Desktop, home): #2 slice 1 built (groundwork)
+- New files, none loaded by the game: js/data/move-attributes.js (grammar), js/data/moves-generated.js (63 moves, generated), tools/export_moves.js (--check guards hand edits), tools/validate_moves.js (21-case self-test, coverage buckets), docs/current feature planning/move-coverage-report.md.
+- First validator run was 54/63. Source fixes in described.json: metal-claw side self, Aerial Ace and Psychic pierce omitted (default UNLIMITED), spread kept on count-1 moves; Spikes source was right (lasts until triggered). Grammar fixes: blank flavor_text allowed, trigger needs some endOn, no spread-count rule. Final 63/63.
+- Docs: MOVE-AXIS-SCHEMA.md updated (grow.max/per, stat fields, casterState, pierce default, spread, hitCap and kind removed); plan doc has slice 1 results and slice 2 kickoff notes; DECISIONS entry added.
+- tools/check.js now runs the freshness check and validator (pass and stale paths tested). 17/18 harnesses pass; upgrade-slice2b-harness.js fails on a missing docs/move-catalogue-preview.json (deleted in 050437e), pre-existing.
+- Stopped at: slice 1 done, slice 2 (resolver + parity report) next in a NEW CHAT. REMINDER: commit + push.
