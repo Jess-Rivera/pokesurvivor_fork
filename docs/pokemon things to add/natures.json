@@ -1,0 +1,202 @@
+[
+  {
+    "id": 0,
+    "Nature": "Hardy",
+    "Increased stat": "Attack",
+    "Decreased stat": "Attack",
+    "Favorite flavor": "Spicy",
+    "Disliked flavor": "Spicy"
+  },
+  {
+    "id": 1,
+    "Nature": "Lonely",
+    "Increased stat": "Attack",
+    "Decreased stat": "Defense",
+    "Favorite flavor": "Spicy",
+    "Disliked flavor": "Sour"
+  },
+  {
+    "id": 2,
+    "Nature": "Brave",
+    "Increased stat": "Attack",
+    "Decreased stat": "Speed",
+    "Favorite flavor": "Spicy",
+    "Disliked flavor": "Sweet"
+  },
+  {
+    "id": 3,
+    "Nature": "Adamant",
+    "Increased stat": "Attack",
+    "Decreased stat": "Sp. Attack",
+    "Favorite flavor": "Spicy",
+    "Disliked flavor": "Dry"
+  },
+  {
+    "id": 4,
+    "Nature": "Naughty",
+    "Increased stat": "Attack",
+    "Decreased stat": "Sp. Defense",
+    "Favorite flavor": "Spicy",
+    "Disliked flavor": "Bitter"
+  },
+  {
+    "id": 5,
+    "Nature": "Bold",
+    "Increased stat": "Defense",
+    "Decreased stat": "Attack",
+    "Favorite flavor": "Sour",
+    "Disliked flavor": "Spicy"
+  },
+  {
+    "id": 6,
+    "Nature": "Docile",
+    "Increased stat": "Defense",
+    "Decreased stat": "Defense",
+    "Favorite flavor": "Sour",
+    "Disliked flavor": "Sour"
+  },
+  {
+    "id": 7,
+    "Nature": "Relaxed",
+    "Increased stat": "Defense",
+    "Decreased stat": "Speed",
+    "Favorite flavor": "Sour",
+    "Disliked flavor": "Sweet"
+  },
+  {
+    "id": 8,
+    "Nature": "Impish",
+    "Increased stat": "Defense",
+    "Decreased stat": "Sp. Attack",
+    "Favorite flavor": "Sour",
+    "Disliked flavor": "Dry"
+  },
+  {
+    "id": 9,
+    "Nature": "Lax",
+    "Increased stat": "Defense",
+    "Decreased stat": "Sp. Defense",
+    "Favorite flavor": "Sour",
+    "Disliked flavor": "Bitter"
+  },
+  {
+    "id": 10,
+    "Nature": "Timid",
+    "Increased stat": "Speed",
+    "Decreased stat": "Attack",
+    "Favorite flavor": "Sweet",
+    "Disliked flavor": "Spicy"
+  },
+  {
+    "id": 11,
+    "Nature": "Hasty",
+    "Increased stat": "Speed",
+    "Decreased stat": "Defense",
+    "Favorite flavor": "Sweet",
+    "Disliked flavor": "Sour"
+  },
+  {
+    "id": 12,
+    "Nature": "Serious",
+    "Increased stat": "Speed",
+    "Decreased stat": "Speed",
+    "Favorite flavor": "Sweet",
+    "Disliked flavor": "Sweet"
+  },
+  {
+    "id": 13,
+    "Nature": "Jolly",
+    "Increased stat": "Speed",
+    "Decreased stat": "Sp. Attack",
+    "Favorite flavor": "Sweet",
+    "Disliked flavor": "Dry"
+  },
+  {
+    "id": 14,
+    "Nature": "Naive",
+    "Increased stat": "Speed",
+    "Decreased stat": "Sp. Defense",
+    "Favorite flavor": "Sweet",
+    "Disliked flavor": "Bitter"
+  },
+  {
+    "id": 15,
+    "Nature": "Modest",
+    "Increased stat": "Sp. Attack",
+    "Decreased stat": "Attack",
+    "Favorite flavor": "Dry",
+    "Disliked flavor": "Spicy"
+  },
+  {
+    "id": 16,
+    "Nature": "Mild",
+    "Increased stat": "Sp. Attack",
+    "Decreased stat": "Defense",
+    "Favorite flavor": "Dry",
+    "Disliked flavor": "Sour"
+  },
+  {
+    "id": 17,
+    "Nature": "Quiet",
+    "Increased stat": "Sp. Attack",
+    "Decreased stat": "Speed",
+    "Favorite flavor": "Dry",
+    "Disliked flavor": "Sweet"
+  },
+  {
+    "id": 18,
+    "Nature": "Bashful",
+    "Increased stat": "Sp. Attack",
+    "Decreased stat": "Sp. Attack",
+    "Favorite flavor": "Dry",
+    "Disliked flavor": "Dry"
+  },
+  {
+    "id": 19,
+    "Nature": "Rash",
+    "Increased stat": "Sp. Attack",
+    "Decreased stat": "Sp. Defense",
+    "Favorite flavor": "Dry",
+    "Disliked flavor": "Bitter"
+  },
+  {
+    "id": 20,
+    "Nature": "Calm",
+    "Increased stat": "Sp. Defense",
+    "Decreased stat": "Attack",
+    "Favorite flavor": "Bitter",
+    "Disliked flavor": "Spicy"
+  },
+  {
+    "id": 21,
+    "Nature": "Gentle",
+    "Increased stat": "Sp. Defense",
+    "Decreased stat": "Defense",
+    "Favorite flavor": "Bitter",
+    "Disliked flavor": "Sour"
+  },
+  {
+    "id": 22,
+    "Nature": "Sassy",
+    "Increased stat": "Sp. Defense",
+    "Decreased stat": "Speed",
+    "Favorite flavor": "Bitter",
+    "Disliked flavor": "Sweet"
+  },
+  {
+    "id": 23,
+    "Nature": "Careful",
+    "Increased stat": "Sp. Defense",
+    "Decreased stat": "Sp. Attack",
+    "Favorite flavor": "Bitter",
+    "Disliked flavor": "Dry"
+  },
+  {
+    "id": 24,
+    "Nature": "Quirky",
+    "Increased stat": "Sp. Defense",
+    "Decreased stat": "Sp. Defense",
+    "Favorite flavor": "Bitter",
+    "Disliked flavor": "Bitter"
+  }
+]
