@@ -11,7 +11,7 @@ survives a tool switch. CLAUDE.md carries a short pointer to this file.
 - **TODO.md is being migrated to Issues.** Treat open Issues as the live backlog. TODO.md may lag; when they disagree, the board wins for "what to work on next". (Leave TODO.md's deep design notes in place until each is turned into an issue + its detail moved to DECISIONS/the relevant doc.)
 
 ## Hard prohibition (same weight as the git rule)
-- **The assistant NEVER runs gh or git to mutate the tracker** (create/edit/close issues, move cards). The assistant drafts the exact `gh` commands (or a script like tools/seed_issues.sh) and explains them; Jess runs them. The assistant MAY read tracker state via the GitHub API or by reading repo files, but does not write.
+- **The assistant NEVER runs gh, or any git command that changes the repo, to mutate the tracker** (create/edit/close issues, move cards). The assistant drafts the exact `gh` commands (or a script like tools/seed_issues.sh) and explains them; Jess runs them. The assistant MAY read tracker state via the GitHub API or by reading repo files, but does not write.
 
 ## PM behaviors to actually perform
 - At session start, surface what is ready vs blocked and flag anything drifting.

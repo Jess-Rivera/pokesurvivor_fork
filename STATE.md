@@ -27,4 +27,4 @@ Last updated: 2026-10-24 evening (Quick, work machine).
 - GitHub API returned #2 CLOSED (completed, blocking #3/#4/#11), but Jess reopened #2 ~6h ago (API cached/stale). Treat #2 as OPEN. #4 closing as "not relevant" (its 3 feel-calls decided inside #3). #3 effectively done (described.json complete); closes once #2 consumes it. #11 now has its dataset.
 
 ## Standing rules (full text: CLAUDE.md)
-Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js + Markdown docs free-edit. Never run git/gh (draft commands, Jess runs them). New save fields backward compatible. Debug on dev.html?dev.
+Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan, Jess OKs, then build; changelog.js + Markdown docs free-edit. Read-only git is OK; never run `gh` or any git that changes the repo (add/commit/push/pull etc.); `git fetch` is OK: draft commands, Jess runs them. New save fields backward compatible. Debug on dev.html?dev.

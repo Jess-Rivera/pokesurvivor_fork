@@ -17,6 +17,22 @@ a divergent tree.
 - Start ("catch me up"): read CONTEXT.md and STATE.md only, then say where we left off and the top open items. Read TODO.md 'In progress' if more detail is needed. Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (large); search them by keyword. Archives: docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md.
 - End: rewrite STATE.md (under 3 KB), append a short DEVLOG.md entry (about 6 lines) at the end, then remind Jess to commit and push.
 
+## Efficient repository exploration
+
+CONTEXT.md, STATE.md, and this file are automatically read at the start of every chat. Treat them as the complete startup context.
+
+After startup:
+
+Do not recursively read, summarize, or attach the repository.
+
+Search first for the task’s feature, identifier, behavior, or system.
+
+Open only matching files, their immediate callers or consumers, and the relevant test or harness.
+
+For broad discovery, create a compact module map once, then reuse it for later slices.
+
+Normally skip assets/, pokeapi-master/, delete/, node_modules/, archive documents, generated bulk data such as js/data/sprites-meta.js and js/data/pokedex.js, and large staged datasets under docs/move_rework_holding/. Open these only when the active task directly requires them.
+
 ## Local-first (hard scope boundary)
 Build and perfect the LOCAL single-player game first. DEFERRED until Jess explicitly switches phase:
 Firebase (auth, Firestore, RTDB, cloud saves), the Cloudflare TURN worker, and the whole
@@ -40,15 +56,22 @@ Dividing line: "does this change what the game does when you run it?"
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 
-## Git, hard prohibition
-The AI assistant NEVER runs git, under any circumstances. It gives Jess exact commands, explains them,
-and advises strategy (branching, staging, commit messages). Jess runs all git himself.
+## Git, hard prohibition on changing the repo
+The AI assistant MAY run read-only git commands to inspect state: status, diff, log, show, blame,
+branch (list only), ls-files, ls-tree, rev-parse, config --get. `git fetch` is also allowed (it only updates
+remote-tracking refs, so the assistant can tell Jess whether he is behind). Any git command that changes the repository, the index, the working tree, refs, config or
+the remote is FORBIDDEN, under any circumstances: this includes add, commit, push, pull, merge,
+rebase, reset, checkout, switch, restore, stash, cherry-pick, revert, tag, branch (create/delete/rename),
+clean, rm, mv, apply, am, config (set), remote (add/remove), and submodule or worktree changes. When in
+doubt whether a command writes anything, do not run it and ask Jess. For every change-making step the
+assistant gives Jess exact commands, explains them, and advises strategy (branching, staging, commit
+messages). Jess runs all of those himself.
 Commit messages carry no "Co-Authored-By" line and no AI signature of any kind.
 
 ## Project management and issue tracking (the assistant is Jess's PM)
 The assistant acts as Jess's expert PM, not just a coder. The tracker is GitHub Issues + the
 "PokeSwarm" Project board (the board wins for "what's next"; TODO.md is being migrated to it).
-The assistant NEVER runs git or `gh` to mutate the tracker: it drafts the exact commands and Jess
+The assistant NEVER runs `gh`, or any git command that changes anything, to mutate the tracker: it drafts the exact commands and Jess
 runs them (same weight as the git rule). Full detail, label taxonomy, board columns, PM behaviors
 and the playtester/template rules: **docs/PM-WORKFLOW.md**.
 

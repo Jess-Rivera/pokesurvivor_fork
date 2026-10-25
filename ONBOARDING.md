@@ -4,6 +4,10 @@ A practical map of the PokeSurvivor codebase for an English-speaking developer w
 wants to fork it and add features. Pair this with GLOSSARY.md (Spanish to English
 terms) and GDD.md (game design). Written from reading the source.
 
+Open this reference only when a task needs architecture, module routing, load-order,
+or build-pipeline information. Do not include it in routine chat startup context.
+CONTEXT.md, STATE.md, and CLAUDE.md are the startup sources of truth.
+
 ## 1. What this is
 
 A Vampire-Survivors-style bullet-heaven / horde-survival roguelite, as a Pokemon
@@ -15,10 +19,9 @@ per-region gacha.
   no build step to run it, no runtime dependencies. Opening `index.html` works.
 - **Everything local:** sprites, data, font, music and save all ship with the game.
   The game makes no internet request to play.
-- **Optional cloud:** Firebase (Authentication + Firestore + Realtime Database)
-  adds accounts, cloud saves, friends, co-op and a leaderboard. Cloudflare adds a
-  TURN relay for co-op and an "online now" counter. All optional; without config
-  the game runs fully local.
+- **Deferred cloud:** Firebase, Cloudflare, accounts, cloud saves, friends, co-op,
+  and leaderboards remain in the repository but are out of scope until Jess explicitly
+  starts the cloud phase. The active project scope is the local single-player game.
 
 ## 2. How the code is wired (the `G` namespace)
 
@@ -55,8 +58,7 @@ Key facts about `tools/build.js`:
 - It writes `version.json` (a short sha1 fingerprint). Do NOT remove this: the
   auto-updater depends on it.
 
-CLAUDE.md holds the owner's fixed rules: edit `dev.html`, commit without AI
-signatures, and only push when asked.
+CLAUDE.md holds the active fork rules and overrides this guide if they conflict.
 
 ## 4. The i18n system (why you do NOT translate strings)
 
@@ -75,9 +77,9 @@ inside longer text. Player-entered text (nicknames) is marked `translate="no"`.
 Language is chosen by: saved setting (`ps.lang` in localStorage) > `/en/` in the URL
 path > browser language (Spanish if the browser is Spanish, English otherwise).
 
-**Implication for you:** Spanish string literals in the code are the i18n KEYS. Leave
-them in Spanish. If you add a new user-facing string, add its English translation to
-`lang-en.js` or it will only render in Spanish.
+**Implication for you:** inherited Spanish string literals in the code are i18n KEYS,
+so leave them in Spanish. New fork-authored user-facing strings are written directly
+in English. Do not add those new English strings to `lang-en.js`.
 
 ## 5. Module map
 
@@ -139,7 +141,10 @@ them in Spanish. If you add a new user-facing string, add its English translatio
 - `tools/` the generators and build scripts (build.js, export_data.js,
   make_seo_pages.py, fetch_*.py, make_font.py).
 
-## 6. Server/ops facts worth knowing (from CLAUDE.md)
+## 6. Deferred server/ops facts
+
+This material is reference-only until Jess explicitly starts the cloud phase. Do not
+propose or implement cloud or multiplayer work during the local-first phase.
 
 - Firebase project is **pokesurvivor-free**. **Never enable "Identity Platform"**
   (or MFA / blocking functions / "Upgrade to enable"): it bills per user. The free
@@ -164,7 +169,8 @@ them in Spanish. If you add a new user-facing string, add its English translatio
   icons in `js/ui/icons.js`. Remember to add it to the `NEED` list in `js/main.js`.
 - **New rift / arena / weather:** `js/systems/rift.js`, `js/systems/weather.js`,
   terrain in `js/world/`.
-- **Anything with new on-screen text:** also add the English string to `js/data/lang-en.js`.
+- **Anything with new on-screen text:** author it directly in English. Leave inherited
+  Spanish literals unchanged because they are translation keys.
 
 Always add new scripts to BOTH the `dev.html` script block and the `NEED` array in
 `js/main.js`, then rebuild with `node tools/build.js` before publishing.
