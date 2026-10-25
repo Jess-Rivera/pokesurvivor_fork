@@ -1,6 +1,6 @@
 {
   "schema": "MOVE-AXIS-SCHEMA.md (canonical, 2026-10-24)",
-  "note": "Feel-first conversions. Jess describes the intended feel per move; agent maps to schema values. One move at a time. Source of truth for the #2 importer alongside move-conversions-final.json.",
+  "note": "Feel-first conversions. Jess describes the intended feel per move; agent maps to schema values. One move at a time. Source of truth for the #2 importer.",
   "generated_by": "hand (feel-described pass)",
   "moves": {
     "tackle": {
@@ -982,7 +982,7 @@
           "t": "stat",
           "stat": "atk",
           "stages": 1,
-          "side": "team",
+          "side": "self",
           "scope": "team"
         },
         {
@@ -1531,7 +1531,7 @@
       "name": "Psychic",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "CHANGED from the earlier static per-time grow to a slow TRAVELING tracked arc. A wedge that starts small (radArc 0.5) and widens to a medium ~115deg arc (radArc 2.0) as it drifts out slowly (moveSpeed 80), homing on the nearest enemy (turnRate). pierce 1 (passes through one, dies on the second). 10% spDef-down rider on hit. The grow is on radArc (the wedge opening), not radRadius.",
+      "feel": "CHANGED from the earlier static per-time grow to a slow TRAVELING tracked arc. A wedge that starts small (radArc 0.5) and widens to a medium ~115deg arc (radArc 2.0) as it drifts out slowly (moveSpeed 80), homing on the nearest enemy (turnRate). pierce omitted (default UNLIMITED: passes through everything it touches, each enemy hit once). 10% spDef-down rider on hit. The grow is on radArc (the wedge opening), not radRadius.",
       "type": "psychic",
       "category": "special",
       "power": 90,
@@ -1543,8 +1543,7 @@
         "shape": "radial",
         "radArc": 0.5,
         "radRadius": 70,
-        "count": 1,
-        "pierce": 1
+        "count": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -2612,7 +2611,7 @@
       "name": "Aerial Ace",
       "kind": "dash",
       "balanceClass": "melee",
-      "feel": "Teleport dash that does NOT return (repositionMode teleport, returnToOrigin false, so the caster ends at the target). 0.3s trailing i-frames from arrival (casterState iframes 0.3). On the strike: knockback + 50% confuse. Never-misses is flavor (no accuracy model needed). A blink-slash that leaves you where you struck.",
+      "feel": "Teleport dash that does NOT return (repositionMode teleport, returnToOrigin false, so the caster ends at the target). 0.3s trailing i-frames from arrival (casterState iframes 0.3). On the strike: knockback + 50% confuse. Never-misses is flavor (no accuracy model needed). A blink-slash that leaves you where you struck. Pierce omitted (default UNLIMITED): the landing circle strikes everything inside it.",
       "type": "flying",
       "category": "physical",
       "power": 60,
@@ -2623,8 +2622,7 @@
       "space": {
         "shape": "radial",
         "radRadius": 46,
-        "count": 1,
-        "pierce": 0
+        "count": 1
       },
       "delivery": {
         "anchor": "caster",

@@ -47,4 +47,13 @@ for (const h of harnesses) {
   else console.log('ok  ' + rel(h) + '  (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)  ' + (out[out.length - 1] || '').slice(0, 60));
 }
 console.log('harnesses: ' + (harnesses.length - hbad) + '/' + harnesses.length + ' passed');
-process.exit(bad || hbad ? 1 : 0);
+// 3. Move data: the generated file must match its source JSON (no hand edits), and every move must pass the grammar.
+let mbad = 0;
+for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], ['validate_moves.js', [], /^moves:/]]) {
+  const r = cp.spawnSync(process.execPath, [path.join(__dirname, name), ...args], { encoding: 'utf8' });
+  const out = ((r.stdout || '') + (r.stderr || '')).trim().split('\n');
+  if (r.status !== 0) { mbad++; console.log('MOVE DATA FAIL tools/' + name + '\n   ' + out.filter(l => /INVALID|FAIL|STALE|Error/.test(l)).slice(0, 8).join('\n   ')); }
+  else console.log('ok  tools/' + name + '  ' + (out.find(l => show.test(l)) || ''));
+}
+console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
+process.exit(bad || hbad || mbad ? 1 : 0);
