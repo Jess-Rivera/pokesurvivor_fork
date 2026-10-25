@@ -286,3 +286,10 @@ All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.as
 - Spikes: a placed mine lasts until triggered and detonates once on contact. A timeout is optional; a triggered instance only needs some endOn.
 - Schema additions: grow.max and grow.per, stat chance/duration/maxStacks, casterState as the container for iframes and delay. metal-claw's team buff is side self, like Swords Dance.
 - The groundwork files stay out of dev.html and the main.js NEED array until slice 3; check.js already runs the export freshness check and the validator.
+
+
+## 2026-10-25 (slice 2 prep): no legacy bridge, resolver owns normalization
+- The move schema is built from the ground up. `kind` is not derived, carried or bridged; there is no flat projection in old field names. combat.js will be mostly rewritten against the resolved definitions, guided by move-coverage-report.md.
+- File roles: described.json (source), move-attributes.js (definitions and defaults), moves-generated.js (generated), move-overrides.js (per-move overrides only), move-handler.js (specials with trigger and optional condition), move-resolver.js (defaults, derived values, overrides, handlers, eager at load).
+- Base cooldown and damage are derived: cd = 0.5 x (35 / PP); dmg = Power / E, where E is damage events per target per cast. Upgrades apply in combat.js on top of the normalized dmg.
+- Parity report compares numbers only against legacy moves.js. Slice 3 (flag swap) is dropped for a re-plan.
