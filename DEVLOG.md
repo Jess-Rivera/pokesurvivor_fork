@@ -143,3 +143,19 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - New per-slice workflow: planning chat writes slice-n.md and slice-n-codehandoff.md, a separate coding chat builds from them. slice-2-codehandoff.md written (the three new files, parity tool, timing line, questions to confirm first).
 - Nothing open for the coding chat except how to load legacy moves.js in node for the parity tool. No game code changed.
 - Stopped at: slice 2 plan approved, build waits for a new coding chat. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 2 built (resolver, overrides, handler skeleton, parity tool)
+- New: js/data/move-overrides.js (fire-spin, leaf-storm, gust, flame-wheel cd), move-handler.js (6 handlers: trigger enemyHit, setWeather cast; berrySteal stub), move-resolver.js (defaults, cd = 0.5 x 35/PP to 3 decimals for Power above 0, overrides, handler attachment; G.MoveDefs eager), tools/move_parity.js (self-test 9/9, parity, timing), hooked into tools/check.js. Not loaded by the game.
+- Parity: power 0 differences; cd 49 match, 14 differ (12 status moves plus Dragon Rage and Night Shade): moves-generated.js has no cd, legacy hand cds have nowhere to come from. Decision for Jess: overrides file or source JSON. Handoff counts (51 damaging, 12 status) were really 49 and 14 by the legacy dmg rule.
+- Timing: 1000 synthetic moves resolve in about 16 ms; moves-generated.js projected 593 KB at 1000.
+- check.js passes (17/17 harnesses, export current, 63/63 valid, parity ok). Stopped at: the 14-cd decision, then commit + push. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 2 follow-up (defaults, cd tuning constants)
+- Found by walking Spikes through the resolver: blanket grammar defaults put turnRate, aimTrack and returnHits on every move, so all 63 resolved moves broke the grammar rules. Resolver now skips those three; behavior-carrying defaults stay.
+- cd formula now reads ANCHOR_CD, ANCHOR_PP, BETA from G.MoveResolver.TUNING (0.5, 35, 1), resolve() takes an optional tuning argument. New: validate_moves.js --resolved, run by check.js (63/63). Parity unchanged (14 cd gaps still await Jess).
+- Stopped at: the 14-cd decision. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 2 follow-up 2 (overrides removed, persistent-move rule)
+- Jess pointed out the 4 seed overrides were legacy kind values: orbit and trail moves are on while active (pacing = rehit or emit every), Gust is now a cast that emits 3 projectiles. Overrides deleted; resolver rule: endOn notActive means no cd (fire-spin, leaf-storm, flame-wheel, bug-buzz). Gust gets the formula cd 0.5.
+- move-overrides.js now has 14 empty entries (12 status moves, Dragon Rage, Night Shade) as slots for hand cds. Parity: power 0 differences, cd 19 (14 unset, 5 intended with notes). check.js passes, self-test 14/14.
+- Stopped at: Jess to fill the 14 cd slots when decided. REMINDER: commit + push.

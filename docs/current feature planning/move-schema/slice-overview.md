@@ -1,7 +1,7 @@
 # Move schema (#2): branch overview
 
 Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-n.md you are working. Each slice file holds that slice's decisions and plan, so nothing here grows past a summary.
-Schema spec: docs/MOVE-AXIS-SCHEMA.md. Design input for combat: docs/current feature planning/move-coverage-report.md (generated). Status updated: 2026-10-25.
+Schema spec: docs/MOVE-AXIS-SCHEMA.md. Design input for combat: docs/current feature planning/move-coverage-report.md (generated). Status updated: 2026-10-26.
 
 ## What this branch is
 A ground-up move system. A single database of moves (the schema) is converted to JS, resolved into final move definitions, and consumed by a rewritten combat.js that dispatches on the schema axes (space, delivery, payload). The legacy `kind` label is not part of the new system and there is no bridge back to it. Move ids do not change, so saves stay compatible.
@@ -21,7 +21,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 
 ## Slices
 1. DONE. Data and grammar. Export script, generated move file, grammar and validator wired into tools/check.js; nothing is loaded by the game. See slice-1.md.
-2. PLAN APPROVED, not built (handoff: slice-2-codehandoff.md). Resolver, overrides and handler skeleton. Cooldown derived by formula (no damage normalization), overrides applied last, final definitions emitted, numeric parity report against legacy moves.js. See slice-2.md.
+2. DONE 2026-10-26 (handoff: slice-2-codehandoff.md; open for Jess: 14 empty cd slots in move-overrides.js, parity report marks). Resolver, overrides and handler skeleton. Cooldown derived by formula (no damage normalization), overrides applied last, final definitions emitted, numeric parity report against legacy moves.js. See slice-2.md.
 3. PLACEHOLDER (re-plan after slice 2). Start the new combat path from the ground up against the resolved definitions, guided by the coverage report. See slice-3.md.
 4. PLACEHOLDER. New executors in order: individual buffs, special handlers one at a time, delivery extras, emit last. See slice-4.md.
 5. PLACEHOLDER. Upgrades derived from each move's own fields instead of the kinds.js per-kind table. See slice-5.md.

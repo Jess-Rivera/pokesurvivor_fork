@@ -1,13 +1,19 @@
 // tools/validate_moves.js: checks js/data/moves-generated.js against the grammar in js/data/move-attributes.js.
 // Usage: node tools/validate_moves.js            self-test, validate every move, print the coverage buckets
 //        node tools/validate_moves.js --report   also write docs/current feature planning/move-coverage-report.md
-// Exit code 1 if the self-test or any move fails. Groundwork: check.js does not run this yet.
+//        node tools/validate_moves.js --resolved   validate the resolver output (G.MoveDefs) instead of the raw data
+// Exit code 1 if the self-test or any move fails.
 const fs = require('fs'), path = require('path');
 const root = path.resolve(__dirname, '..');
 global.G = {};
 require(path.join(root, 'js/data/move-attributes.js'));
 require(path.join(root, 'js/data/moves-generated.js'));
-const A = G.MoveAttrs, DATA = G.MoveData;
+const A = G.MoveAttrs, RESOLVED = process.argv.includes('--resolved');
+let DATA = G.MoveData;
+if (RESOLVED) {   // handlers is the resolver's own addition, not a grammar field, so strip it before checking
+  for (const f of ['move-overrides', 'move-handler', 'move-resolver']) require(path.join(root, 'js/data', f + '.js'));
+  DATA = structuredClone(G.MoveDefs); for (const m of Object.values(DATA)) delete m.handlers;
+}
 
 // ---------- rules: conditions over paths ----------
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -183,7 +189,7 @@ const bucketText = b => Object.entries(b).map(([axis, g]) => '## ' + axis + '\n\
 let failed = selfTest();
 const bad = validateMoves(DATA), total = Object.keys(DATA).length;
 for (const [id, errs] of Object.entries(bad)) for (const e of errs) console.log('INVALID ' + id + ' > ' + e);
-console.log('moves: ' + (total - Object.keys(bad).length) + '/' + total + ' valid');
+console.log((RESOLVED ? 'resolved ' : '') + 'moves: ' + (total - Object.keys(bad).length) + '/' + total + ' valid');
 const cov = bucketText(coverage(DATA));
 if (process.argv.includes('--report')) {
   const out = path.join(root, 'docs/current feature planning/move-coverage-report.md');
