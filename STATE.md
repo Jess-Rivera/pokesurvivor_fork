@@ -1,20 +1,21 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-25 evening (Claude Desktop, home).
+Last updated: 2026-10-26 morning (Claude Desktop, home).
 
 ## Where we are
-- ON BRANCH feature-test/new-move-schema (test branch for the #2 implementation check). Slice 1 of 7 DONE (groundwork, nothing the game loads). Slice 2 is PLANNED, not built. Slices 1 and 2 change no gameplay.
-- PLAN DOCS: docs/current feature planning/move-schema/slice-overview.md (branch summary, one entry per slice), then ONLY the slice-n.md being worked. slice-2.md is next. The old move-schema-slices.md is a pointer stub.
-- DECIDED this session: NO legacy bridge (no derived `kind`, no flat projection in old field names); combat.js will be mostly rewritten later, guided by docs/current feature planning/move-coverage-report.md. New files planned for slice 2: js/data/move-overrides.js (per-move overrides only), js/data/move-handler.js (specials, each with a trigger and optional condition), js/data/move-resolver.js (eager; defaults, derived values, overrides, handlers).
-- Formulas: cd = 0.5 x (35 / PP) for damaging moves (4 orbit/trail moves keep hand cd, seed overrides: fire-spin, leaf-storm, gust, flame-wheel). dmg = Power / E (resolver normalizes; e.g. 7 pellets, 42 power gives dmg 6). Legacy dmg equals Power for all 51 damaging moves.
-- check.js: 17/18 harnesses. upgrade-slice2b-harness.js fails on a missing docs/move-catalogue-preview.json (deleted in 050437e, pre-existing; candidate for KNOWN_STALE).
+- ON BRANCH feature-test/new-move-schema. Slice 1 of 7 DONE. Slice 2 PLAN APPROVED, not built. Slices 1 and 2 change no gameplay.
+- WORKFLOW (new, per slice): a planning chat writes slice-n.md (plan) and slice-n-codehandoff.md (what a coding chat needs), then a separate CODING chat builds from those files only. Docs: docs/current feature planning/move-schema/ (slice-overview.md first, then only the slice files being worked).
+- Slice 2 decisions: NO damage normalization (no E, cone cap, dmg split or per-hit floor); a damage simulator script later decides whether it is needed. flavor_text passes through, accuracy stays a raw fact. Timing line (1000 synthetic moves) wanted. No legacy bridge.
+- Slice 2 builds (nothing the game loads): js/data/move-overrides.js, move-handler.js, move-resolver.js, tools/move_parity.js (report + timing line, run by check.js) and a small self-test. Detail: slice-2-codehandoff.md.
+- Formula: cd = 0.5 x (35 / PP) for damaging moves (hand cd kept for fire-spin, leaf-storm, gust, flame-wheel and status moves). Power passes through as is.
+- Done: upgrade-slice2b-harness.js added to KNOWN_STALE in tools/check.js (17/17 harnesses).
 
 ## Next (in order)
-1. Jess: commit + push (STATE.md, DEVLOG.md, DECISIONS.md, the move-schema/ folder, the edited move-schema-slices.md stub). The untracked docs/ASCII Concept Maps file is not part of this work.
-2. Jess answers the 3 open decisions in slice-2.md: (a) E rules (every pellet counts, or keep the legacy cone min(pellets, 3)?), (b) keep the per-hit floor 1 / max(1, E)?, (c) pass API flavor_text through and leave hand desc to the UI slice? Also: want the 1000-move synthetic timing line in check.js (report only)?
-3. Then build slice 2 (resolver, overrides, handler skeleton, numeric parity report vs legacy moves.js).
-4. Slice 3 is a re-plan (new combat path from the ground up). Later: #11 wire lean learnsets, RESUME gyms (#5).
+1. Jess: commit + push (tools/check.js, STATE.md, DEVLOG.md, slice-2.md, slice-2-codehandoff.md, slice-overview.md).
+2. Start a NEW coding chat for slice 2 (prompt is at the end of the handoff). Nothing is left to confirm; it can start building.
+3. Jess may try a local LLM (gemma4:12b) on one coding task, suggested: tools/move_parity.js.
+4. Slice 3 is a re-plan (new combat path from the ground up), in a new planning chat. Later: damage simulator script (move, upgrades, enemy type and level to damage and enemy HP drop; decides whether normalization is needed), #11 wire lean learnsets, RESUME gyms (#5).
 
 ## Board note
 - Treat #2 as OPEN. #4 closing as not relevant. #3 closes once #2 consumes described.json. #11 has its dataset.

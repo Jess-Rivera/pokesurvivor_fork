@@ -136,3 +136,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Read-only check vs legacy moves.js: dmg equals Power for all 51 damaging moves; cd equals 0.5 x (35 / PP) except the 4 orbit/trail moves (fire-spin, leaf-storm, gust, flame-wheel). Resolver will normalize dmg = Power / E.
 - Plan doc split into docs/current feature planning/move-schema/ (slice-overview.md plus slice-1..7.md) so a slice chat reads only the overview and its own file; old file is a pointer stub. No game code changed.
 - Stopped at: slice 2 plan written, 3 open decisions (E rules, floor, desc) await Jess. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 2 plan approved, code handoff written
+- Jess decided: NO damage normalization in the move schema (no E, cone cap, dmg split or floor; earlier pellet-only E rule superseded). A later damage simulator (move, upgrades, enemy type and level to damage and HP drop) decides if it is needed. flavor_text passes through; 1000-move synthetic timing line wanted.
+- tools/check.js: upgrade-slice2b-harness.js added to KNOWN_STALE (needs the deleted docs/move-catalogue-preview.json). check.js now 17/17 harnesses, export freshness and validator ok.
+- New per-slice workflow: planning chat writes slice-n.md and slice-n-codehandoff.md, a separate coding chat builds from them. slice-2-codehandoff.md written (the three new files, parity tool, timing line, questions to confirm first).
+- Nothing open for the coding chat except how to load legacy moves.js in node for the parity tool. No game code changed.
+- Stopped at: slice 2 plan approved, build waits for a new coding chat. REMINDER: commit + push.

@@ -293,3 +293,13 @@ All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.as
 - File roles: described.json (source), move-attributes.js (definitions and defaults), moves-generated.js (generated), move-overrides.js (per-move overrides only), move-handler.js (specials with trigger and optional condition), move-resolver.js (defaults, derived values, overrides, handlers, eager at load).
 - Base cooldown and damage are derived: cd = 0.5 x (35 / PP); dmg = Power / E, where E is damage events per target per cast. Upgrades apply in combat.js on top of the normalized dmg.
 - Parity report compares numbers only against legacy moves.js. Slice 3 (flag swap) is dropped for a re-plan.
+
+## 2026-10-26 (slice 2 plan): normalization is pellet-only
+- E (the divisor in dmg = Power / E) counts ONLY the base projectile count: E = min(count, 3) when count > 1, else 1. The cap is one named tunable (CONE_E), loosened later step by step.
+- Dropped from legacy: boomerang E 2 (each pass hits at full power if the enemy is still in the path), orbit passes per period, trail overlap, aura 1, re-hit intervals, and the hits multiplier (only Bonemerang had it; mainline Power for multi-hit moves is already adjusted). No hits field in the schema.
+- Per-hit floor stays 1 / max(1, E). Accuracy stays out of dmg (pass-through fact; combat decides expected-value vs miss roll). flavor_text passes through.
+- Parity report will show the boomerang, orbit and trail moves differing from legacy by design.
+
+## 2026-10-26 (slice 2 plan, later same day): normalization removed
+- Supersedes the earlier 2026-10-25 line (dmg = Power / E) and the pellet-only E entry above. Slice 2 has NO damage normalization: no E, no cone cap, no dmg split, no per-hit floor, no hits field. The resolver derives only cd = 0.5 x (35 / PP); power, accuracy and flavor_text pass through.
+- Why: whether normalization is needed is a balance question. A damage simulator script (move, upgrades, enemy type and level, combat factors, output damage and enemy HP drop) will answer it with data. If it is needed it returns as its own step.

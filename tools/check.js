@@ -30,7 +30,8 @@ console.log('syntax: ' + (files.length - bad) + '/' + files.length + ' files OK'
 
 // 2. Harnesses: every *harness*.js under docs/ (exit code 0 and no line containing FAIL).
 // Known stale harnesses (skipped, with the reason). Remove an entry when it is fixed.
-const KNOWN_STALE = { 'docs/proposals/upgrade-slice2a-harness.js': 'needs a work copy under new/ and a stub G.U.TYPE_COLOR since slice 2c' };
+const KNOWN_STALE = { 'docs/proposals/upgrade-slice2a-harness.js': 'needs a work copy under new/ and a stub G.U.TYPE_COLOR since slice 2c',
+  'docs/proposals/upgrade-slice2b-harness.js': 'reads docs/move-catalogue-preview.json, deleted in 050437e' };
 const harnesses = walk(path.join(root, 'docs'), n => /harness.*\.js$/.test(n)).filter(h => {
   const why = KNOWN_STALE[rel(h)];
   if (why) console.log('skip ' + rel(h) + '  (stale: ' + why + ')');
