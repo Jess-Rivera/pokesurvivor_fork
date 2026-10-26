@@ -2431,7 +2431,7 @@
           "stat": "atk",
           "stages": 1,
           "side": "self",
-          "scope": "individual",
+          "scope": "team",
           "chance": 20
         },
         {

@@ -9,19 +9,17 @@
  * The legacy hand cd (js/data/moves.js) is noted in each why, for reference only; nothing reads it. */
 (() => {
   G.MoveOverrides = {
-    'swords-dance': { why: 'no cd set yet (legacy 8)' },
-    'agility':      { why: 'no cd set yet (legacy 8)' },
-    'harden':       { why: 'no cd set yet (legacy 8)' },
-    'aqua-ring':    { why: 'no cd set yet (legacy 8)' },
-    'dragon-dance': { why: 'no cd set yet (legacy 8)' },
-    'toxic':        { why: 'no cd set yet (legacy 0.3)' },
-    'string-shot':  { why: 'no cd set yet (legacy 1.1)' },
-    'spikes':       { why: 'no cd set yet (legacy 1.2)' },
-    'toxic-spikes': { why: 'no cd set yet (legacy 1.1)' },
-    'hail':         { why: 'no cd set yet (legacy 1.2)' },
-    'will-o-wisp':  { why: 'no cd set yet (legacy 3.5)' },
-    'substitute':   { why: 'no cd set yet (legacy 4)' },
-    'dragon-rage':  { why: 'no cd set yet (legacy 1)' },
-    'night-shade':  { why: 'no cd set yet (legacy 0.5)' },
+    'swords-dance': { cd: 8, why: 'no cd set yet (legacy 8)' },
+    'agility':      { cd: 8, why: 'no cd set yet (legacy 8)' },
+    'harden':       { cd: 8, why: 'no cd set yet (legacy 8)' },
+    'aqua-ring':    { cd: 8, why: 'no cd set yet (legacy 8)' },
+    'dragon-dance': { cd: 8, why: 'no cd set yet (legacy 8)' },
+    'string-shot':  { cd: 0.5, why: 'no cd set yet (legacy 1.1)' },
+    'spikes':       { cd: 1.1, why: 'no cd set yet (legacy 1.2)' },
+    'toxic-spikes': { cd: 1.1, why: 'no cd set yet (legacy 1.1)' },
+    'hail':         { cd: 1.2, why: 'no cd set yet (legacy 1.2)' },
+    'will-o-wisp':  { cd: 3.5, why: 'no cd set yet (legacy 3.5)' },
+    'substitute':   { cd: 4, why: 'no cd set yet (legacy 4)' },
+    'dragon-rage':  { cd: 3.5, why: 'no cd set yet (legacy 1)' },
   };
 })();
