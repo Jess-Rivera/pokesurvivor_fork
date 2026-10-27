@@ -5,7 +5,8 @@
  * rectangle for offScreen arrives as data (setView). Facts for presentation go out as SimBus events (I8).
  * Loaded by the game since slice 3d, but only ticked with ?dev&newcombat (G.MoveRoute). Slice 3c scope: anchors caster, target and world;
  * targeting direction, nearest, none and self; motions static and travels (path curve, path oscillate, turnRate); grow; endOn
- * time, wall, offScreen and ownerDeath; pierce; hit policies oncePerInstance and interval; payload damage only.
+ * time, wall, offScreen and ownerDeath; pierce; hit policies oncePerInstance and interval; payload through G.MoveEffects.
+ * Slice 4a: every landed enemy hit emits 'move:hit', with dmg 0 when the payload has riders only (String Shot).
  * Slice 3d: destructible props share the collision sweep (solid ones spend pierce, grass never does), and a routing filter.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
@@ -175,8 +176,8 @@ G.MoveSim = (() => {
     for (const e of go) {
       if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); continue; }     // props emit no 'move:hit' (enemy-only event)
       if (e.dead) continue;
-      const r = G.MoveEffects.applyHit(inst, e, 0, rng);
-      if (r) G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
+      const r = G.MoveEffects.applyHit(inst, e, 0, rng);     // always a result: a riders-only hit still counts (4a, P4)
+      G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
     }
   }
 

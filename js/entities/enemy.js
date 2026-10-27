@@ -502,7 +502,7 @@
         this.skillCd -= dt;
         if (this.skillCd <= 0) {
           if (this.behavior === 'shielder') { this.skillCd = 6; this.castShields(); }
-          else if (dist < 250) { this.skillCd = G.U.rand(5, 7); this.startJump(pl); return; }
+          else if (dist < 250 && !G.Status.rooted(this)) { this.skillCd = G.U.rand(5, 7); this.startJump(pl); return; }     // rooted (trap): no new jump
           else this.skillCd = 0.5;
         }
       }
@@ -745,7 +745,7 @@
       if (c.id === 'dash' && c.t >= c.wind) {
         if (!c.go) { c.go = true; this.anim.play('Attack', { speed: 1.6 }); }
         if (c.t >= c.wind + c.dur) return this.bossEnd();
-        const sp = c.len / c.dur;
+        const sp = G.Status.rooted(this) ? 0 : c.len / c.dur;     // rooted (trap): the dash runs its timer in place
         return [Math.cos(c.ang) * sp, Math.sin(c.ang) * sp, 'Walk'];
       }
       if (c.t >= c.wind && !c.fired) {
@@ -881,7 +881,7 @@
     /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */
     leaveMove(dt, pl) {
       const [dx, dy] = G.U.norm(this.x - pl.x, this.y - pl.y);
-      const spd = Math.max(40, this.spd) * (1 - this.slow);
+      const spd = G.Status.rooted(this) ? 0 : Math.max(40, this.spd) * (1 - this.slow);     // rooted (trap): it waits
       this.touchCd = Math.max(this.touchCd, 0.5);
       this.x += (dx * spd + this.kx) * dt; this.y += (dy * spd + this.ky) * dt;
       this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
@@ -1283,6 +1283,7 @@
     /** Jump: it crouches, flies in an arc and lands where you were. */
     updateJump(dt) {
       const j = this.jump;
+      if (j.t < 0 && G.Status.rooted(this)) { this.anim.loop('Idle'); return; }     // rooted (trap): holds the crouch; a jump in the air lands
       j.t += dt;
       if (j.t < 0) { this.anim.loop('Idle'); return; }
       const k = Math.min(1, j.t / j.dur);

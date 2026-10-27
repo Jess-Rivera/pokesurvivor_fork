@@ -986,7 +986,8 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "chance": 10
+          "chance": 10,
+          "maxStacks": 2
         },
         {
           "t": "knockback",
@@ -1408,7 +1409,8 @@
           "stat": "spAtk",
           "stages": -2,
           "side": "self",
-          "scope": "individual"
+          "scope": "individual",
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
@@ -2446,7 +2448,8 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "chance": 20
+          "chance": 20,
+          "maxStacks": 2
         },
         {
           "t": "emit",

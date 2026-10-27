@@ -53,7 +53,7 @@ console.log('1 CONTROL table: paralysis 10 s, freeze 2 s (+4 s window), sleep 2-
   const p = mk(); p.applyStatus('paralysis'); p.applyBurn(1); p.applyPoison(1); if (p.burn || p.poison) bad('burn/poison over paralysis must be blocked');
   if (p.applyStatus('sleep') !== 'blocked' || p.stMajor.k !== 'paralysis') bad('sleep over paralysis');
   const f = mk(); f.applyStatus('freeze'); if (f.applyStatus('paralysis') !== 'blocked') bad('paralysis over freeze');
-  const c = mk(); c.applyBurn(1); c.applyStatus('confusion'); const cp = mkp(); St.applyDot(cp, 'burn'); St.apply(cp, 'trap'); if (!c.stCnf || !cp.stTrap) bad('confusion and trap are not major: they ride on top of burn'); if (c.applyStatus('trap') !== 'none') bad('trap is player-only');
+  const c = mk(); c.applyBurn(1); c.applyStatus('confusion'); const cp = mkp(); St.applyDot(cp, 'burn'); St.apply(cp, 'trap'); if (!c.stCnf || !cp.stTrap) bad('confusion and trap are not major: they ride on top of burn'); if (c.applyStatus('trap') !== 'ok' || !c.stTrap) bad('trap on an enemy is a root that rides on top of burn (move schema slice 4a)');
   const t = mk(); t.applyPoison(1); t.applyPoison(2); if (t.poison !== 2) bad('poison -> toxic upgrade must still work');
   console.log('3 one major at a time: burn / poison / paralysis / sleep / freeze exclude each other; confusion and trap stack on top; poison -> toxic still upgrades'); }
 
@@ -95,12 +95,13 @@ console.log('1 CONTROL table: paralysis 10 s, freeze 2 s (+4 s window), sleep 2-
   const d = mk(1, 1000); d.applyStatus('sleep'); d.stMajor.t = 5; d.hp -= 200; if (!d.stMajor) bad('damage woke the sleeper');
   console.log('7 thaw: Fire after 0.2 s ends freeze; same-instant, other types and sleepers are left alone'); }
 
-// 8. trap (slice E1): player only, no damage, no slow; a swap lock that runs out
-{ const e = mk(1, 1600); if (e.applyStatus('trap') !== 'none' || e.stTrap) bad('enemies cannot be trapped');
+// 8. trap (slice E1): on the player no damage, no slow; a swap lock that runs out. On an enemy (move schema slice 4a): a 2 s root.
+{ const e = mk(1, 1600); if (e.applyStatus('trap') !== 'ok' || !near(e.stTrap.t, 2) || St.speedMul(e) !== 0) bad('an enemy trap is a 2 s root');
+  tickN(e, 2.1); if (e.stTrap || St.speedMul(e) !== 1) bad('the enemy root should end after 2 s');
   const p = mkp(['normal'], 1600); if (St.apply(p, 'trap') !== 'ok' || !St.swapLocked(p)) bad('player trap should lock swaps');
   if (!near(St.speedMul(p), 1)) bad('trap must not slow'); tickN(p, 7.9); if (!St.swapLocked(p)) bad('trap ended early'); tickN(p, 0.3);
   if (St.swapLocked(p) || p.taken.length) bad('trap should end after 8 s with no damage');
-  console.log('8 trap: enemies immune to the state, player gets an 8 s swap lock, no damage, no slow'); }
+  console.log('8 trap: an enemy is rooted for 2 s, the player gets an 8 s swap lock, no damage, no slow'); }
 
 // 10. real Enemy.update: a frozen / asleep enemy stands still and takes knockback decay only
 { for (const k of ['freeze', 'sleep']) { const e = mk(); e.x = 100; e.y = 100; e.applyStatus(k); e.stMajor.t = 1.5; const x0 = e.x, y0 = e.y; run(e, 1.0);

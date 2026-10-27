@@ -51,12 +51,13 @@ G.Stages = (() => {
   const TEAM_LIVE = 8;      // safety limit on live applications per (stat, move): a pathological build cannot grow the list forever
   const TEAM_GRACE = 0.1;   // an application stays 0.1 s past its end, and a cast of the same move inside that last 0.1 s REFRESHES it instead of stacking:
                             // at cooldown = duration the cast lands within a frame of the old one ending, and without this the stage would dip (or double) for a frame
-  /** Add one application of `n` (raise) of `stat` from move `src`, lasting `dur` s. Returns the number of live applications on `stat`. */
-  function teamAdd(store, stat, n, dur, src) {
+  /** Add one application of `n` (raise) of `stat` from move `src`, lasting `dur` s. `live` (optional, move schema slice 4a: the move's
+   *  maxStacks) caps that move's live applications; at the cap its oldest is dropped. Returns the number of live applications on `stat`. */
+  function teamAdd(store, stat, n, dur, src, live = TEAM_LIVE) {
     const L = store[stat] || (store[stat] = []);
     for (const a of L) if (a.src === src && a.t <= TEAM_GRACE) { a.n = n; a.t = dur; a.dur = dur; return L.length; }     // the old one is ending: renew it
     let mine = 0; for (const a of L) if (a.src === src) mine++;
-    if (mine >= TEAM_LIVE) { const i = L.findIndex(a => a.src === src); if (i >= 0) L.splice(i, 1); }      // drop that move's oldest
+    if (mine >= live) { const i = L.findIndex(a => a.src === src); if (i >= 0) L.splice(i, 1); }      // drop that move's oldest
     L.push({ n, t: dur, dur, src });
     return L.length;
   }
@@ -84,10 +85,23 @@ G.Stages = (() => {
   /**
    * Add one application of `n` stages (negative = a drop) to `stat`, lasting `dur` seconds. `cap` (optional, positive) is the most
    * stages a RAISE may reach (an authored move's stack limit). Returns true when it applied, false when capped.
+   * Move schema slice 4a (D30): `src` tags the application with its move id and `live` caps that move's live applications on this
+   * stat; at the cap the move's oldest application is dropped and the new one added at full duration (even at the +-6 clamp). With a
+   * `src`, the floating text only shows when the stage changed. Without them (every legacy caller) the behavior is as before.
    */
-  function add(h, stat, n, dur = DUR, cap = MAX) {
+  function add(h, stat, n, dur = DUR, cap = MAX, src, live) {
     if (!STATS.includes(stat) || !n || h.dead) return false;
     const cur = stage(h, stat);
+    if (src != null && live > 0) {
+      const g = h.stg || (h.stg = {}), L = g[stat] || (g[stat] = []);
+      let mine = 0; for (const a of L) if (a.src === src) mine++;
+      if (mine >= live) L.splice(L.findIndex(a => a.src === src), 1);
+      else if ((n > 0 && cur >= Math.min(MAX, cap)) || (n < 0 && cur <= -MAX)) return false;
+      L.push({ n, t: dur, src });
+      const now = stage(h, stat);
+      if (now !== cur) text(h, LABEL[stat] + ' ' + (now > 0 ? '+' : '') + now, n > 0 ? UP : DOWN);
+      return true;
+    }
     if (n > 0 && cur >= Math.min(MAX, cap)) return false;
     if (n < 0 && cur <= -MAX) return false;
     const g = h.stg || (h.stg = {});

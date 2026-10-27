@@ -1,7 +1,9 @@
 // Move sim offline checks, slice 3c (Node only). Usage from the repo root:  node docs/proposals/move-sim-harness.js .
 // Loads the real move data chain, G.MoveGeom, G.Stats, G.Types, G.Stages, G.Status and G.SimBus, with small stubs for the enemy
-// manager, world walls, weather and FX. Math.random and performance.now throw while the sim runs (invariant I7), and the default
-// rng throws too, so any roll that is not a crit or a fizzle fails loudly. Every canary runs at dt 1/60 and 1/30 and the hit counts
+// manager, world walls, weather and FX. Math.random and performance.now throw while the sim runs (invariant I7). Since slice 4a the
+// riders roll too (burn on the fire canaries): a world without a seed runs on seed 0 when a move has a chance rider, and on the
+// throwing rng otherwise, so any other stray roll still fails loudly. The rider rules themselves are checked in
+// docs/proposals/move-riders-harness.js against the real enemy, status and stages modules. Every canary runs at dt 1/60 and 1/30 and the hit counts
 // must agree. Damage is checked two ways, neither sharing arithmetic with the code under test: pinned numbers from
 // docs/proposals/move-sim-golden.py (written from the architecture text), and a random property test that re-derives D6 to D11 here.
 // The mutation runner (docs/proposals/move-sim-mutate.js) points MOVE_SIM_SRC / MOVE_FX_SRC at altered copies.
@@ -43,7 +45,8 @@ const CIRCLE = r => ({ radRadius: r, radArc: 6.2832 });
 
 // ---- world builders ----
 const mkE = (id, x, y, o = {}) => Object.assign({ id, x, y, r: 10, dex: 7, atkLvl: 25, types: ['normal'], hp: 1e12, dead: false, log: [],
-  hurt(a) { this.log.push({ a, t: clock }); this.hp -= a; if (this.hp <= 0) this.dead = true; } }, o);
+  hurt(a) { this.log.push({ a, t: clock }); this.hp -= a; if (this.hp <= 0) this.dead = true; },
+  applyBurn() {}, applyPoison() {}, applyFlinch() {} }, o);     // riders (slice 4a) are checked in move-riders-harness.js
 const mkO = (ids, o = {}) => Object.assign({ id: 'p1', x: 0, y: 0, r: 12, aim: 0, level: 30, atk: 84, spa: 109, myTypes: ['fire'], extraMul: 1.1,
   atkStage: 1, spaStage: 1, cdMul: 1, critChance: 0, dead: false, stgTeam: null, moveRadiusMul: 1, dmgDealt: 0,
   slots: [ids.map(id => ({ id, t: 0 }))], activeGroup() { return this.slots[0]; },
@@ -54,7 +57,8 @@ const mkO = (ids, o = {}) => Object.assign({ id: 'p1', x: 0, y: 0, r: 12, aim: 0
 function run(w, secs, dt) {
   fresh();
   enemies = w.enemies || []; props = w.props || []; weather = w.weather || {}; wallX = w.wall != null ? w.wall : Infinity;
-  G.MoveSim.setRng(w.seed != null ? seeded(w.seed) : trap('the sim rng (no roll expected)'));
+  const rolls = w.owner.slots.some(g => g.some(sl => (G.MoveDefs[sl.id].payload || []).some(fx => fx.chance != null && fx.chance < 100)));
+  G.MoveSim.setRng(w.seed != null ? seeded(w.seed) : rolls ? seeded(0) : trap('the sim rng (no roll expected)'));
   G.MoveSim.setView(w.view || null);
   if (w.filter) G.MoveSim.setFilter(w.filter);
   const tape = G.SimBus.record(), N = Math.round(secs / dt);

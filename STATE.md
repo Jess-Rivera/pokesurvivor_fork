@@ -1,20 +1,19 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-27 (Claude Code, home; slice 3d signed off, slice 4a planned).
+Last updated: 2026-10-27 (Claude Code, home; slice 4a built, not yet committed).
 
 ## Where we are
-- ON BRANCH feature-test/new-move-schema. Slices 1 to 3d BUILT, 3d SIGNED OFF by Jess (overlay, Life Orb, swaps, density all good). Flag off, gameplay is unchanged.
-- Quick test: start a run on dev.html?dev&newcombat, then G.Debug.newcombat() in the console (7 routed moves, 24 sleeping dummies, overlay on). G.Debug.hitbox() toggles the overlay.
-- Slice 4a (riders: ailment, flinch, knockback, crit, heal from dealt, stat) is PLANNED. Handoff for the coding chat (Opus): docs/current feature planning/move-schema/slice-4a-codehandoff.md, status PROPOSED until Jess says OK. Decisions in slice-4a.md and review 9.8: Metal Claw and Meteor Mash maxStacks 2, Leaf Storm 1; trap on wild enemies is a 2 s root (bosses, elites, gym leaders cut like freeze, then a 10 s window); String Shot double -2 allowed.
-- Backlog issues for 3d (idle prop targeting, ranged boss priority) were sent by Jess.
-- check.js: 19/19 harnesses, I1 guard ok (5 files). ONE known failure: move_parity self-test "empty override" hard-codes hail (test defect). Browser smoke: node tools/smoke-newcombat.js (Playwright from C:\Users\boric\tools\playwright, outside the repo).
+- ON BRANCH feature-test/new-move-schema. Slices 1 to 3d DONE (3d signed off). Slice 4a (riders on hit) BUILT, waiting for Jess's playtest. Flag off, gameplay is unchanged.
+- Quick test: start a run on dev.html?dev&newcombat, then G.Debug.newcombat('riders') in the console (the 4a seven: Body Slam, String Shot, Ice Beam, Bite, Psycho Cut, Giga Drain, Bulldoze; 24 awake slow dummies; overlay prints statuses and stages). G.Debug.newcombat() is still the 3d seven with sleeping dummies. 14 moves routed in total.
+- 4a scope grew (Jess OK): enemy.js now respects the trap root for leaving units, jumpers, boss dash and boss leap. Details: move-schema/slice-4a.md.
+- check.js: 20/20 harnesses, I1 guard ok (5 files). ONE known failure: move_parity self-test "empty override" hard-codes hail (test defect). Riders harness 97 checks; mutation runners 24/24 and 29/29 (run by hand). Smoke: node tools/smoke-newcombat.js all passed.
 
 ## Next (in order)
-1. Jess: read the 4a handoff and say OK (or edit). Then the planning chat marks it APPROVED.
-2. Start a fresh coding chat with the prompt at the bottom of slice-4a-codehandoff.md.
-3. After 4a: slice 4b (self-casts, specials, chains) or 4c (motion extras), either order, then 4d.
-4. Fix as we reach them: move_parity hail self-test, review section 2.4 validator rules, deep-freeze G.MoveDefs (I2), orbit radius lens (4c), Gust per-shot spread (before 4d), six unowned issues (review 9.7).
+1. Jess: commit and push 4a, then playtest the rider set (feel of the 2 s String Shot root, Flamethrower burn uptime, Metal Claw x2 Attack later). Feel issues become gh issue drafts.
+2. Then slice 4b (self-casts, specials, chains) or 4c (motion extras), either order, then 4d.
+3. Fix as we reach them: move_parity hail self-test, review 2.4 validator rules, deep-freeze G.MoveDefs (I2), orbit radius lens (4c), Gust per-shot spread (before 4d), six unowned issues (review 9.7), knockback `direction: travel` (4c).
+4. DEVLOG.md is past 40 KB: rotate older entries to docs/DEVLOG-archive.md soon.
 
 ## Board note
 - Treat #2 as OPEN. #4 closing as not relevant. #3 closes once #2 consumes described.json. #11 has its dataset.

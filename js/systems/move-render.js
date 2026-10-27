@@ -9,6 +9,7 @@
  *   drawAir(ctx)     outlines of every live shape, travelling shapes as a glowing ball, then the dev hitbox overlay.
  *   overlay          dev toggle (G.Debug.hitbox): G.MoveGeom.shapeOf for every live instance, recomputed from the same
  *                    inputs the sim used (one geometry implementation, I6), and a ring flash on each 'move:hit' enemy.
+ *                    Slice 4a: a dev line over every visible enemy that carries a status or a stat stage (G.Status.list, G.Stages.list).
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
  *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes.
  */
@@ -98,6 +99,13 @@ G.MoveRender = (() => {
       ctx.globalAlpha = 1 - (t - f.t) / FLASH;
       ctx.strokeStyle = f.crit ? '#ffe14d' : '#ffffff'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff';
+    for (const e of G.EnemyMgr.all()) {     // riders (slice 4a): statuses with seconds left, then stat stages
+      if (e.dead || !G.Camera.sees(e.x, e.y, 40)) continue;
+      const parts = G.Status.list(e).map(s => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
+        .concat(G.Stages.list(e).map(s => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
+      if (parts.length) ctx.fillText(parts.join(' | '), e.x, e.y - (e.bodyH || 30) - 16);
     }
     ctx.restore();
   }

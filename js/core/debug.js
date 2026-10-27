@@ -320,10 +320,15 @@ G.Debug = (() => {
     return G.MoveRender.overlay;
   }
 
-  /** New move system quick test (slice 3d, ?dev&newcombat): the routed moves, one per slot (cycle slots to try each), wild spawns
-   *  stopped, the overlay on, and still dummy enemies in 8 directions at 50, 130 and 220 px. A dummy sleeps for good (G.Status:
-   *  no movement, no attacks, damage never wakes a sleeper) and has a huge HP pool. Returns how many dummies were placed. Flags the run as tampered. */
-  function newcombat() {
+  /** New move system quick test (slice 3d, ?dev&newcombat): a set of routed moves, one per slot (cycle slots to try each), wild spawns
+   *  stopped, the overlay on, and 24 dummy enemies in 8 directions at 50, 130 and 220 px with a huge HP pool. Returns how many dummies
+   *  were placed. Flags the run as tampered.
+   *  newcombat()          the slice 3d seven; a dummy sleeps for good (no movement, no attacks, damage never wakes a sleeper).
+   *  newcombat('riders')  the slice 4a seven; dummies are AWAKE slow walkers (40 px/s) at 90, 170 and 250 px, so burn, paralysis,
+   *                       freeze, flinch, knockback and the trap root can show. The overlay prints each dummy's statuses and stages. */
+  const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
+    riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'] };
+  function newcombat(set = 'core') {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
     if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
     const pl = G.Game && G.Game.player;
@@ -331,22 +336,26 @@ G.Debug = (() => {
     G.Game.debugMaxed();
     spawn(0);
     G.Projectiles.clearOrbs(pl);
-    pl.moves = [...G.MoveRoute.ROUTED].map(id => G.Moves.instance(id));
+    const ids = NC_SETS[set];
+    if (!ids) { console.warn('[Debug] newcombat sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
+    const riders = set === 'riders';
+    pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
     pl.slots = pl.moves.map(m => [m]);
     pl.active = 0;
     G.MoveRender.overlay = true;
     const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
     if (!def) { console.warn('[Debug] no enemy definition for the dummies.'); return 0; }
     let n = 0;
-    for (const d of [50, 130, 220]) for (let i = 0; i < 8; i++) {
-      const a = i * Math.PI / 4 + (d === 130 ? Math.PI / 8 : 0);
-      const e = new G.Enemy(def, pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+    for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + (d === (riders ? 170 : 130) ? Math.PI / 8 : 0);
+      const e = new G.Enemy(riders ? Object.assign({}, def, { behavior: 'chase' }) : def, pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
       e.maxHp = e.hp = 1e9;
-      e.stMajor = { k: 'sleep', t: 1e9, age: 0 };
+      if (riders) e.spd = 40;
+      else e.stMajor = { k: 'sleep', t: 1e9, age: 0 };
       G.EnemyMgr.add(e);
       n++;
     }
-    console.log('[Debug] new combat test: ' + pl.slots.length + ' routed moves in slots, ' + n + ' dummies. G.Debug.hitbox() toggles the overlay.');
+    console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + (riders ? ' awake' : '') + ' dummies. G.Debug.hitbox() toggles the overlay.');
     return n;
   }
 

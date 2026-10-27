@@ -763,3 +763,4 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 - **Q5 trap length: DECIDED.** Trap on a wild enemy is a root for 2 s. The player's 8 s swap lock stays. Bosses, elites and gym leaders: 25% length then a 10 s no-reapply window, as freeze and sleep.
 - **S7 String Shot: DECIDED.** The double application (Speed -2 twice, -4) is allowed. No data change.
 - **Slice 3d: signed off by Jess**, 2026-10-27.
+- **Root and enemy movement (4a build): DECIDED.** Four phases bypass the speed product (leaving units, jumpers, boss dash, boss leap); Jess OKed enemy.js. A jump in the air lands, a crouch waits, leaving units are rooted, a boss dash stays in place. Strong hosts are not extended while rooted; wild roots refresh to the longer. Pushes (separation, knockback, flinch recoil) still move a rooted enemy.

@@ -12,7 +12,8 @@
  */
 G.MoveRoute = (() => {
   const on = /[?&]dev\b/.test(location.search) && /[?&]newcombat\b/.test(location.search);
-  const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower']);
+  const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower',     // 3c / 3d
+    'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze']);                        // 4a riders
   const routed = id => on && !G.Coop.active && ROUTED.has(id);
   let owner = null;
 

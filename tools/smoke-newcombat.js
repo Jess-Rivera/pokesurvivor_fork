@@ -4,6 +4,8 @@
 // It serves the repo with python -m http.server, then for dev.html?dev (flag off) and dev.html?dev&newcombat (flag on): boots a
 // guest run, steps the game, calls G.Debug.newcombat() on the flag-on page and cycles the routed slots, then a density run at
 // G.Debug.skipTo(20). Fails on any page error or console error, on a routed slot ticked by both systems, or on no hits landing.
+// Slice 4a: a rider page (G.Debug.newcombat('riders'), awake walkers): String Shot roots its target for 2 s, Body Slam and Bite knock,
+// Bulldoze and Ice Beam leave a Speed stage, Body Slam or Ice Beam lands a major status, and Giga Drain heals the player.
 const path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '..');
 const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
@@ -93,7 +95,7 @@ async function density(page) {
       const s = await page.evaluate(() => ({ hits: window.__hits, overlay: G.MoveRender.overlay }));
       ok(s.hits > 0 && s.overlay, 'hits landed on the dummies (' + s.hits + ') with the overlay on');
       // Life Orb: a routed cast still pays its HP cost through Player.cast
-      await page.evaluate(() => { const pl = G.Game.player; G.Debug.item('lifeorb', true); pl.setActive(0, true); pl.hp = pl.maxHp; window.__hp0 = pl.hp; });
+      await page.evaluate(() => { const pl = G.Game.player; G.Debug.item('lifeorb', true); pl.setActive(pl.slots.findIndex(g => g[0].id === 'ember'), true);     /* ranged: Tackle now knocks the near dummies out of its reach */ pl.hp = pl.maxHp; window.__hp0 = pl.hp; });
       await sleep(1500);
       const lo = await page.evaluate(() => ({ has: G.Game.player.hasItem('lifeorb'), hp: G.Game.player.hp, hp0: window.__hp0 }));
       ok(lo.has && lo.hp < lo.hp0, 'Life Orb costs HP on routed casts (' + lo.hp0 + ' -> ' + lo.hp.toFixed(1) + ')');
@@ -104,6 +106,46 @@ async function density(page) {
       const d = await density(page);
       console.log('      flag on density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
       ok(errs.length === 0, 'flag on: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      await page.close(); }
+
+    // ---- flag on, rider mode (slice 4a): awake dummies, one move at a time ----
+    { const { page, errs } = await boot(browser, '?dev&newcombat');
+      const n = await page.evaluate(() => {
+        const pl = G.Game.player; pl.invuln = 1e9;
+        window.__rk = { knock: 0, major: 0, healed: 0, ss: [] };
+        const h0 = pl.heal.bind(pl); pl.heal = a => { window.__rk.healed += a; return h0(a); };
+        G.SimBus.on('move:hit', ev => {
+          const e = G.EnemyMgr.all().find(x => x.id === ev.enemyId); if (!e) return;
+          if (ev.moveId === 'body-slam' || ev.moveId === 'bite') window.__rk.knock = Math.max(window.__rk.knock, Math.hypot(e.kx, e.ky));
+          if (e.stMajor) window.__rk.major++;
+          if (ev.moveId === 'string-shot' && ev.dmg === 0 && window.__rk.ss.length < 6) window.__rk.ss.push({ id: e.id, x: e.x, y: e.y, t: performance.now() / 1000 });
+        });
+        return G.Debug.newcombat('riders');
+      });
+      ok(n === 24, "newcombat('riders') placed 24 awake dummies (" + n + ')');
+      const slot = id => page.evaluate(id => { const pl = G.Game.player, i = pl.slots.findIndex(g => g[0].id === id); pl.setActive(i, true); return i; }, id);
+      // String Shot first, while the dummies are still spread out: its first target must hold still while the root lasts
+      await slot('string-shot'); await sleep(400);
+      await page.evaluate(() => { const pl = G.Game.player; pl.setActive(pl.slots.findIndex(g => g[0].id === 'psycho-cut'), true); });
+      await sleep(1300);
+      const ss = await page.evaluate(() => { const f = window.__rk.ss[0]; if (!f) return null; const e = G.EnemyMgr.all().find(x => x.id === f.id);
+        return { moved: Math.hypot(e.x - f.x, e.y - f.y), dt: performance.now() / 1000 - f.t, rooted: G.Status.rooted(e), spe: G.Stages.stage(e, 'spe') }; });
+      ok(ss && ss.moved < 2 && ss.dt > 1, 'String Shot target held still ' + (ss ? ss.dt.toFixed(2) + ' s, moved ' + ss.moved.toFixed(2) + ' px, Speed ' + ss.spe : '(no hit)'));
+      await sleep(1200);
+      const after = await page.evaluate(() => { const f = window.__rk.ss[0], e = G.EnemyMgr.all().find(x => x.id === f.id); return { rooted: G.Status.rooted(e), moved: Math.hypot(e.x - f.x, e.y - f.y) }; });
+      ok(!after.rooted && after.moved > 2, 'the root ended and the target walks again (moved ' + after.moved.toFixed(1) + ' px)');
+      for (const id of ['body-slam', 'bite', 'bulldoze', 'ice-beam']) { await slot(id); await sleep(1500); }
+      const st = await page.evaluate(() => ({ spe: G.EnemyMgr.all().filter(e => G.Stages.stage(e, 'spe') < 0).length, rk: window.__rk }));
+      ok(st.rk.knock > 30, 'Body Slam / Bite knocked a dummy (impulse ' + st.rk.knock.toFixed(0) + ')');
+      ok(st.spe > 0, 'Bulldoze / Ice Beam left a Speed drop on ' + st.spe + ' dummies');
+      ok(st.rk.major > 0, 'a major status (paralysis or freeze) was seen on hit dummies (' + st.rk.major + ' hits)');
+      await page.evaluate(() => { const pl = G.Game.player; pl.hp = pl.maxHp * 0.3; window.__rk.healed = 0; });
+      await slot('giga-drain'); await sleep(1800);
+      const hd = await page.evaluate(() => window.__rk.healed);
+      ok(hd > 0, 'Giga Drain healed the player (' + hd.toFixed(1) + ' HP)');
+      await page.evaluate(() => { G.Debug.hitbox(true); });
+      await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-riders.png') });
+      ok(errs.length === 0, 'rider mode: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
   } catch (e) { fail++; console.log('FAIL  ' + (e.stack || e)); }
   await browser.close();

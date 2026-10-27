@@ -198,3 +198,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): Metal Claw and Meteor Mash maxStacks 2, Leaf Storm 1; trap on wild enemies is a 2 s root, bosses, elites and gym leaders cut like freeze (25%, then 10 s window); String Shot double -2 allowed. Recorded in review 9.8 and slice-4a.md.
 - Found: stages.js enemy applications have no source tag, status.js speedMul is shared with the player (root must be non-player only), String Shot has no damage entry, sleeping 3d dummies block burn, paralysis and freeze, and Fire thaw (G.Status.onHit) was missing from the new path. All in the handoff.
 - Stopped at: Jess reads the handoff and OKs, then a fresh coding chat builds 4a. REMINDER: commit + push the docs.
+
+## 2026-10-27 (Claude Code, home): #2 slice 4a built (riders on hit)
+- move-effects.js gained the rider appliers (ailment, flinch, stat with the D30 per-move cap, heal from dealt; crit and knockback read inside damage), one percent conversion, a hop hook and Fire thaw. String Shot hits emit 'move:hit' with dmg 0. 14 moves routed.
+- status.js: trap on a non-player is a 2 s root (strong hosts 0.5 s then a 10 s window); the player's swap lock is unchanged. stages.js: optional src and per-move cap on add and teamAdd. Data: maxStacks Metal Claw 2, Meteor Mash 2, Leaf Storm 1.
+- Stopped mid-build to report four enemy phases that ignore speed (leaving, jumps, boss dash and leap); Jess OKed enemy.js. Bosses are being replaced by gym leaders, so their handling is minimal.
+- G.Debug.newcombat('riders') with awake dummies and a status line on the overlay. New move-riders harness (97 checks) and mutation runner (24/24); sliceC and move-sim harnesses updated; smoke test extended and all passed.
+- Stopped at: Jess commits, pushes and playtests the rider set. REMINDER: commit + push.

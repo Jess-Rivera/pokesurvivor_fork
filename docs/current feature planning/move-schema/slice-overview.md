@@ -1,7 +1,7 @@
 # Move schema (#2): branch overview
 
 Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-n.md you are working. Each slice file holds that slice's decisions and plan, so nothing here grows past a summary.
-Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 3d signed off, 4a planned).
+Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 4a built, waiting for Jess's playtest).
 
 ## Planning documents (all in docs/current feature planning/; read only the parts a slice names)
 - move-consistency-review.md (Checkpoint 1). SECTION 9 is the single source for every decision and open item: read it first. Sections 1 to 8 are the per-move audit snapshot; search them by move id.
@@ -33,7 +33,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 3. Do not change: invariants I1 to I10, the frame order (architecture B), the D-table rules marked EXISTING or DECIDED, the rules R1 to R9, or G.Combat's ownership of enemy shots and contact damage.
 4. A behavior that needs a new cross-axis rule, a new field or a different formula is a stop-and-ask. Record the answer in the slice file and in review section 9.
 5. Done means: the slice's canary scenarios pass, every earlier scenario still passes, tools/check.js is green, STATE.md is rewritten and a DEVLOG.md entry appended, and Jess is handed the git commands (no Co-Authored-By line, never run a repo-changing git command).
-6. Known check.js state: the move_parity self-test "empty override" hard-codes hail and fails (a test defect, not yet fixed). Everything else is green after slice 3d (19/19 harnesses, I1 guard ok on 5 files). Browser smoke: node tools/smoke-newcombat.js (needs the external Playwright install).
+6. Known check.js state: the move_parity self-test "empty override" hard-codes hail and fails (a test defect, not yet fixed). Everything else is green after slice 4a (20/20 harnesses, I1 guard ok on 5 files). Browser smoke: node tools/smoke-newcombat.js (needs the external Playwright install).
 
 ## Slices (dependencies: 3a, 3b, 3c, 3d, 4a, then 4b and 4c in either order, 4d, 5, 6, 7)
 1. DONE. Data and grammar. See slice-1.md.
@@ -42,7 +42,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 3b. DONE 2026-10-26. Geometry module and its harness, plus the I1 guard in check.js. See slice-3b.md.
 3c. DONE 2026-10-26. Headless sim core, damage only. See slice-3c.md.
 3d. DONE 2026-10-27, Jess signed off the playtest. Playable behind `?dev&newcombat` with a hitbox overlay. See slice-3d.md.
-4a. PLANNED 2026-10-27, handoff written (slice-4a-codehandoff.md), waiting for Jess's OK, then a fresh coding chat. Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat). See slice-4a.md.
+4a. BUILT 2026-10-27, waiting for Jess's playtest (G.Debug.newcombat('riders')). Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat); trap roots enemies, enemy.js added to scope. See slice-4a.md.
 4b. Self-casts, special handlers and chains. See slice-4b.md.
 4c. Motion extras (returns, orbits, repositions, delay and falls, aimTrack). See slice-4c.md.
 4d. Emitters, placed objects and the instance cap. See slice-4d.md.
