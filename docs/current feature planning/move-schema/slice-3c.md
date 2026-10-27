@@ -1,4 +1,4 @@
-# Slice 3c: sim core, headless, damage only
+# Slice 3c: sim core, headless, damage only (DONE 2026-10-26)
 
 Back to slice-overview.md. Prior slice: slice-3b.md. Next: slice-3d.md.
 
@@ -33,3 +33,32 @@ The harness is green at both timesteps and Jess has reviewed the numbers table.
 - Call G.MoveGeom.shapeOf with the lens in st; do not scale dimensions in spawnInstance (decision 2 in slice-3b.md).
 - Pass maxEnemyR to boundsOf (linear shapes need it). Avoid the word kind in every new move-*.js file (the I1 guard scans comments too).
 - Open lens gap (left for later by Jess): legacy Wide/Zoom Lens also scaled beam length and targeting reach (combat.js reach()). shapeOf does not scale linLength yet. Decide before 3d.
+
+## Decisions made in this slice (Jess, 2026-10-26; also in review 9.2 and architecture D23, D36, R9, E)
+- S1 cast gate: a caster-anchored static shape waits until the target is within min(range, reach + target radius); reach is the shape's outer radius or length at full growth, lens included (shapeOf). Moving shapes gate on range.
+- S2 `direction` waits for any live enemy within range (TUNING.RANGE when the move has none); `none` and `self` never wait.
+- S3 aim for `direction` and `none` is owner.aim at cast. `nearest` is the plain nearest (no player.js boss/threat priority).
+- S4 turnRate steers at the cast target, then one re-pick of the nearest live enemy within range of the instance, then straight.
+- S5 offScreen uses a view rectangle passed as data (G.MoveSim.setView), 260 px margin as legacy.
+- S6 G.Status.fizzle(h, rng) takes an optional rng (default Math.random, game unchanged).
+- S7 defender helpers (enemy Def/SpD, defending level, defender stage, type x weather with the Power Stone floor, crit chance) copied into move-effects.js until slice 7 deletes combat.js.
+- S8 pierce counts distinct enemies, spent in sweep order (distance from the previous position, ties by id); interval re-hits do not spend it.
+- S9 root instances act in their cast frame; only children (none yet) are deferred (R6).
+- S10 nearest ties go to the lower enemy id, so the rng carries only crits and fizzles.
+- Lens gap folded in: shapeOf scales linLength (beam length), never linWidth. Orbit radius stays in 4c.
+- Conventions: age advances before collision, so an endOn time T instance collides on ceil(T / dt) steps; 1e-9 tolerance on the cooldown, rehit and end-time comparisons; D3 keeps the legacy reset (no carry-over); D23 moves then turns; grow per distance uses base-path distance; wall end = G.World.projectileBlock wall or solid non-destructible prop; 'move:end' reason 'pierce' for exhaustion; 'move:hit' typeMult is the chart only; no 'move:cast' on a fizzle; persistent slots and `location` targeting are skipped until 4c/4d; no legacy aim jitter.
+
+## What was built
+- js/systems/move-sim.js (G.MoveSim: tick, step, setRng, setView, clear, list). Tables keyed by targeting (aim and gate), motion (static, travels), hit policy and endOn condition. Not loaded by the game.
+- js/systems/move-effects.js (G.MoveEffects.applyHit): damage only, attacker half via owner.moveFactor at hit time, defender half through G.Stats.applyDamage, then type x weather, held items, crit 1.5 and a 1 HP floor; Enemy.hurt called as-is.
+- js/systems/move-geom.js: linLength now takes the lens (harness cases updated).
+- js/systems/status.js: fizzle takes an optional rng (two lines).
+- docs/proposals/move-sim-harness.js (1,930 checks, picked up by check.js), move-sim-golden.py (pinned numbers written from the architecture text), move-sim-mutate.js (24 mutations, all caught; run by hand).
+
+## Results
+check.js: 19/19 harnesses, I1 guard ok on 3 files, only the old move_parity hail self-test fails. Every canary passes at dt 1/60 and 1/30 with identical hit counts and end reasons. Same seed gives an identical tape. Damage matches the python numbers exactly.
+
+## Contracts for 3d
+- Owner shape the sim reads: x, y, r, aim, level, dead, cdMul, critChance, stgTeam, moveRadiusMul, stoneType, expertBelt, typeBoost, stMajor/stCnf (via G.Status), slots (groups of { id, t }), activeGroup(), moveFactor(m), stabFor(m), onDealt(dmg), dmgDealt, id.
+- Call G.MoveSim.setView each frame and G.MoveSim.tick(dt, player, now) right after G.Combat.tick. The slot timer `t` is shared with the legacy slot object, so route a slot to exactly one of the two systems.
+- Open for 3d: props (do player moves hit rocks, chests, grass, and do solid props spend pierce), Tackle reach feel (no player-body term now), boss priority for ranged moves gone.

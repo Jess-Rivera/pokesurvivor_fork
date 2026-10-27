@@ -33,7 +33,7 @@ The harness passes inside check.js and the I1 guard is in place.
 
 ## Decisions made in this slice (Jess, 2026-10-26)
 1. D18 amended: an enemy that covers the arc apex (distance at or below its radius) is inside at any angle. Also avoids dividing by zero.
-2. The lens is applied inside shapeOf, to the grown radius and radArc only (radArc clamped to 2 pi). Linear dimensions are not scaled. The authored grow.max number is left alone, but the lens multiplies the grown value after the cap, so a ring still ends at max x lens. spawnInstance (3c) must NOT pre-scale dimensions.
+2. The lens is applied inside shapeOf, to the grown radius and radArc only (radArc clamped to 2 pi). Linear dimensions are not scaled. AMENDED in slice 3c: linLength is scaled too (beam length), linWidth never. The authored grow.max number is left alone, but the lens multiplies the grown value after the cap, so a ring still ends at max x lens. spawnInstance (3c) must NOT pre-scale dimensions.
 3. A radial shape with no radArc is a point. Confirmed against the data: 25 points, 21 arcs, 7 full circles, 5 linear, 12 shapeless.
 
 ## Contracts for 3c and later

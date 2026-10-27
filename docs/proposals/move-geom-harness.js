@@ -46,7 +46,8 @@ ok(M.segDist2(1, 1, 1, 1, 4, 5) === 25, 'segDist2 zero-length segment');
   ok(M.shapeOf({ shape: 'radial', radArc: 1, radRadius: 20 }, { growSpeed: 1, dim: 'radArc', max: 10 }, { x: 0, y: 0, heading: 0, age: 6 }).family === 'circle', 'grown radArc reaching 2 pi becomes a circle');
   const lin = { shape: 'linear', linLength: 100, linWidth: 20 };
   ok(M.shapeOf(lin, { growSpeed: 50, dim: 'linLength', max: 400 }, { x: 0, y: 0, heading: 0, age: 1 }).len === 150, 'grow linLength');
-  ok(M.shapeOf(lin, null, { x: 0, y: 0, heading: 0, lens: 3 }).len === 100, 'lens does not scale linear dimensions');
+  { const s = M.shapeOf(lin, null, { x: 0, y: 0, heading: 0, lens: 3 }); ok(s.len === 300 && s.w === 20, 'lens scales linLength, never linWidth'); }
+  ok(M.shapeOf(lin, { growSpeed: 50, dim: 'linLength', max: 400 }, { x: 0, y: 0, heading: 0, age: 100, lens: 0.5 }).len === 200, 'lens applies to grown linLength after the cap');
   const frozen = JSON.stringify([nova, g]); M.shapeOf(nova, g, { x: 0, y: 0, heading: 0, age: 1 }); ok(JSON.stringify([nova, g]) === frozen, 'shapeOf does not mutate its inputs'); }
 
 // 3. contains

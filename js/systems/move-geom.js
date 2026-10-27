@@ -7,7 +7,7 @@
  *
  *   shapeOf(space, grow, st)  the step's plain shape object. space = the move's space block, grow = delivery.grow or null,
  *                             st = { x, y, heading, age, dist, lens }. The authored dimension is the START and grow.max the
- *                             end (D21). The lens scales the grown radial values and radArc is clamped to 2 pi (D36).
+ *                             end (D21). The lens scales the grown radial values and linLength (never linWidth); radArc is clamped to 2 pi (D36).
  *                             Families: point (radial, no radArc), arc, circle (radArc at 2 pi or more), linear.
  *   contains(shape, px, py, ex, ey, er)  is the enemy circle inside, or swept through, the shape. (px, py) is the
  *                             instance's previous position; only the point family uses it (D17).
@@ -36,7 +36,7 @@ G.MoveGeom = (() => {
     const dim = grow ? (grow.dim || 'radRadius') : null, lens = st.lens || 1;
     const dimOf = k => (dim === k ? grown(space[k] || 0, grow, st) : space[k]);
     const base = { x: st.x, y: st.y, heading: st.heading };
-    if (space.shape === 'linear') return { ...base, family: 'linear', len: dimOf('linLength'), w: space.linWidth };
+    if (space.shape === 'linear') return { ...base, family: 'linear', len: dimOf('linLength') * lens, w: space.linWidth };     // lens: beam length only (Jess, slice 3c)
     const r = dimOf('radRadius') * lens;
     if (space.radArc == null && dim !== 'radArc') return { ...base, family: 'point', r };
     const arc = Math.min(dimOf('radArc') * lens, TAU);

@@ -265,11 +265,11 @@ G.Status = (() => {
   }
 
   /** Roll whether an attack attempt fails: paralysis 25%, confusion 50% (both: 62.5%). */
-  function fizzle(h) {
+  function fizzle(h, rng = Math.random) {     // rng: the new move sim passes its injectable roll (I7, slice 3c)
     let ok = 1;
     if (h.stMajor && h.stMajor.k === 'paralysis') ok *= 1 - CONTROL.paralysis.fizzle;
     if (h.stCnf) ok *= 1 - CONTROL.confusion.fizzle;
-    const f = ok < 1 && Math.random() >= ok;
+    const f = ok < 1 && rng() >= ok;
     if (f) text(h, 'Fizzled', '#a3abb8');
     return f;
   }

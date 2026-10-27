@@ -177,3 +177,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided: D18 apex rule; lens applied in shapeOf (not in spawnInstance); boundsOf takes maxEnemyR for linear shapes; radial with no radArc is a point. Recorded in slice-3b.md, review 9.2, architecture D18.
 - check.js: 18/18 harnesses, guard ok, only the old move_parity hail self-test fails (still out of scope).
 - Stopped at: commit + push, then slice 3c in a fresh chat. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 3c headless sim core built
+- New js/systems/move-sim.js (G.MoveSim) and move-effects.js (damage only); harness docs/proposals/move-sim-harness.js (1,930 checks, every canary at dt 1/60 and 1/30), golden numbers from move-sim-golden.py, mutation runner move-sim-mutate.js (24/24 caught). Not wired into the game.
+- Decided S1 to S10 (slice-3c.md, review 9.2, architecture D23, D36, R9, E): reach-based cast gate, aim = owner.aim, setView for offScreen, pierce in sweep order, roots act in their cast frame. Lens gap folded in: beam length scales, width never.
+- Touched game-loaded status.js: fizzle takes an optional rng (default unchanged). move-geom.js: linLength takes the lens.
+- check.js: 19/19 harnesses, I1 guard ok; only the old move_parity hail self-test fails. Open for 3d: props, Tackle reach feel, boss priority.
+- Stopped at: commit + push, then slice 3d in a fresh chat. REMINDER: commit + push.
