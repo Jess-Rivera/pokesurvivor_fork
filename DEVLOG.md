@@ -170,3 +170,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - slice-overview.md rewritten; new slice-3a (done record), 3b, 3c, 3d, 4a, 4b, 4c, 4d, stage-0; slice-5, 6, 7 rewritten; slice-3.md and slice-4.md are now pointers. Written from the approved architecture section G plus review section 9. Doc-only, no code.
 - Source docs disagreed in places: the I1 grep guard goes in 3b (architecture said 3c); Fire Spin's trap test moves from 4a to 4c (orbit); curve, oscillate and turnRate are built in 3c and their moves verified in 4c.
 - Stopped at: commit + push, then a fresh chat for slice 3b. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 3b geometry module built
+- New js/systems/move-geom.js (G.MoveGeom: segDist2, shapeOf, contains, boundsOf; tables keyed by shape family) and docs/proposals/move-geom-harness.js (23,746 checks incl. segDist2 parity with the legacy source and a boundsOf never-under-covers test). Not wired into the game.
+- tools/check.js gained the I1 guard (word kind banned in js/systems/move-*.js, comments included).
+- Decided: D18 apex rule; lens applied in shapeOf (not in spawnInstance); boundsOf takes maxEnemyR for linear shapes; radial with no radArc is a point. Recorded in slice-3b.md, review 9.2, architecture D18.
+- check.js: 18/18 harnesses, guard ok, only the old move_parity hail self-test fails (still out of scope).
+- Stopped at: commit + push, then slice 3c in a fresh chat. REMINDER: commit + push.

@@ -28,3 +28,7 @@ None. Jess reviews the damage numbers table.
 
 ## Proceed when
 The harness is green at both timesteps and Jess has reviewed the numbers table.
+
+## Notes carried from slice 3b
+- Call G.MoveGeom.shapeOf with the lens in st; do not scale dimensions in spawnInstance (decision 2 in slice-3b.md).
+- Pass maxEnemyR to boundsOf (linear shapes need it). Avoid the word kind in every new move-*.js file (the I1 guard scans comments too).

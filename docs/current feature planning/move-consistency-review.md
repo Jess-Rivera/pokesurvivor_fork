@@ -671,6 +671,7 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 - **D-4, routing: DECIDED.** Per-move routing behind `?newcombat` until slice 7.
 - **Normalization: none** (earlier decision, restated). The Power/s proxy (D37) is for tools only and never gameplay.
 - **Stat key map (C8): PROPOSED.** One mapping function (schema `spd` is Speed, `spDef` is Sp. Def, stages.js `spd` is Sp. Def, `spe` is Speed). Renaming the 17 data effects is not recommended.
+- **Slice 3b geometry (Jess, 2026-10-26): DECIDED.** D18 amended with an apex rule (an enemy covering the arc origin is inside at any angle). The lens is applied in shapeOf, after growth and its cap, to the radius and radArc only (beams are never widened); spawnInstance must not pre-scale. boundsOf takes the largest enemy radius for linear shapes. A radial shape with no radArc is a point.
 - **Architecture approval: DONE (Jess, 2026-10-26).** combat-architecture.md is approved. Items marked PROPOSED are accepted as written, and every "recommend" default not otherwise decided is accepted.
 
 ### 9.3 New findings from Checkpoint 3

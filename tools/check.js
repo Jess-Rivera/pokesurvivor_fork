@@ -48,6 +48,14 @@ for (const h of harnesses) {
   else console.log('ok  ' + rel(h) + '  (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)  ' + (out[out.length - 1] || '').slice(0, 60));
 }
 console.log('harnesses: ' + (harnesses.length - hbad) + '/' + harnesses.length + ' passed');
+// 2b. Invariant I1 guard: the new combat files (js/systems/move-*.js) must never mention the legacy move `kind`, comments included.
+let kbad = 0;
+const moveFiles = walk(path.join(root, 'js', 'systems'), n => /^move-.*\.js$/.test(n));
+for (const f of moveFiles) {
+  const hit = fs.readFileSync(f, 'utf8').split('\n').findIndex(l => /\bkind\b/i.test(l));
+  if (hit >= 0) { kbad++; console.log('I1 GUARD FAIL ' + rel(f) + ':' + (hit + 1) + '  the word "kind" is not allowed in new combat files'); }
+}
+console.log('I1 guard: ' + (kbad ? kbad + ' file(s) mention kind' : 'ok (' + moveFiles.length + ' move-*.js file(s))'));
 // 3. Move data: the generated file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash.
 let mbad = 0;
 for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], ['validate_moves.js', [], /^moves:/], ['validate_moves.js', ['--resolved'], /^resolved moves:/], ['move_parity.js', [], /^parity:/]]) {
@@ -57,4 +65,4 @@ for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], [
   else console.log('ok  tools/' + name + '  ' + (out.find(l => show.test(l)) || ''));
 }
 console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
-process.exit(bad || hbad || mbad ? 1 : 0);
+process.exit(bad || hbad || mbad || kbad ? 1 : 0);

@@ -1,19 +1,19 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-26 (Claude Desktop, coding chat; slice files rewritten).
+Last updated: 2026-10-26 (Claude Desktop, coding chat; slice 3b built).
 
 ## Where we are
-- ON BRANCH feature-test/new-move-schema. Slices 1, 2 and 3a BUILT. None change gameplay; the game still loads none of the new move files.
-- Planning docs (all in docs/current feature planning/): combat-architecture.md (APPROVED), combat-validation-and-handoff.md, move-consistency-review.md. Section 9 of the review is the single source for every decision and open item; read it before any slice.
-- Slice 3a built: grammar gained persistent, delivery.delay, delivery.range, delivery.locationPick, stat defaults (duration 6, maxStacks 6); casterState.delay retired. Resolver: persistent flag replaces the endOn guess for cd, derives basePower (power x accuracy / 100), fills range (TUNING.RANGE 420) and locationPick (enemy), TUNING.INSTANCE_CAP 8 (unused until 4d).
-- Data: Quick Attack returnHits out, Karate Chop fighting, Meteor Mash emit count 1, Toxic Spikes interval emitter (0.25), six novas start 1 with grow.max = old radius, Rock Slide delay on the instance, persistent on fire-spin, leaf-storm, bug-buzz, night-shade, toxic, flame-wheel, ranges Razor Leaf 210 and Bonemerang 230, stat chances restored (Metal Claw 10, Flash Cannon 10, Shadow Ball 20).
-- check.js: 17/17 harnesses, export current, 63/63 valid, resolved 63/63 valid. ONE known failure: move_parity self-test "empty override" hard-codes hail (test defect, fix not yet done).
+- ON BRANCH feature-test/new-move-schema. Slices 1, 2, 3a and 3b BUILT. None change gameplay; the game loads none of the new move files.
+- Planning docs (all in docs/current feature planning/): combat-architecture.md (APPROVED), combat-validation-and-handoff.md, move-consistency-review.md. Section 9 of the review is the single source for every decision and open item. Slice files: docs/current feature planning/move-schema/, start at slice-overview.md.
+- Slice 3b built (UNCOMMITTED): js/systems/move-geom.js (G.MoveGeom: segDist2, shapeOf, contains, boundsOf; not in dev.html), docs/proposals/move-geom-harness.js (23,746 checks), and the I1 guard in tools/check.js (the word kind is banned in js/systems/move-*.js, comments included). Doc edits: slice-3b.md, slice-3c.md, slice-overview.md, review 9.2, architecture D18.
+- Decided in 3b: D18 apex rule (enemy covering the arc origin is inside at any angle); the lens is applied in shapeOf (spawnInstance must not pre-scale); boundsOf takes the largest enemy radius for linear shapes; radial with no radArc is a point.
+- check.js: 18/18 harnesses, I1 guard ok, export current, 63/63 valid, resolved 63/63 valid. ONE known failure: move_parity self-test "empty override" hard-codes hail (test defect, fix not yet done).
 
 ## Next (in order)
-1. Jess: commit + push (grammar, resolver, tools, described.json, generated file, reports, docs).
-2. Decide: fix the move_parity hail self-test; add the review section 2.4 validator rules; deep-freeze G.MoveDefs (architecture I2). All three were left out of 3a.
-3. Slice files 3a to 7 and stage-0.md are rewritten (docs/current feature planning/move-schema/, start at slice-overview.md). Slice 3b (G.MoveGeom) is next, in a fresh coding chat.
+1. Jess: commit + push (move-geom.js, harness, check.js, the doc edits). No Co-Authored-By line.
+2. Slice 3c (G.MoveSim and damage-only G.MoveEffects, headless) in a fresh coding chat. Read slice-3c.md; its "Notes carried from slice 3b" section matters.
+3. Still undecided, left out of 3a: fix the move_parity hail self-test; add the review section 2.4 validator rules; deep-freeze G.MoveDefs (architecture I2).
 4. Still open: maxStacks for Leaf Storm and Metal Claw (before 4a), Gust per-shot spread (before 4d), six unowned issues (review 9.7). Set locationPick per move if wanted (Rock Slide, Spikes, Toxic Spikes, Will-O-Wisp use the enemy default).
 
 ## Board note

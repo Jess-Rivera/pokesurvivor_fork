@@ -1,4 +1,4 @@
-# Slice 3b: geometry module (NEXT)
+# Slice 3b: geometry module (DONE 2026-10-26)
 
 Back to slice-overview.md. Prior slice: slice-3a.md. Next: slice-3c.md.
 
@@ -25,3 +25,22 @@ None.
 
 ## Proceed when
 The harness passes inside check.js and the I1 guard is in place.
+
+## What was built (2026-10-26)
+- js/systems/move-geom.js (G.MoveGeom, not loaded by the game): segDist2 (a copy of the legacy function), shapeOf, contains, boundsOf. Containment and bounds are tables keyed by shape family: point (radial, no radArc), arc, circle (radArc at 2 pi or more, after the lens and the clamp), linear.
+- docs/proposals/move-geom-harness.js: 23,746 checks. Truth tables per family, point sweep versus tunneling, arc edges with the enemy radius, the apex rule, heading wrap, linear ends and sides, a growing ring first reaching an enemy on step 11 and a capped one on step 30, shapeOf purity, segDist2 parity with the legacy source read from combat.js (3000 seeded cases), boundsOf never under-covering contains (6000 random shapes).
+- tools/check.js: the I1 guard (step 2b). It fails if the whole word kind appears anywhere in a js/systems/move-*.js file, comments included. Do not use that word in new combat files.
+
+## Decisions made in this slice (Jess, 2026-10-26)
+1. D18 amended: an enemy that covers the arc apex (distance at or below its radius) is inside at any angle. Also avoids dividing by zero.
+2. The lens is applied inside shapeOf, to the grown radius and radArc only (radArc clamped to 2 pi). Linear dimensions are not scaled. The authored grow.max number is left alone, but the lens multiplies the grown value after the cap, so a ring still ends at max x lens. spawnInstance (3c) must NOT pre-scale dimensions.
+3. A radial shape with no radArc is a point. Confirmed against the data: 25 points, 21 arcs, 7 full circles, 5 linear, 12 shapeless.
+
+## Contracts for 3c and later
+- shapeOf(space, grow, st), st = { x, y, heading, age, dist, lens }. age counts from activation and is clamped at 0, so a delayed instance shows its start size.
+- contains(shape, prevX, prevY, ex, ey, er): only the point family reads prev. Moving arcs and linear shapes are tested at the current position only (no substeps, as the architecture says, until a test shows a miss).
+- boundsOf(shape, prevX, prevY, maxEnemyR): the result is for a query that adds each enemy radius (EnemyMgr.queryCircleEach does, checked in enemy.js). maxEnemyR is read only for linear shapes, whose D20 test widens both axes by the enemy radius (square corners). The caller must pass at least the largest enemy radius it can meet.
+- D20 is a box, legacy beam was a rounded capsule, so corners differ slightly. Accepted as D20 is written.
+
+## Results
+check.js: 18/18 harnesses, I1 guard ok, export current, 63/63 valid, resolved 63/63 valid. The only failure is the old move_parity hail self-test.
