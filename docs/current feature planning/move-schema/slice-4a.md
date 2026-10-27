@@ -1,12 +1,12 @@
 # Slice 4a: riders on hit
 
-Back to slice-overview.md. Prior slice: slice-3d.md. Next: slice-4b.md or slice-4c.md.
+Back to slice-overview.md. Prior slice: slice-3d.md (signed off by Jess 2026-10-27). Next: slice-4b.md or slice-4c.md. Build plan for the coding chat: slice-4a-codehandoff.md (PROPOSED, waiting for Jess's OK).
 
 ## Objective
 The payload effects that ride on a damaging hit: ailment, flinch, knockback, crit, heal from dealt, and stat on foes.
 
 ## Before starting (Jess)
-D-2: maxStacks for Leaf Storm (recommend 1, matching the legacy hold at -2) and Metal Claw (a small cap, no number yet). Required before this slice.
+DONE 2026-10-27, see Decisions below.
 
 ## Reads
 Architecture D10, D30 to D34, E (move-effects table), F (R5 hook only). Review section 9.1 rows Q4, Q5, Q12, Q14. Search status.js (apply, trap handling for non-player hosts), stages.js (add, teamAdd, ladder, src-tagged applications), Enemy.hurt.
@@ -29,3 +29,14 @@ Self-casts, specials, chains.
 
 ## Proceed when
 Harness green and String Shot, Ice Beam, Mud Shot play correctly behind the flag.
+
+## Decisions (Jess, 2026-10-27; also review 9.8)
+- D1 maxStacks (D-2): Metal Claw 2, Meteor Mash 2, Leaf Storm 1. Source JSON edit, regenerate moves-generated.js.
+- D2 Trap on a wild enemy is a root for 2 s. The player's 8 s swap lock is unchanged.
+- D3 Bosses, elites and gym leaders get trap cut like freeze and sleep (25% length, then a 10 s no-reapply window).
+- D4 String Shot's two stacked strands both apply Speed -2 (-4 total). Allowed, no data change.
+
+## Found while planning (details in the handoff)
+- Four additions to the written spec, all existing behavior or plumbing, no new rule: Fire hits thaw ice (G.Status.onHit), a hit with no damage (String Shot) still emits 'move:hit' with dmg 0, crit and knockback are read by the damage applier (one Enemy.hurt call), and the rider-test dummies must be awake (sleeping dummies block burn, paralysis and freeze as a second major status).
+- The routed list adds the 7 canaries (14 in total). Fire Spin and Leaf Storm wait for 4c, Meteor Mash for 4d.
+- Q14 means Flamethrower procs burn about 2.5 times as often as legacy. Balance goes to the Stage 5 simulator.

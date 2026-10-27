@@ -752,7 +752,14 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 
 1. Architecture approval: DONE (2026-10-26).
 2. Slice 3a: no open decisions remain (nova start size decided as 1 px). The stat-chance restoration is a pending data edit, not a question.
-3. Before 4a: maxStacks for Leaf Storm (recommend 1) and Metal Claw (no number yet), D-2, Jess's to-do.
+3. Before 4a: DONE 2026-10-27 (9.8): Leaf Storm 1, Metal Claw 2, Meteor Mash 2.
 4. Before 4d: Gust per-shot spread (genuinely open, no recommendation accepted).
 5. Low: confirm Fire Spin's legacy stat strip and half-strength burn are dropped on purpose; correct the DMG_SCALAR doc mismatch (code 1.0, DECISIONS text 2.0). Orbit y-squash in rendering only is a default accepted.
 6. No owner yet: Aura Sphere reach (S2), Hail cd vs duration (S6), Substitute cd vs shield (S5), Rock Slide boulder count (S11), String Shot double application (S7), Bonemerang return-leg knockback (S12). Shadow Ball cd 1.2 is only 0.03 s above the formula value (1.167), so its "longer cooldown" compensation is nominal.
+
+### 9.8 Slice 4a decisions (Jess, 2026-10-27)
+
+- **D-2 maxStacks: DECIDED.** Metal Claw 2, Meteor Mash 2, Leaf Storm 1. Caps are per move and add across moves. Data edit lands in slice 4a.
+- **Q5 trap length: DECIDED.** Trap on a wild enemy is a root for 2 s. The player's 8 s swap lock stays. Bosses, elites and gym leaders: 25% length then a 10 s no-reapply window, as freeze and sleep.
+- **S7 String Shot: DECIDED.** The double application (Speed -2 twice, -4) is allowed. No data change.
+- **Slice 3d: signed off by Jess**, 2026-10-27.

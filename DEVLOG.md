@@ -191,3 +191,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - G.Debug.newcombat() (7 routed moves in slots, 24 sleeping dummies, overlay on) and G.Debug.hitbox(). tools/smoke-newcombat.js (Playwright from the external install) passes both pages.
 - check.js: 19/19 harnesses (move-sim 1,980 checks), I1 guard ok on 5 files, only the old hail self-test fails. Mutations 29/29 caught.
 - Stopped at: Jess's one-minute playtest and sign-off, then slice 4a. REMINDER: commit + push.
+
+## 2026-10-27 (Claude Code, home): #2 slice 4a planned, 3d signed off
+- Jess signed off slice 3d (one-minute playtest, Life Orb, swaps, density). He ran the backlog gh commands.
+- Planned slice 4a and wrote docs/current feature planning/move-schema/slice-4a-codehandoff.md for the Opus coding chat (status PROPOSED until Jess OKs). Read-only research: no game code touched.
+- Decided (Jess): Metal Claw and Meteor Mash maxStacks 2, Leaf Storm 1; trap on wild enemies is a 2 s root, bosses, elites and gym leaders cut like freeze (25%, then 10 s window); String Shot double -2 allowed. Recorded in review 9.8 and slice-4a.md.
+- Found: stages.js enemy applications have no source tag, status.js speedMul is shared with the player (root must be non-player only), String Shot has no damage entry, sleeping 3d dummies block burn, paralysis and freeze, and Fire thaw (G.Status.onHit) was missing from the new path. All in the handoff.
+- Stopped at: Jess reads the handoff and OKs, then a fresh coding chat builds 4a. REMINDER: commit + push the docs.

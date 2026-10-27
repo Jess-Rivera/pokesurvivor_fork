@@ -1,7 +1,7 @@
 # Move schema (#2): branch overview
 
 Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-n.md you are working. Each slice file holds that slice's decisions and plan, so nothing here grows past a summary.
-Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-26 (slice 3c built).
+Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 3d signed off, 4a planned).
 
 ## Planning documents (all in docs/current feature planning/; read only the parts a slice names)
 - move-consistency-review.md (Checkpoint 1). SECTION 9 is the single source for every decision and open item: read it first. Sections 1 to 8 are the per-move audit snapshot; search them by move id.
@@ -41,8 +41,8 @@ A ground-up move system. A single database of moves (the schema) is converted to
 3a. DONE 2026-10-26. Grammar, resolver and data corrections from the Checkpoint 1 decisions. See slice-3a.md.
 3b. DONE 2026-10-26. Geometry module and its harness, plus the I1 guard in check.js. See slice-3b.md.
 3c. DONE 2026-10-26. Headless sim core, damage only. See slice-3c.md.
-3d. BUILT 2026-10-27, waiting for Jess's playtest sign-off. Playable behind `?dev&newcombat` with a hitbox overlay. See slice-3d.md.
-4a. NEXT after sign-off. Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat). See slice-4a.md.
+3d. DONE 2026-10-27, Jess signed off the playtest. Playable behind `?dev&newcombat` with a hitbox overlay. See slice-3d.md.
+4a. PLANNED 2026-10-27, handoff written (slice-4a-codehandoff.md), waiting for Jess's OK, then a fresh coding chat. Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat). See slice-4a.md.
 4b. Self-casts, special handlers and chains. See slice-4b.md.
 4c. Motion extras (returns, orbits, repositions, delay and falls, aimTrack). See slice-4c.md.
 4d. Emitters, placed objects and the instance cap. See slice-4d.md.
