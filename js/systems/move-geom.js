@@ -2,7 +2,7 @@
  *
  * Pure math: no state, no canvas, no clock, no randomness. This is the ONE implementation of hit geometry
  * (architecture invariant I6): the sim, the harness, the hitbox overlay and the renderer all call it.
- * Not loaded by the game until slice 3d (not in dev.html or the NEED array).
+ * Loaded by the game since slice 3d; used only by the new move path (?dev&newcombat).
  * Units are pixels and radians (I9). Containment is chosen by a table keyed by shape family only (I3).
  *
  *   shapeOf(space, grow, st)  the step's plain shape object. space = the move's space block, grow = delivery.grow or null,

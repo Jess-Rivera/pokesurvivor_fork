@@ -184,3 +184,10 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Touched game-loaded status.js: fizzle takes an optional rng (default unchanged). move-geom.js: linLength takes the lens.
 - check.js: 19/19 harnesses, I1 guard ok; only the old move_parity hail self-test fails. Open for 3d: props, Tackle reach feel, boss priority.
 - Stopped at: commit + push, then slice 3d in a fresh chat. REMINDER: commit + push.
+
+## 2026-10-27 (Claude Code, home): #2 slice 3d playable behind ?dev&newcombat
+- Wired the move data chain and move-geom/sim/effects plus new move-route.js (G.MoveRoute: flag, the ONE routed list of 7 canaries, filter) and move-render.js (G.MoveRender: ground patches, air outlines and balls, hitbox overlay, 'move:cast' glue to Player.cast, castAt and simCd) into dev.html and NEED.
+- combat.js tick skips routed slots in both loops (flag on only); game.js ticks the sim after G.Combat.tick and draws in both layers; HUD ring reads simCd with a cd fallback. Props join the sim sweep (solid spend pierce, grass never), no 'move:hit' for props.
+- G.Debug.newcombat() (7 routed moves in slots, 24 sleeping dummies, overlay on) and G.Debug.hitbox(). tools/smoke-newcombat.js (Playwright from the external install) passes both pages.
+- check.js: 19/19 harnesses (move-sim 1,980 checks), I1 guard ok on 5 files, only the old hail self-test fails. Mutations 29/29 caught.
+- Stopped at: Jess's one-minute playtest and sign-off, then slice 4a. REMINDER: commit + push.

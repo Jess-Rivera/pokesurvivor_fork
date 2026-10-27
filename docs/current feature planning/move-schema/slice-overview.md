@@ -18,7 +18,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 4. js/data/move-overrides.js: per-move overrides only (hand cds).
 5. js/data/move-handler.js: special handlers (6, stubs until slice 4b).
 6. js/data/move-resolver.js: defaults, derived values (cd, basePower, range, locationPick), overrides, handler attachment, G.MoveDefs. TUNING holds the cd constants, RANGE 420 and INSTANCE_CAP 8.
-7. New from slice 3b (none loaded by the game until 3d): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-render.js (G.MoveRender, drawing only).
+7. New from slice 3b (loaded by the game since 3d, active only with ?dev&newcombat): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the flag and the ONE routed list), move-render.js (G.MoveRender, drawing and cast glue).
 
 ## Decisions that span slices
 - Every decision and its status: move-consistency-review.md section 9. Do not restate them here.
@@ -33,7 +33,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 3. Do not change: invariants I1 to I10, the frame order (architecture B), the D-table rules marked EXISTING or DECIDED, the rules R1 to R9, or G.Combat's ownership of enemy shots and contact damage.
 4. A behavior that needs a new cross-axis rule, a new field or a different formula is a stop-and-ask. Record the answer in the slice file and in review section 9.
 5. Done means: the slice's canary scenarios pass, every earlier scenario still passes, tools/check.js is green, STATE.md is rewritten and a DEVLOG.md entry appended, and Jess is handed the git commands (no Co-Authored-By line, never run a repo-changing git command).
-6. Known check.js state: the move_parity self-test "empty override" hard-codes hail and fails (a test defect, not yet fixed). Everything else is green after slice 3c (19/19 harnesses, I1 guard ok on 3 files).
+6. Known check.js state: the move_parity self-test "empty override" hard-codes hail and fails (a test defect, not yet fixed). Everything else is green after slice 3d (19/19 harnesses, I1 guard ok on 5 files). Browser smoke: node tools/smoke-newcombat.js (needs the external Playwright install).
 
 ## Slices (dependencies: 3a, 3b, 3c, 3d, 4a, then 4b and 4c in either order, 4d, 5, 6, 7)
 1. DONE. Data and grammar. See slice-1.md.
@@ -41,8 +41,8 @@ A ground-up move system. A single database of moves (the schema) is converted to
 3a. DONE 2026-10-26. Grammar, resolver and data corrections from the Checkpoint 1 decisions. See slice-3a.md.
 3b. DONE 2026-10-26. Geometry module and its harness, plus the I1 guard in check.js. See slice-3b.md.
 3c. DONE 2026-10-26. Headless sim core, damage only. See slice-3c.md.
-3d. NEXT. Playable behind `?newcombat` with a hitbox overlay. See slice-3d.md.
-4a. Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat). See slice-4a.md.
+3d. BUILT 2026-10-27, waiting for Jess's playtest sign-off. Playable behind `?dev&newcombat` with a hitbox overlay. See slice-3d.md.
+4a. NEXT after sign-off. Riders on hit (ailment, flinch, knockback, crit, heal from dealt, stat). See slice-4a.md.
 4b. Self-casts, special handlers and chains. See slice-4b.md.
 4c. Motion extras (returns, orbits, repositions, delay and falls, aimTrack). See slice-4c.md.
 4d. Emitters, placed objects and the instance cap. See slice-4d.md.

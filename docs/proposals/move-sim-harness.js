@@ -23,9 +23,11 @@ for (const f of ['js/core/util.js', 'js/core/stats.js', 'js/data/types.js', 'js/
   'js/data/move-resolver.js']) load(R + '/' + f);
 G.FX = new Proxy({}, { get: () => () => {} });
 G.DEX_BY = { 7: { stats: [44, 48, 65, 50, 64, 43] } };       // Squirtle: Def 65, SpD 64
-let weather = {}, wallX = Infinity, enemies = [], clock = 0;
+let weather = {}, wallX = Infinity, enemies = [], props = [], clock = 0;
 G.Weather = { mult: t => weather[t] || 1 };
-G.World = { projectileBlock: (x, y, r) => (x + r >= wallX ? 'wall' : null) };
+G.World = { projectileBlock: (x, y, r) => (x + r >= wallX ? 'wall' : null),
+  propsInCircle: (x, y, r) => props.filter(p => p.hp > 0 && (p.x - x) ** 2 + (p.y - y) ** 2 <= (r + p.r) ** 2),
+  damageProp(p, a) { p.log.push({ a, t: clock }); p.hp -= a; } };
 G.EnemyMgr = { all: () => enemies,
   queryCircleEach(x, y, r, fn) { for (const e of enemies.slice()) if (!e.dead && (e.x - x) ** 2 + (e.y - y) ** 2 <= (r + e.r) ** 2) fn(e); } };
 const trap = what => () => { throw new Error('I7 breach: ' + what + ' called inside the sim'); };
@@ -51,9 +53,10 @@ const mkO = (ids, o = {}) => Object.assign({ id: 'p1', x: 0, y: 0, r: 12, aim: 0
 /** Runs a world for `secs` at `dt`. w = { owner, enemies, seed, view, wall, onStep(k, t, w), weather, watch }. Time is k x dt, never accumulated. */
 function run(w, secs, dt) {
   fresh();
-  enemies = w.enemies || []; weather = w.weather || {}; wallX = w.wall != null ? w.wall : Infinity;
+  enemies = w.enemies || []; props = w.props || []; weather = w.weather || {}; wallX = w.wall != null ? w.wall : Infinity;
   G.MoveSim.setRng(w.seed != null ? seeded(w.seed) : trap('the sim rng (no roll expected)'));
   G.MoveSim.setView(w.view || null);
+  if (w.filter) G.MoveSim.setFilter(w.filter);
   const tape = G.SimBus.record(), N = Math.round(secs / dt);
   w.steps = [];
   for (let k = 1; k <= N; k++) {
@@ -256,6 +259,27 @@ for (const aim of [0, Math.PI / 2]) {
   const h = k => w.steps[k][0].h;
   ok(h(38) > h(5) + 0.5, 'after the target dies the instance re-picks the nearest live enemy and turns to it');
   ok(near(h(41), h(70), 1e-12) && near(h(41), h(89), 1e-12), 'after the second death it flies straight even with another enemy in range (one re-pick only)'); }
+
+// ---- 9. slice 3d: routing filter and props ----
+{ const o = mkO(['tackle', 'ember']); o.slots.push([{ id: 'water-gun', t: 0.7 }]); o.slots[0][1].t = 0.3;
+  const w = run({ owner: o, enemies: [mkE(1, 30, 0)], filter: id => id !== 'ember' && id !== 'water-gun' }, 1, 1 / 60);
+  ok(o.slots[0][1].t === 0.3 && o.slots[1][0].t === 0.7, 'a slot the filter rejects is never touched (timers ' + o.slots[0][1].t + ', ' + o.slots[1][0].t + ')');
+  ok(evs(w, 'move:cast').every(c => c.moveId === 'tackle') && evs(w, 'move:cast').length === 2, 'only routed moves cast');
+  const d = run({ owner: mkO(['tackle', 'ember']), enemies: [mkE(1, 30, 0)] }, 0.1, 1 / 60);
+  ok(evs(d, 'move:cast').length === 2, 'the default filter routes every move'); }
+const mkP = (id, x, y, solid, o = {}) => Object.assign({ id, x, y, r: solid ? 12 : 14, solid, destructible: true, hp: 1e9, type: solid ? 'rock' : 'grass', log: [] }, o);
+{ const w = run({ owner: mkO(['hydro-pump']), enemies: [mkE(1, 200, 0)], props: [mkP(1, 100, 0, true), mkP(2, 100, 60, true)] }, 0.6, 1 / 60), p = w.props[0];
+  const m = { cat: G.MoveDefs['hydro-pump'].category, dmg: G.MoveDefs['hydro-pump'].basePower, type: 'water' };
+  ok(p.log.length === 1 && near(p.log[0].a, G.Stats.applyDamageProp(w.owner.moveFactor(m))) && w.props[1].log.length === 0, 'a rock in the band takes the legacy prop damage once, one outside takes none');
+  ok(evs(w, 'move:hit').length === 1 && evs(w, 'move:hit')[0].enemyId === 1, 'props emit no move:hit'); }
+both('solid prop spends pierce (water gun: rock, enemy, then dies)', () => ({ owner: mkO(['water-gun']), enemies: [mkE(1, 120, 0), mkE(2, 180, 0)], props: [mkP(1, 60, 0, true)] }), 0.6, [1, 0])
+  .forEach(w => ok(w.props[0].log.length === 1 && reasons(w)[0] === 'pierce', 'water gun spent its pierce on the rock'));
+both('grass never spends pierce (ember through grass to the enemy)', () => ({ owner: mkO(['ember']), enemies: [mkE(1, 120, 0)], props: [mkP(1, 60, 0, false)] }), 0.6, [1])
+  .forEach(w => ok(w.props[0].log.length === 1, 'ember cut the grass on the way'));
+both('enemy behind a solid prop at pierce 0 is not hit', () => ({ owner: mkO(['ember']), enemies: [mkE(1, 120, 0)], props: [mkP(1, 60, 0, true)] }), 0.6, [0])
+  .forEach(w => ok(w.props[0].log.length === 1 && reasons(w)[0] === 'pierce', 'ember ended on the rock'));
+{ const w = run({ owner: mkO(['ember']), enemies: [mkE(1, 120, 0)], props: [mkP(1, 60, 0, true, { hp: 1 })] }, 0.6, 1 / 60);
+  ok(w.props[0].hp <= 0 && w.enemies[0].log.length === 0, 'breaking a rock still spends the pierce'); }
 
 // ---- 8. determinism: the same seed gives the same tape; another seed changes the crits ----
 { const f = s => run({ owner: mkO(['flamethrower'], { critChance: 0.5 }), enemies: [mkE(1, 100, 0), mkE(2, 120, 20), mkE(3, 150, -10)], seed: s }, 1.1, 1 / 60);

@@ -29,7 +29,13 @@ const M = [
   ['cooldown ignores cdMul floor order (cd x 0.9)', 'sim', [['slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));', 'slot.t = Math.max(0.05, def.cd * 0.9);']]],
   ['stunned owner still casts', 'sim', [['if (G.Status.stunned(o)) { slot.t = RETRY; return null; }', '']]],
   ['fizzle refunds the cooldown', 'sim', [['if (G.Status.fizzle(o, rng)) return null;', 'if (G.Status.fizzle(o, rng)) { slot.t = RETRY; return null; }']]],
-  ['STAB dropped (owner.stabFor ignored)', 'fx', [['o.stabFor(m)', 'false']]]
+  ['STAB dropped (owner.stabFor ignored)', 'fx', [['o.stabFor(m)', 'false']]],
+  // slice 3d
+  ['routing filter ignored', 'sim', [['!routed(slot.id) || ', '']]],
+  ['grass spends pierce', 'sim', [['if (!isProp(e) || e.solid) inst.struck++;', 'inst.struck++;']]],
+  ['solid props never spend pierce', 'sim', [['if (!isProp(e) || e.solid) inst.struck++;', 'if (!isProp(e)) inst.struck++;']]],
+  ['props left out of the sweep', 'sim', [['p.x, p.y, p.r)) cands.push(p);', 'p.x, p.y, p.r)) {}']]],
+  ['props emit move:hit', 'sim', [["if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); continue; }", "if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); G.SimBus.emit('move:hit', { moveId: inst.spec.id, enemyId: null }); continue; }"]]]
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-sim-mut-'));
 let caught = 0;

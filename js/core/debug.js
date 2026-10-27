@@ -312,6 +312,44 @@ G.Debug = (() => {
   const noSpawn = () => spawn(0);
   const spawnOn = () => spawn(1);
 
+  /** New move system hitbox overlay (slice 3d): G.Debug.hitbox() toggles, hitbox(true|false) sets. Needs ?dev&newcombat. */
+  function hitbox(v) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return null; }
+    G.MoveRender.overlay = v == null ? !G.MoveRender.overlay : !!v;
+    return G.MoveRender.overlay;
+  }
+
+  /** New move system quick test (slice 3d, ?dev&newcombat): the routed moves, one per slot (cycle slots to try each), wild spawns
+   *  stopped, the overlay on, and still dummy enemies in 8 directions at 50, 130 and 220 px. A dummy sleeps for good (G.Status:
+   *  no movement, no attacks, damage never wakes a sleeper) and has a huge HP pool. Returns how many dummies were placed. Flags the run as tampered. */
+  function newcombat() {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    G.Game.debugMaxed();
+    spawn(0);
+    G.Projectiles.clearOrbs(pl);
+    pl.moves = [...G.MoveRoute.ROUTED].map(id => G.Moves.instance(id));
+    pl.slots = pl.moves.map(m => [m]);
+    pl.active = 0;
+    G.MoveRender.overlay = true;
+    const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
+    if (!def) { console.warn('[Debug] no enemy definition for the dummies.'); return 0; }
+    let n = 0;
+    for (const d of [50, 130, 220]) for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + (d === 130 ? Math.PI / 8 : 0);
+      const e = new G.Enemy(def, pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+      e.maxHp = e.hp = 1e9;
+      e.stMajor = { k: 'sleep', t: 1e9, age: 0 };
+      G.EnemyMgr.add(e);
+      n++;
+    }
+    console.log('[Debug] new combat test: ' + pl.slots.length + ' routed moves in slots, ' + n + ' dummies. G.Debug.hitbox() toggles the overlay.');
+    return n;
+  }
+
   /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
   function stat(id, n = 1, idx) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
@@ -371,5 +409,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat };
 })();

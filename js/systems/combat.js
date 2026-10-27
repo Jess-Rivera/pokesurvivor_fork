@@ -25,11 +25,13 @@ G.Combat = (() => {
     // and fires the moment its slot becomes active. swapT only limits how soon you can swap AGAIN.
     if (pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt);
     const act = pl.activeGroup();
+    // ?dev&newcombat (slice 3d): a routed slot belongs to G.MoveSim, so skip it in both loops (one owner per slot timer). Off, R is null.
+    const R = G.MoveRoute && G.MoveRoute.on ? G.MoveRoute.routed : null;
     for (const g of pl.slots) {
       if (g === act) continue;
-      for (const m of g) if (m.t > 0) m.t = Math.max(0, m.t - dt);
+      for (const m of g) if (m.t > 0 && !(R && R(m.id))) m.t = Math.max(0, m.t - dt);
     }
-    for (const m of act) tickMove(dt, pl, m, now);
+    for (const m of act) if (!(R && R(m.id))) tickMove(dt, pl, m, now);
   }
 
   function tickMove(dt, pl, m, now) {

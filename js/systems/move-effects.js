@@ -1,11 +1,12 @@
 /* ============ move-effects.js: payload appliers for the new move system (G.MoveEffects) ============
  *
  * Slice 3c: damage only. Every other payload entry is skipped until slice 4a (riders) and 4b (specials).
- * Not loaded by the game until slice 3d (not in dev.html or the NEED array).
+ * Loaded by the game since slice 3d; only reached through G.MoveSim with ?dev&newcombat.
  *
  *   applyHit(inst, e, hop, rng)  runs the instance's payload list in data order for one eligible hit (the sim decided
  *                                eligibility first, invariant I4). Returns { dmg, crit, typeMult } for the 'move:hit' event,
  *                                or null when the payload deals no damage.
+ *   applyProp(inst, p)           a rock, chest or grass the sim found eligible: legacy prop damage, no event.
  *
  * Damage (architecture D5 to D11): the attacker half is computed AT HIT TIME from the owner (owner.moveFactor, the existing
  * player.js D6 composition: stat cards, stages, run items), so a stage change mid-flight reaches later hits. The defender half is
@@ -56,5 +57,14 @@ G.MoveEffects = (() => {
     return out;
   }
 
-  return { applyHit };
+  /** A destructible prop the sim found eligible (slice 3d, D2): the legacy prop formula, only when the payload deals damage. */
+  function applyProp(inst, p) {
+    const def = inst.spec;
+    if (!(def.payload || []).some(fx => fx.t === 'damage')) return;
+    const m = { cat: def.category, dmg: def.basePower || 0, type: def.type };
+    const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
+    G.World.damageProp(p, G.Stats.applyDamageProp(inst.cast.owner.moveFactor(m)), col);
+  }
+
+  return { applyHit, applyProp };
 })();

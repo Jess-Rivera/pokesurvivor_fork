@@ -3,22 +3,26 @@
  * Slots, casts, instances, motion, eligibility and termination for the new move system. No canvas, camera, audio, clock or
  * Math.random (invariant I7): every step takes dt and the time, every roll goes through the injectable rng, and the view
  * rectangle for offScreen arrives as data (setView). Facts for presentation go out as SimBus events (I8).
- * Not loaded by the game until slice 3d (not in dev.html or the NEED array). Slice 3c scope: anchors caster, target and world;
+ * Loaded by the game since slice 3d, but only ticked with ?dev&newcombat (G.MoveRoute). Slice 3c scope: anchors caster, target and world;
  * targeting direction, nearest, none and self; motions static and travels (path curve, path oscillate, turnRate); grow; endOn
  * time, wall, offScreen and ownerDeath; pierce; hit policies oncePerInstance and interval; payload damage only.
+ * Slice 3d: destructible props share the collision sweep (solid ones spend pierce, grass never does), and a routing filter.
  *
- *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()), then step.
+ *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
+ *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
- *   setRng(fn), setView({ x, y, w, h }), clear(owner), list()
+ *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list()
  *
  * Timing conventions (slice 3c, Jess 2026-10-26): a root instance takes its first step in its cast frame (S9); age advances
  * before collision, so an endOn time T instance collides on ceil(T / dt) steps; time comparisons allow EPS for float drift.
  */
 G.MoveSim = (() => {
   const TAU = Math.PI * 2, EPS = 1e-9, RETRY = 0.05, OFF_MARGIN = 260;
-  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0;
+  const PROP_R = 14;     // largest destructible prop radius (world.js grass), the broad-phase pad for the prop query
+  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true;
 
+  const isProp = x => x.destructible === true;     // world props carry it, enemies never do
   const rangeOf = def => (def.delivery.range != null ? def.delivery.range : G.MoveResolver.TUNING.RANGE);
   const live = e => e && !e.dead;
   const lensOf = o => o.moveRadiusMul || 1;
@@ -94,7 +98,7 @@ G.MoveSim = (() => {
       const act = o.activeGroup();
       for (const g of o.slots) for (const slot of g) {
         const def = G.MoveDefs[slot.id];
-        if (!def || def.persistent || def.cd == null) continue;       // persistent upkeep arrives with orbits (slice 4c)
+        if (!def || !routed(slot.id) || def.persistent || def.cd == null) continue;       // persistent upkeep arrives with orbits (slice 4c)
         if (g !== act) { if (slot.t > 0) slot.t = Math.max(0, slot.t - dt); continue; }     // inactive slots recharge too
         slot.t -= dt;
         if (slot.t <= EPS) castSlot(o, slot, def, now);
@@ -151,17 +155,25 @@ G.MoveSim = (() => {
   function collide(inst, maxR) {
     const s = inst.shape, b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR), cands = [];
     G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, e => { if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, e.x, e.y, e.r)) cands.push(e); });
-    // sweep order: nearest to the previous position first, ties by id (S8), so a pierce budget is spent in path order
-    cands.sort((a, c) => ((a.x - inst.prevX) ** 2 + (a.y - inst.prevY) ** 2) - ((c.x - inst.prevX) ** 2 + (c.y - inst.prevY) ** 2) || a.id - c.id);
+    // destructible props join the same sweep (slice 3d, D2): solid ones spend pierce like an enemy, grass never does
+    const pb = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, PROP_R);
+    for (const p of G.World.propsInCircle(pb.x, pb.y, pb.r)) if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r)) cands.push(p);
+    // sweep order: nearest to the previous position first, ties by id (S8) with enemies before props, so a pierce budget is spent in path order
+    cands.sort((a, c) => ((a.x - inst.prevX) ** 2 + (a.y - inst.prevY) ** 2) - ((c.x - inst.prevX) ** 2 + (c.y - inst.prevY) ** 2) ||
+      isProp(a) - isProp(c) || (a.id < c.id ? -1 : a.id > c.id ? 1 : 0));
     const elig = ELIGIBLE[inst.spec.hitPolicy || 'oncePerInstance'], go = [];
     for (const e of cands) {     // I4: every eligibility decision before any payload runs
-      const rec = inst.hits.get(e.id);
+      const key = isProp(e) ? e : e.id, rec = inst.hits.get(key);     // a prop is keyed by itself, so its id never collides with an enemy's
       if (!elig(rec, inst)) continue;
-      if (!rec) { if (inst.struck > inst.pierce) continue; inst.struck++; }     // D16: pierce n damages n + 1 distinct enemies
-      inst.hits.set(e.id, { t: inst.age, leg: 0 });
+      if (!rec) {
+        if (inst.struck > inst.pierce) continue;
+        if (!isProp(e) || e.solid) inst.struck++;     // D16: pierce n damages n + 1 distinct enemies (or solid props)
+      }
+      inst.hits.set(key, { t: inst.age, leg: 0 });
       go.push(e);
     }
     for (const e of go) {
+      if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); continue; }     // props emit no 'move:hit' (enemy-only event)
       if (e.dead) continue;
       const r = G.MoveEffects.applyHit(inst, e, 0, rng);
       if (r) G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
@@ -210,6 +222,7 @@ G.MoveSim = (() => {
     tick, step,
     setRng: fn => { rng = fn || Math.random; },
     setView: v => { view = v || null; },
+    setFilter: fn => { routed = fn || (() => true); },     // slice 3d: the game passes its routed-id check; a rejected slot is never touched
     clear: o => { insts = o ? insts.filter(i => i.cast.owner !== o) : []; },
     list: () => insts
   };
