@@ -303,3 +303,18 @@ All confirm() sites now use G.UI.ask (in-game dialog). New code must use G.UI.as
 ## 2026-10-26 (slice 2 plan, later same day): normalization removed
 - Supersedes the earlier 2026-10-25 line (dmg = Power / E) and the pellet-only E entry above. Slice 2 has NO damage normalization: no E, no cone cap, no dmg split, no per-hit floor, no hits field. The resolver derives only cd = 0.5 x (35 / PP); power, accuracy and flavor_text pass through.
 - Why: whether normalization is needed is a balance question. A damage simulator script (move, upgrades, enemy type and level, combat factors, output damage and enemy HP drop) will answer it with data. If it is needed it returns as its own step.
+
+## 2026-10-27 (slice 4c planning, Jess)
+- 4c is split into 4c-1 persistence, 4c-2 returns and repositions, 4c-3 the rest. Each is signed off before the next.
+- Psychic stays a filled growing wedge (steers at the cast target, then the nearest enemy). No arc band, no grammar change.
+- Aura Sphere reach is fine. Bonemerang return-leg knockback pulls toward the caster, clamped at the caster's edge.
+- The G.MoveDefs deep-freeze (I2) and all review 2.4 validator rules are the first step of 4c-1.
+- Orbit radius scales with the lens. Night Shade ships in 4c-1. Rock Slide stays one boulder. String Shot spacing goes to the feel issue and 4d.
+
+## 2026-10-27 (slice 4c-2 planning, Jess)
+- Reposition landing point is the target enemy's centre. I-frames cover the whole dash plus a 0.3 s tail. The swept dash holds walking through the existing mvRoot flag (no player.js edit).
+- Razor Leaf joins 4c-2 (routed, R2 fixture). The pierce budget resets per leg. Quick Attack hits one enemy at the arrival point, unlike the legacy dash (Q3).
+
+## 2026-10-27 (slice 4c-3 planning, Jess)
+- aimTrack gets implemented and changes Flamethrower now. Its target rule is sticky: the cast target while it lives and is in range, then the nearest enemy, re-picked whenever the tracked one is lost.
+- Rock Slide's telegraph is a low-opacity ring. Location pick uses the seeded rng. Routed list ends 4c at 33 moves.

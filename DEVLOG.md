@@ -115,3 +115,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Data via source JSON plus regenerate (hopReduction rename, maxStacks 1 on four buffs, Substitute 4 s and cd 12, commitments). move_parity hail self-test fixed.
 - Tests: new move-selfcast harness (83) and mutation runner (35/35), check.js 21/21 all green, smoke all passed (one flaky resource fetch on rerun-clean).
 - Stopped at: Jess playtests 4b. REMINDER: commit + push (code, data, harnesses, docs).
+
+## 2026-10-27 (evening): slice 4c planning, no game code
+- Planned 4c with Jess and split it into 4c-1 persistence, 4c-2 returns and repositions, 4c-3 delay, falls, aimTrack and the travelling moves. Wrote slice-4c-1, 4c-2 and 4c-3 codehandoff.md for the coding chat.
+- Decided: Psychic stays a wedge, Bonemerang pull clamped at the caster's edge, orbit radius lens, Razor Leaf into 4c-2, centre landing point, i-frames whole dash plus 0.3 s, aimTrack sticky and now changes Flamethrower, Rock Slide low-opacity telegraph.
+- Found: aimTrack, location targeting, delay and falls were never built in the sim; only grammar exists.
+- Stopped at: handoffs ready for Jess's review. REMINDER: commit + push the docs (DECISIONS, slice-4c, three handoffs, STATE, DEVLOG).
