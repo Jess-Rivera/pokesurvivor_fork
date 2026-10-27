@@ -6,6 +6,8 @@
 // G.Debug.skipTo(20). Fails on any page error or console error, on a routed slot ticked by both systems, or on no hits landing.
 // Slice 4a: a rider page (G.Debug.newcombat('riders'), awake walkers): String Shot roots its target for 2 s, Body Slam and Bite knock,
 // Bulldoze and Ice Beam leave a Speed stage, Body Slam or Ice Beam lands a major status, and Giga Drain heals the player.
+// Slice 4b: a self-cast page (buff stages, Substitute pays a quarter and shields, Aqua Ring heals) and a specials page (Thunderbolt
+// chain hops reach several dummies, Dragon Rage is 40 flat, Hex lands, Flamethrower slows its caster with two commitments).
 const path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '..');
 const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
@@ -146,6 +148,55 @@ async function density(page) {
       await page.evaluate(() => { G.Debug.hitbox(true); });
       await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-riders.png') });
       ok(errs.length === 0, 'rider mode: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      await page.close(); }
+
+    // ---- flag on, self-casts (slice 4b): buffs show stages, Substitute pays a quarter and shields, Aqua Ring heals ----
+    { const { page, errs } = await boot(browser, '?dev&newcombat');
+      const n = await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 1e9; window.__healed = 0;
+        const h0 = pl.heal.bind(pl); pl.heal = a => { window.__healed += a; return h0(a); }; return G.Debug.newcombat('selfcasts'); });
+      ok(n === 24, "newcombat('selfcasts') placed 24 awake dummies (" + n + ')');
+      const slot = id => page.evaluate(id => { const pl = G.Game.player, i = pl.slots.findIndex(g => g[0].id === id); pl.setActive(i, true); return i; }, id);
+      await slot('swords-dance'); await sleep(600);
+      const sd = await page.evaluate(() => G.Stages.stage(G.Game.player, 'atk'));
+      ok(sd === 2, 'Swords Dance: Attack +2 (' + sd + ')');
+      await slot('dragon-dance'); await sleep(600);
+      const dd = await page.evaluate(() => ({ atk: G.Stages.stage(G.Game.player, 'atk'), spe: G.Stages.stage(G.Game.player, 'spe') }));
+      ok(dd.atk === 3 && dd.spe === 1, 'Dragon Dance: Attack +1 more and Speed +1 (' + dd.atk + ', ' + dd.spe + ')');
+      await page.evaluate(() => { const pl = G.Game.player; pl.hp = pl.maxHp; window.__hp0 = pl.hp; });
+      await slot('substitute'); await sleep(500);
+      const sb = await page.evaluate(() => { const pl = G.Game.player; return { hp: pl.hp, hp0: window.__hp0, max: pl.maxHp, sh: pl.shield && { v: pl.shield.v, max: pl.shield.max, t: pl.shield.t } }; });
+      ok(sb.sh && Math.abs(sb.hp - sb.hp0 * 0.75) < 2 && Math.abs(sb.sh.max - sb.max * 0.5) < 1e-6, 'Substitute: HP ' + sb.hp0 + ' -> ' + sb.hp.toFixed(1) + ', shield ' + (sb.sh ? sb.sh.v.toFixed(1) + '/' + sb.sh.max + ', ' + sb.sh.t.toFixed(2) + ' s left' : 'none'));
+      await page.evaluate(() => { G.Debug.hitbox(true); });
+      await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-selfcasts.png') });
+      await page.evaluate(() => { const pl = G.Game.player; pl.hp = pl.maxHp * 0.4; window.__healed = 0; });
+      await slot('aqua-ring'); await sleep(3300);
+      const ar = await page.evaluate(() => ({ healed: window.__healed, max: G.Game.player.maxHp }));
+      ok(ar.healed >= ar.max * 0.0625 * 3 - 1e-6, 'Aqua Ring healed ' + ar.healed.toFixed(1) + ' HP in about 3 s (6.25% of ' + ar.max + ' per second)');
+      ok(errs.length === 0, 'self-casts: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      await page.close(); }
+
+    // ---- flag on, specials (slice 4b): Thunderbolt chains down the line, Dragon Rage is 40 flat, Hex lands, Flamethrower slows the caster ----
+    { const { page, errs } = await boot(browser, '?dev&newcombat');
+      const n = await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 1e9; window.__sp = { chain: {}, dr: [], hex: 0, ftSpe: 0, ftCommits: 0 };
+        G.SimBus.on('move:hit', ev => { const s = window.__sp;
+          if (ev.moveId === 'thunderbolt' && ev.hop > 0) s.chain[ev.enemyId] = 1;
+          if (ev.moveId === 'dragon-rage' && s.dr.length < 20) s.dr.push(ev.dmg);
+          if (ev.moveId === 'hex') s.hex++;
+          if (ev.moveId === 'flamethrower') { s.ftSpe = Math.min(s.ftSpe, G.Stages.stage(G.Game.player, 'spe')); s.ftCommits = Math.max(s.ftCommits, G.MoveSim.commits(G.Game.player).length); }
+        });
+        return G.Debug.newcombat('specials'); });
+      ok(n === 14, "newcombat('specials') placed 14 slow dummies (" + n + ')');
+      const slot = id => page.evaluate(id => { const pl = G.Game.player, i = pl.slots.findIndex(g => g[0].id === id); pl.setActive(i, true); return i; }, id);
+      await slot('thunderbolt'); await sleep(1500);
+      await page.evaluate(() => { G.Debug.hitbox(true); });
+      await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-specials.png') });
+      for (const id of ['dragon-rage', 'hex', 'flamethrower']) { await slot(id); await sleep(2500); }
+      const sp = await page.evaluate(() => window.__sp);
+      ok(Object.keys(sp.chain).length >= 3, 'Thunderbolt chain hops reached ' + Object.keys(sp.chain).length + ' different dummies');
+      ok(sp.dr.length > 0 && sp.dr.every(d => d === 40), 'Dragon Rage hits are 40 flat (' + sp.dr.slice(0, 6).join(', ') + ')');
+      ok(sp.hex > 0, 'Hex landed ' + sp.hex + ' hits');
+      ok(sp.ftSpe === -2 && sp.ftCommits === 2, 'Flamethrower: caster Speed -2 and two commitments while it fires (' + sp.ftSpe + ', ' + sp.ftCommits + ')');
+      ok(errs.length === 0, 'specials: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
   } catch (e) { fail++; console.log('FAIL  ' + (e.stack || e)); }
   await browser.close();

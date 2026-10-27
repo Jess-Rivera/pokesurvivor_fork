@@ -80,9 +80,15 @@
   }, ['anchor', 'targeting']);
 
   // ---- caster state ----
+  // Commitment (slice 4b, S13): t is seconds, or 'untilEffectEnd' (the life of the cast's shield); absent = the move's endOn time.
+  // No commitment means normal cooldown ticking (there is no 'tick' value). freeze id: absent = every cooldown of the caster.
+  const COMMIT_T = { t: 'anyOf', of: [SECS, en(['untilEffectEnd'])] };
   const CASTER = obj({
     iframes: num({ min: 0 }),
-    commitment: obj({ movement: en(['none', 'slowed', 'rooted']), cooldown: en(['tick', 'freeze']) }),
+    commitment: obj({
+      movement: obj({ type: en(['slowed', 'rooted']), t: COMMIT_T }, ['type']),   // slowed: -2 Speed stages on the caster; rooted: move speed 0
+      cooldown: obj({ type: en(['freeze']), id: { t: 'anyOf', of: ['str', list('str', { min: 1 })] }, t: COMMIT_T }, ['type']),   // frozen timers do not run, they arm when the freeze ends
+    }),
   });
 
   // ---- axis 3: PAYLOAD ----
@@ -90,7 +96,7 @@
   const HANDLERS = { t: 'union', key: 'handler', of: {
     berrySteal: special({ condition: en(['targetHasBerry']), damageMult: num({ gt: 0 }), consumesBerry: 'bool' }, ['condition', 'damageMult']),
     fixedDamage: special({ amount: num({ gt: 0 }), ignoresType: 'bool', ignoresDefense: 'bool' }, ['amount']),
-    chainDamageFalloff: special({ chainDamageFraction: num({ gt: 0, max: 1 }) }, ['chainDamageFraction']),
+    chainDamageFalloff: special({ hopReduction: num({ gt: 0, max: 1 }) }, ['hopReduction']),   // per hop: chain hop k deals x (1 - hopReduction)^k, applied last (D15)
     levelDamage: special({}),
     setWeather: special({ weather: en(WEATHER), duration: SECS }, ['weather', 'duration']),
     statusBonus: special({ multiplier: num({ gt: 1 }) }, ['multiplier']),
@@ -145,6 +151,10 @@
     { id: 'pick-needs-location', when: { has: 'delivery.locationPick' }, then: { eq: ['delivery.targeting', 'location'] }, msg: 'locationPick needs targeting location' },
     { id: 'trigger-needs-end', when: { has: 'delivery.trigger' }, then: { has: 'delivery.endOn' }, msg: 'a triggered instance needs an endOn condition so it cannot outlive its move (a timeout is optional: Spikes lasts until triggered)' },
     { id: 'self-has-no-shape', when: { eq: ['delivery.anchor', 'self'] }, then: { not: { has: 'space' } }, msg: 'anchor self is a shapeless cast and rejects space' },
+    { id: 'freeze-default-needs-time', when: [{ has: 'casterState.commitment.cooldown' }, { not: { has: 'casterState.commitment.cooldown.t' } }], then: { has: 'delivery.endOn.time' }, msg: 'a cooldown freeze with no t lasts the endOn time, so the move needs one' },
+    { id: 'movement-default-needs-time', when: [{ has: 'casterState.commitment.movement' }, { not: { has: 'casterState.commitment.movement.t' } }], then: { has: 'delivery.endOn.time' }, msg: 'a movement commitment with no t lasts the endOn time, so the move needs one' },
+    { id: 'freeze-effect-needs-shield', when: { eq: ['casterState.commitment.cooldown.t', 'untilEffectEnd'] }, then: { eq: ['payload.t', 'shield'] }, msg: 'untilEffectEnd needs an effect with a lifetime (a shield)' },
+    { id: 'movement-effect-needs-shield', when: { eq: ['casterState.commitment.movement.t', 'untilEffectEnd'] }, then: { eq: ['payload.t', 'shield'] }, msg: 'untilEffectEnd needs an effect with a lifetime (a shield)' },
   ];
 
   // ---- the move itself ----

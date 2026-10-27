@@ -325,9 +325,23 @@ G.Debug = (() => {
    *  were placed. Flags the run as tampered.
    *  newcombat()          the slice 3d seven; a dummy sleeps for good (no movement, no attacks, damage never wakes a sleeper).
    *  newcombat('riders')  the slice 4a seven; dummies are AWAKE slow walkers (40 px/s) at 90, 170 and 250 px, so burn, paralysis,
-   *                       freeze, flinch, knockback and the trap root can show. The overlay prints each dummy's statuses and stages. */
+   *                       freeze, flinch, knockback and the trap root can show. The overlay prints each dummy's statuses and stages.
+   *  newcombat('selfcasts')  the slice 4b self-casts (Swords Dance, Dragon Dance, Aqua Ring, Substitute) with the 'riders' awake
+   *                       dummies, so they reach you and the shield gets hit. The overlay prints your HP, shield and team stages.
+   *  newcombat('specials')   Dragon Rage, Hex, Thunderbolt and Flamethrower. Slow awake dummies (20 px/s): a line of 6, 100 px
+   *                       apart, in front of you for the Thunderbolt chain, plus 2 each burned, poisoned, paralyzed and asleep at
+   *                       200 px for Hex. The overlay also prints your commitment timers (Flamethrower's slow and freeze). */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
-    riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'] };
+    riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
+    selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
+    specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'] };
+  // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
+  const NC_AIL = {
+    burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
+    poison: e => { e.poison = 1; e.poisonLeft = 1e6; e.poisonTick = 1; e.poisonMul = 1; },
+    paralysis: e => { e.stMajor = { k: 'paralysis', t: 1e9, age: 0 }; },
+    sleep: e => { e.stMajor = { k: 'sleep', t: 1e9, age: 0 }; }
+  };
   function newcombat(set = 'core') {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
     if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
@@ -338,7 +352,7 @@ G.Debug = (() => {
     G.Projectiles.clearOrbs(pl);
     const ids = NC_SETS[set];
     if (!ids) { console.warn('[Debug] newcombat sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
-    const riders = set === 'riders';
+    const riders = set === 'riders' || set === 'selfcasts';
     pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
     pl.slots = pl.moves.map(m => [m]);
     pl.active = 0;
@@ -346,6 +360,21 @@ G.Debug = (() => {
     const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
     if (!def) { console.warn('[Debug] no enemy definition for the dummies.'); return 0; }
     let n = 0;
+    if (set === 'specials') {
+      const put = (x, y, ail) => {
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), x, y, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        if (ail) NC_AIL[ail](e);
+        G.EnemyMgr.add(e);
+        n++;
+      };
+      const a = pl.aim || 0;
+      for (let i = 0; i < 6; i++) put(pl.x + Math.cos(a) * (80 + 100 * i), pl.y + Math.sin(a) * (80 + 100 * i));
+      const ails = ['burn', 'poison', 'paralysis', 'sleep', 'burn', 'poison', 'paralysis', 'sleep'];
+      ails.forEach((k, i) => { const b = a + Math.PI / 2 + i * Math.PI / 8; put(pl.x + Math.cos(b) * 200, pl.y + Math.sin(b) * 200, k); });
+      console.log('[Debug] new combat test (specials): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies (a line of 6 ahead, 8 with ailments). G.Debug.hitbox() toggles the overlay.');
+      return n;
+    }
     for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {
       const a = i * Math.PI / 4 + (d === (riders ? 170 : 130) ? Math.PI / 8 : 0);
       const e = new G.Enemy(riders ? Object.assign({}, def, { behavior: 'chase' }) : def, pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));

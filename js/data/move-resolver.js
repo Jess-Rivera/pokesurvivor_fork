@@ -5,7 +5,7 @@
  * Output is the new definition only: no kind, no flat projection in old field names, no damage normalization
  * (power stays the raw Power; whether normalization is needed waits for a damage simulator). Accuracy, flavor_text and
  * every other raw fact pass through untouched. The resolver checks only its own inputs and throws on an unknown override
- * move or field, an unknown handler name or a bad registry entry. Grammar validation stays in tools/validate_moves.js.
+ * move or field, an unknown handler name, a cooldown freeze naming an unknown move, or a bad registry entry. Grammar validation stays in tools/validate_moves.js.
  * Load order: move-attributes.js, moves-generated.js, move-overrides.js, move-handler.js, move-resolver.js.
  * GROUNDWORK: not listed in dev.html and read by nothing in the game yet. */
 (() => {
@@ -68,9 +68,11 @@
       for (const e of m.payload) if (e.t === 'special') {
         const h = handlers.byName[e.handler];
         if (!h) throw new Error('move-handler: ' + id + ' uses unknown handler "' + e.handler + '"');
-        hs.push({ handler: e.handler, trigger: h.trigger, ...(h.condition && { condition: h.condition }), stub: h.stub });
+        hs.push({ handler: e.handler, trigger: h.trigger, ...(h.condition && { condition: h.condition }), ...(h.stub && { stub: h.stub }) });
       }
       if (hs.length) m.handlers = hs;
+      const fz = m.casterState && m.casterState.commitment && m.casterState.commitment.cooldown;     // slice 4b: a freeze names real moves
+      if (fz && fz.id != null) for (const f of [].concat(fz.id)) if (!data[f]) throw new Error('move-resolver: ' + id + ' freezes unknown move "' + f + '"');
       out[id] = m;
     }
     return out;

@@ -10,12 +10,15 @@
  *   overlay          dev toggle (G.Debug.hitbox): G.MoveGeom.shapeOf for every live instance, recomputed from the same
  *                    inputs the sim used (one geometry implementation, I6), and a ring flash on each 'move:hit' enemy.
  *                    Slice 4a: a dev line over every visible enemy that carries a status or a stat stage (G.Status.list, G.Stages.list).
+ *                    Slice 4b: a dev line over the player (HP, shield value and time left, team stages, commitment timers).
+ *   Slice 4b, always drawn: a short zigzag bolt from the previous enemy to each chain hop ('move:hit' with hop > 0), and a ring
+ *   around the active Pokemon while its shield (Substitute) lives, brighter when fuller.
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
- *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes.
+ *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes and the chain bolts.
  */
 G.MoveRender = (() => {
-  const TAU = Math.PI * 2, FLASH = 0.25;
-  let flashes = [];
+  const TAU = Math.PI * 2, FLASH = 0.25, BOLT = 0.2;
+  let flashes = [], bolts = [];
   const R = { overlay: false };
 
   const colOf = inst => (G.U.TYPE_COLOR && G.U.TYPE_COLOR[inst.spec.type]) || '#ffffff';
@@ -78,7 +81,42 @@ G.MoveRender = (() => {
       }
       ctx.restore();
     }
+    drawBolts(ctx);
+    drawShield(ctx);
     if (R.overlay) drawOverlay(ctx);
+  }
+
+  /** Chain hops (4b): a jagged line from the previous enemy, fading over BOLT s. Presentation only, built from the event. */
+  function drawBolts(ctx) {
+    const t = performance.now() / 1000;
+    bolts = bolts.filter(b => t - b.t < BOLT);
+    if (!bolts.length) return;
+    ctx.save();
+    ctx.lineJoin = 'round';
+    for (const b of bolts) {
+      const dx = b.x - b.fx, dy = b.y - b.fy, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+      ctx.globalAlpha = 1 - (t - b.t) / BOLT;
+      for (const [w, col] of [[4, b.col], [1.5, '#ffffff']]) {
+        ctx.strokeStyle = col; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.moveTo(b.fx, b.fy);
+        for (let i = 1; i < 6; i++) ctx.lineTo(b.fx + dx * i / 6 + nx * b.jit[i], b.fy + dy * i / 6 + ny * b.jit[i]);
+        ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  /** The active Pokemon's shield (4b, Substitute): a ring whose opacity follows the shield's fill. */
+  function drawShield(ctx) {
+    const pl = G.Game && G.Game.player, sh = pl && pl.shield;
+    if (!sh || pl.dead) return;
+    const r = (pl.r || 12) * 2.2, y = pl.y - (pl.bodyH || 30) * 0.5, fill = sh.max > 0 ? sh.v / sh.max : 0;
+    ctx.save();
+    ctx.strokeStyle = '#6ec8ff'; ctx.lineWidth = 3; ctx.globalAlpha = 0.25 + 0.6 * fill;
+    ctx.beginPath(); ctx.arc(pl.x, y, r, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#6ec8ff'; ctx.globalAlpha = 0.1 * fill;
+    ctx.beginPath(); ctx.arc(pl.x, y, r, 0, TAU); ctx.fill();
+    ctx.restore();
   }
 
   function drawOverlay(ctx) {
@@ -107,6 +145,15 @@ G.MoveRender = (() => {
         .concat(G.Stages.list(e).map(s => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
       if (parts.length) ctx.fillText(parts.join(' | '), e.x, e.y - (e.bodyH || 30) - 16);
     }
+    const pl = G.Game && G.Game.player;     // the player (4b): HP, shield, team stages and commitments
+    if (pl && !pl.dead) {
+      const sh = pl.shield, parts = ['HP ' + Math.round(pl.hp) + '/' + Math.round(pl.maxHp)];
+      if (sh) parts.push('shield ' + Math.round(sh.v) + '/' + Math.round(sh.max) + ' ' + sh.t.toFixed(1) + 's');
+      parts.push(...G.Stages.list(pl).map(s => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
+      for (const c of G.MoveSim.commits(pl)) parts.push(c.moveId + ' ' + (c.part === 'cooldown' ? 'freeze' : c.type) + (c.until === 'time' ? ' ' + c.left.toFixed(1) + 's' : ' (' + c.until + ')'));
+      ctx.fillStyle = '#9fe8ff';
+      ctx.fillText(parts.join(' | '), pl.x, pl.y - (pl.bodyH || 30) - 26);
+    }
     ctx.restore();
   }
 
@@ -121,6 +168,11 @@ G.MoveRender = (() => {
     pl.cast(slot);
   });
   G.SimBus.on('move:hit', ev => {
+    if (ev.hop > 0) {     // a chain hop: the bolt is drawn with or without the overlay
+      const def = G.MoveDefs[ev.moveId], jit = [0];
+      for (let i = 1; i < 6; i++) jit.push((Math.random() - 0.5) * 18);
+      bolts.push({ fx: ev.fromX, fy: ev.fromY, x: ev.x, y: ev.y, jit, col: (def && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#ffe14d', t: performance.now() / 1000 });
+    }
     if (!R.overlay) return;
     const e = G.EnemyMgr.all().find(x => x.id === ev.enemyId);
     flashes.push({ x: ev.x, y: ev.y, r: e ? e.r : 12, crit: ev.crit, t: performance.now() / 1000 });

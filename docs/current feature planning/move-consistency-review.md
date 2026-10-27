@@ -654,8 +654,8 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 | Q6 accuracy | DECIDED | Accuracy folds into `basePower` = power x accuracy / 100 (resolver) | 3a resolver |
 | Q7 emit | DECIDED | An emitter is its own instance. Toxic Spikes becomes a 3 s placed emitter, interval every 0.25 s, child ring starts at 100 px. PROPOSED schedule (D29): `cast` emits first at activation, `interval` first at `every`. Emit `count` = total emissions, child `space.count` = shapes per emission | 3a data, 4d |
 | Q8 range | DECIDED (Checkpoint 3) | One tunable `range`. Global default 420 px as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), optional per-move `delivery.range`. Covers `nearest` acquisition, `location` reach, `returns` turnaround and maximum reposition distance | 3a, 3c, 4c |
-| Q9 Hex | DECIDED | Doubles on a major ailment, and on every chain hop. PROPOSED: burn and poison count as major | 4b |
-| Q10 chain riders | DECIDED | Chain hops roll riders at half chance per hop (chance x 0.5^k). PROPOSED: each hop picks the nearest not-yet-hit enemy within `hopRange` of the previous hop, and `chainDamageFalloff` is constant, not compounding | 4b |
+| Q9 Hex | DECIDED | Doubles POWER (inside the attacker half, not a final x2) on a major ailment (paralysis, freeze, sleep, burn, poison, toxic; confusion and trap do not count), checked on every chain hop (Jess 2026-10-27, slice 4b S8; built) | 4b |
+| Q10 chain riders | DECIDED | Chain hops roll riders at half chance per hop (chance x 0.5^k). Superseded targeting and falloff (Jess 2026-10-27, slice 4b S7, S10, S15): hop k deals x (1 - hopReduction)^k applied last; each hop picks the nearest enemy within `hopRange` of the previous hop, never that enemy, unhit enemies first, then revisits (two enemies ping-pong). Built | 4b |
 | Q11 type | DECIDED | Karate Chop is Fighting | 3a data |
 | Q12 crit units | DECIDED | `critChance` is percent points, divided by 100 in exactly one place | 3c / 4a |
 | Q13 turnRate | DECIDED | rad/s, a clamped turn (not the legacy damp) | 3c |
@@ -755,7 +755,7 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 3. Before 4a: DONE 2026-10-27 (9.8): Leaf Storm 1, Metal Claw 2, Meteor Mash 2.
 4. Before 4d: Gust per-shot spread (genuinely open, no recommendation accepted).
 5. Low: confirm Fire Spin's legacy stat strip and half-strength burn are dropped on purpose; correct the DMG_SCALAR doc mismatch (code 1.0, DECISIONS text 2.0). Orbit y-squash in rendering only is a default accepted.
-6. No owner yet: Aura Sphere reach (S2), Hail cd vs duration (S6), Substitute cd vs shield (S5), Rock Slide boulder count (S11), String Shot double application (S7), Bonemerang return-leg knockback (S12). Shadow Ball cd 1.2 is only 0.03 s above the formula value (1.167), so its "longer cooldown" compensation is nominal.
+6. No owner yet: Aura Sphere reach (S2), Hail cd vs duration (S6, now owned by the parked Hail toggle item), Substitute cd vs shield (S5, settled in 4b: 4 s shield, 12 s cd armed at shield end), Rock Slide boulder count (S11), String Shot double application (S7), Bonemerang return-leg knockback (S12). Shadow Ball cd 1.2 is only 0.03 s above the formula value (1.167), so its "longer cooldown" compensation is nominal.
 
 ### 9.8 Slice 4a decisions (Jess, 2026-10-27)
 
@@ -764,3 +764,12 @@ Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, 
 - **S7 String Shot: DECIDED.** The double application (Speed -2 twice, -4) is allowed. No data change.
 - **Slice 3d: signed off by Jess**, 2026-10-27.
 - **Root and enemy movement (4a build): DECIDED.** Four phases bypass the speed product (leaving units, jumpers, boss dash, boss leap); Jess OKed enemy.js. A jump in the air lands, a crouch waits, leaving units are rooted, a boss dash stays in place. Strong hosts are not extended while rooted; wild roots refresh to the longer. Pushes (separation, knockback, flinch recoil) still move a rooted enemy.
+
+### 9.9 Slice 4b decisions (Jess, 2026-10-27; full text in move-schema/slice-4b.md S1 to S15)
+
+- **S1 Substitute: DECIDED and built.** 4 s shield, 12 s cooldown armed when the shield ends (expiry, break, swap, faint). Cast waits at HP at or below the cost and while a shield lives.
+- **S2 Hail: PARKED** as a toggle skill item; setWeather tested through a synthetic move. **S3 Night Shade: to 4c.**
+- **S4 stat stacking per Pokemon**, **S5 flat damage is flat**, **S6 Aqua Ring 6.25% max HP/s accepted**: built.
+- **S7, S8, S9, S10 chains and Hex: built** (sequential hops, x (1 - hopReduction)^k last, per-hop rolls, riders x 0.5^k, the target starts the chain, field renamed to hopReduction).
+- **S13, S14 caster-state commitment: built**; Flamethrower slowed plus freeze(all) for its 1.0 s cone.
+- **S15 chain hop order: DECIDED (Jess, 2026-10-27, during the build).** Fresh first: a hop picks the nearest enemy this chain has not hit yet; only when none is in range may it revisit (never the enemy just hit). A uniform line goes forward, two enemies still ping-pong.

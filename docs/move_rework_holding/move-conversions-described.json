@@ -68,7 +68,8 @@
           "stages": 2,
           "side": "self",
           "scope": "team",
-          "duration": 8
+          "duration": 8,
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
@@ -97,7 +98,8 @@
           "stages": 2,
           "side": "self",
           "scope": "team",
-          "duration": 8
+          "duration": 8,
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
@@ -126,7 +128,8 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "duration": 8
+          "duration": 8,
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
@@ -933,7 +936,8 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "duration": 4
+          "duration": 4,
+          "maxStacks": 1
         },
         {
           "t": "stat",
@@ -941,7 +945,8 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "duration": 4
+          "duration": 4,
+          "maxStacks": 1
         }
       ],
       "reviewStatus": "reviewed"
@@ -1252,6 +1257,16 @@
         ]
       },
       "hitPolicy": "interval",
+      "casterState": {
+        "commitment": {
+          "movement": {
+            "type": "slowed"
+          },
+          "cooldown": {
+            "type": "freeze"
+          }
+        }
+      },
       "payload": [
         {
           "t": "damage"
@@ -1531,8 +1546,8 @@
         {
           "t": "special",
           "handler": "chainDamageFalloff",
-          "chainDamageFraction": 0.33,
-          "note": "chain hits (after the initial) deal 0.33x the initial damage; needs #2 resolver handler or stub"
+          "hopReduction": 0.33,
+          "note": "per-hop reduction: hop k deals x(1 - 0.33)^k of its own full hit, applied last (slice 4b S7, S10)"
         }
       ],
       "reviewStatus": "reviewed"
@@ -2584,6 +2599,15 @@
         "anchor": "self",
         "targeting": "self"
       },
+      "casterState": {
+        "commitment": {
+          "cooldown": {
+            "type": "freeze",
+            "id": "substitute",
+            "t": "untilEffectEnd"
+          }
+        }
+      },
       "payload": [
         {
           "t": "recoil",
@@ -2616,7 +2640,7 @@
             "op": "ref",
             "path": "effect.max"
           },
-          "duration": 6,
+          "duration": 4,
           "absorbsAll": true,
           "overflow": true
         }
@@ -2845,7 +2869,13 @@
           "t": "special",
           "handler": "statusBonus",
           "multiplier": 2.0,
-          "note": "double damage if target has any status condition; needs #2 resolver handler or stub"
+          "note": "doubles POWER (inside the attacker half) when the hop target has a major ailment (paralysis, freeze, sleep, burn, poison, toxic), checked per hop (slice 4b S8)"
+        },
+        {
+          "t": "special",
+          "handler": "chainDamageFalloff",
+          "hopReduction": 0.33,
+          "note": "per-hop reduction: hop k deals x(1 - 0.33)^k, applied last (slice 4b S7, S10)"
         }
       ],
       "reviewStatus": "reviewed"

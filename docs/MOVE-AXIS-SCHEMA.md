@@ -52,7 +52,7 @@ Count and arrangement are independent of an individual shape's size:
 | count | how many instances of the shape (1 Ember, 3 a Razor Leaf fan). |
 | spread | radians; the TOTAL angular fan across all instances, centered on the aim and evenly spaced across it (offsets run from -spread/2 to +spread/2). At 2 pi or more the instances are instead spaced 2 pi / count around the full circle, so Mud Shot and Aura Sphere (6.2832) read as "evenly around". Only used when count>1: the executor ignores it at count 1, but the authored value stays in the data so a count upgrade has a fan to use. A count upgrade makes the fan denser, not wider. High count + large spread = a radial nova made of points. |
 | `pierce` | Number of enemy contacts a directional instance passes through before terminating. `0` means terminate on the first enemy hit, `n` means terminate after passing through n enemies, and omitting it means `UNLIMITED` (so a one-hit projectile must say `pierce: 0`). This owns enemy-contact termination; enemy contact is not also an `endOn` condition. |
-| `chainHops` | Extra targets hit after the first. Pairs with `hopRange` (px). A chain is one hit that retargets; `count` creates separate instances. |
+| `chainHops` | Extra targets hit after the first. Pairs with `hopRange` (px). A chain is one hit that retargets; `count` creates separate instances. Hop k goes to the nearest enemy within `hopRange` of the previous hop, never that enemy, unhit enemies first, then revisits. Its damage is the full hit for that target times (1 - `hopReduction`)^k (declared by a `chainDamageFalloff` special, 0 when absent); rider chances halve per hop. |
 | `splash` | Optional secondary area hit at an impact event: `{ radius, falloff, trigger }`. Radius `0` disables splash (the default; a card raises it, turning a single-target shot into an AoE). `trigger` defines when the burst fires: `enemyHit` (default), `terrainHit`, or `termination`; the default lives in the grammar (move-attributes.js), not per move. The splash burst is a SEPARATE event downstream of the primary shape's impact: it never consumes `pierce` (owned by the primary shape; a 4-enemy splash does not spend 4 pierce). `falloff` is linear from full damage at the center to a floor fraction at the edge radius. Splash CARRIES the payload's riders (ailment, knockback, stat) at HALF their primary chance: a 10% burn on the primary applies at 5% to each splash-caught enemy (round the halved chance as the proc model defines). Stat/knockback riders that are not chance-based apply at half magnitude on splash-caught targets. The resolver derives the splash rider set from the move's own payload; splash does not get an independent payload list. |
 
 All shape-size values describe collision geometry, not merely rendering. The renderer may use the same values for visuals, but collision is authoritative. Numeric fields are upgradeable by default unless excluded through `cardLock`; each upgrade must still respect the field's valid range and geometry constraints.
@@ -138,8 +138,8 @@ This group is not a hit axis because it changes the caster rather than the hit t
 | field | meaning |
 | --- | --- |
 | `iframes` | Seconds of invulnerability. For swept dashes, may be expressed as travel duration plus a trailing interval; teleport dashes use a duration beginning on arrival. |
-| `commitment.movement` | `none`, `slowed`, or `rooted` during a long cast. |
-| `commitment.cooldown` | `tick`, `freeze`, or `freeze(ids)`. `freeze` locks all cooldowns; `freeze(ids)` locks only the listed moves. |
+| `commitment.movement` | `(type, t)`, written `{ type, t }`. `type` is `slowed` (the caster gets -2 Speed stages for `t`) or `rooted` (the caster's move speed is 0 for `t`, like the enemy trap root). `t` defaults to the parent's `endOn` time. |
+| `commitment.cooldown` | `freeze(id, t)`, written `{ type: freeze, id, t }` (absent = normal cooldown ticking, there is no `tick` value).  `id` defaults to all cooldowns, or names a move id or a list. `t` defaults to the parent's `endOn` time, may be seconds, or `untilEffectEnd` (an instant self-cast such as Substitute: the shield's life, ended early by a break, swap or faint). Frozen timers do not run; they arm when the freeze ends. |
 | `delay` | MOVED to `delivery.delay` (the instance carries its own wind-up). Not a caster-state field any more. |
 
 Charge dissolves into delay + commitment; it is not its own payload.
@@ -219,23 +219,24 @@ substitute {
   type: normal
   category: status
   power: 0
-  cd: 30
+  cd: 12            # hand override (move-overrides.js)
   anchor: self
   targeting: self
+  casterState: { commitment: { cooldown: { type: freeze, id: substitute, t: untilEffectEnd } } }
   payload: [
     { t: recoil, fraction: 0.25, trigger: cast },
     { t: shield,
       amount: { op: multiply, args: [{ op: ref, path: cast.paid }, 2] },
       max: { op: multiply, args: [{ op: ref, path: cast.paid }, 2] },
       regen: { op: ref, path: effect.max },
-      duration: 6,
+      duration: 4,
       absorbsAll: true,
       overflow: true }
   ]
 }
 ```
 
-With 100 max HP, the cast pays 25 HP and creates a 50-HP shield that regenerates at 50 HP/s for 6 seconds. Incoming damage drains the shield first; excess damage spills into real HP. Status can still be applied, but its damage-over-time drains the shield. The formula examples above use a restricted, typed formula representation, not executable JavaScript strings.
+With 100 max HP, the cast pays 25 HP and creates a 50-HP shield that regenerates at 50 HP/s for 4 seconds. The 12 s cooldown is frozen while the shield lives and starts when it ends (expiry, a break to 0, a swap or a faint). The cast waits while HP is at or below the cost (recoil never kills) and while a shield is live. Incoming damage drains the shield first; excess damage spills into real HP. Status can still be applied, but its damage-over-time drains the shield. The formula examples above use a restricted, typed formula representation, not executable JavaScript strings.
 
 ## Presets and validation
 

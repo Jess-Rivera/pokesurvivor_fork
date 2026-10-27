@@ -93,6 +93,8 @@ G.Player = class Player {
     this.dead = false;
     this.power = null;         // poder de altar activo: { def, t, dur }
     this.slowT = 0;            // pegado por una trampa
+    this.shield = null;        // move schema slice 4b (Substitute): { v, max, regen, t, dur, overflow, src }, set by G.MoveEffects, absorbed in hurt()
+    this.mvRoot = false;       // move schema slice 4b: a rooted commitment (G.MoveSim) holds move speed at 0
     // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
     this.isPlayer = true;
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
@@ -161,7 +163,7 @@ G.Player = class Player {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();
+    return this.mvRoot ? 0 : s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();     // mvRoot: slice 4b rooted commitment
   }
   /** Run-item SPEED multipliers, applied last: Sharp Scissors (team-HP-scaled, roster 3+) and Pikachu's Tear (1.1x per fainted). */
   runSpeedMul() {
@@ -378,7 +380,12 @@ G.Player = class Player {
     // be on top of the enemies to hit (they lagged far behind).
     const close = this.activeGroup().some(m => m.kind === 'melee') ? 0.75 : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
-    const d = Math.max(1, raw);
+    let d = Math.max(1, raw);
+    if (this.shield) {                        // move schema slice 4b (Substitute): the shield takes the final damage first
+      const took = this.absorb(d);
+      if (took >= d) return;                  // fully absorbed: a blue number only, no invulnerability, flash, sound or camera kick
+      d -= took;                              // the spill goes down the normal path
+    }
     this.hp -= d;
     if (LOG) G.Log.hitIn(who, type, cat, neutral, dStat, afterDef, tk, wk, pure ? 0 : this.reduction, pure ? 1 : close, d,
                          hp0, Math.max(0, this.hp), (d > raw ? 1 : 0) | (pure ? 4 : 0), this.spd);
@@ -404,6 +411,7 @@ G.Player = class Player {
       this.anim.play('Faint', { hold: true });
       G.Projectiles.clearOrbs(this);
       this.reviveT = 0;
+      this.shield = null;                     // slice 4b: a faint ends the shield
       this.clearEffects();                    // slice E2b: fainting wipes every status and own stage drop
     }
   }
@@ -422,6 +430,30 @@ G.Player = class Player {
     G.Status.tick(this, dt);
     G.Stages.tick(this, dt);
     this.benched = false;
+  }
+
+  /** Move schema slice 4b: the shield takes up to `d` of a final hit. Returns what it absorbed (all of `d` when overflow is off).
+   *  A shield drained to 0 is broken for good (its regen does not bring it back). The absorbed part shows as a blue number. */
+  absorb(d) {
+    const sh = this.shield;
+    const took = Math.min(sh.v, d);
+    sh.v -= took;
+    if (sh.v <= 1e-9) this.shield = null;
+    if (!this.benched && took > 0) G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(took), '#6ec8ff');
+    return sh.overflow ? took : d;
+  }
+  /** Shield regen and lifetime (slice 4b), once per frame from update(). */
+  tickShield(dt) {
+    const sh = this.shield;
+    if (!sh) return;
+    if ((sh.t -= dt) <= 0) { this.shield = null; return; }
+    sh.v = Math.min(sh.max, sh.v + sh.regen * dt);
+  }
+  /** A cast's HP cost (slice 4b recoil): taken directly, not through hurt (no invulnerability, flash, sound or kick); never below 1 HP. */
+  payHp(n) {
+    const before = this.hp;
+    this.hp = Math.max(1, this.hp - n);
+    if (!this.benched && before - this.hp >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(before - this.hp), '#c9c9d6');
   }
 
   heal(amount) {
@@ -531,6 +563,7 @@ G.Player = class Player {
     if (this.dead) return;
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
+    this.tickShield(dt);
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
     if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);

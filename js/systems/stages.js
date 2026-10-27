@@ -88,8 +88,9 @@ G.Stages = (() => {
    * Move schema slice 4a (D30): `src` tags the application with its move id and `live` caps that move's live applications on this
    * stat; at the cap the move's oldest application is dropped and the new one added at full duration (even at the +-6 clamp). With a
    * `src`, the floating text only shows when the stage changed. Without them (every legacy caller) the behavior is as before.
+   * Slice 4b: `quiet` (with a src) never shows the text (the caster's commitment slow, S13). A src may name the caster too (move@Pokemon).
    */
-  function add(h, stat, n, dur = DUR, cap = MAX, src, live) {
+  function add(h, stat, n, dur = DUR, cap = MAX, src, live, quiet = false) {
     if (!STATS.includes(stat) || !n || h.dead) return false;
     const cur = stage(h, stat);
     if (src != null && live > 0) {
@@ -99,7 +100,7 @@ G.Stages = (() => {
       else if ((n > 0 && cur >= Math.min(MAX, cap)) || (n < 0 && cur <= -MAX)) return false;
       L.push({ n, t: dur, src });
       const now = stage(h, stat);
-      if (now !== cur) text(h, LABEL[stat] + ' ' + (now > 0 ? '+' : '') + now, n > 0 ? UP : DOWN);
+      if (now !== cur && !quiet) text(h, LABEL[stat] + ' ' + (now > 0 ? '+' : '') + now, n > 0 ? UP : DOWN);
       return true;
     }
     if (n > 0 && cur >= Math.min(MAX, cap)) return false;
@@ -199,6 +200,12 @@ G.Stages = (() => {
   }
 
   function clear(h) { h.stg = h.stgRoll = null; }
+  /** Remove every own application tagged `src` on `h` (slice 4b: a commitment slow ending early, with its instance or on a swap). */
+  function drop(h, src) {
+    const g = h.stg; if (!g) return;
+    for (const s in g) { g[s] = g[s].filter(a => a.src !== src); if (!g[s].length) delete g[s]; }
+    if (!Object.keys(g).length) h.stg = null;
+  }
 
   /** Active stages for the HUD / debug: [{ stat, label, stage }] for every stat that is not at 0. */
   function list(h) {
@@ -207,6 +214,6 @@ G.Stages = (() => {
     return out;
   }
 
-  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, procSelf, stripPositive, remaining, clear, list,
+  return { BASE, ladder, STATS, LABEL, DUR, ROLL_GAP, MAX, TEAM_LIVE, TEAM_GRACE, stage, mul, add, tick, speedMul, procMove, procSelf, stripPositive, remaining, clear, drop, list,
     teamAdd, teamTick, teamSum, teamTimer, teamClear, UP, DOWN };
 })();

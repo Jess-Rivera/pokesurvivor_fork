@@ -13,12 +13,13 @@
 G.MoveRoute = (() => {
   const on = /[?&]dev\b/.test(location.search) && /[?&]newcombat\b/.test(location.search);
   const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower',     // 3c / 3d
-    'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze']);                        // 4a riders
+    'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze',                          // 4a riders
+    'swords-dance', 'dragon-dance', 'aqua-ring', 'substitute', 'dragon-rage', 'hex', 'thunderbolt']);               // 4b self-casts, specials, chains
   const routed = id => on && !G.Coop.active && ROUTED.has(id);
   let owner = null;
 
   function tick(dt, pl, now) {
-    if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes would ride a body that left the field
+    if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
     owner = pl;
     const C = G.Camera;
     G.MoveSim.setView({ x: C.left(), y: C.top(), w: C.w, h: C.h });

@@ -8,12 +8,24 @@
  * time, wall, offScreen and ownerDeath; pierce; hit policies oncePerInstance and interval; payload through G.MoveEffects.
  * Slice 4a: every landed enemy hit emits 'move:hit', with dmg 0 when the payload has riders only (String Shot).
  * Slice 3d: destructible props share the collision sweep (solid ones spend pierce, grass never does), and a routing filter.
+ * Slice 4b: cast-time effects through G.MoveEffects.applyCast (self-casts, recoil, shield, setWeather), the cast waits while
+ * G.MoveEffects.canCast says no (P3), caster-state commitments (S13) and sequential chain hops (D15, S7, S9, S15).
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
- *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list()
+ *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
+ *
+ * Commitments (casterState.commitment, slice 4b S13): cooldown { type: freeze, id, t } holds the named slot timers of the caster
+ * (no id = all of them, inactive slots included) and a frozen slot neither recharges nor casts; when the freeze ends the casting
+ * slot is armed at max(0.05, cd x cdMul) from that moment. movement { type, t }: slowed is a quiet -2 Speed stage on the caster
+ * (source move id plus caster, cap 1), rooted sets owner.mvRoot (player.js reads it as move speed 0). t absent = until the cast's
+ * instances end; seconds; or untilEffectEnd = while the cast's shield lives. Every commitment also ends on swap-out (clear) or faint.
+ * Chains (D15): an instance starts at most one chain, from the cast target when it is among the hits, else the first enemy hit.
+ * Hop k picks the nearest live enemy within hopRange of the enemy hit at hop k - 1, never that enemy; enemies this chain has not
+ * hit yet come first (S15, Jess 2026-10-27), and only when none is in range may it revisit one (so two enemies ping-pong).
+ * Hops resolve in the same step, ignore the hit policy and pierce, and emit 'move:hit' with hop k and the previous position.
  *
  * Timing conventions (slice 3c, Jess 2026-10-26): a root instance takes its first step in its cast frame (S9); age advances
  * before collision, so an endOn time T instance collides on ceil(T / dt) steps; time comparisons allow EPS for float drift.
@@ -21,7 +33,7 @@
 G.MoveSim = (() => {
   const TAU = Math.PI * 2, EPS = 1e-9, RETRY = 0.05, OFF_MARGIN = 260;
   const PROP_R = 14;     // largest destructible prop radius (world.js grass), the broad-phase pad for the prop query
-  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true;
+  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true, cms = [];
 
   const isProp = x => x.destructible === true;     // world props carry it, enemies never do
   const rangeOf = def => (def.delivery.range != null ? def.delivery.range : G.MoveResolver.TUNING.RANGE);
@@ -83,26 +95,86 @@ G.MoveSim = (() => {
     if (G.Status.stunned(o)) { slot.t = RETRY; return null; }       // a stunned owner casts nothing; the move stays ready
     const pick = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
     if (!pick) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
+    if (!G.MoveEffects.canCast(def, o)) { slot.t = RETRY; return null; }     // P3: the cost would kill, or a shield is live; cooldown not spent
     slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));                 // D3
     if (G.Status.fizzle(o, rng)) return null;                         // fizzle spends the cooldown
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, serial: ++castSerial };
+    const self = G.MoveEffects.applyCast(def, cast, rng);             // recoil, shield, self stats, heal over time, setWeather (4b)
+    const roots = [];
     if (def.space) {
       const n = Math.max(1, def.space.count || 1);
-      for (let i = 0; i < n; i++) spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i);
+      for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
     }
+    commit(o, slot, def, roots, self.shield);
     G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
     return cast;
   }
 
+  // ---- caster-state commitments (slice 4b, S13) ----
+  const lifeOf = def => { const c = (def.delivery.endOn || []).find(c => c.time != null); return c ? c.time : 0; };
+  function commit(o, slot, def, roots, shield) {
+    const cs = def.casterState && def.casterState.commitment;
+    if (!cs) return;
+    const src = G.MoveEffects.srcOf(def, o);
+    for (const part of ['cooldown', 'movement']) {
+      const c = cs[part];
+      if (!c) continue;
+      const old = cms.findIndex(m => m.src === src && m.part === part);     // a recast replaces this caster's own commitment
+      if (old >= 0) cms.splice(old, 1);
+      const m = { o, slot, def, src, part, type: c.type, ids: c.id == null ? null : new Set([].concat(c.id)), left: Infinity, insts: null, shield: null };
+      if (c.t == null) { if (roots.length) m.insts = roots; else m.left = lifeOf(def); }     // default: the parent's lifetime
+      else if (c.t === 'untilEffectEnd') m.shield = shield;
+      else m.left = c.t;
+      cms.push(m);
+      if (part === 'movement' && c.type === 'slowed') {     // a quiet stage that ends by itself, and is dropped early by release()
+        const dur = isFinite(m.left) ? m.left : m.shield ? m.shield.t : lifeOf(def);
+        G.Stages.add(o, 'spe', -2, dur, G.Stages.MAX, src, 1, true);
+      }
+    }
+    rootOf(o);
+  }
+  function over(m) {
+    if (m.o.dead || m.left <= EPS) return true;
+    if (m.insts) return m.insts.every(i => i.done);
+    if (m.left === Infinity) return !m.shield || m.o.shield !== m.shield;     // untilEffectEnd: expired, broken, swap or faint
+    return false;
+  }
+  function release(m) {
+    if (m.part === 'cooldown' && (!m.ids || m.ids.has(m.def.id))) m.slot.t = Math.max(0.05, m.def.cd * (m.o.cdMul || 1));     // armed from now
+    if (m.part === 'movement' && m.type === 'slowed') G.Stages.drop(m.o, m.src);
+  }
+  const rootOf = o => { o.mvRoot = cms.some(m => m.o === o && m.part === 'movement' && m.type === 'rooted'); };
+  function upkeepCommits(dt, o) {
+    if (!cms.length) return;
+    for (const m of cms) if (m.o === o) m.left -= dt;
+    const done = cms.filter(m => m.o === o && over(m));
+    if (!done.length) return;
+    cms = cms.filter(m => !done.includes(m));
+    done.forEach(release);
+    rootOf(o);
+  }
+  const frozen = (o, id) => cms.some(m => m.o === o && m.part === 'cooldown' && (!m.ids || m.ids.has(id)));
+
   function tick(dt, o, now) {
-    if (!o.dead) {
+    if (o.dead) endOwner(o);                                          // a faint ends the caster's commitments, heal over time and shield
+    else {
+      upkeepCommits(dt, o);
+      G.MoveEffects.upkeep(dt, o);
       const act = o.activeGroup();
-      for (const g of o.slots) for (const slot of g) {
+      // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
+      // bonded group fires together); the inactive slots run after it, so a freeze cast this frame already holds them.
+      const hold = cms.length ? new Set(act.filter(sl => frozen(o, sl.id))) : null;
+      for (const slot of act) {
         const def = G.MoveDefs[slot.id];
         if (!def || !routed(slot.id) || def.persistent || def.cd == null) continue;       // persistent upkeep arrives with orbits (slice 4c)
-        if (g !== act) { if (slot.t > 0) slot.t = Math.max(0, slot.t - dt); continue; }     // inactive slots recharge too
+        if (hold && hold.has(slot)) continue;
         slot.t -= dt;
         if (slot.t <= EPS) castSlot(o, slot, def, now);
+      }
+      for (const g of o.slots) if (g !== act) for (const slot of g) {     // inactive slots recharge too
+        const def = G.MoveDefs[slot.id];
+        if (!def || !routed(slot.id) || def.persistent || def.cd == null || frozen(o, slot.id)) continue;
+        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);
       }
     }
     step(dt, now);
@@ -173,11 +245,44 @@ G.MoveSim = (() => {
       inst.hits.set(key, { t: inst.age, leg: 0 });
       go.push(e);
     }
+    const struck = [];
     for (const e of go) {
       if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); continue; }     // props emit no 'move:hit' (enemy-only event)
       if (e.dead) continue;
       const r = G.MoveEffects.applyHit(inst, e, 0, rng);     // always a result: a riders-only hit still counts (4a, P4)
       G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
+      struck.push(e);
+    }
+    if (struck.length && inst.spec.space.chainHops && !inst.chained) {     // S9: the cast target starts the chain when it was struck, else the first enemy hit
+      inst.chained = true;
+      chain(inst, struck.includes(inst.cast.target) ? inst.cast.target : struck[0]);
+    }
+  }
+
+  /** D15, S15: the next hop from prev, never prev itself; an enemy this chain has not hit yet first, else the nearest revisit. */
+  function hopFrom(prev, R, seen) {
+    let fresh = null, fd = Infinity, again = null, ad = Infinity;
+    G.EnemyMgr.queryCircleEach(prev.x, prev.y, R, e => {
+      if (e === prev || e.dead || e.remote) return;
+      const d = Math.hypot(e.x - prev.x, e.y - prev.y);
+      if (d > R + EPS) return;
+      const better = (bd, b) => d < bd - EPS || (Math.abs(d - bd) <= EPS && e.id < b.id);
+      if (!seen.has(e)) { if (better(fd, fresh)) { fresh = e; fd = d; } }
+      else if (better(ad, again)) { again = e; ad = d; }
+    });
+    return fresh || again;
+  }
+  function chain(inst, origin) {
+    const sp = inst.spec.space, seen = new Set([origin]);
+    let prev = origin;
+    for (let k = 1; k <= sp.chainHops; k++) {     // bounded by chainHops, so no chain can run away
+      const next = hopFrom(prev, sp.hopRange, seen);
+      if (!next) return;
+      const r = G.MoveEffects.applyHit(inst, next, k, rng);
+      G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: next.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult,
+        x: next.x, y: next.y, hop: k, fromX: prev.x, fromY: prev.y });
+      seen.add(next);
+      prev = next;
     }
   }
 
@@ -219,12 +324,25 @@ G.MoveSim = (() => {
     insts = insts.filter(i => !i.done);
   }
 
+  /** Swap-out or faint (S1, S13): end the owner's commitments (a frozen casting slot is armed now), heal over time and shield. */
+  function endOwner(o) {
+    const mine = cms.filter(m => m.o === o);
+    if (mine.length) { cms = cms.filter(m => m.o !== o); mine.forEach(release); }
+    o.mvRoot = false;
+    G.MoveEffects.endSelf(o);
+  }
+  function clear(o) {
+    if (o) { insts = insts.filter(i => i.cast.owner !== o); endOwner(o); }
+    else { insts = []; cms = []; G.MoveEffects.endSelf(null); }     // run start or back to the menu: fresh Pokemon objects
+  }
+
   return {
-    tick, step,
+    tick, step, clear,
     setRng: fn => { rng = fn || Math.random; },
     setView: v => { view = v || null; },
     setFilter: fn => { routed = fn || (() => true); },     // slice 3d: the game passes its routed-id check; a rejected slot is never touched
-    clear: o => { insts = o ? insts.filter(i => i.cast.owner !== o) : []; },
-    list: () => insts
+    list: () => insts,
+    commits: o => cms.filter(m => !o || m.o === o).map(m => ({ moveId: m.def.id, part: m.part, type: m.type, left: m.left,
+      until: m.insts ? 'instance' : m.shield ? 'effect' : 'time' }))     // dev overlay and harness (plain data)
   };
 })();

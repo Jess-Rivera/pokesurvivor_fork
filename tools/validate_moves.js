@@ -122,6 +122,8 @@ function validateMoves(moves) {   // -> { id: [errors] } for the failing ones
     if (moves[id].id !== id) err('id', 'does not match its key "' + id + '"');
     edges[id] = (moves[id].payload || []).filter(e => e && e.t === 'emit' && typeof e.move === 'string').map(e => e.move);
     for (const to of edges[id]) if (!moves[to]) err('payload', 'emit refers to unknown move "' + to + '"');
+    const fz = moves[id].casterState && moves[id].casterState.commitment && moves[id].casterState.commitment.cooldown;   // slice 4b: freeze names real moves
+    if (fz && fz.id != null) for (const to of [].concat(fz.id)) if (!moves[to] && to !== id) err('casterState.commitment.cooldown.id', 'freeze names unknown move "' + to + '"');
     if (errs.length) bad[id] = errs;
   }
   if (hasCycle(edges)) bad['(emit graph)'] = ['moves emit each other in a cycle'];
@@ -162,6 +164,14 @@ function selfTest() {
     ['unknown special handler', m => (m.payload.push({ t: 'special', handler: 'nope' }), m), 'unknown handler "nope"'],
     ['stat without scope', m => (m.payload.push({ t: 'stat', stat: 'atk', stages: 1, side: 'self' }), m), 'scope: required'],
     ['emit of an unknown move id', m => (m.payload.push({ t: 'emit', move: 'ghost', trigger: 'cast' }), m), 'unknown move "ghost"'],
+    ['commitment with default arguments passes', m => (m.casterState = { commitment: { movement: { type: 'slowed' }, cooldown: { type: 'freeze' } } }, m), null],
+    ['commitment with seconds and an id list passes', m => (m.casterState = { commitment: { movement: { type: 'rooted', t: 0.5 }, cooldown: { type: 'freeze', id: ['x'], t: 2 } } }, m), null],
+    ['retired cooldown value tick', m => (m.casterState = { commitment: { cooldown: 'tick' } }, m), 'must be an object'],
+    ['freeze of an unknown move id', m => (m.casterState = { commitment: { cooldown: { type: 'freeze', id: 'ghost' } } }, m), 'unknown move "ghost"'],
+    ['default freeze needs an endOn time', m => (m.casterState = { commitment: { cooldown: { type: 'freeze' } } }, m.delivery.endOn = [{ ownerDeath: true }], m), 'freeze-default-needs-time'],
+    ['untilEffectEnd needs a shield', m => (m.casterState = { commitment: { cooldown: { type: 'freeze', t: 'untilEffectEnd' } } }, m), 'freeze-effect-needs-shield'],
+    ['untilEffectEnd beside a shield passes', () => { const m = sub(); m.casterState = { commitment: { cooldown: { type: 'freeze', id: 'x', t: 'untilEffectEnd' } } }; return m; }, null],
+    ['old chain field name rejected', m => (m.payload.push({ t: 'special', handler: 'chainDamageFalloff', chainDamageFraction: 0.33 }), m), 'chainDamageFraction: unknown field'],
   ];
   let fails = 0;
   for (const [name, mut, expect] of cases) {

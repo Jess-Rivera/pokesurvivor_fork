@@ -12,7 +12,7 @@ const M = [
   ['cap off by one', 'stages', [['if (mine >= live) L.splice(', 'if (mine > live) L.splice(']]],
   ['cap drops the newest', 'stages', [['if (mine >= live) L.splice(L.findIndex(a => a.src === src), 1);', 'if (mine >= live) L.splice(L.map(a => a.src).lastIndexOf(src), 1);']]],
   ['team cap ignored', 'stages', [['if (mine >= live) { const i', 'if (mine >= TEAM_LIVE) { const i']]],
-  ['stage text every time', 'stages', [['if (now !== cur) text(', 'text(']]],
+  ['stage text every time', 'stages', [['if (now !== cur && !quiet) text(', 'text(']]],
   ['root not applied', 'status', [['if (rooted(h)) return 0;', '']]],
   ['root applied to the player', 'status', [['function rooted(h) { return !!h.stTrap && !h.isPlayer; }', 'function rooted(h) { return !!h.stTrap; }']]],
   ['strong hosts not cut', 'status', [["kind === 'freeze' || kind === 'sleep' || (kind === 'trap' && !h.isPlayer)", "kind === 'freeze' || kind === 'sleep'"]]],

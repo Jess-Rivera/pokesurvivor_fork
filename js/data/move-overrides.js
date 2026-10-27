@@ -19,7 +19,7 @@
     'toxic-spikes': { cd: 1.1, why: 'no cd set yet (legacy 1.1)' },
     'hail':         { cd: 1.2, why: 'no cd set yet (legacy 1.2)' },
     'will-o-wisp':  { cd: 3.5, why: 'no cd set yet (legacy 3.5)' },
-    'substitute':   { cd: 4, why: 'no cd set yet (legacy 4)' },
+    'substitute':   { cd: 12, why: 'slice 4b S1: 12 s, armed when the 4 s shield ends (cooldown freeze); legacy 4' },
     'dragon-rage':  { cd: 3.5, why: 'no cd set yet (legacy 1)' },
     'bug-bite':     { cd: 0.42, why: 'no cd set yet (legacy 0.42)' },
     'shadow-ball':  { cd: 1.2, why: 'no cd set, needs longer to make up for benefits' }
