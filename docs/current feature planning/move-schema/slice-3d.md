@@ -23,8 +23,10 @@ Without the flag: all existing harnesses pass and a short play on dev.html?dev s
 ## Exclusions
 Upgrades, riders, anything past the 3c axis set.
 
-## Decisions needed
-None.
+## Decisions (Jess, 2026-10-27, accepted as recommended)
+- D1 routed list is the 7 canaries only. D2 player moves damage props and solid destructible props spend pierce (grass does not); the cast gate stays enemy-only. D3 Tackle reach stays as built, judged by feel, any fix is data. D4 ranged boss priority stays gone.
+- ?newcombat only counts with ?dev. Single-player only.
+- Found in review: the sim has no routing filter (7 moves would throw), legacy and sim would both tick a routed slot's timer, the HUD ring reads the legacy cd, Player.cast side effects (Life Orb, animation, sound) and the HUD flash need glue off 'move:cast', and the prop pass is missing. All are covered in slice-3d-codehandoff.md, which is the build plan.
 
 ## Proceed when
 Jess plays the core set and signs off. Feel issues go to the backlog as issues per docs/PM-WORKFLOW.md (the assistant drafts the commands, Jess runs them).
