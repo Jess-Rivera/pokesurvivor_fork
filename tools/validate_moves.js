@@ -10,9 +10,9 @@ require(path.join(root, 'js/data/move-attributes.js'));
 require(path.join(root, 'js/data/moves-generated.js'));
 const A = G.MoveAttrs, RESOLVED = process.argv.includes('--resolved');
 let DATA = G.MoveData;
-if (RESOLVED) {   // handlers is the resolver's own addition, not a grammar field, so strip it before checking
+if (RESOLVED) {   // handlers and basePower are the resolver's own additions, not grammar fields, so strip them before checking
   for (const f of ['move-overrides', 'move-handler', 'move-resolver']) require(path.join(root, 'js/data', f + '.js'));
-  DATA = structuredClone(G.MoveDefs); for (const m of Object.values(DATA)) delete m.handlers;
+  DATA = structuredClone(G.MoveDefs); for (const m of Object.values(DATA)) { delete m.handlers; delete m.basePower; }
 }
 
 // ---------- rules: conditions over paths ----------
@@ -148,6 +148,11 @@ function selfTest() {
     ['trigger with no end condition', m => (m.delivery.trigger = 'contact', delete m.delivery.endOn, m), 'trigger-needs-end'],
     ['returns with an arc shape', m => (m.delivery.motion = 'returns', m.delivery.moveSpeed = 300, m), 'returns-needs-point-or-linear'],
     ['spread beside count 1 is kept', m => (m.space.spread = 0.2, m), null],
+    ['persistent flag passes', m => (m.persistent = true, m), null],
+    ['delay and range on delivery pass', m => (m.delivery.delay = 0.4, m.delivery.range = 210, m), null],
+    ['locationPick beside location passes', m => (m.delivery.targeting = 'location', m.delivery.locationPick = 'caster', m), null],
+    ['locationPick without location targeting', m => (m.delivery.locationPick = 'enemy', m), 'pick-needs-location'],
+    ['delay under casterState is retired', m => (m.casterState = { delay: 0.4 }, m), 'casterState.delay: unknown field'],
     ['UNLIMITED outside pierce', m => (m.space.count = A.UNLIMITED, m), 'UNLIMITED is not allowed here'],
     ['leftover UNLIMITED string', m => (m.space.pierce = 'UNLIMITED', m), 'space.pierce: must be a number'],
     ['unknown formula op', () => { const m = sub(); m.payload[1].amount.op = 'power'; return m; }, 'unknown operation "power"'],

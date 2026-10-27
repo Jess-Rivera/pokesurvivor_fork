@@ -4,17 +4,17 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-10-26 (Claude Desktop, coding chat).
 
 ## Where we are
-- ON BRANCH feature-test/new-move-schema. Slices 1 and 2 of 7 BUILT. Both change no gameplay and nothing new is loaded by the game.
-- WORKFLOW (per slice): a planning chat writes slice-n.md and slice-n-codehandoff.md, a separate CODING chat builds from those files only. Docs: docs/current feature planning/move-schema/ (slice-overview.md first, then only the slice files being worked).
-- Slice 2 built: js/data/move-overrides.js (14 empty cd slots), move-handler.js (6 handler declarations), move-resolver.js (G.MoveResolver.resolve, G.MoveDefs), tools/move_parity.js (self-test 9/9, parity, timing; report in docs/current feature planning/move-parity-report.md), hooked into tools/check.js. check.js: 17/17 harnesses, export current, 63/63 valid, parity ok.
-- Parity: power matches legacy for all 63. cd: 45 by formula; 5 intended differences (fire-spin, leaf-storm, flame-wheel, bug-buzz last while active so get no cd; gust is now a cast with a normal 0.5 cd); 14 unset (12 status moves plus Dragon Rage, Night Shade): empty entries in move-overrides.js, fill in `cd` to set. Details: slice-2.md.
-- Formula: cd = ANCHOR_CD x (ANCHOR_PP / PP) ^ BETA (0.5, 35, 1; constants at the top of move-resolver.js, G.MoveResolver.TUNING), 3 decimals, for Power above 0. No damage normalization. No cd for moves that last while active (endOn notActive). Resolver skips turnRate, aimTrack, returnHits defaults; tools/validate_moves.js --resolved checks the output (63/63). Timing: 1000 synthetic moves resolve in about 16 ms.
+- ON BRANCH feature-test/new-move-schema. Slices 1, 2 and 3a BUILT. None change gameplay; the game still loads none of the new move files.
+- Planning docs (all in docs/current feature planning/): combat-architecture.md (APPROVED), combat-validation-and-handoff.md, move-consistency-review.md. Section 9 of the review is the single source for every decision and open item; read it before any slice.
+- Slice 3a built: grammar gained persistent, delivery.delay, delivery.range, delivery.locationPick, stat defaults (duration 6, maxStacks 6); casterState.delay retired. Resolver: persistent flag replaces the endOn guess for cd, derives basePower (power x accuracy / 100), fills range (TUNING.RANGE 420) and locationPick (enemy), TUNING.INSTANCE_CAP 8 (unused until 4d).
+- Data: Quick Attack returnHits out, Karate Chop fighting, Meteor Mash emit count 1, Toxic Spikes interval emitter (0.25), six novas start 1 with grow.max = old radius, Rock Slide delay on the instance, persistent on fire-spin, leaf-storm, bug-buzz, night-shade, toxic, flame-wheel, ranges Razor Leaf 210 and Bonemerang 230, stat chances restored (Metal Claw 10, Flash Cannon 10, Shadow Ball 20).
+- check.js: 17/17 harnesses, export current, 63/63 valid, resolved 63/63 valid. ONE known failure: move_parity self-test "empty override" hard-codes hail (test defect, fix not yet done).
 
 ## Next (in order)
-1. Jess: set the 14 cds in move-overrides.js when decided (empty entries wait there), then mark the parity report (intended / regression).
-2. Jess: commit + push (new files, tools/check.js, report, STATE.md, DEVLOG.md, slice docs).
-3. Slice 3 is a re-plan (new combat path from the ground up), in a new planning chat. Later: damage simulator script (decides if normalization is needed), #11 wire lean learnsets, RESUME gyms (#5).
-4. Jess may try a local LLM (gemma4:12b) on one coding task.
+1. Jess: commit + push (grammar, resolver, tools, described.json, generated file, reports, docs).
+2. Decide: fix the move_parity hail self-test; add the review section 2.4 validator rules; deep-freeze G.MoveDefs (architecture I2). All three were left out of 3a.
+3. Slice 3b (geometry module, G.MoveGeom) is next; rewrite slice-3 to slice-7 files from architecture section G first.
+4. Still open: maxStacks for Leaf Storm and Metal Claw (before 4a), Gust per-shot spread (before 4d), six unowned issues (review 9.7). Set locationPick per move if wanted (Rock Slide, Spikes, Toxic Spikes, Will-O-Wisp use the enemy default).
 
 ## Board note
 - Treat #2 as OPEN. #4 closing as not relevant. #3 closes once #2 consumes described.json. #11 has its dataset.

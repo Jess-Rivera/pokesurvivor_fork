@@ -21,5 +21,7 @@
     'will-o-wisp':  { cd: 3.5, why: 'no cd set yet (legacy 3.5)' },
     'substitute':   { cd: 4, why: 'no cd set yet (legacy 4)' },
     'dragon-rage':  { cd: 3.5, why: 'no cd set yet (legacy 1)' },
+    'bug-bite':     { cd: 0.42, why: 'no cd set yet (legacy 0.42)' },
+    'shadow-ball':  { cd: 1.2, why: 'no cd set, needs longer to make up for benefits' }
   };
 })();

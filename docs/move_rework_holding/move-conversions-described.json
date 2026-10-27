@@ -361,6 +361,7 @@
         "targeting": "direction",
         "motion": "returns",
         "moveSpeed": 330,
+        "range": 210,
         "returnHits": "outAndBack",
         "endOn": [
           {
@@ -688,7 +689,7 @@
       "kind": "melee",
       "balanceClass": "melee",
       "feel": "Normal-type Tackle, focused narrow chop (arc 1.2, narrowest melee) with higher knockback (110 vs Tackle's 90). Static cone, aims at nearest. 'Increased crit' flavor dropped (no-move-crit lean). Type kept normal per Jess. NOTE: seed's flavor_text was a 'this move can't be used' error string, blanked.",
-      "type": "normal",
+      "type": "fighting",
       "category": "physical",
       "power": 50,
       "pp": 25,
@@ -861,7 +862,8 @@
           "stat": "spDef",
           "stages": -1,
           "side": "foe",
-          "scope": "individual"
+          "scope": "individual",
+          "chance": 20
         }
       ],
       "reviewStatus": "reviewed"
@@ -983,7 +985,8 @@
           "stat": "atk",
           "stages": 1,
           "side": "self",
-          "scope": "team"
+          "scope": "team",
+          "chance": 10
         },
         {
           "t": "knockback",
@@ -1031,7 +1034,8 @@
           "stat": "spDef",
           "stages": -1,
           "side": "foe",
-          "scope": "individual"
+          "scope": "individual",
+          "chance": 10
         }
       ],
       "reviewStatus": "reviewed"
@@ -1106,6 +1110,7 @@
         "targeting": "direction",
         "motion": "returns",
         "moveSpeed": 300,
+        "range": 230,
         "returnHits": "outAndBack",
         "endOn": [
           {
@@ -1196,7 +1201,7 @@
         "repositionMode": "swept",
         "dashMult": 10,
         "returnToOrigin": true,
-        "returnHits": "outAndBack",
+        "returnHits": "out",
         "endOn": [
           {
             "returned": true
@@ -1271,6 +1276,7 @@
       "pp": 15,
       "accuracy": 85,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user traps the target inside a fierce vortex of fire that inflicts damage for four to five turns.",
       "space": {
         "shape": "radial",
@@ -1327,7 +1333,7 @@
       "space": {
         "shape": "radial",
         "radArc": 6.2832,
-        "radRadius": 250
+        "radRadius": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -1336,7 +1342,8 @@
         "grow": {
           "growSpeed": 625,
           "dim": "radRadius",
-          "per": "time"
+          "per": "time",
+          "max": 250
         },
         "endOn": [
           {
@@ -1370,6 +1377,7 @@
       "pp": 5,
       "accuracy": 90,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user whips up a storm of leaves around the target. The recoil from this move harshly lowers the user's Sp. Atk stat.",
       "space": {
         "shape": "radial",
@@ -1439,7 +1447,7 @@
             "space": {
               "shape": "radial",
               "radArc": 6.2832,
-              "radRadius": 220
+              "radRadius": 1
             },
             "delivery": {
               "anchor": "world",
@@ -1448,7 +1456,8 @@
               "grow": {
                 "growSpeed": 550,
                 "dim": "radRadius",
-                "per": "time"
+                "per": "time",
+                "max": 220
               },
               "endOn": [
                 {
@@ -1721,7 +1730,7 @@
       "space": {
         "shape": "radial",
         "radArc": 6.2832,
-        "radRadius": 380
+        "radRadius": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -1730,7 +1739,8 @@
         "grow": {
           "growSpeed": 760,
           "dim": "radRadius",
-          "per": "time"
+          "per": "time",
+          "max": 380
         },
         "endOn": [
           {
@@ -1758,6 +1768,7 @@
       "pp": 10,
       "accuracy": 90,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "A move that leaves the target badly poisoned. Its poison damage worsens every turn.",
       "delivery": {
         "anchor": "caster",
@@ -1823,7 +1834,7 @@
       "space": {
         "shape": "radial",
         "radArc": 6.2832,
-        "radRadius": 200
+        "radRadius": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -1832,7 +1843,8 @@
         "grow": {
           "growSpeed": 500,
           "dim": "radRadius",
-          "per": "time"
+          "per": "time",
+          "max": 200
         },
         "endOn": [
           {
@@ -1923,6 +1935,7 @@
       "pp": 10,
       "accuracy": 100,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user vibrates to generate a damaging sound wave. This may also lower the target's Sp. Def stat.",
       "space": {
         "shape": "radial",
@@ -1980,14 +1993,12 @@
         "anchor": "world",
         "targeting": "location",
         "motion": "falls",
+        "delay": 0.4,
         "endOn": [
           {
             "time": 0.2
           }
         ]
-      },
-      "casterState": {
-        "delay": 0.4
       },
       "hitPolicy": "oncePerInstance",
       "payload": [
@@ -2129,7 +2140,7 @@
       "space": {
         "shape": "radial",
         "radArc": 3.1416,
-        "radRadius": 130
+        "radRadius": 1
       },
       "cardLock": [
         "radArc"
@@ -2141,7 +2152,8 @@
         "grow": {
           "growSpeed": 650,
           "dim": "radRadius",
-          "per": "time"
+          "per": "time",
+          "max": 130
         },
         "endOn": [
           {
@@ -2173,7 +2185,7 @@
       "space": {
         "shape": "radial",
         "radArc": 6.2832,
-        "radRadius": 200
+        "radRadius": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -2182,7 +2194,8 @@
         "grow": {
           "growSpeed": 500,
           "dim": "radRadius",
-          "per": "time"
+          "per": "time",
+          "max": 200
         },
         "endOn": [
           {
@@ -2214,6 +2227,7 @@
       "pp": 15,
       "accuracy": 100,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user makes the target see a frightening mirage. It inflicts damage equal to the user's level.",
       "space": {
         "shape": "radial",
@@ -2315,8 +2329,8 @@
       "payload": [
         {
           "t": "emit",
-          "trigger": "termination",
-          "count": 1,
+          "trigger": "interval",
+          "every": 0.25,
           "move": {
             "kind": "nova",
             "space": {
@@ -2437,7 +2451,7 @@
         {
           "t": "emit",
           "trigger": "enemyHit",
-          "count": 3,
+          "count": 1,
           "move": {
             "kind": "projectile",
             "space": {
@@ -2669,6 +2683,7 @@
       "pp": 25,
       "accuracy": 100,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user attacks by cloaking itself in fire and charging at the target. This may also leave the target with a burn.",
       "delivery": {
         "anchor": "caster",

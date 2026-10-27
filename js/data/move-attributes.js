@@ -44,7 +44,7 @@
     radArc: num({ gt: 0, max: 6.2832 }), radRadius: num({ gt: 0 }),
     linLength: num({ gt: 0 }), linWidth: num({ gt: 0 }),
     count: int({ min: 1, d: 1 }),
-    spread: num({ min: 0, max: 6.2832, d: 0 }),   // kept in the data at any count; the executor ignores it when count is 1
+    spread: num({ min: 0, max: 6.2832, d: 0 }),   // TOTAL fan angle across all instances, evenly spaced; at 2 pi or more they are spaced 2 pi / count around the circle; kept in the data at any count, ignored when count is 1
     pierce: int({ min: 0, u: true, d: UNLIMITED }),   // omitted = UNLIMITED; 0 = dies on the first hit; n = dies after passing n enemies
     chainHops: int({ min: 1 }), hopRange: num({ gt: 0 }),
     splash: obj({ radius: num({ min: 0, d: 0 }), falloff: num({ min: 0, max: 1, d: 0 }),
@@ -64,6 +64,9 @@
   const DELIVERY = obj({
     anchor: en(['caster', 'target', 'world', 'self']),
     targeting: en(['direction', 'nearest', 'selected', 'location', 'self', 'none']),
+    locationPick: en(['caster', 'enemy']),   // only with targeting location: where it lands. Absent = enemy (a random enemy within range); the resolver writes it
+    range: num({ gt: 0 }),   // px: nearest acquisition, location reach, returns turnaround, max reposition distance. Absent = the resolver fills TUNING.RANGE where one of those applies
+    delay: SECS,   // s: wind-up on the INSTANCE (meteor telegraph). No hitbox until it ends; endOn time counts from activation
     motion: en(['static', 'travels', 'falls', 'returns', 'orbits', 'repositions'], { d: 'static' }),
     moveSpeed: num({ gt: 0 }), angularSpeed: num({ gt: 0 }), orbitRadius: num({ gt: 0 }),
     path: obj({ curve: num(), oscillate: obj({ amplitude: num({ gt: 0 }), frequency: num({ gt: 0 }) }, ['amplitude', 'frequency']) }),
@@ -78,7 +81,7 @@
 
   // ---- caster state ----
   const CASTER = obj({
-    iframes: num({ min: 0 }), delay: num({ min: 0 }),
+    iframes: num({ min: 0 }),
     commitment: obj({ movement: en(['none', 'slowed', 'rooted']), cooldown: en(['tick', 'freeze']) }),
   });
 
@@ -104,7 +107,7 @@
     knockback: obj({ distance: num({ min: 0, d: 0 }), direction: en(['travel']) }, ['distance']),
     ailment: obj({ id: en(AILMENTS), chance: pct, side: SIDE, duration: SECS }, ['id', 'chance', 'side']),
     stat: obj({ stat: en(STATS), stages: int({ min: -6, max: 6 }), side: SIDE, scope: en(['caster', 'individual', 'team']),
-      chance: pct, duration: SECS, maxStacks: int({ min: 1 }) }, ['stat', 'stages', 'side', 'scope']),
+      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 6 }) }, ['stat', 'stages', 'side', 'scope']),   // duration (s) and maxStacks default to 6
     heal: obj({ amount: HEAL_AMOUNT, per: SECS, side: SIDE, duration: SECS }, ['amount', 'side']),
     shield: obj({ amount: { t: 'formula' }, max: { t: 'formula' }, regen: { t: 'formula' }, duration: SECS,
       absorbsAll: 'bool', overflow: 'bool', blocksStatus: 'bool' }, ['amount', 'duration']),
@@ -139,6 +142,7 @@
     { id: 'hits-need-return', when: { has: 'delivery.returnHits' }, then: { any: [motionIs('returns'), { eq: ['delivery.returnToOrigin', true] }] }, msg: 'returnHits needs motion returns or returnToOrigin true' },
     { id: 'interval-needs-rehit', when: { eq: ['hitPolicy', 'interval'] }, then: { has: 'rehit' }, msg: 'hitPolicy interval needs rehit' },
     { id: 'rehit-needs-interval', when: { has: 'rehit' }, then: { eq: ['hitPolicy', 'interval'] }, msg: 'rehit needs hitPolicy interval' },
+    { id: 'pick-needs-location', when: { has: 'delivery.locationPick' }, then: { eq: ['delivery.targeting', 'location'] }, msg: 'locationPick needs targeting location' },
     { id: 'trigger-needs-end', when: { has: 'delivery.trigger' }, then: { has: 'delivery.endOn' }, msg: 'a triggered instance needs an endOn condition so it cannot outlive its move (a timeout is optional: Spikes lasts until triggered)' },
     { id: 'self-has-no-shape', when: { eq: ['delivery.anchor', 'self'] }, then: { not: { has: 'space' } }, msg: 'anchor self is a shapeless cast and rejects space' },
   ];
@@ -150,6 +154,7 @@
     power: num({ min: 0, nullable: true }), pp: int({ min: 1 }), accuracy: int({ min: 1, max: 100, nullable: true }),
     priority: int({ min: -7, max: 7 }), flavor_text: { t: 'str', empty: true },   // source prose, blank for some moves
     cd: num({ gt: 0 }),   // optional hand override; otherwise derived from pp by the resolver
+    persistent: 'bool',   // true = lasts while the move is the active one: no cd, one live instance per slot (the resolver skips the cd formula). Absent = a cooldown move
     rehit: SECS, hitPolicy: en(['oncePerInstance', 'interval', 'onReentry'], { d: 'oncePerInstance' }),
     cardLock: list('str'), casterState: CASTER, space: SPACE, delivery: DELIVERY, payload: list({ t: 'ref', n: 'effect' }, { min: 1 }),
   }, ['id', 'name', 'balanceClass', 'type', 'category', 'power', 'pp', 'accuracy', 'priority', 'delivery', 'payload'],

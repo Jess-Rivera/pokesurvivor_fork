@@ -1,7 +1,7 @@
 /* ============ move-resolver.js, raw move facts to final move definitions (slice 2 of the move-schema rewrite, #2) ============
  * Eager at load: G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers). Tools call G.MoveResolver.resolve directly.
- * Order per move: grammar defaults (field d, except the ones only valid beside a parent field), derived values (only cd, and not for a move that lasts while active),
- * overrides, handler attachment. A field with no data and no behavior-carrying default is simply absent; combat ignores it.
+ * Order per move: grammar defaults (field d, except the ones only valid beside a parent field), derived values (cd for a move that is not persistent; range and locationPick where they apply),
+ * overrides, basePower, handler attachment. A field with no data and no behavior-carrying default is simply absent; combat ignores it.
  * Output is the new definition only: no kind, no flat projection in old field names, no damage normalization
  * (power stays the raw Power; whether normalization is needed waits for a damage simulator). Accuracy, flavor_text and
  * every other raw fact pass through untouched. The resolver checks only its own inputs and throws on an unknown override
@@ -10,15 +10,21 @@
  * GROUNDWORK: not listed in dev.html and read by nothing in the game yet. */
 (() => {
   const A = G.MoveAttrs;
-  // Cooldown tuning: cd = ANCHOR_CD * (ANCHOR_PP / PP) ^ BETA, for moves with Power above 0 that do not last while active (endOn notActive: their pacing is rehit or an emitter's every, not a cooldown).
+  // Cooldown tuning: cd = ANCHOR_CD * (ANCHOR_PP / PP) ^ BETA, for moves with Power above 0 that are not persistent (the data's persistent flag: their pacing is rehit or an emitter's every, not a cooldown).
   //   ANCHOR_CD  cooldown (s) of the anchor move, Tackle = 0.5
   //   ANCHOR_PP  PP of the anchor move, Tackle = 35
   //   BETA       exponent: 1.0 = pure 1/PP (equal sustained DPS where power x PP is constant); lower compresses long cooldowns (0.5 = square root)
-  const TUNING = { ANCHOR_CD: 0.5, ANCHOR_PP: 35, BETA: 1 };
+  //   RANGE         px, default delivery.range where it has meaning (nearest acquisition, location reach, returns turnaround, max reposition distance); a move's own delivery.range wins
+  //   INSTANCE_CAP  live placed objects per move slot with neither a time lifetime nor HP; the 9th removes the oldest (read by the executor, slice 4d)
+  const TUNING = { ANCHOR_CD: 0.5, ANCHOR_PP: 35, BETA: 1, RANGE: 420, INSTANCE_CAP: 8 };
   // Grammar defaults that are only valid beside a parent field (turn, aim and return rules), so they stay absent unless the data sets them.
   // shortcut: a hand list by name, revisit if the grammar gains another gated default (tools/validate_moves.js --resolved catches it).
   const GATED = new Set(['turnRate', 'aimTrack', 'returnHits']);
-  const lastsWhileActive = m => (m.delivery.endOn || []).some(e => e.notActive);
+  // shortcut: fills the move and its inline emit children one level deep, revisit if an inline move ever emits another inline move.
+  const fillDelivery = (d, t) => {
+    if (!('range' in d) && (d.targeting === 'nearest' || d.targeting === 'location' || d.motion === 'returns' || d.motion === 'repositions')) d.range = t.RANGE;
+    if (d.targeting === 'location' && !('locationPick' in d)) d.locationPick = 'enemy';
+  };
   const isObj = v => v !== null && typeof v === 'object';
 
   // Fill every absent field that has a grammar default `d`, walking the spec the way the validator does.
@@ -52,9 +58,12 @@
     for (const [id, src] of Object.entries(data)) {
       const m = structuredClone(src);
       defaults(A.MOVE, m);
-      if (!('cd' in m) && m.power > 0 && !lastsWhileActive(m)) m.cd = +(tuning.ANCHOR_CD * Math.pow(tuning.ANCHOR_PP / m.pp, tuning.BETA)).toFixed(3);   // 3 decimals like legacy moves.js
+      if (!('cd' in m) && m.power > 0 && !m.persistent) m.cd = +(tuning.ANCHOR_CD * Math.pow(tuning.ANCHOR_PP / m.pp, tuning.BETA)).toFixed(3);   // 3 decimals like legacy moves.js
+      fillDelivery(m.delivery, tuning);
+      for (const e of m.payload) if (e.t === 'emit' && isObj(e.move)) fillDelivery(e.move.delivery, tuning);
       const { why, ...fix } = overrides[id] || {};
       Object.assign(m, fix);
+      m.basePower = (m.power || 0) * (m.accuracy ?? 100) / 100;   // power x accuracy / 100, null power is 0
       const hs = [];
       for (const e of m.payload) if (e.t === 'special') {
         const h = handlers.byName[e.handler];

@@ -2,31 +2,24 @@
 
 Resolved cd and power (new, from js/data/move-resolver.js) against legacy js/data/moves.js (cd and dmg). Power of a status move is null or 0 in the new data and dmg 0 in legacy, both count as 0.
 
-- parity: 63 moves, cd differs on 19, power differs on 0 (cd source: 45 formula, 0 override, 18 none)
-- timing: resolve of 1000 synthetic moves took 13.8 ms; moves-generated.js is 37 KB for 63 moves, projected 593 KB at 1000
+- parity: 63 moves, cd differs on 12, power differs on 0 (cd source: 43 formula, 14 override, 6 none)
+- timing: resolve of 1000 synthetic moves took 23.8 ms; moves-generated.js is 38 KB for 63 moves, projected 596 KB at 1000
 
-## Differences (19)
+## Differences (12)
 
 | move | cd source | cd new | cd legacy | power new | power legacy | differs | note | Jess: intended / regression |
 |---|---|---|---|---|---|---|---|---|
-| swords-dance | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| agility | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| harden | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| aqua-ring | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| dragon-rage | none (no cd set) | - | 1 | 0 | 0 | cd  |  | |
-| dragon-dance | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
+| bug-bite | override | 0.42 | 0.875 | 60 | 60 | cd  |  | |
+| shadow-ball | override | 1.2 | 1.167 | 80 | 80 | cd  |  | |
+| dragon-rage | override | 3.5 | 1 | 0 | 0 | cd  |  | |
 | fire-spin | none (lasts while active) | - | 0.3 | 35 | 35 | cd  | intended: lasts while active, pacing is rehit 0.4 | |
 | leaf-storm | none (lasts while active) | - | 0.26 | 130 | 130 | cd  | intended: lasts while active, pacing is rehit 0.25 | |
 | gust | formula | 0.5 | 0.26 | 40 | 40 | cd  | intended: now a cast that emits 3 projectiles, normal cooldown (was an orbit with a 0.26 re-hit) | |
 | toxic | none (no cd set) | - | 0.3 | 0 | 0 | cd  |  | |
-| string-shot | none (no cd set) | - | 1.1 | 0 | 0 | cd  |  | |
+| string-shot | override | 0.5 | 1.1 | 0 | 0 | cd  |  | |
 | bug-buzz | none (lasts while active) | - | 1.75 | 90 | 90 | cd  | intended: lasts while active, pacing is rehit 0.5 | |
 | night-shade | none (no cd set) | - | 0.5 | 0 | 0 | cd  |  | |
-| spikes | none (no cd set) | - | 1.2 | 0 | 0 | cd  |  | |
-| toxic-spikes | none (no cd set) | - | 1.1 | 0 | 0 | cd  |  | |
-| hail | none (no cd set) | - | 1.2 | 0 | 0 | cd  |  | |
-| will-o-wisp | none (no cd set) | - | 3.5 | 0 | 0 | cd  |  | |
-| substitute | none (no cd set) | - | 4 | 0 | 0 | cd  |  | |
+| spikes | override | 1.1 | 1.2 | 0 | 0 | cd  |  | |
 | flame-wheel | none (lasts while active) | - | 0.28 | 60 | 60 | cd  | intended: lasts while active, fields laid every 0.12 (rehit 0.3) | |
 
 ## All moves
@@ -34,27 +27,27 @@ Resolved cd and power (new, from js/data/move-resolver.js) against legacy js/dat
 | move | cd source | cd new | cd legacy | power new | power legacy | differs | note | Jess: intended / regression |
 |---|---|---|---|---|---|---|---|---|
 | tackle | formula | 0.5 | 0.5 | 40 | 40 |  |  | |
-| swords-dance | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| agility | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
-| harden | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
+| swords-dance | override | 8 | 8 | 0 | 0 |  |  | |
+| agility | override | 8 | 8 | 0 | 0 |  |  | |
+| harden | override | 8 | 8 | 0 | 0 |  |  | |
 | water-gun | formula | 0.7 | 0.7 | 40 | 40 |  |  | |
 | ember | formula | 0.7 | 0.7 | 40 | 40 |  |  | |
 | hydro-pump | formula | 3.5 | 3.5 | 110 | 110 |  |  | |
 | vine-whip | formula | 0.7 | 0.7 | 45 | 45 |  |  | |
-| aqua-ring | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
+| aqua-ring | override | 8 | 8 | 0 | 0 |  |  | |
 | razor-leaf | formula | 0.7 | 0.7 | 55 | 55 |  |  | |
 | giga-drain | formula | 1.75 | 1.75 | 75 | 75 |  |  | |
 | body-slam | formula | 1.167 | 1.167 | 85 | 85 |  |  | |
 | poison-sting | formula | 0.5 | 0.5 | 15 | 15 |  |  | |
-| bug-bite | formula | 0.875 | 0.875 | 60 | 60 |  |  | |
+| bug-bite | override | 0.42 | 0.875 | 60 | 60 | cd  |  | |
 | rock-throw | formula | 1.167 | 1.167 | 50 | 50 |  |  | |
 | ice-beam | formula | 1.75 | 1.75 | 90 | 90 |  |  | |
 | karate-chop | formula | 0.7 | 0.7 | 50 | 50 |  |  | |
 | aura-sphere | formula | 0.875 | 0.875 | 80 | 80 |  |  | |
 | lick | formula | 0.583 | 0.583 | 30 | 30 |  |  | |
-| shadow-ball | formula | 1.167 | 1.167 | 80 | 80 |  |  | |
-| dragon-rage | none (no cd set) | - | 1 | 0 | 0 | cd  |  | |
-| dragon-dance | none (no cd set) | - | 8 | 0 | 0 | cd  |  | |
+| shadow-ball | override | 1.2 | 1.167 | 80 | 80 | cd  |  | |
+| dragon-rage | override | 3.5 | 1 | 0 | 0 | cd  |  | |
+| dragon-dance | override | 8 | 8 | 0 | 0 |  |  | |
 | metal-claw | formula | 0.5 | 0.5 | 50 | 50 |  |  | |
 | flash-cannon | formula | 1.75 | 1.75 | 80 | 80 |  |  | |
 | bite | formula | 0.7 | 0.7 | 60 | 60 |  |  | |
@@ -73,7 +66,7 @@ Resolved cd and power (new, from js/data/move-resolver.js) against legacy js/dat
 | hyper-voice | formula | 1.75 | 1.75 | 90 | 90 |  |  | |
 | toxic | none (no cd set) | - | 0.3 | 0 | 0 | cd  |  | |
 | bulldoze | formula | 0.875 | 0.875 | 60 | 60 |  |  | |
-| string-shot | none (no cd set) | - | 1.1 | 0 | 0 | cd  |  | |
+| string-shot | override | 0.5 | 1.1 | 0 | 0 | cd  |  | |
 | bug-buzz | none (lasts while active) | - | 1.75 | 90 | 90 | cd  | intended: lasts while active, pacing is rehit 0.5 | |
 | rock-slide | formula | 1.75 | 1.75 | 75 | 75 |  |  | |
 | powder-snow | formula | 0.7 | 0.7 | 40 | 40 |  |  | |
@@ -81,12 +74,12 @@ Resolved cd and power (new, from js/data/move-resolver.js) against legacy js/dat
 | dazzling-gleam | formula | 1.75 | 1.75 | 80 | 80 |  |  | |
 | dark-pulse | formula | 1.167 | 1.167 | 80 | 80 |  |  | |
 | night-shade | none (no cd set) | - | 0.5 | 0 | 0 | cd  |  | |
-| spikes | none (no cd set) | - | 1.2 | 0 | 0 | cd  |  | |
-| toxic-spikes | none (no cd set) | - | 1.1 | 0 | 0 | cd  |  | |
-| hail | none (no cd set) | - | 1.2 | 0 | 0 | cd  |  | |
+| spikes | override | 1.1 | 1.2 | 0 | 0 | cd  |  | |
+| toxic-spikes | override | 1.1 | 1.1 | 0 | 0 |  |  | |
+| hail | override | 1.2 | 1.2 | 0 | 0 |  |  | |
 | meteor-mash | formula | 1.75 | 1.75 | 90 | 90 |  |  | |
-| will-o-wisp | none (no cd set) | - | 3.5 | 0 | 0 | cd  |  | |
-| substitute | none (no cd set) | - | 4 | 0 | 0 | cd  |  | |
+| will-o-wisp | override | 3.5 | 3.5 | 0 | 0 |  |  | |
+| substitute | override | 4 | 4 | 0 | 0 |  |  | |
 | aerial-ace | formula | 0.875 | 0.875 | 60 | 60 |  |  | |
 | flame-wheel | none (lasts while active) | - | 0.28 | 60 | 60 | cd  | intended: lasts while active, fields laid every 0.12 (rehit 0.3) | |
 | bubble-beam | formula | 0.875 | 0.875 | 65 | 65 |  |  | |

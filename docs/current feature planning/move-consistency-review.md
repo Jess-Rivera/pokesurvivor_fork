@@ -2,6 +2,7 @@
 
 Date: 2026-10-26. Branch: feature-test/new-move-schema. Review only: no game code, data, generated file, test or git state was changed.
 Scope: all 63 moves in docs/move_rework_holding/move-conversions-described.json (Bubble excluded by `forgottenSkips`).
+DECISIONS: sections 1 to 8 are the Checkpoint 1 snapshot and are not rewritten. Section 9 is the single source for every decision and open item since (Checkpoints 2 and 3), so read the NEEDS REVIEW tags and Q-lists above against it.
 
 ## 0. Repository and validation state (verified)
 
@@ -631,3 +632,124 @@ Verdict: **ready for architectural design after limited clarifications** (Q1 to 
 - No new-path runtime exists, so nothing was executed or seen on screen. All gameplay descriptions are schema readings.
 - combat.js, status.js and stages.js were searched and read in parts, not end to end.
 - No headless-browser test was run (nothing in the new path is loaded by the game).
+
+
+---
+
+## 9. Consolidated decisions and status (updated 2026-10-26, after Checkpoints 2 and 3)
+
+This section is the single source for decisions. Sources: docs/current feature planning/combat-architecture.md (Checkpoint 2, status PROPOSAL, awaiting Jess's approval) and combat-validation-and-handoff.md (Checkpoint 3).
+Labels: DECIDED = Jess's answer. PROPOSED = a recommendation in a combat doc, not yet approved. OPEN = needs Jess. APPLIED = already in the data.
+Caveat: the DECIDED labels for Q1 to Q17 are taken from combat-architecture.md, because the original resolutions text was not in this copy of the review.
+
+### 9.1 Questions Q1 to Q17
+
+| id | status | resolution | lands in |
+|---|---|---|---|
+| Q1 grow | DECIDED | The authored dimension is the START value and `grow.max` is the end. Novas are re-authored with `max` = today's radius and growSpeed unchanged (D-1). Start value DECIDED (Jess, 2026-10-26): 1 px, replacing D-1's "near the body radius". It passes the existing `radRadius` greater-than-0 rule, so no grammar change is needed. Psychic already conforms | slice 3a data |
+| Q2 return legs | DECIDED | The back leg may hit again. Mechanism PROPOSED: hit records keyed by leg (R2), no new field | slice 4c |
+| Q3 Quick Attack | DECIDED | Dash from A to B, hit at B, return to A. PROPOSED R1: pierce exhaustion disarms the hitbox but does not end a `repositions` instance. Data: `returnHits` becomes `out` | 3a data, 4c |
+| Q4 stat riders | DECIDED | Stat `duration` defaults to 6 s and `maxStacks` to 6. Live applications from one move on one host are capped at maxStacks, and a capped application refreshes that move's oldest. Self and team riders still fire per hit, bounded by the cap (C7) | 3a grammar, 4a |
+| Q5 trap | DECIDED | Trap on an enemy is a root (movement multiplier 0). Needs a status.js change | 4a |
+| Q6 accuracy | DECIDED | Accuracy folds into `basePower` = power x accuracy / 100 (resolver) | 3a resolver |
+| Q7 emit | DECIDED | An emitter is its own instance. Toxic Spikes becomes a 3 s placed emitter, interval every 0.25 s, child ring starts at 100 px. PROPOSED schedule (D29): `cast` emits first at activation, `interval` first at `every`. Emit `count` = total emissions, child `space.count` = shapes per emission | 3a data, 4d |
+| Q8 range | DECIDED (Checkpoint 3) | One tunable `range`. Global default 420 px as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), optional per-move `delivery.range`. Covers `nearest` acquisition, `location` reach, `returns` turnaround and maximum reposition distance | 3a, 3c, 4c |
+| Q9 Hex | DECIDED | Doubles on a major ailment, and on every chain hop. PROPOSED: burn and poison count as major | 4b |
+| Q10 chain riders | DECIDED | Chain hops roll riders at half chance per hop (chance x 0.5^k). PROPOSED: each hop picks the nearest not-yet-hit enemy within `hopRange` of the previous hop, and `chainDamageFalloff` is constant, not compounding | 4b |
+| Q11 type | DECIDED | Karate Chop is Fighting | 3a data |
+| Q12 crit units | DECIDED | `critChance` is percent points, divided by 100 in exactly one place | 3c / 4a |
+| Q13 turnRate | DECIDED | rad/s, a clamped turn (not the legacy damp) | 3c |
+| Q14 roll gap | DECIDED | Every eligible hit rolls its riders. The legacy 0.5 s roll gap is dropped for the new path, and the rehit time is the throttle | 4a |
+| Q15 raise scope | APPLIED | Meteor Mash's Attack raise is scope `team`, matching Metal Claw (commit a68a366, verified in described.json) | done |
+| Q16 instance cap | DECIDED (Checkpoint 3) | Placed objects with neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8). A 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout | 3a constant, 4d |
+| Q17 delay | DECIDED | The telegraph delay lives on the instance (`delivery.delay`), not on `casterState`. Rock Slide moves | 3a grammar and data |
+
+### 9.2 Other decisions
+
+- **Persistent flag (C13): DECIDED.** An explicit top-level `persistent` boolean replaces the "no cd means persistent" inference. PROPOSED set for the flag: Fire Spin, Leaf Storm, Bug Buzz, Night Shade, Toxic, Flame Wheel. Spikes is deliberately NOT persistent. Validator rule: persistent forbids `cd` and requires an `endOn notActive`.
+- **D-3, Meteor Mash: DECIDED.** The projectile hits enemy 1. At enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1. This fixes C5: emit `count` becomes 1 and the child `space.count` stays 3.
+- **D-4, routing: DECIDED.** Per-move routing behind `?newcombat` until slice 7.
+- **Normalization: none** (earlier decision, restated). The Power/s proxy (D37) is for tools only and never gameplay.
+- **Stat key map (C8): PROPOSED.** One mapping function (schema `spd` is Speed, `spDef` is Sp. Def, stages.js `spd` is Sp. Def, `spe` is Speed). Renaming the 17 data effects is not recommended.
+- **Architecture approval: DONE (Jess, 2026-10-26).** combat-architecture.md is approved. Items marked PROPOSED are accepted as written, and every "recommend" default not otherwise decided is accepted.
+
+### 9.3 New findings from Checkpoint 3
+
+| id | finding | status |
+|---|---|---|
+| F1 | `spread` has three definitions (schema doc: angle between instances; legacy: total fan, capped at 2 pi; data: authored as total fan) | DECIDED (2026-10-26): spread is the total fan, evenly spaced at 2 pi or more. Write it into the grammar comment and MOVE-AXIS-SCHEMA.md |
+| F2 | 420 px default range cuts the 2 s boomerang lifetime mid-return (Razor Leaf, Bonemerang) | DECIDED: Razor Leaf 210 px, Bonemerang 230 px (per-move `delivery.range`), the 2 s time cap stays as a safety net |
+| F3 | `location` has no pick rule (legacy: mines at the feet, meteors on random enemies, turrets behind the caster) | DECIDED: an enum, "at caster" or "random enemy within range", defaulting to the enemy. Grammar in 3a, used by 4c and 4d |
+| F4 | Emitted children deal full parent power each (Gust, Fairy Wind 3 hits, Discharge 2, Meteor Mash 1 + 3) | DEFAULT ACCEPTED: measure in the Stage 5 simulator first |
+| F5 | Quick Attack's 0.3 s i-frames only cover the trip out at range 420 | DEFAULT ACCEPTED: i-frames for the whole dash. Slice 4c |
+| F6 | Toxic Spikes emission count depends on whether an emission exactly at the end counts (11 or 12) | DEFAULT ACCEPTED: an emitter never emits at or after its end |
+
+### 9.4 Defects C1 to C14, status
+
+| id | status |
+|---|---|
+| C1 return legs vs oncePerInstance | Resolved by Q2 (slice 4c) |
+| C2 Quick Attack pierce ends the dash | Resolved by Q3 and R1 |
+| C3 grow start vs end | Resolved by Q1 (data re-authored in 3a) |
+| C4 Gust spread ignored at count 1 | OPEN (Gust per-shot spread, Jess) |
+| C5 Meteor Mash double count | Resolved by D-3 (data edit in 3a) |
+| C6 trap inert on enemies | Resolved by Q5 (slice 4a) |
+| C7 per-hit self riders | Bounded by Q4 maxStacks. OPEN: maxStacks values for Leaf Storm (recommend 1) and Metal Claw (small cap) are Jess's to-do, needed before 4a (D-2) |
+| C8 Speed / Sp. Def key collision | PROPOSED, one mapping function |
+| C9 Karate Chop type | Resolved by Q11 |
+| C10 missing cds (Bug Bite, Shadow Ball) | Resolved: Bug Bite 0.42 and Shadow Ball 1.2 are written in move-overrides.js |
+| C11 dropped stat chances (Metal Claw 10, Flash Cannon 10, Shadow Ball 20) | Decided: not intentional, restore the chances (Metal Claw 10, Flash Cannon 10, Shadow Ball 20). Data edit pending |
+| C12 move_parity self-test hard-codes hail | Test defect, fix in slice 3a (point it at a synthetic override) |
+| C13 persistent vs cd unset | Resolved by the explicit flag (9.2) |
+| C14 power 0 vs null (Will-O-Wisp, Substitute) | Harmless, not decided |
+
+### 9.5 The 28 NEEDS REVIEW moves
+
+"Settled" means a decision above covers it and no per-move design work is left, though the slice-3a data edit may still be pending.
+
+| move | settled by | still needs Jess |
+|---|---|---|
+| razor-leaf | Q2, F2 (range 210 px) | nothing |
+| bug-bite | cd 0.42 (written to move-overrides.js) | nothing; berrySteal stays a stub |
+| ice-beam | Q4 default duration, C8 mapping | nothing |
+| karate-chop | Q11 | nothing (data edit pending) |
+| aura-sphere | F1 (total fan) | reach of about 160 px (S2) has no owner |
+| shadow-ball | Q4 duration, cd 1.2 (written to move-overrides.js) | restore the 20% chance (data edit pending) |
+| metal-claw | Q4 | maxStacks (D-2); restore the 10% chance (data edit pending) |
+| flash-cannon | Q4 duration | restore the 10% chance (data edit pending) |
+| bonemerang | Q2, F2 (range 230 px), F1 | knockback pulling on the return leg (S12) has no owner |
+| psycho-cut | Q12 | nothing |
+| quick-attack | Q3, R1, Q8 cap, F5 (i-frames for the whole dash, default accepted) | nothing (data edit pending) |
+| flamethrower | Q14 | nothing now; balance goes to the Stage 5 simulator |
+| fire-spin | Q5, Q14, persistent | confirm the legacy stat strip and half-strength burn are dropped on purpose |
+| leaf-storm | persistent, Q4 | maxStacks (D-2, recommend 1) |
+| discharge | Q7, F4 (measure first, default accepted) | nothing; its ring is re-authored to start 1 plus max |
+| thunderbolt | Q10, overlap rule (the target starts the chain, others take the strike only, default accepted) | nothing |
+| psychic | Q1, Q13, wedge shape, steering at the cast target then nearest (default accepted) | nothing |
+| gust | none | per-shot spread (genuinely open) |
+| string-shot | Q4, Q5 | the double application of -2 from two stacked strands (S7) has no owner |
+| rock-slide | Q17, F3 | count 1 vs "boulders" (S11) has no owner |
+| spikes | Q5, Q16, F3, not persistent | nothing |
+| hail | none | cd 1.2 vs duration 10 (S6) has no owner |
+| meteor-mash | Q7, Q15, D-3, F1 | nothing (data edit pending) |
+| substitute | none | cd 4 vs the 6 s shield (S5) has no owner |
+| aerial-ace | Q8 distance cap | nothing |
+| flame-wheel | persistent | overlap multiplying hits (S4) goes to the Stage 5 simulator |
+| bubble-beam | F1 | balance goes to the Stage 5 simulator |
+| hex | Q9 | nothing |
+
+### 9.6 Slice 3a edits (APPLIED 2026-10-26, except the runtime items at the end)
+
+- Grammar: top-level `persistent`, `delivery.delay`, optional `delivery.range`, stat defaults (duration 6, maxStacks 6), the `location` pick enum (F3), and the spread definition (F1) written into the grammar comment and MOVE-AXIS-SCHEMA.md. Resolver: read `persistent`, derive `basePower`, TUNING constants (range 420, instance cap 8).
+- Moves: Quick Attack `returnHits` out; Karate Chop type fighting; Meteor Mash emit count 1; Toxic Spikes interval emitter every 0.25 with a 100 px start child; Heat Wave, Hyper Voice, Bulldoze, Dark Pulse, Dazzling Gleam and the Discharge ring to start 1 plus `grow.max` = old radius; Razor Leaf `delivery.range` 210 and Bonemerang 230; restore the stat chances (Metal Claw 10, Flash Cannon 10, Shadow Ball 20); Rock Slide delay moved to the instance; `persistent` on the six moves in 9.2.
+- Left out of 3a by scope: the move_parity `hail` self-test fix, the section 2.4 validator rules, deep-freezing G.MoveDefs, setting `locationPick` per move. `check.js` is green except that one self-test.
+- Runtime, later slices: trap as root (4a), leg-keyed re-hits (4c), Meteor Mash shards ignoring the struck enemy (4d).
+
+### 9.7 Still open, in the order slices need them
+
+1. Architecture approval: DONE (2026-10-26).
+2. Slice 3a: no open decisions remain (nova start size decided as 1 px). The stat-chance restoration is a pending data edit, not a question.
+3. Before 4a: maxStacks for Leaf Storm (recommend 1) and Metal Claw (no number yet), D-2, Jess's to-do.
+4. Before 4d: Gust per-shot spread (genuinely open, no recommendation accepted).
+5. Low: confirm Fire Spin's legacy stat strip and half-strength burn are dropped on purpose; correct the DMG_SCALAR doc mismatch (code 1.0, DECISIONS text 2.0). Orbit y-squash in rendering only is a default accepted.
+6. No owner yet: Aura Sphere reach (S2), Hail cd vs duration (S6), Substitute cd vs shield (S5), Rock Slide boulder count (S11), String Shot double application (S7), Bonemerang return-leg knockback (S12). Shadow Ball cd 1.2 is only 0.03 s above the formula value (1.167), so its "longer cooldown" compensation is nominal.

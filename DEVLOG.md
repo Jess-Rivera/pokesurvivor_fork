@@ -159,3 +159,9 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Jess pointed out the 4 seed overrides were legacy kind values: orbit and trail moves are on while active (pacing = rehit or emit every), Gust is now a cast that emits 3 projectiles. Overrides deleted; resolver rule: endOn notActive means no cd (fire-spin, leaf-storm, flame-wheel, bug-buzz). Gust gets the formula cd 0.5.
 - move-overrides.js now has 14 empty entries (12 status moves, Dragon Rage, Night Shade) as slots for hand cds. Parity: power 0 differences, cd 19 (14 unset, 5 intended with notes). check.js passes, self-test 14/14.
 - Stopped at: Jess to fill the 14 cd slots when decided. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice 3a (grammar, resolver and move data per the approved architecture)
+- Grammar: persistent, delivery.delay / range / locationPick, stat defaults 6 / 6; casterState.delay retired. Resolver: persistent replaces the endOn guess, basePower, range and locationPick fills, TUNING.RANGE 420 and INSTANCE_CAP 8. 5 validator and 5 parity self-tests added.
+- Data: Quick Attack out, Karate Chop fighting, Meteor Mash emit 1, Toxic Spikes interval emitter, six novas start 1 plus grow.max, Rock Slide delay on the instance, six persistent flags, Razor Leaf 210 and Bonemerang 230 range, stat chances restored (10, 10, 20). Docs: MOVE-AXIS-SCHEMA.md updated (spread is the total fan).
+- check.js: harnesses 17/17, export current, 63/63 and resolved 63/63; only the old hail self-test in move_parity fails (left out of scope). Not done: deep-freeze, the review 2.4 validator rules.
+- Stopped at: commit + push, then slice 3b. REMINDER: commit + push.
