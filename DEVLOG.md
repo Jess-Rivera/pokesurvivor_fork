@@ -165,3 +165,8 @@ Older entries (before 2026-10-19) were rotated to docs/DEVLOG-archive.md on 2026
 - Data: Quick Attack out, Karate Chop fighting, Meteor Mash emit 1, Toxic Spikes interval emitter, six novas start 1 plus grow.max, Rock Slide delay on the instance, six persistent flags, Razor Leaf 210 and Bonemerang 230 range, stat chances restored (10, 10, 20). Docs: MOVE-AXIS-SCHEMA.md updated (spread is the total fan).
 - check.js: harnesses 17/17, export current, 63/63 and resolved 63/63; only the old hail self-test in move_parity fails (left out of scope). Not done: deep-freeze, the review 2.4 validator rules.
 - Stopped at: commit + push, then slice 3b. REMINDER: commit + push.
+
+## 2026-10-26 (Claude Desktop, home): #2 slice files rewritten
+- slice-overview.md rewritten; new slice-3a (done record), 3b, 3c, 3d, 4a, 4b, 4c, 4d, stage-0; slice-5, 6, 7 rewritten; slice-3.md and slice-4.md are now pointers. Written from the approved architecture section G plus review section 9. Doc-only, no code.
+- Source docs disagreed in places: the I1 grep guard goes in 3b (architecture said 3c); Fire Spin's trap test moves from 4a to 4c (orbit); curve, oscillate and turnRate are built in 3c and their moves verified in 4c.
+- Stopped at: commit + push, then a fresh chat for slice 3b. REMINDER: commit + push.

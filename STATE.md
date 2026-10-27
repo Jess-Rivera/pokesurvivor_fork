@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-26 (Claude Desktop, coding chat).
+Last updated: 2026-10-26 (Claude Desktop, coding chat; slice files rewritten).
 
 ## Where we are
 - ON BRANCH feature-test/new-move-schema. Slices 1, 2 and 3a BUILT. None change gameplay; the game still loads none of the new move files.
@@ -13,7 +13,7 @@ Last updated: 2026-10-26 (Claude Desktop, coding chat).
 ## Next (in order)
 1. Jess: commit + push (grammar, resolver, tools, described.json, generated file, reports, docs).
 2. Decide: fix the move_parity hail self-test; add the review section 2.4 validator rules; deep-freeze G.MoveDefs (architecture I2). All three were left out of 3a.
-3. Slice 3b (geometry module, G.MoveGeom) is next; rewrite slice-3 to slice-7 files from architecture section G first.
+3. Slice files 3a to 7 and stage-0.md are rewritten (docs/current feature planning/move-schema/, start at slice-overview.md). Slice 3b (G.MoveGeom) is next, in a fresh coding chat.
 4. Still open: maxStacks for Leaf Storm and Metal Claw (before 4a), Gust per-shot spread (before 4d), six unowned issues (review 9.7). Set locationPick per move if wanted (Rock Slide, Spikes, Toxic Spikes, Will-O-Wisp use the enemy default).
 
 ## Board note
