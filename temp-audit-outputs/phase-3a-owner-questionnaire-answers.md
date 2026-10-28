@@ -54,7 +54,7 @@ Why would we not just fix everything now, then follow up with updating the slice
 
 ### QA-06. BOSS-REWORK.md becomes the progression and encounters spec only
 
-I agree with the recommendation. BOSS-REWORK.md looks like it was a planning document that parts of it have gone stale. `BOSS-REWORK.md` was my planning phase, `docs/BOSS-AUTHORING.md` was my template set-up, and `docs/GYM-ROSTERS.md` was the culmination to get region 1 established. 
+I agree with the recommendation. BOSS-REWORK.md looks like it was a planning document that parts of it have gone stale. `BOSS-REWORK.md` was my planning phase, `docs/BOSS-AUTHORING.md` was my template set-up, and `docs/GYM-ROSTERS.md` was the culmination to get region 1 established.
 
 I do want to eventually (at a later date and separate organization branch) organize further by changing `docs/GYM-ROSTERS.md` to specific `BOSS-REWORK-GYM-ROSTERS-KANTO.md` so that it doesn't grow too long as I add the other regions. Rename `docs/BOSS-AUTHORING.md` to `docs/BOSS-REWORK-AUTHORING.md`. Then move `BOSS-REWORK.md` into docs/ so that they all live together. This will allow all Boss Rework information to follow the plan document and the template document.
 
@@ -77,22 +77,22 @@ Those five are all part of the "same idea" family. Here is the full loop as it s
 1. Game begins at Loop[1].
 2. Enemy level scales by time. L1 at t[0:00] advancing in level every 37secs.
     a. Gyms appearing modify this growth.
-3. Elite enemies spawn at t[+2:00] from the last <eliteTrigger>. 
+3. Elite enemies spawn at t[+2:00] from the last <eliteTrigger>.
     a. <eliteTrigger> is defined as game start or Gym Spawn.
 4. Gyms spawn at t[+4:00] from the last <gymTrigger>.
     a. <gymTrigger> is defined as game start or last Gym Spawn.
-    b. An Escalation period activates at t[+0:37] from Gym Spawn. 
-        1. This Escalation raises both the wild spawn level and the gym leader's locked level by +1, uncapped. 
+    b. An Escalation period activates at t[+0:37] from Gym Spawn.
+        1. This Escalation raises both the wild spawn level and the gym leader's locked level by +1, uncapped.
         2. Escalation Level Bump are temporary. Once a gym is beaten, the Escalation Level Bump is removed and wild enemies return to L(n) set by game time.
-    c. Gyms will use a number of hand-authored boss pokemon from the `docs/GYM-ROSTERS.md`. 
+    c. Gyms will use a number of hand-authored boss pokemon from the `docs/GYM-ROSTERS.md`.
         1. A gym will spawn pokemon from the leader's roster equal to Loop[N] such that on Loop[N] a gym will spawn pokemon from Slots[1] to Slot[Loop[N]]. (e.g. on loop 1, the gym will spawn the first pokemon in the roster and on loop 3 it will spawn the first 3 pokemon in the roster and on loop 6 it will spawn all 6 pokemon in the roster)
-5. Once all 8 Gyms are defeated, a "boss" arena dependent on the region will take the Gyms place. e.g. In Kanto region, after defeating the 8th gym, the first of the Elite Four will spawn at the normal next Gym Spawn time, otherwise following all rules from Gym Spawns. 
+5. Once all 8 Gyms are defeated, a "boss" arena dependent on the region will take the Gyms place. e.g. In Kanto region, after defeating the 8th gym, the first of the Elite Four will spawn at the normal next Gym Spawn time, otherwise following all rules from Gym Spawns.
     a. This will continue until the 4th Elite Four is defeated.
-6. Upon defeating the fourth Elite Four, the player will be given the option ["Return Home"|"Next Region"|"Unlock Safeties"]. 
-    a. Return Home returns the player to the main menu with a completion bonus to their rewards. 
+6. Upon defeating the fourth Elite Four, the player will be given the option ["Return Home"|"Next Region"|"Unlock Safeties"].
+    a. Return Home returns the player to the main menu with a completion bonus to their rewards.
     b. Next Region will take the player to the next region map. That region map will have its game time set to the end time of the previous region and the player will be able to continue playing with their team and all its upgrades.
-    c. Unlock Safeties will keep the player on the same region map and continue the game timer. This will set the Loop to Loop[N+1]. They will then go through the Gym Spawn/Post Gym Boss run as above. 
-        1. At the end of each loop after Loop[1], the player will be presented with ["Return Home"|"Keep Going"]. 
+    c. Unlock Safeties will keep the player on the same region map and continue the game timer. This will set the Loop to Loop[N+1]. They will then go through the Gym Spawn/Post Gym Boss run as above.
+        1. At the end of each loop after Loop[1], the player will be presented with ["Return Home"|"Keep Going"].
             a. Return Home will operate as above, with an escalating bonus per loop completion.
             b. Keep Going will follow the "Unlock Safeties" as above.
         2. Once a player has beaten the final Post Gym Boss on Loop[6] AND they have completed all previous Loop[N] during this same run, they will be presented with a choice of a "Legendary Boss".
@@ -101,10 +101,10 @@ Those five are all part of the "same idea" family. Here is the full loop as it s
     d. Subsequent runs in the region will allow a player to choose a Loop[N] value, with the game time starting at t[0:00] regardless of Loop[N] chosen.
         a. NOTE: The Legendary Boss fight is only present if the player completes Loop[1] through Loop[6] in a single playthrough. No return to main menu's.
 7. Upon Defeating all Legendary Bosses in each Region, the player will be informed that "Arceus awaits."
-    a. This unlocks a new feature called "The Climb". 
-        1. The Climb is a playthrough in which you fight through each region through all 6 Loops. This must be done on a single team. 
+    a. This unlocks a new feature called "The Climb".
+        1. The Climb is a playthrough in which you fight through each region through all 6 Loops. This must be done on a single team.
             a. Once a team is selected for "The Climb" they are locked in. Changing any team member for "The Climb" erases all progress.
-            b. The Climb aquires a completion point when a player completes a Loop[1] through Loop[6] run in a region. Once the final (9th) completion point is obtained, the player is teleported to the Arceus arena where they fight a unique hand-authored encounter. 
+            b. The Climb aquires a completion point when a player completes a Loop[1] through Loop[6] run in a region. Once the final (9th) completion point is obtained, the player is teleported to the Arceus arena where they fight a unique hand-authored encounter.
             c. Upon beating Arceus the player is awarded the ability to have a "Descendant Mutation"
                 1. A "Descendant Mutation" allows a single pokemon on the team to add the moves it currently knows to a pokemon not on the team. That unique copy of the descendant pokemon will have all moves added to it's move pool for subsequent runs.
 
@@ -112,7 +112,7 @@ Those five are all part of the "same idea" family. Here is the full loop as it s
 
 ### QA-10. Trap and Fire Spin on enemies
 
-**Fire Spin**: I'm not sure how Fire Spin ended up where it is. But mainline Fire Spin says "Fire Spin inflicts damage on the first turn then traps the opponent, causing them to lose 1⁄8 of their maximum HP after each turn, for 4-5 turns. If the user holds a Grip Claw, the after-effects last for 7 turns. If a Binding Band is held, the damage is 1⁄6 of the target's maximum HP." 
+**Fire Spin**: I'm not sure how Fire Spin ended up where it is. But mainline Fire Spin says "Fire Spin inflicts damage on the first turn then traps the opponent, causing them to lose 1⁄8 of their maximum HP after each turn, for 4-5 turns. If the user holds a Grip Claw, the after-effects last for 7 turns. If a Binding Band is held, the damage is 1⁄6 of the target's maximum HP."
 Fire Spin will apply Burn and Trap (per the newest decision on the status). It doesn't strip.
 **Trap**: Agree with the recommended (Q5: 2 s on wild enemies, 25% plus 10 s window on strong hosts ). This is a status not a move though, so it will need to go into an appropriate file.
 
