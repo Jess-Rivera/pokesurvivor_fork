@@ -18,5 +18,4 @@ Last updated: 2026-10-27 evening (Claude Code, home; slice 4c planned, no game c
 ## Board note (snapshot 2026-10-27, docs/issues-snapshot.* and board-snapshot.json)
 - 14 items. Shipped #7, #4. In Progress #2. Blocked #3, #8, #11. Accepted #1, #5, #6, #9, #10, #12, #13, #14. Label vs board drift still to fix (#3, #8, #5, #9, #10, #4, #12, #13, #14, #7; #6 title garbled).
 
-## Standing rules (full text: CLAUDE.md)
-Local-first. English-native (Spanish literals are i18n keys). No em-dashes. Prose plan with no code, Jess OKs, then build; changelog.js + Markdown docs free-edit. Read-only git and `git fetch` OK; never run `gh` or any repo-changing git: draft commands, Jess runs them. New save fields backward compatible. Debug on dev.html?dev.
+Rules: CLAUDE.md.
