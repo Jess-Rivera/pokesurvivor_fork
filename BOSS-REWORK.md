@@ -61,17 +61,12 @@ Loop 1 fields the first signature only: Geodude alone. Moves: Tackle, Harden (st
 The format Jess fills in lives in docs/BOSS-AUTHORING.md (fields, move-line hints, validation rules, a template and an illustrative Brock example). It becomes js/data/gyms.js at build time (propose-first).
 
 ### 3c. Status, stages and bosses (2026-10-19)
-LOCKED by Jess:
+General status, damage-over-time and stat stage rules now live in docs/COMBAT-RULES.md (sections "Status effects", "Damage over time" and "Stat stages and maxStacks") and apply to bosses, elites and gym leaders as to every other host. Superseded here and no longer stated: the 2026-10-19 stage multiplier table, the "about 12 s" application length and the Speed-stage-before-shaping line (replaced by the Status Slice D1 and E2a entries in docs/DECISIONS-archive.md, summarized in COMBAT-RULES "Stat stages and maxStacks"). Gym-only rules that stay here (LOCKED by Jess unless marked):
 - Phasing: the pilot gym (Brock) uses DAMAGE moves plus Harden only. No player-side status needed for it. Then a minimal player status core before Gym 3 (burn and poison on the DoT table, paralysis as a slow, stat drops), then control statuses in Slice C. Slice C is needed very soon (promote it right after the pilot).
-- DoT rule: burn, poison and Toxic percentages apply to the target's BASE HP (before the tier HP multiplier), so the multiplier never amplifies DoT. Unscaled, burn would take 25% and poison 50% of a boss in 8 s and Toxic would kill it in 12 s.
-- NO blanket boss immunity (Claude proposed immunity to sleep, freeze and flinch, Jess declined). What hard CC and paralysis do to bosses and elites is decided in Slice C.
-LOCKED 2026-10-19 (Jess: 'Adopt the Stages yes'; numbers and duration TUNE):
-- Adopt mainline STAGES for Atk, Def, SpA, SpD and Spe: -6 to +6, multipliers 0.25, 0.28, 0.33, 0.4, 0.5, 0.66, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0. Accuracy and evasion are skipped (no accuracy stat). This is the stage scale the Slice D 'enemy stat stages' item left open. The catalog descriptions already say 'by one stage' / 'by two stages' but the numbers are 7% / 13% / 10% per stack, so this fixes a divergence.
-- Damage effect: +1 Def means the defender's stat x1.5, so incoming damage /1.5 (-33%); +2 = -50%, +3 = -60%, +6 = -75%. +2 Atk = x2 damage. Stages feed the A/D ratio in applyDamage (defender side) and the attack factor (attacker side); a Speed stage multiplies the Speed stat BEFORE the movement-speed shaping (0.25x to 2.0x bounds).
-- Real-time duration (mainline stages last until switch-out): proposed rule is each application lasts a fixed time (about 12 s, TUNE) with its own expiry, the stage is the sum of the active applications clamped to +-6.
+- DoT on base HP and no blanket boss immunity: see COMBAT-RULES "Damage over time" and "Other status effects".
+- Stages adopted 2026-10-19 (Jess: 'Adopt the Stages yes'): see COMBAT-RULES "Stat stages and maxStacks".
 - Boss Harden = +1 Def stage per cast (x1.5 Defense), stacking, instead of my earlier flat 14%.
 - Cooldown fact (verified 2026-10-19): damaging moves use cd = 0.5 x (35 / PP) (DECISIONS 2026-10-18, BETA 1.0), but STATUS moves (dmg 0) keep their hand-tuned catalog cd. Harden is hand-tuned 0.85 s (PP 30 would give 0.58 s). Boss rule proposal: cast period = the move's cd times the tier factor, never shorter than wind-up plus recovery (about 1.0 s), so a boss cannot spam a move that is fast for the player.
-- Consequence to decide later: moving the PLAYER's buff moves to stages makes an auto-cast Harden (cooldown 0.85 s) reach +6 (-75% damage taken) in about 5 s, versus a 35% cap today, so buff moves would need long cooldowns or a lower in-run stage cap. The pilot only needs the enemy-side structure.
 - BUILT 2026-10-19 (Slice D1): G.Stages with a 6 s per-application duration (the 12 s above was a placeholder), gym leader Harden = +1 Def stage per cast with the move's stacks as the stage cap, gym attacks read the Atk or SpA stage, player-side buffs still on pl.buffs. See DECISIONS 2026-10-19 Status Slice D1.
 
 ## 4. Elite Four phase, Region Complete, Return Home (flow LOCKED 2026-10-19, numbers TBD)
