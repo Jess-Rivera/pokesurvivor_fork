@@ -7,7 +7,7 @@ Planning only. Nothing in this file has been executed. Baseline: branch chore/do
 ## 0. What was verified
 
 | Claim | Result |
-|---|---|
+| --- | --- |
 | combat-validation-and-handoff.md is "299 lines / 32 KB" | 298 lines, 32,046 bytes. Section 2.5 is "six hard moves". |
 | "63 original moves" | Confirmed (slice-overview.md, file roles 1: 63, Bubble excluded). |
 | Fire Spin "burn and trap, no strip" (QA-10) | New-path data already has damage, burn 100% and trap 100% (slice-4c-1-codehandoff.md:10, :46). The legacy path still strips and halves burn (`js/data/moves.js:61`: `strip`, `burnHalf`). No new-path data change is needed; the legacy path is tagged `[Legacy behavior]` until slice 7. |
@@ -50,48 +50,96 @@ Planning only. Nothing in this file has been executed. Baseline: branch chore/do
 ### Open questions (one line each)
 
 **QA-06 (renames)**
+
 - Q1. Rename and move the boss docs in this branch, or in the later organization branch? (Recommended: later.)
+- Later.
 
 **QA-08 (run loop)**
+
 - Q2. Next gym spawns 4:00 after the previous gym spawns (as written), or after it is beaten and you return (LOCKED Option A)?
+- LOCKED Option A (after it is beaten and you return)
+
 - Q3. Elite spawns 2:00 after gym spawn, or after return (LOCKED)? Does "none while one is alive" still hold?
+- after return (LOCKED). none while one is alive still holds.
+
 - Q4. Escalation: a single +1 at 0:37, or the existing 37 s grace then +1 every 10 s?
+- existing 37 s grace then +1 every 10 s
+
 - Q5. Is the L50 clamp at 30:00 kept? Is the post-gym slow ramp dropped? Is the level clock uncapped across loops and Next Region?
+- L50 clamp is kept at 30:00 until 8 gyms are beaten. Post-Gym slow ramp kept. level clock is uncapped across loops and Next Region
+
 - Q6. Elite Four one at a time on the gym clock (replacing "all four at once, hard-set levels, player picks order")?
+- all four at once, hard-set levels, player picks order. We'll keep this.
 - Q7. Is gym level still "wild level + 4, locked at spawn"?
+- wild level + 4, locked at spawn unless otherwise modified by the Escalation mechanic.
+
 - Q8. Is the 2026-10-17 performance-scaled (DDA) Unlock Safeties dropped entirely, with the name now meaning "continue to Loop N+1"?
+- Yes.
+
 - Q9. Descendant Mutation: does QA-08's direction (your mon's moves go to another mon, no typing) replace FGS's inheritor graft?
+- Yes, but also typing moves as well. I forgot that in my answer to QA-08.
+
 - Q10. Does The Climb's 9th completion point replace FGS's "own every legendary" as the Arceus gate?
+- Yes.
+
 - Q11. FGS items QA-08 does not mention (shiny tiers, gold-toll legendary re-challenge, Uber modifiers, per-region legendary counts, one-sitting achievement): keep as `[Proposed]`, or drop?
+- keep as `[Proposed]`.
+
 - Q12. Does the Return Home completion bonus replace or add to BOSS-REWORK section 4's 60 and 90 minute time bonus?
+- yes.
 
 **QA-11 (maxStacks)**
+
 - Q13. When duration is shorter than cooldown the formula gives 0. Floor it at 1?
+- Duration is never shorter than cooldown. Upgrades to duration increase it's time. Upgrades to cooldown reduce time. Thus a cooldown upgrade goes from 8s to lower than 8s. A duration upgrade goes from 8s to greater than 8s.
+
 - Q14. Does the formula replace authored values (Metal Claw 2, Meteor Mash 2, Leaf Storm 1), or take the larger of the two?
+- All moves have the default of maxStacks=1. Including the authored Metal Claw and Meteor Mash values. This will be used as a balancing lever in later passes.
+
 - Q15. Does it apply to legacy buff moves now (a code change), or only on the new path?
+- Only new path.
+
 - Q16. For foe debuff riders and persistent moves (no cooldown), what does "cooldown" mean?
+- the maxStacks only apply to self-buffs per the Upgrade Layer.
 
 **QA-10 (Fire Spin)**
+
 - Q17. Fire Spin burn at the full standard length (half-burn dropped)? Does the persistent orbit damage stay as authored?
+- Full standard length. Yes.
 
 **QA-13 (gym moves after slice 7)**
+
 - Q18. Slice 7 deletes the legacy path the gym AI uses. Does slice 7 implement option (a) for existing gym moves (Brock), so gyms work between the merge to main and the import branch?
+- No. Option A is its own branch. After slice 7, it will either be only Brock spawns the one time or Brock spawns each time a gym is called (however it works easiest in the code). Then we will begin option A and adding the other gyms.
 
 **QA-01 (DECISIONS format)**
+
 - Q19. Use ISO dates, and section-only `Canonical:` (no line numbers)?
+- Yes
+
 - Q20. Superseded entries move verbatim to the archive (the proposed format has no Superseded status)?
+- Yes
 
 **QA-07 (approval tags)**
+
 - Q21. Does bulk `[Approved]` cover only items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED, signed off or [Jess decided], and never DRAFT, PROPOSED, OPEN or TBD?
+- Yes
 
 **QA-15 (agent rules)**
+
 - Q22. Is it confirmed that the Quick agent's instructions load CLAUDE.md, and will they be changed the same day as B7?
+- Yes, Yes.
 
 **QA-05 (slice files and handoffs)**
+
 - Q23. Unexecuted 4c handoffs get pointers plus a conflict list only, with no rewritten build steps?
+- Yes.
 
 **Close-out**
+
 - Q24. Delete temp-audit-outputs/ before the merge (git history keeps it), or keep the ledger in docs/?
+- I will delete the temp-audit-outputs prior to merge.
+
 
 ---
 
@@ -104,6 +152,7 @@ With the coding pause, the order follows dependency, not the coding schedule: ge
 **Still holds:** copy, verify, then trim as two commits per batch; the ledger; agent changes late; the DECISIONS conversion after its targets exist; the completion criteria and the automated-check list.
 
 **Broken by the answers:**
+
 - "No renames, one new file" is now two new files (MOVE-INTENT.md from QA-04), with renames possible.
 - B3's "between 4c sub-slices" timing and B0's interim slice-overview pointer are pointless now (QA-00). The pointer would be a fourth pointer.
 - "Handoffs left as written" changes under QA-05.
@@ -111,6 +160,7 @@ With the coding pause, the order follows dependency, not the coding schedule: ge
 - B5 must encode QA-08's reversals of LOCKED rules.
 
 **Wrong anyway:**
+
 - check.js treated as proof that no code changed.
 - B0 records QA answers in the old DECISIONS format, which B8 then reconverts.
 - Tags defined "in CLAUDE.md or CONTEXT.md"; QA-15 means CLAUDE.md only.
@@ -123,18 +173,21 @@ With the coding pause, the order follows dependency, not the coding schedule: ge
 Every two-commit batch has the same rollback: revert (b), then (a). Single-commit batches: revert the commit.
 
 **B0. Baseline**
+
 - Prerequisites: CP0 (Q1 to Q24 answered, or knowingly left `[Open]`).
 - Files: STATE.md (active work is the consolidation; coding paused per QA-00); new working ledger temp-audit-outputs/phase-4-ledger.md; an addendum to the answers file with the one-line answers.
 - Not in this batch: the draft's interim pointer, and DECISIONS entries (written as each canonical section lands, so every `Canonical:` resolves).
 - Commits: 1. Risk: low.
 
 **B1. Reference fixes**
+
 - Covers R-01 and Phase 3 batch 1, per reference-integrity.md.
 - Excludes citations of files that Q1 might rename.
 - CLAUDE.md and CONTEXT.md: the `delete/` to `_delete_/` change only.
 - Commits: 1. Validation: rerun the reference check.
 
 **B2. Destinations**
+
 - R-14 headers on GDD, BOSS-REWORK, GYM-ROSTERS, BOSS-AUTHORING, MOVE-AXIS-SCHEMA, combat-architecture, combat-validation, ONBOARDING, SIM-PRESENT-BOUNDARY (R-12) and BALANCE.
 - New files: skeletons of docs/COMBAT-RULES.md and docs/MOVE-INTENT.md.
 - CLAUDE.md: a tag-vocabulary paragraph. The only CLAUDE.md change before B7, purely additive.
@@ -143,6 +196,7 @@ Every two-commit batch has the same rollback: revert (b), then (a). Single-commi
 - Commits: 1. Stop: CP1.
 
 **B3. Combat rules** (QA-03, QA-10, QA-11, QA-12, R-05, R-10, R-11)
+
 - Fill COMBAT-RULES from: DECISIONS 2026-10-17 (stats, damage, orthogonal dials, G.Stats) and the 2026-10-18 swap rule; archive Slices A to E2e and DoT; BOSS-REWORK 3c; stat-model notes section 4; shared parts of architecture D6 to D11 and D30.
 - Trap: the enemy rule from QA-10 is `[Approved]`; E1 and Fire Spin strip/burnHalf are `[Legacy behavior]`; the player trap rule is kept unchanged.
 - Commit (b): BOSS-REWORK 3c becomes a pointer plus gym-only rules; BUFF-TABLE repoints; D6 to D11 keep only move-path specifics; stat-model notes get a history header.
@@ -150,6 +204,7 @@ Every two-commit batch has the same rollback: revert (b), then (a). Single-commi
 - Stop: CP2 before (b).
 
 **B4. Move schema** (QA-04, QA-05, QA-11 grammar default, R-02, R-03, R-04, R-06, R-16)
+
 - MOVE-AXIS-SCHEMA gets the grammar, file roles and the maxStacks default per Q13 to Q16, with a code-gap note; combat-architecture gets the runtime rules; MOVE-INTENT.md gets the per-move rulings.
 - QA-04 precedence: a MOVE-INTENT ruling overrides COMBAT-RULES and MOVE-AXIS-SCHEMA defaults for that move. It cannot require something the grammar cannot express; that becomes an `[Open]` grammar gap.
 - QA-04 scenarios: combat-validation section 2.5 keeps its scenarios as validation material. Each ruling sentence moves to MOVE-INTENT, and each scenario links to it.
@@ -159,34 +214,40 @@ Every two-commit batch has the same rollback: revert (b), then (a). Single-commi
 - Risk: high. Stop: CP3 (handoff conflict list and MOVE-INTENT content).
 
 **B5. Progression** (QA-06, QA-08, R-07, R-08, R-09)
+
 - Commit (a1): consolidate existing rules (escalation into section 3, badge rules, archive boss entries, duplicates resolved). Section numbers 2 and 3 stay (cited by elites.js and gym.js).
 - Commit (a2): QA-08 as a dated design change; reversed LOCKED items go to history.
 - Commit (b): change log and touch points to the archive; GYM-ROSTERS rules become a pointer; BOSS-AUTHORING header "implemented for Brock"; FULL-GAME-STRUCT gets a history header but stays in place (gyms.js:19 cites it); DECISIONS Phase 2 text to the archive; QA-13 recorded `[Open]` in BOSS-REWORK 3a.
 - Stop: CP4 before (a2).
 
 **B6. GDD umbrella** (QA-02, QA-14, D-07, QA-08 meta)
+
 - A bounded archive read comes first and produces ledger rows. Conflicts with code go to the owner at CP5.
 - Commit (a): the new GDD, including the meta and endgame section.
 - Commit (b): old decision log to history; GLOSSARY marks removed systems.
 - Risk: highest effort. Time-box it.
 
 **B7. Agent rules** (QA-15)
+
 - CLAUDE.md: coding conventions, the precedence paragraph, the skills line, the "where current rules live" list; Session rituals becomes a pointer.
 - CONTEXT.md: rule reminders removed. STATE.md: "Standing rules" removed. slice-overview.md: rules 2 and 5 become pointers.
 - Commits: 1, so a single revert undoes it. Stop: CP6 before and after.
 
 **B8. DECISIONS log** (QA-01, R-15, R-11, R-10)
+
 - Commit (a): verbatim copies to DECISIONS-archive under "current rule in" headers; every QA answer gets a new-format entry.
 - Commit (b): existing entries reduced to log form; history banners and the archive header added.
 - Validation: every `Canonical:` target resolves; no superseded value remains ("never runs git", "30-min", "bridge", "2.0" near DMG_SCALAR).
 
 **B9. Renames** (only if Q1 = now)
+
 - Commit 1: the moves only, no content edits, so git detects the renames.
 - Commit 2: Markdown citations.
 - Commit 3 (gated): JS comments, under a separate prose plan and the owner's OK.
 - Stop: CP7.
 
 **B10. Close-out**
+
 - Run every automated check from the draft; one reviewer pass per subject; zero unticked ledger rows.
 - Rewrite STATE.md; DEVLOG entry naming the commit that holds the ledger.
 - Remove temp-audit-outputs (per Q24). Merge.
@@ -257,7 +318,7 @@ node tools/check.js
 ### Checkpoints (the executor stops and waits for the owner's OK)
 
 | | When | What the owner approves |
-|---|---|---|
+| --- | --- | --- |
 | CP0 | Before B0 | Answers to Q1 to Q24 |
 | CP1 | After B2 | "Owns" boundaries in the headers, and the tag paragraph |
 | CP2 | B3, before (b) | QA-10 and QA-11 wording, plus every ledger row whose wording changed |
@@ -271,7 +332,7 @@ node tools/check.js
 ### Files created, renamed, moved or deleted
 
 | File | Action | Citations to update | Gated code? |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | docs/COMBAT-RULES.md | create (B2) | New pointers from BOSS-REWORK 3c, BUFF-TABLE, architecture D6-D11, GDD and the CLAUDE.md list | no |
 | docs/MOVE-INTENT.md | create (B2) | New pointers from combat-validation 2.5 and 3.6, slice-overview, MOVE-AXIS-SCHEMA, architecture and the review section 9 header | no |
 | temp-audit-outputs/phase-4-ledger.md | create (B0), delete (B10) | none | no |
@@ -298,6 +359,7 @@ node tools/check.js
 ## C. Executor guardrails
 
 **Must not:**
+
 - Edit js/, dev.html, tools/, css, assets or package files. Run repo-changing git or gh.
 - Resolve an unanswered question by picking an option. Write `[Open]` with the question, and stop if it blocks.
 - Change a rule's meaning while copying it. Every wording change gets an old-text, new-text ledger row ticked by the owner.
@@ -310,6 +372,7 @@ node tools/check.js
 **Must stop and ask** about: a contradiction the QA answers do not cover, or a doc that disagrees with code. Rules from QA-07 group 2 (Checkpoint 1 Q1 to Q17) are AI-recorded (EC-01): tag them per QA-07 but flag the rows in the ledger for owner spot-check.
 
 **Tags (QA-07):**
+
 - `[Approved]`: a source item marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED, signed off or [Jess decided] that no later item supersedes; every QA and Q answer; the section E items. A TUNE value is still approved; the value is a dial.
 - `[Legacy behavior]`: what the live path does when it differs from the approved rule. Always name the slice that removes it (Fire Spin strip and burnHalf at `js/data/moves.js:61`, E1, the legacy "duration/cooldown is the cap").
 - `[Proposed]`: anything marked DRAFT, PROPOSED, recommend or TBD; the mainline type chart (on hold); FGS items pending Q11; GDD rules from the bounded read that code does not confirm.
@@ -318,6 +381,7 @@ node tools/check.js
 - Tie-break: a later dated owner decision wins. The 2026-10-28 answers beat everything earlier. Two conflicting sources with the same date become `[Open]`, and the executor stops.
 
 **Ledger and temp-audit-outputs:**
+
 - Ledger columns: source path and section, verbatim source excerpt, destination, tag, QA/Q dependency, wording-changed flag, reviewer tick.
 - At B10: zero unticked rows. The DEVLOG entry names the commit hash that last contains the ledger. temp-audit-outputs is deleted in its own commit before the merge.
 
