@@ -83,6 +83,9 @@ not a deferred micro-optimization.
 ## Prose style
 No em-dashes, anywhere. Use commas, parentheses, "since"/"because" instead.
 
+## Requirement tags
+Spec rules carry one of four tags. `[Approved]` is owner-approved intended behavior (items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED or signed off, never DRAFT, PROPOSED, OPEN or TBD); approved but not yet built is still `[Approved]` with a short "code differs, see TODO" note. `[Legacy behavior]` is what the live game does today where it differs from an approved rule, and always names the slice that removes it. `[Proposed]` is written but not approved. `[Open]` is a recorded question with no answer. When tags or dates conflict, the later dated owner decision wins.
+
 ## Reference material
 - survivor-like-design-reference.md: cited genre design patterns (Vampire Survivors, Brotato, Halls
   of Torment) with concrete numbers. Ground design advice in it. (Attached to the Quick agent; commit

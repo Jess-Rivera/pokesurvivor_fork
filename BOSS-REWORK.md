@@ -1,5 +1,11 @@
 # BOSS-REWORK, tracker for branch feature/boss-rework
 
+- **Role:** Progression and encounters spec (QA-06). Body not yet reconciled to this role.
+- **Owns:** Run progression, level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops.
+- **Does not own:** Combat rules including status effects (docs/COMBAT-RULES.md); gym roster data (docs/GYM-ROSTERS.md); authoring format (docs/BOSS-AUTHORING.md); tuned numbers (BALANCE.md); work tracking (STATE.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 Single place to see the design, the decisions and every change for this branch. Opened 2026-10-19.
 Durable rulings also get a dated entry in DECISIONS.md; this file is the working view and the change log.
 Read this at session start while the branch is active (CONTEXT.md points here).

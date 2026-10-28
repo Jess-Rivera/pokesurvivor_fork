@@ -1,5 +1,11 @@
 # GYM & ELITE FOUR ROSTERS
 
+- **Role:** Per-leader roster data for gyms and the Elite Four.
+- **Owns:** Rosters, slot order and roster-only conventions.
+- **Does not own:** The rules that consume rosters (BOSS-REWORK.md); the authoring format (docs/BOSS-AUTHORING.md); combat rules (docs/COMBAT-RULES.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 Per-leader rosters for the boss rework. Companion to BOSS-REWORK.md (gym framework,
 locked design) and docs/FULL-GAME-STRUCT.md (loop/region scope). This file is the
 roster DATA; the rules that consume it live in those two docs. Species, types and

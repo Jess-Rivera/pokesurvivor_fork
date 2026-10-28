@@ -1,5 +1,11 @@
 # Move Axis Schema (from-scratch design)
 
+- **Role:** Move data grammar spec.
+- **Owns:** Per-move data shape, axes, fields and enums, file roles, validator rules.
+- **Does not own:** Runtime pipeline rules (docs/current feature planning/combat-architecture.md); per-move rulings (docs/MOVE-INTENT.md); general combat rules (docs/COMBAT-RULES.md).
+- **Status home:** docs/current feature planning/move-schema/slice-overview.md.
+- **Last reconciled:** not yet
+
 **Updated:** Oct 24, 2026 (canonical; merged from the Oct 23 revision + the original from-scratch draft)  
 **Status:** Design proposal; not yet implemented in `js/`  
 **Scope:** Translate PokeAPI move facts into a data-driven survivor-like combat model. Supersedes the eleven-flat-attribute sketch in `MOVES-REFACTOR-PLAN.md`.

@@ -1,5 +1,11 @@
 # GDD, PokeSurvivor . Mystery Dungeon
 
+- **Role:** Living umbrella for the game: short summaries and pointers. Where a subsystem spec covers a topic, the subsystem spec wins (QA-02). Body not yet reconciled to this role.
+- **Owns:** Game concept, screen flow, world, enemies summary, items, economy and meta summaries.
+- **Does not own:** Combat math, status effects and stat stages (docs/COMBAT-RULES.md); move data grammar (docs/MOVE-AXIS-SCHEMA.md); move runtime (docs/current feature planning/combat-architecture.md); per-move rulings (docs/MOVE-INTENT.md); run progression, gyms, elites and loops (BOSS-REWORK.md); tuned numbers (BALANCE.md); decision history (DECISIONS.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 > Living design document. It reflects the **current** state of the game; at the end there is
 > a dated decision log.
 

@@ -1,5 +1,11 @@
 # SIM / PRESENT BOUNDARY (design direction)
 
+- **Role:** Active architecture-direction doc (R-12): direction, not a committed refactor.
+- **Owns:** The sim and present boundary and the language-direction reasoning.
+- **Does not own:** Module map, build and run (ONBOARDING.md); combat rules (docs/COMBAT-RULES.md); agent rules (CLAUDE.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 Status: DIRECTION, not a committed refactor slice. Converge toward this as you touch files; do not stop feature work to do it in one pass.
 Opened 2026-10-22 (Amazon Quick, work machine), from a Go-vs-JS conversation that resolved into an architecture question.
 

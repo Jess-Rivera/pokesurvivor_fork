@@ -1,5 +1,11 @@
 # BOSS-AUTHORING, how to write a gym or Elite Four encounter (DRAFT schema, 2026-10-19)
 
+- **Role:** Authoring format and validation for writing a gym or Elite Four encounter.
+- **Owns:** The authoring template and which fields the game derives.
+- **Does not own:** Roster contents (docs/GYM-ROSTERS.md); progression and encounter rules (BOSS-REWORK.md); combat rules (docs/COMBAT-RULES.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 This is the human-friendly form you fill in. Claude turns it into game data later (js/data/gyms.js, propose-first since it is game data).
 Design background: BOSS-REWORK.md sections 3, 3a and 4. Built so far (2026-10-22): Kanto gym 1, Brock, with the full six-slot roster in js/data/gyms.js (slots 2 to 6 have provisional moves). Roster design for every gym and Elite Four member: docs/GYM-ROSTERS.md.
 
