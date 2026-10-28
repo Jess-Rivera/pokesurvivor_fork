@@ -316,3 +316,20 @@ Approved superseded list (to history, never tagged):
 6. QA-08 answer text items 3a, 4a and 5 (elite trigger, gym trigger, Elite Four one at a time), overridden by Q3, Q2 and Q6.
 
 GYM-ROSTERS pointer scope for B5b (Jess, 2026-10-28: Option A, the narrow reading): in docs/GYM-ROSTERS.md "Rules that apply to every roster here", only the consuming rules become a pointer to BOSS-REWORK (SIX LOOPS / loop N fields the first N, ALL AT ONCE, catalog moves only; these live in BOSS-REWORK 3e, 3a and, after B5a2, 4a). The roster-composition conventions stay in GYM-ROSTERS unchanged (mono-type and off-type, Gen-2 line completion, cross-roster reuse, legendary rule, Elite Four outside Gen-1, pinned stage, ace-first order, stage thresholds). The EVOLUTION STAGE bullet stays but gets a short note: "the gym level includes the escalation bump read at entry, see BOSS-REWORK section 3" (Q7). The GYM-ROSTERS header "Owns" line is unchanged.
+
+### B5a2 rows (2026-10-28): QA-08 design record in BOSS-REWORK
+
+Written from the CP4 decisions above. No source was trimmed; superseded text stays in place marked "Superseded ... history" (untagged). DECISIONS:226-248 is only named in 4a as history; its verbatim move to the archive is B8a (Q20). Rows with wording changed = Y need Jess's tick.
+
+| ID | source path and section | verbatim source excerpt | destination | tag | QA/Q dependency | wording changed (Y/N) | spot-check (Y/N) | reviewer tick |
+|---|---|---|---|---|---|---|---|---|
+| B5a2-01 | CP4 decisions item 1 (above); QA-08 | "Loop N fields the first N mons of every gym and Elite Four roster, all at once" | BOSS-REWORK 4a, first bullet | [Approved] (approved, not built) | QA-08, Q2, Q3, Q6 | Y (new record) | N | ✓ 2026-10-28 |
+| B5a2-02 | CP4 decisions item 2; Q8 | "Return Home, Next Region or Unlock Safeties" ... "continue to Loop N+1" | BOSS-REWORK 4a, end-of-region choice | [Approved] (approved, not built) | QA-08, Q8 | Y | N | ✓ 2026-10-28 |
+| B5a2-03 | CP4 decisions item 3 | "Return Home or Keep Going ... escalating per loop completed" | BOSS-REWORK 4a | [Approved] (approved, not built) | QA-08 | Y | N | ✓ 2026-10-28 |
+| B5a2-04 | CP4 decisions item 4; Q5 | "uncapped across loops and Next Region" | BOSS-REWORK 4a | [Approved] (approved, not built) | Q5 | Y | N | ✓ 2026-10-28 |
+| B5a2-05 | CP4 decisions item 5; Q12, A3-1 | "completion bonus ... replaces the 60 and 90 minute time bonus" | BOSS-REWORK 4a; section 1 tempo sub-bullet, section 4 bonus line, schedule floor sentence and section 7 ramp-link line marked superseded | [Approved] (approved, not built) | Q12, A3-1 | Y (superseded markers added) | N | ✓ 2026-10-28 |
+| B5a2-06 | CP4 decisions item 6 | "start at any loop already cleared, with the clock at 0:00" | BOSS-REWORK 4a | [Approved] (approved, not built) | QA-08 | Y | N | ✓ 2026-10-28 |
+| B5a2-07 | CP4 decisions item 7 | Legendary Boss after Loop 6, The Climb, Arceus, Descendant Mutation | BOSS-REWORK 4a, pointer line to GDD (B6a) | none (pointer) | Q9, Q10 | Y | N | ✓ 2026-10-28 |
+| B5a2-08 | CP4 decisions item 8; BOSS-REWORK:24 "Keep Going ... DEFERRED" | "Keep Going (loops, two signatures at once, bonus per loop) DEFERRED to feature/continue-option." | BOSS-REWORK section 1 line now points to 4a; build stays deferred; section 4 Keep Going line also points to 4a | none | QA-08 | Y | N | ✓ 2026-10-28 |
+| B5a2-09 | CP4 decisions, Open list O1 to O6 | "O1. When does Gym 1 of Loop N+1 spawn ..." to "O6 ..." | BOSS-REWORK 4a | [Open] | none | Y | N | ✓ 2026-10-28 |
+| B5a2-10 | CP4 approved superseded list items 1 to 6 | (see CP4 section above) | BOSS-REWORK 4a history bullet and in-place "Superseded" markers; items 3 and 4 (FULL-GAME-STRUCT:11) and 2 (DECISIONS:226-248) are named only, those files untouched | none (history) | Q9, Q10, Q20 | Y | N | ✓ 2026-10-28 |

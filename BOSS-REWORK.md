@@ -1,10 +1,10 @@
 # BOSS-REWORK, tracker for branch feature/boss-rework
 
-- **Role:** Progression and encounters spec (QA-06). Body partly reconciled to this role (B5a1: escalation, badges and the pilot gym rulings added; the in-region rules from the 2026-10-28 answers tagged). The loop design (QA-08) arrives in B5a2; the change log and touch points move to history in B5b.
+- **Role:** Progression and encounters spec (QA-06). Body partly reconciled to this role (B5a1: escalation, badges and the pilot gym rulings added; the in-region rules from the 2026-10-28 answers tagged). The loop design (QA-08) is recorded in section 4a (B5a2, 2026-10-28, approved, not built); the change log and touch points move to history in B5b.
 - **Owns:** Run progression, level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops.
 - **Does not own:** Combat rules including status effects (docs/COMBAT-RULES.md); gym roster data (docs/GYM-ROSTERS.md); authoring format (docs/BOSS-AUTHORING.md); tuned numbers (BALANCE.md); work tracking (STATE.md).
 - **Status home:** STATE.md.
-- **Last reconciled:** 2026-10-28 (B5a1, sections 1 to 4), against js/systems/gym.js, js/systems/elites.js, js/data/gyms.js and js/core/stats.js (levelForTime).
+- **Last reconciled:** 2026-10-28 (B5a1, sections 1 to 4; B5a2, section 4a), against js/systems/gym.js, js/systems/elites.js, js/data/gyms.js and js/core/stats.js (levelForTime).
 
 Single place to see the design, the decisions and every change for this branch. Opened 2026-10-19.
 Durable rulings also get a dated entry in DECISIONS.md; this file is the working view and the change log.
@@ -21,10 +21,10 @@ Replaces the three old boss systems:
 - Rifts with legendaries -> GYM fights (gate on the map -> type-matched arena -> the leader's signature Pokemon with hand-authored real moves, level = run-time level + 4, sized up).
 - BOSS_SLOTS bosses (3, 6, 9, 12, 15 min) -> overworld ELITES (sized up). The +1 or +2 level offset in the original design was dropped the same day: elites have NO level offset (section 2).
 - Arceus's Judgment at 30:00 -> removed. Region Complete (finish the region's ordered encounter list) replaces it.
-- Region Complete: Return Home (completion bonus) now; Keep Going (loops, two signatures at once, bonus per loop) DEFERRED to feature/continue-option.
+- Region Complete: Return Home (completion bonus) now; Keep Going and the loop design are recorded in section 4a (approved 2026-10-28, approved, not built); the build stays DEFERRED to feature/continue-option. (Superseded, history: the old "two signatures at once" wording, replaced by "Loop N fields the first N".)
 - [Approved] Badge per gym win: run-long boost, guaranteed item, guaranteed level, a Bond, full team revive to 100%. Details in section 3g.
 - [Approved] ENEMY LEVEL CURVE (LOCKED 2026-10-19; confirmed by Q5, 2026-10-28): time under 30:00 -> linear L1 to L50. From 30:00, if the gym list is NOT complete -> clamped at L50. Once all gyms are beaten (Gym 8 in Kanto) -> the slow ramp (starts linear, transitions to exponential, math TBD) and the Elite Four phase starts. levelForTime therefore takes the gym-list completion time as an input. Code differs, see TODO: levelForTime accepts a gymsDone argument but ignores it and always clamps at L50 past 30:00, so the post-gym slow ramp is not built (js/core/stats.js).
-  - Nothing punishes a slow player before that beyond the L50 wild, so the tempo incentive is the Return Home time bonus (section 4).
+  - (Superseded 2026-10-28, history: "the tempo incentive is the Return Home time bonus (section 4)". The 60 and 90 minute time bonus is replaced by the escalating completion bonus, see section 4a.)
 - [Approved] The linear phase restates the 2026-10-17 Enemy HP model (DECISIONS): level(t) = 1 + 49 * clamp(t/1800, 0, 1), HP via the mainline formula. That entry's 'PHASE 2' (Standard Run / Unlock Safeties choice after a 30-minute boss) is superseded (docs/DECISIONS-archive.md, 2026-10-19 boss rework design).
 - [Approved] Gate escalation adds a temporary, uncapped bump to wild spawn levels and to the gym leader's level while a gate is open past its grace period (section 3f). levelForTime itself stays pure.
 
@@ -109,9 +109,29 @@ A gym gate is a pressure mechanic, not come-when-ready.
 - [Approved] Trigger: Gym 8 beaten and the player back on the map. Then (1) the slow level ramp starts and (2) ALL FOUR Elite Four gates open at once, spread across the map so every gate is off screen from the others. The gate shows its level, and so does the direction arrow that points to it. (confirmed by Q6, 2026-10-28) Code differs, see TODO: the Elite Four and the slow ramp are not built.
 - [Approved] Elite Four levels are HARD-SET per encounter (authored in the region data), not clock-based and not wild + 4. The player sees the difficulty and picks the order. Gym levels stay clock-based (wild level + 4).
 - [Approved] Region Complete = all 8 gym leaders and all 4 Elite Four defeated (Champion not in Kanto's list for now).
-- Return Home bonus: a multiplier on total run time. Under 60 min raises it, over 90 min lowers it, flat between (curve shape, steps vs continuous, and numbers TBD). Death still commits EVs and progress.
-- Keep Going: DEFERRED (feature/continue-option). Idea: XP, damage and HP multipliers all go up each loop.
-- Schedule floor (design note): with 4:00 gaps, Gym 8 spawns at about 39 min even if every gym fight takes 1 min, so the best clear is roughly 45 to 50 min. Skill shows up as short fights and no deaths, not as skipping waits. Pick the 60 and 90 min bonus marks after the pilot gym gives real fight times.
+- (Superseded 2026-10-28, history: "Return Home bonus: a multiplier on total run time. Under 60 min raises it, over 90 min lowers it, flat between." Replaced by the completion bonus in section 4a.) Death still commits EVs and progress.
+- Keep Going: DEFERRED (feature/continue-option). The loop design is in section 4a. The old idea "XP, damage and HP multipliers all go up each loop" is not adopted, see 4a O6.
+- Schedule floor (design note): with 4:00 gaps, Gym 8 spawns at about 39 min even if every gym fight takes 1 min, so the best clear is roughly 45 to 50 min. Skill shows up as short fights and no deaths, not as skipping waits. (Superseded 2026-10-28, history: "Pick the 60 and 90 min bonus marks after the pilot gym gives real fight times.")
+
+### 4a. End of region and loops (2026-10-28, Jess; answers QA-08, Q2 to Q12, A.3-1)
+Every rule below is [Approved] and approved, not built (code differs, see TODO: no loops, no Next Region, no completion bonus, no Loop counter exist yet).
+- [Approved] A run starts at Loop 1. Loop N fields the first N mons of every gym and Elite Four roster, all at once (section 3e). Six loops per region. Each loop runs the in-region rules unchanged (sections 2, 3, 3f, 3g and 4).
+- [Approved] After the fourth Elite Four of Loop 1, the player chooses Return Home, Next Region or Unlock Safeties.
+  - Return Home: back to the main menu, with the completion bonus on the rewards.
+  - Next Region: the next region's map. Its clock starts at the previous region's end time. The team and all upgrades are kept.
+  - Unlock Safeties: same map, the timer continues, Loop becomes N+1, and the gyms and Elite Four run again. The name means only "continue to Loop N+1" (Q8). The performance-scaled (DDA) version from 2026-10-17 is dropped.
+- [Approved] After each later loop the choice is Return Home or Keep Going. Return Home pays the completion bonus, escalating per loop completed. Keep Going is Unlock Safeties.
+- [Approved] The level clock is uncapped across loops and Next Region (Q5). The L50 clamp applies only until all 8 gyms of the current run are beaten, as in section 1.
+- [Approved] The completion bonus (escalating per loop) replaces the 60 and 90 minute time bonus (Q12, A.3-1). Bonus numbers: current value TBD, see BALANCE.md when set.
+- [Approved] Later runs in a region may start at any loop already cleared, with the clock at 0:00.
+- Pointer: the Legendary Boss after Loop 6, The Climb, Arceus and Descendant Mutation are recorded in GDD.md (B6a).
+- [Open] O1. When does Gym 1 of Loop N+1 spawn (4:00 after returning from the fourth Elite Four)?
+- [Open] O2. In Loop 2 and later, does the post-gym slow ramp simply continue, and what curve applies to a run started at Loop N from 0:00?
+- [Open] O3. Elite Four levels are hard-set; with an uncapped clock in later loops, do they stay at the authored values?
+- [Open] O4. Do badge boosts stack again when the same gym is beaten in a later loop?
+- [Open] O5. Which loop does Next Region start at (Loop 1?)
+- [Open] O6. The old Keep Going idea "XP, damage and HP multipliers all go up each loop": drop it, or keep it as [Proposed]?
+- History (superseded, never tagged): QA-08 answer items 3a, 4a and 5 (elite trigger, gym trigger, Elite Four one at a time), overridden by Q3, Q2 and Q6; the DECISIONS.md 2026-10-17 Enemy HP model "PHASE 2" Unlock Safeties text (DECISIONS:226-248, moves to the archive in B8, Q20); docs/FULL-GAME-STRUCT.md:11 inheritor graft (replaced by Descendant Mutation, moves and typing go to another mon, Q9) and Arceus gated on owning every legendary (replaced by The Climb's 9th completion point, Q10).
 
 ## 5. Cleanup list (DEFERRED to the last slice of this branch)
 - Unhook rift spawning (rift.js) but keep legendary flags, data and code for the later legendary feature.
@@ -140,7 +160,7 @@ A gym gate is a pressure mechanic, not come-when-ready.
 - RESOLVED: Density Bonus is XP only (section 2). Run-time constant XP_BOOST_END = 180 s approved.
 - RESOLVED 2026-10-19: a gym's level LOCKS when its gate spawns and is displayed on the gate (same as the Elite Four). Elites run in the Elite Four phase: one elite 2:00 after each return from ANY gate, none while one is alive, timers never stack. Elite Four give the badge package WITHOUT the guaranteed full revive (gym leaders keep the revive).
 - Elite Four details still open: order freedom is implied by the hard-set levels (all four gates open at once), hard-set level lists for Kanto, whether any gate-skipping is allowed.
-- Post-gym ramp math, and its link to the 60 and 90 min bonus marks (proposal: it should bite noticeably by 90 min so both incentives agree).
+- Post-gym ramp math. (Superseded 2026-10-28, history: "its link to the 60 and 90 min bonus marks (proposal: it should bite noticeably by 90 min so both incentives agree)"; the time bonus is replaced, see section 4a.)
 - Elites: enrage numbers and ramp length. (Elites in the Elite Four phase: resolved, see the RESOLVED line above and section 2.)
 - Post-gym ramp (deferred): shape and numbers of the slow ramp that starts when the gym list is complete; it also needs the levelForTime change described in section 1.
 - Gyms and the rest: see sections 3 and 4.
