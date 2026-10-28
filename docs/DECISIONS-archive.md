@@ -1,5 +1,7 @@
 # DECISIONS archive
 
+HISTORY (2026-10-28). Nothing here is a live citation. The current rule for each decision is in the spec named by the matching `Canonical:` line in DECISIONS.md, or by the "Current rule in" line above the entries copied on 2026-10-28. If this text and a spec disagree, the spec wins.
+
 Rotated out of DECISIONS.md on 2026-10-20, verbatim and in original order. These are history: some are superseded, and DECISIONS.md and STATE.md win on any conflict. Search by keyword.
 
 ## 2026-10-18, Opening pacing: XP boost and elite gate [Jess, applied, uncommitted, not playtested]
@@ -849,7 +851,7 @@ History. Each entry below is copied verbatim from DECISIONS.md as it stood befor
 - MP (Jess's stated preference): server-authoritative sim + WebRTC with TURN (the server is itself a WebRTC peer, pion/webrtc if Go; TURN relays on NAT failure). Thousands-of-entities for a 4-player room is achievable JS end to end; binding constraints in order are client render throughput, snapshot bandwidth, server sim CPU.
 - STANDING SP DISCIPLINE: converge the sim toward a sim/present-event boundary (the sim mutates state and EMITS events; a presentation layer renders FX/Audio/Animator/HUD from them). Keep collision radius out of sprite metadata (precompute per-species into data), keep the clock injected (sim steps on a passed dt, not rAF/performance.now). Pays off three ways: real headless harness coverage NOW, Web-Worker sim for SP perf, and the authoritative server later. This is DIRECTION (pay down as you touch files), NOT a refactor slice to open mid-feature. Worked example: Enemy.hurt(). Full detail: docs/SIM-PRESENT-BOUNDARY.md.
 
-**Current rule in: none yet (no live spec holds this rule; see the B8a hand-off)**
+**Current rule in: GDD.md, "1. Concept"**
 
 ## 2026-10-20, No external links in game menus; website files parked
 - Menus show no links to outside sites. Ko-fi is disabled by blanking `kofi` in js/data/funding.js (guards hide the Support button and run-end ask); restore it to re-enable.
@@ -899,7 +901,7 @@ Archived entries (heading only):
 - Risky changes are flagged in the plan prose with why; proceed assuming yes unless Jess denies or edits. Jess feel-tests after each change (about a minute), so applied changes are not described as untested.
 - UNCHANGED: the dividing line (does it change what the game does when you run it?), the free-edit exception for js/data/changelog.js, free-edit for the Markdown docs, and the hard rule that the assistant never runs git. Commit messages carry no Co-Authored-By or Claude-Session trailer lines.
 
-**Current rule in: none yet (no live spec holds this rule; see the B8a hand-off)**
+**Current rule in: GDD.md, "1. Concept"**
 
 ## 2026-10-17, Massive density is a FEATURE, not a thing to budget down (design north star)
 Jess's explicit goal: the game should deliver "holy f*** I've got 200 mon after me / ME TOO / SHIT

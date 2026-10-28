@@ -37,6 +37,8 @@ Current behavior.
 - **The player is a Pokemon.** There are **966 Pokemon** from the 9 generations.
 - **Everything is local:** sprites, data, font, music and save. The game makes
   no internet request.
+- **Density is the identity** `[Approved]` (2026-10-17): absurd on-screen enemy density is the point of the game. Entity count is a fixed requirement to design around, not a knob to shrink for cost or frame targets. Solve performance with levers that keep the monster count, and treat only a genuine feel failure (unreadable screen, framerate collapse) as a reason to reduce it, preferring readability fixes first. (CLAUDE.md, "Performance stance")
+- **No external links in menus** `[Approved]` (2026-10-20): menus show no links to outside sites. Ko-fi is off by blanking `kofi` in js/data/funding.js, SpriteCollab and PokeAPI credits stay plain text, and the mailto contact line stays. SEO pages and generators live in `_delete_/`, and the bundle is built with `--sin-seo`.
 
 ## 2. Screen flow
 
