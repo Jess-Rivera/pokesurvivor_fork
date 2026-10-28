@@ -256,6 +256,6 @@ Checked: slice-4c.md, slice-4c-1/2/3-codehandoff.md, slice-4d.md, slice-5.md, sl
 
 Files matching *slice*.md under docs/current feature planning/move-schema/ are out of scope for the audit (owner instruction, 2026-10-28), so no rows track them. The row below needs Jess's tick (wording changed = Y).
 
-| ID | Source | Verbatim source excerpt | Destination | Tag | Dep | Wording changed | Spot-check | Tick |
+| ID | source path and section | verbatim source excerpt | destination | tag | QA/Q dependency | wording changed (Y/N) | spot-check (Y/N) | reviewer tick |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| B4b-01 | docs/current feature planning/move-consistency-review.md top and section 9 | (no text removed; the "single source" wording stays as history) | history header blockquote added after the title and above the section 9 body, with "absorbed into" pointers to MOVE-AXIS-SCHEMA, combat-architecture, MOVE-INTENT and COMBAT-RULES | [Approved] | QA-05 | Y (new header text, body unchanged) | N | |
+| B4b-01 | docs/current feature planning/move-consistency-review.md top and section 9 | (no text removed; the "single source" wording stays as history) | history header blockquote added after the title and above the section 9 body, with "absorbed into" pointers to MOVE-AXIS-SCHEMA, combat-architecture, MOVE-INTENT and COMBAT-RULES | [Approved] | QA-05 | Y | N | ✓ 2026-10-28 |
