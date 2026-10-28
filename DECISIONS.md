@@ -234,18 +234,7 @@ Difficulty is two-phase, gated by the planned 30-minute boss:
 - PHASE 1 (0-30 min), BUILD NOW: enemy level grows LINEARLY from L1 (0:00) to L50 (30:00). i.e.
   level(t) = 1 + 49 * clamp(t/1800, 0, 1). HP follows via the formula. (Base-65 enemy: ~24 HP at
   start, ~124 HP at 30 min.)
-- PHASE 2 (post-30-min), SPEC ONLY until the 30-min boss exists: beating the 30-min boss presents a
-  choice:
-    * [Standard Run]: a FIXED accelerating ramp (the level-growth slope steepens on a schedule, e.g.
-      every 15 min). Predictable, never reactive. Pure skill race.
-    * [Unlock Safeties]: "safeties off" (like a safety catch released, NOT a safety net) - enemies
-      scale UP to the player's performance (DDA), with boosted rewards (exp, gold, tickets, items) as
-      the risk payoff. Opt-in + rewarded, so it does NOT violate the power-fantasy (the player CHOSE
-      the danger for loot; genre-legit like VS Curse / Brotato Danger).
-      DDA signal: a BLEND (to be finalized when built) of player level-vs-expected, kill rate, and
-      HP comfort margin. Composite with tunable weights.
-  Phase 2 depends on the 30-min boss (planned, not built) and a reward-multiplier system (not built),
-  so it is captured here as design and built when the boss lands.
+- PHASE 2 (post-30-min): SUPERSEDED 2026-10-28 (Q8, QA-08). The Standard Run / Unlock Safeties choice and the DDA version are dropped; the text moved verbatim to docs/DECISIONS-archive.md ("DECISIONS 2026-10-17 Enemy HP model, PHASE 2"). Current rule: BOSS-REWORK.md section 4a (Unlock Safeties means "continue to Loop N+1").
 
 ## 2026-10-17, IV/EV deferred pending a persistent-storage design
 Slice 1 (Speed -> movement) does NOT read or store IV/EV. They are part of the mainline stat formula

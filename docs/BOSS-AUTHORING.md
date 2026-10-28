@@ -4,6 +4,7 @@
 - **Owns:** The authoring template and which fields the game derives.
 - **Does not own:** Roster contents (docs/GYM-ROSTERS.md); progression and encounter rules (BOSS-REWORK.md); combat rules (docs/COMBAT-RULES.md).
 - **Status home:** STATE.md.
+- **Implemented for Brock:** the schema is implemented for Kanto gym 1, Brock (js/data/gyms.js); other gyms and the Elite Four are not authored in game data yet.
 - **Last reconciled:** not yet
 
 This is the human-friendly form you fill in. Claude turns it into game data later (js/data/gyms.js, propose-first since it is game data).

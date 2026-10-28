@@ -14,21 +14,9 @@ mons, in what order) is a design decision per leader.
 
 ## Rules that apply to every roster here (do not relitigate; see the source docs)
 
-- SIX LOOPS per region (FULL-GAME-STRUCT). Loop N fields the FIRST N mons of a
-  leader's roster, in slot order. Loop 1 = slot 1 only; loop 6 = the full six.
-  Twelve boss fights per loop (8 gyms + 4 Elite Four).
-- ALL AT ONCE (LOCKED 2026-10-22, Jess): the loop's mons are fielded SIMULTANEOUSLY,
-  not one-at-a-time. Loop 6 = all six leader mons on screen together (a brawl, not a
-  boss-rush). Consequences: (a) ARENA SIZE scales with the mon count (bigger arena for
-  more mons; today ARENA_R is a constant in rift.js and must become count-based);
-  (b) WIN = every leader mon down (arenaTick must track a SET of boss ids, not one
-  arena.bossId, and only call won() when all are dead); (c) ENRAGE = one SHARED gym
-  clock from the first hit on ANY leader mon (proposed, TUNE), not independent
-  per-mon clocks, so stacked enrages cannot make a 6-mon fight unwinnable;
-  (d) difficulty is MULTIPLICATIVE (six simultaneous attack patterns), so loop 6 is a
-  tuning watch item and pairs with the gate-escalation "you dawdled, now you pay" intent.
+- LOOPS, ALL AT ONCE and CATALOG MOVES (rules that consume rosters): see BOSS-REWORK.md section 3e (loop N fields the first N mons, in slot order, all at once; arena size, win condition and shared enrage), section 4a (six loops per region, loop N) and section 3a (catalog moves and existing warning shapes only). Twelve boss fights per loop (8 gyms + 4 Elite Four) is from docs/FULL-GAME-STRUCT.md. Loop 1 = slot 1 only; loop 6 = the full six.
 - SLOT ORDER = send-out order. The roster below is written top-to-bottom in that order.
-- EVOLUTION STAGE follows the GYM's LOCKED LEVEL (gym.level = levelForTime(gate) +
+- EVOLUTION STAGE follows the GYM's LOCKED LEVEL (the gym level includes the escalation bump read at entry, see BOSS-REWORK section 3) (gym.level = levelForTime(gate) +
   LEVEL_OFFSET, locked at gate spawn; BOSS-REWORK section 1 & 3). Each slot is an
   evolution LINE; the stage shown is whichever is level-appropriate for that gym's
   locked level. Because the gym level rises across loops, a slot naturally advances
@@ -36,7 +24,7 @@ mons, in what order) is a design decision per leader.
   stage table. Evolution REQUIREMENTS (trade, min-level, happiness) are IGNORED: the
   leader simply has the stage the level calls for (he is a leader, not a wild catch).
 - Gym leader mons use ONLY catalog moves and the existing warning shapes
-  (BOSS-REWORK section 3a). Authored move/stack data per mon lives in gyms.js /
+  (rule owned by BOSS-REWORK section 3a). Authored move/stack data per mon lives in gyms.js /
   docs/BOSS-AUTHORING.md, NOT here. This file is the roster line-up only.
 - Stage thresholds per line (the level at which a slot shows its next stage) are a
   TUNE value, set when the multi-mon gym flow is built. Placeholder bands are noted

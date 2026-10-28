@@ -592,3 +592,36 @@ real base Speed stat[5]), fixed per species, same px/s scale as the player, with
 speed. Exceptions kept: bosses retain their own spd path (out of scope); the 'runner' behavior keeps
 its x1.6 (it is a behavior archetype, not a base-stat multiplier).
 
+## BOSS-REWORK section 6 (change log and code touch points), moved 2026-10-28 (B5b)
+History. Moved verbatim from BOSS-REWORK.md. Current rules: BOSS-REWORK.md sections 1 to 4a.
+
+### Change log (code and data changed on this branch)
+- 2026-10-19, Boulder Badge boost BUILT (+10% Atk, whole team, Player.badge/incOf, G.Game.badgeBoost, gyms.js boost field); gym leader drops no XP (toast + guaranteed level instead).
+- 2026-10-19, Brock pilot gym BUILT (see DEVLOG): js/data/gyms.js, js/systems/gym.js, rift.js (gate, no timer, random rifts off), enemy.js (gym AI casting the player's own moves), stats.js (power/cat), game.js (grantLevels, reviveTeam, gym death ends the run), hud.js, elites.js (afterGate), debug.js (G.Debug.gym()). Boost is a stub; tuning pending the feel test.
+- 2026-10-19, Overworld Elites slice BUILT: new js/systems/elites.js; eliteDef() in enemies.js; XP_BOOST_END in stats.js; spawner.js (placeElite, elite cap/rate, Density Bonus, boss spawn and bossFight removed); enemy.js (elite descriptor, exclusions, walk-off, drops, name tag); hud.js (elite bar and arrow); judgment.js unhooked (ENABLED = false); progress.js (elite counts as boss kill); debug.js (G.Debug.elite()); dev.html; changelog.js; docs/proposals/elites-harness.js. Open: BOSS_SLOTS/BOSSES/bossScale data still present (cleanup list), TTK and power retune after feel tests.
+
+### Code touch points found so far (baseline for the change log)
+- js/data/enemies.js: BOSS_SLOTS, rollRun() boss draw, bossScale(t), BOSSES getter, upcomingDex().
+- js/systems/spawner.js: bossIdx, spawnBoss(), bossFight (25% spawn rule and no tides), crowd bump line 109 and ELITE_FROM (RENAME to density bonus, gate on bossIdx > 0 replaced by the 180 s constant), XP boost window and its announcement (lines 32 and 207 read BOSS_SLOTS[0].at; LOCKED: read the shared run-time constant XP_BOOST_END = 180 s).
+- js/data/enemies.js line 66: openingHpK also reads BOSS_SLOTS[0].at (same constant, 180 s, must survive the BOSS_SLOTS removal).
+- js/entities/enemy.js: `boss` constructor flag and about 30 branches on it, bossScale(dex) sizing, boss HP / speed / atkFactor null, die() drops (coins plus an item), boss movement and attack functions, boss HP bar.
+- js/systems/combat.js: boss contact uses the flat path and reach 1.0, defender level falls back to the player's level for bosses (atkLvl 0).
+- js/systems/hazards.js: hazards carry atkFactor; bosses pass null.
+- js/systems/rift.js and judgment.js: the arena and portal flow gyms will reuse; Judgment to be removed.
+- js/net/coop.js: rift, arena and hazard messages (co-op is deferred, note only).
+
+## DECISIONS 2026-10-17 Enemy HP model, PHASE 2, moved 2026-10-28 (B5b)
+History, SUPERSEDED (Q8, QA-08). Moved verbatim from DECISIONS.md under "2026-10-17, Enemy HP model: mainline formula, two-phase difficulty". Current rule: BOSS-REWORK.md section 4a.
+
+- PHASE 2 (post-30-min), SPEC ONLY until the 30-min boss exists: beating the 30-min boss presents a
+  choice:
+    * [Standard Run]: a FIXED accelerating ramp (the level-growth slope steepens on a schedule, e.g.
+      every 15 min). Predictable, never reactive. Pure skill race.
+    * [Unlock Safeties]: "safeties off" (like a safety catch released, NOT a safety net) - enemies
+      scale UP to the player's performance (DDA), with boosted rewards (exp, gold, tickets, items) as
+      the risk payoff. Opt-in + rewarded, so it does NOT violate the power-fantasy (the player CHOSE
+      the danger for loot; genre-legit like VS Curse / Brotato Danger).
+      DDA signal: a BLEND (to be finalized when built) of player level-vs-expected, kill rate, and
+      HP comfort margin. Composite with tunable weights.
+  Phase 2 depends on the 30-min boss (planned, not built) and a reward-multiplier system (not built),
+  so it is captured here as design and built when the boss lands.

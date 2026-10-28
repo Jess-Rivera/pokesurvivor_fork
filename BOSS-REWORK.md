@@ -1,6 +1,6 @@
 # BOSS-REWORK, tracker for branch feature/boss-rework
 
-- **Role:** Progression and encounters spec (QA-06). Body partly reconciled to this role (B5a1: escalation, badges and the pilot gym rulings added; the in-region rules from the 2026-10-28 answers tagged). The loop design (QA-08) is recorded in section 4a (B5a2, 2026-10-28, approved, not built); the change log and touch points move to history in B5b.
+- **Role:** Progression and encounters spec (QA-06). Body partly reconciled to this role (B5a1: escalation, badges and the pilot gym rulings added; the in-region rules from the 2026-10-28 answers tagged). The loop design (QA-08) is recorded in section 4a (B5a2, 2026-10-28, approved, not built); the change log and touch points (section 6) moved to history in B5b.
 - **Owns:** Run progression, level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops.
 - **Does not own:** Combat rules including status effects (docs/COMBAT-RULES.md); gym roster data (docs/GYM-ROSTERS.md); authoring format (docs/BOSS-AUTHORING.md); tuned numbers (BALANCE.md); work tracking (STATE.md).
 - **Status home:** STATE.md.
@@ -74,6 +74,7 @@ Loop 1 fields the first signature only: Geodude alone. Moves: Tackle, Harden (st
 - Each move kind has ONE fixed boss form (a table, not a per-move guess). Proposed forms: projectile, cone and nova = aimed shots with a ~0.6 s wind-up ring; melee = zone on the boss (stomp); dash = charge along a beam warning; beam = beam hazard; meteor = zones landing on and around the player; self-buff (Harden, Swords Dance, Agility, Dragon Dance; there is NO Defense Curl in the catalog) = a self stat-stage change (see 3c); SECOND WAVE (only zone and beam shapes, no new hazard type): aura = repeated zone pulses centered on the boss; mine = delayed zones around the player; trail = zones laid behind the boss as it moves; boomerang = a beam out and a beam back; chain = a few zones in sequence near the player; orbit = a ring of zones around the boss; turret (Substitute, Will-O-Wisp) stays inert.
 - Casts use the player's per-cast normalization (total Power split across pellets). Enemy attack strength needs a Power parameter (stats.js enemyAttackFactor hard-codes Power 40 today). Cooldowns come from the catalog times a tier factor. Authoring hints per move: weight, range tag (close, far, any), optional only-below-X%-HP. Fury phase: OFF for now (Jess 2026-10-19; the schema keeps the optional field, unused). Self-boost for buff moves = a stage change (3c).
 - Catalog coverage with the v1 forms (first wave only): rock 2, ground 1 (Mud Shot), water 4, electric 1 (Thunder Shock), grass 1 (Vine Whip), poison 2, psychic 3, fire 3, ice 2, fighting 2, ghost 2, dragon 1 plus Dragon Dance, normal 4 plus 3 self-buffs. Thin: Surge (electric), Erika (grass), Giovanni (ground). The second wave's AURA form alone unlocks 7 more moves, among them Discharge, Giga-Drain and Bulldoze, which are exactly those three types. Normal-type moves (Quick Attack, Tackle, Body Slam, Hyper Voice) are the mainline-accurate filler for the rest.
+- [Approved] QA-13, decided via Q18 (2026-10-28): the move-schema slice 7 does not implement option (a) (supporting-move import for gym moves). After slice 7 the gym is Brock only, either once or every time a gym is called, whichever is simpler to build. Option (a) and the other gyms get their own branch. Naming note: this "option (a)" is unrelated to the gym cadence "Option A" (section 3).
 
 ### 3b. Authoring schema (DRAFT 2026-10-19)
 The format Jess fills in lives in docs/BOSS-AUTHORING.md (fields, move-line hints, validation rules, a template and an illustrative Brock example). It becomes js/data/gyms.js at build time (propose-first).
@@ -140,20 +141,8 @@ Every rule below is [Approved] and approved, not built (code differs, see TODO: 
 - Remove BOSS_SLOTS, bossScale (enemies.js), spawnBoss and bossIdx (spawner.js).
 - Mark GLOSSARY entries (jefe / grieta) and update ONBOARDING / GDD.
 
-## 6. Change log (code and data changed on this branch)
-- 2026-10-19, Boulder Badge boost BUILT (+10% Atk, whole team, Player.badge/incOf, G.Game.badgeBoost, gyms.js boost field); gym leader drops no XP (toast + guaranteed level instead).
-- 2026-10-19, Brock pilot gym BUILT (see DEVLOG): js/data/gyms.js, js/systems/gym.js, rift.js (gate, no timer, random rifts off), enemy.js (gym AI casting the player's own moves), stats.js (power/cat), game.js (grantLevels, reviveTeam, gym death ends the run), hud.js, elites.js (afterGate), debug.js (G.Debug.gym()). Boost is a stub; tuning pending the feel test.
-- 2026-10-19, Overworld Elites slice BUILT: new js/systems/elites.js; eliteDef() in enemies.js; XP_BOOST_END in stats.js; spawner.js (placeElite, elite cap/rate, Density Bonus, boss spawn and bossFight removed); enemy.js (elite descriptor, exclusions, walk-off, drops, name tag); hud.js (elite bar and arrow); judgment.js unhooked (ENABLED = false); progress.js (elite counts as boss kill); debug.js (G.Debug.elite()); dev.html; changelog.js; docs/proposals/elites-harness.js. Open: BOSS_SLOTS/BOSSES/bossScale data still present (cleanup list), TTK and power retune after feel tests.
-
-### Code touch points found so far (baseline for the change log)
-- js/data/enemies.js: BOSS_SLOTS, rollRun() boss draw, bossScale(t), BOSSES getter, upcomingDex().
-- js/systems/spawner.js: bossIdx, spawnBoss(), bossFight (25% spawn rule and no tides), crowd bump line 109 and ELITE_FROM (RENAME to density bonus, gate on bossIdx > 0 replaced by the 180 s constant), XP boost window and its announcement (lines 32 and 207 read BOSS_SLOTS[0].at; LOCKED: read the shared run-time constant XP_BOOST_END = 180 s).
-- js/data/enemies.js line 66: openingHpK also reads BOSS_SLOTS[0].at (same constant, 180 s, must survive the BOSS_SLOTS removal).
-- js/entities/enemy.js: `boss` constructor flag and about 30 branches on it, bossScale(dex) sizing, boss HP / speed / atkFactor null, die() drops (coins plus an item), boss movement and attack functions, boss HP bar.
-- js/systems/combat.js: boss contact uses the flat path and reach 1.0, defender level falls back to the player's level for bosses (atkLvl 0).
-- js/systems/hazards.js: hazards carry atkFactor; bosses pass null.
-- js/systems/rift.js and judgment.js: the arena and portal flow gyms will reuse; Judgment to be removed.
-- js/net/coop.js: rift, arena and hazard messages (co-op is deferred, note only).
+## 6. Change log and code touch points (history)
+Moved verbatim to docs/DECISIONS-archive.md on 2026-10-28 (B5b), under "BOSS-REWORK section 6 (change log and code touch points), moved 2026-10-28". Current progression rules are in sections 1 to 4a; code state is in STATE.md and the code itself.
 
 ## 7. Open questions index
 - RESOLVED 2026-10-19: gym timing = Option A (keep 4:00 gaps, drop the 30:00 target); elite XP = wild yield x HP multiplier x 1.2; XP boost and opening HP discount read one run-time constant.
