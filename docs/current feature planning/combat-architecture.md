@@ -345,6 +345,36 @@ Dependencies: 3a -> 3b -> 3c -> 3d -> 4a -> (4b, 4c in either order) -> 4d -> 5 
 
 ---
 
+## H. Runtime decisions absorbed from review section 9 (2026-10-28)
+
+Source: docs/current feature planning/move-consistency-review.md section 9 (Checkpoints 1 to 3, slices 3b to 4b), plus the slice-3d.md decision that closed a 9.2 open item. Each row is copied from the source. Where a row and an older D or R row above disagree, the row here wins. Grammar decisions live in docs/MOVE-AXIS-SCHEMA.md ("Grammar decisions absorbed from review section 9"); rulings about one move live in docs/MOVE-INTENT.md; general combat rules (trap, stages, damage) live in docs/COMBAT-RULES.md.
+
+| id | rule | tag | source |
+| --- | --- | --- | --- |
+| H1 | Return legs: the back leg may hit again. Hit records keyed by leg (R2), no new field. | [Approved] | 9.1 Q2 |
+| H2 | Stat riders: self and team riders still fire per hit, bounded by the per-move cap (C7). A capped application refreshes that move's oldest. The cap value and scope (self-buffs only, default 1) are in COMBAT-RULES "Stat stages and maxStacks". | [Approved] | 9.1 Q4 (cap wording superseded by Q14 and Q16) |
+| H3 | Accuracy folds into `basePower` = power x accuracy / 100 (resolver). See D1. | [Approved] | 9.1 Q6 |
+| H4 | An emitter is its own instance. Schedule: `cast` emits first at activation, `interval` first at `every` (D29). | [Approved] | 9.1 Q7 |
+| H5 | Every eligible hit rolls its riders. The legacy 0.5 s roll gap is dropped for the new path, and the rehit time is the throttle. See D32. | [Approved] | 9.1 Q14 |
+| H6 | Instance cap: placed objects with neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8; current value: see js/data/move-resolver.js TUNING). A 9th removes that slot's oldest. Timed objects are bounded by their lifetime. | [Approved] | 9.1 Q16 |
+| H7 | Routing: per-move routing behind `?newcombat` until slice 7 (D-4). | [Approved] | 9.2 D-4 |
+| H8 | Normalization: none. The Power/s proxy (D37) is for tools only and never gameplay. | [Approved] | 9.2 |
+| H9 | Stat key map (C8): one mapping function (schema `spd` is Speed, `spDef` is Sp. Def, stages.js `spd` is Sp. Def, `spe` is Speed). Renaming the 17 data effects is not recommended. See D31. | [Approved] (PROPOSED, accepted with the architecture approval, 9.2) | 9.2 C8 |
+| H10 | Slice 3b geometry: D18 amended with an apex rule (an enemy covering the arc origin is inside at any angle). The lens is applied in shapeOf, after growth and its cap, to the radius and radArc only (beams are never widened); spawnInstance must not pre-scale. boundsOf takes the largest enemy radius for linear shapes. | [Approved] | 9.2 slice 3b (Jess, 2026-10-26) |
+| H11 | Slice 3c sim core: S1 a caster-anchored static shape gates on min(range, reach + target radius), reach from shapeOf at full growth with the lens (R9). S2 `direction` waits for any enemy within range, `none` never waits. S3 aim for `direction` and `none` is owner.aim at cast; `nearest` is the plain nearest (no player.js boss/threat priority, a 3d behavior change). S4 turnRate steers at the cast target, then one re-pick (D23). S5 offScreen uses a view rectangle passed as data (setView). S6 G.Status.fizzle takes an optional rng. S7 defender helpers copied into move-effects.js until slice 7. S8 pierce counts distinct enemies, spent in sweep order (ties by id); interval re-hits do not spend it. S9 root instances act in their cast frame (only children are deferred, R6). S10 nearest ties by enemy id, no rng. Lens: beam length scales, width never (D36); orbit radius stays in 4c. Timing: age advances before collision, an endOn time T instance collides on ceil(T / dt) steps, 1e-9 tolerance on time comparisons. | [Approved] | 9.2 slice 3c (Jess, 2026-10-26) |
+| H12 | Props: player moves damage props and solid destructible props spend pierce (grass does not); the cast gate stays enemy-only. | [Approved] | slice-3d.md decision D2; closes the 9.2 "still open from 3c" props item |
+| H13 | Emitted children deal full parent power each (Gust, Fairy Wind 3 hits, Discharge 2, Meteor Mash 1 + 3). Measure in the Stage 5 simulator first. | [Approved] (DEFAULT ACCEPTED) | 9.3 F4 |
+| H14 | An emitter never emits at or after its end. | [Approved] (DEFAULT ACCEPTED) | 9.3 F6 |
+| H15 | Orbit y-squash is rendering only; the sim hitbox is a true circle. Supersedes the OPEN note in D25. | [Approved] (default accepted) | 9.7 item 5; slice-4c.md decisions |
+| H16 | Caps are per move and add across moves. | [Approved] | 9.8 D-2 (the D-2 cap values are superseded by Q14) |
+| H17 | Root and enemy movement (4a build): four phases bypass the speed product (leaving units, jumpers, boss dash, boss leap). A jump in the air lands, a crouch waits, leaving units are rooted, a boss dash stays in place. Strong hosts are not extended while rooted; wild roots refresh to the longer. Pushes (separation, knockback, flinch recoil) still move a rooted enemy. The trap rule itself is in COMBAT-RULES "Trap, enemies". | [Approved] | 9.8 |
+| H18 | Stat stacking per Pokemon (S4): a self stat is tagged with the move id plus the casting Pokemon, so maxStacks is per Pokemon. Built. | [Approved] | 9.9 S4; js/systems/move-effects.js header |
+| H19 | Flat damage is flat (S5). See D14. Built. | [Approved] | 9.9 S5 |
+| H20 | Chains and Hex (S7 to S10, S15): sequential hops, x (1 - hopReduction)^k last, per-hop rolls, riders x 0.5^k, the target starts the chain, fresh first. See D13 and D15. Built. | [Approved] | 9.1 Q9, Q10; 9.9 S7 to S10, S15 |
+| H21 | Caster-state commitment (S13, S14): built. Field grammar: MOVE-AXIS-SCHEMA "Caster state". | [Approved] | 9.9 S13, S14 |
+
+---
+
 ## Summary for approval
 
 Recommended architecture: four small modules (pure geometry, sim, effects, render) driven by one table per axis, with a short, closed list of cross-axis rules (R1 to R9), reusing the existing damage, stage, status, hurt and SimBus systems, running behind a dev flag until the flip.

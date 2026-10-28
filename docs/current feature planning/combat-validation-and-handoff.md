@@ -152,7 +152,11 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 
 ### 2.5 Intent-driven validation of six hard moves
 
+Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended" sentences are copied there and are removed here in a later commit, once their ledger rows are ticked.
+
 **1. Quick Attack** (reposition, pierce, legs, i-frames)
+
+- Ruling: docs/MOVE-INTENT.md, `quick-attack` (the ruling owns intent; this scenario is validation material).
 
 - Intended (DECIDED Q3): dash from A to the nearest enemy B, deal damage at B, return to A, dash ends.
 - Representation after 3a: radial point 46 px, pierce 0, nearest, repositions swept, dashMult 10, returnToOrigin true, returnHits out, endOn returned, i-frames 0.3, range 420 (default).
@@ -162,6 +166,8 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 
 **2. Bonemerang** (returns, legs, knockback direction)
 
+- Ruling: docs/MOVE-INTENT.md, `bonemerang` (the ruling owns intent; this scenario is validation material).
+
 - Intended: two bones out and back, hitting on both legs.
 - Representation after 3a: 2 points 8 px, spread 0.5 (F1), pierce UNLIMITED, returns at 300 px/s, outAndBack, endOn 2 s or returned, range per F2, knockback 40 along travel.
 - Execution: out leg until range, leg 1 starts with fresh eligibility (R2), velocity toward the owner's current position, `returned` ends it.
@@ -169,6 +175,8 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 - Test: one enemy on each bone's path; expect exactly 2 hits per enemy per bone (one per leg), both bones end by `returned`, not by time.
 
 **3. Meteor Mash** (emit on enemyHit, exclusion, inheritance)
+
+- Ruling: docs/MOVE-INTENT.md, `meteor-mash` (the ruling owns intent; this scenario is validation material).
 
 - Intended (DECIDED D-3): the punch hits enemy 1; at enemy 1's position at impact, a 3-shard fan flies on, ignoring enemy 1.
 - Representation after 3a: parent point 9 px, pierce 0, cardLock count and pierce, damage + team atk +1 at 20% + emit {enemyHit, count 1} of a child with count 3, spread 0.6, anchor world, targeting direction, travels 360 px/s, endOn 0.8.
@@ -178,6 +186,8 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 
 **4. Thunderbolt** (target anchor, instant lifetime, chain, falloff, rider halving)
 
+- Ruling: docs/MOVE-INTENT.md, `thunderbolt` (the ruling owns intent; this scenario is validation material).
+
 - Intended: instant strike on the nearest enemy, four jumps at 33% damage, paralysis at 10%, 5%, 2.5%, 1.25%, 0.625% (DECIDED Q10).
 - Representation: point 10 px anchored on the target, endOn time 0, chainHops 4, hopRange 140, cardLock count, chainDamageFalloff 0.33.
 - Execution: one collision step at the target (D28), chain hops pick nearest unhit enemies within 140 px of the previous node (D15), damage x0.33 on hops, rider chance halves per hop.
@@ -186,6 +196,8 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 
 **5. Psychic** (traveling arc, start-size grow, steering)
 
+- Ruling: docs/MOVE-INTENT.md, `psychic` (the ruling owns intent; this scenario is validation material).
+
 - Intended (DECIDED Q1 wording): an arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing.
 - Representation: arc 0.5 rad x 70 px, travels 80 px/s, turnRate 2.5 rad/s, grow radArc 1.5 rad/s to max 2.0, endOn 1.2 s.
 - Execution: the wedge apex moves with the instance, heading turns toward the target by at most 2.5 x dt per step, radArc follows D21 and reaches 2.0 at t = 1.0 s, D18 containment each step, oncePerInstance.
@@ -193,6 +205,8 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 - Test: an enemy straight ahead at 120 px and two enemies at plus and minus 50 degrees at 90 px; expect the straight one hit early, the side ones hit only once the arc has widened past them (time window computed from D21), each hit once.
 
 **6. Toxic Spikes** (placed emitter, interval child, start-size grow, cap)
+
+- Ruling: docs/MOVE-INTENT.md, `toxic-spikes` (the ruling owns intent; this scenario is validation material).
 
 - Intended (DECIDED Q7): one placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches.
 - Representation after 3a: placed point 40 px at `location` (F3), endOn time 3, emit {interval, every 0.25} of a full circle starting at 100 px, grow 400 px/s, endOn 0.25, poison 100%.
@@ -254,6 +268,8 @@ Four modules (geometry, sim, effects, render), one table per axis, cross-axis ru
 Stage 0 report and intent scenarios now; geometry truth (3b); deterministic headless simulation with seeded rng and canary sets per slice (3c onward); in-game flag, dummy setup and sim-drawn hitbox overlay (3d onward); damage simulator on the real code before upgrades and balance (Stage 5). One geometry implementation, used by everything.
 
 ### 3.6 Decisions still needed (in the order slices need them)
+
+Status note (2026-10-28): the rows below are kept as the Checkpoint 3 record. Current rulings: docs/MOVE-INTENT.md (per move), docs/MOVE-AXIS-SCHEMA.md (grammar), combat-architecture.md section H (runtime).
 
 | needed by | decision | recommendation |
 | --- | --- | --- |
