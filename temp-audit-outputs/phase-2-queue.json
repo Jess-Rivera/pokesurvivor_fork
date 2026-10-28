@@ -1,0 +1,386 @@
+{
+ "schema_version": "1.0",
+ "phase": "Phase 2",
+ "inventory_sha256": "ee5665feabf9b75ab349f7b02ac009a9d5546f2786917ff1c149c286117517f7",
+ "next_candidate": null,
+ "candidates": [
+  {
+   "id": "PQ-01",
+   "subject": "Boss/rift/gym design authority",
+   "title": "GDD vs BOSS-REWORK vs GYM-ROSTERS vs FULL-GAME-STRUCT",
+   "paths": [
+    "GDD.md",
+    "BOSS-REWORK.md",
+    "docs/GYM-ROSTERS.md",
+    "docs/BOSS-AUTHORING.md",
+    "docs/FULL-GAME-STRUCT.md",
+    "CONTEXT.md",
+    "CLAUDE.md"
+   ],
+   "reason": "GDD claims current state but describes rifts/5 timed bosses/Arceus Judgment that BOSS-REWORK replaces; section status labels disagree with content; CONTEXT names BOSS-REWORK as tracker.",
+   "priority_provisional": "A",
+   "priority_rationale": "Affects behavior/architecture correctness",
+   "status": "UNRESOLVED",
+   "phase1_sources": [
+    "C-09",
+    "C-10",
+    "C-11",
+    "Q-05",
+    "Q-06"
+   ],
+   "evidence_needed": "Behavioral requirement conflict plus undeclared authority; check js/systems/gym.js and rift.js to see which design is implemented.",
+   "evidence_refs": [
+    "F-001",
+    "F-002",
+    "F-003",
+    "F-025"
+   ],
+   "findings": [
+    "F-001",
+    "F-002",
+    "F-003",
+    "F-025"
+   ],
+   "status_note": "Supersession of GDD by BOSS-REWORK is evidenced by code but owner approval and GDD's role are undeclared"
+  },
+  {
+   "id": "PQ-02",
+   "subject": "Move-schema design/decision authority",
+   "title": "combat-architecture, MOVE-AXIS-SCHEMA, move-consistency-review s9, DECISIONS, slice docs",
+   "paths": [
+    "docs/MOVE-AXIS-SCHEMA.md",
+    "docs/current feature planning/combat-architecture.md",
+    "docs/current feature planning/move-consistency-review.md",
+    "docs/current feature planning/move-schema/slice-overview.md",
+    "DECISIONS.md"
+   ],
+   "reason": "Three statuses for the architecture doc; two declared single-source decision registers; duplicated hitPolicy/reposition/pierce rules.",
+   "priority_provisional": "A",
+   "priority_rationale": "Affects behavior/architecture correctness",
+   "status": "UNRESOLVED",
+   "phase1_sources": [
+    "C-13",
+    "C-14",
+    "D-04",
+    "D-06",
+    "Q-04"
+   ],
+   "evidence_needed": "Compare rule text across the three, and check implementation of js/data/move-*.js and combat resolution.",
+   "evidence_refs": [
+    "F-005",
+    "F-006",
+    "F-007",
+    "F-008"
+   ],
+   "findings": [
+    "F-005",
+    "F-006",
+    "F-007",
+    "F-008"
+   ],
+   "status_note": "Status lines conflict; decision register precedence and Checkpoint 1 provenance need owner input"
+  },
+  {
+   "id": "PQ-03",
+   "subject": "Numeric tunables doc vs code",
+   "title": "DMG_SCALAR, gym escalation constants (GRACE, ESC_STEP, FIRST_AT), RANGE, INSTANCE_CAP",
+   "paths": [
+    "DECISIONS.md",
+    "BALANCE.md",
+    "js/core/stats.js",
+    "docs/ASCII Concept Maps/Gym Flow.txt",
+    "js/systems/gym.js"
+   ],
+   "reason": "DMG_SCALAR documented as 2.0 in DECISIONS, 1.0 in BALANCE/code; gym constants duplicated across DECISIONS, BALANCE and an ASCII map.",
+   "priority_provisional": "A",
+   "priority_rationale": "Affects behavior/architecture correctness",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "C-03",
+    "D-10"
+   ],
+   "evidence_needed": "Grep constants in code and docs, compare values.",
+   "evidence_refs": [
+    "F-009"
+   ],
+   "findings": [
+    "F-009"
+   ],
+   "status_note": "DMG_SCALAR doc/code discrepancy confirmed. Verified NOT_A_CONFLICT: GRACE 37, ESC_STEP 10, FIRST_AT 240 (gym.js), RANGE 420, INSTANCE_CAP 8 (move-resolver.js), HP_SCALAR 2.0 (stats.js) all match their docs"
+  },
+  {
+   "id": "PQ-04",
+   "subject": "Slice 4a/4b built state and applied proposals",
+   "title": "slice-4a, slice-4b, slice-overview, STATE, proposals",
+   "paths": [
+    "docs/current feature planning/move-schema/slice-4a.md",
+    "docs/current feature planning/move-schema/slice-4b.md",
+    "docs/current feature planning/move-schema/slice-overview.md",
+    "STATE.md",
+    "docs/proposals/"
+   ],
+   "reason": "Status headers disagree; 13 proposal docs carry NOT APPLIED headers while DECISIONS says applied; code never verified.",
+   "priority_provisional": "A",
+   "priority_rationale": "Affects behavior/architecture correctness",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "C-02",
+    "C-12",
+    "Q-13"
+   ],
+   "evidence_needed": "Verify files, symbols and tests exist for each slice; git log for status header changes.",
+   "evidence_refs": [
+    "F-010",
+    "F-011"
+   ],
+   "findings": [
+    "F-010",
+    "F-011"
+   ],
+   "status_note": "Stale status headers confirmed; applied state corroborated by git commits, not by executed tests"
+  },
+  {
+   "id": "PQ-05",
+   "subject": "Repeat-clear difficulty ramp",
+   "title": "FULL-GAME-STRUCT vs BOSS-REWORK Keep Going",
+   "paths": [
+    "docs/FULL-GAME-STRUCT.md",
+    "BOSS-REWORK.md",
+    "docs/GYM-ROSTERS.md"
+   ],
+   "reason": "'No difficulty ramp on repeat clears' vs deferred 'multipliers go up each loop'.",
+   "priority_provisional": "A",
+   "priority_rationale": "Affects behavior/architecture correctness",
+   "status": "UNRESOLVED",
+   "phase1_sources": [
+    "C-08",
+    "Q-07"
+   ],
+   "evidence_needed": "Read both sections in context, check git provenance of FULL-GAME-STRUCT.",
+   "evidence_refs": [
+    "F-004"
+   ],
+   "findings": [
+    "F-004"
+   ],
+   "status_note": "Possible scope difference or supersession; FULL-GAME-STRUCT provenance unknown"
+  },
+  {
+   "id": "PQ-06",
+   "subject": "Rule precedence: CLAUDE vs CONTEXT vs DECISIONS",
+   "title": "Git execution, edit boundary, commit attribution, startup set",
+   "paths": [
+    "CLAUDE.md",
+    "CONTEXT.md",
+    "DECISIONS.md",
+    "docs/ORIGINAL-OWNER-RULES.md"
+   ],
+   "reason": "DECISIONS says 'never runs git, ever'; CLAUDE/CONTEXT allow read-only. Both CLAUDE and CONTEXT claim primacy. Rules restated in 3 places.",
+   "priority_provisional": "B",
+   "priority_rationale": "Decision authority or planning ambiguity",
+   "status": "UNRESOLVED",
+   "phase1_sources": [
+    "C-04",
+    "D-01",
+    "D-02",
+    "D-03",
+    "Q-03",
+    "Q-14"
+   ],
+   "evidence_needed": "Read quoted sections, git log on each rule.",
+   "evidence_refs": [
+    "F-012",
+    "F-013",
+    "F-014"
+   ],
+   "findings": [
+    "F-012",
+    "F-013",
+    "F-014"
+   ],
+   "status_note": "Text contradiction confirmed (F-012); whether the relaxation was approved is unknown"
+  },
+  {
+   "id": "PQ-07",
+   "subject": "Work-status source of truth",
+   "title": "TODO mirror vs STATE vs issues-snapshot vs board",
+   "paths": [
+    "TODO.md",
+    "STATE.md",
+    "docs/issues-snapshot.md",
+    "docs/PM-WORKFLOW.md"
+   ],
+   "reason": "Board status differs among four places; board is outside repo.",
+   "priority_provisional": "B",
+   "priority_rationale": "Decision authority or planning ambiguity",
+   "status": "UNRESOLVED",
+   "phase1_sources": [
+    "C-06",
+    "D-07",
+    "Q-02",
+    "Q-17"
+   ],
+   "evidence_needed": "Compare issue numbers/states; no external board access.",
+   "evidence_refs": [
+    "F-015"
+   ],
+   "findings": [
+    "F-015"
+   ],
+   "status_note": "Differences explained by sync dates; the GitHub board cannot be inspected from the repo"
+  },
+  {
+   "id": "PQ-08",
+   "subject": "STATE.md git claims vs repository",
+   "title": "STATE git-state lines",
+   "paths": [
+    "STATE.md",
+    "CONTEXT.md"
+   ],
+   "reason": "STATE.md branch/commit/uncommitted claims differ from HEAD.",
+   "priority_provisional": "B",
+   "priority_rationale": "Decision authority or planning ambiguity",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "C-01"
+   ],
+   "evidence_needed": "git log/status (read-only).",
+   "evidence_refs": [
+    "F-016"
+   ],
+   "findings": [
+    "F-016"
+   ],
+   "status_note": "Stale STATE.md git claims confirmed with read-only git"
+  },
+  {
+   "id": "PQ-09",
+   "subject": "Build/run/publish instructions",
+   "title": "README/ONBOARDING/GDD vs DECISIONS; SEO pipeline location",
+   "paths": [
+    "README.md",
+    "ONBOARDING.md",
+    "GDD.md",
+    "DECISIONS.md",
+    "docs/ORIGINAL-OWNER-RULES.md"
+   ],
+   "reason": "index.html run instructions vs gitignored build; GitHub Pages; SEO generators location.",
+   "priority_provisional": "B",
+   "priority_rationale": "Decision authority or planning ambiguity",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "C-05",
+    "C-07",
+    "C-16",
+    "Q-08",
+    "Q-16"
+   ],
+   "evidence_needed": "Check file existence, tools/ contents, .gitignore.",
+   "evidence_refs": [
+    "F-017",
+    "F-018",
+    "F-019"
+   ],
+   "findings": [
+    "F-017",
+    "F-018",
+    "F-019"
+   ],
+   "status_note": "Run/publish instruction conflicts confirmed; interpretation (inherited text) medium confidence"
+  },
+  {
+   "id": "PQ-10",
+   "subject": "Reference integrity (bulk)",
+   "title": "Broken/stale links across docs",
+   "paths": [
+    "document-inventory.json"
+   ],
+   "reason": "59 reference groups, 33 likely real breaks per Phase 1.",
+   "priority_provisional": "C",
+   "priority_rationale": "Documentation maintenance",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "missing_or_broken_references"
+   ],
+   "evidence_needed": "Automated link/path check against tree and git ls-files.",
+   "evidence_refs": [],
+   "findings": [],
+   "status_note": "Bulk reference check run; see reference-integrity.md"
+  },
+  {
+   "id": "PQ-11",
+   "subject": "Misc maintenance findings",
+   "title": "Move count, em-dash rule scope, delete/ vs _delete_/, DEVLOG-archive header, CREDITS contacts",
+   "paths": [
+    "CLAUDE.md",
+    "CONTEXT.md",
+    "DEVLOG.md",
+    "docs/DEVLOG-archive.md",
+    "CREDITS.md",
+    ".gitignore"
+   ],
+   "reason": "Low-impact documentation hygiene items.",
+   "priority_provisional": "C",
+   "priority_rationale": "Documentation maintenance",
+   "status": "CONFIRMED",
+   "phase1_sources": [
+    "C-15",
+    "C-17",
+    "C-18",
+    "C-19",
+    "C-20"
+   ],
+   "evidence_needed": "Targeted greps.",
+   "evidence_refs": [
+    "F-020",
+    "F-021",
+    "F-022",
+    "F-023"
+   ],
+   "findings": [
+    "F-020",
+    "F-021",
+    "F-022",
+    "F-023"
+   ],
+   "status_note": "Findings F-020 to F-023. Verified NOT_A_CONFLICT: move count 63 vs 64 (moves.js has 64 ids; Bubble is excluded from the 63-move conversion JSON via forgottenSkips)"
+  },
+  {
+   "id": "PQ-12",
+   "subject": "Orphaned/undetermined docs",
+   "title": "ponytail skills, FEATURES_GRAB, ASCII maps, generated reports, MP-PARKED notes",
+   "paths": [
+    "FEATURES_GRAB.md",
+    "ponytail/",
+    "docs/ASCII Concept Maps/",
+    "docs/current feature planning/move-coverage-report.md",
+    "docs/current feature planning/move-parity-report.md"
+   ],
+   "reason": "Docs with no inbound references or unclear authority.",
+   "priority_provisional": "C",
+   "priority_rationale": "Documentation maintenance",
+   "status": "DEFERRED",
+   "phase1_sources": [
+    "orphaned_or_weakly_referenced",
+    "undetermined_status",
+    "Q-09",
+    "Q-10",
+    "Q-11",
+    "Q-12"
+   ],
+   "evidence_needed": "Verify inbound references with grep; summarize without per-file deep read.",
+   "evidence_refs": [
+    "F-024"
+   ],
+   "findings": [
+    "F-024"
+   ],
+   "status_note": "Orphan and status checked at inventory level only; deep reads of ponytail skills, generated-report hand-filled column (Q-11) and the ASCII maps' other values deferred as low value for Phase 3"
+  }
+ ],
+ "summary": {
+  "UNRESOLVED": 5,
+  "CONFIRMED": 6,
+  "DEFERRED": 1
+ }
+}
