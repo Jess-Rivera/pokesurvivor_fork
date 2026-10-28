@@ -31,7 +31,7 @@ Open only matching files, their immediate callers or consumers, and the relevant
 
 For broad discovery, create a compact module map once, then reuse it for later slices.
 
-Normally skip assets/, pokeapi-master/, delete/, node_modules/, archive documents, generated bulk data such as js/data/sprites-meta.js and js/data/pokedex.js, and large staged datasets under docs/move_rework_holding/. Open these only when the active task directly requires them.
+Normally skip assets/, pokeapi-master/, _delete_/, node_modules/, archive documents, generated bulk data such as js/data/sprites-meta.js and js/data/pokedex.js, and large staged datasets under docs/move_rework_holding/. Open these only when the active task directly requires them.
 
 ## Local-first (hard scope boundary)
 Build and perfect the LOCAL single-player game first. DEFERRED until Jess explicitly switches phase:

@@ -8,7 +8,7 @@ Status legend: LOCKED (agreed, build to it), DRAFT (under discussion), OPEN (not
 
 ---
 
-## 1. Overview (LOCKED, see DECISIONS 2026-10-19 boss rework)
+## 1. Overview (LOCKED, see docs/DECISIONS-archive.md, 2026-10-19 boss rework)
 Replaces the three old boss systems:
 - Rifts with legendaries -> GYM fights (gate on the map -> type-matched arena -> the leader's signature Pokemon with hand-authored real moves, level = run-time level + 4, sized up).
 - BOSS_SLOTS bosses (3, 6, 9, 12, 15 min) -> overworld ELITES (level offset +1 or +2, sized up).

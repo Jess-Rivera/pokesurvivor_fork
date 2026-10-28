@@ -1,7 +1,7 @@
 # Combat validation strategy, schema assessment and handoff (Checkpoint 3)
 
 Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: final planning artifact for the move-schema combat rewrite. Nothing here is built.
-Read with: docs/move_rework_holding/move-consistency-review.md (Checkpoint 1) and docs/current feature planning/combat-architecture.md (Checkpoint 2). Section references like "R2" or "D21" point into the architecture document.
+Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 1) and docs/current feature planning/combat-architecture.md (Checkpoint 2). Section references like "R2" or "D21" point into the architecture document.
 
 ## 0. Decisions recorded this round (Jess, 2026-10-26)
 
@@ -291,7 +291,7 @@ Slice 3a scope, precise enough to plan from:
 
 | document | purpose |
 | --- | --- |
-| docs/move_rework_holding/move-consistency-review.md | Checkpoint 1: per-move audit of all 63, defects, gaps, Jess's resolutions (section 9) |
+| docs/current feature planning/move-consistency-review.md | Checkpoint 1: per-move audit of all 63, defects, gaps, Jess's resolutions (section 9) |
 | docs/current feature planning/combat-architecture.md | Checkpoint 2: design goals, data flow, structures, equations, functions, cross-axis rules, slices |
 | docs/current feature planning/combat-validation-and-handoff.md | Checkpoint 3 (this file): validation plan, schema assessment, open decisions, handoff |
 

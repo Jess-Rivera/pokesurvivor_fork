@@ -38,7 +38,7 @@ Both tools follow this symmetric discipline. If STATE.md looks stale after a git
 - **PM / tracker:** assistant is Jess's PM; work queue is GitHub Issues + the "PokeSwarm" board (board wins for "what's next"). Assistant NEVER runs `gh` or any repo-changing git to mutate the tracker, drafts commands for Jess. Detail: docs/PM-WORKFLOW.md. Playtester guide: CONTRIBUTING.md.
 - **No em-dashes** in any prose. Use commas, parentheses, "since"/"because".
 - **Keep docs lean:** DECISIONS ~10 lines/entry, DEVLOG ~6 lines/entry, STATE.md under 3 KB. Rotate to archives past ~40 KB.
-- **Efficient repo exploration:** CONTEXT.md, STATE.md, and CLAUDE.md are the complete automatic startup context. After that baseline, search before opening files. Read only task-relevant matches and their immediate dependencies. Skip assets/, pokeapi-master/, delete/, node_modules/, archives, generated bulk data, and large staged datasets unless the task specifically requires them.
+- **Efficient repo exploration:** CONTEXT.md, STATE.md, and CLAUDE.md are the complete automatic startup context. After that baseline, search before opening files. Read only task-relevant matches and their immediate dependencies. Skip assets/, pokeapi-master/, _delete_/, node_modules/, archives, generated bulk data, and large staged datasets unless the task specifically requires them.
 
 ## Where things live
 - Design reference for the genre: docs/survivor-like-design-reference.md (Vampire Survivors / Brotato / Halls of Torment patterns and numbers). Search it, do not read it whole.
