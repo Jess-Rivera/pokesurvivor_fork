@@ -6,6 +6,170 @@ ARCHIVE: older and superseded entries (mostly 2026-10-17 and 2026-10-18 build re
 Search it by keyword (grep) before assuming a topic was never decided. If an archived entry conflicts with an entry here, this file wins.
 Convention: new entries stay at most about 10 lines (the rule and the why); long detail belongs in the harness or proposal doc.
 
+## 2026-10-28, QA-00: Coding is paused until the whole documentation consolidation is done
+Coding is paused until the whole documentation consolidation is done. (owner answer QA-00)
+Canonical: STATE.md, "Where we are"
+
+## 2026-10-28, QA-01: DECISIONS.md becomes a dated decision log; each entry names the spec that holds the rule
+DECISIONS.md becomes a dated decision log; each entry names the spec that holds the rule. (owner answer QA-01)
+Canonical: CLAUDE.md, "Which document wins"
+
+## 2026-10-28, QA-02: GDD.md becomes a living umbrella that summarises and points to the subsystem specs
+GDD.md becomes a living umbrella that summarises and points to the subsystem specs. (owner answer QA-02)
+Canonical: GDD.md, "Where the details live"
+
+## 2026-10-28, QA-03: General combat rules get one home, docs/COMBAT-RULES.md
+General combat rules get one home, docs/COMBAT-RULES.md. (owner answer QA-03)
+Canonical: CLAUDE.md, "Where current rules live"
+
+## 2026-10-28, QA-04: Per-move rulings get one home, docs/MOVE-INTENT.md, instead of enlarging and renaming the old file
+Per-move rulings get one home, docs/MOVE-INTENT.md, instead of enlarging and renaming the old file. (owner answer QA-04)
+Canonical: docs/MOVE-INTENT.md, "Per-move rulings"
+
+## 2026-10-28, QA-05: Finish the consolidation first, even if the move-schema slice files and handoffs need updating
+Finish the consolidation first, even if the move-schema slice files and handoffs need updating. (owner answer QA-05)
+Canonical: CLAUDE.md, "Where current rules live"
+
+## 2026-10-28, QA-06: BOSS-REWORK.md becomes the run progression and encounters spec
+BOSS-REWORK.md becomes the run progression and encounters spec. (owner answer QA-06)
+Canonical: BOSS-REWORK.md, "1. Overview"
+
+## 2026-10-28, QA-07: Consolidated groups of specs are tagged [Approved]; the four tags are defined once in CLAUDE.md
+Consolidated groups of specs are tagged [Approved]; the four tags are defined once in CLAUDE.md. (owner answer QA-07)
+Canonical: CLAUDE.md, "Requirement tags"
+
+## 2026-10-28, QA-08: The end-of-region and loop design is recorded: Return Home, Next Region, Unlock Safeties, loops and Keep Going. Approved, not built
+The end-of-region and loop design is recorded: Return Home, Next Region, Unlock Safeties, loops and Keep Going. Approved, not built. (owner answer QA-08)
+Canonical: BOSS-REWORK.md, "4a. End of region and loops"
+
+## 2026-10-28, QA-10: Fire Spin applies burn and trap and does not strip stat stages
+Fire Spin applies burn and trap and does not strip stat stages. (owner answer QA-10)
+Canonical: docs/COMBAT-RULES.md, "Trap, enemies"
+
+## 2026-10-28, QA-11: A self-buff's maxStacks is min(floor(duration / cooldown), 6)
+A self-buff's maxStacks is min(floor(duration / cooldown), 6). (owner answer QA-11)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
+## 2026-10-28, QA-12: The mainline type chart stays on hold
+The mainline type chart stays on hold. (owner answer QA-12)
+Canonical: docs/COMBAT-RULES.md, "Type chart"
+
+## 2026-10-28, QA-13: Option (a) for gym moves waits for the supporting move import and gets its own branch
+Option (a) for gym moves waits for the supporting move import and gets its own branch. (owner answer QA-13)
+Canonical: BOSS-REWORK.md, "3a. Gym move vocabulary"
+
+## 2026-10-28, QA-14: Enemies, upgrades and items content is audited before the GDD is consolidated
+Enemies, upgrades and items content is audited before the GDD is consolidated. (owner answer QA-14)
+Canonical: GDD.md, "Where the details live"
+
+## 2026-10-28, QA-15: Agent rules live only in CLAUDE.md; the Quick agent loads it
+Agent rules live only in CLAUDE.md; the Quick agent loads it. (owner answer QA-15)
+Canonical: CLAUDE.md, "Where current rules live"
+
+## 2026-10-28, Q1: Boss doc renames and moves happen in a later organization branch; nothing is renamed in this branch
+Boss doc renames and moves happen in a later organization branch; nothing is renamed in this branch. (owner answer Q1)
+Canonical: none yet (a process or later-branch step with no spec section)
+
+## 2026-10-28, Q2: Gym 1 at 4:00; each later gym 4:00 after the previous gym is beaten and the player has returned
+Gym 1 at 4:00; each later gym 4:00 after the previous gym is beaten and the player has returned. (owner answer Q2)
+Canonical: BOSS-REWORK.md, "3. Gyms"
+
+## 2026-10-28, Q3: First elite at 2:00; each later elite 2:00 after return; none while one is alive
+First elite at 2:00; each later elite 2:00 after return; none while one is alive. (owner answer Q3)
+Canonical: BOSS-REWORK.md, "2. Overworld Elites"
+
+## 2026-10-28, Q4: Gate escalation: 37 s grace, then +1 level every 10 s, uncapped
+Gate escalation: 37 s grace, then +1 level every 10 s, uncapped. (owner answer Q4)
+Canonical: BOSS-REWORK.md, "3f. Gate escalation"
+
+## 2026-10-28, Q5: Level is linear to L50 by 30:00, clamped at L50 until all 8 gyms are beaten, then a post-gym slow ramp, uncapped across loops and Next Region
+Level is linear to L50 by 30:00, clamped at L50 until all 8 gyms are beaten, then a post-gym slow ramp, uncapped across loops and Next Region. (owner answer Q5)
+Canonical: BOSS-REWORK.md, "4a. End of region and loops"
+
+## 2026-10-28, Q6: The four Elite Four fights start at once with hard-set levels, and the player picks the order
+The four Elite Four fights start at once with hard-set levels, and the player picks the order. (owner answer Q6)
+Canonical: BOSS-REWORK.md, "3e. Multi-mon gyms"
+
+## 2026-10-28, Q7: Wild level + 4, locked at spawn, plus the escalation bump read at entry
+Wild level + 4, locked at spawn, plus the escalation bump read at entry. (owner answer Q7)
+Canonical: BOSS-REWORK.md, "3f. Gate escalation"
+
+## 2026-10-28, Q8: Unlock Safeties means "continue to Loop N+1"; the performance-scaled (DDA) version is dropped
+Unlock Safeties means "continue to Loop N+1"; the performance-scaled (DDA) version is dropped. (owner answer Q8)
+Canonical: BOSS-REWORK.md, "4a. End of region and loops"
+
+## 2026-10-28, Q9: Descendant Mutation: the player's mon's moves and typing go to another mon. Approved, not built
+Descendant Mutation: the player's mon's moves and typing go to another mon. Approved, not built. (owner answer Q9)
+Canonical: GDD.md, "12. Meta and endgame"
+
+## 2026-10-28, Q10: Arceus is gated on the 9th completion point of The Climb. Approved, not built
+Arceus is gated on the 9th completion point of The Climb. Approved, not built. (owner answer Q10)
+Canonical: GDD.md, "12. Meta and endgame"
+
+## 2026-10-28, Q11: Shiny tiers, gold-toll re-challenge, Uber modifiers, per-region legendary counts and the one-sitting achievement stay [Proposed]
+Shiny tiers, gold-toll re-challenge, Uber modifiers, per-region legendary counts and the one-sitting achievement stay [Proposed]. (owner answer Q11)
+Canonical: GDD.md, "12. Meta and endgame"
+
+## 2026-10-28, Q12: The completion bonus (escalating per loop) replaces the 60 and 90 minute time bonus
+The completion bonus (escalating per loop) replaces the 60 and 90 minute time bonus. (owner answer Q12)
+Canonical: BOSS-REWORK.md, "4a. End of region and loops"
+
+## 2026-10-28, Q13: A self-buff's duration is never shorter than its cooldown
+A self-buff's duration is never shorter than its cooldown. (owner answer Q13)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
+## 2026-10-28, Q14: Every move defaults to maxStacks 1, including Metal Claw and Meteor Mash (authored 2 today; code default 6 is legacy)
+Every move defaults to maxStacks 1, including Metal Claw and Meteor Mash (authored 2 today; code default 6 is legacy). (owner answer Q14)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
+## 2026-10-28, Q15: For a self-buff, maxStacks = min(floor(duration / cooldown), 6), new path only
+For a self-buff, maxStacks = min(floor(duration / cooldown), 6), new path only. (owner answer Q15)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
+## 2026-10-28, Q16: maxStacks applies only to self-buffs; foe debuffs have no per-move cap, only the +-6 ladder
+maxStacks applies only to self-buffs; foe debuffs have no per-move cap, only the +-6 ladder. (owner answer Q16)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
+## 2026-10-28, Q17: Fire Spin: burn at the full standard length, trap, no strip
+Fire Spin: burn at the full standard length, trap, no strip. (owner answer Q17)
+Canonical: docs/COMBAT-RULES.md, "Trap, enemies"
+
+## 2026-10-28, Q18: Slice 7 does not implement gym option (a); after slice 7 the gym is Brock only
+Slice 7 does not implement gym option (a); after slice 7 the gym is Brock only. (owner answer Q18)
+Canonical: BOSS-REWORK.md, "3a. Gym move vocabulary"
+
+## 2026-10-28, Q19: DECISIONS entries use ISO dates and a Canonical: line naming the section only, no line numbers
+DECISIONS entries use ISO dates and a Canonical: line naming the section only, no line numbers. (owner answer Q19)
+Canonical: CLAUDE.md, "Which document wins"
+
+## 2026-10-28, Q20: Superseded and converted entries move verbatim to docs/DECISIONS-archive.md
+Superseded and converted entries move verbatim to docs/DECISIONS-archive.md. (owner answer Q20)
+Canonical: CLAUDE.md, "Which document wins"
+
+## 2026-10-28, Q21: Bulk [Approved] covers only items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED, signed off or [Jess decided]
+Bulk [Approved] covers only items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED, signed off or [Jess decided]. (owner answer Q21)
+Canonical: CLAUDE.md, "Requirement tags"
+
+## 2026-10-28, Q22: The Quick agent loads CLAUDE.md; its instructions change the same day as the agent-rules rewrite
+The Quick agent loads CLAUDE.md; its instructions change the same day as the agent-rules rewrite. (owner answer Q22)
+Canonical: CLAUDE.md, "Two tools, one repo"
+
+## 2026-10-28, Q23: Unexecuted 4c handoffs get pointers plus a conflict list, not rewritten build steps
+Unexecuted 4c handoffs get pointers plus a conflict list, not rewritten build steps. (owner answer Q23)
+Canonical: docs/current feature planning/move-schema/slice-4c.md, "Decisions (moved)"
+
+## 2026-10-28, Q24: The owner deletes temp-audit-outputs before the merge
+The owner deletes temp-audit-outputs before the merge. (owner answer Q24)
+Canonical: none yet (a process or later-branch step with no spec section)
+
+## 2026-10-28, A3-1: The Return Home completion bonus replaces the 60 and 90 minute time bonus (Q12)
+The Return Home completion bonus replaces the 60 and 90 minute time bonus (Q12). (owner answer A3-1)
+Canonical: BOSS-REWORK.md, "4a. End of region and loops"
+
+## 2026-10-28, A3-2: Q16 stands: maxStacks applies only to self-buffs
+Q16 stands: maxStacks applies only to self-buffs. (owner answer A3-2)
+Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+
 ## 2026-10-24, 64-move pass tooling + seed rules + reposition/dash schema [Jess decided, feature/all-moves-import]
 - SCOPE RESET: the old move-decisions.json + dashboard are GONE and their verdicts were against a superseded model. Issue #3 is now a FULL from-scratch re-classification of all 64 in-game moves (js/data/moves.js) against MOVE-AXIS-SCHEMA.md; old #4 (Flamethrower/Night Shade/Psycho Cut feel-calls) folded into #3 and closed. #2 blocked_by #3 only.
 - TOOL: docs/move_rework_holding/ has build_move_conversions.py (reads moves.js + api_move_dataset.json -> move-conversions.json: per move {current, raw, proposed seed, confidence, seedNotes}) and move-compare.html (old-left/new-right, structured-field editing of the proposed side, radian WEDGE drawings for radArc/spread + deg/s readout for rate fields, full-record diff export). Clean kind-seed only (no prior-decision overlay), low-confidence badge. All free-edit tooling.
