@@ -86,6 +86,8 @@ These restate approved plan section C and the repo's CLAUDE.md. They are not opt
 
 **Prose.** No em-dashes in any added text. Use ISO dates.
 
+**Action List**: During each Batches **Stop and Hand Off** section, include a concrete action list for Jess to complete prior to the git commands. 
+
 ---
 
 ## B0. Baseline
