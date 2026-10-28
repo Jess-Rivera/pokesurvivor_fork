@@ -88,6 +88,8 @@ These restate approved plan section C and the repo's CLAUDE.md. They are not opt
 
 **Action List**: During each Batches **Stop and Hand Off** section, include a concrete action list for Jess to complete prior to the git commands. 
 
+**Current Feature Planning\move-schema\slices**: The feature-test/new-move-schema branch slices*.md files will need to be reworked when I return to that branch. We are to ignore anything related to those.
+
 ---
 
 ## B0. Baseline

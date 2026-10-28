@@ -1,5 +1,7 @@
 # Move consistency review (Checkpoint 1)
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). Section 9 below is absorbed into docs/MOVE-AXIS-SCHEMA.md, combat-architecture.md and docs/MOVE-INTENT.md; read the header at section 9. The "single source" wording in this file is historical. Body unchanged.
+
 Date: 2026-10-26. Branch: feature-test/new-move-schema. Review only: no game code, data, generated file, test or git state was changed.
 Scope: all 63 moves in docs/move_rework_holding/move-conversions-described.json (Bubble excluded by `forgottenSkips`).
 DECISIONS: sections 1 to 8 are the Checkpoint 1 snapshot and are not rewritten. Section 9 is the single source for every decision and open item since (Checkpoints 2 and 3), so read the NEEDS REVIEW tags and Q-lists above against it.
@@ -637,6 +639,8 @@ Verdict: **ready for architectural design after limited clarifications** (Q1 to 
 ---
 
 ## 9. Consolidated decisions and status (updated 2026-10-26, after Checkpoints 2 and 3)
+
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This section is no longer the single source for move decisions. Absorbed into: docs/MOVE-AXIS-SCHEMA.md (grammar and data rules), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules, stages, maxStacks). Where this text and those documents differ, those documents win. Body below unchanged.
 
 This section is the single source for decisions. Sources: docs/current feature planning/combat-architecture.md (Checkpoint 2, status PROPOSAL, awaiting Jess's approval) and combat-validation-and-handoff.md (Checkpoint 3).
 Labels: DECIDED = Jess's answer. PROPOSED = a recommendation in a combat doc, not yet approved. OPEN = needs Jess. APPLIED = already in the data.

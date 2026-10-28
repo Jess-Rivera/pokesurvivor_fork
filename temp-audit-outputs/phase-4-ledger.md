@@ -251,3 +251,11 @@ Checked: slice-4c.md, slice-4c-1/2/3-codehandoff.md, slice-4d.md, slice-5.md, sl
 | overview | slice-overview.md:8 and "Decisions that span slices" | "SECTION 9 is the single source for every decision" (B4b step 2) | the three owners |
 | overview | slice-overview.md rule 4 | "Record the answer in the slice file and in review section 9" is not in B4b's listed scope (B4b repoints only the single-source line; B7 handles rules 2 and 5). Jess to pick the batch | MOVE-INTENT, combat-architecture H, MOVE-AXIS-SCHEMA |
 | validation | combat-validation 2.5 scenario 4 test | expects damage ratios "1 : 0.33 : 0.33 : 0.33 : 0.33"; Q10 (2026-10-27) made hop k x (1 - hopReduction)^k and the data has hopReduction 0.33, so the scenario numbers predate Q10. Not edited (validation material) | MOVE-INTENT thunderbolt |
+
+### B4b rows (2026-10-28): freeze review section 9 as history
+
+Files matching *slice*.md under docs/current feature planning/move-schema/ are out of scope for the audit (owner instruction, 2026-10-28), so no rows track them. The row below needs Jess's tick (wording changed = Y).
+
+| ID | Source | Verbatim source excerpt | Destination | Tag | Dep | Wording changed | Spot-check | Tick |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| B4b-01 | docs/current feature planning/move-consistency-review.md top and section 9 | (no text removed; the "single source" wording stays as history) | history header blockquote added after the title and above the section 9 body, with "absorbed into" pointers to MOVE-AXIS-SCHEMA, combat-architecture, MOVE-INTENT and COMBAT-RULES | [Approved] | QA-05 | Y (new header text, body unchanged) | N | |
