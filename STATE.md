@@ -4,6 +4,7 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-10-27 evening (Claude Code, home; slice 4c planned, no game code changed).
 
 ## Where we are
+- Active work: Documentation consolidation (Phase 4, branch chore/documentation-authority-audit). Coding is paused per QA-00 until the consolidation closes (CP7).
 - Branch feature-test/new-move-schema, matches origin at 997018f (slice 4b built, playtested by Jess: feels good). Slices 1 to 3d, 4a, 4b DONE.
 - This session was planning only. Uncommitted: DECISIONS.md, slice-4c.md and the three new handoffs (slice-4c-1, 4c-2, 4c-3 codehandoff.md), STATE.md, DEVLOG.md. opencode.json is untracked and not ours.
 - 4c is split into three sub-slices, each signed off before the next. Decisions are in slice-4c.md and DECISIONS.md: Psychic stays a growing wedge; Bonemerang return pull toward the caster, clamped at the caster's edge; Aura Sphere reach fine; Rock Slide one boulder; orbit radius takes the lens; Razor Leaf joins 4c-2; landing point is the enemy centre; i-frames cover the whole dash plus 0.3 s; the dash holds walking via mvRoot; aimTrack is now implemented (changes Flamethrower), sticky target; Rock Slide telegraph is a low-opacity ring.
