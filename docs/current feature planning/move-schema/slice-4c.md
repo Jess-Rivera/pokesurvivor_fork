@@ -10,18 +10,12 @@ The motions and lifetimes that need more than static or straight travel: returns
 - **4c-2 returns and repositions:** R1, R2, R9 for repositions, Razor Leaf, Bonemerang, Quick Attack, Aerial Ace, knockback `direction: travel`.
 - **4c-3 the rest:** delay and falls, aimTrack, Psychic, Confusion, Bubble Beam, Rock Slide, Aura Sphere.
 
-## Decisions
-- Psychic stays a filled wedge that grows from 0.5 to 2.0 rad, travels and steers (cast target while it lives, then the nearest enemy). No band thickness, no grammar change. (Jess, 2026-10-27, after first asking for an arc.)
-- Aura Sphere reach (about 160 px by the curve math) is fine, verify only.
-- Bonemerang return-leg knockback pulls enemies toward the caster (the back leg's travel direction). The pull is clamped so an enemy never ends past the caster's edge.
-- Quick Attack i-frames cover the whole dash (F5). Orbit squash is rendering only. Location pick defaults to a random enemy within range.
-- Orbit radius scales with the lens (D36), like the orbiting shapes' own radius.
-- Night Shade (S3) arrives in 4c-1 as a persistent static circle; flat level damage with no target cap is a balance-pass item.
-- Rock Slide stays one boulder in 4c (S11); String Shot shot spacing goes to the feel issue and 4d (S7 double application stays); Gust spread still open before 4d.
-- All ten review 2.4 validator rules and the G.MoveDefs deep-freeze go first, in 4c-1. Rules already covered by the existing list are not duplicated; any data that violates a rule is listed before it is fixed.
+## Decisions (moved)
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in temp-audit-outputs/phase-4-ledger.md (B4b rows). Build steps are unchanged (Q23).
 
-- 4c-2 (Jess, 2026-10-27): landing point is the target enemy's centre (no stand-off); i-frames cover the whole dash plus a 0.3 s tail; the swept dash holds walking through the existing mvRoot flag (no player.js edit); Razor Leaf joins 4c-2 as a routed move and an R2 fixture. The pierce budget resets per leg. Quick Attack hits one enemy at the arrival point (Q3), unlike the legacy dash.
-- 4c-3 (Jess, 2026-10-27): aimTrack is implemented now and changes Flamethrower (the data already says it tracks); the aimTrack target rule is sticky (the cast target while it lives and is in range, then the nearest, re-picked whenever lost); the Rock Slide telegraph is a low-opacity ring. The scout found aimTrack, location targeting, delay and falls were not implemented in the sim.
+Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
+- slice-4c.md "Reads": "Review section 9.1 rows Q2, Q3, Q8, Q17" points at text that is now history. Read instead: combat-architecture F R1, R2 and H1; MOVE-INTENT quick-attack and rock-slide; MOVE-AXIS-SCHEMA `range` and `delay`.
+
 - Handoffs: slice-4c-1-codehandoff.md, slice-4c-2-codehandoff.md and slice-4c-3-codehandoff.md are written, to be built by the coding chat in that order.
 
 ## Reads

@@ -4,7 +4,7 @@ Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-
 Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 4b built, waiting for Jess's playtest).
 
 ## Planning documents (all in docs/current feature planning/; read only the parts a slice names)
-- move-consistency-review.md (Checkpoint 1). SECTION 9 is the single source for every decision and open item: read it first. Sections 1 to 8 are the per-move audit snapshot; search them by move id.
+- move-consistency-review.md (Checkpoint 1), now history. Its section 9 decisions live in three owners: docs/MOVE-AXIS-SCHEMA.md (grammar and data rules), combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings). Combat rules live in docs/COMBAT-RULES.md. Sections 1 to 8 of the review are the per-move audit snapshot; search them by move id.
 - combat-architecture.md (Checkpoint 2, APPROVED 2026-10-26): A goals and invariants I1 to I10, B data flow and frame order, C structures, D equations D1 to D37, E function table, F cross-axis rules R1 to R9, G slices.
 - combat-validation-and-handoff.md (Checkpoint 3): validation stages (1.6), canary sets (1.5), intent scenarios (1.4), six worked move scenarios (2.5), decisions table (3.6).
 
@@ -21,7 +21,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 7. New from slice 3b (loaded by the game since 3d, active only with ?dev&newcombat): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the flag and the ONE routed list), move-render.js (G.MoveRender, drawing and cast glue).
 
 ## Decisions that span slices
-- Every decision and its status: move-consistency-review.md section 9. Do not restate them here.
+- Every decision and its status lives in the three owners above (MOVE-AXIS-SCHEMA, combat-architecture, MOVE-INTENT) and COMBAT-RULES. Do not restate them here.
 - No legacy bridge, no derived `kind`, no flat projection in old field names. Per-move routing by id behind `?newcombat` (D-4) is NOT a bridge; it is removed in slice 7.
 - No damage normalization. The Power/s proxy (D37) is for tools only.
 - Invariants in one line each (full text: architecture section A): I1 no `kind` in new combat files; I2 G.MoveDefs read-only (upgrades build a separate effective definition per slot); I3 one dispatch table per axis; I4 eligibility is decided before any payload runs; I5 an instance ending never removes an effect it applied; I6 collision geometry lives only in the sim (one implementation, G.MoveGeom); I7 sim steps take dt, time and an injectable rng; I8 the sim emits plain-data SimBus events and never calls FX or audio; I9 pixels, seconds, radians, chances in percent divided by 100 in one place; I10 saves untouched.

@@ -1,5 +1,7 @@
 # Slice 4a: riders on hit
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Prior slice: slice-3d.md (signed off by Jess 2026-10-27). Next: slice-4b.md or slice-4c.md. Build plan: slice-4a-codehandoff.md (APPROVED and BUILT 2026-10-27; waiting for Jess's playtest).
 
 ## Objective

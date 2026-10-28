@@ -13,8 +13,13 @@ Read CONTEXT.md, STATE.md, CLAUDE.md (auto), slice-overview.md, slice-4c.md, thi
 - Orbit squash: the legacy renderer squashes y by 0.7. Decided: squash is rendering only, the sim hitbox is a true circle (D25).
 - Validator: the rule list in move-attributes.js already has turn-needs-travel, aim-needs-static, hits-need-return, interval-needs-rehit, rehit-needs-interval, orbit field rules, grow-needs-end and others. Some of the ten review 2.4 rules are therefore partly covered. Do not duplicate them.
 
-## Decisions (answered by Jess, 2026-10-27; also in slice-4c.md and DECISIONS.md)
-Three sub-slices; this is 4c-1. The deep-freeze (I2) and all ten validator rules go first. Orbit radius scales with the lens. Night Shade ships here. Psychic stays a wedge, Bonemerang pulls clamped at the caster's edge (both are later sub-slices, not built here).
+## Decisions (moved)
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in temp-audit-outputs/phase-4-ledger.md (B4b rows). Build steps are unchanged (Q23).
+
+Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
+- P6 and Tests item 5: "refreshes its 6 s each hit, and recovers 6 s after the last hit" conflicts with the CP3 ruling (2026-10-28): the Sp. Atk -2 stays on while the move is active, hit or not, then lasts the standard duration. A per-hit refresh lets it lapse with no enemy in reach. The grammar gap is [Open]. See MOVE-INTENT leaf-storm.
+- "also in slice-4c.md and DECISIONS.md": DECISIONS becomes a log (QA-01). The owners are MOVE-INTENT and combat-architecture H.
+- P10 Docs: asks to edit "review 9.7 item 5 (squash decided, DMG_SCALAR still open)", but review section 9 is history. Squash is now combat-architecture H15; DMG_SCALAR is COMBAT-RULES "Damage" (current value: see js/core/stats.js).
 
 ## Plan decisions (recommended; approved with this plan)
 - P1 Routed list: add exactly fire-spin, leaf-storm, night-shade (24 routed in total). The list stays in js/systems/move-route.js only. Flag off, the game is unchanged.

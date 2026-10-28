@@ -14,8 +14,12 @@ Read CONTEXT.md, STATE.md, CLAUDE.md (auto), slice-overview.md, slice-4c.md, thi
 - The legacy dash (combat.js) was an instant jump along the aim line that stopped at the first blocked step (World.isFree in 8 px steps, radius 0.8 x player radius), then World.collide(pl), invuln 0.3, and it hit everything on the segment. The new design intentionally changes that: Quick Attack hits one enemy at the arrival point (Q3 decided, pierce 0).
 - The 2.5 scenario 1 test numbers: B at 200 px, a decoy on the path, duration 2 x 200 / (10 x speed) within one step. So the dash reaches the enemy's position (no stand-off).
 
-## Decisions (answered by Jess, 2026-10-27; also in slice-4c.md and DECISIONS.md)
-Three sub-slices; this is 4c-2. Bonemerang's return-leg knockback pulls toward the caster, clamped at the caster's edge. D1 landing point is the target enemy's centre (no stand-off). D2 i-frames cover the whole dash plus a 0.3 s tail. D3 the swept dash holds walking with the existing mvRoot flag (no player.js edit). D4 Razor Leaf joins 4c-2 (routed, and an R2 fixture).
+## Decisions (moved)
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in temp-audit-outputs/phase-4-ledger.md (B4b rows). Build steps are unchanged (Q23).
+
+Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
+- "also in slice-4c.md and DECISIONS.md": DECISIONS becomes a log (QA-01). The owners are MOVE-INTENT and combat-architecture H.
+- P12 Docs: asks to edit "F5 in the review" and "review 9.7 item 6 (Bonemerang decided)". Those rulings now live in MOVE-INTENT quick-attack and bonemerang.
 
 ## Plan decisions (recommended; approved with this plan)
 - P1 Routed list: add exactly razor-leaf, bonemerang, quick-attack, aerial-ace (28 routed in total after 4c-1's 24). The list stays in js/systems/move-route.js only. Flag off, the game is unchanged.
