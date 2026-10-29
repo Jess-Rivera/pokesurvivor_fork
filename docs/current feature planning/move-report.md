@@ -2,7 +2,7 @@
 
 Stage 0 resolved-move report (docs/current feature planning/move-schema-post-auth/stage-0.md). Derived values follow combat-validation-and-handoff:1.6 and the combat-architecture D-table. Scenario results come from docs/proposals/move-intent-harness.js (run by tools/check.js). Rulings and batch sign-offs do not go here (this file is regenerated): rulings go in docs/MOVE-INTENT.md, batch sign-offs in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json.
 
-- move report: 63 moves, 21 routed, 29 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 12, 0 need a ruling ()
+- move report: 63 moves, 24 routed, 29 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 12, 0 need a ruling ()
 
 ## Routed moves needing a batch review (0)
 
@@ -35,7 +35,7 @@ None.
 | dragon-rage | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 3.5 | 1 | differs, MOVE-INTENT entry | 420 | 250 (band length) | 1 | - | - | fixed 40 | not power-based | 1 runs |
 | ember | yes | batch reviewed | 40 | 0.7 | 0.7 | same | - | 496 (speed x life) | 3 | - | - | 57.14 | 1 hit per cast | 2 runs |
 | fairy-wind |  | with its batch | 40 | 0.583 | 0.583 | same | - | via emitted children | 1 | 3 | - | 68.61 | per emitted child, children x per cast | none |
-| fire-spin |  | MOVE-INTENT (checked when routed) | 29.75 | persistent | 0.3 | differs, lasts while active | - | 104 (orbit + body) | 3 (persistent) | - | - | 74.38 | 1 hit per rehit 0.4 s, per second | 1 pending |
+| fire-spin | yes | MOVE-INTENT (reviewed when its scenarios pass) | 29.75 | persistent | 0.3 | differs, lasts while active | - | 104 (orbit + body) | 3 (persistent) | - | - | 74.38 | 1 hit per rehit 0.4 s, per second | 1 runs |
 | flame-wheel |  | with its batch | 60 | persistent | 0.28 | differs, lasts while active | - | via emitted children | 1 (persistent) | 1 per 0.12 s moving | - | - | damage comes from emitted children | none |
 | flamethrower | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.167 | 1.167 | same | 420 | 250 (radius) | 1 | - | - | 385.6 | 5 hits (life 1 / rehit 0.2) | 1 runs, 1 pending |
 | flash-cannon |  | with its batch | 80 | 1.75 | 1.75 | same | 420 | 220 (band length) | 1 | - | - | 45.71 | 1 hit per cast | none |
@@ -49,12 +49,12 @@ None.
 | hyper-voice |  | with its batch | 90 | 1.75 | 1.75 | same | - | 380 (grow max, D21) | 1 | - | - | 51.43 | 1 hit per cast | none |
 | ice-beam | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.75 | 1.75 | same | 420 | 290 (band length) | 1 | - | - | 51.43 | 1 hit per cast | 2 runs |
 | karate-chop |  | MOVE-INTENT (checked when routed) | 50 | 0.7 | 0.7 | same | 420 | 50 (radius) | 1 | - | - | 71.43 | 1 hit per cast | none |
-| leaf-storm |  | MOVE-INTENT (checked when routed) | 117 | persistent | 0.26 | differs, lasts while active | - | 109 (orbit + body) | 4 (persistent) | - | - | 468 | 1 hit per rehit 0.25 s, per second | 2 pending |
+| leaf-storm | yes | MOVE-INTENT (reviewed when its scenarios pass) | 117 | persistent | 0.26 | differs, lasts while active | - | 109 (orbit + body) | 4 (persistent) | - | - | 468 | 1 hit per rehit 0.25 s, per second | 2 runs |
 | lick |  | with its batch | 30 | 0.583 | 0.583 | same | 420 | 64 (radius) | 1 | - | - | 51.46 | 1 hit per cast | none |
 | metal-claw |  | MOVE-INTENT (checked when routed) | 47.5 | 0.5 | 0.5 | same | 420 | 50 (radius) | 1 | - | - | 95 | 1 hit per cast | none |
 | meteor-mash |  | MOVE-INTENT (checked when routed) | 81 | 1.75 | 1.75 | same | - | 495 (speed x life) | 1 | 1 per hit | - | 46.29 | 1 hit per cast | none |
 | mud-shot | yes | batch reviewed | 52.25 | 1.167 | 1.167 | same | - | 360 (speed x life) | 12 | - | - | 44.77 | 1 hit per cast | 2 runs |
-| night-shade |  | MOVE-INTENT (checked when routed) | 0 | persistent | 0.5 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | level | not power-based | 1 pending |
+| night-shade | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | persistent | 0.5 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | level | not power-based | 1 runs |
 | poison-sting |  | with its batch | 15 | 0.5 | 0.5 | same | - | 420 (speed x life) | 2 | - | - | 30 | 1 hit per cast | none |
 | powder-snow |  | with its batch | 40 | 0.7 | 0.7 | same | 420 | 48 (radius) | 1 | - | - | 57.14 | 1 hit per cast | none |
 | psybeam |  | with its batch | 65 | 0.875 | 0.875 | same | 420 | 215 (band length) | 1 | - | - | 74.29 | 1 hit per cast | none |

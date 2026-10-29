@@ -95,7 +95,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I14
 
 ### night-shade
-- [Approved] Arrives in 4c-1 as a persistent static circle; flat level damage with no target cap is a balance-pass item. (slice-4c.md decisions; review 9.9 S3) Code differs, see TODO: slice 4c-1.
+- [Approved] Arrives in 4c-1 as a persistent static circle; flat level damage with no target cap is a balance-pass item. (slice-4c.md decisions; review 9.9 S3) Built in slice 4c-1.
 - Ledger: B4-I15
 
 ### psychic

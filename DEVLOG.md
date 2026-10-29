@@ -134,3 +134,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): branch merges into main after slice 7b; gym-roster move import gets a new branch; code gaps join this branch only if tied to the move work.
 - Wrote move-schema-post-auth/ (overview plus 0, 4c-0 to 4c-3, 4r, stage-0, 4d, 5, 6, 7a, 7b). Found: 20 moves had no routing slice (new 4r); open decisions D-FOECAP, D-MC5, D-ENEMY, D-COOP, D-HAIL, D-LOC.
 - No game code changed. Stopped at: Jess approves slice 0 doc fixes, answers D-FOECAP and D-LEAF.
+
+## 2026-10-29 (Quick, work): slice 0, Stage 0, 4c-0 and 4c-1
+- Docs: slice 0 (all four passes) applied; new CLAUDE.md rules for cross-document IDs (`file:ID`) and the move review rule; ONBOARDING module map and tools, GLOSSARY move-schema terms, BALANCE new-path cds; catch-me-up skill now reads CLAUDE.md.
+- Built (game code, approved plans): Stage 0 (tools/move_report.js, move-intent-scenarios.json, move-intent harness; batch 1 of 12 moves signed off), String Shot cd 1.1, 4c-0 (maxStacks default 1, filled on self-side effects only), 4c-1 (persistent upkeep and orbits, deep-freeze of G.MoveDefs, the 2.4 validator rules). 24 of 63 moves routed.
+- Decided: D-FOECAP (a), D-LEAF per-hit refresh, D-PSY one re-pick, cd rulings (Dragon Rage, Gust, Spikes intended; String Shot regression), persistent owns the slot lifecycle and endOn is instance-only (H25, notActive removed from the six persistent moves).
+- Tests: every move harness and the validator passed in a sandbox copy (persist 49, intent 302, riders 103, selfcast 83, sim 1980, validator self-test 48; 16 of 16 mutations caught). check.js NOT yet run on the real tree; Playwright smoke and the skipTo(20) framerate check not run.
+- Stopped at: Jess runs check.js, feel-tests riders, persist and String Shot, commits and pushes. Next: plan 4c-2.

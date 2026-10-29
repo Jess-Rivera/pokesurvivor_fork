@@ -6,27 +6,37 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-24 ~4:45 PM; re-sync at session end)
-Open and closed issues as of this sync. Labels shown as type/area/status.
+## Board mirror (synced from the GitHub API 2026-10-29 ~12:20 PM; re-sync at session end)
+Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
-OPEN:
+OPEN (13):
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
-- #3  Review the remaining pending moves (full 64-move axis pass)  [design / moves / ready]  (blocked_by 1)
-- #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (blocked_by 1)
-- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by 1 open of 2; blocking 1) (reopened)
+- #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking 1, likely #2)
+- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]  (no dependency link)
 - #6  Harness for the gym-gate escalation clock/bump  [feature / gyms / ready]
 - #8  Tileset loader + map generator cleanup  [feature / engine / ready]
-- #9  Regional forms (blocks Lorelei, Agatha, Bruno)  [feature / gyms / blocked]
-- #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]
-- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 1)
+- #9  Regional forms (blocks Lorelei, Agatha, Bruno gym builds)  [feature / gyms / blocked]  (no dependency link)
+- #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]  (no dependency link)
+- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 1, likely #2)
 - #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
+- #13 New move path: routed moves never target idle props  [design / moves / needs-triage]
+- #14 New move path: ranged moves lost boss priority  [design / moves / needs-triage]
+- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / needs-triage]  (new since the last sync; shot spacing, not the cd, see MOVE-INTENT string-shot)
 
-CLOSED (completed 2026-10-24):
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves]  (blocking 3: #3, #4, #11)
-- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms]  (gym leaders already use the correct A/D damage path; BALANCE.md's "open hole" text is outdated.)
+CLOSED (2):
+- #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24, completed; still counted as blocking 1)
+- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms / ready]  (closed 2026-10-24, completed)
 
-DISCREPANCY TO RESOLVE ON THE BOARD: the GitHub API returns #2 as CLOSED (state_reason completed, blocking #3/#4/#11), but Jess reports #2 was REOPENED ~6h before this sync (the API read was cached/stale). Treat #2 as OPEN per Jess: the moves work (the 64-move feel pass) is what's actually in flight and is NOT done at the issue level until the importer lands. If the board now shows #2 open, this mirror's CLOSED placement for #2 is the stale side; fix on next sync.
-NOTE: the feel-first 64-move conversion pass (#3) is COMPLETE as of this session: 63 of 64 moves converted in docs/move_rework_holding/move-conversions-described.json (all reviewStatus: reviewed), bubble intentionally logged as a forgotten-move skip (forgottenSkips block) for the later purge. #4's three feel-calls (Flamethrower / Night Shade / Psycho Cut) were all decided in that pass. Board automation: closing an issue moves it to Shipped.
+INCONSISTENCIES TO RESOLVE ON THE BOARD (Jess; the agent never mutates the tracker):
+- #4 is CLOSED but still listed as a blocker (blocking 1); #2 shows 2 total blockers with 1 open, so the closed one is very likely #4. Remove the stale link.
+- #2 is labeled `ready` while it still has 1 open blocker (likely #3), and it is the in-progress move-schema work, so `ready` understates it.
+- #3 is labeled `ready` but its 64-move conversion pass is done (2026-10-24 note below); consider closing it, which would also unblock #2.
+- #5, #9 and #10 carry `blocked` with no dependency link; add the link (#5 waits on the moves import) or drop the label.
+- #4 (closed) still carries `needs-triage`; #7 (closed) still carries `ready`.
+- #12, #13, #14 and #15 are still `needs-triage`.
+
+NOTE (unchanged from the 2026-10-24 sync): the feel-first 64-move conversion pass (#3) is COMPLETE: 63 of 64 moves converted in docs/move_rework_holding/move-conversions-described.json (bubble logged as a forgotten-move skip). #4's three feel-calls were decided in that pass. Board automation: closing an issue moves it to Shipped.
 
 ---
 

@@ -11,11 +11,8 @@ The validation backbone described in combat-validation-and-handoff:1.4 and comba
 - Expected outcomes come from MOVE-INTENT rulings first, then combat-validation-and-handoff:2.5 for the six worked moves, then the move data and the D-table. Thunderbolt ratios are 1, 0.67, 0.4489, ... (combat-architecture:D15); validation 2.5 was corrected to match on 2026-10-29.
 - The harness runs every scenario whose move is routed and lists the rest as "pending".
 
-## Review rule (Jess, 2026-10-29)
-- A move is reviewed when it has a MOVE-INTENT entry and its data and the new-path code both match that entry (its scenarios pass).
-- A move without an entry is reviewed with the batch that routes it: Jess reviews the batch's scenario table when the batch is added. No separate per-move pass beforehand.
-- Anything that needs specific disambiguation during a batch review becomes a new MOVE-INTENT entry, so it is owned from then on.
-- A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed.
+## Review rule
+CLAUDE.md "Move review rule" (Jess, 2026-10-29). This slice built the tools it uses.
 
 ## Scope note
 Tools and a JSON data file under docs/: this changes no game behavior, but it is a new tool and data file, so it gets a short prose plan first.

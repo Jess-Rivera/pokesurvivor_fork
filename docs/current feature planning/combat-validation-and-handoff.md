@@ -137,18 +137,18 @@ Yes, after the slice 3a grammar additions (persistent, range, instance-level del
 
 ### 2.4 Combinations that validate individually but are incoherent together
 
-These pass today's grammar. They are added as validator rules in slice 4c-1 (MOVE-AXIS-SCHEMA "Presets and validation", Jess 2026-10-27; not built yet), not slice 3a as first recommended. Data-driven, like the existing rule list:
+These pass today's grammar. They are added as validator rules in slice 4c-1 (MOVE-AXIS-SCHEMA "Presets and validation", Jess 2026-10-27), not slice 3a as first recommended. Built 2026-10-29: each rule names its validator id, in js/data/move-attributes.js or, where the condition language cannot express it, tools/validate_moves.js. All 63 moves pass, raw and resolved:
 
-1. `persistent` with a `cd`, or without an `endOn notActive`.
-2. A non-persistent move with no cd after resolution.
-3. `pierce` on a shapeless move or an emitter parent (no hitbox).
-4. `turnRate` or `aimTrack` with targeting `direction` or `none` (nothing to steer toward).
-5. `trigger: contact` together with `endOn time 0`.
-6. `hitPolicy: interval` with a lifetime shorter than `rehit` (it can never re-hit).
-7. Emit `count` greater than 1 with trigger `termination` or `enemyHit` (both are one-shot events; count would be emissions per event, which is what the child's space.count is for).
-8. `grow.dim: radArc` on a shape already at 2 pi, or `grow.max` below the start size.
-9. A stat effect with side `foe` and scope `team` (a team scope is a player-side concept).
-10. `returnHits` without a turnaround (`returns` needs a range; resolved default covers it, so this checks overrides).
+1. `persistent` with a `cd`. Done: `persistent-no-cd`. Changed 2026-10-29 (combat-architecture:H25): a persistent move must NOT list `endOn notActive` (`persistent-no-notactive`), a move that is neither persistent nor a self-cast needs an `endOn` (`needs-end`), and a self-cast rejects one (`self-has-no-end`).
+2. A non-persistent move with no cd after resolution. Done: `resolved-needs-cd` (validate_moves --resolved).
+3. `pierce` on a shapeless move or an emitter parent (no hitbox). Done: `pierce-needs-hitbox` (raw data; a shapeless move has no space to carry pierce).
+4. `turnRate` or `aimTrack` with targeting `direction` or `none` (nothing to steer toward). Done: `steer-needs-target`.
+5. `trigger: contact` together with `endOn time 0`. Done: `contact-not-instant`.
+6. `hitPolicy: interval` with a lifetime shorter than `rehit` (it can never re-hit). Done: `interval-life-covers-rehit` (validate_moves).
+7. Emit `count` greater than 1 with trigger `termination` or `enemyHit` (both are one-shot events; count would be emissions per event, which is what the child's space.count is for). Done: `one-shot-emit-count`.
+8. `grow.dim: radArc` on a shape already at 2 pi, or `grow.max` below the start size. Done: `arc-grow-room` and `grow-max-above-start` (validate_moves).
+9. A stat effect with side `foe` and scope `team` (a team scope is a player-side concept). Done: `foe-not-team`.
+10. `returnHits` without a turnaround (`returns` needs a range; resolved default covers it, so this checks overrides). Done: the existing `hits-need-return` plus `resolved-returns-range` (validate_moves --resolved), so overrides are checked too.
 
 ### 2.5 Intent-driven validation of six hard moves
 

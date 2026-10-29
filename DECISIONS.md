@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-29, Persistent lifecycle: the slot owns it, endOn is instance-only (Jess)
+`persistent: true` spawns the move while its slot is active and the owner unstunned, ends it on a swap, stun or faint, and respawns it after any instance end, so an aura is `persistent` alone and a pulse is `persistent` plus `endOn` time. A persistent move never lists notActive; a move that is not persistent needs an endOn unless it is a self-cast, whose effects carry their own duration. Supersedes the review 9.2 C13 wording "persistent requires an endOn notActive"; notActive was removed from the six persistent moves.
+Canonical: docs/MOVE-AXIS-SCHEMA.md, `persistent` row; combat-architecture section H, H25
+
 ## 2026-10-29, D-PSY: Psychic re-picks its steering target once (Jess)
 After the cast target is lost Psychic re-picks the nearest live enemy once, then flies straight, as D23 already says for every turnRate move. No exception, no new rule; 4c-3 is built as written.
 Canonical: docs/MOVE-INTENT.md, psychic; combat-architecture D23
@@ -19,7 +23,7 @@ Canonical: docs/MOVE-INTENT.md, leaf-storm
 
 ## 2026-10-29, Move review rule for Stage 0 and later batches (Jess)
 A move counts as reviewed when it has a MOVE-INTENT entry and its data and code match it. Moves without an entry are reviewed with the batch that routes them; any move needing specific disambiguation gets a MOVE-INTENT entry. Scenarios that depend on an open decision are marked blocked, not guessed.
-Canonical: docs/current feature planning/move-schema-post-auth/stage-0.md, "Review rule"
+Canonical: CLAUDE.md, "Move review rule" (moved from stage-0.md the same day so it outlives the branch)
 
 ## 2026-10-28, Move-schema branch end and the code-gap rule (Jess)
 feature-test/new-move-schema merges into main after slice 7b, once all 63 moves run on the new path and the legacy player-move path is deleted. A new branch then imports the gym-roster moves; until then the gym is Brock only. A STATE.md code-gap item is built in this branch only if it is tied to the move-schema work; otherwise it waits for its own branch.

@@ -90,7 +90,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 ## 5. Module map
 
 ### `js/core/` (engine services)
-- `util.js` creates `G`, shared helpers.
+- `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
+- `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev`, including `G.Debug.newcombat(set)`.
 - `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).
 - `input.js` keyboard/mouse, `touch.js` mobile joystick + touch controls.
@@ -106,7 +107,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 ### `js/data/` (static game data; some generated)
 - `pokedex.js` the 966 Pokemon (stats, names, types; `leg` = legendary flag). Generated.
 - `sprites-meta.js` sprite sheet metadata (`hv` hover flag, `sa` shiny-alt geometry). Generated, large, skip when reading.
-- `moves.js` the move definitions (families, levels, types).
+- `moves.js` the LEGACY move catalog (families, levels, types). It drives normal play until slice 7b deletes the legacy path.
+- The new move system's data chain (load order): `move-attributes.js` (`G.MoveAttrs`, the grammar and validator rules, docs/MOVE-AXIS-SCHEMA.md), `moves-generated.js` (`G.MoveData`, generated from docs/move_rework_holding/move-conversions-described.json by `tools/export_moves.js`, never hand-edited), `move-overrides.js` (hand-set fields with a `why`), `move-handler.js` (special handlers), `move-resolver.js` (`G.MoveDefs`, the resolved and deep-frozen definitions).
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
@@ -122,7 +124,9 @@ in English. Do not add those new English strings to `lang-en.js`.
   card draft, `gacha.js` pulls/rarity/pity, `rift.js` the legendary arenas,
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
-  (coins/tickets/profile), `judgment.js` (anti-cheat validation).
+  (coins/tickets/profile), `judgment.js` (anti-cheat validation), `status.js` and `stages.js` (ailments and stat stages),
+  `elites.js`, `gym.js` (run progression, BOSS-REWORK.md), `log.js` (dev logger).
+- The new move system (move schema branch, only with `?dev&newcombat`): `move-route.js` (`G.MoveRoute`, the one ROUTED list of moves the new path runs; combat.js skips those slots), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers), `move-render.js` (drawing only). Rules: docs/current feature planning/combat-architecture.md.
 
 ### `js/net/` (online, all optional)
 - `social.js` nicknames/friends, `net.js` WebRTC + relay + TURN handshake,
@@ -145,7 +149,11 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `functions/` Firebase Cloud Functions. `cloudflare/turn-worker.js` the TURN +
   online-counter Worker. `sw.js` the PWA service worker.
 - `tools/` the generators and build scripts (build.js, export_data.js,
-  make_seo_pages.py, fetch_*.py, make_font.py).
+  make_seo_pages.py, fetch_*.py, make_font.py). Checks: `check.js` (syntax of every file, every
+  `*harness*.js` under docs/, the move-data steps). Move tools: `export_moves.js` (source JSON to moves-generated.js; `--check` guards hand edits),
+  `validate_moves.js` (grammar and validator rules; `--resolved` checks the resolver output), `move_parity.js` (new vs legacy cd and power),
+  `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke).
+- `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation runners (`*-mutate.js`, run by hand).
 
 ## 6. Deferred server/ops facts
 
@@ -161,9 +169,11 @@ propose or implement cloud or multiplayer work during the local-first phase.
 
 ## 7. Where do I add a new feature?
 
-- **New move:** add it to `js/data/moves.js` (family, type, levels). Its visual
-  comes from an existing shape in `js/entities/vfx.js`. If user-facing text is new,
-  add the English to `js/data/lang-en.js`. Combat behavior lives in `js/systems/combat.js`.
+- **New move:** while the move schema branch is live, author it in docs/move_rework_holding/move-conversions-described.json (grammar: docs/MOVE-AXIS-SCHEMA.md),
+  run `node tools/export_moves.js`, add hand-set fields to `js/data/move-overrides.js`, and give it a MOVE-INTENT entry if it needs a ruling.
+  It runs on the new path once its id is in `js/systems/move-route.js` ROUTED, and gets an intent scenario. The legacy `js/data/moves.js`
+  plus `js/systems/combat.js` and `js/entities/vfx.js` still drive normal play until slice 7b. New user-facing text is authored in English
+  only, with no lang-en.js entry (CLAUDE.md i18n rule).
 - **New enemy / personality:** `js/data/enemies.js` for the roster/tiers; enemy
   behavior and personalities in `js/entities/enemy.js` (and spawn logic in
   `js/systems/spawner.js`).

@@ -57,6 +57,13 @@ side only and note any deferred hook in TODO.md.
   translations for them. New features render English-only, intentionally.
 - Player-entered text (nicknames) stays marked translate="no".
 
+## Move review rule (Jess, 2026-10-29)
+How a move counts as reviewed, for any batch of moves on any branch:
+- A move with a docs/MOVE-INTENT.md entry is reviewed when its data and code match that entry (its intent scenarios pass in docs/proposals/move-intent-harness.js).
+- A move without an entry is reviewed with the batch that routes it: Jess reviews the batch's scenario table (tools/move_report.js) when the batch lands, and signs it off in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json. No separate per-move pass beforehand.
+- Anything that needs specific disambiguation during a batch review becomes a new MOVE-INTENT entry, so it is owned from then on. That includes cd rulings (intended or regression).
+- A scenario whose outcome depends on an open owner decision is marked blocked on that decision, never guessed. Expected outcomes are hand-derived from MOVE-INTENT or the data and the D-table, never copied from code output.
+
 ## Edit boundary and workflow
 Dividing line: "does this change what the game does when you run it?"
 - YES (game code, js/data/*.js, dev.html, build config, assets): the assistant gives a prose plan in chat and waits for Jess's edits or OK. Then it builds, runs the harness and headless-browser tests, and writes straight into the repo in one step. Risky changes are flagged in the plan; proceed assuming yes unless he denies or edits. A plan approves only the scope it describes. Jess feel-tests after each change (about a minute), so applied changes are not described as untested.

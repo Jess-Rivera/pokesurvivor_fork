@@ -1,17 +1,17 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new slice plan, no game code changed).
+Last updated: 2026-10-29 (Quick, work; slice 0, Stage 0, 4c-0 and 4c-1 built, no commit yet).
 
 ## Where we are
-- Branch feature-test/new-move-schema, consolidation merged (04ecc29). Coding has not resumed yet.
-- Move schema: slices 1 to 3d, 4a, 4b DONE (21 of 63 moves routed behind ?dev&newcombat).
-- NEW live slice plan: docs/current feature planning/move-schema-post-auth/slice-overview.md. The old move-schema/ folder is history except the three 4c codehandoffs (still the build steps, DECISIONS:Q23, read with the corrections in the new 4c-n files). Slice 0 DONE 2026-10-29 (all four passes, detail in slice-0 Results) except F-REP-1/2 report regeneration (deferred, TODO Backlog). New CLAUDE.md rule: cross-document IDs as `file:ID`.
-- Audit of planning docs vs sources of truth: docs/current feature planning/AUDIT-vs-sources-of-truth.md (3 HIGH, 20 MEDIUM, 11 LOW).
-- Branch end (Jess, 2026-10-28): merge into main after slice 7b with all moves on the new path; then a new branch imports the gym-roster moves. A code gap is built here only if tied to the move work (table in the new overview).
+- Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md (old move-schema/ is history except the three 4c codehandoffs, DECISIONS:Q23).
+- Move schema: slices 1 to 3d, 4a, 4b, 4c-0, 4c-1 built; 24 of 63 moves routed behind ?dev&newcombat.
+- 2026-10-29: slice 0 doc fixes done (except F-REP-1/2, folded into Stage 0); Stage 0 built (tools/move_report.js, move-intent scenarios and harness), batch 1 (12 moves) reviewed, cd rulings in MOVE-INTENT, String Shot cd back to 1.1; D-FOECAP, D-LEAF, D-PSY answered; 4c-0 (maxStacks default 1, self-side only) and 4c-1 (persistence, orbits, deep-freeze, validator rules) built.
+- New rules: cross-document IDs as `file:ID` (CLAUDE.md); persistent owns a move's slot life, endOn is instance-only (combat-architecture:H25).
+- Every harness passed in a sandbox copy; Jess still runs check.js on the real tree.
+- Branch end (Jess, 2026-10-28): merge into main after slice 7b; then a new branch imports the gym-roster moves.
 
 ## Open owner decisions (block the slice named)
-- None blocking 4c (D-FOECAP, D-LEAF, D-PSY answered 2026-10-29).
 - D-GUST, D-LOC (4d). D-MC5 (5) QA-11 formula vs Metal Claw/Meteor Mash at 1. D-ENEMY, D-COOP (7a). D-HAIL (7b).
 
 ## Docs and code still differ (approved, not built)
@@ -19,10 +19,11 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 - Own branches: QA-08 run loop; boss doc reorganization (Q1, QA-06); DoT on base HP for elites; Shedinja.
 
 ## Next (in order)
-1. Stage 0 built and batch 1 reviewed 2026-10-29. Open: confirm check.js shows the move-intent harness green. String Shot cd restored to 1.1 (Jess feel-checks it).
-2. 4c-0 BUILT 2026-10-29 (Jess runs check.js and the riders feel-test). Next: 4c-1 (handoff written; prose plan first).
+1. Jess: node tools/check.js; then feel-tests G.Debug.newcombat('riders') (4c-0), G.Debug.newcombat('persist') (4c-1, cycle slots and swap Pokemon), String Shot; G.Debug.skipTo(20) with the persist set for the framerate.
+2. Commit and push (several commits, see the session commands).
+3. Plan 4c-2 (returns and repositions; handoff written, prose plan first).
 
-## Board note (snapshot 2026-10-27)
-- 14 items. Shipped #7, #4. In Progress #2. Blocked #3, #8, #11. Accepted #1, #5, #6, #9, #10, #12, #13, #14. Label vs board drift still to fix.
+## Board note (synced 2026-10-29)
+- 15 issues, 13 open. Drift to fix on the board: #4 closed but still a blocker, #3 likely closable, #5/#9/#10 `blocked` with no link, four `needs-triage` (TODO.md Board mirror).
 
 Rules: CLAUDE.md.

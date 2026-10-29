@@ -30,7 +30,7 @@ A STATE.md code-gap item is built in this branch only if it is directly associat
 | Legacy Fire Spin strip and burnHalf | yes, removed with the legacy path | 7b |
 | E1 on the live path (QA-10) | yes, verified gone after the flip | 7b |
 | QA-13 Brock-only gym fallback | yes | 7a, 7b |
-| Leaf Storm "held while active" grammar gap | yes | 4c-1 (decision first) |
+| Leaf Storm "held while active" grammar gap | closed (D-LEAF: per-hit refresh) | 4c-1 |
 | QA-08 run loop | no, own branch | none |
 | Boss doc renames and comment repoints (Q1, QA-06) | no, organization branch | none |
 | DoT on base HP for elites, Shedinja 1 HP, Speed-bounds doc wording (COMBAT-RULES gaps) | no, own branch | none |
@@ -61,11 +61,11 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 | --- | --- | --- | --- |
 | 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | waiting for Jess to approve the item list | none |
 | 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT 2026-10-29; Jess feel-test open | none |
-| 2 | slice-4c-1.md: persistence and orbits | handoff written | none (D-LEAF answered 2026-10-29) |
+| 2 | slice-4c-1.md: persistence and orbits | BUILT 2026-10-29; Jess feel-test open | none |
 | 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
 | 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | none (D-PSY answered 2026-10-29) |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
-| par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; 4 cd rulings open | none (later batches add scenarios as they route) |
+| par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
 | 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |
 | 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |

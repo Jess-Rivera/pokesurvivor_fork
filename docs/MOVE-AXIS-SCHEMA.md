@@ -34,7 +34,7 @@ Every move entry carries these at the top level (not in an axis):
 | `power` | Source move power, retained as source data. The resolver derives the game's base damage from it; named damage handlers may override the normal formula. |
 | `cd` | Cooldown in seconds. Derived from PP by the resolver, then optionally overridden. |
 | `rehit` | Optional damage-tick interval for a persistent hitbox. Controls how often one instance can damage the same enemy again. Separate from `cd` (recast/re-layout cadence) and movement speed. Absent for one-hit-per-instance shapes. |
-| `persistent` | Optional boolean at the top level of the move. `true` = the move lasts while it is the active selected skill: no cooldown, one live instance per slot, ended by `{ notActive: true }` or a stunned owner. Absent = a normal cooldown move. A placed instance that merely ends on deselect (Spikes) is NOT persistent. The resolver reads the flag; it no longer guesses from `endOn`. |
+| `persistent` | Optional boolean at the top level of the move. `true` = the slot owns the move's life (combat-architecture:H25): no cooldown; while the slot is in the active group and the owner is not stunned it keeps one live group (the `count` shapes of one spawn); leaving the active group or a stun ends it (reason notActive), a faint ends it (ownerDeath), and a group that ends by its own `endOn` is spawned again on the next tick. So an aura is `persistent: true` with no `endOn`, and a pulse is `persistent: true` plus `endOn: [{ time: T }]`. A persistent move never lists `{ notActive: true }` (validator `persistent-no-notactive`). Absent = a normal cooldown move, which needs an `endOn` unless it is a self-cast (`needs-end`). A placed instance that merely ends on deselect (Spikes) is NOT persistent. The resolver reads the flag; it no longer guesses from `endOn`. (Jess, 2026-10-29) |
 | `hitPolicy` | Collision policy for repeated contact: e.g. `oncePerInstance`, `interval`, or `onReentry`. `rehit` supplies the interval when the policy uses one. The grammar defines valid combinations and defaults. |
 | `cardLock` | Optional list of fields that upgrade cards cannot modify, e.g. `['count', 'pierce']`. Default: none. |
 
@@ -94,7 +94,7 @@ There is no separate `lifetime` enum. An instance ends when the first condition 
 | `{ time: N }` | Instance ends after N seconds. `{ time: 0 }` resolves immediately. |
 | `{ contact: "wall" }` | Instance contacts terrain/prop. Separate from enemy contact. |
 | `{ ownerDeath: true }` | The source object is destroyed or removed. |
-| `{ notActive: true }` | The move is no longer the active selected skill; used for persistent orbs and similar selected-skill instances. |
+| `{ notActive: true }` | The move is no longer the active selected skill. For a NON-persistent instance that should end on deselect (Spikes). Never on a persistent move: its slot already ends it (`persistent` row, combat-architecture:H25). |
 | `{ offScreen: true }` | Instance leaves the permitted play area. |
 | `{ returned: true }` | The reposition's return leg (or a `motion: returns` instance's trip) has completed and arrived back. The natural terminator for a `returnToOrigin: true` reposition and for boomerang-style returns, which are speed-driven (see `dashMult`), not time-capped. |
 
@@ -268,8 +268,8 @@ Validation rules should be data-driven where practical. Examples: `grow` require
 
 Avoid booleans that duplicate derivable numeric state. Keep a field's constraints with its definition, and avoid encoding the same event in two independent fields.
 
-- [Approved] Persistent rule: `persistent` forbids `cd` and requires an `endOn notActive`. (review section 9.2, C13)
-- [Approved] The ten combination rules in docs/current feature planning/combat-validation-and-handoff.md section 2.4 are added in slice 4c-1 (Jess, 2026-10-27, slice-4c.md). Code differs, see TODO: not built yet.
+- [Approved] Persistent rule: `persistent` forbids `cd` (`persistent-no-cd`) and forbids `endOn notActive` (`persistent-no-notactive`); its `endOn`, when present, lists only instance ends, each followed by a respawn. A move that is not persistent needs an `endOn` unless it is a self-cast, and a self-cast rejects one because its effects carry their own duration (`needs-end`, `self-has-no-end`). Supersedes the review 9.2 C13 wording "requires an endOn notActive". (Jess, 2026-10-29; combat-architecture:H25)
+- [Approved] The ten combination rules in docs/current feature planning/combat-validation-and-handoff.md section 2.4 are added in slice 4c-1 (Jess, 2026-10-27, slice-4c.md). Built 2026-10-29; the rule ids are listed in combat-validation-and-handoff:2.4.
 
 ## File roles
 

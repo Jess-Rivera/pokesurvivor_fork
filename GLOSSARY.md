@@ -183,9 +183,36 @@ code readable even though they are not renamed.
 | `sa` (in sprites-meta) | shiny-alt geometry flag |
 | `leg` (in pokedex) | legendary / singular flag |
 
+## Move schema terms (the new move path)
+
+English-native terms of the move schema rewrite. Owners: docs/MOVE-AXIS-SCHEMA.md (grammar) and
+docs/current feature planning/combat-architecture.md (runtime); this table only names them.
+
+| Term | Meaning |
+|---|---|
+| axis | one of the three parts of a move: `space` (shape), `delivery` (where, how it moves, when it ends), `payload` (effects) |
+| resolved definition | a move after defaults, derived values (cd, basePower, range) and overrides; `G.MoveDefs`, deep-frozen |
+| routed | in the ROUTED list of js/systems/move-route.js, so the new path runs it with `?dev&newcombat` |
+| legacy path | the old `kind`-based combat in combat.js and moves.js; removed in slice 7b |
+| instance | one live hitbox spawned by a cast (one per `space.count`) |
+| group | the `count` instances of one spawn; a persistent slot keeps one group alive |
+| `endOn` | the conditions that end an instance (time, wall, offScreen, returned, ownerDeath, notActive) |
+| persistent | `persistent: true`: the slot owns the move's life, no cooldown; ends on a swap, stun or faint, respawns after an instance end (H25) |
+| aura / pulse | a persistent move with no `endOn` / with an `endOn` time, which respawns each cycle |
+| self-cast | `anchor: self`, a shapeless cast (Swords Dance); its effects carry their own duration, no `endOn` |
+| hit policy | when one instance may hit the same enemy again: `oncePerInstance`, `interval` (every `rehit` s) |
+| pierce | how many enemies an instance passes through before it ends; UNLIMITED never ends it |
+| lens | the area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius |
+| cast gate | the check that holds a cast until a target is in reach (retries every 0.05 s) |
+| maxStacks | live applications one self-buff move may keep on its host; foe drops only when authored |
+| intent scenario | a staged fight in move-intent-scenarios.json with a hand-derived expected outcome |
+| batch review | Jess's sign-off of newly routed moves that have no MOVE-INTENT entry (CLAUDE.md "Move review rule") |
+| harness / mutation runner | an offline test file under docs/proposals/ run by check.js / a script that breaks the code on purpose to prove the harness catches it |
+
 ## Note on strings vs. comments
 
 Spanish string LITERALS in the JS (text shown to the player) are intentionally
 left in Spanish: the i18n system translates them at runtime using `lang-en.js`,
-keyed on the exact Spanish string. If you add a new user-facing string, add its
-English translation to `js/data/lang-en.js` too, or it will only show in Spanish.
+keyed on the exact Spanish string. Those inherited literals stay as they are. New
+user-facing strings are authored directly in English with NO lang-en.js entry and no
+Spanish version (CLAUDE.md "English-native i18n").
