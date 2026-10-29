@@ -26,6 +26,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### aerial-ace
 - [Approved] Teleport to the nearest enemy's centre, capped by range 420 and walls; the 46 px hitbox is live for its 0.1 s, knockback 80 away from the landing point, 50% confusion. No return and no movement lock. i-frames: 0.3 s once from the cast, not re-raised (4c-2 handoff test 6). Built in slice 4c-2.
+- [Approved] A rooted commitment holds the teleport too, the same as Quick Attack: it waits and casts as the root ends. (Jess, 2026-10-29) Built (4c-2 review).
 - Ledger: none (entry added 2026-10-29 by the 4c-2 build)
 
 ### bonemerang
@@ -115,6 +116,8 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] The landing point is the target enemy's centre (no stand-off); i-frames cover the whole dash plus a 0.3 s tail; the swept dash holds walking through the existing mvRoot flag. Quick Attack hits one enemy at the arrival point, unlike the legacy dash. (slice-4c.md 4c-2 decisions, Jess 2026-10-27; this extends review 9.3 F5, "i-frames for the whole dash") Built in slice 4c-2.
 - [Approved] Dash speed is 10 x the owner's full final move speed (stages, status, weather, liquid, run items), read once when the dash starts; a slow or Agility landing mid-dash does not change it. (Jess, 2026-10-29)
 - [Approved] A new Quick Attack (or any reposition) waits while the owner's dash is still live, so two dashes never fight over the position; a swept dash at speed 0 waits too. The cooldown counts from when the dash can start. (Jess approved the 4c-2 build, 2026-10-29)
+- [Approved] A rooted movement commitment from a move in the same active group holds Quick Attack at the cast gate: it waits and casts as the root ends, so rooted means you cannot move. The cooldown counts from when it can start. No current move roots its caster (Flamethrower's commitment is slowed, which does not hold a dash; its Speed -2 just makes the dash slower), so this guards future moves. (Jess, 2026-10-29) Built (4c-2 review).
+- [Approved] The dash carries a 3 s time cap as a safety net (endOn time 3 beside returned); a normal dash takes about 0.5 s. If the cap fires mid-dash, the owner stays where it is and the root lifts; no snap back. Every swept dash needs a time cap (validator rule swept-needs-time). (Jess, 2026-10-29) Built (4c-2 review).
 - [Open] `priority: 1` ("always first" in a bonded group) is not built: the move sim does not order casts by priority. TODO.md Backlog.
 - Ledger: B4-I17
 

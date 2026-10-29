@@ -62,7 +62,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 an
 | 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | DONE 2026-10-29 (F-REP-1/2 folded into Stage 0) | none |
 | 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT and SIGNED OFF 2026-10-29 | none |
 | 2 | slice-4c-1.md: persistence and orbits | BUILT and SIGNED OFF 2026-10-29 (orphaned-group fix included) | none |
-| 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (check.js and both mutation runners green) | none |
+| 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (review fixes built the same night: check.js green, motion runner 24/24, smoke passed; see slice-4c-2.md Results) | none |
 | 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | NEXT: prose plan to Jess 2026-10-29 | none (D-PSY answered 2026-10-29) |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |

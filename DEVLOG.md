@@ -150,8 +150,16 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Stopped at: Jess runs check.js and node docs/proposals/move-motion-mutate.js, feel-tests newcombat('motion') and skipTo(20), commits and pushes. Next: 4c-3.
 
 ## 2026-10-29 (Quick, work, evening): 4c-2 green, 4c-3 planned
-- Jess ran check.js, move-motion-mutate.js and move-persist-mutate.js on the 4c-2 tree: all green. 4c-2 signed off; slice-overview and slice-4c-2 results updated.
+- Jess ran check.js, move-motion-mutate.js and move-persist-mutate.js on the 4c-2 tree: recorded all green (corrected in the next entry: the motion runner catches 20/22). 4c-2 signed off; slice-overview and slice-4c-2 results updated.
 - 4c-3 handoff re-verified against today's code (aimTrack, location, delay and falls unimplemented as stated; most Flamethrower tests aim straight ahead and survive the tracking change; Confusion and Bubble Beam have no MOVE-INTENT entry, so they go through the batch review). Prose plan given; not approved.
 - Raised: aimTrack should track only within the cone's reach (250 + radius), not range 420. Awaiting Jess.
 - No game code changed this part; board mirror re-synced (no changes since noon).
 - Stopped at: Jess commits and pushes, answers the aimTrack question, approves 4c-3.
+
+## 2026-10-29 (Claude Code, home, night): review of Quick's 4c-2 push
+- Reran everything with Node on 5f21db5: check.js green (24/24), all six move harnesses pass, validator 63/63, persist runner 17/17. Motion runner 20/22, exit 1: the evening "all green" record was wrong for it (survivors: knockback ignores travel, no 0.3 s tail).
+- Docs: unblocked the four 4c-2 intent scenarios (waitsFor removed; intent now 316/316); corrected slice-4c-2 Results, slice-overview and STATE.
+- Review found nothing broken. Raised: Quick Attack has no time cap (endOn returned only); a non-returning swept dash would never end; a dash or teleport can move a rooted owner (no ruling); the pull clamp's SLIDE copies enemy.js decay and the dt cap; speedOf flips mvRoot to read speed.
+- Jess approved all fixes and ruled: stay put at the cap; option (a), a root holds every reposition. Built: two harness gaps closed, Quick Attack time 3, swept-needs-time rule, one-way dash ends `arrived`, root gate, G.Enemy.KNOCK_DECAY plus a SLIDE check, player unrootedSpd. Correction: no current move roots its caster (Flamethrower slows), so the root gate guards future moves only.
+- Tests: check.js green, motion harness 75/75, runners 24/24 (motion), 17/17 (persist), 29/29 (sim), intent 316/316, validator self-test 50/50, smoke-newcombat all passed, one-off browser pass of motion and persist sets clean.
+- Stopped at: Jess feel-tests newcombat('motion') (Quick Attack unchanged in normal play), commits. Next: aimTrack question, 4c-3.

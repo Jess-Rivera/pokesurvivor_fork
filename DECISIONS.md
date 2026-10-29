@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-29, A root holds every reposition; Quick Attack gets a 3 s cap (Jess)
+From the 4c-2 review. Option (a): a rooted movement commitment holds Quick Attack and Aerial Ace at the cast gate until the root ends (option (b), dashes as an escape from your own root, rejected). No current move roots its caster (Flamethrower slows), so this guards future moves; a slowed commitment does not hold a dash. Every swept dash carries an endOn time as a safety net (Quick Attack 3 s); if it fires the owner stays put, no snap back. A one-way swept dash ends `arrived` after its hit at B.
+Canonical: docs/MOVE-INTENT.md, quick-attack and aerial-ace
+
 ## 2026-10-29, Bug Buzz keeps 100% Sp. Def -1 held at -1, and rehit 0.5 (Jess)
 The source's 10% chance stays dropped (the 2026-10-24 Option B design): every hit rolls at 100% and the authored foe cap of 1 holds it at -1, so each enemy in the aura is marked once. Damage stays 90 power every 0.5 s (about 180 Power/s per enemy in range); the throughput goes to the slice 6 balance pass. No data change.
 Canonical: docs/MOVE-INTENT.md, bug-buzz
