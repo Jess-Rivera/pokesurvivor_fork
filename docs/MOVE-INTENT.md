@@ -14,7 +14,7 @@ Tags are defined in CLAUDE.md: [Approved], [Legacy behavior], [Proposed], [Open]
 
 ## Per-move rulings
 
-Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-consistency-review.md section 9, combat-validation-and-handoff.md sections 2.3 and 2.5, and the slice-3d, slice-4b and slice-4c decision sections. Keyed by move id, alphabetical. Each entry names its ledger row (temp-audit-outputs/phase-4-ledger.md, "B4a rows"). Numbers are current data unless a ruling fixes them; current values: see js/data/moves-generated.js and js/data/move-overrides.js.
+Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-consistency-review.md section 9, combat-validation-and-handoff.md sections 2.3 and 2.5, and the slice-3d, slice-4b and slice-4c decision sections. Keyed by move id, alphabetical. Numbers are current data unless a ruling fixes them; current values: see js/data/moves-generated.js and js/data/move-overrides.js.
 
 ### aqua-ring
 - [Approved] Aqua Ring heals 6.25% max HP/s, accepted. Built. (review 9.9 S6)

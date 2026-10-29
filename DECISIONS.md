@@ -326,11 +326,11 @@ Archived entries (heading only):
 - 2026-10-17, Enemy attacks are behavior-driven, NOT move-catalog (finding, affects sub-slice C)
 - 2026-10-18, XP curve (feature/xp-curve), Jess's rulings
 - 2026-10-18, fix/attack-calc: design talk (NO code yet), Jess's rulings and the agreed scope
-- 2026-10-18 — fix/attack-calc slice 1 APPLIED
-- 2026-10-18 — fix/attack-calc decisions (BETA, aura/trail, slicing)
-- 2026-10-18 — fix/attack-calc slice 2 APPLIED
-- 2026-10-18 — fix/attack-calc slices 3a+3b APPLIED
-- 2026-10-18 — fix/attack-calc slice 3c APPLIED (swap rule)
+- 2026-10-18, fix/attack-calc slice 1 APPLIED
+- 2026-10-18, fix/attack-calc decisions (BETA, aura/trail, slicing)
+- 2026-10-18, fix/attack-calc slice 2 APPLIED
+- 2026-10-18, fix/attack-calc slices 3a+3b APPLIED
+- 2026-10-18, fix/attack-calc slice 3c APPLIED (swap rule)
 - 2026-10-18, Upgrade rework slice 1 APPLIED (deletion)
 - 2026-10-18, Upgrade rework slice 2a APPLIED (data layer)
 - 2026-10-18, Upgrade rework slice 2b APPLIED (mechanic cards live)

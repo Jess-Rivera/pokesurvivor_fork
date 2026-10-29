@@ -15,7 +15,7 @@ Read CONTEXT.md, STATE.md, CLAUDE.md (auto), slice-overview.md, slice-4c.md, thi
 - The instance cap constant governs placed objects (4d) and does not apply here.
 
 ## Decisions (moved)
-Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in temp-audit-outputs/phase-4-ledger.md (B4b rows). Build steps are unchanged (Q23).
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in the Phase 4 ledger (B4b rows); the DEVLOG 2026-10-28 B9 entry names the commit that holds it. Build steps are unchanged (Q23).
 
 Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
 - "also in slice-4c.md and DECISIONS.md": DECISIONS becomes a log (QA-01). The owners are MOVE-INTENT and combat-architecture H.
