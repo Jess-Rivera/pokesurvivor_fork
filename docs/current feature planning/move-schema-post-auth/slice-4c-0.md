@@ -19,8 +19,8 @@ Self raises: Swords Dance, Agility, Harden, Dragon Dance (both raises) authored 
 - New path only: a foe-side stat effect has no per-move cap, except where MOVE-INTENT names one. The legacy path (TEAM_LIVE 8, removed in 7b) is untouched.
 - Expected to change move-effects.js (which passes the cap) and possibly move-resolver.js. If js/systems/stages.js must change, stop and ask first (the 4c handoffs keep it off-limits).
 
-## Decision needed before planning (D-FOECAP)
-Once the default is 1, the resolver fills 1 on every foe drop, so "authored 1" (Ice Beam, Bug Buzz) and "default 1" look the same at runtime. Candidate readings: (a) the resolver does not fill the default on foe-side effects, so only an authored value caps a foe drop; (b) a per-move list or flag marks the MOVE-INTENT exceptions. Reading (b) adds a field or a rule, which is a stop-and-ask.
+## Decision (D-FOECAP, answered 2026-10-29)
+Reading (a), Jess 2026-10-29: the resolver fills the `maxStacks` default on self-side stat effects only, so an authored value is the only thing that caps a foe drop (Ice Beam, Bug Buzz). Owners: MOVE-AXIS-SCHEMA "maxStacks field rule", combat-architecture:H24. No new field.
 
 ## Tests (harness, extending move-riders and selfcast)
 - A foe drop without an authored cap stacks per application up to -6 (Mud Shot hit repeatedly reaches -6, never past).

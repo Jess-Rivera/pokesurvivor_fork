@@ -11,7 +11,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 - Branch end (Jess, 2026-10-28): merge into main after slice 7b with all moves on the new path; then a new branch imports the gym-roster moves. A code gap is built here only if tied to the move work (table in the new overview).
 
 ## Open owner decisions (block the slice named)
-- D-LEAF (4c-1) Leaf Storm self-drop lifetime. D-PSY (4c-3) Psychic re-pick. D-FOECAP (4c-0) authored vs default foe cap.
+- D-PSY (4c-3) Psychic re-pick. (D-FOECAP and D-LEAF answered 2026-10-29.)
 - D-GUST, D-LOC (4d). D-MC5 (5) QA-11 formula vs Metal Claw/Meteor Mash at 1. D-ENEMY, D-COOP (7a). D-HAIL (7b).
 
 ## Docs and code still differ (approved, not built)
@@ -20,7 +20,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 
 ## Next (in order)
 1. Stage 0 built and batch 1 reviewed 2026-10-29. Open: confirm check.js shows the move-intent harness green. String Shot cd restored to 1.1 (Jess feel-checks it).
-2. Answer D-FOECAP and D-LEAF, then plan 4c-0 and build 4c-1.
+2. Plan 4c-0 (prose plan for Jess), then build 4c-1.
 
 ## Board note (snapshot 2026-10-27)
 - 14 items. Shipped #7, #4. In Progress #2. Blocked #3, #8, #11. Accepted #1, #5, #6, #9, #10, #12, #13, #14. Label vs board drift still to fix.

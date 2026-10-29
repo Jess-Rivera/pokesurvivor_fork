@@ -376,6 +376,7 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 | H21 | Caster-state commitment (S13, S14): built. Field grammar: MOVE-AXIS-SCHEMA "Caster state". | [Approved] | 9.9 S13, S14 |
 | H22 | Per-leg pierce: on a `returns` move the back leg starts with a fresh pierce budget as well as fresh hit eligibility, so pierce spent on the out leg does not disarm the back leg. Amends R2 and D16. Code differs, see TODO: slice 4c-2. | [Approved] | DECISIONS 2026-10-27, Slice 4c-2 planning |
 | H23 | Location pick: `location` targeting picks its point with the seeded sim rng passed to sim functions (section B, timing and determinism), never an unseeded random source, so harnesses replay exactly. Applies to R9 and selectTarget. Code differs, see TODO: slice 4c-3. | [Approved] | DECISIONS 2026-10-27, Slice 4c-3 planning |
+| H24 | maxStacks default: the resolver fills the `maxStacks` grammar default on self-side `stat` effects only. A foe-side effect keeps only an authored value (a MOVE-INTENT per-move exception), so an uncapped foe drop passes no cap and stacks to the -6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Code differs, see TODO: slice 4c-0. | [Approved] | DECISIONS 2026-10-29, D-FOECAP |
 
 ---
 

@@ -49,7 +49,7 @@ None.
 | hyper-voice |  | with its batch | 90 | 1.75 | 1.75 | same | - | 380 (grow max, D21) | 1 | - | - | 51.43 | 1 hit per cast | none |
 | ice-beam | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.75 | 1.75 | same | 420 | 290 (band length) | 1 | - | - | 51.43 | 1 hit per cast | 2 runs |
 | karate-chop |  | MOVE-INTENT (checked when routed) | 50 | 0.7 | 0.7 | same | 420 | 50 (radius) | 1 | - | - | 71.43 | 1 hit per cast | none |
-| leaf-storm |  | MOVE-INTENT (checked when routed) | 117 | persistent | 0.26 | differs, lasts while active | - | 109 (orbit + body) | 4 (persistent) | - | - | 468 | 1 hit per rehit 0.25 s, per second | 1 blocked D-LEAF |
+| leaf-storm |  | MOVE-INTENT (checked when routed) | 117 | persistent | 0.26 | differs, lasts while active | - | 109 (orbit + body) | 4 (persistent) | - | - | 468 | 1 hit per rehit 0.25 s, per second | 2 pending |
 | lick |  | with its batch | 30 | 0.583 | 0.583 | same | 420 | 64 (radius) | 1 | - | - | 51.46 | 1 hit per cast | none |
 | metal-claw |  | MOVE-INTENT (checked when routed) | 47.5 | 0.5 | 0.5 | same | 420 | 50 (radius) | 1 | - | - | 95 | 1 hit per cast | none |
 | meteor-mash |  | MOVE-INTENT (checked when routed) | 81 | 1.75 | 1.75 | same | - | 495 (speed x life) | 1 | 1 per hit | - | 46.29 | 1 hit per cast | none |

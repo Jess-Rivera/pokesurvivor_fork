@@ -60,8 +60,8 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 | # | slice | status | blocked by |
 | --- | --- | --- | --- |
 | 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | waiting for Jess to approve the item list | none |
-| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | to plan | D-FOECAP |
-| 2 | slice-4c-1.md: persistence and orbits | handoff written | D-LEAF |
+| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | to plan | none (D-FOECAP answered 2026-10-29) |
+| 2 | slice-4c-1.md: persistence and orbits | handoff written | none (D-LEAF answered 2026-10-29) |
 | 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
 | 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | D-PSY |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
@@ -78,9 +78,9 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 
 | id | question | blocks | where it is recorded |
 | --- | --- | --- | --- |
-| D-LEAF | Leaf Storm self Sp. Atk -2: build per-hit refresh now, or resolve the grammar gap first (held while active, then standard duration) | 4c-1 | MOVE-INTENT leaf-storm [Open]; audit 2.1 |
+| D-LEAF | ANSWERED 2026-10-29: per-hit refresh, 6 s after the last hit (MOVE-INTENT leaf-storm) | 4c-1 | DECISIONS 2026-10-29 |
 | D-PSY | Psychic after its target dies: one re-pick then straight (D23), or re-pick whenever lost | 4c-3 | MOVE-INTENT psychic; audit 2.2 |
-| D-FOECAP | How a per-move foe cap (Ice Beam, Bug Buzz authored 1) is told apart from the default once the default is 1 | 4c-0 | slice-4c-0.md |
+| D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
 | D-GUST | Gust per-shot spread | 4d | MOVE-INTENT gust [Open] |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp (resolver default is enemy; legacy placed mines at the caster's feet) | 4d | slice-4d.md |
 | D-MC5 | The QA-11 formula gives Metal Claw min(floor(6 / 0.5), 6) = 6 and Meteor Mash 3, while MOVE-INTENT rules both at 1 | 5 | slice-5.md |

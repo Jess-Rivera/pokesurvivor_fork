@@ -5,6 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-29, D-FOECAP: only an authored maxStacks caps a foe drop (Jess)
+The resolver fills the maxStacks default on self-side stat effects only. Ice Beam and Bug Buzz keep their authored foe cap of 1; every other foe drop stacks to the -6 ladder. No new field.
+Canonical: docs/MOVE-AXIS-SCHEMA.md, "maxStacks field rule"; combat-architecture section H, H24
+
+## 2026-10-29, D-LEAF: Leaf Storm's self Sp. Atk -2 refreshes on hit (Jess)
+The -2 refreshes its 6 s on each hit and holds at -2. An enemy is almost always in reach, so it reads as on while active and lasts 6 s after the last hit, which covers the tail after the move ends. Supersedes the CP3 "held while active" wording; the grammar gap is closed, the 4c-1 handoff P6 and Test 5 stand.
+Canonical: docs/MOVE-INTENT.md, leaf-storm
+
 ## 2026-10-29, Move review rule for Stage 0 and later batches (Jess)
 A move counts as reviewed when it has a MOVE-INTENT entry and its data and code match it. Moves without an entry are reviewed with the batch that routes them; any move needing specific disambiguation gets a MOVE-INTENT entry. Scenarios that depend on an open decision are marked blocked, not guessed.
 Canonical: docs/current feature planning/move-schema-post-auth/stage-0.md, "Review rule"

@@ -80,8 +80,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### leaf-storm
 - [Approved] Persistent. (review 9.2 C13)
 - [Approved] maxStacks 1 on its self Sp. Atk -2: the stage holds at -2 over many hits (never -4) and refreshes its 6 s each hit. (review 9.8 D-2; Q14; slice-4c-1-codehandoff.md P6)
-- [Approved] Per-move rule (not a Q13 case): Leaf Storm applies a self-debuff, Sp. Atk -2. The drop stays on for as long as the move is active. When the move stops being active, the -2 lasts the standard player stat-stage duration and then ends. Standard duration: see docs/COMBAT-RULES.md "Stat stages and maxStacks" (default 6 s; the data today is 6 s. Jess's answer said "8s" and noted he may be wrong, so the standard value is used). No upgrade path shortens this debuff on the persistent Leaf Storm. (Jess, 2026-10-28, CP3)
-- [Open] Grammar gap: a `stat` effect has one `duration`; the grammar cannot say "held while the move is active, then the standard duration". Today the drop refreshes on each hit (slice-4c-1-codehandoff.md P6), so with no enemy in reach it can lapse while the move is still active. Not resolved here; the grammar is not changed.
+- [Approved] Per-move rule (D-LEAF): the self Sp. Atk -2 refreshes its standard duration on each hit (maxStacks 1, holds at -2). In play an enemy is almost always in orbit reach, so it reads as on while the move is active; after the last hit, including when the move stops being active, it lasts the standard duration and then ends. It can lapse while active if nothing is in reach for longer than that; accepted. Standard duration: docs/COMBAT-RULES.md "Stat stages and maxStacks" (6 s). No upgrade path shortens it. Supersedes the 2026-10-28 CP3 "held while active" wording, so there is no grammar gap. (Jess, 2026-10-29)
 - Ledger: B4-I12
 
 ### meteor-mash
