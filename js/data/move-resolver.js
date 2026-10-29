@@ -7,7 +7,8 @@
  * every other raw fact pass through untouched. The resolver checks only its own inputs and throws on an unknown override
  * move or field, an unknown handler name, a cooldown freeze naming an unknown move, or a bad registry entry. Grammar validation stays in tools/validate_moves.js.
  * Load order: move-attributes.js, moves-generated.js, move-overrides.js, move-handler.js, move-resolver.js.
- * GROUNDWORK: not listed in dev.html and read by nothing in the game yet. */
+ * GROUNDWORK: not listed in dev.html and read by nothing in the game yet.
+ * Slice 4c-1 (I2): the live G.MoveDefs is deep-frozen once at load; resolve() keeps returning fresh, unfrozen objects for tools. */
 (() => {
   const A = G.MoveAttrs;
   // Cooldown tuning: cd = ANCHOR_CD * (ANCHOR_PP / PP) ^ BETA, for moves with Power above 0 that are not persistent (the data's persistent flag: their pacing is rehit or an emitter's every, not a cooldown).
@@ -82,5 +83,6 @@
   }
 
   G.MoveResolver = { resolve, TUNING };
-  G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);
+  const freeze = o => { if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); for (const k of Object.keys(o)) freeze(o[k]); } return o; };
+  G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));
 })();

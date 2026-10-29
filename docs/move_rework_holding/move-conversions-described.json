@@ -1306,12 +1306,7 @@
         "targeting": "none",
         "motion": "orbits",
         "orbitRadius": 90,
-        "angularSpeed": 3.0,
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "angularSpeed": 3.0
       },
       "hitPolicy": "interval",
       "payload": [
@@ -1407,12 +1402,7 @@
         "targeting": "none",
         "motion": "orbits",
         "orbitRadius": 95,
-        "angularSpeed": 5.0,
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "angularSpeed": 5.0
       },
       "hitPolicy": "interval",
       "payload": [
@@ -1790,12 +1780,7 @@
       "delivery": {
         "anchor": "caster",
         "targeting": "none",
-        "motion": "static",
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "motion": "static"
       },
       "payload": [
         {
@@ -1964,12 +1949,7 @@
       "delivery": {
         "anchor": "caster",
         "targeting": "none",
-        "motion": "static",
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "motion": "static"
       },
       "hitPolicy": "interval",
       "payload": [
@@ -2256,12 +2236,7 @@
       "delivery": {
         "anchor": "caster",
         "targeting": "none",
-        "motion": "static",
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "motion": "static"
       },
       "hitPolicy": "interval",
       "payload": [
@@ -2715,12 +2690,7 @@
       "delivery": {
         "anchor": "caster",
         "targeting": "none",
-        "motion": "static",
-        "endOn": [
-          {
-            "notActive": true
-          }
-        ]
+        "motion": "static"
       },
       "payload": [
         {

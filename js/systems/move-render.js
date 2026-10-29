@@ -13,6 +13,9 @@
  *                    Slice 4b: a dev line over the player (HP, shield value and time left, team stages, commitment timers).
  *   Slice 4b, always drawn: a short zigzag bolt from the previous enemy to each chain hop ('move:hit' with hop > 0), and a ring
  *   around the active Pokemon while its shield (Substitute) lives, brighter when fuller.
+ *   Slice 4c-1: orbiting shapes are drawn with the legacy 0.7 vertical squash around the owner (presentation only, combat-architecture:H15;
+ *   the sim and the overlay keep the true circle), a standing persistent patch (Night Shade) is drawn lighter, and the dev line over
+ *   the player lists its live persistent groups and whether it counts as stunned.
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
  *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes and the chain bolts.
  */
@@ -21,6 +24,8 @@ G.MoveRender = (() => {
   let flashes = [], bolts = [];
   const R = { overlay: false };
 
+  const SQUASH = 0.7;     // H15: orbit squash is drawing only
+  const squash = (inst, s) => { const o = inst.cast.owner; return Object.assign({}, s, { y: o.y + (s.y - o.y) * SQUASH }); };
   const colOf = inst => (G.U.TYPE_COLOR && G.U.TYPE_COLOR[inst.spec.type]) || '#ffffff';
   const lifeOf = inst => { const c = (inst.spec.delivery.endOn || []).find(c => c.time != null); return c ? c.time : null; };
   /** 0..1 fade: quick in, and out over the last 0.15 s of a timed shape. */
@@ -52,10 +57,11 @@ G.MoveRender = (() => {
       if (!s || inst.spec.delivery.motion !== 'static' || !G.Camera.sees(s.x, s.y, (s.len || s.r) + 60)) continue;
       const a = fadeOf(inst), col = colOf(inst);
       ctx.save();
-      ctx.fillStyle = col; ctx.globalAlpha = 0.24 * a;
+      const soft = inst.spec.persistent ? 0.33 : 1;     // slice 4c-1: a standing patch (Night Shade, 240 px across) stays light so the player reads through it
+      ctx.fillStyle = col; ctx.globalAlpha = 0.24 * a * soft;
       trace(ctx, s); ctx.fill();
       if (s.family !== 'linear') {     // the patch recipe's inner ring
-        ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.45 * a;
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.45 * a * Math.max(soft, 0.6);
         ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 0.8, s.family === 'arc' ? s.heading - s.arc / 2 : 0, s.family === 'arc' ? s.heading + s.arc / 2 : TAU); ctx.stroke();
       }
       ctx.restore();
@@ -70,11 +76,12 @@ G.MoveRender = (() => {
       const col = colOf(inst), a = fadeOf(inst);
       ctx.save();
       if (inst.spec.delivery.motion !== 'static' && s.family === 'point') {     // a travelling ball: glow, body, white core
+        const v = inst.spec.delivery.motion === 'orbits' ? squash(inst, s) : s;     // 4c-1: an orbit is drawn squashed, its hitbox is not
         const pulse = 1 + Math.sin(now * 20 + inst.id) * 0.08;
         ctx.fillStyle = col;
-        ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 1.7 * pulse, 0, TAU); ctx.fill();
-        ctx.globalAlpha = 0.95 * a; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.8 * a; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 0.45, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 1.7 * pulse, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 0.95 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.8 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 0.45, 0, TAU); ctx.fill();
       } else {
         ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.85 * a;
         trace(ctx, s); ctx.stroke();
@@ -150,6 +157,8 @@ G.MoveRender = (() => {
       const sh = pl.shield, parts = ['HP ' + Math.round(pl.hp) + '/' + Math.round(pl.maxHp)];
       if (sh) parts.push('shield ' + Math.round(sh.v) + '/' + Math.round(sh.max) + ' ' + sh.t.toFixed(1) + 's');
       parts.push(...G.Stages.list(pl).map(s => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
+      for (const g of G.MoveSim.persisted(pl)) parts.push(g.moveId + ' x' + g.shapes);     // 4c-1: live persistent groups (R7)
+      if (G.Status.stunned(pl)) parts.push('stunned');
       for (const c of G.MoveSim.commits(pl)) parts.push(c.moveId + ' ' + (c.part === 'cooldown' ? 'freeze' : c.type) + (c.until === 'time' ? ' ' + c.left.toFixed(1) + 's' : ' (' + c.until + ')'));
       ctx.fillStyle = '#9fe8ff';
       ctx.fillText(parts.join(' | '), pl.x, pl.y - (pl.bodyH || 30) - 26);

@@ -330,11 +330,15 @@ G.Debug = (() => {
    *                       dummies, so they reach you and the shield gets hit. The overlay prints your HP, shield and team stages.
    *  newcombat('specials')   Dragon Rage, Hex, Thunderbolt and Flamethrower. Slow awake dummies (20 px/s): a line of 6, 100 px
    *                       apart, in front of you for the Thunderbolt chain, plus 2 each burned, poisoned, paralyzed and asleep at
-   *                       200 px for Hex. The overlay also prints your commitment timers (Flamethrower's slow and freeze). */
+   *                       200 px for Hex. The overlay also prints your commitment timers (Flamethrower's slow and freeze).
+ *  newcombat('persist')   slice 4c-1: Fire Spin, Leaf Storm and Night Shade, one per slot, with two rings of 8 slow awake dummies
+ *                       (20 px/s) at 90 and 150 px. Cycle slots or swap Pokemon to check R7: the move you leave ends at once and
+ *                       the new one spins up fresh. The overlay prints your live persistent groups and Leaf Storm's Sp. Atk -2. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
-    specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'] };
+    specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'],
+    persist: ['fire-spin', 'leaf-storm', 'night-shade'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -373,6 +377,17 @@ G.Debug = (() => {
       const ails = ['burn', 'poison', 'paralysis', 'sleep', 'burn', 'poison', 'paralysis', 'sleep'];
       ails.forEach((k, i) => { const b = a + Math.PI / 2 + i * Math.PI / 8; put(pl.x + Math.cos(b) * 200, pl.y + Math.sin(b) * 200, k); });
       console.log('[Debug] new combat test (specials): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies (a line of 6 ahead, 8 with ailments). G.Debug.hitbox() toggles the overlay.');
+      return n;
+    }
+    if (set === 'persist') {     // slice 4c-1: two rings of slow awake dummies, on and just outside the orbits
+      for (const d of [90, 150]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 150 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (persist): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.');
       return n;
     }
     for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {

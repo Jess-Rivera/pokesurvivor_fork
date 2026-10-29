@@ -23,6 +23,7 @@ global.G = {}; global.window = global;
 for (const f of ['js/core/util.js', 'js/core/stats.js', 'js/data/types.js', 'js/systems/stages.js', 'js/systems/status.js', 'js/core/simbus.js',
   'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
   'js/data/move-resolver.js']) load(R + '/' + f);
+G.MoveDefs = Object.assign({}, G.MoveDefs);     // slice 4c-1: the live defs are deep-frozen (I2); synthetic moves go in a copy of the container, the real defs stay frozen
 G.FX = new Proxy({}, { get: () => () => {} });
 G.DEX_BY = { 7: { stats: [44, 48, 65, 50, 64, 43] } };       // Squirtle: Def 65, SpD 64
 let weather = {}, wallX = Infinity, enemies = [], props = [], clock = 0;

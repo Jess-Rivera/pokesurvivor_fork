@@ -10,6 +10,9 @@
  * Slice 3d: destructible props share the collision sweep (solid ones spend pierce, grass never does), and a routing filter.
  * Slice 4b: cast-time effects through G.MoveEffects.applyCast (self-casts, recoil, shield, setWeather), the cast waits while
  * G.MoveEffects.canCast says no (P3), caster-state commitments (S13) and sequential chain hops (D15, S7, S9, S15).
+ * Slice 4c-1: persistent upkeep (R7, combat-architecture:H25). The slot owns a persistent move's life: it spawns while the slot is
+ * active, ends on leaving the active group or a stun (notActive) or a faint (ownerDeath), and spawns again after a group ends by its
+ * own endOn. Orbits ride a true circle around the owner (D25, H15) with the orbit radius through the lens (D36).
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
@@ -87,6 +90,7 @@ G.MoveSim = (() => {
     const inst = { id: ++serial, spec, cast, fan: i, x: at.x, y: at.y, prevX: at.x, prevY: at.y, bx: at.x, by: at.y,
       heading, age: 0, dist: 0, steer: cast.target, retargeted: false, struck: 0,
       pierce: spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null };
+    if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }     // start on the ring, so the first sweep does not cross the circle
     insts.push(inst);     // roots act in their cast frame (S9); children (slice 4d) will be deferred to the end of the step (R6)
     return inst;
   }
@@ -155,8 +159,40 @@ G.MoveSim = (() => {
   }
   const frozen = (o, id) => cms.some(m => m.o === o && m.part === 'cooldown' && (!m.ids || m.ids.has(id)));
 
+  // ---- persistent upkeep (slice 4c-1, R7, combat-architecture:H25): the slot, not endOn, owns a persistent move's life ----
+  // A routed persistent slot keeps one live group (the count shapes of one spawn) while it is in the active group and the owner is
+  // not stunned. Leaving the active group or a stun ends the group (reason notActive), a faint ends it (ownerDeath), and a group that
+  // ended by its own endOn (a pulse's time, pierce) is spawned again on the next tick. No cooldown, no fizzle roll, fresh hit records.
+  const groupOf = (o, slot) => insts.filter(i => i.cast.persist && i.cast.owner === o && i.cast.slot === slot);
+  function endGroup(list, reason) {
+    if (!list.length) return;
+    for (const i of list) { i.done = reason; G.SimBus.emit('move:end', { moveId: i.spec.id, instId: i.id, reason, x: i.x, y: i.y }); }
+    insts = insts.filter(i => !list.includes(i));
+  }
+  function spawnPersistent(o, slot, def, now) {
+    const pick = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
+    if (!pick || !G.MoveEffects.canCast(def, o)) return null;     // the gate holds; the upkeep tries again next tick
+    const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, serial: ++castSerial, persist: true };
+    const self = G.MoveEffects.applyCast(def, cast, rng), roots = [], n = Math.max(1, def.space.count || 1);
+    for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
+    commit(o, slot, def, roots, self.shield);
+    G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
+    return cast;
+  }
+  function upkeepPersistent(o, now) {
+    const act = o.activeGroup(), stunned = G.Status.stunned(o);
+    for (const g of o.slots) for (const slot of g) {
+      const def = G.MoveDefs[slot.id];
+      if (!def || !def.persistent || !def.space || !routed(slot.id)) continue;     // a shapeless persistent emitter (Toxic, Flame Wheel) arrives with slice 4d
+      const mine = groupOf(o, slot);
+      if (o.dead) endGroup(mine, 'ownerDeath');
+      else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');
+      else if (!mine.length) spawnPersistent(o, slot, def, now);
+    }
+  }
+
   function tick(dt, o, now) {
-    if (o.dead) endOwner(o);                                          // a faint ends the caster's commitments, heal over time and shield
+    if (o.dead) { upkeepPersistent(o, now); endOwner(o); }     // a faint ends its persistent groups, then the caster's commitments, heal over time and shield
     else {
       upkeepCommits(dt, o);
       G.MoveEffects.upkeep(dt, o);
@@ -166,7 +202,7 @@ G.MoveSim = (() => {
       const hold = cms.length ? new Set(act.filter(sl => frozen(o, sl.id))) : null;
       for (const slot of act) {
         const def = G.MoveDefs[slot.id];
-        if (!def || !routed(slot.id) || def.persistent || def.cd == null) continue;       // persistent upkeep arrives with orbits (slice 4c)
+        if (!def || !routed(slot.id) || def.persistent || def.cd == null) continue;       // persistent slots belong to upkeepPersistent (slice 4c-1)
         if (hold && hold.has(slot)) continue;
         slot.t -= dt;
         if (slot.t <= EPS) castSlot(o, slot, def, now);
@@ -176,6 +212,7 @@ G.MoveSim = (() => {
         if (!def || !routed(slot.id) || def.persistent || def.cd == null || frozen(o, slot.id)) continue;
         if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);
       }
+      upkeepPersistent(o, now);     // slice 4c-1 (R7): after the casts, so a new group acts this frame like any root
     }
     step(dt, now);
   }
@@ -216,6 +253,11 @@ G.MoveSim = (() => {
       if (p.oscillate) off = p.oscillate.amplitude * Math.sin(TAU * p.oscillate.frequency * inst.age);
       inst.x = inst.bx - Math.sin(inst.heading) * off;
       inst.y = inst.by + Math.cos(inst.heading) * off;
+    },
+    orbits(inst) {     // D25 (slice 4c-1): shape i at angularSpeed x age + 2 pi i / count, orbitRadius x lens (D36) from the owner (R8), a true circle (H15)
+      const d = inst.spec.delivery, o = inst.cast.owner, n = Math.max(1, inst.spec.space.count || 1), r = d.orbitRadius * lensOf(o);
+      const a = d.angularSpeed * inst.age + (TAU * inst.fan) / n;
+      inst.x = o.x + Math.cos(a) * r; inst.y = o.y + Math.sin(a) * r; inst.heading = wrap(a + Math.PI / 2);
     }
   };
 
@@ -342,6 +384,8 @@ G.MoveSim = (() => {
     setView: v => { view = v || null; },
     setFilter: fn => { routed = fn || (() => true); },     // slice 3d: the game passes its routed-id check; a rejected slot is never touched
     list: () => insts,
+    persisted: o => [...new Set(insts.filter(i => i.cast.persist && (!o || i.cast.owner === o)).map(i => i.cast))]     // dev overlay and harness (plain data)
+      .map(c => ({ moveId: c.moveId, shapes: insts.filter(i => i.cast === c).length })),
     commits: o => cms.filter(m => !o || m.o === o).map(m => ({ moveId: m.def.id, part: m.part, type: m.type, left: m.left,
       until: m.insts ? 'instance' : m.shield ? 'effect' : 'time' }))     // dev overlay and harness (plain data)
   };

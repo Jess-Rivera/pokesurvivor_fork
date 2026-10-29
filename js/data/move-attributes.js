@@ -113,7 +113,9 @@
     knockback: obj({ distance: num({ min: 0, d: 0 }), direction: en(['travel']) }, ['distance']),
     ailment: obj({ id: en(AILMENTS), chance: pct, side: SIDE, duration: SECS }, ['id', 'chance', 'side']),
     stat: obj({ stat: en(STATS), stages: int({ min: -6, max: 6 }), side: SIDE, scope: en(['caster', 'individual', 'team']),
-      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 1 }) }, ['stat', 'stages', 'side', 'scope']),   // duration (s) defaults to 6; maxStacks defaults to 1, self-side only (the resolver skips it on foe-side effects, combat-architecture:H24)
+      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 1 }) }, ['stat', 'stages', 'side', 'scope'], { rules: [
+        { id: 'foe-not-team', when: { eq: ['side', 'foe'] }, then: { not: { eq: ['scope', 'team'] } }, msg: 'a team scope is a player-side concept; a foe stat effect uses individual (combat-validation-and-handoff:2.4 rule 9)' },
+      ] }),   // duration (s) defaults to 6; maxStacks defaults to 1, self-side only (the resolver skips it on foe-side effects, combat-architecture:H24)
     heal: obj({ amount: HEAL_AMOUNT, per: SECS, side: SIDE, duration: SECS }, ['amount', 'side']),
     shield: obj({ amount: { t: 'formula' }, max: { t: 'formula' }, regen: { t: 'formula' }, duration: SECS,
       absorbsAll: 'bool', overflow: 'bool', blocksStatus: 'bool' }, ['amount', 'duration']),
@@ -124,6 +126,7 @@
       trigger: en(['cast', 'casterMove', 'termination', 'enemyHit', 'interval']), endOn: list(ENDON, { min: 1 }) },
       ['move', 'trigger'], { rules: [
         { id: 'interval-needs-every', when: { eq: ['trigger', 'interval'] }, then: { has: 'every' }, msg: 'an interval emitter needs every' },
+        { id: 'one-shot-emit-count', when: { in: ['trigger', ['termination', 'enemyHit']] }, then: { not: { gt: ['count', 1] } }, msg: 'termination and enemyHit fire once per event; use the child space.count for several shapes per emission (combat-validation-and-handoff:2.4 rule 7)' },
       ] }),
     special: HANDLERS,
   } };
@@ -151,6 +154,14 @@
     { id: 'pick-needs-location', when: { has: 'delivery.locationPick' }, then: { eq: ['delivery.targeting', 'location'] }, msg: 'locationPick needs targeting location' },
     { id: 'trigger-needs-end', when: { has: 'delivery.trigger' }, then: { has: 'delivery.endOn' }, msg: 'a triggered instance needs an endOn condition so it cannot outlive its move (a timeout is optional: Spikes lasts until triggered)' },
     { id: 'self-has-no-shape', when: { eq: ['delivery.anchor', 'self'] }, then: { not: { has: 'space' } }, msg: 'anchor self is a shapeless cast and rejects space' },
+    // slice 4c-1: the persistent lifecycle (combat-architecture:H25) and the combination rules of combat-validation-and-handoff:2.4
+    { id: 'self-has-no-end', when: { eq: ['delivery.anchor', 'self'] }, then: { not: { has: 'delivery.endOn' } }, msg: 'anchor self has no instance to end; its effects carry their own duration, so it rejects endOn' },
+    { id: 'needs-end', when: [{ not: { eq: ['persistent', true] } }, { not: { eq: ['delivery.anchor', 'self'] } }], then: { has: 'delivery.endOn' }, msg: 'a move that is not persistent (and every emitted child) needs an endOn so its instance ends; a persistent move ends with its slot' },
+    { id: 'persistent-no-cd', when: { eq: ['persistent', true] }, then: { not: { has: 'cd' } }, msg: 'a persistent move has no cooldown: its slot keeps it alive' },
+    { id: 'persistent-no-notactive', when: { eq: ['persistent', true] }, then: { not: { has: 'delivery.endOn.notActive' } }, msg: 'persistent already ends the move when its slot stops being active; endOn on a persistent move lists only instance ends, each followed by a respawn' },
+    { id: 'steer-needs-target', when: { any: [{ has: 'delivery.turnRate' }, { has: 'delivery.aimTrack' }] }, then: { not: { in: ['delivery.targeting', ['direction', 'none']] } }, msg: 'turnRate or aimTrack needs a target to steer toward (rule 4)' },
+    { id: 'contact-not-instant', when: { eq: ['delivery.trigger', 'contact'] }, then: { not: { eq: ['delivery.endOn.time', 0] } }, msg: 'a contact trigger with endOn time 0 can never be touched (rule 5)' },
+    { id: 'arc-grow-room', when: { eq: ['delivery.grow.dim', 'radArc'] }, then: { not: { gt: ['space.radArc', 6.283] } }, msg: 'growing radArc on a shape already at 2 pi does nothing (rule 8)' },
     { id: 'freeze-default-needs-time', when: [{ has: 'casterState.commitment.cooldown' }, { not: { has: 'casterState.commitment.cooldown.t' } }], then: { has: 'delivery.endOn.time' }, msg: 'a cooldown freeze with no t lasts the endOn time, so the move needs one' },
     { id: 'movement-default-needs-time', when: [{ has: 'casterState.commitment.movement' }, { not: { has: 'casterState.commitment.movement.t' } }], then: { has: 'delivery.endOn.time' }, msg: 'a movement commitment with no t lasts the endOn time, so the move needs one' },
     { id: 'freeze-effect-needs-shield', when: { eq: ['casterState.commitment.cooldown.t', 'untilEffectEnd'] }, then: { eq: ['payload.t', 'shield'] }, msg: 'untilEffectEnd needs an effect with a lifetime (a shield)' },
@@ -164,7 +175,7 @@
     power: num({ min: 0, nullable: true }), pp: int({ min: 1 }), accuracy: int({ min: 1, max: 100, nullable: true }),
     priority: int({ min: -7, max: 7 }), flavor_text: { t: 'str', empty: true },   // source prose, blank for some moves
     cd: num({ gt: 0 }),   // optional hand override; otherwise derived from pp by the resolver
-    persistent: 'bool',   // true = lasts while the move is the active one: no cd, one live instance per slot (the resolver skips the cd formula). Absent = a cooldown move
+    persistent: 'bool',   // true = the slot owns its life (combat-architecture:H25): no cd, one live group while active, ended by a swap, stun or faint and respawned after an instance end. Absent = a cooldown move
     rehit: SECS, hitPolicy: en(['oncePerInstance', 'interval', 'onReentry'], { d: 'oncePerInstance' }),
     cardLock: list('str'), casterState: CASTER, space: SPACE, delivery: DELIVERY, payload: list({ t: 'ref', n: 'effect' }, { min: 1 }),
   }, ['id', 'name', 'balanceClass', 'type', 'category', 'power', 'pp', 'accuracy', 'priority', 'delivery', 'payload'],

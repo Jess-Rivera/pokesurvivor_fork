@@ -47,7 +47,7 @@ const NOTES = { 'fire-spin': 'intended: lasts while active, pacing is rehit 0.4'
   gust: 'intended: now a cast that emits 3 projectiles, normal cooldown (was an orbit with a 0.26 re-hit)' };
 const rows = Object.keys(D).map(id => {
   const n = defs[id], l = L[id], p = n.power || 0;
-  const active = (D[id].delivery.endOn || []).some(e => e.notActive);
+  const active = !!D[id].persistent;     // slice 4c-1: persistence is the flag (combat-architecture:H25); persistent moves no longer list notActive
   return { id, src: n.cd === undefined ? (n.power > 0 && active ? 'none (lasts while active)' : 'none (no cd set)') : O[id] && 'cd' in O[id] ? 'override' : 'formula', note: NOTES[id] || '', cdNew: n.cd, cdOld: l.cd, pNew: p, pOld: l.dmg,
     cdDiff: n.cd === undefined || Math.abs(n.cd - l.cd) > 1e-9, pDiff: p !== l.dmg };
 });

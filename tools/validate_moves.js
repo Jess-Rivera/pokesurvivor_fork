@@ -114,11 +114,26 @@ function check(spec, v, p, err, ctx) {
   }
 }
 
-function validateMoves(moves) {   // -> { id: [errors] } for the failing ones
+// slice 4c-1: combination rules the condition language cannot express (combat-validation-and-handoff:2.4 rules 3, 6 and 8),
+// for the move and for every inline emitted child. `raw` is false on resolver output, where pierce is always filled by the default.
+function crossChecks(m, err, where, raw) {
+  const d = m.delivery || {}, s = m.space || {}, pay = m.payload || [];
+  const life = (d.endOn || []).filter(c => c.time != null).map(c => c.time);
+  if (m.hitPolicy === 'interval' && m.rehit != null && life.length && Math.min(...life) < m.rehit - 1e-9)
+    err(where, 'interval-life-covers-rehit: the lifetime ' + Math.min(...life) + ' s is shorter than rehit ' + m.rehit + ' s, so it can never re-hit (rule 6)');
+  if (d.grow && d.grow.max != null) { const dim = d.grow.dim || 'radRadius', start = s[dim];
+    if (start != null && d.grow.max < start) err(where, 'grow-max-above-start: grow.max ' + d.grow.max + ' is below the start ' + dim + ' ' + start + ' (rule 8)'); }
+  if (raw && 'pierce' in s && pay.length && pay.every(e => e && e.t === 'emit'))
+    err(where, 'pierce-needs-hitbox: pierce on an emitter parent whose payload is only emit, so nothing spends it (rule 3)');
+  pay.forEach((e, i) => { if (e && e.t === 'emit' && isObj(e.move)) crossChecks(e.move, err, (where ? where + '.' : '') + 'payload[' + i + '].move', raw); });
+}
+
+function validateMoves(moves, raw = !RESOLVED) {   // -> { id: [errors] } for the failing ones
   const bad = {}, ids = Object.keys(moves), edges = {};
   for (const id of ids) {
     const errs = [], err = (p, m) => errs.push((p || '(move)') + ': ' + m);
     check(A.MOVE, moves[id], '', err, {});
+    crossChecks(moves[id], err, '', raw);
     if (moves[id].id !== id) err('id', 'does not match its key "' + id + '"');
     edges[id] = (moves[id].payload || []).filter(e => e && e.t === 'emit' && typeof e.move === 'string').map(e => e.move);
     for (const to of edges[id]) if (!moves[to]) err('payload', 'emit refers to unknown move "' + to + '"');
@@ -172,14 +187,29 @@ function selfTest() {
     ['untilEffectEnd needs a shield', m => (m.casterState = { commitment: { cooldown: { type: 'freeze', t: 'untilEffectEnd' } } }, m), 'freeze-effect-needs-shield'],
     ['untilEffectEnd beside a shield passes', () => { const m = sub(); m.casterState = { commitment: { cooldown: { type: 'freeze', id: 'x', t: 'untilEffectEnd' } } }; return m; }, null],
     ['old chain field name rejected', m => (m.payload.push({ t: 'special', handler: 'chainDamageFalloff', chainDamageFraction: 0.33 }), m), 'chainDamageFraction: unknown field'],
+    // slice 4c-1: the persistent lifecycle (combat-architecture:H25) and the combat-validation-and-handoff:2.4 rules
+    ['persistent with no endOn passes (an aura)', m => (m.persistent = true, delete m.delivery.endOn, m), null],
+    ['persistent with an endOn time passes (a pulse)', m => (m.persistent = true, m.delivery.endOn = [{ time: 2 }], m), null],
+    ['persistent with a cd', m => (m.persistent = true, delete m.delivery.endOn, m.cd = 1, m), 'persistent-no-cd'],
+    ['persistent listing notActive', m => (m.persistent = true, m.delivery.endOn = [{ notActive: true }], m), 'persistent-no-notactive'],
+    ['not persistent and no endOn', m => (delete m.delivery.endOn, m), 'needs-end'],
+    ['self-cast with an endOn', () => { const m = sub(); m.delivery.endOn = [{ time: 8 }]; return m; }, 'self-has-no-end'],
+    ['steering with nothing to steer toward', m => (m.delivery.aimTrack = 1, m.delivery.targeting = 'none', m), 'steer-needs-target'],
+    ['contact trigger with endOn time 0', m => (m.delivery.trigger = 'contact', m.delivery.endOn = [{ time: 0 }], m), 'contact-not-instant'],
+    ['interval lifetime shorter than rehit', m => (m.hitPolicy = 'interval', m.rehit = 0.5, m), 'interval-life-covers-rehit'],
+    ['grow.max below the start size', m => (m.delivery.grow = { growSpeed: 100, max: 10 }, m), 'grow-max-above-start'],
+    ['radArc grow on a full circle', m => (m.space.radArc = 6.2832, m.delivery.grow = { growSpeed: 1, dim: 'radArc' }, m), 'arc-grow-room'],
+    ['one-shot emit with a count', m => (m.payload.push({ t: 'emit', move: 'x', trigger: 'enemyHit', count: 3 }), m), 'one-shot-emit-count'],
+    ['foe stat with team scope', m => (m.payload.push({ t: 'stat', stat: 'atk', stages: -1, side: 'foe', scope: 'team' }), m), 'foe-not-team'],
+    ['pierce on an emit-only parent', m => (m.payload = [{ t: 'emit', move: 'x', trigger: 'cast' }], m.space.pierce = 0, m), 'pierce-needs-hitbox'],
   ];
   let fails = 0;
   for (const [name, mut, expect] of cases) {
-    const bad = validateMoves({ x: mut(base()) }), msgs = (bad.x || []).concat(bad['(emit graph)'] || []);
+    const bad = validateMoves({ x: mut(base()) }, true), msgs = (bad.x || []).concat(bad['(emit graph)'] || []);
     const ok = expect === null ? msgs.length === 0 : msgs.some(m => m.includes(expect));
     if (!ok) { fails++; console.log('SELFTEST FAIL: ' + name + ' (expected ' + (expect || 'no errors') + ', got ' + (msgs.join(' | ') || 'no errors') + ')'); }
   }
-  const cyc = validateMoves({ a: { ...base(), id: 'a', payload: [{ t: 'emit', move: 'b', trigger: 'cast' }] }, b: { ...base(), id: 'b', payload: [{ t: 'emit', move: 'a', trigger: 'cast' }] } });
+  const cyc = validateMoves({ a: { ...base(), id: 'a', payload: [{ t: 'emit', move: 'b', trigger: 'cast' }] }, b: { ...base(), id: 'b', payload: [{ t: 'emit', move: 'a', trigger: 'cast' }] } }, true);
   if (!cyc['(emit graph)']) { fails++; console.log('SELFTEST FAIL: emit cycle between two moves was not caught'); }
   console.log('self-test: ' + (cases.length + 1 - fails) + '/' + (cases.length + 1) + ' passed');
   return fails;
@@ -203,6 +233,11 @@ const bucketText = b => Object.entries(b).map(([axis, g]) => '## ' + axis + '\n\
 // ---------- run ----------
 let failed = selfTest();
 const bad = validateMoves(DATA), total = Object.keys(DATA).length;
+if (RESOLVED) for (const [id, m] of Object.entries(DATA)) {   // slice 4c-1: rules that need resolver output (combat-validation-and-handoff:2.4 rules 2 and 10)
+  const add = msg => (bad[id] = bad[id] || []).push(msg);
+  if (!m.persistent && m.cd == null) add('(move): resolved-needs-cd: a move that is not persistent has no cd after resolution (rule 2; set it in js/data/move-overrides.js)');
+  if (m.delivery && m.delivery.motion === 'returns' && m.delivery.range == null) add('delivery: resolved-returns-range: returns needs a turnaround range after resolution (rule 10)');
+}
 for (const [id, errs] of Object.entries(bad)) for (const e of errs) console.log('INVALID ' + id + ' > ' + e);
 console.log((RESOLVED ? 'resolved ' : '') + 'moves: ' + (total - Object.keys(bad).length) + '/' + total + ' valid');
 const cov = bucketText(coverage(DATA));
