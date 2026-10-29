@@ -36,6 +36,11 @@
       "expect": { "hits": [1, 1, 0], "enemyStage": { "0": { "spe": -1 } } },
       "note": "6 projectiles evenly around the circle from the aim (0, 60, ... 300 degrees): 0 and 180 hit, 90 falls between two; foe Speed -1 (schema spd is stages spe, D31)" },
 
+    { "id": "mud-shot-stack", "move": "mud-shot", "source": "data", "secs": 3, "owner": { "cdMul": 0.1 },
+      "enemies": [[100, 0]],
+      "expect": { "hitsMin": [7], "enemyStage": { "0": { "spe": -6 } } },
+      "note": "slice 4c-0 (D-FOECAP): an uncapped foe drop stacks to the -6 ladder. cd 1.167 x 0.1 casts every 0.117 s, so far more than 6 hits land inside one 6 s duration; the stage reads -6, never past" },
+
     { "id": "flamethrower-interval", "move": "flamethrower", "source": "data", "secs": 1.1,
       "enemies": [[100, 0]],
       "expect": { "hits": [5] },

@@ -78,19 +78,32 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   ok(worst === 3, 'Q4: two stages plus a maxStacks 1 move every 3 s never exceeds 3 (worst ' + worst + ')');
   const m = mk(); hitWith('mud-shot', m); for (let i = 0; i < 119; i++) S.tick(m, 0.05); ok(S.stage(m, 'spe') === -1, 'default 6 s: still on at 5.95 s');
   S.tick(m, 0.1); ok(S.stage(m, 'spe') === 0, 'default 6 s: gone after 6 s');
-  const c = mk(); for (let i = 0; i < 9; i++) hitWith('mud-shot', c); ok(c.stg.spe.length === 6 && S.stage(c, 'spe') === -6, 'default maxStacks 6: 6 live applications after 9 hits');
+  const c = mk(); for (let i = 0; i < 9; i++) hitWith('mud-shot', c); ok(c.stg.spe.length === 6 && S.stage(c, 'spe') === -6, 'uncapped foe drop (D-FOECAP): 6 live applications and -6 after 9 hits');
   const o = mk(), two = syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 2 }]);
   hitWith(two, o); S.tick(o, 1); hitWith(two, o); S.tick(o, 1); hitWith(two, o);
   ok(o.stg.def.length === 2 && near(o.stg.def[0].t, 5) && near(o.stg.def[1].t, 6), 'a capped application drops the OLDEST: ' + o.stg.def.map(a => a.t.toFixed(2)));
   const team = {}, A = mkO([], { stgTeam: team }), B = { stgTeam: team, stg: null };
   for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), A, () => 0);
-  ok(S.teamSum(team, 'atk') === 2 && S.stage(B, 'atk') === 2, 'Metal Claw cap 2 on the team store, seen by the roster: ' + S.teamSum(team, 'atk'));
+  ok(S.teamSum(team, 'atk') === 1 && S.stage(B, 'atk') === 1, 'Metal Claw cap 1 (Q14, slice 4c-0) on the team store, seen by the roster: ' + S.teamSum(team, 'atk'));
   const ls = mkO(); for (let i = 0; i < 100; i++) hitWith('leaf-storm', mk(), ls); ok(S.stage(ls, 'spa') === -2 && ls.stg.spa.length === 1, 'Leaf Storm cap 1 holds -2 after 100');
   const mm = mkO(); for (let i = 0; i < 50; i++) { hitWith('metal-claw', mk(), mm, () => 0); hitWith('meteor-mash', mk(), mm, () => 0); }
-  ok(S.teamSum(mm.stgTeam, 'atk') === 4, 'caps are per move and add: Metal Claw 2 + Meteor Mash 2 = 4');
+  ok(S.teamSum(mm.stgTeam, 'atk') === 2, 'caps are per move and add: Metal Claw 1 + Meteor Mash 1 = 2');
   texts.length = 0; const q = mk(), one = syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 1 }]);
   hitWith(one, q); hitWith(one, q); hitWith(one, q); ok(texts.filter(t => /Defense/.test(t)).length === 1, 'no stage text when the stage did not change');
-  console.log('3 D30: Q4 holds at 3, 6 s default, cap 6 default, oldest dropped, Metal Claw 2 team-wide, Leaf Storm -2 held, caps add across moves'); }
+  console.log('3 D30: Q4 holds at 3, 6 s default, uncapped foe drop to -6, oldest dropped, Metal Claw 1 team-wide, Leaf Storm -2 held, caps add across moves'); }
+
+// 3b. slice 4c-0 (D-FOECAP, combat-architecture:H24): maxStacks default 1, filled on self-side effects only
+{ const D = G.MoveDefs, foeCapped = [];
+  for (const [id, d] of Object.entries(D)) for (const fx of (d.payload || [])) if (fx.t === 'stat' && fx.side === 'foe' && fx.maxStacks != null) foeCapped.push(id);
+  ok(foeCapped.sort().join() === 'bug-buzz,ice-beam', 'only Ice Beam and Bug Buzz keep a foe cap after resolve: ' + foeCapped.join());
+  ok(Object.values(D).every(d => (d.payload || []).every(fx => fx.t !== 'stat' || fx.side !== 'self' || fx.maxStacks === 1)), 'every self-side stat effect resolves to maxStacks 1');
+  const r = G.MoveResolver.resolve({ s: { ...D.tackle, id: 's', payload: [{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual' }, { t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual' }] } }, {}, G.MoveHandlers).s;
+  ok(r.payload[0].maxStacks === 1 && !('maxStacks' in r.payload[1]), 'an unauthored self raise gets 1, an unauthored foe drop gets none');
+  const o = mkO(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual', duration: 6, maxStacks: 1 }]);
+  for (let i = 0; i < 50; i++) hitWith(up, mk(), o); ok(S.stage(o, 'atk') === 1 && o.stg.atk.length === 1, 'a self raise at maxStacks 1 holds one live application after 50 hits');
+  const ib = mk(); for (let i = 0; i < 9; i++) hitWith('ice-beam', ib); ok(S.stage(ib, 'spe') === -1, 'Ice Beam (authored foe cap 1) holds at -1 after 9 hits');
+  const st = mk(); for (let i = 0; i < 2; i++) hitWith('string-shot', st); ok(S.stage(st, 'spe') === -4, 'String Shot two strands reach -4 (MOVE-INTENT string-shot)');
+  console.log('3b 4c-0: foe caps only on Ice Beam and Bug Buzz, self default 1, uncapped foe drops stack, Ice Beam -1, String Shot -4'); }
 
 // 4. trap: the root on every movement phase, strong hosts, ghosts, the player
 { const root = e => { e.stTrap = null; return St.apply(e, 'trap'); };

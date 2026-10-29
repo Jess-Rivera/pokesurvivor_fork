@@ -127,11 +127,10 @@ An ordered list of effect records. Payload effects are decoupled from geometry, 
 ### maxStacks field rule
 
 - [Approved] `maxStacks` on a `stat` effect defaults to 1 for every move, including Metal Claw and Meteor Mash. (Q14)
-- [Approved] The resolver fills that default on self-side `stat` effects only. A foe-side effect has no `maxStacks` unless one is authored, and an authored foe cap is a per-move exception that needs a MOVE-INTENT ruling (today Ice Beam and Bug Buzz). Without one a foe drop stacks freely to the -6 ladder. (Jess, 2026-10-29, D-FOECAP) Code differs, see TODO: slice 4c-0.
+- [Approved] The resolver fills that default on self-side `stat` effects only. A foe-side effect has no `maxStacks` unless one is authored, and an authored foe cap is a per-move exception that needs a MOVE-INTENT ruling (today Ice Beam and Bug Buzz). Without one a foe drop stacks freely to the -6 ladder. (Jess, 2026-10-29, D-FOECAP) Built in slice 4c-0.
 - [Approved] It is meaningful only on self-target stage riders. A foe debuff has no per-move cap and stacks up to the -6 ladder limit. (Q16; A.3-2) A move named in docs/MOVE-INTENT.md may override this (Ice Beam and Bug Buzz cap their foe debuff at 1; Dragon Dance has a floor of 1).
 - The stage rules (the +-6 ladder, the upgrade formula, the duration-not-shorter-than-cooldown invariant) live in docs/COMBAT-RULES.md, "Stat stages and maxStacks".
 - This overrides the earlier default of 6 (this file, `stat` row, before 2026-10-28) and review section 9.1 Q4.
-- Code gap: js/data/move-attributes.js defaults `maxStacks` to 6; Metal Claw and Meteor Mash are authored at 2. (Ice Beam and Bug Buzz author `maxStacks` 1 on a foe debuff; that is a per-move rule in MOVE-INTENT, not a gap.) The rules above are the intended behavior; the data and code change in a later slice (approved plan section E, QA-11).
 
 ### Shapeless state-change moves
 

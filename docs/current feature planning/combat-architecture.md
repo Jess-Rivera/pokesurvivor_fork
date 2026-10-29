@@ -136,7 +136,7 @@ Timing and determinism: sim functions take (dt, now, rng). Harnesses step with a
 | projectile.js homing via G.U.damp | DO NOT REUSE for turnRate | DECIDED move-consistency-review:CP1-Q13: turnRate is rad/s (clamped turn), legacy homing is an exponential damp |
 | projectile.js boomerang (resets `hits` at turnaround) | REUSE THE RULE | it is exactly the leg reset proposed for move-consistency-review:CP1-Q2 |
 | procAilments / procFlinch roll gap (0.5 s) | DROP for the new path | DECIDED move-consistency-review:CP1-Q14: every eligible hit rolls; the rehit time is the throttle |
-| G.Stages.add / teamAdd / mul / ladder | KEEP, add a per-move live-application cap for self-buffs only; foe debuffs have no per-move cap, only the +-6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Code differs, see TODO: slice 4c-0 | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists; scope per DECISIONS:Q16 |
+| G.Stages.add / teamAdd / mul / ladder | KEEP, add a per-move live-application cap for self-buffs only; foe debuffs have no per-move cap, only the +-6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Built in slice 4c-0 | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists; scope per DECISIONS:Q16 |
 | G.Stats.attackFactor / applyDamage | KEEP, call with a two-field adapter (category, power) | it reads `move.dmg`, `move.cat`, `move.norm`; the new path passes { cat, dmg } and no norm |
 | drainHeal, Big Root, onDealt, dmgDealt, itemDmgMul, typeKFor (Power Stone), isCrit | KEEP | existing item and stat layers must keep working |
 | Prop damage (rocks, chests, grass) | KEEP behavior | every legacy kind damages props in its area; the new path does the same via propsInCircle |
@@ -376,7 +376,7 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 | H21 | Caster-state commitment (S13, S14): built. Field grammar: MOVE-AXIS-SCHEMA "Caster state". | [Approved] | 9.9 S13, S14 |
 | H22 | Per-leg pierce: on a `returns` move the back leg starts with a fresh pierce budget as well as fresh hit eligibility, so pierce spent on the out leg does not disarm the back leg. Amends R2 and D16. Code differs, see TODO: slice 4c-2. | [Approved] | DECISIONS 2026-10-27, Slice 4c-2 planning |
 | H23 | Location pick: `location` targeting picks its point with the seeded sim rng passed to sim functions (section B, timing and determinism), never an unseeded random source, so harnesses replay exactly. Applies to R9 and selectTarget. Code differs, see TODO: slice 4c-3. | [Approved] | DECISIONS 2026-10-27, Slice 4c-3 planning |
-| H24 | maxStacks default: the resolver fills the `maxStacks` grammar default on self-side `stat` effects only. A foe-side effect keeps only an authored value (a MOVE-INTENT per-move exception), so an uncapped foe drop passes no cap and stacks to the -6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Code differs, see TODO: slice 4c-0. | [Approved] | DECISIONS 2026-10-29, D-FOECAP |
+| H24 | maxStacks default: the resolver fills the `maxStacks` grammar default on self-side `stat` effects only. A foe-side effect keeps only an authored value (a MOVE-INTENT per-move exception), so an uncapped foe drop passes no cap and stacks to the -6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Built in slice 4c-0 (js/data/move-resolver.js skipDefault; js/systems/move-effects.js passes the ladder size as the live limit of an uncapped foe drop). | [Approved] | DECISIONS 2026-10-29, D-FOECAP |
 
 ---
 

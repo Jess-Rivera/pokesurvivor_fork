@@ -86,12 +86,12 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### meteor-mash
 - [Approved] The projectile hits enemy 1. At enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1. Emit `count` 1, child `space.count` 3. (review 9.2 D-3; combat-validation 2.5 scenario 3)
 - [Approved] Its Attack raise is scope `team`, matching Metal Claw. APPLIED (commit a68a366). (review 9.1 Q15)
-- [Approved] maxStacks 1 (the default). Code differs, see TODO: authored at 2 (review 9.8 D-2, superseded by Q14).
+- [Approved] maxStacks 1 (the default; authored 1 since slice 4c-0, was 2). (review 9.8 D-2, superseded by Q14)
 - Shards deal full parent power: combat-architecture H13.
 - Ledger: B4-I13
 
 ### metal-claw
-- [Approved] maxStacks 1 (the default). Code differs, see TODO: authored at 2 (review 9.8 D-2, superseded by Q14).
+- [Approved] maxStacks 1 (the default; authored 1 since slice 4c-0, was 2). (review 9.8 D-2, superseded by Q14)
 - Ledger: B4-I14
 
 ### night-shade

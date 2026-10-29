@@ -114,7 +114,9 @@ G.MoveEffects = (() => {
     const o = inst.cast.owner, k = statKey(fx.stat), onFoe = fx.side === 'foe', src = onFoe ? inst.spec.id : srcOf(inst.spec, o);     // S4
     if (onFoe ? !foe(e) : o.dead) return;
     if (!rolls(fx, hop, rng)) return;
-    if (onFoe) G.Stages.add(e, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks);
+    // a foe drop with no authored cap (D-FOECAP, combat-architecture:H24) passes the ladder size as its live limit: six applications reach -6,
+    // and at -6 a new hit replaces the oldest, so a target under fire stays at -6 and the stage text keeps showing the total.
+    if (onFoe) G.Stages.add(e, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks != null ? fx.maxStacks : G.Stages.MAX);
     else if (fx.scope === 'team') { if (o.stgTeam) G.Stages.teamAdd(o.stgTeam, k, fx.stages, fx.duration, src, fx.maxStacks); }
     else G.Stages.add(o, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks);
   }

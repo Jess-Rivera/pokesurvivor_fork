@@ -113,7 +113,7 @@
     knockback: obj({ distance: num({ min: 0, d: 0 }), direction: en(['travel']) }, ['distance']),
     ailment: obj({ id: en(AILMENTS), chance: pct, side: SIDE, duration: SECS }, ['id', 'chance', 'side']),
     stat: obj({ stat: en(STATS), stages: int({ min: -6, max: 6 }), side: SIDE, scope: en(['caster', 'individual', 'team']),
-      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 6 }) }, ['stat', 'stages', 'side', 'scope']),   // duration (s) and maxStacks default to 6
+      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 1 }) }, ['stat', 'stages', 'side', 'scope']),   // duration (s) defaults to 6; maxStacks defaults to 1, self-side only (the resolver skips it on foe-side effects, combat-architecture:H24)
     heal: obj({ amount: HEAL_AMOUNT, per: SECS, side: SIDE, duration: SECS }, ['amount', 'side']),
     shield: obj({ amount: { t: 'formula' }, max: { t: 'formula' }, regen: { t: 'formula' }, duration: SECS,
       absorbsAll: 'bool', overflow: 'bool', blocksStatus: 'bool' }, ['amount', 'duration']),

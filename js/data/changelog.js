@@ -9,6 +9,8 @@ G.CHANGELOG = [
   { d: '2026-10-29', title: ['String Shot cooldown restored', 'String Shot cooldown restored'], chg: [
     ['String Shot on the new move system (dev builds only) now waits 1.1 s between casts, the same as the regular game. It had been firing every 0.5 s by mistake.',
      'String Shot on the new move system (dev builds only) now waits 1.1 s between casts, the same as the regular game. It had been firing every 0.5 s by mistake.'],
+    ['On the new move system (dev builds only), stat drops on enemies now stack all the way to -6 unless a move has its own limit (Ice Beam and Bug Buzz stay at -1), and Metal Claw and Meteor Mash raise Attack by at most +1 each.',
+     'On the new move system (dev builds only), stat drops on enemies now stack all the way to -6 unless a move has its own limit (Ice Beam and Bug Buzz stay at -1), and Metal Claw and Meteor Mash raise Attack by at most +1 each.'],
   ] },
   { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], new: [
     ['Gym gates now have a timer. You have a short grace period to enter; if you ignore the gate, the Gym Leader and the wild Pokemon on the map keep getting stronger (and stronger, with no limit) until you go in. Clear the gym and the world returns to normal.',

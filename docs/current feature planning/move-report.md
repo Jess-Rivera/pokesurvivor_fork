@@ -53,12 +53,12 @@ None.
 | lick |  | with its batch | 30 | 0.583 | 0.583 | same | 420 | 64 (radius) | 1 | - | - | 51.46 | 1 hit per cast | none |
 | metal-claw |  | MOVE-INTENT (checked when routed) | 47.5 | 0.5 | 0.5 | same | 420 | 50 (radius) | 1 | - | - | 95 | 1 hit per cast | none |
 | meteor-mash |  | MOVE-INTENT (checked when routed) | 81 | 1.75 | 1.75 | same | - | 495 (speed x life) | 1 | 1 per hit | - | 46.29 | 1 hit per cast | none |
-| mud-shot | yes | batch reviewed | 52.25 | 1.167 | 1.167 | same | - | 360 (speed x life) | 12 | - | - | 44.77 | 1 hit per cast | 1 runs |
+| mud-shot | yes | batch reviewed | 52.25 | 1.167 | 1.167 | same | - | 360 (speed x life) | 12 | - | - | 44.77 | 1 hit per cast | 2 runs |
 | night-shade |  | MOVE-INTENT (checked when routed) | 0 | persistent | 0.5 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | level | not power-based | 1 pending |
 | poison-sting |  | with its batch | 15 | 0.5 | 0.5 | same | - | 420 (speed x life) | 2 | - | - | 30 | 1 hit per cast | none |
 | powder-snow |  | with its batch | 40 | 0.7 | 0.7 | same | 420 | 48 (radius) | 1 | - | - | 57.14 | 1 hit per cast | none |
 | psybeam |  | with its batch | 65 | 0.875 | 0.875 | same | 420 | 215 (band length) | 1 | - | - | 74.29 | 1 hit per cast | none |
-| psychic |  | MOVE-INTENT (checked when routed) | 90 | 1.75 | 1.75 | same | 420 | 96 (speed x life) | 1 | - | - | 51.43 | 1 hit per cast | 1 pending, 1 blocked D-PSY |
+| psychic |  | MOVE-INTENT (checked when routed) | 90 | 1.75 | 1.75 | same | 420 | 96 (speed x life) | 1 | - | - | 51.43 | 1 hit per cast | 2 pending |
 | psycho-cut | yes | batch reviewed | 70 | 0.875 | 0.875 | same | 420 | 48 (radius) | 1 | - | - | 80 | 1 hit per cast | 1 runs |
 | quick-attack |  | MOVE-INTENT (checked when routed) | 40 | 0.583 | 0.583 | same | 420 | 466 (range + body) | 1+ | - | - | 68.61 | 1 hit per cast | 1 pending |
 | razor-leaf |  | MOVE-INTENT (checked when routed) | 52.25 | 0.7 | 0.7 | same | 210 | 210 (turnaround) | 6 | - | - | 149.29 | 2 hits (out and back) | 1 pending |

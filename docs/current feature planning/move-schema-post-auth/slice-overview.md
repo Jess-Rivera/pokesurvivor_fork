@@ -23,9 +23,9 @@ A STATE.md code-gap item is built in this branch only if it is directly associat
 
 | code gap (STATE.md) | in this branch? | slice |
 | --- | --- | --- |
-| maxStacks default 6 in code, approved 1 | yes | 4c-0 |
-| Metal Claw and Meteor Mash authored at 2, approved 1 | yes | 4c-0 |
-| Foe debuffs capped per move on the new path | yes | 4c-0 |
+| maxStacks default 6 in code, approved 1 | yes | 4c-0 (built 2026-10-29) |
+| Metal Claw and Meteor Mash authored at 2, approved 1 | yes | 4c-0 (built 2026-10-29) |
+| Foe debuffs capped per move on the new path | yes | 4c-0 (built 2026-10-29) |
 | Self-buff maxStacks formula (QA-11, Q15) | yes | 5 |
 | Legacy Fire Spin strip and burnHalf | yes, removed with the legacy path | 7b |
 | E1 on the live path (QA-10) | yes, verified gone after the flip | 7b |
@@ -60,7 +60,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 | # | slice | status | blocked by |
 | --- | --- | --- | --- |
 | 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | waiting for Jess to approve the item list | none |
-| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | to plan | none (D-FOECAP answered 2026-10-29) |
+| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT 2026-10-29; Jess feel-test open | none |
 | 2 | slice-4c-1.md: persistence and orbits | handoff written | none (D-LEAF answered 2026-10-29) |
 | 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
 | 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | none (D-PSY answered 2026-10-29) |

@@ -200,7 +200,7 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   const ia = mkO([['syn-ind']]), ib = { stgTeam: ia.stgTeam, stg: null }; cast(ia); ok(S.stage(ia, 'def') === 1 && S.stage(ib, 'def') === 0 && !ia.stgTeam.def, 'individual scope: the owner only');
   const g = mkO([['swords-dance']]); cast(g); S.teamTick(g.stgTeam, 8 - 0.05); cast(g); ok(g.stgTeam.atk.length === 1 && near(g.stgTeam.atk[0].t, 8), 'a recast in the grace window renews (one application)');
   ok(FX.srcOf(D['swords-dance'], a) !== FX.srcOf(D['swords-dance'], b) && FX.srcOf(D['swords-dance'], a) === FX.srcOf(D['swords-dance'], a), 'the source tag is move plus Pokemon, stable');
-  const m2 = mkO(); for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), m2, () => 0); ok(S.teamSum(m2.stgTeam, 'atk') === 2, '4a Metal Claw cap 2 unchanged');
+  const m2 = mkO(); for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), m2, () => 0); ok(S.teamSum(m2.stgTeam, 'atk') === 1, 'Metal Claw cap 1 (Q14, slice 4c-0; was 2 through 4b)');
   const leg = mk(); S.add(leg, 'atk', 1, 6); S.add(leg, 'atk', 1, 6); ok(S.stage(leg, 'atk') === 2 && leg.stg.atk.every(x => x.src === undefined), 'legacy add (no src) unchanged');
   console.log('10 stat buffs: +2 per Pokemon, +6 for three, Dragon Dance both, individual owner-only, grace renewal'); }
 

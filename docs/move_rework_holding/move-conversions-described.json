@@ -992,7 +992,7 @@
           "side": "self",
           "scope": "team",
           "chance": 10,
-          "maxStacks": 2
+          "maxStacks": 1
         },
         {
           "t": "knockback",
@@ -2464,7 +2464,7 @@
           "side": "self",
           "scope": "team",
           "chance": 20,
-          "maxStacks": 2
+          "maxStacks": 1
         },
         {
           "t": "emit",
