@@ -201,6 +201,9 @@ function selfTest() {
     ['radArc grow on a full circle', m => (m.space.radArc = 6.2832, m.delivery.grow = { growSpeed: 1, dim: 'radArc' }, m), 'arc-grow-room'],
     ['one-shot emit with a count', m => (m.payload.push({ t: 'emit', move: 'x', trigger: 'enemyHit', count: 3 }), m), 'one-shot-emit-count'],
     ['foe stat with team scope', m => (m.payload.push({ t: 'stat', stat: 'atk', stages: -1, side: 'foe', scope: 'team' }), m), 'foe-not-team'],
+    // 4c-2 review: a swept dash needs a time cap
+    ['swept dash without a time cap', m => (Object.assign(m.delivery, { motion: 'repositions', repositionMode: 'swept', dashMult: 10, returnToOrigin: true, endOn: [{ returned: true }] }), m.space = { shape: 'radial', radRadius: 46, count: 1 }, m), 'swept-needs-time'],
+    ['swept dash with a time cap passes', m => (Object.assign(m.delivery, { motion: 'repositions', repositionMode: 'swept', dashMult: 10, returnToOrigin: true, endOn: [{ time: 3 }, { returned: true }] }), m.space = { shape: 'radial', radRadius: 46, count: 1 }, m), null],
     ['pierce on an emit-only parent', m => (m.payload = [{ t: 'emit', move: 'x', trigger: 'cast' }], m.space.pierce = 0, m), 'pierce-needs-hitbox'],
   ];
   let fails = 0;

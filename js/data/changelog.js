@@ -18,6 +18,8 @@ G.CHANGELOG = [
   ], fix: [
     ['On the new move system (dev builds only), an orbit or aura no longer stays on screen after its move is taken out of your move list.',
      'On the new move system (dev builds only), an orbit or aura no longer stays on screen after its move is taken out of your move list.'],
+    ['On the new move system (dev builds only), Quick Attack can no longer leave you stuck mid-dash: after 3 s at most you are free to move again.',
+     'On the new move system (dev builds only), Quick Attack can no longer leave you stuck mid-dash: after 3 s at most you are free to move again.'],
   ] },
   { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], new: [
     ['Gym gates now have a timer. You have a short grace period to enter; if you ignore the gate, the Gym Leader and the wild Pokemon on the map keep getting stronger (and stronger, with no limit) until you go in. Clear the gym and the world returns to normal.',

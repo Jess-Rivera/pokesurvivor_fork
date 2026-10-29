@@ -23,6 +23,10 @@
     return G.U.clamp(Math.round(110 / h * 2) / 2, 1, 2);
   }
 
+  // Knockback slide: kx, ky decay by KNOCK_DECAY ^ dt each frame. move-effects.js SLIDE (the Bonemerang pull clamp)
+  // assumes this and game.js's 1/30 s frame cap; move-motion-harness.js checks they agree, so rerun it after a retune.
+  const KNOCK_DECAY = 0.0015;
+
   class Enemy {
     constructor(def, x, y, sc, boss = false) {
       this.id = nextId++;
@@ -445,7 +449,7 @@
       if (G.Status.stunned(this)) {
         this.stFl = null;
         this.x += this.kx * dt; this.y += this.ky * dt;
-        this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+        this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
         if (!this.flying) G.World.collide(this);
         this.anim.loop('Idle');
         return;
@@ -476,7 +480,7 @@
         const vx0 = Math.cos(a) * spd * k, vy0 = Math.sin(a) * spd * k;
         const ox = this.x, oy = this.y;
         this.x += (vx0 + this.kx) * dt; this.y += (vy0 + this.ky) * dt;
-        this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+        this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
         if (G.World.collide(this) && Math.hypot(this.x - ox, this.y - oy) < spd * k * dt * 0.3) this.zig += 1.4;
         if (Math.random() < dt * 6 && G.Camera.sees(this.x, this.y, 0)) G.FX.twinkle(this.x + G.U.rand(-this.r, this.r), this.y - G.U.rand(4, this.bodyH));
         this.anim.dir = G.Sprites.dirFromAngle(a);
@@ -593,7 +597,7 @@
       // --- integration ---
       const ox = this.x, oy = this.y;
       this.x += this.kx * dt; this.y += this.ky * dt;
-      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
       this.x += vx * dt; this.y += vy * dt;
 
       if (!this.flying && G.World.collide(this)) {
@@ -884,7 +888,7 @@
       const spd = G.Status.rooted(this) ? 0 : Math.max(40, this.spd) * (1 - this.slow);     // rooted (trap): it waits
       this.touchCd = Math.max(this.touchCd, 0.5);
       this.x += (dx * spd + this.kx) * dt; this.y += (dy * spd + this.ky) * dt;
-      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
       G.World.collide(this);
       this.anim.dir = G.Sprites.dirFromAngle(Math.atan2(dy, dx));
       this.anim.loop('Walk');
@@ -1397,6 +1401,7 @@
   // ---------------- gestor ----------------
 
   G.Enemy = Enemy;
+  Enemy.KNOCK_DECAY = KNOCK_DECAY;
 
   G.EnemyMgr = (() => {
     let list = [];            // vivos

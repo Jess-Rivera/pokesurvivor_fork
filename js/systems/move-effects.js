@@ -77,9 +77,10 @@ G.MoveEffects = (() => {
   }
 
   // ---- knockback direction and the pull clamp (D33, slice 4c-2) ----
-  // Enemy.hurt adds knock x the unit direction to the enemy's slide velocity, which enemy.js decays by 0.0015^dt per second, so a
-  // knock k slides about k x dt / (1 - 0.0015^dt) px: 0.16 at dt 1/60, 0.17 at 1/30, 0.18 at 1/20. SLIDE is that worst case, so a
-  // clamped pull never carries an enemy past the caster's edge.
+  // Enemy.hurt adds knock x the unit direction to the enemy's slide velocity, which enemy.js decays by G.Enemy.KNOCK_DECAY ^ dt (0.0015),
+  // so a knock k slides about k x dt / (1 - KNOCK_DECAY ^ dt) px: 0.16 at dt 1/60, 0.17 at 1/30 (game.js's frame cap), 0.18 at 1/20.
+  // SLIDE covers that with room, so a clamped pull never carries an enemy past the caster's edge. move-motion-harness.js section 4
+  // recomputes it from KNOCK_DECAY and fails if a retune makes SLIDE too small.
   const SLIDE = 0.18;
   /** [dirX, dirY, knock] for e.hurt. `direction: travel` uses the instance's velocity when it has one (returns, travels), else away
    *  from the instance centre as before. A travel knock toward the owner is cut so the enemy stops at the owner's edge (Bonemerang). */

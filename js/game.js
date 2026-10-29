@@ -744,7 +744,7 @@ G.Game = (() => {
 
   function frame(ts) {
     const real = (ts - last) / 1000 || 0;
-    const dt = Math.min(1 / 30, real) * speedK;
+    const dt = Math.min(1 / 30, real) * speedK;     // the 1/30 cap: move-effects.js SLIDE (pull clamp) assumes it
     last = ts;
     if (state === 'playing') G.Settings.sample(real);
     fpsAcc += real; fpsN++;

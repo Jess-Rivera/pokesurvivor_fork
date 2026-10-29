@@ -64,7 +64,7 @@ function run(o, es, secs, { dt = 1 / 60, each = null, reset = true, rng = () => 
     Sim.tick(dt, o, t); S.tick(o, dt);
     for (const e of enemies) if (!e.dead) {
       S.tick(e, dt);
-      if (slide) { e.x += e.kx * dt; e.y += e.ky * dt; const f = Math.pow(0.0015, dt); e.kx *= f; e.ky *= f; }
+      if (slide) { e.x += e.kx * dt; e.y += e.ky * dt; const f = Math.pow(Enemy.KNOCK_DECAY, dt); e.kx *= f; e.ky *= f; }
     }
     for (; seen < tape.length; seen++) tape[seen].t = t;
     if (each) each(k, t);
@@ -178,9 +178,16 @@ function dash(o, es, secs, opt = {}) {
   ok(boss.kx === 0 && boss.ky === 0, 'a boss resists knockback as before (Enemy.hurt)');
   for (const dt of DTS) {
     const e = mkE(0, 0), x0 = e.x = 12 + e.r + 3; knock(BM, e, [x0 + 10, 0], [-300, 0]);
-    for (let t = 0; t < 3; t += dt) { e.x += e.kx * dt; e.y += e.ky * dt; const f = Math.pow(0.0015, dt); e.kx *= f; e.ky *= f; }
+    for (let t = 0; t < 3; t += dt) { e.x += e.kx * dt; e.y += e.ky * dt; const f = Math.pow(Enemy.KNOCK_DECAY, dt); e.kx *= f; e.ky *= f; }
     ok(e.x < x0 && e.x >= 12 + e.r - 1e-9, 'dt ' + dtName(dt) + ': the clamped pull slides toward the caster and stops at or before its edge (' + e.x.toFixed(3) + ')');
+    const slide = dt / (1 - Math.pow(Enemy.KNOCK_DECAY, dt));     // 4c-2 review: SLIDE must cover enemy.js's decay up to game.js's 1/30 cap
+    ok(Fx.SLIDE >= slide, 'dt ' + dtName(dt) + ': SLIDE ' + Fx.SLIDE + ' covers the slide per unit knock from enemy.js KNOCK_DECAY (' + slide.toFixed(4) + ')');
   }
+  // 4c-2 review: an enemy off the bone's line (8 px aside), where travel and away-from-centre differ: only the travel direction counts
+  const sideOut = mkE(100, 8), g8 = knock(BM, sideOut, [90, 0], [300, 0]);
+  ok(g8.dx > 0 && g8.dy === 0 && g8.k === 40, 'off the line, the out leg still pushes straight along its travel, no sideways part (' + g8.dx + ', ' + g8.dy + ')');
+  const sideBack = mkE(100, 8), g9 = knock(BM, sideBack, [110, 0], [-300, 0]);
+  ok(g9.dx < 0 && g9.dy === 0, 'off the line, the back leg still pulls straight along its travel (' + g9.dx + ', ' + g9.dy + ')');
   { const e = mkE(Math.cos(0.25) * 120, Math.sin(0.25) * 120), seen = [], o2 = mkP([['bonemerang']]);
     e.hurt = function (a, c, dx, dy, k) { seen.push({ dot: dx * (this.x - o2.x) + dy * (this.y - o2.y), k }); return Enemy.prototype.hurt.apply(this, arguments); };
     run(o2, [e, mkE(Math.cos(-0.25) * 120, Math.sin(-0.25) * 120)], 1.7);
@@ -200,17 +207,19 @@ function dash(o, es, secs, opt = {}) {
   console.log('5 R9 and walls: no cast past range, teleport lands, the dash stops at the last free step and hits there'); }
 
 // 6. P8: i-frames and the dash root
-{ { const o = mkP([['quick-attack']]); let bad = 0, rootBad = 0, tailIn = 0, tailOut = 0, after = 0;
+{ { const o = mkP([['quick-attack']]); let bad = 0, rootBad = 0, tailIn = 0, tailOut = 0, after = 0, endIv = null;
     dash(o, [mkE(205, 0)], 1.0, { each: (k, t, s) => {
       if (s.endAt == null) { if (!(o.invuln > 0)) bad++; if (!o.mvRoot) rootBad++; return; }
       if (k > 0 && o.act === 0) o.act = 1;     // no recast after the first dash
       const m = t - s.endAt;
+      if (m === 0) endIv = o.invuln;
       if (o.mvRoot) after++;
       if (m <= 0.3 - 1 / 60 - 1e-9 && !(o.invuln > 0)) tailIn++;
       if (m >= 0.3 + 1e-9 && o.invuln > 1e-9) tailOut++;
     } });
     ok(bad === 0 && rootBad === 0, 'the whole dash (out, arrival, back) is invulnerable and rooted (' + bad + ', ' + rootBad + ' bad frames)');
-    ok(tailIn === 0 && tailOut === 0 && after === 0, 'then a 0.3 s tail and normal again; the root ends with the dash (' + [tailIn, tailOut, after] + ')'); }
+    ok(tailIn === 0 && tailOut === 0 && after === 0, 'then a 0.3 s tail and normal again; the root ends with the dash (' + [tailIn, tailOut, after] + ')');
+    ok(endIv != null && near(endIv, 0.3, 1e-9), 'the step the dash ends raises the i-frames once more, so the tail is a full 0.3 s from the end (' + endIv + ')'); }
   { const o = mkP([['quick-attack']], { invuln: 2 }); const r = dash(o, [mkE(205, 0)], 0.42);
     ok(o.invuln > 1.5, 'an existing longer invulnerability is never lowered (' + o.invuln.toFixed(2) + ')'); }
   { const o = mkP([['quick-attack']]); run(o, [mkE(205, 0)], 0.1, { each: k => { if (k === 3) Sim.clear(o); } });
@@ -230,6 +239,24 @@ function dash(o, es, secs, opt = {}) {
   { const o = mkP([['aerial-ace']]); let a = null, b = null;
     run(o, [mkE(300, 0)], 0.4, { each: (k, t) => { if (Math.abs(t - 0.25) < 1e-6) a = o.invuln; if (Math.abs(t - 0.35) < 1e-6) b = o.invuln; } });
     ok(a > 0 && b <= 1e-9 && !o.mvRoot, 'Aerial Ace: 0.3 s of i-frames from the cast, no root (' + a + ', ' + b + ')'); }
+  // 4c-2 review (Jess 2026-10-29): a rooted commitment holds every reposition at the cast gate; the move casts once the root ends
+  for (const id of ['quick-attack', 'aerial-ace']) {
+    const o = mkP([['syn-root-long', id]]); let moved = false;
+    const tape = run(o, [mkE(205, 0)], 1.3, { each: (k, t) => { if (t < 1.0 - 1e-6 && Math.hypot(o.x, o.y) > 1e-9) moved = true; } }), c = castsOf(tape, id);
+    ok(!moved && c.length >= 1 && c[0].t >= 1.0 - 1e-6 && c[0].t <= 1.0 + 2 / 60, id + ': waits while rooted, casts as the root ends (' + (c[0] && c[0].t.toFixed(3)) + ', moved ' + moved + ')');
+  }
+  // 4c-2 review: Quick Attack's 3 s time cap is a safety net; when it fires the owner stays where it is and the root lifts
+  { const o = mkP([['quick-attack']], { baseSpd: 5 }), r = dash(o, [mkE(205, 0)], 3.3, { each: (k, t, s) => { if (s.endAt != null) o.act = 1; } });
+    const end = ends(r.tape).find(e => e.instId === r.id0), x = r.endPos && r.endPos[0];
+    ok(end && end.reason === 'time' && Math.abs(r.endAt - 3) <= 1 / 60 + 1e-9, 'a very slow dash (8 s) ends by its 3 s cap (' + (end && end.reason) + ', ' + r.endAt + ')');
+    ok(x > 1 && x < 204 && o.x === x && o.y === r.endPos[1] && !o.mvRoot, 'at the cap the owner stays put mid-dash and is free to walk (' + x + ', root ' + o.mvRoot + ')'); }
+  // 4c-2 review: a one-way swept dash ends after its armed step at B, so it never pins its owner
+  syn('syn-dash-oneway', { cd: 5, space: { shape: 'radial', radRadius: 46, count: 1, spread: 0, pierce: 0 }, casterState: { iframes: 0.3 },
+    delivery: { anchor: 'caster', targeting: 'nearest', motion: 'repositions', repositionMode: 'swept', dashMult: 10, returnToOrigin: false, range: 420, endOn: [{ time: 3 }] } });
+  { const o = mkP([['syn-dash-oneway']]), B = mkE(205, 0), V = o.spd * 10, r = dash(o, [B], 0.5);
+    const end = ends(r.tape).find(e => e.instId === r.id0), mine = hitsOf(r.tape).filter(h => h.instId === r.id0);
+    ok(end && end.reason === 'arrived' && Math.abs(r.endAt - 205 / V) <= 1 / 60 + 1e-9, 'a one-way dash ends by arrived at B (' + (end && end.reason) + ', ' + r.endAt + ')');
+    ok(mine.length === 1 && mine[0].enemyId === B.id && near(o.x, 205, 1e-9) && !o.mvRoot, 'it hits B once, the owner stays at B and is free (' + mine.length + ', ' + o.x + ', ' + o.mvRoot + ')'); }
   console.log('6 i-frames: whole dash plus a 0.3 s tail, never lowered; the root ends on swap, faint, new run, and the two roots never end each other'); }
 
 // 7. Aerial Ace confusion: one 50% roll per hit

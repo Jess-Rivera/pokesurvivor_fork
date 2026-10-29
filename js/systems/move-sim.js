@@ -21,6 +21,8 @@
  * sweep), then back to the origin (leg 1), with i-frames raised every step and the owner rooted (mvRoot) while it lives.
  * teleport: the owner is placed at the point at cast, the hitbox is live for the instance's life, i-frames once from the cast.
  * Pierce exhaustion disarms a returns or repositions instance but never ends it (R1, H22); an owner faint ends both.
+ * 4c-2 review: a one-way swept dash (returnToOrigin false) ends `arrived` after its armed step at B; a rooted commitment holds every
+ * reposition at the cast gate.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
@@ -125,8 +127,8 @@ G.MoveSim = (() => {
     }
     return { x: o.x, y: o.y };
   }
-  /** The owner's final move speed (player.spd) without the root flag, which would read as 0 (P6). */
-  function speedOf(o) { const was = o.mvRoot; o.mvRoot = false; const v = o.spd || 0; o.mvRoot = was; return v; }
+  /** The owner's final move speed without the root, which would read as 0 (P6): player.js unrootedSpd; an owner without it reads spd. */
+  const speedOf = o => (o.unrootedSpd != null ? o.unrootedSpd : o.spd) || 0;
   function setupReposition(inst) {
     const d = inst.spec.delivery, o = inst.cast.owner, p = repoPoint(o, inst.spec, inst.cast.target || o), iv = (inst.spec.casterState || {}).iframes || 0;
     inst.ox = o.x; inst.oy = o.y; inst.tx = p.x; inst.ty = p.y; inst.heading = Math.atan2(p.y - o.y, p.x - o.x);
@@ -139,9 +141,11 @@ G.MoveSim = (() => {
     inst.v = (d.dashMult || 1) * speedOf(o);
     if (iv) o.invuln = Math.max(o.invuln || 0, iv);
   }
-  /** Cast gate for repositions: a dash never overlaps a live dash of the same owner (both would write its position), and a swept
-   *  dash at speed 0 would never arrive. Either way the slot retries, so the cooldown counts from when the dash can start. */
+  /** Cast gate for repositions: a dash never overlaps a live dash of the same owner (both would write its position), a swept
+   *  dash at speed 0 would never arrive, and a rooted commitment holds every reposition, teleport included (Jess 2026-10-29,
+   *  MOVE-INTENT quick-attack). Each way the slot retries, so the cooldown counts from when the move can start. */
   const repoCanGo = (def, o) => def.delivery.motion !== 'repositions' || (!insts.some(i => i.dash && i.cast.owner === o) &&
+    !cms.some(m => m.o === o && m.part === 'movement' && m.type === 'rooted') &&
     (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 
   function castSlot(o, slot, def, now) {
@@ -440,6 +444,7 @@ G.MoveSim = (() => {
   function checkEnd(inst) {
     const owned = OWNED[inst.spec.delivery.motion];
     if (owned && inst.cast.owner.dead) return 'ownerDeath';     // a faint ends a bone or a dash, listed or not
+    if (inst.dash && inst.phase === 'done' && !inst.spec.delivery.returnToOrigin) return 'arrived';     // a one-way dash ends after its armed step at B, listed or not
     for (const c of inst.spec.delivery.endOn || []) for (const k in c) {
       const r = END[k] && END[k](inst, c[k]);
       if (r) return r;

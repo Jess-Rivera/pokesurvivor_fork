@@ -159,11 +159,13 @@ G.Player = class Player {
   }
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
-  get spd() {
+  get spd() { return this.mvRoot ? 0 : this.unrootedSpd; }     // mvRoot: slice 4b rooted commitment or a live swept dash (G.MoveSim)
+  /** The final move speed as if not rooted: a swept dash reads its speed here (move-sim.js speedOf). */
+  get unrootedSpd() {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
-    return this.mvRoot ? 0 : s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();     // mvRoot: slice 4b rooted commitment
+    return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();
   }
   /** Run-item SPEED multipliers, applied last: Sharp Scissors (team-HP-scaled, roster 3+) and Pikachu's Tear (1.1x per fainted). */
   runSpeedMul() {

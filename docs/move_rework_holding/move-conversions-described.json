@@ -1210,6 +1210,9 @@
         "returnHits": "out",
         "endOn": [
           {
+            "time": 3
+          },
+          {
             "returned": true
           }
         ]
