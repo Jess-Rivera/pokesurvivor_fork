@@ -24,10 +24,14 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Its reach (about 160 px by the curve math) is fine, verify only. (slice-4c.md decisions, Jess 2026-10-27; review 9.7 item 6)
 - Ledger: B4-I02
 
+### aerial-ace
+- [Approved] Teleport to the nearest enemy's centre, capped by range 420 and walls; the 46 px hitbox is live for its 0.1 s, knockback 80 away from the landing point, 50% confusion. No return and no movement lock. i-frames: 0.3 s once from the cast, not re-raised (4c-2 handoff test 6). Built in slice 4c-2.
+- Ledger: none (entry added 2026-10-29 by the 4c-2 build)
+
 ### bonemerang
 - [Approved] Two bones out and back, hitting on both legs. (combat-validation 2.5 scenario 2; review 9.1 Q2)
 - [Approved] Per-move `delivery.range` 230 px; the 2 s time cap stays as a safety net. (review 9.3 F2)
-- [Approved] The return-leg knockback pulls enemies toward the caster (the back leg's travel direction). The pull is clamped so an enemy never ends past the caster's edge. (slice-4c.md decisions, Jess 2026-10-27; closes review 9.5 S12) Code differs, see TODO: slice 4c-2.
+- [Approved] The return-leg knockback pulls enemies toward the caster (the back leg's travel direction). The pull is clamped so an enemy never ends past the caster's edge. (slice-4c.md decisions, Jess 2026-10-27; closes review 9.5 S12) Built in slice 4c-2.
 - Ledger: B4-I03
 
 ### bug-bite
@@ -35,7 +39,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I04
 
 ### bug-buzz
-- [Approved] Per-move rule over Q16: its foe Sp. Def -1 debuff has maxStacks 1 (as authored), although foe debuffs have no per-move cap in general. (Jess, 2026-10-28, CP3)
+- [Approved] Per-move rule over MOVE-AXIS-SCHEMA:Q16: its foe Sp. Def -1 debuff has maxStacks 1 (as authored), although foe debuffs have no per-move cap in general. (Jess, 2026-10-28, CP3)
+- [Approved] The Sp. Def drop has no chance field, so it applies at 100% on every eligible hit (move-consistency-review:CP1-Q14), held at -1 by the cap. The source's 10% was dropped on purpose in the 2026-10-24 conversion (Option B, "debuffs just once"): every enemy in the aura is marked once, and it never stacks. (Jess, 2026-10-29)
+- [Approved] Cadence stays rehit 0.5 at full power per tick (about 180 Power/s to every enemy within 120 px, roughly 3.5x legacy). Not retuned now: it is a throughput outlier for the slice 6 balance pass (move-consistency-review S1). (Jess, 2026-10-29)
 - Ledger: B4-I27
 
 ### dragon-dance
@@ -106,7 +112,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### quick-attack
 - [Approved] Dash from A to B, hit at B, return to A. Pierce exhaustion disarms the hitbox but does not end a `repositions` instance (R1). Data: `returnHits` becomes `out`. (review 9.1 Q3; combat-validation 2.5 scenario 1)
-- [Approved] The landing point is the target enemy's centre (no stand-off); i-frames cover the whole dash plus a 0.3 s tail; the swept dash holds walking through the existing mvRoot flag. Quick Attack hits one enemy at the arrival point, unlike the legacy dash. (slice-4c.md 4c-2 decisions, Jess 2026-10-27; this extends review 9.3 F5, "i-frames for the whole dash") Code differs, see TODO: slice 4c-2.
+- [Approved] The landing point is the target enemy's centre (no stand-off); i-frames cover the whole dash plus a 0.3 s tail; the swept dash holds walking through the existing mvRoot flag. Quick Attack hits one enemy at the arrival point, unlike the legacy dash. (slice-4c.md 4c-2 decisions, Jess 2026-10-27; this extends review 9.3 F5, "i-frames for the whole dash") Built in slice 4c-2.
+- [Approved] Dash speed is 10 x the owner's full final move speed (stages, status, weather, liquid, run items), read once when the dash starts; a slow or Agility landing mid-dash does not change it. (Jess, 2026-10-29)
+- [Approved] A new Quick Attack (or any reposition) waits while the owner's dash is still live, so two dashes never fight over the position; a swept dash at speed 0 waits too. The cooldown counts from when the dash can start. (Jess approved the 4c-2 build, 2026-10-29)
+- [Open] `priority: 1` ("always first" in a bonded group) is not built: the move sim does not order casts by priority. TODO.md Backlog.
 - Ledger: B4-I17
 
 ### razor-leaf

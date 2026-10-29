@@ -41,9 +41,9 @@ CLAUDE.md "Where current rules live" and "Which document wins". In short: genera
 
 ## Done (history in ../move-schema/)
 
-Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
+Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 and 4c-1 are built and signed off (2026-10-29). check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
 
-## Routing coverage (21 of 63 routed today)
+## Routing coverage (28 of 63 routed today)
 
 | slice | moves added to the routed list | routed after |
 | --- | --- | --- |
@@ -59,11 +59,11 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 
 | # | slice | status | blocked by |
 | --- | --- | --- | --- |
-| 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | waiting for Jess to approve the item list | none |
-| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT 2026-10-29; Jess feel-test open | none |
-| 2 | slice-4c-1.md: persistence and orbits | BUILT 2026-10-29; Jess feel-test open | none |
-| 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
-| 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | none (D-PSY answered 2026-10-29) |
+| 0 | slice-0-doc-fixes.md: apply the audit fixes and repoint status homes | DONE 2026-10-29 (F-REP-1/2 folded into Stage 0) | none |
+| 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT and SIGNED OFF 2026-10-29 | none |
+| 2 | slice-4c-1.md: persistence and orbits | BUILT and SIGNED OFF 2026-10-29 (orphaned-group fix included) | none |
+| 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (check.js and both mutation runners green) | none |
+| 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | NEXT: prose plan to Jess 2026-10-29 | none (D-PSY answered 2026-10-29) |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |

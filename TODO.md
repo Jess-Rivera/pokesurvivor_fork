@@ -6,7 +6,7 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-29 ~12:20 PM; re-sync at session end)
+## Board mirror (synced from the GitHub API 2026-10-29 ~5:40 PM; no board changes since the 12:20 PM sync)
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
 OPEN (13):
@@ -22,7 +22,7 @@ OPEN (13):
 - #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
 - #13 New move path: routed moves never target idle props  [design / moves / needs-triage]
 - #14 New move path: ranged moves lost boss priority  [design / moves / needs-triage]
-- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / needs-triage]  (new since the last sync; shot spacing, not the cd, see MOVE-INTENT string-shot)
+- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / needs-triage]  (shot spacing, not the cd, see MOVE-INTENT string-shot; no feel verdict recorded 2026-10-29)
 
 CLOSED (2):
 - #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24, completed; still counted as blocking 1)
@@ -85,6 +85,8 @@ live queue, cross-reference the issue number.
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 
 ## Backlog
+- Move priority in a bonded group (opened 2026-10-29, slice 4c-2): Quick Attack carries priority 1 ("always first") but the new move sim casts a bonded group in slot order. Matters only when Quick Attack shares a slot with other moves. Owner: MOVE-INTENT quick-attack [Open].
+- newcombat('motion') decoy on request (4c-2 handoff P11): not built, since a dummy on the dash line is itself the nearest target. The harness covers it by adding the decoy after the cast.
 
 - Cross-document ID sweep (opened 2026-10-29, low priority): convert older bare or loosely-prefixed IDs ("review 9.1 Q2", "D-2", "S13", local "R2"/"D21" notes) in docs not yet touched to the CLAUDE.md "Cross-document IDs" format (`file:ID`). Start with MOVE-INTENT source notes, combat-architecture section H source column, combat-validation, then the remaining planning docs. Docs only.
 - Stage 0 follow-ups (opened 2026-10-29): (1) DONE 2026-10-29: batch 1 (12 routed moves) playtested and signed off. Later batches: sign off by adding ids to `batchReviewed` in docs/move_rework_holding/move-intent-scenarios.json, or turn a correction into a MOVE-INTENT entry. (2) cd rulings DONE 2026-10-29: dragon-rage, gust, spikes intended (MOVE-INTENT). String Shot 0.5 was a regression, restored to 1.1 (move-overrides.js). (3) Regenerate the reports: `node tools/move_report.js --report` (replaces the move-parity-report rulings column; move_parity.js and validate_moves.js --report are still the generators of their own two files, AUDIT-vs-sources-of-truth:F-REP-1 and F-REP-2).

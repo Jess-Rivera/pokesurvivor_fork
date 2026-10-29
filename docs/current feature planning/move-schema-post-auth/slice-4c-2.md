@@ -25,5 +25,11 @@ Razor Leaf, Bonemerang, Quick Attack, Aerial Ace.
 ## Proceed when
 The handoff's tests pass, check.js green, Jess signs off G.Debug.newcombat('motion').
 
-## Results
-(not started)
+## Results (built 2026-10-29, Quick)
+- js/systems/move-sim.js: instance `leg` and `armed`; hit records keyed by leg and a fresh pierce budget per leg (R2, H1, H22); `returns` motion (D26: out to exactly range, leg 1 on the next step, homes on the owner, `returned`); `repositions` (D27, R1, R9: point = target centre capped by range, 8 px isFree walk, World.collide; swept dash at 10 x final speed read at the cast, hitbox off in transit, one armed step at B as a circle, back to the exact origin; teleport placed at cast); END.returned; pierce exhaustion disarms and never ends returns or repositions; a faint ends both. I-frames raised every step of a swept dash (whole dash plus 0.3 s tail, never lowered); teleport gets 0.3 s once from the cast (handoff test 6). The root: rootOf rebuilds mvRoot from rooted commitments OR a live swept dash, so neither ends the other; clear() drops it on a new run.
+- New rule beyond the handoff (MOVE-INTENT quick-attack): a reposition waits while the owner's dash lives (Quick Attack cd 0.583 is shorter than a long dash), and a swept dash waits at speed 0.
+- js/systems/move-effects.js: knockOf (D33): `direction: travel` uses the instance velocity; a pull toward the owner is clamped to its edge gap / SLIDE 0.18 (Enemy.hurt knock is a decaying velocity); pushes unclamped.
+- js/systems/move-route.js: Razor Leaf, Bonemerang, Quick Attack, Aerial Ace routed (28). js/systems/move-render.js: spinning bones with a trail, dash streak and afterimage, teleport flashes, armed-only dash hitbox, overlay leg and invuln. js/core/debug.js: newcombat('motion').
+- Tests: new docs/proposals/move-motion-harness.js (cases 1 to 8 of the handoff list) and move-motion-mutate.js (22 mutations). Written without running Node (this machine cannot); Jess ran check.js and both mutation runners on the real tree, all green (2026-10-29). Playwright smoke not run (home machine).
+- Not built: Quick Attack priority 1 (the sim does not order casts by priority; TODO Backlog); the on-request decoy in newcombat('motion') (the harness adds its decoy after the cast instead, since a decoy on the line would be the nearest target).
+- Behavior change vs legacy: the legacy dash hit everything on its path; the new Quick Attack hits one enemy at B.

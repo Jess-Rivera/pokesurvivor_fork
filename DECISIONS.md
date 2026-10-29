@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-29, Bug Buzz keeps 100% Sp. Def -1 held at -1, and rehit 0.5 (Jess)
+The source's 10% chance stays dropped (the 2026-10-24 Option B design): every hit rolls at 100% and the authored foe cap of 1 holds it at -1, so each enemy in the aura is marked once. Damage stays 90 power every 0.5 s (about 180 Power/s per enemy in range); the throughput goes to the slice 6 balance pass. No data change.
+Canonical: docs/MOVE-INTENT.md, bug-buzz
+
 ## 2026-10-29, Persistent lifecycle: the slot owns it, endOn is instance-only (Jess)
 `persistent: true` spawns the move while its slot is active and the owner unstunned, ends it on a swap, stun or faint, and respawns it after any instance end, so an aura is `persistent` alone and a pulse is `persistent` plus `endOn` time. A persistent move never lists notActive; a move that is not persistent needs an endOn unless it is a self-cast, whose effects carry their own duration. Supersedes the review 9.2 C13 wording "persistent requires an endOn notActive"; notActive was removed from the six persistent moves.
 Canonical: docs/MOVE-AXIS-SCHEMA.md, `persistent` row; combat-architecture section H, H25

@@ -141,3 +141,17 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided: D-FOECAP (a), D-LEAF per-hit refresh, D-PSY one re-pick, cd rulings (Dragon Rage, Gust, Spikes intended; String Shot regression), persistent owns the slot lifecycle and endOn is instance-only (H25, notActive removed from the six persistent moves).
 - Tests: every move harness and the validator passed in a sandbox copy (persist 49, intent 302, riders 103, selfcast 83, sim 1980, validator self-test 48; 16 of 16 mutations caught). check.js NOT yet run on the real tree; Playwright smoke and the skipTo(20) framerate check not run.
 - Stopped at: Jess runs check.js, feel-tests riders, persist and String Shot, commits and pushes. Next: plan 4c-2.
+
+## 2026-10-29 (Quick, work, later): Bug Buzz rulings, orphan fix, slice 4c-2 built
+- Jess signed off 4c-0 and 4c-1 by feel. Fixed an orphaned persistent group (switching debug move sets left Night Shade running): upkeep ends a group whose slot is gone; newcombat() clears first.
+- Decided: Bug Buzz keeps 100% Sp. Def -1 held at -1 and rehit 0.5 (balance in slice 6), stays in 4r; Quick Attack dash speed = full final speed read at dash start; a reposition waits while a dash lives.
+- Built 4c-2 (approved plan): legs and per-leg pierce, returns, swept and teleport repositions, travel knockback with the pull clamp, i-frames and the shared root. 28 of 63 routed. New move-motion harness and 22-mutation runner.
+- NOT run: this machine cannot run Node, so check.js, both mutation runners and the harnesses are unrun on today's code. Line endings: several docs and JS files were rewritten as CRLF; check git diff --stat for whole-file diffs.
+- Stopped at: Jess runs check.js and node docs/proposals/move-motion-mutate.js, feel-tests newcombat('motion') and skipTo(20), commits and pushes. Next: 4c-3.
+
+## 2026-10-29 (Quick, work, evening): 4c-2 green, 4c-3 planned
+- Jess ran check.js, move-motion-mutate.js and move-persist-mutate.js on the 4c-2 tree: all green. 4c-2 signed off; slice-overview and slice-4c-2 results updated.
+- 4c-3 handoff re-verified against today's code (aimTrack, location, delay and falls unimplemented as stated; most Flamethrower tests aim straight ahead and survive the tracking change; Confusion and Bubble Beam have no MOVE-INTENT entry, so they go through the batch review). Prose plan given; not approved.
+- Raised: aimTrack should track only within the cone's reach (250 + radius), not range 420. Awaiting Jess.
+- No game code changed this part; board mirror re-synced (no changes since noon).
+- Stopped at: Jess commits and pushes, answers the aimTrack question, approves 4c-3.
