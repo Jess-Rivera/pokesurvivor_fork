@@ -13,7 +13,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 
 | id | decision |
 | --- | --- |
-| Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
+| move-consistency-review:CP1-Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
 | D-1 | Re-authored novas start near the caster's body radius, `grow.max` = today's radius, growSpeed unchanged |
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
 | D-2 | maxStacks values for Leaf Storm and Metal Claw: Jess's to-do, required before slice 4a |
@@ -158,7 +158,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended"
 
 - Ruling: docs/MOVE-INTENT.md, `quick-attack` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED Q3): dash from A to the nearest enemy B, deal damage at B, return to A, dash ends.
+- Intended (DECIDED move-consistency-review:CP1-Q3): dash from A to the nearest enemy B, deal damage at B, return to A, dash ends.
 - Representation after 3a: radial point 46 px, pierce 0, nearest, repositions swept, dashMult 10, returnToOrigin true, returnHits out, endOn returned, i-frames 0.3, range 420 (default).
 - Execution: castSlot picks B within 420 px; motion moves the caster at 10 x player speed; on arrival the hitbox tests once (R1: pierce exhaustion disarms but does not end); the caster travels back; `returned` ends the instance.
 - Open: F5 (i-frames on the return), whether enemies brushed on the way out can be hit (current reading: no, the hit happens at B).
@@ -188,7 +188,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended"
 
 - Ruling: docs/MOVE-INTENT.md, `thunderbolt` (the ruling owns intent; this scenario is validation material).
 
-- Intended: instant strike on the nearest enemy, four jumps at 33% damage, paralysis at 10%, 5%, 2.5%, 1.25%, 0.625% (DECIDED Q10).
+- Intended: instant strike on the nearest enemy, four jumps at 33% damage, paralysis at 10%, 5%, 2.5%, 1.25%, 0.625% (DECIDED move-consistency-review:CP1-Q10).
 - Representation: point 10 px anchored on the target, endOn time 0, chainHops 4, hopRange 140, cardLock count, chainDamageFalloff 0.33.
 - Execution: one collision step at the target (D28), chain hops pick nearest unhit enemies within 140 px of the previous node (D15), damage x0.33 on hops, rider chance halves per hop.
 - Open: other enemies inside the 10 px strike circle are hit at full power by the default UNLIMITED pierce; is that intended, and which one starts the chain? Recommend: the targeted enemy starts the chain; overlapping enemies take the strike but do not branch.
@@ -198,7 +198,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended"
 
 - Ruling: docs/MOVE-INTENT.md, `psychic` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED Q1 wording): an arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing.
+- Intended (DECIDED move-consistency-review:CP1-Q1 wording): an arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing.
 - Representation: arc 0.5 rad x 70 px, travels 80 px/s, turnRate 2.5 rad/s, grow radArc 1.5 rad/s to max 2.0, endOn 1.2 s.
 - Execution: the wedge apex moves with the instance, heading turns toward the target by at most 2.5 x dt per step, radArc follows D21 and reaches 2.0 at t = 1.0 s, D18 containment each step, oncePerInstance.
 - Open: "arc wave" suggests a crescent (a band at the front), while the schema shape is a filled wedge from the apex. Same hits for most layouts; different for an enemy close behind the front. Also, steer toward the enemy chosen at cast, or re-acquire the nearest each step? Recommend: the cast target while it lives, then the nearest.
@@ -208,7 +208,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended"
 
 - Ruling: docs/MOVE-INTENT.md, `toxic-spikes` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED Q7): one placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches.
+- Intended (DECIDED move-consistency-review:CP1-Q7): one placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches.
 - Representation after 3a: placed point 40 px at `location` (F3), endOn time 3, emit {interval, every 0.25} of a full circle starting at 100 px, grow 400 px/s, endOn 0.25, poison 100%.
 - Execution: emitter places, emits per D29 (F6 boundary), each ring tests every step and hits each enemy once per ring, poison applied (and refreshed) each time; lifetime bounds concurrency (two or three emitters alive at cd 1.1).
 - Open: F3, F6.
