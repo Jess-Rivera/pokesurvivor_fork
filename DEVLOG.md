@@ -121,3 +121,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided: Psychic stays a wedge, Bonemerang pull clamped at the caster's edge, orbit radius lens, Razor Leaf into 4c-2, centre landing point, i-frames whole dash plus 0.3 s, aimTrack sticky and now changes Flamethrower, Rock Slide low-opacity telegraph.
 - Found: aimTrack, location targeting, delay and falls were never built in the sim; only grammar exists.
 - Stopped at: handoffs ready for Jess's review. REMINDER: commit + push the docs (DECISIONS, slice-4c, three handoffs, STATE, DEVLOG).
+
+## 2026-10-28 (Claude Code, home): Phase 4 docs consolidation closed (B9)
+- Branch chore/documentation-authority-audit, batches B0 to B9. Rules now live in one place each (CLAUDE.md "Where current rules live"); DECISIONS.md is a log whose `Canonical:` line names the winning spec.
+- B9 checks: no code touched on the branch, check.js green, no em-dashes in added text outside archive copies, cited paths resolve, ledger closed with zero unticked rows.
+- The Phase 4 ledger (temp-audit-outputs/phase-4-ledger.md, all working files of the audit) last exists in commit 5274f4b. Read it with: git show 5274f4b:temp-audit-outputs/phase-4-ledger.md
+- Docs and code still differ on the items in STATE.md (maxStacks default and caps, foe debuff cap, legacy Fire Spin, E1, QA-08 run loop).
+- Stopped at: Jess deletes temp-audit-outputs, commits, and merges into feature-test/new-move-schema (CP7).
