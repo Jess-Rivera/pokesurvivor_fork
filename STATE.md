@@ -19,7 +19,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 - Own branches: QA-08 run loop; boss doc reorganization (Q1, QA-06); DoT on base HP for elites; Shedinja.
 
 ## Next (in order)
-1. Jess reviews and approves the item list in move-schema-post-auth/slice-0-doc-fixes.md; apply it.
+1. Stage 0 built and batch 1 reviewed 2026-10-29. Open: confirm check.js shows the move-intent harness green. String Shot cd restored to 1.1 (Jess feel-checks it).
 2. Answer D-FOECAP and D-LEAF, then plan 4c-0 and build 4c-1.
 
 ## Board note (snapshot 2026-10-27)

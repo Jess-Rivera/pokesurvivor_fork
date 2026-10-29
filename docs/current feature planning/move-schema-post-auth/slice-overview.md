@@ -65,7 +65,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 | 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
 | 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | D-PSY |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
-| par | stage-0.md: resolved-move report and intent scenarios | to plan, any time | none (needed before 4d closes) |
+| par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; 4 cd rulings open | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
 | 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |
 | 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |

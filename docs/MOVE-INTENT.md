@@ -42,6 +42,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Per-move rule over the Q13 invariant: its raises may last shorter than its cooldown (data today: duration 4 s, cooldown 8 s on both its Attack and Speed raises). maxStacks has a floor of 1; all other rules of the maxStacks equation apply, so the cap is max(1, min(floor(duration / cooldown), 6)). (Jess, 2026-10-28, CP3) Code differs, see TODO: the upgrade formula is not built (QA-11 follow-up).
 - Ledger: B4-I05
 
+### dragon-rage
+- [Approved] cd 3.5 (move-overrides.js), not the legacy 1: flat 40 to everything in its 250 x 30 band, so it fires about 3.5x less often than today. Playtested in batch 1. (Jess, 2026-10-29, Stage 0 cd ruling)
+
 ### fire-spin
 - [Approved] Burn at the full standard length (half-burn dropped), trap, no strip. The persistent orbit damage stays as authored. (Q17; QA-10)
 - New-path data already matches: damage, burn 100% and trap 100% on the foe (slice-4c-1-codehandoff.md:10, :46). The trap and burn rules themselves are in docs/COMBAT-RULES.md "Trap, enemies" and "Damage over time".
@@ -55,6 +58,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### gust
 - [Open] Per-shot spread (review 9.4 C4, 9.7 item 4). Options recorded in slice-4d.md: a data change to a 3-count simultaneous fan, or accept the legacy +-0.03 jitter, or a new emit-level aim jitter field (a new field is a stop-and-ask). Needed before slice 4d.
+- [Approved] cd 0.5 (formula), not the legacy 0.26: Gust is now a cast that emits 3 projectiles with a normal cooldown, not an orbit with a re-hit. (Jess, 2026-10-29, Stage 0 cd ruling)
 - Ledger: B4-I08
 
 ### hail
@@ -116,10 +120,12 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### spikes
 - [Approved] Deliberately NOT persistent. Keeps no timeout; it is bounded by the instance cap (combat-architecture H6). (review 9.2 C13, 9.1 Q16)
+- [Approved] cd 1.1 (move-overrides.js), not the legacy 1.2. (Jess, 2026-10-29, Stage 0 cd ruling)
 - Ledger: B4-I20
 
 ### string-shot
 - [Approved] The double application (Speed -2 twice, -4) is allowed. No data change. (review 9.8 S7) Shot spacing goes to the feel issue and slice 4d. (slice-4c.md decisions)
+- [Approved] cd 1.1 (move-overrides.js), the legacy value: the 0.5 the new path had was a regression. The cooldown does not cause the two shots of one cast reading as one (#15); that is shot spacing. (Jess, 2026-10-29, Stage 0 cd ruling)
 - Ledger: B4-I21
 
 ### substitute

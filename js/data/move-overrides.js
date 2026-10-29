@@ -14,7 +14,7 @@
     'harden':       { cd: 8, why: 'no cd set yet (legacy 8)' },
     'aqua-ring':    { cd: 8, why: 'no cd set yet (legacy 8)' },
     'dragon-dance': { cd: 8, why: 'no cd set yet (legacy 8)' },
-    'string-shot':  { cd: 0.5, why: 'no cd set yet (legacy 1.1)' },
+    'string-shot':  { cd: 1.1, why: 'Jess 2026-10-29: 0.5 was a regression, restored to legacy 1.1' },
     'spikes':       { cd: 1.1, why: 'no cd set yet (legacy 1.2)' },
     'toxic-spikes': { cd: 1.1, why: 'no cd set yet (legacy 1.1)' },
     'hail':         { cd: 1.2, why: 'no cd set yet (legacy 1.2)' },
