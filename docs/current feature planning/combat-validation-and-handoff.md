@@ -16,7 +16,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 | move-consistency-review:CP1-Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
 | D-1 | Re-authored novas start at 1 px (MOVE-AXIS-SCHEMA "Grammar decisions", Jess 2026-10-26; built in slice 3a), `grow.max` = today's radius, growSpeed unchanged. The original "near the caster's body radius" wording is superseded |
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
-| D-2 | maxStacks values for Leaf Storm and Metal Claw: Jess's to-do, required before slice 4a |
+| D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (DECISIONS:Q14; COMBAT-RULES "Stat stages and maxStacks") |
 | D-3 | Meteor Mash: the projectile hits enemy 1; at enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1 |
 | D-4 | Approved: per-move routing behind `?newcombat` until slice 7 |
 
@@ -76,7 +76,7 @@ Each slice is accepted on a small set that covers every axis value it introduces
 | 3c / 3d core | radial arc, radial point travel, linear, full circle, grow (time), count with spread, pierce 0 / n / UNLIMITED, oncePerInstance, interval, damage | Tackle, Ember, Water Gun, Hydro Pump, Heat Wave, Mud Shot, Flamethrower (aimTrack ignored until 4c) |
 | 4a riders | ailment incl. trap root, flinch, knockback, crit, heal from dealt, stat on foe | Body Slam, String Shot, Ice Beam, Bite, Psycho Cut, Giga Drain, Bulldoze |
 | 4b self and specials | shapeless self casts, team and individual stats, heal over time, recoil and shield, setWeather, fixed/level/status damage, chain | Swords Dance, Dragon Dance, Aqua Ring, Substitute, Hail, Dragon Rage, Night Shade (needs persistent from 4c, or test as a single pulse first), Hex, Thunderbolt |
-| 4c motion extras | returns with legs, orbits and persistence, repositions, delay and falls, aimTrack, turnRate, path curve and oscillate | Bonemerang, Fire Spin, Leaf Storm, Quick Attack, Aerial Ace, Rock Slide, Psychic, Aura Sphere, Bubble Beam, Confusion |
+| 4c motion extras | returns with legs, orbits and persistence, repositions, delay and falls, aimTrack, turnRate, path curve and oscillate | Bonemerang, Fire Spin, Leaf Storm, Night Shade, Razor Leaf, Quick Attack, Aerial Ace, Rock Slide, Psychic, Aura Sphere, Bubble Beam, Confusion (4c-1 to 4c-3 split: move-schema-post-auth/slice-overview.md) |
 | 4d emitters | cast, interval, casterMove, termination, enemyHit triggers; instance cap | Gust, Discharge, Toxic, Flame Wheel, Toxic Spikes, Will-O-Wisp, Meteor Mash, Spikes |
 
 ### 1.6 Staged validation plan with acceptance criteria
@@ -109,7 +109,7 @@ Accept when: Jess has a ranked table and has decided whether any normalization i
 
 ### 2.1 Can the axes express the 63 moves?
 
-Yes, after the slice 3a grammar additions (persistent, range, instance-level delay, stat duration and maxStacks defaults, start-size grow, the instance cap constant) and two definitions that are still open (spread, F1; location pick, F3). Behavior that remains intentionally unexpressed: Toxic's escalating poison and continuous ribbon (accepted stand-ins), source priority (no real-time analogue), Fire Spin's legacy stat strip and half-strength burn (dropped; confirm this is intended).
+Yes, after the slice 3a grammar additions (persistent, range, instance-level delay, stat duration and maxStacks defaults, start-size grow, the instance cap constant) and two definitions since settled (spread, move-consistency-review:F1, and location pick, move-consistency-review:F3: MOVE-AXIS-SCHEMA `spread` and `locationPick` rows). Behavior that remains intentionally unexpressed: Toxic's escalating poison and continuous ribbon (accepted stand-ins), source priority (no real-time analogue), Fire Spin's legacy stat strip and half-strength burn (dropped, confirmed: DECISIONS:QA-10 and DECISIONS:Q17, burn at full standard length plus trap, no strip).
 
 ### 2.2 New findings from this pass (not in Checkpoint 1)
 
@@ -213,7 +213,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04), which owns int
 | item | schema? | implementation? |
 | --- | --- | --- |
 | Leg-keyed eligibility | data already expresses it (outAndBack) | missing (4c) |
-| Trap as root on enemies | schema fine | missing (status.js, 4a) |
+| Trap as root on enemies | schema fine | built (status.js, slice 4a) |
 | Turnaround distance, acquisition range, dash cap | was missing; `range` added in 3a | missing (3c, 4c) |
 | Instance delay / telegraph | was on the caster; moves to the instance in 3a | missing (4c) |
 | Persistence | was inferred; explicit flag in 3a | missing (4c) |

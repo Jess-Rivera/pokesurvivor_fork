@@ -6,7 +6,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 ## Where we are
 - Branch feature-test/new-move-schema, consolidation merged (04ecc29). Coding has not resumed yet.
 - Move schema: slices 1 to 3d, 4a, 4b DONE (21 of 63 moves routed behind ?dev&newcombat).
-- NEW live slice plan: docs/current feature planning/move-schema-post-auth/slice-overview.md. The old move-schema/ folder is history except the three 4c codehandoffs (still the build steps, DECISIONS:Q23, read with the corrections in the new 4c-n files). Slice 0 passes 1 to 3 done 2026-10-29 (detail in slice-0 Results); pass 4 (LOW) open; F-REP-1/2 report regeneration deferred. New CLAUDE.md rule: cross-document IDs as `file:ID`.
+- NEW live slice plan: docs/current feature planning/move-schema-post-auth/slice-overview.md. The old move-schema/ folder is history except the three 4c codehandoffs (still the build steps, DECISIONS:Q23, read with the corrections in the new 4c-n files). Slice 0 DONE 2026-10-29 (all four passes, detail in slice-0 Results) except F-REP-1/2 report regeneration (deferred, TODO Backlog). New CLAUDE.md rule: cross-document IDs as `file:ID`.
 - Audit of planning docs vs sources of truth: docs/current feature planning/AUDIT-vs-sources-of-truth.md (3 HIGH, 20 MEDIUM, 11 LOW).
 - Branch end (Jess, 2026-10-28): merge into main after slice 7b with all moves on the new path; then a new branch imports the gym-roster moves. A code gap is built here only if tied to the move work (table in the new overview).
 
