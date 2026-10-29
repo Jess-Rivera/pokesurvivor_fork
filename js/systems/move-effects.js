@@ -76,6 +76,22 @@ G.MoveEffects = (() => {
     return k;
   }
 
+  // ---- knockback direction and the pull clamp (D33, slice 4c-2) ----
+  // Enemy.hurt adds knock x the unit direction to the enemy's slide velocity, which enemy.js decays by 0.0015^dt per second, so a
+  // knock k slides about k x dt / (1 - 0.0015^dt) px: 0.16 at dt 1/60, 0.17 at 1/30, 0.18 at 1/20. SLIDE is that worst case, so a
+  // clamped pull never carries an enemy past the caster's edge.
+  const SLIDE = 0.18;
+  /** [dirX, dirY, knock] for e.hurt. `direction: travel` uses the instance's velocity when it has one (returns, travels), else away
+   *  from the instance centre as before. A travel knock toward the owner is cut so the enemy stops at the owner's edge (Bonemerang). */
+  function knockOf(inst, e, kfx) {
+    let dx = e.x - inst.x, dy = e.y - inst.y, k = kfx ? kfx.distance || 0 : 0;
+    if (!k || kfx.direction !== 'travel' || !(inst.vx || inst.vy)) return [dx, dy, k];
+    dx = inst.vx; dy = inst.vy;
+    const o = inst.cast.owner, tx = o.x - e.x, ty = o.y - e.y;
+    if (dx * tx + dy * ty > 0) k = Math.min(k, Math.max(0, Math.hypot(tx, ty) - (o.r || 0) - (e.r || 0)) / SLIDE);     // a pull: clamp; a push: never
+    return [dx, dy, k];
+  }
+
   function damage(inst, e, rng, fx, hop, hit) {
     const def = inst.spec, o = inst.cast.owner;
     const sb = specialOf(def, 'statusBonus');                                       // D13: a POWER term, checked per hop target
@@ -90,7 +106,8 @@ G.MoveEffects = (() => {
     const dmg = Math.max(1, full * hopMul(def, hop));                                                 // D15: the chain reduction is applied last
     const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     const hp0 = e.hp, sh0 = e.shield || 0;
-    e.hurt(dmg, col, e.x - inst.x, e.y - inst.y, kfx ? kfx.distance || 0 : 0, crit ? 'crit' : G.Types.label(hit.typeMult));     // D33
+    const kn = knockOf(inst, e, kfx);
+    e.hurt(dmg, col, kn[0], kn[1], kn[2], crit ? 'crit' : G.Types.label(hit.typeMult));     // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg; hit.crit = crit;
@@ -135,7 +152,8 @@ G.MoveEffects = (() => {
     const dmg = Math.max(1, amount * hopMul(def, hop));
     const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     const hp0 = e.hp, sh0 = e.shield || 0;
-    e.hurt(dmg, col, e.x - inst.x, e.y - inst.y, kfx ? kfx.distance || 0 : 0, null);
+    const kn = knockOf(inst, e, kfx);
+    e.hurt(dmg, col, kn[0], kn[1], kn[2], null);
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg; hit.crit = false; hit.typeMult = 1;
@@ -255,5 +273,5 @@ G.MoveEffects = (() => {
     return out;
   }
 
-  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula };
+  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE };
 })();

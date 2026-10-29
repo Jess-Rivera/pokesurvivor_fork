@@ -99,7 +99,13 @@ const hitsOf = (tape, id) => tape.filter(e => e.type === 'move:hit' && (id == nu
   run(q, [e], 1.0); q.act = 1; run(q, null, 1 / 60, { reset: false }); q.act = 0;
   const t4 = run(q, null, 3 / 60, { reset: false });
   ok(hitsOf(t4, 'fire-spin').length >= 1, 'swap back: the fresh group hits at once (no hit record carried over)');
-  console.log('1 R7: one group while active, notActive on swap and stun, ownerDeath on a faint, fresh group on return, no cooldown, clear leaves none'); }
+  const r = mkP([['fire-spin'], ['tackle']]); run(r, [], 0.2);
+  const keep = r.slots[0], s0 = [...groupsOf(r, 'fire-spin')][0];
+  r.slots = [r.slots[1], keep]; r.act = 1; run(r, null, 1 / 60, { reset: false });
+  ok(groupsOf(r, 'fire-spin').size === 1 && [...groupsOf(r, 'fire-spin')][0] === s0, 'slots reordered (arrange): the same slot object keeps its group');
+  r.slots = [[{ id: 'tackle', t: 0 }]]; r.act = 0; const t5 = run(r, null, 1 / 60, { reset: false });
+  ok(groupsOf(r, 'fire-spin').size === 0 && ends(t5, 'notActive').length === 3, 'its slot removed from the slot list (a debug set switch, a removed move): the group ends that frame, notActive');
+  console.log('1 R7: one group while active, notActive on swap, stun and slot removal, ownerDeath on a faint, fresh group on return, no cooldown, clear leaves none'); }
 
 // 2. orbit geometry (D25, H15, D36)
 { for (const dt of DTS) {

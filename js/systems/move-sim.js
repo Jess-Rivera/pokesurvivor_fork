@@ -13,6 +13,14 @@
  * Slice 4c-1: persistent upkeep (R7, combat-architecture:H25). The slot owns a persistent move's life: it spawns while the slot is
  * active, ends on leaving the active group or a stun (notActive) or a faint (ownerDeath), and spawns again after a group ends by its
  * own endOn. Orbits ride a true circle around the owner (D25, H15) with the orbit radius through the lens (D36).
+ * Slice 4c-2: legs (R2, H1, H22). An instance carries a leg (0 at spawn); a hit record counts only in the leg it was made in, and a
+ * new leg also resets the pierce budget. returns (D26): out along the heading until `range` from the cast origin, then home on the
+ * owner's current position, `returned` at owner radius plus own radius. repositions (D27, R1, R9): the point is the cast target's
+ * position capped by `range`, walked in 8 px steps with World.isFree and settled with World.collide. swept: the owner is carried at
+ * dashMult x its final move speed (read at the cast), hitbox off in transit, armed for one step at the point (a circle there, not a
+ * sweep), then back to the origin (leg 1), with i-frames raised every step and the owner rooted (mvRoot) while it lives.
+ * teleport: the owner is placed at the point at cast, the hitbox is live for the instance's life, i-frames once from the cast.
+ * Pierce exhaustion disarms a returns or repositions instance but never ends it (R1, H22); an owner faint ends both.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
@@ -88,18 +96,60 @@ G.MoveSim = (() => {
     const d = spec.delivery, o = cast.owner;
     const at = d.anchor === 'target' && cast.target ? cast.target : d.anchor === 'world' ? cast.point || cast : o;
     const inst = { id: ++serial, spec, cast, fan: i, x: at.x, y: at.y, prevX: at.x, prevY: at.y, bx: at.x, by: at.y,
-      heading, age: 0, dist: 0, steer: cast.target, retargeted: false, struck: 0,
+      heading, age: 0, dist: 0, steer: cast.target, retargeted: false, struck: 0, leg: 0, armed: true,
       pierce: spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null };
     if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }     // start on the ring, so the first sweep does not cross the circle
+    if (d.motion === 'repositions') setupReposition(inst);
     insts.push(inst);     // roots act in their cast frame (S9); children (slice 4d) will be deferred to the end of the step (R6)
+    if (inst.dash) rootOf(o);
     return inst;
   }
+
+  // ---- repositions (slice 4c-2, D27, R9) ----
+  const STEP = 8;     // the legacy dash's wall probe step (combat.js dash), radius 0.8 x the owner's
+  /** The landing point: the cast target's position, capped by range on the line from the owner, cut at the last free 8 px step. */
+  function repoPoint(o, def, t) {
+    const dx = t.x - o.x, dy = t.y - o.y, D = Math.hypot(dx, dy), want = Math.min(rangeOf(def), D), pr = (o.r || 12) * 0.8;
+    let len = 0;
+    if (want > EPS) {
+      const ux = dx / D, uy = dy / D;
+      for (let k = 1; ; k++) {
+        const d = Math.min(k * STEP, want);
+        if (!G.World.isFree(o.x + ux * d, o.y + uy * d, pr, true)) break;
+        len = d;
+        if (d >= want - EPS) break;
+      }
+      const p = { x: o.x + ux * len, y: o.y + uy * len, r: o.r || 12 };
+      G.World.collide(p);     // a legal final spot, not inside a wall or a solid prop
+      return p;
+    }
+    return { x: o.x, y: o.y };
+  }
+  /** The owner's final move speed (player.spd) without the root flag, which would read as 0 (P6). */
+  function speedOf(o) { const was = o.mvRoot; o.mvRoot = false; const v = o.spd || 0; o.mvRoot = was; return v; }
+  function setupReposition(inst) {
+    const d = inst.spec.delivery, o = inst.cast.owner, p = repoPoint(o, inst.spec, inst.cast.target || o), iv = (inst.spec.casterState || {}).iframes || 0;
+    inst.ox = o.x; inst.oy = o.y; inst.tx = p.x; inst.ty = p.y; inst.heading = Math.atan2(p.y - o.y, p.x - o.x);
+    if (d.repositionMode === 'teleport') {
+      o.x = p.x; o.y = p.y; inst.x = inst.prevX = p.x; inst.y = inst.prevY = p.y;
+      if (iv) o.invuln = Math.max(o.invuln || 0, iv);     // once, from the cast
+      return;
+    }
+    inst.dash = true; inst.phase = 'out'; inst.armed = false; inst.px = o.x; inst.py = o.y;
+    inst.v = (d.dashMult || 1) * speedOf(o);
+    if (iv) o.invuln = Math.max(o.invuln || 0, iv);
+  }
+  /** Cast gate for repositions: a dash never overlaps a live dash of the same owner (both would write its position), and a swept
+   *  dash at speed 0 would never arrive. Either way the slot retries, so the cooldown counts from when the dash can start. */
+  const repoCanGo = (def, o) => def.delivery.motion !== 'repositions' || (!insts.some(i => i.dash && i.cast.owner === o) &&
+    (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 
   function castSlot(o, slot, def, now) {
     if (G.Status.stunned(o)) { slot.t = RETRY; return null; }       // a stunned owner casts nothing; the move stays ready
     const pick = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
     if (!pick) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
     if (!G.MoveEffects.canCast(def, o)) { slot.t = RETRY; return null; }     // P3: the cost would kill, or a shield is live; cooldown not spent
+    if (!repoCanGo(def, o)) { slot.t = RETRY; return null; }         // 4c-2: no dash over a live dash, no dash at speed 0
     slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));                 // D3
     if (G.Status.fizzle(o, rng)) return null;                         // fizzle spends the cooldown
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, serial: ++castSerial };
@@ -147,7 +197,8 @@ G.MoveSim = (() => {
     if (m.part === 'cooldown' && (!m.ids || m.ids.has(m.def.id))) m.slot.t = Math.max(0.05, m.def.cd * (m.o.cdMul || 1));     // armed from now
     if (m.part === 'movement' && m.type === 'slowed') G.Stages.drop(m.o, m.src);
   }
-  const rootOf = o => { o.mvRoot = cms.some(m => m.o === o && m.part === 'movement' && m.type === 'rooted'); };
+  // one flag, two sources rebuilt together: a rooted commitment (4b) or a live swept dash (4c-2), so neither ends the other early
+  const rootOf = o => { o.mvRoot = cms.some(m => m.o === o && m.part === 'movement' && m.type === 'rooted') || insts.some(i => i.dash && i.cast.owner === o); };
   function upkeepCommits(dt, o) {
     if (!cms.length) return;
     for (const m of cms) if (m.o === o) m.left -= dt;
@@ -189,6 +240,10 @@ G.MoveSim = (() => {
       else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');
       else if (!mine.length) spawnPersistent(o, slot, def, now);
     }
+    // A group whose slot is no longer in the owner's slots (a slot list rebuilt or a move removed) has no slot left to end it, so it
+    // ends here: notActive, or ownerDeath on a faint. Moving the same slot objects around (arrange, fuse) keeps their groups.
+    const orphans = insts.filter(i => i.cast.persist && i.cast.owner === o && !o.slots.some(g => g.includes(i.cast.slot)));
+    if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');
   }
 
   function tick(dt, o, now) {
@@ -249,6 +304,7 @@ G.MoveSim = (() => {
         }
       }
       inst.heading = wrap(inst.heading);
+      inst.vx = Math.cos(inst.heading) * v; inst.vy = Math.sin(inst.heading) * v;     // knockback `direction: travel` (D33)
       let off = 0;     // D24: exact positional offset across the current heading, independent of dt
       if (p.oscillate) off = p.oscillate.amplitude * Math.sin(TAU * p.oscillate.frequency * inst.age);
       inst.x = inst.bx - Math.sin(inst.heading) * off;
@@ -258,8 +314,47 @@ G.MoveSim = (() => {
       const d = inst.spec.delivery, o = inst.cast.owner, n = Math.max(1, inst.spec.space.count || 1), r = d.orbitRadius * lensOf(o);
       const a = d.angularSpeed * inst.age + (TAU * inst.fan) / n;
       inst.x = o.x + Math.cos(a) * r; inst.y = o.y + Math.sin(a) * r; inst.heading = wrap(a + Math.PI / 2);
+    },
+    returns(inst, dt) {     // D26 (slice 4c-2): out to range from the cast origin, then home on the owner's current position
+      const d = inst.spec.delivery, v = d.moveSpeed || 0, o = inst.cast.owner;
+      if (inst.turn) { inst.turn = false; newLeg(inst, d.returnHits === 'outAndBack'); }     // leg 1 starts the step after the turnaround
+      if (inst.leg === 0) {
+        const R = rangeOf(inst.spec), s = Math.min(v * dt, Math.max(0, R - inst.dist));
+        inst.bx += Math.cos(inst.heading) * s; inst.by += Math.sin(inst.heading) * s; inst.dist += s;
+        inst.vx = Math.cos(inst.heading) * v; inst.vy = Math.sin(inst.heading) * v;
+        if (inst.dist >= R - EPS) inst.turn = true;     // the turnaround is this step, never more than one step past range
+      } else {
+        const dx = o.x - inst.bx, dy = o.y - inst.by, D = Math.hypot(dx, dy), s = Math.min(v * dt, D);
+        if (D > EPS) { inst.bx += dx / D * s; inst.by += dy / D * s; inst.heading = Math.atan2(dy, dx); inst.vx = dx / D * v; inst.vy = dy / D * v; }
+        inst.dist += s;
+        const own = (inst.spec.space.radRadius || 0) * lensOf(o);
+        if (Math.hypot(o.x - inst.bx, o.y - inst.by) <= (o.r || 0) + own + EPS) inst.returned = true;
+      }
+      inst.x = inst.bx; inst.y = inst.by;
+    },
+    repositions(inst, dt) {     // D27 (slice 4c-2): teleport rides the owner; swept carries it to the point and back
+      const d = inst.spec.delivery, o = inst.cast.owner;
+      if (!inst.dash) { follow(inst); return; }
+      if (inst.legUp) { inst.legUp = false; newLeg(inst, false); }
+      inst.armed = false;
+      if (inst.phase === 'out' || inst.phase === 'back') {
+        const out = inst.phase === 'out', tx = out ? inst.tx : inst.ox, ty = out ? inst.ty : inst.oy;
+        const dx = tx - inst.px, dy = ty - inst.py, rem = Math.hypot(dx, dy), s = inst.v * dt;
+        if (rem > EPS) inst.heading = Math.atan2(dy, dx);
+        if (rem <= s + EPS) {
+          inst.px = tx; inst.py = ty;     // snap: the point, or the exact origin
+          if (out) { inst.armed = true; inst.phase = d.returnToOrigin ? 'back' : 'done'; inst.legUp = true; }     // R1: the one armed step at B
+          else { inst.phase = 'done'; inst.returned = true; inst.armed = d.returnHits === 'outAndBack'; }
+        } else { inst.px += dx / rem * s; inst.py += dy / rem * s; }
+      }
+      o.x = inst.px; o.y = inst.py; inst.x = o.x; inst.y = o.y;
+      if (inst.armed) { inst.prevX = inst.x; inst.prevY = inst.y; }     // the arrival hit is a circle at the point, not a sweep of the last step
+      const iv = (inst.spec.casterState || {}).iframes || 0;
+      if (iv) o.invuln = Math.max(o.invuln || 0, iv);     // P8: the whole dash, the last raise leaves the tail; never lowered
     }
   };
+  /** R2, H22: a new leg has its own once-per-instance memory and a fresh pierce budget. `armed` says whether it may hit at all. */
+  function newLeg(inst, armed) { inst.leg++; inst.struck = 0; inst.armed = armed; }
 
   // ---- eligibility table, keyed by hitPolicy (I3): the only place hit timing is decided ----
   const ELIGIBLE = {
@@ -268,6 +363,7 @@ G.MoveSim = (() => {
   };
 
   function collide(inst, maxR) {
+    if (inst.armed === false) return;     // 4c-2: a disarmed hitbox (dash in transit, a returnHits out leg) tests nothing
     const s = inst.shape, b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR), cands = [];
     G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, e => { if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, e.x, e.y, e.r)) cands.push(e); });
     // destructible props join the same sweep (slice 3d, D2): solid ones spend pierce like an enemy, grass never does
@@ -278,13 +374,13 @@ G.MoveSim = (() => {
       isProp(a) - isProp(c) || (a.id < c.id ? -1 : a.id > c.id ? 1 : 0));
     const elig = ELIGIBLE[inst.spec.hitPolicy || 'oncePerInstance'], go = [];
     for (const e of cands) {     // I4: every eligibility decision before any payload runs
-      const key = isProp(e) ? e : e.id, rec = inst.hits.get(key);     // a prop is keyed by itself, so its id never collides with an enemy's
+      const key = isProp(e) ? e : e.id, had = inst.hits.get(key), rec = had && had.leg === inst.leg ? had : null;     // a prop is keyed by itself; a record from an earlier leg counts as absent (R2)
       if (!elig(rec, inst)) continue;
       if (!rec) {
         if (inst.struck > inst.pierce) continue;
         if (!isProp(e) || e.solid) inst.struck++;     // D16: pierce n damages n + 1 distinct enemies (or solid props)
       }
-      inst.hits.set(key, { t: inst.age, leg: 0 });
+      inst.hits.set(key, { t: inst.age, leg: inst.leg });
       go.push(e);
     }
     const struck = [];
@@ -337,13 +433,18 @@ G.MoveSim = (() => {
     },
     offScreen: inst => !!view && (inst.x < view.x - OFF_MARGIN || inst.y < view.y - OFF_MARGIN ||
       inst.x > view.x + view.w + OFF_MARGIN || inst.y > view.y + view.h + OFF_MARGIN) && 'offScreen',
-    ownerDeath: inst => !!inst.cast.owner.dead && 'ownerDeath'
+    ownerDeath: inst => !!inst.cast.owner.dead && 'ownerDeath',
+    returned: inst => !!inst.returned && 'returned'     // 4c-2: returns home (D26) or a swept dash back at its origin (D27)
   };
+  const OWNED = { returns: true, repositions: true };     // motions that ride or chase the owner (4c-2)
   function checkEnd(inst) {
+    const owned = OWNED[inst.spec.delivery.motion];
+    if (owned && inst.cast.owner.dead) return 'ownerDeath';     // a faint ends a bone or a dash, listed or not
     for (const c of inst.spec.delivery.endOn || []) for (const k in c) {
       const r = END[k] && END[k](inst, c[k]);
       if (r) return r;
     }
+    if (owned) return null;     // R1, H22: pierce exhaustion only disarms (the per-leg budget); returned or time ends it
     return inst.struck > inst.pierce ? 'pierce' : null;
   }
 
@@ -359,11 +460,14 @@ G.MoveSim = (() => {
         { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: lensOf(inst.cast.owner) });
     }
     for (const inst of insts) collide(inst, maxR);
+    const unroot = new Set();
     for (const inst of insts) {
       inst.done = checkEnd(inst);
       if (inst.done) G.SimBus.emit('move:end', { moveId: inst.spec.id, instId: inst.id, reason: inst.done, x: inst.x, y: inst.y });
+      if (inst.done && inst.dash) unroot.add(inst.cast.owner);
     }
     insts = insts.filter(i => !i.done);
+    for (const o of unroot) rootOf(o);     // 4c-2: the dash root ends with the dash; a live rooted commitment keeps the flag
   }
 
   /** Swap-out or faint (S1, S13): end the owner's commitments (a frozen casting slot is armed now), heal over time and shield. */
@@ -375,7 +479,7 @@ G.MoveSim = (() => {
   }
   function clear(o) {
     if (o) { insts = insts.filter(i => i.cast.owner !== o); endOwner(o); }
-    else { insts = []; cms = []; G.MoveEffects.endSelf(null); }     // run start or back to the menu: fresh Pokemon objects
+    else { for (const i of insts) if (i.dash) i.cast.owner.mvRoot = false; insts = []; cms = []; G.MoveEffects.endSelf(null); }     // run start or back to the menu
   }
 
   return {

@@ -13,6 +13,11 @@ G.CHANGELOG = [
      'On the new move system (dev builds only), stat drops on enemies now stack all the way to -6 unless a move has its own limit (Ice Beam and Bug Buzz stay at -1), and Metal Claw and Meteor Mash raise Attack by at most +1 each.'],
     ['On the new move system (dev builds only), Fire Spin, Leaf Storm and Night Shade now run: their orbs and aura stay up while the move is your active one and vanish the moment you switch away, are frozen or asleep, or faint.',
      'On the new move system (dev builds only), Fire Spin, Leaf Storm and Night Shade now run: their orbs and aura stay up while the move is your active one and vanish the moment you switch away, are frozen or asleep, or faint.'],
+    ['On the new move system (dev builds only), Razor Leaf, Bonemerang, Quick Attack and Aerial Ace now run: the leaves and bones fly out, come back to you and can hit on both trips (Bonemerang pushes enemies out and pulls them back, never past you), Quick Attack dashes to the nearest enemy, strikes it and dashes back with you untouchable the whole way, and Aerial Ace teleports onto its target.',
+     'On the new move system (dev builds only), Razor Leaf, Bonemerang, Quick Attack and Aerial Ace now run: the leaves and bones fly out, come back to you and can hit on both trips (Bonemerang pushes enemies out and pulls them back, never past you), Quick Attack dashes to the nearest enemy, strikes it and dashes back with you untouchable the whole way, and Aerial Ace teleports onto its target.'],
+  ], fix: [
+    ['On the new move system (dev builds only), an orbit or aura no longer stays on screen after its move is taken out of your move list.',
+     'On the new move system (dev builds only), an orbit or aura no longer stays on screen after its move is taken out of your move list.'],
   ] },
   { d: '2026-10-22', title: ['Re-Do resumes on the right Pokemon', 'Re-Do resumes on the right Pokemon'], new: [
     ['Gym gates now have a timer. You have a short grace period to enter; if you ignore the gate, the Gym Leader and the wild Pokemon on the map keep getting stronger (and stronger, with no limit) until you go in. Clear the gym and the world returns to normal.',

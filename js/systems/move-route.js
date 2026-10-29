@@ -15,7 +15,8 @@ G.MoveRoute = (() => {
   const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower',     // 3c / 3d
     'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze',                          // 4a riders
     'swords-dance', 'dragon-dance', 'aqua-ring', 'substitute', 'dragon-rage', 'hex', 'thunderbolt',                  // 4b self-casts, specials, chains
-    'fire-spin', 'leaf-storm', 'night-shade']);                                                                      // 4c-1 persistence and orbits
+    'fire-spin', 'leaf-storm', 'night-shade',                                                                        // 4c-1 persistence and orbits
+    'razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace']);                                                      // 4c-2 returns and repositions
   const routed = id => on && !G.Coop.active && ROUTED.has(id);
   let owner = null;
 

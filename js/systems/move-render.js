@@ -16,6 +16,9 @@
  *   Slice 4c-1: orbiting shapes are drawn with the legacy 0.7 vertical squash around the owner (presentation only, combat-architecture:H15;
  *   the sim and the overlay keep the true circle), a standing persistent patch (Night Shade) is drawn lighter, and the dev line over
  *   the player lists its live persistent groups and whether it counts as stunned.
+ *   Slice 4c-2: a returning shape (Razor Leaf, Bonemerang) spins with a faint trail; a swept dash (Quick Attack) is a streak from
+ *   its origin to the owner with an afterimage at the origin; a teleport (Aerial Ace) flashes a ring at both ends. A dash's hitbox
+ *   outline shows only while it is armed. The overlay prints each bone's or dash's leg and the player's invulnerability timer.
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
  *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes and the chain bolts.
  */
@@ -68,12 +71,33 @@ G.MoveRender = (() => {
     }
   }
 
+  /** Slice 4c-2, presentation only: the swept dash streak and afterimage, or the teleport's two flashes, then the armed hitbox. */
+  function drawReposition(ctx, inst, s, col) {
+    const d = inst.spec.delivery, o = inst.cast.owner;
+    ctx.save();
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineCap = 'round';
+    if (inst.dash) {
+      ctx.globalAlpha = 0.25; ctx.lineWidth = (o.r || 12) * 1.4;
+      ctx.beginPath(); ctx.moveTo(inst.ox, inst.oy); ctx.lineTo(o.x, o.y); ctx.stroke();
+      ctx.globalAlpha = 0.8; ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff';
+      ctx.beginPath(); ctx.moveTo(inst.ox, inst.oy); ctx.lineTo(o.x, o.y); ctx.stroke();
+      ctx.globalAlpha = 0.22; ctx.beginPath(); ctx.arc(inst.ox, inst.oy - (o.bodyH || 30) * 0.4, (o.r || 12) * 1.1, 0, TAU); ctx.fill();     // afterimage
+    } else {
+      const k = Math.min(1, inst.age / 0.12);
+      ctx.lineWidth = 3; ctx.globalAlpha = Math.max(0, 1 - k);
+      for (const [x, y] of [[inst.ox, inst.oy], [inst.x, inst.y]]) { ctx.beginPath(); ctx.arc(x, y, 10 + 34 * k, 0, TAU); ctx.stroke(); }
+    }
+    if (inst.armed && s) { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.85; trace(ctx, s); ctx.stroke(); }
+    ctx.restore();
+  }
+
   function drawAir(ctx) {
     const now = performance.now() / 1000;
     for (const inst of G.MoveSim.list()) {
       const s = inst.shape;
       if (!s || !G.Camera.sees(s.x, s.y, (s.len || s.r) + 60)) continue;
       const col = colOf(inst), a = fadeOf(inst);
+      if (inst.spec.delivery.motion === 'repositions') { drawReposition(ctx, inst, s, col); continue; }
       ctx.save();
       if (inst.spec.delivery.motion !== 'static' && s.family === 'point') {     // a travelling ball: glow, body, white core
         const v = inst.spec.delivery.motion === 'orbits' ? squash(inst, s) : s;     // 4c-1: an orbit is drawn squashed, its hitbox is not
@@ -82,6 +106,14 @@ G.MoveRender = (() => {
         ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 1.7 * pulse, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.95 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, TAU); ctx.fill();
         ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.8 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 0.45, 0, TAU); ctx.fill();
+        if (inst.spec.delivery.motion === 'returns') {     // 4c-2: a spinning blade and a faint trail behind the travel direction
+          const sp = Math.hypot(inst.vx || 0, inst.vy || 0) || 1, ux = (inst.vx || 0) / sp, uy = (inst.vy || 0) / sp, rot = now * 18 + inst.id;
+          ctx.strokeStyle = col; ctx.lineCap = 'round';
+          ctx.globalAlpha = 0.25 * a; ctx.lineWidth = v.r * 1.2;
+          ctx.beginPath(); ctx.moveTo(v.x - ux * v.r * 5, v.y - uy * v.r * 5); ctx.lineTo(v.x, v.y); ctx.stroke();
+          ctx.globalAlpha = 0.9 * a; ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff';
+          ctx.beginPath(); ctx.moveTo(v.x - Math.cos(rot) * v.r * 2, v.y - Math.sin(rot) * v.r * 2); ctx.lineTo(v.x + Math.cos(rot) * v.r * 2, v.y + Math.sin(rot) * v.r * 2); ctx.stroke();
+        }
       } else {
         ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.85 * a;
         trace(ctx, s); ctx.stroke();
@@ -146,6 +178,7 @@ G.MoveRender = (() => {
       ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke();
     }
     ctx.globalAlpha = 1; ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff';
+    for (const inst of G.MoveSim.list()) if (inst.dash || inst.spec.delivery.motion === 'returns') ctx.fillText('leg ' + inst.leg, inst.x, inst.y - 14);     // 4c-2 (R2)
     for (const e of G.EnemyMgr.all()) {     // riders (slice 4a): statuses with seconds left, then stat stages
       if (e.dead || !G.Camera.sees(e.x, e.y, 40)) continue;
       const parts = G.Status.list(e).map(s => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
@@ -159,6 +192,7 @@ G.MoveRender = (() => {
       parts.push(...G.Stages.list(pl).map(s => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
       for (const g of G.MoveSim.persisted(pl)) parts.push(g.moveId + ' x' + g.shapes);     // 4c-1: live persistent groups (R7)
       if (G.Status.stunned(pl)) parts.push('stunned');
+      if (pl.invuln > 0) parts.push('invuln ' + pl.invuln.toFixed(2));     // 4c-2: dash i-frames and the tail
       for (const c of G.MoveSim.commits(pl)) parts.push(c.moveId + ' ' + (c.part === 'cooldown' ? 'freeze' : c.type) + (c.until === 'time' ? ' ' + c.left.toFixed(1) + 's' : ' (' + c.until + ')'));
       ctx.fillStyle = '#9fe8ff';
       ctx.fillText(parts.join(' | '), pl.x, pl.y - (pl.bodyH || 30) - 26);

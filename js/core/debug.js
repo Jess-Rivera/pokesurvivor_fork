@@ -333,12 +333,17 @@ G.Debug = (() => {
    *                       200 px for Hex. The overlay also prints your commitment timers (Flamethrower's slow and freeze).
  *  newcombat('persist')   slice 4c-1: Fire Spin, Leaf Storm and Night Shade, one per slot, with two rings of 8 slow awake dummies
  *                       (20 px/s) at 90 and 150 px. Cycle slots or swap Pokemon to check R7: the move you leave ends at once and
- *                       the new one spins up fresh. The overlay prints your live persistent groups and Leaf Storm's Sp. Atk -2. */
+ *                       the new one spins up fresh. The overlay prints your live persistent groups and Leaf Storm's Sp. Atk -2.
+ *  newcombat('motion')    slice 4c-2: Razor Leaf, Bonemerang, Quick Attack and Aerial Ace, one per slot, with a loose crowd of 12
+ *                       slow awake dummies (20 px/s) at 140 and 260 px. Bones go out and come back (Bonemerang pushes out, pulls
+ *                       back), Quick Attack dashes to the nearest and returns, Aerial Ace lands on it. The overlay prints each
+ *                       bone's or dash's leg and your invulnerability timer. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
     specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'],
-    persist: ['fire-spin', 'leaf-storm', 'night-shade'] };
+    persist: ['fire-spin', 'leaf-storm', 'night-shade'],
+    motion: ['razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -357,6 +362,7 @@ G.Debug = (() => {
     const ids = NC_SETS[set];
     if (!ids) { console.warn('[Debug] newcombat sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
     const riders = set === 'riders' || set === 'selfcasts';
+    G.MoveSim.clear(pl);     // the old set's live shapes, commitments, heal over time and shield end, as on a Pokemon swap
     pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
     pl.slots = pl.moves.map(m => [m]);
     pl.active = 0;
@@ -388,6 +394,17 @@ G.Debug = (() => {
         n++;
       }
       console.log('[Debug] new combat test (persist): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.');
+      return n;
+    }
+    if (set === 'motion') {     // slice 4c-2: a loose crowd, near enough for the dashes (range 420) and the bones (210 and 230)
+      for (const d of [140, 260]) for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3 + (d === 260 ? Math.PI / 6 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (motion): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots: bones out and back, Quick Attack dash and return, Aerial Ace teleport.');
       return n;
     }
     for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {

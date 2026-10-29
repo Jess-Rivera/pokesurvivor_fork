@@ -12,6 +12,7 @@ const M = [
   ['survives a swap away', 'sim', [["else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');", "else if (stunned) endGroup(mine, 'notActive');"]]],
   ['survives a stun', 'sim', [["else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');", "else if (!act.includes(slot)) endGroup(mine, 'notActive');"]]],
   ['never recreated after a swap back', 'sim', [['else if (!mine.length) spawnPersistent(o, slot, def, now);', 'else if (!mine.length && !slot.spawnedOnce) { slot.spawnedOnce = true; spawnPersistent(o, slot, def, now); }']]],
+  ['a removed slot leaves its group alive', 'sim', [["if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');", 'if (orphans.length) {}']]],
   ['a faint leaves the group alive', 'sim', [["if (o.dead) endGroup(mine, 'ownerDeath');", 'if (o.dead) {}']]],
   ['reuses old hit records after a swap back', 'sim', [['hits: new Map(), done', 'hits: cast.persist ? (cast.slot.rec = cast.slot.rec || new Map()) : new Map(), done']]],
   ['persistent move arms a cooldown', 'sim', [['const self = G.MoveEffects.applyCast(def, cast, rng), roots = []', 'slot.t = 1; const self = G.MoveEffects.applyCast(def, cast, rng), roots = []']]],
