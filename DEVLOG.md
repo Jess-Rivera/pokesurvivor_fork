@@ -128,3 +128,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - The Phase 4 ledger (temp-audit-outputs/phase-4-ledger.md, all working files of the audit) last exists in commit 5274f4b. Read it with: git show 5274f4b:temp-audit-outputs/phase-4-ledger.md
 - Docs and code still differ on the items in STATE.md (maxStacks default and caps, foe debuff cap, legacy Fire Spin, E1, QA-08 run loop).
 - Stopped at: Jess deletes temp-audit-outputs, commits, and merges into feature-test/new-move-schema (CP7).
+
+## 2026-10-28 (Claude Code, home): planning-doc audit and post-authority slice plan
+- Audited docs/current feature planning against the new sources of truth: AUDIT-vs-sources-of-truth.md (3 HIGH, 20 MEDIUM, 11 LOW, 3 suspected). Top: Leaf Storm grammar gap blocks 4c-1, Psychic re-pick, bare Q-number collision with DECISIONS, orphaned D-IDs in 4c handoffs.
+- Decided (Jess): branch merges into main after slice 7b; gym-roster move import gets a new branch; code gaps join this branch only if tied to the move work.
+- Wrote move-schema-post-auth/ (overview plus 0, 4c-0 to 4c-3, 4r, stage-0, 4d, 5, 6, 7a, 7b). Found: 20 moves had no routing slice (new 4r); open decisions D-FOECAP, D-MC5, D-ENEMY, D-COOP, D-HAIL, D-LOC.
+- No game code changed. Stopped at: Jess approves slice 0 doc fixes, answers D-FOECAP and D-LEAF.
