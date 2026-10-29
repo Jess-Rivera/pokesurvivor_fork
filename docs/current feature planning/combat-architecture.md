@@ -3,7 +3,7 @@
 - **Role:** Move runtime pipeline spec for the new combat path.
 - **Owns:** Runtime invariants, data flow, executors and move-path specifics.
 - **Does not own:** General combat math, status effects and stat stages (docs/COMBAT-RULES.md); move data grammar (docs/MOVE-AXIS-SCHEMA.md); per-move rulings (docs/MOVE-INTENT.md).
-- **Status home:** docs/current feature planning/move-schema/slice-overview.md.
+- **Status home:** docs/current feature planning/move-schema-post-auth/slice-overview.md.
 - **Last reconciled:** not yet
 
 Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: APPROVED by Jess 2026-10-26 (PROPOSED items accepted as written; open items are tracked in move-consistency-review.md section 9). Nothing here is built.

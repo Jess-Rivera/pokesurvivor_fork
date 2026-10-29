@@ -3,7 +3,7 @@
 - **Role:** Validation strategy, schema assessment and handoff for the move-schema rewrite.
 - **Owns:** Validation plan, validation scenarios, schema assessment and the handoff list.
 - **Does not own:** Per-move rulings (docs/MOVE-INTENT.md); move data grammar (docs/MOVE-AXIS-SCHEMA.md); runtime rules (docs/current feature planning/combat-architecture.md); general combat rules (docs/COMBAT-RULES.md).
-- **Status home:** docs/current feature planning/move-schema/slice-overview.md.
+- **Status home:** docs/current feature planning/move-schema-post-auth/slice-overview.md.
 - **Last reconciled:** not yet
 
 Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: final planning artifact for the move-schema combat rewrite. Nothing here is built.

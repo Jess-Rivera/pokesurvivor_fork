@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-28, Move-schema branch end and the code-gap rule (Jess)
+feature-test/new-move-schema merges into main after slice 7b, once all 63 moves run on the new path and the legacy player-move path is deleted. A new branch then imports the gym-roster moves; until then the gym is Brock only. A STATE.md code-gap item is built in this branch only if it is tied to the move-schema work; otherwise it waits for its own branch.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-overview.md, "Goal and end of the branch" and "Code-gap rule"
+
 ## 2026-10-28, QA-00: Coding is paused until the whole documentation consolidation is done
 Coding is paused until the whole documentation consolidation is done. (owner answer QA-00)
 Canonical: STATE.md, "Where we are"

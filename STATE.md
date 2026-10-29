@@ -6,7 +6,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 ## Where we are
 - Branch feature-test/new-move-schema, consolidation merged (04ecc29). Coding has not resumed yet.
 - Move schema: slices 1 to 3d, 4a, 4b DONE (21 of 63 moves routed behind ?dev&newcombat).
-- NEW live slice plan: docs/current feature planning/move-schema-post-auth/slice-overview.md. The old move-schema/ folder is history except the three 4c codehandoffs (still the build steps, Q23, read with the corrections in the new 4c-n files). The old folder's overview has no "history" banner yet (slice 0, item 1).
+- NEW live slice plan: docs/current feature planning/move-schema-post-auth/slice-overview.md. The old move-schema/ folder is history except the three 4c codehandoffs (still the build steps, Q23, read with the corrections in the new 4c-n files). Slice 0 pass 1 (items 1 to 4) done 2026-10-29; passes 2 to 4 open.
 - Audit of planning docs vs sources of truth: docs/current feature planning/AUDIT-vs-sources-of-truth.md (3 HIGH, 20 MEDIUM, 11 LOW).
 - Branch end (Jess, 2026-10-28): merge into main after slice 7b with all moves on the new path; then a new branch imports the gym-roster moves. A code gap is built here only if tied to the move work (table in the new overview).
 

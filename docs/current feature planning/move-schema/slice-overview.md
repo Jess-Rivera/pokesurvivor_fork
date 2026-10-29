@@ -1,5 +1,7 @@
 # Move schema (#2): branch overview
 
+> **HISTORY from 2026-10-28.** The live plan is docs/current feature planning/move-schema-post-auth/slice-overview.md. Only the three 4c codehandoffs in this folder stay in use (build steps under Q23, read with the corrections in move-schema-post-auth/).
+
 Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-n.md you are working. Each slice file holds that slice's decisions and plan, so nothing here grows past a summary.
 Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 4b built, waiting for Jess's playtest).
 
