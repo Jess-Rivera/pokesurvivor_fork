@@ -6,7 +6,7 @@
 - **Status home:** docs/current feature planning/move-schema-post-auth/slice-overview.md.
 - **Last reconciled:** not yet
 
-Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: final planning artifact for the move-schema combat rewrite. Nothing here is built.
+Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: final planning artifact for the move-schema combat rewrite (Checkpoint 3). Build status: STATE.md (slices 3a to 4b are built).
 Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 1) and docs/current feature planning/combat-architecture.md (Checkpoint 2). Section references like "R2" or "D21" point into the architecture document.
 
 ## 0. Decisions recorded this round (Jess, 2026-10-26)
@@ -14,7 +14,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 | id | decision |
 | --- | --- |
 | move-consistency-review:CP1-Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
-| D-1 | Re-authored novas start near the caster's body radius, `grow.max` = today's radius, growSpeed unchanged |
+| D-1 | Re-authored novas start at 1 px (MOVE-AXIS-SCHEMA "Grammar decisions", Jess 2026-10-26; built in slice 3a), `grow.max` = today's radius, growSpeed unchanged. The original "near the caster's body radius" wording is superseded |
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
 | D-2 | maxStacks values for Leaf Storm and Metal Claw: Jess's to-do, required before slice 4a |
 | D-3 | Meteor Mash: the projectile hits enemy 1; at enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1 |
@@ -137,7 +137,7 @@ Yes, after the slice 3a grammar additions (persistent, range, instance-level del
 
 ### 2.4 Combinations that validate individually but are incoherent together
 
-These pass today's grammar. Recommend adding them as validator rules in slice 3a (data-driven, like the existing rule list):
+These pass today's grammar. They are added as validator rules in slice 4c-1 (MOVE-AXIS-SCHEMA "Presets and validation", Jess 2026-10-27; not built yet), not slice 3a as first recommended. Data-driven, like the existing rule list:
 
 1. `persistent` with a `cd`, or without an `endOn notActive`.
 2. A non-persistent move with no cd after resolution.
@@ -152,66 +152,60 @@ These pass today's grammar. Recommend adding them as validator rules in slice 3a
 
 ### 2.5 Intent-driven validation of six hard moves
 
-Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04). The "Intended" sentences are copied there and are removed here in a later commit, once their ledger rows are ticked.
+Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04), which owns intent. The "Intended" sentences were removed on 2026-10-29 after the ledger closed (DEVLOG B9); resolved "Open" items point at their owner.
 
 **1. Quick Attack** (reposition, pierce, legs, i-frames)
 
 - Ruling: docs/MOVE-INTENT.md, `quick-attack` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED move-consistency-review:CP1-Q3): dash from A to the nearest enemy B, deal damage at B, return to A, dash ends.
 - Representation after 3a: radial point 46 px, pierce 0, nearest, repositions swept, dashMult 10, returnToOrigin true, returnHits out, endOn returned, i-frames 0.3, range 420 (default).
 - Execution: castSlot picks B within 420 px; motion moves the caster at 10 x player speed; on arrival the hitbox tests once (R1: pierce exhaustion disarms but does not end); the caster travels back; `returned` ends the instance.
-- Open: F5 (i-frames on the return), whether enemies brushed on the way out can be hit (current reading: no, the hit happens at B).
+- Resolved: move-consistency-review:F5 (i-frames cover the whole dash plus a 0.3 s tail) and the out-leg question (one enemy hit at B): MOVE-INTENT quick-attack.
 - Test: scenario with B at 200 px and a decoy enemy on the path; expect B hit once, decoy 0, caster within 1 px of A at the end, duration = 2 x 200 / (10 x speed) within one step.
 
 **2. Bonemerang** (returns, legs, knockback direction)
 
 - Ruling: docs/MOVE-INTENT.md, `bonemerang` (the ruling owns intent; this scenario is validation material).
 
-- Intended: two bones out and back, hitting on both legs.
 - Representation after 3a: 2 points 8 px, spread 0.5 (F1), pierce UNLIMITED, returns at 300 px/s, outAndBack, endOn 2 s or returned, range per F2, knockback 40 along travel.
 - Execution: out leg until range, leg 1 starts with fresh eligibility (R2), velocity toward the owner's current position, `returned` ends it.
-- Open: F1, F2; knockback along travel pulls enemies toward the caster on the return (S12 in the review).
+- Resolved: move-consistency-review:F1 (spread, MOVE-AXIS-SCHEMA `spread`); move-consistency-review:F2 (range 230) and move-consistency-review:S12 (pull clamped at the caster's edge): MOVE-INTENT bonemerang.
 - Test: one enemy on each bone's path; expect exactly 2 hits per enemy per bone (one per leg), both bones end by `returned`, not by time.
 
 **3. Meteor Mash** (emit on enemyHit, exclusion, inheritance)
 
 - Ruling: docs/MOVE-INTENT.md, `meteor-mash` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED D-3): the punch hits enemy 1; at enemy 1's position at impact, a 3-shard fan flies on, ignoring enemy 1.
 - Representation after 3a: parent point 9 px, pierce 0, cardLock count and pierce, damage + team atk +1 at 20% + emit {enemyHit, count 1} of a child with count 3, spread 0.6, anchor world, targeting direction, travels 360 px/s, endOn 0.8.
 - Execution: collision lands on enemy 1, payload runs, the enemyHit emitter queues one emission at enemy 1's position with the parent's heading; pierce 0 ends the parent; the deferred spawn creates 3 shards next frame whose hit record already holds enemy 1 (R6).
-- Open: F1 for the fan angles; F4 (each shard full power).
+- Resolved: move-consistency-review:F1 (fan angles follow MOVE-AXIS-SCHEMA `spread`); move-consistency-review:F4 (each shard deals full parent power, combat-architecture:H13, measured in the Stage 5 simulator).
 - Test: enemy 1 plus three enemies placed on the expected shard lines; expect enemy 1 hit exactly once, each other enemy hit once, 3 shards spawned at enemy 1's impact position.
 
 **4. Thunderbolt** (target anchor, instant lifetime, chain, falloff, rider halving)
 
 - Ruling: docs/MOVE-INTENT.md, `thunderbolt` (the ruling owns intent; this scenario is validation material).
 
-- Intended: instant strike on the nearest enemy, four jumps at 33% damage, paralysis at 10%, 5%, 2.5%, 1.25%, 0.625% (DECIDED move-consistency-review:CP1-Q10).
-- Representation: point 10 px anchored on the target, endOn time 0, chainHops 4, hopRange 140, cardLock count, chainDamageFalloff 0.33.
-- Execution: one collision step at the target (D28), chain hops pick nearest unhit enemies within 140 px of the previous node (D15), damage x0.33 on hops, rider chance halves per hop.
-- Open: other enemies inside the 10 px strike circle are hit at full power by the default UNLIMITED pierce; is that intended, and which one starts the chain? Recommend: the targeted enemy starts the chain; overlapping enemies take the strike but do not branch.
-- Test: 6 enemies in a line 100 px apart; expect hits on 5 enemies with damage ratios 1 : 0.33 : 0.33 : 0.33 : 0.33; with a seeded rng over 10,000 casts, paralysis frequency per hop within 1 point of 10, 5, 2.5, 1.25, 0.625%.
+- Representation: point 10 px anchored on the target, endOn time 0, chainHops 4, hopRange 140, cardLock count, hopReduction 0.33 (renamed from chainDamageFalloff in slice 4b).
+- Execution: one collision step at the target (D28), chain hops pick nearest unhit enemies within 140 px of the previous node (D15), hop k deals x (1 - 0.33)^k applied last (combat-architecture:D15), rider chance halves per hop.
+- Resolved: the targeted enemy starts the chain; other enemies inside the strike circle take the strike only (MOVE-INTENT thunderbolt; combat-architecture:H20).
+- Test: 6 enemies in a line 100 px apart; expect hits on 5 enemies with damage ratios 1 : 0.67 : 0.4489 : 0.3007 : 0.2015 (combat-architecture:D15); with a seeded rng over 10,000 casts, paralysis frequency per hop within 1 point of 10, 5, 2.5, 1.25, 0.625%.
 
 **5. Psychic** (traveling arc, start-size grow, steering)
 
 - Ruling: docs/MOVE-INTENT.md, `psychic` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED move-consistency-review:CP1-Q1 wording): an arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing.
 - Representation: arc 0.5 rad x 70 px, travels 80 px/s, turnRate 2.5 rad/s, grow radArc 1.5 rad/s to max 2.0, endOn 1.2 s.
 - Execution: the wedge apex moves with the instance, heading turns toward the target by at most 2.5 x dt per step, radArc follows D21 and reaches 2.0 at t = 1.0 s, D18 containment each step, oncePerInstance.
-- Open: "arc wave" suggests a crescent (a band at the front), while the schema shape is a filled wedge from the apex. Same hits for most layouts; different for an enemy close behind the front. Also, steer toward the enemy chosen at cast, or re-acquire the nearest each step? Recommend: the cast target while it lives, then the nearest.
+- Resolved: Psychic stays a filled wedge and steers on the cast target while it lives, then the nearest (MOVE-INTENT psychic; combat-architecture:D23).
 - Test: an enemy straight ahead at 120 px and two enemies at plus and minus 50 degrees at 90 px; expect the straight one hit early, the side ones hit only once the arc has widened past them (time window computed from D21), each hit once.
 
 **6. Toxic Spikes** (placed emitter, interval child, start-size grow, cap)
 
 - Ruling: docs/MOVE-INTENT.md, `toxic-spikes` (the ruling owns intent; this scenario is validation material).
 
-- Intended (DECIDED move-consistency-review:CP1-Q7): one placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches.
 - Representation after 3a: placed point 40 px at `location` (F3), endOn time 3, emit {interval, every 0.25} of a full circle starting at 100 px, grow 400 px/s, endOn 0.25, poison 100%.
 - Execution: emitter places, emits per D29 (F6 boundary), each ring tests every step and hits each enemy once per ring, poison applied (and refreshed) each time; lifetime bounds concurrency (two or three emitters alive at cd 1.1).
-- Open: F3, F6.
+- Resolved: move-consistency-review:F3 (location pick, MOVE-AXIS-SCHEMA `locationPick`); move-consistency-review:F6 (never emits at or after its end, combat-architecture:H14).
 - Test: an enemy standing 150 px from the emitter; expect the first ring to reach it at 0.125 s after emission, about 11 poison applications, 0 hits on an enemy at 250 px.
 
 ### 2.6 Missing schema capability vs missing implementation
@@ -246,6 +240,8 @@ Evidence: generation is lossless for all 63 and the grammar validates them; ever
 ---
 
 ## 3. Final synthesis and implementation handoff
+
+> **HISTORY (Checkpoint 3 record, 2026-10-26).** Sections 3.1 to 3.9 are kept as the record and are not live. Coding-chat rules and slice plans: docs/current feature planning/move-schema-post-auth/slice-overview.md. Current rulings: docs/MOVE-INTENT.md, docs/MOVE-AXIS-SCHEMA.md, combat-architecture section H, docs/COMBAT-RULES.md. Status: STATE.md.
 
 ### 3.1 Repository and validation status
 

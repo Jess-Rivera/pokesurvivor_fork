@@ -33,4 +33,7 @@ The two owner decisions D-LEAF and D-PSY (audit section 2). The answers land in 
 Jess has approved the item list, the edits are made, no em-dashes were added, cited paths resolve, and check.js is green.
 
 ## Results
-(not started)
+- Pass 1 (items 1 to 4), 2026-10-29: banner on ../move-schema/slice-overview.md; Status home repointed in four docs; item 3 already done by the 2026-10-28 STATE rewrite; DECISIONS entry for branch end and code-gap rule.
+- Pass 2 (items 5 to 10), 2026-10-29: items 5, 6, 7, 10 already carried by the 4c-n correction lists. Item 8: review numbers in architecture and validation written as move-consistency-review:CP1-Qn (new CLAUDE.md "Cross-document IDs" rule). Item 9: combat-architecture:H22 (per-leg pierce) and H23 (seeded-rng location pick).
+- Pass 3 (drift risk), 2026-10-29: F-ARCH-2 to F-ARCH-6 and F-VAL-1 to F-VAL-5 applied (history banners on architecture G and Summary and validation section 3; status lines; C8 self-buff scope; Metal Claw cap pointer; nova 1 px; validator rules in 4c-1; Thunderbolt ratios; six Intended lines removed, resolved Open lines point at owners). F-S5-1 already carried by slice-5.md. F-REP-1 and F-REP-2 deferred by Jess (reports not regenerated).
+- Pass 4 (LOW cosmetic): not started.

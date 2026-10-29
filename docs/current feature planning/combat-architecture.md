@@ -6,9 +6,9 @@
 - **Status home:** docs/current feature planning/move-schema-post-auth/slice-overview.md.
 - **Last reconciled:** not yet
 
-Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: APPROVED by Jess 2026-10-26 (PROPOSED items accepted as written; open items are tracked in move-consistency-review.md section 9). Nothing here is built.
+Date: 2026-10-26. Branch: feature-test/new-move-schema. Status: APPROVED by Jess 2026-10-26 (PROPOSED items accepted as written). Current runtime rulings: section H. Build status: STATE.md (slices 3a to 4b are built).
 Inputs: docs/current feature planning/move-consistency-review.md (Checkpoint 1, with Jess's resolutions in its section 9), docs/MOVE-AXIS-SCHEMA.md, js/data/move-attributes.js, js/data/move-resolver.js, legacy js/systems/combat.js, js/entities/projectile.js, js/systems/stages.js, js/systems/status.js, js/core/stats.js, js/core/simbus.js, docs/SIM-PRESENT-BOUNDARY.md.
-The existing slice files (docs/current feature planning/move-schema/slice-3.md to slice-7.md) are NOT changed by this document. Section G proposes the replacement plan; the slice files get rewritten only after approval.
+The slice plans now live in docs/current feature planning/move-schema-post-auth/slice-overview.md. Section G below is history (see its banner).
 
 Labels used below: EXISTING = in the code today (file named). PROPOSED = my design, needs approval. DECIDED = Jess's Checkpoint 1 answer. OPEN = needs a decision, with a recommendation.
 
@@ -136,7 +136,7 @@ Timing and determinism: sim functions take (dt, now, rng). Harnesses step with a
 | projectile.js homing via G.U.damp | DO NOT REUSE for turnRate | DECIDED move-consistency-review:CP1-Q13: turnRate is rad/s (clamped turn), legacy homing is an exponential damp |
 | projectile.js boomerang (resets `hits` at turnaround) | REUSE THE RULE | it is exactly the leg reset proposed for move-consistency-review:CP1-Q2 |
 | procAilments / procFlinch roll gap (0.5 s) | DROP for the new path | DECIDED move-consistency-review:CP1-Q14: every eligible hit rolls; the rehit time is the throttle |
-| G.Stages.add / teamAdd / mul / ladder | KEEP, add a per-move live-application cap | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists |
+| G.Stages.add / teamAdd / mul / ladder | KEEP, add a per-move live-application cap for self-buffs only; foe debuffs have no per-move cap, only the +-6 ladder (COMBAT-RULES "Stat stages and maxStacks"). Code differs, see TODO: slice 4c-0 | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists; scope per DECISIONS:Q16 |
 | G.Stats.attackFactor / applyDamage | KEEP, call with a two-field adapter (category, power) | it reads `move.dmg`, `move.cat`, `move.norm`; the new path passes { cat, dmg } and no norm |
 | drainHeal, Big Root, onDealt, dmgDealt, itemDmgMul, typeKFor (Power Stone), isCrit | KEEP | existing item and stat layers must keep working |
 | Prop damage (rocks, chests, grass) | KEEP behavior | every legacy kind damages props in its area; the new path does the same via propsInCircle |
@@ -268,7 +268,7 @@ The rules R1 to R9 are the complete list of places where one axis is allowed to 
 
 Other interactions found in the audit:
 - Upgrades x resolved definitions: upgrades never touch G.MoveDefs (I2); a pierce card on an UNLIMITED or shapeless move is excluded at offer time (slice 5).
-- Stat riders x maxStacks: Leaf Storm and Metal Claw stack per enemy hit; with D30 the per-move cap bounds them. Recommend data maxStacks 1 on Leaf Storm (holds at -2, matching the EXISTING legacy "renewed single application" rule for guaranteed self-drops) and a small cap on Metal Claw. OPEN D-2.
+- Stat riders x maxStacks: Leaf Storm and Metal Claw stack per enemy hit; with D30 the per-move cap bounds them. The cap value is settled: default 1 for every move, including Metal Claw and Meteor Mash (COMBAT-RULES "Stat stages and maxStacks"; H16; DECISIONS:Q14). Leaf Storm's self-drop lifetime is still open (D-LEAF, slice 4c-1).
 - Overlapping placed instances (trail patches): each patch is its own instance and hits independently (Flame Wheel). Correct by the rules; flagged for the simulator, not changed.
 - Delay x lifetime: D28 starts endOn time after the delay; telegraph is a render phase.
 - Enemy hurt invulnerability: Enemy.hurt has no i-frames for enemies today (verify in slice 3c); interval moves rely on that.
@@ -281,6 +281,8 @@ Other interactions found in the audit:
 ---
 
 ## G. Implementation slices (proposed replacement for slices 3 to 6)
+
+> **HISTORY from 2026-10-28.** Section G is the slice plan as approved on 2026-10-26. It is superseded by docs/current feature planning/move-schema-post-auth/slice-overview.md (slice order, the 4c split, slices 5 to 7). Values below that later decisions changed (for example stat default maxStacks 6, now 1 per DECISIONS:Q14) are not live.
 
 Each slice is handed to the coding model alone, with this document and the slice file. Game-affecting slices follow the CLAUDE.md workflow (prose plan, Jess OKs, build, harness, write).
 
@@ -378,6 +380,8 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 ---
 
 ## Summary for approval
+
+> **HISTORY (2026-10-26 approval record).** The open decisions listed here are settled or moved: runtime rulings in section H, grammar in docs/MOVE-AXIS-SCHEMA.md, per-move rulings in docs/MOVE-INTENT.md, open owner decisions per slice in move-schema-post-auth/slice-overview.md. Nothing below is blocking.
 
 Recommended architecture: four small modules (pure geometry, sim, effects, render) driven by one table per axis, with a short, closed list of cross-axis rules (R1 to R9), reusing the existing damage, stage, status, hurt and SimBus systems, running behind a dev flag until the flip.
 
