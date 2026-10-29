@@ -4,7 +4,7 @@ Where these conflict with CLAUDE.md or CONTEXT.md, those win. Read this when pub
 
 # PART 2, original owner's rules (historical reference, not binding)
 
-Preserved from the upstream project. Useful context, but where it conflicts with Part 1, Part 1 wins.
+Preserved from the upstream project. Useful context, but where it conflicts with CLAUDE.md, CLAUDE.md wins.
 The one rule kept fully live from here is commit hygiene: no "Co-Authored-By" or any AI signature in commits.
 
 ## Publishing a version
@@ -24,7 +24,7 @@ Do not remove `updater.js` or the writing of `version.json` in `tools/build.js`.
 
 ## News (changelog)
 Every game change or bug fix also goes in `js/data/changelog.js` for today's date (new / chg / fix).
-Changes to servers, database or costs do NOT go there. (Note, per Part 1 English-native rule: author new
+Changes to servers, database or costs do NOT go there. (Note, per the English-native rule in CLAUDE.md: author new
 changelog entries in English.)
 
 ## Servers (dormant until cloud phase)

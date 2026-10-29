@@ -1,3 +1,5 @@
+> **History header (B5b, 2026-10-28).** Kept in place because js/data/gyms.js:19 cites this file. Loop and region-end rules are now owned by BOSS-REWORK.md section 4a. Superseded by it: the inheritor graft under Arceus (replaced by Descendant Mutation, Q9) and Arceus gated on owning every legendary (replaced by The Climb's 9th completion point, Q10). The legendary, shiny and endgame items below are `[Proposed]` until recorded in GDD.md (B6a).
+
 Loop structure: each region has six loops. Loop one, you fight only the first Pokémon of each gym leader and Elite Four member’s roster. Each subsequent loop adds one more from their roster, so loop six is their full team. Twelve boss fights per loop, eight gyms plus Elite Four.
 
 Checkpoints: you get a checkpoint at the end of each loop, so you can start a session at any loop you’ve already cleared rather than needing a six-hour sitting. There’s a separate achievement for clearing all six loops in one sitting.

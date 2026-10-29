@@ -4,7 +4,7 @@ Branch: feature-test/new-move-schema. Read this file first, then ONLY the slice-
 Schema spec: docs/MOVE-AXIS-SCHEMA.md. Generated reports: docs/current feature planning/move-coverage-report.md and move-parity-report.md. Status updated: 2026-10-27 (slice 4b built, waiting for Jess's playtest).
 
 ## Planning documents (all in docs/current feature planning/; read only the parts a slice names)
-- move-consistency-review.md (Checkpoint 1). SECTION 9 is the single source for every decision and open item: read it first. Sections 1 to 8 are the per-move audit snapshot; search them by move id.
+- move-consistency-review.md (Checkpoint 1), now history. Its section 9 decisions live in three owners: docs/MOVE-AXIS-SCHEMA.md (grammar and data rules), combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings). Combat rules live in docs/COMBAT-RULES.md. Sections 1 to 8 of the review are the per-move audit snapshot; search them by move id.
 - combat-architecture.md (Checkpoint 2, APPROVED 2026-10-26): A goals and invariants I1 to I10, B data flow and frame order, C structures, D equations D1 to D37, E function table, F cross-axis rules R1 to R9, G slices.
 - combat-validation-and-handoff.md (Checkpoint 3): validation stages (1.6), canary sets (1.5), intent scenarios (1.4), six worked move scenarios (2.5), decisions table (3.6).
 
@@ -21,7 +21,7 @@ A ground-up move system. A single database of moves (the schema) is converted to
 7. New from slice 3b (loaded by the game since 3d, active only with ?dev&newcombat): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the flag and the ONE routed list), move-render.js (G.MoveRender, drawing and cast glue).
 
 ## Decisions that span slices
-- Every decision and its status: move-consistency-review.md section 9. Do not restate them here.
+- Every decision and its status lives in the three owners above (MOVE-AXIS-SCHEMA, combat-architecture, MOVE-INTENT) and COMBAT-RULES. Do not restate them here.
 - No legacy bridge, no derived `kind`, no flat projection in old field names. Per-move routing by id behind `?newcombat` (D-4) is NOT a bridge; it is removed in slice 7.
 - No damage normalization. The Power/s proxy (D37) is for tools only.
 - Invariants in one line each (full text: architecture section A): I1 no `kind` in new combat files; I2 G.MoveDefs read-only (upgrades build a separate effective definition per slot); I3 one dispatch table per axis; I4 eligibility is decided before any payload runs; I5 an instance ending never removes an effect it applied; I6 collision geometry lives only in the sim (one implementation, G.MoveGeom); I7 sim steps take dt, time and an injectable rng; I8 the sim emits plain-data SimBus events and never calls FX or audio; I9 pixels, seconds, radians, chances in percent divided by 100 in one place; I10 saves untouched.
@@ -29,10 +29,10 @@ A ground-up move system. A single database of moves (the schema) is converted to
 
 ## Rules for every coding chat
 1. Startup: CONTEXT.md, STATE.md, CLAUDE.md (auto), this file, the slice file. Then only the architecture sections the slice names and review section 9. Do not read the three planning documents whole, and do not read js/data/moves-generated.js or moves.js whole. Search combat.js, stats.js, status.js, stages.js by function name.
-2. Anything that adds or changes game code or game data (including files the game does not load yet) follows CLAUDE.md: a prose plan with no code, Jess's OK, then build, run the harness and check.js, and write into the repo. Markdown docs are free-edit.
+2. Anything that adds or changes game code or game data (including files the game does not load yet) follows CLAUDE.md "Edit boundary and workflow".
 3. Do not change: invariants I1 to I10, the frame order (architecture B), the D-table rules marked EXISTING or DECIDED, the rules R1 to R9, or G.Combat's ownership of enemy shots and contact damage.
 4. A behavior that needs a new cross-axis rule, a new field or a different formula is a stop-and-ask. Record the answer in the slice file and in review section 9.
-5. Done means: the slice's canary scenarios pass, every earlier scenario still passes, tools/check.js is green, STATE.md is rewritten and a DEVLOG.md entry appended, and Jess is handed the git commands (no Co-Authored-By line, never run a repo-changing git command).
+5. Done means: the slice's canary scenarios pass, every earlier scenario still passes, tools/check.js is green, STATE.md is rewritten and a DEVLOG.md entry appended, and Jess is handed the git commands (CLAUDE.md "Git").
 6. Known check.js state after slice 4b: all green (21/21 harnesses, I1 guard ok on 5 files, move data ok; the hail self-test was fixed in 4b). Browser smoke: node tools/smoke-newcombat.js (needs the external Playwright install). Mutation runners (by hand): move-sim-mutate, move-riders-mutate, move-selfcast-mutate.
 
 ## Slices (dependencies: 3a, 3b, 3c, 3d, 4a, then 4b and 4c in either order, 4d, 5, 6, 7)

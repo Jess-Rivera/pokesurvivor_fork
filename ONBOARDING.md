@@ -1,5 +1,11 @@
 # ONBOARDING, developer architecture guide
 
+- **Role:** Developer architecture guide.
+- **Owns:** Module map, load order, G namespace, build and run instructions.
+- **Does not own:** Game design (GDD.md); combat rules (docs/COMBAT-RULES.md); sim and present direction (docs/SIM-PRESENT-BOUNDARY.md); agent rules (CLAUDE.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 A practical map of the PokeSurvivor codebase for an English-speaking developer who
 wants to fork it and add features. Pair this with GLOSSARY.md (Spanish to English
 terms) and GDD.md (game design). Written from reading the source.

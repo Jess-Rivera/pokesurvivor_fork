@@ -1,5 +1,7 @@
 # Slice 4a: code handoff (for the CODING chat)
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Plan and decisions: slice-4a.md. Status: APPROVED 2026-10-27 by Jess (coding chat prompt), BUILT 2026-10-27, enemy.js added to the scope by Jess (see slice-4a.md). Decisions D1 to D4 below were answered by Jess in the planning chat; P1 to P5 are the planning chat's recommendations and become approved when Jess says OK to this plan (the planning chat then changes this line to APPROVED with the date). Once approved, build it, test it and write it into the repo in one step; no second proposal while the work stays inside the scope below. If the scope must grow, or a move needs a new cross-axis rule, a new field or a different formula (overview rule 4), stop and tell Jess in prose.
 
 ## Startup for the coding chat

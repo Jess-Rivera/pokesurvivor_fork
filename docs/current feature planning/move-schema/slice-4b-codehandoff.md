@@ -1,5 +1,7 @@
 # Slice 4b: code handoff (for the CODING chat)
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Plan and decisions: slice-4b.md (S1 to S14). Status: APPROVED 2026-10-27 by Jess (with one change: commitment.cooldown has no `tick` value, the absence of a commitment is normal ticking). Once approved, build it, test it and write it into the repo in one step; no second proposal while the work stays inside the scope below. If the scope must grow, or a move needs a new cross-axis rule, a new field or a different formula beyond what is listed here (overview rule 4), stop and tell Jess in prose.
 
 ## Startup for the coding chat

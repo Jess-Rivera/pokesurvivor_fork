@@ -14,8 +14,12 @@ Read CONTEXT.md, STATE.md, CLAUDE.md (auto), slice-overview.md, slice-4c.md, thi
 - Rock Slide boulder count stays one (S11, Jess). Aura Sphere reach (about 160 px by the curve math) is accepted (Jess). Psychic stays a filled wedge (Jess).
 - The instance cap constant governs placed objects (4d) and does not apply here.
 
-## Decisions (answered by Jess, 2026-10-27; also in slice-4c.md and DECISIONS.md)
-Three sub-slices; this is 4c-3. D1 aimTrack changes Flamethrower now (the data says it tracks). D2 the aimTrack target rule is sticky: the cast target while it lives and is in range, then the nearest live enemy, re-picked whenever the tracked one is lost. D3 the Rock Slide telegraph is drawn as a low-opacity ring (a warning, not a zone effect).
+## Decisions (moved)
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in the Phase 4 ledger (B4b rows); the DEVLOG 2026-10-28 B9 entry names the commit that holds it. Build steps are unchanged (Q23).
+
+Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
+- "also in slice-4c.md and DECISIONS.md": DECISIONS becomes a log (QA-01). The owners are MOVE-INTENT and combat-architecture H.
+- P10 Docs: asks to edit "validation section 2.5 scenario 5 (wedge, steering rule)" and "review 9.7 item 6 (Aura Sphere reach, Rock Slide count)". Those rulings now live in MOVE-INTENT psychic, aura-sphere and rock-slide; validation 2.5 keeps the test only.
 
 ## Plan decisions (recommended; approved with this plan)
 - P1 Routed list: add exactly psychic, confusion, bubble-beam, aura-sphere, rock-slide (33 routed in total after 4c-1 and 4c-2). The list stays in js/systems/move-route.js only. Flag off, the game is unchanged. Flamethrower is already routed; its behavior changes through P2.

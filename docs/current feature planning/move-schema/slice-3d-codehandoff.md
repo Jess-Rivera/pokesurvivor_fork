@@ -1,5 +1,7 @@
 # Slice 3d: code handoff (for the CODING chat)
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Plan and decisions: slice-3d.md. Status: APPROVED by Jess 2026-10-27 (planning chat plan, decisions D1 to D4 below accepted as recommended). This file is the approved plan, so build it, test it and write it into the repo in one step. No second proposal is needed while the work stays inside the scope below. This is the first slice that changes what the game does (behind a flag), so be careful with the legacy path. If the scope must grow, or a move needs a new cross-axis rule, a new field or a different formula (overview rule 4), stop and tell Jess in prose.
 
 ## Startup for the coding chat

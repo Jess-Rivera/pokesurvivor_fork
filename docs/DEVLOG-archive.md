@@ -1,6 +1,6 @@
 # DEVLOG archive
 
-Older DEVLOG entries moved out of DEVLOG.md on 2026-10-17 to keep the session-start read short. Verbatim, newest first.
+Older DEVLOG entries rotated out of DEVLOG.md in several batches (first on 2026-10-17, most recently on 2026-10-27) to keep the session-start read short. Verbatim. Each batch was appended as its own block, so the file is not in one global date order (the first block starts at 2026-10-21 and runs oldest first).
 Not part of the session-start ritual.
 
 ---

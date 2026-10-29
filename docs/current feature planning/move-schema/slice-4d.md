@@ -8,8 +8,11 @@ emit with every trigger, inline children, placed objects and mines, and the cap 
 ## Before starting (Jess)
 Gust per-shot spread is still open: a data change to a 3-count simultaneous fan, or accept the legacy +-0.03 jitter, or a new emit-level aim jitter field (a new field is a stop-and-ask).
 
-## Decisions (default accepted)
-An emitter never emits at or after its end (Toxic Spikes gets 11 emissions in 3 s). Meteor Mash shards ignore the struck enemy (D-3). Children deal full parent power (F4); the Stage 5 simulator measures it.
+## Decisions (moved)
+Decisions formerly listed here (answered by Jess, 2026-10-27, and since reconciled) now live in docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). The removed text is preserved verbatim in the Phase 4 ledger (B4b rows); the DEVLOG 2026-10-28 B9 entry names the commit that holds it. Build steps are unchanged (Q23).
+
+Conflicts with the owning documents (B4a conflict list, approved at CP3). Resolve these when the slice is built; do not follow the old text where it conflicts:
+- slice-4d.md "Reads": "Review section 9.1 rows Q7, Q16" points at text that is now history. Read instead: combat-architecture H4, H6, H14 and D29; MOVE-INTENT toxic-spikes, spikes and meteor-mash.
 
 ## Reads
 Architecture D29, F (R6), C5, C6, E (runEmitters, checkEnd). Review section 9.1 rows Q7, Q16. Validation 2.5 scenarios 3 and 6.

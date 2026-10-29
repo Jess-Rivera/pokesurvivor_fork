@@ -1,5 +1,7 @@
 # Slice 2: resolver, overrides and handler skeleton (PLANNING)
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Prior slice: slice-1.md.
 Status: DONE 2026-10-26 (see Results and the two Follow-ups, which supersede the early counts). Left open for Jess: the 14 empty cd slots in move-overrides.js, and marking the parity report. Code handoff: slice-2-codehandoff.md.
 

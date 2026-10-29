@@ -46,9 +46,9 @@ and internal references all depend on the Spanish names staying as they are.
 | nivel | level |
 | experiencia | experience / XP |
 | enemigo / enemigos | enemy / enemies |
-| jefe / jefes | boss / bosses |
+| jefe / jefes | boss / bosses (REMOVED as a timed spawn, see BOSS-REWORK.md; the word survives in code) |
 | oleada / marea | wave / tide (of enemies) |
-| grieta | rift |
+| grieta | rift (REMOVED as a random event; the rift flow now serves gym gates) |
 | arena | arena |
 | bioma | biome |
 | clima | weather |
@@ -157,7 +157,7 @@ code readable even though they are not renamed.
 | `exp` | experience |
 | `enem` | enemy (enemigo) |
 | `jug` / `jugador` | player |
-| `jefe` | boss |
+| `jefe` | boss (system removed, see BOSS-REWORK.md) |
 | `mov` | move (movimiento) |
 | `mej` | upgrade (mejora) |
 | `tipo` | type |

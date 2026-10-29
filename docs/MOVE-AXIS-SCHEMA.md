@@ -1,5 +1,11 @@
 # Move Axis Schema (from-scratch design)
 
+- **Role:** Move data grammar spec.
+- **Owns:** Per-move data shape, axes, fields and enums, file roles, validator rules.
+- **Does not own:** Runtime pipeline rules (docs/current feature planning/combat-architecture.md); per-move rulings (docs/MOVE-INTENT.md); general combat rules (docs/COMBAT-RULES.md).
+- **Status home:** docs/current feature planning/move-schema/slice-overview.md.
+- **Last reconciled:** not yet
+
 **Updated:** Oct 24, 2026 (canonical; merged from the Oct 23 revision + the original from-scratch draft)  
 **Status:** Design proposal; not yet implemented in `js/`  
 **Scope:** Translate PokeAPI move facts into a data-driven survivor-like combat model. Supersedes the eleven-flat-attribute sketch in `MOVES-REFACTOR-PLAN.md`.
@@ -75,8 +81,8 @@ All shape-size values describe collision geometry, not merely rendering. The ren
 | returnToOrigin | boolean | ONLY on motion:repositions. `true` = after reaching the target the caster returns to the launch point (the position captured at cast time), travelling back the same way its `repositionMode` says (a teleport jumps back, a swept sweep sweeps back). `false`/omitted = no return, the caster ends at the target. Orthogonal to `repositionMode`. On a caster reposition there is no actor left behind at the origin, so "return toward the caster's CURRENT position" is incoherent (that would be motion:returns, a boomerang, a different mechanic): the only meaningful question is come-back-to-launch vs stay-at-target, hence a boolean. With `true`, `returnHits` picks which legs strike and the instance ends on `{ returned: true }`. |
 | returnHits | out, outAndBack | ONLY meaningful with `returnToOrigin: true`. `out` (default) = strike only on the way out; `outAndBack` = strike on both legs. |
 | dashMult | number | ONLY on `repositionMode: swept` (a teleport is instantaneous and ignores it). Traversal speed = `dashMult` x the caster's final move speed. The dash duration is DERIVED from distance / speed, so the move does not pin a fixed time. Example: Quick Attack `dashMult: 10` sweeps at 10x the caster's current move speed out to the target and (with `returnToOrigin: true`) back. Supersedes the vaguer `dashSpeedMult` wording. |
-| `grow` | `{ growSpeed, dim?, per?, max? }` (optional) | Expands one named dimension. `growSpeed` is px/s (radians/s when `dim` is `radArc`); `dim` defaults to `radRadius`; `per` is `time` (default) or `distance` (px of growth per px travelled); `max` optionally caps the grown dimension (Psychic's arc stops growing at 2.0). Specify `radArc` for a widening arc or `linLength` for an extending beam. Travel remains the job of `moveSpeed`, so a shape can travel and grow simultaneously. Collision rules must define how expansion crosses enemies; for an expanding ring, track previous/current radius and hit each enemy at most once per instance. |
-| turnRate | number, 0 = off | Homing steering stiffness (damp coefficient toward the nearest enemy). One number; the old `tracking` bool was just turnRate>0. Rejected on static shapes. |
+| `grow` | `{ growSpeed, dim?, per?, max? }` (optional) | Expands one named dimension. `growSpeed` is px/s (radians/s when `dim` is `radArc`); `dim` defaults to `radRadius`; `per` is `time` (default) or `distance` (px of growth per px travelled); `max` optionally caps the grown dimension (Psychic's arc stops growing at 2.0). The authored dimension is the START value and `grow.max` is the end (DECIDED CP1-Q1). Specify `radArc` for a widening arc or `linLength` for an extending beam. Travel remains the job of `moveSpeed`, so a shape can travel and grow simultaneously. Collision rules must define how expansion crosses enemies; for an expanding ring, track previous/current radius and hit each enemy at most once per instance. |
+| turnRate | rad/s, 0 = off | Homing steering: the heading turns toward the current target by at most turnRate x dt per step (a clamped turn, not the legacy damp; DECIDED CP1-Q13). One number; the old `tracking` bool was just turnRate>0. Rejected on static shapes. |
 | aimTrack | rad/s, 0 = off | For a STATIC-aimed shape (cone, beam): how fast its AIM ANGLE rotates to follow the nearest enemy. Same units as a turn rate, but it rotates the shape's facing, not a projectile's velocity (that is turnRate's job, and turnRate stays rejected on static shapes). Flamethrower aimTrack 1.4 = the cone swivels toward the nearest enemy at 1.4 rad/s. 0 = fires in the fixed aim direction. Distinct from turnRate so steering-a-bullet and swiveling-a-cone stay separate mechanisms. |
 
 ### Instance lifetime: `endOn`
@@ -105,18 +111,26 @@ An ordered list of effect records. Payload effects are decoupled from geometry, 
 | `damage` | Uses source `power` and the game's damage formula unless a named handler overrides it. | Default direct-damage effect. |
 | `knockback` | Distance in px | Push applied to the affected target. Omit or use `0` for no push. |
 | `ailment` | Ailment ID, chance, `side`, optional `duration` | Burn/poison/paralysis/trap/etc. Chance comes from source data where available; the game's proc model owns application. Applied ailments have their own duration/tick rules and are not tied to the originating hitbox's lifetime. |
-| `stat` | Stat ID, `stages`, `side`, explicit `scope`, optional `chance`, `duration`, `maxStacks` | Stage change. `chance` is the percent proc chance when the stage change is a rider (absent means it always applies); `duration` is how many seconds the stage lasts; `maxStacks` caps how many live applications of this move can stack on one target. Both default to 6 (seconds, applications) when absent. Scope is explicit (`caster`, `individual`, `team`, or another validated target scope); it is never inferred from the sign of `stages`. |
+| `stat` | Stat ID, `stages`, `side`, explicit `scope`, optional `chance`, `duration`, `maxStacks` | Stage change. `chance` is the percent proc chance when the stage change is a rider (absent means it always applies); `duration` is how many seconds the stage lasts; `maxStacks` caps how many live applications of this move can stack on its host, and only on self-target stage riders (see "maxStacks field rule" below). `duration` defaults to 6 s when absent; `maxStacks` defaults to 1. Scope is explicit (`caster`, `individual`, `team`, or another validated target scope); it is never inferred from the sign of `stages`. |
 | `heal` | Amount formula and `side` | Recovery from damage dealt, a flat amount, or a fraction of max HP. Drain is a heal with `from: dealt`, not a separate primitive. |
 | `shield` | Amount formula, optional `max`, `regen`, `absorbsAll`, `overflow`, `blocksStatus`, and `duration` | Temporary HP pool. `regen` is HP/s. `absorbsAll` routes incoming HP loss through the shield but does not prevent status application. `overflow` lets excess damage spill into real HP. `blocksStatus` prevents new ailments while active. `duration` controls shield expiration independently of the move instance. |
 | `flinch` | Chance and optional duration | Lost-action roll. Resolve as a target effect, independent of the source hitbox lifetime. |
 | `multihit` | `{ hits: N }` or `{ min, max }`, optional `normalize` | Repeats hits against one target from a single hitbox. Fixed or rolled hit count. `normalize: true` divides source power by the base hit count once during resolution; `false` gives every hit full power. This differs from `count`, which creates separate instances. |
-| `crit` | Stage | Critical-hit-rate modifier. |
+| `crit` | `critChance`, in percent points | Critical-hit-rate modifier. `critChance` is divided by 100 in exactly one place (DECIDED CP1-Q12; combat-architecture D10). |
 | `recoil` | Fraction or formula, plus `trigger` | Self-damage paid on cast or after a hit. The trigger determines when it resolves; hitbox termination does not. |
 | `emit` | `move` (ID or inline), `every`, `trigger`, `endOn` | Places an emitter with no HP or AI that creates/fires a move on an interval or trigger. The emitted move owns its own geometry, motion, payload, and lifetime. Supports turrets, mines, and trails. |
 | `spawn` | `entity` (ID or inline), `allegiance`, `endOn` | Places a combatant with HP, AI, and a moveset. `allegiance` determines its relationship to the summoner and its targets. |
 | `special` | Handler ID and validated parameters | Escape hatch for genuinely bespoke mechanics, such as fixed/level/conditional damage, weather changes, OHKO, Bide, Counter, Metronome, or Transform. Use a special only when the behavior cannot be represented cleanly by existing primitives. A different numeric damage formula alone should not require a unique handler per move. |
 
 **Normalization rule:** `normalize: true` establishes base per-hit/per-tick damage once during resolution, using source power divided by the base hit/tick count. The result is applied once in the damage formula; it is not recalculated every cast. Damage upgrades and duration/rehit upgrades apply afterward. Therefore, adding ticks increases total damage, with each tick using the normalized base. `normalize: false` gives every hit/tick full power. This policy applies to multihit and any persistent/count-based move explicitly configured to use it.
+
+### maxStacks field rule
+
+- [Approved] `maxStacks` on a `stat` effect defaults to 1 for every move, including Metal Claw and Meteor Mash. (Q14)
+- [Approved] It is meaningful only on self-target stage riders. A foe debuff has no per-move cap and stacks up to the -6 ladder limit. (Q16; A.3-2) A move named in docs/MOVE-INTENT.md may override this (Ice Beam and Bug Buzz cap their foe debuff at 1; Dragon Dance has a floor of 1).
+- The stage rules (the +-6 ladder, the upgrade formula, the duration-not-shorter-than-cooldown invariant) live in docs/COMBAT-RULES.md, "Stat stages and maxStacks".
+- This overrides the earlier default of 6 (this file, `stat` row, before 2026-10-28) and review section 9.1 Q4.
+- Code gap: js/data/move-attributes.js defaults `maxStacks` to 6; Metal Claw and Meteor Mash are authored at 2. (Ice Beam and Bug Buzz author `maxStacks` 1 on a foe debuff; that is a per-move rule in MOVE-INTENT, not a gap.) The rules above are the intended behavior; the data and code change in a later slice (approved plan section E, QA-11).
 
 ### Shapeless state-change moves
 
@@ -199,6 +213,8 @@ heat-wave {
 
 A nova is an expanding ring. Its radius grows from 0 to 275px at 250 px/s; each enemy is hit at most once as the ring's collision edge crosses it. The collision implementation must compare previous and current radii each simulation step so fast expansion cannot skip an enemy. `radRadius` is the maximum radius, not the projectile's point size. Converting Heat Wave from a burst of pellets to a ring is an intentional behavior change that the conversion harness should flag. A traveling variant can combine `motion: travels` with `grow`.
 
+[Approved] Note (2026-10-28): this example predates CP1-Q1. Under Q1 the authored `radRadius` is the START size and `grow.max` is the end; novas are re-authored with `max` = today's radius, a 1 px start and growSpeed unchanged. Current data: see js/data/moves-generated.js.
+
 ## Formula values
 
 Fields that need calculated values use a restricted, typed formula object rather than executable strings. The initial formula grammar should support only named operations and validated references, for example:
@@ -252,6 +268,23 @@ Validation rules should be data-driven where practical. Examples: `grow` require
 
 Avoid booleans that duplicate derivable numeric state. Keep a field's constraints with its definition, and avoid encoding the same event in two independent fields.
 
+- [Approved] Persistent rule: `persistent` forbids `cd` and requires an `endOn notActive`. (review section 9.2, C13)
+- [Approved] The ten combination rules in docs/current feature planning/combat-validation-and-handoff.md section 2.4 are added in slice 4c-1 (Jess, 2026-10-27, slice-4c.md). Code differs, see TODO: not built yet.
+
+## File roles
+
+Copied from docs/current feature planning/move-schema/slice-overview.md, "File roles" (2026-10-27).
+
+1. docs/move_rework_holding/move-conversions-described.json: source of truth database (63 moves, Bubble excluded).
+2. js/data/move-attributes.js: the grammar (fields, defaults, cross-field rules).
+3. js/data/moves-generated.js: the database as usable JS (generated by tools/export_moves.js, never hand-edit).
+4. js/data/move-overrides.js: per-move overrides only (hand cds).
+5. js/data/move-handler.js: special handler declarations (6; executors in move-effects.js since 4b, berrySteal still a stub).
+6. js/data/move-resolver.js: defaults, derived values (cd, basePower, range, locationPick), overrides, handler attachment, G.MoveDefs. TUNING holds the cd constants, RANGE 420 and INSTANCE_CAP 8.
+7. New from slice 3b (loaded by the game since 3d, active only with ?dev&newcombat): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the flag and the ONE routed list), move-render.js (G.MoveRender, drawing and cast glue).
+
+Runtime behavior of the files in item 7 is owned by docs/current feature planning/combat-architecture.md.
+
 ## The resolver is a pure fold
 
 Resolution order, with later layers taking precedence:
@@ -284,6 +317,23 @@ Add stress tests with realistic late-game entity counts. The schema itself does 
 - A nova is modeled as an expanding radial edge, not automatically as an instant pulse or pellet burst.
 - Drain is represented as heal-from-damage. Emitters and combatants remain separate primitives. Charge is represented through delay and commitment. Knockback is a payload effect.
 - `kind` is not a schema field (removed 2026-10-25). Behavior is read from the axes. Any legacy kind exists only as a derived compatibility value in the resolver's bridge projection, deleted when the legacy path is removed.
+
+## Grammar decisions absorbed from review section 9 (2026-10-28)
+
+Source: docs/current feature planning/move-consistency-review.md section 9 (Checkpoints 1 to 3). Rulings about one move live in docs/MOVE-INTENT.md; runtime rules live in combat-architecture.md section H.
+
+- [Approved] Grow start (CP1-Q1): the authored dimension is the START value and `grow.max` is the end. Nova start value 1 px (Jess, 2026-10-26); it passes the existing `radRadius` greater-than-0 rule, so no grammar change is needed. See the `grow` row.
+- [Approved] Stat riders (CP1-Q4): `duration` defaults to 6 s. The Q4 `maxStacks` default of 6 is superseded by Q14 (default 1); see "maxStacks field rule".
+- [Approved] Emit counts (CP1-Q7): emit `count` = total emissions, child `space.count` = shapes per emission.
+- [Approved] Range (CP1-Q8): one tunable `range`, global default 420 px as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), optional per-move `delivery.range`. See the `range` row.
+- [Approved] critChance units (CP1-Q12): percent points, divided by 100 in exactly one place. See the `crit` row.
+- [Approved] turnRate units (CP1-Q13): rad/s, a clamped turn (not the legacy damp). See the `turnRate` row.
+- [Approved] Delay (CP1-Q17): the telegraph delay lives on the instance (`delivery.delay`), not on `casterState`. See the `delay` row.
+- [Approved] Persistent flag (C13): an explicit top-level `persistent` boolean replaces the "no cd means persistent" inference. See the `persistent` row and "Presets and validation".
+- [Approved] Spread (F1, 2026-10-26): spread is the total fan, evenly spaced at 2 pi or more. See the `spread` row.
+- [Approved] Location pick (F3): an enum, "at caster" or "random enemy within range", defaulting to the enemy. See the `locationPick` row.
+- [Approved] A radial shape with no radArc is a point (slice 3b geometry, Jess 2026-10-26).
+- [Open] C14: power 0 vs null (Will-O-Wisp, Substitute). Review section 9.4 says "Harmless, not decided".
 
 ## Settled design decisions (2026-10-24)
 

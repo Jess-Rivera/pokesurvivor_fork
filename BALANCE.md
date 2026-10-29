@@ -1,5 +1,11 @@
 # BALANCE
 
+- **Role:** Record of tuned numbers and the reasons for them.
+- **Owns:** Tuned values and their dated reasoning.
+- **Does not own:** Rule text, which lives in the owning spec (docs/COMBAT-RULES.md, BOSS-REWORK.md and others); live values, which are in code (current value: see the code file).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 The living record of tuned numbers so balance stays coherent across sessions and across both tools.
 Update this whenever a number is changed, with the date and the reasoning.
 

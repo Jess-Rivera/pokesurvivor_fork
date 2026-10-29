@@ -1,5 +1,7 @@
 # Slice 4b: self-casts, specials and chains
 
+> HISTORY (frozen 2026-10-28, Phase 4 batch B4b). This is the record of an executed slice. Its decisions are absorbed into docs/MOVE-AXIS-SCHEMA.md (grammar), docs/current feature planning/combat-architecture.md section H and D (runtime rules), docs/MOVE-INTENT.md (per-move rulings), docs/COMBAT-RULES.md (combat rules). Where this text and those documents differ, those documents win. Body below unchanged.
+
 Back to slice-overview.md. Prior slice: slice-4a.md (signed off 2026-10-27). Can run before or after slice-4c. Build plan: slice-4b-codehandoff.md (APPROVED 2026-10-27).
 
 ## Objective
