@@ -11,8 +11,8 @@ aimTrack with the sticky target rule (changes Flamethrower), `location` targetin
 ## Rulings to build (owners)
 MOVE-INTENT flamethrower (sticky aimTrack), psychic (filled wedge, 0.5 to 2.0 rad), rock-slide (one boulder, low-opacity ring telegraph, delay on the instance), aura-sphere (reach about 160 px accepted). MOVE-AXIS-SCHEMA `delay`, `locationPick`, `aimTrack`, `range` rows. Architecture D18, D21, D23, D24, D28, R8, R9, H11, H23 (seeded-rng location pick).
 
-## Blocking decision (D-PSY)
-After Psychic's cast target dies: (a) one re-pick of the nearest, then straight (architecture D23, as the handoff plans and as built in 3c), or (b) re-pick whenever the target is lost (MOVE-INTENT's "then the nearest enemy" read as continuous). Reading (b) needs a Psychic exception to D23 and changes Test 6 and the mutation list. Do not start the build until this is answered.
+## Decision (D-PSY, answered 2026-10-29)
+Psychic re-picks its steering target once: when the cast target is lost it turns toward the nearest live enemy within range, and if that one is lost too it flies straight (combat-architecture:D23; MOVE-INTENT psychic, Jess 2026-10-29). The handoff's P7, Test 6 and the "re-picks every step" mutation stand as written.
 
 ## Corrections to the handoff
 - Startup: read MOVE-AXIS-SCHEMA `delay` instead of "review section 9.1 row Q17".

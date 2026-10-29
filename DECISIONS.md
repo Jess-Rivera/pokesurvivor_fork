@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-29, D-PSY: Psychic re-picks its steering target once (Jess)
+After the cast target is lost Psychic re-picks the nearest live enemy once, then flies straight, as D23 already says for every turnRate move. No exception, no new rule; 4c-3 is built as written.
+Canonical: docs/MOVE-INTENT.md, psychic; combat-architecture D23
+
 ## 2026-10-29, D-FOECAP: only an authored maxStacks caps a foe drop (Jess)
 The resolver fills the maxStacks default on self-side stat effects only. Ice Beam and Bug Buzz keep their authored foe cap of 1; every other foe drop stacks to the -6 ladder. No new field.
 Canonical: docs/MOVE-AXIS-SCHEMA.md, "maxStacks field rule"; combat-architecture section H, H24

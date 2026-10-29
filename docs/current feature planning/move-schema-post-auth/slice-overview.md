@@ -63,7 +63,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). check.j
 | 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | to plan | none (D-FOECAP answered 2026-10-29) |
 | 2 | slice-4c-1.md: persistence and orbits | handoff written | none (D-LEAF answered 2026-10-29) |
 | 3 | slice-4c-2.md: returns and repositions | handoff written | 4c-1 |
-| 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | D-PSY |
+| 4 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | handoff written | none (D-PSY answered 2026-10-29) |
 | 5 | slice-4r.md: route the remaining plain moves and Bug Buzz | to plan | 4c-1 |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; 4 cd rulings open | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
@@ -79,7 +79,7 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | id | question | blocks | where it is recorded |
 | --- | --- | --- | --- |
 | D-LEAF | ANSWERED 2026-10-29: per-hit refresh, 6 s after the last hit (MOVE-INTENT leaf-storm) | 4c-1 | DECISIONS 2026-10-29 |
-| D-PSY | Psychic after its target dies: one re-pick then straight (D23), or re-pick whenever lost | 4c-3 | MOVE-INTENT psychic; audit 2.2 |
+| D-PSY | ANSWERED 2026-10-29: one re-pick, then straight (D23; MOVE-INTENT psychic) | 4c-3 | DECISIONS 2026-10-29 |
 | D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
 | D-GUST | Gust per-shot spread | 4d | MOVE-INTENT gust [Open] |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp (resolver default is enemy; legacy placed mines at the caster's feet) | 4d | slice-4d.md |

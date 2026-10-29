@@ -101,6 +101,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### psychic
 - [Approved] An arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing. (combat-validation 2.5 scenario 5; review 9.1 Q1)
 - [Approved] Psychic stays a filled wedge that grows from 0.5 to 2.0 rad, travels and steers (cast target while it lives, then the nearest enemy). No band thickness, no grammar change. (slice-4c.md decisions, Jess 2026-10-27, after first asking for an arc) Code differs, see TODO: slice 4c-3.
+- [Approved] "Then the nearest" means ONE re-pick (D-PSY): when the cast target is lost, the wedge re-picks the nearest live enemy within range once; if that one is lost too it flies straight. Same rule as Confusion and every turnRate move (combat-architecture:D23, H11). (Jess, 2026-10-29)
 - Ledger: B4-I16
 
 ### quick-attack

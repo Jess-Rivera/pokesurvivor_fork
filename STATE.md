@@ -11,7 +11,7 @@ Last updated: 2026-10-28 (Claude Code, home; post-consolidation audit and new sl
 - Branch end (Jess, 2026-10-28): merge into main after slice 7b with all moves on the new path; then a new branch imports the gym-roster moves. A code gap is built here only if tied to the move work (table in the new overview).
 
 ## Open owner decisions (block the slice named)
-- D-PSY (4c-3) Psychic re-pick. (D-FOECAP and D-LEAF answered 2026-10-29.)
+- None blocking 4c (D-FOECAP, D-LEAF, D-PSY answered 2026-10-29).
 - D-GUST, D-LOC (4d). D-MC5 (5) QA-11 formula vs Metal Claw/Meteor Mash at 1. D-ENEMY, D-COOP (7a). D-HAIL (7b).
 
 ## Docs and code still differ (approved, not built)
