@@ -13,10 +13,10 @@ enemy.js boss casts (kind, cd, cat, radius, arc), gyms.js (BOSS_FORMS, Moves.BY_
 - D-COOP: co-op runs the legacy path today (move-route.js skips routing when co-op is active). After 7b there is no legacy player path. Networking is deferred scope (CLAUDE.md "Local-first"), so the choice is how co-op behaves locally until the MP phase: (a) co-op uses the new path with no new net sync, (b) co-op is disabled until the MP phase. Either way, note the deferred hook in TODO.md.
 
 ## Scope
-UI readers (icons, menu, levelup) read resolved fields or a display name, never `kind`. Gym and boss code per D-ENEMY. Brock's fight works end to end on the new definitions (QA-13).
+UI readers (icons, menu, levelup) read resolved fields or a display name, never `kind`. Gym and boss code per D-ENEMY. Brock's fight works end to end on the new definitions (QA-13). Gym Harden moves onto the stat stage tracker model (COMBAT-RULES:SS13; Jess, 2026-10-30).
 
 ## Tests
-A search guard: no `kind` read outside files 7b deletes. Existing boss and gym harnesses green. Brock fight smoke test. Menus and level-up screens show every move correctly.
+A search guard: no `kind` read outside files 7b deletes. Existing boss and gym harnesses green. Brock fight smoke test; Brock's Harden reaches +6 after about 30 s of steady casting (SS13). Menus and level-up screens show every move correctly.
 
 ## Proceed when
 Every reader is migrated or listed for deletion in 7b, check.js green, Jess plays a run that reaches Brock.

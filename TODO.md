@@ -88,7 +88,7 @@ live queue, cross-reference the issue number.
 
 ## Backlog
 - Stat stage model APPROVED 2026-10-30: rules in docs/COMBAT-RULES.md "Stat stages" (SS1 to SS13), built in slice 5 on feature-test/new-move-schema. Still [Open] there: stage-manipulation moves (Haze, Psych Up and other reset/copy moves), raises on foes and whole-field moves. New tunables for the slice 6 balance pass: SELF_DROP_GATE_MUL (2), STRONG_HOST_GATE_MUL (1), the Gate and Duration card step.
-- Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start.
+- Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start. Includes the two stat stage cards, Gate and Duration (COMBAT-RULES:SS10; Jess, 2026-10-30: built there, not in slice 5).
 - Move priority in a bonded group (opened 2026-10-29, slice 4c-2): Quick Attack carries priority 1 ("always first") but the new move sim casts a bonded group in slot order. Matters only when Quick Attack shares a slot with other moves. Owner: MOVE-INTENT quick-attack [Open].
 - newcombat('motion') decoy on request (4c-2 handoff P11): not built, since a dummy on the dash line is itself the nearest target. The harness covers it by adding the decoy after the cast.
 

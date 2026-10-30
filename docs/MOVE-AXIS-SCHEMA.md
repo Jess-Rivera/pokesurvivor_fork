@@ -128,7 +128,7 @@ An ordered list of effect records. Payload effects are decoupled from geometry, 
 
 Formerly "maxStacks field rule"; a pointer to that title means this section.
 
-- [Approved] `maxStacks` and the `stat` effect's `duration` are retired by the stat stage tracker model: the Cap, the Gate and the Duration are global combat rules (docs/COMBAT-RULES.md "Stat stages", SS1 to SS7), so no move authors either field. (Jess, 2026-10-30) Code differs, see TODO: removed in slice 5; whether the validator then rejects or ignores them is a slice 5 plan question.
+- [Approved] `maxStacks` and the `stat` effect's `duration` are retired by the stat stage tracker model: the Cap, the Gate and the Duration are global combat rules (docs/COMBAT-RULES.md "Stat stages", SS1 to SS7), so no move authors either field. (Jess, 2026-10-30) Code differs, see TODO: removed in slice 5 from the new-path data, the resolver defaults and the overrides once the tracker harness passes; the validator then rejects both fields. The legacy table's own fields go with the legacy path in slice 7b. (Jess, 2026-10-30)
 - [Legacy behavior] Until slice 5: `maxStacks` defaults to 1, filled by the resolver on self-side `stat` effects only; a foe-side cap exists only when authored (Ice Beam, Bug Buzz); `duration` defaults to 6 s. (Q14; D-FOECAP; combat-architecture:H24) Removed by slice 5.
 - History: the default of 6 (this file before 2026-10-28, review section 9.1 Q4), then Q14, Q15, Q16 and D-FOECAP.
 

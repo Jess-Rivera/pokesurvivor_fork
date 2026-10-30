@@ -339,7 +339,7 @@ Each slice is handed to the coding model alone, with this document and the slice
 - Objective: emit with every trigger (D29), inline children inheriting power and type, deferred spawns (R6), casterMove trails, turrets, termination bursts.
 - Tests: Gust 3 shots at once in a 0.5 rad fan (D-GUST, superseding the old 0, 0.08, 0.16 s schedule); Toxic Spikes emission count over 3 s; Meteor Mash R6; trail patch counts vs owner movement.
 - Proceed when: all 63 run behind the flag.
-- Status: BUILT 2026-10-30, termination trigger included; 62 routed, Hail in 7b. Checks unrun on the work machine. Results: slice-4d.md.
+- Status: BUILT and SIGNED OFF 2026-10-30, termination trigger included; 62 routed, Hail in 7b. check.js green (Jess), emit set batch reviewed. Results: slice-4d.md.
 
 ### Slices 5, 6, 7
 Keep the existing placeholders (upgrades from fields, behavior harness and stress run, flip and purge). Slice 6's scope moves into Checkpoint 3's validation plan.

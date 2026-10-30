@@ -11,7 +11,7 @@ Hail is parked as a toggle skill item (MOVE-INTENT hail). At the flip its legacy
 ## Scope
 - Remove the `?newcombat` flag and routing (H7, D-4); every move runs through G.MoveSim. G.Combat keeps enemy shots, wall cover and contact damage.
 - Delete the legacy player-move code in combat.js and the legacy fields it alone used; kinds.js once slice 5 and 7a no longer need it.
-- Legacy behaviors removed (each is a [Legacy behavior] naming slice 7): Fire Spin `strip` and `burnHalf` (COMBAT-RULES "Trap, enemies", MOVE-INTENT fire-spin), the `norm` factor (COMBAT-RULES "Damage"), the "duration / cooldown is the cap" stacking with TEAM_LIVE, ROLL_GAP and procSelf (COMBAT-RULES "Stat stages", legacy path), and E1 (verify that enemies can now be trapped on the only path, QA-10).
+- Legacy behaviors removed (each is a [Legacy behavior] naming slice 7): Fire Spin `strip` and `burnHalf` (COMBAT-RULES "Trap, enemies", MOVE-INTENT fire-spin), the `norm` factor (COMBAT-RULES "Damage"), the "duration / cooldown is the cap" stacking with TEAM_LIVE, ROLL_GAP and procSelf (COMBAT-RULES "Stat stages", legacy path), and E1 (verify that enemies can now be trapped on the only path, QA-10). KEEP when the legacy stage code goes: a small fixed-timer stage application for the carrier statuses SLOW and HASTE (COMBAT-RULES "Stat stages", carrier statuses; Jess, 2026-10-30).
 - Purge Bubble and any other forgotten move. Save-data safety (CLAUDE.md): a save that holds a purged or pulled move must still load, with a backward-compatible default.
 - Brock-only gym fallback (QA-13, Q18), using 7a.
 - Patch notes in js/data/changelog.js (free edit; it must still parse).

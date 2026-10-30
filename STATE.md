@@ -14,7 +14,7 @@ Last updated: 2026-10-30 evening (Quick, work machine; design session, docs only
 
 ## Open owner decisions
 - [Open] in COMBAT-RULES "Stat stages": Bond tax (Bond branch), stage-manipulation moves, raises on foes and whole-field moves.
-- Slice 5 plan questions (slice-5.md): team cards here or later; validator rejects or ignores retired fields; when gym Harden reaches the model; SLOW and HASTE stay outside it.
+- Slice 5 rulings (Jess, today): retired fields removed after the harness passes, then the validator rejects them; team cards go to the team-wide upgrades branch; gym Harden goes to 7a; SLOW and HASTE stay outside the model (7b keeps their timed application).
 - Psychic widening [Open] (slice 6). D-ENEMY, D-COOP (7a). D-HAIL (7b). Quick Attack priority [Open].
 - Spikes on an owner faint: deferred to the MP phase.
 

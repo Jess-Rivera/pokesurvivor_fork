@@ -56,7 +56,7 @@ CLAUDE.md "Where current rules live" and "Which document wins". In short: genera
 
 Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4c-1, 4c-2 and 4r are built and signed off (2026-10-29). 4c-3 is built and signed off (2026-10-29); with it all of 4c is built (summary in slice-4c-3.md Results). check.js after 4c-3: 26/26 harnesses. check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
 
-## Routing coverage (53 of 63 routed today)
+## Routing coverage (62 of 63 routed today)
 
 | slice | moves added to the routed list | routed after |
 | --- | --- | --- |
@@ -79,7 +79,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | built and signed off 2026-10-29 (swapped ahead of 4c-3) | 4c-1 |
 | 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. SIGNED OFF by Jess 2026-10-29 (feel test, Confusion and Bubble Beam batch reviewed; some balance to slice 6) | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
-| 6 | slice-4d.md: emitters, mines, the instance cap | built 2026-10-30, check.js green, feel-tested OK | stage-0 |
+| 6 | slice-4d.md: emitters, mines, the instance cap | BUILT and SIGNED OFF 2026-10-30 (check.js green, emit set batch reviewed) | stage-0 |
 | 7 | slice-5.md: upgrades from fields and the stat stage tracker model | to plan | none (D-MC5 superseded 2026-10-30) |
 | 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |
 | 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan | D-ENEMY, D-COOP |
