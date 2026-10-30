@@ -163,3 +163,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Jess approved all fixes and ruled: stay put at the cap; option (a), a root holds every reposition. Built: two harness gaps closed, Quick Attack time 3, swept-needs-time rule, one-way dash ends `arrived`, root gate, G.Enemy.KNOCK_DECAY plus a SLIDE check, player unrootedSpd. Correction: no current move roots its caster (Flamethrower slows), so the root gate guards future moves only.
 - Tests: check.js green, motion harness 75/75, runners 24/24 (motion), 17/17 (persist), 29/29 (sim), intent 316/316, validator self-test 50/50, smoke-newcombat all passed, one-off browser pass of motion and persist sets clean.
 - Stopped at: Jess feel-tests newcombat('motion') (Quick Attack unchanged in normal play), commits. Next: aimTrack question, 4c-3.
+
+## 2026-10-29 (Claude Code, home, late night): model plan, 4r planned
+- Model plan agreed: medium effort throughout; Sonnet for plain routing, docs and catch-ups, Opus for new runtime slices, Haiku for searches (recorded in STATE).
+- 4r swapped ahead of 4c-3. Re-checked all 20 resolved definitions against the sim: every axis is built. Findings: Thunder Shock is the first travelling chain (one full-power hop), Psybeam the first enemy confusion rider, Dazzling Gleam the first growing partial arc, single shots lose legacy scatter (spread ignored at count 1).
+- Jess approved the whole plan, including four debug sets (arcs, novas, shots, buffs) instead of one 'rest' set. Written to slice-4r.md; overview coverage now 4r to 48, then 4c-3 to 53.
+- No game code changed. Stopped at: Jess commits, a Sonnet chat builds 4r.
