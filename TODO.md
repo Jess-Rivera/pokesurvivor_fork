@@ -87,7 +87,7 @@ live queue, cross-reference the issue number.
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 
 ## Backlog
-- Stat stage model [Proposed] (opened 2026-10-30): docs/proposals/stat-stage-model.md. Jess has one more set of questions before ruling; Q3 (Haze, Psych Up and other reset/copy moves) still open. Holds the slice 5 plan.
+- Stat stage model [Proposed] (opened 2026-10-30): docs/proposals/stat-stage-model.md. Jess has one more set of questions before ruling; stage-manipulation moves (Haze, Psych Up and other reset/copy moves) still open. Holds the slice 5 plan.
 - Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start.
 - Move priority in a bonded group (opened 2026-10-29, slice 4c-2): Quick Attack carries priority 1 ("always first") but the new move sim casts a bonded group in slot order. Matters only when Quick Attack shares a slot with other moves. Owner: MOVE-INTENT quick-attack [Open].
 - newcombat('motion') decoy on request (4c-2 handoff P11): not built, since a dummy on the dash line is itself the nearest target. The harness covers it by adding the decoy after the cast.
