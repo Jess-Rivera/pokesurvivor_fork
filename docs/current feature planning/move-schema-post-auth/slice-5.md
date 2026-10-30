@@ -14,6 +14,7 @@ Upgrade cards work on new-path moves. Until this slice new-path moves ignore car
 
 ## Blocking decision (D-MC5)
 The formula min(floor(duration / cooldown), 6) gives Metal Claw (duration 6, cd 0.5) a cap of 6 and Meteor Mash (6, 1.75) a cap of 3, but MOVE-INTENT rules both at maxStacks 1. Candidate readings: (a) the formula applies only once duration or cooldown upgrades change the ratio, and the base cap stays the authored 1; (b) the formula always applies to self-buffs, and the MOVE-INTENT rulings for Metal Claw and Meteor Mash are per-move exceptions that cap them at 1. The answer goes into COMBAT-RULES or MOVE-INTENT.
+2026-10-30: a from-scratch stat stage model is [Proposed] in docs/proposals/stat-stage-model.md. If approved it retires maxStacks and this formula, so D-MC5 goes away and this slice's scope changes. Hold the slice 5 plan until Jess rules on it.
 
 ## Scope
 Replace the kinds.js per-kind key table for new-path moves with field-derived keys; map card keys to schema paths; levelup.js and the card pool offer only valid cards per move; the self-buff cap uses the formula (per D-MC5) and never breaks the Dragon Dance floor. Legacy moves keep kinds.js until 7b removes it.

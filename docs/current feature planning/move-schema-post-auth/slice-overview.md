@@ -97,7 +97,7 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
 | D-GUST | Gust per-shot spread: RESOLVED 2026-10-30, even 3-shot fan | 4d | MOVE-INTENT gust |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp: RESOLVED 2026-10-30, caster's feet | 4d | MOVE-INTENT spikes, toxic-spikes, will-o-wisp |
-| D-MC5 | The QA-11 formula gives Metal Claw min(floor(6 / 0.5), 6) = 6 and Meteor Mash 3, while MOVE-INTENT rules both at 1 | 5 | slice-5.md |
+| D-MC5 | The QA-11 formula gives Metal Claw min(floor(6 / 0.5), 6) = 6 and Meteor Mash 3, while MOVE-INTENT rules both at 1. 2026-10-30: may be superseded by the [Proposed] stat stage model | 5 | slice-5.md; docs/proposals/stat-stage-model.md |
 | D-ENEMY | How bosses and gym leaders cast once `kind` and the legacy fields are gone | 7a | slice-7a.md |
 | D-COOP | What co-op does after the flip (co-op stays legacy today; net work is deferred scope) | 7a | slice-7a.md |
 | D-HAIL | Hail at the flip: build the toggle here, route it as a plain cast, or pull it from the pool | 7b | MOVE-INTENT hail; slice-7b.md |
