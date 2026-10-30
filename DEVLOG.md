@@ -184,3 +184,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 
 ## 2026-10-29 (Claude Code, home, late night): 4c-3 signed off
 - Jess feel-tested newcombat('falls') and ('extras'): all work as intended, a few need balance (slice 6). Confusion and Bubble Beam added to batchReviewed. Stopped at: Jess commits and pushes.
+
+## 2026-10-30 (Quick, work): slice 4d built and signed off
+- Decided: D-GUST (one emission of 3 shots, 0.5 rad fan), D-LOC (caster's feet for Spikes, Toxic Spikes, Will-O-Wisp), Will-O-Wisp shot range 300, termination bursts on natural ends plus offScreen (not ownerDeath, notActive, cap). Spikes faint question deferred to MP (TODO).
+- Built (approved plans): emit with cast, interval, casterMove, enemyHit and termination; R6 deferred children; H13 full parent power; H14; shapeless emitters as instances; contact mines; instance cap 8; notActive endOn; nine moves routed (62). Data re-exported via an emulation verified byte-identical first. New move-emit harness, move-emit-mutate (25), 10 intent scenarios, newcombat('emit'), changelog.
+- Docs: MOVE-INTENT, MOVE-AXIS-SCHEMA (stale Toxic Spikes wording), combat-architecture, BALANCE, TODO, slice-4d, slice-overview.
+- Tests: Jess ran check.js (green) and the emit runner (25/25); feel-tested all nine, batch signed off. Process note: the first build pass was slow (about 20 small device runs, reads done during the build); plans now carry the targeted read and per-file build map up front.
+- Stopped at: Jess commits and pushes. Next: D-MC5, plan slice 5.

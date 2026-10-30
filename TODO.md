@@ -6,7 +6,7 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-29 ~5:40 PM; no board changes since the 12:20 PM sync)
+## Board mirror (synced from the GitHub API 2026-10-29 ~5:40 PM; verified unchanged 2026-10-30 5:29 AM; the 10-30 wrap-up fetch failed, so later browser changes may be missing)
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
 OPEN (13):
