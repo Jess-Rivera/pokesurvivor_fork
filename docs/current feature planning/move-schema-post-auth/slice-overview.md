@@ -24,7 +24,7 @@ End state (Jess, 2026-10-28):
 | 4c-3 delay, falls, aimTrack  | Opus                                                                  | New runtime rules, but there's an approved, detailed handoff to follow |
 | 4r 20 plain moves           | Sonnet                                                                 | No new axis: a list of ids plus a generic harness                      |
 | 4d emitters, mines, cap      | Opus                                                                  | The most new runtime left in the branch                                |
-| 5 upgrades, self-buff cap   | Opus for the D-MC5 discussion and the build                            | Upgrade folding has to give the same result in any order               |
+| 5 upgrades, stat stage trackers | Opus | New runtime (the tracker model), plus upgrade folding that gives the same result in any order |
 | 6 simulator, balance, stress | Sonnet to build the CLI, Opus to read the results                     | The CLI is plumbing, the tuning calls are judgment                     |
 | 7a off kind                  | Opus for D-ENEMY and the boss and gym code, Sonnet for the UI readers | D-ENEMY is the biggest design call left                                |
 | 7b flip, purge, merge        | Opus                                                                  | Large deletions plus save safety before the merge                      |
@@ -36,14 +36,14 @@ A STATE.md code-gap item is built in this branch only if it is directly associat
 
 | code gap (STATE.md) | in this branch? | slice |
 | --- | --- | --- |
-| maxStacks default 6 in code, approved 1 | yes | 4c-0 (built 2026-10-29) |
-| Metal Claw and Meteor Mash authored at 2, approved 1 | yes | 4c-0 (built 2026-10-29) |
-| Foe debuffs capped per move on the new path | yes | 4c-0 (built 2026-10-29) |
-| Self-buff maxStacks formula (QA-11, Q15) | yes | 5 |
+| maxStacks default 6 in code, approved 1 | yes | 4c-0 (built 2026-10-29); maxStacks itself retired 2026-10-30, removed in 5 |
+| Metal Claw and Meteor Mash authored at 2, approved 1 | yes | 4c-0 (built 2026-10-29); maxStacks retired 2026-10-30, removed in 5 |
+| Foe debuffs capped per move on the new path | yes | 4c-0 (built 2026-10-29); authored foe caps retired 2026-10-30, removed in 5 |
+| Self-buff maxStacks formula (QA-11, Q15): retired 2026-10-30, replaced by the stat stage tracker model (COMBAT-RULES "Stat stages") | yes | 5 |
 | Legacy Fire Spin strip and burnHalf | yes, removed with the legacy path | 7b |
 | E1 on the live path (QA-10) | yes, verified gone after the flip | 7b |
 | QA-13 Brock-only gym fallback | yes | 7a, 7b |
-| Leaf Storm "held while active" grammar gap | closed (D-LEAF: per-hit refresh) | 4c-1 |
+| Leaf Storm "held while active" grammar gap | closed (D-LEAF: per-hit refresh); D-LEAF retired 2026-10-30, Leaf Storm follows COMBAT-RULES:SS12 | 4c-1, then 5 |
 | QA-08 run loop | no, own branch | none |
 | Boss doc renames and comment repoints (Q1, QA-06) | no, organization branch | none |
 | DoT on base HP for elites, Shedinja 1 HP, Speed-bounds doc wording (COMBAT-RULES gaps) | no, own branch | none |
@@ -80,7 +80,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. SIGNED OFF by Jess 2026-10-29 (feel test, Confusion and Bubble Beam batch reviewed; some balance to slice 6) | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | built 2026-10-30, check.js green, feel-tested OK | stage-0 |
-| 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |
+| 7 | slice-5.md: upgrades from fields and the stat stage tracker model | to plan | none (D-MC5 superseded 2026-10-30) |
 | 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |
 | 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan | D-ENEMY, D-COOP |
 | 10 | slice-7b.md: flip, purge and merge into main | to plan | D-HAIL, 7a |
@@ -97,7 +97,7 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
 | D-GUST | Gust per-shot spread: RESOLVED 2026-10-30, even 3-shot fan | 4d | MOVE-INTENT gust |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp: RESOLVED 2026-10-30, caster's feet | 4d | MOVE-INTENT spikes, toxic-spikes, will-o-wisp |
-| D-MC5 | The QA-11 formula gives Metal Claw min(floor(6 / 0.5), 6) = 6 and Meteor Mash 3, while MOVE-INTENT rules both at 1. 2026-10-30: may be superseded by the [Proposed] stat stage model | 5 | slice-5.md; docs/proposals/stat-stage-model.md |
+| D-MC5 | SUPERSEDED 2026-10-30: the stat stage model retires maxStacks and the QA-11 formula (COMBAT-RULES "Stat stages") | 5 | DECISIONS 2026-10-30 |
 | D-ENEMY | How bosses and gym leaders cast once `kind` and the legacy fields are gone | 7a | slice-7a.md |
 | D-COOP | What co-op does after the flip (co-op stays legacy today; net work is deferred scope) | 7a | slice-7a.md |
 | D-HAIL | Hail at the flip: build the toggle here, route it as a plain cast, or pull it from the pool | 7b | MOVE-INTENT hail; slice-7b.md |

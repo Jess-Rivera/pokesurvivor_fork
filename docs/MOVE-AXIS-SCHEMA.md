@@ -111,7 +111,7 @@ An ordered list of effect records. Payload effects are decoupled from geometry, 
 | `damage` | Uses source `power` and the game's damage formula unless a named handler overrides it. | Default direct-damage effect. |
 | `knockback` | Distance in px | Push applied to the affected target. Omit or use `0` for no push. |
 | `ailment` | Ailment ID, chance, `side`, optional `duration` | Burn/poison/paralysis/trap/etc. Chance comes from source data where available; the game's proc model owns application. Applied ailments have their own duration/tick rules and are not tied to the originating hitbox's lifetime. |
-| `stat` | Stat ID, `stages`, `side`, explicit `scope`, optional `chance`, `duration`, `maxStacks` | Stage change. `chance` is the percent proc chance when the stage change is a rider (absent means it always applies); `duration` is how many seconds the stage lasts; `maxStacks` caps how many live applications of this move can stack on its host, and only on self-target stage riders (see "maxStacks field rule" below). `duration` defaults to 6 s when absent; `maxStacks` defaults to 1. Scope is explicit (`caster`, `individual`, `team`, or another validated target scope); it is never inferred from the sign of `stages`. |
+| `stat` | Stat ID, `stages`, `side`, explicit `scope`, optional `chance` | Stage change. `chance` is the percent proc chance when the stage change is a rider (absent means it always applies). `stages` is what one success gives (pokeapi). How a change behaves over time (trackers, Gate, Duration, the Cap) is a combat rule, docs/COMBAT-RULES.md "Stat stages", not a move field. `duration` and `maxStacks` are retired (see "Retired stat fields" below). Scope is explicit (`caster`, `individual`, `team`, or another validated target scope); it is never inferred from the sign of `stages`. |
 | `heal` | Amount formula and `side` | Recovery from damage dealt, a flat amount, or a fraction of max HP. Drain is a heal with `from: dealt`, not a separate primitive. |
 | `shield` | Amount formula, optional `max`, `regen`, `absorbsAll`, `overflow`, `blocksStatus`, and `duration` | Temporary HP pool. `regen` is HP/s. `absorbsAll` routes incoming HP loss through the shield but does not prevent status application. `overflow` lets excess damage spill into real HP. `blocksStatus` prevents new ailments while active. `duration` controls shield expiration independently of the move instance. |
 | `flinch` | Chance and optional duration | Lost-action roll. Resolve as a target effect, independent of the source hitbox lifetime. |
@@ -124,13 +124,13 @@ An ordered list of effect records. Payload effects are decoupled from geometry, 
 
 **Normalization rule:** `normalize: true` establishes base per-hit/per-tick damage once during resolution, using source power divided by the base hit/tick count. The result is applied once in the damage formula; it is not recalculated every cast. Damage upgrades and duration/rehit upgrades apply afterward. Therefore, adding ticks increases total damage, with each tick using the normalized base. `normalize: false` gives every hit/tick full power. This policy applies to multihit and any persistent/count-based move explicitly configured to use it.
 
-### maxStacks field rule
+### Retired stat fields (`maxStacks`, `duration`)
 
-- [Approved] `maxStacks` on a `stat` effect defaults to 1 for every move, including Metal Claw and Meteor Mash. (Q14)
-- [Approved] The resolver fills that default on self-side `stat` effects only. A foe-side effect has no `maxStacks` unless one is authored, and an authored foe cap is a per-move exception that needs a MOVE-INTENT ruling (today Ice Beam and Bug Buzz). Without one a foe drop stacks freely to the -6 ladder. (Jess, 2026-10-29, D-FOECAP) Built in slice 4c-0.
-- [Approved] It is meaningful only on self-target stage riders. A foe debuff has no per-move cap and stacks up to the -6 ladder limit. (Q16; A.3-2) A move named in docs/MOVE-INTENT.md may override this (Ice Beam and Bug Buzz cap their foe debuff at 1; Dragon Dance has a floor of 1).
-- The stage rules (the +-6 ladder, the upgrade formula, the duration-not-shorter-than-cooldown invariant) live in docs/COMBAT-RULES.md, "Stat stages and maxStacks".
-- This overrides the earlier default of 6 (this file, `stat` row, before 2026-10-28) and review section 9.1 Q4.
+Formerly "maxStacks field rule"; a pointer to that title means this section.
+
+- [Approved] `maxStacks` and the `stat` effect's `duration` are retired by the stat stage tracker model: the Cap, the Gate and the Duration are global combat rules (docs/COMBAT-RULES.md "Stat stages", SS1 to SS7), so no move authors either field. (Jess, 2026-10-30) Code differs, see TODO: removed in slice 5; whether the validator then rejects or ignores them is a slice 5 plan question.
+- [Legacy behavior] Until slice 5: `maxStacks` defaults to 1, filled by the resolver on self-side `stat` effects only; a foe-side cap exists only when authored (Ice Beam, Bug Buzz); `duration` defaults to 6 s. (Q14; D-FOECAP; combat-architecture:H24) Removed by slice 5.
+- History: the default of 6 (this file before 2026-10-28, review section 9.1 Q4), then Q14, Q15, Q16 and D-FOECAP.
 
 ### Shapeless state-change moves
 
@@ -323,7 +323,7 @@ Add stress tests with realistic late-game entity counts. The schema itself does 
 Source: docs/current feature planning/move-consistency-review.md section 9 (Checkpoints 1 to 3). Rulings about one move live in docs/MOVE-INTENT.md; runtime rules live in combat-architecture.md section H.
 
 - [Approved] Grow start (CP1-Q1): the authored dimension is the START value and `grow.max` is the end. Nova start value 1 px (Jess, 2026-10-26); it passes the existing `radRadius` greater-than-0 rule, so no grammar change is needed. See the `grow` row.
-- [Approved] Stat riders (CP1-Q4): `duration` defaults to 6 s. The Q4 `maxStacks` default of 6 is superseded by Q14 (default 1); see "maxStacks field rule".
+- [Legacy behavior] Stat riders (CP1-Q4): `duration` defaults to 6 s. The Q4 `maxStacks` default of 6 was superseded by Q14 (default 1); both fields are retired 2026-10-30, see "Retired stat fields". Removed by slice 5.
 - [Approved] Emit counts (CP1-Q7): emit `count` = total emissions, child `space.count` = shapes per emission.
 - [Approved] Range (CP1-Q8): one tunable `range`, global default 420 px as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), optional per-move `delivery.range`. See the `range` row.
 - [Approved] critChance units (CP1-Q12): percent points, divided by 100 in exactly one place. See the `crit` row.

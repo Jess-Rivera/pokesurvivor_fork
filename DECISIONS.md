@@ -5,6 +5,11 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-30, Stat stage model approved: per-move trackers replace maxStacks (Jess)
+R1 to R13 of docs/proposals/stat-stage-model.md approved as COMBAT-RULES:SS1 to SS13. One tracker per (Pokemon, move, stat); global Gate 6.0 s and Duration 6.1 s; every success refreshes, a success with the Gate open climbs by the move's pokeapi stages; a dry window resets only that tracker. Self drops climb on Gate x 2. Strong hosts follow the model with STRONG_HOST_GATE_MUL 1 (Brock's Harden reaches +6 in about 30 s). Two team-wide cards (Gate, Duration).
+Retires maxStacks, the stat `duration` field, Q13, Q14, Q15 / QA-11, D-FOECAP, D-LEAF, D-MC5 and the per-move stage rulings for Bug Buzz, Ice Beam, Dragon Dance, Leaf Storm, Metal Claw, Meteor Mash and String Shot. Built in slice 5 on this branch, not its own branch. Left [Open]: Bond tax, stage-manipulation moves, raises on foes and whole-field moves.
+Canonical: docs/COMBAT-RULES.md, "Stat stages"; docs/MOVE-INTENT.md (the seven moves above); combat-architecture section H, H26; docs/MOVE-AXIS-SCHEMA.md, "Retired stat fields"
+
 ## 2026-10-29, D-AIM: aimTrack tracks only within the cone's reach (Jess)
 Flamethrower's sticky target counts as "in range" only within min(range 420, 250 + the enemy's radius), the same limit as its cast gate, not range 420. An enemy past reach is dropped and the nearest within reach re-picked; with none the heading holds. Approved with the 4c-3 plan; built.
 Canonical: docs/MOVE-INTENT.md, flamethrower; docs/MOVE-AXIS-SCHEMA.md, `aimTrack` row
@@ -28,10 +33,12 @@ Canonical: docs/MOVE-INTENT.md, psychic; combat-architecture D23
 ## 2026-10-29, D-FOECAP: only an authored maxStacks caps a foe drop (Jess)
 The resolver fills the maxStacks default on self-side stat effects only. Ice Beam and Bug Buzz keep their authored foe cap of 1; every other foe drop stacks to the -6 ladder. No new field.
 Canonical: docs/MOVE-AXIS-SCHEMA.md, "maxStacks field rule"; combat-architecture section H, H24
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-29, D-LEAF: Leaf Storm's self Sp. Atk -2 refreshes on hit (Jess)
 The -2 refreshes its 6 s on each hit and holds at -2. An enemy is almost always in reach, so it reads as on while active and lasts 6 s after the last hit, which covers the tail after the move ends. Supersedes the CP3 "held while active" wording; the grammar gap is closed, the 4c-1 handoff P6 and Test 5 stand.
 Canonical: docs/MOVE-INTENT.md, leaf-storm
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-29, Move review rule for Stage 0 and later batches (Jess)
 A move counts as reviewed when it has a MOVE-INTENT entry and its data and code match it. Moves without an entry are reviewed with the batch that routes them; any move needing specific disambiguation gets a MOVE-INTENT entry. Scenarios that depend on an open decision are marked blocked, not guessed.
@@ -84,6 +91,7 @@ Canonical: docs/COMBAT-RULES.md, "Trap, enemies"
 ## 2026-10-28, QA-11: A self-buff's maxStacks is min(floor(duration / cooldown), 6)
 A self-buff's maxStacks is min(floor(duration / cooldown), 6). (owner answer QA-11)
 Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-28, QA-12: The mainline type chart stays on hold
 The mainline type chart stays on hold. (owner answer QA-12)
@@ -152,14 +160,17 @@ Canonical: BOSS-REWORK.md, "4a. End of region and loops"
 ## 2026-10-28, Q13: A self-buff's duration is never shorter than its cooldown
 A self-buff's duration is never shorter than its cooldown. (owner answer Q13)
 Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-28, Q14: Every move defaults to maxStacks 1, including Metal Claw and Meteor Mash (authored 2 today; code default 6 is legacy)
 Every move defaults to maxStacks 1, including Metal Claw and Meteor Mash (authored 2 today; code default 6 is legacy). (owner answer Q14)
 Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-28, Q15: For a self-buff, maxStacks = min(floor(duration / cooldown), 6), new path only
 For a self-buff, maxStacks = min(floor(duration / cooldown), 6), new path only. (owner answer Q15)
 Canonical: docs/COMBAT-RULES.md, "Stat stages and maxStacks"
+Superseded 2026-10-30 by the stat stage model (DECISIONS 2026-10-30).
 
 ## 2026-10-28, Q16: maxStacks applies only to self-buffs; foe debuffs have no per-move cap, only the +-6 ladder
 maxStacks applies only to self-buffs; foe debuffs have no per-move cap, only the +-6 ladder. (owner answer Q16)

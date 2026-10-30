@@ -204,7 +204,10 @@ docs/current feature planning/combat-architecture.md (runtime); this table only 
 | pierce | how many enemies an instance passes through before it ends; UNLIMITED never ends it |
 | lens | the area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius |
 | cast gate | the check that holds a cast until a target is in reach (retries every 0.05 s) |
-| maxStacks | live applications one self-buff move may keep on its host; foe drops only when authored |
+| maxStacks | RETIRED 2026-10-30 by the stat stage model; on the new path until slice 5, the live applications one self-buff move may keep on its host |
+| stage tracker | one per (Pokemon, move, stat) on a recipient: its stages, Gate timer and Duration timer (COMBAT-RULES "Stat stages") |
+| stage Gate | minimum time between two climbs of one stage tracker, 6.0 s at base (x2 for self drops); not the cast gate |
+| stage Duration | how long a stage tracker holds after its last success, 6.1 s at base |
 | intent scenario | a staged fight in move-intent-scenarios.json with a hand-derived expected outcome |
 | batch review | Jess's sign-off of newly routed moves that have no MOVE-INTENT entry (CLAUDE.md "Move review rule") |
 | harness / mutation runner | an offline test file under docs/proposals/ run by check.js / a script that breaks the code on purpose to prove the harness catches it |

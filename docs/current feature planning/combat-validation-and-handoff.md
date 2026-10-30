@@ -16,7 +16,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 | move-consistency-review:CP1-Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
 | D-1 | Re-authored novas start at 1 px (MOVE-AXIS-SCHEMA "Grammar decisions", Jess 2026-10-26; built in slice 3a), `grow.max` = today's radius, growSpeed unchanged. The original "near the caster's body radius" wording is superseded |
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
-| D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (DECISIONS:Q14; COMBAT-RULES "Stat stages and maxStacks") |
+| D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (DECISIONS:Q14). Superseded 2026-10-30: maxStacks is retired (COMBAT-RULES "Stat stages"; DECISIONS 2026-10-30) |
 | D-3 | Meteor Mash: the projectile hits enemy 1; at enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1 |
 | D-4 | Approved: per-move routing behind `?newcombat` until slice 7 |
 

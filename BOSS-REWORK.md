@@ -59,7 +59,7 @@ Build rulings, copied from docs/DECISIONS-archive.md 2026-10-19 Brock pilot gym 
 - [Approved] Gym tuning knobs: each signature may carry power (damage multiplier) and tempo (attack-rate multiplier), default 1, valid in (0, 5]. Brock's values are TUNE, current value: see js/data/gyms.js.
 - [Approved] Boss forms built: melee = the player's cone swing, projectile (and any kind without a form yet) = the player's projectile, buff = the player's buff cast. Validation (2026-10-22, docs/DECISIONS-archive.md Gym roster data model): every move kind must be in G.Gyms.BOSS_FORMS; 1 to 4 moves, at least one damaging; unknown fields rejected; ladders checked.
 - Superseded detail: the archive entry's Harden description (7% damage cut per stack, 5 stacks, 7 s shared timer) and "Stat stages are NOT built" were replaced by Slice D1 stages (section 3c and docs/COMBAT-RULES.md).
-### 3e. Multi-mon gyms (LOCKED 2026-10-22, Jess) — ALL AT ONCE
+### 3e. Multi-mon gyms (LOCKED 2026-10-22, Jess), ALL AT ONCE
 Loops field the leader's first N mons SIMULTANEOUSLY (not sequential): loop 1 = slot 1 alone,
 loop 6 = all six on screen together, a brawl. Arena size scales with the mon count (ARENA_R becomes
 count-based, not the constant 11). Win = every leader mon down (arenaTick tracks a SET of boss ids,
@@ -80,13 +80,13 @@ Loop 1 fields the first signature only: Geodude alone. Moves: Tackle, Harden (st
 The format Jess fills in lives in docs/BOSS-AUTHORING.md (fields, move-line hints, validation rules, a template and an illustrative Brock example). It becomes js/data/gyms.js at build time (propose-first).
 
 ### 3c. Status, stages and bosses (2026-10-19)
-General status, damage-over-time and stat stage rules now live in docs/COMBAT-RULES.md (sections "Status effects", "Damage over time" and "Stat stages and maxStacks") and apply to bosses, elites and gym leaders as to every other host. Superseded here and no longer stated: the 2026-10-19 stage multiplier table, the "about 12 s" application length and the Speed-stage-before-shaping line (replaced by the Status Slice D1 and E2a entries in docs/DECISIONS-archive.md, summarized in COMBAT-RULES "Stat stages and maxStacks"). Gym-only rules that stay here (LOCKED by Jess unless marked):
+General status, damage-over-time and stat stage rules now live in docs/COMBAT-RULES.md (sections "Status effects", "Damage over time" and "Stat stages") and apply to bosses, elites and gym leaders as to every other host. Superseded here and no longer stated: the 2026-10-19 stage multiplier table, the "about 12 s" application length and the Speed-stage-before-shaping line (replaced by the Status Slice D1 and E2a entries in docs/DECISIONS-archive.md, summarized in COMBAT-RULES "Stat stages"). Gym-only rules that stay here (LOCKED by Jess unless marked):
 - Phasing: the pilot gym (Brock) uses DAMAGE moves plus Harden only. No player-side status needed for it. Then a minimal player status core before Gym 3 (burn and poison on the DoT table, paralysis as a slow, stat drops), then control statuses in Slice C. Slice C is needed very soon (promote it right after the pilot).
 - DoT on base HP and no blanket boss immunity: see COMBAT-RULES "Damage over time" and "Other status effects".
-- Stages adopted 2026-10-19 (Jess: 'Adopt the Stages yes'): see COMBAT-RULES "Stat stages and maxStacks".
-- Boss Harden = +1 Def stage per cast (x1.5 Defense), stacking, instead of my earlier flat 14%.
+- Stages adopted 2026-10-19 (Jess: 'Adopt the Stages yes'): see COMBAT-RULES "Stat stages".
+- Boss Harden = +1 Def stage per success, climbing at most once per Strong-host Gate (COMBAT-RULES:SS13; Jess, 2026-10-30: strong hosts follow the stat stage model, so Brock's Harden reaches +6 after about 30 s of steady casting at STRONG_HOST_GATE_MUL 1), instead of my earlier flat 14% and the 2026-10-19 per-cast stacking.
 - Cooldown fact (verified 2026-10-19): damaging moves use cd = 0.5 x (35 / PP) (DECISIONS 2026-10-18, BETA 1.0), but STATUS moves (dmg 0) keep their hand-tuned catalog cd. Harden is hand-tuned 0.85 s (PP 30 would give 0.58 s). Boss rule proposal: cast period = the move's cd times the tier factor, never shorter than wind-up plus recovery (about 1.0 s), so a boss cannot spam a move that is fast for the player.
-- BUILT 2026-10-19 (Slice D1): G.Stages with a 6 s per-application duration (the 12 s above was a placeholder), gym leader Harden = +1 Def stage per cast with the move's stacks as the stage cap, gym attacks read the Atk or SpA stage, player-side buffs still on pl.buffs. See DECISIONS 2026-10-19 Status Slice D1.
+- BUILT 2026-10-19 (Slice D1): G.Stages with a 6 s per-application duration (the 12 s above was a placeholder), gym leader Harden = +1 Def stage per cast with the move's stacks as the stage cap, gym attacks read the Atk or SpA stage, player-side buffs still on pl.buffs. See DECISIONS 2026-10-19 Status Slice D1. [Legacy behavior] The per-cast stacking with the move's stacks as the stage cap is retired by COMBAT-RULES:SS13. Code differs, see TODO: when gym Harden moves onto the tracker model is a slice 5 plan question, since gym casting stays legacy until slice 7a (slice-overview:D-ENEMY).
 
 ### 3f. Gate escalation (LOCKED 2026-10-22, Jess; copied from DECISIONS 2026-10-22, Gym gate is a pressure mechanic)
 A gym gate is a pressure mechanic, not come-when-ready.

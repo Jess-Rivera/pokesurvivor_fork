@@ -1,6 +1,6 @@
-# Stat stage model, from scratch (PROPOSED)
+# Stat stage model, from scratch (APPROVED 2026-10-30, now history)
 
-Status: [Proposed] (Jess, 2026-10-30, Quick session). Not approved, not built. Nothing here changes the game until Jess approves it and a slice plan builds it.
+Status: APPROVED by Jess 2026-10-30 (DECISIONS 2026-10-30). HISTORY from approval: R1 to R13 below are COMBAT-RULES:SS1 to SS13 (docs/COMBAT-RULES.md "Stat stages"), and the text there wins; the [Proposed] tags below are as written before approval. This file keeps the rationale, the shape counts, the worked examples and the design intent. The Open items moved to COMBAT-RULES "Stat stages" as [Open].
 Started from pokeapi data only (stat, stages, chance, target, damage class). No in-game cooldown, duration or maxStacks value was used as an input.
 Replaces the D-MC5 question (slice-overview:D-MC5) if approved: there is no maxStacks formula left to decide.
 
@@ -39,6 +39,7 @@ Terms: **stages** = what one success gives, straight from pokeapi (Swords Dance 
 ## Worked examples (base timers, no cards)
 - Swords Dance (+2, always lands): +2 at 0 s, +4 at 6 s, +6 at 12 s, then holds.
 - Harden (+1): one step every 6 s, +6 at 30 s.
+- Brock's Harden (R13, STRONG_HOST_GATE_MUL 1): same as above, +6 at 30 s of steady casting (today it caps within a few seconds). At 0.5 it would be +6 at 15 s.
 - Swords Dance + Dragon Dance on one Pokemon: two trackers on Atk climb in parallel, Cap at +6.
 - Metal Claw (+1, 10% once per cast): climbs on a success after its Gate opens; a dry 6.1 s window resets only Metal Claw to 0. If another tracker already holds Atk at +6, its resets do not show.
 - Leaf Storm (-2 on itself, orbit hits constantly, R12 Self-drop Gate 12.0 s): -2 at 0 s (x0.5 Sp. Atk), -4 at 12 s (x0.33), -6 at 24 s (x0.25), like mainline repeated use but slower. Expected rhythm: stay out 12 to 20 s, swap off, the drop clears 6.1 s later on the bench, swap back after the lockout to a fresh -2. A team Gate card makes the climb faster.
@@ -59,8 +60,8 @@ Mainline's real cost for Leaf Storm is the switch; here the bench already exists
 - Bond tax [Open]: Jess's idea, bonding a buff move adds 50% of its cooldown to the other moves in the group. Flat seconds vs +50% of each move's own cooldown not decided. Belongs to the Bond rework branch (TODO Backlog).
 - Stage-manipulation moves [Open]: reset, copy, swap, invert, steal (Haze, Clear Smog, Psych Up, Heart Swap, Topsy-Turvy, Spectral Thief). Not in the pool yet.
 - Raise on a foe (Swagger, Flatter) and whole-field moves: should follow R1 to R6 unchanged; not checked at runtime.
-- Bosses, elites, gym leaders: COMBAT-RULES says strong hosts keep their own BOSS-REWORK rules. Check that this model does not overwrite them before approval.
-- Jess has one more set of questions on this model (2026-10-30), still to come.
+- Bosses, elites, gym leaders: CHECKED 2026-10-30. Only conflict was gym Harden's stacks cap and ramp (BOSS-REWORK 3c); Jess ruled strong hosts follow the model (R13). COMBAT-RULES "Foe debuffs ... Strong hosts keep their own rules" points at nothing in BOSS-REWORK; remove that clause on approval.
+
 
 ## Slice impact (if approved)
 - Slice 5 loses the self-buff cap formula. It gains the two team cards (or they move to the upgrade rework branch, see TODO).

@@ -1,11 +1,12 @@
 # BUFF-TABLE, authoring sheet for the player's buff moves
 
 Edit the numbers here, then tell Claude to convert them into `js/data/moves.js` (fields `cd`, `dur`, `stageN`, `stage2`, `amount`).
-Rules (stat stages, stage ladders, maxStacks): docs/COMBAT-RULES.md, section "Stat stages and maxStacks". Where this sheet and COMBAT-RULES disagree, COMBAT-RULES wins. Reasoning history: docs/DECISIONS-archive.md, 2026-10-20 Status Slice E2a.
+Rules (stat stages, stage ladders, trackers): docs/COMBAT-RULES.md, section "Stat stages". Where this sheet and COMBAT-RULES disagree, COMBAT-RULES wins. Reasoning history: docs/DECISIONS-archive.md, 2026-10-20 Status Slice E2a.
 
 ## How it works in one paragraph
+[Legacy behavior] This paragraph and the sheet describe the legacy path (removed by slice 7b) and the new path until slice 5. The tracker model in COMBAT-RULES "Stat stages" replaces the duration / cooldown overlap: a pure buff move has no cooldown of its own (SS8) and stage timing is set by the team Gate and Duration cards (SS10).
 Every cast of a buff move is its own timed application on the TEAM (all raises are team-wide). The sheet below describes the legacy
-behavior, where how many casts overlap is set by duration / cooldown (the cap rules, including per-move maxStacks, are in COMBAT-RULES "Stat stages and maxStacks"). At base the cooldown equals the duration, so exactly one application is
+behavior, where how many casts overlap is set by duration / cooldown (the cap rules, including per-move maxStacks, are in COMBAT-RULES "Stat stages"). At base the cooldown equals the duration, so exactly one application is
 live and the stage is what one cast gives. Recharge (cooldown / (1 + 0.15 n)) and Duration (duration x (1 + 0.15 n)) cards each multiply
 duration / cooldown, and the sustained stage is about: per-cast stages x (1 + 0.15 r) x (1 + 0.15 d). Only moves in the active slot group
 cast (selected or bonded).
@@ -38,7 +39,7 @@ Multiplier = (1 + 0.15 r) x (1 + 0.15 d). Stage = per-cast x multiplier, rounded
 Measured by the offline harness over 200 s with real casts: Harden 4 Recharge = average 1.61, Swords Dance 4 Recharge = 3.23.
 
 ## Stage ladders (one base number B per stat, G.Stages.BASE)
-The ladder rule and the B values are in COMBAT-RULES "Stat stages and maxStacks" (current B values: see js/systems/stages.js BASE). The table below is derived from them for authoring.
+The ladder rule and the B values are in COMBAT-RULES "Stat stages" (current B values: see js/systems/stages.js BASE). The table below is derived from them for authoring.
 
 | Stage | -6 | -4 | -2 | +1 | +2 | +4 | +6 |
 |---|---|---|---|---|---|---|---|

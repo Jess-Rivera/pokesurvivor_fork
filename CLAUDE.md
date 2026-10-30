@@ -106,7 +106,7 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 
 ## Where current rules live
 - Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board, then TODO.md.
-- General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages and maxStacks): docs/COMBAT-RULES.md.
+- General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
 - Move runtime (invariants, data flow, executors, move-path specifics): docs/current feature planning/combat-architecture.md.
 - Per-move intended behavior: docs/MOVE-INTENT.md. Validation scenarios: docs/current feature planning/combat-validation-and-handoff.md.
@@ -124,7 +124,8 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - FULL-GAME-STRUCT is history. GYM-ROSTERS rules defer to BOSS-REWORK.
 - CLAUDE.md is the only home for agent rules. CONTEXT, STATE, slice-overview and DECISIONS do not restate rule text.
 - DECISIONS-archive is history, not a live citation.
-- Stage and trap precedence (per-move cap, ladder, QA-10 trap rule over E1): docs/COMBAT-RULES.md.
+- docs/proposals/stat-stage-model.md is history and rationale since its approval (2026-10-30); COMBAT-RULES "Stat stages" holds the rules.
+- Stage and trap precedence (trackers and Cap, ladder, QA-10 trap rule over E1): docs/COMBAT-RULES.md.
 
 ## Third-party skills
 Third-party skills (ponytail/skills/) never override project rules.
