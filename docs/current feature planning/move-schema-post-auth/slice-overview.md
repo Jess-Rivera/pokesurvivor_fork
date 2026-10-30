@@ -79,7 +79,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | built and signed off 2026-10-29 (swapped ahead of 4c-3) | 4c-1 |
 | 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. SIGNED OFF by Jess 2026-10-29 (feel test, Confusion and Bubble Beam batch reviewed; some balance to slice 6) | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
-| 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
+| 6 | slice-4d.md: emitters, mines, the instance cap | built 2026-10-30, check.js green, feel-tested OK | stage-0 |
 | 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |
 | 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |
 | 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan | D-ENEMY, D-COOP |
@@ -95,8 +95,8 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | D-PSY | ANSWERED 2026-10-29: one re-pick, then straight (D23; MOVE-INTENT psychic) | 4c-3 | DECISIONS 2026-10-29 |
 | D-AIM | ANSWERED 2026-10-29: aimTrack keeps or picks a target only within the cone's reach, min(range, reach + radius) | 4c-3 | MOVE-INTENT flamethrower |
 | D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
-| D-GUST | Gust per-shot spread | 4d | MOVE-INTENT gust [Open] |
-| D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp (resolver default is enemy; legacy placed mines at the caster's feet) | 4d | slice-4d.md |
+| D-GUST | Gust per-shot spread: RESOLVED 2026-10-30, even 3-shot fan | 4d | MOVE-INTENT gust |
+| D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp: RESOLVED 2026-10-30, caster's feet | 4d | MOVE-INTENT spikes, toxic-spikes, will-o-wisp |
 | D-MC5 | The QA-11 formula gives Metal Claw min(floor(6 / 0.5), 6) = 6 and Meteor Mash 3, while MOVE-INTENT rules both at 1 | 5 | slice-5.md |
 | D-ENEMY | How bosses and gym leaders cast once `kind` and the legacy fields are gone | 7a | slice-7a.md |
 | D-COOP | What co-op does after the flip (co-op stays legacy today; net work is deferred scope) | 7a | slice-7a.md |

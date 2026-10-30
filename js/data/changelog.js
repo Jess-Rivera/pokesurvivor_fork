@@ -6,6 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-10-30', title: ['Emitters, mines and trails', 'Emitters, mines and trails'], new: [
+    ['On the new move system (dev builds only), nine more moves now run: Discharge, Gust, Fairy Wind, Toxic, Flame Wheel, Toxic Spikes, Will-O-Wisp, Meteor Mash and Spikes. Gust fires its three gusts at once in a fan, Spikes, Toxic Spikes and Will-O-Wisp are placed at your feet, Will-O-Wisp shoots enemies within 300 px, and you can keep at most 8 Spikes down (a new one replaces the oldest).',
+     'On the new move system (dev builds only), nine more moves now run: Discharge, Gust, Fairy Wind, Toxic, Flame Wheel, Toxic Spikes, Will-O-Wisp, Meteor Mash and Spikes. Gust fires its three gusts at once in a fan, Spikes, Toxic Spikes and Will-O-Wisp are placed at your feet, Will-O-Wisp shoots enemies within 300 px, and you can keep at most 8 Spikes down (a new one replaces the oldest).']
+  ] },
   { d: '2026-10-29', title: ['String Shot cooldown restored', 'String Shot cooldown restored'], chg: [
     ['String Shot on the new move system (dev builds only) now waits 1.1 s between casts, the same as the regular game. It had been firing every 0.5 s by mistake.',
      'String Shot on the new move system (dev builds only) now waits 1.1 s between casts, the same as the regular game. It had been firing every 0.5 s by mistake.'],

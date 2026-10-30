@@ -65,7 +65,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I07
 
 ### gust
-- [Open] Per-shot spread (review 9.4 C4, 9.7 item 4). Options recorded in slice-4d.md: a data change to a 3-count simultaneous fan, or accept the legacy +-0.03 jitter, or a new emit-level aim jitter field (a new field is a stop-and-ask). Needed before slice 4d.
+- [Approved] Per-shot spread: the 3 projectiles fire at once as an even fan using the existing `spread` field (the total fan), not the legacy +-0.03 jitter and not a new aim-jitter field, so the three shots read as separate. Fan width 0.5 rad total, so shots at -0.25, 0 and +0.25 rad. (Jess, 2026-10-30, D-GUST and the approved slice 4d plan; review 9.4 C4, 9.7 item 4) Built in slice 4d.
 - [Approved] cd 0.5 (formula), not the legacy 0.26: Gust is now a cast that emits 3 projectiles with a normal cooldown, not an orbit with a re-hit. (Jess, 2026-10-29, Stage 0 cd ruling)
 - Ledger: B4-I08
 
@@ -135,6 +135,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### spikes
 - [Approved] Deliberately NOT persistent. Keeps no timeout; it is bounded by the instance cap (combat-architecture H6). (review 9.2 C13, 9.1 Q16)
 - [Approved] cd 1.1 (move-overrides.js), not the legacy 1.2. (Jess, 2026-10-29, Stage 0 cd ruling)
+- [Approved] locationPick caster: mines are placed at the caster's feet (as in the legacy game), not on a random enemy, so kiting lays a minefield along the player's path. (Jess, 2026-10-30, D-LOC) Built in slice 4d.
 - Ledger: B4-I20
 
 ### string-shot
@@ -162,4 +163,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### toxic-spikes
 - [Approved] One placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches. (review 9.1 Q7; combat-validation 2.5 scenario 6)
 - [Approved] It never emits at or after its end, so it gets 11 emissions in 3 s. (review 9.3 F6; slice-4d.md decisions)
+- [Approved] locationPick caster: the emitter is placed at the caster's feet (as in the legacy game), a trap the chasing horde walks into. (Jess, 2026-10-30, D-LOC) Built in slice 4d.
 - Ledger: B4-I26
+
+### will-o-wisp
+- [Approved] locationPick caster: the turret is placed at the caster's feet (as in the legacy game), a defensive turret that fires at enemies within its range. (Jess, 2026-10-30, D-LOC) Built in slice 4d.
+- [Approved] Shot range 300 px (the legacy turret's range), set on the emitted shot, not the resolver's 420; the 420 px placement gate is unchanged. (Jess, 2026-10-30, slice 4d plan decision A) Built in slice 4d.

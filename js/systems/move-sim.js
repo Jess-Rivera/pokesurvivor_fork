@@ -55,7 +55,7 @@
 G.MoveSim = (() => {
   const TAU = Math.PI * 2, EPS = 1e-9, RETRY = 0.05, OFF_MARGIN = 260;
   const PROP_R = 14;     // largest destructible prop radius (world.js grass), the broad-phase pad for the prop query
-  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true, cms = [];
+  let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true, cms = [], pending = [];
 
   const isProp = x => x.destructible === true;     // world props carry it, enemies never do
   const rangeOf = def => (def.delivery.range != null ? def.delivery.range : G.MoveResolver.TUNING.RANGE);
@@ -118,17 +118,93 @@ G.MoveSim = (() => {
     return spread >= TAU ? aim + (i * TAU) / n : aim + (i / (n - 1) - 0.5) * spread;
   }
 
-  function spawnInstance(spec, cast, heading, i) {
+  function spawnInstance(spec, cast, heading, i, later) {
     const d = spec.delivery, o = cast.owner;
     const at = d.anchor === 'target' && cast.target ? cast.target : d.anchor === 'world' ? cast.point || cast : o;
     const inst = { id: ++serial, spec, cast, fan: i, x: at.x, y: at.y, prevX: at.x, prevY: at.y, bx: at.x, by: at.y,
       heading, age: 0, dist: 0, steer: cast.target, retargeted: false, track: cast.target, wait: d.delay || 0, struck: 0, leg: 0, armed: true,
-      pierce: spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null };
+      pierce: !spec.space || spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null,
+      emits: emitsOf(spec), hitless: hitlessOf(spec), mvX: o.x, mvY: o.y };     // 4d: emitter state (C6) and the owner's last position (casterMove)
     if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }     // start on the ring, so the first sweep does not cross the circle
     if (d.motion === 'repositions') setupReposition(inst);
-    insts.push(inst);     // roots act in their cast frame (S9); children (slice 4d) will be deferred to the end of the step (R6)
+    (later ? pending : insts).push(inst);     // roots act in their cast frame (S9); emitted children wait for the end of the step (R6)
     if (inst.dash) rootOf(o);
     return inst;
+  }
+
+  // ---- emitters (slice 4d, D29, H4, H13, H14, R6, C6): an emitter is its own instance and keeps one state per emit effect ----
+  const endAt = spec => { const c = (spec.delivery.endOn || []).find(c => c.time != null); return c ? c.time : Infinity; };
+  const emitting = spec => (spec.payload || []).some(fx => fx.t === 'emit');
+  const emitsOf = spec => (emitting(spec) ? spec.payload.filter(fx => fx.t === 'emit').map(fx => ({ fx, done: 0, next: fx.trigger === 'interval' ? fx.every : 0, acc: 0 })) : null);
+  const hitlessOf = spec => !(spec.payload || []).some(fx => fx.t !== 'emit');     // a pure emitter (Toxic Spikes' plate, Will-O-Wisp's turret) has no hitbox
+  const capOk = st => st.fx.count == null || st.done < st.fx.count;     // D29: count caps the total emissions; absent, unlimited while the carrier lives
+  const kids = new WeakMap();
+  /** The child of an emit effect: an inline move takes the parent's identity, type and power (H13); a named move is used as it is. */
+  function childOf(def, fx) {
+    if (typeof fx.move === 'string') return G.MoveDefs[fx.move];
+    let c = kids.get(fx);
+    if (!c) {
+      c = Object.assign({ id: def.id, name: def.name, type: def.type, category: def.category, power: def.power, accuracy: def.accuracy, basePower: def.basePower }, fx.move);
+      kids.set(fx, c);
+    }
+    return c;
+  }
+  /** One emission at `at`: the child's space.count shapes in its fan around `aim`. An enemyHit child ignores the enemy that triggered it
+   *  (R6, MOVE-INTENT meteor-mash). A child that targets nearest (Will-O-Wisp's shot) is not fired when nothing is within its range. */
+  function emitOne(inst, st, at, aim, skip) {
+    const kid = childOf(inst.spec, st.fx);
+    let target = null, heading = aim;
+    if (kid.delivery.targeting === 'nearest') {
+      const R = rangeOf(kid);
+      target = nearest(at.x, at.y, R, () => R);
+      if (!target) return false;
+      heading = Math.atan2(target.y - at.y, target.x - at.x);
+    }
+    const cast = Object.assign({}, inst.cast, { x: at.x, y: at.y, point: { x: at.x, y: at.y }, aim: heading, target, persist: false, parent: inst.id });
+    const n = Math.max(1, (kid.space && kid.space.count) || 1);
+    for (let i = 0; i < n; i++) {
+      const c = spawnInstance(kid, cast, fanAngle(heading, i, n, (kid.space && kid.space.spread) || 0), i, true);
+      if (skip) c.hits.set(skip.id, { t: 0, leg: 0 });
+    }
+    G.SimBus.emit('move:emit', { moveId: inst.spec.id, parentId: inst.id, x: at.x, y: at.y, count: n });
+    return true;
+  }
+  /** D29 schedule, on every live step of the carrier: cast emits first at activation, then every `every`; interval first at `every`;
+   *  casterMove once per `every` s of owner moving time. H14: never at or after the carrier's end. enemyHit runs in collide().
+   *  termination runs in burst(), when the carrier ends (step). */
+  function runEmits(inst, dt) {
+    const o = inst.cast.owner, end = endAt(inst.spec), moved = Math.hypot(o.x - inst.mvX, o.y - inst.mvY) > EPS;
+    inst.mvX = o.x; inst.mvY = o.y;
+    for (const st of inst.emits) {
+      const tr = st.fx.trigger, every = st.fx.every;
+      if (tr === 'cast' || tr === 'interval') {
+        while (capOk(st) && st.next <= inst.age + EPS && st.next < end - EPS) {
+          if (emitOne(inst, st, inst, inst.heading)) st.done++;
+          st.next = every > 0 ? st.next + every : Infinity;
+        }
+      } else if (tr === 'casterMove' && every > 0) {
+        if (moved) st.acc += dt;
+        while (capOk(st) && st.acc >= every - EPS && inst.age < end - EPS) {
+          if (emitOne(inst, st, inst, inst.heading)) st.done++;
+          st.acc -= every;
+        }
+      }
+    }
+  }
+  /** D29 termination (Jess 2026-10-30): one emission when the carrier ends naturally, at its final position; never on ownerDeath,
+   *  notActive or cap (a faint, a swap or the cap cleanup). Its children wait for the end of the step like every child (R6). */
+  const BURST = { time: true, pierce: true, wall: true, triggered: true, returned: true, arrived: true, offScreen: true };
+  function burst(inst) {
+    for (const st of inst.emits) if (st.fx.trigger === 'termination' && capOk(st) && emitOne(inst, st, { x: inst.x, y: inst.y }, inst.heading)) st.done++;
+  }
+  /** H6: a placed object with neither a time lifetime nor HP (Spikes) is capped at TUNING.INSTANCE_CAP live per move slot; the 9th removes that slot's oldest. */
+  const capped = def => !!def.space && def.delivery.anchor === 'world' && !def.persistent && endAt(def) === Infinity;
+  function capSlot(o, slot, def, add) {
+    const live = insts.filter(i => i.spec === def && i.cast.owner === o && i.cast.slot === slot);
+    const drop = live.slice(0, Math.max(0, live.length + add - G.MoveResolver.TUNING.INSTANCE_CAP));
+    if (!drop.length) return;
+    for (const i of drop) { i.done = 'cap'; G.SimBus.emit('move:end', { moveId: i.spec.id, instId: i.id, reason: 'cap', x: i.x, y: i.y }); }
+    insts = insts.filter(i => !drop.includes(i));
   }
 
   // ---- repositions (slice 4c-2, D27, R9) ----
@@ -186,8 +262,9 @@ G.MoveSim = (() => {
     const roots = [];
     if (def.space) {
       const n = Math.max(1, def.space.count || 1);
+      if (capped(def)) capSlot(o, slot, def, n);     // 4d (H6)
       for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
-    }
+    } else if (emitting(def)) roots.push(spawnInstance(def, cast, pick.aim, 0));     // 4d (H4): a shapeless emitter (Gust, Discharge) is still its own instance
     commit(o, slot, def, roots, self.shield);
     G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
     return cast;
@@ -254,8 +331,8 @@ G.MoveSim = (() => {
     if (!gate || !G.MoveEffects.canCast(def, o)) return null;     // the gate holds; the upkeep tries again next tick
     const pick = settle(o, gate);
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial, persist: true };
-    const self = G.MoveEffects.applyCast(def, cast, rng), roots = [], n = Math.max(1, def.space.count || 1);
-    for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
+    const self = G.MoveEffects.applyCast(def, cast, rng), roots = [], n = def.space ? Math.max(1, def.space.count || 1) : 1;     // 4d: a shapeless emitter is one instance
+    for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, (def.space && def.space.spread) || 0), i));
     commit(o, slot, def, roots, self.shield);
     G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
     return cast;
@@ -264,7 +341,7 @@ G.MoveSim = (() => {
     const act = o.activeGroup(), stunned = G.Status.stunned(o);
     for (const g of o.slots) for (const slot of g) {
       const def = G.MoveDefs[slot.id];
-      if (!def || !def.persistent || !def.space || !routed(slot.id)) continue;     // a shapeless persistent emitter (Toxic, Flame Wheel) arrives with slice 4d
+      if (!def || !def.persistent || (!def.space && !emitting(def)) || !routed(slot.id)) continue;     // 4d: a shapeless persistent emitter (Toxic, Flame Wheel) counts
       const mine = groupOf(o, slot);
       if (o.dead) endGroup(mine, 'ownerDeath');
       else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');
@@ -411,7 +488,7 @@ G.MoveSim = (() => {
   };
 
   function collide(inst, maxR) {
-    if (inst.armed === false) return;     // 4c-2: a disarmed hitbox (dash in transit, a returnHits out leg) tests nothing
+    if (inst.armed === false || inst.hitless || !inst.shape) return;     // 4c-2: a disarmed hitbox tests nothing; 4d: nor does a pure emitter
     const s = inst.shape, b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR), cands = [];
     G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, e => { if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, e.x, e.y, e.r)) cands.push(e); });
     // destructible props join the same sweep (slice 3d, D2): solid ones spend pierce like an enemy, grass never does
@@ -438,7 +515,9 @@ G.MoveSim = (() => {
       const r = G.MoveEffects.applyHit(inst, e, 0, rng);     // always a result: a riders-only hit still counts (4a, P4)
       G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
       struck.push(e);
+      if (inst.emits) for (const st of inst.emits) if (st.fx.trigger === 'enemyHit' && capOk(st) && emitOne(inst, st, e, inst.heading, e)) st.done++;     // 4d (D29): once per hit event
     }
+    if (struck.length && inst.spec.delivery.trigger === 'contact') inst.fired = true;     // 4d: a mine goes off once, on the step an enemy touches it
     if (struck.length && inst.spec.space.chainHops && !inst.chained) {     // S9: the cast target starts the chain when it was struck, else the first enemy hit
       inst.chained = true;
       chain(inst, struck.includes(inst.cast.target) ? inst.cast.target : struck[0]);
@@ -482,6 +561,7 @@ G.MoveSim = (() => {
     offScreen: inst => !!view && (inst.x < view.x - OFF_MARGIN || inst.y < view.y - OFF_MARGIN ||
       inst.x > view.x + view.w + OFF_MARGIN || inst.y > view.y + view.h + OFF_MARGIN) && 'offScreen',
     ownerDeath: inst => !!inst.cast.owner.dead && 'ownerDeath',
+    notActive: inst => { const o = inst.cast.owner; return !!o.activeGroup && !o.activeGroup().includes(inst.cast.slot) && 'notActive'; },     // 4d: Spikes leaves with its slot
     returned: inst => !!inst.returned && 'returned'     // 4c-2: returns home (D26) or a swept dash back at its origin (D27)
   };
   const OWNED = { returns: true, repositions: true };     // motions that ride or chase the owner (4c-2)
@@ -489,6 +569,7 @@ G.MoveSim = (() => {
     const owned = OWNED[inst.spec.delivery.motion];
     if (owned && inst.cast.owner.dead) return 'ownerDeath';     // a faint ends a bone or a dash, listed or not
     if (inst.dash && inst.phase === 'done' && !inst.spec.delivery.returnToOrigin) return 'arrived';     // a one-way dash ends after its armed step at B, listed or not
+    if (inst.fired) return 'triggered';     // 4d: a contact mine is gone once it has gone off
     for (const c of inst.spec.delivery.endOn || []) for (const k in c) {
       const r = END[k] && END[k](inst, c[k]);
       if (r) return r;
@@ -517,17 +598,20 @@ G.MoveSim = (() => {
         inst.age += dt;
         MOTION[inst.spec.delivery.motion](inst, dt);
       }
-      inst.shape = G.MoveGeom.shapeOf(inst.spec.space, inst.spec.delivery.grow || null,     // growth (D21) and the lens live in shapeOf
-        { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: lensOf(inst.cast.owner) });
+      inst.shape = inst.spec.space ? G.MoveGeom.shapeOf(inst.spec.space, inst.spec.delivery.grow || null,     // growth (D21) and the lens live in shapeOf
+        { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: lensOf(inst.cast.owner) }) : null;     // 4d: a shapeless emitter has none
     }
+    for (const inst of insts) if (!inst.idle && inst.emits) runEmits(inst, dt);     // 4d: emissions after motion, so a child starts where its carrier is now
     for (const inst of insts) if (!inst.idle) collide(inst, maxR);
     const unroot = new Set();
     for (const inst of insts) {
       inst.done = inst.idle ? waitEnd(inst) : checkEnd(inst);
       if (inst.done) G.SimBus.emit('move:end', { moveId: inst.spec.id, instId: inst.id, reason: inst.done, x: inst.x, y: inst.y });
+      if (inst.done && inst.emits && BURST[inst.done]) burst(inst);     // 4d: termination bursts on a natural end
       if (inst.done && inst.dash) unroot.add(inst.cast.owner);
     }
     insts = insts.filter(i => !i.done);
+    if (pending.length) { insts.push(...pending); pending = []; }     // R6: children join at the end of the step and act from the next one
     for (const o of unroot) rootOf(o);     // 4c-2: the dash root ends with the dash; a live rooted commitment keeps the flag
   }
 
@@ -540,7 +624,7 @@ G.MoveSim = (() => {
   }
   function clear(o) {
     if (o) { insts = insts.filter(i => i.cast.owner !== o); endOwner(o); }
-    else { for (const i of insts) if (i.dash) i.cast.owner.mvRoot = false; insts = []; cms = []; G.MoveEffects.endSelf(null); }     // run start or back to the menu
+    else { for (const i of insts) if (i.dash) i.cast.owner.mvRoot = false; insts = []; pending = []; cms = []; G.MoveEffects.endSelf(null); }     // run start or back to the menu
   }
 
   return {

@@ -100,7 +100,7 @@ There is no separate `lifetime` enum. An instance ends when the first condition 
 
 Enemy contact is owned by `pierce`: `pierce: 0` terminates on the first enemy hit, while `pierce: 2` permits two enemies to be passed through and terminates on the third hit. `endOn` handles independent termination conditions such as time, wall contact, owner death, inactive selection, or leaving the play area.
 
-A mine's proximity detonation is a separate `trigger`, not pierce or an `endOn` condition. Its placement/emitter definition detonates once on `trigger: contact` and is gone. A timeout is optional: Spikes lasts until triggered (ending only if the move is no longer active), while Toxic Spikes uses a timer plus an emit on termination. A turret can end on owner death or a time cap, whichever happens first.
+A mine's proximity detonation is a separate `trigger`, not pierce or an `endOn` condition. Its placement/emitter definition detonates once on `trigger: contact` and is gone. A timeout is optional: Spikes lasts until triggered (ending only if the move is no longer active), while Toxic Spikes is a timed placed emitter that emits on an interval (MOVE-INTENT toxic-spikes). A turret can end on owner death or a time cap, whichever happens first.
 
 ## Axis 3: PAYLOAD (what happens when the move resolves or hits)
 

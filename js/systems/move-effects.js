@@ -256,6 +256,7 @@ G.MoveEffects = (() => {
       if (fx.side === 'foe') throw new Error('MoveEffects: a foe stat on a shapeless cast (' + def.id + ')');
       stat({ spec: def, cast }, null, rng, fx, 0);
     },
+    emit() { },     // 4d: a shapeless emitter's emissions are scheduled by the sim (move-sim.js runEmits), nothing happens at cast
     special(def, o, fx) {
       if (fx.handler !== 'setWeather') throw new Error('MoveEffects: ' + fx.handler + ' on a shapeless cast (' + def.id + ')');
       G.Weather.force(fx.weather, fx.duration);

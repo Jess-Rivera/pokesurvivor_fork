@@ -345,7 +345,10 @@ G.Debug = (() => {
  *  newcombat('extras')   slice 4c-3: Psychic, Confusion, Bubble Beam and Aura Sphere, one per slot.
  *  newcombat('falls')    slice 4c-3: Rock Slide and Flamethrower (now tracking with aimTrack). Both sets: two rings of 8 awake dummies
  *                       at 120 and 240 px, every other one walking faster (45 px/s, the rest 20), so the fixed Rock Slide point,
- *                       the swinging cone and the homing shots show. The overlay prints Rock Slide's wait and the cone's target. */
+ *                       the swinging cone and the homing shots show. The overlay prints Rock Slide's wait and the cone's target.
+ *  newcombat('emit')     slice 4d: the nine emitters, mines and the trail, one per slot (Discharge, Gust, Fairy Wind, Toxic, Flame Wheel,
+ *                       Toxic Spikes, Will-O-Wisp, Meteor Mash, Spikes). Three rings of 8 slow awake dummies (20 px/s) at 90, 170
+ *                       and 260 px. Walk around for the Toxic and Flame Wheel trails; stand still to stack Spikes (8 at most). */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
@@ -357,7 +360,8 @@ G.Debug = (() => {
     shots: ['poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'flash-cannon', 'psybeam'],
     buffs: ['agility', 'harden'],
     extras: ['psychic', 'confusion', 'bubble-beam', 'aura-sphere'],
-    falls: ['rock-slide', 'flamethrower'] };
+    falls: ['rock-slide', 'flamethrower'],
+    emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -430,6 +434,17 @@ G.Debug = (() => {
         n++;
       }
       console.log('[Debug] new combat test (motion): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots: bones out and back, Quick Attack dash and return, Aerial Ace teleport.');
+      return n;
+    }
+    if (set === 'emit') {     // slice 4d: three rings of slow awake dummies, inside and outside the 300 px turret range
+      for (const d of [90, 170, 260]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 170 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (emit): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots; walk for the trails, stand still to stack Spikes.');
       return n;
     }
     if (set === 'extras' || set === 'falls') {     // slice 4c-3: two rings of awake dummies, half of them walking faster

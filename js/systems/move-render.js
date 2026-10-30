@@ -197,6 +197,7 @@ G.MoveRender = (() => {
     ctx.lineWidth = 1;
     ctx.strokeStyle = '#ff3df2';
     for (const inst of G.MoveSim.list()) {
+      if (!inst.spec.space) continue;     // 4d: a shapeless emitter has no hitbox to outline
       const s = G.MoveGeom.shapeOf(inst.spec.space, inst.spec.delivery.grow || null,
         { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: inst.cast.owner.moveRadiusMul || 1 });
       trace(ctx, s); ctx.stroke();

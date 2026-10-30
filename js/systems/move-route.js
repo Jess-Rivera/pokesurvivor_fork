@@ -20,7 +20,8 @@ G.MoveRoute = (() => {
     'vine-whip', 'karate-chop', 'lick', 'metal-claw', 'powder-snow', 'wing-attack', 'bug-bite',                      // 4r plain moves: arcs
     'dazzling-gleam', 'hyper-voice', 'dark-pulse', 'bug-buzz', 'flash-cannon', 'psybeam',                            // novas and beams
     'poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'agility', 'harden',                     // shots and self-casts
-    'psychic', 'confusion', 'bubble-beam', 'aura-sphere', 'rock-slide']);                                            // 4c-3 travelling moves, location and delay
+    'psychic', 'confusion', 'bubble-beam', 'aura-sphere', 'rock-slide',                                              // 4c-3 travelling moves, location and delay
+    'discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes']);  // 4d emitters, mines and the cap
   const routed = id => on && !G.Coop.active && ROUTED.has(id);
   let owner = null;
 

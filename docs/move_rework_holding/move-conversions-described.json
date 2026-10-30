@@ -1659,7 +1659,7 @@
       "name": "Gust",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "CHANGED: fires 3 projectiles in rapid succession (sequential emit, every 0.08s, NOT a simultaneous fan) with a spread, fast travel (moveSpeed 380) and knockback. A quick burst-fire of wind gusts. Each shot is a single fast projectile with a slight aim spread so the three don't stack perfectly.",
+      "feel": "D-GUST (Jess 2026-10-30): fires 3 projectiles AT ONCE in an even 0.5 rad fan (one emission, child count 3; was a sequential emit every 0.08s with an inert per-shot spread), fast travel (moveSpeed 380) and knockback. A quick burst-fire of wind gusts. Each shot is a single fast projectile with a slight aim spread so the three don't stack perfectly.",
       "type": "flying",
       "category": "special",
       "power": 40,
@@ -1680,17 +1680,16 @@
       "payload": [
         {
           "t": "emit",
-          "every": 0.08,
-          "count": 3,
+          "count": 1,
           "trigger": "cast",
           "move": {
             "kind": "projectile",
             "space": {
               "shape": "radial",
               "radRadius": 7,
-              "count": 1,
+              "count": 3,
               "pierce": 0,
-              "spread": 0.25
+              "spread": 0.5
             },
             "delivery": {
               "anchor": "caster",
@@ -2272,6 +2271,7 @@
       "delivery": {
         "anchor": "world",
         "targeting": "location",
+        "locationPick": "caster",
         "motion": "static",
         "trigger": "contact",
         "endOn": [
@@ -2313,6 +2313,7 @@
       "delivery": {
         "anchor": "world",
         "targeting": "location",
+        "locationPick": "caster",
         "motion": "static",
         "endOn": [
           {
@@ -2506,6 +2507,7 @@
       "delivery": {
         "anchor": "world",
         "targeting": "location",
+        "locationPick": "caster",
         "motion": "static",
         "endOn": [
           {
@@ -2532,6 +2534,7 @@
             "delivery": {
               "anchor": "world",
               "targeting": "nearest",
+              "range": 300,
               "motion": "travels",
               "moveSpeed": 300,
               "endOn": [
