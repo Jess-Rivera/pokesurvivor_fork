@@ -8,6 +8,7 @@
 // Bulldoze and Ice Beam leave a Speed stage, Body Slam or Ice Beam lands a major status, and Giga Drain heals the player.
 // Slice 4b: a self-cast page (buff stages, Substitute pays a quarter and shields, Aqua Ring heals) and a specials page (Thunderbolt
 // chain hops reach several dummies, Dragon Rage is 40 flat, Hex lands, Flamethrower slows its caster with two commitments).
+// Slice 4r: a page per set (arcs, novas, shots, buffs): every slot casts, ticks once per frame and lands hits; 'buffs' checks a stage rises.
 const path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '..');
 const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
@@ -198,6 +199,37 @@ async function density(page) {
       ok(sp.ftSpe === -2 && sp.ftCommits === 2, 'Flamethrower: caster Speed -2 and two commitments while it fires (' + sp.ftSpe + ', ' + sp.ftCommits + ')');
       ok(errs.length === 0, 'specials: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
+
+    // ---- flag on, slice 4r plain moves: a page per set, every slot casts once per frame-tick and lands hits ('buffs' raises a stage instead) ----
+    for (const set of ['arcs', 'novas', 'shots', 'buffs']) {
+      const { page, errs } = await boot(browser, '?dev&newcombat');
+      const n = await page.evaluate(set => { G.Game.player.invuln = 1e9; window.__h = {}; window.__c = {};
+        G.SimBus.on('move:hit', e => { window.__h[e.moveId] = (window.__h[e.moveId] || 0) + 1; });
+        G.SimBus.on('move:cast', e => { window.__c[e.moveId] = (window.__c[e.moveId] || 0) + 1; });
+        return G.Debug.newcombat(set); }, set);
+      ok(n === 24, "newcombat('" + set + "') placed 24 slow dummies (" + n + ')');
+      const ids = await page.evaluate(() => G.Game.player.slots.map(g => g[0].id));
+      for (let i = 0; i < ids.length; i++) {
+        await page.evaluate(i => { G.Game.player.setActive(i, true); }, i);
+        const probe = await page.evaluate(() => new Promise(res => {     // double-tick probe, as on the first page
+          const s = G.Game.player.activeGroup()[0], seen = [];
+          const f = () => { seen.push(s.t); if (seen.length < 40) requestAnimationFrame(f); else res(seen); };
+          requestAnimationFrame(f);
+        }));
+        const maxDrop = Math.max(0, ...probe.slice(1).map((t, k) => probe[k] - t).filter(d => d > 0 && d < 0.2));
+        await sleep(set === 'buffs' ? 600 : 1500);
+        const r = await page.evaluate(id => ({ casts: window.__c[id] || 0, hits: window.__h[id] || 0, spe: G.Stages.stage(G.Game.player, 'spe'), def: G.Stages.stage(G.Game.player, 'def') }), ids[i]);
+        ok(r.casts > 0, ids[i] + ': cast ' + r.casts + 'x');
+        ok(maxDrop < 0.05, ids[i] + ': timer falls one frame per frame (largest drop ' + maxDrop.toFixed(4) + ' s)');
+        if (set === 'buffs') ok(ids[i] === 'agility' ? r.spe === 2 : r.def === 1, ids[i] + ': stage rose (Speed ' + r.spe + ', Defense ' + r.def + ')');
+        else ok(r.hits > 0, ids[i] + ': landed ' + r.hits + ' hits');
+      }
+      ok(await page.evaluate(() => G.Game.player.slots.every(g => g.every(m => G.MoveRoute.routed(m.id)))), set + ': every slot is routed');
+      await page.evaluate(() => { G.Debug.hitbox(true); });
+      await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-' + set + '.png') });
+      ok(errs.length === 0, set + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      await page.close();
+    }
   } catch (e) { fail++; console.log('FAIL  ' + (e.stack || e)); }
   await browser.close();
   srv.kill();

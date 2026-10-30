@@ -58,4 +58,12 @@ Emitters, mines and Spikes (4d). Hail (D-HAIL, 7b). Balance (6).
 The new harness and every earlier harness and intent scenario pass, check.js green, smoke passes, Jess feel-tests the four sets and logs feel issues to the board, and signs off the batch in `batchReviewed`.
 
 ## Results
-(not started; plan approved 2026-10-29)
+Built 2026-10-29 (Claude Code, home, Sonnet). Jess feel-tested all four sets (great; an animation sync issue is logged separately) and signed off the batch: the 16 moves are in `batchReviewed` (move_report: 0 need a batch review).
+- js/systems/move-route.js: the 20 ids added to ROUTED (28 to 48).
+- docs/proposals/move-plain-harness.js (new, 1247 checks, run by check.js): headless casts at dt 1/60 and 1/30 against a ring layout and an empty one; geometry for arcs, rings, the half-circle Dazzling Gleam, beams and shots (hits once, edges and misses); damage against an independent D6 to D11 computation (every move plus a 1000-case property test); rider rates within 4 sd over 10000 seeded hits; knockback distances; Thunder Shock hops exactly once at full power within 60 px; Bug Bite stub (no throw, no change, no x2); Bug Buzz five hits in 2.1 s with Sp. Def held at -1; Agility and Harden never pass one application.
+- docs/move_rework_holding/move-intent-scenarios.json: 33 new scenarios (intent harness 562/562). Expected values hand-derived from the data, MOVE-INTENT and the D-table. Karate Chop's Fighting ruling is checked through the softened chart (x1.6 against Normal, x0.6 against Flying, ratio 0.375).
+- js/core/debug.js: newcombat sets arcs, novas, shots, buffs (three rings of 8 slow dummies at 70, 140 and 230 px).
+- tools/smoke-newcombat.js: a page per new set; all passed (casts, one tick per frame, hits landed, buffs raise a stage, no console errors).
+- No axis gap found: Thunder Shock's chain and Dazzling Gleam's growing arc worked in the existing sim with no change.
+- tools/move_report.js: 48 routed, 16 routed moves need the batch review (agility, dark-pulse, dazzling-gleam, flash-cannon, harden, hyper-voice, lick, poison-sting, powder-snow, psybeam, rock-throw, shadow-ball, sludge, thunder-shock, vine-whip, wing-attack). Sign off in `batchReviewed` after reading the table (docs/current feature planning/move-report.md).
+- One gym-harness.js failure (rock-throw and harden seen, tackle not, "not every move used in 60 s") appeared once in a check.js run and did not repeat in 28 reruns; that harness does not load the routing file, so it looks like an unseeded random in the boss picker. Not touched, worth a seed later.

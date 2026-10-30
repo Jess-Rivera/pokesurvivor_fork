@@ -169,3 +169,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - 4r swapped ahead of 4c-3. Re-checked all 20 resolved definitions against the sim: every axis is built. Findings: Thunder Shock is the first travelling chain (one full-power hop), Psybeam the first enemy confusion rider, Dazzling Gleam the first growing partial arc, single shots lose legacy scatter (spread ignored at count 1).
 - Jess approved the whole plan, including four debug sets (arcs, novas, shots, buffs) instead of one 'rest' set. Written to slice-4r.md; overview coverage now 4r to 48, then 4c-3 to 53.
 - No game code changed. Stopped at: Jess commits, a Sonnet chat builds 4r.
+
+## 2026-10-29 (Claude Code, home, night): slice 4r built
+- Routed the 20 plain moves (28 to 48). New move-plain-harness.js (1247 checks: geometry, independent damage, rider rates, knockback, Thunder Shock hop, Bug Bite stub, Bug Buzz rehit, Agility/Harden cap). 33 intent scenarios (hand-derived), debug sets arcs/novas/shots/buffs, a smoke page each.
+- No sim change needed: Thunder Shock's chain and Dazzling Gleam's growing arc worked as is. Fixed two of my own expected values (beam layout aim flip, Karate Chop ratio uses the softened chart, 0.375).
+- Tests: check.js 25/25, intent 562/562, smoke all passed. gym-harness failed once, not reproducible in 28 reruns (unrelated to routing).
+- Stopped at: Jess commits, feel-tests the four sets, signs off the 16-move batch.

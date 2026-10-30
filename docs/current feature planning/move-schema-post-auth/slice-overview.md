@@ -43,14 +43,14 @@ CLAUDE.md "Where current rules live" and "Which document wins". In short: genera
 
 Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 and 4c-1 are built and signed off (2026-10-29). check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
 
-## Routing coverage (28 of 63 routed today)
+## Routing coverage (48 of 63 routed today)
 
 | slice | moves added to the routed list | routed after |
 | --- | --- | --- |
 | built (3c to 4b) | tackle, ember, water-gun, hydro-pump, heat-wave, mud-shot, flamethrower, body-slam, string-shot, ice-beam, bite, psycho-cut, giga-drain, bulldoze, swords-dance, dragon-dance, aqua-ring, substitute, dragon-rage, hex, thunderbolt | 21 |
 | 4c-1 | fire-spin, leaf-storm, night-shade | 24 |
 | 4c-2 | razor-leaf, bonemerang, quick-attack, aerial-ace | 28 |
-| 4r (built before 4c-3) | the 19 plain moves plus bug-buzz (list in slice-4r.md) | 48 |
+| 4r (built 2026-10-29, before 4c-3) | the 19 plain moves plus bug-buzz (list in slice-4r.md) | 48 |
 | 4c-3 | psychic, confusion, bubble-beam, aura-sphere, rock-slide | 53 |
 | 4d | discharge, gust, toxic, fairy-wind, toxic-spikes, meteor-mash, will-o-wisp, flame-wheel, spikes | 62 |
 | decision D-HAIL | hail | 63 or removed |
@@ -63,7 +63,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 an
 | 1 | slice-4c-0.md: maxStacks default 1 and the foe-debuff cap | BUILT and SIGNED OFF 2026-10-29 | none |
 | 2 | slice-4c-1.md: persistence and orbits | BUILT and SIGNED OFF 2026-10-29 (orphaned-group fix included) | none |
 | 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (review fixes built the same night: check.js green, motion runner 24/24, smoke passed; see slice-4c-2.md Results) | none |
-| 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | NEXT: plan approved 2026-10-29 (swapped ahead of 4c-3); build in a Sonnet session | 4c-1 |
+| 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | built and signed off 2026-10-29 (swapped ahead of 4c-3) | 4c-1 |
 | 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | prose plan to Jess 2026-10-29, not approved; after 4r | aimTrack limit question (STATE) |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |

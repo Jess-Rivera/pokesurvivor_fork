@@ -337,13 +337,21 @@ G.Debug = (() => {
  *  newcombat('motion')    slice 4c-2: Razor Leaf, Bonemerang, Quick Attack and Aerial Ace, one per slot, with a loose crowd of 12
  *                       slow awake dummies (20 px/s) at 140 and 260 px. Bones go out and come back (Bonemerang pushes out, pulls
  *                       back), Quick Attack dashes to the nearest and returns, Aerial Ace lands on it. The overlay prints each
- *                       bone's or dash's leg and your invulnerability timer. */
+ *                       bone's or dash's leg and your invulnerability timer.
+ *  newcombat('arcs'), ('novas'), ('shots'), ('buffs')   slice 4r, the 20 plain moves: static arcs (Vine Whip, Karate Chop, Lick, Metal
+ *                       Claw, Powder Snow, Wing Attack, Bug Bite), nova rings (Dazzling Gleam, Hyper Voice, Dark Pulse, Bug Buzz),
+ *                       shots and beams (Poison Sting, Rock Throw, Shadow Ball, Thunder Shock, Sludge, Flash Cannon, Psybeam) and
+ *                       the self-buffs (Agility, Harden). Three rings of 8 slow awake dummies (20 px/s) at 70, 140 and 230 px. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
     specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'],
     persist: ['fire-spin', 'leaf-storm', 'night-shade'],
-    motion: ['razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace'] };
+    motion: ['razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace'],
+    arcs: ['vine-whip', 'karate-chop', 'lick', 'metal-claw', 'powder-snow', 'wing-attack', 'bug-bite'],
+    novas: ['dazzling-gleam', 'hyper-voice', 'dark-pulse', 'bug-buzz'],
+    shots: ['poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'flash-cannon', 'psybeam'],
+    buffs: ['agility', 'harden'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -394,6 +402,17 @@ G.Debug = (() => {
         n++;
       }
       console.log('[Debug] new combat test (persist): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.');
+      return n;
+    }
+    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs') {     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
+      for (const d of [70, 140, 230]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 140 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
       return n;
     }
     if (set === 'motion') {     // slice 4c-2: a loose crowd, near enough for the dashes (range 420) and the bones (210 and 230)

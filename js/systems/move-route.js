@@ -16,7 +16,10 @@ G.MoveRoute = (() => {
     'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze',                          // 4a riders
     'swords-dance', 'dragon-dance', 'aqua-ring', 'substitute', 'dragon-rage', 'hex', 'thunderbolt',                  // 4b self-casts, specials, chains
     'fire-spin', 'leaf-storm', 'night-shade',                                                                        // 4c-1 persistence and orbits
-    'razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace']);                                                      // 4c-2 returns and repositions
+    'razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace',                                                        // 4c-2 returns and repositions
+    'vine-whip', 'karate-chop', 'lick', 'metal-claw', 'powder-snow', 'wing-attack', 'bug-bite',                      // 4r plain moves: arcs
+    'dazzling-gleam', 'hyper-voice', 'dark-pulse', 'bug-buzz', 'flash-cannon', 'psybeam',                            // novas and beams
+    'poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'agility', 'harden']);                   // shots and self-casts
   const routed = id => on && !G.Coop.active && ROUTED.has(id);
   let owner = null;
 

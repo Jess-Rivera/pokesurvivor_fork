@@ -2,7 +2,7 @@
 
 Stage 0 resolved-move report (docs/current feature planning/move-schema-post-auth/stage-0.md). Derived values follow combat-validation-and-handoff:1.6 and the combat-architecture D-table. Scenario results come from docs/proposals/move-intent-harness.js (run by tools/check.js). Rulings and batch sign-offs do not go here (this file is regenerated): rulings go in docs/MOVE-INTENT.md, batch sign-offs in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json.
 
-- move report: 63 moves, 24 routed, 29 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 12, 0 need a ruling ()
+- move report: 63 moves, 48 routed, 30 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 12, 0 need a ruling ()
 
 ## Routed moves needing a batch review (0)
 
@@ -16,20 +16,20 @@ None.
 
 | move | routed | review | basePower | cd | legacy cd | cd parity | range | reach (px) | alive at once | emissions per cast | rider % per hop | Power/s (D37) | Power/s assumes | scenarios |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| aerial-ace |  | with its batch | 60 | 0.875 | 0.875 | same | 420 | 466 (range + body) | 1 | - | - | 68.57 | 1 hit per cast | 1 pending |
-| agility |  | with its batch | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | none |
+| aerial-ace | yes | MOVE-INTENT (reviewed when its scenarios pass) | 60 | 0.875 | 0.875 | same | 420 | 466 (range + body) | 1 | - | - | 68.57 | 1 hit per cast | 1 runs |
+| agility | yes | batch reviewed | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | 1 runs |
 | aqua-ring | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | 1 runs |
 | aura-sphere |  | MOVE-INTENT (checked when routed) | 80 | 0.875 | 0.875 | same | - | 159.6 (curve, D23) | 18 | - | - | 91.43 | 1 hit per cast | 1 pending |
 | bite | yes | batch reviewed | 60 | 0.7 | 0.7 | same | 420 | 46 (radius) | 1 | - | - | 85.71 | 1 hit per cast | 1 runs |
 | body-slam | yes | batch reviewed | 85 | 1.167 | 1.167 | same | 420 | 46 (radius) | 1 | - | - | 72.84 | 1 hit per cast | 1 runs |
-| bonemerang |  | MOVE-INTENT (checked when routed) | 45 | 1.75 | 1.75 | same | 230 | 230 (turnaround) | 4 | - | - | 51.43 | 2 hits (out and back) | 1 pending |
+| bonemerang | yes | MOVE-INTENT (reviewed when its scenarios pass) | 45 | 1.75 | 1.75 | same | 230 | 230 (turnaround) | 4 | - | - | 51.43 | 2 hits (out and back) | 1 runs |
 | bubble-beam |  | with its batch | 65 | 0.875 | 0.875 | same | - | 462 (speed x life) | 14 | - | - | 74.29 | 1 hit per cast | 1 pending |
-| bug-bite |  | MOVE-INTENT (checked when routed) | 60 | 0.42 | 0.875 | differs, MOVE-INTENT entry | 420 | 44 (radius) | 1 | - | - | 142.86 | 1 hit per cast | none |
-| bug-buzz |  | MOVE-INTENT (checked when routed) | 90 | persistent | 1.75 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | 180 | 1 hit per rehit 0.5 s, per second | none |
+| bug-bite | yes | MOVE-INTENT (reviewed when its scenarios pass) | 60 | 0.42 | 0.875 | differs, MOVE-INTENT entry | 420 | 44 (radius) | 1 | - | - | 142.86 | 1 hit per cast | 2 runs |
+| bug-buzz | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | persistent | 1.75 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | 180 | 1 hit per rehit 0.5 s, per second | 2 runs |
 | bulldoze | yes | batch reviewed | 60 | 0.875 | 0.875 | same | - | 200 (grow max, D21) | 1 | - | - | 68.57 | 1 hit per cast | 1 runs |
 | confusion |  | with its batch | 50 | 0.7 | 0.7 | same | 420 | 448 (speed x life) | 3 | - | - | 71.43 | 1 hit per cast | 1 pending |
-| dark-pulse |  | with its batch | 80 | 1.167 | 1.167 | same | - | 200 (grow max, D21) | 1 | - | - | 68.55 | 1 hit per cast | none |
-| dazzling-gleam |  | with its batch | 80 | 1.75 | 1.75 | same | 420 | 130 (grow max, D21) | 1 | - | - | 45.71 | 1 hit per cast | none |
+| dark-pulse | yes | batch reviewed | 80 | 1.167 | 1.167 | same | - | 200 (grow max, D21) | 1 | - | - | 68.55 | 1 hit per cast | 1 runs |
+| dazzling-gleam | yes | batch reviewed | 80 | 1.75 | 1.75 | same | 420 | 130 (grow max, D21) | 1 | - | - | 45.71 | 1 hit per cast | 1 runs |
 | discharge |  | with its batch | 80 | 1.167 | 1.167 | same | - | via emitted children | 1 | 2 | - | 68.55 | per emitted child, children x per cast | none |
 | dragon-dance | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | 1 runs |
 | dragon-rage | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 3.5 | 1 | differs, MOVE-INTENT entry | 420 | 250 (band length) | 1 | - | - | fixed 40 | not power-based | 1 runs |
@@ -38,44 +38,44 @@ None.
 | fire-spin | yes | MOVE-INTENT (reviewed when its scenarios pass) | 29.75 | persistent | 0.3 | differs, lasts while active | - | 104 (orbit + body) | 3 (persistent) | - | - | 74.38 | 1 hit per rehit 0.4 s, per second | 1 runs |
 | flame-wheel |  | with its batch | 60 | persistent | 0.28 | differs, lasts while active | - | via emitted children | 1 (persistent) | 1 per 0.12 s moving | - | - | damage comes from emitted children | none |
 | flamethrower | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.167 | 1.167 | same | 420 | 250 (radius) | 1 | - | - | 385.6 | 5 hits (life 1 / rehit 0.2) | 1 runs, 1 pending |
-| flash-cannon |  | with its batch | 80 | 1.75 | 1.75 | same | 420 | 220 (band length) | 1 | - | - | 45.71 | 1 hit per cast | none |
+| flash-cannon | yes | batch reviewed | 80 | 1.75 | 1.75 | same | 420 | 220 (band length) | 1 | - | - | 45.71 | 1 hit per cast | 2 runs |
 | giga-drain | yes | batch reviewed | 75 | 1.75 | 1.75 | same | - | 435 (speed x life) | 1 | - | - | 42.86 | 1 hit per cast | 1 runs |
 | gust |  | MOVE-INTENT (checked when routed) | 40 | 0.5 | 0.26 | differs, MOVE-INTENT entry | - | via emitted children | 1 | 3 | - | 80 | per emitted child, children x per cast | none |
 | hail |  | MOVE-INTENT (checked when routed) | 0 | 1.2 | 1.2 | same | - | 0 (radius) | 1+ | - | - | - | no damage | none |
-| harden |  | with its batch | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | none |
+| harden | yes | batch reviewed | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | 1 runs |
 | heat-wave | yes | batch reviewed | 85.5 | 1.75 | 1.75 | same | - | 250 (grow max, D21) | 1 | - | - | 48.86 | 1 hit per cast | 1 runs |
 | hex | yes | MOVE-INTENT (reviewed when its scenarios pass) | 65 | 1.75 | 1.75 | same | - | 504 (speed x life) | 1 | - | no chance riders | 37.14 | 1 hit per cast, target only (hops hit others) | 1 runs |
 | hydro-pump | yes | batch reviewed | 88 | 3.5 | 3.5 | same | 420 | 250 (band length) | 1 | - | - | 25.14 | 1 hit per cast | 1 runs |
-| hyper-voice |  | with its batch | 90 | 1.75 | 1.75 | same | - | 380 (grow max, D21) | 1 | - | - | 51.43 | 1 hit per cast | none |
+| hyper-voice | yes | batch reviewed | 90 | 1.75 | 1.75 | same | - | 380 (grow max, D21) | 1 | - | - | 51.43 | 1 hit per cast | 1 runs |
 | ice-beam | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.75 | 1.75 | same | 420 | 290 (band length) | 1 | - | - | 51.43 | 1 hit per cast | 2 runs |
-| karate-chop |  | MOVE-INTENT (checked when routed) | 50 | 0.7 | 0.7 | same | 420 | 50 (radius) | 1 | - | - | 71.43 | 1 hit per cast | none |
+| karate-chop | yes | MOVE-INTENT (reviewed when its scenarios pass) | 50 | 0.7 | 0.7 | same | 420 | 50 (radius) | 1 | - | - | 71.43 | 1 hit per cast | 2 runs |
 | leaf-storm | yes | MOVE-INTENT (reviewed when its scenarios pass) | 117 | persistent | 0.26 | differs, lasts while active | - | 109 (orbit + body) | 4 (persistent) | - | - | 468 | 1 hit per rehit 0.25 s, per second | 2 runs |
-| lick |  | with its batch | 30 | 0.583 | 0.583 | same | 420 | 64 (radius) | 1 | - | - | 51.46 | 1 hit per cast | none |
-| metal-claw |  | MOVE-INTENT (checked when routed) | 47.5 | 0.5 | 0.5 | same | 420 | 50 (radius) | 1 | - | - | 95 | 1 hit per cast | none |
+| lick | yes | batch reviewed | 30 | 0.583 | 0.583 | same | 420 | 64 (radius) | 1 | - | - | 51.46 | 1 hit per cast | 2 runs |
+| metal-claw | yes | MOVE-INTENT (reviewed when its scenarios pass) | 47.5 | 0.5 | 0.5 | same | 420 | 50 (radius) | 1 | - | - | 95 | 1 hit per cast | 2 runs |
 | meteor-mash |  | MOVE-INTENT (checked when routed) | 81 | 1.75 | 1.75 | same | - | 495 (speed x life) | 1 | 1 per hit | - | 46.29 | 1 hit per cast | none |
 | mud-shot | yes | batch reviewed | 52.25 | 1.167 | 1.167 | same | - | 360 (speed x life) | 12 | - | - | 44.77 | 1 hit per cast | 2 runs |
 | night-shade | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | persistent | 0.5 | differs, lasts while active | - | 120 (radius) | 1 (persistent) | - | - | level | not power-based | 1 runs |
-| poison-sting |  | with its batch | 15 | 0.5 | 0.5 | same | - | 420 (speed x life) | 2 | - | - | 30 | 1 hit per cast | none |
-| powder-snow |  | with its batch | 40 | 0.7 | 0.7 | same | 420 | 48 (radius) | 1 | - | - | 57.14 | 1 hit per cast | none |
-| psybeam |  | with its batch | 65 | 0.875 | 0.875 | same | 420 | 215 (band length) | 1 | - | - | 74.29 | 1 hit per cast | none |
+| poison-sting | yes | batch reviewed | 15 | 0.5 | 0.5 | same | - | 420 (speed x life) | 2 | - | - | 30 | 1 hit per cast | 1 runs |
+| powder-snow | yes | batch reviewed | 40 | 0.7 | 0.7 | same | 420 | 48 (radius) | 1 | - | - | 57.14 | 1 hit per cast | 2 runs |
+| psybeam | yes | batch reviewed | 65 | 0.875 | 0.875 | same | 420 | 215 (band length) | 1 | - | - | 74.29 | 1 hit per cast | 2 runs |
 | psychic |  | MOVE-INTENT (checked when routed) | 90 | 1.75 | 1.75 | same | 420 | 96 (speed x life) | 1 | - | - | 51.43 | 1 hit per cast | 2 pending |
 | psycho-cut | yes | batch reviewed | 70 | 0.875 | 0.875 | same | 420 | 48 (radius) | 1 | - | - | 80 | 1 hit per cast | 1 runs |
-| quick-attack |  | MOVE-INTENT (checked when routed) | 40 | 0.583 | 0.583 | same | 420 | 466 (range + body) | 1+ | - | - | 68.61 | 1 hit per cast | 1 pending |
-| razor-leaf |  | MOVE-INTENT (checked when routed) | 52.25 | 0.7 | 0.7 | same | 210 | 210 (turnaround) | 6 | - | - | 149.29 | 2 hits (out and back) | 1 pending |
+| quick-attack | yes | MOVE-INTENT (reviewed when its scenarios pass) | 40 | 0.583 | 0.583 | same | 420 | 466 (range + body) | 6 | - | - | 68.61 | 1 hit per cast | 1 runs |
+| razor-leaf | yes | MOVE-INTENT (reviewed when its scenarios pass) | 52.25 | 0.7 | 0.7 | same | 210 | 210 (turnaround) | 6 | - | - | 149.29 | 2 hits (out and back) | 1 runs |
 | rock-slide |  | MOVE-INTENT (checked when routed) | 67.5 | 1.75 | 1.75 | same | 420 | 490 (range + body) | 1 | - | - | 38.57 | 1 hit per cast | 1 pending |
-| rock-throw |  | with its batch | 45 | 1.167 | 1.167 | same | - | 364 (speed x life) | 2 | - | - | 38.56 | 1 hit per cast | none |
-| shadow-ball |  | with its batch | 80 | 1.2 | 1.167 | differs, override: no cd set, needs longer to make up for benefits | - | 336 (speed x life) | 1 | - | - | 66.67 | 1 hit per cast | none |
-| sludge |  | with its batch | 65 | 0.875 | 0.875 | same | - | 496 (speed x life) | 2 | - | - | 74.29 | 1 hit per cast | none |
+| rock-throw | yes | batch reviewed | 45 | 1.167 | 1.167 | same | - | 364 (speed x life) | 2 | - | - | 38.56 | 1 hit per cast | 1 runs |
+| shadow-ball | yes | batch reviewed | 80 | 1.2 | 1.167 | differs, override: no cd set, needs longer to make up for benefits | - | 336 (speed x life) | 1 | - | - | 66.67 | 1 hit per cast | 2 runs |
+| sludge | yes | batch reviewed | 65 | 0.875 | 0.875 | same | - | 496 (speed x life) | 2 | - | - | 74.29 | 1 hit per cast | 1 runs |
 | spikes |  | MOVE-INTENT (checked when routed) | 0 | 1.1 | 1.2 | differs, MOVE-INTENT entry | 420 | 460 (range + body) | 1+ | - | - | - | no damage | none |
 | string-shot | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 1.1 | 1.1 | same | - | 384 (speed x life) | 4 | - | - | - | no damage | 1 runs |
 | substitute | yes | MOVE-INTENT (reviewed when its scenarios pass) | 0 | 12 | 4 | differs, override: slice 4b S1: 12 s, armed when the 4 s shield ends (cooldown freeze); legacy 4 | - | - | - | - | - | - | no damage | 1 runs |
 | swords-dance | yes | batch reviewed | 0 | 8 | 8 | same | - | - | - | - | - | - | no damage | 2 runs |
 | tackle | yes | MOVE-INTENT (reviewed when its scenarios pass) | 40 | 0.5 | 0.5 | same | 420 | 48 (radius) | 1 | - | - | 80 | 1 hit per cast | 1 runs |
-| thunder-shock |  | with its batch | 40 | 0.583 | 0.583 | same | - | 720 (speed x life) | 3 | - | paralysis 10/5% | 68.61 | 1 hit per cast, target only (hops hit others) | none |
+| thunder-shock | yes | batch reviewed | 40 | 0.583 | 0.583 | same | - | 720 (speed x life) | 3 | - | paralysis 10/5% | 68.61 | 1 hit per cast, target only (hops hit others) | 3 runs |
 | thunderbolt | yes | MOVE-INTENT (reviewed when its scenarios pass) | 90 | 1.167 | 1.167 | same | 420 | 430 (range + body) | 1 | - | paralysis 10/5/2.5/1.25/0.63% | 77.12 | 1 hit per cast, target only (hops hit others) | 1 runs |
 | toxic |  | MOVE-INTENT (checked when routed) | 0 | persistent | 0.3 | differs, lasts while active | - | via emitted children | 1 (persistent) | 1 per 0.1 s moving | - | - | no damage | none |
 | toxic-spikes |  | MOVE-INTENT (checked when routed) | 0 | 1.1 | 1.1 | same | 420 | 460 (range + body) | 3 | 11 | - | - | no damage | none |
-| vine-whip |  | with its batch | 45 | 0.7 | 0.7 | same | 420 | 68 (radius) | 1 | - | - | 64.29 | 1 hit per cast | none |
+| vine-whip | yes | batch reviewed | 45 | 0.7 | 0.7 | same | 420 | 68 (radius) | 1 | - | - | 64.29 | 1 hit per cast | 1 runs |
 | water-gun | yes | batch reviewed | 40 | 0.7 | 0.7 | same | - | 525 (speed x life) | 3 | - | - | 57.14 | 1 hit per cast | 1 runs |
 | will-o-wisp |  | with its batch | 0 | 3.5 | 3.5 | same | 420 | 432 (range + body) | 2 | 7 | - | - | no damage | none |
-| wing-attack |  | with its batch | 60 | 0.5 | 0.5 | same | 420 | 58 (radius) | 1 | - | - | 120 | 1 hit per cast | none |
+| wing-attack | yes | batch reviewed | 60 | 0.5 | 0.5 | same | 420 | 58 (radius) | 1 | - | - | 120 | 1 hit per cast | 1 runs |
