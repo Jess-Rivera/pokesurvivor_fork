@@ -21,7 +21,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I01
 
 ### aura-sphere
-- [Approved] Its reach (about 160 px by the curve math) is fine, verify only. (slice-4c.md decisions, Jess 2026-10-27; review 9.7 item 6)
+- [Approved] Its reach (about 160 px by the curve math) is fine, verify only. (slice-4c.md decisions, Jess 2026-10-27; review 9.7 item 6) Verified in slice 4c-3: 159.5 px measured at dt 1/60, 159.3 at 1/30.
 - Ledger: B4-I02
 
 ### aerial-ace
@@ -60,7 +60,8 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### flamethrower
 - [Approved] Caster-state commitment: slowed plus freeze(all) for its 1.0 s cone. Built. (review 9.9 S13, S14)
-- [Approved] aimTrack is implemented and changes Flamethrower (the data already says it tracks). The aimTrack target rule is sticky: the cast target while it lives and is in range, then the nearest, re-picked whenever lost. (slice-4c.md 4c-3 decisions, Jess 2026-10-27) Code differs, see TODO: slice 4c-3.
+- [Approved] aimTrack is implemented and changes Flamethrower (the data already says it tracks). The aimTrack target rule is sticky: the cast target while it lives and is in range, then the nearest, re-picked whenever lost. (slice-4c.md 4c-3 decisions, Jess 2026-10-27) Built in slice 4c-3.
+- [Approved] "In range" for tracking means within the cone's reach, min(range 420, 250 + the enemy's radius), the same limit as its cast gate. An enemy that walks past reach is dropped and the nearest within reach re-picked; with none the heading holds. (Jess, 2026-10-29) Built in slice 4c-3.
 - Ledger: B4-I07
 
 ### gust
@@ -107,8 +108,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### psychic
 - [Approved] An arc wave starts at the player at radArc 0.5 and widens to 2.0 as it moves outward, homing. (combat-validation 2.5 scenario 5; review 9.1 Q1)
-- [Approved] Psychic stays a filled wedge that grows from 0.5 to 2.0 rad, travels and steers (cast target while it lives, then the nearest enemy). No band thickness, no grammar change. (slice-4c.md decisions, Jess 2026-10-27, after first asking for an arc) Code differs, see TODO: slice 4c-3.
+- [Approved] Psychic stays a filled wedge that grows from 0.5 to 2.0 rad, travels and steers (cast target while it lives, then the nearest enemy). No band thickness, no grammar change. (slice-4c.md decisions, Jess 2026-10-27, after first asking for an arc) Built in slice 4c-3.
 - [Approved] "Then the nearest" means ONE re-pick (D-PSY): when the cast target is lost, the wedge re-picks the nearest live enemy within range once; if that one is lost too it flies straight. Same rule as Confusion and every turnRate move (combat-architecture:D23, H11). (Jess, 2026-10-29)
+- [Open] The widening barely matters against stationary enemies to the side. With 80 px/s travel and a half arc growing 0.75 rad/s, the apex outruns them: validation 2.5 scenario 5's side enemies (plus and minus 50 degrees at 90 px) are never inside the wedge, not "hit once it has widened". Only enemies about 65 to 80 px ahead and off the line benefit (move-travel-harness Test 6). Keep as built, or retune travel or growth in the balance pass? (4c-3 build finding, 2026-10-29)
 - Ledger: B4-I16
 
 ### quick-attack
@@ -127,7 +129,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### rock-slide
 - [Approved] The telegraph delay lives on the instance (`delivery.delay`). (review 9.1 Q17)
-- [Approved] Stays one boulder (S11). The telegraph is drawn as a low-opacity ring (a warning, not a zone effect). (slice-4c.md decisions, Jess 2026-10-27) Code differs, see TODO: slice 4c-3.
+- [Approved] Stays one boulder (S11). The telegraph is drawn as a low-opacity ring (a warning, not a zone effect). (slice-4c.md decisions, Jess 2026-10-27) Built in slice 4c-3: 0.4 s wait, then live 0.2 s.
 - Ledger: B4-I19
 
 ### spikes

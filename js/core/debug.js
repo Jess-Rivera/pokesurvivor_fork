@@ -341,7 +341,11 @@ G.Debug = (() => {
  *  newcombat('arcs'), ('novas'), ('shots'), ('buffs')   slice 4r, the 20 plain moves: static arcs (Vine Whip, Karate Chop, Lick, Metal
  *                       Claw, Powder Snow, Wing Attack, Bug Bite), nova rings (Dazzling Gleam, Hyper Voice, Dark Pulse, Bug Buzz),
  *                       shots and beams (Poison Sting, Rock Throw, Shadow Ball, Thunder Shock, Sludge, Flash Cannon, Psybeam) and
- *                       the self-buffs (Agility, Harden). Three rings of 8 slow awake dummies (20 px/s) at 70, 140 and 230 px. */
+ *                       the self-buffs (Agility, Harden). Three rings of 8 slow awake dummies (20 px/s) at 70, 140 and 230 px.
+ *  newcombat('extras')   slice 4c-3: Psychic, Confusion, Bubble Beam and Aura Sphere, one per slot.
+ *  newcombat('falls')    slice 4c-3: Rock Slide and Flamethrower (now tracking with aimTrack). Both sets: two rings of 8 awake dummies
+ *                       at 120 and 240 px, every other one walking faster (45 px/s, the rest 20), so the fixed Rock Slide point,
+ *                       the swinging cone and the homing shots show. The overlay prints Rock Slide's wait and the cone's target. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
@@ -351,7 +355,9 @@ G.Debug = (() => {
     arcs: ['vine-whip', 'karate-chop', 'lick', 'metal-claw', 'powder-snow', 'wing-attack', 'bug-bite'],
     novas: ['dazzling-gleam', 'hyper-voice', 'dark-pulse', 'bug-buzz'],
     shots: ['poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'flash-cannon', 'psybeam'],
-    buffs: ['agility', 'harden'] };
+    buffs: ['agility', 'harden'],
+    extras: ['psychic', 'confusion', 'bubble-beam', 'aura-sphere'],
+    falls: ['rock-slide', 'flamethrower'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -424,6 +430,17 @@ G.Debug = (() => {
         n++;
       }
       console.log('[Debug] new combat test (motion): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots: bones out and back, Quick Attack dash and return, Aerial Ace teleport.');
+      return n;
+    }
+    if (set === 'extras' || set === 'falls') {     // slice 4c-3: two rings of awake dummies, half of them walking faster
+      for (const d of [120, 240]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 240 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = i % 2 ? 45 : 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' awake dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
       return n;
     }
     for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {

@@ -23,6 +23,15 @@
  * Pierce exhaustion disarms a returns or repositions instance but never ends it (R1, H22); an owner faint ends both.
  * 4c-2 review: a one-way swept dash (returnToOrigin false) ends `arrived` after its armed step at B; a rooted commitment holds every
  * reposition at the cast gate.
+ * Slice 4c-3: aimTrack (MOVE-INTENT flamethrower): a caster-anchored static shape turns its heading toward a tracked enemy by at most
+ * aimTrack x dt each step, after it follows the owner and before collision. The tracked enemy is the cast target while it lives and
+ * stays within the cast gate's reach (min(range, reach + its radius)); when lost, the nearest within that reach (ties by id), re-picked
+ * whenever lost; none in reach and the heading holds. location (R9, H23): `locationPick` enemy picks one live enemy within range with
+ * the sim rng (uniform over the candidates sorted by id), drawn only once the cast passes every gate, so a waiting slot never rolls;
+ * the point is its position at the cast and does not track it. `locationPick` caster: the owner's position. Both wait for a live enemy
+ * within range. delay (D28): an instance with delivery.delay spends whole steps waiting (no motion, collision, aging or endOn; only an
+ * owner faint ends it, as it would anyway), then acts as if cast in the frame after its wait ran out; 'move:land' marks that first
+ * live step for the render. falls (R8): a world shape that never moves; the drop is drawn by the render, moveSpeed is ignored.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
@@ -85,8 +94,23 @@ G.MoveSim = (() => {
       return nearest(o.x, o.y, R, () => R) ? { aim: o.aim || 0, target: null } : null;
     },
     none: o => ({ aim: o.aim || 0, target: null }),
-    self: o => ({ aim: o.aim || 0, target: null })
+    self: o => ({ aim: o.aim || 0, target: null }),
+    // 4c-3 (R9, H23): the candidates are gathered here; the rng draw waits for settle(), after every gate has passed
+    location(o, def) {
+      const R = rangeOf(def), cands = [];
+      G.EnemyMgr.queryCircleEach(o.x, o.y, R, e => { if (live(e) && Math.hypot(e.x - o.x, e.y - o.y) <= R + EPS) cands.push(e); });
+      if (!cands.length) return null;
+      if (def.delivery.locationPick === 'caster') return { aim: o.aim || 0, target: null, point: { x: o.x, y: o.y } };
+      cands.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      return { aim: o.aim || 0, target: null, cands };
+    }
   };
+  /** The location pick's one rng draw (H23), made only for a cast that happens: the point is the picked enemy's position now. */
+  function settle(o, pick) {
+    if (!pick.cands) return pick;
+    const c = pick.cands, t = c[Math.min(c.length - 1, Math.floor(rng() * c.length))];
+    return { aim: Math.atan2(t.y - o.y, t.x - o.x), target: t, point: { x: t.x, y: t.y } };
+  }
 
   /** Root-instance fan (review F1): spread is the TOTAL fan; at 2 pi or more the instances sit 2 pi / count apart. */
   function fanAngle(aim, i, n, spread) {
@@ -98,7 +122,7 @@ G.MoveSim = (() => {
     const d = spec.delivery, o = cast.owner;
     const at = d.anchor === 'target' && cast.target ? cast.target : d.anchor === 'world' ? cast.point || cast : o;
     const inst = { id: ++serial, spec, cast, fan: i, x: at.x, y: at.y, prevX: at.x, prevY: at.y, bx: at.x, by: at.y,
-      heading, age: 0, dist: 0, steer: cast.target, retargeted: false, struck: 0, leg: 0, armed: true,
+      heading, age: 0, dist: 0, steer: cast.target, retargeted: false, track: cast.target, wait: d.delay || 0, struck: 0, leg: 0, armed: true,
       pierce: spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null };
     if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }     // start on the ring, so the first sweep does not cross the circle
     if (d.motion === 'repositions') setupReposition(inst);
@@ -150,13 +174,14 @@ G.MoveSim = (() => {
 
   function castSlot(o, slot, def, now) {
     if (G.Status.stunned(o)) { slot.t = RETRY; return null; }       // a stunned owner casts nothing; the move stays ready
-    const pick = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
-    if (!pick) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
+    const gate = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
+    if (!gate) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
     if (!G.MoveEffects.canCast(def, o)) { slot.t = RETRY; return null; }     // P3: the cost would kill, or a shield is live; cooldown not spent
     if (!repoCanGo(def, o)) { slot.t = RETRY; return null; }         // 4c-2: no dash over a live dash, no dash at speed 0
     slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));                 // D3
     if (G.Status.fizzle(o, rng)) return null;                         // fizzle spends the cooldown
-    const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, serial: ++castSerial };
+    const pick = settle(o, gate);                                     // 4c-3: the location roll, only for a real cast
+    const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial };
     const self = G.MoveEffects.applyCast(def, cast, rng);             // recoil, shield, self stats, heal over time, setWeather (4b)
     const roots = [];
     if (def.space) {
@@ -225,9 +250,10 @@ G.MoveSim = (() => {
     insts = insts.filter(i => !list.includes(i));
   }
   function spawnPersistent(o, slot, def, now) {
-    const pick = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
-    if (!pick || !G.MoveEffects.canCast(def, o)) return null;     // the gate holds; the upkeep tries again next tick
-    const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, serial: ++castSerial, persist: true };
+    const gate = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
+    if (!gate || !G.MoveEffects.canCast(def, o)) return null;     // the gate holds; the upkeep tries again next tick
+    const pick = settle(o, gate);
+    const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial, persist: true };
     const self = G.MoveEffects.applyCast(def, cast, rng), roots = [], n = Math.max(1, def.space.count || 1);
     for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
     commit(o, slot, def, roots, self.shield);
@@ -292,8 +318,26 @@ G.MoveSim = (() => {
     }
     return live(inst.steer) ? inst.steer : null;
   }
+  /** 4c-3 aimTrack target (MOVE-INTENT flamethrower): sticky on the cast target while it lives within the cast gate's reach, then the
+   *  nearest within that reach, re-picked whenever lost (a static cone has no fly-straight fallback, unlike D23 steering). */
+  function trackTarget(inst) {
+    const o = inst.cast.owner, R = rangeOf(inst.spec), reach = reachOf(inst.spec, o), lim = e => Math.min(R, reach + e.r);
+    const t = inst.track;
+    if (live(t) && Math.hypot(t.x - o.x, t.y - o.y) <= lim(t) + EPS) return t;
+    inst.track = nearest(o.x, o.y, R, lim);
+    return inst.track;
+  }
   const MOTION = {
-    static: follow,
+    static(inst, dt) {
+      follow(inst);     // R8 first, then the turn, then collision at the new heading
+      const rate = inst.spec.delivery.aimTrack;
+      if (!rate || inst.spec.delivery.anchor !== 'caster') return;
+      const t = trackTarget(inst);
+      if (!t) return;     // nothing in reach: the heading holds
+      const want = wrap(Math.atan2(t.y - inst.y, t.x - inst.x) - inst.heading), cap = rate * dt;
+      inst.heading = wrap(inst.heading + (want > cap ? cap : want < -cap ? -cap : want));     // the turnRate clamp and wrap (Q13)
+    },
+    falls() { },     // R8: a world shape that never moves by itself; the drop is render-only and moveSpeed is ignored (4c-3)
     travels(inst, dt) {
       const d = inst.spec.delivery, v = d.moveSpeed || 0, p = d.path || {};
       inst.bx += Math.cos(inst.heading) * v * dt;     // D23: position first, then the turn
@@ -452,22 +496,34 @@ G.MoveSim = (() => {
     if (owned) return null;     // R1, H22: pierce exhaustion only disarms (the per-leg budget); returned or time ends it
     return inst.struck > inst.pierce ? 'pierce' : null;
   }
+  /** 4c-3 (D28): while waiting no endOn is evaluated; only a faint ends it, where it would end the active instance too. */
+  function waitEnd(inst) {
+    if (!inst.cast.owner.dead) return null;
+    return OWNED[inst.spec.delivery.motion] || (inst.spec.delivery.endOn || []).some(c => c.ownerDeath) ? 'ownerDeath' : null;
+  }
 
   function step(dt, now) {
     if (!insts.length) return;
     let maxR = 0;
     for (const e of G.EnemyMgr.all()) if (live(e) && e.r > maxR) maxR = e.r;     // boundsOf needs it for linear shapes
     for (const inst of insts) {     // motion (age first, so collisions see the new age)
-      inst.prevX = inst.x; inst.prevY = inst.y;
-      inst.age += dt;
-      MOTION[inst.spec.delivery.motion](inst, dt);
+      inst.idle = inst.wait > EPS;     // 4c-3 (D28): a waiting step does nothing but count the wait down
+      if (inst.idle) {
+        inst.wait -= dt;
+        if (inst.wait <= EPS) inst.wait = 0;
+      } else {
+        if (inst.age === 0 && inst.spec.delivery.delay) G.SimBus.emit('move:land', { moveId: inst.spec.id, instId: inst.id, x: inst.x, y: inst.y });     // its first live step
+        inst.prevX = inst.x; inst.prevY = inst.y;
+        inst.age += dt;
+        MOTION[inst.spec.delivery.motion](inst, dt);
+      }
       inst.shape = G.MoveGeom.shapeOf(inst.spec.space, inst.spec.delivery.grow || null,     // growth (D21) and the lens live in shapeOf
         { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: lensOf(inst.cast.owner) });
     }
-    for (const inst of insts) collide(inst, maxR);
+    for (const inst of insts) if (!inst.idle) collide(inst, maxR);
     const unroot = new Set();
     for (const inst of insts) {
-      inst.done = checkEnd(inst);
+      inst.done = inst.idle ? waitEnd(inst) : checkEnd(inst);
       if (inst.done) G.SimBus.emit('move:end', { moveId: inst.spec.id, instId: inst.id, reason: inst.done, x: inst.x, y: inst.y });
       if (inst.done && inst.dash) unroot.add(inst.cast.owner);
     }

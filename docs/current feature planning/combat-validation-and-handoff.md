@@ -198,6 +198,7 @@ Each scenario links to its ruling in docs/MOVE-INTENT.md (QA-04), which owns int
 - Execution: the wedge apex moves with the instance, heading turns toward the target by at most 2.5 x dt per step, radArc follows D21 and reaches 2.0 at t = 1.0 s, D18 containment each step, oncePerInstance.
 - Resolved: Psychic stays a filled wedge and steers on the cast target while it lives, then the nearest (MOVE-INTENT psychic; combat-architecture:D23).
 - Test: an enemy straight ahead at 120 px and two enemies at plus and minus 50 degrees at 90 px; expect the straight one hit early, the side ones hit only once the arc has widened past them (time window computed from D21), each hit once.
+- Built slice 4c-3 (docs/proposals/move-travel-harness.js Test 6). Derived from D18 and D21 with the approved data, the straight one is hit once at age 0.5, but the side ones are never inside the wedge: the apex outruns them (their angle off the heading rises faster than the half arc widens). The harness asserts that, plus a widened-only hit on an enemy at (150, 45) at age 1.048. Raised to Jess as an [Open] line under MOVE-INTENT psychic.
 
 **6. Toxic Spikes** (placed emitter, interval child, start-size grow, cap)
 

@@ -175,3 +175,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - No sim change needed: Thunder Shock's chain and Dazzling Gleam's growing arc worked as is. Fixed two of my own expected values (beam layout aim flip, Karate Chop ratio uses the softened chart, 0.375).
 - Tests: check.js 25/25, intent 562/562, smoke all passed. gym-harness failed once, not reproducible in 28 reruns (unrelated to routing).
 - Stopped at: Jess commits, feel-tests the four sets, signs off the 16-move batch.
+
+## 2026-10-29 (Claude Code, home, late night): slice 4c-3 built
+- Jess answered D-AIM (aimTrack tracks only within the cone's reach) and approved the 4c-3 plan. Built: aimTrack (sticky, clamped 1.4 rad/s), location targeting (seeded uniform pick drawn after every gate), delay (whole waiting steps, 'move:land'), falls; Psychic, Confusion, Bubble Beam, Aura Sphere, Rock Slide routed (53 of 63). Render telegraph and boulder, debug sets extras and falls.
+- Tests: new move-travel harness 79/79 and runner 26/26; seven intent scenarios unblocked (psychic-repick setup fixed), three added; two sim-runner mutations retargeted. check.js 26/26, intent 608/608, smoke passed (two runs had one local-server resource error each on unrelated pages, third clean). 60 fps at skipTo(20).
+- Finding: Psychic scenario 5's side enemies are never inside the wedge (the apex outruns them); [Open] under MOVE-INTENT psychic.
+- Stopped at: Jess feel-tests falls and extras (Flamethrower now swings), reviews the Confusion/Bubble Beam batch, commits.

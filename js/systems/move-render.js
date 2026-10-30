@@ -19,6 +19,10 @@
  *   Slice 4c-2: a returning shape (Razor Leaf, Bonemerang) spins with a faint trail; a swept dash (Quick Attack) is a streak from
  *   its origin to the owner with an afterimage at the origin; a teleport (Aerial Ace) flashes a ring at both ends. A dash's hitbox
  *   outline shows only while it is armed. The overlay prints each bone's or dash's leg and the player's invulnerability timer.
+ *   Slice 4c-3: a falling shape (Rock Slide) is a low-opacity warning ring at its point whose inner fill grows over the wait, with a
+ *   boulder dropping from above onto it; on 'move:land' a small camera kick, then a flash at the full radius while it is live. A
+ *   travelling wedge (Psychic) is filled translucent, a curving ball (Aura Sphere) leaves a short trail. The overlay prints a delayed
+ *   instance's remaining wait and an aimTrack cone's tracked enemy id.
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
  *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes and the chain bolts.
  */
@@ -91,13 +95,37 @@ G.MoveRender = (() => {
     ctx.restore();
   }
 
+  /** Slice 4c-3, presentation only: the telegraph ring and the dropping boulder during the wait, then the landing flash. */
+  const DROP = 220;     // px the boulder falls from
+  function drawFall(ctx, inst, s, col) {
+    const T = inst.spec.delivery.delay || 0, k = T > 0 ? 1 - inst.wait / T : 1;     // 0 at the cast, 1 at the landing
+    ctx.save();
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+    if (inst.wait > 0) {
+      ctx.globalAlpha = 0.3; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 0.12; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * k, 0, TAU); ctx.fill();
+      const br = Math.max(8, s.r * 0.22), y = s.y - DROP * (1 - k) * (1 - k);     // eases in, fastest at the landing
+      ctx.globalAlpha = 0.25 * k; ctx.fillStyle = '#000000';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y, br * (0.5 + 0.5 * k), br * 0.35 * (0.5 + 0.5 * k), 0, 0, TAU); ctx.fill();
+      ctx.globalAlpha = 0.95; ctx.fillStyle = '#8a7350'; ctx.strokeStyle = '#4d3f2a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, y - br, br, 0, TAU); ctx.fill(); ctx.stroke();
+    } else {
+      const a = fadeOf(inst);
+      ctx.globalAlpha = 0.35 * a; trace(ctx, s); ctx.fill();
+      ctx.globalAlpha = 0.9 * a; ctx.lineWidth = 3; trace(ctx, s); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawAir(ctx) {
     const now = performance.now() / 1000;
     for (const inst of G.MoveSim.list()) {
       const s = inst.shape;
-      if (!s || !G.Camera.sees(s.x, s.y, (s.len || s.r) + 60)) continue;
+      if (!s || !G.Camera.sees(s.x, s.y, (s.len || s.r) + (inst.spec.delivery.motion === 'falls' ? DROP : 60))) continue;
       const col = colOf(inst), a = fadeOf(inst);
       if (inst.spec.delivery.motion === 'repositions') { drawReposition(ctx, inst, s, col); continue; }
+      if (inst.spec.delivery.motion === 'falls') { drawFall(ctx, inst, s, col); continue; }
       ctx.save();
       if (inst.spec.delivery.motion !== 'static' && s.family === 'point') {     // a travelling ball: glow, body, white core
         const v = inst.spec.delivery.motion === 'orbits' ? squash(inst, s) : s;     // 4c-1: an orbit is drawn squashed, its hitbox is not
@@ -106,6 +134,11 @@ G.MoveRender = (() => {
         ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 1.7 * pulse, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.95 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, TAU); ctx.fill();
         ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.8 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 0.45, 0, TAU); ctx.fill();
+        if ((inst.spec.delivery.path || {}).curve) {     // 4c-3: a curving ball (Aura Sphere) leaves a short trail
+          const sp = Math.hypot(inst.vx || 0, inst.vy || 0) || 1;
+          ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.globalAlpha = 0.3 * a; ctx.lineWidth = v.r * 1.3;
+          ctx.beginPath(); ctx.moveTo(v.x - (inst.vx || 0) / sp * v.r * 4, v.y - (inst.vy || 0) / sp * v.r * 4); ctx.lineTo(v.x, v.y); ctx.stroke();
+        }
         if (inst.spec.delivery.motion === 'returns') {     // 4c-2: a spinning blade and a faint trail behind the travel direction
           const sp = Math.hypot(inst.vx || 0, inst.vy || 0) || 1, ux = (inst.vx || 0) / sp, uy = (inst.vy || 0) / sp, rot = now * 18 + inst.id;
           ctx.strokeStyle = col; ctx.lineCap = 'round';
@@ -115,6 +148,7 @@ G.MoveRender = (() => {
           ctx.beginPath(); ctx.moveTo(v.x - Math.cos(rot) * v.r * 2, v.y - Math.sin(rot) * v.r * 2); ctx.lineTo(v.x + Math.cos(rot) * v.r * 2, v.y + Math.sin(rot) * v.r * 2); ctx.stroke();
         }
       } else {
+        if (inst.spec.delivery.motion === 'travels') { ctx.fillStyle = col; ctx.globalAlpha = 0.2 * a; trace(ctx, s); ctx.fill(); }     // 4c-3: a travelling wedge (Psychic)
         ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.globalAlpha = 0.85 * a;
         trace(ctx, s); ctx.stroke();
       }
@@ -179,6 +213,10 @@ G.MoveRender = (() => {
     }
     ctx.globalAlpha = 1; ctx.font = '10px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff';
     for (const inst of G.MoveSim.list()) if (inst.dash || inst.spec.delivery.motion === 'returns') ctx.fillText('leg ' + inst.leg, inst.x, inst.y - 14);     // 4c-2 (R2)
+    for (const inst of G.MoveSim.list()) {     // 4c-3: the remaining wait (D28) and the aimTrack target
+      if (inst.wait > 0) ctx.fillText('wait ' + inst.wait.toFixed(2), inst.x, inst.y - 14);
+      else if (inst.spec.delivery.aimTrack) ctx.fillText('track ' + (inst.track && !inst.track.dead ? '#' + inst.track.id : '-'), inst.x, inst.y - 34);
+    }
     for (const e of G.EnemyMgr.all()) {     // riders (slice 4a): statuses with seconds left, then stat stages
       if (e.dead || !G.Camera.sees(e.x, e.y, 40)) continue;
       const parts = G.Status.list(e).map(s => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
@@ -210,6 +248,7 @@ G.MoveRender = (() => {
     slot.castAt = performance.now();
     pl.cast(slot);
   });
+  G.SimBus.on('move:land', () => G.Camera.kick(0.35));     // 4c-3: a falling shape lands (below the enemy.js 0.5 to 0.9 kicks)
   G.SimBus.on('move:hit', ev => {
     if (ev.hop > 0) {     // a chain hop: the bolt is drawn with or without the overlay
       const def = G.MoveDefs[ev.moveId], jit = [0];

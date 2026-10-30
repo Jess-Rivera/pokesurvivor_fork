@@ -9,6 +9,8 @@
 // Slice 4b: a self-cast page (buff stages, Substitute pays a quarter and shields, Aqua Ring heals) and a specials page (Thunderbolt
 // chain hops reach several dummies, Dragon Rage is 40 flat, Hex lands, Flamethrower slows its caster with two commitments).
 // Slice 4r: a page per set (arcs, novas, shots, buffs): every slot casts, ticks once per frame and lands hits; 'buffs' checks a stage rises.
+// Slice 4c-3: a page per set (extras, falls): every slot casts, ticks once per frame and lands hits; Rock Slide shows its telegraph
+// (a waiting instance) and lands; the Flamethrower cone swings; then a density run at skipTo(20) with the set loaded.
 const path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '..');
 const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
@@ -227,6 +229,56 @@ async function density(page) {
       ok(await page.evaluate(() => G.Game.player.slots.every(g => g.every(m => G.MoveRoute.routed(m.id)))), set + ': every slot is routed');
       await page.evaluate(() => { G.Debug.hitbox(true); });
       await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-' + set + '.png') });
+      ok(errs.length === 0, set + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      await page.close();
+    }
+    // ---- flag on, slice 4c-3: extras (Psychic, Confusion, Bubble Beam, Aura Sphere) and falls (Rock Slide, tracking Flamethrower) ----
+    for (const set of ['extras', 'falls']) {
+      const { page, errs } = await boot(browser, '?dev&newcombat');
+      const n = await page.evaluate(set => { G.Game.player.invuln = 1e9; window.__h = {}; window.__c = {}; window.__land = 0; window.__wait = 0; window.__swing = 0;
+        G.SimBus.on('move:hit', e => { window.__h[e.moveId] = (window.__h[e.moveId] || 0) + 1; });
+        G.SimBus.on('move:cast', e => { window.__c[e.moveId] = (window.__c[e.moveId] || 0) + 1; });
+        G.SimBus.on('move:land', () => window.__land++);
+        const h0 = {}, f = () => { for (const i of G.MoveSim.list()) {     // a telegraph seen, and how far a cone turned from its cast heading
+          if (i.wait > 0) window.__wait++;
+          if (i.spec.delivery.aimTrack) { if (!(i.id in h0)) h0[i.id] = i.heading; window.__swing = Math.max(window.__swing, Math.abs(Math.atan2(Math.sin(i.heading - h0[i.id]), Math.cos(i.heading - h0[i.id])))); } }
+          requestAnimationFrame(f); };
+        requestAnimationFrame(f);
+        return G.Debug.newcombat(set); }, set);
+      ok(n === 16, "newcombat('" + set + "') placed 16 awake dummies (" + n + ')');
+      const ids = await page.evaluate(() => G.Game.player.slots.map(g => g[0].id));
+      for (let i = 0; i < ids.length; i++) {
+        await page.evaluate(i => { G.Game.player.setActive(i, true); }, i);
+        const probe = await page.evaluate(() => new Promise(res => {     // double-tick probe, as on the first page
+          const s = G.Game.player.activeGroup()[0], seen = [];
+          const f = () => { seen.push(s.t); if (seen.length < 40) requestAnimationFrame(f); else res(seen); };
+          requestAnimationFrame(f);
+        }));
+        const maxDrop = Math.max(0, ...probe.slice(1).map((t, k) => probe[k] - t).filter(d => d > 0 && d < 0.2));
+        await sleep(2500);
+        const r = await page.evaluate(id => ({ casts: window.__c[id] || 0, hits: window.__h[id] || 0 }), ids[i]);
+        ok(r.casts > 0, ids[i] + ': cast ' + r.casts + 'x');
+        ok(maxDrop < 0.05, ids[i] + ': timer falls one frame per frame (largest drop ' + maxDrop.toFixed(4) + ' s)');
+        ok(r.hits > 0, ids[i] + ': landed ' + r.hits + ' hits');
+        if (ids[i] === 'rock-slide') { await page.evaluate(() => { G.Debug.hitbox(true); }); await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-falls-rockslide.png') }); }
+      }
+      if (set === 'falls') {     // the walkers come straight in, so move the cone's target a quarter turn around the player and watch it follow
+        await page.evaluate(() => new Promise(res => { const f = () => { const pl = G.Game.player, c = G.MoveSim.list().find(i => i.spec.delivery.aimTrack && i.age < 0.3 && i.track);
+          if (!c) return requestAnimationFrame(f);
+          const e = c.track, a = Math.atan2(e.y - pl.y, e.x - pl.x) + Math.PI / 2, d = Math.min(150, Math.hypot(e.x - pl.x, e.y - pl.y));
+          e.x = pl.x + Math.cos(a) * d; e.y = pl.y + Math.sin(a) * d; res(); };
+          requestAnimationFrame(f); }));
+        await sleep(800);
+        const f = await page.evaluate(() => ({ land: window.__land, wait: window.__wait, swing: window.__swing }));
+        ok(f.wait > 0 && f.land > 0, 'Rock Slide: telegraph seen on ' + f.wait + ' frames, ' + f.land + ' landings');
+        ok(f.swing > 0.05, 'Flamethrower: the cone swung up to ' + f.swing.toFixed(2) + ' rad from its cast heading');
+      }
+      ok(await page.evaluate(() => G.Game.player.slots.every(g => g.every(m => G.MoveRoute.routed(m.id)))), set + ': every slot is routed');
+      await page.evaluate(() => { G.Debug.hitbox(true); });
+      await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-' + set + '.png') });
+      await page.evaluate(set => { G.Debug.hitbox(false); G.EnemyMgr.clear(); const pl = G.Game.player; pl.setActive(pl.slots.findIndex(g => g[0].id === (set === 'falls' ? 'rock-slide' : 'bubble-beam')), true); }, set);
+      const d = await density(page);
+      console.log('      ' + set + ' density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
       ok(errs.length === 0, set + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close();
     }

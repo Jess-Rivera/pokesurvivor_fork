@@ -17,6 +17,19 @@ End state (Jess, 2026-10-28):
 2. The branch merges back into main after slice 7b.
 3. A NEW branch then imports the moves the gym rosters need. Until then the gym is Brock only (Q18, QA-13).
 
+## Suggested Claude Models
+
+| Slice                        | model                                                                 | why                                                                    |
+|------------------------------|-----------------------------------------------------------------------|------------------------------------------------------------------------|
+| 4c-3 delay, falls, aimTrack  | Opus                                                                  | New runtime rules, but there's an approved, detailed handoff to follow |
+| 4r 20 plain moves           | Sonnet                                                                 | No new axis: a list of ids plus a generic harness                      |
+| 4d emitters, mines, cap      | Opus                                                                  | The most new runtime left in the branch                                |
+| 5 upgrades, self-buff cap   | Opus for the D-MC5 discussion and the build                            | Upgrade folding has to give the same result in any order               |
+| 6 simulator, balance, stress | Sonnet to build the CLI, Opus to read the results                     | The CLI is plumbing, the tuning calls are judgment                     |
+| 7a off kind                  | Opus for D-ENEMY and the boss and gym code, Sonnet for the UI readers | D-ENEMY is the biggest design call left                                |
+| 7b flip, purge, merge        | Opus                                                                  | Large deletions plus save safety before the merge                      |
+
+
 ## Code-gap rule (Jess, 2026-10-28)
 
 A STATE.md code-gap item is built in this branch only if it is directly associated with, reflected in, or impacted by the move-schema work. Otherwise it waits for its own branch.
@@ -41,9 +54,9 @@ CLAUDE.md "Where current rules live" and "Which document wins". In short: genera
 
 ## Done (history in ../move-schema/)
 
-Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 and 4c-1 are built and signed off (2026-10-29). check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
+Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4c-1, 4c-2 and 4r are built and signed off (2026-10-29). 4c-3 is built (2026-10-29), awaiting Jess's feel test; with it all of 4c is built (summary in slice-4c-3.md Results). check.js after 4c-3: 26/26 harnesses. check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
 
-## Routing coverage (48 of 63 routed today)
+## Routing coverage (53 of 63 routed today)
 
 | slice | moves added to the routed list | routed after |
 | --- | --- | --- |
@@ -51,7 +64,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 an
 | 4c-1 | fire-spin, leaf-storm, night-shade | 24 |
 | 4c-2 | razor-leaf, bonemerang, quick-attack, aerial-ace | 28 |
 | 4r (built 2026-10-29, before 4c-3) | the 19 plain moves plus bug-buzz (list in slice-4r.md) | 48 |
-| 4c-3 | psychic, confusion, bubble-beam, aura-sphere, rock-slide | 53 |
+| 4c-3 (built 2026-10-29) | psychic, confusion, bubble-beam, aura-sphere, rock-slide | 53 |
 | 4d | discharge, gust, toxic, fairy-wind, toxic-spikes, meteor-mash, will-o-wisp, flame-wheel, spikes | 62 |
 | decision D-HAIL | hail | 63 or removed |
 
@@ -64,7 +77,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0 an
 | 2 | slice-4c-1.md: persistence and orbits | BUILT and SIGNED OFF 2026-10-29 (orphaned-group fix included) | none |
 | 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (review fixes built the same night: check.js green, motion runner 24/24, smoke passed; see slice-4c-2.md Results) | none |
 | 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | built and signed off 2026-10-29 (swapped ahead of 4c-3) | 4c-1 |
-| 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | prose plan to Jess 2026-10-29, not approved; after 4r | aimTrack limit question (STATE) |
+| 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. Awaiting Jess's feel test (Flamethrower re-playtest, newcombat('extras') and ('falls')) and the Confusion and Bubble Beam batch review | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
 | 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |
@@ -80,6 +93,7 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | --- | --- | --- | --- |
 | D-LEAF | ANSWERED 2026-10-29: per-hit refresh, 6 s after the last hit (MOVE-INTENT leaf-storm) | 4c-1 | DECISIONS 2026-10-29 |
 | D-PSY | ANSWERED 2026-10-29: one re-pick, then straight (D23; MOVE-INTENT psychic) | 4c-3 | DECISIONS 2026-10-29 |
+| D-AIM | ANSWERED 2026-10-29: aimTrack keeps or picks a target only within the cone's reach, min(range, reach + radius) | 4c-3 | MOVE-INTENT flamethrower |
 | D-FOECAP | ANSWERED 2026-10-29: the resolver fills maxStacks on self-side effects only; authored foe caps stay (combat-architecture:H24) | 4c-0 | DECISIONS 2026-10-29 |
 | D-GUST | Gust per-shot spread | 4d | MOVE-INTENT gust [Open] |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp (resolver default is enemy; legacy placed mines at the caster's feet) | 4d | slice-4d.md |
