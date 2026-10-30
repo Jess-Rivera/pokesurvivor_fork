@@ -181,3 +181,6 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests: new move-travel harness 79/79 and runner 26/26; seven intent scenarios unblocked (psychic-repick setup fixed), three added; two sim-runner mutations retargeted. check.js 26/26, intent 608/608, smoke passed (two runs had one local-server resource error each on unrelated pages, third clean). 60 fps at skipTo(20).
 - Finding: Psychic scenario 5's side enemies are never inside the wedge (the apex outruns them); [Open] under MOVE-INTENT psychic.
 - Stopped at: Jess feel-tests falls and extras (Flamethrower now swings), reviews the Confusion/Bubble Beam batch, commits.
+
+## 2026-10-29 (Claude Code, home, late night): 4c-3 signed off
+- Jess feel-tested newcombat('falls') and ('extras'): all work as intended, a few need balance (slice 6). Confusion and Bubble Beam added to batchReviewed. Stopped at: Jess commits and pushes.

@@ -54,7 +54,7 @@ CLAUDE.md "Where current rules live" and "Which document wins". In short: genera
 
 ## Done (history in ../move-schema/)
 
-Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4c-1, 4c-2 and 4r are built and signed off (2026-10-29). 4c-3 is built (2026-10-29), awaiting Jess's feel test; with it all of 4c is built (summary in slice-4c-3.md Results). check.js after 4c-3: 26/26 harnesses. check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
+Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4c-1, 4c-2 and 4r are built and signed off (2026-10-29). 4c-3 is built and signed off (2026-10-29); with it all of 4c is built (summary in slice-4c-3.md Results). check.js after 4c-3: 26/26 harnesses. check.js after 4b: 21/21 harnesses, I1 guard ok, move data ok.
 
 ## Routing coverage (53 of 63 routed today)
 
@@ -77,7 +77,7 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | 2 | slice-4c-1.md: persistence and orbits | BUILT and SIGNED OFF 2026-10-29 (orphaned-group fix included) | none |
 | 3 | slice-4c-2.md: returns and repositions | BUILT and SIGNED OFF 2026-10-29 (review fixes built the same night: check.js green, motion runner 24/24, smoke passed; see slice-4c-2.md Results) | none |
 | 4 | slice-4r.md: route the remaining plain moves and Bug Buzz | built and signed off 2026-10-29 (swapped ahead of 4c-3) | 4c-1 |
-| 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. Awaiting Jess's feel test (Flamethrower re-playtest, newcombat('extras') and ('falls')) and the Confusion and Bubble Beam batch review | none |
+| 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. SIGNED OFF by Jess 2026-10-29 (feel test, Confusion and Bubble Beam batch reviewed; some balance to slice 6) | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | to plan | D-GUST, D-LOC, stage-0 |
 | 7 | slice-5.md: upgrades from fields and the self-buff formula | to plan | D-MC5 |

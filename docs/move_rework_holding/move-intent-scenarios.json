@@ -1,7 +1,7 @@
 {
   "about": "Stage 0 intent scenarios (docs/current feature planning/move-schema-post-auth/stage-0.md). Run by docs/proposals/move-intent-harness.js against the real sim for every routed move. Expected outcomes are written by hand from MOVE-INTENT (source MOVE-INTENT:<id>) or from the move data and the D-table (source data), never copied from the harness output. Layout: the owner stands at (0, 0) aiming along +x; enemies are [x, y] or [x, y, {overrides}] with radius 10 and huge HP. Defaults: owner cdMul 100 (one cast per scenario), rng never (every roll misses). Enemy indexes in expect are positions in the enemies list.",
   "batchReviewed": ["bite", "body-slam", "bulldoze", "dragon-rage", "ember", "giga-drain", "heat-wave", "hydro-pump", "mud-shot", "psycho-cut", "swords-dance", "water-gun",
-    "agility", "dark-pulse", "dazzling-gleam", "flash-cannon", "harden", "hyper-voice", "lick", "poison-sting", "powder-snow", "psybeam", "rock-throw", "shadow-ball", "sludge", "thunder-shock", "vine-whip", "wing-attack"],
+    "agility", "dark-pulse", "dazzling-gleam", "flash-cannon", "harden", "hyper-voice", "lick", "poison-sting", "powder-snow", "psybeam", "rock-throw", "shadow-ball", "sludge", "thunder-shock", "vine-whip", "wing-attack", "confusion", "bubble-beam"],
   "scenarios": [
     { "id": "tackle-arc", "move": "tackle", "source": "data", "secs": 0.4,
       "enemies": [[40, 0], [0, 45], [80, 0]],

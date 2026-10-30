@@ -28,7 +28,7 @@ Flamethrower (now tracking), Psychic, Confusion, Bubble Beam, Aura Sphere, Rock 
 The handoff's tests pass, check.js green, Jess re-playtests Flamethrower and signs off G.Debug.newcombat('extras') and ('falls').
 
 ## Results
-BUILT 2026-10-29 (Claude Code, home), plan approved by Jess the same day with the aimTrack limit at the cone's reach (D-AIM). Awaiting his feel test.
+BUILT 2026-10-29 (Claude Code, home), plan approved by Jess the same day with the aimTrack limit at the cone's reach (D-AIM). SIGNED OFF 2026-10-29: Jess feel-tested both sets (all work as intended, some balance for slice 6) and batch-reviewed Confusion and Bubble Beam.
 
 What changed (all behind ?dev&newcombat; flag off the game is unchanged):
 - move-sim.js. aimTrack: a caster-anchored static shape follows the owner, then turns at most aimTrack x dt toward a sticky target (cast target while alive within min(range, reach + radius), else the nearest within that reach, re-picked whenever lost, heading holds with none). location: a new aim entry; candidates are live enemies within range sorted by id, and the one rng draw happens only after every cast gate (stun, cost, dash, fizzle), so a waiting slot never draws; locationPick caster uses the owner position. delay: whole waiting steps (no motion, aging, collision or endOn; only a faint ends it where it would end anyway), then the first live step comes `delay` s after the cast frame and emits 'move:land'. falls: a world shape that never moves.
