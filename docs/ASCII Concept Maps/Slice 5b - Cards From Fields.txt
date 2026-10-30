@@ -1,0 +1,84 @@
+SLICE 5b, TEAM-WIDE UPGRADE CARDS FROM MOVE FIELDS (question map, 2026-10-30)
+Jess: cards are team-wide for the run ("this run: +15% Fire Damage").
+The team-wide upgrades branch is folded in. Eligibility comes from move fields, never `kind`.
+
+1. CARD FLOW
+============
+  TODAY                                   5b
+  pick card                               pick card
+    --> pick a Pokemon                      --> +1 stack in the TEAM store (run state)
+    --> pick one of its moves               --> every team move with that field reads it
+    --> stack lives on that one move        --> new moves and new Pokemon get it too
+
+  genre: Vampire Survivors passives (Might, Area, Cooldown, Amount) hit EVERY weapon;
+         Brotato items are global stats. Fixes the "per-Pokemon-per-move dilutes" problem.
+
+
+2. WHERE IT LIVES
+=================
+  team card store ......... one per run, shared by the roster (like stgTeam)
+  effective def per slot .. fold(def, team stacks) (D4); G.MoveDefs untouched (I2)
+  lens .................... after the fold (D36)
+  level-up offer .......... only if >= 1 team move can use it (levelup.js)
+  pick steps .............. gone: no "choose Pokemon, then move" (run-ui.js)
+  team sheet .............. shows the run's bonuses (sheet.js)
+
+
+3. CARD MAP (rec = my pick, ? = you rule)
+=========================================
+  card              new field (rec)                             ?
+  ----------------  ------------------------------------------  ---
+  Increased Effect  power; Aqua Ring heal; Substitute shield     Q1
+  Type damage       power, moves of that type (unchanged)        -
+  Kind damage       regroup (see Q5)                             Q5
+  Recharge          cd; persistent: rehit; never pure buffs      -
+  Count             space.count                                  Q9
+  Fire Rate         emit every                                   -
+  Ailment Chance    ailment chance (+10 pts, cap 100)            -
+  Pierce            space.pierce (not UNLIMITED/shapeless)       Q9
+  Arc / Width       radArc (cap 360) / linWidth                  -
+  Area              static radRadius, linLength, orbitRadius     Q2
+  Size              radRadius on moving shapes                   Q2
+  Shot Range        flight time on travelling moves              Q3
+  Projectile Speed  moveSpeed; orbits: angularSpeed              -
+  Duration          placed-shape life, shield, heal-over-time    Q4
+  Knockback         knockback distance                           -
+  Stage Gate -x%    stat stage Gate (SS10)                  NEW  -
+  Stage Duration +x%  stat stage Duration (SS10)            NEW  -
+  Buff Stacks       RETIRED with maxStacks                       -
+
+
+4. QUESTIONS
+============
+  Q1 Increased Effect on heal/shield ..... rec yes | alt damage only
+  Q2 Area vs Size ........................ rec split by motion (static/moving) | alt one card
+  Q3 Shot Range .......................... rec flight time | alt also aim range
+  Q4 Duration ............................ rec placed shapes + shield + HoT
+  Q5 Kind damage cards (14 today) ........ rec Melee Damage (13) + Ranged Damage (40)
+                                           alt group by motion | alt drop
+  Q6 2-buff learn limit .................. rec all 6 self-casts | alt the 4 stat buffs
+  Q7 Stat cards (HP Up, Protein ...) ..... rec team-wide too, one rule for every card
+                                           alt stay per Pokemon
+  Q8 Legacy path (no ?newcombat) ......... rec keeps per-move cards until 7b,
+                                           team cards only under the flag
+                                           alt both paths go team-wide now
+  Q9 Count and Pierce, global ............ +1 shot on EVERY move is the strongest card
+                                           rec keep, low draw weight, slice 6 tunes
+                                           (VS Amount is its premium pick)
+                                           alt pull them from the pool
+
+
+5. FLAGS
+========
+  pure buffs: their only upgrades are the two stage cards (fine now, both in 5b)
+  card nouns ("Orb", "Puddle Size") come from kinds.js: small noun table by motion
+  save: check in the build read whether a run in progress is saved
+  steps are slice 6 numbers; a global card is worth ~6 per-move picks, so steps shrink
+
+
+6. TESTS (sketch)
+=================
+  same stacks, any order --> same effective def | G.MoveDefs unchanged
+  a move learned AFTER a card gets the card | a new Pokemon gets the card
+  cardLock never moves | no Pierce on UNLIMITED/shapeless | no Recharge on pure buffs
+  one assertion per row of the card map

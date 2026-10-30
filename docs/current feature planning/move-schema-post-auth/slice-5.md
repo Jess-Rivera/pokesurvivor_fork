@@ -22,9 +22,11 @@ None. D-MC5 was superseded on 2026-10-30 by the stat stage model (DECISIONS 2026
 
 ## Plan rulings (Jess, 2026-10-30)
 - Retired fields: `maxStacks` and stat `duration` are removed from the new-path data, the resolver defaults and the overrides once the tracker harness passes; the validator then rejects both. The legacy table keeps its own fields until 7b.
-- The two team cards (SS10): NOT in this slice; built in the team-wide upgrades branch (TODO Backlog). Until then stage timing has no upgrade.
+- Cards are TEAM-WIDE for the run (Jess, 2026-10-30): the team-wide upgrades branch is folded into 5b, including the two stat stage cards (SS10). Supersedes the earlier same-day call to build them in that branch.
 - Gym Harden: slice 7a, not this slice.
 - SLOW and HASTE (enemy carrier Speed stages) stay outside the tracker model, on their CARRIER timers (COMBAT-RULES "Stat stages", carrier statuses). The tracker build must leave their stage application working.
+- Each tracker is clamped to +-6 on its own (COMBAT-RULES:SS6). A fizzled pure buff waits one Gate (SS8).
+- Split (2026-10-30): 5a = stat stage trackers, plan map docs/ASCII Concept Maps/Slice 5a - Stat Stage Trackers.txt, both plan rulings in, build not started. 5b = team-wide upgrade cards from fields, open questions in docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt. No dependency between them.
 
 ## Tests
 The plan names every new or changed file (harness, mutation runner, intent scenarios, debug sets, check.js) before approval. Expected coverage: same stacks give the same effective definition in any order; G.MoveDefs unchanged after upgrades; cardLock fields never change; no pierce card on UNLIMITED or shapeless moves; the tracker timings reproduce exactly (Swords Dance +6 at 12 s, Harden +6 at 30 s, Leaf Storm -6 at 24 s, a dry window resets only its own tracker); the intent scenarios for the seven moves above are rewritten from the 2026-10-30 rulings; the 4c-0 maxStacks assertions are retired; all earlier harnesses green.

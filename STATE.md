@@ -14,7 +14,7 @@ Last updated: 2026-10-30 evening (Quick, work machine; design session, docs only
 
 ## Open owner decisions
 - [Open] in COMBAT-RULES "Stat stages": Bond tax (Bond branch), stage-manipulation moves, raises on foes and whole-field moves.
-- Slice 5 rulings (Jess, today): retired fields removed after the harness passes, then the validator rejects them; team cards go to the team-wide upgrades branch; gym Harden goes to 7a; SLOW and HASTE stay outside the model (7b keeps their timed application).
+- Slice 5 rulings (Jess, today): retired fields removed after the harness passes, then the validator rejects them; cards go team-wide in 5b (team-wide branch folded in, Gate and Duration cards included); gym Harden goes to 7a; SLOW and HASTE stay outside the model (7b keeps their timed application).
 - Psychic widening [Open] (slice 6). D-ENEMY, D-COOP (7a). D-HAIL (7b). Quick Attack priority [Open].
 - Spikes on an owner faint: deferred to the MP phase.
 
@@ -24,7 +24,7 @@ Last updated: 2026-10-30 evening (Quick, work machine; design session, docs only
 
 ## Next (in order)
 1. Jess commits and pushes today's docs.
-2. Slice 5 plan: targeted read, per-feature prose plan, tests section naming every new file (incl. the rewritten intent scenarios for the seven moves).
+2. Slice 5a (trackers): plan mapped and ruled (docs/ASCII Concept Maps), build next session. Slice 5b (team-wide cards from fields): rule Q1 to Q9 in its map, then plan.
 3. Board cleanup: #16 labels; #2/#3 scope; blocked labels with no linked blocker (#5, #9, #10). #15 waits for slice 6.
 
 ## Model use (Jess, 2026-10-29)

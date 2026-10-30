@@ -17,6 +17,8 @@ Hail is parked as a toggle skill item (MOVE-INTENT hail). At the flip its legacy
 - Patch notes in js/data/changelog.js (free edit; it must still parse).
 - Docs: mark the [Legacy behavior] lines removed in COMBAT-RULES and MOVE-INTENT; clear the matching STATE.md gaps; architecture D7 and C8 lose their legacy notes.
 
+- [Open] D-BUBBLE: Bubble is the 64th legacy move, parked unconverted on purpose (move-conversions-described.json forgottenSkips, Jess 2026-10-24). Two starters open with it (js/data/starters.js: dex 393 and dex 728), so deleting moves.js breaks them. Before the purge: convert Bubble, or re-point those two starters (Water Gun is the obvious swap) and remove it from the pool. (found 2026-10-30)
+
 ## Tests
 All harnesses green with no flag; the I1 guard extended to every file that remains; old saves (with Bubble, Hail and pre-branch move ids) load; a full run to Brock; the stress run from slice 6 repeated with no flag.
 

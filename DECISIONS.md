@@ -5,9 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-30, Upgrade cards go team-wide in slice 5b (Jess)
+Every upgrade card becomes a run-wide team bonus ("this run: +15% Fire Damage") on the new path, built in slice 5b. The separate team-wide upgrades branch is folded in, so the two stat stage cards (Gate, Duration) are built in 5b too. Open sub-questions live in the 5b map.
+Canonical: move-schema-post-auth/slice-5.md; docs/COMBAT-RULES.md, "Stat stages" SS10; docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt
+
 ## 2026-10-30, Slice 5 scope: retired fields, team cards, gym Harden (Jess)
 The retired stat fields (`maxStacks`, `duration`) are removed from the new-path data, resolver defaults and overrides once the tracker harness passes; the validator then rejects them. The Gate and Duration cards are built in the team-wide upgrades branch, not slice 5. Gym Harden moves onto the model in slice 7a. SLOW and HASTE (carrier statuses) stay outside the model on their CARRIER timers; slice 7b keeps a fixed-timer stage application for them.
 Canonical: docs/MOVE-AXIS-SCHEMA.md, "Retired stat fields"; docs/COMBAT-RULES.md, "Stat stages" SS10 and SS13; move-schema-post-auth/slice-5.md and slice-7a.md, carrier statuses; slice-7b.md
+Superseded in part 2026-10-30: the team cards are built in slice 5b (entry above).
 
 ## 2026-10-30, Stat stage model approved: per-move trackers replace maxStacks (Jess)
 R1 to R13 of docs/proposals/stat-stage-model.md approved as COMBAT-RULES:SS1 to SS13. One tracker per (Pokemon, move, stat); global Gate 6.0 s and Duration 6.1 s; every success refreshes, a success with the Gate open climbs by the move's pokeapi stages; a dry window resets only that tracker. Self drops climb on Gate x 2. Strong hosts follow the model with STRONG_HOST_GATE_MUL 1 (Brock's Harden reaches +6 in about 30 s). Two team-wide cards (Gate, Duration).

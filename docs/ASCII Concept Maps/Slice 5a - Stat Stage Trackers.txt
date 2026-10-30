@@ -1,0 +1,101 @@
+SLICE 5a, STAT STAGE TRACKERS (plan map, 2026-10-30; rulings in, build not started)
+Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13. Runtime: combat-architecture:H26.
+
+1. THE SPLIT
+============
+                    slice 5
+                 /           \
+   5a STAGE TRACKERS          5b CARDS FROM FIELDS
+   planned, ready to build    needs 6 rulings first
+            (no dependency between them)
+
+
+2. ONE TRACKER = (Pokemon, move, stat)        Gate 6.0 s   Duration 6.1 s
+========================================
+
+  success --> tracker exists? --no--> apply stages, start Gate + Duration
+                   |
+                  yes --> reset Duration (always)
+                   |
+                   +----> Gate open? --yes--> add stages again, restart Gate
+                                     --no---> refresh only
+
+  no success for 6.1 s --> this tracker = 0 (other trackers untouched)
+  stage on a host = sum of its trackers, clamped to +-6
+  each tracker also clamped to +-6 on its own (Jess OK, SS6)
+
+
+3. TIMELINES (base timers, no cards)
+====================================
+  time (s)        0     6     12    18    24    30
+  Swords Dance   +2    +4    +6    ---- hold ------
+  Harden         +1    +2    +3    +4    +5    +6
+  Leaf Storm     -2          -4          -6          self drop: Gate x2 = 12 s
+  Brock Harden   same as Harden (STRONG_HOST_GATE_MUL 1), built in 7a
+
+
+4. WHO ROLLS, WHERE IT LANDS        (js/systems/move-effects.js)
+============================
+  hit --> stat applier
+            |-- foe drop ----> roll per enemy hit -------> tracker on enemy   Gate 6
+            |-- self drop ---> roll once per cast -------> tracker on caster  Gate 12
+            '-- self raise --> (on first enemy hit) -----> tracker on team    Gate 6
+  persistent / rehit move: every tick is a use
+  foe tag becomes move@caster: 2 Pokemon with Bubble Beam = 2 trackers
+
+
+5. PURE BUFFS CAST ON THEIR GATE    (js/systems/move-sim.js)
+================================
+  Swords Dance, Agility, Harden, Dragon Dance
+      no cooldown ---> cast when tracker missing or Gate open
+      fizzle --------> wait one Gate (Jess OK, SS8)
+      Recharge card / Reflejos ---> no effect until team cards land
+  Aqua Ring, Substitute, damage moves ---> own cooldown, as today
+
+
+6. BUILD ORDER
+==============
+  PASS 1 (I write)         YOU                PASS 2 (I write)          YOU
+  stages.js trackers  -->  check.js     -->   remove maxStacks and  --> export_moves.js
+  move-effects.js          harness green      stat duration from:       check.js
+  move-sim.js                                 conversions json,
+  harness + mutate                            move-attributes.js,
+  scenarios, debug set                        move-resolver.js,
+                                              4 buff cds in overrides
+
+
+7. LEFT ALONE
+=============
+  legacy until 7b ...... procSelf, procMove, old teamAdd, ROLL_GAP, TEAM_LIVE
+  outside the model .... SLOW, HASTE carriers, Flamethrower caster slow
+  save data ............ none (stages are run state)
+
+
+8. TESTS
+========
+  NEW   stat-stage-harness.js    timelines, refresh, reset, clamps, bench,
+                                 2 Pokemon = 2 trackers, chance hold, 30 + 60 fps
+  NEW   stat-stage-mutate.js     9 breaks the harness must catch
+  EDIT  move-riders-harness      cap tests -> tracker tests
+  EDIT  move-selfcast-harness    buffs: no cd, no maxStacks
+  EDIT  move-persist-mutate      remove stale Leaf Storm mutation
+  SCEN  rewritten 5 | re-cited 4 | new 6 (ice-beam numbers posted for you)
+  BATCH re-review: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze, Bubble Beam
+  DEBUG newcombat('stages')      watch SD +2/+4/+6, Leaf Storm -4 at 12 s,
+                                 Bug Buzz dummy climbing, String Shot -2 per cast
+
+
+9. RISKS
+========
+  buffs stronger (+6 in 12 s) | Bug Buzz, Ice Beam drops now climb (slice 6)
+  no buff timing upgrades until 5b (team Gate/Duration cards)
+
+
+10. 5b OPEN QUESTIONS (cards from fields)
+=========================================
+  Area ........... which fields? radius, beam length, orbit radius
+  Shot Range ..... delivery range, or instance life?
+  Duration ....... what does it lengthen now? instance, shield, ailment
+  Kind cards ..... "+15% Projectile Damage": group by shape, motion, or drop?
+  Buff Stacks .... retired with maxStacks
+  2-buff limit ... keyed on kind today: key on what?
