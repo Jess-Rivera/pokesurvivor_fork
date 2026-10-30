@@ -197,4 +197,4 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided to start from pokeapi only. Sorted every mainline stat-change move into nine shapes (5 in the pool, 4 more for later imports). Wrote docs/proposals/stat-stage-model.md [Proposed]: per (Pokemon, move, stat) trackers, pokeapi stages per climb, Gate 6.0 / Duration 6.1, refresh on success, climb on open Gate, dry window resets that move only, self-side once per cast, self drops on Gate x 2, team-wide Gate and Duration cards. Retires maxStacks, Q13, Q15/QA-11, D-FOECAP, D-LEAF, D-MC5 if approved.
 - Pointers: COMBAT-RULES [Proposed] line, slice-5 and slice-overview (plan on hold), TODO Backlog (model, team-wide upgrades branch, Bond tax idea), STATE.
 - No js/ touched, check.js not run (nothing to check). Board API fetch failed at wrap-up; TODO mirror not re-synced, #16 noted.
-- Stopped at: Jess has more questions on the model, then Q3, then rule it and re-plan slice 5.
+- Stopped at: Jess has more questions on the model, then the stage-manipulation moves (Haze, Psych Up and others), then rule it and re-plan slice 5.

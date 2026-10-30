@@ -13,7 +13,7 @@ Last updated: 2026-10-30 afternoon (Quick, work machine; design session, docs on
 - Branch end (Jess, 2026-10-28): merge into main after slice 7b.
 
 ## Open owner decisions
-- Stat stage model [Proposed]: Jess has one more set of questions. Open inside it: Bond tax (to the Bond branch), Q3 (Haze, Psych Up, Heart Swap, Spectral Thief, Topsy-Turvy), raises on foes and whole-field moves, a check against BOSS-REWORK strong-host rules.
+- Stat stage model [Proposed]: Jess has one more set of questions. Open inside it: Bond tax (to the Bond branch), stage-manipulation moves (Haze, Clear Smog, Psych Up, Heart Swap, Topsy-Turvy, Spectral Thief), raises on foes and whole-field moves, a check against BOSS-REWORK strong-host rules.
 - Psychic widening [Open] (slice 6). D-ENEMY, D-COOP (7a). D-HAIL (7b). Quick Attack priority [Open].
 - Spikes on an owner faint: deferred to the MP phase.
 
@@ -23,7 +23,7 @@ Last updated: 2026-10-30 afternoon (Quick, work machine; design session, docs on
 
 ## Next (in order)
 1. Jess commits and pushes today's docs (4d too, if not done).
-2. Jess's remaining questions on the stat stage model, then Q3, then approve or revise it.
+2. Jess's remaining questions on the stat stage model, then the stage-manipulation moves, then approve or revise it.
 3. Re-plan slice 5 against the ruling (targeted read, per-feature prose plan, tests section naming every new file).
 4. Board: re-sync (today's fetch failed); #16 animation sync is filed but unlabeled. #15 waits for slice 6.
 

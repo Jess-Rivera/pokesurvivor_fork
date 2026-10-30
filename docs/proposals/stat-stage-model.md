@@ -24,7 +24,7 @@ The live rules tie stat stacking to maxStacks, duration and cooldown together (C
 Terms: **stages** = what one success gives, straight from pokeapi (Swords Dance +2, Harden +1, Leaf Storm -2, Bubble Beam -1). **Cap** = the +-6 limit on a stat's total, nothing else. **Gate** = the minimum time between two climbs. **Duration** = how long a contribution lasts after its last success.
 
 - R1 [Proposed] ONE TRACKER PER (Pokemon, move, stat) on each recipient: its current stages, its Gate timer and its Duration timer. Each Pokemon counts separately (two roster members with Swords Dance are two trackers). A move with several stat entries (Dragon Dance, Shell Smash) has one tracker per stat.
-- R2 [Proposed] WHO ROLLS (Q1): one roll per recipient, per use. A change on a foe rolls once per enemy hit. A change on the caster or its team rolls once per cast, on the first enemy hit of that cast (a cast that hits nothing rolls nothing). A non-damaging move rolls once per cast. A persistent or rehit move counts each rehit tick as a use. Reads the existing `side` field; no new field.
+- R2 [Proposed] WHO ROLLS: one roll per recipient, per use. A change on a foe rolls once per enemy hit. A change on the caster or its team rolls once per cast, on the first enemy hit of that cast (a cast that hits nothing rolls nothing). A non-damaging move rolls once per cast. A persistent or rehit move counts each rehit tick as a use. Reads the existing `side` field; no new field.
 - R3 [Proposed] FIRST SUCCESS applies the move's pokeapi stages immediately and starts both timers.
 - R4 [Proposed] EVERY SUCCESS resets Duration. A success while the Gate is open also CLIMBS: it adds the move's pokeapi stages again and restarts the Gate.
 - R5 [Proposed] A Duration window with no success sets that tracker's stages to 0. Only that tracker; other moves on the same stat are untouched.
@@ -57,7 +57,7 @@ Mainline's real cost for Leaf Storm is the switch; here the bench already exists
 
 ## Open
 - Bond tax [Open]: Jess's idea, bonding a buff move adds 50% of its cooldown to the other moves in the group. Flat seconds vs +50% of each move's own cooldown not decided. Belongs to the Bond rework branch (TODO Backlog).
-- Q3 [Open]: reset, copy, swap, steal moves (Haze, Psych Up, Heart Swap, Spectral Thief, Topsy-Turvy). Not in the pool yet.
+- Stage-manipulation moves [Open]: reset, copy, swap, invert, steal (Haze, Clear Smog, Psych Up, Heart Swap, Topsy-Turvy, Spectral Thief). Not in the pool yet.
 - Raise on a foe (Swagger, Flatter) and whole-field moves: should follow R1 to R6 unchanged; not checked at runtime.
 - Bosses, elites, gym leaders: COMBAT-RULES says strong hosts keep their own BOSS-REWORK rules. Check that this model does not overwrite them before approval.
 - Jess has one more set of questions on this model (2026-10-30), still to come.
