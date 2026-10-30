@@ -191,3 +191,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Docs: MOVE-INTENT, MOVE-AXIS-SCHEMA (stale Toxic Spikes wording), combat-architecture, BALANCE, TODO, slice-4d, slice-overview.
 - Tests: Jess ran check.js (green) and the emit runner (25/25); feel-tested all nine, batch signed off. Process note: the first build pass was slow (about 20 small device runs, reads done during the build); plans now carry the targeted read and per-file build map up front.
 - Stopped at: Jess commits and pushes. Next: D-MC5, plan slice 5.
+
+## 2026-10-30 (Quick, work, afternoon): stat stage model proposed
+- Started on D-MC5. Found the min(floor(dur/cd), 6) formula is approved but not built (move-attributes.js defaults maxStacks 1), and on the new path Metal Claw rolls its 10% on every enemy hit, held at +1 by the cap. Several cap fixes tried and dropped (ratio equation, cap cards, cd/dur retunes).
+- Decided to start from pokeapi only. Sorted every mainline stat-change move into nine shapes (5 in the pool, 4 more for later imports). Wrote docs/proposals/stat-stage-model.md [Proposed]: per (Pokemon, move, stat) trackers, pokeapi stages per climb, Gate 6.0 / Duration 6.1, refresh on success, climb on open Gate, dry window resets that move only, self-side once per cast, self drops on Gate x 2, team-wide Gate and Duration cards. Retires maxStacks, Q13, Q15/QA-11, D-FOECAP, D-LEAF, D-MC5 if approved.
+- Pointers: COMBAT-RULES [Proposed] line, slice-5 and slice-overview (plan on hold), TODO Backlog (model, team-wide upgrades branch, Bond tax idea), STATE.
+- No js/ touched, check.js not run (nothing to check). Board API fetch failed at wrap-up; TODO mirror not re-synced, #16 noted.
+- Stopped at: Jess has more questions on the model, then Q3, then rule it and re-plan slice 5.

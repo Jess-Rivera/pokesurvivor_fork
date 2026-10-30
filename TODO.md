@@ -8,6 +8,7 @@ Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and i
 
 ## Board mirror (synced from the GitHub API 2026-10-29 ~5:40 PM; verified unchanged 2026-10-30 5:29 AM; the 10-30 wrap-up fetch failed, so later browser changes may be missing)
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
+NOT RE-SYNCED 2026-10-30 3:55 PM (Quick): the API fetch returned empty. A partial fetch that morning showed one issue not listed below: #16 [Bug]: Animation Sync between move and Pokemon [bug, no area or status label] (filed 2026-10-30 00:40 UTC; the TODO "NEW-PATH MOVES MISALIGNED" item). #15 had lost needs-triage (labels bug, area:moves). Re-sync next session.
 
 OPEN (13):
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
@@ -86,6 +87,8 @@ live queue, cross-reference the issue number.
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 
 ## Backlog
+- Stat stage model [Proposed] (opened 2026-10-30): docs/proposals/stat-stage-model.md. Jess has one more set of questions before ruling; Q3 (Haze, Psych Up and other reset/copy moves) still open. Holds the slice 5 plan.
+- Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start.
 - Move priority in a bonded group (opened 2026-10-29, slice 4c-2): Quick Attack carries priority 1 ("always first") but the new move sim casts a bonded group in slot order. Matters only when Quick Attack shares a slot with other moves. Owner: MOVE-INTENT quick-attack [Open].
 - newcombat('motion') decoy on request (4c-2 handoff P11): not built, since a dummy on the dash line is itself the nearest target. The harness covers it by adding the decoy after the cast.
 
@@ -99,7 +102,8 @@ live queue, cross-reference the issue number.
 - Bond rework (its own branch). Opened 2026-10-18, decided with Jess: Bond = Slot Compression + Synergy. Slot compression (a bond frees slots, so you carry more
   moves than the 4 slots; max today 7 moves with one group of 4) stays and grows in value as more moves are added. Synergy (bonded moves interact, for example
   cast-triggered cooldown cuts or same-type bonuses) is new and needs designing. The old job, firing several moves at once, goes away: with independent
-  cooldowns (swap rule, fix/attack-calc slice 3c) every slotted move recharges on its own. Open: synergy rules, bond count per run, BOND_MAX, whether more
+  cooldowns (swap rule, fix/attack-calc slice 3c) every slotted move recharges on its own. Bond tax idea [Open] (Jess, 2026-10-30): bonding a buff move adds 50% of its cooldown to the other moves in the group; flat seconds vs +50% of each move's own cooldown not decided (docs/proposals/stat-stage-model.md).
+  Open: synergy rules, bond count per run, BOND_MAX, whether more
   than one group can grow, HUD, and rebalancing late-game damage (a 4-move bond was ~4x sustained damage).
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess
   2026-10-17, dev logger first. Would reuse the same G.Log records. Not designed further.
