@@ -38,4 +38,5 @@ The plan names every new or changed file (harness, mutation runner, intent scena
 Harness green, check.js green, Jess plays a full run on the flag with upgrades.
 
 ## Results
-- 5a pass 1 written 2026-10-31 (Quick): see slice-5-handoff.md "5a pass 1 status". Verified: check.js 28/28, stat-stage-mutate 11/11, Jess feel-tested in game. Pass 2 (retired fields) written 2026-10-31, awaiting export_moves.js and check.js. Aqua Ring moved to a persistent heal aura (2026-10-31). Still open: the 6-move batch re-review, a re-run of the persist, sim and motion mutate runners. 5b next.
+- 5a DONE 2026-10-31 (Quick): pass 1 (trackers) and pass 2 (retired maxStacks and stat duration) built and verified; Aqua Ring moved to a persistent heal aura. check.js green, mutation runners green, Jess feel-tested. Detail: slice-5-handoff.md. Left before 5b: the 6-move batch re-review sign-off.
+- 5b: not started.

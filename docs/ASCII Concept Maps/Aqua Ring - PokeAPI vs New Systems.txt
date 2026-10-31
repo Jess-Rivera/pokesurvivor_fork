@@ -1,5 +1,5 @@
 AQUA RING, POKEAPI vs WHAT THE NEW SYSTEMS ALLOW (look before closing 5a pass 2; Quick, 2026-10-31)
-DECIDED (Jess, 2026-10-31): option P, persistent aura, 0.0625 every 2 s (3.125%/s). Built as section 8; awaiting check.js. Sources: pokeapi-master/data/v2/csv (moves, move_meta, move_effect_prose, move_flag_map),
+DECIDED (Jess, 2026-10-31): option P, persistent aura, 0.0625 every 2 s (3.125%/s). Built as section 8; verified 2026-10-31 (check.js and selfcast-mutate green, feel-tested). Sources: pokeapi-master/data/v2/csv (moves, move_meta, move_effect_prose, move_flag_map),
 move-conversions-described.json, MOVE-INTENT aqua-ring, js/systems/move-effects.js, js/data/move-attributes.js.
 
 
