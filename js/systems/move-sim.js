@@ -61,6 +61,8 @@ G.MoveSim = (() => {
   const rangeOf = def => (def.delivery.range != null ? def.delivery.range : G.MoveResolver.TUNING.RANGE);
   const live = e => e && !e.dead;
   const lensOf = o => o.moveRadiusMul || 1;
+  /** Slice 5b: the def a slot runs is the team's folded copy (G.TeamCards, lazy); an owner with no team store runs the frozen def. */
+  const defOf = (o, id) => (o && o.teamCards ? G.TeamCards.defOf(o, id) : G.MoveDefs[id]);
   const wrap = a => { a %= TAU; return a > Math.PI ? a - TAU : a < -Math.PI ? a + TAU : a; };
 
   /** Nearest live enemy to (x, y) whose centre distance passes limit(e); ties by lower id (S10, no rng). */
@@ -143,8 +145,8 @@ G.MoveSim = (() => {
   const capOk = st => st.fx.count == null || st.done < st.fx.count;     // D29: count caps the total emissions; absent, unlimited while the carrier lives
   const kids = new WeakMap();
   /** The child of an emit effect: an inline move takes the parent's identity, type and power (H13); a named move is used as it is. */
-  function childOf(def, fx) {
-    if (typeof fx.move === 'string') return G.MoveDefs[fx.move];
+  function childOf(def, fx, o) {
+    if (typeof fx.move === 'string') return defOf(o, fx.move);     // 5b: a named child folds by its own id
     let c = kids.get(fx);
     if (!c) {
       c = Object.assign({ id: def.id, name: def.name, type: def.type, category: def.category, power: def.power, accuracy: def.accuracy, basePower: def.basePower }, fx.move);
@@ -155,7 +157,7 @@ G.MoveSim = (() => {
   /** One emission at `at`: the child's space.count shapes in its fan around `aim`. An enemyHit child ignores the enemy that triggered it
    *  (R6, MOVE-INTENT meteor-mash). A child that targets nearest (Will-O-Wisp's shot) is not fired when nothing is within its range. */
   function emitOne(inst, st, at, aim, skip) {
-    const kid = childOf(inst.spec, st.fx);
+    const kid = childOf(inst.spec, st.fx, inst.cast.owner);
     let target = null, heading = aim;
     if (kid.delivery.targeting === 'nearest') {
       const R = rangeOf(kid);
@@ -325,32 +327,43 @@ G.MoveSim = (() => {
   // not stunned. Leaving the active group or a stun ends the group (reason notActive), a faint ends it (ownerDeath), and a group that
   // ended by its own endOn (a pulse's time, pierce) is spawned again on the next tick. No cooldown, no fizzle roll, fresh hit records.
   const groupOf = (o, slot) => insts.filter(i => i.cast.persist && i.cast.owner === o && i.cast.slot === slot);
-  function endGroup(list, reason) {
+  function endGroup(list, reason, keepHeal = false) {
     if (!list.length) return;
     for (const i of list) { i.done = reason; G.SimBus.emit('move:end', { moveId: i.spec.id, instId: i.id, reason, x: i.x, y: i.y }); }
-    for (const i of list) G.MoveEffects.endHeal(i.cast.owner, G.MoveEffects.srcOf(i.spec, i.cast.owner));     // slice 5a: an aura's heal ends with its group
+    if (!keepHeal) for (const i of list) G.MoveEffects.endHeal(i.cast.owner, G.MoveEffects.srcOf(i.spec, i.cast.owner));     // slice 5a: an aura's heal ends with its group (5b: not on a card restart)
     insts = insts.filter(i => !list.includes(i));
   }
-  function spawnPersistent(o, slot, def, now) {
+  /** `carry` (slice 5b, a card restart): { phase } puts the new orbs where the old ones were; the cast event says restart, so the render
+   *  plays no cast (no animation, sound or Life Orb cost). */
+  function spawnPersistent(o, slot, def, now, carry = null) {
     const gate = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
     if (!gate || !G.MoveEffects.canCast(def, o)) return null;     // the gate holds; the upkeep tries again next tick
     const pick = settle(o, gate);
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial, persist: true };
+    slot.persistDef = def;     // 5b: the def this group was spawned from, so a card pick that changes it respawns the group
     const self = G.MoveEffects.applyCast(def, cast, rng), roots = [], n = def.space ? Math.max(1, def.space.count || 1) : 1;     // 4d: a shapeless emitter is one instance
     for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, (def.space && def.space.spread) || 0), i));
+    if (carry && carry.phase != null) for (const r of roots) r.phase = carry.phase;
     commit(o, slot, def, roots, self.shield);
-    G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
+    G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim, restart: !!carry });
     return cast;
   }
   function upkeepPersistent(o, now) {
     const act = o.activeGroup(), stunned = G.Status.stunned(o);
     for (const g of o.slots) for (const slot of g) {
-      const def = G.MoveDefs[slot.id];
+      const def = defOf(o, slot.id);
       if (!def || !def.persistent || ((!def.space && !emitting(def)) && !selfHealOnly(def)) || !routed(slot.id)) continue;     // 4d: a shapeless persistent emitter (Toxic, Flame Wheel) counts; 5a: so does a self heal aura (Aqua Ring)
       const mine = groupOf(o, slot);
       if (o.dead) endGroup(mine, 'ownerDeath');
       else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');
       else if (!mine.length) spawnPersistent(o, slot, def, now);
+      else if (slot.persistDef && slot.persistDef !== def) {     // 5b: a card changed this move's numbers: the live group restarts on the new def
+        // Jess 2026-10-31: the heal keeps its clock (only its amount updates), the orbs keep their angle, and no cast plays.
+        const lead = mine.find(i => i.fan === 0 && i.spec.delivery.motion === 'orbits');
+        const phase = lead ? (lead.phase || 0) + lead.spec.delivery.angularSpeed * lead.age : null;
+        endGroup(mine, 'notActive', true);
+        if (!spawnPersistent(o, slot, def, now, { phase })) G.MoveEffects.endHeal(o, G.MoveEffects.srcOf(def, o));     // the gate held: no group, so no heal
+      }
     }
     // A group whose slot is no longer in the owner's slots (a slot list rebuilt or a move removed) has no slot left to end it, so it
     // ends here: notActive, or ownerDeath on a faint. Moving the same slot objects around (arrange, fuse) keeps their groups.
@@ -370,7 +383,7 @@ G.MoveSim = (() => {
       // swapped-in buff with a Gate running waits for it. slot.t is only its fizzle or retry wait.
       const hold = cms.length ? new Set(act.filter(sl => frozen(o, sl.id))) : null;
       for (const slot of act) {
-        const def = G.MoveDefs[slot.id];
+        const def = defOf(o, slot.id);
         if (!def || !routed(slot.id) || def.persistent) continue;       // persistent slots belong to upkeepPersistent (slice 4c-1)
         if (hold && hold.has(slot)) continue;
         if (G.MoveEffects.isPureBuff(def)) {
@@ -383,7 +396,7 @@ G.MoveSim = (() => {
         if (slot.t <= EPS) castSlot(o, slot, def, now);
       }
       for (const g of o.slots) if (g !== act) for (const slot of g) {     // inactive slots recharge too
-        const def = G.MoveDefs[slot.id];
+        const def = defOf(o, slot.id);
         if (!def || !routed(slot.id) || def.persistent || (def.cd == null && !G.MoveEffects.isPureBuff(def)) || frozen(o, slot.id)) continue;
         if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);
       }
@@ -448,9 +461,9 @@ G.MoveSim = (() => {
       inst.x = inst.bx - Math.sin(inst.heading) * off;
       inst.y = inst.by + Math.cos(inst.heading) * off;
     },
-    orbits(inst) {     // D25 (slice 4c-1): shape i at angularSpeed x age + 2 pi i / count, orbitRadius x lens (D36) from the owner (R8), a true circle (H15)
+    orbits(inst) {     // D25 (slice 4c-1): shape i at angularSpeed x age + 2 pi i / count (+ the carried phase after a 5b card restart), orbitRadius x lens (D36) from the owner (R8), a true circle (H15)
       const d = inst.spec.delivery, o = inst.cast.owner, n = Math.max(1, inst.spec.space.count || 1), r = d.orbitRadius * lensOf(o);
-      const a = d.angularSpeed * inst.age + (TAU * inst.fan) / n;
+      const a = (inst.phase || 0) + d.angularSpeed * inst.age + (TAU * inst.fan) / n;
       inst.x = o.x + Math.cos(a) * r; inst.y = o.y + Math.sin(a) * r; inst.heading = wrap(a + Math.PI / 2);
     },
     returns(inst, dt) {     // D26 (slice 4c-2): out to range from the cast origin, then home on the owner's current position

@@ -242,17 +242,17 @@ G.MoveRender = (() => {
   // ---- presentation glue, registered once ----
   G.SimBus.on('move:cast', ev => {
     const pl = G.Game && G.Game.player;
-    if (!pl || !G.MoveRoute.routed(ev.moveId)) return;
+    if (!pl || ev.restart || !G.MoveRoute.routed(ev.moveId)) return;     // 5b: a card restart of a live group is not a cast (no animation, sound or Life Orb cost)
     const slot = pl.activeGroup().find(s => s.id === ev.moveId);
     if (!slot) return;
-    slot.simCd = G.MoveDefs[ev.moveId].cd;     // the HUD ring divides by the resolver's cd for this slot
+    slot.simCd = (pl.teamCards ? G.TeamCards.defOf(pl, ev.moveId) : G.MoveDefs[ev.moveId]).cd;     // the HUD ring divides by the slot's cd (5b: the team's folded def, so Cooldown Down shows)
     slot.castAt = performance.now();
     pl.cast(slot);
   });
   G.SimBus.on('move:land', () => G.Camera.kick(0.35));     // 4c-3: a falling shape lands (below the enemy.js 0.5 to 0.9 kicks)
   G.SimBus.on('move:hit', ev => {
     if (ev.hop > 0) {     // a chain hop: the bolt is drawn with or without the overlay
-      const def = G.MoveDefs[ev.moveId], jit = [0];
+      const def = G.MoveDefs[ev.moveId], jit = [0];     // colour only: a card never changes a move's type, so the frozen def is right here
       for (let i = 1; i < 6; i++) jit.push((Math.random() - 0.5) * 18);
       bolts.push({ fx: ev.fromX, fy: ev.fromY, x: ev.x, y: ev.y, jit, col: (def && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#ffe14d', t: performance.now() / 1000 });
     }

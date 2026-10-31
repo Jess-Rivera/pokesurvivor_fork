@@ -260,7 +260,7 @@ G.MoveEffects = (() => {
   function healOverTime(o, fx, src) {
     const old = hots.find(h => h.o === o && h.src === src);
     const left = fx.duration != null ? fx.duration : Infinity;     // slice 5a: no duration = a persistent aura's heal, it lasts until its group ends (endHeal)
-    if (old) { old.left = left; return; }
+    if (old) { old.left = left; old.frac = fx.amount.fraction; old.per = fx.per || 1; return; }     // 5b: a card restart keeps the tick clock (acc), the amount updates
     hots.push({ o, src, frac: fx.amount.fraction, per: fx.per || 1, left, acc: 0 });
   }
   /** Slice 5a: a persistent heal aura's group ended (slot swap, stun, faint): its heal over time ends with it. */

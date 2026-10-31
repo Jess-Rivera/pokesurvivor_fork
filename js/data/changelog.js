@@ -6,7 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
-  { d: '2026-10-31', title: ['Stat stages climb over time', 'Stat stages climb over time'], chg: [
+  { d: '2026-10-31', title: ['Stat stages climb over time', 'Stat stages climb over time'], new: [
+    ['On the new move system (dev builds only), the groundwork for team-wide upgrade cards is in: one set of card bonuses per run, shared by your whole team, that every new-path move reads (including moves you learn later). The level-up screen does not offer these cards yet.',
+     'On the new move system (dev builds only), the groundwork for team-wide upgrade cards is in: one set of card bonuses per run, shared by your whole team, that every new-path move reads (including moves you learn later). The level-up screen does not offer these cards yet.']
+  ], chg: [
     ['On the new move system (dev builds only), Aqua Ring is now an aura: it heals 1/16 of your max HP every 2 s for as long as it is your active move (half its old rate), and switching moves, being stunned or fainting ends it. It no longer has a cooldown.',
      'On the new move system (dev builds only), Aqua Ring is now an aura: it heals 1/16 of your max HP every 2 s for as long as it is your active move (half its old rate), and switching moves, being stunned or fainting ends it. It no longer has a cooldown.'],
     ['On the new move system (dev builds only), stat changes now build up over time instead of stacking on every hit. Each Pokemon\'s move gets its own stage counter: the first success applies the move\'s stages, every success keeps them up for another 6.1 s, and at most once every 6 s a success adds the stages again, up to +6 or -6. Swords Dance reaches +6 in 12 s and Harden in 30 s, a stat drop on an enemy you keep hitting grows by one step every 6 s, and Leaf Storm\'s own Sp. Atk drop grows every 12 s.',

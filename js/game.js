@@ -136,6 +136,9 @@ G.Game = (() => {
     // member runs Player.update(), so the shared timers still tick exactly once
     // per frame, including while the caster sits on the bench. The object is never reassigned.
     roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
+    // Slice 5b: ONE team card store per run, shared by every member (team-wide cards). Run state only, never saved. Only the new move
+    // path (?dev&newcombat) reads it; the legacy path keeps its per-move cards until slice 7b.
+    const teamCards = G.TeamCards.store(); roster.forEach(f => { f.teamCards = teamCards; });
     // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
     const runItems = [];
     roster.forEach(f => { f.runItems = runItems; });
