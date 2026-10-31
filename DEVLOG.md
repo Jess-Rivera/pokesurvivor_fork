@@ -232,3 +232,4 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): sheet move rows stay legacy (TODO, slice 7); Vitamins uses the Protein / Calcium rule; no bench regen text; 2-buff limit counts self-only moves (the five buffs plus Substitute; DECISIONS). My first cut (no damage anywhere) also counted Toxic, String Shot, Spikes, Toxic Spikes, Will-O-Wisp: replaced.
 - Tests: team-cards-harness 147, team-cards-mutate 61; retargeted 7 stale patterns (stat-stage 3, move-sim 1, move-persist 1, move-selfcast 2). Jess ran check.js and all six mutation runners on node: green.
 - Stopped at: commit + push, then the 5b full-run feel test.
+- Closed 2026-10-31: Jess feel-tested 5b (full run with team cards, stages / Gate and regen-while-swapping checks), everything felt good. The verdict was given in a chat that ended before it was written down; recorded in the next session. 5b DONE. Next: slice 6 tuning.

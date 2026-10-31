@@ -57,6 +57,7 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 - Tests: team-cards-harness.js sections 5 to 9 (147 checks); team-cards-mutate.js 61 mutations (31 new). Retargeted patterns that followed the edited text: stat-stage-mutate (3), move-sim-mutate (1), move-persist-mutate (1); move-selfcast-mutate (2, stale since the A/B restart fix).
 - Verified in Quick's sandbox (node stand-in): every harness green except items-f3d2 and move-geom, which the stand-in cannot run (db.js patched before load, vm.runInNewContext) and which touch no changed file; all 9 mutation runners green. Jess to confirm on node.
 - 2-buff limit ruling (Jess, 2026-10-31, DECISIONS): self-only. team-cards.js selfOnly replaces the build default "no damage anywhere" (which had also counted Toxic, String Shot, Spikes, Toxic Spikes and Will-O-Wisp). Buffs on the new path: Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring, Substitute. Harness 3 rows, 3 new mutations.
+- Verified 2026-10-31 (Jess): check.js and all mutation runners green on node; feel-tested in game (full run with team cards, plus the stages / Gate and regen-while-swapping checks), verdict: everything felt good. 5b CLOSED. Next: slice 6 (tuning).
 
 ## Not in slice 5
 Bond tax (Bond branch), gym Harden (7a), SLOW/HASTE (7b), Dodge Cooldown card (dodge branch), the New Move cards rework, the run identity question.

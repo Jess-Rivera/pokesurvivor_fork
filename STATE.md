@@ -1,19 +1,18 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-31 noon (Quick, work machine; slice 5b parts A to G built, node checks green on Jess's machine).
+Last updated: 2026-10-31 12:15 (Quick, work machine; slice 5b CLOSED, feel test passed).
 
 ## Where we are
 - Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md.
-- Slice 5b (team-wide cards) BUILT, parts A to G. Plans: docs/ASCII Concept Maps/Slice 5b - Build Plan.txt and Slice 5b - Parts C to G Plan.txt. Status: slice-5-handoff.md "5b parts C to G status".
+- Slice 5 DONE (5a trackers, 5b team-wide cards). 5b feel test: everything felt good (Jess, 2026-10-31). Status: slice-5-handoff.md "5b parts C to G status".
 - On ?dev&newcombat level-ups offer only team cards and new moves; Vitamins picks a stat on the card screen; the team sheet has a Run Cards tab. Debug: newcombat('cards'), G.Debug.cards(id, n).
 - 2-buff learn limit on the new path: self-only buffs (DECISIONS 2026-10-31).
 - Tests: check.js, team-cards-mutate (61), stat-stage, move-sim, move-persist and move-selfcast mutate all green on node (Jess, 2026-10-31).
 
 ## Next (in order)
-1. Jess feel-tests 5b: dev.html?dev&newcombat, a full run with upgrades (slice 5 proceed rule); then newcombat('stages') with G.Debug.cards('gate', 3), and cards('regen', 5) while swapping.
-2. Feel verdicts close 5b (handoff + DEVLOG). Then slice 6 (tuning: card steps, caps, family weights, HP Regen rate).
-3. Board cleanup on GitHub (TODO mirror lists the inconsistencies).
+1. Slice 6 (tuning: card steps, caps, family weights, HP Regen rate). Start from slice-overview.md.
+2. Board cleanup on GitHub (TODO mirror lists the inconsistencies).
 
 ## Open owner decisions
 - Bond tax [Proposed] (Bond branch). [Open] stage-manipulation moves, raises on foes, whole-field moves.
