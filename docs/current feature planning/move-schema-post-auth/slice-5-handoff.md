@@ -39,6 +39,17 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 - Thin cards: build Delay Down and Recoil Down now, or defer like Splash?
 - Working names OK for the build (Area Up, Speed Up, ...)?
 - Count Up and Pierce Up caps: placeholder numbers in the build, tuned in slice 6.
+(Answered 2026-10-31: build both; working names, Speed Up renamed Velocity Up; caps +3 / +4. Lazy rebuild per move id. See slice-5.md.)
+
+## 5b parts A and B status (Quick, 2026-10-31)
+- Written: js/systems/team-cards.js (G.TeamCards: store, catalogue with field maps, lazy from-scratch fold, one copy per move id, unchanged refold keeps the object); dev.html tag after move-resolver.js; 'TeamCards' in the NEED array; game.js one store per run on every member. move-sim.js reads through a local defOf (4 sites incl. named emit children), and a live persistent group restarts when a pick changes its def (slot.persistDef); move-render.js HUD ring reads the folded cd. Changelog entry.
+- Tests: docs/proposals/team-cards-harness.js (82 checks: store and lazy rows, one row per field card, cardLock, eligible lists, order, readers incl. a static scan for raw G.MoveDefs reads); docs/proposals/team-cards-mutate.js (23 mutations).
+- Verified in Quick's sandbox (bundled, not node CLI): the new harness 82/82; move-sim, persist, emit, motion, travel, selfcast, riders, plain, stat-stage and intent harnesses green; all 23 mutations caught. Jess to run `node tools/check.js` and `node docs/proposals/team-cards-mutate.js`.
+- Data facts found: Count Up fits 16 moves (Rock Slide out: its copies would land on one point), Pierce Up 17 (Quick Attack's dash plus the Gust, Fairy Wind and Will-O-Wisp shots). Recoil Down on Substitute also shrinks its shield (shield = 2 x HP paid). Time Up on Gust, Fairy Wind and Meteor Mash lengthens their shots' flight.
+- Rulings applied (Jess, 2026-10-31): Recoil Down compensates a paid shield (team-cards.js `comp` term, shield stays full size); Time Up placed things only (5 moves: discharge, flame-wheel, toxic, toxic-spikes, will-o-wisp). Harness 85/85, mutations 25/25 (sandbox).
+- Persistent restart costs measured (sandbox probe): Toxic's existing puddles survive; Aqua Ring's next heal tick slipped by up to a full 2 s; Fire Spin and Leaf Storm orbs snapped back to their start angles; fresh hit records (an enemy inside can take a tick early, kept); one cast played (animation, sound, Life Orb cost).
+- Restart fix BUILT (Jess, "apply all three"): move-sim.js endGroup keepHeal on a card restart, spawnPersistent `carry` (orb phase, restart flag on move:cast), orbits motion adds inst.phase; move-effects.js healOverTime updates frac and per on an existing heal (clock kept); move-render.js skips restart casts. A restart whose gate holds ends the heal. Harness 90/90, mutations 30/30, all move harnesses green (sandbox).
+- Next: part C (Gate Reduction and Duration Increase in stages.js / move-effects.js), then D, E, F, G per the build plan section 7.
 
 ## Not in slice 5
 Bond tax (Bond branch), gym Harden (7a), SLOW/HASTE (7b), Dodge Cooldown card (dodge branch), the New Move cards rework, the run identity question.

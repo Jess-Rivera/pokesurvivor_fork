@@ -1,0 +1,166 @@
+SLICE 5b, BUILD PLAN (team-wide cards from fields), 2026-10-31 (Quick)
+Card list: Slice 5b - Cards From Fields.txt section 3. This map is HOW it gets built.
+Jess 2026-10-31: build Delay Down and Recoil Down; working names, "Speed Up" renamed Velocity Up;
+Count Up cap +3, Pierce Up cap +4 (placeholders, slice 6 tunes).
+Jess 2026-10-31: LAZY REBUILD, one copy per move id. A pick only raises the run's cards-picked
+count; a copy built at an older count is refolded from scratch on its next read. Explainer:
+Slice 5b - Card Rebuild Explained.txt.
+Everything below runs only under ?dev&newcombat. Flag off = game unchanged.
+
+
+1. DATA FLOW
+============
+  level-up offer ---> pick card ---> TEAM STORE (+1 stack, run state) ---> cards picked +1
+                                          |
+                                          v
+  read move id ---> copy built at the current cards-picked count? --yes--> use it
+                                          |no (or no copy yet)
+                                          v
+  G.MoveDefs[id] (frozen) ---> FOLD from scratch(def, ALL team stacks, cardLock) ---> store copy
+                    +---------------------+----------------------+
+                    v                     v                      v
+             move-sim.js (4 reads)   move-render.js (2)     sheet.js numbers
+                    |
+                    v
+             lens per holder (D36), AFTER the fold
+  emitted named child (childOf) ---> folded too (it is the team's move)
+
+  stat-stage timers:  move-effects stat() / statReady ---> caster's team Gate x, Duration x
+                      ---> stages.js success(); enemy-caused changes keep base timers
+
+
+2. FILES, PER FEATURE
+=====================
+  A. Team store + fold + catalogue
+     js/systems/team-cards.js ... NEW (G.TeamCards): store, card catalogue (field map,
+                                  modes add / inc / rate, steps, caps), eligibility per move,
+                                  lazy fold (one copy per move id, stamped with the
+                                  cards-picked count), card text and before-to-after preview
+     dev.html ................... script tag after move-resolver.js, before move-sim.js
+     js/main.js ................. 'TeamCards' into the NEED array
+     js/game.js ................. a fresh store at run start, shared like stgTeam (line ~138)
+  B. Readers
+     js/systems/move-sim.js ..... lines ~147, 348, 373, 386: folded def instead of G.MoveDefs
+     js/systems/move-render.js .. line ~248: folded def (HUD ring shows Cooldown Down); line ~255 stays
+                                  on the frozen def (bolt colour only, a card never changes a type)
+  C. Gate Reduction / Duration Increase (SS10)
+     js/systems/stages.js ....... gateOf and success take the team multipliers (default 1)
+     js/systems/move-effects.js . stat() and statReady pass the caster team's multipliers
+                                  (so pure buffs also recast sooner with Gate Reduction)
+  D. HP Regen (bench only) + Vitamins
+     js/entities/player.js ...... incOf adds the team Vitamins bonus beside badge
+                                  (a team read, so a Pokemon caught later gets it too)
+                                  benchUpdate heals % max HP/s from the team store
+  E. Offer + pick flow
+     js/systems/levelup.js ...... flag on: families General / Space / Delivery / Payload /
+                                  New Move from G.TeamCards; a card only if >= 1 team move
+                                  can take it; legacy branch untouched
+                                  2-buff learn limit: a buff = no damage payload (new path)
+     js/ui/run-ui.js ............ team card: applies on pick, no choose sheet
+                                  Vitamins: 3 option rows on the same screen, then apply
+  F. Team sheet
+     js/ui/sheet.js ............. "This run" bonus block (card, stacks, total); move numbers
+                                  read the folded def
+  G. Debug + notes
+     js/core/debug.js ........... set newcombat('cards') + G.Debug.cards(id, n) to grant stacks
+     js/data/changelog.js ....... new entry (free-edit, parse-checked)
+
+
+3. CARD MECHANICS (placeholder steps, slice 6 tunes)
+====================================================
+  card               mode  step      fields                         guard
+  -----------------  ----  --------  -----------------------------  --------------------------
+  Type (Fire ...)    inc   +15%      power, that type              one random team type/offer;
+                                                                    shares Damage Up's pool
+  Gate Reduction     rate  -10%      stat stage Gate                team-caused changes only
+  Duration Increase  inc   +10%      stat stage Duration            team-caused changes only
+  HP Regen           add   +0.5%/s   % max HP, benched only         none
+  Vitamins           pick  +5%       1 of 3 random stats, team      none
+  Area Up            inc   +15%      radRadius, linLength,          none
+                                     orbitRadius
+  Presence Up        inc   +15%      radArc (cap 360), linWidth     not a point, arc < 360
+  Count Up           add   +1        count                          spreads out; cap +3; w 0.5
+  Pierce Up          add   +1        pierce                         not UNLIMITED/shapeless;
+                                                                    cap +4; w 0.5
+  Chain Up           add   +1        chainHops                      already chains
+  Reach Up           inc   +15%      range; endOn time on travels   none
+  Delay Down         rate  -15%      delay                          floor 50% of base delay
+  Velocity Up        inc   +15%      moveSpeed, angularSpeed        none
+  Time Up            inc   +15%      endOn time of PLACED things    never a travelling shot, never
+                                     (Jess 10-31)                   the move's own timer
+  Cooldown Down      rate  -15%      cd; rehit (persistent);        never pure buffs
+                                     emit every
+  Damage Up          inc   +10%      power                          power > 0
+  Knockback Up       inc   +20%      knockback                      knockback > 0
+  Ailment Chance Up  add   +10 pts   chance (cap 100)               chance < 100
+  Heal Up            inc   +15%      heal amount                    has a heal
+  Shield Up          inc   +15%      shield amount                  has a shield
+  Recoil Down        rate  -15%      recoil (floor 0); a paid       has recoil
+                                     shield stays full (Jess 10-31)
+
+  fold order per field: (base + adds) x (1 + incs), then / (1 + rates); cardLock skips the
+  field; a card whose every field is locked or capped on every team move leaves the pool.
+  family weights (placeholders): New Move 10, General 8, Space 10, Delivery 8, Payload 12
+
+
+4. DEFAULTS IN THIS PLAN (veto any)
+===================================
+  emitted named children ...... get the fold (Time Up needs this anyway)
+  Vitamins storage ............ own team value read in incOf, NOT the badge path: the badge
+                                path loops the roster once, so a later Pokemon would miss it
+  flag on, legacy cards ....... not offered; Bubble (unrouted) gets no cards until D-BUBBLE
+  rerolls, New Move card ...... unchanged
+
+
+5. RISKS
+========
+  readers missed ......... a raw G.MoveDefs read means a card silently does nothing
+                           (the mutation runner breaks each read site, see 6)
+  Gate card double edge .. Leaf Storm climbs faster AND lasts longer (intended, SS10)
+  power spikes ........... Count Up multiplies everything: cap +3 and weight 0.5 hold it
+  save ................... none (store is run state, no mid-run save)
+  co-op / gyms ........... untouched (routed = single player; gym stacks stay until 7a)
+
+
+6. TESTS
+========
+  NEW  docs/proposals/team-cards-harness.js
+       checks: one assertion per row of section 3 (field moved, step, guard, cap, floor)
+               same stacks in any order -> same folded def; G.MoveDefs unchanged after picks
+               lazy: a pick rebuilds nothing; the next read refolds; a second read is the
+               same object; a move learned after N picks folds with all N; two Pokemon
+               with the same move share one copy, each with its own lens
+               cardLock never moves; no Pierce on UNLIMITED/shapeless; no Cooldown Down on
+               pure buffs; eligible counts Count 16, Pierce 17, Time 5, Chain 3, Delay 1,
+               Recoil 1; a move learned AFTER a card gets it; a new Pokemon gets it
+               Reach Up: a travelling shot reaches its longer range (sim run)
+               Time Up: root timer unchanged, child timer longer
+               HP Regen: bench heals, active does not; Vitamins reaches a later member
+               Gate/Duration: Swords Dance climbs sooner; Leaf Storm self drop climbs sooner
+               and lasts longer; enemy-caused drops keep base timers; pure buff recasts sooner
+               offer: a card with no taker is never offered; flag off = legacy offer
+       why:    nothing covers the team store or the fold; stat-stage-harness pins the base
+               timers only; upgrade-slice2c covers the legacy cards
+  NEW  docs/proposals/team-cards-mutate.js
+       breaks: fold writes into G.MoveDefs | incs before adds | cardLock ignored | Pierce on
+               UNLIMITED | Cooldown Down on a pure buff | Count Up ignores the spread rule |
+               Time Up scales the root timer | Reach Up skips flight time | Regen heals the
+               active | Gate card skips self drops | Gate card hits enemy-caused changes |
+               a pick does not raise the count (stale copy kept) | refold applies only the
+               newest stack (a diff, not from scratch) | each of the 6 reader sites reads raw G.MoveDefs |
+               caps ignored | Delay floor ignored
+       why:    proves the harness catches each break (same pattern as stat-stage-mutate)
+  INTENT SCENARIOS: none new, none required. Cards change no move's base behavior and no
+       MOVE-INTENT ruling; all existing scenarios run with zero cards and must stay green.
+  DEBUG SET: newcombat('cards') = Ember, Razor Leaf, Rock Slide, Substitute
+       look for: offers show only valid cards; no choose sheet; Vitamins shows 3 rows;
+       G.Debug.cards('reach', 3) makes Razor Leaf turn farther out; ('delay', 9) stops at
+       half the telegraph; ('recoil', 3) lowers Substitute's HP cost; sheet bonus block
+  check.js: no change (it already runs every *harness*.js under docs/)
+  existing harnesses: no edits expected; a fixture with no team store folds to zero cards
+
+
+7. ORDER
+========
+  A store+fold -> B readers -> harness rows for A/B -> C Gate/Duration -> D Regen/Vitamins
+  -> E offer/pick -> F sheet -> G debug + changelog -> full harness + mutate -> Jess feel-test

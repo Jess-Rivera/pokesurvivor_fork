@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-31, ESLint and Prettier wait for the move-schema merge (Jess)
+Both tools are adopted, but neither lands until feature-test/new-move-schema merges into main (after 7b), so the branch never has to reconcile a whole-repo reformat. Then one chore branch off main: ESLint (script sourceType, browser globals plus G, ecma 2020, generated and vendored folders ignored, warn-only in check.js at first), and Prettier as one big-bang format commit, listed in .git-blame-ignore-revs. Prettier options are settled at that time, matching the house style (2-space, single quotes, semicolons).
+Canonical: TODO.md Backlog, "Lint and format tooling"
+
 ## 2026-10-30, Slice 5b card list: team-wide cards grouped by move axis (Jess)
 Upgrade cards on the new path are grouped General, Space, Delivery and Payload, each pointing at named move fields. Cooldown Down is added; Reach Up also lengthens flight time; Time Up only touches emitted or spawned things; Count Up only applies where copies spread out; HP Regen heals the bench only; the six stat cards become one Vitamins card with a pick of 3. Retired on the new path: Buff Stacks, the kind-damage cards, Size, Arc, Width, Shot Range, the old Duration, Projectile Speed, Fire Rate. Dodge Cooldown and Splash deferred.
 Canonical: docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt; move-schema-post-auth/slice-5.md

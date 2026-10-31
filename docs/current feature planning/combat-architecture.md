@@ -24,7 +24,7 @@ Labels used below: EXISTING = in the code today (file named). ACCEPTED = propose
 
 ### Invariants (the coding model must not change these)
 - I1. No `kind`. New combat files never read `kind`, never derive it, and never switch on a combination of axis values. tools/check.js gets a grep guard for this.
-- I2. G.MoveDefs is read-only at runtime (deep-frozen after resolve). Upgrades produce a separate effective definition per slot; they never mutate the shared definition.
+- I2. G.MoveDefs is read-only at runtime (deep-frozen after resolve). Upgrades produce a separate effective definition per move id (team-wide cards, slice 5b; the lens stays per holder); they never mutate the shared definition.
 - I3. One dispatch table per axis, nothing else. Motion is stepped by a table keyed by `delivery.motion`; containment by a table keyed by shape family (radial point, radial arc, linear); eligibility by a table keyed by `hitPolicy`; payload by a table keyed by effect `t`; specials by handler name. Every cross-axis rule is listed in section F and lives in exactly one named function.
 - I4. Hit eligibility is decided before any payload runs, once per (instance, enemy, step). Payload effects never decide eligibility.
 - I5. Instance lifetime and effect lifetime are independent (schema rule): ending an instance never removes an ailment, stage, shield, heal-over-time or weather it applied.
@@ -50,7 +50,7 @@ Load time (EXISTING, slice 1 and 2, plus ACCEPTED additions marked):
 2. js/data/move-resolver.js folds: grammar defaults -> derived values (cd; ACCEPTED: basePower from accuracy; ACCEPTED: `persistent` read, not inferred) -> overrides -> handler attachment -> G.MoveDefs. ACCEPTED: deep-freeze the result (I2).
 
 Run time, once per equipped move (ACCEPTED):
-3. MoveSlot creation: when the player gains a move, its slot gets `eff` = the effective definition. Until slice 5 `eff` is G.MoveDefs[id] itself; from slice 5 it is a fresh fold of def plus the slot's upgrade stacks (same order-independent rule as legacy G.Moves.derive).
+3. MoveSlot creation: when the player gains a move, its slot gets `eff` = the effective definition. Until slice 5 `eff` is G.MoveDefs[id] itself; from slice 5b it is a fresh fold of def plus the TEAM's card stacks (same order-independent rule as legacy G.Moves.derive), one per move id, built lazily: a pick only raises the run's cards-picked count, and a copy built at an older count is refolded from scratch on its next read (Jess, 2026-10-31). No learn-time hook: a newly learned move folds on its first read.
 
 Per frame, in this order (ACCEPTED; the game loop already clamps dt to 1/30 and scales it by speedK, EXISTING game.js line 746):
 4. Cooldowns and casting: every slotted move's timer ticks (EXISTING swap rule: inactive slots recharge too). For the active group: persistent moves make sure their instance exists; cooldown moves cast when ready and the cast gate passes. Cast creates a CastContext and spawns root instances (one per `space.count`, fanned by `spread`).
@@ -155,7 +155,7 @@ Notation: L = owner level, P = power value used by damage, t = instance age in s
 | D1 | basePower = power x (accuracy or 100) / 100; null power -> 0 | power, accuracy -> basePower | resolver, derived values | power points | DECIDED move-consistency-review:CP1-Q6, ACCEPTED placement. Matches legacy, whose `norm` already carried acc/100 |
 | D2 | cd = ANCHOR_CD x (ANCHOR_PP / PP)^BETA, 3 decimals, when basePower > 0 and not persistent; otherwise from overrides; none if persistent | pp -> cd | resolver | s | EXISTING formula; ACCEPTED: `persistent` flag replaces the endOn heuristic (C13 in the review) |
 | D3 | cast interval = max(0.05, eff.cd x owner.cdMul) | cd, cdMul -> timer | cast | s | EXISTING combat.js tickMove (player.js uses a 0.12 floor for another purpose; keep combat's 0.05) |
-| D4 | eff[k] = (def[k] + sum add) x (1 + sum inc) / (1 + sum rate) | def, stacks -> effective field | slot (slice 5) | field units | EXISTING G.Moves.derive; slice 5 maps card keys to schema paths |
+| D4 | eff[k] = (def[k] + sum add) x (1 + sum inc) / (1 + sum rate) | def, team stacks -> effective field | move id (slice 5b; team-wide cards, lazy refold on the cards-picked count) | field units | EXISTING G.Moves.derive; slice 5b maps card keys to schema paths |
 | D5 | P = eff.basePower (or eff.power if slice 5 keeps the multiplier on power; same thing since D1 is linear) | | hit | | ACCEPTED |
 | D6 | Attacker half: the formula and extraMul inputs are in COMBAT-RULES "Damage". Move path: A is computed at hit time from the owner, with P = the D5 power (after statusBonus, D13) | owner, category, P -> A | hit time (C3 note) | | EXISTING stats.js attackFactor, player.js moveFactor |
 | D7 | Defender half: the formula is in COMBAT-RULES "Damage" (DMG_SCALAR: current value, see js/core/stats.js). Move path: the new path has no `norm` normalization factor (the legacy path still multiplies by it, removed by slice 7) | A, enemy -> D | hit | | EXISTING stats.js applyDamage |

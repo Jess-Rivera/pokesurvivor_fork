@@ -1,0 +1,153 @@
+SLICE 5b, HOW CARDS REACH A MOVE (refined option, plain terms), 2026-10-31 (Quick)
+Status: explanation of the refined rebuild; pending Jess's pick vs the plan as written.
+
+
+1. THREE THINGS
+===============
+  recipe ........ G.MoveDefs['ember'], the move as authored. Never edited.
+  sticky notes .. the team store: "+2 Area Up, +1 Cooldown Down". One set per run.
+  drawer copy ... the recipe with the notes applied. What the game actually reads.
+
+
+2. PICK A CARD (game is paused)
+===============================
+  pick Area Up --> add a note --> notes version 7 becomes 8
+  nothing is rebuilt yet
+
+
+3. NEXT FRAME (game running)
+============================
+  game needs Ember
+        |
+        v
+  drawer copy stamped 7? --yes--> out of date: rebuild Ember once, stamp it 8
+                         --no---> use it as is (a lookup, same cost as today)
+
+
+4. EVERY FRAME AFTER
+====================
+  read Ember --> drawer copy stamped 8 --> lookup only
+
+
+5. ONE COPY PER MOVE, NOT PER SLOT
+==================================
+  Charmander's Ember --+
+                       +--> one drawer copy (team cards = same notes for both)
+  Vulpix's Ember ------+         |
+                                 v
+                  each Pokemon's lens (Wide Lens) applied on top, per Pokemon
+
+
+6. LEARN A MOVE MID-RUN
+=======================
+  Flamethrower learned --> no drawer copy yet --> built on first read with the
+  current notes --> it already has every card picked so far (no extra code)
+
+
+7. COST
+=======
+  rebuilds ...... only after a pick, only moves the team actually uses (<= ~24)
+  per frame ..... one lookup per read, nothing multiplied on the hot path
+
+
+8. WALK-THROUGH: Fire +10%, the only Fire move is on a BENCHED Pokemon (Jess, 2026-10-31)
+=========================================================================================
+  pick Fire +10% ........ version 7 -> 8. Nothing rebuilt.
+                          (exception: opening the team sheet reads the moves for its
+                          numbers, so they rebuild then, while paused)
+  still benched ......... move sim only ticks the ACTIVE Pokemon. Not read, not rebuilt.
+  swap in, slot 1 = buff  first frame: the sim reads EVERY slot of the active Pokemon
+                          (active group casts; inactive groups recharge, move-sim ~386;
+                          persistent upkeep, ~348). Fire move is read -> rebuilt NOW,
+                          not when you select it. Its cooldown keeps recharging from then.
+  select the Fire move .. already stamped 8. Lookup only.
+
+  NOT a diff: a stale copy is thrown away and rebuilt from the recipe + ALL notes.
+    from scratch ....... same stacks in any order = same result (a harness row)
+    a diff ............. would have to track which note was already applied: more state,
+                         more bugs, no gain at this size
+
+  The version is global, so a Fire pick also re-stamps your Water moves (each rebuilt
+  once, to the same values). Per-move dirty flags would skip that, but cost more
+  bookkeeping than the few microseconds they save.
+
+  rebuild happens at the FIRST of:
+    team sheet / level-up preview opened (paused)
+    that Pokemon becomes active (any of its slots)
+    the move is learned
+
+
+9. WHY A FIRE PICK ALSO REBUILDS WATER GUN (Jess asked, 2026-10-31)
+===================================================================
+  ONE counter for the whole team store. Each drawer copy remembers the counter it was built at.
+  The check is only "my stamp == counter?". It does not know WHICH card changed.
+
+                     counter   Ember copy     Water Gun copy
+  before the pick      7       stamped 7 ok   stamped 7 ok
+  pick Fire +10%       8       stamped 7 old  stamped 7 old   <-- both look out of date
+  next read            8       rebuilt: +10%  rebuilt: SAME numbers as before (wasted)
+
+  wasted work ... Water Gun copied once, comes out identical. Once per level-up, microseconds.
+  harm .......... none. Same numbers, same frame.
+
+  ALTERNATIVE: per-move tracking
+    on a pick, work out which moves the card touches, mark only those stale
+    Fire +10% -> marks Ember only; Water Gun keeps its copy
+    cost: the "which moves does this card touch" check must run at pick time AND be right.
+          get it wrong once -> that move silently never gets the card. A bug you can't see.
+
+  global counter ...... can never miss a move (worst case: rebuilds too many)
+  per-move tracking ... can miss a move (worst case: a card does nothing on it)
+  saving .............. only on narrow cards (Type, Chain, Delay, Recoil); Damage Up,
+                        Cooldown Down etc. touch most moves anyway
+  verdict ............. global counter
+
+
+10. WHAT THE "COUNTER" COUNTS (Jess asked, 2026-10-31)
+=====================================================
+  It counts CARD PICKS this run. That is all. ("version" in sections 2 to 8 = this number.)
+
+    run starts ............... cards picked = 0
+    level 2, pick Damage Up .. cards picked = 1
+    level 3, pick Area Up .... cards picked = 2
+    level 4, pick Fire +10% .. cards picked = 3
+
+  Each move's copy writes down the number when it was built:
+
+    Ember copy: "built when cards picked = 2"
+
+  Before using a copy, the game compares:
+
+    copy says 2, cards picked is now 3 --> a card was picked since --> rebuild
+    copy says 3, cards picked is now 3 --> nothing new           --> use it
+
+  The number never means anything on its own. It only answers one question:
+  "has any card been picked since this copy was made?"
+
+
+11. WHAT A PERSISTENT RESTART COSTS (measured in the sandbox, 2026-10-31)
+=========================================================================
+  When: only the first frame after the level-up screen closes, only for an orbit / aura / trail
+  on the ACTIVE Pokemon whose numbers the pick changed. Never mid-fight otherwise.
+
+  move           what restarts             cost                                       kind
+  -------------  ------------------------  -----------------------------------------  ---------
+  Toxic,         the trail emitter         nothing: puddles already down stay, finish  none
+  Flame Wheel                              their own timer
+  Aqua Ring      the heal clock            next heal tick slips by up to a full 2 s     LOSS
+                                           (first probe said 1.02 s: it double-ticked)
+  Fire Spin,     the orbs                  orbs snap back to their start angles         visual
+  Leaf Storm                               (a jump on screen)
+  all of them    hit records               an enemy inside can take its next tick       small GAIN
+                                           early (fresh orb / aura)
+  all of them    one cast event            the cast animation, sound AND Life Orb cost  visual +
+                                           play once                                    LOSS
+  Leaf Storm,    nothing                   stat trackers live on the Pokemon / enemy,   none
+  Bug Buzz                                 not on the orb, so they hold
+
+  FIXED (Jess, 2026-10-31, "apply all three"):
+    Aqua Ring ..... a restart keeps the running heal (same clock), only its amount updates
+    orbs .......... new orbs start at the old orbs' current angle (no jump)
+    hit records ... keep (the early tick is tiny and only on a pick frame)
+    animation ..... a restart is not a cast: no animation, sound or Life Orb cost
+  Edge: a restart whose gate holds (no group can spawn) ends the heal, like any group end.

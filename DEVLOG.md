@@ -219,3 +219,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Not run yet: Jess runs export_moves.js, then check.js. Next: an Aqua Ring look (Jess), then the batch re-review, then 5b.
 - Aqua Ring (Jess): mainline is 1/16 per turn until it leaves the field; ruled a persistent heal aura at 1/16 every 2 s (3.125%/s, half the old rate), ending on slot swap, stun or faint, no cd. Built: shapeless self-heal persistent marker in move-sim.js, untimed heal in move-effects.js, validator heal-needs-duration, harness/scenario/mutation updates, MOVE-INTENT ruling, changelog. Not run yet: export_moves.js, check.js, selfcast-mutate.
 - Closed 2026-10-31: export_moves.js, check.js and selfcast-mutate green (one test-only add: a Pokemon swap ends the Aqua Ring heal). Jess feel-tested, committed and pushed. 5a DONE. Drop re-review and mutate re-runs done (Jess). Stopped at: a new 5b build chat.
+
+## 2026-10-31 (Quick, work, late morning): slice 5b parts A and B, team card store and readers
+- Built: js/systems/team-cards.js (store, card field maps, lazy from-scratch rebuild, one copy per move id), dev.html + NEED, game.js store per run; move-sim.js (4 reads + named emit children) and move-render.js (HUD ring) read the team copy; a live persistent group restarts on a changing pick, keeping its heal clock and orb angle, no recast (no Life Orb cost). Changelog entry.
+- Decided (Jess): Delay Down and Recoil Down built; Velocity Up replaces Speed Up; Count Up cap +3, Pierce Up +4; lazy rebuild per move id (D4, I2 reworded); Recoil Down keeps Substitute's shield full; Time Up placed things only; all three restart fixes. ESLint + Prettier wait for the post-7b merge (DECISIONS).
+- Data: eligible Count 16, Pierce 17, Time 5, Chain 3, Delay 1, Recoil 1 (maps corrected).
+- Tests: team-cards-harness (90) and team-cards-mutate (30), green in Quick's sandbox only, plus the 10 move harnesses that load move-sim. check.js NOT run on Jess's machine yet.
+- Slow session: the sandbox has no node CLI, so every run was hand-bundled. Stopped at: Jess runs check.js + mutate, then a fresh chat for parts C to G.

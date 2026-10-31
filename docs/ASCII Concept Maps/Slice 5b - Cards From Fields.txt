@@ -43,8 +43,8 @@ Card names are working names; Jess may rename any of them.
   Area Up (name TBD) .... radRadius (points too: bigger shots), linLength, orbitRadius
   Presence Up ........... radArc (not a point, below 360, capped at 360), linWidth (beams)
   Count Up .............. count, only moves whose copies can spread out
-                          (count > 1, a spread, an orbit, a random location): 17 moves
-  Pierce Up ............. pierce, never UNLIMITED: 16 moves
+                          (count > 1, a spread, an orbit, an emitter fan): 16 moves (2026-10-31 data)
+  Pierce Up ............. pierce, never UNLIMITED: 17 moves (incl. emitted shots, 2026-10-31 data)
   Chain Up .............. chainHops, moves that already chain: 3 moves
   Splash ................ DEFERRED (schema: a card turns splash on)
 
@@ -52,8 +52,8 @@ Card names are working names; Jess may rename any of them.
   Reach Up .............. range, AND flight time on moves that travel (so a shot reaches)
   Delay Down ............ delay, with a floor: 1 move today (Rock Slide)
   Speed Up (name TBD) ... moveSpeed, angularSpeed
-  Time Up ............... endOn time of EMITTED or SPAWNED things only (puddles, turrets,
-                          trails, Toxic Spikes): 8 moves; never the move's own timer
+  Time Up ............... endOn time of PLACED things only (puddles, turrets, trails, Toxic
+                          Spikes, Discharge rings): 5 moves; never a shot, never the move's own timer
   Cooldown Down ......... cd; persistent: rehit; emitters: emit every. Never pure buffs
                           (no cd; Gate Reduction is theirs). Absorbs Fire Rate
 
@@ -63,7 +63,7 @@ Card names are working names; Jess may rename any of them.
   Ailment Chance Up ..... chance points (+10, cap 100), chance below 100
   Heal Up ............... heal amount (Aqua Ring, drains)
   Shield Up ............. shield amount (Substitute)
-  Recoil Down ........... recoil, floor 0: 1 move today (Substitute)
+  Recoil Down ........... recoil, floor 0: 1 move today (Substitute; its shield stays full size)
 
   RETIRED on the new path: Buff Stacks, the 14 kind-damage cards, Size, Arc, Width,
   Shot Range, the old Duration, Projectile Speed, Fire Rate, the six stat cards.
@@ -95,7 +95,7 @@ Card names are working names; Jess may rename any of them.
   same stacks, any order --> same effective def | G.MoveDefs unchanged after picks
   a move learned AFTER a card gets the card | a new Pokemon gets the card
   cardLock never moves | no Pierce on UNLIMITED/shapeless | no Cooldown Down on pure buffs
-  Count Up only on the 17 | Time Up never touches the move's own timer
+  Count Up only on the 16 | Time Up never touches the move's own timer
   Reach Up: a travelling shot reaches its longer range | HP Regen heals the bench only
   Gate/Duration cards change the 5a timelines (SS10, self drops included)
   one assertion per row of section 3

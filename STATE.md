@@ -1,28 +1,27 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-31 morning (Quick, work machine; slice 5a closed, committed and pushed).
+Last updated: 2026-10-31 late morning (Quick, work machine; slice 5b parts A and B built, NOT yet run on Jess's machine).
 
 ## Where we are
 - Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md.
-- Slice 5a DONE (2026-10-31): stat stage trackers on the new path (COMBAT-RULES SS1 to SS13, combat-architecture:H26); maxStacks and stat duration retired (validator rejects both); the 4 pure buffs cast on their Gate, no cd. check.js green, mutation runners green, Jess feel-tested. Detail: slice-5-handoff.md.
-- Aqua Ring is a persistent heal aura (MOVE-INTENT aqua-ring, 2026-10-31): 1/16 max HP every 2 s while active, ends on slot swap, stun, Pokemon swap or faint; no cd.
-- Kept (Jess): a tracker drops its whole stack at once when its Duration runs out (SS5).
-- Debug: `G.Debug.newcombat('id', 'id', ...)` loads any routed moves one per slot; sets `stages`, `drops`.
-- No save impact (stages are run state).
+- Slice 5b (team-wide cards) in progress. Build plan: docs/ASCII Concept Maps/Slice 5b - Build Plan.txt (section 7 = order). Status and data facts: slice-5-handoff.md "5b parts A and B status". Rulings: slice-5.md "Plan rulings".
+- Built (A, B): js/systems/team-cards.js (G.TeamCards: one store per run, card field maps, lazy from-scratch rebuild, one copy per move id); move-sim.js and move-render.js read the team copy; a live orbit/aura restarts on a pick that changes it, keeping its heal clock and orb angle, with no recast. Cards cannot be picked in game yet (part E), so nothing to feel-test.
+- Tests: docs/proposals/team-cards-harness.js (90) and team-cards-mutate.js (30). Green only in Quick's sandbox (bundled, no node CLI).
 
 ## Next (in order)
-1. New build chat: slice 5b (team-wide cards), from slice-5-handoff.md and the 5b map. Ask at its plan: build Delay Down and Recoil Down (1 move each) or defer; working card names OK; Count Up and Pierce Up caps as placeholders.
-(Done 10-31: the 6-move drop re-review, feel-tested by Jess; 5 are in batchReviewed, Psychic is owned by its MOVE-INTENT entry and its scenarios pass. Mutate runners re-run green.)
+1. Jess: `node tools/check.js` and `node docs/proposals/team-cards-mutate.js`. Commit only if both are green.
+2. New build chat: 5b parts C to G in one pass, one stop at the end. C Gate Reduction / Duration Increase (stages.js, move-effects.js); D HP Regen (bench only) and Vitamins (team value read in incOf); E level-up offer and pick (levelup.js, run-ui.js); F team sheet bonus block (sheet.js); G debug set newcombat('cards') + G.Debug.cards. Add harness rows and mutations per part.
+3. Then Jess plays a full run on ?dev&newcombat with upgrades (slice 5 proceed rule).
 
 ## Open owner decisions
 - Bond tax [Proposed] (Bond branch). [Open] stage-manipulation moves, raises on foes, whole-field moves.
-- HUD gap (proposed): own Atk/Def/SpA/SpD drops show only as a fading popup and the dev overlay. TODO Backlog.
+- HUD gap (proposed): own stat drops show only as a popup and the dev overlay. TODO Backlog.
 - Psychic widening [Open] (slice 6). D-ENEMY, D-COOP (7a). D-HAIL, D-BUBBLE (7b). Quick Attack priority [Open].
-- Board cleanup: #16 labels; #2/#3 scope; blocked labels with no linked blocker (#5, #9, #10). TODO mirror last synced 10-29 (API fetch failed today).
+- Board cleanup: #2 ready while #3 still blocks it; #16 no area label; blocked labels with no link (#5, #9, #10). TODO mirror last synced 10-29 (API empty at wrap-up 10-31).
 
 ## Docs and code still differ (approved, not built)
-- This branch: team cards incl. the Gate and Duration cards (5b); legacy TEAM_LIVE, ROLL_GAP, procSelf, Fire Spin strip/burnHalf and E1 (7b); QA-13 Brock fallback (7a, 7b). Branch end: merge into main after 7b.
+- This branch: 5b parts C to G; legacy TEAM_LIVE, ROLL_GAP, procSelf, Fire Spin strip/burnHalf and E1 (7b); QA-13 Brock fallback (7a, 7b). Branch end: merge into main after 7b, then ESLint + Prettier (DECISIONS 2026-10-31).
 
 ## Model use (Jess, 2026-10-29)
 Medium effort throughout. Sonnet for routing, simulator CLI, docs, catch-ups; Opus for new runtime (5b, D-ENEMY, 7b); Haiku for searches.
