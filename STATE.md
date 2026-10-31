@@ -12,9 +12,8 @@ Last updated: 2026-10-31 morning (Quick, work machine; slice 5a closed, committe
 - No save impact (stages are run state).
 
 ## Next (in order)
-1. Batch re-review sign-off (move-intent-scenarios.json `batchReviewed`): Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze, Bubble Beam. Use newcombat('drops').
-2. If not run since the retargets: persist, sim and motion mutate runners (expect no "DID NOT APPLY").
-3. New build chat: slice 5b (team-wide cards), from slice-5-handoff.md and the 5b map. Ask at its plan: build Delay Down and Recoil Down (1 move each) or defer; working card names OK; Count Up and Pierce Up caps as placeholders.
+1. New build chat: slice 5b (team-wide cards), from slice-5-handoff.md and the 5b map. Ask at its plan: build Delay Down and Recoil Down (1 move each) or defer; working card names OK; Count Up and Pierce Up caps as placeholders.
+(Done 10-31: the 6-move drop re-review, feel-tested by Jess; 5 are in batchReviewed, Psychic is owned by its MOVE-INTENT entry and its scenarios pass. Mutate runners re-run green.)
 
 ## Open owner decisions
 - Bond tax [Proposed] (Bond branch). [Open] stage-manipulation moves, raises on foes, whole-field moves.

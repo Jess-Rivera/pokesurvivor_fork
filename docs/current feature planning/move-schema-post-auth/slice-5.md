@@ -38,5 +38,5 @@ The plan names every new or changed file (harness, mutation runner, intent scena
 Harness green, check.js green, Jess plays a full run on the flag with upgrades.
 
 ## Results
-- 5a DONE 2026-10-31 (Quick): pass 1 (trackers) and pass 2 (retired maxStacks and stat duration) built and verified; Aqua Ring moved to a persistent heal aura. check.js green, mutation runners green, Jess feel-tested. Detail: slice-5-handoff.md. Left before 5b: the 6-move batch re-review sign-off.
+- 5a DONE 2026-10-31 (Quick): pass 1 (trackers) and pass 2 (retired maxStacks and stat duration) built and verified; Aqua Ring moved to a persistent heal aura. check.js green, mutation runners green, Jess feel-tested. Detail: slice-5-handoff.md. Drop re-review done (Jess).
 - 5b: not started.
