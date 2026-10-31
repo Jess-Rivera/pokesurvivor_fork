@@ -24,7 +24,7 @@ Last updated: 2026-10-30 evening (Quick, work machine; design session, docs only
 
 ## Next (in order)
 1. Jess commits and pushes today's docs.
-2. Slice 5a (trackers): plan mapped and ruled (docs/ASCII Concept Maps), build next session. Slice 5b (team-wide cards from fields): rule Q1 to Q9 in its map, then plan.
+2. Build slice 5a, then 5b, in a build chat: start from move-schema-post-auth/slice-5-handoff.md. Both maps ruled 2026-10-30 (home): 5b card list by axis (General, Space, Delivery, Payload); SS8 active-group and swap-in rules; Bond tax shape (Bond branch).
 3. Board cleanup: #16 labels; #2/#3 scope; blocked labels with no linked blocker (#5, #9, #10). #15 waits for slice 6.
 
 ## Model use (Jess, 2026-10-29)

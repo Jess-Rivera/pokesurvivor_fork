@@ -90,6 +90,9 @@ live queue, cross-reference the issue number.
 - D-BUBBLE (opened 2026-10-30, blocks 7b): Bubble is the 64th move, parked unconverted; starters dex 393 and 728 open with it. Convert it or re-point them before moves.js is deleted. See slice-7b.md.
 - Stat stage model APPROVED 2026-10-30: rules in docs/COMBAT-RULES.md "Stat stages" (SS1 to SS13), built in slice 5 on feature-test/new-move-schema. Still [Open] there: stage-manipulation moves (Haze, Psych Up and other reset/copy moves), raises on foes and whole-field moves. New tunables for the slice 6 balance pass: SELF_DROP_GATE_MUL (2), STRONG_HOST_GATE_MUL (1), the Gate and Duration card step.
 - Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start. FOLDED INTO slice 5b (Jess, 2026-10-30): every card becomes team-wide for the run, including the two stat stage cards (COMBAT-RULES:SS10). Plan map: docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt.
+- Dodge Cooldown card (opened 2026-10-30, deferred to the dodge branch): a General team-wide card in the 5b card list; build it with the dodge mechanic. Splash card also deferred until splash is built.
+- New Move cards rework [Open] (Jess, 2026-10-30): learning new moves may work differently; idea not formed. 5b leaves the New Move card as it is.
+- Run identity [Open] (2026-10-30): with every card team-wide, what makes one Pokemon or move "yours" in a run? 5b ships "the roster is the build"; revisit after feel-testing.
 - Move priority in a bonded group (opened 2026-10-29, slice 4c-2): Quick Attack carries priority 1 ("always first") but the new move sim casts a bonded group in slot order. Matters only when Quick Attack shares a slot with other moves. Owner: MOVE-INTENT quick-attack [Open].
 - newcombat('motion') decoy on request (4c-2 handoff P11): not built, since a dummy on the dash line is itself the nearest target. The harness covers it by adding the decoy after the cast.
 
@@ -103,7 +106,7 @@ live queue, cross-reference the issue number.
 - Bond rework (its own branch). Opened 2026-10-18, decided with Jess: Bond = Slot Compression + Synergy. Slot compression (a bond frees slots, so you carry more
   moves than the 4 slots; max today 7 moves with one group of 4) stays and grows in value as more moves are added. Synergy (bonded moves interact, for example
   cast-triggered cooldown cuts or same-type bonuses) is new and needs designing. The old job, firing several moves at once, goes away: with independent
-  cooldowns (swap rule, fix/attack-calc slice 3c) every slotted move recharges on its own. Bond tax idea [Open] (Jess, 2026-10-30): bonding a buff move adds 50% of its cooldown to the other moves in the group; flat seconds vs +50% of each move's own cooldown not decided (COMBAT-RULES "Stat stages" [Open]).
+  cooldowns (swap rule, fix/attack-calc slice 3c) every slotted move recharges on its own. Bond tax (Jess, 2026-10-30, [Proposed]): a move whose stat change helps its side (self or team raise, foe drop) adds 0.5 x Gate x chance to every move in its group, itself included; self drops and foe raises are not taxed. Still [Open]: team or base Gate, several taxing moves (sum or largest), persistent moves (COMBAT-RULES "Stat stages").
   Open: synergy rules, bond count per run, BOND_MAX, whether more
   than one group can grow, HUD, and rebalancing late-game damage (a 4-move bond was ~4x sustained damage).
 - Player-facing battle log (for example a last-3-seconds breakdown on the death screen): DEFERRED by Jess

@@ -5,6 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-30, Slice 5b card list: team-wide cards grouped by move axis (Jess)
+Upgrade cards on the new path are grouped General, Space, Delivery and Payload, each pointing at named move fields. Cooldown Down is added; Reach Up also lengthens flight time; Time Up only touches emitted or spawned things; Count Up only applies where copies spread out; HP Regen heals the bench only; the six stat cards become one Vitamins card with a pick of 3. Retired on the new path: Buff Stacks, the kind-damage cards, Size, Arc, Width, Shot Range, the old Duration, Projectile Speed, Fire Rate. Dodge Cooldown and Splash deferred.
+Canonical: docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt; move-schema-post-auth/slice-5.md
+
+## 2026-10-30, Pure buffs cast only while active; swap-in respects the Gate; Bond tax shape (Jess)
+A pure buff casts on its Gate only while its group is active, so a buff alone in its slot is charge-then-swap: it climbs while active and its stages carry onto the next group for the rest of their Duration. A swap-in cast of a pure buff happens only when that move has no Gate running; otherwise it waits for the Gate. Bond tax proposed as 0.5 x Gate x chance on every move in the group, the taxing move included; only changes that help their side (self or team raises, foe drops) are taxed (Bond branch; details still open).
+Canonical: docs/COMBAT-RULES.md, "Stat stages" SS8 and the Bond tax line
+
 ## 2026-10-30, Upgrade cards go team-wide in slice 5b (Jess)
 Every upgrade card becomes a run-wide team bonus ("this run: +15% Fire Damage") on the new path, built in slice 5b. The separate team-wide upgrades branch is folded in, so the two stat stage cards (Gate, Duration) are built in 5b too. Open sub-questions live in the 5b map.
 Canonical: move-schema-post-auth/slice-5.md; docs/COMBAT-RULES.md, "Stat stages" SS10; docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt
