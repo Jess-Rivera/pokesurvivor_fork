@@ -353,7 +353,11 @@ G.Debug = (() => {
  *                       'persist' rings of slow awake dummies. Watch Swords Dance climb +2 / +4 / +6 at 0 / 6 / 12 s, Leaf Storm's
  *                       Sp. Atk -2 turn -4 at 12 s, a dummy in Bug Buzz's aura lose Sp. Def -1 per 6 s, String Shot give -2 per cast.
  *                       Swap off Swords Dance: the raise holds 6.1 s, then drops; swap back inside that window and it waits for its
- *                       Gate before it casts again. */
+ *                       Gate before it casts again.
+ *  newcombat('drops')    slice 5a batch re-review: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze and Bubble Beam (foe stat
+ *                       drops that now climb per Gate). The 'arcs' rings of slow awake dummies; the overlay prints each dummy's stages.
+ *  newcombat('shadow-ball', 'flash-cannon', ...)   any routed move ids, one per slot in the order given, with the same rings. An id that
+ *                       is unknown or not on the new path yet is skipped with a warning. One argument that names a set loads the set. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
@@ -367,7 +371,8 @@ G.Debug = (() => {
     extras: ['psychic', 'confusion', 'bubble-beam', 'aura-sphere'],
     falls: ['rock-slide', 'flamethrower'],
     emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'],
-    stages: ['swords-dance', 'leaf-storm', 'bug-buzz', 'string-shot'] };
+    stages: ['swords-dance', 'leaf-storm', 'bug-buzz', 'string-shot'],
+    drops: ['shadow-ball', 'flash-cannon', 'psychic', 'mud-shot', 'bulldoze', 'bubble-beam'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -375,7 +380,7 @@ G.Debug = (() => {
     paralysis: e => { e.stMajor = { k: 'paralysis', t: 1e9, age: 0 }; },
     sleep: e => { e.stMajor = { k: 'sleep', t: 1e9, age: 0 }; }
   };
-  function newcombat(set = 'core') {
+  function newcombat(...args) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
     if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
     const pl = G.Game && G.Game.player;
@@ -383,8 +388,18 @@ G.Debug = (() => {
     G.Game.debugMaxed();
     spawn(0);
     G.Projectiles.clearOrbs(pl);
-    const ids = NC_SETS[set];
-    if (!ids) { console.warn('[Debug] newcombat sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
+    // one set name (or none: 'core') loads a set; anything else is a list of move ids, one per slot (slice 5a)
+    const named = args.length === 0 || (args.length === 1 && NC_SETS[args[0]]);
+    const set = named ? (args[0] || 'core') : 'custom';
+    let ids = NC_SETS[set];
+    if (!named) {
+      ids = args.filter(id => {
+        if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+        if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
+        return true;
+      });
+      if (!ids.length) { console.warn('[Debug] no usable move ids. Sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
+    }
     const riders = set === 'riders' || set === 'selfcasts';
     G.MoveSim.clear(pl);     // the old set's live shapes, commitments, heal over time and shield end, as on a Pokemon swap
     pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
@@ -420,7 +435,7 @@ G.Debug = (() => {
       console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. ' + (set === 'stages' ? 'The overlay prints every dummy\'s stages and yours; G.Stages.trackers(G.Game.player) shows the timers.' : 'Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.'));
       return n;
     }
-    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs') {     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
+    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs' || set === 'drops' || set === 'custom') {     // 5a: drops and custom lists reuse these rings     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
       for (const d of [70, 140, 230]) for (let i = 0; i < 8; i++) {
         const a = i * Math.PI / 4 + (d === 140 ? Math.PI / 8 : 0);
         const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
@@ -428,7 +443,7 @@ G.Debug = (() => {
         G.EnemyMgr.add(e);
         n++;
       }
-      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots (' + ids.filter(id => G.MoveRoute.routed(id)).join(', ') + '), ' + n + ' slow dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
       return n;
     }
     if (set === 'motion') {     // slice 4c-2: a loose crowd, near enough for the dashes (range 420) and the bones (210 and 230)

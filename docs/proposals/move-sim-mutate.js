@@ -12,10 +12,10 @@ const M = [
   ['crit rolled even when it cannot crit', 'fx', [['crit = c > 0 && rng() < c', 'crit = rng() < c']]],
   ['crit rolled with Math.random', 'fx', [['crit = c > 0 && rng() < c', 'crit = c > 0 && Math.random() < c']]],
   ['attacker half frozen at cast', 'fx', [['const A = o.moveFactor(m);', 'const A = inst.cast.A || (inst.cast.A = o.moveFactor(m));']]],
-  ['root instances deferred a frame', 'sim', [['insts.push(inst);', '(G.__q = G.__q || []).push(inst);'], ['insts = insts.filter(i => !i.done);', 'insts = insts.filter(i => !i.done); if (G.__q) { insts.push(...G.__q); G.__q = null; }']]],
+  ['root instances deferred a frame', 'sim', [['(later ? pending : insts).push(inst);', '(later ? pending : (G.__q = G.__q || [])).push(inst);'], ['insts = insts.filter(i => !i.done);', 'insts = insts.filter(i => !i.done); if (G.__q) { insts.push(...G.__q); G.__q = null; }']]],
   ['growth ignored', 'sim', [['inst.spec.delivery.grow || null,     // growth', 'null,     // growth']]],
   ['full-circle fan spaced 2 pi / (count - 1)', 'sim', [['aim + (i * TAU) / n', 'aim + (i * TAU) / (n - 1)']]],
-  ['lens applied twice', 'sim', [['lens: lensOf(inst.cast.owner) });', 'lens: lensOf(inst.cast.owner) ** 2 });']]],
+  ['lens applied twice', 'sim', [['lens: lensOf(inst.cast.owner) }) : null;', 'lens: lensOf(inst.cast.owner) ** 2 }) : null;']]],     // retargeted 2026-10-31 (4d made the shape conditional)
   ['termination before collision', 'sim', [['for (const inst of insts) if (!inst.idle) collide(inst, maxR);', ''], ['insts = insts.filter(i => !i.done);', 'for (const inst of insts) if (!inst.done && !inst.idle) collide(inst, maxR); insts = insts.filter(i => !i.done);']]],
   ['boundsOf without the enemy radius', 'sim', [['G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR)', 'G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, 0)']]],
   ['interval strict, no tolerance', 'sim', [['inst.age - rec.t >= inst.spec.rehit - EPS', 'inst.age - rec.t > inst.spec.rehit']]],

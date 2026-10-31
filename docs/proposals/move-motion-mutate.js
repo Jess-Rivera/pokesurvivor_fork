@@ -15,7 +15,7 @@ const M = [
   ['the turnaround at the wrong distance', 'sim', [['const R = rangeOf(inst.spec), s = Math.min(v * dt, Math.max(0, R - inst.dist));', 'const R = rangeOf(inst.spec) * 0.8, s = Math.min(v * dt, Math.max(0, R - inst.dist));']]],
   ['the back leg aims at the origin, not the owner', 'sim', [['const dx = o.x - inst.bx, dy = o.y - inst.by, D = Math.hypot(dx, dy), s = Math.min(v * dt, D);', 'const dx = inst.cast.x - inst.bx, dy = inst.cast.y - inst.by, D = Math.hypot(dx, dy), s = Math.min(v * dt, D);']]],
   ['returned never fires', 'sim', [["returned: inst => !!inst.returned && 'returned'", 'returned: inst => false']]],
-  ['the hitbox is armed in transit', 'sim', [['if (inst.armed === false) return;', 'if (false) return;']]],
+  ['the hitbox is armed in transit', 'sim', [['if (inst.armed === false || inst.hitless || !inst.shape) return;', 'if (inst.hitless || !inst.shape) return;']]],     // retargeted 2026-10-31 (4d added the hitless and shapeless guards)
   ['the dash ignores walls', 'sim', [['if (!G.World.isFree(o.x + ux * d, o.y + uy * d, pr, true)) break;', 'if (false) break;']]],
   ['no snap at the end of a leg', 'sim', [['inst.px = tx; inst.py = ty;     // snap', 'inst.px += dx / rem * s; inst.py += dy / rem * s;     // snap']]],
   ['pierce exhaustion ends a dash or a bone', 'sim', [['if (owned) return null;', 'if (false) return null;']]],

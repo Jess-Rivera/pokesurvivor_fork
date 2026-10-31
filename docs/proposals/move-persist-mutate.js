@@ -21,7 +21,7 @@ const M = [
   ['orbit does not follow the caster', 'sim', [['inst.x = o.x + Math.cos(a) * r; inst.y = o.y + Math.sin(a) * r;', 'inst.x = inst.cast.x + Math.cos(a) * r; inst.y = inst.cast.y + Math.sin(a) * r;']]],
   ['orbit tests only the current point (no sweep)', 'sim', [['MOTION[inst.spec.delivery.motion](inst, dt);', "MOTION[inst.spec.delivery.motion](inst, dt); if (inst.spec.delivery.motion === 'orbits') { inst.prevX = inst.x; inst.prevY = inst.y; }"]]],
   ['orbit not started on the ring', 'sim', [["if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }", '']]],
-  ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner) });', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner) });']]],
+  ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner) }) : null;', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner) }) : null;']]],     // retargeted 2026-10-31 (4d made the shape conditional)
   ['Leaf Storm self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false));']]],     // slice 5a (SS12); was 'stacks per hit' on the retired maxStacks
   ['Night Shade takes a multiplier', 'fx', [['flat(inst, e, inst.cast.owner.level || 1, hop, hit)', 'flat(inst, e, (inst.cast.owner.level || 1) * 1.5, hop, hit)']]],
   ['freeze removed', 'res', [['G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));', 'G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);']]],

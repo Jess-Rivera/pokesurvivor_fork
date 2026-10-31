@@ -82,6 +82,10 @@
       "enemies": [[100, 0]],
       "expect": { "casts": 3, "hits": [3], "enemyStage": { "0": { "spe": -1 } } },
       "note": "slice 5a (SS4): three casts inside one 6 s Gate refresh the tracker, so it still reads -1. There is no per-move cap any more; Ice Beam climbs -1 per Gate on an enemy it keeps hitting (MOVE-INTENT ice-beam, 2026-10-30)" },
+    { "id": "ice-beam-climb", "move": "ice-beam", "source": "MOVE-INTENT:ice-beam", "secs": 13.5, "owner": { "cdMul": 1 },
+      "enemies": [[100, 0]],
+      "expect": { "casts": 8, "hits": [8], "enemyStage": { "0": { "spe": -2 } } },
+      "note": "SS4 (MOVE-INTENT ice-beam, 2026-10-30): cd 1.75 s, one hit per cast (oncePerInstance, 0.5 s beam). The first hit (0 s) starts the 6 s Gate; casts at 1.75, 3.5 and 5.25 s refresh; the cast at 7.0 s lands with the Gate open and climbs to -2, restarting the Gate (open at about 13.0 s); 8.75, 10.5 and 12.25 s refresh. 13.5 s ends between cast 8 and cast 9 (14.0 s) at both dt (1/30 casts drift to every 1.767 s: cast 8 near 12.4, cast 9 near 14.2). Rolls miss (default rng), so no freeze" },
 
     { "id": "bite-arc", "move": "bite", "source": "data", "secs": 0.4,
       "enemies": [[40, 0]],

@@ -165,6 +165,17 @@ console.log('1 timelines: Swords Dance, Harden, Dragon Dance, Leaf Storm, equal 
   const cd = mkP([['swords-dance']], { cdMul: 0.01 }); const many = run(cd, [], 7); ok(casts(many, 'swords-dance').length === 2, 'cdMul does not touch a pure buff: 2 casts in 7 s');
   console.log('7 pure buffs: active only, swap-in wait, solo never climbs, restart after reset, fizzle wait, no cooldown'); }
 
+// 7b. a self drop outlives a slot swap (MOVE-INTENT leaf-storm: it ends one Duration after the last hit, including after the move stops being active)
+for (const other of ['tackle', 'swords-dance', 'bug-buzz', 'string-shot']) {
+  const o = mkP([['leaf-storm'], [other]]), es = [mkE(95, 0), mkE(0, 95)];
+  run(o, es, 3);     // the orbit keeps hitting the two dummies, so the last hit is within a frame or two of the swap at 3 s
+  o.act = 1; const st = [];
+  run(o, es, 6.3, { reset: false, each: (k, t) => st.push([k / 60, S.stage(o, 'spa')]) });
+  const at = x => (st.find(y => y[0] >= x - 1e-9) || [0, null])[1];
+  ok(at(0.1) === -2 && at(5.5) === -2 && at(6.3) === 0, 'swap Leaf Storm to ' + other + ': Sp. Atk -2 holds after the swap and ends about 6.1 s after the last hit (' + [at(0.1), at(5.5), at(6.3)] + ')');
+}
+console.log('7b Leaf Storm swap: the self drop holds after a slot swap, for every move in the stages debug set');
+
 // 8. the legacy store, carriers and readers beside the trackers (5a map section 10, carrier statuses)
 { const p = mkP(); S.add(p, 'spe', -1, 6); S.trackTeam(p, 'spe', 2, 'ag'); ok(S.stage(p, 'spe') === 1 && near(S.speedMul(p), 5 / 4), 'a SLOW carrier -1 and an Agility tracker +2 sum to +1');
   S.teamAdd(p.stgTeam, 'regen', 1, 8, 'aq'); S.teamAdd(p.stgTeam, 'pct_def', 0.2, 8, 'kee'); S.trackTeam(p, 'atk', 2, 'sd'); S.teamTick(p.stgTeam, 1);
