@@ -26,9 +26,9 @@ const M = [
   ['turnRate as a damp, not a clamp', 'sim', [['inst.heading += want > cap ? cap : want < -cap ? -cap : want;', 'inst.heading += want * Math.min(1, cap);']]],
   ['steering re-picks forever', 'sim', [['if (!inst.retargeted) {', 'if (true) {']]],
   ['oscillation offset along the heading', 'sim', [['inst.x = inst.bx - Math.sin(inst.heading) * off;', 'inst.x = inst.bx + Math.cos(inst.heading) * off;']]],
-  ['cooldown ignores cdMul floor order (cd x 0.9)', 'sim', [['slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));', 'slot.t = Math.max(0.05, def.cd * 0.9);']]],
+  ['cooldown ignores cdMul floor order (cd x 0.9)', 'sim', [['slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));', 'slot.t = buff ? 0 : Math.max(0.05, def.cd * 0.9);']]],
   ['stunned owner still casts', 'sim', [['if (G.Status.stunned(o)) { slot.t = RETRY; return null; }', '']]],
-  ['fizzle refunds the cooldown', 'sim', [['if (G.Status.fizzle(o, rng)) return null;', 'if (G.Status.fizzle(o, rng)) { slot.t = RETRY; return null; }']]],
+  ['fizzle refunds the cooldown', 'sim', [['if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false); return null; }', 'if (G.Status.fizzle(o, rng)) { slot.t = RETRY; return null; }']]],
   ['STAB dropped (owner.stabFor ignored)', 'fx', [['o.stabFor(m)', 'false']]],
   // slice 3d
   ['routing filter ignored', 'sim', [['!routed(slot.id) || ', '']]],

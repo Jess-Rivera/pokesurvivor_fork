@@ -348,7 +348,12 @@ G.Debug = (() => {
  *                       the swinging cone and the homing shots show. The overlay prints Rock Slide's wait and the cone's target.
  *  newcombat('emit')     slice 4d: the nine emitters, mines and the trail, one per slot (Discharge, Gust, Fairy Wind, Toxic, Flame Wheel,
  *                       Toxic Spikes, Will-O-Wisp, Meteor Mash, Spikes). Three rings of 8 slow awake dummies (20 px/s) at 90, 170
- *                       and 260 px. Walk around for the Toxic and Flame Wheel trails; stand still to stack Spikes (8 at most). */
+ *                       and 260 px. Walk around for the Toxic and Flame Wheel trails; stand still to stack Spikes (8 at most).
+ *  newcombat('stages')   slice 5a, stat stage trackers: Swords Dance, Leaf Storm, Bug Buzz and String Shot, one per slot, with the
+ *                       'persist' rings of slow awake dummies. Watch Swords Dance climb +2 / +4 / +6 at 0 / 6 / 12 s, Leaf Storm's
+ *                       Sp. Atk -2 turn -4 at 12 s, a dummy in Bug Buzz's aura lose Sp. Def -1 per 6 s, String Shot give -2 per cast.
+ *                       Swap off Swords Dance: the raise holds 6.1 s, then drops; swap back inside that window and it waits for its
+ *                       Gate before it casts again. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
     riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
     selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
@@ -361,7 +366,8 @@ G.Debug = (() => {
     buffs: ['agility', 'harden'],
     extras: ['psychic', 'confusion', 'bubble-beam', 'aura-sphere'],
     falls: ['rock-slide', 'flamethrower'],
-    emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'] };
+    emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'],
+    stages: ['swords-dance', 'leaf-storm', 'bug-buzz', 'string-shot'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -403,7 +409,7 @@ G.Debug = (() => {
       console.log('[Debug] new combat test (specials): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies (a line of 6 ahead, 8 with ailments). G.Debug.hitbox() toggles the overlay.');
       return n;
     }
-    if (set === 'persist') {     // slice 4c-1: two rings of slow awake dummies, on and just outside the orbits
+    if (set === 'persist' || set === 'stages') {     // slice 4c-1: two rings of slow awake dummies, on and just outside the orbits (5a reuses them)
       for (const d of [90, 150]) for (let i = 0; i < 8; i++) {
         const a = i * Math.PI / 4 + (d === 150 ? Math.PI / 8 : 0);
         const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
@@ -411,7 +417,7 @@ G.Debug = (() => {
         G.EnemyMgr.add(e);
         n++;
       }
-      console.log('[Debug] new combat test (persist): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.');
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. ' + (set === 'stages' ? 'The overlay prints every dummy\'s stages and yours; G.Stages.trackers(G.Game.player) shows the timers.' : 'Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.'));
       return n;
     }
     if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs') {     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop

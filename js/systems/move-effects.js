@@ -14,9 +14,12 @@
  *                                self-cast (recoil, shield, self stat, heal over time). Returns { paid, shield }.
  *   upkeep(dt, o), endSelf(o)    heal over time ticks for the owner; endSelf drops its heal over time and its shield (swap, faint).
  *   hopReduction(def), srcOf(def, o), evalFormula(expr, ctx)
+ *   isPureBuff(def), statReady(def, o)   slice 5a (SS8): a shapeless move whose payload is only self stat changes casts on its Gate,
+ *                                with no cooldown; statReady is true when one of its trackers is missing or has an open Gate.
  *
- * Slice 4b: a self stat is tagged with the move id plus the casting Pokemon (S4), so maxStacks is per Pokemon: three roster
- * members that know Swords Dance reach +6 together while one Pokemon's recast refreshes its own. Flat damage (fixedDamage,
+ * Slice 4b: a stat change is tagged with the move id plus the casting Pokemon (S4; foe drops too since slice 5a), so each Pokemon
+ * has its own tracker (COMBAT-RULES "Stat stages" SS1): three roster members that know Swords Dance climb separately and add up,
+ * while one Pokemon's recast inside its Gate only refreshes its own. Flat damage (fixedDamage,
  * levelDamage) skips every multiplier (S5) but still goes through Enemy.hurt. statusBonus multiplies POWER before the attacker
  * half when the target has a major ailment (D13). A chain hop k multiplies its full damage LAST by (1 - hopReduction)^k (D15).
  *
@@ -40,7 +43,7 @@ G.MoveEffects = (() => {
     return { def: s && s[2] != null ? s[2] : 50, spd: s && s[4] != null ? s[4] : 50 };
   }
   const defLevel = (e, fallback) => (e.atkLvl > 0 ? e.atkLvl : fallback);
-  const defStage = (e, cat) => (!e.stg || cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def'));
+  const defStage = (e, cat) => (!(e.stg || e.trk) || cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def'));
   function typeK(owner, type, e) {     // D9: chart x weather, floored at 1 for the Power Stone's held type
     const k = G.Types.mult(type, e.types) * G.Weather.mult(type);
     return owner.stoneType && owner.stoneType === type ? Math.max(1, k) : k;
@@ -127,16 +130,50 @@ G.MoveEffects = (() => {
 
   function flinch(inst, e, rng, fx, hop) { if (foe(e) && rolls(fx, hop, rng)) e.applyFlinch(); }
 
-  /** D30: foe on the hit enemy's own list; self team on the owner's team store; self individual on the owner's own list. */
+  // SS2 (slice 5a): the self-side roll memory. A cast is one use, rolled on its first enemy hit (a shapeless self-cast rolls at cast);
+  // a persistent or rehit instance makes each of its collision steps a new use (inst.age is the same for every hit of one step).
+  function firstUse(inst, fx) {
+    const c = inst.cast, rehit = inst.spec.persistent || inst.spec.hitPolicy === 'interval';
+    const use = rehit ? inst.id + ':' + inst.age : 'cast';
+    const u = c.used || (c.used = new Map());
+    if (u.get(fx) === use) return false;
+    u.set(fx, use);
+    return true;
+  }
+  /** H26 (slice 5a): every success lands on a tracker per (recipient, move@caster, stat). Foe side: one roll per enemy hit, on the
+   *  enemy's own tracker. Self side: one roll per use (SS2); team scope on the roster's team tracker, individual on the owner's own.
+   *  A drop a Pokemon puts on itself climbs on the Self-drop Gate (SS12). */
   function stat(inst, e, rng, fx, hop) {
-    const o = inst.cast.owner, k = statKey(fx.stat), onFoe = fx.side === 'foe', src = onFoe ? inst.spec.id : srcOf(inst.spec, o);     // S4
+    const o = inst.cast.owner, k = statKey(fx.stat), onFoe = fx.side === 'foe', src = srcOf(inst.spec, o);     // S4, foe side too (SS1)
     if (onFoe ? !foe(e) : o.dead) return;
+    if (!onFoe && !firstUse(inst, fx)) return;
     if (!rolls(fx, hop, rng)) return;
-    // a foe drop with no authored cap (D-FOECAP, combat-architecture:H24) passes the ladder size as its live limit: six applications reach -6,
-    // and at -6 a new hit replaces the oldest, so a target under fire stays at -6 and the stage text keeps showing the total.
-    if (onFoe) G.Stages.add(e, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks != null ? fx.maxStacks : G.Stages.MAX);
-    else if (fx.scope === 'team') { if (o.stgTeam) G.Stages.teamAdd(o.stgTeam, k, fx.stages, fx.duration, src, fx.maxStacks); }
-    else G.Stages.add(o, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks);
+    if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false));
+    else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));
+    else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));
+  }
+
+  // SS8 (slice 5a): a pure buff move has no damage and no shape: its payload is only self stat changes (Swords Dance, Agility, Harden,
+  // Dragon Dance). It casts when its Gate opens instead of on a cooldown.
+  const pureMemo = new WeakMap();
+  function isPureBuff(def) {
+    let v = pureMemo.get(def);
+    if (v === undefined) {
+      const p = def.payload || [];
+      v = !def.space && p.length > 0 && p.every(fx => fx.t === 'stat' && fx.side !== 'foe');
+      pureMemo.set(def, v);
+    }
+    return v;
+  }
+  /** True when a pure buff may cast: one of its stat trackers is missing or has an open Gate (SS8). */
+  function statReady(def, o) {
+    const src = srcOf(def, o);
+    for (const fx of def.payload || []) {
+      if (fx.t !== 'stat') continue;
+      const t = G.Stages.tracker(o, statKey(fx.stat), src, fx.scope === 'team');
+      if (!t || t.g <= EPS) return true;
+    }
+    return false;
   }
 
   /** D34, from dealt only, no cap (as legacy Giga Drain). The maxHP-over-time form is a cast effect (applyCast). */
@@ -275,5 +312,5 @@ G.MoveEffects = (() => {
     return out;
   }
 
-  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE };
+  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE, isPureBuff, statReady };
 })();

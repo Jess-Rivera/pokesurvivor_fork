@@ -38,4 +38,4 @@ The plan names every new or changed file (harness, mutation runner, intent scena
 Harness green, check.js green, Jess plays a full run on the flag with upgrades.
 
 ## Results
-(not started)
+- 5a pass 1 written 2026-10-31 (Quick): see slice-5-handoff.md "5a pass 1 status". Awaiting check.js, the mutation runners and Jess's feel test (newcombat('stages')). Pass 2 (retired fields) after that.

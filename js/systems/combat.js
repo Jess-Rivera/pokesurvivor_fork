@@ -620,7 +620,7 @@ G.Combat = (() => {
 
   /** The defender's Def / SpD stage multiplier for a move (G.Stages). Status-category moves use the neutral denominator, so 1. */
   function defStage(e, m) {
-    if (!e.stg) return 1;
+    if (!e.stg && !e.trk) return 1;     // slice 5a: a new-path drop lives in e.trk; one stage per stat (COMBAT-RULES "Stat stages" SS6)
     const cat = G.Stats.moveCat(m);
     return cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def');
   }

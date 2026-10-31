@@ -246,8 +246,8 @@ G.HUD = (() => {
     // One chip per live team buff: the stat stages, then the berry effects (type guards, Kee / Maranga, Lansat, Pinap drop bonus).
     const chips = [];
     for (const k of BUFF_ORDER) {
-      const tm = pl.stgTeam && pl.stgTeam[k];
-      if (!tm || !tm.length) continue;
+      if (!G.Stages.teamLive(pl.stgTeam, k)) continue;     // a legacy application or a team tracker (slice 5a)
+      const tm = (pl.stgTeam && pl.stgTeam[k]) || [];
       // Team RAISE of the stat (slice E2a): "ATK +2" for a stage, "REG ×2" for Aqua Ring's applications. Drops show in the status list below.
       const raise = k === 'regen' ? tm.length : Math.min(6, G.Stages.teamSum(pl.stgTeam, k));
       chips.push({ txt: BUFF_LBL[k] + (k === 'regen' ? ' ×' : ' +') + raise, col: BUFF_COL[k], k });

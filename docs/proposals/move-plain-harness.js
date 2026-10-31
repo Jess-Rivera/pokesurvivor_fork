@@ -180,28 +180,28 @@ for (const dt of DTS) {
 
 // ---- 6. special checks ----
 // Bug Bite: the berrySteal handler is a stub. A hit does not throw and adds nothing (no x2, no stage, no status, no heal).
-{ const e = mk(30, 0), ow = mkO([], { myTypes: ['bug'] }); let r = null, threw = null; const before = JSON.stringify([e.stg, e.stMajor, e.stCnf, e.burn, e.poison]);
+{ const e = mk(30, 0), ow = mkO([], { myTypes: ['bug'] }); let r = null, threw = null; const before = JSON.stringify([e.stg, e.trk, e.stMajor, e.stCnf, e.burn, e.poison]);
   try { r = hitWith('bug-bite', e, ow); } catch (x) { threw = x; }
   ok(!threw && near(r.dmg, want('bug-bite', ow, e)), 'bug-bite: a hit with a berry-less target does not throw and deals plain damage (no x2): ' + (threw ? threw.message : r.dmg));
-  ok(JSON.stringify([e.stg, e.stMajor, e.stCnf, e.burn, e.poison]) === before, 'bug-bite: the berrySteal stub changes nothing on the target');
+  ok(JSON.stringify([e.stg, e.trk, e.stMajor, e.stCnf, e.burn, e.poison]) === before, 'bug-bite: the berrySteal stub changes nothing on the target');
   const e2 = mk(30, 0, { berry: 'oran', hasBerry: true, holdItem: 'oran' }); let t2 = null; try { hitWith('bug-bite', e2); } catch (x) { t2 = x; }
   ok(!t2 && e2.berry === 'oran' && e2.holdItem === 'oran', 'bug-bite: even a berry-holding target is untouched while the handler is a stub'); }
-// Bug Buzz (MOVE-INTENT): re-hits every 0.5 s at full power; Sp. Def -1 on the first hit, held at -1 by its cap of 1.
+// Bug Buzz (MOVE-INTENT): re-hits every 0.5 s at full power; Sp. Def -1 on the first hit, refreshed (not climbed) inside its first 6 s Gate (slice 5a).
 for (const dt of DTS) {
   const e = mk(10, 0), w = run(['bug-buzz'], [e], 2.1, dt, { pin: false }), h = evs(w, 'move:hit');
   ok(h.length === 5, 'bug-buzz re-hits at 0.5 s: 5 hits in 2.1 s at dt ' + dt.toFixed(3) + ', got ' + h.length);
   const o = mkO(), first = want('bug-buzz', o, e, 0), later = want('bug-buzz', o, e, -1);
   ok(near(h[0].dmg, first), 'bug-buzz first hit is full power with Sp. Def 0: ' + h[0].dmg + ' vs ' + first);
-  ok(h.slice(1).every(x => near(x.dmg, later)), 'bug-buzz later hits are full power against Sp. Def -1 (held, not -2): ' + h.slice(1).map(x => x.dmg.toFixed(2)));
-  ok(S.stage(e, 'spd') === -1 && e.stg.spd.length === 1, 'bug-buzz holds Sp. Def at -1 after five hits (' + S.stage(e, 'spd') + ')');
+  ok(h.slice(1).every(x => near(x.dmg, later)), 'bug-buzz later hits are full power against Sp. Def -1 (inside the Gate, not -2): ' + h.slice(1).map(x => x.dmg.toFixed(2)));
+  ok(S.stage(e, 'spd') === -1 && Object.keys(e.trk.spd).length === 1, 'bug-buzz holds Sp. Def at -1 after five hits, one tracker (' + S.stage(e, 'spd') + ')');
   ok(evs(w, 'move:cast').length === 1, 'bug-buzz is one persistent instance, not a recast'); }
-// Agility and Harden: team self-buffs. A recast refreshes, it never stacks past one application.
-for (const [id, stat, n1] of [['agility', 'spe', 2], ['harden', 'def', 1]]) for (const dt of DTS) {
+// Agility and Harden: team self-buffs on trackers (slice 5a, COMBAT-RULES "Stat stages" SS8): a cast each time the Gate opens, +2 / +1 per climb, clamp +6.
+for (const [id, stat, top] of [['agility', 'spe', 6], ['harden', 'def', 5]]) for (const dt of DTS) {
   const es = [mk(60, 0), mk(0, 90)], hp0 = es.map(e => e.hp); let worst = 0, other = 0;
   const w = run([id], es, 25, dt, { pin: false, each: (k, t, o) => { worst = Math.max(worst, S.stage(o, stat)); for (const s of ['atk', 'def', 'spa', 'spd', 'spe']) if (s !== stat) other = Math.max(other, Math.abs(S.stage(o, s))); } });
-  ok(worst === n1, id + ' reaches ' + stat + ' +' + n1 + ' and never more over three casts (worst ' + worst + ')');
+  ok(worst === top, id + ' climbs to ' + stat + ' +' + top + ' in 25 s (worst ' + worst + ')');
   ok(other === 0, id + ' raises no other stat');
-  ok(evs(w, 'move:cast').length >= 3, id + ' recast on its cooldown (' + evs(w, 'move:cast').length + ' casts in 25 s)');
+  ok(evs(w, 'move:cast').length === 5, id + ' casts each time its Gate opens: 5 casts in 25 s (' + evs(w, 'move:cast').length + ')');
   ok(es.every((e, i) => e.hp === hp0[i]) && evs(w, 'move:hit').length === 0, id + ' touches no enemy'); }
 { const w = run(['agility'], [mk(60, 0)], 1, 1 / 60); ok(S.stage(w.o, 'spe') === 2 && S.stage(w.o, 'spd') === 0, 'agility +2 lands on Speed through D31, not Sp. Def'); }
 

@@ -1,7 +1,7 @@
 // Move schema slice 4a (riders on hit), offline checks (Node only). Usage from the repo root:  node docs/proposals/move-riders-harness.js .
 // Loads the REAL stats.js, enemies.js, status.js, stages.js and enemy.js (pattern: status-sliceD1/D2 harness) plus the real move data
 // chain, G.MoveGeom, G.MoveSim, G.MoveEffects and G.SimBus, with stubs for the enemy manager, world, weather and FX. Checks: rider proc
-// counts, the D31 stat key map, the D30 per-move cap, the trap root on every enemy movement phase, knockback, crit, heal from dealt,
+// counts, the D31 stat key map, the H26 stat stage trackers (slice 5a), the trap root on every enemy movement phase, knockback, crit, heal from dealt,
 // thaw, the riders-only hit, the hop hook and determinism. The mutation runner (move-riders-mutate.js) points RIDERS_<FILE> at altered copies.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
@@ -71,26 +71,49 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   for (const [st, key] of [['spAtk', 'spa'], ['atk', 'atk'], ['def', 'def']]) { const e = mk(); hitWith(syn([{ t: 'stat', stat: st, stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }]), e); ok(S.stage(e, key) === -1, st + ' reaches ' + key); }
   console.log('2 stat keys: spd -> spe (movement), spDef -> spd (special damage x1.95 at -2, physical same), spAtk/atk/def -> spa/atk/def'); }
 
-// 3. D30 per-move cap
-{ const e = mk(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 1 }], { category: 'status', basePower: 0 });
-  S.add(e, 'atk', 1, 999); S.add(e, 'atk', 1, 999); let worst = 0;
-  for (let t = 0; t < 60; t += 0.05) { if (Math.abs(t % 3) < 1e-6 || Math.abs(t % 3 - 3) < 1e-6) hitWith(up, e); S.tick(e, 0.05); worst = Math.max(worst, S.stage(e, 'atk')); }
-  ok(worst === 3, 'Q4: two stages plus a maxStacks 1 move every 3 s never exceeds 3 (worst ' + worst + ')');
-  const m = mk(); hitWith('mud-shot', m); for (let i = 0; i < 119; i++) S.tick(m, 0.05); ok(S.stage(m, 'spe') === -1, 'default 6 s: still on at 5.95 s');
-  S.tick(m, 0.1); ok(S.stage(m, 'spe') === 0, 'default 6 s: gone after 6 s');
-  const c = mk(); for (let i = 0; i < 9; i++) hitWith('mud-shot', c); ok(c.stg.spe.length === 6 && S.stage(c, 'spe') === -6, 'uncapped foe drop (D-FOECAP): 6 live applications and -6 after 9 hits');
-  const o = mk(), two = syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 2 }]);
-  hitWith(two, o); S.tick(o, 1); hitWith(two, o); S.tick(o, 1); hitWith(two, o);
-  ok(o.stg.def.length === 2 && near(o.stg.def[0].t, 5) && near(o.stg.def[1].t, 6), 'a capped application drops the OLDEST: ' + o.stg.def.map(a => a.t.toFixed(2)));
-  const team = {}, A = mkO([], { stgTeam: team }), B = { stgTeam: team, stg: null };
-  for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), A, () => 0);
-  ok(S.teamSum(team, 'atk') === 1 && S.stage(B, 'atk') === 1, 'Metal Claw cap 1 (Q14, slice 4c-0) on the team store, seen by the roster: ' + S.teamSum(team, 'atk'));
-  const ls = mkO(); for (let i = 0; i < 100; i++) hitWith('leaf-storm', mk(), ls); ok(S.stage(ls, 'spa') === -2 && ls.stg.spa.length === 1, 'Leaf Storm cap 1 holds -2 after 100');
-  const mm = mkO(); for (let i = 0; i < 50; i++) { hitWith('metal-claw', mk(), mm, () => 0); hitWith('meteor-mash', mk(), mm, () => 0); }
-  ok(S.teamSum(mm.stgTeam, 'atk') === 2, 'caps are per move and add: Metal Claw 1 + Meteor Mash 1 = 2');
-  texts.length = 0; const q = mk(), one = syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 1 }]);
-  hitWith(one, q); hitWith(one, q); hitWith(one, q); ok(texts.filter(t => /Defense/.test(t)).length === 1, 'no stage text when the stage did not change');
-  console.log('3 D30: Q4 holds at 3, 6 s default, uncapped foe drop to -6, oldest dropped, Metal Claw 1 team-wide, Leaf Storm -2 held, caps add across moves'); }
+// 3. H26 stat stage trackers (slice 5a, COMBAT-RULES "Stat stages" SS1 to SS7, SS12): one tracker per (recipient, move@caster, stat)
+{ const Gt = S.GATE, Du = S.DURATION, st0 = (p, extra) => syn(p, Object.assign({ category: 'status', basePower: 0 }, extra));
+  // a foe drop refreshes inside its Gate, climbs once the Gate is open, and ends one Duration after its last success (SS3 to SS5, SS7)
+  const m = mk(), o = mkO(); for (let i = 0; i < 10; i++) hitWith('mud-shot', m, o);
+  ok(S.stage(m, 'spe') === -1 && m.trk && Object.keys(m.trk.spe).length === 1, 'Mud Shot: 10 hits inside one Gate refresh one tracker at -1');
+  S.tick(m, Gt - 0.05); hitWith('mud-shot', m, o); ok(S.stage(m, 'spe') === -1, 'Gate still closed at 5.95 s: refresh only');
+  S.tick(m, 0.1); hitWith('mud-shot', m, o); ok(S.stage(m, 'spe') === -2, 'Gate open at 6.05 s: climbs to -2');
+  S.tick(m, Du - 0.05); ok(S.stage(m, 'spe') === -2, 'still -2 at 6.05 s after the last success');
+  S.tick(m, 0.1); ok(S.stage(m, 'spe') === 0 && !m.trk, 'gone 6.15 s after the last success (Duration 6.1 s)');
+  // two Pokemon with the same move are two trackers on one enemy (SS1, foe tag move@caster)
+  const e2 = mk(), A = mkO(), B = mkO(); hitWith('mud-shot', e2, A); hitWith('mud-shot', e2, B);
+  ok(S.stage(e2, 'spe') === -2 && Object.keys(e2.trk.spe).length === 2, 'two casters with Mud Shot: two trackers, -2');
+  // SS6: each tracker clamps at +-6 on its own; a dry window resets only its own tracker (SS5)
+  const c = mk(), big = st0([{ t: 'stat', stat: 'def', stages: -4, side: 'foe', scope: 'individual' }]), small = st0([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual' }]);
+  const co = mkO(), sBig = FX.srcOf(big, co), sSmall = FX.srcOf(small, co);
+  hitWith(big, c, co); S.tick(c, Gt + 0.01); hitWith(big, c, co); hitWith(small, c, co);
+  ok(S.tracker(c, 'def', sBig).n === -6 && S.stage(c, 'def') === -6, 'one tracker climbs -4 then clamps at -6 on its own (not -8), host clamp -6 with a second tracker');
+  for (let i = 0; i < 7; i++) { S.tick(c, 1); hitWith(small, c, co); }
+  ok(!S.tracker(c, 'def', sBig) && S.tracker(c, 'def', sSmall) && S.stage(c, 'def') === S.tracker(c, 'def', sSmall).n,
+    'the dry tracker ends, the one still landing stays: stage ' + S.stage(c, 'def'));
+  // SS2: a self change rolls once per cast, on the cast's first enemy hit; team scope, seen by the roster
+  const team = {}, P = mkO([], { stgTeam: team }), Q = { stgTeam: team, stg: null }, mc = G.MoveDefs['metal-claw'];
+  const seq = [0.99, 0, 0, 0, 0]; let si = 0; const rs = () => seq[Math.min(si++, seq.length - 1)];
+  const one = { owner: P }; for (let i = 0; i < 5; i++) FX.applyHit({ spec: mc, cast: one, x: 0, y: 0 }, mk(), 0, rs);
+  ok(S.teamSum(team, 'atk') === 0, 'one roll per cast: a missed roll on the first hit gives nothing for the other four hits of that cast');
+  FX.applyHit({ spec: mc, cast: { owner: P }, x: 0, y: 0 }, mk(), 0, () => 0);
+  ok(S.teamSum(team, 'atk') === 1 && S.stage(Q, 'atk') === 1, 'a new cast rolls again: Metal Claw +1 on the team tracker, seen by the roster');
+  for (let i = 0; i < 20; i++) FX.applyHit({ spec: mc, cast: { owner: P }, x: 0, y: 0 }, mk(), 0, () => 0);
+  ok(S.teamSum(team, 'atk') === 1, '20 more casts inside the Gate refresh, never climb');
+  const mm = mkO(); for (let i = 0; i < 5; i++) { hitWith('metal-claw', mk(), mm, () => 0); hitWith('meteor-mash', mk(), mm, () => 0); }
+  ok(S.teamSum(mm.stgTeam, 'atk') === 2, 'trackers are per move and add: Metal Claw 1 + Meteor Mash 1 = 2');
+  // SS12: a drop a Pokemon puts on itself climbs on the Self-drop Gate (6 s x 2)
+  const ls = mkO(), lsHit = () => hitWith('leaf-storm', mk(), ls);
+  lsHit(); S.tick(ls, Gt + 0.05); lsHit(); ok(S.stage(ls, 'spa') === -2, 'Leaf Storm at 6.05 s: the 12 s Self-drop Gate is still closed, -2');
+  S.tick(ls, Gt); lsHit(); ok(S.stage(ls, 'spa') === -4, 'at 12.05 s it climbs to -4');
+  texts.length = 0; const tq = mk(), to = mkO(); for (let i = 0; i < 3; i++) hitWith('mud-shot', tq, to);
+  ok(texts.filter(t => /Speed/.test(t)).length === 1, 'a tracker refresh shows no stage text');
+  // the legacy add() keeps its src and live cap (the caster slow still uses it, slice 4b S13)
+  const lg = mk(); S.add(lg, 'def', -1, 6, S.MAX, 'x', 2); S.tick(lg, 1); S.add(lg, 'def', -1, 6, S.MAX, 'x', 2); S.tick(lg, 1); S.add(lg, 'def', -1, 6, S.MAX, 'x', 2);
+  ok(lg.stg.def.length === 2 && near(lg.stg.def[0].t, 5) && near(lg.stg.def[1].t, 6), 'legacy add at its live cap drops the OLDEST: ' + lg.stg.def.map(a => a.t.toFixed(2)));
+  texts.length = 0; const q = mk(); for (let i = 0; i < 3; i++) S.add(q, 'def', -1, 6, S.MAX, 'y', 1);
+  ok(texts.filter(t => /Defense/.test(t)).length === 1, 'legacy add: no stage text when the stage did not change');
+  console.log('3 H26: refresh in the Gate, climb when open, Duration 6.1 s, 2 casters = 2 trackers, per-tracker clamp, own reset, once per cast, Self-drop Gate 12 s, legacy add kept'); }
 
 // 3b. slice 4c-0 (D-FOECAP, combat-architecture:H24): maxStacks default 1, filled on self-side effects only
 { const D = G.MoveDefs, foeCapped = [];
@@ -100,10 +123,10 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   const r = G.MoveResolver.resolve({ s: { ...D.tackle, id: 's', payload: [{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual' }, { t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual' }] } }, {}, G.MoveHandlers).s;
   ok(r.payload[0].maxStacks === 1 && !('maxStacks' in r.payload[1]), 'an unauthored self raise gets 1, an unauthored foe drop gets none');
   const o = mkO(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual', duration: 6, maxStacks: 1 }]);
-  for (let i = 0; i < 50; i++) hitWith(up, mk(), o); ok(S.stage(o, 'atk') === 1 && o.stg.atk.length === 1, 'a self raise at maxStacks 1 holds one live application after 50 hits');
-  const ib = mk(); for (let i = 0; i < 9; i++) hitWith('ice-beam', ib); ok(S.stage(ib, 'spe') === -1, 'Ice Beam (authored foe cap 1) holds at -1 after 9 hits');
-  const st = mk(); for (let i = 0; i < 2; i++) hitWith('string-shot', st); ok(S.stage(st, 'spe') === -4, 'String Shot two strands reach -4 (MOVE-INTENT string-shot)');
-  console.log('3b 4c-0: foe caps only on Ice Beam and Bug Buzz, self default 1, uncapped foe drops stack, Ice Beam -1, String Shot -4'); }
+  for (let i = 0; i < 50; i++) hitWith(up, mk(), o); ok(S.stage(o, 'atk') === 1 && Object.keys(o.trk.atk).length === 1, 'an individual self raise: 50 casts inside one Gate refresh one tracker at +1');
+  const ib = mk(), ibo = mkO(); for (let i = 0; i < 9; i++) hitWith('ice-beam', ib, ibo); ok(S.stage(ib, 'spe') === -1, 'Ice Beam: 9 hits inside one Gate refresh at -1 (MOVE-INTENT ice-beam, SS4)');
+  const st = mk(), sto = mkO(); for (let i = 0; i < 2; i++) hitWith('string-shot', st, sto); ok(S.stage(st, 'spe') === -2, 'String Shot: the second strand refreshes, -2 per cast (MOVE-INTENT string-shot, SS4)');
+  console.log('3b 4c-0 data (until pass 2): foe caps only on Ice Beam and Bug Buzz, self default 1; trackers: Ice Beam -1, String Shot -2 per cast'); }
 
 // 4. trap: the root on every movement phase, strong hosts, ghosts, the player
 { const root = e => { e.stTrap = null; return St.apply(e, 'trap'); };
@@ -169,7 +192,7 @@ function world(ids, es, secs, dt, s) {
     const front = mk(60, 0), back = mk(120, 0); const w = world(['string-shot'], [front, back], 1, dt, 3);
     const hits = w.tape.filter(t => t.type === 'move:hit'), ends = w.tape.filter(t => t.type === 'move:end');
     ok(hits.length === 2 && hits.every(h => h.dmg === 0 && h.enemyId === front.id), 'String Shot: two move:hit with dmg 0 on the first enemy (' + hits.length + ')');
-    ok(S.stage(front, 'spe') === -4 && front.stTrap && !back.stTrap && !back.stg, 'both strands: Speed -4 and the root on the first enemy only');
+    ok(S.stage(front, 'spe') === -2 && front.stTrap && !back.stTrap && !back.stg && !back.trk, 'both strands: Speed -2 (the second refreshes) and the root on the first enemy only');
     ok(ends.length === 2 && ends.every(e => e.reason === 'pierce'), 'pierce spent on the first enemy');
   }
   const run = (s, dt) => { const es = [mk(30, 0), mk(40, 10), mk(200, 0)], w = world(['body-slam', 'ice-beam', 'bite'], es, 1, dt, s);
@@ -177,13 +200,13 @@ function world(ids, es, secs, dt, s) {
   ok(JSON.stringify(run(9, 1 / 60)) === JSON.stringify(run(9, 1 / 60)), 'same seed, identical tape');
   const cnt = h => [0, 1, 2].map(i => h.filter(x => x[0] === i).length).join();
   ok(cnt(run(9, 1 / 60)) === cnt(run(9, 1 / 30)), 'hit counts agree at dt 1/60 and 1/30: ' + cnt(run(9, 1 / 60)) + ' vs ' + cnt(run(9, 1 / 30)));
-  console.log('9 riders-only hit: String Shot lands dmg 0 twice, -4 Speed and the root, pierce spent; tapes deterministic'); }
+  console.log('9 riders-only hit: String Shot lands dmg 0 twice, -2 Speed and the root, pierce spent; tapes deterministic'); }
 
 // 9b. riders skip a dead target (also one the same hit killed); self riders still apply
-{ const d = mk(); d.dead = true; let b = 0; d.applyBurn = () => { b++; }; hitWith('ember', d, mkO(), () => 0); hitWith('mud-shot', d); ok(b === 0 && !d.stg, 'no foe riders on a dead enemy');
-  const k = mk(); k.hp = 1; hitWith('mud-shot', k); ok(k.dead && !k.stg, 'no foe riders on an enemy the hit killed');
+{ const d = mk(); d.dead = true; let b = 0; d.applyBurn = () => { b++; }; hitWith('ember', d, mkO(), () => 0); hitWith('mud-shot', d); ok(b === 0 && !d.stg && !d.trk, 'no foe riders on a dead enemy');
+  const k = mk(); k.hp = 1; hitWith('mud-shot', k); ok(k.dead && !k.stg && !k.trk, 'no foe riders on an enemy the hit killed');
   const o = mkO(), k2 = mk(); k2.hp = 1; hitWith('leaf-storm', k2, o); ok(S.stage(o, 'spa') === -2, 'self riders still apply after a kill');
-  const r = mk(); r.remote = true; hitWith(syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }], { category: 'status', basePower: 0 }), r); ok(!r.stg, 'no foe riders on a remote copy');
+  const r = mk(); r.remote = true; hitWith(syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }], { category: 'status', basePower: 0 }), r); ok(!r.stg && !r.trk, 'no foe riders on a remote copy');
   console.log('9b dead and remote targets: foe riders skipped, self riders kept'); }
 
 // 10. hop hook

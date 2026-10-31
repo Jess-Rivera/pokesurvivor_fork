@@ -710,9 +710,9 @@ G.Player = class Player {
     // Buff arcs around the feet.
     const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
     let i = 0;
-    for (const k in this.stgTeam) {
-      const L = this.stgTeam[k];
-      if (!L.length || !COL[k]) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
+    for (const k of G.Stages.teamKeys(this.stgTeam)) {     // legacy keys plus team tracker stats (slice 5a)
+      const L = this.stgTeam[k] || [];
+      if (!COL[k] || !G.Stages.teamLive(this.stgTeam, k)) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
       const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;

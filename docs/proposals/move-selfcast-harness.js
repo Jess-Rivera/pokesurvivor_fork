@@ -190,20 +190,48 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   ok(sh.length === 2, 'swap-out ends it (2 heals, then none)');
   console.log('9 heal over time: 8 x 6.25% in 8 s, clamp, refresh not stack, swap-out ends it'); }
 
-// 10. stat buffs: per Pokemon caps (S4), three Pokemon reach +6, Dragon Dance both stats, individual scope, team grace renewal
+// 10. stat buffs on trackers (slice 5a, COMBAT-RULES "Stat stages" SS1 and SS8): per Pokemon trackers, three Pokemon reach +6, Dragon Dance
+//     both stats, individual scope, cast on the Gate (no cooldown), active group only, swap-in waits for a running Gate, fizzle waits one Gate
 { const team = {}, a = mkO([['swords-dance']], { stgTeam: team }), b = mkO([['swords-dance']], { stgTeam: team }), c = mkO([['swords-dance']], { stgTeam: team }), d4 = mkO([['swords-dance']], { stgTeam: team });
   const cast = o => { enemies = []; Sim.setRng(() => 0.99); o.slots[0][0].t = 0; Sim.tick(1 / 60, o, 0); };
-  cast(a); cast(a); ok(S.teamSum(team, 'atk') === 2 && team.atk.length === 1, 'one Pokemon casting twice stays +2');
-  cast(b); cast(c); ok(S.stage(a, 'atk') === 6 && team.atk.length === 3, 'three Pokemon each casting once give +6');
+  const sdT = o => Object.keys((S.trackers(o).team || {}).atk || {}).length;
+  cast(a); cast(a); ok(S.teamSum(team, 'atk') === 2 && sdT(a) === 1, 'one Pokemon ticked twice inside its Gate stays +2 (one tracker)');
+  cast(b); cast(c); ok(S.stage(a, 'atk') === 6 && sdT(a) === 3, 'three Pokemon each casting once give +6 (three trackers)');
   cast(d4); ok(S.stage(a, 'atk') === 6, 'a fourth stays +6 (clamp)');
-  const dd = mkO([['dragon-dance']]); cast(dd); ok(S.stage(dd, 'atk') === 1 && S.stage(dd, 'spe') === 1, 'Dragon Dance raises Attack and Speed');
+  const dd = mkO([['dragon-dance']]), ddSrc = FX.srcOf(D['dragon-dance'], dd); cast(dd);
+  ok(S.stage(dd, 'atk') === 1 && S.stage(dd, 'spe') === 1 && S.tracker(dd, 'atk', ddSrc, true) && S.tracker(dd, 'spe', ddSrc, true), 'Dragon Dance: two trackers, Attack and Speed +1');
   syn('syn-ind', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 8, payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'individual', duration: 8, maxStacks: 1 }] });
-  const ia = mkO([['syn-ind']]), ib = { stgTeam: ia.stgTeam, stg: null }; cast(ia); ok(S.stage(ia, 'def') === 1 && S.stage(ib, 'def') === 0 && !ia.stgTeam.def, 'individual scope: the owner only');
-  const g = mkO([['swords-dance']]); cast(g); S.teamTick(g.stgTeam, 8 - 0.05); cast(g); ok(g.stgTeam.atk.length === 1 && near(g.stgTeam.atk[0].t, 8), 'a recast in the grace window renews (one application)');
+  const ia = mkO([['syn-ind']]), ib = { stgTeam: ia.stgTeam, stg: null }; cast(ia); ok(S.stage(ia, 'def') === 1 && S.stage(ib, 'def') === 0 && !S.teamLive(ia.stgTeam, 'def'), 'individual scope: the owner only');
   ok(FX.srcOf(D['swords-dance'], a) !== FX.srcOf(D['swords-dance'], b) && FX.srcOf(D['swords-dance'], a) === FX.srcOf(D['swords-dance'], a), 'the source tag is move plus Pokemon, stable');
-  const m2 = mkO(); for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), m2, () => 0); ok(S.teamSum(m2.stgTeam, 'atk') === 1, 'Metal Claw cap 1 (Q14, slice 4c-0; was 2 through 4b)');
+  ok(['swords-dance', 'dragon-dance', 'harden', 'agility'].every(id => FX.isPureBuff(D[id])) && !['aqua-ring', 'substitute', 'tackle', 'leaf-storm', 'metal-claw'].some(id => FX.isPureBuff(D[id])),
+    'pure buffs: the four, not Aqua Ring, Substitute or a damage move');
+  // SS8: casts when its Gate opens, never on its old cooldown (cdMul 0.01 would recast every 0.08 s); +2 per Gate up to +6
+  const g = mkO([['swords-dance']], { cdMul: 0.01 }), at = []; const gt = run(g, [], 15, { each: () => at.push(S.stage(g, 'atk')) });
+  ok(casts(gt, 'swords-dance').length === 3 && at[30] === 2 && at[355] === 2 && at[370] === 4 && at[715] === 4 && at[730] === 6 && at[895] === 6,
+    'Swords Dance: 3 casts in 15 s, +2 / +4 / +6 at 0 / 6 / 12 s (' + [at[30], at[355], at[370], at[715], at[730], at[895]] + ')');
+  // SS8: only the active group casts; an inactive buff rides its Duration; a swap-in with a Gate running waits, then casts and climbs
+  const two = (o, i) => { o.act = i; o.activeGroup = function () { return this.slots[this.act]; }; };
+  const sw = mkO([['swords-dance'], ['tackle']]); two(sw, 0); run(sw, [], 1);
+  two(sw, 1); const off = run(sw, [], 3, { reset: false });
+  ok(casts(off, 'swords-dance').length === 0 && S.stage(sw, 'atk') === 2, 'inactive for 3 s: no casts, the raise rides its Duration (+2 at 4 s)');
+  two(sw, 0); const back = run(sw, [], 1, { reset: false });
+  ok(casts(back, 'swords-dance').length === 0 && S.stage(sw, 'atk') === 2, 'swap-in at 4 s with its Gate running: no cast');
+  const open = run(sw, [], 1.5, { reset: false });
+  ok(casts(open, 'swords-dance').length === 1 && S.stage(sw, 'atk') === 4, 'then it casts when the Gate opens and climbs to +4');
+  const ex = mkO([['swords-dance'], ['tackle']]); two(ex, 0); run(ex, [], 0.5); two(ex, 1); run(ex, [], 6, { reset: false });
+  ok(S.stage(ex, 'atk') === 0, 'inactive past its Duration: the raise ends 6.1 s after the cast');
+  two(ex, 0); const fresh = run(ex, [], 0.1, { reset: false });
+  ok(casts(fresh, 'swords-dance').length === 1 && S.stage(ex, 'atk') === 2, 'swap-in with no tracker: casts at once, the climb starts over at +2');
+  // SS8: a fizzled pure buff waits one Gate before it tries again
+  const fz = mkO([['swords-dance']]), f0 = St.fizzle; St.fizzle = () => true; run(fz, [], 1 / 60); St.fizzle = f0;
+  ok(S.stage(fz, 'atk') === 0 && near(fz.slots[0][0].t, S.GATE, 1e-6), 'a fizzle: no raise, a wait of one Gate (' + fz.slots[0][0].t + ')');
+  const w1 = run(fz, [], 5.9, { reset: false }), w2 = run(fz, [], 0.2, { reset: false });
+  ok(casts(w1, 'swords-dance').length === 0 && casts(w2, 'swords-dance').length === 1 && S.stage(fz, 'atk') === 2, 'and casts once the wait is over');
+  const m2 = mkO(); for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), m2, () => 0); ok(S.teamSum(m2.stgTeam, 'atk') === 1, 'Metal Claw: 50 casts inside one Gate refresh +1');
+  const gs = {}; S.teamAdd(gs, 'atk', 2, 8, 'sd'); S.teamTick(gs, 8 - 0.05); S.teamAdd(gs, 'atk', 2, 8, 'sd');
+  ok(gs.atk.length === 1 && near(gs.atk[0].t, 8), 'legacy teamAdd: a recast in the grace window renews (one application)');
   const leg = mk(); S.add(leg, 'atk', 1, 6); S.add(leg, 'atk', 1, 6); ok(S.stage(leg, 'atk') === 2 && leg.stg.atk.every(x => x.src === undefined), 'legacy add (no src) unchanged');
-  console.log('10 stat buffs: +2 per Pokemon, +6 for three, Dragon Dance both, individual owner-only, grace renewal'); }
+  console.log('10 stat buffs: per Pokemon trackers, +6 for three, Dragon Dance both, individual owner-only, Gate casting, active group only, swap-in wait, fizzle wait'); }
 
 // 14. commitment cooldown: Flamethrower freeze(all), id = substitute only, untilEffectEnd (8), seconds, cdMul, none = normal ticking
 { const dt = 1 / 60, ft = D.flamethrower;
@@ -244,7 +272,7 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   ok(sp2[10] === 0 && sp2[28] === 0 && sp2[32] === 100 && sp2[50] === 100, 'rooted: speed 0 for 0.5 s and not longer (' + [sp2[10], sp2[28], sp2[32]] + ')');
   const rs = mkP([['syn-root']]); run(rs, [], 0.2); const was = rs.spd; Sim.clear(rs); ok(was === 0 && rs.spd === 100, 'the root is cleared on swap');
   syn('syn-slow3', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 1, casterState: { commitment: { movement: { type: 'slowed', t: 3 } } },
-    payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'team', duration: 1 }] });
+    payload: [{ t: 'recoil', trigger: 'cast', fraction: 0 }] });     // slice 5a: a free recoil, not a stat, so it keeps its 1 s cooldown (a pure buff would cast once per Gate)
   const ps = mkP([['syn-slow3']]), pst = []; run(ps, [], 2.5, { each: () => pst.push(S.stage(ps, 'spe')) });
   ok(pst[30] === -2 && pst[90] === -2 && pst[140] === -2, 'a recast of a slow refreshes it (per source), never -4 (' + [pst[30], pst[90], pst[140]] + ')');
   syn('syn-slow2', { category: 'special', type: 'fire', basePower: 10, space: { shape: 'radial', radArc: 0.5, radRadius: 120, pierce: Infinity, count: 1, spread: 0 }, rehit: 0.2, hitPolicy: 'interval',

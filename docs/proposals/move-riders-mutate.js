@@ -11,7 +11,8 @@ const M = [
   ['spd and spDef swapped', 'fx', [["spDef: 'spd', spd: 'spe'", "spDef: 'spe', spd: 'spd'"]]],
   ['cap off by one', 'stages', [['if (mine >= live) L.splice(', 'if (mine > live) L.splice(']]],
   ['cap drops the newest', 'stages', [['if (mine >= live) L.splice(L.findIndex(a => a.src === src), 1);', 'if (mine >= live) L.splice(L.map(a => a.src).lastIndexOf(src), 1);']]],
-  ['team cap ignored', 'stages', [['if (mine >= live) { const i', 'if (mine >= TEAM_LIVE) { const i']]],
+  // 'team cap ignored' retired in slice 5a: no caller passes a live cap to teamAdd any more (the new path uses trackers), so the mutation is a no-op.
+  // 'cap off by one', 'cap drops the newest' and 'stage text every time' stay: the caster slow still uses add() with a src, and harness section 3 tests it directly.
   ['stage text every time', 'stages', [['if (now !== cur && !quiet) text(', 'text(']]],
   ['root not applied', 'status', [['if (rooted(h)) return 0;', '']]],
   ['root applied to the player', 'status', [['function rooted(h) { return !!h.stTrap && !h.isPlayer; }', 'function rooted(h) { return !!h.stTrap; }']]],

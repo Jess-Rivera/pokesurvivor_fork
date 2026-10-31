@@ -22,7 +22,7 @@ const M = [
   ['orbit tests only the current point (no sweep)', 'sim', [['MOTION[inst.spec.delivery.motion](inst, dt);', "MOTION[inst.spec.delivery.motion](inst, dt); if (inst.spec.delivery.motion === 'orbits') { inst.prevX = inst.x; inst.prevY = inst.y; }"]]],
   ['orbit not started on the ring', 'sim', [["if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }", '']]],
   ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner) });', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner) });']]],
-  ['Leaf Storm stacks per hit', 'fx', [['else G.Stages.add(o, k, fx.stages, fx.duration, G.Stages.MAX, src, fx.maxStacks);', 'else G.Stages.add(o, k, fx.stages, fx.duration, G.Stages.MAX, src, 6);']]],
+  ['Leaf Storm self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false));']]],     // slice 5a (SS12); was 'stacks per hit' on the retired maxStacks
   ['Night Shade takes a multiplier', 'fx', [['flat(inst, e, inst.cast.owner.level || 1, hop, hit)', 'flat(inst, e, (inst.cast.owner.level || 1) * 1.5, hop, hit)']]],
   ['freeze removed', 'res', [['G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));', 'G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);']]],
 ];

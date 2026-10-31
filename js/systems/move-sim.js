@@ -254,8 +254,9 @@ G.MoveSim = (() => {
     if (!gate) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
     if (!G.MoveEffects.canCast(def, o)) { slot.t = RETRY; return null; }     // P3: the cost would kill, or a shield is live; cooldown not spent
     if (!repoCanGo(def, o)) { slot.t = RETRY; return null; }         // 4c-2: no dash over a live dash, no dash at speed 0
-    slot.t = Math.max(0.05, def.cd * (o.cdMul || 1));                 // D3
-    if (G.Status.fizzle(o, rng)) return null;                         // fizzle spends the cooldown
+    const buff = G.MoveEffects.isPureBuff(def);                       // SS8 (slice 5a): a pure buff has no cooldown; its trackers decide when it casts
+    slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));      // D3
+    if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false); return null; }     // fizzle spends the cooldown; a pure buff waits one Gate (SS8)
     const pick = settle(o, gate);                                     // 4c-3: the location roll, only for a real cast
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial };
     const self = G.MoveEffects.applyCast(def, cast, rng);             // recoil, shield, self stats, heal over time, setWeather (4b)
@@ -361,17 +362,25 @@ G.MoveSim = (() => {
       const act = o.activeGroup();
       // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
       // bonded group fires together); the inactive slots run after it, so a freeze cast this frame already holds them.
+      // SS8 (slice 5a): a pure buff casts only here, in the active group, when one of its trackers is missing or its Gate is open, so a
+      // swapped-in buff with a Gate running waits for it. slot.t is only its fizzle or retry wait.
       const hold = cms.length ? new Set(act.filter(sl => frozen(o, sl.id))) : null;
       for (const slot of act) {
         const def = G.MoveDefs[slot.id];
-        if (!def || !routed(slot.id) || def.persistent || def.cd == null) continue;       // persistent slots belong to upkeepPersistent (slice 4c-1)
+        if (!def || !routed(slot.id) || def.persistent) continue;       // persistent slots belong to upkeepPersistent (slice 4c-1)
         if (hold && hold.has(slot)) continue;
+        if (G.MoveEffects.isPureBuff(def)) {
+          if (slot.t > EPS) { slot.t -= dt; if (slot.t > EPS) continue; }
+          if (G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);
+          continue;
+        }
+        if (def.cd == null) continue;
         slot.t -= dt;
         if (slot.t <= EPS) castSlot(o, slot, def, now);
       }
       for (const g of o.slots) if (g !== act) for (const slot of g) {     // inactive slots recharge too
         const def = G.MoveDefs[slot.id];
-        if (!def || !routed(slot.id) || def.persistent || def.cd == null || frozen(o, slot.id)) continue;
+        if (!def || !routed(slot.id) || def.persistent || (def.cd == null && !G.MoveEffects.isPureBuff(def)) || frozen(o, slot.id)) continue;
         if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);
       }
       upkeepPersistent(o, now);     // slice 4c-1 (R7): after the casts, so a new group acts this frame like any root

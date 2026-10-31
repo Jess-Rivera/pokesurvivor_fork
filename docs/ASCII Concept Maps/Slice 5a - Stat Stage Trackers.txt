@@ -1,4 +1,4 @@
-SLICE 5a, STAT STAGE TRACKERS (plan map, 2026-10-30; rulings in, build not started)
+SLICE 5a, STAT STAGE TRACKERS (plan map, 2026-10-30; pass 1 written 2026-10-31, awaiting check.js)
 Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13. Runtime: combat-architecture:H26.
 
 1. THE SPLIT
@@ -96,7 +96,10 @@ Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13. Runtime: combat-architect
   EDIT  move-riders-harness      cap tests -> tracker tests
   EDIT  move-selfcast-harness    buffs: no cd, no maxStacks
   EDIT  move-persist-mutate      remove stale Leaf Storm mutation
-  SCEN  rewritten 5 | re-cited 4 | new 6 (ice-beam numbers posted for you)
+  EDIT  move-riders-mutate       retire "team cap ignored" (no-op once caps go)  (Quick, 10-31)
+  SCEN  rewritten 6 | re-cited 5 | new 4 (ice-beam numbers posted for you)       (Quick, 10-31)
+        two-Pokemon trackers and inactive solo buff move to the harness:
+        the scenario runner cannot set up groups or two owners
   BATCH re-review: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze, Bubble Beam
   DEBUG newcombat('stages')      watch SD +2/+4/+6, Leaf Storm -4 at 12 s,
                                  Bug Buzz dummy climbing, String Shot -2 per cast
@@ -113,3 +116,15 @@ Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13. Runtime: combat-architect
 ================================================
   stgTeam also carries Aqua Ring regen, crit and the berry pct_ keys through
   teamAdd / teamSum: the legacy store and its tick stay intact under the trackers
+
+
+11. ALSO TOUCHED (Quick code read, 2026-10-31; detail in slice-5-handoff.md)
+============================================================================
+  early-outs ........... stages.js mul + speedMul, move-effects.js defStage,
+                         combat.js ~623: all return 1 with no legacy list,
+                         so each must also see trackers
+  team tracker store ... WeakMap keyed by stgTeam (built 10-31): shares itself
+                         wherever stgTeam is shared, no player.js / game.js edit
+  HUD .................. hud.js 252-261 chips + timer, player.js ~713 feet arcs
+  swap-in .............. no player.js change: tracker-based cast check waits
+                         on a running Gate by itself

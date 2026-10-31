@@ -5,7 +5,7 @@
 // move-selfcast-harness.js). Checks: the persistent lifecycle (R7, combat-architecture:H25: one group while active, notActive on a
 // swap or stun, ownerDeath on a faint, fresh group and hit records on return, no cooldown, respawn after an instance end), orbit
 // geometry (D25, H15, D36: true circle, follows the owner, lens, swept hits, nothing inside the ring), interval cadence, Fire Spin,
-// Leaf Storm (D-LEAF: refresh on hit, about 6 s after the last), Night Shade (flat level damage), a synthetic pulse (persistent plus
+// Leaf Storm (slice 5a trackers: refresh on hit, Self-drop Gate 12 s, 6.1 s after the last), Night Shade (flat level damage), a synthetic pulse (persistent plus
 // endOn time), the deep-freeze of G.MoveDefs (I2) and determinism. The mutation runner (move-persist-mutate.js) points PERSIST_SIM,
 // PERSIST_FX and PERSIST_RESOLVER at altered copies; every mutation must make this harness fail.
 const fs = require('fs'), vm = require('vm');
@@ -150,15 +150,20 @@ const hitsOf = (tape, id) => tape.filter(e => e.type === 'move:hit' && (id == nu
   ok(St.list(e).some(s => s.k === 'burn') && St.rooted(e), 'Fire Spin: burn and the trap root land at 100% with no roll');
   console.log('4 Fire Spin: basePower 29.75, burn and root'); }
 
-// 5. Leaf Storm (D-LEAF): refresh on hit, holds at -2, about 6 s after the last hit
-{ const o = mkP([['leaf-storm']]); run(o, [mkE(95, 0)], 1.0);
-  ok(S.stage(o, 'spa') === -2 && o.stg && o.stg.spa && o.stg.spa.length === 1, 'Leaf Storm: the self Sp. Atk drop holds at -2 over many hits (one application)');
-  ok(o.stg.spa[0].t > 6 - 0.25 - 2 / 60, 'it refreshes its 6 s on each hit (' + o.stg.spa[0].t.toFixed(2) + ' s left)');
+// 5. Leaf Storm (MOVE-INTENT leaf-storm, COMBAT-RULES "Stat stages" SS2, SS4, SS12): -2 held by one tracker, its Duration reset on every hit,
+//    a climb only on the 12 s Self-drop Gate (never on the 6 s base Gate), gone 6.1 s after the last hit
+{ const FXm = G.MoveEffects, o = mkP([['leaf-storm']]); run(o, [mkE(95, 0)], 1.0);
+  const tr = () => S.tracker(o, 'spa', FXm.srcOf(D['leaf-storm'], o), false);
+  ok(S.stage(o, 'spa') === -2 && tr() && Object.keys(o.trk.spa).length === 1, 'Leaf Storm: the self Sp. Atk drop holds at -2 over many hits (one tracker)');
+  ok(tr().d > S.DURATION - 0.25 - 2 / 60, 'every hit resets its 6.1 s Duration (' + tr().d.toFixed(2) + ' s left)');
   run(o, [], 5.5, { reset: false }); ok(S.stage(o, 'spa') === -2, 'with nothing in reach it still holds 5.5 s after the last hit');
-  run(o, [], 0.8, { reset: false }); ok(S.stage(o, 'spa') === 0, 'and ends about 6 s after the last hit');
+  run(o, [], 0.8, { reset: false }); ok(S.stage(o, 'spa') === 0, 'and ends 6.1 s after the last hit');
+  const c = mkP([['leaf-storm']]), st = []; run(c, [mkE(95, 0)], 13, { each: (k, t) => st.push([t, S.stage(c, 'spa')]) });
+  const at = x => (st.find(y => y[0] >= x - 1e-9) || [0, null])[1];
+  ok(at(7) === -2 && at(11.5) === -2 && at(13) === -4, 'climbs on the Self-drop Gate: -2 at 7 and 11.5 s, -4 by 13 s (' + [at(7), at(11.5), at(13)] + ')');
   const a = mkP([['leaf-storm']]), b = mkP([['leaf-storm']]); run(a, [mkE(95, 0)], 0.3);
   ok(S.stage(a, 'spa') === -2 && S.stage(b, 'spa') === 0, 'per Pokemon: one Leaf Storm user does not drop another');
-  console.log('5 Leaf Storm: -2 held by one application, refreshed per hit, gone about 6 s after the last'); }
+  console.log('5 Leaf Storm: -2 held by one tracker, Duration reset per hit, -4 only on the 12 s Self-drop Gate, gone 6.1 s after the last'); }
 
 // 6. Night Shade: flat level damage, radius, shield, follows the owner
 { const o = mkP([['night-shade']], { level: 37, critChance: 1, stgTeam: { atk: [{ n: 6, t: 99 }], spa: [{ n: 6, t: 99 }] } });
