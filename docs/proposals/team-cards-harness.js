@@ -97,7 +97,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   d = F('fire-spin', [['area']]); ok(near(d.delivery.orbitRadius, REAL['fire-spin'].delivery.orbitRadius * 1.15) && near(d.space.radRadius, REAL['fire-spin'].space.radRadius * 1.15), 'Area: orbit radius and orb size');
   d = F('heat-wave', [['area', 2]]); ok(near(d.delivery.grow.growSpeed, 625 * 1.3) && near(d.delivery.grow.max, 250 * 1.3), 'Area: a growing radius scales its whole curve (625, 250 x 1.3)');
   d = F('psychic', [['area']]); ok(near(d.delivery.grow.growSpeed, 1.5) && near(d.delivery.grow.max, 2), 'Area: an arc growth is not a size growth');
-  d = F('discharge', [['area']]); ok(near(kid(d).move.delivery.grow.max, 220 * 1.15), 'Area: an emitted ring grows too (220 x 1.15)');
+  d = F('discharge', [['area']]); ok(near(kid(d).move.delivery.grow.max, 110 * 1.15), 'Area: an emitted ring grows too (110 x 1.15; 220 before slice 6)');
   // Presence Up +15%, radArc capped at 360
   d = F('vine-whip', [['presence']]); ok(near(d.space.radArc, 1.3 * 1.15), 'Presence: an arc widens (1.3 x 1.15)');
   d = F('body-slam', [['presence', 20]]); ok(near(d.space.radArc, 6.2832), 'Presence: the arc caps at 360 degrees');
@@ -109,6 +109,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   ok(F('fire-spin', [['count']]).space.count === 4, 'Count: an orbit gets one more orb (3 to 4)');
   ok(kid(F('gust', [['count']])).move.space.count === 4, 'Count: an emitter fan (Gust shots 3 to 4)');
   ok(kid(F('discharge', [['count']])).count === 3 && kid(F('fairy-wind', [['count']])).count === 4, 'Count: emissions spaced in time (Discharge 2 to 3, Fairy Wind 3 to 4)');
+  ok(kid(F('string-shot', [['count']])).count === 3 && kid(F('bubble-beam', [['count']])).count === 8, 'Count: String Shot 2 to 3 and Bubble Beam 7 to 8, emissions spaced in time since slice 6 (D-CARDS)');
   ok(!can('count', 'tackle') && !can('count', 'rock-slide') && !can('count', 'thunderbolt'), 'Count: never one stacked copy, a same-point drop or a locked count');
   // Pierce Up +1, cap +4, never UNLIMITED
   ok(F('ember', [['pierce']]).space.pierce === 1 && F('ember', [['pierce', 6]]).space.pierce === 4, 'Pierce: +1 per stack, capped at +4');
@@ -121,6 +122,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   d = F('razor-leaf', [['reach']]); ok(near(d.delivery.range, 210 * 1.15) && near(timeOf(d.delivery.endOn), 2 * 1.15), 'Reach: a boomerang turns farther out (210 to 241.5) with a longer cap');
   ok(near(F('rock-slide', [['reach']]).delivery.range, 420 * 1.15) && near(F('quick-attack', [['reach']]).delivery.range, 420 * 1.15), 'Reach: a location pick and a dash');
   ok(!can('reach', 'tackle') && !can('reach', 'toxic-spikes') && !can('reach', 'gust'), 'Reach: not a melee acquisition, a placement at the feet or a static emitter');
+  ok(!can('reach', 'string-shot') && !can('reach', 'bubble-beam'), 'Reach: String Shot and Bubble Beam are still emitters since slice 6, like Gust (D-CARDS)');
   // Delay Down rate 15%, floor 50%
   ok(near(F('rock-slide', [['delay']]).delivery.delay, 0.4 / 1.15) && near(F('rock-slide', [['delay', 30]]).delivery.delay, 0.2), 'Delay: 0.4 / 1.15, floored at half (0.2)');
   ok(!can('delay', 'ember'), 'Delay: only moves with a delay');
@@ -374,7 +376,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 { const dbg = fs.readFileSync(R + '/js/core/debug.js', 'utf8'), rt = fs.readFileSync(R + '/js/systems/move-route.js', 'utf8');
   const m = dbg.match(/cards: \[([^\]]*)\]/), ids = m ? (m[1].match(/'([^']+)'/g) || []).map(x => x.slice(1, -1)) : [];
   ok(ids.join(' ') === 'ember razor-leaf rock-slide substitute' && ids.every(id => rt.includes("'" + id + "'")), 'debug: the cards set is Ember, Razor Leaf, Rock Slide and Substitute, all routed');
-  ok(dbg.includes("|| set === 'cards') {") && dbg.includes('function cards(id, n = 1)') && dbg.includes('hitbox, newcombat, cards };'), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');
+  ok(dbg.includes("|| set === 'cards') {") && dbg.includes('function cards(id, n = 1)') && dbg.includes('hitbox, newcombat, cards, movechecker };'), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');     // export list retargeted 2026-10-31 (movechecker added)
   console.log('9 debug set'); }
 
 console.log(fail ? '\nteam-cards harness: ' + fail + ' FAILED of ' + n : '\nteam-cards harness: ' + n + '/' + n + ' checks passed');

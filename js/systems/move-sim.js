@@ -128,6 +128,8 @@ G.MoveSim = (() => {
       pierce: !spec.space || spec.space.pierce == null ? Infinity : spec.space.pierce, hits: new Map(), done: null, shape: null,
       emits: emitsOf(spec), hitless: hitlessOf(spec), mvX: o.x, mvY: o.y };     // 4d: emitter state (C6) and the owner's last position (casterMove)
     if (d.motion === 'orbits') { MOTION.orbits(inst); inst.prevX = inst.x; inst.prevY = inst.y; }     // start on the ring, so the first sweep does not cross the circle
+    else if (d.motion === 'travels' && d.path && d.path.loop) {     // D38: start at the top of the loop, one radius across, so the first sweep does not cross from the caster
+      const lr = d.path.loop.radius; inst.x = inst.prevX = at.x + Math.sin(heading) * lr; inst.y = inst.prevY = at.y - Math.cos(heading) * lr; }
     if (d.motion === 'repositions') setupReposition(inst);
     (later ? pending : insts).push(inst);     // roots act in their cast frame (S9); emitted children wait for the end of the step (R6)
     if (inst.dash) rootOf(o);
@@ -458,8 +460,16 @@ G.MoveSim = (() => {
       inst.vx = Math.cos(inst.heading) * v; inst.vy = Math.sin(inst.heading) * v;     // knockback `direction: travel` (D33)
       let off = 0;     // D24: exact positional offset across the current heading, independent of dt
       if (p.oscillate) off = p.oscillate.amplitude * Math.sin(TAU * p.oscillate.frequency * inst.age);
-      inst.x = inst.bx - Math.sin(inst.heading) * off;
-      inst.y = inst.by + Math.cos(inst.heading) * off;
+      let along = 0;     // D38 (slice 6): a loop is centred on the travelling base point, so the first loop goes round the caster
+      if (p.loop) {
+        const lr = p.loop.radius, lw = TAU * p.loop.frequency, th = lw * inst.age;
+        along = lr * Math.sin(th);
+        off -= lr * Math.cos(th);     // at age 0 the shot is one radius across (the top of the loop)
+        const va = v + lr * lw * Math.cos(th), vc = lr * lw * Math.sin(th);     // the true velocity (base drift plus the loop's derivative)
+        inst.vx = Math.cos(inst.heading) * va - Math.sin(inst.heading) * vc; inst.vy = Math.sin(inst.heading) * va + Math.cos(inst.heading) * vc;
+      }
+      inst.x = inst.bx + Math.cos(inst.heading) * along - Math.sin(inst.heading) * off;
+      inst.y = inst.by + Math.sin(inst.heading) * along + Math.cos(inst.heading) * off;
     },
     orbits(inst) {     // D25 (slice 4c-1): shape i at angularSpeed x age + 2 pi i / count (+ the carried phase after a 5b card restart), orbitRadius x lens (D36) from the owner (R8), a true circle (H15)
       const d = inst.spec.delivery, o = inst.cast.owner, n = Math.max(1, inst.spec.space.count || 1), r = d.orbitRadius * lensOf(o);

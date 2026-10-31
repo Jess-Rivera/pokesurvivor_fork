@@ -36,6 +36,12 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] The return-leg knockback pulls enemies toward the caster (the back leg's travel direction). The pull is clamped so an enemy never ends past the caster's edge. (slice-4c.md decisions, Jess 2026-10-27; closes review 9.5 S12) Built in slice 4c-2.
 - Ledger: B4-I03
 
+### bubble-beam
+- [Approved] A still emitter at the caster fires 7 bubbles one after another, one every 0.075 s, all on the aim line (spread 0), about 25 px apart at 330 px/s, so the volley reads as a stream. Each bubble carries the payload (damage, 10% Speed -1). (Jess, 2026-10-31, slice 6 batch 1) Scenarios: bubble-beam-stream, bubble-beam-volley, bubble-beam-hit.
+- [Approved] Each bubble weaves on its own sine, amplitude 10 px at 1.5 Hz (was 18 px at 3 Hz, whose 339 px/s side speed outran the 330 px/s travel and looked odd). 10 px keeps a close enemy inside the 17 px contact reach. (Jess, 2026-10-31, slice 6 batch 1)
+- [Approved] Cards follow the emitter shape (D-CARDS): Count Up applies (+1 bubble per pick, cap +3); Reach Up no longer does, since the root is a still emitter. (Jess, 2026-10-31, slice 6 batch 1)
+- Ledger: none (entry added 2026-10-31 by slice 6 batch 1)
+
 ### bug-bite
 - [Approved] cd 0.42 (written to move-overrides.js); berrySteal stays a stub. (review 9.4 C10, 9.5)
 - Ledger: B4-I04
@@ -45,6 +51,10 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] The Sp. Def drop has no chance field, so it applies at 100% on every eligible hit (move-consistency-review:CP1-Q14). The source's 10% was dropped on purpose in the 2026-10-24 conversion. (Jess, 2026-10-29)
 - [Approved] Cadence stays rehit 0.5 at full power per tick (about 180 Power/s to every enemy within 120 px, roughly 3.5x legacy). Not retuned now: it is a throughput outlier for the slice 6 balance pass (move-consistency-review S1). (Jess, 2026-10-29)
 - Ledger: B4-I27
+
+### discharge
+- [Approved] Each of the two rings grows to 110 px (was 220) at 275 px/s, so it still blooms in 0.4 s. Jess asked for "area way less" after the movechecker pass; half is the reading he approved. (Jess, 2026-10-31, slice 6 batch 1) Scenarios: discharge-size, discharge-double.
+- Ledger: none (entry added 2026-10-31 by slice 6 batch 1)
 
 ### dragon-dance
 - [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to DECISIONS:Q13 (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
@@ -59,6 +69,11 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Legacy behavior] The legacy path strips every beneficial stat stage and burns for half the normal length (js/data/moves.js:61, `strip` and `burnHalf`). Removed by slice 7.
 - Ledger: B4-I06
 
+### fairy-wind
+- [Approved] Loop-de-loops travelling out: each of the 3 shots (emitted 0.08 s apart, spread 0) rides path.loop, radius 70 px at 0.6667 loops per s, centred on a base point that drifts straight along the aim at 90 px/s, so the first loop goes round the caster and the shot makes 2 full loops in its 3 s flight, peaking about 280 px out (top speed about 383 px/s). It starts at the top of its loop, one radius across from the caster; all 3 ride the same path. About 15 shots are alive at once at the 0.583 s cd. Supersedes the first build the same day (radius 50, 1.6667 Hz, 170 px/s, 1.2 s, loop hanging off the caster), which Jess found too fast and too low. Replaces the 2 rad/s curve at 340 px/s, which only bent the shot. Runtime rule: combat-architecture D38. (Jess, 2026-10-31, slice 6 batch 2, shape C; retuned after the feel test) Scenarios: fairy-wind-loop, fairy-wind-burst.
+- [Approved] Cards: Velocity Up raises the base drift only, so the loops stretch and reach farther; no card scales the loop itself. (Jess, 2026-10-31, slice 6 batch 2)
+- Ledger: none (entry added 2026-10-31 by slice 6 batch 2)
+
 ### flamethrower
 - [Approved] Caster-state commitment: slowed plus freeze(all) for its 1.0 s cone. Built. (review 9.9 S13, S14)
 - [Approved] aimTrack is implemented and changes Flamethrower (the data already says it tracks). The aimTrack target rule is sticky: the cast target while it lives and is in range, then the nearest, re-picked whenever lost. (slice-4c.md 4c-3 decisions, Jess 2026-10-27) Built in slice 4c-3.
@@ -67,7 +82,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### gust
 - [Approved] Per-shot spread: the 3 projectiles fire at once as an even fan using the existing `spread` field (the total fan), not the legacy +-0.03 jitter and not a new aim-jitter field, so the three shots read as separate. Fan width 0.5 rad total, so shots at -0.25, 0 and +0.25 rad. (Jess, 2026-10-30, D-GUST and the approved slice 4d plan; review 9.4 C4, 9.7 item 4) Built in slice 4d.
-- [Approved] cd 0.5 (formula), not the legacy 0.26: Gust is now a cast that emits 3 projectiles with a normal cooldown, not an orbit with a re-hit. (Jess, 2026-10-29, Stage 0 cd ruling)
+- [Approved] cd 0.7, hand-set in js/data/move-overrides.js: the 0.5 formula cd felt too fast in the movechecker pass. Supersedes the 2026-10-29 Stage 0 ruling of cd 0.5 (formula, not the legacy 0.26; Gust is a cast that emits 3 projectiles with a normal cooldown, not an orbit with a re-hit). (Jess, 2026-10-31, slice 6 batch 1) Scenario: gust-cd.
 - Ledger: B4-I08
 
 ### hail
@@ -142,6 +157,8 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Under COMBAT-RULES "Stat stages" the second shot of a cast refreshes the first shot's Speed -2 but does not climb, since the Gate is closed (SS4): one cast gives -2, and an enemy climbs -2 per Gate while String Shot keeps landing on it. Supersedes the review 9.8 S7 double application (-4 per cast). Shot spacing (#15) is now readability only. (Jess, 2026-10-30)
 - [Legacy behavior] New path today: both shots stack, -4 per cast (review 9.8 S7; an uncapped foe drop under D-FOECAP). Removed by slice 5.
 - [Approved] cd 1.1 (move-overrides.js), the legacy value: the 0.5 the new path had was a regression. The cooldown does not cause the two shots of one cast reading as one (#15); that is shot spacing. (Jess, 2026-10-29, Stage 0 cd ruling)
+- [Approved] Shot spacing (#15): a still emitter at the caster fires a strand at once and a second 0.11 s later, both on the aim line, about 35 px apart at 320 px/s (Fairy Wind's pattern). Each strand carries the payload (Speed -2 and the trap), so the SS4 refresh ruling above is unchanged. (Jess, 2026-10-31, slice 6 batch 1) Scenarios: string-shot-spacing, string-shot-double.
+- [Approved] Cards follow the emitter shape (D-CARDS): Count Up applies (+1 strand per pick, cap +3); Reach Up no longer does, since the root is a still emitter, as for Gust. (Jess, 2026-10-31, slice 6 batch 1)
 - Ledger: B4-I21
 
 ### substitute
@@ -150,6 +167,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### tackle
 - [Approved] Tackle reach stays as built, judged by feel, any fix is data. (slice-3d.md decision D3; closes the review 9.2 note that its 48 px circle no longer includes the player's body)
+- [Approved] Radius 54 (was 48): with a 10 px enemy body it reaches 64 px. The feel fix the line above allows. (Jess, 2026-10-31, slice 6 movechecker pass) Scenarios: tackle-reach, tackle-arc.
 - Ledger: B4-I23
 
 ### thunderbolt
@@ -163,7 +181,8 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### toxic-spikes
 - [Approved] One placed emitter lasting 3 s that every 0.25 s emits a 100 px circle growing 400 px/s for 0.25 s, poisoning what it touches. (review 9.1 Q7; combat-validation 2.5 scenario 6)
-- [Approved] It never emits at or after its end, so it gets 11 emissions in 3 s. (review 9.3 F6; slice-4d.md decisions)
+- [Approved] It never emits at or after its end, so it gets 11 emissions in 3 s. (review 9.3 F6; slice-4d.md decisions) Superseded 2026-10-31, see the next line.
+- [Approved] One burst per plate: the plate emits its ring ONCE, when it ends (the termination trigger, a death effect), not every 0.25 s, which pulsed too fast to read. The ring is unchanged (100 px growing 400 px/s for 0.25 s, 100% poison). Supersedes the two lines above on the emission schedule; placement and lifetime are unchanged. (Jess, 2026-10-31, slice 6 batch 1) Scenario: toxic-spikes-burst.
 - [Approved] locationPick caster: the emitter is placed at the caster's feet (as in the legacy game), a trap the chasing horde walks into. (Jess, 2026-10-30, D-LOC) Built in slice 4d.
 - Ledger: B4-I26
 

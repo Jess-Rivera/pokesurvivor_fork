@@ -38,6 +38,15 @@ const M = [
   ['the oscillation frequency is off', 'sim', [['Math.sin(TAU * p.oscillate.frequency * inst.age)', 'Math.sin(TAU * p.oscillate.frequency * 1.1 * inst.age)']]],
   ['the oscillation depends on dt', 'sim', [['Math.sin(TAU * p.oscillate.frequency * inst.age)', 'Math.sin(TAU * p.oscillate.frequency * (inst.age + dt))']]],
   ['the curve is ignored', 'sim', [['if (p.curve) inst.heading += p.curve * dt;', '']]],
+  // slice 6: path.loop (D38)
+  ['the loop radius is off', 'sim', [['along = lr * Math.sin(th);', 'along = lr * 0.9 * Math.sin(th);']]],
+  ['the loop frequency is off', 'sim', [['lw = TAU * p.loop.frequency,', 'lw = TAU * p.loop.frequency * 1.1,']]],
+  ['the loop depends on dt', 'sim', [['th = lw * inst.age;', 'th = lw * (inst.age + dt);']]],
+  ['the loop is not centred (it hangs off the caster)', 'sim', [['off -= lr * Math.cos(th);', 'off += lr * (1 - Math.cos(th));']]],
+  ['the shot spawns on the caster (its first sweep crosses the loop)', 'sim', [['inst.x = inst.prevX = at.x + Math.sin(heading) * lr; inst.y = inst.prevY = at.y - Math.cos(heading) * lr;', '']]],
+  ['the loop turns the base heading', 'sim', [['const lr = p.loop.radius,', 'inst.heading += 0.5 * dt; const lr = p.loop.radius,']]],
+  ['vx / vy left as the base drift', 'sim', [['inst.vx = Math.cos(inst.heading) * va - Math.sin(inst.heading) * vc; inst.vy = Math.sin(inst.heading) * va + Math.cos(inst.heading) * vc;', '']]],
+  ['the loop is ignored', 'sim', [['if (p.loop) {', 'if (false) {']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-travel-mut-'));
 let caught = 0;

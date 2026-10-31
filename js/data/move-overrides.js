@@ -19,6 +19,7 @@
     'substitute':   { cd: 12, why: 'slice 4b S1: 12 s, armed when the 4 s shield ends (cooldown freeze); legacy 4' },
     'dragon-rage':  { cd: 3.5, why: 'no cd set yet (legacy 1)' },
     'bug-bite':     { cd: 0.42, why: 'no cd set yet (legacy 0.42)' },
-    'shadow-ball':  { cd: 1.2, why: 'no cd set, needs longer to make up for benefits' }
+    'shadow-ball':  { cd: 1.2, why: 'no cd set, needs longer to make up for benefits' },
+    'gust':         { cd: 0.7, why: 'Jess 2026-10-31 (slice 6 movechecker pass): the 0.5 formula cd felt too fast, hand-set to 0.7' }
   };
 })();

@@ -2,8 +2,8 @@
 //   node docs/proposals/move-emit-harness.js .
 // Same engine setup and stubs as move-travel-harness.js (the REAL stats, enemy, player, status and stage files plus the move data chain,
 // G.MoveGeom, G.MoveSim, G.MoveEffects and G.SimBus). Checks (slice-4d.md Tests): Meteor Mash (1 parent hit and 0 shard hits on the struck
-// enemy, 3 shards at the impact point, R6 deferral); Toxic Spikes (11 emissions in 3 s, 0.125 s to an enemy at 150 px, none at 250 px, a
-// plate with no hitbox); Discharge (two rings 0.2 s apart, the shapeless emitter of H4); Toxic and Flame Wheel (patch count follows owner
+// enemy, 3 shards at the impact point, R6 deferral); Toxic Spikes (one ring on termination since slice 6, 0.125 s to an enemy at 150 px, none at
+// 250 px, a plate with no hitbox); Discharge (two rings 0.2 s apart, the shapeless emitter of H4); Toxic and Flame Wheel (patch count follows owner
 // moving time); Spikes (the 9th mine removes the slot's oldest, H6; contact trigger; the new notActive check); Gust (D-GUST: 3 shots at
 // once at -0.25, 0, +0.25 rad, full parent power, H13); Will-O-Wisp (interval first at every, shot range 300); D-LOC (caster's feet);
 // the D29 schedule (H14, the count cap, several emissions in one step); determinism; the termination trigger (test 11). Expected values are derived by hand from the data,
@@ -116,31 +116,33 @@ const kidsOf = id => Sim.list().filter(i => i.spec.id === id && i.cast.parent !=
   }
   console.log('1 Meteor Mash: 1 parent hit, 0 shard hits, 3 shards at the impact point'); }
 
-// 2. Toxic Spikes (MOVE-INTENT toxic-spikes): interval every 0.25 over 3 s, first at 0.25, never at 3.0 (H14): 11 emissions. A ring is
-//    100 px growing 400 px/s for 0.25 s, so it reaches 150 px (enemy radius 0) at age 0.125 and never 250 px (it ends at 200).
+// 2. Toxic Spikes (slice 6, Jess 2026-10-31): one plate at the caster's feet (D-LOC) lasting 3 s that emits ONE ring when it ends (the
+//    termination trigger, a death burst; was every 0.25 s, 11 rings), 100 px growing 400 px/s for 0.25 s. The plate is cast at the first
+//    step, so the ring leaves at about 3 s (to the step) at the plate; it reaches A at 150 px (r 0) (150 - 100) / 400 = 0.125 s later,
+//    never B at 250 px (it peaks at 100 + 400 x 0.25 = 200); C on the plate takes the ring once; the plate itself never hits.
 { for (const dt of DTS) {
     const A = mkE(150, 0, { r: 0 }), B = mkE(250, 0, { r: 0 }), C = mkE(20, 0);
     let plate = null;
     const tape = run(mkP([[TS]], { cdMul: 100 }), [A, B, C], 3.6, { dt, each: k => { if (k === 1) plate = inst1(TS); } });
     const em = emitsIn(tape, TS), hA = hitsOf(tape, TS).filter(h => h.enemyId === A.id);
-    ok(em.length === 11, 'dt ' + dtName(dt) + ': 11 emissions in 3 s (first at 0.25, none at 3.0) (' + em.length + ')');
-    ok(em.every((e, k) => between(e.t, 0.25 * (k + 1), 0.25 * (k + 1) + dt) && e.x === 0 && e.y === 0 && e.count === 1), 'dt ' + dtName(dt) + ": emission k at 0.25 k s, at the plate (the caster's feet)");
-    ok(hA.length === 11 && hA.every((h, k) => between(h.t - em[k].t, 0.125, 0.125 + dt)), 'dt ' + dtName(dt) + ': every ring reaches the enemy at 150 px 0.125 s after its emission (to the next step)');
+    ok(em.length === 1, 'dt ' + dtName(dt) + ': one emission per plate, on termination (' + em.length + ')');
+    ok(em.length === 1 && between(em[0].t, 3, 3 + 2 * dt) && em[0].x === 0 && em[0].y === 0 && em[0].count === 1, 'dt ' + dtName(dt) + ": the ring leaves when the plate ends, about 3 s, at the plate (the caster's feet)" + (em[0] ? ' (' + em[0].t.toFixed(3) + ')' : ''));
+    ok(hA.length === 1 && em.length === 1 && between(hA[0].t - em[0].t, 0.125, 0.125 + dt), 'dt ' + dtName(dt) + ': the ring reaches the enemy at 150 px 0.125 s after it leaves (to the next step)');
     ok(hitCount(tape, B, TS) === 0, 'dt ' + dtName(dt) + ': no ring reaches 250 px');
-    ok(hitCount(tape, C, TS) === 11 && plate && !tape.some(e => e.type === 'move:hit' && e.instId === plate.id), 'dt ' + dtName(dt) + ': the plate never hits (a pure emitter); the enemy on it takes the 11 rings only');
-    ok(ends(tape, 'time').length === 12, 'dt ' + dtName(dt) + ': the plate and its 11 rings end by time');
+    ok(hitCount(tape, C, TS) === 1 && plate && !tape.some(e => e.type === 'move:hit' && e.instId === plate.id), 'dt ' + dtName(dt) + ': the plate never hits (a pure emitter); the enemy on it takes the one ring only');
+    ok(ends(tape, 'time').length === 2, 'dt ' + dtName(dt) + ': the plate and its ring end by time');
   }
-  console.log('2 Toxic Spikes: 11 emissions, 0.125 s to 150 px, none at 250 px, a plate with no hitbox'); }
+  console.log('2 Toxic Spikes: one ring on termination, 0.125 s to 150 px, none at 250 px, a plate with no hitbox'); }
 
 // 3. Discharge: a shapeless caster emitter (H4), cast trigger every 0.2 count 2, life 0.6: rings at activation and at 0.2 s. A ring
-//    grows to 220 px, so an enemy at 100 px is hit by each and one at 300 px (230 with its radius) by neither.
+//    grows to 110 px (slice 6; was 220), so an enemy at 100 px is hit by each and one at 125 px (115 with its radius) by neither.
 { for (const dt of DTS) {
-    const A = mkE(100, 0), B = mkE(300, 0);
+    const A = mkE(100, 0), B = mkE(125, 0);
     let root = null;
     const tape = run(mkP([[DC]], { cdMul: 100 }), [A, B], 1.0, { dt, each: k => { if (k === 1) root = inst1(DC); } });
     const em = emitsIn(tape, DC);
     ok(em.length === 2 && between(em[0].t, dt, dt) && between(em[1].t, 0.2, 0.2 + dt), 'dt ' + dtName(dt) + ': two rings, at activation and 0.2 s later');
-    ok(hitCount(tape, A, DC) === 2 && hitCount(tape, B, DC) === 0, 'dt ' + dtName(dt) + ': each ring hits the enemy at 100 px once; 300 px is out');
+    ok(hitCount(tape, A, DC) === 2 && hitCount(tape, B, DC) === 0, 'dt ' + dtName(dt) + ': each ring hits the enemy at 100 px once; 125 px is out');
     ok(root && root.shape === null && root.cast.parent == null && !tape.some(e => e.type === 'move:hit' && e.instId === root.id), 'dt ' + dtName(dt) + ': the emitter is its own shapeless instance (H4) and never hits');
     ok(ends(tape, 'time').length === 3, 'dt ' + dtName(dt) + ': the emitter and both rings end by time');
   }

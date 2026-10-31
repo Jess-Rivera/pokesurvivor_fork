@@ -1,0 +1,103 @@
+SLICE 6 MAP: projectile spacing and nova sizing
+Spec: docs/current feature planning/move-schema-post-auth/slice-6.md   Status: SCOPING (Quick, 2026-10-31)
+History: the simulator / balance plan (D1 to D6, 2026-10-31) is retired; balance -> playtest branches.
+Rule: move data numbers only (spread, timing, radius, grow). No rule changes.
+
+================================================================================
+1. MULTI-SHOT MOVES, current values (resolved defs, new path)
+================================================================================
+  spread = total fan angle in radians (0 = every shot on the same line)
+
+  move          shots  spread   how they leave        reads as
+  -----------   -----  ------   -------------------   -------------------------
+  string-shot     2    0        same frame, same line  ONE shot   (issue #15)
+  bubble-beam     7    0.12     same frame, ~1 deg     one thick shot
+                                 apart                  (also why 7 hit one target)
+  fairy-wind      3    0        every 0.08 s, 1 line   a short stream
+  gust            3    0.5      one fan                fan, ~14 deg apart
+  meteor-mash     3    0.6      fan on enemy hit       fan
+  razor-leaf      2    0.5      fan, out and back      pair
+  bonemerang      2    0.5      fan, out and back      pair
+  mud-shot        6    full     ring                   ring
+  aura-sphere     6    full     ring, speed 120        ring
+  discharge       2    -        rings 0.2 s apart      two pulses
+  fire-spin       3    -        orbit                  (orbit spacing, not spread)
+  leaf-storm      4    -        orbit                  (orbit spacing, not spread)
+
+================================================================================
+2. NOVAS, current values
+================================================================================
+  move            shape      start -> max radius    grow px/s   time to full
+  --------------  ---------  --------------------   ---------   ------------
+  hyper-voice     full ring    1 -> 380               760         0.5 s
+  heat-wave       full ring    1 -> 250               625         0.4 s
+  bulldoze        full ring    1 -> 200               500         0.4 s
+  dark-pulse      full ring    1 -> 200               500         0.4 s
+  dazzling-gleam  half ring    1 -> 130               650         0.2 s
+  night-shade     ring aura    120 fixed (persistent)
+  bug-buzz        ring aura    120 fixed (persistent)
+  rock-slide      falls        70 at the target
+  (psychic grows its ARC 0.5 -> 2 rad while it travels, not a nova)
+
+================================================================================
+3. OPEN: Jess picks the targets and the look
+================================================================================
+  spacing:  which moves, and the look for each
+            [a] side by side (fan)   [b] one after another (gap in time)
+  novas:    which ones are too big / too small, and the intended size
+  then:     prose plan + tests section -> Jess OK -> build -> check.js
+            -> changelog -> feel test
+
+================================================================================
+4. MEASURE SHEET (Jess, dev.html?dev&newcombat, in a run)
+================================================================================
+  batch  call                                                         look at
+  -----  -----------------------------------------------------------  ---------------
+  A      G.Debug.movechecker('string-shot','bubble-beam','fairy-wind',  shot gaps
+           'gust','meteor-mash','razor-leaf', 300)
+  B      G.Debug.movechecker('bonemerang','mud-shot','aura-sphere',     gaps, rings,
+           'discharge','fire-spin','leaf-storm', 300)                   orbit spacing
+  C      G.Debug.movechecker('hyper-voice','heat-wave','bulldoze',      where each nova
+           'dark-pulse','dazzling-gleam','rock-slide')                  stops, vs rings
+  D      G.Debug.movechecker('night-shade','bug-buzz','psychic')        aura size, wedge
+  E      G.Debug.movechecker('tackle','body-slam','bite','psycho-cut',  melee arc reach
+           'karate-chop','vine-whip')
+  F      G.Debug.movechecker('lick','metal-claw','powder-snow',         arc reach, cone
+           'wing-attack','bug-bite','flamethrower')
+  G      G.Debug.movechecker('ember','water-gun','poison-sting',        shot travel
+           'rock-throw','shadow-ball','sludge', 300)
+  H      G.Debug.movechecker('confusion','giga-drain','thunder-shock',  shots, beams
+           'psybeam','flash-cannon','ice-beam', 300)
+  I      G.Debug.movechecker('hydro-pump','dragon-rage','hex',          beams, chains,
+           'thunderbolt','quick-attack','aerial-ace', 300)              dashes
+  J      G.Debug.movechecker('toxic','flame-wheel','toxic-spikes',      walk for trails,
+           'will-o-wisp','spikes')                                      stand for Spikes
+  (no shape, nothing to measure: swords-dance, dragon-dance, aqua-ring, substitute,
+   agility, harden)
+  off    G.Debug.movechecker()
+  A to J cover all 62 routed moves (56 with a shape + the 6 shapeless buffs).
+
+  GAP MATH (side-by-side fans): gap between shots at distance d
+      = d x spread / (count - 1)        shot body is about 7 px across
+
+  move          count  spread  gap @100px  gap @300px   verdict today
+  ------------  -----  ------  ----------  ----------   ----------------------
+  string-shot     2    0         0           0          stacked (#15)
+  bubble-beam     7    0.12      2           6          overlapping
+  gust            3    0.5      25          75          spread
+  meteor-mash     3    0.6      30          90          spread
+  razor-leaf      2    0.5      50         150          spread
+  bonemerang      2    0.5      50         150          spread
+  fairy-wind      3    0 (line) 0.08 s x 340 px/s = 27 px apart along the line
+  discharge       2    rings 0.2 s apart
+
+  KNOBS the console shows (what a fix changes)
+    spacing  space.count, space.spread (radians, whole fan),
+             emit.every (s between shots), delivery.moveSpeed
+    novas    delivery.grow.max (px), delivery.grow.growSpeed (px/s),
+             space.radRadius (fixed auras), space.radArc (cone width)
+
+  REPORT BACK per move (one line each is enough)
+    move | look you want (fan / one after another) | gap or size you want
+    e.g.  bubble-beam | one after another | ~40 px apart
+          hyper-voice | smaller            | stop at the 250 ring

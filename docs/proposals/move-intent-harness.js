@@ -85,6 +85,8 @@ function check(sc, w, tag) {
   if (x.casts != null) { const c = w.tape.filter(e => e.type === 'move:cast').length; ok(c === x.casts, L + 'casts ' + c + ', want ' + x.casts); }
   if (x.ends) for (const [why, k] of Object.entries(x.ends)) { const c = w.tape.filter(e => e.type === 'move:end' && e.reason === why).length; ok(c === k, L + 'ends by ' + why + ': ' + c + ', want ' + k); }
   if (x.firstHit) for (const [i, [a, b]] of Object.entries(x.firstHit)) { const h = hitsOn(w, +i)[0]; ok(h && h.t >= a - 1e-9 && h.t <= b + 1e-9, L + 'first hit on ' + i + ' at ' + (h && h.t.toFixed(3)) + ', want ' + a + ' to ' + b); }
+  if (x.gaps) for (const [i, [a, b]] of Object.entries(x.gaps)) { const hs = hitsOn(w, +i), g = hs.slice(1).map((h, k) => h.t - hs[k].t);     // slice 6: shots one after another
+    ok(g.length > 0 && g.every(v => v >= a - 1e-9 && v <= b + 1e-9), L + 'gaps between hits on ' + i + ' ' + g.map(v => v.toFixed(3)) + ', want each ' + a + ' to ' + b); }
   if (x.ratios) { const d0 = (hitsOn(w, 0)[0] || {}).dmg;
     for (const [i, r] of Object.entries(x.ratios)) { const d = (hitsOn(w, +i)[0] || {}).dmg; ok(d0 > 0 && near(d / d0, r), L + 'damage ratio on ' + i + ' ' + (d / d0) + ', want ' + r); } }
   if (x.dmg != null) { const hs = w.tape.filter(e => e.type === 'move:hit'); ok(hs.length > 0 && hs.every(h => near(h.dmg, x.dmg, 1e-9)), L + 'every hit deals ' + x.dmg + ' (' + hs.map(h => h.dmg) + ')'); }
@@ -105,7 +107,7 @@ function check(sc, w, tag) {
 
 // ---- run ----
 const pending = [], blocked = [], ran = [];
-const KNOWN = new Set(['hits', 'hitsMin', 'casts', 'ends', 'firstHit', 'ratios', 'dmg', 'crit', 'enemyStage', 'rooted', 'status', 'ownerStage', 'at', 'ownerHp', 'shield', 'healFraction', 'casterEnd']);
+const KNOWN = new Set(['hits', 'hitsMin', 'casts', 'ends', 'firstHit', 'gaps', 'ratios', 'dmg', 'crit', 'enemyStage', 'rooted', 'status', 'ownerStage', 'at', 'ownerHp', 'shield', 'healFraction', 'casterEnd']);
 for (const sc of SCENARIOS.scenarios) {
   ok(D[sc.move], sc.id + ': unknown move ' + sc.move);
   ok(sc.source === 'data' || (/^MOVE-INTENT:/.test(sc.source) && INTENT.has(sc.source.slice(12))), sc.id + ': source ' + sc.source + ' is "data" or a real MOVE-INTENT entry');

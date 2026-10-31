@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-31 12:15 (Quick, work machine; slice 5b CLOSED, feel test passed).
+Last updated: 2026-10-31 15:35 (Quick, work machine; slice 6 batches 1 and 2 built, checks green, feel-tested).
 
 ## Where we are
 - Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md.
@@ -11,7 +11,10 @@ Last updated: 2026-10-31 12:15 (Quick, work machine; slice 5b CLOSED, feel test 
 - Tests: check.js, team-cards-mutate (61), stat-stage, move-sim, move-persist and move-selfcast mutate all green on node (Jess, 2026-10-31).
 
 ## Next (in order)
-1. Slice 6 (tuning: card steps, caps, family weights, HP Regen rate). Start from slice-overview.md.
+1. Slice 6, rescoped (Jess, 2026-10-31): projectile spacing and nova sizing. Map: docs/ASCII Concept Maps/Slice 6 - Plan.txt. Balance moves to playtest branches (DECISIONS).
+   - Tool BUILT: G.Debug.movechecker(id, ... up to 6, [px]) (debug.js, move-render.js rings). Harness 40/40, mutations 22/22 in Quick's sandbox; Jess runs check.js + debug-movechecker-mutate.js on node, then feel-tests.
+   - Batch 1 BUILT (String Shot / Bubble Beam spacing, wobble, Tackle 54, Toxic Spikes burst, Gust cd 0.7, Discharge 110): docs/ASCII Concept Maps/Slice 6 - Batch 1 Plan.txt. check.js + mutate runners green on node, feel-tested OK (Jess).
+   - Batch 2 BUILT and retuned: new path.loop (combat-architecture D38), centred on the base point; Fairy Wind radius 70, 0.6667 Hz, 90 px/s, 3 s (about 15 shots alive). Plan: Slice 6 - Batch 2 Plan.txt. check.js + mutate runners green on node, feel-tested OK (Jess). Batch 3 next: Quick Attack and Aerial Ace.
 2. Board cleanup on GitHub (TODO mirror lists the inconsistencies).
 
 ## Open owner decisions

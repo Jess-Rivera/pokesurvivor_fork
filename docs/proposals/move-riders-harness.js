@@ -124,7 +124,7 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   const o = mkO(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual' }]);
   for (let i = 0; i < 50; i++) hitWith(up, mk(), o); ok(S.stage(o, 'atk') === 1 && Object.keys(o.trk.atk).length === 1, 'an individual self raise: 50 casts inside one Gate refresh one tracker at +1');
   const ib = mk(), ibo = mkO(); for (let i = 0; i < 9; i++) hitWith('ice-beam', ib, ibo); ok(S.stage(ib, 'spe') === -1, 'Ice Beam: 9 hits inside one Gate refresh at -1 (MOVE-INTENT ice-beam, SS4)');
-  const st = mk(), sto = mkO(); for (let i = 0; i < 2; i++) hitWith('string-shot', st, sto); ok(S.stage(st, 'spe') === -2, 'String Shot: the second strand refreshes, -2 per cast (MOVE-INTENT string-shot, SS4)');
+  const st = mk(), sto = mkO(); for (let i = 0; i < 2; i++) hitWith(G.MoveDefs['string-shot'].payload[0].move, st, sto);     // slice 6: each emitted strand carries the payload ok(S.stage(st, 'spe') === -2, 'String Shot: the second strand refreshes, -2 per cast (MOVE-INTENT string-shot, SS4)');
   console.log('3b retired fields: none on any stat effect, none added by the resolver; trackers: Ice Beam -1, String Shot -2 per cast'); }
 
 // 4. trap: the root on every movement phase, strong hosts, ghosts, the player
@@ -192,7 +192,7 @@ function world(ids, es, secs, dt, s) {
     const hits = w.tape.filter(t => t.type === 'move:hit'), ends = w.tape.filter(t => t.type === 'move:end');
     ok(hits.length === 2 && hits.every(h => h.dmg === 0 && h.enemyId === front.id), 'String Shot: two move:hit with dmg 0 on the first enemy (' + hits.length + ')');
     ok(S.stage(front, 'spe') === -2 && front.stTrap && !back.stTrap && !back.stg && !back.trk, 'both strands: Speed -2 (the second refreshes) and the root on the first enemy only');
-    ok(ends.length === 2 && ends.every(e => e.reason === 'pierce'), 'pierce spent on the first enemy');
+    ok(ends.filter(e => e.reason === 'pierce').length === 2 && ends.filter(e => e.reason !== 'pierce').length === 1, 'pierce spent on the first enemy; the strands\' emitter ends by time (slice 6)');
   }
   const run = (s, dt) => { const es = [mk(30, 0), mk(40, 10), mk(200, 0)], w = world(['body-slam', 'ice-beam', 'bite'], es, 1, dt, s);
     return w.tape.filter(t => t.type === 'move:hit').map(t => [es.findIndex(e => e.id === t.enemyId), t.crit, +t.dmg.toFixed(6)]); };

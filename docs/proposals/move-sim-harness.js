@@ -147,11 +147,11 @@ for (const [k, f] of GC) { const v = f(); ok(near(v, GOLDEN[k]), 'golden ' + k +
   weather = {}; }
 
 // ---- 3. canaries ----
-// Tackle: every enemy in its arc once (1.7 rad, r 48, enemy r 10); behind, beside and beyond are missed
-both('tackle arc', () => ({ owner: mkO(['tackle']), enemies: [mkE(1, 30, 0), mkE(2, 35, 20), mkE(3, 0, 40), mkE(4, -30, 0), mkE(5, 55, 0), mkE(6, 60, 0)] }), 0.3, [1, 1, 0, 0, 1, 0]);
-// cast gate reach (S1): 48 + 10 = 58 px; lens 2 doubles the radius (and the arc), so 100 px is in reach
+// Tackle: every enemy in its arc once (1.7 rad, r 54 since slice 6, enemy r 10); behind, beside and beyond are missed
+both('tackle arc', () => ({ owner: mkO(['tackle']), enemies: [mkE(1, 30, 0), mkE(2, 35, 20), mkE(3, 0, 40), mkE(4, -30, 0), mkE(5, 55, 0), mkE(6, 65, 0)] }), 0.3, [1, 1, 0, 0, 1, 0]);
+// cast gate reach (S1): 54 + 10 = 64 px; lens 2 doubles the radius (and the arc), so 100 px is in reach
 both('tackle gate, out of reach', () => ({ owner: mkO(['tackle']), enemies: [mkE(1, 100, 0)] }), 1, [0]).forEach(w => ok(evs(w, 'move:cast').length === 0, 'tackle cast at an enemy out of reach'));
-both('tackle gate, edge of reach', () => ({ owner: mkO(['tackle']), enemies: [mkE(1, 57.9, 0)] }), 0.3, [1]);
+both('tackle gate, edge of reach', () => ({ owner: mkO(['tackle']), enemies: [mkE(1, 63.9, 0)] }), 0.3, [1]);
 both('tackle gate, lens 2', () => ({ owner: mkO(['tackle'], { moveRadiusMul: 2 }), enemies: [mkE(1, 100, 0)] }), 0.3, [1]);
 // Ember: dies on its first enemy (pierce 0); the direction gate needs any enemy within range 420
 both('ember pierce 0', () => ({ owner: mkO(['ember']), enemies: [mkE(1, 60, 0), mkE(2, 120, 0), mkE(3, 0, 400)] }), 0.6, [1, 0, 0])

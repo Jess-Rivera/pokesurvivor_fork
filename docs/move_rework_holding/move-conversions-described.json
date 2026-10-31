@@ -19,7 +19,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 48,
+        "radRadius": 54,
         "count": 1
       },
       "delivery": {
@@ -1416,7 +1416,7 @@
       "name": "Discharge",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Double-take pulse nova. An emitter anchored to caster fires TWO expanding rings 0.2s apart; each emitted ring is world-anchored so it blooms from the spot it spawned (shockwave feel, not a ring that follows you). Each ring grows 0->220px in 0.4s (growSpeed 550 px/s). 30% paralysis on BOTH pulses (each ring carries the rider). Models the 'strikes everything around it' flare as two beats.",
+      "feel": "Double-take pulse nova. An emitter anchored to caster fires TWO expanding rings 0.2s apart; each emitted ring is world-anchored so it blooms from the spot it spawned (shockwave feel, not a ring that follows you). Each ring grows 0->110px in 0.4s (growSpeed 275 px/s; Jess 2026-10-31, slice 6: half the old 220 px). 30% paralysis on BOTH pulses (each ring carries the rider). Models the 'strikes everything around it' flare as two beats.",
       "type": "electric",
       "category": "special",
       "power": 80,
@@ -1452,10 +1452,10 @@
               "targeting": "none",
               "motion": "static",
               "grow": {
-                "growSpeed": 550,
+                "growSpeed": 275,
                 "dim": "radRadius",
                 "per": "time",
-                "max": 220
+                "max": 110
               },
               "endOn": [
                 {
@@ -1865,7 +1865,7 @@
       "name": "String Shot",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "2-count projectile, zero spread (both silk strands fly straight in the aim direction, stacked). Status move (no direct damage). Each strand that hits applies a harsh speed debuff (spd -2, source) plus a trap hold (the silk binds). pierce 0. The bind-and-slow setup move.",
+      "feel": "Slice 6 (Jess 2026-10-31): two silk strands one after another on the aim line, about 35 px apart (Fairy Wind's emitter pattern: a still emitter at the caster fires a strand at once, then a second 0.11 s later; 0.11 s x 320 px/s = 35 px). Status move (no direct damage). Each strand that hits applies Speed -2 (the second refreshes it under SS4) plus a trap hold. pierce 0. The bind-and-slow setup move.",
       "type": "bug",
       "category": "status",
       "power": null,
@@ -1873,44 +1873,65 @@
       "accuracy": 95,
       "priority": 0,
       "flavor_text": "The user blows silk from its mouth that binds opposing Pokémon and harshly lowers their Speed stats.",
-      "space": {
-        "shape": "radial",
-        "radRadius": 7,
-        "count": 2,
-        "pierce": 0,
-        "spread": 0
-      },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
-        "motion": "travels",
-        "moveSpeed": 320,
+        "motion": "static",
         "endOn": [
           {
-            "time": 1.2
-          },
-          {
-            "contact": "wall"
-          },
-          {
-            "offScreen": true
+            "time": 0.4
           }
         ]
       },
-      "hitPolicy": "oncePerInstance",
       "payload": [
         {
-          "t": "stat",
-          "stat": "spd",
-          "stages": -2,
-          "side": "foe",
-          "scope": "individual"
-        },
-        {
-          "t": "ailment",
-          "id": "trap",
-          "chance": 100,
-          "side": "foe"
+          "t": "emit",
+          "every": 0.11,
+          "count": 2,
+          "trigger": "cast",
+          "move": {
+            "kind": "projectile",
+            "space": {
+              "shape": "radial",
+              "radRadius": 7,
+              "count": 1,
+              "pierce": 0,
+              "spread": 0
+            },
+            "delivery": {
+              "anchor": "caster",
+              "targeting": "direction",
+              "motion": "travels",
+              "moveSpeed": 320,
+              "endOn": [
+                {
+                  "time": 1.2
+                },
+                {
+                  "contact": "wall"
+                },
+                {
+                  "offScreen": true
+                }
+              ]
+            },
+            "hitPolicy": "oncePerInstance",
+            "payload": [
+              {
+                "t": "stat",
+                "stat": "spd",
+                "stages": -2,
+                "side": "foe",
+                "scope": "individual"
+              },
+              {
+                "t": "ailment",
+                "id": "trap",
+                "chance": 100,
+                "side": "foe"
+              }
+            ]
+          }
         }
       ],
       "reviewStatus": "reviewed"
@@ -2046,7 +2067,7 @@
       "name": "Fairy Wind",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Like Gust (3 projectiles in sequential rapid succession, emit every 0.08s) BUT zero spread and each shot follows a curved path (path.curve 2.0 rad/s, so they arc as they fly). Fairy, no rider. The curve is what distinguishes it from Gust's straight fast shots.",
+      "feel": "Slice 6 (Jess 2026-10-31): loop-de-loops travelling out. Like Gust, 3 projectiles in rapid succession (emit every 0.08s), zero spread, but each shot rides path.loop (combat-architecture D38): the loop is centred on a base point that drifts straight along the aim at 90 px/s, radius 70 px, 0.6667 loops per s, so the first loop goes round the caster and the shot makes 2 full loops in its 3 s flight, peaking about 280 px out. It starts at the top of its loop, one radius across from the caster. Top speed about 383 px/s. The 3 shots ride the same path and chase each other round it. Fairy, no rider. Was a 2 rad/s curve, which only bent the shot.",
       "type": "fairy",
       "category": "special",
       "power": 40,
@@ -2083,13 +2104,16 @@
               "anchor": "caster",
               "targeting": "direction",
               "motion": "travels",
-              "moveSpeed": 340,
+              "moveSpeed": 90,
               "path": {
-                "curve": 2.0
+                "loop": {
+                  "radius": 70,
+                  "frequency": 0.6667
+                }
               },
               "endOn": [
                 {
-                  "time": 1.2
+                  "time": 3.0
                 },
                 {
                   "contact": "wall"
@@ -2284,7 +2308,7 @@
       "name": "Toxic Spikes",
       "kind": "mine",
       "balanceClass": "other",
-      "feel": "Timed mine that explodes into a small poison nova. World-anchored, 3s lifetime (endOn time 3), then detonates into a 100px nova (emit on termination) that applies 100% poison. Unlike Spikes (unlimited-until-stepped-on trap), this one is a timed bomb: lay it, 3s later it bursts. Status move, the damage/effect is the poison nova, not direct contact.",
+      "feel": "Timed mine that bursts into a small poison nova when it ends (Jess 2026-10-31, slice 6: one burst per mine, a death effect, not a pulse every 0.25 s). World-anchored at the caster's feet, 3 s lifetime (endOn time 3), then emits once on termination a 100 px nova growing 400 px/s for 0.25 s that applies 100% poison. Unlike Spikes (unlimited-until-stepped-on trap), this one is a timed bomb: lay it, 3 s later it bursts. Status move, the effect is the poison nova, not direct contact.",
       "type": "poison",
       "category": "status",
       "power": null,
@@ -2312,8 +2336,7 @@
       "payload": [
         {
           "t": "emit",
-          "trigger": "interval",
-          "every": 0.25,
+          "trigger": "termination",
           "move": {
             "kind": "nova",
             "space": {
@@ -2730,7 +2753,7 @@
       "name": "Bubble Beam",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Refines the wobbling-stream lock: 7 bubbles fired in a very NARROW spread (0.12) that each follow an oscillating path (sine weave perpendicular to travel, amplitude 18px, freq 3Hz), so the stream visibly wobbles as it flies. Fast. 10% speed-down rider (source stat_chance 10). A shimmering burst of weaving bubbles, not a straight beam.",
+      "feel": "Slice 6 (Jess 2026-10-31): a stream of 7 bubbles one after another on the aim line, about 25 px apart (Fairy Wind's emitter pattern: a still emitter at the caster fires a bubble every 0.075 s; 0.075 s x 330 px/s = 25 px). Each bubble weaves on its own gentle wave (sine perpendicular to travel, amplitude 10 px, 1.5 Hz: side speed peaks at 94 px/s, under the 330 px/s travel, and 10 px stays inside an enemy's reach), so the stream reads as a snake. 10% speed-down rider (source stat_chance 10).",
       "type": "water",
       "category": "special",
       "power": 65,
@@ -2738,48 +2761,69 @@
       "accuracy": 100,
       "priority": 0,
       "flavor_text": "A spray of bubbles is forcefully ejected at the target. This may also lower the target's Speed stat.",
-      "space": {
-        "shape": "radial",
-        "radRadius": 7,
-        "count": 7,
-        "pierce": 0,
-        "spread": 0.12
-      },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
-        "motion": "travels",
-        "moveSpeed": 330,
-        "path": {
-          "oscillate": {
-            "amplitude": 18,
-            "frequency": 3
-          }
-        },
+        "motion": "static",
         "endOn": [
           {
-            "time": 1.4
-          },
-          {
-            "contact": "wall"
-          },
-          {
-            "offScreen": true
+            "time": 0.6
           }
         ]
       },
-      "hitPolicy": "oncePerInstance",
       "payload": [
         {
-          "t": "damage"
-        },
-        {
-          "t": "stat",
-          "stat": "spd",
-          "stages": -1,
-          "side": "foe",
-          "scope": "individual",
-          "chance": 10
+          "t": "emit",
+          "every": 0.075,
+          "count": 7,
+          "trigger": "cast",
+          "move": {
+            "kind": "projectile",
+            "space": {
+              "shape": "radial",
+              "radRadius": 7,
+              "count": 1,
+              "pierce": 0,
+              "spread": 0
+            },
+            "delivery": {
+              "anchor": "caster",
+              "targeting": "direction",
+              "motion": "travels",
+              "moveSpeed": 330,
+              "path": {
+                "oscillate": {
+                  "amplitude": 10,
+                  "frequency": 1.5
+                }
+              },
+              "endOn": [
+                {
+                  "time": 1.4
+                },
+                {
+                  "contact": "wall"
+                },
+                {
+                  "offScreen": true
+                }
+              ]
+            },
+            "hitPolicy": "oncePerInstance",
+            "payload": [
+              {
+                "t": "damage"
+              },
+              {
+                "t": "stat",
+                "stat": "spd",
+                "stages": -1,
+                "side": "foe",
+                "scope": "individual",
+                "chance": 10
+              }
+            ]
+          }
         }
       ],
       "reviewStatus": "reviewed"

@@ -233,3 +233,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests: team-cards-harness 147, team-cards-mutate 61; retargeted 7 stale patterns (stat-stage 3, move-sim 1, move-persist 1, move-selfcast 2). Jess ran check.js and all six mutation runners on node: green.
 - Stopped at: commit + push, then the 5b full-run feel test.
 - Closed 2026-10-31: Jess feel-tested 5b (full run with team cards, stages / Gate and regen-while-swapping checks), everything felt good. The verdict was given in a chat that ended before it was written down; recorded in the next session. 5b DONE. Next: slice 6 tuning.
+
+## 2026-10-31 (Quick, work, afternoon): slice 6 rescoped, movechecker, batches 1 and 2
+- Decided (Jess): slice 6 is now projectile spacing and nova sizing; the simulator and balance pass move to playtest branches (DECISIONS). A formula DPS table is kept as reference (move-dps-table.md).
+- Built: G.Debug.movechecker (up to 6 moves, one pinned dummy, range rings to 600 px, move data in the console). Batch 1: String Shot and Bubble Beam fire one after another on a line (emitter form), Bubble Beam wobble 10 px / 1.5 Hz, Tackle 54, Toxic Spikes one burst on termination, Gust cd 0.7, Discharge 110 px; Count Up / Reach Up follow the emitter shape (D-CARDS).
+- Batch 2: new path.loop (combat-architecture D38, centred on the drifting base point); Fairy Wind loop-de-loops, radius 70, 0.6667 Hz, 90 px/s, 3 s. Retuned once after the feel test (first build hung the loop off the caster and ran at 694 px/s).
+- Tests: new debug-movechecker harness and mutate; retargeted move-sim, team-cards, stat-stage, move-riders, move-intent (new gaps check), move-travel, move-emit; new scenarios for every ruling. Jess ran check.js and the mutation runners on node: green. Feel test: good.
+- Stopped at: commit + push. Next: batch 3 (Quick Attack is nauseating, Aerial Ace needs a rework; causes still to pin down).

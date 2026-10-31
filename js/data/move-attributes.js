@@ -69,7 +69,9 @@
     delay: SECS,   // s: wind-up on the INSTANCE (meteor telegraph). No hitbox until it ends; endOn time counts from activation
     motion: en(['static', 'travels', 'falls', 'returns', 'orbits', 'repositions'], { d: 'static' }),
     moveSpeed: num({ gt: 0 }), angularSpeed: num({ gt: 0 }), orbitRadius: num({ gt: 0 }),
-    path: obj({ curve: num(), oscillate: obj({ amplitude: num({ gt: 0 }), frequency: num({ gt: 0 }) }, ['amplitude', 'frequency']) }),
+    path: obj({ curve: num(), oscillate: obj({ amplitude: num({ gt: 0 }), frequency: num({ gt: 0 }) }, ['amplitude', 'frequency']),
+      // loop (slice 6, combat-architecture D38): circles of `radius` px, `frequency` per s, around a base point that keeps travelling straight
+      loop: obj({ radius: num({ gt: 0 }), frequency: num({ gt: 0 }) }, ['radius', 'frequency']) }),
     repositionMode: en(['teleport', 'swept']), returnToOrigin: 'bool', returnHits: en(['out', 'outAndBack'], { d: 'out' }),
     dashMult: num({ gt: 0 }),
     grow: obj({ growSpeed: num({ gt: 0 }), dim: en(['radRadius', 'radArc', 'linLength'], { d: 'radRadius' }),

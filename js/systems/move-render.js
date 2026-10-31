@@ -29,7 +29,8 @@
 G.MoveRender = (() => {
   const TAU = Math.PI * 2, FLASH = 0.25, BOLT = 0.2;
   let flashes = [], bolts = [];
-  const R = { overlay: false };
+  const R = { overlay: false, rings: false };     // rings: the movechecker range rings (G.Debug.movechecker, slice 6)
+  const RING_STEP = 50, RING_MAX = 600;
 
   const SQUASH = 0.7;     // H15: orbit squash is drawing only
   const squash = (inst, s) => { const o = inst.cast.owner; return Object.assign({}, s, { y: o.y + (s.y - o.y) * SQUASH }); };
@@ -58,7 +59,25 @@ G.MoveRender = (() => {
     } else ctx.arc(s.x, s.y, Math.max(0.5, s.r), 0, TAU);
   }
 
+  /** Dev range rings (G.Debug.movechecker): every RING_STEP px out to RING_MAX, centred on the player's feet (where casts start),
+   *  on the ground under everything, each labelled in px; every 100 px is brighter. */
+  function drawRings(ctx) {
+    const pl = G.Game && G.Game.player;
+    if (!pl) return;
+    ctx.save();
+    ctx.font = '9px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    for (let r = RING_STEP; r <= RING_MAX; r += RING_STEP) {
+      const major = r % 100 === 0, col = major ? '#ffe14d' : '#ffffff';
+      ctx.strokeStyle = col; ctx.lineWidth = major ? 1.5 : 1; ctx.globalAlpha = major ? 0.55 : 0.3;
+      ctx.beginPath(); ctx.arc(pl.x, pl.y, r, 0, TAU); ctx.stroke();
+      ctx.fillStyle = col; ctx.globalAlpha = 0.85;
+      ctx.fillText(String(r), pl.x, pl.y - r - 2);
+    }
+    ctx.restore();
+  }
+
   function drawGround(ctx) {
+    if (R.rings) drawRings(ctx);
     for (const inst of G.MoveSim.list()) {
       const s = inst.shape;
       if (!s || inst.spec.delivery.motion !== 'static' || !G.Camera.sees(s.x, s.y, (s.len || s.r) + 60)) continue;
@@ -134,7 +153,7 @@ G.MoveRender = (() => {
         ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 1.7 * pulse, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.95 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, TAU); ctx.fill();
         ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.8 * a; ctx.beginPath(); ctx.arc(v.x, v.y, v.r * 0.45, 0, TAU); ctx.fill();
-        if ((inst.spec.delivery.path || {}).curve) {     // 4c-3: a curving ball (Aura Sphere) leaves a short trail
+        if ((inst.spec.delivery.path || {}).curve || (inst.spec.delivery.path || {}).loop) {     // 4c-3: a curving ball (Aura Sphere) leaves a short trail; slice 6: a looping one (Fairy Wind) too
           const sp = Math.hypot(inst.vx || 0, inst.vy || 0) || 1;
           ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.globalAlpha = 0.3 * a; ctx.lineWidth = v.r * 1.3;
           ctx.beginPath(); ctx.moveTo(v.x - (inst.vx || 0) / sp * v.r * 4, v.y - (inst.vy || 0) / sp * v.r * 4); ctx.lineTo(v.x, v.y); ctx.stroke();

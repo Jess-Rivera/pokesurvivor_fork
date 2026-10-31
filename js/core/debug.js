@@ -26,6 +26,7 @@
  *   G.Debug.stage(stat, n, radius)  stat stage on every enemy near you: spe|def|spd|atk|spa, n = -1 (6 s each; repeat to stack, +-6 max)
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
+ *   G.Debug.movechecker(id, ...)  range and move-data check (?dev&newcombat): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -404,10 +405,7 @@ G.Debug = (() => {
       if (!ids.length) { console.warn('[Debug] no usable move ids. Sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
     }
     const riders = set === 'riders' || set === 'selfcasts';
-    G.MoveSim.clear(pl);     // the old set's live shapes, commitments, heal over time and shield end, as on a Pokemon swap
-    pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
-    pl.slots = pl.moves.map(m => [m]);
-    pl.active = 0;
+    loadSlots(pl, ids);
     G.MoveRender.overlay = true;
     const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
     if (!def) { console.warn('[Debug] no enemy definition for the dummies.'); return 0; }
@@ -495,6 +493,73 @@ G.Debug = (() => {
     return n;
   }
 
+  /** The active Pokemon gets the routed moves in `ids`, one per slot, slot 0 active, after the old slots' live shapes, commitments,
+   *  heal over time and shield end (as on a Pokemon swap). Shared by newcombat and movechecker. Returns the slot count. */
+  function loadSlots(pl, ids) {
+    G.MoveSim.clear(pl);
+    pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
+    pl.slots = pl.moves.map(m => [m]);
+    pl.active = 0;
+    return pl.slots.length;
+  }
+
+  /** Range and move-data check (slice 6, ?dev&newcombat). G.Debug.movechecker('bubble-beam', 'gust', 300): wild spawns stop and the
+   *  live enemies are cleared; up to 6 routed move ids go one per slot (cycle slots to try each); ONE dummy stands at the given
+   *  distance to your right (a number argument, default 150 px): awake, so every rider can land and Hex sees no status, but pinned
+   *  in place (no walking, no knockback slide), no contact damage, HP that never runs out. The hitbox overlay and the range rings
+   *  (every 50 px out to 600, centred on you) turn on, and the console prints each move's effective def (team cards folded in, so
+   *  what actually runs) and its override row. G.Debug.movechecker() with no id turns it off: rings off, enemies cleared, spawning
+   *  back on (the hitbox overlay stays; G.Debug.hitbox(false) hides it). Returns the number of moves loaded. */
+  const MC_MAX = 6, MC_DIST = 150;
+  let mcOn = false;
+  function movechecker(...args) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    const strs = args.filter(a => typeof a === 'string'), nums = args.filter(a => typeof a === 'number' && a > 0);
+    if (!strs.length) {
+      G.MoveRender.rings = false;
+      if (mcOn) G.EnemyMgr.clear();     // the pinned dummy (wild spawns were stopped, so it is the only enemy)
+      mcOn = false;
+      spawn(1);     // movechecker off
+      console.log('[Debug] movechecker off: rings off, dummy removed, spawning back on.');
+      return 0;
+    }
+    let ids = strs.filter(id => {
+      if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+      if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
+      return true;
+    });
+    if (!ids.length) { console.warn('[Debug] no usable move ids, nothing changed.'); return 0; }
+    if (ids.length > MC_MAX) { console.warn('[Debug] movechecker takes up to ' + MC_MAX + ' moves; using the first ' + MC_MAX + '.'); ids = ids.slice(0, MC_MAX); }
+    const dist = nums.length ? nums[0] : MC_DIST;
+    const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
+    if (!def) { console.warn('[Debug] no enemy definition for the dummy.'); return 0; }
+    spawn(0);     // movechecker start (also flags the run as tampered)
+    G.Projectiles.clearOrbs(pl);
+    G.EnemyMgr.clear();     // movechecker start: the dummy is the only target
+    const n = loadSlots(pl, ids);
+    G.MoveRender.overlay = true;
+    G.MoveRender.rings = true;
+    const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + dist, pl.y, G.Enemies.scale(G.Game.time));
+    e.maxHp = e.hp = 1e9;
+    e.spd = 0;
+    e.touchCd = Infinity;     // no contact damage (combat.js skips an enemy whose contact timer is running)
+    const ax = e.x, ay = e.y, step = e.update;
+    e.update = function (dt, p) { step.call(this, dt, p); this.x = ax; this.y = ay; this.kx = 0; this.ky = 0; };     // pinned: no walk, slide or straggler move
+    G.EnemyMgr.add(e);
+    mcOn = true;
+    const fin = (k, v) => (v === Infinity ? 'Infinity' : v === -Infinity ? '-Infinity' : v);     // JSON would print Infinity as null
+    for (const id of ids) {
+      const live = G.TeamCards.defOf(pl, id), ov = G.MoveOverrides && G.MoveOverrides[id];
+      console.log('[movechecker] ' + id + ', effective def (what runs, team cards folded in):\n' + JSON.stringify(live, fin, 2)
+        + (ov ? '\n[movechecker] ' + id + ', override row (js/data/move-overrides.js):\n' + JSON.stringify(ov, fin, 2) : '\n[movechecker] ' + id + ': no override row.'));
+    }
+    console.log('[Debug] movechecker: ' + n + ' move(s) in slots (' + ids.join(', ') + '), 1 pinned dummy ' + dist + ' px to your right, range rings every 50 px out to 600. Cycle slots to try each; G.Debug.movechecker() turns it off.');
+    return n;
+  }
+
   /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
   function stat(id, n = 1, idx) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
@@ -571,5 +636,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards, movechecker };
 })();

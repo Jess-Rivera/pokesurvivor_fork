@@ -80,8 +80,8 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | 5 | slice-4c-3.md: delay, falls, aimTrack, travelling moves | BUILT 2026-10-29 (plan approved the same day): check.js 26/26, travel harness 79/79, runner 26/26, intent 608/608, smoke passed. SIGNED OFF by Jess 2026-10-29 (feel test, Confusion and Bubble Beam batch reviewed; some balance to slice 6) | none |
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | BUILT and SIGNED OFF 2026-10-30 (check.js green, emit set batch reviewed) | stage-0 |
-| 7 | slice-5.md: upgrades from fields and the stat stage tracker model | to plan | none (D-MC5 superseded 2026-10-30) |
-| 8 | slice-6.md: damage simulator, balance pass, stress run | to plan | 5 |
+| 7 | slice-5.md: upgrades from fields and the stat stage tracker model | BUILT and SIGNED OFF 2026-10-31 (5a and 5b feel-tested, check.js and mutation runners green) | none (D-MC5 superseded 2026-10-30) |
+| 8 | slice-6.md: projectile spacing and nova sizing (rescoped 2026-10-31; balance moves to playtest branches) | SCOPING (docs/ASCII Concept Maps/Slice 6 - Plan.txt) | 5 |
 | 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan | D-ENEMY, D-COOP |
 | 10 | slice-7b.md: flip, purge and merge into main | to plan | D-HAIL, 7a |
 

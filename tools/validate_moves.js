@@ -191,6 +191,11 @@ function selfTest() {
     ['untilEffectEnd needs a shield', m => (m.casterState = { commitment: { cooldown: { type: 'freeze', t: 'untilEffectEnd' } } }, m), 'freeze-effect-needs-shield'],
     ['untilEffectEnd beside a shield passes', () => { const m = sub(); m.casterState = { commitment: { cooldown: { type: 'freeze', id: 'x', t: 'untilEffectEnd' } } }; return m; }, null],
     ['old chain field name rejected', m => (m.payload.push({ t: 'special', handler: 'chainDamageFalloff', chainDamageFraction: 0.33 }), m), 'chainDamageFraction: unknown field'],
+    // slice 6: path.loop (combat-architecture D38)
+    ['loop on a travelling shot passes', m => (m.delivery.motion = 'travels', m.delivery.moveSpeed = 170, m.delivery.path = { loop: { radius: 50, frequency: 1.6667 } }, m), null],
+    ['loop missing its radius', m => (m.delivery.motion = 'travels', m.delivery.moveSpeed = 170, m.delivery.path = { loop: { frequency: 1.6667 } }, m), 'loop.radius: required'],
+    ['loop missing its frequency', m => (m.delivery.motion = 'travels', m.delivery.moveSpeed = 170, m.delivery.path = { loop: { radius: 50 } }, m), 'loop.frequency: required'],
+    ['loop frequency 0', m => (m.delivery.motion = 'travels', m.delivery.moveSpeed = 170, m.delivery.path = { loop: { radius: 50, frequency: 0 } }, m), 'loop.frequency: must be above 0'],
     // slice 4c-1: the persistent lifecycle (combat-architecture:H25) and the combat-validation-and-handoff:2.4 rules
     ['persistent with no endOn passes (an aura)', m => (m.persistent = true, delete m.delivery.endOn, m), null],
     ['persistent with an endOn time passes (a pulse)', m => (m.persistent = true, m.delivery.endOn = [{ time: 2 }], m), null],

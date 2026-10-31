@@ -83,10 +83,10 @@ const counter = (v = 0.5) => { const f = () => { f.calls++; return v; }; f.calls
 const between = (t, a, b) => t != null && t >= a - 1e-9 && t <= b + 1e-9;
 const firstHit = (tape, e, id) => { const h = hitsOf(tape, id).find(x => x.enemyId === e.id); return h ? h.t : null; };
 const hitCount = (tape, e, id) => hitsOf(tape, id).filter(x => x.enemyId === e.id).length;
-/** n applyHit calls of a real move on fresh enemies with a seeded rng; returns the fraction where got(e) is true. */
+/** n applyHit calls of a real move (an id, or a spec such as an emitted child) on fresh enemies with a seeded rng; returns the fraction where got(e) is true. */
 function rate(id, got, N = 10000, s = 21) {
   const rng = seeded(s), o = mkP([[]]); let k = 0;
-  for (let i = 0; i < N; i++) { const e = mkE(30, 0); G.MoveEffects.applyHit({ id: 1, spec: REAL[id], cast: { owner: o, slot: null, target: null }, x: 0, y: 0, leg: 0 }, e, 0, rng); if (got(e)) k++; }
+  for (let i = 0; i < N; i++) { const e = mkE(30, 0); G.MoveEffects.applyHit({ id: 1, spec: typeof id === 'string' ? REAL[id] : id, cast: { owner: o, slot: null, target: null }, x: 0, y: 0, leg: 0 }, e, 0, rng); if (got(e)) k++; }
   return k / N;
 }
 const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', BB = 'bubble-beam', AS = 'aura-sphere';
@@ -259,22 +259,62 @@ const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', 
   ok(Math.abs(p - 0.1) <= 0.01, 'Sp. Def -1 on about 10% of hits (' + p.toFixed(3) + ')');
   console.log('6 Psychic: ahead hit at 0.5 s, side enemies left behind, widened-only hit at 1.048 s, radArc 2.0 at 1.0 s, 2.5 rad/s steer, one re-pick, Sp. Def ' + p.toFixed(3)); }
 
-// 7. Bubble Beam: 7 shots fanned 0.12, lateral offset exactly 18 sin(2 pi 3 age) (D24), pierce 0, Speed -1 at 10%
+// 7. Bubble Beam (slice 6, Jess 2026-10-31): a still emitter at the caster fires 7 bubbles one after another, one every 0.075 s from
+//    activation (D29), all on the aim line (spread 0). Each bubble sits at 330 age along and 10 sin(2 pi 1.5 age) across its heading
+//    (D24, its own wave from its own emission), so consecutive bubbles fly 0.075 x 330 = 24.75 px apart; pierce 0; Speed -1 at 10%.
 { for (const dt of DTS) {
-    const o = mkP([[BB]]); let bad = 0, frames = 0; const h0 = {};
-    run(o, [mkE(0, -400)], 1.3, { dt, each: () => { for (const i of ofMove(BB)) {
-      const h = (i.fan / 6 - 0.5) * 0.12, lat = -Math.sin(h) * i.x + Math.cos(h) * i.y, lon = Math.cos(h) * i.x + Math.sin(h) * i.y;
-      if (!(i.fan in h0)) h0[i.fan] = i.heading;
-      frames++; if (Math.abs(lat - 18 * Math.sin(TAU * 3 * i.age)) > 1e-9 || Math.abs(lon - 330 * i.age) > 1e-9) bad++; } } });
-    ok(frames > 0 && bad === 0, 'dt ' + dtName(dt) + ': every shot sits at 330 age along and 18 sin(6 pi age) across its heading (' + bad + ' of ' + frames + ' off)');
-    ok(Object.keys(h0).length === 7 && Object.entries(h0).every(([f, h]) => near(h, (f / 6 - 0.5) * 0.12, 1e-12)), 'dt ' + dtName(dt) + ': 7 shots fanned over 0.12 rad');
+    const o = mkP([[BB]]); let bad = 0, frames = 0; const born = {};
+    run(o, [mkE(0, -400)], 1.3, { dt, each: k => { for (const i of ofMove(BB)) {
+      if (!i.spec.space) continue;     // the shapeless emitter (H4)
+      if (!(i.id in born)) born[i.id] = { t: k * dt, h: i.heading };
+      frames++; if (Math.abs(i.y - 10 * Math.sin(TAU * 1.5 * i.age)) > 1e-9 || Math.abs(i.x - 330 * i.age) > 1e-9) bad++; } } });
+    ok(frames > 0 && bad === 0, 'dt ' + dtName(dt) + ': every bubble sits at 330 age along and 10 sin(3 pi age) across its heading (' + bad + ' of ' + frames + ' off)');
+    const b = Object.values(born).sort((p, q) => p.t - q.t).slice(0, 7);
+    ok(b.length === 7 && b.every(x => x.h === 0), 'dt ' + dtName(dt) + ': 7 bubbles in the first cast, all on the aim line (spread 0)');
+    // D29: the first bubble leaves at activation (emitter age dt), bubble k at the first step with age >= 0.075 k, so k leaves 0.075 k - dt to 0.075 k after the first
+    ok(b.every((x, k) => between(x.t - b[0].t, 0.075 * k - dt, 0.075 * k)), 'dt ' + dtName(dt) + ': one bubble every 0.075 s from activation, to the step (' + b.map(x => (x.t - b[0].t).toFixed(3)) + ')');
   }
-  { const E = mkE(60, 0), tape = run(mkP([[BB]]), [E], 0.5);
-    ok(hitCount(tape, E, BB) === 7 && ends(tape, 'pierce').length === 7, 'all 7 shots land on a close enemy (lateral <= 5 + 3.6 < 17 at 60 px), each spent on contact');
-    ok(new Set(hitsOf(tape, BB).map(h => h.instId)).size === 7, 'each shot hits once'); }
-  const p = rate(BB, e => S.list(e).some(s => s.stat === 'spe' && s.stage === -1));
+  { const E = mkE(60, 0), tape = run(mkP([[BB]]), [E], 0.8);
+    ok(hitCount(tape, E, BB) === 7 && ends(tape, 'pierce').length === 7, 'all 7 bubbles land on a close enemy (lateral <= 10 < 17 at 60 px; the last leaves at 0.45 s), each spent on contact');
+    ok(new Set(hitsOf(tape, BB).map(h => h.instId)).size === 7, 'each bubble hits once'); }
+  const p = rate(REAL[BB].payload[0].move, e => S.list(e).some(s => s.stat === 'spe' && s.stage === -1));     // the rider rides each bubble
   ok(Math.abs(p - 0.1) <= 0.01, 'Speed -1 on about 10% of hits (' + p.toFixed(3) + ')');
-  console.log('7 Bubble Beam: exact oscillation at both dts, 7-shot fan, pierce 0, Speed ' + p.toFixed(3)); }
+  console.log('7 Bubble Beam: 7 bubbles 0.075 s apart on one line, exact 10 px / 1.5 Hz wave at both dts, pierce 0, Speed ' + p.toFixed(3)); }
+
+// 7b. path.loop (slice 6, D38; Fairy Wind): the base point travels straight at moveSpeed (heading never turned by the loop) and the loop is
+//     centred on it: the shot sits at base + radius x sin(w age) along and -radius x cos(w age) across, w = 2 pi frequency, exact at every dt.
+//     At age 0 it is one radius across (the top of the loop), and it spawns there, so its first sweep never crosses from the caster; vx / vy
+//     are the true velocity, (v + radius w cos, radius w sin) in the heading frame. Composes with oscillate.
+{ const FW = 'fairy-wind', kd = REAL[FW].payload[0].move.delivery, L = kd.path.loop, v = kd.moveSpeed, w = TAU * L.frequency;
+  ok(L && L.radius === 70 && v === 90 && !kd.path.curve, 'Fairy Wind data: loop radius 70, base drift 90 px/s, no curve');
+  ok(Math.abs(L.frequency * kd.endOn.find(e => e.time != null).time - 2) < 1e-3, 'Fairy Wind data: 2 full loops in its 3 s flight');
+  for (const dt of DTS) {
+    let bad = 0, frames = 0, vbad = 0, turned = 0, start = 0; const seen = new Set();
+    run(mkP([[FW]], { cdMul: 100 }), [mkE(0, -400)], 1.3, { dt, each: () => { for (const i of ofMove(FW)) {     // one cast (cdMul 100), so its 3 shots
+      if (!i.spec.space) continue;     // the shapeless emitter (H4)
+      const th = w * i.age, wx = v * i.age + L.radius * Math.sin(th), wy = -L.radius * Math.cos(th);
+      frames++; if (Math.abs(i.x - wx) > 1e-9 || Math.abs(i.y - wy) > 1e-9) bad++;
+      if (i.heading !== 0) turned++;
+      if (Math.abs(i.vx - (v + L.radius * w * Math.cos(th))) > 1e-9 || Math.abs(i.vy - L.radius * w * Math.sin(th)) > 1e-9) vbad++;
+      if (!seen.has(i.id)) { seen.add(i.id); if (Math.abs(i.prevX) > 1e-9 || Math.abs(i.prevY + L.radius) > 1e-9) start++; } } } });     // its first sweep starts at (0, -radius)
+    ok(frames > 0 && bad === 0, 'dt ' + dtName(dt) + ': every shot sits at base + 70 sin(w age) along, -70 cos(w age) across (' + bad + ' of ' + frames + ' off)');
+    ok(seen.size === 3 && start === 0, 'dt ' + dtName(dt) + ': 3 shots, each spawns at the top of its loop, one radius across, not on the caster (' + seen.size + ', ' + start + ')');
+    ok(turned === 0, 'dt ' + dtName(dt) + ': the loop never turns the base heading (' + turned + ' frames)');
+    ok(vbad === 0, 'dt ' + dtName(dt) + ': vx / vy are the true velocity, base drift plus the loop (' + vbad + ' off)');
+  }
+  { const id = syn('syn-loop-osc', { cd: 5, space: { shape: 'radial', radRadius: 7, count: 1, pierce: 0, spread: 0 },
+      delivery: { anchor: 'caster', targeting: 'direction', motion: 'travels', moveSpeed: 200, path: { loop: { radius: 30, frequency: 1 }, oscillate: { amplitude: 8, frequency: 2 } }, endOn: [{ time: 1 }] } });
+    let bad = 0, frames = 0;
+    run(mkP([[id]]), [mkE(0, -400)], 0.9, { each: () => { for (const i of ofMove(id)) {
+      const th = TAU * i.age, wx = 200 * i.age + 30 * Math.sin(th), wy = -30 * Math.cos(th) + 8 * Math.sin(TAU * 2 * i.age);
+      frames++; if (Math.abs(i.x - wx) > 1e-9 || Math.abs(i.y - wy) > 1e-9) bad++; } } });
+    ok(frames > 0 && bad === 0, 'loop and oscillate compose: the two offsets add (' + bad + ' of ' + frames + ' off)'); }
+  for (const dt of DTS) {
+    const f = () => { eid = 0; const tape = run(mkP([[FW]]), [mkE(60, 40), mkE(150, 80), mkE(-90, 10)], 1.5, { dt, rng: seeded(5) });
+      return JSON.stringify(tape.map(({ instId, parentId, ...r }) => r)); };
+    ok(f() === f(), 'dt ' + dtName(dt) + ': Fairy Wind, same inputs, same tape');
+  }
+  console.log('7b loop: Fairy Wind exact 70 px / 0.6667 Hz loops centred on a 90 px/s drift at both dts, spawns at the top of its loop, true velocity, composes with oscillate'); }
 
 // 8. Aura Sphere: 6 shots 2 pi / 6 apart, heading += 1.5 dt per step (D23), reach about 2 x (120 / 1.5) x sin(1.5) = 159.6 px
 { for (const dt of DTS) {
@@ -305,7 +345,7 @@ const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', 
 // 10. determinism: the five moves plus Flamethrower, same seed and tape twice, at both dts
 { for (const dt of DTS) {
     const f = () => { eid = 0; const tape = run(mkP([[PS, CF, BB, AS, RS, FT]]), [mkE(120, 10), mkE(150, -40), mkE(-90, 10), mkE(30, 200)], 2.5, { dt, rng: seeded(3) });
-      return JSON.stringify(tape.map(({ instId, ...r }) => r)); };
+      return JSON.stringify(tape.map(({ instId, parentId, ...r }) => r)); };     // serials run on across runs; slice 6 made Bubble Beam an emitter, whose move:emit carries parentId
     ok(f() === f(), 'dt ' + dtName(dt) + ': same inputs, same tape');
   }
   console.log('10 determinism: same tape twice at 1/60 and 1/30'); }

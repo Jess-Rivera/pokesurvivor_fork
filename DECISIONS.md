@@ -5,6 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-31, New path primitive path.loop for Fairy Wind (Jess)
+Travelling shots gain path.loop { radius, frequency }: the shot circles a base point that keeps travelling straight, so it draws loop-de-loops that drift away from the caster. The loop is centred on the base point, so the first loop goes round the caster and the shot starts one radius across from it; it never turns the base heading, and adds to oscillate. Needed because curve alone traces a closed circle and oscillate is a 1D weave. First user: Fairy Wind (radius 70, 0.6667 Hz, 90 px/s drift, 2 loops in 3 s; retuned and centred after the same-day feel test). Rule change: grammar, runtime and render trail.
+Canonical: docs/current feature planning/combat-architecture.md D38; docs/MOVE-AXIS-SCHEMA.md path row
+
+## 2026-10-31, Slice 6 becomes projectile spacing and nova sizing; balance moves to playtest branches (Jess)
+The damage simulator and balance pass leave slice 6. Balance passes become their own branches after the game has playtesters, so the numbers are tuned on real play rather than offline tables. Slice 6 is now a feel fix: shot spacing on multi-shot moves (String Shot #15 and others) and nova sizes. Rules do not change, only spacing and size numbers in move data. The slice 6 balance questions (throughput outliers, H13 children power, stage tunables, card steps and caps) carry to the first balance branch.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-6.md
+
 ## 2026-10-31, 2-buff learn limit on the new path: self-only buffs (Jess)
 On the new move path a move counts toward the 2-buff learn limit when every effect in it, emitted children included, lands on its own side: a self or team stat change, a self heal, a shield, a recoil cost. That is the five stat and heal buffs (Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring) plus Substitute. Moves with a foe-side effect but no damage (Toxic, Will-O-Wisp, String Shot, Spikes, Toxic Spikes) are not buffs, since they still act on enemies. Replaces the build default "no damage anywhere". Unrouted moves keep the legacy kind check until 7b.
 Canonical: js/systems/team-cards.js selfOnly; docs/current feature planning/move-schema-post-auth/slice-5-handoff.md

@@ -108,7 +108,8 @@ console.log('1 timelines: Swords Dance, Harden, Dragon Dance, Leaf Storm, equal 
 { const team = {}, a = mkP([[]], { stgTeam: team }), b = mkP([[]], { stgTeam: team });
   hit('metal-claw', mkE(30, 0), a, () => 0); hit('metal-claw', mkE(30, 0), b, () => 0); hit('metal-claw', mkE(30, 0), a, () => 0);
   ok(S.teamSum(team, 'atk') === 2 && S.stage(b, 'atk') === 2 && Object.keys(S.trackers(a).team.atk).length === 2, 'Metal Claw on two roster members: two team trackers, +2');
-  const e = mkE(30, 0); hit('bubble-beam', e, a, () => 0); hit('bubble-beam', e, b, () => 0); hit('bubble-beam', e, a, () => 0);
+  const e = mkE(30, 0), bb = D['bubble-beam'].payload[0].move;     // slice 6: the rider rides each emitted bubble
+  hit(bb, e, a, () => 0); hit(bb, e, b, () => 0); hit(bb, e, a, () => 0);
   ok(S.stage(e, 'spe') === -2 && Object.keys(e.trk.spe).length === 2, 'Bubble Beam from two Pokemon: two trackers on the enemy, -2');
   console.log('3 two Pokemon: two trackers each way'); }
 
