@@ -3,10 +3,11 @@ G.RunUI = (() => {
   const $ = G.UI.$;
   let offers = null, offerCb = null, coopMode = false;
   let flow = null;            // a mechanic / stat card being applied on the choose sheet: { card, idx, info }
+  let vit = null;             // slice 5b: the Vitamins card's stat pick, shown on the card screen itself: { card, idx }
 
   /** @param coop  in a group: after choosing, it waits for the others */
   function showLevelUp(level, list, cb, coop = false) {
-    offerCb = cb; coopMode = coop; flow = null;
+    offerCb = cb; coopMode = coop; flow = null; vit = null;
     $('lvl-num').textContent = level;
     $('lvl-wait').textContent = '';
     $('lvl-wait').classList.toggle('hidden', !coop);
@@ -27,7 +28,7 @@ G.RunUI = (() => {
   }
 
   function reroll() {
-    if (!offers || flow || rerollsLeft() <= 0) return;
+    if (!offers || flow || vit || rerollsLeft() <= 0) return;
     const p = G.Game.player;
     p.rerolls = (p.rerolls || 0) + 1;
     G.Audio.sfx('select');
@@ -74,11 +75,39 @@ G.RunUI = (() => {
   // ---- card -> choose sheet (Pokemon strip + move block) -> Confirm ----
 
   function pick(i) {
-    if (!offers || !offers[i] || flow) return;
+    if (!offers || !offers[i] || flow || vit) return;
     const c = offers[i];
-    if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }
+    if (c.type === 'vitamins') { G.Audio.sfx('select'); openVitamins(c, i); return; }
+    if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }     // a new move, and the 5b team cards (no choose sheet)
     G.Audio.sfx('select');
     openChoose(c, i);
+  }
+
+  // ---- slice 5b: the Vitamins card's stat pick (3 rows on the card screen, keys 1-3, Backspace back) ----
+  function openVitamins(c, idx) {
+    vit = { card: c, idx };
+    $('lvl-reroll').classList.add('hidden');
+    const box = $('cards'), pct = v => Math.round(v * 100) + '%';
+    box.innerHTML = '';
+    c.options.forEach((o, j) => box.appendChild(row({
+      title: o.label + ': ' + o.stat + ' +' + pct(o.next - o.now), desc: 'Team-wide ' + o.stat + ' bonus +' + pct(o.now) + ' to +' + pct(o.next),
+      color: o.color, chip: 'Vitamins', chipColor: o.color, icoText: '+' + pct(o.next - o.now),
+      key: G.Input.keyLabel('attack_' + (j + 1)), onclick: () => pickVit(j)
+    })));
+    box.appendChild(row({ title: 'Back', desc: 'Return to the three cards', color: '#9fb1c9', icoText: '\u2190', key: 'Bksp', onclick: vitBack }));
+  }
+  function pickVit(j) {
+    if (!vit || !vit.card.options[j]) return;
+    const { card, idx } = vit;
+    vit = null;
+    card.choice = card.options[j].id;
+    finish(card, null, idx);
+  }
+  function vitBack() {
+    if (!vit) return;
+    G.Audio.sfx('select');
+    vit = null;
+    renderCards(offers);
   }
 
   /** Open the summary sheet in choose mode for card `c`: pick a Pokemon (and, for a mechanic card, one of its moves). */
@@ -115,7 +144,7 @@ G.RunUI = (() => {
 
   function finish(c, tgt, idx) {
     const cb = offerCb, list = offers;
-    offers = null; offerCb = null; flow = null;
+    offers = null; offerCb = null; flow = null; vit = null;
     $('lvl-reroll').classList.add('hidden');
     G.UI.hide('scr-choose');
     if (coopMode) {
@@ -131,6 +160,11 @@ G.RunUI = (() => {
    *  1-4 pick a move and confirm, Enter confirm, Backspace back. */
   function levelKeys() {
     if (!offers && !flow) return;
+    if (vit) {     // 5b Vitamins: 1-3 pick a stat, Backspace back to the cards
+      for (let i = 0; i < vit.card.options.length; i++) if (G.Input.action('attack_' + (i + 1))) { pickVit(i); return; }
+      if (G.Input.tap('backspace')) vitBack();
+      return;
+    }
     if (!flow) {
       for (let i = 0; i < 3; i++) if (G.Input.action('attack_' + (i + 1))) pick(i);
       if (G.Input.tap('keyr')) reroll();
@@ -156,7 +190,7 @@ G.RunUI = (() => {
   }
 
   function closeLevelUp() {
-    offers = null; offerCb = null; flow = null;
+    offers = null; offerCb = null; flow = null; vit = null;
     $('cards').classList.remove('done');
     G.UI.hide('scr-levelup');
     G.UI.hide('scr-choose');

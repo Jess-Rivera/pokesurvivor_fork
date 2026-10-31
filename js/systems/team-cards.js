@@ -24,6 +24,10 @@
  *   targets(card, def)       the [object, key, lock, opts] fields `card` changes on `def` (empty = the move cannot use it)
  *   usable(card, def)        true when one more stack of `card` changes `def`
  *   CARDS, BY_ID, TYPES, cardOf(id)   (type cards are 'type:fire' and so on)
+ *   gateMul(o), durOf(o)     part C (COMBAT-RULES:SS10): the caster team's Gate multiplier and stat stage Duration (1 and 6.1 s with no store)
+ *   regen(store), vit(store, k)   part D: the benched heal per second (fraction of max HP) and the team Vitamins bonus on stat k
+ *   hasStat(def), selfOnly(def)   part E: a Gate / Duration taker; the new-path buff test for the 2-buff limit (every effect on its own side)
+ *   stepText(card), summary(store)   parts E and F: card text, and the team sheet's "Run Cards" rows { id, label, family, stacks, total }
  */
 G.TeamCards = (() => {
   const TAU = 6.2832, EPS = 1e-9;
@@ -231,5 +235,79 @@ G.TeamCards = (() => {
     return def;
   }
 
-  return { CARDS, BY_ID, TYPES, cardOf, targets, usable, fold, store, add, stacks, defOf, same };
+  // ---- parts C and D: the team cards' readers (Jess 2026-10-31; plan: Slice 5b - Parts C to G Plan.txt) ----
+  const STEP = id => BY_ID[id].step;
+  /** COMBAT-RULES:SS10. The caster team's Gate multiplier: a rate card, 1 / (1 + stacks x step). 1 with no store (enemies, fixtures). */
+  function gateMul(o) { return 1 / (1 + stacks(o && o.teamCards, 'gate') * STEP('gate')); }
+  /** COMBAT-RULES:SS10. The caster team's stat stage Duration in seconds: the base x (1 + stacks x step). */
+  function durOf(o) { return G.Stages.DURATION * (1 + stacks(o && o.teamCards, 'duration') * STEP('duration')); }
+  /** HP Regen: the fraction of max HP a BENCHED member regains per second. */
+  const regen = s => stacks(s, 'regen') * STEP('regen');
+  /** Vitamins: the team's bonus fraction on stat `k` (hp, atk, def, spa, spd, spe), stored as 'vitamins:<k>' stacks (the fold skips them). */
+  const vit = (s, k) => stacks(s, 'vitamins:' + k) * STEP('vitamins');
+
+  // ---- part E: what the offer needs to know about a move ----
+  /** Visits the move and every emitted child, inline or named, once each; true as soon as `fn` is true for one. */
+  function walk(d, fn, seen = new Set()) {
+    if (!d || typeof d !== 'object' || seen.has(d)) return false;
+    seen.add(d);
+    if (fn(d)) return true;
+    for (const fx of d.payload || []) if (fx.t === 'emit' && fx.move && walk(typeof fx.move === 'string' ? G.MoveDefs[fx.move] : fx.move, fn, seen)) return true;
+    return false;
+  }
+  /** A stat change anywhere in the move: Gate Reduction and Duration Increase have a taker. */
+  const hasStat = d => walk(d, n => (n.payload || []).some(fx => fx.t === 'stat'));
+  /** The 2-buff learn limit (Jess, 2026-10-31, self-only): a new-path move is a buff when EVERY effect in it, emitted children included,
+   *  lands on the caster's own side: a self or team stat change, a self heal, a shield, a recoil cost. One foe-side effect (damage, an
+   *  ailment, a foe stat drop, a flinch, a knockback, a weather) and it is not a buff; a move with no effect is not one either. */
+  const SELF_T = new Set(['heal', 'shield', 'recoil']);
+  function selfOnly(d) {
+    let n = 0;
+    const foe = walk(d, x => (x.payload || []).some(fx => {
+      if (fx.t === 'emit') return false;
+      n++;
+      return !(fx.t === 'stat' ? fx.side !== 'foe' : SELF_T.has(fx.t));
+    }));
+    return !foe && n > 0;
+  }
+
+  // ---- parts E and F: card text and the run summary ----
+  const r1 = v => String(Math.round(v * 10) / 10);
+  /** The step as card text: '+15%', '-15%', '+1', '+10 pts', '+0.5%/s'. */
+  function stepText(c) {
+    if (c.id === 'regen') return '+' + r1(c.step * 100) + '%/s';
+    if (c.id === 'ailment') return '+' + c.step + ' pts';
+    if (c.mode === 'add' && c.step >= 1) return '+' + c.step;
+    return (c.mode === 'rate' ? '-' : '+') + Math.round(c.step * 100) + '%';
+  }
+  const FAM = ['General', 'Space', 'Delivery', 'Payload'];
+  const STAT_NAME = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
+  /** The total of `n` stacks: a rate card shows its real cut (1 - 1 / (1 + total)), a capped card counts to its cap. */
+  function totalText(c, n) {
+    const k = c.cap ? Math.min(n, c.cap) : n, v = k * c.step, capped = c.cap && n >= c.cap ? ' (max)' : '';
+    if (c.id === 'regen') return '+' + r1(v * 100) + '% max HP/s, benched only';
+    if (c.id === 'ailment') return '+' + v + ' pts';
+    if (c.mode === 'add' && c.step >= 1) return '+' + v + capped;
+    if (c.mode === 'rate') return '-' + Math.round((1 - 1 / (1 + v)) * 100) + '%';
+    return '+' + Math.round(v * 100) + '%';
+  }
+  /** The team sheet's "Run Cards" rows, General first, then Space, Delivery, Payload; by label inside a family. */
+  function summary(s) {
+    const out = [];
+    for (const id of Object.keys((s && s.stacks) || {})) {
+      const n = s.stacks[id];
+      if (!(n > 0)) continue;
+      if (id.startsWith('vitamins:')) {
+        const k = id.slice(9);
+        out.push({ id, label: 'Vitamins: ' + (STAT_NAME[k] || k), family: 'General', stacks: n, total: '+' + Math.round(n * STEP('vitamins') * 100) + '%' });
+        continue;
+      }
+      const c = BY_ID[id]; if (!c) continue;
+      out.push({ id, label: c.label, family: c.family, stacks: n, total: totalText(c, n) });
+    }
+    return out.sort((a, b) => FAM.indexOf(a.family) - FAM.indexOf(b.family) || (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
+  }
+
+  return { CARDS, BY_ID, TYPES, cardOf, targets, usable, fold, store, add, stacks, defOf, same,
+    gateMul, durOf, regen, vit, hasStat, selfOnly, stepText, summary, STAT_NAME };
 })();

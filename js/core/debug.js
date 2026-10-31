@@ -356,6 +356,8 @@ G.Debug = (() => {
  *                       Gate before it casts again.
  *  newcombat('drops')    slice 5a batch re-review: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze and Bubble Beam (foe stat
  *                       drops that now climb per Gate). The 'arcs' rings of slow awake dummies; the overlay prints each dummy's stages.
+ *  newcombat('cards')    slice 5b team-wide cards: Ember, Razor Leaf, Rock Slide and Substitute, one per slot, with the 'arcs' rings.
+ *                       Level up for the team card offer, or grant stacks with G.Debug.cards(id, n).
  *  newcombat('shadow-ball', 'flash-cannon', ...)   any routed move ids, one per slot in the order given, with the same rings. An id that
  *                       is unknown or not on the new path yet is skipped with a warning. One argument that names a set loads the set. */
   const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
@@ -372,7 +374,8 @@ G.Debug = (() => {
     falls: ['rock-slide', 'flamethrower'],
     emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'],
     stages: ['swords-dance', 'leaf-storm', 'bug-buzz', 'string-shot'],
-    drops: ['shadow-ball', 'flash-cannon', 'psychic', 'mud-shot', 'bulldoze', 'bubble-beam'] };
+    drops: ['shadow-ball', 'flash-cannon', 'psychic', 'mud-shot', 'bulldoze', 'bubble-beam'],
+    cards: ['ember', 'razor-leaf', 'rock-slide', 'substitute'] };
   // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
   const NC_AIL = {
     burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
@@ -435,7 +438,7 @@ G.Debug = (() => {
       console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. ' + (set === 'stages' ? 'The overlay prints every dummy\'s stages and yours; G.Stages.trackers(G.Game.player) shows the timers.' : 'Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.'));
       return n;
     }
-    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs' || set === 'drops' || set === 'custom') {     // 5a: drops and custom lists reuse these rings     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
+    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs' || set === 'drops' || set === 'custom' || set === 'cards') {     // 5a: drops and custom lists reuse these rings     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
       for (const d of [70, 140, 230]) for (let i = 0; i < 8; i++) {
         const a = i * Math.PI / 4 + (d === 140 ? Math.PI / 8 : 0);
         const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
@@ -537,6 +540,23 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Slice 5b team-wide cards (?dev&newcombat): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
+   *  'vitamins:atk' and so on; an HP Vitamin refreshes every member's max HP). No arguments: prints the store and every card id. */
+  function cards(id, n = 1) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
+    const pl = G.Game && G.Game.player, s = pl && pl.teamCards;
+    if (!s) { console.warn('[Debug] no run in progress.'); return 0; }
+    const ids = G.TeamCards.CARDS.filter(c => c.id !== 'vitamins').map(c => c.id).concat(G.Mechanics.STATS.map(st => 'vitamins:' + st.id));
+    if (id == null) { console.table(G.TeamCards.summary(s)); console.log('[Debug] card ids: ' + ids.join(', ')); return s.n; }
+    if (!ids.includes(id)) { console.warn('[Debug] unknown card id: ' + id + '. Ids: ' + ids.join(', ')); return 0; }
+    G.Game.debugMaxed();
+    const k = G.TeamCards.add(s, id, Math.max(1, Math.floor(n)));
+    if (id === 'vitamins:hp') for (const f of G.Game.roster || [pl]) if (f.refreshMaxHp) f.refreshMaxHp();
+    console.log('[Debug] ' + id + ' now x' + k + ' (team-wide). G.Debug.cards() lists the store.');
+    return k;
+  }
+
   /** Queues n level-ups (dev only; flags the run as tampered). */
   function levelUp(n = 1) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
@@ -551,5 +571,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards };
 })();

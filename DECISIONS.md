@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-31, 2-buff learn limit on the new path: self-only buffs (Jess)
+On the new move path a move counts toward the 2-buff learn limit when every effect in it, emitted children included, lands on its own side: a self or team stat change, a self heal, a shield, a recoil cost. That is the five stat and heal buffs (Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring) plus Substitute. Moves with a foe-side effect but no damage (Toxic, Will-O-Wisp, String Shot, Spikes, Toxic Spikes) are not buffs, since they still act on enemies. Replaces the build default "no damage anywhere". Unrouted moves keep the legacy kind check until 7b.
+Canonical: js/systems/team-cards.js selfOnly; docs/current feature planning/move-schema-post-auth/slice-5-handoff.md
+
 ## 2026-10-31, ESLint and Prettier wait for the move-schema merge (Jess)
 Both tools are adopted, but neither lands until feature-test/new-move-schema merges into main (after 7b), so the branch never has to reconcile a whole-repo reformat. Then one chore branch off main: ESLint (script sourceType, browser globals plus G, ecma 2020, generated and vendored folders ignored, warn-only in check.js at first), and Prettier as one big-bang format commit, listed in .git-blame-ignore-revs. Prettier options are settled at that time, matching the house style (2-space, single quotes, semicolons).
 Canonical: TODO.md Backlog, "Lint and format tooling"

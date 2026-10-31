@@ -6,36 +6,37 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-29 ~5:40 PM; verified unchanged 2026-10-30 5:29 AM; the 10-30 wrap-up fetch failed, so later browser changes may be missing)
+## Board mirror (synced from the GitHub API 2026-10-31 ~12:05 PM, Quick)
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
-NOT RE-SYNCED 2026-10-30 3:55 PM (Quick): the API fetch returned empty. A partial fetch that morning showed one issue not listed below: #16 [Bug]: Animation Sync between move and Pokemon [bug, no area or status label] (filed 2026-10-30 00:40 UTC; the TODO "NEW-PATH MOVES MISALIGNED" item). #15 had lost needs-triage (labels bug, area:moves). Re-sync next session.
 
-OPEN (13):
+OPEN (15):
 - #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by 1 open of 2; blocking 1) (reopened)
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by 1 open of 2, likely #3; blocking 1, likely #11) (reopened)
 - #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking 1, likely #2)
 - #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]  (no dependency link)
-- #6  Harness for the gym-gate escalation clock/bump  [feature / gyms / ready]
+- #6  Gym sprite display fix is tracked as #1, harness for escalation clock/bump  [feature / gyms / ready]
 - #8  Tileset loader + map generator cleanup  [feature / engine / ready]
 - #9  Regional forms (blocks Lorelei, Agatha, Bruno gym builds)  [feature / gyms / blocked]  (no dependency link)
 - #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]  (no dependency link)
 - #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 1, likely #2)
-- #12 More accurate hitboxes (per-species circle radius)  [feature / engine / needs-triage]
-- #13 New move path: routed moves never target idle props  [design / moves / needs-triage]
+- #12 More accurate hitboxes (per-species circle radius)  [feature / engine / no status]
+- #13 New move path: routed moves never target idle props  [design / moves / no status]
 - #14 New move path: ranged moves lost boss priority  [design / moves / needs-triage]
-- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / needs-triage]  (shot spacing, not the cd, see MOVE-INTENT string-shot; no feel verdict recorded 2026-10-29)
+- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / no status]  (shot spacing, not the cd, see MOVE-INTENT string-shot)
+- #16 [Bug]: Animation Sync between move and Pokemon  [bug / no area / no status]  (filed 2026-10-30; the TODO "NEW-PATH MOVES MISALIGNED" item)
+- #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / blocked]  (no dependency link; waits on the post-7b merge, DECISIONS 2026-10-31)
 
 CLOSED (2):
 - #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24, completed; still counted as blocking 1)
 - #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms / ready]  (closed 2026-10-24, completed)
 
 INCONSISTENCIES TO RESOLVE ON THE BOARD (Jess; the agent never mutates the tracker):
-- #4 is CLOSED but still listed as a blocker (blocking 1); #2 shows 2 total blockers with 1 open, so the closed one is very likely #4. Remove the stale link.
-- #2 is labeled `ready` while it still has 1 open blocker (likely #3), and it is the in-progress move-schema work, so `ready` understates it.
+- #4 is CLOSED but still counted as a blocker (blocking 1); #2 shows 2 total blockers with 1 open, so the closed one is very likely #4. Remove the stale link.
+- #2 is labeled `ready` while it still has 1 open blocker (likely #3).
 - #3 is labeled `ready` but its 64-move conversion pass is done (2026-10-24 note below); consider closing it, which would also unblock #2.
-- #5, #9 and #10 carry `blocked` with no dependency link; add the link (#5 waits on the moves import) or drop the label.
+- #5, #9, #10 and #17 carry `blocked` with no dependency link; add the link or drop the label (#17 has no issue to link to: it waits on a merge).
+- #16 has no area or status label; #17 has no type label; #12, #13 and #15 have no status label.
 - #4 (closed) still carries `needs-triage`; #7 (closed) still carries `ready`.
-- #12, #13, #14 and #15 are still `needs-triage`.
 
 NOTE (unchanged from the 2026-10-24 sync): the feel-first 64-move conversion pass (#3) is COMPLETE: 63 of 64 moves converted in docs/move_rework_holding/move-conversions-described.json (bubble logged as a forgotten-move skip). #4's three feel-calls were decided in that pass. Board automation: closing an issue moves it to Shipped.
 
@@ -87,6 +88,7 @@ live queue, cross-reference the issue number.
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 
 ## Backlog
+- Team sheet move numbers on the new path (slice 5b F1, Jess 2026-10-31: deferred): sheet.js derives move numbers from the legacy move (G.Kinds, m.kind, m.dmg), so a folded card does not show in the move rows yet. The Run Cards tab lists the cards. Fold into the slice 7 sheet rewrite.
 - Lint and format tooling (decided 2026-10-31, starts AFTER feature-test/new-move-schema merges to main, post-7b): one chore branch off main. (1) ESLint: plain-script files, browser globals plus `G`, ecma 2020 (matches terser in build.js); ignore pokeapi-master/, functions/ (cloud, deferred), _delete_/, node_modules/, js/data/pokedex.js, js/data/sprites-meta.js, docs/move_rework_holding/; add a warn-only lint step to tools/check.js, judge the inherited-code noise, then decide whether it fails the run. (2) Prettier: one big-bang "format everything" commit, its hash in .git-blame-ignore-revs; options match the house style (2-space, single quotes, semicolons); decide then whether hand-aligned trailing comments and one-line property groups (camera.js style) are worth a prettier-ignore or just accepted. Both as devDependencies in package.json (today only archiver). Plan as an ASCII map with a tests section when it starts. Build config, so prose plan and approval.
 - HUD readout for own stat drops (found 2026-10-31, proposed, not approved): a drop on your own Atk, Def, Sp. Atk or Sp. Def (Leaf Storm, enemy drops) shows only as a fading popup plus the ?dev overlay; refreshes inside the Gate are silent, so it looks gone while it is live. Idea: one line per own drop with its time left in the HUD status list (status.js, beside "Slowed"). Presentation only.
 - D-BUBBLE (opened 2026-10-30, blocks 7b): Bubble is the 64th move, parked unconverted; starters dex 393 and 728 open with it. Convert it or re-point them before moves.js is deleted. See slice-7b.md.

@@ -7,17 +7,17 @@ const root = path.resolve(__dirname, '../..');
 const SRC = { stages: ['js/systems/stages.js', 'STAGE_STAGES'], fx: ['js/systems/move-effects.js', 'STAGE_FX'], sim: ['js/systems/move-sim.js', 'STAGE_SIM'] };
 const M = [
   ['climb ignores the Gate', 'stages', [['if (t.g > EPS) return false;', 'if (false) return false;']]],
-  ['a refresh skips the Duration reset', 'stages', [['t.d = DURATION;                                                       // SS4', '// SS4']]],
+  ['a refresh skips the Duration reset', 'stages', [['t.d = dur;                                                       // SS4', '// SS4']]],
   ['a dry window wipes every tracker on the stat', 'stages', [['if ((t.d -= dt) <= 0) delete T[k]; }', 'if ((t.d -= dt) <= 0) { for (const j in T) delete T[j]; break; } }']]],
   ['no per-tracker clamp', 'stages', [['t.n = clamp(t.n + n, -MAX, MAX); t.g = gate;', 't.n = t.n + n; t.g = gate;']]],
-  ['self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false));']]],
+  ['self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);']]],
   ['self change rolls on every hit', 'fx', [['if (u.get(fx) === use) return false;', '']]],
   ['a rehit step is not a new use', 'fx', [["const use = rehit ? inst.id + ':' + inst.age : 'cast';", "const use = 'cast';"]]],
   ['foe tag without the caster (2 Pokemon share a tracker)', 'fx', [['src = srcOf(inst.spec, o);     // S4, foe side too (SS1)', 'src = onFoe ? inst.spec.id : srcOf(inst.spec, o);']]],
   ['a pure buff ignores its Gate (swap-in casts at once)', 'fx', [['if (!t || t.g <= EPS) return true;', 'if (t || !t) return true;']]],
   ['an inactive pure buff casts', 'sim', [['        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);\n',
     '        if (G.MoveEffects.isPureBuff(def) && G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);\n        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);\n']]],
-  ['a fizzled pure buff does not wait', 'sim', [['{ if (buff) slot.t = G.Stages.gateOf(false); return null; }', '{ return null; }']]],
+  ['a fizzled pure buff does not wait', 'sim', [['{ if (buff) slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1); return null; }', '{ return null; }']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stat-stage-mut-'));
 let caught = 0;

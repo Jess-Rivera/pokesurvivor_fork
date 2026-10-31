@@ -28,7 +28,7 @@ const M = [
   ['oscillation offset along the heading', 'sim', [['inst.x = inst.bx - Math.sin(inst.heading) * off;', 'inst.x = inst.bx + Math.cos(inst.heading) * off;']]],
   ['cooldown ignores cdMul floor order (cd x 0.9)', 'sim', [['slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));', 'slot.t = buff ? 0 : Math.max(0.05, def.cd * 0.9);']]],
   ['stunned owner still casts', 'sim', [['if (G.Status.stunned(o)) { slot.t = RETRY; return null; }', '']]],
-  ['fizzle refunds the cooldown', 'sim', [['if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false); return null; }', 'if (G.Status.fizzle(o, rng)) { slot.t = RETRY; return null; }']]],
+  ['fizzle refunds the cooldown', 'sim', [['if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1); return null; }', 'if (G.Status.fizzle(o, rng)) { slot.t = RETRY; return null; }']]],
   ['STAB dropped (owner.stabFor ignored)', 'fx', [['o.stabFor(m)', 'false']]],
   // slice 3d
   ['routing filter ignored', 'sim', [['!routed(slot.id) || ', '']]],

@@ -46,8 +46,9 @@ G.Stages = (() => {
 
   // ---- stat stage trackers (slice 5a): base timers SS7, Self-drop Gate SS12, Strong-host Gate SS13 (dormant until slice 7a) ----
   const GATE = 6.0, DURATION = 6.1, SELF_DROP_GATE_MUL = 2, STRONG_HOST_GATE_MUL = 1;
-  /** The Gate a success climbs on: the base Gate, x2 for a drop a Pokemon puts on itself (SS12). Slice 5b scales this with the team Gate card. */
-  function gateOf(selfDrop) { return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1); }
+  /** The Gate a success climbs on: the base Gate, x2 for a drop a Pokemon puts on itself (SS12), x `mul` (slice 5b, SS10: the caster
+   *  team's Gate card, G.TeamCards.gateMul; 1 for enemies and when omitted). */
+  function gateOf(selfDrop, mul = 1) { return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1) * mul; }
   const TEAM_TRK = new WeakMap();     // team store object -> its tracker map; shared exactly as far as the store itself is shared
   function teamTrk(store, make) {
     if (!store) return null;
@@ -83,11 +84,12 @@ G.Stages = (() => {
   function mul(h, stat) { const s = (h.stg || h.stgTeam || h.trk) ? stage(h, stat) : 0; return s ? ladder(stat, s) : 1; }
 
   /** SS3 to SS6: one success of `n` stages from `src` on tracker map `m` (host `h` shows the text). Returns true when the host's stage changed. */
-  function success(m, h, stat, n, src, gate) {
+  function success(m, h, stat, n, src, gate, dur = DURATION) {     // 5b: dur is the caster team's Duration (SS10), dl its full length for the HUD
     const T = m[stat] || (m[stat] = {}), t = T[src], cur = stage(h, stat);
-    if (!t) T[src] = { n: clamp(n, -MAX, MAX), g: gate, d: DURATION };     // SS3
+    if (!t) T[src] = { n: clamp(n, -MAX, MAX), g: gate, d: dur, dl: dur };     // SS3
     else {
-      t.d = DURATION;                                                       // SS4: every success resets Duration
+      t.dl = dur;
+      t.d = dur;                                                       // SS4: every success resets Duration
       if (t.g > EPS) return false;                                          // Gate closed: refresh only
       t.n = clamp(t.n + n, -MAX, MAX); t.g = gate;                          // Gate open: climb, restart the Gate (SS6 per-tracker clamp)
     }
@@ -96,14 +98,14 @@ G.Stages = (() => {
     return now !== cur;
   }
   /** A success on the host's OWN tracker (a foe drop on an enemy, a self drop, an individual-scope self change). */
-  function trackOwn(h, stat, n, src, gate = GATE) {
+  function trackOwn(h, stat, n, src, gate = GATE, dur = DURATION) {
     if (!STATS.includes(stat) || !n || h.dead) return false;
-    return success(h.trk || (h.trk = {}), h, stat, n, src, gate);
+    return success(h.trk || (h.trk = {}), h, stat, n, src, gate, dur);
   }
   /** A success on the TEAM tracker of `o`'s roster (a team raise). Needs the shared team store. */
-  function trackTeam(o, stat, n, src, gate = GATE) {
+  function trackTeam(o, stat, n, src, gate = GATE, dur = DURATION) {
     if (!STATS.includes(stat) || !n || !o.stgTeam) return false;
-    return success(teamTrk(o.stgTeam, true), o, stat, n, src, gate);
+    return success(teamTrk(o.stgTeam, true), o, stat, n, src, gate, dur);
   }
   /** The tracker of (src, stat) on `h`: its own, or its team's with `team`. Null when there is none. */
   function tracker(h, stat, src, team) {
@@ -147,7 +149,7 @@ G.Stages = (() => {
     const L = store && store[stat]; let best = null;
     if (L) for (const a of L) if (!best || a.t > best.t) best = { t: a.t, dur: a.dur };
     const T = store && TEAM_TRK.has(store) ? TEAM_TRK.get(store)[stat] : null;
-    if (T) for (const k in T) if (!best || T[k].d > best.t) best = { t: T[k].d, dur: DURATION };
+    if (T) for (const k in T) if (!best || T[k].d > best.t) best = { t: T[k].d, dur: T[k].dl || DURATION };
     return best;
   }
   /** True when the team has anything live on `key`: a legacy application or a tracker. */

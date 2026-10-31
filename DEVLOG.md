@@ -226,3 +226,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Data: eligible Count 16, Pierce 17, Time 5, Chain 3, Delay 1, Recoil 1 (maps corrected).
 - Tests: team-cards-harness (90) and team-cards-mutate (30), green in Quick's sandbox only, plus the 10 move harnesses that load move-sim. check.js NOT run on Jess's machine yet.
 - Slow session: the sandbox has no node CLI, so every run was hand-bundled. Stopped at: Jess runs check.js + mutate, then a fresh chat for parts C to G.
+
+## 2026-10-31 (Quick, work, midday): slice 5b parts C to G, team cards playable
+- Built: Gate Reduction / Duration Increase on every team-caused stat change (stages.js, move-effects.js, move-sim.js fizzle wait); HP Regen (bench only) and team Vitamins plus refreshMaxHp (player.js); the team card offer (levelup.js teamFamilies) and pick flow with the Vitamins sub-pick (run-ui.js); Run Cards sheet tab (sheet.js, TeamCards.summary); newcombat('cards') and G.Debug.cards. Changelog entry.
+- Decided (Jess): sheet move rows stay legacy (TODO, slice 7); Vitamins uses the Protein / Calcium rule; no bench regen text; 2-buff limit counts self-only moves (the five buffs plus Substitute; DECISIONS). My first cut (no damage anywhere) also counted Toxic, String Shot, Spikes, Toxic Spikes, Will-O-Wisp: replaced.
+- Tests: team-cards-harness 147, team-cards-mutate 61; retargeted 7 stale patterns (stat-stage 3, move-sim 1, move-persist 1, move-selfcast 2). Jess ran check.js and all six mutation runners on node: green.
+- Stopped at: commit + push, then the 5b full-run feel test.

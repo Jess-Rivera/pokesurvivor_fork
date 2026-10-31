@@ -132,8 +132,9 @@ G.Player = class Player {
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
-  /** Stat bonus fraction: the stat cards plus the gym badge boosts. */
-  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
+  /** Stat bonus fraction: the stat cards plus the gym badge boosts, plus the team Vitamins card (slice 5b: a team read, so every member,
+   *  bench and later ones included, has it). */
+  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k) + (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
   /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
   addBadgeBoost(stat, pct) {
     if (!(stat in this.badge)) return false;
@@ -144,6 +145,13 @@ G.Player = class Player {
       if (gain > 0 && !this.dead) this.hp += gain;
     }
     return true;
+  }
+  /** Slice 5b: re-derive max HP after a team HP bonus (the HP Vitamin). Tops up the gain like a level-up. */
+  refreshMaxHp() {
+    if (this.baseHpStat == null) return;
+    const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+    this.maxHp = newMax;
+    if (gain > 0 && !this.dead) this.hp += gain;     // never revives a fainted member
   }
   /** Take one stat card (HP Up, Protein, Iron, Calcium, Zinc, Carbos). */
   addStat(id) {
@@ -431,6 +439,9 @@ G.Player = class Player {
     if (this.slowT > 0) this.slowT -= dt;
     G.Status.tick(this, dt);
     G.Stages.tick(this, dt);
+    // Slice 5b HP Regen card: benched members only (a reason to swap); no floating number on the bench (Jess, 2026-10-31)
+    const rg = this.teamCards ? G.TeamCards.regen(this.teamCards) : 0;
+    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);
     this.benched = false;
   }
 

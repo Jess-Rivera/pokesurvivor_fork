@@ -148,9 +148,11 @@ G.MoveEffects = (() => {
     if (onFoe ? !foe(e) : o.dead) return;
     if (!onFoe && !firstUse(inst, fx)) return;
     if (!rolls(fx, hop, rng)) return;
-    if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false));
-    else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));
-    else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));
+    // slice 5b (COMBAT-RULES:SS10): the CASTER team's Gate and Duration cards, on every change it causes (foe drops, team raises, self drops)
+    const gm = o.teamCards ? G.TeamCards.gateMul(o) : 1, dur = o.teamCards ? G.TeamCards.durOf(o) : undefined;
+    if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);
+    else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);
+    else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);
   }
 
   // SS8 (slice 5a): a pure buff move has no damage and no shape: its payload is only self stat changes (Swords Dance, Agility, Harden,

@@ -261,7 +261,7 @@ G.MoveSim = (() => {
     if (!repoCanGo(def, o)) { slot.t = RETRY; return null; }         // 4c-2: no dash over a live dash, no dash at speed 0
     const buff = G.MoveEffects.isPureBuff(def);                       // SS8 (slice 5a): a pure buff has no cooldown; its trackers decide when it casts
     slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));      // D3
-    if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false); return null; }     // fizzle spends the cooldown; a pure buff waits one Gate (SS8)
+    if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1); return null; }     // fizzle spends the cooldown; a pure buff waits one Gate (SS8)
     const pick = settle(o, gate);                                     // 4c-3: the location roll, only for a real cast
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial };
     const self = G.MoveEffects.applyCast(def, cast, rng);             // recoil, shield, self stats, heal over time, setWeather (4b)

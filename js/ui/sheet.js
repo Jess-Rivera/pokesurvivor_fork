@@ -12,6 +12,7 @@
  *   G.Sheet.pickMoveIndex(mount, n) select the n-th shown move if it can take the card (choose mode); true if it did
  *   G.Sheet.moveLines(pl, m)       { raw, hit, stacks } text for one move (also used by tests)
  *   G.Sheet.typicalDef()           { def, spd }: median base Def / SpD of the roster
+ *   Slice 5b: a "Run Cards" item tab (new move path only) lists the run's team-wide cards, from G.TeamCards.summary.
  *
  * Choose mode: `card` is the level-up card being applied (type 'mech' or 'stat'), `targets` is card.targets(roster)
  * (per Pokemon: ok, moves[{m, ok, why}] or, for stat cards, note). Pokemon that cannot take the card stay viewable
@@ -275,13 +276,17 @@ G.Sheet = (() => {
             ${(() => {
               // Mini tabs for the item area: Berry | Held Item | Team Items (one panel at a time, so the column does not scroll).
               const tab = S.itemTab || 'held';
-              const tabs = [['berry', 'Berry'], ['held', 'Held Item'], ['team', 'Team Items']]
+              const runCards = !!(pl.teamCards && G.MoveRoute && G.MoveRoute.on === true);     // slice 5b: the run's team-wide cards
+              const tabs = [['berry', 'Berry'], ['held', 'Held Item'], ['team', 'Team Items']].concat(runCards ? [['cards', 'Run Cards']] : [])
                 .map(([k, n]) => `<button type="button" class="sh-itab${tab === k ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('');
               let body = '';
               if (tab === 'held') {
                 body = item
                   ? `<span class="sh-iico">${G.Icons.html(item.icon || pl.item, 28)}</span><b>${E(item.name)}</b>${S.canMoveItems && S.roster.length > 1 ? `<button type="button" class="sh-mv${S.giving ? ' on' : ''}">${S.giving ? 'Cancel' : 'Move item'}</button>` : ''}<div class="ds">${S.giving ? 'Click a teammate in the top right to give it this item (they swap if it holds one).' : E(item.desc || '')}</div>`
                   : `<div class="sh-bag empty"><span class="sh-iico sh-bagbox"></span><b>Held item</b> (none)</div>`;
+              } else if (tab === 'cards' && runCards) {
+                const rows = G.TeamCards.summary(pl.teamCards).map(r => `<div class="sh-bag"><b>${E(r.label)}${r.stacks > 1 ? ' x' + r.stacks : ''}</b><div class="ds">${E(r.total)}</div></div>`);
+                body = `<span class="ds">Team-wide, whole run</span>${rows.join('') || '<div class="ds">No cards yet</div>'}`;
               } else if (tab === 'team') {
                 const have = pl.runItems || [], n = G.Items.runSlots(G.DB && G.DB.save), rows = [];
                 for (let k = 0; k < n; k++) {
