@@ -40,15 +40,13 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I04
 
 ### bug-buzz
-- [Approved] No per-move cap on its foe Sp. Def -1: each enemy's tracker climbs -1 per Gate while it stays in the aura and ends one Duration after it leaves (COMBAT-RULES "Stat stages", SS2 and SS4). Supersedes the 2026-10-28 CP3 cap of 1 and the 2026-10-29 "marked once, never stacks" reading. (Jess, 2026-10-30) Code differs, see TODO: built in slice 5.
-- [Legacy behavior] New path today: authored maxStacks 1, so the drop holds at -1 (slice 4c-0). Removed by slice 5.
+- [Approved] No per-move cap on its foe Sp. Def -1: each enemy's tracker climbs -1 per Gate while it stays in the aura and ends one Duration after it leaves (COMBAT-RULES "Stat stages", SS2 and SS4). Supersedes the 2026-10-28 CP3 cap of 1 and the 2026-10-29 "marked once, never stacks" reading. (Jess, 2026-10-30)
 - [Approved] The Sp. Def drop has no chance field, so it applies at 100% on every eligible hit (move-consistency-review:CP1-Q14). The source's 10% was dropped on purpose in the 2026-10-24 conversion. (Jess, 2026-10-29)
 - [Approved] Cadence stays rehit 0.5 at full power per tick (about 180 Power/s to every enemy within 120 px, roughly 3.5x legacy). Not retuned now: it is a throughput outlier for the slice 6 balance pass (move-consistency-review S1). (Jess, 2026-10-29)
 - Ledger: B4-I27
 
 ### dragon-dance
-- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to DECISIONS:Q13 (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30) Code differs, see TODO: built in slice 5.
-- [Legacy behavior] New path today: duration 4 s and cooldown 8 s on both raises, maxStacks 1. Removed by slice 5.
+- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to DECISIONS:Q13 (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
 - Ledger: B4-I05
 
 ### dragon-rage
@@ -80,8 +78,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I10
 
 ### ice-beam
-- [Approved] No per-move cap on its foe Speed -1: it climbs -1 per Gate on each enemy it keeps hitting (COMBAT-RULES "Stat stages", SS2 and SS4). Supersedes the 2026-10-28 CP3 cap of 1. (Jess, 2026-10-30) Code differs, see TODO: built in slice 5.
-- [Legacy behavior] New path today: authored maxStacks 1, so the drop holds at -1 (slice 4c-0). Removed by slice 5.
+- [Approved] No per-move cap on its foe Speed -1: it climbs -1 per Gate on each enemy it keeps hitting (COMBAT-RULES "Stat stages", SS2 and SS4). Supersedes the 2026-10-28 CP3 cap of 1. (Jess, 2026-10-30)
 - Ledger: B4-I28
 
 ### karate-chop
@@ -90,19 +87,18 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### leaf-storm
 - [Approved] Persistent. (review 9.2 C13)
-- [Approved] Its self Sp. Atk -2 follows COMBAT-RULES "Stat stages" on the Self-drop Gate (SS12, 12.0 s at base): -2 at 0 s, -4 at 12 s, -6 at 24 s while it keeps hitting, and it ends one Duration (6.1 s) after the last hit, including after the move stops being active. The team Gate and Duration cards act on it too (SS10). Swapping off is a reward, not a requirement: at -6 it still hits at about Ember level (docs/proposals/stat-stage-model.md, design intent). Supersedes D-LEAF and the review 9.8 D-2 hold at -2. (Jess, 2026-10-30) Code differs, see TODO: built in slice 5.
-- [Legacy behavior] New path today (D-LEAF, slice 4c-1): maxStacks 1, so the -2 holds at -2 and refreshes its 6 s on each hit. Removed by slice 5.
+- [Approved] Its self Sp. Atk -2 follows COMBAT-RULES "Stat stages" on the Self-drop Gate (SS12, 12.0 s at base): -2 at 0 s, -4 at 12 s, -6 at 24 s while it keeps hitting, and it ends one Duration (6.1 s) after the last hit, including after the move stops being active. The team Gate and Duration cards act on it too (SS10). Swapping off is a reward, not a requirement: at -6 it still hits at about Ember level (docs/proposals/stat-stage-model.md, design intent). Supersedes D-LEAF and the review 9.8 D-2 hold at -2. (Jess, 2026-10-30)
 - Ledger: B4-I12
 
 ### meteor-mash
 - [Approved] The projectile hits enemy 1. At enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1. Emit `count` 1, child `space.count` 3. (review 9.2 D-3; combat-validation 2.5 scenario 3)
 - [Approved] Its Attack raise is scope `team`, matching Metal Claw. APPLIED (commit a68a366). (review 9.1 Q15)
-- [Legacy behavior] maxStacks 1 (authored since slice 4c-0, was 2). Removed by slice 5: its Attack raise then follows COMBAT-RULES "Stat stages" with no per-move rule (one roll per cast on its first enemy hit, SS2). (Jess, 2026-10-30)
+- [Approved] No per-move rule: its Attack raise follows COMBAT-RULES "Stat stages" (one roll per cast on its first enemy hit, SS2). Its maxStacks 1 was removed in slice 5a (2026-10-31). (Jess, 2026-10-30)
 - Shards deal full parent power: combat-architecture H13.
 - Ledger: B4-I13
 
 ### metal-claw
-- [Legacy behavior] maxStacks 1 (authored since slice 4c-0, was 2). Removed by slice 5: its Attack raise then follows COMBAT-RULES "Stat stages" with no per-move rule (one roll per cast on its first enemy hit, SS2). (Jess, 2026-10-30)
+- [Approved] No per-move rule: its Attack raise follows COMBAT-RULES "Stat stages" (one roll per cast on its first enemy hit, SS2). Its maxStacks 1 was removed in slice 5a (2026-10-31). (Jess, 2026-10-30)
 - Ledger: B4-I14
 
 ### night-shade
@@ -142,7 +138,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I20
 
 ### string-shot
-- [Approved] Under COMBAT-RULES "Stat stages" the second shot of a cast refreshes the first shot's Speed -2 but does not climb, since the Gate is closed (SS4): one cast gives -2, and an enemy climbs -2 per Gate while String Shot keeps landing on it. Supersedes the review 9.8 S7 double application (-4 per cast). Shot spacing (#15) is now readability only. (Jess, 2026-10-30) Code differs, see TODO: built in slice 5.
+- [Approved] Under COMBAT-RULES "Stat stages" the second shot of a cast refreshes the first shot's Speed -2 but does not climb, since the Gate is closed (SS4): one cast gives -2, and an enemy climbs -2 per Gate while String Shot keeps landing on it. Supersedes the review 9.8 S7 double application (-4 per cast). Shot spacing (#15) is now readability only. (Jess, 2026-10-30)
 - [Legacy behavior] New path today: both shots stack, -4 per cast (review 9.8 S7; an uncapped foe drop under D-FOECAP). Removed by slice 5.
 - [Approved] cd 1.1 (move-overrides.js), the legacy value: the 0.5 the new path had was a regression. The cooldown does not cause the two shots of one cast reading as one (#15); that is shot spacing. (Jess, 2026-10-29, Stage 0 cd ruling)
 - Ledger: B4-I21

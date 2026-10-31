@@ -1,4 +1,4 @@
-SLICE 5a, STAT STAGE TRACKERS (plan map, 2026-10-30; pass 1 written 2026-10-31, awaiting check.js)
+SLICE 5a, STAT STAGE TRACKERS (plan map, 2026-10-30; pass 1 built and verified 2026-10-31, pass 2 written 2026-10-31)
 Rules: docs/COMBAT-RULES.md "Stat stages" SS1 to SS13. Runtime: combat-architecture:H26.
 
 1. THE SPLIT

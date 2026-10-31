@@ -158,6 +158,8 @@ function selfTest() {
     ['good formula passes', () => sub(), null],
     ['retired field kind', m => (m.kind = 'melee', m), 'kind: unknown field'],
     ['retired field hitCap', m => (m.space.hitCap = 3, m), 'space.hitCap: unknown field'],
+    ['retired stat field maxStacks (slice 5a)', m => (m.payload.push({ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'team', maxStacks: 1 }), m), 'maxStacks: unknown field'],
+    ['retired stat field duration (slice 5a)', m => (m.payload.push({ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'team', duration: 6 }), m), 'duration: unknown field'],
     ['unknown payload type', m => (m.payload.push({ t: 'bogus' }), m), 'unknown t "bogus"'],
     ['grow without an end', m => (m.delivery.grow = { growSpeed: 100 }, delete m.delivery.endOn, m), 'grow-needs-end'],
     ['interval without rehit', m => (m.hitPolicy = 'interval', m), 'interval-needs-rehit'],
@@ -234,11 +236,13 @@ const bucketText = b => Object.entries(b).map(([axis, g]) => '## ' + axis + '\n\
   .map(([k, ids]) => '- ' + k + ' (' + ids.length + '): ' + ids.join(', ')).join('\n')).join('\n\n');
 
 // ---------- run ----------
+// SS8 (slice 5a): a pure buff (no shape, payload only self stat changes) casts on its Gate with no cooldown. Mirrors G.MoveEffects.isPureBuff; keep them in step.
+const pureBuff = m => !m.space && (m.payload || []).length > 0 && m.payload.every(fx => fx.t === 'stat' && fx.side !== 'foe');
 let failed = selfTest();
 const bad = validateMoves(DATA), total = Object.keys(DATA).length;
 if (RESOLVED) for (const [id, m] of Object.entries(DATA)) {   // slice 4c-1: rules that need resolver output (combat-validation-and-handoff:2.4 rules 2 and 10)
   const add = msg => (bad[id] = bad[id] || []).push(msg);
-  if (!m.persistent && m.cd == null) add('(move): resolved-needs-cd: a move that is not persistent has no cd after resolution (rule 2; set it in js/data/move-overrides.js)');
+  if (!m.persistent && m.cd == null && !pureBuff(m)) add('(move): resolved-needs-cd: a move that is not persistent has no cd after resolution (rule 2; set it in js/data/move-overrides.js)');
   if (m.delivery && m.delivery.motion === 'returns' && m.delivery.range == null) add('delivery: resolved-returns-range: returns needs a turnaround range after resolution (rule 10)');
 }
 for (const [id, errs] of Object.entries(bad)) for (const e of errs) console.log('INVALID ' + id + ' > ' + e);

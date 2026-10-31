@@ -87,6 +87,7 @@ live queue, cross-reference the issue number.
   (speed-drop vs freeze vs paralysis vs weather). Opened 2026-10-17.
 
 ## Backlog
+- HUD readout for own stat drops (found 2026-10-31, proposed, not approved): a drop on your own Atk, Def, Sp. Atk or Sp. Def (Leaf Storm, enemy drops) shows only as a fading popup plus the ?dev overlay; refreshes inside the Gate are silent, so it looks gone while it is live. Idea: one line per own drop with its time left in the HUD status list (status.js, beside "Slowed"). Presentation only.
 - D-BUBBLE (opened 2026-10-30, blocks 7b): Bubble is the 64th move, parked unconverted; starters dex 393 and 728 open with it. Convert it or re-point them before moves.js is deleted. See slice-7b.md.
 - Stat stage model APPROVED 2026-10-30: rules in docs/COMBAT-RULES.md "Stat stages" (SS1 to SS13), built in slice 5 on feature-test/new-move-schema. Still [Open] there: stage-manipulation moves (Haze, Psych Up and other reset/copy moves), raises on foes and whole-field moves. New tunables for the slice 6 balance pass: SELF_DROP_GATE_MUL (2), STRONG_HOST_GATE_MUL (1), the Gate and Duration card step.
 - Team-wide upgrades (opened 2026-10-30, own later branch): Jess wants upgrades team-wide because per-Pokemon-per-move cards dilute too much. The two stat stage cards (Gate, Duration) in the proposed model are team-wide from the start. FOLDED INTO slice 5b (Jess, 2026-10-30): every card becomes team-wide for the run, including the two stat stage cards (COMBAT-RULES:SS10). Plan map: docs/ASCII Concept Maps/Slice 5b - Cards From Fields.txt.

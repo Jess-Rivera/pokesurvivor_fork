@@ -25,7 +25,7 @@ const cases = [
   ['persistent move gets no cd, a non-persistent one is untouched', () => defs['fire-spin'].persistent === true && defs['fire-spin'].cd === undefined && defs.spikes.persistent === undefined],
   ['range default only where it has meaning, a move range wins', () => defs.tackle.delivery.range === 420 && !('range' in defs['water-gun'].delivery) && defs['razor-leaf'].delivery.range === 210],
   ['location pick defaults to enemy', () => defs['rock-slide'].delivery.locationPick === 'enemy' && !('locationPick' in defs.tackle.delivery)],
-  ['stat effect gets duration 6, keeps its own maxStacks', () => { const e = defs['ice-beam'].payload.find(x => x.t === 'stat'); return e.duration === 6 && e.maxStacks === 1; }],
+  ['stat effect carries no duration or maxStacks (retired, slice 5a)', () => { const e = defs['ice-beam'].payload.find(x => x.t === 'stat'); return !('duration' in e) && !('maxStacks' in e); }],
   ['handler attached with its trigger', () => defs.hail.handlers[0].trigger === 'cast' && defs['bug-bite'].handlers[0].condition === 'targetHasBerry'],
   ['source data not mutated', () => !('cd' in D.tackle) && !('handlers' in D.hail)],
   ['unknown override field rejected', () => throws(() => R(D, { tackle: { bogus: 1 } }, H), 'unknown field "bogus"')],

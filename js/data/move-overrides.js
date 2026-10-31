@@ -4,16 +4,13 @@
  * Load order: move-attributes.js, moves-generated.js, move-overrides.js, move-handler.js, move-resolver.js.
  * GROUNDWORK: not listed in dev.html and read by nothing in the game yet.
  *
- * The 14 entries below are empty on purpose: these moves have no Power (status moves plus Dragon Rage and Night Shade),
- * so the cooldown formula does not apply, and the data carries no cd for them. Fill in `cd` to give each one a cooldown.
+ * Each entry sets a hand cd: status and flat-damage moves have no Power, so the cooldown formula does not apply, and a few
+ * powered moves are hand-tuned (the why says so). Swords Dance, Agility, Harden and Dragon Dance have no entry: they are pure
+ * buffs and cast on their Gate, with no cooldown (COMBAT-RULES "Stat stages" SS8, slice 5a).
  * The legacy hand cd (js/data/moves.js) is noted in each why, for reference only; nothing reads it. */
 (() => {
   G.MoveOverrides = {
-    'swords-dance': { cd: 8, why: 'no cd set yet (legacy 8)' },
-    'agility':      { cd: 8, why: 'no cd set yet (legacy 8)' },
-    'harden':       { cd: 8, why: 'no cd set yet (legacy 8)' },
     'aqua-ring':    { cd: 8, why: 'no cd set yet (legacy 8)' },
-    'dragon-dance': { cd: 8, why: 'no cd set yet (legacy 8)' },
     'string-shot':  { cd: 1.1, why: 'Jess 2026-10-29: 0.5 was a regression, restored to legacy 1.1' },
     'spikes':       { cd: 1.1, why: 'no cd set yet (legacy 1.2)' },
     'toxic-spikes': { cd: 1.1, why: 'no cd set yet (legacy 1.1)' },

@@ -43,6 +43,10 @@ Workflow: CLAUDE.md "Edit boundary" (prose plan in chat, no code, Jess OKs, then
 ## Not in slice 5
 Bond tax (Bond branch), gym Harden (7a), SLOW/HASTE (7b), Dodge Cooldown card (dodge branch), the New Move cards rework, the run identity question.
 
+## 5a pass 2 status (Quick, 2026-10-31)
+- Written: maxStacks (10 entries) and stat duration (5) removed from move-conversions-described.json (Ice Beam and Bug Buzz feel notes rewritten); grammar drops both fields (move-attributes.js), resolver H24 exception gone, 4 buff cds removed from move-overrides.js; validate_moves.js self-test rejects both and its resolved cd rule exempts pure buffs; move_report.js reports a pure buff as "casts on its Gate (SS8)"; move_parity.js self-test flipped; riders 3b and selfcast buff checks rewritten, synthetic stat defs stripped. Docs: MOVE-INTENT, COMBAT-RULES, MOVE-AXIS-SCHEMA, combat-architecture H24/H26.
+- Jess: export_moves.js, then check.js. Then look at Aqua Ring before closing 5a.
+
 ## 5a pass 1 status (Quick, 2026-10-31)
 - Written: stages.js trackers, move-effects.js rolls and pure buffs, move-sim.js Gate casting, combat.js and hud.js readers, player.js feet arcs, debug set `stages`, changelog.
 - Tests written: stat-stage-harness.js and stat-stage-mutate.js (11 mutations); riders, selfcast, persist and plain harnesses moved to trackers; riders-mutate, persist-mutate and sim-mutate patterns updated; 14 intent scenarios (11 edited, 3 new).

@@ -205,3 +205,15 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): 5b card list by axis (General, Space, Delivery, Payload), Cooldown Down added, Vitamins replaces the six stat cards, HP Regen bench only. 5b builds after 5a.
 - Logged: New Move learning ideas (combined screen, move bank), slice 6 watch items (Leaf Storm about half power, +6 strength, weak chance drops).
 - No js/ touched. Stopped at: build handoff written (slice-5-handoff.md); Jess commits, then a build chat.
+
+## 2026-10-31 (Quick, work): slice 5a pass 1 built, stat stage trackers live on the new path
+- Built: stages.js trackers (Gate 6.0, Duration 6.1, Self-drop Gate 12, per-tracker clamp, team trackers keyed by the stgTeam object so no player.js/game.js wiring); move-effects.js foe src move@caster, self rolls once per cast (each rehit step a use), pure buffs; move-sim.js buffs cast on their Gate, active group only, fizzle waits a Gate; combat.js/hud.js/feet-arc readers; debug newcombat(ids...), 'stages', 'drops'; changelog.
+- Tests: new stat-stage-harness.js (incl. Leaf Storm slot-swap check) + stat-stage-mutate.js (11); riders, selfcast, persist, plain harnesses moved to trackers; 15 intent scenarios (11 edited, 4 new incl. ice-beam-climb); 4 stale mutation patterns (sim, persist, motion) retargeted.
+- check.js 28/28 (one test-only fix: riders Ice Beam/String Shot lines used a fresh owner per hit); stat-stage 11/11, riders 23/23, selfcast 35/35. Jess feel-tested: stages behave as expected.
+- Decided (Jess): keep SS5 all-at-once reset. Found: a "Leaf Storm drops on swap" report was the overlay's orbit tag, not the drop; own SpA/Def/SpD drops have no lasting HUD readout (backlog).
+- Stopped at: pass 2 (retire maxStacks + stat duration), batch re-review of 6 drop moves, re-run of 3 mutate runners; then a new 5b build chat.
+
+## 2026-10-31 (Quick, work, later): slice 5a pass 2 written, retired stat fields removed
+- Removed maxStacks (10) and stat duration (5) from the conversions json; grammar, resolver (H24 exception) and the 4 buff cds in overrides follow. validate_moves.js rejects both fields (2 self-test cases) and lets a pure buff have no cd; move_report.js and move_parity.js updated; riders and selfcast harnesses rewritten for the retired fields.
+- No gameplay change (pass 1 already ignored the fields). No changelog entry. Docs: MOVE-INTENT, COMBAT-RULES, MOVE-AXIS-SCHEMA, combat-architecture.
+- Not run yet: Jess runs export_moves.js, then check.js. Next: an Aqua Ring look (Jess), then the batch re-review, then 5b.

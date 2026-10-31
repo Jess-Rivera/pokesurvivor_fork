@@ -67,9 +67,7 @@
           "stat": "atk",
           "stages": 2,
           "side": "self",
-          "scope": "team",
-          "duration": 8,
-          "maxStacks": 1
+          "scope": "team"
         }
       ],
       "reviewStatus": "reviewed"
@@ -97,9 +95,7 @@
           "stat": "spd",
           "stages": 2,
           "side": "self",
-          "scope": "team",
-          "duration": 8,
-          "maxStacks": 1
+          "scope": "team"
         }
       ],
       "reviewStatus": "reviewed"
@@ -127,9 +123,7 @@
           "stat": "def",
           "stages": 1,
           "side": "self",
-          "scope": "team",
-          "duration": 8,
-          "maxStacks": 1
+          "scope": "team"
         }
       ],
       "reviewStatus": "reviewed"
@@ -640,7 +634,7 @@
       "name": "Ice Beam",
       "kind": "beam",
       "balanceClass": "ranged",
-      "feel": "Longer, narrower Hydro Pump (linLength 290 vs 250, linWidth 20 vs 30). UNLIMITED pierce, hits everyone in the beam. 10% freeze + spd -1 rider (icy chill as a stat debuff, side foe, scope individual, maxStacks 1). Static, nearest.",
+      "feel": "Longer, narrower Hydro Pump (linLength 290 vs 250, linWidth 20 vs 30). UNLIMITED pierce, hits everyone in the beam. 10% freeze + spd -1 rider (icy chill as a stat debuff, side foe, scope individual; it climbs -1 per Gate on an enemy it keeps hitting, COMBAT-RULES \"Stat stages\"). Static, nearest.",
       "type": "ice",
       "category": "special",
       "power": 90,
@@ -680,8 +674,7 @@
           "stat": "spd",
           "stages": -1,
           "side": "foe",
-          "scope": "individual",
-          "maxStacks": 1
+          "scope": "individual"
         }
       ],
       "reviewStatus": "reviewed"
@@ -935,18 +928,14 @@
           "stat": "atk",
           "stages": 1,
           "side": "self",
-          "scope": "team",
-          "duration": 4,
-          "maxStacks": 1
+          "scope": "team"
         },
         {
           "t": "stat",
           "stat": "spd",
           "stages": 1,
           "side": "self",
-          "scope": "team",
-          "duration": 4,
-          "maxStacks": 1
+          "scope": "team"
         }
       ],
       "reviewStatus": "reviewed"
@@ -991,8 +980,7 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "chance": 10,
-          "maxStacks": 1
+          "chance": 10
         },
         {
           "t": "knockback",
@@ -1417,8 +1405,7 @@
           "stat": "spAtk",
           "stages": -2,
           "side": "self",
-          "scope": "individual",
-          "maxStacks": 1
+          "scope": "individual"
         }
       ],
       "reviewStatus": "reviewed"
@@ -1932,7 +1919,7 @@
       "name": "Bug Buzz",
       "kind": "aura",
       "balanceClass": "ranged",
-      "feel": "Continuous damaging aura around the caster, persistent while selected (endOn notActive), radius 120. DAMAGE re-ticks every 0.5s (hitPolicy interval, rehit 0.5). The spDef-down rider is capped at maxStacks 1 so it only ever drops an enemy's Sp. Def ONCE no matter how many damage ticks it eats, no 0.5s debuff spam, no new resolver trigger needed (plain stack cap on the stat effect). Models the steady damaging sound wave as a hum that chips HP continuously but debuffs just once.",
+      "feel": "Continuous damaging aura around the caster, persistent while selected (endOn notActive), radius 120. DAMAGE re-ticks every 0.5s (hitPolicy interval, rehit 0.5). The spDef-down rider lands on one tracker per enemy: the 0.5s ticks refresh it, and it climbs -1 per 6 s Gate while the enemy stays in the aura (COMBAT-RULES \"Stat stages\", MOVE-INTENT bug-buzz 2026-10-30). Models the steady damaging sound wave as a hum that chips HP continuously and wears Sp. Def down over time.",
       "type": "bug",
       "category": "special",
       "power": 90,
@@ -1963,8 +1950,7 @@
           "stat": "spDef",
           "stages": -1,
           "side": "foe",
-          "scope": "individual",
-          "maxStacks": 1
+          "scope": "individual"
         }
       ],
       "reviewStatus": "reviewed"
@@ -2442,8 +2428,7 @@
           "stages": 1,
           "side": "self",
           "scope": "team",
-          "chance": 20,
-          "maxStacks": 1
+          "chance": 20
         },
         {
           "t": "emit",

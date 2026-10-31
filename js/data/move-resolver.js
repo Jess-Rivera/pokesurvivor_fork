@@ -21,9 +21,7 @@
   // Grammar defaults that are only valid beside a parent field (turn, aim and return rules), so they stay absent unless the data sets them.
   // shortcut: a hand list by name, revisit if the grammar gains another gated default (tools/validate_moves.js --resolved catches it).
   const GATED = new Set(['turnRate', 'aimTrack', 'returnHits']);
-  // D-FOECAP (combat-architecture:H24): the maxStacks default is for self-side stat effects only. A foe drop keeps only an authored cap
-  // (a MOVE-INTENT per-move exception: Ice Beam, Bug Buzz); without one it stacks to the -6 ladder (COMBAT-RULES "Stat stages and maxStacks").
-  const skipDefault = (k, v) => GATED.has(k) || (k === 'maxStacks' && v.t === 'stat' && v.side === 'foe');
+  const skipDefault = k => GATED.has(k);     // slice 5a: the maxStacks exception (H24) went with the field
   // shortcut: fills the move and its inline emit children one level deep, revisit if an inline move ever emits another inline move.
   const fillDelivery = (d, t) => {
     if (!('range' in d) && (d.targeting === 'nearest' || d.targeting === 'location' || d.motion === 'returns' || d.motion === 'repositions')) d.range = t.RANGE;

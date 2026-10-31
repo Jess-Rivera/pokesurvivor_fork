@@ -61,14 +61,14 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
 // 2. D31 stat key map
 { ok(['atk', 'def', 'spAtk', 'spDef', 'spd'].map(FX.statKey).join() === 'atk,def,spa,spd,spe', 'statKey map');
   let threw = false; try { FX.statKey('speed'); } catch (x) { threw = true; } ok(threw, 'unknown stat fails loudly');
-  const a = mk(); hitWith(syn([{ t: 'stat', stat: 'spd', stages: -2, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }], { category: 'status', basePower: 0 }), a);
+  const a = mk(); hitWith(syn([{ t: 'stat', stat: 'spd', stages: -2, side: 'foe', scope: 'individual' }], { category: 'status', basePower: 0 }), a);
   ok(S.stage(a, 'spe') === -2 && S.stage(a, 'spd') === 0 && near(S.speedMul(a), 4 / 6), 'spd lowers Speed (movement x0.67), Sp. Def untouched');
   const b = mk(), b0 = mk(), sp = syn([{ t: 'damage' }], { category: 'special', basePower: 60 });
-  hitWith(syn([{ t: 'stat', stat: 'spDef', stages: -2, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }], { category: 'status', basePower: 0 }), b);
+  hitWith(syn([{ t: 'stat', stat: 'spDef', stages: -2, side: 'foe', scope: 'individual' }], { category: 'status', basePower: 0 }), b);
   ok(S.stage(b, 'spd') === -2 && S.stage(b, 'spe') === 0 && S.speedMul(b) === 1, 'spDef lowers Sp. Def, not movement');
   const ph = syn([{ t: 'damage' }], { category: 'physical', basePower: 60 });
   const d1 = hitWith(sp, b).dmg, d0 = hitWith(sp, b0).dmg; ok(d1 / d0 > 1.8 && near(hitWith(ph, b).dmg, hitWith(ph, b0).dmg), 'Sp. Def -2 raises special damage (x' + (d1 / d0).toFixed(3) + '), physical untouched');
-  for (const [st, key] of [['spAtk', 'spa'], ['atk', 'atk'], ['def', 'def']]) { const e = mk(); hitWith(syn([{ t: 'stat', stat: st, stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }]), e); ok(S.stage(e, key) === -1, st + ' reaches ' + key); }
+  for (const [st, key] of [['spAtk', 'spa'], ['atk', 'atk'], ['def', 'def']]) { const e = mk(); hitWith(syn([{ t: 'stat', stat: st, stages: -1, side: 'foe', scope: 'individual' }]), e); ok(S.stage(e, key) === -1, st + ' reaches ' + key); }
   console.log('2 stat keys: spd -> spe (movement), spDef -> spd (special damage x1.95 at -2, physical same), spAtk/atk/def -> spa/atk/def'); }
 
 // 3. H26 stat stage trackers (slice 5a, COMBAT-RULES "Stat stages" SS1 to SS7, SS12): one tracker per (recipient, move@caster, stat)
@@ -115,18 +115,17 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   ok(texts.filter(t => /Defense/.test(t)).length === 1, 'legacy add: no stage text when the stage did not change');
   console.log('3 H26: refresh in the Gate, climb when open, Duration 6.1 s, 2 casters = 2 trackers, per-tracker clamp, own reset, once per cast, Self-drop Gate 12 s, legacy add kept'); }
 
-// 3b. slice 4c-0 (D-FOECAP, combat-architecture:H24): maxStacks default 1, filled on self-side effects only
-{ const D = G.MoveDefs, foeCapped = [];
-  for (const [id, d] of Object.entries(D)) for (const fx of (d.payload || [])) if (fx.t === 'stat' && fx.side === 'foe' && fx.maxStacks != null) foeCapped.push(id);
-  ok(foeCapped.sort().join() === 'bug-buzz,ice-beam', 'only Ice Beam and Bug Buzz keep a foe cap after resolve: ' + foeCapped.join());
-  ok(Object.values(D).every(d => (d.payload || []).every(fx => fx.t !== 'stat' || fx.side !== 'self' || fx.maxStacks === 1)), 'every self-side stat effect resolves to maxStacks 1');
+// 3b. slice 5a pass 2 (MOVE-AXIS-SCHEMA "Retired stat fields"): no stat effect carries maxStacks or duration, and the resolver adds neither
+{ const D = G.MoveDefs, left = [];
+  for (const [id, d] of Object.entries(D)) for (const fx of (d.payload || [])) if (fx.t === 'stat' && ('maxStacks' in fx || 'duration' in fx)) left.push(id);
+  ok(left.length === 0, 'no resolved stat effect carries maxStacks or duration (' + left.join() + ')');
   const r = G.MoveResolver.resolve({ s: { ...D.tackle, id: 's', payload: [{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual' }, { t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual' }] } }, {}, G.MoveHandlers).s;
-  ok(r.payload[0].maxStacks === 1 && !('maxStacks' in r.payload[1]), 'an unauthored self raise gets 1, an unauthored foe drop gets none');
-  const o = mkO(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual', duration: 6, maxStacks: 1 }]);
+  ok(r.payload.every(fx => !('maxStacks' in fx) && !('duration' in fx)), 'the resolver adds neither field to an unauthored self raise or foe drop');
+  const o = mkO(), up = syn([{ t: 'stat', stat: 'atk', stages: 1, side: 'self', scope: 'individual' }]);
   for (let i = 0; i < 50; i++) hitWith(up, mk(), o); ok(S.stage(o, 'atk') === 1 && Object.keys(o.trk.atk).length === 1, 'an individual self raise: 50 casts inside one Gate refresh one tracker at +1');
   const ib = mk(), ibo = mkO(); for (let i = 0; i < 9; i++) hitWith('ice-beam', ib, ibo); ok(S.stage(ib, 'spe') === -1, 'Ice Beam: 9 hits inside one Gate refresh at -1 (MOVE-INTENT ice-beam, SS4)');
   const st = mk(), sto = mkO(); for (let i = 0; i < 2; i++) hitWith('string-shot', st, sto); ok(S.stage(st, 'spe') === -2, 'String Shot: the second strand refreshes, -2 per cast (MOVE-INTENT string-shot, SS4)');
-  console.log('3b 4c-0 data (until pass 2): foe caps only on Ice Beam and Bug Buzz, self default 1; trackers: Ice Beam -1, String Shot -2 per cast'); }
+  console.log('3b retired fields: none on any stat effect, none added by the resolver; trackers: Ice Beam -1, String Shot -2 per cast'); }
 
 // 4. trap: the root on every movement phase, strong hosts, ghosts, the player
 { const root = e => { e.stTrap = null; return St.apply(e, 'trap'); };
@@ -206,7 +205,7 @@ function world(ids, es, secs, dt, s) {
 { const d = mk(); d.dead = true; let b = 0; d.applyBurn = () => { b++; }; hitWith('ember', d, mkO(), () => 0); hitWith('mud-shot', d); ok(b === 0 && !d.stg && !d.trk, 'no foe riders on a dead enemy');
   const k = mk(); k.hp = 1; hitWith('mud-shot', k); ok(k.dead && !k.stg && !k.trk, 'no foe riders on an enemy the hit killed');
   const o = mkO(), k2 = mk(); k2.hp = 1; hitWith('leaf-storm', k2, o); ok(S.stage(o, 'spa') === -2, 'self riders still apply after a kill');
-  const r = mk(); r.remote = true; hitWith(syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual', duration: 6, maxStacks: 6 }], { category: 'status', basePower: 0 }), r); ok(!r.stg && !r.trk, 'no foe riders on a remote copy');
+  const r = mk(); r.remote = true; hitWith(syn([{ t: 'stat', stat: 'def', stages: -1, side: 'foe', scope: 'individual' }], { category: 'status', basePower: 0 }), r); ok(!r.stg && !r.trk, 'no foe riders on a remote copy');
   console.log('9b dead and remote targets: foe riders skipped, self riders kept'); }
 
 // 10. hop hook

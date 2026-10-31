@@ -200,7 +200,7 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   cast(d4); ok(S.stage(a, 'atk') === 6, 'a fourth stays +6 (clamp)');
   const dd = mkO([['dragon-dance']]), ddSrc = FX.srcOf(D['dragon-dance'], dd); cast(dd);
   ok(S.stage(dd, 'atk') === 1 && S.stage(dd, 'spe') === 1 && S.tracker(dd, 'atk', ddSrc, true) && S.tracker(dd, 'spe', ddSrc, true), 'Dragon Dance: two trackers, Attack and Speed +1');
-  syn('syn-ind', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 8, payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'individual', duration: 8, maxStacks: 1 }] });
+  syn('syn-ind', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 8, payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'individual' }] });
   const ia = mkO([['syn-ind']]), ib = { stgTeam: ia.stgTeam, stg: null }; cast(ia); ok(S.stage(ia, 'def') === 1 && S.stage(ib, 'def') === 0 && !S.teamLive(ia.stgTeam, 'def'), 'individual scope: the owner only');
   ok(FX.srcOf(D['swords-dance'], a) !== FX.srcOf(D['swords-dance'], b) && FX.srcOf(D['swords-dance'], a) === FX.srcOf(D['swords-dance'], a), 'the source tag is move plus Pokemon, stable');
   ok(['swords-dance', 'dragon-dance', 'harden', 'agility'].every(id => FX.isPureBuff(D[id])) && !['aqua-ring', 'substitute', 'tackle', 'leaf-storm', 'metal-claw'].some(id => FX.isPureBuff(D[id])),
@@ -249,7 +249,7 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   const s = mkP([['substitute'], ['tackle']]); s.slots[1][0].t = 1; run(s, [], 0.5);
   ok(near(s.slots[1][0].t, 0.5, 1e-6) && s.slots[0][0].t === 12, 'freeze id = substitute: only Substitute holds, Tackle keeps recharging');
   syn('syn-sec', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 3, casterState: { commitment: { cooldown: { type: 'freeze', t: 0.5 } } },
-    payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'team', duration: 1 }] });
+    payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'team' }] });
   const sc = mkO([['syn-sec'], ['tackle']]); sc.slots[1][0].t = 2; const tk = []; run(sc, [], 1, { each: () => tk.push(sc.slots[1][0].t) });
   ok(near(tk[20], 2) && near(tk[59], 2 - 30 * dt, 1e-6), 't = 0.5 s: other timers hold for 0.5 s, then run (' + [tk[20], tk[59]].map(v => v.toFixed(3)) + ')');
   const bonded = mkO([['flamethrower', 'tackle']]), btk = []; const btape = run(bonded, [mk(30, 0)], 1.3, { each: () => btk.push(bonded.slots[0][1].t) });
@@ -267,7 +267,7 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   const w = mkP([['flamethrower']]); run(w, [mk(100, 0)], 0.2); Sim.clear(w); ok(S.stage(w, 'spe') === 0 && Sim.commits(w).length === 0, 'cleared on swap');
   const dd = mkP([['flamethrower']]); run(dd, [mk(100, 0)], 0.2); dd.hp = 1; dd.hurt(50); run(dd, [mk(100, 0)], 1 / 60, { reset: false }); ok(S.stage(dd, 'spe') === 0 && !dd.mvRoot && Sim.commits(dd).length === 0, 'cleared on death');
   syn('syn-root', { delivery: { anchor: 'self', targeting: 'self', motion: 'static' }, cd: 9, casterState: { commitment: { movement: { type: 'rooted', t: 0.5 } } },
-    payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'team', duration: 1 }] });
+    payload: [{ t: 'stat', stat: 'def', stages: 1, side: 'self', scope: 'team' }] });
   const rt = mkP([['syn-root']]), sp2 = []; run(rt, [], 1, { each: () => sp2.push(rt.spd) });
   ok(sp2[10] === 0 && sp2[28] === 0 && sp2[32] === 100 && sp2[50] === 100, 'rooted: speed 0 for 0.5 s and not longer (' + [sp2[10], sp2[28], sp2[32]] + ')');
   const rs = mkP([['syn-root']]); run(rs, [], 0.2); const was = rs.spd; Sim.clear(rs); ok(was === 0 && rs.spd === 100, 'the root is cleared on swap');
@@ -284,7 +284,8 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
 { const tapeOf = dt => { const es = line(), o = mkO([['thunderbolt']], { critChance: 0.3 }); return hits(run(o, es, 0.05, { dt, rng: seeded(3), each: once(o) })).map(x => [x.hop, x.crit, +x.dmg.toFixed(6)]); };
   ok(JSON.stringify(tapeOf(1 / 60)) === JSON.stringify(tapeOf(1 / 60)), 'same seed, identical chain tape');
   ok(JSON.stringify(tapeOf(1 / 60)) === JSON.stringify(tapeOf(1 / 30)), 'same tape at dt 1/60 and 1/30');
-  ok(['swords-dance', 'dragon-dance', 'harden', 'agility'].every(id => D[id].payload.every(f => f.maxStacks === 1)), 'maxStacks 1 on the four buffs');
+  ok(['swords-dance', 'dragon-dance', 'harden', 'agility'].every(id => FX.isPureBuff(D[id]) && D[id].cd === undefined && D[id].payload.every(f => !('maxStacks' in f) && !('duration' in f))),
+    'the four buffs: pure buffs with no cd, no maxStacks, no duration (slice 5a pass 2)');
   ok(D.substitute.cd === 12 && D.substitute.payload[1].duration === 4 && D.substitute.casterState.commitment.cooldown.t === 'untilEffectEnd', 'Substitute data: cd 12, 4 s, freeze until effect end');
   ok(D.flamethrower.casterState.commitment.movement.type === 'slowed' && D.flamethrower.casterState.commitment.cooldown.type === 'freeze' && D.flamethrower.rehit === 0.2, 'Flamethrower data: slowed and freeze, rehit 0.2');
   ok(!(D.hail.handlers[0].stub) && D['bug-bite'].handlers[0].stub, 'handlers implemented except berrySteal');

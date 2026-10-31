@@ -89,11 +89,14 @@ function powerPerSec(d) {     // D37: tools only, never gameplay (H8)
   if (d.space && d.space.chainHops) why += ', target only (hops hit others)';
   return [r2(d.basePower * hits / d.cd), why];
 }
+// SS8 (slice 5a): a pure buff (no shape, payload only self stat changes) casts on its Gate with no cooldown. Mirrors G.MoveEffects.isPureBuff; keep them in step.
+const pureBuff = m => !m.space && (m.payload || []).length > 0 && m.payload.every(fx => fx.t === 'stat' && fx.side !== 'foe');
 function cdParity(id) {
   const n = defs[id], l = LEGACY[id] || {}, ov = O[id], ent = INTENT[id] || '';
   const same = n.cd !== undefined && l.cd !== undefined && Math.abs(n.cd - l.cd) < 1e-9;
   if (same) return { diff: false, note: '' };
   if (n.persistent) return { diff: true, ok: true, note: 'lasts while active' };
+  if (n.cd === undefined && pureBuff(n)) return { diff: true, ok: true, note: 'casts on its Gate (SS8)' };
   if (ov && ov.why && !/^no cd set yet/.test(ov.why)) return { diff: true, ok: true, note: 'override: ' + ov.why };
   if (/\bcd\s*[0-9]|cooldown/i.test(ent)) return { diff: true, ok: true, note: 'MOVE-INTENT entry' };
   return { diff: true, ok: false, note: 'needs a ruling' };

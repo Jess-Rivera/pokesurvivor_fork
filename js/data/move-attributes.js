@@ -113,9 +113,9 @@
     knockback: obj({ distance: num({ min: 0, d: 0 }), direction: en(['travel']) }, ['distance']),
     ailment: obj({ id: en(AILMENTS), chance: pct, side: SIDE, duration: SECS }, ['id', 'chance', 'side']),
     stat: obj({ stat: en(STATS), stages: int({ min: -6, max: 6 }), side: SIDE, scope: en(['caster', 'individual', 'team']),
-      chance: pct, duration: num({ gt: 0, d: 6 }), maxStacks: int({ min: 1, d: 1 }) }, ['stat', 'stages', 'side', 'scope'], { rules: [
+      chance: pct }, ['stat', 'stages', 'side', 'scope'], { rules: [
         { id: 'foe-not-team', when: { eq: ['side', 'foe'] }, then: { not: { eq: ['scope', 'team'] } }, msg: 'a team scope is a player-side concept; a foe stat effect uses individual (combat-validation-and-handoff:2.4 rule 9)' },
-      ] }),   // duration (s) defaults to 6; maxStacks defaults to 1, self-side only (the resolver skips it on foe-side effects, combat-architecture:H24)
+      ] }),   // no duration or maxStacks: the Gate, Duration and Cap are global rules (COMBAT-RULES "Stat stages"; MOVE-AXIS-SCHEMA "Retired stat fields", slice 5a)
     heal: obj({ amount: HEAL_AMOUNT, per: SECS, side: SIDE, duration: SECS }, ['amount', 'side']),
     shield: obj({ amount: { t: 'formula' }, max: { t: 'formula' }, regen: { t: 'formula' }, duration: SECS,
       absorbsAll: 'bool', overflow: 'bool', blocksStatus: 'bool' }, ['amount', 'duration']),
