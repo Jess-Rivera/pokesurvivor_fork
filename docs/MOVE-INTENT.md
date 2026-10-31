@@ -17,7 +17,8 @@ Tags are defined in CLAUDE.md: [Approved], [Legacy behavior], [Proposed], [Open]
 Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-consistency-review.md section 9, combat-validation-and-handoff.md sections 2.3 and 2.5, and the slice-3d, slice-4b and slice-4c decision sections. Keyed by move id, alphabetical. Numbers are current data unless a ruling fixes them; current values: see js/data/moves-generated.js and js/data/move-overrides.js.
 
 ### aqua-ring
-- [Approved] Aqua Ring heals 6.25% max HP/s, accepted. Built. (review 9.9 S6)
+- [Approved] Aqua Ring is a persistent aura (combat-architecture:H25): while its slot is in the active group and the owner is not stunned it heals 1/16 (6.25%) of max HP every 2 s, the mainline 1/16 per turn on the fork's 2 s turn (3.125% max HP/s). A slot swap, a stun or a faint ends it; coming back starts a fresh tick clock. No cooldown, no duration. (Jess, 2026-10-31; PokeAPI aqua-ring: 1/16 per turn until the user leaves the field)
+- [Superseded 2026-10-31] Aqua Ring heals 6.25% max HP/s, 8 s per cast on an 8 s cooldown, accepted. (review 9.9 S6)
 - Ledger: B4-I01
 
 ### aura-sphere

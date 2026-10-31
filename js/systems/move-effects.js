@@ -259,9 +259,12 @@ G.MoveEffects = (() => {
   let hots = [];
   function healOverTime(o, fx, src) {
     const old = hots.find(h => h.o === o && h.src === src);
-    if (old) { old.left = fx.duration; return; }
-    hots.push({ o, src, frac: fx.amount.fraction, per: fx.per || 1, left: fx.duration, acc: 0 });
+    const left = fx.duration != null ? fx.duration : Infinity;     // slice 5a: no duration = a persistent aura's heal, it lasts until its group ends (endHeal)
+    if (old) { old.left = left; return; }
+    hots.push({ o, src, frac: fx.amount.fraction, per: fx.per || 1, left, acc: 0 });
   }
+  /** Slice 5a: a persistent heal aura's group ended (slot swap, stun, faint): its heal over time ends with it. */
+  function endHeal(o, src) { hots = hots.filter(h => h.o !== o || h.src !== src); }
   function upkeep(dt, o) {
     for (const h of hots) {
       if (h.o !== o) continue;
@@ -312,5 +315,5 @@ G.MoveEffects = (() => {
     return out;
   }
 
-  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE, isPureBuff, statReady };
+  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE, isPureBuff, statReady, endHeal };
 })();

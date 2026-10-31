@@ -43,7 +43,7 @@ const L = sandbox.G.Moves.BY_ID;
 
 // ---------- parity ----------
 const NOTES = { 'fire-spin': 'intended: lasts while active, pacing is rehit 0.4', 'leaf-storm': 'intended: lasts while active, pacing is rehit 0.25',
-  'flame-wheel': 'intended: lasts while active, fields laid every 0.12 (rehit 0.3)', 'bug-buzz': 'intended: lasts while active, pacing is rehit 0.5',
+  'flame-wheel': 'intended: lasts while active, fields laid every 0.12 (rehit 0.3)', 'bug-buzz': 'intended: lasts while active, pacing is rehit 0.5', 'aqua-ring': 'intended: persistent heal aura, 1/16 max HP every 2 s (slice 5a)',
   gust: 'intended: now a cast that emits 3 projectiles, normal cooldown (was an orbit with a 0.26 re-hit)' };
 const rows = Object.keys(D).map(id => {
   const n = defs[id], l = L[id], p = n.power || 0;

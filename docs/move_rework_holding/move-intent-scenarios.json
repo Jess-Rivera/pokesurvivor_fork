@@ -121,8 +121,13 @@
 
     { "id": "aqua-ring-tick", "move": "aqua-ring", "source": "MOVE-INTENT:aqua-ring", "secs": 3.5, "owner": { "maxHp": 160, "hp": 10 },
       "enemies": [],
-      "expect": { "ownerHp": 40 },
-      "note": "6.25% of 160 = 10 per second; three ticks by 3.5 s" },
+      "expect": { "ownerHp": 20 },
+      "note": "slice 5a (MOVE-INTENT aqua-ring 2026-10-31): 1/16 of 160 = 10 every 2 s from the spawn; one tick by 3.5 s (the next is near 4.0 s). Was 6.25% per second (three ticks)" },
+
+    { "id": "aqua-ring-aura", "move": "aqua-ring", "source": "MOVE-INTENT:aqua-ring", "secs": 10.5, "owner": { "maxHp": 160, "hp": 10 },
+      "enemies": [],
+      "expect": { "casts": 1, "ownerHp": 60 },
+      "note": "persistent aura: one cast held active the whole time, no recast and no cooldown; ticks near 2, 4, 6, 8 and 10 s at both dt (1/30 lands near 2.03 ... 10.03), so 5 x 10 = +50. The slot-swap, stun and faint ends need a second group or a status, so they live in move-selfcast-harness.js section 9" },
 
     { "id": "substitute-cast", "move": "substitute", "source": "MOVE-INTENT:substitute", "secs": 0.5, "owner": { "hp": 100, "maxHp": 100 },
       "enemies": [],

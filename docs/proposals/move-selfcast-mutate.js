@@ -32,7 +32,8 @@ const M = [
   ['two shields at once', 'fx', [["if (fx.t === 'shield' && o.shield) return false;", '']]],
   ['shield survives a swap', 'fx', [['if (o) o.shield = null;', '']]],
   // heal over time, stat buffs
-  ['Aqua Ring stacks', 'fx', [['if (old) { old.left = fx.duration; return; }', '']]],
+  ['Aqua Ring stacks', 'fx', [['if (old) { old.left = left; return; }', '']]],     // retargeted slice 5a (the refresh line now reads `left`)
+  ['Aqua Ring heal outlives its aura', 'sim', [['    for (const i of list) G.MoveEffects.endHeal(i.cast.owner, G.MoveEffects.srcOf(i.spec, i.cast.owner));', '']]],     // slice 5a
   ['heal over time survives a swap', 'fx', [['hots = o ? hots.filter(h => h.o !== o) : [];', 'hots = o ? hots : [];']]],
   ['per-move instead of per-Pokemon stack tag', 'fx', [["return def.id + '@' + tags.get(o);", 'return def.id;']]],
   // commitment (handoff test 16)

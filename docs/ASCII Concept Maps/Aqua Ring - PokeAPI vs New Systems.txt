@@ -1,0 +1,180 @@
+AQUA RING, POKEAPI vs WHAT THE NEW SYSTEMS ALLOW (look before closing 5a pass 2; Quick, 2026-10-31)
+DECIDED (Jess, 2026-10-31): option P, persistent aura, 0.0625 every 2 s (3.125%/s). Built as section 8; awaiting check.js. Sources: pokeapi-master/data/v2/csv (moves, move_meta, move_effect_prose, move_flag_map),
+move-conversions-described.json, MOVE-INTENT aqua-ring, js/systems/move-effects.js, js/data/move-attributes.js.
+
+
+1. POKEAPI (mainline)
+=====================
+  id 392, gen 4, Water, status, PP 20, no accuracy, target: user, meta category "unique", flag: snatch
+  effect   "Restores 1/16 of the user's max HP at the end of each turn.
+            If the user leaves the field, this effect ends."  (also passed by Baton Pass)
+  shape    ONE use, then it lasts until the user switches out. No duration, no cooldown.
+
+
+2. FORK TODAY (new path)
+========================
+  payload   heal 6.25% max HP every 1 s, for 8 s, self only
+  cd        8 s, from move-overrides.js ("no cd set yet (legacy 8)", a placeholder)
+  recast    refreshes the one live ring, never stacks (one per move@Pokemon)
+  ends      Pokemon swap (benched) or faint.  A MOVE-SLOT swap does NOT end it: the ring
+            keeps ticking until its 8 s run out
+  ruling    MOVE-INTENT aqua-ring [Approved]: "heals 6.25% max HP/s, accepted"
+  HUD       no chip on the new path (the "REG x" chip reads the legacy team store only)
+
+  time (s)   0 ...... 8 ...... 16 .....          held active, cd 8 = duration 8
+  ring       on       recast   recast            about continuous 6.25%/s = full HP in 16 s
+
+
+3. RATE CHECK  (a fork "turn" is 2 s, same as burn and poison in enemies.js STATUS)
+=============
+  mainline 1/16 per turn  ->  1/16 per 2 s  =  3.125% max HP/s
+  fork today               ->  1/16 per 1 s  =  6.25%  max HP/s   (2x mainline, approved)
+
+
+4. WHAT THE NEW SYSTEMS CAN DO WITH IT
+======================================
+  tool                        fits?   why
+  --------------------------  ------  ------------------------------------------------------
+  heal effect (amount, per,   YES     already used: fraction of max HP, tick length, duration
+    duration)
+  "until it leaves the        NO      grammar needs duration > 0, and a ring with no duration
+    field" duration                   ends at once. Needs a new rule (e.g. no duration = until
+                                      the Pokemon is benched or faints)
+  persistent flag             NO      only moves with a shape or an emitter; a shapeless heal
+                                      would never cast
+  pure-buff Gate casting      NO      trackers are for stat stages; a heal is not a stat
+    (SS8)
+  "blocked while live" cast   YES     same pattern Substitute uses ("one shield at a time"),
+    check                             so the ring can cast only when none is live
+  Pokemon swap ends it        YES     already true, and matches "leaves the field"
+
+
+5. THREE WAYS TO TRANSLATE IT
+=============================
+            A. KEEP (as approved)     B. MAINLINE SHAPE            C. MIDDLE
+  cast      cd 8                      once per field entry         when no ring is live
+  lasts     8 s                       until benched or faint       8 s
+  rate      6.25%/s                   3.125%/s (or keep 6.25)      6.25%/s (or 3.125)
+  slot      recasts while active      cast, then swap off: it      recasts while active;
+  swap                                keeps healing forever        rides 8 s after a swap
+  runtime   none (fix the "no cd      new duration rule, cast      cast check only
+            set yet" note only)       check, validator rule
+  feel      steady sustain while      set-and-forget passive       same as A in play, no
+            Aqua Ring is the active   regen; very strong in a      placeholder cooldown
+            move                      30-min horde run (one cast
+                                      heals the whole time)
+
+  genre note: permanent regen is usually a stat or passive item (Brotato HP Regeneration,
+  survivor-like-design-reference); option B turns a move slot into that, so its rate matters most.
+
+
+6. QUESTIONS FOR JESS
+=====================
+  Q1 lasts:  8 s cycles (A, C)  or  until the Pokemon is benched (B)?
+  Q2 rate:   6.25%/s (approved)  or  mainline 1/16 per 2 s turn = 3.125%/s?
+  Q3 recast: a cooldown (A)  or  "only when no ring is live" (B, C)?
+  Any change to the rate or shape re-opens MOVE-INTENT aqua-ring (new dated ruling).
+
+
+7. UPDATE (Jess, 2026-10-31): rate 3.125%/s; can it be an aura like the notActive ones?
+=======================================================================================
+  "endOn notActive" auras are now the PERSISTENT flag (combat-architecture:H25, 2026-10-29).
+  notActive is banned on a persistent move; only Spikes (a placed mine) still uses it.
+
+  move          persistent   what keeps it alive          sim needs
+  ------------  -----------  ---------------------------  -------------------------
+  Bug Buzz      yes          slot active, not stunned     a shape (circle 120)
+  Night Shade   yes          same                         a shape (circle 120)
+  Fire Spin     yes          same                         a shape (orbit)
+  Toxic         yes          same                         an emitter (trail)
+  Aqua Ring     NO           8 s timer, cd 8              shapeless heal: today the
+                                                          sim skips it as persistent
+
+  rate   3.125%/s = mainline 1/16 max HP per 2 s turn  ->  heal fraction 0.0625, per 2
+
+  THE TWO ENDS DIFFER
+                  persistent aura (P)                 mainline (B)
+  ends on         slot swap, stun, faint              Pokemon swap (bench), faint
+  heals while     Aqua Ring is the ACTIVE move        the Pokemon is out, any move
+  trade-off       heal instead of damage in that      none: cast once, swap to damage,
+                  slot (bond it to keep damage)       regen stays (a passive item)
+  fits            the fork's aura family (H25)        PokeAPI text
+
+  P BUILD (needs runtime, game code, plan + OK)
+    move-sim.js     upkeepPersistent: accept a shapeless persistent move whose payload
+                    is self-cast only; its live group is a hitless marker
+    move-effects.js the heal ticks every `per` while that group is live, ends with it
+    data            aqua-ring: persistent true, heal 0.0625 per 2, no duration
+    overrides       drop the cd 8 entry (persistent-no-cd)
+    tests           persist harness: ticks at 2/4/6 s, ends on slot swap, stun, faint,
+                    fresh tick phase on return; intent scenario rewrite; changelog
+  B BUILD (needs runtime)
+    new "until benched" lifetime for a self heal, cast once per field entry; the
+    validator and the grammar both need a rule for it
+
+
+8. BUILD PLAN, PERSISTENT AURA (Jess picked P, 2026-10-31; awaiting OK on the plan + tick)
+==========================================================================================
+  TICK CHOICE (same 3.125%/s average)
+    per 2 s  0.0625    mainline 1/16 per turn, burn/poison cadence; 160 HP mon: +10 every 2 s
+    per 1 s  0.03125   smoother; 160 HP mon: +5 every 1 s
+    why it matters: the aura ends on every slot swap or stun and restarts its tick clock
+    when it comes back, so a swap just before a tick loses that tick.
+      swap at 1.9 s    per 2: 0 heals     per 1: 1 heal
+      sleep 2-6 s      ends the aura; ticks resume after waking, from 0
+
+  FILE BY FILE (game code: written only on OK)
+  data      move-conversions-described.json, aqua-ring
+              persistent true; delivery anchor caster, targeting none, motion static
+              (the Toxic / Flame Wheel shapeless shape); heal fraction + per from the tick
+              choice, NO duration; feel note rewritten. Jess re-runs export_moves.js
+  override  move-overrides.js: drop 'aqua-ring' cd 8 (persistent-no-cd)
+  sim       move-sim.js upkeepPersistent (about line 345): the "needs a shape or an
+              emitter" skip also lets through a shapeless persistent move whose payload
+              is a self heal, so it spawns one hitless marker instance (no shape, collide
+              already skips it)
+            endGroup (about line 325): when a persistent group ends, also end its heal
+              (one new G.MoveEffects call by source)
+  effects   move-effects.js healOverTime: a heal with no duration lasts until its group
+              ends (no countdown); a new endHeal(o, src) removes it. Ticks every `per`
+              from the spawn, as now
+  grammar   move-attributes.js: no change (heal duration is already optional)
+  validator validate_moves.js: new rule "heal-needs-duration": a heal with no duration
+              is only valid on a persistent move (else it would end at once)
+  intent    MOVE-INTENT aqua-ring: new dated ruling (persistent aura, 1/16 per 2 s turn =
+              3.125%/s, ends on slot swap, stun, faint); old 6.25%/s ruling marked superseded
+  changelog Aqua Ring (dev path): half the heal rate, now an aura while it is active
+
+  LEFT ALONE
+    legacy path (js/data/moves.js, team-store "regen", status-sliceE2a-harness): until 7b
+    HUD: no regen chip on the new path (as today); dev overlay shows "aqua-ring x1"
+
+  TESTS
+  EDIT move-selfcast-harness.js section 9 (lines ~180-191)
+         was: 8 heals in 8 s, clamp, recast refresh, swap-out ends it
+         now: heals at each `per` while active (3.5 s: per 2 -> 1 heal, per 1 -> 3), clamp at
+              max HP, a slot swap ends it at once, faint ends it, swap back restarts the
+              tick clock, no cooldown ever armed; same at dt 1/60 and 1/30
+  EDIT move-persist-harness.js: Aqua Ring added to the lifecycle checks (one live group
+         while active, notActive on swap or stun, ownerDeath on faint, a shapeless self
+         heal spawns a hitless marker)
+  EDIT move-selfcast-mutate.js 'Aqua Ring stacks' (line 35): its pattern is the refresh
+         line I change; retarget it to "a second group spawns while one is live" (heals
+         doubled), which the persist checks catch
+  NEW  validate_moves.js self-test: 2 cases (heal without duration on a non-persistent
+         move rejected; on a persistent move passes)
+  SCEN move-intent-scenarios.json aqua-ring-tick: rewritten from the new ruling (same
+         3.5 s window: per 2 -> 1 heal of 10, per 1 -> 3 heals of 5; hp 10 of 160)
+       + aqua-ring-aura (new): 10.5 s held active, 1 cast (no recast, no cd), heals at every
+         `per` the whole time (per 2 -> 5 heals, per 1 -> 10). The slot-swap case needs a
+         second group, which the runner cannot set up, so it lives in the selfcast harness
+  DEBUG newcombat('aqua-ring', 'tackle'): take a hit, watch +HP ticks while Aqua Ring is
+         active, swap to Tackle (ticks stop), swap back (ticks restart after one `per`)
+  NO new harness or mutation runner: the persist and selfcast harnesses already own the
+  persistent lifecycle and heal over time; the new cases fit their sections.
+
+  RISKS
+    heal halves on the dev path (intended, slice 6 can retune)
+    a stun or a slot swap costs the partial tick (see TICK CHOICE)
+    shapeless persistent markers are new: the overlay and step() must tolerate an
+    instance with no shape and no emitter (the emitter path already does; I check it)

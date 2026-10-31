@@ -125,6 +125,8 @@ function crossChecks(m, err, where, raw) {
     if (start != null && d.grow.max < start) err(where, 'grow-max-above-start: grow.max ' + d.grow.max + ' is below the start ' + dim + ' ' + start + ' (rule 8)'); }
   if (raw && 'pierce' in s && pay.length && pay.every(e => e && e.t === 'emit'))
     err(where, 'pierce-needs-hitbox: pierce on an emitter parent whose payload is only emit, so nothing spends it (rule 3)');
+  if (!m.persistent && pay.some(e => e && e.t === 'heal' && e.amount && e.amount.of === 'maxHP' && e.duration == null))     // slice 5a
+    err(where, 'heal-needs-duration: a heal over time with no duration lasts until its persistent group ends, so it needs persistent (Aqua Ring)');
   pay.forEach((e, i) => { if (e && e.t === 'emit' && isObj(e.move)) crossChecks(e.move, err, (where ? where + '.' : '') + 'payload[' + i + '].move', raw); });
 }
 
@@ -194,6 +196,8 @@ function selfTest() {
     ['persistent with an endOn time passes (a pulse)', m => (m.persistent = true, m.delivery.endOn = [{ time: 2 }], m), null],
     ['persistent with a cd', m => (m.persistent = true, delete m.delivery.endOn, m.cd = 1, m), 'persistent-no-cd'],
     ['persistent listing notActive', m => (m.persistent = true, m.delivery.endOn = [{ notActive: true }], m), 'persistent-no-notactive'],
+    ['heal over time with no duration, not persistent (slice 5a)', m => (m.payload.push({ t: 'heal', amount: { fraction: 0.0625, of: 'maxHP' }, per: 2, side: 'self' }), m), 'heal-needs-duration'],
+    ['heal over time with no duration on a persistent move passes', m => (m.persistent = true, delete m.delivery.endOn, m.payload.push({ t: 'heal', amount: { fraction: 0.0625, of: 'maxHP' }, per: 2, side: 'self' }), m), null],
     ['not persistent and no endOn', m => (delete m.delivery.endOn, m), 'needs-end'],
     ['self-cast with an endOn', () => { const m = sub(); m.delivery.endOn = [{ time: 8 }]; return m; }, 'self-has-no-end'],
     ['steering with nothing to steer toward', m => (m.delivery.aimTrack = 1, m.delivery.targeting = 'none', m), 'steer-needs-target'],

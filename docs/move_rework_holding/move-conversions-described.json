@@ -307,17 +307,19 @@
       "name": "Aqua Ring",
       "kind": "buff",
       "balanceClass": "other",
-      "feel": "Self-cast heal-over-time veil. Regenerates the caster's HP each tick for 8s. SELF scope (a heal, not a +stage stat, so not team-wide). Converted from the seed's stat:regen to a proper heal payload. cd 8 hand-set (overrides layer, #2).",
+      "feel": "Persistent self-heal aura (slice 5a, MOVE-INTENT aqua-ring 2026-10-31): while Aqua Ring is the active move and the caster is not stunned it heals 1/16 max HP every 2 s, the mainline 1/16 per turn on the fork's 2 s turn (3.125% max HP/s). A slot swap, stun or faint ends it. Shapeless like Toxic (anchor caster, targeting none, motion static), no cooldown, no duration. SELF scope (a heal, not a team stat).",
       "type": "water",
       "category": "status",
       "power": null,
       "pp": 20,
       "accuracy": null,
       "priority": 0,
+      "persistent": true,
       "flavor_text": "The user envelops itself in a veil made of water. It regains some HP every turn.",
       "delivery": {
-        "anchor": "self",
-        "targeting": "self"
+        "anchor": "caster",
+        "targeting": "none",
+        "motion": "static"
       },
       "payload": [
         {
@@ -326,9 +328,8 @@
             "fraction": 0.0625,
             "of": "maxHP"
           },
-          "per": 1.0,
-          "side": "self",
-          "duration": 8
+          "per": 2,
+          "side": "self"
         }
       ],
       "reviewStatus": "reviewed"

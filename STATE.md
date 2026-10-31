@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-31 morning (Quick, work machine; slice 5a pass 1 built, pass 2 written).
+Last updated: 2026-10-31 morning (Quick, work machine; slice 5a pass 1 built, pass 2 + Aqua Ring aura written).
 
 ## Where we are
 - Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md.
@@ -11,8 +11,8 @@ Last updated: 2026-10-31 morning (Quick, work machine; slice 5a pass 1 built, pa
 - No save impact (stages are run state).
 
 ## Still open in 5a (small, before 5b)
-1. Pass 2 WRITTEN 10-31 (maxStacks and stat duration removed; validator rejects both; the 4 buff cds gone, buffs cast on their Gate). Jess: export_moves.js, then check.js.
-2. Aqua Ring: look at it before closing 5a (Jess, 10-31). Today: cd 8 override ("no cd set yet"), heal over time, not a pure buff, not on the trackers.
+1. Pass 2 WRITTEN 10-31 (maxStacks and stat duration removed; validator rejects both; the 4 buff cds gone, buffs cast on their Gate). Jess: export_moves.js, then check.js (covers item 2 too).
+2. Aqua Ring WRITTEN 10-31: persistent heal aura, 1/16 max HP every 2 s while active (3.125%/s), ends on slot swap, stun, faint; no cd. MOVE-INTENT ruling dated. Map: docs/ASCII Concept Maps/Aqua Ring - PokeAPI vs New Systems.txt.
 3. Batch re-review sign-off in move-intent-scenarios.json `batchReviewed`: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze, Bubble Beam. Use newcombat('drops').
 4. Re-run persist, sim and motion mutate runners once (4 retargeted patterns).
 

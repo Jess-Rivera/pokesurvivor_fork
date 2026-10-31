@@ -136,6 +136,9 @@ G.MoveSim = (() => {
   const endAt = spec => { const c = (spec.delivery.endOn || []).find(c => c.time != null); return c ? c.time : Infinity; };
   const emitting = spec => (spec.payload || []).some(fx => fx.t === 'emit');
   const emitsOf = spec => (emitting(spec) ? spec.payload.filter(fx => fx.t === 'emit').map(fx => ({ fx, done: 0, next: fx.trigger === 'interval' ? fx.every : 0, acc: 0 })) : null);
+  // slice 5a: a shapeless move whose payload is only self heals (Aqua Ring) can be persistent too: its live group is one marker instance
+  // with no shape (collide skips it); the heal over time it starts at spawn ends with the group (endGroup).
+  const selfHealOnly = spec => !spec.space && (spec.payload || []).length > 0 && spec.payload.every(fx => fx.t === 'heal' && fx.side === 'self');
   const hitlessOf = spec => !(spec.payload || []).some(fx => fx.t !== 'emit');     // a pure emitter (Toxic Spikes' plate, Will-O-Wisp's turret) has no hitbox
   const capOk = st => st.fx.count == null || st.done < st.fx.count;     // D29: count caps the total emissions; absent, unlimited while the carrier lives
   const kids = new WeakMap();
@@ -325,6 +328,7 @@ G.MoveSim = (() => {
   function endGroup(list, reason) {
     if (!list.length) return;
     for (const i of list) { i.done = reason; G.SimBus.emit('move:end', { moveId: i.spec.id, instId: i.id, reason, x: i.x, y: i.y }); }
+    for (const i of list) G.MoveEffects.endHeal(i.cast.owner, G.MoveEffects.srcOf(i.spec, i.cast.owner));     // slice 5a: an aura's heal ends with its group
     insts = insts.filter(i => !list.includes(i));
   }
   function spawnPersistent(o, slot, def, now) {
@@ -342,7 +346,7 @@ G.MoveSim = (() => {
     const act = o.activeGroup(), stunned = G.Status.stunned(o);
     for (const g of o.slots) for (const slot of g) {
       const def = G.MoveDefs[slot.id];
-      if (!def || !def.persistent || (!def.space && !emitting(def)) || !routed(slot.id)) continue;     // 4d: a shapeless persistent emitter (Toxic, Flame Wheel) counts
+      if (!def || !def.persistent || ((!def.space && !emitting(def)) && !selfHealOnly(def)) || !routed(slot.id)) continue;     // 4d: a shapeless persistent emitter (Toxic, Flame Wheel) counts; 5a: so does a self heal aura (Aqua Ring)
       const mine = groupOf(o, slot);
       if (o.dead) endGroup(mine, 'ownerDeath');
       else if (stunned || !act.includes(slot)) endGroup(mine, 'notActive');

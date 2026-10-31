@@ -107,6 +107,21 @@ const hitsOf = (tape, id) => tape.filter(e => e.type === 'move:hit' && (id == nu
   ok(groupsOf(r, 'fire-spin').size === 0 && ends(t5, 'notActive').length === 3, 'its slot removed from the slot list (a debug set switch, a removed move): the group ends that frame, notActive');
   console.log('1 R7: one group while active, notActive on swap, stun and slot removal, ownerDeath on a faint, fresh group on return, no cooldown, clear leaves none'); }
 
+// 1b. a shapeless self heal aura (slice 5a, Aqua Ring): one marker instance with no shape, no hits, the same R7 lifecycle
+{ const o = mkP([['aqua-ring'], ['tackle']]), es = [mkE(30, 0)];
+  const tp = run(o, es, 1);
+  const live = ofMove('aqua-ring');
+  ok(groupsOf(o, 'aqua-ring').size === 1 && live.length === 1 && !live[0].shape, 'Aqua Ring: one live group of one shapeless marker while active');
+  ok(hitsOf(tp, 'aqua-ring').length === 0 && o.slots[0][0].t === 0, 'it never hits and never arms a cooldown');
+  o.act = 1; const t1 = run(o, null, 1 / 60, { reset: false });
+  ok(groupsOf(o, 'aqua-ring').size === 0 && ends(t1, 'notActive').filter(e => e.moveId === 'aqua-ring').length === 1, 'swap away: it ends, reason notActive');
+  o.act = 0; run(o, null, 1 / 60, { reset: false });
+  o.stMajor = { k: 'freeze', t: 5, age: 0 }; const t2 = run(o, null, 1 / 60, { reset: false });
+  ok(groupsOf(o, 'aqua-ring').size === 0 && ends(t2, 'notActive').filter(e => e.moveId === 'aqua-ring').length === 1, 'a stun ends it (notActive)');
+  o.stMajor = null; run(o, null, 1 / 60, { reset: false }); o.dead = true; const t3 = run(o, null, 1 / 60, { reset: false });
+  ok(ends(t3, 'ownerDeath').filter(e => e.moveId === 'aqua-ring').length === 1, 'a faint ends it (ownerDeath)');
+  console.log('1b Aqua Ring aura: one shapeless marker, no hits, no cd, ends on swap, stun and faint'); }
+
 // 2. orbit geometry (D25, H15, D36)
 { for (const dt of DTS) {
     const o = mkP([['fire-spin']]); let worst = 0, off = 0;

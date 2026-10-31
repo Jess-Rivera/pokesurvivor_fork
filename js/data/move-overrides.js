@@ -6,11 +6,11 @@
  *
  * Each entry sets a hand cd: status and flat-damage moves have no Power, so the cooldown formula does not apply, and a few
  * powered moves are hand-tuned (the why says so). Swords Dance, Agility, Harden and Dragon Dance have no entry: they are pure
- * buffs and cast on their Gate, with no cooldown (COMBAT-RULES "Stat stages" SS8, slice 5a).
+ * buffs and cast on their Gate, with no cooldown (COMBAT-RULES "Stat stages" SS8, slice 5a). Aqua Ring has none either: it is a
+ * persistent aura (slice 5a, MOVE-INTENT aqua-ring 2026-10-31).
  * The legacy hand cd (js/data/moves.js) is noted in each why, for reference only; nothing reads it. */
 (() => {
   G.MoveOverrides = {
-    'aqua-ring':    { cd: 8, why: 'no cd set yet (legacy 8)' },
     'string-shot':  { cd: 1.1, why: 'Jess 2026-10-29: 0.5 was a regression, restored to legacy 1.1' },
     'spikes':       { cd: 1.1, why: 'no cd set yet (legacy 1.2)' },
     'toxic-spikes': { cd: 1.1, why: 'no cd set yet (legacy 1.1)' },

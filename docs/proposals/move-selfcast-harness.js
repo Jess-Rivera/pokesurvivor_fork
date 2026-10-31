@@ -177,18 +177,38 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   ok(fa.dead && !fa.shield && near(fa.slots[0][0].t, 12) && Sim.commits(fa).length === 0, 'faint ends the shield and the freeze (armed at 12)');
   console.log('8 Substitute: pay 25, shield 50, refill 50/s, 4 s, spill, quiet full absorb, DoT drains, skip rules, cooldown 16/13/10 s'); }
 
-// 9. heal over time: Aqua Ring 6.25% max HP per second for 8 s, clamped; a recast refreshes; swap-out ends it
-{ const p = mkP([['aqua-ring']], { maxHp: 160, hp: 10 }), healed = []; const h0 = p.heal; p.heal = function (a) { healed.push(a); return h0.call(this, a); };
-  run(p, [], 8.5, { each: once(p) });
-  ok(healed.length === 8 && healed.every(a => near(a, 10)) && p.hp === 90, '8 heals of 10 (6.25% of 160) in 8 s (' + healed.length + ', hp ' + p.hp + ')');
-  const c = mkP([['aqua-ring']], { maxHp: 160, hp: 150 }); run(c, [], 3.5, { each: once(c) }); ok(c.hp === 160, 'clamped at max HP');
-  const r = mkP([['aqua-ring']], { maxHp: 160, hp: 1 }), rh = []; const r0 = r.heal; r.heal = function (a) { rh.push(+(this === r) && 1); return r0.call(this, a); };
-  run(r, [], 12.5, { each: (k, t) => { if (Math.abs(t - 4) < 1e-6) r.slots[0][0].t = 0; else if (r.slots[0][0].t < 50 && t > 0.1 && Math.abs(t - 4) > 0.05) r.slots[0][0].t = 99; } });
-  ok(rh.length === 12, 'a recast at 4 s refreshes to 8 s left without doubling: 12 heals by 12 s (' + rh.length + ')');
-  const s = mkP([['aqua-ring']], { maxHp: 160, hp: 1 }), sh = []; const s0 = s.heal; s.heal = function (a) { sh.push(a); return s0.call(this, a); };
-  run(s, [], 2.5, { each: once(s) }); Sim.clear(s); run(s, [], 3, { reset: false });
-  ok(sh.length === 2, 'swap-out ends it (2 heals, then none)');
-  console.log('9 heal over time: 8 x 6.25% in 8 s, clamp, refresh not stack, swap-out ends it'); }
+// 9. heal over time: Aqua Ring is a persistent aura (slice 5a, MOVE-INTENT aqua-ring 2026-10-31): 1/16 max HP every 2 s while active, clamped,
+//    no cooldown; a slot swap, a stun or a faint ends it; coming back starts a fresh tick clock; a second cast while one is live refreshes, never stacks
+{ const spy = o => { const got = []; const h0 = o.heal; o.heal = function (a) { got.push(a); return h0.call(this, a); }; return got; };
+  const act = (o, i) => { o.act = i; o.activeGroup = function () { return this.slots[this.act]; }; };
+  for (const dt of [1 / 60, 1 / 30]) {
+    const tag = ' at dt ' + (dt === 1 / 60 ? '1/60' : '1/30');
+    const p = mkP([['aqua-ring']], { maxHp: 160, hp: 10 }), healed = spy(p); const tp = run(p, [], 10.5, { dt });
+    ok(healed.length === 5 && healed.every(a => near(a, 10)) && p.hp === 60, '5 heals of 10 (1/16 of 160) every 2 s in 10.5 s (' + healed.length + ', hp ' + p.hp + ')' + tag);
+    ok(casts(tp, 'aqua-ring').length === 1 && p.slots[0][0].t === 0, 'one cast, no cooldown ever armed' + tag);
+  }
+  const c = mkP([['aqua-ring']], { maxHp: 160, hp: 155 }); run(c, [], 2.1); ok(c.hp === 160, 'clamped at max HP');
+  const w = mkP([['aqua-ring'], ['tackle']], { maxHp: 160, hp: 1 }), wh = spy(w); act(w, 0);
+  run(w, [], 2.5); act(w, 1); run(w, [], 3, { reset: false });
+  ok(wh.length === 1 && Sim.persisted(w).length === 0, 'a slot swap ends it at once: 1 heal by 2.5 s, none after (' + wh.length + ')');
+  act(w, 0); run(w, [], 1.9, { reset: false }); const before = wh.length; run(w, [], 0.2, { reset: false });
+  ok(before === 1 && wh.length === 2, 'swap back: a fresh tick clock, the next heal 2 s after the return (' + before + ' then ' + wh.length + ')');
+  const z = mkP([['aqua-ring']], { maxHp: 160, hp: 1 }), zh = spy(z); run(z, [], 1);
+  z.stMajor = { k: 'freeze', t: 9, age: 0 }; run(z, [], 2, { reset: false }); z.stMajor = null;
+  ok(zh.length === 0 && Sim.persisted(z).length === 0, 'a stun ends it: no heal at 2 s while frozen');
+  run(z, [], 2.1, { reset: false }); ok(zh.length === 1, 'awake again: a fresh aura, a heal 2 s later (' + zh.length + ')');
+  const f = mkP([['aqua-ring']], { maxHp: 160, hp: 1 }), fh = spy(f); run(f, [], 1); f.dead = true; run(f, [], 3, { reset: false });
+  ok(fh.length === 0 && Sim.persisted(f).length === 0, 'a faint ends it');
+  // a Pokemon swap (move-route.js clears the benched owner, which drops its instances without an endGroup): the heal must end via endSelf.
+  // Only the heal clock is ticked after the clear, as on the bench (the sim no longer ticks the benched owner).
+  const b = mkP([['aqua-ring']], { maxHp: 160, hp: 1 }), bh = spy(b); run(b, [], 1); Sim.clear(b);
+  for (let i = 0; i < 180; i++) FX.upkeep(1 / 60, b);
+  ok(bh.length === 0 && Sim.persisted(b).length === 0, 'a Pokemon swap ends it: no heal in the 3 s after the clear (' + bh.length + ')');
+  const q = mkO(), qh = []; q.heal = a => qh.push(a);
+  FX.applyCast(D['aqua-ring'], { owner: q }, () => 0.99); FX.applyCast(D['aqua-ring'], { owner: q }, () => 0.99);
+  for (let i = 0; i < 126; i++) FX.upkeep(1 / 60, q); FX.endSelf(q);
+  ok(qh.length === 1, 'a second cast while one is live refreshes, never stacks: 1 heal by 2.1 s (' + qh.length + ')');
+  console.log('9 heal aura: 1/16 every 2 s while active, no cd, clamp, ends on slot swap, Pokemon swap, stun and faint, fresh clock on return, no stacking'); }
 
 // 10. stat buffs on trackers (slice 5a, COMBAT-RULES "Stat stages" SS1 and SS8): per Pokemon trackers, three Pokemon reach +6, Dragon Dance
 //     both stats, individual scope, cast on the Gate (no cooldown), active group only, swap-in waits for a running Gate, fizzle waits one Gate
