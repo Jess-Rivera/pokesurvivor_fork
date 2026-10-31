@@ -198,3 +198,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Pointers: COMBAT-RULES [Proposed] line, slice-5 and slice-overview (plan on hold), TODO Backlog (model, team-wide upgrades branch, Bond tax idea), STATE.
 - No js/ touched, check.js not run (nothing to check). Board API fetch failed at wrap-up; TODO mirror not re-synced, #16 noted.
 - Stopped at: Jess has more questions on the model, then the stage-manipulation moves (Haze, Psych Up and others), then rule it and re-plan slice 5.
+
+## 2026-10-30 (home, Claude Code, night): slice 5 planned end to end
+- Reviewed Quick's 5a and 5b maps against the code. 5a fixes: self drops roll on the first enemy hit (SS2), trackers in their own store beside the legacy lists (stgTeam also carries regen, crit, berries), pass 2 adds validate_moves.js, move_parity.js, move_report.js.
+- Decided (Jess): pure buffs cast only while their group is active (solo = charge, then swap); swap-in waits while the Gate runs (SS8). Bond tax [Proposed]: 0.5 x Gate x chance, only for changes that help their side (Bond branch).
+- Decided (Jess): 5b card list by axis (General, Space, Delivery, Payload), Cooldown Down added, Vitamins replaces the six stat cards, HP Regen bench only. 5b builds after 5a.
+- Logged: New Move learning ideas (combined screen, move bank), slice 6 watch items (Leaf Storm about half power, +6 strength, weak chance drops).
+- No js/ touched. Stopped at: build handoff written (slice-5-handoff.md); Jess commits, then a build chat.
