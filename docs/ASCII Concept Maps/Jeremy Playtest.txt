@@ -1,0 +1,15 @@
+Jeremy playtest
+
+- Speed balance 0.5-3.0 -> 0.5-2.0
+- Gold/XP
+- Bosses
+- Status Chips
+- Stat Stages visibility
+- Better Pause Menu
+- More Explanation
+- Bond upgrade needs to let pick pokemon
+- Not enough new move upgrades
+- More Item Drops
+- Bomb guarantees screen clear, 3.0s delay for spawn
+- Magnetism
+- 

@@ -11,7 +11,8 @@ Canonical: docs/GYM-ROSTERS.md, rules section "GEN-1 ORDER"
 
 ## 2026-10-31, Gyms only: rifts, legendary fights and the Judgment are removed (Jess)
 Every rift and legendary-fight reference leaves the game; bosses are gym leaders only. The gym arena moves out of rift.js. The pokedex legendary flag stays as a spawn exclusion; old save fields stay readable and are never wiped; js/net/ is deferred. D1: legendaries stay as gacha pulls (rarity 5, pity). D2: Q10, Q11 and the post-loop-6 legendary fights stay as future scope, to be built on a new arena and brain, not rift code. D3: the smaller Master Ball supply is accepted for now (TODO). Supersedes the RiftBrain part of the boss split entry below.
-Canonical: docs/ASCII Concept Maps/Slice 7a-0 - Gyms Only Plan.txt
+Build follow-up (Jess, same day): all 8 commit A behavior changes approved, including no 'rift' progress event on a gym win, no save.legends write on a gym kill (it was a bug), and the dropped wasted random roll (changes 2, 3, 6 explained in their own map).
+Canonical: docs/ASCII Concept Maps/Slice 7a-0 - Gyms Only Plan.txt; Slice 7a-0 - Commit A Changes 2, 3, 6.txt
 
 ## 2026-10-31, Boss AI leaves enemy.js: shared body plus a brain (Jess)
 Option B of three (A file move, B brain divorce, C separate Boss class). Every line of boss decision code moves to js/entities/boss-ai.js as a GymBrain attached by G.Boss.make (gyms only, entry above); the Enemy body (HP, hurt, die, status, stages, grid slot) stays shared so player moves and status rules have one copy. C rejected: it duplicates every combat rule (drift) and goes against the one-executor decision. Commit B of slice 7a-0, no behavior change.
