@@ -476,11 +476,12 @@ G.HUD = (() => {
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
-    // Rift: a big arrow pulsing at the edge if off-screen, and if visible, a
-    // an arrow bouncing above; in the arena, a countdown.
-    const rift = G.Rift.rift;
-    if (rift) {
-      const sx = (rift.x - cam.left()) * cam.scale, sy = (rift.y - 40 - cam.top()) * cam.scale;
+    // Gym gate: a big arrow pulsing at the edge if off-screen and, if visible,
+    // an arrow bouncing above; in the arena, a GYM tag.
+    const gate = G.GymArena.gate;
+    if (gate) {
+      const gym = gate.gym;
+      const sx = (gate.x - cam.left()) * cam.scale, sy = (gate.y - 40 - cam.top()) * cam.scale;
       const now = performance.now() / 1000, beat = 0.5 + Math.sin(now * 7) * 0.5;
       const gymGauge = () => {   // grace countdown, then the escalation readout (+N and climbing)
         const g = G.Gym.graceLeft(), b = G.Gym.escBump();
@@ -488,8 +489,7 @@ G.HUD = (() => {
         if (g != null && g > 0) return ' · ' + Math.ceil(g) + ' s';
         return '';
       };
-      const label = rift.gym ? 'GYM ' + (rift.gym.idx + 1) + ' · ' + rift.gym.leader.toUpperCase() + ' · LV ' + (rift.gym.level + G.Gym.escBump()) + gymGauge() + ' · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m'
-        : 'GRIETA · ' + Math.round(G.U.dist(pl.x, pl.y, rift.x, rift.y) / 32) + ' m · ' + Math.ceil(rift.ttl) + ' s';
+      const label = 'GYM ' + (gym.idx + 1) + ' · ' + gym.leader.toUpperCase() + ' · LV ' + (gym.level + G.Gym.escBump()) + gymGauge() + ' · ' + Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32) + ' m';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
       if (off) {
@@ -518,7 +518,7 @@ G.HUD = (() => {
         ctx.fillStyle = '#e2d0ff';
         ctx.fillText(label, lx, ly);
       } else {
-        // Above the rift: a bouncing down arrow.
+        // Above the gate: a bouncing down arrow.
         const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
         ctx.translate(sx, by);
         ctx.beginPath(); ctx.moveTo(-15, -12); ctx.lineTo(15, -12); ctx.lineTo(0, 8); ctx.closePath();
@@ -526,30 +526,30 @@ G.HUD = (() => {
         ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff'; ctx.fill();
         ctx.font = F(800, 11); ctx.textAlign = 'center';
         ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        const l2 = rift.gym ? 'GYM · LV ' + (rift.gym.level + G.Gym.escBump()) + (G.Gym.escBump() > 0 ? ' +' + G.Gym.escBump() : '') : 'GRIETA · ' + Math.ceil(rift.ttl) + ' s';
+        const l2 = 'GYM · LV ' + (gym.level + G.Gym.escBump()) + (G.Gym.escBump() > 0 ? ' +' + G.Gym.escBump() : '');
         ctx.strokeText(l2, 0, -18); ctx.fillStyle = '#e2d0ff'; ctx.fillText(l2, 0, -18);
       }
       ctx.restore();
     }
-    if (G.Rift.inArena) {
+    if (G.GymArena.inArena) {
       ctx.textAlign = 'center';
       ctx.font = F(800, 12);
       ctx.fillStyle = '#d9c2ff';
-      ctx.fillText(G.Rift.isGym ? 'GYM' : 'GRIETA · ' + G.U.mmss(G.Rift.timeLeft), w / 2, boss ? 112 : 76);
+      ctx.fillText('GYM', w / 2, boss ? 112 : 76);
     }
 
     // Events: countdown, arrow to the lost Pokemon / to the mark and to the imps.
     G.Events.drawHud(ctx, w, h, pl, F);
 
-    // Its own notice when a rift opens (the other notices do not cover it).
-    if (rift && rift.t < 4.5) {
-      const a = Math.min(1, rift.t * 4, (4.5 - rift.t) * 2), pop = 1 + Math.max(0, 0.25 - rift.t) * 1.6;
+    // Its own notice when a gym gate opens (the other notices do not cover it).
+    if (gate && gate.t < 4.5) {
+      const a = Math.min(1, gate.t * 4, (4.5 - gate.t) * 2), pop = 1 + Math.max(0, 0.25 - gate.t) * 1.6;
       const y0 = h * 0.2;
       ctx.save();
       ctx.globalAlpha = a;
       ctx.translate(w / 2, y0); ctx.scale(pop, pop);
       ctx.font = F(800, 20);
-      const t1 = rift.gym ? 'A GYM GATE HAS OPENED' : '¡SE HA ABIERTO UNA GRIETA!', t2 = rift.gym ? rift.gym.leader + ' waits inside (Lv ' + rift.gym.level + '). Enter soon: after ' + G.Gym.GRACE + ' s the gym and the world start getting stronger.' : 'Sigue la flecha morada: dentro te espera un legendario';
+      const t1 = 'A GYM GATE HAS OPENED', t2 = gate.gym.leader + ' waits inside (Lv ' + gate.gym.level + '). Enter soon: after ' + G.Gym.GRACE + ' s the gym and the world start getting stronger.';
       const bw = Math.min(w - 24, Math.max(ctx.measureText(t1).width, (ctx.font = F(700, 11), ctx.measureText(t2).width)) + 36);
       roundRect(ctx, -bw / 2, -26, bw, 52, 10);
       ctx.fillStyle = 'rgba(26,11,51,.88)'; ctx.fill();

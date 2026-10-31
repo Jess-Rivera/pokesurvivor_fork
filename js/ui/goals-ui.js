@@ -1,7 +1,7 @@
 /* ============ goals-ui.js — misiones, logros y perfil ============
  * A screen with three tabs:
  *   Missions  3 daily + 2 weekly, with a bar, prize and a claim button
- *   Achievements  medals by category; the legendaries, one by one with their sprite
+ *   Achievements  medals by category
  *   Profile   your 3 favorites and your title; a preview of the public profile
  * and the public profile window of any player (G.ProfileUI.show).
  */
@@ -105,30 +105,12 @@
       box.insertAdjacentHTML('beforeend', `<p class="sub">${got} de ${all.length} logros · títulos: ${G.Progress.titles().length}</p>`);
       box.appendChild(chips);
 
-      const list = all.filter(a => a.cat === cat && !a.dex);
+      const list = all.filter(a => a.cat === cat);
       const grid = document.createElement('div');
       grid.className = 'ach-grid';
       for (const a of list) grid.appendChild(achCard(a, s));
       box.appendChild(grid);
 
-      // Legendaries: one by one, with their sprite (in shadow if you have not beaten it yet).
-      if (cat === 'legendarios') {
-        const legs = all.filter(a => a.dex);
-        const beaten = legs.filter(a => s.legends && s.legends[a.dex]).length;
-        box.insertAdjacentHTML('beforeend', `<h3 style="margin:14px 0 6px">Legendarios vencidos ${beaten} / ${legs.length}</h3>`);
-        const lg = document.createElement('div');
-        lg.className = 'leg-grid';
-        for (const a of legs) {
-          const ok = !!(s.legends && s.legends[a.dex]);
-          const c = document.createElement('div');
-          c.className = 'leg-cell' + (ok ? ' ok' : '');
-          c.title = a.name + (ok ? ' · ¡vencido!' : '');
-          c.appendChild(G.UI.spriteCanvas(a.dex, 64, 56, { scale: 1, silhouette: !ok, shadow: ok }));
-          c.insertAdjacentHTML('beforeend', `<small>${ok ? esc(G.DEX_BY[a.dex].name) : '???'}</small>`);
-          lg.appendChild(c);
-        }
-        box.appendChild(lg);
-      }
     }
 
     function achCard(a, s) {
@@ -257,7 +239,6 @@
           <div><span>En grupo</span><b>${fmt(b.group || 0)}</b></div>
           <div><span>Nivel máximo</span><b>${b.level || 0}</b></div>
           <div><span>Jefes</span><b>${(b.bosses || 0).toLocaleString('es')}</b></div>
-          <div><span>Legendarios</span><b>${b.legends || 0}</b></div>
           <div><span>Derrotados</span><b>${(b.kills || 0).toLocaleString('es')}</b></div>
         </div>
         <h3>Medallas <span class="sub">${b.medals || 0}</span></h3>
@@ -279,8 +260,7 @@
         const m = document.createElement('div');
         m.className = 'pm';
         m.title = a.name;
-        if (a.dex) m.appendChild(G.UI.spriteCanvas(a.dex, 48, 40, { scale: 1 }));
-        else m.innerHTML = G.Icons.html('medal' + a.tier, 36);
+        m.innerHTML = G.Icons.html('medal' + a.tier, 36);
         m.insertAdjacentHTML('beforeend', `<small>${esc(a.name)}</small>`);
         med.appendChild(m);
       }

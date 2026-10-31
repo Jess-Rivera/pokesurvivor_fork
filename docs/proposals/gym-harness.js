@@ -58,7 +58,7 @@ G.Enemy.prototype.die = function () { this.dead = true; };
 
 // 2. gate and def
 let g, def;
-{ G.Rift = { inArena: false, rift: null, openGate: info => { G.Rift.rift = { gym: info }; return true; } };
+{ G.GymArena = { inArena: false, gate: null, openGate: info => { G.GymArena.gate = { gym: info }; return true; } };
   G.Gym.reset(); clock = 239; G.Gym.update(0.1, {}, 239); if (G.Gym.gate) bad('gate before 4:00');
   clock = 240; G.Gym.update(0.1, {}, 240); g = G.Gym.gate; if (!g) bad('no gate at 4:00');
   const wantL = Math.round(G.Stats.levelForTime(240)) + 4; if (g.level !== wantL) bad('level ' + g.level + ' vs ' + wantL);
@@ -125,7 +125,7 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   if (!(seen.tackle && seen['rock-throw'] && seen.harden)) bad('not every move used in 60 s: ' + JSON.stringify(seen));
   if (hz.some(h => h.atkFactor == null)) bad('a hazard without a ratio factor'); if (shots.some(s => s.atkFactor == null)) bad('a shot without a ratio factor');
   if (shots.some(s => s.mtype !== 'rock')) bad('shot type ' + shots.map(s => s.mtype)); if (hz.some(h => h.type !== 'normal')) bad('zone type');
-  if (e.ai.fury) bad('fury should stay off');
+  if ('fury' in e.ai) bad('the old fury state is back');
   const rt = e.gym.moves.find(x => x.id === 'rock-throw').inst, tk = e.gym.moves.find(x => x.id === 'tackle').inst;
   if (shots.some(x => !near(x.r, rt.size) || Math.abs(Math.hypot(x.vx, x.vy) - rt.speed) > 1 || !near(x.life, rt.life) || (x.pierce | 0) !== (rt.pierce | 0))) bad('Rock Throw shot differs from the player version');
   if (!shots.every(x => x.vis && x.vis.id === 'rock-throw')) bad('shot visuals are not the move visuals');
@@ -140,7 +140,7 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', zones ' + (kinds.zone || 0) + ', shots ' + shots.length + ', peak Def stage multiplier x' + maxDef + ', Tackle slashes ' + slashes.length + ' hurting ' + hurts.length + ' times, shots r' + (shots[0] && shots[0].r) + ' at ' + (shots[0] && Math.round(Math.hypot(shots[0].vx, shots[0].vy))) + ' px/s' + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
 
 // 6. schedule after the fight
-{ G.Gym.onReturn(g); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('onReturn state'); G.Rift.rift = null; clock = 9999; G.Gym.update(0.1, {}, 9999); if (G.Gym.gate) bad('a second gate with one gym in the list');
+{ G.Gym.onReturn(g); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('onReturn state'); G.GymArena.gate = null; clock = 9999; G.Gym.update(0.1, {}, 9999); if (G.Gym.gate) bad('a second gate with one gym in the list');
   console.log('6 schedule: after Brock, beaten ' + G.Gym.beaten + ', no further gate (the list has one entry)'); }
 
 // 7. stage ladders: the stage a slot shows follows the level (placeholder bands 20 / 35), single-stage lines never change
@@ -163,17 +163,17 @@ const mk = () => { const e = new G.Enemy(def, 0, 0, { hp: 1, spd: 1, dmg: 1 }, t
   console.log('8 lineup: loop 1..6 gives the first N slots in order; stage at level 12 is Geodude/Rhyhorn/Omanyte/Kabuto/Onix/Aerodactyl, at 35 the finals; odd loops clamp'); }
 
 // 9. loop accessor, roster and the escalation bump feeding the stage
-G.Rift.rift = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
+G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
 const g2 = G.Gym.gate; if (!g2) bad('no gate for sections 9 to 12');
 { if (G.Gym.loop !== 1) bad('default loop'); G.Gym.debugLoop(4); if (G.Gym.loop !== 4 || G.Gym.roster(g2).length !== 4) bad('debugLoop 4 / roster size ' + G.Gym.roster(g2).length);
   G.Gym.debugLoop(99); if (G.Gym.loop !== G.Gyms.LOOPS) bad('debugLoop clamps high'); G.Gym.debugLoop(0); if (G.Gym.loop !== 1) bad('debugLoop clamps low'); G.Gym.debugLoop(NaN); if (G.Gym.loop !== 1) bad('debugLoop NaN');
   G.Gym.debugLoop(3); G.Gym.reset(); if (G.Gym.loop !== 1) bad('reset() should clear the loop');
-  G.Rift.rift = null; clock = 240; G.Gym.update(0.1, {}, 240); const g3 = G.Gym.gate;
+  G.GymArena.gate = null; clock = 240; G.Gym.update(0.1, {}, 240); const g3 = G.Gym.gate;
   if (G.Gym.roster(g3)[0].dex !== 74) bad('slot 1 at gate level ' + g3.level + ' should be Geodude');
   G.Gym.debugEsc(g3.level >= 20 ? 0 : 20 - g3.level); if (G.Gym.roster(g3)[0].dex !== 75) bad('with the bump to level 20 slot 1 should be Graveler, got ' + G.Gym.roster(g3)[0].dex);
   if (G.Gym.gate.dex !== 74) bad('the gate keeps the spawn-time stage for its label');
   console.log('9 loop and roster: default 1, debugLoop clamps 1..6, reset clears it, roster follows loop and the bump (Geodude -> Graveler at Lv 20), gate label keeps its spawn stage'); }
-G.Rift.rift = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
+G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
 const gate2 = G.Gym.gate;
 
 // 10. a def for every slot at several levels, a regression guard for the single-mon path, and every slot through the real boss AI
@@ -208,7 +208,7 @@ const gate2 = G.Gym.gate;
 // 11. the sim emits events and never calls presentation itself (Spawner and Audio throw if touched; no subscriber is loaded yet)
 { G.Spawner = { say: () => bad('SIM called Spawner.say directly'), CAP: 64 }; G.Audio = { sfx: () => bad('SIM called Audio.sfx directly') };
   const grants = { levels: 0, boosts: [] }; G.Game.grantLevels = n => { grants.levels += n; }; G.Game.reviveTeam = () => { }; G.Game.badgeBoost = (st, p) => grants.boosts.push(st + ':' + p);
-  G.Rift.rift = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240); const g4 = G.Gym.gate;
+  G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240); const g4 = G.Gym.gate;
   const tape = G.SimBus.record();
   G.Gym.debugEsc(0); G.Gym.update(10.5, {}, 260);                   // one escalation tick after the grace
   G.Gym.makeDef(g4);                                                 // entering with bump > 0 marks the gate
@@ -233,7 +233,7 @@ const gate2 = G.Gym.gate;
   G.SimBus.emit('gym:escalate', { leader: 'Brock', bump: 1 }); G.SimBus.emit('gym:calm', { leader: 'Brock' });
   G.SimBus.emit('gym:badge', { badge: 'Boulder Badge', stat: 'atk', pct: 0.1 }); G.SimBus.emit('gym:badge', { badge: 'Cascade Badge', stat: null, pct: null });
   const want = ['Brock gets stronger, and so does the world!', 'The world calms with Brock defeated.', 'Boulder Badge earned! +10% Attack for the whole team, and a level up', 'Cascade Badge earned! and a level up'];
-  if (said.join('|') !== want.join('|')) bad('gym-present text: ' + JSON.stringify(said)); if (sfx.join() !== 'rift') bad('gym-present sound ' + sfx);
+  if (said.join('|') !== want.join('|')) bad('gym-present text: ' + JSON.stringify(said)); if (sfx.join() !== 'gate') bad('gym-present sound ' + sfx);
   console.log('12 gym-present: escalate, calm and badge events render the exact toasts and the escalation sound'); }
 
 console.log(fail ? fail + ' FAILED' : 'ALL OK');

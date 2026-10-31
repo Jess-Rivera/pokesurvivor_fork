@@ -1,0 +1,584 @@
+KANTO BOSSES (GYMS 2-8 + ELITE FOUR): LORE MOVESETS BY LOOP   (PLANNING DRAFT 2026-10-31)
+================================================================================
+!! STALE ORDER (2026-10-31): docs/GYM-ROSTERS.md moved to the Gen-1 order. Slot numbers and
+!! loop walks below use the OLD order and need redoing (TODO.md).
+Planning only. Same method as "Brock Movesets by Loop.txt" (Gym 1 lives there).
+Rosters: docs/GYM-ROSTERS.md. Catalog coverage ignored on purpose.
+
+  RULE: each mon walks ITS OWN history with that trainer, weakest set first,
+        one step per loop, from the loop it enters (= its slot number) to loop 6.
+        Slot 1 needs 6 sets, slot 2 five ... slot 6 one.
+        "Weakest first" = the trainer's level in that game, then how optimized
+        the set is (PWT and late rematches last).
+
+  SOURCE KEY
+  RB      Red/Blue                    Y       Yellow
+  FRLG    FireRed/LeafGreen (gym, or E4 first battle)
+  FRLG-R  FRLG E4 rematch             GSC     Crystal
+  HG      HeartGold/SoulSilver (gym, or E4 first battle)
+  HG-R    HGSS rematch (Fighting Dojo for gyms, Indigo Plateau for E4)
+  HG-RKT  HGSS Giovanni at Tohjo Falls
+  LG      Let's Go gym / E4 first     LG-R    Let's Go rematch
+  RKT1/2  Let's Go Giovanni, Rocket Hideout / Silph Co.
+  ST1/ST2 Pokemon Stadium (N64) Gym Leader Castle / League, round 1 / 2 (Lv50)
+  PK      B2W2 PWT, Kanto Leaders     PW      B2W2 PWT, World Leaders / Type Expert
+  PC      B2W2 PWT, Champions         USUM    Ultra Sun/Moon, Rainbow Rocket
+
+  MARKERS
+  *   set from another stage/evo of the same line, SAME trainer
+      (e.g. Gloom set on Vileplume, Electivire set on Electabuzz)
+  +   borrowed from ANOTHER Kanto boss's same species (no canon set exists)
+  ^   subset of that trainer's later canon set (early-loop reveal)
+  =   held from the loop before (canon sets ran out)
+  comp  no canon trainer set exists anywhere; composite from the species
+
+
+################################################################################
+GYM 2  MISTY (Water)
+################################################################################
+  loop:      1      2       3       4       5       6
+  Starmie  [FRLG*][FRLG]--[GSC]---[HG-R]--[LG-R]--[PW]
+  Gyarados        [^]-----[^]-----[LG-R]--[=]-----[=]
+  Golduck                 [GSC]---[HG]----[LG-R]--[PK]
+  Poliwrath                       [+ST2]--[+LG]---[+LG-R]
+  Lapras                                  [HG]----[PK]
+  Dewgong                                         [LG-R]
+
+ S1 Starmie   (Staryu > Starmie)
+  L1 FRLG*  Staryu   Tackle, Harden, Water Pulse, Recover
+  L2 FRLG            Swift, Rapid Spin, Water Pulse, Recover
+  L3 GSC             Ice Beam, Surf, Confuse Ray, Recover
+  L4 HG-R            Ice Beam, Thunderbolt, Psychic, Surf
+  L5 LG-R            Hydro Pump, Dazzling Gleam, Psychic, Thunderbolt
+  L6 PW              Psychic, Grass Knot, Thunderbolt, Ice Beam
+  alts: Y (Tackle, Water Gun, Harden, Bubble Beam); LG (Scald, Psywave, Swift);
+        ST1 (Thunder, Swift, Bubble Beam, Thunder Wave); HG; PK
+ S2 Gyarados  THIN: Misty's only game Gyarados is LG-R
+  L2 ^      Waterfall, Crunch
+  L3 ^      Waterfall, Crunch, Iron Tail
+  L4 LG-R   Outrage, Crunch, Waterfall, Iron Tail
+  L5-L6 =
+ S3 Golduck
+  L3 GSC    Disable, Surf, Psych Up, Psychic
+  L4 HG     Disable, Water Pulse, Psych Up, Psychic   (near-dupe of L3)
+  L5 LG-R   Scald, Psychic, Ice Beam, Light Screen
+  L6 PK     Aqua Jet, Hone Claws, Focus Blast, Blizzard
+  alts: LG Psyduck* (Water Gun, Confusion); ST1 Psyduck* (Disable, Confusion,
+        Fury Swipes, Body Slam)
+ S4 Poliwrath  NO MISTY SET IN ANY GAME (anime-only Poliwag line)
+  L4 +ST2 Surge   Amnesia, Ice Beam, Psychic, Submission
+  L5 +LG Bruno    Superpower, Waterfall, Body Slam
+  L6 +LG-R Bruno  Superpower, Waterfall, Body Slam, Earthquake
+ S5 Lapras
+  L5 HG     Sing, Ice Beam, Water Pulse, Body Slam
+  L6 PK     Ice Beam, Confuse Ray, Hydro Pump, Thunderbolt
+  alts: GSC / HG-R (Surf, Perish Song, Blizzard, Rain Dance);
+        PW (Ice Shard, Sheer Cold, Hydro Pump, Blizzard)
+ S6 Dewgong
+  L6 LG-R   Aqua Jet, Ice Shard, Waterfall, Iron Tail
+  alt: ST2 (Aurora Beam, Rest, Take Down, Surf)
+
+
+################################################################################
+GYM 3  LT. SURGE (Electric)
+################################################################################
+  loop:       1       2       3       4       5       6
+  Raichu    [RB*]---[Y]-----[GSC]---[HG-R]--[LG-R]--[PW]
+  Electrode         [GSC]---[HG]----[HG-R]--[LG-R]--[PW]
+  Magneton                  [GSC]---[HG]----[LG-R]--[PW*]
+  Electabuzz                        [GSC]---[LG-R]--[PW*]
+  Jolteon                                   [LG-R]--[PK]
+  Porygon                                           [comp]
+
+ S1 Raichu   (Pikachu > Raichu)
+  L1 RB*   Pikachu  Thunder Shock, Growl, Thunder Wave, Quick Attack
+  L2 Y              Thunderbolt, Mega Punch, Mega Kick, Growl
+  L3 GSC            Quick Attack, Thunder Wave, Thunderbolt, Thunder
+  L4 HG-R           Quick Attack, Thunder Wave, Thunderbolt, Grass Knot
+  L5 LG-R           Thunder Punch, Iron Tail, Brick Break, Quick Attack
+  L6 PW             Fake Out, Focus Punch, Thunder Wave, Volt Tackle
+  alts: RB Raichu; FRLG; LG; ST1/ST2 (Surf Raichu); HG; PK
+ S2 Electrode
+  L2 GSC    Screech, Swift, Explosion, Double Team
+  L3 HG     Screech, Charge Beam, Self-Destruct, Double Team
+  L4 HG-R   Explosion, Thunder Wave, Thunderbolt, Double Team
+  L5 LG-R   Mirror Coat, Explosion, Thunderbolt, Foul Play
+  L6 PW     Electro Ball, Thunder Wave, Double Team, Signal Beam
+  alts: RB/FRLG/LG/ST1 Voltorb*; ST1 Electrode; HG #2; PK (Rain Dance, Thunder)
+ S3 Magneton
+  L3 GSC    Zap Cannon, Lock-On, Swift, Double Team
+  L4 HG     Mirror Shot, Supersonic, Shock Wave, Double Team
+  L5 LG-R   Thunder, Flash Cannon, Tri Attack, Hyper Beam
+  L6 PW*    (Magnezone) Magnet Rise, Signal Beam, Flash Cannon, Discharge
+  alts: LG / ST1 Magnemite*; ST1 Magneton; HG-R*, PK* Magnezone
+ S4 Electabuzz
+  L4 GSC    Quick Attack, Light Screen, Thunder Punch, Thunder
+  L5 LG-R   Thunder Punch, Ice Punch, Fire Punch, Brick Break
+  L6 PW*    (Electivire) Ice Punch, Wild Charge, Earthquake, Cross Chop
+  alts: HG; ST2 (Toxic, Thunder Punch, Seismic Toss, Psychic); HG-R*, PK*
+ S5 Jolteon
+  L5 LG-R   Thunder, Shadow Ball, Reflect, Quick Attack
+  L6 PK     Rain Dance, Shadow Ball, Signal Beam, Thunder
+  alt: PW (Iron Tail, Quick Attack, Double Team, Volt Switch)
+ S6 Porygon  NO TRAINER SET ANYWHERE (off-type pick)
+  L6 comp   Tri Attack, Psybeam, Recover, Thunderbolt
+            (Gen 1 level-up line + Thunderbolt TM for the Surge theme)
+
+
+################################################################################
+GYM 4  ERIKA (Grass)
+################################################################################
+  loop:       1      2       3       4       5       6
+  Victreebel [Y*]---[FRLG]--[GSC]---[HG]----[LG-R]--[PK]
+  Vileplume         [Y*]----[FRLG]--[ST2]---[LG-R]--[PK]
+  Tangela                   [GSC]---[HG]----[LG-R]--[PK*]
+  Exeggutor                         [ST2]---[LG-R]--[PK]
+  Parasect                                  [^]-----[LG-R]
+  Venusaur                                          [PW]
+
+ S1 Victreebel   (Bellsprout > Weepinbell > Victreebel)
+  L1 Y*    Weepinbell  Acid, Stun Spore, Sleep Powder, Razor Leaf
+  L2 FRLG             Acid, Poison Powder, Stun Spore, Giga Drain
+  L3 GSC              Synthesis, Razor Leaf, Acid, Sunny Day
+  L4 HG               Grass Knot, Razor Leaf, Leaf Storm, Sunny Day
+  L5 LG-R             Power Whip, Poison Jab, Reflect, Swords Dance
+  L6 PK               Leaf Blade, Swords Dance, Sucker Punch, Reflect
+  alts: LG Weepinbell*; ST1/ST2; HG-R (Leaf Blade, Sludge Bomb, Natural Gift,
+        Leaf Storm)
+ S2 Vileplume
+  L2 Y*    Gloom   Acid, Petal Dance, Stun Spore, Sleep Powder
+  L3 FRLG          Acid, Sleep Powder, Stun Spore, Giga Drain
+  L4 ST2           Stun Spore, Petal Dance, Mega Drain, Body Slam
+  L5 LG-R          Moonblast, Sludge Bomb, Petal Dance, Stun Spore
+  L6 PK            Sunny Day, Petal Dance, Sleep Powder, Moonlight
+  alts: LG (Mega Drain, Moonblast); ST1; PW (Drain Punch, Swords Dance,
+        Sleep Powder, Synthesis); GSC/HG Bellossom (other Gloom branch)
+ S3 Tangela
+  L3 GSC    Giga Drain, Sleep Powder, Vine Whip, Bind
+  L4 HG     Giga Drain, Sleep Powder, Ancient Power, Wring Out
+  L5 LG-R   Mega Drain, Sludge Bomb, Reflect, Power Whip
+  L6 PK*    (Tangrowth) Rock Slide, Earthquake, Swords Dance, Power Whip
+  alts: Y; FRLG; LG; ST1/ST2; HG-R*, PW* Tangrowth
+ S4 Exeggutor
+  L4 ST2    Hypnosis, Explosion, Mega Drain, Psychic
+  L5 LG-R   Psychic, Sludge Bomb, Solar Beam, Hyper Beam
+  L6 PK     Psyshock, Sunny Day, Solar Beam, Hypnosis
+  alts: ST1 Exeggcute*; PW (Psyshock, Ancient Power, Leaf Storm, Psychic)
+ S5 Parasect  THIN: one Erika set (LG-R)
+  L5 ^      Spore, Leech Life, Solar Beam
+  L6 LG-R   Spore, Leech Life, Brick Break, Solar Beam
+  (+ option: Koga ST2 Parasect, Spore, Slash, Mega Drain, Growth)
+ S6 Venusaur
+  L6 PW     Outrage, Earthquake, Power Whip, Leaf Storm
+  alt: PK (Toxic, Light Screen, Petal Dance, Synthesis)
+
+
+################################################################################
+GYM 5  KOGA (Poison)
+################################################################################
+  loop:       1      2       3       4       5       6
+  Crobat    [^]-----[LG*]---[GSC]---[HG]----[LG-R*]-[HG-R]
+  Weezing           [FRLG*]-[FRLG]--[ST1]---[LG]----[LG-R]
+  Venomoth                  [Y]-----[GSC]---[LG]----[LG-R]
+  Muk                               [GSC]---[HG]----[LG-R]
+  Arbok                                     [+Y]----[+FRLG]
+  Tentacruel                                        [LG-R]
+
+ S1 Crobat   (Zubat > Golbat > Crobat)
+  L1 ^      Leech Life, Toxic                     (from LG Golbat)
+  L2 LG*    Golbat  Toxic, Protect, Fly, Leech Life
+  L3 GSC            Toxic, Double Team, Quick Attack, Wing Attack
+  L4 HG             Poison Fang, Double Team, Quick Attack, Wing Attack
+  L5 LG-R*  Golbat  Crunch, U-turn, Fly, Leech Life
+  L6 HG-R           Toxic, Cross Poison, Mean Look, Fly
+ S2 Weezing
+  L2 FRLG*  Koffing  Sludge, Self-Destruct, Smokescreen, Toxic
+  L3 FRLG            Sludge, Tackle, Smokescreen, Toxic
+  L4 ST1             Sludge, Smokescreen, Thunderbolt, Fire Blast
+  L5 LG              Toxic, Protect, Sludge Bomb, Explosion
+  L6 LG-R            Fire Blast, Thunder, Sludge Bomb, Toxic
+  alt: ST2 (Sludge, Smokescreen, Toxic, Fire Blast)
+ S3 Venomoth
+  L3 Y      Toxic, Psychic, Leech Life, Double Team
+  L4 GSC    Toxic, Psychic, Supersonic, Gust
+  L5 LG     Sludge Bomb, Protect, Psychic, Bug Buzz
+  L6 LG-R   Mega Drain, Sludge Bomb, Psychic, Bug Buzz
+  alts: Y Venonat* x3 (Koga's all-Venonat Yellow team); ST1/ST2; HG;
+        HG-R (Psychic, Silver Wind, Double Team, Baton Pass)
+ S4 Muk
+  L4 GSC    Toxic, Sludge Bomb, Acid Armor, Minimize
+  L5 HG     Toxic, Gunk Shot, Minimize, Screech
+  L6 LG-R   Sludge Bomb, Moonblast, Mega Drain, Dark Pulse
+  alts: FRLG; ST1/ST2 (Hyper Beam); LG; HG-R
+ S5 Arbok  NO KOGA SET IN ANY GAME. Agatha's two oldest sets (she keeps the rest)
+  L5 +Y Agatha     Wrap, Glare, Screech, Acid
+  L6 +FRLG Agatha  Bite, Screech, Sludge Bomb, Iron Tail
+ S6 Tentacruel
+  L6 LG-R   Hydro Pump, Toxic, Sludge Bomb, Mega Drain
+
+
+################################################################################
+GYM 6  SABRINA (Psychic)
+################################################################################
+  loop:       1       2       3       4       5       6
+  Alakazam  [FRLG*]-[FRLG]--[GSC]---[HG]----[LG-R]--[PK]
+  Mr. Mime          [FRLG]--[ST1]---[GSC]---[HG-R]--[LG-R]
+  Hypno                     [ST1]---[ST2]---[LG-R]--[PK]
+  Jynx                              [LG]----[LG-R]--[PK]
+  Slowbro                                   [LG]----[LG-R]
+  Gengar                                            [+Y]
+
+ S1 Alakazam   (Abra > Kadabra > Alakazam)
+  L1 FRLG*  Kadabra  Psybeam, Future Sight, Calm Mind, Reflect
+  L2 FRLG            Psychic, Future Sight, Calm Mind, Recover
+  L3 GSC             Recover, Future Sight, Psychic, Reflect
+  L4 HG              Energy Ball, Psychic, Skill Swap, Reflect
+  L5 LG-R            Psychic, Dazzling Gleam, Shadow Ball, Tri Attack
+  L6 PK              Psyshock, Shadow Ball, Charge Beam, Focus Blast
+  alts: Y Abra* (Teleport, Flash), Y Kadabra*, Y; LG (Psychic, Night Shade);
+        ST1/ST2; HG-R (Energy Ball, Psychic, Gravity, Focus Blast); PW
+ S2 Mr. Mime
+  L2 FRLG   Psybeam, Baton Pass, Calm Mind, Barrier
+  L3 ST1    Double Slap, Psychic, Thunder Wave, Solar Beam
+  L4 GSC    Barrier, Reflect, Baton Pass, Psychic
+  L5 HG-R   Thunder, Psychic, Skill Swap, Reflect
+  L6 LG-R   Psychic, Dazzling Gleam, Reflect, Light Screen
+  alts: LG; ST2; HG; PK (Psychic, Charge Beam, Light Screen, Reflect)
+ S3 Hypno
+  L3 ST1    Hypnosis, Dream Eater, Confusion, Mega Punch
+  L4 ST2    Hypnosis, Dream Eater, Meditate, Mega Kick
+  L5 LG-R   Dream Eater, Hypnosis, Thunder Punch, Fire Punch
+  L6 PK     Hypnosis, Dream Eater, Shadow Ball, Calm Mind
+ S4 Jynx
+  L4 LG     Psychic, Lovely Kiss, Ice Punch
+  L5 LG-R   Psychic, Blizzard, Shadow Ball, Lovely Kiss
+  L6 PK     Energy Ball, Dream Eater, Frost Breath, Lovely Kiss
+  alts: ST1; HG-R (Perish Song, Psychic, Blizzard, Focus Blast)
+  (Lorelei's Jynx uses her own Y/FRLG sets, no overlap)
+ S5 Slowbro
+  L5 LG     Psychic, Yawn, Surf, Calm Mind
+  L6 LG-R   Psychic, Ice Beam, Shadow Ball, Scald
+  alt: PK/PW Slowking (other Slowpoke branch)
+ S6 Gengar  NO SABRINA SET IN ANY GAME (anime only). Borrowed Agatha's most
+            Psychic-flavored set; Agatha keeps the rest
+  L6 +Y Agatha  Confuse Ray, Psychic, Hypnosis, Dream Eater
+
+
+################################################################################
+GYM 7  BLAINE (Fire)
+################################################################################
+  loop:       1       2       3       4       5       6
+  Arcanine  [FRLG*]-[Y]-----[ST1]---[LG]----[LG-R]--[PK]
+  Rapidash          [FRLG]--[GSC]---[HG]----[LG-R]--[PK]
+  Magmar                    [GSC]---[HG]----[LG-R]--[PK*]
+  Ninetales                         [Y]-----[LG-R]--[PK]
+  Flareon                                   [LG-R]--[PW]
+  Charizard                                         [PW]
+
+ S1 Arcanine   (Growlithe > Arcanine)
+  L1 FRLG*  Growlithe  Bite, Fire Blast, Take Down, Roar
+  L2 Y                 Reflect, Take Down, Fire Blast, Flamethrower
+  L3 ST1               Body Slam, Fire Blast, Dragon Rage, Dig
+  L4 LG                Flare Blitz, Outrage, Crunch
+  L5 LG-R              Flare Blitz, Outrage, Crunch, Play Rough
+  L6 PK                Flare Blitz, Close Combat, Extreme Speed, Wild Charge
+  alts: FRLG Arcanine (same as Growlithe); PW (Overheat, Close Combat,
+        Extreme Speed, Bulldoze)
+ S2 Rapidash
+  L2 FRLG   Stomp, Fire Blast, Fire Spin, Bounce
+  L3 GSC    Fire Spin, Fury Attack, Quick Attack, Fire Blast
+  L4 HG     Overheat, Flare Blitz, Quick Attack, Bounce
+  L5 LG-R   Flare Blitz, Quick Attack, Megahorn, Drill Run
+  L6 PK     Flare Blitz, Megahorn, Wild Charge, Hypnosis
+  alts: Y; FRLG Ponyta*; ST1/ST2 (Horn Drill); LG; HG-R
+ S3 Magmar
+  L3 GSC    Thunder Punch, Fire Punch, Sunny Day, Confuse Ray
+  L4 HG     Overheat, Sunny Day, Thunder Punch, Confuse Ray
+  L5 LG-R   Fire Punch, Thunder Punch, Brick Break, Will-O-Wisp
+  L6 PK*    (Magmortar) Fire Blast, Thunderbolt, Focus Blast, Psychic
+  alts: ST1/ST2; LG (Flamethrower, Low Kick, Confuse Ray); HG-R*, PW* Magmortar
+ S4 Ninetales
+  L4 Y      Confuse Ray, Quick Attack, Tail Whip, Flamethrower
+  L5 LG-R   Fire Blast, Quick Attack, Dark Pulse, Solar Beam
+  L6 PK     Hypnosis, Nasty Plot, Energy Ball, Heat Wave
+  alts: LG; PW (Fire Blast, Will-O-Wisp, Energy Ball, Psyshock)
+ S5 Flareon
+  L5 LG-R   Flare Blitz, Quick Attack, Superpower, Iron Tail
+  L6 PW     Overheat, Quick Attack, Superpower, Toxic
+  alt: PK (Flail, Flame Charge, Superpower, Yawn)
+ S6 Charizard
+  L6 PW     Air Slash, Flamethrower, Dragon Pulse, Focus Blast
+  alts: ST1/ST2 (Slash, Earthquake, Fly, Flamethrower);
+        PK (Inferno, Hone Claws, Dragon Rush, Focus Blast)
+
+
+################################################################################
+GYM 8  GIOVANNI (Ground)
+################################################################################
+  loop:       1       2       3       4       5       6
+  Dugtrio   [ST1]---[FRLG]--[LG]----[=]-----[USUM]--[=]
+  Marowak           [+ST1*]-[^]-----[PK]----[=]-----[=]
+  Persian                   [RKT1]--[ST1]---[ST2]---[RKT2]
+  Nidoqueen                         [HG-RKT][PK]----[USUM]
+  Nidoking                                  [PK]----[USUM]
+  Rhydon                                            [USUM*]
+
+ S1 Dugtrio  THIN: four Giovanni sets for six loops
+  L1 ST1    Sand-Attack, Slash, Dig, Rock Slide
+  L2 FRLG   Slash, Sand Tomb, Earthquake, Mud-Slap
+  L3 LG     Earthquake, Sucker Punch, Slash
+  L4 =
+  L5 USUM   Sandstorm, Earthquake, Sucker Punch, Stealth Rock
+  L6 =
+ S2 Marowak  THIN: one Giovanni set (PK)
+  L2 +ST1* Brock's Cubone  Body Slam, Fissure, Bone Club, Submission
+  L3 ^      Bonemerang, Thunder Punch, Stone Edge
+  L4 PK     Outrage, Bonemerang, Thunder Punch, Stone Edge
+  L5-L6 =
+ S3 Persian
+  L3 RKT1   Slash, Feint, Fake Out
+  L4 ST1    Toxic, Slash, Thunderbolt, Bubble Beam
+  L5 ST2    Screech, Slash, Thunderbolt, Bubble Beam
+  L6 RKT2   Slash, Feint, Fake Out, Play Rough
+ S4 Nidoqueen
+  L4 HG-RKT Crunch, Roar, Earth Power, Superpower
+  L5 PK     Thunder, Superpower, Earth Power, Poison Jab
+  L6 USUM   Surf, Earth Power, Sludge Wave, Flamethrower
+  alts: FRLG; RKT2; ST1/ST2; LG (Earthquake, Super Fang, Crunch)
+ S5 Nidoking
+  L5 PK     Megahorn, Sludge Wave, Earth Power, Blizzard
+  L6 USUM   Earthquake, Poison Jab, Throat Chop, Aqua Tail
+  alts: FRLG (Thrash); ST1/ST2; LG (Earthquake, Horn Drill, Megahorn,
+        Poison Jab); HG-RKT; PW (Ice Beam, Thunderbolt, Flamethrower, Earth Power)
+ S6 Rhydon
+  L6 USUM*  (Rhyperior) Megahorn, Earthquake, Thunder Punch, Stone Edge
+  alts: LG Rhydon (Earthquake, Rock Slide, Megahorn: the real Rhydon, 3 moves);
+        FRLG / RKT Rhyhorn*; ST1 Rhydon (Fury Attack, Earthquake, Body Slam,
+        Fissure); PK*/PW* Rhyperior
+  (Brock's Rhydon L6 is his own Rhyperior set; no overlap)
+
+
+################################################################################
+ELITE FOUR 1  LORELEI (Ice)          E4 levels are hard-set; same loop walk
+################################################################################
+  loop:       1      2       3       4       5       6
+  Lapras    [LG]----[FRLG]--[Y]-----[LG-R]--[FRLG-R][=]
+  Cloyster          [FRLG]--[Y]-----[LG]----[LG-R]--[FRLG-R]
+  Dewgong                   [Y]-----[FRLG]--[LG]----[FRLG-R]
+  Jynx                              [Y]-----[FRLG]--[FRLG-R]
+  Mamoswine                                 [FRLG-R*][=]
+  A-Sandslash                                       [LG-R]
+
+ S1 Lapras
+  L1 LG     Hydro Pump, Blizzard, Dragon Pulse
+  L2 FRLG   Surf, Confuse Ray, Ice Beam, Body Slam
+  L3 Y      Body Slam, Confuse Ray, Hydro Pump, Blizzard
+  L4 LG-R   Hydro Pump, Blizzard, Dragon Pulse, Thunder
+  L5 FRLG-R Surf, Thunder, Ice Beam, Psychic
+  L6 =      (ST1 is a dupe of Y)
+ S2 Cloyster
+  L2 FRLG   Dive, Spikes, Protect, Hail
+  L3 Y      Supersonic, Clamp, Ice Beam, Spike Cannon
+  L4 LG     Ice Beam, Spike Cannon, Hydro Pump
+  L5 LG-R   Blizzard, Spike Cannon, Hydro Pump, Poison Jab
+  L6 FRLG-R Surf, Rain Dance, Ice Beam, Supersonic
+  alts: ST1 (Explosion); ST2 (Toxic, Clamp, Ice Beam, Explosion)
+ S3 Dewgong
+  L3 Y      Bubble Beam, Aurora Beam, Rest, Take Down
+  L4 FRLG   Surf, Safeguard, Ice Beam, Hail
+  L5 LG     Aqua Jet, Ice Shard, Waterfall
+  L6 FRLG-R Surf, Signal Beam, Ice Beam, Double Team
+  (LG-R left for Misty's Dewgong)
+ S4 Jynx
+  L4 Y      Double Slap, Ice Punch, Lovely Kiss, Thrash
+  L5 FRLG   Attract, Double Slap, Lovely Kiss, Ice Punch
+  L6 FRLG-R Attract, Ice Beam, Lovely Kiss, Psychic
+  (LG / LG-R left for Sabrina's Jynx)
+ S5 Mamoswine  THIN: one set, on Piloswine
+  L5 FRLG-R* Piloswine  Blizzard, Earthquake, Double-Edge, Rock Slide
+  L6 =
+ S6 Alolan Sandslash
+  L6 LG-R   Ice Shard, Iron Tail, Earthquake, Ice Punch
+
+
+################################################################################
+ELITE FOUR 2  BRUNO (Fighting)
+################################################################################
+  loop:        1      2       3       4       5        6
+  Machamp    [Y]-----[GSC]---[FRLG]--[LG-R]--[FRLG-R]-[HG-R]
+  Hitmonlee          [Y]-----[GSC]---[HG]----[LG-R]---[HG-R]
+  Hitmonchan                 [Y]-----[FRLG]--[HG]-----[HG-R]
+  Poliwrath                          [LG]----[LG-R]---[=]
+  Steelix                                    [FRLG-R]-[FRLG-R #2]
+  A-Golem                                             [LG-R]
+
+ S1 Machamp
+  L1 Y      Leer, Strength, Karate Chop, Submission
+  L2 GSC    Vital Throw, Cross Chop, Rock Slide, Foresight
+  L3 FRLG   Bulk Up, Cross Chop, Scary Face, Rock Tomb
+  L4 LG-R   Earthquake, Superpower, Rock Slide, Ice Punch
+  L5 FRLG-R Earthquake, Cross Chop, Brick Break, Rock Slide
+  L6 HG-R   Bullet Punch, Dynamic Punch, Stone Edge, Foresight
+  alts: ST1/ST2 (Hyper Beam, Seismic Toss); LG; HG (Revenge)
+ S2 Hitmonlee
+  L2 Y      Double Kick, Double Team, Hi Jump Kick, Mega Kick
+  L3 GSC    Foresight, Hi Jump Kick, Double Kick, Swagger
+  L4 HG     Blaze Kick, Hi Jump Kick, Focus Energy, Swagger
+  L5 LG-R   High Jump Kick, Feint, Rock Slide, Poison Jab
+  L6 HG-R   Blaze Kick, Close Combat, Reversal, Swagger
+  alts: ST1/ST2; FRLG; FRLG-R; LG
+ S3 Hitmonchan
+  L3 Y      Ice Punch, Fire Punch, Thunder Punch, Double Team
+  L4 FRLG   Rock Tomb, Sky Uppercut, Mach Punch, Counter
+  L5 HG     Ice Punch, Fire Punch, Thunder Punch, Bullet Punch
+  L6 HG-R   Substitute, Close Combat, Drain Punch, Bullet Punch
+  alts: ST1; FRLG-R; LG/LG-R (elemental punches + Feint); GSC (+ Mach Punch)
+ S4 Poliwrath  THIN: two Bruno sets (Misty also borrows these)
+  L4 LG     Superpower, Waterfall, Body Slam
+  L5 LG-R   Superpower, Waterfall, Body Slam, Earthquake
+  L6 =
+ S5 Onix > Steelix
+  L5 FRLG-R Steelix  Rock Tomb, Earthquake, Iron Tail, Crunch
+  L6 FRLG-R Steelix #2  Crunch, Earthquake, Dragon Breath, Iron Tail
+  alts (Onix): Y x2; ST1; FRLG x2; LG/LG-R (Iron Tail, Stealth Rock,
+        Earthquake, Rock Slide); GSC; HG (Dragon Breath)
+ S6 Alolan Golem
+  L6 LG-R   Thunder Punch, Rock Slide, Earthquake, Superpower
+
+
+################################################################################
+ELITE FOUR 3  AGATHA (Ghost)
+################################################################################
+  loop:        1      2       3       4       5        6
+  Gengar     [Y]-----[FRLG]--[FRLG#2][LG-R]--[FRLG-R]-[FRLG-R#2]
+  Crobat             [Y*]----[FRLG*]-[LG*]---[LG-R*]--[FRLG-R]
+  Arbok                      [ST1]---[LG]----[LG-R]---[FRLG-R]
+  Weezing                            [LG]----[LG-R]---[=]
+  A-Marowak                                  [^]------[LG-R]
+  Mismagius                                           [FRLG-R*]
+
+ S1 Gengar   (Agatha fields two Gengar in most games)
+  L1 Y         Confuse Ray, Lick, Substitute, Mega Drain
+  L2 FRLG      Confuse Ray, Shadow Punch, Double Team, Toxic
+  L3 FRLG #2   Nightmare, Shadow Ball, Sludge Bomb, Hypnosis
+  L4 LG-R      Sucker Punch, Will-O-Wisp, Shadow Ball, Sludge Bomb
+  L5 FRLG-R    Confuse Ray, Shadow Punch, Hypnosis, Psychic
+  L6 FRLG-R #2 Psychic, Shadow Ball, Sludge Bomb, Thunderbolt
+  alts: Y/FRLG Haunter*; ST1 Haunter* (Thunderbolt, Night Shade, Hypnosis,
+        Dream Eater); ST1 Gengar (Explosion); LG x2; LG-R #2 (Dazzling Gleam)
+  (Y #2 lent to Sabrina's Gengar)
+ S2 Crobat   (Zubat > Golbat > Crobat)
+  L2 Y*     Golbat  Supersonic, Leech Life, Wing Attack, Toxic
+  L3 FRLG*  Golbat  Confuse Ray, Poison Fang, Air Cutter, Bite
+  L4 LG*    Golbat  Air Slash, Crunch, Quick Attack
+  L5 LG-R*  Golbat  Air Slash, Crunch, Leech Life, Quick Attack
+  L6 FRLG-R         Confuse Ray, Sludge Bomb, Air Cutter, Shadow Ball
+  alt: ST1 Golbat* (Supersonic, Haze, Mega Drain, Swift)
+ S3 Arbok   (Y and FRLG lent to Koga)
+  L3 ST1    Glare, Wrap, Screech, Fissure
+  L4 LG     Glare, Crunch, Poison Jab
+  L5 LG-R   Glare, Crunch, Poison Jab, Earthquake
+  L6 FRLG-R Earthquake, Double Team, Sludge Bomb, Giga Drain
+  alt: ST2 (Glare, Wrap, Screech, Earthquake)
+ S4 Weezing  THIN: two Agatha sets
+  L4 LG     Sludge Bomb, Shadow Ball, Thunderbolt
+  L5 LG-R   Sludge Bomb, Shadow Ball, Fire Blast, Thunder
+  L6 =
+ S5 Alolan Marowak  THIN: one set (LG-R)
+  L5 ^      Flare Blitz, Bonemerang, Shadow Ball
+  L6 LG-R   Flare Blitz, Bonemerang, Shadow Ball, Rock Slide
+ S6 Mismagius
+  L6 FRLG-R* Misdreavus  Psychic, Shadow Ball, Thunderbolt, Attract
+
+
+################################################################################
+ELITE FOUR 4  LANCE (Dragon)
+################################################################################
+  loop:        1      2       3       4       5        6
+  Dragonite  [GSC]---[Y]-----[FRLG]--[LG-R]--[FRLG-R]-[PC]
+  Aerodactyl         [Y]-----[GSC]---[HG]----[LG-R]---[FRLG-R]
+  Gyarados                   [Y]-----[GSC]---[HG]-----[FRLG-R]
+  Charizard                          [GSC]---[HG]-----[LG-R]
+  Kingdra                                    [FRLG-R]-[PC]
+  Dragonair (pinned)                                  [FRLG]
+
+ S1 Dragonite
+  L1 GSC    Twister, Thunder Wave, Hyper Beam, Blizzard
+  L2 Y      Blizzard, Fire Blast, Thunder, Hyper Beam
+  L3 FRLG   Outrage, Wing Attack, Hyper Beam, Safeguard
+  L4 LG-R   Outrage, Fire Punch, Hyper Beam, Iron Tail
+  L5 FRLG-R Outrage, Thunderbolt, Hyper Beam, Ice Beam
+  L6 PC     Ice Punch, Draco Meteor, Extreme Speed, Fire Punch
+  alts: GSC x2 more; HG x3; HG-R (Draco Meteor, Hyper Beam, Safeguard,
+        Fire Blast); FRLG-R #1 (Dragon Claw, Flamethrower, Hyper Beam,
+        Earthquake); LG; HG multi battle (Fly, Twister, Hyper Beam, Thunder)
+ S2 Aerodactyl
+  L2 Y      Wing Attack, Fly, Swift, Hyper Beam
+  L3 GSC    Hyper Beam, Rock Slide, Ancient Power, Wing Attack
+  L4 HG     Crunch, Rock Slide, Thunder Fang, Aerial Ace
+  L5 LG-R   Rock Slide, Crunch, Hyper Beam, Earthquake
+  L6 FRLG-R Aerial Ace, Ancient Power, Hyper Beam, Earthquake
+  alts: ST1 (Supersonic, Fly, Hyper Beam, Sky Attack); FRLG; LG
+  (Brock's Aerodactyl uses Brock's PWT set; no overlap)
+ S3 Gyarados
+  L3 Y      Hydro Pump, Dragon Rage, Leer, Hyper Beam
+  L4 GSC    Surf, Rain Dance, Hyper Beam, Flail
+  L5 HG     Waterfall, Dragon Pulse, Ice Fang, Flail
+  L6 FRLG-R Hyper Beam, Thunder Wave, Dragon Dance, Earthquake
+  alts: ST1; FRLG (Twister); LG/LG-R; HG-R (Waterfall, Dragon Dance,
+        Thunder Wave, Ice Fang)
+ S4 Charizard
+  L4 GSC    Slash, Wing Attack, Flamethrower, Hyper Beam
+  L5 HG     Air Slash, Dragon Claw, Shadow Claw, Fire Fang
+  L6 LG-R   Flare Blitz, Dragon Pulse, Hyper Beam, Thunder Punch
+  alts: ST1/ST2; LG; HG-R (Air Slash, Dragon Claw, Flamethrower, Hyper Beam)
+  (Blaine's Charizard uses Blaine's PWT set; no overlap)
+ S5 Kingdra   (both are real Kingdra sets)
+  L5 FRLG-R Surf, Dragon Dance, Hyper Beam, Ice Beam
+  L6 PC     Surf, Dragon Pulse, Flash Cannon, Ice Beam
+  alts: LG / LG-R Seadra* (Hydro Pump, Dragon Pulse, Hyper Beam, Blizzard)
+ S6 Dragonair (pinned stage)
+  L6 FRLG   Outrage, Dragon Rage, Hyper Beam, Safeguard
+  alts: Y #1 (Thunderbolt, Thunder Wave, Slam, Hyper Beam); Y #2 (Wrap,
+        Bubble Beam, Ice Beam, Hyper Beam); ST1; FRLG #2 (Thunder Wave)
+
+
+================================================================================
+GAPS + DECISIONS (for Jess)
+================================================================================
+  NO CANON SET FOR THAT TRAINER, borrowed or composite:
+    Misty    Poliwrath   from Surge (Stadium) and Bruno (Let's Go)
+    Surge    Porygon     composite, no trainer anywhere
+    Koga     Arbok       from Agatha (her two oldest)
+    Sabrina  Gengar      from Agatha (Yellow #2)
+    Giovanni Marowak L2  from Brock's Stadium Cubone
+  THIN (subsets ^ or holds =):
+    Misty Gyarados, Erika Parasect, Koga Crobat L1, Giovanni Dugtrio +
+    Marowak, Lorelei Mamoswine, Bruno Poliwrath, Agatha Weezing + A-Marowak
+  SHARED SPECIES: split so no two bosses run the same set
+    (Gengar, Arbok, Jynx, Dewgong, Gyarados, Aerodactyl, Charizard, Rhydon).
+    Misty and Bruno's Poliwrath is the one real overlap.
+
+  D1  Brock used COMPOSITES for his Rhydon gaps; this file uses subsets/holds
+      (stays 100% canon). Pick one rule and I align Brock.
+  D2  Stadium (N64) sets count as canon here. Brock's file skipped Stadium
+      (it has Brock sets for Onix, Graveler, Golem, Omastar, Kabuto). Add?
+  D3  Porygon composite OK, or swap the slot to a mon Surge actually used
+      (his HGSS/PWT teams: Manectric, Pachirisu, Ampharos, Lanturn: not Gen 1).
+
+  NOTES
+  - Red/Blue sets were missing from the main source for most bosses; Yellow
+    stands in as the Gen 1 set. Surge's RB sets were available.
+  - Verified from one source plus Stadium; spot-check before locking.
+
+
+SOURCES (2026-10-31)
+================================================================================
+  Victory Road wiki (all core-game + PWT + USUM sets), one page per boss:
+    https://victoryroad.fandom.com/wiki/<Misty | Lt._Surge | Erika | Koga |
+    Sabrina | Blaine | Giovanni | Lorelei | Bruno | Agatha | Lance>
+  Serebii, Pokemon Stadium Gym Leader Castle / Elite Four:
+    https://serebii.net/stadium/<ceruleangym | vermiliongym | celadongym |
+    fuchsiagym | saffrongym | cinnabargym | viridiangym | elitefour>.shtml
+  PokemonDB, Let's Go Gym Leaders & Elite Four (rosters + levels)
+    https://pokemondb.net/lets-go-pikachu-eevee/gymleaders-elitefour

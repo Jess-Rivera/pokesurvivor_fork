@@ -93,7 +93,7 @@ G.Weather = (() => {
     if (cur) {
       cur.t += dt;
       if (cur.t >= cur.dur) cur = null;
-    } else if (authority() && time > FROM && !G.Rift.inArena && !G.Judgment.active) {
+    } else if (authority() && time > FROM && !G.GymArena.inArena) {
       checkT -= dt;
       if (checkT <= 0) {
         checkT = CHECK;
@@ -172,7 +172,7 @@ G.Weather = (() => {
     KINDS, reset, update, draw, mult, speedFor, hurts, onEvent,
     get current() { return cur && level() > 0 ? Object.assign({ left: Math.max(0, cur.dur - cur.t) }, cur, KINDS[cur.kind]) : null; },
     get vignette() { return cur && cur.kind === 'fog' ? level() : 0; },
-    /** Sets weather now (the rift arena; not sent: each one sets it). */
+    /** Sets weather now (the gym arena; not sent: each one sets it). */
     force(kind, dur) { start(kind, dur); },
     /** Clears the weather at once (on leaving the arena). */
     clear() { cur = null; parts.length = 0; },

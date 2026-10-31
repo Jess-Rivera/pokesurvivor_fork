@@ -5,6 +5,30 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-31, Gym and Elite Four rosters use the Gen-1 order; anime counts as canon (Jess)
+Slot order = the leader's Red/Blue send-out order, one slot per evolution line; the rest fill by final-stage BST, weakest first (ties keep the old order). Picks stay as locked 2026-10-22, since anime is a canon source (Misty keeps the Poliwag line). Jolteon and Flareon start from Eevee. Brock keeps Geodude in slot 1 (7a pilot untouched); Onix moves to slot 2. Ace-first was considered and dropped. The two lore moveset maps and gyms.js slots 2 to 6 still use the old order (TODO).
+Canonical: docs/GYM-ROSTERS.md, rules section "GEN-1 ORDER"
+
+## 2026-10-31, Gyms only: rifts, legendary fights and the Judgment are removed (Jess)
+Every rift and legendary-fight reference leaves the game; bosses are gym leaders only. The gym arena moves out of rift.js. The pokedex legendary flag stays as a spawn exclusion; old save fields stay readable and are never wiped; js/net/ is deferred. D1: legendaries stay as gacha pulls (rarity 5, pity). D2: Q10, Q11 and the post-loop-6 legendary fights stay as future scope, to be built on a new arena and brain, not rift code. D3: the smaller Master Ball supply is accepted for now (TODO). Supersedes the RiftBrain part of the boss split entry below.
+Canonical: docs/ASCII Concept Maps/Slice 7a-0 - Gyms Only Plan.txt
+
+## 2026-10-31, Boss AI leaves enemy.js: shared body plus a brain (Jess)
+Option B of three (A file move, B brain divorce, C separate Boss class). Every line of boss decision code moves to js/entities/boss-ai.js as a GymBrain attached by G.Boss.make (gyms only, entry above); the Enemy body (HP, hurt, die, status, stages, grid slot) stays shared so player moves and status rules have one copy. C rejected: it duplicates every combat rule (drift) and goes against the one-executor decision. Commit B of slice 7a-0, no behavior change.
+Canonical: docs/ASCII Concept Maps/Slice 7a-0 - Gyms Only Plan.txt
+
+## 2026-10-31, D-ENEMY: bosses cast through the new move system with an enemy owner; roster sets boss move numbers (Jess)
+Option (a): bosses and gym leaders cast through G.MoveSim with an enemy as the owner, scoped to what Brock needs (Q18); other gyms come with the gym-roster branch. No boss-only cast code and no derived `kind`. Brock's upgrade stacks are replaced by numbers set directly in the roster (no team cards on bosses, no G.Moves.addStack).
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Blocking decisions"
+
+## 2026-10-31, D-COOP: no co-op work in slice 7a (Jess)
+Co-op cannot run in the local-first phase, since the net stack it needs is deferred and does not work, so there is no local co-op behavior to preserve through the flip. 7a does no co-op work; co-op on the new move path is designed in the MP phase (TODO deferred section).
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Blocking decisions"
+
+## 2026-10-31, Slice 6 closes at batch 2; Quick Attack and Aerial Ace go to a later fun pass (Jess)
+Batch 3 is dropped from slice 6. Quick Attack ("nauseating") and Aerial Ace ("needs a rework") work as intended on the new path, they are just not fun, so this is a balance and fun pass, not a correctness fix. Both move to a TODO Backlog entry for a later feature branch; the open questions D-QA and D-AA (Slice 6 - Batch 1 Plan.txt section 6) go with them. Slice 6 is done once the stress run is recorded or carried; slice 7a is next.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-6.md, "Results"
+
 ## 2026-10-31, New path primitive path.loop for Fairy Wind (Jess)
 Travelling shots gain path.loop { radius, frequency }: the shot circles a base point that keeps travelling straight, so it draws loop-de-loops that drift away from the caster. The loop is centred on the base point, so the first loop goes round the caster and the shot starts one radius across from it; it never turns the base heading, and adds to oscillate. Needed because curve alone traces a closed circle and oscillate is a 1D weave. First user: Fairy Wind (radius 70, 0.6667 Hz, 90 px/s drift, 2 loops in 3 s; retuned and centred after the same-day feel test). Rule change: grammar, runtime and render trail.
 Canonical: docs/current feature planning/combat-architecture.md D38; docs/MOVE-AXIS-SCHEMA.md path row

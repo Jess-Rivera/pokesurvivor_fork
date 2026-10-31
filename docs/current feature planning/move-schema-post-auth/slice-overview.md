@@ -81,8 +81,8 @@ Slices 1, 2, 3a, 3b, 3c, 3d, 4a, 4b are built and signed off (STATE.md). 4c-0, 4
 | par | stage-0.md: resolved-move report and intent scenarios | BUILT 2026-10-29; batch 1 (12 moves) reviewed; cd rulings done (MOVE-INTENT) | none (later batches add scenarios as they route) |
 | 6 | slice-4d.md: emitters, mines, the instance cap | BUILT and SIGNED OFF 2026-10-30 (check.js green, emit set batch reviewed) | stage-0 |
 | 7 | slice-5.md: upgrades from fields and the stat stage tracker model | BUILT and SIGNED OFF 2026-10-31 (5a and 5b feel-tested, check.js and mutation runners green) | none (D-MC5 superseded 2026-10-30) |
-| 8 | slice-6.md: projectile spacing and nova sizing (rescoped 2026-10-31; balance moves to playtest branches) | SCOPING (docs/ASCII Concept Maps/Slice 6 - Plan.txt) | 5 |
-| 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan | D-ENEMY, D-COOP |
+| 8 | slice-6.md: projectile spacing and nova sizing (rescoped 2026-10-31; balance moves to playtest branches) | DONE at batch 2 (2026-10-31; batch 3 Quick Attack and Aerial Ace moved to a later fun pass; stress run still owed) | 5 |
+| 9 | slice-7a.md: non-player readers off `kind` (bosses, gyms, UI) | to plan (D-ENEMY and D-COOP decided 2026-10-31) | 6 |
 | 10 | slice-7b.md: flip, purge and merge into main | to plan | D-HAIL, 7a |
 
 Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r may swap with neighbours if Jess prefers; 4r needs only 4c-1.
@@ -98,8 +98,8 @@ Each slice is signed off by Jess (feel test) before the next starts. 4c-0 and 4r
 | D-GUST | Gust per-shot spread: RESOLVED 2026-10-30, even 3-shot fan | 4d | MOVE-INTENT gust |
 | D-LOC | locationPick for Spikes, Toxic Spikes, Will-O-Wisp: RESOLVED 2026-10-30, caster's feet | 4d | MOVE-INTENT spikes, toxic-spikes, will-o-wisp |
 | D-MC5 | SUPERSEDED 2026-10-30: the stat stage model retires maxStacks and the QA-11 formula (COMBAT-RULES "Stat stages") | 5 | DECISIONS 2026-10-30 |
-| D-ENEMY | How bosses and gym leaders cast once `kind` and the legacy fields are gone | 7a | slice-7a.md |
-| D-COOP | What co-op does after the flip (co-op stays legacy today; net work is deferred scope) | 7a | slice-7a.md |
+| D-ENEMY | DECIDED 2026-10-31: (a) bosses cast through G.MoveSim with an enemy owner, Brock scope; roster sets boss move numbers | 7a | slice-7a.md; DECISIONS 2026-10-31 |
+| D-COOP | DECIDED 2026-10-31: no co-op work in 7a; co-op cannot run in the local-first phase, designed in the MP phase | 7a | slice-7a.md; DECISIONS 2026-10-31 |
 | D-HAIL | Hail at the flip: build the toggle here, route it as a plain cast, or pull it from the pool | 7b | MOVE-INTENT hail; slice-7b.md |
 | C14 | power 0 vs null (Will-O-Wisp, Substitute), harmless | none | MOVE-AXIS-SCHEMA [Open] |
 

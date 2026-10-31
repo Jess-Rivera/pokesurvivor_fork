@@ -1,0 +1,139 @@
+SLICE 7a-0: GYMS ONLY  (Jess, 2026-10-31)   COMMIT A BUILT (not on node yet), B NEXT
+================================================================================
+Ruling: remove every rift and legendary-fight reference. Bosses are gym
+leaders only. Replaces "Slice 7a-0 - Boss Brain Split Plan.txt" (RiftBrain is
+gone). Two commits, both before 7a:
+
+  A  remove rifts, legendary fights, the Judgment, the old boss AI;
+     the gym arena moves out of rift.js
+  B  boss brain split, GymBrain only (much smaller now)
+
+
+A. WHAT GOES, WHAT MOVES, WHAT STAYS
+================================================================================
+
+  DELETE                               MOVE / RENAME (gym still needs it)
+  ------                               ----------------------------------
+  js/systems/judgment.js (whole)       rift.js gym half -> js/systems/
+  rift.js: random rifts, legendary       gym-arena.js (G.GymArena):
+    spawn, legendary win path            openGate, enter, startGym,
+  enemy.js: old boss AI (init, slam,     spawnGymLeader, arena tick, keep
+    dash, leap, rain, beam, volley,      inside, won, lost, finish, gate
+    nova, fury, enrage), legend and      drawable. Bond + item on a win
+    judge flags                          kept (today via Rift.won)
+  pickup.js: legendary x10 ticket,     tiles.js: per-type "rift arenas"
+    boss ticket roll                     -> gym arenas (themes kept);
+  achievements: rift1, rift10, leg10,    Judgment arena theme deleted
+    leg30, legAll, every leg_<dex>,    music.js: rift track -> gym arena
+    judge, judge60, judgeBoss          audio.js: 'rift' sfx -> 'gate'
+  missions: wrift                      every G.Rift.inArena / isGym / rift
+  goals-ui: Legendaries tab + stat       reader -> G.GymArena (gym.js,
+  hud.js: GRIETA labels, rift timer      spawner, events, weather, hud,
+  progress.js: legend / rift / judge     game.js, gym-present)
+    counters
+  audio.js: 'judge' sfx                dev.html: rift.js and judgment.js
+  music.js: Judgment track               tags -> one gym-arena.js tag;
+  game.js: Judgment reset, summary,      SEO meta copy loses its
+    rift travel flash                    "legendarios / grietas" phrases
+  hazards.js: Judgment pillars         main.js NEED: 'Rift' -> 'GymArena'
+  export_data.js: legendary/rift rows
+
+  STAYS (on purpose)
+  ------------------
+  pokedex `leg` flag   still keeps legendaries OUT of wild, elite, event and
+                       gym pools (no behavior change)
+  db.js save fields    legends, arenas, riftWins, judged... stay in old saves,
+                       never read, never wiped (save safety)
+  js/net/**            deferred scope; hook noted in TODO
+  lang-en.js           dead keys stay (chunk matching risk); existing
+                       dead-key backlog item
+  changelog.js         old entries are history; one new entry added
+  issue #1 (gate art)  the gate keeps today's prop art minus nothing new;
+                       a gym look is still #1
+
+
+DECISIONS (Jess, 2026-10-31)
+================================================================================
+
+  D1  KEEP gacha legendaries: rarity 5, pity at PITY_5, the LEGENDARIO reel
+      and the 'legend' sfx stay. Only the fights go. The gacha help text
+      loses its "rift legendaries drop Master Balls" line (no longer true).
+
+  D2  KEEP the approved future legendary designs (Q10 Arceus on The Climb,
+      post-loop-6 regional legendary fights, Q11) as future scope. They are
+      NOT built on rift.js: when they start, they get a new arena and their
+      own brain in boss-ai.js. Docs sweep keeps them, marked "future, no
+      code". db.js `legends` stays (old saves, and a likely reuse).
+
+  D3  ACCEPT the smaller Master Ball supply for now. TODO "Unreachable
+      Master Ball rewards" now also lists the removed legendary and boss
+      drops, wrift and the legendary/Judgment achievements.
+
+
+B. BOSS BRAIN SPLIT (after A)
+================================================================================
+
+  enemy.js (BODY)                     js/entities/boss-ai.js (G.Boss)
+  update: if brain -> brain.step      make(def, x, y): the only boss spawn
+  applyFlinch: brain.flinch           GymBrain: setup (the constructor gym
+  body flags: no knockback, morale      block), pick, start, cast, buff,
+                                        shoot, cd, factor, restore, flinch
+  gym-arena.js spawns via G.Boss.make. No behavior change.
+
+
+TESTS
+================================================================================
+
+  NEW  docs/proposals/gyms-only-harness.js   (commit A)
+    - G.Rift and G.Judgment do not exist; G.GymArena does
+    - search guard: no rift / Judgment / legendary-fight identifier left in
+      js/ (allowed: net/, lang-en.js, changelog history, the pokedex leg
+      flag, the gacha rarity per D1)
+    - wild spawns, events and weather still pause inside the gym arena
+    - achievement and mission lists hold no rift, leg_ or judge ids
+    - an old save holding those ids plus legends / riftWins loads and the
+      goals screen renders with no error
+    - legendaries still never enter wild, elite or event pools
+    WHY: gym-harness and gym-reward-harness prove the fight works, not
+    that every rift path is gone or that old saves survive the removal.
+
+  NEW  docs/proposals/gyms-only-mutate.js   (breaks, harness must catch)
+    - G.Judgment left registered
+    - spawner ignores the gym arena
+    - the leg filter dropped in enemies.js
+    - rift1 put back in achievements
+    - goals screen crashes on an unknown saved achievement id
+    - a gym win stops granting the Bond
+
+  NEW  docs/proposals/boss-split-harness.js + boss-split-mutate.js
+    (commit B) as in the old 7a-0 map, RiftBrain checks removed
+
+  INTENT SCENARIOS  none.   DEBUG SETS  none new.
+
+  CHANGED
+    gym-reward-harness.js   load gym-arena.js, G.Rift -> G.GymArena
+    gym-harness.js          same; boss calls go through e.brain (B)
+    elites-harness.js       drop its rift / legendary references
+    items-f1-harness.js     drop the rift / legendary drop checks
+    status-sliceD2-harness.js  boss flinch checked on a gym leader (the
+                            slam cast it built no longer exists)
+    move-riders-harness.js  boss-dash root check removed (the dash form is
+                            deleted); gym leader root still checked
+    move-travel, move-sim   re-checked at build (hits look like "drift")
+    check.js, smoke-newcombat.js   no change
+
+  FEEL TEST (Jess): a run to the 4:00 gate, Brock fight, win (badge, Bond,
+  item), back on the map, the next gate scheduled; goals screen; gacha
+  per D1. Plain ?dev, then ?dev&newcombat.
+
+
+AFTER THE CODE
+================================================================================
+
+  Docs sweep (free edit): GDD, BOSS-REWORK, GLOSSARY, ONBOARDING,
+  GYM-ROSTERS, SIM-PRESENT-BOUNDARY, BALANCE, README, combat-architecture.
+  History (DEVLOG, archives, proposals, the DECISIONS log) stays as is.
+
+  GIT (Jess runs): commit A "Remove rifts, legendary fights and the
+  Judgment; gym arena moves to gym-arena.js", then commit B "Split gym AI
+  out of enemy.js into boss-ai.js (no behavior change)".

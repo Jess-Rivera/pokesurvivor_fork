@@ -57,7 +57,7 @@
       this.dmg = def.dmg * sc.dmg;
       this.xp = def.xp;
       // Wild enemies: XP is computed at the kill from the species base_experience (die()). Bosses
-      // and Judgment legendaries (def.bx undefined) keep the flat def.xp. xpMul collects the
+      // (def.bx undefined) keep the flat def.xp. xpMul collects the
       // tank / elite / shiny / golden multipliers.
       this.bx = def.bx != null ? def.bx : null;
       this.xpMul = (def.xpMul || 1) * (this.elite ? this.elite.xpMul : 1);
@@ -183,7 +183,6 @@
       this.hp -= amount;
       if (this.elite && !this.remote) G.Elites.engage(this);
       if (!this.boss && !this.elite) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
-      G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
       if (knock > 0 && !this.boss && !this.elite) {
         const [nx, ny] = G.U.norm(dirX, dirY);
@@ -260,9 +259,9 @@
     applyFlinch() {
       if (this.remote || this.dead || G.Status.stunned(this)) return false;
       const ai = this.ai;
-      if (this.boss && ai) {
+      if (this.gym && ai) {
         if (ai.cast) this.bossEnd();
-        else ai.cd = this.gym ? this.gymCd() : G.U.rand(1.3, 2.0);
+        else ai.cd = this.gymCd();
       }
       if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
       if (this.keepsDistance()) this.shotCd = this.shotGap();
@@ -310,8 +309,7 @@
         if (this.shiny) { G.FX.burst(this.x, cy, '#ffe9a0', 30, 220); G.FX.ring(this.x, this.y, this.r, this.r * 7, '#9ae6ff', 0.7, 5); }
         return;
       }
-      // (The legendaries from Arceus's Judgment only give experience.)
-      if (this.boss && !this.judge) {
+      if (this.boss) {
         G.Camera.kick(0.9);
         for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
         // Bosses always drop an item: a Pokemon item, with a small placeholder chance of a RUN item (Items.RUN_CHANCE).
@@ -326,7 +324,7 @@
       // Elite: a burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout.
       if (this.elite) {
         G.Camera.kick(0.6);
-        G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
+        G.Pickups.dropXp(this.x, this.y, this.xp, true);
         G.Pickups.drop('heal', this.x + 24, this.y, 0);                                    // the guaranteed Oran Berry (the plain 'heal' pickup, 30%)
         G.Pickups.drop('ground', this.x + 4, this.y + 22, G.Grounds.roll());               // plus one ground roll
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
@@ -337,7 +335,7 @@
            (picked up by the arena's pullAll): a Pokemon item, or a RUN item with the placeholder Items.RUN_CHANCE.gym. */
         G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('gym', G.Game.player.runItems));
       }
-      else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
+      else G.Pickups.dropXp(this.x, this.y, this.xp);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {
@@ -345,12 +343,6 @@
         for (let i = 0; i < n; i++) G.Pickups.drop('coin', this.x + G.U.rand(-36, 36), this.y + G.U.rand(-26, 26), 5);
         if (this.def.loot === 'ticket10') G.Pickups.drop('ticket10', this.x, this.y - 12, 1);
         G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ffd23f', 0.6, 4);
-      }
-      if (this.legend) {
-        // The rift legendary: loose tickets and coins (the x10, about
-        // half the time; it used to always give 2).
-        for (let i = 0; i < 3; i++) G.Pickups.drop('ticket', this.x + G.U.rand(-30, 30), this.y + G.U.rand(-20, 20), 1);
-        for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-50, 50), this.y + G.U.rand(-35, 35), 8);
       }
       G.Audio.sfx(this.boss ? 'bossDown' : 'faint');
       if (this.shiny) {
@@ -457,8 +449,8 @@
 
       // --- terreno ---
       let terrainMul = 1;
-      // (The legendary is at home: its arena does not affect it. Arceus's ones, neither.)
-      if (!this.flying && !this.legend && !this.judge && !this.elite && G.World.isLiquid(this.x, this.y)) {
+      // (Elites are not slowed or burned by liquids.)
+      if (!this.flying && !this.elite && G.World.isLiquid(this.x, this.y)) {
         const le = G.World.liquidEffect(this.types);
         if (le.dmg) {
           this.lavaTick -= dt;
@@ -529,7 +521,7 @@
       let vx = dx * spd, vy = dy * spd;
       let animBase = 'Walk';
 
-      if (this.boss) {
+      if (this.gym) {
         [vx, vy, animBase] = this.bossMove(dt, pl, dist, dx, dy, spd);
       } else if (this.fl) {
         [vx, vy, animBase] = this.flankMove(dt, pl, spd, dist);
@@ -621,35 +613,22 @@
       this.anim.loop(moving ? animBase : 'Idle', moving ? Math.max(0.6, spd / 70) : 1);
     }
 
-    // ---------------- jefes ----------------
-    // Each boss (and each rift legendary) has 4 attacks: 2 at
-    // close (Stomp always + Dash or Jump) and 2 from range by type.
-    // It alternates between coming at you and fighting from range, so the one that
-    // shoots also charges at you and the melee one also
-    // shoots. Everything warns on the ground. Below half health it
-    // enrages: faster, less waiting and sometimes it chains two attacks.
+    // ---------------- gym leaders: movement and the cast loop ----------------
+    // Gym leaders are the only bosses (gyms only, 2026-10-31). A leader alternates between coming at you and fighting
+    // from range by its stance, picks an authored move by weight, range and HP gate (gymPick), telegraphs it with a
+    // wind-up (gymStart) and casts it (gymCast). There is no fury: the enrage is the 120 s clock (systems/gym.js).
 
     bossInit() {
-      const T = this.types, has = (...xs) => xs.some(x => T.includes(x));
-      const melee = ['slam', G.U.hash(this.dex, 3, 7) < 0.5 ? 'dash' : 'leap'];
-      const pref = has('fire', 'ground', 'poison', 'rock', 'grass') ? 'rain'
-                 : has('electric', 'psychic', 'dragon', 'ice', 'steel') ? 'beam'
-                 : has('fairy', 'ghost', 'water', 'flying') ? 'nova' : 'volley';
-      const others = ['rain', 'beam', 'nova', 'volley'].filter(x => x !== pref);
-      const ranged = [pref, others[Math.floor(G.U.hash(this.dex, 5, 9) * 3) % 3]];
-      const far = this.behavior === 'ranged';
-      this.ai = { melee, ranged, farLike: far ? 0.65 : 0.35, mode: far ? 'far' : 'close', modeT: G.U.rand(6, 8),
-                  cd: 1.6, cast: null, fury: false, side: Math.random() < 0.5 ? -1 : 1 };
-      if (this.gym) { const st = this.gym.stance; this.ai.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5; this.ai.mode = st === 'far' ? 'far' : 'close'; }
+      const st = this.gym.stance;
+      this.ai = { farLike: st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5, mode: st === 'far' ? 'far' : 'close', modeT: G.U.rand(6, 8),
+                  cd: 1.6, cast: null, side: Math.random() < 0.5 ? -1 : 1 };
     }
 
     bossMove(dt, pl, dist, dx, dy, spd) {
       if (!this.ai) this.bossInit();
       const ai = this.ai;
-      if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
-      const k = ai.fury ? 1.25 : 1;
-      if (ai.cast) return this.bossCast(dt, pl);
-      ai.modeT -= dt; ai.cd -= dt * k;
+      if (ai.cast) return this.gymCast(dt, pl);
+      ai.modeT -= dt; ai.cd -= dt;
       // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s).
       if (ai.modeT <= 0) {
         ai.mode = ai.mode === 'far' ? 'close' : 'far';
@@ -657,118 +636,25 @@
         ai.side = -ai.side;
       }
       // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
-      const chase = this.gym ? 1 : 1.1, circle = this.gym ? 1 : 0.55;
-      let vx = dx * spd * k * chase, vy = dy * spd * k * chase;
+      let vx = dx * spd, vy = dy * spd;
       const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
       if (ai.mode === 'far') {
         if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
-        else if (dist < 300) { vx = -ddy * spd * circle * ai.side; vy = ddx * spd * circle * ai.side; }   // te rodea
+        else if (dist < 300) { vx = -ddy * spd * ai.side; vy = ddx * spd * ai.side; }   // te rodea
       }
       if (ai.cd <= 0 && G.Status.fizzle(this)) ai.cd = 1;       // paralysis / confusion: the attempt fails, it tries again in a second
-      if (ai.cd <= 0 && this.gym) {
+      if (ai.cd <= 0) {
         const id = this.gymPick(dist);
         if (id) this.gymStart(id, pl); else ai.cd = 0.3;
-      } else if (ai.cd <= 0) {
-        let id = null;
-        if (ai.mode === 'close') {
-          const ok = ai.melee.filter(m => m === 'slam' ? dist < 125 : dist < 320);
-          // Now and then, even when close, it also shoots.
-          id = ok.length && Math.random() < 0.8 ? G.U.pick(ok) : dist < 480 ? G.U.pick(ai.ranged) : null;
-        } else {
-          id = dist < 115 ? 'slam' : dist < 430 ? G.U.pick(ai.ranged) : null;
-        }
-        if (id) this.bossStart(id, pl);
       }
       return [vx, vy, 'Walk'];
-    }
-
-    enrage() {
-      this.ai.fury = true;
-      this.spd *= 1.15;
-      if (!this.judge) G.Spawner.say('¡' + this.name + ' se ha enfurecido!', 2.4);
-      G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ff4a4a', 0.6, 5);
-      G.Camera.kick(0.5);
-      G.Audio.sfx('boss');
-    }
-
-    bossStart(id, pl) {
-      const ai = this.ai, f = ai.fury ? 0.8 : 1, type = this.atkType;
-      const col = G.U.TYPE_COLOR[type] || '#ff7a9e';
-      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
-      const c = ai.cast = { id, t: 0, wind: 0.6 * f, after: 0.35, ang };
-      switch (id) {
-        case 'slam':       // stomp: a wave around
-          c.wind = 0.85 * f;
-          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, r: 96 + this.r, delay: c.wind, dmg: this.dmg * 1.3, type, color: col });
-          this.anim.play('Charge', { speed: 1.2 });
-          break;
-        case 'dash':       // dash in a straight line
-          c.wind = 0.75 * f; c.len = 330; c.dur = 0.32;
-          G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, angle: ang, len: c.len + this.r, w: this.r * 2 + 16,
-                          delay: c.wind + c.dur, dmg: this.dmg * 1.2, type, color: col });
-          this.anim.play('Charge', { speed: 1.3 });
-          break;
-        case 'leap':       // jump and land on you
-          this.jump = { sx: this.x, sy: this.y, tx: pl.x, ty: pl.y, t: -0.5 * f, dur: 0.65 };
-          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: pl.x, y: pl.y, r: 82, delay: 0.5 * f + 0.65, dmg: this.dmg * 1.25, type, color: col });
-          this.anim.play('Charge', { speed: 1.4 });
-          ai.cast = null; ai.cd = G.U.rand(1.4, 2) + 0.6;
-          break;
-        case 'rain': {     // zonas que caen alrededor de ti
-          const n = ai.fury ? 6 : 4;
-          for (let i = 0; i < n; i++) {
-            const a = i ? Math.random() * 6.2832 : 0, d = i ? G.U.rand(40, 120) : 0;
-            G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: pl.x + Math.cos(a) * d, y: pl.y + Math.sin(a) * d * 0.8, r: 50,
-                            delay: 1.05 + i * 0.12, dmg: this.shotDmg() * 1.15, type, color: col });
-          }
-          c.wind = 0.5; this.anim.play('Shoot');
-          break;
-        }
-        case 'beam': {     // rayos en abanico
-          const n = ai.fury ? 5 : 3, sp = ai.fury ? 0.42 : 0.5;
-          for (let i = 0; i < n; i++) {
-            G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, angle: ang + (i - (n - 1) / 2) * sp, len: 400, w: 26,
-                            delay: 1.0, dmg: this.shotDmg() * 1.2, type, color: col });
-          }
-          c.wind = 1.0; c.after = 0.25; this.anim.play('Charge', { speed: 1.1 });
-          break;
-        }
-        case 'volley':     // abanico de disparos
-        case 'nova':       // anillo de disparos
-          c.wind = (id === 'nova' ? 0.7 : 0.5) * f;
-          this.anim.play('Charge', { speed: 1.4 });
-          G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);
-          break;
-      }
-    }
-
-    bossCast(dt, pl) {
-      if (this.gym) return this.gymCast(dt, pl);
-      const ai = this.ai, c = ai.cast;
-      c.t += dt;
-      if (c.id === 'dash' && c.t >= c.wind) {
-        if (!c.go) { c.go = true; this.anim.play('Attack', { speed: 1.6 }); }
-        if (c.t >= c.wind + c.dur) return this.bossEnd();
-        const sp = G.Status.rooted(this) ? 0 : c.len / c.dur;     // rooted (trap): the dash runs its timer in place
-        return [Math.cos(c.ang) * sp, Math.sin(c.ang) * sp, 'Walk'];
-      }
-      if (c.t >= c.wind && !c.fired) {
-        c.fired = true;
-        const [ax, ay] = G.U.norm(pl.x - this.x, pl.y - this.y);
-        if (c.id === 'volley') this.shoot(ax, ay, 1.1, ai.fury ? 9 : 7, 0.8);
-        else if (c.id === 'nova') { const n = ai.fury ? 18 : 14; this.shoot(ax, ay, 6.2832 * (n - 1) / n, n, 0.7); }
-        else if (c.id === 'slam') this.anim.play('Attack', { speed: 1.4 });
-      }
-      if (c.t >= c.wind + c.after) return this.bossEnd();
-      return [0, 0, 'Idle'];
     }
 
     bossEnd() {
       const ai = this.ai;
       ai.cast = null;
-      ai.cd = G.U.rand(1.3, 2.0);
-      if (this.gym) { ai.cd = this.gymCd(); this.gymRestore(); return [0, 0, 'Idle']; }
-      if (ai.fury && Math.random() < 0.35) ai.cd = 0.3;    // encadena otro
+      ai.cd = this.gymCd();
+      this.gymRestore();
       return [0, 0, 'Idle'];
     }
 
@@ -777,7 +663,7 @@
     // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
     // player's Harden (slice E2a: a +1 Defense stage per cast lasting its duration; no stack cap, duration / recovery sets how many overlap). Only the damage is
     // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
-    // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
+    // form yet fall back to the projectile. The enrage is the 120 s clock (systems/gym.js).
 
     /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
     gymFactor(m) {
@@ -1318,7 +1204,7 @@
       if ((this.boss || this.shiny || gold) && !this.dead) {
         ctx.save();
         ctx.globalAlpha = (gold && !this.boss ? 0.32 : 0.22) + Math.sin(this.bob * 0.5) * 0.06;
-        ctx.fillStyle = this.ai && this.ai.fury ? '#ff4a4a' : this.shiny ? '#9ae6ff' : gold ? '#ffd23f' : '#ffd95e';
+        ctx.fillStyle = this.shiny ? '#9ae6ff' : gold ? '#ffd23f' : '#ffd95e';
         ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.6, this.r * 0.6, 0, 0, 6.2832); ctx.fill();
         ctx.restore();
       }
@@ -1435,7 +1321,7 @@
       return e;
     }
 
-    // --- rift arena ---
+    // --- gym arena ---
     let stashed = null;
 
     /** Stashes the map enemies while the arena lasts. */
@@ -1583,7 +1469,7 @@
         if (e.dead) {
           pl.kills++;
           if (G.Log.on) G.Log.kill(e);
-          if ((e.boss || e.elite) && !e.judge) pl.bosses++;
+          if (e.boss || e.elite) pl.bosses++;
           G.Progress.kill(e);
           corpses.push(e);
           list.splice(i, 1);
@@ -1608,7 +1494,7 @@
           }
           continue;
         }
-        if (e.boss || e.elite || e.shiny || G.Rift.inArena) continue;
+        if (e.boss || e.elite || e.shiny || G.GymArena.inArena) continue;
         // Stragglers: the ones that fall behind while you run and have been a while
         // OUT OF SIGHT (of everyone) come back out ahead of you. This way
         // you cannot just flee, and one you are looking at never disappears.

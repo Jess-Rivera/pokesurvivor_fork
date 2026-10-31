@@ -46,13 +46,14 @@ const mk = (behavior = 'plain') => { const e = new Enemy({ dex: 1, baseHp: 50, s
   const r = mk('ranged'); r.shotCd = 0.2; r.def.shotCd = 3; r.applyFlinch(); if (r.keepsDistance() && r.shotCd !== 3) bad('ranged: shot timer restarts at its full period ' + r.shotCd);
   const c = mk('charger'); c.phase = 'aim'; c.pt = 0.1; c.applyFlinch(); if (c.phase !== 'walk' || !near(c.pt, 1.1)) bad('charger aim is cancelled');
   c.phase = 'dash'; c.pt = 0.2; c.applyFlinch(); if (c.phase !== 'walk') bad('charger dash is cancelled');
-  const b = mk(); b.boss = true; b.ai = { cast: { id: 'slam', t: 0.3, wind: 0.8, after: 0.35 }, cd: 0, fury: false }; b.applyFlinch(); if (b.ai.cast !== null || b.ai.cd < 1.3 || b.ai.cd > 2.0) bad('boss cast cancelled, timer restarted: ' + JSON.stringify(b.ai));
-  const b2 = mk(); b2.boss = true; b2.ai = { cast: null, cd: 0.1, fury: false }; b2.applyFlinch(); if (b2.ai.cd < 1.3) bad('boss between casts: next attack timer restarts');
+  const gl = { tempo: 1, moves: [], stance: 'mixed' };      // a gym leader descriptor: gym leaders are the only bosses (2026-10-31)
+  const b = mk(); b.boss = true; b.gym = gl; b.ai = { cast: { id: 'tackle', t: 0.3, wind: 0.45, after: 0.35 }, cd: 0 }; b.applyFlinch(); if (b.ai.cast !== null || !near(b.ai.cd, 1.2)) bad('gym leader cast cancelled, timer restarted as after a cast: ' + JSON.stringify(b.ai));
+  const b2 = mk(); b2.boss = true; b2.gym = gl; b2.ai = { cast: null, cd: 0.1 }; b2.applyFlinch(); if (!near(b2.ai.cd, 1.2)) bad('gym leader between casts: next attack timer restarts');
   const dead = mk(); dead.dead = true; if (dead.applyFlinch()) bad('dead units do not flinch'); const rem = mk(); rem.remote = true; if (rem.applyFlinch()) bad('remote copies do not flinch (co-op deferred)');
   const fz = mk(); fz.applyStatus('freeze'); if (fz.applyFlinch()) bad('frozen units do not flinch'); const sl = mk(); sl.applyStatus('sleep'); if (sl.applyFlinch()) bad('sleeping units do not flinch');
-  const el = mk(); el.elite = { hp: 10 }; el.fsp = 0; if (!el.applyFlinch()) bad('elites flinch (no immunity)'); const bb = mk(); bb.boss = true; bb.ai = { cast: null, cd: 0, fury: false }; if (!bb.applyFlinch()) bad('bosses flinch (no immunity)');
+  const el = mk(); el.elite = { hp: 10 }; el.fsp = 0; if (!el.applyFlinch()) bad('elites flinch (no immunity)'); const bb = mk(); bb.boss = true; bb.gym = gl; bb.ai = { cast: null, cd: 0 }; if (!bb.applyFlinch()) bad('gym leaders flinch (no immunity)');
   let n = 0; const f = mk(); f.fsp = 0; for (let i = 0; i < 5; i++) { if (f.applyFlinch()) n++; } if (n !== 5) bad('no window: five flinches in a row all apply ' + n);
-  console.log('3 lost action: wild melee contact timer, ranged shot timer, charger aim and dash, boss cast; no immunity, no window; dead, remote, frozen and asleep units cannot flinch'); }
+  console.log('3 lost action: wild melee contact timer, ranged shot timer, charger aim and dash, gym leader cast; no immunity, no window; dead, remote, frozen and asleep units cannot flinch'); }
 
 // 4. recoil: half a sprite radius back at 2.0x speed, then 0.2 to 0.3 s still
 { const holds = []; let worstDist = 0;

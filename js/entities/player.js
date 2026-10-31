@@ -61,7 +61,7 @@ G.Player = class Player {
     this.active = 0;           // hueco activo
     this.swapT = 0;            // hold left (s) before you may swap slots again
     this.maxMoves = 4;         // huecos
-    this.bonds = 0;            // links to use (reward from the legendaries)
+    this.bonds = 0;            // links to use (reward from gym wins)
 
     // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
     // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
@@ -260,7 +260,7 @@ G.Player = class Player {
   }
 
   // ---------------- links (fusions) ----------------
-  // Each legendary beaten gives a link. With it, moves are combined into a
+  // Each gym win gives a link. With it, moves are combined into a
   // single slot and fired at once. Only one group grows (up to BOND_MAX); if
   // none is in progress, the link joins two loose moves.
   static get BOND_MAX() { return 4; }
@@ -353,7 +353,7 @@ G.Player = class Player {
 
   /**
    * @param type  attack type (type chart and weather); with no type, damage as-is
-   * @param pure  damage not reduced by defense or melee (Arceus)
+   * @param pure  damage not reduced by defense or melee (fixed-damage sources)
    */
   hurt(amount, type = null, pure = false, atk = null, who = null) {
     if (this.invuln > 0 || this.dead) {
@@ -364,7 +364,7 @@ G.Player = class Player {
     let neutral = amount, dStat = 0, cat = -1;
     // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
     // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
-    // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
+    // (atk == null: terrain, lava, altar, DoT) keeps `amount` as-is.
     if (atk && !pure) {
       const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;

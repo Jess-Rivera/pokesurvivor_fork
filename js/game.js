@@ -106,9 +106,8 @@ G.Game = (() => {
     G.EnemyMgr.clear();
     G.Pickups.clear();
     G.Spawner.reset();
-    G.Rift.reset();
+    G.GymArena.reset();
     G.Gym.reset();
-    G.Judgment.reset();
     G.Events.reset();
     G.Weather.reset();
     G.Path.clear();
@@ -259,7 +258,7 @@ G.Game = (() => {
     return Math.ceil((pl.xpNext - pl.xp + 1) / k);
   }
 
-  // Full-screen flash (travel to the rift).
+  // Full-screen flash (travel to the gym arena).
   let flashT = 0, flashDur = 1, flashCol = '#fff';
   function flash(col, dur) { flashCol = col; flashDur = dur; flashT = dur; }
 
@@ -411,9 +410,6 @@ G.Game = (() => {
     if (coop) save.stats.bestGroupTime = Math.max(save.stats.bestGroupTime || 0, Math.floor(time));
     save.stats.bestLevel = Math.max(save.stats.bestLevel, pl.level);
     save.stats.coinsEarned += coins;
-    const judge = G.Judgment.summary();
-    if (judge) G.Progress.event('judgeEnd', judge);
-    G.Judgment.reset();
     G.Progress.event('runEnd', { time, level: pl.level, coins: pl.coins, types: pl.mon.types, group: coop });
     G.Progress.checkAch();
     // To the cloud on finishing the game (at most every 30 min); if the record enters
@@ -430,7 +426,7 @@ G.Game = (() => {
     if (sent) sent.then(b => { if (b && b.some(p => p !== 'a')) G.DB.commit(true); }).catch(() => {});
 
     G.RunUI.showOver({
-      dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, judge,
+      dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10,
       moves: pl.moves, roster, caught,
       breakdown: Object.entries(parts).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') +
                  (mul > 1 ? ` · ×${mul.toFixed(2)} Fortuna` : '')
@@ -485,14 +481,14 @@ G.Game = (() => {
   // ---------------- links ----------------
 
   /**
-   * A legendary's link: you choose which moves fuse.
+   * A gym win's link: you choose which moves fuse.
    * If it cannot happen now (there are not two free), it is held until you learn
    * another move. It is checked every frame: if another screen covers it (group
    * level cards, pause), it shows again on closing it.
    * @param quiet  do not warn if it still cannot happen
    */
   function offerBond(quiet = false) {
-    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.Rift.inArena) return;
+    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
     if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-choose'].some(G.UI.isOpen)) return;
     const opt = pl.bondOptions();
     if (!opt) {
@@ -679,11 +675,6 @@ G.Game = (() => {
 
   function handleKeys() {
     if (G.SettingsUI.isOpen) { if (G.Input.tap('escape')) G.SettingsUI.close(); return; }
-    // Arceus's Judgment: Space, Enter or Esc skip the animation (if allowed).
-    if (G.Judgment.cinematic && state === 'playing') {
-      if (['space', 'enter', 'escape'].some(k => G.Input.tap(k))) G.Judgment.skip();
-      return;
-    }
     if (state === 'levelup') {
       G.RunUI.levelKeys();
       return;
@@ -724,7 +715,7 @@ G.Game = (() => {
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
   // The next frame is requested BEFORE anything else: if something fails midway, the
   // game continues (before it would freeze forever and you had to reload;
-  // that is how a huge game was lost when a rift opened).
+  // that is how a huge game was lost once).
   // If it fails frame after frame (the game no longer advances or renders), the
   // game is considered over at ~3 s and is saved: time, defeated,
   // records and ranking. Better that than a black screen and losing everything.
@@ -770,19 +761,8 @@ G.Game = (() => {
   function update(dt) {
     const coop = G.Coop.active;
     if (flashT > 0) flashT -= dt;
-    // Arceus's Judgment: while the animation lasts, everything else stops.
-    if (G.Judgment.cinematic) {
-      G.Judgment.cineTick(dt);
-      pl.anim.update(dt);
-      if (coop) for (const p of G.Coop.puppets()) p.netUpdate(dt);
-      G.World.update(dt, G.Camera);
-      G.FX.update(dt);
-      G.Audio.music(G.Judgment.music);
-      return;
-    }
     // After going down, let the Faint animation play before the summary.
-    // (Not in the rift arena: there, going down just throws you back.)
-    if (pl.dead && !coop && (!G.Rift.inArena || G.Rift.isGym)) {
+    if (pl.dead && !coop) {
       // Team: if another member is still up, bench the fainted one and swap in the
       // living member with the LOWEST slot number (slot 1 first, then 2, and so on).
       const alive = roster.filter(f => !f.dead && f !== pl);
@@ -828,7 +808,7 @@ G.Game = (() => {
     else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // accessibility auto-shake, 3 taps/s (E2e)
 
     const b = Math.floor(time / 240);
-    if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {
+    if (b !== biome && !G.GymArena.inArena) {
       biome = b;
       G.World.setBiome(b);
       G.Audio.sfx('biome');
@@ -864,14 +844,13 @@ G.Game = (() => {
     G.Pickups.update(dt, all, onCollect);
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
-    G.Rift.update(dt, pl, time);
+    G.GymArena.update(dt, pl, time);
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
-    G.Judgment.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
     G.FX.update(dt);
 
-    G.Audio.music(G.Judgment.active ? G.Judgment.music : G.Rift.inArena ? 'rift' : G.EnemyMgr.bossAlive() ? 'boss' : G.BIOME_MUSIC[biome % G.BIOME_MUSIC.length]);
+    G.Audio.music(G.GymArena.inArena ? 'gym' : G.EnemyMgr.bossAlive() ? 'boss' : G.BIOME_MUSIC[biome % G.BIOME_MUSIC.length]);
     if (!coop || G.Coop.isHost) maybeLevelUp();
     if (pl.bonds > 0) offerBond(true);
     if (G.Coop.isHost) checkAllDown(dt);
@@ -886,7 +865,7 @@ G.Game = (() => {
 
   /** Host: if you all go down, it ends (after seeing the last one fall). */
   function checkAllDown(dt) {
-    if (G.Rift.inArena || !G.Coop.players().every(p => p.dead)) { deathT = 0; return; }
+    if (G.GymArena.inArena || !G.Coop.players().every(p => p.dead)) { deathT = 0; return; }
     deathT += dt;
     if (deathT > 1.6) {
       deathT = 0;
@@ -912,10 +891,8 @@ G.Game = (() => {
     for (const p of G.World.visibleProps(cam)) items.push({ y: p.flat ? p.y - 4000 : p.y, prop: p });
     for (const e of G.EnemyMgr.drawables(cam)) items.push({ y: e.y, ent: e });
     for (const e of extra) items.push({ y: e.y, ent: e });
-    const rift = G.Rift.drawable();
-    if (rift) items.push({ y: rift.y, ent: rift });
-    const arceus = pl && state !== 'ui' ? G.Judgment.drawable() : null;
-    if (arceus) items.push({ y: arceus.y, ent: arceus });
+    const gate = G.GymArena.drawable();
+    if (gate) items.push({ y: gate.y, ent: gate });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
@@ -937,7 +914,6 @@ G.Game = (() => {
     G.Combat.drawAirFields(ctx);
     if (G.MoveRoute.on) G.MoveRender.drawAir(ctx);
     G.FX.draw(ctx);
-    G.Judgment.drawAir(ctx);
     ctx.restore();
 
     G.Weather.draw(ctx, w, h, frameDt);
@@ -951,8 +927,7 @@ G.Game = (() => {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
-    if (!G.Judgment.cinematic) G.HUD.draw(ctx, w, h, pl, st);
-    G.Judgment.drawOverlay(ctx, w, h);
+    G.HUD.draw(ctx, w, h, pl, st);
     G.Touch.draw(ctx);
     if (G.Settings.get('fps')) {
       ctx.save();

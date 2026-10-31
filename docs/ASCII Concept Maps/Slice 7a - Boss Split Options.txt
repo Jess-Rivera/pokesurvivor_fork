@@ -1,0 +1,73 @@
+SLICE 7a: HOW FAR TO SPLIT BOSSES FROM ENEMY.JS  (Jess, 2026-10-31, OPEN)
+================================================================================
+
+A boss today is two things glued together:
+
+  BODY  (what makes it a thing in the world)      BRAIN  (what it decides)
+  ------------------------------------------      ------------------------
+  HP, hurt(), die(), shield, drops                 move pick, range, HP gates
+  burn / poison / flinch entry points              wind-up, cast, recovery
+  status + stage fields (G.Status, G.Stages)       stance, far/close modes
+  sprite animator, hurt numbers, faint fade        enrage, fury, contact move
+  a slot in the EnemyMgr spatial grid  <---- every player move finds Brock here
+
+
+OPTIONS
+================================================================================
+
+  A  FILE MOVE           B  BRAIN DIVORCE (rec.)       C  FULL DIVORCE
+  ------------------     -----------------------       -----------------------
+  boss methods move      ALL boss AI leaves            separate Boss class:
+  to boss-ai.js, still   enemy.js. Boss = shared       own body AND own brain,
+  Enemy methods          body + a BossBrain            nothing shared
+
+  enemy.js still has     enemy.js has no boss          enemy.js has no boss
+  boss branches          AI at all; only body          anything
+                         flags (no knockback,
+                         no morale)
+
+  cost: tiny             cost: medium                  cost: large
+  risk: none             risk: low                     risk: HIGH (drift)
+
+
+WHY NOT C
+================================================================================
+
+  player move hits Brock
+        |
+        v
+  EnemyMgr grid  --> e.hurt()  --> e.applyBurn / applyPoison / applyFlinch
+        |                              |
+        |                              +--> G.Status, G.Stages read e's fields
+        v
+  C needs a second copy of every one of these on the Boss class, kept in sync
+  forever. A status or damage fix made on one side silently misses the other.
+  It also goes against the 2026-10-23 decision: one executor, a boss is just
+  another caster (and target).
+
+
+B IN PRACTICE
+================================================================================
+
+  enemy.js                         boss-ai.js (new)
+  --------                         ----------------
+  Body (shared)                    G.Boss.make(def, x, y)  <- the only way to
+   update():                         builds a Body, attaches   spawn a boss
+     terrain, status, stages,        a brain, sets boss body   (rift.js, gym,
+     knockback, anim                 flags                     judgment.js)
+     if brain -> brain.step()  ---> GymBrain    (Brock, later all gyms, E4)
+     else     -> wild AI            RiftBrain   (legendaries + Judgment)
+  WildAI (unchanged)                 each brain owns its own state
+   chase, bands, morale,             (today's this.ai)
+   flank, carriers
+
+  Later boss types (multi-mon arena #5, Elite Four, phased Lords) = a new
+  brain, zero edits to the wild AI.
+
+
+OPEN QUESTION  (for Jess)
+================================================================================
+
+  1  Split depth:      A / B (recommended) / C
+  2  Timing for B:     now, as its own no-behavior-change commit before 7a,
+                       so 7a's enemy-owner casts land in GymBrain directly

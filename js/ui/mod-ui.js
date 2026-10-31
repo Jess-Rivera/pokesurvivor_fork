@@ -59,7 +59,7 @@ G.ModUI = (() => {
     const dex = (b.match(/_p(\d+)$/) || [])[1];
     return mode + ' · ' + per + (dex && G.DEX_BY[dex] ? ' · sólo ' + G.DEX_BY[dex].name : '');
   }
-  // With Arceus's Judgment (minute 30) almost no one goes past ~32-33 min.
+  // Runs past ~33 min are treated as suspect (threshold kept from when every run ended at minute 30).
   const SUSPECT_T = 33 * 60;
 
   async function renderReports(list) {
@@ -80,7 +80,7 @@ G.ModUI = (() => {
       row.appendChild(mons);
       row.insertAdjacentHTML('beforeend', `<span class="who"><b translate="no">${g.names.map(esc).join(' · ')}</b>
           <small>${esc(boardName(g.board))}${info ? ' · Nv. ' + (info.lv || 1) + ' · ' + (info.kills || 0).toLocaleString('es') + ' derrotados' : ' · ya no está en el top 50'}</small>
-          ${sus ? '<small class="mod-warn">Más de 33 min: casi imposible con la Sentencia de Arceus</small>' : ''}</span>
+          ${sus ? '<small class="mod-warn">Over 33 min: worth a check</small>' : ''}</span>
         <span class="time${sus ? ' mod-warn' : ''}">${fmt(t)}</span>`);
       const acts = document.createElement('span');
       acts.className = 'mod-acts';

@@ -217,7 +217,6 @@ G.RunUI = (() => {
       <div><span>Level</span><b>${r.level}</b></div>
       <div><span>Defeated</span><b>${r.kills}</b></div>
       <div><span>Bosses</span><b>${r.bosses}</b></div>
-      ${r.judge ? `<div style="grid-column:1/-1"><span>Against Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendary' : 'legendaries'}</b></div>` : ''}
       <div style="grid-column:1/-1"><span>PokéCoins earned</span>
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>

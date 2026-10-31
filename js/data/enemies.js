@@ -31,8 +31,8 @@
  * The warned attacks are in systems/hazards.js.
  *
  * Bosses: strong NON-legendary Pokemon (pseudo-legendaries, Slaking...), at
- * random by power bands. The legendaries only appear in the rifts
- * (systems/rift.js).
+ * random by power bands. Legendaries never spawn (the pokedex leg flag; the
+ * gacha still has them).
  */
 G.Enemies = (() => {
   const TIERS = [
@@ -248,8 +248,6 @@ G.Enemies = (() => {
     return { cast, bosses };
   }
 
-  // (The minute-60 "extra time" was removed when Arceus's Judgment arrived,
-  //  that ends every game at minute 30: see systems/judgment.js.)
   function scale(t) {
     // HP now comes from enemyHp(baseHp, t) at spawn; carry t through. dmg/spd ramps
     // unchanged (damage is a later slice).

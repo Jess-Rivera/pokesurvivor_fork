@@ -240,3 +240,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Batch 2: new path.loop (combat-architecture D38, centred on the drifting base point); Fairy Wind loop-de-loops, radius 70, 0.6667 Hz, 90 px/s, 3 s. Retuned once after the feel test (first build hung the loop off the caster and ran at 694 px/s).
 - Tests: new debug-movechecker harness and mutate; retargeted move-sim, team-cards, stat-stage, move-riders, move-intent (new gaps check), move-travel, move-emit; new scenarios for every ruling. Jess ran check.js and the mutation runners on node: green. Feel test: good.
 - Stopped at: commit + push. Next: batch 3 (Quick Attack is nauseating, Aerial Ace needs a rework; causes still to pin down).
+
+## 2026-10-31 (Quick, work, late afternoon): slice 7a decisions, gyms only, 7a-0 commit A built
+- Decided (Jess): slice 6 closed at batch 2; D-ENEMY (a) with roster-set boss numbers, Brock slot 1 only; D-COOP no co-op work; boss AI split option B (shared body plus brain); gyms only (rifts, legendary fights and the Judgment removed), D1 gacha legendaries stay, D2 future legendary designs stay as scope, D3 smaller Master Ball supply accepted.
+- Built commit A: judgment.js deleted; rift.js replaced by js/systems/gym-arena.js (G.GymArena, gym half only); old boss AI (slam, dash, leap, rain, beam, volley, nova, fury) out of enemy.js, gym leaders keep their path; rift, legendary and minute-30 achievements, the weekly rift mission, the HUD rift labels, drops, music and sounds removed; old save fields kept. Changelog entry added.
+- Tests: new gyms-only harness (30 checks) and mutate runner (6/6); gym, gym-reward, status D2 and move-riders harnesses updated; move-riders mutate lost its boss-dash mutant (22/22). Quick sandbox: 29/30 harnesses (items-f3d2, move-geom need node). Not run on node yet.
+- Stopped at: Jess runs check.js and the two mutate runners on node, feel-tests Brock, commits A. Next: commit B (GymBrain split).

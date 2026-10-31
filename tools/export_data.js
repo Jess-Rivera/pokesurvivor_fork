@@ -29,7 +29,6 @@ for (const f of ['js/data/lang-en.js', 'js/core/settings.js', 'js/data/pokedex.j
 const moves = Object.values(G.Moves.BY_ID).map(m => ({ id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: 0, evo: null }));
 const out = {
   dex: G.DEX,
-  legends: G.DEX.filter(p => p.leg).map(p => p.dex),
   moves,
   items: (G.Items.LIST || []).map(i => ({ id: i.id, name: i.name, desc: i.desc })),
   achievements: (G.AchDefs.LIST || []).map(a => ({ id: a.id, cat: a.cat, name: a.name, desc: a.desc, tier: a.tier, title: a.title || '', reward: a.reward || {} })),
@@ -39,8 +38,8 @@ const out = {
   typeName: G.U.TYPE_NAME,
   typeOrder: Object.keys(G.U.TYPE_NAME),
   matrix: Object.fromEntries(Object.keys(G.U.TYPE_NAME).map(a => [a, Object.fromEntries(Object.keys(G.U.TYPE_NAME).map(d => [d, G.Types.mult(a, [d])]))])),
-  // (Without Arceus's arena: the rift ones are one per type.)
-  arenas: Object.fromEntries(Object.entries(G.ARENA_THEMES || (G.Tiles && G.Tiles.ARENA_THEMES) || {}).filter(([k]) => k !== 'judgment').map(([k, v]) => [k, v.name])),
+  // The gym arenas, one per type.
+  arenas: Object.fromEntries(Object.entries(G.ARENA_THEMES || (G.Tiles && G.Tiles.ARENA_THEMES) || {}).map(([k, v]) => [k, v.name])),
   funding: { kofi: G.Funding.kofi, sponsors: G.Funding.sponsors, costs: G.Funding.costs },
   en: EN
 };

@@ -137,8 +137,6 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   { const e = mk(0, 0); e.leaving = true; root(e); still('leaving unit', e, near1); }
   { const e = mk(0, 0); e.jump = { sx: 0, sy: 0, tx: 100, ty: 0, t: -0.3, dur: 0.6 }; root(e); e.updateJump(0.2); ok(e.x === 0 && e.jump.t === -0.3, 'rooted: a crouching jump holds');
     e.jump.t = 0.1; e.updateJump(0.1); ok(e.x > 0, 'rooted: a jump in the air still lands'); }
-  { const e = mk(0, 0); e.ai = { cast: { id: 'dash', t: 1, wind: 0.75, len: 330, dur: 0.32, go: true, ang: 0 } }; root(e); const v = e.bossCast(0.016, near1); ok(v[0] === 0 && v[1] === 0, 'boss dash: no motion while rooted');
-    e.stTrap = null; e.ai.cast.t = 0.8; const v2 = e.bossCast(0.016, near1); ok(v2[0] > 0, 'boss dash moves when not rooted'); }
   { const e = mk(0, 0); e.fl = { ph: 'approach', t: 0, sector: -1, scanT: 0 }; root(e); const v = e.flankMove(0.05, near1, 0, 150); ok(v[0] === 0 && v[1] === 0, 'flanker: no motion at speed 0'); }
   { const e = mk(0, 0); root(e); const x0 = e.x; e.kx = 200; stepE(e, 0.3, far); ok(e.x > x0 + 5, 'a rooted enemy is still pushed by knockback'); }
   for (const k of ['boss', 'elite', 'gym']) { const h = { x: 0, y: 0, maxHp: 100, hp: 100, types: ['normal'], [k]: k === 'gym' ? {} : true };
@@ -148,7 +146,7 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   const g = mk(0, 0); g.types = ['ghost']; ok(root(g) === 'immune' && St.speedMul(g) === 1, 'ghost immune');
   const p = { isPlayer: true, mon: { types: ['normal'] }, x: 0, y: 0, maxHp: 100, hp: 100 };
   ok(St.apply(p, 'trap') === 'ok' && near(p.stTrap.t, 8) && St.speedMul(p) === 1 && St.swapLocked(p) && !St.rooted(p), 'player: 8 s swap lock, speed unchanged, never rooted');
-  console.log('4 trap: 2 s root on walkers, charger, ranged, thief, healer, jumper, shielder, bomber, leaving, jumps, boss dash, flanker; strong 0.5 s + 10 s window; ghost immune; player swap lock unchanged'); }
+  console.log('4 trap: 2 s root on walkers, charger, ranged, thief, healer, jumper, shielder, bomber, leaving, jumps, flanker; strong 0.5 s + 10 s window; ghost immune; player swap lock unchanged'); }
 
 // 5. knockback: the legacy impulse, direction from the instance centre, bosses and elites still, a shield-absorbed hit does not knock
 { const a = mk(30, 0), b = mk(30, 0); hitWith('tackle', a); b.hurt(10, '#fff', 30, 0, 90);

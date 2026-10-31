@@ -45,7 +45,7 @@ G.Icons = (() => {
     boot: { pal: { b: '#4fb4ff', d: '#2a6fb0', w: '#e6f4ff', g: '#e8e8f0' }, rows: [
       '............', '....kkkk....', '....kbbk....', '....kbbk....', '....kbbk....', '....kbbbkk..',
       '...kbwbbbbk.', '..kbbbbbbbbk', '..kdddddddbk', '..kgggggggk.', '...kkkkkkk..', '............'] },
-    // Link (reward from the legendaries): two linked chain links.
+    // Link (reward from gym wins): two linked chain links.
     bond: { pal: { y: '#ffd23f', w: '#fff3b0', p: '#ff8ad8', q: '#ffd3f1' }, rows: [
       '.kkkkk......', 'kwyyyyk.....', 'kykkkyk.....', 'kyk.kyk.....', 'kykkkyk.....', 'kyyyyykkkkk.',
       '.kkkkkqppppk', '.....kpkkkpk', '.....kpk.kpk', '.....kpkkkpk', '.....kpppppk', '......kkkkk.'] },
@@ -558,7 +558,7 @@ G.Icons = (() => {
   /**
    * Base Stat Total as a 7-star rating: each star is 100 BST and a half star is 50,
    * rounded to the NEAREST 50. Unfilled stars are shown dim so Pokemon compare at a glance.
-   * (BST tops out at 720, Arceus, which is exactly 7 stars.)
+   * (BST tops out at 720, which is exactly 7 stars.)
    */
   function bstStars(bst, size = 12) {
     const halves = Math.max(0, Math.min(14, Math.round(bst / 50)));

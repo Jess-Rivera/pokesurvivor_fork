@@ -6,7 +6,7 @@
 G.GymPresent = (() => {
   G.SimBus.on('gym:escalate', ev => {
     G.Spawner.say(ev.leader + ' gets stronger, and so does the world!', 3, true);
-    G.Audio.sfx('rift');
+    G.Audio.sfx('gate');
   });
   G.SimBus.on('gym:calm', ev => {
     G.Spawner.say('The world calms with ' + ev.leader + ' defeated.', 3, true);

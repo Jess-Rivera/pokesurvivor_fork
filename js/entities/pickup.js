@@ -25,8 +25,6 @@ G.Pickups = (() => {
     ground:   { color: '#ffffff', glow: '#9fe8ff', r: 8 }       // ground item (data/ground-items.js), value = its id
   };
   /** Chance that a normal Pokemon drops a gacha ticket. */
-  const BOSS_T10 = 1 / 3;               // ticket ×10 de un jefe normal
-  const LEGEND_T10 = 1 / 2;             // ticket ×10 del legendario de la grieta
   const BIG_XP_SHARE = 0.05;           // an orb worth >= 5% of the next level draws as the big one
   const TICKET_RATE = 1 / 400;          // (was 1/260; rarer since 2026-10-10)
 
@@ -71,20 +69,13 @@ G.Pickups = (() => {
   /** Magnet: everything flies toward the nearest player. */
   function pullAll() { for (const o of list) o.pulled = true; }
 
-  /** @param plain  experience only (the legendaries of Arceus's Judgment) */
-  function dropXp(x, y, value, boss = false, legend = false, plain = false) {
-    if (boss) {
-      // Bosses burst into a bunch of big orbs + rewards.
+  /** @param burst  a burst of big orbs and nothing else (overworld elites) */
+  function dropXp(x, y, value, burst = false) {
+    if (burst) {
       for (let i = 0; i < 14; i++) {
         const a = Math.random() * 6.2832, d = G.U.rand(10, 70);
         push(orb('xpBig', x + Math.cos(a) * d, y + Math.sin(a) * d, Math.ceil(value / 14)));
       }
-      if (plain) return;
-      push(orb('heal', x + 24, y, 0));
-      push(orb('magnet', x - 24, y, 0));
-      // x10 ticket: always the rift legendary; a normal boss, 1 in 3 times.
-      // (Until 2026-10-12 the rift legendary always gave 2: too many came out.)
-      if (Math.random() < (legend ? LEGEND_T10 : BOSS_T10)) push(orb('ticket10', x, y - 20, 1));
       return;
     }
     // Big orb = worth at least BIG_XP_SHARE of the next level (was a flat 20 XP).

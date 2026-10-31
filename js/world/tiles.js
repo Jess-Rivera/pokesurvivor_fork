@@ -36,9 +36,9 @@ G.Tiles = (() => {
       rock: ['#4e4642', '#6a605b', '#877c76'], grass: ['#6b4a2a', '#94693a', '#c4914e'] },
   ];
   const NORMAL = 3;                   // biomas que se van turnando en una run
-  const ARENA = 3;                    // from here on, the rift arenas (one per type)
+  const ARENA = 3;                    // from here on, the gym arenas (one per type)
 
-  // ---------------- rift arenas ----------------
+  // ---------------- gym arenas ----------------
   /*
    * Each type has its arena: palette, terrain and weather.
    *   liquid   puddles: water (slows) · swamp (slows more) · lava (burns) ·
@@ -102,12 +102,7 @@ G.Tiles = (() => {
                 pools: 0, pillars: 0.08, props: { tree: 0.01 }, weather: null },
     fairy:    { name: 'Bosque Encantado', floor: '#4f7f5a', wall: '#7a5a8a', liquid: 'water', liq: '#8fd8ff', foam: '#ffe0f4', prop: 'tree',
                 leaf: '#e08ad0', trunk: '#6b4a5a', flowers: ['#ff8ad8', '#ffffff', '#c9a6ff'], grass: '#c48ad8', rock: '#9a8aa8',
-                pools: 0.16, pillars: 0, props: { tree: 0.05, grass: 0.1 }, weather: null },
-    // Arceus's arena at minute 30 (systems/judgment.js): ash, ruins and
-    // dead trees, with a clearing where it lands (clear). It belongs to no rift.
-    judgment: { name: 'Ruinas del Juicio', floor: '#4a4240', wall: '#2e2829', liquid: 'lava', liq: '#e8a82a', foam: '#fff1b8', prop: 'dead',
-                leaf: '#3e3633', trunk: '#2a2321', flowers: ['#8a7f76', '#e8a82a', '#5a514c'], grass: '#5e544c', rock: '#6a625c',
-                pools: 0, pillars: 0.03, props: { tree: 0.012, rock: 0.02 }, weather: null, clear: 4.5 }
+                pools: 0.16, pillars: 0, props: { tree: 0.05, grass: 0.1 }, weather: null }
   };
   const ARENA_TYPES = Object.keys(ARENA_THEMES);
 
@@ -121,7 +116,7 @@ G.Tiles = (() => {
   function arenaBiome(th) {
     const f = th.floor, w = th.wall, L = th.liq;
     return {
-      name: 'Grieta · ' + th.name, liquid: th.liquid,
+      name: 'Gym · ' + th.name, liquid: th.liquid,
       floor: [f, shade(f, 0.05), shade(f, -0.06)], dirt: [shade(f, -0.16), shade(f, -0.12), shade(f, -0.2)],
       speck: shade(f, -0.25), light: shade(f, 0.22), flowers: th.flowers,
       wallTop: [w, shade(w, 0.07), shade(w, -0.07)], wallLight: shade(w, 0.32), wallEdge: shade(w, -0.7),
@@ -134,7 +129,6 @@ G.Tiles = (() => {
     };
   }
   for (const t of ARENA_TYPES) BIOMES.push(arenaBiome(ARENA_THEMES[t]));
-  BIOMES[ARENA + ARENA_TYPES.indexOf('judgment')].name = ARENA_THEMES.judgment.name;
 
   // ---------------- color / pixel utilities ----------------
 
@@ -585,8 +579,8 @@ G.Tiles = (() => {
       return P.canvas();
     },
 
-    /** Rift to the legendary's arena. variant = frame 0..3. */
-    rift(B, variant) {
+    /** The gym gate (still the old purple portal art, issue #1). variant = frame 0..3. */
+    gate(B, variant) {
       const P = Pix(30, 46);
       const glow = pack('#7b3cff'), mid = pack('#b48aff'), core = pack('#140a26'), white = pack('#f2e6ff');
       for (let y = 2; y < 44; y++) {

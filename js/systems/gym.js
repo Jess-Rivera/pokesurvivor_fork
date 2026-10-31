@@ -1,9 +1,9 @@
 /* ============ gym.js: gym gates, leaders and the badge package (feature/boss-rework) ============
- * Replaces the random legendary rifts. Gym 1 gate opens at 4:00; each later gate opens GAP seconds after the previous gym is beaten
+ * Gyms are the only bosses (2026-10-31). Gym 1 gate opens at 4:00; each later gate opens GAP seconds after the previous gym is beaten
  * AND the player is back on the map. A gate stays until entered. The gym level is the run-time level at gate spawn + LEVEL_OFFSET,
  * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored catalog moves (G.Gyms). Losing (team wipe)
  * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps).
- * The arena itself is the rift arena (systems/rift.js); this module owns the schedule, the leader's def and the rewards.
+ * The gate and the arena themselves are systems/gym-arena.js; this module owns the schedule, the leader's def and the rewards.
  * Pilot scope: Kanto gym 1 (Brock). The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
  * SIM/PRESENT: this module is simulation only. Everything the player sees or hears about the gym schedule (escalation toast and sound,
  * the badge line, the calm line) is EMITTED as a plain-data event on G.SimBus and rendered by ui/gym-present.js (docs/SIM-PRESENT-BOUNDARY.md).
@@ -27,16 +27,16 @@ G.Gym = (() => {
 
   /** Gate schedule: called every game frame (solo / host). */
   function update(dt, pl, t) {
-    if (G.Rift.isGym) trackFight(dt, pl, t);
+    if (G.GymArena.inArena) trackFight(dt, pl, t);
     // Escalation clock: runs while the gate is open on the map (not once you are in the arena). Anchored to run-time
     // (dt is the run clock), so a pause screen or draft does not tick it. Starts after GRACE s since the gate opened.
-    if (gate && G.Rift.rift && !G.Rift.inArena) escalate(dt);
-    if (gate || G.Rift.inArena || G.Rift.rift || beaten >= list().length || nextAt == null || t < nextAt) return;
+    if (gate && G.GymArena.gate && !G.GymArena.inArena) escalate(dt);
+    if (gate || G.GymArena.inArena || G.GymArena.gate || beaten >= list().length || nextAt == null || t < nextAt) return;
     const entry = list()[beaten];
     const level = Math.round(G.Stats.levelForTime(t)) + G.Gyms.LEVEL_OFFSET;
     const lead = G.Gyms.lineup(entry, 1, level)[0];       // the gate shows slot 1 at the level it spawns with
     gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, boost: entry.boost || null, dex: lead.dex, species: G.DEX_BY[lead.dex].name, level, openedAt: t };
-    if (!G.Rift.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
+    if (!G.GymArena.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
     esc = null;   // fresh gate: grace first
   }
 
@@ -116,7 +116,7 @@ G.Gym = (() => {
     return Math.max(0, G.Gyms.ENRAGE_AFTER - (now() - x.engagedAt));
   }
 
-  /** Badge package on a win: level, team revive, the run-long team boost. The item and the Bond come from the boss drop / rift win (Rift.won). */
+  /** Badge package on a win: level, team revive, the run-long team boost. The item and the Bond come from the leader drop / arena win (GymArena.won). */
   function onWin(g) {
     badges.push(g.badge);
     report('won');

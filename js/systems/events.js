@@ -1,6 +1,6 @@
 /* ============ events.js — mid-game events and treasure imps ============
  *
- * Every 4-5 minutes (never with a boss alive or in the rift) one of these happens:
+ * Every 4-5 minutes (never with a boss alive or in the gym arena) one of these happens:
  *
  *   horde   Horde of a type: 30 s in which everything that spawns is of one
  *           same type (if your type beats them, it is your moment)
@@ -40,7 +40,7 @@ G.Events = (() => {
       if (cur.id !== 'lost' && cur.t >= cur.dur && authority()) end();
     }
     if (lost) lostTick(dt, players);
-    if (!authority() || G.Rift.inArena || G.Judgment.active) return;
+    if (!authority() || G.GymArena.inArena) return;
 
     if (thieves < 2) {
       thiefT -= dt;

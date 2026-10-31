@@ -31,7 +31,6 @@ const M = [
   ['leaving units walk while rooted', 'enemy', [['const spd = G.Status.rooted(this) ? 0 : Math.max(40, this.spd)', 'const spd = Math.max(40, this.spd)']]],
   ['rooted jumper starts a jump', 'enemy', [['else if (dist < 250 && !G.Status.rooted(this))', 'else if (dist < 250)']]],
   ['rooted crouch does not hold', 'enemy', [["if (j.t < 0 && G.Status.rooted(this)) { this.anim.loop('Idle'); return; }", '']]],
-  ['rooted boss dash moves', 'enemy', [['const sp = G.Status.rooted(this) ? 0 : c.len / c.dur;', 'const sp = c.len / c.dur;']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'riders-mut-'));
 let caught = 0;

@@ -4,17 +4,17 @@
  *
  *   value(save) -> current progress (number) · goal -> what you have to reach
  *
- * There is also an achievement for EACH legendary: beating it in a rift.
+ * Gyms only (2026-10-31): the achievements of the removed boss modes are gone. Old saves may still hold their ids
+ * in save.ach; nothing reads an id that is not in LIST (progress.js titles, goals-ui.js medals).
  */
 G.AchDefs = (() => {
   const own = s => Object.keys(s.owned || {}).filter(d => G.DEX_BY[d]).length;
   const shinies = s => Object.keys(s.shiny || {}).length;
-  const legends = s => Object.keys(s.legends || {}).length;
   const st = k => s => (s.stats && s.stats[k]) || 0;
   const count = k => s => Object.keys(s[k] || {}).length;
 
   const CATS = [['coleccion', 'Colección'], ['supervivencia', 'Supervivencia'], ['combate', 'Combate'],
-                ['grietas', 'Grietas'], ['legendarios', 'Legendarios'], ['otros', 'Misiones y más']];
+                ['otros', 'Misiones y más']];
 
   const LIST = [
     // ---------- collection ----------
@@ -37,10 +37,6 @@ G.AchDefs = (() => {
     { id: 'time20', cat: 'supervivencia', tier: 3, name: 'Superviviente', desc: 'Aguanta 20 minutos.', value: s => Math.floor(st('bestTime')(s) / 60), goal: 20, reward: { t10: 2 }, title: 'Superviviente' },
     { id: 'lvl20', cat: 'supervivencia', tier: 1, name: 'Creciendo', desc: 'Llega al nivel 15 en una run.', value: st('bestLevel'), goal: 15, reward: { t1: 2 } },
     { id: 'lvl40', cat: 'supervivencia', tier: 3, name: 'Imparable', desc: 'Llega al nivel 30 en una run.', value: st('bestLevel'), goal: 30, reward: { t10: 1 }, title: 'Imparable' },
-    // Arceus's Judgment (minute 30, see systems/judgment.js).
-    { id: 'judge', cat: 'supervivencia', tier: 2, name: 'La Sentencia', desc: 'Llega a la Sentencia de Arceus (minuto 30).', value: st('judged'), goal: 1, reward: { t10: 1 }, title: 'Juzgado' },
-    { id: 'judge60', cat: 'supervivencia', tier: 3, name: 'Ante el Creador', desc: 'Aguanta 1 minuto ante Arceus.', value: st('judgeTime'), goal: 60, reward: { t10: 2 }, title: 'Elegido de Arceus' },
-    { id: 'judgeBoss', cat: 'supervivencia', tier: 3, name: 'Desafío divino', desc: 'Derrota a 3 legendarios ante Arceus en una partida.', value: st('judgeBosses'), goal: 3, reward: { t10: 2 } },
     { id: 'runs50', cat: 'supervivencia', tier: 2, name: 'Explorador', desc: 'Juega 50 runs.', value: st('runs'), goal: 50, reward: { t10: 1 }, title: 'Explorador' },
 
     // ---------- combate ----------
@@ -53,16 +49,6 @@ G.AchDefs = (() => {
     { id: 'items5', cat: 'combate', tier: 1, name: 'Bolsa llena', desc: 'Encuentra 5 objetos distintos.', value: count('itemsFound'), goal: 5, reward: { t1: 3 } },
     { id: 'itemsAll', cat: 'combate', tier: 2, name: 'Coleccionista de objetos', desc: 'Encuentra los 11 objetos.', value: count('itemsFound'), goal: 11, reward: { t10: 1 }, title: 'Anticuario' },
 
-    // ---------- grietas ----------
-    { id: 'rift1', cat: 'grietas', tier: 1, name: 'Al otro lado', desc: 'Gana tu primera pelea en una grieta.', value: st('riftWins'), goal: 1, reward: { t1: 3 }, title: 'Valiente' },
-    { id: 'rift10', cat: 'grietas', tier: 2, name: 'Saltagrietas', desc: 'Gana 10 peleas en grietas.', value: st('riftWins'), goal: 10, reward: { t10: 1 } },
-    { id: 'arenas', cat: 'grietas', tier: 3, name: 'Viajero de grietas', desc: 'Gana en las 18 arenas (una por tipo).', value: count('arenas'), goal: 18, reward: { t10: 2 }, title: 'Viajero de grietas' },
-
-    // ---------- legendaries (counter; the individual ones are added below) ----------
-    { id: 'leg10', cat: 'legendarios', tier: 2, name: 'Cazalegendarios', desc: 'Vence a 10 legendarios distintos.', value: legends, goal: 10, reward: { t10: 1 }, title: 'Cazalegendarios' },
-    { id: 'leg30', cat: 'legendarios', tier: 3, name: 'Domador de mitos', desc: 'Vence a 30 legendarios distintos.', value: legends, goal: 30, reward: { t10: 2 } },
-    { id: 'legAll', cat: 'legendarios', tier: 3, name: 'Leyenda', desc: 'Vence a todos los legendarios.', value: legends, goal: 87, reward: { t10: 5 }, title: 'Leyenda' },
-
     // ---------- missions and more ----------
     { id: 'mis10', cat: 'otros', tier: 1, name: 'Cumplidor', desc: 'Completa 10 misiones.', value: st('missionsDone'), goal: 10, reward: { t1: 3 } },
     { id: 'mis50', cat: 'otros', tier: 2, name: 'Constante', desc: 'Completa 50 misiones.', value: st('missionsDone'), goal: 50, reward: { t10: 1 }, title: 'Constante' },
@@ -71,13 +57,6 @@ G.AchDefs = (() => {
     { id: 'group10', cat: 'otros', tier: 2, name: 'Compañero fiel', desc: 'Juega 10 partidas en grupo.', value: st('groupRuns'), goal: 10, reward: { t10: 1 }, title: 'Compañero fiel' }
   ];
 
-  // One achievement per legendary: "Beat Mewtwo"...
-  for (const p of G.DEX.filter(p => p.leg && G.SPRITE_META[p.dex])) {
-    LIST.push({ id: 'leg_' + p.dex, cat: 'legendarios', tier: 2, dex: p.dex, name: 'Vence a ' + p.name,
-                desc: 'Derrota a ' + p.name + ' en una grieta.', value: s => (s.legends && s.legends[p.dex] ? 1 : 0), goal: 1, reward: { t1: 1 } });
-  }
-  const totalLegends = LIST.filter(a => a.dex).length;
-  for (const a of LIST) if (a.id === 'legAll') { a.goal = totalLegends; a.desc = `Vence a los ${totalLegends} legendarios.`; }
   // Goals that depend on the game data.
   for (const a of LIST) if (a.id === 'ownAll') { a.goal = G.DEX.length; a.desc = `Ten los ${G.DEX.length} Pokémon del juego.`; }
 

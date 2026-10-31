@@ -15,4 +15,8 @@ Still owed before the merge: late-game density with all moves on the flag. A vis
 Jess has feel-tested the spacing and nova changes.
 
 ## Results
-(not started)
+DONE at batch 2 (Jess, 2026-10-31).
+- Tool: G.Debug.movechecker(id, ... up to 6, [px]) with range rings (debug.js, move-render.js).
+- Batch 1: String Shot and Bubble Beam spacing and wobble, Tackle 54, Toxic Spikes burst, Gust cd 0.7, Discharge 110. Plan: docs/ASCII Concept Maps/Slice 6 - Batch 1 Plan.txt.
+- Batch 2: path.loop (combat-architecture:D38), Fairy Wind radius 70, 0.6667 Hz, 90 px/s, 3 s. Plan: Slice 6 - Batch 2 Plan.txt. Both batches green on node and feel-tested OK.
+- Batch 3 DROPPED: Quick Attack and Aerial Ace work as intended but are not fun; moved to a later fun pass (TODO Backlog, DECISIONS 2026-10-31). The stress run above is still owed before the merge.
