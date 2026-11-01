@@ -22,58 +22,97 @@
  */
 G.Signups = (() => {
   const URL = 'https://turn.pokesurvivor.com/mau';
-  const CACHE = 30 * 60 * 1000, K_OPEN = 'ps.mau.open';
-  let open = true, checkedAt = 0;
+  const CACHE = 30 * 60 * 1000,
+    K_OPEN = 'ps.mau.open';
+  let open = true,
+    checkedAt = 0;
   try {
     const c = JSON.parse(localStorage.getItem(K_OPEN) || 'null');
-    if (c && typeof c.open === 'boolean') { open = c.open; checkedAt = c.t || 0; }
-  } catch (e) { /* nada */ }
+    if (c && typeof c.open === 'boolean') {
+      open = c.open;
+      checkedAt = c.t || 0;
+    }
+  } catch (e) {
+    /* nada */
+  }
 
   const month = () => new Date(Date.now() - 8 * 3600e3).toISOString().slice(0, 7);
   const OFF = true;
   const enabled = () => !OFF && /^https?:$/.test(location.protocol) && !(G.FIREBASE_CONFIG || {}).emulator;
-  const reportedKey = uid => 'ps.mau.' + uid + '.' + month();
+  const reportedKey = (uid) => 'ps.mau.' + uid + '.' + month();
 
   function remember(j) {
     if (typeof j.open !== 'boolean') return;
-    open = j.open; checkedAt = Date.now();
-    try { localStorage.setItem(K_OPEN, JSON.stringify({ open, t: checkedAt })); } catch (e) { /* nada */ }
+    open = j.open;
+    checkedAt = Date.now();
+    try {
+      localStorage.setItem(K_OPEN, JSON.stringify({ open, t: checkedAt }));
+    } catch (e) {
+      /* nada */
+    }
   }
 
   /** Can new accounts be created this month? */
   async function check() {
     if (!enabled()) return true;
     if (Date.now() - checkedAt < CACHE) return open;
-    try { remember(await (await fetch(URL)).json()); } catch (e) { /* no response: nothing is blocked */ }
+    try {
+      remember(await (await fetch(URL)).json());
+    } catch (e) {
+      /* no response: nothing is blocked */
+    }
     return open;
   }
 
   /** Just-created account: the gatekeeper already recorded it, no need to report. */
   function markNew(uid) {
-    try { localStorage.setItem(reportedKey(uid), '1'); } catch (e) { /* nada */ }
+    try {
+      localStorage.setItem(reportedKey(uid), '1');
+    } catch (e) {
+      /* nada */
+    }
   }
 
   /** This account has entered: recorded once a month. */
   async function report(user) {
     if (!enabled() || !user) return;
     const key = reportedKey(user.uid);
-    try { if (localStorage.getItem(key)) return; } catch (e) { /* nada */ }
+    try {
+      if (localStorage.getItem(key)) return;
+    } catch (e) {
+      /* nada */
+    }
     try {
       const tok = await user.getIdToken();
       const r = await fetch(URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: tok });
       if (r.ok) {
         remember(await r.json());
-        try { localStorage.setItem(key, '1'); } catch (e) { /* nada */ }
+        try {
+          localStorage.setItem(key, '1');
+        } catch (e) {
+          /* nada */
+        }
       }
-    } catch (e) { /* retried next time */ }
+    } catch (e) {
+      /* retried next time */
+    }
   }
 
   /** Name of the next month (for the notice). */
   function nextMonthName() {
-    const d = new Date(); d.setMonth(d.getMonth() + 1, 1);
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1, 1);
     const en = G.I18n && G.I18n.lang === 'en';
     return d.toLocaleString(en ? 'en-US' : 'es-ES', { month: 'long' });
   }
 
-  return { check, report, markNew, nextMonthName, get closed() { return !open; } };
+  return {
+    check,
+    report,
+    markNew,
+    nextMonthName,
+    get closed() {
+      return !open;
+    },
+  };
 })();

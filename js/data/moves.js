@@ -15,7 +15,8 @@
   // Retired moves (slice 7b, D-BUBBLE and D-HAIL, Jess 2026-11-01): out of every pool; a save that names one loads its replacement.
   const RETIRED = { bubble: 'water-gun', hail: 'water-gun' };
 
-  let all = null, pool = null;
+  let all = null,
+    pool = null;
   function build() {
     all = Object.values(G.MoveDefs);
     pool = {};
@@ -26,7 +27,7 @@
   function poolFor(mon) {
     if (!pool) build();
     const ids = new Set(pool.normal);
-    for (const t of mon.types) for (const id of (pool[t] || [])) ids.add(id);
+    for (const t of mon.types) for (const id of pool[t] || []) ids.add(id);
     return [...ids];
   }
 
@@ -38,11 +39,24 @@
 
   /** Starting move based on the main type (if the Pokemon does not bring one). */
   const START = {
-    fire: 'ember', water: 'water-gun', grass: 'vine-whip', electric: 'thunder-shock',
-    psychic: 'confusion', poison: 'sludge', ground: 'mud-shot', flying: 'gust',
-    bug: 'bug-bite', rock: 'rock-throw', ice: 'ice-beam', fighting: 'karate-chop',
-    ghost: 'shadow-ball', dragon: 'dragon-rage', fairy: 'fairy-wind', steel: 'metal-claw',
-    dark: 'bite', normal: 'tackle'
+    fire: 'ember',
+    water: 'water-gun',
+    grass: 'vine-whip',
+    electric: 'thunder-shock',
+    psychic: 'confusion',
+    poison: 'sludge',
+    ground: 'mud-shot',
+    flying: 'gust',
+    bug: 'bug-bite',
+    rock: 'rock-throw',
+    ice: 'ice-beam',
+    fighting: 'karate-chop',
+    ghost: 'shadow-ball',
+    dragon: 'dragon-rage',
+    fairy: 'fairy-wind',
+    steel: 'metal-claw',
+    dark: 'bite',
+    normal: 'tackle',
   };
   function startFor(mon) {
     if (mon.start && G.MoveDefs[mon.start] && !RETIRED[mon.start]) return mon.start;
@@ -50,5 +64,14 @@
     return 'tackle';
   }
 
-  G.Moves = { get ALL() { if (!all) build(); return all; }, RETIRED, poolFor, instance, startFor };
+  G.Moves = {
+    get ALL() {
+      if (!all) build();
+      return all;
+    },
+    RETIRED,
+    poolFor,
+    instance,
+    startFor,
+  };
 })();

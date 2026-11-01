@@ -19,24 +19,29 @@ G.MoveGeom = (() => {
 
   /** Squared distance from point (cx, cy) to the segment (ax, ay)-(bx, by). Same results as the legacy combat.js copy. */
   function segDist2(ax, ay, bx, by, cx, cy) {
-    const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+    const dx = bx - ax,
+      dy = by - ay,
+      l2 = dx * dx + dy * dy;
     let t = l2 ? ((cx - ax) * dx + (cy - ay) * dy) / l2 : 0;
     t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const qx = ax + dx * t - cx, qy = ay + dy * t - cy;
+    const qx = ax + dx * t - cx,
+      qy = ay + dy * t - cy;
     return qx * qx + qy * qy;
   }
 
   /** D21: start + growSpeed x (age, or distance travelled), capped by max when there is one. */
   function grown(start, grow, st) {
-    const g = start + grow.growSpeed * (grow.per === 'distance' ? (st.dist || 0) : Math.max(0, st.age || 0));
+    const g = start + grow.growSpeed * (grow.per === 'distance' ? st.dist || 0 : Math.max(0, st.age || 0));
     return grow.max == null ? g : Math.min(g, grow.max);
   }
 
   function shapeOf(space, grow, st) {
-    const dim = grow ? (grow.dim || 'radRadius') : null, lens = st.lens || 1;
-    const dimOf = k => (dim === k ? grown(space[k] || 0, grow, st) : space[k]);
+    const dim = grow ? grow.dim || 'radRadius' : null,
+      lens = st.lens || 1;
+    const dimOf = (k) => (dim === k ? grown(space[k] || 0, grow, st) : space[k]);
     const base = { x: st.x, y: st.y, heading: st.heading };
-    if (space.shape === 'linear') return { ...base, family: 'linear', len: dimOf('linLength') * lens, w: space.linWidth };     // lens: beam length only (Jess, slice 3c)
+    if (space.shape === 'linear')
+      return { ...base, family: 'linear', len: dimOf('linLength') * lens, w: space.linWidth }; // lens: beam length only (Jess, slice 3c)
     const r = dimOf('radRadius') * lens;
     if (space.radArc == null && dim !== 'radArc') return { ...base, family: 'point', r };
     const arc = Math.min(dimOf('radArc') * lens, TAU);
@@ -51,36 +56,48 @@ G.MoveGeom = (() => {
     // D18: distance plus angular offset with the enemy-size tolerance. An enemy that covers the apex is inside at any angle
     // (Jess, 2026-10-26; also avoids dividing by a zero distance).
     arc(s, px, py, ex, ey, er) {
-      const dx = ex - s.x, dy = ey - s.y, d2 = dx * dx + dy * dy;
+      const dx = ex - s.x,
+        dy = ey - s.y,
+        d2 = dx * dx + dy * dy;
       if (d2 > (s.r + er) ** 2) return false;
       const d = Math.sqrt(d2);
       if (d <= er) return true;
       let off = (Math.atan2(dy, dx) - s.heading) % TAU;
-      if (off > Math.PI) off -= TAU; else if (off < -Math.PI) off += TAU;
+      if (off > Math.PI) off -= TAU;
+      else if (off < -Math.PI) off += TAU;
       return Math.abs(off) <= s.arc / 2 + Math.asin(er / d);
     },
     // D20: project onto the band axis from the anchor along the heading; both ends and the sides widened by the enemy radius
     linear(s, px, py, ex, ey, er) {
-      const c = Math.cos(s.heading), n = Math.sin(s.heading), rx = ex - s.x, ry = ey - s.y;
-      const along = rx * c + ry * n, side = Math.abs(ry * c - rx * n);
+      const c = Math.cos(s.heading),
+        n = Math.sin(s.heading),
+        rx = ex - s.x,
+        ry = ey - s.y;
+      const along = rx * c + ry * n,
+        side = Math.abs(ry * c - rx * n);
       return along >= -er && along <= s.len + er && side <= s.w / 2 + er;
-    }
+    },
   };
 
   const BOUNDS = {
     point: (s, px, py) => ({ x: (px + s.x) / 2, y: (py + s.y) / 2, r: Math.hypot(s.x - px, s.y - py) / 2 + s.r }),
-    circle: s => ({ x: s.x, y: s.y, r: s.r }),
-    arc: s => ({ x: s.x, y: s.y, r: s.r }),
+    circle: (s) => ({ x: s.x, y: s.y, r: s.r }),
+    arc: (s) => ({ x: s.x, y: s.y, r: s.r }),
     // the band widened by a square margin has corners up to (sqrt 2 - 1) x the enemy radius beyond a round one; 0.42 covers that
     linear(s, px, py, pad) {
       const h = s.len / 2;
-      return { x: s.x + Math.cos(s.heading) * h, y: s.y + Math.sin(s.heading) * h, r: Math.hypot(h, s.w / 2) + pad * 0.42 };
-    }
+      return {
+        x: s.x + Math.cos(s.heading) * h,
+        y: s.y + Math.sin(s.heading) * h,
+        r: Math.hypot(h, s.w / 2) + pad * 0.42,
+      };
+    },
   };
 
   return {
-    segDist2, shapeOf,
+    segDist2,
+    shapeOf,
     contains: (s, px, py, ex, ey, er) => CONTAINS[s.family](s, px, py, ex, ey, er),
-    boundsOf: (s, px, py, maxEnemyR) => BOUNDS[s.family](s, px, py, maxEnemyR || 0)
+    boundsOf: (s, px, py, maxEnemyR) => BOUNDS[s.family](s, px, py, maxEnemyR || 0),
   };
 })();

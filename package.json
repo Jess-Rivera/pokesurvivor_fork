@@ -1,5 +1,14 @@
 {
   "devDependencies": {
-    "archiver": "^7.0.1"
+    "archiver": "^7.0.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write \"js/**/*.js\" \"tools/*.js\" \"css/**/*.css\" dev.html sw.js eslint.config.js",
+    "format:check": "prettier --list-different \"js/**/*.js\" \"tools/*.js\" \"css/**/*.css\" dev.html sw.js eslint.config.js"
   }
 }

@@ -17,14 +17,18 @@
  */
 G.GymArena = (() => {
   const ARENA_R = 11;
-  const WEATHER_T = 135;          // seconds of the arena's own weather (the theme's), unchanged from before the gyms-only change
-  let gate = null;                // { x, y, t, gym }: the gate on the map; gym = the gate info from G.Gym
-  let arena = null;               // { tx, ty, r, dex, shiny, type, gym, x, y, back, biome, t, phase, endT, bossId }
+  const WEATHER_T = 135; // seconds of the arena's own weather (the theme's), unchanged from before the gyms-only change
+  let gate = null; // { x, y, t, gym }: the gate on the map; gym = the gate info from G.Gym
+  let arena = null; // { tx, ty, r, dex, shiny, type, gym, x, y, back, biome, t, phase, endT, bossId }
   let asked = false;
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
 
-  function reset() { gate = null; arena = null; asked = false; }
+  function reset() {
+    gate = null;
+    arena = null;
+    asked = false;
+  }
 
   // ---------------- the gate on the map ----------------
 
@@ -40,8 +44,10 @@ G.GymArena = (() => {
   function openGate(info) {
     const near = G.Game.player;
     for (let i = 0; i < 24; i++) {
-      const a = Math.random() * 6.2832, d = G.U.rand(380, 560);
-      const x = near.x + Math.cos(a) * d, y = near.y + Math.sin(a) * d * 0.85;
+      const a = Math.random() * 6.2832,
+        d = G.U.rand(380, 560);
+      const x = near.x + Math.cos(a) * d,
+        y = near.y + Math.sin(a) * d * 0.85;
       if (!G.World.isFree(x, y, 22)) continue;
       gate = { x, y, t: 0, gym: info };
       asked = false;
@@ -68,8 +74,13 @@ G.GymArena = (() => {
     if (arena || !gate) return;
     const g = gate.gym;
     const cfg = {
-      tx: 5000 + Math.floor(Math.random() * 3000), ty: 5000 + Math.floor(Math.random() * 3000), r: ARENA_R,
-      dex: g.dex, shiny: false, type: g.arena, gym: g
+      tx: 5000 + Math.floor(Math.random() * 3000),
+      ty: 5000 + Math.floor(Math.random() * 3000),
+      r: ARENA_R,
+      dex: g.dex,
+      shiny: false,
+      type: g.arena,
+      gym: g,
     };
     if (G.Coop.isHost) G.Coop.broadcast(['arena', cfg]);
     begin(cfg);
@@ -79,7 +90,7 @@ G.GymArena = (() => {
   function spawnLeader(g) {
     const ts = TS();
     const e = G.Boss.make(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5);
-    e.flying = false;                  // collides with walls like you, so your shots can reach it
+    e.flying = false; // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);
     arena.bossId = e.id;
     G.Spawner.say(g.leader + ' sends out ' + e.name + '!', 3.2);
@@ -92,11 +103,19 @@ G.GymArena = (() => {
     const pl = G.Game.player;
     const ts = TS();
     arena = Object.assign({}, cfg, {
-      x: cfg.tx * ts + ts / 2, y: cfg.ty * ts + ts / 2,
-      back: { x: pl.x, y: pl.y }, biome: G.World.biome, t: 0, phase: 'fight', endT: 0, bossId: 0
+      x: cfg.tx * ts + ts / 2,
+      y: cfg.ty * ts + ts / 2,
+      back: { x: pl.x, y: pl.y },
+      biome: G.World.biome,
+      t: 0,
+      phase: 'fight',
+      endT: 0,
+      bossId: 0,
     });
-    gate = null; asked = false;
-    if (authority()) G.EnemyMgr.stash(); else G.EnemyMgr.clearRemote();
+    gate = null;
+    asked = false;
+    if (authority()) G.EnemyMgr.stash();
+    else G.EnemyMgr.clearRemote();
     G.Projectiles.clear();
     G.Hazards.clear();
     G.World.setArena({ tx: cfg.tx, ty: cfg.ty, r: cfg.r, type: cfg.type });
@@ -106,8 +125,12 @@ G.GymArena = (() => {
     if (th && th.weather) G.Weather.force(th.weather, WEATHER_T);
     // Everyone to the south of the arena, in a row; the leader appears to the north.
     const ps = G.Game.everyone();
-    ps.forEach((p, i) => { p.x = arena.x + (i - (ps.length - 1) / 2) * 34; p.y = arena.y + ts * 3; });
-    G.Camera.x = pl.x; G.Camera.y = pl.y;
+    ps.forEach((p, i) => {
+      p.x = arena.x + (i - (ps.length - 1) / 2) * 34;
+      p.y = arena.y + ts * 3;
+    });
+    G.Camera.x = pl.x;
+    G.Camera.y = pl.y;
     G.Game.flash('#c9a6ff', 0.9);
     G.Audio.sfx('gate');
     G.Spawner.say('Gym Leader ' + cfg.gym.leader + ' wants to battle!', 2.4, true);
@@ -115,11 +138,17 @@ G.GymArena = (() => {
 
   /** No one leaves the arena circle (in case something pushes too hard). */
   function keepInside() {
-    const ts = TS(), max = (arena.r - 1.4) * ts;
+    const ts = TS(),
+      max = (arena.r - 1.4) * ts;
     for (const e of G.EnemyMgr.all()) {
       if (e.remote) continue;
-      const dx = e.x - arena.x, dy = e.y - arena.y, d = Math.hypot(dx, dy);
-      if (d > max) { e.x = arena.x + dx / d * max; e.y = arena.y + dy / d * max; }
+      const dx = e.x - arena.x,
+        dy = e.y - arena.y,
+        d = Math.hypot(dx, dy);
+      if (d > max) {
+        e.x = arena.x + (dx / d) * max;
+        e.y = arena.y + (dy / d) * max;
+      }
     }
   }
 
@@ -129,8 +158,11 @@ G.GymArena = (() => {
       if (!authority()) return;
       keepInside();
       const boss = G.EnemyMgr.get(arena.bossId);
-      if (!boss || boss.dead) { G.Coop.isHost && G.Coop.broadcast(['aw']); won(); }
-      return;                          // no timer; a team wipe ends the run (game.js), the enrage clock is the pressure
+      if (!boss || boss.dead) {
+        G.Coop.isHost && G.Coop.broadcast(['aw']);
+        won();
+      }
+      return; // no timer; a team wipe ends the run (game.js), the enrage clock is the pressure
     }
     arena.endT -= dt;
     if (arena.endT <= 0) finish();
@@ -138,7 +170,8 @@ G.GymArena = (() => {
 
   function won() {
     if (!arena || arena.phase !== 'fight') return;
-    arena.phase = 'won'; arena.endT = 5;
+    arena.phase = 'won';
+    arena.endT = 5;
     G.Gym.onWin(arena.gym);
     G.Pickups.pullAll();
     G.Spawner.say('¡Has vencido a ' + G.DEX_BY[arena.dex].name + '! Recoge el premio…', 3.4, true);
@@ -166,10 +199,15 @@ G.GymArena = (() => {
     if (authority()) G.EnemyMgr.restore();
     G.Projectiles.clear();
     G.Hazards.clear();
-    for (const p of G.Game.everyone()) { p.x = a.back.x; p.y = a.back.y; }
-    pl.x = a.back.x; pl.y = a.back.y;
+    for (const p of G.Game.everyone()) {
+      p.x = a.back.x;
+      p.y = a.back.y;
+    }
+    pl.x = a.back.x;
+    pl.y = a.back.y;
     if (pl.dead) pl.revive(0.3);
-    G.Camera.x = pl.x; G.Camera.y = pl.y;
+    G.Camera.x = pl.x;
+    G.Camera.y = pl.y;
     G.Game.flash('#c9a6ff', 0.8);
     if (pl.bonds > 0) G.Game.offerBond();
   }
@@ -184,17 +222,21 @@ G.GymArena = (() => {
       draw(ctx) {
         const P = G.Sprites.PX;
         const img = G.Tiles.propSprite(0, 'gate', Math.floor(gate.t * 8) % 4);
-        const w = img.width * P, h = img.height * P;
+        const w = img.width * P,
+          h = img.height * P;
         const fadeIn = Math.min(1, gate.t * 2);
         ctx.save();
         ctx.globalAlpha = 0.25 * fadeIn;
         ctx.fillStyle = '#7b3cff';
-        ctx.beginPath(); ctx.ellipse(gate.x, gate.y, 34, 12, 0, 0, 6.2832); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(gate.x, gate.y, 34, 12, 0, 0, 6.2832);
+        ctx.fill();
         ctx.globalAlpha = fadeIn;
         ctx.drawImage(img, Math.round(gate.x - w / 2), Math.round(gate.y - h + 4), w, h);
         ctx.restore();
-        if (Math.random() < 0.3) G.FX.px(gate.x + G.U.rand(-14, 14), gate.y - G.U.rand(10, 80), '#d9c2ff', { vy: -40, life: 0.6 });
-      }
+        if (Math.random() < 0.3)
+          G.FX.px(gate.x + G.U.rand(-14, 14), gate.y - G.U.rand(10, 80), '#d9c2ff', { vy: -40, life: 0.6 });
+      },
     };
   }
 
@@ -202,14 +244,32 @@ G.GymArena = (() => {
 
   function onEvent(ev) {
     switch (ev[0]) {
-      case 'arena': begin(ev[1]); break;
-      case 'aw': won(); break;
+      case 'arena':
+        begin(ev[1]);
+        break;
+      case 'aw':
+        won();
+        break;
     }
   }
 
   return {
-    reset, update, drawable, onEvent, openGate, enterRequest() { if (!arena) start(); },
-    get gate() { return gate; }, get arena() { return arena; },
-    get inArena() { return !!arena; }
+    reset,
+    update,
+    drawable,
+    onEvent,
+    openGate,
+    enterRequest() {
+      if (!arena) start();
+    },
+    get gate() {
+      return gate;
+    },
+    get arena() {
+      return arena;
+    },
+    get inArena() {
+      return !!arena;
+    },
   };
 })();

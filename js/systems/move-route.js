@@ -10,17 +10,20 @@
  * Gym leaders cast through G.MoveSim too (slice 7a, D-ENEMY): their brains call G.MoveSim.castAt from the enemy update.
  */
 G.MoveRoute = (() => {
-  const routed = id => !!(G.MoveDefs && G.MoveDefs[id]) && !(G.Moves && G.Moves.RETIRED[id]);
+  const routed = (id) => !!(G.MoveDefs && G.MoveDefs[id]) && !(G.Moves && G.Moves.RETIRED[id]);
   let owner = null;
 
   function tick(dt, pl, now) {
     const C = G.Camera;
     G.MoveSim.setView({ x: C.left(), y: C.top(), w: C.w, h: C.h });
-    if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
+    if (owner && owner !== pl) G.MoveSim.clear(owner); // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
     owner = pl;
     G.MoveSim.tick(dt, pl, now);
   }
-  function reset() { owner = null; G.MoveSim.clear(); }
+  function reset() {
+    owner = null;
+    G.MoveSim.clear();
+  }
 
   G.MoveSim.setFilter(routed);
   return { routed, tick, reset };

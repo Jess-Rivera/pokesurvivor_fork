@@ -21,48 +21,73 @@
  *       peers() · mode(uid) -> 'connecting' | 'direct' | 'relay' | 'closed'
  */
 G.Net = (() => {
-  const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-               { urls: 'stun:stun.cloudflare.com:3478' }];
-  const DIRECT_TIMEOUT = 9000;     // ms to get a direct channel before using the relay
+  const ICE = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+  ];
+  const DIRECT_TIMEOUT = 9000; // ms to get a direct channel before using the relay
   // Relay via the Realtime Database OFF (2026-10-12): at $1 per GB it was the biggest
   // co-op cost. Without a direct connection or TURN, that pair cannot play
   // together ('failed') and the host retries every RETRY_MS. Through the database
   // only the signaling goes (a few small messages to connect).
-  const ALLOW_RELAY = false, RETRY_MS = 15000;
+  const ALLOW_RELAY = false,
+    RETRY_MS = 15000;
 
   // ---------------- TURN (Cloudflare) ----------------
   const TURN_URL = 'https://turn.pokesurvivor.com/';
-  let turn = null, turnAt = 0, turnReq = null;
+  let turn = null,
+    turnAt = 0,
+    turnReq = null;
   /** Requests (or reuses) TURN credentials. It never fails: without them, it continues as before. */
   function fetchTurn() {
     const fb = G.DB.fb;
     if (!fb || fb.emulator || !fb.auth || !fb.auth.currentUser) return Promise.resolve(null);
     if (turn && Date.now() - turnAt < (turn.ttl - 600) * 1000) return Promise.resolve(turn);
     if (turnReq) return turnReq;
-    turnReq = fb.auth.currentUser.getIdToken()
-      .then(tok => fetch(TURN_URL, { headers: { Authorization: 'Bearer ' + tok } }))
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => {
-        if (j && j.iceServers) { turn = { servers: [].concat(j.iceServers), ttl: j.ttl || 3600 }; turnAt = Date.now(); }
+    turnReq = fb.auth.currentUser
+      .getIdToken()
+      .then((tok) => fetch(TURN_URL, { headers: { Authorization: 'Bearer ' + tok } }))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.iceServers) {
+          turn = { servers: [].concat(j.iceServers), ttl: j.ttl || 3600 };
+          turnAt = Date.now();
+        }
         return turn;
       })
-      .catch(e => { console.warn('[Net] TURN:', e.message); return null; })
-      .finally(() => { turnReq = null; });
+      .catch((e) => {
+        console.warn('[Net] TURN:', e.message);
+        return null;
+      })
+      .finally(() => {
+        turnReq = null;
+      });
     return turnReq;
   }
   /** Waits for the credentials 2.5 s at most (if they take longer, it connects without them). */
-  const waitTurn = () => Promise.race([fetchTurn(), new Promise(r => setTimeout(r, 2500))]);
+  const waitTurn = () => Promise.race([fetchTurn(), new Promise((r) => setTimeout(r, 2500))]);
   const iceServers = () => (turn ? ICE.concat(turn.servers) : ICE);
 
-  let rtdb = null, uid = null, roomId = null, isHost = false, hostUid = null;
+  let rtdb = null,
+    uid = null,
+    roomId = null,
+    isHost = false,
+    hostUid = null;
   let qref = null;
-  const peers = new Map();         // uid -> { pc, dc, mode, timer }
-  const handlers = new Set(), peerHandlers = new Set();
+  const peers = new Map(); // uid -> { pc, dc, mode, timer }
+  const handlers = new Set(),
+    peerHandlers = new Set();
   let stats = { sent: 0, recv: 0, relaySent: 0 };
 
   function emitPeer(u) {
     const p = peers.get(u);
-    peerHandlers.forEach(fn => { try { fn(u, p ? p.mode : 'closed'); } catch (e) { console.warn(e); } });
+    peerHandlers.forEach((fn) => {
+      try {
+        fn(u, p ? p.mode : 'closed');
+      } catch (e) {
+        console.warn(e);
+      }
+    });
   }
 
   // ---------------- apertura ----------------
@@ -71,15 +96,22 @@ G.Net = (() => {
     if (roomId === id) return;
     close();
     const fb = G.DB.fb;
-    rtdb = fb.rtdb; uid = fb.uid;
-    roomId = id; isHost = host; hostUid = hostId;
-    fetchTurn();                    // se piden ya, para tenerlas al conectar
+    rtdb = fb.rtdb;
+    uid = fb.uid;
+    roomId = id;
+    isHost = host;
+    hostUid = hostId;
+    fetchTurn(); // se piden ya, para tenerlas al conectar
     qref = rtdb.ref('rooms/' + id + '/q/' + uid);
-    qref.on('child_added', s => {
+    qref.on('child_added', (s) => {
       const raw = s.val();
       s.ref.remove().catch(() => {});
       let m;
-      try { m = JSON.parse(raw); } catch (e) { return; }
+      try {
+        m = JSON.parse(raw);
+      } catch (e) {
+        return;
+      }
       if (!m || !m.f) return;
       if (m.sig) onSignal(m.f, m.sig);
       else deliver(m.f, m.d);
@@ -88,15 +120,25 @@ G.Net = (() => {
     // offer arrives). This way, if it never arrives, the relay is used and you know when it leaves.
     if (!isHost) {
       const p = { pc: null, dc: null, mode: 'connecting', timer: 0 };
-      p.timer = setTimeout(() => { if (p.mode === 'connecting') { p.mode = ALLOW_RELAY ? 'relay' : 'failed'; emitPeer(hostId); } }, DIRECT_TIMEOUT + 3000);
+      p.timer = setTimeout(() => {
+        if (p.mode === 'connecting') {
+          p.mode = ALLOW_RELAY ? 'relay' : 'failed';
+          emitPeer(hostId);
+        }
+      }, DIRECT_TIMEOUT + 3000);
       peers.set(hostId, p);
     }
   }
 
   function close() {
     for (const u of [...peers.keys()]) drop(u);
-    if (qref) { qref.off(); qref = null; }
-    roomId = null; isHost = false; hostUid = null;
+    if (qref) {
+      qref.off();
+      qref = null;
+    }
+    roomId = null;
+    isHost = false;
+    hostUid = null;
   }
 
   /** The host calls this when the room members change. */
@@ -117,25 +159,48 @@ G.Net = (() => {
     peers.set(u, p);
     // No WebRTC (old or blocked browser): straight to the relay.
     let pc;
-    try { pc = p.pc = new RTCPeerConnection({ iceServers: iceServers() }); }
-    catch (e) { p.mode = 'relay'; emitPeer(u); return p; }
-    pc.onicecandidate = e => { if (e.candidate) signal(u, { c: e.candidate.toJSON() }); };
+    try {
+      pc = p.pc = new RTCPeerConnection({ iceServers: iceServers() });
+    } catch (e) {
+      p.mode = 'relay';
+      emitPeer(u);
+      return p;
+    }
+    pc.onicecandidate = (e) => {
+      if (e.candidate) signal(u, { c: e.candidate.toJSON() });
+    };
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'failed' && p.mode !== 'closed') useRelay(u);
     };
     // If there is no direct channel within a few seconds, the relay is used.
-    p.timer = setTimeout(() => { if (p.mode === 'connecting') useRelay(u); }, DIRECT_TIMEOUT);
+    p.timer = setTimeout(() => {
+      if (p.mode === 'connecting') useRelay(u);
+    }, DIRECT_TIMEOUT);
     emitPeer(u);
     return p;
   }
 
   function wireChannel(u, p, dc) {
     p.dc = dc;
-    dc.onopen = () => { clearTimeout(p.timer); p.mode = 'direct'; emitPeer(u); checkTurn(p); };
-    dc.onclose = () => { if (p.mode === 'direct') { p.mode = 'connecting'; useRelay(u); } };
-    dc.onmessage = e => {
+    dc.onopen = () => {
+      clearTimeout(p.timer);
+      p.mode = 'direct';
+      emitPeer(u);
+      checkTurn(p);
+    };
+    dc.onclose = () => {
+      if (p.mode === 'direct') {
+        p.mode = 'connecting';
+        useRelay(u);
+      }
+    };
+    dc.onmessage = (e) => {
       let m;
-      try { m = JSON.parse(e.data); } catch (err) { return; }
+      try {
+        m = JSON.parse(e.data);
+      } catch (err) {
+        return;
+      }
       deliver(u, m);
     };
   }
@@ -147,24 +212,41 @@ G.Net = (() => {
   async function checkTurn(p) {
     try {
       const st = await p.pc.getStats();
-      st.forEach(s => {
+      st.forEach((s) => {
         if (s.type !== 'candidate-pair' || !s.nominated || s.state !== 'succeeded') return;
-        const l = st.get(s.localCandidateId), r = st.get(s.remoteCandidateId);
+        const l = st.get(s.localCandidateId),
+          r = st.get(s.remoteCandidateId);
         if ((l && l.candidateType === 'relay') || (r && r.candidateType === 'relay')) p.turn = true;
       });
-    } catch (e) { /* nada */ }
+    } catch (e) {
+      /* nada */
+    }
   }
 
   function useRelay(u) {
     const p = peers.get(u);
     if (!p || p.mode === 'direct' || p.mode === 'closed' || p.mode === 'failed') return;
-    if (ALLOW_RELAY) { p.mode = 'relay'; emitPeer(u); return; }
+    if (ALLOW_RELAY) {
+      p.mode = 'relay';
+      emitPeer(u);
+      return;
+    }
     // No relay: you cannot play with that person for now. The host retries.
     clearTimeout(p.timer);
     p.mode = 'failed';
-    try { if (p.pc) p.pc.close(); } catch (e) { /* nada */ }
+    try {
+      if (p.pc) p.pc.close();
+    } catch (e) {
+      /* nada */
+    }
     emitPeer(u);
-    if (isHost) p.timer = setTimeout(() => { if (peers.get(u) === p && p.mode === 'failed' && roomId) { drop(u, true); connect(u); } }, RETRY_MS);
+    if (isHost)
+      p.timer = setTimeout(() => {
+        if (peers.get(u) === p && p.mode === 'failed' && roomId) {
+          drop(u, true);
+          connect(u);
+        }
+      }, RETRY_MS);
   }
 
   /** Host: opens a connection with a guest. */
@@ -178,10 +260,12 @@ G.Net = (() => {
       const offer = await p.pc.createOffer();
       await p.pc.setLocalDescription(offer);
       signal(u, { sdp: p.pc.localDescription.toJSON() });
-    } catch (e) { useRelay(u); }
+    } catch (e) {
+      useRelay(u);
+    }
   }
 
-  const pendingIce = new Map();     // candidatos que llegan antes que la oferta
+  const pendingIce = new Map(); // candidatos que llegan antes que la oferta
 
   async function onSignal(from, sig) {
     let p = peers.get(from);
@@ -192,7 +276,7 @@ G.Net = (() => {
         await waitTurn();
         p = newPeer(from);
         if (!p.pc) return;
-        p.pc.ondatachannel = e => wireChannel(from, p, e.channel);
+        p.pc.ondatachannel = (e) => wireChannel(from, p, e.channel);
         await p.pc.setRemoteDescription(sig.sdp);
         const ans = await p.pc.createAnswer();
         await p.pc.setLocalDescription(ans);
@@ -203,7 +287,10 @@ G.Net = (() => {
         if (p && p.pc) await p.pc.setRemoteDescription(sig.sdp);
       } else if (sig.c) {
         if (p && p.pc && p.pc.remoteDescription) await p.pc.addIceCandidate(sig.c).catch(() => {});
-        else { if (!pendingIce.has(from)) pendingIce.set(from, []); pendingIce.get(from).push(sig.c); }
+        else {
+          if (!pendingIce.has(from)) pendingIce.set(from, []);
+          pendingIce.get(from).push(sig.c);
+        }
       }
     } catch (e) {
       console.warn('[Net] señalización:', e.message);
@@ -211,15 +298,25 @@ G.Net = (() => {
     }
   }
 
-  function signal(to, sig) { relayPush(to, { f: uid, sig }); }
+  function signal(to, sig) {
+    relayPush(to, { f: uid, sig });
+  }
 
   function drop(u, silent) {
     const p = peers.get(u);
     if (!p) return;
     clearTimeout(p.timer);
     p.mode = 'closed';
-    try { if (p.dc) p.dc.close(); } catch (e) { /* nada */ }
-    try { if (p.pc) p.pc.close(); } catch (e) { /* nada */ }
+    try {
+      if (p.dc) p.dc.close();
+    } catch (e) {
+      /* nada */
+    }
+    try {
+      if (p.pc) p.pc.close();
+    } catch (e) {
+      /* nada */
+    }
     peers.delete(u);
     if (!silent) emitPeer(u);
   }
@@ -228,7 +325,10 @@ G.Net = (() => {
 
   function relayPush(to, env) {
     if (!rtdb || !roomId) return;
-    rtdb.ref('rooms/' + roomId + '/q/' + to).push(JSON.stringify(env)).catch(e => console.warn('[Net] relé:', e.code || e.message));
+    rtdb
+      .ref('rooms/' + roomId + '/q/' + to)
+      .push(JSON.stringify(env))
+      .catch((e) => console.warn('[Net] relé:', e.code || e.message));
   }
 
   function send(to, msg) {
@@ -236,7 +336,12 @@ G.Net = (() => {
     const p = peers.get(to);
     stats.sent++;
     if (p && p.dc && p.dc.readyState === 'open') {
-      try { p.dc.send(JSON.stringify(msg)); return; } catch (e) { /* falls to the relay */ }
+      try {
+        p.dc.send(JSON.stringify(msg));
+        return;
+      } catch (e) {
+        /* falls to the relay */
+      }
     }
     // Without a relay, the game data does not go through the database (lost: that
     // pair is not connected). Only the start notice goes through.
@@ -245,30 +350,73 @@ G.Net = (() => {
     relayPush(to, { f: uid, d: msg });
   }
 
-  function toHost(msg) { if (!isHost && hostUid) send(hostUid, msg); }
-  function broadcast(msg, except) { for (const u of peers.keys()) if (u !== except) send(u, msg); }
+  function toHost(msg) {
+    if (!isHost && hostUid) send(hostUid, msg);
+  }
+  function broadcast(msg, except) {
+    for (const u of peers.keys()) if (u !== except) send(u, msg);
+  }
 
   function deliver(from, msg) {
     stats.recv++;
-    handlers.forEach(fn => { try { fn(from, msg); } catch (e) { console.error('[Net] mensaje:', e); } });
+    handlers.forEach((fn) => {
+      try {
+        fn(from, msg);
+      } catch (e) {
+        console.error('[Net] mensaje:', e);
+      }
+    });
   }
 
   return {
-    open, close, syncMembers, send, toHost, broadcast,
-    on(fn) { handlers.add(fn); }, off(fn) { handlers.delete(fn); },
-    onPeer(fn) { peerHandlers.add(fn); },
-    mode(u) { const p = peers.get(u); return p ? p.mode : 'closed'; },
+    open,
+    close,
+    syncMembers,
+    send,
+    toHost,
+    broadcast,
+    on(fn) {
+      handlers.add(fn);
+    },
+    off(fn) {
+      handlers.delete(fn);
+    },
+    onPeer(fn) {
+      peerHandlers.add(fn);
+    },
+    mode(u) {
+      const p = peers.get(u);
+      return p ? p.mode : 'closed';
+    },
     /** Is it going over the relay (or no connection)? Then it is sent less often. */
-    slow(u) { const p = peers.get(u); return !p || p.mode !== 'direct'; },
+    slow(u) {
+      const p = peers.get(u);
+      return !p || p.mode !== 'direct';
+    },
     /** Is it direct but through Cloudflare's TURN? (sent a bit less) */
-    viaTurn(u) { const p = peers.get(u); return !!p && p.mode === 'direct' && !!p.turn; },
-    peers() { return [...peers.keys()]; },
-    get open_() { return !!roomId; },
-    get isHost() { return isHost; },
-    get uid() { return uid; },
-    get hostUid() { return hostUid; },
+    viaTurn(u) {
+      const p = peers.get(u);
+      return !!p && p.mode === 'direct' && !!p.turn;
+    },
+    peers() {
+      return [...peers.keys()];
+    },
+    get open_() {
+      return !!roomId;
+    },
+    get isHost() {
+      return isHost;
+    },
+    get uid() {
+      return uid;
+    },
+    get hostUid() {
+      return hostUid;
+    },
     stats,
     /** Are there TURN credentials? (for testing and diagnostics) */
-    get turn() { return !!turn; }
+    get turn() {
+      return !!turn;
+    },
   };
 })();

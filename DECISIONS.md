@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, ESLint + Prettier setup choices (Jess: defaults)
+ESLint 9 flat config: eslint:recommended plus a short Airbnb-derived set (eqeqeq, no-var, prefer-const, no-shadow, no-unused-vars), not the full Airbnb config (it assumes ES modules and bans patterns this script-global code uses). Warn-only: tools/check.js prints the count and never fails on it. Prettier: single quotes, semicolons, 2-space, width 120, trailing commas es5, LF; .gitattributes and .editorconfig pin LF. One big-bang format commit comes next, its hash in .git-blame-ignore-revs.
+Canonical: TODO.md Backlog, "Lint and format tooling"; eslint.config.js; .prettierrc.json
+
 ## 2026-11-01, Slice 7b done: one move path (Jess)
 The ?newcombat flag is gone: every move, player and gym leader, runs in G.MoveSim from its resolved def. Deleted: the legacy player-move engine (the player half of combat.js, player shots in projectile.js), kinds.js, mechanics.js, the legacy level-up cards and the choose screen, the ROUTED list (routed now means a resolved def that is not retired), the legacy stage stacking and the norm factor. Bubble and Hail retired (D-BUBBLE, D-HAIL). The legacy table is kept only for the tools (docs/move_rework_holding/legacy-moves.js). Not changed: js/net/coop.js still calls removed hooks (deferred, D-COOP). Skipped: the dead G.Log.hitOut cleanup in js/systems/log.js. Each step feel-tested by Jess.
 Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Results"

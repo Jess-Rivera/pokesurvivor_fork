@@ -8,20 +8,25 @@
  * - node tools/build.js --sin-seo  ->  without the SEO parts (until pokesurvivor.com exists).
  * - Afterward you must regenerate en/index.html: python tools/make_seo_pages.py
  */
-const fs = require('fs'), path = require('path'), crypto = require('crypto');
+const fs = require('fs'),
+  path = require('path'),
+  crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
-const DEV = path.join(ROOT, 'dev.html'), OUT = path.join(ROOT, 'index.html');
-const BEGIN = '<!-- scripts:begin -->', END = '<!-- scripts:end -->';
+const DEV = path.join(ROOT, 'dev.html'),
+  OUT = path.join(ROOT, 'index.html');
+const BEGIN = '<!-- scripts:begin -->',
+  END = '<!-- scripts:end -->';
 
 const dev = fs.readFileSync(DEV, 'utf8');
-const i = dev.indexOf(BEGIN), j = dev.indexOf(END);
+const i = dev.indexOf(BEGIN),
+  j = dev.indexOf(END);
 if (i < 0 || j < 0) throw new Error('dev.html no tiene las marcas ' + BEGIN + ' / ' + END);
 const block = dev.slice(i, j + END.length);
-const files = [...block.matchAll(/<script[^>]*src="(js\/[^"]+\.js)"/g)].map(m => m[1]);
+const files = [...block.matchAll(/<script[^>]*src="(js\/[^"]+\.js)"/g)].map((m) => m[1]);
 
 // Joins the files in order; each separated by ';' in case one does not end with a semicolon.
-let joined = files.map(f => `/* ${f} */\n` + fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+let joined = files.map((f) => `/* ${f} */\n` + fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
 // Anti-cheat: in the published version the game is WRAPPED in a function:
 // G stops existing in the browser console (F12), and with it the shortcuts to
 // make yourself invincible, skip the clock, etc. (dev.html stays the same, for development).
@@ -38,18 +43,67 @@ fs.writeFileSync(tmp, joined);
 const outJs = path.join(ROOT, 'js', 'app.min.js');
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const shell = process.platform === 'win32';
-execFileSync(npx, ['--yes', 'terser@5', tmp, '--compress', 'passes=1', '--mangle', '--comments', 'false', '--ecma', '2020', '-o', outJs],
-  { stdio: 'inherit', shell });
+execFileSync(
+  npx,
+  [
+    '--yes',
+    'terser@5',
+    tmp,
+    '--compress',
+    'passes=1',
+    '--mangle',
+    '--comments',
+    'false',
+    '--ecma',
+    '2020',
+    '-o',
+    outJs,
+  ],
+  { stdio: 'inherit', shell }
+);
 // And obfuscated: the code becomes unreadable and breaks on its own if reformatted to
 // tamper with it. The strings, in an encoded table (only a part, so as not to slow
 // the game). Fixed seed: the same code always gives the same file.
 if (!EXPOSE) {
-  execFileSync(npx, ['--yes', 'javascript-obfuscator@4.1.1', outJs, '--output', outJs,
-    '--compact', 'true', '--self-defending', 'true', '--seed', '7',
-    '--string-array', 'true', '--string-array-encoding', 'base64', '--string-array-threshold', '0.1',
-    '--identifier-names-generator', 'hexadecimal', '--rename-globals', 'false', '--transform-object-keys', 'false',
-    '--split-strings', 'false', '--control-flow-flattening', 'false', '--dead-code-injection', 'false',
-    '--unicode-escape-sequence', 'false', '--target', 'browser'], { stdio: 'inherit', shell });
+  execFileSync(
+    npx,
+    [
+      '--yes',
+      'javascript-obfuscator@4.1.1',
+      outJs,
+      '--output',
+      outJs,
+      '--compact',
+      'true',
+      '--self-defending',
+      'true',
+      '--seed',
+      '7',
+      '--string-array',
+      'true',
+      '--string-array-encoding',
+      'base64',
+      '--string-array-threshold',
+      '0.1',
+      '--identifier-names-generator',
+      'hexadecimal',
+      '--rename-globals',
+      'false',
+      '--transform-object-keys',
+      'false',
+      '--split-strings',
+      'false',
+      '--control-flow-flattening',
+      'false',
+      '--dead-code-injection',
+      'false',
+      '--unicode-escape-sequence',
+      'false',
+      '--target',
+      'browser',
+    ],
+    { stdio: 'inherit', shell }
+  );
 }
 const min = fs.readFileSync(outJs);
 const hash = crypto.createHash('sha1').update(min).digest('hex').slice(0, 10);
@@ -59,10 +113,17 @@ html = html.replace(/<meta name="robots" content="noindex">\s*/, '');
 // --sin-seo: without canonical/social/structured data or links to the pages
 // (to publish before having the pokesurvivor.com domain).
 const SIN_SEO = process.argv.includes('--sin-seo');
-html = SIN_SEO ? html.replace(/<!-- seo:begin -->[\s\S]*?<!-- seo:end -->\n?/g, '') : html.replace(/<!-- seo:(begin|end) -->\n?/g, '');
-html = html.replace(/<!-- dev.html: página fuente[^>]*-->/, '<!-- GENERADO desde dev.html por tools/build.js: no editar a mano (se edita dev.html). -->');
+html = SIN_SEO
+  ? html.replace(/<!-- seo:begin -->[\s\S]*?<!-- seo:end -->\n?/g, '')
+  : html.replace(/<!-- seo:(begin|end) -->\n?/g, '');
+html = html.replace(
+  /<!-- dev.html: página fuente[^>]*-->/,
+  '<!-- GENERADO desde dev.html por tools/build.js: no editar a mano (se edita dev.html). -->'
+);
 fs.writeFileSync(OUT, html);
 // Published version: players check it every 5 min and, if it changes, the game
 // updates on its own (in the menu, or on finishing the game). See js/core/updater.js.
 fs.writeFileSync(path.join(ROOT, 'version.json'), JSON.stringify({ v: hash, at: new Date().toISOString() }) + '\n');
-console.log(`${SIN_SEO ? '[sin SEO] ' : ''}${EXPOSE ? '[SIN PROTEGER, sólo pruebas] ' : ''}ok: ${files.length} scripts · ${(joined.length / 1024).toFixed(0)} KB -> ${(min.length / 1024).toFixed(0)} KB (app.min.js?v=${hash})`);
+console.log(
+  `${SIN_SEO ? '[sin SEO] ' : ''}${EXPOSE ? '[SIN PROTEGER, sólo pruebas] ' : ''}ok: ${files.length} scripts · ${(joined.length / 1024).toFixed(0)} KB -> ${(min.length / 1024).toFixed(0)} KB (app.min.js?v=${hash})`
+);

@@ -1,0 +1,3 @@
+# Commits that only reformatted code. git blame skips them when blame.ignoreRevsFile points here.
+# Prettier big-bang format (#17)
+eb7d0a71805a6a8737913399ba66238454c3f056

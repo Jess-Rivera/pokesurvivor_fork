@@ -124,7 +124,7 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
   G.Enemies.setRegion(null); G.Enemies.rollRun();
   ok(!castLeg && !bossLeg && !eliteLeg, 'legendaries drawn: cast ' + castLeg + ', boss slots ' + bossLeg + ', elites ' + eliteLeg);
   const ev = fs.readFileSync(R + '/js/systems/events.js', 'utf8');
-  ok(/G\.DEX\.filter\(p => p\.rarity <= 3 && !p\.leg/.test(ev), 'the lost-Pokemon event pool still excludes legendaries');
+  ok(/G\.DEX\.filter\(\(?p\)? => p\.rarity <= 3 && !p\.leg/.test(ev), 'the lost-Pokemon event pool still excludes legendaries');
   console.log('5 pools: ' + draws + ' boss and elite draws over 3 regions, no legendary; the lost-Pokemon pool keeps its leg filter'); }
 
 // 6. spawner, events and weather pause inside the gym arena (a control run outside it first, so the checks are not vacuous)

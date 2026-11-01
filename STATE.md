@@ -12,8 +12,9 @@ Last updated: 2026-11-01 end of session (Claude Code, home; slice 7b done, the m
 
 ## Next (in order)
 1. Jess: a quick feel run on main (dev.html?dev).
-2. Board: #17 unblocked (drop `blocked`, move from waiting); #1 and #6 still In progress.
-3. Choose the next branch off main: the gym-roster move-import branch (Brock slot order, enemy-owned riders on the player, TODO), or #17 ESLint + Prettier (TODO "Lint and format tooling"; build config, so prose plan first).
+2. #17 ESLint + Prettier is built on chore/lint-format (format commit eb7d0a7, blame-ignore set). Merge it to main, close #17. #1 and #6 still In progress.
+   Found: js/ui/move-info.js:100 calls an undefined legacy() (needs a plan).
+3. Choose the next branch off main: the gym-roster move-import branch (Brock slot order, enemy-owned riders on the player, TODO).
 
 ## Open owner decisions
 - Commit A side effects to confirm (slice-7a.md Results).

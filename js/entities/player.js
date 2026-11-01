@@ -15,7 +15,8 @@ G.Player = class Player {
     this.dex = mon.dex;
     this.shiny = shiny && G.Sprites.hasShiny(mon.dex);
     this.anim = new G.Sprites.Animator(mon.dex, 1, this.shiny);
-    this.x = 0; this.y = 0;
+    this.x = 0;
+    this.y = 0;
     this.r = G.Sprites.bodyRadius(mon.dex);
     this.bodyH = G.Sprites.bodyHeight(mon.dex);
 
@@ -23,15 +24,15 @@ G.Player = class Player {
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
-    this.moveRadiusMul = 1;      // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
-    this.typeBoost = null;       // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
+    this.moveRadiusMul = 1; // Wide Lens / Zoom Lens: scales move radius + arc for this holder (F3b lens slice)
+    this.typeBoost = null; // type-damage held items (Charcoal, Mystic Water, ...): +20% to moves of this type (F3b)
     // ---- F3c run-item flags (team-wide; set by equipRun on/off). Effects read in get spd / G.Combat / typeK. ----
-    this.sharpScissors = false;  // team-HP-scaled speed (needs roster 3+)
-    this.brassKnuckles = false;  // team-HP-scaled damage (needs roster 3+)
-    this.snowball = false;       // damage scales with total HP of enemies killed this run
-    this.redo = false;           // once-per-run full-team revive on final death
-    this.pikaTear = false;       // +1.1x damage & speed per fainted teammate
-    this.stoneType = null;       // Power Stone: this type's moves ignore resistance + immunity (typeK)
+    this.sharpScissors = false; // team-HP-scaled speed (needs roster 3+)
+    this.brassKnuckles = false; // team-HP-scaled damage (needs roster 3+)
+    this.snowball = false; // damage scales with total HP of enemies killed this run
+    this.redo = false; // once-per-run full-team revive on final death
+    this.pikaTear = false; // +1.1x damage & speed per fainted teammate
+    this.stoneType = null; // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
     this.magnet = 78 * (perks.magnetMul || 1);
     this.xpMul = perks.xpMul || 1;
@@ -42,26 +43,26 @@ G.Player = class Player {
     this.perksHp = perks.hp || 0;
     // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-    this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };   // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
-    this.baseHpStat = (mon.stats && mon.stats[0] != null) ? mon.stats[0] : null;
+    this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }; // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
+    this.baseHpStat = mon.stats && mon.stats[0] != null ? mon.stats[0] : null;
     this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
-    this.baseSpd = (mon.stats && mon.stats[5] != null) ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
+    this.baseSpd = mon.stats && mon.stats[5] != null ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
     this.baseAtk = mon.atk;
     // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
     // via G.Stats. Fallback 50 keeps a mon with no stats array working.
-    this.baseAtkStat = (mon.stats && mon.stats[1] != null) ? mon.stats[1] : 50;
-    this.baseSpAStat = (mon.stats && mon.stats[3] != null) ? mon.stats[3] : 50;
+    this.baseAtkStat = mon.stats && mon.stats[1] != null ? mon.stats[1] : 50;
+    this.baseSpAStat = mon.stats && mon.stats[3] != null ? mon.stats[3] : 50;
     this.myTypes = mon.types || [];
 
-    this.moves = [];           // todos los movimientos aprendidos
-    this.slots = [];           // huecos: cada uno, una lista de movimientos que se lanzan a la vez
-    this.active = 0;           // hueco activo
-    this.swapT = 0;            // hold left (s) before you may swap slots again
-    this.maxMoves = 4;         // huecos
-    this.bonds = 0;            // links to use (reward from gym wins)
+    this.moves = []; // todos los movimientos aprendidos
+    this.slots = []; // huecos: cada uno, una lista de movimientos que se lanzan a la vez
+    this.active = 0; // hueco activo
+    this.swapT = 0; // hold left (s) before you may swap slots again
+    this.maxMoves = 4; // huecos
+    this.bonds = 0; // links to use (reward from gym wins)
 
     // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
     // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
@@ -73,13 +74,14 @@ G.Player = class Player {
     this.xpNext = Player.xpFor(1);
     this.kills = 0;
     this.bosses = 0;
-    this.rerolls = 0;          // veces que ha cambiado las cartas de nivel en esta run
-    this.rerollBonus = perks.rerolls || 0;   // rerolls bought in Upgrades (plus the free one)
-    this.critChance = perks.crit || 0;       // critical hit chance (Upgrades)
-    this.banned = new Set();                 // movimientos vetados (Mejoras → Veto): no salen en las cartas
-    this.bind = {};                          // movimiento -> hueco fijo (0-3), elegido en Mejoras
-    this.coins = 0;            // monedas recogidas en esta run
-    this.t1 = 0; this.t10 = 0; // tickets del gacha recogidos en esta run
+    this.rerolls = 0; // veces que ha cambiado las cartas de nivel en esta run
+    this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
+    this.critChance = perks.crit || 0; // critical hit chance (Upgrades)
+    this.banned = new Set(); // movimientos vetados (Mejoras → Veto): no salen en las cartas
+    this.bind = {}; // movimiento -> hueco fijo (0-3), elegido en Mejoras
+    this.coins = 0; // monedas recogidas en esta run
+    this.t1 = 0;
+    this.t10 = 0; // tickets del gacha recogidos en esta run
     this.dmgDealt = 0;
 
     this.invuln = 0;
@@ -89,25 +91,34 @@ G.Player = class Player {
     this.walking = false;
     this.inLiquid = false;
     this.lavaTick = 0;
-    this.attackFace = 0;       // tiempo que sigue mirando al objetivo tras atacar
+    this.attackFace = 0; // tiempo que sigue mirando al objetivo tras atacar
     this.dead = false;
-    this.power = null;         // poder de altar activo: { def, t, dur }
-    this.slowT = 0;            // pegado por una trampa
-    this.shield = null;        // move schema slice 4b (Substitute): { v, max, regen, t, dur, overflow, src }, set by G.MoveEffects, absorbed in hurt()
-    this.mvRoot = false;       // move schema slice 4b: a rooted commitment (G.MoveSim) holds move speed at 0
+    this.power = null; // poder de altar activo: { def, t, dur }
+    this.slowT = 0; // pegado por una trampa
+    this.shield = null; // move schema slice 4b (Substitute): { v, max, regen, t, dur, overflow, src }, set by G.MoveEffects, absorbed in hurt()
+    this.mvRoot = false; // move schema slice 4b: a rooted commitment (G.MoveSim) holds move speed at 0
     // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
     this.isPlayer = true;
-    this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
-    this.stg = null;      // fixed-timer stat applications (carrier SLOW, commitment slow); move stages are trackers (h.trk)
-    this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
-    this.berries = [];         // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
-    this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
-    this.sashT = -999;         // last time the Focus Band saved you
-    this.bellHeal = 0;         // pending healing from the Shell Bell
+    this.stMajor = null;
+    this.stCnf = null;
+    this.stTrap = null;
+    this.stWin = null;
+    this.stDot = null;
+    this.stDaze = null;
+    this.stDrow = null;
+    this.shakeCd = 0;
+    this.stg = null; // fixed-timer stat applications (carrier SLOW, commitment slow); move stages are trackers (h.trk)
+    this.item = null; // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
+    this.berries = []; // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
+    this.runItems = []; // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
+    this.sashT = -999; // last time the Focus Band saved you
+    this.bellHeal = 0; // pending healing from the Shell Bell
   }
 
   /** Seconds you must stay next to a downed teammate to lift them. */
-  static get REVIVE_TIME() { return 3; }
+  static get REVIVE_TIME() {
+    return 3;
+  }
 
   // Mainline Medium Fast cost curve (total n^3), see G.Stats.xpToNext. The old hand-made
   // curve was floor((8 + 6L + 1.6 L^1.75) * 4).
@@ -115,32 +126,54 @@ G.Player = class Player {
     return G.Stats.xpToNext(level);
   }
 
-  cy() { return this.y; }
+  cy() {
+    return this.y;
+  }
 
   // ---------------- stats efectivos ----------------
-  get atk() { return this.baseAtk * this.atkMul * G.Stages.mul(this, 'atk'); }
+  get atk() {
+    return this.baseAtk * this.atkMul * G.Stages.mul(this, 'atk');
+  }
   // Multiplier layer that used to be folded into the flat pl.atk (upgrades), now passed into the A/D attacker
   // factor so the ratio stays proportional. The Attack / Sp. Atk STAGE is applied per move category in moveFactor.
-  get atkMulAll() { return this.atkMul; }
+  get atkMulAll() {
+    return this.atkMul;
+  }
   // Attacker half of the damage formula for move `m` (see G.Stats.attackFactor). The
   // defender half completes at impact (combat.js hit()/resolve()) against the enemy's Def/SpD.
   moveFactor(m) {
     const c = G.Stats.moveCat(m);
-    const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk');     // Protein / Calcium
-    const stg = c === 'special' ? G.Stages.mul(this, 'spa') : c === 'status' ? 1 : G.Stages.mul(this, 'atk');     // stage raises and drops (slice E2a)
-    return G.Stats.attackFactor(this.baseAtkStat, this.baseSpAStat, this.level, m, this.atkMulAll * (1 + si) * stg * this.runDmgMul());     // run items (Brass Knuckles, Pikachu's Tear, Snowball)
+    const si = c === 'special' ? this.incOf('spa') : c === 'status' ? 0 : this.incOf('atk'); // Protein / Calcium
+    const stg = c === 'special' ? G.Stages.mul(this, 'spa') : c === 'status' ? 1 : G.Stages.mul(this, 'atk'); // stage raises and drops (slice E2a)
+    return G.Stats.attackFactor(
+      this.baseAtkStat,
+      this.baseSpAStat,
+      this.level,
+      m,
+      this.atkMulAll * (1 + si) * stg * this.runDmgMul()
+    ); // run items (Brass Knuckles, Pikachu's Tear, Snowball)
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
-  maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
+  maxHpAt(level) {
+    return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp;
+  }
   /** Stat bonus fraction: the stat cards plus the gym badge boosts, plus the team Vitamins card (slice 5b: a team read, so every member,
    *  bench and later ones included, has it). */
-  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k) + (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
+  incOf(k) {
+    return (
+      this.inc[k] +
+      this.badge[k] +
+      G.Stages.teamSum(this.stgTeam, 'pct_' + k) +
+      (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0)
+    );
+  } // + timed Kee / Maranga berries (pct_def, pct_spd)
   /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
   addBadgeBoost(stat, pct) {
     if (!(stat in this.badge)) return false;
     this.badge[stat] += pct;
     if (stat === 'hp' && this.baseHpStat != null) {
-      const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+      const newMax = this.maxHpAt(this.level),
+        gain = newMax - this.maxHp;
       this.maxHp = newMax;
       if (gain > 0 && !this.dead) this.hp += gain;
     }
@@ -149,13 +182,18 @@ G.Player = class Player {
   /** Slice 5b: re-derive max HP after a team HP bonus (the HP Vitamin). Tops up the gain like a level-up. */
   refreshMaxHp() {
     if (this.baseHpStat == null) return;
-    const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+    const newMax = this.maxHpAt(this.level),
+      gain = newMax - this.maxHp;
     this.maxHp = newMax;
-    if (gain > 0 && !this.dead) this.hp += gain;     // never revives a fainted member
+    if (gain > 0 && !this.dead) this.hp += gain; // never revives a fainted member
   }
   // STAB flag: the move's type matches one of the active mon's species types.
-  stabFor(m) { return this.myTypes.includes(m.type); }
-  get spd() { return this.mvRoot ? 0 : this.unrootedSpd; }     // mvRoot: slice 4b rooted commitment or a live swept dash (G.MoveSim)
+  stabFor(m) {
+    return this.myTypes.includes(m.type);
+  }
+  get spd() {
+    return this.mvRoot ? 0 : this.unrootedSpd;
+  } // mvRoot: slice 4b rooted commitment or a live swept dash (G.MoveSim)
   /** The final move speed as if not rooted: a swept dash reads its speed here (move-sim.js speedOf). */
   get unrootedSpd() {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
@@ -178,8 +216,12 @@ G.Player = class Player {
     if (this.snowball) m *= G.Items.snowballMul();
     return m;
   }
-  get reduction() { return Math.min(0.8, this.dmgReduce); }
-  get regen() { return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen'); }
+  get reduction() {
+    return Math.min(0.8, this.dmgReduce);
+  }
+  get regen() {
+    return this.regenFlat + G.Stages.teamSum(this.stgTeam, 'regen');
+  }
 
   // ---------------- movimientos ----------------
   addMove(id) {
@@ -190,7 +232,8 @@ G.Player = class Player {
     this.slots.push(group);
     this.arrange();
     // It switches to the new one, unless you are using a link (it does not take the group off you).
-    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group), true);
+    if (!(this.slots[this.active] && this.slots[this.active].length > 1))
+      this.setActive(this.slots.indexOf(group), true);
     return true;
   }
 
@@ -203,14 +246,21 @@ G.Player = class Player {
   arrange() {
     const n = this.slots.length;
     if (n < 2 || !this.bind) return;
-    const want = g => { let k = Infinity; for (const m of g) if (this.bind[m.id] != null) k = Math.min(k, this.bind[m.id]); return k; };
+    const want = (g) => {
+      let k = Infinity;
+      for (const m of g) if (this.bind[m.id] != null) k = Math.min(k, this.bind[m.id]);
+      return k;
+    };
     const cur = this.slots[this.active];
     const out = new Array(n).fill(null);
-    const bound = this.slots.filter(g => want(g) < Infinity).sort((a, b) => want(a) - want(b));
+    const bound = this.slots.filter((g) => want(g) < Infinity).sort((a, b) => want(a) - want(b));
     for (const g of bound) {
       let p = Math.min(want(g), n - 1);
-      while (p >= 0 && out[p]) p--;                          // ocupado: el de antes
-      if (p < 0) { p = 0; while (out[p]) p++; }              // o el primero libre
+      while (p >= 0 && out[p]) p--; // ocupado: el de antes
+      if (p < 0) {
+        p = 0;
+        while (out[p]) p++;
+      } // o el primero libre
       out[p] = g;
     }
     for (const g of this.slots) if (!out.includes(g)) out[out.indexOf(null)] = g;
@@ -218,17 +268,21 @@ G.Player = class Player {
     if (cur) this.active = out.indexOf(cur);
   }
 
-  hasMove(id) { return this.moves.some(m => m.id === id); }
+  hasMove(id) {
+    return this.moves.some((m) => m.id === id);
+  }
 
   /** Minimum time (s) you stay on a slot after switching to it by hand. The new move fires at once if it is
    *  ready; this only stops instant back-and-forth swapping. Every move keeps its own cooldown (Combat.tick),
    *  so it is a feel limit, not a throughput limit. */
-  static get SWAP_LOCK() { return 0.4; }
+  static get SWAP_LOCK() {
+    return 0.4;
+  }
 
   /** @param free  true for switches the game makes itself (learning a move, run start): never blocked, no hold. */
   setActive(i, free = false) {
     if (i < 0 || i >= this.slots.length || i === this.active) return;
-    if (!free && this.swapT > 0) return;           // still holding the slot you just switched to
+    if (!free && this.swapT > 0) return; // still holding the slot you just switched to
     // Choice Band: you cannot switch moves.
     if (this.hasItem('choiceband') && this.slots[this.active]) {
       G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Choice Band', '#ff8ad8');
@@ -250,23 +304,25 @@ G.Player = class Player {
   // Each gym win gives a link. With it, moves are combined into a
   // single slot and fired at once. Only one group grows (up to BOND_MAX); if
   // none is in progress, the link joins two loose moves.
-  static get BOND_MAX() { return 4; }
+  static get BOND_MAX() {
+    return 4;
+  }
 
   /** What a link can do now: add to a group or join two loose ones. */
   bondOptions() {
-    const loose = this.slots.filter(s => s.length === 1).map(s => s[0]);
-    const grow = this.slots.find(s => s.length > 1 && s.length < Player.BOND_MAX);
+    const loose = this.slots.filter((s) => s.length === 1).map((s) => s[0]);
+    const grow = this.slots.find((s) => s.length > 1 && s.length < Player.BOND_MAX);
     if (grow) return loose.length ? { mode: 'add', group: grow, loose } : null;
     return loose.length >= 2 ? { mode: 'pair', group: null, loose } : null;
   }
 
   /** Combines `moves` (loose) into the group `group` (or a new one) and spends a link. */
   fuse(moves, group = null) {
-    const target = group || this.slots.find(s => s[0] === moves[0]);
+    const target = group || this.slots.find((s) => s[0] === moves[0]);
     const cur = this.slots[this.active];
     for (const m of moves) {
       if (target.includes(m)) continue;
-      const i = this.slots.findIndex(s => s.length === 1 && s[0] === m);
+      const i = this.slots.findIndex((s) => s.length === 1 && s[0] === m);
       if (i < 0) continue;
       this.slots.splice(i, 1);
       target.push(m);
@@ -280,25 +336,54 @@ G.Player = class Player {
   }
 
   /** Moves launched now (the group of the active slot). */
-  activeGroup() { return this.slots[this.active] || []; }
+  activeGroup() {
+    return this.slots[this.active] || [];
+  }
 
-  activeMove() { return this.activeGroup()[0]; }
+  activeMove() {
+    return this.activeGroup()[0];
+  }
 
   /**
    * Called by combat.js when launching a move. It picks the PMD animation and
    * speeds it up if the cooldown is shorter than the animation, so it chains.
    */
   cast(m) {
-    const def = G.MoveDefs[m.id], fam = G.MoveInfo.badge(m.id);     // slice 7a: the resolved def and the display family, never the legacy table
+    const def = G.MoveDefs[m.id],
+      fam = G.MoveInfo.badge(m.id); // slice 7a: the resolved def and the display family, never the legacy table
     // Life Orb: each attack costs a little health (it never leaves you KO). An always-on move (a persistent def) is not an attack.
     if (this.hasItem('lifeorb') && !(def && def.persistent) && !this.remote) {
       this.hp = Math.max(1, this.hp - Math.max(1, this.maxHp * 0.01));
     }
-    const anim = { melee: 'Attack', beam: 'Shoot', projectile: 'Shoot', nova: 'Attack',
-                   aura: 'Charge', buff: 'Charge', orbit: 'Charge', boomerang: 'Shoot', chain: 'Shoot',
-                   mine: 'Charge', meteor: 'Charge', turret: 'Charge', dash: 'Attack', trail: 'Walk', cone: 'Shoot' }[fam] || 'Attack';
+    const anim =
+      {
+        melee: 'Attack',
+        beam: 'Shoot',
+        projectile: 'Shoot',
+        nova: 'Attack',
+        aura: 'Charge',
+        buff: 'Charge',
+        orbit: 'Charge',
+        boomerang: 'Shoot',
+        chain: 'Shoot',
+        mine: 'Charge',
+        meteor: 'Charge',
+        turret: 'Charge',
+        dash: 'Attack',
+        trail: 'Walk',
+        cone: 'Shoot',
+      }[fam] || 'Attack';
     // The new families sound like the similar one of the usual ones.
-    const SND = { boomerang: 'projectile', chain: 'beam', mine: 'nova', meteor: 'nova', turret: 'buff', dash: 'melee', trail: 'aura', cone: 'projectile' };
+    const SND = {
+      boomerang: 'projectile',
+      chain: 'beam',
+      mine: 'nova',
+      meteor: 'nova',
+      turret: 'buff',
+      dash: 'melee',
+      trail: 'aura',
+      cone: 'projectile',
+    };
     // The trail does not play a sound at each puddle (it would be a constant buzz).
     if (fam !== 'trail') G.Audio.sfx('shot', { kind: SND[fam] || fam || 'melee', type: m.type });
     if (fam === 'trail') return;
@@ -306,7 +391,7 @@ G.Player = class Player {
     if (this.anim.busy() && this.anim.progress() < 0.65) return;
     const meta = G.Sprites.animMeta(this.dex, anim);
     const len = meta ? meta.d.reduce((a, b) => a + b, 0) / 60 : 0.4;
-    const cd = Math.max(0.12, (m.simCd || m.cd || 0.5) * this.cdMul);     // simCd: the team's folded cd, set by move-render on each cast
+    const cd = Math.max(0.12, (m.simCd || m.cd || 0.5) * this.cdMul); // simCd: the team's folded cd, set by move-render on each cast
     this.anim.play(anim, { speed: Math.max(1, len / (cd * 0.9)) });
     this.attackFace = 0.35;
   }
@@ -318,15 +403,21 @@ G.Player = class Player {
    * slow = a Speed -1 stage (never below -2 from this source); sleep rolls CARRIER.sleepBase, x1.5 while drowsy.
    */
   inflict(kind, half = false) {
-    const C = G.Enemies.CARRIER, dm = half ? C.secHalf : 1;
+    const C = G.Enemies.CARRIER,
+      dm = half ? C.secHalf : 1;
     switch (kind) {
-      case 'slow': if (G.Stages.stage(this, 'spe') > -2) G.Stages.add(this, 'spe', -1, C.dur.slow * dm); break;
-      case 'poison': G.Status.applyDot(this, 'poison', 1, dm); break;
+      case 'slow':
+        if (G.Stages.stage(this, 'spe') > -2) G.Stages.add(this, 'spe', -1, C.dur.slow * dm);
+        break;
+      case 'poison':
+        G.Status.applyDot(this, 'poison', 1, dm);
+        break;
       case 'sleep':
         if (Math.random() < G.Status.sleepChance(this, C.sleepBase)) G.Status.apply(this, 'sleep', 1, dm);
         else G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Resisted', '#a3abb8');
         break;
-      default: G.Status.apply(this, kind, 1, dm);          // paralysis, freeze, confusion, daze, drowsy, trap: the CONTROL table's durations
+      default:
+        G.Status.apply(this, kind, 1, dm); // paralysis, freeze, confusion, daze, drowsy, trap: the CONTROL table's durations
     }
   }
 
@@ -347,15 +438,22 @@ G.Player = class Player {
       if (G.Log.on && !this.dead) G.Log.block(who, atk ? atk.factor : amount, this.invuln);
       return;
     }
-    const LOG = G.Log.on, hp0 = this.hp;
-    let neutral = amount, dStat = 0, cat = -1;
+    const LOG = G.Log.on,
+      hp0 = this.hp;
+    let neutral = amount,
+      dStat = 0,
+      cat = -1;
     // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
     // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
     // (atk == null: terrain, lava, altar, DoT) keeps `amount` as-is.
     if (atk && !pure) {
-      const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
-      const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
-      const defMul = (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) * G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def');     // Iron / Zinc, then the Def / Sp. Def stage (slice E2a)
+      const st = this.mon.stats,
+        mul = atk.mul || 1; // mul: weak support / flanker strike, on the final damage
+      const defB = st ? st[2] : 50,
+        spdB = st ? st[4] : 50;
+      const defMul =
+        (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) *
+        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def'); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a)
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
@@ -364,56 +462,90 @@ G.Player = class Player {
       amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul) * mul;
     }
     const afterDef = amount;
-    let eff = null, tk = 1, wk = 1;
+    let eff = null,
+      tk = 1,
+      wk = 1;
     if (type) {
       tk = G.Types.mult(type, this.mon.types);
       wk = G.Weather.mult(type);
       eff = G.Types.label(tk);
       // Type-guard berry (ground item, 10 s): a super-effective hit of its type is halved (Chilan: every Normal hit).
-      const guard = this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
+      const guard =
+        this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
       amount *= tk * wk * guard;
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
-    const close = this.activeGroup().some(m => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee') ? 0.75 : 1;
+    const close = this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
+      ? 0.75
+      : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
     let d = Math.max(1, raw);
-    if (this.shield) {                        // move schema slice 4b (Substitute): the shield takes the final damage first
+    if (this.shield) {
+      // move schema slice 4b (Substitute): the shield takes the final damage first
       const took = this.absorb(d);
-      if (took >= d) return;                  // fully absorbed: a blue number only, no invulnerability, flash, sound or camera kick
-      d -= took;                              // the spill goes down the normal path
+      if (took >= d) return; // fully absorbed: a blue number only, no invulnerability, flash, sound or camera kick
+      d -= took; // the spill goes down the normal path
     }
     this.hp -= d;
-    if (LOG) G.Log.hitIn(who, type, cat, neutral, dStat, afterDef, tk, wk, pure ? 0 : this.reduction, pure ? 1 : close, d,
-                         hp0, Math.max(0, this.hp), (d > raw ? 1 : 0) | (pure ? 4 : 0), this.spd);
+    if (LOG)
+      G.Log.hitIn(
+        who,
+        type,
+        cat,
+        neutral,
+        dStat,
+        afterDef,
+        tk,
+        wk,
+        pure ? 0 : this.reduction,
+        pure ? 1 : close,
+        d,
+        hp0,
+        Math.max(0, this.hp),
+        (d > raw ? 1 : 0) | (pure ? 4 : 0),
+        this.spd
+      );
     this.invuln = 0.45;
     this.flash = 0.14;
-    if (!this.benched) {                      // a benched Pokemon taking DoT is silent: no shake, sound or numbers at its stale position (the toast says it fainted)
+    if (!this.benched) {
+      // a benched Pokemon taking DoT is silent: no shake, sound or numbers at its stale position (the toast says it fainted)
       G.Audio.sfx('hurt');
       G.Camera.kick(0.28);
-      G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(d), eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a', eff === 'super');
+      G.FX.dmgText(
+        this.x,
+        this.y - this.bodyH - 4,
+        '-' + Math.round(d),
+        eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a',
+        eff === 'super'
+      );
       G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
     }
     // Focus Band: survives the hit with 1 health (once every 60 s).
     if (this.hp <= 0 && this.hasItem('focussash') && performance.now() - this.sashT > 60000) {
       this.sashT = performance.now();
-      this.hp = 1; this.invuln = 1.2;
+      this.hp = 1;
+      this.invuln = 1.2;
       if (LOG) G.Log.faint(true, 1);
       G.FX.dmgText(this.x, this.y - this.bodyH - 16, 'Focus Sash!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
     if (this.hp <= 0) {
-      this.hp = 0; this.dead = true;
+      this.hp = 0;
+      this.dead = true;
       if (LOG) G.Log.faint(false, 0);
       this.anim.play('Faint', { hold: true });
       this.reviveT = 0;
-      this.shield = null;                     // slice 4b: a faint ends the shield
-      this.clearEffects();                    // slice E2b: fainting wipes every status and own stage drop
+      this.shield = null; // slice 4b: a faint ends the shield
+      this.clearEffects(); // slice E2b: fainting wipes every status and own stage drop
     }
   }
 
   /** Every status (major, confusion, trap, daze, drowsy, DoT, windows) and this Pokemon's own stage drops. The TEAM raises are shared and stay. */
-  clearEffects() { G.Status.clear(this); G.Stages.clear(this); }
+  clearEffects() {
+    G.Status.clear(this);
+    G.Stages.clear(this);
+  }
 
   /**
    * A benched, standing team member (slice E2b, Jess 2026-10-20): statuses, DoT and its own stage drops keep ticking; only skill cooldowns do not
@@ -445,14 +577,18 @@ G.Player = class Player {
   tickShield(dt) {
     const sh = this.shield;
     if (!sh) return;
-    if ((sh.t -= dt) <= 0) { this.shield = null; return; }
+    if ((sh.t -= dt) <= 0) {
+      this.shield = null;
+      return;
+    }
     sh.v = Math.min(sh.max, sh.v + sh.regen * dt);
   }
   /** A cast's HP cost (slice 4b recoil): taken directly, not through hurt (no invulnerability, flash, sound or kick); never below 1 HP. */
   payHp(n) {
     const before = this.hp;
     this.hp = Math.max(1, this.hp - n);
-    if (!this.benched && before - this.hp >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(before - this.hp), '#c9c9d6');
+    if (!this.benched && before - this.hp >= 1)
+      G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(before - this.hp), '#c9c9d6');
   }
 
   heal(amount) {
@@ -463,7 +599,10 @@ G.Player = class Player {
     if (got >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 6, '+' + got, '#5fe08a');
   }
 
-  addMaxHp(amount) { this.maxHp += amount; this.hp += amount; }
+  addMaxHp(amount) {
+    this.maxHp += amount;
+    this.hp += amount;
+  }
 
   /** Returns how many levels it gained (there can be several at once). */
   gainXp(amount) {
@@ -480,7 +619,10 @@ G.Player = class Player {
     if (leveled && this.baseHpStat != null) {
       const newMax = this.maxHpAt(this.level);
       const gain = newMax - this.maxHp;
-      if (gain > 0) { this.maxHp = newMax; this.hp += gain; }
+      if (gain > 0) {
+        this.maxHp = newMax;
+        this.hp += gain;
+      }
     }
     return leveled;
   }
@@ -489,7 +631,11 @@ G.Player = class Player {
    *  new level, preserving current-hp fraction (so swapping is neither a free heal
    *  nor a penalty). The ACTIVE fighter uses gainXp instead. */
   syncLevel(level) {
-    if (this.baseHpStat == null || level <= this.level) { this.level = level; this.xpNext = Player.xpFor(level); return; }
+    if (this.baseHpStat == null || level <= this.level) {
+      this.level = level;
+      this.xpNext = Player.xpFor(level);
+      return;
+    }
     const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
     this.level = level;
     this.xpNext = Player.xpFor(level);
@@ -500,7 +646,9 @@ G.Player = class Player {
   // ---------------- held items ----------------
   /** True when `id` is in effect for this Pokemon: its own held item while it is NOT benched (held effects only work
    *  on the field), or any run-tier item the team carries. */
-  hasItem(id) { return (!this.benched && this.item === id) || this.runItems.includes(id); }
+  hasItem(id) {
+    return (!this.benched && this.item === id) || this.runItems.includes(id);
+  }
 
   /** Equips a Pokemon-tier item on THIS Pokemon (and removes whatever it carried). Run-tier items go through G.Game. */
   equip(id) {
@@ -517,13 +665,18 @@ G.Player = class Player {
    */
   swapHeldItem(other) {
     if (!other || other === this || (!this.item && !other.item)) return null;
-    const a = this.item, b = other.item, ta = this.sashT, tb = other.sashT;
+    const a = this.item,
+      b = other.item,
+      ta = this.sashT,
+      tb = other.sashT;
     if (a) G.Items.BY[a].off(this);
     if (b) G.Items.BY[b].off(other);
-    this.item = b; other.item = a;
+    this.item = b;
+    other.item = a;
     if (b) G.Items.BY[b].on(this);
     if (a) G.Items.BY[a].on(other);
-    this.sashT = tb; other.sashT = ta;
+    this.sashT = tb;
+    other.sashT = ta;
     return { a, b };
   }
 
@@ -547,13 +700,20 @@ G.Player = class Player {
     if (this.flash > 0) this.flash -= dt;
     if (this.attackFace > 0) this.attackFace -= dt;
 
-    G.Stages.teamTick(this.stgTeam, dt);       // the shared team raises: only the active member runs update(), so they tick exactly once per frame
+    G.Stages.teamTick(this.stgTeam, dt); // the shared team raises: only the active member runs update(), so they tick exactly once per frame
     if (this.slowT > 0) this.slowT -= dt;
     G.Status.tick(this, dt);
     G.Stages.tick(this, dt);
     if (this.dead) return;
-    if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
-    if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
+    if (this.bellHeal > 0) {
+      const h = Math.min(this.bellHeal, 4 * dt);
+      this.hp = Math.min(this.maxHp, this.hp + h);
+      this.bellHeal -= h;
+    }
+    if (this.power && (this.power.t -= dt) <= 0) {
+      this.power.def.off(this);
+      this.power = null;
+    }
     this.tickShield(dt);
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
@@ -561,14 +721,20 @@ G.Player = class Player {
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || G.Status.stunned(this) ? [0, 0] : G.Input.axis();     // frozen or asleep: you cannot move
-    if (this.stCnf && (ax || ay)) {                                                    // confused: your heading drifts (half weight)
-      const m = Math.hypot(ax, ay), w = G.Status.wander(this, ax / m, ay / m, 0.5);
-      ax = w[0] * m; ay = w[1] * m;
+    let [ax, ay] = this.frozen || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen or asleep: you cannot move
+    if (this.stCnf && (ax || ay)) {
+      // confused: your heading drifts (half weight)
+      const m = Math.hypot(ax, ay),
+        w = G.Status.wander(this, ax / m, ay / m, 0.5);
+      ax = w[0] * m;
+      ay = w[1] * m;
     }
-    if (this.stDaze && (ax || ay)) {                                                   // dazed: the heading is jittered (slice E1)
-      const m = Math.hypot(ax, ay), j = G.Status.jitter(this, ax / m, ay / m);
-      ax = j[0] * m; ay = j[1] * m;
+    if (this.stDaze && (ax || ay)) {
+      // dazed: the heading is jittered (slice E1)
+      const m = Math.hypot(ax, ay),
+        j = G.Status.jitter(this, ax / m, ay / m);
+      ax = j[0] * m;
+      ay = j[1] * m;
     }
     this.walking = ax !== 0 || ay !== 0;
     const s = this.spd;
@@ -588,7 +754,8 @@ G.Player = class Player {
       if (le.dmg) {
         this.lavaTick -= dt;
         if (this.lavaTick <= 0) {
-          this.lavaTick = le.every; this.invuln = 0;
+          this.lavaTick = le.every;
+          this.invuln = 0;
           this.hurt(Math.max(le.flat, this.maxHp * le.dmg * 0.5));
           G.FX.burst(this.x, this.y - 4, le.color, 5, 70);
         }
@@ -609,10 +776,11 @@ G.Player = class Player {
     const md = m && G.MoveDefs[m.id];
     const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
     const threat = G.Projectiles.nearest(all, this.x, this.y, this.r + 24);
-    const boss = all.find(e => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
-    const tg = (ranged ? boss || threat : threat || boss)
-            || G.Projectiles.nearest(all, this.x, this.y, 520)
-            || G.World.nearestBreakable(this.x, this.y, 200);
+    const boss = all.find((e) => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
+    const tg =
+      (ranged ? boss || threat : threat || boss) ||
+      G.Projectiles.nearest(all, this.x, this.y, 520) ||
+      G.World.nearestBreakable(this.x, this.y, 200);
     this.target = tg;
     if (tg) this.aim = Math.atan2(tg.y - this.y, tg.x - this.x);
     else if (this.walking) this.aim = this.moveAngle;
@@ -625,7 +793,7 @@ G.Player = class Player {
 
   /** Gets back up (revived by a teammate in co-op). */
   revive(frac = 0.5) {
-    this.clearEffects();                      // slice E2b: a revive starts clean
+    this.clearEffects(); // slice E2b: a revive starts clean
     this.dead = false;
     this.hp = Math.max(1, this.maxHp * frac);
     this.invuln = 2;
@@ -649,14 +817,22 @@ G.Player = class Player {
     if (!n) return;
     if (this.flash > 0) this.flash -= dt;
     if (this.attackFace > 0) this.attackFace -= dt;
-    if (G.U.dist2(this.x, this.y, n.x, n.y) > 300 * 300) { this.x = n.x; this.y = n.y; }
-    else { this.x = G.U.damp(this.x, n.x, 14, dt); this.y = G.U.damp(this.y, n.y, 14, dt); }
+    if (G.U.dist2(this.x, this.y, n.x, n.y) > 300 * 300) {
+      this.x = n.x;
+      this.y = n.y;
+    } else {
+      this.x = G.U.damp(this.x, n.x, 14, dt);
+      this.y = G.U.damp(this.y, n.y, 14, dt);
+    }
     if (n.hp < this.hp - 0.5 && !n.dead) this.flash = 0.14;
-    this.hp = n.hp; this.maxHp = n.maxHp;
+    this.hp = n.hp;
+    this.maxHp = n.maxHp;
     this.magnet = n.mag || this.magnet;
     this.reviveT = n.rev || 0;
-    if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); }
-    else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
+    if (n.dead && !this.dead) {
+      this.dead = true;
+      this.anim.play('Faint', { hold: true });
+    } else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
     // Active move (for the halo and the HUD).
     if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.MoveDefs[n.mv]) {
       this.moves = [G.Moves.instance(n.mv)];
@@ -680,7 +856,9 @@ G.Player = class Player {
       ctx.globalAlpha = 0.22;
       ctx.strokeStyle = G.U.TYPE_COLOR[m.type];
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.5, this.r * 0.6, 0, 0, 6.2832); ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(this.x, this.y, this.r * 1.5, this.r * 0.6, 0, 0, 6.2832);
+      ctx.stroke();
       ctx.restore();
     }
     G.Sprites.drawShadow(ctx, this.dex, this.x, this.y);
@@ -688,20 +866,29 @@ G.Player = class Player {
     if (this.power && !this.dead) {
       ctx.save();
       ctx.globalAlpha = 0.35 + Math.sin(performance.now() / 120) * 0.15;
-      ctx.strokeStyle = this.power.def.color; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 2.1, this.r * 0.85, 0, 0, 6.2832); ctx.stroke();
+      ctx.strokeStyle = this.power.def.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(this.x, this.y, this.r * 2.1, this.r * 0.85, 0, 0, 6.2832);
+      ctx.stroke();
       ctx.restore();
     }
 
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
-    this.anim.draw(ctx, this.x, this.y, Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this)));
+    this.anim.draw(
+      ctx,
+      this.x,
+      this.y,
+      Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this))
+    );
 
     // Buff arcs around the feet.
     const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
     let i = 0;
-    for (const k of G.Stages.teamKeys(this.stgTeam)) {     // legacy keys plus team tracker stats (slice 5a)
+    for (const k of G.Stages.teamKeys(this.stgTeam)) {
+      // legacy keys plus team tracker stats (slice 5a)
       const L = this.stgTeam[k] || [];
-      if (!COL[k] || !G.Stages.teamLive(this.stgTeam, k)) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
+      if (!COL[k] || !G.Stages.teamLive(this.stgTeam, k)) continue; // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
       const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;
@@ -716,24 +903,43 @@ G.Player = class Player {
 
     // Statuses (slice E1): a coloured ring under the feet for the most restrictive one, and a floating zzz while drowsy or asleep.
     if (!this.dead) {
-      const S = G.Status, cs = this.stMajor ? S.CONTROL[this.stMajor.k] : this.stCnf ? S.CONTROL.confusion : this.stDaze ? S.CONTROL.daze
-              : this.stTrap ? S.CONTROL.trap : this.stDrow ? S.CONTROL.drowsy : null;
+      const S = G.Status,
+        cs = this.stMajor
+          ? S.CONTROL[this.stMajor.k]
+          : this.stCnf
+            ? S.CONTROL.confusion
+            : this.stDaze
+              ? S.CONTROL.daze
+              : this.stTrap
+                ? S.CONTROL.trap
+                : this.stDrow
+                  ? S.CONTROL.drowsy
+                  : null;
       if (cs) {
         ctx.save();
-        ctx.globalAlpha = 0.55; ctx.strokeStyle = cs.color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832); ctx.stroke();
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = cs.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832);
+        ctx.stroke();
         ctx.restore();
       }
       if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
         const t = performance.now() / 1000;
         ctx.save();
-        ctx.font = '800 9px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
-        ctx.fillStyle = '#cfc6ff'; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 2;
+        ctx.font = '800 9px Pixelify,"Segoe UI",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#cfc6ff';
+        ctx.strokeStyle = 'rgba(0,0,0,.7)';
+        ctx.lineWidth = 2;
         for (let i = 0; i < 3; i++) {
-          const ph = (t * 0.7 + i / 3) % 1;                      // three letters rising and fading in turn
+          const ph = (t * 0.7 + i / 3) % 1; // three letters rising and fading in turn
           ctx.globalAlpha = Math.sin(ph * Math.PI);
-          const zx = this.x + 8 + ph * 8, zy = this.y - this.bodyH - 4 - ph * 16;
-          ctx.strokeText('z', zx, zy); ctx.fillText('z', zx, zy);
+          const zx = this.x + 8 + ph * 8,
+            zy = this.y - this.bodyH - 4 - ph * 16;
+          ctx.strokeText('z', zx, zy);
+          ctx.fillText('z', zx, zy);
         }
         ctx.restore();
       }
@@ -741,22 +947,44 @@ G.Player = class Player {
 
     // Status icons above the head (slice E1): a small 3-letter pill per status with a thin timer bar. Drowsy has its zzz instead.
     if (!this.dead) {
-      const L = G.Status.list(this).filter(x => x.k !== 'drowsy');
+      const L = G.Status.list(this).filter((x) => x.k !== 'drowsy');
       const mx = this._stMax || (this._stMax = {});
-      for (const k in mx) if (!L.some(x => x.k === k)) delete mx[k];
+      for (const k in mx) if (!L.some((x) => x.k === k)) delete mx[k];
       if (L.length) {
-        const TAG = { burn: 'BRN', poison: 'PSN', toxic: 'TOX', paralysis: 'PAR', sleep: 'SLP', freeze: 'FRZ', confusion: 'CNF', daze: 'DZE', trap: 'TRP', slow: 'SLW' };
+        const TAG = {
+          burn: 'BRN',
+          poison: 'PSN',
+          toxic: 'TOX',
+          paralysis: 'PAR',
+          sleep: 'SLP',
+          freeze: 'FRZ',
+          confusion: 'CNF',
+          daze: 'DZE',
+          trap: 'TRP',
+          slow: 'SLW',
+        };
         ctx.save();
-        ctx.font = '800 7px Pixelify,"Segoe UI",sans-serif'; ctx.textAlign = 'center';
-        const gap = 2, h = 9, ws = L.map(x => Math.ceil(ctx.measureText(TAG[x.k] || x.k.slice(0, 3).toUpperCase()).width) + 6);
+        ctx.font = '800 7px Pixelify,"Segoe UI",sans-serif';
+        ctx.textAlign = 'center';
+        const gap = 2,
+          h = 9,
+          ws = L.map((x) => Math.ceil(ctx.measureText(TAG[x.k] || x.k.slice(0, 3).toUpperCase()).width) + 6);
         let x = this.x - (ws.reduce((a, b) => a + b, 0) + gap * (L.length - 1)) / 2;
         const y = this.y - this.bodyH - (this.tag ? 24 : 14);
         L.forEach((st, i) => {
           if (st.t != null) mx[st.k] = Math.max(mx[st.k] || 0, st.t);
-          ctx.fillStyle = 'rgba(20,0,6,.82)'; ctx.beginPath(); ctx.roundRect(x, y, ws[i], h, 3); ctx.fill();
-          ctx.lineWidth = 1; ctx.strokeStyle = st.color; ctx.stroke();
-          ctx.fillStyle = st.color; ctx.fillText(TAG[st.k] || st.k.slice(0, 3).toUpperCase(), x + ws[i] / 2, y + 7);
-          if (st.t != null && mx[st.k] > 0) { ctx.fillRect(x + 1, y + h + 1, (ws[i] - 2) * Math.max(0, Math.min(1, st.t / mx[st.k])), 1.5); }
+          ctx.fillStyle = 'rgba(20,0,6,.82)';
+          ctx.beginPath();
+          ctx.roundRect(x, y, ws[i], h, 3);
+          ctx.fill();
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = st.color;
+          ctx.stroke();
+          ctx.fillStyle = st.color;
+          ctx.fillText(TAG[st.k] || st.k.slice(0, 3).toUpperCase(), x + ws[i] / 2, y + 7);
+          if (st.t != null && mx[st.k] > 0) {
+            ctx.fillRect(x + 1, y + h + 1, (ws[i] - 2) * Math.max(0, Math.min(1, st.t / mx[st.k])), 1.5);
+          }
           x += ws[i] + gap;
         });
         ctx.restore();
@@ -769,7 +997,15 @@ G.Player = class Player {
       ctx.strokeStyle = '#5fe08a';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.ellipse(this.x, this.y, this.r * 2.4, this.r * 1.0, 0, -Math.PI / 2, -Math.PI / 2 + 6.2832 * Math.min(1, this.reviveT / G.Player.REVIVE_TIME));
+      ctx.ellipse(
+        this.x,
+        this.y,
+        this.r * 2.4,
+        this.r * 1.0,
+        0,
+        -Math.PI / 2,
+        -Math.PI / 2 + 6.2832 * Math.min(1, this.reviveT / G.Player.REVIVE_TIME)
+      );
       ctx.stroke();
       ctx.restore();
     }
@@ -778,7 +1014,8 @@ G.Player = class Player {
       ctx.font = '700 7px Pixelify,"Segoe UI",sans-serif';
       ctx.textAlign = 'center';
       const y = this.y - this.bodyH - 8;
-      ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.75)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = 'rgba(0,0,0,.75)';
       ctx.strokeText(this.tag, this.x, y);
       ctx.fillStyle = this.dead ? '#ff8a96' : this.tagColor || '#fff';
       ctx.fillText(this.tag, this.x, y);

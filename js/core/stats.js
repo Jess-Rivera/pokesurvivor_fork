@@ -14,22 +14,24 @@
  */
 G.Stats = (() => {
   // ---- tunables (see BALANCE.md) ----
-  const HP_SCALAR = 2.0;                                   // mainline HP * this
-  const SPEED_MEDIAN = 65;                                 // roster median base Speed (verified)
-  const BASE_PX = 107;                                     // px/s at movement r = 1.0 (median mon)
-  const MOVE_K = 1.0, MOVE_MAX = 3.0, MOVE_MIN = 0.5;      // movement transfer: slope + asymptotes
-  const XP_SCALAR = 0.035;                                 // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
+  const HP_SCALAR = 2.0; // mainline HP * this
+  const SPEED_MEDIAN = 65; // roster median base Speed (verified)
+  const BASE_PX = 107; // px/s at movement r = 1.0 (median mon)
+  const MOVE_K = 1.0,
+    MOVE_MAX = 3.0,
+    MOVE_MIN = 0.5; // movement transfer: slope + asymptotes
+  const XP_SCALAR = 0.035; // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
   // ---- mainline stat core ----
   /** Mainline non-HP stat value. IV/EV additive, default 0. */
   function statValue(base, level, iv = 0, ev = 0) {
-    return Math.floor((2 * base + iv + Math.floor(ev / 4)) * level / 100) + 5;
+    return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
   }
 
   // ---- HP (player + enemy, scales with level) ----
   /** Mainline HP * HP_SCALAR. IV/EV default 0. */
   function hpForLevel(baseHp, level, iv = 0, ev = 0) {
-    return Math.round((Math.floor((2 * baseHp + iv + Math.floor(ev / 4)) * level / 100) + level + 10) * HP_SCALAR);
+    return Math.round((Math.floor(((2 * baseHp + iv + Math.floor(ev / 4)) * level) / 100) + level + 10) * HP_SCALAR);
   }
 
   // ---- Speed -> movement px/s (fixed species identity, level cancels) ----
@@ -37,7 +39,7 @@ G.Stats = (() => {
     if (r <= 0) return MOVE_MIN;
     const lr = Math.log(r);
     const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
-    return Math.exp(w * Math.tanh(MOVE_K * lr / w));
+    return Math.exp(w * Math.tanh((MOVE_K * lr) / w));
   }
   /** Base Speed stat -> movement px/s. Same for player and enemy. */
   function speedToPx(baseSpe) {
@@ -49,34 +51,47 @@ G.Stats = (() => {
   // Enemy level for run time. Three states (feature/boss-rework): under 30:00 a linear ramp L1 to L50; past 30:00 it
   // stays clamped at L50 until every gym is beaten (gymsDone false); the slow post-gym ramp is TBD, so for now
   // gymsDone also clamps. Callers that know the gym state pass it as the second argument.
-  function levelForTime(t, gymsDone) { return 1 + 49 * G.U.clamp(t / 1800, 0, 1); }
+  function levelForTime(t, gymsDone) {
+    return 1 + 49 * G.U.clamp(t / 1800, 0, 1);
+  }
   // Wild XP boost / opening HP discount window end (seconds). Shared so the spawner banner, xpBoost and openingHpK agree.
   const XP_BOOST_END = 180;
 
   // ---- XP (feature/xp-curve) ----
   // Cost: mainline Medium Fast. Total XP to reach level n is n^3, so L -> L+1 costs (L+1)^3 - L^3.
-  function xpToNext(level) { return 3 * level * level + 3 * level + 1; }
+  function xpToNext(level) {
+    return 3 * level * level + 3 * level + 1;
+  }
   // Yield: Gen 5 scaled formula. bx = species base_experience (PokeAPI), enemyLevel = the level
   // the enemy spawned at, playerLevel = the player's level at the kill. The ((2Le+10)/(Le+Lp+10))^2.5
   // term shrinks the reward as you outlevel the cast. Multipliers (tank, elite, shiny, golden) are
   // applied by the caller. Returns a float (do not round, early levels would quantize).
   function xpYield(bx, enemyLevel, playerLevel) {
-    const a = 2 * enemyLevel + 10, b = enemyLevel + playerLevel + 10;
-    return XP_SCALAR * ((bx * enemyLevel / 5) * Math.pow(a / b, 2.5) + 1);
+    const a = 2 * enemyLevel + 10,
+      b = enemyLevel + playerLevel + 10;
+    return XP_SCALAR * (((bx * enemyLevel) / 5) * Math.pow(a / b, 2.5) + 1);
   }
 
   // ---- Atk/Def/SpA/SpD: scale with level via the mainline statValue ----
-  function attack(base, level, iv = 0, ev = 0)  { return statValue(base, level, iv, ev); }
-  function defense(base, level, iv = 0, ev = 0) { return statValue(base, level, iv, ev); }
-  function spAtk(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
-  function spDef(base, level, iv = 0, ev = 0)   { return statValue(base, level, iv, ev); }
+  function attack(base, level, iv = 0, ev = 0) {
+    return statValue(base, level, iv, ev);
+  }
+  function defense(base, level, iv = 0, ev = 0) {
+    return statValue(base, level, iv, ev);
+  }
+  function spAtk(base, level, iv = 0, ev = 0) {
+    return statValue(base, level, iv, ev);
+  }
+  function spDef(base, level, iv = 0, ev = 0) {
+    return statValue(base, level, iv, ev);
+  }
 
   // ---- damage model (mainline A/D ratio, split into cast + impact halves) ----
   // Single survivor-feel scalar (locked). STAB = same-type attack bonus. PROP_DEF is the
   // neutral denominator for things without a Def stat: destructible props AND status-cat
   // damaging moves (toxic/spikes/etc. have no phys/spec class, so they do not swing on an
   // enemy's Def/SpD split). See DECISIONS.md / BALANCE.md.
-  const DMG_SCALAR = 1.0;   // re-centered 2026-10-17 for canonical move power (median fork dmg 14 -> canon 60); tune by feel
+  const DMG_SCALAR = 1.0; // re-centered 2026-10-17 for canonical move power (median fork dmg 14 -> canon 60); tune by feel
   const STAB = 1.5;
   const PROP_DEF = 50;
 
@@ -86,7 +101,7 @@ G.Stats = (() => {
   // uses Atk as its attacker stat (arbitrary but stable; its denominator is neutral anyway).
   function attackFactor(atkBase, spaBase, level, move, extraMul = 1) {
     const aStat = moveCat(move) === 'special' ? spAtk(spaBase, level) : attack(atkBase, level);
-    return ((2 * level / 5 + 2) * (move.dmg || 0) * aStat) / 50 * extraMul;
+    return ((((2 * level) / 5 + 2) * (move.dmg || 0) * aStat) / 50) * extraMul;
   }
 
   // Defender half, computed at impact against a specific enemy's real base Def/SpD
@@ -96,16 +111,21 @@ G.Stats = (() => {
   function applyDamage(factor, defBase, spdBase, move, level, stab, defMul = 1) {
     // defMul: the defender's Def / SpD STAGE multiplier (G.Stages.mul), applied to the final stat. A status-cat move ignores it.
     const cat = moveCat(move);
-    const dStat = cat === 'status' ? PROP_DEF
-                : cat === 'special' ? spDef(spdBase, level) * defMul
-                : defense(defBase, level) * defMul;
-    const stabMul = (stab && cat !== 'status') ? STAB : 1;
+    const dStat =
+      cat === 'status'
+        ? PROP_DEF
+        : cat === 'special'
+          ? spDef(spdBase, level) * defMul
+          : defense(defBase, level) * defMul;
+    const stabMul = stab && cat !== 'status' ? STAB : 1;
     // Slice 7b-2b: the legacy per-cast norm factor is gone (COMBAT-RULES "Damage"); every hit is a full mainline event.
     return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
   }
 
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
-  function applyDamageProp(factor) { return (factor / PROP_DEF + 2) * DMG_SCALAR; }
+  function applyDamageProp(factor) {
+    return (factor / PROP_DEF + 2) * DMG_SCALAR;
+  }
 
   // Held-item damage multiplier, applied at the hit site on top of the type/crit multipliers.
   // Pure function of the holder's item fields + the move's type + the already-computed type
@@ -128,7 +148,9 @@ G.Stats = (() => {
   const ENEMY_POWER = 40;
 
   // Enemy attack category from the higher offensive stat: SpA > Atk => 'special'.
-  function enemyCat(atkBase, spaBase) { return (spaBase > atkBase) ? 'special' : 'physical'; }
+  function enemyCat(atkBase, spaBase) {
+    return spaBase > atkBase ? 'special' : 'physical';
+  }
 
   // Attacker half for an enemy at its level, using its winning offensive stat and the
   // flat placeholder Power. Mirrors attackFactor (no extraMul; enemies have no upgrades).
@@ -136,7 +158,7 @@ G.Stats = (() => {
   function enemyAttackFactor(atkBase, spaBase, level, power = ENEMY_POWER, cat = null) {
     const special = (cat || enemyCat(atkBase, spaBase)) === 'special';
     const aStat = special ? spAtk(spaBase, level) : attack(atkBase, level);
-    return ((2 * level / 5 + 2) * power * aStat) / 50;
+    return (((2 * level) / 5 + 2) * power * aStat) / 50;
   }
 
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
@@ -144,7 +166,8 @@ G.Stats = (() => {
   // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
   function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1) {
     // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
-    const dStat = (cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel)) * defMul;
+    const dStat =
+      (cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel)) * defMul;
     return (factor / Math.max(1, dStat) + 2) * ENEMY_DMG_SCALAR;
   }
 
@@ -157,11 +180,36 @@ G.Stats = (() => {
   }
 
   return {
-    HP_SCALAR, SPEED_MEDIAN, BASE_PX, MOVE_K, MOVE_MAX, MOVE_MIN,
-    statValue, hpForLevel, moveTransfer, speedToPx, levelForTime, XP_BOOST_END,
-    XP_SCALAR, xpToNext, xpYield,
-    attack, defense, spAtk, spDef, moveCat,
-    DMG_SCALAR, STAB, attackFactor, applyDamage, applyDamageProp, itemDmgMul,
-    ENEMY_DMG_SCALAR, ENEMY_POWER, enemyCat, enemyAttackFactor, applyPlayerDefense,
+    HP_SCALAR,
+    SPEED_MEDIAN,
+    BASE_PX,
+    MOVE_K,
+    MOVE_MAX,
+    MOVE_MIN,
+    statValue,
+    hpForLevel,
+    moveTransfer,
+    speedToPx,
+    levelForTime,
+    XP_BOOST_END,
+    XP_SCALAR,
+    xpToNext,
+    xpYield,
+    attack,
+    defense,
+    spAtk,
+    spDef,
+    moveCat,
+    DMG_SCALAR,
+    STAB,
+    attackFactor,
+    applyDamage,
+    applyDamageProp,
+    itemDmgMul,
+    ENEMY_DMG_SCALAR,
+    ENEMY_POWER,
+    enemyCat,
+    enemyAttackFactor,
+    applyPlayerDefense,
   };
 })();
