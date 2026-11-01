@@ -401,9 +401,50 @@ These need no import. Hail is in the data but retired (`G.Moves.RETIRED`, D-HAIL
 | Thunder Shock | 1 | Lt. Surge (Raichu) |
 | Vine Whip | 1 | Erika (Tangela) |
 
+## Decisions needed (2026-11-01)
+
+Goal (Jess, 2026-11-01): import all 177 moves normally, so the player can use them too, then translate them to the bosses. This section sorts the 177 by how much design work each needs before it can be authored. The counts are a first pass from the mainline effects, not rulings.
+
+| Bucket | Moves | Work |
+|---|---|---|
+| Whole-field | 7 | Waits on the open whole-field decision (STATE.md) |
+| Unique decisions | 38 (about 24 distinct rulings) | A ruling each, recorded as MOVE-INTENT entries |
+| Existing pattern, one ruling per pattern | 18 | One ruling covers the group |
+| Maps to the schema | about 114 | Normal batch review (CLAUDE.md "Move review rule") |
+
+### Whole-field (7)
+
+Sunny Day, Rain Dance, Sandstorm, Reflect, Light Screen, Safeguard, Stealth Rock. Weather has a handler (`setWeather`); screens, Safeguard and hazards do not.
+
+### Unique decisions (38)
+
+| Group | Moves | What has to be decided |
+|---|---|---|
+| Accuracy and evasion (6) | Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight | COMBAT-RULES skips accuracy and evasion stages, so these do nothing today. One ruling covers all six, plus the accuracy riders on Mud-Slap, Mirror Shot and Hone Claws (drop them, or give them a meaning). |
+| Power from HP (3) | Flail, Reversal, Wring Out | Power that scales with the user's or the target's HP. One ruling. |
+| Damage from other stats (4) | Foul Play, Psyshock, Electro Ball, Grass Knot | Foul Play uses the target's Attack, Psyshock hits Defense, Electro Ball scales with Speed, Grass Knot with weight (not tracked). |
+| Damage reflection (2) | Counter, Mirror Coat | Return damage taken. One ruling. |
+| Turn or action conditions (5) | Sucker Punch, Fake Out, Feint, Focus Punch, High Jump Kick | "Foe is attacking", "first turn", "breaks Protect", "fails if hit while charging", "crash damage on a miss": what each condition means in real time. |
+| Sleep-dependent (2) | Dream Eater, Nightmare | Only work on a sleeping target. One ruling. |
+| Switching (2) | U-turn, Baton Pass | Tie into the swap rule; Baton Pass also falls under the open stage-manipulation decision. |
+| User faints (2) | Explosion, Self-Destruct | What fainting the caster means for the player's mon and a boss mon. |
+| One-hit KO (1) | Fissure | What a one-hit KO means against a swarm, a player and a boss. |
+| New status mechanics (11) | Attract, Yawn, Rest, Protect, Disable, Roar, Psych Up, Swagger, Skill Swap, Focus Energy, Magnet Rise | Attract needs a new ailment (infatuation); Yawn is a delayed sleep; Rest is self-sleep plus a full heal; Focus Energy is a crit stage (stages cover five stats today); Psych Up and Swagger are open owner decisions already (stage manipulation, raises on foes); Skill Swap has no abilities to swap. |
+
+### Existing pattern, one ruling per pattern (18)
+
+- Priority (6): Aqua Jet, Mach Punch, Ice Shard, Bullet Punch, Extreme Speed, Vital Throw. Follow the Quick Attack dash; waits on the open Quick Attack priority decision.
+- Two-turn (6): Fly, Dig, Dive, Bounce, Solar Beam, Future Sight. `delivery.delay` and caster i-frames exist; confirm the shape once.
+- Rampage and recharge (4): Outrage, Thrash, Petal Dance (lock in, then self confusion), Hyper Beam (a lockout after firing; today's commitment covers only the cast).
+- Random ailment (1): Tri Attack picks one of burn, paralysis or freeze.
+- Hazard clear (1): Rapid Spin. Damage and the Speed raise map; clearing hazards follows the whole-field ruling.
+
+### Maps to the schema (about 114)
+
+Plain damage; damage with riders (burn, poison, paralysis, freeze, confusion, flinch, stat drops, high crit, recoil, drain, multihit, trap); self raises (Calm Mind, Bulk Up, Amnesia, Barrier, Acid Armor, Meditate, Nasty Plot); foe drops (Growl, Leer, Tail Whip, Scary Face, Screech); pure ailment moves (Thunder Wave, Glare, Hypnosis, Sing, Spore, Sleep Powder, Stun Spore, Poison Powder, Lovely Kiss, Confuse Ray, Supersonic, Mean Look as trap); heals (Recover, Synthesis, Moonlight). Self drops after an attack (Superpower, Close Combat, Overheat, Draco Meteor) are `stat` effects with `side: self`.
+
 ## Notes for the import work
 
 - Each import goes through the move data pipeline (`docs/MOVE-AXIS-SCHEMA.md`, the source JSON under `docs/move_rework_holding/`, then `tools/export_moves.js`) and the move review rule in CLAUDE.md.
 - A move also needs a gym form (`G.Gyms.formOf`: melee, nova, strike, shot or buff) before a leader can cast it. Status moves that are not self raises (Thunder Wave, Hypnosis, Confuse Ray, Reflect, Screech) have no leader form today.
-- Several status moves hit open owner decisions in STATE.md: stage manipulation (Baton Pass, Psych Up), raises on foes (Swagger), whole-field moves (Sunny Day, Rain Dance, Sandstorm, Light Screen, Reflect, Safeguard, Stealth Rock).
-- Battle-mechanic moves with no survivor-like meaning yet: Protect, Counter, Mirror Coat, Skill Swap, Lock-On, Foresight, Mean Look, Fake Out, Feint, Future Sight, Dream Eater, Nightmare, Rest, Attract, Disable, Roar, U-turn, Explosion and Self-Destruct, and the one-hit KO Fissure. These want design rulings (MOVE-INTENT entries) before data.
+- The rulings in "Decisions needed" become MOVE-INTENT entries, so each move is owned from then on (CLAUDE.md "Move review rule").
