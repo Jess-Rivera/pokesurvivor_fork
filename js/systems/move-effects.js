@@ -263,37 +263,86 @@ G.MoveEffects = (() => {
 
   /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
    *  the folded Power, STAB, power knob, enrage and Attack stage); Player.hurt does the defender half and the type, as for every enemy hit.
-   *  Damage only (Jess 2026-10-31): knockback is skipped, since the player has none, and any other rider is not built for this direction
-   *  yet (TODO), so it is skipped with one console note per move and effect. */
+   *  Riders onto the player (gym-roster, Jess 2026-11-01): the payload runs in data order like applyHit. Damage takes statusBonus (Hex)
+   *  and a crit (the D10 rule: the owner's crit cards plus the move's percent, x1.5 after your defense). Ailments go through G.Status
+   *  (burn, poison and toxic as the player's damage over time), so immunity, one major, the hard-CC grace, berries and Shake off hold.
+   *  Foe drops land on your own tracker on the leader's Gate (strong-host Gate) and Duration; its own raises and drain heal land on
+   *  it. Flinch: one roll per move per 0.5 s, then Player.applyFlinch. Knockback is skipped, since the player has none; flat damage is
+   *  not built for this direction yet, so it is skipped with one console note per move and effect. */
   const noted = new Set();
-  function hitPlayer(inst, pl) {
+  const FLINCH_GAP = 0.5; // seconds between two flinch rolls of one move on the player (COMBAT-RULES "Flinch on the player")
+  function hurtPlayer(inst, pl, rng, fx, hop, hit) {
     const def = inst.spec,
       o = inst.cast.owner;
-    const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(def.type, (pl.mon && pl.mon.types) || []), dealt: 0 };
-    for (const fx of def.payload || [])
-      if (fx.t !== 'damage' && fx.t !== 'knockback' && !noted.has(def.id + ':' + fx.t)) {
-        noted.add(def.id + ':' + fx.t);
-        console.warn(
-          '[MoveEffects] ' + def.id + ': the ' + fx.t + ' rider is not applied to the player yet (gym leader cast)'
-        );
-      }
-    if (!(def.payload || []).some((fx) => fx.t === 'damage')) return hit;
-    const m = { cat: def.category, dmg: def.basePower || 0, type: def.type },
+    const sb = specialOf(def, 'statusBonus'); // D13: checked before this hit's own riders land
+    const m = {
+        cat: def.category,
+        dmg: (def.basePower || 0) * (sb && G.Status.majorKind(pl) ? sb.multiplier : 1),
+        type: def.type,
+      },
       A = o.moveFactor(m),
       hp0 = pl.hp;
+    const cfx = fxOf(def, 'crit'),
+      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
+      crit = c > 0 && rng() < c; // D10: no base chance
     pl.hurt(
       A,
       def.type,
       false,
-      { factor: A, cat: def.category === 'special' ? 'special' : 'physical', mul: 1 },
+      { factor: A, cat: def.category === 'special' ? 'special' : 'physical', mul: crit ? CRIT_MUL : 1, crit },
       G.Log.on ? G.Log.who(o, def.id) : null
     );
+    hit.crit = crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
+  }
+  const DOT = new Set(['burn', 'poison', 'toxic']);
+  function ailPlayer(inst, pl, rng, fx, hop) {
+    if (fx.side !== 'foe' || !foe(pl) || !rolls(fx, hop, rng)) return;
+    if (DOT.has(fx.id)) {
+      const S = fx.duration != null && G.Enemies.STATUS[fx.id]; // a stated length becomes the turn multiplier, as on an enemy
+      G.Status.applyDot(pl, fx.id, 1, S ? fx.duration / (S.turns * S.turn) : 1);
+    } else G.Status.apply(pl, fx.id, 1, 1, fx.duration);
+  }
+  function flinchPlayer(inst, pl, rng, fx, hop) {
+    if (!foe(pl) || !pl.applyFlinch) return;
+    const now = inst.cast.time + (inst.age || 0),
+      last = pl.flRoll || (pl.flRoll = {});
+    if (last[inst.spec.id] != null && now - last[inst.spec.id] < FLINCH_GAP - EPS) return;
+    last[inst.spec.id] = now;
+    if (rolls(fx, hop, rng)) pl.applyFlinch();
+  }
+  const PL = {
+    damage: hurtPlayer,
+    ailment: ailPlayer,
+    flinch: flinchPlayer,
+    stat,
+    heal,
+    special: (inst, pl, rng, fx) => {
+      if (SPECIAL[fx.handler] === read) return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here
+      if (!noted.has(inst.spec.id + ':' + fx.handler)) {
+        noted.add(inst.spec.id + ':' + fx.handler);
+        console.warn(
+          '[MoveEffects] ' + inst.spec.id + ': ' + fx.handler + ' is not applied to the player yet (gym leader cast)'
+        );
+      }
+    },
+    crit: inDamage,
+    knockback: inDamage,
+  };
+  function hitPlayer(inst, pl, hop, rng) {
+    const def = inst.spec;
+    const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(def.type, (pl.mon && pl.mon.types) || []), dealt: 0 };
+    for (const fx of def.payload || []) {
+      const f = PL[fx.t];
+      if (f) f(inst, pl, rng, fx, hop, hit);
+      else if (!LATER.has(fx.t)) throw new Error('MoveEffects: no applier for effect ' + fx.t + ' (' + def.id + ')');
+    }
+    if (foe(pl)) G.Status.onHit(pl, def.type); // P3: a Fire hit thaws a freeze older than 0.2 s
     return hit;
   }
 
   function applyHit(inst, e, hop, rng) {
-    if (inst.cast.owner.foes) return hitPlayer(inst, e); // slice 7a: an enemy owner's only foe is the player
+    if (inst.cast.owner.foes) return hitPlayer(inst, e, hop, rng); // slice 7a: an enemy owner's only foe is the player
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(inst.spec.type, e.types), dealt: 0 };
     for (const fx of inst.spec.payload || []) {
       const f = APPLY[fx.t];

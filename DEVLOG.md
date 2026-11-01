@@ -338,3 +338,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Found in a headless fight: the fixed form order starved later moves. Jess chose a utility AI for move picks (movement stays a state machine; movement scoring is Gym AI Tier 2). Built: freshness x fit, POINT_BLANK 0.5; every move in the starvation sets now casts.
 - Found (TODO (e)): a leader's Psychic never lands (420 px cast gate, about 166 px flight). Next: riders onto the player.
 - Verified: check.js 30/30, boss-owner 131 checks, mutations 40/40, smokes pass (one flake each).
+
+## 2026-11-01 (Claude Code, home): riders onto the player
+- Gym leader hits now land their whole payload on the player (js/systems/move-effects.js hitPlayer): ailments through G.Status, foe drops on your own tracker (strong-host Gate), Hex x2 vs a major, crits by the D10 rule (only Psycho Cut today), the leader's Metal Claw raise and Giga Drain heal (new brain heal in boss-ai.js).
+- Flinch on the player: G.MoveSim.flinch restarts the active group's cooldowns + 0.3 s; Player.applyFlinch recoils (back half the body at 2x, then still 0.2 to 0.3 s), 0.5 s roll gap per move, none while asleep or frozen. COMBAT-RULES rules added.
+- Picker: score x opportunity (Hex 1.5, blocked ailment 0.75, absent drop 1.25; BOSS-AUTHORING THE PICK).
+- Verified: check.js 30/30, boss-owner harness 164 checks, mutations 54/54, smoke-ui pass; smoke-newcombat every functional check ok on 3 runs, but each run had one "failed to load resource" console error on a different page (local server flake).
+- Next: Surge's real Electric sets (plan agreed).

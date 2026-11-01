@@ -8,9 +8,9 @@
  * authored moves (G.Gyms) sit in one group and cast through the sim (G.MoveSim.castAt), each attack on its own cooldown (the folded
  * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
- * The attack is picked by a utility score (attack(): freshness x fit, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
- * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player is damage
- * only (G.MoveEffects). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
+ * The attack is picked by a utility score (attack(): freshness x fit x opportunity, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
+ * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player lands
+ * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px;
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
@@ -20,6 +20,12 @@ G.Boss = (() => {
   const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
   const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
   const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
+  // TUNE, the opportunity factor (Jess 2026-11-01): a Hex-like move (statusBonus) while you carry a major ailment; a move whose major
+  // ailment cannot land since you already carry one; a move whose foe stat drop is not on you yet
+  const OPP_HEX = 1.5,
+    OPP_BLOCKED = 0.75,
+    OPP_DROP = 1.25;
+  const MAJOR = new Set(['burn', 'poison', 'toxic', 'paralysis', 'freeze', 'sleep']);
   const RECOVER = 0.35; // seconds standing still after the release, divided by tempo
   const LOW_HP = 0.3; // below this fraction of max HP the leader favors fighting from range
   const NEAR = 170,
@@ -46,6 +52,7 @@ G.Boss = (() => {
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
       e.moveFactor = (m) => this.factor(m);
+      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
       this.contact = dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
       this.touch();
@@ -136,7 +143,7 @@ G.Boss = (() => {
      *  strike or a shot: its range) gets a score, and the highest starts its tell. Score = freshness x fit. Freshness: seconds since the
      *  move's last tell started (the fight's first pick for one never cast), over its cooldown, so every move gets turns and fast moves
      *  still come more often. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's close reach. Ties: ORDER, then
-     *  the move's place in the group. No randomness. this.scores keeps the last pick's scores for the ?dev overlay. */
+     *  the move's place in the group. Opportunity: see opp(). No randomness. this.scores keeps the last pick's scores for the ?dev overlay. */
     attack(dist, pl, now) {
       if (this.t0 == null) this.t0 = now;
       const close = this.reach(),
@@ -152,7 +159,7 @@ G.Boss = (() => {
         const near = CLOSE.includes(form);
         if (dist > G.Gyms.reachOf(d, form) + (near ? pl.r || 0 : 0)) continue;
         const fresh = (now - (s.last != null ? s.last : this.t0)) / Math.max(0.05, d.cd * this.e.cdMul),
-          c = { s, d, form, rank, score: fresh * (blank && !near ? POINT_BLANK : 1) };
+          c = { s, d, form, rank, score: fresh * (blank && !near ? POINT_BLANK : 1) * this.opp(d, pl) };
         scores.push(c);
         if (!best || c.score > best.score || (c.score === best.score && c.rank < best.rank)) best = c;
       }
@@ -161,6 +168,29 @@ G.Boss = (() => {
       best.s.last = now;
       this.start(best.s, best.d, best.form, pl);
       return true;
+    }
+
+    /** Opportunity (Jess 2026-11-01): x OPP_HEX for a statusBonus move while you carry a major ailment, x OPP_BLOCKED for a move with a
+     *  major ailment rider while you already carry one, x OPP_DROP for a move with a foe stat drop that is not on you yet (no tracker from
+     *  this move and mon). Each applies once; 1 otherwise. */
+    opp(d, pl) {
+      const p = d.payload || [],
+        major = G.Status.majorKind(pl);
+      let k = 1;
+      if (major && p.some((fx) => fx.t === 'special' && fx.handler === 'statusBonus')) k *= OPP_HEX;
+      if (major && p.some((fx) => fx.t === 'ailment' && fx.side === 'foe' && MAJOR.has(fx.id))) k *= OPP_BLOCKED;
+      const src = G.MoveEffects.srcOf(d, this.e);
+      if (
+        p.some(
+          (fx) =>
+            fx.t === 'stat' &&
+            fx.side === 'foe' &&
+            fx.stages < 0 &&
+            !G.Stages.tracker(pl, G.MoveEffects.statKey(fx.stat), src, false)
+        )
+      )
+        k *= OPP_DROP;
+      return k;
     }
 
     /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks
@@ -239,6 +269,15 @@ G.Boss = (() => {
         G.Gym.enrageMul(e) *
         G.Stages.mul(e, special ? 'spa' : 'atk')
       );
+    }
+
+    /** Giga Drain's heal on the mon: up to its max HP, with a green number. */
+    heal(n) {
+      const e = this.e,
+        before = e.hp;
+      e.hp = Math.min(e.maxHp, e.hp + n);
+      const got = Math.round(e.hp - before);
+      if (got >= 1) G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 6, '+' + got, '#5fe08a');
     }
 
     /** The body's contact numbers (combat.js reads atkFactor, atkCat and atkType when you touch it): the contact move, never swapped. */

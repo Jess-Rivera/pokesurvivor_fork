@@ -8,7 +8,8 @@
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const SRC = { 'js/entities/boss-ai.js': 'OWNER_BRAIN', 'js/systems/move-sim.js': 'OWNER_SIM', 'js/systems/move-effects.js': 'OWNER_FX',
-  'js/data/gyms.js': 'OWNER_GYMS', 'js/systems/move-route.js': 'OWNER_ROUTE', 'js/systems/move-render.js': 'OWNER_RENDER', 'js/entities/enemy.js': 'OWNER_ENEMY' };
+  'js/data/gyms.js': 'OWNER_GYMS', 'js/systems/move-route.js': 'OWNER_ROUTE', 'js/systems/move-render.js': 'OWNER_RENDER', 'js/entities/enemy.js': 'OWNER_ENEMY',
+  'js/entities/player.js': 'OWNER_PLAYER' };
 const read = p => fs.readFileSync((SRC[p] && process.env[SRC[p]]) || R + '/' + p, 'utf8');
 const load = p => vm.runInThisContext(read(p), { filename: p });
 const noop = new Proxy(function () { }, { get: () => noop, apply: () => undefined, construct: () => ({}) });
@@ -20,8 +21,8 @@ global.window = global; global.location = { search: '?dev' };     // 7b flip: th
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
 let clock = 0, enrage = 1; const casts = {}, warns = [];
 const plTackle = { id: 'tackle', t: Infinity };     // 7b flip: G.MoveSim ticks the player's slots too; this one never recharges, so the player never casts
-const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [],
-  hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
+const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [], isPlayer: true, loss: 0,     // loss: the HP a hit takes (drain tests)
+  hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); this.hp -= this.loss; }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
 const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), rand: (a, b) => a + (b - a) * rnd(), randInt: (a, b) => a + Math.floor((b - a + 1) * rnd()),
     pickN: a => a, damp: (a, b) => b, norm: (x, y) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; }, dist: (a, b, c, d) => Math.hypot(a - c, b - d),
     dist2: (a, b, c, d) => (a - c) * (a - c) + (b - d) * (b - d), hash: () => 0.5, pick: a => a[0] },
@@ -33,12 +34,13 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   World: { collide: () => false, isLiquid: () => false, isFree: () => true, projectileBlock: () => null, propsInCircle: () => [] }, Path: { dirFor: () => null },
   Gym: { now: () => clock, enrageMul: () => enrage, noteCast: id => { casts[id] = (casts[id] || 0) + 1; } } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js',
+for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/player.js',
   'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
   'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js',
   'js/systems/move-route.js', 'js/systems/move-render.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
 const origWarn = console.warn; console.warn = m => warns.push(String(m));
 const Sim = G.MoveSim, S = G.Stages, Gy = G.Gyms; G.Enemy.prototype.die = function () { this.dead = true; };
+pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
@@ -61,7 +63,8 @@ function frame(e, { bx = 0, by = 0, each = null } = {}) {
   G.MoveRoute.tick(DT, pl, clock);
 }
 const run = (e, secs, opt) => { for (let i = 0, N = Math.round(secs / DT); i < N; i++) frame(e, opt); };
-function fresh() { Sim.clear(); Sim.setRng(rnd); pl.hurts = []; pl.dead = false; pl.x = 0; pl.y = 0; clock = 0; enrage = 1; for (const k in casts) delete casts[k]; }
+function fresh() { Sim.clear(); Sim.setRng(rnd); pl.hurts = []; pl.dead = false; pl.x = 0; pl.y = 0; clock = 0; enrage = 1; for (const k in casts) delete casts[k];
+  G.Status.clear(pl); S.clear(pl); pl.stFl = pl.flRoll = null; pl.walking = false; pl.svx = pl.svy = 0; pl.loss = 0; pl.hp = pl.maxHp; pl.mon.types = ['normal']; plTackle.t = Infinity; }
 const tackleFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 40 * 1.3, 'physical');                 // Normal on a Rock/Ground mon: no STAB
 const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3, 'physical') * 1.5;             // Rock: STAB
 
@@ -221,13 +224,70 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   run(e, 0.6); ok(!casts.tackle, 'the cancelled Tackle never lands');
   console.log('9 flinch: cancels the tell, spends the cooldown, waits one recovery'); }
 
-// 10. riders on the player: damage only; a rider is noted once and not applied
-{ fresh(); warns.length = 0; const g = gymOf({ moves: [{ id: 'body-slam' }], cards: {} }), e = mkBoss(g), b = e.brain; b.init(); b.wait = 0; b.mode = 'close';
-  pl.x = 50; pl.inflict = () => ok(false, 'a rider reached the player'); run(e, 3);
-  ok(pl.hurts.length >= 2, 'Body Slam hurts the player: ' + pl.hurts.length);
-  ok(warns.filter(w => w.includes('body-slam') && w.includes('ailment')).length === 1, 'its paralysis rider is noted once: ' + JSON.stringify(warns));
-  ok(!pl.stMajor, 'no ailment on the player'); delete pl.inflict;
-  console.log('10 riders: damage only; Body Slam\'s paralysis noted once in the console and not applied'); }
+// 10. riders onto the player (gym-roster, Jess 2026-11-01). Hits are applied straight through G.MoveEffects.applyHit with a fixed roll (0 =
+// every chance lands, 0.99 = none does), plus one Body Slam end to end through the brain. Expected values from the move data (Body Slam
+// paralysis 30, Sludge poison 30, Ember burn 10, Powder Snow freeze 10, Mud Shot Speed -1 at 100, Metal Claw Attack +1 at 10, Giga Drain
+// half of dealt, Hex x2 vs a major, Psycho Cut crit 15, Bite flinch 30), the status table (poison 4 turns), the Gate (6 s x strong-host 1),
+// D10 (no base crit, x1.5) and the flinch rule (cooldown + 0.3 s, back half the body at 2x speed, else still 0.2 to 0.3 s, 0.5 s roll gap).
+{ const hitWith = (e, id, roll, age = 0, time = 10) => G.MoveEffects.applyHit({ spec: e.brain.def(id), cast: { owner: e, time }, age }, pl, 0, () => roll);
+  const boss = (ids) => mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} }));
+  // ailments
+  { fresh(); const e = boss(['body-slam']); hitWith(e, 'body-slam', 0.99); ok(pl.hurts.length === 1 && !pl.stMajor, 'Body Slam, roll 0.99: damage, no paralysis');
+    hitWith(e, 'body-slam', 0); ok(pl.stMajor && pl.stMajor.k === 'paralysis', 'Body Slam, roll 0: paralysis on the player');
+    hitWith(e, 'sludge', 0); ok(!pl.stDot, 'Sludge cannot poison a paralyzed player (one major at a time)'); }
+  { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4, 'Sludge poisons through the damage over time: 4 turns: ' + JSON.stringify(pl.stDot));
+    fresh(); pl.mon.types = ['poison']; hitWith(e, 'sludge', 0); ok(!pl.stDot, 'a Poison-type player is immune'); pl.mon.types = ['normal'];
+    fresh(); hitWith(e, 'ember', 0); ok(pl.stDot && pl.stDot.k === 'burn', 'Ember burns');
+    fresh(); hitWith(e, 'powder-snow', 0); ok(pl.stMajor && pl.stMajor.k === 'freeze' && G.Status.stunned(pl), 'Powder Snow freezes');
+    fresh(); pl.stWin = { hard: 1 }; hitWith(e, 'powder-snow', 0); ok(!pl.stMajor, 'no freeze inside the 2.5 s hard-CC grace'); }
+  // foe drops on your own tracker, the leader's own raise and drain
+  { fresh(); const e = boss(['mud-shot']), src = G.MoveEffects.srcOf(e.brain.def('mud-shot'), e);
+    hitWith(e, 'mud-shot', 0.99); const t = S.tracker(pl, 'spe', src, false);
+    ok(S.stage(pl, 'spe') === -1 && t && near(t.g, 6 * S.STRONG_HOST_GATE_MUL), 'Mud Shot: Speed -1 on your own tracker, the strong-host Gate (6 s): ' + JSON.stringify(t));
+    hitWith(e, 'mud-shot', 0.99); ok(S.stage(pl, 'spe') === -1, 'a second hit inside the Gate only refreshes'); }
+  { fresh(); const e = boss(['metal-claw']); hitWith(e, 'metal-claw', 0.99); ok(S.stage(e, 'atk') === 0, 'Metal Claw, roll 0.99: no raise');
+    hitWith(e, 'metal-claw', 0); ok(S.stage(e, 'atk') === 1 && e.trk && e.trk.atk && S.stage(pl, 'atk') === 0, "Metal Claw, roll 0: Attack +1 on the leader's own tracker, none on you"); }
+  { fresh(); const e = boss(['giga-drain']); e.hp = e.maxHp / 2; const h0 = e.hp; pl.loss = 100;
+    hitWith(e, 'giga-drain', 0.99); ok(near(e.hp - h0, 50), 'Giga Drain heals the leader half the 100 dealt: ' + (e.hp - h0));
+    e.hp = e.maxHp - 10; hitWith(e, 'giga-drain', 0.99); ok(e.hp === e.maxHp, 'the heal stops at max HP');
+    pl.loss = 0; e.hp = h0; hitWith(e, 'giga-drain', 0.99); ok(e.hp === h0, 'nothing dealt (a shield took it), no heal'); }
+  // Hex and crits
+  { fresh(); const e = boss(['hex']), hex = (p) => G.Stats.enemyAttackFactor(80, 30, 20, p, 'special');
+    hitWith(e, 'hex', 0.99); ok(near(pl.hurts[0].a[0], hex(65)), 'Hex on a clean player: Power 65: ' + pl.hurts[0].a[0]);
+    G.Status.apply(pl, 'paralysis'); hitWith(e, 'hex', 0.99); ok(near(pl.hurts[1].a[0], hex(130)), 'Hex vs a paralyzed player: Power 130: ' + pl.hurts[1].a[0]); }
+  { fresh(); const e = boss(['psycho-cut']);
+    hitWith(e, 'psycho-cut', 0.1); ok(pl.hurts[0].a[3].mul === 1.5 && pl.hurts[0].a[3].crit === true, 'Psycho Cut, roll 0.1 under its 15%: a crit, x1.5');
+    hitWith(e, 'psycho-cut', 0.2); ok(pl.hurts[1].a[3].mul === 1 && !pl.hurts[1].a[3].crit, 'Psycho Cut, roll 0.2: no crit');
+    hitWith(e, 'tackle', 0); ok(pl.hurts[2].a[3].mul === 1, 'Tackle never crits (no base chance), even on roll 0'); }
+  // flinch
+  { fresh(); const e = boss(['bite']); plTackle.t = 0.1;
+    hitWith(e, 'bite', 0.99); ok(!pl.stFl && plTackle.t === 0.1, 'Bite, roll 0.99: no flinch');
+    hitWith(e, 'bite', 0, 0.6); ok(pl.stFl && pl.stFl.ph === 'hold' && pl.stFl.t >= 0.2 && pl.stFl.t <= 0.3, 'Bite, roll 0, standing: still for 0.2 to 0.3 s: ' + JSON.stringify(pl.stFl));
+    ok(near(plTackle.t, 0.5 + 0.3), "the active group's Tackle restarts its 0.5 s cooldown plus the 0.3 s hold: " + plTackle.t);
+    pl.stFl = null; plTackle.t = 0.1; hitWith(e, 'bite', 0, 0.9); ok(!pl.stFl && plTackle.t === 0.1, 'a second roll 0.3 s later is skipped (0.5 s gap)');
+    hitWith(e, 'bite', 0, 1.15); ok(!!pl.stFl, 'a roll 0.55 s after the last lands');
+    fresh(); G.Status.apply(pl, 'sleep'); plTackle.t = 0.1; hitWith(e, 'bite', 0); ok(!pl.stFl && plTackle.t === 0.1, 'an asleep player cannot flinch');
+    fresh(); pl.walking = true; pl.svx = 100; pl.svy = 0; hitWith(e, 'bite', 0);
+    ok(pl.stFl && pl.stFl.ph === 'back' && near(pl.stFl.dx, -1) && near(pl.stFl.sp, 200) && near(pl.stFl.t, 6 / 200), 'moving at 100 px/s: back at 200 px/s for half the body (6 px): ' + JSON.stringify(pl.stFl));
+    const v = pl.flinchMove(DT); ok(near(v[0], -200) && v[1] === 0, 'the recoil velocity points back');
+    for (let i = 0; i < 40 && pl.stFl; i++) pl.flinchMove(DT); ok(!pl.stFl, 'the flinch ends after the recoil and the hold');
+    plTackle.t = Infinity; }
+  { const g = [{ id: 'tackle', t: 0.1 }, { id: 'swords-dance', t: 0 }, { id: 'aqua-ring', t: 0.2 }, { id: 'rock-throw', t: 0 }], other = [{ id: 'tackle', t: 0.1 }];
+    Sim.flinch({ activeGroup: () => g, slots: [g, other], cdMul: 0.5 });
+    ok(near(g[0].t, 0.25 + 0.3) && near(g[3].t, G.MoveDefs['rock-throw'].cd * 0.5 + 0.3), 'every cooldown move of the group restarts (cdMul 0.5) plus the hold: ' + [g[0].t, g[3].t]);
+    ok(g[1].t === 0 && g[2].t === 0.2 && other[0].t === 0.1, 'a pure buff, a persistent aura and the inactive group are untouched'); }
+  // end to end: the brain's Body Slam paralyzes, with no console note
+  { fresh(); warns.length = 0; Sim.setRng(() => 0); const e = boss(['body-slam']), b = e.brain; b.init(); b.wait = 0; b.mode = 'close'; pl.x = 50; run(e, 1.5);
+    ok(pl.hurts.length >= 1 && pl.stMajor && pl.stMajor.k === 'paralysis', 'a Body Slam cast by the brain paralyzes the player');
+    ok(!warns.some(w => w.includes('body-slam')), 'no "not applied" note any more'); Sim.setRng(rnd); }
+  // the opportunity factor (boss-ai.js opp)
+  { fresh(); const e = boss(['hex', 'thunder-shock', 'mud-shot', 'confusion', 'tackle']), b = e.brain, o = id => b.opp(b.def(id), pl);
+    ok(o('hex') === 1 && o('thunder-shock') === 1 && o('mud-shot') === 1.25 && o('confusion') === 1 && o('tackle') === 1, 'clean player: only the drop move is up (1.25)');
+    G.Status.apply(pl, 'paralysis');
+    ok(o('hex') === 1.5 && o('thunder-shock') === 0.75 && o('confusion') === 1, 'paralyzed: Hex x1.5, Thunder Shock x0.75, Confusion (not a major) x1');
+    hitWith(e, 'mud-shot', 0.99); ok(o('mud-shot') === 1, 'once Mud Shot has dropped you, its opportunity is back to 1'); }
+  fresh();
+  console.log('10 riders: ailments (paralysis, poison 4 turns, burn, freeze, one major, immunity, grace), Mud Shot -1 on your tracker, Metal Claw +1 on the leader, Giga Drain half of dealt, Hex x2, Psycho Cut crit x1.5 and no base crit, flinch (+0.3 s hold, recoil, 0.5 s gap, not asleep), opportunity 1.5 / 0.75 / 1.25'); }
 
 // 11. the shared sim: MoveRoute.tick steps every instance once per frame; an enemy cast is not the player's cast
 { fresh(); ok(G.MoveRoute.routed('tackle') && G.MoveRoute.on === undefined, 'the new path is the only path (no flag since 7b)');
@@ -283,15 +343,15 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 { const mk3 = (ids) => { fresh(); const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; return [e, b]; };
   const slot = (e, id) => e.slots[0].find(x => x.id === id);
   { const [e, b] = mk3(['thunder-shock', 'confusion', 'psychic']); b.t0 = 0; const T = 10; pl.x = 300; pl.y = 0;
-    slot(e, 'thunder-shock').last = T - 1; slot(e, 'confusion').last = T - 1; slot(e, 'psychic').last = T - 4;   // 1.715, 1.429, 2.286
-    b.attack(300, pl, T); ok(b.tell && b.tell.id === 'psychic', 'the stalest move by its own cooldown wins: Psychic 4/1.75 = 2.29 over Thunder Shock 1/0.583 = 1.71');
+    slot(e, 'thunder-shock').last = T - 1; slot(e, 'confusion').last = T - 1; slot(e, 'psychic').last = T - 4;   // 1.715, 1.429, 2.286 x 1.25 (its drop is not on you)
+    b.attack(300, pl, T); ok(b.tell && b.tell.id === 'psychic', 'the stalest move by its own cooldown wins: Psychic 4/1.75 x 1.25 = 2.86 over Thunder Shock 1/0.583 = 1.71');
     const sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
-    ok(near(sc['thunder-shock'], 1 / 0.583, 1e-2) && near(sc.confusion, 1 / 0.7, 1e-2) && near(sc.psychic, 4 / 1.75, 1e-2), 'scores are seconds over cooldown: ' + JSON.stringify(sc));
+    ok(near(sc['thunder-shock'], 1 / 0.583, 1e-2) && near(sc.confusion, 1 / 0.7, 1e-2) && near(sc.psychic, 4 / 1.75 * 1.25, 1e-2), 'scores are seconds over cooldown (x opportunity): ' + JSON.stringify(sc));
     ok(b.scores.filter(x => x.picked).length === 1 && b.scores.find(x => x.picked).id === 'psychic', 'the overlay record marks one pick');
     ok(slot(e, 'psychic').last === T, 'the pick stamps its last cast at the tell start');
     const [e2, b2] = mk3(['thunder-shock', 'confusion', 'psychic']); b2.t0 = 0;
-    slot(e2, 'thunder-shock').last = T - 1; slot(e2, 'confusion').last = T - 1; slot(e2, 'psychic').last = T - 2.9;   // 1.715 vs 1.657
-    b2.attack(300, pl, T); ok(b2.tell && b2.tell.id === 'thunder-shock', 'Psychic at 2.9/1.75 = 1.66 loses to Thunder Shock at 1.71'); }
+    slot(e2, 'thunder-shock').last = T - 1; slot(e2, 'confusion').last = T - 1; slot(e2, 'psychic').last = T - 2.3;   // 1.715 vs 1.643
+    b2.attack(300, pl, T); ok(b2.tell && b2.tell.id === 'thunder-shock', 'Psychic at 2.3/1.75 x 1.25 = 1.64 loses to Thunder Shock at 1.71'); }
   { const [e, b] = mk3(['psychic', 'thunder-shock']); b.t0 = 5; b.attack(300, pl, 5);
     ok(b.tell && b.tell.id === 'psychic', 'equal scores (both never cast, 0) go to the first move in the group'); }
   { const [e, b] = mk3(['rock-throw', 'tackle']); b.t0 = 5; b.attack(60, pl, 5);

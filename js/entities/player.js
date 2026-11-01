@@ -421,6 +421,37 @@ G.Player = class Player {
     }
   }
 
+  /**
+   * Flinch from a gym leader's hit (COMBAT-RULES "Flinch on the player", Jess 2026-11-01): the active group's cooldowns restart plus a
+   * 0.3 s hold (G.MoveSim.flinch), and you recoil as an enemy does: moving, back half your body at 2x your speed, then still 0.2 to
+   * 0.3 s; standing, still only. Input is ignored while it lasts. Frozen or asleep, you cannot flinch. Returns true when it applied.
+   */
+  applyFlinch() {
+    if (this.dead || G.Status.stunned(this)) return false;
+    G.MoveSim.flinch(this);
+    const sp = this.walking ? Math.hypot(this.svx || 0, this.svy || 0) : 0;
+    this.stFl =
+      sp > 0
+        ? { ph: 'back', dx: -this.svx / sp, dy: -this.svy / sp, sp: 2 * sp, t: this.r / 2 / (2 * sp) }
+        : { ph: 'hold', dx: 0, dy: 0, sp: 0, t: G.U.rand(0.2, 0.3) };
+    G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Flinched', '#e8d5a0');
+    return true;
+  }
+  /** Velocity during the flinch: back at 2x for half the body, then still for 0.2 to 0.3 s. */
+  flinchMove(dt) {
+    const F = this.stFl;
+    F.t -= dt;
+    if (F.ph === 'back') {
+      if (F.t <= 0) {
+        F.ph = 'hold';
+        F.t = G.U.rand(0.2, 0.3);
+      }
+      return [F.dx * F.sp, F.dy * F.sp];
+    }
+    if (F.t <= 0) this.stFl = null;
+    return [0, 0];
+  }
+
   statusDot(kind, amount, color) {
     if (this.dead) return;
     const inv = this.invuln;
@@ -517,7 +548,7 @@ G.Player = class Player {
         this.y - this.bodyH - 4,
         '-' + Math.round(d),
         eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a',
-        eff === 'super'
+        eff === 'super' || !!(atk && atk.crit) // a gym leader's crit shows big
       );
       G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
     }
@@ -721,7 +752,7 @@ G.Player = class Player {
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen or asleep: you cannot move
+    let [ax, ay] = this.frozen || this.stFl || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen, asleep or flinched: no input
     if (this.stCnf && (ax || ay)) {
       // confused: your heading drifts (half weight)
       const m = Math.hypot(ax, ay),
@@ -740,8 +771,12 @@ G.Player = class Player {
     const s = this.spd;
     // Ice: you slide (the velocity changes slowly).
     const slide = this.inLiquid && G.World.liquidEffect(this.mon.types).slide;
-    this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;
-    this.svy = slide ? G.U.damp(this.svy || 0, ay * s * 1.15, 1.6, dt) : ay * s;
+    if (this.stFl)
+      [this.svx, this.svy] = this.flinchMove(dt); // the flinch recoil moves you
+    else {
+      this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;
+      this.svy = slide ? G.U.damp(this.svy || 0, ay * s * 1.15, 1.6, dt) : ay * s;
+    }
     this.x += this.svx * dt;
     this.y += this.svy * dt;
     G.World.collide(this);

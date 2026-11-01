@@ -1,12 +1,13 @@
 // Mutation check for slice 7a's gym leader owner (D-ENEMY; Node only; not a harness, so tools/check.js does not run it).
 // Usage from the repo root:  node docs/proposals/boss-owner-mutate.js
-// Each mutation breaks boss-ai.js, move-sim.js, move-effects.js, gyms.js, move-route.js, move-render.js or enemy.js in one deliberate way,
+// Each mutation breaks boss-ai.js, move-sim.js, move-effects.js, gyms.js, move-route.js, move-render.js, enemy.js or player.js in one deliberate way,
 // writes the copy to a temp folder, and runs docs/proposals/boss-owner-harness.js against it (OWNER_<FILE> env vars). The harness must fail
 // every time.
 const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '../..');
 const SRC = { brain: ['js/entities/boss-ai.js', 'OWNER_BRAIN'], sim: ['js/systems/move-sim.js', 'OWNER_SIM'], fx: ['js/systems/move-effects.js', 'OWNER_FX'],
-  gyms: ['js/data/gyms.js', 'OWNER_GYMS'], route: ['js/systems/move-route.js', 'OWNER_ROUTE'], render: ['js/systems/move-render.js', 'OWNER_RENDER'], enemy: ['js/entities/enemy.js', 'OWNER_ENEMY'] };
+  gyms: ['js/data/gyms.js', 'OWNER_GYMS'], route: ['js/systems/move-route.js', 'OWNER_ROUTE'], render: ['js/systems/move-render.js', 'OWNER_RENDER'], enemy: ['js/entities/enemy.js', 'OWNER_ENEMY'],
+  player: ['js/entities/player.js', 'OWNER_PLAYER'] };
 const M = [
   ['the cards are not added to the mon', 'brain', [['G.TeamCards.add(e.teamCards, id, g.cards[id]);', '']]],
   ['tempo no longer scales the cooldowns', 'brain', [['e.cdMul = 1 / g.tempo;', 'e.cdMul = 1;']]],
@@ -28,7 +29,21 @@ const M = [
   ['the player takes the knockback', 'fx', [['hp0 = pl.hp;', 'hp0 = pl.hp; pl.x += 20;']]],
   ['a team raise with no team store is lost', 'fx', [["const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;", "const teamOf = (fx, o) => fx.scope === 'team';"]]],
   ['the strong-host Gate multiplier is dropped', 'fx', [['* (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1)', '* (o.strongHost ? 2 : 1)']]],
-  ['riders are not noted', 'fx', [["noted.add(def.id + ':' + fx.t);", "noted.add(def.id + ':' + fx.t); continue;"]]],
+  ['ailments skip the player', 'fx', [['    ailment: ailPlayer,', '    ailment: inDamage,']]],
+  ['burn and poison go through the control table', 'fx', [['if (DOT.has(fx.id)) {', 'if (false) {']]],
+  ['foe drops skip the player', 'fx', [['    flinch: flinchPlayer,\n    stat,', '    flinch: flinchPlayer,\n    stat: inDamage,']]],
+  ['the leader drain heals nothing', 'brain', [['e.hp = Math.min(e.maxHp, e.hp + n);', '']]],
+  ['Hex ignores your ailment', 'fx', [['(sb && G.Status.majorKind(pl) ? sb.multiplier : 1)', '1']]],
+  ['leader crits deal no extra damage', 'fx', [['mul: crit ? CRIT_MUL : 1, crit }', 'mul: 1, crit }']]],
+  ['leader hits get a base crit chance', 'fx', [['crit = c > 0 && rng() < c; // D10: no base chance', 'crit = rng() < c + 0.05;']]],
+  ['no flinch roll gap', 'fx', [['now - last[inst.spec.id] < FLINCH_GAP - EPS', 'false']]],
+  ['an asleep player can flinch', 'player', [['if (this.dead || G.Status.stunned(this)) return false;\n    G.MoveSim.flinch(this);', 'if (this.dead) return false;\n    G.MoveSim.flinch(this);']]],
+  ['no recoil while moving', 'player', [['const sp = this.walking ?', 'const sp = false ?']]],
+  ['no flinch hold', 'sim', [['* (o.cdMul || 1)) + FLINCH_HOLD;', '* (o.cdMul || 1));']]],
+  ['no Hex opportunity', 'brain', [['k *= OPP_HEX;', '']]],
+  ['a blocked ailment keeps its score', 'brain', [['k *= OPP_BLOCKED;', '']]],
+  ['the drop opportunity ignores the tracker', 'brain', [['!G.Stages.tracker(pl, G.MoveEffects.statKey(fx.stat), src, false)', 'true']]],
+  ['the opportunity is left out of the score', 'brain', [['* this.opp(d, pl) };', ' };']]],
   ['team cards allowed on a leader', 'gyms', [["else if (c.team) bad.push", "else if (false) bad.push"]]],
   ['card caps not checked', 'gyms', [['else if (c.cap && n > c.cap)', 'else if (false)']]],
   ['a beam counts as a melee cone', 'gyms', [["if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee';", "if (v.motion === 'static' && v.targeting === 'nearest') return 'melee';"]]],

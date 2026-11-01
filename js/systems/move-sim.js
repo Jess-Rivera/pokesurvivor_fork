@@ -42,6 +42,9 @@
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
  *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
  *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
+ *   flinch(owner)         a flinch on the player (gym-roster, Jess 2026-11-01): every cooldown move of the active group restarts its full
+ *                         cooldown plus FLINCH_HOLD (a bonded group is hit together). Pure buffs, persistent moves, frozen slots, the
+ *                         inactive groups and the shapes already out are untouched.
  *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
  *
  * Commitments (casterState.commitment, slice 4b S13): cooldown { type: freeze, id, t } holds the named slot timers of the caster
@@ -528,6 +531,17 @@ G.MoveSim = (() => {
     rootOf(o);
   }
   const frozen = (o, id) => cms.some((m) => m.o === o && m.part === 'cooldown' && (!m.ids || m.ids.has(id)));
+
+  const FLINCH_HOLD = 0.3; // seconds a flinched cooldown waits before it counts (COMBAT-RULES "Flinch on the player")
+  function flinch(o) {
+    for (const slot of o.activeGroup()) {
+      const def = defOf(o, slot.id);
+      if (!def || !routed(slot.id) || def.persistent || def.cd == null || frozen(o, slot.id))
+        // a pure buff has no cd
+        continue;
+      slot.t = Math.max(0.05, def.cd * (o.cdMul || 1)) + FLINCH_HOLD;
+    }
+  }
 
   // ---- persistent upkeep (slice 4c-1, R7, combat-architecture:H25): the slot, not endOn, owns a persistent move's life ----
   // A routed persistent slot keeps one live group (the count shapes of one spawn) while it is in the active group and the owner is
@@ -1105,6 +1119,7 @@ G.MoveSim = (() => {
     step,
     clear,
     castAt,
+    flinch,
     setRng: (fn) => {
       rng = fn || Math.random;
     },
