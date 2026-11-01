@@ -8,21 +8,22 @@
  * authored moves (G.Gyms) sit in one group and cast through the sim (G.MoveSim.castAt), each attack on its own cooldown (the folded
  * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
- * Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone and
- * 0.5 s for a shot, then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player is damage
+ * Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
+ * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player is damage
  * only (G.MoveEffects). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px;
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
  */
 G.Boss = (() => {
-  const TELL = { melee: 0.45, shot: 0.5 }; // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
+  const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5 }; // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
+  const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
+  const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack pick: the first ready form, in this order, whose reach you are inside
   const RECOVER = 0.35; // seconds standing still after the release, divided by tempo
   const LOW_HP = 0.3; // below this fraction of max HP the leader favors fighting from range
   const NEAR = 170,
     FAR = 300; // far mode: backs off inside NEAR, circles you inside FAR, walks in beyond it
   const adapt = (d) => ({ cat: d.category, dmg: d.basePower || 0, type: d.type }); // the damage adapter G.MoveEffects uses (D5: P = basePower)
-  const rangeOf = (d) => (d.delivery.range != null ? d.delivery.range : G.MoveResolver.TUNING.RANGE);
 
   class GymBrain {
     /** The body becomes a sim owner: one group with the authored moves, its own card store, tempo as the cooldown multiplier, the player
@@ -53,7 +54,7 @@ G.Boss = (() => {
     init() {
       const st = this.e.gym.stance;
       this.on = true;
-      this.melee = this.e.slots[0].some((s) => G.Gyms.formOf(this.def(s.id)) === 'melee');
+      this.melee = this.e.slots[0].some((s) => CLOSE.includes(G.Gyms.formOf(this.def(s.id))));
       this.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5;
       this.mode = st === 'far' || !this.melee ? 'far' : 'close';
       this.modeT = G.U.rand(6, 8);
@@ -102,8 +103,8 @@ G.Boss = (() => {
           vx = -ux * spd;
           vy = -uy * spd;
         } else if (dist < FAR) circle();
-      } else if (!this.ready('melee')) {
-        // close, melee recharging: circle just outside its reach
+      } else if (!this.ready('melee') && !this.ready('nova')) {
+        // close, every close move recharging: circle just outside its reach
         const r = this.reach() + (pl.r || 0) + 30;
         if (dist < r) {
           vx = -ux * spd;
@@ -119,26 +120,27 @@ G.Boss = (() => {
       for (const s of this.e.activeGroup()) if (s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form) return s;
       return null;
     }
-    /** The reach of the mon's melee cone (the largest), from its center: the player's reach, since the mon is player-sized. */
+    /** The reach of the mon's close moves (the largest melee cone or nova), from its center: the player's reach, since the mon is player-sized. */
     reach() {
       let r = 0;
       for (const s of this.e.slots[0]) {
-        const d = this.def(s.id);
-        if (G.Gyms.formOf(d) === 'melee') r = Math.max(r, d.space.radRadius);
+        const d = this.def(s.id),
+          f = G.Gyms.formOf(d);
+        if (CLOSE.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
       }
       return r;
     }
 
-    /** Starts a tell for the first ready attack the player is in range of: a melee cone when you are inside its reach (plus your body),
-     *  else a shot when you are within its range (the sim's cast gate for a straight shot). */
+    /** Starts a tell for the first ready attack the player is in range of (ORDER): a melee cone or a nova when you are inside its reach
+     *  (plus your body), else a strike or a shot when you are within its range (the sim's cast gate for a shot). */
     attack(dist, pl) {
       const list = this.e.activeGroup();
-      for (const want of ['melee', 'shot'])
+      for (const want of ORDER)
         for (const s of list) {
           if (s.t > 0) continue;
           const d = this.def(s.id);
           if (G.Gyms.formOf(d) !== want) continue;
-          if (want === 'melee' ? dist <= d.space.radRadius + (pl.r || 0) : dist <= rangeOf(d)) {
+          if (dist <= G.Gyms.reachOf(d, want) + (CLOSE.includes(want) ? pl.r || 0 : 0)) {
             this.start(s, d, want, pl);
             return true;
           }
@@ -146,17 +148,20 @@ G.Boss = (() => {
       return false;
     }
 
-    /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. */
+    /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks
+     *  your spot instead and marks it on the ground; a nova's ring shows its full reach. */
     start(slot, d, form, pl) {
       const e = this.e,
         tempo = e.gym.tempo,
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
-      const wind = TELL[form] / tempo;
-      this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, fired: false };
+      const wind = TELL[form] / tempo,
+        spot = form === 'strike' ? { x: pl.x, y: pl.y } : null;
+      this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
       e.aim = ang;
       e.anim.play('Charge', { speed: 1.4 });
-      G.FX.ring(e.x, e.y, e.r, e.r * 2.4, col, wind, 2);
+      if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
+      else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
     }
 
     telling(dt, now) {
@@ -166,9 +171,9 @@ G.Boss = (() => {
       if (!c.fired && c.t >= c.wind) {
         c.fired = true;
         e.aim = c.ang;
-        if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang)) {
+        if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {
           G.Gym.noteCast(c.id);
-          e.anim.play(c.form === 'melee' ? 'Attack' : 'Shoot', { speed: 1.4 });
+          e.anim.play(CLOSE.includes(c.form) ? 'Attack' : 'Shoot', { speed: 1.4 });
         }
       }
       if (c.t >= c.wind + c.after) this.tell = null;

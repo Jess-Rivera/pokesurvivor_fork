@@ -27,21 +27,35 @@ G.Gyms = (() => {
   const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'cards', 'moves'];
   const MOVE_KEYS = ['id', 'hpBelow'];
 
-  /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'shot' (shapes
-   *  that travel straight along the aim) or 'buff' (a pure self stat change). Emitters, chains, delays, persistent moves and caster
-   *  commitments have no gym form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
+  /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'nova' (a ring or
+   *  half ring that grows out of its body: Heat Wave, Dazzling Gleam), 'shot' (shapes that travel along the aim, homing ones included:
+   *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt) or 'buff' (a pure self stat change). A chain move takes
+   *  its shape's form; its hops search the caster's foes (G.MoveSim). Emitters, delays, persistent moves and caster commitments have no gym
+   *  form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
       p = d.payload || [];
-    if (p.some((fx) => fx.t === 'emit') || d.persistent || d.casterState || v.delay || (d.space && d.space.chainHops))
-      return null;
+    if (p.some((fx) => fx.t === 'emit') || d.persistent || d.casterState || v.delay) return null;
     if (!d.space) return p.length && p.every((fx) => fx.t === 'stat' && fx.side !== 'foe') ? 'buff' : null;
+    const radial = d.space.shape === 'radial';
+    if (v.anchor === 'target') return v.motion === 'static' && v.targeting === 'nearest' && radial ? 'strike' : null;
     if (v.anchor !== 'caster') return null;
-    if (v.motion === 'static' && v.targeting === 'nearest' && d.space.shape === 'radial') return 'melee'; // a cone; beams wait for their own form
-    if (v.motion === 'travels' && v.targeting === 'direction' && !v.path && !v.aimTrack) return 'shot';
+    if (v.motion === 'static' && radial && v.grow && v.grow.dim === 'radRadius') return 'nova';
+    if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee'; // a cone; beams wait for their own form
+    if (v.motion === 'travels' && (v.targeting === 'direction' || v.targeting === 'nearest') && !v.path && !v.aimTrack)
+      return 'shot';
     return null;
   }
+  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range. */
+  const reachOf = (d, form) =>
+    form === 'melee'
+      ? d.space.radRadius
+      : form === 'nova'
+        ? d.delivery.grow.max
+        : d.delivery.range != null
+          ? d.delivery.range
+          : G.MoveResolver.TUNING.RANGE;
 
   /** Builds a stage ladder from national dex numbers, base form first. Levels default to STAGE_BANDS; pass `levels` to override per line. */
   function ladder(dexes, levels) {
@@ -601,7 +615,7 @@ G.Gyms = (() => {
         if (d.basePower > 0) damaging++;
         if (!formOf(d))
           bad.push(
-            who + ': ' + m.id + ' has no gym form yet (leaders cast melee cones, straight shots and self buffs)'
+            who + ': ' + m.id + ' has no gym form yet (leaders cast melee cones, novas, shots, strikes and self buffs)'
           );
       }
       if (s.moves && s.moves.length && !damaging) bad.push(who + ' needs at least one damaging move');
@@ -637,6 +651,7 @@ G.Gyms = (() => {
     stageFor,
     lineup,
     formOf,
+    reachOf,
     validate,
   };
 })();

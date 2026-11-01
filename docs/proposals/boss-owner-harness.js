@@ -72,8 +72,14 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   const forms = id => Gy.formOf(G.MoveDefs[id]);
   ok(forms('tackle') === 'melee' && forms('rock-throw') === 'shot' && forms('harden') === 'buff', 'forms: Tackle melee, Rock Throw shot, Harden buff');
   ok(forms('body-slam') === 'melee' && forms('water-gun') === 'shot' && forms('swords-dance') === 'buff' && forms('agility') === 'buff', 'slots 2 to 6 forms');
-  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('quick-attack') && !forms('thunderbolt'), 'no gym form for falls, emitters, persistent auras, dashes and chains');
-  ok(!forms('ice-beam') && !forms('hydro-pump') && !forms('heat-wave') && !forms('confusion') && !forms('bonemerang'), 'no gym form for beams, novas, homing shots and returning shots');
+  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('quick-attack') && !forms('flamethrower') && !forms('aura-sphere') && !forms('spikes'),
+    'no gym form for falls, emitters, persistent auras, dashes, tracking cones, path shots and world hazards');
+  ok(forms('thunder-shock') === 'shot' && forms('hex') === 'shot', "a chain move takes its shape's form: Thunder Shock and Hex are shots");
+  ok(forms('thunderbolt') === 'strike', 'Thunderbolt (target-anchored, static) is a strike');
+  ok(['heat-wave', 'hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
+  ok(forms('confusion') === 'shot' && forms('psychic') === 'shot', 'homing shots (Confusion, Psychic) cast as shots');
+  const beam = { id: 'beam', space: { shape: 'linear', len: 200, width: 10 }, delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static' }, payload: [{ t: 'damage' }] };
+  ok(!Gy.formOf(beam), 'a beam (a static linear shape) has no gym form yet');
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
     ['unknown card', s => { s.cards.luck = 1; }, 'unknown card luck'],
@@ -237,6 +243,39 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   G.MoveRoute = saved;
   const h = tape.filter(x => x.type === 'move:hit'); ok(h.length >= 1 && h.every(x => x.enemyId === null), 'a hit on the player names no enemy');
   console.log('11 shared sim: MoveRoute.tick steps once per frame; enemy casts are tagged and never play your animation'); }
+
+// 13. new forms (gym-roster): chains search the caster's foes, novas, strikes, homing. Expected numbers from the move data: Thunder Shock
+// hopRange 60, Bulldoze grows to 200, Dazzling Gleam to 130, Thunderbolt radius 10 at the default range 420, Confusion turns 3 rad/s.
+{ const one = (id) => { fresh(); const e = mkBoss(gymOf({ moves: [{ id }], cards: {} })), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; return [e, b]; };
+  // a wild enemy beside the player: a leader's chain must never hop to it, nor to the leader itself
+  const decoy = { id: 9001, x: 0, y: 0, r: 10, dead: false, types: ['normal'], hits: 0, hurt() { this.hits++; }, applyBurn() {}, applyPoison() {}, applyFlinch() {} };
+  const savedMgr = G.EnemyMgr; G.EnemyMgr = { queryCircleEach: (x, y, R, f) => { if (Math.hypot(decoy.x - x, decoy.y - y) <= R) f(decoy); }, queryCircle: () => [decoy], all: () => [decoy] };
+  { const [e, b] = one('thunder-shock'); pl.x = 200; pl.y = 0; decoy.x = 230; decoy.y = 0; decoy.hits = 0; const hp0 = e.hp;
+    frame(e); ok(b.tell && b.tell.form === 'shot' && b.tell.id === 'thunder-shock', 'a Thunder Shock tell at 200 px');
+    run(e, 1.2); ok(pl.hurts.length === 1, 'Thunder Shock hits the player once: ' + pl.hurts.length);
+    ok(decoy.hits === 0 && e.hp === hp0, 'its hop never reaches a wild enemy 30 px away, nor the leader');
+    // co-op ready: a second foe within the 60 px hop range takes the hop
+    fresh(); const [e2, b2] = one('thunder-shock'), pl2 = { x: 240, y: 0, r: 12, dead: false, mon: { types: ['normal'] }, hurts: [], hurt(...a) { this.hurts.push(a); } };
+    e2.foes = () => [pl, pl2]; pl.x = 200; pl.y = 0; run(e2, 1.2);
+    ok(pl.hurts.length === 1 && pl2.hurts.length === 1, 'with two foes 40 px apart the chain hops to the second: ' + [pl.hurts.length, pl2.hurts.length]); }
+  { const [e, b] = one('hex'); pl.x = 200; pl.y = 0; decoy.x = 260; decoy.hits = 0; run(e, 1.2);
+    ok(casts.hex >= 1 && pl.hurts.length >= 1 && decoy.hits === 0, 'Hex is cast, hits the player and never hops to the wild enemy'); }
+  { const [e, b] = one('bulldoze'); pl.x = 215; pl.y = 0; frame(e); ok(!b.tell, 'no Bulldoze tell at 215 px (reach 200 + body 12)');
+    pl.x = 205; frame(e); ok(b.tell && b.tell.form === 'nova' && near(b.tell.wind, 0.45), 'a 0.45 s nova tell at 205 px');
+    run(e, 1); ok(pl.hurts.length === 1, 'the ring reaches the player at 205 px: ' + pl.hurts.length);
+    ok(near(b.reach(), 200), "the brain's close reach is the nova's full growth (200)"); }
+  { const [e, b] = one('dazzling-gleam'); pl.x = 140; pl.y = 0; frame(e); ok(b.tell && b.tell.form === 'nova', 'a Dazzling Gleam tell at 140 px (reach 130 + body 12)');
+    run(e, 1); ok(pl.hurts.length === 1, 'Dazzling Gleam lands (it never could as a 1 px melee): ' + pl.hurts.length);
+    const [e2, b2] = one('dazzling-gleam'); pl.x = 100; pl.y = 0; frame(e2); pl.x = -100; run(e2, 1); ok(pl.hurts.length === 0, 'its half ring keeps the locked aim and misses a player behind it'); }
+  { const [e, b] = one('thunderbolt'); pl.x = 430; pl.y = 0; frame(e); ok(!b.tell, 'no Thunderbolt tell past its 420 px range');
+    pl.x = 300; decoy.x = 300; decoy.y = 15; decoy.hits = 0; frame(e);
+    ok(b.tell && b.tell.form === 'strike' && near(b.tell.wind, 0.5) && b.tell.spot && b.tell.spot.x === 300 && b.tell.spot.y === 0, "a 0.5 s strike tell locks the player's spot");
+    run(e, 0.8); ok(pl.hurts.length === 1 && decoy.hits === 0, 'it lands on the player who stayed, and does not hop to the wild enemy: ' + [pl.hurts.length, decoy.hits]);
+    const [e2, b2] = one('thunderbolt'); pl.x = 300; pl.y = 0; frame(e2); pl.y = 40; run(e2, 0.8); ok(pl.hurts.length === 0, 'a player 40 px off the spot (radius 10 + body 12) is missed'); }
+  { const [e, b] = one('confusion'); pl.x = 200; pl.y = 0; frame(e); ok(b.tell && near(b.tell.ang, 0), 'a Confusion tell aimed at 0');
+    pl.y = 60; run(e, 1.6); ok(pl.hurts.length === 1, 'the shot homes on the player, who moved 60 px off the locked aim: ' + pl.hurts.length); }
+  G.EnemyMgr = savedMgr; pl.x = 0; pl.y = 0;
+  console.log('13 forms: Thunder Shock and Hex hop only between foes (a second player takes the hop), Bulldoze and Dazzling Gleam novas, Thunderbolt strike on a locked spot, Confusion homes'); }
 
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');

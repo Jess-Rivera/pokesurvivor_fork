@@ -40,7 +40,8 @@
  *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
- *   castAt(owner, slot, def, now, aim)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain
+ *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
+ *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
  *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
  *
  * Commitments (casterState.commitment, slice 4b S13): cooldown { type: freeze, id, t } holds the named slot timers of the caster
@@ -83,11 +84,18 @@ G.MoveSim = (() => {
     return a > Math.PI ? a - TAU : a < -Math.PI ? a + TAU : a;
   };
 
-  /** Nearest live enemy to (x, y) whose centre distance passes limit(e); ties by lower id (S10, no rng). */
-  function nearest(x, y, far, limit) {
+  /** Calls f for every live foe of `o` within `far` of (x, y): an enemy owner's own foes (owner.foes(), the player; every player once co-op
+   *  fills that list), else the enemy grid. Every search a move makes goes through here, so a move never needs to know who cast it. */
+  function eachFoe(o, x, y, far, f) {
+    if (o && o.foes) {
+      for (const p of o.foes()) if (!p.dead && Math.hypot(p.x - x, p.y - y) <= far + EPS) f(p);
+    } else G.EnemyMgr.queryCircleEach(x, y, far, f);
+  }
+  /** Nearest live foe of `o` to (x, y) whose centre distance passes limit(e); ties by lower id (S10, no rng). */
+  function nearest(o, x, y, far, limit) {
     let best = null,
       bd = Infinity;
-    G.EnemyMgr.queryCircleEach(x, y, far, (e) => {
+    eachFoe(o, x, y, far, (e) => {
       const d = Math.hypot(e.x - x, e.y - y);
       if (d > limit(e) + EPS) return;
       if (d < bd - EPS || (Math.abs(d - bd) <= EPS && e.id < best.id)) {
@@ -118,12 +126,12 @@ G.MoveSim = (() => {
       const R = rangeOf(def),
         d = def.delivery;
       const reach = d.anchor === 'caster' && d.motion === 'static' ? reachOf(def, o) : Infinity;
-      const t = nearest(o.x, o.y, R, (e) => Math.min(R, reach + e.r));
+      const t = nearest(o, o.x, o.y, R, (e) => Math.min(R, reach + e.r));
       return t ? { aim: Math.atan2(t.y - o.y, t.x - o.x), target: t } : null;
     },
     direction(o, def) {
       const R = rangeOf(def);
-      return nearest(o.x, o.y, R, () => R) ? { aim: o.aim || 0, target: null } : null;
+      return nearest(o, o.x, o.y, R, () => R) ? { aim: o.aim || 0, target: null } : null;
     },
     none: (o) => ({ aim: o.aim || 0, target: null }),
     self: (o) => ({ aim: o.aim || 0, target: null }),
@@ -253,7 +261,7 @@ G.MoveSim = (() => {
       heading = aim;
     if (kid.delivery.targeting === 'nearest') {
       const R = rangeOf(kid);
-      target = nearest(at.x, at.y, R, () => R);
+      target = nearest(inst.cast.owner, at.x, at.y, R, () => R);
       if (!target) return false;
       heading = Math.atan2(target.y - at.y, target.x - at.x);
     }
@@ -450,7 +458,7 @@ G.MoveSim = (() => {
   }
   /** Slice 7a (D-ENEMY): a gym leader's cast, timed by its brain (boss-ai.js), which owns the tell and the slot's recharge. The move
    *  fires along `aim` whether or not the player is still in reach; stun, the cast cost, fizzle and the cooldown hold as for the player. */
-  const castAt = (o, slot, def, now, aim) => castSlot(o, slot, def, now, { aim, target: null });
+  const castAt = (o, slot, def, now, aim, target = null) => castSlot(o, slot, def, now, { aim, target }); // target: a strike's locked spot
 
   // ---- caster-state commitments (slice 4b, S13) ----
   const lifeOf = (def) => {
@@ -670,7 +678,7 @@ G.MoveSim = (() => {
     if (!inst.retargeted) {
       inst.retargeted = true;
       const R = rangeOf(inst.spec);
-      inst.steer = nearest(inst.x, inst.y, R, () => R);
+      inst.steer = nearest(inst.cast.owner, inst.x, inst.y, R, () => R);
     }
     return live(inst.steer) ? inst.steer : null;
   }
@@ -683,7 +691,7 @@ G.MoveSim = (() => {
       lim = (e) => Math.min(R, reach + e.r);
     const t = inst.track;
     if (live(t) && Math.hypot(t.x - o.x, t.y - o.y) <= lim(t) + EPS) return t;
-    inst.track = nearest(o.x, o.y, R, lim);
+    inst.track = nearest(o, o.x, o.y, R, lim);
     return inst.track;
   }
   const MOTION = {
@@ -921,12 +929,12 @@ G.MoveSim = (() => {
   }
 
   /** D15, S15: the next hop from prev, never prev itself; an enemy this chain has not hit yet first, else the nearest revisit. */
-  function hopFrom(prev, R, seen) {
+  function hopFrom(o, prev, R, seen) {
     let fresh = null,
       fd = Infinity,
       again = null,
       ad = Infinity;
-    G.EnemyMgr.queryCircleEach(prev.x, prev.y, R, (e) => {
+    eachFoe(o, prev.x, prev.y, R, (e) => {
       if (e === prev || e.dead || e.remote) return;
       const d = Math.hypot(e.x - prev.x, e.y - prev.y);
       if (d > R + EPS) return;
@@ -949,13 +957,13 @@ G.MoveSim = (() => {
     let prev = origin;
     for (let k = 1; k <= sp.chainHops; k++) {
       // bounded by chainHops, so no chain can run away
-      const next = hopFrom(prev, sp.hopRange, seen);
+      const next = hopFrom(inst.cast.owner, prev, sp.hopRange, seen); // an enemy owner hops only between its foes (one player: no hop)
       if (!next) return;
       const r = G.MoveEffects.applyHit(inst, next, k, rng);
       G.SimBus.emit('move:hit', {
         moveId: inst.spec.id,
         instId: inst.id,
-        enemyId: next.id,
+        enemyId: inst.cast.owner.foes ? null : next.id,
         dmg: r.dmg,
         crit: r.crit,
         typeMult: r.typeMult,
