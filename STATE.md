@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-10-31 late night (Claude Code, home; 7a done, docs sweep done, sweep not yet committed).
+Last updated: 2026-11-01 (Claude Code, home; 7a done, sweep committed, board cleaned).
 
 ## Where we are
 - Branch feature-test/new-move-schema. Live plan: docs/current feature planning/move-schema-post-auth/slice-overview.md.
@@ -11,9 +11,8 @@ Last updated: 2026-10-31 late night (Claude Code, home; 7a done, docs sweep done
 - Tests: check.js 34/34, I1 and 7a guards ok; tools/smoke-ui.js and smoke-newcombat all passed.
 
 ## Next (in order)
-1. Jess commits the sweep.
-2. Board cleanup on GitHub (TODO mirror; #15 can close; #1 gym gate still draws the rift prop).
-3. Slice 7b plan (flip, purge, merge). Blocking: D-HAIL, D-BUBBLE. Owed: the slice 6 stress run.
+1. Sweep committed (dfa5c9b). Board cleaned (Jess, 2026-10-31): #15 closed; In progress = #1, #6, #17.
+2. Slice 7b plan (flip, purge, merge). Blocking: D-HAIL, D-BUBBLE. Owed: the slice 6 stress run.
 
 ## Open owner decisions
 - Commit A side effects to confirm (slice-7a.md Results).

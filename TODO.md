@@ -7,6 +7,7 @@ notes that have not yet been turned into issues. When the board and this file di
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
 ## Board mirror (synced from the GitHub API 2026-10-31 ~12:05 PM, Quick)
+Update 2026-11-01 (Jess, board cleaned 2026-10-31): #15 closed; In progress = #1, #6, #17. Other labels below may be stale until the next full sync.
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
 OPEN (15):
