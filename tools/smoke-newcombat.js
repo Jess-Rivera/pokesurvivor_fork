@@ -172,9 +172,9 @@ async function density(page) {
       await page.evaluate(() => { G.Debug.hitbox(true); });
       await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat-selfcasts.png') });
       await page.evaluate(() => { const pl = G.Game.player; pl.hp = pl.maxHp * 0.4; window.__healed = 0; });
-      await slot('aqua-ring'); await sleep(3300);
+      await slot('aqua-ring'); await sleep(4300);      // the aura heals 1/16 of max HP every 2 s (MOVE-INTENT aqua-ring, slice 5a)
       const ar = await page.evaluate(() => ({ healed: window.__healed, max: G.Game.player.maxHp }));
-      ok(ar.healed >= ar.max * 0.0625 * 3 - 1e-6, 'Aqua Ring healed ' + ar.healed.toFixed(1) + ' HP in about 3 s (6.25% of ' + ar.max + ' per second)');
+      ok(ar.healed >= ar.max * 0.0625 * 2 - 1e-6, 'Aqua Ring healed ' + ar.healed.toFixed(1) + ' HP in about 4 s (6.25% of ' + ar.max + ' every 2 s, two ticks)');
       ok(errs.length === 0, 'self-casts: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 

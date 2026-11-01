@@ -20,7 +20,7 @@ const cases = [
   ['empty override (why only) leaves the move as resolved', () => { const r = R({ s: { ...D['swords-dance'] }, t: D.tackle }, { s: { why: 'only a note' } }, H); return r.s.cd === undefined && r.t.cd === 0.5; }],
   ['freeze of an unknown move rejected', () => throws(() => R({ s: { ...D.substitute, casterState: { commitment: { cooldown: { type: 'freeze', id: 'ghost' } } } } }, {}, H), 'unknown move "ghost"')],
   ['move that lasts while active gets no cd', () => ['fire-spin', 'leaf-storm', 'flame-wheel', 'bug-buzz'].every(i => defs[i].cd === undefined)],
-  ['Gust gets the formula cd', () => defs.gust.cd === 0.5],
+  ['Gust gets its hand-set cd 0.7 (MOVE-INTENT gust, slice 6 batch 1)', () => defs.gust.cd === 0.7],
   ['basePower is power x accuracy / 100', () => defs['hydro-pump'].basePower === 88 && defs['night-shade'].basePower === 0 && defs.tackle.basePower === 40],
   ['persistent move gets no cd, a non-persistent one is untouched', () => defs['fire-spin'].persistent === true && defs['fire-spin'].cd === undefined && defs.spikes.persistent === undefined],
   ['range default only where it has meaning, a move range wins', () => defs.tackle.delivery.range === 420 && !('range' in defs['water-gun'].delivery) && defs['razor-leaf'].delivery.range === 210],
