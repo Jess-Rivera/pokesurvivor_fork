@@ -12,11 +12,11 @@ Last updated: 2026-11-01 (Claude Code, home; 7a done, sweep committed, board cle
 
 ## Next (in order)
 1. Sweep committed (dfa5c9b). Board cleaned (Jess, 2026-10-31): #15 closed; In progress = #1, #6, #17.
-2. Slice 7b plan (flip, purge, merge). Blocking: D-HAIL, D-BUBBLE. Owed: the slice 6 stress run.
+2. Slice 7b plan (flip, purge, merge). Unblocked. D-HAIL resolved (Hail pulled, old saves get Water Gun). D-BUBBLE resolved (retire Bubble, starters get Water Gun). Slice 6 stress run done (Jess; Quick did not log it).
 
 ## Open owner decisions
 - Commit A side effects to confirm (slice-7a.md Results).
-- D-HAIL, D-BUBBLE (7b). [Open] loop 2+: do a gym's mons share stat raises (TODO). Enemy-owned riders on the player (TODO, gym-roster branch).
+- [Open] loop 2+: do a gym's mons share stat raises (TODO). Enemy-owned riders on the player (TODO, gym-roster branch).
 - Bond tax [Proposed]. [Open] stage-manipulation moves, raises on foes, whole-field moves. HUD own-drop gap (proposed). Psychic widening [Open]. Quick Attack priority [Open].
 
 ## Docs and code still differ (approved, not built)

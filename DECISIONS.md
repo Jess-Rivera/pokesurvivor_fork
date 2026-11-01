@@ -5,6 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, D-HAIL: Hail leaves the pool until its toggle exists; old saves get Water Gun (Jess)
+Option (c). The toggle skill item stays parked (MOVE-INTENT hail) and becomes its own issue after the merge. A save that holds Hail loads with Water Gun. Declined: building the toggle in 7b, and a plain snow cast (snow chips the player's own non-Ice team).
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Decision D-HAIL"
+
+## 2026-11-01, D-BUBBLE: Bubble is retired; its starters open with Water Gun (Jess)
+Bubble (the 64th legacy move, never converted) leaves the move pool in slice 7b. The two starters that open with it (dex 393 and 728) open with Water Gun instead. Old saves that hold Bubble must still load. Also recorded: the slice 6 stress run was done (Quick did not log it).
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Scope"
+
 ## 2026-10-31, 7a UI readers: picks 1c, 2a, 3a, 4a (Jess)
 Menus, level-up cards, icons, the HUD, the sheet and player.js read the resolved def (G.MoveDefs, through G.MoveInfo for display), never the legacy `kind`. 1c: a move's card text is generated from its def (shape plus effects), not copied from moves.js. 2a: the icon badge comes from the def's shape, motion and anchor (14 badges change, listed in slice-7a.md Results). 3a: player.js gameplay readers migrate: the melee damage-taken cut reads balanceClass, ranged targeting reads a travelling shot or a beam, Life Orb skips persistent defs; the buff test is self-only on both flags. 4a: the sheet's routed rows read the folded def; flag-off rows stay until 7b. The 7a guard (tools/kind-guard.js) fails on any legacy read outside 7b's files; known leftovers are tagged legacy-7b.
 Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Results"

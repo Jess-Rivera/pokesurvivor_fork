@@ -5,8 +5,8 @@ Back to slice-overview.md. Prior: slice-7a.md. This is the last slice of the bra
 ## Objective
 The new path is the only player-move path. The legacy code and its legacy behaviors are gone. The branch merges into main.
 
-## Blocking decision (D-HAIL)
-Hail is parked as a toggle skill item (MOVE-INTENT hail). At the flip its legacy path disappears. Candidate readings: (a) build the toggle here; (b) route Hail as a plain setWeather self-cast (built in 4b) and leave the toggle for its own item; (c) remove Hail from the player pool until the toggle exists (saves that hold it must still load).
+## Decision D-HAIL (resolved)
+- [Approved] (c): Hail leaves the player pool until its toggle skill item exists (MOVE-INTENT hail). Old saves that hold Hail load with Water Gun in its place. (Jess, 2026-11-01; (a) build the toggle here and (b) a plain setWeather cast were declined, since snow chips the player's own team.)
 
 ## Scope
 - Remove the `?newcombat` flag and routing (H7, D-4); every move runs through G.MoveSim. G.Combat keeps enemy shots, wall cover and contact damage.
@@ -17,7 +17,7 @@ Hail is parked as a toggle skill item (MOVE-INTENT hail). At the flip its legacy
 - Patch notes in js/data/changelog.js (free edit; it must still parse).
 - Docs: mark the [Legacy behavior] lines removed in COMBAT-RULES and MOVE-INTENT; clear the matching STATE.md gaps; architecture D7 and C8 lose their legacy notes.
 
-- [Open] D-BUBBLE: Bubble is the 64th legacy move, parked unconverted on purpose (move-conversions-described.json forgottenSkips, Jess 2026-10-24). Two starters open with it (js/data/starters.js: dex 393 and dex 728), so deleting moves.js breaks them. Before the purge: convert Bubble, or re-point those two starters (Water Gun is the obvious swap) and remove it from the pool. (found 2026-10-30)
+- [Approved] D-BUBBLE: Bubble is retired as a move. The starters that open with it (js/data/starters.js: dex 393 and dex 728) open with Water Gun instead, and Bubble leaves the pool. Saves that hold Bubble must still load (Water Gun is the natural default). (Jess, 2026-11-01; found 2026-10-30)
 
 ## Tests
 All harnesses green with no flag; the I1 guard extended to every file that remains; old saves (with Bubble, Hail and pre-branch move ids) load; a full run to Brock; the stress run from slice 6 repeated with no flag.
