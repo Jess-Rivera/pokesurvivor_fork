@@ -187,7 +187,7 @@ propose or implement cloud or multiplayer work during the local-first phase.
 - **New UI screen:** add a `*-ui.js` under `js/ui/`, register it on `G`, add its
   `<script>` to `dev.html`, and wire it into the flow in `js/game.js`. Draw any
   icons in `js/ui/icons.js`. Remember to add it to the `NEED` list in `js/main.js`.
-- **New gym / arena / weather:** `js/systems/gym-arena.js` (arena), `js/data/gyms.js` (rosters, moves, cards; docs/BOSS-AUTHORING.md), `js/systems/weather.js`,
+- **New gym / arena / weather:** `js/systems/gym-arena.js` (arena), `js/data/gyms.js` (rosters, moves, cards; docs/BOSS-AUTHORING.md), `js/data/gym-contact.js` (building contact mask, generated: rerun `node tools/gym_contact.js` after repainting gym-contact.png), `js/systems/weather.js`,
   terrain in `js/world/`.
 - **Anything with new on-screen text:** author it directly in English. Leave inherited
   Spanish literals unchanged because they are translation keys.

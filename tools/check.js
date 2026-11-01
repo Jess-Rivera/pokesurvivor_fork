@@ -108,13 +108,15 @@ console.log(
         ')')
 );
 kbad += KG.bad.length;
-// 3. Move data: the generated file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash.
+// 3. Generated data: the move file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash;
+// the gym contact mask must match its PNG.
 let mbad = 0;
 for (const [name, args, show] of [
   ['export_moves.js', ['--check'], /current/],
   ['validate_moves.js', [], /^moves:/],
   ['validate_moves.js', ['--resolved'], /^resolved moves:/],
   ['move_parity.js', [], /^parity:/],
+  ['gym_contact.js', ['--check'], /current/],
 ]) {
   const r = cp.spawnSync(process.execPath, [path.join(__dirname, name), ...args], { encoding: 'utf8' });
   const out = ((r.stdout || '') + (r.stderr || '')).trim().split('\n');

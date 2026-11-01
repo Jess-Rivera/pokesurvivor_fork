@@ -320,3 +320,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - js/systems/gym-arena.js: the gate draws assets/tileset/gyms/gym-<arena>.png (loaded on gate open, half scale), type-colored open ring, soft ground shadow; purple ellipse and sparkles gone; spawn clearance radius 22 to 60. Removed the old purple gate painter from js/world/tiles.js.
 - Fixed on the way: harnesses run without Image, so artFor() returns an empty entry there. Verified: check.js 30/30, smoke-ui and smoke-newcombat pass, headless screenshot of the Brock gate. HUD gate colors left for later (TODO).
 - Follow-up: the oval shadow became a north-east silhouette of the building (offset 10,-8, alpha 0.35). Contact and spawn clearance now use Jess's painted mask assets/tileset/gyms/gym-contact.png (whole building minus the roof strip; fallback is that rectangle). Verified: check.js 30/30, headless probe of side, roof, corner, back entry and a clear footprint.
+
+## 2026-11-01 (Claude Code, home): gym contact mask on file://
+- Bug: opening dev.html from file:// threw "The operation is insecure" (gym-arena.js:77); Firefox blocks reading canvas pixels of a file:// image, so the painted mask never loaded (rectangle fallback). Smokes run over http, so they missed it.
+- Fix: tools/gym_contact.js bakes gym-contact.png into js/data/gym-contact.js (G.GymContact, row runs, 1.8 KB); gym-arena.js reads that, no runtime pixel reads. dev.html loads it after gyms.js (not in NEED: the rectangle fallback stays). check.js fails if the data is stale vs the PNG.
+- Verified: check.js 30/30 plus the mask check; headless file:// load clean of gym errors; baked mask equals the browser pixel read (0 of 71424 pixels differ).

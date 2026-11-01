@@ -24,7 +24,7 @@ G.GymArena = (() => {
   const GATE_ART_SCALE = 0.5; // the gym building images are 288x248; drawn at half size on the map
   const GATE_ART_W = 288,
     GATE_ART_H = 248; // art pixels; gym-contact.png has the same size
-  const GATE_MASK_TOP = 24; // fallback contact area before the mask loads: the art minus this many top rows (the roof)
+  const GATE_MASK_TOP = 24; // fallback contact area if the mask data is missing: the art minus this many top rows (the roof)
   const GATE_CLEAR_STEP = 16; // spawn clearance: the contact area is sampled on this grid (world px)...
   const GATE_CLEAR_R = 8; // ...and each sample needs this much free space
   const GATE_SHADOW_DX = 10,
@@ -64,22 +64,20 @@ G.GymArena = (() => {
     return a;
   }
 
-  // The contact area, shared by every gym: the painted pixels of assets/tileset/gyms/gym-contact.png (1 = solid).
+  // The contact area, shared by every gym: the painted pixels of assets/tileset/gyms/gym-contact.png (1 = solid), baked into
+  // G.GymContact (js/data/gym-contact.js, by tools/gym_contact.js) so no canvas pixels are read at runtime (Firefox blocks that on file://).
   const mask = { ok: false, solid: null };
-  if (typeof Image !== 'undefined') {
-    const img = new Image();
-    img.onload = () => {
-      const c = document.createElement('canvas');
-      c.width = GATE_ART_W;
-      c.height = GATE_ART_H;
-      const g = c.getContext('2d', { willReadFrequently: true });
-      g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, GATE_ART_W, GATE_ART_H).data;
-      mask.solid = new Uint8Array(GATE_ART_W * GATE_ART_H);
-      for (let i = 0; i < mask.solid.length; i++) mask.solid[i] = d[i * 4 + 3] > 0 ? 1 : 0;
-      mask.ok = true;
-    };
-    img.src = 'assets/tileset/gyms/gym-contact.png';
+  const gc = G.GymContact;
+  if (gc && gc.w === GATE_ART_W && gc.h === GATE_ART_H) {
+    mask.solid = new Uint8Array(GATE_ART_W * GATE_ART_H);
+    gc.rows.split('/').forEach((row, y) => {
+      if (row)
+        for (const run of row.split(',')) {
+          const [x0, x1] = run.split('-').map(Number);
+          mask.solid.fill(1, y * GATE_ART_W + x0, y * GATE_ART_W + x1);
+        }
+    });
+    mask.ok = true;
   }
 
   /** Is world point (x, y) on the contact area of a building whose door (feet) is at (gx, gy)? */
