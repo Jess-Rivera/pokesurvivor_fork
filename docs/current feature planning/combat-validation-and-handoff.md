@@ -18,7 +18,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
 | D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (DECISIONS:Q14). Superseded 2026-10-30: maxStacks is retired (COMBAT-RULES "Stat stages"; DECISIONS 2026-10-30) |
 | D-3 | Meteor Mash: the projectile hits enemy 1; at enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1 |
-| D-4 | Approved: per-move routing behind `?newcombat` until slice 7 |
+| D-4 | Approved: per-move routing behind `?newcombat` until slice 7. Done: slice 7b removed the flag and the list (2026-11-01); every move with a resolved def that is not retired runs in G.MoveSim |
 
 Still open from Checkpoint 2: Gust's per-shot spread (only D-3 of item 5 was answered).
 

@@ -65,7 +65,7 @@ Per frame, in this order (ACCEPTED; the game loop already clamps dt to 1/30 and 
 13. Presentation (separate pass in the draw phase): the renderer reads the instance list read-only and draws shapes; SimBus subscribers turn 'move:cast', 'move:hit', 'move:end' into FX and sound.
 
 ### Where it plugs into the existing loop
-game.js today calls G.Combat.tick, G.Projectiles.update, G.Combat.resolve, G.Combat.updateFields (lines 855 to 858) and draws fields and projectiles at lines 900 to 931. ACCEPTED: under a dev flag (section G, slice 3d), the active player's moves route to G.MoveSim instead of G.Combat's kind switch; G.MoveSim.step runs right after G.Combat.tick; G.MoveRender draws in the same two layers (ground, air). G.Combat.resolve keeps handling ENEMY projectiles, wall cover for enemy shots and enemy contact damage, which are outside the move schema (see C, "retained mechanics").
+Since slice 7b (2026-11-01) game.js calls G.MoveRoute.tick (the player's slots through G.MoveSim.tick, which ends with the step), then G.Projectiles.update and G.Combat.resolve, and G.MoveRender draws in two layers (ground under the entities, air after the projectiles). G.Combat.resolve handles only ENEMY projectiles, wall cover for enemy shots and enemy contact damage, which are outside the move schema (see C, "retained mechanics"). History: from slice 3d to 7b-1 the routing sat behind a dev flag and G.MoveSim ran right after the legacy G.Combat.tick.
 
 ### Simulation / presentation boundary
 
@@ -215,7 +215,7 @@ Proposed files (all new; none loaded by the game until slice 3d):
 ### move-sim.js
 | function | responsibility | in -> out | mutates | invariants | deps |
 |---|---|---|---|---|---|
-| tick(dt, owner, now) | entry point: cooldowns, persistent upkeep, casts, then step | | slots, instances | runs once per frame after G.Combat.tick | below |
+| tick(dt, owner, now) | entry point: cooldowns, persistent upkeep, casts, then step | | slots, instances | runs once per frame from G.MoveRoute.tick, before G.Projectiles.update | below |
 | upkeepPersistent(owner, now) | the slot owns a persistent move's life (H25): spawn one group for an active, unstunned, routed persistent slot with no live group; end it with notActive when the slot leaves the active group or the owner is stunned, ownerDeath on a faint; a group that ended by its own endOn is spawned again next tick | | instances (cast.persist marks a persistent group) | one live group per slot | spawnInstance |
 | castSlot(owner, slot, now) | cast gate, fizzle, cooldown spend, CastContext, recoil, root instance fan | -> CastContext or null | slot.t, owner HP (recoil) | never casts while stunned; cd spent on fizzle | spawnInstance, G.Status |
 | selectTarget(cast, spec) | pick target enemy or point per `targeting`, within `range` | -> enemy or point or null | nothing | uses rng only for ties | G.EnemyMgr |
@@ -232,7 +232,7 @@ Proposed files (all new; none loaded by the game until slice 3d):
 | setView(rect) | the visible world rectangle {x, y, w, h} for endOn offScreen (260 px margin); set by the game each frame from 3d, fixed in harnesses, so the sim never calls the camera (I7) | | module view | | |
 | castAt(owner, slot, def, now, aim) | slice 7a (D-ENEMY): one cast along `aim` with no cast gate, for an enemy owner whose brain timed it (the tell locked the aim); stun, cost, fizzle and cooldown as castSlot | -> CastContext or null | slot.t | only gym leader brains call it | castSlot |
 
-Enemy owners (slice 7a, D-ENEMY; Jess 2026-10-31): a gym leader's mon is a sim owner. It supplies `foes()` (the player), `activeGroup()`, `moveFactor(m)` (the boss ratio path), `teamCards` (its own card store, so defOf folds its cards), `cdMul` (1 / tempo), `aim` and `strongHost`. Its brain (js/entities/boss-ai.js) times every cast through castAt and never calls tick, so the shared step runs once per frame from MoveRoute.tick on both flags. collide tests only the owner's foes (no enemies, no props) and keys hit records by the foe object; applyHit hands the hit to the player's hurt with the owner's factor (damage only; knockback skipped, other riders noted and skipped, TODO). 'move:cast' carries `enemy: true` so the render never plays the player's animation for it.
+Enemy owners (slice 7a, D-ENEMY; Jess 2026-10-31): a gym leader's mon is a sim owner. It supplies `foes()` (the player), `activeGroup()`, `moveFactor(m)` (the boss ratio path), `teamCards` (its own card store, so defOf folds its cards), `cdMul` (1 / tempo), `aim` and `strongHost`. Its brain (js/entities/boss-ai.js) times every cast through castAt and never calls tick, so the shared step runs once per frame from MoveRoute.tick. collide tests only the owner's foes (no enemies, no props) and keys hit records by the foe object; applyHit hands the hit to the player's hurt with the owner's factor (damage only; knockback skipped, other riders noted and skipped, TODO). 'move:cast' carries `enemy: true` so the render never plays the player's animation for it.
 
 ### move-effects.js
 | function | responsibility | in -> out | mutates | invariants | deps |
@@ -317,7 +317,7 @@ Each slice is handed to the coding model alone, with this document and the slice
 ### Slice 3d: playable behind a dev flag
 - Objective: see the core moves in the real game.
 - Files: dev.html (script tags), js/main.js NEED array, js/game.js (call site under the flag), js/systems/move-render.js (outline-quality shapes in type color plus the retained telegraph and patch recipes).
-- Routing (OPEN D-4, touches the "no bridge" ruling): with `?newcombat`, a slot whose move id the new path supports runs through G.MoveSim; everything else stays legacy. This is routing by id, not a data bridge; no kind is derived. Recommend yes, removed in slice 7.
+- Routing (OPEN D-4, touches the "no bridge" ruling): with `?newcombat`, a slot whose move id the new path supports runs through G.MoveSim; everything else stays legacy. This is routing by id, not a data bridge; no kind is derived. Recommend yes, removed in slice 7. History: built as proposed; slice 7b-1 removed the flag and 7b-2b the hand-kept list (2026-11-01), see H7.
 - Tests: legacy unchanged without the flag (check.js harnesses untouched); with the flag, the slice 3c moves playable on dev.html?dev&newcombat; framerate check at high density (performance stance: a visible collapse is fixed now).
 - Exclusions: upgrades (new-path moves ignore cards until slice 5), riders.
 - Proceed when: Jess plays the core set and signs off feel-level issues to the backlog.
@@ -360,12 +360,12 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 | id | rule | tag | source |
 | --- | --- | --- | --- |
 | H1 | Return legs: the back leg may hit again. Hit records keyed by leg (R2), no new field. | [Approved] | 9.1 Q2 |
-| H2 | Stat riders: self and team riders still fire per hit, bounded by the per-move cap (C7). A capped application refreshes that move's oldest. Removed by slice 5: H26 replaces it (self-side rolls once per cast). | [Legacy behavior] | 9.1 Q4 (cap wording superseded by DECISIONS:Q14 and DECISIONS:Q16; rule superseded 2026-10-30 by H26) |
+| H2 | Stat riders: self and team riders fired per hit, bounded by the per-move cap (C7). A capped application refreshed that move's oldest. Removed in slice 5 (2026-10-31): H26 replaces it (self-side rolls once per cast). | History | 9.1 Q4 (cap wording superseded by DECISIONS:Q14 and DECISIONS:Q16; rule superseded 2026-10-30 by H26) |
 | H3 | Accuracy folds into `basePower` = power x accuracy / 100 (resolver). See D1. | [Approved] | 9.1 Q6 |
 | H4 | An emitter is its own instance. Schedule: `cast` emits first at activation, `interval` first at `every` (D29). | [Approved] | 9.1 Q7 |
 | H5 | Every eligible hit rolls its riders. The legacy 0.5 s roll gap is dropped for the new path, and the rehit time is the throttle. See D32. | [Approved] | 9.1 Q14 |
 | H6 | Instance cap: placed objects with neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8; current value: see js/data/move-resolver.js TUNING). A 9th removes that slot's oldest. Timed objects are bounded by their lifetime. | [Approved] | 9.1 Q16 |
-| H7 | Routing: per-move routing behind `?newcombat` until slice 7 (D-4). | [Approved] | 9.2 D-4 |
+| H7 | Routing (D-4): G.MoveRoute.routed(id) is true for a move with a resolved def that is not retired (G.Moves.RETIRED); G.MoveSim runs every routed slot. History: per-move routing sat behind `?newcombat` until slice 7b-1 removed the flag, and 7b-2b replaced the hand-kept ROUTED list with this test (2026-11-01). | [Approved] | 9.2 D-4 |
 | H8 | Normalization: none. The Power/s proxy (D37) is for tools only and never gameplay. | [Approved] | 9.2 |
 | H9 | Stat key map (C8): one mapping function (schema `spd` is Speed, `spDef` is Sp. Def, stages.js `spd` is Sp. Def, `spe` is Speed). Renaming the 17 data effects is not recommended. See D31. | [Approved] (accepted with the architecture approval, 9.2) | 9.2 C8 |
 | H10 | Slice 3b geometry: D18 amended with an apex rule (an enemy covering the arc origin is inside at any angle). The lens is applied in shapeOf, after growth and its cap, to the radius and radArc only (beams are never widened); spawnInstance must not pre-scale. boundsOf takes the largest enemy radius for linear shapes. | [Approved] | 9.2 slice 3b (Jess, 2026-10-26) |
@@ -400,7 +400,7 @@ Open decisions:
 - BLOCKING for slice 3a: D-1 start sizes for the re-authored novas (recommend a small start near the caster's body radius, `max` = today's radius, growSpeed unchanged); move-consistency-review:CP1-Q8 `range` values (recommend one field, defaults: nearest acquisition 520 px like legacy, returns turnaround about 210 px like legacy Razor Leaf, repositions 110 to 120 px like legacy dashes, location pick within 340 px like legacy meteors); move-consistency-review:CP1-Q16 Spikes lifetime (recommend a timeout so its concurrent count is bounded like every other placed object).
 - Before slice 4a: D-2 maxStacks values for Leaf Storm and Metal Claw.
 - Before slice 4d: D-3 whether enemyHit children ignore the triggering enemy; Gust's per-shot spread (data change to a 3-count simultaneous fan, or accept the ±0.03 jitter, or a new emit-level aim jitter field).
-- Before slice 3d: D-4 per-move routing behind ?newcombat.
+- Before slice 3d: D-4 per-move routing behind ?newcombat. (Resolved: built in 3d, the flag and the list removed in slice 7b, 2026-11-01.)
 - Low: D25 orbit y-squash (render only, recommended).
 
 Assumptions the implementation model must not change: everything in section A, the D-table formulas marked EXISTING or DECIDED, the R1 to R9 list, the frame order in section B, and that G.Combat keeps enemy shots and contact damage until slice 7.

@@ -243,14 +243,14 @@ Placeholder behavior (CP5-8). The upstream Upgrades menu is live with 13 per-Pok
 - **Shop** `[Approved]`: tabs Pokemon (the gacha, section 7.6) | Team Items (every team item not yet unlocked, flat price) | Team Upgrades (slots 2 to 4). Purchases use the in-game confirm dialog. Prices: current value, see js/data/items.js (TEAM_ITEM_PRICE, SLOT_PRICES). Berry bag slots are not in the Shop yet.
 
 ### 7.4 Level-up and in-run upgrades
-`[Approved]` (upgrade rework slices 1 to 2d-2, 2026-10-18). Move-path card rules for the new move system: combat-architecture D4.
-`[Legacy behavior]` The mechanic, stat and scoped cards below are the flag-off path, removed in slice 7b. On the new move path (`?dev&newcombat`) a level-up offers team-wide cards instead (one store per run, every member and every later move reads it; js/systems/team-cards.js, slice 5b) plus new-move cards. A new-move card's name, type, text and icon badge come from the move's resolved definition through G.MoveInfo (js/ui/move-info.js; text generated from shape and effects, DECISIONS 2026-10-31 "7a UI readers"), on both flags.
+`[Approved]` (team cards, slice 5b, Jess 2026-10-30 and 2026-10-31; the family draft and unlimited upgrades carry over from the 2026-10-18 upgrade rework). Card rules: combat-architecture D4.
+History (removed in slice 7b-2a, 2026-11-01): the per-move mechanic cards, the per-Pokemon stat cards and the scoped type or move-family cards (js/data/mechanics.js, js/data/kinds.js) are gone; the team cards replaced them.
 
-- On leveling up: **1 of 3 cards**, drawn by family first (new move, DPS, Coverage, Utility, Stats), then a card inside the family, so catalogue size does not skew the odds. Weights: current value, see js/systems/levelup.js (FAMILY_W). Only cards with a legal target on the team are offered.
+- On leveling up: **1 of 3 cards**, drawn by family first (New Move, then the team families General, Space, Delivery, Payload), then a card inside the family, so catalogue size does not skew the odds. Weights: current value, see js/systems/levelup.js (TEAM_W). A card is offered only when a team move can take it.
 - **Moves have no level**; they hold any number of upgrades. Unlimited upgrades are the point: a framerate collapse at END GAME from a stacked build is intended, a collapse in a normal-length game is not.
-- **Mechanic cards** are move-specific: card, then an eligible Pokemon (any team member, fainted included), then an eligible move. A card whose ceiling is already reached is ineligible (dimmed). Rate mechanics are additive "increased rate".
-- **Stat cards** (HP Up, Protein, Iron, Calcium, Zinc, Carbos): per Pokemon, percentage only. **Scoped cards** (one type or one legacy move family): applied to one chosen move. All "increased damage" sources sum in one additive pool. Steps: current value, see js/data/mechanics.js and js/data/kinds.js.
-- **Removed:** move evolutions, the nine old stat cards and the utility cards (cooldown, regen, pickup radius, XP, heal).
+- **Team cards**: every pick is team-wide for the run (one store per run; every member and every later move reads it, so a move learned later gets every card picked so far). Which moves a card touches comes from the move's own fields. General holds Gate Reduction, Duration Increase, HP Regen (benched only) and Vitamins (a pick of HP Up, Protein, Iron, Calcium, Zinc, Carbos for the whole team). Steps, caps and weights: current value, see js/systems/team-cards.js (slice 6 placeholders).
+- **New Move cards**: learn a move (active Pokemon only, with a free slot). Name, type, text and icon badge come from the move's resolved definition through G.MoveInfo (js/ui/move-info.js; text generated from shape and effects, DECISIONS 2026-10-31 "7a UI readers").
+- **Removed:** move evolutions, the nine old stat cards, the utility cards (cooldown, regen, pickup radius, XP, heal), and in slice 7b-2a the mechanic, stat and scoped cards.
 - **Bond** `[Open]`: Bond = Slot Compression + Synergy; synergy rules, bond count per run and BOND_MAX are open. See TODO (Bond rework) and the board.
 
 ### 7.5 Gacha tickets: Pokeballs and Master Balls

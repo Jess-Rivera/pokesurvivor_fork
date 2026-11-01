@@ -281,7 +281,7 @@ Copied from docs/current feature planning/move-schema/slice-overview.md, "File r
 4. js/data/move-overrides.js: per-move overrides only (hand cds).
 5. js/data/move-handler.js: special handler declarations (6; executors in move-effects.js since 4b, berrySteal still a stub).
 6. js/data/move-resolver.js: defaults, derived values (cd, basePower, range, locationPick), overrides, handler attachment, G.MoveDefs. TUNING holds the cd constants, RANGE 420 and INSTANCE_CAP 8.
-7. New from slice 3b (loaded by the game since 3d, active only with ?dev&newcombat): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the flag and the ONE routed list), move-render.js (G.MoveRender, drawing and cast glue).
+7. New from slice 3b (loaded by the game since 3d, the only move path since slice 7b, 2026-11-01): js/systems/move-geom.js (G.MoveGeom, pure math), move-sim.js (G.MoveSim), move-effects.js (G.MoveEffects), move-route.js (G.MoveRoute, the per-frame entry and routed(id): a resolved def that is not retired), move-render.js (G.MoveRender, drawing and cast glue).
 
 Runtime behavior of the files in item 7 is owned by docs/current feature planning/combat-architecture.md.
 

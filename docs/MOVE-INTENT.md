@@ -155,7 +155,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### string-shot
 - [Approved] Under COMBAT-RULES "Stat stages" the second shot of a cast refreshes the first shot's Speed -2 but does not climb, since the Gate is closed (SS4): one cast gives -2, and an enemy climbs -2 per Gate while String Shot keeps landing on it. Supersedes the review 9.8 S7 double application (-4 per cast). Shot spacing (#15) is now readability only. (Jess, 2026-10-30)
-- [Legacy behavior] New path today: both shots stack, -4 per cast (review 9.8 S7; an uncapped foe drop under D-FOECAP). Removed by slice 5.
+- History (removed in slice 5, 2026-10-31): both shots stacked, -4 per cast (review 9.8 S7; an uncapped foe drop under D-FOECAP).
 - [Approved] cd 1.1 (move-overrides.js), the legacy value: the 0.5 the new path had was a regression. The cooldown does not cause the two shots of one cast reading as one (#15); that is shot spacing. (Jess, 2026-10-29, Stage 0 cd ruling)
 - [Approved] Shot spacing (#15): a still emitter at the caster fires a strand at once and a second 0.11 s later, both on the aim line, about 35 px apart at 320 px/s (Fairy Wind's pattern). Each strand carries the payload (Speed -2 and the trap), so the SS4 refresh ruling above is unchanged. (Jess, 2026-10-31, slice 6 batch 1) Scenarios: string-shot-spacing, string-shot-double.
 - [Approved] Cards follow the emitter shape (D-CARDS): Count Up applies (+1 strand per pick, cap +3); Reach Up no longer does, since the root is a still emitter, as for Gust. (Jess, 2026-10-31, slice 6 batch 1)

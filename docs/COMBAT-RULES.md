@@ -105,7 +105,7 @@ Paths: since slice 7b (2026-11-01) there is one move path, the move schema path 
 
 ## Stat stages
 
-Formerly "Stat stages and maxStacks"; a pointer to that title means this section. SS1 to SS13 were approved by Jess on 2026-10-30 (DECISIONS 2026-10-30, stat stage model). Rationale, the pokeapi shape counts, the worked examples and the design intent: docs/proposals/stat-stage-model.md (history; its R1 to R13 are SS1 to SS13 here, and this text wins). Built on the new path in slice 5a (2026-10-31). Code differs, see TODO: the legacy path keeps its own model until slice 7b removes it, and the two team cards (SS10) land in slice 5b.
+Formerly "Stat stages and maxStacks"; a pointer to that title means this section. SS1 to SS13 were approved by Jess on 2026-10-30 (DECISIONS 2026-10-30, stat stage model). Rationale, the pokeapi shape counts, the worked examples and the design intent: docs/proposals/stat-stage-model.md (history; its R1 to R13 are SS1 to SS13 here, and this text wins). Built on the new path in slice 5a (2026-10-31). The two team cards (SS10) landed in slice 5b; the legacy path's own model was removed in slice 7b (2026-11-01).
 
 - [Approved] Mainline stat STAGES for Attack, Defense, Sp. Atk, Sp. Def and Speed, on every host (player, wild, elite, boss, gym leader). Accuracy and evasion are skipped. (archive 2026-10-19 Status Slice D1)
 - [Approved] The CAP is the +-6 ladder limit: a stat's stage on a host is the sum of its trackers (SS6), clamped to +-6. The maximum stage can never exceed 6 for any single stat. (A.2; archive Slice D1)
