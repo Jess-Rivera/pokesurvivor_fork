@@ -293,3 +293,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Docs: the 7b [Legacy behavior] lines are dated history notes now. Tests: check.js 30/30, smokes pass.
 - Stopped at: Jess feel-tests 2b, then commits. Next: 7b-3 (docs sweep, changelog, merge into main).
 - Later: Jess hit a freeze entering the gym with Fire Spin. Cause: the orbit swept across the arena teleport and the prop query generated every chunk on the line (predates 7b, exposed by the flip). Fixed in move-sim.js (a >1,000 px step sweeps nothing); harness and mutation added.
+
+## 2026-11-01 (Claude Code, home): session close
+- Jess confirmed the gym freeze fix in play. Committed and pushed: be9b512 (7b-2b), 47f3dd5 (freeze fix).
+- 7b-3 handoff written as a numbered work list in slice-7b.md "Steps" (docs sweep counts per file, optional log.js cleanup, DECISIONS line, merge order).
+- Stopped at: 7b-3 not started. Next chat: 7b-3, then the merge into main.
