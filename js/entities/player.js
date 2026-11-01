@@ -65,7 +65,7 @@ G.Player = class Player {
 
     // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
     // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
-    // { stat: [{ n, t, dur, src }] } with stat in atk, def, spa, spd, spe, regen. See G.Stages.teamAdd.
+    // { stat: [{ n, t, dur, src }] } with stat in atk, def, spa, spd, spe, regen. Timed keys from berries (data/ground-items.js); move raises are team trackers (G.Stages).
     this.stgTeam = {};
 
     this.level = 1;
@@ -98,7 +98,7 @@ G.Player = class Player {
     // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
     this.isPlayer = true;
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
-    this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
+    this.stg = null;      // fixed-timer stat applications (carrier SLOW, commitment slow); move stages are trackers (h.trk)
     this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
     this.berries = [];         // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
@@ -537,14 +537,6 @@ G.Player = class Player {
     if (this.power) this.power.def.off(this);
     def.on(this);
     this.power = { def, t: dur, dur };
-  }
-
-  /** A buff move's cast (slice E2a): one team application of `n` stages on `stat` (or `n` HP/s of regen), lasting `dur` s. Returns true when the effective stage changed. */
-  addTeamStage(stat, n, dur, src) {
-    const before = stat === 'regen' ? 0 : G.Stages.stage(this, stat);
-    G.Stages.teamAdd(this.stgTeam, stat, n, dur, src);
-    if (stat === 'regen') return true;
-    return G.Stages.stage(this, stat) !== before;
   }
 
   // ---------------- ciclo ----------------

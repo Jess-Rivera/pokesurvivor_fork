@@ -34,7 +34,7 @@ const tickN = (h, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt
   const at = (st, s) => S.ladder(st, s), sp4 = { '-6': 0.4, '-5': 4 / 9, '-4': 0.5, '-3': 4 / 7, '-2': 2 / 3, '-1': 0.8, 0: 1, 1: 1.25, 2: 1.5, 3: 1.75, 4: 2, 5: 2.25, 6: 2.5 };
   for (let s = -6; s <= 6; s++) { if (!near(at('spe', s), sp4[s], 1e-9)) bad('Speed ladder ' + s + ' = ' + at('spe', s)); if (!near(at('atk', s), s >= 0 ? (2 + s) / 2 : 2 / (2 - s), 1e-9)) bad('mainline ladder ' + s); }
   if (at('atk', 6) !== 4 || at('atk', 2) !== 2 || at('atk', -2) !== 0.5 || at('atk', -6) !== 0.25) bad('mainline anchors');
-  if (!(S.DUR === 6 && S.ROLL_GAP === 0.5 && S.MAX === 6) || 'APPLY_GAP' in S) bad('constants (no lockout exists)');
+  if (!(S.DUR === 6 && S.MAX === 6) || 'APPLY_GAP' in S || 'ROLL_GAP' in S) bad('constants (no lockout, no legacy roll gap since 7b-2b)');
   const e = mk(); if (S.stage(e, 'spe') !== 0 || S.mul(e, 'spe') !== 1) bad('no stage = x1');
   for (let i = 0; i < 9; i++) S.add(e, 'def', 1, 6); if (S.stage(e, 'def') !== 6 || S.mul(e, 'def') !== 4) bad('+6 clamp ' + S.stage(e, 'def'));
   const d = mk(); for (let i = 0; i < 9; i++) S.add(d, 'spd', -1, 6); if (S.stage(d, 'spd') !== -6 || S.mul(d, 'spd') !== 0.25) bad('-6 clamp');

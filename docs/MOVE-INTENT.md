@@ -66,7 +66,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### fire-spin
 - [Approved] Burn at the full standard length (half-burn dropped), trap, no strip. The persistent orbit damage stays as authored. (Q17; QA-10)
 - New-path data already matches: damage, burn 100% and trap 100% on the foe (slice-4c-1-codehandoff.md:10, :46). The trap and burn rules themselves are in docs/COMBAT-RULES.md "Trap, enemies" and "Damage over time".
-- [Legacy behavior] The legacy path strips every beneficial stat stage and burns for half the normal length (js/data/moves.js:61, `strip` and `burnHalf`). Removed by slice 7.
+- History (removed in slice 7b-2a, 2026-11-01): the legacy path stripped every beneficial stat stage and burned for half the normal length (`strip`, `burnHalf`).
 - Ledger: B4-I06
 
 ### fairy-wind

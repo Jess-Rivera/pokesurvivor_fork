@@ -126,6 +126,7 @@ Timing and determinism: sim functions take (dt, now, rng). Harnesses step with a
 - No entity references, no display text (SimBus rule).
 
 ### C8. Retained legacy mechanics (evaluated)
+History since slice 7b (2026-11-01): the legacy move code is deleted. What was kept lives on in move-geom.js (segDist2, the arc wrap) and stages.js (the ladder, mul, the fixed-timer add for the carrier statuses); enemy shots and wall cover stay in G.Combat.resolve. The rows below are the original evaluation.
 | mechanic | verdict | why |
 |---|---|---|
 | segDist2 (combat.js) | KEEP, move to the geometry module as a shared pure function; legacy keeps using it | exact swept point-vs-circle test, already proven against tunneling |
@@ -158,7 +159,7 @@ Notation: L = owner level, P = power value used by damage, t = instance age in s
 | D4 | eff[k] = (def[k] + sum add) x (1 + sum inc) / (1 + sum rate) | def, team stacks -> effective field | move id (slice 5b; team-wide cards, lazy refold on the cards-picked count) | field units | EXISTING G.Moves.derive; slice 5b maps card keys to schema paths |
 | D5 | P = eff.basePower (or eff.power if slice 5 keeps the multiplier on power; same thing since D1 is linear) | | hit | | ACCEPTED |
 | D6 | Attacker half: the formula and extraMul inputs are in COMBAT-RULES "Damage". Move path: A is computed at hit time from the owner, with P = the D5 power (after statusBonus, D13) | owner, category, P -> A | hit time (C3 note) | | EXISTING stats.js attackFactor, player.js moveFactor |
-| D7 | Defender half: the formula is in COMBAT-RULES "Damage" (DMG_SCALAR: current value, see js/core/stats.js). Move path: the new path has no `norm` normalization factor (the legacy path still multiplies by it, removed by slice 7) | A, enemy -> D | hit | | EXISTING stats.js applyDamage |
+| D7 | Defender half: the formula is in COMBAT-RULES "Damage" (DMG_SCALAR: current value, see js/core/stats.js). No `norm` normalization factor (the legacy path's, removed in slice 7b-2b) | A, enemy -> D | hit | | EXISTING stats.js applyDamage |
 | D8 | STAB: see COMBAT-RULES "Damage" | | hit | | EXISTING |
 | D9 | typeK = typeChart x weatherMult: see COMBAT-RULES "Damage" and "Type chart" | | hit | | EXISTING combat.js typeKFor |
 | D10 | Crit chance on the move path: rng < owner.critChance + team crit stages + (crit effect critChance / 100); the crit multiplier is in COMBAT-RULES "Damage" | | hit | probability | EXISTING plus DECIDED move-consistency-review:CP1-Q12 (percent points) |

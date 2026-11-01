@@ -36,7 +36,7 @@ const mkHost = (store, hp = 1000) => { const p = Object.create(Player.prototype)
     anim: new G.Sprites.Animator(), hasItem: () => false }); St.clear(p); return p; };
 
 // 4. faint / revive clear everything own, team raises stay, HP 100%
-{ const store = {}, p = mkHost(store, 200); p.addTeamStage('atk', 2, 8, 'sd');
+{ const store = {}, p = mkHost(store, 200); Sg.trackTeam(p, 'atk', 2, 'sd');     // a team raise (a tracker since slice 5a)
   St.apply(p, 'sleep'); St.applyDot(p, 'poison'); St.apply(p, 'confusion'); St.apply(p, 'trap'); Sg.add(p, 'spa', -2, 6);
   p.hp = 1; p.hurt(500, null, true);
   if (!p.dead) bad('the hit should have fainted it');

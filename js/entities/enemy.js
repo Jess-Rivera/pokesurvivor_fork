@@ -86,10 +86,9 @@
       this.flash = 0;
       this.slow = 0; this.slowT = 0;
       // Status (slice A, G.Enemies.STATUS): burn is 0/1; poison is 0 none, 1 poisoned, 2 badly poisoned (Toxic, N/16 per turn).
-      // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter, ailRoll = per-move roll gap.
+      // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter.
       this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
       this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
-      this.ailRoll = null;
       this.stFl = null; this.fsp = 0; this.fdx = 0; this.fdy = 0;     // flinch recoil state and the last moving heading (see applyFlinch)
       // Control statuses (slice C, see G.Status): major (paralysis | freeze | sleep), confusion, trap, and the hard-CC no-reapply windows.
       this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null;
@@ -417,11 +416,6 @@
           this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
           if (--this.poisonLeft <= 0) { this.poison = 0; this.poisonN = 0; }
         }
-      }
-      if (this.ailRoll) {
-        let any = false;
-        for (const k in this.ailRoll) { if ((this.ailRoll[k] -= dt) <= 0) delete this.ailRoll[k]; else any = true; }
-        if (!any) this.ailRoll = null;
       }
       G.Status.tick(this, dt);
       G.Stages.tick(this, dt);

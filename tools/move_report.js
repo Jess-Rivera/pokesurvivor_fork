@@ -14,19 +14,18 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const root = path.resolve(__dirname, '..');
 global.G = {};
 // @@LOAD-BEGIN (tools that bundle this file replace this block)
-for (const f of ['move-attributes', 'moves-generated', 'move-overrides', 'move-handler', 'move-resolver']) require(path.join(root, 'js/data', f + '.js'));
+for (const f of ['move-attributes', 'moves-generated', 'move-overrides', 'move-handler', 'move-resolver', 'moves']) require(path.join(root, 'js/data', f + '.js'));
 const legacyBox = { G: {}, console }; legacyBox.window = legacyBox;
 vm.runInNewContext(fs.readFileSync(path.join(root, 'docs/move_rework_holding/legacy-moves.js'), 'utf8'), legacyBox);
 const LEGACY = legacyBox.G.Moves.BY_ID;
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
-const SCEN = JSON.parse(read('docs/move_rework_holding/move-intent-scenarios.json')), ROUTE_SRC = read('js/systems/move-route.js'), INTENT_SRC = read('docs/MOVE-INTENT.md');
+const SCEN = JSON.parse(read('docs/move_rework_holding/move-intent-scenarios.json')), INTENT_SRC = read('docs/MOVE-INTENT.md');
 const OUT = path.join(root, 'docs/current feature planning/move-report.md'), WRITE = process.argv.includes('--report');
 // @@LOAD-END
 const D = G.MoveData, O = G.MoveOverrides, defs = G.MoveDefs, RANGE = G.MoveResolver.TUNING.RANGE;
 
-// ---- routed list and MOVE-INTENT entries (text, as in the intent harness) ----
-const routedBlock = (ROUTE_SRC.match(/ROUTED\s*=\s*new Set\(\[([\s\S]*?)\]\)/) || [])[1] || '';
-const ROUTED = new Set((routedBlock.match(/'([a-z0-9-]+)'/g) || []).map(s => s.slice(1, -1)));
+// ---- routed moves (every resolved def that is not retired, as G.MoveRoute.routed; slice 7b-2b) and MOVE-INTENT entries ----
+const ROUTED = new Set(Object.keys(defs).filter(id => !G.Moves.RETIRED[id]));
 const INTENT = {};
 for (const part of INTENT_SRC.split(/^### /m).slice(1)) { const id = part.split('\n')[0].trim(); INTENT[id] = part.slice(id.length); }
 const BATCH = new Set(SCEN.batchReviewed || []);

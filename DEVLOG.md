@@ -285,3 +285,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Broke and fixed: main.js NEED still listed Kinds and Mechanics (boot halted); swap lock lived in G.Combat.tick, moved to game.js.
 - Tests: legacy table archived for the tools; 6 legacy harnesses retired, 5 trimmed to engine checks; check.js 30/30, smokes and mutations pass.
 - Stopped at: Jess feel-tests 2a, then commits. Next: 7b-2b.
+
+## 2026-11-01 (Claude Code, home, evening): 7b-2b
+- 7b-2a feel test passed (Jess); committed 496118a.
+- Built 2b: ROUTED replaced by "has a def, not retired"; legacy stage stacking (procMove, procSelf, teamAdd, TEAM_LIVE, ROLL_GAP, strip), enemy ailRoll and the norm factor removed; guard final (no exempt game file).
+- Verified: E1 gone (Fire Spin and trap-mine scenarios trap enemies), Brock-only, damage unchanged (no caller passed norm).
+- Docs: the 7b [Legacy behavior] lines are dated history notes now. Tests: check.js 30/30, smokes pass.
+- Stopped at: Jess feel-tests 2b, then commits. Next: 7b-3 (docs sweep, changelog, merge into main).

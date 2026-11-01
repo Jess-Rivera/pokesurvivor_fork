@@ -66,7 +66,6 @@ const M = [
   ['incOf ignores Vitamins', 'player', [[' + (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0); }', '; }']]],
   ['the HP refresh revives a fainted member', 'player', [['if (gain > 0 && !this.dead) this.hp += gain;     // never revives', 'if (gain > 0) this.hp += gain;     // never revives']]],
   // ---- part E: the offer ----
-  ['the offer shows legacy cards under the flag', 'levelup', [['const team = teamOn() && !!pl.teamCards,', 'const team = false,']]],
   ['the offer keeps a card with no taker', 'levelup', [['      if (!takers.length) continue;', '']]],
   ['a capped card stays in the pool', 'levelup', [['      if (c.cap && TC.stacks(s, c.id) >= c.cap) continue;', '']]],
   ['Gate and Duration offered with no stat move', 'levelup', [['if (moves.some(x => TC.hasStat(x.def))) {', 'if (true) {']]],

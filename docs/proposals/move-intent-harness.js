@@ -1,6 +1,6 @@
 // Stage 0 intent scenarios (docs/current feature planning/move-schema-post-auth/stage-0.md), offline checks (Node only).
 // Usage from the repo root:  node docs/proposals/move-intent-harness.js .
-// Runs every scenario in docs/move_rework_holding/move-intent-scenarios.json whose move is routed (G.MoveRoute ROUTED, read from
+// Runs every scenario in docs/move_rework_holding/move-intent-scenarios.json whose move is routed (G.MoveRoute.routed: a resolved def, not retired; until 7b-2b read from
 // js/systems/move-route.js as text) against the REAL sim, effects, stages, status, enemy and player code, at dt 1/60 and 1/30; the
 // hit counts must agree between the two. Scenarios for unrouted moves, with `waitsFor` (a later slice) or with `blockedBy` (an open
 // owner decision) are listed and not run. Engine setup copied from docs/proposals/move-selfcast-harness.js (stubs for the enemy
@@ -30,9 +30,9 @@ global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, 
 // @@LOAD-BEGIN (the module list; tools that bundle this file replace this block)
 for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/player.js',
   'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
-  'js/data/move-resolver.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
+  'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
 const SCENARIOS = JSON.parse(fs.readFileSync(SCEN, 'utf8'));
-const ROUTE_SRC = fs.readFileSync(R + '/js/systems/move-route.js', 'utf8'), INTENT_SRC = fs.readFileSync(R + '/docs/MOVE-INTENT.md', 'utf8');
+const INTENT_SRC = fs.readFileSync(R + '/docs/MOVE-INTENT.md', 'utf8');
 // @@LOAD-END
 G.EnemyMgr = { all: () => enemies, queryCircle(x, y, r) { const o = []; this.queryCircleEach(x, y, r, e => o.push(e)); return o; },
   queryCircleEach(x, y, r, fn) { for (const e of enemies.slice()) if (!e.dead && (e.x - x) ** 2 + (e.y - y) ** 2 <= (r + e.r) ** 2) fn(e); } };
@@ -40,11 +40,10 @@ const St = G.Status, S = G.Stages, Sim = G.MoveSim, Enemy = G.Enemy, D = G.MoveD
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-3) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 
-// ---- routed list and MOVE-INTENT headings, read as text (move-route.js needs a browser location; MOVE-INTENT is Markdown) ----
-const routedBlock = (ROUTE_SRC.match(/ROUTED\s*=\s*new Set\(\[([\s\S]*?)\]\)/) || [])[1] || '';
-const ROUTED = new Set((routedBlock.match(/'([a-z0-9-]+)'/g) || []).map(s => s.slice(1, -1)));
+// ---- routed moves (every resolved def that is not retired, as G.MoveRoute.routed; slice 7b-2b) and MOVE-INTENT headings (Markdown) ----
+const ROUTED = new Set(Object.keys(D).filter(id => !G.Moves.RETIRED[id]));
 const INTENT = new Set((INTENT_SRC.match(/^### ([a-z0-9-]+)/gm) || []).map(s => s.slice(4)));
-ok(ROUTED.size > 0, 'read the ROUTED list from move-route.js');
+ok(ROUTED.size === 62, 'every resolved move but the retired Hail is routed (' + ROUTED.size + ')');
 
 // ---- world builders (owner: a REAL Player prototype on a hand-built body, as in move-selfcast-harness.js) ----
 let eid = 0;

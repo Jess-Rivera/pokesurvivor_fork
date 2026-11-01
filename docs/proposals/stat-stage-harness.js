@@ -179,8 +179,9 @@ console.log('7b Leaf Storm swap: the self drop holds after a slot swap, for ever
 
 // 8. the legacy store, carriers and readers beside the trackers (5a map section 10, carrier statuses)
 { const p = mkP(); S.add(p, 'spe', -1, 6); S.trackTeam(p, 'spe', 2, 'ag'); ok(S.stage(p, 'spe') === 1 && near(S.speedMul(p), 5 / 4), 'a SLOW carrier -1 and an Agility tracker +2 sum to +1');
-  S.teamAdd(p.stgTeam, 'regen', 1, 8, 'aq'); S.teamAdd(p.stgTeam, 'pct_def', 0.2, 8, 'kee'); S.trackTeam(p, 'atk', 2, 'sd'); S.teamTick(p.stgTeam, 1);
-  ok(S.teamSum(p.stgTeam, 'regen') === 1 && near(S.teamSum(p.stgTeam, 'pct_def'), 0.2) && S.teamSum(p.stgTeam, 'atk') === 2, 'Aqua Ring regen and a berry key keep working beside the trackers');
+  p.stgTeam.regen = [{ n: 1, t: 8, dur: 8, src: 'aq' }]; p.stgTeam.pct_def = [{ n: 0.2, t: 8, dur: 8, src: 'kee' }];     // timed store keys (teamAdd went in 7b-2b)
+  S.trackTeam(p, 'atk', 2, 'sd'); S.teamTick(p.stgTeam, 1);
+  ok(S.teamSum(p.stgTeam, 'regen') === 1 && near(S.teamSum(p.stgTeam, 'pct_def'), 0.2) && S.teamSum(p.stgTeam, 'atk') === 2, 'timed store keys (regen, a berry) keep working beside the trackers');
   ok(S.teamLive(p.stgTeam, 'atk') && S.teamLive(p.stgTeam, 'regen') && !S.teamLive(p.stgTeam, 'def') && S.teamKeys(p.stgTeam).includes('atk') && S.teamKeys(p.stgTeam).includes('regen'), 'HUD readers see legacy keys and tracker stats');
   const tm = S.teamTimer(p.stgTeam, 'atk'); ok(tm && near(tm.t, S.DURATION - 1) && tm.dur === S.DURATION, 'HUD timer: the tracker Duration left (' + (tm && tm.t) + ')');
   const e = mkE(30, 0), e0 = mkE(30, 0), sp = syn('syn-sp', { category: 'special', basePower: 60, payload: [{ t: 'damage' }] }); S.trackOwn(e, 'spd', -2, 'x');

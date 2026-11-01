@@ -40,3 +40,12 @@ check.js green on the branch, STATE.md and DEVLOG.md updated, a DECISIONS.md log
   - Tests: the legacy table is archived at docs/move_rework_holding/legacy-moves.js for move_parity, move_report and the ui-readers parity checks. Retired (legacy only): status B, D3, E2a, upgrade 2a, 2b, 2c. Cut to their engine sections: status A (1-6, 9), C (1-8, 10, 13-15), D1 (1-3, 7), D2 (3-5), E2b (4, 5, 8). check.js 30/30, guards ok, smoke-ui and smoke-newcombat pass, mutation runners clean except three stale mutations that predate this slice (move-sim oscillation, stat-stage inactive pure buff, team-cards persistent upkeep; TODO).
   - Rules with no new-path test after the retirement: the Ailment Chance card (gone with the legacy cards) and legacy Fire Spin strip (a removed legacy behavior). The drain rule is covered by move-riders.
   - js/net/ untouched (D-COOP): coop.js still calls the removed G.Combat.ghostCast and G.Moves.stackTotal; co-op cannot run in this phase (TODO co-op item).
+  - Feel test passed (Jess, 2026-11-01); committed 496118a.
+- 7b-2b built 2026-11-01 (Claude Code, home):
+  - ROUTED gone: G.MoveRoute.routed(id) = a resolved def that is not retired (62 moves; Hail stays out). The intent harness and tools/move_report.js compute the same set from G.MoveDefs and G.Moves.RETIRED.
+  - stages.js: procMove, procSelf, teamAdd, TEAM_LIVE, ROLL_GAP, stripPositive and the stgRoll field removed; add() kept for SLOW / HASTE carriers, the commitment slow and debug; the team store kept for berries and team trackers. player.addTeamStage (no callers) and enemy ailRoll (only the legacy procAilments wrote it) removed.
+  - stats.js applyDamage: the norm factor removed. No move-path caller passed norm, so damage is unchanged.
+  - E1 verified: the Fire Spin and trap-mine intent scenarios trap enemies on the only path. Brock-only confirmed: gyms.js authors Brock alone.
+  - Guard final: no exempt game file (js/net/ stays exempt, D-COOP), a legacy-7b tag excuses nothing.
+  - Docs: the 7b [Legacy behavior] lines in COMBAT-RULES, MOVE-INTENT (fire-spin), BUFF-TABLE and architecture D7 / C8 became dated history notes. Left for 7b-3: GDD 7.4, and the slice-5 legacy lines (MOVE-INTENT 158, architecture H2) are not 7b's.
+  - Tests: check.js 30/30, guards ok, both smokes pass, mutation runners clean but for the three stale move-sim mutations (TODO). Not changed: G.Log.hitOut and its HIT_OUT record have no caller since 7b-2a (dead logging, harmless; cleanup with the 7b-3 sweep).

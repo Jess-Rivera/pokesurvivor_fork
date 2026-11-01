@@ -10,7 +10,7 @@ Precedence: this file beats BOSS-REWORK section 3c, the decisions archive, docs/
 
 Tags are defined in CLAUDE.md: [Approved], [Legacy behavior], [Proposed], [Open].
 
-Paths: "the legacy path" is the live move code (js/data/moves.js, js/systems/combat.js); "the new path" is the move schema path (js/systems/move-*.js). Slice 7 deletes the legacy path.
+Paths: since slice 7b (2026-11-01) there is one move path, the move schema path (js/systems/move-*.js). "The legacy path" in history notes means the deleted move code (the old js/data/moves.js table and the player half of js/systems/combat.js; a frozen copy of the table is docs/move_rework_holding/legacy-moves.js).
 
 ## Stats and HP
 
@@ -34,7 +34,7 @@ Paths: "the legacy path" is the live move code (js/data/moves.js, js/systems/com
   - Defender half D = (A / max(1, Dstat) + 2) x STAB x DMG_SCALAR. Dstat = statValue(Def or SpD at enemy level) x defender Def/SpD stage multiplier; status category uses PROP_DEF 50 and no STAB. (combat-architecture D7; js/core/stats.js applyDamage)
   - typeK = typeChart(moveType, enemyTypes) x weatherMult(moveType); Power Stone floors it at 1 for the held type. (combat-architecture D9)
   - dmg = max(1, D x typeK x itemDmgMul x critMul x handlerMul). (combat-architecture D11; handlerMul is move-path specific, see combat-architecture)
-- [Legacy behavior] The legacy path also multiplies the defender half by the move's per-cast normalization `move.norm` (js/core/stats.js applyDamage). The new path has no normalization (combat-architecture D7). Removed by slice 7.
+- History (removed in slice 7b-2b, 2026-11-01): the legacy path multiplied the defender half by the move's per-cast normalization `move.norm`. applyDamage has no normalization now (combat-architecture D7).
 - [Approved] Floor: if reduction would make a hit 0, it does 1. (stat-model notes section 4)
 - [Open] Does immunity (0x) override the floor-of-1 rule? Recommended yes. (stat-model notes section 4, Open; no live effect today, since the softened chart has no 0x)
 - [Approved] Crit: no base chance, +3% per Critical Hit card level, crit multiplies by 1.5. Move-based crit stages (12.5% / 50% / 100%) are DROPPED. (archive 2026-10-20 Status Slice D CLOSED; combat-architecture D10; CRIT_MUL in js/systems/combat.js)
@@ -72,8 +72,8 @@ Paths: "the legacy path" is the live move code (js/data/moves.js, js/systems/com
 - [Approved] Trap on an enemy is a root: movement multiplier 0 while trapped. Wild enemies: 2 s. Strong hosts: 25% of that, no extension, then a 10 s no-reapply window. (QA-10; CP1-Q5; js/systems/status.js CONTROL.trap.root, STRONG)
 - [Approved] Ghost types are immune to trap. (archive 2026-10-19 Status Slice C; js/systems/status.js CONTROL.trap)
 - [Approved] Fire Spin applies burn at the full standard length and trap, and does not strip. Its persistent orbit damage stays as authored. The full ruling lives in docs/MOVE-INTENT.md. (QA-10; Q17)
-- [Legacy behavior] E1 (archive 2026-10-20 Status Slice E1): "Enemies cannot be trapped any more". On the legacy path no move carries a trap ailment, so enemies are never trapped there; status.js already roots any non-player host for the new path. Removed by slice 7.
-- [Legacy behavior] Fire Spin on the legacy path (js/data/moves.js:61, fields `strip` and `burnHalf`; js/systems/combat.js procAilments): "strips every beneficial stat stage from the target and burns it for half the normal length. Fire types are immune to the burn, not to the strip." Removed by slice 7. (archive 2026-10-20 Status Slice E1)
+- History (removed in slice 7b, 2026-11-01): E1 (archive 2026-10-20 Status Slice E1), "Enemies cannot be trapped any more", held only on the legacy path, where no move carried a trap. Verified gone: the Fire Spin and trap-mine scenarios trap enemies on the only path (move-intent harness).
+- History (removed in slice 7b-2a, 2026-11-01): the legacy Fire Spin stripped every beneficial stat stage and burned for half the normal length (`strip`, `burnHalf`). (archive 2026-10-20 Status Slice E1)
 
 ### Trap, player
 
@@ -134,4 +134,4 @@ Terms: **stages** = what one success gives, straight from pokeapi (Swords Dance 
 - [Open] Raises on a foe (Swagger, Flatter, Decorate) and whole-field moves: expected to follow SS1 to SS6 unchanged; not checked at runtime. None is in the pool except Bulldoze, which applies to foes only today.
 - [Approved] CARRIER STATUSES STAY OUTSIDE THE MODEL: SLOW (Speed -1, 6 s) and HASTE (nova, Speed +1 for 6 s, stacking to 2) from wild carrier enemies are not move stat changes. They keep their own fixed timers and stack limits from js/data/enemies.js CARRIER ("Other status effects" above), do not climb per Gate, and still sum into the Speed stage under the Cap (SS6). Reason: enemy behavior owns enemy attacks, and HASTE on the model would let every enemy near a haste carrier reach Speed +6 (x2.5) with no hit needed. (Jess, 2026-10-30)
 - History (removed from the new path in slice 5a, 2026-10-31): through slices 4c-0 and 4c-1 the new path had per-move maxStacks on self-side stat effects, default 1, filled by the resolver (combat-architecture:H24); authored foe caps of 1 on Ice Beam and Bug Buzz; each application lasts its move's `duration` (default 6 s) on its own timer; a capped application refreshes that move's oldest. Rulings it carried, all retired 2026-10-30: DECISIONS:Q13 (duration never shorter than cooldown), DECISIONS:Q14 (maxStacks default 1), DECISIONS:Q15 / QA-11 (the upgrade formula, never built), D-FOECAP, D-LEAF, D-MC5 and the [Proposed] A.3-3 authored floor.
-- [Legacy behavior] Legacy path, NO EXPLICIT CAP: duration / cooldown is the cap. Every cast is its own application on its own timer, the +-6 clamp is the only hard limit, with a safety limit of 8 live applications per move (js/systems/stages.js:17, TEAM_LIVE); rider rolls use ROLL_GAP and procSelf. Removed by slice 7b. (archive 2026-10-20 Status Slice E2a)
+- History (removed in slices 7b-2a and 7b-2b, 2026-11-01): the legacy path had no explicit cap (duration / cooldown was the cap, every cast its own application, a safety limit of 8 live applications per move, TEAM_LIVE), with rider rolls on ROLL_GAP and procSelf. (archive 2026-10-20 Status Slice E2a)

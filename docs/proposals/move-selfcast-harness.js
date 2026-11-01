@@ -248,8 +248,6 @@ const line = (n0 = 6, x0 = 80, gap = 100) => Array.from({ length: n0 }, (_, i) =
   const w1 = run(fz, [], 5.9, { reset: false }), w2 = run(fz, [], 0.2, { reset: false });
   ok(casts(w1, 'swords-dance').length === 0 && casts(w2, 'swords-dance').length === 1 && S.stage(fz, 'atk') === 2, 'and casts once the wait is over');
   const m2 = mkO(); for (let i = 0; i < 50; i++) hitWith('metal-claw', mk(), m2, () => 0); ok(S.teamSum(m2.stgTeam, 'atk') === 1, 'Metal Claw: 50 casts inside one Gate refresh +1');
-  const gs = {}; S.teamAdd(gs, 'atk', 2, 8, 'sd'); S.teamTick(gs, 8 - 0.05); S.teamAdd(gs, 'atk', 2, 8, 'sd');
-  ok(gs.atk.length === 1 && near(gs.atk[0].t, 8), 'legacy teamAdd: a recast in the grace window renews (one application)');
   const leg = mk(); S.add(leg, 'atk', 1, 6); S.add(leg, 'atk', 1, 6); ok(S.stage(leg, 'atk') === 2 && leg.stg.atk.every(x => x.src === undefined), 'legacy add (no src) unchanged');
   console.log('10 stat buffs: per Pokemon trackers, +6 for three, Dragon Dance both, individual owner-only, Gate casting, active group only, swap-in wait, fizzle wait'); }
 

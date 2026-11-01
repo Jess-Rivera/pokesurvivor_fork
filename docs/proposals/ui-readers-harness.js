@@ -141,7 +141,7 @@ console.log('7 sheet');
 { const KG = require(path.resolve(R, 'tools/kind-guard.js'));
   const plant = ['const k = G.Moves.BY_ID[id];', 'const b = G.Kinds.BY[x];', 'if (m.kind) go();', 'if (slot.kind === "orbit") go();', 'if (q.kind !== \'buff\') go();', 'const t = TABLE[def.kind];'];
   ok(plant.every(l => KG.scanText(l).length === 1), 'every planted legacy read is caught (' + plant.filter(l => !KG.scanText(l).length).join(' | ') + ')');
-  ok(KG.scanText('const k = G.Moves.BY_ID[id];     // legacy-7b: D-BUBBLE').length === 0 && KG.tagged('a\nb // legacy-7b').join() === '2', 'a tagged line is allowed and listed');
+  ok(KG.scanText('const k = G.Moves.BY_ID[id];     // legacy-7b: D-BUBBLE').length === 1 && KG.tagged('a\nb // legacy-7b').join() === '2', 'a legacy-7b tag no longer excuses a line (7b-2b); a stray tag is still listed');
   ok(KG.scanText('if (p.kind === \'coin\') go(); const kind = 3; e.applyBurn(kind);').length === 0, 'a pickup kind, a local named kind: not move reads');
   const r = KG.run(R);
   ok(r.bad.length === 0, 'the tree is clean: ' + r.bad.map(h => h.file + ':' + h.line).join(' '));
