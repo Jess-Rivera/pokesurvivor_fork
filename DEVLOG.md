@@ -298,3 +298,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Jess confirmed the gym freeze fix in play. Committed and pushed: be9b512 (7b-2b), 47f3dd5 (freeze fix).
 - 7b-3 handoff written as a numbered work list in slice-7b.md "Steps" (docs sweep counts per file, optional log.js cleanup, DECISIONS line, merge order).
 - Stopped at: 7b-3 not started. Next chat: 7b-3, then the merge into main.
+
+## 2026-11-01 (Claude Code, home, night): 7b-3 and the merge
+- Docs sweep: stale legacy-path and flag mentions out of 12 files (GDD 7.4 rewritten for team cards; ONBOARDING module map; GLOSSARY; slice-5 [Legacy behavior] lines to History). TODO sheet-numbers item was already built in 7a.
+- Decided (Jess): skip the log.js hitOut cleanup; tools/ is free edit (CLAUDE.md). DECISIONS line for the flip added. Smoke tools load plain ?dev; smoke-ui runs one pass.
+- Merge: origin/main (issue templates) into the branch, check.js and both smokes green; then the branch into main with --no-ff (f9a2f2c); check.js green on main.
+- Snag: Git Bash sed -i stripped CRLF from combat-architecture.md; restored. Use node for in-place edits.
+- Stopped at: merged, main pushed. Next: feel run on main, unblock #17, pick gym-roster or lint branch.

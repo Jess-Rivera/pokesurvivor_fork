@@ -25,7 +25,7 @@ OPEN (15):
 - #14 New move path: ranged moves lost boss priority  [design / moves / needs-triage]
 - #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / no status]  (shot spacing, not the cd, see MOVE-INTENT string-shot)
 - #16 [Bug]: Animation Sync between move and Pokemon  [bug / no area / no status]  (filed 2026-10-30; the TODO "NEW-PATH MOVES MISALIGNED" item)
-- #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / blocked]  (no dependency link; waits on the post-7b merge, DECISIONS 2026-10-31)
+- #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / blocked]  (no dependency link; waits on the post-7b merge, DECISIONS 2026-10-31) UNBLOCKED 2026-11-01: the branch merged into main (f9a2f2c).
 
 CLOSED (2):
 - #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24, completed; still counted as blocking 1)
