@@ -6,7 +6,7 @@
  *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
- *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
+ *   G.Debug.give(id)   give the active Pokemon a move
  *   G.Debug.ground(id) drop a ground item above you, outside pickup range but on screen (no id: logs every id; ids in data/ground-items.js, e.g. 'x-attack', 'sitrus', 'occa', 'pinap')
  *   G.Debug.item(id[, force])   give a Pokemon-tier held item through the real pickup path, chooser included (force=true equips directly; no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
@@ -26,6 +26,7 @@
  *   G.Debug.stage(stat, n, radius)  stat stage on every enemy near you: spe|def|spd|atk|spa, n = -1 (6 s each; repeat to stack, +-6 max)
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
+ *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -207,22 +208,9 @@ G.Debug = (() => {
   function give(id) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const pl = G.Game && G.Game.player;
-    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
+    if (!pl || !G.MoveDefs[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
     G.Game.debugMaxed();
     return pl.addMove(id);
-  }
-
-  /** Put `n` stacks of mechanic `mechId` on a move of the active Pokemon (default: its first move).
-   *  Returns how many were accepted. Flags the run as tampered. ?dev only. */
-  function stack(mechId, n = 1, moveId) {
-    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    const pl = G.Game && G.Game.player;
-    const m = pl && (moveId ? pl.moves.find(x => x.id === moveId) : pl.moves[0]);
-    if (!m) { console.warn('[Debug] no such move on the active Pokemon.'); return 0; }
-    G.Game.debugMaxed();
-    let k = 0;
-    for (let i = 0; i < n; i++) if (G.Moves.addStack(m, mechId)) k++;
-    return k;
   }
 
   /** Put a status on every enemy around the active Pokemon, for a one-minute check of the DoT numbers:
@@ -312,15 +300,246 @@ G.Debug = (() => {
   const noSpawn = () => spawn(0);
   const spawnOn = () => spawn(1);
 
-  /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
-  function stat(id, n = 1, idx) {
+  /** New move system hitbox overlay (slice 3d): G.Debug.hitbox() toggles, hitbox(true|false) sets. Needs ?dev. */
+  function hitbox(v) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
+    G.MoveRender.overlay = v == null ? !G.MoveRender.overlay : !!v;
+    return G.MoveRender.overlay;
+  }
+
+  /** New move system quick test (slice 3d, ?dev): a set of routed moves, one per slot (cycle slots to try each), wild spawns
+   *  stopped, the overlay on, and 24 dummy enemies in 8 directions at 50, 130 and 220 px with a huge HP pool. Returns how many dummies
+   *  were placed. Flags the run as tampered.
+   *  newcombat()          the slice 3d seven; a dummy sleeps for good (no movement, no attacks, damage never wakes a sleeper).
+   *  newcombat('riders')  the slice 4a seven; dummies are AWAKE slow walkers (40 px/s) at 90, 170 and 250 px, so burn, paralysis,
+   *                       freeze, flinch, knockback and the trap root can show. The overlay prints each dummy's statuses and stages.
+   *  newcombat('selfcasts')  the slice 4b self-casts (Swords Dance, Dragon Dance, Aqua Ring, Substitute) with the 'riders' awake
+   *                       dummies, so they reach you and the shield gets hit. The overlay prints your HP, shield and team stages.
+   *  newcombat('specials')   Dragon Rage, Hex, Thunderbolt and Flamethrower. Slow awake dummies (20 px/s): a line of 6, 100 px
+   *                       apart, in front of you for the Thunderbolt chain, plus 2 each burned, poisoned, paralyzed and asleep at
+   *                       200 px for Hex. The overlay also prints your commitment timers (Flamethrower's slow and freeze).
+ *  newcombat('persist')   slice 4c-1: Fire Spin, Leaf Storm and Night Shade, one per slot, with two rings of 8 slow awake dummies
+ *                       (20 px/s) at 90 and 150 px. Cycle slots or swap Pokemon to check R7: the move you leave ends at once and
+ *                       the new one spins up fresh. The overlay prints your live persistent groups and Leaf Storm's Sp. Atk -2.
+ *  newcombat('motion')    slice 4c-2: Razor Leaf, Bonemerang, Quick Attack and Aerial Ace, one per slot, with a loose crowd of 12
+ *                       slow awake dummies (20 px/s) at 140 and 260 px. Bones go out and come back (Bonemerang pushes out, pulls
+ *                       back), Quick Attack dashes to the nearest and returns, Aerial Ace lands on it. The overlay prints each
+ *                       bone's or dash's leg and your invulnerability timer.
+ *  newcombat('arcs'), ('novas'), ('shots'), ('buffs')   slice 4r, the 20 plain moves: static arcs (Vine Whip, Karate Chop, Lick, Metal
+ *                       Claw, Powder Snow, Wing Attack, Bug Bite), nova rings (Dazzling Gleam, Hyper Voice, Dark Pulse, Bug Buzz),
+ *                       shots and beams (Poison Sting, Rock Throw, Shadow Ball, Thunder Shock, Sludge, Flash Cannon, Psybeam) and
+ *                       the self-buffs (Agility, Harden). Three rings of 8 slow awake dummies (20 px/s) at 70, 140 and 230 px.
+ *  newcombat('extras')   slice 4c-3: Psychic, Confusion, Bubble Beam and Aura Sphere, one per slot.
+ *  newcombat('falls')    slice 4c-3: Rock Slide and Flamethrower (now tracking with aimTrack). Both sets: two rings of 8 awake dummies
+ *                       at 120 and 240 px, every other one walking faster (45 px/s, the rest 20), so the fixed Rock Slide point,
+ *                       the swinging cone and the homing shots show. The overlay prints Rock Slide's wait and the cone's target.
+ *  newcombat('emit')     slice 4d: the nine emitters, mines and the trail, one per slot (Discharge, Gust, Fairy Wind, Toxic, Flame Wheel,
+ *                       Toxic Spikes, Will-O-Wisp, Meteor Mash, Spikes). Three rings of 8 slow awake dummies (20 px/s) at 90, 170
+ *                       and 260 px. Walk around for the Toxic and Flame Wheel trails; stand still to stack Spikes (8 at most).
+ *  newcombat('stages')   slice 5a, stat stage trackers: Swords Dance, Leaf Storm, Bug Buzz and String Shot, one per slot, with the
+ *                       'persist' rings of slow awake dummies. Watch Swords Dance climb +2 / +4 / +6 at 0 / 6 / 12 s, Leaf Storm's
+ *                       Sp. Atk -2 turn -4 at 12 s, a dummy in Bug Buzz's aura lose Sp. Def -1 per 6 s, String Shot give -2 per cast.
+ *                       Swap off Swords Dance: the raise holds 6.1 s, then drops; swap back inside that window and it waits for its
+ *                       Gate before it casts again.
+ *  newcombat('drops')    slice 5a batch re-review: Shadow Ball, Flash Cannon, Psychic, Mud Shot, Bulldoze and Bubble Beam (foe stat
+ *                       drops that now climb per Gate). The 'arcs' rings of slow awake dummies; the overlay prints each dummy's stages.
+ *  newcombat('cards')    slice 5b team-wide cards: Ember, Razor Leaf, Rock Slide and Substitute, one per slot, with the 'arcs' rings.
+ *                       Level up for the team card offer, or grant stacks with G.Debug.cards(id, n).
+ *  newcombat('shadow-ball', 'flash-cannon', ...)   any routed move ids, one per slot in the order given, with the same rings. An id that
+ *                       is unknown or not on the new path yet is skipped with a warning. One argument that names a set loads the set. */
+  const NC_SETS = { core: ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'],
+    riders: ['body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze'],
+    selfcasts: ['swords-dance', 'dragon-dance', 'aqua-ring', 'substitute'],
+    specials: ['dragon-rage', 'hex', 'thunderbolt', 'flamethrower'],
+    persist: ['fire-spin', 'leaf-storm', 'night-shade'],
+    motion: ['razor-leaf', 'bonemerang', 'quick-attack', 'aerial-ace'],
+    arcs: ['vine-whip', 'karate-chop', 'lick', 'metal-claw', 'powder-snow', 'wing-attack', 'bug-bite'],
+    novas: ['dazzling-gleam', 'hyper-voice', 'dark-pulse', 'bug-buzz'],
+    shots: ['poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'flash-cannon', 'psybeam'],
+    buffs: ['agility', 'harden'],
+    extras: ['psychic', 'confusion', 'bubble-beam', 'aura-sphere'],
+    falls: ['rock-slide', 'flamethrower'],
+    emit: ['discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes'],
+    stages: ['swords-dance', 'leaf-storm', 'bug-buzz', 'string-shot'],
+    drops: ['shadow-ball', 'flash-cannon', 'psychic', 'mud-shot', 'bulldoze', 'bubble-beam'],
+    cards: ['ember', 'razor-leaf', 'rock-slide', 'substitute'] };
+  // slice 4b: lasting major ailments for the Hex dummies (burn and poison through their own counters, the rest as a major status)
+  const NC_AIL = {
+    burn: e => { e.burn = 1; e.burnLeft = 1e6; e.burnTick = 1; e.burnMul = 1; },
+    poison: e => { e.poison = 1; e.poisonLeft = 1e6; e.poisonTick = 1; e.poisonMul = 1; },
+    paralysis: e => { e.stMajor = { k: 'paralysis', t: 1e9, age: 0 }; },
+    sleep: e => { e.stMajor = { k: 'sleep', t: 1e9, age: 0 }; }
+  };
+  function newcombat(...args) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    const g = G.Game, f = idx != null ? g.roster[idx] : g.player;
-    if (!f) { console.warn('[Debug] no such Pokemon.'); return 0; }
-    g.debugMaxed();
-    let k = 0;
-    for (let i = 0; i < n; i++) if (f.addStat(id)) k++;
-    return k;
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    G.Game.debugMaxed();
+    spawn(0);
+    // one set name (or none: 'core') loads a set; anything else is a list of move ids, one per slot (slice 5a)
+    const named = args.length === 0 || (args.length === 1 && NC_SETS[args[0]]);
+    const set = named ? (args[0] || 'core') : 'custom';
+    let ids = NC_SETS[set];
+    if (!named) {
+      ids = args.filter(id => {
+        if (!G.MoveDefs[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+        if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
+        return true;
+      });
+      if (!ids.length) { console.warn('[Debug] no usable move ids. Sets: ' + Object.keys(NC_SETS).join(', ')); return 0; }
+    }
+    const riders = set === 'riders' || set === 'selfcasts';
+    loadSlots(pl, ids);
+    G.MoveRender.overlay = true;
+    const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
+    if (!def) { console.warn('[Debug] no enemy definition for the dummies.'); return 0; }
+    let n = 0;
+    if (set === 'specials') {
+      const put = (x, y, ail) => {
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), x, y, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        if (ail) NC_AIL[ail](e);
+        G.EnemyMgr.add(e);
+        n++;
+      };
+      const a = pl.aim || 0;
+      for (let i = 0; i < 6; i++) put(pl.x + Math.cos(a) * (80 + 100 * i), pl.y + Math.sin(a) * (80 + 100 * i));
+      const ails = ['burn', 'poison', 'paralysis', 'sleep', 'burn', 'poison', 'paralysis', 'sleep'];
+      ails.forEach((k, i) => { const b = a + Math.PI / 2 + i * Math.PI / 8; put(pl.x + Math.cos(b) * 200, pl.y + Math.sin(b) * 200, k); });
+      console.log('[Debug] new combat test (specials): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies (a line of 6 ahead, 8 with ailments). G.Debug.hitbox() toggles the overlay.');
+      return n;
+    }
+    if (set === 'persist' || set === 'stages') {     // slice 4c-1: two rings of slow awake dummies, on and just outside the orbits (5a reuses them)
+      for (const d of [90, 150]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 150 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. ' + (set === 'stages' ? 'The overlay prints every dummy\'s stages and yours; G.Stages.trackers(G.Game.player) shows the timers.' : 'Cycle slots or swap Pokemon: the move you leave ends at once, the new one spins up fresh.'));
+      return n;
+    }
+    if (set === 'arcs' || set === 'novas' || set === 'shots' || set === 'buffs' || set === 'drops' || set === 'custom' || set === 'cards') {     // 5a: drops and custom lists reuse these rings     // slice 4r: slow awake dummies in two rings, plus a line ahead for the Thunder Shock hop
+      for (const d of [70, 140, 230]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 140 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots (' + ids.filter(id => G.MoveRoute.routed(id)).join(', ') + '), ' + n + ' slow dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
+      return n;
+    }
+    if (set === 'motion') {     // slice 4c-2: a loose crowd, near enough for the dashes (range 420) and the bones (210 and 230)
+      for (const d of [140, 260]) for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3 + (d === 260 ? Math.PI / 6 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (motion): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots: bones out and back, Quick Attack dash and return, Aerial Ace teleport.');
+      return n;
+    }
+    if (set === 'emit') {     // slice 4d: three rings of slow awake dummies, inside and outside the 300 px turret range
+      for (const d of [90, 170, 260]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 170 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (emit): ' + pl.slots.length + ' routed moves in slots, ' + n + ' slow dummies. Cycle slots; walk for the trails, stand still to stack Spikes.');
+      return n;
+    }
+    if (set === 'extras' || set === 'falls') {     // slice 4c-3: two rings of awake dummies, half of them walking faster
+      for (const d of [120, 240]) for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + (d === 240 ? Math.PI / 8 : 0);
+        const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+        e.maxHp = e.hp = 1e9; e.spd = i % 2 ? 45 : 20;
+        G.EnemyMgr.add(e);
+        n++;
+      }
+      console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + ' awake dummies. Cycle slots to try each; G.Debug.hitbox() toggles the overlay.');
+      return n;
+    }
+    for (const d of riders ? [90, 170, 250] : [50, 130, 220]) for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + (d === (riders ? 170 : 130) ? Math.PI / 8 : 0);
+      const e = new G.Enemy(riders ? Object.assign({}, def, { behavior: 'chase' }) : def, pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d, G.Enemies.scale(G.Game.time));
+      e.maxHp = e.hp = 1e9;
+      if (riders) e.spd = 40;
+      else e.stMajor = { k: 'sleep', t: 1e9, age: 0 };
+      G.EnemyMgr.add(e);
+      n++;
+    }
+    console.log('[Debug] new combat test (' + set + '): ' + pl.slots.length + ' routed moves in slots, ' + n + (riders ? ' awake' : '') + ' dummies. G.Debug.hitbox() toggles the overlay.');
+    return n;
+  }
+
+  /** The active Pokemon gets the routed moves in `ids`, one per slot, slot 0 active, after the old slots' live shapes, commitments,
+   *  heal over time and shield end (as on a Pokemon swap). Shared by newcombat and movechecker. Returns the slot count. */
+  function loadSlots(pl, ids) {
+    G.MoveSim.clear(pl);
+    pl.moves = ids.filter(id => G.MoveRoute.routed(id)).map(id => G.Moves.instance(id));
+    pl.slots = pl.moves.map(m => [m]);
+    pl.active = 0;
+    return pl.slots.length;
+  }
+
+  /** Range and move-data check (slice 6, ?dev). G.Debug.movechecker('bubble-beam', 'gust', 300): wild spawns stop and the
+   *  live enemies are cleared; up to 6 routed move ids go one per slot (cycle slots to try each); ONE dummy stands at the given
+   *  distance to your right (a number argument, default 150 px): awake, so every rider can land and Hex sees no status, but pinned
+   *  in place (no walking, no knockback slide), no contact damage, HP that never runs out. The hitbox overlay and the range rings
+   *  (every 50 px out to 600, centred on you) turn on, and the console prints each move's effective def (team cards folded in, so
+   *  what actually runs) and its override row. G.Debug.movechecker() with no id turns it off: rings off, enemies cleared, spawning
+   *  back on (the hitbox overlay stays; G.Debug.hitbox(false) hides it). Returns the number of moves loaded. */
+  const MC_MAX = 6, MC_DIST = 150;
+  let mcOn = false;
+  function movechecker(...args) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player;
+    if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
+    const strs = args.filter(a => typeof a === 'string'), nums = args.filter(a => typeof a === 'number' && a > 0);
+    if (!strs.length) {
+      G.MoveRender.rings = false;
+      if (mcOn) G.EnemyMgr.clear();     // the pinned dummy (wild spawns were stopped, so it is the only enemy)
+      mcOn = false;
+      spawn(1);     // movechecker off
+      console.log('[Debug] movechecker off: rings off, dummy removed, spawning back on.');
+      return 0;
+    }
+    let ids = strs.filter(id => {
+      if (!G.MoveDefs[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+      if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
+      return true;
+    });
+    if (!ids.length) { console.warn('[Debug] no usable move ids, nothing changed.'); return 0; }
+    if (ids.length > MC_MAX) { console.warn('[Debug] movechecker takes up to ' + MC_MAX + ' moves; using the first ' + MC_MAX + '.'); ids = ids.slice(0, MC_MAX); }
+    const dist = nums.length ? nums[0] : MC_DIST;
+    const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
+    if (!def) { console.warn('[Debug] no enemy definition for the dummy.'); return 0; }
+    spawn(0);     // movechecker start (also flags the run as tampered)
+    G.EnemyMgr.clear();     // movechecker start: the dummy is the only target
+    const n = loadSlots(pl, ids);
+    G.MoveRender.overlay = true;
+    G.MoveRender.rings = true;
+    const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), pl.x + dist, pl.y, G.Enemies.scale(G.Game.time));
+    e.maxHp = e.hp = 1e9;
+    e.spd = 0;
+    e.touchCd = Infinity;     // no contact damage (combat.js skips an enemy whose contact timer is running)
+    const ax = e.x, ay = e.y, step = e.update;
+    e.update = function (dt, p) { step.call(this, dt, p); this.x = ax; this.y = ay; this.kx = 0; this.ky = 0; };     // pinned: no walk, slide or straggler move
+    G.EnemyMgr.add(e);
+    mcOn = true;
+    const fin = (k, v) => (v === Infinity ? 'Infinity' : v === -Infinity ? '-Infinity' : v);     // JSON would print Infinity as null
+    for (const id of ids) {
+      const live = G.TeamCards.defOf(pl, id), ov = G.MoveOverrides && G.MoveOverrides[id];
+      console.log('[movechecker] ' + id + ', effective def (what runs, team cards folded in):\n' + JSON.stringify(live, fin, 2)
+        + (ov ? '\n[movechecker] ' + id + ', override row (js/data/move-overrides.js):\n' + JSON.stringify(ov, fin, 2) : '\n[movechecker] ' + id + ': no override row.'));
+    }
+    console.log('[Debug] movechecker: ' + n + ' move(s) in slots (' + ids.join(', ') + '), 1 pinned dummy ' + dist + ' px to your right, range rings every 50 px out to 600. Cycle slots to try each; G.Debug.movechecker() turns it off.');
+    return n;
   }
 
   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
@@ -357,6 +576,22 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Slice 5b team-wide cards (?dev): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
+   *  'vitamins:atk' and so on; an HP Vitamin refreshes every member's max HP). No arguments: prints the store and every card id. */
+  function cards(id, n = 1) {
+    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
+    const pl = G.Game && G.Game.player, s = pl && pl.teamCards;
+    if (!s) { console.warn('[Debug] no run in progress.'); return 0; }
+    const ids = G.TeamCards.CARDS.filter(c => c.id !== 'vitamins').map(c => c.id).concat(G.TeamCards.STATS.map(st => 'vitamins:' + st.id));
+    if (id == null) { console.table(G.TeamCards.summary(s)); console.log('[Debug] card ids: ' + ids.join(', ')); return s.n; }
+    if (!ids.includes(id)) { console.warn('[Debug] unknown card id: ' + id + '. Ids: ' + ids.join(', ')); return 0; }
+    G.Game.debugMaxed();
+    const k = G.TeamCards.add(s, id, Math.max(1, Math.floor(n)));
+    if (id === 'vitamins:hp') for (const f of G.Game.roster || [pl]) if (f.refreshMaxHp) f.refreshMaxHp();
+    console.log('[Debug] ' + id + ' now x' + k + ' (team-wide). G.Debug.cards() lists the store.');
+    return k;
+  }
+
   /** Queues n level-ups (dev only; flags the run as tampered). */
   function levelUp(n = 1) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
@@ -371,5 +606,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards, movechecker };
 })();

@@ -30,7 +30,7 @@ console.log('syntax: ' + (files.length - bad) + '/' + files.length + ' files OK'
 
 // 2. Harnesses: every *harness*.js under docs/ (exit code 0 and no line containing FAIL).
 // Known stale harnesses (skipped, with the reason). Remove an entry when it is fixed.
-const KNOWN_STALE = { 'docs/proposals/upgrade-slice2a-harness.js': 'needs a work copy under new/ and a stub G.U.TYPE_COLOR since slice 2c' };
+const KNOWN_STALE = {};     // slice 7b-2a retired the two stale upgrade harnesses with the legacy cards
 const harnesses = walk(path.join(root, 'docs'), n => /harness.*\.js$/.test(n)).filter(h => {
   const why = KNOWN_STALE[rel(h)];
   if (why) console.log('skip ' + rel(h) + '  (stale: ' + why + ')');
@@ -47,4 +47,26 @@ for (const h of harnesses) {
   else console.log('ok  ' + rel(h) + '  (' + ((Date.now() - t0) / 1000).toFixed(1) + 's)  ' + (out[out.length - 1] || '').slice(0, 60));
 }
 console.log('harnesses: ' + (harnesses.length - hbad) + '/' + harnesses.length + ' passed');
-process.exit(bad || hbad ? 1 : 0);
+// 2b. Invariant I1 guard: the new combat files (js/systems/move-*.js) must never mention the legacy move `kind`, comments included.
+let kbad = 0;
+const moveFiles = walk(path.join(root, 'js', 'systems'), n => /^move-.*\.js$/.test(n));
+for (const f of moveFiles) {
+  const hit = fs.readFileSync(f, 'utf8').split('\n').findIndex(l => /\bkind\b/i.test(l));
+  if (hit >= 0) { kbad++; console.log('I1 GUARD FAIL ' + rel(f) + ':' + (hit + 1) + '  the word "kind" is not allowed in new combat files'); }
+}
+console.log('I1 guard: ' + (kbad ? kbad + ' file(s) mention kind' : 'ok (' + moveFiles.length + ' move-*.js file(s))'));
+// 2c. Legacy move guard (slice 7a, final in 7b-2b): no legacy move-table read (G.Moves.BY_ID, G.Kinds, a move's kind) in any game file (tools/kind-guard.js).
+const KG = require('./kind-guard.js').run(root);
+for (const h of KG.bad) console.log('7A GUARD FAIL ' + h.file + ':' + h.line + '  ' + h.rule + ' (read the resolved def or G.MoveInfo)');
+console.log('7a guard: ' + (KG.bad.length ? KG.bad.length + ' legacy read(s)' : 'ok (' + KG.files + ' file(s)' + (KG.tagged.length ? '; ' + KG.tagged.length + ' stray legacy-7b tag(s)' : '') + ')'));
+kbad += KG.bad.length;
+// 3. Move data: the generated file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash.
+let mbad = 0;
+for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], ['validate_moves.js', [], /^moves:/], ['validate_moves.js', ['--resolved'], /^resolved moves:/], ['move_parity.js', [], /^parity:/]]) {
+  const r = cp.spawnSync(process.execPath, [path.join(__dirname, name), ...args], { encoding: 'utf8' });
+  const out = ((r.stdout || '') + (r.stderr || '')).trim().split('\n');
+  if (r.status !== 0) { mbad++; console.log('MOVE DATA FAIL tools/' + name + '\n   ' + out.filter(l => /INVALID|FAIL|STALE|Error/.test(l)).slice(0, 8).join('\n   ')); }
+  else console.log('ok  tools/' + name + '  ' + (out.find(l => show.test(l)) || ''));
+}
+console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
+process.exit(bad || hbad || mbad || kbad ? 1 : 0);

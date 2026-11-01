@@ -1,7 +1,7 @@
 /* ============ elites.js: overworld elites (feature/boss-rework) ============
  * An elite is a regular (non-boss) wild Enemy, sized up, with a big HP pool and a power multiplier. It reuses the wild AI of its
  * class and the wild damage path (atkFactor). Species: region-accurate, one BST tier above the highest active wild tier, no
- * legendaries, no repeats. The player's FIRST hit engages it; 60 s after that it ENRAGES (damage ramps, no speed bonus).
+ * legendary species (the pokedex leg flag), no repeats. The player's FIRST hit engages it; 60 s after that it ENRAGES (damage ramps, no speed bonus).
  * While one is alive and for a minute after it spawns, the wild cap and spawn rate are halved (then ramp back over 30 s) and
  * the excess wild units walk off screen and are removed (no XP). See BOSS-REWORK.md section 2 and BALANCE.md.
  * Cadence is TEMPORARY until gyms exist: first at 2:00, then every 6:00 (one alive at a time).

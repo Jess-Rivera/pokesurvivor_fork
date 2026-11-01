@@ -1,19 +1,17 @@
 /* ============ progress.js — missions, achievements and account stats ============
  * The game reports what happens with G.Progress.event(type, data):
  *
- *   kill      { types, boss, legend }  (also in the co-op copies)
+ *   kill      { types, boss }  (also in the co-op copies)
  *   chest     cofre con candado abierto
  *   item      { id }        objeto equipado
- *   rift      { type }      rift fight won
  *   runEnd    { time, level, coins, types, group }
- *   judge     you reach Arceus's Judgment (minute 30)
- *   judgeEnd  { time, bosses }  survived against Arceus (on finishing the game)
  *   missionDone { daily }   (lo lanza claim)
  *
  * and this updates in the saved game:
- *   stats.bossesTotal · riftWins · evolutions · missionsDone · groupRuns
- *   stats.judged · judgeTime (best time against Arceus) · judgeBosses (best number of bosses)
- *   legends{dex} · arenas{tipo} · itemsFound{id} · evoMoves{id} · ach{id}
+ *   stats.bossesTotal · evolutions · missionsDone · groupRuns
+ *   itemsFound{id} · evoMoves{id} · ach{id}
+ *   (Old saves also hold counters from the boss modes removed by the gyms-only change, 2026-10-31: they stay in
+ *   the save, see core/db.js, and are never written or read here.)
  *   missions { day, daily[], rerolled, week, weekly[] }
  *
  * Missions: 3 daily + 2 weekly, drawn with a seed from the date and
@@ -145,11 +143,6 @@ G.Progress = (() => {
     switch (kind) {
       case 'kill':
         if (d.boss) S.bossesTotal = (S.bossesTotal || 0) + 1;
-        if (d.legend) { s.legends = s.legends || {}; if (!s.legends[d.legend]) s.legends[d.legend] = Date.now(); }
-        break;
-      case 'rift':
-        S.riftWins = (S.riftWins || 0) + 1;
-        if (d.type) { s.arenas = s.arenas || {}; s.arenas[d.type] = s.arenas[d.type] || Date.now(); }
         break;
       case 'item':
         s.itemsFound = s.itemsFound || {}; s.itemsFound[d.id] = s.itemsFound[d.id] || Date.now();
@@ -157,28 +150,17 @@ G.Progress = (() => {
       case 'runEnd':
         if (d.group) S.groupRuns = (S.groupRuns || 0) + 1;
         break;
-      case 'judge':
-        S.judged = (S.judged || 0) + 1;
-        break;
-      case 'judgeEnd':
-        S.judgeTime = Math.max(S.judgeTime || 0, Math.floor(d.time));
-        S.judgeBosses = Math.max(S.judgeBosses || 0, d.bosses);
-        break;
     }
     advance(s.missions.daily, kind, d);
     advance(s.missions.weekly, kind, d);
     // The achievements are checked at most once per second (there are hundreds of kills).
-    if (kind !== 'kill' || d.boss || d.legend) checkAch();
+    if (kind !== 'kill' || d.boss) checkAch();
     else if (performance.now() - achT > 1000) checkAch();
   }
 
   /** An enemy has fallen (host, solo or copy on the guest). */
   function kill(e) {
-    // The legendaries of Arceus's Judgment do not count as bosses (neither for
-    // missions nor for boss achievements): they have their own counter.
-    if (G.Judgment.active && e.boss) { G.Judgment.bossDown(); event('kill', { types: e.types || [], boss: false, legend: 0 }); return; }
-    const legend = e.legend || (G.Rift.inArena && e.boss) ? e.dex : 0;
-    event('kill', { types: e.types || [], boss: !!(e.boss || e.elite), legend });   // overworld elites count as the old bosses did
+    event('kill', { types: e.types || [], boss: !!(e.boss || e.elite) });   // gym leaders and overworld elites count as bosses
   }
 
   // ---------------- logros ----------------
@@ -223,9 +205,8 @@ G.Progress = (() => {
     if (!n) return;
     let el = document.getElementById('ach-pop');
     if (!el) { el = document.createElement('div'); el.id = 'ach-pop'; el.className = 'box ach-pop'; document.body.appendChild(el); }
-    const icon = n.ach ? (n.ach.dex ? '' : G.Icons.html('medal' + n.ach.tier, 24)) : G.Icons.html('medal2', 24);
+    const icon = n.ach ? G.Icons.html('medal' + n.ach.tier, 24) : G.Icons.html('medal2', 24);
     el.innerHTML = `${icon}<div><b>${n.title}</b>${n.sub ? `<small>${n.sub}</small>` : ''}</div>`;
-    if (n.ach && n.ach.dex) el.prepend(G.UI.spriteCanvas(n.ach.dex, 48, 40, { scale: 1 }));
     el.classList.remove('hidden');
     G.Audio.sfx(n.ach ? 'legend' : 'confirm');
     clearTimeout(toastT);

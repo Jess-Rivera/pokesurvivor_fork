@@ -152,8 +152,7 @@ G.GachaUI = (() => {
        <p class="note">· La tirada ×10 garantiza al menos una Épica.<br>
        · A las ${G.Gacha.PITY_5} tiradas sin Legendaria en un banner, la siguiente lo es.<br>
        · Los repetidos dan Pokémonedas. Los shiny no se repiten.<br>
-       · Pokeballs are earned by playing: some Pokémon drop them when defeated, and
-         bosses and rift legendaries sometimes drop Master Balls.</p>`;
+       · Pokeballs are earned by playing: some Pokémon drop them when defeated.</p>`;
 
     const t = s.tickets;
     $('cost-1').innerHTML = `${G.Icons.html('ball', 24)} 1`;

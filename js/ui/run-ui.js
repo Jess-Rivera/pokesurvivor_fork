@@ -2,11 +2,11 @@
 G.RunUI = (() => {
   const $ = G.UI.$;
   let offers = null, offerCb = null, coopMode = false;
-  let flow = null;            // a mechanic / stat card being applied on the choose sheet: { card, idx, info }
+  let vit = null;             // slice 5b: the Vitamins card's stat pick, shown on the card screen itself: { card, idx }
 
   /** @param coop  in a group: after choosing, it waits for the others */
   function showLevelUp(level, list, cb, coop = false) {
-    offerCb = cb; coopMode = coop; flow = null;
+    offerCb = cb; coopMode = coop; vit = null;
     $('lvl-num').textContent = level;
     $('lvl-wait').textContent = '';
     $('lvl-wait').classList.toggle('hidden', !coop);
@@ -27,7 +27,7 @@ G.RunUI = (() => {
   }
 
   function reroll() {
-    if (!offers || flow || rerollsLeft() <= 0) return;
+    if (!offers || vit || rerollsLeft() <= 0) return;
     const p = G.Game.player;
     p.rerolls = (p.rerolls || 0) + 1;
     G.Audio.sfx('select');
@@ -71,53 +71,46 @@ G.RunUI = (() => {
     if (doneIdx != null) box.classList.add('done');
   }
 
-  // ---- card -> choose sheet (Pokemon strip + move block) -> Confirm ----
+  // ---- card -> apply (the Vitamins card first asks for its stat) ----
 
   function pick(i) {
-    if (!offers || !offers[i] || flow) return;
+    if (!offers || !offers[i] || vit) return;
     const c = offers[i];
-    if (c.type !== 'mech' && c.type !== 'stat') { finish(c, null, i); return; }
+    if (c.type === 'vitamins') { G.Audio.sfx('select'); openVitamins(c, i); return; }
+    finish(c, null, i);     // a new move or a team-wide card
+  }
+
+  // ---- slice 5b: the Vitamins card's stat pick (3 rows on the card screen, keys 1-3, Backspace back) ----
+  function openVitamins(c, idx) {
+    vit = { card: c, idx };
+    $('lvl-reroll').classList.add('hidden');
+    const box = $('cards'), pct = v => Math.round(v * 100) + '%';
+    box.innerHTML = '';
+    c.options.forEach((o, j) => box.appendChild(row({
+      title: o.label + ': ' + o.stat + ' +' + pct(o.next - o.now), desc: 'Team-wide ' + o.stat + ' bonus +' + pct(o.now) + ' to +' + pct(o.next),
+      color: o.color, chip: 'Vitamins', chipColor: o.color, icoText: '+' + pct(o.next - o.now),
+      key: G.Input.keyLabel('attack_' + (j + 1)), onclick: () => pickVit(j)
+    })));
+    box.appendChild(row({ title: 'Back', desc: 'Return to the three cards', color: '#9fb1c9', icoText: '\u2190', key: 'Bksp', onclick: vitBack }));
+  }
+  function pickVit(j) {
+    if (!vit || !vit.card.options[j]) return;
+    const { card, idx } = vit;
+    vit = null;
+    card.choice = card.options[j].id;
+    finish(card, null, idx);
+  }
+  function vitBack() {
+    if (!vit) return;
     G.Audio.sfx('select');
-    openChoose(c, i);
-  }
-
-  /** Open the summary sheet in choose mode for card `c`: pick a Pokemon (and, for a mechanic card, one of its moves). */
-  function openChoose(c, idx) {
-    const roster = G.Game.roster;
-    flow = { card: c, idx, info: { ok: false, why: '' } };
-    $('choose-title').textContent = 'Apply ' + c.title;
-    $('choose-sub').textContent = 'Level ' + $('lvl-num').textContent;
-    $('btn-choose-back').onclick = back;
-    $('btn-choose-ok').onclick = confirm;
-    G.Sheet.render($('choose-sheet'), roster, {
-      sel: Math.max(0, roster.indexOf(G.Game.player)),
-      choose: {
-        card: c, targets: c.targets(roster), onConfirm: confirm,
-        onChange: info => { if (!flow) return; flow.info = info; $('btn-choose-ok').disabled = !info.ok; $('choose-note').textContent = info.ok ? '' : info.why; }
-      }
-    });
-    G.UI.show('scr-choose');
-  }
-
-  function confirm() {
-    if (!flow || !flow.info.ok) return;
-    const ch = G.Sheet.chosen($('choose-sheet'));
-    finish(flow.card, { pl: ch.pl, move: ch.move }, flow.idx);
-  }
-
-  /** Back to the three cards (same offer, nothing spent). */
-  function back() {
-    if (!flow) return;
-    G.Audio.sfx('select');
-    flow = null;
-    G.UI.show('scr-levelup');
+    vit = null;
+    renderCards(offers);
   }
 
   function finish(c, tgt, idx) {
     const cb = offerCb, list = offers;
-    offers = null; offerCb = null; flow = null;
+    offers = null; offerCb = null; vit = null;
     $('lvl-reroll').classList.add('hidden');
-    G.UI.hide('scr-choose');
     if (coopMode) {
       // The chosen card stays in view while the others choose.
       renderCards(list, idx);
@@ -127,21 +120,16 @@ G.RunUI = (() => {
     cb(c, tgt);
   }
 
-  /** Keyboard for the level-up screens. Cards: slot keys 1-3, R reroll. Choose sheet: swap keys / arrows switch Pokemon,
-   *  1-4 pick a move and confirm, Enter confirm, Backspace back. */
+  /** Keyboard for the level-up screen. Cards: slot keys 1-3, R reroll. Vitamins: 1-3 pick a stat, Backspace back. */
   function levelKeys() {
-    if (!offers && !flow) return;
-    if (!flow) {
-      for (let i = 0; i < 3; i++) if (G.Input.action('attack_' + (i + 1))) pick(i);
-      if (G.Input.tap('keyr')) reroll();
+    if (!offers) return;
+    if (vit) {     // 5b Vitamins: 1-3 pick a stat, Backspace back to the cards
+      for (let i = 0; i < vit.card.options.length; i++) if (G.Input.action('attack_' + (i + 1))) { pickVit(i); return; }
+      if (G.Input.tap('backspace')) vitBack();
       return;
     }
-    if (G.Input.tap('backspace')) { back(); return; }
-    if (G.Input.tap('enter')) { confirm(); return; }
-    G.Sheet.keys($('choose-sheet'));
-    if (flow && flow.card.type === 'mech') {
-      for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1)) && G.Sheet.pickMoveIndex($('choose-sheet'), i)) { confirm(); return; }
-    }
+    for (let i = 0; i < 3; i++) if (G.Input.action('attack_' + (i + 1))) pick(i);
+    if (G.Input.tap('keyr')) reroll();
   }
 
   /** Co-op: who still has to choose. */
@@ -156,10 +144,9 @@ G.RunUI = (() => {
   }
 
   function closeLevelUp() {
-    offers = null; offerCb = null; flow = null;
+    offers = null; offerCb = null; vit = null;
     $('cards').classList.remove('done');
     G.UI.hide('scr-levelup');
-    G.UI.hide('scr-choose');
   }
 
   /**
@@ -183,7 +170,6 @@ G.RunUI = (() => {
       <div><span>Level</span><b>${r.level}</b></div>
       <div><span>Defeated</span><b>${r.kills}</b></div>
       <div><span>Bosses</span><b>${r.bosses}</b></div>
-      ${r.judge ? `<div style="grid-column:1/-1"><span>Against Arceus</span><b class="gold">${G.U.mmss(r.judge.time)} · ${r.judge.bosses} ${r.judge.bosses === 1 ? 'legendary' : 'legendaries'}</b></div>` : ''}
       <div style="grid-column:1/-1"><span>PokéCoins earned</span>
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
@@ -319,12 +305,12 @@ G.RunUI = (() => {
       const col = G.U.TYPE_COLOR[m.type];
       const desc = opt.mode === 'add' ? 'Se lanzará a la vez que ' + names(opt.group) + '.'
         : step2 ? 'Se lanzará a la vez que ' + first.name + '. Queda un hueco libre.'
-        : m.desc || '';
+        : G.MoveInfo.desc(m.id);
       const el = document.createElement('div');
       el.className = 'card' + (opt.mode === 'add' || step2 ? ' bond' : '');
       el.innerHTML =
         `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
-         <div class="txt"><div class="nm">${m.name} ${G.Moves.stackTotal(m) ? `<span class="tag-chip" style="background:${col}">+${G.Moves.stackTotal(m)}</span>` : ''}</div><div class="ds">${desc}</div></div>
+         <div class="txt"><div class="nm">${m.name}</div><div class="ds">${desc}</div></div>
          <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
       el.dataset.sfx = 'none';
       el.onclick = () => pickBond(i);

@@ -1,0 +1,32 @@
+   ┌────────────────────────────────┐       
+   │ move-conversion-described.json │       
+   │  └►`source of truth` database  │       
+   └───────────────┬────────────────┘       
+┌──────────────────▼─────────────────────┐  
+│ move-attributes.js                     │  
+│  └►holds definitions and defaults      │  
+│ moves-generated.js                     │─┐
+│  └►mini js with  json converted to js  │ │
+└────────────────────────────────────────┘ │
+┌────────────────────────────────────────┐ │
+│ move-overrides.js                      │ │
+│   └►holds per move attribute overrides │ │
+│ move-handler.js                        │ │
+│   └►holds `special` handlers           │ │
+└───────────────────┬────────────────────┘ │
+                    │                      │
+     ┌──────────────▼────────────────┐     │
+     │ move-resolver.js              │     │
+     │  ├►applies defaults           │     │
+     │  ├►calculates derived values  │◄────┘
+     │  ├►applies overrides          │      
+     │  ├►injects handler conditions │      
+     │  └►emits final move data─┐    │      
+     └─────────────┬────────────┴────┘      
+                   │                        
+    ┌──────────────▼───────────┐            
+    │ combat.js                │            
+    │  ├►uses final move data  │            
+    │  ├►uses defender data    │            
+    │  └►emits combat result┐  │            
+    └───────────────────────▼──┘            

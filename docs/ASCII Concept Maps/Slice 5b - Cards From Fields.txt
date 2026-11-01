@@ -1,0 +1,101 @@
+SLICE 5b, TEAM-WIDE UPGRADE CARDS FROM MOVE FIELDS (plan map, 2026-10-30; card list ruled by Jess)
+Jess: cards are team-wide for the run ("this run: +15% Fire Damage").
+The team-wide upgrades branch is folded in. Eligibility comes from move fields, never `kind`.
+Builds AFTER 5a: Gate Reduction and Duration Increase need the 5a trackers.
+Card names are working names; Jess may rename any of them.
+
+1. CARD FLOW
+============
+  TODAY                                   5b
+  pick card                               pick card
+    --> pick a Pokemon                      --> +1 stack in the TEAM store (run state)
+    --> pick one of its moves               --> every team move with that field reads it
+    --> stack lives on that one move        --> new moves and new Pokemon get it too
+  (Vitamins is the one card with a sub-pick, see 3)
+
+
+2. WHERE IT LIVES
+=================
+  team card store ......... one per run, shared by the roster (like stgTeam); no mid-run
+                            save exists, so no save migration
+  effective def per move .. fold(G.MoveDefs[id], team stacks), cached, rebuilt on a pick
+                            (D4); G.MoveDefs stays frozen (I2); cardLock always wins
+  readers ................. move-sim.js (4 reads) and move-render.js (2) read the folded def
+  lens .................... after the fold (D36)
+  level-up offer .......... a card is offered only if >= 1 team move can use it
+  pick steps .............. gone, except the Vitamins sub-pick (run-ui.js)
+  team sheet .............. shows the run's bonuses (sheet.js)
+  draw families ........... General, Space, Delivery, Payload, New Move (weights: slice 6)
+
+
+3. THE CARDS (Jess, 2026-10-30)
+===============================
+  GENERAL
+  Type (Fire ...) ....... power, moves of that type; same pool as Damage Up
+  Gate Reduction ........ stat stage Gate (SS10)
+  Duration Increase ..... stat stage Duration (SS10)
+  HP Regen .............. % max HP per s, BENCHED Pokemon only (a reason to swap)
+  Vitamins .............. on pick, choose 1 of 3 random stat bonuses (HP, Atk, Def,
+                          SpA, SpD, Spe), team-wide; replaces the six stat cards
+  Dodge Cooldown ........ DEFERRED to the dodge branch (TODO)
+
+  SPACE
+  Area Up (name TBD) .... radRadius (points too: bigger shots), linLength, orbitRadius
+  Presence Up ........... radArc (not a point, below 360, capped at 360), linWidth (beams)
+  Count Up .............. count, only moves whose copies can spread out
+                          (count > 1, a spread, an orbit, an emitter fan): 16 moves (2026-10-31 data)
+  Pierce Up ............. pierce, never UNLIMITED: 17 moves (incl. emitted shots, 2026-10-31 data)
+  Chain Up .............. chainHops, moves that already chain: 3 moves
+  Splash ................ DEFERRED (schema: a card turns splash on)
+
+  DELIVERY
+  Reach Up .............. range, AND flight time on moves that travel (so a shot reaches)
+  Delay Down ............ delay, with a floor: 1 move today (Rock Slide)
+  Speed Up (name TBD) ... moveSpeed, angularSpeed
+  Time Up ............... endOn time of PLACED things only (puddles, turrets, trails, Toxic
+                          Spikes, Discharge rings): 5 moves; never a shot, never the move's own timer
+  Cooldown Down ......... cd; persistent: rehit; emitters: emit every. Never pure buffs
+                          (no cd; Gate Reduction is theirs). Absorbs Fire Rate
+
+  PAYLOAD
+  Damage Up ............. power > 0
+  Knockback Up .......... knockback > 0
+  Ailment Chance Up ..... chance points (+10, cap 100), chance below 100
+  Heal Up ............... heal amount (Aqua Ring, drains)
+  Shield Up ............. shield amount (Substitute)
+  Recoil Down ........... recoil, floor 0: 1 move today (Substitute; its shield stays full size)
+
+  RETIRED on the new path: Buff Stacks, the 14 kind-damage cards, Size, Arc, Width,
+  Shot Range, the old Duration, Projectile Speed, Fire Rate, the six stat cards.
+
+
+4. DEFAULTS (taken unless Jess objects)
+=======================================
+  Count Up and Pierce Up ... rarer draw + a per-run cap (numbers: slice 6)
+  2-buff learn limit ....... unchanged; a buff = no damage payload on the new path
+  legacy path (no flag) .... keeps per-move cards until 7b; team cards only under ?newcombat
+  gym leaders .............. keep per-move stacks (gyms.js) until 7a
+  Vitamins ................. 3 options, +5% each (today's step), team-wide via the badge
+                             path (player.js badge: already "every member, bench included")
+
+
+5. STILL OPEN
+=============
+  New Move cards ........ Jess: learning new moves may work differently (idea not formed).
+                          5b leaves the New Move card as it is today.
+  Identity .............. with every card team-wide, what makes one Pokemon "yours"?
+                          5b ships "the roster is the build"; revisit after feel-testing.
+  Thin cards ............ Delay Down and Recoil Down each touch 1 move today: build them,
+                          or defer like Splash until more moves need them?
+  Names ................. Area Up, Speed Up (clashes with the Speed stat), and the rest.
+
+
+6. TESTS (sketch)
+=================
+  same stacks, any order --> same effective def | G.MoveDefs unchanged after picks
+  a move learned AFTER a card gets the card | a new Pokemon gets the card
+  cardLock never moves | no Pierce on UNLIMITED/shapeless | no Cooldown Down on pure buffs
+  Count Up only on the 16 | Time Up never touches the move's own timer
+  Reach Up: a travelling shot reaches its longer range | HP Regen heals the bench only
+  Gate/Duration cards change the 5a timelines (SS10, self drops included)
+  one assertion per row of section 3

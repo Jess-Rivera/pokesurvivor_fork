@@ -61,11 +61,11 @@ G.Player = class Player {
     this.active = 0;           // hueco activo
     this.swapT = 0;            // hold left (s) before you may swap slots again
     this.maxMoves = 4;         // huecos
-    this.bonds = 0;            // links to use (reward from the legendaries)
+    this.bonds = 0;            // links to use (reward from gym wins)
 
     // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
     // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
-    // { stat: [{ n, t, dur, src }] } with stat in atk, def, spa, spd, spe, regen. See G.Stages.teamAdd.
+    // { stat: [{ n, t, dur, src }] } with stat in atk, def, spa, spd, spe, regen. Timed keys from berries (data/ground-items.js); move raises are team trackers (G.Stages).
     this.stgTeam = {};
 
     this.level = 1;
@@ -93,10 +93,12 @@ G.Player = class Player {
     this.dead = false;
     this.power = null;         // poder de altar activo: { def, t, dur }
     this.slowT = 0;            // pegado por una trampa
+    this.shield = null;        // move schema slice 4b (Substitute): { v, max, regen, t, dur, overflow, src }, set by G.MoveEffects, absorbed in hurt()
+    this.mvRoot = false;       // move schema slice 4b: a rooted commitment (G.MoveSim) holds move speed at 0
     // Statuses (slice C, G.Status): the player is a host like any enemy. stDot is the player's burn / poison / toxic.
     this.isPlayer = true;
     this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null; this.stDot = null; this.stDaze = null; this.stDrow = null; this.shakeCd = 0;
-    this.stg = null; this.stgRoll = null;      // stat stages (slice E1: Speed drops only)
+    this.stg = null;      // fixed-timer stat applications (carrier SLOW, commitment slow); move stages are trackers (h.trk)
     this.item = null;          // held Pokemon-tier item id (data/items.js), one per Pokemon; works only while this one is active
     this.berries = [];         // status-berry ids in the team berry bag: ONE array shared by the whole roster (game.js), never reassigned after the run starts
     this.runItems = [];        // run-tier item ids (data/items.js): ONE array shared by the whole roster (game.js), never reassigned after the run starts
@@ -130,8 +132,9 @@ G.Player = class Player {
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) { return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp; }
-  /** Stat bonus fraction: the stat cards plus the gym badge boosts. */
-  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
+  /** Stat bonus fraction: the stat cards plus the gym badge boosts, plus the team Vitamins card (slice 5b: a team read, so every member,
+   *  bench and later ones included, has it). */
+  incOf(k) { return this.inc[k] + this.badge[k] + G.Stages.teamSum(this.stgTeam, 'pct_' + k) + (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0); }       // + timed Kee / Maranga berries (pct_def, pct_spd)
   /** A gym badge's run-long boost: +pct on a stat (hp, atk, def, spa, spd, spe). Applies like the matching stat card. */
   addBadgeBoost(stat, pct) {
     if (!(stat in this.badge)) return false;
@@ -143,21 +146,18 @@ G.Player = class Player {
     }
     return true;
   }
-  /** Take one stat card (HP Up, Protein, Iron, Calcium, Zinc, Carbos). */
-  addStat(id) {
-    const st = G.Mechanics.STAT_BY[id];
-    if (!st || !(id in this.inc)) return false;
-    this.inc[id] += st.step;
-    if (id === 'hp' && this.baseHpStat != null) {
-      const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
-      this.maxHp = newMax;
-      if (gain > 0 && !this.dead) this.hp += gain;       // tops up like a level-up; a fainted mon is not revived
-    }
-    return true;
+  /** Slice 5b: re-derive max HP after a team HP bonus (the HP Vitamin). Tops up the gain like a level-up. */
+  refreshMaxHp() {
+    if (this.baseHpStat == null) return;
+    const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
+    this.maxHp = newMax;
+    if (gain > 0 && !this.dead) this.hp += gain;     // never revives a fainted member
   }
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
-  get spd() {
+  get spd() { return this.mvRoot ? 0 : this.unrootedSpd; }     // mvRoot: slice 4b rooted commitment or a live swept dash (G.MoveSim)
+  /** The final move speed as if not rooted: a swept dash reads its speed here (move-sim.js speedOf). */
+  get unrootedSpd() {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
     const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
@@ -235,7 +235,6 @@ G.Player = class Player {
       return;
     }
     this.active = i;
-    G.Projectiles.clearOrbs(this);
     G.Audio.sfx('select');
     if (!free) this.swapT = Player.SWAP_LOCK;
     const m = this.slots[i][0];
@@ -248,7 +247,7 @@ G.Player = class Player {
   }
 
   // ---------------- links (fusions) ----------------
-  // Each legendary beaten gives a link. With it, moves are combined into a
+  // Each gym win gives a link. With it, moves are combined into a
   // single slot and fired at once. Only one group grows (up to BOND_MAX); if
   // none is in progress, the link joins two loose moves.
   static get BOND_MAX() { return 4; }
@@ -277,7 +276,6 @@ G.Player = class Player {
     const a = this.slots.indexOf(cur);
     this.active = this.hasItem('choiceband') && a >= 0 ? a : this.slots.indexOf(target);
     this.bonds = Math.max(0, this.bonds - 1);
-    G.Projectiles.clearOrbs(this);
     return target;
   }
 
@@ -291,23 +289,24 @@ G.Player = class Player {
    * speeds it up if the cooldown is shorter than the animation, so it chains.
    */
   cast(m) {
-    // Life Orb: each attack costs a little health (it never leaves you KO).
-    if (this.hasItem('lifeorb') && m.kind !== 'orbit' && m.kind !== 'trail' && !this.remote) {
+    const def = G.MoveDefs[m.id], fam = G.MoveInfo.badge(m.id);     // slice 7a: the resolved def and the display family, never the legacy table
+    // Life Orb: each attack costs a little health (it never leaves you KO). An always-on move (a persistent def) is not an attack.
+    if (this.hasItem('lifeorb') && !(def && def.persistent) && !this.remote) {
       this.hp = Math.max(1, this.hp - Math.max(1, this.maxHp * 0.01));
     }
     const anim = { melee: 'Attack', beam: 'Shoot', projectile: 'Shoot', nova: 'Attack',
                    aura: 'Charge', buff: 'Charge', orbit: 'Charge', boomerang: 'Shoot', chain: 'Shoot',
-                   mine: 'Charge', meteor: 'Charge', turret: 'Charge', dash: 'Attack', trail: 'Walk', cone: 'Shoot' }[m.kind] || 'Attack';
+                   mine: 'Charge', meteor: 'Charge', turret: 'Charge', dash: 'Attack', trail: 'Walk', cone: 'Shoot' }[fam] || 'Attack';
     // The new families sound like the similar one of the usual ones.
     const SND = { boomerang: 'projectile', chain: 'beam', mine: 'nova', meteor: 'nova', turret: 'buff', dash: 'melee', trail: 'aura', cone: 'projectile' };
     // The trail does not play a sound at each puddle (it would be a constant buzz).
-    if (m.kind !== 'trail') G.Audio.sfx('shot', { kind: SND[m.kind] || m.kind, type: m.type });
-    if (m.kind === 'trail') return;
+    if (fam !== 'trail') G.Audio.sfx('shot', { kind: SND[fam] || fam || 'melee', type: m.type });
+    if (fam === 'trail') return;
     // Do not restart an animation that is halfway through: it would look choppy.
     if (this.anim.busy() && this.anim.progress() < 0.65) return;
     const meta = G.Sprites.animMeta(this.dex, anim);
     const len = meta ? meta.d.reduce((a, b) => a + b, 0) / 60 : 0.4;
-    const cd = Math.max(0.12, m.cd * this.cdMul);
+    const cd = Math.max(0.12, (m.simCd || m.cd || 0.5) * this.cdMul);     // simCd: the team's folded cd, set by move-render on each cast
     this.anim.play(anim, { speed: Math.max(1, len / (cd * 0.9)) });
     this.attackFace = 0.35;
   }
@@ -341,7 +340,7 @@ G.Player = class Player {
 
   /**
    * @param type  attack type (type chart and weather); with no type, damage as-is
-   * @param pure  damage not reduced by defense or melee (Arceus)
+   * @param pure  damage not reduced by defense or melee (fixed-damage sources)
    */
   hurt(amount, type = null, pure = false, atk = null, who = null) {
     if (this.invuln > 0 || this.dead) {
@@ -352,7 +351,7 @@ G.Player = class Player {
     let neutral = amount, dStat = 0, cat = -1;
     // Enemy attack (sub-slice C): `amount` is the enemy attacker FACTOR; convert to raw
     // damage via this player's base Def/SpD matching the attack category. Non-enemy damage
-    // (atk == null: terrain, lava, altar, judgment, DoT) keeps `amount` as-is.
+    // (atk == null: terrain, lava, altar, DoT) keeps `amount` as-is.
     if (atk && !pure) {
       const st = this.mon.stats, mul = atk.mul || 1;     // mul: weak support / flanker strike, on the final damage
       const defB = st ? st[2] : 50, spdB = st ? st[4] : 50;
@@ -376,9 +375,14 @@ G.Player = class Player {
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
-    const close = this.activeGroup().some(m => m.kind === 'melee') ? 0.75 : 1;
+    const close = this.activeGroup().some(m => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee') ? 0.75 : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
-    const d = Math.max(1, raw);
+    let d = Math.max(1, raw);
+    if (this.shield) {                        // move schema slice 4b (Substitute): the shield takes the final damage first
+      const took = this.absorb(d);
+      if (took >= d) return;                  // fully absorbed: a blue number only, no invulnerability, flash, sound or camera kick
+      d -= took;                              // the spill goes down the normal path
+    }
     this.hp -= d;
     if (LOG) G.Log.hitIn(who, type, cat, neutral, dStat, afterDef, tk, wk, pure ? 0 : this.reduction, pure ? 1 : close, d,
                          hp0, Math.max(0, this.hp), (d > raw ? 1 : 0) | (pure ? 4 : 0), this.spd);
@@ -402,8 +406,8 @@ G.Player = class Player {
       this.hp = 0; this.dead = true;
       if (LOG) G.Log.faint(false, 0);
       this.anim.play('Faint', { hold: true });
-      G.Projectiles.clearOrbs(this);
       this.reviveT = 0;
+      this.shield = null;                     // slice 4b: a faint ends the shield
       this.clearEffects();                    // slice E2b: fainting wipes every status and own stage drop
     }
   }
@@ -421,7 +425,34 @@ G.Player = class Player {
     if (this.slowT > 0) this.slowT -= dt;
     G.Status.tick(this, dt);
     G.Stages.tick(this, dt);
+    // Slice 5b HP Regen card: benched members only (a reason to swap); no floating number on the bench (Jess, 2026-10-31)
+    const rg = this.teamCards ? G.TeamCards.regen(this.teamCards) : 0;
+    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);
     this.benched = false;
+  }
+
+  /** Move schema slice 4b: the shield takes up to `d` of a final hit. Returns what it absorbed (all of `d` when overflow is off).
+   *  A shield drained to 0 is broken for good (its regen does not bring it back). The absorbed part shows as a blue number. */
+  absorb(d) {
+    const sh = this.shield;
+    const took = Math.min(sh.v, d);
+    sh.v -= took;
+    if (sh.v <= 1e-9) this.shield = null;
+    if (!this.benched && took > 0) G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(took), '#6ec8ff');
+    return sh.overflow ? took : d;
+  }
+  /** Shield regen and lifetime (slice 4b), once per frame from update(). */
+  tickShield(dt) {
+    const sh = this.shield;
+    if (!sh) return;
+    if ((sh.t -= dt) <= 0) { this.shield = null; return; }
+    sh.v = Math.min(sh.max, sh.v + sh.regen * dt);
+  }
+  /** A cast's HP cost (slice 4b recoil): taken directly, not through hurt (no invulnerability, flash, sound or kick); never below 1 HP. */
+  payHp(n) {
+    const before = this.hp;
+    this.hp = Math.max(1, this.hp - n);
+    if (!this.benched && before - this.hp >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 4, '-' + Math.round(before - this.hp), '#c9c9d6');
   }
 
   heal(amount) {
@@ -508,14 +539,6 @@ G.Player = class Player {
     this.power = { def, t: dur, dur };
   }
 
-  /** A buff move's cast (slice E2a): one team application of `n` stages on `stat` (or `n` HP/s of regen), lasting `dur` s. Returns true when the effective stage changed. */
-  addTeamStage(stat, n, dur, src) {
-    const before = stat === 'regen' ? 0 : G.Stages.stage(this, stat);
-    G.Stages.teamAdd(this.stgTeam, stat, n, dur, src);
-    if (stat === 'regen') return true;
-    return G.Stages.stage(this, stat) !== before;
-  }
-
   // ---------------- ciclo ----------------
   update(dt) {
     this.anim.update(dt);
@@ -531,6 +554,7 @@ G.Player = class Player {
     if (this.dead) return;
     if (this.bellHeal > 0) { const h = Math.min(this.bellHeal, 4 * dt); this.hp = Math.min(this.maxHp, this.hp + h); this.bellHeal -= h; }
     if (this.power && (this.power.t -= dt) <= 0) { this.power.def.off(this); this.power = null; }
+    this.tickShield(dt);
     if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
     // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
     if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);
@@ -575,14 +599,15 @@ G.Player = class Player {
 
     // --- targeting: nearest enemy; if none, toward where you walk ---
     // Target priority based on the active attack:
-    //   ranged (projectile, beam): the boss if in range > what is touching you > the nearest
+    //   ranged (a shot that travels, or a beam): the boss if in range > what is touching you > the nearest
     //   melee and the rest:           what is touching you > the boss > the nearest
     // With a horde on top something is almost always touching you; if that always won,
     // ranged attacks would never hit the boss.
     // With no enemies, it targets the nearest rock or chest.
     const all = G.EnemyMgr.all();
     const m = this.activeMove();
-    const ranged = !!m && (m.kind === 'projectile' || m.kind === 'beam');
+    const md = m && G.MoveDefs[m.id];
+    const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
     const threat = G.Projectiles.nearest(all, this.x, this.y, this.r + 24);
     const boss = all.find(e => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
     const tg = (ranged ? boss || threat : threat || boss)
@@ -630,14 +655,13 @@ G.Player = class Player {
     this.hp = n.hp; this.maxHp = n.maxHp;
     this.magnet = n.mag || this.magnet;
     this.reviveT = n.rev || 0;
-    if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
+    if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); }
     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
-    // Active move (for the halo, the HUD and the orbs).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {
+    // Active move (for the halo and the HUD).
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.MoveDefs[n.mv]) {
       this.moves = [G.Moves.instance(n.mv)];
       this.slots = [this.moves.slice()];
       this.active = 0;
-      G.Projectiles.clearOrbs(this);
     }
     if (this.dead) return;
     this.walking = !!n.walk;
@@ -675,9 +699,9 @@ G.Player = class Player {
     // Buff arcs around the feet.
     const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
     let i = 0;
-    for (const k in this.stgTeam) {
-      const L = this.stgTeam[k];
-      if (!L.length || !COL[k]) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
+    for (const k of G.Stages.teamKeys(this.stgTeam)) {     // legacy keys plus team tracker stats (slice 5a)
+      const L = this.stgTeam[k] || [];
+      if (!COL[k] || !G.Stages.teamLive(this.stgTeam, k)) continue;          // berry keys (guard_*, pct_*, crit, drop) show in the HUD chips, not as feet arcs
       const frac = k === 'regen' ? Math.min(1, L.length / 4) : Math.min(1, G.Stages.teamSum(this.stgTeam, k) / 6);
       ctx.save();
       ctx.globalAlpha = 0.6;

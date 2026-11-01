@@ -31,8 +31,8 @@
  * The warned attacks are in systems/hazards.js.
  *
  * Bosses: strong NON-legendary Pokemon (pseudo-legendaries, Slaking...), at
- * random by power bands. The legendaries only appear in the rifts
- * (systems/rift.js).
+ * random by power bands. Legendaries never spawn (the pokedex leg flag; the
+ * gacha still has them).
  */
 G.Enemies = (() => {
   const TIERS = [
@@ -64,8 +64,10 @@ G.Enemies = (() => {
   // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
   const OPENING_HP_START = 0.55;
   const openingHpK = t => { const end = G.Stats.XP_BOOST_END; return t >= end ? 1 : OPENING_HP_START + (1 - OPENING_HP_START) * Math.max(0, t) / end; };
-  const enemyHp = (baseHP, t) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t)) * openingHpK(t);
-  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers
+  // lvlBump (rework/gym-progression): extra levels from gym-gate escalation, applied to wild spawns only (the caller
+  // decides who is a wild enemy and passes G.Gym.escBump()). The opening HP discount still keys off real run time t.
+  const enemyHp = (baseHP, t, lvlBump = 0) => G.Stats.hpForLevel(baseHP, G.Stats.levelForTime(t) + (lvlBump || 0)) * openingHpK(t);
+  const levelForTime = t => G.Stats.levelForTime(t);   // re-exported for the HUD / callers (NO bump: HUD shows true run level)
 
   const H = (d, s) => G.U.hash(d, 7, s);
 
@@ -246,8 +248,6 @@ G.Enemies = (() => {
     return { cast, bosses };
   }
 
-  // (The minute-60 "extra time" was removed when Arceus's Judgment arrived,
-  //  that ends every game at minute 30: see systems/judgment.js.)
   function scale(t) {
     // HP now comes from enemyHp(baseHp, t) at spawn; carry t through. dmg/spd ramps
     // unchanged (damage is a later slice).

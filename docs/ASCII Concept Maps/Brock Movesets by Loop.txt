@@ -1,0 +1,153 @@
+BROCK (KANTO GYM 1): LORE MOVESETS BY LOOP   (PLANNING DRAFT 2026-10-31)
+================================================================================
+!! STALE ORDER (2026-10-31): docs/GYM-ROSTERS.md moved to the Gen-1 order. Slot numbers and
+!! loop walks below use the OLD order and need redoing (TODO.md).
+Planning only. Lore-first: every set below is Brock's own in-game set unless
+tagged otherwise. Catalog coverage is ignored on purpose (handled at build time).
+Roster: docs/GYM-ROSTERS.md, Gym 1.
+
+
+THE RULE (proposed)
+================================================================================
+Each mon walks its OWN Brock history, oldest/weakest appearance first, one
+step per loop. Loop 1 lands on Gen 1 (Brock's L12 Geodude, which matches our
+~L12 loop-1 gym level). Loop 6 lands on the PWT tournament sets (his most
+optimized teams).
+
+  loop:     1        2        3        4        5        6
+  slot 1  [RBY]---[GSC]---[LGPE]--[HGSS-R]-[PWT-K]--[PWT-W]
+  slot 2          [GSC]---[HGSS]--[comp]---[comp]---[PWT-W*]
+  slot 3                  [GSC]---[HGSS]---[LGPE]---[PWT-K]
+  slot 4                           [HGSS]---[LGPE]---[PWT-K]
+  slot 5                                    [LGPE]---[PWT-W]
+  slot 6                                             [PWT-W]
+
+  source key
+  RBY    Red/Blue (Lv12)                 GSC    Crystal gym (Lv41-44)
+  HGSS   HeartGold/SoulSilver gym (Lv51-54)
+  HGSS-R HGSS rematch, Fighting Dojo (Lv54-61)
+  LGPE   Let's Go rematch (Lv56-57)
+  PWT-K  Black 2/White 2 PWT, Kanto Leaders (Lv50)
+  PWT-W  B2W2 PWT, World Leaders / Type Expert (Lv50)
+  comp   COMPOSITE: no single Brock set exists, built from his other canon
+  *      move set taken from Brock's Rhyperior (same line, Gen 4 evo)
+
+
+SETS PER SLOT
+================================================================================
+
+ SLOT 1  Geodude > Graveler > Golem   (loops 1-6)
+ --------------------------------------------------------------------------
+  L1  RBY     Geodude   Tackle, Defense Curl
+              (+ Rock Throw: Jess's pilot add, not canon on Brock's Geodude.
+               Let's Go Onix does carry it.)
+  L2  GSC     Graveler  Defense Curl, Rollout, Rock Slide, Earthquake
+              (HGSS gym Graveler is identical, so it is skipped)
+  L3  LGPE    Golem     Earthquake, Rock Slide, Fire Punch, Thunder Punch
+  L4  HGSS-R  Golem     Sandstorm, Rock Polish, Rock Slide, Earthquake
+  L5  PWT-K   Golem     Stone Edge, Iron Defense, Sucker Punch, Earthquake
+  L6  PWT-W   Golem     Stone Edge, Rock Polish, Sucker Punch, Earthquake
+
+ SLOT 2  Rhyhorn > Rhydon   (loops 2-6)
+ --------------------------------------------------------------------------
+  L2  GSC     Rhyhorn   Fury Attack, Scary Face, Earthquake, Horn Drill
+  L3  HGSS    Rhyhorn   Earthquake, Sandstorm, Scary Face, Horn Drill
+  L4  comp    Rhydon    Earthquake, Horn Drill, Scary Face, Thunder Fang
+              (Thunder Fang = the Rhyhorn Brock trades you in HGSS)
+  L5  comp    Rhydon    Earthquake, Horn Drill, Megahorn, Stone Edge
+              (bridge from the GSC/HGSS core to the Rhyperior set)
+  L6  PWT-W*  Rhydon    Megahorn, Avalanche, Earthquake, Stone Edge
+  NOTE: Brock never fields a Rhydon in any core game. Rhyhorn (GSC, HGSS)
+        and Rhyperior (PWT World) are his; Rhydon is the gap between them.
+
+ SLOT 3  Omanyte > Omastar   (loops 3-6)
+ --------------------------------------------------------------------------
+  L3  GSC     Omastar   Bite, Surf, Protect, Spike Cannon
+  L4  HGSS    Omastar   Protect, Spike Cannon, Ancient Power, Brine
+  L5  LGPE    Omastar   Blizzard, Hydro Pump, Seismic Toss, Reflect
+  L6  PWT-K   Omastar   Ice Beam, Earth Power, Ancient Power, Hydro Pump
+  (HGSS-R: Protect, Sandstorm, Ancient Power, Brine. Near-dupe of L4, unused)
+
+ SLOT 4  Kabuto > Kabutops   (loops 4-6)
+ --------------------------------------------------------------------------
+  L4  HGSS    Kabutops  Endure, Giga Drain, Aqua Jet, Rock Slide
+  L5  LGPE    Kabutops  X-Scissor, Rock Slide, Aqua Jet, Brick Break
+  L6  PWT-K   Kabutops  Aqua Jet, Superpower, Swords Dance, Stone Edge
+  (alts: GSC Slash, Surf, Endure, Giga Drain.
+         PWT-W X-Scissor, Rock Slide, Swords Dance, Waterfall)
+
+ SLOT 5  Onix > Steelix   (loops 5-6)
+ --------------------------------------------------------------------------
+  L5  LGPE    Onix      Stealth Rock, Iron Tail, Rock Slide, Earthquake
+  L6  PWT-W   Steelix   Iron Head, Sandstorm, Earthquake, Stone Edge
+              (Brock's Onix set; Iron Head suits the Steelix stage too)
+  NOTE: no game gives Brock a Steelix. Onix is his ace in every game, so it
+        has the deepest history (8 sets) and only 2 loops to use it. Spares:
+        RBY     Tackle, Screech, Bide, Bind
+        LGPE    Headbutt, Bind, Rock Throw (gym)
+        GSC     Bind, Sandstorm, Bide, Rock Slide
+        HGSS    Screech, Sandstorm, Iron Tail, Rock Slide
+        HGSS-R  Stealth Rock, Sandstorm, Rock Polish, Rock Slide
+        PWT-K   Protect, Sand Tomb, Stealth Rock, Sandstorm
+
+ SLOT 6  Aerodactyl   (loop 6)
+ --------------------------------------------------------------------------
+  L6  PWT-W   Aerodactyl  Fire Fang, Earthquake, Rock Slide, Ice Fang
+  (alts: LGPE  Crunch, Rock Slide, Earthquake, Iron Tail
+         PWT-K Tailwind, Earthquake, Thunder Fang, Rock Slide)
+
+
+PER-LOOP VIEW (what is on screen)
+================================================================================
+  LOOP 1  Geodude       Tackle . Defense Curl (. Rock Throw)
+  LOOP 2  Graveler      Defense Curl . Rollout . Rock Slide . Earthquake
+          Rhyhorn       Fury Attack . Scary Face . Earthquake . Horn Drill
+  LOOP 3  Golem         Earthquake . Rock Slide . Fire Punch . Thunder Punch
+          Rhyhorn       Earthquake . Sandstorm . Scary Face . Horn Drill
+          Omastar       Bite . Surf . Protect . Spike Cannon
+  LOOP 4  Golem         Sandstorm . Rock Polish . Rock Slide . Earthquake
+          Rhydon        Earthquake . Horn Drill . Scary Face . Thunder Fang
+          Omastar       Protect . Spike Cannon . Ancient Power . Brine
+          Kabutops      Endure . Giga Drain . Aqua Jet . Rock Slide
+  LOOP 5  Golem         Stone Edge . Iron Defense . Sucker Punch . Earthquake
+          Rhydon        Earthquake . Horn Drill . Megahorn . Stone Edge
+          Omastar       Blizzard . Hydro Pump . Seismic Toss . Reflect
+          Kabutops      X-Scissor . Rock Slide . Aqua Jet . Brick Break
+          Onix          Stealth Rock . Iron Tail . Rock Slide . Earthquake
+  LOOP 6  Golem         Stone Edge . Rock Polish . Sucker Punch . Earthquake
+          Rhydon        Megahorn . Avalanche . Earthquake . Stone Edge
+          Omastar       Ice Beam . Earth Power . Ancient Power . Hydro Pump
+          Kabutops      Aqua Jet . Superpower . Swords Dance . Stone Edge
+          Steelix       Iron Head . Sandstorm . Earthquake . Stone Edge
+          Aerodactyl    Fire Fang . Earthquake . Rock Slide . Ice Fang
+
+  Stage note: species shown at each loop follow the lore set's species. The
+  actual stage still comes from the gym level (GYM-ROSTERS rule); one set per
+  loop serves whichever stage shows.
+
+
+DESIGN FLAGS (for later, not blocking)
+================================================================================
+  - Earthquake is on 6 mons by loop 6. Lore-true (it is Brock's whole identity
+    past Gen 1) but it means 6 overlapping ground pulses in the brawl.
+  - Sandstorm shows up on 3 mons (L4+). Natural fit for a weather-system hook
+    (js/systems weather) rather than a per-mon attack.
+  - Coverage moves (Fire/Thunder Punch, Blizzard, Ice Beam, Megahorn, Fangs)
+    are Brock's canon anti-Water/Grass answers: built-in anti-cheese.
+  - Horn Drill (OHKO) and Bide/Rollout/Protect/Endure need a survivor-like
+    translation before they can be bosses' moves.
+  - Catalog gap: most of these moves are not in js/data/moves.js yet; the gap
+    list gets produced when the gym-roster branch is planned.
+
+
+SOURCES (2026-10-31)
+================================================================================
+  Victory Road wiki, Brock (all core-game + PWT sets)
+    https://victoryroad.fandom.com/wiki/Brock
+  Helixpedia, Brock (RBY + Crystal sets)
+    https://helixpedia.fandom.com/wiki/Brock
+  Dittobase, HGSS Brock (gym sets, cross-check)
+  Serebii trainer dex, Kabutops (HGSS gym + rematch, cross-check)
+  Supercheats / Gamer Guides, LGPE rematch (cross-check)
+  PokemonDB, LGPE rematch roster + levels
+  Bulbapedia, Brock (game) (trade Rhyhorn Thunder Fang)

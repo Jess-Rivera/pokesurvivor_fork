@@ -84,8 +84,8 @@ G.DB = (() => {
       pupg: {},               // dex -> { id -> level }: each Pokemon's upgrades
       tickets: { t1: 0, t10: 0 },   // gacha tickets (x1 and x10)
       pity: {},               // banner generation -> pulls without a 5-star
-      legends: {},            // dex -> date: legendaries beaten in rifts
-      arenas: {},             // type -> date: rift arenas won
+      legends: {},            // dex -> date (old saves only: no longer written since the gyms-only change, 2026-10-31)
+      arenas: {},             // type -> date (old saves only: no longer written since the gyms-only change)
       itemsFound: {},         // id -> date: equippable items found
       evoMoves: {},           // id -> date: moves ever evolved
       ach: {},                // id -> date: achievements earned
@@ -146,8 +146,9 @@ G.DB = (() => {
         const l = Array.isArray(s.pbind[d]) ? s.pbind[d].slice(0, 4) : [];
         const seen = new Set();
         s.pbind[d] = [0, 1, 2, 3].map(i => {
-          const id = l[i];
-          if (typeof id !== 'string' || (G.Moves && !G.Moves.BY_ID[id]) || seen.has(id)) return null;
+          // A retired move (Bubble, Hail) loads as its replacement, unless the list already binds that move itself (slice 7b).
+          const r = G.Moves && G.Moves.RETIRED[l[i]], id = r ? (l.includes(r) ? null : r) : l[i];
+          if (typeof id !== 'string' || (G.MoveDefs && !G.MoveDefs[id]) || seen.has(id)) return null;
           seen.add(id); return id;
         });
       }
@@ -156,7 +157,7 @@ G.DB = (() => {
     if (s.pban && typeof s.pban === 'object') {
       for (const d of Object.keys(s.pban)) {
         const l = Array.isArray(s.pban[d]) ? s.pban[d] : [];
-        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, 3);
+        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.MoveDefs || (G.MoveDefs[id] && !(G.Moves && G.Moves.RETIRED[id])))))].slice(0, 3);     // a retired move's veto is dropped
       }
     } else s.pban = {};
     if (G.Upgrades) for (const d of Object.keys(s.pupg || {})) {
@@ -226,7 +227,7 @@ G.DB = (() => {
       for (const k in older.pupg[d]) mine[k] = Math.max(mine[k] || 0, older.pupg[d][k]);
     }
     r.pupgDone = r.pupgDone || older.pupgDone;
-    // What is earned is never lost: union of legendaries, arenas, items, achievements...
+    // What is earned is never lost: union of legends, arenas, items, achievements...
     for (const coll of ['legends', 'arenas', 'itemsFound', 'evoMoves', 'ach']) {
       r[coll] = r[coll] || {};
       for (const k in older[coll] || {}) if (!r[coll][k]) r[coll][k] = older[coll][k];

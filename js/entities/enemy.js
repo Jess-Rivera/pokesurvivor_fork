@@ -23,6 +23,10 @@
     return G.U.clamp(Math.round(110 / h * 2) / 2, 1, 2);
   }
 
+  // Knockback slide: kx, ky decay by KNOCK_DECAY ^ dt each frame. move-effects.js SLIDE (the Bonemerang pull clamp)
+  // assumes this and game.js's 1/30 s frame cap; move-motion-harness.js checks they agree, so rerun it after a retune.
+  const KNOCK_DECAY = 0.0015;
+
   class Enemy {
     constructor(def, x, y, sc, boss = false) {
       this.id = nextId++;
@@ -32,7 +36,8 @@
       this.x = x; this.y = y;
       this.boss = boss;
       this.elite = def.elite || null;      // overworld elite descriptor (systems/elites.js); a regular wild Enemy otherwise
-      this.scale = boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
+      // A gym leader's mon is drawn at player size, so its moves reach exactly as the player's do (slice 7a, Jess 2026-10-31).
+      this.scale = def.gym ? 1 : boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
       this.anim = new G.Sprites.Animator(def.dex, this.scale);
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
@@ -40,7 +45,11 @@
       // Enemy HP = real base HP through the mainline formula at the level-for-run-time
       // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
-      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0);
+      // Gym-gate escalation (rework/gym-progression): a PLAIN wild enemy (not boss, not gym, not elite) spawned while a
+      // gate has been ignored past its grace period gets +escBump levels. Read once at spawn (level is frozen here),
+      // so escalation ramps as new spawns come in hot and snaps back when the bump clears on the win. 0 otherwise.
+      const wildBump = (!boss && !def.gym && !this.elite && G.Gym) ? G.Gym.escBump() : 0;
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.elite ? this.elite.hp : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0, wildBump);
       this.hp = this.maxHp;
       // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
       // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
@@ -49,7 +58,7 @@
       this.dmg = def.dmg * sc.dmg;
       this.xp = def.xp;
       // Wild enemies: XP is computed at the kill from the species base_experience (die()). Bosses
-      // and Judgment legendaries (def.bx undefined) keep the flat def.xp. xpMul collects the
+      // (def.bx undefined) keep the flat def.xp. xpMul collects the
       // tank / elite / shiny / golden multipliers.
       this.bx = def.bx != null ? def.bx : null;
       this.xpMul = (def.xpMul || 1) * (this.elite ? this.elite.xpMul : 1);
@@ -65,16 +74,10 @@
       this.atkBase = _st ? _st[1] : 50;
       this.spaBase = _st ? _st[3] : 50;
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
-      this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0);
+      this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0) + wildBump;   // escalation makes hot wilds hit harder too, not just tankier
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
-      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
-      if (this.gym) {
-        this.atkLvl = this.gym.level;
-        this.baseAtkType = this.atkType;
-        const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
-        this.contactMove = cm.find(m => m.kind === 'melee') || cm[0] || null;
-        if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; this.baseAtkType = this.atkType; }
-      }
+      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); its level, contact factor, sim-owner fields and AI are set by the brain (boss-ai.js)
+      this.brain = null;                    // a boss's brain (G.Boss.make); it makes every boss decision, the body only delegates
       this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
@@ -83,10 +86,9 @@
       this.flash = 0;
       this.slow = 0; this.slowT = 0;
       // Status (slice A, G.Enemies.STATUS): burn is 0/1; poison is 0 none, 1 poisoned, 2 badly poisoned (Toxic, N/16 per turn).
-      // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter, ailRoll = per-move roll gap.
+      // *Left = ticks still to come, *Tick = seconds to the next one, poisonN = Toxic turn counter.
       this.burn = 0; this.burnLeft = 0; this.burnTick = 0; this.burnMul = 1;
       this.poison = 0; this.poisonLeft = 0; this.poisonTick = 0; this.poisonN = 0; this.poisonMul = 1;   // *Mul = DoT strength of the source move
-      this.ailRoll = null;
       this.stFl = null; this.fsp = 0; this.fdx = 0; this.fdy = 0;     // flinch recoil state and the last moving heading (see applyFlinch)
       // Control statuses (slice C, see G.Status): major (paralysis | freeze | sleep), confusion, trap, and the hard-CC no-reapply windows.
       this.stMajor = null; this.stCnf = null; this.stTrap = null; this.stWin = null;
@@ -175,7 +177,6 @@
       this.hp -= amount;
       if (this.elite && !this.remote) G.Elites.engage(this);
       if (!this.boss && !this.elite) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp);      // morale: HP lost recently, as a fraction of max (capped)
-      G.Judgment.noteDmg(amount, this);
       this.showHurt(d, color, dirX, dirY, eff);
       if (knock > 0 && !this.boss && !this.elite) {
         const [nx, ny] = G.U.norm(dirX, dirY);
@@ -251,11 +252,7 @@
      */
     applyFlinch() {
       if (this.remote || this.dead || G.Status.stunned(this)) return false;
-      const ai = this.ai;
-      if (this.boss && ai) {
-        if (ai.cast) this.bossEnd();
-        else ai.cd = this.gym ? this.gymCd() : G.U.rand(1.3, 2.0);
-      }
+      if (this.brain) this.brain.flinch();
       if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
       if (this.keepsDistance()) this.shotCd = this.shotGap();
       this.touchCd = Math.max(this.touchCd, 0.55);
@@ -302,8 +299,7 @@
         if (this.shiny) { G.FX.burst(this.x, cy, '#ffe9a0', 30, 220); G.FX.ring(this.x, this.y, this.r, this.r * 7, '#9ae6ff', 0.7, 5); }
         return;
       }
-      // (The legendaries from Arceus's Judgment only give experience.)
-      if (this.boss && !this.judge) {
+      if (this.boss) {
         G.Camera.kick(0.9);
         for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
         // Bosses always drop an item: a Pokemon item, with a small placeholder chance of a RUN item (Items.RUN_CHANCE).
@@ -318,7 +314,7 @@
       // Elite: a burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout.
       if (this.elite) {
         G.Camera.kick(0.6);
-        G.Pickups.dropXp(this.x, this.y, this.xp, true, false, true);
+        G.Pickups.dropXp(this.x, this.y, this.xp, true);
         G.Pickups.drop('heal', this.x + 24, this.y, 0);                                    // the guaranteed Oran Berry (the plain 'heal' pickup, 30%)
         G.Pickups.drop('ground', this.x + 4, this.y + 22, G.Grounds.roll());               // plus one ground roll
         if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
@@ -329,7 +325,7 @@
            (picked up by the arena's pullAll): a Pokemon item, or a RUN item with the placeholder Items.RUN_CHANCE.gym. */
         G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('gym', G.Game.player.runItems));
       }
-      else G.Pickups.dropXp(this.x, this.y, this.xp, this.boss, !!this.legend, !!this.judge);
+      else G.Pickups.dropXp(this.x, this.y, this.xp);
       if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {
@@ -337,12 +333,6 @@
         for (let i = 0; i < n; i++) G.Pickups.drop('coin', this.x + G.U.rand(-36, 36), this.y + G.U.rand(-26, 26), 5);
         if (this.def.loot === 'ticket10') G.Pickups.drop('ticket10', this.x, this.y - 12, 1);
         G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ffd23f', 0.6, 4);
-      }
-      if (this.legend) {
-        // The rift legendary: loose tickets and coins (the x10, about
-        // half the time; it used to always give 2).
-        for (let i = 0; i < 3; i++) G.Pickups.drop('ticket', this.x + G.U.rand(-30, 30), this.y + G.U.rand(-20, 20), 1);
-        for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-50, 50), this.y + G.U.rand(-35, 35), 8);
       }
       G.Audio.sfx(this.boss ? 'bossDown' : 'faint');
       if (this.shiny) {
@@ -427,11 +417,6 @@
           if (--this.poisonLeft <= 0) { this.poison = 0; this.poisonN = 0; }
         }
       }
-      if (this.ailRoll) {
-        let any = false;
-        for (const k in this.ailRoll) { if ((this.ailRoll[k] -= dt) <= 0) delete this.ailRoll[k]; else any = true; }
-        if (!any) this.ailRoll = null;
-      }
       G.Status.tick(this, dt);
       G.Stages.tick(this, dt);
       if (this.dead) return;
@@ -441,7 +426,7 @@
       if (G.Status.stunned(this)) {
         this.stFl = null;
         this.x += this.kx * dt; this.y += this.ky * dt;
-        this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+        this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
         if (!this.flying) G.World.collide(this);
         this.anim.loop('Idle');
         return;
@@ -449,8 +434,8 @@
 
       // --- terreno ---
       let terrainMul = 1;
-      // (The legendary is at home: its arena does not affect it. Arceus's ones, neither.)
-      if (!this.flying && !this.legend && !this.judge && !this.elite && G.World.isLiquid(this.x, this.y)) {
+      // (Elites are not slowed or burned by liquids.)
+      if (!this.flying && !this.elite && G.World.isLiquid(this.x, this.y)) {
         const le = G.World.liquidEffect(this.types);
         if (le.dmg) {
           this.lavaTick -= dt;
@@ -472,7 +457,7 @@
         const vx0 = Math.cos(a) * spd * k, vy0 = Math.sin(a) * spd * k;
         const ox = this.x, oy = this.y;
         this.x += (vx0 + this.kx) * dt; this.y += (vy0 + this.ky) * dt;
-        this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+        this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
         if (G.World.collide(this) && Math.hypot(this.x - ox, this.y - oy) < spd * k * dt * 0.3) this.zig += 1.4;
         if (Math.random() < dt * 6 && G.Camera.sees(this.x, this.y, 0)) G.FX.twinkle(this.x + G.U.rand(-this.r, this.r), this.y - G.U.rand(4, this.bodyH));
         this.anim.dir = G.Sprites.dirFromAngle(a);
@@ -498,7 +483,7 @@
         this.skillCd -= dt;
         if (this.skillCd <= 0) {
           if (this.behavior === 'shielder') { this.skillCd = 6; this.castShields(); }
-          else if (dist < 250) { this.skillCd = G.U.rand(5, 7); this.startJump(pl); return; }
+          else if (dist < 250 && !G.Status.rooted(this)) { this.skillCd = G.U.rand(5, 7); this.startJump(pl); return; }     // rooted (trap): no new jump
           else this.skillCd = 0.5;
         }
       }
@@ -521,8 +506,8 @@
       let vx = dx * spd, vy = dy * spd;
       let animBase = 'Walk';
 
-      if (this.boss) {
-        [vx, vy, animBase] = this.bossMove(dt, pl, dist, dx, dy, spd);
+      if (this.brain) {
+        [vx, vy, animBase] = this.brain.step(dt, pl, dist, dx, dy, spd);
       } else if (this.fl) {
         [vx, vy, animBase] = this.flankMove(dt, pl, spd, dist);
       } else if (this.isSeeker()) {
@@ -589,7 +574,7 @@
       // --- integration ---
       const ox = this.x, oy = this.y;
       this.x += this.kx * dt; this.y += this.ky * dt;
-      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
       this.x += vx * dt; this.y += vy * dt;
 
       if (!this.flying && G.World.collide(this)) {
@@ -613,274 +598,15 @@
       this.anim.loop(moving ? animBase : 'Idle', moving ? Math.max(0.6, spd / 70) : 1);
     }
 
-    // ---------------- jefes ----------------
-    // Each boss (and each rift legendary) has 4 attacks: 2 at
-    // close (Stomp always + Dash or Jump) and 2 from range by type.
-    // It alternates between coming at you and fighting from range, so the one that
-    // shoots also charges at you and the melee one also
-    // shoots. Everything warns on the ground. Below half health it
-    // enrages: faster, less waiting and sometimes it chains two attacks.
-
-    bossInit() {
-      const T = this.types, has = (...xs) => xs.some(x => T.includes(x));
-      const melee = ['slam', G.U.hash(this.dex, 3, 7) < 0.5 ? 'dash' : 'leap'];
-      const pref = has('fire', 'ground', 'poison', 'rock', 'grass') ? 'rain'
-                 : has('electric', 'psychic', 'dragon', 'ice', 'steel') ? 'beam'
-                 : has('fairy', 'ghost', 'water', 'flying') ? 'nova' : 'volley';
-      const others = ['rain', 'beam', 'nova', 'volley'].filter(x => x !== pref);
-      const ranged = [pref, others[Math.floor(G.U.hash(this.dex, 5, 9) * 3) % 3]];
-      const far = this.behavior === 'ranged';
-      this.ai = { melee, ranged, farLike: far ? 0.65 : 0.35, mode: far ? 'far' : 'close', modeT: G.U.rand(6, 8),
-                  cd: 1.6, cast: null, fury: false, side: Math.random() < 0.5 ? -1 : 1 };
-      if (this.gym) { const st = this.gym.stance; this.ai.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5; this.ai.mode = st === 'far' ? 'far' : 'close'; }
-    }
-
-    bossMove(dt, pl, dist, dx, dy, spd) {
-      if (!this.ai) this.bossInit();
-      const ai = this.ai;
-      if (!ai.fury && !this.gym && this.hp < this.maxHp * 0.5) this.enrage();
-      const k = ai.fury ? 1.25 : 1;
-      if (ai.cast) return this.bossCast(dt, pl);
-      ai.modeT -= dt; ai.cd -= dt * k;
-      // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s).
-      if (ai.modeT <= 0) {
-        ai.mode = ai.mode === 'far' ? 'close' : 'far';
-        ai.modeT = (ai.mode === 'far') === (ai.farLike > 0.5) ? G.U.rand(7, 9) : G.U.rand(4, 5);
-        ai.side = -ai.side;
-      }
-      // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
-      const chase = this.gym ? 1 : 1.1, circle = this.gym ? 1 : 0.55;
-      let vx = dx * spd * k * chase, vy = dy * spd * k * chase;
-      const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-      if (ai.mode === 'far') {
-        if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
-        else if (dist < 300) { vx = -ddy * spd * circle * ai.side; vy = ddx * spd * circle * ai.side; }   // te rodea
-      }
-      if (ai.cd <= 0 && G.Status.fizzle(this)) ai.cd = 1;       // paralysis / confusion: the attempt fails, it tries again in a second
-      if (ai.cd <= 0 && this.gym) {
-        const id = this.gymPick(dist);
-        if (id) this.gymStart(id, pl); else ai.cd = 0.3;
-      } else if (ai.cd <= 0) {
-        let id = null;
-        if (ai.mode === 'close') {
-          const ok = ai.melee.filter(m => m === 'slam' ? dist < 125 : dist < 320);
-          // Now and then, even when close, it also shoots.
-          id = ok.length && Math.random() < 0.8 ? G.U.pick(ok) : dist < 480 ? G.U.pick(ai.ranged) : null;
-        } else {
-          id = dist < 115 ? 'slam' : dist < 430 ? G.U.pick(ai.ranged) : null;
-        }
-        if (id) this.bossStart(id, pl);
-      }
-      return [vx, vy, 'Walk'];
-    }
-
-    enrage() {
-      this.ai.fury = true;
-      this.spd *= 1.15;
-      if (!this.judge) G.Spawner.say('¡' + this.name + ' se ha enfurecido!', 2.4);
-      G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ff4a4a', 0.6, 5);
-      G.Camera.kick(0.5);
-      G.Audio.sfx('boss');
-    }
-
-    bossStart(id, pl) {
-      const ai = this.ai, f = ai.fury ? 0.8 : 1, type = this.atkType;
-      const col = G.U.TYPE_COLOR[type] || '#ff7a9e';
-      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
-      const c = ai.cast = { id, t: 0, wind: 0.6 * f, after: 0.35, ang };
-      switch (id) {
-        case 'slam':       // stomp: a wave around
-          c.wind = 0.85 * f;
-          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, r: 96 + this.r, delay: c.wind, dmg: this.dmg * 1.3, type, color: col });
-          this.anim.play('Charge', { speed: 1.2 });
-          break;
-        case 'dash':       // dash in a straight line
-          c.wind = 0.75 * f; c.len = 330; c.dur = 0.32;
-          G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, angle: ang, len: c.len + this.r, w: this.r * 2 + 16,
-                          delay: c.wind + c.dur, dmg: this.dmg * 1.2, type, color: col });
-          this.anim.play('Charge', { speed: 1.3 });
-          break;
-        case 'leap':       // jump and land on you
-          this.jump = { sx: this.x, sy: this.y, tx: pl.x, ty: pl.y, t: -0.5 * f, dur: 0.65 };
-          G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: pl.x, y: pl.y, r: 82, delay: 0.5 * f + 0.65, dmg: this.dmg * 1.25, type, color: col });
-          this.anim.play('Charge', { speed: 1.4 });
-          ai.cast = null; ai.cd = G.U.rand(1.4, 2) + 0.6;
-          break;
-        case 'rain': {     // zonas que caen alrededor de ti
-          const n = ai.fury ? 6 : 4;
-          for (let i = 0; i < n; i++) {
-            const a = i ? Math.random() * 6.2832 : 0, d = i ? G.U.rand(40, 120) : 0;
-            G.Hazards.add({ kind: 'zone', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: pl.x + Math.cos(a) * d, y: pl.y + Math.sin(a) * d * 0.8, r: 50,
-                            delay: 1.05 + i * 0.12, dmg: this.shotDmg() * 1.15, type, color: col });
-          }
-          c.wind = 0.5; this.anim.play('Shoot');
-          break;
-        }
-        case 'beam': {     // rayos en abanico
-          const n = ai.fury ? 5 : 3, sp = ai.fury ? 0.42 : 0.5;
-          for (let i = 0; i < n; i++) {
-            G.Hazards.add({ kind: 'beam', atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, x: this.x, y: this.y, angle: ang + (i - (n - 1) / 2) * sp, len: 400, w: 26,
-                            delay: 1.0, dmg: this.shotDmg() * 1.2, type, color: col });
-          }
-          c.wind = 1.0; c.after = 0.25; this.anim.play('Charge', { speed: 1.1 });
-          break;
-        }
-        case 'volley':     // abanico de disparos
-        case 'nova':       // anillo de disparos
-          c.wind = (id === 'nova' ? 0.7 : 0.5) * f;
-          this.anim.play('Charge', { speed: 1.4 });
-          G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);
-          break;
-      }
-    }
-
-    bossCast(dt, pl) {
-      if (this.gym) return this.gymCast(dt, pl);
-      const ai = this.ai, c = ai.cast;
-      c.t += dt;
-      if (c.id === 'dash' && c.t >= c.wind) {
-        if (!c.go) { c.go = true; this.anim.play('Attack', { speed: 1.6 }); }
-        if (c.t >= c.wind + c.dur) return this.bossEnd();
-        const sp = c.len / c.dur;
-        return [Math.cos(c.ang) * sp, Math.sin(c.ang) * sp, 'Walk'];
-      }
-      if (c.t >= c.wind && !c.fired) {
-        c.fired = true;
-        const [ax, ay] = G.U.norm(pl.x - this.x, pl.y - this.y);
-        if (c.id === 'volley') this.shoot(ax, ay, 1.1, ai.fury ? 9 : 7, 0.8);
-        else if (c.id === 'nova') { const n = ai.fury ? 18 : 14; this.shoot(ax, ay, 6.2832 * (n - 1) / n, n, 0.7); }
-        else if (c.id === 'slam') this.anim.play('Attack', { speed: 1.4 });
-      }
-      if (c.t >= c.wind + c.after) return this.bossEnd();
-      return [0, 0, 'Idle'];
-    }
-
-    bossEnd() {
-      const ai = this.ai;
-      ai.cast = null;
-      ai.cd = G.U.rand(1.3, 2.0);
-      if (this.gym) { ai.cd = this.gymCd(); this.gymRestore(); return [0, 0, 'Idle']; }
-      if (ai.fury && Math.random() < 0.35) ai.cd = 0.3;    // encadena otro
-      return [0, 0, 'Idle'];
-    }
-
-    // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
-    // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
-    // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
-    // player's Harden (slice E2a: a +1 Defense stage per cast lasting its duration; no stack cap, duration / recovery sets how many overlap). Only the damage is
-    // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
-    // form yet fall back to the projectile. Fury is OFF for gyms; the enrage is the 120 s clock (systems/gym.js).
-
-    /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
-    gymFactor(m) {
-      const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
-      const special = m.cat === 'special';
-      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, special ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this) * G.Stages.mul(this, special ? 'spa' : 'atk');
-    }
-
-    /** A leader's buff cast is a mainline STAGE change (G.Stages): +stageN (default 1) on the move's stat per cast, each application
-     *  lasting the move's dur on its own timer, up to the move's stacks as the stage cap (max 6). The player's Speed buff stat is 'spd'. */
-    castBuff(m) {
-      const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
-      if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
-      if (m.stage2) G.Stages.add(this, m.stage2.stat, m.stage2.n, m.dur, G.Stages.MAX);
-    }
-
-    /** Weighted pick among the moves allowed by range and HP gate; null if none. */
-    gymPick(dist) {
-      // "close" = inside the player's own melee start range for the leader's melee move(s): move radius + body + 40 (combat.js rangeOf
-      // starts a swing at radius + 30). With no melee move it is a flat 150.
-      const mel = this.gym.moves.map(x => x.inst).filter(m => m && m.kind === 'melee');
-      const close = dist < (mel.length ? Math.max(...mel.map(m => m.radius)) + this.r + 40 : 150), frac = this.hp / this.maxHp;
-      const ok = this.gym.moves.filter(m => (m.range === 'any' || (m.range === 'close') === close) && (m.hpBelow == null || frac < m.hpBelow));
-      if (!ok.length) return null;
-      let r = Math.random() * ok.reduce((a, m) => a + m.weight, 0);
-      for (const m of ok) if ((r -= m.weight) <= 0) return m.id;
-      return ok[ok.length - 1].id;
-    }
-
-    /** Cooldown after a cast: damaging moves use the catalog rule 0.5 x (35 / PP); status moves keep their catalog cd. */
-    gymCd() {
-      const m = this.ai.lastMove;
-      if (!m) return 1.2;
-      // A buff move's catalog cd is the PLAYER's recast timer (slice E2a: 8 s); a leader picks moves by weight, so its recovery after a buff cast stays 0.85 s.
-      const cd = (m.kind === 'buff' ? 0.85 : Math.max(0.35, m.cd || 1)) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
-      return cd / this.gym.tempo;
-    }
-
-    gymStart(id, pl) {
-      const ai = this.ai, m = this.gym.moves.find(x => x.id === id).inst, type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
-      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
-      const c = ai.cast = { id, t: 0, wind: 0.5, after: 0.35, ang, kind: m.kind, m };
-      ai.lastMove = m;
-      this.atkType = type;
-      if (m.cat !== 'status') { this.atkFactor = this.gymFactor(m); this.atkCat = m.cat === 'special' ? 'special' : 'physical'; }
-      if (m.kind === 'buff') c.wind = 0.3;
-      else if (m.kind === 'melee') c.wind = 0.45;
-      c.wind /= this.gym.tempo; c.after /= this.gym.tempo;
-      G.Gym.noteCast(id);
-      this.anim.play('Charge', { speed: 1.4 });
-      G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);       // the wind-up telegraph (the aim is locked now)
-    }
-
-    gymCast(dt, pl) {
-      const ai = this.ai, c = ai.cast, m = c.m;
-      c.t += dt;
-      if (c.t >= c.wind && !c.fired) {
-        c.fired = true;
-        const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
-        if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
-          this.castBuff(m);
-          const vis = G.VFX.forMove(m);
-          G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
-          for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });
-        } else if (c.kind === 'melee') {          // the player's melee: slash visual, a cone of radius m.radius (from the body edge) and arc m.arc
-          const reach = m.radius + this.r, half = Math.min(m.arc, 6.2832) / 2;
-          G.FX.slash(this.x, this.y - G.LIFT * 0.5, c.ang, reach, m.arc, col, G.VFX.forMove(m));
-          this.anim.play('Attack', { speed: 1.4 });
-          const a = Math.atan2(pl.y - this.y, pl.x - this.x);
-          const inArc = Math.abs(((a - c.ang + Math.PI * 3) % 6.2832) - Math.PI) <= half;
-          if (!pl.dead && inArc && G.U.dist2(this.x, this.y, pl.x, pl.y) <= (reach + pl.r) * (reach + pl.r)) {
-            const w = G.Log.on ? G.Log.who(this, 'contact') : null;
-            pl.hurt(this.atkFactor, this.atkType, false, { factor: this.atkFactor, cat: this.atkCat, mul: 1 }, w);
-          }
-        } else {
-          this.gymShoot(m, Math.cos(c.ang), Math.sin(c.ang));
-        }
-      }
-      if (c.t >= c.wind + c.after) return this.bossEnd();
-      return [0, 0, 'Idle'];
-    }
-
-    /** The player's projectile: speed, size, life, count, spread, pierce and visuals from the move; the aim was locked at wind-up. */
-    gymShoot(m, ax, ay) {
-      const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
-      const n = Math.max(1, m.count | 0), spread = m.spread || 0;
-      const fan = Math.min(spread * n, 6.2832 * (n - 1) / n), base = Math.atan2(ay, ax);
-      for (let i = 0; i < n; i++) {
-        const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan, a = base + off + G.U.rand(-0.03, 0.03);
-        G.Projectiles.spawn({
-          x: this.x + Math.cos(a) * 3, y: this.y + Math.sin(a) * 3, vx: Math.cos(a) * m.speed, vy: Math.sin(a) * m.speed,
-          dmg: this.shotDmg(), r: m.size, life: m.life, mul: 1, friendly: false, color: col, mtype: m.type,
-          atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, pierce: m.pierce | 0, vis
-        });
-      }
-      this.anim.play('Shoot');
-      G.FX.spark(this.x + Math.cos(base) * this.r, this.y - G.LIFT + Math.sin(base) * this.r, col, Math.cos(base), Math.sin(base), 3);
-    }
-
-    /** Back to the leader's idle attack (contact) after a cast. */
-    gymRestore() {
-      if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; }
-    }
+    // Gym leader AI: js/entities/boss-ai.js (G.Boss, the GymBrain). update and applyFlinch delegate to this.brain.
 
     /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */
     leaveMove(dt, pl) {
       const [dx, dy] = G.U.norm(this.x - pl.x, this.y - pl.y);
-      const spd = Math.max(40, this.spd) * (1 - this.slow);
+      const spd = G.Status.rooted(this) ? 0 : Math.max(40, this.spd) * (1 - this.slow);     // rooted (trap): it waits
       this.touchCd = Math.max(this.touchCd, 0.5);
       this.x += (dx * spd + this.kx) * dt; this.y += (dy * spd + this.ky) * dt;
-      this.kx *= Math.pow(0.0015, dt); this.ky *= Math.pow(0.0015, dt);
+      this.kx *= Math.pow(KNOCK_DECAY, dt); this.ky *= Math.pow(KNOCK_DECAY, dt);
       G.World.collide(this);
       this.anim.dir = G.Sprites.dirFromAngle(Math.atan2(dy, dx));
       this.anim.loop('Walk');
@@ -1279,6 +1005,7 @@
     /** Jump: it crouches, flies in an arc and lands where you were. */
     updateJump(dt) {
       const j = this.jump;
+      if (j.t < 0 && G.Status.rooted(this)) { this.anim.loop('Idle'); return; }     // rooted (trap): holds the crouch; a jump in the air lands
       j.t += dt;
       if (j.t < 0) { this.anim.loop('Idle'); return; }
       const k = Math.min(1, j.t / j.dur);
@@ -1309,7 +1036,7 @@
       if ((this.boss || this.shiny || gold) && !this.dead) {
         ctx.save();
         ctx.globalAlpha = (gold && !this.boss ? 0.32 : 0.22) + Math.sin(this.bob * 0.5) * 0.06;
-        ctx.fillStyle = this.ai && this.ai.fury ? '#ff4a4a' : this.shiny ? '#9ae6ff' : gold ? '#ffd23f' : '#ffd95e';
+        ctx.fillStyle = this.shiny ? '#9ae6ff' : gold ? '#ffd23f' : '#ffd95e';
         ctx.beginPath(); ctx.ellipse(this.x, this.y, this.r * 1.6, this.r * 0.6, 0, 0, 6.2832); ctx.fill();
         ctx.restore();
       }
@@ -1392,6 +1119,7 @@
   // ---------------- gestor ----------------
 
   G.Enemy = Enemy;
+  Enemy.KNOCK_DECAY = KNOCK_DECAY;
 
   G.EnemyMgr = (() => {
     let list = [];            // vivos
@@ -1425,7 +1153,7 @@
       return e;
     }
 
-    // --- rift arena ---
+    // --- gym arena ---
     let stashed = null;
 
     /** Stashes the map enemies while the arena lasts. */
@@ -1573,7 +1301,7 @@
         if (e.dead) {
           pl.kills++;
           if (G.Log.on) G.Log.kill(e);
-          if ((e.boss || e.elite) && !e.judge) pl.bosses++;
+          if (e.boss || e.elite) pl.bosses++;
           G.Progress.kill(e);
           corpses.push(e);
           list.splice(i, 1);
@@ -1598,7 +1326,7 @@
           }
           continue;
         }
-        if (e.boss || e.elite || e.shiny || G.Rift.inArena) continue;
+        if (e.boss || e.elite || e.shiny || G.GymArena.inArena) continue;
         // Stragglers: the ones that fall behind while you run and have been a while
         // OUT OF SIGHT (of everyone) come back out ahead of you. This way
         // you cannot just flee, and one you are looking at never disappears.

@@ -1,0 +1,72 @@
+ ┌──────────────────────────────────────────────────────────────────────┐
+ │  MAIN MAP  (open-world run, wild enemies spawning)                     │
+ │                                                                        │
+ │   player ◄── auto-attacks ──► wild mons        [G.Spawner, G.EnemyMgr] │
+ │   collect XP gems, level up, draft upgrade cards                       │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 │  every frame: G.Gym.update(dt, pl, t)
+                                 │  gate==null, not in arena, t >= nextAt?
+                                 │  (FIRST_AT = 240s = gym 1 opens at 4:00)
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  GATE OPENS                                              [gym.js update] │
+ │   entry = list()[beaten]            ← G.Gyms.KANTO[0] = Brock            │
+ │   sig   = entry.signatures[0]       ← Geodude (sig.dex)                  │
+ │   level = levelForTime(t) + OFFSET  ← LOCKED at spawn, shown on gate     │
+ │   gate  = { idx, id, leader:'Brock', badge, arena, dex:Geodude, level } │
+ │   G.Rift.openGate(gate)  ─────────────────────────────┐                 │
+ └───────────────────────────────────────────────────────┼─────────────────┘
+                                                         │  [rift.js openGate]
+                                                         ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  GATE ON THE MAP   (a persistent rift, ttl = Infinity)   [rift.js show] │
+ │   rift = { x, y, ttl:∞, t }; rift.gym = gate                            │
+ │   ⚠ DISPLAYS AS: propSprite('rift') + purple ellipse  ← the RIFT look   │
+ │      (this is the "show a Gym sprite instead" fix)                      │
+ │   banner: "A gym gate opened: Brock (Lv N)"                             │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 │  player walks within ~30px of the gate
+                                 │  rift.js update(): dist2 < 30² → enter()
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  ENTER     [rift.js enter → start]                                      │
+ │   start():  if (rift.gym) ──► startGym(gate)   ← the gym fork           │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  TRIP TO THE ARENA   [rift.js startGym → begin]                         │
+ │   cfg = { tx,ty, r, dex:Geodude, type: gate.arena (Brock=rock), gym }   │
+ │   begin(cfg):                                                           │
+ │     • G.EnemyMgr.stash()   ← map wild mons parked, map frozen           │
+ │     • clear projectiles / fields / hazards                             │
+ │     • setArena + setBiome(rock)  ← the rock arena tiles                 │
+ │     • teleport team to south edge, camera recenters, '#c9a6ff' flash   │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  LEADER SPAWNS   [rift.js spawnGymLeader]                               │
+ │   def = G.Gym.makeDef(gate)   ← HP from elite ref model @ gym level,    │
+ │                                  TTK target; authored moves via G.Gyms  │
+ │   e = new G.Enemy(def, …, boss=true);  e.flying=false (walls block it)  │
+ │   arena.bossId = e.id                                                   │
+ │   "Brock sends out Geodude!"   camera kick                              │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  THE FIGHT   [rift.js arenaTick, phase 'fight']                         │
+ │   you vs Geodude. Authored stacks (Rock Throw ×3 effect, etc).          │
+ │   NO arena timer for gyms (arena.gym → return before the ARENA_TIME     │
+ │   check). Pressure = ENRAGE: 120s after first hit, dmg ramps ×1→×2.     │
+ │   G.Gym.trackFight() records time / HP / casts for the [Gym] readout.   │
+ │                                                                         │
+ │   ├─ boss dead  ──────────────► won()  ──► G.Gym.onWin: badge, team     │
+ │   │                                        revive, run-long boost, +1 lvl│
+ │   └─ whole team down (game.js) ─► run ends (losing a gym = run over)    │
+ └───────────────────────────────┬────────────────────────────────────────┘
+                                 │  won() → phase 'won' 5s → finish()
+                                 ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  BACK TO THE MAP   [rift.js finish → G.Gym.onReturn]                    │
+ │   arena = null; restore biome/weather; unstash the map                 │
+ │   onReturn: beaten++, schedule next gate (now + GAP=240s), next elite   │
+ └────────────────────────────────────────────────────────────────────────┘

@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PokéSurvivor Redux</title>
-<meta name="description" content="Sobrevive a hordas de Pokémon con tu compañero en este fan game gratis para navegador y móvil: 966 Pokémon, shinies, legendarios y cooperativo con amigos. Sin descargas ni anuncios.">
+<meta name="description" content="Sobrevive a hordas de Pokémon con tu compañero en este fan game gratis para navegador y móvil: 966 Pokémon, shinies y cooperativo con amigos. Sin descargas ni anuncios.">
 <!-- seo:begin -->
 <link rel="canonical" href="https://pokesurvivor.com/">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -18,7 +18,7 @@
 <meta property="og:locale" content="es_ES">
 <meta property="og:url" content="https://pokesurvivor.com/">
 <meta property="og:title" content="PokéSurvivor – Sobrevive a las hordas Pokémon">
-<meta property="og:description" content="Fan game gratis para navegador y móvil: 966 Pokémon, shinies, legendarios y cooperativo hasta 4 amigos. Sin descargas ni anuncios.">
+<meta property="og:description" content="Fan game gratis para navegador y móvil: 966 Pokémon, shinies y cooperativo hasta 4 amigos. Sin descargas ni anuncios.">
 <meta property="og:image" content="https://pokesurvivor.com/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -60,7 +60,7 @@
       "@id": "https://pokesurvivor.com/#juego",
       "name": "PokéSurvivor",
       "url": "https://pokesurvivor.com/",
-      "description": "Fan game gratuito de supervivencia (bullet heaven, estilo Survivor.io) con Pokémon: elige compañero, sobrevive a hordas, sube de nivel, evoluciona tus ataques, enfréntate a legendarios en grietas y juega en cooperativo con hasta 4 amigos.",
+      "description": "Fan game gratuito de supervivencia (bullet heaven, estilo Survivor.io) con Pokémon: elige compañero, sobrevive a hordas, sube de nivel, evoluciona tus ataques y juega en cooperativo con hasta 4 amigos.",
       "image": "https://pokesurvivor.com/assets/og-image.jpg",
       "inLanguage": "es",
       "genre": ["Roguelike", "Bullet heaven", "Acción", "Supervivencia"],
@@ -324,7 +324,7 @@
     <div class="boot-in">
       <h1>PokéSurvivor</h1>
       <p>PokéSurvivor necesita JavaScript para funcionar. Actívalo para jugar.</p>
-      <p>Fan game gratuito de supervivencia con 966 Pokémon de las 9 regiones: elige tu compañero, sobrevive a las hordas, evoluciona tus ataques, enfréntate a legendarios y juega en cooperativo con hasta 4 amigos.</p>
+      <p>Fan game gratuito de supervivencia con 966 Pokémon de las 9 regiones: elige tu compañero, sobrevive a las hordas, evoluciona tus ataques y juega en cooperativo con hasta 4 amigos.</p>
     </div>
   </div>
 </noscript>
@@ -653,24 +653,6 @@
   </div>
 </section>
 
-<section id="scr-choose" class="scr dim hidden">
-  <div class="box sheet">
-    <div class="sh-top"><h2 id="choose-title">Apply</h2><span id="choose-sub" class="sh-state"></span><div class="sh-strip-slot"></div></div>
-    <div id="choose-sheet" class="sh-mount"></div>
-    <div class="sh-foot">
-      <div class="sh-foot-l">
-        <p class="sub kbd-hint"><kbd>←</kbd>/<kbd>→</kbd> switch Pokémon · <kbd>1</kbd>–<kbd>4</kbd> pick a move · <kbd>Enter</kbd> confirm · <kbd>Backspace</kbd> back</p>
-        <p class="sub touch-hint">Tap a Pokémon above and a move, then Confirm</p>
-        <p id="choose-note" class="note choose-note"></p>
-      </div>
-      <div class="row">
-        <button id="btn-choose-back" class="btn" data-sfx="none">Back</button>
-        <button id="btn-choose-ok" class="btn gold" data-sfx="none">Confirm</button>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section id="scr-team" class="scr dim hidden">
   <div class="box sheet">
     <div class="sh-top"><h2>Team summary</h2><span class="sh-state">Run over</span><div class="sh-strip-slot"></div></div>
@@ -697,6 +679,7 @@
 <!-- scripts:begin -->
 <script defer src="js/core/util.js"></script>
 <script defer src="js/core/stats.js"></script>
+<script defer src="js/core/simbus.js"></script>
 <script defer src="js/systems/log.js"></script>
 <script defer src="js/core/i18n.js"></script>
 <script defer src="js/data/lang-en.js"></script>
@@ -713,8 +696,6 @@
 <script defer src="js/core/sprites.js"></script>
 <script defer src="js/core/camera.js"></script>
 <!-- datos de juego -->
-<script defer src="js/data/kinds.js"></script>
-<script defer src="js/data/mechanics.js"></script>
 <script defer src="js/data/moves.js"></script>
 <script defer src="js/data/types.js"></script>
 <script defer src="js/data/starters.js"></script>
@@ -737,6 +718,7 @@
 <script defer src="js/entities/fx.js"></script>
 <script defer src="js/entities/projectile.js"></script>
 <script defer src="js/entities/enemy.js"></script>
+<script defer src="js/entities/boss-ai.js"></script>
 <script defer src="js/entities/pickup.js"></script>
 <script defer src="js/entities/player.js"></script>
 <!-- sistemas -->
@@ -746,9 +728,8 @@
 <script defer src="js/systems/levelup.js"></script>
 <script defer src="js/systems/gacha.js"></script>
 <script defer src="js/systems/interact.js"></script>
-<script defer src="js/systems/rift.js"></script>
+<script defer src="js/systems/gym-arena.js"></script>
 <script defer src="js/systems/gym.js"></script>
-<script defer src="js/systems/judgment.js"></script>
 <script defer src="js/systems/events.js"></script>
 <script defer src="js/systems/weather.js"></script>
 <script defer src="js/systems/pathing.js"></script>
@@ -756,6 +737,18 @@
 <script defer src="js/systems/hazards.js"></script>
 <script defer src="js/systems/status.js"></script>
 <script defer src="js/systems/stages.js"></script>
+<!-- the move system (G.MoveSim; slice 3d, the only path since slice 7b) -->
+<script defer src="js/data/move-attributes.js"></script>
+<script defer src="js/data/moves-generated.js"></script>
+<script defer src="js/data/move-overrides.js"></script>
+<script defer src="js/data/move-handler.js"></script>
+<script defer src="js/data/move-resolver.js"></script>
+<script defer src="js/systems/team-cards.js"></script>
+<script defer src="js/systems/move-geom.js"></script>
+<script defer src="js/systems/move-sim.js"></script>
+<script defer src="js/systems/move-effects.js"></script>
+<script defer src="js/systems/move-route.js"></script>
+<script defer src="js/systems/move-render.js"></script>
 <!-- red: amigos, salas, cooperativo y ranking -->
 <script defer src="js/net/social.js"></script>
 <script defer src="js/net/signups.js"></script>
@@ -763,11 +756,13 @@
 <script defer src="js/net/coop.js"></script>
 <script defer src="js/net/ranking.js"></script>
 <!-- interfaz -->
+<script defer src="js/ui/move-info.js"></script>
 <script defer src="js/ui/icons.js"></script>
 <script defer src="js/ui/ui.js"></script>
 <script defer src="js/ui/statchart.js"></script>
 <script defer src="js/ui/sheet.js"></script>
 <script defer src="js/ui/hud.js"></script>
+<script defer src="js/ui/gym-present.js"></script>
 <script defer src="js/ui/login.js"></script>
 <script defer src="js/ui/test.js"></script>
 <script defer src="js/ui/menu.js"></script>

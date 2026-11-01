@@ -138,9 +138,8 @@ G.Spawner = (() => {
     players = Array.isArray(who) ? who : [who];
     runT = t;
     if (announceT > 0) announceT -= dt;
-    // In the rift arena nothing else spawns (and the boss clock waits).
-    // In Arceus's Judgment, only its legendaries (systems/judgment.js).
-    if (G.Rift.inArena || G.Judgment.active) return;
+    // In the gym arena nothing else spawns (and the elite clock waits).
+    if (G.GymArena.inArena) return;
 
     // Preloads what will spawn in the next minute.
     preloadT -= dt;

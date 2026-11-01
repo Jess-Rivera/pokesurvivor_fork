@@ -1,0 +1,127 @@
+MOVES PORT PATH  —  from the feel-described conversions to real moves in-game
+PokeSurvivor English Fork   |   drawn 2026-10-24   |   branch feature/all-moves-import
+Canonical design: docs/MOVE-AXIS-SCHEMA.md  (MOVES-IMPORT-PLAN.md / MOVES-REFACTOR-PLAN.md are GONE; schema is the live spec)
+
+=====================================================================================
+WHERE WE ARE  (the two ends that do not yet touch)
+=====================================================================================
+
+   AUTHORED INTENT (done)                        LIVE ENGINE (today)
+   ----------------------                        -------------------
+   move-conversions-described.json               js/data/moves.js
+     63/64 moves, reviewStatus:reviewed            64 entries, FLAT kind-model:
+     already in SPACE/DELIVERY/PAYLOAD             { kind:'projectile', dmg, speed,
+     axis form + a `feel` note                       count, pierce, life, size, arc }
+     bubble parked in forgottenSkips             js/systems/combat.js
+                                                   run(pl,m){ switch(m.kind){
+   api_learnset_dataset(.lean).json                 case 'projectile': fireProjectiles
+     who-learns-what (just built)                    case 'melee','beam','nova',
+                                                       'aura','buff','boomerang',
+   pokeapi .../api_dataset.json                       'chain','mine','meteor',
+     937 moves, raw PokeAPI facts                      'turret','dash','trail','cone' }}
+                                                   14 hand-written branches, flat fields
+
+        |                                                      ^
+        |   the described records cannot run: the engine        |
+        |   reads flat fields + kind, not axes. NOTHING in       |
+        +------  js/ consumes the axis schema yet.  --->---------+
+                        THIS GAP IS #2.
+
+   MISSING entirely (schema calls for them, none exist):
+     js/data/move-attributes.js    (grammar: legal fields/values/defaults, UNLIMITED const)
+     js/data/move-classification.js (presets: beam/nova/melee bundles)
+     resolver (pure fold, load-time)         conversion harness (go/no-go gate)
+
+=====================================================================================
+THE PIPELINE WE ARE BUILDING  (resolver = pure fold, runs at load AND in check.js)
+=====================================================================================
+
+  raw facts            interpretation         classification        hand-authored
+  (generator) ───────▶ formulas        ──────▶ + preset expand ─────▶ overrides
+  api_dataset.json      PP→cd, acc→proc,        move-classification    described.json
+  (937 moves)           power→base dmg          presets                axis records
+                                                                           │
+                        [ later layers win; resolver validates against grammar ]
+                                                                           │
+                                                                           ▼
+                                                               RESOLVED MOVE DEFS
+                                                               (plain data, no presets,
+                                                                ranges checked)
+                                                                           │
+                        ┌──────────────────────────────────────────────────┤
+                        │                                                   │
+                        ▼                                                   ▼
+                 CONVERSION HARNESS                                 UNIFIED EXECUTOR
+                 (check.js, offline)                                execute(caster, move, aim)
+                 feed all 63 records ─▶ resolve ─▶ assert:          one path, reads AXES not kind:
+                   • valid against grammar                            SPACE   → geometry/count/pierce
+                   • maps to a supported primitive                    DELIVERY→ anchor/motion/endOn
+                     or a declared special                            PAYLOAD → effect list
+                   • flag INTENTIONAL behavior changes                caster-state → iframes/commit/delay
+                     (e.g. Heat Wave pellets→ring)                   boss = a combatant that calls
+                   • stress test at late-game counts                   the SAME execute()
+                 PASSING = "I can port it" ✓                        replaces the 14-branch switch
+
+=====================================================================================
+PRIMITIVE COVERAGE  (what the 63 records actually exercise — the executor must serve all)
+=====================================================================================
+
+  kinds (authoring shorthand → presets):
+    projectile 17 | nova 8 | melee 11 | buff 7 | beam 5 | orbit 2 | boomerang 2
+    dash 2 | trail 2 | aura 2 | mine 2 | cone 1 | meteor 1 | turret 1
+
+  DELIVERY axis spread:
+    anchor   : caster 51 | self 7 | world 4 | target 1
+    motion   : static 33 | travels 16 | returns 2 | repositions 2 | orbits 2 | falls 1 | (none) 7
+    targeting: nearest 23 | direction 17 | none 13 | self 6 | location 4
+
+  PAYLOAD effect types:
+    damage 45 | ailment 18 | stat 17 | knockback 11 | emit 8 | special 6
+    flinch 3 | heal 2 | recoil 1 | shield 1 | crit 1
+
+  SPECIAL handlers (each needs a stub or impl before its move can resolve):
+    berrySteal · fixedDamage · chainDamageFalloff · levelDamage · setWeather · statusBonus
+    (+ mine contact-trigger and Ice Beam slow rider, noted in feel pass)
+
+=====================================================================================
+BUILD ORDER  (slices; each ends at check.js green + Jess browser feel-test)
+=====================================================================================
+
+  S0  GRAMMAR + PRESETS                     move-attributes.js + move-classification.js
+      define fields/values/defaults/UNLIMITED; presets. No behavior yet.         [data only]
+
+  S1  RESOLVER (pure fold) + HARNESS        the #2 gate. resolve all 63; assert valid or
+      wired into check.js                   declared-special. NO executor yet = proves the
+                                            DATA ports. Behavior changes flagged, not run.  ◀── "can I port it?"
+
+  S2  UNIFIED EXECUTOR, core kinds          execute(caster,move,aim) for the dense set first:
+      behind a flag, old switch stays        projectile/melee/nova/beam/buff (48 of 63).
+                                            Run new + old side by side; diff feel.
+
+  S3  SPECIAL HANDLERS                       stub then implement: fixedDamage, levelDamage,
+                                            chainDamageFalloff, statusBonus, setWeather,
+                                            berrySteal, mine-trigger, Ice-Beam-slow.
+
+  S4  REMAINING KINDS                        orbit/boomerang/dash/trail/aura/mine/meteor/
+                                            turret/cone via emit+spawn primitives.
+
+  S5  LEARNSET WIRING (#11)                  feed api_learnset_dataset.lean.json so enemies/
+                                            player draw REAL movepools; decide form→species
+                                            fallback (ties to #9 regional forms).
+
+  S6  CUT OVER                               delete the 14-branch switch + flat moves.js model;
+                                            axis records become the only source. Retune.
+
+  parked / downstream:  bubble (forgotten-move purge) · boss damage A/D path ·
+                        canonical type chart · RESUME gyms (#5)
+
+=====================================================================================
+HARD RULES ON THIS PATH  (CLAUDE.md)
+=====================================================================================
+  * all of S0..S6 is GAME CODE → propose-first: prose plan, Jess OKs, THEN build + check.js
+      (exception on this path: none — described.json & docs are free-edit, js/ is not)
+  * never run git/gh — agent drafts commands, Jess runs them
+  * new save fields backward-compatible (null-check + default)
+  * debug on dev.html?dev, not built index.html
+  * English-native new strings; Spanish literals are i18n keys, leave as-is
+  * no em-dashes in prose

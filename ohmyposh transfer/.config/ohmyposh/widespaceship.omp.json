@@ -1,0 +1,91 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 4,
+  "final_space": true,
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "path",
+          "style": "diamond",
+          "foreground": "#00ff00",
+          "background": "#400080",
+          "template": "{{ .Path }} ",
+          "trailing_diamond": "\ue0b0",
+          "options": {
+            "style": "agnoster_short",
+            "mapped_locations": {
+              "C:\\Users\\boric\\OneDrive\\Desktop\\pokesurvivor_fork": "\uf1d3 "
+            },
+            "max_depth": 3
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "newline": false,
+      "segments": [
+        {
+          "type": "time",
+          "style": "diamond",
+          "foreground": "#400080",
+          "background": "#00ff00",
+          "template": " \uf017 {{ .CurrentDate | date .Format }} ",
+          "powerline_symbol": "\ue0b0",
+          "leading_diamond": "\ue0b2",
+          "options": {
+            "time_format": "15:04:05"
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "git",
+          "style": "diamond",
+          "powerline_symbol": "\ue0b0",
+          "properties": { "branch_icon": "" },
+          "template": "{{ if eq .Ref `main` }}\uf1d2{{ else }}\uf418{{ end }} {{ .HEAD }}{{ if and (eq .Ahead 0) (eq .Behind 0) }} \udb82\udc4f{{ end }}{{ if gt .Ahead 0 }} \udb81\udf99 {{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} \udb81\udf96 {{ .Behind }}{{ end }}",
+          "foreground": "#00ff00",
+          "background": "#400080"
+        }
+      ],
+      "newline": true
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "segments": [
+        {
+          "type": "git",
+          "style": "plain",
+          "powerline_symbol": "\ue0b0",
+          "template": "{{ if or (gt .Working.Untracked 0) (gt .Working.Modified 0) (gt .Working.Deleted 0) (gt .Staging.Added 0) (gt .Staging.Modified 0) (gt .Staging.Deleted 0) (gt .Working.Added 0) }} | \ued80 {{ .Working.Untracked }} \uf05f {{ .Working.Modified }} \udb82\udf98 {{ .Working.Deleted }} | \uf4d0 {{ .Staging.Added }} \uf4d2 {{ .Staging.Modified }} \uf4d6 {{ .Staging.Deleted }}{{ if gt .Working.Added 0 }} \udb82\ude4b {{ .Working.Added }}{{ end }}{{ end }}",
+          "foreground": "#00ff00",
+          "background": "#400080"
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "text",
+          "style": "plain",
+          "powerline_symbol": "\ue0b0",
+          "template": "\udb80\udec7",
+          "foreground": "#00ff00"
+        }
+      ],
+      "newline": true
+    }
+  ]
+}

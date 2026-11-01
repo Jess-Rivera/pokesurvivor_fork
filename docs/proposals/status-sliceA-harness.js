@@ -1,4 +1,5 @@
 // Status rework slice A, offline checks (Node only). Usage from the repo root:  node docs/proposals/status-sliceA-harness.js .
+// Slice 7b-2a (2026-11-01): the legacy-path sections (G.Combat procs, legacy move fields and cards) were cut with the legacy code; the engine checks stay.
 // Loads the REAL stats.js, enemies.js, moves.js, enemy.js and combat.js with stubbed engine globals and checks: the STATUS table,
 // type immunities, burn / poison / Toxic tick math, refresh rules, the chance roll (ailmentChance, status moves, throttle, multi-pellet),
 // Fire Spin as a trap (slice C), and the logger line. Rendering and the live game loop are NOT covered (no browser).
@@ -75,32 +76,6 @@ console.log('2 immunities: fire vs burn, poison+steel vs poison/toxic');
   const p = mk(1, 1e6); p.applyPoison(1); run(p, 3); p.applyPoison(2); if (p.poison !== 2 || p.poisonN !== 0) bad('poison -> toxic upgrade');
   p.applyPoison(1); if (p.poison !== 2) bad('toxic downgraded to poison');
   console.log('6 refresh: re-hit every 0.2 s still ticks every 2 s; poison upgrades to toxic once, never back'); }
-
-// 7. chance roll
-const roll = (id, n, calls = 1, dex = 1) => { const m = G.Moves.instance(id); let hit = 0;
-  for (let i = 0; i < n; i++) { const e = mk(dex); for (let c = 0; c < calls; c++) G.Combat.procAilments(e, m.burn, m.poison, m); if (e.burn || e.poison) hit++; } return hit / n; };
-const N = 40000;
-{ const r = { ember: roll('ember', N), sludge: roll('sludge', N), sting: roll('poison-sting', N), wisp: roll('will-o-wisp', 2000), toxic: roll('toxic', 2000), fire7: roll('flamethrower', N, 7) };
-  const chk = (k, want, tol) => { if (Math.abs(r[k] - want) > tol) bad(k + ' proc rate ' + r[k] + ' want ' + want); };
-  chk('ember', 0.10, 0.01); chk('sludge', 0.30, 0.012); chk('sting', 0.30, 0.012); chk('wisp', 1, 0); chk('toxic', 1, 0); chk('fire7', 0.10, 0.01);
-  console.log('7 chance: ember', r.ember.toFixed(3), 'sludge', r.sludge.toFixed(3), 'poison-sting', r.sting.toFixed(3), 'will-o-wisp', r.wisp, 'toxic', r.toxic, '| 7 pellets in one cast (flamethrower)', r.fire7.toFixed(3), '(one roll, not 7)'); }
-{ const m = G.Moves.instance('ember'), e = mk(1); let procs = 0;
-  for (let i = 0; i < 1000; i++) { G.Combat.procAilments(e, 1, 0, m); }
-  if (e.ailRoll === null || e.ailRoll.ember === undefined) bad('throttle key missing');
-  const before = e.ailRoll.ember; run(e, 0.6, 0.05);
-  if (e.ailRoll && e.ailRoll.ember > 0) bad('roll gap did not expire'); G.Combat.procAilments(e, 1, 0, m);
-  console.log('7b throttle: 1000 same-frame hits = 1 roll; gap', before, 's, expires after 0.5 s'); }
-{ const fs_ = G.Moves.instance('fire-spin'); let ok = 0, burned = 0, half = 0;      // slice E1: strips boosts, half-length burn, Fire types immune to the burn only
-  for (let i = 0; i < 200; i++) { const e = mk(2); G.Stages.add(e, 'atk', 2); G.Stages.add(e, 'def', -1); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (!e.burn && !e.stg.atk && e.stg.def) ok++; }
-  for (let i = 0; i < 200; i++) { const e = mk(1); G.Stages.add(e, 'spe', 1); G.Combat.procAilments(e, fs_.burn, 0, fs_); if (e.burn && !e.stg) burned++; if (e.burnLeft === 2) half++; }
-  const em = G.Moves.instance('ember'); let blocked = 0; for (let i = 0; i < 2000; i++) { const e = mk(2); G.Combat.procAilments(e, em.burn, 0, em); if (e.burn) blocked++; }
-  if (ok !== 200) bad('fire spin on a fire enemy: strip yes, burn no, drops stay: ' + ok + '/200'); if (burned !== 200 || half !== 200) bad('fire spin on a normal enemy: burn ' + burned + ' half ' + half); if (blocked) bad('ember burned a fire enemy');
-  console.log('7c Fire Spin (slice E1): strips every boost (drops stay), burns for 2 turns (half), a Fire enemy still gets stripped but not burned; Ember 0/2000 (immune)'); }
-
-// 8. data
-{ if (G.Moves.instance('toxic').poison !== 2 || G.Moves.instance('toxic-spikes').poison !== 2) bad('toxic / toxic-spikes should be poison 2');
-  const flagged = G.Moves.ALL.filter(m => m.burn || m.poison).map(m => m.id + ':' + (m.burn ? 'burn' : 'poison' + m.poison));
-  console.log('8 flagged moves (' + flagged.length + '):', flagged.join(' ')); }
 
 // 9. logger line
 try { load('js/systems/log.js'); G.EnemyMgr = { count: 0 }; G.Game = { player: null };

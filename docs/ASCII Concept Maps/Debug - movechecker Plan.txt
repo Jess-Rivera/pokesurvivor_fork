@@ -1,0 +1,103 @@
+G.Debug.movechecker(id) PLAN          Status: BUILT (Quick, 2026-10-31; D1 to D7 approved by Jess)
+Slice 6 tool (spacing and nova sizing). Needs ?dev&newcombat. Dev-only, never in a normal run.
+
+  JESS CHANGES ON APPROVAL (2026-10-31), these win over the sections below:
+    - up to 6 move ids, one per slot (a 7th is dropped with a warning); a number
+      argument anywhere in the call is the dummy distance
+    - rings every 50 px out to 600 (not 450)
+  Also built: the dummy is PINNED (position restored after its own update, so no
+  knockback slide or straggler move); off clears the enemies; hitbox overlay stays.
+
+================================================================================
+1. WHAT IT DOES
+================================================================================
+
+  G.Debug.movechecker('bubble-beam')
+        |
+        +--> 1. spawn(0)               normal spawning stops (drip, tides, bursts, elites)
+        |       live enemies cleared   so the dummy is the only target              (D4)
+        |
+        +--> 2. move id check          unknown or not routed -> warning, nothing changes
+        |       slots = [ [that move] ] one slot, active Pokemon (same path as newcombat)
+        |
+        +--> 3. ONE dummy              150 px to your right (or 2nd arg: distance)   (D2)
+        |       can't move or attack,  HP never runs out                         (D1, D3)
+        |
+        +--> 4. range rings            every 50 px, 50 to 450, labelled, centred on YOU,
+        |       + hitbox overlay on     follow you as you walk                       (D6)
+        |
+        +--> 5. console                the move data that actually runs (team cards folded
+                                        in), plus its override row if it has one      (D5)
+
+  G.Debug.movechecker()      (no id) = off: rings off, dummy removed, spawn(1)     (D7)
+
+        you            dummy
+         @ - - - - - - - X          rings: 50 100 150 200 ... 450
+       (((( 50 )))) 100 ))) 150 )))
+
+================================================================================
+2. FILES
+================================================================================
+  js/core/debug.js
+    - new movechecker(id, dist): steps 1 to 5 above
+    - the slot setup newcombat already does (clear sim, one slot per move, active 0)
+      moves into a small shared helper, so both use it. newcombat output unchanged.
+    - header comment line + export list gets movechecker
+  js/systems/move-render.js
+    - new rings flag on G.MoveRender (off by default) and a ring layer drawn under
+      the hitbox overlay, in world space around the player (same canvas pass)
+  js/data/changelog.js   one "new" line (dev tool)
+  NOT touched: spawner (uses the existing spawn(0) / spawn(1)), enemy.js, move data
+
+================================================================================
+3. TESTS
+================================================================================
+  NEW  docs/proposals/debug-movechecker-harness.js
+       loads debug.js + move-render.js with stub game, player, spawner, enemy manager
+       and a recording canvas. Checks:
+         a. spawn rate set to 0, live enemies cleared, exactly 1 enemy added
+         b. the dummy is at the chosen distance, cannot move or attack, never dies
+         c. the player has exactly one slot holding that move
+         d. rings: arcs at 50, 100 ... 450, centred on the player, and they move with
+            the player; nothing drawn when the flag is off
+         e. console shows the FOLDED def (a card stack changes the printed value)
+            and the override row when one exists
+         f. unknown / unrouted id: a warning, slots and enemies unchanged
+         g. movechecker() off: rings off, dummy gone, spawn rate back to 1
+         h. newcombat still builds the same slots after the shared helper
+       why: no harness loads debug.js or the render layer today (team-cards-harness
+            only text-matches debug.js), so none of a to h is covered.
+
+  NEW  docs/proposals/debug-movechecker-mutate.js
+       breaks, one at a time: spawn not stopped; two dummies; dummy keeps its speed;
+       rings centred on 0,0; ring step 100; base def printed instead of folded;
+       off leaves spawning stopped; helper drops newcombat's last slot.
+       why: proves each harness check catches its failure.
+
+  EDIT docs/proposals/team-cards-harness.js (the debug export check, about line 377)
+       it text-matches the export list ending "hitbox, newcombat, cards };", which
+       gains movechecker. The check is retargeted to the new list.
+  check.js: no edit (it runs every docs/**/*harness*.js already).
+  Intent scenarios: none (no move behaviour changes).
+  New debug set: none (this IS the debug tool). Feel test: section 4.
+
+================================================================================
+4. FEEL TEST (Jess, dev.html?dev&newcombat, start a run)
+================================================================================
+  G.Debug.movechecker('string-shot')   two shots should read as one today (#15)
+  G.Debug.movechecker('hyper-voice')   the nova should stop at the 380 ring
+  G.Debug.movechecker('ember', 300)    the dummy sits on the 300 ring
+  G.Debug.movechecker()                spawns come back, rings gone
+
+================================================================================
+5. DECISIONS FOR JESS
+================================================================================
+  D1  Dummy can't move: AWAKE with speed 0 and no attack (recommended), not asleep.
+      Sleep is a major status, so Hex would show double damage and sleep / paralysis
+      riders could not land. (newcombat's still dummies use sleep.)
+  D2  Dummy 150 px to your right; optional 2nd argument sets the distance.
+  D3  Dummy HP never runs out (it doesn't die mid-check).
+  D4  Live enemies are cleared at the start, not just new spawns stopped.
+  D5  Console: the folded def (what runs, cards included) + its override row.
+  D6  Rings every 50 px out to 450, labelled, centred on you; hitbox overlay on.
+  D7  movechecker() with no id turns it all off and restores spawning.

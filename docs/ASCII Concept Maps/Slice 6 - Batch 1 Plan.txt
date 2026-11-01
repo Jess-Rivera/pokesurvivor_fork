@@ -1,0 +1,163 @@
+SLICE 6 BATCH 1 PLAN: spacing, sizes, one cd         Status: BUILT (Quick, 2026-10-31; approved by Jess)
+  Jess on approval: Gust cd 0.7; Discharge 110 px; D-CARDS accepted.
+  Built: data + override + regenerated moves-generated.js, MOVE-INTENT (gust, string-shot,
+  tackle, toxic-spikes updated; bubble-beam, discharge new), scenarios (new: tackle-reach,
+  bubble-beam-stream, discharge-size, gust-cd, string-shot-spacing; toxic-spikes-rings
+  replaced by toxic-spikes-burst; bubble-beam-hit / -volley, discharge-double retargeted),
+  intent harness gains a "gaps" check, retargeted harnesses: move-sim, team-cards (+2 rows),
+  stat-stage, move-riders, move-travel (section 7 rewritten), move-emit (section 2 rewritten).
+  Sandbox: every touched harness green; move-emit-mutate 25/25, move-travel-mutate 26/26.
+  NOT run in the sandbox (interrupted): move-sim, move-riders, stat-stage, team-cards mutate.
+From Jess's movechecker pass (2026-10-31). Move DATA only, no sim / render code.
+Data source: docs/move_rework_holding/move-conversions-described.json (Jess re-runs
+tools/export_moves.js -> js/data/moves-generated.js). cd rows: js/data/move-overrides.js.
+
+================================================================================
+1. THE FAIRY WIND PATTERN (what String Shot and Bubble Beam switch to)
+================================================================================
+  today:   [root shot x N] all leave the same frame        -> stacked
+  after:   [root: invisible emitter at you, aims, 'cast' trigger]
+               | every E s, N times
+               v
+           [child shot]  [child shot]  [child shot] ...    -> a line
+           gap in px = E x moveSpeed
+
+  move          shots  moveSpeed  every E   gap      emitter life   spread
+  ------------  -----  ---------  --------  -------  -------------  ----------
+  string-shot     2      320      0.11 s    35 px    0.4 s          0 (line)
+  bubble-beam     7      330      0.075 s   25 px    0.6 s          0.12 -> 0
+  (fairy-wind     3      340      0.08 s    27 px    0.4 s   unchanged, ref)
+
+  Each child keeps the old shot's body (7 px, pierce 0), speed, flight time and
+  payload (String Shot: Speed -2 + trap; Bubble Beam: damage + 10% Speed -1).
+  The cd stays on the root (String Shot 1.1 override; Bubble Beam 0.875 formula).
+
+================================================================================
+2. BUBBLE BEAM WOBBLE (part of D-BB)
+================================================================================
+  side-to-side speed peak = 2 pi x frequency x amplitude
+
+                 amplitude  frequency  side speed  forward  wave length
+  today            18 px     3 Hz       339 px/s   330      110 px   <- wobble = travel
+  proposed         10 px     1.5 Hz      94 px/s   330      220 px
+
+  Why amplitude drops too: at 1.5 Hz a bubble near a close enemy sits at its widest
+  swing; 18 px off-axis is outside an enemy body (7 + 10 = 17 px) so a close enemy
+  would be missed. 10 px always stays inside.
+  Each bubble starts its own wave when it is emitted, so the 7 read as a snake.
+
+================================================================================
+3. THE REST OF BATCH 1
+================================================================================
+  move          field                         today          after
+  ------------  ----------------------------  -------------  --------------------
+  tackle        space.radRadius               48             54   (Jess)
+  toxic-spikes  emit.trigger                  interval 0.25  termination
+                -> 11 pulses in 3 s           -> ONE burst when the mine ends
+                (this is what its original design note said; the data drifted)
+  gust          cd (new override row)         0.5 formula    D-GUST
+  discharge     child grow.max                220 px         D-DIS
+                child grow.growSpeed          550 px/s       scaled with max, so it
+                                                             still blooms in 0.4 s
+
+================================================================================
+4. NOT IN BATCH 1 (need Jess's input first; batch 2)
+================================================================================
+  fairy-wind   spiral: needs a NEW path rule (see 6), stop-and-ask
+  quick-attack "nauseating": cause not pinned down yet (see 6)
+  aerial-ace   "needs rework": what it should be (see 6)
+
+================================================================================
+5. FILES AND TESTS
+================================================================================
+  DATA (on approval)
+    move-conversions-described.json  string-shot, bubble-beam -> emitter form;
+                                     tackle 54; toxic-spikes trigger; discharge size
+    js/data/move-overrides.js        gust cd row with its why
+    js/data/changelog.js             chg lines (free edit, parse-checked)
+  DOCS (free edit)
+    docs/MOVE-INTENT.md   string-shot (spacing ruling), toxic-spikes (supersedes
+                          "every 0.25 s / 11 emissions"), tackle (54), gust (cd),
+                          NEW entries: bubble-beam (stream + wobble), discharge (size)
+
+  NEW INTENT SCENARIOS (docs/move_rework_holding/move-intent-scenarios.json)
+    REQUIRED (Move review rule: a MOVE-INTENT ruling is reviewed when its
+    scenarios pass; expected values hand-derived from the data, not code output):
+      string-shot-spacing   1 enemy at 100 px: 2 hits, 2nd lands 0.11 s after 1st
+      bubble-beam-stream    1 enemy at 100 px: 7 hits, 0.075 s apart
+      toxic-spikes-burst    enemy at 150 px: exactly 1 poison hit, at ~3.0 s+
+      tackle-reach          enemy at 60 px hit (54 + body 10 = 64), at 70 px not
+      gust-cd               casts counted over a fixed window at the new cd
+      discharge-size        enemy inside the new max hit by both rings, one just
+                            outside hit by neither
+  RETARGETED SCENARIOS (they pin values that change)
+      bubble-beam-volley    7 hits at 60 px in 0.5 s: the last bubble now leaves
+                            at 0.45 s, so the window and the fan note are redone
+      toxic-spikes-rings    11 hits -> 1, ends 12 -> 2: replaced by -burst above
+      discharge-double      enemy at 100 px sits ON the new edge; moved inside
+      tackle-arc            note text says radius 48 (values still pass)
+
+  EXISTING HARNESSES RETARGETED (pinned numbers change, no new checks of their own)
+    docs/proposals/team-cards-harness.js
+      - line ~100 Area on Discharge (220 x 1.15) -> new max x 1.15
+      - eligible lists: Count Up gains String Shot, Reach Up loses String Shot and
+        Bubble Beam (D-CARDS); any pinned eligible counts move with them
+      - 2 new rows: can('count','string-shot'), !can('reach','bubble-beam')
+    docs/proposals/move-emit-harness.js   pins Toxic Spikes' 11 emissions and
+                                          Discharge's 220 px ring: retargeted
+    docs/proposals/move-travel-harness.js Bubble Beam fan + wobble pins: retargeted
+    docs/proposals/stat-stage-harness.js (~111), move-riders-harness.js (~127, ~191)
+      fire String Shot / Bubble Beam directly; if they read the root's payload they
+      point at the emitted child instead (checked at build)
+    status-sliceD1-harness.js  reads the LEGACY js/data/moves.js: unaffected
+  MUTATION RUNNER: none new. No sim / render code changes, so there is no new code
+    to break; the data is pinned by the scenarios above. Re-run the existing
+    move-emit-mutate.js and move-travel-mutate.js unchanged (their harnesses change).
+  DEBUG SET: none new. Feel test is movechecker (section 7).
+  check.js: no edit.  tools/smoke-newcombat.js (home, Playwright): its String Shot
+    root check and Bubble Beam slot still apply, re-run at home.
+
+================================================================================
+6. DECISIONS FOR JESS
+================================================================================
+  D-SS    String Shot: emitter form, 2 strands 0.11 s apart = 35 px.
+  D-BB    Bubble Beam: emitter form, 7 bubbles 0.075 s apart = 25 px, spread 0;
+          wobble 18 px / 3 Hz -> 10 px / 1.5 Hz.
+  D-CARDS (RULE CHANGE, side effect of D-SS / D-BB)
+          - Count Up becomes offered for String Shot (adds a 3rd strand, +1 per
+            pick, cap +3), same as Fairy Wind's emissions today.
+          - Reach Up stops applying to String Shot and Bubble Beam (it only lengthens
+            a TRAVELLING ROOT; their root becomes a still emitter, same as Gust and
+            Fairy Wind today). Velocity Up and Pierce Up still apply via the shots.
+  D-GUST  Gust cd 0.5 -> ?
+  D-DIS   Discharge ring 220 px -> ?  ("100% less" read as half = 110, confirm)
+  D-TK    Tackle 48 -> 54 (as given).
+  D-TS    Toxic Spikes: one poison burst when the mine ends (1 per mine, was 11).
+
+  BATCH 2 QUESTIONS
+  D-FW    Fairy Wind. curve alone cannot do this: a constant turn at constant speed
+          draws a CLOSED circle, so the shot loops in place and never leaves you.
+          It needs a new path rule (schema + validator + sim). Which shape?
+
+          A  outward spiral around YOU          B  loop-de-loops travelling out
+
+                 .---.                                 _     _
+               /  .-. \                               ( )   ( )
+              |  ( @ ) |  -->  2 turns,          @ -->-'-->-'--> ...
+               \  '-'  /       radius grows      (2 loops along a straight line)
+                '---'          to ~300 px
+
+          and: does the centre follow you, or stay where you cast?
+  D-QA    Quick Attack: what is nauseating?  a) the camera whipping out and back
+          (~1.7 times a second)  b) the dash speed  c) the return leg  d) other.
+          Candidate fixes: camera holds still during the dash; no return; slower
+          dash (x10 -> x5); longer cd.
+  D-AA    Aerial Ace: what should it be? (today: blink to the nearest enemy, 46 px
+          hit, knockback, 50% confusion, you stay where you land)
+
+================================================================================
+7. FEEL TEST AFTER THE BUILD (Jess)
+================================================================================
+  node tools/export_moves.js, node tools/check.js, then the two mutate runners
+  G.Debug.movechecker('string-shot','bubble-beam','tackle','toxic-spikes',
+                      'gust','discharge', 200)

@@ -100,10 +100,10 @@ G.MUSIC = {
 };
 
 // Added outside the object so as not to touch the other themes.
-/* ---------------- Rift: duel against the legendary ----------------
+/* ---------------- Gym arena: duel against the gym leader ----------------
  * Faster and tenser than the boss one: A minor, a galloping bass and the
  * melody rising to the high octave in the second half. */
-G.MUSIC.rift = {
+G.MUSIC.gym = {
   bpm: 164,
   chords: ['Am', 'F', 'G', 'E', 'Am', 'F', 'Dm', 'E',
            'F', 'G', 'Am', 'Am', 'Dm', 'E', 'Am', 'E'],
@@ -124,29 +124,6 @@ G.MUSIC.rift = {
   drums: { kick: 'X.x.X.x.X.x.X.xx', snare: '....X.......X..X', hat: 'xoxoxoxoxoxoxoxo' }
 };
 
-/* ---------------- Arceus's Judgment (minute 30) ----------------
- * Solemn and inescapable: D minor with an E flat (phrygian) that darkens,
- * low bells on each bar and the melody rising to the end. */
-G.MUSIC.judgment = {
-  bpm: 140,
-  chords: ['Dm', 'Bb', 'Gm', 'A', 'Dm', 'Eb', 'C', 'A',
-           'Bb', 'C', 'Dm', 'Dm', 'Gm', 'A', 'Dm', 'A'],
-  melody: [{ inst: 'lead', vel: 1, bars: [
-    'D5:4 F5:4 A5:6 G5:2', 'F5:4 D5:4 Bb4:8',
-    'G5:4 Bb5:4 D6:4 C6:2 Bb5:2', 'A5:8 C#6:4 E6:4',
-    'D6:6 C6:2 A5:4 F5:4', 'G5:4 Eb5:4 G5:4 Bb5:4',
-    'C6:4 E5:2 G5:2 C6:4 E6:4', 'C#6:12 -:4',
-    'D6:2 D6:2 F6:4 D6:4 Bb5:4', 'C6:2 C6:2 E6:4 C6:4 G5:4',
-    'A5:4 D6:4 F6:4 E6:2 D6:2', 'D6:12 -:4',
-    'Bb5:4 D6:4 G6:4 F6:2 D6:2', 'E6:4 C#6:4 A5:4 E6:4',
-    'F6:4 E6:2 D6:2 A5:4 F5:4', 'E5:4 A5:4 C#6:4 E6:4'] }],
-  parts: [
-    { inst: 'bass', octave: 2, vel: 1, pattern: 'R.RRR.RRR.RRF.OF' },
-    { inst: 'bell', octave: 4, vel: 0.6, pattern: '0.......2.......' },
-    { inst: 'pad', octave: 3, vel: 0.8, pattern: 'C---------------' }
-  ],
-  drums: { kick: 'X..xX..xX..xX.xx', snare: '....X.......X..X', hat: 'x.x.x.x.x.x.x.x.' }
-};
 
 /** Theme of each biome during the run. */
 G.BIOME_MUSIC = ['forest', 'cave', 'volcano'];

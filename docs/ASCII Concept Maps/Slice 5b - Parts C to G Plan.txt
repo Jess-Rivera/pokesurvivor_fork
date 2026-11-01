@@ -1,0 +1,158 @@
+SLICE 5b, PARTS C TO G, BUILD PLAN (Quick, 2026-10-31)
+Parent map: Slice 5b - Build Plan.txt (sections 2, 3, 6, 7). This map is what the code reading
+changed or pinned down. Everything runs only under ?dev&newcombat (single player). Flag off = unchanged.
+Status before this: parts A and B built, Jess's node CLI run of check.js + team-cards-mutate PENDING.
+
+
+0. GAPS FOUND IN THE CODE (need a call, see section 6)
+======================================================
+  F1  sheet.js move numbers are LEGACY-derived (G.Kinds, m.kind, m.dmg). There is no new-path
+      formatter to "read the folded def" into. Building one is a sheet rewrite, not a 5b part.
+  F2  the parent plan says team-cards.js has "card text and before-to-after preview". It does not
+      (A shipped the store and fold only). Card text moves into part E.
+  F3  game.js calls card.apply(pl, t.pl, t.move): there is no slot for a Vitamins stat choice.
+
+
+1. FLOW, ONE PICK
+=================
+  level-up --> G.LevelUp.offer(pl, 3, roster)
+                 |flag on (MoveRoute.on, not co-op)        |flag off
+                 v                                         v
+           teamFamilies(): General/Space/Delivery/       families(): legacy, untouched
+           Payload/New Move, only cards with a taker
+                 |
+                 v
+  run-ui pick(i) --type 'team'------------------> finish --> card.apply --> TeamCards.add(store,id)
+                 --type 'vitamins'--> 3 stat rows (same screen, keys 1-3, Backspace back)
+                                       --> card.choice = stat --> finish --> add(store,'vitamins:'+stat)
+                                                                            (HP: refresh max HP, whole roster)
+  reads after the pick:
+    move fields ......... defOf (A/B, already built)
+    Gate / Duration ..... move-effects stat() + move-sim fizzle wait --> stages success(gate, dur)
+    HP Regen ............ player.js benchUpdate (benched, alive)
+    Vitamins ............ player.js incOf (team value, so a later catch gets it)
+
+
+2. PER PART: FILE, SPOT, CHANGE
+===============================
+  C  GATE REDUCTION / DURATION INCREASE (COMBAT-RULES:SS10: every change the TEAM causes:
+     raises, foe drops, self drops. Enemies: base timers)
+     team-cards.js ...... new readers gateMul(o) = 1/(1+0.10 x stacks), durMul(o) = 1+0.10 x stacks;
+                          no store = 1 (enemies, fixtures)
+     stages.js .......... gateOf(selfDrop, mul = 1); success(), trackOwn(), trackTeam() take a
+                          Duration argument, default DURATION (6.1). Legacy lists untouched.
+     move-effects.js .... stat(): all three branches (foe, team, own) pass the CASTER's gate and
+                          duration multipliers. statReady unchanged (it reads the stored Gate, so
+                          a pure buff recasts sooner by itself).
+     move-sim.js ........ line ~264 fizzle wait of a pure buff: gateOf(false, gateMul(o)).
+     numbers (2 Gate stacks): Swords Dance +2/+4/+6 at 0/5.0/10.0 s (was 0/6/12);
+                          Leaf Storm self drop Gate 12 -> 10.0 s. 2 Duration stacks: 6.1 -> 7.32 s.
+
+  D  HP REGEN (BENCH ONLY) + VITAMINS
+     team-cards.js ...... regen(o) = 0.005 x stacks (fraction of max HP per s); vit(o, k) =
+                          0.05 x stacks of 'vitamins:'+k. Vitamins stacks live in the same store
+                          under 'vitamins:hp' ... 'vitamins:spe' (fold skips them: no card id).
+     player.js .......... incOf(k) adds vit(this, k) beside badge.
+                          benchUpdate: alive -> hp += regen x maxHp x dt, capped at maxHp,
+                          NO floating number (a per-frame +0 spam, and the benched body is not drawn).
+                          new refreshMaxHp(): recompute from maxHpAt(level), top up the gain,
+                          a fainted member is not revived (same rule as addBadgeBoost).
+
+  E  OFFER + PICK
+     levelup.js ......... offer() branches on flag on and not co-op. New teamFamilies():
+                            General .. one Type card per offer (a random type a team move can use),
+                                       Gate + Duration (only if a team move has a stat effect,
+                                       emitted children included), HP Regen (only with 2+ members),
+                                       Vitamins (always)
+                            Space / Delivery / Payload .. every field card usable on >= 1 routed
+                                       team move (folded def); weight w (Count 0.5, Pierce 0.5)
+                            New Move . today's code, but the 2-buff limit counts a routed move as a
+                                       buff when it has no damage anywhere (no damage entry, no
+                                       fixedDamage / levelDamage, no damaging emitted child);
+                                       unrouted moves keep m.kind
+                          family weights: New Move 10, General 8, Space 10, Delivery 8, Payload 12
+                          card text (F2): title "Area Up +15%", "Count Up +1", "Ailment Chance
+                          Up +10 pts"; desc "Team-wide. Works on: Razor Leaf, Ember +1 more".
+                          Team cards get a now-to-after line ("Stat stage Gate 6.0 s to 5.5 s",
+                          "Benched Pokemon regain 0.5% to 1.0% max HP/s").
+                          Legacy mech and stat cards are NOT offered under the flag.
+     run-ui.js .......... pick(): 'team' finishes at once (no choose sheet). 'vitamins': the card
+                          box is re-rendered as 3 rows (3 random of HP/Atk/Def/SpA/SpD/Spe,
+                          rolled when the card is built, so a reroll re-rolls them), now-to-after
+                          per row; choice stored on the card (F3, no game.js edit). levelKeys:
+                          1-3 pick a row, Backspace back to the cards. Reroll locked inside.
+
+  F  TEAM SHEET
+     team-cards.js ...... summary(store): rows { label, stacks, total text } sorted by family
+     sheet.js ........... a fourth tab "Run Cards" beside Berry / Held Item / Team Items, flag on
+                          only: one row per picked card ("Area Up x2  +30%", "Vitamins Atk x1
+                          +5%"), "No cards yet" when empty. The hexagon already shows Vitamins
+                          (it reads incOf). Move numbers: see decision F1.
+
+  G  DEBUG + NOTES
+     debug.js ........... NC_SETS.cards = Ember, Razor Leaf, Rock Slide, Substitute.
+                          G.Debug.cards(id, n = 1): grant n stacks ('vitamins:atk' style for
+                          Vitamins; HP refreshes max HP); no args prints the store and the ids.
+     changelog.js ....... new entry (free-edit, parse-checked)
+     docs ............... STATE, slice-5-handoff status, DEVLOG at wrap-up
+
+
+3. TESTS
+========
+  CHANGED  docs/proposals/team-cards-harness.js (90 rows today), new sections:
+    C  no store = exact 5a numbers (+6 at 12 s, Leaf Storm Gate 12 s, Duration 6.1 s)
+       2 Gate stacks: Swords Dance +2/+4/+6 at 0/5.0/10.0 s; Leaf Storm self drop Gate 10.0 s
+       2 Duration stacks: a raise held 7.32 s after the last success; a self drop lasts longer too
+       a foe drop our move puts on an enemy uses the team timers (SS10)
+       an enemy-caused change (direct trackOwn with no caster store) keeps 6.0 / 6.1
+       a fizzled pure buff waits the shortened Gate
+    D  regen: benched member heals 0.5% x stacks per s; active does not; fainted does not; capped
+       vitamins: incOf includes it; a member added AFTER the pick gets it; HP vitamin raises every
+       member's max HP and tops up the gain; a fainted member stays at 0
+    E  flag on: no legacy mech/stat card ever; every offered field card is usable on >= 1 team
+       move; Gate/Duration absent with no stat move; HP Regen absent solo; at most one Type card;
+       apply raises the store count; Vitamins apply with a choice adds 'vitamins:<stat>';
+       2-buff limit: Swords Dance + Harden known -> no third pure buff, Night Shade still offered
+       flag off: offer() output has only legacy card types (same families as today)
+    F  summary(): rows match the stacks (label, count, total), empty store = no rows
+    G  static: every NC_SETS.cards id is routed
+    why: C to G add readers and a flow nothing tests; stat-stage-harness pins base timers only.
+  CHANGED  docs/proposals/team-cards-mutate.js (30 today), new mutations, each must be caught:
+       Gate card ignored in stat() | Duration card ignored | Gate card applied to enemy-caused
+       changes | self drops skip the Gate card | foe drops skip the cards | fizzle wait ignores
+       the Gate card | regen heals the active | regen heals the fainted | regen ignores the cap |
+       Vitamins read per member at pick time (later catch misses it) | HP Vitamin skips the max HP
+       refresh | offer keeps a card with no taker | offer shows legacy cards under the flag |
+       Gate offered with no stat move | HP Regen offered solo | two Type cards in one offer |
+       buff limit reads m.kind on a routed move | summary drops a card
+    why: proves each new harness row bites (same pattern as A/B).
+  INTENT SCENARIOS: none new, none required (cards change no base behavior or MOVE-INTENT ruling).
+  DEBUG SET: newcombat('cards'). Look for: cards('gate', 3) on a 'stages' set climbs sooner;
+       cards('regen', 5) and swap: the benched bar refills; Vitamins shows 3 rows; level-ups offer
+       no legacy cards; the Run Cards tab lists what you took.
+  check.js: no change. Existing harnesses: no edits expected (no store = 5a behavior).
+  upgrade-slice2c (legacy cards) must stay green: proves flag off is untouched.
+
+
+4. RISKS
+========
+  Gate card double edge ...... Leaf Storm climbs faster AND lasts longer (intended, SS10)
+  HP Regen feel .............. swap-to-heal can trivialize damage; 0.5%/s is a placeholder (slice 6)
+  stage-text spam ............ shorter Gates mean more "+2" popups; feel-test call
+  co-op / gyms ............... untouched (flag off in co-op; gym stacks stay until 7a)
+  save ....................... none (run state only)
+
+
+5. ORDER
+========
+  C -> harness C -> D -> harness D -> E -> harness E -> F -> G -> full harness + mutate (sandbox)
+  -> changelog -> docs -> Jess: check.js + both mutate runners on node, then feel-test.
+
+
+6. DECISIONS FOR JESS
+=====================
+  F1  sheet move numbers ... (a) DEFAULT: leave them legacy for now, note in TODO for the slice 7
+                             sheet rewrite; (b) add a one-line folded summary per routed move now
+  V   Vitamins rows ........ (a) DEFAULT: 3 random of the 6 stats; (b) skip Atk / SpA when no team
+                             move uses that category (the old Protein / Calcium rule)
+  R   HP Regen floating text (a) DEFAULT: none on the bench; (b) a "+N" on swap-in for what was regained

@@ -1,24 +1,33 @@
 # ONBOARDING, developer architecture guide
 
+- **Role:** Developer architecture guide.
+- **Owns:** Module map, load order, G namespace, build and run instructions.
+- **Does not own:** Game design (GDD.md); combat rules (docs/COMBAT-RULES.md); sim and present direction (docs/SIM-PRESENT-BOUNDARY.md); agent rules (CLAUDE.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 A practical map of the PokeSurvivor codebase for an English-speaking developer who
 wants to fork it and add features. Pair this with GLOSSARY.md (Spanish to English
 terms) and GDD.md (game design). Written from reading the source.
+
+Open this reference only when a task needs architecture, module routing, load-order,
+or build-pipeline information. Do not include it in routine chat startup context.
+CONTEXT.md, STATE.md, and CLAUDE.md are the startup sources of truth.
 
 ## 1. What this is
 
 A Vampire-Survivors-style bullet-heaven / horde-survival roguelite, as a Pokemon
 fan game. The player is a Pokemon that auto-attacks; you dodge, pick level-up
-cards, fight bosses, open rifts against legendaries, and collect Pokemon via a
+cards, fight elites and gym leaders, and collect Pokemon via a
 per-region gacha.
 
 - **Pure front end:** vanilla HTML + CSS + JavaScript on Canvas 2D. No framework,
   no build step to run it, no runtime dependencies. Opening `index.html` works.
 - **Everything local:** sprites, data, font, music and save all ship with the game.
   The game makes no internet request to play.
-- **Optional cloud:** Firebase (Authentication + Firestore + Realtime Database)
-  adds accounts, cloud saves, friends, co-op and a leaderboard. Cloudflare adds a
-  TURN relay for co-op and an "online now" counter. All optional; without config
-  the game runs fully local.
+- **Deferred cloud:** Firebase, Cloudflare, accounts, cloud saves, friends, co-op,
+  and leaderboards remain in the repository but are out of scope until Jess explicitly
+  starts the cloud phase. The active project scope is the local single-player game.
 
 ## 2. How the code is wired (the `G` namespace)
 
@@ -55,8 +64,7 @@ Key facts about `tools/build.js`:
 - It writes `version.json` (a short sha1 fingerprint). Do NOT remove this: the
   auto-updater depends on it.
 
-CLAUDE.md holds the owner's fixed rules: edit `dev.html`, commit without AI
-signatures, and only push when asked.
+CLAUDE.md holds the active fork rules and overrides this guide if they conflict.
 
 ## 4. The i18n system (why you do NOT translate strings)
 
@@ -75,14 +83,15 @@ inside longer text. Player-entered text (nicknames) is marked `translate="no"`.
 Language is chosen by: saved setting (`ps.lang` in localStorage) > `/en/` in the URL
 path > browser language (Spanish if the browser is Spanish, English otherwise).
 
-**Implication for you:** Spanish string literals in the code are the i18n KEYS. Leave
-them in Spanish. If you add a new user-facing string, add its English translation to
-`lang-en.js` or it will only render in Spanish.
+**Implication for you:** inherited Spanish string literals in the code are i18n KEYS,
+so leave them in Spanish. New fork-authored user-facing strings are written directly
+in English. Do not add those new English strings to `lang-en.js`.
 
 ## 5. Module map
 
 ### `js/core/` (engine services)
-- `util.js` creates `G`, shared helpers.
+- `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
+- `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev`, including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
 - `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).
 - `input.js` keyboard/mouse, `touch.js` mobile joystick + touch controls.
@@ -98,7 +107,8 @@ them in Spanish. If you add a new user-facing string, add its English translatio
 ### `js/data/` (static game data; some generated)
 - `pokedex.js` the 966 Pokemon (stats, names, types; `leg` = legendary flag). Generated.
 - `sprites-meta.js` sprite sheet metadata (`hv` hover flag, `sa` shiny-alt geometry). Generated, large, skip when reading.
-- `moves.js` the move definitions (families, levels, types).
+- `moves.js` (`G.Moves`) since slice 7b: the learn pools per type, `RETIRED` (retired id to replacement, Bubble and Hail), the starting move per type and a slim slot instance (id, name, type, cd, timer) read from `G.MoveDefs`. It holds no move data; display reads `G.MoveInfo`. The old legacy table is archived at docs/move_rework_holding/legacy-moves.js for the tools.
+- The new move system's data chain (load order): `move-attributes.js` (`G.MoveAttrs`, the grammar and validator rules, docs/MOVE-AXIS-SCHEMA.md), `moves-generated.js` (`G.MoveData`, generated from docs/move_rework_holding/move-conversions-described.json by `tools/export_moves.js`, never hand-edited), `move-overrides.js` (hand-set fields with a `why`), `move-handler.js` (special handlers), `move-resolver.js` (`G.MoveDefs`, the resolved and deep-frozen definitions).
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
@@ -106,15 +116,18 @@ them in Spanish. If you add a new user-facing string, add its English translatio
 - `funding.js` support/funding config.
 
 ### `js/entities/`
-- `player.js`, `enemy.js` (plus the `EnemyMgr` manager), `projectile.js`,
+- `player.js`, `enemy.js` (plus the `EnemyMgr` manager), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
+  enemy.js body plus a brain; the GymBrain makes every gym leader decision), `projectile.js` (enemy shots in flight; player moves live in G.MoveSim),
   `pickup.js`, `fx.js` and `vfx.js` (the 23 pixel-art attack shapes).
 
 ### `js/systems/` (gameplay rules)
-- `combat.js` damage/targeting, `spawner.js` enemy spawning/waves, `levelup.js` the
-  card draft, `gacha.js` pulls/rarity/pity, `rift.js` the legendary arenas,
+- `combat.js` enemy attacks on the player (enemy shots with wall cover, contact damage), `spawner.js` enemy spawning/waves, `levelup.js` the
+  card draft (team cards and New Move), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
-  (coins/tickets/profile), `judgment.js` (anti-cheat validation).
+  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),
+  `elites.js`, `gym.js` (run progression, BOSS-REWORK.md), `log.js` (dev logger).
+- The move system (every move, player and gym leader, since slice 7b): `move-route.js` (`G.MoveRoute`, the per-frame entry and `routed(id)`: a resolved def that is not retired), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep; `castAt` for an enemy owner), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers, hits on the player too), `move-render.js` (drawing only), `team-cards.js` (`G.TeamCards`, the team card store, the fold onto a def and `STATS`, the Vitamins card's six stats). Rules: docs/current feature planning/combat-architecture.md.
 
 ### `js/net/` (online, all optional)
 - `social.js` nicknames/friends, `net.js` WebRTC + relay + TURN handshake,
@@ -126,7 +139,8 @@ them in Spanish. If you add a new user-facing string, add its English translatio
   objects and collisions (16x16 tile chunks baked to ImageData).
 
 ### `js/ui/`
-- `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `login.js`,
+- `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
+  before icons.js), `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
   `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
@@ -137,9 +151,17 @@ them in Spanish. If you add a new user-facing string, add its English translatio
 - `functions/` Firebase Cloud Functions. `cloudflare/turn-worker.js` the TURN +
   online-counter Worker. `sw.js` the PWA service worker.
 - `tools/` the generators and build scripts (build.js, export_data.js,
-  make_seo_pages.py, fetch_*.py, make_font.py).
+  make_seo_pages.py, fetch_*.py, make_font.py). Checks: `check.js` (syntax of every file, every
+  `*harness*.js` under docs/, the move-data steps). Move tools: `export_moves.js` (source JSON to moves-generated.js; `--check` guards hand edits),
+  `validate_moves.js` (grammar and validator rules; `--resolved` checks the resolver output), `move_parity.js` (new vs legacy cd and power),
+  `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke of the move path),
+  `smoke-ui.js` (headless: every move in the menus, level-up cards, pause sheet and icons), `kind-guard.js` (the legacy move guard, run by check.js).
+- `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation runners (`*-mutate.js`, run by hand).
 
-## 6. Server/ops facts worth knowing (from CLAUDE.md)
+## 6. Deferred server/ops facts
+
+This material is reference-only until Jess explicitly starts the cloud phase. Do not
+propose or implement cloud or multiplayer work during the local-first phase.
 
 - Firebase project is **pokesurvivor-free**. **Never enable "Identity Platform"**
   (or MFA / blocking functions / "Upgrade to enable"): it bills per user. The free
@@ -150,21 +172,25 @@ them in Spanish. If you add a new user-facing string, add its English translatio
 
 ## 7. Where do I add a new feature?
 
-- **New move:** add it to `js/data/moves.js` (family, type, levels). Its visual
-  comes from an existing shape in `js/entities/vfx.js`. If user-facing text is new,
-  add the English to `js/data/lang-en.js`. Combat behavior lives in `js/systems/combat.js`.
+- **New move:** while the move schema branch is live, author it in docs/move_rework_holding/move-conversions-described.json (grammar: docs/MOVE-AXIS-SCHEMA.md),
+  run `node tools/export_moves.js`, add hand-set fields to `js/data/move-overrides.js`, and give it a MOVE-INTENT entry if it needs a ruling.
+  It runs as soon as it has a resolved def (G.MoveRoute.routed), and gets an intent scenario; add it to a type pool in `js/data/moves.js` so Pokemon can learn it.
+  Its card text, icon badge and sheet rows
+  come from its definition automatically (`G.MoveInfo`, sheet.js); never read `kind` (the 7a guard fails). New user-facing text is authored in English
+  only, with no lang-en.js entry (CLAUDE.md i18n rule).
 - **New enemy / personality:** `js/data/enemies.js` for the roster/tiers; enemy
   behavior and personalities in `js/entities/enemy.js` (and spawn logic in
-  `js/systems/spawner.js`).
+  `js/systems/spawner.js`). Boss behavior goes in a brain in `js/entities/boss-ai.js`, never in enemy.js.
 - **New achievement or quest:** `js/data/achievements.js` / `js/data/missions.js`,
   surfaced through `js/ui/goals-ui.js` and tracked in `js/systems/progress.js`.
 - **New upgrade:** `js/data/upgrades.js`, applied in `js/entities/player.js` / combat.
 - **New UI screen:** add a `*-ui.js` under `js/ui/`, register it on `G`, add its
   `<script>` to `dev.html`, and wire it into the flow in `js/game.js`. Draw any
   icons in `js/ui/icons.js`. Remember to add it to the `NEED` list in `js/main.js`.
-- **New rift / arena / weather:** `js/systems/rift.js`, `js/systems/weather.js`,
+- **New gym / arena / weather:** `js/systems/gym-arena.js` (arena), `js/data/gyms.js` (rosters, moves, cards; docs/BOSS-AUTHORING.md), `js/systems/weather.js`,
   terrain in `js/world/`.
-- **Anything with new on-screen text:** also add the English string to `js/data/lang-en.js`.
+- **Anything with new on-screen text:** author it directly in English. Leave inherited
+  Spanish literals unchanged because they are translation keys.
 
 Always add new scripts to BOTH the `dev.html` script block and the `NEED` array in
 `js/main.js`, then rebuild with `node tools/build.js` before publishing.

@@ -1,5 +1,5 @@
 // Gym 1 reward-path offline check (Node only). Usage from the repo root:  node docs/proposals/gym-reward-harness.js .
-// Real rift.js, gym.js, elites.js, enemy.js and the data files with stubbed engine globals. Plays the whole chain: gate -> enter ->
+// Real gym-arena.js, gym.js, elites.js, enemy.js and the data files with stubbed engine globals. Plays the whole chain: gate -> enter ->
 // arena + leader -> kill the leader -> win -> badge package (level, revive, Bond, item, +10% Atk team boost, no XP orbs) -> 5 s later the return -> the
 // next gate/elite schedule. The real Game (cards, bond screen), Pickups and the arena visuals are NOT covered (stubs / no browser).
 const fs = require('fs'), vm = require('vm');
@@ -15,43 +15,45 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   World: { isFree: () => true, biome: 1, setArena() { }, setBiome() { } }, Coop: { active: false, isHost: false }, LIFT: 0,
   Game: { player: pl, st: { get time() { return clock; } }, everyone: () => [pl], grantLevels: n => { log.levels += n; }, reviveTeam: () => { log.revives++; }, badgeBoost: (st, pc) => log.boosts.push(st + ':' + pc), offerBond: () => { log.bondOffers++; }, flash() { } },
   Spawner: { CAP: 64, say: t => log.says.push(t) }, Progress: { event: (k, d) => log.progress.push(k) },
-  Pickups: { drop: (k, x, y, v) => log.drops.push(k), dropXp: (x, y, v, boss, leg, plain) => log.dropXp.push({ v: Math.round(v), boss, plain }), pullAll() { log.pulled = true; } },
-  Items: { roll: () => 'x', rollFor: () => 'x' }, Judgment: { AT: 1800, noteDmg() { } }, Log: { on: false } };
+  Pickups: { drop: (k, x, y, v) => log.drops.push(k), dropXp: (x, y, v, burst) => log.dropXp.push({ v: Math.round(v), burst }), pullAll() { log.pulled = true; } },
+  Items: { roll: () => 'x', rollFor: () => 'x' }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
-['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/rift.js', 'js/systems/gym.js'].forEach(p => {
+['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 
-G.Rift.reset(); G.Gym.reset(); G.Elites.reset();
+G.GymArena.reset(); G.Gym.reset(); G.Elites.reset();
+const tape = G.SimBus.record();          // the sim's events; the toast text below is asserted through the REAL gym-present subscriber
 // gate at 4:00
-clock = 240; G.Gym.update(0.1, pl, 240); const gate = G.Gym.gate, rift = G.Rift.rift;
-if (!gate || !rift || !rift.gym) bad('no gate'); else if (rift.ttl !== Infinity) bad('the gate should not expire');
+clock = 240; G.Gym.update(0.1, pl, 240); const gate = G.Gym.gate, gg = G.GymArena.gate;
+if (!gate || !gg || gg.gym !== gate) bad('no gate');
 // the gate survives a long wait
-for (let i = 0; i < 100; i++) G.Rift.update(5, pl, 240 + i * 5); if (!G.Rift.rift) bad('gate expired');
+for (let i = 0; i < 100; i++) G.GymArena.update(5, pl, 240 + i * 5); if (G.GymArena.gate !== gg) bad('gate expired');
 // enter
-pl.x = rift.x; pl.y = rift.y - 10; G.Rift.update(0.05, pl, 740);
-if (!G.Rift.inArena || !G.Rift.isGym) bad('did not enter the gym arena');
+pl.x = gg.x; pl.y = gg.y - 10; G.GymArena.update(0.05, pl, 740);
+if (!G.GymArena.inArena || !G.GymArena.arena.gym) bad('did not enter the gym arena');
 const leader = G.EnemyMgr.all().find(e => e.gym); if (!leader) bad('no leader spawned');
 // fight: the leader is hit (engages), then killed
-clock = 760; leader.hurt(50); G.Rift.update(0.05, pl, 760); if (!G.Rift.inArena) bad('left the arena early');
+clock = 760; leader.hurt(50); G.GymArena.update(0.05, pl, 760); if (!G.GymArena.inArena) bad('left the arena early');
 if (log.levels || log.revives) bad('package paid before the win');
 leader.hurt(1e9); if (!leader.dead) bad('leader did not die');
 const drops = log.drops.slice();
-G.Rift.update(0.05, pl, 780);                      // arena tick sees the dead leader -> won()
+G.GymArena.update(0.05, pl, 780);                  // arena tick sees the dead leader -> won()
 if (log.levels !== 1) bad('level grants: ' + log.levels); if (log.revives !== 1) bad('revives: ' + log.revives);
 if (pl.bonds !== 1) bad('bond count ' + pl.bonds); if (G.Gym.badges.join() !== 'Boulder Badge') bad('badge ' + G.Gym.badges);
-if (!log.progress.includes('rift')) bad('progress event');
-// (The Berry, magnet and the x10 ticket chance come from the real Pickups.dropXp(boss, not plain), which this run stubs: asserted below by its arguments.)
+if (log.progress.length) bad('a gym win reports no progress event now (the portal-fight counters are gone): ' + log.progress);
+// (A gym leader drops coins and items only: no XP orbs, so no Pickups.dropXp call, asserted below.)
 if (!drops.includes('item')) bad('missing the guaranteed item in ' + drops);
 if (drops.filter(k => k === 'coin').length < 10) bad('coins ' + drops.filter(k => k === 'coin').length);
 if (log.dropXp.length) bad('a gym leader must drop no XP: ' + JSON.stringify(log.dropXp));
 if (log.boosts.join() !== 'atk:0.1') bad('Boulder Badge boost: ' + log.boosts); if (!log.pulled) bad('pickups not pulled to the player');
 if (!log.says.some(t => /Boulder Badge earned.*10% Attack.*level up/.test(t))) bad('no badge message: ' + log.says);
+{ const ev = tape.filter(e => e.type === 'gym:badge'); if (ev.length !== 1 || ev[0].badge !== 'Boulder Badge' || ev[0].stat !== 'atk' || ev[0].pct !== 0.1) bad('gym:badge event: ' + JSON.stringify(ev)); else if (JSON.stringify(JSON.parse(JSON.stringify(ev[0]))) !== JSON.stringify(ev[0])) bad('gym:badge payload is not plain data'); }
 if (log.levels === 1 && G.Gym.beaten !== 0) bad('beaten counted before the return');
 // 5 s later: back on the map
-G.Rift.update(5.1, pl, 786);
-if (G.Rift.inArena) bad('still in the arena after the win timer'); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('return state: beaten ' + G.Gym.beaten + ' gate ' + !!G.Gym.gate);
+G.GymArena.update(5.1, pl, 786);
+if (G.GymArena.inArena) bad('still in the arena after the win timer'); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('return state: beaten ' + G.Gym.beaten + ' gate ' + !!G.Gym.gate);
 if (log.bondOffers !== 1) bad('bond offer ' + log.bondOffers);
 // schedule: no second gate (one entry), and the next elite is 2:00 after the return
 G.Gym.update(0.1, pl, 5000); if (G.Gym.gate) bad('a second gate appeared');

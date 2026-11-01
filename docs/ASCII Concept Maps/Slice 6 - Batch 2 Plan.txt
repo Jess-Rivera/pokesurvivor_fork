@@ -1,0 +1,128 @@
+SLICE 6 BATCH 2 PLAN: Fairy Wind loop-de-loops          Status: BUILT (Quick, 2026-10-31; approved by Jess)
+  Jess on approval: D-FW-RULE yes; D-FW2 start on you; D-FW1 numbers as proposed.
+  Correction: reach is about 200 px, not 250 (the 1.2 s flight ends back on the base line at
+  170 x 1.2 = 204 px).
+  Sandbox: validate_moves (self-test + 63/63 + resolved 63/63), move-travel 94/94, intent 867/867,
+  emit, team-cards, move-sim, plain, riders, stat-stage, movechecker green; move-travel-mutate
+  33/33 (7 new loop breaks all caught).
+
+  RETUNE AFTER JESS'S FEEL TEST (2026-10-31, same day) - wins over section 2 below
+    loop CENTRED on the base point (was: hanging off the caster, "top of the loop at my feet")
+      across = -radius x cos(w age)      the shot spawns at the top of its loop, one radius
+                                         across, so its first sweep never crosses from you
+                    old      new
+    radius          50       70 px
+    frequency       1.6667   0.6667 Hz
+    flight          1.2      3.0 s       (still 2 loops)
+    drift           170      90 px/s
+    top speed       694      383 px/s
+    reach           ~200     ~280 px
+    alive at once   ~6       ~15         (3 shots x 3 s / 0.583 s cd)
+  Sandbox: travel 94/94, intent 867/867, emit 100/100, team-cards 149/149, validate 63/63 both,
+  move-travel-mutate 34/34 (8 loop breaks, incl. "not centred" and "spawns on the caster").
+Jess picked shape C (2026-10-31): same-size loops that drift away along the aim line.
+This batch adds ONE new path rule, so it is a rule change (grammar + runtime), not just data.
+
+================================================================================
+1. WHY A NEW FIELD
+================================================================================
+  path.curve      turns the heading at a constant rad/s. Constant turn + constant
+                  speed = a CLOSED circle (radius = speed / curve). It never leaves.
+  path.oscillate  a 1D sine offset ACROSS the heading only (D24). A wave, never a loop.
+
+  A loop needs a 2D offset (along AND across) around a base point that keeps
+  travelling straight. That is the same idea as oscillate (D24), one dimension up.
+
+================================================================================
+2. THE NEW FIELD: path.loop { radius, frequency }
+================================================================================
+  base point   travels straight along the aim at moveSpeed (unchanged travel)
+  shot         base point + a circular offset, theta = 2 pi x frequency x age
+                 along  = radius x sin(theta)
+                 across = radius x (1 - cos(theta))
+  at age 0 the offset is 0, so the shot starts on you like every other shot
+  (no spawn jump), then circles to one side, same turning direction as today's curve.
+
+     @ = you        the base point slides right at 170 px/s
+     @-.     .-.
+     |  \   /   \     loop 1 brushes past you, loop 2 is ~100 px further out
+      '--'-'     '--> ends ~200 px out, 1.2 s
+
+  exact and dt-independent (positional, like D24); composes with oscillate (offsets add);
+  the base heading is not turned by the loop; the shot's velocity (vx, vy) is the true
+  motion, so a travel-direction knockback and the render trail follow what you see.
+
+  FAIRY WIND NUMBERS (D-FW1)        today                  after
+    moveSpeed (base drift)          340 px/s               170 px/s
+    path                            curve 2.0 rad/s        loop radius 50, 1.667 Hz
+    loops in its 1.2 s flight       (one arc)              2 full loops
+    reach                           ~317 px (curved chord) ~250 px
+    top speed on the loop           340                    170 + 524 = ~694 px/s
+  loop roundness: radius x 2 pi x frequency / moveSpeed = 3.1 (above 1 = true loops;
+  about 3 gives round loops spaced about one loop-width apart).
+  The 3 shots (0.08 s apart) ride the SAME path, so they chase each other round it.
+
+================================================================================
+3. FILES (prose; code only on approval)
+================================================================================
+  GRAMMAR  js/data/move-attributes.js, the path line (about line 72)
+           path gains loop: radius (px, above 0) and frequency (Hz, above 0), both
+           required. Why: the validator and resolver read the grammar from here.
+  RUNTIME  js/systems/move-sim.js, the travels motion (about lines 444 to 463)
+           after the oscillate offset, add the loop offset in the same base-heading
+           frame; when a loop is present, vx / vy become the true velocity (base plus
+           the loop's derivative). Why: one place owns travel; the formula is exact.
+  RENDER   js/systems/move-render.js, the curving-ball trail check (about line 156)
+           also draws the short trail for a loop shot. Why: Fairy Wind drops its curve,
+           so without this it would lose the trail it has today. Presentation only.
+  DATA     docs/move_rework_holding/move-conversions-described.json, fairy-wind child
+           delivery: moveSpeed 340 -> 170, path curve 2.0 -> loop { 50, 1.667 }; feel
+           note rewritten. Then Jess re-runs tools/export_moves.js.
+  DOCS     docs/MOVE-AXIS-SCHEMA.md path row (grammar owner): add loop
+           docs/current feature planning/combat-architecture.md: new row D38 (runtime
+           owner, beside D23 / D24)
+           docs/MOVE-INTENT.md: new fairy-wind entry
+           DECISIONS.md: one entry (new path primitive)
+           js/data/changelog.js: one chg line (free edit, parse-checked)
+  CARDS    no edit. Velocity Up raises the base drift only, so loops stretch out and the
+           shot reaches farther; Count Up keeps adding shots; Time Up still never
+           touches travelling shots. No card scales the loop itself.
+
+================================================================================
+4. TESTS
+================================================================================
+  docs/proposals/move-travel-harness.js, NEW section (loop)
+    a. exact position: every frame the shot sits at base + the loop offset, at 1/60
+       and 1/30 (same positions at the same ages)
+    b. starts on the caster (offset 0 at age 0)
+    c. 2 full loops in 1.2 s: back on the base line at 0.6 s and 1.2 s
+    d. the loop never turns the base heading; vx / vy equal the true velocity
+    e. composes with oscillate (a synthetic def with both: the offsets add)
+    f. determinism: same inputs, same tape
+    why: no harness covers a 2D path offset; the travel harness already owns D23 / D24.
+  docs/proposals/move-travel-mutate.js, NEW mutations
+    loop radius off; frequency off; depends on dt; starts offset (a spawn jump);
+    the loop turns the heading; vx / vy left as the base drift; loop ignored
+    why: proves each check above catches its failure.
+  tools/validate_moves.js self-test, NEW rows
+    rejects a loop missing radius, missing frequency, or frequency 0
+    why: the grammar change needs its own rejection rows, like oscillate's.
+  docs/move_rework_holding/move-intent-scenarios.json
+    NEW  fairy-wind-loop: one enemy at (51, 100), the far side of the first loop
+         (base 170 x 0.3 = 51 along, 2 x 50 = 100 across), hit by all 3 shots;
+         today's path never reaches 100 px to the side that early. Hand-derived.
+    RETARGET fairy-wind-burst: its note names the 2 rad/s curve; the 40 px enemy
+         ahead is still hit (contact after about 0.034 s), values checked at build.
+  Not expected to change (confirmed at build): move-emit-harness.js (Fairy Wind is in
+    its generic emitter checks, no curve pinned), team-cards-harness.js (Count and
+    Time rows only).
+  check.js: no edit. Debug set: none new.
+  Feel test: G.Debug.movechecker('fairy-wind', 200)
+
+================================================================================
+5. DECISIONS FOR JESS
+================================================================================
+  D-FW-RULE  Add path.loop (grammar, runtime row D38, render trail). RULE CHANGE.
+  D-FW1      Fairy Wind: drift 170 px/s, loop radius 50, 2 loops in 1.2 s.
+  D-FW2      Start on you and circle to one side (no spawn jump). Alt: centre the
+             first loop on you, so the shot appears 50 px away.

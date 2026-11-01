@@ -17,8 +17,8 @@
  *           with the enemies
  *   (the interactables logic is in systems/interact.js)
  *
- * Rift: setArena() turns a far-off area of the map into a round arena
- * closed by walls, where you fight a legendary (systems/rift.js).
+ * Gym arena: setArena() turns a far-off area of the map into a round arena
+ * closed by walls, where you fight a gym leader (systems/gym-arena.js).
  *
  * Flying Pokemon, ghosts and bosses ignore the terrain.
  *
@@ -62,13 +62,11 @@ G.World = (() => {
   function arenaDist(tx, ty) { return arena ? Math.hypot(tx - arena.tx, ty - arena.ty) : Infinity; }
 
   /**
-   * Free corridor of the arena: where you appear (south) and the legendary (north).
-   * With `clear` in the theme, also a clearing where Arceus lands (5 to the north).
+   * Free corridor of the arena: where you appear (south) and the leader (north).
    */
   function arenaSafe(tx, ty) {
     const lx = tx - arena.tx, ly = ty - arena.ty;
-    return (Math.abs(lx) <= 2 && ly >= -6 && ly <= 5) || Math.hypot(lx, ly) < 2.5 ||
-           (arena.th.clear > 0 && Math.hypot(lx, ly + 5) < arena.th.clear);
+    return (Math.abs(lx) <= 2 && ly >= -6 && ly <= 5) || Math.hypot(lx, ly) < 2.5;
   }
 
   function terrainRaw(tx, ty) {
@@ -560,7 +558,7 @@ G.World = (() => {
   }
 
   /**
-   * @param i        biome (G.Tiles.ARENA and onward are the rift arenas)
+   * @param i        biome (G.Tiles.ARENA and onward are the gym arenas)
    * @param instant  without a fade (when starting a run)
    * A run changes biome every 4 min and goes through the whole list; when it ends,
    * it starts over. (Before, past the last one, around minute 84, it requested
@@ -592,7 +590,7 @@ G.World = (() => {
     kindAt, isWall, isLiquid, isFree, collide, projectileBlock, propsInCircle, nearestBreakable,
     damageProp, breakAt, specialsNear, update,
     breakProp(p) { if (!broken.has(p.tx + ',' + p.ty)) destroyProp(p); },
-    /** Rift arena: { tx, ty, r } (in tiles) or null. */
+    /** Gym arena: { tx, ty, r } (in tiles) or null. */
     setArena(a) {
       arena = a;
       if (!a) return;

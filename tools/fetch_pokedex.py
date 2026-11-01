@@ -131,7 +131,7 @@ def main():
         ' * hp/spd/atk son stats de juego derivados de los stats base.',
         ' * stats = the six base stats [HP, Atk, Def, SpA, SpD, Spe] (PokeAPI, current generation).',
         ' * rarity 1-5 para el gacha · gen = generación (banner) · starter = test',
-        ' * leg = legendario o singular (sólo salen en las grietas)',
+        ' * leg = legendario o singular (never in the wild, elite, event or gym pools)',
         ' */',
         'G.DEX = [',
     ]

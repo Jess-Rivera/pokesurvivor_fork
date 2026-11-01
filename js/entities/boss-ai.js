@@ -1,0 +1,183 @@
+/* ============ boss-ai.js: boss brains (G.Boss) ============
+ * A boss is the shared Enemy body (enemy.js: HP, hurt, die, status, stages, the grid slot) plus a brain that makes every
+ * decision. The body only delegates: Enemy.update calls brain.step, Enemy.applyFlinch calls brain.flinch. G.Boss.make is
+ * the only way to spawn a boss (gym-arena.js). Gyms only since 2026-10-31, so the GymBrain is the only brain; a later boss
+ * type (the Elite Four, or a multi-mon gym arena that needs its own pacing) gets its own brain here, with no edit to the wild AI.
+ *
+ * GymBrain (slice 7a, D-ENEMY, Jess 2026-10-31): a leader's mon plays like the player. The body becomes a G.MoveSim owner: its
+ * authored moves (G.Gyms) sit in one group and cast through the sim (G.MoveSim.castAt), each attack on its own cooldown (the folded
+ * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
+ * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
+ * Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone and
+ * 0.5 s for a shot, then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player is damage
+ * only (G.MoveEffects). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
+ * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px;
+ * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
+ * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
+ */
+G.Boss = (() => {
+  const TELL = { melee: 0.45, shot: 0.5 };     // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
+  const RECOVER = 0.35;                        // seconds standing still after the release, divided by tempo
+  const LOW_HP = 0.3;                          // below this fraction of max HP the leader favors fighting from range
+  const NEAR = 170, FAR = 300;                 // far mode: backs off inside NEAR, circles you inside FAR, walks in beyond it
+  const adapt = d => ({ cat: d.category, dmg: d.basePower || 0, type: d.type });     // the damage adapter G.MoveEffects uses (D5: P = basePower)
+  const rangeOf = d => (d.delivery.range != null ? d.delivery.range : G.MoveResolver.TUNING.RANGE);
+
+  class GymBrain {
+    /** The body becomes a sim owner: one group with the authored moves, its own card store, tempo as the cooldown multiplier, the player
+     *  as its only foe. The contact move is the first damaging melee move (else the first damaging move). */
+    constructor(e) {
+      this.e = e;
+      this.on = false;                      // the fight state starts on the first step (init)
+      const g = e.gym;
+      e.atkLvl = g.level;
+      e.slots = [g.moves.map(m => ({ id: m.id, t: 0, hpBelow: m.hpBelow }))];
+      e.teamCards = G.TeamCards.store();
+      for (const id of Object.keys(g.cards || {})) G.TeamCards.add(e.teamCards, id, g.cards[id]);
+      e.cdMul = 1 / g.tempo; e.aim = 0; e.strongHost = true;
+      e.foes = () => { const p = G.Game.player; return p && !p.dead ? [p] : []; };
+      e.activeGroup = () => e.slots[0].filter(s => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow);     // an hpBelow move joins only below its line
+      e.moveFactor = m => this.factor(m);
+      const dmg = g.moves.map(m => m.id).filter(id => this.def(id).basePower > 0);
+      this.contact = dmg.find(id => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
+      this.touch();
+      e.atkFactor0 = e.atkFactor;
+    }
+
+    init() {
+      const st = this.e.gym.stance;
+      this.on = true;
+      this.melee = this.e.slots[0].some(s => G.Gyms.formOf(this.def(s.id)) === 'melee');
+      this.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5; this.mode = st === 'far' || !this.melee ? 'far' : 'close'; this.modeT = G.U.rand(6, 8);
+      this.tell = null; this.wait = 1.6; this.side = Math.random() < 0.5 ? -1 : 1; this.low = false;
+    }
+
+    /** The def this mon casts: the frozen move data with its cards folded in (G.TeamCards). */
+    def(id) { return G.TeamCards.defOf(this.e, id); }
+
+    /** One frame of movement and casting; returns [vx, vy, anim] for the body's integration. */
+    step(dt, pl, dist, dx, dy, spd) {
+      if (!this.on) this.init();
+      const e = this.e, now = G.Gym.now();
+      this.touch();
+      for (const s of e.slots[0]) if (s.t > 0) s.t = Math.max(0, s.t - dt);     // every move recharges, as the player's do
+      if (this.wait > 0) this.wait -= dt;
+      this.buffs(now);
+      if (this.tell) return this.telling(dt, now);
+      this.modeT -= dt;
+      if (!this.low && e.hp < e.maxHp * LOW_HP) { this.low = true; this.farLike = 0.8; }
+      // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s). A mon with no melee move stays far.
+      if (this.modeT <= 0) {
+        this.mode = this.mode === 'far' && this.melee ? 'close' : 'far';
+        this.modeT = (this.mode === 'far') === (this.farLike > 0.5) ? G.U.rand(7, 9) : G.U.rand(4, 5);
+        this.side = -this.side;
+      }
+      // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
+      let vx = dx * spd, vy = dy * spd;
+      const [ux, uy] = G.U.norm(pl.x - e.x, pl.y - e.y);
+      const circle = () => { vx = -uy * spd * this.side; vy = ux * spd * this.side; };
+      if (this.mode === 'far') {
+        if (dist < NEAR) { vx = -ux * spd; vy = -uy * spd; }
+        else if (dist < FAR) circle();
+      } else if (!this.ready('melee')) {     // close, melee recharging: circle just outside its reach
+        const r = this.reach() + (pl.r || 0) + 30;
+        if (dist < r) { vx = -ux * spd; vy = -uy * spd; } else if (dist < r + 40) circle();
+      }
+      if (this.wait <= 0 && !e.stFl && this.attack(dist, pl)) return [0, 0, 'Idle'];
+      return [vx, vy, 'Walk'];
+    }
+
+    /** The first ready move of `form` in the mon's group, or null. */
+    ready(form) {
+      for (const s of this.e.activeGroup()) if (s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form) return s;
+      return null;
+    }
+    /** The reach of the mon's melee cone (the largest), from its center: the player's reach, since the mon is player-sized. */
+    reach() {
+      let r = 0;
+      for (const s of this.e.slots[0]) { const d = this.def(s.id); if (G.Gyms.formOf(d) === 'melee') r = Math.max(r, d.space.radRadius); }
+      return r;
+    }
+
+    /** Starts a tell for the first ready attack the player is in range of: a melee cone when you are inside its reach (plus your body),
+     *  else a shot when you are within its range (the sim's cast gate for a straight shot). */
+    attack(dist, pl) {
+      const list = this.e.activeGroup();
+      for (const want of ['melee', 'shot']) for (const s of list) {
+        if (s.t > 0) continue;
+        const d = this.def(s.id);
+        if (G.Gyms.formOf(d) !== want) continue;
+        if (want === 'melee' ? dist <= d.space.radRadius + (pl.r || 0) : dist <= rangeOf(d)) { this.start(s, d, want, pl); return true; }
+      }
+      return false;
+    }
+
+    /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. */
+    start(slot, d, form, pl) {
+      const e = this.e, tempo = e.gym.tempo, ang = Math.atan2(pl.y - e.y, pl.x - e.x), col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
+      const wind = TELL[form] / tempo;
+      this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, fired: false };
+      e.aim = ang;
+      e.anim.play('Charge', { speed: 1.4 });
+      G.FX.ring(e.x, e.y, e.r, e.r * 2.4, col, wind, 2);
+    }
+
+    telling(dt, now) {
+      const e = this.e, c = this.tell;
+      c.t += dt;
+      if (!c.fired && c.t >= c.wind) {
+        c.fired = true; e.aim = c.ang;
+        if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang)) { G.Gym.noteCast(c.id); e.anim.play(c.form === 'melee' ? 'Attack' : 'Shoot', { speed: 1.4 }); }
+      }
+      if (c.t >= c.wind + c.after) this.tell = null;
+      return [0, 0, 'Idle'];
+    }
+
+    /** Pure buffs cast the moment their Gate opens (SS8), with no tell, even during an attack's tell. A fizzle waits one Gate (the sim). */
+    buffs(now) {
+      const e = this.e;
+      for (const s of e.activeGroup()) {
+        const d = this.def(s.id);
+        if (s.t > 0 || G.Gyms.formOf(d) !== 'buff' || !G.MoveEffects.statReady(d, e)) continue;
+        if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
+        G.Gym.noteCast(s.id);
+        const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e', vis = G.VFX.forMove(d);     // the player's buff look: a ring and rising sprites
+        G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
+        for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, e.x + G.U.rand(-e.r * 1.4, e.r * 1.4), e.y - G.U.rand(0, e.bodyH * 0.8), { vy: -70, life: 0.6 });
+      }
+    }
+
+    /** Flinch (slice D2): a tell in progress is cancelled (that move's cooldown is spent) and the next attack waits one recovery. */
+    flinch() {
+      if (!this.on) return;
+      const c = this.tell;
+      if (c && !c.fired) c.slot.t = Math.max(0.05, this.def(c.id).cd * this.e.cdMul);
+      this.tell = null;
+      this.wait = Math.max(this.wait, RECOVER / this.e.gym.tempo);
+    }
+
+    /** Attack factor for a move (the sim's damage adapter): the folded Power, category from the move, level locked at gate spawn, STAB on
+     *  the mon's own types, the power knob, the enrage and the Attack or Sp. Atk stage. Player.hurt does the defender half. */
+    factor(m) {
+      const e = this.e, special = m.cat === 'special';
+      const stab = e.types.includes(m.type) ? 1.5 : 1;
+      return G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, e.gym.level, m.dmg || 40, special ? 'special' : 'physical') * stab * e.gym.power * G.Gym.enrageMul(e) * G.Stages.mul(e, special ? 'spa' : 'atk');
+    }
+
+    /** The body's contact numbers (combat.js reads atkFactor, atkCat and atkType when you touch it): the contact move, never swapped. */
+    touch() {
+      const e = this.e, d = this.contact && this.def(this.contact);
+      if (!d) return;
+      e.atkFactor = this.factor(adapt(d)); e.atkCat = d.category === 'special' ? 'special' : 'physical'; e.atkType = d.type;
+    }
+  }
+
+  /** The only boss spawn: a boss body (enemy.js) with a GymBrain when the def carries a gym leader descriptor. */
+  function make(def, x, y) {
+    const e = new G.Enemy(def, x, y, { hp: 1, spd: 1, dmg: 1 }, true);
+    if (e.gym) e.brain = new GymBrain(e);
+    return e;
+  }
+
+  return { make, GymBrain, TELL, RECOVER };
+})();

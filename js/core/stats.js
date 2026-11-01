@@ -100,9 +100,8 @@ G.Stats = (() => {
                 : cat === 'special' ? spDef(spdBase, level) * defMul
                 : defense(defBase, level) * defMul;
     const stabMul = (stab && cat !== 'status') ? STAB : 1;
-    // move.norm = per-cast normalization (accuracy x hits / events), see data/moves.js. Applied to the FINAL
-    // per-event damage because the mainline +2 is per event.
-    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR * (move.norm || 1);
+    // Slice 7b-2b: the legacy per-cast norm factor is gone (COMBAT-RULES "Damage"); every hit is a full mainline event.
+    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
   }
 
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
@@ -150,14 +149,11 @@ G.Stats = (() => {
   }
 
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
-  // own cat (stamped in js/data/moves.js from pokeapi). Fallback for a move missing it
-  // (e.g. a future custom move): buffs are status; contact-y behaviors physical; the
-  // rest (ranged/elemental) special. So a missing cat never breaks the damage model.
+  // own cat; a move missing it takes its resolved def's category (slice 7a), else physical.
   function moveCat(m) {
     if (m && m.cat) return m.cat;
-    if (!m) return 'physical';
-    if (m.kind === 'buff') return 'status';
-    return (m.kind === 'melee' || m.kind === 'dash' || m.kind === 'mine') ? 'physical' : 'special';
+    const d = m && G.MoveDefs && G.MoveDefs[m.id];
+    return d ? d.category : 'physical';
   }
 
   return {

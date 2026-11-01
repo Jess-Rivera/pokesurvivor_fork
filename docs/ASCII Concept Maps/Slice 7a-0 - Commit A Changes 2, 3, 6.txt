@@ -1,0 +1,94 @@
+SLICE 7a-0 COMMIT A: BEHAVIOR CHANGES 2, 3 AND 6 EXPLAINED   (2026-10-31)
+================================================================================
+Approved by Jess: 1, 4, 5, 7, 8. Explained here: 2, 3, 6.
+Old behavior read from the pre-change enemy.js and the old built bundle
+(js/app.min.js, which can lag the source a little); new behavior from the
+current tree.
+
+
+2. A GYM WIN NO LONGER FIRES THE 'rift' PROGRESS EVENT
+================================================================================
+
+  OLD: the gym arena WAS the rift arena, so a gym win ran the rift win path
+
+    Brock beaten -> Rift.won() -> Progress.event('rift', { type })
+                                      |
+                                      +-> stats.riftWins + 1
+                                      +-> save.arenas[arena type] = date
+
+    who read those:
+      riftWins  -> achievements rift1 (win 1), rift10 (win 10)
+      arenas    -> achievement 'arenas' (win in all 18 type arenas)
+      'rift' ev -> weekly mission wrift (win 1 or 2 rifts)
+
+  So beating Brock quietly paid out RIFT rewards: Brock once = rift1
+  (3 Pokeballs), and a wrift weekly mission step.
+
+  NEW: all four readers are deleted (changes 1 and 7), so the event would
+  feed nothing. It is not sent.
+
+    Brock beaten -> GymArena win -> level, revive, badge, Bond, item
+                    Progress.kill(leader) -> still a BOSS kill:
+                      stats.bossesTotal + 1  -> boss1, boss25, boss100
+                      weekly mission 'boss'  -> still counts
+
+  Save safety: riftWins and arenas stay in old saves, untouched, never read.
+  Only remaining reader of anything here: js/net/ (deferred).
+
+
+3. A GYM LEADER KILL NO LONGER WRITES save.legends
+================================================================================
+
+  OLD kill report (Progress.kill):
+
+    legend = e.legend  OR  (inside the rift arena AND e is a boss)
+                 ? e.dex : 0
+    if legend: save.legends[dex] = date
+
+    The second half was meant for the rift legendary. But the gym fight
+    also ran inside the "rift arena", so Brock's mon passed the test:
+
+    beat Brock (Geodude) -> save.legends[74] = date   <- not a legendary
+
+    who read save.legends:
+      leg10 / leg30 / legAll   count EVERY key in save.legends
+      leg_<dex> medals         one per real legendary (Geodude never matched)
+      goals screen             "Legendarios" profile stat (key count)
+
+    Effect: every gym species you beat padded the "beat 10 / 30 / all
+    distinct legendaries" counters and the profile number. A bug.
+
+  NEW: all those readers are deleted, and the kill report sends only
+  { types, boss }. Nothing writes save.legends.
+
+  Save safety: an old save that already has Geodude in save.legends keeps
+  it (never wiped). D2 keeps the future legendary fights, so when they are
+  built, save.legends is the natural place to reuse, and it should then
+  ignore non-legendary dex numbers left by this old bug (one null-safe
+  filter on the pokedex leg flag). Noted for that future branch.
+  Only other reader: js/net/social.js profile card (online, deferred).
+
+
+6. bossEnd NO LONGER BURNS ONE UNUSED RANDOM ROLL
+================================================================================
+
+  OLD, at the end of every gym leader cast:
+
+    ai.cd = rand(1.3, 2.0)     <- roll #1, the old rift-boss recovery
+    if gym: ai.cd = gymCd()    <- overwrites it; gymCd may roll #2 (jitter)
+
+    Roll #1 was thrown away every time.
+
+  NEW: ai.cd = gymCd() only. Same recovery times, same odds.
+
+  Why the "sequence shift": the whole game draws from ONE shared random
+  stream (Math.random). Every roll takes the next number in line.
+
+    old stream:  [cd1 wasted] [jitter] [next pick] [crit] [spawn] ...
+    new stream:  [jitter] [next pick] [crit] [spawn] ...
+
+  Every individual roll still has exactly the same odds, so play feels the
+  same. What changes is WHICH number each roll gets, so a run replayed from
+  the same random state would diverge after Brock's first cast. Matters
+  only to exact replays or a test pinned to a sequence; the harnesses use
+  a seeded random and passed in the sandbox.

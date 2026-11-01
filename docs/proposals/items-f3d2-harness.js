@@ -18,7 +18,7 @@ load('js/data/items.js');
 const I = G.Items;
 let T = null;
 try {
-  load('js/core/db.js', src => { const k = '  return {\n    ready, register'; if (!src.includes(k)) throw new Error('db.js export block moved'); return src.replace(k, '  G.__t = { newSave, migrate, sanitize };\n' + k); });
+  load('js/core/db.js', src => { src = src.replace(/\r\n/g, '\n'); const k = '  return {\n    ready, register'; if (!src.includes(k)) throw new Error('db.js export block moved'); return src.replace(k, '  G.__t = { newSave, migrate, sanitize };\n' + k); });
   T = G.__t;
 } catch (e) { bad('db.js did not load for the test: ' + e.message); }
 

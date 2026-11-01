@@ -1,5 +1,11 @@
 # SIM / PRESENT BOUNDARY (design direction)
 
+- **Role:** Active architecture-direction doc (R-12): direction, not a committed refactor.
+- **Owns:** The sim and present boundary and the language-direction reasoning.
+- **Does not own:** Module map, build and run (ONBOARDING.md); combat rules (docs/COMBAT-RULES.md); agent rules (CLAUDE.md).
+- **Status home:** STATE.md.
+- **Last reconciled:** not yet
+
 Status: DIRECTION, not a committed refactor slice. Converge toward this as you touch files; do not stop feature work to do it in one pass.
 Opened 2026-10-22 (Amazon Quick, work machine), from a Go-vs-JS conversation that resolved into an architecture question.
 
@@ -42,3 +48,14 @@ These are the concrete places where sim reaches into presentation. They are the 
 - Worked examples live in js/entities/enemy.js (hurt, showHurt, die, update) and js/game.js (loop, frame, update, render, drawScene).
 - Related TODO: "More accurate hitboxes" (per-species collision radius from opaque pixels, offline into a data file) is the same work as offender #2, do them together.
 - MP background: docs/MP-PARKED-NOTES.md (read when the cloud/MP phase begins).
+
+## Paid down (log)
+- 2026-10-22, rework/gym-progression: the event channel EXISTS now: js/core/simbus.js (G.SimBus: on, off, emit, record, stopRecording). Named SimBus because G.Events is the mid-game events system (horde, golden hour). Rules for events are in the simbus.js header: type 'area:name', plain-data payload that carries facts never display text, synchronous, a throwing subscriber is isolated, subscribers register once at boot.
+- 2026-10-22: systems/gym.js is now sim-only. Its four presentation calls (escalation toast and sound, the badge line, the calm line) are events: 'gym:escalate' { leader, bump }, 'gym:calm' { leader }, 'gym:badge' { badge, stat, pct }. js/ui/gym-present.js subscribes and owns the words and the sound. The gym harness asserts the events with Spawner and Audio rigged to throw if the sim touches them, and asserts the exact toast text through the real subscriber.
+- The first concrete candidate (Enemy.hurt / showHurt onto the bus) is unblocked now that the channel exists.
+
+## Remaining gym-side offenders (convert when the next slice touches them)
+- entities/boss-ai.js, since the 7a slot-1 rewrite (2026-10-31): GymBrain.start (the tell: anim.play Charge, G.FX.ring), GymBrain.telling (anim.play when the cast fires through G.MoveSim.castAt) and GymBrain.buffs (G.FX.ring, G.FX.sp): the brain's decisions and their visuals are still interleaved. The move's own shapes are drawn by move-render.js, which skips enemy casts. Candidate: a 'gym:tell' and 'gym:cast' event pair on G.SimBus. Earlier offenders GymBrain.cast and GymBrain.shoot are gone. (Moved out of enemy.js unchanged in 7a-0 commit B, 2026-10-31.)
+- systems/gym-arena.js (the gym half of the removed rift.js, 7a-0): openGate and startGym toasts (G.Spawner.say), the send-out line, the gate sparkles in the arena tick, and won() presentation (G.FX.dmgText, G.FX.ring). The multi-mon arena flow (next slice) rewrites the arena tick, so convert these then.
+- Reading sim state from presentation (hud.js reads G.Gym.graceLeft, escBump, enrageIn) is the allowed direction and stays.
+- New pure data functions follow the same rule: G.Gyms.stageFor and G.Gyms.lineup touch no engine global except the dex table, no clock, no randomness.

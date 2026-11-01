@@ -101,13 +101,12 @@ G.Game = (() => {
     G.UI.chrome(false);
     G.FX.clear();
     G.Projectiles.clear();
-    G.Combat.clearFields();
+    G.MoveRoute.reset();     // slice 7a: gym leaders cast through G.MoveSim on both flags, so it is cleared on both
     G.EnemyMgr.clear();
     G.Pickups.clear();
     G.Spawner.reset();
-    G.Rift.reset();
+    G.GymArena.reset();
     G.Gym.reset();
-    G.Judgment.reset();
     G.Events.reset();
     G.Weather.reset();
     G.Path.clear();
@@ -135,6 +134,9 @@ G.Game = (() => {
     // member runs Player.update(), so the shared timers still tick exactly once
     // per frame, including while the caster sits on the bench. The object is never reassigned.
     roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
+    // Slice 5b: ONE team card store per run, shared by every member (team-wide cards). Run state only, never saved. Since the slice 7b flip
+    // these are the only upgrade cards (the legacy per-move cards are off, deleted in 7b-2).
+    const teamCards = G.TeamCards.store(); roster.forEach(f => { f.teamCards = teamCards; });
     // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
     const runItems = [];
     roster.forEach(f => { f.runItems = runItems; });
@@ -177,7 +179,7 @@ G.Game = (() => {
     f.addMove(G.startMoveOf(mon.dex));
     f.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
     if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter(id => !f.hasMove(id) && !f.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
+      const pool = G.Moves.poolFor(mon).filter(id => !f.hasMove(id) && !f.banned.has(id) && !G.MoveInfo.isBuff(id));
       if (pool.length) f.addMove(G.U.pick(pool));
       f.setActive(0);
     }
@@ -255,7 +257,7 @@ G.Game = (() => {
     return Math.ceil((pl.xpNext - pl.xp + 1) / k);
   }
 
-  // Full-screen flash (travel to the rift).
+  // Full-screen flash (travel to the gym arena).
   let flashT = 0, flashDur = 1, flashCol = '#fff';
   function flash(col, dur) { flashCol = col; flashDur = dur; flashT = dur; }
 
@@ -407,9 +409,6 @@ G.Game = (() => {
     if (coop) save.stats.bestGroupTime = Math.max(save.stats.bestGroupTime || 0, Math.floor(time));
     save.stats.bestLevel = Math.max(save.stats.bestLevel, pl.level);
     save.stats.coinsEarned += coins;
-    const judge = G.Judgment.summary();
-    if (judge) G.Progress.event('judgeEnd', judge);
-    G.Judgment.reset();
     G.Progress.event('runEnd', { time, level: pl.level, coins: pl.coins, types: pl.mon.types, group: coop });
     G.Progress.checkAch();
     // To the cloud on finishing the game (at most every 30 min); if the record enters
@@ -426,7 +425,7 @@ G.Game = (() => {
     if (sent) sent.then(b => { if (b && b.some(p => p !== 'a')) G.DB.commit(true); }).catch(() => {});
 
     G.RunUI.showOver({
-      dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, judge,
+      dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10,
       moves: pl.moves, roster, caught,
       breakdown: Object.entries(parts).filter(([, v]) => v).map(([k, v]) => `${k} ${v}`).join(' · ') +
                  (mul > 1 ? ` · ×${mul.toFixed(2)} Fortuna` : '')
@@ -471,9 +470,9 @@ G.Game = (() => {
     if (!cards.length) return;
     state = 'levelup';
     G.Audio.sfx('levelup');
-    G.RunUI.showLevelUp(pl.level, cards, (card, t) => {
+    G.RunUI.showLevelUp(pl.level, cards, card => {
       G.Audio.sfx('confirm');
-      card.apply(pl, t && t.pl, t && t.move);
+      card.apply(pl);
       state = 'playing';
     });
   }
@@ -481,15 +480,15 @@ G.Game = (() => {
   // ---------------- links ----------------
 
   /**
-   * A legendary's link: you choose which moves fuse.
+   * A gym win's link: you choose which moves fuse.
    * If it cannot happen now (there are not two free), it is held until you learn
    * another move. It is checked every frame: if another screen covers it (group
    * level cards, pause), it shows again on closing it.
    * @param quiet  do not warn if it still cannot happen
    */
   function offerBond(quiet = false) {
-    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.Rift.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-choose'].some(G.UI.isOpen)) return;
+    if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
     const opt = pl.bondOptions();
     if (!opt) {
       if (!quiet) G.Spawner.say('Guardas el vínculo: aprende otro movimiento para usarlo', 3, true);
@@ -566,7 +565,7 @@ G.Game = (() => {
   function offerItem(id) {
     const def = pl && G.Items.BY[id];
     if (!def) return;
-    if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
+    if (state === 'levelup' || G.UI.isOpen('scr-levelup')) { laterItems.push(id); return; }
     const run = def.tier === 'run';
     // F3d-2: finding a team item unlocks it for good (pre-run loadout), even if you then choose Leave it.
     if (run && G.Items.unlock(G.DB.save, id)) { G.DB.commit(); G.Spawner.say('Team item unlocked: ' + def.name, 3, true); }
@@ -675,11 +674,6 @@ G.Game = (() => {
 
   function handleKeys() {
     if (G.SettingsUI.isOpen) { if (G.Input.tap('escape')) G.SettingsUI.close(); return; }
-    // Arceus's Judgment: Space, Enter or Esc skip the animation (if allowed).
-    if (G.Judgment.cinematic && state === 'playing') {
-      if (['space', 'enter', 'escape'].some(k => G.Input.tap(k))) G.Judgment.skip();
-      return;
-    }
     if (state === 'levelup') {
       G.RunUI.levelKeys();
       return;
@@ -720,7 +714,7 @@ G.Game = (() => {
   let fpsShown = 60, fpsAcc = 0, fpsN = 0;
   // The next frame is requested BEFORE anything else: if something fails midway, the
   // game continues (before it would freeze forever and you had to reload;
-  // that is how a huge game was lost when a rift opened).
+  // that is how a huge game was lost once).
   // If it fails frame after frame (the game no longer advances or renders), the
   // game is considered over at ~3 s and is saved: time, defeated,
   // records and ranking. Better that than a black screen and losing everything.
@@ -743,7 +737,7 @@ G.Game = (() => {
 
   function frame(ts) {
     const real = (ts - last) / 1000 || 0;
-    const dt = Math.min(1 / 30, real) * speedK;
+    const dt = Math.min(1 / 30, real) * speedK;     // the 1/30 cap: move-effects.js SLIDE (pull clamp) assumes it
     last = ts;
     if (state === 'playing') G.Settings.sample(real);
     fpsAcc += real; fpsN++;
@@ -766,19 +760,8 @@ G.Game = (() => {
   function update(dt) {
     const coop = G.Coop.active;
     if (flashT > 0) flashT -= dt;
-    // Arceus's Judgment: while the animation lasts, everything else stops.
-    if (G.Judgment.cinematic) {
-      G.Judgment.cineTick(dt);
-      pl.anim.update(dt);
-      if (coop) for (const p of G.Coop.puppets()) p.netUpdate(dt);
-      G.World.update(dt, G.Camera);
-      G.FX.update(dt);
-      G.Audio.music(G.Judgment.music);
-      return;
-    }
     // After going down, let the Faint animation play before the summary.
-    // (Not in the rift arena: there, going down just throws you back.)
-    if (pl.dead && !coop && (!G.Rift.inArena || G.Rift.isGym)) {
+    if (pl.dead && !coop) {
       // Team: if another member is still up, bench the fainted one and swap in the
       // living member with the LOWEST slot number (slot 1 first, then 2, and so on).
       const alive = roster.filter(f => !f.dead && f !== pl);
@@ -824,7 +807,7 @@ G.Game = (() => {
     else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt)) G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2);     // accessibility auto-shake, 3 taps/s (E2e)
 
     const b = Math.floor(time / 240);
-    if (b !== biome && !G.Rift.inArena && !G.Judgment.active) {
+    if (b !== biome && !G.GymArena.inArena) {
       biome = b;
       G.World.setBiome(b);
       G.Audio.sfx('biome');
@@ -841,7 +824,7 @@ G.Game = (() => {
       if (f.dead) { G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad'); G.Audio.sfx('faint'); }
     }
     if (coop) {
-      for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
+      for (const p of G.Coop.puppets()) p.netUpdate(dt);
       if (pl.dead) reviveTick(dt);
     }
     G.Camera.follow(pl.x, pl.y, dt);
@@ -852,21 +835,20 @@ G.Game = (() => {
     else G.Spawner.tickBanner(dt);
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
-    G.Combat.tick(dt, pl, time);
+    if (!pl.dead && pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt);     // the swap lock (was in the legacy G.Combat.tick until 7b-2a)
+    G.MoveRoute.tick(dt, pl, time);     // the player's moves and gym leaders' casts run in G.MoveSim (slice 7b flip)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);
-    G.Combat.updateFields(dt);
     G.Pickups.update(dt, all, onCollect);
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
-    G.Rift.update(dt, pl, time);
+    G.GymArena.update(dt, pl, time);
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
-    G.Judgment.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
     G.FX.update(dt);
 
-    G.Audio.music(G.Judgment.active ? G.Judgment.music : G.Rift.inArena ? 'rift' : G.EnemyMgr.bossAlive() ? 'boss' : G.BIOME_MUSIC[biome % G.BIOME_MUSIC.length]);
+    G.Audio.music(G.GymArena.inArena ? 'gym' : G.EnemyMgr.bossAlive() ? 'boss' : G.BIOME_MUSIC[biome % G.BIOME_MUSIC.length]);
     if (!coop || G.Coop.isHost) maybeLevelUp();
     if (pl.bonds > 0) offerBond(true);
     if (G.Coop.isHost) checkAllDown(dt);
@@ -881,7 +863,7 @@ G.Game = (() => {
 
   /** Host: if you all go down, it ends (after seeing the last one fall). */
   function checkAllDown(dt) {
-    if (G.Rift.inArena || !G.Coop.players().every(p => p.dead)) { deathT = 0; return; }
+    if (G.GymArena.inArena || !G.Coop.players().every(p => p.dead)) { deathT = 0; return; }
     deathT += dt;
     if (deathT > 1.6) {
       deathT = 0;
@@ -897,7 +879,7 @@ G.Game = (() => {
     G.World.drawGround(ctx, cam);
     G.World.drawLiquid(ctx, cam, t);
     G.Hazards.draw(ctx);
-    G.Combat.drawGroundFields(ctx);
+    G.MoveRender.drawGround(ctx);     // slice 7a: on both flags (gym leaders' shapes)
     G.Pickups.draw(ctx);
 
     // Everything with "feet" is sorted by Y: objects, enemies, player.
@@ -906,10 +888,8 @@ G.Game = (() => {
     for (const p of G.World.visibleProps(cam)) items.push({ y: p.flat ? p.y - 4000 : p.y, prop: p });
     for (const e of G.EnemyMgr.drawables(cam)) items.push({ y: e.y, ent: e });
     for (const e of extra) items.push({ y: e.y, ent: e });
-    const rift = G.Rift.drawable();
-    if (rift) items.push({ y: rift.y, ent: rift });
-    const arceus = pl && state !== 'ui' ? G.Judgment.drawable() : null;
-    if (arceus) items.push({ y: arceus.y, ent: arceus });
+    const gate = G.GymArena.drawable();
+    if (gate) items.push({ y: gate.y, ent: gate });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
@@ -928,9 +908,8 @@ G.Game = (() => {
     G.Camera.apply(ctx);
     drawScene(G.Camera, G.Coop.active ? [pl, ...G.Coop.puppets()] : [pl]);
     G.Projectiles.draw(ctx);
-    G.Combat.drawAirFields(ctx);
+    G.MoveRender.drawAir(ctx);
     G.FX.draw(ctx);
-    G.Judgment.drawAir(ctx);
     ctx.restore();
 
     G.Weather.draw(ctx, w, h, frameDt);
@@ -944,8 +923,7 @@ G.Game = (() => {
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
     }
-    if (!G.Judgment.cinematic) G.HUD.draw(ctx, w, h, pl, st);
-    G.Judgment.drawOverlay(ctx, w, h);
+    G.HUD.draw(ctx, w, h, pl, st);
     G.Touch.draw(ctx);
     if (G.Settings.get('fps')) {
       ctx.save();
@@ -1051,7 +1029,8 @@ G.Game = (() => {
     function restore() {
       G.World.reset(4242);
       G.World.setBiome(bi, true);
-      G.FX.clear(); G.Projectiles.clear(); G.Combat.clearFields(); G.EnemyMgr.clear(); G.Pickups.clear();
+      G.FX.clear(); G.Projectiles.clear(); G.EnemyMgr.clear(); G.Pickups.clear();
+      G.MoveRoute.reset();
       wanderers = CAST.map(dex => spawn(dex, true));
     }
 

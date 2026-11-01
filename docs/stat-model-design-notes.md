@@ -1,5 +1,10 @@
 # PokéSurvivor fork: stat model design notes (2026-10-17)
 
+- **Role:** History. Design analysis and data behind the base-stats model, kept for the reasoning.
+- **Owns:** Nothing. The live rules are in docs/COMBAT-RULES.md (sections "Stats and HP", "Damage", "Type chart"), and tuned numbers are in BALANCE.md and js/core/stats.js.
+- **Status home:** STATE.md.
+- **Last reconciled:** 2026-10-28 (B3b). The body below is unedited; where it disagrees with COMBAT-RULES, COMBAT-RULES wins (for example, the Speed bounds and the "Full mainline type chart" line).
+
 Status: design only, no code written. Data: 966 species in `js/data/pokedex.js` (`stats:[HP,Atk,Def,SpA,SpD,Spe]`, `bst`). All numbers computed at level 50, untrained (IV 0, EV 0) unless stated.
 
 ## 1. Goal

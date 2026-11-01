@@ -1,0 +1,64 @@
+You are auditing the planning documents in this repo against the project's sources of truth. This is a read-only audit. Do not edit any file, and do not run any git command that changes anything (read-only git such as status, diff, log, show, blame, ls-files is fine). Findings go in a single report file, described at the end.
+
+STARTUP
+Read CLAUDE.md, CONTEXT.md and STATE.md in full. They are the complete startup context. Do not recursively read or summarize the repo. Skip assets/, pokeapi-master/, _delete_/, node_modules/, archive documents, generated bulk data and docs/move_rework_holding/. Search DECISIONS.md, DEVLOG.md and BALANCE.md by keyword, never read them whole.
+
+BACKGROUND
+I just finished a documentation consolidation (Phase 4, merged as 04ecc29). During it I decided which version of the truth I keep for each subject. The result is the authority map in CLAUDE.md under "Where current rules live" and "Which document wins". The folder "docs/current feature planning" (including move-schema/) was written before or during that consolidation. Now that every rule has one home, I want to know whether the planning docs agree with those homes.
+
+SOURCES OF TRUTH (the standard you audit against)
+- docs/COMBAT-RULES.md: general combat rules (stats and HP, damage, orthogonal dials, G.Stats, swap rule, status effects including trap, damage over time, stat stages, maxStacks). Wins over BOSS-REWORK 3c, the archive, stat-model notes, BUFF-TABLE, BALANCE and architecture D6 to D11 for combat rules.
+- docs/MOVE-AXIS-SCHEMA.md: move data shape (axes, fields, enums, file roles, validator rules). It owns move grammar.
+- docs/MOVE-INTENT.md: per-move intended behavior. A ruling here beats COMBAT-RULES and grammar defaults for the named move.
+- BOSS-REWORK.md and docs/GYM-ROSTERS.md, docs/BOSS-AUTHORING.md: run progression. GYM-ROSTERS defers to BOSS-REWORK.
+- GDD.md is an umbrella; subsystem specs win where they differ.
+- docs/SIM-PRESENT-BOUNDARY.md: sim and present boundary.
+- DECISIONS.md is a log. The spec named in an entry's "Canonical:" line wins, not the log entry.
+- Requirement tags: [Approved], [Legacy behavior], [Proposed], [Open]. When tags or dates conflict, the later dated owner decision wins.
+- Combat runtime lives in docs/current feature planning/combat-architecture.md, and validation scenarios in docs/current feature planning/combat-validation-and-handoff.md. These two are IN scope for the audit AND are themselves authority for move runtime. Treat them as authoritative for runtime, but audit them against COMBAT-RULES, MOVE-AXIS-SCHEMA and MOVE-INTENT where those own the rule.
+- docs/current feature planning/move-consistency-review.md (section 9 in particular) is history, not a single source. Do not treat it as truth. Check only whether anything still cites it as if it were authority.
+
+SCOPE (the documents under audit)
+1. combat-architecture.md and combat-validation-and-handoff.md
+2. move-schema/slice-overview.md, then every slice file: stage-0, slice-1, slice-2, slice-2-codehandoff, slice-3, 3a, 3b, 3c, 3d, 3d-codehandoff, slice-4, 4a, 4a-codehandoff, 4b, 4b-codehandoff, 4c, 4c-1, 4c-2, 4c-3 codehandoffs, 4d, 5, 6, 7
+3. move-schema-slices.md, move-coverage-report.md, move-parity-report.md (check whether these are stale, redundant or pointing to dead paths)
+
+Slices 1 through 4b are built. 4c and later are planned and unbuilt. Judge each doc accordingly.
+
+WHAT TO CHECK
+For each in-scope doc, find places where it:
+A. Contradicts a source of truth (a number, default, enum, field name, rule or sequence that differs). Quote both sides with file and line or heading.
+B. Restates rule text that now lives elsewhere, instead of pointing to it. CLAUDE.md says CONTEXT, STATE, slice-overview and DECISIONS do not restate rule text. Flag restatements in planning docs that could drift.
+C. Cites a document, section, decision ID (D-numbers, Q-numbers, QA-numbers, S-numbers) or path that no longer exists, moved, or now means something else. Verify each cited path resolves and each cited ID exists where claimed.
+D. Uses a requirement tag wrong: an approved rule shown as proposed, a proposed rule written as settled, an approved-but-unbuilt rule missing the "code differs, see TODO" note, or a legacy behavior without a named removing slice.
+E. Conflicts with another planning doc in the same folder (for example a 4c handoff versus slice-4c.md versus combat-architecture, or a later slice reversing an earlier locked decision without saying so).
+F. Is superseded: a doc or section whose content is fully covered by a source of truth and should be marked historical, trimmed to a pointer, or moved.
+G. Violates house rules in newly written text: em-dashes (not allowed outside archive copies), new Spanish user-facing strings, confirm/alert/prompt instead of G.UI.ask, stat formulas outside G.Stats, anything touching the deferred cloud and multiplayer scope.
+
+KNOWN INTENTIONAL GAPS (do not report these as findings)
+STATE.md lists approved-but-unbuilt differences between docs and code: maxStacks default (code 6, approved 1), Metal Claw and Meteor Mash maxStacks, per-move foe debuff cap in stages.js, self-buff maxStacks derivation (QA-11), legacy Fire Spin strip and burnHalf, E1, the QA-08 run loop, QA-13 Brock fallback, and the later organization branch. Docs describing the approved rule while code differs is correct. Only report a case where a planning doc describes the CODE's current value as the rule, or where it fails to mark the gap.
+Also: I am comparing docs to docs. Do not audit game code, except to confirm a cited file or symbol exists when a doc claims it does.
+
+RULES FOR FINDINGS
+- Every finding needs evidence: the exact passages from both documents, with paths and headings or line numbers.
+- Say which source wins according to CLAUDE.md, and why.
+- Do not guess which side I meant. If two docs conflict and the authority map does not decide it, mark the finding "needs owner decision" and state the two candidate readings.
+- Separate confirmed contradictions from suspicions. Label each CONFIRMED or SUSPECTED.
+- Rank by consequence: HIGH means a coding chat following this doc would build the wrong thing (the 4c handoffs matter most, since they are about to be built). MEDIUM means drift risk or a broken pointer. LOW means cosmetic or tag hygiene.
+- Do not pad. If a doc is clean, say so in one line.
+- Do not propose rewritten text in the report. Describe the needed change in words (which file, which location, what changes). I approve changes before anyone edits.
+
+PROCESS
+Work in this order so the likely-consequential findings come first: (1) combat-architecture and combat-validation, then (2) the three 4c codehandoffs and slice-4c.md, 4d, 5, 6, 7, then (3) built slices, then (4) the reports and leftover files. If a single pass would be too large, say so and cover tier 1 and 2 first, then list what remains.
+
+OUTPUT
+Write the report to docs/current feature planning/AUDIT-vs-sources-of-truth.md (a new markdown file; this is the only file you may create). Structure:
+1. Summary: counts by severity, and the three to five findings that most need my attention.
+2. Needs owner decision: each with the two candidate readings.
+3. Confirmed findings, grouped by document, ranked HIGH to LOW.
+4. Suspected findings.
+5. Broken or stale references table (citing doc, cited target, status).
+6. Docs that are clean.
+7. Anything you could not verify, and why.
+No em-dashes anywhere in the report. Keep the report under about 25 KB; if it needs more, split by tier.
+End your chat reply with a short summary and the report path. Do not paste the report into chat.
