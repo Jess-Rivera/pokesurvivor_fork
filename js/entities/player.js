@@ -303,18 +303,19 @@ G.Player = class Player {
    * speeds it up if the cooldown is shorter than the animation, so it chains.
    */
   cast(m) {
-    // Life Orb: each attack costs a little health (it never leaves you KO).
-    if (this.hasItem('lifeorb') && m.kind !== 'orbit' && m.kind !== 'trail' && !this.remote) {
+    const def = G.MoveDefs[m.id], fam = G.MoveInfo.badge(m.id);     // slice 7a: the resolved def and the display family, never the legacy table
+    // Life Orb: each attack costs a little health (it never leaves you KO). An always-on move (a persistent def) is not an attack.
+    if (this.hasItem('lifeorb') && !(def && def.persistent) && !this.remote) {
       this.hp = Math.max(1, this.hp - Math.max(1, this.maxHp * 0.01));
     }
     const anim = { melee: 'Attack', beam: 'Shoot', projectile: 'Shoot', nova: 'Attack',
                    aura: 'Charge', buff: 'Charge', orbit: 'Charge', boomerang: 'Shoot', chain: 'Shoot',
-                   mine: 'Charge', meteor: 'Charge', turret: 'Charge', dash: 'Attack', trail: 'Walk', cone: 'Shoot' }[m.kind] || 'Attack';
+                   mine: 'Charge', meteor: 'Charge', turret: 'Charge', dash: 'Attack', trail: 'Walk', cone: 'Shoot' }[fam] || 'Attack';
     // The new families sound like the similar one of the usual ones.
     const SND = { boomerang: 'projectile', chain: 'beam', mine: 'nova', meteor: 'nova', turret: 'buff', dash: 'melee', trail: 'aura', cone: 'projectile' };
     // The trail does not play a sound at each puddle (it would be a constant buzz).
-    if (m.kind !== 'trail') G.Audio.sfx('shot', { kind: SND[m.kind] || m.kind, type: m.type });
-    if (m.kind === 'trail') return;
+    if (fam !== 'trail') G.Audio.sfx('shot', { kind: SND[fam] || fam || 'melee', type: m.type });
+    if (fam === 'trail') return;
     // Do not restart an animation that is halfway through: it would look choppy.
     if (this.anim.busy() && this.anim.progress() < 0.65) return;
     const meta = G.Sprites.animMeta(this.dex, anim);
@@ -388,7 +389,7 @@ G.Player = class Player {
     }
     // With a melee attack active you take 25% less: you have to
     // be on top of the enemies to hit (they lagged far behind).
-    const close = this.activeGroup().some(m => m.kind === 'melee') ? 0.75 : 1;
+    const close = this.activeGroup().some(m => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee') ? 0.75 : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
     let d = Math.max(1, raw);
     if (this.shield) {                        // move schema slice 4b (Substitute): the shield takes the final damage first
@@ -621,14 +622,15 @@ G.Player = class Player {
 
     // --- targeting: nearest enemy; if none, toward where you walk ---
     // Target priority based on the active attack:
-    //   ranged (projectile, beam): the boss if in range > what is touching you > the nearest
+    //   ranged (a shot that travels, or a beam): the boss if in range > what is touching you > the nearest
     //   melee and the rest:           what is touching you > the boss > the nearest
     // With a horde on top something is almost always touching you; if that always won,
     // ranged attacks would never hit the boss.
     // With no enemies, it targets the nearest rock or chest.
     const all = G.EnemyMgr.all();
     const m = this.activeMove();
-    const ranged = !!m && (m.kind === 'projectile' || m.kind === 'beam');
+    const md = m && G.MoveDefs[m.id];
+    const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
     const threat = G.Projectiles.nearest(all, this.x, this.y, this.r + 24);
     const boss = all.find(e => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
     const tg = (ranged ? boss || threat : threat || boss)
@@ -679,7 +681,7 @@ G.Player = class Player {
     if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
     // Active move (for the halo, the HUD and the orbs).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {     // legacy-7b: co-op remote sync (D-COOP purge)
       this.moves = [G.Moves.instance(n.mv)];
       this.slots = [this.moves.slice()];
       this.active = 0;

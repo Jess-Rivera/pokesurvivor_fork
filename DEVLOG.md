@@ -259,3 +259,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: GymBrain rewrite (boss-ai.js), G.MoveSim.castAt and enemy-owner collision, hits on the player in move-effects.js, sim stepped and drawn on both flags, gym mons at scale 1, gyms.js cards and formOf (melee limited to radial cones, since beams look alike), changelog. Docs: BOSS-REWORK 3d/3c, BOSS-AUTHORING, BALANCE, COMBAT-RULES SS13, combat-architecture.
 - Tests: new boss-owner harness (89) and mutate (29/29); six harnesses and three mutate runners updated; check.js 33/33; headless Brock fight green on both flags. Six older mutation patterns fail only on this CRLF checkout (TODO).
 - Feel test: good (Jess); committed as bc24717. Next: the 7a UI readers.
+
+## 2026-10-31 (Claude Code, home, late night): 7a UI readers off `kind`
+- Decided (Jess): 1c generated card text, 2a badges from the def, 3a player.js readers migrated with a parity table, 4a flag-on sheet rows on the folded def.
+- Built: js/ui/move-info.js (G.MoveInfo); icons, menu, test, levelup, game, hud, stats, player, sheet migrated; combat.js orbit charge passes the id; tools/kind-guard.js wired into check.js; legacy-7b tags on db/debug (D-BUBBLE), sheet flag-off rows, the Bubble fallback, co-op sync; changelog.
+- Play changes vs legacy kind (melee cut, ranged targeting, Life Orb, Substitute buff) and 14 badge changes: slice-7a.md Results.
+- Tests: ui-readers harness 119 + mutate 20/20; team-cards harness and mutate updated; tools/smoke-ui.js new, all passed on both flags; check.js 34/34; smoke-newcombat all passed.
+- Stopped at: Jess feel-tests, then commits. Next: a run to Brock (7a Proceed when), then the docs sweep.

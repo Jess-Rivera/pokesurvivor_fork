@@ -45,7 +45,7 @@ G.Sheet = (() => {
   const r1d = v => (v >= 100 ? r0(v) : String(+(+v).toFixed(1)));
   /** One formatter per stat key; returns null to leave the key out. */
   const FMT = {
-    dmg: (v, m) => (G.Kinds.BY[m.kind] && G.Kinds.BY[m.kind].payload === 'damage' ? 'Power ' + r0(v) : null),
+    dmg: (v, m) => (G.Kinds.BY[m.kind] && G.Kinds.BY[m.kind].payload === 'damage' ? 'Power ' + r0(v) : null),     // legacy-7b
     cd: v => 'every ' + r1(v) + ' s',
     count: v => (v > 1 ? '×' + r0(v) : null),
     rate: v => 'shoots every ' + r1(v) + ' s',
@@ -62,9 +62,50 @@ G.Sheet = (() => {
     amount: v => 'potency ' + r0(v * 100) + '%'
   };
 
+  // ---- slice 7a: a routed move's rows come from the team's folded def (G.TeamCards.defOf), never the legacy table ----
+  const TAU = Math.PI * 2;
+  const routed = m => !!(G.MoveRoute && G.MoveRoute.routed(m.id) && G.MoveDefs[m.id]);
+  const folded = (pl, m) => G.TeamCards.defOf(pl, m.id);
+  const kidsOf = d => (d.payload || []).filter(fx => fx.t === 'emit' && fx.move && typeof fx.move === 'object');
+  const dealsDamage = d => (d.payload || []).some(fx => fx.t === 'damage') || kidsOf(d).some(fx => dealsDamage(fx.move));
+  /** One hit of a def against the typical enemy, through the same adapter as move-effects.js damage() (null when it deals no damage). */
+  function defHit(pl, d) {
+    if (!(d.basePower > 0) || !dealsDamage(d)) return null;
+    const t = typicalDef(), m = { cat: d.category, dmg: d.basePower, type: d.type };
+    return G.Stats.applyDamage(pl.moveFactor(m), t.def, t.spd, m, pl.level, pl.stabFor(m));
+  }
+  /** The def's numbers as [text, text with the held item or null]. An emitter with no shape shows its first child's shape. */
+  function defRows(pl, d) {
+    const kid = !d.space && kidsOf(d)[0], s = d.space || (kid && kid.move.space) || {}, dv = (kid ? kid.move.delivery : d.delivery) || {};
+    const cdm = (pl && pl.cdMul) || 1, lens = (pl && pl.moveRadiusMul) || 1, out = [];
+    const row = (t, w) => out.push([t, w && w !== t ? w : null]);
+    if (d.basePower > 0 && dealsDamage(d)) row('Power ' + r0(d.basePower));
+    if (d.cd > 0) row('every ' + r1(d.cd) + ' s', cdm !== 1 ? 'every ' + r1(d.cd * cdm) + ' s' : null);
+    const n = Math.max(s.count || 1, (kid && kid.count) || 1);
+    if (n > 1) row('×' + r0(n));
+    if (s.radRadius > 0) { const w = dv.motion === 'travels' ? 'size ' : 'area '; row(w + r0(s.radRadius), lens !== 1 ? w + r0(s.radRadius * lens) : null); }
+    if (s.radArc > 0 && s.radArc < TAU - 0.01) row('arc ' + r0(s.radArc * 180 / Math.PI) + '°');
+    if (s.linLength > 0) row('length ' + r0(s.linLength), lens !== 1 ? 'length ' + r0(s.linLength * lens) : null);
+    if (s.linWidth > 0) row('width ' + r0(s.linWidth));
+    if (s.pierce > 0 && isFinite(s.pierce)) row('pierce ' + r0(s.pierce));
+    if (dv.moveSpeed > 0) row('speed ' + r0(dv.moveSpeed));
+    const life = (dv.endOn || []).find(e => e.time > 0), flies = dv.motion === 'travels' || dv.motion === 'returns';
+    if (life && !d.persistent && (flies || life.time >= 0.5)) row((flies ? 'range ' : 'lasts ') + r1(life.time) + ' s');     // a swing's 0.15 s is not worth a row
+    return out;
+  }
+  function defSummary(pl, d) {
+    const h = defHit(pl, d);
+    if (h != null) return 'Hits for about ' + r1d(h);
+    const t = G.MoveInfo.effects(d).slice(0, 2).join(', ');
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Support move';
+  }
+  /** The effects line of a def, minus the plain words the numbers already say. */
+  const defAil = d => G.MoveInfo.effects(d).filter(t => t !== 'damage').join(', ');
+
   /** Damage of one hit against the typical enemy (null for moves that do no damage). */
   function hitOf(pl, m) {
-    const k = G.Kinds.BY[m.kind];
+    if (routed(m)) return defHit(pl, folded(pl, m));
+    const k = G.Kinds.BY[m.kind];     // legacy-7b
     if (!k || k.payload !== 'damage' || !(m.dmg > 0)) return null;
     const t = typicalDef();
     return G.Stats.applyDamage(pl.moveFactor(m), t.def, t.spd, m, pl.level, pl.stabFor(m));
@@ -72,11 +113,12 @@ G.Sheet = (() => {
 
   /** One-line summary for the collapsed card: hit damage, heal, or a short effect. */
   function summaryOf(pl, m) {
+    if (routed(m)) return defSummary(pl, folded(pl, m));
     const d = hitOf(pl, m);
     if (d != null) return 'Hits for about ' + r1d(d);
     if (m.drain) return 'Heals from damage dealt';
-    if (m.kind === 'buff' && m.stat === 'regen') return 'Heals over time';
-    if (m.kind === 'buff' && m.stat) {
+    if (m.kind === 'buff' && m.stat === 'regen') return 'Heals over time';     // legacy-7b
+    if (m.kind === 'buff' && m.stat) {     // legacy-7b
       const LBL = { atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Speed', spe: 'Speed' };
       return 'Team ' + (LBL[m.stat] || m.stat) + ' +' + (m.stageN || 1) + ' per cast';
     }
@@ -86,7 +128,12 @@ G.Sheet = (() => {
 
   /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes. */
   function detailOf(pl, m) {
-    const k = G.Kinds.BY[m.kind];
+    if (routed(m)) {
+      const d = folded(pl, m), h = defHit(pl, d), am = (pl && pl.atkMul) || 1, base = am !== 1 && h != null ? h / am : h;
+      return { raw: defRows(pl, d).map(([t, w]) => (w ? t + ' (' + w + ')' : t)).join(' · '), ail: defAil(d),
+        hit: h == null ? '' : am !== 1 ? 'Hits for about ' + r1d(base) + ' (' + r1d(h) + ')' : 'Hits for about ' + r1d(h) };
+    }
+    const k = G.Kinds.BY[m.kind];     // legacy-7b
     const rm = (pl && pl.moveRadiusMul) || 1, cdm = (pl && pl.cdMul) || 1;
     const rows = [];
     if (k) for (const key of k.keys) {
@@ -110,10 +157,14 @@ G.Sheet = (() => {
 
   /** Text for one move: raw numbers (what the cards change), stack list, and one-hit damage. */
   function moveLines(pl, m) {
-    const k = G.Kinds.BY[m.kind];
+    if (routed(m)) {
+      const d = folded(pl, m), h = defHit(pl, d);
+      return { raw: defRows(pl, d).map(([t]) => t).join(' · '), hit: h == null ? '' : 'Hits for about ' + r1d(h), stacks: '', ail: defAil(d) };
+    }
+    const k = G.Kinds.BY[m.kind];     // legacy-7b
     const bits = [];
     if (k) for (const key of k.keys) { if (m[key] == null) continue; const t = FMT[key] && FMT[key](m[key], m); if (t) bits.push(t); }
-    if (m.kind === 'buff' && m.stat && m.stat !== 'regen') {          // team stage raise per cast (slice E2a); the move data calls Speed 'spd'
+    if (m.kind === 'buff' && m.stat && m.stat !== 'regen') {          // legacy-7b: team stage raise per cast (slice E2a); the move data calls Speed 'spd'
       const LBL = { atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Speed', spe: 'Speed' };
       bits.unshift('team ' + LBL[m.stat] + ' +' + (m.stageN || 1) + (m.stage2 ? ', ' + LBL[m.stage2.stat] + ' +' + m.stage2.n : '') + ' per cast');
     }

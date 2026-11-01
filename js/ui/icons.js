@@ -399,8 +399,8 @@ G.Icons = (() => {
     let cv = cache.get(name);
     if (cv) return cv;
     if (name.startsWith('move:')) {
-      const m = G.Moves.BY_ID[name.slice(5)];
-      cv = emblem(m ? m.type : 'normal', m ? m.kind : null);
+      const id = name.slice(5);
+      cv = emblem(G.MoveInfo.type(id), G.MoveInfo.badge(id));
     } else if (name.startsWith('type:')) {
       cv = emblem(name.slice(5));
     } else if (name.startsWith('ps:')) {

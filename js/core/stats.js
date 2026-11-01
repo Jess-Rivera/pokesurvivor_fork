@@ -150,14 +150,11 @@ G.Stats = (() => {
   }
 
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
-  // own cat (stamped in js/data/moves.js from pokeapi). Fallback for a move missing it
-  // (e.g. a future custom move): buffs are status; contact-y behaviors physical; the
-  // rest (ranged/elemental) special. So a missing cat never breaks the damage model.
+  // own cat; a move missing it takes its resolved def's category (slice 7a), else physical.
   function moveCat(m) {
     if (m && m.cat) return m.cat;
-    if (!m) return 'physical';
-    if (m.kind === 'buff') return 'status';
-    return (m.kind === 'melee' || m.kind === 'dash' || m.kind === 'mine') ? 'physical' : 'special';
+    const d = m && G.MoveDefs && G.MoveDefs[m.id];
+    return d ? d.category : 'physical';
   }
 
   return {

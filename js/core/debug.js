@@ -208,7 +208,7 @@ G.Debug = (() => {
   function give(id) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const pl = G.Game && G.Game.player;
-    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
+    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }     // legacy-7b: D-BUBBLE
     G.Game.debugMaxed();
     return pl.addMove(id);
   }
@@ -398,7 +398,7 @@ G.Debug = (() => {
     let ids = NC_SETS[set];
     if (!named) {
       ids = args.filter(id => {
-        if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+        if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }     // legacy-7b: D-BUBBLE
         if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
         return true;
       });
@@ -527,7 +527,7 @@ G.Debug = (() => {
       return 0;
     }
     let ids = strs.filter(id => {
-      if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
+      if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }     // legacy-7b: D-BUBBLE
       if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
       return true;
     });

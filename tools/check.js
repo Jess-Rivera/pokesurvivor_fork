@@ -56,6 +56,11 @@ for (const f of moveFiles) {
   if (hit >= 0) { kbad++; console.log('I1 GUARD FAIL ' + rel(f) + ':' + (hit + 1) + '  the word "kind" is not allowed in new combat files'); }
 }
 console.log('I1 guard: ' + (kbad ? kbad + ' file(s) mention kind' : 'ok (' + moveFiles.length + ' move-*.js file(s))'));
+// 2c. Slice 7a guard: no legacy move-table read (G.Moves.BY_ID, G.Kinds, a move's kind) outside the files 7b deletes (tools/kind-guard.js).
+const KG = require('./kind-guard.js').run(root);
+for (const h of KG.bad) console.log('7A GUARD FAIL ' + h.file + ':' + h.line + '  ' + h.rule + ' (read the resolved def or G.MoveInfo, or tag the line legacy-7b)');
+console.log('7a guard: ' + (KG.bad.length ? KG.bad.length + ' legacy read(s)' : 'ok (' + KG.files + ' file(s); ' + KG.tagged.length + ' legacy-7b line(s) left for 7b)'));
+kbad += KG.bad.length;
 // 3. Move data: the generated file must match its source JSON (no hand edits), every move must pass the grammar, and the resolver self-test and parity run must not crash.
 let mbad = 0;
 for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], ['validate_moves.js', [], /^moves:/], ['validate_moves.js', ['--resolved'], /^resolved moves:/], ['move_parity.js', [], /^parity:/]]) {

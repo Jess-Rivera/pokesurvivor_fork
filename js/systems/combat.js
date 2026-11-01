@@ -583,7 +583,7 @@ G.Combat = (() => {
 
     // A charge-up animation now and then, so it feels alive.
     pl.orbCastT = (pl.orbCastT || 0) - dt;
-    if (pl.orbCastT <= 0) { pl.orbCastT = 1.6; pl.cast({ kind: 'orbit', cd: 1.6 }); }
+    if (pl.orbCastT <= 0) { pl.orbCastT = 1.6; pl.cast({ id: m.id, type: m.type, cd: 1.6 }); }     // 7a: cast() reads the def by id
   }
 
   /** Replays a teammate's attack just to see it (no damage). */

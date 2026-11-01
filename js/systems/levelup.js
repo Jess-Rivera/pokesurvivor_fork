@@ -79,19 +79,10 @@ G.LevelUp = (() => {
     if (pl.slots.length < pl.maxMoves) {
       // With 2 buffs no more are offered: buffs do no damage and
       // filling the 4 slots with them leaves the run with no way out.
-      const buffs = pl.moves.filter(m => m.kind === 'buff').length;
+      const buffs = pl.moves.filter(m => G.MoveInfo.isBuff(m.id)).length;
       const pool = G.Moves.poolFor(pl.mon).filter(id =>
-        !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.Moves.BY_ID[id].kind === 'buff'));
-      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) {
-        const d = G.Moves.BY_ID[id];
-        add('newmove', {
-          w: 1, family: 'newmove', type: 'new', key: 'new:' + id,
-          icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
-          tag: G.U.TYPE_NAME[d.type],
-          title: d.name, desc: d.desc,
-          apply: p => p.addMove(id)
-        });
-      }
+        !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));
+      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) add('newmove', newMoveCard(id));
     }
 
     // --- mechanic cards, by value class ---
@@ -115,9 +106,12 @@ G.LevelUp = (() => {
   const VIT_PICK = 3;
   const teamOn = () => !!(G.MoveRoute && G.MoveRoute.on === true && !(G.Coop && G.Coop.active));
   const r1 = v => String(Math.round(v * 10) / 10);
-  /** The 2-buff learn limit: a new-path move is a buff when every effect lands on its own side (G.TeamCards.selfOnly, Jess 2026-10-31);
-   *  an unrouted move keeps its legacy kind. */
-  const teamBuff = id => (G.MoveRoute.routed(id) ? G.TeamCards.selfOnly(G.MoveDefs[id]) : !!(G.Moves.BY_ID[id] && G.Moves.BY_ID[id].kind === 'buff'));
+  /** A "learn a new move" card; name, type and text come from the resolved move data (slice 7a). */
+  function newMoveCard(id) {
+    const t = G.MoveInfo.type(id);
+    return { w: 1, family: 'newmove', type: 'new', key: 'new:' + id, icon: 'move:' + id, color: G.U.TYPE_COLOR[t], tag: G.U.TYPE_NAME[t],
+      title: G.MoveInfo.name(id), desc: G.MoveInfo.desc(id), apply: p => p.addMove(id) };
+  }
   /** Every routed move the team knows, once per id, with its folded def (one team store, so any holder gives the same copy). */
   function teamMoves(roster) {
     const out = [], seen = new Set();
@@ -187,18 +181,9 @@ G.LevelUp = (() => {
     }
     // --- new moves (active Pokemon only): today's draw, with the new-path buff test for the 2-buff limit ---
     if (pl.slots.length < pl.maxMoves) {
-      const buffs = pl.moves.filter(m => teamBuff(m.id)).length;
-      const pool = G.Moves.poolFor(pl.mon).filter(id => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && teamBuff(id)));
-      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) {
-        const d = G.Moves.BY_ID[id];
-        add('newmove', {
-          w: 1, family: 'newmove', type: 'new', key: 'new:' + id,
-          icon: 'move:' + id, color: G.U.TYPE_COLOR[d.type],
-          tag: G.U.TYPE_NAME[d.type],
-          title: d.name, desc: d.desc,
-          apply: p => p.addMove(id)
-        });
-      }
+      const buffs = pl.moves.filter(m => G.MoveInfo.isBuff(m.id)).length;
+      const pool = G.Moves.poolFor(pl.mon).filter(id => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));
+      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) add('newmove', newMoveCard(id));
     }
     return fam;
   }
@@ -235,5 +220,5 @@ G.LevelUp = (() => {
     return picked;
   }
 
-  return { offer, families, targetsOf, FAMILY_W, teamFamilies, teamOn, teamBuff, TEAM_W };
+  return { offer, families, targetsOf, FAMILY_W, teamFamilies, teamOn, teamBuff: id => G.MoveInfo.isBuff(id), TEAM_W };
 })();

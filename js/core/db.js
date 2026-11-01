@@ -147,7 +147,7 @@ G.DB = (() => {
         const seen = new Set();
         s.pbind[d] = [0, 1, 2, 3].map(i => {
           const id = l[i];
-          if (typeof id !== 'string' || (G.Moves && !G.Moves.BY_ID[id]) || seen.has(id)) return null;
+          if (typeof id !== 'string' || (G.Moves && !G.Moves.BY_ID[id]) || seen.has(id)) return null;     // legacy-7b: D-BUBBLE (Bubble has no def)
           seen.add(id); return id;
         });
       }
@@ -156,7 +156,7 @@ G.DB = (() => {
     if (s.pban && typeof s.pban === 'object') {
       for (const d of Object.keys(s.pban)) {
         const l = Array.isArray(s.pban[d]) ? s.pban[d] : [];
-        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, 3);
+        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, 3);     // legacy-7b: D-BUBBLE
       }
     } else s.pban = {};
     if (G.Upgrades) for (const d of Object.keys(s.pupg || {})) {

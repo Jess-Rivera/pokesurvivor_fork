@@ -180,7 +180,7 @@ G.Game = (() => {
     f.addMove(G.startMoveOf(mon.dex));
     f.banned = new Set((save.pban && save.pban[mon.dex] || []).slice(0, perks.bans));
     if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter(id => !f.hasMove(id) && !f.banned.has(id) && G.Moves.BY_ID[id].kind !== 'buff');
+      const pool = G.Moves.poolFor(mon).filter(id => !f.hasMove(id) && !f.banned.has(id) && !G.MoveInfo.isBuff(id));
       if (pool.length) f.addMove(G.U.pick(pool));
       f.setActive(0);
     }

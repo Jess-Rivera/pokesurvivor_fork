@@ -304,7 +304,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   console.log('6 HP Regen and Vitamins'); }
 
 // ===== 7. the level-up offer (part E) =====
-['js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
+['js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js', 'js/ui/move-info.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 { const L = G.LevelUp, ROUTE = G.MoveRoute, COOP = G.Coop;
   G.Coop = { active: false };
   G.MoveRoute = { on: true, routed: id => !!REAL[id] && !!G.Moves.BY_ID[id] };

@@ -76,7 +76,7 @@ const M = [
   ['Vitamins ignores the Protein / Calcium rule', 'levelup', [['.filter(st => !st.cat || cats.has(st.cat))', '']]],
   ['Vitamins written per member at pick time', 'levelup', [["TC.add(s, 'vitamins:' + card.choice);", 'for (const f of roster) f.badge[card.choice] += c.step;']]],
   ['the HP Vitamin skips the max HP refresh', 'levelup', [["if (card.choice === 'hp') for (const f of roster) if (f.refreshMaxHp) f.refreshMaxHp();", '']]],
-  ['the buff limit reads the legacy kind on a routed move', 'levelup', [['const teamBuff = id => (G.MoveRoute.routed(id) ? G.TeamCards.selfOnly(G.MoveDefs[id]) :', 'const teamBuff = id => (false ? 0 :']]],
+  ['the 2-buff limit is dropped on the new path', 'levelup', [['filter(id => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));', 'filter(id => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)));']]],
   ['a foe stat change counts as self', 'cards', [["return !(fx.t === 'stat' ? fx.side !== 'foe' : SELF_T.has(fx.t));", "return !(fx.t === 'stat' ? true : SELF_T.has(fx.t));"]]],
   ['ailments count as self', 'cards', [["const SELF_T = new Set(['heal', 'shield', 'recoil']);", "const SELF_T = new Set(['heal', 'shield', 'recoil', 'ailment']);"]]],
   ['a move with no effect counts as a buff', 'cards', [['return !foe && n > 0;', 'return !foe;']]],
