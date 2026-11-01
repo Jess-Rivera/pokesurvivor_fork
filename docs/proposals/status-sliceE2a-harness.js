@@ -3,7 +3,7 @@
 // the five buff moves' data (cd = duration = 8 s at base), the retired Buff Stacks / Increased Effect cards on stage buffs, sustain at base (exactly the
 // stages one cast gives, no dip, no double, in both frame orders and with jittery frames), stacking through Recharge and Duration (duration / cooldown is
 // the cap), the +-6 clamp, team-wide raises vs per-Pokemon drops, the stat reads (Attack stage on physical moves only), Dragon Dance (two stats), Aqua Ring
-// regen applications, and Brock's authored Harden. Rendering, HUD and game.js wiring are NOT covered (no browser).
+// regen applications, and legacy Harden with Duration stacks. Rendering, HUD and game.js wiring are NOT covered (no browser).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -115,12 +115,12 @@ const fixed = () => 1 / 60, jit = () => 0.012 + rnd() * 0.012;
   const w = mkHost(); for (let i = 0; i < 20; i++) w.addTeamStage('atk', 1, 8, 'x'); if (w.stgTeam.atk.length !== Sg.TEAM_LIVE) bad('safety limit on live applications per move: ' + w.stgTeam.atk.length);
   console.log('7 casts: Dragon Dance Atk +1 and Spe +1 in one real cast, a recast mid-way stacks, one in the last 0.1 s renews, 8 live applications per move at most'); }
 
-// 8. Brock: Harden is the stage version (Duration x2 authored; Buff Stacks is gone for it)
-{ const bad0 = G.Gyms.validate(G.Gyms.KANTO[0]); if (bad0.length) bad('Brock fails validation: ' + bad0.join('; '));
-  const h = G.Moves.instance('harden'); G.Moves.addStack(h, 'duration'); G.Moves.addStack(h, 'duration');
+// 8. legacy Harden with Duration stacks (the legacy path until slice 7b). Brock himself left this path in slice 7a (his validation and his
+//    tracker Harden live in gym-harness.js and boss-owner-harness.js).
+{ const h = G.Moves.instance('harden'); G.Moves.addStack(h, 'duration'); G.Moves.addStack(h, 'duration');
   if (!near(h.dur, 8 * 1.3, 1e-9) || h.stat !== 'def' || (h.stageN || 1) !== 1) bad('Brock Harden: dur ' + h.dur + ' stat ' + h.stat + ' stageN ' + h.stageN);
   const e = { stg: null }; Sg.add(e, 'def', h.stageN || 1, h.dur, h.stacks | 0 || Sg.MAX); Sg.add(e, 'def', 1, h.dur, h.stacks | 0 || Sg.MAX); if (Sg.stage(e, 'def') !== 2) bad('gym enemies still stack stage applications');
-  console.log('8 Brock: validates against the real card rules, Harden +1 Def per cast lasting ' + h.dur.toFixed(1) + ' s (8 s x 1.3 for his two Duration stacks), no stack cap (the +-6 clamp), no Buff Stacks'); }
+  console.log('8 legacy Harden: +1 Def per cast lasting ' + h.dur.toFixed(1) + ' s (8 s x 1.3 for two Duration stacks), no stack cap (the +-6 clamp), no Buff Stacks'); }
 
 console.log(fail ? fail + ' FAILED' : 'all slice E2a checks passed');
 process.exit(fail ? 1 : 0);

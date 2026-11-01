@@ -18,7 +18,8 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   DEX_BY, DEX: [], FX: { dmgText: (x, y, m) => texts.push(m), spark() {}, ring() {}, burst() {}, sp() {} },
   Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false, dirFromAngle: () => 0 } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/enemies.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/combat.js'].forEach(p => {
+['js/core/stats.js', 'js/data/enemies.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js',
+ 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/combat.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 const Enemy = G.Enemy; Enemy.prototype.die = function () { this.dead = true; };
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
@@ -46,13 +47,15 @@ const mk = (behavior = 'plain') => { const e = new Enemy({ dex: 1, baseHp: 50, s
   const r = mk('ranged'); r.shotCd = 0.2; r.def.shotCd = 3; r.applyFlinch(); if (r.keepsDistance() && r.shotCd !== 3) bad('ranged: shot timer restarts at its full period ' + r.shotCd);
   const c = mk('charger'); c.phase = 'aim'; c.pt = 0.1; c.applyFlinch(); if (c.phase !== 'walk' || !near(c.pt, 1.1)) bad('charger aim is cancelled');
   c.phase = 'dash'; c.pt = 0.2; c.applyFlinch(); if (c.phase !== 'walk') bad('charger dash is cancelled');
-  const gl = { tempo: 1, moves: [], stance: 'mixed' };      // a gym leader descriptor: gym leaders are the only bosses (2026-10-31)
-  const brain = (e, casting, cd) => { const k = new G.Boss.GymBrain(e); k.init(); k.casting = casting; k.cd = cd; return k; };      // a real GymBrain (boss-ai.js) mid-fight
-  const b = mk(); b.boss = true; b.gym = gl; b.brain = brain(b, { id: 'tackle', t: 0.3, wind: 0.45, after: 0.35 }, 0); b.applyFlinch(); if (b.brain.casting !== null || !near(b.brain.cd, 1.2)) bad('gym leader cast cancelled, timer restarted as after a cast: ' + b.brain.cd);
-  const b2 = mk(); b2.boss = true; b2.gym = gl; b2.brain = brain(b2, null, 0.1); b2.applyFlinch(); if (!near(b2.brain.cd, 1.2)) bad('gym leader between casts: next attack timer restarts');
+  const gl = () => ({ tempo: 1, power: 1, level: 10, cards: {}, moves: [{ id: 'tackle' }], stance: 'mixed' });      // a gym leader descriptor: gym leaders are the only bosses (2026-10-31)
+  const brain = e => { const k = new G.Boss.GymBrain(e); k.init(); k.wait = 0; return k; };      // a real GymBrain (boss-ai.js) mid-fight (slice 7a)
+  const b = mk(); b.boss = true; b.gym = gl(); b.brain = brain(b); const s = b.slots[0][0];
+  b.brain.tell = { slot: s, id: 'tackle', form: 'melee', t: 0.3, wind: 0.45, after: 0.35, ang: 0, fired: false }; b.applyFlinch();
+  if (b.brain.tell !== null || !near(s.t, 0.5) || !near(b.brain.wait, 0.35)) bad('gym leader tell cancelled: its cooldown is spent (0.5) and the next attack waits one recovery (0.35): ' + [s.t, b.brain.wait]);
+  const b2 = mk(); b2.boss = true; b2.gym = gl(); b2.brain = brain(b2); b2.applyFlinch(); if (!near(b2.brain.wait, 0.35)) bad('gym leader between attacks: the next attack waits one recovery');
   const dead = mk(); dead.dead = true; if (dead.applyFlinch()) bad('dead units do not flinch'); const rem = mk(); rem.remote = true; if (rem.applyFlinch()) bad('remote copies do not flinch (co-op deferred)');
   const fz = mk(); fz.applyStatus('freeze'); if (fz.applyFlinch()) bad('frozen units do not flinch'); const sl = mk(); sl.applyStatus('sleep'); if (sl.applyFlinch()) bad('sleeping units do not flinch');
-  const el = mk(); el.elite = { hp: 10 }; el.fsp = 0; if (!el.applyFlinch()) bad('elites flinch (no immunity)'); const bb = mk(); bb.boss = true; bb.gym = gl; bb.brain = brain(bb, null, 0); if (!bb.applyFlinch()) bad('gym leaders flinch (no immunity)');
+  const el = mk(); el.elite = { hp: 10 }; el.fsp = 0; if (!el.applyFlinch()) bad('elites flinch (no immunity)'); const bb = mk(); bb.boss = true; bb.gym = gl(); bb.brain = brain(bb); if (!bb.applyFlinch()) bad('gym leaders flinch (no immunity)');
   let n = 0; const f = mk(); f.fsp = 0; for (let i = 0; i < 5; i++) { if (f.applyFlinch()) n++; } if (n !== 5) bad('no window: five flinches in a row all apply ' + n);
   console.log('3 lost action: wild melee contact timer, ranged shot timer, charger aim and dash, gym leader cast; no immunity, no window; dead, remote, frozen and asleep units cannot flinch'); }
 

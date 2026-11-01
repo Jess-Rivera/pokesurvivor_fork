@@ -2,9 +2,9 @@
 // Real util, stats, pokedex, sprite meta, moves, enemies, gyms, stages, enemy, boss-ai, elites, gym-arena and gym files with stubbed engine
 // globals. Checks: G.Boss is in, loads between enemy.js and gym-arena.js, and is in the boot NEED list; the Enemy body holds no boss AI
 // (prototype and source) and only delegates (update -> brain.step, applyFlinch -> brain.flinch); the arena spawns its leader through
-// G.Boss.make with a GymBrain; the brain's setup gives the body the old contact numbers; a wild enemy has no brain; a flinch cancels a cast,
-// restarts the timer and restores the contact type, and a flinch before the first step leaves the brain idle. The fight itself (picker,
-// casts, every roster slot through the brain) stays in gym-harness.js. The mutation runner (boss-split-mutate.js) points BOSSSPLIT_<FILE>
+// G.Boss.make with a GymBrain; the brain's setup gives the body the contact numbers (Tackle); a wild enemy has no brain; a flinch cancels a
+// tell and spends its cooldown, and a flinch before the first step leaves the brain idle. Since slice 7a the fight itself (tells, casts
+// through G.MoveSim, Harden, every roster slot) is in boss-owner-harness.js and gym-harness.js. The mutation runner (boss-split-mutate.js) points BOSSSPLIT_<FILE>
 // at altered copies. The live game and the visuals are NOT covered (no browser).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
@@ -24,6 +24,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js',
+ 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/systems/team-cards.js',
  'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 40) console.log('FAIL', m); } };
@@ -66,9 +67,10 @@ let leader = null;
 // 4. setup gives the body the old contact numbers; a def with no gym gets no brain; a wild enemy has no brain
 { G.GymArena.reset(); G.Gym.reset(); clock = 240; G.Gym.update(0.1, pl, 240);
   const e = G.Boss.make(G.Gym.makeDef(G.Gym.gate), 0, 0), b = e.brain;
-  ok(b && b.contact && b.contact.kind === 'melee', 'contact move is the melee move');
+  ok(b && b.contact === 'tackle', 'contact move is the melee move (Tackle)');
   ok(e.atkLvl === e.gym.level, 'leader level ' + e.atkLvl);
-  ok(b && near(e.atkFactor, b.factor(b.contact)) && e.atkFactor0 === e.atkFactor && e.atkCat === 'physical' && e.atkType === 'normal', 'contact factor, category and type on the body');
+  const td = b && b.def('tackle');
+  ok(b && near(e.atkFactor, b.factor({ cat: td.category, dmg: td.basePower, type: td.type })) && e.atkFactor0 === e.atkFactor && e.atkCat === 'physical' && e.atkType === 'normal', 'contact factor, category and type on the body');
   ok(b && b.on === false, 'the fight state starts on the first step');
   const plain = G.Boss.make(Object.assign({}, wildDef, { hp: 500 }), 0, 0); ok(plain.boss && plain.brain === null, 'a boss def with no gym gets no brain');
   const w = new G.Enemy(wildDef, 0, 0, { t: 0, dmg: 1, hp: 1, spd: 1 }, false); ok(w.brain === null, 'a wild enemy has no brain');
@@ -79,11 +81,11 @@ let leader = null;
 { const e = G.Boss.make(G.Gym.makeDef(G.Gym.gate), 0, 0), b = e.brain;
   ok(e.applyFlinch() && b.on === false, 'a flinch before the first step leaves the brain idle');
   e.stFl = null; pl.x = 420; pl.y = 0; e.update(0.05, pl); ok(b.on, 'the first step starts the fight state');
-  b.casting = null; b.start('rock-throw', pl); ok(!!b.casting && e.atkType === 'rock', 'a Rock Throw cast sets the rock type on the body');
-  ok(e.applyFlinch() && b.casting === null && b.cd > 0, 'a flinch cancels the cast and restarts the timer (' + b.cd + ')');
-  ok(e.atkType === 'normal' && e.atkCat === 'physical' && near(e.atkFactor, b.factor(b.contact)), 'the flinch restores the contact type and factor (' + e.atkType + ')');
-  b.casting = null; b.cd = 0.1; e.stFl = null; e.applyFlinch(); ok(b.cd > 0.1, 'between casts a flinch restarts the next-attack timer');
-  console.log('5 flinch: idle before the first step; mid-cast it cancels, restarts the timer and restores the contact type'); }
+  const s = e.slots[0].find(x => x.id === 'rock-throw'); s.t = 0;
+  b.tell = null; b.start(s, b.def('rock-throw'), 'shot', pl); ok(!!b.tell && e.atkType === 'normal', 'a Rock Throw tell leaves the contact type Normal (never swapped)');
+  ok(e.applyFlinch() && b.tell === null && s.t > 1, 'a flinch cancels the tell and spends its cooldown (' + s.t + ')');
+  b.wait = 0; e.stFl = null; e.applyFlinch(); ok(b.wait > 0, 'between attacks a flinch delays the next attack');
+  console.log('5 flinch: idle before the first step; mid-tell it cancels and spends the cooldown; contact stays Tackle'); }
 
 console.log(fail ? fail + ' FAILED (' + n + ' checks)' : 'ALL OK (' + n + ' checks)');
 process.exit(fail ? 1 : 0);

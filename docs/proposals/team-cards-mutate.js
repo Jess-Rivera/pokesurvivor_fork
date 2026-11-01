@@ -49,7 +49,7 @@ const M = [
   ['a restart keeps the old heal amount', 'fx', [['if (old) { old.left = left; old.frac = fx.amount.fraction; old.per = fx.per || 1; return; }', 'if (old) { old.left = left; return; }']]],
   ['restarted orbs jump back to their start angle', 'sim', [['if (carry && carry.phase != null) for (const r of roots) r.phase = carry.phase;', '']]],
   ['a restart is reported as a cast', 'sim', [['restart: !!carry });', 'restart: false });']]],
-  ['the render plays a restart', 'render', [['if (!pl || ev.restart || !G.MoveRoute.routed(ev.moveId)) return;', 'if (!pl || !G.MoveRoute.routed(ev.moveId)) return;']]],
+  ['the render plays a restart', 'render', [['if (!pl || ev.restart || ev.enemy || !G.MoveRoute.routed(ev.moveId)) return;', 'if (!pl || ev.enemy || !G.MoveRoute.routed(ev.moveId)) return;']]],
   // ---- part C: Gate Reduction and Duration Increase (SS10) ----
   ['the Gate card is ignored', 'stages', [['return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1) * mul;', 'return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1);']]],
   ['Gate Reduction subtracts instead of dividing', 'cards', [["function gateMul(o) { return 1 / (1 + stacks(o && o.teamCards, 'gate') * STEP('gate')); }", "function gateMul(o) { return 1 - stacks(o && o.teamCards, 'gate') * STEP('gate'); }"]]],
@@ -57,8 +57,8 @@ const M = [
   ['the Duration card is ignored on a refresh', 'stages', [['      t.d = dur;', '      t.d = DURATION;']]],
   ['self drops skip the Gate card', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0), dur);']]],
   ['foe drops skip the cards', 'fx', [['if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);', 'if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false));']]],
-  ['team raises skip the cards', 'fx', [["else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);", "else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));"]]],
-  ['a fizzled pure buff ignores the Gate card', 'sim', [['slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1);', 'slot.t = G.Stages.gateOf(false);']]],
+  ['team raises skip the cards', 'fx', [["else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);", "else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));"]]],
+  ['a fizzled pure buff ignores the Gate card', 'sim', [['slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o));', 'slot.t = G.Stages.gateOf(false);']]],
   // ---- part D: HP Regen and Vitamins ----
   ['regen ignores the max HP cap', 'player', [['this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);', 'this.hp = this.hp + rg * this.maxHp * dt;']]],
   ['regen heals the fainted', 'player', [['    if (this.dead) return;\n    this.benched = true;', '    this.benched = true;'], ['if (rg > 0 && !this.dead && this.hp < this.maxHp)', 'if (rg > 0 && this.hp < this.maxHp)']]],

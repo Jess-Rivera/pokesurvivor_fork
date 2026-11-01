@@ -25,6 +25,8 @@
  *   instance's remaining wait and an aimTrack cone's tracked enemy id.
  *   Subscribed once at load: 'move:cast' plays the routed slot's cast (G.Player.cast: animation, sound, Life Orb cost),
  *   stamps castAt for the HUD flash and simCd for the HUD ring; 'move:hit' feeds the overlay flashes and the chain bolts.
+ *   Slice 7a: drawn on both flags, since gym leaders cast through the sim either way; a gym leader's 'move:cast' (enemy: true) is
+ *   skipped here (its brain plays its own animation).
  */
 G.MoveRender = (() => {
   const TAU = Math.PI * 2, FLASH = 0.25, BOLT = 0.2;
@@ -261,7 +263,7 @@ G.MoveRender = (() => {
   // ---- presentation glue, registered once ----
   G.SimBus.on('move:cast', ev => {
     const pl = G.Game && G.Game.player;
-    if (!pl || ev.restart || !G.MoveRoute.routed(ev.moveId)) return;     // 5b: a card restart of a live group is not a cast (no animation, sound or Life Orb cost)
+    if (!pl || ev.restart || ev.enemy || !G.MoveRoute.routed(ev.moveId)) return;     // 5b: a card restart of a live group is not a cast (no animation, sound or Life Orb cost); 7a: a gym leader's cast is not yours
     const slot = pl.activeGroup().find(s => s.id === ev.moveId);
     if (!slot) return;
     slot.simCd = (pl.teamCards ? G.TeamCards.defOf(pl, ev.moveId) : G.MoveDefs[ev.moveId]).cd;     // the HUD ring divides by the slot's cd (5b: the team's folded def, so Cooldown Down shows)

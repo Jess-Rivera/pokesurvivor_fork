@@ -17,7 +17,7 @@ const M = [
   ['a pure buff ignores its Gate (swap-in casts at once)', 'fx', [['if (!t || t.g <= EPS) return true;', 'if (t || !t) return true;']]],
   ['an inactive pure buff casts', 'sim', [['        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);\n',
     '        if (G.MoveEffects.isPureBuff(def) && G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);\n        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);\n']]],
-  ['a fizzled pure buff does not wait', 'sim', [['{ if (buff) slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1); return null; }', '{ return null; }']]],
+  ['a fizzled pure buff does not wait', 'sim', [['{ if (buff) slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o)); return null; }', '{ return null; }']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stat-stage-mut-'));
 let caught = 0;

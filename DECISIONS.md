@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-10-31, Gym leader mons play like the player: cards per mon, autocast, Tier 1 AI (Jess)
+Amends D-ENEMY. Each roster mon is its own sim owner holding upgrade cards (the player's card rules, per mon, no team cards), not hand-set numbers. Its moves autocast through G.MoveSim like the player's (one group, per-move cooldowns, pure buffs on their Gate per SS8); the brain only moves. Mons are drawn at player size, so cone reach is measured from the center like the player's. Every enemy cast keeps a tell with the aim locked at its start (0.5 s shots, 0.45 s melee, 0.3 s buffs; BOSS-REWORK's 0.3 to 0.45 is corrected). Riders: damage only, no knockback on the player. Contact: fixed to Tackle, never swapped. Tempo and power stay as per-mon knobs. Scope: player-like shell plus Tier 1 movement AI in 7a; Tier 2 smart play gets its own branch after the merge.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Blocking decisions"
+
 ## 2026-10-31, Gym and Elite Four rosters use the Gen-1 order; anime counts as canon (Jess)
 Slot order = the leader's Red/Blue send-out order, one slot per evolution line; the rest fill by final-stage BST, weakest first (ties keep the old order). Picks stay as locked 2026-10-22, since anime is a canon source (Misty keeps the Poliwag line). Jolteon and Flareon start from Eevee. Brock keeps Geodude in slot 1 (7a pilot untouched); Onix moves to slot 2. Ace-first was considered and dropped. The two lore moveset maps and gyms.js slots 2 to 6 still use the old order (TODO).
 Canonical: docs/GYM-ROSTERS.md, rules section "GEN-1 ORDER"

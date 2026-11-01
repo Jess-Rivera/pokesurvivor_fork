@@ -34,7 +34,8 @@ global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, 
 try { load('js/core/util.js'); } catch (e) { }
 if (!G.U || !G.U.TYPE_NAME) { console.log('util did not load'); process.exit(1); }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js',
- 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/spawner.js', 'js/systems/events.js', 'js/systems/weather.js',
+ 'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js',
+ 'js/data/gyms.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/spawner.js', 'js/systems/events.js', 'js/systems/weather.js',
  'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js', 'js/data/achievements.js', 'js/data/missions.js', 'js/systems/progress.js', 'js/ui/goals-ui.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 40) console.log('FAIL', m); } };

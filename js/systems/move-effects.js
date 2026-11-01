@@ -149,11 +149,16 @@ G.MoveEffects = (() => {
     if (!onFoe && !firstUse(inst, fx)) return;
     if (!rolls(fx, hop, rng)) return;
     // slice 5b (COMBAT-RULES:SS10): the CASTER team's Gate and Duration cards, on every change it causes (foe drops, team raises, self drops)
-    const gm = o.teamCards ? G.TeamCards.gateMul(o) : 1, dur = o.teamCards ? G.TeamCards.durOf(o) : undefined;
+    const gm = gateMulOf(o), dur = o.teamCards ? G.TeamCards.durOf(o) : undefined;
     if (onFoe) G.Stages.trackOwn(e, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);
-    else if (fx.scope === 'team') G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);
+    else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);
     else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);
   }
+  /** Slice 7a: a team-scope raise lands on the team tracker only when the owner has a team store; a gym leader's mon has none, so its
+   *  Harden raises itself (TODO: whether a gym's mons share raises in loop 2+). */
+  const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;
+  /** The Gate multiplier on every stat change `o` causes: its team's Gate card (SS10), times STRONG_HOST_GATE_MUL for a strong host (SS13). */
+  const gateMulOf = o => (o.teamCards ? G.TeamCards.gateMul(o) : 1) * (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1);
 
   // SS8 (slice 5a): a pure buff move has no damage and no shape: its payload is only self stat changes (Swords Dance, Agility, Harden,
   // Dragon Dance). It casts when its Gate opens instead of on a cooldown.
@@ -172,7 +177,7 @@ G.MoveEffects = (() => {
     const src = srcOf(def, o);
     for (const fx of def.payload || []) {
       if (fx.t !== 'stat') continue;
-      const t = G.Stages.tracker(o, statKey(fx.stat), src, fx.scope === 'team');
+      const t = G.Stages.tracker(o, statKey(fx.stat), src, teamOf(fx, o));
       if (!t || t.g <= EPS) return true;
     }
     return false;
@@ -216,7 +221,27 @@ G.MoveEffects = (() => {
   const APPLY = { damage, ailment, flinch, stat, heal, special, crit: inDamage, knockback: inDamage };     // one applier per effect t (I3)
   const LATER = new Set(['emit', 'shield', 'recoil']);     // emit: slice 4d; shield and recoil act at cast (applyCast)
 
+  /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
+   *  the folded Power, STAB, power knob, enrage and Attack stage); Player.hurt does the defender half and the type, as for every enemy hit.
+   *  Damage only (Jess 2026-10-31): knockback is skipped, since the player has none, and any other rider is not built for this direction
+   *  yet (TODO), so it is skipped with one console note per move and effect. */
+  const noted = new Set();
+  function hitPlayer(inst, pl) {
+    const def = inst.spec, o = inst.cast.owner;
+    const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(def.type, (pl.mon && pl.mon.types) || []), dealt: 0 };
+    for (const fx of def.payload || []) if (fx.t !== 'damage' && fx.t !== 'knockback' && !noted.has(def.id + ':' + fx.t)) {
+      noted.add(def.id + ':' + fx.t);
+      console.warn('[MoveEffects] ' + def.id + ': the ' + fx.t + ' rider is not applied to the player yet (gym leader cast)');
+    }
+    if (!(def.payload || []).some(fx => fx.t === 'damage')) return hit;
+    const m = { cat: def.category, dmg: def.basePower || 0, type: def.type }, A = o.moveFactor(m), hp0 = pl.hp;
+    pl.hurt(A, def.type, false, { factor: A, cat: def.category === 'special' ? 'special' : 'physical', mul: 1 }, G.Log.on ? G.Log.who(o, def.id) : null);
+    hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
+    return hit;
+  }
+
   function applyHit(inst, e, hop, rng) {
+    if (inst.cast.owner.foes) return hitPlayer(inst, e);     // slice 7a: an enemy owner's only foe is the player
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(inst.spec.type, e.types), dealt: 0 };
     for (const fx of inst.spec.payload || []) {
       const f = APPLY[fx.t];
@@ -317,5 +342,5 @@ G.MoveEffects = (() => {
     return out;
   }
 
-  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE, isPureBuff, statReady, endHeal };
+  return { applyHit, applyProp, statKey, rolls, canCast, applyCast, upkeep, endSelf, hopReduction, srcOf, evalFormula, knockOf, SLIDE, isPureBuff, statReady, endHeal, gateMulOf };
 })();

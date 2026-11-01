@@ -253,3 +253,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests: new boss-split harness (24 checks) and mutate (6/6); gym, gym-reward, gyms-only and status D2 harnesses moved to the brain. check.js 32/32 and move data green; gyms-only and move-riders mutate green. Headless Brock fight on ?dev and ?dev&newcombat: brain, every move cast, live flinch, win to the badge cards, no errors.
 - Stale tool checks (already failing in HEAD) updated to the Quick rulings: move_parity Gust selftest now expects the hand-set cd 0.7; smoke-newcombat Aqua Ring expects the aura (1/16 max HP every 2 s, two ticks in about 4 s). Smoke all passed.
 - Feel test: good (Jess). Stopped at: Jess commits B. Next: the docs sweep, then the 7a slot-1 enemy-owner plan.
+
+## 2026-10-31 (Claude Code, home, night): 7a slot-1 enemy owner, Brock plays like the player
+- Decided (Jess): D-ENEMY amendment: gym leader mons play like the player (cards per mon, autocast through G.MoveSim, player size, tells with locked aim, damage-only riders, contact fixed to Tackle, Tier 1 AI now, Tier 2 own branch); Harden has no tell; Brock on the new path on both flags; folded Power; weight and range dropped; Geodude cards Damage 3, Count 2, Velocity 3, Area 2.
+- Built: GymBrain rewrite (boss-ai.js), G.MoveSim.castAt and enemy-owner collision, hits on the player in move-effects.js, sim stepped and drawn on both flags, gym mons at scale 1, gyms.js cards and formOf (melee limited to radial cones, since beams look alike), changelog. Docs: BOSS-REWORK 3d/3c, BOSS-AUTHORING, BALANCE, COMBAT-RULES SS13, combat-architecture.
+- Tests: new boss-owner harness (89) and mutate (29/29); six harnesses and three mutate runners updated; check.js 33/33; headless Brock fight green on both flags. Six older mutation patterns fail only on this CRLF checkout (TODO).
+- Stopped at: Jess feel-tests Brock and commits. Next: the 7a UI readers.

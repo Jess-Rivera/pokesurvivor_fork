@@ -1,10 +1,11 @@
 /* ============ gyms.js: hand-authored gym leaders (feature/boss-rework) ============
  * One entry per gym, in region order. Format and rules: docs/BOSS-AUTHORING.md. Roster DESIGN (who, in what order, why): docs/GYM-ROSTERS.md.
- * Moves may only be ids from G.Moves (js/data/moves.js). Each move line: id, weight, range (close | far | any), optional hpBelow
- * (use only below that fraction of max HP) and optional `stacks`: upgrade-card stacks the move carries, by mechanic id from
- * js/data/mechanics.js (effect, recharge, count, pierce, area, width, arc, size, range, speed, duration, knock, stacks...). They go
- * through the SAME upgrade system as the player's cards (G.Moves.addStack), so a leader's move is a leveled-up player move.
- * A move kind decides its boss form (see GymBrain.start in js/entities/boss-ai.js); BOSS_FORMS lists the kinds that are actually built.
+ * Slice 7a (D-ENEMY, Jess 2026-10-31): a leader's mon plays like the player. Moves are ids from G.MoveDefs (the new move data); each
+ * move line is the id plus an optional hpBelow (the move joins the mon's moves only below that fraction of max HP). They all cast
+ * through G.MoveSim on their own cooldowns, pure buffs on their Gate (js/entities/boss-ai.js). A slot's `cards` are upgrade cards by
+ * id from G.TeamCards (damage, count, velocity, area...), held by that mon only and folded by the SAME rules as the player's cards, so
+ * each card applies to every one of the mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies
+ * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, shots, self buffs).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
  * last one whose minLevel is <= the gym's effective level (stageFor), so a slot evolves as the level climbs, and evolution requirements
@@ -20,15 +21,25 @@ G.Gyms = (() => {
   const MAX_MOVES = 4;
   // Placeholder stage bands (TUNE, docs/GYM-ROSTERS.md): a 2-stage line shows its final form at 35; a 3-stage line shows its mid form at 20.
   const STAGE_BANDS = { mid: 20, final: 35 };
-  // Move kinds that have a built boss form (GymBrain.cast in boss-ai.js: melee and buff have their own form, everything else is the projectile path).
-  // Add a kind here only when its boss form is built and tested; validate() rejects every other kind instead of letting it misfire.
-  const BOSS_FORMS = ['melee', 'projectile', 'buff'];
   const STANCES = ['close', 'far', 'mixed'];
-  const RANGES = ['close', 'far', 'any'];
   const STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
   const GYM_KEYS = ['id', 'leader', 'badge', 'arena', 'boost', 'signatures'];
-  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'moves'];
-  const MOVE_KEYS = ['id', 'weight', 'range', 'hpBelow', 'stacks'];
+  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'cards', 'moves'];
+  const MOVE_KEYS = ['id', 'hpBelow'];
+
+  /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'shot' (shapes
+   *  that travel straight along the aim) or 'buff' (a pure self stat change). Emitters, chains, delays, persistent moves and caster
+   *  commitments have no gym form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
+  function formOf(d) {
+    if (!d) return null;
+    const v = d.delivery || {}, p = d.payload || [];
+    if (p.some(fx => fx.t === 'emit') || d.persistent || d.casterState || v.delay || (d.space && d.space.chainHops)) return null;
+    if (!d.space) return p.length && p.every(fx => fx.t === 'stat' && fx.side !== 'foe') ? 'buff' : null;
+    if (v.anchor !== 'caster') return null;
+    if (v.motion === 'static' && v.targeting === 'nearest' && d.space.shape === 'radial') return 'melee';     // a cone; beams wait for their own form
+    if (v.motion === 'travels' && v.targeting === 'direction' && !v.path && !v.aimTrack) return 'shot';
+    return null;
+  }
 
   /** Builds a stage ladder from national dex numbers, base form first. Levels default to STAGE_BANDS; pass `levels` to override per line. */
   function ladder(dexes, levels) {
@@ -41,44 +52,44 @@ G.Gyms = (() => {
     // boost: the badge's run-long team buff (mainline: Boulder = +10% Attack). stat is one of hp, atk, def, spa, spd, spe.
     { id: 'kanto-gym-1', leader: 'Brock', badge: 'Boulder Badge', arena: 'rock', boost: { stat: 'atk', pct: 0.10 },
       signatures: [
-        // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (shorter wind-up/recovery/cooldown). Both TUNE, default 1.
-        // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned).
-        { line: ladder([74, 75, 76]), stance: 'mixed', power: 1, tempo: 1, moves: [
-          { id: 'tackle', weight: 2, range: 'close', stacks: { effect: 2, area: 1, arc: 1, recharge: 2 } },
-          { id: 'rock-throw', weight: 3, range: 'any', stacks: { effect: 3, count: 2, recharge: 2, size: 1, speed: 1 } },
-          // Slice E2a: Harden is the player's stage version now (+1 Defense per cast, 8 s). Buff Stacks no longer exists for it, so only Duration is authored.
-          { id: 'harden', weight: 1, range: 'any', stacks: { duration: 2 } }
+        // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (cooldowns, tell and recovery divided by it). Both TUNE, default 1.
+        // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned). Cards (Jess 2026-10-31): Tackle Power 52, reach 70; Rock Throw Power 58.5,
+        // 3 rocks of size 11.7 at 377 px/s; Harden takes none.
+        { line: ladder([74, 75, 76]), stance: 'mixed', power: 1, tempo: 1, cards: { damage: 3, count: 2, velocity: 3, area: 2 }, moves: [
+          { id: 'tackle' },
+          { id: 'rock-throw' },
+          { id: 'harden' }
         ] },
-        // Slots 2 to 6: PROVISIONAL move sets (TUNE, no stacks yet), built only from the boss forms that exist. Balance pass pending.
+        // Slots 2 to 6: PROVISIONAL move sets (TUNE, no cards yet; the gym-roster branch authors them). Balance pass pending.
         // Slot 2: Rhyhorn -> Rhydon, the Ground-lean bruiser.
         { line: ladder([111, 112]), stance: 'close', power: 1, tempo: 1, moves: [
-          { id: 'body-slam', weight: 3, range: 'close' },
-          { id: 'rock-throw', weight: 2, range: 'any' },
-          { id: 'swords-dance', weight: 1, range: 'any', hpBelow: 0.5 }
+          { id: 'body-slam' },
+          { id: 'rock-throw' },
+          { id: 'swords-dance', hpBelow: 0.5 }
         ] },
         // Slot 3: Omanyte -> Omastar, the special threat.
         { line: ladder([138, 139]), stance: 'far', power: 1, tempo: 1, moves: [
-          { id: 'water-gun', weight: 3, range: 'far' },
-          { id: 'rock-throw', weight: 2, range: 'any' },
-          { id: 'harden', weight: 1, range: 'any' }
+          { id: 'water-gun' },
+          { id: 'rock-throw' },
+          { id: 'harden' }
         ] },
         // Slot 4: Kabuto -> Kabutops, the fast physical one.
         { line: ladder([140, 141]), stance: 'close', power: 1, tempo: 1, moves: [
-          { id: 'metal-claw', weight: 3, range: 'close' },
-          { id: 'water-gun', weight: 2, range: 'any' },
-          { id: 'swords-dance', weight: 1, range: 'any', hpBelow: 0.6 }
+          { id: 'metal-claw' },
+          { id: 'water-gun' },
+          { id: 'swords-dance', hpBelow: 0.6 }
         ] },
         // Slot 5: Onix -> Steelix (Gen-2 line-completion), the Defense wall.
         { line: ladder([95, 208]), stance: 'close', power: 1, tempo: 1, moves: [
-          { id: 'body-slam', weight: 2, range: 'close' },
-          { id: 'rock-throw', weight: 3, range: 'any' },
-          { id: 'harden', weight: 2, range: 'any' }
+          { id: 'body-slam' },
+          { id: 'rock-throw' },
+          { id: 'harden' }
         ] },
         // Slot 6: Aerodactyl, the speed ace (single stage).
         { line: ladder([142]), stance: 'mixed', power: 1, tempo: 1, moves: [
-          { id: 'wing-attack', weight: 3, range: 'close' },
-          { id: 'rock-throw', weight: 2, range: 'any' },
-          { id: 'agility', weight: 1, range: 'any' }
+          { id: 'wing-attack' },
+          { id: 'rock-throw' },
+          { id: 'agility' }
         ] }
       ] }
   ];
@@ -141,23 +152,28 @@ G.Gyms = (() => {
       let damaging = 0;
       for (const m of s.moves || []) {
         for (const k of unknownKeys(m, MOVE_KEYS)) bad.push(who + ': ' + m.id + ' has unknown field ' + k);
-        if (!(m.weight > 0)) bad.push(who + ': ' + m.id + ' needs a weight');
-        if (!RANGES.includes(m.range)) bad.push(who + ': ' + m.id + ' has a bad range');
-        const cat = G.Moves.BY_ID[m.id];
-        if (!cat) { bad.push(who + ': unknown move ' + m.id); continue; }
-        if (cat.cat !== 'status') damaging++;
-        if (!BOSS_FORMS.includes(cat.kind)) bad.push(who + ': ' + m.id + ' is a ' + cat.kind + ' move, which has no boss form yet');
-        const inst = G.Moves.instance(m.id);      // every authored stack must be accepted by the real upgrade rules, in order
-        for (const id in m.stacks || {}) for (let i = 0; i < m.stacks[id]; i++) {
-          if (!G.Moves.addStack(inst, id)) { bad.push(who + ': ' + m.id + ' cannot take ' + id + ' x' + (i + 1) + ' (' + (G.Mechanics.BY_ID[id] ? G.Mechanics.reason(inst, G.Mechanics.BY_ID[id]) : 'unknown mechanic') + ')'); break; }
-        }
+        if (m.hpBelow != null && !(m.hpBelow > 0 && m.hpBelow < 1)) bad.push(who + ': ' + m.id + ' hpBelow must be in (0, 1)');
+        const d = G.MoveDefs[m.id];
+        if (!d) { bad.push(who + ': unknown move ' + m.id); continue; }
+        if (d.basePower > 0) damaging++;
+        if (!formOf(d)) bad.push(who + ': ' + m.id + ' has no gym form yet (leaders cast melee cones, straight shots and self buffs)');
       }
       if (s.moves && s.moves.length && !damaging) bad.push(who + ' needs at least one damaging move');
+      // cards: the player's card rules, per mon (slice 7a); each must exist, be a move card, respect its cap and fit at least one move
+      const cards = s.cards || {};
+      for (const id of Object.keys(cards)) {
+        const c = G.TeamCards.BY_ID[id], n = cards[id];
+        if (!c) bad.push(who + ': unknown card ' + id);
+        else if (c.team) bad.push(who + ': ' + id + ' is a team card, and leaders use the base stage timers');
+        else if (!Number.isInteger(n) || n < 1) bad.push(who + ': card ' + id + ' needs a whole number of stacks');
+        else if (c.cap && n > c.cap) bad.push(who + ': card ' + id + ' is capped at ' + c.cap);
+        else if (!(s.moves || []).some(m => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length)) bad.push(who + ': card ' + id + ' fits none of its moves');
+      }
     }
     return bad;
   }
 
   const STAT_LABEL = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
 
-  return { STAT_LABEL, LEVEL_OFFSET, TTK, ENRAGE_AFTER, LOOPS, STAGE_BANDS, BOSS_FORMS, KANTO, listFor, allRegions, stageIndex, stageFor, lineup, validate };
+  return { STAT_LABEL, LEVEL_OFFSET, TTK, ENRAGE_AFTER, LOOPS, STAGE_BANDS, KANTO, listFor, allRegions, stageIndex, stageFor, lineup, formOf, validate };
 })();

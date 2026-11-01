@@ -227,7 +227,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
     const first = run(mkP([['fire-spin']], { teamCards: TC.store() }), [], 1 / 60);
     ok(castsOf(first, 'fire-spin').length === 1 && castsOf(first, 'fire-spin')[0].restart === false, 'restart: a normal spawn is not marked restart'); }
   { const s2 = fs.readFileSync(pathOf('js/systems/move-render.js'), 'utf8');
-    ok(/if \(!pl \|\| ev\.restart \|\| !G\.MoveRoute\.routed\(ev\.moveId\)\) return;/.test(s2), 'restart: the render plays no cast for a restart (no animation, sound or Life Orb cost)'); }
+    ok(/if \(!pl \|\| ev\.restart \|\|( ev\.enemy \|\|)? !G\.MoveRoute\.routed\(ev\.moveId\)\) return;/.test(s2), 'restart: the render plays no cast for a restart (no animation, sound or Life Orb cost)'); }     // 7a adds the enemy-cast skip
   // a named emitted child folds by its own id
   { const id = syn('tc-named-emit', { space: undefined, delivery: { anchor: 'caster', targeting: 'direction', motion: 'static', endOn: [{ time: 0.3 }] },
       payload: [{ t: 'emit', trigger: 'cast', count: 1, move: 'ember' }], cd: 5 });

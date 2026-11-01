@@ -7,8 +7,11 @@
  *   ROUTED             the ONE list of move ids the new path supports. It grows with each slice.
  *   routed(id)         flag on, single-player run (co-op stays legacy) and the id is in ROUTED. combat.js skips these slots
  *                      (both its recharge loop and its cast loop), G.MoveSim runs them, so each slot timer has one owner.
- *   tick(dt, pl, now)  game.js calls it right after G.Combat.tick: the camera view for offScreen, then G.MoveSim.tick.
+ *   tick(dt, pl, now)  game.js calls it every frame right after G.Combat.tick: the camera view for offScreen, then G.MoveSim.tick
+ *                      (flag on: the player's routed slots, then the step) or only G.MoveSim.step (flag off).
  *   reset()            drops every live instance (run start, back to the menu).
+ * Slice 7a (D-ENEMY, Jess 2026-10-31): gym leaders cast through G.MoveSim on both flags (their brains call G.MoveSim.castAt from the
+ * enemy update), so the sim steps every frame even with the flag off; the flag only decides the player's path.
  */
 G.MoveRoute = (() => {
   const on = /[?&]dev\b/.test(location.search) && /[?&]newcombat\b/.test(location.search);
@@ -26,10 +29,11 @@ G.MoveRoute = (() => {
   let owner = null;
 
   function tick(dt, pl, now) {
-    if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
-    owner = pl;
     const C = G.Camera;
     G.MoveSim.setView({ x: C.left(), y: C.top(), w: C.w, h: C.h });
+    if (!on) { G.MoveSim.step(dt, now); return; }     // 7a: no routed player slots, but a gym leader's shapes still move
+    if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
+    owner = pl;
     G.MoveSim.tick(dt, pl, now);
   }
   function reset() { owner = null; G.MoveSim.clear(); }

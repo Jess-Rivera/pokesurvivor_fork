@@ -102,7 +102,7 @@ G.Game = (() => {
     G.FX.clear();
     G.Projectiles.clear();
     G.Combat.clearFields();
-    if (G.MoveRoute.on) G.MoveRoute.reset();
+    G.MoveRoute.reset();     // slice 7a: gym leaders cast through G.MoveSim on both flags, so it is cleared on both
     G.EnemyMgr.clear();
     G.Pickups.clear();
     G.Spawner.reset();
@@ -837,7 +837,7 @@ G.Game = (() => {
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
     G.Combat.tick(dt, pl, time);
-    if (G.MoveRoute.on) G.MoveRoute.tick(dt, pl, time);     // ?dev&newcombat: routed slots run in G.MoveSim (slice 3d)
+    G.MoveRoute.tick(dt, pl, time);     // ?dev&newcombat: routed slots run in G.MoveSim (slice 3d); gym leaders' casts on both flags (7a)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);
     G.Combat.updateFields(dt);
@@ -882,7 +882,7 @@ G.Game = (() => {
     G.World.drawLiquid(ctx, cam, t);
     G.Hazards.draw(ctx);
     G.Combat.drawGroundFields(ctx);
-    if (G.MoveRoute.on) G.MoveRender.drawGround(ctx);
+    G.MoveRender.drawGround(ctx);     // slice 7a: on both flags (gym leaders' shapes)
     G.Pickups.draw(ctx);
 
     // Everything with "feet" is sorted by Y: objects, enemies, player.
@@ -912,7 +912,7 @@ G.Game = (() => {
     drawScene(G.Camera, G.Coop.active ? [pl, ...G.Coop.puppets()] : [pl]);
     G.Projectiles.draw(ctx);
     G.Combat.drawAirFields(ctx);
-    if (G.MoveRoute.on) G.MoveRender.drawAir(ctx);
+    G.MoveRender.drawAir(ctx);
     G.FX.draw(ctx);
     ctx.restore();
 
@@ -1034,7 +1034,7 @@ G.Game = (() => {
       G.World.reset(4242);
       G.World.setBiome(bi, true);
       G.FX.clear(); G.Projectiles.clear(); G.Combat.clearFields(); G.EnemyMgr.clear(); G.Pickups.clear();
-      if (G.MoveRoute.on) G.MoveRoute.reset();
+      G.MoveRoute.reset();
       wanderers = CAST.map(dex => spawn(dex, true));
     }
 

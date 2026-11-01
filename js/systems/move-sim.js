@@ -32,11 +32,15 @@
  * within range. delay (D28): an instance with delivery.delay spends whole steps waiting (no motion, collision, aging or endOn; only an
  * owner faint ends it, as it would anyway), then acts as if cast in the frame after its wait ran out; 'move:land' marks that first
  * live step for the render. falls (R8): a world shape that never moves; the drop is drawn by the render, moveSpeed is ignored.
+ * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon, js/entities/boss-ai.js) names its foes (owner.foes(), the player). Its brain
+ * times the casts and calls castAt with the aim it locked at the tell; its shapes collide only with those foes (never enemies or
+ * props), and a hit goes through G.MoveEffects to the player's own hurt. The step is shared, so its shapes move with everyone's.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
+ *   castAt(owner, slot, def, now, aim)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain
  *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
  *
  * Commitments (casterState.commitment, slice 4b S13): cooldown { type: freeze, id, t } holds the named slot timers of the caster
@@ -255,15 +259,16 @@ G.MoveSim = (() => {
     !cms.some(m => m.o === o && m.part === 'movement' && m.type === 'rooted') &&
     (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 
-  function castSlot(o, slot, def, now) {
+  /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the cast gate. */
+  function castSlot(o, slot, def, now, forced) {
     if (G.Status.stunned(o)) { slot.t = RETRY; return null; }       // a stunned owner casts nothing; the move stays ready
-    const gate = AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null;
+    const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
     if (!gate) { slot.t = RETRY; return null; }                       // cast gate: retry every 0.05 s
     if (!G.MoveEffects.canCast(def, o)) { slot.t = RETRY; return null; }     // P3: the cost would kill, or a shield is live; cooldown not spent
     if (!repoCanGo(def, o)) { slot.t = RETRY; return null; }         // 4c-2: no dash over a live dash, no dash at speed 0
     const buff = G.MoveEffects.isPureBuff(def);                       // SS8 (slice 5a): a pure buff has no cooldown; its trackers decide when it casts
     slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));      // D3
-    if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false, o.teamCards ? G.TeamCards.gateMul(o) : 1); return null; }     // fizzle spends the cooldown; a pure buff waits one Gate (SS8)
+    if (G.Status.fizzle(o, rng)) { if (buff) slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o)); return null; }     // fizzle spends the cooldown; a pure buff waits one Gate (SS8)
     const pick = settle(o, gate);                                     // 4c-3: the location roll, only for a real cast
     const cast = { owner: o, slot, moveId: def.id, time: now, x: o.x, y: o.y, aim: pick.aim, target: pick.target, point: pick.point, serial: ++castSerial };
     const self = G.MoveEffects.applyCast(def, cast, rng);             // recoil, shield, self stats, heal over time, setWeather (4b)
@@ -274,9 +279,12 @@ G.MoveSim = (() => {
       for (let i = 0; i < n; i++) roots.push(spawnInstance(def, cast, fanAngle(pick.aim, i, n, def.space.spread || 0), i));
     } else if (emitting(def)) roots.push(spawnInstance(def, cast, pick.aim, 0));     // 4d (H4): a shapeless emitter (Gust, Discharge) is still its own instance
     commit(o, slot, def, roots, self.shield);
-    G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim });
+    G.SimBus.emit('move:cast', { moveId: def.id, ownerId: o.id != null ? o.id : null, x: o.x, y: o.y, aim: pick.aim, enemy: !!o.foes });
     return cast;
   }
+  /** Slice 7a (D-ENEMY): a gym leader's cast, timed by its brain (boss-ai.js), which owns the tell and the slot's recharge. The move
+   *  fires along `aim` whether or not the player is still in reach; stun, the cast cost, fizzle and the cooldown hold as for the player. */
+  const castAt = (o, slot, def, now, aim) => castSlot(o, slot, def, now, { aim, target: null });
 
   // ---- caster-state commitments (slice 4b, S13) ----
   const lifeOf = def => { const c = (def.delivery.endOn || []).find(c => c.time != null); return c ? c.time : 0; };
@@ -525,17 +533,22 @@ G.MoveSim = (() => {
 
   function collide(inst, maxR) {
     if (inst.armed === false || inst.hitless || !inst.shape) return;     // 4c-2: a disarmed hitbox tests nothing; 4d: nor does a pure emitter
-    const s = inst.shape, b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR), cands = [];
-    G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, e => { if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, e.x, e.y, e.r)) cands.push(e); });
-    // destructible props join the same sweep (slice 3d, D2): solid ones spend pierce like an enemy, grass never does
-    const pb = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, PROP_R);
-    for (const p of G.World.propsInCircle(pb.x, pb.y, pb.r)) if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r)) cands.push(p);
+    const s = inst.shape, cands = [], o = inst.cast.owner;
+    if (o.foes) {     // slice 7a: an enemy owner (a gym leader) hits only its foes, the player; never enemies or props
+      for (const p of o.foes()) if (!p.dead && G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r || 0)) cands.push(p);
+    } else {
+      const b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR);
+      G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, e => { if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, e.x, e.y, e.r)) cands.push(e); });
+      // destructible props join the same sweep (slice 3d, D2): solid ones spend pierce like an enemy, grass never does
+      const pb = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, PROP_R);
+      for (const p of G.World.propsInCircle(pb.x, pb.y, pb.r)) if (G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r)) cands.push(p);
+    }
     // sweep order: nearest to the previous position first, ties by id (S8) with enemies before props, so a pierce budget is spent in path order
     cands.sort((a, c) => ((a.x - inst.prevX) ** 2 + (a.y - inst.prevY) ** 2) - ((c.x - inst.prevX) ** 2 + (c.y - inst.prevY) ** 2) ||
       isProp(a) - isProp(c) || (a.id < c.id ? -1 : a.id > c.id ? 1 : 0));
     const elig = ELIGIBLE[inst.spec.hitPolicy || 'oncePerInstance'], go = [];
     for (const e of cands) {     // I4: every eligibility decision before any payload runs
-      const key = isProp(e) ? e : e.id, had = inst.hits.get(key), rec = had && had.leg === inst.leg ? had : null;     // a prop is keyed by itself; a record from an earlier leg counts as absent (R2)
+      const key = isProp(e) || o.foes ? e : e.id, had = inst.hits.get(key), rec = had && had.leg === inst.leg ? had : null;     // a prop is keyed by itself; a record from an earlier leg counts as absent (R2)
       if (!elig(rec, inst)) continue;
       if (!rec) {
         if (inst.struck > inst.pierce) continue;
@@ -549,7 +562,7 @@ G.MoveSim = (() => {
       if (isProp(e)) { if (e.hp > 0) G.MoveEffects.applyProp(inst, e); continue; }     // props emit no 'move:hit' (enemy-only event)
       if (e.dead) continue;
       const r = G.MoveEffects.applyHit(inst, e, 0, rng);     // always a result: a riders-only hit still counts (4a, P4)
-      G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
+      G.SimBus.emit('move:hit', { moveId: inst.spec.id, instId: inst.id, enemyId: o.foes ? null : e.id, dmg: r.dmg, crit: r.crit, typeMult: r.typeMult, x: e.x, y: e.y, hop: 0 });
       struck.push(e);
       if (inst.emits) for (const st of inst.emits) if (st.fx.trigger === 'enemyHit' && capOk(st) && emitOne(inst, st, e, inst.heading, e)) st.done++;     // 4d (D29): once per hit event
     }
@@ -664,7 +677,7 @@ G.MoveSim = (() => {
   }
 
   return {
-    tick, step, clear,
+    tick, step, clear, castAt,
     setRng: fn => { rng = fn || Math.random; },
     setView: v => { view = v || null; },
     setFilter: fn => { routed = fn || (() => true); },     // slice 3d: the game passes its routed-id check; a rejected slot is never touched

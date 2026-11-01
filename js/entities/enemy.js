@@ -36,7 +36,8 @@
       this.x = x; this.y = y;
       this.boss = boss;
       this.elite = def.elite || null;      // overworld elite descriptor (systems/elites.js); a regular wild Enemy otherwise
-      this.scale = boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
+      // A gym leader's mon is drawn at player size, so its moves reach exactly as the player's do (slice 7a, Jess 2026-10-31).
+      this.scale = def.gym ? 1 : boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
       this.anim = new G.Sprites.Animator(def.dex, this.scale);
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
@@ -75,7 +76,7 @@
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
       this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0) + wildBump;   // escalation makes hot wilds hit harder too, not just tankier
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
-      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); its level, contact factor and AI are set by the brain (boss-ai.js)
+      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); its level, contact factor, sim-owner fields and AI are set by the brain (boss-ai.js)
       this.brain = null;                    // a boss's brain (G.Boss.make); it makes every boss decision, the body only delegates
       this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a

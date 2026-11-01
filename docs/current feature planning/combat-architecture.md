@@ -229,6 +229,9 @@ Proposed files (all new; none loaded by the game until slice 3d):
 | clear(owner) | remove all instances (run end, death) | | instances | | |
 | setRng(fn) | harness hook | | module rng | | |
 | setView(rect) | the visible world rectangle {x, y, w, h} for endOn offScreen (260 px margin); set by the game each frame from 3d, fixed in harnesses, so the sim never calls the camera (I7) | | module view | | |
+| castAt(owner, slot, def, now, aim) | slice 7a (D-ENEMY): one cast along `aim` with no cast gate, for an enemy owner whose brain timed it (the tell locked the aim); stun, cost, fizzle and cooldown as castSlot | -> CastContext or null | slot.t | only gym leader brains call it | castSlot |
+
+Enemy owners (slice 7a, D-ENEMY; Jess 2026-10-31): a gym leader's mon is a sim owner. It supplies `foes()` (the player), `activeGroup()`, `moveFactor(m)` (the boss ratio path), `teamCards` (its own card store, so defOf folds its cards), `cdMul` (1 / tempo), `aim` and `strongHost`. Its brain (js/entities/boss-ai.js) times every cast through castAt and never calls tick, so the shared step runs once per frame from MoveRoute.tick on both flags. collide tests only the owner's foes (no enemies, no props) and keys hit records by the foe object; applyHit hands the hit to the player's hurt with the owner's factor (damage only; knockback skipped, other riders noted and skipped, TODO). 'move:cast' carries `enemy: true` so the render never plays the player's animation for it.
 
 ### move-effects.js
 | function | responsibility | in -> out | mutates | invariants | deps |

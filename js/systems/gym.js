@@ -1,7 +1,7 @@
 /* ============ gym.js: gym gates, leaders and the badge package (feature/boss-rework) ============
  * Gyms are the only bosses (2026-10-31). Gym 1 gate opens at 4:00; each later gate opens GAP seconds after the previous gym is beaten
  * AND the player is back on the map. A gate stays until entered. The gym level is the run-time level at gate spawn + LEVEL_OFFSET,
- * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored catalog moves (G.Gyms). Losing (team wipe)
+ * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored moves and cards (G.Gyms). Losing (team wipe)
  * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps).
  * The gate and the arena themselves are systems/gym-arena.js; this module owns the schedule, the leader's def and the rewards.
  * Pilot scope: Kanto gym 1 (Brock). The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
@@ -74,13 +74,6 @@ G.Gym = (() => {
     return s;
   }
 
-  /** A leader's move as a live player-style move instance: the catalog move plus its authored upgrade stacks. */
-  function buildMove(m) {
-    const inst = G.Moves.instance(m.id);
-    for (const id in m.stacks || {}) for (let i = 0; i < m.stacks[id]; i++) G.Moves.addStack(inst, id);
-    return inst;
-  }
-
   /** The leader's def for roster slot `slot` (0 = first): HP from the elite reference model with the gym's TTK target, at the gym level.
    *  The species is the stage the slot's evolution line shows at the effective level (G.Gyms.stageFor). */
   function makeDef(g, slot = 0) {
@@ -98,7 +91,9 @@ G.Gym = (() => {
     return {
       dex, name: mon.name, hp, spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
       dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
-      gym: { level: lvl, leader: g.leader, badge: g.badge, species: mon.name, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1, moves: sig.moves.map(m => Object.assign({}, m, { inst: buildMove(m) })), engagedAt: null }
+      // moves and cards are read by the GymBrain (boss-ai.js), which casts the moves through G.MoveSim with the cards folded in (slice 7a)
+      gym: { level: lvl, leader: g.leader, badge: g.badge, species: mon.name, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1,
+        cards: Object.assign({}, sig.cards), moves: sig.moves.map(m => Object.assign({}, m)), engagedAt: null }
     };
   }
 
