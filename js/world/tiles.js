@@ -1114,31 +1114,6 @@ G.Tiles = (() => {
       return P.canvas();
     },
 
-    /** The gym gate (still the old purple portal art, issue #1). variant = frame 0..3. */
-    gate(B, variant) {
-      const P = Pix(30, 46);
-      const glow = pack('#7b3cff'),
-        mid = pack('#b48aff'),
-        core = pack('#140a26'),
-        white = pack('#f2e6ff');
-      for (let y = 2; y < 44; y++) {
-        const t = (y - 2) / 42;
-        const w = Math.sin(t * Math.PI) * 9 + 1;
-        const off = Math.round(Math.sin(t * 9 + variant * 1.6) * 2.2 + (H(y, variant, 91) - 0.5) * 2);
-        for (let x = -Math.ceil(w) - 2; x <= Math.ceil(w) + 2; x++) {
-          const ax = Math.abs(x) / w;
-          const px = 15 + x + off;
-          if (ax <= 0.45) P.set(px, y, core);
-          else if (ax <= 0.75) P.set(px, y, H(px, y, 92 + variant) < 0.15 ? white : mid);
-          else if (ax <= 1.15 || H(px, y, 93 + variant) < 0.3) P.set(px, y, glow);
-        }
-      }
-      // Chispas en el centro.
-      for (let i = 0; i < 6; i++)
-        P.set(13 + Math.floor(H(i, variant, 94) * 5), 8 + Math.floor(H(i, variant, 95) * 30), white);
-      return P.canvas();
-    },
-
     chest() {
       const P = Pix(16, 14);
       const gold = pack('#f2c443'),

@@ -21,8 +21,87 @@ G.GymArena = (() => {
   let gate = null; // { x, y, t, gym }: the gate on the map; gym = the gate info from G.Gym
   let arena = null; // { tx, ty, r, dex, shiny, type, gym, x, y, back, biome, t, phase, endT, bossId }
   let asked = false;
+  const GATE_ART_SCALE = 0.5; // the gym building images are 288x248; drawn at half size on the map
+  const GATE_ART_W = 288,
+    GATE_ART_H = 248; // art pixels; gym-contact.png has the same size
+  const GATE_MASK_TOP = 24; // fallback contact area before the mask loads: the art minus this many top rows (the roof)
+  const GATE_CLEAR_STEP = 16; // spawn clearance: the contact area is sampled on this grid (world px)...
+  const GATE_CLEAR_R = 8; // ...and each sample needs this much free space
+  const GATE_SHADOW_DX = 10,
+    GATE_SHADOW_DY = -8; // the building's shadow, offset north-east (world px)
+  const GATE_SHADOW_A = 0.35;
+  const GATE_FALLBACK = '#c9b37a'; // ring color for an arena type with no entry in TYPE_COLOR
+  const gateArt = {}; // arena type -> Image of assets/tileset/gyms/gym-<type>.png (loaded when a gate of that type opens)
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
+
+  /** A black copy of an image (same shape), for the building's shadow. */
+  function silhouette(img) {
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+
+  /** The gate art for an arena type, started loading on first ask. Returns an entry whose img (and shadow) is drawable once ok is true. */
+  function artFor(type) {
+    let a = gateArt[type];
+    if (!a) {
+      a = gateArt[type] = { img: null, shadow: null, ok: false };
+      if (typeof Image === 'undefined') return a; // the offline harnesses run without a DOM
+      a.img = new Image();
+      a.img.onload = () => {
+        a.shadow = silhouette(a.img);
+        a.ok = true;
+      };
+      a.img.src = 'assets/tileset/gyms/gym-' + type + '.png';
+    }
+    return a;
+  }
+
+  // The contact area, shared by every gym: the painted pixels of assets/tileset/gyms/gym-contact.png (1 = solid).
+  const mask = { ok: false, solid: null };
+  if (typeof Image !== 'undefined') {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = GATE_ART_W;
+      c.height = GATE_ART_H;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, GATE_ART_W, GATE_ART_H).data;
+      mask.solid = new Uint8Array(GATE_ART_W * GATE_ART_H);
+      for (let i = 0; i < mask.solid.length; i++) mask.solid[i] = d[i * 4 + 3] > 0 ? 1 : 0;
+      mask.ok = true;
+    };
+    img.src = 'assets/tileset/gyms/gym-contact.png';
+  }
+
+  /** Is world point (x, y) on the contact area of a building whose door (feet) is at (gx, gy)? */
+  function onBuilding(gx, gy, x, y) {
+    const ix = Math.floor((x - gx) / GATE_ART_SCALE + GATE_ART_W / 2),
+      iy = Math.floor((y - gy - 4) / GATE_ART_SCALE + GATE_ART_H);
+    if (ix < 0 || iy < 0 || ix >= GATE_ART_W || iy >= GATE_ART_H) return false;
+    return mask.ok ? mask.solid[iy * GATE_ART_W + ix] === 1 : iy >= GATE_MASK_TOP;
+  }
+
+  /** Is the whole contact area of a building at (gx, gy) on free ground? */
+  function spotClear(gx, gy) {
+    const w = GATE_ART_W * GATE_ART_SCALE,
+      h = GATE_ART_H * GATE_ART_SCALE;
+    for (let y = gy + 4 - h; y <= gy + 4; y += GATE_CLEAR_STEP)
+      for (let x = gx - w / 2; x <= gx + w / 2; x += GATE_CLEAR_STEP) {
+        const px = Math.min(x, gx + w / 2 - 1),
+          py = Math.min(y, gy + 3);
+        if (onBuilding(gx, gy, px, py) && !G.World.isFree(px, py, GATE_CLEAR_R)) return false;
+      }
+    return true;
+  }
 
   function reset() {
     gate = null;
@@ -35,7 +114,7 @@ G.GymArena = (() => {
   function update(dt, pl) {
     if (gate) {
       gate.t += dt;
-      if (!arena && !pl.dead && G.U.dist2(pl.x, pl.y, gate.x, gate.y - 10) < 30 * 30) enter();
+      if (!arena && !pl.dead && onBuilding(gate.x, gate.y, pl.x, pl.y)) enter();
     }
     if (arena) arenaTick(dt, pl);
   }
@@ -48,12 +127,13 @@ G.GymArena = (() => {
         d = G.U.rand(380, 560);
       const x = near.x + Math.cos(a) * d,
         y = near.y + Math.sin(a) * d * 0.85;
-      if (!G.World.isFree(x, y, 22)) continue;
+      if (!spotClear(x, y)) continue;
       gate = { x, y, t: 0, gym: info };
+      artFor(info.arena);
       asked = false;
       // (The big notice is drawn by hud.js while gate.t < 4.5 s.)
       G.Audio.sfx('gate');
-      G.FX.ring(x, y, 6, 80, '#b48aff', 0.7, 5);
+      G.FX.ring(x, y, 6, 80, G.U.TYPE_COLOR[info.arena] || GATE_FALLBACK, 0.7, 5);
       G.Spawner.say('A gym gate opened: ' + info.leader + ' (Lv ' + info.level + ')', 3.4, true);
       return true;
     }
@@ -214,28 +294,27 @@ G.GymArena = (() => {
 
   // ---------------- drawing ----------------
 
-  /** The gate, to sort it by Y with the rest of the scene. The art is still the old purple portal (issue #1). */
+  /** The gate, to sort it by Y with the rest of the scene: the gym building for its arena type, door at the gate's feet. */
   function drawable() {
     if (!gate) return null;
     return {
       y: gate.y,
       draw(ctx) {
-        const P = G.Sprites.PX;
-        const img = G.Tiles.propSprite(0, 'gate', Math.floor(gate.t * 8) % 4);
-        const w = img.width * P,
-          h = img.height * P;
+        const a = artFor(gate.gym.arena);
         const fadeIn = Math.min(1, gate.t * 2);
         ctx.save();
-        ctx.globalAlpha = 0.25 * fadeIn;
-        ctx.fillStyle = '#7b3cff';
-        ctx.beginPath();
-        ctx.ellipse(gate.x, gate.y, 34, 12, 0, 0, 6.2832);
-        ctx.fill();
-        ctx.globalAlpha = fadeIn;
-        ctx.drawImage(img, Math.round(gate.x - w / 2), Math.round(gate.y - h + 4), w, h);
+        if (a.ok) {
+          const w = a.img.width * GATE_ART_SCALE,
+            h = a.img.height * GATE_ART_SCALE;
+          const x = Math.round(gate.x - w / 2),
+            y = Math.round(gate.y - h + 4);
+          ctx.imageSmoothingEnabled = false;
+          ctx.globalAlpha = GATE_SHADOW_A * fadeIn;
+          ctx.drawImage(a.shadow, x + GATE_SHADOW_DX, y + GATE_SHADOW_DY, w, h);
+          ctx.globalAlpha = fadeIn;
+          ctx.drawImage(a.img, x, y, w, h);
+        }
         ctx.restore();
-        if (Math.random() < 0.3)
-          G.FX.px(gate.x + G.U.rand(-14, 14), gate.y - G.U.rand(10, 80), '#d9c2ff', { vy: -40, life: 0.6 });
       },
     };
   }
