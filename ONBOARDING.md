@@ -116,7 +116,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `funding.js` support/funding config.
 
 ### `js/entities/`
-- `player.js`, `enemy.js` (plus the `EnemyMgr` manager), `projectile.js`,
+- `player.js`, `enemy.js` (plus the `EnemyMgr` manager), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
+  enemy.js body plus a brain; the GymBrain makes every gym leader decision), `projectile.js`,
   `pickup.js`, `fx.js` and `vfx.js` (the 23 pixel-art attack shapes).
 
 ### `js/systems/` (gameplay rules)
@@ -176,7 +177,7 @@ propose or implement cloud or multiplayer work during the local-first phase.
   only, with no lang-en.js entry (CLAUDE.md i18n rule).
 - **New enemy / personality:** `js/data/enemies.js` for the roster/tiers; enemy
   behavior and personalities in `js/entities/enemy.js` (and spawn logic in
-  `js/systems/spawner.js`).
+  `js/systems/spawner.js`). Boss behavior goes in a brain in `js/entities/boss-ai.js`, never in enemy.js.
 - **New achievement or quest:** `js/data/achievements.js` / `js/data/missions.js`,
   surfaced through `js/ui/goals-ui.js` and tracked in `js/systems/progress.js`.
 - **New upgrade:** `js/data/upgrades.js`, applied in `js/entities/player.js` / combat.

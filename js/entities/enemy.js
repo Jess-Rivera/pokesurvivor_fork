@@ -75,14 +75,8 @@
       this.atkCat = G.Stats.enemyCat(this.atkBase, this.spaBase);
       this.atkLvl = boss ? 0 : G.Stats.levelForTime(sc.t || 0) + wildBump;   // escalation makes hot wilds hit harder too, not just tankier
       this.atkFactor = boss ? null : G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.atkLvl);
-      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); a boss with authored moves and ratio damage
-      if (this.gym) {
-        this.atkLvl = this.gym.level;
-        this.baseAtkType = this.atkType;
-        const cm = this.gym.moves.map(x => x.inst).filter(m => m && m.cat !== 'status');
-        this.contactMove = cm.find(m => m.kind === 'melee') || cm[0] || null;
-        if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; this.baseAtkType = this.atkType; }
-      }
+      this.gym = def.gym || null;           // gym leader descriptor (systems/gym.js); its level, contact factor and AI are set by the brain (boss-ai.js)
+      this.brain = null;                    // a boss's brain (G.Boss.make); it makes every boss decision, the body only delegates
       this.atkFactor0 = this.atkFactor;     // elites: atkFactor = this x power x enrage, recomputed each frame (Elites.update)
       // Only those that FLOAT in their sprite fly over rocks and water (a
       // Rowlet walks even though it is Flying). Bosses, by their size, do too.
@@ -258,11 +252,7 @@
      */
     applyFlinch() {
       if (this.remote || this.dead || G.Status.stunned(this)) return false;
-      const ai = this.ai;
-      if (this.gym && ai) {
-        if (ai.cast) this.bossEnd();
-        else ai.cd = this.gymCd();
-      }
+      if (this.brain) this.brain.flinch();
       if (this.behavior === 'charger' && (this.phase === 'aim' || this.phase === 'dash')) { this.phase = 'walk'; this.pt = 1.1; }
       if (this.keepsDistance()) this.shotCd = this.shotGap();
       this.touchCd = Math.max(this.touchCd, 0.55);
@@ -521,8 +511,8 @@
       let vx = dx * spd, vy = dy * spd;
       let animBase = 'Walk';
 
-      if (this.gym) {
-        [vx, vy, animBase] = this.bossMove(dt, pl, dist, dx, dy, spd);
+      if (this.brain) {
+        [vx, vy, animBase] = this.brain.step(dt, pl, dist, dx, dy, spd);
       } else if (this.fl) {
         [vx, vy, animBase] = this.flankMove(dt, pl, spd, dist);
       } else if (this.isSeeker()) {
@@ -613,160 +603,7 @@
       this.anim.loop(moving ? animBase : 'Idle', moving ? Math.max(0.6, spd / 70) : 1);
     }
 
-    // ---------------- gym leaders: movement and the cast loop ----------------
-    // Gym leaders are the only bosses (gyms only, 2026-10-31). A leader alternates between coming at you and fighting
-    // from range by its stance, picks an authored move by weight, range and HP gate (gymPick), telegraphs it with a
-    // wind-up (gymStart) and casts it (gymCast). There is no fury: the enrage is the 120 s clock (systems/gym.js).
-
-    bossInit() {
-      const st = this.gym.stance;
-      this.ai = { farLike: st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5, mode: st === 'far' ? 'far' : 'close', modeT: G.U.rand(6, 8),
-                  cd: 1.6, cast: null, side: Math.random() < 0.5 ? -1 : 1 };
-    }
-
-    bossMove(dt, pl, dist, dx, dy, spd) {
-      if (!this.ai) this.bossInit();
-      const ai = this.ai;
-      if (ai.cast) return this.gymCast(dt, pl);
-      ai.modeT -= dt; ai.cd -= dt;
-      // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s).
-      if (ai.modeT <= 0) {
-        ai.mode = ai.mode === 'far' ? 'close' : 'far';
-        ai.modeT = (ai.mode === 'far') === (ai.farLike > 0.5) ? G.U.rand(7, 9) : G.U.rand(4, 5);
-        ai.side = -ai.side;
-      }
-      // A gym leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19).
-      let vx = dx * spd, vy = dy * spd;
-      const [ddx, ddy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-      if (ai.mode === 'far') {
-        if (dist < 170) { vx = -ddx * spd; vy = -ddy * spd; }
-        else if (dist < 300) { vx = -ddy * spd * ai.side; vy = ddx * spd * ai.side; }   // te rodea
-      }
-      if (ai.cd <= 0 && G.Status.fizzle(this)) ai.cd = 1;       // paralysis / confusion: the attempt fails, it tries again in a second
-      if (ai.cd <= 0) {
-        const id = this.gymPick(dist);
-        if (id) this.gymStart(id, pl); else ai.cd = 0.3;
-      }
-      return [vx, vy, 'Walk'];
-    }
-
-    bossEnd() {
-      const ai = this.ai;
-      ai.cast = null;
-      ai.cd = this.gymCd();
-      this.gymRestore();
-      return [0, 0, 'Idle'];
-    }
-
-    // ---------------- gym leaders (authored moves, ratio damage; feature/boss-rework) ----------------
-    // The move list comes from G.Gyms (hand-authored, catalog moves only). A leader uses the PLAYER's version of each move: same
-    // radius / arc / speed / size / life / count / spread / pierce, same slash and projectile visuals (G.VFX.forMove), and Harden is the
-    // player's Harden (slice E2a: a +1 Defense stage per cast lasting its duration; no stack cap, duration / recovery sets how many overlap). Only the damage is
-    // the enemy ratio path (catalog Power and category), and a wind-up telegraphs the move so it can be dodged. Kinds without a boss
-    // form yet fall back to the projectile. The enrage is the 120 s clock (systems/gym.js).
-
-    /** Attack factor for an authored move: Power from the catalog, category from the move, level locked at gate spawn, enrage on top. */
-    gymFactor(m) {
-      const stab = this.types.includes(m.type) ? 1.5 : 1;      // same STAB the player gets on its own types
-      const special = m.cat === 'special';
-      return G.Stats.enemyAttackFactor(this.atkBase, this.spaBase, this.gym.level, m.dmg || 40, special ? 'special' : 'physical') * stab * this.gym.power * G.Gym.enrageMul(this) * G.Stages.mul(this, special ? 'spa' : 'atk');
-    }
-
-    /** A leader's buff cast is a mainline STAGE change (G.Stages): +stageN (default 1) on the move's stat per cast, each application
-     *  lasting the move's dur on its own timer, up to the move's stacks as the stage cap (max 6). The player's Speed buff stat is 'spd'. */
-    castBuff(m) {
-      const stat = ({ atk: 'atk', def: 'def', spd: 'spe', spe: 'spe' })[m.stat];
-      if (stat) G.Stages.add(this, stat, m.stageN || 1, m.dur, m.stacks | 0 || G.Stages.MAX);
-      if (m.stage2) G.Stages.add(this, m.stage2.stat, m.stage2.n, m.dur, G.Stages.MAX);
-    }
-
-    /** Weighted pick among the moves allowed by range and HP gate; null if none. */
-    gymPick(dist) {
-      // "close" = inside the player's own melee start range for the leader's melee move(s): move radius + body + 40 (combat.js rangeOf
-      // starts a swing at radius + 30). With no melee move it is a flat 150.
-      const mel = this.gym.moves.map(x => x.inst).filter(m => m && m.kind === 'melee');
-      const close = dist < (mel.length ? Math.max(...mel.map(m => m.radius)) + this.r + 40 : 150), frac = this.hp / this.maxHp;
-      const ok = this.gym.moves.filter(m => (m.range === 'any' || (m.range === 'close') === close) && (m.hpBelow == null || frac < m.hpBelow));
-      if (!ok.length) return null;
-      let r = Math.random() * ok.reduce((a, m) => a + m.weight, 0);
-      for (const m of ok) if ((r -= m.weight) <= 0) return m.id;
-      return ok[ok.length - 1].id;
-    }
-
-    /** Cooldown after a cast: damaging moves use the catalog rule 0.5 x (35 / PP); status moves keep their catalog cd. */
-    gymCd() {
-      const m = this.ai.lastMove;
-      if (!m) return 1.2;
-      // A buff move's catalog cd is the PLAYER's recast timer (slice E2a: 8 s); a leader picks moves by weight, so its recovery after a buff cast stays 0.85 s.
-      const cd = (m.kind === 'buff' ? 0.85 : Math.max(0.35, m.cd || 1)) + (m.cat === 'status' ? 0 : G.U.rand(0.2, 0.5));   // the move's own cd: 0.5 x (35 / PP) for damaging, shortened by Recharge stacks
-      return cd / this.gym.tempo;
-    }
-
-    gymStart(id, pl) {
-      const ai = this.ai, m = this.gym.moves.find(x => x.id === id).inst, type = m.type || this.baseAtkType, col = G.U.TYPE_COLOR[type] || '#ff7a9e';
-      const ang = Math.atan2(pl.y - this.y, pl.x - this.x);
-      const c = ai.cast = { id, t: 0, wind: 0.5, after: 0.35, ang, kind: m.kind, m };
-      ai.lastMove = m;
-      this.atkType = type;
-      if (m.cat !== 'status') { this.atkFactor = this.gymFactor(m); this.atkCat = m.cat === 'special' ? 'special' : 'physical'; }
-      if (m.kind === 'buff') c.wind = 0.3;
-      else if (m.kind === 'melee') c.wind = 0.45;
-      c.wind /= this.gym.tempo; c.after /= this.gym.tempo;
-      G.Gym.noteCast(id);
-      this.anim.play('Charge', { speed: 1.4 });
-      G.FX.ring(this.x, this.y, this.r, this.r * 2.4, col, c.wind, 2);       // the wind-up telegraph (the aim is locked now)
-    }
-
-    gymCast(dt, pl) {
-      const ai = this.ai, c = ai.cast, m = c.m;
-      c.t += dt;
-      if (c.t >= c.wind && !c.fired) {
-        c.fired = true;
-        const col = G.U.TYPE_COLOR[m.type] || '#ff7a9e';
-        if (c.kind === 'buff') {                 // the player's buff cast: the stack, a ring and rising sprites
-          this.castBuff(m);
-          const vis = G.VFX.forMove(m);
-          G.FX.ring(this.x, this.y, this.r * 2.4, this.r * 1.1, col, 0.35, 2.5);
-          for (let i = 0; i < 3; i++) G.FX.sp(vis.buff || 'arrow', vis.pal, this.x + G.U.rand(-this.r * 1.4, this.r * 1.4), this.y - G.U.rand(0, this.bodyH * 0.8), { vy: -70, life: 0.6 });
-        } else if (c.kind === 'melee') {          // the player's melee: slash visual, a cone of radius m.radius (from the body edge) and arc m.arc
-          const reach = m.radius + this.r, half = Math.min(m.arc, 6.2832) / 2;
-          G.FX.slash(this.x, this.y - G.LIFT * 0.5, c.ang, reach, m.arc, col, G.VFX.forMove(m));
-          this.anim.play('Attack', { speed: 1.4 });
-          const a = Math.atan2(pl.y - this.y, pl.x - this.x);
-          const inArc = Math.abs(((a - c.ang + Math.PI * 3) % 6.2832) - Math.PI) <= half;
-          if (!pl.dead && inArc && G.U.dist2(this.x, this.y, pl.x, pl.y) <= (reach + pl.r) * (reach + pl.r)) {
-            const w = G.Log.on ? G.Log.who(this, 'contact') : null;
-            pl.hurt(this.atkFactor, this.atkType, false, { factor: this.atkFactor, cat: this.atkCat, mul: 1 }, w);
-          }
-        } else {
-          this.gymShoot(m, Math.cos(c.ang), Math.sin(c.ang));
-        }
-      }
-      if (c.t >= c.wind + c.after) return this.bossEnd();
-      return [0, 0, 'Idle'];
-    }
-
-    /** The player's projectile: speed, size, life, count, spread, pierce and visuals from the move; the aim was locked at wind-up. */
-    gymShoot(m, ax, ay) {
-      const col = G.U.TYPE_COLOR[m.type], vis = G.VFX.forMove(m);
-      const n = Math.max(1, m.count | 0), spread = m.spread || 0;
-      const fan = Math.min(spread * n, 6.2832 * (n - 1) / n), base = Math.atan2(ay, ax);
-      for (let i = 0; i < n; i++) {
-        const off = n === 1 ? 0 : (i / (n - 1) - 0.5) * fan, a = base + off + G.U.rand(-0.03, 0.03);
-        G.Projectiles.spawn({
-          x: this.x + Math.cos(a) * 3, y: this.y + Math.sin(a) * 3, vx: Math.cos(a) * m.speed, vy: Math.sin(a) * m.speed,
-          dmg: this.shotDmg(), r: m.size, life: m.life, mul: 1, friendly: false, color: col, mtype: m.type,
-          atkFactor: this.atkFactor, atkCat: this.atkCat, src: this, pierce: m.pierce | 0, vis
-        });
-      }
-      this.anim.play('Shoot');
-      G.FX.spark(this.x + Math.cos(base) * this.r, this.y - G.LIFT + Math.sin(base) * this.r, col, Math.cos(base), Math.sin(base), 3);
-    }
-
-    /** Back to the leader's idle attack (contact) after a cast. */
-    gymRestore() {
-      if (this.contactMove) { this.atkFactor = this.gymFactor(this.contactMove); this.atkCat = this.contactMove.cat; this.atkType = this.contactMove.type; }
-    }
+    // Gym leader AI: js/entities/boss-ai.js (G.Boss, the GymBrain). update and applyFlinch delegate to this.brain.
 
     /** Walks straight away from the player (excess wild units when an elite spawns). Never hits or shoots. */
     leaveMove(dt, pl) {

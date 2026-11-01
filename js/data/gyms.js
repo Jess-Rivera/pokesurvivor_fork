@@ -4,7 +4,7 @@
  * (use only below that fraction of max HP) and optional `stacks`: upgrade-card stacks the move carries, by mechanic id from
  * js/data/mechanics.js (effect, recharge, count, pierce, area, width, arc, size, range, speed, duration, knock, stacks...). They go
  * through the SAME upgrade system as the player's cards (G.Moves.addStack), so a leader's move is a leveled-up player move.
- * A move kind decides its boss form (see Enemy.gymStart); BOSS_FORMS lists the kinds that are actually built.
+ * A move kind decides its boss form (see GymBrain.start in js/entities/boss-ai.js); BOSS_FORMS lists the kinds that are actually built.
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
  * last one whose minLevel is <= the gym's effective level (stageFor), so a slot evolves as the level climbs, and evolution requirements
@@ -20,7 +20,7 @@ G.Gyms = (() => {
   const MAX_MOVES = 4;
   // Placeholder stage bands (TUNE, docs/GYM-ROSTERS.md): a 2-stage line shows its final form at 35; a 3-stage line shows its mid form at 20.
   const STAGE_BANDS = { mid: 20, final: 35 };
-  // Move kinds that have a built boss form (Enemy.gymCast: melee and buff have their own form, everything else is the projectile path).
+  // Move kinds that have a built boss form (GymBrain.cast in boss-ai.js: melee and buff have their own form, everything else is the projectile path).
   // Add a kind here only when its boss form is built and tested; validate() rejects every other kind instead of letting it misfire.
   const BOSS_FORMS = ['melee', 'projectile', 'buff'];
   const STANCES = ['close', 'far', 'mixed'];

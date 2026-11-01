@@ -55,7 +55,7 @@ These are the concrete places where sim reaches into presentation. They are the 
 - The first concrete candidate (Enemy.hurt / showHurt onto the bus) is unblocked now that the channel exists.
 
 ## Remaining gym-side offenders (convert when the next slice touches them)
-- entities/enemy.js gymStart (G.FX.ring, anim.play) and gymCast (G.FX.slash, G.FX.ring, G.FX.sp, anim.play, G.FX.spark in gymShoot): the cast sim and its visuals are interleaved.
+- entities/boss-ai.js GymBrain.start (G.FX.ring, anim.play) and GymBrain.cast (G.FX.slash, G.FX.ring, G.FX.sp, anim.play, G.FX.spark in GymBrain.shoot): the cast sim and its visuals are interleaved. (Moved out of enemy.js unchanged in 7a-0 commit B, 2026-10-31.)
 - systems/rift.js: openGate and startGym toasts (G.Spawner.say), the arena tick and won() presentation. The multi-mon arena flow (next slice) rewrites the arena tick, so convert these then.
 - Reading sim state from presentation (hud.js reads G.Gym.graceLeft, escBump, enrageIn) is the allowed direction and stays.
 - New pure data functions follow the same rule: G.Gyms.stageFor and G.Gyms.lineup touch no engine global except the dex table, no clock, no randomness.

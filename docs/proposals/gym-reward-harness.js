@@ -19,7 +19,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Items: { roll: () => 'x', rollFor: () => 'x' }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
-['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
+['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 

@@ -78,7 +78,7 @@ G.GymArena = (() => {
 
   function spawnLeader(g) {
     const ts = TS();
-    const e = new G.Enemy(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5, { hp: 1, spd: 1, dmg: 1 }, true);
+    const e = G.Boss.make(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5);
     e.flying = false;                  // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);
     arena.bossId = e.id;

@@ -1,4 +1,4 @@
-SLICE 7a-0: GYMS ONLY  (Jess, 2026-10-31)   COMMIT A BUILT (not on node yet), B NEXT
+SLICE 7a-0: GYMS ONLY  (Jess, 2026-10-31)   COMMIT A IN (a2c0cf1), COMMIT B BUILT (not committed)
 ================================================================================
 Ruling: remove every rift and legendary-fight reference. Bosses are gym
 leaders only. Replaces "Slice 7a-0 - Boss Brain Split Plan.txt" (RiftBrain is

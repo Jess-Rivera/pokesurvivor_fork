@@ -60,7 +60,7 @@ A signature is a roster SLOT, and a slot is an evolution LINE. The stage it show
 
 ## Validation rules (enforced by G.Gyms.validate, swept by docs/proposals/gym-harness.js)
 
-- every move id exists in the catalog; the move's kind must have a BOSS FORM that is built. Today only melee, projectile and buff are built (Enemy.gymCast: melee and buff have their own form, every other kind falls through to the projectile path), so G.Gyms.BOSS_FORMS lists exactly those three. Add a kind there only when its boss form is built and tested.
+- every move id exists in the catalog; the move's kind must have a BOSS FORM that is built. Today only melee, projectile and buff are built (GymBrain.cast in js/entities/boss-ai.js: melee and buff have their own form, every other kind falls through to the projectile path), so G.Gyms.BOSS_FORMS lists exactly those three. Add a kind there only when its boss form is built and tested.
 - 1 to 4 moves per slot, at least one damaging move, weight above 0, range close, far or any, optional hpBelow, stacks accepted by the real upgrade rules
 - stance close, far or mixed; power and tempo above 0 up to 5
 - stage ladder non-empty, first stage at level 1, levels strictly increasing integers, every dex real

@@ -246,3 +246,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built commit A: judgment.js deleted; rift.js replaced by js/systems/gym-arena.js (G.GymArena, gym half only); old boss AI (slam, dash, leap, rain, beam, volley, nova, fury) out of enemy.js, gym leaders keep their path; rift, legendary and minute-30 achievements, the weekly rift mission, the HUD rift labels, drops, music and sounds removed; old save fields kept. Changelog entry added.
 - Tests: new gyms-only harness (30 checks) and mutate runner (6/6); gym, gym-reward, status D2 and move-riders harnesses updated; move-riders mutate lost its boss-dash mutant (22/22). Quick sandbox: 29/30 harnesses (items-f3d2, move-geom need node). Not run on node yet.
 - Stopped at: Jess runs check.js and the two mutate runners on node, feel-tests Brock, commits A. Next: commit B (GymBrain split).
+
+## 2026-10-31 (Claude Code, home, evening): 7a-0 commit B built, GymBrain split
+- Built: js/entities/boss-ai.js (G.Boss). G.Boss.make is the only boss spawn (gym-arena.js uses it); the GymBrain holds the old constructor gym block, the eleven boss methods and the old e.ai state. enemy.js keeps the body and delegates (update -> brain.step, applyFlinch -> brain.flinch). dev.html and main.js NEED updated. No behavior change.
+- Proof: a one-off seeded trace (all six Brock slots at levels 12 and 36, 90 s each, moving, flinched and hit on a schedule) matched the pre-split code line for line (45,201 lines).
+- Tests: new boss-split harness (24 checks) and mutate (6/6); gym, gym-reward, gyms-only and status D2 harnesses moved to the brain. check.js 32/32 and move data green; gyms-only and move-riders mutate green. Headless Brock fight on ?dev and ?dev&newcombat: brain, every move cast, live flinch, win to the badge cards, no errors.
+- Stale tool checks (already failing in HEAD) updated to the Quick rulings: move_parity Gust selftest now expects the hand-set cd 0.7; smoke-newcombat Aqua Ring expects the aura (1/16 max HP every 2 s, two ticks in about 4 s). Smoke all passed.
+- Feel test: good (Jess). Stopped at: Jess commits B. Next: the docs sweep, then the 7a slot-1 enemy-owner plan.
