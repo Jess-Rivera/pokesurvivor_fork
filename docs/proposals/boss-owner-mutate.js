@@ -14,8 +14,8 @@ const M = [
   ['a melee tell is as long as a shot', 'brain', [['melee: 0.45, nova: 0.45, shot: 0.5', 'melee: 0.5, nova: 0.45, shot: 0.5']]],
   ['no recovery after the release', 'brain', [['if (c.t >= c.wind + c.after) this.tell = null;', 'if (c.t >= c.wind) this.tell = null;']]],
   ['Harden waits for the attack tell', 'brain', [['      this.buffs(now);', '      if (!this.tell) this.buffs(now);']]],
-  ['the melee reach ignores the player body', 'brain', [['(CLOSE.includes(want) ? pl.r || 0 : 0)', '(CLOSE.includes(want) ? -15 : 0)']]],
-  ['the shot ignores its range', 'brain', [['if (dist <= G.Gyms.reachOf(d, want) +', "if (want === 'shot' || dist <= G.Gyms.reachOf(d, want) +"]]],
+  ['the melee reach ignores the player body', 'brain', [['(near ? pl.r || 0 : 0)', '(near ? -15 : 0)']]],
+  ['the shot ignores its range', 'brain', [['if (dist > G.Gyms.reachOf(d, form) +', "if (form !== 'shot' && dist > G.Gyms.reachOf(d, form) +"]]],
   ['contact swaps to the cast move', 'brain', [['G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {', 'G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) { e.atkType = this.def(c.id).type; return [0, 0, "Idle"];']], ],
   ['the contact move ignores the enrage', 'brain', [['G.Gym.enrageMul(e) *', '1 *']]],
   ['flinch keeps the tell', 'brain', [['if (c && !c.fired) c.slot.t = Math.max(0.05, this.def(c.id).cd * this.e.cdMul);', 'if (c && !c.fired) { c.slot.t = Math.max(0.05, this.def(c.id).cd * this.e.cdMul); return; }']]],
@@ -41,6 +41,11 @@ const M = [
   ['chain hops search the enemy grid', 'sim', [['eachFoe(o, prev.x, prev.y, R, (e) => {', 'G.EnemyMgr.queryCircleEach(prev.x, prev.y, R, (e) => {']]],
   ['homing ignores the caster foes', 'sim', [['inst.steer = nearest(inst.cast.owner,', 'inst.steer = nearest(null,']]],
   ['slot 1 cards changed', 'gyms', [['cards: { damage: 3, count: 2, velocity: 3, area: 2 }', 'cards: { damage: 3, count: 2, velocity: 1, area: 2 }']]],
+  ['freshness ignores the cooldown', 'brain', [['/ Math.max(0.05, d.cd * this.e.cdMul)', '/ 1']]],
+  ['no point-blank cut', 'brain', [['score: fresh * (blank && !near ? POINT_BLANK : 1)', 'score: fresh']]],
+  ['the last cast is stamped at the release, not the tell', 'brain', [['best.s.last = now;', ''], ['          G.Gym.noteCast(c.id);', '          G.Gym.noteCast(c.id); c.slot.last = now;']]],
+  ['ties are broken by a coin flip', 'brain', [['(c.score === best.score && c.rank < best.rank)', '(c.score === best.score && Math.random() < 0.5)']]],
+  ['the old fixed order is back', 'brain', [['if (!best || c.score > best.score ||', 'if (!best || c.rank < best.rank ||']]],
   ['the render plays your cast for Brock', 'render', [['|| ev.enemy ||', '||']]],
   ['gym leaders keep the boss scale', 'enemy', [['this.scale = def.gym ? 1 : boss', 'this.scale = boss']]]
 ];

@@ -8,7 +8,7 @@
  * authored moves (G.Gyms) sit in one group and cast through the sim (G.MoveSim.castAt), each attack on its own cooldown (the folded
  * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
- * Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
+ * The attack is picked by a utility score (attack(): freshness x fit, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
  * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player is damage
  * only (G.MoveEffects). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px;
@@ -18,7 +18,8 @@
 G.Boss = (() => {
   const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5 }; // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
   const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
-  const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack pick: the first ready form, in this order, whose reach you are inside
+  const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
+  const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
   const RECOVER = 0.35; // seconds standing still after the release, divided by tempo
   const LOW_HP = 0.3; // below this fraction of max HP the leader favors fighting from range
   const NEAR = 170,
@@ -111,7 +112,7 @@ G.Boss = (() => {
           vy = -uy * spd;
         } else if (dist < r + 40) circle();
       }
-      if (this.wait <= 0 && !e.stFl && this.attack(dist, pl)) return [0, 0, 'Idle'];
+      if (this.wait <= 0 && !e.stFl && this.attack(dist, pl, now)) return [0, 0, 'Idle'];
       return [vx, vy, 'Walk'];
     }
 
@@ -131,21 +132,35 @@ G.Boss = (() => {
       return r;
     }
 
-    /** Starts a tell for the first ready attack the player is in range of (ORDER): a melee cone or a nova when you are inside its reach
-     *  (plus your body), else a strike or a shot when you are within its range (the sim's cast gate for a shot). */
-    attack(dist, pl) {
-      const list = this.e.activeGroup();
-      for (const want of ORDER)
-        for (const s of list) {
-          if (s.t > 0) continue;
-          const d = this.def(s.id);
-          if (G.Gyms.formOf(d) !== want) continue;
-          if (dist <= G.Gyms.reachOf(d, want) + (CLOSE.includes(want) ? pl.r || 0 : 0)) {
-            this.start(s, d, want, pl);
-            return true;
-          }
-        }
-      return false;
+    /** The utility pick (Jess 2026-11-01): every ready attack you are in reach of (a melee cone or a nova: its reach plus your body; a
+     *  strike or a shot: its range) gets a score, and the highest starts its tell. Score = freshness x fit. Freshness: seconds since the
+     *  move's last tell started (the fight's first pick for one never cast), over its cooldown, so every move gets turns and fast moves
+     *  still come more often. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's close reach. Ties: ORDER, then
+     *  the move's place in the group. No randomness. this.scores keeps the last pick's scores for the ?dev overlay. */
+    attack(dist, pl, now) {
+      if (this.t0 == null) this.t0 = now;
+      const close = this.reach(),
+        blank = close > 0 && dist <= close + (pl.r || 0);
+      let best = null;
+      const scores = [];
+      for (const s of this.e.activeGroup()) {
+        if (s.t > 0) continue;
+        const d = this.def(s.id),
+          form = G.Gyms.formOf(d),
+          rank = ORDER.indexOf(form);
+        if (rank < 0) continue;
+        const near = CLOSE.includes(form);
+        if (dist > G.Gyms.reachOf(d, form) + (near ? pl.r || 0 : 0)) continue;
+        const fresh = (now - (s.last != null ? s.last : this.t0)) / Math.max(0.05, d.cd * this.e.cdMul),
+          c = { s, d, form, rank, score: fresh * (blank && !near ? POINT_BLANK : 1) };
+        scores.push(c);
+        if (!best || c.score > best.score || (c.score === best.score && c.rank < best.rank)) best = c;
+      }
+      this.scores = scores.map((c) => ({ id: c.s.id, score: c.score, picked: c === best }));
+      if (!best) return false;
+      best.s.last = now;
+      this.start(best.s, best.d, best.form, pl);
+      return true;
     }
 
     /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks

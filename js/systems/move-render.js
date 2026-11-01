@@ -11,6 +11,7 @@
  *                    inputs the sim used (one geometry implementation, I6), and a ring flash on each 'move:hit' enemy.
  *                    Slice 4a: a dev line over every visible enemy that carries a status or a stat stage (G.Status.list, G.Stages.list).
  *                    Slice 4b: a dev line over the player (HP, shield value and time left, team stages, commitment timers).
+ *                    Gym leaders: their last utility pick, one line per scored move with the pick marked (boss-ai.js attack).
  *   Slice 4b, always drawn: a short zigzag bolt from the previous enemy to each chain hop ('move:hit' with hop > 0), and a ring
  *   around the active Pokemon while its shield (Substitute) lives, brighter when fuller.
  *   Slice 4c-1: orbiting shapes are drawn with the legacy 0.7 vertical squash around the owner (presentation only, combat-architecture:H15;
@@ -422,6 +423,16 @@ G.MoveRender = (() => {
         .map((s) => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
         .concat(G.Stages.list(e).map((s) => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
       if (parts.length) ctx.fillText(parts.join(' | '), e.x, e.y - (e.bodyH || 30) - 16);
+      // a gym leader's last utility pick (boss-ai.js attack): one line per scored move, the pick marked
+      const sc = e.brain && e.brain.scores;
+      if (sc)
+        sc.forEach((c, i) =>
+          ctx.fillText(
+            (c.picked ? '> ' : '  ') + c.id + ' ' + c.score.toFixed(2),
+            e.x,
+            e.y - (e.bodyH || 30) - 28 - 11 * i
+          )
+        );
     }
     const pl = G.Game && G.Game.player; // the player (4b): HP, shield, team stages and commitments
     if (pl && !pl.dead) {

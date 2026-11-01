@@ -277,6 +277,48 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   G.EnemyMgr = savedMgr; pl.x = 0; pl.y = 0;
   console.log('13 forms: Thunder Shock and Hex hop only between foes (a second player takes the hop), Bulldoze and Dazzling Gleam novas, Thunderbolt strike on a locked spot, Confusion homes'); }
 
+// 14. the utility pick (Jess 2026-11-01): score = freshness (seconds since the move's last tell started, over its cooldown) x fit (0.5 for a
+// shot or strike inside the mon's close reach, else 1); ties by form order, then group order. Cooldowns from the move data, no cards:
+// Tackle 0.5, Rock Throw 1.167, Thunder Shock 0.583, Confusion 0.7, Psychic 1.75. Expected values hand-derived from those.
+{ const mk3 = (ids) => { fresh(); const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; return [e, b]; };
+  const slot = (e, id) => e.slots[0].find(x => x.id === id);
+  { const [e, b] = mk3(['thunder-shock', 'confusion', 'psychic']); b.t0 = 0; const T = 10; pl.x = 300; pl.y = 0;
+    slot(e, 'thunder-shock').last = T - 1; slot(e, 'confusion').last = T - 1; slot(e, 'psychic').last = T - 4;   // 1.715, 1.429, 2.286
+    b.attack(300, pl, T); ok(b.tell && b.tell.id === 'psychic', 'the stalest move by its own cooldown wins: Psychic 4/1.75 = 2.29 over Thunder Shock 1/0.583 = 1.71');
+    const sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
+    ok(near(sc['thunder-shock'], 1 / 0.583, 1e-2) && near(sc.confusion, 1 / 0.7, 1e-2) && near(sc.psychic, 4 / 1.75, 1e-2), 'scores are seconds over cooldown: ' + JSON.stringify(sc));
+    ok(b.scores.filter(x => x.picked).length === 1 && b.scores.find(x => x.picked).id === 'psychic', 'the overlay record marks one pick');
+    ok(slot(e, 'psychic').last === T, 'the pick stamps its last cast at the tell start');
+    const [e2, b2] = mk3(['thunder-shock', 'confusion', 'psychic']); b2.t0 = 0;
+    slot(e2, 'thunder-shock').last = T - 1; slot(e2, 'confusion').last = T - 1; slot(e2, 'psychic').last = T - 2.9;   // 1.715 vs 1.657
+    b2.attack(300, pl, T); ok(b2.tell && b2.tell.id === 'thunder-shock', 'Psychic at 2.9/1.75 = 1.66 loses to Thunder Shock at 1.71'); }
+  { const [e, b] = mk3(['psychic', 'thunder-shock']); b.t0 = 5; b.attack(300, pl, 5);
+    ok(b.tell && b.tell.id === 'psychic', 'equal scores (both never cast, 0) go to the first move in the group'); }
+  { const [e, b] = mk3(['rock-throw', 'tackle']); b.t0 = 5; b.attack(60, pl, 5);
+    ok(b.tell && b.tell.id === 'tackle', 'equal scores go to the earlier form: melee before shot, whatever the group order'); }
+  { const [e, b] = mk3(['tackle', 'rock-throw']); b.t0 = 0; const T = 10;
+    slot(e, 'tackle').last = T - 1; slot(e, 'rock-throw').last = T - 1;
+    b.attack(60, pl, T); let sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
+    ok(b.tell && b.tell.id === 'tackle' && near(sc.tackle, 2, 1e-2) && near(sc['rock-throw'], 0.5 / 1.167, 1e-2), 'point-blank (60 px, inside Tackle 70 + body 12): Tackle 2, Rock Throw halved to 0.43: ' + JSON.stringify(sc));
+    slot(e, 'tackle').last = T - 1; slot(e, 'rock-throw').last = T - 6; b.tell = null;
+    b.attack(60, pl, T); sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
+    ok(b.tell && b.tell.id === 'rock-throw' && near(sc['rock-throw'], 0.5 * 6 / 1.167, 1e-2), 'a stale enough shot still wins point-blank: 0.5 x 6 / 1.167 = 2.57 over Tackle 2');
+    b.tell = null; slot(e, 'rock-throw').last = T - 1; b.attack(300, pl, T); sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
+    ok(b.tell && b.tell.id === 'rock-throw' && !('tackle' in sc) && near(sc['rock-throw'], 1 / 1.167, 1e-2), 'at 300 px Tackle is out of reach and Rock Throw keeps its full score: ' + JSON.stringify(sc)); }
+  { const [e, b] = mk3(['rock-throw', 'harden']); b.t0 = 0; slot(e, 'rock-throw').last = 9; b.attack(30, pl, 10);
+    ok(b.scores.length === 1 && near(b.scores[0].score, 1 / 1.167, 1e-2), 'a mon with no close move gets no point-blank cut at 30 px; a buff is never scored'); }
+  { const [e, b] = mk3(['tackle', 'rock-throw']); pl.x = 60; frame(e); const t = clock; ok(b.tell, 'a tell to flinch');
+    const id = b.tell && b.tell.id; e.applyFlinch();
+    ok(!b.tell && id && slot(e, id).last === t, 'a flinched tell still stamps its move (' + id + ') as used at the tell start'); }
+  // the two starvation sets from the 2026-11-01 browser run: every move is cast within 25 s
+  const sets = [[['bulldoze', 'thunderbolt', 'thunder-shock', 'confusion'], 205], [['thunder-shock', 'confusion', 'psychic'], 300]];
+  const outs = [];
+  for (const [ids, at] of sets) { const [e] = mk3(ids); pl.x = at; pl.y = 0; run(e, 25);
+    for (const id of ids) ok(casts[id] >= 1, ids.join('+') + ' at ' + at + ' px: ' + id + ' cast within 25 s: ' + JSON.stringify(casts));
+    outs.push(ids.map(id => id + ' ' + (casts[id] || 0)).join(', ')); }
+  pl.x = 0; pl.y = 0;
+  console.log('14 utility pick: freshness over cooldown, point-blank cut 0.5, ties by form then group order, flinch counts as used; starvation sets now rotate: ' + outs.join(' | ')); }
+
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');
   ok(!/\bkind\b/.test(brain.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')), 'boss-ai.js reads no kind');
