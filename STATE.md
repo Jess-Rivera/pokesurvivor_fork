@@ -7,12 +7,12 @@ Last updated: 2026-11-01 (Claude Code, home; riders onto the player on feature/g
 - Branch feature/gym-roster (off main, pushed up to 75f2cd9). Kanto gyms 2 to 8 authored and feel-tested; utility picker in.
 - This session (uncommitted until Jess commits): RIDERS ONTO THE PLAYER built. Leader hits land ailments (G.Status), foe drops on your tracker, Hex x2, crits (D10 rule; only Psycho Cut crits today), the leader's own raises and drain heal. Flinch on the player (active group cooldowns + 0.3 s hold, recoil, 0.5 s roll gap). Picker opportunity factor (1.5 / 0.75 / 1.25). Rules in COMBAT-RULES and BOSS-AUTHORING.
 - Tests: check.js 30/30, boss-owner harness 164, mutations 54/54, smoke-ui pass. smoke-newcombat: all functional checks ok, one resource-load flake per run (different page each time).
-- Needs Jess's feel run: a Bite gym and a Body Slam / Lick gym (paralysis and flinch now land; balance risk).
+- Surge's real Electric sets built (Thunder Shock on 5 of 6 mons, Thunderbolt on the ace below 50% HP; js/data/gyms.js). First cut if too harsh: Voltorb's Thunder Shock.
+- Needs Jess's feel run: Surge, a Bite gym and a Body Slam / Lick gym (paralysis and flinch now land; balance risk).
 
 ## Next (in order)
-1. Surge's real Electric sets (agreed 2026-11-01): Thunder Shock on Pikachu/Raichu, Magnemite, Voltorb, Electabuzz, Jolteon; each keeps a Normal/Steel melee; Thunderbolt only on the ace below 50% HP; Porygon unchanged; Jolteon drops Poison Sting. First cut if too harsh: Voltorb's Thunder Shock.
-2. TODO "Gym follow-ups" (e) Psychic reach, separate slice (Jess).
-3. Tune gyms 2 to 8. Redo the two lore moveset maps to the Gen-1 order.
+1. TODO "Gym follow-ups" (e) Psychic reach, separate slice (Jess).
+2. Tune gyms 2 to 8. Redo the two lore moveset maps to the Gen-1 order.
 
 ## Open owner decisions
 - [Open] loop 2+: do a gym's mons share stat raises. O4: do badge boosts stack again in later loops.

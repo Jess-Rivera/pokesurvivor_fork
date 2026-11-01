@@ -193,14 +193,15 @@ G.Gyms = (() => {
       boost: { stat: 'spe', pct: 0.1 },
       signatures: [
         // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
-        // STAND-INS: no Electric move has a gym form yet (Thunder Shock chains), so the Electric mons use Normal and Steel moves until boss casts are widened.
+        // Electric sets (Jess 2026-11-01): Thunder Shock on every Electric mon, each keeps a Normal or Steel melee (no Electric melee in the
+        // catalog) as its contact move; Thunderbolt only on the ace, below 50% HP. If the paralysis is too much, cut Voltorb's Thunder Shock first.
         // Slot 1: Pikachu -> Raichu, the signature ace.
         {
           line: ladder([25, 26]),
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'tackle' }, { id: 'agility' }],
+          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }, { id: 'thunderbolt', hpBelow: 0.5 }],
         },
         // Slot 2: Porygon, the off-type tech pick (Psycho Cut stands in for Psybeam).
         {
@@ -216,7 +217,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'metal-claw' }, { id: 'harden' }],
+          moves: [{ id: 'thunder-shock' }, { id: 'metal-claw' }, { id: 'harden' }],
         },
         // Slot 4: Voltorb -> Electrode, the fastest.
         {
@@ -224,7 +225,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'tackle' }, { id: 'agility' }],
+          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }],
         },
         // Slot 5: Electabuzz, the mixed attacker (Karate Chop stands in for its punches).
         {
@@ -232,15 +233,15 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'karate-chop' }, { id: 'agility' }],
+          moves: [{ id: 'thunder-shock' }, { id: 'karate-chop' }, { id: 'agility' }],
         },
-        // Slot 6: Eevee -> Jolteon, the speed glass cannon (Poison Sting stands in for Pin Missile).
+        // Slot 6: Eevee -> Jolteon, the speed glass cannon.
         {
           line: ladder([133, 135]),
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'tackle' }, { id: 'poison-sting' }, { id: 'agility' }],
+          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }],
         },
       ],
     },

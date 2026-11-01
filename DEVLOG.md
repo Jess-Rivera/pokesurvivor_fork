@@ -344,4 +344,5 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Flinch on the player: G.MoveSim.flinch restarts the active group's cooldowns + 0.3 s; Player.applyFlinch recoils (back half the body at 2x, then still 0.2 to 0.3 s), 0.5 s roll gap per move, none while asleep or frozen. COMBAT-RULES rules added.
 - Picker: score x opportunity (Hex 1.5, blocked ailment 0.75, absent drop 1.25; BOSS-AUTHORING THE PICK).
 - Verified: check.js 30/30, boss-owner harness 164 checks, mutations 54/54, smoke-ui pass; smoke-newcombat every functional check ok on 3 runs, but each run had one "failed to load resource" console error on a different page (local server flake).
-- Next: Surge's real Electric sets (plan agreed).
+- Surge's real Electric sets (js/data/gyms.js): Thunder Shock on every Electric mon, each keeps its Normal/Steel melee for contact, Thunderbolt on Raichu below 50% HP, Jolteon drops Poison Sting. gym-harness 10b: Surge 18/18 moves cast.
+- Next: Psychic reach (separate slice), then tune gyms 2 to 8.
