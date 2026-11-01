@@ -1,13 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-01 (Claude Code, home; shot reach on feature/shot-reach).
+Last updated: 2026-11-01 (Claude Code, home; shot reach done, merged back to feature/gym-roster).
 
 ## Where we are
-- Branch feature/shot-reach (off feature/gym-roster). Riders onto the player and Surge's Electric sets are committed and feel-tested (good for now).
-- This session (uncommitted until Jess commits): SHOT REACH FROM FLIGHT built. A leader's shot is a candidate only within speed x lifetime + size, capped at its range (420 default); homing gets no turn credit. Far stance shrinks to the longest ready shot or strike's reach (minus 20 px) so a Psychic user walks in to land it. Rule: docs/BOSS-AUTHORING.md REACH. Code: G.Gyms.reachOf (js/data/gyms.js), GymBrain.ranged() and far mode in js/entities/boss-ai.js.
+- Branch feature/gym-roster (feature/shot-reach fast-forwarded into it; work continues here). Riders onto the player and Surge's Electric sets are feel-tested (good for now).
+- SHOT REACH FROM FLIGHT built and feel-tested (Jess: feels good). A leader's shot is a candidate only within speed x lifetime + size, capped at its range (420 default); homing gets no turn credit. Far stance shrinks to the longest ready shot or strike's reach (minus 20 px) so a Psychic user walks in to land it. Rule: docs/BOSS-AUTHORING.md REACH. Code: G.Gyms.reachOf (js/data/gyms.js), GymBrain.ranged() and far mode in js/entities/boss-ai.js.
 - Tests: check.js 30/30, boss-owner harness 175, mutations 58/58, smoke-ui pass. smoke-newcombat SKIPPED until its flake is fixed (Jess; TODO Backlog).
-- Feel check for Jess: a Shadow Ball / Rock Throw / Mud Shot user holds fire beyond ~345 to 373 px now; no gym uses Psychic yet.
+- No gym uses Psychic yet, so the walk-in has only been seen in the harness.
 
 ## Next (in order)
 1. Tune gyms 2 to 8 (power, tempo, cards). Redo the two lore moveset maps to the Gen-1 order.
