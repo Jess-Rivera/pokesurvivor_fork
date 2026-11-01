@@ -91,12 +91,12 @@ async function check(browser, query, flag) {
     const pl = G.Game.player, roster = G.Game.roster, pf = G.Moves.poolFor, keep = { moves: pl.moves, slots: pl.slots, active: pl.active };
     pl.invuln = 1e9;
     const out = { cards: 0, bad: [], sheet: 0, rowsNum: 0 };
-    const newPath = G.MoveRoute.on === true;
+    const newPath = true;     // the only path since slice 7b
     pl.moves = [G.Moves.instance('tackle')]; pl.slots = [pl.moves.slice()]; pl.active = 0;
     const cards = [];
     for (const id of ids) {
       G.Moves.poolFor = () => [id];
-      const fam = (newPath ? G.LevelUp.teamFamilies(pl, roster) : G.LevelUp.families(pl, roster)).newmove || [];
+      const fam = G.LevelUp.teamFamilies(pl, roster).newmove || [];
       if (id !== 'tackle') { if (fam[0]) cards.push(fam[0]); else out.bad.push('no card ' + id); }
     }
     G.Moves.poolFor = pf;

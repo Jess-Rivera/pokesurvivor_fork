@@ -153,18 +153,6 @@ G.Player = class Player {
     this.maxHp = newMax;
     if (gain > 0 && !this.dead) this.hp += gain;     // never revives a fainted member
   }
-  /** Take one stat card (HP Up, Protein, Iron, Calcium, Zinc, Carbos). */
-  addStat(id) {
-    const st = G.Mechanics.STAT_BY[id];
-    if (!st || !(id in this.inc)) return false;
-    this.inc[id] += st.step;
-    if (id === 'hp' && this.baseHpStat != null) {
-      const newMax = this.maxHpAt(this.level), gain = newMax - this.maxHp;
-      this.maxHp = newMax;
-      if (gain > 0 && !this.dead) this.hp += gain;       // tops up like a level-up; a fainted mon is not revived
-    }
-    return true;
-  }
   // STAB flag: the move's type matches one of the active mon's species types.
   stabFor(m) { return this.myTypes.includes(m.type); }
   get spd() { return this.mvRoot ? 0 : this.unrootedSpd; }     // mvRoot: slice 4b rooted commitment or a live swept dash (G.MoveSim)
@@ -247,7 +235,6 @@ G.Player = class Player {
       return;
     }
     this.active = i;
-    G.Projectiles.clearOrbs(this);
     G.Audio.sfx('select');
     if (!free) this.swapT = Player.SWAP_LOCK;
     const m = this.slots[i][0];
@@ -289,7 +276,6 @@ G.Player = class Player {
     const a = this.slots.indexOf(cur);
     this.active = this.hasItem('choiceband') && a >= 0 ? a : this.slots.indexOf(target);
     this.bonds = Math.max(0, this.bonds - 1);
-    G.Projectiles.clearOrbs(this);
     return target;
   }
 
@@ -320,7 +306,7 @@ G.Player = class Player {
     if (this.anim.busy() && this.anim.progress() < 0.65) return;
     const meta = G.Sprites.animMeta(this.dex, anim);
     const len = meta ? meta.d.reduce((a, b) => a + b, 0) / 60 : 0.4;
-    const cd = Math.max(0.12, m.cd * this.cdMul);
+    const cd = Math.max(0.12, (m.simCd || m.cd || 0.5) * this.cdMul);     // simCd: the team's folded cd, set by move-render on each cast
     this.anim.play(anim, { speed: Math.max(1, len / (cd * 0.9)) });
     this.attackFace = 0.35;
   }
@@ -420,7 +406,6 @@ G.Player = class Player {
       this.hp = 0; this.dead = true;
       if (LOG) G.Log.faint(false, 0);
       this.anim.play('Faint', { hold: true });
-      G.Projectiles.clearOrbs(this);
       this.reviveT = 0;
       this.shield = null;                     // slice 4b: a faint ends the shield
       this.clearEffects();                    // slice E2b: fainting wipes every status and own stage drop
@@ -678,14 +663,13 @@ G.Player = class Player {
     this.hp = n.hp; this.maxHp = n.maxHp;
     this.magnet = n.mag || this.magnet;
     this.reviveT = n.rev || 0;
-    if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); G.Projectiles.clearOrbs(this); }
+    if (n.dead && !this.dead) { this.dead = true; this.anim.play('Faint', { hold: true }); }
     else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
-    // Active move (for the halo, the HUD and the orbs).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.Moves.BY_ID[n.mv]) {     // legacy-7b: co-op remote sync (D-COOP purge)
+    // Active move (for the halo and the HUD).
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.MoveDefs[n.mv]) {
       this.moves = [G.Moves.instance(n.mv)];
       this.slots = [this.moves.slice()];
       this.active = 0;
-      G.Projectiles.clearOrbs(this);
     }
     if (this.dead) return;
     this.walking = !!n.walk;

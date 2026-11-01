@@ -21,20 +21,22 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   DEX: [], DEX_BY: {}, Audio: { sfx: (n, o) => sfx.push(o) }, Sprites: { animMeta: () => null, Animator: class { } }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 const FILES = ['js/core/stats.js', 'js/systems/stages.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js',
-  'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/systems/team-cards.js', 'js/data/kinds.js', 'js/data/mechanics.js',
+  'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/systems/team-cards.js',
   'js/data/moves.js', 'js/entities/player.js', 'js/systems/levelup.js', 'js/ui/move-info.js', 'js/ui/sheet.js'];
 for (const p of FILES) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
-const I = G.MoveInfo, D = G.MoveDefs, L = G.Moves.BY_ID, IDS = Object.keys(D);
+// Slice 7b-2a: the legacy table is gone from the game; the parity checks read its frozen copy (docs/move_rework_holding/legacy-moves.js).
+const LB = { G: {}, console }; LB.window = LB; vm.runInNewContext(fs.readFileSync(R + '/docs/move_rework_holding/legacy-moves.js', 'utf8'), LB);
+const I = G.MoveInfo, D = G.MoveDefs, L = LB.G.Moves.BY_ID, IDS = Object.keys(D);
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const set = a => [...a].sort().join(' ');
-const legacyWhere = f => G.Moves.ALL.filter(m => D[m.id] && f(m)).map(m => m.id);
+const legacyWhere = f => Object.values(L).filter(m => D[m.id] && f(m)).map(m => m.id);
 
 // ===== 1. names, types, categories: every def, and Bubble (no def, D-BUBBLE) =====
 ok(IDS.length === 63, '63 resolved defs (' + IDS.length + ')');
 ok(IDS.every(id => I.name(id) === D[id].name && I.type(id) === D[id].type), 'name and type come from the def for every move');
 ok(IDS.every(id => I.cat(id) === D[id].category), 'category from the def for every move');
 ok(IDS.every(id => D[id].category === L[id].cat), 'parity: every def category equals the legacy cat (no change)');
-ok(I.name('bubble') === 'Bubble' && I.type('bubble') === 'water' && I.badge('bubble') === null && I.desc('bubble') === L.bubble.desc, 'Bubble: legacy name, type and text, no badge (D-BUBBLE)');
+ok(!D.bubble && I.name('bubble') === 'bubble' && I.badge('bubble') === null && G.Moves.RETIRED.bubble === 'water-gun', 'Bubble: retired (D-BUBBLE), no def and no badge; a save naming it loads Water Gun');
 ok(I.name('no-such-move') === 'no-such-move' && I.type('no-such-move') === 'normal', 'an unknown id falls back to its id and Normal');
 ok(G.Stats.moveCat({ id: 'ember' }) === 'special' && G.Stats.moveCat({ id: 'tackle' }) === 'physical' && G.Stats.moveCat({ id: 'harden' }) === 'status' && G.Stats.moveCat({}) === 'physical',
   'moveCat with no cat: the def category, else physical');
@@ -104,19 +106,14 @@ console.log('5 player.cast');
 
 // ===== 6. the level-up cards =====
 { const pf = G.Moves.poolFor, ROUTE = G.MoveRoute, COOP = G.Coop;
-  G.Coop = { active: false }; G.Moves.poolFor = () => ['ember', 'agility', 'bubble'];
+  G.Coop = { active: false }; G.Moves.poolFor = () => ['ember', 'agility'];
   const mkT = (ids, o = {}) => Object.assign({ mon: { types: ['fire'] }, maxMoves: 4, slots: ids.map(id => [{ id }]), moves: ids.map(id => G.Moves.instance(id)),
     hasMove(id) { return ids.includes(id); }, banned: null, teamCards: G.TeamCards.store(), incOf: () => 0, inc: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 } }, o);
   G.MoveRoute = { on: true, routed: id => !!D[id] };
   const cards = G.LevelUp.teamFamilies(mkT(['tackle']), [mkT(['tackle'])]).newmove || [];
-  const em = cards.find(c => c.key === 'new:ember'), bu = cards.find(c => c.key === 'new:bubble');
+  const em = cards.find(c => c.key === 'new:ember');
   ok(em && em.title === 'Ember' && em.tag === tc.fire && em.color === tc.fire && em.desc === 'Shot: damage, 10% burn.' && em.icon === 'move:ember', 'flag on: the Ember card reads name, type and text from the def');
-  ok(bu && bu.title === 'Bubble' && bu.desc === L.bubble.desc, 'flag on: the Bubble card keeps its legacy name and text');
   ok(!(G.LevelUp.teamFamilies(mkT(['harden', 'substitute']), []).newmove || []).some(c => c.key === 'new:agility'), 'flag on: Harden plus Substitute are two buffs, so no Agility');
-  G.MoveRoute = { on: false, routed: () => false };
-  const off = G.LevelUp.families(mkT(['tackle']), [mkT(['tackle'])]).newmove || [];
-  ok(off.some(c => c.key === 'new:ember' && c.desc === 'Shot: damage, 10% burn.'), 'flag off: the same card text');
-  ok(!(G.LevelUp.families(mkT(['harden', 'substitute']), []).newmove || []).some(c => c.key === 'new:agility'), 'flag off: the same buff test (Substitute counts)');
   G.Moves.poolFor = pf; G.MoveRoute = ROUTE; G.Coop = COOP; }
 console.log('6 level-up cards');
 
@@ -148,7 +145,7 @@ console.log('7 sheet');
   ok(KG.scanText('if (p.kind === \'coin\') go(); const kind = 3; e.applyBurn(kind);').length === 0, 'a pickup kind, a local named kind: not move reads');
   const r = KG.run(R);
   ok(r.bad.length === 0, 'the tree is clean: ' + r.bad.map(h => h.file + ':' + h.line).join(' '));
-  ok(r.tagged.length > 0 && r.tagged.every(t => /^js\/(core\/(db|debug)|ui\/(sheet|move-info)|entities\/player)\.js$/.test(t.file)), 'legacy-7b tags only in db, debug, sheet, move-info, player'); }
+  ok(r.tagged.length === 0, 'no legacy-7b tag left (slice 7b-2a): ' + r.tagged.map(t => t.file + ':' + t.line).join(' ')); }
 console.log('8 guard');
 
 console.log((fail ? 'FAIL ' : '') + 'ui-readers harness: ' + (n - fail) + '/' + n + ' checks passed');

@@ -19,16 +19,16 @@ const M = [
   ['the description drops its effects', 'info', [["return head + (fx.length ? ': ' + fx.join(', ') : '') + '.';", "return head + '.';"]]],
   ['effects skip emitted children', 'info', [['for (const k of kids(x)) walk(', 'for (const k of []) walk(']]],
   ['the chance is dropped', 'info', [["const pct = c => (c != null && c < 100 ? c + '% ' : '');", "const pct = c => '';"]]],
-  ['Bubble loses its legacy name', 'info', [['const name = id => { const d = def(id) || legacy(id);', 'const name = id => { const d = def(id);']]],
+  ['an unknown or retired move gets a made-up name', 'info', [["const name = id => { const d = def(id); return d ? d.name : id; };", "const name = id => { const d = def(id); return d ? d.name : 'Move'; };"]]],
   // ---- sheet.js ----
-  ['the sheet never takes the routed rows', 'sheet', [['const routed = m => !!(G.MoveRoute && G.MoveRoute.routed(m.id) && G.MoveDefs[m.id]);', 'const routed = m => false;']]],
+  ['the sheet never takes the def rows', 'sheet', [['const routed = m => !!G.MoveDefs[m.id];', 'const routed = m => false;']]],
   ['the sheet reads the frozen def, not the folded one', 'sheet', [['const folded = (pl, m) => G.TeamCards.defOf(pl, m.id);', 'const folded = (pl, m) => G.MoveDefs[m.id];']]],
   ['a swing timer gets a row', 'sheet', [['(flies || life.time >= 0.5)', 'true']]],
   ['the arc row is dropped', 'sheet', [['if (s.radArc > 0 && s.radArc < TAU - 0.01) row(', 'if (false) row(']]],
   ['the effect line keeps plain damage', 'sheet', [["const defAil = d => G.MoveInfo.effects(d).filter(t => t !== 'damage').join(', ');", "const defAil = d => G.MoveInfo.effects(d).join(', ');"]]],
   // ---- levelup.js ----
   ['the new-move card loses its text', 'levelup', [['desc: G.MoveInfo.desc(id),', "desc: '',"]]],
-  ['the flag-off 2-buff limit is dropped', 'levelup', [['        !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));', '        !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)));']]],
+  ['the 2-buff limit is dropped', 'levelup', [['!(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));', '!(pl.banned && pl.banned.has(id)));']]],
   // ---- player.js ----
   ['Life Orb charges an always-on move', 'player', [['!(def && def.persistent) && ', '']]],
   ['the animation ignores the family', 'player', [["cone: 'Shoot' }[fam] || 'Attack';", "cone: 'Shoot' }[null] || 'Attack';"]]],

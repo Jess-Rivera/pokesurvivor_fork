@@ -224,7 +224,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   console.log('10 riders: damage only; Body Slam\'s paralysis noted once in the console and not applied'); }
 
 // 11. the shared sim: MoveRoute.tick steps every instance once per frame; an enemy cast is not the player's cast
-{ fresh(); ok(G.MoveRoute.on === true, 'the new path is always on since the 7b flip');
+{ fresh(); ok(G.MoveRoute.routed('tackle') && G.MoveRoute.on === undefined, 'the new path is the only path (no flag since 7b)');
   const e = mkBoss(), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; for (const s of e.slots[0]) if (s.id === 'tackle') s.t = 99;
   pl.x = 400; frame(e); run(e, 0.5 + 2 * DT); const r = Sim.list().find(i => i.spec.id === 'rock-throw'); ok(!!r, 'a rock in flight');
   const x0 = r.x; G.MoveRoute.tick(DT, pl, clock); ok(near(r.x - x0, 377 * DT * Math.cos(r.heading), 1e-6), 'one MoveRoute.tick moves it one step (' + (r.x - x0).toFixed(3) + ' px)');

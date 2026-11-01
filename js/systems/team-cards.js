@@ -282,6 +282,15 @@ G.TeamCards = (() => {
   }
   const FAM = ['General', 'Space', 'Delivery', 'Payload'];
   const STAT_NAME = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
+  /** The Vitamins card's six stats (moved from the legacy mechanics.js in slice 7b-2a). cat: offered only when a team move uses it. */
+  const STATS = [
+    { id: 'hp',  label: 'HP Up',   stat: 'HP',      color: '#5fcb6a', cat: null },
+    { id: 'atk', label: 'Protein', stat: 'Attack',  color: '#ff8a4d', cat: 'physical' },
+    { id: 'def', label: 'Iron',    stat: 'Defense', color: '#ffd23f', cat: null },
+    { id: 'spa', label: 'Calcium', stat: 'Sp. Atk', color: '#b99dff', cat: 'special' },
+    { id: 'spd', label: 'Zinc',    stat: 'Sp. Def', color: '#6ea4ff', cat: null },
+    { id: 'spe', label: 'Carbos',  stat: 'Speed',   color: '#4dd6c8', cat: null }
+  ];
   /** The total of `n` stacks: a rate card shows its real cut (1 - 1 / (1 + total)), a capped card counts to its cap. */
   function totalText(c, n) {
     const k = c.cap ? Math.min(n, c.cap) : n, v = k * c.step, capped = c.cap && n >= c.cap ? ' (max)' : '';
@@ -309,5 +318,5 @@ G.TeamCards = (() => {
   }
 
   return { CARDS, BY_ID, TYPES, cardOf, targets, usable, fold, store, add, stacks, defOf, same,
-    gateMul, durOf, regen, vit, hasStat, selfOnly, stepText, summary, STAT_NAME };
+    gateMul, durOf, regen, vit, hasStat, selfOnly, stepText, summary, STAT_NAME, STATS };
 })();

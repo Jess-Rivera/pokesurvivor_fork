@@ -1,22 +1,16 @@
 /* ============ move-route.js: which slots the new move system runs (G.MoveRoute, slice 3d) ============
  *
- * Routing by move id (decision D-4). This is not a data bridge: nothing is derived from the legacy
- * definition, a routed slot simply belongs to G.MoveSim instead of G.Combat. Removed in slice 7b-2.
- * Slice 7b flip (Jess 2026-11-01): the ?newcombat flag is gone; the new path is always on. Bubble and Hail are retired
- * (G.Moves.RETIRED), so every move in the pool is in ROUTED.
+ * Routing by move id (decision D-4). Slice 7b flip (Jess 2026-11-01): the ?newcombat flag is gone and every move runs in G.MoveSim;
+ * 7b-2a deleted the legacy player-move code. Bubble and Hail are retired (G.Moves.RETIRED), so every move in the pool is in ROUTED.
+ * ROUTED itself goes in 7b-2b (the intent harness and tools/move_report.js still read it as text).
  *
- *   on                 always true since the 7b flip (kept until 7b-2 deletes the readers).
- *   ROUTED             the ONE list of move ids the new path supports. It grows with each slice.
- *   routed(id)         flag on, single-player run (co-op stays legacy) and the id is in ROUTED. combat.js skips these slots
- *                      (both its recharge loop and its cast loop), G.MoveSim runs them, so each slot timer has one owner.
- *   tick(dt, pl, now)  game.js calls it every frame right after G.Combat.tick: the camera view for offScreen, then G.MoveSim.tick
- *                      (flag on: the player's routed slots, then the step) or only G.MoveSim.step (flag off).
+ *   ROUTED             the list of move ids the new path runs.
+ *   routed(id)         the id is in ROUTED (G.MoveSim's slot filter).
+ *   tick(dt, pl, now)  game.js calls it every frame: the camera view for offScreen, then G.MoveSim.tick (the player's slots, then the step).
  *   reset()            drops every live instance (run start, back to the menu).
- * Slice 7a (D-ENEMY, Jess 2026-10-31): gym leaders cast through G.MoveSim on both flags (their brains call G.MoveSim.castAt from the
- * enemy update), so the sim steps every frame even with the flag off; the flag only decides the player's path.
+ * Gym leaders cast through G.MoveSim too (slice 7a, D-ENEMY): their brains call G.MoveSim.castAt from the enemy update.
  */
 G.MoveRoute = (() => {
-  const on = true;
   const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower',     // 3c / 3d
     'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze',                          // 4a riders
     'swords-dance', 'dragon-dance', 'aqua-ring', 'substitute', 'dragon-rage', 'hex', 'thunderbolt',                  // 4b self-casts, specials, chains
@@ -27,13 +21,12 @@ G.MoveRoute = (() => {
     'poison-sting', 'rock-throw', 'shadow-ball', 'thunder-shock', 'sludge', 'agility', 'harden',                     // shots and self-casts
     'psychic', 'confusion', 'bubble-beam', 'aura-sphere', 'rock-slide',                                              // 4c-3 travelling moves, location and delay
     'discharge', 'gust', 'fairy-wind', 'toxic', 'flame-wheel', 'toxic-spikes', 'will-o-wisp', 'meteor-mash', 'spikes']);  // 4d emitters, mines and the cap
-  const routed = id => on && !G.Coop.active && ROUTED.has(id);
+  const routed = id => ROUTED.has(id);
   let owner = null;
 
   function tick(dt, pl, now) {
     const C = G.Camera;
     G.MoveSim.setView({ x: C.left(), y: C.top(), w: C.w, h: C.h });
-    if (!on) { G.MoveSim.step(dt, now); return; }     // 7a: no routed player slots, but a gym leader's shapes still move
     if (owner && owner !== pl) G.MoveSim.clear(owner);     // a Pokemon swap: the benched one's shapes, commitments, heal over time and shield end (4b)
     owner = pl;
     G.MoveSim.tick(dt, pl, now);
@@ -41,6 +34,5 @@ G.MoveRoute = (() => {
   function reset() { owner = null; G.MoveSim.clear(); }
 
   G.MoveSim.setFilter(routed);
-  if (on) console.log('[MoveRoute] new combat path ON for: ' + [...ROUTED].join(', '));
-  return { on, ROUTED, routed, tick, reset };
+  return { ROUTED, routed, tick, reset };
 })();

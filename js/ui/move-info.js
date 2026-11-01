@@ -10,15 +10,13 @@
  *   desc(id)                 a one-line description built from the def (Jess, 2026-10-31: generated, option c)
  *   effects(def)             the effect list as short phrases (the sheet uses it too)
  *
- * Bubble has no def yet (D-BUBBLE, slice 7b), so its name and type still come from the legacy row.
  */
 G.MoveInfo = (() => {
   const TAU = Math.PI * 2;
   const def = id => (G.MoveDefs && G.MoveDefs[id]) || null;
-  const legacy = id => (G.Moves && G.Moves.BY_ID[id]) || null;     // legacy-7b: D-BUBBLE, the one move with no def
 
-  const name = id => { const d = def(id) || legacy(id); return d ? d.name : id; };
-  const type = id => { const d = def(id) || legacy(id); return d ? d.type : 'normal'; };
+  const name = id => { const d = def(id); return d ? d.name : id; };
+  const type = id => { const d = def(id); return d ? d.type : 'normal'; };
   const cat = id => { const d = def(id); return d ? d.category : 'physical'; };
   const isBuff = id => { const d = def(id); return !!d && G.TeamCards.selfOnly(d); };
 

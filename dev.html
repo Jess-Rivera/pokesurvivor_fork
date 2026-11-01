@@ -653,24 +653,6 @@
   </div>
 </section>
 
-<section id="scr-choose" class="scr dim hidden">
-  <div class="box sheet">
-    <div class="sh-top"><h2 id="choose-title">Apply</h2><span id="choose-sub" class="sh-state"></span><div class="sh-strip-slot"></div></div>
-    <div id="choose-sheet" class="sh-mount"></div>
-    <div class="sh-foot">
-      <div class="sh-foot-l">
-        <p class="sub kbd-hint"><kbd>←</kbd>/<kbd>→</kbd> switch Pokémon · <kbd>1</kbd>–<kbd>4</kbd> pick a move · <kbd>Enter</kbd> confirm · <kbd>Backspace</kbd> back</p>
-        <p class="sub touch-hint">Tap a Pokémon above and a move, then Confirm</p>
-        <p id="choose-note" class="note choose-note"></p>
-      </div>
-      <div class="row">
-        <button id="btn-choose-back" class="btn" data-sfx="none">Back</button>
-        <button id="btn-choose-ok" class="btn gold" data-sfx="none">Confirm</button>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section id="scr-team" class="scr dim hidden">
   <div class="box sheet">
     <div class="sh-top"><h2>Team summary</h2><span class="sh-state">Run over</span><div class="sh-strip-slot"></div></div>
@@ -714,8 +696,6 @@
 <script defer src="js/core/sprites.js"></script>
 <script defer src="js/core/camera.js"></script>
 <!-- datos de juego -->
-<script defer src="js/data/kinds.js"></script>
-<script defer src="js/data/mechanics.js"></script>
 <script defer src="js/data/moves.js"></script>
 <script defer src="js/data/types.js"></script>
 <script defer src="js/data/starters.js"></script>
@@ -757,7 +737,7 @@
 <script defer src="js/systems/hazards.js"></script>
 <script defer src="js/systems/status.js"></script>
 <script defer src="js/systems/stages.js"></script>
-<!-- new move system (slice 3d): loads always, runs only with ?dev&newcombat (G.MoveRoute) -->
+<!-- the move system (G.MoveSim; slice 3d, the only path since slice 7b) -->
 <script defer src="js/data/move-attributes.js"></script>
 <script defer src="js/data/moves-generated.js"></script>
 <script defer src="js/data/move-overrides.js"></script>

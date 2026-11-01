@@ -636,17 +636,6 @@ G.HUD = (() => {
       } else {
         // type emblem + family badge at the box size (54 = 3x the 18 px native icon), cooldown and flash on the icon itself
         moveIcon(ctx, 'move:' + m.id, x, y, S, cdOf(m), 1 - (performance.now() - (m.castAt || 0)) / 180, on);
-
-        // upgrade stacks taken on this move (badge, hidden at 0)
-        const stk = G.Moves.stackTotal(m);
-        if (stk > 0) {
-          ctx.save();
-          ctx.font = F(800, 10); ctx.textAlign = 'center'; ctx.fillStyle = col;
-          ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
-          ctx.strokeText('+' + stk, x + S / 2, y + S - 4);
-          ctx.fillText('+' + stk, x + S / 2, y + S - 4);
-          ctx.restore();
-        }
       }
 
       // key

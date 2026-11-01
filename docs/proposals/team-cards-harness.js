@@ -304,10 +304,10 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   console.log('6 HP Regen and Vitamins'); }
 
 // ===== 7. the level-up offer (part E) =====
-['js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/levelup.js', 'js/ui/move-info.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
+['js/data/moves.js', 'js/systems/levelup.js', 'js/ui/move-info.js'].forEach(p => { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 { const L = G.LevelUp, ROUTE = G.MoveRoute, COOP = G.Coop;
   G.Coop = { active: false };
-  G.MoveRoute = { on: true, routed: id => !!REAL[id] && !!G.Moves.BY_ID[id] };
+  G.MoveRoute = { routed: id => !!REAL[id] };
   const mkT = (ids, o = {}) => { const p = mkP([ids], Object.assign({ maxMoves: 4 }, o)); p.moves = ids.map(id => G.Moves.instance(id)); return p; };
   const flat = (p, roster) => Object.values(L.teamFamilies(p, roster || [p])).flat();
   const s1 = TC.store(), P = mkT(['ember', 'swords-dance'], { teamCards: s1 }), all = flat(P), ids = all.map(c => c.team).filter(Boolean);
@@ -353,9 +353,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
     ok(!two.includes('new:agility') && two.includes('new:night-shade') && two.includes('new:ember') && one.includes('new:agility'), '2-buff limit: with two buffs no third (Agility), Night Shade still offered; with one, Agility offered'); }
   { const o1 = L.offer(mkT(['ember', 'swords-dance'], { teamCards: TC.store() }), 3);
     ok(o1.length === 3 && o1.every(c => c.type === 'team' || c.type === 'vitamins' || c.type === 'new'), 'offer(), flag on: three new-path cards'); }
-  G.MoveRoute = { on: false, routed: () => false };
-  { const o2 = L.offer(mkT(['ember', 'swords-dance'], { teamCards: TC.store() }), 3);
-    ok(o2.length > 0 && o2.every(c => c.type === 'mech' || c.type === 'stat' || c.type === 'new'), 'offer(), flag off: the legacy cards only (' + o2.map(c => c.type).join(' ') + ')'); }
+  ok(L.families === undefined && L.teamOn === undefined, 'offer(): no legacy card path left (slice 7b-2a)');
   G.MoveRoute = ROUTE; G.Coop = COOP;
   console.log('7 level-up offer'); }
 
@@ -369,7 +367,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   ok(by('regen').total === '+0.5% max HP/s, benched only', 'summary: HP Regen');
   ok(rows[0].family === 'General' && rows[rows.length - 1].family === 'Delivery' && TC.summary(TC.store()).length === 0 && TC.summary(null).length === 0, 'summary: General first; no rows for an empty store');
   const sh = fs.readFileSync(R + '/js/ui/sheet.js', 'utf8');
-  ok(sh.includes("[['cards', 'Run Cards']]") && sh.includes('G.TeamCards.summary(pl.teamCards)') && sh.includes('G.MoveRoute.on === true'), 'sheet: a Run Cards tab, flag on only, fed by G.TeamCards.summary');
+  ok(sh.includes("[['cards', 'Run Cards']]") && sh.includes('G.TeamCards.summary(pl.teamCards)') && !sh.includes('G.MoveRoute.on'), 'sheet: a Run Cards tab whenever the run has a card store, fed by G.TeamCards.summary');
   console.log('8 team sheet summary'); }
 
 // ===== 9. the debug set (part G) =====

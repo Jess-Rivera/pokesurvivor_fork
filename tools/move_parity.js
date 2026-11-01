@@ -1,4 +1,4 @@
-// tools/move_parity.js: resolves the 63 moves and compares cd and power against legacy js/data/moves.js.
+// tools/move_parity.js: resolves the 63 moves and compares cd and power against the legacy move table (archived: docs/move_rework_holding/legacy-moves.js).
 // Usage: node tools/move_parity.js            self-test, parity summary, timing line
 //        node tools/move_parity.js --report   also write docs/current feature planning/move-parity-report.md
 // A report, not a gate: exit code 1 only if the self-test fails or the resolver throws.
@@ -36,9 +36,9 @@ let fails = 0;
 for (const [name, f] of cases) { let ok = false; try { ok = f(); } catch (e) { console.log('  threw: ' + e.message); } if (!ok) { fails++; console.log('SELFTEST FAIL: ' + name); } }
 console.log('self-test: ' + (cases.length - fails) + '/' + cases.length + ' passed');
 
-// ---------- legacy moves.js (a browser IIFE using G): run it in a vm sandbox with a stub G ----------
+// ---------- legacy moves (archived copy) (a browser IIFE using G): run it in a vm sandbox with a stub G ----------
 const sandbox = { G: {}, console }; sandbox.window = sandbox;
-vm.runInNewContext(fs.readFileSync(path.join(root, 'js/data/moves.js'), 'utf8'), sandbox);
+vm.runInNewContext(fs.readFileSync(path.join(root, 'docs/move_rework_holding/legacy-moves.js'), 'utf8'), sandbox);
 const L = sandbox.G.Moves.BY_ID;
 
 // ---------- parity ----------

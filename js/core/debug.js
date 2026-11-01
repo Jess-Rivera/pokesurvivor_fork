@@ -6,7 +6,7 @@
  *   G.Debug.maxAll()   unlock every Pokemon + shiny, max coins/tickets,
  *                      and max every per-Pokemon upgrade. Writes to the
  *                      current save (local or guest).
- *   G.Debug.give(id)   give the active Pokemon a move; G.Debug.stack(mechId, n, moveId) adds upgrade stacks
+ *   G.Debug.give(id)   give the active Pokemon a move
  *   G.Debug.ground(id) drop a ground item above you, outside pickup range but on screen (no id: logs every id; ids in data/ground-items.js, e.g. 'x-attack', 'sitrus', 'occa', 'pinap')
  *   G.Debug.item(id[, force])   give a Pokemon-tier held item through the real pickup path, chooser included (force=true equips directly; no id: logs every pokemon-tier id; ids in data/items.js, e.g. 'leftovers', 'scopelens', 'expertbelt')
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
@@ -26,7 +26,7 @@
  *   G.Debug.stage(stat, n, radius)  stat stage on every enemy near you: spe|def|spd|atk|spa, n = -1 (6 s each; repeat to stack, +-6 max)
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
- *   G.Debug.movechecker(id, ...)  range and move-data check (?dev&newcombat): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
+ *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -208,22 +208,9 @@ G.Debug = (() => {
   function give(id) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return false; }
     const pl = G.Game && G.Game.player;
-    if (!pl || !G.Moves.BY_ID[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }     // legacy-7b: D-BUBBLE
+    if (!pl || !G.MoveDefs[id]) { console.warn('[Debug] no run in progress, or unknown move id.'); return false; }
     G.Game.debugMaxed();
     return pl.addMove(id);
-  }
-
-  /** Put `n` stacks of mechanic `mechId` on a move of the active Pokemon (default: its first move).
-   *  Returns how many were accepted. Flags the run as tampered. ?dev only. */
-  function stack(mechId, n = 1, moveId) {
-    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    const pl = G.Game && G.Game.player;
-    const m = pl && (moveId ? pl.moves.find(x => x.id === moveId) : pl.moves[0]);
-    if (!m) { console.warn('[Debug] no such move on the active Pokemon.'); return 0; }
-    G.Game.debugMaxed();
-    let k = 0;
-    for (let i = 0; i < n; i++) if (G.Moves.addStack(m, mechId)) k++;
-    return k;
   }
 
   /** Put a status on every enemy around the active Pokemon, for a one-minute check of the DoT numbers:
@@ -313,15 +300,14 @@ G.Debug = (() => {
   const noSpawn = () => spawn(0);
   const spawnOn = () => spawn(1);
 
-  /** New move system hitbox overlay (slice 3d): G.Debug.hitbox() toggles, hitbox(true|false) sets. Needs ?dev&newcombat. */
+  /** New move system hitbox overlay (slice 3d): G.Debug.hitbox() toggles, hitbox(true|false) sets. Needs ?dev. */
   function hitbox(v) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return null; }
-    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return null; }
     G.MoveRender.overlay = v == null ? !G.MoveRender.overlay : !!v;
     return G.MoveRender.overlay;
   }
 
-  /** New move system quick test (slice 3d, ?dev&newcombat): a set of routed moves, one per slot (cycle slots to try each), wild spawns
+  /** New move system quick test (slice 3d, ?dev): a set of routed moves, one per slot (cycle slots to try each), wild spawns
    *  stopped, the overlay on, and 24 dummy enemies in 8 directions at 50, 130 and 220 px with a huge HP pool. Returns how many dummies
    *  were placed. Flags the run as tampered.
    *  newcombat()          the slice 3d seven; a dummy sleeps for good (no movement, no attacks, damage never wakes a sleeper).
@@ -386,19 +372,17 @@ G.Debug = (() => {
   };
   function newcombat(...args) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
     const pl = G.Game && G.Game.player;
     if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
     G.Game.debugMaxed();
     spawn(0);
-    G.Projectiles.clearOrbs(pl);
     // one set name (or none: 'core') loads a set; anything else is a list of move ids, one per slot (slice 5a)
     const named = args.length === 0 || (args.length === 1 && NC_SETS[args[0]]);
     const set = named ? (args[0] || 'core') : 'custom';
     let ids = NC_SETS[set];
     if (!named) {
       ids = args.filter(id => {
-        if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }     // legacy-7b: D-BUBBLE
+        if (!G.MoveDefs[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
         if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
         return true;
       });
@@ -503,7 +487,7 @@ G.Debug = (() => {
     return pl.slots.length;
   }
 
-  /** Range and move-data check (slice 6, ?dev&newcombat). G.Debug.movechecker('bubble-beam', 'gust', 300): wild spawns stop and the
+  /** Range and move-data check (slice 6, ?dev). G.Debug.movechecker('bubble-beam', 'gust', 300): wild spawns stop and the
    *  live enemies are cleared; up to 6 routed move ids go one per slot (cycle slots to try each); ONE dummy stands at the given
    *  distance to your right (a number argument, default 150 px): awake, so every rider can land and Hex sees no status, but pinned
    *  in place (no walking, no knockback slide), no contact damage, HP that never runs out. The hitbox overlay and the range rings
@@ -514,7 +498,6 @@ G.Debug = (() => {
   let mcOn = false;
   function movechecker(...args) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
     const pl = G.Game && G.Game.player;
     if (!pl) { console.warn('[Debug] no run in progress.'); return 0; }
     const strs = args.filter(a => typeof a === 'string'), nums = args.filter(a => typeof a === 'number' && a > 0);
@@ -527,7 +510,7 @@ G.Debug = (() => {
       return 0;
     }
     let ids = strs.filter(id => {
-      if (!G.Moves.BY_ID[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }     // legacy-7b: D-BUBBLE
+      if (!G.MoveDefs[id]) { console.warn('[Debug] unknown move id, skipped: ' + id); return false; }
       if (!G.MoveRoute.routed(id)) { console.warn('[Debug] not on the new move path yet, skipped: ' + id); return false; }
       return true;
     });
@@ -537,7 +520,6 @@ G.Debug = (() => {
     const def = G.Enemies.defForDex(19, G.Game.time) || G.Enemies.defForDex(16, G.Game.time);
     if (!def) { console.warn('[Debug] no enemy definition for the dummy.'); return 0; }
     spawn(0);     // movechecker start (also flags the run as tampered)
-    G.Projectiles.clearOrbs(pl);
     G.EnemyMgr.clear();     // movechecker start: the dummy is the only target
     const n = loadSlots(pl, ids);
     G.MoveRender.overlay = true;
@@ -558,17 +540,6 @@ G.Debug = (() => {
     }
     console.log('[Debug] movechecker: ' + n + ' move(s) in slots (' + ids.join(', ') + '), 1 pinned dummy ' + dist + ' px to your right, range rings every 50 px out to 600. Cycle slots to try each; G.Debug.movechecker() turns it off.');
     return n;
-  }
-
-  /** Give `n` stat cards (`hp|atk|def|spa|spd|spe`) to roster member `idx` (default: the active Pokemon). ?dev only. */
-  function stat(id, n = 1, idx) {
-    if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    const g = G.Game, f = idx != null ? g.roster[idx] : g.player;
-    if (!f) { console.warn('[Debug] no such Pokemon.'); return 0; }
-    g.debugMaxed();
-    let k = 0;
-    for (let i = 0; i < n; i++) if (f.addStat(id)) k++;
-    return k;
   }
 
   // Convenience hotkey: Shift+D maxes everything (only with ?dev).
@@ -605,14 +576,13 @@ G.Debug = (() => {
     return true;
   }
 
-  /** Slice 5b team-wide cards (?dev&newcombat): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
+  /** Slice 5b team-wide cards (?dev): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
    *  'vitamins:atk' and so on; an HP Vitamin refreshes every member's max HP). No arguments: prints the store and every card id. */
   function cards(id, n = 1) {
     if (!on) { console.warn('[Debug] add ?dev to the URL to enable debug tools.'); return 0; }
-    if (!G.MoveRoute.on) { console.warn('[Debug] add &newcombat to the URL (with ?dev) for the new move system.'); return 0; }
     const pl = G.Game && G.Game.player, s = pl && pl.teamCards;
     if (!s) { console.warn('[Debug] no run in progress.'); return 0; }
-    const ids = G.TeamCards.CARDS.filter(c => c.id !== 'vitamins').map(c => c.id).concat(G.Mechanics.STATS.map(st => 'vitamins:' + st.id));
+    const ids = G.TeamCards.CARDS.filter(c => c.id !== 'vitamins').map(c => c.id).concat(G.TeamCards.STATS.map(st => 'vitamins:' + st.id));
     if (id == null) { console.table(G.TeamCards.summary(s)); console.log('[Debug] card ids: ' + ids.join(', ')); return s.n; }
     if (!ids.includes(id)) { console.warn('[Debug] unknown card id: ' + id + '. Ids: ' + ids.join(', ')); return 0; }
     G.Game.debugMaxed();
@@ -636,5 +606,5 @@ G.Debug = (() => {
     return true;
   }
 
-  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, stack, stat, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards, movechecker };
+  return { on, elite, skipTo, levelUp, gym, maxAll, clearUpgrades, toggleUpgrades, give, ground, item, runitem, runslots, coins, unlockitem, loadout, ignite, status, stage, flinch, statusSelf, carrier, spawn, noSpawn, spawnOn, hitbox, newcombat, cards, movechecker };
 })();

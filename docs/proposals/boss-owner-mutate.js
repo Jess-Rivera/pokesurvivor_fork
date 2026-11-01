@@ -34,7 +34,6 @@ const M = [
   ['a beam counts as a melee cone', 'gyms', [[" && d.space.shape === 'radial') return 'melee';", ") return 'melee';"]]],
   ['a homing shot counts as a straight shot', 'gyms', [["v.motion === 'travels' && v.targeting === 'direction'", "v.motion === 'travels'"]]],
   ['slot 1 cards changed', 'gyms', [['cards: { damage: 3, count: 2, velocity: 3, area: 2 }', 'cards: { damage: 3, count: 2, velocity: 1, area: 2 }']]],
-  ['flag off no longer steps the sim', 'route', [['if (!on) { G.MoveSim.step(dt, now); return; }', 'if (!on) return;']]],
   ['the render plays your cast for Brock', 'render', [['|| ev.enemy ||', '||']]],
   ['gym leaders keep the boss scale', 'enemy', [['this.scale = def.gym ? 1 : boss', 'this.scale = boss']]]
 ];

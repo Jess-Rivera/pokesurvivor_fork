@@ -98,7 +98,6 @@ G.GymArena = (() => {
     gate = null; asked = false;
     if (authority()) G.EnemyMgr.stash(); else G.EnemyMgr.clearRemote();
     G.Projectiles.clear();
-    G.Combat.clearFields();
     G.Hazards.clear();
     G.World.setArena({ tx: cfg.tx, ty: cfg.ty, r: cfg.r, type: cfg.type });
     G.World.setBiome(G.Tiles.arenaBiome(cfg.type), true);
@@ -166,7 +165,6 @@ G.GymArena = (() => {
     // returned and they were not visible until they fell (only their attacks).
     if (authority()) G.EnemyMgr.restore();
     G.Projectiles.clear();
-    G.Combat.clearFields();
     G.Hazards.clear();
     for (const p of G.Game.everyone()) { p.x = a.back.x; p.y = a.back.y; }
     pl.x = a.back.x; pl.y = a.back.y;

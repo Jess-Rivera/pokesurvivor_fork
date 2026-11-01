@@ -278,3 +278,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - 7b split in three (flip, purge, merge). 7b-1 built: new path always on, team cards only, G.Moves.RETIRED, save shortcuts and vetoes cleaned. Details: slice-7b.md Results.
 - Tests: check.js 34/34, smoke-ui and smoke-newcombat pass (three tests updated for the flip).
 - Stopped at: Jess feel-tests 7b-1 (run to Brock, stress run), then commits. Next: 7b-2 purge.
+
+## 2026-11-01 (Claude Code, home, later): 7b-2a purge
+- 7b-1 feel test and stress run passed (Jess); committed 8b7cbb7. 7b-2 split into 2a (engine purge) and 2b (stage stacking, ROUTED, guard), addendum approved.
+- Built 2a: legacy player-move code gone from combat.js and projectile.js; kinds.js and mechanics.js deleted; moves.js slim on G.MoveDefs; choose screen and "+N" badges removed; about 2,900 lines out.
+- Broke and fixed: main.js NEED still listed Kinds and Mechanics (boot halted); swap lock lived in G.Combat.tick, moved to game.js.
+- Tests: legacy table archived for the tools; 6 legacy harnesses retired, 5 trimmed to engine checks; check.js 30/30, smokes and mutations pass.
+- Stopped at: Jess feel-tests 2a, then commits. Next: 7b-2b.

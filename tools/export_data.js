@@ -7,7 +7,7 @@ const noop = () => {};
 const fakeCtx = new Proxy({}, { get: () => noop });
 const G = {};
 const sandbox = {
-  G, window: {}, console, Math, JSON, Date, Map, Set, Object, Array, Number, String, RegExp, Promise, Symbol, Infinity, NaN, isFinite, parseInt, parseFloat,
+  G, window: {}, console, Math, JSON, structuredClone, Date, Map, Set, Object, Array, Number, String, RegExp, Promise, Symbol, Infinity, NaN, isFinite, parseInt, parseFloat,
   location: { pathname: '/', protocol: 'file:' }, navigator: { language: 'es', languages: ['es'] }, localStorage: { getItem: () => 'es', setItem: noop },
   document: { documentElement: {}, createElement: () => ({ getContext: () => fakeCtx, width: 0, height: 0 }), addEventListener: noop, querySelector: () => null, body: {} },
   addEventListener: noop, matchMedia: () => ({ matches: false }), CanvasRenderingContext2D: function () {}, Image: function () {}, performance: { now: () => 0 },
@@ -21,12 +21,14 @@ for (const f of ['js/core/util.js', 'js/core/i18n.js']) load(f);
 // Captures the English dictionary (Spanish key).
 const add = G.I18n.add;
 G.I18n.add = d => { Object.assign(EN, d); add(d); };
-for (const f of ['js/data/lang-en.js', 'js/core/settings.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/types.js',
+for (const f of ['js/data/lang-en.js', 'js/core/settings.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js',
+                 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/data/types.js',
                  'js/data/items.js', 'js/data/achievements.js', 'js/world/tiles.js', 'js/data/funding.js']) {
   try { load(f); } catch (e) { console.warn('aviso', f, e.message); }
 }
 // evo stays in the export as null: tools/make_seo_pages.py still reads it (SEO copy pass is a TODO).
-const moves = Object.values(G.Moves.BY_ID).map(m => ({ id: m.id, name: m.name, type: m.type, kind: m.kind, desc: m.desc, maxLvl: 0, evo: null }));
+// Slice 7b-2a: moves come from the resolved defs; the legacy `kind` family is gone (null), desc is the mainline flavor text.
+const moves = G.Moves.ALL.filter(m => !G.Moves.RETIRED[m.id]).map(m => ({ id: m.id, name: m.name, type: m.type, kind: null, desc: m.flavor_text, maxLvl: 0, evo: null }));
 const out = {
   dex: G.DEX,
   moves,

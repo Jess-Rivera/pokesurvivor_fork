@@ -101,7 +101,6 @@ G.Game = (() => {
     G.UI.chrome(false);
     G.FX.clear();
     G.Projectiles.clear();
-    G.Combat.clearFields();
     G.MoveRoute.reset();     // slice 7a: gym leaders cast through G.MoveSim on both flags, so it is cleared on both
     G.EnemyMgr.clear();
     G.Pickups.clear();
@@ -471,9 +470,9 @@ G.Game = (() => {
     if (!cards.length) return;
     state = 'levelup';
     G.Audio.sfx('levelup');
-    G.RunUI.showLevelUp(pl.level, cards, (card, t) => {
+    G.RunUI.showLevelUp(pl.level, cards, card => {
       G.Audio.sfx('confirm');
-      card.apply(pl, t && t.pl, t && t.move);
+      card.apply(pl);
       state = 'playing';
     });
   }
@@ -489,7 +488,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-choose'].some(G.UI.isOpen)) return;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
     const opt = pl.bondOptions();
     if (!opt) {
       if (!quiet) G.Spawner.say('Guardas el vínculo: aprende otro movimiento para usarlo', 3, true);
@@ -566,7 +565,7 @@ G.Game = (() => {
   function offerItem(id) {
     const def = pl && G.Items.BY[id];
     if (!def) return;
-    if (state === 'levelup' || G.UI.isOpen('scr-levelup') || G.UI.isOpen('scr-choose')) { laterItems.push(id); return; }
+    if (state === 'levelup' || G.UI.isOpen('scr-levelup')) { laterItems.push(id); return; }
     const run = def.tier === 'run';
     // F3d-2: finding a team item unlocks it for good (pre-run loadout), even if you then choose Leave it.
     if (run && G.Items.unlock(G.DB.save, id)) { G.DB.commit(); G.Spawner.say('Team item unlocked: ' + def.name, 3, true); }
@@ -825,7 +824,7 @@ G.Game = (() => {
       if (f.dead) { G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad'); G.Audio.sfx('faint'); }
     }
     if (coop) {
-      for (const p of G.Coop.puppets()) { p.netUpdate(dt); G.Combat.ghostOrbit(p, dt, time); }
+      for (const p of G.Coop.puppets()) p.netUpdate(dt);
       if (pl.dead) reviveTick(dt);
     }
     G.Camera.follow(pl.x, pl.y, dt);
@@ -836,11 +835,10 @@ G.Game = (() => {
     else G.Spawner.tickBanner(dt);
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
-    G.Combat.tick(dt, pl, time);
+    if (!pl.dead && pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt);     // the swap lock (was in the legacy G.Combat.tick until 7b-2a)
     G.MoveRoute.tick(dt, pl, time);     // the player's moves and gym leaders' casts run in G.MoveSim (slice 7b flip)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);
-    G.Combat.updateFields(dt);
     G.Pickups.update(dt, all, onCollect);
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
@@ -881,7 +879,6 @@ G.Game = (() => {
     G.World.drawGround(ctx, cam);
     G.World.drawLiquid(ctx, cam, t);
     G.Hazards.draw(ctx);
-    G.Combat.drawGroundFields(ctx);
     G.MoveRender.drawGround(ctx);     // slice 7a: on both flags (gym leaders' shapes)
     G.Pickups.draw(ctx);
 
@@ -911,7 +908,6 @@ G.Game = (() => {
     G.Camera.apply(ctx);
     drawScene(G.Camera, G.Coop.active ? [pl, ...G.Coop.puppets()] : [pl]);
     G.Projectiles.draw(ctx);
-    G.Combat.drawAirFields(ctx);
     G.MoveRender.drawAir(ctx);
     G.FX.draw(ctx);
     ctx.restore();
@@ -1033,7 +1029,7 @@ G.Game = (() => {
     function restore() {
       G.World.reset(4242);
       G.World.setBiome(bi, true);
-      G.FX.clear(); G.Projectiles.clear(); G.Combat.clearFields(); G.EnemyMgr.clear(); G.Pickups.clear();
+      G.FX.clear(); G.Projectiles.clear(); G.EnemyMgr.clear(); G.Pickups.clear();
       G.MoveRoute.reset();
       wanderers = CAST.map(dex => spawn(dex, true));
     }

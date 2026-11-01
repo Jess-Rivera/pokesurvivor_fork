@@ -4,7 +4,7 @@
 // One row per move: the derived values of combat-validation-and-handoff:1.6 (basePower, cd or persistent, range used, reach,
 // instances alive at once, emissions per cast, rider chance per chain hop, the Power/s proxy of combat-architecture:D37 with its
 // hit-count assumption), the review state under the Stage 0 review rule, the scenarios that cover it, and the cd parity against
-// legacy js/data/moves.js. A report, not a gate: exit code 1 only if loading fails. Scenario pass or fail comes from
+// the legacy move table (archived: docs/move_rework_holding/legacy-moves.js). A report, not a gate: exit code 1 only if loading fails. Scenario pass or fail comes from
 // docs/proposals/move-intent-harness.js (run by tools/check.js), not from here.
 // Review rule (Jess 2026-10-29): a move with a MOVE-INTENT entry is reviewed when its data and code match it (its scenarios pass);
 // a move without one is reviewed with the batch that routes it (listed in the scenarios file `batchReviewed`).
@@ -16,7 +16,7 @@ global.G = {};
 // @@LOAD-BEGIN (tools that bundle this file replace this block)
 for (const f of ['move-attributes', 'moves-generated', 'move-overrides', 'move-handler', 'move-resolver']) require(path.join(root, 'js/data', f + '.js'));
 const legacyBox = { G: {}, console }; legacyBox.window = legacyBox;
-vm.runInNewContext(fs.readFileSync(path.join(root, 'js/data/moves.js'), 'utf8'), legacyBox);
+vm.runInNewContext(fs.readFileSync(path.join(root, 'docs/move_rework_holding/legacy-moves.js'), 'utf8'), legacyBox);
 const LEGACY = legacyBox.G.Moves.BY_ID;
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const SCEN = JSON.parse(read('docs/move_rework_holding/move-intent-scenarios.json')), ROUTE_SRC = read('js/systems/move-route.js'), INTENT_SRC = read('docs/MOVE-INTENT.md');

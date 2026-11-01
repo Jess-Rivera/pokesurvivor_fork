@@ -1,6 +1,5 @@
 // Move geometry offline checks (Node only). Usage from the repo root:  node docs/proposals/move-geom-harness.js .
-// Loads js/systems/move-geom.js into a bare G (no engine stubs needed, it is pure math). Covers: segDist2 truth cases and parity with the
-// legacy copy in combat.js on seeded random cases, shapeOf (families, grow per time and per distance, caps, lens, 2 pi clamp, purity),
+// Loads js/systems/move-geom.js into a bare G (no engine stubs needed, it is pure math). Covers: segDist2 truth cases, shapeOf (families, grow per time and per distance, caps, lens, 2 pi clamp, purity),
 // contains for each family (point sweep vs tunneling, arc edges with the enemy radius and the apex rule, full circle, linear ends and
 // sides, heading wrap), a growing ring first reaching an enemy on the right step, and boundsOf never under-covering contains.
 const fs = require('fs'), vm = require('vm');
@@ -15,17 +14,12 @@ let seed = 12345; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; l
 const rr = (a, b) => a + (b - a) * rnd();
 const deg = d => d * Math.PI / 180;
 
-// 1. segDist2: truth cases, then parity with the legacy function read from combat.js
+// 1. segDist2: truth cases
 ok(M.segDist2(0, 0, 10, 0, 0, 5) === 25, 'segDist2 beside the segment');
 ok(M.segDist2(0, 0, 10, 0, 13, 4) === 25, 'segDist2 past the end');
 ok(M.segDist2(0, 0, 10, 0, -3, 4) === 25, 'segDist2 before the start');
 ok(M.segDist2(1, 1, 1, 1, 4, 5) === 25, 'segDist2 zero-length segment');
-{ const src = fs.readFileSync(R + '/js/systems/combat.js', 'utf8').match(/function segDist2\([^)]*\) \{[\s\S]*?\n  \}/);
-  ok(!!src, 'legacy segDist2 not found in combat.js');
-  if (src) { const legacy = vm.runInNewContext('(' + src[0] + ')');
-    for (let i = 0; i < 3000; i++) { const a = [rr(-500, 500), rr(-500, 500), rr(-500, 500), rr(-500, 500), rr(-500, 500), rr(-500, 500)];
-      if (i % 10 === 0) { a[2] = a[0]; a[3] = a[1]; }
-      ok(M.segDist2(...a) === legacy(...a), 'segDist2 parity ' + a); } } }
+// (the parity check with the legacy combat.js copy went with that code in slice 7b-2a)
 
 // 2. shapeOf
 { const pt = M.shapeOf({ shape: 'radial', radRadius: 6, count: 1 }, null, { x: 1, y: 2, heading: 0.5 });

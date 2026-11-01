@@ -1,4 +1,5 @@
 // Status rework slice C, offline checks (Node only). Usage from the repo root:  node docs/proposals/status-sliceC-harness.js .
+// Slice 7b-2a (2026-11-01): the legacy-path sections (G.Combat procs, legacy move fields and cards) were cut with the legacy code; the engine checks stay.
 // Loads the REAL stats.js, enemies.js, moves.js, status.js, enemy.js, combat.js and mechanics.js with stubbed engine globals and checks the
 // shared status engine on enemies (real Enemy.update), on strong hosts (boss / elite / gym / player-like object) and the combat hooks:
 // one-major rule, durations, immunities, freeze / sleep cut and window, thaw, trap, confusion, paralysis, fizzle rates, the proc roll
@@ -19,7 +20,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
     norm: (x, y) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; } },
   DEX_BY, DEX: [], Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/enemies.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
+['js/core/stats.js', 'js/data/enemies.js', 'js/data/moves.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/combat.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 const Enemy = G.Enemy;
 Enemy.prototype.die = function () { this.dead = true; };
@@ -108,32 +109,6 @@ console.log('1 CONTROL table: paralysis 10 s, freeze 2 s (+4 s window), sleep 2-
     if (e.x !== x0 || e.y !== y0) bad(k + ' enemy moved while stunned: ' + e.x + ',' + e.y); }
   const e = mk(); e.x = 100; e.y = 100; run(e, 1); const moved = Math.hypot(e.x - 100, e.y - 100);
   console.log('10 Enemy.update: frozen and asleep enemies do not move', moved ? '' : '(movement is stubbed here)'); }
-
-// 11. procAilments: control moves roll by ailmentChance, throttle and strength
-const roll = (id, n, dex = 1) => { const m = G.Moves.instance(id); let hit = 0;
-  for (let i = 0; i < n; i++) { const e = mk(dex); G.Combat.procAilments(e, m.burn, m.poison, m); if (e.stMajor || e.stCnf || e.stTrap || e.burn || e.poison) hit++; } return hit / n; };
-{ const N = 30000, r = { thundershock: roll('thunder-shock', N), discharge: roll('discharge', N), confusion: roll('confusion', N), icebeam: roll('ice-beam', N), lick: roll('lick', N), firespin: roll('fire-spin', 500), electricVsPara: roll('thunder-shock', 3000, 3) };
-  const chk = (k, want, tol) => { if (Math.abs(r[k] - want) > tol) bad(k + ' proc rate ' + r[k] + ' want ' + want); };
-  const want = id => G.Moves.instance(id).ailmentChance / 100;
-  chk('thundershock', want('thunder-shock'), 0.012); chk('discharge', want('discharge'), 0.012); chk('confusion', want('confusion'), 0.012); chk('icebeam', want('ice-beam'), 0.012); chk('lick', want('lick'), 0.012);
-  chk('firespin', 1, 0); chk('electricVsPara', 0, 0);
-  const fs_ = G.Moves.instance('fire-spin'); if (fs_.burn) bad('Fire Spin must not carry burn any more'); if (G.Moves.instance('lick').slow) bad('Lick must not have a hand-set slow any more');
-  const e = mk(); const m = G.Moves.instance('thunder-shock'); m.ailmentChance = 100; for (let i = 0; i < 100; i++) G.Combat.procAilments(e, 0, 0, m);
-  if (!e.stMajor || e.stMajor.k !== 'paralysis') bad('100% paralysis did not apply'); if (!e.ailRoll || !(e.ailRoll['thunder-shock'] > 0)) bad('control ailments must use the roll throttle');
-  console.log('11 proc roll:', 'thunder-shock', r.thundershock.toFixed(3), 'discharge', r.discharge.toFixed(3), 'confusion', r.confusion.toFixed(3), 'ice-beam', r.icebeam.toFixed(3), 'lick', r.lick.toFixed(3), '| fire-spin traps 100%, Electric enemy 0% paralysis'); }
-
-// 12. wired moves and sheet text
-{ const list = G.Moves.ALL.filter(d => G.Status.isControl(d.ailment)).map(d => d.id + ':' + d.ailment);
-  const T = id => G.Mechanics.ailmentText(G.Moves.instance(id));
-  const lines = { 'thunder-shock': T('thunder-shock'), 'ice-beam': T('ice-beam'), confusion: T('confusion'), 'fire-spin': T('fire-spin'), lick: T('lick') };
-  if (!/^Paralysis chance 10% per hit: half speed, 25% of attacks fizzle, 10 s$/.test(lines['thunder-shock'])) bad('thunder-shock line ' + lines['thunder-shock']);
-  if (!/^Freeze chance 10% per hit: cannot act for 2 s/.test(lines['ice-beam'])) bad('ice-beam line ' + lines['ice-beam']);
-  if (!/^Confusion chance 10% per hit: wanders and 50% of attacks fizzle, 2-8 s$/.test(lines.confusion)) bad('confusion line ' + lines.confusion);
-  if (!/^Strips all stat boosts, then burn chance 100% per hit: 6\.3% max HP every 2 s, 2 times/.test(lines['fire-spin'])) bad('fire-spin line ' + lines['fire-spin']);
-  const m = G.Moves.instance('thunder-shock'), AC = G.Mechanics.BY_ID.ailchance; if (!G.Mechanics.check(m, AC).ok) bad('Ailment Chance must be allowed on thunder-shock'); G.Moves.addStack(m, 'ailchance');
-  if (m.ailmentChance !== 20) bad('Ailment Chance +10 points on a paralysis move: ' + m.ailmentChance); if (!/Paralysis chance 20%/.test(G.Mechanics.ailmentText(m))) bad('card text on paralysis: ' + G.Mechanics.ailmentText(m));
-  if (G.Mechanics.text(G.Moves.instance('thunder-shock'), AC) !== '+10 points Paralysis Chance') bad('card name: ' + G.Mechanics.text(G.Moves.instance('thunder-shock'), AC));
-  console.log('12 wired control moves (' + list.length + '):', list.join(' ')); console.log('   ', JSON.stringify(lines)); }
 
 // 13. the player as a host: the DoT path and its numbers match the enemies'
 { const p = mkp(['normal'], 1600); if (St.applyDot(p, 'burn') !== 'ok') bad('player burn'); tickN(p, 10);

@@ -1,4 +1,5 @@
 // Status rework slice D2 (flinch), offline checks (Node only). Usage from the repo root:  node docs/proposals/status-sliceD2-harness.js .
+// Slice 7b-2a (2026-11-01): the legacy-path sections (G.Combat procs, legacy move fields and cards) were cut with the legacy code; the engine checks stay.
 // Loads the REAL stats.js, enemies.js, moves.js, status.js, stages.js, enemy.js and combat.js with stubbed engine globals and checks: the flinch
 // data, the proc roll (chance, one roll per 0.5 s), the lost action per unit kind (wild melee, ranged, charger, boss cast), the recoil (half a sprite
 // radius back at 2.0x speed, then 0.2 to 0.3 s still), no immunity and no window, and that frozen / dead / remote units cannot flinch.
@@ -18,29 +19,13 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   DEX_BY, DEX: [], FX: { dmgText: (x, y, m) => texts.push(m), spark() {}, ring() {}, burst() {}, sp() {} },
   Sprites: { Animator: class { update() { } loop() { } play() { } busy() { return false; } }, bodyRadius: () => 10, bodyHeight: () => 20, hovers: () => false, dirFromAngle: () => 0 } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-['js/core/stats.js', 'js/data/enemies.js', 'js/data/kinds.js', 'js/data/mechanics.js', 'js/data/moves.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js',
+['js/core/stats.js', 'js/data/enemies.js', 'js/data/moves.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js',
  'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/combat.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 const Enemy = G.Enemy; Enemy.prototype.die = function () { this.dead = true; };
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const mk = (behavior = 'plain') => { const e = new Enemy({ dex: 1, baseHp: 50, spd: 50, dmg: 5, xp: 1, hp: 100, behavior }, 0, 0, { t: 0, dmg: 1, hp: 1, spd: 1 }, false); e.maxHp = 1e6; e.hp = 1e6; return e; };
-
-// 1. data
-{ const want = { 'rock-slide': 30, bite: 30, 'dark-pulse': 20 }, got = {};
-  for (const m of G.Moves.LIST || Object.values(G.Moves.BY_ID)) if (m.flinch > 0) got[m.id] = m.flinch;
-  if (JSON.stringify(Object.entries(got).sort()) !== JSON.stringify(Object.entries(want).sort())) bad('flinch moves ' + JSON.stringify(got));
-  console.log('1 data: flinch moves in the catalogue ' + JSON.stringify(got)); }
-
-// 2. proc roll: chance, one roll per 0.5 s per move per target
-{ const rate = (id, n = 20000) => { let k = 0; for (let i = 0; i < n; i++) { const e = mk(); e.applyFlinch = () => { k++; return true; }; G.Combat.procFlinch(e, G.Moves.instance(id)); } return k / n; };
-  const rb = rate('bite'), rd = rate('dark-pulse'), rr = rate('rock-slide');
-  if (Math.abs(rb - 0.3) > 0.012 || Math.abs(rr - 0.3) > 0.012 || Math.abs(rd - 0.2) > 0.012) bad('flinch rates ' + [rb, rd, rr]);
-  const e = mk(); let k = 0; e.applyFlinch = () => { k++; return true; }; const m = G.Moves.instance('bite'); m.flinch = 100;
-  for (let i = 0; i < 10; i++) G.Combat.procFlinch(e, m); if (k !== 1) bad('a burst of hits is ONE roll: ' + k);
-  G.Stages.tick(e, 0.51); G.Combat.procFlinch(e, m); if (k !== 2) bad('the roll gap is 0.5 s: ' + k);
-  const none = mk(); none.applyFlinch = () => { k = 99; }; G.Combat.procFlinch(none, G.Moves.instance('tackle')); if (k === 99) bad('a move without flinch must not roll');
-  console.log('2 rolls: Bite ' + rb.toFixed(3) + ', Dark Pulse ' + rd.toFixed(3) + ', Rock Slide ' + rr.toFixed(3) + ' per roll; one roll per 0.5 s per move per target'); }
 
 // 3. the lost action, per unit kind
 { const w = mk(); w.touchCd = 0; w.fsp = 0; if (!w.applyFlinch() || w.touchCd !== 0.55 || !w.stFl || w.stFl.ph !== 'hold') bad('wild melee: contact timer restarts, a stationary unit only freezes');
