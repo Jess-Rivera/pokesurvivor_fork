@@ -331,3 +331,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Found: the brain only lands its longest-reach melee, so each slot carries one melee cone (21 sets trimmed; rule in BOSS-AUTHORING). Harness gym-harness 10b casts every authored move of gyms 2 to 8.
 - Found (not fixed, TODO): item choice soft-lock when two items arrive with the replace screen open.
 - Verified: check.js 30/30, smoke-ui and smoke-newcombat pass (one boot flake on the first newcombat run), headless probe walks all 8 gyms in order with no page errors (badge boosts stack: Atk and SpA +20%).
+
+## 2026-11-01 (Claude Code, home): soft-lock, gym forms, utility picker
+- Item choice soft-lock fixed (js/game.js offerItem: a second item queues while an item choice is open; queue reset at run start). Headless probe failed with the guard removed, passed with it.
+- Gym forms: chain hops and homing search the caster's foes (co-op ready), nova, strike (Thunderbolt) and homing forms; Dazzling Gleam lands now. Decided (Jess): flinch on the player restarts the active group's cooldowns plus a 0.3 s hold and the boss recoil; crits on for leaders.
+- Found in a headless fight: the fixed form order starved later moves. Jess chose a utility AI for move picks (movement stays a state machine; movement scoring is Gym AI Tier 2). Built: freshness x fit, POINT_BLANK 0.5; every move in the starvation sets now casts.
+- Found (TODO (e)): a leader's Psychic never lands (420 px cast gate, about 166 px flight). Next: riders onto the player.
+- Verified: check.js 30/30, boss-owner 131 checks, mutations 40/40, smokes pass (one flake each).
