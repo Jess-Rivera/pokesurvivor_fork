@@ -12,4 +12,4 @@ Jeremy playtest
 - More Item Drops
 - Bomb guarantees screen clear, 3.0s delay for spawn
 - Magnetism
-- 
+- Flamethrower and some other moves hit through walls
