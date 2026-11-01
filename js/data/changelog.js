@@ -14,6 +14,10 @@ G.CHANGELOG = [
         'Walking into a gym (or back out) with an orbiting move like Fire Spin or Leaf Storm no longer freezes the game.',
         'Walking into a gym (or back out) with an orbiting move like Fire Spin or Leaf Storm no longer freezes the game.',
       ],
+      [
+        'Gym leaders only fire a shot when it can actually reach you, and a leader with a short-range shot like Psychic now steps in to use it instead of wasting it from afar.',
+        'Gym leaders only fire a shot when it can actually reach you, and a leader with a short-range shot like Psychic now steps in to use it instead of wasting it from afar.',
+      ],
     ],
     chg: [
       [

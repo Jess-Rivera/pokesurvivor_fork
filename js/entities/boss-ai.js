@@ -11,7 +11,8 @@
  * The attack is picked by a utility score (attack(): freshness x fit x opportunity, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
  * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player lands
  * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
- * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px;
+ * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px,
+ * closer while its longest ready shot or strike falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
  */
@@ -30,6 +31,8 @@ G.Boss = (() => {
   const LOW_HP = 0.3; // below this fraction of max HP the leader favors fighting from range
   const NEAR = 170,
     FAR = 300; // far mode: backs off inside NEAR, circles you inside FAR, walks in beyond it
+  const SHOT_IN = 20, // far mode with a short ranged move ready: FAR shrinks to its reach minus this, so it lands
+    BAND = 40; // and NEAR to at most this much inside the shrunk FAR
   const adapt = (d) => ({ cat: d.category, dmg: d.basePower || 0, type: d.type }); // the damage adapter G.MoveEffects uses (D5: P = basePower)
 
   class GymBrain {
@@ -107,10 +110,12 @@ G.Boss = (() => {
         vy = ux * spd * this.side;
       };
       if (this.mode === 'far') {
-        if (dist < NEAR) {
+        const out = Math.min(FAR, this.ranged() - SHOT_IN),
+          inn = Math.min(NEAR, out - BAND);
+        if (dist < inn) {
           vx = -ux * spd;
           vy = -uy * spd;
-        } else if (dist < FAR) circle();
+        } else if (dist < out) circle();
       } else if (!this.ready('melee') && !this.ready('nova')) {
         // close, every close move recharging: circle just outside its reach
         const r = this.reach() + (pl.r || 0) + 30;
@@ -139,8 +144,20 @@ G.Boss = (() => {
       return r;
     }
 
+    /** The reach of the mon's longest ready shot or strike, or Infinity when none is ready: far mode keeps you inside it. */
+    ranged() {
+      let r = -Infinity;
+      for (const s of this.e.activeGroup()) {
+        if (s.t > 0) continue;
+        const d = this.def(s.id),
+          f = G.Gyms.formOf(d);
+        if (f === 'shot' || f === 'strike') r = Math.max(r, G.Gyms.reachOf(d, f));
+      }
+      return r > -Infinity ? r : Infinity;
+    }
+
     /** The utility pick (Jess 2026-11-01): every ready attack you are in reach of (a melee cone or a nova: its reach plus your body; a
-     *  strike or a shot: its range) gets a score, and the highest starts its tell. Score = freshness x fit. Freshness: seconds since the
+     *  strike: its range; a shot: how far it flies, capped at its range) gets a score, and the highest starts its tell. Score = freshness x fit. Freshness: seconds since the
      *  move's last tell started (the fight's first pick for one never cast), over its cooldown, so every move gets turns and fast moves
      *  still come more often. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's close reach. Ties: ORDER, then
      *  the move's place in the group. Opportunity: see opp(). No randomness. this.scores keeps the last pick's scores for the ?dev overlay. */

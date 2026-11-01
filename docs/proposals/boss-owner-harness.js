@@ -339,20 +339,21 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 
 // 14. the utility pick (Jess 2026-11-01): score = freshness (seconds since the move's last tell started, over its cooldown) x fit (0.5 for a
 // shot or strike inside the mon's close reach, else 1); ties by form order, then group order. Cooldowns from the move data, no cards:
-// Tackle 0.5, Rock Throw 1.167, Thunder Shock 0.583, Confusion 0.7, Psychic 1.75. Expected values hand-derived from those.
+// Tackle 0.5, Rock Throw 1.167, Thunder Shock 0.583, Confusion 0.7, Psychic 1.75. Expected values hand-derived from those. Psychic sets are
+// scored at 150 px, inside Psychic's 166 px flight (section 15).
 { const mk3 = (ids) => { fresh(); const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; return [e, b]; };
   const slot = (e, id) => e.slots[0].find(x => x.id === id);
   { const [e, b] = mk3(['thunder-shock', 'confusion', 'psychic']); b.t0 = 0; const T = 10; pl.x = 300; pl.y = 0;
     slot(e, 'thunder-shock').last = T - 1; slot(e, 'confusion').last = T - 1; slot(e, 'psychic').last = T - 4;   // 1.715, 1.429, 2.286 x 1.25 (its drop is not on you)
-    b.attack(300, pl, T); ok(b.tell && b.tell.id === 'psychic', 'the stalest move by its own cooldown wins: Psychic 4/1.75 x 1.25 = 2.86 over Thunder Shock 1/0.583 = 1.71');
+    b.attack(150, pl, T); ok(b.tell && b.tell.id === 'psychic', 'the stalest move by its own cooldown wins: Psychic 4/1.75 x 1.25 = 2.86 over Thunder Shock 1/0.583 = 1.71');
     const sc = Object.fromEntries(b.scores.map(x => [x.id, x.score]));
     ok(near(sc['thunder-shock'], 1 / 0.583, 1e-2) && near(sc.confusion, 1 / 0.7, 1e-2) && near(sc.psychic, 4 / 1.75 * 1.25, 1e-2), 'scores are seconds over cooldown (x opportunity): ' + JSON.stringify(sc));
     ok(b.scores.filter(x => x.picked).length === 1 && b.scores.find(x => x.picked).id === 'psychic', 'the overlay record marks one pick');
     ok(slot(e, 'psychic').last === T, 'the pick stamps its last cast at the tell start');
     const [e2, b2] = mk3(['thunder-shock', 'confusion', 'psychic']); b2.t0 = 0;
     slot(e2, 'thunder-shock').last = T - 1; slot(e2, 'confusion').last = T - 1; slot(e2, 'psychic').last = T - 2.3;   // 1.715 vs 1.643
-    b2.attack(300, pl, T); ok(b2.tell && b2.tell.id === 'thunder-shock', 'Psychic at 2.3/1.75 x 1.25 = 1.64 loses to Thunder Shock at 1.71'); }
-  { const [e, b] = mk3(['psychic', 'thunder-shock']); b.t0 = 5; b.attack(300, pl, 5);
+    b2.attack(150, pl, T); ok(b2.tell && b2.tell.id === 'thunder-shock', 'Psychic at 2.3/1.75 x 1.25 = 1.64 loses to Thunder Shock at 1.71'); }
+  { const [e, b] = mk3(['psychic', 'thunder-shock']); b.t0 = 5; b.attack(150, pl, 5);
     ok(b.tell && b.tell.id === 'psychic', 'equal scores (both never cast, 0) go to the first move in the group'); }
   { const [e, b] = mk3(['rock-throw', 'tackle']); b.t0 = 5; b.attack(60, pl, 5);
     ok(b.tell && b.tell.id === 'tackle', 'equal scores go to the earlier form: melee before shot, whatever the group order'); }
@@ -371,13 +372,35 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     const id = b.tell && b.tell.id; e.applyFlinch();
     ok(!b.tell && id && slot(e, id).last === t, 'a flinched tell still stamps its move (' + id + ') as used at the tell start'); }
   // the two starvation sets from the 2026-11-01 browser run: every move is cast within 25 s
-  const sets = [[['bulldoze', 'thunderbolt', 'thunder-shock', 'confusion'], 205], [['thunder-shock', 'confusion', 'psychic'], 300]];
+  const sets = [[['bulldoze', 'thunderbolt', 'thunder-shock', 'confusion'], 205], [['thunder-shock', 'confusion', 'psychic'], 150]];
   const outs = [];
   for (const [ids, at] of sets) { const [e] = mk3(ids); pl.x = at; pl.y = 0; run(e, 25);
     for (const id of ids) ok(casts[id] >= 1, ids.join('+') + ' at ' + at + ' px: ' + id + ' cast within 25 s: ' + JSON.stringify(casts));
     outs.push(ids.map(id => id + ' ' + (casts[id] || 0)).join(', ')); }
   pl.x = 0; pl.y = 0;
   console.log('14 utility pick: freshness over cooldown, point-blank cut 0.5, ties by form then group order, flinch counts as used; starvation sets now rotate: ' + outs.join(' | ')); }
+
+// 15. shot reach from flight (Jess 2026-11-01): a shot reaches speed x lifetime + size, capped at its range (default 420), with no credit
+// for homing; far mode keeps you inside its longest ready shot or strike. From the move data, no cards: Shadow Ball 280 x 1.2 + 9 = 345,
+// Psychic 80 x 1.2 + 70 = 166, Rock Throw 260 x 1.4 + 9 = 373, Thunder Shock 480 x 1.5 + 7 = 727 -> 420, Confusion 280 x 1.6 + 7 = 455 -> 420.
+{ const one = (ids) => { fresh(); const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {}, stance: 'far' })), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; return [e, b]; };
+  const R = (id) => Gy.reachOf(G.MoveDefs[id], Gy.formOf(G.MoveDefs[id]));
+  ok(near(R('shadow-ball'), 345) && near(R('psychic'), 166) && near(R('rock-throw'), 373), 'flight reach: Shadow Ball 345, Psychic 166, Rock Throw 373: ' + [R('shadow-ball'), R('psychic'), R('rock-throw')]);
+  ok(R('thunder-shock') === 420 && R('confusion') === 420, 'long and homing shots cap at the 420 range: ' + [R('thunder-shock'), R('confusion')]);
+  { const [e, b] = one(['shadow-ball']); pl.x = 350; pl.y = 0; frame(e); ok(!b.tell, 'no Shadow Ball tell at 350 px (flies 345)');
+    pl.x = 340; frame(e); ok(b.tell && b.tell.id === 'shadow-ball', 'a Shadow Ball tell at 340 px'); }
+  { const [e, b] = one(['thunder-shock']); pl.x = 430; pl.y = 0; frame(e); ok(!b.tell, 'no Thunder Shock tell at 430 px (capped at 420)');
+    pl.x = 410; frame(e); ok(b.tell && b.tell.id === 'thunder-shock', 'a Thunder Shock tell at 410 px'); }
+  { const [e, b] = one(['psychic', 'harden']); ok(near(b.ranged(), 166), 'the far band follows the ready Psychic (166)');
+    e.slots[0][0].t = 1; ok(b.ranged() === Infinity, 'with Psychic recharging there is no short ranged move: the 170 to 300 band');
+    const [e2, b2] = one(['rock-throw']); ok(near(b2.ranged(), 373), 'Rock Throw ready: 373, the band stays 170 to 300'); }
+  // the walk-in: a far-stance Psychic user 250 px away, free to move (not held), steps in and lands it
+  { const [e, b] = one(['psychic']); pl.x = 250; pl.y = 0; let minD = Infinity;
+    for (let i = 0; i < 8 * 60; i++) { clock += DT; e.kx = e.ky = 0; e.update(DT, pl); G.MoveRoute.tick(DT, pl, clock); minD = Math.min(minD, Math.hypot(pl.x - e.x, pl.y - e.y)); }
+    ok(casts.psychic >= 1 && pl.hurts.length >= 1, 'a far Psychic user walks in and lands it within 8 s: casts ' + (casts.psychic || 0) + ', hits ' + pl.hurts.length + ', closest ' + Math.round(minD) + ' px');
+    ok(minD < 166 && minD >= 166 - 20 - 40 - 5, 'it closes inside 166 but keeps the shrunk band (no closer than about 106 px): ' + Math.round(minD)); }
+  pl.x = 0; pl.y = 0;
+  console.log('15 shot reach: flight capped at range (Shadow Ball 345, Psychic 166, Thunder Shock and Confusion 420); far mode walks in for a short ready shot'); }
 
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');

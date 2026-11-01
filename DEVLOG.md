@@ -346,3 +346,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Verified: check.js 30/30, boss-owner harness 164 checks, mutations 54/54, smoke-ui pass; smoke-newcombat every functional check ok on 3 runs, but each run had one "failed to load resource" console error on a different page (local server flake).
 - Surge's real Electric sets (js/data/gyms.js): Thunder Shock on every Electric mon, each keeps its Normal/Steel melee for contact, Thunderbolt on Raichu below 50% HP, Jolteon drops Poison Sting. gym-harness 10b: Surge 18/18 moves cast.
 - Next: Psychic reach (separate slice), then tune gyms 2 to 8.
+
+## 2026-11-01 (Claude Code, home): shot reach from flight
+- Jess feel-tested riders and Surge: good for now.
+- G.Gyms.reachOf: a shot reaches speed x lifetime + size, capped at its range (default 420); homing gets no turn credit (Jess). Shadow Ball 345, Rock Throw 373, Psychic 166, Thunder Shock and Confusion 420.
+- boss-ai.js far mode: the 170 to 300 band shrinks to the longest ready shot or strike's reach minus 20 (inner edge 40 inside), so a Psychic user walks in and lands it (Jess: "move to use it").
+- Verified: check.js 30/30, boss-owner harness 175 (new section 15; section 14 Psychic sets now scored at 150 px), mutations 58/58 (4 new, 1 stale re-pointed), smoke-ui pass. smoke-newcombat skipped from now on by Jess (flaky, slow; TODO Backlog).
+- Next: tune gyms 2 to 8.

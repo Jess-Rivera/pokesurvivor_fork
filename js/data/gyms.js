@@ -47,15 +47,18 @@ G.Gyms = (() => {
       return 'shot';
     return null;
   }
-  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range. */
-  const reachOf = (d, form) =>
-    form === 'melee'
-      ? d.space.radRadius
-      : form === 'nova'
-        ? d.delivery.grow.max
-        : d.delivery.range != null
-          ? d.delivery.range
-          : G.MoveResolver.TUNING.RANGE;
+  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range. A shot
+   *  reaches no further than it flies (speed x lifetime + size), capped at that range; a homing shot gets no credit for turning
+   *  (Jess 2026-11-01). */
+  function reachOf(d, form) {
+    if (form === 'melee') return d.space.radRadius;
+    if (form === 'nova') return d.delivery.grow.max;
+    const v = d.delivery,
+      range = v.range != null ? v.range : G.MoveResolver.TUNING.RANGE;
+    if (form !== 'shot') return range;
+    const life = (v.endOn || []).find((c) => c.time != null);
+    return life ? Math.min(range, v.moveSpeed * life.time + ((d.space && d.space.radRadius) || 0)) : range;
+  }
 
   /** Builds a stage ladder from national dex numbers, base form first. Levels default to STAGE_BANDS; pass `levels` to override per line. */
   function ladder(dexes, levels) {
