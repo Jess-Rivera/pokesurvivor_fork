@@ -110,7 +110,7 @@ Slot | Line (base -> mid -> final)        | Types (final)  | BST (final) | Role
 -----|------------------------------------|----------------|-------------|---------------------------
   1  | Geodude -> Graveler -> Golem       | Rock/Ground    | 495         | spine; evolves across loops
   2  | Onix                               | Rock/Ground    | 385         | the Def-160 wall
-     |   -> Steelix (Gen-2 line-completion, Jess 2026-10-22) | Steel/Ground | 510 | Def-200 wall at high gym level; off-Rock typing accepted
+  2  |   -> Steelix                       | Steel/Ground   | 510         | Def-200 wall at high gym level; off-Rock typing accepted
   3  | Rhyhorn -> Rhydon                  | Ground/Rock    | 485         | Ground-lean bruiser
   4  | Omanyte -> Omastar                 | Rock/Water     | 495         | special threat (SpA 115)
   5  | Kabuto -> Kabutops                 | Rock/Water     | 495         | fast physical (Spe 80)
@@ -486,7 +486,7 @@ and until then gym data uses the regular Geodude line as the stand-in.
 Slot | Line (base -> final)               | Types (final)  | BST (final) | Role / canon
 -----|------------------------------------|----------------|-------------|---------------------------
   1  | Onix                               | Rock/Ground    | 385         | canon in every game
-     |   -> Steelix (line-completion; FRLG rematch) | Steel/Ground | 510 | Def-200 wall; shared with Brock slot 2
+  1  |   -> Steelix (line-completion; FRLG rematch) | Steel/Ground | 510 | Def-200 wall; shared with Brock slot 2
   2  | Hitmonchan                         | Fighting       | 455         | canon; every game
   3  | Hitmonlee                          | Fighting       | 455         | canon; Atk 120, SpD 110
   4  | Machop -> Machoke -> Machamp       | Fighting       | 505         | his ace in every game (Atk 130)
