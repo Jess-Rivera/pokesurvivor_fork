@@ -32,8 +32,10 @@ mons, in what order) is a design decision per leader.
   stage table. Evolution REQUIREMENTS (trade, min-level, happiness) are IGNORED: the
   leader simply has the stage the level calls for (he is a leader, not a wild catch).
 - Gym leader mons use ONLY catalog moves and the existing warning shapes
-  (rule owned by BOSS-REWORK section 3a). Authored move/stack data per mon lives in gyms.js /
-  docs/BOSS-AUTHORING.md, NOT here. This file is the roster line-up only.
+  (rule owned by BOSS-REWORK section 3a). Authored moves and upgrade cards per mon live in gyms.js /
+  docs/BOSS-AUTHORING.md, NOT here (D-ENEMY amendment, 2026-10-31: each mon holds its own cards under the
+  player's card rules; Brock slot 1 is built, slots 2 to 6 and the other gyms keep PROVISIONAL move sets until
+  the gym-roster branch). This file is the roster line-up only.
 - Stage thresholds per line (the level at which a slot shows its next stage) are a
   TUNE value, set when the multi-mon gym flow is built. Placeholder bands are noted
   per line where useful; they are not locked.
@@ -43,7 +45,7 @@ mons, in what order) is a design decision per leader.
   Electric is the first case: only 8 species, Zapdos excluded as a legendary), the
   remaining slot(s) may use an OFF-TYPE thematic pick that fits the leader's identity
   (e.g. Porygon for Lt. Surge, the Game-Corner tech mon). Legendaries are NEVER gym
-  mons (they are unique, rift/bespoke content). An off-type pick is a feature, not a
+  mons (they are unique, bespoke content). An off-type pick is a feature, not a
   fallback apology: it doubles as anti-cheese (a mon the obvious counter-type cannot
   sweep). Prefer evolving/mono-type first; reach for off-type only when the pool runs out.
 - LINE-COMPLETION TO GEN-2 allowed (LOCKED 2026-10-22, Jess). A roster slot that is a
@@ -98,7 +100,7 @@ starting point only; real bands get set and recorded in BALANCE.md at build time
 
 ## Kanto
 
-### Gym 1 - Brock (Rock)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/stacks still in gyms.js]
+### Gym 1 - Brock (Rock)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/cards in gyms.js]
 
 Source: Pokemon Crystal rematch party (Graveler, Rhyhorn, Omastar, Kabutops, Onix)
 + Aerodactyl (Brock's Let's Go rematch and B2W2 PWT teams; corrected 2026-10-31, the old
@@ -145,7 +147,7 @@ Grass/Electric/Fighting/Ground; Rock/Flying (Aerodactyl) is weak to
 Electric/Water/Rock/Steel/Ice. Interaction with the softened SOFT type chart and
 the Rock/Ground Electric-immunity question is still open (BOSS-REWORK 3d note 4).
 
-### Gym 2 - Misty (Water)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 2 - Misty (Water)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Gen-1-ONLY by request (the earlier mixed-gen
 options (Politoed, Lanturn, Quagsire) were Gen 2 and are swapped for Gen-1 lines).
@@ -182,7 +184,7 @@ Water/Ice x2. The whole team is ELECTRIC-weak and most are Grass-weak, since the
 Gen-1 Water/Ground to patch it (that was the cut Quagsire's job), so a Gen-1 Misty is
 genuinely hard-countered by an Electric or Grass starter. Canon-accurate for an early
 Water gym; flagged as a lower anti-cheese spread than the mixed-gen version.
-### Gym 3 - Lt. Surge (Electric)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 3 - Lt. Surge (Electric)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Gen-1-ONLY. NOTE: the Gen-1 Electric pool is
 tiny, with only 8 non-legendary species (Pikachu/Raichu, Voltorb/Electrode,
@@ -220,7 +222,7 @@ Ground starter walks this gym), with two exceptions that add texture: Magneton
 (Electric/Steel, no Ground immunity but many resistances) and the off-type Porygon
 (Normal, NOT Ground-weak, which makes it the one mon a Ground starter cannot shred; Fighting-weak
 instead). Porygon is the deliberate anti-cheese seam here.
-### Gym 4 - Erika (Grass)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 4 - Erika (Grass)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Gen-1-ONLY. Venusaur is canon (Erika's
 Pokemon Let's Go rematch roster), so no design-add this time. Pool is ample (14
@@ -260,7 +262,7 @@ Flying starter walks this gym, which is canon-accurate for Erika. CORRECTION
 Flying weak (and 4x Bug-weak). Only Poison coverage differs. Tangela is pure Grass
 (Def-115 wall) and equally Fire/Flying weak. Fire hits all six; Flying hits all six. Low anti-cheese vs Fire/Flying by
 design; the Grass/Poison stack is the point.
-### Gym 5 - Koga (Poison)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 + line-completion; moves/stacks still in gyms.js]
+### Gym 5 - Koga (Poison)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 + line-completion; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Jess's lineup. Uses the LINE-COMPLETION rule
 (Zubat line caps at Crobat, Gen-2). Nidoran lines deliberately NOT used here so they
@@ -303,7 +305,7 @@ Flying (Crobat) takes Electric/Ice/Rock, Bug/Poison (Venomoth) takes Fire/Flying
 Water/Poison (Tentacruel) takes Electric/Ground/Psychic. So a Psychic starter is the
 hard counter (Sabrina-style), and a Ground starter nearly is. Lower anti-cheese than
 first claimed; accepted as canon-accurate for Koga. Nidoran lines reserved for Giovanni.
-### Gym 6 - Sabrina (Psychic)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 6 - Sabrina (Psychic)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Gen-1-ONLY. 6th slot = Gengar (her iconic
 anime ghost ace); Jess accepts the overlap with Agatha (Ghost E4), who also wants the
@@ -346,7 +348,7 @@ from the dual-types: Jynx (Ice/Psychic, +Fire/Rock/Steel-weak), Slowbro (Water/P
 Mr. Mime (Psychic/Fairy, Steel/Poison-weak), Gengar (Ghost/Poison, Dark/Ground/Psychic-
 weak and immune to Normal/Fighting). A Dark starter hits most of the team; Gengar and
 the dual-types keep it from being a clean single-type sweep.
-### Gym 7 - Blaine (Fire)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 7 - Blaine (Fire)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary, anime secondary. Gen-1-ONLY. The Gen-1 Fire pool has exactly six
 non-legendary lines (Moltres excluded), so the roster is the whole pool and no off-type
@@ -387,7 +389,7 @@ starter walks this gym. Accepted by Jess (Mewtwo was considered as a patch and r
 see the legendary ruling in the rules section). Average final BST ~519, the highest of
 any gym so far, so the power curve is already front-loaded; watch loop 6 tuning.
 
-### Gym 8 - Giovanni (Ground)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/stacks still in gyms.js]
+### Gym 8 - Giovanni (Ground)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; Gen-1 only; moves/cards in gyms.js]
 
 Source: games primary. Gen-1-ONLY, and Jess's six are the RBY/Let's Go-style Giovanni
 core with Marowak added. Uses the cross-roster reuse rule for RHYDON (also Brock's slot
@@ -426,14 +428,14 @@ Marowak). Giovanni fielding a Marowak is dark irony or a lore slip depending on 
 Jess kept it. Revisit if it reads wrong in play.
 
 Defensive spread (design note): the lowest average BST of any gym (~464), as the Kanto
-finale, so move stacks and level scaling carry its difficulty. WATER and ICE hit five of
+finale, so its mons' upgrade cards and level scaling carry its difficulty. WATER and ICE hit five of
 six (Persian is Normal, so neither lands), Grass hits Dugtrio, Marowak and Rhydon (4x on
 Rhydon), Psychic hits both Nidos, Fighting hits Persian and Rhydon. ELECTRIC is immune on
 five of six (only Persian takes it), so Electric starters are walled hard: the gym's one
 real anti-cheese edge, plus Persian as the single non-Ground mon. Rhydon is shared with
 Brock, so a loop-6 player faces it in two gyms.
 
-### Elite Four 1 - Lorelei (Ice)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/stacks still in gyms.js]
+### Elite Four 1 - Lorelei (Ice)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/cards in gyms.js]
 
 Source: core-series teams (Bulbapedia, Serebii). Dewgong, Cloyster, Jynx, Lapras and
 Slowbro are on her team in every Gen-1-era game. Mamoswine is the outside pick (her FRLG
@@ -474,7 +476,7 @@ Steel weak; Electric-IMMUNE) and Alolan Sandslash (Ice/Steel: Fire and Fighting 
 2x, resists Grass). FIGHTING hits five of six (Jynx neutral), Grass four, Electric three
 (Mamoswine immune); no single type clears the team, so a better spread than most gyms.
 
-### Elite Four 2 - Bruno (Fighting)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/stacks still in gyms.js]
+### Elite Four 2 - Bruno (Fighting)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/cards in gyms.js]
 
 Source: core-series teams. His Let's Go rematch is Onix, Hitmonchan, Hitmonlee, Poliwrath,
 Golem (Alolan there), Machamp, which is Jess's list plus Hitmonchan; Steelix is the FRLG
@@ -520,7 +522,7 @@ Electric- and Poison-immune and Alolan Golem resists Electric. A Flying or Psych
 clears the Fighting four, a Water or Ground starter clears the back two, so no single type
 sweeps.
 
-### Elite Four 3 - Agatha (Ghost)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/stacks still in gyms.js]
+### Elite Four 3 - Agatha (Ghost)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/cards in gyms.js]
 
 Source: core-series teams. Her Gen-1 era teams are Poison-heavy (Gengar, Golbat, Arbok,
 Haunter; Let's Go adds Weezing and Alolan Marowak), so a Poison-leaning Ghost roster is
@@ -562,7 +564,7 @@ Alolan Marowak and Mismagius, and Water/Rock hit Alolan Marowak. Gengar and Mism
 Normal- and Fighting-immune. Psychic is still the best single type but no longer clears
 five of six, a better spread than Koga's.
 
-### Elite Four 4 - Lance (Dragon)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/stacks still in gyms.js]
+### Elite Four 4 - Lance (Dragon)   [ROSTER LOCKED 2026-10-22; ORDER Gen-1 2026-10-31; moves/cards in gyms.js]
 
 Source: core-series teams. Dragonite, Aerodactyl, Gyarados, Charizard (GSC, Let's Go) and
 Dragonair (RBY, FRLG) are canon. Kingdra passes the outside test via Seadra (Lance's Let's

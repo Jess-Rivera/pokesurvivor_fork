@@ -116,17 +116,17 @@ art from code (16 px per tile, x2).
 | **Spring** | Heals while you are on it; it runs out and recharges on its own in ~45 s |
 | **Locked chest** | Stay 3.5 s next to it (even if attacked): coins, 1-3 tickets (15% an x10) and experience to level up once |
 | **Traps** | Poison, sticky (slows you) or explosive; they trigger when stepped on, by enemies too |
-| **Gym gate** | Opens on the map on the gym schedule and takes you to the leader's type arena (BOSS-REWORK section 3) |
+| **Gym gate** | Opens on the map on the gym schedule and takes you to the leader's type arena (BOSS-REWORK section 3). The leader's mons fight like the player: player size, the player's moves through G.MoveSim, their own upgrade cards, a tell before every cast (D-ENEMY, slice 7a; BOSS-REWORK 3c and 3d) |
 
 - **Fliers, ghosts and bosses** ignore the terrain.
 - **3 biomes** that rotate every 4 minutes, each with its own music:
   Shadow Forest, Crystal Cave, Ash Volcano. The change is a **2.6 s fade**
   between the old palette and the new one (ground and objects).
-- **Removed:** random legendary rifts (rift.js RANDOM_RIFTS false) and Arceus's Judgment at 30:00 (judgment.js ENABLED false). Gym gates reuse the rift flow and arenas. BOSS-REWORK section 1; code cleanup in its section 5.
+- **Removed:** random legendary rifts, legendary fights and Arceus's Judgment at 30:00; rift.js and judgment.js are deleted (slice 7a-0, 2026-10-31). Gym gates use the gym arena (js/systems/gym-arena.js, G.GymArena). DECISIONS 2026-10-31 "Gyms only"; BOSS-REWORK section 1.
 - Mid-game events (horde of one type, golden hour, lost Pokemon) and treasure imps (Meowth, Gholdengo): current behavior, see js/systems/events.js.
 
 ### 4.0 Type arenas (one per type)
-Current behavior. Built for the old rifts, now used by gym gates (the leader fights in the arena of the gym's type). Each
+Current behavior. Used by gym gates (js/systems/gym-arena.js: the leader fights in the arena of the gym's type). Each
 arena has its own palette, decoration, terrain and weather, and plays its own
 theme. The opponent collides with walls and columns like you and cannot
 leave the circle.
@@ -196,7 +196,7 @@ Summary. Tuned numbers: BALANCE.md and js/data/enemies.js. Enemy level curve, op
   around rocks, walls and dangerous puddles. Only those that **float in their
   sprite** fly over (`hv` in sprites-meta, tools/hover_flags.py):
   Rowlet or Pidgey walk even though they are Fliers; Gastly or Zubat float.
-- **Removed:** the five timed bosses (3, 6, 9, 12, 15 min), random legendary rifts and Arceus's Judgment. Elites and gyms replace them (BOSS-REWORK section 1). BOSS_SLOTS is still rolled in enemies.js but never spawned (cleanup: BOSS-REWORK section 5).
+- **Removed:** the five timed bosses (3, 6, 9, 12, 15 min), random legendary rifts, legendary fights and Arceus's Judgment (code deleted in slice 7a-0). Elites and gyms replace them (BOSS-REWORK section 1). BOSS_SLOTS is still rolled in enemies.js but never spawned (cleanup: BOSS-REWORK section 5).
 
 ## 6. Shinies
 
@@ -244,18 +244,19 @@ Placeholder behavior (CP5-8). The upstream Upgrades menu is live with 13 per-Pok
 
 ### 7.4 Level-up and in-run upgrades
 `[Approved]` (upgrade rework slices 1 to 2d-2, 2026-10-18). Move-path card rules for the new move system: combat-architecture D4.
+`[Legacy behavior]` The mechanic, stat and scoped cards below are the flag-off path, removed in slice 7b. On the new move path (`?dev&newcombat`) a level-up offers team-wide cards instead (one store per run, every member and every later move reads it; js/systems/team-cards.js, slice 5b) plus new-move cards. A new-move card's name, type, text and icon badge come from the move's resolved definition through G.MoveInfo (js/ui/move-info.js; text generated from shape and effects, DECISIONS 2026-10-31 "7a UI readers"), on both flags.
 
 - On leveling up: **1 of 3 cards**, drawn by family first (new move, DPS, Coverage, Utility, Stats), then a card inside the family, so catalogue size does not skew the odds. Weights: current value, see js/systems/levelup.js (FAMILY_W). Only cards with a legal target on the team are offered.
 - **Moves have no level**; they hold any number of upgrades. Unlimited upgrades are the point: a framerate collapse at END GAME from a stacked build is intended, a collapse in a normal-length game is not.
 - **Mechanic cards** are move-specific: card, then an eligible Pokemon (any team member, fainted included), then an eligible move. A card whose ceiling is already reached is ineligible (dimmed). Rate mechanics are additive "increased rate".
-- **Stat cards** (HP Up, Protein, Iron, Calcium, Zinc, Carbos): per Pokemon, percentage only. **Scoped cards** (one type or one damage kind): applied to one chosen move. All "increased damage" sources sum in one additive pool. Steps: current value, see js/data/mechanics.js and js/data/kinds.js.
+- **Stat cards** (HP Up, Protein, Iron, Calcium, Zinc, Carbos): per Pokemon, percentage only. **Scoped cards** (one type or one legacy move family): applied to one chosen move. All "increased damage" sources sum in one additive pool. Steps: current value, see js/data/mechanics.js and js/data/kinds.js.
 - **Removed:** move evolutions, the nine old stat cards and the utility cards (cooldown, regen, pickup radius, XP, heal).
 - **Bond** `[Open]`: Bond = Slot Compression + Synergy; synergy rules, bond count per run and BOND_MAX are open. See TODO (Bond rework) and the board.
 
 ### 7.5 Gacha tickets: Pokeballs and Master Balls
 - `[Approved]` The x1 ticket is shown as a Great Ball labelled "Pokeball"; the x10 ticket as a Master Ball labelled "Master Ball". Code and save names (`ticket`, `ticket10`, `t1`, `t10`) are unchanged.
 - **Pokeball sources** (current behavior): each defeated wild Pokemon (current value: see js/entities/pickup.js TICKET_RATE), locked chests (1-3), the lost-Pokemon event, daily missions.
-- **Master Ball sources** (current behavior, D-07, from code 2026-10-28): locked chests (15%), the Gholdengo treasure imp (1 in 4 imps), weekly missions (kills; bosses, where elites and gym leaders count; survival time; dailies done) and achievements. Gym leaders and elites drop none. Dormant: the old boss drop and rift legendary drop have no live path, and the weekly "rift" mission and the "Judgment" achievement cannot be completed (see TODO).
+- **Master Ball sources** (current behavior, D-07, from code 2026-10-28): locked chests (15%), the Gholdengo treasure imp (1 in 4 imps), weekly missions (kills; bosses, where elites and gym leaders count; survival time; dailies done) and achievements. Gym leaders and elites drop none. The old boss and rift legendary drops, the weekly "rift" mission and the rift, legendary and Judgment achievements were removed in slice 7a-0 (2026-10-31); the smaller supply is accepted for now (DECISIONS 2026-10-31 "Gyms only", D3, TODO).
 
 ### 7.6 Gacha, one banner per region
 Current behavior. Kanto, Johto, Hoenn, Sinnoh, Unova, Kalos, Alola, Galar and Paldea, each with

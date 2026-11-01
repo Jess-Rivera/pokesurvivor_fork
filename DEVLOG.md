@@ -266,3 +266,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Play changes vs legacy kind (melee cut, ranged targeting, Life Orb, Substitute buff) and 14 badge changes: slice-7a.md Results.
 - Tests: ui-readers harness 119 + mutate 20/20; team-cards harness and mutate updated; tools/smoke-ui.js new, all passed on both flags; check.js 34/34; smoke-newcombat all passed.
 - Stopped at: Jess feel-tests, then commits. Next: a run to Brock (7a Proceed when), then the docs sweep.
+
+## 2026-10-31 (Claude Code, home, late night): 7a closed, docs sweep
+- Feel test of the UI readers passed and a run reached Brock (Jess): 7a Proceed when met. UI readers committed as e6465d4.
+- Docs sweep: GDD (rifts and Judgment removed, gym gate row, 7.4 legacy-card note and G.MoveInfo, Master Ball line), GLOSSARY (rift, 7a terms), ONBOARDING (gym-arena.js, team-cards.js, move-info.js, sheet.js, smoke-ui.js, kind-guard.js; rift.js and judgment.js gone), README (gym gates, link, tickets, no move evolutions), GYM-ROSTERS (cards, not stacks), SIM-PRESENT-BOUNDARY (GymBrain and gym-arena offenders), TODO (rift region bug closed).
+- Stopped at: Jess commits the sweep. Next: board cleanup, then the 7b plan.

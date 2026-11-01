@@ -48,7 +48,7 @@ and internal references all depend on the Spanish names staying as they are.
 | enemigo / enemigos | enemy / enemies |
 | jefe / jefes | boss / bosses (REMOVED as a timed spawn, see BOSS-REWORK.md; the word survives in code) |
 | oleada / marea | wave / tide (of enemies) |
-| grieta | rift (REMOVED as a random event; the rift flow now serves gym gates) |
+| grieta | rift (REMOVED 2026-10-31 with rift.js; gym gates use the gym arena, js/systems/gym-arena.js) |
 | arena | arena |
 | bioma | biome |
 | clima | weather |
@@ -193,7 +193,12 @@ docs/current feature planning/combat-architecture.md (runtime); this table only 
 | axis | one of the three parts of a move: `space` (shape), `delivery` (where, how it moves, when it ends), `payload` (effects) |
 | resolved definition | a move after defaults, derived values (cd, basePower, range) and overrides; `G.MoveDefs`, deep-frozen |
 | routed | in the ROUTED list of js/systems/move-route.js, so the new path runs it with `?dev&newcombat` |
-| legacy path | the old `kind`-based combat in combat.js and moves.js; removed in slice 7b |
+| legacy path | the old `kind`-based combat in combat.js and moves.js; removed in slice 7b. Since 7a no other file reads `kind` (the 7a guard) |
+| G.MoveInfo | js/ui/move-info.js: what the menus, cards, icons and cast animation show about a move (name, type, badge, generated text), read from `G.MoveDefs` |
+| badge | the small move family glyph on a move icon; derived from the def's shape, motion and anchor for display only, never read by gameplay |
+| 7a guard | tools/kind-guard.js (run by check.js): fails on any legacy move-table read (`G.Moves.BY_ID`, `G.Kinds`, a move's `kind`) outside the files 7b deletes |
+| legacy-7b | a code comment tag on a known legacy read left for slice 7b (flag-off rows, D-BUBBLE id checks); the 7a guard allows and counts it |
+| enemy owner | a gym leader mon casting through G.MoveSim as the cast's owner, with its own cards (D-ENEMY, slice 7a) |
 | instance | one live hitbox spawned by a cast (one per `space.count`) |
 | group | the `count` instances of one spawn; a persistent slot keeps one group alive |
 | `endOn` | the conditions that end an instance (time, wall, offScreen, returned, ownerDeath, notActive) |

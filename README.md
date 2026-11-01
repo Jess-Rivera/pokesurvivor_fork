@@ -40,14 +40,15 @@ app ("Add to home screen"). In **Settings** there is sound, graphics quality
 (with an automatic mode), damage numbers, less shake, FPS and the account.
 
 The Pokemon attacks on its own with the active move (or with all the moves of a
-**link**: each legendary you beat lets you fuse moves to fire them at once from a
+**link**: each gym leader you beat lets you fuse moves to fire them at once from a
 single slot, up to 4). Rocks, chests and tall grass break; walls and trees block
 enemy shots; water slows you down and lava burns (enemies too).
 
 On the map there are **power altars**, **springs** that heal, **locked chests**
 (stay next to them a few seconds) and **traps** that also damage enemies. Now
-and then a **rift** opens: enter it and you will fight a **legendary** in a
-separate arena.
+and then a **gym gate** opens: enter it and you will fight the **gym leader** in
+an arena of the gym's type. The leader's Pokemon fight the way you do, with the
+same moves and a short warning before each attack.
 
 There is a **type chart** (a Bubble Beam takes more off a Charmander) and,
 every so often, **weather** (sun, rain, sandstorm, snow, fog) that boosts some
@@ -56,12 +57,12 @@ types and weakens others.
 Every day there are **quests** (and weekly ones) that give tickets and coins;
 **achievements** give medals and titles, and your **profile** shows your 3
 favorite Pokemon, your records and your medals. In runs you find **items**
-(Leftovers, Choice Band...) and your moves **evolve** at max level. Enemies have
+(Leftovers, Choice Band...) and level-up cards upgrade your moves. Enemies have
 personality: they heal, put up shields, call in their pack or attack with a
 ground warning.
 
 **Upgrades** are per Pokemon. The **gacha** runs on **tickets** earned by
-playing (x1 from some Pokemon, x10 from bosses and legendaries), and is pulled
+playing (x1 from some Pokemon, x10 from locked chests and the Gholdengo treasure imp), and is pulled
 on a pixel-art slot machine.
 
 Each enemy has a 1/4096 chance of being **shiny**: it sparkles, an arrow at the

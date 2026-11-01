@@ -55,7 +55,7 @@ These are the concrete places where sim reaches into presentation. They are the 
 - The first concrete candidate (Enemy.hurt / showHurt onto the bus) is unblocked now that the channel exists.
 
 ## Remaining gym-side offenders (convert when the next slice touches them)
-- entities/boss-ai.js GymBrain.start (G.FX.ring, anim.play) and GymBrain.cast (G.FX.slash, G.FX.ring, G.FX.sp, anim.play, G.FX.spark in GymBrain.shoot): the cast sim and its visuals are interleaved. (Moved out of enemy.js unchanged in 7a-0 commit B, 2026-10-31.)
-- systems/rift.js: openGate and startGym toasts (G.Spawner.say), the arena tick and won() presentation. The multi-mon arena flow (next slice) rewrites the arena tick, so convert these then.
+- entities/boss-ai.js, since the 7a slot-1 rewrite (2026-10-31): GymBrain.start (the tell: anim.play Charge, G.FX.ring), GymBrain.telling (anim.play when the cast fires through G.MoveSim.castAt) and GymBrain.buffs (G.FX.ring, G.FX.sp): the brain's decisions and their visuals are still interleaved. The move's own shapes are drawn by move-render.js, which skips enemy casts. Candidate: a 'gym:tell' and 'gym:cast' event pair on G.SimBus. Earlier offenders GymBrain.cast and GymBrain.shoot are gone. (Moved out of enemy.js unchanged in 7a-0 commit B, 2026-10-31.)
+- systems/gym-arena.js (the gym half of the removed rift.js, 7a-0): openGate and startGym toasts (G.Spawner.say), the send-out line, the gate sparkles in the arena tick, and won() presentation (G.FX.dmgText, G.FX.ring). The multi-mon arena flow (next slice) rewrites the arena tick, so convert these then.
 - Reading sim state from presentation (hud.js reads G.Gym.graceLeft, escBump, enrageIn) is the allowed direction and stays.
 - New pure data functions follow the same rule: G.Gyms.stageFor and G.Gyms.lineup touch no engine global except the dex table, no clock, no randomness.

@@ -18,7 +18,7 @@ CONTEXT.md, STATE.md, and CLAUDE.md are the startup sources of truth.
 
 A Vampire-Survivors-style bullet-heaven / horde-survival roguelite, as a Pokemon
 fan game. The player is a Pokemon that auto-attacks; you dodge, pick level-up
-cards, fight bosses, open rifts against legendaries, and collect Pokemon via a
+cards, fight elites and gym leaders, and collect Pokemon via a
 per-region gacha.
 
 - **Pure front end:** vanilla HTML + CSS + JavaScript on Canvas 2D. No framework,
@@ -107,7 +107,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 ### `js/data/` (static game data; some generated)
 - `pokedex.js` the 966 Pokemon (stats, names, types; `leg` = legendary flag). Generated.
 - `sprites-meta.js` sprite sheet metadata (`hv` hover flag, `sa` shiny-alt geometry). Generated, large, skip when reading.
-- `moves.js` the LEGACY move catalog (families, levels, types). It drives normal play until slice 7b deletes the legacy path.
+- `moves.js` the LEGACY move catalog (families, levels, types). It drives flag-off play until slice 7b deletes the legacy path; since 7a nothing outside the 7b files reads it for display (use `G.MoveInfo`).
 - The new move system's data chain (load order): `move-attributes.js` (`G.MoveAttrs`, the grammar and validator rules, docs/MOVE-AXIS-SCHEMA.md), `moves-generated.js` (`G.MoveData`, generated from docs/move_rework_holding/move-conversions-described.json by `tools/export_moves.js`, never hand-edited), `move-overrides.js` (hand-set fields with a `why`), `move-handler.js` (special handlers), `move-resolver.js` (`G.MoveDefs`, the resolved and deep-frozen definitions).
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
 - `upgrades.js` permanent upgrades. `items.js` equippable run items.
@@ -122,12 +122,12 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/systems/` (gameplay rules)
 - `combat.js` damage/targeting, `spawner.js` enemy spawning/waves, `levelup.js` the
-  card draft, `gacha.js` pulls/rarity/pity, `rift.js` the legendary arenas,
+  card draft, `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
-  (coins/tickets/profile), `judgment.js` (anti-cheat validation), `status.js` and `stages.js` (ailments and stat stages),
+  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),
   `elites.js`, `gym.js` (run progression, BOSS-REWORK.md), `log.js` (dev logger).
-- The new move system (move schema branch, only with `?dev&newcombat`): `move-route.js` (`G.MoveRoute`, the one ROUTED list of moves the new path runs; combat.js skips those slots), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers), `move-render.js` (drawing only). Rules: docs/current feature planning/combat-architecture.md.
+- The new move system (move schema branch; player moves only with `?dev&newcombat`, gym leader casts on both flags since 7a): `move-route.js` (`G.MoveRoute`, the one ROUTED list of moves the new path runs; combat.js skips those slots), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep; `castAt` for an enemy owner), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers, hits on the player too), `move-render.js` (drawing only), `team-cards.js` (`G.TeamCards`, the team card store and the fold onto a def). Rules: docs/current feature planning/combat-architecture.md.
 
 ### `js/net/` (online, all optional)
 - `social.js` nicknames/friends, `net.js` WebRTC + relay + TURN handshake,
@@ -139,7 +139,8 @@ in English. Do not add those new English strings to `lang-en.js`.
   objects and collisions (16x16 tile chunks baked to ImageData).
 
 ### `js/ui/`
-- `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `login.js`,
+- `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
+  before icons.js), `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
   `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),
@@ -153,7 +154,8 @@ in English. Do not add those new English strings to `lang-en.js`.
   make_seo_pages.py, fetch_*.py, make_font.py). Checks: `check.js` (syntax of every file, every
   `*harness*.js` under docs/, the move-data steps). Move tools: `export_moves.js` (source JSON to moves-generated.js; `--check` guards hand edits),
   `validate_moves.js` (grammar and validator rules; `--resolved` checks the resolver output), `move_parity.js` (new vs legacy cd and power),
-  `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke).
+  `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke),
+  `smoke-ui.js` (headless: every move in the menus, level-up cards, pause sheet and icons, both flags), `kind-guard.js` (the 7a guard, run by check.js).
 - `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation runners (`*-mutate.js`, run by hand).
 
 ## 6. Deferred server/ops facts
@@ -173,7 +175,8 @@ propose or implement cloud or multiplayer work during the local-first phase.
 - **New move:** while the move schema branch is live, author it in docs/move_rework_holding/move-conversions-described.json (grammar: docs/MOVE-AXIS-SCHEMA.md),
   run `node tools/export_moves.js`, add hand-set fields to `js/data/move-overrides.js`, and give it a MOVE-INTENT entry if it needs a ruling.
   It runs on the new path once its id is in `js/systems/move-route.js` ROUTED, and gets an intent scenario. The legacy `js/data/moves.js`
-  plus `js/systems/combat.js` and `js/entities/vfx.js` still drive normal play until slice 7b. New user-facing text is authored in English
+  plus `js/systems/combat.js` and `js/entities/vfx.js` still drive flag-off play until slice 7b. Its card text, icon badge and sheet rows
+  come from its definition automatically (`G.MoveInfo`, sheet.js); never read `kind` (the 7a guard fails). New user-facing text is authored in English
   only, with no lang-en.js entry (CLAUDE.md i18n rule).
 - **New enemy / personality:** `js/data/enemies.js` for the roster/tiers; enemy
   behavior and personalities in `js/entities/enemy.js` (and spawn logic in
@@ -184,7 +187,7 @@ propose or implement cloud or multiplayer work during the local-first phase.
 - **New UI screen:** add a `*-ui.js` under `js/ui/`, register it on `G`, add its
   `<script>` to `dev.html`, and wire it into the flow in `js/game.js`. Draw any
   icons in `js/ui/icons.js`. Remember to add it to the `NEED` list in `js/main.js`.
-- **New rift / arena / weather:** `js/systems/rift.js`, `js/systems/weather.js`,
+- **New gym / arena / weather:** `js/systems/gym-arena.js` (arena), `js/data/gyms.js` (rosters, moves, cards; docs/BOSS-AUTHORING.md), `js/systems/weather.js`,
   terrain in `js/world/`.
 - **Anything with new on-screen text:** author it directly in English. Leave inherited
   Spanish literals unchanged because they are translation keys.
