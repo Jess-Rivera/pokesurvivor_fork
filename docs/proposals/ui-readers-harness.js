@@ -70,6 +70,7 @@ const DESC = {
   'leaf-storm': 'Circles you, always on: damage, own Sp. Atk -2.', 'metal-claw': 'Close strike: damage, 10% team Attack +1, knockback.', hail: 'Effect: sets snow for 10 s.',
   hex: 'Chains between foes: damage, x2 on a statused foe, hops to more foes.', 'bug-bite': 'Close strike: damage, knockback.'
 };
+ok(I.desc('no-such-move') === '', 'desc of an unknown move id is empty, not a throw (legacy() was removed in 7b)');
 for (const id in DESC) ok(I.desc(id) === DESC[id], 'desc ' + id + ': "' + I.desc(id) + '"');
 ok(I.effects(D.discharge).join() === 'damage,30% paralysis', 'effects walk an emitted child (Discharge: damage from the parent power, 30% paralysis)');
 console.log('3 descriptions');

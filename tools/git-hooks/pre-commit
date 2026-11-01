@@ -1,0 +1,14 @@
+#!/bin/sh
+# Blocks a commit if a staged JS, CSS or HTML file is not Prettier-formatted.
+# Install once per checkout:  git config core.hooksPath tools/git-hooks
+# Fix with: npx prettier --write <file>, then git add it again. Bypass in an emergency: git commit --no-verify
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(js/.*\.js|tools/[^/]*\.js|css/.*\.css|dev\.html|sw\.js|eslint\.config\.js)$')
+[ -z "$files" ] && exit 0
+[ -x node_modules/.bin/prettier ] || { echo "pre-commit: prettier not installed (npm install), skipping format check"; exit 0; }
+bad=$(echo "$files" | xargs node_modules/.bin/prettier --list-different)
+if [ -n "$bad" ]; then
+  echo "pre-commit: these staged files need formatting:"
+  echo "$bad"
+  echo "Run: npx prettier --write <file>   then git add it again."
+  exit 1
+fi

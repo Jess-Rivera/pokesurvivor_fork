@@ -132,6 +132,10 @@ for (const [name, args, show] of [
   } else console.log('ok  tools/' + name + '  ' + (out.find((l) => show.test(l)) || ''));
 }
 console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
+const FORMAT_GLOBS = require('../package.json')
+  .scripts['format:check'].match(/"[^"]+"|\S+/g)
+  .slice(2)
+  .map((g) => g.replace(/"/g, ''));
 // 4. Lint (ESLint, warn-only for now: the count is printed, it never fails the run). Skipped if dev dependencies are not installed.
 try {
   const eslintBin = path.join(root, 'node_modules', 'eslint', 'bin', 'eslint.js');
@@ -150,5 +154,20 @@ try {
   console.log('lint: ' + errs + ' error(s), ' + warns + ' warning(s) (warn-only; run npx eslint . for detail)');
 } catch (e) {
   console.log('lint: skipped (npm install to enable)');
+}
+// 5. Format drift (Prettier, report only: the count is printed, it never fails the run).
+try {
+  const prettierBin = path.join(root, 'node_modules', 'prettier', 'bin', 'prettier.cjs');
+  if (!fs.existsSync(prettierBin)) throw new Error('no prettier');
+  const r = cp.spawnSync(process.execPath, [prettierBin, '--list-different', ...FORMAT_GLOBS], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  const drift = (r.stdout || '').split(/\r?\n/).filter(Boolean);
+  console.log(
+    'format: ' + (drift.length ? drift.length + ' file(s) need npm run format: ' + drift.slice(0, 5).join(', ') : 'ok')
+  );
+} catch (e) {
+  console.log('format: skipped (npm install to enable)');
 }
 process.exit(bad || hbad || mbad || kbad ? 1 : 0);

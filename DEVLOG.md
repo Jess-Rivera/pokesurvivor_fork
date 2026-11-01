@@ -311,3 +311,7 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Added eslint.config.js, .prettierrc.json/.prettierignore, .gitattributes, .editorconfig, npm scripts (lint, format, format:check), and a warn-only lint step in tools/check.js.
 - First lint run: 5 errors, 69 warnings. Real finds: js/ui/move-info.js:100 calls an undefined legacy() (leftover from 7b; throws if a def is missing); 4 duplicate keys in lang-en.js (inherited).
 - Prettier not yet run: 106 files differ, so the format is its own commit next. Stopped before any git.
+
+## 2026-11-01 (Claude Code, home): #17 follow-ups
+- Fixed js/ui/move-info.js desc(): the undefined legacy() fallback is gone (unknown id returns ''); ui-readers harness gained a case (117 checks).
+- check.js now also prints Prettier drift (report only). Added tools/git-hooks/pre-commit (format gate); Jess installs it with `git config core.hooksPath tools/git-hooks`.

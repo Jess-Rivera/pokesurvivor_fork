@@ -172,10 +172,7 @@ G.MoveInfo = (() => {
   }
   function desc(id) {
     const d = def(id);
-    if (!d) {
-      const l = legacy(id);
-      return l ? l.desc : '';
-    }
+    if (!d) return '';
     const b = badgeOf(d, true),
       fx = effects(d);
     const head = (SHAPE[b] || 'Effect') + (d.persistent ? ', always on' : '');
