@@ -125,6 +125,8 @@ G.Game = (() => {
     G.Log.t = 0;
     holdBy = [];
     awayBy = null;
+    openItem = null; // an item choice or queued items left by the last run never carry over
+    laterItems.length = 0;
     redoUsed = false; // Re-Do available again this run
     if (G.Items.resetRun) G.Items.resetRun(); // reset the Snowball Badge counter
     const save = G.DB.save;
@@ -692,7 +694,7 @@ G.Game = (() => {
    * game stayed stuck for everyone.)
    */
   let openItem = null; // { held, next, take, run, lock } unfinished item choice
-  const laterItems = []; // objetos recogidos con las cartas de nivel abiertas
+  const laterItems = []; // items picked up while the level cards or another item choice were open, offered one at a time
   function afterLevelUp() {
     if (state !== 'playing' && state !== 'held') return;
     if (openItem && !G.UI.isOpen('scr-item')) {
@@ -745,7 +747,8 @@ G.Game = (() => {
   function offerItem(id) {
     const def = pl && G.Items.BY[id];
     if (!def) return;
-    if (state === 'levelup' || G.UI.isOpen('scr-levelup')) {
+    // An item choice already open also queues: a second one would overwrite it and leave the game paused with no screen.
+    if (state === 'levelup' || G.UI.isOpen('scr-levelup') || openItem || G.UI.isOpen('scr-item')) {
       laterItems.push(id);
       return;
     }
