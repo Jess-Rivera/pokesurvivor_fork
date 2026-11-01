@@ -1,0 +1,19 @@
+node_modules/
+pokeapi-master/
+functions/
+cloudflare/
+_delete_/
+assets/
+ponytail/
+docs/
+art_test_mockups/
+ohmyposh transfer/
+tools/out/
+tools/cache/
+js/data/pokedex.js
+js/data/sprites-meta.js
+js/data/moves-generated.js
+js/data/lang-en.js
+package-lock.json
+index.html
+*.md

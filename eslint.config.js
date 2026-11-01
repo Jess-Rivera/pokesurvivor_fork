@@ -1,0 +1,51 @@
+// ESLint flat config. Warn-only for now (tools/check.js prints the count, never fails on it).
+// Game code is plain <script> files sharing one global namespace, G. Tools are node commonjs.
+const js = require('@eslint/js');
+const globals = require('globals');
+const prettier = require('eslint-config-prettier');
+
+// A short list of Airbnb's bug-catching rules, on top of eslint:recommended.
+const rules = {
+  eqeqeq: ['warn', 'always', { null: 'ignore' }],
+  'no-var': 'warn',
+  'prefer-const': 'warn',
+  'no-shadow': 'warn',
+  'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }],
+  'no-empty': ['warn', { allowEmptyCatch: true }],
+};
+
+module.exports = [
+  {
+    ignores: [
+      'node_modules/', 'pokeapi-master/', 'functions/', 'cloudflare/', '_delete_/', 'assets/', 'ponytail/',
+      'tools/out/', 'tools/cache/', 'docs/', 'art_test_mockups/', 'ohmyposh transfer/',
+      'js/data/pokedex.js', 'js/data/sprites-meta.js', 'index.html',
+    ],
+  },
+  js.configs.recommended,
+  {
+    files: ['js/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'script',
+      globals: { ...globals.browser, G: 'writable', firebase: 'readonly' },
+    },
+    rules,
+  },
+  {
+    files: ['sw.js'],
+    languageOptions: { ecmaVersion: 2020, sourceType: 'script', globals: globals.serviceworker },
+    rules,
+  },
+  {
+    files: ['tools/**/*.js', 'eslint.config.js'],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: { ...globals.node, G: 'writable' } },
+    rules,
+  },
+  {
+    // The smokes carry page code that runs inside the headless browser.
+    files: ['tools/smoke-*.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser, G: 'writable' } },
+  },
+  prettier,
+];

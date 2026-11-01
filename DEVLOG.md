@@ -6,6 +6,7 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 
 ---
 
+
 ## 2026-10-25 (Claude Desktop, home): #2 new-move-schema slice plan
 - Jess created feature-test/new-move-schema for the #2 implementation check. Read move-conversions-described.json (63 moves, all reviewed), MOVE-AXIS-SCHEMA.md, moves.js, kinds.js, combat.js kind dispatch, status.js. No js/ edits.
 - Wrote docs/current feature planning/move-schema-slices.md: 7 slices (data+grammar, resolver+parity report, ?newmoves flag, new executors, upgrades, behavior+stress harness, flip+purge).
@@ -305,3 +306,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Merge: origin/main (issue templates) into the branch, check.js and both smokes green; then the branch into main with --no-ff (f9a2f2c); check.js green on main.
 - Snag: Git Bash sed -i stripped CRLF from combat-architecture.md; restored. Use node for in-place edits.
 - Stopped at: merged, main pushed. Next: feel run on main, unblock #17, pick gym-roster or lint branch.
+
+## 2026-11-01 (Claude Code, home): #17 ESLint + Prettier setup
+- Added eslint.config.js, .prettierrc.json/.prettierignore, .gitattributes, .editorconfig, npm scripts (lint, format, format:check), and a warn-only lint step in tools/check.js.
+- First lint run: 5 errors, 69 warnings. Real finds: js/ui/move-info.js:100 calls an undefined legacy() (leftover from 7b; throws if a def is missing); 4 duplicate keys in lang-en.js (inherited).
+- Prettier not yet run: 106 files differ, so the format is its own commit next. Stopped before any git.

@@ -69,4 +69,13 @@ for (const [name, args, show] of [['export_moves.js', ['--check'], /current/], [
   else console.log('ok  tools/' + name + '  ' + (out.find(l => show.test(l)) || ''));
 }
 console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
+// 4. Lint (ESLint, warn-only for now: the count is printed, it never fails the run). Skipped if dev dependencies are not installed.
+try {
+  const eslintBin = path.join(root, 'node_modules', 'eslint', 'bin', 'eslint.js');
+  if (!fs.existsSync(eslintBin)) throw new Error('no eslint');
+  const r = cp.spawnSync(process.execPath, [eslintBin, '-f', 'json', '.'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 });
+  let errs = 0, warns = 0;
+  for (const f of JSON.parse(r.stdout || '[]')) { errs += f.errorCount; warns += f.warningCount; }
+  console.log('lint: ' + errs + ' error(s), ' + warns + ' warning(s) (warn-only; run npx eslint . for detail)');
+} catch (e) { console.log('lint: skipped (npm install to enable)'); }
 process.exit(bad || hbad || mbad || kbad ? 1 : 0);
