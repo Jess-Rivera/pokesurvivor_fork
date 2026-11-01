@@ -292,3 +292,4 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Verified: E1 gone (Fire Spin and trap-mine scenarios trap enemies), Brock-only, damage unchanged (no caller passed norm).
 - Docs: the 7b [Legacy behavior] lines are dated history notes now. Tests: check.js 30/30, smokes pass.
 - Stopped at: Jess feel-tests 2b, then commits. Next: 7b-3 (docs sweep, changelog, merge into main).
+- Later: Jess hit a freeze entering the gym with Fire Spin. Cause: the orbit swept across the arena teleport and the prop query generated every chunk on the line (predates 7b, exposed by the flip). Fixed in move-sim.js (a >1,000 px step sweeps nothing); harness and mutation added.

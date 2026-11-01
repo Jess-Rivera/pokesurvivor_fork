@@ -6,7 +6,10 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
-  { d: '2026-11-01', title: ['The new move system is live', 'The new move system is live'], chg: [
+  { d: '2026-11-01', title: ['The new move system is live', 'The new move system is live'], fix: [
+    ['Walking into a gym (or back out) with an orbiting move like Fire Spin or Leaf Storm no longer freezes the game.',
+     'Walking into a gym (or back out) with an orbiting move like Fire Spin or Leaf Storm no longer freezes the game.']
+  ], chg: [
     ['Every move now runs on the new move system for everyone, not only in dev builds: the moves behave as they did there, and level-ups offer the team-wide upgrade cards (each one works for your whole team for the rest of the run) instead of the old per-move cards.',
      'Every move now runs on the new move system for everyone, not only in dev builds: the moves behave as they did there, and level-ups offer the team-wide upgrade cards (each one works for your whole team for the rest of the run) instead of the old per-move cards.'],
     ['Bubble and Hail are retired for now: no Pokemon learns them. Piplup and Popplio start with Water Gun instead of Bubble, and a move shortcut you had set on Bubble or Hail now points at Water Gun.',

@@ -143,7 +143,12 @@ const hitsOf = (tape, id) => tape.filter(e => e.type === 'move:hit' && (id == nu
     ok(hitsOf(run(o, [e], 2 * dt, { dt })).length === 1, 'swept orbit dt ' + dtName(dt) + ': a small enemy between two samples is hit'); }
   for (const dt of DTS) { const o = mkP([['fire-spin']]), e = mkE(45, 0, { r: 5 });
     ok(hitsOf(run(o, [e], 1.0, { dt })).length === 0, 'dt ' + dtName(dt) + ': nothing inside the ring is hit (the group starts on the ring)'); }
-  console.log('2 orbit: true circle, follows the owner, lens 2 = 180 px, swept hits at 1/60 and 1/30, nothing inside the ring'); }
+  // a teleport (gym arena in or out, Jess 2026-11-01): the step sweeps nothing across the jump, so the prop query stays local (the world
+  // generates every chunk a query touches; a 200,000 px sweep hung the game)
+  for (const dt of DTS) { const W = G.World, pic = W.propsInCircle; let big = 0; W.propsInCircle = (x, y, r) => { big = Math.max(big, r); return []; };
+    const o = mkP([['fire-spin']]); run(o, [], 0.2, { dt, each: k => { if (k === 3) { o.x += 200000; o.y -= 150000; } } }); W.propsInCircle = pic;
+    ok(big < 200 && ofMove('fire-spin').every(i => Math.hypot(i.x - o.x, i.y - o.y) < 100), 'teleport dt ' + dtName(dt) + ': the orbit follows, the largest prop query is ' + big.toFixed(1) + ' px'); }
+  console.log('2 orbit: true circle, follows the owner, lens 2 = 180 px, swept hits at 1/60 and 1/30, nothing inside the ring, a teleport sweeps nothing'); }
 
 // 3. interval cadence: per shape, per enemy
 { const cad = (id, rehit, mk, least) => { for (const dt of DTS) {

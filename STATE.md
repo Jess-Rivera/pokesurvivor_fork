@@ -8,6 +8,7 @@ Last updated: 2026-11-01 (Claude Code, home; 7b-2a committed, 7b-2b built, uncom
 - Slices 5, 6, 7a DONE. Slice 6 stress run done (Jess; Quick did not log it). Board: #15 closed; In progress #1, #6, #17 (#17 waits for the post-7b merge).
 - 7b-1 flip committed (8b7cbb7): new path always on, team cards only, Bubble and Hail retired (G.Moves.RETIRED), starters 393/728 open with Water Gun. Feel test and stress run passed.
 - 7b-2a purge committed (496118a), feel test passed: legacy player-move engine, kinds.js, mechanics.js, choose screen and stack badges gone; legacy table archived at docs/move_rework_holding/legacy-moves.js.
+- Gym teleport hang (Fire Spin, Leaf Storm entering a gym) FIXED in move-sim.js, uncommitted (its own commit after 7b-2b).
 - 7b-2b BUILT, uncommitted: ROUTED gone (routed = a def, not retired), legacy stage stacking and the norm factor removed (damage unchanged), E1 and Brock-only verified, guard has no exempt game file, 7b legacy doc lines are history notes.
 - Tests: check.js 30/30, guards ok, smoke-ui and smoke-newcombat pass, mutation runners clean (3 stale mutations predate 7b, TODO).
 

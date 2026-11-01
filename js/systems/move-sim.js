@@ -59,6 +59,7 @@
 G.MoveSim = (() => {
   const TAU = Math.PI * 2, EPS = 1e-9, RETRY = 0.05, OFF_MARGIN = 260;
   const PROP_R = 14;     // largest destructible prop radius (world.js grass), the broad-phase pad for the prop query
+  const TELEPORT = 1000;     // px in one step: past this the owner was teleported (gym arena in or out), so the step sweeps nothing across the gap
   let rng = Math.random, view = null, insts = [], serial = 0, castSerial = 0, routed = () => true, cms = [], pending = [];
 
   const isProp = x => x.destructible === true;     // world props carry it, enemies never do
@@ -646,6 +647,8 @@ G.MoveSim = (() => {
         inst.prevX = inst.x; inst.prevY = inst.y;
         inst.age += dt;
         MOTION[inst.spec.delivery.motion](inst, dt);
+        // A teleport (Jess 2026-11-01, gym entry hang): the swept path would span the whole jump and generate every world chunk on it.
+        if ((inst.x - inst.prevX) ** 2 + (inst.y - inst.prevY) ** 2 > TELEPORT * TELEPORT) { inst.prevX = inst.x; inst.prevY = inst.y; }
       }
       inst.shape = inst.spec.space ? G.MoveGeom.shapeOf(inst.spec.space, inst.spec.delivery.grow || null,     // growth (D21) and the lens live in shapeOf
         { x: inst.x, y: inst.y, heading: inst.heading, age: inst.age, dist: inst.dist, lens: lensOf(inst.cast.owner) }) : null;     // 4d: a shapeless emitter has none

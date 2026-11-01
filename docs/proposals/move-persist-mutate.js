@@ -24,6 +24,7 @@ const M = [
   ['persistent shapes ignore their radius (lens 2)', 'sim', [['lens: lensOf(inst.cast.owner) }) : null;', 'lens: inst.spec.persistent ? 2 : lensOf(inst.cast.owner) }) : null;']]],     // retargeted 2026-10-31 (4d made the shape conditional)
   ['Leaf Storm self drop on the base Gate', 'fx', [['else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);', 'else G.Stages.trackOwn(o, k, fx.stages, src, G.Stages.gateOf(false, gm), dur);']]],     // slice 5a (SS12); was 'stacks per hit' on the retired maxStacks
   ['Night Shade takes a multiplier', 'fx', [['flat(inst, e, inst.cast.owner.level || 1, hop, hit)', 'flat(inst, e, (inst.cast.owner.level || 1) * 1.5, hop, hit)']]],
+  ['a teleport sweeps the whole jump', 'sim', [['> TELEPORT * TELEPORT) { inst.prevX = inst.x; inst.prevY = inst.y; }', '> TELEPORT * TELEPORT && false) { }']]],
   ['freeze removed', 'res', [['G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));', 'G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-persist-mut-'));
