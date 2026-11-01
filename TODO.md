@@ -11,7 +11,7 @@ Update 2026-11-01 (Jess, board cleaned 2026-10-31): #15 closed; In progress = #1
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
 OPEN (15):
-- #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]
+- #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]  FIXED 2026-11-01 on fix/gym-gate-art (gate draws assets/tileset/gyms/gym-<arena>.png at half size); merge, close. Follow-up: the gate HUD notice and gauge in hud.js still use purple-ish colors, type-match them later.
 - #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by 1 open of 2, likely #3; blocking 1, likely #11) (reopened)
 - #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking 1, likely #2)
 - #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]  (no dependency link)

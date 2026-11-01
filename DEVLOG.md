@@ -315,3 +315,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 ## 2026-11-01 (Claude Code, home): #17 follow-ups
 - Fixed js/ui/move-info.js desc(): the undefined legacy() fallback is gone (unknown id returns ''); ui-readers harness gained a case (117 checks).
 - check.js now also prints Prettier drift (report only). Added tools/git-hooks/pre-commit (format gate); Jess installs it with `git config core.hooksPath tools/git-hooks`.
+
+## 2026-11-01 (Claude Code, home): #1 gym gate art
+- js/systems/gym-arena.js: the gate draws assets/tileset/gyms/gym-<arena>.png (loaded on gate open, half scale), type-colored open ring, soft ground shadow; purple ellipse and sparkles gone; spawn clearance radius 22 to 60. Removed the old purple gate painter from js/world/tiles.js.
+- Fixed on the way: harnesses run without Image, so artFor() returns an empty entry there. Verified: check.js 30/30, smoke-ui and smoke-newcombat pass, headless screenshot of the Brock gate. HUD gate colors left for later (TODO).
+- Follow-up: the oval shadow became a north-east silhouette of the building (offset 10,-8, alpha 0.35). Contact and spawn clearance now use Jess's painted mask assets/tileset/gyms/gym-contact.png (whole building minus the roof strip; fallback is that rectangle). Verified: check.js 30/30, headless probe of side, roof, corner, back entry and a clear footprint.
