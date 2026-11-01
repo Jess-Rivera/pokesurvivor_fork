@@ -55,8 +55,8 @@ if (log.levels === 1 && G.Gym.beaten !== 0) bad('beaten counted before the retur
 G.GymArena.update(5.1, pl, 786);
 if (G.GymArena.inArena) bad('still in the arena after the win timer'); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('return state: beaten ' + G.Gym.beaten + ' gate ' + !!G.Gym.gate);
 if (log.bondOffers !== 1) bad('bond offer ' + log.bondOffers);
-// schedule: no second gate (one entry), and the next elite is 2:00 after the return
-G.Gym.update(0.1, pl, 5000); if (G.Gym.gate) bad('a second gate appeared');
+// schedule: the second gym (Misty) is next in the list
+G.Gym.update(0.1, pl, 5000); if (!G.Gym.gate || G.Gym.gate.leader !== G.Gyms.KANTO[1].leader) bad('the second gate should be ' + G.Gyms.KANTO[1].leader);
 console.log('win chain: drops ' + JSON.stringify(drops.reduce((a, k) => (a[k] = (a[k] || 0) + 1, a), {})) + '; XP orbs ' + log.dropXp.length + '; boosts ' + log.boosts.join() + '; level grants ' + log.levels + ', revives ' + log.revives + ', Bond ' + pl.bonds + ' (offered ' + log.bondOffers + 'x), badges ' + G.Gym.badges.join());
 console.log(fail ? fail + ' FAILED' : 'ALL OK');
 process.exit(fail ? 1 : 0);

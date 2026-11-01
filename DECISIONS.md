@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, Kanto gyms 2 to 8 authored; badge boosts for every Kanto badge (Jess)
+Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine and Giovanni join Brock in js/data/gyms.js with their locked rosters (Gen-1 order) and PROVISIONAL move sets from catalog moves that have a gym form; power and tempo 1, no cards yet. Badge boosts, each +10% to one stat for the run: Boulder Atk, Cascade SpD, Thunder Spe, Rainbow HP, Soul Def, Marsh SpA, Volcano SpA, Earth Atk (repeats stack). Brock slots reordered (Onix line to slot 2). Surge has no castable Electric move (Thunder Shock chains), so his mons use Normal and Steel stand-ins until boss casts and riders are widened (next, Jess). Authoring rule found: one melee cone per slot, since the brain only lands its longest-reach melee.
+Canonical: js/data/gyms.js (data), BOSS-REWORK.md section 3g (badge boosts), docs/BOSS-AUTHORING.md (authoring rule)
+
 ## 2026-11-01, ESLint + Prettier setup choices (Jess: defaults)
 ESLint 9 flat config: eslint:recommended plus a short Airbnb-derived set (eqeqeq, no-var, prefer-const, no-shadow, no-unused-vars), not the full Airbnb config (it assumes ES modules and bans patterns this script-global code uses). Warn-only: tools/check.js prints the count and never fails on it. Prettier: single quotes, semicolons, 2-space, width 120, trailing commas es5, LF; .gitattributes and .editorconfig pin LF. One big-bang format commit comes next, its hash in .git-blame-ignore-revs.
 Canonical: TODO.md Backlog, "Lint and format tooling"; eslint.config.js; .prettierrc.json

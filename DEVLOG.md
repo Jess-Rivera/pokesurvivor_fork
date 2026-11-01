@@ -325,3 +325,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Bug: opening dev.html from file:// threw "The operation is insecure" (gym-arena.js:77); Firefox blocks reading canvas pixels of a file:// image, so the painted mask never loaded (rectangle fallback). Smokes run over http, so they missed it.
 - Fix: tools/gym_contact.js bakes gym-contact.png into js/data/gym-contact.js (G.GymContact, row runs, 1.8 KB); gym-arena.js reads that, no runtime pixel reads. dev.html loads it after gyms.js (not in NEED: the rectangle fallback stays). check.js fails if the data is stale vs the PNG.
 - Verified: check.js 30/30 plus the mask check; headless file:// load clean of gym errors; baked mask equals the browser pixel read (0 of 71424 pixels differ).
+
+## 2026-11-01 (Claude Code, home): Kanto gyms 2 to 8
+- js/data/gyms.js: Misty to Giovanni authored (locked rosters, Gen-1 order, provisional catalog move sets, badge boosts); Brock slots reordered (Onix to slot 2). Decisions: Jess approved the boosts; Surge keeps Normal/Steel stand-ins, boss casts and riders come next.
+- Found: the brain only lands its longest-reach melee, so each slot carries one melee cone (21 sets trimmed; rule in BOSS-AUTHORING). Harness gym-harness 10b casts every authored move of gyms 2 to 8.
+- Found (not fixed, TODO): item choice soft-lock when two items arrive with the replace screen open.
+- Verified: check.js 30/30, smoke-ui and smoke-newcombat pass (one boot flake on the first newcombat run), headless probe walks all 8 gyms in order with no page errors (badge boosts stack: Atk and SpA +20%).

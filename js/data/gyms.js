@@ -70,8 +70,16 @@ G.Gyms = (() => {
           cards: { damage: 3, count: 2, velocity: 3, area: 2 },
           moves: [{ id: 'tackle' }, { id: 'rock-throw' }, { id: 'harden' }],
         },
-        // Slots 2 to 6: PROVISIONAL move sets (TUNE, no cards yet; the gym-roster branch authors them). Balance pass pending.
-        // Slot 2: Rhyhorn -> Rhydon, the Ground-lean bruiser.
+        // Slots 2 to 6 (Gen-1 order, docs/GYM-ROSTERS.md): PROVISIONAL move sets (TUNE, no cards yet; the gym-roster branch authors them). Balance pass pending.
+        // Slot 2: Onix -> Steelix (Gen-2 line-completion), the Defense wall.
+        {
+          line: ladder([95, 208]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'harden' }],
+        },
+        // Slot 3: Rhyhorn -> Rhydon, the Ground-lean bruiser.
         {
           line: ladder([111, 112]),
           stance: 'close',
@@ -79,7 +87,7 @@ G.Gyms = (() => {
           tempo: 1,
           moves: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
         },
-        // Slot 3: Omanyte -> Omastar, the special threat.
+        // Slot 4: Omanyte -> Omastar, the special threat.
         {
           line: ladder([138, 139]),
           stance: 'far',
@@ -87,21 +95,13 @@ G.Gyms = (() => {
           tempo: 1,
           moves: [{ id: 'water-gun' }, { id: 'rock-throw' }, { id: 'harden' }],
         },
-        // Slot 4: Kabuto -> Kabutops, the fast physical one.
+        // Slot 5: Kabuto -> Kabutops, the fast physical one.
         {
           line: ladder([140, 141]),
           stance: 'close',
           power: 1,
           tempo: 1,
           moves: [{ id: 'metal-claw' }, { id: 'water-gun' }, { id: 'swords-dance', hpBelow: 0.6 }],
-        },
-        // Slot 5: Onix -> Steelix (Gen-2 line-completion), the Defense wall.
-        {
-          line: ladder([95, 208]),
-          stance: 'close',
-          power: 1,
-          tempo: 1,
-          moves: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'harden' }],
         },
         // Slot 6: Aerodactyl, the speed ace (single stage).
         {
@@ -110,6 +110,414 @@ G.Gyms = (() => {
           power: 1,
           tempo: 1,
           moves: [{ id: 'wing-attack' }, { id: 'rock-throw' }, { id: 'agility' }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-2',
+      leader: 'Misty',
+      badge: 'Cascade Badge',
+      arena: 'water',
+      boost: { stat: 'spd', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Slot 1: Staryu -> Starmie, the signature ace.
+        {
+          line: ladder([120, 121]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'tackle' }, { id: 'harden' }],
+        },
+        // Slot 2: Seel -> Dewgong, Water/Ice.
+        {
+          line: ladder([86, 87]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'powder-snow' }, { id: 'water-gun' }, { id: 'harden' }],
+        },
+        // Slot 3: Psyduck -> Golduck.
+        {
+          line: ladder([54, 55]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'agility', hpBelow: 0.5 }],
+        },
+        // Slot 4: Poliwag -> Poliwhirl -> Poliwrath, the Fighting profile (Karate Chop stands in for its Fighting moves).
+        {
+          line: ladder([60, 61, 62]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'karate-chop' }, { id: 'swords-dance', hpBelow: 0.5 }],
+        },
+        // Slot 5: Lapras, the bulky Water/Ice anchor.
+        {
+          line: ladder([131]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'powder-snow' }],
+        },
+        // Slot 6: Magikarp -> Gyarados, the physical powerhouse.
+        {
+          line: ladder([129, 130]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'bite' }, { id: 'water-gun' }, { id: 'dragon-dance', hpBelow: 0.5 }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-3',
+      leader: 'Lt. Surge',
+      badge: 'Thunder Badge',
+      arena: 'electric',
+      boost: { stat: 'spe', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // STAND-INS: no Electric move has a gym form yet (Thunder Shock chains), so the Electric mons use Normal and Steel moves until boss casts are widened.
+        // Slot 1: Pikachu -> Raichu, the signature ace.
+        {
+          line: ladder([25, 26]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'tackle' }, { id: 'agility' }],
+        },
+        // Slot 2: Porygon, the off-type tech pick (Psycho Cut stands in for Psybeam).
+        {
+          line: ladder([137]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'psycho-cut' }, { id: 'agility' }],
+        },
+        // Slot 3: Magnemite -> Magneton, Electric/Steel.
+        {
+          line: ladder([81, 82]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'metal-claw' }, { id: 'harden' }],
+        },
+        // Slot 4: Voltorb -> Electrode, the fastest.
+        {
+          line: ladder([100, 101]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'tackle' }, { id: 'agility' }],
+        },
+        // Slot 5: Electabuzz, the mixed attacker (Karate Chop stands in for its punches).
+        {
+          line: ladder([125]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'karate-chop' }, { id: 'agility' }],
+        },
+        // Slot 6: Eevee -> Jolteon, the speed glass cannon (Poison Sting stands in for Pin Missile).
+        {
+          line: ladder([133, 135]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'tackle' }, { id: 'poison-sting' }, { id: 'agility' }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-4',
+      leader: 'Erika',
+      badge: 'Rainbow Badge',
+      arena: 'grass',
+      boost: { stat: 'hp', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Slot 1: Bellsprout -> Weepinbell -> Victreebel, the RBY ace.
+        {
+          line: ladder([69, 70, 71]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'sludge', hpBelow: 0.5 }],
+        },
+        // Slot 2: Tangela, the pure-Grass wall.
+        {
+          line: ladder([114]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'harden' }],
+        },
+        // Slot 3: Oddish -> Gloom -> Vileplume.
+        {
+          line: ladder([43, 44, 45]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'giga-drain' }, { id: 'sludge' }, { id: 'poison-sting' }],
+        },
+        // Slot 4: Paras -> Parasect, the Bug typing.
+        {
+          line: ladder([46, 47]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'bug-bite' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }],
+        },
+        // Slot 5: Bulbasaur -> Ivysaur -> Venusaur, the iconic Grass ace.
+        {
+          line: ladder([1, 2, 3]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }],
+        },
+        // Slot 6: Exeggcute -> Exeggutor, the special nuke.
+        {
+          line: ladder([102, 103]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'giga-drain' }, { id: 'psycho-cut' }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-5',
+      leader: 'Koga',
+      badge: 'Soul Badge',
+      arena: 'poison',
+      boost: { stat: 'def', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Slot 1: Koffing -> Weezing, the signature wall.
+        {
+          line: ladder([109, 110]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'sludge' }, { id: 'tackle' }, { id: 'harden' }],
+        },
+        // Slot 2: Grimer -> Muk, the bulky one.
+        {
+          line: ladder([88, 89]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'sludge' }, { id: 'body-slam' }, { id: 'harden' }],
+        },
+        // Slot 3: Ekans -> Arbok.
+        {
+          line: ladder([23, 24]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'bite' }, { id: 'poison-sting' }, { id: 'sludge' }],
+        },
+        // Slot 4: Venonat -> Venomoth, the Bug typing (Psycho Cut stands in for Psybeam).
+        {
+          line: ladder([48, 49]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'poison-sting' }, { id: 'psycho-cut' }],
+        },
+        // Slot 5: Tentacool -> Tentacruel, the Water coverage (Harden stands in for Barrier).
+        {
+          line: ladder([72, 73]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'sludge' }, { id: 'harden' }],
+        },
+        // Slot 6: Zubat -> Golbat -> Crobat (Gen-2 line-completion), the speed ace.
+        {
+          line: ladder([41, 42, 169]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'wing-attack' }, { id: 'poison-sting' }, { id: 'agility' }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-6',
+      leader: 'Sabrina',
+      badge: 'Marsh Badge',
+      arena: 'psychic',
+      boost: { stat: 'spa', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Psycho Cut is the only Psychic move with a gym form; the ranged pressure comes from Shadow Ball until boss casts are widened.
+        // Slot 1: Abra -> Kadabra -> Alakazam, the signature ace.
+        {
+          line: ladder([63, 64, 65]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'shadow-ball' }, { id: 'psycho-cut' }, { id: 'agility' }],
+        },
+        // Slot 2: Mr. Mime, the barrier mon (Harden stands in for Barrier).
+        {
+          line: ladder([122]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'psycho-cut' }, { id: 'shadow-ball' }, { id: 'harden' }],
+        },
+        // Slot 3: Jynx, Ice/Psychic.
+        {
+          line: ladder([124]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'powder-snow' }, { id: 'shadow-ball' }],
+        },
+        // Slot 4: Drowzee -> Hypno, the SpD wall.
+        {
+          line: ladder([96, 97]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'psycho-cut' }, { id: 'harden' }],
+        },
+        // Slot 5: Slowpoke -> Slowbro, Water/Psychic (Harden stands in for Withdraw).
+        {
+          line: ladder([79, 80]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'harden' }],
+        },
+        // Slot 6: Gastly -> Haunter -> Gengar, her anime ace.
+        {
+          line: ladder([92, 93, 94]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'shadow-ball' }, { id: 'lick' }, { id: 'sludge' }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-7',
+      leader: 'Blaine',
+      badge: 'Volcano Badge',
+      arena: 'fire',
+      boost: { stat: 'spa', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Slot 1: Growlithe -> Arcanine, the signature ace.
+        {
+          line: ladder([58, 59]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'ember' }, { id: 'bite' }, { id: 'agility' }],
+        },
+        // Slot 2: Ponyta -> Rapidash, fast physical.
+        {
+          line: ladder([77, 78]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'tackle' }, { id: 'ember' }, { id: 'agility' }],
+        },
+        // Slot 3: Magmar, the special attacker (Karate Chop stands in for Fire Punch, Sludge for Smog).
+        {
+          line: ladder([126]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'ember' }, { id: 'karate-chop' }, { id: 'sludge' }],
+        },
+        // Slot 4: Vulpix -> Ninetales (Shadow Ball stands in for Hex).
+        {
+          line: ladder([37, 38]),
+          stance: 'far',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'ember' }, { id: 'shadow-ball' }, { id: 'agility' }],
+        },
+        // Slot 5: Eevee -> Flareon, the physical bruiser.
+        {
+          line: ladder([133, 136]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'bite' }, { id: 'ember' }, { id: 'swords-dance', hpBelow: 0.5 }],
+        },
+        // Slot 6: Charmander -> Charmeleon -> Charizard, the capstone.
+        {
+          line: ladder([4, 5, 6]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'wing-attack' }, { id: 'ember' }, { id: 'dragon-dance', hpBelow: 0.5 }],
+        },
+      ],
+    },
+    {
+      id: 'kanto-gym-8',
+      leader: 'Giovanni',
+      badge: 'Earth Badge',
+      arena: 'ground',
+      boost: { stat: 'atk', pct: 0.1 },
+      signatures: [
+        // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
+        // Slot 1: Rhyhorn -> Rhydon, the ace (shared with Brock slot 3).
+        {
+          line: ladder([111, 112]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'body-slam' }, { id: 'mud-shot' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
+        },
+        // Slot 2: Diglett -> Dugtrio, the glass cannon (Metal Claw stands in for Slash).
+        {
+          line: ladder([50, 51]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'metal-claw' }, { id: 'mud-shot' }, { id: 'agility' }],
+        },
+        // Slot 3: Nidoran(F) -> Nidorina -> Nidoqueen.
+        {
+          line: ladder([29, 30, 31]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'poison-sting' }, { id: 'bite' }, { id: 'body-slam' }],
+        },
+        // Slot 4: Nidoran(M) -> Nidorino -> Nidoking (Karate Chop stands in for Double Kick).
+        {
+          line: ladder([32, 33, 34]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'poison-sting' }, { id: 'mud-shot' }, { id: 'karate-chop' }],
+        },
+        // Slot 5: Cubone -> Marowak, the Def wall (Mud Shot stands in for Bonemerang).
+        {
+          line: ladder([104, 105]),
+          stance: 'mixed',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'mud-shot' }, { id: 'body-slam' }, { id: 'harden' }],
+        },
+        // Slot 6: Meowth -> Persian, off-type.
+        {
+          line: ladder([52, 53]),
+          stance: 'close',
+          power: 1,
+          tempo: 1,
+          moves: [{ id: 'bite' }, { id: 'agility' }],
         },
       ],
     },

@@ -105,7 +105,8 @@ A gym gate is a pressure mechanic, not come-when-ready.
 - [Approved] The gym leader drops no XP. The win is a toast plus an automatic level bump (guaranteed level, normal level-up cards still open). Item, coins, Bond and full revive unchanged. (same entry)
 - [Approved] Gym leaders move at their species speed with no modifiers (Jess, 2026-10-19): no 1.1x chase bonus, no 0.55x circling (boss code kept for non-gym bosses); standing still while casting stays. (same entry)
 - [Approved] Elite Four give the badge package WITHOUT the guaranteed full revive (gym leaders keep the revive). (RESOLVED 2026-10-19, section 7; docs/DECISIONS-archive.md 2026-10-19 late morning addendum) Code differs, see TODO: the Elite Four is not built.
-- [Open] Badge boost definitions for the other badges (mainline-accurate per region or uniform stat bumps), and what a 'Bond' badge reward means until the Bond rework decides. (docs/DECISIONS-archive.md 2026-10-19 Boss rework design, OPEN list)
+- [Approved] Kanto badge boosts (Jess 2026-11-01), each +10% to one stat for the run, repeats stack: Boulder Atk, Cascade SpD, Thunder Spe, Rainbow HP, Soul Def, Marsh SpA, Volcano SpA, Earth Atk (Red/Blue's mapping where it had one). Data: js/data/gyms.js `boost`.
+- [Open] Badge boosts for other regions, and what a 'Bond' badge reward means until the Bond rework decides. (docs/DECISIONS-archive.md 2026-10-19 Boss rework design, OPEN list)
 
 ## 4. Elite Four phase, Region Complete, Return Home (flow LOCKED 2026-10-19, numbers TBD)
 - [Approved] Trigger: Gym 8 beaten and the player back on the map. Then (1) the slow level ramp starts and (2) ALL FOUR Elite Four gates open at once, spread across the map so every gate is off screen from the others. The gate shows its level, and so does the direction arrow that points to it. (confirmed by Q6, 2026-10-28) Code differs, see TODO: the Elite Four and the slow ramp are not built.

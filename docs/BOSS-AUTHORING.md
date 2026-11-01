@@ -62,6 +62,7 @@ A signature is a roster SLOT, and a slot is an evolution LINE. The stage it show
 ## Validation rules (enforced by G.Gyms.validate, swept by docs/proposals/gym-harness.js)
 
 - every move id exists in the new move data and has a GYM FORM (G.Gyms.formOf): a melee cone (caster radial shape aimed at the nearest foe), a straight shot (travels along the aim) or a pure self buff. Beams, novas, falls, emitters, chains, dashes and persistent moves have no form yet. Add a form only when the GymBrain (js/entities/boss-ai.js) casts it and a harness covers it.
+- ONE melee cone per slot (found 2026-11-01): the brain walks in to its longest melee reach and fires the first ready move in range, so a second, shorter cone (even one gated by hpBelow, since reach counts every move) almost never lands. Pair the cone with shots and self buffs instead. Two or three shots are fine when their cooldowns leave room (docs/proposals/gym-harness.js check 10b proves every authored move gets cast).
 - 1 to 4 moves per slot, at least one damaging move, optional hpBelow in (0, 1); cards as above
 - stance close, far or mixed; power and tempo above 0 up to 5
 - stage ladder non-empty, first stage at level 1, levels strictly increasing integers, every dex real

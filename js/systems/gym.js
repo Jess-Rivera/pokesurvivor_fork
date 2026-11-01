@@ -4,7 +4,7 @@
  * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored moves and cards (G.Gyms). Losing (team wipe)
  * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps).
  * The gate and the arena themselves are systems/gym-arena.js; this module owns the schedule, the leader's def and the rewards.
- * Pilot scope: Kanto gym 1 (Brock). The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
+ * Kanto gyms 1 to 8 (js/data/gyms.js), opened in list order. The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
  * SIM/PRESENT: this module is simulation only. Everything the player sees or hears about the gym schedule (escalation toast and sound,
  * the badge line, the calm line) is EMITTED as a plain-data event on G.SimBus and rendered by ui/gym-present.js (docs/SIM-PRESENT-BOUNDARY.md).
  */

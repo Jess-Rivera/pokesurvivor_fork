@@ -113,27 +113,36 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', ' + hurts.length + ' hits on the player, peak Def stage multiplier x' + maxDef + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
 
 // 6. schedule after the fight
-{ G.Gym.onReturn(g); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('onReturn state'); G.GymArena.gate = null; clock = 9999; G.Gym.update(0.1, {}, 9999); if (G.Gym.gate) bad('a second gate with one gym in the list');
-  console.log('6 schedule: after Brock, beaten ' + G.Gym.beaten + ', no further gate (the list has one entry)'); }
+{ G.Gym.onReturn(g); if (G.Gym.beaten !== 1 || G.Gym.gate) bad('onReturn state'); G.GymArena.gate = null;
+  // the next gates follow in list order, GAP s after each return; none after the last gym
+  const order = [];
+  for (let i = 1; i < G.Gyms.KANTO.length; i++) {
+    clock += G.Gym.GAP - 1; G.Gym.update(0.1, {}, clock); if (G.Gym.gate) bad('gate ' + (i + 1) + ' before GAP');
+    clock += 1; G.Gym.update(0.1, {}, clock); const gi = G.Gym.gate;
+    if (!gi || gi.leader !== G.Gyms.KANTO[i].leader) { bad('gate ' + (i + 1) + ' should be ' + G.Gyms.KANTO[i].leader); break; }
+    order.push(gi.leader); G.Gym.onReturn(gi); G.GymArena.gate = null;
+  }
+  clock += 9999; G.Gym.update(0.1, {}, clock); if (G.Gym.gate) bad('a gate after the last gym');
+  console.log('6 schedule: after Brock, ' + order.join(', ') + ' in order, GAP apart; beaten ' + G.Gym.beaten + ', no gate after the last'); }
 
 // 7. stage ladders: the stage a slot shows follows the level (placeholder bands 20 / 35), single-stage lines never change
 { const sg = i => G.Gyms.KANTO[0].signatures[i];
   const at = (i, l) => G.Gyms.stageFor(sg(i), l).dex;
   const geo = [[1, 74], [19, 74], [20, 75], [34, 75], [35, 76], [99, 76]];
   for (const [l, want] of geo) if (at(0, l) !== want) bad('Geodude line at level ' + l + ': dex ' + at(0, l) + ' vs ' + want);
-  if (at(1, 34) !== 111 || at(1, 35) !== 112) bad('Rhyhorn line boundary'); if (at(4, 34) !== 95 || at(4, 35) !== 208) bad('Onix line boundary (Steelix at 35)');
+  if (at(2, 34) !== 111 || at(2, 35) !== 112) bad('Rhyhorn line boundary'); if (at(1, 34) !== 95 || at(1, 35) !== 208) bad('Onix line boundary (Steelix at 35)');
   for (const l of [1, 20, 35, 99]) if (at(5, l) !== 142) bad('Aerodactyl is single-stage, got ' + at(5, l) + ' at ' + l);
   if (G.Gyms.stageFor(sg(0), NaN).dex !== 74) bad('a non-finite level should fall back to the first stage');
   console.log('7 stage ladders: Geodude 74 until 19, Graveler 20 to 34, Golem from 35; Steelix at 35; Aerodactyl never changes'); }
 
 // 8. lineup: loop N fields the first N slots, in order, each at its stage
 { const brock = G.Gyms.KANTO[0], dexes = lv => G.Gyms.lineup(brock, 6, lv).map(m => m.dex);
-  if (dexes(12).join() !== '74,111,138,140,95,142') bad('full lineup at level 12: ' + dexes(12));
-  if (dexes(35).join() !== '76,112,139,141,208,142') bad('full lineup at level 35: ' + dexes(35));
+  if (dexes(12).join() !== '74,95,111,138,140,142') bad('full lineup at level 12: ' + dexes(12));
+  if (dexes(35).join() !== '76,208,112,139,141,142') bad('full lineup at level 35: ' + dexes(35));
   for (let n = 1; n <= 6; n++) { const l = G.Gyms.lineup(brock, n, 12); if (l.length !== n || l.some((m, i) => m.index !== i || m.sig !== brock.signatures[i])) bad('lineup loop ' + n + ' is not the first ' + n + ' in order'); }
   for (const odd of [0, -3, NaN, undefined, null, 'x']) if (G.Gyms.lineup(brock, odd, 12).length !== 1) bad('loop ' + odd + ' should clamp to 1 slot');
   if (G.Gyms.lineup(brock, 99, 12).length !== 6) bad('loop 99 should clamp to the roster size'); if (G.Gyms.lineup(brock, 2.9, 12).length !== 2) bad('a fractional loop floors');
-  console.log('8 lineup: loop 1..6 gives the first N slots in order; stage at level 12 is Geodude/Rhyhorn/Omanyte/Kabuto/Onix/Aerodactyl, at 35 the finals; odd loops clamp'); }
+  console.log('8 lineup: loop 1..6 gives the first N slots in order; stage at level 12 is Geodude/Onix/Rhyhorn/Omanyte/Kabuto/Aerodactyl, at 35 the finals; odd loops clamp'); }
 
 // 9. loop accessor, roster and the escalation bump feeding the stage
 G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
@@ -178,6 +187,31 @@ const gate2 = G.Gym.gate;
   }
   clock = 240;
   console.log('10 defs: every slot x levels 12/20/35/60 builds the right stage; default def unchanged (Geodude HP 1029); AI uses every authored move: ' + out.join(', ')); }
+
+// 10b. gyms 2 to 8: every slot of every later gym through the real brain and G.MoveSim, same drill as 10 (close at full HP, far at 40% HP)
+{ const out = [];
+  for (let gi = 1; gi < G.Gyms.KANTO.length; gi++) {
+    const entry = G.Gyms.KANTO[gi], gate = Object.assign({}, gate2, { idx: gi, leader: entry.leader, level: 36 });
+    let used = 0, total = 0;
+    for (let slot = 0; slot < entry.signatures.length; slot++) {
+      G.MoveSim.clear();
+      const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot), e = G.Boss.make(d, 0, 0); e.flying = false;
+      const near = Math.max(1, e.brain.reach() + (pl.r || 0) - 1); // where the brain stops walking in: just inside its largest melee reach
+      if (d.dex !== G.Gyms.stageFor(sig, 36).dex) bad(entry.leader + ' slot ' + slot + ' def dex ' + d.dex);
+      const seen = {}; let err = null;
+      for (let i = 0; i < 90 * 20 && !err; i++) {
+        clock = 240 + i * 0.05; e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 900 ? near : 380; if (i === 900) e.hp = e.maxHp * 0.4;
+        try { pl.dead = false; for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { err = x.message; }
+      }
+      if (err) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' threw in the boss AI: ' + err);
+      for (const id of Object.keys(seen)) if (!sig.moves.some(m => m.id === id)) bad(entry.leader + ' slot ' + slot + ' cast an unauthored move ' + id);
+      for (const m of sig.moves) if (!seen[m.id]) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' never used ' + m.id + ' in 90 s: ' + JSON.stringify(seen));
+      used += Object.keys(seen).length; total += sig.moves.length;
+    }
+    out.push(entry.leader + ' ' + used + '/' + total);
+  }
+  clock = 240;
+  console.log('10b later gyms: every slot casts every authored move through the boss AI: ' + out.join(', ')); }
 
 // 11. the sim emits events and never calls presentation itself (Spawner and Audio throw if touched; no subscriber is loaded yet)
 { G.Spawner = { say: () => bad('SIM called Spawner.say directly'), CAP: 64 }; G.Audio = { sfx: () => bad('SIM called Audio.sfx directly') };

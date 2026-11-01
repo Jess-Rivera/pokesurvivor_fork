@@ -34,8 +34,8 @@ mons, in what order) is a design decision per leader.
 - Gym leader mons use ONLY catalog moves and the existing warning shapes
   (rule owned by BOSS-REWORK section 3a). Authored moves and upgrade cards per mon live in gyms.js /
   docs/BOSS-AUTHORING.md, NOT here (D-ENEMY amendment, 2026-10-31: each mon holds its own cards under the
-  player's card rules; Brock slot 1 is built, slots 2 to 6 and the other gyms keep PROVISIONAL move sets until
-  the gym-roster branch). This file is the roster line-up only.
+  player's card rules; Brock slot 1 is tuned; Brock slots 2 to 6 and Kanto gyms 2 to 8 (authored 2026-11-01) have
+  PROVISIONAL move sets from catalog moves with a gym form). This file is the roster line-up only.
 - Stage thresholds per line (the level at which a slot shows its next stage) are a
   TUNE value, set when the multi-mon gym flow is built. Placeholder bands are noted
   per line where useful; they are not locked.
