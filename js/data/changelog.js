@@ -6,6 +6,12 @@
  * Each line in Spanish and English.
  */
 G.CHANGELOG = [
+  { d: '2026-11-01', title: ['The new move system is live', 'The new move system is live'], chg: [
+    ['Every move now runs on the new move system for everyone, not only in dev builds: the moves behave as they did there, and level-ups offer the team-wide upgrade cards (each one works for your whole team for the rest of the run) instead of the old per-move cards.',
+     'Every move now runs on the new move system for everyone, not only in dev builds: the moves behave as they did there, and level-ups offer the team-wide upgrade cards (each one works for your whole team for the rest of the run) instead of the old per-move cards.'],
+    ['Bubble and Hail are retired for now: no Pokemon learns them. Piplup and Popplio start with Water Gun instead of Bubble, and a move shortcut you had set on Bubble or Hail now points at Water Gun.',
+     'Bubble and Hail are retired for now: no Pokemon learns them. Piplup and Popplio start with Water Gun instead of Bubble, and a move shortcut you had set on Bubble or Hail now points at Water Gun.']
+  ] },
   { d: '2026-10-31', title: ['Stat stages climb over time', 'Stat stages climb over time'], new: [
     ['On the new move system (dev builds only), the groundwork for team-wide upgrade cards is in: one set of card bonuses per run, shared by your whole team, that every new-path move reads (including moves you learn later). The level-up screen does not offer these cards yet.',
      'On the new move system (dev builds only), the groundwork for team-wide upgrade cards is in: one set of card bonuses per run, shared by your whole team, that every new-path move reads (including moves you learn later). The level-up screen does not offer these cards yet.'],

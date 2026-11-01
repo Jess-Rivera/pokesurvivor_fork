@@ -77,9 +77,11 @@ async function check(browser, query, flag) {
     const dexOk = rows.length > 0 && rows.every(r => names.has(r.querySelector('span').textContent) && r.querySelector('canvas,img,i'));
     return { n: opts.length, seen: [...seen], bad, dexOk, rows: rows.length };
   });
-  const miss = ALL.filter(id => !menu.seen.includes(id));
+  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED));     // slice 7b: Bubble and Hail are learnable by no one
+  const miss = ALL.filter(id => !RET.includes(id) && !menu.seen.includes(id)), shownRet = RET.filter(id => menu.seen.includes(id));
   ok(!menu.bad.length, flag + ': ban picker and move-slot names match MoveInfo over ' + menu.n + ' Pokemon' + (menu.bad.length ? ' (' + menu.bad.slice(0, 6).join(', ') + ')' : ''));
-  ok(!miss.length, flag + ': the menus showed every move (' + menu.seen.length + '/' + ALL.length + (miss.length ? '; missing ' + miss.join(' ') : '') + ')');
+  ok(!miss.length, flag + ': the menus showed every move but the retired ones (' + menu.seen.length + '/' + (ALL.length - RET.length) + (miss.length ? '; missing ' + miss.join(' ') : '') + ')');
+  ok(!shownRet.length, flag + ': no retired move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : ''));
   ok(menu.dexOk, flag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
 
   // ---- a run: level-up cards and the pause sheet for every move ----

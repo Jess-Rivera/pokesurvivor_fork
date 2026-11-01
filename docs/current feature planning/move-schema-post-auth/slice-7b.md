@@ -25,5 +25,10 @@ All harnesses green with no flag; the I1 guard extended to every file that remai
 ## Merge into main (Jess runs all git)
 check.js green on the branch, STATE.md and DEVLOG.md updated, a DECISIONS.md log line for the flip, then the assistant gives Jess the exact merge commands (merge main into the branch first if main moved, then the branch into main). After the merge, open the gym-roster move-import branch.
 
+## Steps (plan approved by Jess, 2026-11-01)
+- 7b-1 flip: the new path always on (no ?newcombat), team cards the only cards, Bubble and Hail retired (G.Moves.RETIRED), starters 393 and 728 open with Water Gun, save shortcuts (pbind) map a retired move to Water Gun unless the list already binds Water Gun (then that slot clears), vetoes (pban) drop retired moves.
+- 7b-2 purge: legacy player-move code in combat.js, kinds.js, mechanics.js, moves.js down to pools, start table and instance (reading G.MoveDefs), ROUTED and the 14 legacy-7b lines, the legacy behaviors listed in Scope; guard allows zero legacy-7b lines; Brock-only fallback.
+- 7b-3 docs, changelog, merge.
+
 ## Results
-(not started)
+- 7b-1 built 2026-11-01 (Claude Code, home): move-route.js `on` is always true (readers stay until 7b-2); moves.js RETIRED map, pools skip it; menu.js move search skips it; starters.js; db.js pbind and pban; changelog. Tests: check.js 34/34 (boss-owner harness's stand-in player got an inert Tackle slot, since the sim now ticks it), smoke-ui and smoke-newcombat updated for the flip and all pass; save cleanup checked by hand (Bubble/Hail shortcuts and vetoes). Owed: Jess's feel test (a full run to Brock) and the stress run with no flag.

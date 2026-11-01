@@ -16,11 +16,12 @@ const TYPES = ['normal','fire','water','grass','electric','ice','fighting','pois
 const tc = {}; TYPES.forEach(t => tc[t] = '#888');
 const DEX_BY = { 1: { name: 'Normie', types: ['normal'], stats: [50, 50, 50, 50, 50, 65] }, 74: { name: 'Geodude', types: ['rock', 'ground'], stats: [40, 80, 100, 30, 30, 20] } };
 for (const d of [75, 76, 95, 111, 112, 138, 139, 140, 141, 142, 208]) DEX_BY[d] = { name: 'M' + d, types: ['rock'], stats: [50, 50, 50, 50, 50, 50] };     // Brock's other stages (validate checks every dex)
-global.window = global; global.location = { search: '?dev' };
+global.window = global; global.location = { search: '?dev' };     // 7b flip: the new path is always on, flag or not
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
 let clock = 0, enrage = 1; const casts = {}, warns = [];
+const plTackle = { id: 'tackle', t: Infinity };     // 7b flip: G.MoveSim ticks the player's slots too; this one never recharges, so the player never casts
 const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [],
-  hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); }, activeGroup: () => [{ id: 'tackle' }], cast() { pl.casted = (pl.casted || 0) + 1; } };
+  hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
 const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), rand: (a, b) => a + (b - a) * rnd(), randInt: (a, b) => a + Math.floor((b - a + 1) * rnd()),
     pickN: a => a, damp: (a, b) => b, norm: (x, y) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; }, dist: (a, b, c, d) => Math.hypot(a - c, b - d),
     dist2: (a, b, c, d) => (a - c) * (a - c) + (b - d) * (b - d), hash: () => 0.5, pick: a => a[0] },
@@ -222,8 +223,8 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(!pl.stMajor, 'no ailment on the player'); delete pl.inflict;
   console.log('10 riders: damage only; Body Slam\'s paralysis noted once in the console and not applied'); }
 
-// 11. the shared sim: flag off, MoveRoute.tick steps every instance once per frame; an enemy cast is not the player's cast
-{ fresh(); ok(G.MoveRoute.on === false, 'this harness runs with the flag off (?dev only)');
+// 11. the shared sim: MoveRoute.tick steps every instance once per frame; an enemy cast is not the player's cast
+{ fresh(); ok(G.MoveRoute.on === true, 'the new path is always on since the 7b flip');
   const e = mkBoss(), b = e.brain; b.init(); b.wait = 0; b.mode = 'far'; for (const s of e.slots[0]) if (s.id === 'tackle') s.t = 99;
   pl.x = 400; frame(e); run(e, 0.5 + 2 * DT); const r = Sim.list().find(i => i.spec.id === 'rock-throw'); ok(!!r, 'a rock in flight');
   const x0 = r.x; G.MoveRoute.tick(DT, pl, clock); ok(near(r.x - x0, 377 * DT * Math.cos(r.heading), 1e-6), 'one MoveRoute.tick moves it one step (' + (r.x - x0).toFixed(3) + ' px)');
@@ -235,7 +236,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   G.SimBus.emit('move:cast', { moveId: 'tackle', ownerId: null, x: 0, y: 0, aim: 0, enemy: false }); ok(pl.casted === 1, 'your own Tackle still plays');
   G.MoveRoute = saved;
   const h = tape.filter(x => x.type === 'move:hit'); ok(h.length >= 1 && h.every(x => x.enemyId === null), 'a hit on the player names no enemy');
-  console.log('11 shared sim: MoveRoute.tick steps once per frame on the flag-off path; enemy casts are tagged and never play your animation'); }
+  console.log('11 shared sim: MoveRoute.tick steps once per frame; enemy casts are tagged and never play your animation'); }
 
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');

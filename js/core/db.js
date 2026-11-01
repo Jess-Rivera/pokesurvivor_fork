@@ -146,8 +146,9 @@ G.DB = (() => {
         const l = Array.isArray(s.pbind[d]) ? s.pbind[d].slice(0, 4) : [];
         const seen = new Set();
         s.pbind[d] = [0, 1, 2, 3].map(i => {
-          const id = l[i];
-          if (typeof id !== 'string' || (G.Moves && !G.Moves.BY_ID[id]) || seen.has(id)) return null;     // legacy-7b: D-BUBBLE (Bubble has no def)
+          // A retired move (Bubble, Hail) loads as its replacement, unless the list already binds that move itself (slice 7b).
+          const r = G.Moves && G.Moves.RETIRED[l[i]], id = r ? (l.includes(r) ? null : r) : l[i];
+          if (typeof id !== 'string' || (G.Moves && !G.Moves.BY_ID[id]) || seen.has(id)) return null;     // legacy-7b: D-BUBBLE
           seen.add(id); return id;
         });
       }
@@ -156,7 +157,7 @@ G.DB = (() => {
     if (s.pban && typeof s.pban === 'object') {
       for (const d of Object.keys(s.pban)) {
         const l = Array.isArray(s.pban[d]) ? s.pban[d] : [];
-        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || G.Moves.BY_ID[id])))].slice(0, 3);     // legacy-7b: D-BUBBLE
+        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.Moves || (G.Moves.BY_ID[id] && !G.Moves.RETIRED[id]))))].slice(0, 3);     // legacy-7b: D-BUBBLE; a retired move's veto is dropped
       }
     } else s.pban = {};
     if (G.Upgrades) for (const d of Object.keys(s.pupg || {})) {

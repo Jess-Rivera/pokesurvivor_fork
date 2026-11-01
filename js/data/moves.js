@@ -423,9 +423,12 @@
     m.floor = 1 / Math.max(1, E);
   }
 
+  // Retired moves (slice 7b, D-BUBBLE and D-HAIL, Jess 2026-11-01): out of every pool; a save that names one loads its replacement.
+  const RETIRED = { bubble: 'water-gun', hail: 'water-gun' };
+
   // Move pool by type. The `normal` pool is shared by all.
   const POOL = {};
-  for (const m of RAW) (POOL[m.type] = POOL[m.type] || []).push(m.id);
+  for (const m of RAW) if (!RETIRED[m.id]) (POOL[m.type] = POOL[m.type] || []).push(m.id);
 
   const BY_ID = {};
   for (const m of RAW) {
@@ -510,5 +513,5 @@
     return 'tackle';
   }
 
-  G.Moves = { ALL: RAW, BY_ID, POOL, poolFor, instance, startFor, derive, addStack, stackTotal, dotMul };
+  G.Moves = { ALL: RAW, BY_ID, POOL, RETIRED, poolFor, instance, startFor, derive, addStack, stackTotal, dotMul };
 })();

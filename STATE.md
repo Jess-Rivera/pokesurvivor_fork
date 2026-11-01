@@ -12,7 +12,8 @@ Last updated: 2026-11-01 (Claude Code, home; 7a done, sweep committed, board cle
 
 ## Next (in order)
 1. Sweep committed (dfa5c9b). Board cleaned (Jess, 2026-10-31): #15 closed; In progress = #1, #6, #17.
-2. Slice 7b plan (flip, purge, merge). Unblocked. D-HAIL resolved (Hail pulled, old saves get Water Gun). D-BUBBLE resolved (retire Bubble, starters get Water Gun). Slice 6 stress run done (Jess; Quick did not log it).
+2. Slice 7b in three steps (slice-7b.md "Steps"). 7b-1 flip BUILT, uncommitted; owed: Jess's run to Brock and the stress run with no flag. Then 7b-2 purge, 7b-3 merge.
+   Unblocked. D-HAIL resolved (Hail pulled, old saves get Water Gun). D-BUBBLE resolved (retire Bubble, starters get Water Gun). Slice 6 stress run done (Jess; Quick did not log it).
 
 ## Open owner decisions
 - Commit A side effects to confirm (slice-7a.md Results).

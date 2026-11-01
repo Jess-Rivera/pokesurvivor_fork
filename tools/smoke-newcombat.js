@@ -59,12 +59,12 @@ async function density(page) {
   await sleep(1200);
   const browser = await chromium.launch();
   try {
-    // ---- flag off: the game plays, nothing from the new path runs ----
+    // ---- no flag: since the 7b flip the new path runs on plain ?dev too ----
     { const { page, errs } = await boot(browser, '?dev');
       await sleep(4000);
       const s = await page.evaluate(() => ({ on: G.MoveRoute.on, routed: G.MoveRoute.routed('ember'), live: G.MoveSim.list().length,
         alive: !G.Game.player.dead, time: G.Game.time != null }));
-      ok(!s.on && !s.routed && s.live === 0, 'flag off: MoveRoute off, nothing routed, no sim instances');
+      ok(s.on && s.routed && s.alive, 'flag off: the new path runs without the flag (7b flip), the player is alive');
       const d = await density(page);
       console.log('      flag off density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
       ok(errs.length === 0, 'flag off: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));

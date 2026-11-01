@@ -135,8 +135,8 @@ G.Game = (() => {
     // member runs Player.update(), so the shared timers still tick exactly once
     // per frame, including while the caster sits on the bench. The object is never reassigned.
     roster.forEach(f => { f.stgTeam = roster[0].stgTeam; });
-    // Slice 5b: ONE team card store per run, shared by every member (team-wide cards). Run state only, never saved. Only the new move
-    // path (?dev&newcombat) reads it; the legacy path keeps its per-move cards until slice 7b.
+    // Slice 5b: ONE team card store per run, shared by every member (team-wide cards). Run state only, never saved. Since the slice 7b flip
+    // these are the only upgrade cards (the legacy per-move cards are off, deleted in 7b-2).
     const teamCards = G.TeamCards.store(); roster.forEach(f => { f.teamCards = teamCards; });
     // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
     const runItems = [];
@@ -837,7 +837,7 @@ G.Game = (() => {
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
     G.Combat.tick(dt, pl, time);
-    G.MoveRoute.tick(dt, pl, time);     // ?dev&newcombat: routed slots run in G.MoveSim (slice 3d); gym leaders' casts on both flags (7a)
+    G.MoveRoute.tick(dt, pl, time);     // the player's moves and gym leaders' casts run in G.MoveSim (slice 7b flip)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);
     G.Combat.updateFields(dt);

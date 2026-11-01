@@ -1,9 +1,11 @@
 /* ============ move-route.js: which slots the new move system runs (G.MoveRoute, slice 3d) ============
  *
- * Routing by move id behind a dev flag (decision D-4). This is not a data bridge: nothing is derived from the legacy
- * definition, a routed slot simply belongs to G.MoveSim instead of G.Combat. Removed in slice 7.
+ * Routing by move id (decision D-4). This is not a data bridge: nothing is derived from the legacy
+ * definition, a routed slot simply belongs to G.MoveSim instead of G.Combat. Removed in slice 7b-2.
+ * Slice 7b flip (Jess 2026-11-01): the ?newcombat flag is gone; the new path is always on. Bubble and Hail are retired
+ * (G.Moves.RETIRED), so every move in the pool is in ROUTED.
  *
- *   on                 true only with BOTH ?dev and ?newcombat in the URL. Off, nothing here runs and the game is unchanged.
+ *   on                 always true since the 7b flip (kept until 7b-2 deletes the readers).
  *   ROUTED             the ONE list of move ids the new path supports. It grows with each slice.
  *   routed(id)         flag on, single-player run (co-op stays legacy) and the id is in ROUTED. combat.js skips these slots
  *                      (both its recharge loop and its cast loop), G.MoveSim runs them, so each slot timer has one owner.
@@ -14,7 +16,7 @@
  * enemy update), so the sim steps every frame even with the flag off; the flag only decides the player's path.
  */
 G.MoveRoute = (() => {
-  const on = /[?&]dev\b/.test(location.search) && /[?&]newcombat\b/.test(location.search);
+  const on = true;
   const ROUTED = new Set(['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower',     // 3c / 3d
     'body-slam', 'string-shot', 'ice-beam', 'bite', 'psycho-cut', 'giga-drain', 'bulldoze',                          // 4a riders
     'swords-dance', 'dragon-dance', 'aqua-ring', 'substitute', 'dragon-rage', 'hex', 'thunderbolt',                  // 4b self-casts, specials, chains
