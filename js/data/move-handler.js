@@ -11,12 +11,17 @@
     triggers: ['cast', 'casterMove', 'termination', 'enemyHit', 'interval'],
     conditions: ['targetHasBerry'],
     byName: {
-      berrySteal:         { params: ['damageMult', 'consumesBerry'], trigger: 'enemyHit', condition: 'targetHasBerry', stub: 'no holdable/berry system in the local build' },
-      fixedDamage:        { params: ['amount', 'ignoresType', 'ignoresDefense'], trigger: 'enemyHit' },
+      berrySteal: {
+        params: ['damageMult', 'consumesBerry'],
+        trigger: 'enemyHit',
+        condition: 'targetHasBerry',
+        stub: 'no holdable/berry system in the local build',
+      },
+      fixedDamage: { params: ['amount', 'ignoresType', 'ignoresDefense'], trigger: 'enemyHit' },
       chainDamageFalloff: { params: ['hopReduction'], trigger: 'enemyHit' },
-      levelDamage:        { params: [], trigger: 'enemyHit' },
-      setWeather:         { params: ['weather', 'duration'], trigger: 'cast' },
-      statusBonus:        { params: ['multiplier'], trigger: 'enemyHit' },
+      levelDamage: { params: [], trigger: 'enemyHit' },
+      setWeather: { params: ['weather', 'duration'], trigger: 'cast' },
+      statusBonus: { params: ['multiplier'], trigger: 'enemyHit' },
     },
   };
 })();

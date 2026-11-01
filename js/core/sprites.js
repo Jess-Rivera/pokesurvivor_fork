@@ -12,12 +12,17 @@
 G.Sprites = (() => {
   /** World units per art pixel. Tiles and sprites share the scale. */
   const PX = 2;
-  const sheets = new Map();          // "dex/Anim[/s]" -> {img, ready, failed}
+  const sheets = new Map(); // "dex/Anim[/s]" -> {img, ready, failed}
 
-  function meta(dex) { return G.SPRITE_META[dex] || null; }
+  function meta(dex) {
+    return G.SPRITE_META[dex] || null;
+  }
 
   /** Does it float in its sprite? (tools/hover_flags.py) It passes over rocks and water. */
-  function hovers(dex) { const m = meta(dex); return !!(m && m.hv); }
+  function hovers(dex) {
+    const m = meta(dex);
+    return !!(m && m.hv);
+  }
 
   /**
    * White version of an image (for the flash when taking a hit).
@@ -30,7 +35,8 @@ G.Sprites = (() => {
     let c = whites.get(img);
     if (c) return c;
     c = document.createElement('canvas');
-    c.width = img.width; c.height = img.height;
+    c.width = img.width;
+    c.height = img.height;
     const x = c.getContext('2d');
     x.drawImage(img, 0, 0);
     x.globalCompositeOperation = 'source-in';
@@ -45,24 +51,29 @@ G.Sprites = (() => {
    */
   const tints = new WeakMap();
   function tinted(img, color) {
-    let m = tints.get(img); if (!m) tints.set(img, m = new Map());
+    let m = tints.get(img);
+    if (!m) tints.set(img, (m = new Map()));
     let c = m.get(color);
     if (c) return c;
     c = document.createElement('canvas');
-    c.width = img.width; c.height = img.height;
+    c.width = img.width;
+    c.height = img.height;
     const x = c.getContext('2d');
     x.drawImage(img, 0, 0);
-    x.globalCompositeOperation = 'color';            // hue + saturation of the colour, the sprite's own light and dark: it keeps the shading
+    x.globalCompositeOperation = 'color'; // hue + saturation of the colour, the sprite's own light and dark: it keeps the shading
     x.fillStyle = color;
     x.fillRect(0, 0, c.width, c.height);
-    x.globalCompositeOperation = 'destination-in';   // back to the sprite's own silhouette (the fill also painted the empty pixels)
+    x.globalCompositeOperation = 'destination-in'; // back to the sprite's own silhouette (the fill also painted the empty pixels)
     x.drawImage(img, 0, 0);
     m.set(color, c);
     return c;
   }
 
   /** Does it have a shiny version? (assets/pokemon/{dex}/s/) */
-  function hasShiny(dex) { const m = meta(dex); return !!(m && m.sh); }
+  function hasShiny(dex) {
+    const m = meta(dex);
+    return !!(m && m.sh);
+  }
 
   /** Animations available for that variant. */
   function has(m, anim, shiny) {
@@ -89,14 +100,15 @@ G.Sprites = (() => {
   // Sheets in memory at most. Before, none were released: in games over
   // an hour long hundreds of species went by, the graphics memory filled up
   // and the screen went black until the browser reloaded the page.
-  const MAX_SHEETS = 200, IDLE_MS = 20000;   // ~0.66 MB each once drawn: ~130 MB
+  const MAX_SHEETS = 200,
+    IDLE_MS = 20000; // ~0.66 MB each once drawn: ~130 MB
   function evict(now) {
     const old = [...sheets].filter(([, s]) => now - s.at > IDLE_MS).sort((a, b) => a[1].at - b[1].at);
     const drop = old.slice(0, Math.max(sheets.size - Math.floor(MAX_SHEETS * 0.75), 0));
     for (const [k, s] of drop) {
       sheets.delete(k);
       s.img.onload = s.img.onerror = null;
-      s.img.src = '';                 // releases the decoded image
+      s.img.src = ''; // releases the decoded image
     }
   }
 
@@ -111,14 +123,29 @@ G.Sprites = (() => {
     if (s) {
       s.at = now;
       // If the download was cut off (bad network, saturated server), retry later.
-      if (s.failed && performance.now() > s.retryAt) { s.failed = false; s.img.src = s.src + '?r=' + s.tries; }
+      if (s.failed && performance.now() > s.retryAt) {
+        s.failed = false;
+        s.img.src = s.src + '?r=' + s.tries;
+      }
       return s;
     }
     if (sheets.size >= MAX_SHEETS) evict(now);
-    s = { ready: false, failed: false, img: new Image(), tries: 0, retryAt: 0, at: now,
-          src: `assets/pokemon/${dex}/${shiny ? 's/' : ''}${name}.png` };
-    s.img.onload = () => { s.ready = true; };
-    s.img.onerror = () => { s.failed = true; s.retryAt = performance.now() + 1000 * Math.min(8, 2 ** s.tries++); };
+    s = {
+      ready: false,
+      failed: false,
+      img: new Image(),
+      tries: 0,
+      retryAt: 0,
+      at: now,
+      src: `assets/pokemon/${dex}/${shiny ? 's/' : ''}${name}.png`,
+    };
+    s.img.onload = () => {
+      s.ready = true;
+    };
+    s.img.onerror = () => {
+      s.failed = true;
+      s.retryAt = performance.now() + 1000 * Math.min(8, 2 ** s.tries++);
+    };
     s.img.src = s.src;
     sheets.set(k, s);
     return s;
@@ -129,11 +156,15 @@ G.Sprites = (() => {
   /** Preloads all the animations of those Pokemon. */
   function preload(dexes, timeout = 8000, shiny = false) {
     const hs = [];
-    for (const d of dexes) for (const a of ANIMS) { const s = sheet(d, a, shiny); if (s) hs.push(s); }
-    return new Promise(res => {
+    for (const d of dexes)
+      for (const a of ANIMS) {
+        const s = sheet(d, a, shiny);
+        if (s) hs.push(s);
+      }
+    return new Promise((res) => {
       const t0 = performance.now();
       (function check() {
-        if (hs.every(h => h.ready || h.failed) || performance.now() - t0 > timeout) return res();
+        if (hs.every((h) => h.ready || h.failed) || performance.now() - t0 > timeout) return res();
         setTimeout(check, 50);
       })();
     });
@@ -184,10 +215,10 @@ G.Sprites = (() => {
       this.base = 'Idle';
       this.cur = 'Idle';
       this.frame = 0;
-      this.t = 0;              // time within the frame, in 1/60 s
+      this.t = 0; // time within the frame, in 1/60 s
       this.speed = 1;
       this.once = false;
-      this.hold = false;       // stays on the last frame (Faint)
+      this.hold = false; // stays on the last frame (Faint)
       this.done = false;
       this.dir = 0;
       // The sheets load when first drawn; the run preloads
@@ -208,33 +239,45 @@ G.Sprites = (() => {
     }
 
     /** Is a one-shot animation playing and unfinished? */
-    busy() { return this.once && !this.done; }
+    busy() {
+      return this.once && !this.done;
+    }
 
     /** Progress 0..1 of the current animation. */
     progress() {
       const m = animMeta(this.dex, this.cur, this.shiny);
       if (!m) return 1;
-      let total = 0, before = 0;
-      for (let i = 0; i < m.n; i++) { if (i < this.frame) before += m.d[i]; total += m.d[i]; }
+      let total = 0,
+        before = 0;
+      for (let i = 0; i < m.n; i++) {
+        if (i < this.frame) before += m.d[i];
+        total += m.d[i];
+      }
       return total ? (before + this.t) / total : 1;
     }
 
     _start(anim, once) {
       this.cur = animName(this.dex, anim, this.shiny) || 'Idle';
-      this.frame = 0; this.t = 0;
-      this.once = once; this.done = false;
+      this.frame = 0;
+      this.t = 0;
+      this.once = once;
+      this.done = false;
     }
 
     update(dt) {
       const m = animMeta(this.dex, this.cur, this.shiny);
-      if (!m || this.done || this.frozen) return;       // frozen (status): the animation stops on its current frame
+      if (!m || this.done || this.frozen) return; // frozen (status): the animation stops on its current frame
       this.t += dt * 60 * this.speed;
       while (this.t >= m.d[this.frame]) {
         this.t -= m.d[this.frame];
         this.frame++;
         if (this.frame >= m.n) {
           if (this.once) {
-            if (this.hold) { this.frame = m.n - 1; this.done = true; return; }
+            if (this.hold) {
+              this.frame = m.n - 1;
+              this.done = true;
+              return;
+            }
             // Return to the background animation.
             this._start(this.base, false);
             this.speed = 1;
@@ -253,20 +296,27 @@ G.Sprites = (() => {
       if (s && !s.ready) {
         // While this animation loads, show Idle if it is ready.
         const idle = sheet(this.dex, 'Idle', this.shiny);
-        if (idle && idle.ready) { s = idle; m = animMeta(this.dex, 'Idle', this.shiny); }
+        if (idle && idle.ready) {
+          s = idle;
+          m = animMeta(this.dex, 'Idle', this.shiny);
+        }
       }
       const frame = s === sheet(this.dex, this.cur, this.shiny) ? this.frame : 0;
       if (!m || !s || !s.ready) {
         // Fallback: a little ball, in case the file is missing.
         ctx.fillStyle = opts.color || '#6b7a94';
-        ctx.beginPath(); ctx.arc(x, y - 12 * k, 8 * k, 0, 6.2832); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y - 12 * k, 8 * k, 0, 6.2832);
+        ctx.fill();
         return;
       }
       const row = Math.min(this.dir, m.r - 1);
       const alpha = opts.alpha == null ? 1 : opts.alpha;
       if (alpha <= 0) return;
-      const sx = Math.min(frame, m.n - 1) * m.w, sy = row * m.h;
-      const dx = Math.round(x - m.ax * k), dy = Math.round(y - m.ay * k);
+      const sx = Math.min(frame, m.n - 1) * m.w,
+        sy = row * m.h;
+      const dx = Math.round(x - m.ax * k),
+        dy = Math.round(y - m.ay * k);
       const prev = ctx.globalAlpha;
       if (alpha < 1) ctx.globalAlpha = prev * alpha;
       // Flash: full white (enemies) or half white on top (your Pokemon).
@@ -283,6 +333,23 @@ G.Sprites = (() => {
     }
   }
 
-  return { PX, meta, hasShiny, hovers, white, animMeta, sheet, preload, dirFromAngle, bodyRadius, bodyHeight,
-           drawShadow, Animator, ANIMS, get sheetCount() { return sheets.size; } };
+  return {
+    PX,
+    meta,
+    hasShiny,
+    hovers,
+    white,
+    animMeta,
+    sheet,
+    preload,
+    dirFromAngle,
+    bodyRadius,
+    bodyHeight,
+    drawShadow,
+    Animator,
+    ANIMS,
+    get sheetCount() {
+      return sheets.size;
+    },
+  };
 })();

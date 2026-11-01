@@ -42,13 +42,7 @@ if (!NO_BUILD) {
 
 // --- 2. The runtime bundle -----------------------------------------------
 // Individual files that must be in the zip (relative to ROOT).
-const INCLUDE_FILES = [
-  'index.html',
-  'js/app.min.js',
-  'version.json',
-  'manifest.webmanifest',
-  'favicon.ico',
-];
+const INCLUDE_FILES = ['index.html', 'js/app.min.js', 'version.json', 'manifest.webmanifest', 'favicon.ico'];
 // Whole directories shipped as-is.
 const INCLUDE_DIRS = [
   'css',
@@ -83,16 +77,25 @@ output.on('close', () => {
   const mb = (archive.pointer() / 1048576).toFixed(2);
   console.log('');
   console.log(`ok: dist/pokesurvivor-alpha.zip  (${kb} KB / ${mb} MB, ${fileCount} files)`);
-  console.log(`    service worker: ${WITH_SW ? 'INCLUDED' : 'excluded'} \u00b7 SEO tags: ${KEEP_SEO ? 'kept' : 'stripped'}`);
+  console.log(
+    `    service worker: ${WITH_SW ? 'INCLUDED' : 'excluded'} \u00b7 SEO tags: ${KEEP_SEO ? 'kept' : 'stripped'}`
+  );
   console.log('');
   console.log('Push to itch (set <user>/<project> to your real slug):');
   console.log('    butler push dist/pokesurvivor-alpha.zip <user>/<project>:html-alpha');
 });
-archive.on('warning', err => { if (err.code === 'ENOENT') console.warn(err); else throw err; });
-archive.on('error', err => { throw err; });
+archive.on('warning', (err) => {
+  if (err.code === 'ENOENT') console.warn(err);
+  else throw err;
+});
+archive.on('error', (err) => {
+  throw err;
+});
 
 let fileCount = 0;
-archive.on('entry', () => { fileCount++; });
+archive.on('entry', () => {
+  fileCount++;
+});
 
 archive.pipe(output);
 for (const f of INCLUDE_FILES) archive.file(path.join(ROOT, f), { name: f });

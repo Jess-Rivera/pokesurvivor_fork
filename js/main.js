@@ -2,17 +2,78 @@
 (() => {
   // If a file fails to load (a mobile connection that drops), it is better
   // to warn than to boot halfway.
-  const NEED = ['U', 'Stats', 'Log', 'I18n', 'Settings', 'DB', 'Audio', 'Input', 'Touch', 'Sprites', 'Camera', 'Moves', 'ENEMY_CLASSES', 'Enemies', 'Status', 'Stages', 'Upgrades', 'Items',
-                'World', 'FX', 'Projectiles', 'EnemyMgr', 'Boss', 'Pickups', 'Player', 'Combat', 'Spawner', 'LevelUp', 'Gacha',
-                'MoveAttrs', 'MoveData', 'MoveOverrides', 'MoveHandlers', 'MoveResolver', 'MoveDefs', 'TeamCards', 'MoveGeom', 'MoveSim', 'MoveEffects', 'MoveRoute', 'MoveRender',
-                'SimBus', 'GymPresent', 'GymArena', 'Weather', 'Progress', 'Hazards', 'Social', 'Net', 'Coop', 'Ranking', 'MoveInfo', 'Icons', 'UI', 'HUD', 'Sheet',
-                'MenuUI', 'RunUI', 'SettingsUI', 'Funding', 'SupportUI', 'Game', 'Flow'];
+  const NEED = [
+    'U',
+    'Stats',
+    'Log',
+    'I18n',
+    'Settings',
+    'DB',
+    'Audio',
+    'Input',
+    'Touch',
+    'Sprites',
+    'Camera',
+    'Moves',
+    'ENEMY_CLASSES',
+    'Enemies',
+    'Status',
+    'Stages',
+    'Upgrades',
+    'Items',
+    'World',
+    'FX',
+    'Projectiles',
+    'EnemyMgr',
+    'Boss',
+    'Pickups',
+    'Player',
+    'Combat',
+    'Spawner',
+    'LevelUp',
+    'Gacha',
+    'MoveAttrs',
+    'MoveData',
+    'MoveOverrides',
+    'MoveHandlers',
+    'MoveResolver',
+    'MoveDefs',
+    'TeamCards',
+    'MoveGeom',
+    'MoveSim',
+    'MoveEffects',
+    'MoveRoute',
+    'MoveRender',
+    'SimBus',
+    'GymPresent',
+    'GymArena',
+    'Weather',
+    'Progress',
+    'Hazards',
+    'Social',
+    'Net',
+    'Coop',
+    'Ranking',
+    'MoveInfo',
+    'Icons',
+    'UI',
+    'HUD',
+    'Sheet',
+    'MenuUI',
+    'RunUI',
+    'SettingsUI',
+    'Funding',
+    'SupportUI',
+    'Game',
+    'Flow',
+  ];
   function broken() {
     // (In the published version G is not on window: it is wrapped, see tools/build.js.)
-    const miss = NEED.filter(k => typeof G !== 'object' || !G[k]);
+    const miss = NEED.filter((k) => typeof G !== 'object' || !G[k]);
     if (!miss.length) return false;
     const el = document.getElementById('boot');
-    el.innerHTML = 'No se pudo cargar todo el juego (¿se cortó la conexión?).<br><button class="btn gold" style="margin-top:12px" onclick="location.reload()">Recargar</button>';
+    el.innerHTML =
+      'No se pudo cargar todo el juego (¿se cortó la conexión?).<br><button class="btn gold" style="margin-top:12px" onclick="location.reload()">Recargar</button>';
     console.warn('[Boot] missing:', miss.join(', '));
     return true;
   }
@@ -26,12 +87,16 @@
     const en = typeof G === 'object' && G.I18n ? G.I18n.lang === 'en' : !/^es/i.test(navigator.language || '');
     const el = document.getElementById('boot');
     el.setAttribute('translate', 'no');
-    el.innerHTML = '<div class="boot-in"><h1>PokéSurvivor</h1>' + (en
-      ? '<p><b>We are under maintenance.</b></p><p>We are moving the game to new servers so it can stay free for everyone. ' +
-        'Your account, your save and your Pokémon are safe. Please come back in a few hours!</p>'
-      : '<p><b>Estamos en mantenimiento.</b></p><p>Estamos mudando el juego a servidores nuevos para que siga siendo gratis para todos. ' +
-        'Tu cuenta, tu partida y tus Pokémon están a salvo. ¡Vuelve en unas horas!</p>') +
-      '<button class="btn gold" style="margin-top:12px" onclick="location.reload()">' + (en ? 'Try again' : 'Volver a intentarlo') + '</button></div>';
+    el.innerHTML =
+      '<div class="boot-in"><h1>PokéSurvivor</h1>' +
+      (en
+        ? '<p><b>We are under maintenance.</b></p><p>We are moving the game to new servers so it can stay free for everyone. ' +
+          'Your account, your save and your Pokémon are safe. Please come back in a few hours!</p>'
+        : '<p><b>Estamos en mantenimiento.</b></p><p>Estamos mudando el juego a servidores nuevos para que siga siendo gratis para todos. ' +
+          'Tu cuenta, tu partida y tus Pokémon están a salvo. ¡Vuelve en unas horas!</p>') +
+      '<button class="btn gold" style="margin-top:12px" onclick="location.reload()">' +
+      (en ? 'Try again' : 'Volver a intentarlo') +
+      '</button></div>';
     return true;
   }
 
@@ -48,6 +113,8 @@
 
   // Installable as an app (PWA). Only with http(s): opened by double-click (file://) it is not needed.
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('[PWA]', e.message)));
+    addEventListener('load', () =>
+      navigator.serviceWorker.register('sw.js').catch((e) => console.warn('[PWA]', e.message))
+    );
   }
 })();

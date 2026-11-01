@@ -17,21 +17,60 @@
  * neutral value props use). The buffer keeps the newest 8192 records.
  */
 G.Log = (() => {
-  const CAP = 8192, NF = 20;
-  const F = new Float32Array(CAP * NF), K = new Uint8Array(CAP), T = new Float32Array(CAP);
-  let head = 0, count = 0;
-  const strs = [''], strIx = new Map([['', 0]]);
-  const S = s => {
+  const CAP = 8192,
+    NF = 20;
+  const F = new Float32Array(CAP * NF),
+    K = new Uint8Array(CAP),
+    T = new Float32Array(CAP);
+  let head = 0,
+    count = 0;
+  const strs = [''],
+    strIx = new Map([['', 0]]);
+  const S = (s) => {
     s = s == null ? '' : String(s);
     let i = strIx.get(s);
-    if (i === undefined) { i = strs.length; strs.push(s); strIx.set(s, i); }
+    if (i === undefined) {
+      i = strs.length;
+      strs.push(s);
+      strIx.set(s, i);
+    }
     return i;
   };
-  const HIT_IN = 1, HIT_OUT = 2, KILL = 3, XP = 4, OFFER = 5, PICK = 6, HEAL = 7, FAINT = 8, BLOCK = 9, DOT = 10, MIX = 11, ITEM = 12, REDO = 13;
-  const KIND_NAME = ['', 'HIT_IN', 'HIT_OUT', 'KILL', 'XP', 'OFFER', 'PICK', 'HEAL', 'FAINT', 'BLOCK', 'DOT', 'MIX', 'ITEM', 'REDO'];
-  const NEAR_PX = 120, MIX_EVERY = 5;           // "near" = within a typical melee reach of you; sample period in seconds
+  const HIT_IN = 1,
+    HIT_OUT = 2,
+    KILL = 3,
+    XP = 4,
+    OFFER = 5,
+    PICK = 6,
+    HEAL = 7,
+    FAINT = 8,
+    BLOCK = 9,
+    DOT = 10,
+    MIX = 11,
+    ITEM = 12,
+    REDO = 13;
+  const KIND_NAME = [
+    '',
+    'HIT_IN',
+    'HIT_OUT',
+    'KILL',
+    'XP',
+    'OFFER',
+    'PICK',
+    'HEAL',
+    'FAINT',
+    'BLOCK',
+    'DOT',
+    'MIX',
+    'ITEM',
+    'REDO',
+  ];
+  const NEAR_PX = 120,
+    MIX_EVERY = 5; // "near" = within a typical melee reach of you; sample period in seconds
   const FAM_IX = { melee: 0, range: 1, support: 2 };
-  const _mn = new Float64Array(3), _mnear = new Float64Array(3), _mds = new Float64Array(3);   // reused, no allocation per sample
+  const _mn = new Float64Array(3),
+    _mnear = new Float64Array(3),
+    _mds = new Float64Array(3); // reused, no allocation per sample
   let lastMix = -MIX_EVERY;
   const api = { on: /[?&]dev\b/.test(location.search), t: 0 };
 
@@ -39,22 +78,41 @@ G.Log = (() => {
     const i = head;
     head = (head + 1) % CAP;
     if (count < CAP) count++;
-    K[i] = kind; T[i] = api.t;
+    K[i] = kind;
+    T[i] = api.t;
     return i * NF;
   }
 
   // Reused by Player.hurt call sites to name the attacker without allocating.
   const _who = { e: null, kind: '' };
-  api.who = (e, kind) => { _who.e = e; _who.kind = kind; return _who; };
+  api.who = (e, kind) => {
+    _who.e = e;
+    _who.kind = kind;
+    return _who;
+  };
 
   // ---------------- recorders (numbers only) ----------------
   api.hitIn = (w, type, cat, neutral, dStat, afterDef, typeK, wxK, red, close, fin, hp0, hp1, flags, myPx) => {
-    const o = rec(HIT_IN), e = w && w.e;
-    F[o] = e ? e.dex : 0; F[o + 1] = (e && e.atkLvl) || 0; F[o + 2] = S(w ? w.kind : 'flat');
-    F[o + 3] = cat; F[o + 4] = neutral; F[o + 5] = dStat; F[o + 6] = afterDef; F[o + 7] = typeK; F[o + 8] = wxK;
-    F[o + 9] = red; F[o + 10] = close; F[o + 11] = fin; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = flags | (e && e.fl ? 8 : 0) | (e && e.boss ? 32 : 0);    // 8 = active flanker, 32 = boss
+    const o = rec(HIT_IN),
+      e = w && w.e;
+    F[o] = e ? e.dex : 0;
+    F[o + 1] = (e && e.atkLvl) || 0;
+    F[o + 2] = S(w ? w.kind : 'flat');
+    F[o + 3] = cat;
+    F[o + 4] = neutral;
+    F[o + 5] = dStat;
+    F[o + 6] = afterDef;
+    F[o + 7] = typeK;
+    F[o + 8] = wxK;
+    F[o + 9] = red;
+    F[o + 10] = close;
+    F[o + 11] = fin;
+    F[o + 12] = hp0;
+    F[o + 13] = hp1;
+    F[o + 14] = flags | (e && e.fl ? 8 : 0) | (e && e.boss ? 32 : 0); // 8 = active flanker, 32 = boss
     F[o + 15] = S(type);
-    F[o + 16] = e ? e.spd : 0; F[o + 17] = myPx || 0;   // attacker and your px/s at the moment of the hit
+    F[o + 16] = e ? e.spd : 0;
+    F[o + 17] = myPx || 0; // attacker and your px/s at the moment of the hit
     // Where the attacker stood relative to you, in screen units (1.0 = screen edge; for a shot, where the shooter is when it lands),
     // and how many enemies were alive.
     const me = G.Game.player;
@@ -63,80 +121,161 @@ G.Log = (() => {
   };
   api.hitOut = (pl, m, e, cat, factor, dStat, stab, typeK, crit, fin, hp0, hp1, absorbed, norm) => {
     const o = rec(HIT_OUT);
-    F[o] = pl.mon.dex; F[o + 1] = S(m.id); F[o + 2] = S(m.type); F[o + 3] = cat; F[o + 4] = pl.level;
-    F[o + 5] = factor; F[o + 6] = dStat; F[o + 7] = stab; F[o + 8] = typeK; F[o + 9] = crit ? 1 : 0;
-    F[o + 10] = fin; F[o + 11] = e.dex; F[o + 12] = hp0; F[o + 13] = hp1; F[o + 14] = absorbed; F[o + 15] = e.boss ? 1 : 0; F[o + 16] = norm || 1;
+    F[o] = pl.mon.dex;
+    F[o + 1] = S(m.id);
+    F[o + 2] = S(m.type);
+    F[o + 3] = cat;
+    F[o + 4] = pl.level;
+    F[o + 5] = factor;
+    F[o + 6] = dStat;
+    F[o + 7] = stab;
+    F[o + 8] = typeK;
+    F[o + 9] = crit ? 1 : 0;
+    F[o + 10] = fin;
+    F[o + 11] = e.dex;
+    F[o + 12] = hp0;
+    F[o + 13] = hp1;
+    F[o + 14] = absorbed;
+    F[o + 15] = e.boss ? 1 : 0;
+    F[o + 16] = norm || 1;
   };
-  api.kill = e => {
+  api.kill = (e) => {
     const o = rec(KILL);
-    F[o] = e.dex; F[o + 1] = e.boss ? 1 : 0; F[o + 2] = e.atkLvl || 0; F[o + 3] = e.xp || 0;
-    F[o + 4] = e.golden ? 1 : 0; F[o + 5] = e.shiny ? 1 : 0;
+    F[o] = e.dex;
+    F[o + 1] = e.boss ? 1 : 0;
+    F[o + 2] = e.atkLvl || 0;
+    F[o + 3] = e.xp || 0;
+    F[o + 4] = e.golden ? 1 : 0;
+    F[o + 5] = e.shiny ? 1 : 0;
   };
   api.xp = (value, coopK, xpMul, lvl0, lvl1, xp1, xpNext) => {
     const o = rec(XP);
-    F[o] = value; F[o + 1] = coopK; F[o + 2] = xpMul; F[o + 3] = lvl0; F[o + 4] = lvl1; F[o + 5] = xp1; F[o + 6] = xpNext;
+    F[o] = value;
+    F[o + 1] = coopK;
+    F[o + 2] = xpMul;
+    F[o + 3] = lvl0;
+    F[o + 4] = lvl1;
+    F[o + 5] = xp1;
+    F[o + 6] = xpNext;
   };
   api.offer = (level, cards, rerolls) => {
     const o = rec(OFFER);
-    F[o] = level; F[o + 4] = rerolls; F[o + 5] = cards.length;
+    F[o] = level;
+    F[o + 4] = rerolls;
+    F[o + 5] = cards.length;
     for (let i = 0; i < 3 && i < cards.length; i++) F[o + 1 + i] = S(cards[i].key);
   };
-  api.pick = key => { F[rec(PICK)] = S(key); };
+  api.pick = (key) => {
+    F[rec(PICK)] = S(key);
+  };
   api.heal = (asked, got, hp, maxHp) => {
     const o = rec(HEAL);
-    F[o] = asked; F[o + 1] = got; F[o + 2] = hp; F[o + 3] = maxHp;
+    F[o] = asked;
+    F[o + 1] = got;
+    F[o + 2] = hp;
+    F[o + 3] = maxHp;
   };
-  api.faint = (saved, hp) => { const o = rec(FAINT); F[o] = saved ? 1 : 0; F[o + 1] = hp; };
+  api.faint = (saved, hp) => {
+    const o = rec(FAINT);
+    F[o] = saved ? 1 : 0;
+    F[o + 1] = hp;
+  };
   api.block = (w, factor, invuln) => {
-    const o = rec(BLOCK), e = w && w.e;
-    F[o] = e ? e.dex : 0; F[o + 1] = S(w ? w.kind : 'flat'); F[o + 2] = factor; F[o + 3] = invuln;
+    const o = rec(BLOCK),
+      e = w && w.e;
+    F[o] = e ? e.dex : 0;
+    F[o + 1] = S(w ? w.kind : 'flat');
+    F[o + 2] = factor;
+    F[o + 3] = invuln;
   };
   api.dot = (e, kind, amount, hp0, hp1) => {
     const o = rec(DOT);
-    F[o] = e ? e.dex : 0; F[o + 1] = S(kind); F[o + 2] = amount; F[o + 3] = hp0; F[o + 4] = hp1; F[o + 5] = e && e.boss ? 1 : 0; F[o + 6] = e ? e.maxHp : 0;
+    F[o] = e ? e.dex : 0;
+    F[o + 1] = S(kind);
+    F[o + 2] = amount;
+    F[o + 3] = hp0;
+    F[o + 4] = hp1;
+    F[o + 5] = e && e.boss ? 1 : 0;
+    F[o + 6] = e ? e.maxHp : 0;
   };
   // Team (run-tier) item equipped: which id, and how many run items the team holds afterwards. Diagnostic for Re-Do (and any run item) actually being on the team.
-  api.item = (id, n) => { const o = rec(ITEM); F[o] = S(id); F[o + 1] = n || 0; };
+  api.item = (id, n) => {
+    const o = rec(ITEM);
+    F[o] = S(id);
+    F[o + 1] = n || 0;
+  };
   // Final-faint decision: whether 'redo' was in runItems, whether it was already spent, roster size, living members (excluding the just-fainted active), and the branch taken (0 bench-swap, 1 re-do fired, 2 end-run).
   api.redo = (hasItem, used, rosterN, aliveN, branch) => {
     const o = rec(REDO);
-    F[o] = hasItem ? 1 : 0; F[o + 1] = used ? 1 : 0; F[o + 2] = rosterN || 0; F[o + 3] = aliveN || 0; F[o + 4] = branch || 0;
+    F[o] = hasItem ? 1 : 0;
+    F[o + 1] = used ? 1 : 0;
+    F[o + 2] = rosterN || 0;
+    F[o + 3] = aliveN || 0;
+    F[o + 4] = branch || 0;
   };
   // Alive enemies by family (melee / range / support; bosses skipped), how many sit within NEAR_PX of you, and the average distance
   // in screen units (1.0 = screen edge). Shows whether a family is piling up out of reach.
   api.mix = () => {
     const me = G.Game.player;
     if (!me) return;
-    _mn.fill(0); _mnear.fill(0); _mds.fill(0);
-    let holders = 0, panics = 0, mor = 0;
-    const hw = G.Camera.w / 2, hh = G.Camera.h / 2;
+    _mn.fill(0);
+    _mnear.fill(0);
+    _mds.fill(0);
+    let holders = 0,
+      panics = 0,
+      mor = 0;
+    const hw = G.Camera.w / 2,
+      hh = G.Camera.h / 2;
     for (const e of G.EnemyMgr.all()) {
       if (e.dead || e.boss) continue;
-      const p = G.DEX_BY[e.dex], fx = p && FAM_IX[G.Enemies.FAMILY[G.Enemies.classOf(p)]];
+      const p = G.DEX_BY[e.dex],
+        fx = p && FAM_IX[G.Enemies.FAMILY[G.Enemies.classOf(p)]];
       if (fx === undefined) continue;
-      const dx = e.x - me.x, dy = e.y - me.y;
-      _mn[fx]++; _mds[fx] += Math.hypot(dx / hw, dy / hh);
+      const dx = e.x - me.x,
+        dy = e.y - me.y;
+      _mn[fx]++;
+      _mds[fx] += Math.hypot(dx / hw, dy / hh);
       if (dx * dx + dy * dy <= NEAR_PX * NEAR_PX) _mnear[fx]++;
-      if (e.keepsDistance() || e.isSeeker()) { holders++; if (e.panic) panics++; mor += e.moraleNow(); }
+      if (e.keepsDistance() || e.isSeeker()) {
+        holders++;
+        if (e.panic) panics++;
+        mor += e.moraleNow();
+      }
     }
     const o = rec(MIX);
     F[o] = _mn[0] + _mn[1] + _mn[2];
-    for (let i = 0; i < 3; i++) { F[o + 1 + i] = _mn[i]; F[o + 4 + i] = _mnear[i]; F[o + 7 + i] = _mn[i] ? _mds[i] / _mn[i] : 0; }
-    F[o + 10] = holders; F[o + 11] = panics; F[o + 12] = holders ? mor / holders : 0;
+    for (let i = 0; i < 3; i++) {
+      F[o + 1 + i] = _mn[i];
+      F[o + 4 + i] = _mnear[i];
+      F[o + 7 + i] = _mn[i] ? _mds[i] / _mn[i] : 0;
+    }
+    F[o + 10] = holders;
+    F[o + 11] = panics;
+    F[o + 12] = holders ? mor / holders : 0;
   };
   // Called every frame from the game loop; records a MIX line at most once per MIX_EVERY seconds of run time.
-  api.sample = () => { if (api.t - lastMix >= MIX_EVERY) { lastMix = api.t; api.mix(); } };
-  api.clear = () => { head = 0; count = 0; lastMix = -MIX_EVERY; };
+  api.sample = () => {
+    if (api.t - lastMix >= MIX_EVERY) {
+      lastMix = api.t;
+      api.mix();
+    }
+  };
+  api.clear = () => {
+    head = 0;
+    count = 0;
+    lastMix = -MIX_EVERY;
+  };
 
   // ---------------- text (built only on request) ----------------
-  const mmss = t => {
-    const q = Math.round(t * 10), s = Math.floor(q / 10);   // tenths, rounded (times are stored as float32)
+  const mmss = (t) => {
+    const q = Math.round(t * 10),
+      s = Math.floor(q / 10); // tenths, rounded (times are stored as float32)
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + '.' + (q % 10);
   };
-  const n1 = x => (Math.round(x * 10) / 10).toFixed(1);
-  const r2 = x => +x.toFixed(2);   // multipliers: strips float32 noise (1.600000023 -> 1.6)
-  const sd = x => (x >= 0 ? '+' : '') + n1(x);
-  const dexName = d => (G.DEX_BY[d] && G.DEX_BY[d].name) || (d ? '#' + d : 'env');
+  const n1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+  const r2 = (x) => +x.toFixed(2); // multipliers: strips float32 noise (1.600000023 -> 1.6)
+  const sd = (x) => (x >= 0 ? '+' : '') + n1(x);
+  const dexName = (d) => (G.DEX_BY[d] && G.DEX_BY[d].name) || (d ? '#' + d : 'env');
   const CAT = ['physical', 'special', 'status'];
 
   // Class tag from the class table: " (shielder)", " (plain+tank)", " (shooter+flanker)". Empty for bosses and anything not in the table.
@@ -150,23 +289,54 @@ G.Log = (() => {
     const who = (dex ? dexName(dex) + (lvl ? ' L' + n1(lvl) : '') + tagOf(dex, fl & 32, fl & 8) + ' ' : '') + strs[kS];
     const p = ['neutral ' + n1(neu)];
     let cur = neu;
-    if (dS > 0) { p.push((cat === 1 ? 'SpD ' : 'Def ') + Math.round(dS) + ' ' + sd(aD - cur)); cur = aD; }
-    else if (cat < 0 && dex) p.push('flat (no defense step)');
-    if (tK !== 1) { p.push('type x' + r2(tK) + ' ' + sd(cur * tK - cur)); cur *= tK; }
-    if (wK !== 1) { p.push('weather x' + r2(wK) + ' ' + sd(cur * wK - cur)); cur *= wK; }
-    if (red) { const nx = cur * (1 - red); p.push('reduction ' + Math.round(red * 100) + '% ' + sd(nx - cur)); cur = nx; }
-    if (cl !== 1) { const nx = cur * cl; p.push('melee x' + r2(cl) + ' ' + sd(nx - cur)); cur = nx; }
+    if (dS > 0) {
+      p.push((cat === 1 ? 'SpD ' : 'Def ') + Math.round(dS) + ' ' + sd(aD - cur));
+      cur = aD;
+    } else if (cat < 0 && dex) p.push('flat (no defense step)');
+    if (tK !== 1) {
+      p.push('type x' + r2(tK) + ' ' + sd(cur * tK - cur));
+      cur *= tK;
+    }
+    if (wK !== 1) {
+      p.push('weather x' + r2(wK) + ' ' + sd(cur * wK - cur));
+      cur *= wK;
+    }
+    if (red) {
+      const nx = cur * (1 - red);
+      p.push('reduction ' + Math.round(red * 100) + '% ' + sd(nx - cur));
+      cur = nx;
+    }
+    if (cl !== 1) {
+      const nx = cur * cl;
+      p.push('melee x' + r2(cl) + ' ' + sd(nx - cur));
+      cur = nx;
+    }
     if (fl & 1) p.push('floor ' + sd(fin - cur));
     if (fl & 4) p.push('pure');
     if (aPx > 0 && myPx > 0) p.push('speed ' + Math.round(aPx) + ' vs you ' + Math.round(myPx));
     if (sCr > 0) p.push('s ' + sCr.toFixed(2) + ', ' + live + ' alive');
-    return 'IN   ' + who + ' [' + (strs[tyS] || 'none') + '] > you | ' + p.join(' | ') +
-           ' | FINAL ' + n1(fin) + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
+    return (
+      'IN   ' +
+      who +
+      ' [' +
+      (strs[tyS] || 'none') +
+      '] > you | ' +
+      p.join(' | ') +
+      ' | FINAL ' +
+      n1(fin) +
+      '  HP ' +
+      n1(hp0) +
+      ' > ' +
+      n1(hp1)
+    );
   }
   function lineOut(v) {
-    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss, nm] = v, norm = nm || 1;
+    const [pdex, mS, tyS, cat, lvl, factor, dS, stab, tK, crit, fin, edex, hp0, hp1, abs, boss, nm] = v,
+      norm = nm || 1;
     const sc = G.Stats.DMG_SCALAR;
-    const neu = (factor / 50 + 2) * sc, st = neu * stab, aD = (factor / Math.max(1, dS) + 2) * stab * sc;
+    const neu = (factor / 50 + 2) * sc,
+      st = neu * stab,
+      aD = (factor / Math.max(1, dS) + 2) * stab * sc;
     const p = ['neutral ' + n1(neu)];
     if (stab !== 1) p.push('STAB x' + r2(stab) + ' ' + sd(st - neu));
     p.push((cat === 1 ? 'SpD ' : cat === 0 ? 'Def ' : 'prop ') + Math.round(dS) + ' ' + sd(aD - st));
@@ -175,29 +345,139 @@ G.Log = (() => {
     if (tK !== 1) p.push('type x' + r2(tK) + ' ' + sd(aN * tK - aN));
     if (crit) p.push('crit x1.5 ' + sd(aN * tK * 0.5));
     p.push('FINAL ' + n1(fin) + (abs ? ' (shield took ' + Math.round(abs) + ')' : ''));
-    return 'OUT  ' + dexName(pdex) + ' L' + lvl + ' ' + strs[mS] + ' [' + strs[tyS] + ' ' + CAT[cat] + '] > ' +
-           dexName(edex) + (boss ? ' (boss)' : '') + ' | ' + p.join(' | ') + '  HP ' + n1(hp0) + ' > ' + n1(hp1);
+    return (
+      'OUT  ' +
+      dexName(pdex) +
+      ' L' +
+      lvl +
+      ' ' +
+      strs[mS] +
+      ' [' +
+      strs[tyS] +
+      ' ' +
+      CAT[cat] +
+      '] > ' +
+      dexName(edex) +
+      (boss ? ' (boss)' : '') +
+      ' | ' +
+      p.join(' | ') +
+      '  HP ' +
+      n1(hp0) +
+      ' > ' +
+      n1(hp1)
+    );
   }
   function fmt(i) {
-    const v = Array.from(F.subarray(i * NF, i * NF + NF)), k = K[i];
+    const v = Array.from(F.subarray(i * NF, i * NF + NF)),
+      k = K[i];
     let s;
     if (k === HIT_IN) s = lineIn(v);
     else if (k === HIT_OUT) s = lineOut(v);
-    else if (k === KILL) s = 'KILL ' + dexName(v[0]) + (v[1] ? ' (boss)' : tagOf(v[0], 0, 0)) + (v[2] ? ' L' + n1(v[2]) : '') + ' dropped ' + v[3].toFixed(2) + ' xp' + (v[4] ? ' (golden)' : '') + (v[5] ? ' (shiny)' : '');
-    else if (k === XP) s = 'XP   +' + n1(v[0] * v[1] * v[2]) + ' (orb ' + v[0].toFixed(2) + ' x coop ' + v[1] + ' x bonus ' + n1(v[2]) + ')  ' + Math.round(v[5]) + '/' + v[6] + (v[4] > v[3] ? '  LEVEL ' + v[3] + ' > ' + v[4] : '');
-    else if (k === OFFER) s = 'OFFER L' + v[0] + ' [' + [v[1], v[2], v[3]].slice(0, v[5]).map(x => strs[x]).join(', ') + '] rerolls used ' + v[4];
+    else if (k === KILL)
+      s =
+        'KILL ' +
+        dexName(v[0]) +
+        (v[1] ? ' (boss)' : tagOf(v[0], 0, 0)) +
+        (v[2] ? ' L' + n1(v[2]) : '') +
+        ' dropped ' +
+        v[3].toFixed(2) +
+        ' xp' +
+        (v[4] ? ' (golden)' : '') +
+        (v[5] ? ' (shiny)' : '');
+    else if (k === XP)
+      s =
+        'XP   +' +
+        n1(v[0] * v[1] * v[2]) +
+        ' (orb ' +
+        v[0].toFixed(2) +
+        ' x coop ' +
+        v[1] +
+        ' x bonus ' +
+        n1(v[2]) +
+        ')  ' +
+        Math.round(v[5]) +
+        '/' +
+        v[6] +
+        (v[4] > v[3] ? '  LEVEL ' + v[3] + ' > ' + v[4] : '');
+    else if (k === OFFER)
+      s =
+        'OFFER L' +
+        v[0] +
+        ' [' +
+        [v[1], v[2], v[3]]
+          .slice(0, v[5])
+          .map((x) => strs[x])
+          .join(', ') +
+        '] rerolls used ' +
+        v[4];
     else if (k === PICK) s = 'PICK  ' + strs[v[0]];
     else if (k === HEAL) s = 'HEAL +' + n1(v[1]) + ' (asked ' + n1(v[0]) + ')  HP ' + n1(v[2]) + '/' + n1(v[3]);
     else if (k === FAINT) s = v[0] ? 'FOCUS BAND saved you at HP ' + v[1] : 'FAINT';
-    else if (k === BLOCK) s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
-    else if (k === DOT) s = 'DOT  ' + strs[v[1]] + ' > ' + dexName(v[0]) + (v[5] ? ' (boss)' : '') + ' | ' + n1(v[2]) + (v[6] ? ' (' + n1(100 * v[2] / v[6]) + '% of max)' : '') + '  HP ' + n1(v[3]) + ' > ' + n1(v[4]);
-    else if (k === MIX) { const fam = ['melee', 'range', 'support']; s = 'MIX  alive ' + v[0] + ' | ' + fam.map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')').join(' | ') + ' | morale units (ranged + healers/shielders) ' + v[10] + ', panicking ' + v[11] + ', avg morale ' + v[12].toFixed(2) + '  [near = within ' + NEAR_PX + ' px]'; }
-    else if (k === ITEM) s = 'ITEM equip ' + strs[v[0]] + ' (team now holds ' + v[1] + ' run item' + (v[1] === 1 ? '' : 's') + ')';
-    else if (k === REDO) { const br = ['bench-swap', 'RE-DO fired', 'end-run']; s = 'REDO final-faint | has redo ' + v[0] + ' | already used ' + v[1] + ' | roster ' + v[2] + ' | alive(others) ' + v[3] + ' | branch ' + (br[v[4]] || v[4]); }
-    else s = '?';
+    else if (k === BLOCK)
+      s = 'BLOCKED ' + (v[0] ? dexName(v[0]) + ' ' : '') + strs[v[1]] + ' (i-frames, ' + v[3].toFixed(2) + 's left)';
+    else if (k === DOT)
+      s =
+        'DOT  ' +
+        strs[v[1]] +
+        ' > ' +
+        dexName(v[0]) +
+        (v[5] ? ' (boss)' : '') +
+        ' | ' +
+        n1(v[2]) +
+        (v[6] ? ' (' + n1((100 * v[2]) / v[6]) + '% of max)' : '') +
+        '  HP ' +
+        n1(v[3]) +
+        ' > ' +
+        n1(v[4]);
+    else if (k === MIX) {
+      const fam = ['melee', 'range', 'support'];
+      s =
+        'MIX  alive ' +
+        v[0] +
+        ' | ' +
+        fam
+          .map((f, j) => f + ' ' + v[1 + j] + ' (' + v[4 + j] + ' near, avg ' + v[7 + j].toFixed(2) + ')')
+          .join(' | ') +
+        ' | morale units (ranged + healers/shielders) ' +
+        v[10] +
+        ', panicking ' +
+        v[11] +
+        ', avg morale ' +
+        v[12].toFixed(2) +
+        '  [near = within ' +
+        NEAR_PX +
+        ' px]';
+    } else if (k === ITEM)
+      s = 'ITEM equip ' + strs[v[0]] + ' (team now holds ' + v[1] + ' run item' + (v[1] === 1 ? '' : 's') + ')';
+    else if (k === REDO) {
+      const br = ['bench-swap', 'RE-DO fired', 'end-run'];
+      s =
+        'REDO final-faint | has redo ' +
+        v[0] +
+        ' | already used ' +
+        v[1] +
+        ' | roster ' +
+        v[2] +
+        ' | alive(others) ' +
+        v[3] +
+        ' | branch ' +
+        (br[v[4]] || v[4]);
+    } else s = '?';
     return mmss(T[i]) + '  ' + s;
   }
-  const COLORS = { 3: '#ffd23f', 4: '#5fe08a', 5: '#9fb1c9', 6: '#9fb1c9', 7: '#5fe08a', 8: '#ff3048', 9: '#8a93a3', 10: '#ff9a4d', 11: '#7fb8ff', 12: '#d9a6ff', 13: '#ffe08a' };
+  const COLORS = {
+    3: '#ffd23f',
+    4: '#5fe08a',
+    5: '#9fb1c9',
+    6: '#9fb1c9',
+    7: '#5fe08a',
+    8: '#ff3048',
+    9: '#8a93a3',
+    10: '#ff9a4d',
+    11: '#7fb8ff',
+    12: '#d9a6ff',
+    13: '#ffe08a',
+  };
   function color(i) {
     const k = K[i];
     if (k === HIT_IN || k === HIT_OUT) {
@@ -206,16 +486,20 @@ G.Log = (() => {
     }
     return COLORS[k] || '#ccc';
   }
-  const order = n => {
-    const m = Math.min(n, count), out = [];
+  const order = (n) => {
+    const m = Math.min(n, count),
+      out = [];
     for (let j = m; j > 0; j--) out.push((head - j + CAP) % CAP);
     return out;
   };
 
   api.text = (n = 40) => order(n).map(fmt).join('\n');
-  api.print = (n = 40) => { for (const i of order(n)) console.log('%c' + fmt(i), 'color:' + color(i)); };
+  api.print = (n = 40) => {
+    for (const i of order(n)) console.log('%c' + fmt(i), 'color:' + color(i));
+  };
   api.pacing = () => {
-    const rows = []; let prev = 0;
+    const rows = [];
+    let prev = 0;
     for (const i of order(count)) {
       if (K[i] !== XP || F[i * NF + 4] <= F[i * NF + 3]) continue;
       rows.push({ level: F[i * NF + 4], at: mmss(T[i]), sinceLast: +(T[i] - prev).toFixed(1) });
@@ -226,30 +510,82 @@ G.Log = (() => {
   };
   api.cast = () => {
     const rows = [];
-    G.Enemies.cast.forEach((t, ti) => { for (const d of t.list) rows.push({ tier: ti + 1, species: d.name, class: G.Enemies.classOf(G.DEX_BY[d.dex]), tank: d.tank ? 'yes' : '', flanker: d.flanker ? 'yes' : '' }); });
+    G.Enemies.cast.forEach((t, ti) => {
+      for (const d of t.list)
+        rows.push({
+          tier: ti + 1,
+          species: d.name,
+          class: G.Enemies.classOf(G.DEX_BY[d.dex]),
+          tank: d.tank ? 'yes' : '',
+          flanker: d.flanker ? 'yes' : '',
+        });
+    });
     console.table(rows);
     return rows;
   };
   api.bands = () => {
-    const pl = G.Game.player, B = G.Enemies.BANDS, by = {};
+    const pl = G.Game.player,
+      B = G.Enemies.BANDS,
+      by = {};
     if (!pl) return [];
     for (const e of G.EnemyMgr.all()) {
       if (e.dead || e.boss) continue;
-      (by[e.behavior] = by[e.behavior] || []).push(Math.hypot((e.x - pl.x) / (G.Camera.w / 2), (e.y - pl.y) / (G.Camera.h / 2)));
+      (by[e.behavior] = by[e.behavior] || []).push(
+        Math.hypot((e.x - pl.x) / (G.Camera.w / 2), (e.y - pl.y) / (G.Camera.h / 2))
+      );
     }
-    const rows = Object.keys(by).map(k => {
-      const a = by[k].sort((x, y) => x - y), b = B[k];
-      return { behavior: k, n: a.length, min: +a[0].toFixed(2), median: +a[a.length >> 1].toFixed(2), max: +a[a.length - 1].toFixed(2),
-               band: b ? b[0] + ' to ' + b[1] : (k === 'shielder' || k === 'healer' ? 'floor ' + G.Enemies.SEEK.floor : '-'), inBand: b ? a.filter(x => x >= b[0] && x <= b[1] * 1.05).length : '-' };
+    const rows = Object.keys(by).map((k) => {
+      const a = by[k].sort((x, y) => x - y),
+        b = B[k];
+      return {
+        behavior: k,
+        n: a.length,
+        min: +a[0].toFixed(2),
+        median: +a[a.length >> 1].toFixed(2),
+        max: +a[a.length - 1].toFixed(2),
+        band: b ? b[0] + ' to ' + b[1] : k === 'shielder' || k === 'healer' ? 'floor ' + G.Enemies.SEEK.floor : '-',
+        inBand: b ? a.filter((x) => x >= b[0] && x <= b[1] * 1.05).length : '-',
+      };
     });
     console.table(rows);
     return rows;
   };
   api.download = () => {
-    const rows = order(count).map(i => ({ t: +T[i].toFixed(2), kind: KIND_NAME[K[i]], text: fmt(i), v: Array.from(F.subarray(i * NF, i * NF + NF)) }));
+    const rows = order(count).map((i) => ({
+      t: +T[i].toFixed(2),
+      kind: KIND_NAME[K[i]],
+      text: fmt(i),
+      v: Array.from(F.subarray(i * NF, i * NF + NF)),
+    }));
     // First row: this run's cast with class and modifier flags, so a log can be read without the game open.
-    rows.unshift({ t: 0, kind: 'CAST', v: [], text: 'region ' + (G.Enemies.region == null ? 'all' : G.Enemies.region) + '\n' +
-      G.Enemies.cast.map((t, ti) => 'T' + (ti + 1) + ': ' + t.list.map(d => d.name + ' (' + G.Enemies.classOf(G.DEX_BY[d.dex]) + (d.tank ? '+tank' : '') + (d.flanker ? '+flanker' : '') + ')').join(', ')).join('\n') });
+    rows.unshift({
+      t: 0,
+      kind: 'CAST',
+      v: [],
+      text:
+        'region ' +
+        (G.Enemies.region == null ? 'all' : G.Enemies.region) +
+        '\n' +
+        G.Enemies.cast
+          .map(
+            (t, ti) =>
+              'T' +
+              (ti + 1) +
+              ': ' +
+              t.list
+                .map(
+                  (d) =>
+                    d.name +
+                    ' (' +
+                    G.Enemies.classOf(G.DEX_BY[d.dex]) +
+                    (d.tank ? '+tank' : '') +
+                    (d.flanker ? '+flanker' : '') +
+                    ')'
+                )
+                .join(', ')
+          )
+          .join('\n'),
+    });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(rows)], { type: 'application/json' }));
     a.download = 'pokesurvivor-log-' + Date.now() + '.json';

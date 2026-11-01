@@ -12,8 +12,8 @@
  * record()/stopRecording() capture every emitted event for harnesses.
  */
 G.SimBus = (() => {
-  const subs = new Map();          // type -> [handlers]
-  let tape = null;                 // when recording: every emitted event, in order
+  const subs = new Map(); // type -> [handlers]
+  let tape = null; // when recording: every emitted event, in order
 
   /** Subscribes to a type; returns the unsubscribe function. */
   function on(type, fn) {
@@ -35,13 +35,24 @@ G.SimBus = (() => {
     const hs = subs.get(type);
     if (!hs) return;
     for (const h of hs.slice()) {
-      try { h(ev); } catch (e) { console.error('[SimBus] a subscriber of ' + type + ' failed:', e); }
+      try {
+        h(ev);
+      } catch (e) {
+        console.error('[SimBus] a subscriber of ' + type + ' failed:', e);
+      }
     }
   }
   /** Harness: starts recording and returns the live array of events. */
-  function record() { tape = []; return tape; }
+  function record() {
+    tape = [];
+    return tape;
+  }
   /** Harness: stops recording and returns what was captured. */
-  function stopRecording() { const t = tape || []; tape = null; return t; }
+  function stopRecording() {
+    const t = tape || [];
+    tape = null;
+    return t;
+  }
 
   return { on, off, emit, record, stopRecording };
 })();

@@ -27,29 +27,43 @@
 G.Status = (() => {
   const TURN = 2;
   const CONTROL = {
-    paralysis: { major: true,  dur: 10,     immune: ['electric'], speed: 0.5,  fizzle: 0.25, color: '#f5d742', label: 'Paralyzed' },
-    freeze:    { major: true,  dur: 2,      immune: ['ice'],      window: 4,    thawBy: 'fire', color: '#8fd8f0', label: 'Frozen' },
-    sleep:     { major: true,  dur: [2, 6], immune: [],           window: 0,    color: '#b9a3e8', label: 'Asleep' },
-    confusion: { major: false, dur: [2, 8], immune: [],           fizzle: 0.5,  color: '#e57fc4', label: 'Confused' },
-    trap:      { major: false, dur: 8,      immune: ['ghost'],    root: 2, color: '#b0743a', label: 'Trapped' },     // player: 8 s swap lock; others: 2 s root
-    daze:      { major: false, dur: 6,      immune: [],           jitter: 35 * Math.PI / 180, color: '#e8b04a', label: 'Dazed' },
-    drowsy:    { major: false, dur: 8,      immune: [],           sleepMul: 1.5, color: '#9a8fd8', label: 'Drowsy' }
+    paralysis: {
+      major: true,
+      dur: 10,
+      immune: ['electric'],
+      speed: 0.5,
+      fizzle: 0.25,
+      color: '#f5d742',
+      label: 'Paralyzed',
+    },
+    freeze: { major: true, dur: 2, immune: ['ice'], window: 4, thawBy: 'fire', color: '#8fd8f0', label: 'Frozen' },
+    sleep: { major: true, dur: [2, 6], immune: [], window: 0, color: '#b9a3e8', label: 'Asleep' },
+    confusion: { major: false, dur: [2, 8], immune: [], fizzle: 0.5, color: '#e57fc4', label: 'Confused' },
+    trap: { major: false, dur: 8, immune: ['ghost'], root: 2, color: '#b0743a', label: 'Trapped' }, // player: 8 s swap lock; others: 2 s root
+    daze: { major: false, dur: 6, immune: [], jitter: (35 * Math.PI) / 180, color: '#e8b04a', label: 'Dazed' },
+    drowsy: { major: false, dur: 8, immune: [], sleepMul: 1.5, color: '#9a8fd8', label: 'Drowsy' },
   };
-  const STRONG = { cut: 0.25, window: 10 };      // bosses, elites, gym leaders: hard CC (freeze, sleep, the trap root)
+  const STRONG = { cut: 0.25, window: 10 }; // bosses, elites, gym leaders: hard CC (freeze, sleep, the trap root)
   // Player only (slice E1): Shake off. Each tap takes `per` s off the status with the most time left among the mashable ones,
   // never below `floor` s remaining; at most `rate` taps count per second. Order = most restrictive first.
-  const SHAKE = { per: 0.25, floor: 0.5, rate: 12, auto: 3, order: ['sleep', 'freeze', 'paralysis', 'confusion', 'trap', 'daze'] };
-  const GRACE = 2.5;                              // player: seconds after a hard CC ends in which no new hard CC lands
+  const SHAKE = {
+    per: 0.25,
+    floor: 0.5,
+    rate: 12,
+    auto: 3,
+    order: ['sleep', 'freeze', 'paralysis', 'confusion', 'trap', 'daze'],
+  };
+  const GRACE = 2.5; // player: seconds after a hard CC ends in which no new hard CC lands
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
-  const strong = h => !!(h.boss || h.elite || h.gym);                  // the player is NOT strong any more (full timers + Shake off)
-  const typesOf = h => h.types || (h.mon && h.mon.types) || [];
-  const fam = k => (k === 'toxic' ? 'poison' : k);
-  const isControl = k => !!CONTROL[k];
+  const strong = (h) => !!(h.boss || h.elite || h.gym); // the player is NOT strong any more (full timers + Shake off)
+  const typesOf = (h) => h.types || (h.mon && h.mon.types) || [];
+  const fam = (k) => (k === 'toxic' ? 'poison' : k);
+  const isControl = (k) => !!CONTROL[k];
 
   function immune(h, kind) {
     const S = CONTROL[kind] || (G.Enemies && G.Enemies.STATUS[kind]);
-    return !!S && S.immune.some(t => typesOf(h).includes(t));
+    return !!S && S.immune.some((t) => typesOf(h).includes(t));
   }
 
   /** The major status on `h` right now ('burn' | 'poison' | 'toxic' | 'paralysis' | 'freeze' | 'sleep') or null. */
@@ -73,7 +87,14 @@ G.Status = (() => {
   /** Base length of `kind` on `h` in seconds; `secs` (a move effect's own duration) replaces the table value. */
   function dur(h, kind, secs) {
     const S = CONTROL[kind];
-    const base = secs != null ? secs : kind === 'trap' && !h.isPlayer ? S.root : Array.isArray(S.dur) ? G.U.rand(S.dur[0], S.dur[1]) : S.dur;
+    const base =
+      secs != null
+        ? secs
+        : kind === 'trap' && !h.isPlayer
+          ? S.root
+          : Array.isArray(S.dur)
+            ? G.U.rand(S.dur[0], S.dur[1])
+            : S.dur;
     return cutsStrong(h, kind) && strong(h) ? base * STRONG.cut : base;
   }
 
@@ -84,51 +105,74 @@ G.Status = (() => {
   function apply(h, kind, mul = 1, durMul = 1, secs) {
     const S = CONTROL[kind];
     if (!S || h.dead) return 'none';
-    if (immune(h, kind)) { text(h, 'Immune', '#a3abb8'); return 'immune'; }
-    if (kind === 'trap' && !h.isPlayer) {                             // a root (slice 4a); strong hosts: cut, no extension, then a window
+    if (immune(h, kind)) {
+      text(h, 'Immune', '#a3abb8');
+      return 'immune';
+    }
+    if (kind === 'trap' && !h.isPlayer) {
+      // a root (slice 4a); strong hosts: cut, no extension, then a window
       if (h.stWin && h.stWin.trap > 0) return 'window';
       const t = dur(h, kind, secs) * durMul;
-      if (h.stTrap) { if (!strong(h)) h.stTrap.t = Math.max(h.stTrap.t, t); return 'refresh'; }
-      h.stTrap = { t }; text(h, S.label, S.color);
+      if (h.stTrap) {
+        if (!strong(h)) h.stTrap.t = Math.max(h.stTrap.t, t);
+        return 'refresh';
+      }
+      h.stTrap = { t };
+      text(h, S.label, S.color);
       return 'ok';
     }
     if (h.isPlayer && HARD.includes(kind) && h.stWin && h.stWin.hard > 0) return 'window';
     if (S.major) {
       const cur = majorKind(h);
       if (cur && cur !== kind) return 'blocked';
-      if (cur === kind) {                                     // paralysis refreshes; freeze and sleep never extend (no lock)
+      if (cur === kind) {
+        // paralysis refreshes; freeze and sleep never extend (no lock)
         if (kind === 'paralysis') h.stMajor.t = Math.max(h.stMajor.t, dur(h, kind) * durMul);
         return 'refresh';
       }
       if (h.stWin && h.stWin[kind] > 0) return 'window';
-      if (h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry';        // a stored status berry blocks it (ground items, F3a-2)
+      if (h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry'; // a stored status berry blocks it (ground items, F3a-2)
       h.stMajor = { k: kind, t: dur(h, kind, secs) * durMul, age: 0 };
       text(h, S.label, S.color);
       return 'ok';
     }
     if (kind === 'confusion') {
       if (!h.stCnf && h.isPlayer && G.Grounds.berryGuard(h, kind)) return 'berry';
-      const t = dur(h, kind, secs) * durMul, was = !!h.stCnf;
+      const t = dur(h, kind, secs) * durMul,
+        was = !!h.stCnf;
       if (was) h.stCnf.t = Math.max(h.stCnf.t, t);
-      else { h.stCnf = { t, wa: G.U.rand(0, 6.2832), wt: G.U.rand(0.5, 1.1) }; text(h, S.label, S.color); }
+      else {
+        h.stCnf = { t, wa: G.U.rand(0, 6.2832), wt: G.U.rand(0.5, 1.1) };
+        text(h, S.label, S.color);
+      }
       return was ? 'refresh' : 'ok';
     }
     if (kind === 'daze') {
       const was = !!h.stDaze;
       if (was) h.stDaze.t = Math.max(h.stDaze.t, S.dur * durMul);
-      else { h.stDaze = { t: S.dur * durMul, a: 0, ta: 0, wt: 0 }; text(h, S.label, S.color); }
+      else {
+        h.stDaze = { t: S.dur * durMul, a: 0, ta: 0, wt: 0 };
+        text(h, S.label, S.color);
+      }
       return was ? 'refresh' : 'ok';
     }
     if (kind === 'drowsy') {
       const was = !!h.stDrow;
       if (was) h.stDrow.t = Math.max(h.stDrow.t, S.dur * durMul);
-      else { h.stDrow = { t: S.dur * durMul }; text(h, S.label, S.color); }
+      else {
+        h.stDrow = { t: S.dur * durMul };
+        text(h, S.label, S.color);
+      }
       return was ? 'refresh' : 'ok';
     }
     // trap (player only): a swap lock
-    const was = !!h.stTrap, t = S.dur * durMul;
+    const was = !!h.stTrap,
+      t = S.dur * durMul;
     if (was) h.stTrap.t = Math.max(h.stTrap.t, t);
-    else { h.stTrap = { t }; text(h, S.label, S.color); }
+    else {
+      h.stTrap = { t };
+      text(h, S.label, S.color);
+    }
     return was ? 'refresh' : 'ok';
   }
 
@@ -136,11 +180,17 @@ G.Status = (() => {
   function applyDot(h, kind, mul = 1, durMul = 1) {
     const S = G.Enemies.STATUS[kind];
     if (!S || h.dead) return 'none';
-    if (immune(h, kind)) { text(h, 'Immune', '#a3abb8'); return 'immune'; }
+    if (immune(h, kind)) {
+      text(h, 'Immune', '#a3abb8');
+      return 'immune';
+    }
     if (blocked(h, kind)) return 'blocked';
     const d = h.stDot;
     if (d) {
-      if (kind === 'toxic' && d.k !== 'toxic') { d.k = 'toxic'; d.n = 0; }            // poison upgrades to toxic, never back
+      if (kind === 'toxic' && d.k !== 'toxic') {
+        d.k = 'toxic';
+        d.n = 0;
+      } // poison upgrades to toxic, never back
       d.left = Math.max(d.left, Math.max(1, Math.round(S.turns * durMul)));
       if (mul > d.mul) d.mul = mul;
       return 'refresh';
@@ -156,8 +206,10 @@ G.Status = (() => {
   }
 
   function endMajor(h) {
-    const M = h.stMajor; if (!M) return;
-    const S = CONTROL[M.k], w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : (S.window || 0);
+    const M = h.stMajor;
+    if (!M) return;
+    const S = CONTROL[M.k],
+      w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : S.window || 0;
     if (w > 0) (h.stWin || (h.stWin = {}))[M.k] = w;
     if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = GRACE;
     h.stMajor = null;
@@ -167,19 +219,30 @@ G.Status = (() => {
   function tick(h, dt) {
     if (h.stWin) {
       let any = false;
-      for (const k in h.stWin) { if ((h.stWin[k] -= dt) <= 0) delete h.stWin[k]; else any = true; }
+      for (const k in h.stWin) {
+        if ((h.stWin[k] -= dt) <= 0) delete h.stWin[k];
+        else any = true;
+      }
       if (!any) h.stWin = null;
     }
     const M = h.stMajor;
-    if (M) { M.t -= dt; M.age += dt; if (M.t <= 0) endMajor(h); }
+    if (M) {
+      M.t -= dt;
+      M.age += dt;
+      if (M.t <= 0) endMajor(h);
+    }
     const C = h.stCnf;
     if (C) {
-      C.t -= dt; C.wt -= dt;
-      if (C.wt <= 0) { C.wt = G.U.rand(0.5, 1.1); C.wa = G.U.rand(0, 6.2832); }
+      C.t -= dt;
+      C.wt -= dt;
+      if (C.wt <= 0) {
+        C.wt = G.U.rand(0.5, 1.1);
+        C.wa = G.U.rand(0, 6.2832);
+      }
       if (C.t <= 0) h.stCnf = null;
     }
     if (h.shakeCd > 0) h.shakeCd -= dt;
-    if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze');      // a frozen sprite stops animating
+    if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze'); // a frozen sprite stops animating
     const T = h.stTrap;
     if (T && (T.t -= dt) <= 0) {
       h.stTrap = null;
@@ -187,9 +250,13 @@ G.Status = (() => {
     }
     const Z = h.stDaze;
     if (Z) {
-      Z.t -= dt; Z.wt -= dt;
-      if (Z.wt <= 0) { Z.wt = G.U.rand(0.2, 0.4); Z.ta = G.U.rand(-1, 1) * CONTROL.daze.jitter; }
-      Z.a += (Z.ta - Z.a) * Math.min(1, dt * 10);                          // eased toward the target angle
+      Z.t -= dt;
+      Z.wt -= dt;
+      if (Z.wt <= 0) {
+        Z.wt = G.U.rand(0.2, 0.4);
+        Z.ta = G.U.rand(-1, 1) * CONTROL.daze.jitter;
+      }
+      Z.a += (Z.ta - Z.a) * Math.min(1, dt * 10); // eased toward the target angle
       if (Z.t <= 0) h.stDaze = null;
     }
     const R = h.stDrow;
@@ -198,10 +265,14 @@ G.Status = (() => {
     if (D && !h.dead) {
       D.tick -= dt;
       if (D.tick <= 0) {
-        const bad = D.k === 'toxic', S = G.Enemies.STATUS[D.k];
+        const bad = D.k === 'toxic',
+          S = G.Enemies.STATUS[D.k];
         D.tick += S.turn;
         let frac = S.frac;
-        if (bad) { D.n = Math.min(S.cap, D.n + 1); frac = S.step * D.n; }
+        if (bad) {
+          D.n = Math.min(S.cap, D.n + 1);
+          frac = S.step * D.n;
+        }
         damage(h, D.k, h.maxHp * frac * D.mul, S.color);
         if (--D.left <= 0) h.stDot = null;
       }
@@ -209,15 +280,30 @@ G.Status = (() => {
   }
 
   // Sprite tint of the major status (Jess 2026-10-20): freeze icy blue, sleep blue-purple, poison / toxic purple, burn red, paralysis yellow.
-  const TINT = { freeze: ['#4fc3ff', 0.85], sleep: ['#7a70e6', 0.75], poison: ['#a64fd6', 0.75], toxic: ['#a64fd6', 0.75], burn: ['#ff3a2a', 0.75], paralysis: ['#ffd92a', 0.75] };
+  const TINT = {
+    freeze: ['#4fc3ff', 0.85],
+    sleep: ['#7a70e6', 0.75],
+    poison: ['#a64fd6', 0.75],
+    toxic: ['#a64fd6', 0.75],
+    burn: ['#ff3a2a', 0.75],
+    paralysis: ['#ffd92a', 0.75],
+  };
   /** { tint, tintA } for the sprite of `h` (its major status), or null. Draw options for Animator.draw. */
-  function tintOf(h) { const t = TINT[majorKind(h)]; return t ? { tint: t[0], tintA: t[1] } : null; }
+  function tintOf(h) {
+    const t = TINT[majorKind(h)];
+    return t ? { tint: t[0], tintA: t[1] } : null;
+  }
 
   /** Frozen or asleep: no movement, no attacks, no casts. */
-  function stunned(h) { const M = h.stMajor; return !!M && (M.k === 'freeze' || M.k === 'sleep'); }
+  function stunned(h) {
+    const M = h.stMajor;
+    return !!M && (M.k === 'freeze' || M.k === 'sleep');
+  }
 
   /** Trap on a non-player host: a root (slice 4a). The player's trap is a swap lock and never roots. */
-  function rooted(h) { return !!h.stTrap && !h.isPlayer; }
+  function rooted(h) {
+    return !!h.stTrap && !h.isPlayer;
+  }
 
   /** Movement multiplier: a root is x0, paralysis x0.5; it multiplies with the old `slow` and the Speed stage. (Trap never slows the player.) */
   function speedMul(h) {
@@ -227,16 +313,22 @@ G.Status = (() => {
 
   /** Daze: rotate the heading (dx, dy) by the current eased jitter angle. */
   function jitter(h, dx, dy) {
-    const Z = h.stDaze; if (!Z || !Z.a) return [dx, dy];
-    const c = Math.cos(Z.a), s = Math.sin(Z.a);
+    const Z = h.stDaze;
+    if (!Z || !Z.a) return [dx, dy];
+    const c = Math.cos(Z.a),
+      s = Math.sin(Z.a);
     return [dx * c - dy * s, dx * s + dy * c];
   }
 
   /** Chance (0..1) of a sleep effect on `h`, given the base chance: drowsy x1.5, capped at 100%. */
-  function sleepChance(h, base) { return Math.min(1, h && h.stDrow ? base * CONTROL.drowsy.sleepMul : base); }
+  function sleepChance(h, base) {
+    return Math.min(1, h && h.stDrow ? base * CONTROL.drowsy.sleepMul : base);
+  }
 
   /** True while manual team swaps are locked (trap on the player). */
-  function swapLocked(h) { return !!h.stTrap; }
+  function swapLocked(h) {
+    return !!h.stTrap;
+  }
 
   function timeOf(h, k) {
     if (k === 'sleep' || k === 'freeze' || k === 'paralysis') return h.stMajor && h.stMajor.k === k ? h.stMajor : null;
@@ -247,14 +339,19 @@ G.Status = (() => {
   }
 
   /** Is anything on `h` that Shake off can work on right now? (HUD prompt.) */
-  function shakeable(h) { return SHAKE.order.some(k => { const o = timeOf(h, k); return o && o.t > SHAKE.floor + 1e-6; }); }
+  function shakeable(h) {
+    return SHAKE.order.some((k) => {
+      const o = timeOf(h, k);
+      return o && o.t > SHAKE.floor + 1e-6;
+    });
+  }
 
   /**
    * One Shake off tap (player only). Takes SHAKE.per s off the most restrictive mashable status that still has more than SHAKE.floor s
    * left. Returns true when the tap counted (rate cap respected and something was reduced).
    */
   function shake(h) {
-    if (!h.isPlayer || h.dead || h.shakeCd > 1e-4) return false;      // (1e-4: float slack so exactly 12 taps per second all count)
+    if (!h.isPlayer || h.dead || h.shakeCd > 1e-4) return false; // (1e-4: float slack so exactly 12 taps per second all count)
     for (const k of SHAKE.order) {
       const o = timeOf(h, k);
       if (o && o.t > SHAKE.floor + 1e-6) {
@@ -272,7 +369,10 @@ G.Status = (() => {
    * 12 taps/s a person can reach). Call once per frame; returns true when a tap counted.
    */
   function autoShake(h, dt) {
-    if (!shakeable(h)) { h.autoShakeT = 0; return false; }
+    if (!shakeable(h)) {
+      h.autoShakeT = 0;
+      return false;
+    }
     h.autoShakeT = (h.autoShakeT || 0) - dt;
     if (h.autoShakeT > 0) return false;
     if (!shake(h)) return false;
@@ -281,7 +381,8 @@ G.Status = (() => {
   }
 
   /** Roll whether an attack attempt fails: paralysis 25%, confusion 50% (both: 62.5%). */
-  function fizzle(h, rng = Math.random) {     // rng: the new move sim passes its injectable roll (I7, slice 3c)
+  function fizzle(h, rng = Math.random) {
+    // rng: the new move sim passes its injectable roll (I7, slice 3c)
     let ok = 1;
     if (h.stMajor && h.stMajor.k === 'paralysis') ok *= 1 - CONTROL.paralysis.fizzle;
     if (h.stCnf) ok *= 1 - CONTROL.confusion.fizzle;
@@ -292,8 +393,11 @@ G.Status = (() => {
 
   /** Confusion: the heading (dx, dy) drifts toward a random direction (weight k) that is re-rolled every ~0.8 s. */
   function wander(h, dx, dy, k = 0.75) {
-    const C = h.stCnf; if (!C) return [dx, dy];
-    const x = dx * (1 - k) + Math.cos(C.wa) * k, y = dy * (1 - k) + Math.sin(C.wa) * k, n = Math.hypot(x, y) || 1;
+    const C = h.stCnf;
+    if (!C) return [dx, dy];
+    const x = dx * (1 - k) + Math.cos(C.wa) * k,
+      y = dy * (1 - k) + Math.sin(C.wa) * k,
+      n = Math.hypot(x, y) || 1;
     return [x / n, y / n];
   }
 
@@ -303,29 +407,85 @@ G.Status = (() => {
     if (M && M.k === 'freeze' && type === CONTROL.freeze.thawBy && M.age > 0.2) endMajor(h);
   }
 
-  function clear(h) { h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null; h.shakeCd = h.autoShakeT = 0; if (h.anim) h.anim.frozen = false; }
+  function clear(h) {
+    h.stMajor = h.stCnf = h.stTrap = h.stWin = h.stDot = h.stFl = h.stDaze = h.stDrow = null;
+    h.shakeCd = h.autoShakeT = 0;
+    if (h.anim) h.anim.frozen = false;
+  }
 
   const AIL_COLOR = { slow: '#8ab4e8', poison: '#d47cf0', haste: '#7fe08a' };
   /** Active statuses for the HUD: [{ k, label, color, t, mash }]. t = seconds left (null = unknown); mash = Shake off works on it. */
   function list(h) {
     const out = [];
-    if (h.stMajor) { const k = h.stMajor.k; out.push({ k, label: CONTROL[k].label, color: CONTROL[k].color, t: h.stMajor.t, mash: SHAKE.order.includes(k) }); }
-    const d = h.stDot || (h.burn > 0 ? { k: 'burn' } : h.poison > 0 ? { k: h.poison === 2 ? 'toxic' : 'poison' } : null);
+    if (h.stMajor) {
+      const k = h.stMajor.k;
+      out.push({ k, label: CONTROL[k].label, color: CONTROL[k].color, t: h.stMajor.t, mash: SHAKE.order.includes(k) });
+    }
+    const d =
+      h.stDot || (h.burn > 0 ? { k: 'burn' } : h.poison > 0 ? { k: h.poison === 2 ? 'toxic' : 'poison' } : null);
     if (d) {
       const S = G.Enemies.STATUS[d.k];
-      out.push({ k: d.k, label: d.k === 'burn' ? 'Burned' : d.k === 'toxic' ? 'Badly poisoned' : 'Poisoned', color: S.color, t: h.stDot ? Math.max(0, h.stDot.left - 1) * S.turn + h.stDot.tick : null, mash: false });
+      out.push({
+        k: d.k,
+        label: d.k === 'burn' ? 'Burned' : d.k === 'toxic' ? 'Badly poisoned' : 'Poisoned',
+        color: S.color,
+        t: h.stDot ? Math.max(0, h.stDot.left - 1) * S.turn + h.stDot.tick : null,
+        mash: false,
+      });
     }
-    if (h.stCnf) out.push({ k: 'confusion', label: CONTROL.confusion.label, color: CONTROL.confusion.color, t: h.stCnf.t, mash: true });
-    if (h.stDaze) out.push({ k: 'daze', label: CONTROL.daze.label, color: CONTROL.daze.color, t: h.stDaze.t, mash: true });
-    if (h.stTrap) out.push({ k: 'trap', label: CONTROL.trap.label, color: CONTROL.trap.color, t: h.stTrap.t, mash: true });
+    if (h.stCnf)
+      out.push({
+        k: 'confusion',
+        label: CONTROL.confusion.label,
+        color: CONTROL.confusion.color,
+        t: h.stCnf.t,
+        mash: true,
+      });
+    if (h.stDaze)
+      out.push({ k: 'daze', label: CONTROL.daze.label, color: CONTROL.daze.color, t: h.stDaze.t, mash: true });
+    if (h.stTrap)
+      out.push({ k: 'trap', label: CONTROL.trap.label, color: CONTROL.trap.color, t: h.stTrap.t, mash: true });
     const sl = G.Stages ? G.Stages.remaining(h, 'spe', -1) : 0;
     if (sl > 0) out.push({ k: 'slow', label: 'Slowed', color: AIL_COLOR.slow, t: sl, mash: false });
-    if (h.stDrow) out.push({ k: 'drowsy', label: CONTROL.drowsy.label, color: CONTROL.drowsy.color, t: h.stDrow.t, mash: false });
+    if (h.stDrow)
+      out.push({ k: 'drowsy', label: CONTROL.drowsy.label, color: CONTROL.drowsy.color, t: h.stDrow.t, mash: false });
     return out;
   }
 
   /** Shot colour of a carrier's status. */
-  function ailColor(k) { return AIL_COLOR[k] || (CONTROL[k] && CONTROL[k].color) || '#ff7a9e'; }
+  function ailColor(k) {
+    return AIL_COLOR[k] || (CONTROL[k] && CONTROL[k].color) || '#ff7a9e';
+  }
 
-  return { ailColor, tintOf, CONTROL, STRONG, SHAKE, GRACE, TURN, isControl, strong, immune, majorKind, blocked, apply, applyDot, tick, stunned, rooted, speedMul, jitter, sleepChance, swapLocked, shakeable, shake, autoShake, fizzle, wander, onHit, clear, list };
+  return {
+    ailColor,
+    tintOf,
+    CONTROL,
+    STRONG,
+    SHAKE,
+    GRACE,
+    TURN,
+    isControl,
+    strong,
+    immune,
+    majorKind,
+    blocked,
+    apply,
+    applyDot,
+    tick,
+    stunned,
+    rooted,
+    speedMul,
+    jitter,
+    sleepChance,
+    swapLocked,
+    shakeable,
+    shake,
+    autoShake,
+    fizzle,
+    wander,
+    onHit,
+    clear,
+    list,
+  };
 })();

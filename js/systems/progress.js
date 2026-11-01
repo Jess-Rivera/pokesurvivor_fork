@@ -20,14 +20,25 @@
  */
 G.Progress = (() => {
   const TYPES = Object.keys(G.U.TYPE_NAME);
-  let achT = 0, toastQ = [], toastT = 0;
+  let achT = 0,
+    toastQ = [],
+    toastT = 0;
 
   // ---------------- misiones ----------------
 
   function rng(seedStr) {
     let h = 2166136261;
-    for (let i = 0; i < seedStr.length; i++) { h ^= seedStr.charCodeAt(i); h = Math.imul(h, 16777619); }
-    return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    for (let i = 0; i < seedStr.length; i++) {
+      h ^= seedStr.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return () => {
+      h += 0x6d2b79f5;
+      let t = h;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
   }
 
   function make(def, r) {
@@ -37,7 +48,7 @@ G.Progress = (() => {
   }
 
   function pickSet(defs, n, r, avoid = []) {
-    const pool = defs.filter(d => !avoid.includes(d.id));
+    const pool = defs.filter((d) => !avoid.includes(d.id));
     const out = [];
     while (out.length < n && pool.length) out.push(make(pool.splice(Math.floor(r() * pool.length), 1)[0], r));
     return out;
@@ -51,7 +62,8 @@ G.Progress = (() => {
     s.missions = s.missions || {};
     const M = s.missions;
     if (M.day !== ids.d) {
-      M.day = ids.d; M.rerolled = false;
+      M.day = ids.d;
+      M.rerolled = false;
       M.daily = pickSet(G.MissionDefs.daily, 3, rng(ids.d + key));
     }
     if (M.week !== ids.w) {
@@ -60,17 +72,30 @@ G.Progress = (() => {
     }
     // Saves from before 2026-10-18 can hold missions that no longer exist (evolve, wevolve):
     // drop them and top the list back up so nothing reads a missing definition.
-    const known = m => !!G.MissionDefs.BY[m.id];
+    const known = (m) => !!G.MissionDefs.BY[m.id];
     const topUp = (list, defs, n, seed) => {
       const keep = (list || []).filter(known);
-      return keep.length >= n ? keep : keep.concat(pickSet(defs, n - keep.length, rng(seed), keep.map(x => x.id)));
+      return keep.length >= n
+        ? keep
+        : keep.concat(
+            pickSet(
+              defs,
+              n - keep.length,
+              rng(seed),
+              keep.map((x) => x.id)
+            )
+          );
     };
     M.daily = topUp(M.daily, G.MissionDefs.daily, 3, ids.d + key + 'x');
     M.weekly = topUp(M.weekly, G.MissionDefs.weekly, 2, ids.w + key + 'x');
   }
 
-  function text(m) { return G.MissionDefs.BY[m.id].text(m.goal, m.param); }
-  function done(m) { return m.prog >= m.goal; }
+  function text(m) {
+    return G.MissionDefs.BY[m.id].text(m.goal, m.param);
+  }
+  function done(m) {
+    return m.prog >= m.goal;
+  }
 
   function advance(list, kind, d) {
     for (const m of list || []) {
@@ -107,7 +132,12 @@ G.Progress = (() => {
     const m = M.daily[i];
     if (!m || M.rerolled || m.claimed) return false;
     const r = rng(M.day + 'cambio' + Date.now());
-    const [n] = pickSet(G.MissionDefs.daily, 1, r, M.daily.map(x => x.id));
+    const [n] = pickSet(
+      G.MissionDefs.daily,
+      1,
+      r,
+      M.daily.map((x) => x.id)
+    );
     if (!n) return false;
     M.daily[i] = n;
     M.rerolled = true;
@@ -122,7 +152,8 @@ G.Progress = (() => {
     if (r.coins) s.coins += r.coins;
     if (r.t1) s.tickets.t1 += r.t1;
     if (r.t10) s.tickets.t10 += r.t10;
-    if (G.UI && G.UI.refreshCoins && !document.getElementById('topbar').classList.contains('hidden')) G.UI.refreshCoins();
+    if (G.UI && G.UI.refreshCoins && !document.getElementById('topbar').classList.contains('hidden'))
+      G.UI.refreshCoins();
   }
 
   function rewardText(r) {
@@ -145,7 +176,8 @@ G.Progress = (() => {
         if (d.boss) S.bossesTotal = (S.bossesTotal || 0) + 1;
         break;
       case 'item':
-        s.itemsFound = s.itemsFound || {}; s.itemsFound[d.id] = s.itemsFound[d.id] || Date.now();
+        s.itemsFound = s.itemsFound || {};
+        s.itemsFound[d.id] = s.itemsFound[d.id] || Date.now();
         break;
       case 'runEnd':
         if (d.group) S.groupRuns = (S.groupRuns || 0) + 1;
@@ -160,7 +192,7 @@ G.Progress = (() => {
 
   /** An enemy has fallen (host, solo or copy on the guest). */
   function kill(e) {
-    event('kill', { types: e.types || [], boss: !!(e.boss || e.elite) });   // gym leaders and overworld elites count as bosses
+    event('kill', { types: e.types || [], boss: !!(e.boss || e.elite) }); // gym leaders and overworld elites count as bosses
   }
 
   // ---------------- logros ----------------
@@ -182,7 +214,7 @@ G.Progress = (() => {
   /** Titles you have (from the achievements earned). */
   function titles() {
     const s = G.DB.save;
-    return G.AchDefs.LIST.filter(a => a.title && s && s.ach && s.ach[a.id]).map(a => a.title);
+    return G.AchDefs.LIST.filter((a) => a.title && s && s.ach && s.ach[a.id]).map((a) => a.title);
   }
 
   /** Mission prizes to claim (for the menu notice). */
@@ -190,7 +222,7 @@ G.Progress = (() => {
     const s = G.DB.save;
     if (!s) return 0;
     ensure(s);
-    return [...s.missions.daily, ...s.missions.weekly].filter(m => done(m) && !m.claimed).length;
+    return [...s.missions.daily, ...s.missions.weekly].filter((m) => done(m) && !m.claimed).length;
   }
 
   // ---------------- avisos ----------------
@@ -204,7 +236,12 @@ G.Progress = (() => {
     const n = toastQ[0];
     if (!n) return;
     let el = document.getElementById('ach-pop');
-    if (!el) { el = document.createElement('div'); el.id = 'ach-pop'; el.className = 'box ach-pop'; document.body.appendChild(el); }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ach-pop';
+      el.className = 'box ach-pop';
+      document.body.appendChild(el);
+    }
     const icon = n.ach ? G.Icons.html('medal' + n.ach.tier, 24) : G.Icons.html('medal2', 24);
     el.innerHTML = `${icon}<div><b>${n.title}</b>${n.sub ? `<small>${n.sub}</small>` : ''}</div>`;
     el.classList.remove('hidden');

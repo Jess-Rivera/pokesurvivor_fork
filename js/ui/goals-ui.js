@@ -7,17 +7,22 @@
  */
 (() => {
   const $ = G.UI.$;
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = t => (t >= 3600 ? Math.floor(t / 3600) + ':' + G.U.mmss(t % 3600).padStart(5, '0') : G.U.mmss(t));
+  const esc = (s) =>
+    String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const fmt = (t) => (t >= 3600 ? Math.floor(t / 3600) + ':' + G.U.mmss(t % 3600).padStart(5, '0') : G.U.mmss(t));
 
   // ======================= PANTALLA =======================
 
   G.GoalsUI = (() => {
-    let tab = 'missions', cat = 'coleccion';
+    let tab = 'missions',
+      cat = 'coleccion';
 
     function init() {
-      document.querySelectorAll('#goals-tabs .tab').forEach(t => {
-        t.onclick = () => { tab = t.dataset.tab; render(); };
+      document.querySelectorAll('#goals-tabs .tab').forEach((t) => {
+        t.onclick = () => {
+          tab = t.dataset.tab;
+          render();
+        };
       });
     }
 
@@ -30,7 +35,7 @@
     }
 
     function render() {
-      document.querySelectorAll('#goals-tabs .tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+      document.querySelectorAll('#goals-tabs .tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === tab));
       const box = $('goals-body');
       box.innerHTML = '';
       if (tab === 'missions') missions(box);
@@ -45,38 +50,63 @@
       // Midnight (dailies) or Monday (weeklies), Spain time approximated by the browser's.
       const end = new Date(now);
       end.setHours(24, 0, 0, 0);
-      if (kind === 'w') { const add = (8 - (now.getDay() || 7)) % 7; end.setDate(end.getDate() + add); }
+      if (kind === 'w') {
+        const add = (8 - (now.getDay() || 7)) % 7;
+        end.setDate(end.getDate() + add);
+      }
       const mins = Math.max(1, Math.round((end - now) / 60000));
-      return mins >= 1440 ? Math.floor(mins / 1440) + ' d ' + Math.floor(mins % 1440 / 60) + ' h'
-                          : Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min';
+      return mins >= 1440
+        ? Math.floor(mins / 1440) + ' d ' + Math.floor((mins % 1440) / 60) + ' h'
+        : Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min';
     }
 
     function missions(box) {
       const M = G.DB.save.missions;
       const section = (title, list, weekly) => {
-        box.insertAdjacentHTML('beforeend', `<div class="row between goals-h"><h3>${title}</h3>
-          <span class="sub">Se renuevan en ${untilText(weekly ? 'w' : 'd')}</span></div>`);
+        box.insertAdjacentHTML(
+          'beforeend',
+          `<div class="row between goals-h"><h3>${title}</h3>
+          <span class="sub">Se renuevan en ${untilText(weekly ? 'w' : 'd')}</span></div>`
+        );
         list.forEach((m, i) => {
           const d = G.MissionDefs.BY[m.id];
           const done = G.Progress.done(m);
           const el = document.createElement('div');
           el.className = 'mission' + (m.claimed ? ' claimed' : done ? ' ready' : '');
-          const pct = Math.min(100, m.prog / m.goal * 100);
+          const pct = Math.min(100, (m.prog / m.goal) * 100);
           el.innerHTML = `
             <div class="m-txt"><b>${esc(G.Progress.text(m))}</b>
               <div class="bar"><i style="width:${pct}%"></i></div>
               <small>${Math.min(m.prog, m.goal).toLocaleString('es')} / ${m.goal.toLocaleString('es')}</small></div>
             <div class="m-rw">${G.Progress.rewardText(d.reward)}</div>`;
           const btn = document.createElement('button');
-          if (m.claimed) { btn.className = 'btn small'; btn.disabled = true; btn.textContent = 'Recogido'; }
-          else if (done) {
-            btn.className = 'btn small gold'; btn.textContent = 'Recoger'; btn.dataset.sfx = 'none';
-            btn.onclick = () => { if (G.Progress.claim(m, weekly)) { G.Audio.sfx('buy'); G.UI.toast('¡Premio recogido!'); render(); } };
+          if (m.claimed) {
+            btn.className = 'btn small';
+            btn.disabled = true;
+            btn.textContent = 'Recogido';
+          } else if (done) {
+            btn.className = 'btn small gold';
+            btn.textContent = 'Recoger';
+            btn.dataset.sfx = 'none';
+            btn.onclick = () => {
+              if (G.Progress.claim(m, weekly)) {
+                G.Audio.sfx('buy');
+                G.UI.toast('¡Premio recogido!');
+                render();
+              }
+            };
           } else if (!weekly && !M.rerolled) {
-            btn.className = 'btn small ghost'; btn.textContent = 'Cambiar';
+            btn.className = 'btn small ghost';
+            btn.textContent = 'Cambiar';
             btn.title = 'Cambia esta misión por otra (una vez al día)';
-            btn.onclick = () => { if (G.Progress.reroll(i)) render(); };
-          } else { btn.className = 'btn small ghost'; btn.disabled = true; btn.textContent = 'En curso'; }
+            btn.onclick = () => {
+              if (G.Progress.reroll(i)) render();
+            };
+          } else {
+            btn.className = 'btn small ghost';
+            btn.disabled = true;
+            btn.textContent = 'En curso';
+          }
           el.appendChild(btn);
           box.appendChild(el);
         });
@@ -90,27 +120,32 @@
     function achievements(box) {
       const s = G.DB.save;
       const all = G.AchDefs.LIST;
-      const got = all.filter(a => s.ach && s.ach[a.id]).length;
+      const got = all.filter((a) => s.ach && s.ach[a.id]).length;
       const chips = document.createElement('div');
       chips.className = 'filters';
       for (const [k, label] of G.AchDefs.CATS) {
-        const list = all.filter(a => a.cat === k);
-        const n = list.filter(a => s.ach && s.ach[a.id]).length;
+        const list = all.filter((a) => a.cat === k);
+        const n = list.filter((a) => s.ach && s.ach[a.id]).length;
         const b = document.createElement('button');
         b.className = 'chip' + (k === cat ? ' on' : '');
         b.textContent = `${label} ${n}/${list.length}`;
-        b.onclick = () => { cat = k; render(); };
+        b.onclick = () => {
+          cat = k;
+          render();
+        };
         chips.appendChild(b);
       }
-      box.insertAdjacentHTML('beforeend', `<p class="sub">${got} de ${all.length} logros · títulos: ${G.Progress.titles().length}</p>`);
+      box.insertAdjacentHTML(
+        'beforeend',
+        `<p class="sub">${got} de ${all.length} logros · títulos: ${G.Progress.titles().length}</p>`
+      );
       box.appendChild(chips);
 
-      const list = all.filter(a => a.cat === cat);
+      const list = all.filter((a) => a.cat === cat);
       const grid = document.createElement('div');
       grid.className = 'ach-grid';
       for (const a of list) grid.appendChild(achCard(a, s));
       box.appendChild(grid);
-
     }
 
     function achCard(a, s) {
@@ -120,7 +155,7 @@
       el.className = 'ach' + (ok ? ' ok' : '');
       el.innerHTML = `${G.Icons.html(ok ? 'medal' + a.tier : 'medalOff', 36)}
         <div class="a-txt"><b>${esc(a.name)}</b><small>${esc(a.desc)}</small>
-          ${ok ? '' : `<div class="bar"><i style="width:${v / a.goal * 100}%"></i></div>`}
+          ${ok ? '' : `<div class="bar"><i style="width:${(v / a.goal) * 100}%"></i></div>`}
           <div class="a-rw">${ok ? '¡Conseguido!' : v.toLocaleString('es') + ' / ' + a.goal.toLocaleString('es')} · ${G.Progress.rewardText(a.reward)}
           ${a.title ? ` · <span class="gold">Título: ${esc(a.title)}</span>` : ''}</div></div>`;
       return el;
@@ -132,9 +167,15 @@
       const s = G.DB.save;
       s.profile = s.profile || { favs: [], title: '' };
       const P = s.profile;
-      box.insertAdjacentHTML('beforeend', `<p class="sub">${G.DB.online ? 'Así te ven los demás jugadores (desde el ranking y la lista de amigos).'
-        : 'Tu perfil se publica cuando juegas con una cuenta online.'}</p>
-        <h3>Tus 3 Pokémon favoritos</h3>`);
+      box.insertAdjacentHTML(
+        'beforeend',
+        `<p class="sub">${
+          G.DB.online
+            ? 'Así te ven los demás jugadores (desde el ranking y la lista de amigos).'
+            : 'Tu perfil se publica cuando juegas con una cuenta online.'
+        }</p>
+        <h3>Tus 3 Pokémon favoritos</h3>`
+      );
       const favs = document.createElement('div');
       favs.className = 'fav-slots';
       for (let i = 0; i < 3; i++) {
@@ -143,7 +184,10 @@
         slot.className = 'fav-slot';
         if (f && G.DEX_BY[f.dex]) {
           slot.appendChild(G.UI.spriteCanvas(f.dex, 120, 100, { scale: 2, lively: true, shiny: !!f.shiny }));
-          slot.insertAdjacentHTML('beforeend', `<b>${f.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[f.dex].name)}</b>`);
+          slot.insertAdjacentHTML(
+            'beforeend',
+            `<b>${f.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[f.dex].name)}</b>`
+          );
         } else slot.innerHTML = '<span>Elegir</span>';
         slot.onclick = () => pickFav(i);
         favs.appendChild(slot);
@@ -155,13 +199,20 @@
       const sel = document.createElement('select');
       sel.className = 'field';
       sel.style.maxWidth = '320px';
-      sel.innerHTML = `<option value="">(sin título)</option>` + titles.map(t => `<option ${t === P.title ? 'selected' : ''}>${esc(t)}</option>`).join('');
-      sel.onchange = () => { P.title = sel.value; save(); };
+      sel.innerHTML =
+        `<option value="">(sin título)</option>` +
+        titles.map((t) => `<option ${t === P.title ? 'selected' : ''}>${esc(t)}</option>`).join('');
+      sel.onchange = () => {
+        P.title = sel.value;
+        save();
+      };
       box.appendChild(sel);
-      if (!titles.length) box.insertAdjacentHTML('beforeend', '<p class="note">Consigue logros para desbloquear títulos.</p>');
+      if (!titles.length)
+        box.insertAdjacentHTML('beforeend', '<p class="note">Consigue logros para desbloquear títulos.</p>');
 
       const prev = document.createElement('button');
-      prev.className = 'btn gold'; prev.style.marginTop = '16px';
+      prev.className = 'btn gold';
+      prev.style.marginTop = '16px';
       prev.textContent = 'Ver mi perfil público';
       prev.onclick = () => G.ProfileUI.showData(G.Social.profileData());
       box.appendChild(prev);
@@ -174,22 +225,32 @@
         <button class="btn small ghost" id="fav-back">Volver</button></div>
         <input class="field" id="fav-q" placeholder="Buscar por nombre" style="max-width:320px;margin:6px 0 10px">
         <div class="grid" id="fav-grid"></div>`;
-      $('fav-back').onclick = () => { tab = 'profile'; render(); };
-      const fill = q => {
+      $('fav-back').onclick = () => {
+        tab = 'profile';
+        render();
+      };
+      const fill = (q) => {
         const g = $('fav-grid');
         g.innerHTML = '';
-        const mons = Object.keys(s.owned).map(Number).filter(d => G.DEX_BY[d] && (!q || G.DEX_BY[d].name.toLowerCase().includes(q)));
+        const mons = Object.keys(s.owned)
+          .map(Number)
+          .filter((d) => G.DEX_BY[d] && (!q || G.DEX_BY[d].name.toLowerCase().includes(q)));
         for (const d of mons.slice(0, 120)) {
           for (const shiny of G.DB.ownsShiny(d) ? [false, true] : [false]) {
             const c = document.createElement('div');
             c.className = 'cell';
             c.appendChild(G.UI.spriteCanvas(d, 92, 80, { scale: 2, shiny }));
-            c.insertAdjacentHTML('beforeend', `<b>${shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[d].name)}</b>`);
+            c.insertAdjacentHTML(
+              'beforeend',
+              `<b>${shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[d].name)}</b>`
+            );
             c.onclick = () => {
               s.profile.favs = (s.profile.favs || []).slice();
               s.profile.favs[i] = { dex: d, shiny };
               s.profile.favs = s.profile.favs.filter(Boolean).slice(0, 3);
-              save(); tab = 'profile'; render();
+              save();
+              tab = 'profile';
+              render();
             };
             g.appendChild(c);
           }
@@ -213,18 +274,28 @@
   G.ProfileUI = (() => {
     function init() {
       $('prof-close').onclick = close;
-      $('scr-profile').onclick = e => { if (e.target.id === 'scr-profile') close(); };
+      $('scr-profile').onclick = (e) => {
+        if (e.target.id === 'scr-profile') close();
+      };
     }
-    function close() { $('scr-profile').classList.add('hidden'); }
+    function close() {
+      $('scr-profile').classList.add('hidden');
+    }
 
     /** Opens another player's profile by their uid. */
     async function show(uid) {
       if (!uid) return;
-      if (uid === G.Social.uid) { showData(G.Social.profileData()); return; }
+      if (uid === G.Social.uid) {
+        showData(G.Social.profileData());
+        return;
+      }
       $('prof-body').innerHTML = '<p class="sub">Cargando…</p>';
       $('scr-profile').classList.remove('hidden');
       const d = await G.Social.getProfile(uid);
-      if (!d) { $('prof-body').innerHTML = '<p class="sub">Este jugador aún no tiene perfil.</p>'; return; }
+      if (!d) {
+        $('prof-body').innerHTML = '<p class="sub">Este jugador aún no tiene perfil.</p>';
+        return;
+      }
       showData(d);
     }
 
@@ -249,7 +320,10 @@
         const slot = document.createElement('div');
         slot.className = 'fav-slot';
         slot.appendChild(G.UI.spriteCanvas(f.dex, 120, 100, { scale: 2, lively: true, shiny: !!f.shiny }));
-        slot.insertAdjacentHTML('beforeend', `<b>${f.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[f.dex].name)}</b>`);
+        slot.insertAdjacentHTML(
+          'beforeend',
+          `<b>${f.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${esc(G.DEX_BY[f.dex].name)}</b>`
+        );
         favs.appendChild(slot);
       }
       if (!favs.children.length) favs.innerHTML = '<p class="sub">Sin favoritos todavía.</p>';

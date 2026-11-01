@@ -1,12 +1,16 @@
 /* ============ run-ui.js — level cards, pause and end of run ============ */
 G.RunUI = (() => {
   const $ = G.UI.$;
-  let offers = null, offerCb = null, coopMode = false;
-  let vit = null;             // slice 5b: the Vitamins card's stat pick, shown on the card screen itself: { card, idx }
+  let offers = null,
+    offerCb = null,
+    coopMode = false;
+  let vit = null; // slice 5b: the Vitamins card's stat pick, shown on the card screen itself: { card, idx }
 
   /** @param coop  in a group: after choosing, it waits for the others */
   function showLevelUp(level, list, cb, coop = false) {
-    offerCb = cb; coopMode = coop; vit = null;
+    offerCb = cb;
+    coopMode = coop;
+    vit = null;
     $('lvl-num').textContent = level;
     $('lvl-wait').textContent = '';
     $('lvl-wait').classList.toggle('hidden', !coop);
@@ -39,15 +43,19 @@ G.RunUI = (() => {
     const el = document.createElement('div');
     el.className = 'card' + (o.dim ? ' dim' : '') + (o.flash ? ' flash' : '');
     const chip = o.chip ? `<span class="tag-chip" style="background:${o.chipColor || '#9fb1c9'}">${o.chip}</span>` : '';
-    el.innerHTML =
-      `<div class="ico" style="background:${o.color}33"></div>
+    el.innerHTML = `<div class="ico" style="background:${o.color}33"></div>
        <div class="txt"><div class="nm">${o.title} ${chip}</div><div class="ds">${o.desc}</div></div>
        <div class="key">${o.key || ''}</div>`;
     const ico = el.querySelector('.ico');
     if (o.icoNode) ico.appendChild(o.icoNode);
     else if (o.icoHtml) ico.innerHTML = o.icoHtml;
-    else { ico.textContent = o.icoText || ''; ico.style.color = o.color; ico.style.fontWeight = '800'; ico.style.fontSize = '15px'; }
-    el.dataset.sfx = 'none';             // el juego pone su propio sonido al elegir
+    else {
+      ico.textContent = o.icoText || '';
+      ico.style.color = o.color;
+      ico.style.fontWeight = '800';
+      ico.style.fontSize = '15px';
+    }
+    el.dataset.sfx = 'none'; // el juego pone su propio sonido al elegir
     if (!o.dim && o.onclick) el.onclick = o.onclick;
     return el;
   }
@@ -61,9 +69,15 @@ G.RunUI = (() => {
     box.innerHTML = '';
     list.forEach((c, i) => {
       const el = row({
-        title: c.title, desc: c.desc, color: c.color, key: G.Input.keyLabel('attack_' + (i + 1)),
-        chip: c.type === 'new' ? 'New · ' + c.tag : c.tag, chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
-        icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '', icoText: c.ico, onclick: () => pick(i)
+        title: c.title,
+        desc: c.desc,
+        color: c.color,
+        key: G.Input.keyLabel('attack_' + (i + 1)),
+        chip: c.type === 'new' ? 'New · ' + c.tag : c.tag,
+        chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
+        icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '',
+        icoText: c.ico,
+        onclick: () => pick(i),
       });
       if (doneIdx === i) el.classList.add('picked');
       box.appendChild(el);
@@ -76,22 +90,45 @@ G.RunUI = (() => {
   function pick(i) {
     if (!offers || !offers[i] || vit) return;
     const c = offers[i];
-    if (c.type === 'vitamins') { G.Audio.sfx('select'); openVitamins(c, i); return; }
-    finish(c, null, i);     // a new move or a team-wide card
+    if (c.type === 'vitamins') {
+      G.Audio.sfx('select');
+      openVitamins(c, i);
+      return;
+    }
+    finish(c, null, i); // a new move or a team-wide card
   }
 
   // ---- slice 5b: the Vitamins card's stat pick (3 rows on the card screen, keys 1-3, Backspace back) ----
   function openVitamins(c, idx) {
     vit = { card: c, idx };
     $('lvl-reroll').classList.add('hidden');
-    const box = $('cards'), pct = v => Math.round(v * 100) + '%';
+    const box = $('cards'),
+      pct = (v) => Math.round(v * 100) + '%';
     box.innerHTML = '';
-    c.options.forEach((o, j) => box.appendChild(row({
-      title: o.label + ': ' + o.stat + ' +' + pct(o.next - o.now), desc: 'Team-wide ' + o.stat + ' bonus +' + pct(o.now) + ' to +' + pct(o.next),
-      color: o.color, chip: 'Vitamins', chipColor: o.color, icoText: '+' + pct(o.next - o.now),
-      key: G.Input.keyLabel('attack_' + (j + 1)), onclick: () => pickVit(j)
-    })));
-    box.appendChild(row({ title: 'Back', desc: 'Return to the three cards', color: '#9fb1c9', icoText: '\u2190', key: 'Bksp', onclick: vitBack }));
+    c.options.forEach((o, j) =>
+      box.appendChild(
+        row({
+          title: o.label + ': ' + o.stat + ' +' + pct(o.next - o.now),
+          desc: 'Team-wide ' + o.stat + ' bonus +' + pct(o.now) + ' to +' + pct(o.next),
+          color: o.color,
+          chip: 'Vitamins',
+          chipColor: o.color,
+          icoText: '+' + pct(o.next - o.now),
+          key: G.Input.keyLabel('attack_' + (j + 1)),
+          onclick: () => pickVit(j),
+        })
+      )
+    );
+    box.appendChild(
+      row({
+        title: 'Back',
+        desc: 'Return to the three cards',
+        color: '#9fb1c9',
+        icoText: '\u2190',
+        key: 'Bksp',
+        onclick: vitBack,
+      })
+    );
   }
   function pickVit(j) {
     if (!vit || !vit.card.options[j]) return;
@@ -108,8 +145,11 @@ G.RunUI = (() => {
   }
 
   function finish(c, tgt, idx) {
-    const cb = offerCb, list = offers;
-    offers = null; offerCb = null; vit = null;
+    const cb = offerCb,
+      list = offers;
+    offers = null;
+    offerCb = null;
+    vit = null;
     $('lvl-reroll').classList.add('hidden');
     if (coopMode) {
       // The chosen card stays in view while the others choose.
@@ -123,8 +163,13 @@ G.RunUI = (() => {
   /** Keyboard for the level-up screen. Cards: slot keys 1-3, R reroll. Vitamins: 1-3 pick a stat, Backspace back. */
   function levelKeys() {
     if (!offers) return;
-    if (vit) {     // 5b Vitamins: 1-3 pick a stat, Backspace back to the cards
-      for (let i = 0; i < vit.card.options.length; i++) if (G.Input.action('attack_' + (i + 1))) { pickVit(i); return; }
+    if (vit) {
+      // 5b Vitamins: 1-3 pick a stat, Backspace back to the cards
+      for (let i = 0; i < vit.card.options.length; i++)
+        if (G.Input.action('attack_' + (i + 1))) {
+          pickVit(i);
+          return;
+        }
       if (G.Input.tap('backspace')) vitBack();
       return;
     }
@@ -135,16 +180,21 @@ G.RunUI = (() => {
   /** Co-op: who still has to choose. */
   function setWaiting(names) {
     const me = G.Social.me ? G.Social.me.name : '';
-    const others = names.filter(n => n !== me);
-    const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
-    $('lvl-wait').textContent = !names.length ? ''
-      : !others.length ? 'Choose your card'
-      : names.includes(me) ? 'Still choosing: ' + list([...others, 'you'])
-      : 'Waiting for ' + list(others) + '…';
+    const others = names.filter((n) => n !== me);
+    const list = (a) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]);
+    $('lvl-wait').textContent = !names.length
+      ? ''
+      : !others.length
+        ? 'Choose your card'
+        : names.includes(me)
+          ? 'Still choosing: ' + list([...others, 'you'])
+          : 'Waiting for ' + list(others) + '…';
   }
 
   function closeLevelUp() {
-    offers = null; offerCb = null; vit = null;
+    offers = null;
+    offerCb = null;
+    vit = null;
     $('cards').classList.remove('done');
     G.UI.hide('scr-levelup');
   }
@@ -158,7 +208,12 @@ G.RunUI = (() => {
     const runs = (G.DB.save && G.DB.save.stats && G.DB.save.stats.runs) || 0;
     if (runs < 2 || !(r.record || runs % 10 === 0)) return false;
     const today = new Date().toISOString().slice(0, 10);
-    try { if (localStorage.getItem('ps.ask') === today) return false; localStorage.setItem('ps.ask', today); } catch (e) { return false; }
+    try {
+      if (localStorage.getItem('ps.ask') === today) return false;
+      localStorage.setItem('ps.ask', today);
+    } catch (e) {
+      return false;
+    }
     return true;
   }
 
@@ -173,16 +228,28 @@ G.RunUI = (() => {
       <div style="grid-column:1/-1"><span>PokéCoins earned</span>
         <b class="gold"><span class="coin"></span> +${r.coins}</b>
         <div style="font-size:12px;color:var(--muted)">${r.breakdown}</div></div>
-      ${r.t1 || r.t10 ? `<div style="grid-column:1/-1"><span>Pokeballs and Master Balls</span><b>
-        ${r.t1 ? G.Icons.html('ball', 24) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ball4', 24) + ' +' + r.t10 : ''}</b></div>` : ''}
-      ${r.caught && r.caught.length ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies caught</span>
-        <div class="caught-row" id="over-caught"></div></div>` : ''}
+      ${
+        r.t1 || r.t10
+          ? `<div style="grid-column:1/-1"><span>Pokeballs and Master Balls</span><b>
+        ${r.t1 ? G.Icons.html('ball', 24) + ' +' + r.t1 + ' ' : ''}${r.t10 ? G.Icons.html('ball4', 24) + ' +' + r.t10 : ''}</b></div>`
+          : ''
+      }
+      ${
+        r.caught && r.caught.length
+          ? `<div style="grid-column:1/-1" class="caught"><span>${G.Icons.html('shiny', 12)} Shinies caught</span>
+        <div class="caught-row" id="over-caught"></div></div>`
+          : ''
+      }
       ${r.record ? '<div style="grid-column:1/-1;text-align:center" class="gold">New time record!</div>' : ''}
-      ${askSupport(r) ? `<div class="support-ask" id="over-ask" style="grid-column:1/-1">
+      ${
+        askSupport(r)
+          ? `<div class="support-ask" id="over-ask" style="grid-column:1/-1">
         <button class="x" type="button" aria-label="Close">×</button>
         <p>Enjoying PokéSurvivor? I make it on my own and the servers cost money. If you'd like, you can help keep it online.</p>
         <a class="btn small gold" href="${G.Funding.url}" target="_blank" rel="noopener">${G.Icons.html('heart', 14)} Support on Ko-fi</a>
-      </div>` : ''}`;
+      </div>`
+          : ''
+      }`;
     const ask = $('over-ask');
     if (ask) ask.querySelector('.x').onclick = () => ask.remove();
     $('btn-again').onclick = onBack;
@@ -217,9 +284,10 @@ G.RunUI = (() => {
     box.innerHTML = '';
     const scr = $('scr-item');
     scr.querySelector('h2').textContent = run ? 'A team item!' : 'An item!';
-    scr.querySelector('.sub').textContent = lock && run ? 'Only one Stone at a time'
-      : run ? 'Your team item slots are full' : 'Only one per Pokemon';
-    const confirm = $('item-confirm'), leave = $('item-leave');
+    scr.querySelector('.sub').textContent =
+      lock && run ? 'Only one Stone at a time' : run ? 'Your team item slots are full' : 'Only one per Pokemon';
+    const confirm = $('item-confirm'),
+      leave = $('item-leave');
     // SINGLE: one thing can be replaced (a lone held item, or a Stone lock). The held card starts highlighted (= keep it);
     // click the new card to take it instead. MULTI: several run slots; click the slot to replace (nothing is highlighted at first).
     const target = lock || (held.length === 1 ? held[0] : null);
@@ -228,7 +296,8 @@ G.RunUI = (() => {
       const it = G.Items.BY[id];
       const el = document.createElement('div');
       el.className = 'card' + extra;
-      el.dataset.id = id; el.dataset.k = k;
+      el.dataset.id = id;
+      el.dataset.k = k;
       el.innerHTML = `<div class="ico">${G.Icons.html(it.icon || it.id, 36)}</div>
         <div class="txt"><div class="nm">${it.name}</div><div class="ds">${it.desc}</div></div>
         <span class="item-chip">${chip}</span>`;
@@ -247,24 +316,44 @@ G.RunUI = (() => {
       const el = mk(id, chip, single ? (id === target ? 1 : 0) : i + 1, lock && id !== lock ? ' dim' : '');
       return el;
     });
-    let sel = null;                 // single: 'new' or the held id.  multi: the held id to replace.
+    let sel = null; // single: 'new' or the held id.  multi: the held id to replace.
     const paint = () => {
       newEl.classList.toggle('evo', single && sel === 'new');
-      heldEls.forEach(e => e.classList.toggle('evo', sel === e.dataset.id));
+      heldEls.forEach((e) => e.classList.toggle('evo', sel === e.dataset.id));
       confirm.disabled = sel == null;
     };
     if (single) {
       sel = target;
-      newEl.onclick = () => { sel = 'new'; paint(); };
-      heldEls.forEach(e => { if (e.dataset.id === target) e.onclick = () => { sel = target; paint(); }; });
+      newEl.onclick = () => {
+        sel = 'new';
+        paint();
+      };
+      heldEls.forEach((e) => {
+        if (e.dataset.id === target)
+          e.onclick = () => {
+            sel = target;
+            paint();
+          };
+      });
     } else {
       newEl.style.cursor = 'default';
-      heldEls.forEach(e => { e.onclick = () => { sel = e.dataset.id; paint(); }; });
+      heldEls.forEach((e) => {
+        e.onclick = () => {
+          sel = e.dataset.id;
+          paint();
+        };
+      });
     }
     paint();
-    const done = replace => { G.UI.hide('scr-item'); cb(replace); };
+    const done = (replace) => {
+      G.UI.hide('scr-item');
+      cb(replace);
+    };
     // single + held highlighted = keep what you have (same as Leave it); single + new highlighted = swap; multi = replace the clicked slot.
-    confirm.onclick = () => { if (sel == null) return; done(single ? (sel === 'new' ? target : null) : sel); };
+    confirm.onclick = () => {
+      if (sel == null) return;
+      done(single ? (sel === 'new' ? target : null) : sel);
+    };
     leave.onclick = () => done(null);
     G.UI.show('scr-item');
   }
@@ -274,11 +363,14 @@ G.RunUI = (() => {
     const el = document.querySelector('#item-cards .card[data-k="' + (i + 1) + '"]');
     if (el && !el.classList.contains('dim')) el.click();
   }
-  function itemConfirm() { const b = $('item-confirm'); if (b && !b.disabled) b.click(); }
+  function itemConfirm() {
+    const b = $('item-confirm');
+    if (b && !b.disabled) b.click();
+  }
 
   // ---------------- link: which moves fuse ----------------
 
-  let bond = null;          // { opt, cb, first, list }
+  let bond = null; // { opt, cb, first, list }
 
   /**
    * @param opt  pl.bondOptions(): 'add' (one loose into the group) or 'pair' (two loose, in two steps)
@@ -293,23 +385,29 @@ G.RunUI = (() => {
 
   function renderBond() {
     const { opt, first } = bond;
-    const names = ms => ms.map(m => m.name).join(' + ');
+    const names = (ms) => ms.map((m) => m.name).join(' + ');
     const step2 = opt.mode === 'pair' && first;
-    $('bond-sub').textContent = opt.mode === 'add' ? 'Elige qué movimiento se une a ' + names(opt.group)
-      : step2 ? '¿Con cuál unes ' + first.name + '?' : 'Elige el primer movimiento que vas a unir';
+    $('bond-sub').textContent =
+      opt.mode === 'add'
+        ? 'Elige qué movimiento se une a ' + names(opt.group)
+        : step2
+          ? '¿Con cuál unes ' + first.name + '?'
+          : 'Elige el primer movimiento que vas a unir';
     $('bond-back').classList.toggle('hidden', !step2);
-    bond.list = step2 ? opt.loose.filter(m => m !== first) : opt.loose;
+    bond.list = step2 ? opt.loose.filter((m) => m !== first) : opt.loose;
     const box = $('bond-cards');
     box.innerHTML = '';
     bond.list.forEach((m, i) => {
       const col = G.U.TYPE_COLOR[m.type];
-      const desc = opt.mode === 'add' ? 'Se lanzará a la vez que ' + names(opt.group) + '.'
-        : step2 ? 'Se lanzará a la vez que ' + first.name + '. Queda un hueco libre.'
-        : G.MoveInfo.desc(m.id);
+      const desc =
+        opt.mode === 'add'
+          ? 'Se lanzará a la vez que ' + names(opt.group) + '.'
+          : step2
+            ? 'Se lanzará a la vez que ' + first.name + '. Queda un hueco libre.'
+            : G.MoveInfo.desc(m.id);
       const el = document.createElement('div');
       el.className = 'card' + (opt.mode === 'add' || step2 ? ' bond' : '');
-      el.innerHTML =
-        `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
+      el.innerHTML = `<div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
          <div class="txt"><div class="nm">${m.name}</div><div class="ds">${desc}</div></div>
          <div class="key">${G.Input.keyLabel('attack_' + (i + 1))}</div>`;
       el.dataset.sfx = 'none';
@@ -358,5 +456,22 @@ G.RunUI = (() => {
     $('btn-quit').onclick = onQuit;
   }
 
-  return { showLevelUp, reroll, showItemChoice, itemKey, itemConfirm, showBond, pickBond, bondBack, pick, levelKeys, setWaiting, closeLevelUp, showOver, wirePause, showPause, pauseKeys };
+  return {
+    showLevelUp,
+    reroll,
+    showItemChoice,
+    itemKey,
+    itemConfirm,
+    showBond,
+    pickBond,
+    bondBack,
+    pick,
+    levelKeys,
+    setWaiting,
+    closeLevelUp,
+    showOver,
+    wirePause,
+    showPause,
+    pauseKeys,
+  };
 })();

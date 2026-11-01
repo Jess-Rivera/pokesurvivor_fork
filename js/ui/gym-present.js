@@ -4,15 +4,17 @@
  * Events: 'gym:escalate' { leader, bump }, 'gym:calm' { leader }, 'gym:badge' { badge, stat, pct } (stat and pct are null without a boost).
  */
 G.GymPresent = (() => {
-  G.SimBus.on('gym:escalate', ev => {
+  G.SimBus.on('gym:escalate', (ev) => {
     G.Spawner.say(ev.leader + ' gets stronger, and so does the world!', 3, true);
     G.Audio.sfx('gate');
   });
-  G.SimBus.on('gym:calm', ev => {
+  G.SimBus.on('gym:calm', (ev) => {
     G.Spawner.say('The world calms with ' + ev.leader + ' defeated.', 3, true);
   });
-  G.SimBus.on('gym:badge', ev => {
-    const boost = ev.stat ? ' +' + Math.round(ev.pct * 100) + '% ' + G.Gyms.STAT_LABEL[ev.stat] + ' for the whole team,' : '';
+  G.SimBus.on('gym:badge', (ev) => {
+    const boost = ev.stat
+      ? ' +' + Math.round(ev.pct * 100) + '% ' + G.Gyms.STAT_LABEL[ev.stat] + ' for the whole team,'
+      : '';
     G.Spawner.say(ev.badge + ' earned!' + boost + ' and a level up', 3.6, true);
   });
   return {};

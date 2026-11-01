@@ -3,11 +3,13 @@
  * size, so the game feels the same on any screen.
  */
 G.Camera = {
-  x: 0, y: 0,
+  x: 0,
+  y: 0,
   scale: 1,
-  VIEW_W: 768,              // 20% more view than at the start (640)
+  VIEW_W: 768, // 20% more view than at the start (640)
   shake: 0,
-  _sx: 0, _sy: 0,
+  _sx: 0,
+  _sy: 0,
 
   /** Recomputes the scale for the current canvas size. */
   dpr: 1,
@@ -31,11 +33,13 @@ G.Camera = {
       const a = this.shake * 7;
       this._sx = G.U.rand(-a, a);
       this._sy = G.U.rand(-a, a);
-    } else { this._sx = this._sy = 0; }
+    } else {
+      this._sx = this._sy = 0;
+    }
   },
 
   kick(amount) {
-    if (G.Settings.get('calm')) amount *= 0.25;      // "less shake"
+    if (G.Settings.get('calm')) amount *= 0.25; // "less shake"
     this.shake = Math.min(1.2, this.shake + amount);
   },
 
@@ -44,19 +48,25 @@ G.Camera = {
     // Rounds to physical screen pixels: without this, 1 px seams appear
     // between chunks and the sprites "shimmer" when moving.
     const k = this.scale * this.dpr;
-    ctx.translate(Math.round((-this.left() + this._sx) * k) / k,
-                  Math.round((-this.top() + this._sy) * k) / k);
+    ctx.translate(Math.round((-this.left() + this._sx) * k) / k, Math.round((-this.top() + this._sy) * k) / k);
   },
 
-  left() { return this.x - this.w / 2; },
-  top() { return this.y - this.h / 2; },
+  left() {
+    return this.x - this.w / 2;
+  },
+  top() {
+    return this.y - this.h / 2;
+  },
 
   /** Is the point inside the view (with a margin)? */
   sees(x, y, pad = 60) {
-    return x > this.left() - pad && x < this.left() + this.w + pad &&
-           y > this.top() - pad && y < this.top() + this.h + pad;
+    return (
+      x > this.left() - pad && x < this.left() + this.w + pad && y > this.top() - pad && y < this.top() + this.h + pad
+    );
   },
 
   /** Radius of the circle that bounds the view: used to spawn outside. */
-  outerRadius() { return Math.hypot(this.w, this.h) / 2 + 40; }
+  outerRadius() {
+    return Math.hypot(this.w, this.h) / 2 + 40;
+  },
 };

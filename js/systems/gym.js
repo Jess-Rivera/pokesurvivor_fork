@@ -9,21 +9,37 @@
  * the badge line, the calm line) is EMITTED as a plain-data event on G.SimBus and rendered by ui/gym-present.js (docs/SIM-PRESENT-BOUNDARY.md).
  */
 G.Gym = (() => {
-  const FIRST_AT = 240, GAP = 240;       // seconds
-  const ENRAGE_RAMP = 30, ENRAGE_MAX = 2;
+  const FIRST_AT = 240,
+    GAP = 240; // seconds
+  const ENRAGE_RAMP = 30,
+    ENRAGE_MAX = 2;
   // Gate escalation (rework/gym-progression): a gate opens, GRACE s of come-when-ready, then every ESC_STEP s
   // both the wild spawn level and the gym leader's locked level climb by 1 (UNCAPPED by design: ignoring the gate
   // is meant to end the run). The bump is a single shared integer read by the wild spawner and the leader build.
-  const GRACE = 37, ESC_STEP = 10;       // seconds
-  let beaten = 0, nextAt = FIRST_AT, gate = null, badges = [];
-  let fight = null;      // readout of the current gym fight: { t0, hp, minFrac, taken, casts }
-  let esc = null;        // escalation state while a gate is open past grace: { bump, acc } (null = grace or no gate)
-  let loop = 1;          // which loop of the region this run is in: loop N fields the first N roster slots (G.Gyms.lineup). Dev-set until the real loop counter exists.
+  const GRACE = 37,
+    ESC_STEP = 10; // seconds
+  let beaten = 0,
+    nextAt = FIRST_AT,
+    gate = null,
+    badges = [];
+  let fight = null; // readout of the current gym fight: { t0, hp, minFrac, taken, casts }
+  let esc = null; // escalation state while a gate is open past grace: { bump, acc } (null = grace or no gate)
+  let loop = 1; // which loop of the region this run is in: loop N fields the first N roster slots (G.Gyms.lineup). Dev-set until the real loop counter exists.
   const list = () => G.Gyms.listFor(G.Enemies.region);
 
-  function reset() { beaten = 0; nextAt = FIRST_AT; gate = null; badges = []; fight = null; esc = null; loop = 1; }
+  function reset() {
+    beaten = 0;
+    nextAt = FIRST_AT;
+    gate = null;
+    badges = [];
+    fight = null;
+    esc = null;
+    loop = 1;
+  }
 
-  function now() { return G.Game.st.time; }
+  function now() {
+    return G.Game.st.time;
+  }
 
   /** Gate schedule: called every game frame (solo / host). */
   function update(dt, pl, t) {
@@ -31,33 +47,55 @@ G.Gym = (() => {
     // Escalation clock: runs while the gate is open on the map (not once you are in the arena). Anchored to run-time
     // (dt is the run clock), so a pause screen or draft does not tick it. Starts after GRACE s since the gate opened.
     if (gate && G.GymArena.gate && !G.GymArena.inArena) escalate(dt);
-    if (gate || G.GymArena.inArena || G.GymArena.gate || beaten >= list().length || nextAt == null || t < nextAt) return;
+    if (gate || G.GymArena.inArena || G.GymArena.gate || beaten >= list().length || nextAt == null || t < nextAt)
+      return;
     const entry = list()[beaten];
     const level = Math.round(G.Stats.levelForTime(t)) + G.Gyms.LEVEL_OFFSET;
-    const lead = G.Gyms.lineup(entry, 1, level)[0];       // the gate shows slot 1 at the level it spawns with
-    gate = { idx: beaten, id: entry.id, leader: entry.leader, badge: entry.badge, arena: entry.arena, boost: entry.boost || null, dex: lead.dex, species: G.DEX_BY[lead.dex].name, level, openedAt: t };
-    if (!G.GymArena.openGate(gate)) { gate = null; nextAt = t + 2; return; }   // no free spot yet: try again shortly
-    esc = null;   // fresh gate: grace first
+    const lead = G.Gyms.lineup(entry, 1, level)[0]; // the gate shows slot 1 at the level it spawns with
+    gate = {
+      idx: beaten,
+      id: entry.id,
+      leader: entry.leader,
+      badge: entry.badge,
+      arena: entry.arena,
+      boost: entry.boost || null,
+      dex: lead.dex,
+      species: G.DEX_BY[lead.dex].name,
+      level,
+      openedAt: t,
+    };
+    if (!G.GymArena.openGate(gate)) {
+      gate = null;
+      nextAt = t + 2;
+      return;
+    } // no free spot yet: try again shortly
+    esc = null; // fresh gate: grace first
   }
 
   /** The escalation clock. After GRACE s open, start climbing the shared bump by 1 every ESC_STEP s. Uncapped. */
   function escalate(dt) {
     const since = now() - gate.openedAt;
-    if (since < GRACE) return;              // grace period: no penalty yet
-    if (!esc) { esc = { bump: 0, acc: 0 }; }
+    if (since < GRACE) return; // grace period: no penalty yet
+    if (!esc) {
+      esc = { bump: 0, acc: 0 };
+    }
     esc.acc += dt;
     while (esc.acc >= ESC_STEP) {
       esc.acc -= ESC_STEP;
       esc.bump++;
-      G.SimBus.emit('gym:escalate', { leader: gate.leader, bump: esc.bump });   // ui/gym-present.js renders the toast and the sound
+      G.SimBus.emit('gym:escalate', { leader: gate.leader, bump: esc.bump }); // ui/gym-present.js renders the toast and the sound
     }
   }
 
   /** Shared escalation bump (integer levels). Read by the wild spawner (enemy.js) and the leader build (makeDef).
    *  0 during grace or when no gate is open. This is the single source of truth for 'how much have you dawdled'. */
-  function escBump() { return esc ? esc.bump : 0; }
+  function escBump() {
+    return esc ? esc.bump : 0;
+  }
   /** Seconds left in the grace period (0 once escalating), or null when no gate is open. For the gate gauge (hud.js). */
-  function graceLeft() { return gate ? Math.max(0, GRACE - (now() - gate.openedAt)) : null; }
+  function graceLeft() {
+    return gate ? Math.max(0, GRACE - (now() - gate.openedAt)) : null;
+  }
 
   /** Readout for tuning: how long, how much of your HP it took, the lowest you got, and what it cast. */
   function trackFight(dt, pl, t) {
@@ -66,10 +104,24 @@ G.Gym = (() => {
     fight.hp = pl.hp;
     if (pl.maxHp) fight.minFrac = Math.min(fight.minFrac, pl.hp / pl.maxHp);
   }
-  function noteCast(id) { if (fight) fight.casts[id] = (fight.casts[id] || 0) + 1; }
+  function noteCast(id) {
+    if (fight) fight.casts[id] = (fight.casts[id] || 0) + 1;
+  }
   function report(result) {
     if (!fight) return null;
-    const secs = Math.round(now() - fight.t0), s = (result || 'fight') + ' after ' + secs + ' s: ' + (fight.who || 'player') + ' took ' + Math.round(fight.taken * 100) + '% of its max HP in total, lowest ' + Math.round(fight.minFrac * 100) + '% HP, casts ' + JSON.stringify(fight.casts);
+    const secs = Math.round(now() - fight.t0),
+      s =
+        (result || 'fight') +
+        ' after ' +
+        secs +
+        ' s: ' +
+        (fight.who || 'player') +
+        ' took ' +
+        Math.round(fight.taken * 100) +
+        '% of its max HP in total, lowest ' +
+        Math.round(fight.minFrac * 100) +
+        '% HP, casts ' +
+        JSON.stringify(fight.casts);
     console.log('[Gym] ' + s);
     return s;
   }
@@ -77,23 +129,43 @@ G.Gym = (() => {
   /** The leader's def for roster slot `slot` (0 = first): HP from the elite reference model with the gym's TTK target, at the gym level.
    *  The species is the stage the slot's evolution line shows at the effective level (G.Gyms.stageFor). */
   function makeDef(g, slot = 0) {
-    const entry = list()[g.idx], sig = entry.signatures[slot];
+    const entry = list()[g.idx],
+      sig = entry.signatures[slot];
     if (!sig) throw new Error('Gym.makeDef: ' + entry.leader + ' has no roster slot ' + slot);
     // Effective level = the locked base plus however far escalation has climbed by the moment you enter.
     // Read once here (the leader is only instantiated at entry), so 'Brock got stronger while you waited' is baked in.
     const bump = escBump();
     const lvl = g.level + bump;
-    if (bump > 0) g.escBumpSeen = true;   // remembered on the gate so onReturn can play the 'world calms' line
-    const dex = G.Gyms.stageFor(sig, lvl).dex, mon = G.DEX_BY[dex];
-    const tEq = Math.max(0, (lvl - 1) / 49 * 1800);
+    if (bump > 0) g.escBumpSeen = true; // remembered on the gate so onReturn can play the 'world calms' line
+    const dex = G.Gyms.stageFor(sig, lvl).dex,
+      mon = G.DEX_BY[dex];
+    const tEq = Math.max(0, ((lvl - 1) / 49) * 1800);
     const base = { dex, baseHp: mon.stats ? mon.stats[0] : 50 };
     const hp = G.Elites.hpFor(base, tEq, G.Gyms.TTK).hp;
     return {
-      dex, name: mon.name, hp, spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
-      dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260,
+      dex,
+      name: mon.name,
+      hp,
+      spd: G.Stats.speedToPx(mon.stats ? mon.stats[5] : 65),
+      dmg: 20,
+      xp: 0,
+      behavior: 'chase',
+      shotDmg: 10,
+      shotCd: 1,
+      range: 260,
       // moves and cards are read by the GymBrain (boss-ai.js), which casts the moves through G.MoveSim with the cards folded in (slice 7a)
-      gym: { level: lvl, leader: g.leader, badge: g.badge, species: mon.name, stance: sig.stance, power: sig.power || 1, tempo: sig.tempo || 1,
-        cards: Object.assign({}, sig.cards), moves: sig.moves.map(m => Object.assign({}, m)), engagedAt: null }
+      gym: {
+        level: lvl,
+        leader: g.leader,
+        badge: g.badge,
+        species: mon.name,
+        stance: sig.stance,
+        power: sig.power || 1,
+        tempo: sig.tempo || 1,
+        cards: Object.assign({}, sig.cards),
+        moves: sig.moves.map((m) => Object.assign({}, m)),
+        engagedAt: null,
+      },
     };
   }
 
@@ -116,15 +188,21 @@ G.Gym = (() => {
     badges.push(g.badge);
     report('won');
     fight = null;
-    G.Game.grantLevels(1);                 // guaranteed level (no XP is dropped; the leader pays a level, not orbs)
-    G.Game.reviveTeam();                   // full team revive, fainted members included
-    if (g.boost) G.Game.badgeBoost(g.boost.stat, g.boost.pct);   // the badge's run-long team buff (mainline Boulder Badge: +10% Attack)
-    G.SimBus.emit('gym:badge', { badge: g.badge, stat: g.boost ? g.boost.stat : null, pct: g.boost ? g.boost.pct : null });
+    G.Game.grantLevels(1); // guaranteed level (no XP is dropped; the leader pays a level, not orbs)
+    G.Game.reviveTeam(); // full team revive, fainted members included
+    if (g.boost) G.Game.badgeBoost(g.boost.stat, g.boost.pct); // the badge's run-long team buff (mainline Boulder Badge: +10% Attack)
+    G.SimBus.emit('gym:badge', {
+      badge: g.badge,
+      stat: g.boost ? g.boost.stat : null,
+      pct: g.boost ? g.boost.pct : null,
+    });
   }
 
   /** Back on the map after the arena: schedule the next gate and the next elite. */
   function onReturn(g) {
-    beaten++; gate = null; esc = null;     // snap-back: bump cleared, next wild spawns read 0 -> correct run-time level
+    beaten++;
+    gate = null;
+    esc = null; // snap-back: bump cleared, next wild spawns read 0 -> correct run-time level
     nextAt = beaten < list().length ? now() + GAP : null;
     G.Elites.afterGate(now());
     if (g && g.escBumpSeen) G.SimBus.emit('gym:calm', { leader: g.leader });
@@ -132,18 +210,54 @@ G.Gym = (() => {
 
   /** The roster this gym fights with right now: the first N slots for the current loop, each at its stage for the effective level
    *  (the gate's locked level plus the escalation bump). Pure read; the arena flow that fields them all at once comes in the next slice. */
-  function roster(g) { return G.Gyms.lineup(list()[g.idx], loop, g.level + escBump()); }
+  function roster(g) {
+    return G.Gyms.lineup(list()[g.idx], loop, g.level + escBump());
+  }
 
   return {
     /** Dev: open the next gate on the next frame. */
-    debugOpen() { nextAt = 0; },
-    FIRST_AT, GAP, GRACE, ESC_STEP, reset, update, noteCast, report, makeDef, enrageMul, enrageIn, onWin, onReturn, now,
-    escBump, graceLeft, roster,
+    debugOpen() {
+      nextAt = 0;
+    },
+    FIRST_AT,
+    GAP,
+    GRACE,
+    ESC_STEP,
+    reset,
+    update,
+    noteCast,
+    report,
+    makeDef,
+    enrageMul,
+    enrageIn,
+    onWin,
+    onReturn,
+    now,
+    escBump,
+    graceLeft,
+    roster,
     /** Dev: set the current loop (1 to G.Gyms.LOOPS). Cleared by reset() on a new run. */
-    debugLoop(n) { loop = Math.max(1, Math.min(G.Gyms.LOOPS, n | 0)); },
-    get loop() { return loop; },
+    debugLoop(n) {
+      loop = Math.max(1, Math.min(G.Gyms.LOOPS, n | 0));
+    },
+    get loop() {
+      return loop;
+    },
     /** Dev: force the gate past grace and set the bump directly. */
-    debugEsc(n) { if (gate) { gate.openedAt = now() - GRACE - 1; esc = { bump: n | 0, acc: 0 }; } },
-    get gate() { return gate; }, get beaten() { return beaten; }, get badges() { return badges; }
+    debugEsc(n) {
+      if (gate) {
+        gate.openedAt = now() - GRACE - 1;
+        esc = { bump: n | 0, acc: 0 };
+      }
+    },
+    get gate() {
+      return gate;
+    },
+    get beaten() {
+      return beaten;
+    },
+    get badges() {
+      return badges;
+    },
   };
 })();

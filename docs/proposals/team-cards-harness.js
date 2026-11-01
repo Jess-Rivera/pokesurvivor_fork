@@ -374,7 +374,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 { const dbg = fs.readFileSync(R + '/js/core/debug.js', 'utf8');
   const m = dbg.match(/cards: \[([^\]]*)\]/), ids = m ? (m[1].match(/'([^']+)'/g) || []).map(x => x.slice(1, -1)) : [];
   ok(ids.join(' ') === 'ember razor-leaf rock-slide substitute' && ids.every(id => G.MoveDefs[id]), 'debug: the cards set is Ember, Razor Leaf, Rock Slide and Substitute, all with a def (routed)');
-  ok(dbg.includes("|| set === 'cards') {") && dbg.includes('function cards(id, n = 1)') && dbg.includes('hitbox, newcombat, cards, movechecker };'), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');     // export list retargeted 2026-10-31 (movechecker added)
+  ok(/\|\|\s*set === 'cards'\s*\) \{/.test(dbg) && dbg.includes('function cards(id, n = 1)') && /newcombat,\s*cards,\s*movechecker,?\s*\};/.test(dbg), 'debug: the cards set gets dummy rings and G.Debug.cards is exported');     // export list retargeted 2026-10-31 (movechecker added)
   console.log('9 debug set'); }
 
 console.log(fail ? '\nteam-cards harness: ' + fail + ' FAILED of ' + n : '\nteam-cards harness: ' + n + '/' + n + ' checks passed');

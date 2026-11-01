@@ -25,17 +25,20 @@
  * Guest mode plays with an in-memory save that is not stored.
  */
 G.DB = (() => {
-  const K_ACC = 'ps.accounts', K_SES = 'ps.session', K_SAVE = 'ps.save.';
-  const K_CLOUD = 'ps.cloud.', K_MIGRATED = 'ps.migrated.';
+  const K_ACC = 'ps.accounts',
+    K_SES = 'ps.session',
+    K_SAVE = 'ps.save.';
+  const K_CLOUD = 'ps.cloud.',
+    K_MIGRATED = 'ps.migrated.';
   const VERSION = 3;
   const START_COINS = 500;
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
-  const NAME_DOMAIN = 'jugadores.pokesurvivor.net';   // only for the internal email
+  const NAME_DOMAIN = 'jugadores.pokesurvivor.net'; // only for the internal email
 
-  let mode = 'local';       // 'cloud' | 'local'
-  let localReason = '';     // why there is no cloud: 'file' | 'config' | 'host' | 'error'
-  let user = null;          // visible name
-  let key = null;           // local key (lowercase) or Firebase uid
+  let mode = 'local'; // 'cloud' | 'local'
+  let localReason = ''; // why there is no cloud: 'file' | 'config' | 'host' | 'error'
+  let user = null; // visible name
+  let key = null; // local key (lowercase) or Firebase uid
   let guest = false;
   let save = null;
   let storageOk = true;
@@ -43,13 +46,20 @@ G.DB = (() => {
   // ---------------- safe local storage ----------------
 
   function read(k) {
-    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
-    catch (e) { storageOk = false; return null; }
+    try {
+      const v = localStorage.getItem(k);
+      return v ? JSON.parse(v) : null;
+    } catch (e) {
+      storageOk = false;
+      return null;
+    }
   }
   function write(k, v) {
     const s = JSON.stringify(v);
-    try { localStorage.setItem(k, s); return true; }
-    catch (e) {
+    try {
+      localStorage.setItem(k, s);
+      return true;
+    } catch (e) {
       // Browser full (mostly from what the ranking stores): the
       // disposable data is freed and it retries. Before, the save copy stopped
       // being written silently and, on reloading, it reverted to the cloud one.
@@ -58,11 +68,21 @@ G.DB = (() => {
           const key = localStorage.key(i);
           if (key && /^ps\.rk\.c\./.test(key)) localStorage.removeItem(key);
         }
-        localStorage.setItem(k, s); return true;
-      } catch (e2) { storageOk = false; return false; }
+        localStorage.setItem(k, s);
+        return true;
+      } catch (e2) {
+        storageOk = false;
+        return false;
+      }
     }
   }
-  function remove(k) { try { localStorage.removeItem(k); } catch (e) { /* nothing */ } }
+  function remove(k) {
+    try {
+      localStorage.removeItem(k);
+    } catch (e) {
+      /* nothing */
+    }
+  }
 
   // ---------------- save ----------------
 
@@ -71,32 +91,45 @@ G.DB = (() => {
       v: VERSION,
       name,
       created: Date.now(),
-      updated: Date.now(),    // last change (for merging)
+      updated: Date.now(), // last change (for merging)
       coins: START_COINS,
-      owned: {},              // dex -> { at, from: 'starter'|'gacha'|'wild' }
-      shiny: {},              // dex -> { at, from } — shiny variants obtained
-      partner: null,          // dex of the Pokemon you play with
-      partnerShiny: false,    // play with its shiny version (if you have it)
+      owned: {}, // dex -> { at, from: 'starter'|'gacha'|'wild' }
+      shiny: {}, // dex -> { at, from } — shiny variants obtained
+      partner: null, // dex of the Pokemon you play with
+      partnerShiny: false, // play with its shiny version (if you have it)
       team: [null, null, null, null, null, null], // 6 FIXED slots, each { dex, shiny } or null (slot 0 = lead = partner)
-      starter: null,          // dex you got in the test
-      personality: null,      // { trait, scores }
-      upgrades: {},           // (old) account upgrades; now they go per Pokemon
-      pupg: {},               // dex -> { id -> level }: each Pokemon's upgrades
-      tickets: { t1: 0, t10: 0 },   // gacha tickets (x1 and x10)
-      pity: {},               // banner generation -> pulls without a 5-star
-      legends: {},            // dex -> date (old saves only: no longer written since the gyms-only change, 2026-10-31)
-      arenas: {},             // type -> date (old saves only: no longer written since the gyms-only change)
-      itemsFound: {},         // id -> date: equippable items found
-      evoMoves: {},           // id -> date: moves ever evolved
-      ach: {},                // id -> date: achievements earned
-      missions: {},           // daily / weekly missions (systems/progress.js)
-      profile: { favs: [], title: '' },   // public profile: 3 favorites and title
-      stats: { runs: 0, bestTime: 0, bestLevel: 0, totalKills: 0, pulls: 0, coinsEarned: 0, shinies: 0,
-               bossesTotal: 0, riftWins: 0, evolutions: 0, missionsDone: 0, groupRuns: 0, bestGroupTime: 0 },
-      teamItems: {},          // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
-      teamLoadout: []         // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
+      starter: null, // dex you got in the test
+      personality: null, // { trait, scores }
+      upgrades: {}, // (old) account upgrades; now they go per Pokemon
+      pupg: {}, // dex -> { id -> level }: each Pokemon's upgrades
+      tickets: { t1: 0, t10: 0 }, // gacha tickets (x1 and x10)
+      pity: {}, // banner generation -> pulls without a 5-star
+      legends: {}, // dex -> date (old saves only: no longer written since the gyms-only change, 2026-10-31)
+      arenas: {}, // type -> date (old saves only: no longer written since the gyms-only change)
+      itemsFound: {}, // id -> date: equippable items found
+      evoMoves: {}, // id -> date: moves ever evolved
+      ach: {}, // id -> date: achievements earned
+      missions: {}, // daily / weekly missions (systems/progress.js)
+      profile: { favs: [], title: '' }, // public profile: 3 favorites and title
+      stats: {
+        runs: 0,
+        bestTime: 0,
+        bestLevel: 0,
+        totalKills: 0,
+        pulls: 0,
+        coinsEarned: 0,
+        shinies: 0,
+        bossesTotal: 0,
+        riftWins: 0,
+        evolutions: 0,
+        missionsDone: 0,
+        groupRuns: 0,
+        bestGroupTime: 0,
+      },
+      teamItems: {}, // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
+      teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
     };
-    if (G.Items) G.Items.grantStarters(save);       // Lucky Egg + Amulet Coin
+    if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
     return save;
   }
 
@@ -109,7 +142,7 @@ G.DB = (() => {
     if (typeof s.pity === 'number') s.pity = { 1: s.pity };
     // v2 -> v3: upgrades belonged to the account; they pass to the companion of that time.
     if (!s.pupgDone) {
-      if (s.partner && Object.values(s.upgrades || {}).some(v => v > 0)) {
+      if (s.partner && Object.values(s.upgrades || {}).some((v) => v > 0)) {
         s.pupg[s.partner] = Object.assign({}, s.upgrades);
       }
       s.pupgDone = true;
@@ -127,29 +160,33 @@ G.DB = (() => {
    * server (firestore.rules, saves).
    */
   function sanitize(s) {
-    const n = v => (Number.isFinite(+v) && +v > 0 ? Math.floor(+v) : 0);
+    const n = (v) => (Number.isFinite(+v) && +v > 0 ? Math.floor(+v) : 0);
     s.coins = n(s.coins);
     s.tickets.t1 = n(s.tickets.t1);
     s.tickets.t10 = n(s.tickets.t10);
     // F3d-2 team items: keep only real team-tier ids, then a clean loadout (unlocked, no duplicates, one per group, within the unlocked slots).
     if (G.Items) {
       if (!s.teamItems || typeof s.teamItems !== 'object') s.teamItems = {};
-      for (const id of Object.keys(s.teamItems)) if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'run') delete s.teamItems[id];
+      for (const id of Object.keys(s.teamItems))
+        if (!G.Items.BY[id] || G.Items.BY[id].tier !== 'run') delete s.teamItems[id];
       G.Items.cleanLoadout(s);
     }
-    if (G.DEX_BY) for (const coll of ['owned', 'shiny']) {
-      for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
-    }
+    if (G.DEX_BY)
+      for (const coll of ['owned', 'shiny']) {
+        for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
+      }
     // Shortcuts: 4 slots with a move that exists (or null), no repeats.
     if (s.pbind && typeof s.pbind === 'object') {
       for (const d of Object.keys(s.pbind)) {
         const l = Array.isArray(s.pbind[d]) ? s.pbind[d].slice(0, 4) : [];
         const seen = new Set();
-        s.pbind[d] = [0, 1, 2, 3].map(i => {
+        s.pbind[d] = [0, 1, 2, 3].map((i) => {
           // A retired move (Bubble, Hail) loads as its replacement, unless the list already binds that move itself (slice 7b).
-          const r = G.Moves && G.Moves.RETIRED[l[i]], id = r ? (l.includes(r) ? null : r) : l[i];
+          const r = G.Moves && G.Moves.RETIRED[l[i]],
+            id = r ? (l.includes(r) ? null : r) : l[i];
           if (typeof id !== 'string' || (G.MoveDefs && !G.MoveDefs[id]) || seen.has(id)) return null;
-          seen.add(id); return id;
+          seen.add(id);
+          return id;
         });
       }
     } else s.pbind = {};
@@ -157,17 +194,27 @@ G.DB = (() => {
     if (s.pban && typeof s.pban === 'object') {
       for (const d of Object.keys(s.pban)) {
         const l = Array.isArray(s.pban[d]) ? s.pban[d] : [];
-        s.pban[d] = [...new Set(l.filter(id => typeof id === 'string' && (!G.MoveDefs || (G.MoveDefs[id] && !(G.Moves && G.Moves.RETIRED[id])))))].slice(0, 3);     // a retired move's veto is dropped
+        s.pban[d] = [
+          ...new Set(
+            l.filter(
+              (id) => typeof id === 'string' && (!G.MoveDefs || (G.MoveDefs[id] && !(G.Moves && G.Moves.RETIRED[id])))
+            )
+          ),
+        ].slice(0, 3); // a retired move's veto is dropped
       }
     } else s.pban = {};
-    if (G.Upgrades) for (const d of Object.keys(s.pupg || {})) {
-      const u = s.pupg[d];
-      if (!u || typeof u !== 'object') { delete s.pupg[d]; continue; }
-      for (const id of Object.keys(u)) {
-        if (!G.Upgrades.BY[id]) delete u[id];
-        else u[id] = Math.min(G.Upgrades.BY[id].max, n(u[id]));
+    if (G.Upgrades)
+      for (const d of Object.keys(s.pupg || {})) {
+        const u = s.pupg[d];
+        if (!u || typeof u !== 'object') {
+          delete s.pupg[d];
+          continue;
+        }
+        for (const id of Object.keys(u)) {
+          if (!G.Upgrades.BY[id]) delete u[id];
+          else u[id] = Math.min(G.Upgrades.BY[id].max, n(u[id]));
+        }
       }
-    }
     normalizeTeam(s);
   }
 
@@ -189,7 +236,10 @@ G.DB = (() => {
     for (let i = 0; i < TEAM_SIZE; i++) {
       const t = src[i];
       const ok = t && t.dex != null && !seen.has(t.dex) && (!G.DEX_BY || G.DEX_BY[t.dex]);
-      if (!ok) { out.push(null); continue; }
+      if (!ok) {
+        out.push(null);
+        continue;
+      }
       seen.add(t.dex);
       out.push({ dex: t.dex, shiny: !!t.shiny });
     }
@@ -223,7 +273,7 @@ G.DB = (() => {
     for (const k in older.upgrades || {}) r.upgrades[k] = Math.max(r.upgrades[k] || 0, older.upgrades[k]);
     r.pupg = r.pupg || {};
     for (const d in older.pupg || {}) {
-      const mine = r.pupg[d] = r.pupg[d] || {};
+      const mine = (r.pupg[d] = r.pupg[d] || {});
       for (const k in older.pupg[d]) mine[k] = Math.max(mine[k] || 0, older.pupg[d][k]);
     }
     r.pupgDone = r.pupgDone || older.pupgDone;
@@ -233,8 +283,12 @@ G.DB = (() => {
       for (const k in older[coll] || {}) if (!r[coll][k]) r[coll][k] = older[coll][k];
     }
     // Missions from the same day/week: the greater progress and what was already claimed.
-    const mo = older.missions || {}, mr = r.missions = r.missions || {};
-    for (const [per, list] of [['day', 'daily'], ['week', 'weekly']]) {
+    const mo = older.missions || {},
+      mr = (r.missions = r.missions || {});
+    for (const [per, list] of [
+      ['day', 'daily'],
+      ['week', 'weekly'],
+    ]) {
       if (mr[per] !== mo[per] || !mr[list] || !mo[list]) continue;
       mr[list].forEach((m, i) => {
         const o = mo[list][i];
@@ -247,7 +301,10 @@ G.DB = (() => {
     for (const k in older.stats || {}) r.stats[k] = Math.max(r.stats[k] || 0, older.stats[k] || 0);
     if (r.starter == null) r.starter = older.starter;
     if (r.personality == null) r.personality = older.personality;
-    if (r.partner == null || !r.owned[r.partner]) { r.partner = older.partner; r.partnerShiny = older.partnerShiny; }
+    if (r.partner == null || !r.owned[r.partner]) {
+      r.partner = older.partner;
+      r.partnerShiny = older.partnerShiny;
+    }
     r.created = Math.min(a.created || Date.now(), b.created || Date.now());
     r.updated = Math.max(a.updated || 0, b.updated || 0);
     return r;
@@ -258,7 +315,7 @@ G.DB = (() => {
   // Pokemon...): open screens hold references to them. Before they were
   // replaced and a purchase made right after uploading the save was
   // recorded in the old copy: the coins were charged and the upgrade was lost.
-  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
   function assignDeep(dst, src) {
     for (const k of Object.keys(dst)) if (!(k in src)) delete dst[k];
     for (const k in src) {
@@ -266,7 +323,9 @@ G.DB = (() => {
       else dst[k] = src[k];
     }
   }
-  function applyInPlace(s) { assignDeep(save, s); }
+  function applyInPlace(s) {
+    assignDeep(save, s);
+  }
 
   const VALID = /^[A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ]{3,16}$/;
 
@@ -278,12 +337,14 @@ G.DB = (() => {
     const text = salt + ':' + pass;
     if (window.crypto && crypto.subtle) {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+      return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
     }
-    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    let h1 = 0xdeadbeef,
+      h2 = 0x41c6ce57;
     for (let i = 0; i < text.length; i++) {
       const c = text.charCodeAt(i);
-      h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677);
+      h1 = Math.imul(h1 ^ c, 2654435761);
+      h2 = Math.imul(h2 ^ c, 1597334677);
     }
     return 'f' + (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
   }
@@ -292,7 +353,7 @@ G.DB = (() => {
     const a = new Uint8Array(12);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a);
     else for (let i = 0; i < a.length; i++) a[i] = Math.random() * 256;
-    return [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+    return [...a].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   function loadLocal(k, name) {
@@ -301,7 +362,9 @@ G.DB = (() => {
   }
 
   function beginLocal(k, name) {
-    key = k; user = name; guest = false;
+    key = k;
+    user = name;
+    guest = false;
     save = loadLocal(k, name);
     write(K_SES, k);
   }
@@ -321,7 +384,7 @@ G.DB = (() => {
   async function loginLocal(name, pass) {
     const accs = read(K_ACC) || {};
     const acc = accs[name.toLowerCase()];
-    if (!acc || acc.hash !== await hash(pass || '', acc.salt)) {
+    if (!acc || acc.hash !== (await hash(pass || '', acc.salt))) {
       return { ok: false, error: 'Usuario o contraseña incorrectos.' };
     }
     beginLocal(name.toLowerCase(), acc.name);
@@ -332,7 +395,10 @@ G.DB = (() => {
     const k = read(K_SES);
     if (!k) return false;
     const accs = read(K_ACC) || {};
-    if (!accs[k]) { remove(K_SES); return false; }
+    if (!accs[k]) {
+      remove(K_SES);
+      return false;
+    }
     beginLocal(k, accs[k].name);
     return true;
   }
@@ -342,7 +408,7 @@ G.DB = (() => {
     const k = (name || '').toLowerCase();
     const acc = (read(K_ACC) || {})[k];
     if (!acc || read(K_MIGRATED + k)) return null;
-    if (acc.hash !== await hash(pass || '', acc.salt)) return null;
+    if (acc.hash !== (await hash(pass || '', acc.salt))) return null;
     const s = read(K_SAVE + k);
     return s ? { key: k, save: migrate(s, acc.name) } : null;
   }
@@ -351,8 +417,16 @@ G.DB = (() => {
   //                               MODO NUBE
   // =====================================================================
 
-  let auth = null, fs = null, rtdb = null, uid = null, unlisten = null;
-  let pushT = 0, retryT = 0, pending = false, pushing = null, lastPush = 0;
+  let auth = null,
+    fs = null,
+    rtdb = null,
+    uid = null,
+    unlisten = null;
+  let pushT = 0,
+    retryT = 0,
+    pending = false,
+    pushing = null,
+    lastPush = 0;
   // At most one upload every 30 min (with thousands of players, every 5 min
   // was tens of thousands of writes per hour); the stuff that costs something
   // (gacha, upgrades), at 30 s. The local copy is always saved immediately (and merged with the
@@ -368,17 +442,31 @@ G.DB = (() => {
   // at most every 30 min:
   // with 2 h, whoever opened the game on another device (or in another
   // app's browser) saw the old cloud copy and thought they had lost it.
-  const PUSH_GAP = 2 * 3600 * 1000, PUSH_GAP_URGENT = 15 * 1000, PUSH_GAP_RUN = 30 * 60 * 1000, HIDE_GAP = 30 * 60 * 1000;
-  let syncState = 'local';           // 'ok' | 'syncing' | 'pending' | 'offline' | 'local'
+  const PUSH_GAP = 2 * 3600 * 1000,
+    PUSH_GAP_URGENT = 15 * 1000,
+    PUSH_GAP_RUN = 30 * 60 * 1000,
+    HIDE_GAP = 30 * 60 * 1000;
+  let syncState = 'local'; // 'ok' | 'syncing' | 'pending' | 'offline' | 'local'
   const listeners = new Set();
 
-  function setSync(s) { syncState = s; listeners.forEach(fn => { try { fn(s); } catch (e) { /* nothing */ } }); }
+  function setSync(s) {
+    syncState = s;
+    listeners.forEach((fn) => {
+      try {
+        fn(s);
+      } catch (e) {
+        /* nothing */
+      }
+    });
+  }
 
   function loadScript(src) {
     return new Promise((res, rej) => {
       const el = document.createElement('script');
-      el.src = src; el.async = true;
-      el.onload = res; el.onerror = () => rej(new Error('No se pudo cargar ' + src));
+      el.src = src;
+      el.async = true;
+      el.onload = res;
+      el.onerror = () => rej(new Error('No se pudo cargar ' + src));
       document.head.appendChild(el);
     });
   }
@@ -395,9 +483,18 @@ G.DB = (() => {
 
   async function initCloud() {
     const cfg = G.FIREBASE_CONFIG;
-    if (!/^https?:$/.test(location.protocol)) { localReason = 'file'; return false; }
-    if (cfg && !cfg.emulator && !HOSTS.includes(location.hostname)) { localReason = 'host'; return false; }
-    if (!cfg || !cfg.apiKey || !cfg.projectId) { localReason = 'config'; return false; }
+    if (!/^https?:$/.test(location.protocol)) {
+      localReason = 'file';
+      return false;
+    }
+    if (cfg && !cfg.emulator && !HOSTS.includes(location.hostname)) {
+      localReason = 'host';
+      return false;
+    }
+    if (!cfg || !cfg.apiKey || !cfg.projectId) {
+      localReason = 'config';
+      return false;
+    }
     await loadScript(SDK + 'firebase-app-compat.js');
     await loadScript(SDK + 'firebase-auth-compat.js');
     await loadScript(SDK + 'firebase-firestore-compat.js');
@@ -408,7 +505,11 @@ G.DB = (() => {
     fs = firebase.firestore();
     // Some networks and antivirus cut off live updates (friends,
     // invitations): Firebase tries another way to receive them if needed.
-    try { fs.settings({ experimentalAutoDetectLongPolling: true }); } catch (e) { /* already set */ }
+    try {
+      fs.settings({ experimentalAutoDetectLongPolling: true });
+    } catch (e) {
+      /* already set */
+    }
     rtdb = cfg.databaseURL ? firebase.database() : null;
     // Testing only: { ..., emulator: true } uses the local Firebase emulator.
     if (cfg.emulator) {
@@ -418,44 +519,58 @@ G.DB = (() => {
     }
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     auth.languageCode = 'es';
-    addEventListener('online', () => { if (pending) pushNow(); });
+    addEventListener('online', () => {
+      if (pending) pushNow();
+    });
     // On leaving or closing the tab what is pending uploads, but no more than
     // once every 10 min: people switch tabs often and each game was
     // uploading every ~9 min instead of every 30 (2026-10-12, the biggest Firebase
     // cost). What is not uploaded stays in this browser's copy and
     // uploads on re-entering.
-    const hideFlush = () => { if (pending && Date.now() - lastPush > HIDE_GAP) pushNow(); };
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') hideFlush(); });
+    const hideFlush = () => {
+      if (pending && Date.now() - lastPush > HIDE_GAP) pushNow();
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') hideFlush();
+    });
     // On closing or reloading the page, what is pending always uploads.
-    addEventListener('pagehide', () => { if (pending) pushNow(); });
+    addEventListener('pagehide', () => {
+      if (pending) pushNow();
+    });
     return true;
   }
 
   /** Firebase requires an email: the name is encoded into an internal one, unique and valid. */
   function nameToEmail(name) {
-    const hex = [...new TextEncoder().encode(name.trim().toLowerCase())].map(b => b.toString(16).padStart(2, '0')).join('');
+    const hex = [...new TextEncoder().encode(name.trim().toLowerCase())]
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
     return hex + '@' + NAME_DOMAIN;
   }
 
   function displayNameOf(u) {
-    const n = ((u && u.displayName) || 'Entrenador').trim().split(/\s+/)[0].replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ]/g, '');
+    const n = ((u && u.displayName) || 'Entrenador')
+      .trim()
+      .split(/\s+/)[0]
+      .replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ]/g, '');
     return (n || 'Entrenador').slice(0, 16);
   }
 
   const docRef = () => fs.collection('saves').doc(uid);
-  const plain = s => JSON.parse(JSON.stringify(s));      // Firestore does not allow undefined
+  const plain = (s) => JSON.parse(JSON.stringify(s)); // Firestore does not allow undefined
 
   /** Opens the cloud save of a just-authenticated user. */
   async function openCloud(u, opts = {}) {
     uid = u.uid;
-    if (G.Signups) G.Signups.report(u);          // monthly account cap (net/signups.js)
+    if (G.Signups) G.Signups.report(u); // monthly account cap (net/signups.js)
     const cached = read(K_CLOUD + uid);
-    let remote = null, online = true;
+    let remote = null,
+      online = true;
     try {
       const snap = await docRef().get();
       remote = snap.exists ? snap.data().save : null;
     } catch (e) {
-      if (!cached) throw e;                // offline and no copy: there is nothing to open
+      if (!cached) throw e; // offline and no copy: there is nothing to open
       online = false;
     }
     let s = merge(cached && migrate(cached), remote && migrate(remote));
@@ -465,7 +580,9 @@ G.DB = (() => {
       write(K_MIGRATED + opts.legacy.key, uid);
     }
     save = migrate(s, s.name);
-    key = uid; user = save.name; guest = false;
+    key = uid;
+    user = save.name;
+    guest = false;
     write(K_CLOUD + uid, save);
     // It only uploads if there is something the cloud does not have (new account, progress on
     // this computer not uploaded...), and WITHOUT waiting: before, the menu did not show until
@@ -473,9 +590,12 @@ G.DB = (() => {
     // (Comparing the whole text gave "different" almost always and it uploaded on every
     // entry: now only if this copy is newer than the cloud one.)
     const same = remote && !opts.legacy && (!cached || (cached.updated || 0) <= (remote.updated || 0));
-    lastPush = Date.now();       // the first purchase or ticket does not upload immediately: it waits like the rest
-    if (!online) { pending = true; setSync('offline'); scheduleRetry(); }
-    else if (same) setSync('ok');
+    lastPush = Date.now(); // the first purchase or ticket does not upload immediately: it waits like the rest
+    if (!online) {
+      pending = true;
+      setSync('offline');
+      scheduleRetry();
+    } else if (same) setSync('ok');
     else pushNow();
   }
 
@@ -484,28 +604,42 @@ G.DB = (() => {
    * If you play on two computers, the saves merge on entering and on
    * each upload (a transaction with merge()).
    */
-  function stopListening() { if (unlisten) { unlisten(); unlisten = null; } }
+  function stopListening() {
+    if (unlisten) {
+      unlisten();
+      unlisten = null;
+    }
+  }
 
   /*
    * If the admin has banned the account from the ranking (ban = true in the cloud, see
    * firestore.rules), every save has to preserve it: it is copied from the cloud.
    * It never uploads twice in under 65 s; meanwhile, everything is in the browser.
    */
-  const K_OK = 'ps.cloudok.', MIN_GAP = 65000;
+  const K_OK = 'ps.cloudok.',
+    MIN_GAP = 65000;
   const sinceOk = () => Date.now() - (+read(K_OK + uid) || 0);
 
   /** Uploads the save, merging it with whatever is in the cloud (transaction). */
   function pushNow() {
     if (mode !== 'cloud' || guest || !save || !uid) return Promise.resolve();
     // If an upload is already in progress, another is done right after (for whatever changed meanwhile).
-    if (pushing) { pending = true; return pushing.then(() => (pending ? pushNow() : undefined)); }
-    clearTimeout(pushT); pushT = 0; pushDue = 0;
+    if (pushing) {
+      pending = true;
+      return pushing.then(() => (pending ? pushNow() : undefined));
+    }
+    clearTimeout(pushT);
+    pushT = 0;
+    pushDue = 0;
     if (navigator.onLine === false) {
-      pending = true; setSync('offline'); scheduleRetry();
+      pending = true;
+      setSync('offline');
+      scheduleRetry();
       return Promise.resolve();
     }
     if (sinceOk() < MIN_GAP) {
-      pending = true; setSync('pending');
+      pending = true;
+      setSync('pending');
       schedulePush(MIN_GAP - sinceOk() + 500);
       return Promise.resolve();
     }
@@ -513,7 +647,7 @@ G.DB = (() => {
     lastPush = Date.now();
     setSync('syncing');
     let merged = null;
-    const tr = fs.runTransaction(async tx => {
+    const tr = fs.runTransaction(async (tx) => {
       const ref = docRef();
       const snap = await tx.get(ref);
       const remote = snap.exists ? migrate(snap.data().save) : null;
@@ -525,24 +659,32 @@ G.DB = (() => {
     // If the network drops midway, Firestore can hang waiting: a 12 s cap.
     const timeout = new Promise((_, rej) => setTimeout(() => rej({ code: 'unavailable' }), 12000));
     let failed = false;
-    pushing = Promise.race([tr, timeout]).then(() => {
-      fails = 0;
-      write(K_OK + uid, Date.now());
-      // It is MERGED with the current state (not overwritten): if you changed something
-      // while it was uploading (choosing a companion, a purchase...), it is not lost.
-      if (merged && save) { applyInPlace(merge(plain(save), merged)); write(K_CLOUD + uid, save); }
-      setSync(pending ? 'pending' : 'ok');
-      if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins();
-    }).catch(e => {
-      console.warn('[DB] could not sync:', e.code || e.message);
-      pending = true; failed = true;
-      setSync(navigator.onLine === false || e.code === 'unavailable' ? 'offline' : 'pending');
-      scheduleRetry();
-    }).finally(() => {
-      pushing = null;
-      // (If it failed, the retry is already scheduled with its growing wait.)
-      if (!failed && pending && syncState === 'pending') schedulePush(Math.max(1500, PUSH_GAP - (Date.now() - lastPush)));
-    });
+    pushing = Promise.race([tr, timeout])
+      .then(() => {
+        fails = 0;
+        write(K_OK + uid, Date.now());
+        // It is MERGED with the current state (not overwritten): if you changed something
+        // while it was uploading (choosing a companion, a purchase...), it is not lost.
+        if (merged && save) {
+          applyInPlace(merge(plain(save), merged));
+          write(K_CLOUD + uid, save);
+        }
+        setSync(pending ? 'pending' : 'ok');
+        if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins();
+      })
+      .catch((e) => {
+        console.warn('[DB] could not sync:', e.code || e.message);
+        pending = true;
+        failed = true;
+        setSync(navigator.onLine === false || e.code === 'unavailable' ? 'offline' : 'pending');
+        scheduleRetry();
+      })
+      .finally(() => {
+        pushing = null;
+        // (If it failed, the retry is already scheduled with its growing wait.)
+        if (!failed && pending && syncState === 'pending')
+          schedulePush(Math.max(1500, PUSH_GAP - (Date.now() - lastPush)));
+      });
     return pushing;
   }
 
@@ -551,8 +693,13 @@ G.DB = (() => {
   function schedulePush(ms) {
     const due = Date.now() + ms;
     if (pushT && pushDue && pushDue <= due) return;
-    clearTimeout(pushT); pushDue = due;
-    pushT = setTimeout(() => { pushT = 0; pushDue = 0; pushNow(); }, ms);
+    clearTimeout(pushT);
+    pushDue = due;
+    pushT = setTimeout(() => {
+      pushT = 0;
+      pushDue = 0;
+      pushNow();
+    }, ms);
   }
   /**
    * Retry with growing wait: 15 s, 30 s, 1 min, 2 min... up to 10 min.
@@ -564,7 +711,9 @@ G.DB = (() => {
     const ms = Math.min(10 * 60e3, 15e3 * Math.pow(2, fails)) * (0.8 + Math.random() * 0.4);
     fails = Math.min(fails + 1, 8);
     clearTimeout(retryT);
-    retryT = setTimeout(() => { if (pending) pushNow(); }, ms);
+    retryT = setTimeout(() => {
+      if (pending) pushNow();
+    }, ms);
   }
 
   function authError(e) {
@@ -579,19 +728,25 @@ G.DB = (() => {
       'auth/too-many-requests': 'Demasiados intentos seguidos. Espera un poco.',
       'auth/network-request-failed': 'Sin conexión a internet.',
       'auth/popup-blocked': 'El navegador bloqueó la ventana de Google. Permite las ventanas emergentes.',
-      'auth/unauthorized-domain': 'Este dominio no está autorizado en Firebase (Authentication > Configuración > Dominios autorizados).',
+      'auth/unauthorized-domain':
+        'Este dominio no está autorizado en Firebase (Authentication > Configuración > Dominios autorizados).',
       'auth/operation-not-allowed': 'Ese método de inicio de sesión no está activado en Firebase.',
       // New-account registration disabled in Firebase (Authentication > Settings).
-      'auth/admin-restricted-operation': 'Ahora mismo no se pueden crear cuentas nuevas. Si ya tienes cuenta, entra normal; si no, puedes jugar como invitado.',
+      'auth/admin-restricted-operation':
+        'Ahora mismo no se pueden crear cuentas nuevas. Si ya tienes cuenta, entra normal; si no, puedes jugar como invitado.',
       'auth/requires-recent-login': 'Por seguridad, vuelve a iniciar sesión y repite la operación.',
       'permission-denied': 'La base de datos rechazó el acceso (revisa las reglas de Firestore).',
-      'unavailable': 'Sin conexión con la base de datos.'
+      unavailable: 'Sin conexión con la base de datos.',
     };
     if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return '';
     // Firebase's "gatekeeper" (functions/index.js) rejected the new account: monthly cap.
     if (/error-code:-47|BLOCKING_FUNCTION|resource-exhausted|cuentas nuevas/i.test(c + ' ' + ((e && e.message) || '')))
-      return 'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' + (G.Signups ? G.Signups.nextMonthName() : 'mes que viene') + '). Mientras, puedes jugar como invitado.';
-    return M[c] || ('Error: ' + (c || (e && e.message) || 'desconocido'));
+      return (
+        'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' +
+        (G.Signups ? G.Signups.nextMonthName() : 'mes que viene') +
+        '). Mientras, puedes jugar como invitado.'
+      );
+    return M[c] || 'Error: ' + (c || (e && e.message) || 'desconocido');
   }
 
   // =====================================================================
@@ -604,13 +759,31 @@ G.DB = (() => {
   function ready() {
     if (readyP) return readyP;
     readyP = (async () => {
-      try { if (await initCloud()) mode = 'cloud'; }
-      catch (e) { console.warn('[DB] no cloud:', e.message); localReason = 'error'; mode = 'local'; }
-      if (mode === 'local') { setSync('local'); return restoreLocal(); }
-      const u = await new Promise(res => { const off = auth.onAuthStateChanged(x => { off(); res(x); }); });
+      try {
+        if (await initCloud()) mode = 'cloud';
+      } catch (e) {
+        console.warn('[DB] no cloud:', e.message);
+        localReason = 'error';
+        mode = 'local';
+      }
+      if (mode === 'local') {
+        setSync('local');
+        return restoreLocal();
+      }
+      const u = await new Promise((res) => {
+        const off = auth.onAuthStateChanged((x) => {
+          off();
+          res(x);
+        });
+      });
       if (!u) return false;
-      try { await openCloud(u); return true; }
-      catch (e) { console.warn('[DB] could not open the save:', e.code || e.message); return false; }
+      try {
+        await openCloud(u);
+        return true;
+      } catch (e) {
+        console.warn('[DB] could not open the save:', e.code || e.message);
+        return false;
+      }
     })();
     return readyP;
   }
@@ -622,14 +795,23 @@ G.DB = (() => {
     if ((pass || '').length < min) return { ok: false, error: `La contraseña debe tener al menos ${min} caracteres.` };
     if (mode === 'local') return registerLocal(name, pass);
     // Monthly account cap (Firebase charges beyond 50,000 a month).
-    if (G.Signups && !(await G.Signups.check())) return { ok: false, error: 'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' + G.Signups.nextMonthName() + '). Mientras, puedes jugar como invitado.' };
+    if (G.Signups && !(await G.Signups.check()))
+      return {
+        ok: false,
+        error:
+          'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' +
+          G.Signups.nextMonthName() +
+          '). Mientras, puedes jugar como invitado.',
+      };
     try {
       const legacy = await legacySave(name, pass);
       const cred = await auth.createUserWithEmailAndPassword(nameToEmail(name), pass);
-      if (G.Signups) G.Signups.markNew(cred.user.uid);   // the gatekeeper already recorded it
+      if (G.Signups) G.Signups.markNew(cred.user.uid); // the gatekeeper already recorded it
       await openCloud(cred.user, { name, legacy });
       return { ok: true, isNew: !save.partner, imported: !!legacy };
-    } catch (e) { return { ok: false, error: authError(e) }; }
+    } catch (e) {
+      return { ok: false, error: authError(e) };
+    }
   }
 
   async function login(name, pass) {
@@ -640,7 +822,9 @@ G.DB = (() => {
       const cred = await auth.signInWithEmailAndPassword(nameToEmail(name), pass || '');
       await openCloud(cred.user, { name, legacy });
       return { ok: true, isNew: !save.partner, imported: !!legacy };
-    } catch (e) { return { ok: false, error: authError(e) }; }
+    } catch (e) {
+      return { ok: false, error: authError(e) };
+    }
   }
 
   async function loginWithGoogle() {
@@ -651,23 +835,35 @@ G.DB = (() => {
       if (cred.additionalUserInfo && cred.additionalUserInfo.isNewUser && G.Signups && !(await G.Signups.check())) {
         await cred.user.delete().catch(() => {});
         await auth.signOut().catch(() => {});
-        return { ok: false, error: 'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' + G.Signups.nextMonthName() + '). Mientras, puedes jugar como invitado.' };
+        return {
+          ok: false,
+          error:
+            'Este mes ya no quedan plazas para cuentas nuevas (vuelven el 1 de ' +
+            G.Signups.nextMonthName() +
+            '). Mientras, puedes jugar como invitado.',
+        };
       }
       if (cred.additionalUserInfo && cred.additionalUserInfo.isNewUser && G.Signups) G.Signups.markNew(cred.user.uid);
       await openCloud(cred.user, { name: displayNameOf(cred.user) });
       return { ok: true, isNew: !save.partner };
-    } catch (e) { return { ok: false, error: authError(e) }; }
+    } catch (e) {
+      return { ok: false, error: authError(e) };
+    }
   }
 
   /** Changes the name shown in the game (on choosing a nickname). */
   function setName(n) {
     if (!save || guest) return;
-    save.name = n; user = n;
+    save.name = n;
+    user = n;
     commit();
   }
 
   function playAsGuest() {
-    user = 'Invitado'; key = null; guest = true; uid = null;
+    user = 'Invitado';
+    key = null;
+    guest = true;
+    uid = null;
     save = newSave('Invitado');
     if (mode === 'local') remove(K_SES);
     return { ok: true, isNew: true };
@@ -680,7 +876,7 @@ G.DB = (() => {
    *                'run': on finishing a game (at most every 30 min) · false: every 2 h
    */
   function commit(urgent = false) {
-    if (save) normalizeTeam(save);   // before the guest check: guests play with a team too
+    if (save) normalizeTeam(save); // before the guest check: guests play with a team too
     if (guest || !key || !save) return false;
     save.updated = Date.now();
     if (mode === 'local') return write(K_SAVE + key, save);
@@ -696,21 +892,42 @@ G.DB = (() => {
   const leaveHooks = [];
 
   async function logout() {
-    for (const fn of leaveHooks) { try { await fn('logout'); } catch (e) { /* nothing */ } }
+    for (const fn of leaveHooks) {
+      try {
+        await fn('logout');
+      } catch (e) {
+        /* nothing */
+      }
+    }
     if (mode === 'cloud' && !guest && save) {
-      if (pending) { try { await pushNow(); } catch (e) { /* the local copy remains */ } }
+      if (pending) {
+        try {
+          await pushNow();
+        } catch (e) {
+          /* the local copy remains */
+        }
+      }
       stopListening();
-      try { await auth.signOut(); } catch (e) { /* nothing */ }
+      try {
+        await auth.signOut();
+      } catch (e) {
+        /* nothing */
+      }
     } else if (mode === 'local' && !guest) {
       commit();
       remove(K_SES);
     }
-    clearTimeout(pushT); clearTimeout(retryT);
-    user = key = save = uid = null; guest = false; pending = false;
+    clearTimeout(pushT);
+    clearTimeout(retryT);
+    user = key = save = uid = null;
+    guest = false;
+    pending = false;
     setSync(mode === 'cloud' ? 'ok' : 'local');
   }
 
-  function nameAccount() { return !!(auth && auth.currentUser && (auth.currentUser.email || '').endsWith('@' + NAME_DOMAIN)); }
+  function nameAccount() {
+    return !!(auth && auth.currentUser && (auth.currentUser.email || '').endsWith('@' + NAME_DOMAIN));
+  }
 
   /*
    * Account recovery: name-and-password accounts have no real email
@@ -721,7 +938,7 @@ G.DB = (() => {
    */
   function hasGoogle() {
     const u = auth && auth.currentUser;
-    return !!(u && u.providerData.some(p => p.providerId === 'google.com'));
+    return !!(u && u.providerData.some((p) => p.providerId === 'google.com'));
   }
   async function linkGoogle() {
     if (!auth || !auth.currentUser) return { ok: false, error: 'Inicia sesión primero.' };
@@ -747,7 +964,8 @@ G.DB = (() => {
       const accs = read(K_ACC) || {};
       delete accs[key];
       write(K_ACC, accs);
-      remove(K_SAVE + key); remove(K_SES);
+      remove(K_SAVE + key);
+      remove(K_SES);
       user = key = save = null;
       return { ok: true };
     }
@@ -763,7 +981,9 @@ G.DB = (() => {
       } else {
         await cu.reauthenticateWithPopup(new firebase.auth.GoogleAuthProvider());
       }
-      clearTimeout(pushT); clearTimeout(retryT); pending = false;
+      clearTimeout(pushT);
+      clearTimeout(retryT);
+      pending = false;
       stopListening();
       for (const fn of leaveHooks) await fn('delete');
       await docRef().delete();
@@ -771,18 +991,24 @@ G.DB = (() => {
       await auth.currentUser.delete();
       user = key = save = uid = null;
       return { ok: true };
-    } catch (e) { return { ok: false, error: authError(e) }; }
+    } catch (e) {
+      return { ok: false, error: authError(e) };
+    }
   }
 
   // ---------------- save helpers ----------------
 
-  function owns(dex) { return !!(save && save.owned[dex]); }
+  function owns(dex) {
+    return !!(save && save.owned[dex]);
+  }
 
   function grant(dex, from) {
     if (!save.owned[dex]) save.owned[dex] = { at: Date.now(), from };
   }
 
-  function ownsShiny(dex) { return !!(save && save.shiny && save.shiny[dex]); }
+  function ownsShiny(dex) {
+    return !!(save && save.shiny && save.shiny[dex]);
+  }
 
   /** Upgrades bought for a Pokemon: { id -> level }. */
   function upgradesOf(dex) {
@@ -800,25 +1026,69 @@ G.DB = (() => {
   }
 
   return {
-    ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow,
-    owns, grant, ownsShiny, grantShiny, merge, setName, upgradesOf, normalizeTeam,
-    onSync(fn) { listeners.add(fn); },
-    onLeave(fn) { leaveHooks.push(fn); },
+    ready,
+    register,
+    login,
+    loginWithGoogle,
+    playAsGuest,
+    logout,
+    commit,
+    deleteAccount,
+    flush: pushNow,
+    owns,
+    grant,
+    ownsShiny,
+    grantShiny,
+    merge,
+    setName,
+    upgradesOf,
+    normalizeTeam,
+    onSync(fn) {
+      listeners.add(fn);
+    },
+    onLeave(fn) {
+      leaveHooks.push(fn);
+    },
     /** Low-level access for the network modules (cloud mode only). */
-    get fb() { return mode === 'cloud' ? { auth, fs, rtdb, uid, emulator: !!(G.FIREBASE_CONFIG || {}).emulator } : null; },
+    get fb() {
+      return mode === 'cloud' ? { auth, fs, rtdb, uid, emulator: !!(G.FIREBASE_CONFIG || {}).emulator } : null;
+    },
     /** Is the online side available (friends, ranking, multiplayer)? */
-    get online() { return mode === 'cloud' && !guest && !!uid && !!save; },
+    get online() {
+      return mode === 'cloud' && !guest && !!uid && !!save;
+    },
     /** Is the account a username-and-password one (not Google)? */
-    get nameAccount() { return nameAccount(); },
-    get hasGoogle() { return hasGoogle(); }, linkGoogle,
-    get mode() { return mode; },
-    get localReason() { return localReason; },
-    get syncState() { return syncState; },
-    get user() { return user; },
-    get guest() { return guest; },
-    get save() { return save; },
-    get loggedIn() { return !!save; },
-    get storageOk() { return storageOk; },
-    START_COINS
+    get nameAccount() {
+      return nameAccount();
+    },
+    get hasGoogle() {
+      return hasGoogle();
+    },
+    linkGoogle,
+    get mode() {
+      return mode;
+    },
+    get localReason() {
+      return localReason;
+    },
+    get syncState() {
+      return syncState;
+    },
+    get user() {
+      return user;
+    },
+    get guest() {
+      return guest;
+    },
+    get save() {
+      return save;
+    },
+    get loggedIn() {
+      return !!save;
+    },
+    get storageOk() {
+      return storageOk;
+    },
+    START_COINS,
   };
 })();

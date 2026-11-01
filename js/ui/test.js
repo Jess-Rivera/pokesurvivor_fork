@@ -1,17 +1,24 @@
 /* ============ test.js — personality test and companion choice ============ */
 G.TestUI = (() => {
   const $ = G.UI.$;
-  let idx = 0, scores = {}, result = null, picked = null;
+  let idx = 0,
+    scores = {},
+    result = null,
+    picked = null;
 
   function init() {
     $('res-ok').onclick = () => choose(result.dex);
     $('res-other').onclick = openStarters;
     $('starter-back').onclick = () => G.UI.show('scr-result');
-    $('starter-ok').onclick = () => { if (picked) choose(picked); };
+    $('starter-ok').onclick = () => {
+      if (picked) choose(picked);
+    };
   }
 
   function start() {
-    idx = 0; scores = {}; result = null;
+    idx = 0;
+    scores = {};
+    result = null;
     G.UI.chrome(false);
     G.UI.show('scr-test');
     render();
@@ -20,12 +27,12 @@ G.TestUI = (() => {
   function render() {
     const Q = G.PERSONALITY_TEST;
     const q = Q[idx];
-    $('test-bar').style.width = (idx / Q.length * 100) + '%';
+    $('test-bar').style.width = (idx / Q.length) * 100 + '%';
     $('test-count').textContent = `Pregunta ${idx + 1} de ${Q.length}`;
     $('test-q').textContent = q.q;
     const box = $('test-a');
     box.innerHTML = '';
-    q.a.forEach(a => {
+    q.a.forEach((a) => {
       const b = document.createElement('button');
       b.className = 'answer';
       b.dataset.sfx = 'select';
@@ -67,13 +74,17 @@ G.TestUI = (() => {
       cell.appendChild(G.UI.spriteCanvas(s.dex, 92, 80, { scale: 2 }));
       cell.insertAdjacentHTML('beforeend', `<b>${mon.name}</b>`);
       cell.onclick = () => {
-        grid.querySelectorAll('.cell').forEach(c => c.classList.remove('on'));
+        grid.querySelectorAll('.cell').forEach((c) => c.classList.remove('on'));
         cell.classList.add('on');
         picked = s.dex;
-        $('starter-info').innerHTML = `${G.UI.typeChips(mon.types)} ${G.Icons.html('move:' + s.start, 16)} ${G.MoveInfo.name(s.start)} · ${s.traits.join(', ')}`;
+        $('starter-info').innerHTML =
+          `${G.UI.typeChips(mon.types)} ${G.Icons.html('move:' + s.start, 16)} ${G.MoveInfo.name(s.start)} · ${s.traits.join(', ')}`;
         $('starter-ok').disabled = false;
       };
-      if (result && s.dex === result.dex) { picked = s.dex; $('starter-ok').disabled = false; }
+      if (result && s.dex === result.dex) {
+        picked = s.dex;
+        $('starter-ok').disabled = false;
+      }
       grid.appendChild(cell);
     }
     G.UI.show('scr-starters');

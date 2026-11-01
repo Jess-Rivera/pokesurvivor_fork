@@ -24,35 +24,57 @@ G.Stages = (() => {
   // movement, tuned by feel. One shared ladder per stat for raises and drops, on every host (player, wild, elite, boss, gym leader). Raise B to soften a stat.
   const BASE = { atk: 2, def: 2, spa: 2, spd: 2, spe: 4 };
   /** The multiplier of `stat` at stage `s` (-6 .. +6) on its ladder. */
-  function ladder(stat, s) { const b = BASE[stat] || 2; return s >= 0 ? (b + s) / b : b / (b - s); }
+  function ladder(stat, s) {
+    const b = BASE[stat] || 2;
+    return s >= 0 ? (b + s) / b : b / (b - s);
+  }
   const STATS = ['atk', 'def', 'spa', 'spd', 'spe'];
   const LABEL = { atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
-  const DUR = 6;            // seconds one application lasts (stat-drop moves)
+  const DUR = 6; // seconds one application lasts (stat-drop moves)
   const MAX = 6;
-  const UP = '#7fe08a', DOWN = '#f08a8a';
+  const UP = '#7fe08a',
+    DOWN = '#f08a8a';
   const EPS = 1e-9;
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   // ---- stat stage trackers (slice 5a): base timers SS7, Self-drop Gate SS12, Strong-host Gate SS13 (dormant until slice 7a) ----
-  const GATE = 6.0, DURATION = 6.1, SELF_DROP_GATE_MUL = 2, STRONG_HOST_GATE_MUL = 1;
+  const GATE = 6.0,
+    DURATION = 6.1,
+    SELF_DROP_GATE_MUL = 2,
+    STRONG_HOST_GATE_MUL = 1;
   /** The Gate a success climbs on: the base Gate, x2 for a drop a Pokemon puts on itself (SS12), x `mul` (slice 5b, SS10: the caster
    *  team's Gate card, G.TeamCards.gateMul; 1 for enemies and when omitted). */
-  function gateOf(selfDrop, mul = 1) { return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1) * mul; }
-  const TEAM_TRK = new WeakMap();     // team store object -> its tracker map; shared exactly as far as the store itself is shared
+  function gateOf(selfDrop, mul = 1) {
+    return GATE * (selfDrop ? SELF_DROP_GATE_MUL : 1) * mul;
+  }
+  const TEAM_TRK = new WeakMap(); // team store object -> its tracker map; shared exactly as far as the store itself is shared
   function teamTrk(store, make) {
     if (!store) return null;
     let m = TEAM_TRK.get(store);
-    if (!m && make) TEAM_TRK.set(store, m = {});
+    if (!m && make) TEAM_TRK.set(store, (m = {}));
     return m || null;
   }
-  function trkSum(m, stat) { const T = m && m[stat]; let s = 0; if (T) for (const k in T) s += T[k].n; return s; }
+  function trkSum(m, stat) {
+    const T = m && m[stat];
+    let s = 0;
+    if (T) for (const k in T) s += T[k].n;
+    return s;
+  }
   /** Advance a tracker map. Returns true when it is empty afterwards. */
   function trkTick(m, dt) {
     for (const s in m) {
       const T = m[s];
-      for (const k in T) { const t = T[k]; t.g = Math.max(0, t.g - dt); if ((t.d -= dt) <= 0) delete T[k]; }     // SS5: only this tracker
-      let any = false; for (const k in T) { any = true; break; }
+      for (const k in T) {
+        const t = T[k];
+        t.g = Math.max(0, t.g - dt);
+        if ((t.d -= dt) <= 0) delete T[k];
+      } // SS5: only this tracker
+      let any = false;
+      for (const k in T) {
+        any = true;
+        break;
+      }
       if (!any) delete m[s];
     }
     for (const s in m) return false;
@@ -61,7 +83,10 @@ G.Stages = (() => {
 
   /** The stage of `stat` on `h` right now (-6 .. +6). */
   function stage(h, stat) {
-    const L = h.stg && h.stg[stat], T = h.stgTeam && h.stgTeam[stat], A = h.trk, B = h.stgTeam ? TEAM_TRK.get(h.stgTeam) : null;
+    const L = h.stg && h.stg[stat],
+      T = h.stgTeam && h.stgTeam[stat],
+      A = h.trk,
+      B = h.stgTeam ? TEAM_TRK.get(h.stgTeam) : null;
     if (!L && !T && !A && !B) return 0;
     let s = 0;
     if (L) for (const a of L) s += a.n;
@@ -71,17 +96,25 @@ G.Stages = (() => {
     return clamp(s, -MAX, MAX);
   }
   /** The stat multiplier for `stat` on `h` (1 when it has no stage). */
-  function mul(h, stat) { const s = (h.stg || h.stgTeam || h.trk) ? stage(h, stat) : 0; return s ? ladder(stat, s) : 1; }
+  function mul(h, stat) {
+    const s = h.stg || h.stgTeam || h.trk ? stage(h, stat) : 0;
+    return s ? ladder(stat, s) : 1;
+  }
 
   /** SS3 to SS6: one success of `n` stages from `src` on tracker map `m` (host `h` shows the text). Returns true when the host's stage changed. */
-  function success(m, h, stat, n, src, gate, dur = DURATION) {     // 5b: dur is the caster team's Duration (SS10), dl its full length for the HUD
-    const T = m[stat] || (m[stat] = {}), t = T[src], cur = stage(h, stat);
-    if (!t) T[src] = { n: clamp(n, -MAX, MAX), g: gate, d: dur, dl: dur };     // SS3
+  function success(m, h, stat, n, src, gate, dur = DURATION) {
+    // 5b: dur is the caster team's Duration (SS10), dl its full length for the HUD
+    const T = m[stat] || (m[stat] = {}),
+      t = T[src],
+      cur = stage(h, stat);
+    if (!t)
+      T[src] = { n: clamp(n, -MAX, MAX), g: gate, d: dur, dl: dur }; // SS3
     else {
       t.dl = dur;
-      t.d = dur;                                                       // SS4: every success resets Duration
-      if (t.g > EPS) return false;                                          // Gate closed: refresh only
-      t.n = clamp(t.n + n, -MAX, MAX); t.g = gate;                          // Gate open: climb, restart the Gate (SS6 per-tracker clamp)
+      t.d = dur; // SS4: every success resets Duration
+      if (t.g > EPS) return false; // Gate closed: refresh only
+      t.n = clamp(t.n + n, -MAX, MAX);
+      t.g = gate; // Gate open: climb, restart the Gate (SS6 per-tracker clamp)
     }
     const now = stage(h, stat);
     if (now !== cur) text(h, LABEL[stat] + ' ' + (now > 0 ? '+' : '') + now, n > 0 ? UP : DOWN);
@@ -99,15 +132,18 @@ G.Stages = (() => {
   }
   /** The tracker of (src, stat) on `h`: its own, or its team's with `team`. Null when there is none. */
   function tracker(h, stat, src, team) {
-    const m = team ? teamTrk(h.stgTeam, false) : h.trk, T = m && m[stat];
+    const m = team ? teamTrk(h.stgTeam, false) : h.trk,
+      T = m && m[stat];
     return (T && T[src]) || null;
   }
   /** Debug view of every tracker on `h`: { own, team }. */
-  function trackers(h) { return { own: h.trk || null, team: teamTrk(h.stgTeam, false) }; }
+  function trackers(h) {
+    return { own: h.trk || null, team: teamTrk(h.stgTeam, false) };
+  }
 
   // ---- team store (slice E2a): shared by the whole roster, mutated in place, never reassigned ----
-  const TEAM_GRACE = 0.1;   // an application stays 0.1 s past its end, and a cast of the same move inside that last 0.1 s REFRESHES it instead of stacking:
-                            // at cooldown = duration the cast lands within a frame of the old one ending, and without this the stage would dip (or double) for a frame
+  const TEAM_GRACE = 0.1; // an application stays 0.1 s past its end, and a cast of the same move inside that last 0.1 s REFRESHES it instead of stacking:
+  // at cooldown = duration the cast lands within a frame of the old one ending, and without this the stage would dip (or double) for a frame
   /** Advance the team timers once per frame. In place: the roster shares this object. An application is removed TEAM_GRACE s after its time is up. */
   function teamTick(store, dt) {
     for (const s in store) {
@@ -120,12 +156,14 @@ G.Stages = (() => {
   }
   /** The team's raise on `stat` (timed store keys plus team trackers, before the +-6 clamp), and for HUD the longest time left with its full length. */
   function teamSum(store, stat) {
-    const L = store && store[stat]; let s = 0;
+    const L = store && store[stat];
+    let s = 0;
     if (L) for (const a of L) s += a.n;
     return s + (store ? trkSum(TEAM_TRK.get(store), stat) : 0);
   }
   function teamTimer(store, stat) {
-    const L = store && store[stat]; let best = null;
+    const L = store && store[stat];
+    let best = null;
     if (L) for (const a of L) if (!best || a.t > best.t) best = { t: a.t, dur: a.dur };
     const T = store && TEAM_TRK.has(store) ? TEAM_TRK.get(store)[stat] : null;
     if (T) for (const k in T) if (!best || T[k].d > best.t) best = { t: T[k].d, dur: T[k].dl || DURATION };
@@ -140,11 +178,15 @@ G.Stages = (() => {
   }
   /** Every key with something live on the team store: the timed keys, then tracker stats not already listed. */
   function teamKeys(store) {
-    const out = store ? Object.keys(store) : [], m = store && TEAM_TRK.get(store);
+    const out = store ? Object.keys(store) : [],
+      m = store && TEAM_TRK.get(store);
     if (m) for (const s in m) if (!out.includes(s)) out.push(s);
     return out;
   }
-  function teamClear(store) { for (const s in store) delete store[s]; TEAM_TRK.delete(store); }
+  function teamClear(store) {
+    for (const s in store) delete store[s];
+    TEAM_TRK.delete(store);
+  }
 
   function text(h, msg, color) {
     if (G.FX && G.FX.dmgText) G.FX.dmgText(h.x, h.y - (h.bodyH || 30) - 4, msg, color);
@@ -162,9 +204,15 @@ G.Stages = (() => {
     if (!STATS.includes(stat) || !n || h.dead) return false;
     const cur = stage(h, stat);
     if (src != null && live > 0) {
-      const g = h.stg || (h.stg = {}), L = g[stat] || (g[stat] = []);
-      let mine = 0; for (const a of L) if (a.src === src) mine++;
-      if (mine >= live) L.splice(L.findIndex(a => a.src === src), 1);
+      const g = h.stg || (h.stg = {}),
+        L = g[stat] || (g[stat] = []);
+      let mine = 0;
+      for (const a of L) if (a.src === src) mine++;
+      if (mine >= live)
+        L.splice(
+          L.findIndex((a) => a.src === src),
+          1
+        );
       else if ((n > 0 && cur >= Math.min(MAX, cap)) || (n < 0 && cur <= -MAX)) return false;
       L.push({ n, t: dur, src });
       const now = stage(h, stat);
@@ -181,47 +229,93 @@ G.Stages = (() => {
 
   /** Advance every application timer and the trackers. Called once per frame from Enemy.update and the player. */
   function tick(h, dt) {
-    if (h.trk && trkTick(h.trk, dt)) h.trk = null;     // own trackers (slice 5a): enemies, the active member and the bench all pass through here
+    if (h.trk && trkTick(h.trk, dt)) h.trk = null; // own trackers (slice 5a): enemies, the active member and the bench all pass through here
     const g = h.stg;
     if (!g) return;
     let live = false;
     for (const s in g) {
       const L = g[s];
       for (let i = L.length - 1; i >= 0; i--) if ((L[i].t -= dt) <= 0) L.splice(i, 1);
-      if (L.length) live = true; else delete g[s];
+      if (L.length) live = true;
+      else delete g[s];
     }
     if (!live) h.stg = null;
   }
 
   /** The Speed STAGE as a movement multiplier on the FINAL speed (Jess 2026-10-19), on the Speed ladder (B = 4: +2 x1.5, +6 x2.5, -2 x0.67, -6 x0.4). The species
    *  Speed shaping (0.5x to 3.0x identity bounds) is a different thing and is not involved. It multiplies with paralysis and trap. */
-  function speedMul(h) { const s = stage(h, 'spe'); return s ? ladder('spe', s) : 1; }
+  function speedMul(h) {
+    const s = stage(h, 'spe');
+    return s ? ladder('spe', s) : 1;
+  }
 
   /** Longest time left (s) among the applications of `stat` that push the stage down (drop) or up; for the HUD timer bar. */
   function remaining(h, stat, sign = -1) {
-    const L = h.stg && h.stg[stat]; let t = 0;
+    const L = h.stg && h.stg[stat];
+    let t = 0;
     if (L) for (const a of L) if (Math.sign(a.n) === sign && a.t > t) t = a.t;
     const T = h.trk && h.trk[stat];
     if (T) for (const k in T) if (Math.sign(T[k].n) === sign && T[k].d > t) t = T[k].d;
     return t;
   }
 
-  function clear(h) { h.stg = h.trk = null; }     // own drops and trackers; the shared team raises stay (FAINT AND REVIVE)
+  function clear(h) {
+    h.stg = h.trk = null;
+  } // own drops and trackers; the shared team raises stay (FAINT AND REVIVE)
   /** Remove every own application tagged `src` on `h` (slice 4b: a commitment slow ending early, with its instance or on a swap). */
   function drop(h, src) {
-    const g = h.stg; if (!g) return;
-    for (const s in g) { g[s] = g[s].filter(a => a.src !== src); if (!g[s].length) delete g[s]; }
+    const g = h.stg;
+    if (!g) return;
+    for (const s in g) {
+      g[s] = g[s].filter((a) => a.src !== src);
+      if (!g[s].length) delete g[s];
+    }
     if (!Object.keys(g).length) h.stg = null;
   }
 
   /** Active stages for the HUD / debug: [{ stat, label, stage }] for every stat that is not at 0. */
   function list(h) {
     const out = [];
-    for (const s of STATS) { const v = stage(h, s); if (v) out.push({ stat: s, label: LABEL[s], stage: v }); }
+    for (const s of STATS) {
+      const v = stage(h, s);
+      if (v) out.push({ stat: s, label: LABEL[s], stage: v });
+    }
     return out;
   }
 
-  return { BASE, ladder, STATS, LABEL, DUR, MAX, TEAM_GRACE, stage, mul, add, tick, speedMul, remaining, clear, drop, list,
-    teamTick, teamSum, teamTimer, teamClear, teamLive, teamKeys, UP, DOWN,
-    GATE, DURATION, SELF_DROP_GATE_MUL, STRONG_HOST_GATE_MUL, gateOf, trackOwn, trackTeam, tracker, trackers };
+  return {
+    BASE,
+    ladder,
+    STATS,
+    LABEL,
+    DUR,
+    MAX,
+    TEAM_GRACE,
+    stage,
+    mul,
+    add,
+    tick,
+    speedMul,
+    remaining,
+    clear,
+    drop,
+    list,
+    teamTick,
+    teamSum,
+    teamTimer,
+    teamClear,
+    teamLive,
+    teamKeys,
+    UP,
+    DOWN,
+    GATE,
+    DURATION,
+    SELF_DROP_GATE_MUL,
+    STRONG_HOST_GATE_MUL,
+    gateOf,
+    trackOwn,
+    trackTeam,
+    tracker,
+    trackers,
+  };
 })();

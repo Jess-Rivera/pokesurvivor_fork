@@ -20,9 +20,10 @@ G.Combat = (() => {
       if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
         const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
         const landed = pl.invuln <= 0;
-        if (p.atkFactor != null) pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
+        if (p.atkFactor != null)
+          pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
         else pl.hurt(p.dmg, p.mtype, false, null, w);
-        if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf);      // a Status carrier's shot (slice E1)
+        if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf); // a Status carrier's shot (slice E1)
         G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
         projectiles.splice(i, 1);
       }
@@ -35,21 +36,26 @@ G.Combat = (() => {
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
-      if (G.Status.stunned(e)) continue;        // frozen or asleep enemies do not hit
+      if (G.Status.stunned(e)) continue; // frozen or asleep enemies do not hit
       // An active flanker only hits in its strike phase, and waits out your invulnerability instead of wasting the hit.
       if (e.fl && (e.fl.ph !== 'strike' || pl.invuln > 0)) continue;
       e.touchCd = 0.55;
-      if (G.Status.fizzle(e)) continue;         // paralysis / confusion: the strike fizzles
+      if (G.Status.fizzle(e)) continue; // paralysis / confusion: the strike fizzles
       e.strike(pl);
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
-      if (e.atkFactor != null) pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
+      if (e.atkFactor != null)
+        pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
       else pl.hurt(e.dmg, e.atkType, false, null, w);
-      if (e.carrierSec && !pl.dead) { const k = e.secAil(); if (k) pl.inflict(k, true); }      // a secondary carrier's touch (slice E1)
+      if (e.carrierSec && !pl.dead) {
+        const k = e.secAil();
+        if (k) pl.inflict(k, true);
+      } // a secondary carrier's touch (slice E1)
       if (e.fl) e.flankStruck();
       if (pl.hasItem('rockyhelmet')) e.hurt(15 + pl.level * 4, '#9aa6b5', e.x - pl.x, e.y - pl.y, 80);
       const [nx, ny] = G.U.norm(e.x - pl.x, e.y - pl.y);
-      e.kx += nx * 150; e.ky += ny * 150;
+      e.kx += nx * 150;
+      e.ky += ny * 150;
     }
   }
 

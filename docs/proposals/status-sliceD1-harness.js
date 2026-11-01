@@ -57,7 +57,7 @@ const tickN = (h, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt
 { const pl = { level: 5, x: 3000, y: 0, hp: 100, r: 10, dead: false };
   const run = (e, secs, dt = 0.05) => { for (let i = 0; i < Math.round(secs / dt); i++) { try { e.update(dt, pl); } catch (x) { if (!/primitive|not a function|undefined|noop/i.test(String(x))) throw x; } } };
   const b = mk(1); for (let i = 0; i < 3; i++) S.add(b, 'spe', -1, 6); run(b, 5.9); if (S.stage(b, 'spe') !== -3) bad('stage should still be -3 at 5.9 s'); run(b, 0.3); if (b.stg) bad('stage should have expired by 6.2 s through Enemy.update');
-  const src = fs.readFileSync(R + '/js/entities/enemy.js', 'utf8'); if (!/G\.Status\.speedMul\(this\) \* G\.Stages\.speedMul\(this\)/.test(src)) bad('enemy movement does not read Stages.speedMul'); if (!/G\.Stages\.tick\(this, dt\)/.test(src)) bad('Enemy.update does not tick the stages');
+  const src = fs.readFileSync(R + '/js/entities/enemy.js', 'utf8'); if (!/G\.Status\.speedMul\(this\)\s*\*\s*G\.Stages\.speedMul\(this\)/.test(src)) bad('enemy movement does not read Stages.speedMul'); if (!/G\.Stages\.tick\(this, dt\)/.test(src)) bad('Enemy.update does not tick the stages');
   console.log('7 Enemy.update ticks and expires the stage; the movement line multiplies by Stages.speedMul'); }
 
 console.log(fail ? '\n' + fail + ' FAILED' : '\nALL PASS');

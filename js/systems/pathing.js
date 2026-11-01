@@ -14,20 +14,37 @@
  * 0.35 s. Enemies outside the field (very far) go in a straight line.
  */
 G.Path = (() => {
-  const R = 28, N = R * 2 + 1, EVERY = 0.35;
+  const R = 28,
+    N = R * 2 + 1,
+    EVERY = 0.35;
   const UNSEEN = 0x7fff;
-  const fields = new Map();          // jugador -> { ox, oy, dist: Int16Array, t }
+  const fields = new Map(); // jugador -> { ox, oy, dist: Int16Array, t }
   const queue = new Int32Array(N * N);
-  const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const D8 = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
   let timer = 0;
 
   function build(pl) {
     const TS = G.World.TS;
-    const px = Math.floor(pl.x / TS), py = Math.floor(pl.y / TS);
-    const ox = px - R, oy = py - R;
+    const px = Math.floor(pl.x / TS),
+      py = Math.floor(pl.y / TS);
+    const ox = px - R,
+      oy = py - R;
     let f = fields.get(pl);
-    if (!f) { f = { dist: new Int16Array(N * N) }; fields.set(pl, f); }
-    f.ox = ox; f.oy = oy;
+    if (!f) {
+      f = { dist: new Int16Array(N * N) };
+      fields.set(pl, f);
+    }
+    f.ox = ox;
+    f.oy = oy;
     const dist = f.dist;
     dist.fill(UNSEEN);
     // Walkable cells of the area (queried once).
@@ -35,15 +52,19 @@ G.Path = (() => {
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) open[j * N + i] = G.World.walkable(ox + i, oy + j) ? 1 : 0;
 
     const start = R * N + R;
-    open[start] = 1;                 // where the player is always counts
+    open[start] = 1; // where the player is always counts
     dist[start] = 0;
-    let head = 0, tail = 0;
+    let head = 0,
+      tail = 0;
     queue[tail++] = start;
     while (head < tail) {
       const c = queue[head++];
-      const cx = c % N, cy = (c / N) | 0, d = dist[c] + 1;
+      const cx = c % N,
+        cy = (c / N) | 0,
+        d = dist[c] + 1;
       for (let k = 0; k < 8; k++) {
-        const nx = cx + D8[k][0], ny = cy + D8[k][1];
+        const nx = cx + D8[k][0],
+          ny = cy + D8[k][1];
         if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
         const n = ny * N + nx;
         if (!open[n] || dist[n] !== UNSEEN) continue;
@@ -72,30 +93,43 @@ G.Path = (() => {
     const f = fields.get(pl);
     if (!f) return null;
     const TS = G.World.TS;
-    const tx = Math.floor(e.x / TS) - f.ox, ty = Math.floor(e.y / TS) - f.oy;
+    const tx = Math.floor(e.x / TS) - f.ox,
+      ty = Math.floor(e.y / TS) - f.oy;
     if (tx < 0 || ty < 0 || tx >= N || ty >= N) return null;
     const here = f.dist[ty * N + tx];
-    if (here <= 1 || here === UNSEEN) return null;   // pegado a ti, o sin camino: directo
+    if (here <= 1 || here === UNSEEN) return null; // pegado a ti, o sin camino: directo
     // With a clear line of sight to the player, straight (more natural).
     // Checked every 0.2 s per enemy (it is the most expensive part).
     const now = performance.now();
-    if (!e.losAt || now - e.losAt > 200) { e.losAt = now; e.los = clearLine(f, e.x, e.y, pl.x, pl.y, e.r); }
+    if (!e.losAt || now - e.losAt > 200) {
+      e.losAt = now;
+      e.los = clearLine(f, e.x, e.y, pl.x, pl.y, e.r);
+    }
     if (e.los) return null;
     // Next cell of the path (the neighbor with fewer steps, without cutting corners).
-    let bx = tx, by = ty, best = here;
+    let bx = tx,
+      by = ty,
+      best = here;
     for (let k = 0; k < 8; k++) {
-      const x = tx + D8[k][0], y = ty + D8[k][1];
+      const x = tx + D8[k][0],
+        y = ty + D8[k][1];
       if (x < 0 || y < 0 || x >= N || y >= N) continue;
       const v = f.dist[y * N + x];
       if (v >= best) continue;
       if (k >= 4 && (!f.open[ty * N + x] || !f.open[y * N + tx])) continue;
-      best = v; bx = x; by = y;
+      best = v;
+      bx = x;
+      by = y;
     }
     if (bx === tx && by === ty) return null;
-    let gx = (f.ox + bx + 0.5) * TS, gy = (f.oy + by + 0.5) * TS;
+    let gx = (f.ox + bx + 0.5) * TS,
+      gy = (f.oy + by + 0.5) * TS;
     // If it is off-center and the shortcut to that cell grazes an obstacle,
     // first to the center of its own (so it does not snag on corners).
-    if (!clearLine(f, e.x, e.y, gx, gy, e.r)) { gx = (f.ox + tx + 0.5) * TS; gy = (f.oy + ty + 0.5) * TS; }
+    if (!clearLine(f, e.x, e.y, gx, gy, e.r)) {
+      gx = (f.ox + tx + 0.5) * TS;
+      gy = (f.oy + ty + 0.5) * TS;
+    }
     return G.U.norm(gx - e.x, gy - e.y);
   }
 
@@ -104,12 +138,15 @@ G.Path = (() => {
     const TS = G.World.TS;
     const len = Math.hypot(bx - ax, by - ay);
     if (len < 1) return true;
-    const ux = (bx - ax) / len, uy = (by - ay) / len;
+    const ux = (bx - ax) / len,
+      uy = (by - ay) / len;
     const w = Math.min(r * 0.9, TS * 0.45);
     for (let d = 0; d <= len; d += TS * 0.4) {
-      const cx = ax + ux * d, cy = ay + uy * d;
+      const cx = ax + ux * d,
+        cy = ay + uy * d;
       for (const s of [-w, 0, w]) {
-        const x = Math.floor((cx - uy * s) / TS) - f.ox, y = Math.floor((cy + ux * s) / TS) - f.oy;
+        const x = Math.floor((cx - uy * s) / TS) - f.ox,
+          y = Math.floor((cy + ux * s) / TS) - f.oy;
         if (x < 0 || y < 0 || x >= N || y >= N) return false;
         if (!f.open[y * N + x]) return false;
       }
@@ -117,7 +154,10 @@ G.Path = (() => {
     return true;
   }
 
-  function clear() { fields.clear(); timer = 0; }
+  function clear() {
+    fields.clear();
+    timer = 0;
+  }
 
   return { update, dirFor, clear };
 })();

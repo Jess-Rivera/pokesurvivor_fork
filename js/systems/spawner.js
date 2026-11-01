@@ -15,23 +15,34 @@ G.Spawner = (() => {
   // the cap is reached, the Density Bonus pays more XP (see DENSITY_FROM).
   const CAP = 64;
   // Density Bonus (was the "crowd bump"): XP only, x1.6 on a spawn while this many are alive, once the opening XP boost is over.
-  const DENSITY_FROM = 54, DENSITY_XP = 1.6;
+  const DENSITY_FROM = 54,
+    DENSITY_XP = 1.6;
   // Fewer Pokemon but stronger (the screen does not get crowded): ~24% of
   // the previous number spawn, each with more health, damage and experience.
-  const DENSITY = 0.24, DMG_K = 2.4;
+  const DENSITY = 0.24,
+    DMG_K = 2.4;
   // The extra toughness grows with the run: x3.3 at first and up to x5
   // toward minute 6, when you already have attacks to take them down.
-  const hpK = t => 3.3 + Math.min(1.7, t / 210);
+  const hpK = (t) => 3.3 + Math.min(1.7, t / 210);
   const SHINY_RATE = 1 / 4096;
   // Opening XP boost: wild kills pay XP_BOOST x until the first boss slot (3:00).
   const XP_BOOST = 2.0;
-  let acc = 0, surgeT = 32, announce = null, announceT = 0, preloadT = 0, runT = 0;
-  let forceShiny = 0;           // for testing: the next N spawn shiny
-  let debugMul = 1;             // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
+  let acc = 0,
+    surgeT = 32,
+    announce = null,
+    announceT = 0,
+    preloadT = 0,
+    runT = 0;
+  let forceShiny = 0; // for testing: the next N spawn shiny
+  let debugMul = 1; // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
 
   function reset() {
-    acc = 0; surgeT = 32; preloadT = 0; runT = 0;
-    announce = Math.round(G.Stats.XP_BOOST_END / 60) + ' Min XP boost!'; announceT = 4;
+    acc = 0;
+    surgeT = 32;
+    preloadT = 0;
+    runT = 0;
+    announce = Math.round(G.Stats.XP_BOOST_END / 60) + ' Min XP boost!';
+    announceT = 4;
     G.Enemies.rollRun();
     G.Elites.reset();
     G.Sprites.preload(G.Enemies.upcomingDex(0, 80));
@@ -52,7 +63,7 @@ G.Spawner = (() => {
   /** Would any player see it? (to avoid spawning in front of anyone) */
   function seenByAnyone(x, y) {
     const r = G.Camera.outerRadius() - 30;
-    return players.some(o => G.U.dist2(o.x, o.y, x, y) < r * r);
+    return players.some((o) => G.U.dist2(o.x, o.y, x, y) < r * r);
   }
 
   /** A ring point where it fits: not inside walls or in the water. */
@@ -68,34 +79,48 @@ G.Spawner = (() => {
 
   /** The player around which the next enemy spawns. */
   function anchor() {
-    const alive = players.filter(o => !o.dead);
+    const alive = players.filter((o) => !o.dead);
     return alive.length ? G.U.pick(alive) : players[0];
   }
 
   // HP is no longer scaled here: wild-enemy HP comes from the mainline formula
   // (G.Enemies.enemyHp) inside the Enemy constructor. This passes sc through unchanged
   // (the co-op/density k no longer multiplies HP; it stays dormant with deferred MP).
-  function scaled(sc, k) { return sc; }
+  function scaled(sc, k) {
+    return sc;
+  }
 
-  function isFlyer(def) { return G.Sprites.hovers(def.dex); }
+  function isFlyer(def) {
+    return G.Sprites.hovers(def.dex);
+  }
 
   function rollShiny(dex) {
     if (!G.Sprites.hasShiny(dex)) return false;
-    if (forceShiny > 0) { forceShiny--; return true; }
+    if (forceShiny > 0) {
+      forceShiny--;
+      return true;
+    }
     return Math.random() < SHINY_RATE;
   }
 
   /** Band-holders alive and units alive (the ceiling in G.Enemies.HOLDER_CAP). */
   function holderCount() {
-    let h = 0, n = 0;
-    for (const e of G.EnemyMgr.all()) if (!e.dead && !e.boss && !e.elite && !e.leaving) { n++; if (e.keepsDistance()) h++; }
+    let h = 0,
+      n = 0;
+    for (const e of G.EnemyMgr.all())
+      if (!e.dead && !e.boss && !e.elite && !e.leaving) {
+        n++;
+        if (e.keepsDistance()) h++;
+      }
     return [h, n];
   }
 
   function spawnOne(pl, t, angle) {
-    const bag = G.Enemies.bagAt(t), HC = G.Enemies.HOLDER_CAP;
+    const bag = G.Enemies.bagAt(t),
+      HC = G.Enemies.HOLDER_CAP;
     let def = G.U.pick(bag);
-    if (G.Enemies.BANDS[def.behavior]) {                  // a band-holder: keep them to HC.share of what is alive
+    if (G.Enemies.BANDS[def.behavior]) {
+      // a band-holder: keep them to HC.share of what is alive
       const [h, n] = holderCount();
       if (h >= HC.floor && h + 1 > HC.share * (n + 1)) {
         for (let i = 0; i < HC.rerolls && G.Enemies.BANDS[def.behavior]; i++) def = G.U.pick(bag);
@@ -143,7 +168,10 @@ G.Spawner = (() => {
 
     // Preloads what will spawn in the next minute.
     preloadT -= dt;
-    if (preloadT <= 0) { preloadT = 10; G.Sprites.preload(G.Enemies.upcomingDex(t, 60)); }
+    if (preloadT <= 0) {
+      preloadT = 10;
+      G.Sprites.preload(G.Enemies.upcomingDex(t, 60));
+    }
 
     // --- elites (systems/elites.js): spawn, enrage, and the lowered wild cap / rate around them ---
     if (debugMul > 0) G.Elites.update(dt, t);
@@ -164,7 +192,10 @@ G.Spawner = (() => {
       surgeT = G.U.rand(38, 56);
       const base = Math.random() * 6.2832;
       const target = anchor();
-      const n = Math.min(capNow - G.EnemyMgr.count, Math.round((14 + Math.floor(t / 22)) * G.Coop.scaleRate(players.length) * 0.4));
+      const n = Math.min(
+        capNow - G.EnemyMgr.count,
+        Math.round((14 + Math.floor(t / 22)) * G.Coop.scaleRate(players.length) * 0.4)
+      );
       for (let i = 0; i < n; i++) spawnOne(target, t, base + G.U.rand(-0.55, 0.55));
       say('¡Marea de Pokémon!', 2.2);
       G.Audio.sfx('surge');
@@ -174,7 +205,9 @@ G.Spawner = (() => {
   /** A handful at once from one side (when starting a horde). */
   function burst(n) {
     if (debugMul <= 0) return;
-    const base = Math.random() * 6.2832, target = anchor() || G.Game.player, t = G.Game.st.time;
+    const base = Math.random() * 6.2832,
+      target = anchor() || G.Game.player,
+      t = G.Game.st.time;
     for (let i = 0; i < n && G.EnemyMgr.count < CAP + 10; i++) spawnOne(target, t, base + G.U.rand(-0.6, 0.6));
   }
 
@@ -188,26 +221,57 @@ G.Spawner = (() => {
     const a0 = sp > 20 ? Math.atan2(pl._vy, pl._vx) : Math.random() * 6.2832;
     const pt = freePoint(pl, a0 + G.U.rand(-0.9, 0.9), e.flying);
     if (!pt) return false;
-    e.x = pt[0]; e.y = pt[1]; e.kx = e.ky = 0;
-    e.phase = 'walk'; e.pt = 0; e.jump = null; e.jumpLift = 0;
+    e.x = pt[0];
+    e.y = pt[1];
+    e.kx = e.ky = 0;
+    e.phase = 'walk';
+    e.pt = 0;
+    e.jump = null;
+    e.jumpLift = 0;
     return true;
   }
 
   /** Big on-screen notice (also used by the biome and the shinies). */
   /** @param local  only on this computer (not sent to teammates) */
   function say(text, secs = 2.6, local = false) {
-    announce = text; announceT = secs;
+    announce = text;
+    announceT = secs;
     if (G.Coop.isHost && !local) G.Coop.say(text, secs);
   }
 
-  function banner() { return announceT > 0 ? { text: announce, t: announceT } : null; }
+  function banner() {
+    return announceT > 0 ? { text: announce, t: announceT } : null;
+  }
 
   /** Guest in co-op: only runs the notice clock. */
-  function tickBanner(dt) { if (announceT > 0) announceT -= dt; }
+  function tickBanner(dt) {
+    if (announceT > 0) announceT -= dt;
+  }
 
   /** XP multiplier for wild kills: XP_BOOST until the first boss slot, then 1. */
-  function xpBoost() { return runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1; }
-  return { reset, update, ahead, placeElite, burst, tickBanner, banner, say, rate, xpBoost, SHINY_RATE, CAP,
-           debugForceShiny(n = 1) { forceShiny = n; },
-           debugRate(k) { debugMul = Math.max(0, +k); if (!isFinite(debugMul)) debugMul = 1; return debugMul; } };
+  function xpBoost() {
+    return runT < G.Stats.XP_BOOST_END ? XP_BOOST : 1;
+  }
+  return {
+    reset,
+    update,
+    ahead,
+    placeElite,
+    burst,
+    tickBanner,
+    banner,
+    say,
+    rate,
+    xpBoost,
+    SHINY_RATE,
+    CAP,
+    debugForceShiny(n = 1) {
+      forceShiny = n;
+    },
+    debugRate(k) {
+      debugMul = Math.max(0, +k);
+      if (!isFinite(debugMul)) debugMul = 1;
+      return debugMul;
+    },
+  };
 })();
