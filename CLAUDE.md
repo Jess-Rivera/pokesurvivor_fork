@@ -70,6 +70,7 @@ Dividing line: "does this change what the game does when you run it?"
   - The prose plan contains NO CODE, not a snippet, not a single line, not a diff. Describe the change in words only: which files, which location in each, what changes, the numbers, the decisions needed, the risks. Code appears ONLY when it is written into the repo on approval, never in chat. Jess does not type code and does not want to read it in the plan.
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
+- Also NO: the dev tools and checks under tools/ (they never ship in the game; Jess, 2026-11-01). Edit them directly, then run node tools/check.js and any smoke the change touches.
 
 ## Git, hard prohibition on changing the repo
 The AI assistant MAY run read-only git commands to inspect state: status, diff, log, show, blame,

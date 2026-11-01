@@ -1,8 +1,8 @@
-// tools/smoke-newcombat.js: headless browser smoke test for the new move path (slice 3d). A check, not a harness: tools/check.js
+// tools/smoke-newcombat.js: headless browser smoke test for the move path (slice 3d; the name is from the removed ?newcombat flag). A check, not a harness: tools/check.js
 // only syntax-checks it, since it needs a browser. Playwright is NOT a repo dependency: it is loaded from an install outside the
 // repo (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright). Usage from the repo root:  node tools/smoke-newcombat.js
-// It serves the repo with python -m http.server, then for dev.html?dev (flag off) and dev.html?dev&newcombat (flag on): boots a
-// guest run, steps the game, calls G.Debug.newcombat() on the flag-on page and cycles the routed slots, then a density run at
+// It serves the repo with python -m http.server, then on dev.html?dev: a plain guest run (the only move path since slice 7b), then a
+// quick-test page that calls G.Debug.newcombat() and cycles the routed slots; each ends with a density run at
 // G.Debug.skipTo(20). Fails on any page error or console error, on a routed slot ticked by both systems, or on no hits landing.
 // Slice 4a: a rider page (G.Debug.newcombat('riders'), awake walkers): String Shot roots its target for 2 s, Body Slam and Bite knock,
 // Bulldoze and Ice Beam leave a Speed stage, Body Slam or Ice Beam lands a major status, and Giga Drain heals the player.
@@ -59,19 +59,19 @@ async function density(page) {
   await sleep(1200);
   const browser = await chromium.launch();
   try {
-    // ---- no flag: since the 7b flip the new path runs on plain ?dev too ----
+    // ---- plain run: no test scene; since 7b the move path is the only path ----
     { const { page, errs } = await boot(browser, '?dev');
       await sleep(4000);
       const s = await page.evaluate(() => ({ on: G.MoveRoute.on, routed: G.MoveRoute.routed('ember'), live: G.MoveSim.list().length,
         alive: !G.Game.player.dead, time: G.Game.time != null }));
-      ok(s.on === undefined && s.routed && s.alive, 'flag off: the new path is the only path (no flag since 7b), the player is alive');
+      ok(s.on === undefined && s.routed && s.alive, 'plain run: the move path is the only path (no flag since 7b), the player is alive');
       const d = await density(page);
-      console.log('      flag off density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
-      ok(errs.length === 0, 'flag off: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      console.log('      plain run density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
+      ok(errs.length === 0, 'plain run: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 
-    // ---- flag on: quick-test helper, every routed slot, overlay ----
-    { const { page, errs } = await boot(browser, '?dev&newcombat');
+    // ---- quick test: the newcombat() helper, every routed slot, overlay ----
+    { const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(() => {
         G.Game.player.invuln = 1e9;     // the smoke run must not die mid-check
         window.__hits = 0; window.__casts = {}; window.__propHits = 0;
@@ -106,15 +106,15 @@ async function density(page) {
       ok(lo.has && lo.hp < lo.hp0, 'Life Orb costs HP on routed casts (' + lo.hp0 + ' -> ' + lo.hp.toFixed(1) + ')');
       ok(await page.evaluate(() => G.Game.player.slots.every(g => g.every(m => G.MoveRoute.routed(m.id)))), 'every slot of the quick test is routed');
       await page.screenshot({ path: path.join(require('os').tmpdir(), 'smoke-newcombat.png') });
-      // density: same skipTo minute as the flag-off page, with the dummies gone and a mid-range routed move active
+      // density: same skipTo minute as the plain run, with the dummies gone and a mid-range routed move active
       await page.evaluate(() => { G.Debug.hitbox(false); G.EnemyMgr.clear(); G.Game.player.setActive(G.Game.player.slots.findIndex(g => g[0].id === 'flamethrower'), true); });
       const d = await density(page);
-      console.log('      flag on density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
-      ok(errs.length === 0, 'flag on: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+      console.log('      quick test density: ' + d.n + ' enemies, ' + d.ms.toFixed(1) + ' ms/frame');
+      ok(errs.length === 0, 'quick test: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 
-    // ---- flag on, rider mode (slice 4a): awake dummies, one move at a time ----
-    { const { page, errs } = await boot(browser, '?dev&newcombat');
+    // ---- rider mode (slice 4a): awake dummies, one move at a time ----
+    { const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(() => {
         const pl = G.Game.player; pl.invuln = 1e9;
         window.__rk = { knock: 0, major: 0, healed: 0, ss: [] };
@@ -153,8 +153,8 @@ async function density(page) {
       ok(errs.length === 0, 'rider mode: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 
-    // ---- flag on, self-casts (slice 4b): buffs show stages, Substitute pays a quarter and shields, Aqua Ring heals ----
-    { const { page, errs } = await boot(browser, '?dev&newcombat');
+    // ---- self-casts (slice 4b): buffs show stages, Substitute pays a quarter and shields, Aqua Ring heals ----
+    { const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 1e9; window.__healed = 0;
         const h0 = pl.heal.bind(pl); pl.heal = a => { window.__healed += a; return h0(a); }; return G.Debug.newcombat('selfcasts'); });
       ok(n === 24, "newcombat('selfcasts') placed 24 awake dummies (" + n + ')');
@@ -178,8 +178,8 @@ async function density(page) {
       ok(errs.length === 0, 'self-casts: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 
-    // ---- flag on, specials (slice 4b): Thunderbolt chains down the line, Dragon Rage is 40 flat, Hex lands, Flamethrower slows the caster ----
-    { const { page, errs } = await boot(browser, '?dev&newcombat');
+    // ---- specials (slice 4b): Thunderbolt chains down the line, Dragon Rage is 40 flat, Hex lands, Flamethrower slows the caster ----
+    { const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(() => { const pl = G.Game.player; pl.invuln = 1e9; window.__sp = { chain: {}, dr: [], hex: 0, ftSpe: 0, ftCommits: 0 };
         G.SimBus.on('move:hit', ev => { const s = window.__sp;
           if (ev.moveId === 'thunderbolt' && ev.hop > 0) s.chain[ev.enemyId] = 1;
@@ -202,9 +202,9 @@ async function density(page) {
       ok(errs.length === 0, 'specials: no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close(); }
 
-    // ---- flag on, slice 4r plain moves: a page per set, every slot casts once per frame-tick and lands hits ('buffs' raises a stage instead) ----
+    // ---- slice 4r plain moves: a page per set, every slot casts once per frame-tick and lands hits ('buffs' raises a stage instead) ----
     for (const set of ['arcs', 'novas', 'shots', 'buffs']) {
-      const { page, errs } = await boot(browser, '?dev&newcombat');
+      const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(set => { G.Game.player.invuln = 1e9; window.__h = {}; window.__c = {};
         G.SimBus.on('move:hit', e => { window.__h[e.moveId] = (window.__h[e.moveId] || 0) + 1; });
         G.SimBus.on('move:cast', e => { window.__c[e.moveId] = (window.__c[e.moveId] || 0) + 1; });
@@ -232,9 +232,9 @@ async function density(page) {
       ok(errs.length === 0, set + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
       await page.close();
     }
-    // ---- flag on, slice 4c-3: extras (Psychic, Confusion, Bubble Beam, Aura Sphere) and falls (Rock Slide, tracking Flamethrower) ----
+    // ---- slice 4c-3: extras (Psychic, Confusion, Bubble Beam, Aura Sphere) and falls (Rock Slide, tracking Flamethrower) ----
     for (const set of ['extras', 'falls']) {
-      const { page, errs } = await boot(browser, '?dev&newcombat');
+      const { page, errs } = await boot(browser, '?dev');
       const n = await page.evaluate(set => { G.Game.player.invuln = 1e9; window.__h = {}; window.__c = {}; window.__land = 0; window.__wait = 0; window.__swing = 0;
         G.SimBus.on('move:hit', e => { window.__h[e.moveId] = (window.__h[e.moveId] || 0) + 1; });
         G.SimBus.on('move:cast', e => { window.__c[e.moveId] = (window.__c[e.moveId] || 0) + 1; });

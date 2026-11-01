@@ -1,11 +1,11 @@
 // tools/smoke-ui.js: headless browser check for the slice 7a UI readers. A check, not a harness: tools/check.js only syntax-checks it,
 // since it needs a browser. Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright), as in
 // tools/smoke-newcombat.js. Usage from the repo root:  node tools/smoke-ui.js
-// For dev.html?dev (flag off) and dev.html?dev&newcombat (flag on), every move must show correctly:
+// On dev.html?dev (one move path since slice 7b; the ?newcombat page it also ran is gone), every move must show correctly:
 //   menus: the Upgrades screen's ban picker and move-slot selects (every owned Pokemon, so the union of pools covers every move), the
 //          Pokedex detail (start move and learnable icons);
 //   level-up: a "new move" card for every move on the real level-up screen (name, text, type tag, icon);
-//   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; flag on: routed rows with numbers);
+//   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; routed rows with numbers);
 //   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one.
 // Fails on any page or console error.
 const path = require('path'), cp = require('child_process');
@@ -35,7 +35,7 @@ async function boot(browser, query) {
   return { page, errs };
 }
 
-async function check(browser, query, flag) {
+async function check(browser, query, tag) {
   const { page, errs } = await boot(browser, query);
   const ALL = await page.evaluate(() => G.Moves.ALL.map(m => m.id));
 
@@ -45,9 +45,9 @@ async function check(browser, query, flag) {
     const p = c.getImageData(big ? 12 : 10, big ? 12 : 10, 1, 1).data, hex = '#' + [p[0], p[1], p[2]].map(v => v.toString(16).padStart(2, '0')).join('');
     return { id, w: cv.width, html: G.Icons.html('move:' + id, 16).length, badge: G.MoveInfo.badge(id), drawn: hex === '#2b3454' || hex === '#ffd23f' };
   }), ALL);
-  ok(ic.every(x => x.w > 0 && x.html > 20), flag + ': every move icon is drawn (' + ic.length + ')');
+  ok(ic.every(x => x.w > 0 && x.html > 20), tag + ': every move icon is drawn (' + ic.length + ')');
   const off = ic.filter(x => !!x.badge !== x.drawn);
-  ok(!off.length, flag + ': the family badge shows exactly when MoveInfo gives one' + (off.length ? ' (' + off.map(x => x.id).join(' ') + ')' : ''));
+  ok(!off.length, tag + ': the family badge shows exactly when MoveInfo gives one' + (off.length ? ' (' + off.map(x => x.id).join(' ') + ')' : ''));
 
   // ---- menus: the Upgrades screen for every owned Pokemon (ban picker + move-slot selects), then the Pokedex detail ----
   const menu = await page.evaluate(async () => {
@@ -79,10 +79,10 @@ async function check(browser, query, flag) {
   });
   const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED));     // slice 7b: Bubble and Hail are learnable by no one
   const miss = ALL.filter(id => !RET.includes(id) && !menu.seen.includes(id)), shownRet = RET.filter(id => menu.seen.includes(id));
-  ok(!menu.bad.length, flag + ': ban picker and move-slot names match MoveInfo over ' + menu.n + ' Pokemon' + (menu.bad.length ? ' (' + menu.bad.slice(0, 6).join(', ') + ')' : ''));
-  ok(!miss.length, flag + ': the menus showed every move but the retired ones (' + menu.seen.length + '/' + (ALL.length - RET.length) + (miss.length ? '; missing ' + miss.join(' ') : '') + ')');
-  ok(!shownRet.length, flag + ': no retired move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : ''));
-  ok(menu.dexOk, flag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
+  ok(!menu.bad.length, tag + ': ban picker and move-slot names match MoveInfo over ' + menu.n + ' Pokemon' + (menu.bad.length ? ' (' + menu.bad.slice(0, 6).join(', ') + ')' : ''));
+  ok(!miss.length, tag + ': the menus showed every move but the retired ones (' + menu.seen.length + '/' + (ALL.length - RET.length) + (miss.length ? '; missing ' + miss.join(' ') : '') + ')');
+  ok(!shownRet.length, tag + ': no retired move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : ''));
+  ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
 
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());
@@ -127,12 +127,12 @@ async function check(browser, query, flag) {
     Object.assign(pl, keep);
     return out;
   }, ALL);
-  ok(run.cards === ALL.length - 1, flag + ': a level-up card for every move but the held one (' + run.cards + ')');
-  ok(run.sheet === ALL.length, flag + ': every move on the pause sheet (' + run.sheet + ')');
-  ok(!run.bad.length, flag + ': cards and sheet rows read right' + (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : ''));
-  if (flag === 'flag on') ok(run.rowsNum >= 55, flag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');
+  ok(run.cards === ALL.length - 1, tag + ': a level-up card for every move but the held one (' + run.cards + ')');
+  ok(run.sheet === ALL.length, tag + ': every move on the pause sheet (' + run.sheet + ')');
+  ok(!run.bad.length, tag + ': cards and sheet rows read right' + (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : ''));
+  ok(run.rowsNum >= 55, tag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');
   await sleep(500);
-  ok(errs.length === 0, flag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+  ok(errs.length === 0, tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
   await page.close();
 }
 
@@ -141,8 +141,7 @@ async function check(browser, query, flag) {
   await sleep(1200);
   const browser = await chromium.launch();
   try {
-    await check(browser, '?dev', 'flag off');
-    await check(browser, '?dev&newcombat', 'flag on');
+    await check(browser, '?dev', 'ui');
   } catch (e) { fail++; console.log('FAIL  crashed: ' + (e && e.stack || e)); }
   await browser.close();
   srv.kill();

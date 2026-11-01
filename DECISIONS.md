@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, Slice 7b done: one move path (Jess)
+The ?newcombat flag is gone: every move, player and gym leader, runs in G.MoveSim from its resolved def. Deleted: the legacy player-move engine (the player half of combat.js, player shots in projectile.js), kinds.js, mechanics.js, the legacy level-up cards and the choose screen, the ROUTED list (routed now means a resolved def that is not retired), the legacy stage stacking and the norm factor. Bubble and Hail retired (D-BUBBLE, D-HAIL). The legacy table is kept only for the tools (docs/move_rework_holding/legacy-moves.js). Not changed: js/net/coop.js still calls removed hooks (deferred, D-COOP). Skipped: the dead G.Log.hitOut cleanup in js/systems/log.js. Each step feel-tested by Jess.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Results"
+
 ## 2026-11-01, D-HAIL: Hail leaves the pool until its toggle exists; old saves get Water Gun (Jess)
 Option (c). The toggle skill item stays parked (MOVE-INTENT hail) and becomes its own issue after the merge. A save that holds Hail loads with Water Gun. Declined: building the toggle in 7b, and a plain snow cast (snow chips the player's own non-Ice team).
 Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Decision D-HAIL"
