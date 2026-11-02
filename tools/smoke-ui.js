@@ -26,6 +26,9 @@ async function boot(browser, query) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errs = [];
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  page.on('requestfailed', (r) =>
+    errs.push('requestfailed: ' + r.url() + ' (' + (r.failure() && r.failure().errorText) + ')')
+  );
   page.on('console', (m) => {
     if (m.type() === 'error') errs.push('console: ' + m.text());
   });

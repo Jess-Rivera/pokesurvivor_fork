@@ -6392,7 +6392,7 @@
       "name": "Surf",
       "kind": "buff",
       "balanceClass": "other",
-      "feel": "Kanto batch 1 proposal. Movement skill, never autocast (new) (a passive: faster in water and swamp). Shape: None (movement skill). Delivery: On the user, never autocast. Payload: no water or swamp slowdown, x1.15 speed in them.",
+      "feel": "Kanto batch 1 proposal. Movement skill, never autocast (new) (a passive: faster in water and swamp). Shape: None (movement skill). Delivery: On the user, never autocast. Payload: no water or swamp slowdown, x1.25 speed in them.",
       "type": "water",
       "category": "special",
       "power": 90,
@@ -8244,6 +8244,34 @@
           "handler": "flight",
           "duration": 4,
           "cooldown": 20
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "defense-curl": {
+      "id": "defense-curl",
+      "name": "Defense Curl",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Kanto batch 1 proposal. Self-cast, no hitbox (like Swords Dance). Shape: None (self-cast). Delivery: Instant on the user. Payload: own Defense +1, team-wide.",
+      "type": "normal",
+      "category": "status",
+      "power": null,
+      "pp": 40,
+      "accuracy": null,
+      "priority": 0,
+      "flavor_text": "The user curls up and boosts its Defense stat.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "self"
+      },
+      "payload": [
+        {
+          "t": "stat",
+          "stat": "def",
+          "stages": 1,
+          "side": "self",
+          "scope": "team"
         }
       ],
       "reviewStatus": "proposed"

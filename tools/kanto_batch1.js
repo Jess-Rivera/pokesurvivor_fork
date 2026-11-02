@@ -137,6 +137,8 @@ const PLAN = {
   'air-slash': ['shot'],
   'air-cutter': ['burst'],
   fly: ['skill'], // joined batch 1 as a movement skill (Jess 2026-11-02)
+  // Gym loop-1 additions (Jess 2026-11-02): lore moves a loop-1 leader needs, imported with the same patterns. Not batch 1's review.
+  'defense-curl': ['self'], // Brock's Geodude; plays as Harden (Rollout, the move it boosts, is not imported)
   // Ghost
   'confuse-ray': ['statusShot'],
   'shadow-punch': ['melee'],

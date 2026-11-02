@@ -35,11 +35,16 @@ G.Enemy.prototype.die = function () { this.dead = true; };
   if (brock.signatures.length !== 6) bad('Brock should field six slots, has ' + brock.signatures.length);
   const flags = (mut) => { const c = JSON.parse(JSON.stringify(brock)); mut(c); return G.Gyms.validate(c); };
   const cases = [
-    ['unknown move', c => c.signatures[0].moves.push({ id: 'not-a-move' }), 'unknown move not-a-move'],
-    ['five moves', c => c.signatures[0].moves.push({ id: 'body-slam' }, { id: 'bite' }), 'more than 4 moves'],
-    ['no moves', c => { c.signatures[0].moves = []; }, 'has no moves'],
-    ['no damaging move', c => { c.signatures[0].moves = [{ id: 'harden' }]; }, 'at least one damaging move'],
-    ['move without a gym form', c => { c.signatures[0].moves[1].id = 'rock-slide'; }, 'no gym form yet'],
+    ['unknown move', c => c.signatures[0].sets[1].push({ id: 'not-a-move' }), 'unknown move not-a-move'],
+    ['five moves', c => c.signatures[0].sets[1].push({ id: 'body-slam' }, { id: 'bite' }), 'more than 4 moves'],
+    ['no moves', c => { c.signatures[0].sets[1] = []; }, 'has no moves'],
+    ['no sets', c => { c.signatures[0].sets = {}; }, 'has no moves'],
+    ['first set not at the entry loop', c => { c.signatures[1].sets = { 3: c.signatures[1].sets[2] }; }, 'first set must be for loop 2'],
+    ['set before the entry loop', c => { c.signatures[2].sets[1] = c.signatures[2].sets[3]; }, 'keyed by a loop from 3 to 6'],
+    ['set past the last loop', c => { c.signatures[0].sets[7] = c.signatures[0].sets[1]; }, 'keyed by a loop from 1 to 6'],
+    ['old moves field', c => { c.signatures[0].moves = []; }, 'unknown field moves'],
+    ['no damaging move', c => { c.signatures[0].sets[2] = [{ id: 'harden' }]; }, 'at least one damaging move'],
+    ['move without a gym form', c => { c.signatures[0].sets[1][1].id = 'rock-slide'; }, 'no gym form yet'],
     ['card the rules do not know', c => { c.signatures[0].cards = { 'not-a-card': 1 }; }, 'unknown card'],
     ['ladder not increasing', c => { c.signatures[0].line[1].minLevel = 1; }, 'stage levels must increase'],
     ['ladder first stage not 1', c => { c.signatures[0].line[0].minLevel = 5; }, 'first stage must start at level 1'],
@@ -49,7 +54,7 @@ G.Enemy.prototype.die = function () { this.dead = true; };
     ['bad stance', c => { c.signatures[0].stance = 'sideways'; }, 'bad stance'],
     ['power out of range', c => { c.signatures[0].power = 9; }, 'power must be in'],
     ['typo field on a slot', c => { c.signatures[0].tempoo = 1; }, 'unknown field tempoo'],
-    ['typo field on a move', c => { c.signatures[0].moves[0].hpBelw = 0.5; }, 'unknown field hpBelw'],
+    ['typo field on a move', c => { c.signatures[0].sets[1][0].hpBelw = 0.5; }, 'unknown field hpBelw'],
     ['typo field on a gym', c => { c.bagde = 'x'; }, 'unknown field bagde'],
     ['too many slots', c => { c.signatures.push(c.signatures[0]); }, 'signatures must be 1 to 6'],
     ['bad boost', c => { c.boost = { stat: 'luck', pct: 0.1 }; }, 'boost needs a stat']
@@ -105,11 +110,11 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
     try { for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { errs.push(x.message); break; }
     maxDef = Math.max(maxDef, +G.Stages.mul(e, 'def').toFixed(2));
   }
-  for (const id of Object.keys(seen)) if (!['tackle', 'rock-throw', 'harden'].includes(id)) bad('unauthored move ' + id);
-  if (!(seen.tackle && seen['rock-throw'] && seen.harden)) bad('not every move used in 60 s: ' + JSON.stringify(seen));
+  for (const id of Object.keys(seen)) if (!['tackle', 'rock-throw', 'defense-curl'].includes(id)) bad('unauthored move ' + id); // loop 1 (Jess 2026-11-02)
+  if (!(seen.tackle && seen['rock-throw'] && seen['defense-curl'])) bad('not every move used in 60 s: ' + JSON.stringify(seen));
   if ('fury' in e.brain) bad('the old fury state is back');
   if (!hurts.length) bad('the leader never hurt the player'); if (hurts.some(a => !(a[0] > 0) || a[3].cat !== 'physical' || !['normal', 'rock'].includes(a[1]))) bad('a hit that is not Tackle or Rock Throw');
-  if (maxDef < 4 - 1e-9) bad('Harden should reach +6 (x4 Defense) inside 60 s, peak x' + maxDef);
+  if (maxDef < 4 - 1e-9) bad('Defense Curl should reach +6 (x4 Defense) inside 60 s, peak x' + maxDef);
   console.log('5 60 s fight: casts ' + JSON.stringify(seen) + ', ' + hurts.length + ' hits on the player, peak Def stage multiplier x' + maxDef + (errs.length ? ', ERRORS ' + errs : ', no errors')); if (errs.length) bad('fight errors'); }
 
 // 6. schedule after the fight
@@ -165,7 +170,7 @@ const gate2 = G.Gym.gate;
     const d = G.Gym.makeDef(Object.assign({}, gate2, { level: lv }), slot), want = G.Gyms.stageFor(G.Gyms.KANTO[0].signatures[slot], lv).dex;
     if (d.dex !== want || d.name !== names[want] || d.gym.species !== names[want]) bad('slot ' + slot + ' level ' + lv + ' def is ' + d.name + ' (dex ' + d.dex + '), wanted dex ' + want);
     if (!Number.isFinite(d.hp) || d.hp <= 0 || !(d.spd > 0)) bad('slot ' + slot + ' level ' + lv + ' bad hp/spd ' + [d.hp, d.spd]);
-    if (d.gym.moves.length !== G.Gyms.KANTO[0].signatures[slot].moves.length || d.gym.moves.some(m => !G.MoveDefs[m.id])) bad('slot ' + slot + ' moves not in the move data');
+    if (d.gym.moves.length !== G.Gyms.movesFor(G.Gyms.KANTO[0].signatures[slot], slot, G.Gym.loop).length || d.gym.moves.some(m => !G.MoveDefs[m.id])) bad('slot ' + slot + ' moves not in the move data');
     if (d.gym.level !== lv) bad('slot ' + slot + ' effective level ' + d.gym.level);
   }
   let threw = false; try { G.Gym.makeDef(gate2, 6); } catch (e) { threw = true; } if (!threw) bad('makeDef must refuse a slot that does not exist');
@@ -181,9 +186,9 @@ const gate2 = G.Gym.gate;
       try { pl.dead = false; for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { err = x.message; }
     }
     if (err) bad('slot ' + slot + ' ' + d.name + ' threw in the boss AI: ' + err);
-    for (const id of Object.keys(seen)) if (!sig.moves.some(m => m.id === id)) bad('slot ' + slot + ' cast an unauthored move ' + id);
-    for (const m of sig.moves) if (!seen[m.id]) bad('slot ' + slot + ' ' + d.name + ' never used ' + m.id + ' in 90 s: ' + JSON.stringify(seen));
-    out.push(d.name + ' ' + Object.keys(seen).length + '/' + sig.moves.length);
+    for (const id of Object.keys(seen)) if (!G.Gyms.movesFor(sig, slot, G.Gym.loop).some(m => m.id === id)) bad('slot ' + slot + ' cast an unauthored move ' + id);
+    for (const m of G.Gyms.movesFor(sig, slot, G.Gym.loop)) if (!seen[m.id]) bad('slot ' + slot + ' ' + d.name + ' never used ' + m.id + ' in 90 s: ' + JSON.stringify(seen));
+    out.push(d.name + ' ' + Object.keys(seen).length + '/' + G.Gyms.movesFor(sig, slot, G.Gym.loop).length);
   }
   clock = 240;
   console.log('10 defs: every slot x levels 12/20/35/60 builds the right stage; default def unchanged (Geodude HP 1029); AI uses every authored move: ' + out.join(', ')); }
@@ -196,7 +201,10 @@ const gate2 = G.Gym.gate;
     for (let slot = 0; slot < entry.signatures.length; slot++) {
       G.MoveSim.clear();
       const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot), e = G.Boss.make(d, 0, 0); e.flying = false;
-      const near = Math.max(1, e.brain.reach() + (pl.r || 0) - 1); // where the brain stops walking in: just inside its largest melee reach
+      // just inside its SHORTEST close reach: with a close move ready the brain walks in to contact, so every close move is in reach
+      // (2026-11-02: loop-1 sets mix reaches, Bite 46 beside Take Down 54, Body Slam 46 beside Earthquake 260)
+      const closeR = e.slots[0].map(s => { const d = e.brain.def(s.id), f = G.Gyms.formOf(d); return ['melee', 'nova'].includes(f) ? G.Gyms.reachOf(d, f) : Infinity; }),
+        near = Math.max(1, Math.min(e.brain.reach(), ...closeR) + (pl.r || 0) - 1);
       if (d.dex !== G.Gyms.stageFor(sig, 36).dex) bad(entry.leader + ' slot ' + slot + ' def dex ' + d.dex);
       const seen = {}; let err = null;
       for (let i = 0; i < 90 * 20 && !err; i++) {
@@ -204,14 +212,34 @@ const gate2 = G.Gym.gate;
         try { pl.dead = false; for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { err = x.message; }
       }
       if (err) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' threw in the boss AI: ' + err);
-      for (const id of Object.keys(seen)) if (!sig.moves.some(m => m.id === id)) bad(entry.leader + ' slot ' + slot + ' cast an unauthored move ' + id);
-      for (const m of sig.moves) if (!seen[m.id]) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' never used ' + m.id + ' in 90 s: ' + JSON.stringify(seen));
-      used += Object.keys(seen).length; total += sig.moves.length;
+      for (const id of Object.keys(seen)) if (!G.Gyms.movesFor(sig, slot, G.Gym.loop).some(m => m.id === id)) bad(entry.leader + ' slot ' + slot + ' cast an unauthored move ' + id);
+      for (const m of G.Gyms.movesFor(sig, slot, G.Gym.loop)) if (!seen[m.id]) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' never used ' + m.id + ' in 90 s: ' + JSON.stringify(seen));
+      used += Object.keys(seen).length; total += G.Gyms.movesFor(sig, slot, G.Gym.loop).length;
     }
     out.push(entry.leader + ' ' + used + '/' + total);
   }
   clock = 240;
   console.log('10b later gyms: every slot casts every authored move through the boss AI: ' + out.join(', ')); }
+
+// 10c. per-loop sets (Jess 2026-11-02): the loop-1 lore sets, written out by hand, and every slot's def carrying its loop's set
+{ const LOOP1 = { Brock: 'tackle,defense-curl,rock-throw', Misty: 'tackle,harden,water-pulse,recover', 'Lt. Surge': 'thunder-shock,growl,thunder-wave',
+    Erika: 'acid,stun-spore,sleep-powder', Koga: 'sludge', Sabrina: 'confusion,calm-mind', Blaine: 'bite,fire-blast,take-down', Giovanni: 'earthquake,body-slam' };
+  let defs = 0;
+  G.Gyms.KANTO.forEach((entry, gi) => {
+    const got = G.Gyms.movesFor(entry.signatures[0], 0, 1).map(m => m.id).join();
+    if (got !== LOOP1[entry.leader]) bad(entry.leader + ' loop 1 set ' + got + ', want ' + LOOP1[entry.leader]);
+    entry.signatures.forEach((sig, slot) => {
+      for (let L = slot + 1; L <= G.Gyms.LOOPS; L++) {
+        G.Gym.debugLoop(L);
+        const d = G.Gym.makeDef(Object.assign({}, gate2, { idx: gi, leader: entry.leader }), slot), want = G.Gyms.movesFor(sig, slot, L).map(m => m.id).join();
+        if (d.gym.moves.map(m => m.id).join() !== want) bad(entry.leader + ' slot ' + slot + ' loop ' + L + ' def moves ' + d.gym.moves.map(m => m.id) + ', want ' + want);
+        defs++;
+      }
+    });
+    if (G.Gyms.movesFor(entry.signatures[0], 0, 2) !== G.Gyms.movesFor(entry.signatures[0], 0, 6)) bad(entry.leader + ' slot 1: loops 3 to 6 should hold the loop 2 set');
+  });
+  G.Gym.debugLoop(1);
+  console.log('10c per-loop sets: the 8 loop-1 lore sets match; ' + defs + ' defs (every gym, slot and loop it is fielded in) carry their loop\'s set; slot 1 holds its loop-2 set through loop 6'); }
 
 // 11. the sim emits events and never calls presentation itself (Spawner and Audio throw if touched; no subscriber is loaded yet)
 { G.Spawner = { say: () => bad('SIM called Spawner.say directly'), CAP: 64 }; G.Audio = { sfx: () => bad('SIM called Audio.sfx directly') };

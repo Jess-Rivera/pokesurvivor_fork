@@ -10,7 +10,8 @@
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
  * The attack is picked by a utility score (attack(): freshness x fit x opportunity, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
  * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player lands
- * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
+ * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Recoil costs the mon HP (never
+ * below 1) and a self heal (Recover) casts with no tell while it is hurt (Jess 2026-11-02). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px,
  * closer while its longest ready shot or strike falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
@@ -55,7 +56,8 @@ G.Boss = (() => {
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
       e.moveFactor = (m) => this.factor(m);
-      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you
+      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
+      e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
       this.contact = dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
       this.touch();
@@ -89,6 +91,8 @@ G.Boss = (() => {
       for (const s of e.slots[0]) if (s.t > 0) s.t = Math.max(0, s.t - dt); // every move recharges, as the player's do
       if (this.wait > 0) this.wait -= dt;
       this.buffs(now);
+      this.heals(now);
+      G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
       if (this.tell) return this.telling(dt, now);
       this.modeT -= dt;
       if (!this.low && e.hp < e.maxHp * LOW_HP) {
@@ -264,6 +268,20 @@ G.Boss = (() => {
       }
     }
 
+    /** Self heals (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) cast with no tell, as buffs do, whenever the mon
+     *  is hurt and the move is off cooldown. */
+    heals(now) {
+      const e = this.e;
+      if (!(e.hp < e.maxHp)) return;
+      for (const s of e.activeGroup()) {
+        const d = this.def(s.id);
+        if (s.t > 0 || G.Gyms.formOf(d) !== 'heal') continue;
+        if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
+        G.Gym.noteCast(s.id);
+        G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
+      }
+    }
+
     /** Flinch (slice D2): a tell in progress is cancelled (that move's cooldown is spent) and the next attack waits one recovery. */
     flinch() {
       if (!this.on) return;
@@ -288,7 +306,16 @@ G.Boss = (() => {
       );
     }
 
-    /** Giga Drain's heal on the mon: up to its max HP, with a green number. */
+    /** A cast's HP cost (recoil) on the mon: taken directly, never below 1 HP, with a grey number (Player.payHp's rule). */
+    payHp(n) {
+      const e = this.e,
+        before = e.hp;
+      e.hp = Math.max(1, e.hp - n);
+      const got = Math.round(before - e.hp);
+      if (got >= 1) G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 6, '-' + got, '#c9c9d6');
+    }
+
+    /** A heal on the mon (Giga Drain's drain, a self heal's tick): up to its max HP, with a green number. */
     heal(n) {
       const e = this.e,
         before = e.hp;

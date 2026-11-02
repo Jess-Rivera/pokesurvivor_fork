@@ -44,11 +44,11 @@ pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.protot
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
-const BROCK = Gy.KANTO[0], SLOT1 = BROCK.signatures[0];
+const BROCK = Gy.KANTO[0], SLOT1 = BROCK.signatures[0], PILOT = SLOT1.sets[2]; // the tuned pilot set (loop 2 on since 2026-11-02)
 
 // ---- builders ----
 const gymOf = (o = {}) => Object.assign({ level: 20, leader: 'Brock', badge: 'Boulder Badge', species: 'Geodude', stance: 'mixed', power: 1, tempo: 1,
-  cards: Object.assign({}, SLOT1.cards), moves: SLOT1.moves.map(m => Object.assign({}, m)), engagedAt: null }, o);
+  cards: Object.assign({}, SLOT1.cards), moves: PILOT.map(m => Object.assign({}, m)), engagedAt: null }, o);
 function mkBoss(gym = gymOf()) {
   const e = G.Boss.make({ dex: 74, name: 'Geodude', hp: 1e6, spd: 40, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym }, 0, 0);
   e.flying = false; return e;
@@ -71,7 +71,9 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 // 1. roster data and the validator
 { ok(!Gy.validate(BROCK).length, 'Brock validates: ' + Gy.validate(BROCK).join('; '));
   ok(JSON.stringify(SLOT1.cards) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'slot 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
-  ok(SLOT1.moves.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 moves');
+  ok(PILOT.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 pilot set (loop 2 on)');
+  ok(SLOT1.sets[1].map(m => m.id).join() === 'tackle,defense-curl,rock-throw', 'slot 1 loop 1: Tackle, Defense Curl, Rock Throw (Jess 2026-11-02)');
+  ok(Gy.movesFor(SLOT1, 0, 1) === SLOT1.sets[1] && [2, 3, 6].every(L => Gy.movesFor(SLOT1, 0, L) === PILOT), 'movesFor: loop 1 its own set, loops 2 to 6 hold the pilot set');
   const forms = id => Gy.formOf(G.MoveDefs[id]);
   ok(forms('tackle') === 'melee' && forms('rock-throw') === 'shot' && forms('harden') === 'buff', 'forms: Tackle melee, Rock Throw shot, Harden buff');
   ok(forms('body-slam') === 'melee' && forms('water-gun') === 'shot' && forms('swords-dance') === 'buff' && forms('agility') === 'buff', 'slots 2 to 6 forms');
@@ -82,6 +84,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(['hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
   ok(['heat-wave', 'sludge-wave'].every(id => forms(id) === 'shot'), 'waves (a travelling band at the nearest foe) cast as shots');
   ok(!forms('surf') && !forms('fly'), 'movement skills (Surf, Fly) have no gym form');
+  ok(['recover', 'synthesis', 'moonlight'].every(id => forms(id) === 'heal') && forms('defense-curl') === 'buff' && forms('drain-punch') === 'melee', 'self heals of max HP are the heal form; Defense Curl a buff; a drain stays its shape');
   ok(forms('confusion') === 'shot' && forms('psychic') === 'shot', 'homing shots (Confusion, Psychic) cast as shots');
   const beam = { id: 'beam', space: { shape: 'linear', len: 200, width: 10 }, delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static' }, payload: [{ t: 'damage' }] };
   ok(!Gy.formOf(beam), 'a beam (a static linear shape) has no gym form yet');
@@ -93,16 +96,16 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     ['card that fits no move', s => { s.cards.heal = 1; }, 'fits none of its moves'],
     ['fractional stacks', s => { s.cards.damage = 1.5; }, 'whole number of stacks'],
     ['zero stacks', s => { s.cards.area = 0; }, 'whole number of stacks'],
-    ['hpBelow out of range', s => { s.moves[2].hpBelow = 1.2; }, 'hpBelow must be in (0, 1)'],
-    ['unknown move', s => { s.moves.push({ id: 'not-a-move' }); }, 'unknown move not-a-move'],
-    ['move with no gym form', s => { s.moves[1].id = 'rock-slide'; }, 'has no gym form yet'],
-    ['old weight field', s => { s.moves[0].weight = 2; }, 'unknown field weight'],
-    ['old stacks field', s => { s.moves[0].stacks = { effect: 1 }; }, 'unknown field stacks'],
-    ['no damaging move', s => { s.moves = [{ id: 'harden' }]; }, 'at least one damaging move'],
+    ['hpBelow out of range', s => { s.sets[1][2].hpBelow = 1.2; }, 'hpBelow must be in (0, 1)'],
+    ['unknown move', s => { s.sets[1].push({ id: 'not-a-move' }); }, 'unknown move not-a-move'],
+    ['move with no gym form', s => { s.sets[1][1].id = 'rock-slide'; }, 'has no gym form yet'],
+    ['old weight field', s => { s.sets[1][0].weight = 2; }, 'unknown field weight'],
+    ['old stacks field', s => { s.sets[1][0].stacks = { effect: 1 }; }, 'unknown field stacks'],
+    ['no damaging move', s => { s.sets[2] = [{ id: 'harden' }]; }, 'at least one damaging move'],
     ['typo on a slot', s => { s.cardz = {}; }, 'unknown field cardz']
   ];
   for (const [name, mut, needle] of cases) { const out = flags(mut); ok(out.some(m => m.includes(needle)), 'validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
-  console.log('1 data: Brock valid; slot 1 = Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
+  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
 
 // 2. the owner: player size, its own folded defs, the player as its only foe
 { fresh(); const e = mkBoss(), b = e.brain;
@@ -253,6 +256,18 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     hitWith(e, 'giga-drain', 0.99); ok(near(e.hp - h0, 50), 'Giga Drain heals the leader half the 100 dealt: ' + (e.hp - h0));
     e.hp = e.maxHp - 10; hitWith(e, 'giga-drain', 0.99); ok(e.hp === e.maxHp, 'the heal stops at max HP');
     pl.loss = 0; e.hp = h0; hitWith(e, 'giga-drain', 0.99); ok(e.hp === h0, 'nothing dealt (a shield took it), no heal'); }
+  // recoil (Jess 2026-11-02): Take Down costs the leader 0.25 of the dealt damage, never below 1 HP
+  { fresh(); const e = boss(['take-down']); e.hp = 1000; pl.loss = 100;
+    hitWith(e, 'take-down', 0.99); ok(near(e.hp, 975), 'Take Down: the leader pays 0.25 of the 100 dealt: ' + e.hp);
+    e.hp = 10; hitWith(e, 'take-down', 0.99); ok(e.hp === 1, 'recoil never takes the leader below 1 HP: ' + e.hp);
+    pl.loss = 0; e.hp = 1000; hitWith(e, 'take-down', 0.99); ok(e.hp === 1000, 'nothing dealt, no recoil'); }
+  // self heal (Jess 2026-11-02, mainline): Recover casts with no tell while hurt, half max HP on its first tick, then its 12 s cooldown
+  { fresh(); const e = boss(['tackle', 'recover']); pl.x = 5000; const M = e.maxHp;
+    run(e, 1); ok(e.hp === M, 'at full HP no heal is cast');
+    e.hp = 0.3 * M; run(e, 0.2); ok(near(e.hp, 0.8 * M), 'hurt to 30%: Recover lands half of max HP at once (80%): ' + (e.hp / M).toFixed(3));
+    e.hp = 0.3 * M; run(e, 11); ok(near(e.hp, 0.3 * M), 'no second Recover inside its 12 s cooldown: ' + (e.hp / M).toFixed(3));
+    run(e, 1.2); ok(near(e.hp, 0.8 * M), 'the next Recover lands once the 12 s cooldown is up: ' + (e.hp / M).toFixed(3));
+    e.hp = 0.8 * M; run(e, 12.5); ok(e.hp === M, 'the heal stops at max HP'); }
   // Hex and crits
   { fresh(); const e = boss(['hex']), hex = (p) => G.Stats.enemyAttackFactor(80, 30, 20, p, 'special');
     hitWith(e, 'hex', 0.99); ok(near(pl.hurts[0].a[0], hex(65)), 'Hex on a clean player: Power 65: ' + pl.hurts[0].a[0]);

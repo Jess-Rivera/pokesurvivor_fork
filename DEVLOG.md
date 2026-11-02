@@ -409,3 +409,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Jess signed off: shapes kept, batch in batchReviewed (108 plus Sand Tomb by its new MOVE-INTENT entry, cd 2.5). move_report.js treats a move with no legacy cd as nothing to compare.
 - Learnset step 1: build_learnset_dataset.py takes the latest version group with a level-up list (Champions rows are train-only and left 197 species empty, Charizard and Pikachu among them). Rebuilt, 0 warnings.
 - Verified: intent harness 2136/2136, check.js 30/30. Stopped before step 2 (game code, four decisions open).
+
+## 2026-11-02, Gym loop-1 lore sets, slice 1 (Claude Code, home)
+- Jess parked player learnset pools: the imports are for the bosses. Gyms one at a time in GYM-ROSTERS order, per-loop sets, loop 1 of all 8 first.
+- Built: gyms.js `sets` keyed by loop (movesFor, validator per set), gym.js hands each mon its loop's set, leader recoil (payHp, never below 1 HP), leader heal form (Recover, no tell, while hurt; the brain now ticks heal over time), Defense Curl imported and held. Loop-1 lore sets for all 8; Sabrina Confusion stand-in.
+- Found: gym-harness 10b placed the player at the largest close reach, so Bite and Body Slam looked starved; live, the brain walks in and lands both. Harness fixed; BOSS-AUTHORING "one melee cone" rule revised.
+- Verified: check.js 30/30, intent 2151, boss-owner 188, gym harness, smoke-ui, live loop-1 fights for all 8 on file://. Not yet feel-tested.

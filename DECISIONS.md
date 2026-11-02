@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Gym bosses: per-loop lore sets, loop 1 first (Jess)
+The point of the Kanto imports is the bosses; player learnset pools are parked. Gyms go one at a time in GYM-ROSTERS order (the Concept Maps are only a moves reference). Each slot holds one move set per loop from the loop it enters; loop 1 of all 8 gyms gets its lore set first. Giovanni's loop 1 is the Stadium Rhydon set (Fury Attack, Earthquake, Body Slam, Fissure). Self-Destruct stays a real faint, on later-loop mons, with utility weight 0. Sabrina uses Confusion as a stand-in for Psybeam until the beam form. A leader pays recoil (never below 1 HP) and casts Recover at mainline strength (half max HP, 12 s cd) whenever hurt.
+Canonical: docs/BOSS-AUTHORING.md "Signature fields" and "Validation rules"; js/data/gyms.js
+
 ## 2026-11-02, Kanto batch 1 signed off; Sand Tomb cd 2.5; learnsets use the latest game with a level-up list (Jess)
 All 111 batch-1 shapes kept as built (no overrides), and the batch scenario table signed off (108 in batchReviewed, Sand Tomb through its own entry). Sand Tomb cd 2.5, so one patch at a time. The move report no longer asks for a cd ruling on a move with no legacy cd. The learnset dataset picks each Pokemon's latest version group that has a level-up list (pokeapi's Champions rows are "train" only and left 197 species with none).
 Canonical: docs/MOVE-INTENT.md sand-tomb; docs/move_rework_holding/build_learnset_dataset.py docstring

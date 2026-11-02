@@ -32,7 +32,7 @@ const set = a => [...a].sort().join(' ');
 const legacyWhere = f => Object.values(L).filter(m => D[m.id] && f(m)).map(m => m.id);
 
 // ===== 1. names, types, categories: every def, and Bubble (no def, D-BUBBLE) =====
-ok(IDS.length === 174, '174 resolved defs, Kanto batch 1 and Fly included (' + IDS.length + ')');
+ok(IDS.length === 175, '175 resolved defs, Kanto batch 1, Fly and Defense Curl included (' + IDS.length + ')');
 ok(IDS.every(id => I.name(id) === D[id].name && I.type(id) === D[id].type), 'name and type come from the def for every move');
 ok(IDS.every(id => I.cat(id) === D[id].category), 'category from the def for every move');
 ok(IDS.filter(id => L[id]).every(id => D[id].category === L[id].cat), 'parity: every def with a legacy entry keeps the legacy cat (no change)');

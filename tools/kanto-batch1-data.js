@@ -3172,7 +3172,7 @@ window.KANTO_B1 = {
    "category": "physical",
    "power": 35,
    "pp": 15,
-   "cd": 1.167,
+   "cd": 2.5,
    "target": "selected-pokemon",
    "effect": "Prevents the target from fleeing and inflicts damage for 2-5 turns.",
    "pattern": "zone",
@@ -5430,6 +5430,40 @@ window.KANTO_B1 = {
       "handler": "flight",
       "duration": 4,
       "cooldown": 20
+     }
+    ]
+   }
+  },
+  {
+   "id": "defense-curl",
+   "name": "Defense Curl",
+   "type": "normal",
+   "category": "status",
+   "power": null,
+   "pp": 40,
+   "cd": null,
+   "target": "user",
+   "effect": "Raises user’s Defense by one stage.",
+   "pattern": "self",
+   "words": {
+    "shape": "None (self-cast)",
+    "delivery": "Instant on the user",
+    "payload": "own Defense +1, team-wide",
+    "rule": ""
+   },
+   "proposed": {
+    "kind": "buff",
+    "delivery": {
+     "anchor": "self",
+     "targeting": "self"
+    },
+    "payload": [
+     {
+      "t": "stat",
+      "stat": "def",
+      "stages": 1,
+      "side": "self",
+      "scope": "team"
      }
     ]
    }

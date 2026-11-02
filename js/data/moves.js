@@ -16,7 +16,8 @@
   // Retired moves (slice 7b, D-BUBBLE and D-HAIL, Jess 2026-11-01): out of every pool; a save that names one loads its replacement.
   const RETIRED = { bubble: 'water-gun', hail: 'water-gun' };
   // Kanto import batch 1 (Jess 2026-11-01): in the catalog (gym leaders, debug) but out of every player pool until pools follow
-  // mainline learnsets; the type pools would otherwise triple and the shared Normal pool go from 7 to 31.
+  // mainline learnsets; the type pools would otherwise triple and the shared Normal pool go from 7 to 31. Defense Curl joined
+  // 2026-11-02 for Brock's loop-1 Geodude.
   const HELD = new Set(
     (
       'slash screech lovely-kiss recover supersonic glare swift double-slap mega-kick spike-cannon take-down growl ' +
@@ -29,7 +30,7 @@
       'waterfall water-pulse scald aqua-tail clamp fire-blast flare-blitz fire-punch overheat blaze-kick fire-fang ' +
       'crunch nasty-plot dragon-pulse draco-meteor dragon-breath dragon-claw twister blizzard ice-punch aurora-beam ' +
       'frost-breath ice-fang stone-edge ancient-power rock-tomb leech-life megahorn signal-beam air-slash air-cutter ' +
-      'confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail fly'
+      'confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail fly defense-curl'
     ).split(' ')
   );
 

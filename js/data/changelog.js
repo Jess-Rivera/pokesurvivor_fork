@@ -7,6 +7,20 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-02',
+    title: ['Gym leaders use their real moves', 'Gym leaders use their real moves'],
+    chg: [
+      [
+        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
+        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
+      ],
+      [
+        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover.",
+        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover.",
+      ],
+    ],
+  },
+  {
     d: '2026-11-01',
     title: ['The new move system is live', 'The new move system is live'],
     fix: [
