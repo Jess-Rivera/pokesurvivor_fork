@@ -5,6 +5,22 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, Kanto import rulings set 4: priority ignored, two-turn, rampage, whole-field (Jess)
+Priority is not a mechanic: Quick Attack and the six priority imports cast by shape and power; a bonded group casts in slot order (closes the Quick Attack priority question). Fly, Dig, Dive, Bounce vanish with i-frames then strike; Solar Beam charges (instant in sun); Future Sight lands after a delay. Outrage, Thrash, Petal Dance lock in then confuse; Hyper Beam has a recharge lockout. Whole-field moves are team-side fields: weather, Reflect / Light Screen / Safeguard as timed team buffs, Stealth Rock as hazards (Rapid Spin clears them).
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 3: odd damage stats and new status mechanics (Jess)
+Foul Play, Psyshock, Electro Ball and Grass Knot follow mainline (species weight joins the dex). Protect is a short full block on a long cooldown. Rest is a big heal plus ailment clear with no self-sleep; Yawn is a delayed sleep. Attract (infatuation skip), Disable, Roar (scatter), Focus Energy (crit stage), Magnet Rise (Ground immunity) get real-time analogs; Skill Swap is not imported. Psych Up and Swagger stay with the open stage-manipulation decision.
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 2: turn conditions, sleep moves, switching, OHKO (Jess)
+Fake Out, Sucker Punch, Focus Punch, High Jump Kick and Feint get real-time analogs (first cast after swap-in, foe mid wind-up, charge cancelled by a hit, 50% crash on a whiff, breaks a guard window). Dream Eater and Nightmare work only on sleeping targets. U-turn hits and clears the swap lock (no auto-swap); Baton Pass waits on the stage-manipulation decision. Fissure KOs wild enemies only (30%); everything else takes a heavy hit. Numbers marked [Proposed] until the batch review.
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 1: accuracy/evasion, HP power, reflection, self-KO (Jess)
+Accuracy and evasion become stage trackers with the mainline miss chance (Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight; Mud-Slap, Mirror Shot, Hone Claws keep their riders). Flail, Reversal, Wring Out use the mainline HP curves. Counter and Mirror Coat are a short stance window reflecting x2. Explosion and Self-Destruct faint the caster for real on both sides (last mon = run over, Re-Do applies). Window lengths and blast sizes are [Proposed] until the batch review.
+Canonical: docs/MOVE-INTENT.md (per move), docs/COMBAT-RULES.md "Stat stages" (accuracy and evasion trackers)
+
 ## 2026-11-01, Kanto gyms 2 to 8 authored; badge boosts for every Kanto badge (Jess)
 Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine and Giovanni join Brock in js/data/gyms.js with their locked rosters (Gen-1 order) and PROVISIONAL move sets from catalog moves that have a gym form; power and tempo 1, no cards yet. Badge boosts, each +10% to one stat for the run: Boulder Atk, Cascade SpD, Thunder Spe, Rainbow HP, Soul Def, Marsh SpA, Volcano SpA, Earth Atk (repeats stack). Brock slots reordered (Onix line to slot 2). Surge has no castable Electric move (Thunder Shock chains), so his mons use Normal and Steel stand-ins until boss casts and riders are widened (next, Jess). Authoring rule found: one melee cone per slot, since the brain only lands its longest-reach melee.
 Canonical: js/data/gyms.js (data), BOSS-REWORK.md section 3g (badge boosts), docs/BOSS-AUTHORING.md (authoring rule)

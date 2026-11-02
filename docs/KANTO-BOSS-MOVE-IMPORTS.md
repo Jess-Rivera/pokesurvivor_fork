@@ -414,30 +414,32 @@ Goal (Jess, 2026-11-01): import all 177 moves normally, so the player can use th
 
 ### Whole-field (7)
 
+RULED (Jess, 2026-11-01, set 4): team-side fields (weather via setWeather; screens and Safeguard as timed team buffs; Stealth Rock as field hazards). Per move: MOVE-INTENT.
+
 Sunny Day, Rain Dance, Sandstorm, Reflect, Light Screen, Safeguard, Stealth Rock. Weather has a handler (`setWeather`); screens, Safeguard and hazards do not.
 
 ### Unique decisions (38)
 
 | Group | Moves | What has to be decided |
 |---|---|---|
-| Accuracy and evasion (6) | Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight | COMBAT-RULES skips accuracy and evasion stages, so these do nothing today. One ruling covers all six, plus the accuracy riders on Mud-Slap, Mirror Shot and Hone Claws (drop them, or give them a meaning). |
-| Power from HP (3) | Flail, Reversal, Wring Out | Power that scales with the user's or the target's HP. One ruling. |
-| Damage from other stats (4) | Foul Play, Psyshock, Electro Ball, Grass Knot | Foul Play uses the target's Attack, Psyshock hits Defense, Electro Ball scales with Speed, Grass Knot with weight (not tracked). |
-| Damage reflection (2) | Counter, Mirror Coat | Return damage taken. One ruling. |
-| Turn or action conditions (5) | Sucker Punch, Fake Out, Feint, Focus Punch, High Jump Kick | "Foe is attacking", "first turn", "breaks Protect", "fails if hit while charging", "crash damage on a miss": what each condition means in real time. |
-| Sleep-dependent (2) | Dream Eater, Nightmare | Only work on a sleeping target. One ruling. |
-| Switching (2) | U-turn, Baton Pass | Tie into the swap rule; Baton Pass also falls under the open stage-manipulation decision. |
-| User faints (2) | Explosion, Self-Destruct | What fainting the caster means for the player's mon and a boss mon. |
-| One-hit KO (1) | Fissure | What a one-hit KO means against a swarm, a player and a boss. |
-| New status mechanics (11) | Attract, Yawn, Rest, Protect, Disable, Roar, Psych Up, Swagger, Skill Swap, Focus Energy, Magnet Rise | Attract needs a new ailment (infatuation); Yawn is a delayed sleep; Rest is self-sleep plus a full heal; Focus Energy is a crit stage (stages cover five stats today); Psych Up and Swagger are open owner decisions already (stage manipulation, raises on foes); Skill Swap has no abilities to swap. |
+| Accuracy and evasion (6) RULED: miss chance (MOVE-INTENT) | Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight | COMBAT-RULES skips accuracy and evasion stages, so these do nothing today. One ruling covers all six, plus the accuracy riders on Mud-Slap, Mirror Shot and Hone Claws (drop them, or give them a meaning). |
+| Power from HP (3) RULED: mainline curve | Flail, Reversal, Wring Out | Power that scales with the user's or the target's HP. One ruling. |
+| Damage from other stats (4) RULED: mainline, weight from the dex | Foul Play, Psyshock, Electro Ball, Grass Knot | Foul Play uses the target's Attack, Psyshock hits Defense, Electro Ball scales with Speed, Grass Knot with weight (not tracked). |
+| Damage reflection (2) RULED: stance window | Counter, Mirror Coat | Return damage taken. One ruling. |
+| Turn or action conditions (5) RULED: real-time analogs (Feint waits on Protect) | Sucker Punch, Fake Out, Feint, Focus Punch, High Jump Kick | "Foe is attacking", "first turn", "breaks Protect", "fails if hit while charging", "crash damage on a miss": what each condition means in real time. |
+| Sleep-dependent (2) RULED: sleep only | Dream Eater, Nightmare | Only work on a sleeping target. One ruling. |
+| Switching (2) RULED: U-turn clears the swap lock; Baton Pass [Open] | U-turn, Baton Pass | Tie into the swap rule; Baton Pass also falls under the open stage-manipulation decision. |
+| User faints (2) RULED: real faint | Explosion, Self-Destruct | What fainting the caster means for the player's mon and a boss mon. |
+| One-hit KO (1) RULED: wild only | Fissure | What a one-hit KO means against a swarm, a player and a boss. |
+| New status mechanics (11) RULED except Psych Up and Swagger (still [Open]); Skill Swap not imported | Attract, Yawn, Rest, Protect, Disable, Roar, Psych Up, Swagger, Skill Swap, Focus Energy, Magnet Rise | Attract needs a new ailment (infatuation); Yawn is a delayed sleep; Rest is self-sleep plus a full heal; Focus Energy is a crit stage (stages cover five stats today); Psych Up and Swagger are open owner decisions already (stage manipulation, raises on foes); Skill Swap has no abilities to swap. |
 
 ### Existing pattern, one ruling per pattern (18)
 
-- Priority (6): Aqua Jet, Mach Punch, Ice Shard, Bullet Punch, Extreme Speed, Vital Throw. Follow the Quick Attack dash; waits on the open Quick Attack priority decision.
-- Two-turn (6): Fly, Dig, Dive, Bounce, Solar Beam, Future Sight. `delivery.delay` and caster i-frames exist; confirm the shape once.
-- Rampage and recharge (4): Outrage, Thrash, Petal Dance (lock in, then self confusion), Hyper Beam (a lockout after firing; today's commitment covers only the cast).
-- Random ailment (1): Tri Attack picks one of burn, paralysis or freeze.
-- Hazard clear (1): Rapid Spin. Damage and the Speed raise map; clearing hazards follows the whole-field ruling.
+- RULED (set 4, priority ignored, they import by shape and power) Priority (6): Aqua Jet, Mach Punch, Ice Shard, Bullet Punch, Extreme Speed, Vital Throw. Follow the Quick Attack dash; waits on the open Quick Attack priority decision.
+- RULED (set 4, delay plus i-frames) Two-turn (6): Fly, Dig, Dive, Bounce, Solar Beam, Future Sight. `delivery.delay` and caster i-frames exist; confirm the shape once.
+- RULED (set 4, mainline analogs) Rampage and recharge (4): Outrage, Thrash, Petal Dance (lock in, then self confusion), Hyper Beam (a lockout after firing; today's commitment covers only the cast).
+- [Proposed] mainline (set 4) Random ailment (1): Tri Attack picks one of burn, paralysis or freeze.
+- RULED (set 4, team-side fields) Hazard clear (1): Rapid Spin. Damage and the Speed raise map; clearing hazards follows the whole-field ruling.
 
 ### Maps to the schema (about 114)
 

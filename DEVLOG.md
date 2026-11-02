@@ -367,4 +367,5 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Bond is the team's: the count rides takeField on swap (was stranded on the mon active at the gym win). The bond screen opens with a Pokemon step (team keys 1-6, ineligible dimmed, skipped when only one can bond); the field does not swap.
 - Bomb: kills wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then a 3 s spawn quiet (G.Spawner.quiet). CONTRIBUTING asks for coins per run.
 - Verified: check.js 30/30, smoke-ui pass, headless: speed px, bond pick on a benched mon, bond carried on swap, bomb 26 -> 0 with no spawns for 3 s. smoke-newcombat skipped.
-- Next: Jess feel-tests, then the Kanto import rulings.
+- Jess feel-tested: bonds work, bombs work, speed feels better. Next: the Kanto import rulings.
+- Kanto import rulings, 4 sets with Jess: accuracy/evasion as miss chance, HP-curve power, Counter stance, real-faint Explosion; real-time turn conditions, sleep-only Dream Eater, U-turn clears the swap lock, wild-only Fissure; mainline odd stats (weight joins the dex), Protect block, Rest without sleep, status analogs (Skill Swap out); priority ignored, two-turn delay, rampage lock, team-side fields. 64 new MOVE-INTENT entries (plus a line on quick-attack), 4 DECISIONS entries. Still open: Psych Up, Swagger, Baton Pass.
