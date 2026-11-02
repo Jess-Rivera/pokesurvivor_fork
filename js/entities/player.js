@@ -85,6 +85,8 @@ G.Player = class Player {
     this.dmgDealt = 0;
 
     this.invuln = 0;
+    this.flyT = 0; // Fly (Jess 2026-11-02): seconds of flight left; while above 0 terrain, contact, shots and your own casts are off
+    this.flyCd = 0; // seconds until Fly can be pressed again, counted from landing
     this.flash = 0;
     this.aim = Math.PI / 2;
     this.moveAngle = Math.PI / 2;
@@ -198,7 +200,10 @@ G.Player = class Player {
   get unrootedSpd() {
     const s = this.baseSpd * this.spdMul * (1 + this.incOf('spe')) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
-    const slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
+    let slow = this.inLiquid ? G.World.liquidEffect(this.mon.types).slow || 1 : 1;
+    // Surf (Jess 2026-11-02): in water or swamp, no slowdown and a small boost (Water types already swim unslowed)
+    const surf = this.inLiquid && ['water', 'swamp'].includes(G.World.liquidKind()) && this.skillFx('surf');
+    if (surf) slow = surf.speedMul;
     return s * slow * w * G.Status.speedMul(this) * G.Stages.speedMul(this) * this.runSpeedMul();
   }
   /** Run-item SPEED multipliers, applied last: Sharp Scissors (team-HP-scaled, roster 3+) and Pikachu's Tear (1.1x per fainted). */
@@ -280,7 +285,47 @@ G.Player = class Player {
   }
 
   /** @param free  true for switches the game makes itself (learning a move, run start): never blocked, no hold. */
+  /** The movement skill in slot i ('surf', 'fly') or null. A skill never becomes the active slot (Jess 2026-11-02). */
+  skillAt(i) {
+    const g = this.slots[i];
+    return g && g.length === 1 ? G.MoveEffects.skillOf(G.MoveDefs[g[0].id]) : null;
+  }
+  /** The numbers of skill k ('surf', 'fly') if a slot holds it, else null. */
+  skillFx(k) {
+    for (let i = 0; i < this.slots.length; i++)
+      if (this.skillAt(i) === k) return G.MoveEffects.skillFx(G.MoveDefs[this.slots[i][0].id]);
+    return null;
+  }
+  /** Fly: takes off for its duration, unless already up, cooling down, asleep, frozen or committed to a move. */
+  takeOff() {
+    const fx = this.skillFx('fly');
+    if (!fx || this.dead || this.flyT > 0 || this.flyCd > 0 || G.Status.stunned(this) || this.mvRoot || this.frozen)
+      return false;
+    this.flyT = fx.duration;
+    G.Audio.sfx('select');
+    G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR.flying, 0.3, 3);
+    return true;
+  }
+  /** Fly ends: where you come down decides (G.World.landing): a wall costs 1/16 max HP once and puts you on the nearest ground,
+   *  a solid object moves you on along your heading; anything else works on you as usual from the next frame. */
+  land() {
+    const fx = this.skillFx('fly');
+    this.flyT = 0;
+    this.flyCd = fx ? fx.cooldown : 20;
+    const L = G.World.landing(this.x, this.y, this.r, this.moveAngle);
+    this.x = L.x;
+    this.y = L.y;
+    if (L.wall && !this.dead) this.payHp(this.maxHp / 16);
+    G.World.collide(this);
+    G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
+  }
+
   setActive(i, free = false) {
+    const sk = this.skillAt(i);
+    if (sk) {
+      if (sk === 'fly' && !free) this.takeOff(); // its key flies; it never becomes the active slot
+      return;
+    }
     if (i < 0 || i >= this.slots.length || i === this.active) return;
     if (!free && this.swapT > 0) return; // still holding the slot you just switched to
     // Choice Band: you cannot switch moves.
@@ -297,7 +342,11 @@ G.Player = class Player {
 
   cycle(dir) {
     if (!this.slots.length) return;
-    this.setActive((this.active + dir + this.slots.length) % this.slots.length);
+    const n = this.slots.length; // skills are stepped over
+    for (let k = 1; k <= n; k++) {
+      const i = (((this.active + dir * k) % n) + n) % n;
+      if (!this.skillAt(i)) return this.setActive(i);
+    }
   }
 
   // ---------------- links (fusions) ----------------
@@ -310,7 +359,7 @@ G.Player = class Player {
 
   /** What a link can do now: add to a group or join two loose ones. */
   bondOptions() {
-    const loose = this.slots.filter((s) => s.length === 1).map((s) => s[0]);
+    const loose = this.slots.filter((s, i) => s.length === 1 && !this.skillAt(i)).map((s) => s[0]); // a skill never bonds
     const grow = this.slots.find((s) => s.length > 1 && s.length < Player.BOND_MAX);
     if (grow) return loose.length ? { mode: 'add', group: grow, loose } : null;
     return loose.length >= 2 ? { mode: 'pair', group: null, loose } : null;
@@ -456,7 +505,9 @@ G.Player = class Player {
     if (this.dead) return;
     const inv = this.invuln;
     this.invuln = 0;
+    this.dot = true; // status damage still lands in the air (Fly)
     this.hurt(amount, null, true);
+    this.dot = false;
     if (!this.dead) this.invuln = inv;
   }
 
@@ -465,6 +516,7 @@ G.Player = class Player {
    * @param pure  damage not reduced by defense or melee (fixed-damage sources)
    */
   hurt(amount, type = null, pure = false, atk = null, who = null) {
+    if (this.flyT > 0 && !this.dot && !this.dead) return; // in the air: hits miss, but status damage over time (statusDot) lands
     if (this.invuln > 0 || this.dead) {
       if (G.Log.on && !this.dead) G.Log.block(who, atk ? atk.factor : amount, this.invuln);
       return;
@@ -564,6 +616,7 @@ G.Player = class Player {
     if (this.hp <= 0) {
       this.hp = 0;
       this.dead = true;
+      this.flyT = 0; // a faint in the air ends the flight where it is
       if (LOG) G.Log.faint(false, 0);
       this.anim.play('Faint', { hold: true });
       this.reviveT = 0;
@@ -730,6 +783,13 @@ G.Player = class Player {
     if (this.invuln > 0) this.invuln -= dt;
     if (this.flash > 0) this.flash -= dt;
     if (this.attackFace > 0) this.attackFace -= dt;
+    if (this.flyT > 0 && (this.flyT -= dt) <= 0) this.land();
+    else if (this.flyT <= 0 && this.flyCd > 0) this.flyCd = Math.max(0, this.flyCd - dt);
+    if (this.skillAt(this.active)) {
+      // a skill never stays active (it may land there when slots change): the first castable slot takes over
+      const i = this.slots.findIndex((g, k) => !this.skillAt(k));
+      if (i >= 0) this.active = i;
+    }
 
     G.Stages.teamTick(this.stgTeam, dt); // the shared team raises: only the active member runs update(), so they tick exactly once per frame
     if (this.slowT > 0) this.slowT -= dt;
@@ -779,11 +839,12 @@ G.Player = class Player {
     }
     this.x += this.svx * dt;
     this.y += this.svy * dt;
-    G.World.collide(this);
+    if (this.flyT > 0) this.keepInArena();
+    else G.World.collide(this); // in the air walls and objects do not block
     if (this.walking) this.moveAngle = Math.atan2(ay, ax);
 
     // --- liquid terrain ---
-    this.inLiquid = G.World.isLiquid(this.x, this.y);
+    this.inLiquid = !(this.flyT > 0) && G.World.isLiquid(this.x, this.y);
     if (this.inLiquid) {
       const le = G.World.liquidEffect(this.mon.types);
       if (le.dmg) {
@@ -824,6 +885,20 @@ G.Player = class Player {
     const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
     this.anim.dir = G.Sprites.dirFromAngle(face);
     this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? s / 110 : 1);
+  }
+
+  /** A flying player stays inside a gym arena's circle (its walls no longer hold it). */
+  keepInArena() {
+    const a = G.GymArena && G.GymArena.arena;
+    if (!a) return;
+    const max = (a.r - 1.4) * G.World.TS,
+      dx = this.x - a.x,
+      dy = this.y - a.y,
+      d = Math.hypot(dx, dy);
+    if (d > max) {
+      this.x = a.x + (dx / d) * max;
+      this.y = a.y + (dy / d) * max;
+    }
   }
 
   /** Gets back up (revived by a teammate in co-op). */
@@ -910,10 +985,11 @@ G.Player = class Player {
     }
 
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
+    const lift = this.flyT > 0 ? 22 + Math.sin(performance.now() / 160) * 3 : 0; // Fly: the sprite rises, the shadow stays on the ground
     this.anim.draw(
       ctx,
       this.x,
-      this.y,
+      this.y - lift,
       Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this))
     );
 

@@ -142,8 +142,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Ledger: B4-I07
 
 ### fly
-- [Approved] Two-turn as delay plus i-frames: the user vanishes with i-frames, then strikes where it lands (delivery.delay and caster i-frames). (Jess, 2026-11-01, Kanto import rulings set 4)
-- [Proposed] Vanish about 0.8 s.
+- [Approved] A movement skill, never autocast (special handler flight): its slot key (or a tap on its icon) gives 4 s of flight at normal walk speed, then a 20 s cooldown counted from landing. No damage. It never becomes the active slot and never bonds. In the air: walls, objects, liquids, traps, springs and altars do nothing; enemy contact, shots and gym leader moves miss; status damage over time still lands; your own moves pause (no casts, every slot timer frozen; persistent groups end as on a slot switch); team swaps are locked. No takeoff while asleep, frozen or committed to a move. Landing: on floor or a liquid you stay and the tile works on you from the next frame; on a wall you pay 1/16 max HP once and go to the nearest floor; on a solid object you move on along your heading to the first free spot. A flyer stays inside a gym arena's circle. Scenario fly-pressed. (Jess, 2026-11-02)
+- [Superseded 2026-11-02] Two-turn as delay plus i-frames: the user vanishes with i-frames, then strikes where it lands. (Jess, 2026-11-01, Kanto import rulings set 4)
+- [Superseded 2026-11-02] Vanish about 0.8 s.
 
 ### focus-energy
 - [Approved] Raises a crit-rate stage on the user (mainline +2), a new tracker beside the five stat stages. (Jess, 2026-11-01, Kanto import rulings set 3)
@@ -364,6 +365,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### sunny-day
 - [Approved] Team-side field: sets the run's weather to sun for a while (setWeather). (Jess, 2026-11-01, Kanto import rulings set 4)
+
+### surf
+- [Approved] A movement skill, passive (special handler surfer): while the Pokemon on the field has Surf in any slot and stands in water or swamp, it ignores the slowdown and moves at x1.15. Water types already ignore the slowdown, so they gain the x1.15. Lava, poison and spark still hurt; ice still slides. No damage, never autocast, never the active slot, never bonds. Mainline Surf is an HM learned by many non-Water Pokemon. Scenario surf-passive. (Jess, 2026-11-02)
 
 ### tackle
 - [Approved] Tackle reach stays as built, judged by feel, any fix is data. (slice-3d.md decision D3; closes the review 9.2 note that its 48 px circle no longer includes the player's body)

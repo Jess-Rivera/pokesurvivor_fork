@@ -14,6 +14,7 @@ window.KANTO_B1 = {
   "cloud": "Powder cloud, no damage (new)",
   "zone": "Ground patch at a foe (new)",
   "wave": "Wave: a band across the aim that widens as it travels (new)",
+  "skill": "Movement skill, never autocast (new)",
   "meteors": "Three falls on the nearest foe (new)"
  },
  "rows": [
@@ -3702,48 +3703,24 @@ window.KANTO_B1 = {
    "cd": 1.167,
    "target": "all-other-pokemon",
    "effect": "Inflicts regular damage and can hit Dive users.",
-   "pattern": "wave",
+   "pattern": "skill",
    "words": {
-    "shape": "Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe",
-    "delivery": "Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen",
-    "payload": "Damage",
-    "rule": "a wave by name: a widening band"
+    "shape": "None (movement skill)",
+    "delivery": "On the user, never autocast",
+    "payload": "no water or swamp slowdown, x1.15 speed in them",
+    "rule": "a passive: faster in water and swamp"
    },
    "proposed": {
-    "kind": "nova",
-    "space": {
-     "shape": "linear",
-     "linLength": 16,
-     "linWidth": 60,
-     "pierce": "UNLIMITED"
-    },
+    "kind": "buff",
     "delivery": {
-     "anchor": "caster",
-     "targeting": "nearest",
-     "motion": "travels",
-     "moveSpeed": 300,
-     "grow": {
-      "growSpeed": 0.667,
-      "dim": "linWidth",
-      "per": "distance",
-      "max": 260
-     },
-     "endOn": [
-      {
-       "time": 1
-      },
-      {
-       "contact": "wall"
-      },
-      {
-       "offScreen": true
-      }
-     ]
+     "anchor": "self",
+     "targeting": "none"
     },
-    "hitPolicy": "oncePerInstance",
     "payload": [
      {
-      "t": "damage"
+      "t": "special",
+      "handler": "surfer",
+      "speedMul": 1.15
      }
     ]
    }
@@ -5422,6 +5399,39 @@ window.KANTO_B1 = {
      {
       "t": "crit",
       "critChance": 15
+     }
+    ]
+   }
+  },
+  {
+   "id": "fly",
+   "name": "Fly",
+   "type": "flying",
+   "category": "physical",
+   "power": 90,
+   "pp": 15,
+   "cd": null,
+   "target": "selected-pokemon",
+   "effect": "User flies high into the air, dodging all attacks, and hits next turn.",
+   "pattern": "skill",
+   "words": {
+    "shape": "None (movement skill)",
+    "delivery": "On the user, never autocast",
+    "payload": "fly 4 s over walls, objects and liquids, 20 s cooldown from landing",
+    "rule": "pressed: 4 s of flight over the terrain, 20 s from landing"
+   },
+   "proposed": {
+    "kind": "buff",
+    "delivery": {
+     "anchor": "self",
+     "targeting": "none"
+    },
+    "payload": [
+     {
+      "t": "special",
+      "handler": "flight",
+      "duration": 4,
+      "cooldown": 20
      }
     ]
    }

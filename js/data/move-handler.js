@@ -3,12 +3,13 @@
  * the grammar parameters it takes, WHEN it fires (one of `triggers`), an optional condition (one of `conditions`)
  * and, for a handler with no executor, why it is a stub. Slice 4b: the executors live in js/systems/move-effects.js
  * (fixedDamage, levelDamage, statusBonus, chainDamageFalloff, setWeather); berrySteal stays a stub. The resolver attaches these to each move and rejects a handler name that is not here.
- * `triggers` is the grammar's emit trigger list; `conditions` is the grammar's berrySteal condition list.
+ * `triggers` is the grammar's emit trigger list plus the two movement-skill triggers (Jess 2026-11-02): `passive` (always on while
+ * the move is in a slot: surfer) and `press` (fired by the slot key, never autocast: flight); `conditions` is the grammar's berrySteal condition list.
  * Load order: move-attributes.js, moves-generated.js, move-overrides.js, move-handler.js, move-resolver.js.
  * GROUNDWORK: not listed in dev.html and read by nothing in the game yet. */
 (() => {
   G.MoveHandlers = {
-    triggers: ['cast', 'casterMove', 'termination', 'enemyHit', 'interval'],
+    triggers: ['cast', 'casterMove', 'termination', 'enemyHit', 'interval', 'passive', 'press'],
     conditions: ['targetHasBerry'],
     byName: {
       berrySteal: {
@@ -22,6 +23,8 @@
       levelDamage: { params: [], trigger: 'enemyHit' },
       setWeather: { params: ['weather', 'duration'], trigger: 'cast' },
       statusBonus: { params: ['multiplier'], trigger: 'enemyHit' },
+      surfer: { params: ['speedMul'], trigger: 'passive' }, // Surf: no water or swamp slowdown, x speedMul in them (player.js)
+      flight: { params: ['duration', 'cooldown'], trigger: 'press' }, // Fly: duration s over the terrain, then cooldown s from landing (player.js)
     },
   };
 })();

@@ -17,7 +17,8 @@ G.Combat = (() => {
         projectiles.splice(i, 1);
         continue;
       }
-      if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
+      if (!(pl.flyT > 0) && G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
+        // a flying player (Fly) is passed by
         const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
         const landed = pl.invuln <= 0;
         if (p.atkFactor != null)
@@ -30,7 +31,7 @@ G.Combat = (() => {
     }
 
     // --- enemy <-> player contact ---
-    if (pl.dead) return;
+    if (pl.dead || pl.flyT > 0) return; // nothing touches a flying player
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, pl.r + 40)) {
       // Contact gap: wild melee reaches CONTACT.hit x the radius sum (it stops at CONTACT.stop x); bosses keep 1.0.
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);

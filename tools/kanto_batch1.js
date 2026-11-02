@@ -97,7 +97,7 @@ const PLAN = {
   'gunk-shot': ['shot'],
   'poison-powder': ['cloud'],
   // Water
-  surf: ['wave'],
+  surf: ['skill'],
   waterfall: ['melee'],
   'water-pulse': ['shot'],
   scald: ['shot'],
@@ -136,6 +136,7 @@ const PLAN = {
   // Flying
   'air-slash': ['shot'],
   'air-cutter': ['burst'],
+  fly: ['skill'], // joined batch 1 as a movement skill (Jess 2026-11-02)
   // Ghost
   'confuse-ray': ['statusShot'],
   'shadow-punch': ['melee'],
@@ -162,6 +163,7 @@ const PATTERNS = {
   cloud: 'Powder cloud, no damage (new)',
   zone: 'Ground patch at a foe (new)',
   wave: 'Wave: a band across the aim that widens as it travels (new)',
+  skill: 'Movement skill, never autocast (new)',
   meteors: 'Three falls on the nearest foe (new)',
 };
 
@@ -387,6 +389,7 @@ function words(p, o, g, pay) {
     zone: 'Circle 40 px on the ground at a foe, hits every 0.5 s',
     wave: 'Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe',
     meteors: '3 circles of 60 px, each on the nearest foe',
+    skill: 'None (movement skill)',
     beam: 'Line 290 x 20 px, pierces everything',
     strike: `Circle ${o.r || 30} px on the nearest foe`,
     falls: `Circle ${o.r || 70} px that lands on a spot`,
@@ -403,6 +406,7 @@ function words(p, o, g, pay) {
     zone: 'Placed on a random foe in range, lasts 2.5 s',
     wave: 'Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen',
     meteors: 'One every 0.25 s; each warns 0.4 s, then lands for 0.2 s',
+    skill: 'On the user, never autocast',
     beam: 'Instant at nearest, lasts 0.5 s',
     strike: 'Instant on the nearest foe',
     falls: '0.4 s warning, then lands for 0.2 s',
@@ -424,6 +428,10 @@ function words(p, o, g, pay) {
         : `heals ${fx.amount.fraction * 100}% max HP`;
     if (fx.t === 'stat')
       return `${fx.side === 'self' ? 'own' : 'foe'} ${STAT_WORD[fx.stat]} ${fx.stages > 0 ? '+' : ''}${fx.stages}${fx.chance ? ` (${fx.chance}%)` : ''}${fx.side === 'self' && fx.scope === 'team' ? ', team-wide' : ''}`;
+    if (fx.t === 'special' && fx.handler === 'surfer')
+      return `no water or swamp slowdown, x${fx.speedMul} speed in them`;
+    if (fx.t === 'special' && fx.handler === 'flight')
+      return `fly ${fx.duration} s over walls, objects and liquids, ${fx.cooldown} s cooldown from landing`;
     return fx.t;
   });
   return { shape, delivery, payload: pw.join(', ') || 'none', rule: g.why || '' };
@@ -437,7 +445,24 @@ function entry(id, p, o) {
     g,
     shown = null;
   const c = { id, type: a.type, power: a.source.power, pay };
-  if (p === 'meteors') {
+  if (p === 'skill') {
+    // Movement skills (Jess 2026-11-02): no shape or damage. Surf: passive, no water or swamp slowdown and x1.15 in them.
+    // Fly: pressed on its slot key, 4 s over the terrain, then 20 s from landing.
+    const fx =
+      id === 'surf'
+        ? { t: 'special', handler: 'surfer', speedMul: 1.15 }
+        : { t: 'special', handler: 'flight', duration: 4, cooldown: 20 };
+    g = {
+      kind: 'buff',
+      balanceClass: 'other',
+      delivery: { anchor: 'self', targeting: 'none' },
+      why:
+        id === 'surf'
+          ? 'a passive: faster in water and swamp'
+          : 'pressed: 4 s of flight over the terrain, 20 s from landing',
+    };
+    pay = [fx];
+  } else if (p === 'meteors') {
     // Rule 5 (Draco Meteor): three falls, each on the nearest foe when it is emitted; the own stat drop stays on the cast
     const own = pay.filter((fx) => fx.t === 'stat' && fx.side === 'self'),
       hit = pay.filter((fx) => !own.includes(fx));

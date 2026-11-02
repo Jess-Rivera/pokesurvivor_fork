@@ -756,10 +756,15 @@ G.HUD = (() => {
     // A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove): that sawtooth is not a cooldown, so <= 0.05 s reads as ready.
     // simCd: the resolver cd, set on a slot routed through the new move system (?dev&newcombat, slice 3d); absent otherwise.
     // An always-on move (a persistent def: orbits, auras, trails) has no cooldown to show (slice 7a).
+    const flyFx = pl.skillFx('fly'); // Fly's icon: the flight left while up, then the recharge from landing
     const cdOf = (m) =>
-      (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
-        ? 0
-        : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
+      G.MoveEffects.skillOf(G.MoveDefs[m.id]) === 'fly'
+        ? pl.flyT > 0
+          ? G.U.clamp(pl.flyT / flyFx.duration, 0, 1)
+          : G.U.clamp(pl.flyCd / flyFx.cooldown, 0, 1)
+        : (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
+          ? 0
+          : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
 
     for (let i = 0; i < n; i++) {
       const g = pl.slots[i] || [];

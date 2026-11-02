@@ -190,6 +190,8 @@
       levelDamage: special({}),
       setWeather: special({ weather: en(WEATHER), duration: SECS }, ['weather', 'duration']),
       statusBonus: special({ multiplier: num({ gt: 1 }) }, ['multiplier']),
+      surfer: special({ speedMul: num({ gt: 1 }) }, ['speedMul']), // movement skills (Jess 2026-11-02): no shape, never autocast
+      flight: special({ duration: SECS, cooldown: SECS }, ['duration', 'cooldown']),
     },
   };
 

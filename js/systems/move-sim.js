@@ -91,7 +91,7 @@ G.MoveSim = (() => {
    *  fills that list), else the enemy grid. Every search a move makes goes through here, so a move never needs to know who cast it. */
   function eachFoe(o, x, y, far, f) {
     if (o && o.foes) {
-      for (const p of o.foes()) if (!p.dead && Math.hypot(p.x - x, p.y - y) <= far + EPS) f(p);
+      for (const p of o.foes()) if (!p.dead && !(p.flyT > 0) && Math.hypot(p.x - x, p.y - y) <= far + EPS) f(p); // a flying player is out of reach
     } else G.EnemyMgr.queryCircleEach(x, y, far, f);
   }
   /** Nearest live foe of `o` to (x, y) whose centre distance passes limit(e); ties by lower id (S10, no rng). */
@@ -530,6 +530,8 @@ G.MoveSim = (() => {
     done.forEach(release);
     rootOf(o);
   }
+  /** The owner's active group, or none while it flies (Fly, Jess 2026-11-02): its persistent groups end and nothing casts. */
+  const actOf = (o) => (o.flyT > 0 ? [] : o.activeGroup());
   const frozen = (o, id) => cms.some((m) => m.o === o && m.part === 'cooldown' && (!m.ids || m.ids.has(id)));
 
   const FLINCH_HOLD = 0.3; // seconds a flinched cooldown waits before it counts (COMBAT-RULES "Flinch on the player")
@@ -595,7 +597,7 @@ G.MoveSim = (() => {
     return cast;
   }
   function upkeepPersistent(o, now) {
-    const act = o.activeGroup(),
+    const act = actOf(o),
       stunned = G.Status.stunned(o);
     for (const g of o.slots)
       for (const slot of g) {
@@ -631,6 +633,11 @@ G.MoveSim = (() => {
     else {
       upkeepCommits(dt, o);
       G.MoveEffects.upkeep(dt, o);
+      if (o.flyT > 0) {
+        // Fly: every slot timer is frozen and nothing casts until landing; the persistent groups end (a slot switch)
+        upkeepPersistent(o, now);
+        return step(dt, now);
+      }
       const act = o.activeGroup();
       // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
       // bonded group fires together); the inactive slots run after it, so a freeze cast this frame already holds them.
@@ -877,7 +884,8 @@ G.MoveSim = (() => {
     if (o.foes) {
       // slice 7a: an enemy owner (a gym leader) hits only its foes, the player; never enemies or props
       for (const p of o.foes())
-        if (!p.dead && G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r || 0)) cands.push(p);
+        if (!p.dead && !(p.flyT > 0) && G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r || 0))
+          cands.push(p);
     } else {
       const b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR);
       G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, (e) => {
@@ -1009,7 +1017,7 @@ G.MoveSim = (() => {
     ownerDeath: (inst) => !!inst.cast.owner.dead && 'ownerDeath',
     notActive: (inst) => {
       const o = inst.cast.owner;
-      return !!o.activeGroup && !o.activeGroup().includes(inst.cast.slot) && 'notActive';
+      return !!o.activeGroup && !actOf(o).includes(inst.cast.slot) && 'notActive';
     }, // 4d: Spikes leaves with its slot
     returned: (inst) => !!inst.returned && 'returned', // 4c-2: returns home (D26) or a swept dash back at its origin (D27)
   };

@@ -398,3 +398,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: a line can grow its width (grammar, move-geom); the lens, Area and Presence follow a line's long and short side. Surf, Sludge Wave and Heat Wave are widening bands at the nearest foe; wave badge reuses nova.
 - Tests moved off Heat Wave as the example ring (Hyper Voice, Bulldoze); new hand-derived wave checks in move-sim and team-cards; scenario heat-wave-wave replaces heat-wave-grow.
 - Verified: check.js 30/30, validators, smoke-ui pass, the three waves and Hyper Voice cast and hit live on file://.
+
+## 2026-11-02, Surf and Fly movement skills (Claude Code, home)
+- Built: special handlers surfer (passive) and flight (press); no derived cd; skill slots never active, cycled past, never bonded. Surf x1.15 in water and swamp. Fly: 4 s flight, hits and terrain off, own casts and timers frozen, swaps locked, G.World.landing (wall: 1/16 HP and nearest floor; object: on along heading), arena clamp, 20 s cd from landing; HUD icon shows flight then recharge.
+- Fly joins batch 1 (111 moves, held). Scenarios surf-passive and fly-pressed.
+- Verified: check.js 30/30, validators 174/174, smoke-ui pass, headless on file:// (Surf 1.15 vs 0.6, cycling, takeoff, hits miss, DoT lands, no casts, frozen timers, wall landing 1/16 HP to free ground, cd from landing, object landing).

@@ -57,6 +57,9 @@ G.MoveEffects = (() => {
   const fxOf = (def, t) => (def.payload || []).find((fx) => fx.t === t);
   const specialOf = (def, h) => (def.payload || []).find((fx) => fx.t === 'special' && fx.handler === h);
   const foe = (e) => !e.dead && !e.remote;
+  /** The movement skill a move is (Jess 2026-11-02): 'surf' (surfer, passive) or 'fly' (flight, pressed), else null. Its fx carries the numbers. */
+  const skillOf = (def) => (!def ? null : specialOf(def, 'surfer') ? 'surf' : specialOf(def, 'flight') ? 'fly' : null);
+  const skillFx = (def) => def && (specialOf(def, 'surfer') || specialOf(def, 'flight'));
 
   // S4: a stable tag per Pokemon (the Player object persists across swaps), so a source is move id plus caster
   const tags = new WeakMap();
@@ -480,6 +483,8 @@ G.MoveEffects = (() => {
   }
 
   return {
+    skillOf,
+    skillFx,
     applyHit,
     applyProp,
     statKey,

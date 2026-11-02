@@ -29,7 +29,7 @@
       'waterfall water-pulse scald aqua-tail clamp fire-blast flare-blitz fire-punch overheat blaze-kick fire-fang ' +
       'crunch nasty-plot dragon-pulse draco-meteor dragon-breath dragon-claw twister blizzard ice-punch aurora-beam ' +
       'frost-breath ice-fang stone-edge ancient-power rock-tomb leech-life megahorn signal-beam air-slash air-cutter ' +
-      'confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail'
+      'confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail fly'
     ).split(' ')
   );
 

@@ -137,6 +137,7 @@ Formerly "maxStacks field rule"; a pointer to that title means this section.
 Some moves change global state rather than creating a hitbox. They use `anchor: self`, `targeting: none`, and a `special` state-change handler, with no SPACE fields.
 
 - Weather: `{ t: special, handler: setWeather, weather: <kind>, duration: N }`. The handler calls the weather system for N seconds. A player-cast weather effect overrides ambient weather for its duration.
+- Movement skills (Jess 2026-11-02): `{ t: special, handler: surfer, speedMul }` (trigger `passive`: always on while in a slot) and `{ t: special, handler: flight, duration, cooldown }` (trigger `press`: fired by its slot key). A skill has `delivery: { anchor: self, targeting: none }`, no space, and no cooldown (the resolver derives none and the resolved-needs-cd rule exempts it); it never autocasts, never becomes the active slot and never bonds. Runtime: player.js (skillFx, takeOff, land), G.World.landing. Rulings: MOVE-INTENT surf and fly.
 - Terrain/field: Electric/Grassy/Misty/Psychic Terrain and effects such as Trick Room use corresponding named handlers when implemented.
 
 The move's cast/activation lifetime and the weather/terrain effect duration are separate. The global state effect persists for its declared duration even if the move's cast has already completed.

@@ -80,7 +80,8 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(forms('thunder-shock') === 'shot' && forms('hex') === 'shot', "a chain move takes its shape's form: Thunder Shock and Hex are shots");
   ok(forms('thunderbolt') === 'strike', 'Thunderbolt (target-anchored, static) is a strike');
   ok(['hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
-  ok(['heat-wave', 'surf', 'sludge-wave'].every(id => forms(id) === 'shot'), 'waves (a travelling band at the nearest foe) cast as shots');
+  ok(['heat-wave', 'sludge-wave'].every(id => forms(id) === 'shot'), 'waves (a travelling band at the nearest foe) cast as shots');
+  ok(!forms('surf') && !forms('fly'), 'movement skills (Surf, Fly) have no gym form');
   ok(forms('confusion') === 'shot' && forms('psychic') === 'shot', 'homing shots (Confusion, Psychic) cast as shots');
   const beam = { id: 'beam', space: { shape: 'linear', len: 200, width: 10 }, delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static' }, payload: [{ t: 'damage' }] };
   ok(!Gy.formOf(beam), 'a beam (a static linear shape) has no gym form yet');

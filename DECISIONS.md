@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Surf and Fly are movement skills (Jess)
+Surf is a passive: no water or swamp slowdown and x1.15 speed in them while it is in a slot. Fly is pressed on its slot key: 4 s of flight at walk speed over walls, objects and liquids, hits miss, your moves pause with frozen timers, then a 20 s cooldown from landing; landing on a wall costs 1/16 max HP and moves you to the nearest floor, on an object moves you on along your heading. Neither deals damage, autocasts, becomes the active slot or bonds. Fly joins batch 1; the set-4 Fly ruling is superseded.
+Canonical: docs/MOVE-INTENT.md surf and fly
+
 ## 2026-11-02, Waves: a widening band across the aim (Jess)
 Moves that are waves by name (Surf, Sludge Wave, and the original Heat Wave) become a band 16 px deep across the aim that travels at the nearest foe and widens from 60 to 260 px over about 300 px. A line can now grow its width; the range upgrade and the Area card stretch a line's long side (a beam's length, a wave's width), Presence its short side. Waves show the nova badge for now and count as ranged for aiming and as shots for gym leaders.
 Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules" rule 6; docs/MOVE-INTENT.md heat-wave

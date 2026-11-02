@@ -6390,9 +6390,9 @@
     "surf": {
       "id": "surf",
       "name": "Surf",
-      "kind": "nova",
-      "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Wave: a band across the aim that widens as it travels (new) (a wave by name: a widening band). Shape: Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe. Delivery: Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen. Payload: Damage.",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Kanto batch 1 proposal. Movement skill, never autocast (new) (a passive: faster in water and swamp). Shape: None (movement skill). Delivery: On the user, never autocast. Payload: no water or swamp slowdown, x1.15 speed in them.",
       "type": "water",
       "category": "special",
       "power": 90,
@@ -6400,39 +6400,15 @@
       "accuracy": 100,
       "priority": 0,
       "flavor_text": "The user attacks everything around it by swamping its surroundings with a giant wave.",
-      "space": {
-        "shape": "linear",
-        "linLength": 16,
-        "linWidth": 60,
-        "pierce": "UNLIMITED"
-      },
       "delivery": {
-        "anchor": "caster",
-        "targeting": "nearest",
-        "motion": "travels",
-        "moveSpeed": 300,
-        "grow": {
-          "growSpeed": 0.667,
-          "dim": "linWidth",
-          "per": "distance",
-          "max": 260
-        },
-        "endOn": [
-          {
-            "time": 1
-          },
-          {
-            "contact": "wall"
-          },
-          {
-            "offScreen": true
-          }
-        ]
+        "anchor": "self",
+        "targeting": "none"
       },
-      "hitPolicy": "oncePerInstance",
       "payload": [
         {
-          "t": "damage"
+          "t": "special",
+          "handler": "surfer",
+          "speedMul": 1.15
         }
       ],
       "reviewStatus": "proposed"
@@ -8241,6 +8217,33 @@
         {
           "t": "knockback",
           "distance": 140
+        }
+      ],
+      "reviewStatus": "proposed"
+    },
+    "fly": {
+      "id": "fly",
+      "name": "Fly",
+      "kind": "buff",
+      "balanceClass": "other",
+      "feel": "Kanto batch 1 proposal. Movement skill, never autocast (new) (pressed: 4 s of flight over the terrain, 20 s from landing). Shape: None (movement skill). Delivery: On the user, never autocast. Payload: fly 4 s over walls, objects and liquids, 20 s cooldown from landing.",
+      "type": "flying",
+      "category": "physical",
+      "power": 90,
+      "pp": 15,
+      "accuracy": 95,
+      "priority": 0,
+      "flavor_text": "The user flies up into the sky on the first turn, then attacks on the next turn.",
+      "delivery": {
+        "anchor": "self",
+        "targeting": "none"
+      },
+      "payload": [
+        {
+          "t": "special",
+          "handler": "flight",
+          "duration": 4,
+          "cooldown": 20
         }
       ],
       "reviewStatus": "proposed"

@@ -277,6 +277,7 @@ G.Game = (() => {
     const next = roster[i];
     if (!next || next.dead) return false;
     if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
+    if (pl.flyT > 0) return false; // no team swaps in the air (Fly)
     if (G.Status.swapLocked(pl)) {
       // trapped (slice E1): no manual swaps until it wears off
       if (!swapNoteT || time - swapNoteT > 0.8) {

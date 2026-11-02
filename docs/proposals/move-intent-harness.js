@@ -43,7 +43,7 @@ const near = (a, b, e = 1e-3) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
 // ---- routed moves (every resolved def that is not retired, as G.MoveRoute.routed; slice 7b-2b) and MOVE-INTENT headings (Markdown) ----
 const ROUTED = new Set(Object.keys(D).filter(id => !G.Moves.RETIRED[id]));
 const INTENT = new Set((INTENT_SRC.match(/^### ([a-z0-9-]+)/gm) || []).map(s => s.slice(4)));
-ok(ROUTED.size === 172, 'every resolved move but the retired Hail is routed, Kanto batch 1 included (' + ROUTED.size + ')');
+ok(ROUTED.size === 173, 'every resolved move but the retired Hail is routed, Kanto batch 1 and Fly included (' + ROUTED.size + ')');
 
 // ---- world builders (owner: a REAL Player prototype on a hand-built body, as in move-selfcast-harness.js) ----
 let eid = 0;
