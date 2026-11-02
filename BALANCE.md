@@ -153,7 +153,7 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 (none tuned yet) 2026-10-18: the old in-run stat cards and move evolutions were removed; the new stat cards and mechanic cards (slice 2) get their first numbers then, from G.Log.pacing().
 
 ## Drops / economy
-(none tuned yet)
+- Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
 
 ## XP curve / run pacing (feature/xp-curve, applied 2026-10-18)
 - Cost: mainline Medium Fast, total n^3. xpToNext(L) = 3L^2 + 3L + 1 (G.Stats.xpToNext): L1 7, L10 331, L20 1261, L50 7651. Replaced floor((8 + 6L + 1.6 L^1.75) * 4).
