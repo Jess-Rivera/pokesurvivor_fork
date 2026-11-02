@@ -3700,14 +3700,13 @@ window.KANTO_B1 = {
    "category": "special",
    "power": 90,
    "pp": 15,
-   "cd": 1.167,
    "target": "all-other-pokemon",
    "effect": "Inflicts regular damage and can hit Dive users.",
    "pattern": "skill",
    "words": {
     "shape": "None (movement skill)",
     "delivery": "On the user, never autocast",
-    "payload": "no water or swamp slowdown, x1.15 speed in them",
+    "payload": "no water or swamp slowdown, x1.25 speed in them",
     "rule": "a passive: faster in water and swamp"
    },
    "proposed": {
@@ -3720,7 +3719,7 @@ window.KANTO_B1 = {
      {
       "t": "special",
       "handler": "surfer",
-      "speedMul": 1.15
+      "speedMul": 1.25
      }
     ]
    }
@@ -5410,7 +5409,6 @@ window.KANTO_B1 = {
    "category": "physical",
    "power": 90,
    "pp": 15,
-   "cd": null,
    "target": "selected-pokemon",
    "effect": "User flies high into the air, dodging all attacks, and hits next turn.",
    "pattern": "skill",

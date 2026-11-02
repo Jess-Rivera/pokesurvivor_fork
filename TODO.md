@@ -79,7 +79,7 @@ live queue, cross-reference the issue number.
   - Panic is nearly inert at the 0.6 weights (log 4: 0 panicking in all 44 samples) and the panic meter will rarely show; Jess will retune MORALE (fearWeight / painWeight / panicBelow) later if wanted.
   - The XP boost stops at 3:00 (same moment as the first boss); consider fading it. The XP bar rounds up (6.55 shows 7/7).
   - 'Retune HP / damage scalars from logs, last' was NOT done. Revisit after the boss damage slice (a boss one-or-two-shots the player today, so later-run incoming damage cannot be judged).
-  - Dash ability: design talk first, own branch. Slot unlock progression and level-up scaling by slots: see Backlog.
+  - Dash ability: design talk first, own branch. Jess 2026-11-02: movement skills (Quick Attack, Aerial Ace and others) replace the standard dash, built on the Surf and Fly skill slot path (pressed on the slot key, never active, cd from landing). Slot unlock progression and level-up scaling by slots: see Backlog.
   - Co-op was not exercised for any of the new enemy code (band jitter, morale, ceiling, status chasers); remote copies run the same constructor. Check when the multiplayer phase starts.
   - Status class: inactive carriers are plain chasers (melee family); active ones (cap 2) hold the close band (slice E1). Summoners still hold a band.
 - Boss damage slice: bosses still use the flat def.dmg path (sub-slice C deferred them). Put bosses on

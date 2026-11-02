@@ -446,11 +446,11 @@ function entry(id, p, o) {
     shown = null;
   const c = { id, type: a.type, power: a.source.power, pay };
   if (p === 'skill') {
-    // Movement skills (Jess 2026-11-02): no shape or damage. Surf: passive, no water or swamp slowdown and x1.15 in them.
+    // Movement skills (Jess 2026-11-02): no shape or damage. Surf: passive, no water or swamp slowdown and x1.25 in them.
     // Fly: pressed on its slot key, 4 s over the terrain, then 20 s from landing.
     const fx =
       id === 'surf'
-        ? { t: 'special', handler: 'surfer', speedMul: 1.15 }
+        ? { t: 'special', handler: 'surfer', speedMul: 1.25 }
         : { t: 'special', handler: 'flight', duration: 4, cooldown: 20 };
     g = {
       kind: 'buff',

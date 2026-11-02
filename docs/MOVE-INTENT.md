@@ -367,7 +367,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] Team-side field: sets the run's weather to sun for a while (setWeather). (Jess, 2026-11-01, Kanto import rulings set 4)
 
 ### surf
-- [Approved] A movement skill, passive (special handler surfer): while the Pokemon on the field has Surf in any slot and stands in water or swamp, it ignores the slowdown and moves at x1.15. Water types already ignore the slowdown, so they gain the x1.15. Lava, poison and spark still hurt; ice still slides. No damage, never autocast, never the active slot, never bonds. Mainline Surf is an HM learned by many non-Water Pokemon. Scenario surf-passive. (Jess, 2026-11-02)
+- [Approved] A movement skill, passive (special handler surfer): while the Pokemon on the field has Surf in any slot and stands in water or swamp, it ignores the slowdown and moves at x1.25. Water types already ignore the slowdown, so they gain the x1.25. Lava, poison and spark still hurt; ice still slides. No damage, never autocast, never the active slot, never bonds. Mainline Surf is an HM learned by many non-Water Pokemon. Scenario surf-passive. (Jess, 2026-11-02)
 
 ### tackle
 - [Approved] Tackle reach stays as built, judged by feel, any fix is data. (slice-3d.md decision D3; closes the review 9.2 note that its 48 px circle no longer includes the player's body)

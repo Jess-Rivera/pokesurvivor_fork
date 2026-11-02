@@ -6408,7 +6408,7 @@
         {
           "t": "special",
           "handler": "surfer",
-          "speedMul": 1.15
+          "speedMul": 1.25
         }
       ],
       "reviewStatus": "proposed"
