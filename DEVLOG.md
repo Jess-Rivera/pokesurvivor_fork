@@ -365,7 +365,17 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 ## 2026-11-01 (Claude Code, home): playtest fixes part 1 (Jeremy's notes), branch fix/playtest-kanto-moves
 - Speed transfer bounds 0.5/3.0 -> 0.7/1.3 (Jess's pick over the proposed 0.5/2.0); Spe 130+ now saturates at 139 px/s, k left at 1.0 (BALANCE).
 - Bond is the team's: the count rides takeField on swap (was stranded on the mon active at the gym win). The bond screen opens with a Pokemon step (team keys 1-6, ineligible dimmed, skipped when only one can bond); the field does not swap.
+- Economy doc (docs/Economy Balance Ideas.md) open questions: run-wide upgrades bought on several mons stacking (Gold Gain x4), run-wide rank III costing 30 of a mon's 40 points, the 371,700-gold curve per mon or once, unbuilt stats (dodge, Status Chance), Starting Moves III vs Repertoire, save migration of the old upgrade levels. Needs coins-per-run data first.
 - Bomb: kills wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then a 3 s spawn quiet (G.Spawner.quiet). CONTRIBUTING asks for coins per run.
 - Verified: check.js 30/30, smoke-ui pass, headless: speed px, bond pick on a benched mon, bond carried on swap, bomb 26 -> 0 with no spawns for 3 s. smoke-newcombat skipped.
 - Jess feel-tested: bonds work, bombs work, speed feels better. Next: the Kanto import rulings.
 - Kanto import rulings, 4 sets with Jess: accuracy/evasion as miss chance, HP-curve power, Counter stance, real-faint Explosion; real-time turn conditions, sleep-only Dream Eater, U-turn clears the swap lock, wild-only Fissure; mainline odd stats (weight joins the dex), Protect block, Rest without sleep, status analogs (Skill Swap out); priority ignored, two-turn delay, rampage lock, team-side fields. 64 new MOVE-INTENT entries (plus a line on quick-attack), 4 DECISIONS entries. Still open: Psych Up, Swagger, Baton Pass.
+
+
+## 2026-11-01 (Claude Code, home): Team menu rework
+- Slow list: every menu sprite drew once before IntersectionObserver reported, so opening Team fetched ~946 sheets; ui.js now draws only canvases reported in view (rootMargin 160px). ~45 requests on open.
+- Slots: Free Slot N under Put in the detail column, for the highlighted slot, always shown (greyed on the lead and empty slots; Jess moved it there after the first feel test); drag a team card onto the list to free it. Drag list->slot and slot<->slot already worked.
+- Upgrades: main menu entry removed; a + on the Team detail stage opens it on that Pokemon, Back returns to Team keeping the draft. smoke-ui now opens Upgrades that way.
+- Menu sprites centre on their visible Idle pixels (G.Sprites.idleBox, scanned once per dex/variant/row); hero views fit by that box. World sprites unchanged.
+- Feel test 1 fix: on file:// the pixel scan threw a SecurityError inside the sprite loop, so no menu sprite drew; the scan is now caught and falls back to the old placement (centring works only over http until a precomputed table exists). The + sits a little lower.
+- Verified: check.js 30/30, smoke-ui pass, headless over file:// and http, 1600x900 and 1280x720.

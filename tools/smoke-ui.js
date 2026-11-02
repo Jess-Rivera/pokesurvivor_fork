@@ -82,7 +82,9 @@ async function check(browser, query, tag) {
   // ---- menus: the Upgrades screen for every owned Pokemon (ban picker + move-slot selects), then the Pokedex detail ----
   const menu = await page.evaluate(async () => {
     G.MenuUI.open();
-    document.querySelector('#scr-menu [data-go="upgrades"]').click();
+    // Upgrades opens from the Team screen's + on the previewed Pokemon (the main menu entry is gone, 2026-11-01)
+    document.querySelector('#scr-menu [data-go="team"]').click();
+    document.getElementById('ros-upg').click();
     const sel = document.getElementById('upg-mon'),
       seen = new Set(),
       bad = [];

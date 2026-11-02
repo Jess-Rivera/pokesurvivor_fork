@@ -223,7 +223,7 @@ multiplied by the Fortune upgrade. "Per boss" now counts overworld elites and gy
 Coins buy the permanent upgrades and the Shop's Team Items and Team Upgrades tabs; the gacha runs on tickets.
 
 ### 7.2 Permanent upgrades, per Pokemon
-Placeholder behavior (CP5-8). The upstream Upgrades menu is live with 13 per-Pokemon upgrades: Vitality, Strength, Stride, Reflexes, Carapace, Synthesis, Magnet, Wisdom, Fortune, Repertoire (start with 2 moves), Critical Hit, Card Reroll and Veto (block a move from the cards). Each Pokemon has its own and they only count when you play with it. Current value: see js/data/upgrades.js. The meta-progression redesign is deferred to its own branch (DECISIONS-archive 2026-10-18 Upgrade rework).
+Placeholder behavior (CP5-8). The upstream Upgrades screen (opened from the Team screen's + on a Pokemon since 2026-11-01; no main menu entry) is live with 13 per-Pokemon upgrades: Vitality, Strength, Stride, Reflexes, Carapace, Synthesis, Magnet, Wisdom, Fortune, Repertoire (start with 2 moves), Critical Hit, Card Reroll and Veto (block a move from the cards). Each Pokemon has its own and they only count when you play with it. Current value: see js/data/upgrades.js. The meta-progression redesign is deferred to its own branch (DECISIONS-archive 2026-10-18 Upgrade rework).
 
 ### 7.3 Items
 `[Approved]` Three tiers, split by where the item lives and how it reaches the player (2026-10-20, Jess decided). Catalog and numbers: current value, see js/data/items.js and js/data/ground-items.js.

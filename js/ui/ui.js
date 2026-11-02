@@ -309,7 +309,7 @@ G.UI = (() => {
   const io =
     'IntersectionObserver' in window
       ? new IntersectionObserver((es) => es.forEach((e) => seen.set(e.target, e.isIntersecting)), {
-          rootMargin: '80px',
+          rootMargin: '160px', // about one grid row ahead, so a scroll finds the next row already drawing
         })
       : null;
 
@@ -342,7 +342,8 @@ G.UI = (() => {
         continue;
       }
       if (s.cv.offsetParent === null) continue; // pantalla oculta
-      if (io && seen.get(s.cv) === false) continue; // fuera de la vista
+      // Out of view, or not reported yet: nothing drawn, so its sheets only load once the canvas scrolls near the view.
+      if (io && seen.get(s.cv) !== true) continue;
       s.a.update(dt);
 
       if (s.opts.lively) {
@@ -368,13 +369,32 @@ G.UI = (() => {
       // Integer scale so the pixels stay crisp.
       const m = G.Sprites.animMeta(s.dex, 'Idle');
       const ay = m ? m.ay : 24;
+      // Visible pixels of its Idle (blank sheet space ignored): the sprite is centred on them once the sheet is in.
+      const box = G.Sprites.idleBox(s.dex, !!s.opts.shiny, s.a.dir);
       let k = s.opts.scale || 2;
-      if (s.opts.hero) k = Math.max(1, Math.min(k, Math.floor((cv.height * 0.8) / ay)));
+      if (s.opts.hero)
+        k = box
+          ? Math.max(
+              1,
+              Math.min(
+                k,
+                Math.floor((cv.height * 0.8) / (box.y1 - box.y0)),
+                Math.floor((cv.width * 0.9) / (box.x1 - box.x0))
+              )
+            )
+          : Math.max(1, Math.min(k, Math.floor((cv.height * 0.8) / ay)));
       s.a.scale = k / G.Sprites.PX;
-      // If it does not fit standing, the body is centered in the box.
-      const big = ay * k > cv.height * 0.8;
-      const fx = cv.width / 2,
+      let fx, fy;
+      if (box) {
+        // the feet anchor goes where the visible box lands centred in the canvas
+        fx = Math.round(cv.width / 2 - ((box.x0 + box.x1) / 2) * k);
+        fy = Math.round(cv.height / 2 - ((box.y0 + box.y1) / 2) * k);
+      } else {
+        // If it does not fit standing, the body is centered in the box.
+        const big = ay * k > cv.height * 0.8;
+        fx = cv.width / 2;
         fy = big ? cv.height / 2 + ay * k * 0.45 : cv.height * 0.88;
+      }
 
       if (s.opts.shadow !== false && !s.opts.silhouette) {
         ctx.fillStyle = 'rgba(0,0,0,.35)';

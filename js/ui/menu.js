@@ -755,7 +755,7 @@ G.MenuUI = (() => {
   //   ros.dex    the Pokémon shown on the right (a team member, or a preview from the list), null = empty slot
   //   ros.shiny  Normal / Shiny toggle for ros.dex
   //   ros.drag   dex being dragged (a list cell or a filled slot)
-  const ros = { team: [], slot: 0, dex: null, shiny: false, drag: null };
+  const ros = { team: [], slot: 0, dex: null, shiny: false, drag: null, dragSlot: null };
   const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0] : null)));
   const rosDirty = () => teamKey(ros.team) !== teamKey(G.DB.save.team);
 
@@ -770,7 +770,33 @@ G.MenuUI = (() => {
     $('ros-commit').onclick = rosCommit;
     buildControls(rosView);
     renderGrid(rosView);
+    // Drop a team card back on the list: that slot is freed.
+    const grid = $('ros-grid');
+    grid.ondragover = (e) => {
+      if (ros.dragSlot > 0) {
+        e.preventDefault();
+        grid.classList.add('drop');
+      }
+    };
+    grid.ondragleave = (e) => {
+      if (!grid.contains(e.relatedTarget)) grid.classList.remove('drop');
+    };
+    grid.ondrop = (e) => {
+      grid.classList.remove('drop');
+      if (!(ros.dragSlot > 0)) return;
+      e.preventDefault();
+      const slot = ros.dragSlot;
+      ros.drag = ros.dragSlot = null;
+      rosFreeSlot(slot);
+    };
     rosSelectSlot(0);
+  }
+
+  /** Back to the Team screen from Upgrades, keeping the unsaved draft and the selection. */
+  function rosReturn() {
+    G.UI.chrome(false);
+    G.UI.show('scr-roster');
+    rosRenderAll();
   }
 
   async function rosBack() {
@@ -873,14 +899,14 @@ G.MenuUI = (() => {
     markGrid(rosView);
   }
 
-  function rosRemove() {
-    const i = ros.team.findIndex((t) => t && t.dex === ros.dex);
-    if (i <= 0) return; // not on the team, or the lead (never empty)
+  /** Empty team slot `i` (on the working copy). Slot 1, the lead, is never emptied. */
+  function rosFreeSlot(i) {
+    if (i <= 0 || !ros.team[i]) return;
     const gone = ros.team[i].dex;
     ros.team = ros.team.slice();
     ros.team[i] = null;
     ros.slot = i;
-    ros.dex = null;
+    if (ros.dex === gone) ros.dex = null;
     rosRenderAll();
     refreshCells(rosView, [gone]);
     markGrid(rosView);
@@ -930,18 +956,20 @@ G.MenuUI = (() => {
         e.preventDefault();
         b.classList.remove('drop');
         const d = ros.drag != null ? ros.drag : +e.dataTransfer.getData('text/plain');
-        ros.drag = null;
+        ros.drag = ros.dragSlot = null;
         if (d) rosAssign(slot, d);
       };
       if (mon) {
         b.draggable = true; // drag a team card onto another slot to swap
         b.ondragstart = (e) => {
           ros.drag = mon.dex;
+          ros.dragSlot = slot; // dropped on the list, it frees this slot
           e.dataTransfer.setData('text/plain', String(mon.dex));
           e.dataTransfer.effectAllowed = 'move';
         };
         b.ondragend = () => {
-          ros.drag = null;
+          ros.drag = ros.dragSlot = null;
+          $('ros-grid').classList.remove('drop');
         };
       }
       box.appendChild(b);
@@ -952,9 +980,25 @@ G.MenuUI = (() => {
     const s = G.DB.save,
       box = $('ros-detail');
     const dex = ros.dex;
+    // Free Slot N: always shown under Put, for the highlighted slot; greyed out on the lead (never empty) and on an empty slot.
+    const n = ros.slot + 1,
+      canFree = ros.slot > 0 && !!ros.team[ros.slot];
+    const freeBtn = `<button id="ros-free" class="btn ghost"${canFree ? '' : ' disabled'} title="${
+      ros.slot === 0
+        ? 'Slot 1 is the lead and cannot be left empty'
+        : canFree
+          ? `Empty Slot ${n}`
+          : `Slot ${n} is already empty`
+    }">Free Slot ${n}</button>`;
+    const wireFree = () => {
+      const f = $('ros-free');
+      if (f) f.onclick = () => rosFreeSlot(ros.slot);
+    };
     if (dex == null) {
-      box.innerHTML = `<div class="ros-hint"><h3>Slot ${ros.slot + 1} is empty</h3>
-        <p class="sub">Pick a Pokémon from the list, then use <b class="gold">Put in Slot ${ros.slot + 1}</b>, double-click it, or drag it onto a slot.</p></div>`;
+      box.innerHTML = `<div class="ros-hint"><h3>Slot ${n} is empty</h3>
+        <p class="sub">Pick a Pokémon from the list, then use <b class="gold">Put in Slot ${n}</b>, double-click it, or drag it onto a slot.</p></div>
+        <div class="ros-da">${freeBtn}</div>`;
+      wireFree();
       return;
     }
     const p = G.DEX_BY[dex];
@@ -987,14 +1031,16 @@ G.MenuUI = (() => {
       act =
         `<button id="ros-put" class="btn gold" data-sfx="confirm"${same ? ' disabled' : ''}>` +
         (same ? `Already in Slot ${slotT + 1}` : `Put in Slot ${slotT + 1}` + (hasSh && ros.shiny ? ' (shiny)' : '')) +
-        '</button>' +
-        (onTeam > 0 ? '<button id="ros-remove" class="btn ghost">Remove from team</button>' : '');
+        '</button>';
     }
 
     box.innerHTML = `
       <div class="ros-dh"><b>${own ? p.name : '???'}</b><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>
       <div class="ros-db">
-        <canvas id="ros-big" class="stage" width="220" height="190"></canvas>
+        <div class="ros-stage">
+          <canvas id="ros-big" class="stage" width="220" height="190"></canvas>
+          ${own ? `<button type="button" id="ros-upg" class="ros-upg" title="Upgrades for ${p.name}" data-sfx="click">+</button>` : ''}
+        </div>
         ${
           hasSh
             ? `<div class="seg">
@@ -1018,7 +1064,8 @@ G.MenuUI = (() => {
             o derrotándolo cuando salga shiny.</p>`
         }
       </div>
-      <div class="ros-da">${note ? `<p class="roster-note">${note}</p>` : ''}${act}</div>`;
+      <div class="ros-da">${note ? `<p class="roster-note">${note}</p>` : ''}${act}${freeBtn}</div>`;
+    wireFree();
     $('ros-big').style.setProperty('--stage-c', color);
     $('ros-big').classList.toggle('shiny', own && ros.shiny);
     const hex = $('ros-hex');
@@ -1045,17 +1092,24 @@ G.MenuUI = (() => {
     });
     const put = $('ros-put');
     if (put) put.onclick = () => rosAssign(ros.slot, dex);
-    const rm = $('ros-remove');
-    if (rm) rm.onclick = rosRemove;
+    const upg = $('ros-upg');
+    if (upg) upg.onclick = () => openUpgrades(dex, rosReturn);
   }
 
   // ---------------- mejoras ----------------
 
   let upgDex = null;
 
-  function openUpgrades() {
+  /**
+   * @param dex   the Pokémon to open on (the Team screen's + button)
+   * @param back  where Volver goes (default: the main menu)
+   */
+  function openUpgrades(dex, back = open) {
+    G.UI.chrome(true); // coins on view: upgrades are bought with them
     G.UI.show('scr-upgrades', true);
+    $('upg-back').onclick = back;
     const s = G.DB.save;
+    if (dex != null) upgDex = dex;
     if (!upgDex || !s.owned[upgDex]) upgDex = s.partner;
     // Selector with your Pokemon: the companion first, then the ones that already have upgrades.
     const sel = $('upg-mon');

@@ -151,6 +151,52 @@ G.Sprites = (() => {
     return s;
   }
 
+  /**
+   * Visible-pixel box of the Idle animation in one direction row, in art pixels relative to the ground anchor
+   * ({ x0, y0, x1, y1 }, the union over every Idle frame so it does not jitter). Scanned once per dex / variant / row when
+   * the sheet is ready; null before that (or for an empty row). Menus centre their sprites on it (ui.js).
+   */
+  const boxes = new Map();
+  let scanBlocked = false; // file:// pages may not read image pixels (SecurityError): then no box, the old placement
+  function idleBox(dex, shiny = false, dir = 0) {
+    if (scanBlocked) return null;
+    const m = animMeta(dex, 'Idle', shiny),
+      s = sheet(dex, 'Idle', shiny);
+    if (!m || !s || !s.ready) return null;
+    const row = Math.min(dir, m.r - 1),
+      k = dex + '/' + (shiny && hasShiny(dex) ? 's' : '') + '/' + row;
+    if (boxes.has(k)) return boxes.get(k);
+    const W = m.w * m.n,
+      c = document.createElement('canvas');
+    c.width = W;
+    c.height = m.h;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(s.img, 0, row * m.h, W, m.h, 0, 0, W, m.h);
+    let px;
+    try {
+      px = x.getImageData(0, 0, W, m.h).data;
+    } catch (e) {
+      scanBlocked = true;
+      return null;
+    }
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
+    for (let y = 0; y < m.h; y++)
+      for (let i = 0; i < W; i++) {
+        if (px[(y * W + i) * 4 + 3] < 16) continue;
+        const fx = i % m.w; // frame-local column
+        if (fx < x0) x0 = fx;
+        if (fx > x1) x1 = fx;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    const b = x1 < 0 ? null : { x0: x0 - m.ax, y0: y0 - m.ay, x1: x1 + 1 - m.ax, y1: y1 + 1 - m.ay };
+    boxes.set(k, b);
+    return b;
+  }
+
   const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
 
   /** Preloads all the animations of those Pokemon. */
@@ -341,6 +387,7 @@ G.Sprites = (() => {
     white,
     animMeta,
     sheet,
+    idleBox,
     preload,
     dirFromAngle,
     bodyRadius,

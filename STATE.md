@@ -9,10 +9,12 @@ Last updated: 2026-11-01 (Claude Code, home; branch fix/playtest-kanto-moves, fr
   - Bond belongs to the team: carried on swap; the bond screen first picks the Pokemon (keys 1-6), then its moves.
   - Bomb clears wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then 3 s with no spawns.
 - Tests: check.js 30/30, smoke-ui pass, headless checks of all three. smoke-newcombat SKIPPED (flaky; TODO Backlog).
-- docs/Economy Balance Ideas.md reviewed: ranks after playtest fixes and move imports; needs coins-per-run data first (CONTRIBUTING now asks). Six open design questions (run-wide stacking, 40-point cap vs run-wide costs, curve per mon or once, unbuilt stats, Starting Moves vs Repertoire, save migration).
+- docs/Economy Balance Ideas.md: waits for coins-per-run data (CONTRIBUTING asks); six open design questions noted in chat 2026-11-01 (DEVLOG).
+
+- Team menu rework BUILT, needs feel test 2: lazy-loaded sprites, Free Slot N under Put, drag a slot to the list to free it, Upgrades via + on the detail stage (menu entry gone), sprites centred on visible pixels (DEVLOG).
 
 ## Next (in order)
-1. Commit part 1.
+1. Feel-test the Team menu; commit.
 2. Kanto move imports: rulings DONE (4 sets, MOVE-INTENT; DECISIONS 2026-11-01). Next: plan import batch 1 (the ~114 moves that map straight), then the new mechanics (accuracy/evasion trackers, Protect, fields, rampage) in their own slices.
 3. Cone and area moves ignore walls (Flamethrower etc.; move-sim only stops moving shots). Needs a line-of-sight ruling, own branch.
 4. Readability pass (Jeremy): status chips, stat stage visibility, pause menu, explanations. Ask Jeremy what "Bosses" and "Magnetism" meant. Item drop rates and New Move card frequency (part 2).
