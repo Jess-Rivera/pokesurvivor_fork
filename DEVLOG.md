@@ -360,3 +360,4 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Hail: still parked (D-HAIL, toggle skill item); its follow-up issue may not be filed.
 - tools/move-lab.html: dev page that loads the real move scripts; pick a move, stack cards, see base vs effective fields, leader form and reach; build a 4-move slot and copy its moves / cards block for gyms.js. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Headless load: 62 moves, no page errors; check.js 30/30.
 - smoke-newcombat skipped from the routine (Jess) until its flake is fixed.
+- Jess: feature/gym-roster done (rosters in); fast-forward to main. Gym cards after playtester feedback.
