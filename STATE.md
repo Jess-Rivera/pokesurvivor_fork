@@ -1,11 +1,11 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-01 (Claude Code, home; branch fix/playtest-kanto-moves, from main).
+Last updated: 2026-11-02 (Claude Code, home; branch fix/playtest-kanto-moves, from main).
 
 ## Where we are
 - Playtest fixes part 1 and the Team menu rework: built and feel-tested OK (Jess 2026-11-01). Team menu sprite centring works over http only.
-- Kanto import batch 1 BUILT, not yet reviewed: 110 moves in the catalog, held out of player pools (G.Moves.HELD) until learnset pools. Built by tools/kanto_batch1.js; sleep allowed in the grammar; recoil on hit; status cooldowns proposed. Detail: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1".
+- Kanto import batch 1 BUILT, not yet reviewed: 110 moves in the catalog, held out of player pools (G.Moves.HELD) until learnset pools. Built by tools/kanto_batch1.js; sleep allowed in the grammar; recoil on hit; status cooldowns proposed. Shapes now follow Jess's five shape rules (2026-11-02). Detail: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1" and "Batch 1 shape rules". Open: Sand Tomb cd (1.17 s vs a 2.5 s patch).
 - Tests: validators 173/173, check.js 30/30, smoke-ui pass, live casts headless on file://. smoke-newcombat SKIPPED (flaky; TODO Backlog).
 
 ## Next (in order)

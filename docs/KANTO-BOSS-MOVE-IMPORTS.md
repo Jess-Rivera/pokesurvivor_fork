@@ -455,6 +455,16 @@ Built on fix/playtest-kanto-moves: 110 of the "Maps to the schema" moves are in 
 - Status cooldowns (move-overrides.js, proposed): sleep shots 4 s; paralysis, poison, confusion and trap shots 3.5 s; foe drops 3 s; heals 12 s. Pure raises have none (they cast when their Gate opens).
 - Scenarios: one placeholder per move in move-intent-scenarios.json, blocked on the shape review; the hand-derived scenarios and the batchReviewed sign-off come after it.
 
+### Batch 1 shape rules (Jess, 2026-11-02)
+
+[Approved] tools/kanto_batch1.js derives every shape from these rules; each move's review row names the rule that fired. Later batches use them too.
+
+1. Melee. Tackle (arc 1.7 rad, reach 54 px) is the default swing; heavy moves (power 100+) start from arc 2, reach 60. Damage and knockback are free. Each extra (ailment, flinch, crit, drain, foe stat drop, trap) costs area: one small-chance extra keeps 80%, a strong one (50%+ chance, a drain, a trap) or two extras keep 65%. Drawbacks (recoil, own stat drops) cost nothing. The name picks the trade: punch, chop, jab, uppercut narrow the arc; fang, bite, crunch, clamp, leech, bind, wrap (and any move with no family word) shorten the reach; claw, slash, blade, cross widen the arc (x1.3) and shorten the reach more; tail, whip, kick, horn, drill, stomp lengthen the reach (x1.2) and narrow the arc a lot. The scale matches the originals: Lick 66%, Bite 64%, Bug Bite 62%, Metal Claw 81%.
+2. Shots. Each type has a look read off the originals: water pierces one and is quick (Water Gun 6 px, 350 px/s); fire wobbles (Ember 7 px, 310); ghost is slow, big and pierces one (Shadow Ball 9 px, 280); electric is very fast (Thunder Shock 7 px, 480); rock is slow and big with knockback 90 (Rock Throw 9 px, 260); psychic steers to the nearest foe (Confusion); grass 8 px 290; poison 7 px 310; steel 9 px 330. New: fighting 9 px 260 with knockback, flying 5 px 420, fairy 8 px 300 pierces one, normal 7 px 320. Power under 60: 25% smaller, 15% faster; 100 and up: 25% bigger, 15% slower. No-damage status shots use their type's look at base size.
+3. Area moves. Hits everyone around in mainline (target all-other-pokemon), or a sound or look (Growl, Leer, Tail Whip): a ring around the user. A damaging spray of objects (Blizzard, Twister, Acid, Air Cutter, Swift): a 6-shot burst. Batch 1: 6 rings, 5 bursts. Heat Wave (an original ring) is left as it is.
+4. Mines and trails (none in batch 1). A mine is placed on the field (mainline hazards like Spikes); a trail is left behind as the user moves (Flame Wheel). Toxic stays a trail as a designer pick.
+5. Uniques. When a move stands out in its type it gets its own variant. Batch 1: Shock Wave homes on the nearest foe (never misses); Sleep Powder, Stun Spore, Spore and Poison Powder are a 22 px cloud drifting 90 px/s for 1 s through every foe; Sand Tomb is a 40 px sand patch on a foe for 2.5 s that hits and traps every 0.5 s; Draco Meteor is three 60 px falls, 0.25 s apart, each on the nearest foe, with its Sp. Atk drop paid once per cast.
+
 ## Notes for the import work
 
 - Each import goes through the move data pipeline (`docs/MOVE-AXIS-SCHEMA.md`, the source JSON under `docs/move_rework_holding/`, then `tools/export_moves.js`) and the move review rule in CLAUDE.md.

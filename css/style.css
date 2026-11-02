@@ -15,6 +15,12 @@
   font-weight: 551 900;
   font-display: block;
 }
+@font-face {
+  font-family: 'Monogram';
+  src: url('../assets/fonts/monogram-extended.ttf') format('truetype');
+  font-weight: 551 900;
+  font-display: block;
+}
 
 :root {
   --ink: #ffffff;

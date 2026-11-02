@@ -387,3 +387,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Runtime: sleep allowed in the grammar; recoil on hit from damage dealt (move-effects.js); status cooldowns proposed in move-overrides.js. Harness pins on 63 moves scoped to the pre-Kanto moves; 110 blocked placeholder scenarios.
 - Verified: validators 173/173, check.js 30/30, smoke-ui pass, review page and live casts headless on file:// (sleep, paralysis, poison, trap, confusion land; recoil and drain and Recover heal work; no errors).
 - Hail toggle: unscheduled since D-HAIL; now a TODO fields slice with the weather moves. Stopped at: waiting on Jess's shape review.
+
+## 2026-11-02, Kanto batch 1 shape rules (Claude Code, home)
+- Jess set five shape rules for the imports (melee trade-off vs Tackle, type looks for shots, ring vs burst, mine vs trail, uniques). tools/kanto_batch1.js now derives shapes from them; review rows name the rule.
+- Applied and exported (173 moves). New shapes: Shock Wave homing, powder clouds, Sand Tomb patch, Draco Meteor three falls; Blizzard and Twister are bursts.
+- Verified: check.js 30/30, validators 173/173, smoke-ui pass, 18 reshaped moves cast and hit live on file://, no page errors.
+- Open: Sand Tomb cd resolves to 1.17 s while a patch lasts 2.5 s (patches overlap); needs a cd ruling.

@@ -47,7 +47,7 @@ const PLAN = {
   superpower: ['melee', { heavy: 1 }],
   'brick-break': ['melee'],
   'cross-chop': ['melee', { heavy: 1 }],
-  'focus-blast': ['shot', { r: 12 }],
+  'focus-blast': ['shot'],
   'close-combat': ['melee', { heavy: 1 }],
   submission: ['melee'],
   'double-kick': ['multi', { n: 2, on: 'melee' }],
@@ -67,17 +67,17 @@ const PLAN = {
   'thunder-wave': ['statusShot'],
   'wild-charge': ['melee'],
   'charge-beam': ['beam'],
-  'shock-wave': ['shot'],
+  'shock-wave': ['shot', { home: 1 }],
   'thunder-fang': ['melee'],
   'volt-tackle': ['melee', { heavy: 1 }],
-  'zap-cannon': ['shot', { r: 12 }],
+  'zap-cannon': ['shot'],
   // Grass
   'mega-drain': ['shot'],
-  'sleep-powder': ['statusShot'],
-  'stun-spore': ['statusShot'],
+  'sleep-powder': ['cloud'],
+  'stun-spore': ['cloud'],
   'power-whip': ['melee', { heavy: 1 }],
-  'energy-ball': ['shot', { r: 10 }],
-  spore: ['statusShot'],
+  'energy-ball': ['shot'],
+  spore: ['cloud'],
   'leaf-blade': ['melee'],
   synthesis: ['self'],
   // Ground
@@ -85,29 +85,29 @@ const PLAN = {
   'earth-power': ['strike', { r: 30 }],
   'bone-club': ['melee'],
   'drill-run': ['melee'],
-  'sand-tomb': ['strike', { r: 30 }],
+  'sand-tomb': ['zone'],
   // Poison
-  'sludge-bomb': ['shot', { r: 10 }],
+  'sludge-bomb': ['shot'],
   'poison-jab': ['melee'],
   acid: ['burst'],
   'poison-fang': ['melee'],
   'sludge-wave': ['ring', { r: 220 }],
   'acid-armor': ['self'],
   'cross-poison': ['melee'],
-  'gunk-shot': ['shot', { r: 12 }],
-  'poison-powder': ['statusShot'],
+  'gunk-shot': ['shot'],
+  'poison-powder': ['cloud'],
   // Water
   surf: ['ring', { r: 240 }],
   waterfall: ['melee'],
-  'water-pulse': ['shot', { r: 10 }],
+  'water-pulse': ['shot'],
   scald: ['shot'],
   'aqua-tail': ['melee'],
   clamp: ['melee'],
   // Fire
-  'fire-blast': ['shot', { r: 12 }],
+  'fire-blast': ['shot'],
   'flare-blitz': ['melee', { heavy: 1 }],
   'fire-punch': ['melee'],
-  overheat: ['shot', { r: 12 }],
+  overheat: ['shot'],
   'blaze-kick': ['melee'],
   'fire-fang': ['melee'],
   // Dark
@@ -115,19 +115,19 @@ const PLAN = {
   'nasty-plot': ['self'],
   // Dragon
   'dragon-pulse': ['beam'],
-  'draco-meteor': ['falls', { r: 80 }],
+  'draco-meteor': ['meteors'],
   'dragon-breath': ['beam'],
   'dragon-claw': ['melee'],
-  twister: ['ring', { r: 180 }],
+  twister: ['burst'],
   // Ice
-  blizzard: ['ring', { r: 240 }],
+  blizzard: ['burst'],
   'ice-punch': ['melee'],
   'aurora-beam': ['beam'],
   'frost-breath': ['beam'],
   'ice-fang': ['melee'],
   // Rock
   'stone-edge': ['falls', { r: 60 }],
-  'ancient-power': ['shot', { r: 10 }],
+  'ancient-power': ['shot'],
   'rock-tomb': ['falls', { r: 60 }],
   // Bug
   'leech-life': ['melee'],
@@ -141,7 +141,7 @@ const PLAN = {
   'shadow-punch': ['melee'],
   'shadow-claw': ['melee'],
   // Fairy
-  moonblast: ['shot', { r: 10 }],
+  moonblast: ['shot'],
   'play-rough': ['melee'],
   moonlight: ['self'],
   // Steel
@@ -159,6 +159,9 @@ const PATTERNS = {
   statusShot: 'Status shot, no damage (like String Shot)',
   self: 'Self-cast, no hitbox (like Swords Dance)',
   multi: 'Multi-hit, quick repeats (like String Shot)',
+  cloud: 'Powder cloud, no damage (new)',
+  zone: 'Ground patch at a foe (new)',
+  meteors: 'Three falls on the nearest foe (new)',
 };
 
 const STAT = { 2: 'atk', 3: 'def', 4: 'spAtk', 5: 'spDef', 6: 'spd' }; // 7 accuracy, 8 evasion: none in this batch
@@ -199,28 +202,118 @@ function payloadOf(id, a) {
 }
 
 const ends = (t) => [{ time: t }, { contact: 'wall' }, { offScreen: true }];
-const melee = (o) => ({
-  kind: 'melee',
-  balanceClass: 'melee',
-  space: { shape: 'radial', radArc: o.heavy ? 2 : 1.7, radRadius: o.heavy ? 60 : 54, count: 1 },
-  delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static', endOn: [{ time: 0.15 }] },
-  hitPolicy: 'oncePerInstance',
-  knock: o.heavy ? 140 : 90,
-});
-const shot = (o) => ({
-  kind: 'projectile',
-  balanceClass: 'ranged',
-  space: { shape: 'radial', radRadius: o.r || 8, count: 1, pierce: 0 },
-  delivery: { anchor: 'caster', targeting: 'direction', motion: 'travels', moveSpeed: 300, endOn: ends(1.5) },
-  hitPolicy: 'oncePerInstance',
-});
+
+// Shape rules (Jess 2026-11-02, docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules").
+// Rule 1: Tackle (arc 1.7, reach 54) is the default swing. Each extra (ailment, flinch, crit, drain, foe stat drop) costs area:
+// one small-chance extra keeps 80%, a strong one (50%+ chance, a drain, a trap) or two extras keep 65%. Drawbacks (recoil,
+// own stat drops) cost nothing. The move's name picks which way it gives the area up.
+const FAMILY = [
+  ['narrow', /punch|chop|jab|uppercut|brick/, 'narrower arc'],
+  ['short', /fang|bite|crunch|clamp|leech|bind|wrap/, 'shorter reach'],
+  ['sweep', /claw|slash|blade|cross-poison/, 'wide arc, short reach'],
+  ['long', /tail|whip|kick|horn|drill|stomp/, 'narrow arc, long reach'],
+];
+function meleeExtras(pay) {
+  const x = pay.filter(
+    (fx) =>
+      ['ailment', 'flinch', 'crit'].includes(fx.t) ||
+      (fx.t === 'heal' && fx.amount.from) ||
+      (fx.t === 'stat' && fx.side === 'foe')
+  );
+  const strong = x.length > 1 || x.some((fx) => fx.t !== 'crit' && (fx.chance == null || fx.chance >= 50));
+  return { n: x.length, f: !x.length ? 1 : strong ? 0.65 : 0.8, strong };
+}
+const melee = (o, c) => {
+  let arc = o.heavy ? 2 : 1.7,
+    r = o.heavy ? 60 : 54,
+    why = o.heavy ? 'heavy swing' : 'Tackle swing';
+  const x = meleeExtras(c.pay);
+  if (x.f < 1) {
+    const [fam, , say] = FAMILY.find(([, re]) => re.test(c.id)) || ['short', null, 'shorter reach'];
+    if (fam === 'narrow') arc *= x.f;
+    else if (fam === 'short') r *= Math.sqrt(x.f);
+    else if (fam === 'sweep') ((arc *= 1.3), (r *= Math.sqrt(x.f / 1.3)));
+    else ((r *= 1.2), (arc *= x.f / 1.44));
+    why += `, ${say} (${fam === 'short' && !FAMILY.some(([, re]) => re.test(c.id)) ? 'default' : fam + ' family'}) for ${x.strong ? 'a strong extra' : 'one small extra'}, ${Math.round(x.f * 100)}% area`;
+  }
+  return {
+    kind: 'melee',
+    balanceClass: 'melee',
+    space: { shape: 'radial', radArc: Math.round(arc * 100) / 100, radRadius: Math.round(r), count: 1 },
+    delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static', endOn: [{ time: 0.15 }] },
+    hitPolicy: 'oncePerInstance',
+    knock: o.heavy ? 140 : 90,
+    why,
+  };
+};
+// Rule 2: each type's shot has a look read off the original moves; power scales it (under 60: 25% smaller, 15% faster;
+// 100 and up: 25% bigger, 15% slower). aim nearest steers (Confusion); kb adds knockback (Rock Throw).
+const SHOT_TYPE = {
+  water: { r: 6, v: 350, p: 1, spr: 0.1, say: 'pierces one, quick (Water Gun)' },
+  fire: { r: 7, v: 310, p: 0, spr: 0.12, say: 'wobbles (Ember)' },
+  ghost: { r: 9, v: 280, p: 1, spr: 0.1, say: 'slow, big, pierces one (Shadow Ball)' },
+  electric: { r: 7, v: 480, p: 0, say: 'very fast (Thunder Shock)' },
+  rock: { r: 9, v: 260, p: 0, spr: 0.12, kb: 90, say: 'slow, big, knockback (Rock Throw)' },
+  psychic: { r: 7, v: 280, p: 0, aim: 1, say: 'steers to the nearest foe (Confusion)' },
+  grass: { r: 8, v: 290, p: 0, say: 'medium (Giga Drain)' },
+  poison: { r: 7, v: 310, p: 0, say: 'medium (Sludge)' },
+  steel: { r: 9, v: 330, p: 0, say: 'big (Meteor Mash)' },
+  fighting: { r: 9, v: 260, p: 0, kb: 90, say: 'slow, big, knockback' },
+  flying: { r: 5, v: 420, p: 0, say: 'thin and fast' },
+  fairy: { r: 8, v: 300, p: 1, say: 'pierces one' },
+  normal: { r: 7, v: 320, p: 0, say: 'plain' },
+};
+const SHOT_DEF = { r: 8, v: 300, p: 0, say: 'plain' };
+const shot = (o, c, status) => {
+  const b = SHOT_TYPE[c.type] || SHOT_DEF,
+    pw = status ? null : c.power,
+    tier = pw == null ? 0 : pw < 60 ? -1 : pw >= 100 ? 1 : 0;
+  const r = Math.round(b.r * (1 + 0.25 * tier)),
+    v = Math.round((b.v * (1 - 0.15 * tier)) / 10) * 10,
+    steer = b.aim || o.home;
+  const space = { shape: 'radial', radRadius: r, count: 1, pierce: b.p };
+  if (b.spr) space.spread = b.spr;
+  const delivery = { anchor: 'caster', targeting: steer ? 'nearest' : 'direction', motion: 'travels', moveSpeed: v };
+  if (steer) delivery.turnRate = 3;
+  delivery.endOn = ends(status ? 1.2 : 1.5);
+  return {
+    kind: 'projectile',
+    balanceClass: 'ranged',
+    space,
+    delivery,
+    hitPolicy: 'oncePerInstance',
+    knock: b.kb,
+    why: `${c.type} shot: ${b.say}${tier ? (tier > 0 ? ', strong: bigger and slower' : ', weak: smaller and faster') : ''}${o.home ? ', homes on the nearest foe (never misses)' : ''}`,
+  };
+};
 const BUILD = {
   melee,
   shot,
-  statusShot: (o) =>
-    Object.assign(shot(o), {
-      delivery: { anchor: 'caster', targeting: 'direction', motion: 'travels', moveSpeed: 320, endOn: ends(1.2) },
-    }),
+  statusShot: (o, c) => shot(o, c, true),
+  // Rule 5 uniques
+  cloud: () => ({
+    kind: 'projectile',
+    balanceClass: 'ranged',
+    space: { shape: 'radial', radRadius: 22, count: 1, pierce: 'UNLIMITED' },
+    delivery: {
+      anchor: 'caster',
+      targeting: 'direction',
+      motion: 'travels',
+      moveSpeed: 90,
+      endOn: [{ time: 1 }, { contact: 'wall' }],
+    },
+    hitPolicy: 'oncePerInstance',
+    why: 'powder: a short slow cloud that drifts through foes',
+  }),
+  zone: () => ({
+    kind: 'mine',
+    balanceClass: 'ranged',
+    space: { shape: 'radial', radRadius: 40, count: 1, pierce: 'UNLIMITED' },
+    delivery: { anchor: 'world', targeting: 'location', motion: 'static', endOn: [{ time: 2.5 }] },
+    hitPolicy: 'interval',
+    rehit: 0.5,
+    why: 'a sand patch at a foe that lasts 2.5 s and traps whoever stands in it',
+  }),
   beam: () => ({
     kind: 'beam',
     balanceClass: 'ranged',
@@ -266,10 +359,15 @@ const BUILD = {
 };
 
 function words(p, o, g, pay) {
+  const s = g.space || {},
+    d = g.delivery || {};
   const shape = {
-    melee: `Melee arc ${g.space && g.space.radArc} rad, reach ${g.space && g.space.radRadius} px, aims at nearest`,
-    shot: `One shot, radius ${o.r || 8} px`,
-    statusShot: `One shot, radius ${o.r || 8} px, no damage`,
+    melee: `Melee arc ${s.radArc} rad, reach ${s.radRadius} px, aims at nearest`,
+    shot: `One shot, radius ${s.radRadius} px${s.pierce ? ', pierces ' + s.pierce : ''}`,
+    statusShot: `One shot, radius ${s.radRadius} px${s.pierce ? ', pierces ' + s.pierce : ''}, no damage`,
+    cloud: 'Cloud, radius 22 px, passes through every foe, no damage',
+    zone: 'Circle 40 px on the ground at a foe, hits every 0.5 s',
+    meteors: '3 circles of 60 px, each on the nearest foe',
     beam: 'Line 290 x 20 px, pierces everything',
     strike: `Circle ${o.r || 30} px on the nearest foe`,
     falls: `Circle ${o.r || 70} px that lands on a spot`,
@@ -280,8 +378,11 @@ function words(p, o, g, pay) {
   }[p];
   const delivery = {
     melee: 'Instant, lasts 0.15 s',
-    shot: 'Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen',
-    statusShot: 'Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen',
+    shot: `Travels ${d.moveSpeed} px/s ${d.turnRate ? 'steering to the nearest foe' : 'toward aim'}, ends at 1.5 s, a wall or off screen`,
+    statusShot: `Travels ${d.moveSpeed} px/s ${d.turnRate ? 'steering to the nearest foe' : 'toward aim'}, ends at 1.2 s, a wall or off screen`,
+    cloud: 'Drifts 90 px/s toward aim, ends at 1 s or a wall',
+    zone: 'Placed on a random foe in range, lasts 2.5 s',
+    meteors: 'One every 0.25 s; each warns 0.4 s, then lands for 0.2 s',
     beam: 'Instant at nearest, lasts 0.5 s',
     strike: 'Instant on the nearest foe',
     falls: '0.4 s warning, then lands for 0.2 s',
@@ -305,7 +406,7 @@ function words(p, o, g, pay) {
       return `${fx.side === 'self' ? 'own' : 'foe'} ${STAT_WORD[fx.stat]} ${fx.stages > 0 ? '+' : ''}${fx.stages}${fx.chance ? ` (${fx.chance}%)` : ''}${fx.side === 'self' && fx.scope === 'team' ? ', team-wide' : ''}`;
     return fx.t;
   });
-  return { shape, delivery, payload: pw.join(', ') || 'none' };
+  return { shape, delivery, payload: pw.join(', ') || 'none', rule: g.why || '' };
 }
 
 /** One full catalog entry for id with pattern p and options o. */
@@ -315,10 +416,31 @@ function entry(id, p, o) {
   let pay = payloadOf(id, a),
     g,
     shown = null;
-  if (p === 'multi') {
-    const inner = BUILD[o.on](o);
+  const c = { id, type: a.type, power: a.source.power, pay };
+  if (p === 'meteors') {
+    // Rule 5 (Draco Meteor): three falls, each on the nearest foe when it is emitted; the own stat drop stays on the cast
+    const own = pay.filter((fx) => fx.t === 'stat' && fx.side === 'self'),
+      hit = pay.filter((fx) => !own.includes(fx));
+    g = {
+      kind: 'meteor',
+      balanceClass: 'ranged',
+      delivery: { anchor: 'caster', targeting: 'none', motion: 'static', endOn: [{ time: 0.25 * 3 + 0.2 }] },
+      why: 'three meteors instead of one',
+    };
+    const im = {
+      kind: 'meteor',
+      space: { shape: 'radial', radArc: TAU, radRadius: 60, count: 1 },
+      delivery: { anchor: 'target', targeting: 'nearest', motion: 'falls', delay: 0.4, endOn: [{ time: 0.2 }] },
+      hitPolicy: 'oncePerInstance',
+      payload: hit,
+    };
+    pay = own.concat([{ t: 'emit', every: 0.25, count: 3, trigger: 'cast', move: im }]);
+    shown = pay.slice(0, own.length).concat(hit);
+  } else if (p === 'multi') {
+    const inner = BUILD[o.on](o, c);
     const ipay = pay.slice();
     if (o.on === 'melee') ipay.push({ t: 'knockback', distance: 40 });
+    else if (inner.knock) ipay.push({ t: 'knockback', distance: inner.knock });
     g = {
       kind: inner.kind,
       balanceClass: inner.balanceClass,
@@ -333,19 +455,25 @@ function entry(id, p, o) {
     };
     pay = [{ t: 'emit', every: 0.11, count: o.n, trigger: 'cast', move: im }];
     shown = ipay; // the words describe one repeat
+    g.why = `${o.n} repeats of: ${inner.why}`;
   } else {
-    g = BUILD[p](o);
-    if (p === 'melee') pay.push({ t: 'knockback', distance: g.knock });
-    if (p === 'statusShot') pay = pay.filter((fx) => fx.t !== 'damage');
+    g = BUILD[p](o, c);
+    if (p === 'statusShot' || p === 'cloud') pay = pay.filter((fx) => fx.t !== 'damage');
+    else if (g.knock) pay.push({ t: 'knockback', distance: g.knock });
+    // Rule 3: hits everyone around in mainline, or a sound or look, is a ring (nova); a damaging spray of objects is a burst
+    if (p === 'ring')
+      g.why = a.target === 'all-other-pokemon' ? 'hits everyone around in mainline: ring' : 'a sound or look: ring';
+    if (p === 'burst') g.why = 'a damaging spray of objects: burst';
   }
   delete g.knock;
   const w = words(p, o, g, shown || pay);
+  delete g.why;
   const e = {
     id,
     name: a.name,
     kind: g.kind,
     balanceClass: g.balanceClass,
-    feel: `Kanto batch 1 proposal. ${PATTERNS[p]}. Shape: ${w.shape}. Delivery: ${w.delivery}. Payload: ${w.payload}.`,
+    feel: `Kanto batch 1 proposal. ${PATTERNS[p]}${w.rule ? ' (' + w.rule + ')' : ''}. Shape: ${w.shape}. Delivery: ${w.delivery}. Payload: ${w.payload}.`,
     type: a.type,
     category: a.damage_class,
     power: a.source.power,
@@ -357,6 +485,7 @@ function entry(id, p, o) {
   if (g.space) e.space = g.space;
   e.delivery = g.delivery;
   if (g.hitPolicy) e.hitPolicy = g.hitPolicy;
+  if (g.rehit) e.rehit = g.rehit;
   e.payload = pay;
   e.reviewStatus = 'proposed';
   return { e, w };

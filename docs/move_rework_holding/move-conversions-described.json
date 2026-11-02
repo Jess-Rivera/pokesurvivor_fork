@@ -3128,7 +3128,7 @@
       "name": "Slash",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area). Shape: Melee arc 2.21 rad, reach 42 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 70,
@@ -3138,8 +3138,8 @@
       "flavor_text": "The target is attacked with a slash of claws, scythes, or the like. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 2.21,
+        "radRadius": 42,
         "count": 1
       },
       "delivery": {
@@ -3173,7 +3173,7 @@
       "name": "Screech",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: foe Defense -2.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: foe Defense -2.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3183,7 +3183,7 @@
       "flavor_text": "An earsplitting screech harshly lowers the target's Defense stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -3221,7 +3221,7 @@
       "name": "Lovely Kiss",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3231,7 +3231,7 @@
       "flavor_text": "With a scary face, the user tries to force a kiss on the target. If it succeeds, the target falls asleep.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -3299,7 +3299,7 @@
       "name": "Supersonic",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: confusion 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: confusion 100%.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3309,7 +3309,7 @@
       "flavor_text": "The user generates odd sound waves from its body that confuse the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -3346,7 +3346,7 @@
       "name": "Glare",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: paralysis 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: paralysis 100%.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3356,7 +3356,7 @@
       "flavor_text": "The user intimidates the target with the pattern on its belly to cause paralysis.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -3393,7 +3393,7 @@
       "name": "Swift",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot) (a damaging spray of objects: burst). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage.",
       "type": "normal",
       "category": "special",
       "power": 60,
@@ -3438,7 +3438,7 @@
       "name": "Double Slap",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot). Shape: 3 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
+      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot) (3 repeats of: Tackle swing). Shape: 3 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
       "type": "normal",
       "category": "physical",
       "power": 15,
@@ -3500,7 +3500,7 @@
       "name": "Mega Kick",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
       "type": "normal",
       "category": "physical",
       "power": 120,
@@ -3541,7 +3541,7 @@
       "name": "Spike Cannon",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot). Shape: 3 quick shots, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot) (3 repeats of: normal shot: plain, weak: smaller and faster). Shape: 3 quick shots, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage.",
       "type": "normal",
       "category": "physical",
       "power": 20,
@@ -3569,7 +3569,7 @@
             "kind": "projectile",
             "space": {
               "shape": "radial",
-              "radRadius": 8,
+              "radRadius": 5,
               "count": 1,
               "pierce": 0
             },
@@ -3577,7 +3577,7 @@
               "anchor": "caster",
               "targeting": "direction",
               "motion": "travels",
-              "moveSpeed": 300,
+              "moveSpeed": 370,
               "endOn": [
                 {
                   "time": 1.5
@@ -3606,7 +3606,7 @@
       "name": "Take Down",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 90,
@@ -3652,7 +3652,7 @@
       "name": "Growl",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Attack -1.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (a sound or look: ring). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Attack -1.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3698,7 +3698,7 @@
       "name": "Leer",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Defense -1.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (a sound or look: ring). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Defense -1.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3744,7 +3744,7 @@
       "name": "Mega Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 80,
@@ -3785,7 +3785,7 @@
       "name": "Wrap",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 15,
@@ -3796,7 +3796,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -3832,7 +3832,7 @@
       "name": "Bind",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 15,
@@ -3843,7 +3843,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -3879,7 +3879,7 @@
       "name": "Double-Edge",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 33% of damage dealt, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 33% of damage dealt, knockback 140.",
       "type": "normal",
       "category": "physical",
       "power": 120,
@@ -3925,7 +3925,7 @@
       "name": "Fury Attack",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot). Shape: 3 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
+      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot) (3 repeats of: Tackle swing). Shape: 3 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
       "type": "normal",
       "category": "physical",
       "power": 15,
@@ -3987,7 +3987,7 @@
       "name": "Mean Look",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: trap 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: trap 100%.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -3997,7 +3997,7 @@
       "flavor_text": "The user pins the target with a dark, arresting look. The target becomes unable to flee.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -4034,7 +4034,7 @@
       "name": "Scary Face",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: foe Speed -2.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: foe Speed -2.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -4044,7 +4044,7 @@
       "flavor_text": "The user frightens the target with a scary face to harshly lower its Speed stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -4082,7 +4082,7 @@
       "name": "Sing",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (normal shot: plain). Shape: One shot, radius 7 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -4092,7 +4092,7 @@
       "flavor_text": "A soothing lullaby is sung in a beautiful voice that puts the target to sleep.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -4129,7 +4129,7 @@
       "name": "Stomp",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 30%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrow arc, long reach (long family) for one small extra, 80% area). Shape: Melee arc 0.94 rad, reach 65 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 30%, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 65,
@@ -4139,8 +4139,8 @@
       "flavor_text": "The user attacks by stomping on the target with a big foot. This may also make the target flinch.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 0.94,
+        "radRadius": 65,
         "count": 1
       },
       "delivery": {
@@ -4174,7 +4174,7 @@
       "name": "Strength",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "normal",
       "category": "physical",
       "power": 80,
@@ -4215,7 +4215,7 @@
       "name": "Tail Whip",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Defense -1.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (a sound or look: ring). Shape: Ring growing to 160 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: foe Defense -1.",
       "type": "normal",
       "category": "status",
       "power": null,
@@ -4261,7 +4261,7 @@
       "name": "Superpower",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, own Attack -1, own Defense -1, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, own Attack -1, own Defense -1, knockback 140.",
       "type": "fighting",
       "category": "physical",
       "power": 120,
@@ -4316,7 +4316,7 @@
       "name": "Brick Break",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "fighting",
       "category": "physical",
       "power": 75,
@@ -4357,7 +4357,7 @@
       "name": "Cross Chop",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing, narrower arc (narrow family) for one small extra, 80% area). Shape: Melee arc 1.6 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 140.",
       "type": "fighting",
       "category": "physical",
       "power": 100,
@@ -4367,7 +4367,7 @@
       "flavor_text": "The user delivers a double chop with its forearms crossed. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 2,
+        "radArc": 1.6,
         "radRadius": 60,
         "count": 1
       },
@@ -4402,7 +4402,7 @@
       "name": "Focus Blast",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 12 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%).",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (fighting shot: slow, big, knockback, strong: bigger and slower). Shape: One shot, radius 11 px. Delivery: Travels 220 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%), knockback 90.",
       "type": "fighting",
       "category": "special",
       "power": 120,
@@ -4412,7 +4412,7 @@
       "flavor_text": "The user heightens its mental focus and unleashes its power. This may also lower the target's Sp. Def stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 12,
+        "radRadius": 11,
         "count": 1,
         "pierce": 0
       },
@@ -4420,7 +4420,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 220,
         "endOn": [
           {
             "time": 1.5
@@ -4445,6 +4445,10 @@
           "side": "foe",
           "scope": "individual",
           "chance": 10
+        },
+        {
+          "t": "knockback",
+          "distance": 90
         }
       ],
       "reviewStatus": "proposed"
@@ -4454,7 +4458,7 @@
       "name": "Close Combat",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, own Defense -1, own Sp. Def -1, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, own Defense -1, own Sp. Def -1, knockback 140.",
       "type": "fighting",
       "category": "physical",
       "power": 120,
@@ -4509,7 +4513,7 @@
       "name": "Submission",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
       "type": "fighting",
       "category": "physical",
       "power": 80,
@@ -4555,7 +4559,7 @@
       "name": "Double Kick",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot). Shape: 2 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
+      "feel": "Kanto batch 1 proposal. Multi-hit, quick repeats (like String Shot) (2 repeats of: Tackle swing). Shape: 2 quick melee swings, 0.11 s apart. Delivery: Each repeat as its pattern. Payload: Damage, knockback 40.",
       "type": "fighting",
       "category": "physical",
       "power": 30,
@@ -4652,7 +4656,7 @@
       "name": "Drain Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, drains 50% of damage dealt, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrower arc (narrow family) for a strong extra, 65% area). Shape: Melee arc 1.11 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, drains 50% of damage dealt, knockback 90.",
       "type": "fighting",
       "category": "physical",
       "power": 75,
@@ -4662,7 +4666,7 @@
       "flavor_text": "The user attacks with an energy-draining punch. The user's HP is restored by up to half the damage taken by the target.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
+        "radArc": 1.11,
         "radRadius": 54,
         "count": 1
       },
@@ -4701,7 +4705,7 @@
       "name": "Dynamic Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, confusion 100%, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing, narrower arc (narrow family) for a strong extra, 65% area). Shape: Melee arc 1.3 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, confusion 100%, knockback 140.",
       "type": "fighting",
       "category": "physical",
       "power": 100,
@@ -4711,7 +4715,7 @@
       "flavor_text": "The user attacks by punching the target with full concentrated power. This also confuses the target.",
       "space": {
         "shape": "radial",
-        "radArc": 2,
+        "radArc": 1.3,
         "radRadius": 60,
         "count": 1
       },
@@ -4748,7 +4752,7 @@
       "name": "Sky Uppercut",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "fighting",
       "category": "physical",
       "power": 85,
@@ -4789,7 +4793,7 @@
       "name": "Hypnosis",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (psychic shot: steers to the nearest foe (Confusion)). Shape: One shot, radius 7 px, no damage. Delivery: Travels 280 px/s steering to the nearest foe, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
       "type": "psychic",
       "category": "status",
       "power": null,
@@ -4799,15 +4803,16 @@
       "flavor_text": "The user employs hypnotic suggestion to make the target fall asleep.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "direction",
+        "targeting": "nearest",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 280,
+        "turnRate": 3,
         "endOn": [
           {
             "time": 1.2
@@ -4955,7 +4960,7 @@
       "name": "Thunder Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrower arc (narrow family) for one small extra, 80% area). Shape: Melee arc 1.36 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, knockback 90.",
       "type": "electric",
       "category": "physical",
       "power": 75,
@@ -4965,7 +4970,7 @@
       "flavor_text": "The target is attacked with an electrified punch. This may also leave the target with paralysis.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
+        "radArc": 1.36,
         "radRadius": 54,
         "count": 1
       },
@@ -5044,7 +5049,7 @@
       "name": "Thunder Wave",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: paralysis 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (electric shot: very fast (Thunder Shock)). Shape: One shot, radius 7 px, no damage. Delivery: Travels 480 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: paralysis 100%.",
       "type": "electric",
       "category": "status",
       "power": null,
@@ -5054,7 +5059,7 @@
       "flavor_text": "The user launches a weak jolt of electricity that paralyzes the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -5062,7 +5067,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 480,
         "endOn": [
           {
             "time": 1.2
@@ -5091,7 +5096,7 @@
       "name": "Wild Charge",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, recoil 25% of damage dealt, knockback 90.",
       "type": "electric",
       "category": "physical",
       "power": 90,
@@ -5182,7 +5187,7 @@
       "name": "Shock Wave",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 8 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (electric shot: very fast (Thunder Shock), homes on the nearest foe (never misses)). Shape: One shot, radius 7 px. Delivery: Travels 480 px/s steering to the nearest foe, ends at 1.5 s, a wall or off screen. Payload: Damage.",
       "type": "electric",
       "category": "special",
       "power": 60,
@@ -5192,15 +5197,16 @@
       "flavor_text": "The user strikes the target with a quick jolt of electricity. This attack never misses.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "direction",
+        "targeting": "nearest",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 480,
+        "turnRate": 3,
         "endOn": [
           {
             "time": 1.5
@@ -5226,7 +5232,7 @@
       "name": "Thunder Fang",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, flinch 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, flinch 10%, knockback 90.",
       "type": "electric",
       "category": "physical",
       "power": 65,
@@ -5237,7 +5243,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -5277,7 +5283,7 @@
       "name": "Volt Tackle",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, recoil 33% of damage dealt, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing, shorter reach (default) for one small extra, 80% area). Shape: Melee arc 2 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, paralysis 10%, recoil 33% of damage dealt, knockback 140.",
       "type": "electric",
       "category": "physical",
       "power": 120,
@@ -5288,7 +5294,7 @@
       "space": {
         "shape": "radial",
         "radArc": 2,
-        "radRadius": 60,
+        "radRadius": 54,
         "count": 1
       },
       "delivery": {
@@ -5329,7 +5335,7 @@
       "name": "Zap Cannon",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 12 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, paralysis 100%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (electric shot: very fast (Thunder Shock), strong: bigger and slower). Shape: One shot, radius 9 px. Delivery: Travels 410 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, paralysis 100%.",
       "type": "electric",
       "category": "special",
       "power": 120,
@@ -5339,7 +5345,7 @@
       "flavor_text": "The user attacks by firing an electric blast like a cannon. This also leaves the target with paralysis.",
       "space": {
         "shape": "radial",
-        "radRadius": 12,
+        "radRadius": 9,
         "count": 1,
         "pierce": 0
       },
@@ -5347,7 +5353,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 410,
         "endOn": [
           {
             "time": 1.5
@@ -5379,7 +5385,7 @@
       "name": "Mega Drain",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 8 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, drains 50% of damage dealt.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (grass shot: medium (Giga Drain), weak: smaller and faster). Shape: One shot, radius 6 px. Delivery: Travels 330 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, drains 50% of damage dealt.",
       "type": "grass",
       "category": "special",
       "power": 40,
@@ -5389,7 +5395,7 @@
       "flavor_text": "A nutrient-draining attack. The user's HP is restored by up to half the damage taken by the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 6,
         "count": 1,
         "pierce": 0
       },
@@ -5397,7 +5403,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 330,
         "endOn": [
           {
             "time": 1.5
@@ -5431,7 +5437,7 @@
       "name": "Sleep Powder",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
+      "feel": "Kanto batch 1 proposal. Powder cloud, no damage (new) (powder: a short slow cloud that drifts through foes). Shape: Cloud, radius 22 px, passes through every foe, no damage. Delivery: Drifts 90 px/s toward aim, ends at 1 s or a wall. Payload: sleep 100%.",
       "type": "grass",
       "category": "status",
       "power": null,
@@ -5441,24 +5447,21 @@
       "flavor_text": "The user scatters a cloud of soporific dust that puts the target to sleep.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 22,
         "count": 1,
-        "pierce": 0
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 90,
         "endOn": [
           {
-            "time": 1.2
+            "time": 1
           },
           {
             "contact": "wall"
-          },
-          {
-            "offScreen": true
           }
         ]
       },
@@ -5478,7 +5481,7 @@
       "name": "Stun Spore",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: paralysis 100%.",
+      "feel": "Kanto batch 1 proposal. Powder cloud, no damage (new) (powder: a short slow cloud that drifts through foes). Shape: Cloud, radius 22 px, passes through every foe, no damage. Delivery: Drifts 90 px/s toward aim, ends at 1 s or a wall. Payload: paralysis 100%.",
       "type": "grass",
       "category": "status",
       "power": null,
@@ -5488,24 +5491,21 @@
       "flavor_text": "The user scatters a cloud of numbing powder that paralyzes the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 22,
         "count": 1,
-        "pierce": 0
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 90,
         "endOn": [
           {
-            "time": 1.2
+            "time": 1
           },
           {
             "contact": "wall"
-          },
-          {
-            "offScreen": true
           }
         ]
       },
@@ -5525,7 +5525,7 @@
       "name": "Power Whip",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
       "type": "grass",
       "category": "physical",
       "power": 120,
@@ -5566,7 +5566,7 @@
       "name": "Energy Ball",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 10 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%).",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (grass shot: medium (Giga Drain)). Shape: One shot, radius 8 px. Delivery: Travels 290 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%).",
       "type": "grass",
       "category": "special",
       "power": 90,
@@ -5576,7 +5576,7 @@
       "flavor_text": "The user draws power from nature and fires it at the target. This may also lower the target's Sp. Def stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 10,
+        "radRadius": 8,
         "count": 1,
         "pierce": 0
       },
@@ -5584,7 +5584,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 290,
         "endOn": [
           {
             "time": 1.5
@@ -5618,7 +5618,7 @@
       "name": "Spore",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: sleep 100%.",
+      "feel": "Kanto batch 1 proposal. Powder cloud, no damage (new) (powder: a short slow cloud that drifts through foes). Shape: Cloud, radius 22 px, passes through every foe, no damage. Delivery: Drifts 90 px/s toward aim, ends at 1 s or a wall. Payload: sleep 100%.",
       "type": "grass",
       "category": "status",
       "power": null,
@@ -5628,24 +5628,21 @@
       "flavor_text": "The user scatters bursts of spores that induce sleep.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 22,
         "count": 1,
-        "pierce": 0
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 90,
         "endOn": [
           {
-            "time": 1.2
+            "time": 1
           },
           {
             "contact": "wall"
-          },
-          {
-            "offScreen": true
           }
         ]
       },
@@ -5665,7 +5662,7 @@
       "name": "Leaf Blade",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area). Shape: Melee arc 2.21 rad, reach 42 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
       "type": "grass",
       "category": "physical",
       "power": 90,
@@ -5675,8 +5672,8 @@
       "flavor_text": "The user handles a sharp leaf like a sword and cuts the target to inflict damage. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 2.21,
+        "radRadius": 42,
         "count": 1
       },
       "delivery": {
@@ -5741,7 +5738,7 @@
       "name": "Earthquake",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 260 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (hits everyone around in mainline: ring). Shape: Ring growing to 260 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage.",
       "type": "ground",
       "category": "physical",
       "power": 100,
@@ -5827,7 +5824,7 @@
       "name": "Bone Club",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (default) for one small extra, 80% area). Shape: Melee arc 1.7 rad, reach 48 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 10%, knockback 90.",
       "type": "ground",
       "category": "physical",
       "power": 65,
@@ -5838,7 +5835,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 48,
         "count": 1
       },
       "delivery": {
@@ -5872,7 +5869,7 @@
       "name": "Drill Run",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrow arc, long reach (long family) for one small extra, 80% area). Shape: Melee arc 0.94 rad, reach 65 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
       "type": "ground",
       "category": "physical",
       "power": 80,
@@ -5882,8 +5879,8 @@
       "flavor_text": "The user crashes into the target while rotating its body like a drill. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 0.94,
+        "radRadius": 65,
         "count": 1
       },
       "delivery": {
@@ -5915,9 +5912,9 @@
     "sand-tomb": {
       "id": "sand-tomb",
       "name": "Sand Tomb",
-      "kind": "projectile",
+      "kind": "mine",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Strike on the target (like Thunderbolt, no chain). Shape: Circle 30 px on the nearest foe. Delivery: Instant on the nearest foe. Payload: Damage, trap 100%.",
+      "feel": "Kanto batch 1 proposal. Ground patch at a foe (new) (a sand patch at a foe that lasts 2.5 s and traps whoever stands in it). Shape: Circle 40 px on the ground at a foe, hits every 0.5 s. Delivery: Placed on a random foe in range, lasts 2.5 s. Payload: Damage, trap 100%.",
       "type": "ground",
       "category": "physical",
       "power": 35,
@@ -5927,20 +5924,22 @@
       "flavor_text": "The user traps the target inside a harshly raging sandstorm that inflicts damage for four to five turns.",
       "space": {
         "shape": "radial",
-        "radRadius": 30,
-        "count": 1
+        "radRadius": 40,
+        "count": 1,
+        "pierce": "UNLIMITED"
       },
       "delivery": {
-        "anchor": "target",
-        "targeting": "nearest",
+        "anchor": "world",
+        "targeting": "location",
         "motion": "static",
         "endOn": [
           {
-            "time": 0
+            "time": 2.5
           }
         ]
       },
-      "hitPolicy": "oncePerInstance",
+      "hitPolicy": "interval",
+      "rehit": 0.5,
       "payload": [
         {
           "t": "damage"
@@ -5959,7 +5958,7 @@
       "name": "Sludge Bomb",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 10 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, poison 30%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (poison shot: medium (Sludge)). Shape: One shot, radius 7 px. Delivery: Travels 310 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, poison 30%.",
       "type": "poison",
       "category": "special",
       "power": 90,
@@ -5969,7 +5968,7 @@
       "flavor_text": "The user hurls unsanitary sludge at the target to inflict damage. This may also poison the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 10,
+        "radRadius": 7,
         "count": 1,
         "pierce": 0
       },
@@ -5977,7 +5976,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 310,
         "endOn": [
           {
             "time": 1.5
@@ -6009,7 +6008,7 @@
       "name": "Poison Jab",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 30%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrower arc (narrow family) for one small extra, 80% area). Shape: Melee arc 1.36 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 30%, knockback 90.",
       "type": "poison",
       "category": "physical",
       "power": 80,
@@ -6019,7 +6018,7 @@
       "flavor_text": "The target is stabbed with a tentacle, an arm, or the like steeped in poison. This may also poison the target.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
+        "radArc": 1.36,
         "radRadius": 54,
         "count": 1
       },
@@ -6056,7 +6055,7 @@
       "name": "Acid",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%).",
+      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot) (a damaging spray of objects: burst). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, foe Sp. Def -1 (10%).",
       "type": "poison",
       "category": "special",
       "power": 40,
@@ -6109,7 +6108,7 @@
       "name": "Poison Fang",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 50%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 50%, knockback 90.",
       "type": "poison",
       "category": "physical",
       "power": 50,
@@ -6120,7 +6119,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -6156,7 +6155,7 @@
       "name": "Sludge Wave",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 220 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage, poison 10%.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (hits everyone around in mainline: ring). Shape: Ring growing to 220 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage, poison 10%.",
       "type": "poison",
       "category": "special",
       "power": 95,
@@ -6232,7 +6231,7 @@
       "name": "Cross Poison",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 10%, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, wide arc, short reach (sweep family) for a strong extra, 65% area). Shape: Melee arc 2.21 rad, reach 38 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, poison 10%, high crit (+15%), knockback 90.",
       "type": "poison",
       "category": "physical",
       "power": 70,
@@ -6242,8 +6241,8 @@
       "flavor_text": "A slashing attack with a poisonous blade that may also poison the target. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 2.21,
+        "radRadius": 38,
         "count": 1
       },
       "delivery": {
@@ -6283,7 +6282,7 @@
       "name": "Gunk Shot",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 12 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, poison 30%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (poison shot: medium (Sludge), strong: bigger and slower). Shape: One shot, radius 9 px. Delivery: Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, poison 30%.",
       "type": "poison",
       "category": "physical",
       "power": 120,
@@ -6293,7 +6292,7 @@
       "flavor_text": "The user shoots filthy garbage at the target to attack. This may also poison the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 12,
+        "radRadius": 9,
         "count": 1,
         "pierce": 0
       },
@@ -6301,7 +6300,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 260,
         "endOn": [
           {
             "time": 1.5
@@ -6333,7 +6332,7 @@
       "name": "Poison Powder",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: poison 100%.",
+      "feel": "Kanto batch 1 proposal. Powder cloud, no damage (new) (powder: a short slow cloud that drifts through foes). Shape: Cloud, radius 22 px, passes through every foe, no damage. Delivery: Drifts 90 px/s toward aim, ends at 1 s or a wall. Payload: poison 100%.",
       "type": "poison",
       "category": "status",
       "power": null,
@@ -6343,24 +6342,21 @@
       "flavor_text": "The user scatters a cloud of poisonous dust that poisons the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 22,
         "count": 1,
-        "pierce": 0
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 90,
         "endOn": [
           {
-            "time": 1.2
+            "time": 1
           },
           {
             "contact": "wall"
-          },
-          {
-            "offScreen": true
           }
         ]
       },
@@ -6380,7 +6376,7 @@
       "name": "Surf",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 240 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (hits everyone around in mainline: ring). Shape: Ring growing to 240 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage.",
       "type": "water",
       "category": "special",
       "power": 90,
@@ -6422,7 +6418,7 @@
       "name": "Waterfall",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 20%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (default) for one small extra, 80% area). Shape: Melee arc 1.7 rad, reach 48 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, flinch 20%, knockback 90.",
       "type": "water",
       "category": "physical",
       "power": 80,
@@ -6433,7 +6429,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 48,
         "count": 1
       },
       "delivery": {
@@ -6467,7 +6463,7 @@
       "name": "Water Pulse",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 10 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, confusion 20%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (water shot: pierces one, quick (Water Gun)). Shape: One shot, radius 6 px, pierces 1. Delivery: Travels 350 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, confusion 20%.",
       "type": "water",
       "category": "special",
       "power": 60,
@@ -6477,15 +6473,16 @@
       "flavor_text": "The user attacks the target with a pulsing blast of water. This may also confuse the target.",
       "space": {
         "shape": "radial",
-        "radRadius": 10,
+        "radRadius": 6,
         "count": 1,
-        "pierce": 0
+        "pierce": 1,
+        "spread": 0.1
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 350,
         "endOn": [
           {
             "time": 1.5
@@ -6517,7 +6514,7 @@
       "name": "Scald",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 8 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, burn 30%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (water shot: pierces one, quick (Water Gun)). Shape: One shot, radius 6 px, pierces 1. Delivery: Travels 350 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, burn 30%.",
       "type": "water",
       "category": "special",
       "power": 80,
@@ -6527,15 +6524,16 @@
       "flavor_text": "The user attacks by shooting boiling hot water at the target. This may also leave the target with a burn.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 6,
         "count": 1,
-        "pierce": 0
+        "pierce": 1,
+        "spread": 0.1
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 350,
         "endOn": [
           {
             "time": 1.5
@@ -6567,7 +6565,7 @@
       "name": "Aqua Tail",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "water",
       "category": "physical",
       "power": 90,
@@ -6608,7 +6606,7 @@
       "name": "Clamp",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, trap 100%, knockback 90.",
       "type": "water",
       "category": "physical",
       "power": 35,
@@ -6619,7 +6617,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -6655,7 +6653,7 @@
       "name": "Fire Blast",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 12 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, burn 10%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (fire shot: wobbles (Ember), strong: bigger and slower). Shape: One shot, radius 9 px. Delivery: Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, burn 10%.",
       "type": "fire",
       "category": "special",
       "power": 110,
@@ -6665,15 +6663,16 @@
       "flavor_text": "The target is attacked with an intense blast of all-consuming fire. This may also leave the target with a burn.",
       "space": {
         "shape": "radial",
-        "radRadius": 12,
+        "radRadius": 9,
         "count": 1,
-        "pierce": 0
+        "pierce": 0,
+        "spread": 0.12
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 260,
         "endOn": [
           {
             "time": 1.5
@@ -6705,7 +6704,7 @@
       "name": "Flare Blitz",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, recoil 33% of damage dealt, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing, shorter reach (default) for one small extra, 80% area). Shape: Melee arc 2 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, recoil 33% of damage dealt, knockback 140.",
       "type": "fire",
       "category": "physical",
       "power": 120,
@@ -6716,7 +6715,7 @@
       "space": {
         "shape": "radial",
         "radArc": 2,
-        "radRadius": 60,
+        "radRadius": 54,
         "count": 1
       },
       "delivery": {
@@ -6757,7 +6756,7 @@
       "name": "Fire Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrower arc (narrow family) for one small extra, 80% area). Shape: Melee arc 1.36 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, knockback 90.",
       "type": "fire",
       "category": "physical",
       "power": 75,
@@ -6767,7 +6766,7 @@
       "flavor_text": "The target is attacked with a fiery punch. This may also leave the target with a burn.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
+        "radArc": 1.36,
         "radRadius": 54,
         "count": 1
       },
@@ -6804,7 +6803,7 @@
       "name": "Overheat",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 12 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, own Sp. Atk -2.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (fire shot: wobbles (Ember), strong: bigger and slower). Shape: One shot, radius 9 px. Delivery: Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, own Sp. Atk -2.",
       "type": "fire",
       "category": "special",
       "power": 130,
@@ -6814,15 +6813,16 @@
       "flavor_text": "The user attacks the target with all its might. The recoil from this move harshly lowers the user's Sp. Atk stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 12,
+        "radRadius": 9,
         "count": 1,
-        "pierce": 0
+        "pierce": 0,
+        "spread": 0.12
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 260,
         "endOn": [
           {
             "time": 1.5
@@ -6855,7 +6855,7 @@
       "name": "Blaze Kick",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrow arc, long reach (long family) for a strong extra, 65% area). Shape: Melee arc 0.77 rad, reach 65 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, high crit (+15%), knockback 90.",
       "type": "fire",
       "category": "physical",
       "power": 85,
@@ -6865,8 +6865,8 @@
       "flavor_text": "The user launches a kick that has a heightened chance of landing a critical hit. This may also leave the target with a burn.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 0.77,
+        "radRadius": 65,
         "count": 1
       },
       "delivery": {
@@ -6906,7 +6906,7 @@
       "name": "Fire Fang",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, flinch 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, burn 10%, flinch 10%, knockback 90.",
       "type": "fire",
       "category": "physical",
       "power": 65,
@@ -6917,7 +6917,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -6957,7 +6957,7 @@
       "name": "Crunch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Defense -1 (20%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for one small extra, 80% area). Shape: Melee arc 1.7 rad, reach 48 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Defense -1 (20%), knockback 90.",
       "type": "dark",
       "category": "physical",
       "power": 80,
@@ -6968,7 +6968,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 48,
         "count": 1
       },
       "delivery": {
@@ -7071,7 +7071,7 @@
       "name": "Draco Meteor",
       "kind": "meteor",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Falls from above (like Rock Slide). Shape: Circle 80 px that lands on a spot. Delivery: 0.4 s warning, then lands for 0.2 s. Payload: Damage, own Sp. Atk -2.",
+      "feel": "Kanto batch 1 proposal. Three falls on the nearest foe (new) (three meteors instead of one). Shape: 3 circles of 60 px, each on the nearest foe. Delivery: One every 0.25 s; each warns 0.4 s, then lands for 0.2 s. Payload: own Sp. Atk -2, Damage.",
       "type": "dragon",
       "category": "special",
       "power": 130,
@@ -7079,34 +7079,55 @@
       "accuracy": 90,
       "priority": 0,
       "flavor_text": "Comets are summoned down from the sky onto the target. The recoil from this move harshly lowers the user’s Sp. Atk stat.",
-      "space": {
-        "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 80,
-        "count": 1
-      },
       "delivery": {
-        "anchor": "world",
-        "targeting": "location",
-        "motion": "falls",
-        "delay": 0.4,
+        "anchor": "caster",
+        "targeting": "none",
+        "motion": "static",
         "endOn": [
           {
-            "time": 0.2
+            "time": 0.95
           }
         ]
       },
-      "hitPolicy": "oncePerInstance",
       "payload": [
-        {
-          "t": "damage"
-        },
         {
           "t": "stat",
           "stat": "spAtk",
           "stages": -2,
           "side": "self",
           "scope": "individual"
+        },
+        {
+          "t": "emit",
+          "every": 0.25,
+          "count": 3,
+          "trigger": "cast",
+          "move": {
+            "kind": "meteor",
+            "space": {
+              "shape": "radial",
+              "radArc": 6.2832,
+              "radRadius": 60,
+              "count": 1
+            },
+            "delivery": {
+              "anchor": "target",
+              "targeting": "nearest",
+              "motion": "falls",
+              "delay": 0.4,
+              "endOn": [
+                {
+                  "time": 0.2
+                }
+              ]
+            },
+            "hitPolicy": "oncePerInstance",
+            "payload": [
+              {
+                "t": "damage"
+              }
+            ]
+          }
         }
       ],
       "reviewStatus": "proposed"
@@ -7159,7 +7180,7 @@
       "name": "Dragon Claw",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "dragon",
       "category": "physical",
       "power": 80,
@@ -7200,7 +7221,7 @@
       "name": "Twister",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 180 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage, flinch 20%.",
+      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot) (a damaging spray of objects: burst). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, flinch 20%.",
       "type": "dragon",
       "category": "special",
       "power": 40,
@@ -7210,22 +7231,25 @@
       "flavor_text": "The user whips up a vicious tornado to tear at opposing Pokémon. This may also make them flinch.",
       "space": {
         "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 1
+        "radRadius": 7,
+        "count": 6,
+        "pierce": 0,
+        "spread": 6.2832
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "none",
-        "motion": "static",
-        "grow": {
-          "growSpeed": 450,
-          "dim": "radRadius",
-          "per": "time",
-          "max": 180
-        },
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 300,
         "endOn": [
           {
-            "time": 0.4
+            "time": 1.2
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
           }
         ]
       },
@@ -7246,7 +7270,7 @@
       "name": "Blizzard",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze). Shape: Ring growing to 240 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage, freeze 10%.",
+      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot) (a damaging spray of objects: burst). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, freeze 10%.",
       "type": "ice",
       "category": "special",
       "power": 110,
@@ -7256,22 +7280,25 @@
       "flavor_text": "A howling blizzard is summoned to strike opposing Pokémon. This may also leave the opposing Pokémon frozen.",
       "space": {
         "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 1
+        "radRadius": 7,
+        "count": 6,
+        "pierce": 0,
+        "spread": 6.2832
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "none",
-        "motion": "static",
-        "grow": {
-          "growSpeed": 600,
-          "dim": "radRadius",
-          "per": "time",
-          "max": 240
-        },
+        "targeting": "direction",
+        "motion": "travels",
+        "moveSpeed": 300,
         "endOn": [
           {
-            "time": 0.4
+            "time": 1.2
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
           }
         ]
       },
@@ -7294,7 +7321,7 @@
       "name": "Ice Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, freeze 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, narrower arc (narrow family) for one small extra, 80% area). Shape: Melee arc 1.36 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, freeze 10%, knockback 90.",
       "type": "ice",
       "category": "physical",
       "power": 75,
@@ -7304,7 +7331,7 @@
       "flavor_text": "The target is attacked with an icy punch. This may also leave the target frozen.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
+        "radArc": 1.36,
         "radRadius": 54,
         "count": 1
       },
@@ -7427,7 +7454,7 @@
       "name": "Ice Fang",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, freeze 10%, flinch 10%, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, freeze 10%, flinch 10%, knockback 90.",
       "type": "ice",
       "category": "physical",
       "power": 65,
@@ -7438,7 +7465,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -7520,7 +7547,7 @@
       "name": "Ancient Power",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 10 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, own Attack +1 (10%), team-wide, own Defense +1 (10%), team-wide, own Sp. Atk +1 (10%), team-wide, own Sp. Def +1 (10%), team-wide, own Speed +1 (10%), team-wide.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (rock shot: slow, big, knockback (Rock Throw)). Shape: One shot, radius 9 px. Delivery: Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, own Attack +1 (10%), team-wide, own Defense +1 (10%), team-wide, own Sp. Atk +1 (10%), team-wide, own Sp. Def +1 (10%), team-wide, own Speed +1 (10%), team-wide, knockback 90.",
       "type": "rock",
       "category": "special",
       "power": 60,
@@ -7530,15 +7557,16 @@
       "flavor_text": "The user attacks with a prehistoric power. This may also boost all the user's stats at once.",
       "space": {
         "shape": "radial",
-        "radRadius": 10,
+        "radRadius": 9,
         "count": 1,
-        "pierce": 0
+        "pierce": 0,
+        "spread": 0.12
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 260,
         "endOn": [
           {
             "time": 1.5
@@ -7595,6 +7623,10 @@
           "side": "self",
           "scope": "team",
           "chance": 10
+        },
+        {
+          "t": "knockback",
+          "distance": 90
         }
       ],
       "reviewStatus": "proposed"
@@ -7649,7 +7681,7 @@
       "name": "Leech Life",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, drains 50% of damage dealt, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (short family) for a strong extra, 65% area). Shape: Melee arc 1.7 rad, reach 44 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, drains 50% of damage dealt, knockback 90.",
       "type": "bug",
       "category": "physical",
       "power": 80,
@@ -7660,7 +7692,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 44,
         "count": 1
       },
       "delivery": {
@@ -7698,7 +7730,7 @@
       "name": "Megahorn",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 140.",
       "type": "bug",
       "category": "physical",
       "power": 120,
@@ -7782,7 +7814,7 @@
       "name": "Air Slash",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 8 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, flinch 30%.",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (flying shot: thin and fast). Shape: One shot, radius 5 px. Delivery: Travels 420 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, flinch 30%.",
       "type": "flying",
       "category": "special",
       "power": 75,
@@ -7792,7 +7824,7 @@
       "flavor_text": "The user attacks with a blade of air that slices even the sky. This may also make the target flinch.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 5,
         "count": 1,
         "pierce": 0
       },
@@ -7800,7 +7832,7 @@
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 420,
         "endOn": [
           {
             "time": 1.5
@@ -7830,7 +7862,7 @@
       "name": "Air Cutter",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, high crit (+15%).",
+      "feel": "Kanto batch 1 proposal. Burst of 6 shots in a circle (like Mud Shot) (a damaging spray of objects: burst). Shape: 6 shots in a full circle, radius 7 px each. Delivery: Travels 300 px/s outward, ends at 1.2 s, a wall or off screen. Payload: Damage, high crit (+15%).",
       "type": "flying",
       "category": "special",
       "power": 60,
@@ -7879,7 +7911,7 @@
       "name": "Confuse Ray",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot). Shape: One shot, radius 8 px, no damage. Delivery: Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: confusion 100%.",
+      "feel": "Kanto batch 1 proposal. Status shot, no damage (like String Shot) (ghost shot: slow, big, pierces one (Shadow Ball)). Shape: One shot, radius 9 px, pierces 1, no damage. Delivery: Travels 280 px/s toward aim, ends at 1.2 s, a wall or off screen. Payload: confusion 100%.",
       "type": "ghost",
       "category": "status",
       "power": null,
@@ -7889,15 +7921,16 @@
       "flavor_text": "The target is exposed to a sinister ray that causes confusion.",
       "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 9,
         "count": 1,
-        "pierce": 0
+        "pierce": 1,
+        "spread": 0.1
       },
       "delivery": {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 320,
+        "moveSpeed": 280,
         "endOn": [
           {
             "time": 1.2
@@ -7926,7 +7959,7 @@
       "name": "Shadow Punch",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, knockback 90.",
       "type": "ghost",
       "category": "physical",
       "power": 60,
@@ -7967,7 +8000,7 @@
       "name": "Shadow Claw",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area). Shape: Melee arc 2.21 rad, reach 42 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, high crit (+15%), knockback 90.",
       "type": "ghost",
       "category": "physical",
       "power": 70,
@@ -7977,8 +8010,8 @@
       "flavor_text": "The user attacks by slashing the target with a sharp claw made from shadows. This move has a heightened chance of landing a critical hit.",
       "space": {
         "shape": "radial",
-        "radArc": 1.7,
-        "radRadius": 54,
+        "radArc": 2.21,
+        "radRadius": 42,
         "count": 1
       },
       "delivery": {
@@ -8012,7 +8045,7 @@
       "name": "Moonblast",
       "kind": "projectile",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball). Shape: One shot, radius 10 px. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Atk -1 (30%).",
+      "feel": "Kanto batch 1 proposal. Single shot (like Sludge / Shadow Ball) (fairy shot: pierces one). Shape: One shot, radius 8 px, pierces 1. Delivery: Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen. Payload: Damage, foe Sp. Atk -1 (30%).",
       "type": "fairy",
       "category": "special",
       "power": 95,
@@ -8022,9 +8055,9 @@
       "flavor_text": "Borrowing the power of the moon, the user attacks the target. This may also lower the target's Sp. Atk stat.",
       "space": {
         "shape": "radial",
-        "radRadius": 10,
+        "radRadius": 8,
         "count": 1,
-        "pierce": 0
+        "pierce": 1
       },
       "delivery": {
         "anchor": "caster",
@@ -8064,7 +8097,7 @@
       "name": "Play Rough",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 1.7 rad, reach 54 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Attack -1 (10%), knockback 90.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (Tackle swing, shorter reach (default) for one small extra, 80% area). Shape: Melee arc 1.7 rad, reach 48 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Attack -1 (10%), knockback 90.",
       "type": "fairy",
       "category": "physical",
       "power": 90,
@@ -8075,7 +8108,7 @@
       "space": {
         "shape": "radial",
         "radArc": 1.7,
-        "radRadius": 54,
+        "radRadius": 48,
         "count": 1
       },
       "delivery": {
@@ -8144,7 +8177,7 @@
       "name": "Iron Tail",
       "kind": "melee",
       "balanceClass": "melee",
-      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam). Shape: Melee arc 2 rad, reach 60 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Defense -1 (30%), knockback 140.",
+      "feel": "Kanto batch 1 proposal. Melee swing (like Tackle / Body Slam) (heavy swing, narrow arc, long reach (long family) for one small extra, 80% area). Shape: Melee arc 1.11 rad, reach 72 px, aims at nearest. Delivery: Instant, lasts 0.15 s. Payload: Damage, foe Defense -1 (30%), knockback 140.",
       "type": "steel",
       "category": "physical",
       "power": 100,
@@ -8154,8 +8187,8 @@
       "flavor_text": "The target is slammed with a steel-hard tail. This may also lower the target's Defense stat.",
       "space": {
         "shape": "radial",
-        "radArc": 2,
-        "radRadius": 60,
+        "radArc": 1.11,
+        "radRadius": 72,
         "count": 1
       },
       "delivery": {

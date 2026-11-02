@@ -10,7 +10,10 @@ window.KANTO_B1 = {
   "burst": "Burst of 6 shots in a circle (like Mud Shot)",
   "statusShot": "Status shot, no damage (like String Shot)",
   "self": "Self-cast, no hitbox (like Swords Dance)",
-  "multi": "Multi-hit, quick repeats (like String Shot)"
+  "multi": "Multi-hit, quick repeats (like String Shot)",
+  "cloud": "Powder cloud, no damage (new)",
+  "zone": "Ground patch at a foe (new)",
+  "meteors": "Three falls on the nearest foe (new)"
  },
  "rows": [
   {
@@ -25,16 +28,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 2.21 rad, reach 42 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, high crit (+15%), knockback 90"
+    "payload": "Damage, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 2.21,
+     "radRadius": 42,
      "count": 1
     },
     "delivery": {
@@ -75,15 +79,16 @@ window.KANTO_B1 = {
    "effect": "Lowers the target’s Defense by two stages.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "foe Defense -2"
+    "payload": "foe Defense -2",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -128,15 +133,16 @@ window.KANTO_B1 = {
    "effect": "Puts the target to sleep.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "sleep 100%"
+    "payload": "sleep 100%",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -182,7 +188,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "heals 50% max HP"
+    "payload": "heals 50% max HP",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -216,15 +223,16 @@ window.KANTO_B1 = {
    "effect": "Confuses the target.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "confusion 100%"
+    "payload": "confusion 100%",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -268,15 +276,16 @@ window.KANTO_B1 = {
    "effect": "Paralyzes the target.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "paralysis 100%"
+    "payload": "paralysis 100%",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -322,7 +331,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "6 shots in a full circle, radius 7 px each",
     "delivery": "Travels 300 px/s outward, ends at 1.2 s, a wall or off screen",
-    "payload": "Damage"
+    "payload": "Damage",
+    "rule": "a damaging spray of objects: burst"
    },
    "proposed": {
     "kind": "nova",
@@ -372,7 +382,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "3 quick melee swings, 0.11 s apart",
     "delivery": "Each repeat as its pattern",
-    "payload": "Damage, knockback 40"
+    "payload": "Damage, knockback 40",
+    "rule": "3 repeats of: Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -439,7 +450,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 140"
+    "payload": "Damage, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -485,7 +497,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "3 quick shots, 0.11 s apart",
     "delivery": "Each repeat as its pattern",
-    "payload": "Damage"
+    "payload": "Damage",
+    "rule": "3 repeats of: normal shot: plain, weak: smaller and faster"
    },
    "proposed": {
     "kind": "projectile",
@@ -509,7 +522,7 @@ window.KANTO_B1 = {
        "kind": "projectile",
        "space": {
         "shape": "radial",
-        "radRadius": 8,
+        "radRadius": 5,
         "count": 1,
         "pierce": 0
        },
@@ -517,7 +530,7 @@ window.KANTO_B1 = {
         "anchor": "caster",
         "targeting": "direction",
         "motion": "travels",
-        "moveSpeed": 300,
+        "moveSpeed": 370,
         "endOn": [
          {
           "time": 1.5
@@ -555,7 +568,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, recoil 25% of damage dealt, knockback 90"
+    "payload": "Damage, recoil 25% of damage dealt, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -606,7 +620,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 160 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "foe Attack -1"
+    "payload": "foe Attack -1",
+    "rule": "a sound or look: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -657,7 +672,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 160 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "foe Defense -1"
+    "payload": "foe Defense -1",
+    "rule": "a sound or look: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -708,7 +724,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -752,16 +769,17 @@ window.KANTO_B1 = {
    "effect": "Prevents the target from fleeing and inflicts damage for 2-5 turns.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, trap 100%, knockback 90"
+    "payload": "Damage, trap 100%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -804,16 +822,17 @@ window.KANTO_B1 = {
    "effect": "Prevents the target from fleeing and inflicts damage for 2-5 turns.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, trap 100%, knockback 90"
+    "payload": "Damage, trap 100%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -858,7 +877,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, recoil 33% of damage dealt, knockback 140"
+    "payload": "Damage, recoil 33% of damage dealt, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -909,7 +929,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "3 quick melee swings, 0.11 s apart",
     "delivery": "Each repeat as its pattern",
-    "payload": "Damage, knockback 40"
+    "payload": "Damage, knockback 40",
+    "rule": "3 repeats of: Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -974,15 +995,16 @@ window.KANTO_B1 = {
    "effect": "Prevents the target from leaving battle.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "trap 100%"
+    "payload": "trap 100%",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -1026,15 +1048,16 @@ window.KANTO_B1 = {
    "effect": "Lowers the target’s Speed by two stages.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "foe Speed -2"
+    "payload": "foe Speed -2",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -1079,15 +1102,16 @@ window.KANTO_B1 = {
    "effect": "Puts the target to sleep.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
+    "shape": "One shot, radius 7 px, no damage",
     "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "sleep 100%"
+    "payload": "sleep 100%",
+    "rule": "normal shot: plain"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -1131,16 +1155,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 0.94 rad, reach 65 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, flinch 30%, knockback 90"
+    "payload": "Damage, flinch 30%, knockback 90",
+    "rule": "Tackle swing, narrow arc, long reach (long family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 0.94,
+     "radRadius": 65,
      "count": 1
     },
     "delivery": {
@@ -1183,7 +1208,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1229,7 +1255,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 160 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "foe Defense -1"
+    "payload": "foe Defense -1",
+    "rule": "a sound or look: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -1280,7 +1307,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, own Attack -1, own Defense -1, knockback 140"
+    "payload": "Damage, own Attack -1, own Defense -1, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1340,7 +1368,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1384,15 +1413,16 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
+    "shape": "Melee arc 1.6 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, high crit (+15%), knockback 140"
+    "payload": "Damage, high crit (+15%), knockback 140",
+    "rule": "heavy swing, narrower arc (narrow family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 2,
+     "radArc": 1.6,
      "radRadius": 60,
      "count": 1
     },
@@ -1434,15 +1464,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Special Defense by one stage.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 12 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, foe Sp. Def -1 (10%)"
+    "shape": "One shot, radius 11 px",
+    "delivery": "Travels 220 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, foe Sp. Def -1 (10%), knockback 90",
+    "rule": "fighting shot: slow, big, knockback, strong: bigger and slower"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 12,
+     "radRadius": 11,
      "count": 1,
      "pierce": 0
     },
@@ -1450,7 +1481,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 220,
      "endOn": [
       {
        "time": 1.5
@@ -1475,6 +1506,10 @@ window.KANTO_B1 = {
       "side": "foe",
       "scope": "individual",
       "chance": 10
+     },
+     {
+      "t": "knockback",
+      "distance": 90
      }
     ]
    }
@@ -1493,7 +1528,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, own Defense -1, own Sp. Def -1, knockback 140"
+    "payload": "Damage, own Defense -1, own Sp. Def -1, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1553,7 +1589,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, recoil 25% of damage dealt, knockback 90"
+    "payload": "Damage, recoil 25% of damage dealt, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1604,7 +1641,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "2 quick melee swings, 0.11 s apart",
     "delivery": "Each repeat as its pattern",
-    "payload": "Damage, knockback 40"
+    "payload": "Damage, knockback 40",
+    "rule": "2 repeats of: Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1670,7 +1708,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Attack +1, team-wide, own Defense +1, team-wide"
+    "payload": "own Attack +1, team-wide, own Defense +1, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -1708,15 +1747,16 @@ window.KANTO_B1 = {
    "effect": "Drains half the damage inflicted to heal the user.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.11 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, drains 50% of damage dealt, knockback 90"
+    "payload": "Damage, drains 50% of damage dealt, knockback 90",
+    "rule": "Tackle swing, narrower arc (narrow family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
+     "radArc": 1.11,
      "radRadius": 54,
      "count": 1
     },
@@ -1762,15 +1802,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to confuse the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
+    "shape": "Melee arc 1.3 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, confusion 100%, knockback 140"
+    "payload": "Damage, confusion 100%, knockback 140",
+    "rule": "heavy swing, narrower arc (narrow family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 2,
+     "radArc": 1.3,
      "radRadius": 60,
      "count": 1
     },
@@ -1816,7 +1857,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -1860,23 +1902,25 @@ window.KANTO_B1 = {
    "effect": "Puts the target to sleep.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "sleep 100%"
+    "shape": "One shot, radius 7 px, no damage",
+    "delivery": "Travels 280 px/s steering to the nearest foe, ends at 1.2 s, a wall or off screen",
+    "payload": "sleep 100%",
+    "rule": "psychic shot: steers to the nearest foe (Confusion)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "direction",
+     "targeting": "nearest",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 280,
+     "turnRate": 3,
      "endOn": [
       {
        "time": 1.2
@@ -1913,7 +1957,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Sp. Atk +1, team-wide, own Sp. Def +1, team-wide"
+    "payload": "own Sp. Atk +1, team-wide, own Sp. Def +1, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -1952,7 +1997,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Defense +2, team-wide"
+    "payload": "own Defense +2, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -1984,7 +2030,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Sp. Def +2, team-wide"
+    "payload": "own Sp. Def +2, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -2016,7 +2063,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Attack +1, team-wide"
+    "payload": "own Attack +1, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -2047,15 +2095,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to paralyze the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.36 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, paralysis 10%, knockback 90"
+    "payload": "Damage, paralysis 10%, knockback 90",
+    "rule": "Tackle swing, narrower arc (narrow family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
+     "radArc": 1.36,
      "radRadius": 54,
      "count": 1
     },
@@ -2101,7 +2150,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Circle 36 px on the nearest foe",
     "delivery": "Instant on the nearest foe",
-    "payload": "Damage, paralysis 30%"
+    "payload": "Damage, paralysis 30%",
+    "rule": ""
    },
    "proposed": {
     "kind": "projectile",
@@ -2146,15 +2196,16 @@ window.KANTO_B1 = {
    "effect": "Paralyzes the target.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "paralysis 100%"
+    "shape": "One shot, radius 7 px, no damage",
+    "delivery": "Travels 480 px/s toward aim, ends at 1.2 s, a wall or off screen",
+    "payload": "paralysis 100%",
+    "rule": "electric shot: very fast (Thunder Shock)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -2162,7 +2213,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 480,
      "endOn": [
       {
        "time": 1.2
@@ -2200,7 +2251,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, recoil 25% of damage dealt, knockback 90"
+    "payload": "Damage, recoil 25% of damage dealt, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -2251,7 +2303,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage, own Sp. Atk +1 (70%), team-wide"
+    "payload": "Damage, own Sp. Atk +1 (70%), team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -2299,23 +2352,25 @@ window.KANTO_B1 = {
    "effect": "Never misses.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 8 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage"
+    "shape": "One shot, radius 7 px",
+    "delivery": "Travels 480 px/s steering to the nearest foe, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage",
+    "rule": "electric shot: very fast (Thunder Shock), homes on the nearest foe (never misses)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "direction",
+     "targeting": "nearest",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 480,
+     "turnRate": 3,
      "endOn": [
       {
        "time": 1.5
@@ -2348,16 +2403,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to paralyze the target and a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, paralysis 10%, flinch 10%, knockback 90"
+    "payload": "Damage, paralysis 10%, flinch 10%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -2404,16 +2460,17 @@ window.KANTO_B1 = {
    "effect": "User takes 1/3 the damage inflicted in recoil.  Has a chance to paralyze the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
+    "shape": "Melee arc 2 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, paralysis 10%, recoil 33% of damage dealt, knockback 140"
+    "payload": "Damage, paralysis 10%, recoil 33% of damage dealt, knockback 140",
+    "rule": "heavy swing, shorter reach (default) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 2,
-     "radRadius": 60,
+     "radRadius": 54,
      "count": 1
     },
     "delivery": {
@@ -2461,15 +2518,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to paralyze the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 12 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, paralysis 100%"
+    "shape": "One shot, radius 9 px",
+    "delivery": "Travels 410 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, paralysis 100%",
+    "rule": "electric shot: very fast (Thunder Shock), strong: bigger and slower"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 12,
+     "radRadius": 9,
      "count": 1,
      "pierce": 0
     },
@@ -2477,7 +2535,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 410,
      "endOn": [
       {
        "time": 1.5
@@ -2516,15 +2574,16 @@ window.KANTO_B1 = {
    "effect": "Drains half the damage inflicted to heal the user.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 8 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, drains 50% of damage dealt"
+    "shape": "One shot, radius 6 px",
+    "delivery": "Travels 330 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, drains 50% of damage dealt",
+    "rule": "grass shot: medium (Giga Drain), weak: smaller and faster"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 6,
      "count": 1,
      "pierce": 0
     },
@@ -2532,7 +2591,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 330,
      "endOn": [
       {
        "time": 1.5
@@ -2571,34 +2630,32 @@ window.KANTO_B1 = {
    "cd": 4,
    "target": "selected-pokemon",
    "effect": "Puts the target to sleep.",
-   "pattern": "statusShot",
+   "pattern": "cloud",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "sleep 100%"
+    "shape": "Cloud, radius 22 px, passes through every foe, no damage",
+    "delivery": "Drifts 90 px/s toward aim, ends at 1 s or a wall",
+    "payload": "sleep 100%",
+    "rule": "powder: a short slow cloud that drifts through foes"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 22,
      "count": 1,
-     "pierce": 0
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 90,
      "endOn": [
       {
-       "time": 1.2
+       "time": 1
       },
       {
        "contact": "wall"
-      },
-      {
-       "offScreen": true
       }
      ]
     },
@@ -2623,34 +2680,32 @@ window.KANTO_B1 = {
    "cd": 3.5,
    "target": "selected-pokemon",
    "effect": "Paralyzes the target.",
-   "pattern": "statusShot",
+   "pattern": "cloud",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "paralysis 100%"
+    "shape": "Cloud, radius 22 px, passes through every foe, no damage",
+    "delivery": "Drifts 90 px/s toward aim, ends at 1 s or a wall",
+    "payload": "paralysis 100%",
+    "rule": "powder: a short slow cloud that drifts through foes"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 22,
      "count": 1,
-     "pierce": 0
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 90,
      "endOn": [
       {
-       "time": 1.2
+       "time": 1
       },
       {
        "contact": "wall"
-      },
-      {
-       "offScreen": true
       }
      ]
     },
@@ -2679,7 +2734,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 140"
+    "payload": "Damage, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -2723,15 +2779,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Special Defense by one stage.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 10 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, foe Sp. Def -1 (10%)"
+    "shape": "One shot, radius 8 px",
+    "delivery": "Travels 290 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, foe Sp. Def -1 (10%)",
+    "rule": "grass shot: medium (Giga Drain)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 10,
+     "radRadius": 8,
      "count": 1,
      "pierce": 0
     },
@@ -2739,7 +2796,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 290,
      "endOn": [
       {
        "time": 1.5
@@ -2778,34 +2835,32 @@ window.KANTO_B1 = {
    "cd": 4,
    "target": "selected-pokemon",
    "effect": "Puts the target to sleep.",
-   "pattern": "statusShot",
+   "pattern": "cloud",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "sleep 100%"
+    "shape": "Cloud, radius 22 px, passes through every foe, no damage",
+    "delivery": "Drifts 90 px/s toward aim, ends at 1 s or a wall",
+    "payload": "sleep 100%",
+    "rule": "powder: a short slow cloud that drifts through foes"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 22,
      "count": 1,
-     "pierce": 0
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 90,
      "endOn": [
       {
-       "time": 1.2
+       "time": 1
       },
       {
        "contact": "wall"
-      },
-      {
-       "offScreen": true
       }
      ]
     },
@@ -2832,16 +2887,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 2.21 rad, reach 42 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, high crit (+15%), knockback 90"
+    "payload": "Damage, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 2.21,
+     "radRadius": 42,
      "count": 1
     },
     "delivery": {
@@ -2884,7 +2940,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "heals 50% max HP"
+    "payload": "heals 50% max HP",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -2920,7 +2977,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 260 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "Damage"
+    "payload": "Damage",
+    "rule": "hits everyone around in mainline: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -2967,7 +3025,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Circle 30 px on the nearest foe",
     "delivery": "Instant on the nearest foe",
-    "payload": "Damage, foe Sp. Def -1 (10%)"
+    "payload": "Damage, foe Sp. Def -1 (10%)",
+    "rule": ""
    },
    "proposed": {
     "kind": "projectile",
@@ -3014,16 +3073,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 48 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, flinch 10%, knockback 90"
+    "payload": "Damage, flinch 10%, knockback 90",
+    "rule": "Tackle swing, shorter reach (default) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 48,
      "count": 1
     },
     "delivery": {
@@ -3064,16 +3124,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 0.94 rad, reach 65 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, high crit (+15%), knockback 90"
+    "payload": "Damage, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, narrow arc, long reach (long family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 0.94,
+     "radRadius": 65,
      "count": 1
     },
     "delivery": {
@@ -3112,30 +3173,32 @@ window.KANTO_B1 = {
    "cd": 1.167,
    "target": "selected-pokemon",
    "effect": "Prevents the target from fleeing and inflicts damage for 2-5 turns.",
-   "pattern": "strike",
+   "pattern": "zone",
    "words": {
-    "shape": "Circle 30 px on the nearest foe",
-    "delivery": "Instant on the nearest foe",
-    "payload": "Damage, trap 100%"
+    "shape": "Circle 40 px on the ground at a foe, hits every 0.5 s",
+    "delivery": "Placed on a random foe in range, lasts 2.5 s",
+    "payload": "Damage, trap 100%",
+    "rule": "a sand patch at a foe that lasts 2.5 s and traps whoever stands in it"
    },
    "proposed": {
-    "kind": "projectile",
+    "kind": "mine",
     "space": {
      "shape": "radial",
-     "radRadius": 30,
-     "count": 1
+     "radRadius": 40,
+     "count": 1,
+     "pierce": "UNLIMITED"
     },
     "delivery": {
-     "anchor": "target",
-     "targeting": "nearest",
+     "anchor": "world",
+     "targeting": "location",
      "motion": "static",
      "endOn": [
       {
-       "time": 0
+       "time": 2.5
       }
      ]
     },
-    "hitPolicy": "oncePerInstance",
+    "hitPolicy": "interval",
     "payload": [
      {
       "t": "damage"
@@ -3161,15 +3224,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to poison the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 10 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, poison 30%"
+    "shape": "One shot, radius 7 px",
+    "delivery": "Travels 310 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, poison 30%",
+    "rule": "poison shot: medium (Sludge)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 10,
+     "radRadius": 7,
      "count": 1,
      "pierce": 0
     },
@@ -3177,7 +3241,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 310,
      "endOn": [
       {
        "time": 1.5
@@ -3216,15 +3280,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to poison the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.36 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, poison 30%, knockback 90"
+    "payload": "Damage, poison 30%, knockback 90",
+    "rule": "Tackle swing, narrower arc (narrow family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
+     "radArc": 1.36,
      "radRadius": 54,
      "count": 1
     },
@@ -3270,7 +3335,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "6 shots in a full circle, radius 7 px each",
     "delivery": "Travels 300 px/s outward, ends at 1.2 s, a wall or off screen",
-    "payload": "Damage, foe Sp. Def -1 (10%)"
+    "payload": "Damage, foe Sp. Def -1 (10%)",
+    "rule": "a damaging spray of objects: burst"
    },
    "proposed": {
     "kind": "nova",
@@ -3326,16 +3392,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to badly poison the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, poison 50%, knockback 90"
+    "payload": "Damage, poison 50%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -3380,7 +3447,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 220 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "Damage, poison 10%"
+    "payload": "Damage, poison 10%",
+    "rule": "hits everyone around in mainline: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -3432,7 +3500,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Defense +2, team-wide"
+    "payload": "own Defense +2, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -3463,16 +3532,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit and a chance to poison the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 2.21 rad, reach 38 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, poison 10%, high crit (+15%), knockback 90"
+    "payload": "Damage, poison 10%, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, wide arc, short reach (sweep family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 2.21,
+     "radRadius": 38,
      "count": 1
     },
     "delivery": {
@@ -3519,15 +3589,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to poison the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 12 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, poison 30%"
+    "shape": "One shot, radius 9 px",
+    "delivery": "Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, poison 30%",
+    "rule": "poison shot: medium (Sludge), strong: bigger and slower"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 12,
+     "radRadius": 9,
      "count": 1,
      "pierce": 0
     },
@@ -3535,7 +3606,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 260,
      "endOn": [
       {
        "time": 1.5
@@ -3572,34 +3643,32 @@ window.KANTO_B1 = {
    "cd": 3.5,
    "target": "selected-pokemon",
    "effect": "Poisons the target.",
-   "pattern": "statusShot",
+   "pattern": "cloud",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "poison 100%"
+    "shape": "Cloud, radius 22 px, passes through every foe, no damage",
+    "delivery": "Drifts 90 px/s toward aim, ends at 1 s or a wall",
+    "payload": "poison 100%",
+    "rule": "powder: a short slow cloud that drifts through foes"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 22,
      "count": 1,
-     "pierce": 0
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 90,
      "endOn": [
       {
-       "time": 1.2
+       "time": 1
       },
       {
        "contact": "wall"
-      },
-      {
-       "offScreen": true
       }
      ]
     },
@@ -3628,7 +3697,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Ring growing to 240 px around the user",
     "delivery": "Grows out from the user over 0.4 s",
-    "payload": "Damage"
+    "payload": "Damage",
+    "rule": "hits everyone around in mainline: ring"
    },
    "proposed": {
     "kind": "nova",
@@ -3673,16 +3743,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 48 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, flinch 20%, knockback 90"
+    "payload": "Damage, flinch 20%, knockback 90",
+    "rule": "Tackle swing, shorter reach (default) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 48,
      "count": 1
     },
     "delivery": {
@@ -3723,23 +3794,25 @@ window.KANTO_B1 = {
    "effect": "Has a chance to confuse the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 10 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, confusion 20%"
+    "shape": "One shot, radius 6 px, pierces 1",
+    "delivery": "Travels 350 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, confusion 20%",
+    "rule": "water shot: pierces one, quick (Water Gun)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 10,
+     "radRadius": 6,
      "count": 1,
-     "pierce": 0
+     "pierce": 1,
+     "spread": 0.1
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 350,
      "endOn": [
       {
        "time": 1.5
@@ -3778,23 +3851,25 @@ window.KANTO_B1 = {
    "effect": "Has a chance to burn the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 8 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, burn 30%"
+    "shape": "One shot, radius 6 px, pierces 1",
+    "delivery": "Travels 350 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, burn 30%",
+    "rule": "water shot: pierces one, quick (Water Gun)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 6,
      "count": 1,
-     "pierce": 0
+     "pierce": 1,
+     "spread": 0.1
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 350,
      "endOn": [
       {
        "time": 1.5
@@ -3835,7 +3910,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -3879,16 +3955,17 @@ window.KANTO_B1 = {
    "effect": "Prevents the target from fleeing and inflicts damage for 2-5 turns.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, trap 100%, knockback 90"
+    "payload": "Damage, trap 100%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -3931,23 +4008,25 @@ window.KANTO_B1 = {
    "effect": "Has a chance to burn the target.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 12 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, burn 10%"
+    "shape": "One shot, radius 9 px",
+    "delivery": "Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, burn 10%",
+    "rule": "fire shot: wobbles (Ember), strong: bigger and slower"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 12,
+     "radRadius": 9,
      "count": 1,
-     "pierce": 0
+     "pierce": 0,
+     "spread": 0.12
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 260,
      "endOn": [
       {
        "time": 1.5
@@ -3986,16 +4065,17 @@ window.KANTO_B1 = {
    "effect": "User takes 1/3 the damage inflicted in recoil.  Has a chance to burn the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
+    "shape": "Melee arc 2 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, burn 10%, recoil 33% of damage dealt, knockback 140"
+    "payload": "Damage, burn 10%, recoil 33% of damage dealt, knockback 140",
+    "rule": "heavy swing, shorter reach (default) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 2,
-     "radRadius": 60,
+     "radRadius": 54,
      "count": 1
     },
     "delivery": {
@@ -4043,15 +4123,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to burn the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.36 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, burn 10%, knockback 90"
+    "payload": "Damage, burn 10%, knockback 90",
+    "rule": "Tackle swing, narrower arc (narrow family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
+     "radArc": 1.36,
      "radRadius": 54,
      "count": 1
     },
@@ -4095,23 +4176,25 @@ window.KANTO_B1 = {
    "effect": "Lowers the user’s Special Attack by two stages after inflicting damage.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 12 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, own Sp. Atk -2"
+    "shape": "One shot, radius 9 px",
+    "delivery": "Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, own Sp. Atk -2",
+    "rule": "fire shot: wobbles (Ember), strong: bigger and slower"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 12,
+     "radRadius": 9,
      "count": 1,
-     "pierce": 0
+     "pierce": 0,
+     "spread": 0.12
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 260,
      "endOn": [
       {
        "time": 1.5
@@ -4151,16 +4234,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit and a chance to burn the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 0.77 rad, reach 65 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, burn 10%, high crit (+15%), knockback 90"
+    "payload": "Damage, burn 10%, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, narrow arc, long reach (long family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 0.77,
+     "radRadius": 65,
      "count": 1
     },
     "delivery": {
@@ -4207,16 +4291,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to burn the target and a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, burn 10%, flinch 10%, knockback 90"
+    "payload": "Damage, burn 10%, flinch 10%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -4263,16 +4348,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Defense by one stage.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 48 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, foe Defense -1 (20%), knockback 90"
+    "payload": "Damage, foe Defense -1 (20%), knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 48,
      "count": 1
     },
     "delivery": {
@@ -4318,7 +4404,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "own Sp. Atk +2, team-wide"
+    "payload": "own Sp. Atk +2, team-wide",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -4351,7 +4438,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage"
+    "payload": "Damage",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -4389,42 +4477,64 @@ window.KANTO_B1 = {
    "cd": 3.5,
    "target": "selected-pokemon",
    "effect": "Lowers the user’s Special Attack by two stages after inflicting damage.",
-   "pattern": "falls",
+   "pattern": "meteors",
    "words": {
-    "shape": "Circle 80 px that lands on a spot",
-    "delivery": "0.4 s warning, then lands for 0.2 s",
-    "payload": "Damage, own Sp. Atk -2"
+    "shape": "3 circles of 60 px, each on the nearest foe",
+    "delivery": "One every 0.25 s; each warns 0.4 s, then lands for 0.2 s",
+    "payload": "own Sp. Atk -2, Damage",
+    "rule": "three meteors instead of one"
    },
    "proposed": {
     "kind": "meteor",
-    "space": {
-     "shape": "radial",
-     "radArc": 6.2832,
-     "radRadius": 80,
-     "count": 1
-    },
     "delivery": {
-     "anchor": "world",
-     "targeting": "location",
-     "motion": "falls",
-     "delay": 0.4,
+     "anchor": "caster",
+     "targeting": "none",
+     "motion": "static",
      "endOn": [
       {
-       "time": 0.2
+       "time": 0.95
       }
      ]
     },
-    "hitPolicy": "oncePerInstance",
     "payload": [
-     {
-      "t": "damage"
-     },
      {
       "t": "stat",
       "stat": "spAtk",
       "stages": -2,
       "side": "self",
       "scope": "individual"
+     },
+     {
+      "t": "emit",
+      "every": 0.25,
+      "count": 3,
+      "trigger": "cast",
+      "move": {
+       "kind": "meteor",
+       "space": {
+        "shape": "radial",
+        "radArc": 6.2832,
+        "radRadius": 60,
+        "count": 1
+       },
+       "delivery": {
+        "anchor": "target",
+        "targeting": "nearest",
+        "motion": "falls",
+        "delay": 0.4,
+        "endOn": [
+         {
+          "time": 0.2
+         }
+        ]
+       },
+       "hitPolicy": "oncePerInstance",
+       "payload": [
+        {
+         "t": "damage"
+        }
+       ]
+      }
      }
     ]
    }
@@ -4443,7 +4553,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage, paralysis 30%"
+    "payload": "Damage, paralysis 30%",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -4491,7 +4602,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -4533,32 +4645,36 @@ window.KANTO_B1 = {
    "cd": 0.875,
    "target": "all-opponents",
    "effect": "Has a chance to make the target flinch.",
-   "pattern": "ring",
+   "pattern": "burst",
    "words": {
-    "shape": "Ring growing to 180 px around the user",
-    "delivery": "Grows out from the user over 0.4 s",
-    "payload": "Damage, flinch 20%"
+    "shape": "6 shots in a full circle, radius 7 px each",
+    "delivery": "Travels 300 px/s outward, ends at 1.2 s, a wall or off screen",
+    "payload": "Damage, flinch 20%",
+    "rule": "a damaging spray of objects: burst"
    },
    "proposed": {
     "kind": "nova",
     "space": {
      "shape": "radial",
-     "radArc": 6.2832,
-     "radRadius": 1
+     "radRadius": 7,
+     "count": 6,
+     "pierce": 0,
+     "spread": 6.2832
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "none",
-     "motion": "static",
-     "grow": {
-      "growSpeed": 450,
-      "dim": "radRadius",
-      "per": "time",
-      "max": 180
-     },
+     "targeting": "direction",
+     "motion": "travels",
+     "moveSpeed": 300,
      "endOn": [
       {
-       "time": 0.4
+       "time": 1.2
+      },
+      {
+       "contact": "wall"
+      },
+      {
+       "offScreen": true
       }
      ]
     },
@@ -4584,32 +4700,36 @@ window.KANTO_B1 = {
    "cd": 3.5,
    "target": "all-opponents",
    "effect": "Has a chance to freeze the target.",
-   "pattern": "ring",
+   "pattern": "burst",
    "words": {
-    "shape": "Ring growing to 240 px around the user",
-    "delivery": "Grows out from the user over 0.4 s",
-    "payload": "Damage, freeze 10%"
+    "shape": "6 shots in a full circle, radius 7 px each",
+    "delivery": "Travels 300 px/s outward, ends at 1.2 s, a wall or off screen",
+    "payload": "Damage, freeze 10%",
+    "rule": "a damaging spray of objects: burst"
    },
    "proposed": {
     "kind": "nova",
     "space": {
      "shape": "radial",
-     "radArc": 6.2832,
-     "radRadius": 1
+     "radRadius": 7,
+     "count": 6,
+     "pierce": 0,
+     "spread": 6.2832
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "none",
-     "motion": "static",
-     "grow": {
-      "growSpeed": 600,
-      "dim": "radRadius",
-      "per": "time",
-      "max": 240
-     },
+     "targeting": "direction",
+     "motion": "travels",
+     "moveSpeed": 300,
      "endOn": [
       {
-       "time": 0.4
+       "time": 1.2
+      },
+      {
+       "contact": "wall"
+      },
+      {
+       "offScreen": true
       }
      ]
     },
@@ -4639,15 +4759,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to freeze the target.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.36 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, freeze 10%, knockback 90"
+    "payload": "Damage, freeze 10%, knockback 90",
+    "rule": "Tackle swing, narrower arc (narrow family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
+     "radArc": 1.36,
      "radRadius": 54,
      "count": 1
     },
@@ -4693,7 +4814,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage, foe Attack -1 (10%)"
+    "payload": "Damage, foe Attack -1 (10%)",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -4743,7 +4865,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage, always crits"
+    "payload": "Damage, always crits",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -4787,16 +4910,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to freeze the target and a chance to make the target flinch.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, freeze 10%, flinch 10%, knockback 90"
+    "payload": "Damage, freeze 10%, flinch 10%, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -4845,7 +4969,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Circle 60 px that lands on a spot",
     "delivery": "0.4 s warning, then lands for 0.2 s",
-    "payload": "Damage, high crit (+15%)"
+    "payload": "Damage, high crit (+15%)",
+    "rule": ""
    },
    "proposed": {
     "kind": "meteor",
@@ -4890,23 +5015,25 @@ window.KANTO_B1 = {
    "effect": "Has a chance to raise all of the user’s stats by one stage.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 10 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, own Attack +1 (10%), team-wide, own Defense +1 (10%), team-wide, own Sp. Atk +1 (10%), team-wide, own Sp. Def +1 (10%), team-wide, own Speed +1 (10%), team-wide"
+    "shape": "One shot, radius 9 px",
+    "delivery": "Travels 260 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, own Attack +1 (10%), team-wide, own Defense +1 (10%), team-wide, own Sp. Atk +1 (10%), team-wide, own Sp. Def +1 (10%), team-wide, own Speed +1 (10%), team-wide, knockback 90",
+    "rule": "rock shot: slow, big, knockback (Rock Throw)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 10,
+     "radRadius": 9,
      "count": 1,
-     "pierce": 0
+     "pierce": 0,
+     "spread": 0.12
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 260,
      "endOn": [
       {
        "time": 1.5
@@ -4963,6 +5090,10 @@ window.KANTO_B1 = {
       "side": "self",
       "scope": "team",
       "chance": 10
+     },
+     {
+      "t": "knockback",
+      "distance": 90
      }
     ]
    }
@@ -4981,7 +5112,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Circle 60 px that lands on a spot",
     "delivery": "0.4 s warning, then lands for 0.2 s",
-    "payload": "Damage, foe Speed -1"
+    "payload": "Damage, foe Speed -1",
+    "rule": ""
    },
    "proposed": {
     "kind": "meteor",
@@ -5029,16 +5161,17 @@ window.KANTO_B1 = {
    "effect": "Drains half the damage inflicted to heal the user.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 44 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, drains 50% of damage dealt, knockback 90"
+    "payload": "Damage, drains 50% of damage dealt, knockback 90",
+    "rule": "Tackle swing, shorter reach (short family) for a strong extra, 65% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 44,
      "count": 1
     },
     "delivery": {
@@ -5085,7 +5218,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 140"
+    "payload": "Damage, knockback 140",
+    "rule": "heavy swing"
    },
    "proposed": {
     "kind": "melee",
@@ -5131,7 +5265,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Line 290 x 20 px, pierces everything",
     "delivery": "Instant at nearest, lasts 0.5 s",
-    "payload": "Damage, confusion 10%"
+    "payload": "Damage, confusion 10%",
+    "rule": ""
    },
    "proposed": {
     "kind": "beam",
@@ -5177,15 +5312,16 @@ window.KANTO_B1 = {
    "effect": "Has a chance to make the target flinch.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 8 px",
-    "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, flinch 30%"
+    "shape": "One shot, radius 5 px",
+    "delivery": "Travels 420 px/s toward aim, ends at 1.5 s, a wall or off screen",
+    "payload": "Damage, flinch 30%",
+    "rule": "flying shot: thin and fast"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 5,
      "count": 1,
      "pierce": 0
     },
@@ -5193,7 +5329,7 @@ window.KANTO_B1 = {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 300,
+     "moveSpeed": 420,
      "endOn": [
       {
        "time": 1.5
@@ -5232,7 +5368,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "6 shots in a full circle, radius 7 px each",
     "delivery": "Travels 300 px/s outward, ends at 1.2 s, a wall or off screen",
-    "payload": "Damage, high crit (+15%)"
+    "payload": "Damage, high crit (+15%)",
+    "rule": "a damaging spray of objects: burst"
    },
    "proposed": {
     "kind": "nova",
@@ -5284,23 +5421,25 @@ window.KANTO_B1 = {
    "effect": "Confuses the target.",
    "pattern": "statusShot",
    "words": {
-    "shape": "One shot, radius 8 px, no damage",
-    "delivery": "Travels 320 px/s toward aim, ends at 1.2 s, a wall or off screen",
-    "payload": "confusion 100%"
+    "shape": "One shot, radius 9 px, pierces 1, no damage",
+    "delivery": "Travels 280 px/s toward aim, ends at 1.2 s, a wall or off screen",
+    "payload": "confusion 100%",
+    "rule": "ghost shot: slow, big, pierces one (Shadow Ball)"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 8,
+     "radRadius": 9,
      "count": 1,
-     "pierce": 0
+     "pierce": 1,
+     "spread": 0.1
     },
     "delivery": {
      "anchor": "caster",
      "targeting": "direction",
      "motion": "travels",
-     "moveSpeed": 320,
+     "moveSpeed": 280,
      "endOn": [
       {
        "time": 1.2
@@ -5338,7 +5477,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, knockback 90"
+    "payload": "Damage, knockback 90",
+    "rule": "Tackle swing"
    },
    "proposed": {
     "kind": "melee",
@@ -5382,16 +5522,17 @@ window.KANTO_B1 = {
    "effect": "Has an increased chance for a critical hit.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 2.21 rad, reach 42 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, high crit (+15%), knockback 90"
+    "payload": "Damage, high crit (+15%), knockback 90",
+    "rule": "Tackle swing, wide arc, short reach (sweep family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 1.7,
-     "radRadius": 54,
+     "radArc": 2.21,
+     "radRadius": 42,
      "count": 1
     },
     "delivery": {
@@ -5432,17 +5573,18 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Special Attack by one stage.",
    "pattern": "shot",
    "words": {
-    "shape": "One shot, radius 10 px",
+    "shape": "One shot, radius 8 px, pierces 1",
     "delivery": "Travels 300 px/s toward aim, ends at 1.5 s, a wall or off screen",
-    "payload": "Damage, foe Sp. Atk -1 (30%)"
+    "payload": "Damage, foe Sp. Atk -1 (30%)",
+    "rule": "fairy shot: pierces one"
    },
    "proposed": {
     "kind": "projectile",
     "space": {
      "shape": "radial",
-     "radRadius": 10,
+     "radRadius": 8,
      "count": 1,
-     "pierce": 0
+     "pierce": 1
     },
     "delivery": {
      "anchor": "caster",
@@ -5489,16 +5631,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Attack by one stage.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 1.7 rad, reach 54 px, aims at nearest",
+    "shape": "Melee arc 1.7 rad, reach 48 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, foe Attack -1 (10%), knockback 90"
+    "payload": "Damage, foe Attack -1 (10%), knockback 90",
+    "rule": "Tackle swing, shorter reach (default) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
      "radArc": 1.7,
-     "radRadius": 54,
+     "radRadius": 48,
      "count": 1
     },
     "delivery": {
@@ -5545,7 +5688,8 @@ window.KANTO_B1 = {
    "words": {
     "shape": "None (self-cast)",
     "delivery": "Instant on the user",
-    "payload": "heals 50% max HP"
+    "payload": "heals 50% max HP",
+    "rule": ""
    },
    "proposed": {
     "kind": "buff",
@@ -5579,16 +5723,17 @@ window.KANTO_B1 = {
    "effect": "Has a chance to lower the target’s Defense by one stage.",
    "pattern": "melee",
    "words": {
-    "shape": "Melee arc 2 rad, reach 60 px, aims at nearest",
+    "shape": "Melee arc 1.11 rad, reach 72 px, aims at nearest",
     "delivery": "Instant, lasts 0.15 s",
-    "payload": "Damage, foe Defense -1 (30%), knockback 140"
+    "payload": "Damage, foe Defense -1 (30%), knockback 140",
+    "rule": "heavy swing, narrow arc, long reach (long family) for one small extra, 80% area"
    },
    "proposed": {
     "kind": "melee",
     "space": {
      "shape": "radial",
-     "radArc": 2,
-     "radRadius": 60,
+     "radArc": 1.11,
+     "radRadius": 72,
      "count": 1
     },
     "delivery": {
