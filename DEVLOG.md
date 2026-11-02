@@ -432,3 +432,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: push-only knockback (wild enemies slide, the player gets Player.push, a 0.2 s slide), ohkoWild handler (wild foes only), the leader 'delayed' form (Future Sight, spot locked at the cast, castAt passes it as the point), marker drawn without the boulder. Loop 1: Blaine + Roar, Sabrina + Future Sight, Giovanni + Fissure.
 - Found: Roar with no cd was cast 52 times in 90 s (cd 5 TUNE added); Fissure's 30 accuracy made the heavy hit 36 (accuracy set to 100).
 - Verified: check.js 30/30, intent 2193 (4 new scenarios), boss-owner 245 (section 18), gym harness, live Blaine, Sabrina, Giovanni on file://, no page errors. Not yet feel-tested.
+
+## 2026-11-02, Branch close: fix/playtest-kanto-moves merged (Claude Code, home)
+- Filed GitHub issues for the last loop-1 gaps: Reflect (Sabrina, blocked on the fields slice) and Smokescreen (Koga, blocked on the accuracy trackers). The two slices still need issues of their own.
+- Pre-merge check: tree clean, main had not moved, check.js harnesses all OK (lint 5 errors, warn-only, unchanged).
+- The imports (Roar, Fissure, Future Sight) are still not feel-tested; that carries over to main.

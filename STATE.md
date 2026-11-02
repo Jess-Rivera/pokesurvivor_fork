@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-02 (Claude Code, home; branch fix/playtest-kanto-moves, from main).
+Last updated: 2026-11-02 (Claude Code, home). fix/playtest-kanto-moves MERGED into main; next branch starts from main.
 
 ## Where we are
 - Kanto import batch 1 DONE and signed off (111 moves, held out of player pools). Player learnset pools PARKED (Jess 2026-11-02: the imports are for the bosses).
@@ -10,7 +10,7 @@ Last updated: 2026-11-02 (Claude Code, home; branch fix/playtest-kanto-moves, fr
 
 ## Next (in order)
 1. Jess: quick feel of the imports: Roar's push on you (140 px, 0.2 s; cd 5 [Proposed] TUNE), Future Sight's 2 s marker, Fissure's heavy hit.
-2. Remaining loop-1 gaps ride other slices: Reflect with the FIELDS SLICE, Smokescreen with the accuracy slice. Self-Destruct comes with later loops.
+2. Remaining loop-1 gaps ride other slices (GitHub issues filed, status blocked): Reflect with the FIELDS SLICE, Smokescreen with the accuracy slice. Those two slices still need their own issues. Self-Destruct comes with later loops.
 3. Then later loops, gym by gym (Psycho Cut still stands in for Psybeam on Porygon and Venomoth). Recoil and heals for the Elite Four come with that phase.
 4. Cone and area moves ignore walls: needs a line-of-sight ruling, own branch.
 5. Readability pass (Jeremy) and part 2 (item drops, New Move card frequency). Ask Jeremy about "Bosses" and "Magnetism".
