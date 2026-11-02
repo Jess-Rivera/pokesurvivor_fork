@@ -8,6 +8,26 @@
 G.CHANGELOG = [
   {
     d: '2026-11-02',
+    title: ['A new main menu: welcome to PokeSwarm', 'A new main menu: welcome to PokeSwarm'],
+    new: [
+      [
+        'The main menu has a new look, in the style of Pokemon Black and White. Move through it with the mouse or the arrow keys and Enter.',
+        'The main menu has a new look, in the style of Pokemon Black and White. Move through it with the mouse or the arrow keys and Enter.',
+      ],
+    ],
+    chg: [
+      [
+        'Sound, fullscreen and sign out now live in Settings, and the patch notes are in Settings, About.',
+        'Sound, fullscreen and sign out now live in Settings, and the patch notes are in Settings, About.',
+      ],
+      [
+        'Pickups reach you from farther away: the base pickup range is up by about half, and the Magnet upgrade now gives +20% per level instead of +12%.',
+        'Pickups reach you from farther away: the base pickup range is up by about half, and the Magnet upgrade now gives +20% per level instead of +12%.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-02',
     title: ['Gym leaders use their real moves', 'Gym leaders use their real moves'],
     chg: [
       [

@@ -92,6 +92,7 @@
     </script>
     <!-- seo:end -->
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/bw-menu.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -186,46 +187,30 @@
 
     <!-- ====== Menú principal ====== -->
     <section id="scr-menu" class="scr hidden">
-      <div class="menu-left">
-        <div class="logo menu-logo redux">
-          <div class="t1">PokéSurvivor<span class="redux-stamp">REDUX</span></div>
-          <div class="redux-sub">
-            <span>R</span><span>e</span><span>m</span><span>a</span><span>s</span><span>t</span><span>e</span
-            ><span>r</span><span>e</span><span>d</span><span>&nbsp;</span><span>C</span><span>o</span><span>l</span
-            ><span>l</span><span>e</span><span>c</span><span>t</span><span>o</span><span>r</span><span>'</span
-            ><span>s</span><span>&nbsp;</span><span>R</span><span>e</span><span>d</span><span>&nbsp;</span><span>E</span
-            ><span>d</span><span>i</span><span>t</span><span>i</span><span>o</span><span>n</span>
-          </div>
-        </div>
-      </div>
-      <div class="menu-right">
-        <div class="box">
-          <div class="menu-list">
-            <button class="menu-item play" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
-            <button class="menu-item" data-go="team">Team<small id="menu-dex-count"></small></button>
-            <button class="menu-item" data-go="inventory">Inventory<small>Team items for your run</small></button>
-            <button class="menu-item" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
-            <button class="menu-item" data-go="goals">
-              Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
-            </button>
-            <button class="menu-item" data-go="friends">
-              Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small>
-            </button>
-            <button class="menu-item" data-go="rank">Ranking<small>Quién aguanta más</small></button>
-            <button class="menu-item" data-go="settings">
-              Ajustes<small>Sonido, gráficos, controles y cuenta</small>
-            </button>
-          </div>
-        </div>
-        <div class="box" style="padding: 14px 18px">
-          <div id="menu-stats" style="font-size: 14px; color: var(--muted)"></div>
+      <div class="bw-panel">
+        <h1 class="bw-title">PokeSwarm</h1>
+        <div class="bw-list">
+          <button class="bw-row play sel" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
+          <button class="bw-row" data-go="team">Team<small id="menu-dex-count"></small></button>
+          <button class="bw-row" data-go="inventory">Inventory<small>Team items for your run</small></button>
+          <button class="bw-row" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
+          <button class="bw-row" data-go="goals">
+            Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
+          </button>
+          <button class="bw-row" data-go="friends">
+            Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small>
+          </button>
+          <button class="bw-row" data-go="rank">Ranking<small>Quién aguanta más</small></button>
+          <button class="bw-row" data-go="settings">Ajustes<small>Sonido, gráficos, controles y cuenta</small></button>
         </div>
       </div>
     </section>
 
     <div id="topbar" class="topbar hidden">
+      <span id="guest-note" class="guest-note hidden">Guest mode: progress is not saved</span>
       <div class="pill"><span class="coin"></span><span id="coins">0</span></div>
-      <div class="pill" id="tickets-pill" title="Pokeballs and Master Balls"></div>
+      <div class="pill" id="tickets-pill" title="Poke Balls"></div>
+      <div class="pill" id="master-pill" title="Master Balls"></div>
       <div class="pill" id="user-pill"></div>
       <button id="btn-news" class="btn small ghost news-btn" title="Novedades"></button>
       <button id="btn-support" class="btn small gold hidden" title="Apoyar el proyecto"></button>
@@ -234,6 +219,7 @@
       <button id="btn-settings" class="btn small ghost" title="Ajustes"></button>
       <button id="btn-logout" class="btn small ghost">Salir</button>
     </div>
+    <div id="botbar" class="botbar hidden"><span id="menu-stats"></span></div>
     <div id="sound-panel" class="box sound-panel hidden"></div>
     <div id="credits-line" class="credits-line hidden">
       Proyecto de fan sin ánimo de lucro · Sprites: SpriteCollab (CC BY-NC 4.0) · Pokémon © Nintendo/Creatures/GAME

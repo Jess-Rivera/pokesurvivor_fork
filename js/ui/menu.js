@@ -70,22 +70,38 @@ G.MenuUI = (() => {
     compact: true, // filter chips show icons only (the name is the tooltip)
   };
 
+  // Main menu cursor: one row is always selected (Black/White style); hover, focus and the arrow keys move it.
+  let rows = [],
+    menuCur = 0;
+  function select(i) {
+    menuCur = (i + rows.length) % rows.length;
+    rows.forEach((b, k) => b.classList.toggle('sel', k === menuCur));
+  }
+  /** The main menu is the top screen: nothing (Settings, a dialog, another screen) open over it. */
+  const menuOnTop = () => G.UI.isOpen('scr-menu') && document.querySelectorAll('.scr:not(.hidden)').length === 1;
+
   function init() {
-    // Menu icons: PokeSprite atlas names ('ps:<category>.<name>', js/data/pokesprite-index.js).
-    const ICON = {
-      play: 'ps:ball.poke',
-      team: 'ps:key-item.adventure-guide',
-      inventory: 'ps:key-item.explorer-kit',
-      upgrades: 'ps:valuable-item.pearl-string',
-      gacha: 'ps:ball.master',
-      goals: 'ps:key-item.point-card',
-      friends: 'ps:key-item.vs-recorder',
-      rank: 'ps:key-item.contest-pass',
-      settings: 'ps:hm.normal',
-      dex: 'book',
-    };
+    // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
+    for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
+    if (document.fonts) {
+      document.fonts.load('16px PokeBW').catch(() => {});
+      document.fonts.load('800 16px Korataki').catch(() => {});
+    }
+    rows = [...document.querySelectorAll('#scr-menu [data-go]')];
+    rows.forEach((b, i) => {
+      b.addEventListener('pointerenter', () => select(i));
+      b.addEventListener('focus', () => select(i));
+    });
+    addEventListener('keydown', (e) => {
+      if (!menuOnTop() || e.target.closest('input, textarea, select')) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        select(menuCur + (e.key === 'ArrowDown' ? 1 : -1));
+        G.Audio.sfx('hover');
+      } else if (e.key === 'Enter' || e.key === ' ') rows[menuCur].click();
+      else return;
+      e.preventDefault();
+    });
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
-      b.insertAdjacentHTML('afterbegin', `<span class="mi-ico">${G.Icons.html(ICON[b.dataset.go], 32)}</span>`);
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
         const go = b.dataset.go;
@@ -136,9 +152,9 @@ G.MenuUI = (() => {
 
     const st = s.stats;
     $('menu-stats').innerHTML =
-      `Runs <b style="color:#fff">${st.runs}</b> · Mejor tiempo <b style="color:#fff">${G.U.mmss(st.bestTime)}</b><br>` +
-      `Mejor nivel <b style="color:#fff">${st.bestLevel}</b> · Derrotados <b style="color:#fff">${st.totalKills.toLocaleString('es')}</b>` +
-      (G.DB.guest ? '<br><span style="color:#ffb0b8">Modo invitado: no se guarda</span>' : '');
+      `Runs <b>${st.runs}</b> · Best <b>${G.U.mmss(st.bestTime)}</b> · ` +
+      `Lv <b>${st.bestLevel}</b> · KOs <b>${st.totalKills.toLocaleString('en')}</b>`;
+    $('guest-note').classList.toggle('hidden', !G.DB.guest);
 
     socialLine();
     // Mission prizes to claim.

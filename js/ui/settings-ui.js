@@ -266,8 +266,10 @@ G.SettingsUI = (() => {
              <li><b>Datos de los Pokémon:</b> PokéAPI.</li>
              <li><b>Música y sonidos:</b> originales, generados por el propio juego.</li>
              <li><b>Fuente:</b> Pixelify Sans (OFL).</li>
+             <li><b>Menu fonts:</b> Pokemon B/W fan font, Korataki (Typodermic).</li>
            </ul>` +
         `<div class="row wrap" style="justify-content:center;gap:8px">
+             <button class="btn small" id="set-news">Patch notes</button>
              <button class="btn small" data-legal>Aviso legal y privacidad</button>
            </div>`;
     }
@@ -359,6 +361,13 @@ G.SettingsUI = (() => {
       out.onclick = () => {
         close();
         leave();
+      };
+    // Patch notes moved here from the top bar (the Black/White top bar keeps only the counters).
+    const news = $('set-news');
+    if (news)
+      news.onclick = () => {
+        close();
+        G.NewsUI.open();
       };
     const del = $('set-delete');
     if (del)
