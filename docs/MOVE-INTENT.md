@@ -321,6 +321,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### sand-attack
 - [Approved] Lowers the target's accuracy stage -1: the target's own attacks get a miss chance from the mainline table (accuracy stage -n: hit chance 3/(3+n)). (Jess, 2026-11-01, Kanto import rulings set 1)
 
+### sand-tomb
+- [Approved] cd 2.5, hand-set in js/data/move-overrides.js, so a new patch casts as the last one ends (one 40 px patch at a time, 2.5 s, hitting and trapping every 0.5 s). Replaces the 1.17 formula cd. (Jess, 2026-11-02, Kanto batch 1 review) Scenario: sand-tomb-cd.
+
 ### sandstorm
 - [Approved] Team-side field: sets a sandstorm for a while (setWeather). (Jess, 2026-11-01, Kanto import rulings set 4)
 

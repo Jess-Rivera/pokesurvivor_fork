@@ -403,3 +403,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: special handlers surfer (passive) and flight (press); no derived cd; skill slots never active, cycled past, never bonded. Surf x1.15 in water and swamp. Fly: 4 s flight, hits and terrain off, own casts and timers frozen, swaps locked, G.World.landing (wall: 1/16 HP and nearest floor; object: on along heading), arena clamp, 20 s cd from landing; HUD icon shows flight then recharge.
 - Fly joins batch 1 (111 moves, held). Scenarios surf-passive and fly-pressed.
 - Verified: check.js 30/30, validators 174/174, smoke-ui pass, headless on file:// (Surf 1.15 vs 0.6, cycling, takeoff, hits miss, DoT lands, no casts, frozen timers, wall landing 1/16 HP to free ground, cd from landing, object landing).
+
+## 2026-11-02, Batch 1 review and learnset step 1 (Claude Code, home)
+- Wrote the hand-derived scenarios for the 109 batch-1 placeholders (shape plus rolled riders; flinch unchecked, no harness key). Two first guesses were wrong, not the code: location moves pick a random enemy in range, clouds have no pierce limit.
+- Jess signed off: shapes kept, batch in batchReviewed (108 plus Sand Tomb by its new MOVE-INTENT entry, cd 2.5). move_report.js treats a move with no legacy cd as nothing to compare.
+- Learnset step 1: build_learnset_dataset.py takes the latest version group with a level-up list (Champions rows are train-only and left 197 species empty, Charizard and Pikachu among them). Rebuilt, 0 warnings.
+- Verified: intent harness 2136/2136, check.js 30/30. Stopped before step 2 (game code, four decisions open).

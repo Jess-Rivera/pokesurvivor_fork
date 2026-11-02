@@ -8,7 +8,7 @@
 // docs/proposals/move-intent-harness.js (run by tools/check.js), not from here.
 // Review rule (Jess 2026-10-29): a move with a MOVE-INTENT entry is reviewed when its data and code match it (its scenarios pass);
 // a move without one is reviewed with the batch that routes it (listed in the scenarios file `batchReviewed`).
-// cd parity: a difference is explained when the move is persistent (it lasts while active), or its override `why` gives a reason
+// cd parity: a move with no legacy cd (a new import) has nothing to compare. A difference is explained when the move is persistent (it lasts while active), or its override `why` gives a reason
 // (anything but the "no cd set yet" placeholder), or its MOVE-INTENT entry talks about its cooldown. Rulings go in MOVE-INTENT.
 const fs = require('fs'),
   path = require('path'),
@@ -147,6 +147,7 @@ function cdParity(id) {
     ent = INTENT[id] || '';
   const same = n.cd !== undefined && l.cd !== undefined && Math.abs(n.cd - l.cd) < 1e-9;
   if (same) return { diff: false, note: '' };
+  if (l.cd === undefined) return { diff: false, note: 'new move, no legacy cd' }; // Jess 2026-11-02: nothing to compare against
   if (n.persistent) return { diff: true, ok: true, note: 'lasts while active' };
   if (n.cd === undefined && pureBuff(n)) return { diff: true, ok: true, note: 'casts on its Gate (SS8)' };
   if (ov && ov.why && !/^no cd set yet/.test(ov.why)) return { diff: true, ok: true, note: 'override: ' + ov.why };

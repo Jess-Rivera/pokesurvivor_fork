@@ -24,7 +24,8 @@
       cd: 0.7,
       why: 'Jess 2026-10-31 (slice 6 movechecker pass): the 0.5 formula cd felt too fast, hand-set to 0.7',
     },
-    // Kanto import batch 1 (2026-11-01), proposed for the batch review: status shots near Will-O-Wisp, foe drops shorter, big heals long.
+    // Kanto import batch 1 (2026-11-01), signed off in the batch review (Jess 2026-11-02): status shots near Will-O-Wisp, foe drops shorter, big heals long.
+    'sand-tomb': { cd: 2.5, why: 'Jess 2026-11-02 (batch 1 review): one patch at a time, cd matches its 2.5 s life' },
     'lovely-kiss': { cd: 4, why: 'Kanto batch 1: sleep shot, proposed 4' },
     sing: { cd: 4, why: 'Kanto batch 1: sleep shot, proposed 4' },
     hypnosis: { cd: 4, why: 'Kanto batch 1: sleep shot, proposed 4' },

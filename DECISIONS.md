@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Kanto batch 1 signed off; Sand Tomb cd 2.5; learnsets use the latest game with a level-up list (Jess)
+All 111 batch-1 shapes kept as built (no overrides), and the batch scenario table signed off (108 in batchReviewed, Sand Tomb through its own entry). Sand Tomb cd 2.5, so one patch at a time. The move report no longer asks for a cd ruling on a move with no legacy cd. The learnset dataset picks each Pokemon's latest version group that has a level-up list (pokeapi's Champions rows are "train" only and left 197 species with none).
+Canonical: docs/MOVE-INTENT.md sand-tomb; docs/move_rework_holding/build_learnset_dataset.py docstring
+
 ## 2026-11-02, Surf and Fly are movement skills (Jess)
 Surf is a passive: no water or swamp slowdown and x1.25 speed in them while it is in a slot. Fly is pressed on its slot key: 4 s of flight at walk speed over walls, objects and liquids, hits miss, your moves pause with frozen timers, then a 20 s cooldown from landing; landing on a wall costs 1/16 max HP and moves you to the nearest floor, on an object moves you on along your heading. Neither deals damage, autocasts, becomes the active slot or bonds. Fly joins batch 1; the set-4 Fly ruling is superseded.
 Canonical: docs/MOVE-INTENT.md surf and fly

@@ -452,8 +452,8 @@ Built on fix/playtest-kanto-moves: 110 of the "Maps to the schema" moves are in 
 - Source: `tools/kanto_batch1.js` builds each move from pokeapi plus a pattern copied off a catalog move (melee swing, shot, beam, strike, falls, ring, burst, status shot, self-cast, multi-hit). `--apply` splices them into move-conversions-described.json; then `node tools/export_moves.js`.
 - Review: `tools/kanto-batch1-review.html` shows each move's facts, the proposal in words, and override slots (pattern, shape, delivery, payload, cooldown, note). Export saves `kanto-batch1-overrides.json`; put it in docs/move_rework_holding/ and rerun the generator. Plain-text overrides are applied by hand.
 - Runtime added: `sleep` is a legal ailment in the grammar; recoil `trigger: hit` pays a fraction of the damage dealt (gym leaders pay nothing yet, they have no payHp). Self heals (Recover, Synthesis, Moonlight) are one 0.1 s heal-over-time tick of 50% max HP.
-- Status cooldowns (move-overrides.js, proposed): sleep shots 4 s; paralysis, poison, confusion and trap shots 3.5 s; foe drops 3 s; heals 12 s. Pure raises have none (they cast when their Gate opens).
-- Scenarios: one placeholder per move in move-intent-scenarios.json, blocked on the shape review; the hand-derived scenarios and the batchReviewed sign-off come after it.
+- Status cooldowns (move-overrides.js, signed off 2026-11-02): sleep shots 4 s; paralysis, poison, confusion and trap shots 3.5 s; foe drops 3 s; heals 12 s. Pure raises have none (they cast when their Gate opens).
+- Review (Jess, 2026-11-02): all 111 shapes kept as built (no overrides file). Every move has a hand-derived scenario (shape, plus a rolled-riders scenario where a rider has a chance); flinch is not checked (the harness has no flinch key). Batch signed off in batchReviewed; Sand Tomb cd 2.5 (MOVE-INTENT sand-tomb). The moves stay held until learnset pools.
 
 ### Batch 1 shape rules (Jess, 2026-11-02)
 

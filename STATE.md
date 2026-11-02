@@ -5,12 +5,13 @@ Last updated: 2026-11-02 (Claude Code, home; branch fix/playtest-kanto-moves, fr
 
 ## Where we are
 - Playtest fixes part 1 and the Team menu rework: built and feel-tested OK (Jess 2026-11-01). Team menu sprite centring works over http only.
-- Kanto import batch 1 BUILT, not yet reviewed: 110 moves in the catalog, held out of player pools (G.Moves.HELD) until learnset pools. Built by tools/kanto_batch1.js; sleep allowed in the grammar; recoil on hit; status cooldowns proposed. Shapes now follow Jess's five shape rules (2026-11-02). Detail: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1" and "Batch 1 shape rules". Waves built (Sludge Wave, Heat Wave); Surf and Fly are movement skills (Fly joined batch 1, 111 moves). Open: Sand Tomb cd (1.17 s vs a 2.5 s patch).
-- Tests: validators 173/173, check.js 30/30, smoke-ui pass, live casts headless on file://. smoke-newcombat SKIPPED (flaky; TODO Backlog).
+- Kanto import batch 1 DONE and signed off (Jess 2026-11-02): 111 moves, shapes kept as built, a hand-derived scenario each, Sand Tomb cd 2.5. Still held out of player pools (G.Moves.HELD) until learnset pools. Detail: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1".
+- Learnset pools step 1 DONE: the dataset (api_learnset_dataset.lean.json) now uses each Pokemon's latest game with a level-up list. Level-up + egg against our catalog: median 7 moves, 75 of 966 under 4 (Kanto: median 8, 8 under 4: Caterpie, Weedle, Metapod, Kakuna, Lickitung, Magikarp, Abra 0, Ditto 0).
+- Tests: intent harness 2136/2136 (247 scenarios, 0 blocked), check.js 30/30, move report 0 reviews and 0 cd rulings pending. smoke-newcombat SKIPPED (flaky; TODO Backlog).
 
 ## Next (in order)
-1. Jess: open tools/kanto-batch1-review.html, override shapes, Export, put kanto-batch1-overrides.json in docs/move_rework_holding/. Then apply, write the hand-derived scenarios, batch review (move_report.js, batchReviewed).
-2. Learnset pools (empties G.Moves.HELD; plan first). Then the boss translation of the imports (gym forms, recoil for leaders).
+1. Learnset pools step 2 (game code, js/data/moves.js poolFor). Waits on four decisions: learn methods (proposed level-up + egg), type-pool top-up to 4 for thin learnsets (proposed), learn levels (proposed ignored for now), moves in old saves the species no longer learns (proposed kept). Then G.Moves.HELD empties.
+2. The boss translation of the imports (gym forms, recoil for leaders).
 3. New mechanics slices: accuracy/evasion trackers (+ Mud-Slap, Mirror Shot, Hone Claws), fields (Hail toggle + weather moves, TODO), Protect, rampage.
 4. Cone and area moves ignore walls: needs a line-of-sight ruling, own branch.
 5. Readability pass (Jeremy) and part 2 (item drops, New Move card frequency). Ask Jeremy about "Bosses" and "Magnetism".
