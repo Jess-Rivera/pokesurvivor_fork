@@ -361,3 +361,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - tools/move-lab.html: dev page that loads the real move scripts; pick a move, stack cards, see base vs effective fields, leader form and reach; build a 4-move slot and copy its moves / cards block for gyms.js. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Headless load: 62 moves, no page errors; check.js 30/30.
 - smoke-newcombat skipped from the routine (Jess) until its flake is fixed.
 - Jess: feature/gym-roster done (rosters in); fast-forward to main. Gym cards after playtester feedback.
+
+## 2026-11-01 (Claude Code, home): playtest fixes part 1 (Jeremy's notes), branch fix/playtest-kanto-moves
+- Speed transfer bounds 0.5/3.0 -> 0.7/1.3 (Jess's pick over the proposed 0.5/2.0); Spe 130+ now saturates at 139 px/s, k left at 1.0 (BALANCE).
+- Bond is the team's: the count rides takeField on swap (was stranded on the mon active at the gym win). The bond screen opens with a Pokemon step (team keys 1-6, ineligible dimmed, skipped when only one can bond); the field does not swap.
+- Bomb: kills wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then a 3 s spawn quiet (G.Spawner.quiet). CONTRIBUTING asks for coins per run.
+- Verified: check.js 30/30, smoke-ui pass, headless: speed px, bond pick on a benched mon, bond carried on swap, bomb 26 -> 0 with no spawns for 3 s. smoke-newcombat skipped.
+- Next: Jess feel-tests, then the Kanto import rulings.

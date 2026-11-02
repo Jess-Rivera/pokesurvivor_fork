@@ -31,6 +31,7 @@ G.Game = (() => {
   let swapLock = 0; // seconds until you can swap again (5s lockout)
   const SWAP_LOCK = 5,
     SWAP_IFRAME = 0.5;
+  const BOMB_QUIET = 3; // s with no wild spawns after a Bomb pickup (Jeremy playtest, 2026-11-01)
   let caught = []; // shinies obtained in this run
   let biome = -1;
 
@@ -258,6 +259,7 @@ G.Game = (() => {
     next.kills = pl.kills;
     next.bosses = pl.bosses;
     next.coins = pl.coins;
+    next.bonds = pl.bonds; // links are the team's: the one on the field holds the live count
     next.t1 = pl.t1;
     next.t10 = pl.t10;
     next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
@@ -651,8 +653,9 @@ G.Game = (() => {
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
     if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
-    const opt = pl.bondOptions();
-    if (!opt) {
+    // The link belongs to the team: any living member that can bond now may take it (picked on the screen).
+    const choices = roster.filter((f) => !f.dead).map((f) => ({ f, opt: f.bondOptions() }));
+    if (!choices.some((c) => c.opt)) {
       if (!quiet) G.Spawner.say('Guardas el vínculo: aprende otro movimiento para usarlo', 3, true);
       return;
     }
@@ -660,8 +663,10 @@ G.Game = (() => {
     state = 'choice';
     if (G.Coop.active) G.Coop.holdStart();
     G.Audio.sfx('levelup');
-    G.RunUI.showBond(opt, (picked) => {
-      const group = pl.fuse(picked, opt.group);
+    G.RunUI.showBond(choices, (f, opt, picked) => {
+      const left = Math.max(0, pl.bonds - 1);
+      const group = f.fuse(picked, opt.group);
+      pl.bonds = left; // fuse() spends the chosen member's copy; the live count is the one on the field
       G.Audio.sfx('legend');
       G.FX.ring(pl.x, pl.y, 8, 130, '#ff8ad8', 0.8, 6);
       G.FX.burst(pl.x, pl.y - pl.bodyH * 0.5, '#ffb3e6', 40, 240);
@@ -881,10 +886,13 @@ G.Game = (() => {
       if (G.U.dist2(who.x, who.y, pl.x, pl.y) < 500 * 500) G.Camera.kick(0.8);
       const R = G.Camera.outerRadius();
       G.FX.ring(who.x, who.y, 20, R, '#ff7b3d', 0.5, 6);
+      // A screen clear: every wild enemy in view falls (shield and all); bosses, gym leaders and elites only take the old blast.
       for (const e of G.EnemyMgr.all()) {
         if (mine ? !G.Camera.sees(e.x, e.y, 0) : G.U.dist2(e.x, e.y, who.x, who.y) > R * R) continue;
-        e.hurt(60 + pl.level * 14, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
+        const tough = e.boss || e.gym || e.elite;
+        e.hurt(tough ? 60 + pl.level * 14 : e.hp + (e.shield || 0) + 1, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
       }
+      G.Spawner.quiet(BOMB_QUIET);
     }
   }
 
@@ -900,8 +908,10 @@ G.Game = (() => {
       return;
     }
     if (G.UI.isOpen('scr-bond')) {
-      for (let i = 0; i < 4; i++) {
-        if (G.Input.action('attack_' + (i + 1))) G.RunUI.pickBond(i);
+      // Pokemon step: the team keys (1 to 6); move steps: the attack keys.
+      const mon = G.RunUI.bondPickingMon();
+      for (let i = 0; i < (mon ? 6 : 4); i++) {
+        if (G.Input.action((mon ? 'swap_' : 'attack_') + (i + 1))) G.RunUI.pickBond(i);
       }
       return;
     }

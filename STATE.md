@@ -1,19 +1,23 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-01 (Claude Code, home; feature/gym-roster done, merging to main).
+Last updated: 2026-11-01 (Claude Code, home; branch fix/playtest-kanto-moves, from main).
 
 ## Where we are
-- feature/gym-roster is DONE (Jess 2026-11-01): all Kanto gym rosters in, riders, Surge sets and shot reach feel-tested. Fast-forwarded into main; next branches start from main. Gym cards wait for playtester feedback.
-- SHOT REACH FROM FLIGHT built and feel-tested (Jess: feels good). A leader's shot is a candidate only within speed x lifetime + size, capped at its range (420 default); homing gets no turn credit. Far stance shrinks to the longest ready shot or strike's reach (minus 20 px) so a Psychic user walks in to land it. Rule: docs/BOSS-AUTHORING.md REACH. Code: G.Gyms.reachOf (js/data/gyms.js), GymBrain.ranged() and far mode in js/entities/boss-ai.js.
-- Tests: check.js 30/30, boss-owner harness 175, mutations 58/58, smoke-ui pass. smoke-newcombat SKIPPED until its flake is fixed (Jess; TODO Backlog).
-- No gym uses Psychic yet, so the walk-in has only been seen in the harness.
-- Also this session: docs/KANTO-BOSS-MOVE-IMPORTS.md (177 moves to import, decisions-needed breakdown) and tools/move-lab.html (load a gym's loop lineup, set each mon's cards, see the folded moves, copy the gyms.js blocks).
+- Jeremy's playtest notes (docs/ASCII Concept Maps/Jeremy Playtest.txt) triaged. Part 1 BUILT, needs Jess's feel test:
+  - Speed bounds 0.7 to 1.3 (was 0.5 to 3.0). Spe 130 and up all move at 139 px/s; k is the knob if fast mons should differ (BALANCE).
+  - Bond belongs to the team: carried on swap; the bond screen first picks the Pokemon (keys 1-6), then its moves.
+  - Bomb clears wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then 3 s with no spawns.
+- Tests: check.js 30/30, smoke-ui pass, headless checks of all three. smoke-newcombat SKIPPED (flaky; TODO Backlog).
+- docs/Economy Balance Ideas.md reviewed: ranks after playtest fixes and move imports; needs coins-per-run data first (CONTRIBUTING now asks). Six open design questions (run-wide stacking, 40-point cap vs run-wide costs, curve per mon or once, unbuilt stats, Starting Moves vs Repertoire, save migration).
 
 ## Next (in order)
-1. Playtesters run the gyms (rosters as built; only Brock's slot 1 has cards). Then add cards and tune power and tempo from their feedback (tools/move-lab.html). Redo the two lore moveset maps to the Gen-1 order.
-2. Kanto move imports: the ~24 rulings in docs/KANTO-BOSS-MOVE-IMPORTS.md "Decisions needed", then import in batches. File the Hail toggle issue if missing (D-HAIL).
-3. Fix the smoke-newcombat flake, then restore it to the routine.
+1. Jess feel-tests part 1; commit.
+2. Kanto move imports: the ~24 rulings in docs/KANTO-BOSS-MOVE-IMPORTS.md "Decisions needed", then batches.
+3. Cone and area moves ignore walls (Flamethrower etc.; move-sim only stops moving shots). Needs a line-of-sight ruling, own branch.
+4. Readability pass (Jeremy): status chips, stat stage visibility, pause menu, explanations. Ask Jeremy what "Bosses" and "Magnetism" meant. Item drop rates and New Move card frequency (part 2).
+5. Economy rework once coin data comes in. Bond tax last.
+6. Gym cards after playtester runs (tools/move-lab.html). Fix the smoke-newcombat flake.
 
 ## Open owner decisions
 - [Open] loop 2+: do a gym's mons share stat raises. O4: do badge boosts stack again in later loops.
