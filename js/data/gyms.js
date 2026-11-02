@@ -7,7 +7,8 @@
  * through G.MoveSim on their own cooldowns, pure buffs on their Gate (js/entities/boss-ai.js). A slot's `cards` are upgrade cards by
  * id from G.TeamCards (damage, count, velocity, area...), held by that mon only and folded by the SAME rules as the player's cards, so
  * each card applies to every one of the mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies
- * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, shots, self buffs, self heals).
+ * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
+ * returns, beams, bursts, trails, self buffs, self heals).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
  * last one whose minLevel is <= the gym's effective level (stageFor), so a slot evolves as the level climbs, and evolution requirements
@@ -33,14 +34,34 @@ G.Gyms = (() => {
    *  half ring that grows out of its body: Heat Wave, Dazzling Gleam), 'shot' (shapes that travel along the aim, homing ones included:
    *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt), 'buff' (a pure self stat change), 'heal' (a self
    *  heal of max HP: Recover, Synthesis, Moonlight; Jess 2026-11-02) or 'dash' (a swept dash to the spot locked at its tell, a hit
-   *  there and back to its start, with the move's i-frames: Quick Attack; Jess 2026-11-02). A chain move takes
-   *  its shape's form; its hops search the caster's foes (G.MoveSim). Emitters, delays, persistent moves and caster commitments have no gym
-   *  form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
+   *  there and back to its start, with the move's i-frames: Quick Attack; Jess 2026-11-02). Slice 3 of the lore sets (Jess 2026-11-02):
+   *  'returns' (shapes that fly out along the aim and back to the mon: Razor Leaf), 'beam' (a straight line from its body along the
+   *  aim: Psybeam), 'multi' (a burst of melee cones, each re-aimed at you: Fury Attack) and 'trail' (a persistent slot that drops
+   *  hazards behind the mon while it moves, as the player's does: Toxic). A chain move takes its shape's form; its hops search the
+   *  caster's foes (G.MoveSim). Other emitters, delays, persistent moves and caster commitments have no gym form; validate() rejects
+   *  them instead of letting them misfire. Read by the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
       p = d.payload || [];
-    if (p.some((fx) => fx.t === 'emit') || d.persistent || v.delay) return null;
+    if (v.delay) return null;
+    const emits = p.filter((fx) => fx.t === 'emit');
+    if (d.persistent)
+      return !d.space && emits.length && emits.length === p.length && emits.every((fx) => fx.trigger === 'casterMove')
+        ? 'trail'
+        : null;
+    if (emits.length) {
+      const fx = emits[0];
+      return !d.space &&
+        p.length === 1 &&
+        fx.trigger === 'cast' &&
+        fx.count > 1 &&
+        v.anchor === 'caster' &&
+        v.motion === 'static' &&
+        formOf(fx.move) === 'melee'
+        ? 'multi'
+        : null;
+    }
     // a swept dash to the nearest foe and back (Quick Attack; Jess 2026-11-02), its i-frames included; any other commitment has no form
     if (v.motion === 'repositions')
       return v.repositionMode === 'swept' &&
@@ -61,17 +82,22 @@ G.Gyms = (() => {
     if (v.anchor === 'target') return v.motion === 'static' && v.targeting === 'nearest' && radial ? 'strike' : null;
     if (v.anchor !== 'caster') return null;
     if (v.motion === 'static' && radial && v.grow && v.grow.dim === 'radRadius') return 'nova';
-    if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee'; // a cone; beams wait for their own form
-    if (v.motion === 'travels' && (v.targeting === 'direction' || v.targeting === 'nearest') && !v.path && !v.aimTrack)
-      return 'shot';
+    if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee'; // a cone
+    if (v.motion === 'static' && v.targeting === 'nearest' && d.space.shape === 'linear' && !v.grow) return 'beam';
+    const aimed = v.targeting === 'direction' || v.targeting === 'nearest';
+    if (v.motion === 'returns') return aimed && radial ? 'returns' : null;
+    if (v.motion === 'travels' && aimed && !v.path && !v.aimTrack) return 'shot';
     return null;
   }
-  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range (a strike, a dash). A shot
-   *  reaches no further than it flies (speed x lifetime + size), capped at that range; a homing shot gets no credit for turning
-   *  (Jess 2026-11-01). */
+  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, a beam's length, a burst's cone
+   *  radius, else the move's range (a strike, a dash, the turnaround of a returns move). A shot reaches no further than it flies (speed x
+   *  lifetime + size), capped at that range; a homing shot gets no credit for turning (Jess 2026-11-01). A trail reaches nothing. */
   function reachOf(d, form) {
     if (form === 'melee') return d.space.radRadius;
     if (form === 'nova') return d.delivery.grow.max;
+    if (form === 'beam') return d.space.linLength;
+    if (form === 'multi') return d.payload[0].move.space.radRadius;
+    if (form === 'trail') return 0;
     const v = d.delivery,
       range = v.range != null ? v.range : G.MoveResolver.TUNING.RANGE;
     if (form !== 'shot') return range;
@@ -306,9 +332,9 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): Yellow Weepinbell; Razor Leaf waits on an out-and-back form. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): Yellow Weepinbell, the full lore set (Razor Leaf in the returns form). Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'acid' }, { id: 'stun-spore' }, { id: 'sleep-powder' }],
+            1: [{ id: 'razor-leaf' }, { id: 'acid' }, { id: 'stun-spore' }, { id: 'sleep-powder' }],
             2: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'sludge', hpBelow: 0.5 }],
           },
         },
@@ -368,10 +394,10 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): FRLG Koffing; Self-Destruct (utility weight 0, not imported), Smokescreen (accuracy slice) and Toxic
-          // (trail form) are still to come. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): FRLG Koffing, Toxic in the trail form; Self-Destruct (utility weight 0, not imported) and Smokescreen
+          // (accuracy slice) are still to come. Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'sludge' }],
+            1: [{ id: 'sludge' }, { id: 'toxic' }],
             2: [{ id: 'sludge' }, { id: 'tackle' }, { id: 'harden' }],
           },
         },
@@ -432,10 +458,10 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): FRLG Kadabra. STAND-IN: Confusion for Psybeam until the beam form; Future Sight and Reflect are not
-          // imported yet. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): FRLG Kadabra, Psybeam in the beam form; Future Sight and Reflect are not imported yet. Loop 2 on:
+          // the provisional set.
           sets: {
-            1: [{ id: 'confusion' }, { id: 'calm-mind' }],
+            1: [{ id: 'psybeam' }, { id: 'calm-mind' }],
             2: [{ id: 'shadow-ball' }, { id: 'psycho-cut' }, { id: 'agility' }],
           },
         },
@@ -557,10 +583,10 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): Stadium Rhydon; Fury Attack waits on a multi-hit form, Fissure is not imported yet. Loop 2 on: the
+          // Loop 1 (Jess 2026-11-02): Stadium Rhydon, Fury Attack in the burst form; Fissure is not imported yet. Loop 2 on: the
           // provisional set.
           sets: {
-            1: [{ id: 'earthquake' }, { id: 'body-slam' }],
+            1: [{ id: 'earthquake' }, { id: 'body-slam' }, { id: 'fury-attack' }],
             2: [{ id: 'body-slam' }, { id: 'mud-shot' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
           },
         },
@@ -702,7 +728,7 @@ G.Gyms = (() => {
               L +
                 ': ' +
                 m.id +
-                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, self buffs and self heals)'
+                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, returns, beams, bursts, trails, self buffs and self heals)'
             );
         }
         if (!damaging) bad.push(L + ' needs at least one damaging move');

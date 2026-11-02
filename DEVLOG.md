@@ -420,3 +420,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Defense Curl signed off (batchReviewed). Built the dash form: Quick Attack casts for leaders as a swept dash to the spot locked at a 0.6 s tell (warn-only line plus circle, the wild charger's hazard), one hit there, back to its start. Leaders keep the i-frames (Enemy.hurt now honours invuln; DoT still lands) and deal no contact damage mid-dash. Lt. Surge loop 1 complete.
 - Ruled: Self-Destruct on a leader is a closer (score 0 until about 20% HP), no weight knob; recorded in MOVE-INTENT, built with the import.
 - Verified: check.js 30/30, boss-owner 202 (new section 16), gym harness, live Surge fight on file:// (16 dashes, one hit each, no errors). Not yet feel-tested.
+
+## 2026-11-02, Leader returns, beam, burst and trail forms, slice 3 (Claude Code, home)
+- Jess merged the four remaining forms into one slice. Built in gyms.js formOf/reachOf and boss-ai.js: returns (Razor Leaf, 0.5 s tell), beam (Psybeam, 0.5 s tell with a warning line), multi (Fury Attack, 0.45 s, jabs re-aimed), trail (Toxic, persistent, via new G.MoveSim.persist). The sim now also ends a persistent group on its owner's stun or faint in the step.
+- Loop-1 sets: Erika + Razor Leaf, Koga + Toxic, Sabrina Psybeam for Confusion, Giovanni + Fury Attack.
+- Found: a player dead centre at about 150 px slips between Razor Leaf's two leaves (0.5 rad fan); point blank takes 4 hits.
+- Verified: check.js 30/30, boss-owner 228 (new section 17, two mutations caught), gym harness ALL OK, live loop-1 fights of all four on file:// with no page errors. Not yet feel-tested.

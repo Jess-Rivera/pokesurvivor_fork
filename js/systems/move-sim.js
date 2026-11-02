@@ -42,7 +42,10 @@
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
  *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
  *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
- *   flinch(owner)         a flinch on the player (gym-roster, Jess 2026-11-01): every cooldown move of the active group restarts its full
+ *   persist(owner, now)   slice 3 of the gym lore sets (Jess 2026-11-02): the persistent upkeep alone, for a gym leader's brain, so a
+ *                         persistent slot (Toxic's trail) lives while it is in the active group, as the player's does. A faint or a stun
+ *                         ends a persistent group in the step too (checkEnd), since a stunned or fainted mon's brain does not run.
+ *   flinch(owner)        a flinch on the player (gym-roster, Jess 2026-11-01): every cooldown move of the active group restarts its full
  *                         cooldown plus FLINCH_HOLD (a bonded group is hit together). Pure buffs, persistent moves, frozen slots, the
  *                         inactive groups and the shapes already out are untouched.
  *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
@@ -1025,6 +1028,11 @@ G.MoveSim = (() => {
   function checkEnd(inst) {
     const owned = OWNED[inst.spec.delivery.motion];
     if (owned && inst.cast.owner.dead) return 'ownerDeath'; // a faint ends a bone or a dash, listed or not
+    if (inst.cast.persist) {
+      // H25: a faint or a stun ends a persistent group (upkeepPersistent does it for the player; a gym mon's brain skips those frames)
+      if (inst.cast.owner.dead) return 'ownerDeath';
+      if (G.Status.stunned(inst.cast.owner)) return 'notActive';
+    }
     if (inst.dash && inst.phase === 'done' && !inst.spec.delivery.returnToOrigin) return 'arrived'; // a one-way dash ends after its armed step at B, listed or not
     if (inst.fired) return 'triggered'; // 4d: a contact mine is gone once it has gone off
     for (const c of inst.spec.delivery.endOn || [])
@@ -1127,6 +1135,7 @@ G.MoveSim = (() => {
     step,
     clear,
     castAt,
+    persist: upkeepPersistent,
     flinch,
     setRng: (fn) => {
       rng = fn || Math.random;

@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Leader returns, beam, burst and trail forms in one slice (Jess)
+The four remaining leader forms ship as one slice for larger batches. Razor Leaf flies out and back as its data says (two leaves, one hit per leaf per leg). Psybeam is a beam with a warning line. Fury Attack's jabs each re-aim at you. Toxic is a move slot like every other trail move: alive while the mon is out, ended by a stun, a swap or a faint. The Psycho Cut stand-ins for Psybeam in later loops stay for now.
+Canonical: docs/BOSS-AUTHORING.md "Validation rules" (gym forms)
+
 ## 2026-11-02, Leader dash form; Self-Destruct as a closer (Jess)
 A gym leader casts Quick Attack as a dash to your spot locked at its 0.6 s tell (warning line), one hit there, then back; the leader keeps the i-frames and deals no contact damage while dashing. Self-Destruct on a leader scores 0 in the utility pick until the mon is nearly beaten, then it is the finisher; no new weight setting.
 Canonical: docs/MOVE-INTENT.md quick-attack and self-destruct; docs/BOSS-AUTHORING.md "Validation rules"

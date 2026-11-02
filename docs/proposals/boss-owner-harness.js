@@ -87,8 +87,12 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(!forms('surf') && !forms('fly'), 'movement skills (Surf, Fly) have no gym form');
   ok(['recover', 'synthesis', 'moonlight'].every(id => forms(id) === 'heal') && forms('defense-curl') === 'buff' && forms('drain-punch') === 'melee', 'self heals of max HP are the heal form; Defense Curl a buff; a drain stays its shape');
   ok(forms('confusion') === 'shot' && forms('psychic') === 'shot', 'homing shots (Confusion, Psychic) cast as shots');
-  const beam = { id: 'beam', space: { shape: 'linear', len: 200, width: 10 }, delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static' }, payload: [{ t: 'damage' }] };
-  ok(!Gy.formOf(beam), 'a beam (a static linear shape) has no gym form yet');
+  // lore-set slice 3 (Jess 2026-11-02): reach from the move data, Razor Leaf range 210, Psybeam 215 long, Fury Attack's jab cone 54
+  ok(forms('razor-leaf') === 'returns' && forms('bonemerang') === 'returns' && Gy.reachOf(G.MoveDefs['razor-leaf'], 'returns') === 210, 'Razor Leaf and Bonemerang are the returns form, Razor Leaf reach 210');
+  ok(forms('psybeam') === 'beam' && Gy.reachOf(G.MoveDefs.psybeam, 'beam') === 215, 'Psybeam (a static linear shape) is the beam form, reach 215');
+  ok(forms('fury-attack') === 'multi' && Gy.reachOf(G.MoveDefs['fury-attack'], 'multi') === 54, 'Fury Attack (three cast-emitted cones) is the multi form, reach 54');
+  ok(forms('toxic') === 'trail' && forms('flame-wheel') === 'trail', 'Toxic and Flame Wheel (persistent casterMove emitters) are the trail form');
+  ok(!forms('string-shot') && !forms('toxic-spikes'), 'an emitter of shots (String Shot) or a placed emitter (Toxic Spikes) still has no form');
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
     ['unknown card', s => { s.cards.luck = 1; }, 'unknown card luck'],
@@ -465,6 +469,52 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     G.World.isFree = W; ok(maxX < 100 && maxX > sx, 'a wall at x 100 stops the dash short: furthest x ' + maxX.toFixed(1)); }
   off && off();
   console.log('16 dash: warn line and circle at the locked spot, one hit there, back to the start, i-frames + 0.3 s tail, a sidestep dodges, 420 range, walls cut it'); }
+
+// 17. lore-set slice 3 forms (Jess 2026-11-02), from the move data: Razor Leaf 2 leaves radius 6 in a 0.5 rad fan (each 0.25 rad off the
+// aim), 210 px out at 330 px/s and back, one hit per leaf per leg; Psybeam a 215 x 30 line for 0.5 s; Fury Attack 3 cones of radius 54
+// every 0.11 s, each re-aimed at the nearest foe; Toxic a persistent trail, one 22 px puddle per 0.1 s of moving time, poison 100.
+// Wind-ups (TUNE): returns and beam 0.5 s, multi 0.45 s. The player's body radius is 12. The boss is held in place unless it walks.
+{ const one = (ids) => { fresh(); hazards.length = 0; const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; return [e, b]; };
+  const ends = [], emits = [];
+  const offE = G.SimBus.on('move:end', ev => ends.push(ev)), offM = G.SimBus.on('move:emit', ev => emits.push(ev));
+  // a) returns: at 60 px dead ahead each leaf passes 60 x sin 0.25 = 14.8 px off the player (< 6 + 12), so 2 leaves x 2 legs = 4 hits;
+  // at 150 px the gap is 37 px, so a player dead centre slips between them
+  { const [e, b] = one(['razor-leaf']); pl.x = 60; pl.y = 0; ends.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'returns' && near(b.tell.wind, 0.5), 'a 0.5 s returns tell at 60 px');
+    for (let i = 0; i < 180 && ends.filter(ev => ev.moveId === 'razor-leaf').length < 2; i++) frame(e); // until both leaves of the first throw end
+    ok(pl.hurts.length === 4, 'two leaves, out and back, hit a player at 60 px four times: ' + pl.hurts.length);
+    const rl = ends.filter(ev => ev.moveId === 'razor-leaf');
+    ok(rl.length === 2 && rl.every(ev => ev.reason === 'returned'), 'both leaves end by returning to the leader: ' + rl.map(ev => ev.reason)); }
+  { const [e, b] = one(['razor-leaf']); pl.x = 150; pl.y = 0; run(e, 2.5); ok(casts['razor-leaf'] >= 1 && pl.hurts.length === 0, 'a player 150 px dead ahead slips between the two leaves'); }
+  { const [e, b] = one(['razor-leaf']); pl.x = 240; pl.y = 0; frame(e); ok(!b.tell, 'no returns tell at 240 px, past its 210 range'); }
+  // b) beam: a warning line along the locked aim, one hit, a sidestep past 15 + 12 px dodges it
+  { const [e, b] = one(['psybeam']); pl.x = 200; pl.y = 0; frame(e);
+    const line = hazards.find(h => h.kind === 'beam');
+    ok(b.tell && b.tell.form === 'beam' && near(b.tell.wind, 0.5), 'a 0.5 s beam tell at 200 px');
+    ok(line && line.warn && line.len === 215 && line.w === 30 && near(line.delay, 0.5) && near(line.angle, 0), 'the tell shows a warn-only line 215 long, 30 wide, for 0.5 s along the aim');
+    run(e, 1.2); ok(pl.hurts.length === 1, 'Psybeam hits the player who stayed once: ' + pl.hurts.length); }
+  { const [e, b] = one(['psybeam']); pl.x = 200; pl.y = 0; frame(e); pl.y = 40; run(e, 1.2); ok(casts.psybeam >= 1 && pl.hurts.length === 0, 'a player 40 px off the locked line is missed'); }
+  { const [e, b] = one(['psybeam']); pl.x = 235; pl.y = 0; frame(e); ok(!b.tell, 'no beam tell at 235 px, past 215 + 12'); }
+  // c) multi: three jabs, each re-aimed, so a player who walks behind the leader during the wind-up still takes all three
+  { const [e, b] = one(['fury-attack']); pl.x = 40; pl.y = 0; frame(e);
+    ok(b.tell && b.tell.form === 'multi' && near(b.tell.wind, 0.45), 'a 0.45 s multi tell at 40 px');
+    pl.x = -40; run(e, 1); ok(pl.hurts.length === 3, 'three jabs, each re-aimed, hit a player who moved behind the leader: ' + pl.hurts.length); }
+  { const [e, b] = one(['fury-attack']); pl.x = 70; pl.y = 0; frame(e); ok(!b.tell, 'no multi tell at 70 px, past 54 + 12');
+    ok(near(b.reach(), 54) && b.melee, 'the burst is a close move: the brain walks in for it, reach 54'); }
+  { const [e, b] = one(['fury-attack', 'body-slam']); ok(b.contact === 'body-slam', 'contact stays the melee cone (Body Slam), not the burst'); }
+  // d) trail: a persistent slot, puddles only while the leader moves, ended by a stun and a faint, back after the stun
+  { const [e, b] = one(['toxic']); pl.x = 300; pl.y = 300; emits.length = 0; run(e, 1);
+    ok(Sim.persisted(e).length === 1 && Sim.persisted(e)[0].moveId === 'toxic', 'Toxic lives as a persistent group while it is in the active group');
+    ok(!emits.some(ev => ev.moveId === 'toxic') && !b.tell, 'a leader standing still drops no puddles, and the trail never starts a tell');
+    let x = 0; pl.x = 60; pl.y = 0; run(e, 1, { each: () => { x += 2; }, get bx() { return x; } });
+    const n = emits.filter(ev => ev.moveId === 'toxic').length;
+    ok(n >= 9 && n <= 10, '1 s of walking drops about 10 puddles (one per 0.1 s of moving time): ' + n);
+    ok(G.Status.majorKind(pl) === 'poison', 'a player standing on the trail is poisoned');
+    G.Status.apply(e, 'sleep'); frame(e, { bx: x }); ok(Sim.persisted(e).length === 0, 'a stun ends the trail');
+    G.Status.clear(e); frame(e, { bx: x }); ok(Sim.persisted(e).length === 1, 'the trail comes back once the stun is gone');
+    e.dead = true; G.MoveRoute.tick(DT, pl, clock); ok(Sim.persisted(e).length === 0, 'a faint ends the trail'); }
+  offE && offE(); offM && offM(); pl.x = 0; pl.y = 0;
+  console.log('17 slice-3 forms: Razor Leaf 4 hits at 60 px and returns (a centred player slips the gap at 150), Psybeam warn line and one hit, Fury Attack 3 re-aimed jabs, Toxic trail only while moving, ended by stun and faint'); }
 
 console.warn = origWarn;
 console.log(fail ? fail + ' FAILED (' + n + ' checks)' : 'ALL OK (' + n + ' checks)');

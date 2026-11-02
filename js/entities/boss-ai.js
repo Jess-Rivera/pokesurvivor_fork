@@ -9,18 +9,23 @@
  * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
  * The attack is picked by a utility score (attack(): freshness x fit x opportunity, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
- * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player lands
+ * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still.
+ * Lore-set slice 3 (Jess 2026-11-02): a returns move (Razor Leaf) and a beam (Psybeam, with a warning line) tell 0.5 s, a burst (Fury
+ * Attack) 0.45 s with each jab re-aimed at you; a trail (Toxic) is a persistent slot kept by G.MoveSim.persist, with no tell. A hit on the player lands
  * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Recoil costs the mon HP (never
  * below 1) and a self heal (Recover) casts with no tell while it is hurt (Jess 2026-11-02). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px,
- * closer while its longest ready shot or strike falls short of that (it walks in to use it, Jess 2026-11-01);
+ * closer while its longest ready ranged move falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
  */
 G.Boss = (() => {
-  const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5, dash: 0.6 }; // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02), divided by tempo; a pure buff has none
-  const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
-  const ORDER = ['melee', 'nova', 'strike', 'dash', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
+  // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02; returns, beam, multi TUNE 2026-11-02), divided by tempo; a
+  // pure buff, a self heal and a trail have none
+  const TELL = { melee: 0.45, nova: 0.45, multi: 0.45, shot: 0.5, strike: 0.5, returns: 0.5, beam: 0.5, dash: 0.6 };
+  const CLOSE = ['melee', 'nova', 'multi']; // forms cast from the body, so the close stance walks in for them
+  const RANGED = ['shot', 'strike', 'dash', 'returns', 'beam']; // forms far mode keeps you inside of
+  const ORDER = ['melee', 'nova', 'multi', 'strike', 'dash', 'beam', 'returns', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
   const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
   // TUNE, the opportunity factor (Jess 2026-11-01): a Hex-like move (statusBonus) while you carry a major ailment; a move whose major
   // ailment cannot land since you already carry one; a move whose foe stat drop is not on you yet
@@ -92,6 +97,7 @@ G.Boss = (() => {
       if (this.wait > 0) this.wait -= dt;
       this.buffs(now);
       this.heals(now);
+      G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as the player's does
       G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
       if (e.mvRoot) return [0, 0, 'Walk']; // a live dash (Quick Attack) carries the body; the brain does not steer until it is back
       if (this.tell) return this.telling(dt, now);
@@ -121,7 +127,7 @@ G.Boss = (() => {
           vx = -ux * spd;
           vy = -uy * spd;
         } else if (dist < out) circle();
-      } else if (!this.ready('melee') && !this.ready('nova')) {
+      } else if (!CLOSE.some((f) => this.ready(f))) {
         // close, every close move recharging: circle just outside its reach
         const r = this.reach() + (pl.r || 0) + 30;
         if (dist < r) {
@@ -149,14 +155,14 @@ G.Boss = (() => {
       return r;
     }
 
-    /** The reach of the mon's longest ready shot or strike, or Infinity when none is ready: far mode keeps you inside it. */
+    /** The reach of the mon's longest ready ranged move (RANGED), or Infinity when none is ready: far mode keeps you inside it. */
     ranged() {
       let r = -Infinity;
       for (const s of this.e.activeGroup()) {
         if (s.t > 0) continue;
         const d = this.def(s.id),
           f = G.Gyms.formOf(d);
-        if (f === 'shot' || f === 'strike' || f === 'dash') r = Math.max(r, G.Gyms.reachOf(d, f));
+        if (RANGED.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
       }
       return r > -Infinity ? r : Infinity;
     }
@@ -247,7 +253,23 @@ G.Boss = (() => {
           };
         G.Hazards.add(w);
         G.Hazards.add(Object.assign({}, w, { kind: 'zone', x: end.x, y: end.y, r: d.space.radRadius }));
-      } else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
+      } else if (form === 'beam')
+        // the warning line along the locked aim, the beam's full length and width (Jess 2026-11-02)
+        G.Hazards.add({
+          kind: 'beam',
+          warn: true,
+          src: e,
+          x: e.x,
+          y: e.y,
+          angle: ang,
+          len: d.space.linLength,
+          w: d.space.linWidth,
+          delay: wind,
+          dmg: 0,
+          type: d.type,
+          color: col,
+        });
+      else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
       else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
     }
 
