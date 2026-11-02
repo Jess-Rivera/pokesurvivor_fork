@@ -1,0 +1,347 @@
+<!doctype html>
+<!-- Move Lab (dev tool, never ships; Jess 2026-11-01). Every move in the catalog with the upgrade cards folded in, for hand authoring gym
+     slots. It loads the game's own move scripts, so it never drifts from the game: open it from the repo (double-click, or through the
+     local server like dev.html). Cards here work like a gym slot's `cards`: held by one mon and applied to every one of its moves they fit.
+     "Load gym" pulls a leader's lineup for a loop and level through G.Gyms.lineup (loop N fields the first N mons). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Move Lab</title>
+<style>
+  :root { --bg: #15171c; --panel: #1e2128; --line: #2e323b; --text: #e4e6eb; --dim: #8b919c; --hi: #ffd23f; --up: #5fcb6a; --down: #ff7a6b; --acc: #6ea4ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 system-ui, sans-serif; }
+  header { padding: 8px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; min-height: 44px; }
+  header h1 { font-size: 16px; margin: 0; }
+  header span { color: var(--dim); }
+  header label { color: var(--dim); font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+  header input[type=number] { width: 56px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; }
+  main { display: grid; grid-template-columns: 240px 1fr 300px; height: calc(100vh - 46px); }
+  section { overflow: auto; padding: 12px; border-right: 1px solid var(--line); }
+  section:last-child { border-right: 0; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin: 14px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  input[type=search] { width: 100%; padding: 6px 8px; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 4px; }
+  .filters { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+  select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 3px; }
+  .move { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+  .move:hover { background: var(--panel); }
+  .move.sel { background: #2b3242; }
+  .move .nm { flex: 1; }
+  .move .tag { color: var(--dim); font-size: 11px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+  .title { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .title b { font-size: 18px; }
+  .tag { color: var(--dim); font-size: 12px; }
+  .pill { font-size: 11px; padding: 1px 6px; border-radius: 9px; background: #2b3242; color: var(--text); }
+  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; margin-top: 8px; }
+  .kv div span { display: block; color: var(--dim); font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  td, th { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--dim); font-weight: 500; font-size: 11px; }
+  td.path { color: var(--dim); font-family: ui-monospace, monospace; font-size: 12px; }
+  tr.ch td { background: #2a2a1c; }
+  tr.ch td.eff { color: var(--hi); font-weight: 600; }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .crow { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+  .crow .lb { flex: 1; }
+  .crow .st { color: var(--dim); font-size: 11px; width: 44px; text-align: right; }
+  .crow.off { opacity: 0.38; }
+  .crow button, .btn { background: #2b3242; color: var(--text); border: 1px solid var(--line); border-radius: 4px; width: 22px; height: 22px; cursor: pointer; padding: 0; }
+  button:disabled { opacity: 0.35; cursor: default; }
+  .crow .n { width: 18px; text-align: center; font-weight: 600; }
+  .btn { width: auto; padding: 0 10px; height: 26px; }
+  .note { color: var(--dim); font-size: 11px; margin: 4px 0 8px; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; white-space: pre-wrap; font-size: 12px; margin: 6px 0; }
+  label.chk { color: var(--dim); font-size: 12px; display: inline-flex; gap: 4px; align-items: center; text-transform: none; letter-spacing: 0; }
+  .err { color: var(--down); padding: 20px; }
+  .mon { margin-bottom: 12px; }
+  .mon .mh { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 4px 6px; border-radius: 4px; cursor: pointer; margin-bottom: 6px; }
+  .mon.act .mh { background: #2b3242; }
+  .mon .mh b { font-size: 14px; }
+  .mon .mh .cs { color: var(--hi); font-size: 12px; }
+  .slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .mini { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; cursor: pointer; position: relative; min-height: 110px; }
+  .mini.sel { border-color: var(--acc); }
+  .mini.empty { display: flex; align-items: center; justify-content: center; color: var(--dim); cursor: default; border-style: dashed; }
+  .mini > b { display: block; margin-right: 22px; }
+  .mini .row { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; }
+  .mini .row span:first-child { color: var(--dim); }
+  .mini .row span:last-child { white-space: nowrap; }
+  .mini .fx { color: var(--dim); font-size: 11px; margin-top: 4px; }
+  .mini .hp { color: var(--hi); font-size: 11px; }
+  .mini .x { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; padding: 0; }
+  @media (max-width: 1200px) { .slots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } section { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+<script>window.G = {};</script>
+<script src="../js/core/util.js"></script>
+<script src="../js/data/pokedex.js"></script>
+<script src="../js/data/types.js"></script>
+<script src="../js/data/move-attributes.js"></script>
+<script src="../js/data/moves-generated.js"></script>
+<script src="../js/data/move-overrides.js"></script>
+<script src="../js/data/move-handler.js"></script>
+<script src="../js/data/move-resolver.js"></script>
+<script src="../js/data/moves.js"></script>
+<script src="../js/systems/team-cards.js"></script>
+<script src="../js/data/gyms.js"></script>
+<script src="../js/ui/move-info.js"></script>
+</head>
+<body>
+<header><h1>Move Lab</h1>
+  <label>Gym <select id="gGym"></select></label>
+  <label>Loop <select id="gLoop"></select></label>
+  <label>Level <input type="number" id="gLvl" min="1" max="100"></label>
+  <button class="btn" id="gLoad">Load gym</button>
+  <button class="btn" id="gFree">Blank mon</button>
+  <span id="sub"></span></header>
+<main>
+  <section>
+    <input type="search" id="q" placeholder="Search moves">
+    <div class="filters"><select id="fType"></select><select id="fForm"></select></div>
+    <div id="list"></div>
+  </section>
+  <section id="detail"></section>
+  <section>
+    <h2 id="cardsFor">Cards</h2>
+    <div class="note">Held by one mon and applied to every one of its moves they fit, like a gym slot's <code>cards</code>. Click a mon's name to edit its cards.</div>
+    <button class="btn" id="clear">Clear this mon's cards</button>
+    <div id="cards"></div>
+    <h2>Copy for gyms.js</h2>
+    <div class="note">Every mon on screen, in slot order. Paste each block into its signature.</div>
+    <pre id="out"></pre>
+    <button class="btn" id="copy">Copy</button>
+  </section>
+</main>
+<script>
+(() => {
+  const TC = G.TeamCards, MI = G.MoveInfo, Gy = G.Gyms;
+  if (!G.MoveDefs || !TC || !Gy) {
+    document.querySelector('main').innerHTML = '<div class="err">The move scripts did not load. Open this file from tools/ inside the repo.</div>';
+    return;
+  }
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const ids = Object.keys(G.MoveDefs).filter((id) => !(G.Moves && G.Moves.RETIRED[id])).sort((a, b) => MI.name(a).localeCompare(MI.name(b)));
+  const color = (t) => (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[t]) || '#888';
+  const formOf = (d) => Gy.formOf(d) || 'none';
+  const dexName = (dex) => (G.DEX_BY && G.DEX_BY[dex] ? G.DEX_BY[dex].name : '#' + dex);
+  const GYMS = Gy.KANTO;
+  const MAX = 4;
+  const blank = () => ({ label: 'Custom mon', meta: null, moves: [], cards: {} });
+
+  // State: the mons on screen (one blank mon, or a gym's lineup for a loop), the mon whose cards are edited (act), the move in the detail.
+  let st = { mons: [blank()], act: 0, sel: ids[0], changedOnly: false, gym: 2, loop: 4, lvl: 30 };
+  try {
+    const s = JSON.parse(localStorage.getItem('moveLab2') || 'null');
+    if (s && Array.isArray(s.mons) && s.mons.length) st = Object.assign(st, s);
+    st.mons.forEach((m) => (m.moves = (m.moves || []).filter((x) => G.MoveDefs[x.id])));
+    if (!G.MoveDefs[st.sel]) st.sel = ids[0];
+    if (!(st.act < st.mons.length)) st.act = 0;
+  } catch (e) {}
+  const save = () => {
+    try { localStorage.setItem('moveLab2', JSON.stringify(st)); } catch (e) {}
+  };
+  const mon = () => st.mons[st.act];
+
+  $('sub').textContent = ids.length + ' moves, ' + TC.CARDS.length + ' cards, read live from js/data and js/systems';
+  $('gGym').innerHTML = GYMS.map((g, i) => `<option value="${i}">${i + 1}. ${esc(g.leader)}</option>`).join('');
+  $('gLoop').innerHTML = Array.from({ length: Gy.LOOPS }, (_, i) => `<option>${i + 1}</option>`).join('');
+  $('gGym').value = st.gym;
+  $('gLoop').value = st.loop;
+  $('gLvl').value = st.lvl;
+  const types = [...new Set(ids.map((id) => G.MoveDefs[id].type))].sort();
+  $('fType').innerHTML = '<option value="">All types</option>' + types.map((t) => `<option>${t}</option>`).join('');
+  $('fForm').innerHTML = '<option value="">All leader forms</option>' + ['melee', 'nova', 'strike', 'shot', 'buff', 'none'].map((f) => `<option>${f}</option>`).join('');
+
+  /** The gym's lineup for that loop at that level (G.Gyms.lineup, the game's own rule): one mon per signature, its moves and cards copied. */
+  function loadGym() {
+    st.gym = +$('gGym').value;
+    st.loop = +$('gLoop').value;
+    st.lvl = Math.max(1, Math.min(100, +$('gLvl').value || 30));
+    st.mons = Gy.lineup(GYMS[st.gym], st.loop, st.lvl).map((u) => ({
+      label: dexName(u.dex),
+      meta: {
+        slot: u.index + 1,
+        line: u.sig.line.map((x) => dexName(x.dex) + ' ' + x.minLevel).join(' > '),
+        stance: u.sig.stance || 'mixed',
+        power: u.sig.power || 1,
+        tempo: u.sig.tempo || 1,
+      },
+      moves: u.sig.moves.map((m) => Object.assign({}, m)),
+      cards: Object.assign({}, u.sig.cards || {}),
+    }));
+    st.act = 0;
+    if (st.mons[0].moves[0]) st.sel = st.mons[0].moves[0].id;
+    render();
+  }
+
+  const eff = (id, m = mon()) => TC.fold(G.MoveDefs[id], m.cards);
+  const fmt = (v) => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(+v.toFixed(3))) : v === undefined ? '' : JSON.stringify(v));
+  const delta = (a, b) => (a === b || a == null || b == null ? fmt(b) : `${fmt(a)} &rarr; <b class="${b > a ? 'up' : 'down'}">${fmt(b)}</b>`);
+  /** path -> value for every leaf of a def, payload effects labelled by their kind. */
+  function flat(o, p = '', out = {}) {
+    if (Array.isArray(o)) o.forEach((x, i) => flat(x, p + '[' + i + (x && x.t ? ' ' + x.t : '') + ']', out));
+    else if (o && typeof o === 'object') {
+      for (const k of Object.keys(o)) if (p || (k !== 'flavor_text' && k !== 'name' && k !== 'id')) flat(o[k], p ? p + '.' + k : k, out);
+    } else out[p] = o;
+    return out;
+  }
+  const cardText = (cards) =>
+    Object.keys(cards).filter((k) => cards[k] > 0).map((k) => (TC.cardOf(k) ? TC.cardOf(k).label : k) + ' ' + cards[k]).join(', ');
+
+  function list() {
+    const q = $('q').value.trim().toLowerCase(), ft = $('fType').value, ff = $('fForm').value;
+    $('list').innerHTML = ids
+      .filter((id) => {
+        const d = G.MoveDefs[id];
+        return (!q || id.includes(q) || MI.name(id).toLowerCase().includes(q)) && (!ft || d.type === ft) && (!ff || formOf(d) === ff);
+      })
+      .map((id) => {
+        const d = G.MoveDefs[id];
+        return `<div class="move${id === st.sel ? ' sel' : ''}" data-id="${id}"><span class="dot" style="background:${color(d.type)}"></span><span class="nm">${esc(MI.name(id))}</span><span class="tag">${formOf(d)}</span></div>`;
+      })
+      .join('');
+  }
+
+  /** One move card in a mon's row: its numbers with that mon's cards folded in. */
+  function mini(m, mi, mv) {
+    const id = mv.id, b = G.MoveDefs[id], x = eff(id, m), f = Gy.formOf(b);
+    return `<div class="mini${id === st.sel && mi === st.act ? ' sel' : ''}" data-pick="${id}" data-mon="${mi}">
+      <button class="btn x" data-rm="${id}" data-mon="${mi}" title="Remove from this mon">&times;</button>
+      <b><span class="dot" style="background:${color(b.type)}"></span> ${esc(b.name)}</b>
+      ${mv.hpBelow != null ? '<div class="hp">joins below ' + Math.round(mv.hpBelow * 100) + '% HP</div>' : ''}
+      <div class="row"><span>form</span><span>${f || 'none'}</span></div>
+      <div class="row"><span>power</span><span>${delta(b.basePower, x.basePower)}</span></div>
+      <div class="row"><span>cooldown</span><span>${delta(b.cd, x.cd)}</span></div>
+      <div class="row"><span>reach</span><span>${f && f !== 'buff' ? delta(Gy.reachOf(b, f), Gy.reachOf(x, f)) : '-'}</span></div>
+      <div class="fx">${esc(MI.effects(x).join(', ') || 'no effects')}</div></div>`;
+  }
+
+  function detail() {
+    const roster = st.mons
+      .map((m, mi) => {
+        const mt = m.meta;
+        const info = mt ? `slot ${mt.slot} &middot; ${esc(mt.line)} &middot; ${mt.stance}, power ${mt.power}, tempo ${mt.tempo}` : 'not from a gym';
+        const cs = cardText(m.cards);
+        const row = [0, 1, 2, 3].map((i) => (m.moves[i] ? mini(m, mi, m.moves[i]) : '<div class="mini empty">empty</div>')).join('');
+        return `<div class="mon${mi === st.act ? ' act' : ''}"><div class="mh" data-act="${mi}"><b>${esc(m.label)}</b><span class="tag">${info}</span><span class="cs">${cs ? 'cards: ' + esc(cs) : 'no cards'}</span></div><div class="slots">${row}</div></div>`;
+      })
+      .join('');
+    const n = st.mons.length;
+    const top = st.mons[0].meta ? `<h2>${esc(GYMS[st.gym].leader)}, loop ${st.loop}, level ${st.lvl}: ${n} mon${n > 1 ? 's' : ''}</h2>` : '<h2>Blank mon</h2>';
+    const base = G.MoveDefs[st.sel], e = eff(st.sel), form = Gy.formOf(base);
+    const fb = flat(base), fe = flat(e), keys = [...new Set([...Object.keys(fb), ...Object.keys(fe)])];
+    const rows = keys
+      .filter((k) => !st.changedOnly || fb[k] !== fe[k])
+      .map((k) => `<tr class="${fb[k] !== fe[k] ? 'ch' : ''}"><td class="path">${esc(k)}</td><td>${esc(fmt(fb[k]))}</td><td class="eff">${esc(fmt(fe[k]))}</td></tr>`)
+      .join('');
+    const nCh = keys.filter((k) => fb[k] !== fe[k]).length;
+    const who = esc(mon().label), has = mon().moves.some((x) => x.id === st.sel), full = mon().moves.length >= MAX;
+    $('detail').innerHTML =
+      top +
+      roster +
+      `<div class="card">
+        <div class="title"><span class="dot" style="background:${color(base.type)}"></span><b>${esc(base.name)}</b><span class="pill">${base.type}</span><span class="pill">${MI.cat(st.sel)}</span><span class="pill">leader form: ${form || 'none'}</span><code class="tag">${st.sel}</code><span class="tag">with ${who}'s cards</span></div>
+        <div class="note">${esc(MI.desc(st.sel))}</div>
+        <div class="kv">
+          <div><span>Power (basePower)</span>${delta(base.basePower, e.basePower)}</div>
+          <div><span>Cooldown (s)</span>${delta(base.cd, e.cd)}</div>
+          <div><span>Leader reach (px)</span>${!form ? 'not castable by a leader' : form === 'buff' ? 'self buff, no reach' : delta(Gy.reachOf(base, form), Gy.reachOf(e, form))}</div>
+          <div><span>Effects</span>${esc(MI.effects(e).join(', ') || 'none')}</div>
+        </div>
+        <div style="margin-top:8px"><button class="btn" id="add"${!has && full ? ' disabled' : ''}>${has ? 'Remove from ' + who : full ? who + ' is full (4)' : 'Add to ' + who}</button></div>
+      </div>
+      <h2>Fields <label class="chk"><input type="checkbox" id="chOnly"${st.changedOnly ? ' checked' : ''}> changed only (${nCh})</label></h2>
+      <table><tr><th>field</th><th>base</th><th>with cards</th></tr>${rows || '<tr><td colspan="3" class="note">No field changed.</td></tr>'}</table>`;
+    $('add').onclick = () => {
+      const m = mon();
+      m.moves = has ? m.moves.filter((x) => x.id !== st.sel) : full ? m.moves : [...m.moves, { id: st.sel }];
+      render();
+    };
+    $('chOnly').onchange = (ev) => {
+      st.changedOnly = ev.target.checked;
+      render();
+    };
+  }
+
+  function cards() {
+    const m = mon(), base = G.MoveDefs[st.sel], scope = m.moves.length ? m.moves.map((x) => x.id) : [st.sel];
+    $('cardsFor').textContent = 'Cards on ' + m.label;
+    let h = '';
+    for (const fam of ['Space', 'Delivery', 'Payload', 'General']) {
+      h += `<h2>${fam}</h2>`;
+      for (const c of TC.CARDS.filter((c) => c.family === fam)) {
+        const n = m.cards[c.id] || 0,
+          fitsSel = !c.team && TC.usable(c, base),
+          fitsAny = !c.team && scope.some((id) => TC.usable(c, G.MoveDefs[id]));
+        const why = c.team ? 'team card, changes no move field (not allowed on a gym slot)' : fitsSel ? '' : fitsAny ? "fits another of this mon's moves, not this one" : "no effect on this mon's moves";
+        const max = c.cap && n >= c.cap;
+        h += `<div class="crow${fitsAny || n ? '' : ' off'}" title="${esc(why)}"><span class="lb">${esc(c.label)}${c.cap ? ' <span class="tag">cap ' + c.cap + '</span>' : ''}</span><span class="st">${TC.stepText(c)}</span>
+          <button data-c="${c.id}" data-d="-1"${n ? '' : ' disabled'}>&minus;</button><span class="n">${n}</span><button data-c="${c.id}" data-d="1"${c.team || max || !fitsAny ? ' disabled' : ''}>+</button></div>`;
+      }
+    }
+    $('cards').innerHTML = h;
+  }
+
+  function out() {
+    $('out').textContent = st.mons
+      .map((m) => {
+        const ms = m.moves.map((x) => `{ id: '${x.id}'${x.hpBelow != null ? ', hpBelow: ' + x.hpBelow : ''} }`).join(', ');
+        const cs = Object.keys(m.cards)
+          .filter((k) => m.cards[k] > 0)
+          .map((k) => (/^[a-z]+$/.test(k) ? k : `'${k}'`) + ': ' + m.cards[k])
+          .join(', ');
+        return (m.meta ? `// Slot ${m.meta.slot}: ${m.label}\n` : '') + `moves: [${ms}],` + (cs ? `\ncards: { ${cs} },` : '');
+      })
+      .join('\n\n');
+  }
+
+  function render() {
+    list();
+    detail();
+    cards();
+    out();
+    save();
+  }
+
+  $('q').oninput = list;
+  $('fType').onchange = list;
+  $('fForm').onchange = list;
+  $('list').onclick = (ev) => {
+    const m = ev.target.closest('.move');
+    if (m) { st.sel = m.dataset.id; render(); }
+  };
+  $('detail').addEventListener('click', (ev) => {
+    const rm = ev.target.closest('button[data-rm]');
+    if (rm) {
+      const m = st.mons[+rm.dataset.mon];
+      m.moves = m.moves.filter((x) => x.id !== rm.dataset.rm);
+      render();
+      return;
+    }
+    const pk = ev.target.closest('[data-pick]');
+    if (pk) { st.sel = pk.dataset.pick; st.act = +pk.dataset.mon; render(); return; }
+    const a = ev.target.closest('[data-act]');
+    if (a) { st.act = +a.dataset.act; render(); }
+  });
+  $('cards').onclick = (ev) => {
+    const b = ev.target.closest('button[data-c]');
+    if (!b) return;
+    const c = mon().cards, id = b.dataset.c;
+    c[id] = Math.max(0, (c[id] || 0) + +b.dataset.d);
+    if (!c[id]) delete c[id];
+    render();
+  };
+  $('clear').onclick = () => { mon().cards = {}; render(); };
+  $('copy').onclick = () => { if (navigator.clipboard) navigator.clipboard.writeText($('out').textContent); };
+  $('gLoad').onclick = loadGym;
+  $('gFree').onclick = () => { st.mons = [blank()]; st.act = 0; render(); };
+  render();
+})();
+</script>
+</body>
+</html>

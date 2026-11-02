@@ -354,3 +354,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Verified: check.js 30/30, boss-owner harness 175 (new section 15; section 14 Psychic sets now scored at 150 px), mutations 58/58 (4 new, 1 stale re-pointed), smoke-ui pass. smoke-newcombat skipped from now on by Jess (flaky, slow; TODO Backlog).
 - Jess feel-tested: feels good. feature/shot-reach fast-forwarded into feature/gym-roster.
 - Next: tune gyms 2 to 8.
+
+## 2026-11-01 (Claude Code, home): Kanto move imports and the Move Lab
+- docs/KANTO-BOSS-MOVE-IMPORTS.md: 219 distinct moves in the Kanto lore sets, 42 in the catalog, 177 to import (goal: import for the player, then translate to bosses). Decisions needed: 7 whole-field, 38 unique (about 24 rulings), 18 pattern rulings, about 114 map straight.
+- Hail: still parked (D-HAIL, toggle skill item); its follow-up issue may not be filed.
+- tools/move-lab.html: dev page that loads the real move scripts; pick a move, stack cards, see base vs effective fields, leader form and reach; build a 4-move slot and copy its moves / cards block for gyms.js. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Headless load: 62 moves, no page errors; check.js 30/30.
+- smoke-newcombat skipped from the routine (Jess) until its flake is fixed.

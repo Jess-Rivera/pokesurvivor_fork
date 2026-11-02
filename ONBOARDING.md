@@ -53,6 +53,8 @@ node tools/export_data.js      # exports game data for the SEO pages
 python tools/make_seo_pages.py # builds the Spanish + English SEO pages, en/index.html, sitemap
 ```
 
+Move Lab (dev tool, never shipped): open `tools/move-lab.html` (double-click or the local server). It loads the real move scripts, lists every routed move, loads a gym leader's lineup for any loop and level (each mon with its own moves and cards), and folds upgrade cards into each mon's moves, with base vs effective fields, the leader form and reach, and a paste-ready `moves` / `cards` block for js/data/gyms.js.
+
 Key facts about `tools/build.js`:
 - It reads the script list between `<!-- scripts:begin -->` and `<!-- scripts:end -->`
   in `dev.html`, concatenates those files, and runs them through terser (minify) and
