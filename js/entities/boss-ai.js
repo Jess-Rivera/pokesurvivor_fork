@@ -18,9 +18,9 @@
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
  */
 G.Boss = (() => {
-  const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5 }; // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
+  const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5, dash: 0.6 }; // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02), divided by tempo; a pure buff has none
   const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
-  const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
+  const ORDER = ['melee', 'nova', 'strike', 'dash', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
   const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
   // TUNE, the opportunity factor (Jess 2026-11-01): a Hex-like move (statusBonus) while you carry a major ailment; a move whose major
   // ailment cannot land since you already carry one; a move whose foe stat drop is not on you yet
@@ -93,6 +93,7 @@ G.Boss = (() => {
       this.buffs(now);
       this.heals(now);
       G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
+      if (e.mvRoot) return [0, 0, 'Walk']; // a live dash (Quick Attack) carries the body; the brain does not steer until it is back
       if (this.tell) return this.telling(dt, now);
       this.modeT -= dt;
       if (!this.low && e.hp < e.maxHp * LOW_HP) {
@@ -155,7 +156,7 @@ G.Boss = (() => {
         if (s.t > 0) continue;
         const d = this.def(s.id),
           f = G.Gyms.formOf(d);
-        if (f === 'shot' || f === 'strike') r = Math.max(r, G.Gyms.reachOf(d, f));
+        if (f === 'shot' || f === 'strike' || f === 'dash') r = Math.max(r, G.Gyms.reachOf(d, f));
       }
       return r > -Infinity ? r : Infinity;
     }
@@ -215,18 +216,38 @@ G.Boss = (() => {
     }
 
     /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks
-     *  your spot instead and marks it on the ground; a nova's ring shows its full reach. */
+     *  your spot instead and marks it on the ground; a nova's ring shows its full reach. A dash locks your spot too and shows the wild
+     *  charger's warning line to it (capped at its range) plus its hit circle there (Jess 2026-11-02). */
     start(slot, d, form, pl) {
       const e = this.e,
         tempo = e.gym.tempo,
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
       const wind = TELL[form] / tempo,
-        spot = form === 'strike' ? { x: pl.x, y: pl.y } : null;
+        spot = form === 'strike' || form === 'dash' ? { x: pl.x, y: pl.y } : null;
       this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
       e.aim = ang;
       e.anim.play('Charge', { speed: 1.4 });
-      if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
+      if (form === 'dash') {
+        const len = Math.min(Math.hypot(spot.x - e.x, spot.y - e.y), G.Gyms.reachOf(d, form)),
+          end = { x: e.x + Math.cos(ang) * len, y: e.y + Math.sin(ang) * len },
+          w = {
+            kind: 'beam',
+            warn: true,
+            src: e,
+            x: e.x,
+            y: e.y,
+            angle: ang,
+            len,
+            w: d.space.radRadius * 2,
+            delay: wind,
+            dmg: 0,
+            type: d.type,
+            color: col,
+          };
+        G.Hazards.add(w);
+        G.Hazards.add(Object.assign({}, w, { kind: 'zone', x: end.x, y: end.y, r: d.space.radRadius }));
+      } else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
       else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
     }
 
@@ -239,7 +260,7 @@ G.Boss = (() => {
         e.aim = c.ang;
         if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {
           G.Gym.noteCast(c.id);
-          e.anim.play(CLOSE.includes(c.form) ? 'Attack' : 'Shoot', { speed: 1.4 });
+          e.anim.play(CLOSE.includes(c.form) || c.form === 'dash' ? 'Attack' : 'Shoot', { speed: 1.4 });
         }
       }
       if (c.t >= c.wind + c.after) this.tell = null;

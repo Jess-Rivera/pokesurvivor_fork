@@ -2,7 +2,7 @@
 
 Stage 0 resolved-move report (docs/current feature planning/move-schema-post-auth/stage-0.md). Derived values follow combat-validation-and-handoff:1.6 and the combat-architecture D-table. Scenario results come from docs/proposals/move-intent-harness.js (run by tools/check.js). Rulings and batch sign-offs do not go here (this file is regenerated): rulings go in docs/MOVE-INTENT.md, batch sign-offs in the `batchReviewed` list of docs/move_rework_holding/move-intent-scenarios.json.
 
-- move report: 174 moves, 173 routed, 38 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 17, 0 need a ruling ()
+- move report: 175 moves, 174 routed, 38 with a MOVE-INTENT entry; 0 routed moves need a batch review (); cd differs from legacy on 17, 0 need a ruling ()
 
 ## Routed moves needing a batch review (0)
 
@@ -53,6 +53,7 @@ None.
 | crunch | yes | batch reviewed | 80 | 1.167 | - | same | 420 | 48 (radius) | 1 | - | - | 68.55 | 1 hit per cast | 2 runs |
 | dark-pulse | yes | batch reviewed | 80 | 1.167 | 1.167 | same | - | 200 (grow max, D21) | 1 | - | - | 68.55 | 1 hit per cast | 1 runs |
 | dazzling-gleam | yes | batch reviewed | 80 | 1.75 | 1.75 | same | 420 | 130 (grow max, D21) | 1 | - | - | 45.71 | 1 hit per cast | 1 runs |
+| defense-curl | yes | batch reviewed | 0 | - | - | same | - | - | - | - | - | - | no damage | 2 runs |
 | discharge | yes | MOVE-INTENT (reviewed when its scenarios pass) | 80 | 1.167 | 1.167 | same | - | via emitted children | 1 | 2 | - | 68.55 | per emitted child, children x per cast | 2 runs |
 | double-edge | yes | batch reviewed | 120 | 1.167 | - | same | 420 | 60 (radius) | 1 | - | - | 102.83 | 1 hit per cast | 1 runs |
 | double-kick | yes | batch reviewed | 30 | 0.583 | - | same | - | via emitted children | 1 | 2 | - | 51.46 | per emitted child, children x per cast | 1 runs |

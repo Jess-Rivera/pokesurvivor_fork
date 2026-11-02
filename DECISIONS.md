@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Leader dash form; Self-Destruct as a closer (Jess)
+A gym leader casts Quick Attack as a dash to your spot locked at its 0.6 s tell (warning line), one hit there, then back; the leader keeps the i-frames and deals no contact damage while dashing. Self-Destruct on a leader scores 0 in the utility pick until the mon is nearly beaten, then it is the finisher; no new weight setting.
+Canonical: docs/MOVE-INTENT.md quick-attack and self-destruct; docs/BOSS-AUTHORING.md "Validation rules"
+
 ## 2026-11-02, Gym bosses: per-loop lore sets, loop 1 first (Jess)
 The point of the Kanto imports is the bosses; player learnset pools are parked. Gyms go one at a time in GYM-ROSTERS order (the Concept Maps are only a moves reference). Each slot holds one move set per loop from the loop it enters; loop 1 of all 8 gyms gets its lore set first. Giovanni's loop 1 is the Stadium Rhydon set (Fury Attack, Earthquake, Body Slam, Fissure). Self-Destruct stays a real faint, on later-loop mons, with utility weight 0. Sabrina uses Confusion as a stand-in for Psybeam until the beam form. A leader pays recoil (never below 1 HP) and casts Recover at mainline strength (half max HP, 12 s cd) whenever hurt.
 Canonical: docs/BOSS-AUTHORING.md "Signature fields" and "Validation rules"; js/data/gyms.js

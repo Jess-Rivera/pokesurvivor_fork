@@ -415,3 +415,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: gyms.js `sets` keyed by loop (movesFor, validator per set), gym.js hands each mon its loop's set, leader recoil (payHp, never below 1 HP), leader heal form (Recover, no tell, while hurt; the brain now ticks heal over time), Defense Curl imported and held. Loop-1 lore sets for all 8; Sabrina Confusion stand-in.
 - Found: gym-harness 10b placed the player at the largest close reach, so Bite and Body Slam looked starved; live, the brain walks in and lands both. Harness fixed; BOSS-AUTHORING "one melee cone" rule revised.
 - Verified: check.js 30/30, intent 2151, boss-owner 188, gym harness, smoke-ui, live loop-1 fights for all 8 on file://. Not yet feel-tested.
+
+## 2026-11-02, Leader dash form, slice 2 (Claude Code, home)
+- Defense Curl signed off (batchReviewed). Built the dash form: Quick Attack casts for leaders as a swept dash to the spot locked at a 0.6 s tell (warn-only line plus circle, the wild charger's hazard), one hit there, back to its start. Leaders keep the i-frames (Enemy.hurt now honours invuln; DoT still lands) and deal no contact damage mid-dash. Lt. Surge loop 1 complete.
+- Ruled: Self-Destruct on a leader is a closer (score 0 until about 20% HP), no weight knob; recorded in MOVE-INTENT, built with the import.
+- Verified: check.js 30/30, boss-owner 202 (new section 16), gym harness, live Surge fight on file:// (16 dashes, one hit each, no errors). Not yet feel-tested.

@@ -285,6 +285,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] The dash carries a 3 s time cap as a safety net (endOn time 3 beside returned); a normal dash takes about 0.5 s. If the cap fires mid-dash, the owner stays where it is and the root lifts; no snap back. Every swept dash needs a time cap (validator rule swept-needs-time). (Jess, 2026-10-29) Built (4c-2 review).
 - [Open] `priority: 1` ("always first" in a bonded group) is not built: the move sim does not order casts by priority. TODO.md Backlog.
 - [Approved] Priority is ignored as a mechanic (no cast ordering, no instant cast); a bonded group casts in slot order. Closes the Quick Attack priority question and the bonded-group priority item. (Jess, 2026-11-01, Kanto import rulings set 4)
+- [Approved] A gym leader casts it too (the dash form): 0.6 s tell (TUNE) with a warning line to the spot locked at its start, the dash, one hit there, back to its start; the leader keeps the i-frames (the whole dash plus 0.3 s) and deals no body-contact damage while dashing. (Jess, 2026-11-02) Checks: boss-owner-harness.js 16.
 - Ledger: B4-I17
 
 ### rain-dance
@@ -329,6 +330,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### self-destruct
 - [Approved] As explosion: real faint for the caster on both sides. (Jess, 2026-11-01, Kanto import rulings set 1)
+- [Approved] A gym leader's Self-Destruct is a closer: on later-loop mons only, its utility score is 0 until the mon is nearly beaten (below about 20% HP, TUNE), then it becomes the finisher; no separate weight setting. Not built (it comes with the import). (Jess, 2026-11-02)
 - [Proposed] Mainline power 200, a smaller area than explosion.
 
 ### skill-swap

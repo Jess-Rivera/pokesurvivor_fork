@@ -11,12 +11,12 @@ G.CHANGELOG = [
     title: ['Gym leaders use their real moves', 'Gym leaders use their real moves'],
     chg: [
       [
-        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
-        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
+        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave, Quick Attack), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
+        "In each gym's first loop, the leader's first Pokemon now uses its moves from the main games: Brock's Geodude (Tackle, Defense Curl, Rock Throw), Misty's Staryu (Tackle, Harden, Water Pulse, Recover), Lt. Surge's Pikachu (Thunder Shock, Growl, Thunder Wave, Quick Attack), Erika's Weepinbell (Acid, Stun Spore, Sleep Powder), Koga's Koffing (Sludge), Sabrina's Kadabra (Confusion, Calm Mind), Blaine's Growlithe (Bite, Fire Blast, Take Down) and Giovanni's Rhyhorn (Earthquake, Body Slam). More of their moves arrive as they are added.",
       ],
       [
-        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover.",
-        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover.",
+        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover. A leader's Quick Attack shows a warning line first, then dashes to where you stood, strikes and dashes back; it cannot be hit mid-dash.",
+        "A gym leader's Pokemon now pays recoil on moves like Take Down, as yours does, and can heal itself with Recover. A leader's Quick Attack shows a warning line first, then dashes to where you stood, strikes and dashes back; it cannot be hit mid-dash.",
       ],
     ],
   },

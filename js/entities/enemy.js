@@ -196,6 +196,7 @@
     /** @param eff  'super' | 'weak' | null (type chart, just to show it) */
     hurt(amount, color = '#fff', dirX = 0, dirY = 0, knock = 0, eff = null) {
       if (this.dead || !(amount > 0)) return;
+      if (this.invuln > 0) return; // i-frames (a gym leader's Quick Attack, Jess 2026-11-02): hits miss, damage over time still lands
       if (this.gym && !this.remote) {
         // gym leader: the first hit engages (enrage clock); its Def / SpD stages act in the damage ratio (combat.js)
         if (this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
@@ -488,6 +489,7 @@
       const seen = G.Camera.sees(this.x, this.y, 120);
       if (seen || this.dead) this.anim.update(dt);
       if (this.flash > 0) this.flash -= dt;
+      if (this.invuln > 0) this.invuln -= dt; // i-frames, raised by the move sim during a leader's dash
       if (this.dead) {
         this.fade -= dt;
         return;

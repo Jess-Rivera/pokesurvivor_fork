@@ -38,6 +38,7 @@ G.Combat = (() => {
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
       if (G.Status.stunned(e)) continue; // frozen or asleep enemies do not hit
+      if (e.gym && e.mvRoot) continue; // a leader's dash (Quick Attack) hits only at its landing spot, never by touch (Jess 2026-11-02)
       // An active flanker only hits in its strike phase, and waits out your invulnerability instead of wasting the hit.
       if (e.fl && (e.fl.ph !== 'strike' || pl.invuln > 0)) continue;
       e.touchCd = 0.55;

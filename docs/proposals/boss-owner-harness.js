@@ -19,7 +19,7 @@ const DEX_BY = { 1: { name: 'Normie', types: ['normal'], stats: [50, 50, 50, 50,
 for (const d of [75, 76, 95, 111, 112, 138, 139, 140, 141, 142, 208]) DEX_BY[d] = { name: 'M' + d, types: ['rock'], stats: [50, 50, 50, 50, 50, 50] };     // Brock's other stages (validate checks every dex)
 global.window = global; global.location = { search: '?dev' };     // 7b flip: the new path is always on, flag or not
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
-let clock = 0, enrage = 1; const casts = {}, warns = [];
+let clock = 0, enrage = 1; const casts = {}, warns = [], hazards = [];
 const plTackle = { id: 'tackle', t: Infinity };     // 7b flip: G.MoveSim ticks the player's slots too; this one never recharges, so the player never casts
 const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [], isPlayer: true, loss: 0,     // loss: the HP a hit takes (drain tests)
   hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); this.hp -= this.loss; }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
@@ -32,7 +32,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   Weather: { mult: () => 1, speedFor: () => 1, force() {} }, Game: { player: pl, everyone: () => [pl] }, Audio: { sfx() {} }, Log: { on: false },
   Camera: { kick() {}, sees: () => true, left: () => -2000, top: () => -2000, w: 4000, h: 4000 }, Coop: { active: false },
   World: { collide: () => false, isLiquid: () => false, isFree: () => true, projectileBlock: () => null, propsInCircle: () => [] }, Path: { dirFor: () => null },
-  Gym: { now: () => clock, enrageMul: () => enrage, noteCast: id => { casts[id] = (casts[id] || 0) + 1; } } };
+  Gym: { now: () => clock, enrageMul: () => enrage, noteCast: id => { casts[id] = (casts[id] || 0) + 1; } }, Hazards: { add: h => { hazards.push(h); return h; } } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/player.js',
   'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
@@ -77,8 +77,9 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   const forms = id => Gy.formOf(G.MoveDefs[id]);
   ok(forms('tackle') === 'melee' && forms('rock-throw') === 'shot' && forms('harden') === 'buff', 'forms: Tackle melee, Rock Throw shot, Harden buff');
   ok(forms('body-slam') === 'melee' && forms('water-gun') === 'shot' && forms('swords-dance') === 'buff' && forms('agility') === 'buff', 'slots 2 to 6 forms');
-  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('quick-attack') && !forms('flamethrower') && !forms('aura-sphere') && !forms('spikes'),
-    'no gym form for falls, emitters, persistent auras, dashes, tracking cones, path shots and world hazards');
+  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('aerial-ace') && !forms('flamethrower') && !forms('aura-sphere') && !forms('spikes'),
+    'no gym form for falls, emitters, persistent auras, teleports, tracking cones, path shots and world hazards');
+  ok(forms('quick-attack') === 'dash' && Gy.reachOf(G.MoveDefs['quick-attack'], 'dash') === 420, 'Quick Attack is the dash form, reach its range 420 (Jess 2026-11-02)');
   ok(forms('thunder-shock') === 'shot' && forms('hex') === 'shot', "a chain move takes its shape's form: Thunder Shock and Hex are shots");
   ok(forms('thunderbolt') === 'strike', 'Thunderbolt (target-anchored, static) is a strike');
   ok(['hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
@@ -421,10 +422,49 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');
-  ok(!/\bkind\b/.test(brain.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')), 'boss-ai.js reads no kind');
+  ok(!/\bkind\b/.test(brain.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/kind: '(beam|zone)'/g, '')), 'boss-ai.js reads no kind (a G.Hazards warning shape, beam or zone, is not a move kind)');
   ok(!/Moves\.BY_ID|addStack|BOSS_FORMS/.test(brain + gyms + gym), 'no legacy move table, addStack or BOSS_FORMS on the gym path');
   ok(!/\.weight\b|\bpick\(|cdAfter/.test(brain), 'no weight picker left in the brain');
   console.log('12 guards: no kind, BY_ID, addStack, BOSS_FORMS or weight picker on the gym path'); }
+
+// 16. dash form (Jess 2026-11-02): Quick Attack from the move data: range 420, hit circle 46, dashMult 10 x the mon's speed (40 here, so
+// 400 px/s), back to its start, i-frames the whole dash plus 0.3 s. Wind-up 0.6 s (TUNE). The boss is NOT held in place here.
+{ const free = (secs) => { for (let i = 0, N = Math.round(secs / DT); i < N; i++) { clock += DT; e.update(DT, pl); G.MoveRoute.tick(DT, pl, clock); } };
+  const boss = (ids) => mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), at = [];
+  const off = G.SimBus.on('move:cast', ev => { if (ev.moveId === 'quick-attack') at.push({ x: ev.x, y: ev.y, t: clock }); });
+  let e;
+  // a) the warning, the hit at the locked spot, the way back
+  { fresh(); hazards.length = 0; at.length = 0; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    let tellAt = null; for (let i = 0; i < 120 && tellAt == null; i++) { free(DT); if (e.brain.tell) tellAt = clock; }
+    ok(tellAt != null && e.brain.tell.form === 'dash', 'the leader starts a dash tell at 200 px');
+    const sx = e.x, sy = e.y, spot = e.brain.tell.spot, len = Math.min(Math.hypot(spot.x - sx, spot.y - sy), 420);
+    const line = hazards.find(h => h.kind === 'beam'), zone = hazards.find(h => h.kind === 'zone');
+    ok(line && line.warn && near(line.len, len) && line.w === 92 && near(line.delay, 0.6) && zone && zone.warn && zone.r === 46 && near(zone.x, sx + (spot.x - sx) * len / Math.hypot(spot.x - sx, spot.y - sy)),
+      'the tell shows a warn-only line to the locked spot (len ' + (line && line.len.toFixed(1)) + ', width 92, 0.6 s) and the 46 px circle there');
+    free(0.6); ok(at.length === 1, 'the dash casts when the 0.6 s wind-up ends');
+    const hurts0 = pl.hurts.length; let maxOut = 0, inv = true, hitT = null;
+    free(DT); ok(e.mvRoot, 'the dash is live (the body is rooted to it)');
+    for (let i = 0; i < 120 && e.mvRoot; i++) { free(DT); maxOut = Math.max(maxOut, Math.hypot(e.x - sx, e.y - sy)); if (e.mvRoot && !(e.invuln > 0)) inv = false; if (hitT == null && pl.hurts.length > hurts0) hitT = clock; }
+    ok(pl.hurts.length === hurts0 + 1, 'one hit on a player standing on the locked spot (' + (pl.hurts.length - hurts0) + ')');
+    ok(near(maxOut, Math.hypot(spot.x - sx, spot.y - sy), 1e-3), 'it dashes all the way to the locked spot: ' + maxOut.toFixed(1));
+    ok(!e.mvRoot && Math.hypot(e.x - sx, e.y - sy) < 1e-6, 'and back to its start, unrooted');
+    ok(inv, 'i-frames on the whole dash');
+    const hp = e.hp = 1e5; e.hurt(500); ok(e.invuln > 0 && e.hp === hp, 'just after the dash, inside the 0.3 s tail, a hit misses');
+    free(0.35); e.hurt(500); ok(e.hp === hp - 500, 'after the tail a hit lands: ' + (hp - e.hp)); }
+  // b) a player who steps aside during the wind-up is missed
+  { fresh(); hazards.length = 0; at.length = 0; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    for (let i = 0; i < 120 && !e.brain.tell; i++) free(DT);
+    pl.y = 120; const h0 = pl.hurts.length; free(2); ok(at.length >= 1 && pl.hurts.length === h0, 'a player who moved 120 px off the locked spot is missed (46 + 12 < 120)'); }
+  // c) out of range: no dash; a wall cuts it short
+  { fresh(); e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 460; pl.y = 0; let told = false;
+    for (let i = 0; i < 60; i++) { clock += DT; e.x = 0; e.y = 0; e.update(DT, pl); G.MoveRoute.tick(DT, pl, clock); if (e.brain.tell) told = true; }
+    ok(!told, 'no dash tell at 460 px, past the 420 range'); }
+  { fresh(); at.length = 0; const W = G.World.isFree; G.World.isFree = (x) => x < 100; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    for (let i = 0; i < 120 && !e.brain.tell; i++) free(DT);
+    const sx = e.x; let maxX = -1e9; free(0.6); for (let i = 0; i < 90; i++) { free(DT); maxX = Math.max(maxX, e.x); }
+    G.World.isFree = W; ok(maxX < 100 && maxX > sx, 'a wall at x 100 stops the dash short: furthest x ' + maxX.toFixed(1)); }
+  off && off();
+  console.log('16 dash: warn line and circle at the locked spot, one hit there, back to the start, i-frames + 0.3 s tail, a sidestep dodges, 420 range, walls cut it'); }
 
 console.warn = origWarn;
 console.log(fail ? fail + ' FAILED (' + n + ' checks)' : 'ALL OK (' + n + ' checks)');

@@ -222,7 +222,7 @@ const gate2 = G.Gym.gate;
   console.log('10b later gyms: every slot casts every authored move through the boss AI: ' + out.join(', ')); }
 
 // 10c. per-loop sets (Jess 2026-11-02): the loop-1 lore sets, written out by hand, and every slot's def carrying its loop's set
-{ const LOOP1 = { Brock: 'tackle,defense-curl,rock-throw', Misty: 'tackle,harden,water-pulse,recover', 'Lt. Surge': 'thunder-shock,growl,thunder-wave',
+{ const LOOP1 = { Brock: 'tackle,defense-curl,rock-throw', Misty: 'tackle,harden,water-pulse,recover', 'Lt. Surge': 'thunder-shock,growl,thunder-wave,quick-attack',
     Erika: 'acid,stun-spore,sleep-powder', Koga: 'sludge', Sabrina: 'confusion,calm-mind', Blaine: 'bite,fire-blast,take-down', Giovanni: 'earthquake,body-slam' };
   let defs = 0;
   G.Gyms.KANTO.forEach((entry, gi) => {

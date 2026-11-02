@@ -31,15 +31,26 @@ G.Gyms = (() => {
 
   /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'nova' (a ring or
    *  half ring that grows out of its body: Heat Wave, Dazzling Gleam), 'shot' (shapes that travel along the aim, homing ones included:
-   *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt), 'buff' (a pure self stat change) or 'heal' (a self
-   *  heal of max HP: Recover, Synthesis, Moonlight; Jess 2026-11-02). A chain move takes
+   *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt), 'buff' (a pure self stat change), 'heal' (a self
+   *  heal of max HP: Recover, Synthesis, Moonlight; Jess 2026-11-02) or 'dash' (a swept dash to the spot locked at its tell, a hit
+   *  there and back to its start, with the move's i-frames: Quick Attack; Jess 2026-11-02). A chain move takes
    *  its shape's form; its hops search the caster's foes (G.MoveSim). Emitters, delays, persistent moves and caster commitments have no gym
    *  form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
       p = d.payload || [];
-    if (p.some((fx) => fx.t === 'emit') || d.persistent || d.casterState || v.delay) return null;
+    if (p.some((fx) => fx.t === 'emit') || d.persistent || v.delay) return null;
+    // a swept dash to the nearest foe and back (Quick Attack; Jess 2026-11-02), its i-frames included; any other commitment has no form
+    if (v.motion === 'repositions')
+      return v.repositionMode === 'swept' &&
+        v.returnToOrigin &&
+        v.targeting === 'nearest' &&
+        d.space &&
+        d.space.shape === 'radial'
+        ? 'dash'
+        : null;
+    if (d.casterState) return null;
     if (!d.space) {
       if (p.length && p.every((fx) => fx.t === 'stat' && fx.side !== 'foe')) return 'buff';
       return p.length && p.every((fx) => fx.t === 'heal' && fx.side === 'self' && fx.amount && fx.amount.of === 'maxHP')
@@ -55,7 +66,7 @@ G.Gyms = (() => {
       return 'shot';
     return null;
   }
-  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range. A shot
+  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range (a strike, a dash). A shot
    *  reaches no further than it flies (speed x lifetime + size), capped at that range; a homing shot gets no credit for turning
    *  (Jess 2026-11-01). */
   function reachOf(d, form) {
@@ -233,9 +244,9 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): Red/Blue Pikachu; Quick Attack waits on a leader dash form. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): Red/Blue Pikachu, the full lore set. Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'thunder-shock' }, { id: 'growl' }, { id: 'thunder-wave' }],
+            1: [{ id: 'thunder-shock' }, { id: 'growl' }, { id: 'thunder-wave' }, { id: 'quick-attack' }],
             2: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }, { id: 'thunderbolt', hpBelow: 0.5 }],
           },
         },
@@ -691,7 +702,7 @@ G.Gyms = (() => {
               L +
                 ': ' +
                 m.id +
-                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, self buffs and self heals)'
+                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, self buffs and self heals)'
             );
         }
         if (!damaging) bad.push(L + ' needs at least one damaging move');
