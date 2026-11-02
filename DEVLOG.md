@@ -379,3 +379,4 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Menu sprites centre on their visible Idle pixels (G.Sprites.idleBox, scanned once per dex/variant/row); hero views fit by that box. World sprites unchanged.
 - Feel test 1 fix: on file:// the pixel scan threw a SecurityError inside the sprite loop, so no menu sprite drew; the scan is now caught and falls back to the old placement (centring works only over http until a precomputed table exists). The + sits a little lower.
 - Verified: check.js 30/30, smoke-ui pass, headless over file:// and http, 1600x900 and 1280x720.
+- The + became an Upgrade button (Jess). Session closed: part 1, rulings and Team menu all committed on fix/playtest-kanto-moves.
