@@ -8,7 +8,7 @@
  * id from G.TeamCards (damage, count, velocity, area...), held by that mon only and folded by the SAME rules as the player's cards, so
  * each card applies to every one of the mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies
  * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
- * returns, beams, bursts, trails, self buffs, self heals).
+ * returns, beams, bursts, trails, delayed marks, self buffs, self heals).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
  * last one whose minLevel is <= the gym's effective level (stageFor), so a slot evolves as the level climbs, and evolution requirements
@@ -37,14 +37,24 @@ G.Gyms = (() => {
    *  there and back to its start, with the move's i-frames: Quick Attack; Jess 2026-11-02). Slice 3 of the lore sets (Jess 2026-11-02):
    *  'returns' (shapes that fly out along the aim and back to the mon: Razor Leaf), 'beam' (a straight line from its body along the
    *  aim: Psybeam), 'multi' (a burst of melee cones, each re-aimed at you: Fury Attack) and 'trail' (a persistent slot that drops
-   *  hazards behind the mon while it moves, as the player's does: Toxic). A chain move takes its shape's form; its hops search the
+   *  hazards behind the mon while it moves, as the player's does: Toxic). Import batch (Jess 2026-11-02): 'delayed' (your spot, locked
+   *  at the cast, hit when the move's delay ends: Future Sight). A chain move takes its shape's form; its hops search the
    *  caster's foes (G.MoveSim). Other emitters, delays, persistent moves and caster commitments have no gym form; validate() rejects
    *  them instead of letting them misfire. Read by the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
       p = d.payload || [];
-    if (v.delay) return null;
+    // a mark (Future Sight; Jess 2026-11-02): a world spot hit after its delay, the spot locked at the cast; other delays (falls) have no form
+    if (v.delay)
+      return v.anchor === 'world' &&
+        v.targeting === 'location' &&
+        v.motion === 'static' &&
+        d.space &&
+        d.space.shape === 'radial' &&
+        !p.some((fx) => fx.t === 'emit')
+        ? 'delayed'
+        : null;
     const emits = p.filter((fx) => fx.t === 'emit');
     if (d.persistent)
       return !d.space && emits.length && emits.length === p.length && emits.every((fx) => fx.trigger === 'casterMove')
@@ -394,8 +404,8 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): FRLG Koffing, Toxic in the trail form; Self-Destruct (utility weight 0, not imported) and Smokescreen
-          // (accuracy slice) are still to come. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): FRLG Koffing, Toxic in the trail form; Smokescreen (accuracy slice) is still to come. Self-Destruct
+          // is for later-loop mons only (MOVE-INTENT self-destruct). Loop 2 on: the provisional set.
           sets: {
             1: [{ id: 'sludge' }, { id: 'toxic' }],
             2: [{ id: 'sludge' }, { id: 'tackle' }, { id: 'harden' }],
@@ -458,10 +468,10 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): FRLG Kadabra, Psybeam in the beam form; Future Sight and Reflect are not imported yet. Loop 2 on:
-          // the provisional set.
+          // Loop 1 (Jess 2026-11-02): FRLG Kadabra, Psybeam in the beam form, Future Sight as a delayed mark; Reflect waits on the fields
+          // slice. Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'psybeam' }, { id: 'calm-mind' }],
+            1: [{ id: 'psybeam' }, { id: 'calm-mind' }, { id: 'future-sight' }],
             2: [{ id: 'shadow-ball' }, { id: 'psycho-cut' }, { id: 'agility' }],
           },
         },
@@ -521,9 +531,10 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): FRLG Growlithe (Take Down's recoil is paid); Roar is not imported yet. Loop 2 on: the provisional set.
+          // Loop 1 (Jess 2026-11-02): FRLG Growlithe, the full lore set (Take Down's recoil is paid, Roar pushes you). Loop 2 on: the
+          // provisional set.
           sets: {
-            1: [{ id: 'bite' }, { id: 'fire-blast' }, { id: 'take-down' }],
+            1: [{ id: 'roar' }, { id: 'bite' }, { id: 'fire-blast' }, { id: 'take-down' }],
             2: [{ id: 'ember' }, { id: 'bite' }, { id: 'agility' }],
           },
         },
@@ -583,10 +594,10 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          // Loop 1 (Jess 2026-11-02): Stadium Rhydon, Fury Attack in the burst form; Fissure is not imported yet. Loop 2 on: the
-          // provisional set.
+          // Loop 1 (Jess 2026-11-02): Stadium Rhydon, the full lore set (Fury Attack in the burst form, Fissure a heavy strike on you).
+          // Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'earthquake' }, { id: 'body-slam' }, { id: 'fury-attack' }],
+            1: [{ id: 'earthquake' }, { id: 'body-slam' }, { id: 'fury-attack' }, { id: 'fissure' }],
             2: [{ id: 'body-slam' }, { id: 'mud-shot' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
           },
         },
@@ -728,7 +739,7 @@ G.Gyms = (() => {
               L +
                 ': ' +
                 m.id +
-                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, returns, beams, bursts, trails, self buffs and self heals)'
+                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, returns, beams, bursts, trails, delayed marks, self buffs and self heals)'
             );
         }
         if (!damaging) bad.push(L + ' needs at least one damaging move');

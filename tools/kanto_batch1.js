@@ -16,7 +16,9 @@ const TAU = 6.2832;
 const api = {};
 for (const m of Object.values(require(path.join(HOLD, 'api_move_dataset.json')).moves)) api[m.source.identifier] = m;
 
-// id: [pattern, options]. Options: heavy (bigger melee), r (radius / ring size), n (multihit count), on (multihit inner pattern).
+// id: [pattern, options]. Options: heavy (bigger melee), r (radius / ring size), n (multihit count), on (multihit inner pattern),
+// push (a knockback distance on a move with no damage), power (a power for a move pokeapi lists without one), ko (a wild-only
+// one-hit KO chance), delay (seconds before a mark lands), acc (an accuracy that replaces pokeapi's).
 const PLAN = {
   // Normal
   slash: ['melee'],
@@ -139,6 +141,12 @@ const PLAN = {
   fly: ['skill'], // joined batch 1 as a movement skill (Jess 2026-11-02)
   // Gym loop-1 additions (Jess 2026-11-02): lore moves a loop-1 leader needs, imported with the same patterns. Not batch 1's review.
   'defense-curl': ['self'], // Brock's Geodude; plays as Harden (Rollout, the move it boosts, is not imported)
+  // Lore-set imports (Jess 2026-11-02, MOVE-INTENT roar, fissure, future-sight): numbers are the approved proposals.
+  roar: ['ring', { r: 160, push: 140 }], // Blaine's Growlithe: no damage, pushes foes 140 px away (the player too)
+  // Giovanni's Rhydon: 30% one-hit KO on wild foes only, else a power-120 hit. Mainline's 30% accuracy IS the KO roll, so accuracy is
+  // 100 here (basePower = power x accuracy would make the heavy hit 36).
+  fissure: ['strike', { r: 60, power: 120, ko: 30, acc: 100 }],
+  'future-sight': ['mark', { r: 60, delay: 2 }], // Sabrina's Kadabra: the spot is hit 2 s after the cast
   // Ghost
   'confuse-ray': ['statusShot'],
   'shadow-punch': ['melee'],
@@ -167,6 +175,7 @@ const PATTERNS = {
   wave: 'Wave: a band across the aim that widens as it travels (new)',
   skill: 'Movement skill, never autocast (new)',
   meteors: 'Three falls on the nearest foe (new)',
+  mark: 'Delayed hit on a spot (new)',
 };
 
 const STAT = { 2: 'atk', 3: 'def', 4: 'spAtk', 5: 'spDef', 6: 'spd' }; // 7 accuracy, 8 evasion: none in this batch
@@ -378,6 +387,14 @@ const BUILD = {
     hitPolicy: 'oncePerInstance',
   }),
   self: () => ({ kind: 'buff', balanceClass: 'other', delivery: { anchor: 'self', targeting: 'self' } }),
+  // a delayed hit (Future Sight): the spot of a foe in range, marked at the cast, hit when the delay ends
+  mark: (o) => ({
+    kind: 'meteor',
+    balanceClass: 'ranged',
+    space: { shape: 'radial', radArc: TAU, radRadius: o.r || 60, count: 1 },
+    delivery: { anchor: 'world', targeting: 'location', motion: 'static', delay: o.delay || 2, endOn: [{ time: 0.2 }] },
+    hitPolicy: 'oncePerInstance',
+  }),
 };
 
 function words(p, o, g, pay) {
@@ -397,6 +414,7 @@ function words(p, o, g, pay) {
     falls: `Circle ${o.r || 70} px that lands on a spot`,
     ring: `Ring growing to ${o.r || 200} px around the user`,
     burst: '6 shots in a full circle, radius 7 px each',
+    mark: `Circle ${o.r || 60} px on a spot`,
     self: 'None (self-cast)',
     multi: `${o.n} quick ${o.on === 'shot' ? 'shots' : 'melee swings'}, 0.11 s apart`,
   }[p];
@@ -414,6 +432,7 @@ function words(p, o, g, pay) {
     falls: '0.4 s warning, then lands for 0.2 s',
     ring: 'Grows out from the user over 0.4 s',
     burst: 'Travels 300 px/s outward, ends at 1.2 s, a wall or off screen',
+    mark: `Marks a foe's spot, lands ${o.delay || 2} s later for 0.2 s`,
     self: 'Instant on the user',
     multi: 'Each repeat as its pattern',
   }[p];
@@ -430,6 +449,7 @@ function words(p, o, g, pay) {
         : `heals ${fx.amount.fraction * 100}% max HP`;
     if (fx.t === 'stat')
       return `${fx.side === 'self' ? 'own' : 'foe'} ${STAT_WORD[fx.stat]} ${fx.stages > 0 ? '+' : ''}${fx.stages}${fx.chance ? ` (${fx.chance}%)` : ''}${fx.side === 'self' && fx.scope === 'team' ? ', team-wide' : ''}`;
+    if (fx.t === 'special' && fx.handler === 'ohkoWild') return `one-hit KO ${fx.koChance}% on wild foes`;
     if (fx.t === 'special' && fx.handler === 'surfer')
       return `no water or swamp slowdown, x${fx.speedMul} speed in them`;
     if (fx.t === 'special' && fx.handler === 'flight')
@@ -446,7 +466,10 @@ function entry(id, p, o) {
   let pay = payloadOf(id, a),
     g,
     shown = null;
-  const c = { id, type: a.type, power: a.source.power, pay };
+  if (o.power != null && !pay.some((fx) => fx.t === 'damage')) pay.unshift({ t: 'damage' }); // a power pokeapi leaves out (Fissure)
+  if (o.ko) pay.push({ t: 'special', handler: 'ohkoWild', koChance: o.ko });
+  if (o.push) pay.push({ t: 'knockback', distance: o.push });
+  const c = { id, type: a.type, power: o.power != null ? o.power : a.source.power, pay };
   if (p === 'skill') {
     // Movement skills (Jess 2026-11-02): no shape or damage. Surf: passive, no water or swamp slowdown and x1.25 in them.
     // Fly: pressed on its slot key, 4 s over the terrain, then 20 s from landing.
@@ -523,9 +546,9 @@ function entry(id, p, o) {
     feel: `Kanto batch 1 proposal. ${PATTERNS[p]}${w.rule ? ' (' + w.rule + ')' : ''}. Shape: ${w.shape}. Delivery: ${w.delivery}. Payload: ${w.payload}.`,
     type: a.type,
     category: a.damage_class,
-    power: a.source.power,
+    power: c.power,
     pp: a.source.pp,
-    accuracy: a.source.accuracy,
+    accuracy: o.acc != null ? o.acc : a.source.accuracy,
     priority: a.source.priority,
     flavor_text: a.flavor_text ? a.flavor_text.flavor_text.replace(/\s+/g, ' ') : '',
   };

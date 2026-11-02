@@ -188,6 +188,7 @@
       fixedDamage: special({ amount: num({ gt: 0 }), ignoresType: 'bool', ignoresDefense: 'bool' }, ['amount']),
       chainDamageFalloff: special({ hopReduction: num({ gt: 0, max: 1 }) }, ['hopReduction']), // per hop: chain hop k deals x (1 - hopReduction)^k, applied last (D15)
       levelDamage: special({}),
+      ohkoWild: special({ koChance: num({ gt: 0, max: 100 }) }, ['koChance']), // Fissure: koChance % one-hit KO on a wild foe only
       setWeather: special({ weather: en(WEATHER), duration: SECS }, ['weather', 'duration']),
       statusBonus: special({ multiplier: num({ gt: 1 }) }, ['multiplier']),
       surfer: special({ speedMul: num({ gt: 1 }) }, ['speedMul']), // movement skills (Jess 2026-11-02): no shape, never autocast

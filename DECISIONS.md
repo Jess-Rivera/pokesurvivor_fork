@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Roar, Fissure, Future Sight imported with the proposed numbers (Jess)
+Roar is a 160 px ring with no damage that pushes 140 px; a leader's Roar pushes the player (a 0.2 s slide). Fissure is a power-120 strike at accuracy 100 whose 30% KO lands on wild foes only. Future Sight hits a marked spot 2 s later; a leader marks your spot at the cast with no other wind-up. Roar's cd 5 is [Proposed] (TUNE). Balance passes wait for playtesters.
+Canonical: docs/MOVE-INTENT.md roar, fissure, future-sight; docs/BOSS-AUTHORING.md "Validation rules"
+
 ## 2026-11-02, Leader returns, beam, burst and trail forms in one slice (Jess)
 The four remaining leader forms ship as one slice for larger batches. Razor Leaf flies out and back as its data says (two leaves, one hit per leaf per leg). Psybeam is a beam with a warning line. Fury Attack's jabs each re-aim at you. Toxic is a move slot like every other trail move: alive while the mon is out, ended by a stun, a swap or a faint. The Psycho Cut stand-ins for Psybeam in later loops stay for now.
 Canonical: docs/BOSS-AUTHORING.md "Validation rules" (gym forms)

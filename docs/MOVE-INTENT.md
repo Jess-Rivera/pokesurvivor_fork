@@ -130,7 +130,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### fissure
 - [Approved] Wild only: each WILD enemy it hits has the mainline 30% chance to be KO'd outright; bosses, gym leaders, elites and the player never are and take a heavy fixed-power hit instead. A gym leader may cast it at the player as that heavy hit. (Jess, 2026-11-01, Kanto import rulings set 2)
-- [Proposed] Fallback power 120 (ground area).
+- [Approved] Power 120 on a 60 px strike at the nearest foe, accuracy 100 (mainline's 30% accuracy is the KO roll, kept as the 30% wild-only chance; folding it into basePower would make the hit 36). Handler ohkoWild. (Jess, 2026-11-02, the proposal accepted) Scenarios: fissure-ko-wild, fissure-no-ko.
 
 ### flail
 - [Approved] Mainline curve: power from the USER's live HP fraction at each hit, mainline bands (HP over 68.75% = 20, 35.42% to 68.75% = 40, 20.83% to 35.42% = 80, 10.42% to 20.83% = 100, 4.17% to 10.42% = 150, under 4.17% = 200). (Jess, 2026-11-01, Kanto import rulings set 1)
@@ -162,7 +162,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### future-sight
 - [Approved] The hit lands at the marked spot after a delay. (Jess, 2026-11-01, Kanto import rulings set 4)
-- [Proposed] Delay about 2 s.
+- [Approved] Delay 2 s, power 120, a 60 px mark on a foe's spot. A gym leader marks your spot at the cast with no other wind-up; the marker is the warning. (Jess, 2026-11-02, the proposal accepted) Scenario: future-sight-delay.
 
 ### grass-knot
 - [Approved] Mainline: power from the target's species weight (under 10 kg = 20, 10+ = 40, 25+ = 60, 50+ = 80, 100+ = 100, 200+ kg = 120). Weight comes from pokeapi-master into the dex as a new field. (Jess, 2026-11-01, Kanto import rulings set 3)
@@ -310,6 +310,8 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 
 ### roar
 - [Approved] A big knockback burst that scatters the horde around the user; a gym leader's Roar pushes the player away. (Jess, 2026-11-01, Kanto import rulings set 3)
+- [Approved] A ring growing to 160 px, no damage, push 140 px away from the user: wild enemies slide as from a hit (bosses and elites never), the player slides 140 px over 0.2 s (TUNE), input ignored, walls stop it, never while flying. (Jess, 2026-11-02, the proposal accepted) Scenario: roar-push.
+- [Proposed] Cooldown 5 s (TUNE): with no cooldown a leader cast it 52 times in 90 s and never used its attacks.
 
 ### rock-slide
 - [Approved] The telegraph delay lives on the instance (`delivery.delay`). (review 9.1 Q17)

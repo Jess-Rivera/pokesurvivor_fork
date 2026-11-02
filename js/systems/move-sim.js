@@ -464,7 +464,9 @@ G.MoveSim = (() => {
   }
   /** Slice 7a (D-ENEMY): a gym leader's cast, timed by its brain (boss-ai.js), which owns the tell and the slot's recharge. The move
    *  fires along `aim` whether or not the player is still in reach; stun, the cast cost, fizzle and the cooldown hold as for the player. */
-  const castAt = (o, slot, def, now, aim, target = null) => castSlot(o, slot, def, now, { aim, target }); // target: a strike's locked spot
+  // target: a strike's locked spot; it is the point too, so a world mark (Future Sight) lands there and not on a wild enemy
+  const castAt = (o, slot, def, now, aim, target = null) =>
+    castSlot(o, slot, def, now, target ? { aim, target, point: { x: target.x, y: target.y } } : { aim, target });
 
   // ---- caster-state commitments (slice 4b, S13) ----
   const lifeOf = (def) => {

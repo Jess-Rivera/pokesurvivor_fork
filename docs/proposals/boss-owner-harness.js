@@ -516,6 +516,55 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   offE && offE(); offM && offM(); pl.x = 0; pl.y = 0;
   console.log('17 slice-3 forms: Razor Leaf 4 hits at 60 px and returns (a centred player slips the gap at 150), Psybeam warn line and one hit, Fury Attack 3 re-aimed jabs, Toxic trail only while moving, ended by stun and faint'); }
 
+// 18. lore-set imports (Jess 2026-11-02, MOVE-INTENT roar, fissure, future-sight), from the approved proposals: Roar a ring growing
+// to 160 px, no damage, push 140 px, cd 5; Fissure power 120, a 60 px strike, 30% one-hit KO on wild foes only; Future Sight power
+// 120, a 60 px mark hit 2 s after the cast. The player's push lasts 0.2 s, so 140 px is 700 px/s.
+{ const one = (ids) => { fresh(); hazards.length = 0; const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; return [e, b]; };
+  const pushes = []; pl.push = function (dx, dy, k) { pushes.push({ dx, dy, k }); return G.Player.prototype.push.call(this, dx, dy, k); };
+  // a) Roar: a nova with no damage that pushes the player 140 px straight away from the leader
+  { const [e, b] = one(['roar']); pl.x = 100; pl.y = 0; pushes.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'nova' && near(b.tell.wind, 0.45), 'a 0.45 s Roar tell at 100 px (reach 160 + body 12)');
+    run(e, 1); const p = pushes[0];
+    ok(pushes.length === 1 && p.k === 140 && near(Math.atan2(p.dy, p.dx), 0, 1e-3) && pl.hurts.length === 0, 'Roar pushes the player once, 140 px away from the leader, with no damage: ' + JSON.stringify(pushes));
+    ok(pl.stPush && near(pl.stPush.vx, 700) && near(pl.stPush.vy, 0) && near(pl.stPush.t, 0.2), 'the push is a 0.2 s slide at 700 px/s');
+    ok(near(e.brain.def('roar').cd, 5), 'Roar cd 5'); pl.stPush = null; }
+  { const [e, b] = one(['roar']); pl.x = 0; pl.y = 0; pl.flyT = 1; pushes.length = 0; G.Player.prototype.push.call(pl, 1, 0, 140); ok(!pl.stPush, 'a flying player is never pushed'); pl.flyT = 0; }
+  // the player's Roar on enemies: a wild one slides, a boss or an elite does not
+  { const roar = G.MoveDefs.roar, mk = (o) => Object.assign({ id: 7000 + Math.random(), x: 50, y: 0, r: 10, dead: false, kx: 0, ky: 0, types: ['normal'], hurt() {} }, o),
+      cast = { spec: roar, cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
+    const w = mk(), bo = mk({ boss: true }), el = mk({ elite: true });
+    for (const t of [w, bo, el]) G.MoveEffects.applyHit(cast, t, 0, () => 0);
+    ok(w.kx === 140 && w.ky === 0 && bo.kx === 0 && el.kx === 0, 'the player\'s Roar slides a wild enemy (knock 140 away) and never a boss or an elite: ' + [w.kx, bo.kx, el.kx]); }
+  // b) Fissure: the KO roll on wild foes only; on the player a strike of power 120
+  { const fx = G.MoveDefs.fissure.payload.find(f => f.handler === 'ohkoWild'), only = { spec: Object.assign({}, G.MoveDefs.fissure, { payload: [fx] }), cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
+    const mk = (o) => Object.assign({ x: 0, y: 0, r: 10, dead: false, hp: 500, shield: 0, types: ['normal'], hurt(n) { this.hp -= n; if (this.hp <= 0) this.dead = true; } }, o);
+    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ elite: true });
+    G.MoveEffects.applyHit(only, w1, 0, () => 0.29); G.MoveEffects.applyHit(only, w2, 0, () => 0.3);
+    for (const t of [bo, gy, el]) G.MoveEffects.applyHit(only, t, 0, () => 0);
+    ok(fx.koChance === 30 && w1.dead && !w2.dead, 'a wild foe is KO\'d on a roll under 0.30 and not at 0.30');
+    ok(!bo.dead && !gy.dead && !el.dead && bo.hp === 500 && gy.hp === 500 && el.hp === 500, 'a boss, a gym mon and an elite are never KO\'d outright'); }
+  { const [e, b] = one(['fissure']); pl.x = 200; pl.y = 0; warns.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'strike' && near(b.tell.wind, 0.5) && b.tell.spot.x === 200, 'a 0.5 s Fissure strike tell locks the player\'s spot');
+    run(e, 0.8); ok(pl.hurts.length === 1 && !pl.dead && !warns.some(w => /ohkoWild/.test(w)), 'one power-120 hit on the player, never a KO, and no unapplied-effect note');
+    ok(e.brain.def('fissure').basePower === 120, 'Fissure Power 120'); }
+  // c) Future Sight: no tell, the mark sits on the player's spot at the cast, hits 2 s later; a step of 80 px (> 60 + 12) dodges it
+  { const [e, b] = one(['future-sight']); pl.x = 200; pl.y = 0; let at = null;
+    for (let i = 0; i < 10 && at == null; i++) { frame(e); if (casts['future-sight']) at = clock; }
+    const mark = Sim.list().find(i => i.spec.id === 'future-sight');
+    ok(at != null && at <= 2 * DT + 1e-9 && b.tell && b.tell.form === 'delayed', 'the mark is cast at once (no wind-up), as the delayed form');
+    ok(mark && near(mark.x, 200) && near(mark.y, 0), 'the mark sits on the player\'s spot at the cast: ' + (mark && [mark.x, mark.y]));
+    run(e, 1.9); ok(pl.hurts.length === 0, 'no hit before the 2 s delay');
+    run(e, 0.3); ok(pl.hurts.length === 1, 'one hit when it lands on the player who stayed: ' + pl.hurts.length); }
+  { const [e, b] = one(['future-sight']); pl.x = 200; pl.y = 0; frame(e); frame(e); pl.y = 80; run(e, 2.3); ok(casts['future-sight'] >= 1 && pl.hurts.length === 0, 'a player who stepped 80 px away is missed'); }
+  { // a wild enemy beside the leader: a leader's mark still goes on the player, never on the wild enemy (castAt passes the spot as the point)
+    const decoy = { id: 9002, x: 30, y: 0, r: 10, dead: false, types: ['normal'], hurt() {} }, saved = G.EnemyMgr;
+    G.EnemyMgr = { queryCircleEach: (x, y, R, f) => f(decoy), queryCircle: () => [decoy], all: () => [decoy] };
+    const [e, b] = one(['future-sight']); pl.x = 250; pl.y = 0; frame(e); frame(e);
+    const mark = Sim.list().find(i => i.spec.id === 'future-sight'); G.EnemyMgr = saved;
+    ok(mark && near(mark.x, 250), 'with a wild enemy at 30 px the mark still lands on the player at 250: ' + (mark && mark.x)); }
+  delete pl.push; pl.stPush = null; pl.x = 0; pl.y = 0;
+  console.log('18 imports: Roar pushes the player 140 px (0.2 s slide, never in the air) and wild enemies only, cd 5; Fissure KOs wild foes on a roll under 30% only, a 120 strike on you; Future Sight marks your spot, lands 2 s later, a step dodges it'); }
+
 console.warn = origWarn;
 console.log(fail ? fail + ' FAILED (' + n + ' checks)' : 'ALL OK (' + n + ' checks)');
 process.exit(fail ? 1 : 0);

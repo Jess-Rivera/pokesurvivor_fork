@@ -486,6 +486,14 @@ G.Player = class Player {
     G.FX.dmgText(this.x, this.y - this.bodyH - 4, 'Flinched', '#e8d5a0');
     return true;
   }
+  /** A push-only move from a gym leader (Roar, MOVE-INTENT roar, Jess 2026-11-02): you slide `dist` px along (dx, dy) over PUSH_T
+   *  seconds (0.2), walls stopping you, input ignored. In the air (Fly) nothing reaches you. */
+  push(dx, dy, dist) {
+    if (this.dead || this.flyT > 0 || !(dist > 0)) return;
+    const PUSH_T = 0.2, // TUNE: seconds the slide lasts (140 px is 700 px/s)
+      [nx, ny] = G.U.norm(dx, dy);
+    this.stPush = { vx: (nx * dist) / PUSH_T, vy: (ny * dist) / PUSH_T, t: PUSH_T };
+  }
   /** Velocity during the flinch: back at 2x for half the body, then still for 0.2 to 0.3 s. */
   flinchMove(dt) {
     const F = this.stFl;
@@ -812,7 +820,7 @@ G.Player = class Player {
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || this.stFl || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen, asleep or flinched: no input
+    let [ax, ay] = this.frozen || this.stFl || this.stPush || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen, asleep, flinched or pushed: no input
     if (this.stCnf && (ax || ay)) {
       // confused: your heading drifts (half weight)
       const m = Math.hypot(ax, ay),
@@ -831,7 +839,12 @@ G.Player = class Player {
     const s = this.spd;
     // Ice: you slide (the velocity changes slowly).
     const slide = this.inLiquid && G.World.liquidEffect(this.mon.types).slide;
-    if (this.stFl)
+    if (this.stPush) {
+      // a push (Roar) moves you; it ends after PUSH_T
+      this.svx = this.stPush.vx;
+      this.svy = this.stPush.vy;
+      if ((this.stPush.t -= dt) <= 0) this.stPush = null;
+    } else if (this.stFl)
       [this.svx, this.svy] = this.flinchMove(dt); // the flinch recoil moves you
     else {
       this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;

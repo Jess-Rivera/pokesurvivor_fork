@@ -223,7 +223,7 @@ const gate2 = G.Gym.gate;
 
 // 10c. per-loop sets (Jess 2026-11-02): the loop-1 lore sets, written out by hand, and every slot's def carrying its loop's set
 { const LOOP1 = { Brock: 'tackle,defense-curl,rock-throw', Misty: 'tackle,harden,water-pulse,recover', 'Lt. Surge': 'thunder-shock,growl,thunder-wave,quick-attack',
-    Erika: 'razor-leaf,acid,stun-spore,sleep-powder', Koga: 'sludge,toxic', Sabrina: 'psybeam,calm-mind', Blaine: 'bite,fire-blast,take-down', Giovanni: 'earthquake,body-slam,fury-attack' };
+    Erika: 'razor-leaf,acid,stun-spore,sleep-powder', Koga: 'sludge,toxic', Sabrina: 'psybeam,calm-mind,future-sight', Blaine: 'roar,bite,fire-blast,take-down', Giovanni: 'earthquake,body-slam,fury-attack,fissure' };
   let defs = 0;
   G.Gyms.KANTO.forEach((entry, gi) => {
     const got = G.Gyms.movesFor(entry.signatures[0], 0, 1).map(m => m.id).join();

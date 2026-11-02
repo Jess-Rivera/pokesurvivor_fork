@@ -257,11 +257,18 @@ G.MoveEffects = (() => {
   const SPECIAL = {
     fixedDamage: (inst, e, rng, fx, hop, hit) => flat(inst, e, fx.amount, hop, hit), // D12: ignoresType and ignoresDefense hold by construction
     levelDamage: (inst, e, rng, fx, hop, hit) => flat(inst, e, inst.cast.owner.level || 1, hop, hit), // D14
+    ohkoWild, // Fissure: a wild foe that survives the hit rolls koChance % to faint outright (MOVE-INTENT fissure)
     statusBonus: read,
     chainDamageFalloff: read,
     setWeather: read,
     berrySteal: read,
   };
+  /** Fissure (Jess 2026-11-01): only a wild foe can be KO'd outright; bosses, gym leaders, elites and the player take the hit alone. */
+  function ohkoWild(inst, e, rng, fx) {
+    if (!foe(e) || e.isPlayer || e.boss || e.elite || e.gym || !(rng() < pct(fx.koChance || 0))) return;
+    G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 14, 'One-hit KO!', '#ffd23f');
+    e.hurt(e.hp + (e.shield || 0) + 1, '#ffd23f', 0, 0, 0, null);
+  }
   function special(inst, e, rng, fx, hop, hit) {
     const f = SPECIAL[fx.handler];
     if (!f) throw new Error('MoveEffects: no executor for handler ' + fx.handler + ' (' + inst.spec.id + ')');
@@ -269,7 +276,25 @@ G.MoveEffects = (() => {
   }
 
   const inDamage = () => {}; // crit and knockback are read by damage(); their entries exist so an unknown t fails loudly
-  const APPLY = { damage, ailment, flinch, stat, heal, special, recoil, crit: inDamage, knockback: inDamage }; // one applier per effect t (I3)
+  /** A move that pushes without damage (Roar, MOVE-INTENT roar): there is no damage call to carry the knockback, so it is applied
+   *  here, away from the instance centre. A wild enemy slides as from a hit (bosses and elites never do, as in Enemy.hurt); the player
+   *  is pushed (Player.push). A move with a damage effect keeps its knockback inside the damage call. */
+  function shove(inst, e, rng, fx) {
+    const p = inst.spec.payload || [];
+    if (!foe(e) || p.some((x) => x.t === 'damage' || (x.t === 'special' && FLAT[x.handler]))) return;
+    const [dx, dy, k] = knockOf(inst, e, fx);
+    if (!(k > 0)) return;
+    if (e.isPlayer) {
+      if (e.push) e.push(dx, dy, k);
+      return;
+    }
+    if (e.boss || e.elite) return;
+    const [nx, ny] = G.U.norm(dx, dy);
+    e.kx = (e.kx || 0) + nx * k;
+    e.ky = (e.ky || 0) + ny * k;
+  }
+  const FLAT = { fixedDamage: 1, levelDamage: 1 }; // handlers that deal the hit (and carry its knockback) themselves
+  const APPLY = { damage, ailment, flinch, stat, heal, special, recoil, crit: inDamage, knockback: shove }; // one applier per effect t (I3)
   const LATER = new Set(['emit', 'shield']); // emit: slice 4d; shield acts at cast (applyCast)
 
   /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
@@ -278,7 +303,7 @@ G.MoveEffects = (() => {
    *  and a crit (the D10 rule: the owner's crit cards plus the move's percent, x1.5 after your defense). Ailments go through G.Status
    *  (burn, poison and toxic as the player's damage over time), so immunity, one major, the hard-CC grace, berries and Shake off hold.
    *  Foe drops land on your own tracker on the leader's Gate (strong-host Gate) and Duration; its own raises and drain heal land on
-   *  it. Flinch: one roll per move per 0.5 s, then Player.applyFlinch. Knockback is skipped, since the player has none; flat damage is
+   *  it. Flinch: one roll per move per 0.5 s, then Player.applyFlinch. Knockback on a damaging hit is skipped; a push-only move (Roar) pushes you (Player.push); flat damage is
    *  not built for this direction yet, so it is skipped with one console note per move and effect. */
   const noted = new Set();
   const FLINCH_GAP = 0.5; // seconds between two flinch rolls of one move on the player (COMBAT-RULES "Flinch on the player")
@@ -330,7 +355,7 @@ G.MoveEffects = (() => {
     heal,
     recoil,
     special: (inst, pl, rng, fx) => {
-      if (SPECIAL[fx.handler] === read) return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here
+      if (SPECIAL[fx.handler] === read || fx.handler === 'ohkoWild') return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here; the player is never KO'd outright
       if (!noted.has(inst.spec.id + ':' + fx.handler)) {
         noted.add(inst.spec.id + ':' + fx.handler);
         console.warn(
@@ -339,7 +364,7 @@ G.MoveEffects = (() => {
       }
     },
     crit: inDamage,
-    knockback: inDamage,
+    knockback: shove, // a push-only move (Roar) pushes you; a damaging hit's knockback is still skipped on the player
   };
   function hitPlayer(inst, pl, hop, rng) {
     const def = inst.spec;

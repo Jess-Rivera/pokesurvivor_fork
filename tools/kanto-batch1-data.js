@@ -15,7 +15,8 @@ window.KANTO_B1 = {
   "zone": "Ground patch at a foe (new)",
   "wave": "Wave: a band across the aim that widens as it travels (new)",
   "skill": "Movement skill, never autocast (new)",
-  "meteors": "Three falls on the nearest foe (new)"
+  "meteors": "Three falls on the nearest foe (new)",
+  "mark": "Delayed hit on a spot (new)"
  },
  "rows": [
   {
@@ -5441,7 +5442,6 @@ window.KANTO_B1 = {
    "category": "status",
    "power": null,
    "pp": 40,
-   "cd": null,
    "target": "user",
    "effect": "Raises user’s Defense by one stage.",
    "pattern": "self",
@@ -5464,6 +5464,146 @@ window.KANTO_B1 = {
       "stages": 1,
       "side": "self",
       "scope": "team"
+     }
+    ]
+   }
+  },
+  {
+   "id": "roar",
+   "name": "Roar",
+   "type": "normal",
+   "category": "status",
+   "power": null,
+   "pp": 20,
+   "cd": 5,
+   "target": "selected-pokemon",
+   "effect": "Immediately ends wild battles.  Forces trainers to switch Pokémon.",
+   "pattern": "ring",
+   "words": {
+    "shape": "Ring growing to 160 px around the user",
+    "delivery": "Grows out from the user over 0.4 s",
+    "payload": "knockback 140",
+    "rule": "a sound or look: ring"
+   },
+   "proposed": {
+    "kind": "nova",
+    "space": {
+     "shape": "radial",
+     "radArc": 6.2832,
+     "radRadius": 1
+    },
+    "delivery": {
+     "anchor": "caster",
+     "targeting": "none",
+     "motion": "static",
+     "grow": {
+      "growSpeed": 400,
+      "dim": "radRadius",
+      "per": "time",
+      "max": 160
+     },
+     "endOn": [
+      {
+       "time": 0.4
+      }
+     ]
+    },
+    "hitPolicy": "oncePerInstance",
+    "payload": [
+     {
+      "t": "knockback",
+      "distance": 140
+     }
+    ]
+   }
+  },
+  {
+   "id": "fissure",
+   "name": "Fissure",
+   "type": "ground",
+   "category": "physical",
+   "power": null,
+   "pp": 5,
+   "cd": 3.5,
+   "target": "selected-pokemon",
+   "effect": "Causes a one-hit KO.",
+   "pattern": "strike",
+   "words": {
+    "shape": "Circle 60 px on the nearest foe",
+    "delivery": "Instant on the nearest foe",
+    "payload": "Damage, one-hit KO 30% on wild foes",
+    "rule": ""
+   },
+   "proposed": {
+    "kind": "projectile",
+    "space": {
+     "shape": "radial",
+     "radRadius": 60,
+     "count": 1
+    },
+    "delivery": {
+     "anchor": "target",
+     "targeting": "nearest",
+     "motion": "static",
+     "endOn": [
+      {
+       "time": 0
+      }
+     ]
+    },
+    "hitPolicy": "oncePerInstance",
+    "payload": [
+     {
+      "t": "damage"
+     },
+     {
+      "t": "special",
+      "handler": "ohkoWild",
+      "koChance": 30
+     }
+    ]
+   }
+  },
+  {
+   "id": "future-sight",
+   "name": "Future Sight",
+   "type": "psychic",
+   "category": "special",
+   "power": 120,
+   "pp": 10,
+   "cd": 1.75,
+   "target": "selected-pokemon",
+   "effect": "Hits the target two turns later.",
+   "pattern": "mark",
+   "words": {
+    "shape": "Circle 60 px on a spot",
+    "delivery": "Marks a foe's spot, lands 2 s later for 0.2 s",
+    "payload": "Damage",
+    "rule": ""
+   },
+   "proposed": {
+    "kind": "meteor",
+    "space": {
+     "shape": "radial",
+     "radArc": 6.2832,
+     "radRadius": 60,
+     "count": 1
+    },
+    "delivery": {
+     "anchor": "world",
+     "targeting": "location",
+     "motion": "static",
+     "delay": 2,
+     "endOn": [
+      {
+       "time": 0.2
+      }
+     ]
+    },
+    "hitPolicy": "oncePerInstance",
+    "payload": [
+     {
+      "t": "damage"
      }
     ]
    }

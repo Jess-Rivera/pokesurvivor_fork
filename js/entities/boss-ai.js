@@ -22,10 +22,21 @@
 G.Boss = (() => {
   // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02; returns, beam, multi TUNE 2026-11-02), divided by tempo; a
   // pure buff, a self heal and a trail have none
-  const TELL = { melee: 0.45, nova: 0.45, multi: 0.45, shot: 0.5, strike: 0.5, returns: 0.5, beam: 0.5, dash: 0.6 };
+  // a delayed mark (Future Sight) has none: its own delay, with the marker drawn on your locked spot, is the warning (Jess 2026-11-02)
+  const TELL = {
+    melee: 0.45,
+    nova: 0.45,
+    multi: 0.45,
+    shot: 0.5,
+    strike: 0.5,
+    returns: 0.5,
+    beam: 0.5,
+    dash: 0.6,
+    delayed: 0,
+  };
   const CLOSE = ['melee', 'nova', 'multi']; // forms cast from the body, so the close stance walks in for them
-  const RANGED = ['shot', 'strike', 'dash', 'returns', 'beam']; // forms far mode keeps you inside of
-  const ORDER = ['melee', 'nova', 'multi', 'strike', 'dash', 'beam', 'returns', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
+  const RANGED = ['shot', 'strike', 'dash', 'returns', 'beam', 'delayed']; // forms far mode keeps you inside of
+  const ORDER = ['melee', 'nova', 'multi', 'strike', 'delayed', 'dash', 'beam', 'returns', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
   const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
   // TUNE, the opportunity factor (Jess 2026-11-01): a Hex-like move (statusBonus) while you carry a major ailment; a move whose major
   // ailment cannot land since you already carry one; a move whose foe stat drop is not on you yet
@@ -230,7 +241,7 @@ G.Boss = (() => {
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
       const wind = TELL[form] / tempo,
-        spot = form === 'strike' || form === 'dash' ? { x: pl.x, y: pl.y } : null;
+        spot = form === 'strike' || form === 'dash' || form === 'delayed' ? { x: pl.x, y: pl.y } : null;
       this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
       e.aim = ang;
       e.anim.play('Charge', { speed: 1.4 });
@@ -269,6 +280,8 @@ G.Boss = (() => {
           type: d.type,
           color: col,
         });
+      else if (form === 'delayed')
+        return; // the marker is the move's own instance, drawn through its delay (move-render.js)
       else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
       else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
     }

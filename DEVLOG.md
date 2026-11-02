@@ -426,3 +426,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Loop-1 sets: Erika + Razor Leaf, Koga + Toxic, Sabrina Psybeam for Confusion, Giovanni + Fury Attack.
 - Found: a player dead centre at about 150 px slips between Razor Leaf's two leaves (0.5 rad fan); point blank takes 4 hits.
 - Verified: check.js 30/30, boss-owner 228 (new section 17, two mutations caught), gym harness ALL OK, live loop-1 fights of all four on file:// with no page errors. Not yet feel-tested.
+
+## 2026-11-02, Imports: Roar, Fissure, Future Sight (Claude Code, home)
+- Jess: slice 3 felt good enough; balance waits for playtesters; use the proposed numbers. Imported via kanto_batch1.js (new options push, power, ko, acc, delay and the mark pattern), held from pools.
+- Built: push-only knockback (wild enemies slide, the player gets Player.push, a 0.2 s slide), ohkoWild handler (wild foes only), the leader 'delayed' form (Future Sight, spot locked at the cast, castAt passes it as the point), marker drawn without the boulder. Loop 1: Blaine + Roar, Sabrina + Future Sight, Giovanni + Fissure.
+- Found: Roar with no cd was cast 52 times in 90 s (cd 5 TUNE added); Fissure's 30 accuracy made the heavy hit 36 (accuracy set to 100).
+- Verified: check.js 30/30, intent 2193 (4 new scenarios), boss-owner 245 (section 18), gym harness, live Blaine, Sabrina, Giovanni on file://, no page errors. Not yet feel-tested.
