@@ -91,13 +91,13 @@ const PLAN = {
   'poison-jab': ['melee'],
   acid: ['burst'],
   'poison-fang': ['melee'],
-  'sludge-wave': ['ring', { r: 220 }],
+  'sludge-wave': ['wave'],
   'acid-armor': ['self'],
   'cross-poison': ['melee'],
   'gunk-shot': ['shot'],
   'poison-powder': ['cloud'],
   // Water
-  surf: ['ring', { r: 240 }],
+  surf: ['wave'],
   waterfall: ['melee'],
   'water-pulse': ['shot'],
   scald: ['shot'],
@@ -161,6 +161,7 @@ const PATTERNS = {
   multi: 'Multi-hit, quick repeats (like String Shot)',
   cloud: 'Powder cloud, no damage (new)',
   zone: 'Ground patch at a foe (new)',
+  wave: 'Wave: a band across the aim that widens as it travels (new)',
   meteors: 'Three falls on the nearest foe (new)',
 };
 
@@ -305,6 +306,23 @@ const BUILD = {
     hitPolicy: 'oncePerInstance',
     why: 'powder: a short slow cloud that drifts through foes',
   }),
+  // a wave (Jess 2026-11-02): a band 16 px deep across the aim, 60 px wide, widening to 260 by the end of its 300 px run.
+  // Wider than long, so the range upgrade stretches its width (move-geom). Takes priority over rule 3.
+  wave: () => ({
+    kind: 'nova',
+    balanceClass: 'ranged',
+    space: { shape: 'linear', linLength: 16, linWidth: 60, pierce: 'UNLIMITED' },
+    delivery: {
+      anchor: 'caster',
+      targeting: 'nearest',
+      motion: 'travels',
+      moveSpeed: 300,
+      grow: { growSpeed: 0.667, dim: 'linWidth', per: 'distance', max: 260 },
+      endOn: ends(1),
+    },
+    hitPolicy: 'oncePerInstance',
+    why: 'a wave by name: a widening band',
+  }),
   zone: () => ({
     kind: 'mine',
     balanceClass: 'ranged',
@@ -367,6 +385,7 @@ function words(p, o, g, pay) {
     statusShot: `One shot, radius ${s.radRadius} px${s.pierce ? ', pierces ' + s.pierce : ''}, no damage`,
     cloud: 'Cloud, radius 22 px, passes through every foe, no damage',
     zone: 'Circle 40 px on the ground at a foe, hits every 0.5 s',
+    wave: 'Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe',
     meteors: '3 circles of 60 px, each on the nearest foe',
     beam: 'Line 290 x 20 px, pierces everything',
     strike: `Circle ${o.r || 30} px on the nearest foe`,
@@ -382,6 +401,7 @@ function words(p, o, g, pay) {
     statusShot: `Travels ${d.moveSpeed} px/s ${d.turnRate ? 'steering to the nearest foe' : 'toward aim'}, ends at 1.2 s, a wall or off screen`,
     cloud: 'Drifts 90 px/s toward aim, ends at 1 s or a wall',
     zone: 'Placed on a random foe in range, lasts 2.5 s',
+    wave: 'Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen',
     meteors: 'One every 0.25 s; each warns 0.4 s, then lands for 0.2 s',
     beam: 'Instant at nearest, lasts 0.5 s',
     strike: 'Instant on the nearest foe',

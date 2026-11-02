@@ -1325,7 +1325,7 @@
       "name": "Heat Wave",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Large fast nova blast. Full-circle ring (radArc 6.2832) whose collision edge expands 0->250px in 0.4s (growSpeed 625 px/s, per time, so the edge reaches max right at endOn 0.4). Each enemy hit once as the edge crosses it (oncePerInstance). 10% burn. A quick wide shockwave, not pellets (the intentional burst->ring conversion the schema calls out).",
+      "feel": "Wave (Jess 2026-11-02): a band 16 px deep across the aim, 60 px wide, that travels 300 px/s at the nearest foe and widens with distance (growSpeed 0.667 px per px, max 260), so it is narrow near the user and wide far out. Ends at 1 s (about 300 px), a wall or off screen. Passes through every foe, each hit once (oncePerInstance). 10% burn. Was a full ring growing to 250 px.",
       "type": "fire",
       "category": "special",
       "power": 95,
@@ -1334,23 +1334,31 @@
       "priority": 0,
       "flavor_text": "The user attacks by exhaling hot breath on opposing Pokémon. This may also leave them with a burn.",
       "space": {
-        "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 1
+        "shape": "linear",
+        "linLength": 16,
+        "linWidth": 60,
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "none",
-        "motion": "static",
+        "targeting": "nearest",
+        "motion": "travels",
+        "moveSpeed": 300,
         "grow": {
-          "growSpeed": 625,
-          "dim": "radRadius",
-          "per": "time",
-          "max": 250
+          "growSpeed": 0.667,
+          "dim": "linWidth",
+          "per": "distance",
+          "max": 260
         },
         "endOn": [
           {
-            "time": 0.4
+            "time": 1
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
           }
         ]
       },
@@ -6155,7 +6163,7 @@
       "name": "Sludge Wave",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (hits everyone around in mainline: ring). Shape: Ring growing to 220 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage, poison 10%.",
+      "feel": "Kanto batch 1 proposal. Wave: a band across the aim that widens as it travels (new) (a wave by name: a widening band). Shape: Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe. Delivery: Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen. Payload: Damage, poison 10%.",
       "type": "poison",
       "category": "special",
       "power": 95,
@@ -6164,23 +6172,31 @@
       "priority": 0,
       "flavor_text": "The user strikes everything around it by swamping the area with a giant sludge wave. This may also poison those it hits.",
       "space": {
-        "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 1
+        "shape": "linear",
+        "linLength": 16,
+        "linWidth": 60,
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "none",
-        "motion": "static",
+        "targeting": "nearest",
+        "motion": "travels",
+        "moveSpeed": 300,
         "grow": {
-          "growSpeed": 550,
-          "dim": "radRadius",
-          "per": "time",
-          "max": 220
+          "growSpeed": 0.667,
+          "dim": "linWidth",
+          "per": "distance",
+          "max": 260
         },
         "endOn": [
           {
-            "time": 0.4
+            "time": 1
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
           }
         ]
       },
@@ -6376,7 +6392,7 @@
       "name": "Surf",
       "kind": "nova",
       "balanceClass": "ranged",
-      "feel": "Kanto batch 1 proposal. Ring around the user (like Bulldoze) (hits everyone around in mainline: ring). Shape: Ring growing to 240 px around the user. Delivery: Grows out from the user over 0.4 s. Payload: Damage.",
+      "feel": "Kanto batch 1 proposal. Wave: a band across the aim that widens as it travels (new) (a wave by name: a widening band). Shape: Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe. Delivery: Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen. Payload: Damage.",
       "type": "water",
       "category": "special",
       "power": 90,
@@ -6385,23 +6401,31 @@
       "priority": 0,
       "flavor_text": "The user attacks everything around it by swamping its surroundings with a giant wave.",
       "space": {
-        "shape": "radial",
-        "radArc": 6.2832,
-        "radRadius": 1
+        "shape": "linear",
+        "linLength": 16,
+        "linWidth": 60,
+        "pierce": "UNLIMITED"
       },
       "delivery": {
         "anchor": "caster",
-        "targeting": "none",
-        "motion": "static",
+        "targeting": "nearest",
+        "motion": "travels",
+        "moveSpeed": 300,
         "grow": {
-          "growSpeed": 600,
-          "dim": "radRadius",
-          "per": "time",
-          "max": 240
+          "growSpeed": 0.667,
+          "dim": "linWidth",
+          "per": "distance",
+          "max": 260
         },
         "endOn": [
           {
-            "time": 0.4
+            "time": 1
+          },
+          {
+            "contact": "wall"
+          },
+          {
+            "offScreen": true
           }
         ]
       },

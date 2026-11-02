@@ -55,7 +55,7 @@ G.MoveInfo = (() => {
       if (k.some((x) => x.fx.trigger === 'casterMove')) return 'trail';
       return k.length ? badgeOf(k[0].d, false) : null;
     }
-    if (s.shape === 'linear') return 'beam';
+    if (s.shape === 'linear') return v.motion === 'travels' ? 'nova' : 'beam'; // a wave shows the nova badge until it has its own
     if (v.motion === 'travels') return 'projectile';
     if (s.radArc == null || s.radArc >= TAU - 0.01) return d.persistent ? 'aura' : 'nova';
     return d.category === 'physical' ? 'melee' : 'cone';

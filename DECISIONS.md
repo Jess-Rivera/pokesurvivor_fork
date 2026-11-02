@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Waves: a widening band across the aim (Jess)
+Moves that are waves by name (Surf, Sludge Wave, and the original Heat Wave) become a band 16 px deep across the aim that travels at the nearest foe and widens from 60 to 260 px over about 300 px. A line can now grow its width; the range upgrade and the Area card stretch a line's long side (a beam's length, a wave's width), Presence its short side. Waves show the nova badge for now and count as ranged for aiming and as shots for gym leaders.
+Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules" rule 6; docs/MOVE-INTENT.md heat-wave
+
 ## 2026-11-02, Kanto import batch 1 shape rules (Jess)
 Batch 1 shapes now come from five rules instead of per-move picks. (1) Tackle is the default swing; a melee move with an extra (ailment, flinch, crit, drain, foe stat drop) gives up area, and its name picks which way; drawbacks (recoil, own stat drops) cost nothing. (2) Every shot takes its type's look from the original moves, scaled by power; no-damage status shots follow it too. (3) Area moves: hits everyone around in mainline, or a sound or look, is a ring; a damaging spray is a burst. (4) Mine = placed on the field, trail = left behind as the user moves; Toxic stays a trail as a designer pick. (5) Uniques in this batch: Shock Wave homes, the four powders are drifting clouds, Sand Tomb is a sand patch at a foe, Draco Meteor is three falls.
 Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules"

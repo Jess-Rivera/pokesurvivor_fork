@@ -393,3 +393,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Applied and exported (173 moves). New shapes: Shock Wave homing, powder clouds, Sand Tomb patch, Draco Meteor three falls; Blizzard and Twister are bursts.
 - Verified: check.js 30/30, validators 173/173, smoke-ui pass, 18 reshaped moves cast and hit live on file://, no page errors.
 - Open: Sand Tomb cd resolves to 1.17 s while a patch lasts 2.5 s (patches overlap); needs a cd ruling.
+
+## 2026-11-02, Waves (Claude Code, home)
+- Built: a line can grow its width (grammar, move-geom); the lens, Area and Presence follow a line's long and short side. Surf, Sludge Wave and Heat Wave are widening bands at the nearest foe; wave badge reuses nova.
+- Tests moved off Heat Wave as the example ring (Hyper Voice, Bulldoze); new hand-derived wave checks in move-sim and team-cards; scenario heat-wave-wave replaces heat-wave-grow.
+- Verified: check.js 30/30, validators, smoke-ui pass, the three waves and Hyper Voice cast and hit live on file://.

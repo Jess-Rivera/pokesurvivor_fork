@@ -41,10 +41,10 @@
       "expect": { "hits": [1, 1, 0, 0] },
       "note": "linear 250 x 30 aimed at the nearest: inside along 0 to 260 and within 25 px of the axis" },
 
-    { "id": "heat-wave-grow", "move": "heat-wave", "source": "data", "secs": 0.5,
-      "enemies": [[100, 0], [0, -200], [300, 0]],
-      "expect": { "hits": [1, 1, 0], "firstHit": { "0": [0.12, 0.18], "1": [0.28, 0.34] } },
-      "note": "circle grows from 1 px at 625 px/s to max 250 (D21): reaches 100 at about 0.14 s, 200 at about 0.30 s, never 300" },
+    { "id": "heat-wave-wave", "move": "heat-wave", "source": "data", "secs": 1.1,
+      "enemies": [[100, 0], [100, 80], [200, 90], [300, 0], [0, -200]],
+      "expect": { "hits": [1, 0, 1, 1, 0], "firstHit": { "0": [0.22, 0.28], "2": [0.55, 0.61], "3": [0.89, 0.95] } },
+      "note": "wave (Jess 2026-11-02): band 16 deep at the nearest foe (100, 0), 300 px/s, width 60 + 0.667 per px travelled. Enemy r 10: on the axis hit once dist + 16 + 10 reaches it (100 at dist 74, 0.25 s; 300 at dist 274, 0.91 s). (100, 80): at most 133 wide over x 100, half + 10 = 77 < 80, a miss (narrow near the user). (200, 90): front reaches x 190 at dist 174, 176 wide, half + 10 = 98, a hit at 0.58 s. Behind the user: never." },
 
     { "id": "mud-shot-ring", "move": "mud-shot", "source": "data", "secs": 0.6,
       "enemies": [[100, 0], [-100, 0], [0, 100]],

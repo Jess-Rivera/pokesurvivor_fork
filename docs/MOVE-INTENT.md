@@ -175,6 +175,9 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] PARKED as a toggle skill item; setWeather tested through a synthetic move. Its cd 1.2 vs duration 10 (review S6) is owned by the parked Hail toggle item. (review 9.9 S2, 9.7 item 6)
 - Ledger: B4-I09
 
+### heat-wave
+- [Approved] Heat Wave is a wave: a band 16 px deep across the aim, 60 px wide, that travels 300 px/s at the nearest foe and widens 0.667 px per px travelled to 260, ending at 1 s (about 300 px). Passes through every foe, each hit once; 10% burn. It replaces the full ring growing to 250 px. The range upgrade stretches its width, not its depth. Scenario heat-wave-wave. (Jess, 2026-11-02, waves)
+
 ### hex
 - [Approved] Doubles POWER (inside the attacker half, not a final x2) on a major ailment (paralysis, freeze, sleep, burn, poison, toxic; confusion and trap do not count), checked on every chain hop. Built. (review 9.1 Q9; slice 4b S8; combat-architecture D13)
 - Ledger: B4-I10

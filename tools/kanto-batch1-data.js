@@ -13,6 +13,7 @@ window.KANTO_B1 = {
   "multi": "Multi-hit, quick repeats (like String Shot)",
   "cloud": "Powder cloud, no damage (new)",
   "zone": "Ground patch at a foe (new)",
+  "wave": "Wave: a band across the aim that widens as it travels (new)",
   "meteors": "Three falls on the nearest foe (new)"
  },
  "rows": [
@@ -3443,33 +3444,41 @@ window.KANTO_B1 = {
    "cd": 1.75,
    "target": "all-other-pokemon",
    "effect": "Has a chance to poison the target.",
-   "pattern": "ring",
+   "pattern": "wave",
    "words": {
-    "shape": "Ring growing to 220 px around the user",
-    "delivery": "Grows out from the user over 0.4 s",
+    "shape": "Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe",
+    "delivery": "Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen",
     "payload": "Damage, poison 10%",
-    "rule": "hits everyone around in mainline: ring"
+    "rule": "a wave by name: a widening band"
    },
    "proposed": {
     "kind": "nova",
     "space": {
-     "shape": "radial",
-     "radArc": 6.2832,
-     "radRadius": 1
+     "shape": "linear",
+     "linLength": 16,
+     "linWidth": 60,
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "none",
-     "motion": "static",
+     "targeting": "nearest",
+     "motion": "travels",
+     "moveSpeed": 300,
      "grow": {
-      "growSpeed": 550,
-      "dim": "radRadius",
-      "per": "time",
-      "max": 220
+      "growSpeed": 0.667,
+      "dim": "linWidth",
+      "per": "distance",
+      "max": 260
      },
      "endOn": [
       {
-       "time": 0.4
+       "time": 1
+      },
+      {
+       "contact": "wall"
+      },
+      {
+       "offScreen": true
       }
      ]
     },
@@ -3693,33 +3702,41 @@ window.KANTO_B1 = {
    "cd": 1.167,
    "target": "all-other-pokemon",
    "effect": "Inflicts regular damage and can hit Dive users.",
-   "pattern": "ring",
+   "pattern": "wave",
    "words": {
-    "shape": "Ring growing to 240 px around the user",
-    "delivery": "Grows out from the user over 0.4 s",
+    "shape": "Band 16 px deep across the aim, 60 px wide growing to 260, passes through every foe",
+    "delivery": "Travels 300 px/s at the nearest foe, ends at 1 s, a wall or off screen",
     "payload": "Damage",
-    "rule": "hits everyone around in mainline: ring"
+    "rule": "a wave by name: a widening band"
    },
    "proposed": {
     "kind": "nova",
     "space": {
-     "shape": "radial",
-     "radArc": 6.2832,
-     "radRadius": 1
+     "shape": "linear",
+     "linLength": 16,
+     "linWidth": 60,
+     "pierce": "UNLIMITED"
     },
     "delivery": {
      "anchor": "caster",
-     "targeting": "none",
-     "motion": "static",
+     "targeting": "nearest",
+     "motion": "travels",
+     "moveSpeed": 300,
      "grow": {
-      "growSpeed": 600,
-      "dim": "radRadius",
-      "per": "time",
-      "max": 240
+      "growSpeed": 0.667,
+      "dim": "linWidth",
+      "per": "distance",
+      "max": 260
      },
      "endOn": [
       {
-       "time": 0.4
+       "time": 1
+      },
+      {
+       "contact": "wall"
+      },
+      {
+       "offScreen": true
       }
      ]
     },

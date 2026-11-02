@@ -69,8 +69,10 @@ G.Sheet = (() => {
       row(w + r0(s.radRadius), lens !== 1 ? w + r0(s.radRadius * lens) : null);
     }
     if (s.radArc > 0 && s.radArc < TAU - 0.01) row('arc ' + r0((s.radArc * 180) / Math.PI) + '°');
-    if (s.linLength > 0) row('length ' + r0(s.linLength), lens !== 1 ? 'length ' + r0(s.linLength * lens) : null);
-    if (s.linWidth > 0) row('width ' + r0(s.linWidth));
+    const wave = s.linWidth > s.linLength; // the lens stretches a line's long side: a beam's length, a wave's width
+    if (s.linLength > 0)
+      row('length ' + r0(s.linLength), lens !== 1 && !wave ? 'length ' + r0(s.linLength * lens) : null);
+    if (s.linWidth > 0) row('width ' + r0(s.linWidth), lens !== 1 && wave ? 'width ' + r0(s.linWidth * lens) : null);
     if (s.pierce > 0 && isFinite(s.pierce)) row('pierce ' + r0(s.pierce));
     if (dv.moveSpeed > 0) row('speed ' + r0(dv.moveSpeed));
     const life = (dv.endOn || []).find((e) => e.time > 0),

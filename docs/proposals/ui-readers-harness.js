@@ -86,7 +86,7 @@ const MELEE = OLD.filter(id => D[id].balanceClass === 'melee');
 ok(set(MELEE) === set(legacyWhere(m => m.kind === 'melee').concat('quick-attack powder-snow aerial-ace psycho-cut'.split(' '))), 'melee cut: legacy melee plus Quick Attack, Powder Snow, Aerial Ace, Psycho Cut');
 // ranged-first targeting: a travelling shot or a beam
 const RANGED = OLD.filter(id => (D[id].delivery || {}).motion === 'travels' || (D[id].space || {}).shape === 'linear');
-ok(set(RANGED) === set(legacyWhere(m => m.kind === 'projectile' || m.kind === 'beam').concat('psychic mud-shot meteor-mash hex'.split(' '))), 'ranged targeting: legacy projectile and beam plus Psychic, Mud Shot, Meteor Mash, Hex');
+ok(set(RANGED) === set(legacyWhere(m => m.kind === 'projectile' || m.kind === 'beam').concat('psychic mud-shot meteor-mash hex heat-wave'.split(' '))), 'ranged targeting: legacy projectile and beam plus Psychic, Mud Shot, Meteor Mash, Hex, Heat Wave (a travelling wave since 2026-11-02)');
 // Life Orb exemption: a persistent def
 const FREE = IDS.filter(id => D[id].persistent);
 ok(set(FREE) === set('fire-spin leaf-storm toxic flame-wheel aqua-ring bug-buzz night-shade'.split(' ')), 'Life Orb free: the persistent defs (legacy orbit and trail minus Gust, plus Aqua Ring, Bug Buzz, Night Shade)');

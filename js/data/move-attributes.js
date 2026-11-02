@@ -147,7 +147,7 @@
       grow: obj(
         {
           growSpeed: num({ gt: 0 }),
-          dim: en(['radRadius', 'radArc', 'linLength'], { d: 'radRadius' }),
+          dim: en(['radRadius', 'radArc', 'linLength', 'linWidth'], { d: 'radRadius' }),
           per: en(['time', 'distance'], { d: 'time' }),
           max: num({ gt: 0 }),
         },
@@ -292,9 +292,9 @@
     },
     {
       id: 'grow-dim-linear',
-      when: { eq: ['delivery.grow.dim', 'linLength'] },
+      when: { in: ['delivery.grow.dim', ['linLength', 'linWidth']] },
       then: { eq: ['space.shape', 'linear'] },
-      msg: 'growing linLength needs a linear shape',
+      msg: 'growing linLength/linWidth needs a linear shape',
     },
     {
       id: 'turn-needs-travel',
