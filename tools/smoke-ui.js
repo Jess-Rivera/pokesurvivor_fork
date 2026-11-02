@@ -117,7 +117,7 @@ async function check(browser, query, tag) {
       rows.every((r) => names.has(r.querySelector('span').textContent) && r.querySelector('canvas,img,i'));
     return { n: opts.length, seen: [...seen], bad, dexOk, rows: rows.length };
   });
-  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED)); // slice 7b: Bubble and Hail are learnable by no one
+  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED).concat([...G.Moves.HELD])); // learnable by no one: retired (slice 7b) and held (Kanto batch 1)
   const miss = ALL.filter((id) => !RET.includes(id) && !menu.seen.includes(id)),
     shownRet = RET.filter((id) => menu.seen.includes(id));
   ok(
@@ -131,7 +131,7 @@ async function check(browser, query, tag) {
   ok(
     !miss.length,
     tag +
-      ': the menus showed every move but the retired ones (' +
+      ': the menus showed every move but the retired and held ones (' +
       menu.seen.length +
       '/' +
       (ALL.length - RET.length) +
@@ -140,7 +140,7 @@ async function check(browser, query, tag) {
   );
   ok(
     !shownRet.length,
-    tag + ': no retired move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
+    tag + ': no retired or held move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
   ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
 

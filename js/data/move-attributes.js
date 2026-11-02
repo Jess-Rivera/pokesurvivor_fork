@@ -53,7 +53,7 @@
     'steel',
     'fairy',
   ];
-  const AILMENTS = ['burn', 'paralysis', 'poison', 'freeze', 'trap', 'confusion']; // the ones status.js implements
+  const AILMENTS = ['burn', 'paralysis', 'poison', 'freeze', 'trap', 'confusion', 'sleep']; // the ones status.js implements
   const STATS = ['atk', 'def', 'spAtk', 'spDef', 'spd'];
   const WEATHER = ['sun', 'rain', 'sand', 'snow', 'fog']; // weather.js ids
 

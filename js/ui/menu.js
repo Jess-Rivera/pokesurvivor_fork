@@ -373,7 +373,7 @@ G.MenuUI = (() => {
       weak = new Set();
     let all = false; // types: the move NAME starts with q (ranked first); weak: only a later word does ('bit' -> Bug Bite)
     for (const m of G.Moves.ALL) {
-      if (G.Moves.RETIRED[m.id]) continue; // retired moves are learnable by no one (slice 7b)
+      if (G.Moves.RETIRED[m.id] || G.Moves.HELD.has(m.id)) continue; // retired (slice 7b) and held (Kanto batch 1) moves are learnable by no one
       const nm = m.name.toLowerCase();
       if (m.type === 'normal') {
         if (nm === q) all = true;

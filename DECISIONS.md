@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-01, Kanto import batch 1: held from pools, multi-hit as quick repeats, simplifications (Jess)
+The 110 batch-1 moves (the 114 that map to the schema, minus Mud-Slap, Mirror Shot and Hone Claws, which wait on the accuracy trackers, and Throat Chop, which needs a silence status) join the catalog but stay out of every player pool (G.Moves.HELD) until pools follow mainline learnsets. Multi-hit moves are quick repeats: Double Kick 2, the 2-5 hit moves a fixed 3, full power each. Ancient Power rolls once per stat; Synthesis and Moonlight ignore weather; Earthquake and Surf drop their Dig/Dive bonus and Brick Break its screen break until those exist; Poison Fang inflicts regular poison. Moves that hit every foe split between a ring around the user and a Mud Shot burst. Shapes, numbers and status cooldowns stay proposals until Jess's shape review (tools/kanto-batch1-review.html) and the batch review.
+Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1"
+
 ## 2026-11-01, Kanto import rulings set 4: priority ignored, two-turn, rampage, whole-field (Jess)
 Priority is not a mechanic: Quick Attack and the six priority imports cast by shape and power; a bonded group casts in slot order (closes the Quick Attack priority question). Fly, Dig, Dive, Bounce vanish with i-frames then strike; Solar Beam charges (instant in sun); Future Sight lands after a delay. Outrage, Thrash, Petal Dance lock in then confuse; Hyper Beam has a recharge lockout. Whole-field moves are team-side fields: weather, Reflect / Light Screen / Safeguard as timed team buffs, Stealth Rock as hazards (Rapid Spin clears them).
 Canonical: docs/MOVE-INTENT.md (per move)

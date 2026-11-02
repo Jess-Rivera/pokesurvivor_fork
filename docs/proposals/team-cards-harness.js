@@ -168,7 +168,8 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 // ===== 3. cardLock, eligibility counts, order =====
 { ok(!can('count', 'giga-drain') && !can('pierce', 'giga-drain') && !can('count', 'meteor-mash') && !can('pierce', 'meteor-mash'), 'cardLock: Giga Drain and Meteor Mash (its shots too)');
   ok(F('giga-drain', [['count', 3], ['pierce', 3]]) === REAL['giga-drain'], 'cardLock: locked fields never move');
-  const list = c => Object.keys(REAL).filter(id => can(c, id)).sort().join(' ');
+  load('js/data/moves.js'); // for G.Moves.HELD (the full load is in section 10)
+  const list = c => Object.keys(REAL).filter(id => !G.Moves.HELD.has(id) && can(c, id)).sort().join(' '); // the pre-Kanto moves; batch 1 is checked at its batch review
   const want = { count: 'aura-sphere bonemerang bubble-beam discharge ember fairy-wind fire-spin gust leaf-storm mud-shot poison-sting razor-leaf rock-throw shadow-ball string-shot water-gun',
     pierce: 'aura-sphere bubble-beam confusion ember fairy-wind gust hex mud-shot poison-sting quick-attack rock-throw shadow-ball sludge string-shot thunder-shock water-gun will-o-wisp',
     time: 'discharge flame-wheel toxic toxic-spikes will-o-wisp', chain: 'hex thunder-shock thunderbolt', delay: 'rock-slide', recoil: 'substitute' };

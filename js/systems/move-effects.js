@@ -222,6 +222,14 @@ G.MoveEffects = (() => {
     o.heal(hit.dealt * a.fraction * (o.bigRoot ? BIG_ROOT : 1));
   }
 
+  /** Kanto batch 1: recoil `trigger: hit` costs a fraction of this hit's dealt damage (mainline Take Down, Double-Edge); payHp keeps
+   *  1 HP. An owner without payHp (a gym leader) pays nothing yet. `trigger: cast` is paid in applyCast. */
+  function recoil(inst, e, rng, fx, hop, hit) {
+    const o = inst.cast.owner;
+    if (fx.trigger !== 'hit' || o.dead || !o.payHp || !(hit.dealt > 0)) return;
+    o.payHp(hit.dealt * fx.fraction);
+  }
+
   /** S5: flat damage skips STAB, type, crit, stages, weather, items and cards; the chain factor and the 1 HP floor still apply. */
   function flat(inst, e, amount, hop, hit) {
     if (!foe(e)) return;
@@ -258,8 +266,8 @@ G.MoveEffects = (() => {
   }
 
   const inDamage = () => {}; // crit and knockback are read by damage(); their entries exist so an unknown t fails loudly
-  const APPLY = { damage, ailment, flinch, stat, heal, special, crit: inDamage, knockback: inDamage }; // one applier per effect t (I3)
-  const LATER = new Set(['emit', 'shield', 'recoil']); // emit: slice 4d; shield and recoil act at cast (applyCast)
+  const APPLY = { damage, ailment, flinch, stat, heal, special, recoil, crit: inDamage, knockback: inDamage }; // one applier per effect t (I3)
+  const LATER = new Set(['emit', 'shield']); // emit: slice 4d; shield acts at cast (applyCast)
 
   /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
    *  the folded Power, STAB, power knob, enrage and Attack stage); Player.hurt does the defender half and the type, as for every enemy hit.
@@ -317,6 +325,7 @@ G.MoveEffects = (() => {
     flinch: flinchPlayer,
     stat,
     heal,
+    recoil,
     special: (inst, pl, rng, fx) => {
       if (SPECIAL[fx.handler] === read) return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here
       if (!noted.has(inst.spec.id + ':' + fx.handler)) {

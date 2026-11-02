@@ -445,6 +445,16 @@ Sunny Day, Rain Dance, Sandstorm, Reflect, Light Screen, Safeguard, Stealth Rock
 
 Plain damage; damage with riders (burn, poison, paralysis, freeze, confusion, flinch, stat drops, high crit, recoil, drain, multihit, trap); self raises (Calm Mind, Bulk Up, Amnesia, Barrier, Acid Armor, Meditate, Nasty Plot); foe drops (Growl, Leer, Tail Whip, Scary Face, Screech); pure ailment moves (Thunder Wave, Glare, Hypnosis, Sing, Spore, Sleep Powder, Stun Spore, Poison Powder, Lovely Kiss, Confuse Ray, Supersonic, Mean Look as trap); heals (Recover, Synthesis, Moonlight). Self drops after an attack (Superpower, Close Combat, Overheat, Draco Meteor) are `stat` effects with `side: self`.
 
+## Batch 1 (2026-11-01)
+
+Built on fix/playtest-kanto-moves: 110 of the "Maps to the schema" moves are in the catalog, held out of player pools (`G.Moves.HELD`, js/data/moves.js) until pools follow mainline learnsets. Held back to later slices: Mud-Slap, Mirror Shot, Hone Claws (accuracy trackers), Throat Chop (silence).
+
+- Source: `tools/kanto_batch1.js` builds each move from pokeapi plus a pattern copied off a catalog move (melee swing, shot, beam, strike, falls, ring, burst, status shot, self-cast, multi-hit). `--apply` splices them into move-conversions-described.json; then `node tools/export_moves.js`.
+- Review: `tools/kanto-batch1-review.html` shows each move's facts, the proposal in words, and override slots (pattern, shape, delivery, payload, cooldown, note). Export saves `kanto-batch1-overrides.json`; put it in docs/move_rework_holding/ and rerun the generator. Plain-text overrides are applied by hand.
+- Runtime added: `sleep` is a legal ailment in the grammar; recoil `trigger: hit` pays a fraction of the damage dealt (gym leaders pay nothing yet, they have no payHp). Self heals (Recover, Synthesis, Moonlight) are one 0.1 s heal-over-time tick of 50% max HP.
+- Status cooldowns (move-overrides.js, proposed): sleep shots 4 s; paralysis, poison, confusion and trap shots 3.5 s; foe drops 3 s; heals 12 s. Pure raises have none (they cast when their Gate opens).
+- Scenarios: one placeholder per move in move-intent-scenarios.json, blocked on the shape review; the hand-derived scenarios and the batchReviewed sign-off come after it.
+
 ## Notes for the import work
 
 - Each import goes through the move data pipeline (`docs/MOVE-AXIS-SCHEMA.md`, the source JSON under `docs/move_rework_holding/`, then `tools/export_moves.js`) and the move review rule in CLAUDE.md.

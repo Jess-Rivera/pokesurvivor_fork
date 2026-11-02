@@ -4,28 +4,24 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-01 (Claude Code, home; branch fix/playtest-kanto-moves, from main).
 
 ## Where we are
-- Jeremy's playtest notes (docs/ASCII Concept Maps/Jeremy Playtest.txt) triaged. Part 1 BUILT and feel-tested OK (Jess 2026-11-01: bonds work, bombs work, speed feels better):
-  - Speed bounds 0.7 to 1.3 (was 0.5 to 3.0). Spe 130 and up all move at 139 px/s; k is the knob if fast mons should differ (BALANCE).
-  - Bond belongs to the team: carried on swap; the bond screen first picks the Pokemon (keys 1-6), then its moves.
-  - Bomb clears wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then 3 s with no spawns.
-- Tests: check.js 30/30, smoke-ui pass, headless checks of all three. smoke-newcombat SKIPPED (flaky; TODO Backlog).
-- docs/Economy Balance Ideas.md: waits for coins-per-run data (CONTRIBUTING asks); six open design questions noted in chat 2026-11-01 (DEVLOG).
-- Team menu rework BUILT and committed (db508e0), final feel test pending: lazy-loaded sprites, Free Slot N under Put, drag a slot to the list to free it, Upgrade button on the detail stage (menu entry gone), sprites centred on visible pixels. Centring works over http only; file:// pages keep the old placement.
+- Playtest fixes part 1 and the Team menu rework: built and feel-tested OK (Jess 2026-11-01). Team menu sprite centring works over http only.
+- Kanto import batch 1 BUILT, not yet reviewed: 110 moves in the catalog, held out of player pools (G.Moves.HELD) until learnset pools. Built by tools/kanto_batch1.js; sleep allowed in the grammar; recoil on hit; status cooldowns proposed. Detail: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1".
+- Tests: validators 173/173, check.js 30/30, smoke-ui pass, live casts headless on file://. smoke-newcombat SKIPPED (flaky; TODO Backlog).
 
 ## Next (in order)
-1. Feel-test the Team menu. Optional: precompute sprite boxes (tool + generated data file, plan first) so centring works on file:// too.
-2. Kanto move imports: rulings DONE (4 sets, MOVE-INTENT; DECISIONS 2026-11-01). Next: plan import batch 1 (the ~114 moves that map straight), then the new mechanics (accuracy/evasion trackers, Protect, fields, rampage) in their own slices.
-3. Cone and area moves ignore walls (Flamethrower etc.; move-sim only stops moving shots). Needs a line-of-sight ruling, own branch.
-4. Readability pass (Jeremy): status chips, stat stage visibility, pause menu, explanations. Ask Jeremy what "Bosses" and "Magnetism" meant. Item drop rates and New Move card frequency (part 2).
-5. Economy rework once coin data comes in. Bond tax last.
-6. Gym cards after playtester runs (tools/move-lab.html). Fix the smoke-newcombat flake.
+1. Jess: open tools/kanto-batch1-review.html, override shapes, Export, put kanto-batch1-overrides.json in docs/move_rework_holding/. Then apply, write the hand-derived scenarios, batch review (move_report.js, batchReviewed).
+2. Learnset pools (empties G.Moves.HELD; plan first). Then the boss translation of the imports (gym forms, recoil for leaders).
+3. New mechanics slices: accuracy/evasion trackers (+ Mud-Slap, Mirror Shot, Hone Claws), fields (Hail toggle + weather moves, TODO), Protect, rampage.
+4. Cone and area moves ignore walls: needs a line-of-sight ruling, own branch.
+5. Readability pass (Jeremy) and part 2 (item drops, New Move card frequency). Ask Jeremy about "Bosses" and "Magnetism".
+6. Economy rework once coin data comes in. Gym cards after playtester runs. Fix the smoke-newcombat flake.
 
 ## Open owner decisions
 - [Open] loop 2+: do a gym's mons share stat raises. O4: do badge boosts stack again in later loops.
-- Bond tax [Proposed]. [Open] stage-manipulation moves (Psych Up, Baton Pass), raises on foes (Swagger). HUD own-drop gap (proposed). Psychic widening [Open]. Base crit for leaders (currently none, by D10).
+- Bond tax [Proposed]. [Open] Psych Up, Baton Pass, Swagger. HUD own-drop gap (proposed). Psychic widening [Open]. Base crit for leaders (none, by D10).
 
 ## Docs and code still differ (approved, not built)
-- Multi-mon arena (#5), gym AI Tier 2 (movement scoring), js/net/coop.js legacy hooks, three stale move-sim mutations (TODO Backlog), regional forms (#9).
+- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, three stale move-sim mutations (TODO Backlog), regional forms (#9).
 
 Rules: CLAUDE.md. Model use: Sonnet for routing, docs, catch-ups; Opus for new runtime.
 Tip for edits: the repo mixes CRLF and LF files, so exact multi-line text matches must normalize line endings first.

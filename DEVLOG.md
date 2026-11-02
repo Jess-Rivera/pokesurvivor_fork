@@ -380,3 +380,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Feel test 1 fix: on file:// the pixel scan threw a SecurityError inside the sprite loop, so no menu sprite drew; the scan is now caught and falls back to the old placement (centring works only over http until a precomputed table exists). The + sits a little lower.
 - Verified: check.js 30/30, smoke-ui pass, headless over file:// and http, 1600x900 and 1280x720.
 - The + became an Upgrade button (Jess). Session closed: part 1, rulings and Team menu all committed on fix/playtest-kanto-moves.
+
+## 2026-11-01 (Claude Code, home): Kanto import batch 1
+- Team menu feel test passed (Jess). Batch 1 planned and built: 110 moves from pokeapi plus a pattern each (tools/kanto_batch1.js), held out of player pools (G.Moves.HELD) until learnset pools. Held back: Mud-Slap, Mirror Shot, Hone Claws, Throat Chop.
+- Jess: all-foe moves split between ring and Mud Shot burst; review page with override slots (tools/kanto-batch1-review.html, export to docs/move_rework_holding/kanto-batch1-overrides.json); hold list, quick-repeat multi-hit and the simplifications agreed.
+- Runtime: sleep allowed in the grammar; recoil on hit from damage dealt (move-effects.js); status cooldowns proposed in move-overrides.js. Harness pins on 63 moves scoped to the pre-Kanto moves; 110 blocked placeholder scenarios.
+- Verified: validators 173/173, check.js 30/30, smoke-ui pass, review page and live casts headless on file:// (sleep, paralysis, poison, trap, confusion land; recoil and drain and Recover heal work; no errors).
+- Hail toggle: unscheduled since D-HAIL; now a TODO fields slice with the weather moves. Stopped at: waiting on Jess's shape review.
