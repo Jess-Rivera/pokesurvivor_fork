@@ -42,7 +42,10 @@
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
  *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
  *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
- *   flinch(owner)         a flinch on the player (gym-roster, Jess 2026-11-01): every cooldown move of the active group restarts its full
+ *   persist(owner, now)   slice 3 of the gym lore sets (Jess 2026-11-02): the persistent upkeep alone, for a gym leader's brain, so a
+ *                         persistent slot (Toxic's trail) lives while it is in the active group, as the player's does. A faint or a stun
+ *                         ends a persistent group in the step too (checkEnd), since a stunned or fainted mon's brain does not run.
+ *   flinch(owner)        a flinch on the player (gym-roster, Jess 2026-11-01): every cooldown move of the active group restarts its full
  *                         cooldown plus FLINCH_HOLD (a bonded group is hit together). Pure buffs, persistent moves, frozen slots, the
  *                         inactive groups and the shapes already out are untouched.
  *   setRng(fn), setView({ x, y, w, h }), setFilter(id => bool) (default: every id), clear(owner), list(), commits(owner)
@@ -91,7 +94,7 @@ G.MoveSim = (() => {
    *  fills that list), else the enemy grid. Every search a move makes goes through here, so a move never needs to know who cast it. */
   function eachFoe(o, x, y, far, f) {
     if (o && o.foes) {
-      for (const p of o.foes()) if (!p.dead && Math.hypot(p.x - x, p.y - y) <= far + EPS) f(p);
+      for (const p of o.foes()) if (!p.dead && !(p.flyT > 0) && Math.hypot(p.x - x, p.y - y) <= far + EPS) f(p); // a flying player is out of reach
     } else G.EnemyMgr.queryCircleEach(x, y, far, f);
   }
   /** Nearest live foe of `o` to (x, y) whose centre distance passes limit(e); ties by lower id (S10, no rng). */
@@ -461,7 +464,9 @@ G.MoveSim = (() => {
   }
   /** Slice 7a (D-ENEMY): a gym leader's cast, timed by its brain (boss-ai.js), which owns the tell and the slot's recharge. The move
    *  fires along `aim` whether or not the player is still in reach; stun, the cast cost, fizzle and the cooldown hold as for the player. */
-  const castAt = (o, slot, def, now, aim, target = null) => castSlot(o, slot, def, now, { aim, target }); // target: a strike's locked spot
+  // target: a strike's locked spot; it is the point too, so a world mark (Future Sight) lands there and not on a wild enemy
+  const castAt = (o, slot, def, now, aim, target = null) =>
+    castSlot(o, slot, def, now, target ? { aim, target, point: { x: target.x, y: target.y } } : { aim, target });
 
   // ---- caster-state commitments (slice 4b, S13) ----
   const lifeOf = (def) => {
@@ -530,6 +535,8 @@ G.MoveSim = (() => {
     done.forEach(release);
     rootOf(o);
   }
+  /** The owner's active group, or none while it flies (Fly, Jess 2026-11-02): its persistent groups end and nothing casts. */
+  const actOf = (o) => (o.flyT > 0 ? [] : o.activeGroup());
   const frozen = (o, id) => cms.some((m) => m.o === o && m.part === 'cooldown' && (!m.ids || m.ids.has(id)));
 
   const FLINCH_HOLD = 0.3; // seconds a flinched cooldown waits before it counts (COMBAT-RULES "Flinch on the player")
@@ -595,7 +602,7 @@ G.MoveSim = (() => {
     return cast;
   }
   function upkeepPersistent(o, now) {
-    const act = o.activeGroup(),
+    const act = actOf(o),
       stunned = G.Status.stunned(o);
     for (const g of o.slots)
       for (const slot of g) {
@@ -631,6 +638,11 @@ G.MoveSim = (() => {
     else {
       upkeepCommits(dt, o);
       G.MoveEffects.upkeep(dt, o);
+      if (o.flyT > 0) {
+        // Fly: every slot timer is frozen and nothing casts until landing; the persistent groups end (a slot switch)
+        upkeepPersistent(o, now);
+        return step(dt, now);
+      }
       const act = o.activeGroup();
       // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
       // bonded group fires together); the inactive slots run after it, so a freeze cast this frame already holds them.
@@ -877,7 +889,8 @@ G.MoveSim = (() => {
     if (o.foes) {
       // slice 7a: an enemy owner (a gym leader) hits only its foes, the player; never enemies or props
       for (const p of o.foes())
-        if (!p.dead && G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r || 0)) cands.push(p);
+        if (!p.dead && !(p.flyT > 0) && G.MoveGeom.contains(s, inst.prevX, inst.prevY, p.x, p.y, p.r || 0))
+          cands.push(p);
     } else {
       const b = G.MoveGeom.boundsOf(s, inst.prevX, inst.prevY, maxR);
       G.EnemyMgr.queryCircleEach(b.x, b.y, b.r, (e) => {
@@ -1009,7 +1022,7 @@ G.MoveSim = (() => {
     ownerDeath: (inst) => !!inst.cast.owner.dead && 'ownerDeath',
     notActive: (inst) => {
       const o = inst.cast.owner;
-      return !!o.activeGroup && !o.activeGroup().includes(inst.cast.slot) && 'notActive';
+      return !!o.activeGroup && !actOf(o).includes(inst.cast.slot) && 'notActive';
     }, // 4d: Spikes leaves with its slot
     returned: (inst) => !!inst.returned && 'returned', // 4c-2: returns home (D26) or a swept dash back at its origin (D27)
   };
@@ -1017,6 +1030,11 @@ G.MoveSim = (() => {
   function checkEnd(inst) {
     const owned = OWNED[inst.spec.delivery.motion];
     if (owned && inst.cast.owner.dead) return 'ownerDeath'; // a faint ends a bone or a dash, listed or not
+    if (inst.cast.persist) {
+      // H25: a faint or a stun ends a persistent group (upkeepPersistent does it for the player; a gym mon's brain skips those frames)
+      if (inst.cast.owner.dead) return 'ownerDeath';
+      if (G.Status.stunned(inst.cast.owner)) return 'notActive';
+    }
     if (inst.dash && inst.phase === 'done' && !inst.spec.delivery.returnToOrigin) return 'arrived'; // a one-way dash ends after its armed step at B, listed or not
     if (inst.fired) return 'triggered'; // 4d: a contact mine is gone once it has gone off
     for (const c of inst.spec.delivery.endOn || [])
@@ -1119,6 +1137,7 @@ G.MoveSim = (() => {
     step,
     clear,
     castAt,
+    persist: upkeepPersistent,
     flinch,
     setRng: (fn) => {
       rng = fn || Math.random;

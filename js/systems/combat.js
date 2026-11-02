@@ -17,7 +17,8 @@ G.Combat = (() => {
         projectiles.splice(i, 1);
         continue;
       }
-      if (G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
+      if (!(pl.flyT > 0) && G.U.dist2(p.x, p.y, pl.x, pl.y) < (p.r + pl.r) * (p.r + pl.r)) {
+        // a flying player (Fly) is passed by
         const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
         const landed = pl.invuln <= 0;
         if (p.atkFactor != null)
@@ -30,13 +31,14 @@ G.Combat = (() => {
     }
 
     // --- enemy <-> player contact ---
-    if (pl.dead) return;
+    if (pl.dead || pl.flyT > 0) return; // nothing touches a flying player
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, pl.r + 40)) {
       // Contact gap: wild melee reaches CONTACT.hit x the radius sum (it stops at CONTACT.stop x); bosses keep 1.0.
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
       if (e.touchCd > 0 || e.behavior === 'thief') continue;
       if (G.Status.stunned(e)) continue; // frozen or asleep enemies do not hit
+      if (e.gym && e.mvRoot) continue; // a leader's dash (Quick Attack) hits only at its landing spot, never by touch (Jess 2026-11-02)
       // An active flanker only hits in its strike phase, and waits out your invulnerability instead of wasting the hit.
       if (e.fl && (e.fl.ph !== 'strike' || pl.invuln > 0)) continue;
       e.touchCd = 0.55;

@@ -43,7 +43,7 @@ const near = (a, b, e = 1e-3) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
 // ---- routed moves (every resolved def that is not retired, as G.MoveRoute.routed; slice 7b-2b) and MOVE-INTENT headings (Markdown) ----
 const ROUTED = new Set(Object.keys(D).filter(id => !G.Moves.RETIRED[id]));
 const INTENT = new Set((INTENT_SRC.match(/^### ([a-z0-9-]+)/gm) || []).map(s => s.slice(4)));
-ok(ROUTED.size === 62, 'every resolved move but the retired Hail is routed (' + ROUTED.size + ')');
+ok(ROUTED.size === 177, 'every resolved move but the retired Hail is routed, Kanto batch 1, Fly, Defense Curl, Roar, Fissure and Future Sight included (' + ROUTED.size + ')');
 
 // ---- world builders (owner: a REAL Player prototype on a hand-built body, as in move-selfcast-harness.js) ----
 let eid = 0;
@@ -100,13 +100,16 @@ function check(sc, w, tag) {
   if (x.shield != null) ok(w.owner.shield && near(w.owner.shield.v, x.shield, 1e-9), L + 'shield ' + (w.owner.shield && w.owner.shield.v) + ', want ' + x.shield);
   if (x.healFraction != null) { const dealt = w.tape.filter(e => e.type === 'move:hit').reduce((a, h) => a + h.dmg, 0), hp0 = (sc.owner && sc.owner.hp) || 500;
     ok(dealt > 0 && near(w.owner.hp - hp0, dealt * x.healFraction), L + 'healed ' + (w.owner.hp - hp0) + ' of ' + dealt + ' dealt, want x' + x.healFraction); }
+  // lore-set imports (2026-11-02): the slide velocity a push-only move gives each enemy (Roar), and exactly which enemies fainted (Fissure)
+  if (x.knock) for (const [i, [kx, ky]] of Object.entries(x.knock)) { const e = w.enemies[+i]; ok(near(e.kx || 0, kx) && near(e.ky || 0, ky), L + 'enemy ' + i + ' knock ' + [(e.kx || 0).toFixed(1), (e.ky || 0).toFixed(1)] + ', want ' + [kx, ky]); }
+  if (x.dead) { const got = w.enemies.map((e, i) => (e.dead ? i : -1)).filter(i => i >= 0); ok(JSON.stringify(got) === JSON.stringify(x.dead), L + 'fainted ' + got + ', want ' + x.dead); }
   if (x.casterEnd) { const [cx, cy, tol] = x.casterEnd; ok(Math.hypot(w.owner.x - cx, w.owner.y - cy) <= tol, L + 'caster ends at ' + w.owner.x.toFixed(1) + ', ' + w.owner.y.toFixed(1) + ', want within ' + tol + ' of ' + cx + ', ' + cy); }
   return counts;
 }
 
 // ---- run ----
 const pending = [], blocked = [], ran = [];
-const KNOWN = new Set(['hits', 'hitsMin', 'casts', 'ends', 'firstHit', 'gaps', 'ratios', 'dmg', 'crit', 'enemyStage', 'rooted', 'status', 'ownerStage', 'at', 'ownerHp', 'shield', 'healFraction', 'casterEnd']);
+const KNOWN = new Set(['hits', 'hitsMin', 'casts', 'ends', 'firstHit', 'gaps', 'ratios', 'dmg', 'crit', 'enemyStage', 'rooted', 'status', 'ownerStage', 'at', 'ownerHp', 'shield', 'healFraction', 'casterEnd', 'knock', 'dead']);
 for (const sc of SCENARIOS.scenarios) {
   ok(D[sc.move], sc.id + ': unknown move ' + sc.move);
   ok(sc.source === 'data' || (/^MOVE-INTENT:/.test(sc.source) && INTENT.has(sc.source.slice(12))), sc.id + ': source ' + sc.source + ' is "data" or a real MOVE-INTENT entry');

@@ -19,7 +19,7 @@ const DEX_BY = { 1: { name: 'Normie', types: ['normal'], stats: [50, 50, 50, 50,
 for (const d of [75, 76, 95, 111, 112, 138, 139, 140, 141, 142, 208]) DEX_BY[d] = { name: 'M' + d, types: ['rock'], stats: [50, 50, 50, 50, 50, 50] };     // Brock's other stages (validate checks every dex)
 global.window = global; global.location = { search: '?dev' };     // 7b flip: the new path is always on, flag or not
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
-let clock = 0, enrage = 1; const casts = {}, warns = [];
+let clock = 0, enrage = 1; const casts = {}, warns = [], hazards = [];
 const plTackle = { id: 'tackle', t: Infinity };     // 7b flip: G.MoveSim ticks the player's slots too; this one never recharges, so the player never casts
 const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [], isPlayer: true, loss: 0,     // loss: the HP a hit takes (drain tests)
   hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); this.hp -= this.loss; }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
@@ -32,7 +32,7 @@ const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(
   Weather: { mult: () => 1, speedFor: () => 1, force() {} }, Game: { player: pl, everyone: () => [pl] }, Audio: { sfx() {} }, Log: { on: false },
   Camera: { kick() {}, sees: () => true, left: () => -2000, top: () => -2000, w: 4000, h: 4000 }, Coop: { active: false },
   World: { collide: () => false, isLiquid: () => false, isFree: () => true, projectileBlock: () => null, propsInCircle: () => [] }, Path: { dirFor: () => null },
-  Gym: { now: () => clock, enrageMul: () => enrage, noteCast: id => { casts[id] = (casts[id] || 0) + 1; } } };
+  Gym: { now: () => clock, enrageMul: () => enrage, noteCast: id => { casts[id] = (casts[id] || 0) + 1; } }, Hazards: { add: h => { hazards.push(h); return h; } } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/player.js',
   'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js',
@@ -44,11 +44,11 @@ pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.protot
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
-const BROCK = Gy.KANTO[0], SLOT1 = BROCK.signatures[0];
+const BROCK = Gy.KANTO[0], SLOT1 = BROCK.signatures[0], PILOT = SLOT1.sets[2]; // the tuned pilot set (loop 2 on since 2026-11-02)
 
 // ---- builders ----
 const gymOf = (o = {}) => Object.assign({ level: 20, leader: 'Brock', badge: 'Boulder Badge', species: 'Geodude', stance: 'mixed', power: 1, tempo: 1,
-  cards: Object.assign({}, SLOT1.cards), moves: SLOT1.moves.map(m => Object.assign({}, m)), engagedAt: null }, o);
+  cards: Object.assign({}, SLOT1.cards), moves: PILOT.map(m => Object.assign({}, m)), engagedAt: null }, o);
 function mkBoss(gym = gymOf()) {
   const e = G.Boss.make({ dex: 74, name: 'Geodude', hp: 1e6, spd: 40, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym }, 0, 0);
   e.flying = false; return e;
@@ -71,18 +71,28 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 // 1. roster data and the validator
 { ok(!Gy.validate(BROCK).length, 'Brock validates: ' + Gy.validate(BROCK).join('; '));
   ok(JSON.stringify(SLOT1.cards) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'slot 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
-  ok(SLOT1.moves.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 moves');
+  ok(PILOT.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 pilot set (loop 2 on)');
+  ok(SLOT1.sets[1].map(m => m.id).join() === 'tackle,defense-curl,rock-throw', 'slot 1 loop 1: Tackle, Defense Curl, Rock Throw (Jess 2026-11-02)');
+  ok(Gy.movesFor(SLOT1, 0, 1) === SLOT1.sets[1] && [2, 3, 6].every(L => Gy.movesFor(SLOT1, 0, L) === PILOT), 'movesFor: loop 1 its own set, loops 2 to 6 hold the pilot set');
   const forms = id => Gy.formOf(G.MoveDefs[id]);
   ok(forms('tackle') === 'melee' && forms('rock-throw') === 'shot' && forms('harden') === 'buff', 'forms: Tackle melee, Rock Throw shot, Harden buff');
   ok(forms('body-slam') === 'melee' && forms('water-gun') === 'shot' && forms('swords-dance') === 'buff' && forms('agility') === 'buff', 'slots 2 to 6 forms');
-  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('quick-attack') && !forms('flamethrower') && !forms('aura-sphere') && !forms('spikes'),
-    'no gym form for falls, emitters, persistent auras, dashes, tracking cones, path shots and world hazards');
+  ok(!forms('rock-slide') && !forms('discharge') && !forms('aqua-ring') && !forms('aerial-ace') && !forms('flamethrower') && !forms('aura-sphere') && !forms('spikes'),
+    'no gym form for falls, emitters, persistent auras, teleports, tracking cones, path shots and world hazards');
+  ok(forms('quick-attack') === 'dash' && Gy.reachOf(G.MoveDefs['quick-attack'], 'dash') === 420, 'Quick Attack is the dash form, reach its range 420 (Jess 2026-11-02)');
   ok(forms('thunder-shock') === 'shot' && forms('hex') === 'shot', "a chain move takes its shape's form: Thunder Shock and Hex are shots");
   ok(forms('thunderbolt') === 'strike', 'Thunderbolt (target-anchored, static) is a strike');
-  ok(['heat-wave', 'hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
+  ok(['hyper-voice', 'bulldoze', 'dark-pulse', 'dazzling-gleam'].every(id => forms(id) === 'nova'), 'the growing rings are novas, Dazzling Gleam included (no longer a 1 px melee)');
+  ok(['heat-wave', 'sludge-wave'].every(id => forms(id) === 'shot'), 'waves (a travelling band at the nearest foe) cast as shots');
+  ok(!forms('surf') && !forms('fly'), 'movement skills (Surf, Fly) have no gym form');
+  ok(['recover', 'synthesis', 'moonlight'].every(id => forms(id) === 'heal') && forms('defense-curl') === 'buff' && forms('drain-punch') === 'melee', 'self heals of max HP are the heal form; Defense Curl a buff; a drain stays its shape');
   ok(forms('confusion') === 'shot' && forms('psychic') === 'shot', 'homing shots (Confusion, Psychic) cast as shots');
-  const beam = { id: 'beam', space: { shape: 'linear', len: 200, width: 10 }, delivery: { anchor: 'caster', targeting: 'nearest', motion: 'static' }, payload: [{ t: 'damage' }] };
-  ok(!Gy.formOf(beam), 'a beam (a static linear shape) has no gym form yet');
+  // lore-set slice 3 (Jess 2026-11-02): reach from the move data, Razor Leaf range 210, Psybeam 215 long, Fury Attack's jab cone 54
+  ok(forms('razor-leaf') === 'returns' && forms('bonemerang') === 'returns' && Gy.reachOf(G.MoveDefs['razor-leaf'], 'returns') === 210, 'Razor Leaf and Bonemerang are the returns form, Razor Leaf reach 210');
+  ok(forms('psybeam') === 'beam' && Gy.reachOf(G.MoveDefs.psybeam, 'beam') === 215, 'Psybeam (a static linear shape) is the beam form, reach 215');
+  ok(forms('fury-attack') === 'multi' && Gy.reachOf(G.MoveDefs['fury-attack'], 'multi') === 54, 'Fury Attack (three cast-emitted cones) is the multi form, reach 54');
+  ok(forms('toxic') === 'trail' && forms('flame-wheel') === 'trail', 'Toxic and Flame Wheel (persistent casterMove emitters) are the trail form');
+  ok(!forms('string-shot') && !forms('toxic-spikes'), 'an emitter of shots (String Shot) or a placed emitter (Toxic Spikes) still has no form');
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
     ['unknown card', s => { s.cards.luck = 1; }, 'unknown card luck'],
@@ -91,16 +101,16 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     ['card that fits no move', s => { s.cards.heal = 1; }, 'fits none of its moves'],
     ['fractional stacks', s => { s.cards.damage = 1.5; }, 'whole number of stacks'],
     ['zero stacks', s => { s.cards.area = 0; }, 'whole number of stacks'],
-    ['hpBelow out of range', s => { s.moves[2].hpBelow = 1.2; }, 'hpBelow must be in (0, 1)'],
-    ['unknown move', s => { s.moves.push({ id: 'not-a-move' }); }, 'unknown move not-a-move'],
-    ['move with no gym form', s => { s.moves[1].id = 'rock-slide'; }, 'has no gym form yet'],
-    ['old weight field', s => { s.moves[0].weight = 2; }, 'unknown field weight'],
-    ['old stacks field', s => { s.moves[0].stacks = { effect: 1 }; }, 'unknown field stacks'],
-    ['no damaging move', s => { s.moves = [{ id: 'harden' }]; }, 'at least one damaging move'],
+    ['hpBelow out of range', s => { s.sets[1][2].hpBelow = 1.2; }, 'hpBelow must be in (0, 1)'],
+    ['unknown move', s => { s.sets[1].push({ id: 'not-a-move' }); }, 'unknown move not-a-move'],
+    ['move with no gym form', s => { s.sets[1][1].id = 'rock-slide'; }, 'has no gym form yet'],
+    ['old weight field', s => { s.sets[1][0].weight = 2; }, 'unknown field weight'],
+    ['old stacks field', s => { s.sets[1][0].stacks = { effect: 1 }; }, 'unknown field stacks'],
+    ['no damaging move', s => { s.sets[2] = [{ id: 'harden' }]; }, 'at least one damaging move'],
     ['typo on a slot', s => { s.cardz = {}; }, 'unknown field cardz']
   ];
   for (const [name, mut, needle] of cases) { const out = flags(mut); ok(out.some(m => m.includes(needle)), 'validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
-  console.log('1 data: Brock valid; slot 1 = Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
+  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
 
 // 2. the owner: player size, its own folded defs, the player as its only foe
 { fresh(); const e = mkBoss(), b = e.brain;
@@ -251,6 +261,18 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     hitWith(e, 'giga-drain', 0.99); ok(near(e.hp - h0, 50), 'Giga Drain heals the leader half the 100 dealt: ' + (e.hp - h0));
     e.hp = e.maxHp - 10; hitWith(e, 'giga-drain', 0.99); ok(e.hp === e.maxHp, 'the heal stops at max HP');
     pl.loss = 0; e.hp = h0; hitWith(e, 'giga-drain', 0.99); ok(e.hp === h0, 'nothing dealt (a shield took it), no heal'); }
+  // recoil (Jess 2026-11-02): Take Down costs the leader 0.25 of the dealt damage, never below 1 HP
+  { fresh(); const e = boss(['take-down']); e.hp = 1000; pl.loss = 100;
+    hitWith(e, 'take-down', 0.99); ok(near(e.hp, 975), 'Take Down: the leader pays 0.25 of the 100 dealt: ' + e.hp);
+    e.hp = 10; hitWith(e, 'take-down', 0.99); ok(e.hp === 1, 'recoil never takes the leader below 1 HP: ' + e.hp);
+    pl.loss = 0; e.hp = 1000; hitWith(e, 'take-down', 0.99); ok(e.hp === 1000, 'nothing dealt, no recoil'); }
+  // self heal (Jess 2026-11-02, mainline): Recover casts with no tell while hurt, half max HP on its first tick, then its 12 s cooldown
+  { fresh(); const e = boss(['tackle', 'recover']); pl.x = 5000; const M = e.maxHp;
+    run(e, 1); ok(e.hp === M, 'at full HP no heal is cast');
+    e.hp = 0.3 * M; run(e, 0.2); ok(near(e.hp, 0.8 * M), 'hurt to 30%: Recover lands half of max HP at once (80%): ' + (e.hp / M).toFixed(3));
+    e.hp = 0.3 * M; run(e, 11); ok(near(e.hp, 0.3 * M), 'no second Recover inside its 12 s cooldown: ' + (e.hp / M).toFixed(3));
+    run(e, 1.2); ok(near(e.hp, 0.8 * M), 'the next Recover lands once the 12 s cooldown is up: ' + (e.hp / M).toFixed(3));
+    e.hp = 0.8 * M; run(e, 12.5); ok(e.hp === M, 'the heal stops at max HP'); }
   // Hex and crits
   { fresh(); const e = boss(['hex']), hex = (p) => G.Stats.enemyAttackFactor(80, 30, 20, p, 'special');
     hitWith(e, 'hex', 0.99); ok(near(pl.hurts[0].a[0], hex(65)), 'Hex on a clean player: Power 65: ' + pl.hurts[0].a[0]);
@@ -404,10 +426,144 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 
 // 12. guards: the old picker, stacks and kind reads are gone from the gym path
 { const brain = read('js/entities/boss-ai.js'), gyms = read('js/data/gyms.js'), gym = fs.readFileSync(R + '/js/systems/gym.js', 'utf8');
-  ok(!/\bkind\b/.test(brain.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')), 'boss-ai.js reads no kind');
+  ok(!/\bkind\b/.test(brain.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/kind: '(beam|zone)'/g, '')), 'boss-ai.js reads no kind (a G.Hazards warning shape, beam or zone, is not a move kind)');
   ok(!/Moves\.BY_ID|addStack|BOSS_FORMS/.test(brain + gyms + gym), 'no legacy move table, addStack or BOSS_FORMS on the gym path');
   ok(!/\.weight\b|\bpick\(|cdAfter/.test(brain), 'no weight picker left in the brain');
   console.log('12 guards: no kind, BY_ID, addStack, BOSS_FORMS or weight picker on the gym path'); }
+
+// 16. dash form (Jess 2026-11-02): Quick Attack from the move data: range 420, hit circle 46, dashMult 10 x the mon's speed (40 here, so
+// 400 px/s), back to its start, i-frames the whole dash plus 0.3 s. Wind-up 0.6 s (TUNE). The boss is NOT held in place here.
+{ const free = (secs) => { for (let i = 0, N = Math.round(secs / DT); i < N; i++) { clock += DT; e.update(DT, pl); G.MoveRoute.tick(DT, pl, clock); } };
+  const boss = (ids) => mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), at = [];
+  const off = G.SimBus.on('move:cast', ev => { if (ev.moveId === 'quick-attack') at.push({ x: ev.x, y: ev.y, t: clock }); });
+  let e;
+  // a) the warning, the hit at the locked spot, the way back
+  { fresh(); hazards.length = 0; at.length = 0; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    let tellAt = null; for (let i = 0; i < 120 && tellAt == null; i++) { free(DT); if (e.brain.tell) tellAt = clock; }
+    ok(tellAt != null && e.brain.tell.form === 'dash', 'the leader starts a dash tell at 200 px');
+    const sx = e.x, sy = e.y, spot = e.brain.tell.spot, len = Math.min(Math.hypot(spot.x - sx, spot.y - sy), 420);
+    const line = hazards.find(h => h.kind === 'beam'), zone = hazards.find(h => h.kind === 'zone');
+    ok(line && line.warn && near(line.len, len) && line.w === 92 && near(line.delay, 0.6) && zone && zone.warn && zone.r === 46 && near(zone.x, sx + (spot.x - sx) * len / Math.hypot(spot.x - sx, spot.y - sy)),
+      'the tell shows a warn-only line to the locked spot (len ' + (line && line.len.toFixed(1)) + ', width 92, 0.6 s) and the 46 px circle there');
+    free(0.6); ok(at.length === 1, 'the dash casts when the 0.6 s wind-up ends');
+    const hurts0 = pl.hurts.length; let maxOut = 0, inv = true, hitT = null;
+    free(DT); ok(e.mvRoot, 'the dash is live (the body is rooted to it)');
+    for (let i = 0; i < 120 && e.mvRoot; i++) { free(DT); maxOut = Math.max(maxOut, Math.hypot(e.x - sx, e.y - sy)); if (e.mvRoot && !(e.invuln > 0)) inv = false; if (hitT == null && pl.hurts.length > hurts0) hitT = clock; }
+    ok(pl.hurts.length === hurts0 + 1, 'one hit on a player standing on the locked spot (' + (pl.hurts.length - hurts0) + ')');
+    ok(near(maxOut, Math.hypot(spot.x - sx, spot.y - sy), 1e-3), 'it dashes all the way to the locked spot: ' + maxOut.toFixed(1));
+    ok(!e.mvRoot && Math.hypot(e.x - sx, e.y - sy) < 1e-6, 'and back to its start, unrooted');
+    ok(inv, 'i-frames on the whole dash');
+    const hp = e.hp = 1e5; e.hurt(500); ok(e.invuln > 0 && e.hp === hp, 'just after the dash, inside the 0.3 s tail, a hit misses');
+    free(0.35); e.hurt(500); ok(e.hp === hp - 500, 'after the tail a hit lands: ' + (hp - e.hp)); }
+  // b) a player who steps aside during the wind-up is missed
+  { fresh(); hazards.length = 0; at.length = 0; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    for (let i = 0; i < 120 && !e.brain.tell; i++) free(DT);
+    pl.y = 120; const h0 = pl.hurts.length; free(2); ok(at.length >= 1 && pl.hurts.length === h0, 'a player who moved 120 px off the locked spot is missed (46 + 12 < 120)'); }
+  // c) out of range: no dash; a wall cuts it short
+  { fresh(); e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 460; pl.y = 0; let told = false;
+    for (let i = 0; i < 60; i++) { clock += DT; e.x = 0; e.y = 0; e.update(DT, pl); G.MoveRoute.tick(DT, pl, clock); if (e.brain.tell) told = true; }
+    ok(!told, 'no dash tell at 460 px, past the 420 range'); }
+  { fresh(); at.length = 0; const W = G.World.isFree; G.World.isFree = (x) => x < 100; e = boss(['quick-attack']); e.x = 0; e.y = 0; pl.x = 200; pl.y = 0;
+    for (let i = 0; i < 120 && !e.brain.tell; i++) free(DT);
+    const sx = e.x; let maxX = -1e9; free(0.6); for (let i = 0; i < 90; i++) { free(DT); maxX = Math.max(maxX, e.x); }
+    G.World.isFree = W; ok(maxX < 100 && maxX > sx, 'a wall at x 100 stops the dash short: furthest x ' + maxX.toFixed(1)); }
+  off && off();
+  console.log('16 dash: warn line and circle at the locked spot, one hit there, back to the start, i-frames + 0.3 s tail, a sidestep dodges, 420 range, walls cut it'); }
+
+// 17. lore-set slice 3 forms (Jess 2026-11-02), from the move data: Razor Leaf 2 leaves radius 6 in a 0.5 rad fan (each 0.25 rad off the
+// aim), 210 px out at 330 px/s and back, one hit per leaf per leg; Psybeam a 215 x 30 line for 0.5 s; Fury Attack 3 cones of radius 54
+// every 0.11 s, each re-aimed at the nearest foe; Toxic a persistent trail, one 22 px puddle per 0.1 s of moving time, poison 100.
+// Wind-ups (TUNE): returns and beam 0.5 s, multi 0.45 s. The player's body radius is 12. The boss is held in place unless it walks.
+{ const one = (ids) => { fresh(); hazards.length = 0; const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; return [e, b]; };
+  const ends = [], emits = [];
+  const offE = G.SimBus.on('move:end', ev => ends.push(ev)), offM = G.SimBus.on('move:emit', ev => emits.push(ev));
+  // a) returns: at 60 px dead ahead each leaf passes 60 x sin 0.25 = 14.8 px off the player (< 6 + 12), so 2 leaves x 2 legs = 4 hits;
+  // at 150 px the gap is 37 px, so a player dead centre slips between them
+  { const [e, b] = one(['razor-leaf']); pl.x = 60; pl.y = 0; ends.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'returns' && near(b.tell.wind, 0.5), 'a 0.5 s returns tell at 60 px');
+    for (let i = 0; i < 180 && ends.filter(ev => ev.moveId === 'razor-leaf').length < 2; i++) frame(e); // until both leaves of the first throw end
+    ok(pl.hurts.length === 4, 'two leaves, out and back, hit a player at 60 px four times: ' + pl.hurts.length);
+    const rl = ends.filter(ev => ev.moveId === 'razor-leaf');
+    ok(rl.length === 2 && rl.every(ev => ev.reason === 'returned'), 'both leaves end by returning to the leader: ' + rl.map(ev => ev.reason)); }
+  { const [e, b] = one(['razor-leaf']); pl.x = 150; pl.y = 0; run(e, 2.5); ok(casts['razor-leaf'] >= 1 && pl.hurts.length === 0, 'a player 150 px dead ahead slips between the two leaves'); }
+  { const [e, b] = one(['razor-leaf']); pl.x = 240; pl.y = 0; frame(e); ok(!b.tell, 'no returns tell at 240 px, past its 210 range'); }
+  // b) beam: a warning line along the locked aim, one hit, a sidestep past 15 + 12 px dodges it
+  { const [e, b] = one(['psybeam']); pl.x = 200; pl.y = 0; frame(e);
+    const line = hazards.find(h => h.kind === 'beam');
+    ok(b.tell && b.tell.form === 'beam' && near(b.tell.wind, 0.5), 'a 0.5 s beam tell at 200 px');
+    ok(line && line.warn && line.len === 215 && line.w === 30 && near(line.delay, 0.5) && near(line.angle, 0), 'the tell shows a warn-only line 215 long, 30 wide, for 0.5 s along the aim');
+    run(e, 1.2); ok(pl.hurts.length === 1, 'Psybeam hits the player who stayed once: ' + pl.hurts.length); }
+  { const [e, b] = one(['psybeam']); pl.x = 200; pl.y = 0; frame(e); pl.y = 40; run(e, 1.2); ok(casts.psybeam >= 1 && pl.hurts.length === 0, 'a player 40 px off the locked line is missed'); }
+  { const [e, b] = one(['psybeam']); pl.x = 235; pl.y = 0; frame(e); ok(!b.tell, 'no beam tell at 235 px, past 215 + 12'); }
+  // c) multi: three jabs, each re-aimed, so a player who walks behind the leader during the wind-up still takes all three
+  { const [e, b] = one(['fury-attack']); pl.x = 40; pl.y = 0; frame(e);
+    ok(b.tell && b.tell.form === 'multi' && near(b.tell.wind, 0.45), 'a 0.45 s multi tell at 40 px');
+    pl.x = -40; run(e, 1); ok(pl.hurts.length === 3, 'three jabs, each re-aimed, hit a player who moved behind the leader: ' + pl.hurts.length); }
+  { const [e, b] = one(['fury-attack']); pl.x = 70; pl.y = 0; frame(e); ok(!b.tell, 'no multi tell at 70 px, past 54 + 12');
+    ok(near(b.reach(), 54) && b.melee, 'the burst is a close move: the brain walks in for it, reach 54'); }
+  { const [e, b] = one(['fury-attack', 'body-slam']); ok(b.contact === 'body-slam', 'contact stays the melee cone (Body Slam), not the burst'); }
+  // d) trail: a persistent slot, puddles only while the leader moves, ended by a stun and a faint, back after the stun
+  { const [e, b] = one(['toxic']); pl.x = 300; pl.y = 300; emits.length = 0; run(e, 1);
+    ok(Sim.persisted(e).length === 1 && Sim.persisted(e)[0].moveId === 'toxic', 'Toxic lives as a persistent group while it is in the active group');
+    ok(!emits.some(ev => ev.moveId === 'toxic') && !b.tell, 'a leader standing still drops no puddles, and the trail never starts a tell');
+    let x = 0; pl.x = 60; pl.y = 0; run(e, 1, { each: () => { x += 2; }, get bx() { return x; } });
+    const n = emits.filter(ev => ev.moveId === 'toxic').length;
+    ok(n >= 9 && n <= 10, '1 s of walking drops about 10 puddles (one per 0.1 s of moving time): ' + n);
+    ok(G.Status.majorKind(pl) === 'poison', 'a player standing on the trail is poisoned');
+    G.Status.apply(e, 'sleep'); frame(e, { bx: x }); ok(Sim.persisted(e).length === 0, 'a stun ends the trail');
+    G.Status.clear(e); frame(e, { bx: x }); ok(Sim.persisted(e).length === 1, 'the trail comes back once the stun is gone');
+    e.dead = true; G.MoveRoute.tick(DT, pl, clock); ok(Sim.persisted(e).length === 0, 'a faint ends the trail'); }
+  offE && offE(); offM && offM(); pl.x = 0; pl.y = 0;
+  console.log('17 slice-3 forms: Razor Leaf 4 hits at 60 px and returns (a centred player slips the gap at 150), Psybeam warn line and one hit, Fury Attack 3 re-aimed jabs, Toxic trail only while moving, ended by stun and faint'); }
+
+// 18. lore-set imports (Jess 2026-11-02, MOVE-INTENT roar, fissure, future-sight), from the approved proposals: Roar a ring growing
+// to 160 px, no damage, push 140 px, cd 5; Fissure power 120, a 60 px strike, 30% one-hit KO on wild foes only; Future Sight power
+// 120, a 60 px mark hit 2 s after the cast. The player's push lasts 0.2 s, so 140 px is 700 px/s.
+{ const one = (ids) => { fresh(); hazards.length = 0; const e = mkBoss(gymOf({ moves: ids.map(id => ({ id })), cards: {} })), b = e.brain; b.init(); b.wait = 0; return [e, b]; };
+  const pushes = []; pl.push = function (dx, dy, k) { pushes.push({ dx, dy, k }); return G.Player.prototype.push.call(this, dx, dy, k); };
+  // a) Roar: a nova with no damage that pushes the player 140 px straight away from the leader
+  { const [e, b] = one(['roar']); pl.x = 100; pl.y = 0; pushes.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'nova' && near(b.tell.wind, 0.45), 'a 0.45 s Roar tell at 100 px (reach 160 + body 12)');
+    run(e, 1); const p = pushes[0];
+    ok(pushes.length === 1 && p.k === 140 && near(Math.atan2(p.dy, p.dx), 0, 1e-3) && pl.hurts.length === 0, 'Roar pushes the player once, 140 px away from the leader, with no damage: ' + JSON.stringify(pushes));
+    ok(pl.stPush && near(pl.stPush.vx, 700) && near(pl.stPush.vy, 0) && near(pl.stPush.t, 0.2), 'the push is a 0.2 s slide at 700 px/s');
+    ok(near(e.brain.def('roar').cd, 5), 'Roar cd 5'); pl.stPush = null; }
+  { const [e, b] = one(['roar']); pl.x = 0; pl.y = 0; pl.flyT = 1; pushes.length = 0; G.Player.prototype.push.call(pl, 1, 0, 140); ok(!pl.stPush, 'a flying player is never pushed'); pl.flyT = 0; }
+  // the player's Roar on enemies: a wild one slides, a boss or an elite does not
+  { const roar = G.MoveDefs.roar, mk = (o) => Object.assign({ id: 7000 + Math.random(), x: 50, y: 0, r: 10, dead: false, kx: 0, ky: 0, types: ['normal'], hurt() {} }, o),
+      cast = { spec: roar, cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
+    const w = mk(), bo = mk({ boss: true }), el = mk({ elite: true });
+    for (const t of [w, bo, el]) G.MoveEffects.applyHit(cast, t, 0, () => 0);
+    ok(w.kx === 140 && w.ky === 0 && bo.kx === 0 && el.kx === 0, 'the player\'s Roar slides a wild enemy (knock 140 away) and never a boss or an elite: ' + [w.kx, bo.kx, el.kx]); }
+  // b) Fissure: the KO roll on wild foes only; on the player a strike of power 120
+  { const fx = G.MoveDefs.fissure.payload.find(f => f.handler === 'ohkoWild'), only = { spec: Object.assign({}, G.MoveDefs.fissure, { payload: [fx] }), cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
+    const mk = (o) => Object.assign({ x: 0, y: 0, r: 10, dead: false, hp: 500, shield: 0, types: ['normal'], hurt(n) { this.hp -= n; if (this.hp <= 0) this.dead = true; } }, o);
+    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ elite: true });
+    G.MoveEffects.applyHit(only, w1, 0, () => 0.29); G.MoveEffects.applyHit(only, w2, 0, () => 0.3);
+    for (const t of [bo, gy, el]) G.MoveEffects.applyHit(only, t, 0, () => 0);
+    ok(fx.koChance === 30 && w1.dead && !w2.dead, 'a wild foe is KO\'d on a roll under 0.30 and not at 0.30');
+    ok(!bo.dead && !gy.dead && !el.dead && bo.hp === 500 && gy.hp === 500 && el.hp === 500, 'a boss, a gym mon and an elite are never KO\'d outright'); }
+  { const [e, b] = one(['fissure']); pl.x = 200; pl.y = 0; warns.length = 0; frame(e);
+    ok(b.tell && b.tell.form === 'strike' && near(b.tell.wind, 0.5) && b.tell.spot.x === 200, 'a 0.5 s Fissure strike tell locks the player\'s spot');
+    run(e, 0.8); ok(pl.hurts.length === 1 && !pl.dead && !warns.some(w => /ohkoWild/.test(w)), 'one power-120 hit on the player, never a KO, and no unapplied-effect note');
+    ok(e.brain.def('fissure').basePower === 120, 'Fissure Power 120'); }
+  // c) Future Sight: no tell, the mark sits on the player's spot at the cast, hits 2 s later; a step of 80 px (> 60 + 12) dodges it
+  { const [e, b] = one(['future-sight']); pl.x = 200; pl.y = 0; let at = null;
+    for (let i = 0; i < 10 && at == null; i++) { frame(e); if (casts['future-sight']) at = clock; }
+    const mark = Sim.list().find(i => i.spec.id === 'future-sight');
+    ok(at != null && at <= 2 * DT + 1e-9 && b.tell && b.tell.form === 'delayed', 'the mark is cast at once (no wind-up), as the delayed form');
+    ok(mark && near(mark.x, 200) && near(mark.y, 0), 'the mark sits on the player\'s spot at the cast: ' + (mark && [mark.x, mark.y]));
+    run(e, 1.9); ok(pl.hurts.length === 0, 'no hit before the 2 s delay');
+    run(e, 0.3); ok(pl.hurts.length === 1, 'one hit when it lands on the player who stayed: ' + pl.hurts.length); }
+  { const [e, b] = one(['future-sight']); pl.x = 200; pl.y = 0; frame(e); frame(e); pl.y = 80; run(e, 2.3); ok(casts['future-sight'] >= 1 && pl.hurts.length === 0, 'a player who stepped 80 px away is missed'); }
+  { // a wild enemy beside the leader: a leader's mark still goes on the player, never on the wild enemy (castAt passes the spot as the point)
+    const decoy = { id: 9002, x: 30, y: 0, r: 10, dead: false, types: ['normal'], hurt() {} }, saved = G.EnemyMgr;
+    G.EnemyMgr = { queryCircleEach: (x, y, R, f) => f(decoy), queryCircle: () => [decoy], all: () => [decoy] };
+    const [e, b] = one(['future-sight']); pl.x = 250; pl.y = 0; frame(e); frame(e);
+    const mark = Sim.list().find(i => i.spec.id === 'future-sight'); G.EnemyMgr = saved;
+    ok(mark && near(mark.x, 250), 'with a wild enemy at 30 px the mark still lands on the player at 250: ' + (mark && mark.x)); }
+  delete pl.push; pl.stPush = null; pl.x = 0; pl.y = 0;
+  console.log('18 imports: Roar pushes the player 140 px (0.2 s slide, never in the air) and wild enemies only, cd 5; Fissure KOs wild foes on a roll under 30% only, a 120 strike on you; Future Sight marks your spot, lands 2 s later, a step dodges it'); }
 
 console.warn = origWarn;
 console.log(fail ? fail + ' FAILED (' + n + ' checks)' : 'ALL OK (' + n + ' checks)');

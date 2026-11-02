@@ -32,10 +32,10 @@ const set = a => [...a].sort().join(' ');
 const legacyWhere = f => Object.values(L).filter(m => D[m.id] && f(m)).map(m => m.id);
 
 // ===== 1. names, types, categories: every def, and Bubble (no def, D-BUBBLE) =====
-ok(IDS.length === 63, '63 resolved defs (' + IDS.length + ')');
+ok(IDS.length === 178, '178 resolved defs, Kanto batch 1, Fly, Defense Curl, Roar, Fissure and Future Sight included (' + IDS.length + ')');
 ok(IDS.every(id => I.name(id) === D[id].name && I.type(id) === D[id].type), 'name and type come from the def for every move');
 ok(IDS.every(id => I.cat(id) === D[id].category), 'category from the def for every move');
-ok(IDS.every(id => D[id].category === L[id].cat), 'parity: every def category equals the legacy cat (no change)');
+ok(IDS.filter(id => L[id]).every(id => D[id].category === L[id].cat), 'parity: every def with a legacy entry keeps the legacy cat (no change)');
 ok(!D.bubble && I.name('bubble') === 'bubble' && I.badge('bubble') === null && G.Moves.RETIRED.bubble === 'water-gun', 'Bubble: retired (D-BUBBLE), no def and no badge; a save naming it loads Water Gun');
 ok(I.name('no-such-move') === 'no-such-move' && I.type('no-such-move') === 'normal', 'an unknown id falls back to its id and Normal');
 ok(G.Stats.moveCat({ id: 'ember' }) === 'special' && G.Stats.moveCat({ id: 'tackle' }) === 'physical' && G.Stats.moveCat({ id: 'harden' }) === 'status' && G.Stats.moveCat({}) === 'physical',
@@ -54,10 +54,10 @@ const BADGE = {
 };
 const want = {}; for (const b in BADGE) for (const id of BADGE[b].split(' ')) want[id] = b; want.hail = null;
 ok(Object.keys(want).length === 63, 'the expected badge table covers 63 moves');
-for (const id of IDS) ok(I.badge(id) === want[id], 'badge ' + id + ': ' + I.badge(id) + ', want ' + want[id]);
+for (const id of IDS.filter(id => id in want)) ok(I.badge(id) === want[id], 'badge ' + id + ': ' + I.badge(id) + ', want ' + want[id]); // pre-Kanto moves; batch 1 badges are checked at its batch review
 ok(IDS.every(id => I.badge(id) === null || KEYS.has(I.badge(id))), 'every badge is a glyph icons.js can draw');
 const BADGE_CHANGES = 'bubble-beam bulldoze dazzling-gleam discharge fairy-wind gust hail meteor-mash mud-shot powder-snow psychic psycho-cut string-shot substitute';
-ok(set(IDS.filter(id => I.badge(id) !== (L[id].kind === undefined ? null : L[id].kind))) === BADGE_CHANGES, 'badge changes from the legacy family are exactly the reviewed 14');
+ok(set(IDS.filter(id => L[id] && I.badge(id) !== (L[id].kind === undefined ? null : L[id].kind))) === BADGE_CHANGES, 'badge changes from the legacy family are exactly the reviewed 14');
 console.log('2 badges');
 
 // ===== 3. the description (plan 1c): built from the def =====
@@ -76,16 +76,17 @@ ok(I.effects(D.discharge).join() === 'damage,30% paralysis', 'effects walk an em
 console.log('3 descriptions');
 
 // ===== 4. the parity tables (plan 3a) =====
+const OLD = IDS.filter(id => L[id]); // parity is against the legacy table: the pre-Kanto moves (batch 1 has no legacy entry)
 // the 2-buff limit: self-only (Jess 2026-10-31); legacy kind buff plus Substitute
-ok(set(IDS.filter(I.isBuff)) === set('swords-dance agility harden aqua-ring dragon-dance substitute'.split(' ')), 'buffs: the five plus Substitute');
-ok(set(IDS.filter(I.isBuff)) === set(legacyWhere(m => m.kind === 'buff').concat('substitute')), 'buff change from legacy: Substitute only');
+ok(set(OLD.filter(I.isBuff)) === set('swords-dance agility harden aqua-ring dragon-dance substitute'.split(' ')), 'buffs: the five plus Substitute');
+ok(set(OLD.filter(I.isBuff)) === set(legacyWhere(m => m.kind === 'buff').concat('substitute')), 'buff change from legacy: Substitute only');
 ok(!I.isBuff('bubble') && G.LevelUp.teamBuff('substitute') && !G.LevelUp.teamBuff('ember'), 'Bubble is no buff; LevelUp.teamBuff is the same test');
 // the melee 25% damage-taken cut: balanceClass melee
-const MELEE = IDS.filter(id => D[id].balanceClass === 'melee');
+const MELEE = OLD.filter(id => D[id].balanceClass === 'melee');
 ok(set(MELEE) === set(legacyWhere(m => m.kind === 'melee').concat('quick-attack powder-snow aerial-ace psycho-cut'.split(' '))), 'melee cut: legacy melee plus Quick Attack, Powder Snow, Aerial Ace, Psycho Cut');
 // ranged-first targeting: a travelling shot or a beam
-const RANGED = IDS.filter(id => (D[id].delivery || {}).motion === 'travels' || (D[id].space || {}).shape === 'linear');
-ok(set(RANGED) === set(legacyWhere(m => m.kind === 'projectile' || m.kind === 'beam').concat('psychic mud-shot meteor-mash hex'.split(' '))), 'ranged targeting: legacy projectile and beam plus Psychic, Mud Shot, Meteor Mash, Hex');
+const RANGED = OLD.filter(id => (D[id].delivery || {}).motion === 'travels' || (D[id].space || {}).shape === 'linear');
+ok(set(RANGED) === set(legacyWhere(m => m.kind === 'projectile' || m.kind === 'beam').concat('psychic mud-shot meteor-mash hex heat-wave'.split(' '))), 'ranged targeting: legacy projectile and beam plus Psychic, Mud Shot, Meteor Mash, Hex, Heat Wave (a travelling wave since 2026-11-02)');
 // Life Orb exemption: a persistent def
 const FREE = IDS.filter(id => D[id].persistent);
 ok(set(FREE) === set('fire-spin leaf-storm toxic flame-wheel aqua-ring bug-buzz night-shade'.split(' ')), 'Life Orb free: the persistent defs (legacy orbit and trail minus Gust, plus Aqua Ring, Bug Buzz, Night Shade)');

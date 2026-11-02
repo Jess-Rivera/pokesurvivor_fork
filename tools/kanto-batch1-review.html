@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kanto Batch 1 Review</title>
+    <!-- Dev tool, never shipped. Data: tools/kanto-batch1-data.js (node tools/kanto_batch1.js). Your overrides are kept in this
+         browser and leave it only through Export, which saves kanto-batch1-overrides.json for docs/move_rework_holding/. -->
+    <style>
+      :root {
+        --bg: #14161a;
+        --panel: #1d2026;
+        --panel2: #23272f;
+        --ink: #e8eaed;
+        --mut: #9aa3b2;
+        --acc: #ffcb05;
+        --blue: #2a75bb;
+        --line: #30353f;
+        --edit: #2a2410;
+        --ok: #57a05a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          14px/1.45 system-ui,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        padding: 10px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 8px 0 0;
+        color: var(--acc);
+      }
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+        font-size: 13px;
+        color: var(--ink);
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 8px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--blue);
+      }
+      button.primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #fff;
+        font-weight: 600;
+      }
+      .count {
+        color: var(--mut);
+        font-variant-numeric: tabular-nums;
+      }
+      .spacer {
+        flex: 1;
+      }
+      main {
+        padding: 12px 16px 60px;
+        display: grid;
+        gap: 10px;
+      }
+      .help {
+        color: var(--mut);
+        font-size: 13px;
+        max-width: 1100px;
+      }
+      .move {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: grid;
+        grid-template-columns: 250px 1fr 1fr;
+      }
+      .move.edited {
+        border-color: var(--acc);
+      }
+      .move > div {
+        padding: 10px 12px;
+        min-width: 0;
+      }
+      .move > div + div {
+        border-left: 1px solid var(--line);
+      }
+      .name {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .chip {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 1px 7px;
+        border-radius: 9px;
+        margin: 4px 4px 0 0;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+      }
+      .chip.allfoe {
+        color: var(--acc);
+        border-color: var(--acc);
+      }
+      .facts,
+      .effect {
+        color: var(--mut);
+        font-size: 12.5px;
+        margin-top: 6px;
+      }
+      .effect {
+        color: var(--ink);
+      }
+      .label {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--mut);
+        margin-top: 6px;
+      }
+      .label:first-child {
+        margin-top: 0;
+      }
+      .val {
+        font-size: 13px;
+      }
+      .pattern {
+        color: var(--acc);
+        font-weight: 600;
+      }
+      details {
+        margin-top: 8px;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--mut);
+        font-size: 12px;
+      }
+      pre {
+        margin: 6px 0 0;
+        font-size: 11.5px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: var(--bg);
+        border-radius: 6px;
+        padding: 8px;
+        max-height: 320px;
+        overflow: auto;
+      }
+      .ovr label {
+        display: block;
+      }
+      .ovr input,
+      .ovr select,
+      .ovr textarea {
+        width: 100%;
+        margin-top: 2px;
+      }
+      .ovr textarea {
+        min-height: 34px;
+        resize: vertical;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        gap: 8px;
+      }
+      .clear {
+        margin-top: 8px;
+        font-size: 12px;
+        padding: 3px 8px;
+      }
+      #toast {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        background: var(--ok);
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 6px;
+        display: none;
+      }
+      @media (max-width: 900px) {
+        .move {
+          grid-template-columns: 1fr;
+        }
+        .move > div + div {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Kanto batch 1 review</h1>
+      <input id="q" type="search" placeholder="Search moves" aria-label="Search moves" />
+      <select id="fType" aria-label="Type"></select>
+      <select id="fPat" aria-label="Pattern"></select>
+      <select id="fShow" aria-label="Show">
+        <option value="all">All moves</option>
+        <option value="allfoe">Hits every foe</option>
+        <option value="edited">Overridden only</option>
+        <option value="status">Status moves</option>
+      </select>
+      <span class="count" id="count"></span>
+      <span class="spacer"></span>
+      <button id="imp">Import overrides</button>
+      <input id="file" type="file" accept=".json,application/json" hidden />
+      <button id="copy">Copy JSON</button>
+      <button id="exp" class="primary">Export overrides</button>
+    </header>
+    <main>
+      <p class="help">
+        Left: the mainline facts. Middle: my proposal. Right: your override. Pick a different pattern, or write what you
+        want in plain words in Shape, Delivery or Payload (for example "ring, 300 px" or "burn 30% instead"). Cooldown
+        is in seconds. Overrides save in this browser as you type. When done, Export saves
+        <b>kanto-batch1-overrides.json</b>: put it in <b>docs/move_rework_holding/</b> and tell me.
+      </p>
+      <div id="list"></div>
+    </main>
+    <div id="toast" role="status"></div>
+    <script src="kanto-batch1-data.js"></script>
+    <script>
+      (() => {
+        const DATA = window.KANTO_B1;
+        const KEY = 'kanto-batch1-overrides';
+        const ALLFOE = new Set(['all-opponents', 'all-other-pokemon']);
+        const FIELDS = ['pattern', 'shape', 'delivery', 'payload', 'cd', 'note'];
+        let ovr = {};
+        try {
+          ovr = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+        } catch (e) {
+          ovr = {};
+        }
+        const save = () => {
+          try {
+            localStorage.setItem(KEY, JSON.stringify(ovr));
+          } catch (e) {
+            /* storage blocked: overrides still live in this page until it closes */
+          }
+        };
+        const esc = (s) =>
+          String(s == null ? '' : s).replace(
+            /[&<>"]/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]
+          );
+        const edited = (id) => ovr[id] && FIELDS.some((f) => ovr[id][f] != null && ovr[id][f] !== '');
+        const cdText = (r) =>
+          r.cd != null ? r.cd + ' s' : r.category === 'status' ? 'none (casts when its Gate opens)' : 'none';
+
+        const types = [...new Set(DATA.rows.map((r) => r.type))].sort();
+        document.getElementById('fType').innerHTML =
+          '<option value="">All types</option>' + types.map((t) => `<option value="${t}">${t}</option>`).join('');
+        document.getElementById('fPat').innerHTML =
+          '<option value="">All patterns</option>' +
+          Object.entries(DATA.patterns)
+            .map(([k, v]) => `<option value="${k}">${esc(v)}</option>`)
+            .join('');
+
+        function card(r) {
+          const o = ovr[r.id] || {};
+          const pats = Object.entries(DATA.patterns)
+            .map(([k, v]) => `<option value="${k}" ${o.pattern === k ? 'selected' : ''}>${esc(v)}</option>`)
+            .join('');
+          const field = (f, label, ph) =>
+            `<label><span class="label">${label}</span><textarea rows="1" data-f="${f}" placeholder="${esc(ph)}">${esc(o[f] || '')}</textarea></label>`;
+          return `<section class="move ${edited(r.id) ? 'edited' : ''}" data-id="${r.id}">
+  <div>
+    <div class="name">${esc(r.name)}</div>
+    <span class="chip">${r.type}</span><span class="chip">${r.category}</span>${ALLFOE.has(r.target) ? '<span class="chip allfoe">hits every foe</span>' : ''}
+    <div class="facts">Power ${r.power == null ? '-' : r.power} &middot; PP ${r.pp} &middot; cd ${esc(cdText(r))}<br>Target: ${esc(r.target)}</div>
+    <div class="effect">${esc(r.effect)}</div>
+  </div>
+  <div>
+    <div class="label">Pattern</div><div class="val pattern">${esc(DATA.patterns[r.pattern])}</div>
+    <div class="label">Shape</div><div class="val">${esc(r.words.shape)}</div>
+    <div class="label">Delivery</div><div class="val">${esc(r.words.delivery)}</div>
+    <div class="label">Payload</div><div class="val">${esc(r.words.payload)}</div>
+    <details><summary>Data (for reference)</summary><pre>${esc(JSON.stringify(r.proposed, null, 2))}</pre></details>
+  </div>
+  <div class="ovr">
+    <div class="row2">
+      <label><span class="label">Pattern</span><select data-f="pattern"><option value="">Keep proposal</option>${pats}</select></label>
+      <label><span class="label">Cooldown (s)</span><input data-f="cd" inputmode="decimal" value="${esc(o.cd || '')}" placeholder="${r.cd != null ? r.cd : ''}"></label>
+    </div>
+    ${field('shape', 'Shape', 'keep')}
+    ${field('delivery', 'Delivery', 'keep')}
+    ${field('payload', 'Payload', 'keep')}
+    ${field('note', 'Note', '')}
+    ${edited(r.id) ? '<button class="clear" data-clear>Clear override</button>' : ''}
+  </div>
+</section>`;
+        }
+
+        function render() {
+          const q = document.getElementById('q').value.trim().toLowerCase(),
+            t = document.getElementById('fType').value,
+            p = document.getElementById('fPat').value,
+            show = document.getElementById('fShow').value;
+          const rows = DATA.rows.filter(
+            (r) =>
+              (!q || r.name.toLowerCase().includes(q) || r.id.includes(q)) &&
+              (!t || r.type === t) &&
+              (!p || r.pattern === p) &&
+              (show === 'all' ||
+                (show === 'allfoe' && ALLFOE.has(r.target)) ||
+                (show === 'edited' && edited(r.id)) ||
+                (show === 'status' && r.category === 'status'))
+          );
+          document.getElementById('list').innerHTML = rows.map(card).join('');
+          counts();
+        }
+        function counts() {
+          const n = DATA.rows.filter((r) => edited(r.id)).length;
+          document.getElementById('count').textContent = DATA.rows.length + ' moves, ' + n + ' overridden';
+        }
+
+        const list = document.getElementById('list');
+        function onField(e) {
+          const el = e.target,
+            f = el.dataset && el.dataset.f;
+          if (!f) return;
+          const sec = el.closest('.move'),
+            id = sec.dataset.id;
+          const o = (ovr[id] = ovr[id] || {});
+          if (el.value === '') delete o[f];
+          else o[f] = el.value;
+          if (!Object.keys(o).length) delete ovr[id];
+          save();
+          sec.classList.toggle('edited', !!edited(id));
+          counts();
+        }
+        list.addEventListener('input', onField);
+        list.addEventListener('change', onField);
+        list.addEventListener('click', (e) => {
+          if (!e.target.hasAttribute('data-clear')) return;
+          const sec = e.target.closest('.move');
+          delete ovr[sec.dataset.id];
+          save();
+          sec.outerHTML = card(DATA.rows.find((r) => r.id === sec.dataset.id));
+          counts();
+        });
+        ['q', 'fType', 'fPat', 'fShow'].forEach((id) => document.getElementById(id).addEventListener('input', render));
+
+        // export shape read by tools/kanto_batch1.js: { moves: { id: { pattern, shape, delivery, payload, cd, note } } }
+        const out = () => {
+          const moves = {};
+          for (const r of DATA.rows) if (edited(r.id)) moves[r.id] = ovr[r.id];
+          return JSON.stringify(
+            {
+              about: 'Kanto batch 1 overrides (tools/kanto-batch1-review.html)',
+              saved: new Date().toISOString(),
+              moves,
+            },
+            null,
+            2
+          );
+        };
+        const toast = (m) => {
+          const t = document.getElementById('toast');
+          t.textContent = m;
+          t.style.display = 'block';
+          setTimeout(() => (t.style.display = 'none'), 2200);
+        };
+        document.getElementById('exp').onclick = () => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([out()], { type: 'application/json' }));
+          a.download = 'kanto-batch1-overrides.json';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        };
+        document.getElementById('copy').onclick = () => {
+          navigator.clipboard.writeText(out()).then(
+            () => toast('Copied'),
+            () => toast('Copy blocked; use Export')
+          );
+        };
+        document.getElementById('imp').onclick = () => document.getElementById('file').click();
+        document.getElementById('file').onchange = (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          f.text().then((txt) => {
+            try {
+              ovr = JSON.parse(txt).moves || {};
+              save();
+              render();
+              toast('Imported ' + Object.keys(ovr).length + ' overrides');
+            } catch (err) {
+              toast('Not an overrides file');
+            }
+          });
+          e.target.value = '';
+        };
+        render();
+      })();
+    </script>
+  </body>
+</html>

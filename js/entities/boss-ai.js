@@ -9,17 +9,34 @@
  * def's cd, divided by tempo) and a pure buff the moment its Gate opens (COMBAT-RULES:SS8 and SS13, so Harden climbs to +6 in about
  * 30 s), with no tell. Its upgrade cards (G.Gyms `cards`) belong to this mon only and are folded by G.TeamCards like the player's.
  * The attack is picked by a utility score (attack(): freshness x fit x opportunity, Jess 2026-11-01). Every attack is telegraphed: a tell (Charge animation plus a ring) with the aim locked at its start, 0.45 s for a melee cone or a
- * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still. A hit on the player lands
- * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
+ * nova and 0.5 s for a shot or a strike (a strike locks your spot instead of the aim), then 0.35 s of recovery, all divided by tempo; one tell at a time, standing still.
+ * Lore-set slice 3 (Jess 2026-11-02): a returns move (Razor Leaf) and a beam (Psybeam, with a warning line) tell 0.5 s, a burst (Fury
+ * Attack) 0.45 s with each jab re-aimed at you; a trail (Toxic) is a persistent slot kept by G.MoveSim.persist, with no tell. A hit on the player lands
+ * its riders too (G.MoveEffects: ailments, drops, flinch, crits; the mon's own raises and drain heal). Recoil costs the mon HP (never
+ * below 1) and a self heal (Recover) casts with no tell while it is hurt (Jess 2026-11-02). Movement (Tier 1): the stance alternation (far / close) as before, made aware of its moves: in close mode it
  * walks in while a melee move is ready and circles just outside its reach while it recharges; in far mode it keeps 170 to 300 px,
- * closer while its longest ready shot or strike falls short of that (it walks in to use it, Jess 2026-11-01);
+ * closer while its longest ready ranged move falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
  */
 G.Boss = (() => {
-  const TELL = { melee: 0.45, nova: 0.45, shot: 0.5, strike: 0.5 }; // seconds of wind-up before an attack (Jess 2026-10-31), divided by tempo; a pure buff has none
-  const CLOSE = ['melee', 'nova']; // forms cast from the body, so the close stance walks in for them
-  const ORDER = ['melee', 'nova', 'strike', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
+  // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02; returns, beam, multi TUNE 2026-11-02), divided by tempo; a
+  // pure buff, a self heal and a trail have none
+  // a delayed mark (Future Sight) has none: its own delay, with the marker drawn on your locked spot, is the warning (Jess 2026-11-02)
+  const TELL = {
+    melee: 0.45,
+    nova: 0.45,
+    multi: 0.45,
+    shot: 0.5,
+    strike: 0.5,
+    returns: 0.5,
+    beam: 0.5,
+    dash: 0.6,
+    delayed: 0,
+  };
+  const CLOSE = ['melee', 'nova', 'multi']; // forms cast from the body, so the close stance walks in for them
+  const RANGED = ['shot', 'strike', 'dash', 'returns', 'beam', 'delayed']; // forms far mode keeps you inside of
+  const ORDER = ['melee', 'nova', 'multi', 'strike', 'delayed', 'dash', 'beam', 'returns', 'shot']; // the attack forms; on equal scores the earlier form wins, then the earlier move
   const POINT_BLANK = 0.5; // TUNE: a shot or strike's score when you are inside the mon's close reach, so up close it prefers its melee
   // TUNE, the opportunity factor (Jess 2026-11-01): a Hex-like move (statusBonus) while you carry a major ailment; a move whose major
   // ailment cannot land since you already carry one; a move whose foe stat drop is not on you yet
@@ -55,7 +72,8 @@ G.Boss = (() => {
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
       e.moveFactor = (m) => this.factor(m);
-      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you
+      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
+      e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
       this.contact = dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
       this.touch();
@@ -89,6 +107,10 @@ G.Boss = (() => {
       for (const s of e.slots[0]) if (s.t > 0) s.t = Math.max(0, s.t - dt); // every move recharges, as the player's do
       if (this.wait > 0) this.wait -= dt;
       this.buffs(now);
+      this.heals(now);
+      G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as the player's does
+      G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
+      if (e.mvRoot) return [0, 0, 'Walk']; // a live dash (Quick Attack) carries the body; the brain does not steer until it is back
       if (this.tell) return this.telling(dt, now);
       this.modeT -= dt;
       if (!this.low && e.hp < e.maxHp * LOW_HP) {
@@ -116,7 +138,7 @@ G.Boss = (() => {
           vx = -ux * spd;
           vy = -uy * spd;
         } else if (dist < out) circle();
-      } else if (!this.ready('melee') && !this.ready('nova')) {
+      } else if (!CLOSE.some((f) => this.ready(f))) {
         // close, every close move recharging: circle just outside its reach
         const r = this.reach() + (pl.r || 0) + 30;
         if (dist < r) {
@@ -144,14 +166,14 @@ G.Boss = (() => {
       return r;
     }
 
-    /** The reach of the mon's longest ready shot or strike, or Infinity when none is ready: far mode keeps you inside it. */
+    /** The reach of the mon's longest ready ranged move (RANGED), or Infinity when none is ready: far mode keeps you inside it. */
     ranged() {
       let r = -Infinity;
       for (const s of this.e.activeGroup()) {
         if (s.t > 0) continue;
         const d = this.def(s.id),
           f = G.Gyms.formOf(d);
-        if (f === 'shot' || f === 'strike') r = Math.max(r, G.Gyms.reachOf(d, f));
+        if (RANGED.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
       }
       return r > -Infinity ? r : Infinity;
     }
@@ -211,18 +233,56 @@ G.Boss = (() => {
     }
 
     /** The tell: the aim is locked now; the move fires along it when the tell ends, whether or not you are still there. A strike locks
-     *  your spot instead and marks it on the ground; a nova's ring shows its full reach. */
+     *  your spot instead and marks it on the ground; a nova's ring shows its full reach. A dash locks your spot too and shows the wild
+     *  charger's warning line to it (capped at its range) plus its hit circle there (Jess 2026-11-02). */
     start(slot, d, form, pl) {
       const e = this.e,
         tempo = e.gym.tempo,
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
       const wind = TELL[form] / tempo,
-        spot = form === 'strike' ? { x: pl.x, y: pl.y } : null;
+        spot = form === 'strike' || form === 'dash' || form === 'delayed' ? { x: pl.x, y: pl.y } : null;
       this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
       e.aim = ang;
       e.anim.play('Charge', { speed: 1.4 });
-      if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
+      if (form === 'dash') {
+        const len = Math.min(Math.hypot(spot.x - e.x, spot.y - e.y), G.Gyms.reachOf(d, form)),
+          end = { x: e.x + Math.cos(ang) * len, y: e.y + Math.sin(ang) * len },
+          w = {
+            kind: 'beam',
+            warn: true,
+            src: e,
+            x: e.x,
+            y: e.y,
+            angle: ang,
+            len,
+            w: d.space.radRadius * 2,
+            delay: wind,
+            dmg: 0,
+            type: d.type,
+            color: col,
+          };
+        G.Hazards.add(w);
+        G.Hazards.add(Object.assign({}, w, { kind: 'zone', x: end.x, y: end.y, r: d.space.radRadius }));
+      } else if (form === 'beam')
+        // the warning line along the locked aim, the beam's full length and width (Jess 2026-11-02)
+        G.Hazards.add({
+          kind: 'beam',
+          warn: true,
+          src: e,
+          x: e.x,
+          y: e.y,
+          angle: ang,
+          len: d.space.linLength,
+          w: d.space.linWidth,
+          delay: wind,
+          dmg: 0,
+          type: d.type,
+          color: col,
+        });
+      else if (form === 'delayed')
+        return; // the marker is the move's own instance, drawn through its delay (move-render.js)
+      else if (spot) G.FX.ring(spot.x, spot.y, d.space.radRadius * 3, d.space.radRadius, col, wind, 2);
       else G.FX.ring(e.x, e.y, e.r, form === 'nova' ? G.Gyms.reachOf(d, form) : e.r * 2.4, col, wind, 2);
     }
 
@@ -235,7 +295,7 @@ G.Boss = (() => {
         e.aim = c.ang;
         if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {
           G.Gym.noteCast(c.id);
-          e.anim.play(CLOSE.includes(c.form) ? 'Attack' : 'Shoot', { speed: 1.4 });
+          e.anim.play(CLOSE.includes(c.form) || c.form === 'dash' ? 'Attack' : 'Shoot', { speed: 1.4 });
         }
       }
       if (c.t >= c.wind + c.after) this.tell = null;
@@ -264,6 +324,20 @@ G.Boss = (() => {
       }
     }
 
+    /** Self heals (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) cast with no tell, as buffs do, whenever the mon
+     *  is hurt and the move is off cooldown. */
+    heals(now) {
+      const e = this.e;
+      if (!(e.hp < e.maxHp)) return;
+      for (const s of e.activeGroup()) {
+        const d = this.def(s.id);
+        if (s.t > 0 || G.Gyms.formOf(d) !== 'heal') continue;
+        if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
+        G.Gym.noteCast(s.id);
+        G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
+      }
+    }
+
     /** Flinch (slice D2): a tell in progress is cancelled (that move's cooldown is spent) and the next attack waits one recovery. */
     flinch() {
       if (!this.on) return;
@@ -288,7 +362,16 @@ G.Boss = (() => {
       );
     }
 
-    /** Giga Drain's heal on the mon: up to its max HP, with a green number. */
+    /** A cast's HP cost (recoil) on the mon: taken directly, never below 1 HP, with a grey number (Player.payHp's rule). */
+    payHp(n) {
+      const e = this.e,
+        before = e.hp;
+      e.hp = Math.max(1, e.hp - n);
+      const got = Math.round(before - e.hp);
+      if (got >= 1) G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 6, '-' + got, '#c9c9d6');
+    }
+
+    /** A heal on the mon (Giga Drain's drain, a self heal's tick): up to its max HP, with a green number. */
     heal(n) {
       const e = this.e,
         before = e.hp;

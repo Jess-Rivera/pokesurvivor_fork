@@ -163,7 +163,7 @@ G.Gym = (() => {
         power: sig.power || 1,
         tempo: sig.tempo || 1,
         cards: Object.assign({}, sig.cards),
-        moves: sig.moves.map((m) => Object.assign({}, m)),
+        moves: G.Gyms.movesFor(sig, slot, loop).map((m) => Object.assign({}, m)), // this loop's set (per-loop sets, Jess 2026-11-02)
         engagedAt: null,
       },
     };

@@ -181,7 +181,8 @@ G.MoveRender = (() => {
     ctx.restore();
   }
 
-  /** Slice 4c-3, presentation only: the telegraph ring and the dropping boulder during the wait, then the landing flash. */
+  /** Slice 4c-3, presentation only: the telegraph ring and the dropping boulder during the wait, then the landing flash. A delayed
+   *  move that does not fall (Future Sight, a mark) gets the same ring and flash with no boulder. */
   const DROP = 220; // px the boulder falls from
   function drawFall(ctx, inst, s, col) {
     const T = inst.spec.delivery.delay || 0,
@@ -199,6 +200,10 @@ G.MoveRender = (() => {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r * k, 0, TAU);
       ctx.fill();
+      if (inst.spec.delivery.motion !== 'falls') {
+        ctx.restore();
+        return;
+      }
       const br = Math.max(8, s.r * 0.22),
         y = s.y - DROP * (1 - k) * (1 - k); // eases in, fastest at the landing
       ctx.globalAlpha = 0.25 * k;
@@ -239,7 +244,7 @@ G.MoveRender = (() => {
         drawReposition(ctx, inst, s, col);
         continue;
       }
-      if (inst.spec.delivery.motion === 'falls') {
+      if (inst.spec.delivery.motion === 'falls' || inst.spec.delivery.delay) {
         drawFall(ctx, inst, s, col);
         continue;
       }

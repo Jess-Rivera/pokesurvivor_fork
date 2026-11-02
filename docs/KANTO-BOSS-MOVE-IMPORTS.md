@@ -414,34 +414,58 @@ Goal (Jess, 2026-11-01): import all 177 moves normally, so the player can use th
 
 ### Whole-field (7)
 
+RULED (Jess, 2026-11-01, set 4): team-side fields (weather via setWeather; screens and Safeguard as timed team buffs; Stealth Rock as field hazards). Per move: MOVE-INTENT.
+
 Sunny Day, Rain Dance, Sandstorm, Reflect, Light Screen, Safeguard, Stealth Rock. Weather has a handler (`setWeather`); screens, Safeguard and hazards do not.
 
 ### Unique decisions (38)
 
 | Group | Moves | What has to be decided |
 |---|---|---|
-| Accuracy and evasion (6) | Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight | COMBAT-RULES skips accuracy and evasion stages, so these do nothing today. One ruling covers all six, plus the accuracy riders on Mud-Slap, Mirror Shot and Hone Claws (drop them, or give them a meaning). |
-| Power from HP (3) | Flail, Reversal, Wring Out | Power that scales with the user's or the target's HP. One ruling. |
-| Damage from other stats (4) | Foul Play, Psyshock, Electro Ball, Grass Knot | Foul Play uses the target's Attack, Psyshock hits Defense, Electro Ball scales with Speed, Grass Knot with weight (not tracked). |
-| Damage reflection (2) | Counter, Mirror Coat | Return damage taken. One ruling. |
-| Turn or action conditions (5) | Sucker Punch, Fake Out, Feint, Focus Punch, High Jump Kick | "Foe is attacking", "first turn", "breaks Protect", "fails if hit while charging", "crash damage on a miss": what each condition means in real time. |
-| Sleep-dependent (2) | Dream Eater, Nightmare | Only work on a sleeping target. One ruling. |
-| Switching (2) | U-turn, Baton Pass | Tie into the swap rule; Baton Pass also falls under the open stage-manipulation decision. |
-| User faints (2) | Explosion, Self-Destruct | What fainting the caster means for the player's mon and a boss mon. |
-| One-hit KO (1) | Fissure | What a one-hit KO means against a swarm, a player and a boss. |
-| New status mechanics (11) | Attract, Yawn, Rest, Protect, Disable, Roar, Psych Up, Swagger, Skill Swap, Focus Energy, Magnet Rise | Attract needs a new ailment (infatuation); Yawn is a delayed sleep; Rest is self-sleep plus a full heal; Focus Energy is a crit stage (stages cover five stats today); Psych Up and Swagger are open owner decisions already (stage manipulation, raises on foes); Skill Swap has no abilities to swap. |
+| Accuracy and evasion (6) RULED: miss chance (MOVE-INTENT) | Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight | COMBAT-RULES skips accuracy and evasion stages, so these do nothing today. One ruling covers all six, plus the accuracy riders on Mud-Slap, Mirror Shot and Hone Claws (drop them, or give them a meaning). |
+| Power from HP (3) RULED: mainline curve | Flail, Reversal, Wring Out | Power that scales with the user's or the target's HP. One ruling. |
+| Damage from other stats (4) RULED: mainline, weight from the dex | Foul Play, Psyshock, Electro Ball, Grass Knot | Foul Play uses the target's Attack, Psyshock hits Defense, Electro Ball scales with Speed, Grass Knot with weight (not tracked). |
+| Damage reflection (2) RULED: stance window | Counter, Mirror Coat | Return damage taken. One ruling. |
+| Turn or action conditions (5) RULED: real-time analogs (Feint waits on Protect) | Sucker Punch, Fake Out, Feint, Focus Punch, High Jump Kick | "Foe is attacking", "first turn", "breaks Protect", "fails if hit while charging", "crash damage on a miss": what each condition means in real time. |
+| Sleep-dependent (2) RULED: sleep only | Dream Eater, Nightmare | Only work on a sleeping target. One ruling. |
+| Switching (2) RULED: U-turn clears the swap lock; Baton Pass [Open] | U-turn, Baton Pass | Tie into the swap rule; Baton Pass also falls under the open stage-manipulation decision. |
+| User faints (2) RULED: real faint | Explosion, Self-Destruct | What fainting the caster means for the player's mon and a boss mon. |
+| One-hit KO (1) RULED: wild only | Fissure | What a one-hit KO means against a swarm, a player and a boss. |
+| New status mechanics (11) RULED except Psych Up and Swagger (still [Open]); Skill Swap not imported | Attract, Yawn, Rest, Protect, Disable, Roar, Psych Up, Swagger, Skill Swap, Focus Energy, Magnet Rise | Attract needs a new ailment (infatuation); Yawn is a delayed sleep; Rest is self-sleep plus a full heal; Focus Energy is a crit stage (stages cover five stats today); Psych Up and Swagger are open owner decisions already (stage manipulation, raises on foes); Skill Swap has no abilities to swap. |
 
 ### Existing pattern, one ruling per pattern (18)
 
-- Priority (6): Aqua Jet, Mach Punch, Ice Shard, Bullet Punch, Extreme Speed, Vital Throw. Follow the Quick Attack dash; waits on the open Quick Attack priority decision.
-- Two-turn (6): Fly, Dig, Dive, Bounce, Solar Beam, Future Sight. `delivery.delay` and caster i-frames exist; confirm the shape once.
-- Rampage and recharge (4): Outrage, Thrash, Petal Dance (lock in, then self confusion), Hyper Beam (a lockout after firing; today's commitment covers only the cast).
-- Random ailment (1): Tri Attack picks one of burn, paralysis or freeze.
-- Hazard clear (1): Rapid Spin. Damage and the Speed raise map; clearing hazards follows the whole-field ruling.
+- RULED (set 4, priority ignored, they import by shape and power) Priority (6): Aqua Jet, Mach Punch, Ice Shard, Bullet Punch, Extreme Speed, Vital Throw. Follow the Quick Attack dash; waits on the open Quick Attack priority decision.
+- RULED (set 4, delay plus i-frames) Two-turn (6): Fly, Dig, Dive, Bounce, Solar Beam, Future Sight. `delivery.delay` and caster i-frames exist; confirm the shape once.
+- RULED (set 4, mainline analogs) Rampage and recharge (4): Outrage, Thrash, Petal Dance (lock in, then self confusion), Hyper Beam (a lockout after firing; today's commitment covers only the cast).
+- [Proposed] mainline (set 4) Random ailment (1): Tri Attack picks one of burn, paralysis or freeze.
+- RULED (set 4, team-side fields) Hazard clear (1): Rapid Spin. Damage and the Speed raise map; clearing hazards follows the whole-field ruling.
 
 ### Maps to the schema (about 114)
 
 Plain damage; damage with riders (burn, poison, paralysis, freeze, confusion, flinch, stat drops, high crit, recoil, drain, multihit, trap); self raises (Calm Mind, Bulk Up, Amnesia, Barrier, Acid Armor, Meditate, Nasty Plot); foe drops (Growl, Leer, Tail Whip, Scary Face, Screech); pure ailment moves (Thunder Wave, Glare, Hypnosis, Sing, Spore, Sleep Powder, Stun Spore, Poison Powder, Lovely Kiss, Confuse Ray, Supersonic, Mean Look as trap); heals (Recover, Synthesis, Moonlight). Self drops after an attack (Superpower, Close Combat, Overheat, Draco Meteor) are `stat` effects with `side: self`.
+
+## Batch 1 (2026-11-01)
+
+Built on fix/playtest-kanto-moves: 110 of the "Maps to the schema" moves are in the catalog, held out of player pools (`G.Moves.HELD`, js/data/moves.js) until pools follow mainline learnsets. Held back to later slices: Mud-Slap, Mirror Shot, Hone Claws (accuracy trackers), Throat Chop (silence).
+
+- Source: `tools/kanto_batch1.js` builds each move from pokeapi plus a pattern copied off a catalog move (melee swing, shot, beam, strike, falls, ring, burst, status shot, self-cast, multi-hit). `--apply` splices them into move-conversions-described.json; then `node tools/export_moves.js`.
+- Review: `tools/kanto-batch1-review.html` shows each move's facts, the proposal in words, and override slots (pattern, shape, delivery, payload, cooldown, note). Export saves `kanto-batch1-overrides.json`; put it in docs/move_rework_holding/ and rerun the generator. Plain-text overrides are applied by hand.
+- Runtime added: `sleep` is a legal ailment in the grammar; recoil `trigger: hit` pays a fraction of the damage dealt (gym leaders pay nothing yet, they have no payHp). Self heals (Recover, Synthesis, Moonlight) are one 0.1 s heal-over-time tick of 50% max HP.
+- Status cooldowns (move-overrides.js, signed off 2026-11-02): sleep shots 4 s; paralysis, poison, confusion and trap shots 3.5 s; foe drops 3 s; heals 12 s. Pure raises have none (they cast when their Gate opens).
+- Review (Jess, 2026-11-02): all 111 shapes kept as built (no overrides file). Every move has a hand-derived scenario (shape, plus a rolled-riders scenario where a rider has a chance); flinch is not checked (the harness has no flinch key). Batch signed off in batchReviewed; Sand Tomb cd 2.5 (MOVE-INTENT sand-tomb). The moves stay held until learnset pools.
+
+### Batch 1 shape rules (Jess, 2026-11-02)
+
+[Approved] tools/kanto_batch1.js derives every shape from these rules; each move's review row names the rule that fired. Later batches use them too.
+
+1. Melee. Tackle (arc 1.7 rad, reach 54 px) is the default swing; heavy moves (power 100+) start from arc 2, reach 60. Damage and knockback are free. Each extra (ailment, flinch, crit, drain, foe stat drop, trap) costs area: one small-chance extra keeps 80%, a strong one (50%+ chance, a drain, a trap) or two extras keep 65%. Drawbacks (recoil, own stat drops) cost nothing. The name picks the trade: punch, chop, jab, uppercut narrow the arc; fang, bite, crunch, clamp, leech, bind, wrap (and any move with no family word) shorten the reach; claw, slash, blade, cross widen the arc (x1.3) and shorten the reach more; tail, whip, kick, horn, drill, stomp lengthen the reach (x1.2) and narrow the arc a lot. The scale matches the originals: Lick 66%, Bite 64%, Bug Bite 62%, Metal Claw 81%.
+2. Shots. Each type has a look read off the originals: water pierces one and is quick (Water Gun 6 px, 350 px/s); fire wobbles (Ember 7 px, 310); ghost is slow, big and pierces one (Shadow Ball 9 px, 280); electric is very fast (Thunder Shock 7 px, 480); rock is slow and big with knockback 90 (Rock Throw 9 px, 260); psychic steers to the nearest foe (Confusion); grass 8 px 290; poison 7 px 310; steel 9 px 330. New: fighting 9 px 260 with knockback, flying 5 px 420, fairy 8 px 300 pierces one, normal 7 px 320. Power under 60: 25% smaller, 15% faster; 100 and up: 25% bigger, 15% slower. No-damage status shots use their type's look at base size.
+3. Area moves. Hits everyone around in mainline (target all-other-pokemon), or a sound or look (Growl, Leer, Tail Whip): a ring around the user. A damaging spray of objects (Blizzard, Twister, Acid, Air Cutter, Swift): a 6-shot burst. Batch 1: 6 rings, 5 bursts. Heat Wave (an original ring) is left as it is.
+4. Mines and trails (none in batch 1). A mine is placed on the field (mainline hazards like Spikes); a trail is left behind as the user moves (Flame Wheel). Toxic stays a trail as a designer pick.
+6. Waves (Jess, 2026-11-02). A move that is a wave by name (Sludge Wave, Heat Wave, and later Muddy Water and the like; Surf became a movement skill, rule 7) is a band 16 px deep across the aim, 60 px wide, that travels 300 px/s at the nearest foe for 1 s and widens with distance to 260 px, so it is narrow near the user. It takes priority over rule 3. The range upgrade stretches a line's long side, so a wave gets wider; Area widens it, Presence deepens it. It shows the nova badge until it has its own. Batch 1 rings are now 4 (Earthquake, Growl, Leer, Tail Whip).
+7. Movement skills (Jess, 2026-11-02). Surf and Fly are not attacks: Surf is a passive (no water or swamp slowdown, x1.25 in them), Fly is pressed (4 s of flight over the terrain, 20 s from landing). Fly joined batch 1 for it (111 moves). Rulings: MOVE-INTENT surf and fly.
+5. Uniques. When a move stands out in its type it gets its own variant. Batch 1: Shock Wave homes on the nearest foe (never misses); Sleep Powder, Stun Spore, Spore and Poison Powder are a 22 px cloud drifting 90 px/s for 1 s through every foe; Sand Tomb is a 40 px sand patch on a foe for 2.5 s that hits and traps every 0.5 s; Draco Meteor is three 60 px falls, 0.25 s apart, each on the nearest foe, with its Sp. Atk drop paid once per cast.
 
 ## Notes for the import work
 

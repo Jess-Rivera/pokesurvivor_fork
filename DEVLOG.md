@@ -361,3 +361,79 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - tools/move-lab.html: dev page that loads the real move scripts; pick a move, stack cards, see base vs effective fields, leader form and reach; build a 4-move slot and copy its moves / cards block for gyms.js. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Then: Load gym (leader, loop, level via G.Gyms.lineup) shows every mon of that loop as a 4-move row with its own cards. Headless load: 62 moves, no page errors; check.js 30/30.
 - smoke-newcombat skipped from the routine (Jess) until its flake is fixed.
 - Jess: feature/gym-roster done (rosters in); fast-forward to main. Gym cards after playtester feedback.
+
+## 2026-11-01 (Claude Code, home): playtest fixes part 1 (Jeremy's notes), branch fix/playtest-kanto-moves
+- Speed transfer bounds 0.5/3.0 -> 0.7/1.3 (Jess's pick over the proposed 0.5/2.0); Spe 130+ now saturates at 139 px/s, k left at 1.0 (BALANCE).
+- Bond is the team's: the count rides takeField on swap (was stranded on the mon active at the gym win). The bond screen opens with a Pokemon step (team keys 1-6, ineligible dimmed, skipped when only one can bond); the field does not swap.
+- Economy doc (docs/Economy Balance Ideas.md) open questions: run-wide upgrades bought on several mons stacking (Gold Gain x4), run-wide rank III costing 30 of a mon's 40 points, the 371,700-gold curve per mon or once, unbuilt stats (dodge, Status Chance), Starting Moves III vs Repertoire, save migration of the old upgrade levels. Needs coins-per-run data first.
+- Bomb: kills wild enemies in view outright (bosses, gym leaders, elites keep the old damage), then a 3 s spawn quiet (G.Spawner.quiet). CONTRIBUTING asks for coins per run.
+- Verified: check.js 30/30, smoke-ui pass, headless: speed px, bond pick on a benched mon, bond carried on swap, bomb 26 -> 0 with no spawns for 3 s. smoke-newcombat skipped.
+- Jess feel-tested: bonds work, bombs work, speed feels better. Next: the Kanto import rulings.
+- Kanto import rulings, 4 sets with Jess: accuracy/evasion as miss chance, HP-curve power, Counter stance, real-faint Explosion; real-time turn conditions, sleep-only Dream Eater, U-turn clears the swap lock, wild-only Fissure; mainline odd stats (weight joins the dex), Protect block, Rest without sleep, status analogs (Skill Swap out); priority ignored, two-turn delay, rampage lock, team-side fields. 64 new MOVE-INTENT entries (plus a line on quick-attack), 4 DECISIONS entries. Still open: Psych Up, Swagger, Baton Pass.
+
+
+## 2026-11-01 (Claude Code, home): Team menu rework
+- Slow list: every menu sprite drew once before IntersectionObserver reported, so opening Team fetched ~946 sheets; ui.js now draws only canvases reported in view (rootMargin 160px). ~45 requests on open.
+- Slots: Free Slot N under Put in the detail column, for the highlighted slot, always shown (greyed on the lead and empty slots; Jess moved it there after the first feel test); drag a team card onto the list to free it. Drag list->slot and slot<->slot already worked.
+- Upgrades: main menu entry removed; an Upgrade button on the Team detail stage (first a +) opens it on that Pokemon, Back returns to Team keeping the draft. smoke-ui now opens Upgrades that way.
+- Menu sprites centre on their visible Idle pixels (G.Sprites.idleBox, scanned once per dex/variant/row); hero views fit by that box. World sprites unchanged.
+- Feel test 1 fix: on file:// the pixel scan threw a SecurityError inside the sprite loop, so no menu sprite drew; the scan is now caught and falls back to the old placement (centring works only over http until a precomputed table exists). The + sits a little lower.
+- Verified: check.js 30/30, smoke-ui pass, headless over file:// and http, 1600x900 and 1280x720.
+- The + became an Upgrade button (Jess). Session closed: part 1, rulings and Team menu all committed on fix/playtest-kanto-moves.
+
+## 2026-11-01 (Claude Code, home): Kanto import batch 1
+- Team menu feel test passed (Jess). Batch 1 planned and built: 110 moves from pokeapi plus a pattern each (tools/kanto_batch1.js), held out of player pools (G.Moves.HELD) until learnset pools. Held back: Mud-Slap, Mirror Shot, Hone Claws, Throat Chop.
+- Jess: all-foe moves split between ring and Mud Shot burst; review page with override slots (tools/kanto-batch1-review.html, export to docs/move_rework_holding/kanto-batch1-overrides.json); hold list, quick-repeat multi-hit and the simplifications agreed.
+- Runtime: sleep allowed in the grammar; recoil on hit from damage dealt (move-effects.js); status cooldowns proposed in move-overrides.js. Harness pins on 63 moves scoped to the pre-Kanto moves; 110 blocked placeholder scenarios.
+- Verified: validators 173/173, check.js 30/30, smoke-ui pass, review page and live casts headless on file:// (sleep, paralysis, poison, trap, confusion land; recoil and drain and Recover heal work; no errors).
+- Hail toggle: unscheduled since D-HAIL; now a TODO fields slice with the weather moves. Stopped at: waiting on Jess's shape review.
+
+## 2026-11-02, Kanto batch 1 shape rules (Claude Code, home)
+- Jess set five shape rules for the imports (melee trade-off vs Tackle, type looks for shots, ring vs burst, mine vs trail, uniques). tools/kanto_batch1.js now derives shapes from them; review rows name the rule.
+- Applied and exported (173 moves). New shapes: Shock Wave homing, powder clouds, Sand Tomb patch, Draco Meteor three falls; Blizzard and Twister are bursts.
+- Verified: check.js 30/30, validators 173/173, smoke-ui pass, 18 reshaped moves cast and hit live on file://, no page errors.
+- Open: Sand Tomb cd resolves to 1.17 s while a patch lasts 2.5 s (patches overlap); needs a cd ruling.
+
+## 2026-11-02, Waves (Claude Code, home)
+- Built: a line can grow its width (grammar, move-geom); the lens, Area and Presence follow a line's long and short side. Surf, Sludge Wave and Heat Wave are widening bands at the nearest foe; wave badge reuses nova.
+- Tests moved off Heat Wave as the example ring (Hyper Voice, Bulldoze); new hand-derived wave checks in move-sim and team-cards; scenario heat-wave-wave replaces heat-wave-grow.
+- Verified: check.js 30/30, validators, smoke-ui pass, the three waves and Hyper Voice cast and hit live on file://.
+
+## 2026-11-02, Surf and Fly movement skills (Claude Code, home)
+- Built: special handlers surfer (passive) and flight (press); no derived cd; skill slots never active, cycled past, never bonded. Surf x1.15 in water and swamp. Fly: 4 s flight, hits and terrain off, own casts and timers frozen, swaps locked, G.World.landing (wall: 1/16 HP and nearest floor; object: on along heading), arena clamp, 20 s cd from landing; HUD icon shows flight then recharge.
+- Fly joins batch 1 (111 moves, held). Scenarios surf-passive and fly-pressed.
+- Verified: check.js 30/30, validators 174/174, smoke-ui pass, headless on file:// (Surf 1.15 vs 0.6, cycling, takeoff, hits miss, DoT lands, no casts, frozen timers, wall landing 1/16 HP to free ground, cd from landing, object landing).
+
+## 2026-11-02, Batch 1 review and learnset step 1 (Claude Code, home)
+- Wrote the hand-derived scenarios for the 109 batch-1 placeholders (shape plus rolled riders; flinch unchecked, no harness key). Two first guesses were wrong, not the code: location moves pick a random enemy in range, clouds have no pierce limit.
+- Jess signed off: shapes kept, batch in batchReviewed (108 plus Sand Tomb by its new MOVE-INTENT entry, cd 2.5). move_report.js treats a move with no legacy cd as nothing to compare.
+- Learnset step 1: build_learnset_dataset.py takes the latest version group with a level-up list (Champions rows are train-only and left 197 species empty, Charizard and Pikachu among them). Rebuilt, 0 warnings.
+- Verified: intent harness 2136/2136, check.js 30/30. Stopped before step 2 (game code, four decisions open).
+
+## 2026-11-02, Gym loop-1 lore sets, slice 1 (Claude Code, home)
+- Jess parked player learnset pools: the imports are for the bosses. Gyms one at a time in GYM-ROSTERS order, per-loop sets, loop 1 of all 8 first.
+- Built: gyms.js `sets` keyed by loop (movesFor, validator per set), gym.js hands each mon its loop's set, leader recoil (payHp, never below 1 HP), leader heal form (Recover, no tell, while hurt; the brain now ticks heal over time), Defense Curl imported and held. Loop-1 lore sets for all 8; Sabrina Confusion stand-in.
+- Found: gym-harness 10b placed the player at the largest close reach, so Bite and Body Slam looked starved; live, the brain walks in and lands both. Harness fixed; BOSS-AUTHORING "one melee cone" rule revised.
+- Verified: check.js 30/30, intent 2151, boss-owner 188, gym harness, smoke-ui, live loop-1 fights for all 8 on file://. Not yet feel-tested.
+
+## 2026-11-02, Leader dash form, slice 2 (Claude Code, home)
+- Defense Curl signed off (batchReviewed). Built the dash form: Quick Attack casts for leaders as a swept dash to the spot locked at a 0.6 s tell (warn-only line plus circle, the wild charger's hazard), one hit there, back to its start. Leaders keep the i-frames (Enemy.hurt now honours invuln; DoT still lands) and deal no contact damage mid-dash. Lt. Surge loop 1 complete.
+- Ruled: Self-Destruct on a leader is a closer (score 0 until about 20% HP), no weight knob; recorded in MOVE-INTENT, built with the import.
+- Verified: check.js 30/30, boss-owner 202 (new section 16), gym harness, live Surge fight on file:// (16 dashes, one hit each, no errors). Not yet feel-tested.
+
+## 2026-11-02, Leader returns, beam, burst and trail forms, slice 3 (Claude Code, home)
+- Jess merged the four remaining forms into one slice. Built in gyms.js formOf/reachOf and boss-ai.js: returns (Razor Leaf, 0.5 s tell), beam (Psybeam, 0.5 s tell with a warning line), multi (Fury Attack, 0.45 s, jabs re-aimed), trail (Toxic, persistent, via new G.MoveSim.persist). The sim now also ends a persistent group on its owner's stun or faint in the step.
+- Loop-1 sets: Erika + Razor Leaf, Koga + Toxic, Sabrina Psybeam for Confusion, Giovanni + Fury Attack.
+- Found: a player dead centre at about 150 px slips between Razor Leaf's two leaves (0.5 rad fan); point blank takes 4 hits.
+- Verified: check.js 30/30, boss-owner 228 (new section 17, two mutations caught), gym harness ALL OK, live loop-1 fights of all four on file:// with no page errors. Not yet feel-tested.
+
+## 2026-11-02, Imports: Roar, Fissure, Future Sight (Claude Code, home)
+- Jess: slice 3 felt good enough; balance waits for playtesters; use the proposed numbers. Imported via kanto_batch1.js (new options push, power, ko, acc, delay and the mark pattern), held from pools.
+- Built: push-only knockback (wild enemies slide, the player gets Player.push, a 0.2 s slide), ohkoWild handler (wild foes only), the leader 'delayed' form (Future Sight, spot locked at the cast, castAt passes it as the point), marker drawn without the boulder. Loop 1: Blaine + Roar, Sabrina + Future Sight, Giovanni + Fissure.
+- Found: Roar with no cd was cast 52 times in 90 s (cd 5 TUNE added); Fissure's 30 accuracy made the heavy hit 36 (accuracy set to 100).
+- Verified: check.js 30/30, intent 2193 (4 new scenarios), boss-owner 245 (section 18), gym harness, live Blaine, Sabrina, Giovanni on file://, no page errors. Not yet feel-tested.
+
+## 2026-11-02, Branch close: fix/playtest-kanto-moves merged (Claude Code, home)
+- Filed GitHub issues for the last loop-1 gaps: Reflect (Sabrina, blocked on the fields slice) and Smokescreen (Koga, blocked on the accuracy trackers). The two slices still need issues of their own.
+- Pre-merge check: tree clean, main had not moved, check.js harnesses all OK (lint 5 errors, warn-only, unchanged).
+- The imports (Roar, Fissure, Future Sight) are still not feel-tested; that carries over to main.

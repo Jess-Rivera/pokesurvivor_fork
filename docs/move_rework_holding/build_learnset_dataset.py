@@ -30,6 +30,11 @@ Scope and decisions (frozen 2026-10-24, Jess):
   in (this varies by pokemon: e.g. many top out at scarlet-violet, others at
   champions, sword-shield, legends-arceus, etc.). Mirrors the "latest" rule
   the sibling builders use for versioned records.
+  Amended 2026-11-02 (Jess, learnset pools step 1): the latest version group
+  that has a LEVEL-UP list for that pokemon. pokeapi's champions rows carry
+  only a "train" method, so the plain latest left 197 species with no
+  level-up moves. A pokemon with no level-up rows anywhere keeps the plain
+  latest.
 - Learn methods: ALL methods, GROUPED by method identifier (level-up, machine,
   egg, tutor, ...). level-up entries carry their level; others carry level only
   when the source row specifies one (usually null).
@@ -191,6 +196,7 @@ def main():
     pokemon_with_moves = 0
     total_moves_emitted = 0
     moves_missing_name = set()
+    no_level_up = []
 
     for raw_pokemon in pokemon_rows:
         pk = clean(raw_pokemon)
@@ -206,8 +212,13 @@ def main():
             # Many non-default/form rows legitimately have no own learnset.
             continue
 
-        # latest version group THIS pokemon appears in
-        latest_order = max(vg_order_of(r) for r in rows)
+        # latest version group THIS pokemon has a level-up list in (2026-11-02);
+        # with no level-up rows anywhere, the latest it appears in
+        lvl_rows = [r for r in rows
+                    if identifier(methods, val(r.get("pokemon_move_method_id"))) == "level-up"]
+        latest_order = max(vg_order_of(r) for r in (lvl_rows or rows))
+        if not lvl_rows:
+            no_level_up.append(pokemon_id)
         latest_vg_rows = [r for r in rows if vg_order_of(r) == latest_order]
         latest_vg_id = val(latest_vg_rows[0].get("version_group_id"))
 
@@ -293,13 +304,14 @@ def main():
         "moves_loaded": len(moves),
         "version_groups_loaded": len(version_groups),
         "moves_missing_localized_name": len(moves_missing_name),
+        "pokemon_with_no_level_up_list": len(no_level_up),
         "warnings": len(report["warnings"]),
     }
 
     dataset = {
         "dataset": "pokemon_learnset_api",
         "language_id": lang,
-        "version_selection": "highest version_groups.order per pokemon",
+        "version_selection": "highest version_groups.order with a level-up list per pokemon",
         "learnsets": output_learnsets,
     }
 
@@ -353,7 +365,7 @@ def main():
         lean = {
             "dataset": "pokemon_learnset_api_lean",
             "language_id": lang,
-            "version_selection": "highest version_groups.order per pokemon",
+            "version_selection": "highest version_groups.order with a level-up list per pokemon",
             "note": ("moves are [move_id, level] pairs grouped by method; "
                      "level is null for non-level-up methods. Resolve move "
                      "identifiers via the `moves` legend, version groups via "

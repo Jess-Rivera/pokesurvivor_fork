@@ -213,6 +213,10 @@ feel with the interactive tuner over the real 966-species roster:
 - Reference points (k=1.0): Spe100 Charizard 161, Spe130 Mewtwo/Jolteon 198, Spe160 Ninjask 225.
 - Watch item: 3.0x upper mostly gives Regieleki a dramatic solo top (250); next fast tier sits ~210-225.
   If fast mons feel slippery/hard to control at high density, the upper bound is the first knob to lower.
+- 2026-11-01, bounds 0.5/3.0 -> 0.7/1.3 (Jeremy playtest: speed spread too wide; Jess picked 0.7 to 1.3). k stays 1.0. Same curve for player, wild enemies and gym leaders.
+  px/s now: Spe 5 to 20 = 75, Spe 45 = 82, median 107, Spe 100 = 136, Spe 130 and up = 139 (saturates). Old: Spe 100 = 161, Spe 130 = 198, Spe 200 = 250.
+  Felt spread ~1.86x (was ~4.6x). Watch item: everything from about Spe 110 up now moves the same; if fast mons should still differ, lower k (k 0.5 gives Spe 100 127, 130 134, 200 138; slow end Spe 45 91).
+- Bomb pickup (2026-11-01, Jeremy playtest): kills every wild enemy in view outright (shield included); bosses, gym leaders and elites take the old 60 + 14 x level. Then BOMB_QUIET = 3 s with no drip and no tides (js/game.js; G.Spawner.quiet, a second bomb restarts the window). Drop rate unchanged (0.6% per kill).
 
 ## 2026-10-18 — fix/attack-calc slice 1 (needs playtest)
 - Expect player->enemy damage down ~15-18% from 1:00-10:00 (defender level fix), fading to 0 at level parity. Kill times rise accordingly; DMG_SCALAR retune is tune/damage-hp, last.

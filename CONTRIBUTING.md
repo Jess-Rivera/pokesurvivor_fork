@@ -26,6 +26,7 @@ The templates ask a few questions. Please fill them in; the more concrete, the f
 - **Try first**: a hard reload (Ctrl+Shift+R), and reproduce it once more. The save lives in your browser (localStorage), so some glitches are stale-state and clear on reload.
 - **Console output**: press F12 → Console, copy any red errors in.
 - **Browser and OS** (e.g. Chrome 142, Windows 11).
+- **Coins per run** (any report, bug or not): the coin total from the end-of-run screen, with how long the run lasted. It helps tune the shop prices.
 
 ## How to read the board (PokeSwarm)
 

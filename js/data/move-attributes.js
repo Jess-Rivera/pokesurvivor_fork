@@ -53,7 +53,7 @@
     'steel',
     'fairy',
   ];
-  const AILMENTS = ['burn', 'paralysis', 'poison', 'freeze', 'trap', 'confusion']; // the ones status.js implements
+  const AILMENTS = ['burn', 'paralysis', 'poison', 'freeze', 'trap', 'confusion', 'sleep']; // the ones status.js implements
   const STATS = ['atk', 'def', 'spAtk', 'spDef', 'spd'];
   const WEATHER = ['sun', 'rain', 'sand', 'snow', 'fog']; // weather.js ids
 
@@ -147,7 +147,7 @@
       grow: obj(
         {
           growSpeed: num({ gt: 0 }),
-          dim: en(['radRadius', 'radArc', 'linLength'], { d: 'radRadius' }),
+          dim: en(['radRadius', 'radArc', 'linLength', 'linWidth'], { d: 'radRadius' }),
           per: en(['time', 'distance'], { d: 'time' }),
           max: num({ gt: 0 }),
         },
@@ -188,8 +188,11 @@
       fixedDamage: special({ amount: num({ gt: 0 }), ignoresType: 'bool', ignoresDefense: 'bool' }, ['amount']),
       chainDamageFalloff: special({ hopReduction: num({ gt: 0, max: 1 }) }, ['hopReduction']), // per hop: chain hop k deals x (1 - hopReduction)^k, applied last (D15)
       levelDamage: special({}),
+      ohkoWild: special({ koChance: num({ gt: 0, max: 100 }) }, ['koChance']), // Fissure: koChance % one-hit KO on a wild foe only
       setWeather: special({ weather: en(WEATHER), duration: SECS }, ['weather', 'duration']),
       statusBonus: special({ multiplier: num({ gt: 1 }) }, ['multiplier']),
+      surfer: special({ speedMul: num({ gt: 1 }) }, ['speedMul']), // movement skills (Jess 2026-11-02): no shape, never autocast
+      flight: special({ duration: SECS, cooldown: SECS }, ['duration', 'cooldown']),
     },
   };
 
@@ -292,9 +295,9 @@
     },
     {
       id: 'grow-dim-linear',
-      when: { eq: ['delivery.grow.dim', 'linLength'] },
+      when: { in: ['delivery.grow.dim', ['linLength', 'linWidth']] },
       then: { eq: ['space.shape', 'linear'] },
-      msg: 'growing linLength needs a linear shape',
+      msg: 'growing linLength/linWidth needs a linear shape',
     },
     {
       id: 'turn-needs-travel',

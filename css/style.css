@@ -15,6 +15,12 @@
   font-weight: 551 900;
   font-display: block;
 }
+@font-face {
+  font-family: 'Monogram';
+  src: url('../assets/fonts/monogram-extended.ttf') format('truetype');
+  font-weight: 551 900;
+  font-display: block;
+}
 
 :root {
   --ink: #ffffff;
@@ -3553,6 +3559,42 @@ a.btn {
   padding-right: 14px;
   align-self: center;
 }
+/* a team card dragged over the list: dropping it frees its slot */
+#ros-grid.drop {
+  outline: 2px dashed #ff8a96;
+  outline-offset: -2px;
+  border-radius: 12px;
+  background: rgba(255, 90, 110, 0.08);
+}
+/* the detail stage with its + (Upgrades) in the corner */
+.ros-stage {
+  position: relative; /* width per window size: the .ros-detail .ros-stage rules */
+  align-self: center;
+  flex: 0 0 auto;
+}
+.ros-stage .stage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ros-upg {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  cursor: pointer;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 210, 63, 0.6);
+}
+.ros-upg:hover {
+  color: #fff;
+  background: rgba(255, 210, 63, 0.3);
+}
 /* middle: the Pokédex filters and grid */
 .ros-center {
   display: flex;
@@ -3673,10 +3715,8 @@ a.btn {
   flex-direction: column;
   padding: 8px 14px;
 }
-.ros-detail .stage {
+.ros-detail .ros-stage {
   width: min(220px, 100%);
-  height: auto;
-  flex: 0 0 auto;
 }
 .ros-detail .hex-wrap {
   flex: 0 0 auto;
@@ -3741,6 +3781,7 @@ a.btn {
   flex-shrink: 1;
 }
 .ros-hint {
+  flex: 1; /* keeps Free Slot N at the bottom, where it sits under Put */
   padding: 30px 20px;
   text-align: center;
 }
@@ -3773,7 +3814,7 @@ a.btn {
   color: var(--muted);
 }
 @media (max-height: 820px) {
-  .ros-detail .stage {
+  .ros-detail .ros-stage {
     width: min(150px, 100%);
   }
   .ros-detail .stat-hex {
@@ -3789,7 +3830,7 @@ a.btn {
   }
 }
 @media (max-height: 760px) {
-  .ros-detail .stage {
+  .ros-detail .ros-stage {
     width: min(124px, 100%);
   }
   .ros-detail .stat-hex {

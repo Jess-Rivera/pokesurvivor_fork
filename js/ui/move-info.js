@@ -55,7 +55,7 @@ G.MoveInfo = (() => {
       if (k.some((x) => x.fx.trigger === 'casterMove')) return 'trail';
       return k.length ? badgeOf(k[0].d, false) : null;
     }
-    if (s.shape === 'linear') return 'beam';
+    if (s.shape === 'linear') return v.motion === 'travels' ? 'nova' : 'beam'; // a wave shows the nova badge until it has its own
     if (v.motion === 'travels') return 'projectile';
     if (s.radArc == null || s.radArc >= TAU - 0.01) return d.persistent ? 'aura' : 'nova';
     return d.category === 'physical' ? 'melee' : 'cone';
@@ -146,6 +146,9 @@ G.MoveInfo = (() => {
         if (fx.handler === 'chainDamageFalloff') return 'hops to more foes';
         if (fx.handler === 'setWeather')
           return 'sets ' + fx.weather + (fx.duration ? ' for ' + fx.duration + ' s' : '');
+        if (fx.handler === 'surfer') return 'no water or swamp slowdown, x' + fx.speedMul + ' speed in them';
+        if (fx.handler === 'flight')
+          return 'fly ' + fx.duration + ' s over walls, objects and water, then ' + fx.cooldown + ' s to recharge';
         return null;
       }
       default:
@@ -175,7 +178,13 @@ G.MoveInfo = (() => {
     if (!d) return '';
     const b = badgeOf(d, true),
       fx = effects(d);
-    const head = (SHAPE[b] || 'Effect') + (d.persistent ? ', always on' : '');
+    const sk = G.MoveEffects.skillOf(d); // movement skills (Jess 2026-11-02): Surf is passive, Fly is pressed
+    const head =
+      sk === 'surf'
+        ? 'Passive'
+        : sk === 'fly'
+          ? 'Press its key'
+          : (SHAPE[b] || 'Effect') + (d.persistent ? ', always on' : '');
     return head + (fx.length ? ': ' + fx.join(', ') : '') + '.';
   }
 

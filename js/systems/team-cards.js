@@ -64,6 +64,7 @@ G.TeamCards = (() => {
   };
   const isPureBuff = (d) =>
     !d.space && (d.payload || []).length > 0 && d.payload.every((fx) => fx.t === 'stat' && fx.side !== 'foe');
+  const wide = (s) => s.shape === 'linear' && s.linWidth > s.linLength; // a wave: a line wider than it is long
   const spreads = (s) => !!s && (s.count > 1 || s.spread > EPS);
   const T = (o, k, lock = k, opt = null) => [o, k, lock, opt];
 
@@ -75,7 +76,7 @@ G.TeamCards = (() => {
         dv = n.delivery || {},
         g = dv.grow;
       if (s && num(s.radRadius)) out.push(T(s, 'radRadius'));
-      if (s && num(s.linLength)) out.push(T(s, 'linLength'));
+      if (s && num(s.linLength)) out.push(T(s, wide(s) ? 'linWidth' : 'linLength')); // the long side: a beam's length, a wave's width
       if (num(dv.orbitRadius)) out.push(T(dv, 'orbitRadius'));
       if (g && (g.dim || 'radRadius') !== 'radArc') {
         // a growing size scales its whole curve, like the lens (D36)
@@ -92,7 +93,7 @@ G.TeamCards = (() => {
       const s = n.space,
         g = (n.delivery || {}).grow;
       if (s && num(s.radArc) && s.radArc < TAU - 0.01) out.push(T(s, 'radArc', 'radArc', { max: TAU })); // never a point (no radArc), never a full circle
-      if (s && num(s.linWidth)) out.push(T(s, 'linWidth'));
+      if (s && num(s.linWidth)) out.push(T(s, wide(s) ? 'linLength' : 'linWidth')); // the short side
       if (g && g.dim === 'radArc') {
         if (num(g.growSpeed)) out.push(T(g, 'growSpeed', 'radArc'));
         if (num(g.max) && g.max < TAU - 0.01) out.push(T(g, 'max', 'radArc', { max: TAU }));

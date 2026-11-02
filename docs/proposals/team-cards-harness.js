@@ -95,7 +95,9 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   let d = F('ember', [['area']]); ok(near(d.space.radRadius, 7 * 1.15), 'Area: a point grows (Ember radRadius 7 to 8.05)');
   d = F('hydro-pump', [['area']]); ok(near(d.space.linLength, REAL['hydro-pump'].space.linLength * 1.15) && d.space.linWidth === REAL['hydro-pump'].space.linWidth, 'Area: beam length, not width');
   d = F('fire-spin', [['area']]); ok(near(d.delivery.orbitRadius, REAL['fire-spin'].delivery.orbitRadius * 1.15) && near(d.space.radRadius, REAL['fire-spin'].space.radRadius * 1.15), 'Area: orbit radius and orb size');
-  d = F('heat-wave', [['area', 2]]); ok(near(d.delivery.grow.growSpeed, 625 * 1.3) && near(d.delivery.grow.max, 250 * 1.3), 'Area: a growing radius scales its whole curve (625, 250 x 1.3)');
+  d = F('bulldoze', [['area', 2]]); ok(near(d.delivery.grow.growSpeed, 500 * 1.3) && near(d.delivery.grow.max, 200 * 1.3), 'Area: a growing radius scales its whole curve (500, 200 x 1.3)');
+  d = F('heat-wave', [['area']]); ok(near(d.space.linWidth, 60 * 1.15) && d.space.linLength === 16 && near(d.delivery.grow.growSpeed, 0.667 * 1.15) && near(d.delivery.grow.max, 260 * 1.15), 'Area: a wave widens (its width and width curve), not deepens');
+  d = F('heat-wave', [['presence']]); ok(d.space.linLength > 16 && d.space.linWidth === 60, 'Presence: a wave gets deeper, not wider');
   d = F('psychic', [['area']]); ok(near(d.delivery.grow.growSpeed, 1.5) && near(d.delivery.grow.max, 2), 'Area: an arc growth is not a size growth');
   d = F('discharge', [['area']]); ok(near(kid(d).move.delivery.grow.max, 110 * 1.15), 'Area: an emitted ring grows too (110 x 1.15; 220 before slice 6)');
   // Presence Up +15%, radArc capped at 360
@@ -168,7 +170,8 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 // ===== 3. cardLock, eligibility counts, order =====
 { ok(!can('count', 'giga-drain') && !can('pierce', 'giga-drain') && !can('count', 'meteor-mash') && !can('pierce', 'meteor-mash'), 'cardLock: Giga Drain and Meteor Mash (its shots too)');
   ok(F('giga-drain', [['count', 3], ['pierce', 3]]) === REAL['giga-drain'], 'cardLock: locked fields never move');
-  const list = c => Object.keys(REAL).filter(id => can(c, id)).sort().join(' ');
+  load('js/data/moves.js'); // for G.Moves.HELD (the full load is in section 10)
+  const list = c => Object.keys(REAL).filter(id => !G.Moves.HELD.has(id) && can(c, id)).sort().join(' '); // the pre-Kanto moves; batch 1 is checked at its batch review
   const want = { count: 'aura-sphere bonemerang bubble-beam discharge ember fairy-wind fire-spin gust leaf-storm mud-shot poison-sting razor-leaf rock-throw shadow-ball string-shot water-gun',
     pierce: 'aura-sphere bubble-beam confusion ember fairy-wind gust hex mud-shot poison-sting quick-attack rock-throw shadow-ball sludge string-shot thunder-shock water-gun will-o-wisp',
     time: 'discharge flame-wheel toxic toxic-spikes will-o-wisp', chain: 'hex thunder-shock thunderbolt', delay: 'rock-slide', recoil: 'substitute' };

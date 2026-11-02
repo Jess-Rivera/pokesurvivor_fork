@@ -407,6 +407,54 @@ G.World = (() => {
     return hit;
   }
 
+  /** Does a circle overlap a wall tile? */
+  function hitsWall(x, y, r) {
+    for (let ty = tileOf(y - r); ty <= tileOf(y + r); ty++)
+      for (let tx = tileOf(x - r); tx <= tileOf(x + r); tx++) {
+        if (terrainAt(tx, ty) !== WALL) continue;
+        const qx = G.U.clamp(x, tx * TS, tx * TS + TS),
+          qy = G.U.clamp(y, ty * TS, ty * TS + TS);
+        if ((x - qx) ** 2 + (y - qy) ** 2 < r * r) return true;
+      }
+    return false;
+  }
+  /** The nearest spot of floor (no wall, liquid or solid object) with room for radius r, by tile centre, within 24 tiles. */
+  function nearestGround(x, y, r) {
+    const cx = tileOf(x),
+      cy = tileOf(y);
+    let best = null,
+      bd = Infinity;
+    for (let k = 0; k <= 24; k++) {
+      for (let ty = cy - k; ty <= cy + k; ty++)
+        for (let tx = cx - k; tx <= cx + k; tx++) {
+          if (Math.max(Math.abs(tx - cx), Math.abs(ty - cy)) !== k) continue; // this ring only
+          const px = tx * TS + TS / 2,
+            py = ty * TS + TS / 2,
+            d = (px - x) ** 2 + (py - y) ** 2;
+          if (d < bd && isFree(px, py, r)) ((best = { x: px, y: py }), (bd = d));
+        }
+      if (best && (k * TS) ** 2 > bd) break; // no later ring can be nearer
+    }
+    return best || { x, y };
+  }
+  /**
+   * Where a flyer comes down (Fly, Jess 2026-11-02). On a wall: the nearest floor, and wall is true (the lander pays 1/16 max HP).
+   * On a solid object: on along the heading to the first spot with room (liquid allowed), else the nearest floor.
+   * Anywhere else it stays; liquids and traps work on it from the next frame as usual.
+   */
+  function landing(x, y, r, heading) {
+    if (hitsWall(x, y, r)) return Object.assign(nearestGround(x, y, r), { wall: true });
+    if (isFree(x, y, r, true)) return { x, y, wall: false };
+    const c = Math.cos(heading),
+      s = Math.sin(heading);
+    for (let d = 4; d <= 12 * TS; d += 4) {
+      const px = x + c * d,
+        py = y + s * d;
+      if (isFree(px, py, r, true)) return { x: px, y: py, wall: false };
+    }
+    return Object.assign(nearestGround(x, y, r), { wall: false });
+  }
+
   /** Does a projectile collide here? Returns 'wall', the solid prop, or null. */
   function projectileBlock(x, y, r) {
     const tx = tileOf(x),
@@ -732,6 +780,7 @@ G.World = (() => {
     isLiquid,
     isFree,
     collide,
+    landing,
     projectileBlock,
     propsInCircle,
     nearestBreakable,

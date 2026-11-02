@@ -102,24 +102,25 @@ Catalog totals:
 | 40            | 72,000    |
 | Total         | 371,700   |
 
-| Upgrade                      | Rank I  | Rank II | Rank III | Rank IV | Rank V  |
-|------------------------------|---------|---------|----------|---------|---------|
-| Maximum HP                   | 8%      | 16%     | 24%      | 32%     | 40%     |
-| Defense                      | 5%      | 10%     | 15%      | 20%     | 25%     |
-| HP Regeneration              | 0.15%/s | 0.30%/s | 0.45%/s  | 0.60%/s | 0.75%/s |
-| Damage                       | 5%      | 10%     | 15%      | 20%     | 25%     |
-| Movement Speed               | 4%      | 8%      | 12%      | 16%     | 20%     |
-| Cooldown Reduction           | -4%     | -8%     | -12%     | -16%    | -20%    |
-| Critical Chance              | 2%      | 4%      | 6%       | 8%      | 10%     |
-| Critical Damage              | 10%     | 20%     | 30%      | 40%     | 50%     |
-| Status Chance                | 5%      | 10%     | 15%      | 20%     | 25%     |
-| Dodge Cooldown Reduction*    | -5%     | -10%    | -15%     | -20%    | -25%    |
-| Dodge Distance*              | 5%      | 10%     | 15%      | 20%     | 25%     |
-| EXP Gain                     | 10%     | 25%     | 45%      |         |         |
-| Gold Gain                    | 10%     | 25%     | 45%      |         |         |
-| Pickup Range                 | 15%     | 35%     | 60%      |         |         |
-| Item Drop Chance             | 5%      | 12%     | 20%      |         |         |
-| Card Rerolls                 | 1       | 2       | 3        |         |         |
-| Card Banish                  | 1       | 2       | 3        |         |         |
-| Starting Moves               | 1       | 2       | 3        |         |         |
-| Team Swap Cooldown Reduction | -10%    | -20%    | -30%     |         |         |
+| Upgrade                      | Rank I               | Rank II | Rank III | Rank IV | Rank V  | Points |   |   |   |   |
+|------------------------------|----------------------|---------|----------|---------|---------|--------|---|---|---|---|
+| Maximum HP                   | 8%                   | 16%     | 24%      | 32%     | 40%     | 1      | 2 | 3 | 4 | 5 |
+| Defense                      | 5%                   | 10%     | 15%      | 20%     | 25%     | 1      | 2 | 3 | 4 | 5 |
+| HP Regeneration              | 0.15%/s              | 0.30%/s | 0.45%/s  | 0.60%/s | 0.75%/s | 1      | 2 | 3 | 4 | 5 |
+| Damage                       | 5%                   | 10%     | 15%      | 20%     | 25%     | 1      | 2 | 3 | 4 | 5 |
+| Movement Speed               | 4%                   | 8%      | 12%      | 16%     | 20%     | 1      | 2 | 3 | 4 | 5 |
+| Cooldown Reduction           | -4%                  | -8%     | -12%     | -16%    | -20%    | 1      | 2 | 3 | 4 | 5 |
+| Critical Chance              | 2%                   | 4%      | 6%       | 8%      | 10%     | 1      | 2 | 3 | 4 | 5 |
+| Critical Damage              | 10%                  | 20%     | 30%      | 40%     | 50%     | 1      | 2 | 3 | 4 | 5 |
+| Status Chance                | 5%                   | 10%     | 15%      | 20%     | 25%     | 1      | 2 | 3 | 4 | 5 |
+| Dodge Cooldown Reduction*    | -5%                  | -10%    | -15%     | -20%    | -25%    | 1      | 2 | 3 | 4 | 5 |
+| Dodge Distance*              | 5%                   | 10%     | 15%      | 20%     | 25%     | 1      | 2 | 3 | 4 | 5 |
+| Team Swap Cooldown Reduction | -10%                 | -20%    | -30%     | -40%    | -50%    | 1      | 2 | 3 | 4 | 5 |
+| EXP Gain                     | 10%                  | 25%     | 45%      |         |         | 1      | 2 | 3 | 0 | 0 |
+| Gold Gain                    | 10%                  | 25%     | 45%      |         |         | 1      | 2 | 3 | 0 | 0 |
+| Pickup Range                 | 15%                  | 35%     | 60%      |         |         | 1      | 2 | 3 | 0 | 0 |
+| Item Drop Chance             | 5%                   | 12%     | 20%      |         |         | 1      | 2 | 3 | 0 | 0 |
+| Card Rerolls                 | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
+| Card Banish                  | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
+| Starting Moves               | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
+|                              | Total Points to Fill |         |          |         |         | 222    |   |   |   |   |

@@ -72,7 +72,7 @@ G.Interact = (() => {
     healAcc = 0;
 
   function update(dt, pl) {
-    if (!pl) return;
+    if (!pl || pl.flyT > 0) return; // in the air (Fly): springs, altars and traps do not trigger
     for (const p of G.World.specialsNear(pl.x, pl.y, 720)) {
       const d2 = G.U.dist2(pl.x, pl.y, p.x, p.type === 'spring' || p.type === 'trap' ? p.y - 8 : p.y);
       switch (p.type) {
@@ -169,7 +169,7 @@ G.Interact = (() => {
         } else e.hurt(90 + lvl * 18, '#ff7b3d', e.x - x, e.y - y, 220);
       }
     }
-    if (pl && !pl.dead && G.U.dist2(x, y, pl.x, pl.y) < (TRAP_R * 0.7) ** 2) {
+    if (pl && !pl.dead && !(pl.flyT > 0) && G.U.dist2(x, y, pl.x, pl.y) < (TRAP_R * 0.7) ** 2) {
       pl.invuln = 0;
       if (k === 0) pl.hurt(pl.maxHp * 0.1);
       else if (k === 1) {

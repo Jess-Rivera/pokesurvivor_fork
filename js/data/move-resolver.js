@@ -78,7 +78,11 @@
     for (const [id, src] of Object.entries(data)) {
       const m = structuredClone(src);
       defaults(A.MOVE, m);
-      if (!('cd' in m) && m.power > 0 && !m.persistent)
+      const skill = m.payload.some(
+        // a movement skill (surfer, flight) never autocasts, so it has no cooldown to derive
+        (e) => e.t === 'special' && ['passive', 'press'].includes((handlers.byName[e.handler] || {}).trigger)
+      );
+      if (!('cd' in m) && m.power > 0 && !m.persistent && !skill)
         m.cd = +(tuning.ANCHOR_CD * Math.pow(tuning.ANCHOR_PP / m.pp, tuning.BETA)).toFixed(3); // 3 decimals like legacy moves.js
       fillDelivery(m.delivery, tuning);
       for (const e of m.payload) if (e.t === 'emit' && isObj(e.move)) fillDelivery(e.move.delivery, tuning);

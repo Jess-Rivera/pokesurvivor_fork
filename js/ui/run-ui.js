@@ -370,20 +370,50 @@ G.RunUI = (() => {
 
   // ---------------- link: which moves fuse ----------------
 
-  let bond = null; // { opt, cb, first, list }
+  let bond = null; // { choices, pickMon, f, opt, cb, first, list }
 
   /**
-   * @param opt  pl.bondOptions(): 'add' (one loose into the group) or 'pair' (two loose, in two steps)
-   * @param cb   receives the list of moves that combine
+   * @param choices  [{ f, opt }] one per living team member; opt = f.bondOptions(), null when it cannot bond now (dimmed)
+   * @param cb       receives (f, opt, moves): the chosen member, its options and the list of moves that combine
+   * With one eligible member the Pokemon step is skipped.
    */
-  function showBond(opt, cb) {
-    bond = { opt, cb, first: null, list: [] };
+  function showBond(choices, cb) {
+    const ok = choices.filter((c) => c.opt);
+    bond = { choices, pickMon: ok.length > 1, f: null, opt: null, cb, first: null, list: [] };
+    if (!bond.pickMon) Object.assign(bond, ok[0]);
     $('bond-back').onclick = bondBack;
     renderBond();
     G.UI.show('scr-bond');
   }
 
+  /** First step: which team member spends the link. */
+  function renderBondMons() {
+    $('bond-sub').textContent = 'Choose the Pokémon that bonds its moves';
+    $('bond-back').classList.add('hidden');
+    bond.list = bond.choices;
+    const box = $('bond-cards');
+    box.innerHTML = '';
+    bond.choices.forEach(({ f, opt }, i) => {
+      const desc = !opt
+        ? 'Needs two unbonded moves (or one to add to its bond).'
+        : opt.mode === 'add'
+          ? 'Adds a move to ' + opt.group.map((m) => m.name).join(' + ') + '.'
+          : 'Bonds two of: ' + opt.loose.map((m) => m.name).join(', ') + '.';
+      const el = document.createElement('div');
+      el.className = 'card' + (opt ? '' : ' off');
+      if (!opt) el.style.opacity = '0.45';
+      el.innerHTML = `<div class="ico"></div>
+         <div class="txt"><div class="nm" translate="no">${f.mon.name}</div><div class="ds">${desc}</div></div>
+         <div class="key">${G.Input.keyLabel('swap_' + (i + 1))}</div>`;
+      el.querySelector('.ico').appendChild(G.UI.spriteCanvas(f.dex, 32, 32, { scale: 1, shiny: f.shiny }));
+      el.dataset.sfx = 'none';
+      el.onclick = () => pickBond(i);
+      box.appendChild(el);
+    });
+  }
+
   function renderBond() {
+    if (!bond.f) return renderBondMons();
     const { opt, first } = bond;
     const names = (ms) => ms.map((m) => m.name).join(' + ');
     const step2 = opt.mode === 'pair' && first;
@@ -393,7 +423,7 @@ G.RunUI = (() => {
         : step2
           ? '¿Con cuál unes ' + first.name + '?'
           : 'Elige el primer movimiento que vas a unir';
-    $('bond-back').classList.toggle('hidden', !step2);
+    $('bond-back').classList.toggle('hidden', !step2 && !bond.pickMon);
     bond.list = step2 ? opt.loose.filter((m) => m !== first) : opt.loose;
     const box = $('bond-cards');
     box.innerHTML = '';
@@ -416,8 +446,18 @@ G.RunUI = (() => {
     });
   }
 
+  /** Card i of the current step (keys: swap_n on the Pokemon step, attack_n on the move steps). */
   function pickBond(i) {
     if (!bond || !bond.list[i]) return;
+    if (!bond.f) {
+      const c = bond.list[i];
+      if (!c.opt) return;
+      bond.f = c.f;
+      bond.opt = c.opt;
+      G.Audio.sfx('select');
+      renderBond();
+      return;
+    }
     const m = bond.list[i];
     if (bond.opt.mode === 'pair' && !bond.first) {
       bond.first = m;
@@ -426,17 +466,21 @@ G.RunUI = (() => {
       return;
     }
     const picked = bond.opt.mode === 'add' ? [m] : [bond.first, m];
-    const cb = bond.cb;
+    const { cb, f, opt } = bond;
     bond = null;
     G.UI.hide('scr-bond');
-    cb(picked);
+    cb(f, opt, picked);
   }
 
   function bondBack() {
     if (!bond) return;
-    bond.first = null;
+    if (bond.first) bond.first = null;
+    else if (bond.pickMon) bond.f = bond.opt = null;
     renderBond();
   }
+
+  /** Which step the link screen is on, so the keyboard can pick the right key set. */
+  const bondPickingMon = () => !!bond && !bond.f;
 
   function showPause(coop = false) {
     $('pause-coop').classList.toggle('hidden', !coop);
@@ -464,6 +508,7 @@ G.RunUI = (() => {
     itemConfirm,
     showBond,
     pickBond,
+    bondPickingMon,
     bondBack,
     pick,
     levelKeys,

@@ -1,15 +1,18 @@
 /* ============ gyms.js: hand-authored gym leaders (feature/boss-rework) ============
  * One entry per gym, in region order. Format and rules: docs/BOSS-AUTHORING.md. Roster DESIGN (who, in what order, why): docs/GYM-ROSTERS.md.
  * Slice 7a (D-ENEMY, Jess 2026-10-31): a leader's mon plays like the player. Moves are ids from G.MoveDefs (the new move data); each
- * move line is the id plus an optional hpBelow (the move joins the mon's moves only below that fraction of max HP). They all cast
+ * move line is the id plus an optional hpBelow (the move joins the mon's moves only below that fraction of max HP). Per-loop sets
+ * (Jess 2026-11-02): a slot's `sets` maps a loop number to its move lines, starting at the loop the slot enters (slot N enters loop N);
+ * a loop with no set keeps the last earlier one (movesFor). They all cast
  * through G.MoveSim on their own cooldowns, pure buffs on their Gate (js/entities/boss-ai.js). A slot's `cards` are upgrade cards by
  * id from G.TeamCards (damage, count, velocity, area...), held by that mon only and folded by the SAME rules as the player's cards, so
  * each card applies to every one of the mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies
- * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, shots, self buffs).
+ * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
+ * returns, beams, bursts, trails, delayed marks, self buffs, self heals).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
  * last one whose minLevel is <= the gym's effective level (stageFor), so a slot evolves as the level climbs, and evolution requirements
- * are ignored. Moves, stance, power and tempo belong to the slot, so one move set serves every stage of the line.
+ * are ignored. Moves, stance, power and tempo belong to the slot, so a loop's move set serves every stage of the line.
  * Loop N fields the first N signatures at once (lineup). The gym level is the run-time level when the gate spawns plus LEVEL_OFFSET,
  * locked at spawn.
  */
@@ -24,40 +27,105 @@ G.Gyms = (() => {
   const STANCES = ['close', 'far', 'mixed'];
   const STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
   const GYM_KEYS = ['id', 'leader', 'badge', 'arena', 'boost', 'signatures'];
-  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'cards', 'moves'];
+  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'cards', 'sets'];
   const MOVE_KEYS = ['id', 'hpBelow'];
 
   /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'nova' (a ring or
    *  half ring that grows out of its body: Heat Wave, Dazzling Gleam), 'shot' (shapes that travel along the aim, homing ones included:
-   *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt) or 'buff' (a pure self stat change). A chain move takes
-   *  its shape's form; its hops search the caster's foes (G.MoveSim). Emitters, delays, persistent moves and caster commitments have no gym
-   *  form; validate() rejects them instead of letting them misfire. Read by the GymBrain too. */
+   *  Psychic), 'strike' (lands on a spot, locked when its tell starts: Thunderbolt), 'buff' (a pure self stat change), 'heal' (a self
+   *  heal of max HP: Recover, Synthesis, Moonlight; Jess 2026-11-02) or 'dash' (a swept dash to the spot locked at its tell, a hit
+   *  there and back to its start, with the move's i-frames: Quick Attack; Jess 2026-11-02). Slice 3 of the lore sets (Jess 2026-11-02):
+   *  'returns' (shapes that fly out along the aim and back to the mon: Razor Leaf), 'beam' (a straight line from its body along the
+   *  aim: Psybeam), 'multi' (a burst of melee cones, each re-aimed at you: Fury Attack) and 'trail' (a persistent slot that drops
+   *  hazards behind the mon while it moves, as the player's does: Toxic). Import batch (Jess 2026-11-02): 'delayed' (your spot, locked
+   *  at the cast, hit when the move's delay ends: Future Sight). A chain move takes its shape's form; its hops search the
+   *  caster's foes (G.MoveSim). Other emitters, delays, persistent moves and caster commitments have no gym form; validate() rejects
+   *  them instead of letting them misfire. Read by the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},
       p = d.payload || [];
-    if (p.some((fx) => fx.t === 'emit') || d.persistent || d.casterState || v.delay) return null;
-    if (!d.space) return p.length && p.every((fx) => fx.t === 'stat' && fx.side !== 'foe') ? 'buff' : null;
+    // a mark (Future Sight; Jess 2026-11-02): a world spot hit after its delay, the spot locked at the cast; other delays (falls) have no form
+    if (v.delay)
+      return v.anchor === 'world' &&
+        v.targeting === 'location' &&
+        v.motion === 'static' &&
+        d.space &&
+        d.space.shape === 'radial' &&
+        !p.some((fx) => fx.t === 'emit')
+        ? 'delayed'
+        : null;
+    const emits = p.filter((fx) => fx.t === 'emit');
+    if (d.persistent)
+      return !d.space && emits.length && emits.length === p.length && emits.every((fx) => fx.trigger === 'casterMove')
+        ? 'trail'
+        : null;
+    if (emits.length) {
+      const fx = emits[0];
+      return !d.space &&
+        p.length === 1 &&
+        fx.trigger === 'cast' &&
+        fx.count > 1 &&
+        v.anchor === 'caster' &&
+        v.motion === 'static' &&
+        formOf(fx.move) === 'melee'
+        ? 'multi'
+        : null;
+    }
+    // a swept dash to the nearest foe and back (Quick Attack; Jess 2026-11-02), its i-frames included; any other commitment has no form
+    if (v.motion === 'repositions')
+      return v.repositionMode === 'swept' &&
+        v.returnToOrigin &&
+        v.targeting === 'nearest' &&
+        d.space &&
+        d.space.shape === 'radial'
+        ? 'dash'
+        : null;
+    if (d.casterState) return null;
+    if (!d.space) {
+      if (p.length && p.every((fx) => fx.t === 'stat' && fx.side !== 'foe')) return 'buff';
+      return p.length && p.every((fx) => fx.t === 'heal' && fx.side === 'self' && fx.amount && fx.amount.of === 'maxHP')
+        ? 'heal'
+        : null;
+    }
     const radial = d.space.shape === 'radial';
     if (v.anchor === 'target') return v.motion === 'static' && v.targeting === 'nearest' && radial ? 'strike' : null;
     if (v.anchor !== 'caster') return null;
     if (v.motion === 'static' && radial && v.grow && v.grow.dim === 'radRadius') return 'nova';
-    if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee'; // a cone; beams wait for their own form
-    if (v.motion === 'travels' && (v.targeting === 'direction' || v.targeting === 'nearest') && !v.path && !v.aimTrack)
-      return 'shot';
+    if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee'; // a cone
+    if (v.motion === 'static' && v.targeting === 'nearest' && d.space.shape === 'linear' && !v.grow) return 'beam';
+    const aimed = v.targeting === 'direction' || v.targeting === 'nearest';
+    if (v.motion === 'returns') return aimed && radial ? 'returns' : null;
+    if (v.motion === 'travels' && aimed && !v.path && !v.aimTrack) return 'shot';
     return null;
   }
-  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, else the move's range. A shot
-   *  reaches no further than it flies (speed x lifetime + size), capped at that range; a homing shot gets no credit for turning
-   *  (Jess 2026-11-01). */
+  /** How far a leader's attack reaches from its centre: a melee cone's radius, a nova's full growth, a beam's length, a burst's cone
+   *  radius, else the move's range (a strike, a dash, the turnaround of a returns move). A shot reaches no further than it flies (speed x
+   *  lifetime + size), capped at that range; a homing shot gets no credit for turning (Jess 2026-11-01). A trail reaches nothing. */
   function reachOf(d, form) {
     if (form === 'melee') return d.space.radRadius;
     if (form === 'nova') return d.delivery.grow.max;
+    if (form === 'beam') return d.space.linLength;
+    if (form === 'multi') return d.payload[0].move.space.radRadius;
+    if (form === 'trail') return 0;
     const v = d.delivery,
       range = v.range != null ? v.range : G.MoveResolver.TUNING.RANGE;
     if (form !== 'shot') return range;
     const life = (v.endOn || []).find((c) => c.time != null);
     return life ? Math.min(range, v.moveSpeed * life.time + ((d.space && d.space.radRadius) || 0)) : range;
+  }
+
+  /** The move lines slot `index` (0-based) casts in loop `loop`: the set for that loop, else the last earlier one. A loop before the
+   *  slot enters gets its first set (the slot is not fielded then anyway). Pure. */
+  function movesFor(sig, index, loop) {
+    const keys = Object.keys(sig.sets || {})
+      .map(Number)
+      .sort((a, b) => a - b);
+    if (!keys.length) return [];
+    const want = Number.isFinite(loop) ? Math.floor(loop) : index + 1;
+    let at = keys[0];
+    for (const k of keys) if (k <= want) at = k;
+    return sig.sets[at];
   }
 
   /** Builds a stage ladder from national dex numbers, base form first. Levels default to STAGE_BANDS; pass `levels` to override per line. */
@@ -85,7 +153,11 @@ G.Gyms = (() => {
           power: 1,
           tempo: 1,
           cards: { damage: 3, count: 2, velocity: 3, area: 2 },
-          moves: [{ id: 'tackle' }, { id: 'rock-throw' }, { id: 'harden' }],
+          // Loop 1 (Jess 2026-11-02): Red/Blue Geodude, Tackle and Defense Curl, plus Jess's pilot Rock Throw. Loop 2 on: the pilot set.
+          sets: {
+            1: [{ id: 'tackle' }, { id: 'defense-curl' }, { id: 'rock-throw' }],
+            2: [{ id: 'tackle' }, { id: 'rock-throw' }, { id: 'harden' }],
+          },
         },
         // Slots 2 to 6 (Gen-1 order, docs/GYM-ROSTERS.md): PROVISIONAL move sets (TUNE, no cards yet; the gym-roster branch authors them). Balance pass pending.
         // Slot 2: Onix -> Steelix (Gen-2 line-completion), the Defense wall.
@@ -94,7 +166,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'harden' }],
+          sets: { 2: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'harden' }] },
         },
         // Slot 3: Rhyhorn -> Rhydon, the Ground-lean bruiser.
         {
@@ -102,7 +174,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          sets: { 3: [{ id: 'body-slam' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }] },
         },
         // Slot 4: Omanyte -> Omastar, the special threat.
         {
@@ -110,7 +182,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'rock-throw' }, { id: 'harden' }],
+          sets: { 4: [{ id: 'water-gun' }, { id: 'rock-throw' }, { id: 'harden' }] },
         },
         // Slot 5: Kabuto -> Kabutops, the fast physical one.
         {
@@ -118,7 +190,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'metal-claw' }, { id: 'water-gun' }, { id: 'swords-dance', hpBelow: 0.6 }],
+          sets: { 5: [{ id: 'metal-claw' }, { id: 'water-gun' }, { id: 'swords-dance', hpBelow: 0.6 }] },
         },
         // Slot 6: Aerodactyl, the speed ace (single stage).
         {
@@ -126,7 +198,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'wing-attack' }, { id: 'rock-throw' }, { id: 'agility' }],
+          sets: { 6: [{ id: 'wing-attack' }, { id: 'rock-throw' }, { id: 'agility' }] },
         },
       ],
     },
@@ -144,7 +216,11 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'tackle' }, { id: 'harden' }],
+          // Loop 1 (Jess 2026-11-02): FRLG Staryu, the full lore set. Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'tackle' }, { id: 'harden' }, { id: 'water-pulse' }, { id: 'recover' }],
+            2: [{ id: 'water-gun' }, { id: 'tackle' }, { id: 'harden' }],
+          },
         },
         // Slot 2: Seel -> Dewgong, Water/Ice.
         {
@@ -152,7 +228,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'powder-snow' }, { id: 'water-gun' }, { id: 'harden' }],
+          sets: { 2: [{ id: 'powder-snow' }, { id: 'water-gun' }, { id: 'harden' }] },
         },
         // Slot 3: Psyduck -> Golduck.
         {
@@ -160,7 +236,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'agility', hpBelow: 0.5 }],
+          sets: { 3: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'agility', hpBelow: 0.5 }] },
         },
         // Slot 4: Poliwag -> Poliwhirl -> Poliwrath, the Fighting profile (Karate Chop stands in for its Fighting moves).
         {
@@ -168,7 +244,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'karate-chop' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          sets: { 4: [{ id: 'water-gun' }, { id: 'karate-chop' }, { id: 'swords-dance', hpBelow: 0.5 }] },
         },
         // Slot 5: Lapras, the bulky Water/Ice anchor.
         {
@@ -176,7 +252,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'powder-snow' }],
+          sets: { 5: [{ id: 'water-gun' }, { id: 'powder-snow' }] },
         },
         // Slot 6: Magikarp -> Gyarados, the physical powerhouse.
         {
@@ -184,7 +260,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'bite' }, { id: 'water-gun' }, { id: 'dragon-dance', hpBelow: 0.5 }],
+          sets: { 6: [{ id: 'bite' }, { id: 'water-gun' }, { id: 'dragon-dance', hpBelow: 0.5 }] },
         },
       ],
     },
@@ -204,7 +280,11 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }, { id: 'thunderbolt', hpBelow: 0.5 }],
+          // Loop 1 (Jess 2026-11-02): Red/Blue Pikachu, the full lore set. Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'thunder-shock' }, { id: 'growl' }, { id: 'thunder-wave' }, { id: 'quick-attack' }],
+            2: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }, { id: 'thunderbolt', hpBelow: 0.5 }],
+          },
         },
         // Slot 2: Porygon, the off-type tech pick (Psycho Cut stands in for Psybeam).
         {
@@ -212,7 +292,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'psycho-cut' }, { id: 'agility' }],
+          sets: { 2: [{ id: 'psycho-cut' }, { id: 'agility' }] },
         },
         // Slot 3: Magnemite -> Magneton, Electric/Steel.
         {
@@ -220,7 +300,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'thunder-shock' }, { id: 'metal-claw' }, { id: 'harden' }],
+          sets: { 3: [{ id: 'thunder-shock' }, { id: 'metal-claw' }, { id: 'harden' }] },
         },
         // Slot 4: Voltorb -> Electrode, the fastest.
         {
@@ -228,7 +308,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }],
+          sets: { 4: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }] },
         },
         // Slot 5: Electabuzz, the mixed attacker (Karate Chop stands in for its punches).
         {
@@ -236,7 +316,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'thunder-shock' }, { id: 'karate-chop' }, { id: 'agility' }],
+          sets: { 5: [{ id: 'thunder-shock' }, { id: 'karate-chop' }, { id: 'agility' }] },
         },
         // Slot 6: Eevee -> Jolteon, the speed glass cannon.
         {
@@ -244,7 +324,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }],
+          sets: { 6: [{ id: 'thunder-shock' }, { id: 'tackle' }, { id: 'agility' }] },
         },
       ],
     },
@@ -262,7 +342,11 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'sludge', hpBelow: 0.5 }],
+          // Loop 1 (Jess 2026-11-02): Yellow Weepinbell, the full lore set (Razor Leaf in the returns form). Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'razor-leaf' }, { id: 'acid' }, { id: 'stun-spore' }, { id: 'sleep-powder' }],
+            2: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'sludge', hpBelow: 0.5 }],
+          },
         },
         // Slot 2: Tangela, the pure-Grass wall.
         {
@@ -270,7 +354,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'harden' }],
+          sets: { 2: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'harden' }] },
         },
         // Slot 3: Oddish -> Gloom -> Vileplume.
         {
@@ -278,7 +362,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'giga-drain' }, { id: 'sludge' }, { id: 'poison-sting' }],
+          sets: { 3: [{ id: 'giga-drain' }, { id: 'sludge' }, { id: 'poison-sting' }] },
         },
         // Slot 4: Paras -> Parasect, the Bug typing.
         {
@@ -286,7 +370,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'bug-bite' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          sets: { 4: [{ id: 'bug-bite' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }] },
         },
         // Slot 5: Bulbasaur -> Ivysaur -> Venusaur, the iconic Grass ace.
         {
@@ -294,7 +378,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          sets: { 5: [{ id: 'vine-whip' }, { id: 'giga-drain' }, { id: 'swords-dance', hpBelow: 0.5 }] },
         },
         // Slot 6: Exeggcute -> Exeggutor, the special nuke.
         {
@@ -302,7 +386,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'giga-drain' }, { id: 'psycho-cut' }],
+          sets: { 6: [{ id: 'giga-drain' }, { id: 'psycho-cut' }] },
         },
       ],
     },
@@ -320,7 +404,12 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'sludge' }, { id: 'tackle' }, { id: 'harden' }],
+          // Loop 1 (Jess 2026-11-02): FRLG Koffing, Toxic in the trail form; Smokescreen (accuracy slice) is still to come. Self-Destruct
+          // is for later-loop mons only (MOVE-INTENT self-destruct). Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'sludge' }, { id: 'toxic' }],
+            2: [{ id: 'sludge' }, { id: 'tackle' }, { id: 'harden' }],
+          },
         },
         // Slot 2: Grimer -> Muk, the bulky one.
         {
@@ -328,7 +417,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'sludge' }, { id: 'body-slam' }, { id: 'harden' }],
+          sets: { 2: [{ id: 'sludge' }, { id: 'body-slam' }, { id: 'harden' }] },
         },
         // Slot 3: Ekans -> Arbok.
         {
@@ -336,7 +425,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'bite' }, { id: 'poison-sting' }, { id: 'sludge' }],
+          sets: { 3: [{ id: 'bite' }, { id: 'poison-sting' }, { id: 'sludge' }] },
         },
         // Slot 4: Venonat -> Venomoth, the Bug typing (Psycho Cut stands in for Psybeam).
         {
@@ -344,7 +433,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'poison-sting' }, { id: 'psycho-cut' }],
+          sets: { 4: [{ id: 'poison-sting' }, { id: 'psycho-cut' }] },
         },
         // Slot 5: Tentacool -> Tentacruel, the Water coverage (Harden stands in for Barrier).
         {
@@ -352,7 +441,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'sludge' }, { id: 'harden' }],
+          sets: { 5: [{ id: 'water-gun' }, { id: 'sludge' }, { id: 'harden' }] },
         },
         // Slot 6: Zubat -> Golbat -> Crobat (Gen-2 line-completion), the speed ace.
         {
@@ -360,7 +449,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'wing-attack' }, { id: 'poison-sting' }, { id: 'agility' }],
+          sets: { 6: [{ id: 'wing-attack' }, { id: 'poison-sting' }, { id: 'agility' }] },
         },
       ],
     },
@@ -379,7 +468,12 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'shadow-ball' }, { id: 'psycho-cut' }, { id: 'agility' }],
+          // Loop 1 (Jess 2026-11-02): FRLG Kadabra, Psybeam in the beam form, Future Sight as a delayed mark; Reflect waits on the fields
+          // slice. Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'psybeam' }, { id: 'calm-mind' }, { id: 'future-sight' }],
+            2: [{ id: 'shadow-ball' }, { id: 'psycho-cut' }, { id: 'agility' }],
+          },
         },
         // Slot 2: Mr. Mime, the barrier mon (Harden stands in for Barrier).
         {
@@ -387,7 +481,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'psycho-cut' }, { id: 'shadow-ball' }, { id: 'harden' }],
+          sets: { 2: [{ id: 'psycho-cut' }, { id: 'shadow-ball' }, { id: 'harden' }] },
         },
         // Slot 3: Jynx, Ice/Psychic.
         {
@@ -395,7 +489,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'powder-snow' }, { id: 'shadow-ball' }],
+          sets: { 3: [{ id: 'powder-snow' }, { id: 'shadow-ball' }] },
         },
         // Slot 4: Drowzee -> Hypno, the SpD wall.
         {
@@ -403,7 +497,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'psycho-cut' }, { id: 'harden' }],
+          sets: { 4: [{ id: 'psycho-cut' }, { id: 'harden' }] },
         },
         // Slot 5: Slowpoke -> Slowbro, Water/Psychic (Harden stands in for Withdraw).
         {
@@ -411,7 +505,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'harden' }],
+          sets: { 5: [{ id: 'water-gun' }, { id: 'psycho-cut' }, { id: 'harden' }] },
         },
         // Slot 6: Gastly -> Haunter -> Gengar, her anime ace.
         {
@@ -419,7 +513,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'shadow-ball' }, { id: 'lick' }, { id: 'sludge' }],
+          sets: { 6: [{ id: 'shadow-ball' }, { id: 'lick' }, { id: 'sludge' }] },
         },
       ],
     },
@@ -437,7 +531,12 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'ember' }, { id: 'bite' }, { id: 'agility' }],
+          // Loop 1 (Jess 2026-11-02): FRLG Growlithe, the full lore set (Take Down's recoil is paid, Roar pushes you). Loop 2 on: the
+          // provisional set.
+          sets: {
+            1: [{ id: 'roar' }, { id: 'bite' }, { id: 'fire-blast' }, { id: 'take-down' }],
+            2: [{ id: 'ember' }, { id: 'bite' }, { id: 'agility' }],
+          },
         },
         // Slot 2: Ponyta -> Rapidash, fast physical.
         {
@@ -445,7 +544,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'tackle' }, { id: 'ember' }, { id: 'agility' }],
+          sets: { 2: [{ id: 'tackle' }, { id: 'ember' }, { id: 'agility' }] },
         },
         // Slot 3: Magmar, the special attacker (Karate Chop stands in for Fire Punch, Sludge for Smog).
         {
@@ -453,7 +552,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'ember' }, { id: 'karate-chop' }, { id: 'sludge' }],
+          sets: { 3: [{ id: 'ember' }, { id: 'karate-chop' }, { id: 'sludge' }] },
         },
         // Slot 4: Vulpix -> Ninetales (Shadow Ball stands in for Hex).
         {
@@ -461,7 +560,7 @@ G.Gyms = (() => {
           stance: 'far',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'ember' }, { id: 'shadow-ball' }, { id: 'agility' }],
+          sets: { 4: [{ id: 'ember' }, { id: 'shadow-ball' }, { id: 'agility' }] },
         },
         // Slot 5: Eevee -> Flareon, the physical bruiser.
         {
@@ -469,7 +568,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'bite' }, { id: 'ember' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          sets: { 5: [{ id: 'bite' }, { id: 'ember' }, { id: 'swords-dance', hpBelow: 0.5 }] },
         },
         // Slot 6: Charmander -> Charmeleon -> Charizard, the capstone.
         {
@@ -477,7 +576,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'wing-attack' }, { id: 'ember' }, { id: 'dragon-dance', hpBelow: 0.5 }],
+          sets: { 6: [{ id: 'wing-attack' }, { id: 'ember' }, { id: 'dragon-dance', hpBelow: 0.5 }] },
         },
       ],
     },
@@ -495,7 +594,12 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'body-slam' }, { id: 'mud-shot' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          // Loop 1 (Jess 2026-11-02): Stadium Rhydon, the full lore set (Fury Attack in the burst form, Fissure a heavy strike on you).
+          // Loop 2 on: the provisional set.
+          sets: {
+            1: [{ id: 'earthquake' }, { id: 'body-slam' }, { id: 'fury-attack' }, { id: 'fissure' }],
+            2: [{ id: 'body-slam' }, { id: 'mud-shot' }, { id: 'rock-throw' }, { id: 'swords-dance', hpBelow: 0.5 }],
+          },
         },
         // Slot 2: Diglett -> Dugtrio, the glass cannon (Metal Claw stands in for Slash).
         {
@@ -503,7 +607,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'metal-claw' }, { id: 'mud-shot' }, { id: 'agility' }],
+          sets: { 2: [{ id: 'metal-claw' }, { id: 'mud-shot' }, { id: 'agility' }] },
         },
         // Slot 3: Nidoran(F) -> Nidorina -> Nidoqueen.
         {
@@ -511,7 +615,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'poison-sting' }, { id: 'bite' }, { id: 'body-slam' }],
+          sets: { 3: [{ id: 'poison-sting' }, { id: 'bite' }, { id: 'body-slam' }] },
         },
         // Slot 4: Nidoran(M) -> Nidorino -> Nidoking (Karate Chop stands in for Double Kick).
         {
@@ -519,7 +623,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'poison-sting' }, { id: 'mud-shot' }, { id: 'karate-chop' }],
+          sets: { 4: [{ id: 'poison-sting' }, { id: 'mud-shot' }, { id: 'karate-chop' }] },
         },
         // Slot 5: Cubone -> Marowak, the Def wall (Mud Shot stands in for Bonemerang).
         {
@@ -527,7 +631,7 @@ G.Gyms = (() => {
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'mud-shot' }, { id: 'body-slam' }, { id: 'harden' }],
+          sets: { 5: [{ id: 'mud-shot' }, { id: 'body-slam' }, { id: 'harden' }] },
         },
         // Slot 6: Meowth -> Persian, off-type.
         {
@@ -535,7 +639,7 @@ G.Gyms = (() => {
           stance: 'close',
           power: 1,
           tempo: 1,
-          moves: [{ id: 'bite' }, { id: 'agility' }],
+          sets: { 6: [{ id: 'bite' }, { id: 'agility' }] },
         },
       ],
     },
@@ -587,7 +691,7 @@ G.Gyms = (() => {
     if (g.boost && (!STATS.includes(g.boost.stat) || !(g.boost.pct > 0 && g.boost.pct <= 1)))
       bad.push('boost needs a stat (hp, atk, def, spa, spd, spe) and a pct in (0, 1]');
     if (!g.signatures || !g.signatures.length || g.signatures.length > 6) bad.push('signatures must be 1 to 6');
-    for (const s of g.signatures || []) {
+    (g.signatures || []).forEach((s, si) => {
       const who = sigName(s);
       for (const k of unknownKeys(s, SIG_KEYS)) bad.push(who + ': unknown field ' + k);
       if (s.stance != null && !STANCES.includes(s.stance)) bad.push(who + ': bad stance ' + s.stance);
@@ -604,27 +708,46 @@ G.Gyms = (() => {
           else if (i > 0 && st.minLevel <= s.line[i - 1].minLevel) bad.push(who + ': stage levels must increase');
         });
       }
-      if (!s.moves || !s.moves.length) bad.push(who + ' has no moves');
-      else if (s.moves.length > MAX_MOVES) bad.push(who + ' has more than ' + MAX_MOVES + ' moves');
-      let damaging = 0;
-      for (const m of s.moves || []) {
-        for (const k of unknownKeys(m, MOVE_KEYS)) bad.push(who + ': ' + m.id + ' has unknown field ' + k);
-        if (m.hpBelow != null && !(m.hpBelow > 0 && m.hpBelow < 1))
-          bad.push(who + ': ' + m.id + ' hpBelow must be in (0, 1)');
-        const d = G.MoveDefs[m.id];
-        if (!d) {
-          bad.push(who + ': unknown move ' + m.id);
+      // per-loop sets (Jess 2026-11-02): loop keys from the slot's entry loop (slot N enters loop N) to LOOPS, each a valid move set
+      const keys = Object.keys(s.sets || {});
+      if (!keys.length) bad.push(who + ' has no moves');
+      else if (!keys.includes(String(si + 1)))
+        bad.push(who + ': its first set must be for loop ' + (si + 1) + ', the loop it enters');
+      for (const k of keys) {
+        const L = who + ' loop ' + k,
+          set = s.sets[k];
+        if (!(Number(k) >= si + 1 && Number(k) <= LOOPS && Number.isInteger(Number(k))))
+          bad.push(L + ': sets are keyed by a loop from ' + (si + 1) + ' to ' + LOOPS);
+        if (!Array.isArray(set) || !set.length) {
+          bad.push(L + ' has no moves');
           continue;
         }
-        if (d.basePower > 0) damaging++;
-        if (!formOf(d))
-          bad.push(
-            who + ': ' + m.id + ' has no gym form yet (leaders cast melee cones, novas, shots, strikes and self buffs)'
-          );
+        if (set.length > MAX_MOVES) bad.push(L + ' has more than ' + MAX_MOVES + ' moves');
+        let damaging = 0;
+        for (const m of set) {
+          for (const f of unknownKeys(m, MOVE_KEYS)) bad.push(L + ': ' + m.id + ' has unknown field ' + f);
+          if (m.hpBelow != null && !(m.hpBelow > 0 && m.hpBelow < 1))
+            bad.push(L + ': ' + m.id + ' hpBelow must be in (0, 1)');
+          const d = G.MoveDefs[m.id];
+          if (!d) {
+            bad.push(L + ': unknown move ' + m.id);
+            continue;
+          }
+          if (d.basePower > 0) damaging++;
+          if (!formOf(d))
+            bad.push(
+              L +
+                ': ' +
+                m.id +
+                ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, returns, beams, bursts, trails, delayed marks, self buffs and self heals)'
+            );
+        }
+        if (!damaging) bad.push(L + ' needs at least one damaging move');
       }
-      if (s.moves && s.moves.length && !damaging) bad.push(who + ' needs at least one damaging move');
       // cards: the player's card rules, per mon (slice 7a); each must exist, be a move card, respect its cap and fit at least one move
-      const cards = s.cards || {};
+      // of any of its loop sets
+      const cards = s.cards || {},
+        allMoves = [].concat(...Object.values(s.sets || {}).filter(Array.isArray));
       for (const id of Object.keys(cards)) {
         const c = G.TeamCards.BY_ID[id],
           n = cards[id];
@@ -632,10 +755,10 @@ G.Gyms = (() => {
         else if (c.team) bad.push(who + ': ' + id + ' is a team card, and leaders use the base stage timers');
         else if (!Number.isInteger(n) || n < 1) bad.push(who + ': card ' + id + ' needs a whole number of stacks');
         else if (c.cap && n > c.cap) bad.push(who + ': card ' + id + ' is capped at ' + c.cap);
-        else if (!(s.moves || []).some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
+        else if (!allMoves.some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
           bad.push(who + ': card ' + id + ' fits none of its moves');
       }
-    }
+    });
     return bad;
   }
 
@@ -654,6 +777,7 @@ G.Gyms = (() => {
     stageIndex,
     stageFor,
     lineup,
+    movesFor,
     formOf,
     reachOf,
     validate,

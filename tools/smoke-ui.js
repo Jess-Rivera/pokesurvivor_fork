@@ -26,6 +26,9 @@ async function boot(browser, query) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errs = [];
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  page.on('requestfailed', (r) =>
+    errs.push('requestfailed: ' + r.url() + ' (' + (r.failure() && r.failure().errorText) + ')')
+  );
   page.on('console', (m) => {
     if (m.type() === 'error') errs.push('console: ' + m.text());
   });
@@ -82,7 +85,9 @@ async function check(browser, query, tag) {
   // ---- menus: the Upgrades screen for every owned Pokemon (ban picker + move-slot selects), then the Pokedex detail ----
   const menu = await page.evaluate(async () => {
     G.MenuUI.open();
-    document.querySelector('#scr-menu [data-go="upgrades"]').click();
+    // Upgrades opens from the Team screen's Upgrade button on the previewed Pokemon (the main menu entry is gone, 2026-11-01)
+    document.querySelector('#scr-menu [data-go="team"]').click();
+    document.getElementById('ros-upg').click();
     const sel = document.getElementById('upg-mon'),
       seen = new Set(),
       bad = [];
@@ -115,7 +120,7 @@ async function check(browser, query, tag) {
       rows.every((r) => names.has(r.querySelector('span').textContent) && r.querySelector('canvas,img,i'));
     return { n: opts.length, seen: [...seen], bad, dexOk, rows: rows.length };
   });
-  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED)); // slice 7b: Bubble and Hail are learnable by no one
+  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED).concat([...G.Moves.HELD])); // learnable by no one: retired (slice 7b) and held (Kanto batch 1)
   const miss = ALL.filter((id) => !RET.includes(id) && !menu.seen.includes(id)),
     shownRet = RET.filter((id) => menu.seen.includes(id));
   ok(
@@ -129,7 +134,7 @@ async function check(browser, query, tag) {
   ok(
     !miss.length,
     tag +
-      ': the menus showed every move but the retired ones (' +
+      ': the menus showed every move but the retired and held ones (' +
       menu.seen.length +
       '/' +
       (ALL.length - RET.length) +
@@ -138,7 +143,7 @@ async function check(browser, query, tag) {
   );
   ok(
     !shownRet.length,
-    tag + ': no retired move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
+    tag + ': no retired or held move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
   ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
 

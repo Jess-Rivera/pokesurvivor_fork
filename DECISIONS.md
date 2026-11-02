@@ -5,6 +5,58 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Roar, Fissure, Future Sight imported with the proposed numbers (Jess)
+Roar is a 160 px ring with no damage that pushes 140 px; a leader's Roar pushes the player (a 0.2 s slide). Fissure is a power-120 strike at accuracy 100 whose 30% KO lands on wild foes only. Future Sight hits a marked spot 2 s later; a leader marks your spot at the cast with no other wind-up. Roar's cd 5 is [Proposed] (TUNE). Balance passes wait for playtesters.
+Canonical: docs/MOVE-INTENT.md roar, fissure, future-sight; docs/BOSS-AUTHORING.md "Validation rules"
+
+## 2026-11-02, Leader returns, beam, burst and trail forms in one slice (Jess)
+The four remaining leader forms ship as one slice for larger batches. Razor Leaf flies out and back as its data says (two leaves, one hit per leaf per leg). Psybeam is a beam with a warning line. Fury Attack's jabs each re-aim at you. Toxic is a move slot like every other trail move: alive while the mon is out, ended by a stun, a swap or a faint. The Psycho Cut stand-ins for Psybeam in later loops stay for now.
+Canonical: docs/BOSS-AUTHORING.md "Validation rules" (gym forms)
+
+## 2026-11-02, Leader dash form; Self-Destruct as a closer (Jess)
+A gym leader casts Quick Attack as a dash to your spot locked at its 0.6 s tell (warning line), one hit there, then back; the leader keeps the i-frames and deals no contact damage while dashing. Self-Destruct on a leader scores 0 in the utility pick until the mon is nearly beaten, then it is the finisher; no new weight setting.
+Canonical: docs/MOVE-INTENT.md quick-attack and self-destruct; docs/BOSS-AUTHORING.md "Validation rules"
+
+## 2026-11-02, Gym bosses: per-loop lore sets, loop 1 first (Jess)
+The point of the Kanto imports is the bosses; player learnset pools are parked. Gyms go one at a time in GYM-ROSTERS order (the Concept Maps are only a moves reference). Each slot holds one move set per loop from the loop it enters; loop 1 of all 8 gyms gets its lore set first. Giovanni's loop 1 is the Stadium Rhydon set (Fury Attack, Earthquake, Body Slam, Fissure). Self-Destruct stays a real faint, on later-loop mons, with utility weight 0. Sabrina uses Confusion as a stand-in for Psybeam until the beam form. A leader pays recoil (never below 1 HP) and casts Recover at mainline strength (half max HP, 12 s cd) whenever hurt.
+Canonical: docs/BOSS-AUTHORING.md "Signature fields" and "Validation rules"; js/data/gyms.js
+
+## 2026-11-02, Kanto batch 1 signed off; Sand Tomb cd 2.5; learnsets use the latest game with a level-up list (Jess)
+All 111 batch-1 shapes kept as built (no overrides), and the batch scenario table signed off (108 in batchReviewed, Sand Tomb through its own entry). Sand Tomb cd 2.5, so one patch at a time. The move report no longer asks for a cd ruling on a move with no legacy cd. The learnset dataset picks each Pokemon's latest version group that has a level-up list (pokeapi's Champions rows are "train" only and left 197 species with none).
+Canonical: docs/MOVE-INTENT.md sand-tomb; docs/move_rework_holding/build_learnset_dataset.py docstring
+
+## 2026-11-02, Surf and Fly are movement skills (Jess)
+Surf is a passive: no water or swamp slowdown and x1.25 speed in them while it is in a slot. Fly is pressed on its slot key: 4 s of flight at walk speed over walls, objects and liquids, hits miss, your moves pause with frozen timers, then a 20 s cooldown from landing; landing on a wall costs 1/16 max HP and moves you to the nearest floor, on an object moves you on along your heading. Neither deals damage, autocasts, becomes the active slot or bonds. Fly joins batch 1; the set-4 Fly ruling is superseded.
+Canonical: docs/MOVE-INTENT.md surf and fly
+
+## 2026-11-02, Waves: a widening band across the aim (Jess)
+Moves that are waves by name (Surf, Sludge Wave, and the original Heat Wave) become a band 16 px deep across the aim that travels at the nearest foe and widens from 60 to 260 px over about 300 px. A line can now grow its width; the range upgrade and the Area card stretch a line's long side (a beam's length, a wave's width), Presence its short side. Waves show the nova badge for now and count as ranged for aiming and as shots for gym leaders.
+Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules" rule 6; docs/MOVE-INTENT.md heat-wave
+
+## 2026-11-02, Kanto import batch 1 shape rules (Jess)
+Batch 1 shapes now come from five rules instead of per-move picks. (1) Tackle is the default swing; a melee move with an extra (ailment, flinch, crit, drain, foe stat drop) gives up area, and its name picks which way; drawbacks (recoil, own stat drops) cost nothing. (2) Every shot takes its type's look from the original moves, scaled by power; no-damage status shots follow it too. (3) Area moves: hits everyone around in mainline, or a sound or look, is a ring; a damaging spray is a burst. (4) Mine = placed on the field, trail = left behind as the user moves; Toxic stays a trail as a designer pick. (5) Uniques in this batch: Shock Wave homes, the four powders are drifting clouds, Sand Tomb is a sand patch at a foe, Draco Meteor is three falls.
+Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1 shape rules"
+
+## 2026-11-01, Kanto import batch 1: held from pools, multi-hit as quick repeats, simplifications (Jess)
+The 110 batch-1 moves (the 114 that map to the schema, minus Mud-Slap, Mirror Shot and Hone Claws, which wait on the accuracy trackers, and Throat Chop, which needs a silence status) join the catalog but stay out of every player pool (G.Moves.HELD) until pools follow mainline learnsets. Multi-hit moves are quick repeats: Double Kick 2, the 2-5 hit moves a fixed 3, full power each. Ancient Power rolls once per stat; Synthesis and Moonlight ignore weather; Earthquake and Surf drop their Dig/Dive bonus and Brick Break its screen break until those exist; Poison Fang inflicts regular poison. Moves that hit every foe split between a ring around the user and a Mud Shot burst. Shapes, numbers and status cooldowns stay proposals until Jess's shape review (tools/kanto-batch1-review.html) and the batch review.
+Canonical: docs/KANTO-BOSS-MOVE-IMPORTS.md "Batch 1"
+
+## 2026-11-01, Kanto import rulings set 4: priority ignored, two-turn, rampage, whole-field (Jess)
+Priority is not a mechanic: Quick Attack and the six priority imports cast by shape and power; a bonded group casts in slot order (closes the Quick Attack priority question). Fly, Dig, Dive, Bounce vanish with i-frames then strike; Solar Beam charges (instant in sun); Future Sight lands after a delay. Outrage, Thrash, Petal Dance lock in then confuse; Hyper Beam has a recharge lockout. Whole-field moves are team-side fields: weather, Reflect / Light Screen / Safeguard as timed team buffs, Stealth Rock as hazards (Rapid Spin clears them).
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 3: odd damage stats and new status mechanics (Jess)
+Foul Play, Psyshock, Electro Ball and Grass Knot follow mainline (species weight joins the dex). Protect is a short full block on a long cooldown. Rest is a big heal plus ailment clear with no self-sleep; Yawn is a delayed sleep. Attract (infatuation skip), Disable, Roar (scatter), Focus Energy (crit stage), Magnet Rise (Ground immunity) get real-time analogs; Skill Swap is not imported. Psych Up and Swagger stay with the open stage-manipulation decision.
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 2: turn conditions, sleep moves, switching, OHKO (Jess)
+Fake Out, Sucker Punch, Focus Punch, High Jump Kick and Feint get real-time analogs (first cast after swap-in, foe mid wind-up, charge cancelled by a hit, 50% crash on a whiff, breaks a guard window). Dream Eater and Nightmare work only on sleeping targets. U-turn hits and clears the swap lock (no auto-swap); Baton Pass waits on the stage-manipulation decision. Fissure KOs wild enemies only (30%); everything else takes a heavy hit. Numbers marked [Proposed] until the batch review.
+Canonical: docs/MOVE-INTENT.md (per move)
+
+## 2026-11-01, Kanto import rulings set 1: accuracy/evasion, HP power, reflection, self-KO (Jess)
+Accuracy and evasion become stage trackers with the mainline miss chance (Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight; Mud-Slap, Mirror Shot, Hone Claws keep their riders). Flail, Reversal, Wring Out use the mainline HP curves. Counter and Mirror Coat are a short stance window reflecting x2. Explosion and Self-Destruct faint the caster for real on both sides (last mon = run over, Re-Do applies). Window lengths and blast sizes are [Proposed] until the batch review.
+Canonical: docs/MOVE-INTENT.md (per move), docs/COMBAT-RULES.md "Stat stages" (accuracy and evasion trackers)
+
 ## 2026-11-01, Kanto gyms 2 to 8 authored; badge boosts for every Kanto badge (Jess)
 Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine and Giovanni join Brock in js/data/gyms.js with their locked rosters (Gen-1 order) and PROVISIONAL move sets from catalog moves that have a gym form; power and tempo 1, no cards yet. Badge boosts, each +10% to one stat for the run: Boulder Atk, Cascade SpD, Thunder Spe, Rainbow HP, Soul Def, Marsh SpA, Volcano SpA, Earth Atk (repeats stack). Brock slots reordered (Onix line to slot 2). Surge has no castable Electric move (Thunder Shock chains), so his mons use Normal and Steel stand-ins until boss casts and riders are widened (next, Jess). Authoring rule found: one melee cone per slot, since the brain only lands its longest-reach melee.
 Canonical: js/data/gyms.js (data), BOSS-REWORK.md section 3g (badge boosts), docs/BOSS-AUTHORING.md (authoring rule)

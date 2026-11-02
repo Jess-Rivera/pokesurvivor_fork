@@ -18,8 +18,8 @@ G.Stats = (() => {
   const SPEED_MEDIAN = 65; // roster median base Speed (verified)
   const BASE_PX = 107; // px/s at movement r = 1.0 (median mon)
   const MOVE_K = 1.0,
-    MOVE_MAX = 3.0,
-    MOVE_MIN = 0.5; // movement transfer: slope + asymptotes
+    MOVE_MAX = 1.3,
+    MOVE_MIN = 0.7; // movement transfer: slope + asymptotes
   const XP_SCALAR = 0.035; // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
   // ---- mainline stat core ----

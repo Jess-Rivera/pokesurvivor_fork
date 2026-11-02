@@ -34,10 +34,12 @@ G.Spawner = (() => {
     preloadT = 0,
     runT = 0;
   let forceShiny = 0; // for testing: the next N spawn shiny
+  let quietT = 0; // s left with no drip and no tides (a Bomb pickup, quiet())
   let debugMul = 1; // ?dev: scales the drip, the tides, bursts and the elite timer (0 = nothing spawns), see G.Debug.spawn
 
   function reset() {
     acc = 0;
+    quietT = 0;
     surgeT = 32;
     preloadT = 0;
     runT = 0;
@@ -177,6 +179,11 @@ G.Spawner = (() => {
     if (debugMul > 0) G.Elites.update(dt, t);
     const capNow = Math.floor(CAP * G.Elites.capMul());
     const eliteOn = !!G.Elites.current();
+    // A Bomb's quiet window: the elite clock above keeps running, nothing wild spawns.
+    if (quietT > 0) {
+      quietT -= dt;
+      return;
+    }
 
     // --- goteo normal ---
     if (G.EnemyMgr.count < capNow) {
@@ -200,6 +207,11 @@ G.Spawner = (() => {
       say('¡Marea de Pokémon!', 2.2);
       G.Audio.sfx('surge');
     }
+  }
+
+  /** No drip and no tides for `secs` (a second call restarts the window, it does not add). */
+  function quiet(secs) {
+    quietT = secs;
   }
 
   /** A handful at once from one side (when starting a horde). */
@@ -258,6 +270,7 @@ G.Spawner = (() => {
     ahead,
     placeElite,
     burst,
+    quiet,
     tickBanner,
     banner,
     say,

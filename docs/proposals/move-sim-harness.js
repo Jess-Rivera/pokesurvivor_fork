@@ -170,13 +170,17 @@ both('hydro pump lens 1.2 scales length, not width', () => ({ owner: mkO(['hydro
 // the far corner of the band needs boundsOf's enemy-radius pad (along 259 of 260, side 24 of 25)
 both('hydro pump far corner', () => ({ owner: mkO(['hydro-pump']), enemies: [mkE(1, 40, 0), mkE(2, 259, 24)] }), 0.6, [1, 1]);
 both('hydro pump gate', () => ({ owner: mkO(['hydro-pump']), enemies: [mkE(1, 265, 0)] }), 0.6, [0]);
-// Heat Wave: grows from 1 px at 625 px/s to 250; each enemy once, on the first step the ring reaches it
-{ const D = [20, 100, 200, 255, 265];
-  const ws = both('heat wave', () => ({ owner: mkO(['heat-wave']), enemies: D.map((d, i) => mkE(i + 1, d, 0)) }), 0.5, [1, 1, 1, 1, 0]);
+// Hyper Voice: grows from 1 px at 760 px/s to 380; each enemy once, on the first step the ring reaches it (Heat Wave held this check until it became a wave)
+{ const D = [20, 100, 200, 375, 395]; // 395: beyond max 380 + enemy r 10
+  const ws = both('hyper voice', () => ({ owner: mkO(['hyper-voice']), enemies: D.map((d, i) => mkE(i + 1, d, 0)) }), 0.5, [1, 1, 1, 1, 0]);
   ws.forEach((w, j) => { const dt = DTS[j];
-    D.slice(0, 4).forEach((d, i) => { const k = Math.max(1, Math.ceil((d - 11) / 625 / dt - 1e-9)), t = w.enemies[i].log[0] && w.enemies[i].log[0].t;
-      ok(near(t, k * dt), 'heat wave reaches ' + d + ' px at step ' + k + ', got t ' + t); }); });
-  ok(evs(run({ owner: mkO(['heat-wave']), enemies: [] }, 0.1, 1 / 60), 'move:cast').length === 1, 'heat wave (targeting none) casts with no enemies'); }
+    D.slice(0, 4).forEach((d, i) => { const k = Math.max(1, Math.ceil((d - 11) / 760 / dt - 1e-9)), t = w.enemies[i].log[0] && w.enemies[i].log[0].t;
+      ok(near(t, k * dt), 'hyper voice reaches ' + d + ' px at step ' + k + ', got t ' + t); }); });
+  ok(evs(run({ owner: mkO(['hyper-voice']), enemies: [] }, 0.1, 1 / 60), 'move:cast').length === 1, 'hyper voice (targeting none) casts with no enemies'); }
+// Heat Wave (a wave, 2026-11-02): a 16 px deep band at the nearest foe, 60 px wide + 0.667 px per px travelled. Enemy r 10: on the axis it is
+// hit once the front (dist + 16) is within 10 px; to the side once half the width + 10 covers it. At (100, 80) the band is at most
+// 60 + 0.667 x 110 = 133 wide while it overlaps x 100, half 66.7 + 10 < 80: a miss. At (200, 90) it is 176 wide at dist 174: a hit.
+both('heat wave widens', () => ({ owner: mkO(['heat-wave']), enemies: [mkE(1, 100, 0), mkE(2, 100, 80), mkE(3, 200, 90), mkE(4, 300, 0), mkE(5, 0, -200)] }), 1.1, [1, 0, 1, 1, 0]);
 // Flamethrower: a standing enemy in the cone takes 5 hits in 1 s (rehit 0.2)
 both('flamethrower', () => ({ owner: mkO(['flamethrower']), enemies: [mkE(1, 100, 0), mkE(2, -100, 0)] }), 1.1, [5, 0]);
 // Mud Shot: 6 shots evenly around the circle, each enemy at 80 px hit once

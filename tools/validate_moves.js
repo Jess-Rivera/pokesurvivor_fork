@@ -681,7 +681,10 @@ if (RESOLVED)
   for (const [id, m] of Object.entries(DATA)) {
     // slice 4c-1: rules that need resolver output (combat-validation-and-handoff:2.4 rules 2 and 10)
     const add = (msg) => (bad[id] = bad[id] || []).push(msg);
-    if (!m.persistent && m.cd == null && !pureBuff(m))
+    const skill = (m.payload || []).some(
+      (fx) => fx.t === 'special' && ['passive', 'press'].includes((G.MoveHandlers.byName[fx.handler] || {}).trigger)
+    ); // Surf, Fly: movement skills never autocast
+    if (!m.persistent && m.cd == null && !pureBuff(m) && !skill)
       add(
         '(move): resolved-needs-cd: a move that is not persistent has no cd after resolution (rule 2; set it in js/data/move-overrides.js)'
       );
