@@ -375,7 +375,7 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 ## 2026-11-01 (Claude Code, home): Team menu rework
 - Slow list: every menu sprite drew once before IntersectionObserver reported, so opening Team fetched ~946 sheets; ui.js now draws only canvases reported in view (rootMargin 160px). ~45 requests on open.
 - Slots: Free Slot N under Put in the detail column, for the highlighted slot, always shown (greyed on the lead and empty slots; Jess moved it there after the first feel test); drag a team card onto the list to free it. Drag list->slot and slot<->slot already worked.
-- Upgrades: main menu entry removed; a + on the Team detail stage opens it on that Pokemon, Back returns to Team keeping the draft. smoke-ui now opens Upgrades that way.
+- Upgrades: main menu entry removed; an Upgrade button on the Team detail stage (first a +) opens it on that Pokemon, Back returns to Team keeping the draft. smoke-ui now opens Upgrades that way.
 - Menu sprites centre on their visible Idle pixels (G.Sprites.idleBox, scanned once per dex/variant/row); hero views fit by that box. World sprites unchanged.
 - Feel test 1 fix: on file:// the pixel scan threw a SecurityError inside the sprite loop, so no menu sprite drew; the scan is now caught and falls back to the old placement (centring works only over http until a precomputed table exists). The + sits a little lower.
 - Verified: check.js 30/30, smoke-ui pass, headless over file:// and http, 1600x900 and 1280x720.

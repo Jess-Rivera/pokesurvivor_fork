@@ -1039,7 +1039,7 @@ G.MenuUI = (() => {
       <div class="ros-db">
         <div class="ros-stage">
           <canvas id="ros-big" class="stage" width="220" height="190"></canvas>
-          ${own ? `<button type="button" id="ros-upg" class="ros-upg" title="Upgrades for ${p.name}" data-sfx="click">+</button>` : ''}
+          ${own ? `<button type="button" id="ros-upg" class="ros-upg" title="Upgrades for ${p.name}" data-sfx="click">Upgrade</button>` : ''}
         </div>
         ${
           hasSh
