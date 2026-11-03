@@ -102,6 +102,7 @@ G.SettingsUI = (() => {
     move_down: 'Down',
     move_left: 'Left',
     move_right: 'Right',
+    dodge: 'Dodge',
     attack_1: 'Attack 1',
     attack_2: 'Attack 2',
     attack_3: 'Attack 3',

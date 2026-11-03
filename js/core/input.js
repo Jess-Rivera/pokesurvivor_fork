@@ -21,8 +21,9 @@ G.Input = (() => {
   // Layout presets (slice E1, Jess 2026-10-20): action -> list of key codes (lowercased e.code).
   //   compact  the default: one hand on WASD, the other on IJKL (skills) and H (Shake off); 1-6 pick a team slot, Z / C cycle the team
   //   full     full keyboard: WASD, 1-6 team slots, Z / C, NUM1-4 skills, NUM+ Shake off
-  // Space is reserved for the planned dash and is not bound to anything.
+  // Space is the dodge in both layouts.
   const COMMON = {
+    dodge: ['space'],
     move_up: ['keyw', 'arrowup'],
     move_down: ['keys', 'arrowdown'],
     move_left: ['keya', 'arrowleft'],
@@ -62,6 +63,7 @@ G.Input = (() => {
     'move_down',
     'move_left',
     'move_right',
+    'dodge',
     'attack_1',
     'attack_2',
     'attack_3',

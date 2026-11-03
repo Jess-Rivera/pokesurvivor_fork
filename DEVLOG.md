@@ -450,3 +450,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Inventory (css/bw-inventory.css): popup in the card frame (border-image on an overlay so the yellow title and bottom bar run under it), slot tiles and item cards from the script.
 - Found: scaling the rip art up thickened the border (redrawn by script instead); the narrow grid squashed the slot strip (fixed with max-content rows).
 - Verified: check.js 30/30, smoke-ui all pass (it now opens Upgrades from a slot), headless Team and Inventory checks on file:// at 4 sizes, no page errors. Not feel-tested yet. Next: Shop, Missions, Settings, one at a time.
+
+## 2026-11-02, Dodge on Space (Claude Code, home, fix/ui-upgrade)
+- Decided (Jess): Space dodges 150 px in 0.5 s along the heading; 2 team charges, own cooldowns (7 s in a 5 to 10 s band) paused during a dodge, 0.2 s gap; no i-frames, the body circle is 20% for 0.3 s instead (every enemy hit test uses it); enemies stay pass-through; ice keeps the dodge speed; rings show recharging charges.
+- Built: Player.DODGE, tryDodge / endDodge / tickDodges and the 4 px sub-steps in player.js; "dodge" action on Space (input.js, Settings label); shared charges and swap end in game.js; move dashes wait during a dodge (move-sim.js). Rules in COMBAT-RULES "Dodge"; changelog line.
+- Found: an empty roster broke the shared-charges line (fixed); a float made 0.5 s last 31 frames (epsilon); prettier rewrote player.js to LF (git stores LF anyway).
+- Verified: check.js 30/30 (E1 harness now expects Space on dodge), smoke-ui passes, headless dodge probe on file://. Not feel-tested yet.

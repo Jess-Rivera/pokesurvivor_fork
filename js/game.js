@@ -184,6 +184,10 @@ G.Game = (() => {
     roster.forEach((f) => {
       f.runItems = runItems;
     });
+    const dodges = { cd: [0, 0], gap: 0 }; // the dodge charges are the team's: a swap never hands you fresh ones
+    roster.forEach((f) => {
+      f.dodges = dodges;
+    });
     const berries = []; // the team berry bag (data/ground-items.js, status berries): one shared array too
     roster.forEach((f) => {
       f.berries = berries;
@@ -250,6 +254,7 @@ G.Game = (() => {
    */
   function takeField(i) {
     const next = roster[i];
+    pl.endDodge(); // the outgoing body grows back; the incoming one starts on foot
     next.x = pl.x;
     next.y = pl.y;
     next.aim = pl.aim;

@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-02, Dodge on Space (Jess)
+Space dodges 150 px in 0.5 s along your heading. Two team charges, each with its own cooldown (7 s, TUNE in the 5 to 10 s band), all paused during a dodge, 0.2 s between dodges. No i-frames: the body circle is 20% of normal for the first 0.3 s, so shots miss more and gaps fit. Enemies stay pass-through. On ice the dodge speed is kept until you leave it. Two rings to the right of the Pokemon show recharging charges.
+Canonical: docs/COMBAT-RULES.md "Dodge"
+
 ## 2026-11-02, Roar, Fissure, Future Sight imported with the proposed numbers (Jess)
 Roar is a 160 px ring with no damage that pushes 140 px; a leader's Roar pushes the player (a 0.2 s slide). Fissure is a power-120 strike at accuracy 100 whose 30% KO lands on wild foes only. Future Sight hits a marked spot 2 s later; a leader marks your spot at the cast with no other wind-up. Roar's cd 5 is [Proposed] (TUNE). Balance passes wait for playtesters.
 Canonical: docs/MOVE-INTENT.md roar, fissure, future-sight; docs/BOSS-AUTHORING.md "Validation rules"

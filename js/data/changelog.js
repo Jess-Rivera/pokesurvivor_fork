@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-02',
+    title: ['Dodge', 'Dodge'],
+    new: [
+      [
+        'Press Space to dodge: a quick 150 px dash in the direction you move. You have two dodges, each with its own 7 second recharge (shown as two rings next to your Pokemon). For a moment your body gets much smaller, so shots miss more and you can slip through narrow gaps. A dodge that ends on ice keeps its speed until you leave the ice.',
+        'Press Space to dodge: a quick 150 px dash in the direction you move. You have two dodges, each with its own 7 second recharge (shown as two rings next to your Pokemon). For a moment your body gets much smaller, so shots miss more and you can slip through narrow gaps. A dodge that ends on ice keeps its speed until you leave the ice.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-02',
     title: ['A new main menu: welcome to PokeSwarm', 'A new main menu: welcome to PokeSwarm'],
     new: [
       [

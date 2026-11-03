@@ -152,6 +152,9 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 ## Upgrades
 (none tuned yet) 2026-10-18: the old in-run stat cards and move evolutions were removed; the new stat cards and mechanic cards (slice 2) get their first numbers then, from G.Log.pacing().
 
+## Dodge (fix/ui-upgrade, built 2026-11-02; TUNE)
+- 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
+
 ## Drops / economy
 - Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
 

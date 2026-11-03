@@ -87,6 +87,13 @@ G.Player = class Player {
     this.invuln = 0;
     this.flyT = 0; // Fly (Jess 2026-11-02): seconds of flight left; while above 0 terrain, contact, shots and your own casts are off
     this.flyCd = 0; // seconds until Fly can be pressed again, counted from landing
+    this.dodges = { cd: [0, 0], gap: 0 }; // dodge charge cooldowns and the gap after a dodge; game.js shares ONE object across the roster
+    this.dodgeT = 0; // seconds left of the dodge in progress
+    this.dodgeEl = 0; // seconds since it started
+    this.dodgeVx = 0;
+    this.dodgeVy = 0;
+    this.dodgeR0 = 0; // the body radius to restore after the shrink (0 = not shrunk)
+    this.iceGlide = false; // a dodge ended on ice: dodge speed is kept until you leave the ice
     this.flash = 0;
     this.aim = Math.PI / 2;
     this.moveAngle = Math.PI / 2;
@@ -120,6 +127,12 @@ G.Player = class Player {
   /** Seconds you must stay next to a downed teammate to lift them. */
   static get REVIVE_TIME() {
     return 3;
+  }
+
+  /** Dodge (Space, Jess 2026-11-02): 150 px in 0.5 s along your heading, 2 charges with their own cooldown (paused while a dodge
+   *  runs), 0.2 s between dodges. For the first 0.3 s the body circle is 20% of normal, so shots miss more and small gaps fit. */
+  static get DODGE() {
+    return { dist: 150, dur: 0.5, cd: 7, gap: 0.2, shrinkT: 0.3, shrink: 0.2, charges: 2 }; // TUNE (BALANCE.md "Dodge")
   }
 
   // Mainline Medium Fast cost curve (total n^3), see G.Stats.xpToNext. The old hand-made
@@ -318,6 +331,47 @@ G.Player = class Player {
     if (L.wall && !this.dead) this.payHp(this.maxHp / 16);
     G.World.collide(this);
     G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
+  }
+  /** Dodge charges recharge on their own, but every timer waits while a dodge runs. */
+  tickDodges(dt) {
+    if (this.dodgeT > 0) return;
+    const c = this.dodges;
+    if (c.gap > 0) c.gap = Math.max(0, c.gap - dt);
+    for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dt);
+  }
+  /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
+   *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
+  tryDodge(ax, ay) {
+    const D = Player.DODGE,
+      c = this.dodges,
+      i = c.cd.indexOf(0);
+    if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return false;
+    if (this.frozen || this.stFl || this.stPush || this.mvRoot || G.Status.stunned(this)) return false;
+    const [nx, ny] = ax || ay ? G.U.norm(ax, ay) : [Math.cos(this.moveAngle), Math.sin(this.moveAngle)],
+      v = D.dist / D.dur;
+    c.cd[i] = D.cd;
+    this.dodgeT = D.dur;
+    this.dodgeEl = 0;
+    this.dodgeVx = nx * v;
+    this.dodgeVy = ny * v;
+    this.iceGlide = false;
+    if (!this.dodgeR0) {
+      this.dodgeR0 = this.r;
+      this.r *= D.shrink;
+    }
+    G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
+    return true;
+  }
+  /** Ends the dodge (finished, cancelled, or swapped out): the body grows back and the gap before the next dodge starts. */
+  endDodge() {
+    if (this.dodgeR0) {
+      this.r = this.dodgeR0;
+      this.dodgeR0 = 0;
+      if (!(this.flyT > 0)) G.World.collide(this);
+    }
+    if (this.dodgeT <= 0) return;
+    this.dodgeT = 0;
+    this.dodges.gap = Player.DODGE.gap;
   }
 
   setActive(i, free = false) {
@@ -793,6 +847,7 @@ G.Player = class Player {
     if (this.attackFace > 0) this.attackFace -= dt;
     if (this.flyT > 0 && (this.flyT -= dt) <= 0) this.land();
     else if (this.flyT <= 0 && this.flyCd > 0) this.flyCd = Math.max(0, this.flyCd - dt);
+    this.tickDodges(dt);
     if (this.skillAt(this.active)) {
       // a skill never stays active (it may land there when slots change): the first castable slot takes over
       const i = this.slots.findIndex((g, k) => !this.skillAt(k));
@@ -835,10 +890,15 @@ G.Player = class Player {
       ax = j[0] * m;
       ay = j[1] * m;
     }
-    this.walking = ax !== 0 || ay !== 0;
+    // Dodge: a push, a flinch, freezing or sleep cancels the one in progress (its charge stays spent).
+    if (this.dodgeT > 0 && (this.frozen || this.stFl || this.stPush || G.Status.stunned(this))) this.endDodge();
+    if (G.Input.action('dodge')) this.tryDodge(ax, ay);
+    const dodging = this.dodgeT > 0;
+    this.walking = ax !== 0 || ay !== 0 || dodging;
     const s = this.spd;
     // Ice: you slide (the velocity changes slowly).
     const slide = this.inLiquid && G.World.liquidEffect(this.mon.types).slide;
+    if (!slide) this.iceGlide = false;
     if (this.stPush) {
       // a push (Roar) moves you; it ends after PUSH_T
       this.svx = this.stPush.vx;
@@ -846,15 +906,48 @@ G.Player = class Player {
       if ((this.stPush.t -= dt) <= 0) this.stPush = null;
     } else if (this.stFl)
       [this.svx, this.svy] = this.flinchMove(dt); // the flinch recoil moves you
-    else {
+    else if (dodging) {
+      // a dodge holds its heading and speed, ice or not
+      this.svx = this.dodgeVx;
+      this.svy = this.dodgeVy;
+    } else if (this.iceGlide) {
+      // a dodge that ended on ice keeps its speed until you leave the ice; your keys turn the heading as slowly as ice steering
+      const v = Player.DODGE.dist / Player.DODGE.dur,
+        [hx, hy] = ax || ay ? [ax, ay] : G.U.norm(this.svx || 0, this.svy || 0);
+      const gx = G.U.damp(this.svx || 0, hx * v, 1.6, dt),
+        gy = G.U.damp(this.svy || 0, hy * v, 1.6, dt),
+        g = Math.hypot(gx, gy) || 1;
+      this.svx = (gx / g) * v;
+      this.svy = (gy / g) * v;
+    } else {
       this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;
       this.svy = slide ? G.U.damp(this.svy || 0, ay * s * 1.15, 1.6, dt) : ay * s;
     }
-    this.x += this.svx * dt;
-    this.y += this.svy * dt;
-    if (this.flyT > 0) this.keepInArena();
-    else G.World.collide(this); // in the air walls and objects do not block
-    if (this.walking) this.moveAngle = Math.atan2(ay, ax);
+    // Fast moves step in 4 px pieces so the shrunk body cannot skip over a thin obstacle on a long frame.
+    const steps = Math.max(1, Math.ceil((Math.hypot(this.svx, this.svy) * dt) / 4));
+    for (let k = 0; k < steps; k++) {
+      this.x += (this.svx * dt) / steps;
+      this.y += (this.svy * dt) / steps;
+      if (this.flyT > 0) this.keepInArena();
+      else G.World.collide(this); // in the air walls and objects do not block
+    }
+    if (dodging) {
+      this.moveAngle = Math.atan2(this.dodgeVy, this.dodgeVx);
+      this.dodgeEl += dt;
+      // past the shrink window the body grows back as soon as it fits where you stand (it never pops out of a gap mid-dodge)
+      const fits = this.flyT > 0 || G.World.isFree(this.x, this.y, this.dodgeR0, true);
+      if (this.dodgeR0 && this.dodgeEl >= Player.DODGE.shrinkT && fits) {
+        this.r = this.dodgeR0;
+        this.dodgeR0 = 0;
+      }
+      if (this.dodgeT > dt + 1e-6)
+        this.dodgeT -= dt; // the epsilon keeps 0.5 s at 30 frames, not 31
+      else {
+        this.endDodge();
+        this.iceGlide =
+          !(this.flyT > 0) && G.World.isLiquid(this.x, this.y) && !!G.World.liquidEffect(this.mon.types).slide;
+      }
+    } else if (this.walking) this.moveAngle = Math.atan2(ay, ax);
 
     // --- liquid terrain ---
     this.inLiquid = !(this.flyT > 0) && G.World.isLiquid(this.x, this.y);
@@ -1005,6 +1098,29 @@ G.Player = class Player {
       this.y - lift,
       Object.assign({ flash: this.flash > 0, softFlash: true, alpha, color: '#ffcb3d' }, G.Status.tintOf(this))
     );
+
+    // Dodge charges: two rings to the right of the body while one recharges (outer = first charge); each fills as it comes back.
+    const dc = this.dodges.cd;
+    if (!this.dead && dc.some((t) => t > 0)) {
+      const cx = this.x + this.r + 12,
+        cy = this.y - lift - this.bodyH * 0.5;
+      ctx.save();
+      ctx.lineWidth = 2;
+      dc.forEach((t, k) => {
+        const rr = k ? 3.5 : 7;
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, rr, 0, 6.2832);
+        ctx.stroke();
+        ctx.globalAlpha = 0.95;
+        ctx.strokeStyle = t > 0 ? '#9fe8ff' : '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, rr, -Math.PI / 2, -Math.PI / 2 + 6.2832 * (1 - t / Player.DODGE.cd));
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
 
     // Buff arcs around the feet.
     const COL = { atk: '#ff6b4d', spe: '#7fe0ff', def: '#b0b8c8', regen: '#5fe08a', spa: '#b99dff', spd: '#6ea4ff' };
