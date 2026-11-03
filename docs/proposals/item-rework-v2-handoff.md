@@ -12,8 +12,8 @@ Read CLAUDE.md first (the rules), then STATE.md, then this file. This file is th
 - Committed (16ff37f): js/data/drops.js (G.Drops), Oran and Sitrus on wild kills and elites, docs/ITEMS.md.
 - Step 1 committed (3006c89), waiting on Jess's feel-test: world props moved into G.Drops (tables grass, rock, chest, bigchest), Oran replaces the heal pickup there at the same rates, a gym leader drops one item (its own table: 10 coins and the 10% run chance). The 'heal' pickup kind still exists in pickup.js, game.js and coop.js, but nothing drops it.
 - Step 1 feel-tested by Jess: good. Step 1a (rock and chest 6 HP) and step 2 BUILT, uncommitted, waiting on his feel-test. Harness: docs/proposals/item-batch1-harness.js.
-- Step 3 and pickup lines BUILT, uncommitted, waiting on Jess's feel-test.
-- Steps 4 to 6 approved by Jess ("go"), not built. Build one at a time, with a feel-test between.
+- Step 3 and pickup lines committed, feel-tested good.
+- Steps 4 to 6: the rulings and hooks are approved, not built. Build one at a time, with a feel-test between. Recommended split of step 4: 4a is Weakness Policy, Absorb Bulb, Cell Battery, Luminous Moss, Snowball, Focus Band, Protective Pads, Shed Shell, King's Rock and the shared guard against enemy drops. 4b is Enigma, Jaboca, Rowap and Eject Button (these change the hit call sites or the swap). Give Jess the no-code plan for each before building (CLAUDE.md "Edit boundary"). The harness must take real hits through Player.hurt, not just check fields (a defense multiplier once passed the field checks while missing from hurt).
 
 ## Batch 1 scope and rulings (Jess, 2026-11-03)
 - 12 ground items: Enigma, Jaboca, Rowap, White Herb, Guard Spec, Dire Hit, Max Mushrooms, Revive, Max Revive, Sacred Ash, Leppa, Custap. Effects and weights (19.5 total) are in the proposal. Existing weights scale by 0.805 so the total stays 100.
