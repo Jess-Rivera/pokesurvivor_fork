@@ -94,6 +94,7 @@ G.MenuUI = (() => {
       'arrow',
     ])
       new Image().src = `assets/ui/team/${n}.png`;
+    for (const n of ['box', 'box-sel']) new Image().src = `assets/ui/upgrades/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});
       document.fonts.load('800 16px Korataki').catch(() => {});
@@ -114,7 +115,12 @@ G.MenuUI = (() => {
     });
     // Team screen: Enter puts the previewed Pokémon in the targeted slot.
     addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || !G.UI.isOpen('scr-roster') || e.target.closest('input, textarea, select, button'))
+      if (
+        e.key !== 'Enter' ||
+        !G.UI.isOpen('scr-roster') ||
+        G.UI.isOpen('scr-upgrades') ||
+        e.target.closest('input, textarea, select, button')
+      )
         return;
       const d = ros.dex,
         cur = ros.team[ros.slot];
@@ -122,6 +128,7 @@ G.MenuUI = (() => {
       e.preventDefault();
       rosAssign(ros.slot, d);
     });
+    addEventListener('keydown', upgKey);
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
@@ -1104,182 +1111,150 @@ G.MenuUI = (() => {
     if (hex) hex.appendChild(G.StatChart.make(p.stats, color, 340, 400, { radius: 0.4 }));
   }
 
-  // ---------------- mejoras ----------------
+  // ---------------- upgrades (B/W screen, display only) ----------------
+  // The catalog from docs/Economy Balance Ideas.md. Not wired yet: every rank reads 0 and nothing can be
+  // bought (the old G.Upgrades shop is being deprecated). A 5-rank upgrade is Pokémon-specific and grows by
+  // `step` per rank; a 3-rank one is run-wide and lists its ranks. `soon` waits on the dodge mechanic.
+  const UPG_COLS = [
+    [
+      'Survivability',
+      [
+        { name: 'Maximum HP', step: 8, unit: '%' },
+        { name: 'Defense', step: 5, unit: '%' },
+        { name: 'HP Regeneration', step: 0.15, unit: '%/s' },
+      ],
+    ],
+    [
+      'Combat',
+      [
+        { name: 'Damage', step: 5, unit: '%' },
+        { name: 'Movement Speed', step: 4, unit: '%' },
+        { name: 'Cooldown Reduction', step: -4, unit: '%' },
+        { name: 'Critical Chance', step: 2, unit: '%' },
+        { name: 'Critical Damage', step: 10, unit: '%' },
+        { name: 'Status Chance', step: 5, unit: '%' },
+        { name: 'Dodge Cooldown Reduction', step: -5, unit: '%', soon: true },
+        { name: 'Dodge Distance', step: 5, unit: '%', soon: true },
+      ],
+    ],
+    [
+      'Economy',
+      [
+        { name: 'EXP Gain', ranks: [10, 25, 45], unit: '%' },
+        { name: 'Gold Gain', ranks: [10, 25, 45], unit: '%' },
+        { name: 'Pickup Range', ranks: [15, 35, 60], unit: '%' },
+        { name: 'Item Drop Chance', ranks: [5, 12, 20], unit: '%' },
+      ],
+    ],
+    [
+      'Tactical Utility',
+      [
+        { name: 'Card Rerolls', ranks: [1, 2, 3], unit: '' },
+        { name: 'Card Banish', ranks: [1, 2, 3], unit: '' },
+        { name: 'Starting Moves', ranks: [1, 2, 3], unit: '' },
+        { name: 'Team Swap Cooldown Reduction', step: -10, unit: '%' },
+      ],
+    ],
+  ];
+  const UPG_MAX_POINTS = 40;
 
-  let upgDex = null;
+  let upgDex = null,
+    upgBack = open,
+    upgCur = [0, 0]; // keyboard cursor: [column, box]
+
+  /** The Pokémon the tab cycles through: the Team screen's draft team, else the saved one. */
+  function upgParty() {
+    const t = ros.team.some(Boolean) ? ros.team : G.DB.save.team || [];
+    return t.filter(Boolean).map((x) => x.dex);
+  }
 
   /**
-   * @param dex   the Pokémon to open on (the Team screen's + button)
-   * @param back  where Volver goes (default: the main menu)
+   * @param dex   the Pokémon to open on (a Team screen slot's Upgrade button)
+   * @param back  where Back goes (default: the main menu)
    */
   function openUpgrades(dex, back = open) {
-    G.UI.chrome(true); // coins on view: upgrades are bought with them
-    G.UI.show('scr-upgrades', true);
-    $('upg-back').onclick = back;
-    const s = G.DB.save;
+    // A popup: the screen under it (the Team screen) stays drawn, dimmed. Back reopens that screen, which hides this one.
+    rosChrome();
+    $('scr-upgrades').classList.remove('hidden');
+    upgBack = back;
+    $('upg-back').onclick = () => upgBack();
+    $('upg-prev').onclick = () => upgStep(-1);
+    $('upg-next').onclick = () => upgStep(1);
     if (dex != null) upgDex = dex;
-    if (!upgDex || !s.owned[upgDex]) upgDex = s.partner;
-    // Selector with your Pokemon: the companion first, then the ones that already have upgrades.
-    const sel = $('upg-mon');
-    const lv = (d) => Object.values(s.pupg[d] || {}).reduce((a, b) => a + b, 0);
-    const mons = Object.keys(s.owned)
-      .map(Number)
-      .filter((d) => G.DEX_BY[d])
-      .sort((a, b) => (b === s.partner) - (a === s.partner) || lv(b) - lv(a) || a - b);
-    sel.innerHTML = mons
-      .map(
-        (d) =>
-          `<option value="${d}">${G.DEX_BY[d].name}${d === s.partner ? ' (compañero)' : ''}${lv(d) ? ' · ' + lv(d) + ' niveles' : ''}</option>`
-      )
-      .join('');
-    sel.value = upgDex;
-    sel.onchange = () => {
-      upgDex = +sel.value;
-      G.Audio.sfx('select');
-      renderUpgrades();
-    };
+    const party = upgParty();
+    if (!party.includes(upgDex)) upgDex = party[0] != null ? party[0] : G.DB.save.partner;
+    upgCur = [0, 0];
     renderUpgrades();
   }
 
+  function upgStep(d) {
+    const party = upgParty();
+    if (party.length < 2) return;
+    upgDex = party[(party.indexOf(upgDex) + d + party.length) % party.length];
+    G.Audio.sfx('select');
+    renderUpgrades();
+  }
+
+  const upgNum = (n) => (n > 0 ? '+' : n < 0 ? '-' : '+') + Math.abs(Math.round(n * 100) / 100);
+
   function renderUpgrades() {
-    const s = G.DB.save;
-    const levels = G.DB.upgradesOf(upgDex);
-    const mon = G.DEX_BY[upgDex];
-    const shiny = upgDex === s.partner && !!s.partnerShiny && G.DB.ownsShiny(upgDex);
-    G.UI.sprite($('upg-stage'), upgDex, { lively: true, scale: 2, hero: true, shiny });
-    $('upg-stage').style.setProperty('--stage-c', shiny ? '#9ae6ff' : G.U.TYPE_COLOR[mon.types[0]]);
-    const box = $('upg-list');
-    box.innerHTML = '';
-    for (const u of G.Upgrades.LIST) {
-      const lvl = levels[u.id] || 0;
-      const maxed = lvl >= u.max;
-      const cost = maxed ? 0 : G.Upgrades.cost(u.id, lvl);
-      const el = document.createElement('div');
-      el.className = 'panel upg-item';
-      el.innerHTML = `
-        <div class="ic">${G.Icons.html(u.icon, 32)}</div>
-        <div>
-          <b>${u.name}</b> <span style="color:var(--muted);font-size:13px">${u.unit}</span>
-          <div class="pips">${Array.from({ length: u.max }, (_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('')}</div>
-        </div>
-        <div class="upg-btns">
-          ${u.id === 'ban' && lvl > 0 ? `<button class="btn small" data-ban>Elegir (${banList().length}/${lvl})</button>` : ''}
-          <button class="btn small ${maxed ? '' : 'gold'}" data-buy data-sfx="none" ${maxed || s.coins < cost ? 'disabled' : ''}>
-          ${maxed ? 'Máx.' : `<span class="coin"></span> ${cost}`}</button></div>`;
-      if (u.id === 'ban' && lvl > 0)
-        el.querySelector('[data-ban]').onclick = () => {
-          banOpen = !banOpen;
-          renderUpgrades();
-        };
-      el.querySelector('[data-buy]').onclick = () => {
-        // Everything is re-read on press (the save may have changed since it was drawn).
-        const sv = G.DB.save,
-          lv = G.DB.upgradesOf(upgDex),
-          now = lv[u.id] || 0;
-        if (now >= u.max) {
-          renderUpgrades();
-          return;
-        }
-        const price = G.Upgrades.cost(u.id, now);
-        if (sv.coins < price) {
-          renderUpgrades();
-          return;
-        }
-        sv.coins -= price;
-        lv[u.id] = now + 1;
-        G.DB.commit(true);
-        G.Audio.sfx('buy');
-        G.UI.refreshCoins();
-        G.UI.toast(`${mon.name} · ${u.name}: nivel ${now + 1}`);
-        renderUpgrades();
-      };
-      box.appendChild(el);
-      if (u.id === 'ban' && lvl > 0 && banOpen) box.appendChild(banPicker(lvl));
-    }
-    box.appendChild(bindPanel());
+    $('upg-name').textContent = G.DEX_BY[upgDex] ? G.DEX_BY[upgDex].name : '';
+    $('upg-points').textContent = `0 / ${UPG_MAX_POINTS}`;
+    const cols = $('upg-cols');
+    cols.innerHTML = '';
+    UPG_COLS.forEach(([title, list], c) => {
+      const col = document.createElement('div');
+      col.className = 'upg-col';
+      col.innerHTML = `<h3>${title}</h3>`;
+      list.forEach((u, i) => {
+        const rank = 0; // not wired yet
+        const max = u.ranks ? u.ranks.length : 5;
+        const total = rank === 0 ? 0 : u.ranks ? u.ranks[rank - 1] : u.step * rank;
+        const per = u.ranks
+          ? `${upgNum(u.ranks[0])} / ${u.ranks.slice(1).join(' / ')}${u.unit}`
+          : `${upgNum(u.step)}${u.unit} per Rank`;
+        const el = document.createElement('div');
+        el.className = 'upg-box' + (u.soon ? ' soon' : '');
+        el.title = u.soon ? `${u.name}: coming with the dodge mechanic` : u.name;
+        el.innerHTML = `<span class="rk">Rank</span>
+          <span class="pips r${max}">${Array.from({ length: max }, (_, k) => `<i${k < rank ? ' class="on"' : ''}></i>`).join('')}</span>
+          <span class="txt"><span class="nm${u.name.length > 16 ? ' long' : ''}">${u.name}</span><span class="per">${u.soon ? 'Soon' : per}</span></span>
+          <span class="tot">${upgNum(total)}${u.unit}</span>`;
+        el.addEventListener('pointerenter', () => upgSelect(c, i));
+        col.appendChild(el);
+      });
+      cols.appendChild(col);
+    });
+    upgSelect(upgCur[0], upgCur[1]);
   }
 
-  // ---------------- shortcuts: a fixed slot for each move ----------------
-  // save.pbind[dex] = [move of slot 1, of 2, of 3, of 4] (or null).
-  function bindPanel() {
-    const s = G.DB.save;
-    s.pbind = s.pbind || {};
-    const list = s.pbind[upgDex] || [null, null, null, null];
-    const mon = G.DEX_BY[upgDex];
-    const ids = G.Moves.poolFor(mon)
-      .concat([G.startMoveOf(upgDex)])
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .sort((a, b) => G.MoveInfo.name(a).localeCompare(G.MoveInfo.name(b), 'es'));
-    const el = document.createElement('div');
-    el.className = 'panel bind-panel';
-    el.innerHTML = `<b>Atajos de movimientos</b>
-      <p class="sub" style="margin:2px 0 8px">Elige qué movimiento va siempre en cada hueco (teclas 1-4 o los iconos de abajo), para la memoria muscular. Si aún no tienes tantos movimientos, va al hueco más cercano.</p>
-      <div class="bind-slots">${[0, 1, 2, 3]
-        .map(
-          (i) => `<label class="bind-slot"><span>${i + 1}</span>
-        <select class="field" data-slot="${i}"><option value="">Libre</option>${ids
-          .map((id) => `<option value="${id}" ${list[i] === id ? 'selected' : ''}>${G.MoveInfo.name(id)}</option>`)
-          .join('')}</select></label>`
-        )
-        .join('')}</div>`;
-    el.querySelectorAll('select[data-slot]').forEach((sel) => {
-      sel.onchange = () => {
-        const l = (s.pbind[upgDex] || [null, null, null, null]).slice(0, 4);
-        while (l.length < 4) l.push(null);
-        const i = +sel.dataset.slot,
-          id = sel.value || null;
-        // A move can only be in one slot.
-        for (let j = 0; j < 4; j++) if (id && l[j] === id) l[j] = null;
-        l[i] = id;
-        s.pbind[upgDex] = l;
-        G.DB.commit();
-        G.Audio.sfx('select');
-        renderUpgrades();
-      };
-    });
-    return el;
+  function upgSelect(c, i) {
+    const cols = $('upg-cols').children;
+    c = (c + cols.length) % cols.length;
+    const boxes = cols[c].querySelectorAll('.upg-box');
+    i = Math.max(0, Math.min(boxes.length - 1, i));
+    upgCur = [c, i];
+    $('upg-cols')
+      .querySelectorAll('.upg-box.sel')
+      .forEach((b) => b.classList.remove('sel'));
+    boxes[i].classList.add('sel');
+    boxes[i].scrollIntoView({ block: 'nearest' });
   }
 
-  // ---------------- veto: movimientos bloqueados ----------------
-  // List per Pokemon in save.pban[dex]; with N levels of Veto, N moves.
-  let banOpen = false;
-  function banList() {
-    const s = G.DB.save;
-    s.pban = s.pban || {};
-    return s.pban[upgDex] || (s.pban[upgDex] = []);
-  }
-  function banPicker(max) {
-    const mon = G.DEX_BY[upgDex];
-    const start = G.startMoveOf(upgDex);
-    const ids = G.Moves.poolFor(mon)
-      .filter((id) => id !== start)
-      .sort((a, b) => G.MoveInfo.name(a).localeCompare(G.MoveInfo.name(b), 'es'));
-    const list = banList();
-    const el = document.createElement('div');
-    el.className = 'panel ban-picker';
-    el.innerHTML = `<p class="sub" style="margin:0 0 8px">Toca los movimientos que no quieres que te salgan en las cartas (${list.length}/${max}). El movimiento de inicio no se puede vetar.</p>
-      <div class="ban-moves">${ids
-        .map((id) => {
-          const on = list.includes(id);
-          return `<button class="chip ${on ? 'on ban' : ''}" data-id="${id}">${G.Icons.html('move:' + id, 16)} ${G.MoveInfo.name(id)}${on ? ' ' + G.Icons.html('ban', 14) : ''}</button>`;
-        })
-        .join('')}</div>`;
-    el.querySelectorAll('[data-id]').forEach((b) => {
-      b.onclick = () => {
-        const l = banList(),
-          id = b.dataset.id,
-          i = l.indexOf(id);
-        if (i >= 0) l.splice(i, 1);
-        else if (l.length >= max) {
-          G.UI.toast('Ya tienes ' + max + ' vetados: quita uno primero');
-          return;
-        } else l.push(id);
-        G.DB.commit();
-        G.Audio.sfx('select');
-        renderUpgrades();
-      };
-    });
-    return el;
+  /** Arrows move the cursor, Q / E change Pokémon, Esc goes back. */
+  function upgKey(e) {
+    if (!G.UI.isOpen('scr-upgrades') || (e.target.closest && e.target.closest('input, textarea, select'))) return;
+    const [c, i] = upgCur;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') upgSelect(c, i + (e.key === 'ArrowDown' ? 1 : -1));
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') upgSelect(c + (e.key === 'ArrowRight' ? 1 : -1), i);
+    else if (e.key === 'q' || e.key === 'Q') return upgStep(-1);
+    else if (e.key === 'e' || e.key === 'E') return upgStep(1);
+    else if (e.key === 'Escape') {
+      G.Audio.sfx('back');
+      upgBack();
+    } else return;
+    if (e.key.startsWith('Arrow')) G.Audio.sfx('hover');
+    e.preventDefault();
   }
 
   return { init, open, GEN_NAMES };

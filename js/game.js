@@ -922,13 +922,11 @@ G.Game = (() => {
       return;
     }
     if (state === 'ui') {
-      // Esc on a menu subscreen returns to the menu.
+      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen.)
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-inventory', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(
-          G.UI.isOpen
-        ) &&
+        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen) &&
         document.getElementById('pull-fx').classList.contains('hidden')
       )
         G.MenuUI.open();
