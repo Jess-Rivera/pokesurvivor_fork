@@ -2,8 +2,8 @@
 // since it needs a browser. Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright), as in
 // tools/smoke-newcombat.js. Usage from the repo root:  node tools/smoke-ui.js
 // On dev.html?dev (one move path since slice 7b; the ?newcombat page it also ran is gone), every move must show correctly:
-//   menus: the Upgrades screen's ban picker and move-slot selects (every owned Pokemon, so the union of pools covers every move), the
-//          Pokedex detail (start move and learnable icons);
+//   menus: the Team screen's detail moves for every owned Pokemon (so the union of pools covers every move, each name MoveInfo's
+//          and with an icon), then the Upgrades popup over it (4 columns, 19 boxes, the points counter, Q/E between party members, Esc);
 //   level-up: a "new move" card for every move on the real level-up screen (name, text, type tag, icon);
 //   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; routed rows with numbers);
 //   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one.
@@ -82,43 +82,53 @@ async function check(browser, query, tag) {
       (off.length ? ' (' + off.map((x) => x.id).join(' ') + ')' : '')
   );
 
-  // ---- menus: the Upgrades screen for every owned Pokemon (ban picker + move-slot selects), then the Pokedex detail ----
+  // ---- menus: the Team screen's detail for every owned Pokemon, then the Upgrades screen ----
   const menu = await page.evaluate(async () => {
-    G.MenuUI.open();
-    // Upgrades opens from the Team screen's Upgrade button on the previewed Pokemon (the main menu entry is gone, 2026-11-01)
-    document.querySelector('#scr-menu [data-go="team"]').click();
-    document.getElementById('ros-upg').click();
-    const sel = document.getElementById('upg-mon'),
-      seen = new Set(),
-      bad = [];
-    const opts = [...sel.options].map((o) => o.value);
-    for (const v of opts) {
-      sel.value = v;
-      sel.dispatchEvent(new Event('change'));
-      const ban = document.querySelector('[data-ban]');
-      if (ban && !document.querySelector('.ban-moves')) ban.click();
-      for (const b of document.querySelectorAll('.ban-moves [data-id]')) {
-        const id = b.dataset.id;
-        seen.add(id);
-        if (!b.textContent.includes(G.MoveInfo.name(id)) || !b.querySelector('canvas,img,svg,i,span'))
-          bad.push('ban ' + id);
-      }
-      for (const o of document.querySelectorAll('.bind-slot select option[value]')) {
-        if (!o.value) continue;
-        seen.add(o.value);
-        if (o.textContent !== G.MoveInfo.name(o.value)) bad.push('bind ' + o.value + ' "' + o.textContent + '"');
-      }
-    }
-    // the Team screen's detail: the start move first, then the pool, each a name MoveInfo gives and an icon
+    // Headless Chrome cannot play sound, so "press to start" is still waiting: pass it before any key test.
+    if (G.UI.isOpen && !document.getElementById('tap-start').classList.contains('hidden'))
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     G.MenuUI.open();
     document.querySelector('#scr-menu [data-go="team"]').click();
     await new Promise((r) => setTimeout(r, 300));
-    const names = new Set(G.Moves.ALL.map((m) => G.MoveInfo.name(m.id)));
-    const rows = [...document.querySelectorAll('.ros-mv')];
-    const dexOk =
-      rows.length > 0 &&
-      rows.every((r) => names.has(r.querySelector('span').textContent) && r.querySelector('canvas,img,i'));
-    return { n: opts.length, seen: [...seen], bad, dexOk, rows: rows.length };
+    const byName = new Map(G.Moves.ALL.map((m) => [G.MoveInfo.name(m.id), m.id]));
+    const seen = new Set(),
+      bad = [];
+    let n = 0,
+      rowsMax = 0;
+    for (const cell of document.querySelectorAll('#ros-grid .cell')) {
+      if (!G.DB.save.owned[+cell.dataset.dex]) continue;
+      cell.click();
+      n++;
+      const rows = [...document.querySelectorAll('.ros-mv')];
+      rowsMax = Math.max(rowsMax, rows.length);
+      for (const r of rows) {
+        const name = r.querySelector('span').textContent,
+          id = byName.get(name);
+        if (!id || !r.querySelector('canvas,img,i')) bad.push(cell.dataset.dex + ' "' + name + '"');
+        else seen.add(id);
+      }
+    }
+    const dexOk = n > 0 && rowsMax > 0 && !bad.length;
+    // Upgrades opens from the Upgrade button on a Team screen slot (the main menu entry is gone, 2026-11-01)
+    document.querySelector('.ros-slot .rupg').click();
+    const name0 = document.getElementById('upg-name').textContent;
+    const key = (k) => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+    key('e');
+    const name1 = document.getElementById('upg-name').textContent;
+    const party = G.DB.save.team.filter(Boolean).length;
+    const pts = document.getElementById('upg-points');
+    const upg = {
+      open: G.UI.isOpen('scr-upgrades'),
+      cols: document.querySelectorAll('#upg-cols .upg-col').length,
+      boxes: document.querySelectorAll('#upg-cols .upg-box').length,
+      pips: [...document.querySelectorAll('.upg-box .pips')].map((p) => p.children.length).join(''),
+      points: pts.textContent === '0 / 40',
+      popup: G.UI.isOpen('scr-roster'),
+      swap: party < 2 || (name0 !== name1 && !!name1),
+    };
+    key('Escape');
+    upg.back = G.UI.isOpen('scr-roster') && !G.UI.isOpen('scr-upgrades');
+    return { n, seen: [...seen], bad, dexOk, rows: rowsMax, upg };
   });
   const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED).concat([...G.Moves.HELD])); // learnable by no one: retired (slice 7b) and held (Kanto batch 1)
   const miss = ALL.filter((id) => !RET.includes(id) && !menu.seen.includes(id)),
@@ -126,7 +136,7 @@ async function check(browser, query, tag) {
   ok(
     !menu.bad.length,
     tag +
-      ': ban picker and move-slot names match MoveInfo over ' +
+      ': Team screen move names match MoveInfo over ' +
       menu.n +
       ' Pokemon' +
       (menu.bad.length ? ' (' + menu.bad.slice(0, 6).join(', ') + ')' : '')
@@ -145,7 +155,23 @@ async function check(browser, query, tag) {
     !shownRet.length,
     tag + ': no retired or held move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
-  ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (' + menu.rows + ' rows)');
+  ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (up to ' + menu.rows + ' rows)');
+  const u = menu.upg;
+  ok(
+    u.open && u.cols === 4 && u.boxes === 19 && u.pips === '555' + '55555555' + '3333' + '3335',
+    tag +
+      ': Upgrades shows 4 columns and 19 boxes with 5 or 3 rank dots (' +
+      u.cols +
+      ', ' +
+      u.boxes +
+      ', ' +
+      u.pips +
+      ')'
+  );
+  ok(u.points, tag + ': the Upgrades top bar shows "0 / 40"');
+  ok(u.popup, tag + ': Upgrades is a popup: the Team screen stays open under it');
+  ok(u.swap, tag + ': E moves Upgrades to the next party member');
+  ok(u.back, tag + ': Esc on Upgrades closes the popup back to the Team screen');
 
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());

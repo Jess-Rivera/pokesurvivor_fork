@@ -1,0 +1,103 @@
+"""Cut assets/raw/coins.gif into pickup sheets (assets/items/pickups) and js/data/pickup-sprites.js.
+
+The GIF is 76 frames of 22 icons (12 coin-style on the top row, 10 gems below), each a 32x32 sprite drawn at 4x.
+Frame segments (from the GIF's own timing): spin 0-23, glint 24-39, bounce 40-59, collect 60-65. Frames 66-75
+repeat the end and are dropped. The run draws 16 px halves of the spin sheet and of the ringed gold coin
+(spin16.png, coin16.png, no JSON, same row and 2 px gap layout). Sheets: one row per icon, 32 px cells, 2 px gap, like assets/items/coins; each
+has an atlas JSON in the same shape (per-frame durations kept). file:// cannot fetch JSON, so the game reads the
+same layout from js/data/pickup-sprites.js, written here.
+
+Run: python tools/cut_pickup_gifs.py, then npx prettier --write js/data/pickup-sprites.js
+"""
+import json
+from collections import Counter
+from PIL import Image
+
+SRC = 'assets/raw/coins.gif'
+OUT = 'assets/items/pickups'
+SEGMENTS = {'spin': (0, 23), 'glint': (24, 39), 'bounce': (40, 59), 'collect': (60, 65)}
+TOP = ['star', 'crown', 'skull', 'heart_coin', 'square', 'arrow', 'gear', 'moon', 'ruby_coin', 'bolt', 'box', 'hourglass']
+BOT = ['diamond', 'emerald', 'heart', 'drop', 'amethyst', 'amber', 'aqua', 'violet', 'topaz', 'ruby']
+# (name, x of the sprite box, y of the sprite box); the box is 128 x 128 in the GIF
+ICONS = [(n, 34 + 156 * i, 5) for i, n in enumerate(TOP)] + [(n, 190 + 156 * i, 159) for i, n in enumerate(BOT)]
+CELL, PAD = 32, 2
+BG = (44, 41, 68)
+
+import os
+
+os.makedirs(OUT, exist_ok=True)
+gif = Image.open(SRC)
+frames, durations = [], []
+for i in range(gif.n_frames):
+    gif.seek(i)
+    frames.append(gif.convert('RGBA'))
+    durations.append(gif.info.get('duration', 80))
+
+meta = {}
+for seg, (a, b) in SEGMENTS.items():
+    n = b - a + 1
+    w, h = n * (CELL + PAD) - PAD, len(ICONS) * (CELL + PAD) - PAD
+    sheet = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    atlas = {}
+    for r, (name, x, y) in enumerate(ICONS):
+        for k in range(n):
+            f = a + k
+            sprite = frames[f].crop((x, y, x + 128, y + 128)).resize((CELL, CELL), Image.NEAREST)
+            # The GIF paints every icon on a flat card colour: make that transparent.
+            sprite.putdata([(0, 0, 0, 0) if px[:3] == BG else px for px in sprite.getdata()])
+            px, py = k * (CELL + PAD), r * (CELL + PAD)
+            sheet.paste(sprite, (px, py))
+            atlas[f'{name} {k}.png'] = {
+                'frame': {'x': px, 'y': py, 'w': CELL, 'h': CELL},
+                'rotated': False,
+                'trimmed': False,
+                'spriteSourceSize': {'x': 0, 'y': 0, 'w': CELL, 'h': CELL},
+                'sourceSize': {'w': CELL, 'h': CELL},
+                'duration': durations[f],
+            }
+    sheet.save(f'{OUT}/{seg}.png')
+    tags = [{'name': name, 'from': r * n, 'to': r * n + n - 1, 'direction': 'forward'} for r, (name, _, _) in enumerate(ICONS)]
+    json.dump(
+        {'frames': atlas, 'meta': {'image': f'{seg}.png', 'size': {'w': w, 'h': h}, 'scale': '1', 'padding': PAD,
+                                   'cell': {'w': CELL, 'h': CELL}, 'frameTags': tags}},
+        open(f'{OUT}/{seg}.json', 'w'), indent=1)
+    meta[seg] = {'src': f'{OUT}/{seg}.png', 'n': n, 'ms': durations[a:b + 1]}
+    print(seg, sheet.size)
+
+def cut16(sprite):
+    """Half-size cut: each 2x2 block takes its most common opaque colour (opaque when 2+ of the 4 pixels are), so no blur."""
+    out = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+    for y in range(16):
+        for x in range(16):
+            opaque = [p for p in (sprite.getpixel((2 * x + i, 2 * y + j)) for i in (0, 1) for j in (0, 1)) if p[3] > 0]
+            if len(opaque) >= 2:
+                out.putpixel((x, y), Counter(opaque).most_common(1)[0][0])
+    return out
+
+
+# 16 px pickups, drawn in the run (1 art pixel per 1.5 world units): the spin sheet and the ringed gold coin, cut in half.
+spin32 = Image.open(f'{OUT}/spin.png').convert('RGBA')
+n = SEGMENTS['spin'][1] - SEGMENTS['spin'][0] + 1
+spin16 = Image.new('RGBA', (n * 18 - 2, len(ICONS) * 18 - 2), (0, 0, 0, 0))
+for r in range(len(ICONS)):
+    for k in range(n):
+        spin16.paste(cut16(spin32.crop((k * 34, r * 34, k * 34 + 32, r * 34 + 32))), (k * 18, r * 18))
+spin16.save(f'{OUT}/spin16.png')
+meta['spin16'] = {'src': f'{OUT}/spin16.png', 'n': n, 'cell': 16, 'ms': meta['spin']['ms']}
+gold32 = Image.open('assets/items/coins/spin_gold.png').convert('RGBA')
+gold_y = json.load(open('assets/items/coins/spin_gold.json'))['frames']['ringed_gold 0.png']['frame']['y']
+coin16 = Image.new('RGBA', (8 * 18 - 2, 16), (0, 0, 0, 0))
+for k in range(8):
+    coin16.paste(cut16(gold32.crop((k * 34, gold_y, k * 34 + 32, gold_y + 32))), (k * 18, 0))
+coin16.save(f'{OUT}/coin16.png')
+
+with open('js/data/pickup-sprites.js', 'w', newline='\n') as f:
+    f.write('/* ============ pickup-sprites.js: GENERATED by tools/cut_pickup_gifs.py, do not edit ============\n')
+    f.write(' * Sheets of the in-run pickup animations (assets/items/pickups): one row per icon in `rows` order,\n')
+    f.write(' * 32 px cells with a 2 px gap. Per sheet: src, n frames per row, ms per frame.\n */\n')
+    f.write('G.PickupSprites = {\n  cell: 32,\n  pad: 2,\n  rows: ' + json.dumps([n for n, _, _ in ICONS]) + ',\n')
+    f.write('  sheets: ' + json.dumps(meta) + ',\n')
+    # The gold coin is the ringed_gold row of assets/items/coins/spin_gold.png (tag ringed_gold, 8 frames, 125 ms),
+    # cut to 16 px into coin16.png above.
+    gold = {'src': f'{OUT}/coin16.png', 'y': 0, 'n': 8, 'cell': 16, 'ms': [125]}
+    f.write('  gold: ' + json.dumps(gold) + ',\n};\n')

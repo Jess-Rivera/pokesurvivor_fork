@@ -1,0 +1,230 @@
+/* ============ bw-upgrades.css: Black/White Upgrades window ============
+ * One Pokemon's upgrade catalog (docs/Economy Balance Ideas.md), a popup over the Team screen: a yellow title bar
+ * (name, "N / 40" points), four columns of blue boxes (the party rip's panel_round_swap, hue-shifted to the
+ * Inventory blue by tools/blue_upgrade_boxes.py, at its 2 px scale), and a bottom bar with Prev / Next and Back
+ * (the Team screen's .bw-btn from bw-team.css). Inventory's frame and cut corners. Display only for now.
+ */
+#scr-upgrades {
+  padding: calc(max(calc(46 * var(--u)), 20px) + 8px) 20px 8px; /* below the main menu's top bar */
+}
+.upgw {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1360px, 100%);
+  height: min(1040px, 100%);
+  background: linear-gradient(135deg, #04060a 12%, #0a1520 50%, #04060a 88%);
+  /* The frame's cut corners: nothing shows outside them. A clip shape, not a mask image (file://). */
+  clip-path: polygon(
+    20px 2px,
+    calc(100% - 20px) 2px,
+    calc(100% - 2px) 20px,
+    calc(100% - 2px) calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 2px),
+    20px calc(100% - 2px),
+    2px calc(100% - 20px),
+    2px 20px
+  );
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--shadow);
+  animation: bw-pop 0.12s ease-out;
+}
+/* The frame (Inventory's) sits on top, so the title bar and bottom bar run under it to the edge. */
+.upgw::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 24px solid transparent;
+  border-image: url('../assets/ui/inventory/frame.png') 24 stretch;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+/* Title bar: one yellow strip, the Pokemon's name left, the points right (like Inventory's). */
+.upg-head {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 26px 40px 12px;
+  background: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.upg-head b {
+  font-weight: 400;
+  font-size: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upg-head span {
+  font-size: 18px;
+  white-space: nowrap;
+}
+/* Bottom bar: charcoal with the cyan line, Prev / Next on the left, Back on the right. */
+.upg-bot {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  height: 72px; /* 24 px of it sits under the frame */
+  padding: 0 40px 24px;
+  background: var(--bw-charcoal);
+  border-top: 2px solid var(--bw-line);
+}
+.upg-step {
+  display: flex;
+  gap: 12px;
+}
+.upg-step .bw-btn img {
+  width: 17px; /* half the PNG, an exact downscale, like the Team screen's Upgrade arrow */
+  height: 14px;
+  margin-right: 4px;
+}
+#upg-prev img {
+  transform: rotate(180deg);
+}
+.upg-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 32px 8px;
+}
+
+/* ---------- the four columns; they wrap on narrow windows and the whole block scrolls when short ---------- */
+.upg-cols {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 256px);
+  justify-content: center;
+  align-content: start;
+  align-items: start;
+  column-gap: clamp(16px, 5vw, 76px);
+  row-gap: 24px;
+}
+.upg-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.upg-col h3 {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  margin: 0 4px 4px;
+  padding: 0 20px;
+  background: rgba(0, 99, 140, 0.35);
+  font-weight: 400;
+  font-size: 26px;
+  white-space: nowrap;
+}
+
+/* ---------- one upgrade: Rank and its dots centred on the dark left band (art y 16 to 86), name and
+   per-rank line centred on the light part (x 76 to 246, y 16 to 66), the total on the dark bottom strip ---------- */
+.upg-box {
+  position: relative;
+  flex: none;
+  width: 256px;
+  height: 98px;
+  background: url('../assets/ui/upgrades/box.png') no-repeat 0 0 / 256px 98px;
+  image-rendering: pixelated;
+  text-shadow: 2px 2px 0 #000;
+}
+.upg-box.sel {
+  background-image: url('../assets/ui/upgrades/box-sel.png');
+  filter: brightness(1.3);
+}
+.upg-box.soon {
+  opacity: 0.5;
+}
+.upg-box .rk {
+  position: absolute;
+  left: 24px;
+  top: 20px;
+  font-size: 15px;
+}
+.upg-box .pips {
+  position: absolute;
+  left: 22px;
+  top: 40px;
+  width: 42px;
+  height: 42px;
+}
+.upg-box .pips i {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #373737;
+}
+.upg-box .pips i.on {
+  background: #fff;
+}
+/* Five ranks: a pentagon, filled clockwise from the top. Three ranks: a triangle. */
+.pips.r5 i:nth-child(1) {
+  left: 15px;
+  top: 0;
+}
+.pips.r5 i:nth-child(2) {
+  left: 29px;
+  top: 12px;
+}
+.pips.r5 i:nth-child(3) {
+  left: 24px;
+  top: 27px;
+}
+.pips.r5 i:nth-child(4) {
+  left: 6px;
+  top: 27px;
+}
+.pips.r5 i:nth-child(5) {
+  left: 1px;
+  top: 12px;
+}
+.pips.r3 i:nth-child(1) {
+  left: 15px;
+  top: 4px;
+}
+.pips.r3 i:nth-child(2) {
+  left: 25px;
+  top: 22px;
+}
+.pips.r3 i:nth-child(3) {
+  left: 5px;
+  top: 22px;
+}
+/* A long name takes two lines in a smaller size. */
+.upg-box .txt {
+  position: absolute;
+  left: 88px;
+  right: 12px;
+  top: 16px;
+  height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.upg-box .nm {
+  font-size: 19px;
+  line-height: 1;
+}
+.upg-box .nm.long {
+  font-size: 15px;
+}
+.upg-box .per {
+  font-size: 14px;
+}
+.upg-box .tot {
+  position: absolute;
+  right: 26px;
+  bottom: 12px;
+  font-size: 14px;
+}

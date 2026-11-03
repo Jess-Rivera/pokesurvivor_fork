@@ -46,7 +46,7 @@ The ladder rule and the B values are in COMBAT-RULES "Stat stages" (current B va
 | B = 2 (Atk, Def, SpA, SpD) | x0.25 | x0.33 | x0.50 | x1.5 | x2.0 | x3.0 | x4.0 |
 | B = 4 (Speed, movement) | x0.40 | x0.50 | x0.67 | x1.25 | x1.5 | x2.0 | x2.5 |
 
-Dash Distance (planned dash, not built) will use the B = 2 ladder.
+Dash Distance (the dodge is built, the stat is not) will use the B = 2 ladder.
 
 ## Things to tune by feel
 - Cooldown and duration per move (all 8 / 8 to start; a cooldown a little above 8 s loses uptime at base, a little below stacks briefly).

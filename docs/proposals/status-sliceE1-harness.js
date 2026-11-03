@@ -109,7 +109,7 @@ function N2(n) { return n; }
   const keys = n => bound(n).join(',');
   const want = { move_up: 'keyw,arrowup', attack_1: 'keyi,numpad1', attack_2: 'keyj,numpad2', attack_3: 'keyk,numpad3', attack_4: 'keyl,numpad4', swap_1: 'digit1', swap_6: 'digit6', swap_prev: 'keyz', swap_next: 'keyc', shake_off: 'keyh' };
   for (const a in want) if (keys(a) !== want[a]) bad('compact ' + a + ': ' + keys(a));
-  if (I.conflicts().length) bad('compact conflicts ' + JSON.stringify(I.conflicts())); if (I.actionList.some(a => bound(a).includes('space'))) bad('space stays free for the dash');
+  if (I.conflicts().length) bad('compact conflicts ' + JSON.stringify(I.conflicts())); if (keys('dodge') !== 'space' || I.actionList.some(a => a !== 'dodge' && bound(a).includes('space'))) bad('space is the dodge, and only the dodge');
   I.applyPreset('full'); const wf = { attack_1: 'numpad1', attack_4: 'numpad4', swap_1: 'digit1', swap_6: 'digit6', swap_prev: 'keyz', swap_next: 'keyc', shake_off: 'numpadadd', move_left: 'keya,arrowleft' };
   for (const a in wf) if (keys(a) !== wf[a]) bad('full ' + a + ': ' + keys(a)); if (I.conflicts().length) bad('full conflicts'); if (I.keyLabel('shake_off') !== 'Num+') bad('label Num+: ' + I.keyLabel('shake_off'));
   I.applyPreset('compact'); I.rebind('shake_off', 'keyj'); if (!I.conflicts().length === false && bound('attack_2').includes('keyj')) bad('rebind removes the key from the other action');

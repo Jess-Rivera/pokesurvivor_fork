@@ -1,0 +1,451 @@
+/* ============ bw-menu.css: Black/White main menu (PokeSwarm) ============
+ * The main menu, the top bar (coins, Poke Balls, Master Balls) and the bottom bar
+ * (credits, run stats). Loaded after style.css; every rule is scoped to these
+ * elements, so the other screens keep the old look until their own reskin.
+ * Sizes are in mockup pixels times --u: the mockup is 1920x1080
+ * (assets/ui/Main Screen Mockup.png), scaled to fit the window.
+ */
+@font-face {
+  font-family: 'PokeBW';
+  src: url('../assets/fonts/pokemon-b-w.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'Korataki';
+  src: url('../assets/fonts/Korataki%20W01%20ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-display: block;
+}
+
+:root {
+  --u: min(calc(100vw / 1920), calc(100dvh / 1080));
+  --bw-panel: calc(535 * var(--u));
+  --bw-charcoal: #181818;
+  --bw-line: #29ceff;
+  --bw-sub: #8cfff7;
+  --bw-sub-sel: #ffffff;
+  --bw-grid: rgba(16, 24, 33, 0.7);
+  --bw-grid-line: rgba(41, 206, 255, 0.1);
+  --bw-fade: calc(360 * var(--u));
+  --bw-title: #fff000;
+  --bw-title-shade: #8f8500;
+  --bw-ink-shadow: #00213a;
+}
+
+/* ---------- main menu: live overworld on the left, grid panel on the right ---------- */
+#scr-menu {
+  display: block;
+  padding: 0;
+  animation: none;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+}
+#scr-menu.hidden {
+  display: none;
+}
+.bw-panel {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--bw-panel);
+  display: flex;
+  flex-direction: column;
+  padding: calc(49 * var(--u)) 0 calc(43 * var(--u));
+  isolation: isolate;
+  animation: bw-slide 0.12s ease-out;
+}
+/* The grid (generated, no image). It starts solid a little left of the Play row and fades out
+   over --bw-fade toward the centre of the screen. */
+.bw-panel::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: calc(13 * var(--u) - var(--bw-fade));
+  background-color: var(--bw-grid);
+  background-image:
+    linear-gradient(90deg, var(--bw-grid-line) max(1px, calc(2 * var(--u))), transparent 0),
+    linear-gradient(var(--bw-grid-line) max(1px, calc(2 * var(--u))), transparent 0);
+  background-size: calc(16 * var(--u)) calc(16 * var(--u));
+  background-position: right top;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--bw-fade));
+  mask-image: linear-gradient(90deg, transparent, #000 var(--bw-fade));
+  pointer-events: none;
+}
+@keyframes bw-slide {
+  from {
+    transform: translateX(calc(48 * var(--u)));
+    opacity: 0.4;
+  }
+}
+.bw-title {
+  margin: calc(56 * var(--u)) 0 0 calc(36 * var(--u));
+  font-family: 'Korataki', 'PokeBW', sans-serif;
+  font-weight: 800;
+  font-size: calc(50 * var(--u));
+  line-height: 1;
+  color: var(--bw-title);
+  text-shadow: 0 calc(4 * var(--u)) 0 var(--bw-title-shade);
+  white-space: nowrap;
+}
+/* The rows sit centred in the space left under the title. */
+.bw-list {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(7 * var(--u));
+}
+
+/* Rows: the row art scaled whole (it is drawn at the row's mockup size, tools/make_menu_rows.py), running off the right edge.
+   The highlight swaps instantly, no transition: the cursor must feel snappy. */
+.bw-row {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: calc(88 * var(--u));
+  margin: 0 0 0 calc(77 * var(--u));
+  padding: calc(12 * var(--u)) calc(32 * var(--u)) calc(12 * var(--u)) calc(54 * var(--u));
+  border: 0;
+  background: url('../assets/ui/menu/row.png') no-repeat 0 0 / 100% 100%;
+  image-rendering: pixelated;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: max(calc(30 * var(--u)), 13px);
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--bw-ink-shadow);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bw-row small {
+  display: block;
+  margin-top: calc(4 * var(--u));
+  font-size: max(calc(19 * var(--u)), 10px);
+  color: var(--bw-sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bw-row small.gold {
+  color: var(--gold);
+}
+.bw-row.sel {
+  background-image: url('../assets/ui/menu/row-sel.png');
+}
+.bw-row.sel small:not(.gold) {
+  color: var(--bw-sub-sel);
+}
+.bw-row:focus-visible {
+  outline: none;
+}
+.bw-row.play {
+  height: calc(152 * var(--u));
+  margin-left: calc(33 * var(--u));
+  padding-left: calc(62 * var(--u));
+  background-image: url('../assets/ui/menu/play.png');
+  font-size: max(calc(52 * var(--u)), 18px);
+}
+.bw-row.play small {
+  font-size: max(calc(22 * var(--u)), 11px);
+}
+.bw-row.play.sel {
+  background-image: url('../assets/ui/menu/play-sel.png');
+}
+
+/* ---------- top bar: charcoal with a cyan line that steps down over the panel ---------- */
+#topbar {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(46 * var(--u));
+  min-height: 20px;
+  gap: 0;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 calc(24 * var(--u)) 0 0;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+}
+#topbar.hidden {
+  display: none;
+}
+#topbar::before,
+#topbar::after,
+#botbar::before,
+#botbar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+/* The cyan layer peeks out 2 mockup pixels below the charcoal one: that is the line. */
+#topbar::before {
+  background: var(--bw-line);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    calc(100% - 521 * var(--u)) 100%,
+    calc(100% - 564 * var(--u)) calc(34 * var(--u)),
+    0 calc(34 * var(--u))
+  );
+}
+#topbar::after {
+  background: var(--bw-charcoal);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(44 * var(--u)),
+    calc(100% - 521 * var(--u)) calc(44 * var(--u)),
+    calc(100% - 564 * var(--u)) calc(32 * var(--u)),
+    0 calc(32 * var(--u))
+  );
+}
+/* Only the three counters stay; sound, news, fullscreen and sign out live in Settings. */
+#topbar #user-pill,
+#topbar #btn-news,
+#topbar #btn-support,
+#topbar #btn-sound,
+#topbar #btn-full,
+#topbar #btn-settings,
+#topbar #btn-logout {
+  display: none;
+}
+#topbar .pill {
+  width: calc(162 * var(--u));
+  min-width: 64px;
+  padding: 0;
+  gap: calc(10 * var(--u));
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: max(calc(24 * var(--u)), 12px);
+  font-weight: 400;
+  color: #fff;
+  text-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 #000;
+}
+#topbar .pill .pix,
+#topbar .pill .coin {
+  width: auto;
+  height: max(calc(26 * var(--u)), 14px);
+}
+#topbar .pill .coin {
+  width: max(calc(26 * var(--u)), 14px);
+}
+.guest-note {
+  align-self: flex-start;
+  margin-right: auto;
+  padding-left: calc(16 * var(--u));
+  line-height: max(calc(32 * var(--u)), 14px);
+  font-size: max(calc(18 * var(--u)), 10px);
+  color: #ff8a9a;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.guest-note.hidden {
+  display: none;
+}
+
+/* ---------- bottom bar: credits on the left, run stats under the panel ---------- */
+#botbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  height: calc(43 * var(--u));
+  min-height: 18px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  padding: 0 calc(24 * var(--u)) 0 0;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  pointer-events: none;
+}
+#botbar.hidden {
+  display: none;
+}
+#botbar::before {
+  background: var(--bw-line);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 582 * var(--u)) 0,
+    calc(100% - 538 * var(--u)) calc(12 * var(--u)),
+    100% calc(12 * var(--u)),
+    100% 100%,
+    0 100%
+  );
+}
+#botbar::after {
+  background: var(--bw-charcoal);
+  clip-path: polygon(
+    0 calc(2 * var(--u)),
+    calc(100% - 582 * var(--u)) calc(2 * var(--u)),
+    calc(100% - 538 * var(--u)) calc(14 * var(--u)),
+    100% calc(14 * var(--u)),
+    100% 100%,
+    0 100%
+  );
+}
+#menu-stats {
+  line-height: max(calc(29 * var(--u)), 14px);
+  font-size: max(calc(18 * var(--u)), 10px);
+  color: var(--bw-sub);
+  white-space: nowrap;
+}
+#menu-stats b {
+  font-weight: 400;
+  color: #fff;
+}
+#credits-line {
+  bottom: 0;
+  left: calc(16 * var(--u));
+  max-width: calc(100% - var(--bw-panel) - 48 * var(--u));
+  line-height: max(calc(41 * var(--u)), 16px);
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-size: max(calc(17 * var(--u)), 10px);
+  color: rgba(140, 255, 247, 0.75);
+  text-shadow: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- small screens ---------- */
+/* Short landscape (phones): no subtitles on the plain rows, so every row fits. */
+@media (max-height: 450px) {
+  .bw-row:not(.play) small {
+    display: none;
+  }
+}
+/* Portrait: the panel takes the whole width; the credits keep the bottom bar. */
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --u: min(calc(100dvh / 1080), calc(100vw / 560));
+    --bw-panel: 100vw;
+  }
+  .bw-panel::before {
+    left: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  #menu-stats {
+    display: none;
+  }
+  #credits-line {
+    max-width: calc(100% - 32 * var(--u));
+  }
+}
+
+/* ---------- loading and "press to start" screens: the menu's title and row fonts ---------- */
+.boot-in h1 {
+  font-family: 'Korataki', 'PokeBW', sans-serif;
+  font-weight: 800;
+  font-size: clamp(40px, 8vw, 64px);
+  line-height: 1;
+  color: var(--bw-title);
+  text-shadow: 0 4px 0 var(--bw-title-shade);
+  margin-bottom: 16px;
+}
+.boot-in p {
+  font-family: 'PokeBW', 'Pixelify', monospace;
+}
+
+/* ---------- region select: cards slide out from under the panel over a dimmed overworld ----------
+   The layer sits behind the panel and the bars, so those stay bright. Open and close are class toggles
+   on #rg; each card is delayed by its index (--i) so the list cascades. Locked regions are dimmed and inert. */
+.rg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rg-dim {
+  position: absolute;
+  inset: 0; /* the bars sit above it (z 25), and it fills the steps in their shape */
+  z-index: 0;
+  background: rgba(0, 6, 16, 0.62);
+  opacity: 0;
+  transition: opacity 0.12s ease-in;
+}
+.rg.open .rg-dim {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+.rg-cards {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--bw-panel) + 10 * var(--u));
+  z-index: 2; /* above the panel's grid fade, so the cards rest clean */
+  /* a wall at the cards' right edge: they slide out from behind it, as if from under the panel */
+  clip-path: inset(-20px 0 -20px -100vw);
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+  transform: translateY(-50%);
+}
+.rg-card {
+  appearance: none;
+  display: flex;
+  align-items: baseline;
+  gap: calc(10 * var(--u));
+  box-sizing: border-box;
+  width: calc(408 * var(--u));
+  height: calc(64 * var(--u));
+  padding: calc(14 * var(--u)) calc(32 * var(--u)) 0;
+  border: 0;
+  background: url('../assets/ui/menu/region.png') no-repeat 0 0 / 100% 100%;
+  image-rendering: pixelated;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-size: max(calc(30 * var(--u)), 13px);
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--bw-ink-shadow);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(calc(70 * var(--u)));
+  transition:
+    transform 0.12s ease-in,
+    opacity 0.12s ease-in;
+  transition-delay: calc((9 - var(--i)) * 12ms);
+  pointer-events: none;
+}
+.rg.open .rg-card {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.17s cubic-bezier(0.15, 0.8, 0.3, 1),
+    opacity 0.14s ease-out;
+  transition-delay: calc(var(--i) * 24ms);
+  pointer-events: auto;
+}
+.rg-card small {
+  font-size: max(calc(15 * var(--u)), 9px);
+  color: var(--bw-sub);
+  text-shadow: none;
+}
+.rg-card.sel {
+  background-image: url('../assets/ui/menu/region-sel.png');
+}
+.rg-card.sel small {
+  color: var(--bw-sub-sel);
+}
+.rg.open .rg-card.locked {
+  opacity: 0.35;
+  cursor: default;
+}
+/* While the cards are out, the other rows dim so they read as unavailable; Play stays lit. */
+#scr-menu.rg-on .bw-row:not(.play) {
+  opacity: 0.4;
+  cursor: default;
+}
+.bw-row {
+  transition: opacity 0.2s ease-out;
+}

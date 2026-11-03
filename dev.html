@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="robots" content="noindex" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>PokéSurvivor Redux</title>
+    <title>PokeSwarm</title>
     <meta
       name="description"
       content="Sobrevive a hordas de Pokémon con tu compañero en este fan game gratis para navegador y móvil: 966 Pokémon, shinies y cooperativo con amigos. Sin descargas ni anuncios."
@@ -47,7 +47,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="PokéSurvivor" />
+    <meta name="apple-mobile-web-app-title" content="PokeSwarm" />
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
     <link rel="preload" href="assets/fonts/PixelifyPS-400.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="assets/fonts/PixelifyPS-700.ttf" as="font" type="font/ttf" crossorigin />
@@ -92,6 +92,11 @@
     </script>
     <!-- seo:end -->
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/bw-menu.css" />
+    <link rel="stylesheet" href="css/bw-team.css" />
+    <link rel="stylesheet" href="css/bw-inventory.css" />
+    <link rel="stylesheet" href="css/bw-upgrades.css" />
+    <link rel="stylesheet" href="css/bw-settings.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -186,46 +191,35 @@
 
     <!-- ====== Menú principal ====== -->
     <section id="scr-menu" class="scr hidden">
-      <div class="menu-left">
-        <div class="logo menu-logo redux">
-          <div class="t1">PokéSurvivor<span class="redux-stamp">REDUX</span></div>
-          <div class="redux-sub">
-            <span>R</span><span>e</span><span>m</span><span>a</span><span>s</span><span>t</span><span>e</span
-            ><span>r</span><span>e</span><span>d</span><span>&nbsp;</span><span>C</span><span>o</span><span>l</span
-            ><span>l</span><span>e</span><span>c</span><span>t</span><span>o</span><span>r</span><span>'</span
-            ><span>s</span><span>&nbsp;</span><span>R</span><span>e</span><span>d</span><span>&nbsp;</span><span>E</span
-            ><span>d</span><span>i</span><span>t</span><span>i</span><span>o</span><span>n</span>
-          </div>
-        </div>
+      <!-- Region select: cards that slide out from under the panel over a dimmed overworld (menu.js openRegionPicker) -->
+      <div class="rg" id="rg">
+        <div class="rg-dim"></div>
+        <div class="rg-cards" id="rg-cards"></div>
       </div>
-      <div class="menu-right">
-        <div class="box">
-          <div class="menu-list">
-            <button class="menu-item play" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
-            <button class="menu-item" data-go="team">Team<small id="menu-dex-count"></small></button>
-            <button class="menu-item" data-go="inventory">Inventory<small>Team items for your run</small></button>
-            <button class="menu-item" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
-            <button class="menu-item" data-go="goals">
-              Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
-            </button>
-            <button class="menu-item" data-go="friends">
-              Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small>
-            </button>
-            <button class="menu-item" data-go="rank">Ranking<small>Quién aguanta más</small></button>
-            <button class="menu-item" data-go="settings">
-              Ajustes<small>Sonido, gráficos, controles y cuenta</small>
-            </button>
-          </div>
-        </div>
-        <div class="box" style="padding: 14px 18px">
-          <div id="menu-stats" style="font-size: 14px; color: var(--muted)"></div>
+      <div class="bw-panel">
+        <h1 class="bw-title">PokeSwarm</h1>
+        <div class="bw-list">
+          <button class="bw-row play sel" data-go="play">Jugar<small>Entra en la mazmorra</small></button>
+          <button class="bw-row" data-go="team">Team<small id="menu-dex-count"></small></button>
+          <button class="bw-row" data-go="inventory">Inventory<small>Team items for your run</small></button>
+          <button class="bw-row" data-go="gacha">Shop<small>Pokémon, team items and upgrades</small></button>
+          <button class="bw-row" data-go="goals">
+            Misiones<small id="menu-goals-sub">Misiones, logros y perfil</small>
+          </button>
+          <button class="bw-row" data-go="friends">
+            Amigos<small id="menu-friends-sub">Juega en grupo, hasta 4</small>
+          </button>
+          <button class="bw-row" data-go="rank">Ranking<small>Quién aguanta más</small></button>
+          <button class="bw-row" data-go="settings">Ajustes<small>Sonido, gráficos, controles y cuenta</small></button>
         </div>
       </div>
     </section>
 
     <div id="topbar" class="topbar hidden">
+      <span id="guest-note" class="guest-note hidden">Guest mode: progress is not saved</span>
       <div class="pill"><span class="coin"></span><span id="coins">0</span></div>
-      <div class="pill" id="tickets-pill" title="Pokeballs and Master Balls"></div>
+      <div class="pill" id="tickets-pill" title="Poke Balls"></div>
+      <div class="pill" id="master-pill" title="Master Balls"></div>
       <div class="pill" id="user-pill"></div>
       <button id="btn-news" class="btn small ghost news-btn" title="Novedades"></button>
       <button id="btn-support" class="btn small gold hidden" title="Apoyar el proyecto"></button>
@@ -234,6 +228,7 @@
       <button id="btn-settings" class="btn small ghost" title="Ajustes"></button>
       <button id="btn-logout" class="btn small ghost">Salir</button>
     </div>
+    <div id="botbar" class="botbar hidden"><span id="menu-stats"></span></div>
     <div id="sound-panel" class="box sound-panel hidden"></div>
     <div id="credits-line" class="credits-line hidden">
       Proyecto de fan sin ánimo de lucro · Sprites: SpriteCollab (CC BY-NC 4.0) · Pokémon © Nintendo/Creatures/GAME
@@ -279,21 +274,25 @@
       </div>
     </section>
 
-    <!-- ====== Ajustes ====== -->
-    <section id="scr-settings" class="scr dim hidden">
-      <div class="box settings">
-        <div class="row between">
-          <h2>Ajustes</h2>
-          <button class="btn small ghost" id="set-close">Cerrar</button>
+    <!-- ====== Settings (full screen, css/bw-settings.css; js/ui/settings-ui.js) ====== -->
+    <section id="scr-settings" class="scr hidden">
+      <div class="st">
+        <div class="st-wrap">
+          <nav class="st-cats" id="set-tabs">
+            <button type="button" class="st-cat" data-t="gfx">Graphics</button>
+            <button type="button" class="st-cat" data-t="ctl">Controls</button>
+            <button type="button" class="st-cat" data-t="sound">Sound</button>
+            <button type="button" class="st-cat" data-t="acc">Account</button>
+            <button type="button" class="st-cat" data-t="about">About</button>
+          </nav>
+          <div class="st-main">
+            <div class="st-body" id="set-body"></div>
+            <aside class="st-hint" id="set-hint"></aside>
+          </div>
         </div>
-        <div class="tabs" id="set-tabs">
-          <button class="gen-tab" data-t="sound">Sonido</button>
-          <button class="gen-tab" data-t="gfx">Gráficos</button>
-          <button class="gen-tab" data-t="ctl">Controles</button>
-          <button class="gen-tab" data-t="acc">Cuenta</button>
-          <button class="gen-tab" data-t="about">Acerca de</button>
+        <div class="st-bar">
+          <button class="bw-btn" id="set-close">Back<img src="assets/ui/team/back-x.png" alt="" /></button>
         </div>
-        <div id="set-body" class="set-body"></div>
       </div>
     </section>
 
@@ -366,7 +365,7 @@
     </section>
     <div id="boot" class="boot">
       <div class="boot-in">
-        <h1>PokéSurvivor</h1>
+        <h1>PokeSwarm</h1>
         <p>Juego de supervivencia con Pokémon, gratis en el navegador y en el móvil.</p>
         <p class="boot-ld">Cargando…</p>
       </div>
@@ -396,9 +395,9 @@
     </script>
     <div id="tap-start" class="tapstart hidden">
       <div class="boot-in">
-        <h1>PokéSurvivor</h1>
-        <p>Sobrevive a las hordas con tu compañero Pokémon</p>
-        <p class="tap-blink">Pulsa para empezar</p>
+        <h1>PokeSwarm</h1>
+        <p>Survive the swarm</p>
+        <p class="tap-blink">Press to Start</p>
       </div>
     </div>
     <noscript>
@@ -594,18 +593,16 @@
 
     <!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
     <section id="scr-inventory" class="scr dim hidden">
-      <div class="box inv">
-        <div class="row between">
-          <h2>Inventory <span id="inv-count" class="sub" style="font-size: 15px"></span></h2>
-          <button class="btn small ghost" id="inv-back" data-back>Back</button>
-        </div>
-        <p class="sub" style="margin: 2px 0 10px">
-          Team items you equip here start every run. Gym leaders and bosses can drop new ones.
-        </p>
+      <div class="inv">
+        <div class="inv-head"><b>Inventory</b><span id="inv-count"></span></div>
+        <p class="inv-sub">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
         <div class="inv-main">
           <aside class="inv-slots" id="inv-slots"></aside>
-          <div class="grid inv-grid" id="inv-grid"></div>
-          <aside class="panel inv-detail" id="inv-detail"></aside>
+          <div class="inv-grid" id="inv-grid"></div>
+          <aside class="inv-detail" id="inv-detail"></aside>
+        </div>
+        <div class="inv-foot">
+          <button class="bw-btn" id="inv-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
         </div>
       </div>
     </section>
@@ -643,50 +640,34 @@
           <aside class="ros-detail" id="ros-detail"></aside>
         </div>
         <div class="ros-bar">
-          <span class="ros-tip"
-            >Click a Pokémon to preview it and a slot to target it. Put it in the highlighted slot with the button, a
-            double-click, or by dragging it onto a slot. Double-click a slot to inspect its Pokémon.</span
-          >
-          <button class="btn" id="ros-back" data-back>Back</button>
-          <button class="btn gold" id="ros-commit" data-sfx="confirm" disabled>Commit Team</button>
+          <button class="bw-btn" id="ros-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+          <button class="bw-btn" id="ros-commit" data-sfx="confirm" disabled>
+            Commit<img src="assets/ui/team/commit-arrow.png" alt="" />
+          </button>
         </div>
-      </div>
-    </section>
-
-    <!-- ====== Region select (before a run) ====== -->
-    <section id="scr-region" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Choose a region</h2>
-          <button class="btn small ghost" id="region-back" data-back>Volver</button>
-        </div>
-        <p class="sub" style="margin: 2px 0 10px">
-          Only Pokemon from the region you pick (and earlier regions) will appear this run.
-        </p>
-        <div class="region-grid" id="region-grid"></div>
       </div>
     </section>
 
     <!-- ====== Mejoras ====== -->
     <section id="scr-upgrades" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Mejoras</h2>
-          <button class="btn small ghost" id="upg-back">Volver</button>
-        </div>
+      <div class="upgw">
         <div class="upg-head">
-          <canvas id="upg-stage" class="stage" width="120" height="96"></canvas>
-          <div class="grow">
-            <p class="sub" style="margin: 0">
-              Cada Pokémon tiene sus propias mejoras: sólo cuentan cuando juegas con él.
-            </p>
-            <div class="row" style="margin-top: 8px">
-              <label for="upg-mon" style="margin: 0">Pokémon</label>
-              <select id="upg-mon" class="field" style="width: auto; min-width: 220px"></select>
-            </div>
-          </div>
+          <b id="upg-name" translate="no"></b><span id="upg-points" title="Upgrade points">0 / 40</span>
         </div>
-        <div class="upg" id="upg-list"></div>
+        <div class="upg-main">
+          <div class="upg-cols" id="upg-cols"></div>
+        </div>
+        <div class="upg-bot">
+          <span class="upg-step">
+            <button class="bw-btn" type="button" id="upg-prev" title="Previous Pokémon (Q)">
+              Prev<img src="assets/ui/team/arrow.png" alt="" />
+            </button>
+            <button class="bw-btn" type="button" id="upg-next" title="Next Pokémon (E)">
+              Next<img src="assets/ui/team/arrow.png" alt="" />
+            </button>
+          </span>
+          <button class="bw-btn" id="upg-back">Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+        </div>
       </div>
     </section>
 
@@ -883,6 +864,7 @@
     <script defer src="js/data/upgrades.js"></script>
     <script defer src="js/data/items.js"></script>
     <script defer src="js/data/ground-items.js"></script>
+    <script defer src="js/data/pickup-sprites.js"></script>
     <script defer src="js/data/pokesprite-index.js"></script>
     <script defer src="js/data/missions.js"></script>
     <script defer src="js/data/achievements.js"></script>

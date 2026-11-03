@@ -1,0 +1,447 @@
+/* ============ bw-team.css: Black/White Team screen ============
+ * The whole Team screen: the diagonal background, the team slots on the left (panel_round / panel_rect
+ * over panel_blank), the search row and the tall party cards in the middle (art made by
+ * tools/make_party_cards.py), the detail column on the right and the bottom bar. The top bar is the
+ * main menu's (bw-menu.css). Scoped to #scr-roster, so the separate Pokedex screen keeps its own cells.
+ */
+#scr-roster .ros-center {
+  --bw-field: #1a2733;
+  --bw-field-edge: #424242;
+  --bw-field-focus: #29ceff;
+}
+
+/* Search box, dropdowns, sort direction and Clear: a lighter step of the grid, square like the pixel art. */
+#scr-roster .ctrl-row .field,
+#scr-roster .ctrl-row .btn {
+  background-color: var(--bw-field);
+  border: 2px solid var(--bw-field-edge);
+  border-radius: 0;
+  box-shadow: none;
+  color: #fff;
+}
+#scr-roster .ctrl-row .field:focus,
+#scr-roster .ctrl-row .btn:hover,
+#scr-roster .ctrl-row .btn:focus-visible {
+  border-color: var(--bw-field-focus);
+  outline: none;
+}
+#scr-roster .ctrl-row .field::placeholder {
+  color: #8a99a8;
+}
+#scr-roster .ctrl-row select.field option {
+  background: var(--bw-field);
+}
+
+/* Fixed-size cards: the PNG is drawn 1:1, so the row count changes, never the card. */
+#ros-grid {
+  grid-template-columns: repeat(auto-fill, 100px);
+  justify-content: center;
+}
+#ros-grid .cell {
+  box-sizing: border-box;
+  width: 100px;
+  height: 136px;
+  padding: 14px 0 0;
+  overflow: hidden;
+  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  background: url('../assets/ui/team/cell.png') no-repeat 0 0 / 100px 136px;
+  image-rendering: pixelated;
+  /* The card's outline clips everything, so a sprite never shows past the cut corners. A clip shape,
+     not a mask image: Chrome blocks mask images on file://. */
+  clip-path: polygon(20px 2px, 80px 2px, 98px 20px, 98px 112px, 80px 132px, 20px 132px, 2px 112px, 2px 20px);
+  transition: transform 0.08s;
+}
+/* The frame is drawn again over the sprite: whatever reaches the inner edge goes under the border. */
+#ros-grid .cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: url('../assets/ui/team/cell-frame.png') no-repeat 0 0 / 100px 136px;
+  pointer-events: none;
+}
+/* The highlight swaps instantly, like the main menu cursor. */
+#ros-grid .cell.on {
+  background-image: url('../assets/ui/team/cell-sel.png');
+}
+#ros-grid .cell.on::after {
+  background-image: url('../assets/ui/team/cell-sel-frame.png');
+}
+#ros-grid .cell:hover,
+#ros-grid .cell.locked:hover {
+  border: 0;
+  background-color: transparent;
+}
+/* Sprite a little left of centre, clear of the name on the right. */
+#ros-grid .cell canvas {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0 -4px;
+}
+/* Number and badges sit inside the cut corners. */
+#ros-grid .cell .no,
+#ros-grid .cell .badge-r,
+#ros-grid .cell .rarity-ball {
+  z-index: 3;
+}
+#ros-grid .cell .no {
+  top: 7px;
+  left: 22px;
+}
+#ros-grid .cell .badge-r {
+  top: 7px;
+  right: 20px;
+}
+/* The name runs up the right side, read bottom to top like a spine (a 90 degree turn keeps pixel text crisp).
+   It sits behind the sprite. */
+#ros-grid .cell b {
+  position: absolute;
+  z-index: 0;
+  top: 26px;
+  bottom: 26px;
+  right: 9px;
+  padding: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+/* Rarity ball on the bottom edge, centred between the cut corners. */
+#ros-grid .cell .rarity-ball {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- the screen: diagonal gradient, room left for the main menu's top bar ---------- */
+#scr-roster {
+  background: linear-gradient(135deg, #04060a 12%, #0a1520 50%, #04060a 88%);
+}
+#scr-roster .ros {
+  padding-top: calc(max(calc(46 * var(--u)), 20px) + 8px);
+}
+#scr-roster .ros-main {
+  grid-template-columns: 408px minmax(0, 1fr) 380px;
+}
+
+/* ---------- left: the 6 team slots, floating (no column background), drawn at the cards' 2 px scale
+   (tools/make_party_cards.py) ---------- */
+.ros-team {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* panel_blank is the slot's own background; the panel art sits on ::before, so an empty slot can dim
+   only the panel and let the stripes show through. */
+.ros-slot {
+  position: relative;
+  flex: none;
+  width: 384px;
+  height: 146px;
+  isolation: isolate;
+  cursor: pointer;
+  background: url('../assets/ui/team/slot-blank.png') no-repeat 0 0 / 384px 146px;
+  image-rendering: pixelated;
+}
+.ros-slot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('../assets/ui/team/slot-rect.png') no-repeat 0 0 / 384px 146px;
+}
+.ros-slot.lead::before {
+  background-image: url('../assets/ui/team/slot-round.png');
+}
+.ros-slot.on::before {
+  background-image: url('../assets/ui/team/slot-rect-sel.png');
+}
+.ros-slot.lead.on::before {
+  background-image: url('../assets/ui/team/slot-round-sel.png');
+}
+.ros-slot.drop::before {
+  background-image: url('../assets/ui/team/slot-rect-swap.png');
+}
+.ros-slot.lead.drop::before {
+  background-image: url('../assets/ui/team/slot-round-swap.png');
+}
+.ros-slot.empty::before {
+  opacity: 0.35;
+}
+/* Sprite on the left, inside the border. */
+.ros-slot canvas {
+  position: absolute;
+  left: 18px;
+  top: 13px;
+  width: 120px;
+  height: 120px;
+}
+/* Name left-justified in the rest of the slot, its bottom on the slot's centre line; the type chips under it. */
+.ros-slot .rinfo {
+  position: absolute;
+  left: 144px;
+  right: 21px;
+  top: 12px;
+  bottom: 12px;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  justify-items: start;
+  min-width: 0;
+}
+.ros-slot .rinfo b {
+  align-self: end;
+  max-width: 100%;
+  font-size: 24px;
+  line-height: 1.1;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ros-slot.empty .rinfo b {
+  color: var(--muted);
+  font-weight: 400;
+}
+.ros-slot .rtypes {
+  align-self: start;
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ros-slot .rtypes .type {
+  margin: 0;
+  padding: 2px 9px;
+  font-size: 15px;
+}
+/* The shiny icon is the Normal / Shiny switch: dim when off. One art pixel in from the corner. */
+.ros-slot .rsh {
+  position: absolute;
+  top: 17px;
+  right: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0.35;
+}
+.ros-slot .rsh.on {
+  opacity: 1;
+}
+/* Upgrade, in the bottom-right corner like the shiny star in the top-right: the label, then the arrow turned up. */
+.ros-slot .rupg {
+  position: absolute;
+  right: 24px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}
+.ros-slot .rupg img {
+  width: 17px; /* half the PNG: 1 px per art pixel, an exact downscale */
+  height: 14px;
+  margin: 0 -1px 0 0;
+  transform: rotate(-90deg);
+  image-rendering: pixelated;
+}
+.ros-slot .rupg:hover,
+.ros-slot .rupg:focus-visible {
+  color: var(--bw-title);
+  outline: none;
+}
+
+/* ---------- right: the detail column, alternating dark and light see-through blues, no buttons ---------- */
+.ros-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px 16px 8px 4px;
+}
+.ros-dh {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.ros-dh b {
+  font-size: 22px;
+}
+.ros-dh span {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.ros-db {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.ros-db > * {
+  flex-shrink: 0;
+}
+.ros-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(0, 33, 57, 0.5);
+}
+.ros-row b {
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--muted);
+}
+.ros-row .rtypes {
+  display: flex;
+  gap: 6px;
+}
+.ros-box {
+  position: relative;
+  padding: 10px 14px;
+  background: rgba(0, 99, 140, 0.35);
+}
+/* BST star rating in the top-left corner of the hexagon box. */
+.ros-bst {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 1;
+}
+.ros-detail .hex-wrap {
+  width: 100%;
+}
+.ros-detail .stat-hex {
+  display: block;
+  width: 88% !important;
+  height: auto !important;
+  margin: 0 auto;
+}
+.ros-mbox {
+  flex: 1 0 auto;
+}
+.ros-mh {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ros-moves {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  align-content: start;
+}
+.ros-mv {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.ros-mv span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ros-mv.start {
+  color: var(--gold);
+}
+@media (max-height: 820px) {
+  .ros-detail .stat-hex {
+    width: 66% !important;
+  }
+}
+
+/* ---------- bottom bar: the top bar's charcoal and cyan line, one thickness all the way across ---------- */
+.ros-bar {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  height: max(calc(46 * var(--u)), 46px);
+  padding: 0 24px;
+  background: var(--bw-charcoal);
+  border-top: max(1px, calc(2 * var(--u))) solid var(--bw-line);
+}
+/* Buttons: icon_cancel_narrow at 1:1, label on the left, icon right-justified. */
+.bw-btn {
+  appearance: none;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 134px;
+  height: 36px;
+  padding: 0 8px 0 14px;
+  border: 0;
+  background: url('../assets/ui/team/btn.png') no-repeat 0 0 / 134px 36px;
+  image-rendering: pixelated;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}
+.bw-btn img {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+.bw-btn:hover:not(:disabled),
+.bw-btn:focus-visible {
+  background-image: url('../assets/ui/team/btn-sel.png');
+  outline: none;
+}
+.bw-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- narrow windows: one column, the slots in a sideways strip ---------- */
+@media (max-width: 820px) {
+  #scr-roster .ros-main {
+    grid-template-columns: 1fr;
+    grid-auto-rows: max-content; /* the scrolling column must not squash the slot strip */
+    overflow-y: auto;
+  }
+  .ros-team {
+    flex-direction: row;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .ros-center {
+    min-height: 70vh;
+  }
+  .ros-detail {
+    min-height: 80vh;
+    padding: 8px;
+  }
+}

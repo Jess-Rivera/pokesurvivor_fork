@@ -402,6 +402,7 @@ G.MoveSim = (() => {
   const repoCanGo = (def, o) =>
     def.delivery.motion !== 'repositions' ||
     (!insts.some((i) => i.dash && i.cast.owner === o) &&
+      !(o.dodgeT > 0) && // nor the player's own dodge (Jess 2026-11-02)
       !cms.some((m) => m.o === o && m.part === 'movement' && m.type === 'rooted') &&
       (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 

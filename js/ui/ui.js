@@ -29,7 +29,6 @@ G.UI = (() => {
     'scr-goals',
     'scr-bond',
     'scr-mod',
-    'scr-region',
     'scr-inventory',
   ];
 
@@ -47,9 +46,10 @@ G.UI = (() => {
     return !$(id).classList.contains('hidden');
   }
 
-  /** Top bar (coins, user, sound) only outside the runs. */
+  /** Top bar (coins, balls) and bottom bar (credits, stats) only outside the runs. */
   function chrome(on) {
     $('topbar').classList.toggle('hidden', !on);
+    $('botbar').classList.toggle('hidden', !on);
     $('credits-line').classList.toggle('hidden', !on);
     if (!on) $('sound-panel').classList.add('hidden');
     if (on) refreshCoins();
@@ -59,7 +59,8 @@ G.UI = (() => {
     const s = G.DB.save;
     $('coins').textContent = s ? s.coins.toLocaleString('es') : '0';
     const t = (s && s.tickets) || { t1: 0, t10: 0 };
-    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1} &nbsp;${G.Icons.html('ball4', 24)} ${t.t10}`;
+    $('tickets-pill').innerHTML = `${G.Icons.html('ball', 24)} ${t.t1}`;
+    $('master-pill').innerHTML = `${G.Icons.html('ball4', 24)} ${t.t10}`;
     // Sync dot: green = saved in the cloud, yellow = saving,
     // red = no connection (saved locally and uploaded on return).
     const st = G.DB.guest ? 'guest' : G.DB.syncState;
@@ -149,7 +150,7 @@ G.UI = (() => {
 
   // ---------------- interface sound ----------------
 
-  const CLICKABLE = '.btn, .menu-item, .tab, .chip, .card, .cell:not(.locked), .answer, .gen-tab';
+  const CLICKABLE = '.btn, .menu-item, .bw-row, .tab, .chip, .card, .cell:not(.locked), .answer, .gen-tab';
   let lastHover = null;
 
   function wireSounds() {

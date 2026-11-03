@@ -28,6 +28,61 @@ G.Pickups = (() => {
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
   const TICKET_RATE = 1 / 400; // (was 1/260; rarer since 2026-10-10)
 
+  // Sprite pickups (data/pickup-sprites.js, 16 px art drawn at 1.5 world units per art pixel): the coin is the
+  // ringed_gold coin, small XP the aqua gem and big XP the violet gem. Until a sheet has loaded they keep their drawn shapes.
+  const SPR = { coin: { gold: true, size: 24 }, xp: { row: 'aqua', size: 24 }, xpBig: { row: 'violet', size: 24 } };
+  const sheetImgs = {};
+  function sheetImg(src) {
+    let e = sheetImgs[src];
+    if (!e) {
+      e = sheetImgs[src] = { ready: false, img: new Image() };
+      e.img.onload = () => {
+        e.ready = true;
+      };
+      e.img.src = src;
+    }
+    return e.ready ? e.img : null;
+  }
+  /** Draws a pickup's spinning sprite centred on (x, y); false when it has none or its sheet is not loaded yet. */
+  function drawSprite(ctx, p, x, y) {
+    const S = SPR[p.kind],
+      D = G.PickupSprites;
+    if (!S || !D) return false;
+    let sheet, ms, n, sy;
+    if (S.gold) {
+      sheet = D.gold;
+      n = sheet.n;
+      ms = sheet.ms;
+      sy = sheet.y;
+    } else {
+      sheet = D.sheets.spin16;
+      n = sheet.n;
+      ms = sheet.ms;
+      sy = D.rows.indexOf(S.row) * (sheet.cell + D.pad);
+    }
+    const img = sheetImg(sheet.src);
+    if (!img) return false;
+    // p.t runs 4 per second from a random start, so the coins and gems are out of step and the animation pauses with the game.
+    const t = p.t * 250,
+      per = ms[0] * n; // every frame of these rows lasts the same
+    const f = Math.floor((t % per) / ms[0]) % n;
+    const sm = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      img,
+      f * (sheet.cell + D.pad),
+      sy,
+      sheet.cell,
+      sheet.cell,
+      x - S.size / 2,
+      y - S.size / 2,
+      S.size,
+      S.size
+    );
+    ctx.imageSmoothingEnabled = sm;
+    return true;
+  }
+
   function clear() {
     list = [];
   }
@@ -186,13 +241,17 @@ G.Pickups = (() => {
       ctx.ellipse(p.x, p.y, r * 0.9, r * 0.35, 0, 0, 6.2832);
       ctx.fill();
 
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = k.glow;
-      ctx.beginPath();
-      ctx.arc(p.x, y, r * 2, 0, 6.2832);
-      ctx.fill();
+      if (!SPR[p.kind] || !G.PickupSprites) {
+        // The spinning sprites need no glow; the drawn shapes and the other pickups keep it.
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = k.glow;
+        ctx.beginPath();
+        ctx.arc(p.x, y, r * 2, 0, 6.2832);
+        ctx.fill();
+      }
 
       ctx.globalAlpha = 1;
+      if (drawSprite(ctx, p, p.x, y)) continue;
       ctx.fillStyle = k.color;
       if (p.kind === 'xp' || p.kind === 'xpBig') {
         ctx.beginPath();

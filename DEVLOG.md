@@ -437,3 +437,29 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Filed GitHub issues for the last loop-1 gaps: Reflect (Sabrina, blocked on the fields slice) and Smokescreen (Koga, blocked on the accuracy trackers). The two slices still need issues of their own.
 - Pre-merge check: tree clean, main had not moved, check.js harnesses all OK (lint 5 errors, warn-only, unchanged).
 - The imports (Roar, Fissure, Future Sight) are still not feel-tested; that carries over to main.
+
+## 2026-11-02, UI rework starts: Black/White main menu and Team cards (Claude Code, home, fix/ui-upgrade)
+- Decided: every screen moves to a cohesive Black/White look that feels snappy; menus stay HTML/CSS (Pixi only for the in-run canvas, after an fps test). Magnet raised (base 120 px, +20% per upgrade level).
+- Built: main menu to Jess's mockup (css/bw-menu.css, assets/ui/menu, keyboard cursor, new top and bottom bars; extra top bar buttons folded into Settings). Team screen centre (css/bw-team.css): 100x136 party cards made by tools/make_party_cards.py, side names behind the sprite, sprites clipped under the frame, plain blue background.
+- Found: on file:// Chrome blocks CSS mask images (cards vanished; switched to clip-path). A 45 degree name banner was tried and dropped (hidden by the sprite, blurry text).
+- Verified: check.js 30/30, headless menu and Team checks at 4 sizes, no page errors. Next: rest of the Team screen in a new chat.
+
+## 2026-11-02, Team screen and Inventory in the Black/White look (Claude Code, home, fix/ui-upgrade)
+- Built: menu rows recoloured and redrawn in the party card style (tools/make_menu_rows.py, 2 px scale, card blues). Full Team screen (css/bw-team.css): diagonal gradient, menu top bar kept, flat bottom bar (Back, Commit), 384x146 slots and the inventory art made by tools/make_party_cards.py (9-slice keeps the card border; bands redrawn, chevron for panel_round, panel_blank stripes kept in step).
+- Decided (Jess): no buttons in the Team detail column or the Inventory. Team: Enter / double-click / drag puts, right-click or drag to grid frees, shiny via the slot icon, Upgrade on each slot. Inventory: double-click equips, moves or unequips; right-click empties a slot. Controls live in tooltips.
+- Inventory (css/bw-inventory.css): popup in the card frame (border-image on an overlay so the yellow title and bottom bar run under it), slot tiles and item cards from the script.
+- Found: scaling the rip art up thickened the border (redrawn by script instead); the narrow grid squashed the slot strip (fixed with max-content rows).
+- Verified: check.js 30/30, smoke-ui all pass (it now opens Upgrades from a slot), headless Team and Inventory checks on file:// at 4 sizes, no page errors. Not feel-tested yet. Next: Shop, Missions, Settings, one at a time.
+
+## 2026-11-02, Dodge on Space (Claude Code, home, fix/ui-upgrade)
+- Decided (Jess): Space dodges 150 px in 0.5 s along the heading; 2 team charges, own cooldowns (7 s in a 5 to 10 s band) paused during a dodge, 0.2 s gap; no i-frames, the body circle is 20% for 0.3 s instead (every enemy hit test uses it); enemies stay pass-through; ice keeps the dodge speed; rings show recharging charges.
+- Built: Player.DODGE, tryDodge / endDodge / tickDodges and the 4 px sub-steps in player.js; "dodge" action on Space (input.js, Settings label); shared charges and swap end in game.js; move dashes wait during a dodge (move-sim.js). Rules in COMBAT-RULES "Dodge"; changelog line.
+- Found: an empty roster broke the shared-charges line (fixed); a float made 0.5 s last 31 frames (epsilon); prettier rewrote player.js to LF (git stores LF anyway).
+- Verified: check.js 30/30 (E1 harness now expects Space on dodge), smoke-ui passes, headless dodge probe on file://. Not feel-tested yet.
+
+## 2026-11-03, Upgrades restyle, pickup sprites, region select, Settings (Claude Code, home, fix/ui-upgrade)
+- Built: Upgrades popup in Inventory's frame (yellow title bar, blue cards by tools/blue_upgrade_boxes.py, Prev/Next in the bottom bar). Pickups: coin is the ringed gold coin, XP the aqua gem (big XP violet), all cut to 16 px (tools/cut_pickup_gifs.py writes the spin, glint, bounce and collect sheets, spin16, coin16 and js/data/pickup-sprites.js), drawn at 1.5 world units per art pixel, no glow circle.
+- Built: region select (cards slide out under the panel over a dimmed overworld, other rows dim, only Kanto open, Esc or click away closes; card art in tools/make_menu_rows.py) and the full-screen Settings (css/bw-settings.css, five categories, live apply, hint box, language row dropped).
+- Decided (Jess): sprites stay at 2x for now (1x and camera zoom previews only), Pixi before the tileset branch as its own branch after a benchmark, Pokedex is no longer a menu item, Shop waits for the meta progression.
+- Found: the camera is height-bound (MIN_VIEW_H 420) so VIEW_W alone does not zoom; the panel's grid fade drew over the cards (cards now above it, clipped at a wall); the dim stopped below the bar's stepped part (now full screen under the bars); the GIF paints icons on a flat card colour (made transparent).
+- Verified: check.js and smoke-ui pass, headless file:// probes. Region select, Settings and pickups not feel-tested. Left uncommitted: region select, Settings, no-glow pickups.

@@ -1,7 +1,7 @@
 # COMBAT-RULES, general combat rules
 
 - **Role:** The single home for general combat rules (QA-03). Filled in Phase 4 batch B3a from the sources named in each section.
-- **Owns:** Stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects (including trap), damage over time, stat stages (the tracker model).
+- **Owns:** Stats and HP, damage, orthogonal dials, G.Stats, the swap rule, the dodge, status effects (including trap), damage over time, stat stages (the tracker model).
 - **Does not own:** Move data grammar (docs/MOVE-AXIS-SCHEMA.md); move runtime pipeline (docs/current feature planning/combat-architecture.md); per-move rulings (docs/MOVE-INTENT.md); gym and elite encounter rules (BOSS-REWORK.md); tuned numbers (BALANCE.md; current value: see the code file).
 - **Status home:** STATE.md.
 - **Last reconciled:** 2026-10-28 (B3a), against js/core/stats.js, js/data/types.js, js/systems/status.js and js/systems/stages.js.
@@ -61,6 +61,14 @@ Paths: since slice 7b (2026-11-01) there is one move path, the move schema path 
 - [Approved] Every slotted move runs its own independent cooldown, active or not. Only the active group fires. The 35% incoming-wait cap in setActive is removed. (DECISIONS 2026-10-18 Swap rule decided)
 - [Approved] A short hold after swapping stops instant back-and-forth swapping; the swapped-in move fires at once. Length: current value: see js/entities/player.js (SWAP_LOCK). (DECISIONS 2026-10-18 Swap rule decided)
 - [Approved] Bond is reworked in its own branch (Slot Compression + Synergy). The old "fire several moves at once" role is gone once cooldowns are independent. (DECISIONS 2026-10-18 Swap rule decided)
+
+## Dodge
+
+- [Approved] Space (the rebindable "dodge" action) moves you 150 px in 0.5 s (300 px/s) along your heading, or your last heading when standing still. Heading and speed are locked for the dodge; confusion and daze bend the heading at the press only. (Jess 2026-11-02)
+- [Approved] Two charges for the team (a swap never refills them). Each spent charge runs its own cooldown, about 5 to 10 s (current value: js/entities/player.js DODGE). Every dodge cooldown pauses while a dodge runs. The next dodge can start 0.2 s after the last one ends. (Jess 2026-11-02)
+- [Approved] No i-frames. For the first 0.3 s the body circle is 20% of normal; every enemy hit test (shots, contact, hazards, leader shapes) uses that circle, so small shots miss more and narrow gaps fit. The body grows back once it fits where you stand. Walls stop a dodge; solid objects are slid around; enemies stay pass-through as always. (Jess 2026-11-02)
+- [Approved] A dodge that ends on ice keeps 300 px/s until you leave the ice; the keys turn the heading at ice speed. (Jess 2026-11-02)
+- [Approved] Frozen, asleep, flinched, pushed, rooted or carried by a move's dash: no dodge. A push, flinch, freeze or sleep cancels a dodge in progress (the charge stays spent). A move's dash waits while you dodge. (Jess 2026-11-02)
 
 ## Status effects
 

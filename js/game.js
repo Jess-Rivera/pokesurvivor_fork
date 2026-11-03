@@ -184,6 +184,10 @@ G.Game = (() => {
     roster.forEach((f) => {
       f.runItems = runItems;
     });
+    const dodges = { cd: [0, 0], gap: 0 }; // the dodge charges are the team's: a swap never hands you fresh ones
+    roster.forEach((f) => {
+      f.dodges = dodges;
+    });
     const berries = []; // the team berry bag (data/ground-items.js, status berries): one shared array too
     roster.forEach((f) => {
       f.berries = berries;
@@ -250,6 +254,7 @@ G.Game = (() => {
    */
   function takeField(i) {
     const next = roster[i];
+    pl.endDodge(); // the outgoing body grows back; the incoming one starts on foot
     next.x = pl.x;
     next.y = pl.y;
     next.aim = pl.aim;
@@ -922,13 +927,11 @@ G.Game = (() => {
       return;
     }
     if (state === 'ui') {
-      // Esc on a menu subscreen returns to the menu.
+      // Esc on a menu subscreen returns to the menu. (Upgrades handles its own Esc: it goes back to the Team screen.)
       if (
         G.Input.tap('escape') &&
         !G.UI.isOpen('scr-profile') &&
-        ['scr-dex', 'scr-inventory', 'scr-upgrades', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(
-          G.UI.isOpen
-        ) &&
+        ['scr-dex', 'scr-inventory', 'scr-gacha', 'scr-friends', 'scr-rank', 'scr-goals'].some(G.UI.isOpen) &&
         document.getElementById('pull-fx').classList.contains('hidden')
       )
         G.MenuUI.open();

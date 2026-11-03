@@ -7,6 +7,66 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-03',
+    title: ['New settings screen', 'New settings screen'],
+    chg: [
+      [
+        'Settings is now a full screen in the same style as the main menu, with Graphics, Controls, Sound, Account and About on the left. Changes apply right away. The language switch is gone: the game is in English.',
+        'Settings is now a full screen in the same style as the main menu, with Graphics, Controls, Sound, Account and About on the left. Changes apply right away. The language switch is gone: the game is in English.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['New region select', 'New region select'],
+    chg: [
+      [
+        'Pressing Play now slides the regions out over a dimmed map. Only Kanto is open for now; click anywhere else, or press Esc, to go back.',
+        'Pressing Play now slides the regions out over a dimmed map. Only Kanto is open for now; click anywhere else, or press Esc, to go back.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['New coin and XP gems', 'New coin and XP gems'],
+    chg: [
+      [
+        'Coins on the ground are now spinning gold coins, and the small experience orbs are light blue gems, drawn in pixel art.',
+        'Coins on the ground are now spinning gold coins, and the small experience orbs are light blue gems, drawn in pixel art.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-02',
+    title: ['Dodge', 'Dodge'],
+    new: [
+      [
+        'Press Space to dodge: a quick 150 px dash in the direction you move. You have two dodges, each with its own 7 second recharge (shown as two rings next to your Pokemon). For a moment your body gets much smaller, so shots miss more and you can slip through narrow gaps. A dodge that ends on ice keeps its speed until you leave the ice.',
+        'Press Space to dodge: a quick 150 px dash in the direction you move. You have two dodges, each with its own 7 second recharge (shown as two rings next to your Pokemon). For a moment your body gets much smaller, so shots miss more and you can slip through narrow gaps. A dodge that ends on ice keeps its speed until you leave the ice.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-02',
+    title: ['A new main menu: welcome to PokeSwarm', 'A new main menu: welcome to PokeSwarm'],
+    new: [
+      [
+        'The main menu has a new look, in the style of Pokemon Black and White. Move through it with the mouse or the arrow keys and Enter.',
+        'The main menu has a new look, in the style of Pokemon Black and White. Move through it with the mouse or the arrow keys and Enter.',
+      ],
+    ],
+    chg: [
+      [
+        'Sound, fullscreen and sign out now live in Settings, and the patch notes are in Settings, About.',
+        'Sound, fullscreen and sign out now live in Settings, and the patch notes are in Settings, About.',
+      ],
+      [
+        'Pickups reach you from farther away: the base pickup range is up by about half, and the Magnet upgrade now gives +20% per level instead of +12%.',
+        'Pickups reach you from farther away: the base pickup range is up by about half, and the Magnet upgrade now gives +20% per level instead of +12%.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-02',
     title: ['Gym leaders use their real moves', 'Gym leaders use their real moves'],
     chg: [
