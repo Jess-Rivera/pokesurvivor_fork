@@ -30,8 +30,8 @@ const chk = (name, got, want, tol) => { if (!near(got, want, tol)) bad(name + ' 
   chk('wild ground pool', rate(c, 'ground:pool'), 0.01, 0.0015);
   if (c.heal) bad('the old heal pickup no longer drops from wild kills');
   chk('wild healing per kill (fraction of max HP)', rate(c, 'ground:oran') * 0.3 + rate(c, 'ground:sitrus') * 0.5, 0.0036, 0.0006);
-  const b = sample('wild', { lead: { bonus: 0.1 } });
-  chk('wild ground pool with golden pinap', rate(b, 'ground:pool'), 0.11, 0.003);
+  const b = sample('wild', { lead: { bonus: 0.02 } });
+  chk('wild ground pool with golden pinap', rate(b, 'ground:pool'), 0.03, 0.002);
   // berry, magnet and bomb never drop together (one shared roll)
   let both = 0; for (let i = 0; i < N; i++) { const k = G.Drops.roll('wild', 0, 0, { rnd, place() {} }).map(key).filter(k => k === 'ground:oran' || k === 'ground:sitrus' || k === 'magnet' || k === 'bomb'); if (k.length > 1) both++; }
   if (both) bad('berry/magnet/bomb dropped together ' + both);
@@ -86,6 +86,21 @@ console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thie
   if (G.Drops.roll('nope', 0, 0).length) bad('unknown source drops nothing'); }
 // place() receives the same results roll() returns
 { const seen = []; const out = G.Drops.roll('rescue', 5, 5, { rnd, place: (k, x, y, v) => seen.push(k) }); if (seen.length !== out.length) bad('place called once per drop'); }
+
+// pickup radii (real pickup.js, Jess 2026-11-03): only XP orbs use pl.magnet, every other kind uses pl.itemMagnet; pullAll takes everything.
+{ Object.assign(G.U, { rand: () => 0, dist2: (a, b, c, d) => (a - c) ** 2 + (b - d) ** 2, damp: (a, b) => b }); G.Coop = { active: false, isHost: false }; G.Grounds.canTake = () => true;
+  load('js/entities/pickup.js'); const P = G.Pickups;
+  const KINDS = ['xp', 'xpBig', 'coin', 'ground', 'item', 'ticket', 'ticket10', 'magnet', 'bomb'], isXp = k => k === 'xp' || k === 'xpBig';
+  const pulledAt = (k, d, pl, all) => { P.clear(); P.drop(k, d, 0, 1); if (all) P.pullAll(); P.update(0.001, pl, () => {}); return P.all()[0].pulled; };
+  const pl = { x: 0, y: 0, magnet: 120, itemMagnet: 78 };
+  for (const k of KINDS) {
+    if (pulledAt(k, 100, pl) !== isXp(k)) bad(k + ' at 100 px, between the two radii');
+    if (!pulledAt(k, 70, pl)) bad(k + ' at 70 px, inside both radii');
+    if (pulledAt(k, 130, pl)) bad(k + ' at 130 px, outside both radii');
+    if (!pulledAt(k, 130, pl, true)) bad(k + ' with the magnet pickup');
+    if (!pulledAt(k, 300, { x: 0, y: 0, magnet: 480, itemMagnet: 312 })) bad(k + ' at 300 px with both radii x4');
+  }
+  console.log('pickup radii: XP orbs 120, the rest 78, the magnet pickup pulls all, x4 scales both'); }
 
 console.log(fail ? fail + ' FAILED' : 'drops harness: all passed');
 process.exit(fail ? 1 : 0);

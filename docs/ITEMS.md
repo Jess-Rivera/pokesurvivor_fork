@@ -67,9 +67,9 @@ Chance columns are per wild kill (base 1% ground roll times the item weight, plu
 | Lansat Berry | +20% critical hit chance for 10 s | 1% | 0.01% | 1% |
 | Kee Berry | +10% Defense for 10 s | 3% | 0.03% | 3% |
 | Maranga Berry | +10% Sp. Def for 10 s | 3% | 0.03% | 3% |
-| Pinap Berry | Ground drop chance +1 point for 60 s | 2.5% | 0.025% | 2.5% |
-| Silver Pinap Berry | Ground drop chance +5 points for 60 s | 1% | 0.01% | 1% |
-| Golden Pinap Berry | Ground drop chance +10 points for 60 s | 0.5% | 0.005% | 0.5% |
+| Pinap Berry | Ground drop chance +0.5 points for 20 s | 2.5% | 0.025% | 2.5% |
+| Silver Pinap Berry | Ground drop chance +1 point for 10 s | 1% | 0.01% | 1% |
+| Golden Pinap Berry | Ground drop chance +2 points for 5 s | 0.5% | 0.005% | 0.5% |
 | Cheri Berry | Stored in the berry bag: blocks the next Paralysis | 1.5% | 0.015% | 1.5% |
 | Chesto Berry | Stored in the berry bag: blocks the next Sleep | 1.5% | 0.015% | 1.5% |
 | Pecha Berry | Stored in the berry bag: blocks the next Poison | 1.5% | 0.015% | 1.5% |

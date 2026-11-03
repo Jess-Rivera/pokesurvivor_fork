@@ -6,8 +6,10 @@ Last updated: 2026-11-03, end of session (Claude Code, home; branch feature/item
 ## Where we are
 - ITEM REWORK V2. Detail, rulings and corrected build plan: docs/proposals/item-rework-v2-handoff.md (read it first for item work).
 - Committed (16ff37f): one drop table (js/data/drops.js), Oran and Sitrus on kills and elites, docs/ITEMS.md.
-- Committed: step 1 (3006c89: every world drop in G.Drops, Oran replaces the heal pickup, a gym leader drops one item; feel-tested good) and the Space restart fix (d7824c8). smoke-ui failed once for an unseen reason (not a region check); watch for it.
+- Committed: step 1 (3006c89: every world drop in G.Drops, Oran replaces the heal pickup, a gym leader drops one item; feel-tested good) and the Space restart fix (d7824c8). smoke-ui is flaky: 1 of 3 runs on 2026-11-03 failed with net::ERR_FAILED on assets/pokemon/7/Charge.png (the file exists); cause not found.
 - Committed: step 1a (rock and small chest 6 HP) and step 2 (Band, Specs, Muscle Band, Wise Glasses by category; new Choice Specs, Thick Club, Light Ball, Lucky Punch, Leek), 35bc2c6. Step 3 (Eviolite with generated js/data/evolvable.js, Metal Powder, Quick Powder, Bright Powder; 45 Pokemon items) and pickup lines ("Oran Berry: heal 30% HP", G.FX.notice); Jess feel-tested step 3: good.
+- Built, awaiting Jess's feel-test: playtest tune. Pickup radius split (XP orbs 120 px plus upgrade; everything else fixed 78 px; magnet pickup and shrine hit both) and Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s). Numbers in BALANCE.md. Dowsing Machine is now +0.5 when built.
+- Open: Jess has a list of moves to tune from the 10 min playtest; not named yet.
 - NEXT: step 4, split into 4a and 4b (handoff). Not started; show Jess the no-code plan first.
 - APPROVED, NOT BUILT: batch 1, steps 4 to 6 (12 ground + 10 more Pokemon items). Jess said go on all recommendations; one step at a time, feel-test between.
 

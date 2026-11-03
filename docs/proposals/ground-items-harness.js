@@ -77,13 +77,16 @@ const sum = (p, k) => S.teamSum(p.stgTeam, k), tm = (p, k) => (S.teamTimer(p.stg
 
 // 6. drop rate
 { const p = mk(); if (!near(Gr.dropBonus(p), 0)) bad('no bonus at base');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.01)) bad('pinap -> +1 point');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.01)) bad('pinap refreshes');
-  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropBonus(q), 0.05)) bad('silver -> +5 points');
-  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropBonus(g), 0.10) || !near(tm(g, 'drop'), 60)) bad('golden -> +10 points for 60 s');
-  S.teamTick(g.stgTeam, 60.2); if (!near(Gr.dropBonus(g), 0)) bad('drop bonus expires after 60 s');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.005) || !near(tm(p, 'drop'), 20)) bad('pinap -> +0.5 points for 20 s');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.005)) bad('pinap refreshes');
+  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropBonus(q), 0.01) || !near(tm(q, 'drop'), 10)) bad('silver -> +1 point for 10 s');
+  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropBonus(g), 0.02) || !near(tm(g, 'drop'), 5)) bad('golden -> +2 points for 5 s');
+  S.teamTick(g.stgTeam, 5.2); if (!near(Gr.dropBonus(g), 0)) bad('golden bonus expires after 5 s');
+  const t = mk(); Gr.apply(t, 'pinap'); Gr.apply(t, 'silver-pinap'); Gr.apply(t, 'golden-pinap'); if (!near(Gr.dropBonus(t), 0.035)) bad('the three tiers stack to +3.5 points');
+  S.teamTick(t.stgTeam, 5.2); if (!near(Gr.dropBonus(t), 0.015)) bad('golden runs out first, Pinap and Silver stay');
+  if (Gr.chip('drop', 0.005).label !== 'DROPS +0.5%' || Gr.chip('drop', 0.035).label !== 'DROPS +3.5%' || Gr.chip('drop', 0.02).label !== 'DROPS +2%') bad('the HUD chip shows half points');
   if (!near(Gr.dropBonus(null), 0) || !near(Gr.dropBonus({}), 0)) bad('dropBonus tolerates no store');
-  console.log('6 dropBonus: +1 / +5 / +10 points for 60 s (base 1% is G.Drops.K.groundBase)'); }
+  console.log('6 dropBonus: +0.5 / +1 / +2 points for 20 / 10 / 5 s, tiers stack (base 1% is G.Drops.K.groundBase)'); }
 
 // 7. status berries (F3a-2): the bag, canTake, berryGuard
 { const p = mk(); G.DB = { save: {} };

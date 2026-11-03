@@ -15,8 +15,7 @@
  */
 G.Grounds = (() => {
   const X_DUR = 30,
-    BERRY_DUR = 10,
-    PINAP_DUR = 60;
+    BERRY_DUR = 10;
   const HEAL_ORAN = 0.3,
     HEAL_SITRUS = 0.5;
   const LANSAT_CRIT = 0.2;
@@ -179,30 +178,30 @@ G.Grounds = (() => {
     '+10% Sp. Def for 10 s'
   );
 
-  // ---- Pinaps: +1 / +5 / +10 points on the ground drop chance for 60 s ----
+  // ---- Pinaps: +0.5 / +1 / +2 points on the ground drop chance for 20 / 10 / 5 s (Jess, 2026-11-03) ----
   add(
     'pinap',
     'Pinap Berry',
     'berry.pinap',
     2.5,
-    team('drop', 0.01, PINAP_DUR, 'pinap', 'drops +1%', '#ffd23f'),
-    'Ground drop chance +1 point for 60 s'
+    team('drop', 0.005, 20, 'pinap', 'drops +0.5%', '#ffd23f'),
+    'Ground drop chance +0.5 points for 20 s'
   );
   add(
     'silver-pinap',
     'Silver Pinap Berry',
     'berry.silver-pinap',
     1,
-    team('drop', 0.05, PINAP_DUR, 'silver-pinap', 'drops +5%', '#dfe6f2'),
-    'Ground drop chance +5 points for 60 s'
+    team('drop', 0.01, 10, 'silver-pinap', 'drops +1%', '#dfe6f2'),
+    'Ground drop chance +1 point for 10 s'
   );
   add(
     'golden-pinap',
     'Golden Pinap Berry',
     'berry.golden-pinap',
     0.5,
-    team('drop', 0.1, PINAP_DUR, 'golden-pinap', 'drops +10%', '#ffc21a'),
-    'Ground drop chance +10 points for 60 s'
+    team('drop', 0.02, 5, 'golden-pinap', 'drops +2%', '#ffc21a'),
+    'Ground drop chance +2 points for 5 s'
   );
 
   // ---- status berries: stored in the team berry bag, consumed automatically when the status would land ----
@@ -309,7 +308,7 @@ G.Grounds = (() => {
     if (key === 'pct_def') return { label: 'DEF +' + pct + '%', color: STAT_COL.def };
     if (key === 'pct_spd') return { label: 'SP.DEF +' + pct + '%', color: STAT_COL.spd };
     if (key === 'crit') return { label: 'CRIT +' + pct + '%', color: '#ffb347' };
-    if (key === 'drop') return { label: 'DROPS +' + pct + '%', color: '#ffd23f' };
+    if (key === 'drop') return { label: 'DROPS +' + Math.round(sum * 1000) / 10 + '%', color: '#ffd23f' };
     return null;
   }
 

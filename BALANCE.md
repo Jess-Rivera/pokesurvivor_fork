@@ -158,6 +158,8 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 ## Drops / economy
 - Rock and small chest HP (feature/item-rework-v2, 2026-11-03, Jess; TUNE): rock 34 to 6, chest 22 to 6 (js/world/world.js). Prop damage has no STAB or type and grows with level. A 40 power move (Ember, Water Gun, Tackle, no upgrades) does about 2.2 at level 1, so 3 hits; 2 hits by level 10; 1 hit from about level 15 to 20. Was: 16 and 10 hits at level 1.
 - Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
+- Pickup radius split (feature/item-rework-v2, 2026-11-03, Jess playtest; TUNE): XP orbs only keep the radius above (120 px, 264 px maxed). Every other pickup, coins included, uses a fixed 78 px (Player.itemMagnet) that the permanent upgrade does not touch. The magnet pickup still pulls everything, and the Magnet shrine x4 scales both radii (480 and 312 px at base). Was: one radius for everything.
+- Pinap bonus (feature/item-rework-v2, 2026-11-03, Jess playtest; TUNE): Pinap +0.5 points for 20 s, Silver +1 for 10 s, Golden +2 for 5 s, on the 1% wild ground roll (js/data/ground-items.js). Different tiers still stack, up to 4.5%. Was: +1, +5, +10 for 60 s, up to 17%.
 
 ## XP curve / run pacing (feature/xp-curve, applied 2026-10-18)
 - Cost: mainline Medium Fast, total n^3. xpToNext(L) = 3L^2 + 3L + 1 (G.Stats.xpToNext): L1 7, L10 331, L20 1261, L50 7651. Replaced floor((8 + 6L + 1.6 L^1.75) * 4).

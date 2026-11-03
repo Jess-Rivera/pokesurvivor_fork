@@ -62,7 +62,7 @@ Today there are 25 run items, but 18 are the Power Stones, so there are only 7 d
 | Item | Source (pokeapi) | Proposed effect | Feasibility |
 | --- | --- | --- | --- |
 | Shiny Charm | raises shiny chance | Shiny spawn rate x3 | fits the spawner shiny roll, check |
-| Dowsing Machine | finds hidden items | Wild ground item drop rate +1 point (1% to 2%), like a permanent Pinap | fits (the drop bonus already exists) |
+| Dowsing Machine | finds hidden items | Wild ground item drop rate +0.5 points (1% to 1.5%), like a permanent Pinap (Jess, 2026-11-03, was +1) | fits (the drop bonus already exists) |
 | Berry Pouch | holds berries | +1 status berry bag slot for the run | fits (berry slots exist) |
 | Berry Pots | grows berries | Timed berry effects last 50% longer (10 s to 15 s) | fits the berry duration constant |
 | Smoke Ball | escape from battle | +1 dodge charge (2 to 3) | fits the dodge system |

@@ -37,7 +37,8 @@ G.Player = class Player {
     this.pikaTear = false; // +1.1x damage & speed per fainted teammate
     this.stoneType = null; // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
-    this.magnet = 120 * (perks.magnetMul || 1);
+    this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
+    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, tickets, magnet, bomb), fixed
     this.xpMul = perks.xpMul || 1;
     this.coinMul = perks.coinMul || 1;
 

@@ -8,6 +8,23 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: [
+      'Items take more walking, and Pinap Berries calm down',
+      'Items take more walking, and Pinap Berries calm down',
+    ],
+    chg: [
+      [
+        'Pickup range is now split. XP orbs keep the long range and the Magnet upgrade only boosts XP (it now says "+20% XP pickup"). Coins, berries, items and everything else use a shorter fixed range, so you have to walk to them. The magnet pickup and the Magnet altar still work on everything.',
+        'Pickup range is now split. XP orbs keep the long range and the Magnet upgrade only boosts XP (it now says "+20% XP pickup"). Coins, berries, items and everything else use a shorter fixed range, so you have to walk to them. The magnet pickup and the Magnet altar still work on everything.',
+      ],
+      [
+        'Pinap Berries are much weaker: Pinap +0.5% for 20 s, Silver +1% for 10 s, Golden +2% for 5 s. They were +1%, +5% and +10% for 60 s.',
+        'Pinap Berries are much weaker: Pinap +0.5% for 20 s, Silver +1% for 10 s, Golden +2% for 5 s. They were +1%, +5% and +10% for 60 s.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['Pickups tell you what they did, and four new items', 'Pickups tell you what they did, and four new items'],
     new: [
       [

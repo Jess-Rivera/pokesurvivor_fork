@@ -96,7 +96,7 @@ console.log('1 Band, Specs, Muscle Band, Wise Glasses, Thick Club and Light Ball
   const team = () => ({ berries: [], stgTeam: {}, hp: 10, maxHp: 100, x: 0, y: 0, bodyH: 20, heal(a) { this.hp += a; } });
   const WANT = { oran: 'Oran Berry: heal 30% HP', sitrus: 'Sitrus Berry: heal 50% HP', 'x-attack': 'X Attack: team Attack +1, 30 s', 'x-defense': 'X Defense: team Defense +1, 30 s', 'x-sp-atk': 'X Sp. Atk: team Sp. Atk +1, 30 s', 'x-sp-def': 'X Sp. Def: team Sp. Def +1, 30 s', 'x-speed': 'X Speed: team Speed +1, 30 s',
     occa: 'Occa Berry: Fire guard, 10 s', chilan: 'Chilan Berry: Normal guard, 10 s', liechi: 'Liechi Berry: team Attack +1, 10 s', apicot: 'Apicot Berry: team Sp. Def +1, 10 s', lansat: 'Lansat Berry: crit +20%, 10 s', kee: 'Kee Berry: Defense +10%, 10 s', maranga: 'Maranga Berry: Sp. Def +10%, 10 s',
-    pinap: 'Pinap Berry: drops +1%, 60 s', 'silver-pinap': 'Silver Pinap Berry: drops +5%, 60 s', 'golden-pinap': 'Golden Pinap Berry: drops +10%, 60 s' };
+    pinap: 'Pinap Berry: drops +0.5%, 20 s', 'silver-pinap': 'Silver Pinap Berry: drops +1%, 10 s', 'golden-pinap': 'Golden Pinap Berry: drops +2%, 5 s' };
   for (const id in WANT) { log.length = 0; G.Grounds.apply(team(), id); if (log.length !== 1 || log[0] !== WANT[id]) bad(id + ' shows ' + JSON.stringify(log)); }
   for (let i = 0; i < 40; i++) { log.length = 0; const p = team(); G.Grounds.apply(p, 'starf'); const st = Object.keys(p.stgTeam)[0], label = G.Stages.LABEL[st]; if (log[0] !== 'Starf Berry: ' + label + ' +2, 10 s') bad('starf names the stat it raised: ' + log[0] + ' / ' + st); }
   for (const it of G.Grounds.LIST) { log.length = 0; const p = team(); G.Grounds.apply(p, it.id);

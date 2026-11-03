@@ -48,9 +48,11 @@ G.Interact = (() => {
       color: '#ff8ad8',
       on: (p) => {
         p.magnet *= 4;
+        p.itemMagnet *= 4;
       },
       off: (p) => {
         p.magnet /= 4;
+        p.itemMagnet /= 4;
       },
     },
     {

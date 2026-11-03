@@ -1,7 +1,7 @@
 /* ============ pickup.js — experience orbs and items ============
  * The orbs stay still until you enter the magnet radius; then
  * accelerate toward you. So thousands do not pile up, past MAX they merge
- * the oldest ones.
+ * the oldest ones. XP orbs use pl.magnet, everything else pl.itemMagnet.
  *
  * Co-op: the objects are created by the host (each with its id) and the
  * others receive a copy. They all fly toward the nearest player; who
@@ -191,7 +191,8 @@ G.Pickups = (() => {
       if (!pl) continue;
       const dx = pl.x - p.x,
         dy = pl.y - p.y;
-      const mag2 = pl.magnet * pl.magnet;
+      const mag = p.kind === 'xp' || p.kind === 'xpBig' ? pl.magnet : pl.itemMagnet;
+      const mag2 = mag * mag;
 
       // A status berry the team cannot take (bag full, or already holding that one) just sits there: no pull, no pickup.
       const stuck = p.kind === 'ground' && !G.Grounds.canTake(p.value, pl);
