@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-03',
+    title: ['New coin and XP gems', 'New coin and XP gems'],
+    chg: [
+      [
+        'Coins on the ground are now spinning gold coins, and the small experience orbs are light blue gems, drawn in pixel art.',
+        'Coins on the ground are now spinning gold coins, and the small experience orbs are light blue gems, drawn in pixel art.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-02',
     title: ['Dodge', 'Dodge'],
     new: [

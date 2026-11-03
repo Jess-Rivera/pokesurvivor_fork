@@ -28,6 +28,51 @@ G.Pickups = (() => {
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
   const TICKET_RATE = 1 / 400; // (was 1/260; rarer since 2026-10-10)
 
+  // Sprite pickups (data/pickup-sprites.js): the coin is the ringed_gold row of the coin sheet, small XP the aqua
+  // gem and big XP the violet gem of the pickup sheets. Until a sheet has loaded they keep their drawn shapes.
+  const SPR = { coin: { gold: true, size: 20 }, xp: { row: 'aqua', size: 18 }, xpBig: { row: 'violet', size: 18 } };
+  const sheetImgs = {};
+  function sheetImg(src) {
+    let e = sheetImgs[src];
+    if (!e) {
+      e = sheetImgs[src] = { ready: false, img: new Image() };
+      e.img.onload = () => {
+        e.ready = true;
+      };
+      e.img.src = src;
+    }
+    return e.ready ? e.img : null;
+  }
+  /** Draws a pickup's spinning sprite centred on (x, y); false when it has none or its sheet is not loaded yet. */
+  function drawSprite(ctx, p, x, y) {
+    const S = SPR[p.kind],
+      D = G.PickupSprites;
+    if (!S || !D) return false;
+    let sheet, ms, n, sy;
+    if (S.gold) {
+      sheet = D.gold;
+      n = sheet.n;
+      ms = [sheet.ms];
+      sy = sheet.y;
+    } else {
+      sheet = D.sheets.spin;
+      n = sheet.n;
+      ms = sheet.ms;
+      sy = D.rows.indexOf(S.row) * (D.cell + D.pad);
+    }
+    const img = sheetImg(sheet.src);
+    if (!img) return false;
+    // p.t runs 4 per second from a random start, so the coins and gems are out of step and the animation pauses with the game.
+    const t = p.t * 250,
+      per = ms[0] * n; // every frame of these rows lasts the same
+    const f = Math.floor((t % per) / ms[0]) % n;
+    const sm = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, f * (D.cell + D.pad), sy, D.cell, D.cell, x - S.size / 2, y - S.size / 2, S.size, S.size);
+    ctx.imageSmoothingEnabled = sm;
+    return true;
+  }
+
   function clear() {
     list = [];
   }
@@ -193,6 +238,7 @@ G.Pickups = (() => {
       ctx.fill();
 
       ctx.globalAlpha = 1;
+      if (drawSprite(ctx, p, p.x, y)) continue;
       ctx.fillStyle = k.color;
       if (p.kind === 'xp' || p.kind === 'xpBig') {
         ctx.beginPath();
