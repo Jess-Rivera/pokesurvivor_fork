@@ -100,7 +100,13 @@ console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thie
     if (!pulledAt(k, 130, pl, true)) bad(k + ' with the magnet pickup');
     if (!pulledAt(k, 300, { x: 0, y: 0, magnet: 480, itemMagnet: 312 })) bad(k + ' at 300 px with both radii x4');
   }
-  console.log('pickup radii: XP orbs 120, the rest 78, the magnet pickup pulls all, x4 scales both'); }
+  console.log('pickup radii: XP orbs 120, the rest 78, the magnet pickup pulls all, x4 scales both');
+  // a dropped item draws the icon from its data at 32 (the sheet's 1x cell), the same icon as the held slot; with no icon set, its id
+  const drawn = []; G.Icons = { draw: (c, name, x, y, size) => drawn.push([name, size]) }; G.Camera = { sees: () => true }; G.Items.BY = { spec: { icon: 'ps:hold-item.choice-specs' }, old: {} };
+  const ctx = new Proxy({}, { get: (t, k) => (k in t ? t[k] : () => {}), set: (t, k, v) => { t[k] = v; return true; } });
+  for (const [id, want] of [['spec', 'ps:hold-item.choice-specs'], ['old', 'old'], ['gone', 'gone']]) { drawn.length = 0; P.clear(); P.drop('item', 0, 0, id); P.draw(ctx);
+    if (drawn.length !== 1 || drawn[0][0] !== want || drawn[0][1] !== 32) bad('dropped item ' + id + ' draws ' + JSON.stringify(drawn)); }
+  console.log('dropped items: the icon from the item data at 32, the id when none is set'); }
 
 console.log(fail ? fail + ' FAILED' : 'drops harness: all passed');
 process.exit(fail ? 1 : 0);

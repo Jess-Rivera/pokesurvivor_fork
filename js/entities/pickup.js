@@ -265,7 +265,7 @@ G.Pickups = (() => {
         // Berry, magnet and bomb: their pixel-art icon.
         const ICON = { heal: 'berry', magnet: 'magnet', bomb: 'bomb', ticket: 'ticket', ticket10: 'ticket10' };
         const sz =
-          p.kind === 'ticket10' || p.kind === 'ticket' ? 32 : p.kind === 'item' ? 24 : p.kind === 'ground' ? 22 : 18;
+          p.kind === 'ticket10' || p.kind === 'ticket' || p.kind === 'item' ? 32 : p.kind === 'ground' ? 22 : 18;
         if (p.kind === 'ground') {
           // Ground item: a soft white pulse under its Pokesprite icon.
           ctx.globalAlpha = 0.18 + Math.sin(p.t * 1.5) * 0.08;
@@ -287,7 +287,7 @@ G.Pickups = (() => {
         G.Icons.draw(
           ctx,
           p.kind === 'item'
-            ? p.value
+            ? (G.Items.BY[p.value] || {}).icon || p.value
             : p.kind === 'ground'
               ? 'ps:' + ((G.Grounds.BY[p.value] || {}).icon || 'berry.oran')
               : ICON[p.kind],

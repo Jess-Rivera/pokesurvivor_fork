@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Dropped items show their real sprite', 'Dropped items show their real sprite'],
+    fix: [
+      [
+        'Held items on the ground now show the same sprite as in your held slot, and they are larger. Most of them were showing a plain star.',
+        'Held items on the ground now show the same sprite as in your held slot, and they are larger. Most of them were showing a plain star.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: [
       'Items take more walking, and Pinap Berries calm down',
       'Items take more walking, and Pinap Berries calm down',
