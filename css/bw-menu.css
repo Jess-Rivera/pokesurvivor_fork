@@ -341,3 +341,17 @@
     max-width: calc(100% - 32 * var(--u));
   }
 }
+
+/* ---------- loading and "press to start" screens: the menu's title and row fonts ---------- */
+.boot-in h1 {
+  font-family: 'Korataki', 'PokeBW', sans-serif;
+  font-weight: 800;
+  font-size: clamp(40px, 8vw, 64px);
+  line-height: 1;
+  color: var(--bw-title);
+  text-shadow: 0 4px 0 var(--bw-title-shade);
+  margin-bottom: 16px;
+}
+.boot-in p {
+  font-family: 'PokeBW', 'Pixelify', monospace;
+}
