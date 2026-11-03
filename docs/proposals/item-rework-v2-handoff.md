@@ -10,7 +10,7 @@ Read CLAUDE.md first (the rules), then STATE.md, then this file. This file is th
 
 ## Status
 - Committed (16ff37f): js/data/drops.js (G.Drops), Oran and Sitrus on wild kills and elites, docs/ITEMS.md.
-- Step 1 BUILT, uncommitted, waiting on Jess's feel-test: world props moved into G.Drops (tables grass, rock, chest, bigchest), Oran replaces the heal pickup there at the same rates, a gym leader drops one item (its own table: 10 coins and the 10% run chance). The 'heal' pickup kind still exists in pickup.js, game.js and coop.js, but nothing drops it.
+- Step 1 committed (3006c89), waiting on Jess's feel-test: world props moved into G.Drops (tables grass, rock, chest, bigchest), Oran replaces the heal pickup there at the same rates, a gym leader drops one item (its own table: 10 coins and the 10% run chance). The 'heal' pickup kind still exists in pickup.js, game.js and coop.js, but nothing drops it.
 - Steps 2 to 6 approved by Jess ("go"), not built. Stop after step 1 for the feel-test.
 
 ## Batch 1 scope and rulings (Jess, 2026-11-03)

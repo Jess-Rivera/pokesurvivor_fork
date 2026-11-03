@@ -475,3 +475,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: grass, rock, chest and big chest tables in G.Drops, Oran replaces the heal pickup at the same rates, a gym leader drops one item. Rock Oran is now its own 6% roll instead of only coming with coins. ITEMS.md covers props and chests; check.js fails if it is stale.
 - Decided (Jess): all recommendations, see DECISIONS 2026-11-03. Raises from held items stay team-wide.
 - Verified: check.js, smoke-ui, file:// prop probe. Not feel-tested. Left uncommitted: step 1. Stopped for the feel-test before batch 1 step 2.
+
+## 2026-11-03, Space restarted the run (Claude Code, home, feature/item-rework-v2)
+- Found: picking a region never closed the picker, so its key handler stayed live in the run and Space or Enter clicked the card again. Any Pokemon. From the region select in fix/ui-upgrade. smoke-ui missed it because it calls startRun directly.
+- Built: startRegion closes the picker. smoke-ui walks the real menu, Play and card path; with the fix removed, 3 of its checks fail.
+- Verified: check.js, smoke-ui, a real Space press as Charizard dodges with no restart. One earlier smoke-ui run failed once on an unseen non-region check and did not repeat. Left uncommitted: the fix.

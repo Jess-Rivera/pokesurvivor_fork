@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Space no longer restarts your run', 'Space no longer restarts your run'],
+    fix: [
+      [
+        'After picking a region, pressing Space or Enter during the run started a new run. Space dodges again.',
+        'After picking a region, pressing Space or Enter during the run started a new run. Space dodges again.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['New settings screen', 'New settings screen'],
     chg: [
       [
