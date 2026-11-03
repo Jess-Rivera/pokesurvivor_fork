@@ -8,6 +8,81 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Dropped items show their real sprite', 'Dropped items show their real sprite'],
+    fix: [
+      [
+        'Held items on the ground now show the same sprite as in your held slot, and they are larger. Most of them were showing a plain star.',
+        'Held items on the ground now show the same sprite as in your held slot, and they are larger. Most of them were showing a plain star.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: [
+      'Items take more walking, and Pinap Berries calm down',
+      'Items take more walking, and Pinap Berries calm down',
+    ],
+    chg: [
+      [
+        'Pickup range is now split. XP orbs keep the long range and the Magnet upgrade only boosts XP (it now says "+20% XP pickup"). Coins, berries, items and everything else use a shorter fixed range, so you have to walk to them. The magnet pickup and the Magnet altar still work on everything.',
+        'Pickup range is now split. XP orbs keep the long range and the Magnet upgrade only boosts XP (it now says "+20% XP pickup"). Coins, berries, items and everything else use a shorter fixed range, so you have to walk to them. The magnet pickup and the Magnet altar still work on everything.',
+      ],
+      [
+        'Pinap Berries are much weaker: Pinap +0.5% for 20 s, Silver +1% for 10 s, Golden +2% for 5 s. They were +1%, +5% and +10% for 60 s.',
+        'Pinap Berries are much weaker: Pinap +0.5% for 20 s, Silver +1% for 10 s, Golden +2% for 5 s. They were +1%, +5% and +10% for 60 s.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['Pickups tell you what they did, and four new items', 'Pickups tell you what they did, and four new items'],
+    new: [
+      [
+        'Berries and other items used up on pickup now show what they did, like "Oran Berry: heal 30% HP".',
+        'Berries and other items used up on pickup now show what they did, like "Oran Berry: heal 30% HP".',
+      ],
+      [
+        'Four new held items: Eviolite (much tougher while your Pokemon can still evolve), Metal Powder, Quick Powder and Bright Powder (shorter dodge cooldown).',
+        'Four new held items: Eviolite (much tougher while your Pokemon can still evolve), Metal Powder, Quick Powder and Bright Powder (shorter dodge cooldown).',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['New held items, and easier rocks and chests', 'New held items, and easier rocks and chests'],
+    new: [
+      [
+        'Five new held items: Choice Specs, Thick Club, Light Ball, Lucky Punch and Leek. All of them work on any Pokemon.',
+        'Five new held items: Choice Specs, Thick Club, Light Ball, Lucky Punch and Leek. All of them work on any Pokemon.',
+      ],
+    ],
+    chg: [
+      [
+        'Choice Band and Muscle Band now boost physical moves only, and Wise Glasses boosts special moves only.',
+        'Choice Band and Muscle Band now boost physical moves only, and Wise Glasses boosts special moves only.',
+      ],
+      [
+        'Rocks and small chests break much faster: about 3 hits of a basic move at the start of a run.',
+        'Rocks and small chests break much faster: about 3 hits of a basic move at the start of a run.',
+      ],
+      [
+        'Gym leaders now drop one item instead of two, and grass, rocks and chests drop Oran Berries instead of the old heal pickup.',
+        'Gym leaders now drop one item instead of two, and grass, rocks and chests drop Oran Berries instead of the old heal pickup.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['Space no longer restarts your run', 'Space no longer restarts your run'],
+    fix: [
+      [
+        'After picking a region, pressing Space or Enter during the run started a new run. Space dodges again.',
+        'After picking a region, pressing Space or Enter during the run started a new run. Space dodges again.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['New settings screen', 'New settings screen'],
     chg: [
       [

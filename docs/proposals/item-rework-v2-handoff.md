@@ -1,0 +1,48 @@
+# Handoff: item rework v2 (branch feature/item-rework-v2), updated 2026-11-03
+
+Read CLAUDE.md first (the rules), then STATE.md, then this file. This file is the detail behind STATE.md for the item work. Where it differs from docs/proposals/item-batch-1-proposal.md, this file wins.
+
+## Rules that bite on this work (full text in CLAUDE.md)
+- Game code and js/data/*.js: prose plan with NO CODE, wait for Jess's OK, then build. Docs (*.md), docs/proposals harnesses and tools/ are edit-directly.
+- Git: read-only commands only. Jess commits, with no Co-Authored-By line or AI signature.
+- No em-dashes anywhere. New strings in English, no lang-en.js entries. Save-compat: every new save field is null-checked.
+- Verify with `node tools/check.js`, `node tools/smoke-ui.js`, and file:// headless probes. Skip tools/smoke-newcombat.js (flaky).
+
+## Status
+- Committed (16ff37f): js/data/drops.js (G.Drops), Oran and Sitrus on wild kills and elites, docs/ITEMS.md.
+- Step 1 committed (3006c89), waiting on Jess's feel-test: world props moved into G.Drops (tables grass, rock, chest, bigchest), Oran replaces the heal pickup there at the same rates, a gym leader drops one item (its own table: 10 coins and the 10% run chance). The 'heal' pickup kind still exists in pickup.js, game.js and coop.js, but nothing drops it.
+- Step 1 feel-tested by Jess: good. Step 1a (rock and chest 6 HP) and step 2 BUILT, uncommitted, waiting on his feel-test. Harness: docs/proposals/item-batch1-harness.js.
+- Step 3 and pickup lines committed, feel-tested good.
+- PARKED (Jess, 2026-11-03): the branch merged to main without steps 4 to 6, since he is happy with the item count for now. Start them only if he reopens them, on a new branch from main. Everything below stays valid for that.
+- Steps 4 to 6: the rulings and hooks are approved, not built. Build one at a time, with a feel-test between. Recommended split of step 4: 4a is Weakness Policy, Absorb Bulb, Cell Battery, Luminous Moss, Snowball, Focus Band, Protective Pads, Shed Shell, King's Rock and the shared guard against enemy drops. 4b is Enigma, Jaboca, Rowap and Eject Button (these change the hit call sites or the swap). Give Jess the no-code plan for each before building (CLAUDE.md "Edit boundary"). The harness must take real hits through Player.hurt, not just check fields (a defense multiplier once passed the field checks while missing from hurt).
+
+## Batch 1 scope and rulings (Jess, 2026-11-03)
+- 12 ground items: Enigma, Jaboca, Rowap, White Herb, Guard Spec, Dire Hit, Max Mushrooms, Revive, Max Revive, Sacred Ash, Leppa, Custap. Effects and weights (19.5 total) are in the proposal. Existing weights scale by 0.805 so the total stays 100.
+- 19 Pokemon items: Focus Band, Weakness Policy, Absorb Bulb, Cell Battery, Luminous Moss, Snowball, Protective Pads, Shed Shell, Eviolite, Bright Powder, King's Rock, Eject Button, Choice Specs, Thick Club, Light Ball, Lucky Punch, Leek, Metal Powder, Quick Powder. That makes 55 in the tier, about 1.8% each.
+- No species-locked items. Thick Club (+30% physical, 10% slower), Light Ball (+30% special, 10% slower), Lucky Punch (+15% crit), Metal Powder (+15% Def and Sp. Def), Quick Powder (+15% speed) work on any holder. Eviolite stays: 1.5x Def and Sp. Def while the holder can still evolve.
+- Choice Band +40% physical only, Choice Specs +40% special only, both keep the lock. Muscle Band and Wise Glasses become physical only and special only.
+- Covert Cloak has no icon: it becomes Protective Pads (hold-item.protective-pads, unused) with the same effect, statuses and stat drops from enemies, EXCEPT trap.
+- Raise items (Weakness Policy, Absorb Bulb, Cell Battery, Luminous Moss, Snowball): only the holder's hit triggers them, but the raise goes to the TEAM for 10 s (COMBAT-RULES "SCOPE": every raise is team-wide).
+- Leek: +10% crit chance and crit damage x2.25. There is no base crit and a Pokemon holds one item, so crit damage alone would do nothing.
+- Jaboca, Rowap: 12.5% of the attacker's max HP; on bosses, elites and gyms capped at 60 + 14 x level (the bomb's blast on those).
+- King's Rock: 10%, one roll per target per 0.5 s (the flinch rule). A flinch cancels a leader's cast, so an uncapped roll could lock leaders down.
+- Eject Button: 20 s cooldown. Acts like the faint auto-swap: ignores trap and the swap lock, then starts the normal lock.
+- Shed Shell: immune to trap, and the holder's swap lock is 2.5 s instead of 5 s.
+- Gems delayed. Run items are a second pass.
+
+## Build plan
+1. DONE (see Status).
+2. DONE. Damage and crit: physMul and specMul read through G.Stats.itemCatMul in Player.moveFactor and sheet.js detailOf, Player.choiceLocked for both Choice items, critDmgMul read in move-effects.js damage(). Damaging status-category moves get neither multiplier, like stages. Moving Band out of atkMul also lowers its small share of the enemy healer scaling (Enemy.healAround reads p.atk), left as is.
+3. DONE. Passive stats: defItemMul in the defMul line of Player.hurt (Eviolite, Metal Powder; flat hits with no atk, such as overworld bosses' plain damage, skip it like all defense), js/data/evolvable.js generated by tools/evolvable_data.js, Quick Powder spdMul, Bright Powder ticks the team's charges faster in tickDodges. Pickup lines (Jess, 2026-11-03): a used-up ground item's apply returns [what it did, color] and G.Grounds.apply shows one G.FX.notice line, "Oran Berry: heal 30% HP". Step 5's new ground items must return one too (the harness requires it).
+4. Hit reactions in Player.hurt, after the shield check (a fully absorbed hit returns early). A real enemy hit has a type; DoT and terrain do not. Focus Band sits after the Focus Sash check (the Sash has no full-HP condition, the proposal is wrong there). Team raises and Enigma use the team store like the ground items. Jaboca and Rowap need the attacker, and `who` is only a log tag: pass the attacker from the contact and shot paths in combat.js and hurtPlayer in move-effects.js. Overworld bosses have atkFactor null, so atk is null: use their atkCat. Eject Button: set a flag, swap next frame in the game loop through takeField (not swapTo, which refuses during lock and trap; swapping inside the combat.js loop would hit the benched mon). Protective Pads and Shed Shell: G.Status.immune (status.js:64), which runs before the berry check in both apply and applyDot, so a stored berry is not wasted. Guard against enemy drops, shared with Guard Spec: at Player.inflict 'slow' and the foe side of stat() in move-effects.js, NOT in stages.js, which cannot tell an enemy drop from a self drop. King's Rock: at damage().
+5. Ground items in js/data/ground-items.js. Revives: canTake needs a fainted teammate, Player.revive(frac), G.Game.reviveTeam for Sacred Ash. Leppa: a new reset beside MoveSim.flinch with the same skips (persistent, pure buffs, held cooldowns). Custap: a timed team key that speeds the cooldown ticks in move-sim.js (the `slot.t -= dt` for cooldown moves and the inactive-slot loop, not the pure-buff wait); player.js:497 is animation only. White Herb: a new drops-only clear across the roster that spares the commitment slow (G.Stages.clear would wipe it; it is a tagged application from move-sim commit()). Guard Spec: the guard from step 4. Dire Hit: team key 'crit'. Max Mushrooms icon: battle-item.max-mushrooms; White Herb icon: hold-item.white-herb. New team keys need labels in Grounds.chip.
+6. Checks: docs/proposals/ground-items-harness.js asserts family weights and total 100 (these change), add a harness for the new effects, regenerate docs/ITEMS.md (check.js fails if stale), check.js and smoke-ui, a headless file:// probe, a short feel-test list.
+
+## Gotchas
+- Files have mixed CRLF and LF. Python edits: open with encoding='utf-8', newline=''. Heredocs eat non-ASCII and backslashes; prefer the Edit and Write tools.
+- Prettier is enforced (`format: ok` in check.js). Run `npx prettier --write <file>` after editing JS.
+- The 7a guard flags `.kind` reads on move objects, hence the `pickup` field in drops.js.
+- Pokemon-item drops are uniform across the tier, so adding items dilutes the old ones.
+- Bosses and world XP orbs (rocks, chests) also roll the wild table through Pickups.dropXp.
+- The Pokemon sprite index is GENERATED (js/data/pokesprite-index.js); look up icons as 'hold-item.<name>', 'berry.<name>', 'medicine.<name>', 'battle-item.<name>'.
+- Debug on dev.html, not index.html. Headless runs must click #tap-start first. file:// blocks CSS mask-image and logs font CORS errors (harmless).

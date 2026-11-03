@@ -16,7 +16,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Game: { player: pl, st: { get time() { return clock; } }, everyone: () => [pl], grantLevels: n => { log.levels += n; }, reviveTeam: () => { log.revives++; }, badgeBoost: (st, pc) => log.boosts.push(st + ':' + pc), offerBond: () => { log.bondOffers++; }, flash() { } },
   Spawner: { CAP: 64, say: t => log.says.push(t) }, Progress: { event: (k, d) => log.progress.push(k) },
   Pickups: { drop: (k, x, y, v) => log.drops.push(k), dropXp: (x, y, v, burst) => log.dropXp.push({ v: Math.round(v), burst }), pullAll() { log.pulled = true; } },
-  Items: { roll: () => 'x', rollFor: () => 'x' }, Log: { on: false } };
+  Items: { roll: () => 'x', rollRun: () => 'x' }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
@@ -33,6 +33,7 @@ for (let i = 0; i < 100; i++) G.GymArena.update(5, pl, 240 + i * 5); if (G.GymAr
 // enter
 pl.x = gg.x; pl.y = gg.y - 10; G.GymArena.update(0.05, pl, 740);
 if (!G.GymArena.inArena || !G.GymArena.arena.gym) bad('did not enter the gym arena');
+load('js/data/drops.js');                      // the gym's coins and item come from the drop table
 const leader = G.EnemyMgr.all().find(e => e.gym); if (!leader) bad('no leader spawned');
 // fight: the leader is hit (engages), then killed
 clock = 760; leader.hurt(50); G.GymArena.update(0.05, pl, 760); if (!G.GymArena.inArena) bad('left the arena early');
@@ -44,7 +45,7 @@ if (log.levels !== 1) bad('level grants: ' + log.levels); if (log.revives !== 1)
 if (pl.bonds !== 1) bad('bond count ' + pl.bonds); if (G.Gym.badges.join() !== 'Boulder Badge') bad('badge ' + G.Gym.badges);
 if (log.progress.length) bad('a gym win reports no progress event now (the portal-fight counters are gone): ' + log.progress);
 // (A gym leader drops coins and items only: no XP orbs, so no Pickups.dropXp call, asserted below.)
-if (!drops.includes('item')) bad('missing the guaranteed item in ' + drops);
+if (drops.filter(k => k === 'item').length !== 1) bad('a gym leader drops exactly one item (Jess 2026-11-03), got ' + drops);
 if (drops.filter(k => k === 'coin').length < 10) bad('coins ' + drops.filter(k => k === 'coin').length);
 if (log.dropXp.length) bad('a gym leader must drop no XP: ' + JSON.stringify(log.dropXp));
 if (log.boosts.join() !== 'atk:0.1') bad('Boulder Badge boost: ' + log.boosts); if (!log.pulled) bad('pickups not pulled to the player');

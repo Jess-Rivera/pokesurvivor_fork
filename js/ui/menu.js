@@ -306,6 +306,7 @@ G.MenuUI = (() => {
 
   /** Commit the region choice and start the run. */
   function startRegion(gen) {
+    closeRegionPicker(); // or its key handler stays live in the run, and Space or Enter starts a new one
     G.Enemies.setRegion(gen);
     G.Flow.play();
   }

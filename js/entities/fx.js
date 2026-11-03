@@ -151,6 +151,17 @@ G.FX = (() => {
     texts.push({ x: x + G.U.rand(-6, 6), y, vy: -46, t: 0, life: big ? 0.95 : 0.62, s: value, color, big });
   }
 
+  /** A line the player should read (what a pickup just did): never dropped at the cap, slower and longer than a damage number,
+   *  and one that lands right after another starts above it, so a chest's drops do not overlap. */
+  function notice(x, y, value, color = '#ffffff') {
+    const LIFE = 1.6, // TUNE
+      GAP = 0.5,
+      LINE = 16;
+    const near = texts.filter((t) => t.notice && t.t < GAP).length;
+    if (texts.length >= CAP_TEXTS[q()]) texts.shift();
+    texts.push({ x, y: y - near * LINE, vy: -22, t: 0, life: LIFE, s: value, color, big: false, notice: true });
+  }
+
   /** Wave ring (pixel dots). */
   function ring(x, y, r0, r1, color, life = 0.3, width = 3) {
     rings.push({ x, y, r0, r1, color, life, t: 0, width });
@@ -375,7 +386,7 @@ G.FX = (() => {
       const k = 1 - t.t / t.life;
       ctx.save();
       ctx.globalAlpha = Math.min(1, k * 2.2);
-      ctx.font = (t.big ? '700 20px' : '700 13px') + ' Pixelify,"Segoe UI",sans-serif';
+      ctx.font = (t.big ? '700 20px' : t.notice ? '700 15px' : '700 13px') + ' Pixelify,"Segoe UI",sans-serif';
       ctx.textAlign = 'center';
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(0,0,0,.75)';
@@ -395,6 +406,7 @@ G.FX = (() => {
     twinkle,
     trail,
     dmgText,
+    notice,
     ring,
     slash,
     beam,

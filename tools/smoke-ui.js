@@ -6,7 +6,8 @@
 //          and with an icon), then the Upgrades popup over it (4 columns, 19 boxes, the points counter, Q/E between party members, Esc);
 //   level-up: a "new move" card for every move on the real level-up screen (name, text, type tag, icon);
 //   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; routed rows with numbers);
-//   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one.
+//   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one;
+//   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -263,6 +264,61 @@ async function check(browser, query, tag) {
   await page.close();
 }
 
+// The real way into a run: menu, Play, region card. check() above calls startRun directly, which skips the region picker.
+async function regionFlow(browser, query, tag) {
+  const { page, errs } = await boot(browser, query);
+  const toRun = async () => {
+    await page.evaluate(() => {
+      const t = document.getElementById('tap-start');
+      if (!t.classList.contains('hidden')) t.click();
+      G.Flow.goMenu();
+      document.querySelector('#scr-menu [data-go="play"]').click();
+    });
+    await page.waitForFunction(() => document.getElementById('rg').classList.contains('open'), null, { timeout: 5000 });
+    await page.evaluate(() => document.querySelector('#rg-cards .rg-card:not(.locked)').click());
+    await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
+    await sleep(600);
+    await page.evaluate(() => {
+      window.__smokePl = G.Game.player;
+      G.Game.player.invuln = 1e9;
+    });
+  };
+  const sameRun = () => page.evaluate(() => window.__smokePl === G.Game.player);
+  await toRun();
+  ok(
+    await page.evaluate(() => !document.getElementById('rg').classList.contains('open')),
+    tag + ': picking a region closes the picker'
+  );
+  await page.keyboard.press('Space');
+  await sleep(300);
+  ok(await sameRun(), tag + ': Space in a run does not start a new run');
+  ok(await page.evaluate(() => G.Game.player.dodges.cd.some((t) => t > 0)), tag + ': Space in a run dodges');
+  await page.keyboard.press('Enter');
+  await sleep(300);
+  ok(await sameRun(), tag + ': Enter in a run does not start a new run');
+  // back to the menu: the picker opens and closes again as before, and starts a second run
+  await page.evaluate(() => {
+    G.Game.toUI();
+    G.Flow.goMenu();
+    document.querySelector('#scr-menu [data-go="play"]').click();
+  });
+  await sleep(200);
+  const opened = await page.evaluate(() => document.getElementById('rg').classList.contains('open'));
+  await page.keyboard.press('Escape');
+  await sleep(200);
+  ok(
+    opened && (await page.evaluate(() => !document.getElementById('rg').classList.contains('open'))),
+    tag + ': the picker reopens after a run and Esc closes it'
+  );
+  await toRun();
+  ok(await page.evaluate(() => G.Game.state === 'playing'), tag + ': a second run starts from the picker');
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await page.close();
+}
+
 (async () => {
   const srv = cp.spawn('python', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1'], {
     cwd: root,
@@ -272,6 +328,7 @@ async function check(browser, query, tag) {
   const browser = await chromium.launch();
   try {
     await check(browser, '?dev', 'ui');
+    await regionFlow(browser, '?dev', 'region');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

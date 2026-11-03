@@ -5,18 +5,17 @@
  *   guard_<type>  1     super-effective hits of <type> deal half damage (Player.hurt; Chilan halves every Normal hit)
  *   pct_def / pct_spd   +fraction on Def / Sp. Def, added to the stat-card pool (Player.incOf)
  *   crit          +fraction of critical hit chance (combat.js isCrit)
- *   drop          +fraction on the ground drop chance of wild kills (G.Grounds.dropRate)
+ *   drop          +fraction on the ground drop chance of wild kills (G.Grounds.dropBonus, on top of G.Drops.K.groundBase)
  * Item families (Jess, 2026-10-20): X items, Oran and Sitrus, the type-guard berries, the pinch berries, Kee / Maranga, the Pinaps.
  * Status berries (Cheri, Chesto, Pecha, Rawst, Aspear, Persim, Lum, F3a-2) are the one exception: touching one STORES it in the team's berry bag
  * (pl.berries, ONE array shared by the roster, G.Grounds.berrySlots(save) slots, default 1). G.Status calls berryGuard(h, kind) the moment a status
  * would land on a Pokemon: a matching berry is consumed and the status never applies. A full bag, or a berry you already hold, leaves the pickup on the ground.
  * Names and text are English; icons come from the Pokesprite sheet ('ps:<category>.<name>', data/pokesprite-index.js).
+ * An item used up on touch returns [what it did, color] from its apply; G.Grounds.apply shows that as one line, "Oran Berry: heal 30% HP" (Jess, 2026-11-03).
  */
 G.Grounds = (() => {
-  const BASE_RATE = 0.01; // extra ground roll per wild kill (Jess: 1%)
   const X_DUR = 30,
-    BERRY_DUR = 10,
-    PINAP_DUR = 60;
+    BERRY_DUR = 10;
   const HEAL_ORAN = 0.3,
     HEAL_SITRUS = 0.5;
   const LANSAT_CRIT = 0.2;
@@ -45,21 +44,22 @@ G.Grounds = (() => {
   function stage(stat, n, dur, src) {
     return (pl) => {
       renew(pl.stgTeam, stat, n, dur, src);
-      say(pl, STAT_LABEL[stat] + ' +' + n, STAT_COL[stat]);
       ring(pl, STAT_COL[stat]);
+      return ['team ' + STAT_LABEL[stat] + ' +' + n + ', ' + dur + ' s', STAT_COL[stat]];
     };
   }
   function heal(frac) {
     return (pl) => {
       pl.heal(pl.maxHp * frac);
       ring(pl, '#5fe08a');
+      return ['heal ' + Math.round(frac * 100) + '% HP', '#5fe08a'];
     };
   }
   function team(key, n, dur, src, msg, color) {
     return (pl) => {
       renew(pl.stgTeam, key, n, dur, src);
-      say(pl, msg, color);
       ring(pl, color);
+      return [msg + ', ' + dur + ' s', color];
     };
   }
 
@@ -118,8 +118,8 @@ G.Grounds = (() => {
       (pl) => {
         renew(pl.stgTeam, 'guard_' + t, 1, BERRY_DUR, 'guard:' + t);
         const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[t]) || '#ffd23f';
-        say(pl, cap(t) + ' guard', col);
         ring(pl, col);
+        return [cap(t) + ' guard, ' + BERRY_DUR + ' s', col];
       },
       t === 'normal' ? 'Halves Normal-type hits for 10 s' : 'Halves super-effective ' + cap(t) + ' hits for 10 s'
     );
@@ -146,8 +146,8 @@ G.Grounds = (() => {
     (pl) => {
       const s = STATS[Math.floor(Math.random() * STATS.length)];
       renew(pl.stgTeam, s, 2, BERRY_DUR, 'pinch:starf');
-      say(pl, STAT_LABEL[s] + ' +2', STAT_COL[s]);
       ring(pl, STAT_COL[s]);
+      return [STAT_LABEL[s] + ' +2, ' + BERRY_DUR + ' s', STAT_COL[s]];
     },
     'A random team stat +2 for 10 s'
   );
@@ -156,7 +156,7 @@ G.Grounds = (() => {
     'Lansat Berry',
     'berry.lansat',
     1,
-    team('crit', LANSAT_CRIT, BERRY_DUR, 'lansat', 'Crit +20%', '#ffb347'),
+    team('crit', LANSAT_CRIT, BERRY_DUR, 'lansat', 'crit +20%', '#ffb347'),
     '+20% critical hit chance for 10 s'
   );
 
@@ -178,30 +178,30 @@ G.Grounds = (() => {
     '+10% Sp. Def for 10 s'
   );
 
-  // ---- Pinaps: +1 / +5 / +10 points on the ground drop chance for 60 s ----
+  // ---- Pinaps: +0.5 / +1 / +2 points on the ground drop chance for 20 / 10 / 5 s (Jess, 2026-11-03) ----
   add(
     'pinap',
     'Pinap Berry',
     'berry.pinap',
     2.5,
-    team('drop', 0.01, PINAP_DUR, 'pinap', 'Drops +1%', '#ffd23f'),
-    'Ground drop chance +1 point for 60 s'
+    team('drop', 0.005, 20, 'pinap', 'drops +0.5%', '#ffd23f'),
+    'Ground drop chance +0.5 points for 20 s'
   );
   add(
     'silver-pinap',
     'Silver Pinap Berry',
     'berry.silver-pinap',
     1,
-    team('drop', 0.05, PINAP_DUR, 'silver-pinap', 'Drops +5%', '#dfe6f2'),
-    'Ground drop chance +5 points for 60 s'
+    team('drop', 0.01, 10, 'silver-pinap', 'drops +1%', '#dfe6f2'),
+    'Ground drop chance +1 point for 10 s'
   );
   add(
     'golden-pinap',
     'Golden Pinap Berry',
     'berry.golden-pinap',
     0.5,
-    team('drop', 0.1, PINAP_DUR, 'golden-pinap', 'Drops +10%', '#ffc21a'),
-    'Ground drop chance +10 points for 60 s'
+    team('drop', 0.02, 5, 'golden-pinap', 'drops +2%', '#ffc21a'),
+    'Ground drop chance +2 points for 5 s'
   );
 
   // ---- status berries: stored in the team berry bag, consumed automatically when the status would land ----
@@ -255,10 +255,9 @@ G.Grounds = (() => {
     return LIST[LIST.length - 1].id;
   }
 
-  /** Chance that a wild kill also drops a ground item: 1% plus the live Pinap bonus. `pl` is any roster member (the store is shared). */
-  function dropRate(pl) {
-    const bonus = pl && pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'drop') : 0;
-    return BASE_RATE + bonus;
+  /** The live Pinap bonus on a wild kill's ground drop chance (the base rate is G.Drops.K.groundBase). `pl` is any roster member (the store is shared). */
+  function dropBonus(pl) {
+    return pl && pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'drop') : 0;
   }
 
   /** Can the pickup be taken right now? Berry-bag items need a free slot and no copy already in the bag; everything else always can. */
@@ -294,7 +293,8 @@ G.Grounds = (() => {
   function apply(pl, id) {
     const it = BY[id];
     if (!it || !pl) return false;
-    it.apply(pl);
+    const did = it.apply(pl);
+    if (did && G.FX && G.FX.notice) G.FX.notice(pl.x, pl.y - (pl.bodyH || 30) - 34, it.name + ': ' + did[0], did[1]);
     return true;
   }
 
@@ -308,7 +308,7 @@ G.Grounds = (() => {
     if (key === 'pct_def') return { label: 'DEF +' + pct + '%', color: STAT_COL.def };
     if (key === 'pct_spd') return { label: 'SP.DEF +' + pct + '%', color: STAT_COL.spd };
     if (key === 'crit') return { label: 'CRIT +' + pct + '%', color: '#ffb347' };
-    if (key === 'drop') return { label: 'DROPS +' + pct + '%', color: '#ffd23f' };
+    if (key === 'drop') return { label: 'DROPS +' + Math.round(sum * 1000) / 10 + '%', color: '#ffd23f' };
     return null;
   }
 
@@ -317,11 +317,10 @@ G.Grounds = (() => {
     BY,
     GUARD,
     TOTAL_W,
-    BASE_RATE,
     BERRY_CURES,
     LUM_COVERS,
     roll,
-    dropRate,
+    dropBonus,
     apply,
     canTake,
     berryGuard,

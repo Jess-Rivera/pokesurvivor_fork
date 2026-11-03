@@ -2,7 +2,7 @@
 // Real data/ground-items.js, systems/stages.js, data/pokesprite-index.js and Player.incOf with stubbed engine globals. Covers: the table (unique ids,
 // English text, icons present in the Pokesprite index, 18 guard berries, weights add to 100 by family), the weighted roll, every effect on a fake team
 // (heal fractions, X items +1 for 30 s, berries for 10 s, Starf +2 on one stat, Lansat crit, Kee / Maranga pct, Pinap drop bonus), refresh versus
-// stacking, expiry, dropRate, HUD chip labels. The type-guard halving inside Player.hurt, the pickup draw and the HUD are covered by the headless run.
+// stacking, expiry, dropBonus, HUD chip labels. The type-guard halving inside Player.hurt, the pickup draw and the HUD are covered by the headless run.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -76,14 +76,17 @@ const sum = (p, k) => S.teamSum(p.stgTeam, k), tm = (p, k) => (S.teamTimer(p.stg
   console.log('5 guard berries (18), Lansat +20% crit, Kee / Maranga +10% via incOf, expiry'); }
 
 // 6. drop rate
-{ const p = mk(); if (!near(Gr.dropRate(p), 0.01)) bad('base 1%');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropRate(p), 0.02)) bad('pinap -> 2%');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropRate(p), 0.02)) bad('pinap refreshes');
-  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropRate(q), 0.06)) bad('silver -> 6%');
-  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropRate(g), 0.11) || !near(tm(g, 'drop'), 60)) bad('golden -> 11% for 60 s');
-  S.teamTick(g.stgTeam, 60.2); if (!near(Gr.dropRate(g), 0.01)) bad('drop bonus expires after 60 s');
-  if (!near(Gr.dropRate(null), 0.01) || !near(Gr.dropRate({}), 0.01)) bad('dropRate tolerates no store');
-  console.log('6 dropRate: 1% base, +1 / +5 / +10 points for 60 s'); }
+{ const p = mk(); if (!near(Gr.dropBonus(p), 0)) bad('no bonus at base');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.005) || !near(tm(p, 'drop'), 20)) bad('pinap -> +0.5 points for 20 s');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.005)) bad('pinap refreshes');
+  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropBonus(q), 0.01) || !near(tm(q, 'drop'), 10)) bad('silver -> +1 point for 10 s');
+  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropBonus(g), 0.02) || !near(tm(g, 'drop'), 5)) bad('golden -> +2 points for 5 s');
+  S.teamTick(g.stgTeam, 5.2); if (!near(Gr.dropBonus(g), 0)) bad('golden bonus expires after 5 s');
+  const t = mk(); Gr.apply(t, 'pinap'); Gr.apply(t, 'silver-pinap'); Gr.apply(t, 'golden-pinap'); if (!near(Gr.dropBonus(t), 0.035)) bad('the three tiers stack to +3.5 points');
+  S.teamTick(t.stgTeam, 5.2); if (!near(Gr.dropBonus(t), 0.015)) bad('golden runs out first, Pinap and Silver stay');
+  if (Gr.chip('drop', 0.005).label !== 'DROPS +0.5%' || Gr.chip('drop', 0.035).label !== 'DROPS +3.5%' || Gr.chip('drop', 0.02).label !== 'DROPS +2%') bad('the HUD chip shows half points');
+  if (!near(Gr.dropBonus(null), 0) || !near(Gr.dropBonus({}), 0)) bad('dropBonus tolerates no store');
+  console.log('6 dropBonus: +0.5 / +1 / +2 points for 20 / 10 / 5 s, tiers stack (base 1% is G.Drops.K.groundBase)'); }
 
 // 7. status berries (F3a-2): the bag, canTake, berryGuard
 { const p = mk(); G.DB = { save: {} };

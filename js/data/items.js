@@ -11,7 +11,7 @@
  *   on(p)   equip it (what it does while carried)
  *   off(p)  unequip it (undoes what on did)
  * Items that react to something (lethal hit, damage dealt...) are checked with p.hasItem(id).
- * Stat items use their own multiplier (atkMul, spdMul, cdMul, xpMul, coinMul), separate from the additive
+ * Stat items use their own multiplier (atkMul, physMul, specMul, critDmgMul, spdMul, cdMul, xpMul, coinMul), separate from the additive
  * increase pool, so numbers stay as they were.
  * icon: a Pokesprite cell ('ps:<category>.<name>', see data/pokesprite-index.js), drawn the same way the
  *       ground items are. Pokemon-tier held items all carry one (F3b, 2026-10-21).
@@ -37,12 +37,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Choice Band',
       icon: 'ps:hold-item.choice-band',
-      desc: '+40% damage, but you cannot switch moves.',
+      desc: '+40% physical damage, but you cannot switch moves.',
       on: (p) => {
-        p.atkMul *= 1.4;
+        p.physMul *= 1.4;
       },
       off: (p) => {
-        p.atkMul /= 1.4;
+        p.physMul /= 1.4;
       },
     },
     {
@@ -130,12 +130,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Muscle Band',
       icon: 'ps:hold-item.muscle-band',
-      desc: '+10% damage.',
+      desc: '+10% physical damage.',
       on: (p) => {
-        p.atkMul *= 1.1;
+        p.physMul *= 1.1;
       },
       off: (p) => {
-        p.atkMul /= 1.1;
+        p.physMul /= 1.1;
       },
     },
     {
@@ -143,12 +143,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Wise Glasses',
       icon: 'ps:hold-item.wise-glasses',
-      desc: '+10% damage.',
+      desc: '+10% special damage.',
       on: (p) => {
-        p.atkMul *= 1.1;
+        p.specMul *= 1.1;
       },
       off: (p) => {
-        p.atkMul /= 1.1;
+        p.specMul /= 1.1;
       },
     },
     {
@@ -485,6 +485,127 @@ G.Items = (() => {
       off: (p) => {
         if (p.typeBoost === 'fairy') p.typeBoost = null;
       },
+    },
+    // ---- item batch 1, damage and crit (Jess 2026-11-03). None is species-locked: the old species items work on any holder ----
+    {
+      id: 'choicespecs',
+      tier: 'pokemon',
+      name: 'Choice Specs',
+      icon: 'ps:hold-item.choice-specs',
+      desc: '+40% special damage, but you cannot switch moves.',
+      on: (p) => {
+        p.specMul *= 1.4;
+      },
+      off: (p) => {
+        p.specMul /= 1.4;
+      },
+    },
+    {
+      id: 'thickclub',
+      tier: 'pokemon',
+      name: 'Thick Club',
+      icon: 'ps:hold-item.thick-club',
+      desc: '+30% physical damage, but 10% longer cooldowns.',
+      on: (p) => {
+        p.physMul *= 1.3;
+        p.cdMul *= 1.1;
+      },
+      off: (p) => {
+        p.physMul /= 1.3;
+        p.cdMul /= 1.1;
+      },
+    },
+    {
+      id: 'lightball',
+      tier: 'pokemon',
+      name: 'Light Ball',
+      icon: 'ps:hold-item.light-ball',
+      desc: '+30% special damage, but 10% longer cooldowns.',
+      on: (p) => {
+        p.specMul *= 1.3;
+        p.cdMul *= 1.1;
+      },
+      off: (p) => {
+        p.specMul /= 1.3;
+        p.cdMul /= 1.1;
+      },
+    },
+    {
+      id: 'luckypunch',
+      tier: 'pokemon',
+      name: 'Lucky Punch',
+      icon: 'ps:hold-item.lucky-punch',
+      desc: '+15% critical hit chance.',
+      on: (p) => {
+        p.critChance += 0.15;
+      },
+      off: (p) => {
+        p.critChance -= 0.15;
+      },
+    },
+    {
+      id: 'leek',
+      tier: 'pokemon',
+      name: 'Leek',
+      icon: 'ps:hold-item.stick',
+      desc: '+10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x.',
+      on: (p) => {
+        p.critChance += 0.1;
+        p.critDmgMul *= 1.5;
+      },
+      off: (p) => {
+        p.critChance -= 0.1;
+        p.critDmgMul /= 1.5;
+      },
+    },
+    // ---- item batch 1, passive stats (Jess 2026-11-03) ----
+    {
+      id: 'eviolite',
+      tier: 'pokemon',
+      name: 'Eviolite',
+      icon: 'ps:hold-item.eviolite',
+      desc: '1.5x Defense and Sp. Def, only while this Pokemon can still evolve.',
+      on: (p) => {
+        if (G.Evolvable.has(p.dex)) p.defItemMul *= 1.5;
+      },
+      off: (p) => {
+        if (G.Evolvable.has(p.dex)) p.defItemMul /= 1.5;
+      },
+    },
+    {
+      id: 'metalpowder',
+      tier: 'pokemon',
+      name: 'Metal Powder',
+      icon: 'ps:hold-item.metal-powder',
+      desc: '+15% Defense and Sp. Def.',
+      on: (p) => {
+        p.defItemMul *= 1.15;
+      },
+      off: (p) => {
+        p.defItemMul /= 1.15;
+      },
+    },
+    {
+      id: 'quickpowder',
+      tier: 'pokemon',
+      name: 'Quick Powder',
+      icon: 'ps:hold-item.quick-powder',
+      desc: '+15% speed.',
+      on: (p) => {
+        p.spdMul *= 1.15;
+      },
+      off: (p) => {
+        p.spdMul /= 1.15;
+      },
+    },
+    {
+      id: 'brightpowder',
+      tier: 'pokemon',
+      name: 'Bright Powder',
+      icon: 'ps:hold-item.bright-powder',
+      desc: 'Dodge cooldown 15% shorter.',
+      on: () => {},
+      off: () => {},
     },
     // ---- run tier (whole team, whole run) ----
     {
@@ -914,27 +1035,16 @@ G.Items = (() => {
     return { ok: true, slots: n + 1 };
   }
 
-  /** Placeholder chance that a drop source gives a RUN item instead of a Pokemon item (tune later). */
-  const RUN_CHANCE = { gym: 0.1, boss: 0.05 };
-
   /** A random item of `tier`, different from `except` (the one already carried). */
   function roll(except, tier = 'pokemon') {
     const pool = LIST.filter((i) => i.tier === tier && i.id !== except);
     return pool.length ? G.U.pick(pool).id : null;
   }
 
-  /**
-   * An item for a drop source: usually a Pokemon item, with the source's RUN_CHANCE of a run item
-   * (skipped when the team already holds every run item).
-   * @param src     'gym' | 'boss' | anything else (never a run item)
-   * @param owned   run item ids already held
-   */
-  function rollFor(src, owned = []) {
-    if (Math.random() < (RUN_CHANCE[src] || 0)) {
-      const pool = LIST.filter((i) => i.tier === 'run' && !owned.includes(i.id));
-      if (pool.length) return G.U.pick(pool).id;
-    }
-    return roll();
+  /** A random RUN item the team does not hold yet, or null when it holds them all. How often it is rolled is G.Drops. */
+  function rollRun(owned = []) {
+    const pool = LIST.filter((i) => i.tier === 'run' && !owned.includes(i.id));
+    return pool.length ? G.U.pick(pool).id : null;
   }
 
   // ---- F3c run-item shared math (team-wide; read by Player.runSpeedMul / runDmgMul) ----
@@ -1016,7 +1126,7 @@ G.Items = (() => {
     LIST,
     BY,
     roll,
-    rollFor,
+    rollRun,
     runSlots,
     STARTER_TEAM_ITEMS,
     unlocked,
@@ -1028,7 +1138,6 @@ G.Items = (() => {
     slotPrice,
     buyTeamItem,
     buySlot,
-    RUN_CHANCE,
     RUN_SLOTS_DEFAULT,
     RUN_SLOTS_MAX,
     teamHpMul,

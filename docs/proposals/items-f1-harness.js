@@ -19,21 +19,21 @@ let P;
 try { load('js/entities/player.js'); P = G.Player; } catch (e) { console.log('player.js load failed', e.message); process.exit(1); }
 if (!P) { console.log('G.Player missing'); process.exit(1); }
 const I = G.Items;
-const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
+const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, physMul: 1, specMul: 1, defItemMul: 1, critDmgMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
   critChance: 0, expertBelt: false, bigRoot: false, sludgeHurt: false, myTypes: [], moveRadiusMul: 1, typeBoost: null,
   sharpScissors: false, brassKnuckles: false, snowball: false, redo: false, pikaTear: false, stoneType: null,
   hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt, swapHeldItem: P.prototype.swapHeldItem });
 
 // 1. the port
 { const pk = I.LIST.filter(i => i.tier === 'pokemon').map(i => i.id), rn = I.LIST.filter(i => i.tier === 'run').map(i => i.id);
-  if (I.LIST.length !== 61 || pk.length !== 36) bad('counts ' + I.LIST.length + '/' + pk.length);
+  if (I.LIST.length !== 70 || pk.length !== 45) bad('counts ' + I.LIST.length + '/' + pk.length);
   if (rn.length !== 25) bad('run tier count ' + rn.length);
   for (const id of ['amuletcoin', 'luckyegg', 'sharpscissors', 'brassknuckles', 'snowballbadge', 'redo', 'pikachustear']) if (!rn.includes(id)) bad('missing run item ' + id);
   if (rn.filter(id => id.endsWith('stone')).length !== 18) bad('expected 18 Power Stones, got ' + rn.filter(id => id.endsWith('stone')).length);
   if (I.LIST.some(i => !['pokemon', 'run', 'ground'].includes(i.tier))) bad('unknown tier');
   const SPAN = /[ñáéíóúÁÉÍÓÚ¡¿]|\b(de|los|tu|un|el|la)\b/;
   for (const i of I.LIST) if (SPAN.test(i.name.replace(/Poké/g, 'Poke')) || SPAN.test(i.desc.replace(/Poké/g, 'Poke'))) bad('not English: ' + i.id + ' ' + i.name + ' / ' + i.desc);
-  console.log('1 port: 61 items (36 pokemon, 25 run), English text'); }
+  console.log('1 port: 70 items (45 pokemon, 25 run), English text'); }
 
 // 2. on/off symmetry (separate multiplier, no drift)
 { // F3b items use float multipliers (atkMul x1.1, critChance +-0.05) and flags that round-trip within tolerance, not exact
@@ -44,7 +44,7 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
   for (const it of I.LIST) { if (F3B.has(it.id)) continue; const p = mk(), b = JSON.stringify(p); it.on(p); it.off(p);
     const a = JSON.stringify(p); if (a !== b && !(it.id === 'leftovers')) bad('drift ' + it.id + ' ' + b + ' -> ' + a);
     if (it.id === 'leftovers' && !near(p.regenFlat, 0)) bad('leftovers drift'); }
-  const p = mk(); I.BY.choiceband.on(p); if (!near(p.atkMul, 1.4)) bad('choiceband 1.4'); I.BY.lifeorb.on(p); if (!near(p.atkMul, 1.4 * 1.3)) bad('multipliers stack multiplicatively');
+  const p = mk(); I.BY.choiceband.on(p); if (!near(p.physMul, 1.4) || !near(p.atkMul, 1)) bad('choiceband is physical only'); I.BY.lifeorb.on(p); if (!near(p.atkMul, 1.3) || !near(p.physMul, 1.4)) bad('the all-damage and physical layers stay separate');
   const q = mk(); I.BY.leftovers.on(q); if (!near(q.regenFlat, 3)) bad('leftovers 1.5% of 200 = 3, got ' + q.regenFlat);
   const r = mk(); I.BY.luckyegg.on(r); I.BY.amuletcoin.on(r); if (!near(r.xpMul, 1.3) || !near(r.coinMul, 1.5)) bad('run item mults');
   console.log('2 on/off round-trip clean for all 11; stat mults 1.4/1.3/0.8/1.35/+0.2/1.3/1.5 as before'); }
@@ -71,15 +71,11 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
 { if (I.runSlots(null) !== 1 || I.runSlots({}) !== 1 || I.runSlots({ runSlots: 0 }) !== 1 || I.runSlots({ runSlots: 3 }) !== 3 || I.runSlots({ runSlots: 99 }) !== 4) bad('runSlots');
   for (let i = 0; i < 200; i++) { const r = I.roll('leftovers'); if (r === 'leftovers' || I.BY[r].tier !== 'pokemon') bad('pokemon roll ' + r); }
   for (let i = 0; i < 100; i++) { const r = I.roll(null, 'run'); if (I.BY[r].tier !== 'run') bad('run roll'); }
-  const N = 40000, cnt = { gym: 0, boss: 0, chest: 0 };
-  for (const s of Object.keys(cnt)) for (let i = 0; i < N; i++) if (I.BY[I.rollFor(s, [])].tier === 'run') cnt[s]++;
-  if (Math.abs(cnt.gym / N - 0.10) > 0.01) bad('gym run chance ' + cnt.gym / N);
-  if (Math.abs(cnt.boss / N - 0.05) > 0.01) bad('boss run chance ' + cnt.boss / N);
-  if (cnt.chest !== 0) bad('other sources never give run items');
   const allRun = I.LIST.filter(it => it.tier === 'run').map(it => it.id);
-  for (let i = 0; i < 2000; i++) if (I.BY[I.rollFor('gym', allRun)].tier !== 'pokemon') bad('all run items owned falls back to pokemon');
-  for (let i = 0; i < 2000; i++) if (I.rollFor('gym', ['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
-  console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; gym ~10%, boss ~5%, others 0%'); }
+  for (let i = 0; i < 200; i++) if (I.BY[I.rollRun([])].tier !== 'run') bad('rollRun gives a run item');
+  if (I.rollRun(allRun) !== null) bad('all run items owned -> null (the drop table then falls back to a Pokemon item)');
+  for (let i = 0; i < 2000; i++) if (I.rollRun(['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
+  console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; rollRun skips held run items (drop shares: drops-harness)'); }
 
 // 6. F2: moving and swapping held items between Pokemon
 { const a = mk(), b = mk();
@@ -101,8 +97,8 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
 
 // 7. F3b imports: the 7 new held items (near()-based, since they use float multipliers and flags)
 { // effect magnitudes
-  const ma = mk(); I.BY.muscleband.on(ma); if (!near(ma.atkMul, 1.1)) bad('muscle band +10% -> ' + ma.atkMul);
-  const wg = mk(); I.BY.wiseglasses.on(wg); if (!near(wg.atkMul, 1.1)) bad('wise glasses +10% -> ' + wg.atkMul);
+  const ma = mk(); I.BY.muscleband.on(ma); if (!near(ma.physMul, 1.1) || !near(ma.specMul, 1)) bad('muscle band +10% physical -> ' + ma.physMul);
+  const wg = mk(); I.BY.wiseglasses.on(wg); if (!near(wg.specMul, 1.1) || !near(wg.physMul, 1)) bad('wise glasses +10% special -> ' + wg.specMul);
   const sc = mk(); I.BY.scopelens.on(sc); if (!near(sc.critChance, 0.05)) bad('scope lens +5% crit -> ' + sc.critChance);
   const rz = mk(); I.BY.razorclaw.on(rz); if (!near(rz.critChance, 0.05)) bad('razor claw +5% crit -> ' + rz.critChance);
   const eb = mk(); I.BY.expertbelt.on(eb); if (eb.expertBelt !== true) bad('expert belt flag on'); I.BY.expertbelt.off(eb); if (eb.expertBelt !== false) bad('expert belt flag off');
@@ -110,7 +106,7 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
   // on/off round-trip within tolerance for the multiplier/crit items
   for (const id of ['muscleband', 'wiseglasses', 'scopelens', 'razorclaw']) {
     const p = mk(); I.BY[id].on(p); I.BY[id].off(p);
-    if (!near(p.atkMul, 1) || !near(p.critChance, 0)) bad('F3b round-trip ' + id + ' atkMul ' + p.atkMul + ' crit ' + p.critChance);
+    if (!near(p.physMul, 1) || !near(p.specMul, 1) || !near(p.critChance, 0)) bad('F3b round-trip ' + id + ' phys ' + p.physMul + ' spec ' + p.specMul + ' crit ' + p.critChance);
   }
   // Black Sludge: Poison holder heals (1.5% of maxHp), non-Poison chips (sludgeHurt), both clean off
   const poi = mk(); poi.myTypes = ['poison']; I.BY.blacksludge.on(poi);

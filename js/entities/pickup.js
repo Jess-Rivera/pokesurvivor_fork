@@ -1,7 +1,7 @@
 /* ============ pickup.js — experience orbs and items ============
  * The orbs stay still until you enter the magnet radius; then
  * accelerate toward you. So thousands do not pile up, past MAX they merge
- * the oldest ones.
+ * the oldest ones. XP orbs use pl.magnet, everything else pl.itemMagnet.
  *
  * Co-op: the objects are created by the host (each with its id) and the
  * others receive a copy. They all fly toward the nearest player; who
@@ -24,9 +24,7 @@ G.Pickups = (() => {
     item: { color: '#ffd23f', glow: '#c08a10', r: 9 }, // value = id del objeto
     ground: { color: '#ffffff', glow: '#9fe8ff', r: 8 }, // ground item (data/ground-items.js), value = its id
   };
-  /** Chance that a normal Pokemon drops a gacha ticket. */
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
-  const TICKET_RATE = 1 / 400; // (was 1/260; rarer since 2026-10-10)
 
   // Sprite pickups (data/pickup-sprites.js, 16 px art drawn at 1.5 world units per art pixel): the coin is the
   // ringed_gold coin, small XP the aqua gem and big XP the violet gem. Until a sheet has loaded they keep their drawn shapes.
@@ -146,17 +144,8 @@ G.Pickups = (() => {
     // Big orb = worth at least BIG_XP_SHARE of the next level (was a flat 20 XP).
     const lead = G.Game.everyone()[0];
     push(orb(lead && value >= lead.xpNext * BIG_XP_SHARE ? 'xpBig' : 'xp', x, y, value));
-    if (Math.random() < TICKET_RATE) push(orb('ticket', x + G.U.rand(-6, 6), y, 1));
-
-    // Drops ocasionales.
-    const r = Math.random();
-    if (r < 0.012) push(orb('heal', x + G.U.rand(-8, 8), y, 0));
-    else if (r < 0.02) push(orb('magnet', x, y, 0));
-    else if (r < 0.026) push(orb('bomb', x, y, 0));
-
-    // Ground item (data/ground-items.js): its own roll, 1% plus the live Pinap bonus.
-    if (Math.random() < G.Grounds.dropRate(lead))
-      push(orb('ground', x + G.U.rand(-10, 10), y + G.U.rand(-6, 6), G.Grounds.roll()));
+    // The ticket, the occasional berry / magnet / bomb and the ground item: all chances live in data/drops.js.
+    G.Drops.roll('wild', x, y, { lead });
   }
 
   /** Suelta un objeto suelto: 'heal' | 'magnet' | 'bomb' | 'coin'. */
@@ -202,7 +191,8 @@ G.Pickups = (() => {
       if (!pl) continue;
       const dx = pl.x - p.x,
         dy = pl.y - p.y;
-      const mag2 = pl.magnet * pl.magnet;
+      const mag = p.kind === 'xp' || p.kind === 'xpBig' ? pl.magnet : pl.itemMagnet;
+      const mag2 = mag * mag;
 
       // A status berry the team cannot take (bag full, or already holding that one) just sits there: no pull, no pickup.
       const stuck = p.kind === 'ground' && !G.Grounds.canTake(p.value, pl);
@@ -275,7 +265,7 @@ G.Pickups = (() => {
         // Berry, magnet and bomb: their pixel-art icon.
         const ICON = { heal: 'berry', magnet: 'magnet', bomb: 'bomb', ticket: 'ticket', ticket10: 'ticket10' };
         const sz =
-          p.kind === 'ticket10' || p.kind === 'ticket' ? 32 : p.kind === 'item' ? 24 : p.kind === 'ground' ? 22 : 18;
+          p.kind === 'ticket10' || p.kind === 'ticket' || p.kind === 'item' ? 32 : p.kind === 'ground' ? 22 : 18;
         if (p.kind === 'ground') {
           // Ground item: a soft white pulse under its Pokesprite icon.
           ctx.globalAlpha = 0.18 + Math.sin(p.t * 1.5) * 0.08;
@@ -297,7 +287,7 @@ G.Pickups = (() => {
         G.Icons.draw(
           ctx,
           p.kind === 'item'
-            ? p.value
+            ? (G.Items.BY[p.value] || {}).icon || p.value
             : p.kind === 'ground'
               ? 'ps:' + ((G.Grounds.BY[p.value] || {}).icon || 'berry.oran')
               : ICON[p.kind],

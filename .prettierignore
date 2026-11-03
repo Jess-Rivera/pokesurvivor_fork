@@ -13,6 +13,7 @@ tools/cache/
 js/data/pokedex.js
 js/data/sprites-meta.js
 js/data/moves-generated.js
+js/data/evolvable.js
 tools/kanto-batch1-data.js
 js/data/lang-en.js
 package-lock.json

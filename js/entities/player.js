@@ -21,6 +21,9 @@ G.Player = class Player {
     this.bodyH = G.Sprites.bodyHeight(mon.dex);
 
     this.atkMul = perks.atkMul || 1;
+    this.physMul = 1; // held items that boost one damage category (G.Stats.itemCatMul)
+    this.specMul = 1;
+    this.defItemMul = 1; // held items that raise Def and Sp. Def (Eviolite, Metal Powder), read in hurt()
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
@@ -34,7 +37,8 @@ G.Player = class Player {
     this.pikaTear = false; // +1.1x damage & speed per fainted teammate
     this.stoneType = null; // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
-    this.magnet = 120 * (perks.magnetMul || 1);
+    this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
+    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, tickets, magnet, bomb), fixed
     this.xpMul = perks.xpMul || 1;
     this.coinMul = perks.coinMul || 1;
 
@@ -77,6 +81,7 @@ G.Player = class Player {
     this.rerolls = 0; // veces que ha cambiado las cartas de nivel en esta run
     this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
     this.critChance = perks.crit || 0; // critical hit chance (Upgrades)
+    this.critDmgMul = 1; // on top of the base crit multiplier (Leek)
     this.banned = new Set(); // movimientos vetados (Mejoras → Veto): no salen en las cartas
     this.bind = {}; // movimiento -> hueco fijo (0-3), elegido en Mejoras
     this.coins = 0; // monedas recogidas en esta run
@@ -165,7 +170,7 @@ G.Player = class Player {
       this.baseSpAStat,
       this.level,
       m,
-      this.atkMulAll * (1 + si) * stg * this.runDmgMul()
+      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul()
     ); // run items (Brass Knuckles, Pikachu's Tear, Snowball)
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
@@ -337,7 +342,9 @@ G.Player = class Player {
     if (this.dodgeT > 0) return;
     const c = this.dodges;
     if (c.gap > 0) c.gap = Math.max(0, c.gap - dt);
-    for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dt);
+    // Bright Powder: 15% shorter by ticking faster, since the charges are the team's and only the holder has the item on the field
+    const dc = this.hasItem('brightpowder') ? dt / 0.85 : dt;
+    for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dc);
   }
   /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
    *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
@@ -382,9 +389,9 @@ G.Player = class Player {
     }
     if (i < 0 || i >= this.slots.length || i === this.active) return;
     if (!free && this.swapT > 0) return; // still holding the slot you just switched to
-    // Choice Band: you cannot switch moves.
-    if (this.hasItem('choiceband') && this.slots[this.active]) {
-      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Choice Band', '#ff8ad8');
+    // Choice Band and Choice Specs: you cannot switch moves.
+    if (this.choiceLocked() && this.slots[this.active]) {
+      G.FX.dmgText(this.x, this.y - this.bodyH - 8, G.Items.BY[this.item].name, '#ff8ad8');
       return;
     }
     this.active = i;
@@ -431,9 +438,9 @@ G.Player = class Player {
       target.push(m);
     }
     this.arrange();
-    // It switches to the group, except with the Choice Band (you stay on the slot you had, if it remains).
+    // It switches to the group, except with a Choice item (you stay on the slot you had, if it remains).
     const a = this.slots.indexOf(cur);
-    this.active = this.hasItem('choiceband') && a >= 0 ? a : this.slots.indexOf(target);
+    this.active = this.choiceLocked() && a >= 0 ? a : this.slots.indexOf(target);
     this.bonds = Math.max(0, this.bonds - 1);
     return target;
   }
@@ -598,7 +605,8 @@ G.Player = class Player {
         spdB = st ? st[4] : 50;
       const defMul =
         (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) *
-        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def'); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a)
+        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def') *
+        (this.defItemMul || 1); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a), then Eviolite and Metal Powder
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
@@ -792,6 +800,9 @@ G.Player = class Player {
   // ---------------- held items ----------------
   /** True when `id` is in effect for this Pokemon: its own held item while it is NOT benched (held effects only work
    *  on the field), or any run-tier item the team carries. */
+  choiceLocked() {
+    return this.hasItem('choiceband') || this.hasItem('choicespecs');
+  }
   hasItem(id) {
     return (!this.benched && this.item === id) || this.runItems.includes(id);
   }

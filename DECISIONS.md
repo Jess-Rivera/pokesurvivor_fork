@@ -5,6 +5,16 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-03, Rocks and small chests break in 2 to 3 hits (Jess)
+A rock and a small chest take roughly 2 to 3 hits of an Ember, Water Gun or Tackle with no upgrades. Flat 6 HP each: 3 hits at level 1, 2 by level 10, 1 from about level 15 to 20, since prop damage grows with level.
+Canonical: BALANCE.md "Drops / economy"
+
+## 2026-11-03, Item rework v2: drops, heal pickup, batch 1 rulings (Jess)
+Drops: every chance lives in G.Drops. The heal pickup is retired everywhere; Oran takes its place at the same rates (grass, rocks, small chests), and wild kills drop Oran 0.55% or Sitrus 0.40%. A gym leader drops one item, not two, plus its 10 coins.
+Batch 1 is 12 ground and 19 Pokemon items. No species-locked items: Thick Club, Light Ball, Lucky Punch, Leek and the two Powders are generic. Eviolite stays, working while the holder can still evolve. Choice Band physical only, Choice Specs special only, both keep the lock; Muscle Band and Wise Glasses become physical and special only. Gems and run items come later.
+Rulings: raise items (Weakness Policy and the like) trigger on the holder's hit and raise the TEAM, keeping COMBAT-RULES SCOPE. Covert Cloak becomes Protective Pads and does not block trap. Leek also gives +10% crit. Jaboca and Rowap deal 12.5% of max HP, capped at 60 + 14 x level on bosses, elites and gyms. King's Rock rolls once per target per 0.5 s. Eject Button ignores trap and the swap lock, then starts the lock. Shed Shell also halves the holder's swap lock.
+Canonical: docs/ITEMS.md (generated) and js/data/drops.js for drops; docs/proposals/item-rework-v2-handoff.md for batch 1 until it is built
+
 ## 2026-11-02, Dodge on Space (Jess)
 Space dodges 150 px in 0.5 s along your heading. Two team charges, each with its own cooldown (7 s, TUNE in the 5 to 10 s band), all paused during a dodge, 0.2 s between dodges. No i-frames: the body circle is 20% of normal for the first 0.3 s, so shots miss more and gaps fit. Enemies stay pass-through. On ice the dodge speed is kept until you leave it. Two rings to the right of the Pokemon show recharging charges.
 Canonical: docs/COMBAT-RULES.md "Dodge"

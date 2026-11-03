@@ -20,7 +20,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   World: { isFree: () => true, biome: 1, setArena() { }, setBiome() { }, collide() { }, isLiquid: () => false, liquidEffect: () => null }, Weather: { speedFor: () => 1 }, Path: { dirFor: () => null },
   Coop: { active: false, isHost: false }, LIFT: 0, VFX: { forMove: m => ({ id: m.id }), forType: () => null }, Projectiles: { spawn: s => s, clear() { } },
   Game: { player: pl, st: { get time() { return clock; } }, everyone: () => [pl], grantLevels() { }, reviveTeam() { }, badgeBoost() { }, offerBond() { }, flash() { } },
-  Spawner: { CAP: 64, say() { } }, Progress: { event() { } }, Pickups: { drop() { }, dropXp() { }, pullAll() { } }, Items: { roll: () => 'x', rollFor: () => 'x' }, Log: { on: false } };
+  Spawner: { CAP: 64, say() { } }, Progress: { event() { } }, Pickups: { drop() { }, dropXp() { }, pullAll() { } }, Items: { roll: () => 'x' }, Log: { on: false } };
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 try { load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js',

@@ -140,6 +140,12 @@ G.Stats = (() => {
     return m;
   }
 
+  // Held-item multiplier for one damage category, part of the attacker factor (Player.moveFactor). Status-category moves get neither,
+  // like the Attack and Sp. Atk stages. Choice Band and Muscle Band set physMul, Choice Specs and Wise Glasses specMul.
+  function itemCatMul(pl, cat) {
+    return cat === 'special' ? pl.specMul || 1 : cat === 'status' ? 1 : pl.physMul || 1;
+  }
+
   // ---- enemy -> player damage (sub-slice C), mirror of the player A/D ratio ----
   // Enemy "Power" is a flat placeholder for now (no per-enemy move yet). TEMPORARY:
   // swap to canonical move power when enemies draw real moves (see DECISIONS). Gentle
@@ -206,6 +212,7 @@ G.Stats = (() => {
     applyDamage,
     applyDamageProp,
     itemDmgMul,
+    itemCatMul,
     ENEMY_DMG_SCALAR,
     ENEMY_POWER,
     enemyCat,

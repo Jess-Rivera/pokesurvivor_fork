@@ -1,29 +1,31 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-03, end of session (Claude Code, home; branch fix/ui-upgrade, from main).
+Last updated: 2026-11-03, end of session (Claude Code, home). feature/item-rework-v2 is being merged to main; start the next branch from main.
 
 ## Where we are
-- UI REWORK (menus only, in-run UI is out of scope on this branch): Black/White (Gen 5) look, snappy. Menus stay HTML/CSS.
-- Committed: main menu, Team, Inventory, Upgrades popup (yellow title bar, blue cards, Prev/Next), start and loading screens, dodge on Space, coin and XP pickup sprites (16 px, assets/items/pickups, tools/cut_pickup_gifs.py).
-- BUILT, NOT COMMITTED (Jess commits): region select (cards slide out over a dimmed menu, only Kanto open via REGIONS_OPEN in menu.js, Esc or click away closes), new full-screen Settings (css/bw-settings.css, js/ui/settings-ui.js; applies live, language switch removed), pickups without the glow circle (pickup.js). Headless checks pass; none feel-tested.
-- Tests: check.js passes, smoke-ui passes, headless file:// probes for pickups, region select and settings. The signed-in Account tab was not rendered headless.
+- ITEM REWORK V2 is DONE for now and feel-tested good. Jess is happy with the item count.
+- Shipped: one drop table (js/data/drops.js, docs/ITEMS.md); Oran and Sitrus replace the heal pickup; a gym leader drops one item; rock and small chest 6 HP; Band, Specs, Muscle Band, Wise Glasses by category; 9 new Pokemon items (45 total); pickup lines ("Oran Berry: heal 30% HP"); Space and Enter no longer restart the run.
+- Playtest tune: pickup radius split (XP orbs 120 px plus the upgrade; everything else, coins included, fixed 78 px; magnet pickup and shrine hit both) and Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s). Numbers in BALANCE.md. Dropped items now draw their real sprite at 32.
+- PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
 
-## Next (in order)
-1. Jess: commit the uncommitted work, feel-test region select timing, Settings, pickups and the dodge.
-2. Menu screens left: none planned (Pokedex is no longer a menu item, Shop waits for the meta progression). Mobile and narrow layouts last.
-3. Upgrade points: buying, spending, applying in runs, saving (TODO.md "Upgrade points catalog").
-4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch), since the tileset branch depends on it.
+## Next
+1. Jess picks the next branch, cut from main. Nothing is chosen yet.
+2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
+3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
+4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).
 5. Gameplay queue: fields slice (Reflect), accuracy trackers (Smokescreen), gym loops, line of sight for cones.
 
+## Watch
+- smoke-ui is flaky: 1 of 4 runs on 2026-11-03 failed with net::ERR_FAILED on assets/pokemon/7/Charge.png (the file exists); cause not found.
+- check.js reports 5 lint errors (warn-only), not traced.
+
 ## Open owner decisions
-- Pixel density: Pokemon sprites at 1x or 2x, camera zoom, tile and sprite scale split (PX in js/core/sprites.js is shared). Previews were made, nothing changed; pickups are 16 px drawn at 1.5 world units per art pixel.
-- Region unlock rule (all but Kanto are locked for now, Random too).
-- Friends and Leaderboard rows: grey them out?
-- Korataki W01 web licence: check before publishing.
+- Run-only boss pool: how many distinct run items first (34 with the 9 drafted, 18 are Power Stones).
+- Pixel density and sprite scale; region unlock rule; grey out Friends and Leaderboard; Korataki W01 licence.
 - [Open] loop 2+: gym mons share stat raises. O4: badge boosts stacking. Psych Up, Baton Pass, Swagger, Psychic widening.
 
 ## Docs and code still differ (approved, not built)
-- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9). Dodge: no touch button, not synced in co-op (TODO).
+- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9), item batch 1 steps 4 to 6. Dodge: no touch button, not synced in co-op (TODO).
 
-Rules: CLAUDE.md. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.
+Rules: CLAUDE.md. Run npm run format before handing over. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.
