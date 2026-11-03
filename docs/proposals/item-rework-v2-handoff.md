@@ -13,6 +13,7 @@ Read CLAUDE.md first (the rules), then STATE.md, then this file. This file is th
 - Step 1 committed (3006c89), waiting on Jess's feel-test: world props moved into G.Drops (tables grass, rock, chest, bigchest), Oran replaces the heal pickup there at the same rates, a gym leader drops one item (its own table: 10 coins and the 10% run chance). The 'heal' pickup kind still exists in pickup.js, game.js and coop.js, but nothing drops it.
 - Step 1 feel-tested by Jess: good. Step 1a (rock and chest 6 HP) and step 2 BUILT, uncommitted, waiting on his feel-test. Harness: docs/proposals/item-batch1-harness.js.
 - Step 3 and pickup lines committed, feel-tested good.
+- PARKED (Jess, 2026-11-03): the branch merged to main without steps 4 to 6, since he is happy with the item count for now. Start them only if he reopens them, on a new branch from main. Everything below stays valid for that.
 - Steps 4 to 6: the rulings and hooks are approved, not built. Build one at a time, with a feel-test between. Recommended split of step 4: 4a is Weakness Policy, Absorb Bulb, Cell Battery, Luminous Moss, Snowball, Focus Band, Protective Pads, Shed Shell, King's Rock and the shared guard against enemy drops. 4b is Enigma, Jaboca, Rowap and Eject Button (these change the hit call sites or the swap). Give Jess the no-code plan for each before building (CLAUDE.md "Edit boundary"). The harness must take real hits through Player.hurt, not just check fields (a defense multiplier once passed the field checks while missing from hurt).
 
 ## Batch 1 scope and rulings (Jess, 2026-11-03)

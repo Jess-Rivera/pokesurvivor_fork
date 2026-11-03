@@ -492,3 +492,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): pickup lines for items used up on touch. Magnets, bombs, bag berries and held items keep what they have.
 - Found: the defense multiplier was first missing from Player.hurt while the field checks passed; the harness now takes real hits.
 - Verified: check.js, smoke-ui, file:// probe and screenshots. Left uncommitted: all of it. Stopped for the feel-test before step 4.
+
+## 2026-11-03, Playtest tune and branch close (Claude Code, home, feature/item-rework-v2)
+- Built: pickup radius split (XP orbs Player.magnet; everything else, coins included, Player.itemMagnet, fixed 78 px; magnet pickup and shrine hit both), Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s), HUD chip shows half points, dropped items draw their data icon at 32.
+- Decided (Jess): XP set is XP orbs only; Dowsing Machine +0.5 when built; steps 4 to 6 parked, happy with the item count; merge to main.
+- Found: dropped items looked up their icon by item id, so about 57 showed the fallback star and 12 an old hand-drawn icon. Also handed over once without Prettier (the check.js format line is warn-only).
+- Verified: check.js 32/32, format ok, smoke-ui (1 of 4 runs failed on a Charge.png request, cause not found), file:// probes and screenshots. Jess feel-tested: good. Stopped with the merge to main in his hands.
