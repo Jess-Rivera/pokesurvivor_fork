@@ -26,7 +26,6 @@ G.Pickups = (() => {
   };
   /** Chance that a normal Pokemon drops a gacha ticket. */
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
-  const TICKET_RATE = 1 / 400; // (was 1/260; rarer since 2026-10-10)
 
   // Sprite pickups (data/pickup-sprites.js, 16 px art drawn at 1.5 world units per art pixel): the coin is the
   // ringed_gold coin, small XP the aqua gem and big XP the violet gem. Until a sheet has loaded they keep their drawn shapes.
@@ -146,17 +145,8 @@ G.Pickups = (() => {
     // Big orb = worth at least BIG_XP_SHARE of the next level (was a flat 20 XP).
     const lead = G.Game.everyone()[0];
     push(orb(lead && value >= lead.xpNext * BIG_XP_SHARE ? 'xpBig' : 'xp', x, y, value));
-    if (Math.random() < TICKET_RATE) push(orb('ticket', x + G.U.rand(-6, 6), y, 1));
-
-    // Drops ocasionales.
-    const r = Math.random();
-    if (r < 0.012) push(orb('heal', x + G.U.rand(-8, 8), y, 0));
-    else if (r < 0.02) push(orb('magnet', x, y, 0));
-    else if (r < 0.026) push(orb('bomb', x, y, 0));
-
-    // Ground item (data/ground-items.js): its own roll, 1% plus the live Pinap bonus.
-    if (Math.random() < G.Grounds.dropRate(lead))
-      push(orb('ground', x + G.U.rand(-10, 10), y + G.U.rand(-6, 6), G.Grounds.roll()));
+    // The ticket, the occasional berry / magnet / bomb and the ground item: all chances live in data/drops.js.
+    G.Drops.roll('wild', x, y, { lead });
   }
 
   /** Suelta un objeto suelto: 'heal' | 'magnet' | 'bomb' | 'coin'. */

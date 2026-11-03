@@ -17,7 +17,6 @@ G.Elites = (() => {
     minHpMul: 3, // never less than this x a wild unit's HP at that level
     powMul: 1.5, // power multiplier on the wild ratio attack path (TUNE)
     xpMul: 1.2, // XP = wild yield x HP multiplier x this
-    itemChance: 0.5, // chance of an item on death (a Berry is guaranteed)
     enrageAfter: 60,
     enrageRamp: 30,
     enrageMax: 2, // damage x1.0 -> x2.0 over 30 s, starting 60 s after engagement

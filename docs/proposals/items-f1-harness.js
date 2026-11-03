@@ -71,15 +71,11 @@ const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, spdMul:
 { if (I.runSlots(null) !== 1 || I.runSlots({}) !== 1 || I.runSlots({ runSlots: 0 }) !== 1 || I.runSlots({ runSlots: 3 }) !== 3 || I.runSlots({ runSlots: 99 }) !== 4) bad('runSlots');
   for (let i = 0; i < 200; i++) { const r = I.roll('leftovers'); if (r === 'leftovers' || I.BY[r].tier !== 'pokemon') bad('pokemon roll ' + r); }
   for (let i = 0; i < 100; i++) { const r = I.roll(null, 'run'); if (I.BY[r].tier !== 'run') bad('run roll'); }
-  const N = 40000, cnt = { gym: 0, boss: 0, chest: 0 };
-  for (const s of Object.keys(cnt)) for (let i = 0; i < N; i++) if (I.BY[I.rollFor(s, [])].tier === 'run') cnt[s]++;
-  if (Math.abs(cnt.gym / N - 0.10) > 0.01) bad('gym run chance ' + cnt.gym / N);
-  if (Math.abs(cnt.boss / N - 0.05) > 0.01) bad('boss run chance ' + cnt.boss / N);
-  if (cnt.chest !== 0) bad('other sources never give run items');
   const allRun = I.LIST.filter(it => it.tier === 'run').map(it => it.id);
-  for (let i = 0; i < 2000; i++) if (I.BY[I.rollFor('gym', allRun)].tier !== 'pokemon') bad('all run items owned falls back to pokemon');
-  for (let i = 0; i < 2000; i++) if (I.rollFor('gym', ['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
-  console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; gym ~10%, boss ~5%, others 0%'); }
+  for (let i = 0; i < 200; i++) if (I.BY[I.rollRun([])].tier !== 'run') bad('rollRun gives a run item');
+  if (I.rollRun(allRun) !== null) bad('all run items owned -> null (the drop table then falls back to a Pokemon item)');
+  for (let i = 0; i < 2000; i++) if (I.rollRun(['luckyegg']) === 'luckyegg') bad('owned run item rolled again');
+  console.log('5 slots default 1 (old saves ok, cap 4); rolls by tier; rollRun skips held run items (drop shares: drops-harness)'); }
 
 // 6. F2: moving and swapping held items between Pokemon
 { const a = mk(), b = mk();

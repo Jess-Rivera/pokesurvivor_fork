@@ -76,14 +76,14 @@ const sum = (p, k) => S.teamSum(p.stgTeam, k), tm = (p, k) => (S.teamTimer(p.stg
   console.log('5 guard berries (18), Lansat +20% crit, Kee / Maranga +10% via incOf, expiry'); }
 
 // 6. drop rate
-{ const p = mk(); if (!near(Gr.dropRate(p), 0.01)) bad('base 1%');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropRate(p), 0.02)) bad('pinap -> 2%');
-  Gr.apply(p, 'pinap'); if (!near(Gr.dropRate(p), 0.02)) bad('pinap refreshes');
-  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropRate(q), 0.06)) bad('silver -> 6%');
-  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropRate(g), 0.11) || !near(tm(g, 'drop'), 60)) bad('golden -> 11% for 60 s');
-  S.teamTick(g.stgTeam, 60.2); if (!near(Gr.dropRate(g), 0.01)) bad('drop bonus expires after 60 s');
-  if (!near(Gr.dropRate(null), 0.01) || !near(Gr.dropRate({}), 0.01)) bad('dropRate tolerates no store');
-  console.log('6 dropRate: 1% base, +1 / +5 / +10 points for 60 s'); }
+{ const p = mk(); if (!near(Gr.dropBonus(p), 0)) bad('no bonus at base');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.01)) bad('pinap -> +1 point');
+  Gr.apply(p, 'pinap'); if (!near(Gr.dropBonus(p), 0.01)) bad('pinap refreshes');
+  const q = mk(); Gr.apply(q, 'silver-pinap'); if (!near(Gr.dropBonus(q), 0.05)) bad('silver -> +5 points');
+  const g = mk(); Gr.apply(g, 'golden-pinap'); if (!near(Gr.dropBonus(g), 0.10) || !near(tm(g, 'drop'), 60)) bad('golden -> +10 points for 60 s');
+  S.teamTick(g.stgTeam, 60.2); if (!near(Gr.dropBonus(g), 0)) bad('drop bonus expires after 60 s');
+  if (!near(Gr.dropBonus(null), 0) || !near(Gr.dropBonus({}), 0)) bad('dropBonus tolerates no store');
+  console.log('6 dropBonus: +1 / +5 / +10 points for 60 s (base 1% is G.Drops.K.groundBase)'); }
 
 // 7. status berries (F3a-2): the bag, canTake, berryGuard
 { const p = mk(); G.DB = { save: {} };

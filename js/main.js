@@ -21,6 +21,7 @@
     'Stages',
     'Upgrades',
     'Items',
+    'Drops',
     'World',
     'FX',
     'Projectiles',

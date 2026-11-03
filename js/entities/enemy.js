@@ -395,9 +395,7 @@
       }
       if (this.boss) {
         G.Camera.kick(0.9);
-        for (let i = 0; i < 10; i++) G.Pickups.drop('coin', this.x + G.U.rand(-40, 40), this.y + G.U.rand(-30, 30), 5);
-        // Bosses always drop an item: a Pokemon item, with a small placeholder chance of a RUN item (Items.RUN_CHANCE).
-        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('boss', G.Game.player.runItems));
+        G.Drops.roll('boss', this.x, this.y); // coins and the guaranteed item (data/drops.js)
       }
       // Wild enemy: Gen 5 yield from its species base_experience, its spawn level and the player's
       // level right now (shared run level, so the highest among the players).
@@ -409,21 +407,17 @@
       if (this.elite) {
         G.Camera.kick(0.6);
         G.Pickups.dropXp(this.x, this.y, this.xp, true);
-        G.Pickups.drop('heal', this.x + 24, this.y, 0); // the guaranteed Oran Berry (the plain 'heal' pickup, 30%)
-        G.Pickups.drop('ground', this.x + 4, this.y + 22, G.Grounds.roll()); // plus one ground roll
-        if (Math.random() < G.Elites.K.itemChance) G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.roll());
+        G.Drops.roll('elite', this.x, this.y); // the guaranteed Berry, a ground roll, a chance at an item (data/drops.js)
         G.Elites.noteDeath(this);
       } else if (this.gym) {
         /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop one guaranteed item
-           (picked up by the arena's pullAll): a Pokemon item, or a RUN item with the placeholder Items.RUN_CHANCE.gym. */
-        G.Pickups.drop('item', this.x - 26, this.y - 10, G.Items.rollFor('gym', G.Game.player.runItems));
+           (picked up by the arena's pullAll), see data/drops.js. */
+        G.Drops.roll('gym', this.x, this.y);
       } else G.Pickups.dropXp(this.x, this.y, this.xp);
-      if (this.golden && Math.random() < 0.35) G.Pickups.drop('coin', this.x + 6, this.y - 4, 3);
+      if (this.golden) G.Drops.roll('golden', this.x, this.y);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {
-        const n = this.def.loot === 'ticket10' ? 6 : 20;
-        for (let i = 0; i < n; i++) G.Pickups.drop('coin', this.x + G.U.rand(-36, 36), this.y + G.U.rand(-26, 26), 5);
-        if (this.def.loot === 'ticket10') G.Pickups.drop('ticket10', this.x, this.y - 12, 1);
+        G.Drops.roll(this.def.loot === 'ticket10' ? 'thiefTicket' : 'thief', this.x, this.y);
         G.FX.ring(this.x, this.y, this.r, this.r * 5, '#ffd23f', 0.6, 4);
       }
       G.Audio.sfx(this.boss ? 'bossDown' : 'faint');

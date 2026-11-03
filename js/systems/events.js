@@ -288,8 +288,7 @@ G.Events = (() => {
 
   function rescued() {
     const L = lost;
-    for (let i = 0; i < 12; i++) G.Pickups.drop('coin', L.tx + G.U.rand(-40, 40), L.ty + G.U.rand(-30, 30), 5);
-    G.Pickups.drop('ticket', L.tx, L.ty - 12, 1);
+    G.Drops.roll('rescue', L.tx, L.ty);
     if (G.Coop.isHost) G.Coop.broadcast(['ev', 'rw', L.dex, L.grant ? 1 : 0]);
     reward(L.dex, L.grant);
     lost = null;

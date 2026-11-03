@@ -914,27 +914,16 @@ G.Items = (() => {
     return { ok: true, slots: n + 1 };
   }
 
-  /** Placeholder chance that a drop source gives a RUN item instead of a Pokemon item (tune later). */
-  const RUN_CHANCE = { gym: 0.1, boss: 0.05 };
-
   /** A random item of `tier`, different from `except` (the one already carried). */
   function roll(except, tier = 'pokemon') {
     const pool = LIST.filter((i) => i.tier === tier && i.id !== except);
     return pool.length ? G.U.pick(pool).id : null;
   }
 
-  /**
-   * An item for a drop source: usually a Pokemon item, with the source's RUN_CHANCE of a run item
-   * (skipped when the team already holds every run item).
-   * @param src     'gym' | 'boss' | anything else (never a run item)
-   * @param owned   run item ids already held
-   */
-  function rollFor(src, owned = []) {
-    if (Math.random() < (RUN_CHANCE[src] || 0)) {
-      const pool = LIST.filter((i) => i.tier === 'run' && !owned.includes(i.id));
-      if (pool.length) return G.U.pick(pool).id;
-    }
-    return roll();
+  /** A random RUN item the team does not hold yet, or null when it holds them all. How often it is rolled is G.Drops. */
+  function rollRun(owned = []) {
+    const pool = LIST.filter((i) => i.tier === 'run' && !owned.includes(i.id));
+    return pool.length ? G.U.pick(pool).id : null;
   }
 
   // ---- F3c run-item shared math (team-wide; read by Player.runSpeedMul / runDmgMul) ----
@@ -1016,7 +1005,7 @@ G.Items = (() => {
     LIST,
     BY,
     roll,
-    rollFor,
+    rollRun,
     runSlots,
     STARTER_TEAM_ITEMS,
     unlocked,
@@ -1028,7 +1017,6 @@ G.Items = (() => {
     slotPrice,
     buyTeamItem,
     buySlot,
-    RUN_CHANCE,
     RUN_SLOTS_DEFAULT,
     RUN_SLOTS_MAX,
     teamHpMul,

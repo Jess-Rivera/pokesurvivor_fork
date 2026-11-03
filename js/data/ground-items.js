@@ -5,7 +5,7 @@
  *   guard_<type>  1     super-effective hits of <type> deal half damage (Player.hurt; Chilan halves every Normal hit)
  *   pct_def / pct_spd   +fraction on Def / Sp. Def, added to the stat-card pool (Player.incOf)
  *   crit          +fraction of critical hit chance (combat.js isCrit)
- *   drop          +fraction on the ground drop chance of wild kills (G.Grounds.dropRate)
+ *   drop          +fraction on the ground drop chance of wild kills (G.Grounds.dropBonus, on top of G.Drops.K.groundBase)
  * Item families (Jess, 2026-10-20): X items, Oran and Sitrus, the type-guard berries, the pinch berries, Kee / Maranga, the Pinaps.
  * Status berries (Cheri, Chesto, Pecha, Rawst, Aspear, Persim, Lum, F3a-2) are the one exception: touching one STORES it in the team's berry bag
  * (pl.berries, ONE array shared by the roster, G.Grounds.berrySlots(save) slots, default 1). G.Status calls berryGuard(h, kind) the moment a status
@@ -13,7 +13,6 @@
  * Names and text are English; icons come from the Pokesprite sheet ('ps:<category>.<name>', data/pokesprite-index.js).
  */
 G.Grounds = (() => {
-  const BASE_RATE = 0.01; // extra ground roll per wild kill (Jess: 1%)
   const X_DUR = 30,
     BERRY_DUR = 10,
     PINAP_DUR = 60;
@@ -255,10 +254,9 @@ G.Grounds = (() => {
     return LIST[LIST.length - 1].id;
   }
 
-  /** Chance that a wild kill also drops a ground item: 1% plus the live Pinap bonus. `pl` is any roster member (the store is shared). */
-  function dropRate(pl) {
-    const bonus = pl && pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'drop') : 0;
-    return BASE_RATE + bonus;
+  /** The live Pinap bonus on a wild kill's ground drop chance (the base rate is G.Drops.K.groundBase). `pl` is any roster member (the store is shared). */
+  function dropBonus(pl) {
+    return pl && pl.stgTeam ? G.Stages.teamSum(pl.stgTeam, 'drop') : 0;
   }
 
   /** Can the pickup be taken right now? Berry-bag items need a free slot and no copy already in the bag; everything else always can. */
@@ -317,11 +315,10 @@ G.Grounds = (() => {
     BY,
     GUARD,
     TOTAL_W,
-    BASE_RATE,
     BERRY_CURES,
     LUM_COVERS,
     roll,
-    dropRate,
+    dropBonus,
     apply,
     canTake,
     berryGuard,
