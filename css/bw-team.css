@@ -122,16 +122,17 @@
 
 /* ---------- the screen: diagonal gradient, room left for the main menu's top bar ---------- */
 #scr-roster {
-  background: linear-gradient(135deg, #0a1520 12%, #1a4566 50%, #0a1520 88%);
+  background: linear-gradient(135deg, #04060a 12%, #0a1520 50%, #04060a 88%);
 }
 #scr-roster .ros {
   padding-top: calc(max(calc(46 * var(--u)), 20px) + 8px);
 }
 #scr-roster .ros-main {
-  grid-template-columns: 280px minmax(0, 1fr) 380px;
+  grid-template-columns: 408px minmax(0, 1fr) 380px;
 }
 
-/* ---------- left: the 6 team slots, floating (no column background), 1:1 like the cards ---------- */
+/* ---------- left: the 6 team slots, floating (no column background), drawn at the cards' 2 px scale
+   (tools/make_party_cards.py) ---------- */
 .ros-team {
   display: flex;
   flex-direction: column;
@@ -147,11 +148,11 @@
 .ros-slot {
   position: relative;
   flex: none;
-  width: 256px;
-  height: 98px;
+  width: 384px;
+  height: 146px;
   isolation: isolate;
   cursor: pointer;
-  background: url('../assets/ui/team/slot-blank.png') no-repeat 0 0 / 256px 98px;
+  background: url('../assets/ui/team/slot-blank.png') no-repeat 0 0 / 384px 146px;
   image-rendering: pixelated;
 }
 .ros-slot::before {
@@ -159,7 +160,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url('../assets/ui/team/slot-rect.png') no-repeat 0 0 / 256px 98px;
+  background: url('../assets/ui/team/slot-rect.png') no-repeat 0 0 / 384px 146px;
 }
 .ros-slot.lead::before {
   background-image: url('../assets/ui/team/slot-round.png');
@@ -182,27 +183,27 @@
 /* Sprite on the left, inside the border. */
 .ros-slot canvas {
   position: absolute;
-  left: 12px;
-  top: 9px;
-  width: 80px;
-  height: 80px;
+  left: 18px;
+  top: 13px;
+  width: 120px;
+  height: 120px;
 }
-/* Name centred in the rest of the slot, its bottom on the slot's centre line; the type chips under it. */
+/* Name left-justified in the rest of the slot, its bottom on the slot's centre line; the type chips under it. */
 .ros-slot .rinfo {
   position: absolute;
-  left: 96px;
-  right: 14px;
-  top: 8px;
-  bottom: 8px;
+  left: 144px;
+  right: 21px;
+  top: 12px;
+  bottom: 12px;
   display: grid;
   grid-template-rows: 1fr 1fr;
-  justify-items: center;
+  justify-items: start;
   min-width: 0;
 }
 .ros-slot .rinfo b {
   align-self: end;
   max-width: 100%;
-  font-size: 17px;
+  font-size: 24px;
   line-height: 1.1;
   color: #fff;
   white-space: nowrap;
@@ -216,19 +217,19 @@
 .ros-slot .rtypes {
   align-self: start;
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 6px;
 }
 .ros-slot .rtypes .type {
   margin: 0;
-  padding: 1px 6px;
-  font-size: 11px;
+  padding: 2px 9px;
+  font-size: 15px;
 }
-/* The shiny icon is the Normal / Shiny switch: dim when off. */
+/* The shiny icon is the Normal / Shiny switch: dim when off. One art pixel in from the corner. */
 .ros-slot .rsh {
   position: absolute;
-  top: 9px;
-  right: 18px;
+  top: 17px;
+  right: 30px;
   padding: 0;
   border: 0;
   background: none;
@@ -238,6 +239,35 @@
 }
 .ros-slot .rsh.on {
   opacity: 1;
+}
+/* Upgrade, in the bottom-right corner like the shiny star in the top-right: the label, then the arrow turned up. */
+.ros-slot .rupg {
+  position: absolute;
+  right: 24px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+}
+.ros-slot .rupg img {
+  width: 17px; /* half the PNG: 1 px per art pixel, an exact downscale */
+  height: 14px;
+  margin: 0 -1px 0 0;
+  transform: rotate(-90deg);
+  image-rendering: pixelated;
+}
+.ros-slot .rupg:hover,
+.ros-slot .rupg:focus-visible {
+  color: var(--bw-title);
+  outline: none;
 }
 
 /* ---------- right: the detail column, alternating dark and light see-through blues, no buttons ---------- */
@@ -392,10 +422,6 @@
 .bw-btn:disabled {
   opacity: 0.45;
   cursor: default;
-}
-#ros-upg {
-  justify-content: center;
-  padding: 0;
 }
 
 /* ---------- narrow windows: one column, the slots in a sideways strip ---------- */

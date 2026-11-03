@@ -83,7 +83,16 @@ G.MenuUI = (() => {
   function init() {
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
-    for (const n of ['slot-blank', 'slot-rect', 'slot-rect-sel', 'slot-round', 'slot-round-sel', 'btn', 'btn-sel'])
+    for (const n of [
+      'slot-blank',
+      'slot-rect',
+      'slot-rect-sel',
+      'slot-round',
+      'slot-round-sel',
+      'btn',
+      'btn-sel',
+      'arrow',
+    ])
       new Image().src = `assets/ui/team/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});
@@ -105,7 +114,8 @@ G.MenuUI = (() => {
     });
     // Team screen: Enter puts the previewed Pokémon in the targeted slot.
     addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' || !G.UI.isOpen('scr-roster') || e.target.closest('input, textarea, select, button')) return;
+      if (e.key !== 'Enter' || !G.UI.isOpen('scr-roster') || e.target.closest('input, textarea, select, button'))
+        return;
       const d = ros.dex,
         cur = ros.team[ros.slot];
       if (d == null || !G.DB.save.owned[d] || (cur && cur.dex === d)) return;
@@ -795,9 +805,6 @@ G.MenuUI = (() => {
     G.UI.show('scr-roster'); // (no keepMenu: the main menu is hidden too)
     $('ros-back').onclick = rosBack;
     $('ros-commit').onclick = rosCommit;
-    $('ros-upg').onclick = () => {
-      if (ros.dex != null && s.owned[ros.dex]) openUpgrades(ros.dex, rosReturn);
-    };
     buildControls(rosView);
     renderGrid(rosView);
     // Drop a team card back on the list: that slot is freed.
@@ -892,10 +899,6 @@ G.MenuUI = (() => {
     rosRenderSlots();
     rosRenderDetail();
     $('ros-commit').disabled = !rosDirty();
-    const upg = $('ros-upg'),
-      own = ros.dex != null && !!G.DB.save.owned[ros.dex];
-    upg.disabled = !own;
-    upg.title = own ? `Upgrades for ${G.DEX_BY[ros.dex].name}` : 'Preview a Pokémon you own to upgrade it';
   }
 
   /**
@@ -969,7 +972,7 @@ G.MenuUI = (() => {
       b.dataset.sfx = 'click';
       b.title = (mon ? `Slot ${slot + 1}: ${mon.name}` : `Slot ${slot + 1}: empty`) + '\n' + ROS_TIP;
       if (mon) {
-        b.appendChild(G.UI.spriteCanvas(mon.dex, 80, 80, { lively: true, scale: 2, hero: true, shiny }));
+        b.appendChild(G.UI.spriteCanvas(mon.dex, 120, 120, { lively: true, scale: 3, hero: true, shiny }));
         b.insertAdjacentHTML(
           'beforeend',
           `<div class="rinfo"><b>${mon.name}</b><span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
@@ -980,7 +983,7 @@ G.MenuUI = (() => {
           sh.type = 'button';
           sh.className = 'rsh' + (shiny ? ' on' : '');
           sh.title = `Shiny ${shiny ? 'on' : 'off'}: click to switch`;
-          sh.innerHTML = G.Icons.html('shiny', 12);
+          sh.innerHTML = G.Icons.html('shiny', 18);
           sh.onclick = (e) => {
             e.stopPropagation();
             rosToggleShiny(slot);
@@ -988,6 +991,18 @@ G.MenuUI = (() => {
           sh.ondblclick = (e) => e.stopPropagation();
           b.appendChild(sh);
         }
+        const up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'rupg';
+        up.dataset.sfx = 'click';
+        up.title = `Upgrades for ${mon.name}`;
+        up.innerHTML = 'Upgrade<img src="assets/ui/team/arrow.png" alt="" />';
+        up.onclick = (e) => {
+          e.stopPropagation();
+          openUpgrades(mon.dex, rosReturn);
+        };
+        up.ondblclick = (e) => e.stopPropagation();
+        b.appendChild(up);
       } else {
         b.insertAdjacentHTML('beforeend', '<div class="rinfo"><b>Empty</b></div>');
       }
