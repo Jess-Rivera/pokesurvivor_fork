@@ -5,15 +5,16 @@ Last updated: 2026-11-02 (Claude Code, home; branch fix/ui-upgrade, from main).
 
 ## Where we are
 - UI REWORK started: Black/White (Gen 5) look for every screen, cohesive, "snappy, quick" (instant highlight, ~120 ms slides, preloaded art). Menus stay HTML/CSS; PixiJS only ever for the in-run canvas, after an fps test.
-- Main menu BUILT (css/bw-menu.css): PokeSwarm title (Korataki ExtraBold), pokemon-b-w font, faded grid panel (lines 30%), chevron rows from assets/ui/menu, keyboard cursor, top bar with 3 counters, bottom bar with credits and stats. Sound, fullscreen, sign out and patch notes moved into Settings. Restyled to the Team card blues: rows drawn by tools/make_menu_rows.py at the cards' 2 px scale (chevron, 3-line border, see-through fill, 45 degree band), navy grid, cyan bar lines.
-- Team screen BUILT (css/bw-team.css): diagonal gradient (#04060a corners, #0a1520 band), main menu top bar kept, flat bottom bar with Back / Commit (icon_cancel_narrow art). Left: 6 floating slots, column scrolls under ~1000 px tall (panel_round lead, panel_rect, panel_blank under, dimmed when empty, swap art on drag). Centre: party cards (tools/make_party_cards.py). Slots drawn by tools/make_party_cards.py (384x146, card border), Upgrade on each slot. Right: yellow name row, then alternating blues (rarity+types, BST+hex, ability, moves), no buttons. Put = double-click, drag or Enter; free = right-click or drag to grid; shiny = click the slot's shiny icon; controls in the slot tooltip.
+- Main menu BUILT (css/bw-menu.css): PokeSwarm title, pokemon-b-w font, navy grid panel, rows from tools/make_menu_rows.py (card style), keyboard cursor, top bar with 3 counters, bottom bar. Sound, fullscreen, sign out, patch notes moved into Settings.
+- Team screen BUILT (css/bw-team.css): diagonal gradient, menu top bar, bottom bar Back / Commit. Left: 6 slots from tools/make_party_cards.py (384x146), Upgrade and shiny switch on each slot; column scrolls under ~1000 px tall. Right: yellow name row, alternating blues, no buttons. Put = double-click, drag, Enter; free = right-click or drag to grid.
+- Inventory BUILT (css/bw-inventory.css): popup in the card frame over the gradient, yellow title, slot tiles and item cards from the same script (assets/ui/inventory), no buttons: double-click equips / moves / unequips, right-click empties a slot.
 - Magnet: base 120 px, upgrade +20% per level (committed).
 - Kanto batch 1 and gym loop-1 lore sets merged into main (Roar, Fissure, Future Sight not yet feel-tested).
-- Tests: check.js 30/30; headless menu and Team checks on file:// at 4 sizes, no page errors.
+- Tests: check.js 30/30, smoke-ui passes; headless menu, Team, Inventory checks on file:// at 4 sizes.
 
 ## Next (in order)
-1. Jess: feel the main menu and the Team screen; commit.
-2. Other screens, one at a time (Shop, Inventory, Missions, Settings, Pokedex, pause, end of run, level-up cards). Narrow phones: the 3 bar buttons overflow below ~420 px wide.
+1. Jess: feel the main menu, Team and Inventory; commit.
+2. Other screens, one at a time (Shop, Missions, Settings, Pokedex, pause, end of run, level-up cards). Mobile layout is a last-pass concern.
 3. In-run HUD from assets/ui/In Run Mockup.png (own stage).
 4. Gameplay queue still waiting: fields slice (Reflect), accuracy trackers (Smokescreen), later gym loops, line of sight for cones.
 

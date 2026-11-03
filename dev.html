@@ -94,6 +94,7 @@
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
     <link rel="stylesheet" href="css/bw-team.css" />
+    <link rel="stylesheet" href="css/bw-inventory.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -581,18 +582,16 @@
 
     <!-- ====== Inventory (pre-run team item loadout, opened from the main menu) ====== -->
     <section id="scr-inventory" class="scr dim hidden">
-      <div class="box inv">
-        <div class="row between">
-          <h2>Inventory <span id="inv-count" class="sub" style="font-size: 15px"></span></h2>
-          <button class="btn small ghost" id="inv-back" data-back>Back</button>
-        </div>
-        <p class="sub" style="margin: 2px 0 10px">
-          Team items you equip here start every run. Gym leaders and bosses can drop new ones.
-        </p>
+      <div class="inv">
+        <div class="inv-head"><b>Inventory</b><span id="inv-count"></span></div>
+        <p class="inv-sub">Team items you equip here start every run. Gym leaders and bosses can drop new ones.</p>
         <div class="inv-main">
           <aside class="inv-slots" id="inv-slots"></aside>
-          <div class="grid inv-grid" id="inv-grid"></div>
-          <aside class="panel inv-detail" id="inv-detail"></aside>
+          <div class="inv-grid" id="inv-grid"></div>
+          <aside class="inv-detail" id="inv-detail"></aside>
+        </div>
+        <div class="inv-foot">
+          <button class="bw-btn" id="inv-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
         </div>
       </div>
     </section>

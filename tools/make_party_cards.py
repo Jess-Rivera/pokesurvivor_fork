@@ -11,6 +11,9 @@ Writes to assets/ui/team/:
                           panel_rect (diagonal band), slot-round(-sel, -swap) from panel_round (chevron band),
                           slot-blank from panel_blank (its 1 px stripes keep their rhythm).
 
+And to assets/ui/inventory/: frame.png (the card border alone, for the window), slot(-sel).png and
+slot-blank.png (82x82 item slots), cell(-sel).png (136x88 item cards).
+
 Usage from the repo root:  python tools/make_party_cards.py [art_w art_h [out_dir]]   (cards; default 50 68 -> 100x136 px)
 """
 
@@ -25,6 +28,10 @@ SRC = os.path.join(ROOT, 'assets', 'ui', 'BW Pokedex rip', 'BW Party')
 OUT = os.path.join(ROOT, 'assets', 'ui', 'team')
 CORNER = 12  # art pixels kept fixed at each corner (covers the cut corners)
 SLOT = (192, 73)  # team slot art size; 73 - 49 is even, so panel_blank's stripes stay in step
+INV_OUT = os.path.join(ROOT, 'assets', 'ui', 'inventory')
+INV_FRAME = (32, 32)  # the window border alone, used as a CSS border-image (24 px slices)
+INV_SLOT = (41, 41)  # item slot tiles; 41 - 49 is even, as above
+INV_CELL = (68, 44)  # item cards
 
 
 def is_fill(p):
@@ -104,6 +111,14 @@ def main():
             card('panel_%s%s.png' % (shape, state), sw, sh, key).save(os.path.join(out, name + '.png'))
     card('panel_blank.png', sw, sh, stripes=True).save(os.path.join(out, 'slot-blank.png'))
     print('wrote', out, 'slots', sw * 2, 'x', sh * 2)
+    os.makedirs(INV_OUT, exist_ok=True)
+    frame_only(card('panel_rect.png', *INV_FRAME)).save(os.path.join(INV_OUT, 'frame.png'))
+    for state in ('', '_sel'):
+        suffix = state.replace('_', '-')
+        card('panel_rect%s.png' % state, *INV_SLOT).save(os.path.join(INV_OUT, 'slot' + suffix + '.png'))
+        card('panel_rect%s.png' % state, *INV_CELL).save(os.path.join(INV_OUT, 'cell' + suffix + '.png'))
+    card('panel_blank.png', *INV_SLOT, stripes=True).save(os.path.join(INV_OUT, 'slot-blank.png'))
+    print('wrote', INV_OUT, 'frame, slots', INV_SLOT[0] * 2, 'x', INV_SLOT[1] * 2, 'cells', INV_CELL[0] * 2, 'x', INV_CELL[1] * 2)
 
 
 if __name__ == '__main__':

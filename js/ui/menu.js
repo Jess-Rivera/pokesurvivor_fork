@@ -642,8 +642,11 @@ G.MenuUI = (() => {
 
   // ---------------- inventory: the pre-run team item loadout (F3d-2) ----------------
   // save.teamItems = unlocked ids, save.teamLoadout = equipped ids BY SLOT (null = empty; G.Items.cleanLoadout keeps it valid). Saves at once.
-  // Two INDEPENDENT highlights: inv.sel = the item shown in the detail column, inv.slot = the target slot. The button joins them.
+  // Two INDEPENDENT highlights: inv.sel = the item shown in the detail column, inv.slot = the target slot. A double-click joins them.
   const inv = { slot: 0, sel: null };
+  // The controls, on every slot's and item's tooltip (no buttons in the window).
+  const INV_TIP =
+    'Click a slot to target it. Double-click an item to equip it in the targeted slot, or to unequip it if it is already there. Right-click a slot to empty it.';
   const invUnlocked = () => G.Items.LIST.filter((i) => i.tier === 'run' && G.Items.unlocked(G.DB.save, i.id));
 
   function openInventory() {
@@ -706,7 +709,7 @@ G.MenuUI = (() => {
       const el = document.createElement('div');
       el.className = 'inv-slot' + (it ? ' full' : '') + (k === inv.slot ? ' on' : '');
       el.innerHTML = (it ? icon(it, 36) : '') + `<span class="inv-sn">Slot ${k + 1}</span>`;
-      el.title = it ? it.name : 'Empty slot';
+      el.title = (it ? it.name : 'Empty slot') + '\n' + INV_TIP;
       el.onclick = () => {
         inv.slot = k;
         G.Audio.sfx('click');
@@ -718,6 +721,10 @@ G.MenuUI = (() => {
           renderInventory();
         }
       }; // double-click a filled slot to inspect its item
+      el.oncontextmenu = (e) => {
+        e.preventDefault();
+        if (it) invUnequip(it.id);
+      };
       slots.appendChild(el);
     }
 
@@ -730,7 +737,8 @@ G.MenuUI = (() => {
     for (const it of have) {
       const k = load.indexOf(it.id);
       const el = document.createElement('div');
-      el.className = 'cell inv-cell' + (inv.sel === it.id ? ' on' : '');
+      el.className = 'inv-cell' + (inv.sel === it.id ? ' on' : '');
+      el.title = it.name + '\n' + INV_TIP;
       el.innerHTML =
         `<div class="inv-ico">${icon(it, 36)}</div><b>${it.name}</b>` +
         (k >= 0 ? `<span class="inv-eq">Slot ${k + 1}</span>` : '');
@@ -739,18 +747,19 @@ G.MenuUI = (() => {
         G.Audio.sfx('click');
         renderInventory();
       };
+      // In the targeted slot: unequip. Anywhere else (or nowhere): equip it there, moving it if needed.
       el.ondblclick = () => {
-        if (load.includes(it.id)) invUnequip(it.id);
+        if (load[inv.slot] === it.id) invUnequip(it.id);
         else invEquip(it.id);
       };
       grid.appendChild(el);
     }
 
-    // Right: the selected item. The button always names the HIGHLIGHTED slot.
+    // Right: the selected item, in the Team screen's alternating blues. The hint always names the HIGHLIGHTED slot.
     const det = $('inv-detail');
     const it = G.Items.BY[inv.sel];
     if (!it || !G.Items.unlocked(s, it.id)) {
-      det.innerHTML = '<div class="sub">Pick an item to see what it does.</div>';
+      det.innerHTML = '<div class="inv-drow">Pick an item to see what it does.</div>';
       return;
     }
     const k = load.indexOf(it.id),
@@ -765,24 +774,14 @@ G.MenuUI = (() => {
       note +=
         (note ? ' ' : '') +
         `Only one ${it.group === 'stone' ? 'Stone' : 'of this kind'} at a time: ${G.Items.BY[clashId].name} is removed.`;
-    det.innerHTML = `<div class="inv-dico">${icon(it, 56)}</div><h3 style="margin:6px 0 4px">${it.name}</h3>
-      <div class="ds">${it.desc}</div>
-      ${note ? `<div class="ds inv-note">${note}</div>` : ''}
-      <div class="inv-act"></div>`;
-    const act = det.querySelector('.inv-act');
-    const btn = (label, cls, fn, off) => {
-      const b = document.createElement('button');
-      b.className = 'btn ' + cls;
-      b.textContent = label;
-      b.disabled = !!off;
-      b.onclick = fn;
-      act.appendChild(b);
-    };
-    if (k === T) btn(`Unequip from Slot ${T + 1}`, '', () => invUnequip(it.id));
-    else {
-      btn(k >= 0 ? `Move to Slot ${T + 1}` : `Equip to Slot ${T + 1}`, 'gold', () => invEquip(it.id));
-      if (k >= 0) btn('Unequip', '', () => invUnequip(it.id));
-    }
+    const hint =
+      k === T
+        ? `In Slot ${T + 1}. Double-click it to unequip.`
+        : `Double-click it to ${k >= 0 ? 'move it from Slot ' + (k + 1) + ' to' : 'equip it in'} Slot ${T + 1}.`;
+    det.innerHTML = `<div class="inv-dbox"><div class="inv-dico">${icon(it, 56)}</div><b>${it.name}</b></div>
+      <div class="inv-drow">${it.desc}</div>
+      ${note ? `<div class="inv-note">${note}</div>` : ''}
+      <div class="inv-hint">${hint}</div>`;
   }
 
   // ---------------- team screen ----------------
