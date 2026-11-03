@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-02 (Claude Code, home; branch fix/ui-upgrade, from main).
+Last updated: 2026-11-02, end of session (Claude Code, home; branch fix/ui-upgrade, from main, not pushed yet).
 
 ## Where we are
 - UI REWORK started: Black/White (Gen 5) look for every screen, cohesive, "snappy, quick" (instant highlight, ~120 ms slides, preloaded art). Menus stay HTML/CSS; PixiJS only ever for the in-run canvas, after an fps test.

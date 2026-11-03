@@ -1,0 +1,212 @@
+/* ============ bw-inventory.css: Black/White Inventory window ============
+ * The pre-run team item loadout, a popup over the main menu. The window is the party card border
+ * (frame.png as a border-image) over the Team screen's diagonal gradient; the slots and item cards
+ * are party panels redrawn at their size. Art made by tools/make_party_cards.py (assets/ui/inventory).
+ * The Back button is the Team screen's .bw-btn (bw-team.css).
+ */
+.inv {
+  position: relative;
+  width: min(860px, 100%);
+  max-height: 100%;
+  padding: 24px;
+  background: linear-gradient(135deg, #04060a 12%, #0a1520 50%, #04060a 88%);
+  /* The frame's cut corners: nothing shows outside them. A clip shape, not a mask image (file://). */
+  clip-path: polygon(
+    20px 2px,
+    calc(100% - 20px) 2px,
+    calc(100% - 2px) 20px,
+    calc(100% - 2px) calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 2px),
+    20px calc(100% - 2px),
+    2px calc(100% - 20px),
+    2px 20px
+  );
+  text-shadow: 2px 2px 0 var(--shadow);
+  animation: bw-pop 0.12s ease-out;
+}
+/* The frame sits on top of everything, so the title bar and the bottom bar can run under it to the edge. */
+.inv::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 24px solid transparent;
+  border-image: url('../assets/ui/inventory/frame.png') 24 stretch;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+@keyframes bw-pop {
+  from {
+    transform: translateY(12px);
+    opacity: 0.4;
+  }
+}
+
+/* Title bar: the Team screen's yellow name row, out to the frame on the top and sides. */
+.inv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin: -20px -20px 0;
+  padding: 16px 34px 12px;
+  background: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.inv-head b {
+  font-size: 22px;
+}
+.inv-head span {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.inv-sub {
+  margin: 8px 2px 12px;
+  font-size: 14px;
+  color: var(--bw-sub);
+}
+
+.inv-main {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 250px;
+  gap: 14px;
+  min-height: 300px;
+}
+
+/* ---------- left: item slots, panel_blank under each, the panel dimmed when empty (like the Team slots) ---------- */
+.inv-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inv-slot {
+  position: relative;
+  flex: none;
+  width: 82px;
+  height: 82px;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  background: url('../assets/ui/inventory/slot-blank.png') no-repeat 0 0 / 82px 82px;
+}
+.inv-slot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('../assets/ui/inventory/slot.png') no-repeat 0 0 / 82px 82px;
+}
+.inv-slot.on::before {
+  background-image: url('../assets/ui/inventory/slot-sel.png');
+}
+.inv-slot:not(.full)::before {
+  opacity: 0.35;
+}
+.inv-sn {
+  font-size: 11px;
+  color: var(--bw-sub);
+  text-shadow: none;
+}
+
+/* ---------- middle: the unlocked items as party cards ---------- */
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 136px);
+  justify-content: center;
+  gap: 8px;
+  align-content: start;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.inv-cell {
+  box-sizing: border-box;
+  width: 136px;
+  height: 88px;
+  padding: 10px 12px 0;
+  text-align: center;
+  cursor: pointer;
+  background: url('../assets/ui/inventory/cell.png') no-repeat 0 0 / 136px 88px;
+}
+.inv-cell.on {
+  background-image: url('../assets/ui/inventory/cell-sel.png');
+}
+.inv-cell b {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inv-ico {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+.inv-eq {
+  display: block;
+  font-size: 11px;
+  color: var(--bw-title);
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---------- right: the selected item, alternating light and dark see-through blues ---------- */
+.inv-detail {
+  display: flex;
+  flex-direction: column;
+}
+.inv-dbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  background: rgba(0, 99, 140, 0.35);
+  font-size: 18px;
+}
+.inv-dico {
+  display: flex;
+  justify-content: center;
+}
+.inv-drow {
+  padding: 10px 14px;
+  background: rgba(0, 33, 57, 0.5);
+  font-size: 14px;
+  color: var(--muted);
+}
+.inv-note {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--bw-title);
+}
+.inv-hint {
+  margin-top: auto;
+  padding: 8px 14px;
+  background: rgba(0, 99, 140, 0.35);
+  font-size: 13px;
+  color: var(--bw-sub);
+}
+
+/* ---------- bottom: the Team screen's bar, Back on the right, out to the frame on the bottom and sides ---------- */
+.inv-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin: 14px -20px -20px;
+  padding: 16px 30px 20px;
+  background: var(--bw-charcoal);
+  border-top: 2px solid var(--bw-line);
+}
+
+@media (max-width: 720px) {
+  .inv-main {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+  .inv-detail {
+    grid-column: 1 / -1;
+  }
+}

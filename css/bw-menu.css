@@ -21,14 +21,15 @@
   --u: min(calc(100vw / 1920), calc(100dvh / 1080));
   --bw-panel: calc(535 * var(--u));
   --bw-charcoal: #181818;
-  --bw-lime: #94ef18;
-  --bw-mint: #7bf7c6;
-  --bw-lime-pale: #d6ff7b;
-  --bw-grid: #002b17;
-  --bw-grid-line: #001f14;
+  --bw-line: #29ceff;
+  --bw-sub: #8cfff7;
+  --bw-sub-sel: #ffffff;
+  --bw-grid: rgba(16, 24, 33, 0.7);
+  --bw-grid-line: rgba(41, 206, 255, 0.1);
+  --bw-fade: calc(360 * var(--u));
   --bw-title: #fff000;
   --bw-title-shade: #8f8500;
-  --bw-ink-shadow: #0c2a26;
+  --bw-ink-shadow: #00213a;
 }
 
 /* ---------- main menu: live overworld on the left, grid panel on the right ---------- */
@@ -47,23 +48,30 @@
   right: 0;
   bottom: 0;
   width: var(--bw-panel);
-  padding-top: calc(49 * var(--u));
+  display: flex;
+  flex-direction: column;
+  padding: calc(49 * var(--u)) 0 calc(43 * var(--u));
+  isolation: isolate;
+  animation: bw-slide 0.12s ease-out;
+}
+/* The grid (generated, no image). It starts solid a little left of the Play row and fades out
+   over --bw-fade toward the centre of the screen. */
+.bw-panel::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: calc(13 * var(--u) - var(--bw-fade));
   background-color: var(--bw-grid);
   background-image:
     linear-gradient(90deg, var(--bw-grid-line) max(1px, calc(2 * var(--u))), transparent 0),
     linear-gradient(var(--bw-grid-line) max(1px, calc(2 * var(--u))), transparent 0);
   background-size: calc(16 * var(--u)) calc(16 * var(--u));
-  animation: bw-slide 0.12s ease-out;
-}
-/* Soft edge where the panel meets the world. */
-.bw-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(-16 * var(--u));
-  width: calc(16 * var(--u));
-  background: linear-gradient(90deg, rgba(0, 43, 23, 0), rgba(0, 43, 23, 0.75));
+  background-position: right top;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--bw-fade));
+  mask-image: linear-gradient(90deg, transparent, #000 var(--bw-fade));
   pointer-events: none;
 }
 @keyframes bw-slide {
@@ -73,7 +81,7 @@
   }
 }
 .bw-title {
-  margin: calc(56 * var(--u)) 0 calc(46 * var(--u)) calc(36 * var(--u));
+  margin: calc(56 * var(--u)) 0 0 calc(36 * var(--u));
   font-family: 'Korataki', 'PokeBW', sans-serif;
   font-weight: 800;
   font-size: calc(50 * var(--u));
@@ -82,13 +90,15 @@
   text-shadow: 0 calc(4 * var(--u)) 0 var(--bw-title-shade);
   white-space: nowrap;
 }
+/* The rows sit centred in the space left under the title. */
 .bw-list {
+  margin: auto 0;
   display: flex;
   flex-direction: column;
   gap: calc(7 * var(--u));
 }
 
-/* Rows: 9-slice of the row art (chevron and edges fixed, middle stretches), running off the right edge.
+/* Rows: the row art scaled whole (it is drawn at the row's mockup size, tools/make_menu_rows.py), running off the right edge.
    The highlight swaps instantly, no transition: the cursor must feel snappy. */
 .bw-row {
   appearance: none;
@@ -97,11 +107,9 @@
   justify-content: center;
   height: calc(88 * var(--u));
   margin: 0 0 0 calc(77 * var(--u));
-  padding: 0 calc(12 * var(--u)) 0 calc(22 * var(--u));
-  border-style: solid;
-  border-width: calc(12 * var(--u)) calc(20 * var(--u)) calc(12 * var(--u)) calc(32 * var(--u));
-  border-image: url('../assets/ui/menu/row.png') 12 20 12 32 fill stretch;
-  background: none;
+  padding: calc(12 * var(--u)) calc(32 * var(--u)) calc(12 * var(--u)) calc(54 * var(--u));
+  border: 0;
+  background: url('../assets/ui/menu/row.png') no-repeat 0 0 / 100% 100%;
   image-rendering: pixelated;
   cursor: pointer;
   text-align: left;
@@ -117,7 +125,7 @@
   display: block;
   margin-top: calc(4 * var(--u));
   font-size: max(calc(19 * var(--u)), 10px);
-  color: var(--bw-mint);
+  color: var(--bw-sub);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -125,10 +133,10 @@
   color: var(--gold);
 }
 .bw-row.sel {
-  border-image-source: url('../assets/ui/menu/row-sel.png');
+  background-image: url('../assets/ui/menu/row-sel.png');
 }
 .bw-row.sel small:not(.gold) {
-  color: var(--bw-lime-pale);
+  color: var(--bw-sub-sel);
 }
 .bw-row:focus-visible {
   outline: none;
@@ -136,19 +144,18 @@
 .bw-row.play {
   height: calc(152 * var(--u));
   margin-left: calc(33 * var(--u));
-  margin-bottom: calc(13 * var(--u));
-  padding-left: calc(30 * var(--u));
-  border-image-source: url('../assets/ui/menu/play.png');
+  padding-left: calc(62 * var(--u));
+  background-image: url('../assets/ui/menu/play.png');
   font-size: max(calc(52 * var(--u)), 18px);
 }
 .bw-row.play small {
   font-size: max(calc(22 * var(--u)), 11px);
 }
 .bw-row.play.sel {
-  border-image-source: url('../assets/ui/menu/play-sel.png');
+  background-image: url('../assets/ui/menu/play-sel.png');
 }
 
-/* ---------- top bar: charcoal with a lime line that steps down over the panel ---------- */
+/* ---------- top bar: charcoal with a cyan line that steps down over the panel ---------- */
 #topbar {
   top: 0;
   left: 0;
@@ -173,9 +180,9 @@
   inset: 0;
   z-index: -1;
 }
-/* The lime layer peeks out 2 mockup pixels below the charcoal one: that is the line. */
+/* The cyan layer peeks out 2 mockup pixels below the charcoal one: that is the line. */
 #topbar::before {
-  background: var(--bw-lime);
+  background: var(--bw-line);
   clip-path: polygon(
     0 0,
     100% 0,
@@ -264,7 +271,7 @@
   display: none;
 }
 #botbar::before {
-  background: var(--bw-lime);
+  background: var(--bw-line);
   clip-path: polygon(
     0 0,
     calc(100% - 582 * var(--u)) 0,
@@ -288,7 +295,7 @@
 #menu-stats {
   line-height: max(calc(29 * var(--u)), 14px);
   font-size: max(calc(18 * var(--u)), 10px);
-  color: var(--bw-mint);
+  color: var(--bw-sub);
   white-space: nowrap;
 }
 #menu-stats b {
@@ -302,7 +309,7 @@
   line-height: max(calc(41 * var(--u)), 16px);
   font-family: 'PokeBW', 'Pixelify', monospace;
   font-size: max(calc(17 * var(--u)), 10px);
-  color: rgba(214, 255, 123, 0.75);
+  color: rgba(140, 255, 247, 0.75);
   text-shadow: none;
   white-space: nowrap;
   overflow: hidden;
@@ -323,7 +330,9 @@
     --bw-panel: 100vw;
   }
   .bw-panel::before {
-    display: none;
+    left: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   #menu-stats {
     display: none;
