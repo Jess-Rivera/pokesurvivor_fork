@@ -46,6 +46,12 @@ G.PickupSprites = {
       ms: [80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80],
     },
     collect: { src: 'assets/items/pickups/collect.png', n: 6, ms: [80, 80, 80, 80, 80, 80] },
+    spin16: {
+      src: 'assets/items/pickups/spin16.png',
+      n: 24,
+      cell: 16,
+      ms: [80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80],
+    },
   },
-  gold: { src: 'assets/items/coins/spin_gold.png', y: 34, n: 8, ms: [125] },
+  gold: { src: 'assets/items/pickups/coin16.png', y: 0, n: 8, cell: 16, ms: [125] },
 };

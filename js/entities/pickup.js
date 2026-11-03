@@ -28,9 +28,9 @@ G.Pickups = (() => {
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
   const TICKET_RATE = 1 / 400; // (was 1/260; rarer since 2026-10-10)
 
-  // Sprite pickups (data/pickup-sprites.js): the coin is the ringed_gold row of the coin sheet, small XP the aqua
-  // gem and big XP the violet gem of the pickup sheets. Until a sheet has loaded they keep their drawn shapes.
-  const SPR = { coin: { gold: true, size: 20 }, xp: { row: 'aqua', size: 18 }, xpBig: { row: 'violet', size: 18 } };
+  // Sprite pickups (data/pickup-sprites.js, 16 px art drawn at 1.5 world units per art pixel): the coin is the
+  // ringed_gold coin, small XP the aqua gem and big XP the violet gem. Until a sheet has loaded they keep their drawn shapes.
+  const SPR = { coin: { gold: true, size: 24 }, xp: { row: 'aqua', size: 24 }, xpBig: { row: 'violet', size: 24 } };
   const sheetImgs = {};
   function sheetImg(src) {
     let e = sheetImgs[src];
@@ -52,13 +52,13 @@ G.Pickups = (() => {
     if (S.gold) {
       sheet = D.gold;
       n = sheet.n;
-      ms = [sheet.ms];
+      ms = sheet.ms;
       sy = sheet.y;
     } else {
-      sheet = D.sheets.spin;
+      sheet = D.sheets.spin16;
       n = sheet.n;
       ms = sheet.ms;
-      sy = D.rows.indexOf(S.row) * (D.cell + D.pad);
+      sy = D.rows.indexOf(S.row) * (sheet.cell + D.pad);
     }
     const img = sheetImg(sheet.src);
     if (!img) return false;
@@ -68,7 +68,17 @@ G.Pickups = (() => {
     const f = Math.floor((t % per) / ms[0]) % n;
     const sm = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, f * (D.cell + D.pad), sy, D.cell, D.cell, x - S.size / 2, y - S.size / 2, S.size, S.size);
+    ctx.drawImage(
+      img,
+      f * (sheet.cell + D.pad),
+      sy,
+      sheet.cell,
+      sheet.cell,
+      x - S.size / 2,
+      y - S.size / 2,
+      S.size,
+      S.size
+    );
     ctx.imageSmoothingEnabled = sm;
     return true;
   }
