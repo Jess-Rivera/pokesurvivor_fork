@@ -655,18 +655,21 @@
     <!-- ====== Mejoras ====== -->
     <section id="scr-upgrades" class="scr dim hidden">
       <div class="upgw">
-        <div class="upg-top"><span id="upg-points" title="Upgrade points">0 / 40</span></div>
+        <div class="upg-head">
+          <b id="upg-name" translate="no"></b><span id="upg-points" title="Upgrade points">0 / 40</span>
+        </div>
         <div class="upg-main">
-          <div class="upg-tab">
-            <span class="upg-cap">
-              <button type="button" id="upg-prev" title="Previous Pokémon (Q)"></button>
-              <button type="button" id="upg-next" title="Next Pokémon (E)"></button>
-            </span>
-            <b id="upg-name" translate="no"></b>
-          </div>
           <div class="upg-cols" id="upg-cols"></div>
         </div>
         <div class="upg-bot">
+          <span class="upg-step">
+            <button class="bw-btn" type="button" id="upg-prev" title="Previous Pokémon (Q)">
+              Prev<img src="assets/ui/team/arrow.png" alt="" />
+            </button>
+            <button class="bw-btn" type="button" id="upg-next" title="Next Pokémon (E)">
+              Next<img src="assets/ui/team/arrow.png" alt="" />
+            </button>
+          </span>
           <button class="bw-btn" id="upg-back">Back<img src="assets/ui/team/back-x.png" alt="" /></button>
         </div>
       </div>

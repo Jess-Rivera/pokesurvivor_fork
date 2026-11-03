@@ -1200,6 +1200,7 @@ G.MenuUI = (() => {
   function renderUpgrades() {
     $('upg-name').textContent = G.DEX_BY[upgDex] ? G.DEX_BY[upgDex].name : '';
     $('upg-points').textContent = `0 / ${UPG_MAX_POINTS}`;
+    $('upg-prev').disabled = $('upg-next').disabled = upgParty().length < 2;
     const cols = $('upg-cols');
     cols.innerHTML = '';
     UPG_COLS.forEach(([title, list], c) => {

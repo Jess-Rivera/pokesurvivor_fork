@@ -1,98 +1,99 @@
 /* ============ bw-upgrades.css: Black/White Upgrades window ============
- * One Pokemon's upgrade catalog (docs/Economy Balance Ideas.md), a popup over the Team screen: its own top
- * bar (the "N / 40" points counter) and bottom bar (Back, the Team screen's .bw-btn from bw-team.css), a
- * name tab, then four columns of boxes (panel_round_swap from the party rip, copied to assets/ui/upgrades
- * at its 2 px scale). No frame border, unlike Inventory. Display only for now.
+ * One Pokemon's upgrade catalog (docs/Economy Balance Ideas.md), a popup over the Team screen: a yellow title bar
+ * (name, "N / 40" points), four columns of blue boxes (the party rip's panel_round_swap, hue-shifted to the
+ * Inventory blue by tools/blue_upgrade_boxes.py, at its 2 px scale), and a bottom bar with Prev / Next and Back
+ * (the Team screen's .bw-btn from bw-team.css). Inventory's frame and cut corners. Display only for now.
  */
 #scr-upgrades {
   padding: calc(max(calc(46 * var(--u)), 20px) + 8px) 20px 8px; /* below the main menu's top bar */
 }
 .upgw {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: min(1360px, 100%);
   height: min(1040px, 100%);
   background: linear-gradient(135deg, #04060a 12%, #0a1520 50%, #04060a 88%);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+  /* The frame's cut corners: nothing shows outside them. A clip shape, not a mask image (file://). */
+  clip-path: polygon(
+    20px 2px,
+    calc(100% - 20px) 2px,
+    calc(100% - 2px) 20px,
+    calc(100% - 2px) calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 2px),
+    20px calc(100% - 2px),
+    2px calc(100% - 20px),
+    2px 20px
+  );
   font-family: 'PokeBW', 'Pixelify', monospace;
   color: #fff;
   text-shadow: 2px 2px 0 var(--shadow);
   animation: bw-pop 0.12s ease-out;
 }
-/* The window's bars: charcoal with the cyan line on the inner edge, like the main menu's. */
-.upg-top,
+/* The frame (Inventory's) sits on top, so the title bar and bottom bar run under it to the edge. */
+.upgw::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 24px solid transparent;
+  border-image: url('../assets/ui/inventory/frame.png') 24 stretch;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+/* Title bar: one yellow strip, the Pokemon's name left, the points right (like Inventory's). */
+.upg-head {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 26px 40px 12px;
+  background: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.upg-head b {
+  font-weight: 400;
+  font-size: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upg-head span {
+  font-size: 18px;
+  white-space: nowrap;
+}
+/* Bottom bar: charcoal with the cyan line, Prev / Next on the left, Back on the right. */
 .upg-bot {
   flex: none;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: 0 24px;
+  box-sizing: border-box;
+  height: 72px; /* 24 px of it sits under the frame */
+  padding: 0 40px 24px;
   background: var(--bw-charcoal);
-}
-.upg-top {
-  height: 42px;
-  border-bottom: 2px solid var(--bw-line);
-  font-size: 24px;
-}
-.upg-bot {
-  height: 46px;
   border-top: 2px solid var(--bw-line);
+}
+.upg-step {
+  display: flex;
+  gap: 12px;
+}
+.upg-step .bw-btn img {
+  width: 17px; /* half the PNG, an exact downscale, like the Team screen's Upgrade arrow */
+  height: 14px;
+  margin-right: 4px;
+}
+#upg-prev img {
+  transform: rotate(180deg);
 }
 .upg-main {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px 24px;
-}
-
-/* ---------- the name tab: a dark capsule holding the previous / next chevrons, then the name ---------- */
-.upg-tab {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 300px;
-  height: 42px;
-  padding-left: 4px;
-  background: #026b56;
-  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-}
-.upg-tab b {
-  font-weight: 400;
-  font-size: 30px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.upg-cap {
-  flex: none;
-  display: flex;
-  height: 34px;
-  border-radius: 17px;
-  background: #024939;
-}
-.upg-cap button {
-  appearance: none;
-  width: 26px;
-  height: 34px;
-  padding: 0;
-  border: 0;
-  background: #fff;
-  opacity: 0.55;
-  cursor: pointer;
-}
-.upg-cap button:hover,
-.upg-cap button:focus-visible {
-  opacity: 1;
-  outline: none;
-}
-#upg-prev {
-  clip-path: polygon(70% 15%, 85% 15%, 50% 50%, 85% 85%, 70% 85%, 35% 50%);
-}
-#upg-next {
-  clip-path: polygon(15% 15%, 30% 15%, 65% 50%, 30% 85%, 15% 85%, 50% 50%);
+  padding: 16px 32px 8px;
 }
 
 /* ---------- the four columns; they wrap on narrow windows and the whole block scrolls when short ---------- */
@@ -119,7 +120,7 @@
   height: 50px;
   margin: 0 4px 4px;
   padding: 0 20px;
-  background: #024939;
+  background: rgba(0, 99, 140, 0.35);
   font-weight: 400;
   font-size: 26px;
   white-space: nowrap;
