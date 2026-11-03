@@ -7,12 +7,13 @@ Last updated: 2026-11-03, end of session (Claude Code, home; branch feature/item
 - ITEM REWORK V2. Detail, rulings and corrected build plan: docs/proposals/item-rework-v2-handoff.md (read it first for item work).
 - Committed (16ff37f): one drop table (js/data/drops.js), Oran and Sitrus on kills and elites, docs/ITEMS.md.
 - Committed: step 1 (3006c89: every world drop in G.Drops, Oran replaces the heal pickup, a gym leader drops one item; feel-tested good) and the Space restart fix (d7824c8). smoke-ui failed once for an unseen reason (not a region check); watch for it.
-- BUILT, NOT COMMITTED: step 1a (rock and small chest 6 HP: 3 hits at level 1, 1 hit by about level 15 to 20) and step 2 (Band, Specs, Muscle Band, Wise Glasses by category; new Choice Specs, Thick Club, Light Ball, Lucky Punch, Leek). Waiting on Jess's feel-test.
-- APPROVED, NOT BUILT: batch 1, steps 3 to 6 (12 ground + 14 more Pokemon items). Jess said go on all recommendations; one step at a time, feel-test between.
+- Committed (35bc2c6): step 1a (rock and small chest 6 HP) and step 2 (Band, Specs, Muscle Band, Wise Glasses by category; new Choice Specs, Thick Club, Light Ball, Lucky Punch, Leek). Feel-test not reported yet.
+- BUILT, NOT COMMITTED: step 3 (Eviolite with generated js/data/evolvable.js, Metal Powder, Quick Powder, Bright Powder; 45 Pokemon items) and pickup lines ("Oran Berry: heal 30% HP", G.FX.notice). Waiting on Jess's feel-test.
+- APPROVED, NOT BUILT: batch 1, steps 4 to 6 (12 ground + 10 more Pokemon items). Jess said go on all recommendations; one step at a time, feel-test between.
 
 ## Next (in order)
-1. Jess: feel-test steps 1a and 2, commit, push.
-2. Build batch 1 steps 3 to 6 per the handoff, one at a time.
+1. Jess: feel-test steps 1a, 2 and 3, commit, push.
+2. Build batch 1 steps 4 to 6 per the handoff, one at a time.
 3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
 4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).
 5. Gameplay queue: fields slice (Reflect), accuracy trackers (Smokescreen), gym loops, line of sight for cones.

@@ -486,3 +486,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): step 1 felt good; rocks and chests about 2 to 3 hits of a 40 power move with no upgrades.
 - Found: prop damage grows with level, so flat 6 HP is 3 hits at level 1 and 1 hit by about level 15 to 20. Status-category moves get no category boost.
 - Verified: check.js 32/32, smoke-ui, file:// probe (real hits to break, Leek crit 2.25x, Specs lock, sheet, icons, pickup). Left uncommitted: all of it. Stopped for the feel-test before step 3.
+
+## 2026-11-03, Step 3: passive stat items, pickup lines (Claude Code, home, feature/item-rework-v2)
+- Built: Eviolite (js/data/evolvable.js, generated from pokeapi by tools/evolvable_data.js, checked by check.js), Metal Powder, Quick Powder, Bright Powder (45 Pokemon items). Used-up ground items show one line, "Oran Berry: heal 30% HP", through G.FX.notice: never dropped at the text cap, 1.6 s, stacks.
+- Decided (Jess): pickup lines for items used up on touch. Magnets, bombs, bag berries and held items keep what they have.
+- Found: the defense multiplier was first missing from Player.hurt while the field checks passed; the harness now takes real hits.
+- Verified: check.js, smoke-ui, file:// probe and screenshots. Left uncommitted: all of it. Stopped for the feel-test before step 4.

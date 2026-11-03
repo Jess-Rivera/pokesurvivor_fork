@@ -8,6 +8,20 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Pickups tell you what they did, and four new items', 'Pickups tell you what they did, and four new items'],
+    new: [
+      [
+        'Berries and other items used up on pickup now show what they did, like "Oran Berry: heal 30% HP".',
+        'Berries and other items used up on pickup now show what they did, like "Oran Berry: heal 30% HP".',
+      ],
+      [
+        'Four new held items: Eviolite (much tougher while your Pokemon can still evolve), Metal Powder, Quick Powder and Bright Powder (shorter dodge cooldown).',
+        'Four new held items: Eviolite (much tougher while your Pokemon can still evolve), Metal Powder, Quick Powder and Bright Powder (shorter dodge cooldown).',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['New held items, and easier rocks and chests', 'New held items, and easier rocks and chests'],
     new: [
       [

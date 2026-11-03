@@ -19,21 +19,21 @@ let P;
 try { load('js/entities/player.js'); P = G.Player; } catch (e) { console.log('player.js load failed', e.message); process.exit(1); }
 if (!P) { console.log('G.Player missing'); process.exit(1); }
 const I = G.Items;
-const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, physMul: 1, specMul: 1, critDmgMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
+const mk = () => ({ item: null, runItems: [], benched: false, atkMul: 1, physMul: 1, specMul: 1, defItemMul: 1, critDmgMul: 1, spdMul: 1, cdMul: 1, dmgReduce: 0, regenFlat: 0, xpMul: 1, coinMul: 1, maxHp: 200, bellHeal: 0, sashT: -999,
   critChance: 0, expertBelt: false, bigRoot: false, sludgeHurt: false, myTypes: [], moveRadiusMul: 1, typeBoost: null,
   sharpScissors: false, brassKnuckles: false, snowball: false, redo: false, pikaTear: false, stoneType: null,
   hasItem: P.prototype.hasItem, equip: P.prototype.equip, onDealt: P.prototype.onDealt, swapHeldItem: P.prototype.swapHeldItem });
 
 // 1. the port
 { const pk = I.LIST.filter(i => i.tier === 'pokemon').map(i => i.id), rn = I.LIST.filter(i => i.tier === 'run').map(i => i.id);
-  if (I.LIST.length !== 66 || pk.length !== 41) bad('counts ' + I.LIST.length + '/' + pk.length);
+  if (I.LIST.length !== 70 || pk.length !== 45) bad('counts ' + I.LIST.length + '/' + pk.length);
   if (rn.length !== 25) bad('run tier count ' + rn.length);
   for (const id of ['amuletcoin', 'luckyegg', 'sharpscissors', 'brassknuckles', 'snowballbadge', 'redo', 'pikachustear']) if (!rn.includes(id)) bad('missing run item ' + id);
   if (rn.filter(id => id.endsWith('stone')).length !== 18) bad('expected 18 Power Stones, got ' + rn.filter(id => id.endsWith('stone')).length);
   if (I.LIST.some(i => !['pokemon', 'run', 'ground'].includes(i.tier))) bad('unknown tier');
   const SPAN = /[ñáéíóúÁÉÍÓÚ¡¿]|\b(de|los|tu|un|el|la)\b/;
   for (const i of I.LIST) if (SPAN.test(i.name.replace(/Poké/g, 'Poke')) || SPAN.test(i.desc.replace(/Poké/g, 'Poke'))) bad('not English: ' + i.id + ' ' + i.name + ' / ' + i.desc);
-  console.log('1 port: 66 items (41 pokemon, 25 run), English text'); }
+  console.log('1 port: 70 items (45 pokemon, 25 run), English text'); }
 
 // 2. on/off symmetry (separate multiplier, no drift)
 { // F3b items use float multipliers (atkMul x1.1, critChance +-0.05) and flags that round-trip within tolerance, not exact

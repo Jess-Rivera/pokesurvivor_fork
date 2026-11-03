@@ -20,6 +20,7 @@
     'Status',
     'Stages',
     'Upgrades',
+    'Evolvable',
     'Items',
     'Drops',
     'World',

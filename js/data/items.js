@@ -558,6 +558,55 @@ G.Items = (() => {
         p.critDmgMul /= 1.5;
       },
     },
+    // ---- item batch 1, passive stats (Jess 2026-11-03) ----
+    {
+      id: 'eviolite',
+      tier: 'pokemon',
+      name: 'Eviolite',
+      icon: 'ps:hold-item.eviolite',
+      desc: '1.5x Defense and Sp. Def, only while this Pokemon can still evolve.',
+      on: (p) => {
+        if (G.Evolvable.has(p.dex)) p.defItemMul *= 1.5;
+      },
+      off: (p) => {
+        if (G.Evolvable.has(p.dex)) p.defItemMul /= 1.5;
+      },
+    },
+    {
+      id: 'metalpowder',
+      tier: 'pokemon',
+      name: 'Metal Powder',
+      icon: 'ps:hold-item.metal-powder',
+      desc: '+15% Defense and Sp. Def.',
+      on: (p) => {
+        p.defItemMul *= 1.15;
+      },
+      off: (p) => {
+        p.defItemMul /= 1.15;
+      },
+    },
+    {
+      id: 'quickpowder',
+      tier: 'pokemon',
+      name: 'Quick Powder',
+      icon: 'ps:hold-item.quick-powder',
+      desc: '+15% speed.',
+      on: (p) => {
+        p.spdMul *= 1.15;
+      },
+      off: (p) => {
+        p.spdMul /= 1.15;
+      },
+    },
+    {
+      id: 'brightpowder',
+      tier: 'pokemon',
+      name: 'Bright Powder',
+      icon: 'ps:hold-item.bright-powder',
+      desc: 'Dodge cooldown 15% shorter.',
+      on: () => {},
+      off: () => {},
+    },
     // ---- run tier (whole team, whole run) ----
     {
       id: 'amuletcoin',

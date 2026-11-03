@@ -118,6 +118,7 @@ for (const [name, args, show] of [
   ['move_parity.js', [], /^parity:/],
   ['gym_contact.js', ['--check'], /current/],
   ['items_report.js', ['--check'], /current/],
+  ['evolvable_data.js', ['--check'], /current/],
 ]) {
   const r = cp.spawnSync(process.execPath, [path.join(__dirname, name), ...args], { encoding: 'utf8' });
   const out = ((r.stdout || '') + (r.stderr || '')).trim().split('\n');

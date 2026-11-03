@@ -6,7 +6,7 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 ## How items reach you
 
 - **Ground items** (44): activate the moment the active Pokemon touches them (status berries go in a small bag instead). Nothing is stored otherwise.
-- **Pokemon items** (41): one held per Pokemon, effect only while that Pokemon is the active one. A found one goes to the active Pokemon.
+- **Pokemon items** (45): one held per Pokemon, effect only while that Pokemon is the active one. A found one goes to the active Pokemon.
 - **Run items** (25, shown to the player as team items): shared by the whole team for the run, kept in run slots (1 at the start, up to 4 bought). A run item dropped in a run is also unlocked for good. Lucky Egg and Amulet Coin start unlocked; any other costs 100,000 PokeCoins in the Shop.
 
 ## Drop sources
@@ -78,53 +78,57 @@ Chance columns are per wild kill (base 1% ground roll times the item weight, plu
 | Persim Berry | Stored in the berry bag: blocks the next Confusion | 1.5% | 0.015% | 1.5% |
 | Lum Berry | Stored in the berry bag: blocks the next of any of those six statuses | 0.5% | 0.005% | 0.5% |
 
-## Pokemon items (41)
+## Pokemon items (45)
 
-All Pokemon items are equally likely (1 in 41 per Pokemon-item roll). Chance columns are per kill of that source.
+All Pokemon items are equally likely (1 in 45 per Pokemon-item roll). Chance columns are per kill of that source.
 
 | Item | What it does | Per elite | Per boss | Per gym leader | Per small chest | Per big chest |
 | --- | --- | --- | --- | --- | --- | --- |
-| Leftovers | Recover 1.5% of your max HP per second. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Choice Band | +40% physical damage, but you cannot switch moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Quick Claw | -20% cooldown on all your moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Shell Bell | Recover HP from the damage you deal. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Life Orb | +30% damage, but each attack costs you a little HP. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Choice Scarf | +35% speed. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Rocky Helmet | Foes that hit you in melee take damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Assault Vest | +20% damage reduction. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Muscle Band | +10% physical damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Wise Glasses | +10% special damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Scope Lens | +5% critical hit chance. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Razor Claw | +5% critical hit chance. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Expert Belt | +20% damage on super effective hits. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Big Root | +30% HP recovered from draining moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Wide Lens | +15% area on all your moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Zoom Lens | -50% area but +20% damage on all your moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Silk Scarf | +20% Normal-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Charcoal | +20% Fire-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Mystic Water | +20% Water-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Magnet | +20% Electric-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Miracle Seed | +20% Grass-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Never-Melt Ice | +20% Ice-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Black Belt | +20% Fighting-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Poison Barb | +20% Poison-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Soft Sand | +20% Ground-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Sharp Beak | +20% Flying-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Twisted Spoon | +20% Psychic-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Silver Powder | +20% Bug-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Hard Stone | +20% Rock-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Spell Tag | +20% Ghost-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Dragon Fang | +20% Dragon-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Black Glasses | +20% Dark-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Metal Coat | +20% Steel-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Pixie Plate | +20% Fairy-type move damage. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Choice Specs | +40% special damage, but you cannot switch moves. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Thick Club | +30% physical damage, but 10% longer cooldowns. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Light Ball | +30% special damage, but 10% longer cooldowns. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Lucky Punch | +15% critical hit chance. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
-| Leek | +10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x. | 1.22% | 2.32% | 2.2% | 0.195% | 1.22% |
+| Leftovers | Recover 1.5% of your max HP per second. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Band | +40% physical damage, but you cannot switch moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Quick Claw | -20% cooldown on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Shell Bell | Recover HP from the damage you deal. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Life Orb | +30% damage, but each attack costs you a little HP. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Scarf | +35% speed. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Rocky Helmet | Foes that hit you in melee take damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Assault Vest | +20% damage reduction. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Muscle Band | +10% physical damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Wise Glasses | +10% special damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Scope Lens | +5% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Razor Claw | +5% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Expert Belt | +20% damage on super effective hits. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Big Root | +30% HP recovered from draining moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Wide Lens | +15% area on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Zoom Lens | -50% area but +20% damage on all your moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Silk Scarf | +20% Normal-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Charcoal | +20% Fire-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Mystic Water | +20% Water-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Magnet | +20% Electric-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Miracle Seed | +20% Grass-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Never-Melt Ice | +20% Ice-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Belt | +20% Fighting-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Poison Barb | +20% Poison-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Soft Sand | +20% Ground-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Sharp Beak | +20% Flying-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Twisted Spoon | +20% Psychic-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Silver Powder | +20% Bug-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Hard Stone | +20% Rock-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Spell Tag | +20% Ghost-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Dragon Fang | +20% Dragon-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Black Glasses | +20% Dark-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Metal Coat | +20% Steel-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Pixie Plate | +20% Fairy-type move damage. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Choice Specs | +40% special damage, but you cannot switch moves. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Thick Club | +30% physical damage, but 10% longer cooldowns. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Light Ball | +30% special damage, but 10% longer cooldowns. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Lucky Punch | +15% critical hit chance. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Leek | +10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Eviolite | 1.5x Defense and Sp. Def, only while this Pokemon can still evolve. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Metal Powder | +15% Defense and Sp. Def. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Quick Powder | +15% speed. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
+| Bright Powder | Dodge cooldown 15% shorter. | 1.11% | 2.11% | 2% | 0.178% | 1.11% |
 
 ## Run items (25)
 

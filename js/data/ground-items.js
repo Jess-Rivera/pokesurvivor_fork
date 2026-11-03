@@ -11,6 +11,7 @@
  * (pl.berries, ONE array shared by the roster, G.Grounds.berrySlots(save) slots, default 1). G.Status calls berryGuard(h, kind) the moment a status
  * would land on a Pokemon: a matching berry is consumed and the status never applies. A full bag, or a berry you already hold, leaves the pickup on the ground.
  * Names and text are English; icons come from the Pokesprite sheet ('ps:<category>.<name>', data/pokesprite-index.js).
+ * An item used up on touch returns [what it did, color] from its apply; G.Grounds.apply shows that as one line, "Oran Berry: heal 30% HP" (Jess, 2026-11-03).
  */
 G.Grounds = (() => {
   const X_DUR = 30,
@@ -44,21 +45,22 @@ G.Grounds = (() => {
   function stage(stat, n, dur, src) {
     return (pl) => {
       renew(pl.stgTeam, stat, n, dur, src);
-      say(pl, STAT_LABEL[stat] + ' +' + n, STAT_COL[stat]);
       ring(pl, STAT_COL[stat]);
+      return ['team ' + STAT_LABEL[stat] + ' +' + n + ', ' + dur + ' s', STAT_COL[stat]];
     };
   }
   function heal(frac) {
     return (pl) => {
       pl.heal(pl.maxHp * frac);
       ring(pl, '#5fe08a');
+      return ['heal ' + Math.round(frac * 100) + '% HP', '#5fe08a'];
     };
   }
   function team(key, n, dur, src, msg, color) {
     return (pl) => {
       renew(pl.stgTeam, key, n, dur, src);
-      say(pl, msg, color);
       ring(pl, color);
+      return [msg + ', ' + dur + ' s', color];
     };
   }
 
@@ -117,8 +119,8 @@ G.Grounds = (() => {
       (pl) => {
         renew(pl.stgTeam, 'guard_' + t, 1, BERRY_DUR, 'guard:' + t);
         const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[t]) || '#ffd23f';
-        say(pl, cap(t) + ' guard', col);
         ring(pl, col);
+        return [cap(t) + ' guard, ' + BERRY_DUR + ' s', col];
       },
       t === 'normal' ? 'Halves Normal-type hits for 10 s' : 'Halves super-effective ' + cap(t) + ' hits for 10 s'
     );
@@ -145,8 +147,8 @@ G.Grounds = (() => {
     (pl) => {
       const s = STATS[Math.floor(Math.random() * STATS.length)];
       renew(pl.stgTeam, s, 2, BERRY_DUR, 'pinch:starf');
-      say(pl, STAT_LABEL[s] + ' +2', STAT_COL[s]);
       ring(pl, STAT_COL[s]);
+      return [STAT_LABEL[s] + ' +2, ' + BERRY_DUR + ' s', STAT_COL[s]];
     },
     'A random team stat +2 for 10 s'
   );
@@ -155,7 +157,7 @@ G.Grounds = (() => {
     'Lansat Berry',
     'berry.lansat',
     1,
-    team('crit', LANSAT_CRIT, BERRY_DUR, 'lansat', 'Crit +20%', '#ffb347'),
+    team('crit', LANSAT_CRIT, BERRY_DUR, 'lansat', 'crit +20%', '#ffb347'),
     '+20% critical hit chance for 10 s'
   );
 
@@ -183,7 +185,7 @@ G.Grounds = (() => {
     'Pinap Berry',
     'berry.pinap',
     2.5,
-    team('drop', 0.01, PINAP_DUR, 'pinap', 'Drops +1%', '#ffd23f'),
+    team('drop', 0.01, PINAP_DUR, 'pinap', 'drops +1%', '#ffd23f'),
     'Ground drop chance +1 point for 60 s'
   );
   add(
@@ -191,7 +193,7 @@ G.Grounds = (() => {
     'Silver Pinap Berry',
     'berry.silver-pinap',
     1,
-    team('drop', 0.05, PINAP_DUR, 'silver-pinap', 'Drops +5%', '#dfe6f2'),
+    team('drop', 0.05, PINAP_DUR, 'silver-pinap', 'drops +5%', '#dfe6f2'),
     'Ground drop chance +5 points for 60 s'
   );
   add(
@@ -199,7 +201,7 @@ G.Grounds = (() => {
     'Golden Pinap Berry',
     'berry.golden-pinap',
     0.5,
-    team('drop', 0.1, PINAP_DUR, 'golden-pinap', 'Drops +10%', '#ffc21a'),
+    team('drop', 0.1, PINAP_DUR, 'golden-pinap', 'drops +10%', '#ffc21a'),
     'Ground drop chance +10 points for 60 s'
   );
 
@@ -292,7 +294,8 @@ G.Grounds = (() => {
   function apply(pl, id) {
     const it = BY[id];
     if (!it || !pl) return false;
-    it.apply(pl);
+    const did = it.apply(pl);
+    if (did && G.FX && G.FX.notice) G.FX.notice(pl.x, pl.y - (pl.bodyH || 30) - 34, it.name + ': ' + did[0], did[1]);
     return true;
   }
 

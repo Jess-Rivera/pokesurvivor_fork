@@ -23,6 +23,7 @@ G.Player = class Player {
     this.atkMul = perks.atkMul || 1;
     this.physMul = 1; // held items that boost one damage category (G.Stats.itemCatMul)
     this.specMul = 1;
+    this.defItemMul = 1; // held items that raise Def and Sp. Def (Eviolite, Metal Powder), read in hurt()
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
@@ -340,7 +341,9 @@ G.Player = class Player {
     if (this.dodgeT > 0) return;
     const c = this.dodges;
     if (c.gap > 0) c.gap = Math.max(0, c.gap - dt);
-    for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dt);
+    // Bright Powder: 15% shorter by ticking faster, since the charges are the team's and only the holder has the item on the field
+    const dc = this.hasItem('brightpowder') ? dt / 0.85 : dt;
+    for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dc);
   }
   /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
    *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
@@ -601,7 +604,8 @@ G.Player = class Player {
         spdB = st ? st[4] : 50;
       const defMul =
         (1 + (atk.cat === 'special' ? this.incOf('spd') : this.incOf('def'))) *
-        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def'); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a)
+        G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def') *
+        (this.defItemMul || 1); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a), then Eviolite and Metal Powder
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
