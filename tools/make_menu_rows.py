@@ -24,13 +24,15 @@ SELECTED = ('#39dede', '#efefef', '#008cde', '#086b94', '#0073ad')
 
 # name: (art width, art height, chevron steps (rows per art pixel in), flat tip half height)
 ROWS = {'row': (229, 44, 2, 3), 'play': (251, 76, 3, 4)}
+# The region select cards (css/bw-menu.css .rg-card): pointed at both ends, border all the way round.
+CARDS = {'region': (204, 32, 2, 3)}
 
 
 def rgba(h, a=255):
     return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5)) + (a,)
 
 
-def row(w, h, step, tip, colours):
+def row(w, h, step, tip, colours, both=False):
     edge, light, fill, band, shade = colours
     out = Image.new('RGBA', (w, h))
     po = out.load()
@@ -39,8 +41,10 @@ def row(w, h, step, tip, colours):
     mid = int(0.52 * w) + h // 2
     half = round(0.57 * h)
     for y in range(h):
-        for x in range(left[y], w):
+        for x in range(left[y], w - left[y] if both else w):
             d = min(y, h - 1 - y, x - left[y])
+            if both:
+                d = min(d, w - 1 - left[y] - x)
             if d < 3:
                 po[x, y] = rgba(light if d == 1 else edge)
                 continue
@@ -58,6 +62,10 @@ def main():
     for name, (w, h, step, tip) in ROWS.items():
         row(w, h, step, tip, NORMAL).save(os.path.join(OUT, name + '.png'))
         row(w, h, step, tip, SELECTED).save(os.path.join(OUT, name + '-sel.png'))
+        print('wrote %s(-sel).png %dx%d' % (name, w * 2, h * 2))
+    for name, (w, h, step, tip) in CARDS.items():
+        row(w, h, step, tip, NORMAL, True).save(os.path.join(OUT, name + '.png'))
+        row(w, h, step, tip, SELECTED, True).save(os.path.join(OUT, name + '-sel.png'))
         print('wrote %s(-sel).png %dx%d' % (name, w * 2, h * 2))
 
 

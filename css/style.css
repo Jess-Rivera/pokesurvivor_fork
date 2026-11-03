@@ -2066,10 +2066,6 @@ body.touch .kbd-hint {
   }
 }
 
-/* ---------- ajustes ---------- */
-#scr-settings {
-  z-index: 60;
-}
 /* Colocar los botones (layout-ui.js): por delante de Ajustes */
 #scr-layout {
   z-index: 66;
@@ -2206,49 +2202,6 @@ body.touch .kbd-hint {
   gap: 8px;
   margin-top: 6px;
 }
-.box.settings {
-  width: min(640px, 100%);
-  max-height: calc(100dvh - 24px);
-  display: flex;
-  flex-direction: column;
-}
-.set-body {
-  overflow-y: auto;
-  padding-right: 4px;
-  min-height: 0;
-}
-#set-tabs {
-  flex-wrap: wrap;
-}
-#set-tabs .gen-tab {
-  padding: 6px 12px;
-}
-.set-h {
-  color: var(--gold);
-  font-size: 17px;
-  margin: 14px 0 6px;
-}
-.set-h:first-child {
-  margin-top: 4px;
-}
-.set-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.set-row b {
-  display: block;
-}
-.set-row small {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-}
-.set-row .switch {
-  min-width: 58px;
-}
 .chips {
   display: flex;
   gap: 6px;
@@ -2266,26 +2219,6 @@ body.touch .kbd-hint {
 }
 .keys span {
   color: var(--muted);
-}
-.credits {
-  margin: 4px 0 12px;
-  padding-left: 18px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-.credits b {
-  color: var(--ink);
-}
-.about-logo {
-  text-align: center;
-  font-size: 34px;
-  font-weight: 700;
-  color: var(--gold);
-  text-shadow:
-    2px 2px 0 #a55f00,
-    4px 4px 0 var(--shadow);
-  margin-top: 6px;
 }
 .btn.danger {
   background: #8a1f2e;
@@ -2893,47 +2826,6 @@ a.btn {
   .dex-controls .ctrl-row .field {
     flex: 1 1 140px;
   }
-}
-
-/* ---------- Region select (2026-10-17) ---------- */
-.region-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-top: 8px;
-}
-.region-card {
-  appearance: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 14px 10px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 2px solid rgba(244, 248, 255, 0.22);
-  color: var(--ink);
-  font-family: 'Pixelify', system-ui, sans-serif;
-  text-shadow: 1px 1px 0 var(--shadow);
-}
-.region-card:hover {
-  border-color: var(--gold);
-}
-.region-card b {
-  font-size: 15px;
-}
-.region-card small {
-  color: var(--muted);
-  font-size: 12px;
-}
-.region-card.all {
-  grid-column: 1 / -1;
-  background: rgba(255, 210, 63, 0.14);
-  border-color: var(--gold);
-}
-.region-card.all b {
-  color: var(--gold);
 }
 
 /* ---------- team summary sheet (pause screen, end-of-run team view) ---------- */

@@ -8,6 +8,26 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['New settings screen', 'New settings screen'],
+    chg: [
+      [
+        'Settings is now a full screen in the same style as the main menu, with Graphics, Controls, Sound, Account and About on the left. Changes apply right away. The language switch is gone: the game is in English.',
+        'Settings is now a full screen in the same style as the main menu, with Graphics, Controls, Sound, Account and About on the left. Changes apply right away. The language switch is gone: the game is in English.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['New region select', 'New region select'],
+    chg: [
+      [
+        'Pressing Play now slides the regions out over a dimmed map. Only Kanto is open for now; click anywhere else, or press Esc, to go back.',
+        'Pressing Play now slides the regions out over a dimmed map. Only Kanto is open for now; click anywhere else, or press Esc, to go back.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['New coin and XP gems', 'New coin and XP gems'],
     chg: [
       [

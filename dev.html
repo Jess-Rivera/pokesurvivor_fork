@@ -96,6 +96,7 @@
     <link rel="stylesheet" href="css/bw-team.css" />
     <link rel="stylesheet" href="css/bw-inventory.css" />
     <link rel="stylesheet" href="css/bw-upgrades.css" />
+    <link rel="stylesheet" href="css/bw-settings.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -190,6 +191,11 @@
 
     <!-- ====== Menú principal ====== -->
     <section id="scr-menu" class="scr hidden">
+      <!-- Region select: cards that slide out from under the panel over a dimmed overworld (menu.js openRegionPicker) -->
+      <div class="rg" id="rg">
+        <div class="rg-dim"></div>
+        <div class="rg-cards" id="rg-cards"></div>
+      </div>
       <div class="bw-panel">
         <h1 class="bw-title">PokeSwarm</h1>
         <div class="bw-list">
@@ -268,21 +274,25 @@
       </div>
     </section>
 
-    <!-- ====== Ajustes ====== -->
-    <section id="scr-settings" class="scr dim hidden">
-      <div class="box settings">
-        <div class="row between">
-          <h2>Ajustes</h2>
-          <button class="btn small ghost" id="set-close">Cerrar</button>
+    <!-- ====== Settings (full screen, css/bw-settings.css; js/ui/settings-ui.js) ====== -->
+    <section id="scr-settings" class="scr hidden">
+      <div class="st">
+        <div class="st-wrap">
+          <nav class="st-cats" id="set-tabs">
+            <button type="button" class="st-cat" data-t="gfx">Graphics</button>
+            <button type="button" class="st-cat" data-t="ctl">Controls</button>
+            <button type="button" class="st-cat" data-t="sound">Sound</button>
+            <button type="button" class="st-cat" data-t="acc">Account</button>
+            <button type="button" class="st-cat" data-t="about">About</button>
+          </nav>
+          <div class="st-main">
+            <div class="st-body" id="set-body"></div>
+            <aside class="st-hint" id="set-hint"></aside>
+          </div>
         </div>
-        <div class="tabs" id="set-tabs">
-          <button class="gen-tab" data-t="sound">Sonido</button>
-          <button class="gen-tab" data-t="gfx">Gráficos</button>
-          <button class="gen-tab" data-t="ctl">Controles</button>
-          <button class="gen-tab" data-t="acc">Cuenta</button>
-          <button class="gen-tab" data-t="about">Acerca de</button>
+        <div class="st-bar">
+          <button class="bw-btn" id="set-close">Back<img src="assets/ui/team/back-x.png" alt="" /></button>
         </div>
-        <div id="set-body" class="set-body"></div>
       </div>
     </section>
 
@@ -635,20 +645,6 @@
             Commit<img src="assets/ui/team/commit-arrow.png" alt="" />
           </button>
         </div>
-      </div>
-    </section>
-
-    <!-- ====== Region select (before a run) ====== -->
-    <section id="scr-region" class="scr dim hidden">
-      <div class="box wide">
-        <div class="row between">
-          <h2>Choose a region</h2>
-          <button class="btn small ghost" id="region-back" data-back>Volver</button>
-        </div>
-        <p class="sub" style="margin: 2px 0 10px">
-          Only Pokemon from the region you pick (and earlier regions) will appear this run.
-        </p>
-        <div class="region-grid" id="region-grid"></div>
       </div>
     </section>
 

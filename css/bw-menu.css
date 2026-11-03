@@ -44,6 +44,7 @@
 }
 .bw-panel {
   position: absolute;
+  z-index: 1;
   top: 0;
   right: 0;
   bottom: 0;
@@ -354,4 +355,97 @@
 }
 .boot-in p {
   font-family: 'PokeBW', 'Pixelify', monospace;
+}
+
+/* ---------- region select: cards slide out from under the panel over a dimmed overworld ----------
+   The layer sits behind the panel and the bars, so those stay bright. Open and close are class toggles
+   on #rg; each card is delayed by its index (--i) so the list cascades. Locked regions are dimmed and inert. */
+.rg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rg-dim {
+  position: absolute;
+  inset: 0; /* the bars sit above it (z 25), and it fills the steps in their shape */
+  z-index: 0;
+  background: rgba(0, 6, 16, 0.62);
+  opacity: 0;
+  transition: opacity 0.12s ease-in;
+}
+.rg.open .rg-dim {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+.rg-cards {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--bw-panel) + 10 * var(--u));
+  z-index: 2; /* above the panel's grid fade, so the cards rest clean */
+  /* a wall at the cards' right edge: they slide out from behind it, as if from under the panel */
+  clip-path: inset(-20px 0 -20px -100vw);
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+  transform: translateY(-50%);
+}
+.rg-card {
+  appearance: none;
+  display: flex;
+  align-items: baseline;
+  gap: calc(10 * var(--u));
+  box-sizing: border-box;
+  width: calc(408 * var(--u));
+  height: calc(64 * var(--u));
+  padding: calc(14 * var(--u)) calc(32 * var(--u)) 0;
+  border: 0;
+  background: url('../assets/ui/menu/region.png') no-repeat 0 0 / 100% 100%;
+  image-rendering: pixelated;
+  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-size: max(calc(30 * var(--u)), 13px);
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--bw-ink-shadow);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(calc(70 * var(--u)));
+  transition:
+    transform 0.12s ease-in,
+    opacity 0.12s ease-in;
+  transition-delay: calc((9 - var(--i)) * 12ms);
+  pointer-events: none;
+}
+.rg.open .rg-card {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.17s cubic-bezier(0.15, 0.8, 0.3, 1),
+    opacity 0.14s ease-out;
+  transition-delay: calc(var(--i) * 24ms);
+  pointer-events: auto;
+}
+.rg-card small {
+  font-size: max(calc(15 * var(--u)), 9px);
+  color: var(--bw-sub);
+  text-shadow: none;
+}
+.rg-card.sel {
+  background-image: url('../assets/ui/menu/region-sel.png');
+}
+.rg-card.sel small {
+  color: var(--bw-sub-sel);
+}
+.rg.open .rg-card.locked {
+  opacity: 0.35;
+  cursor: default;
+}
+/* While the cards are out, the other rows dim so they read as unavailable; Play stays lit. */
+#scr-menu.rg-on .bw-row:not(.play) {
+  opacity: 0.4;
+  cursor: default;
+}
+.bw-row {
+  transition: opacity 0.2s ease-out;
 }

@@ -10,7 +10,7 @@
 | Defense         | Pokémon-specific | V        |
 | HP Regeneration | Pokémon-specific | V        |
 
-1. Combat
+2. Combat
 
 | Upgrade                     | Scope            | Max Rank |
 | :-------------------------- | :--------------- | :------: |
@@ -24,6 +24,8 @@
 | Dodge Distance              | Pokémon-specific |    V     |
 
 Dodge upgrades are planned for the future dodge mechanic.
+
+
 3. Progression & Economy
 
 | Upgrade          | Scope    | Max Rank |
@@ -33,7 +35,7 @@ Dodge upgrades are planned for the future dodge mechanic.
 | Pickup Range     | Run-wide |   III    |
 | Item Drop Chance | Run-wide |   III    |
 
-1. Tactical Utility
+4. Tactical Utility
 
 | Upgrade                      | Scope            | Max Rank |
 | :--------------------------- | :--------------- | :------: |

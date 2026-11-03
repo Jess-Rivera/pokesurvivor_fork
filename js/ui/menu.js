@@ -2,6 +2,11 @@
 G.MenuUI = (() => {
   const $ = G.UI.$;
   const GEN_NAMES = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Teselia', 'Kalos', 'Alola', 'Galar', 'Paldea'];
+  // Region select cards (new English text; GEN_NAMES above is the old key list other screens use).
+  const REGION_CARDS = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Paldea'];
+  // Generations you can pick for now. TODO: unlock the rest by region completion (BOSS-REWORK). Random stays locked
+  // because it rolls any generation.
+  const REGIONS_OPEN = [1];
   let dexSel = null;
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
@@ -101,11 +106,11 @@ G.MenuUI = (() => {
     }
     rows = [...document.querySelectorAll('#scr-menu [data-go]')];
     rows.forEach((b, i) => {
-      b.addEventListener('pointerenter', () => select(i));
-      b.addEventListener('focus', () => select(i));
+      b.addEventListener('pointerenter', () => !rgOpen && select(i));
+      b.addEventListener('focus', () => !rgOpen && select(i));
     });
     addEventListener('keydown', (e) => {
-      if (!menuOnTop() || e.target.closest('input, textarea, select')) return;
+      if (!menuOnTop() || rgOpen || e.target.closest('input, textarea, select')) return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         select(menuCur + (e.key === 'ArrowDown' ? 1 : -1));
         G.Audio.sfx('hover');
@@ -150,6 +155,7 @@ G.MenuUI = (() => {
     document.querySelectorAll('[data-back]').forEach((b) => {
       b.onclick = open;
     });
+    initRegionPicker();
     G.Social.on(() => {
       if (G.UI.isOpen('scr-menu')) socialLine();
     });
@@ -171,6 +177,7 @@ G.MenuUI = (() => {
 
   function open() {
     const s = G.DB.save;
+    closeRegionPicker();
     G.UI.chrome(true);
     G.UI.show('scr-menu');
 
@@ -222,28 +229,79 @@ G.MenuUI = (() => {
 
   // ---------------- collection ----------------
 
-  /** Region select before a solo run. Pick a region (or All); only that region's
-   *  Pokemon (and earlier gens) spawn this run. Per-run, not saved. See DECISIONS.md. */
-  function openRegionPicker() {
-    G.UI.show('scr-region', true);
-    const grid = $('region-grid');
-    grid.innerHTML = '';
-    const card = (label, onclick, cls) => {
+  /** Region select before a solo run: the cards slide out from under the main panel over a dimmed overworld
+   *  (css/bw-menu.css .rg). Pick a generation; only it and the earlier ones spawn this run. Per-run, not saved. */
+  let rgOpen = false,
+    rgCur = 0;
+  const rgCards = () => [...document.querySelectorAll('#rg-cards .rg-card')];
+  const rgFree = () => rgCards().flatMap((c, i) => (c.classList.contains('locked') ? [] : [i]));
+
+  function initRegionPicker() {
+    const box = $('rg-cards');
+    const card = (name, sub, gen, i) => {
       const b = document.createElement('button');
-      b.className = 'region-card' + (cls ? ' ' + cls : '');
-      b.innerHTML = `<b>${label}</b>`;
-      b.dataset.sfx = 'confirm';
-      b.onclick = onclick;
-      grid.appendChild(b);
+      const locked = !REGIONS_OPEN.includes(gen);
+      b.className = 'rg-card' + (locked ? ' locked' : '');
+      b.style.setProperty('--i', i);
+      b.innerHTML = `<b translate="no">${name}</b><small>${sub}</small>`;
+      if (locked) {
+        b.setAttribute('aria-disabled', 'true');
+        b.tabIndex = -1;
+      } else {
+        b.dataset.sfx = 'confirm';
+        b.onclick = () => startRegion(gen);
+        b.addEventListener('pointerenter', () => rgSelect(i));
+      }
+      box.appendChild(b);
     };
-    // Random: rolls a gen 1-9 at click time; the run then shows the actual region it landed on.
-    card('Random', () => startRegion(G.U.randInt(1, GEN_NAMES.length)), 'all');
-    // One card per generation. (No "All regions" card: Paldea (gen 9) already = every
-    // earlier gen = the full dex.)
-    GEN_NAMES.forEach((name, i) => {
-      const g = i + 1;
-      card(`[Gen. ${g}] ${name}`, () => startRegion(g));
+    REGION_CARDS.forEach((name, i) => card(name, `Generation ${i + 1}`, i + 1, i));
+    card('Random', 'Random Selection', 0, REGION_CARDS.length);
+    // Any click that is not on a card (the dim, the panel, the space by the bars) folds the cards back and does nothing else.
+    $('scr-menu').addEventListener(
+      'click',
+      (e) => {
+        if (!rgOpen || e.target.closest('.rg-card')) return;
+        e.stopPropagation();
+        e.preventDefault();
+        G.Audio.sfx('back');
+        closeRegionPicker();
+      },
+      true
+    );
+    addEventListener('keydown', (e) => {
+      if (!rgOpen) return;
+      const free = rgFree();
+      if (e.key === 'Escape') {
+        G.Audio.sfx('back');
+        closeRegionPicker();
+      } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && free.length) {
+        const at = Math.max(0, free.indexOf(rgCur));
+        rgSelect(free[(at + (e.key === 'ArrowDown' ? 1 : -1) + free.length) % free.length]);
+        G.Audio.sfx('hover');
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        if (free.includes(rgCur)) rgCards()[rgCur].click();
+      } else return;
+      e.preventDefault();
     });
+  }
+
+  function rgSelect(i) {
+    rgCur = i;
+    rgCards().forEach((c, k) => c.classList.toggle('sel', k === i));
+  }
+
+  function openRegionPicker() {
+    rgOpen = true;
+    rgSelect(rgFree()[0] || 0);
+    select(0); // Play stays lit, the other rows dim
+    $('rg').classList.add('open');
+    $('scr-menu').classList.add('rg-on');
+  }
+
+  function closeRegionPicker() {
+    rgOpen = false;
+    $('rg').classList.remove('open');
+    $('scr-menu').classList.remove('rg-on');
   }
 
   /** Commit the region choice and start the run. */

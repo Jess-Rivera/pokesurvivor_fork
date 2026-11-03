@@ -241,11 +241,14 @@ G.Pickups = (() => {
       ctx.ellipse(p.x, p.y, r * 0.9, r * 0.35, 0, 0, 6.2832);
       ctx.fill();
 
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = k.glow;
-      ctx.beginPath();
-      ctx.arc(p.x, y, r * 2, 0, 6.2832);
-      ctx.fill();
+      if (!SPR[p.kind] || !G.PickupSprites) {
+        // The spinning sprites need no glow; the drawn shapes and the other pickups keep it.
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = k.glow;
+        ctx.beginPath();
+        ctx.arc(p.x, y, r * 2, 0, 6.2832);
+        ctx.fill();
+      }
 
       ctx.globalAlpha = 1;
       if (drawSprite(ctx, p, p.x, y)) continue;

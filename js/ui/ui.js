@@ -29,7 +29,6 @@ G.UI = (() => {
     'scr-goals',
     'scr-bond',
     'scr-mod',
-    'scr-region',
     'scr-inventory',
   ];
 
