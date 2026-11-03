@@ -1,27 +1,28 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-02 (Claude Code, home). fix/playtest-kanto-moves MERGED into main; next branch starts from main.
+Last updated: 2026-11-02 (Claude Code, home; branch fix/ui-upgrade, from main).
 
 ## Where we are
-- Kanto import batch 1 DONE and signed off (111 moves, held out of player pools). Player learnset pools PARKED (Jess 2026-11-02: the imports are for the bosses).
-- Gym loop-1 lore sets: slices 1 to 3 BUILT (Jess felt slice 3 good enough; balance passes wait for playtesters). Imports Roar (Blaine), Fissure (Giovanni), Future Sight (Sabrina) BUILT, not feel-tested. Loop 1 lacks only Reflect (Sabrina, fields slice) and Smokescreen (Koga, accuracy slice). Loops 2 to 6 hold the provisional sets.
-- Tests: check.js 30/30, intent 2193, boss-owner 245 (18: imports), gym harness ALL OK, live loop-1 fights of Blaine, Sabrina, Giovanni on file:// (no page errors). smoke-newcombat SKIPPED (flaky).
+- UI REWORK started: Black/White (Gen 5) look for every screen, cohesive, "snappy, quick" (instant highlight, ~120 ms slides, preloaded art). Menus stay HTML/CSS; PixiJS only ever for the in-run canvas, after an fps test.
+- Main menu BUILT (css/bw-menu.css): PokeSwarm title (Korataki ExtraBold), pokemon-b-w font, faded grid panel (lines 30%), chevron rows from assets/ui/menu, keyboard cursor, top bar with 3 counters, bottom bar with credits and stats. Sound, fullscreen, sign out and patch notes moved into Settings. Restyled to the Team card blues: rows drawn by tools/make_menu_rows.py at the cards' 2 px scale (chevron, 3-line border, see-through fill, 45 degree band), navy grid, cyan bar lines.
+- Team screen BUILT (css/bw-team.css): diagonal navy/blue gradient, main menu top bar kept, flat bottom bar with Upgrade / Back / Commit (icon_cancel_narrow art). Left: 6 floating slots at 1:1 (panel_round lead, panel_rect, panel_blank under, dimmed when empty, swap art on drag). Centre: party cards (tools/make_party_cards.py). Right: yellow name row, then alternating blues (rarity+types, BST+hex, ability, moves), no buttons. Put = double-click, drag or Enter; free = right-click or drag to grid; shiny = click the slot's shiny icon; controls in the slot tooltip.
+- Magnet: base 120 px, upgrade +20% per level (committed).
+- Kanto batch 1 and gym loop-1 lore sets merged into main (Roar, Fissure, Future Sight not yet feel-tested).
+- Tests: check.js 30/30; headless menu and Team checks on file:// at 4 sizes, no page errors.
 
 ## Next (in order)
-1. Jess: quick feel of the imports: Roar's push on you (140 px, 0.2 s; cd 5 [Proposed] TUNE), Future Sight's 2 s marker, Fissure's heavy hit.
-2. Remaining loop-1 gaps ride other slices (GitHub issues filed, status blocked): Reflect with the FIELDS SLICE, Smokescreen with the accuracy slice. Those two slices still need their own issues. Self-Destruct comes with later loops.
-3. Then later loops, gym by gym (Psycho Cut still stands in for Psybeam on Porygon and Venomoth). Recoil and heals for the Elite Four come with that phase.
-4. Cone and area moves ignore walls: needs a line-of-sight ruling, own branch.
-5. Readability pass (Jeremy) and part 2 (item drops, New Move card frequency). Ask Jeremy about "Bosses" and "Magnetism".
-6. Economy rework once coin data comes in. Fix the smoke-newcombat flake.
+1. Jess: feel the main menu and the Team screen; commit.
+2. Other screens, one at a time (Shop, Inventory, Missions, Settings, Pokedex, pause, end of run, level-up cards). Narrow phones: the 3 bar buttons overflow below ~420 px wide.
+3. In-run HUD from assets/ui/In Run Mockup.png (own stage).
+4. Gameplay queue still waiting: fields slice (Reflect), accuracy trackers (Smokescreen), later gym loops, line of sight for cones.
 
 ## Open owner decisions
-- [Open] loop 2+: do a gym's mons share stat raises. O4: do badge boosts stack again in later loops.
-- Bond tax [Proposed]. [Open] Psych Up, Baton Pass, Swagger. HUD own-drop gap (proposed). Psychic widening [Open]. Base crit for leaders (none, by D10).
+- Friends and Leaderboard rows: they still open as before; grey them out?
+- Korataki W01 web licence: check before publishing.
+- [Open] loop 2+: do a gym's mons share stat raises. O4: badge boosts stacking. Psych Up, Baton Pass, Swagger, Psychic widening.
 
 ## Docs and code still differ (approved, not built)
-- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, three stale move-sim mutations (TODO Backlog), regional forms (#9).
+- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9).
 
-Rules: CLAUDE.md. Model use: Sonnet for routing, docs, catch-ups; Opus for new runtime.
-Tip for edits: the repo mixes CRLF and LF files, so exact multi-line text matches must normalize line endings first.
+Rules: CLAUDE.md. file:// limits: CSS mask-image is blocked (use clip-path); @font-face loads fine; rel=preload font links fail (harmless).

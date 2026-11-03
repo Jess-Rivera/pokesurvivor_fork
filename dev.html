@@ -93,6 +93,7 @@
     <!-- seo:end -->
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/bw-menu.css" />
+    <link rel="stylesheet" href="css/bw-team.css" />
   </head>
   <body>
     <canvas id="game"></canvas>
@@ -629,12 +630,11 @@
           <aside class="ros-detail" id="ros-detail"></aside>
         </div>
         <div class="ros-bar">
-          <span class="ros-tip"
-            >Click a Pokémon to preview it and a slot to target it. Put it in the highlighted slot with the button, a
-            double-click, or by dragging it onto a slot. Double-click a slot to inspect its Pokémon.</span
-          >
-          <button class="btn" id="ros-back" data-back>Back</button>
-          <button class="btn gold" id="ros-commit" data-sfx="confirm" disabled>Commit Team</button>
+          <button class="bw-btn" id="ros-upg" data-sfx="click" disabled>Upgrade</button>
+          <button class="bw-btn" id="ros-back" data-back>Back<img src="assets/ui/team/back-x.png" alt="" /></button>
+          <button class="bw-btn" id="ros-commit" data-sfx="confirm" disabled>
+            Commit<img src="assets/ui/team/commit-arrow.png" alt="" />
+          </button>
         </div>
       </div>
     </section>

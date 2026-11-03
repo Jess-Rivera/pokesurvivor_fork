@@ -83,6 +83,8 @@ G.MenuUI = (() => {
   function init() {
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
+    for (const n of ['slot-blank', 'slot-rect', 'slot-rect-sel', 'slot-round', 'slot-round-sel', 'btn', 'btn-sel'])
+      new Image().src = `assets/ui/team/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});
       document.fonts.load('800 16px Korataki').catch(() => {});
@@ -100,6 +102,15 @@ G.MenuUI = (() => {
       } else if (e.key === 'Enter' || e.key === ' ') rows[menuCur].click();
       else return;
       e.preventDefault();
+    });
+    // Team screen: Enter puts the previewed Pokémon in the targeted slot.
+    addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || !G.UI.isOpen('scr-roster') || e.target.closest('input, textarea, select, button')) return;
+      const d = ros.dex,
+        cur = ros.team[ros.slot];
+      if (d == null || !G.DB.save.owned[d] || (cur && cur.dex === d)) return;
+      e.preventDefault();
+      rosAssign(ros.slot, d);
     });
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
@@ -767,9 +778,9 @@ G.MenuUI = (() => {
   // ---------------- team screen ----------------
   // A fullscreen editor for the 6 fixed team slots. It works on a COPY of the team (ros.team);
   // nothing is saved until Commit Team, and Back discards the edits.
-  //   ros.slot   the highlighted slot (where "Put in Slot N", a double-click or a drop goes)
+  //   ros.slot   the highlighted slot (where Enter, a double-click or a drop goes)
   //   ros.dex    the Pokémon shown on the right (a team member, or a preview from the list), null = empty slot
-  //   ros.shiny  Normal / Shiny toggle for ros.dex
+  //   ros.shiny  Normal / Shiny look for ros.dex (switched by the shiny icon on its team slot)
   //   ros.drag   dex being dragged (a list cell or a filled slot)
   const ros = { team: [], slot: 0, dex: null, shiny: false, drag: null, dragSlot: null };
   const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0] : null)));
@@ -780,10 +791,13 @@ G.MenuUI = (() => {
     G.DB.normalizeTeam(s);
     ros.team = s.team.map((t) => (t ? { dex: t.dex, shiny: !!t.shiny } : null));
     ros.drag = null;
-    G.UI.chrome(false); // fullscreen: no coins / tickets bar
+    rosChrome();
     G.UI.show('scr-roster'); // (no keepMenu: the main menu is hidden too)
     $('ros-back').onclick = rosBack;
     $('ros-commit').onclick = rosCommit;
+    $('ros-upg').onclick = () => {
+      if (ros.dex != null && s.owned[ros.dex]) openUpgrades(ros.dex, rosReturn);
+    };
     buildControls(rosView);
     renderGrid(rosView);
     // Drop a team card back on the list: that slot is freed.
@@ -808,9 +822,16 @@ G.MenuUI = (() => {
     rosSelectSlot(0);
   }
 
+  /** The Team screen keeps the main menu's top bar (the counters) but not its bottom bar: it has its own. */
+  function rosChrome() {
+    G.UI.chrome(false);
+    $('topbar').classList.remove('hidden');
+    G.UI.refreshCoins();
+  }
+
   /** Back to the Team screen from Upgrades, keeping the unsaved draft and the selection. */
   function rosReturn() {
-    G.UI.chrome(false);
+    rosChrome();
     G.UI.show('scr-roster');
     rosRenderAll();
   }
@@ -871,6 +892,10 @@ G.MenuUI = (() => {
     rosRenderSlots();
     rosRenderDetail();
     $('ros-commit').disabled = !rosDirty();
+    const upg = $('ros-upg'),
+      own = ros.dex != null && !!G.DB.save.owned[ros.dex];
+    upg.disabled = !own;
+    upg.title = own ? `Upgrades for ${G.DEX_BY[ros.dex].name}` : 'Preview a Pokémon you own to upgrade it';
   }
 
   /**
@@ -928,37 +953,56 @@ G.MenuUI = (() => {
     markGrid(rosView);
   }
 
+  // The controls, on every slot's tooltip (the bar has no room for a hint line).
+  const ROS_TIP =
+    'Click a slot to target it, double-click it to inspect its Pokémon. Put a Pokémon in the targeted slot by double-clicking it, dragging it onto a slot or pressing Enter. Drag a slot onto another to swap them, right-click a slot to free it.';
+
   function rosRenderSlots() {
     const box = $('ros-slots');
     box.innerHTML = '';
     ros.team.forEach((t, slot) => {
       const mon = t && G.DEX_BY[t.dex];
-      const shiny = !!(mon && t.shiny && G.DB.ownsShiny(t.dex));
+      const hasSh = !!(mon && G.DB.ownsShiny(t.dex));
+      const shiny = hasSh && !!t.shiny;
       const b = document.createElement('div');
       b.className = 'ros-slot' + (mon ? '' : ' empty') + (slot === 0 ? ' lead' : '') + (slot === ros.slot ? ' on' : '');
       b.dataset.sfx = 'click';
-      b.title = mon ? `Slot ${slot + 1}: ${mon.name}` : `Slot ${slot + 1}: empty`;
-      b.insertAdjacentHTML(
-        'beforeend',
-        `<span class="rn">${slot === 0 ? G.Icons.html('crown', 12) : ''}${slot + 1}</span>`
-      );
+      b.title = (mon ? `Slot ${slot + 1}: ${mon.name}` : `Slot ${slot + 1}: empty`) + '\n' + ROS_TIP;
       if (mon) {
+        b.appendChild(G.UI.spriteCanvas(mon.dex, 80, 80, { lively: true, scale: 2, hero: true, shiny }));
         b.insertAdjacentHTML(
           'beforeend',
           `<div class="rinfo"><b>${mon.name}</b><span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
         );
-        if (shiny) b.insertAdjacentHTML('beforeend', `<span class="rsh">${G.Icons.html('shiny', 12)}</span>`);
-        b.appendChild(G.UI.spriteCanvas(mon.dex, 138, 120, { lively: true, scale: 3, hero: true, shiny }));
+        // The shiny icon is the Normal / Shiny switch, shown only when the shiny is owned.
+        if (hasSh) {
+          const sh = document.createElement('button');
+          sh.type = 'button';
+          sh.className = 'rsh' + (shiny ? ' on' : '');
+          sh.title = `Shiny ${shiny ? 'on' : 'off'}: click to switch`;
+          sh.innerHTML = G.Icons.html('shiny', 12);
+          sh.onclick = (e) => {
+            e.stopPropagation();
+            rosToggleShiny(slot);
+          };
+          sh.ondblclick = (e) => e.stopPropagation();
+          b.appendChild(sh);
+        }
       } else {
-        b.insertAdjacentHTML('beforeend', '<div class="rinfo"><b>Empty</b></div><span class="rplus">+</span>');
+        b.insertAdjacentHTML('beforeend', '<div class="rinfo"><b>Empty</b></div>');
       }
-      // Click = target this slot (the previewed Pokémon stays, so the Put button can name it). Double-click = inspect the Pokémon in it.
+      // Click = target this slot (the previewed Pokémon stays, so Enter can put it here). Double-click = inspect the Pokémon in it.
       b.onclick = () => {
         rosFocusSlot(slot);
       };
       b.ondblclick = () => {
         rosSelectSlot(slot);
         markGrid(rosView);
+      };
+      b.oncontextmenu = (e) => {
+        e.preventDefault();
+        if (slot === 0) G.UI.toast('Slot 1 is the lead and cannot be left empty');
+        else rosFreeSlot(slot);
       };
       // Drop a Pokémon from the list (or another slot) here.
       b.ondragover = (e) => {
@@ -992,124 +1036,58 @@ G.MenuUI = (() => {
     });
   }
 
+  /** Switch a team member between its normal and shiny look (the shiny icon on its slot). */
+  function rosToggleShiny(slot) {
+    const t = ros.team[slot];
+    if (!t || !G.DB.ownsShiny(t.dex)) return;
+    ros.team = ros.team.slice();
+    ros.team[slot] = { dex: t.dex, shiny: !t.shiny };
+    if (ros.dex === t.dex) ros.shiny = !t.shiny;
+    rosRenderAll();
+    refreshCells(rosView, [t.dex]);
+  }
+
+  /** The detail column: name row, rarity and types, BST and the stat hexagon, ability, moves. No buttons. */
   function rosRenderDetail() {
     const s = G.DB.save,
       box = $('ros-detail');
-    const dex = ros.dex;
-    // Free Slot N: always shown under Put, for the highlighted slot; greyed out on the lead (never empty) and on an empty slot.
-    const n = ros.slot + 1,
-      canFree = ros.slot > 0 && !!ros.team[ros.slot];
-    const freeBtn = `<button id="ros-free" class="btn ghost"${canFree ? '' : ' disabled'} title="${
-      ros.slot === 0
-        ? 'Slot 1 is the lead and cannot be left empty'
-        : canFree
-          ? `Empty Slot ${n}`
-          : `Slot ${n} is already empty`
-    }">Free Slot ${n}</button>`;
-    const wireFree = () => {
-      const f = $('ros-free');
-      if (f) f.onclick = () => rosFreeSlot(ros.slot);
-    };
+    const dex = ros.dex,
+      n = ros.slot + 1;
     if (dex == null) {
-      box.innerHTML = `<div class="ros-hint"><h3>Slot ${n} is empty</h3>
-        <p class="sub">Pick a Pokémon from the list, then use <b class="gold">Put in Slot ${n}</b>, double-click it, or drag it onto a slot.</p></div>
-        <div class="ros-da">${freeBtn}</div>`;
-      wireFree();
+      box.innerHTML = `<div class="ros-dh"><b>Slot ${n} is empty</b></div>
+        <div class="ros-db"><div class="ros-box"><p class="sub">Pick a Pokémon from the list, then double-click it, drag it onto a slot, or press Enter to put it in Slot ${n}.</p></div></div>`;
       return;
     }
     const p = G.DEX_BY[dex];
     const own = !!s.owned[dex];
-    const hasSh = G.DB.ownsShiny(dex);
-    if (!hasSh) ros.shiny = false;
-    const onTeam = ros.team.findIndex((t) => t && t.dex === dex);
-    const slotT = ros.slot,
-      cur = ros.team[slotT];
+    if (!G.DB.ownsShiny(dex)) ros.shiny = false;
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-
-    let moves = '';
-    if (own) {
-      const start = G.startMoveOf(dex);
-      const ids = [start].concat(G.Moves.poolFor(p).filter((id) => id !== start));
-      moves = ids
-        .map(
-          (id, i) =>
-            `<div class="ros-mv${i === 0 ? ' start' : ''}"${i === 0 ? ' title="Starting move"' : ''}>${G.Icons.html('move:' + id, 16)}<span>${G.MoveInfo.name(id)}</span></div>`
-        )
-        .join('');
+    const head = `<div class="ros-dh"><b>${own ? p.name : '???'}</b><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    if (!own) {
+      box.innerHTML =
+        head +
+        `<div class="ros-db"><div class="ros-box"><p class="center" style="color:var(--muted)">Aún no lo tienes.<br>Consíguelo en el banner de <b class="gold">${GEN_NAMES[p.gen - 1]}</b>
+            o derrotándolo cuando salga shiny.</p></div></div>`;
+      return;
     }
-
-    let note = '',
-      act = '';
-    if (own) {
-      const same = onTeam === slotT;
-      if (!same && onTeam >= 0) note = `Currently in Slot ${onTeam + 1}: swaps with Slot ${slotT + 1}.`;
-      else if (!same && cur) note = `Replaces ${G.DEX_BY[cur.dex].name} in Slot ${slotT + 1}.`;
-      act =
-        `<button id="ros-put" class="btn gold" data-sfx="confirm"${same ? ' disabled' : ''}>` +
-        (same ? `Already in Slot ${slotT + 1}` : `Put in Slot ${slotT + 1}` + (hasSh && ros.shiny ? ' (shiny)' : '')) +
-        '</button>';
-    }
-
-    box.innerHTML = `
-      <div class="ros-dh"><b>${own ? p.name : '???'}</b><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>
-      <div class="ros-db">
-        <div class="ros-stage">
-          <canvas id="ros-big" class="stage" width="220" height="190"></canvas>
-          ${own ? `<button type="button" id="ros-upg" class="ros-upg" title="Upgrades for ${p.name}" data-sfx="click">Upgrade</button>` : ''}
-        </div>
-        ${
-          hasSh
-            ? `<div class="seg">
-          <button class="${ros.shiny ? '' : 'on'}" data-v="0">Normal</button>
-          <button class="${ros.shiny ? 'on' : ''}" data-v="1">${G.Icons.html('shiny', 12)} Shiny</button></div>`
-            : ''
-        }
-        ${
-          own
-            ? `
-          <div class="center">
-            <div class="rarity-line" style="color:${G.Gacha.RARITY_COLOR[p.rarity]}">${G.UI.stars(p.rarity, 24)}<span>${G.Gacha.RARITY_NAME[p.rarity]}</span>${G.Icons.bstStars(p.bst)}</div>
-            <div style="margin:6px 0">${G.UI.typeChips(p.types)}</div>
-          </div>
-          ${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}
-          <div class="ros-line"><span>Ability</span><b>Coming soon</b></div>
-          <div class="ros-mh">Moves</div>
-          <div class="ros-moves">${moves}</div>
-        `
-            : `<p class="center" style="color:var(--muted)">Aún no lo tienes.<br>Consíguelo en el banner de <b class="gold">${GEN_NAMES[p.gen - 1]}</b>
-            o derrotándolo cuando salga shiny.</p>`
-        }
-      </div>
-      <div class="ros-da">${note ? `<p class="roster-note">${note}</p>` : ''}${act}${freeBtn}</div>`;
-    wireFree();
-    $('ros-big').style.setProperty('--stage-c', color);
-    $('ros-big').classList.toggle('shiny', own && ros.shiny);
+    const start = G.startMoveOf(dex);
+    const moves = [start]
+      .concat(G.Moves.poolFor(p).filter((id) => id !== start))
+      .map(
+        (id, i) =>
+          `<div class="ros-mv${i === 0 ? ' start' : ''}"${i === 0 ? ' title="Starting move"' : ''}>${G.Icons.html('move:' + id, 16)}<span>${G.MoveInfo.name(id)}</span></div>`
+      )
+      .join('');
+    box.innerHTML =
+      head +
+      `<div class="ros-db">
+        <div class="ros-row"><span title="${G.Gacha.RARITY_NAME[p.rarity]}">${G.UI.stars(p.rarity, 24)}</span><span class="rtypes">${G.UI.typeChips(p.types)}</span></div>
+        <div class="ros-box ros-stats"><span class="ros-bst">${G.Icons.bstStars(p.bst)}</span>${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}</div>
+        <div class="ros-row"><span>Ability</span><b>Coming soon</b></div>
+        <div class="ros-box ros-mbox"><div class="ros-mh">Moves</div><div class="ros-moves">${moves}</div></div>
+      </div>`;
     const hex = $('ros-hex');
     if (hex) hex.appendChild(G.StatChart.make(p.stats, color, 340, 400, { radius: 0.4 }));
-    G.UI.sprite($('ros-big'), dex, {
-      lively: own,
-      spin: own,
-      silhouette: !own,
-      scale: 3,
-      hero: true,
-      shiny: own && ros.shiny,
-    });
-    box.querySelectorAll('.seg button').forEach((b) => {
-      b.onclick = () => {
-        ros.shiny = b.dataset.v === '1';
-        if (onTeam >= 0) {
-          // a team member's Normal / Shiny choice is part of the draft
-          ros.team = ros.team.slice();
-          ros.team[onTeam] = { dex, shiny: ros.shiny };
-          refreshCells(rosView, [dex]);
-        }
-        rosRenderAll();
-      };
-    });
-    const put = $('ros-put');
-    if (put) put.onclick = () => rosAssign(ros.slot, dex);
-    const upg = $('ros-upg');
-    if (upg) upg.onclick = () => openUpgrades(dex, rosReturn);
   }
 
   // ---------------- mejoras ----------------
