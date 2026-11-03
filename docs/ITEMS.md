@@ -16,11 +16,16 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 | Wild kill | Ground item 1% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.55%, Sitrus Berry 0.4%, magnet 0.8%, bomb 0.6%, plus x2 ticket 1 in 400, plus XP |
 | Elite | Guaranteed heal berry (Oran or Sitrus, 50/50), one guaranteed ground item roll, 50% chance of a Pokemon item, big XP burst |
 | Boss | 10 coins, one guaranteed item (5% it is a run item, else a Pokemon item), and the wild extras above |
-| Gym leader | Two item rolls today (the leader counts as boss and gym): 5% and 10% run item, else Pokemon item. No XP, the badge pays a level. [Open] is the double drop intended? |
+| Gym leader | 10 coins, one guaranteed item (10% it is a run item, else a Pokemon item). No XP, the badge pays a level |
 | Golden enemy | 35% for 3 extra coins |
 | Meowth (thief) | 20 coins |
 | Gholdengo (thief) | 6 coins and an x10 ticket |
 | Lost-Pokemon event | 12 coins and a ticket |
+| Grass | One shared roll: Oran Berry 5%, 1 coin 6% |
+| Rock | One shared roll: small XP orb (1% of the next level) 40%, 2 coins 25%. Separately, Oran Berry 6% |
+| Small chest | 4 to 7 coins, Oran Berry or magnet (50/50), Sitrus Berry, 20 XP, 8% chance of a Pokemon item |
+| Big chest | 9 coins, 1 to 3 tickets, 15% x10 ticket, 50% chance of a Pokemon item, one ground item roll, one level of XP |
+| XP orbs from rocks and chests | Also roll the wild extras above, like a kill |
 
 ## Ground items (44)
 
@@ -35,24 +40,24 @@ Chance columns are per wild kill (base 1% ground roll times the item weight, plu
 | X Speed | Team Speed +1 for 30 s | 6% | 0.06% | 6% |
 | Oran Berry | Heals 30% of max HP | 9% | 0.64% | 59% |
 | Sitrus Berry | Heals 50% of max HP | 6.5% | 0.465% | 56.5% |
-| Occa Berry | Halves super-effective Fire hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Passho Berry | Halves super-effective Water hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Yache Berry | Halves super-effective Ice hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Coba Berry | Halves super-effective Flying hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Charti Berry | Halves super-effective Rock hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
-| Chilan Berry | Halves Normal-type hits for 10 s | 1.1111111111111112% | 0.011% | 1.11% |
+| Occa Berry | Halves super-effective Fire hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Passho Berry | Halves super-effective Water hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Yache Berry | Halves super-effective Ice hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Coba Berry | Halves super-effective Flying hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Charti Berry | Halves super-effective Rock hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.11% | 0.011% | 1.11% |
+| Chilan Berry | Halves Normal-type hits for 10 s | 1.11% | 0.011% | 1.11% |
 | Liechi Berry | Team Attack +1 for 10 s | 2.5% | 0.025% | 2.5% |
 | Ganlon Berry | Team Defense +1 for 10 s | 2.5% | 0.025% | 2.5% |
 | Salac Berry | Team Speed +1 for 10 s | 2.5% | 0.025% | 2.5% |
@@ -77,44 +82,44 @@ Chance columns are per wild kill (base 1% ground roll times the item weight, plu
 
 All Pokemon items are equally likely (1 in 36 per Pokemon-item roll). Chance columns are per kill of that source.
 
-| Item | What it does | Per elite | Per boss | Per gym leader |
-| --- | --- | --- | --- | --- |
-| Leftovers | Recover 1.5% of your max HP per second. | 1.39% | 2.64% | 5.14% |
-| Choice Band | +40% damage, but you cannot switch moves. | 1.39% | 2.64% | 5.14% |
-| Quick Claw | -20% cooldown on all your moves. | 1.39% | 2.64% | 5.14% |
-| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 1.39% | 2.64% | 5.14% |
-| Shell Bell | Recover HP from the damage you deal. | 1.39% | 2.64% | 5.14% |
-| Life Orb | +30% damage, but each attack costs you a little HP. | 1.39% | 2.64% | 5.14% |
-| Choice Scarf | +35% speed. | 1.39% | 2.64% | 5.14% |
-| Rocky Helmet | Foes that hit you in melee take damage. | 1.39% | 2.64% | 5.14% |
-| Assault Vest | +20% damage reduction. | 1.39% | 2.64% | 5.14% |
-| Muscle Band | +10% damage. | 1.39% | 2.64% | 5.14% |
-| Wise Glasses | +10% damage. | 1.39% | 2.64% | 5.14% |
-| Scope Lens | +5% critical hit chance. | 1.39% | 2.64% | 5.14% |
-| Razor Claw | +5% critical hit chance. | 1.39% | 2.64% | 5.14% |
-| Expert Belt | +20% damage on super effective hits. | 1.39% | 2.64% | 5.14% |
-| Big Root | +30% HP recovered from draining moves. | 1.39% | 2.64% | 5.14% |
-| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 1.39% | 2.64% | 5.14% |
-| Wide Lens | +15% area on all your moves. | 1.39% | 2.64% | 5.14% |
-| Zoom Lens | -50% area but +20% damage on all your moves. | 1.39% | 2.64% | 5.14% |
-| Silk Scarf | +20% Normal-type move damage. | 1.39% | 2.64% | 5.14% |
-| Charcoal | +20% Fire-type move damage. | 1.39% | 2.64% | 5.14% |
-| Mystic Water | +20% Water-type move damage. | 1.39% | 2.64% | 5.14% |
-| Magnet | +20% Electric-type move damage. | 1.39% | 2.64% | 5.14% |
-| Miracle Seed | +20% Grass-type move damage. | 1.39% | 2.64% | 5.14% |
-| Never-Melt Ice | +20% Ice-type move damage. | 1.39% | 2.64% | 5.14% |
-| Black Belt | +20% Fighting-type move damage. | 1.39% | 2.64% | 5.14% |
-| Poison Barb | +20% Poison-type move damage. | 1.39% | 2.64% | 5.14% |
-| Soft Sand | +20% Ground-type move damage. | 1.39% | 2.64% | 5.14% |
-| Sharp Beak | +20% Flying-type move damage. | 1.39% | 2.64% | 5.14% |
-| Twisted Spoon | +20% Psychic-type move damage. | 1.39% | 2.64% | 5.14% |
-| Silver Powder | +20% Bug-type move damage. | 1.39% | 2.64% | 5.14% |
-| Hard Stone | +20% Rock-type move damage. | 1.39% | 2.64% | 5.14% |
-| Spell Tag | +20% Ghost-type move damage. | 1.39% | 2.64% | 5.14% |
-| Dragon Fang | +20% Dragon-type move damage. | 1.39% | 2.64% | 5.14% |
-| Black Glasses | +20% Dark-type move damage. | 1.39% | 2.64% | 5.14% |
-| Metal Coat | +20% Steel-type move damage. | 1.39% | 2.64% | 5.14% |
-| Pixie Plate | +20% Fairy-type move damage. | 1.39% | 2.64% | 5.14% |
+| Item | What it does | Per elite | Per boss | Per gym leader | Per small chest | Per big chest |
+| --- | --- | --- | --- | --- | --- | --- |
+| Leftovers | Recover 1.5% of your max HP per second. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Choice Band | +40% damage, but you cannot switch moves. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Quick Claw | -20% cooldown on all your moves. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Focus Sash | A hit that would KO you leaves you at 1 HP instead (once every 60 s). | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Shell Bell | Recover HP from the damage you deal. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Life Orb | +30% damage, but each attack costs you a little HP. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Choice Scarf | +35% speed. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Rocky Helmet | Foes that hit you in melee take damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Assault Vest | +20% damage reduction. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Muscle Band | +10% damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Wise Glasses | +10% damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Scope Lens | +5% critical hit chance. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Razor Claw | +5% critical hit chance. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Expert Belt | +20% damage on super effective hits. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Big Root | +30% HP recovered from draining moves. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Black Sludge | Poison types recover 1.5% max HP per second; others lose a little. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Wide Lens | +15% area on all your moves. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Zoom Lens | -50% area but +20% damage on all your moves. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Silk Scarf | +20% Normal-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Charcoal | +20% Fire-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Mystic Water | +20% Water-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Magnet | +20% Electric-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Miracle Seed | +20% Grass-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Never-Melt Ice | +20% Ice-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Black Belt | +20% Fighting-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Poison Barb | +20% Poison-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Soft Sand | +20% Ground-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Sharp Beak | +20% Flying-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Twisted Spoon | +20% Psychic-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Silver Powder | +20% Bug-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Hard Stone | +20% Rock-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Spell Tag | +20% Ghost-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Dragon Fang | +20% Dragon-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Black Glasses | +20% Dark-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Metal Coat | +20% Steel-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
+| Pixie Plate | +20% Fairy-type move damage. | 1.39% | 2.64% | 2.5% | 0.222% | 1.39% |
 
 ## Run items (25)
 
@@ -122,31 +127,31 @@ Only bosses and gym leaders drop them, and only ones the team does not already h
 
 | Item | What it does | Group | Per boss | Per gym leader |
 | --- | --- | --- | --- | --- |
-| Amulet Coin | +50% PokéCoins at the end of the run. |  | 0.2% | 0.6% |
-| Lucky Egg | +30% experience. |  | 0.2% | 0.6% |
-| Sharp Scissors | The lower your team HP, the faster you move (up to 2x). Needs a team of 3+. |  | 0.2% | 0.6% |
-| Brass Knuckles | The lower your team HP, the more damage you deal (up to 2x). Needs a team of 3+. |  | 0.2% | 0.6% |
-| Snowball Badge | Every kill feeds the Snowball: +damage for the total HP of everything you have slain. |  | 0.2% | 0.6% |
-| Re-Do | When your last Pokemon faints, revive your whole team to full HP. Once per run. |  | 0.2% | 0.6% |
-| Pikachu's Tear | Each fainted teammate boosts your damage and speed by 1.1x. |  | 0.2% | 0.6% |
-| Normal Stone | Your Normal attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Flame Stone | Your Fire attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Wave Stone | Your Water attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Lightning Stone | Your Electric attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Leaf Stone | Your Grass attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Frost Stone | Your Ice attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Fist Stone | Your Fighting attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Venom Stone | Your Poison attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Earth Stone | Your Ground attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Gale Stone | Your Flying attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Mind Stone | Your Psychic attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Bug Stone | Your Bug attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Rock Stone | Your Rock attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Spirit Stone | Your Ghost attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Dragon Stone | Your Dragon attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Shadow Stone | Your Dark attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Steel Stone | Your Steel attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
-| Fae Stone | Your Fairy attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.6% |
+| Amulet Coin | +50% PokéCoins at the end of the run. |  | 0.2% | 0.4% |
+| Lucky Egg | +30% experience. |  | 0.2% | 0.4% |
+| Sharp Scissors | The lower your team HP, the faster you move (up to 2x). Needs a team of 3+. |  | 0.2% | 0.4% |
+| Brass Knuckles | The lower your team HP, the more damage you deal (up to 2x). Needs a team of 3+. |  | 0.2% | 0.4% |
+| Snowball Badge | Every kill feeds the Snowball: +damage for the total HP of everything you have slain. |  | 0.2% | 0.4% |
+| Re-Do | When your last Pokemon faints, revive your whole team to full HP. Once per run. |  | 0.2% | 0.4% |
+| Pikachu's Tear | Each fainted teammate boosts your damage and speed by 1.1x. |  | 0.2% | 0.4% |
+| Normal Stone | Your Normal attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Flame Stone | Your Fire attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Wave Stone | Your Water attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Lightning Stone | Your Electric attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Leaf Stone | Your Grass attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Frost Stone | Your Ice attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Fist Stone | Your Fighting attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Venom Stone | Your Poison attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Earth Stone | Your Ground attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Gale Stone | Your Flying attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Mind Stone | Your Psychic attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Bug Stone | Your Bug attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Rock Stone | Your Rock attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Spirit Stone | Your Ghost attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Dragon Stone | Your Dragon attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Shadow Stone | Your Dark attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Steel Stone | Your Steel attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
+| Fae Stone | Your Fairy attacks ignore enemy resistance and immunity. Only one Stone at a time. | stone | 0.2% | 0.4% |
 
 ## Other pickups (not items)
 
@@ -155,7 +160,7 @@ Only bosses and gym leaders drop them, and only ones the team does not already h
 | XP orb / big XP orb | Experience; every kill drops one, an orb worth 5% of the next level or more draws as the big one |
 | Coin | PokeCoins, banked at the end of the run (Amulet Coin: +50%) |
 | Ticket / x10 ticket | Banked into Pokeball (x1) and Master Ball (x10) gacha tickets |
-| Heal pickup (retired) | Used to heal 30% of max HP; nothing drops it any more, the Oran and Sitrus Berry ground items replaced it |
+| Heal pickup (retired) | Used to heal 30% of max HP; nothing drops it any more, Oran and Sitrus Berry ground items replaced it everywhere |
 | Magnet | Pulls every pickup on screen to the nearest player |
 | Bomb | Screen clear: every wild enemy in view falls; bosses, gym leaders and elites take a hit instead |
 

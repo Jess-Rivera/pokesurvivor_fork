@@ -26,7 +26,7 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
   Camera: { sees: () => true, outerRadius: () => 400, kick() { } }, Tiles: { T: 16, arenaBiome: () => 0, ARENA_THEMES: { rock: {} } },
   World: { isFree: () => true, biome: 1, setArena() { }, setBiome() { } }, Coop: { active: false, isHost: false, scaleRate: () => 1, scaleHp: () => 1 }, LIFT: 0,
   Game: { player: pl, st: { get time() { return clock; } }, everyone: () => [pl], grantLevels: n => { log.levels += n; }, reviveTeam: () => { log.revives++; }, badgeBoost: (st, pc) => log.boosts.push(st + ':' + pc), offerBond: () => { log.bondOffers++; }, flash() { } },
-  Pickups: { drop() { }, dropXp() { }, pullAll() { } }, Items: { roll: () => 'x', rollFor: () => 'x' }, Log: { on: false },
+  Pickups: { drop() { }, dropXp() { }, pullAll() { } }, Items: { roll: () => 'x' }, Log: { on: false },
   UI: { $: id => document.getElementById(id), show() { }, spriteCanvas: () => mkEl('canvas'), toast() { }, isOpen: () => false },
   Icons: { html: () => '' }, Ranking: { periodIds: () => ({ d: 'd-2026-10-31', w: 'w-2026-44' }) },
   Social: { me: null, profileData: () => ({ name: 'Tester', best: {}, medals: [] }) }, DB: { save: null, online: false, commit() { } } };

@@ -1,6 +1,6 @@
 # Item batch 1 proposal (feature/item-rework-v2)
 
-Status: [Proposed], 2026-11-03. Nothing here is built. Effects are drafted from pokeapi (pokeapi-master/data/v2/csv: items, item_prose, berries, item_categories) and adapted to survivor play. Every number is a placeholder for Jess to edit.
+Status: [Proposed], 2026-11-03. Nothing here is built. Jess's later rulings and corrected hooks are in docs/proposals/item-rework-v2-handoff.md, which wins where they differ. Effects are drafted from pokeapi (pokeapi-master/data/v2/csv: items, item_prose, berries, item_categories) and adapted to survivor play. Every number is a placeholder for Jess to edit.
 Feasibility notes come from the code I have read (the Player.hurt type-guard path, stage trackers and team timers, hasItem hooks, the drop table). I have not read every hook, so "check" means verify before building.
 
 ## Berries: we already have the playable ones

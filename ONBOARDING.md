@@ -112,7 +112,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `moves.js` (`G.Moves`) since slice 7b: the learn pools per type, `RETIRED` (retired id to replacement, Bubble and Hail), the starting move per type and a slim slot instance (id, name, type, cd, timer) read from `G.MoveDefs`. It holds no move data; display reads `G.MoveInfo`. The old legacy table is archived at docs/move_rework_holding/legacy-moves.js for the tools.
 - The new move system's data chain (load order): `move-attributes.js` (`G.MoveAttrs`, the grammar and validator rules, docs/MOVE-AXIS-SCHEMA.md), `moves-generated.js` (`G.MoveData`, generated from docs/move_rework_holding/move-conversions-described.json by `tools/export_moves.js`, never hand-edited), `move-overrides.js` (hand-set fields with a `why`), `move-handler.js` (special handlers), `move-resolver.js` (`G.MoveDefs`, the resolved and deep-frozen definitions).
 - `enemies.js` enemy roster and tiers. `starters.js` the 29 starters + personality test.
-- `upgrades.js` permanent upgrades. `items.js` equippable run items.
+- `upgrades.js` permanent upgrades. `items.js` equippable run items. `ground-items.js` (`G.Grounds`) items used on touch. `drops.js` (`G.Drops`) every drop chance, one table per source; docs/ITEMS.md is generated from these by tools/items_report.js.
 - `achievements.js`, `missions.js` quests/achievements. `changelog.js` news (bilingual).
 - `types.js` the type chart. `music.js` the song scores. `lang-en.js` the i18n dictionary.
 - `funding.js` support/funding config.

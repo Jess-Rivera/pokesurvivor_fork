@@ -45,7 +45,7 @@ if (log.levels !== 1) bad('level grants: ' + log.levels); if (log.revives !== 1)
 if (pl.bonds !== 1) bad('bond count ' + pl.bonds); if (G.Gym.badges.join() !== 'Boulder Badge') bad('badge ' + G.Gym.badges);
 if (log.progress.length) bad('a gym win reports no progress event now (the portal-fight counters are gone): ' + log.progress);
 // (A gym leader drops coins and items only: no XP orbs, so no Pickups.dropXp call, asserted below.)
-if (!drops.includes('item')) bad('missing the guaranteed item in ' + drops);
+if (drops.filter(k => k === 'item').length !== 1) bad('a gym leader drops exactly one item (Jess 2026-11-03), got ' + drops);
 if (drops.filter(k => k === 'coin').length < 10) bad('coins ' + drops.filter(k => k === 'coin').length);
 if (log.dropXp.length) bad('a gym leader must drop no XP: ' + JSON.stringify(log.dropXp));
 if (log.boosts.join() !== 'atk:0.1') bad('Boulder Badge boost: ' + log.boosts); if (!log.pulled) bad('pickups not pulled to the player');

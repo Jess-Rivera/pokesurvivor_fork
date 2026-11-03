@@ -2,7 +2,7 @@
 // Real data/ground-items.js, systems/stages.js, data/pokesprite-index.js and Player.incOf with stubbed engine globals. Covers: the table (unique ids,
 // English text, icons present in the Pokesprite index, 18 guard berries, weights add to 100 by family), the weighted roll, every effect on a fake team
 // (heal fractions, X items +1 for 30 s, berries for 10 s, Starf +2 on one stat, Lansat crit, Kee / Maranga pct, Pinap drop bonus), refresh versus
-// stacking, expiry, dropRate, HUD chip labels. The type-guard halving inside Player.hurt, the pickup draw and the HUD are covered by the headless run.
+// stacking, expiry, dropBonus, HUD chip labels. The type-guard halving inside Player.hurt, the pickup draw and the HUD are covered by the headless run.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });

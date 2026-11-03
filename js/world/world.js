@@ -506,30 +506,20 @@ G.World = (() => {
     G.Audio.sfx(p.type === 'grass' ? 'grass' : p.type === 'chest' ? 'chest' : 'break');
     if (p.type === 'grass') {
       G.FX.burst(p.x, p.y - 6, B.grass[1], 6, 70);
-      const r = Math.random();
-      if (r < 0.05) G.Pickups.drop('heal', p.x, p.y);
-      else if (r < 0.11) G.Pickups.drop('coin', p.x, p.y, 1);
+      G.Drops.roll('grass', p.x, p.y);
       return;
     }
     if (p.type === 'rock') {
       G.FX.burst(p.x, p.y - 10, B.rock[1], 14, 140);
       G.FX.ring(p.x, p.y - 8, 4, 26, B.rock[2], 0.3, 3);
-      const r = Math.random();
-      if (r < 0.4) G.Pickups.dropXp(p.x, p.y, G.Game.everyone()[0].xpNext * 0.01); // flat 1% of the next level
-      if (r > 0.75) G.Pickups.drop('coin', p.x, p.y, 2);
-      if (r > 0.94) G.Pickups.drop('heal', p.x + 8, p.y);
+      G.Drops.roll('rock', p.x, p.y);
       return;
     }
     if (p.type === 'chest') {
       G.FX.burst(p.x, p.y - 10, '#f2c443', 22, 180);
       G.FX.ring(p.x, p.y - 8, 6, 46, '#f2c443', 0.45, 4);
       G.Camera.kick(0.25);
-      const n = G.U.randInt(4, 7);
-      for (let i = 0; i < n; i++) G.Pickups.drop('coin', p.x + G.U.rand(-14, 14), p.y + G.U.rand(-10, 10), 3);
-      G.Pickups.drop(Math.random() < 0.5 ? 'heal' : 'magnet', p.x, p.y);
-      G.Pickups.drop('ground', p.x + 12, p.y - 6, 'sitrus'); // a small chest always holds a Sitrus Berry
-      G.Pickups.dropXp(p.x, p.y, 20);
-      if (Math.random() < 0.08) G.Pickups.drop('item', p.x, p.y - 12, G.Items.roll());
+      G.Drops.roll('chest', p.x, p.y);
       return;
     }
     if (p.type === 'bigchest') {
@@ -537,13 +527,7 @@ G.World = (() => {
       G.FX.burst(p.x, p.y - 12, '#f2c443', 34, 220);
       G.FX.ring(p.x, p.y - 8, 6, 80, '#f2c443', 0.6, 5);
       G.Camera.kick(0.4);
-      for (let i = 0; i < 9; i++) G.Pickups.drop('coin', p.x + G.U.rand(-22, 22), p.y + G.U.rand(-14, 14), 4);
-      const tk = G.U.randInt(1, 3);
-      for (let i = 0; i < tk; i++) G.Pickups.drop('ticket', p.x + G.U.rand(-16, 16), p.y + G.U.rand(-10, 10), 1);
-      if (Math.random() < 0.15) G.Pickups.drop('ticket10', p.x, p.y - 10, 1);
-      if (Math.random() < 0.5) G.Pickups.drop('item', p.x + 14, p.y - 14, G.Items.roll());
-      G.Pickups.drop('ground', p.x - 14, p.y - 14, G.Grounds.roll()); // a big chest always holds one ground item
-      G.Pickups.dropXp(p.x, p.y, G.Game.levelXp());
+      G.Drops.roll('bigchest', p.x, p.y);
       G.Progress.event('chest');
       return;
     }

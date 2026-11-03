@@ -395,7 +395,7 @@
       }
       if (this.boss) {
         G.Camera.kick(0.9);
-        G.Drops.roll('boss', this.x, this.y); // coins and the guaranteed item (data/drops.js)
+        if (!this.gym) G.Drops.roll('boss', this.x, this.y); // coins and the guaranteed item (data/drops.js); a gym leader rolls its own table below
       }
       // Wild enemy: Gen 5 yield from its species base_experience, its spawn level and the player's
       // level right now (shared run level, so the highest among the players).
@@ -410,8 +410,8 @@
         G.Drops.roll('elite', this.x, this.y); // the guaranteed Berry, a ground roll, a chance at an item (data/drops.js)
         G.Elites.noteDeath(this);
       } else if (this.gym) {
-        /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop one guaranteed item
-           (picked up by the arena's pullAll), see data/drops.js. */
+        /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop its coins and one guaranteed
+           item (picked up by the arena's pullAll), see data/drops.js. */
         G.Drops.roll('gym', this.x, this.y);
       } else G.Pickups.dropXp(this.x, this.y, this.xp);
       if (this.golden) G.Drops.roll('golden', this.x, this.y);

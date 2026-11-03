@@ -24,7 +24,6 @@ G.Pickups = (() => {
     item: { color: '#ffd23f', glow: '#c08a10', r: 9 }, // value = id del objeto
     ground: { color: '#ffffff', glow: '#9fe8ff', r: 8 }, // ground item (data/ground-items.js), value = its id
   };
-  /** Chance that a normal Pokemon drops a gacha ticket. */
   const BIG_XP_SHARE = 0.05; // an orb worth >= 5% of the next level draws as the big one
 
   // Sprite pickups (data/pickup-sprites.js, 16 px art drawn at 1.5 world units per art pixel): the coin is the

@@ -1,12 +1,12 @@
 // Drop tables (feature/item-rework-v2) offline checks (Node only). Usage from the repo root:  node docs/proposals/drops-harness.js .
 // Real data/drops.js with stubbed engine globals. The expected rates below are hand-derived from the code that data/drops.js replaced
-// (pickup.js dropXp, enemy.js die(), events.js rescued, elites.js itemChance, items.js RUN_CHANCE), not read back from drops.js.
+// (pickup.js dropXp, enemy.js die(), events.js rescued, elites.js itemChance, items.js RUN_CHANCE, world.js prop loot), not read back from drops.js.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
 global.window = global;
 let s = 12345; const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
-global.G = { U: { pick: a => a[0] }, Pickups: { drop() {} }, Game: { player: { runItems: [] } },
+global.G = { U: { pick: a => a[0] }, Pickups: { drop() {} }, Game: { player: { runItems: [] }, everyone: () => [{ xpNext: 1000 }], levelXp: () => 777 },
   Grounds: { roll: r => 'pool', dropBonus: pl => (pl && pl.bonus) || 0 },
   Items: { roll: () => 'poke', rollRun: owned => (owned.includes('run') ? null : 'run') } };
 load('js/data/drops.js');
@@ -41,13 +41,34 @@ const chk = (name, got, want, tol) => { if (!near(got, want, tol)) bad(name + ' 
 const once = (src, want) => { const out = G.Drops.roll(src, 0, 0, { rnd, place() {} }); const c = {}; out.forEach(d => (c[d.pickup] = (c[d.pickup] || 0) + 1));
   for (const k in want) if ((c[k] || 0) !== want[k]) bad(src + ' ' + k + ' ' + (c[k] || 0) + ' want ' + want[k]); return out; };
 once('boss', { coin: 10, item: 1 });
-once('gym', { item: 1 });
+once('gym', { coin: 10, item: 1 }); // exactly one item (Jess 2026-11-03)
 once('thief', { coin: 20 });
 once('thiefTicket', { coin: 6, ticket10: 1 });
 once('rescue', { coin: 12, ticket: 1 });
 { const c = sample('elite'); chk('elite berry always', rate(c, 'ground:oran') + rate(c, 'ground:sitrus'), 1, 1e-9); chk('elite berry is 50/50 Oran', rate(c, 'ground:oran'), 0.5, 0.006); chk('elite ground pool roll always', rate(c, 'ground:pool'), 1, 1e-9); chk('elite item 50%', rate(c, 'item'), 0.5, 0.006); }
 { const c = sample('golden'); chk('golden coin 35%', rate(c, 'coin'), 0.35, 0.006); }
-console.log('boss 10 coins + item, gym item, thief 20 coins, thief ticket 6 + x10, rescue 12 + ticket, elite berry + ground + 50% item, golden 35%');
+console.log('boss 10 coins + item, gym 10 coins + one item, thief 20 coins, thief ticket 6 + x10, rescue 12 + ticket, elite berry + ground + 50% item, golden 35%');
+
+// world props, hand-derived from the old world.js (the 'heal' pickup there became Oran at the same rate, both heal 30%)
+{ const g = sample('grass'); chk('grass oran', rate(g, 'ground:oran'), 0.05, 0.002); chk('grass coin', rate(g, 'coin'), 0.06, 0.002);
+  const r = sample('rock'); chk('rock xp', rate(r, 'xp'), 0.4, 0.004); chk('rock coin', rate(r, 'coin'), 0.25, 0.004); chk('rock oran', rate(r, 'ground:oran'), 0.06, 0.002);
+  let both = 0; for (let i = 0; i < 20000; i++) { const k = G.Drops.roll('rock', 0, 0, { rnd, place() {} }).map(d => d.pickup); if (k.includes('xp') && k.includes('coin')) both++; }
+  if (both) bad('rock xp and coin share one roll');
+  const x = G.Drops.roll('rock', 0, 0, { rnd: () => 0.1, place() {} }).find(d => d.pickup === 'xp'); if (!x || x.value !== 10) bad('rock xp is 1% of the next level');
+  const c = sample('chest'); chk('chest coins average 5.5', rate(c, 'coin'), 5.5, 0.05); chk('chest oran', rate(c, 'ground:oran'), 0.5, 0.006); chk('chest magnet', rate(c, 'magnet'), 0.5, 0.006); chk('chest sitrus always', rate(c, 'ground:sitrus'), 1, 1e-9); chk('chest xp always', rate(c, 'xp'), 1, 1e-9); chk('chest item 8%', rate(c, 'item'), 0.08, 0.003);
+  for (let i = 0; i < 2000; i++) { const n = G.Drops.roll('chest', 0, 0, { rnd, place() {} }).filter(d => d.pickup === 'coin').length; if (n < 4 || n > 7) { bad('chest coin count ' + n); break; } }
+  const b = sample('bigchest'); chk('big chest coins', rate(b, 'coin'), 9, 1e-9); chk('big chest tickets average 2', rate(b, 'ticket'), 2, 0.02); chk('big chest x10 15%', rate(b, 'ticket10'), 0.15, 0.004); chk('big chest item 50%', rate(b, 'item'), 0.5, 0.006); chk('big chest ground always', rate(b, 'ground:pool'), 1, 1e-9); chk('big chest xp always', rate(b, 'xp'), 1, 1e-9);
+  const y = G.Drops.roll('bigchest', 0, 0, { rnd, place() {} }).find(d => d.pickup === 'xp'); if (y.value !== 777) bad('big chest xp is one level');
+  const z = G.Drops.roll('chest', 0, 0, { rnd, place() {} }).find(d => d.pickup === 'xp'); if (z.value !== 20) bad('chest xp is 20');
+  // the default place sends xp through dropXp and everything else through drop
+  const seen = []; G.Pickups.dropXp = (x, y, v) => seen.push('dropXp:' + v); G.Pickups.drop = k => seen.push(k);
+  G.Drops.roll('chest', 0, 0, { rnd: () => 0.99 }); if (!seen.includes('dropXp:20') || seen.includes('xp')) bad('xp entries go through Pickups.dropXp');
+  G.Pickups.drop = () => {};
+  console.log('props: grass, rock, chest and big chest rates as before, Oran in place of the heal pickup'); }
+// one table: no source file rolls loot on its own, and nothing drops the retired heal pickup
+{ if (JSON.stringify(G.Drops.TABLES).includes('"heal"')) bad('a table still drops the heal pickup');
+  for (const f of ['js/world/world.js', 'js/entities/enemy.js', 'js/entities/pickup.js', 'js/systems/events.js']) { const src = fs.readFileSync(R + '/' + f, 'utf8');
+    if (/Pickups\.drop\(/.test(src) || /\bdrop\('/.test(src)) bad(f + ' places a drop outside G.Drops'); } }
 
 // run item share: boss 5%, gym 10%, elites never; a held run item is not rolled again
 { for (const [src, want] of [['boss', 0.05], ['gym', 0.1], ['elite', 0]]) { let run = 0, items = 0;

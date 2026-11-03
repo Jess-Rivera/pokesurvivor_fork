@@ -469,3 +469,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): batch 1 is 12 ground and 19 Pokemon items, Band physical-only and Specs special-only, no species-locked items, gems later, run items second pass. Proposal: docs/proposals/item-batch-1-proposal.md.
 - Found: a gym leader drops two items (boss plus gym branch, predates this work). Pokedex has no evolution data (Eviolite needs a derived file).
 - Verified: check.js 31/31, smoke-ui passes. Not feel-tested. Left uncommitted: all of it. Stopped before building batch 1; handoff in docs/proposals/item-rework-v2-handoff.md.
+
+## 2026-11-03, Review of the drop work, step 1 of batch 1 (Claude Code, home, feature/item-rework-v2)
+- Reviewed 16ff37f: tables sound, but world.js still dropped the heal pickup and rolled its own chances, and the batch 1 plan had 9 wrong hooks (corrected in the handoff).
+- Built: grass, rock, chest and big chest tables in G.Drops, Oran replaces the heal pickup at the same rates, a gym leader drops one item. Rock Oran is now its own 6% roll instead of only coming with coins. ITEMS.md covers props and chests; check.js fails if it is stale.
+- Decided (Jess): all recommendations, see DECISIONS 2026-11-03. Raises from held items stay team-wide.
+- Verified: check.js, smoke-ui, file:// prop probe. Not feel-tested. Left uncommitted: step 1. Stopped for the feel-test before batch 1 step 2.

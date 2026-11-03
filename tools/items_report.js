@@ -84,7 +84,9 @@ out.push('## Drop sources');
 out.push('');
 out.push(row('Source', 'What it drops'));
 out.push(row('---', '---'));
-const gymP = (1 - bossRun + (1 - gymRun)) / nP;
+const gymP = (1 - gymRun) / nP;
+const chestItem = T.chest.find((e) => e.pickup === 'item').p,
+  bigItem = T.bigchest.find((e) => e.pickup === 'item').p;
 out.push(
   row(
     'Wild kill',
@@ -112,17 +114,34 @@ out.push(
 out.push(
   row(
     'Gym leader',
-    'Two item rolls today (the leader counts as boss and gym): ' +
-      pct(bossRun) +
-      ' and ' +
+    '10 coins, one guaranteed item (' +
       pct(gymRun) +
-      ' run item, else Pokemon item. No XP, the badge pays a level. [Open] is the double drop intended?'
+      ' it is a run item, else a Pokemon item). No XP, the badge pays a level'
   )
 );
 out.push(row('Golden enemy', pct(K.golden) + ' for 3 extra coins'));
 out.push(row('Meowth (thief)', '20 coins'));
 out.push(row('Gholdengo (thief)', '6 coins and an x10 ticket'));
 out.push(row('Lost-Pokemon event', '12 coins and a ticket'));
+out.push(row('Grass', 'One shared roll: Oran Berry 5%, 1 coin 6%'));
+out.push(
+  row('Rock', 'One shared roll: small XP orb (1% of the next level) 40%, 2 coins 25%. Separately, Oran Berry 6%')
+);
+out.push(
+  row(
+    'Small chest',
+    '4 to 7 coins, Oran Berry or magnet (50/50), Sitrus Berry, 20 XP, ' + pct(chestItem) + ' chance of a Pokemon item'
+  )
+);
+out.push(
+  row(
+    'Big chest',
+    '9 coins, 1 to 3 tickets, 15% x10 ticket, ' +
+      pct(bigItem) +
+      ' chance of a Pokemon item, one ground item roll, one level of XP'
+  )
+);
+out.push(row('XP orbs from rocks and chests', 'Also roll the wild extras above, like a kill'));
 out.push('');
 out.push('## Ground items (' + ground.length + ')');
 out.push('');
@@ -139,7 +158,7 @@ for (const g of ground)
     row(
       g.name,
       g.desc,
-      g.w + '%',
+      pct(g.w / 100),
       pct((wildGroundBase * g.w) / 100 + direct('wild', g.id)),
       pct(g.w / 100 + direct('elite', g.id))
     )
@@ -153,9 +172,12 @@ out.push(
     ' per Pokemon-item roll). Chance columns are per kill of that source.'
 );
 out.push('');
-out.push(row('Item', 'What it does', 'Per elite', 'Per boss', 'Per gym leader'));
-out.push(row('---', '---', '---', '---', '---'));
-for (const i of poke) out.push(row(i.name, i.desc, pct(eliteItem / nP), pct((1 - bossRun) / nP), pct(gymP)));
+out.push(row('Item', 'What it does', 'Per elite', 'Per boss', 'Per gym leader', 'Per small chest', 'Per big chest'));
+out.push(row('---', '---', '---', '---', '---', '---', '---'));
+for (const i of poke)
+  out.push(
+    row(i.name, i.desc, pct(eliteItem / nP), pct((1 - bossRun) / nP), pct(gymP), pct(chestItem / nP), pct(bigItem / nP))
+  );
 out.push('');
 out.push('## Run items (' + nR + ')');
 out.push('');
@@ -167,7 +189,7 @@ out.push(
 out.push('');
 out.push(row('Item', 'What it does', 'Group', 'Per boss', 'Per gym leader'));
 out.push(row('---', '---', '---', '---', '---'));
-for (const i of run) out.push(row(i.name, i.desc, i.group || '', pct(bossRun / nR), pct((bossRun + gymRun) / nR)));
+for (const i of run) out.push(row(i.name, i.desc, i.group || '', pct(bossRun / nR), pct(gymRun / nR)));
 out.push('');
 out.push('## Other pickups (not items)');
 out.push('');
@@ -184,7 +206,7 @@ out.push(row('Ticket / x10 ticket', 'Banked into Pokeball (x1) and Master Ball (
 out.push(
   row(
     'Heal pickup (retired)',
-    'Used to heal 30% of max HP; nothing drops it any more, the Oran and Sitrus Berry ground items replaced it'
+    'Used to heal 30% of max HP; nothing drops it any more, Oran and Sitrus Berry ground items replaced it everywhere'
   )
 );
 out.push(row('Magnet', 'Pulls every pickup on screen to the nearest player'));
