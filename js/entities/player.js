@@ -21,6 +21,8 @@ G.Player = class Player {
     this.bodyH = G.Sprites.bodyHeight(mon.dex);
 
     this.atkMul = perks.atkMul || 1;
+    this.physMul = 1; // held items that boost one damage category (G.Stats.itemCatMul)
+    this.specMul = 1;
     this.spdMul = perks.spdMul || 1;
     this.cdMul = perks.cdMul || 1;
     this.dmgReduce = perks.dmgReduce || 0;
@@ -77,6 +79,7 @@ G.Player = class Player {
     this.rerolls = 0; // veces que ha cambiado las cartas de nivel en esta run
     this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
     this.critChance = perks.crit || 0; // critical hit chance (Upgrades)
+    this.critDmgMul = 1; // on top of the base crit multiplier (Leek)
     this.banned = new Set(); // movimientos vetados (Mejoras → Veto): no salen en las cartas
     this.bind = {}; // movimiento -> hueco fijo (0-3), elegido en Mejoras
     this.coins = 0; // monedas recogidas en esta run
@@ -165,7 +168,7 @@ G.Player = class Player {
       this.baseSpAStat,
       this.level,
       m,
-      this.atkMulAll * (1 + si) * stg * this.runDmgMul()
+      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul()
     ); // run items (Brass Knuckles, Pikachu's Tear, Snowball)
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
@@ -382,9 +385,9 @@ G.Player = class Player {
     }
     if (i < 0 || i >= this.slots.length || i === this.active) return;
     if (!free && this.swapT > 0) return; // still holding the slot you just switched to
-    // Choice Band: you cannot switch moves.
-    if (this.hasItem('choiceband') && this.slots[this.active]) {
-      G.FX.dmgText(this.x, this.y - this.bodyH - 8, 'Choice Band', '#ff8ad8');
+    // Choice Band and Choice Specs: you cannot switch moves.
+    if (this.choiceLocked() && this.slots[this.active]) {
+      G.FX.dmgText(this.x, this.y - this.bodyH - 8, G.Items.BY[this.item].name, '#ff8ad8');
       return;
     }
     this.active = i;
@@ -431,9 +434,9 @@ G.Player = class Player {
       target.push(m);
     }
     this.arrange();
-    // It switches to the group, except with the Choice Band (you stay on the slot you had, if it remains).
+    // It switches to the group, except with a Choice item (you stay on the slot you had, if it remains).
     const a = this.slots.indexOf(cur);
-    this.active = this.hasItem('choiceband') && a >= 0 ? a : this.slots.indexOf(target);
+    this.active = this.choiceLocked() && a >= 0 ? a : this.slots.indexOf(target);
     this.bonds = Math.max(0, this.bonds - 1);
     return target;
   }
@@ -792,6 +795,9 @@ G.Player = class Player {
   // ---------------- held items ----------------
   /** True when `id` is in effect for this Pokemon: its own held item while it is NOT benched (held effects only work
    *  on the field), or any run-tier item the team carries. */
+  choiceLocked() {
+    return this.hasItem('choiceband') || this.hasItem('choicespecs');
+  }
   hasItem(id) {
     return (!this.benched && this.item === id) || this.runItems.includes(id);
   }

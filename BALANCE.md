@@ -156,6 +156,7 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 - 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
 
 ## Drops / economy
+- Rock and small chest HP (feature/item-rework-v2, 2026-11-03, Jess; TUNE): rock 34 to 6, chest 22 to 6 (js/world/world.js). Prop damage has no STAB or type and grows with level. A 40 power move (Ember, Water Gun, Tackle, no upgrades) does about 2.2 at level 1, so 3 hits; 2 hits by level 10; 1 hit from about level 15 to 20. Was: 16 and 10 hits at level 1.
 - Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
 
 ## XP curve / run pacing (feature/xp-curve, applied 2026-10-18)

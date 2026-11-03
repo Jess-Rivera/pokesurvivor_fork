@@ -480,3 +480,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Found: picking a region never closed the picker, so its key handler stayed live in the run and Space or Enter clicked the card again. Any Pokemon. From the region select in fix/ui-upgrade. smoke-ui missed it because it calls startRun directly.
 - Built: startRegion closes the picker. smoke-ui walks the real menu, Play and card path; with the fix removed, 3 of its checks fail.
 - Verified: check.js, smoke-ui, a real Space press as Charizard dodges with no restart. One earlier smoke-ui run failed once on an unseen non-region check and did not repeat. Left uncommitted: the fix.
+
+## 2026-11-03, Step 1a and step 2: prop HP, category damage, crit items (Claude Code, home, feature/item-rework-v2)
+- Built: rock and small chest 6 HP. Band, Specs, Muscle Band, Wise Glasses by category (physMul, specMul, G.Stats.itemCatMul in moveFactor and the sheet). New Choice Specs, Thick Club, Light Ball, Lucky Punch, Leek (41 Pokemon items). Harness: item-batch1-harness.js.
+- Decided (Jess): step 1 felt good; rocks and chests about 2 to 3 hits of a 40 power move with no upgrades.
+- Found: prop damage grows with level, so flat 6 HP is 3 hits at level 1 and 1 hit by about level 15 to 20. Status-category moves get no category boost.
+- Verified: check.js 32/32, smoke-ui, file:// probe (real hits to break, Leek crit 2.25x, Specs lock, sheet, icons, pickup). Left uncommitted: all of it. Stopped for the feel-test before step 3.

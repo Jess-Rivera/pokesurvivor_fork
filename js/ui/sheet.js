@@ -107,7 +107,7 @@ G.Sheet = (() => {
     if (!routed(m)) return { raw: '', ail: '', hit: '' };
     const d = folded(pl, m),
       h = defHit(pl, d),
-      am = (pl && pl.atkMul) || 1,
+      am = pl ? (pl.atkMul || 1) * G.Stats.itemCatMul(pl, d.category) : 1,
       base = am !== 1 && h != null ? h / am : h;
     return {
       raw: defRows(pl, d)

@@ -129,7 +129,7 @@ G.MoveEffects = (() => {
       kfx = fxOf(def, 'knockback');
     const c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
       crit = c > 0 && rng() < c; // D10: one roll per damage hit, only when it can crit
-    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (crit ? CRIT_MUL : 1)); // D11
+    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (crit ? CRIT_MUL * (o.critDmgMul || 1) : 1)); // D11
     const dmg = Math.max(1, full * hopMul(def, hop)); // D15: the chain reduction is applied last
     const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     const hp0 = e.hp,

@@ -194,8 +194,8 @@ G.World = (() => {
 
   const PROP = {
     tree: { solid: true, hp: Infinity, r: 13 },
-    rock: { solid: true, hp: 34, r: 12 },
-    chest: { solid: true, hp: 22, r: 12 },
+    rock: { solid: true, hp: 6, r: 12 }, // 2 to 3 hits of a 40 power move early (Jess 2026-11-03); prop damage grows with level, so 1 hit by about level 15
+    chest: { solid: true, hp: 6, r: 12 },
     grass: { solid: false, hp: 1, r: 14 },
     altar: { solid: true, hp: Infinity, r: 9 },
     spring: { solid: false, hp: Infinity, r: 22, flat: true },

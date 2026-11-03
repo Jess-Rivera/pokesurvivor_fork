@@ -11,7 +11,7 @@
  *   on(p)   equip it (what it does while carried)
  *   off(p)  unequip it (undoes what on did)
  * Items that react to something (lethal hit, damage dealt...) are checked with p.hasItem(id).
- * Stat items use their own multiplier (atkMul, spdMul, cdMul, xpMul, coinMul), separate from the additive
+ * Stat items use their own multiplier (atkMul, physMul, specMul, critDmgMul, spdMul, cdMul, xpMul, coinMul), separate from the additive
  * increase pool, so numbers stay as they were.
  * icon: a Pokesprite cell ('ps:<category>.<name>', see data/pokesprite-index.js), drawn the same way the
  *       ground items are. Pokemon-tier held items all carry one (F3b, 2026-10-21).
@@ -37,12 +37,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Choice Band',
       icon: 'ps:hold-item.choice-band',
-      desc: '+40% damage, but you cannot switch moves.',
+      desc: '+40% physical damage, but you cannot switch moves.',
       on: (p) => {
-        p.atkMul *= 1.4;
+        p.physMul *= 1.4;
       },
       off: (p) => {
-        p.atkMul /= 1.4;
+        p.physMul /= 1.4;
       },
     },
     {
@@ -130,12 +130,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Muscle Band',
       icon: 'ps:hold-item.muscle-band',
-      desc: '+10% damage.',
+      desc: '+10% physical damage.',
       on: (p) => {
-        p.atkMul *= 1.1;
+        p.physMul *= 1.1;
       },
       off: (p) => {
-        p.atkMul /= 1.1;
+        p.physMul /= 1.1;
       },
     },
     {
@@ -143,12 +143,12 @@ G.Items = (() => {
       tier: 'pokemon',
       name: 'Wise Glasses',
       icon: 'ps:hold-item.wise-glasses',
-      desc: '+10% damage.',
+      desc: '+10% special damage.',
       on: (p) => {
-        p.atkMul *= 1.1;
+        p.specMul *= 1.1;
       },
       off: (p) => {
-        p.atkMul /= 1.1;
+        p.specMul /= 1.1;
       },
     },
     {
@@ -484,6 +484,78 @@ G.Items = (() => {
       },
       off: (p) => {
         if (p.typeBoost === 'fairy') p.typeBoost = null;
+      },
+    },
+    // ---- item batch 1, damage and crit (Jess 2026-11-03). None is species-locked: the old species items work on any holder ----
+    {
+      id: 'choicespecs',
+      tier: 'pokemon',
+      name: 'Choice Specs',
+      icon: 'ps:hold-item.choice-specs',
+      desc: '+40% special damage, but you cannot switch moves.',
+      on: (p) => {
+        p.specMul *= 1.4;
+      },
+      off: (p) => {
+        p.specMul /= 1.4;
+      },
+    },
+    {
+      id: 'thickclub',
+      tier: 'pokemon',
+      name: 'Thick Club',
+      icon: 'ps:hold-item.thick-club',
+      desc: '+30% physical damage, but 10% longer cooldowns.',
+      on: (p) => {
+        p.physMul *= 1.3;
+        p.cdMul *= 1.1;
+      },
+      off: (p) => {
+        p.physMul /= 1.3;
+        p.cdMul /= 1.1;
+      },
+    },
+    {
+      id: 'lightball',
+      tier: 'pokemon',
+      name: 'Light Ball',
+      icon: 'ps:hold-item.light-ball',
+      desc: '+30% special damage, but 10% longer cooldowns.',
+      on: (p) => {
+        p.specMul *= 1.3;
+        p.cdMul *= 1.1;
+      },
+      off: (p) => {
+        p.specMul /= 1.3;
+        p.cdMul /= 1.1;
+      },
+    },
+    {
+      id: 'luckypunch',
+      tier: 'pokemon',
+      name: 'Lucky Punch',
+      icon: 'ps:hold-item.lucky-punch',
+      desc: '+15% critical hit chance.',
+      on: (p) => {
+        p.critChance += 0.15;
+      },
+      off: (p) => {
+        p.critChance -= 0.15;
+      },
+    },
+    {
+      id: 'leek',
+      tier: 'pokemon',
+      name: 'Leek',
+      icon: 'ps:hold-item.stick',
+      desc: '+10% critical hit chance, and critical hits deal 2.25x damage instead of 1.5x.',
+      on: (p) => {
+        p.critChance += 0.1;
+        p.critDmgMul *= 1.5;
+      },
+      off: (p) => {
+        p.critChance -= 0.1;
+        p.critDmgMul /= 1.5;
       },
     },
     // ---- run tier (whole team, whole run) ----

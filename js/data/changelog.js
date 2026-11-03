@@ -8,6 +8,30 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['New held items, and easier rocks and chests', 'New held items, and easier rocks and chests'],
+    new: [
+      [
+        'Five new held items: Choice Specs, Thick Club, Light Ball, Lucky Punch and Leek. All of them work on any Pokemon.',
+        'Five new held items: Choice Specs, Thick Club, Light Ball, Lucky Punch and Leek. All of them work on any Pokemon.',
+      ],
+    ],
+    chg: [
+      [
+        'Choice Band and Muscle Band now boost physical moves only, and Wise Glasses boosts special moves only.',
+        'Choice Band and Muscle Band now boost physical moves only, and Wise Glasses boosts special moves only.',
+      ],
+      [
+        'Rocks and small chests break much faster: about 3 hits of a basic move at the start of a run.',
+        'Rocks and small chests break much faster: about 3 hits of a basic move at the start of a run.',
+      ],
+      [
+        'Gym leaders now drop one item instead of two, and grass, rocks and chests drop Oran Berries instead of the old heal pickup.',
+        'Gym leaders now drop one item instead of two, and grass, rocks and chests drop Oran Berries instead of the old heal pickup.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['Space no longer restarts your run', 'Space no longer restarts your run'],
     fix: [
       [

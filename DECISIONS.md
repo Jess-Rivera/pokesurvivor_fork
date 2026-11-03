@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-03, Rocks and small chests break in 2 to 3 hits (Jess)
+A rock and a small chest take roughly 2 to 3 hits of an Ember, Water Gun or Tackle with no upgrades. Flat 6 HP each: 3 hits at level 1, 2 by level 10, 1 from about level 15 to 20, since prop damage grows with level.
+Canonical: BALANCE.md "Drops / economy"
+
 ## 2026-11-03, Item rework v2: drops, heal pickup, batch 1 rulings (Jess)
 Drops: every chance lives in G.Drops. The heal pickup is retired everywhere; Oran takes its place at the same rates (grass, rocks, small chests), and wild kills drop Oran 0.55% or Sitrus 0.40%. A gym leader drops one item, not two, plus its 10 coins.
 Batch 1 is 12 ground and 19 Pokemon items. No species-locked items: Thick Club, Light Ball, Lucky Punch, Leek and the two Powders are generic. Eviolite stays, working while the holder can still evolve. Choice Band physical only, Choice Specs special only, both keep the lock; Muscle Band and Wise Glasses become physical and special only. Gems and run items come later.
