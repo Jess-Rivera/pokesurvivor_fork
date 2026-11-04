@@ -24,7 +24,6 @@ G.Copies = (() => {
   const HIDDEN_CHANCE = 0.05;
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
-  const STAT_LABEL = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
   const titled = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const METHODS = { starter: 's', gacha: 'g', wild: 'w', rescue: 'r', debug: 'd', other: 'o' };
   const METHOD_NAME = {};
@@ -117,9 +116,7 @@ G.Copies = (() => {
       nature: nature[0],
       natureUp: nature[1],
       natureDown: nature[2],
-      natureLabel:
-        titled(nature[0]) +
-        (nature[1] === nature[2] ? ', neutral' : ` +${STAT_LABEL[nature[1]]} -${STAT_LABEL[nature[2]]}`),
+      natureName: titled(nature[0]),
       box: c.b || 0,
       iv: [...c.i].map((ch) => IV_CHARS.indexOf(ch)),
       gender: GENDERS[c.g],

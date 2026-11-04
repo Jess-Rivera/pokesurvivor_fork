@@ -10,7 +10,7 @@
  *     opts.hpText  replaces the HP number (for example "105/105")
  *     opts.teamHex  the Team screen look: the base shape is see-through white, larger numbers. `color` is then the IV band's color.
  *     opts.iv      six IVs (with teamHex): a band in `color` from the base shape out to base + IV, and each number gets "+iv" beside it.
- *                  The band draws one IV as one base point, a simplification: in the stat formula a base point counts double. Without opts.iv there is no band and no "+iv".
+ *                  The band draws 2 IVs as one base point, as in the stat formula (2 x base + IV). Without opts.iv there is no band and no "+iv".
  *     opts.after   six in-run percentages AFTER a pending change (level-up preview): a lighter dashed outline of the
  *                  new shape, and "+10% to +15%" on the axes that change
  *
@@ -91,11 +91,11 @@ G.StatChart = (() => {
     ctx.stroke();
     // The IV band: only the increase, from the base shape out to base + IV. Past the outer edge it is clamped (the numbers stay true).
     if (iv) {
-      const fi = AXES.map(([k]) => Math.max(0, Math.min(1, ((stats[k] || 0) + (iv[k] || 0)) / MAX)));
+      const fi = AXES.map(([k]) => Math.max(0, Math.min(1, ((stats[k] || 0) + (iv[k] || 0) / 2) / MAX)));
       ctx.beginPath();
       trace(fi);
       trace(fr);
-      ctx.fillStyle = color + 'd9'; // ~85% opacity
+      ctx.fillStyle = color + '59'; // ~35% opacity, like the base shape
       ctx.fill('evenodd');
       poly(fi);
       ctx.strokeStyle = color;

@@ -1287,7 +1287,7 @@ G.MenuUI = (() => {
     const copy = ros.uid ? G.Copies.get(s, ros.uid) : null;
     ros.shiny = !!(copy && copy.isShiny);
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p, 10) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
     if (!own) {
       box.innerHTML =
         head +
@@ -1324,7 +1324,7 @@ G.MenuUI = (() => {
     const abilityText = (a) => a.name + (a.hidden ? ' (Hidden)' : '');
     if (copy)
       return (
-        row('Nature', copy.natureLabel) +
+        row('Nature', copy.natureName) +
         row('Ability', abilityText({ name: copy.abilityName, hidden: copy.abilityHidden })) +
         row('Height', copy.heightM.toFixed(2) + ' m') +
         row('Weight', copy.weightKg.toFixed(1) + ' kg')

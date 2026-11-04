@@ -22,7 +22,7 @@ let seed = 12345; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294
 const LINE = '{"u":"fzwqnksdToqcIV0Oj2obNA","d":143,"t":1793736000,"m":"g","n":11,"i":"47MFWJ","g":0,"x":142,"y":97,"a":2,"s":1,"e":[180,252,78,0,0,0],"k":"Mochi","h":120,"p":{"dmg":3,"hp":2},"f":1,"l":1}';
 { if (LINE.length !== 190) bad('the plan says 190 bytes, the line has ' + LINE.length);
   const c = C.read(JSON.parse(LINE), { trainerId: 'me' });
-  const WANT = { abilityName: 'Thick Fat', abilityHidden: false, natureLabel: 'Adamant +Atk -SpA', box: 0, pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'gacha', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
+  const WANT = { abilityName: 'Thick Fat', abilityHidden: false, natureName: 'Adamant', box: 0, pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'gacha', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
   for (const k in WANT) if (c[k] !== WANT[k]) bad('Snorlax ' + k + ' is ' + c[k]);
   if (!same(c.iv, [28, 31, 12, 5, 22, 9])) bad('Snorlax IVs in game stat order ' + c.iv);
   if (!same(c.ev, [180, 252, 78, 0, 0, 0])) bad('Snorlax EVs ' + c.ev);
@@ -143,7 +143,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
 
   // 8. display values, by hand from pokeapi
   { const hard = C.read({ u: 'fzwqnksdToqcIV0Oj2obNA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 0, y: 0, a: 3 }, {});
-    if (hard.abilityName !== 'Gluttony' || !hard.abilityHidden || hard.natureLabel !== 'Hardy, neutral') bad('hidden ability and neutral nature labels ' + hard.abilityName + ' ' + hard.natureLabel);
+    if (hard.abilityName !== 'Gluttony' || !hard.abilityHidden || hard.natureName !== 'Hardy') bad('hidden ability and nature names ' + hard.abilityName + ' ' + hard.natureName);
     const sp = C.species(143); if (!same(sp.abilities, [{ name: 'Immunity', hidden: false }, { name: 'Thick Fat', hidden: false }, { name: 'Gluttony', hidden: true }]) || sp.heightM !== 2.1 || sp.weightKg !== 460) bad('species view ' + JSON.stringify(sp));
     if (!same(C.species(151).abilities, [{ name: 'Synchronize', hidden: false }])) bad('Mew has one ability'); }
 

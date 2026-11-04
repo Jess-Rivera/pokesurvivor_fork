@@ -510,3 +510,5 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): the hexagon base is see-through white, the IV band is the type color and shows only the increase. Pokedex tab double-click asks for a copy. Moves in a run stay per fighter (one per slot).
 - Found: a local helper in G.Copies.fill shadowed add (caught by the harness). The pixel font has no gender symbols, so they are icons. The hex stayed small under 820 px tall from an old 66% rule, now 84%.
 - Verified: check.js, format, smoke-ui, file:// probe (tabs, drags, swap, free, commit, reload, a run swapping between duplicates). Stopped for the feel-test.
+
+- 2026-11-03 tweaks after the step 2 feel-test (Jess): the IV band draws 2 IVs per base point at about 35% opacity, the Nature row shows only the name, the detail header gender icon is 10 px.
