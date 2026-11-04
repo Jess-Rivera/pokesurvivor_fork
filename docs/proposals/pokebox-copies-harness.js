@@ -1,4 +1,4 @@
-// Pokebox offline checks, steps 1 to 3a-3 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
+// Pokebox offline checks, steps 1 to 3a-4 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
 // Real js/systems/copies.js, js/data/species-traits.js and js/core/db.js with a fake localStorage. Expected values are hand-derived from
 // docs/proposals/pokebox-plan.md and pokeapi (Snorlax 2.1 m, 460 kg, Immunity / Thick Fat / Gluttony, 12.5% female), not read back from code output.
 // PB_COPIES=<file> / PB_DB=<file> run it against another copies.js or db.js (docs/proposals/pokebox-copies-mutate.js uses these).
@@ -308,6 +308,45 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     if (!r.ok || lead !== a || C.get(u, b) || !C.get(u, a) || u.team[0].uid !== a || u.coins !== coins) bad('a sale survives a reload and the lead keeps its copy ' + JSON.stringify([r, u.team[0], u.coins, coins]));
     if (C.sell(u, a).error !== 'team') bad('after a reload the lead still cannot be sold');
     console.log('16 a sale survives a reload; the lead keeps its copy and stays unsellable'); }
+
+  // 17. full boxes (3a-4). 500 places per box; with none left, add saves nothing and obtain sells on arrival at the sell price.
+  { const s = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    if (C.freePlaces(s) !== 1000) bad('2 empty boxes have 1,000 free places, got ' + C.freePlaces(s));
+    for (let i = 0; i < 997; i++) C.add(s, { dex: 10, from: 'debug' }, rnd);
+    if (C.freePlaces(s) !== 3) bad('997 copies leave 3 free places, got ' + C.freePlaces(s));
+    s.coins = 10000; C.buyBox(s); s.coins = 0;
+    if (C.freePlaces(s) !== 503) bad('buying Box 3 adds 500 places: 503, got ' + C.freePlaces(s));
+    for (let i = 0; i < 503; i++) if (!C.add(s, { dex: 10, from: 'debug' }, rnd)) bad('copy ' + (998 + i) + ' fits');
+    if (C.freePlaces(s) !== 0 || C.inBox(s, 2) !== 500) bad('1,500 copies fill 3 boxes, free ' + C.freePlaces(s) + ', Box 3 ' + C.inBox(s, 2));
+    const n = s.box.length;
+    if (C.add(s, { dex: 10, from: 'debug' }, rnd) !== null || s.box.length !== n || C.inBox(s, 2) !== 500) bad('a full set of boxes takes no copy, and the last box never overflows');
+    s.boxCount = 5; let more = 0;
+    for (let k = 0; k < 1100 && C.add(s, { dex: 10, from: 'debug' }, rnd); k++) more++;
+    if (more !== 1000 || C.freePlaces(s) !== 0) bad('5 boxes hold 2,500 and no more, added ' + more);
+    for (const [dex, sh, want] of [[10, false, 15], [25, false, 30], [4, false, 60], [143, false, 120], [150, false, 300], [150, true, 900], [10, true, 45]])
+      if (C.priceFor(dex, sh) !== want) bad('priceFor ' + dex + (sh ? ' shiny' : '') + ' is ' + want + ', got ' + C.priceFor(dex, sh));
+    const t = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {} }, u = C.read(C.add(t, { dex: 143, shiny: true, from: 'debug' }, rnd), t).pokemonUUID;
+    if (C.priceFor(143, true) !== C.sellPrice(t, u)) bad('priceFor matches the price of a real copy');
+    console.log('17 full boxes: 500 a box, 2,500 at most, a full set takes nothing; priceFor matches the sell price'); }
+
+  // 18. obtain with full boxes: sold on arrival through the real db.js, the Pokedex still counts it, and a reload keeps it.
+  put('ps.session', K); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  { const D6 = G.DB, t = D6.save;
+    if (!t) bad('the tester save loads for section 18');
+    t.boxCount = 2;
+    for (let k = 0; k < 1100 && C.freePlaces(t) > 0; k++) C.add(t, { dex: 10, from: 'debug' }, rnd);
+    delete t.owned[150]; delete t.shiny[150]; t.owned[10] = { at: 1, from: 'debug' };
+    const n = t.box.length, c0 = Math.floor(+t.coins) || 0;
+    let r = D6.obtain(150, true, 'gacha');
+    if (r.uid !== null || r.box !== null || r.sold !== 900 || !r.isNew || t.box.length !== n) bad('a new shiny Mewtwo with full boxes is sold for 900, no copy, still new ' + JSON.stringify(r));
+    if (!t.owned[150] || !t.shiny[150]) bad('a Pokemon sold on arrival is still in the Pokedex (D4)');
+    if (t.coins !== c0 + 900) bad('the 900 goes to the save, coins ' + t.coins + ' from ' + c0);
+    r = D6.obtain(10, false, 'rescue');
+    if (r.sold !== 15 || r.isNew || t.coins !== c0 + 915) bad('a repeat Caterpie with full boxes is sold for 15 ' + JSON.stringify(r));
+    D6.commit(true);
+    load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const v = G.DB.save;
+    if (v.coins !== c0 + 915 || v.box.length !== n || !v.shiny[150]) bad('the sale on arrival survives a reload ' + JSON.stringify([v.coins, v.box.length, n]));
+    console.log('18 obtain with full boxes: sold on arrival for the sell price, the Pokedex counts it, a reload keeps it'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

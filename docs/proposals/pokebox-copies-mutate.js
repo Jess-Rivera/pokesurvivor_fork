@@ -25,10 +25,10 @@ const M = [
   ['obtain writes no Pokedex record', 'db', [['    if (!s.owned[dex]) s.owned[dex] = { at: now, from };\n', '']]],
   ['obtain drops the method (every copy is other)', 'db', [['G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });', 'G.Copies.add(s, { dex, shiny: !!shiny, at: now });']]],
   ['obtain overwrites the first date on a repeat', 'db', [['    if (!s.owned[dex]) s.owned[dex] = { at: now, from };\n', '    s.owned[dex] = { at: s.owned[dex] ? 1 : now, from };\n']]],
-  ['the gacha refund is back', 'gacha', [["const got = G.DB.obtain(mon.dex, shiny, 'gacha', save);", "const got = G.DB.obtain(mon.dex, shiny, 'gacha', save);\n      if (!got.isNew) save.coins += REFUND[rarity] * (shiny ? 3 : 1);"]]],
+  ['the gacha refund is back', 'gacha', [["got = G.DB.obtain(r.dex, r.shiny, 'gacha', save);", "got = G.DB.obtain(r.dex, r.shiny, 'gacha', save);\n      if (!r.isNew) save.coins += REFUND[r.rarity] * (r.shiny ? 3 : 1);"]]],
   ['the repeat shiny re-roll is back', 'gacha', [['const shiny = canShiny && (forceShiny > 0 ? (forceShiny--, true) : Math.random() < SHINY_RATE);', 'let shiny = canShiny && (forceShiny > 0 ? (forceShiny--, true) : Math.random() < SHINY_RATE);\n      if (shiny && save.shiny[mon.dex]) shiny = false;']]],
-  ['a pull reports the wrong box', 'gacha', [['uid: got.uid, box: got.box });', 'uid: got.uid, box: 0 });']]],
-  ['the gacha writes into the loaded save, not the one it is given', 'gacha', [["G.DB.obtain(mon.dex, shiny, 'gacha', save);", "G.DB.obtain(mon.dex, shiny, 'gacha', { owned: {}, shiny: {}, box: [] });"]]],
+  ['a pull reports the wrong box', 'gacha', [['uid: got.uid, box: got.box };', 'uid: got.uid, box: 0 };']]],
+  ['the gacha writes into the loaded save, not the one it is given', 'gacha', [["G.DB.obtain(r.dex, r.shiny, 'gacha', save);", "G.DB.obtain(r.dex, r.shiny, 'gacha', { owned: {}, shiny: {}, box: [] });"]]],
   // ---- ride-along fix: top bar coins ----
   ['a save write no longer redraws the coins', 'db', [['guests play with a team too\n    redrawCoins();\n', 'guests play with a team too\n']]],
   ['the coins redraw while the top bar is hidden', 'db', [["if (!bar || bar.classList.contains('hidden')) return;", 'if (!bar) return;']]],
@@ -39,12 +39,20 @@ const M = [
   ['guests never tell the screens', 'db', [['    redrawScreens();\n    if (guest || !key || !save) return false;\n', '    if (guest || !key || !save) return false;\n    redrawScreens();\n']]],
   // ---- 3a-3: selling ----
   ['a shiny sells at x1', 'copies', [['const SHINY_SELL = 3;', 'const SHINY_SELL = 1;']]],
-  ['the price is one rarity tier off', 'copies', [['return SELL_PRICE[r] * (c.s ? SHINY_SELL : 1);', 'return SELL_PRICE[Math.min(5, r + 1)] * (c.s ? SHINY_SELL : 1);']]],
+  ['the price is one rarity tier off', 'copies', [['return SELL_PRICE[r] * (shiny ? SHINY_SELL : 1);', 'return SELL_PRICE[Math.min(5, r + 1)] * (shiny ? SHINY_SELL : 1);']]],
   ['a copy on the team can be sold', 'copies', [['if ((save.team || []).some((t) => t && t.uid === id) || also.includes(id))', 'if (also.includes(id))']]],
   ['the uncommitted team edits are ignored', 'copies', [['if ((save.team || []).some((t) => t && t.uid === id) || also.includes(id))', 'if ((save.team || []).some((t) => t && t.uid === id))']]],
   ['a locked copy can be sold', 'copies', [["    if (c.l) return { ok: false, error: 'locked' };\n", '']]],
   ['a sale pays but keeps the copy', 'copies', [['    save.box.splice(i, 1);\n', '']]],
   ['a sale removes the copy but pays nothing', 'copies', [['    save.coins = (Math.floor(+save.coins) || 0) + coins;', '    save.coins = Math.floor(+save.coins) || 0;']]],
+  // ---- 3a-4: full boxes ----
+  ['a new copy overflows into the last box again', 'copies', [['if (inBox(save, b) < BOX_SIZE) return b;\n    return -1;', 'if (inBox(save, b) < BOX_SIZE) return b;\n    return n - 1;']]],
+  ['free places miss a box', 'copies', [['    const n = boxCount(save),\n      per = new Array(n).fill(0);', '    const n = boxCount(save) - 1,\n      per = new Array(n).fill(0);']]],
+  ['a sale on arrival pays nothing', 'db', [['      s.coins = (Math.floor(+s.coins) || 0) + sold;\n', '']]],
+  ['a sale on arrival drops the Pokedex record', 'db', [['      const sold = G.Copies.priceFor(dex, !!shiny);', '      const sold = G.Copies.priceFor(dex, !!shiny);\n      if (isNew) { if (shiny) delete s.shiny[dex]; else delete s.owned[dex]; }']]],
+  ['a short pull places in plain pull order', 'gacha', [['if (G.Copies.freePlaces(save) < n) order.sort', 'if (false) order.sort']]],
+  ['a shiny is not ranked above rarity', 'gacha', [['(r.shiny ? 10 : 0)', '(r.shiny ? 0 : 0)']]],
+  ['results come back in placement order', 'gacha', [['      out[i] = res;', '      out[out.filter(Boolean).length] = res;']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-mut-'));
 let caught = 0;

@@ -233,6 +233,18 @@ G.GachaUI = (() => {
 
   async function pull(n, use = 't1') {
     if (busy) return;
+    // Too little room: warn first (pokebox 3a-4). The pull is never blocked; whatever does not fit is sold on arrival.
+    const s = G.DB.save;
+    if (G.Gacha.costOf(s, n, use)) {
+      const free = G.Copies.freePlaces(s);
+      if (free < n) {
+        const yes = await G.UI.ask(
+          "You don't have enough space. Any pokemon pulled that can't be placed in a slot will be automatically sold.",
+          { title: 'Not enough space', ok: 'Pull anyway', note: `${fmt(free)} free place${free === 1 ? '' : 's'}, ${n} Pokémon.` }
+        );
+        if (!yes || busy) return;
+      }
+    }
     const res = G.Gacha.pull(G.DB.save, n, gen, use);
     if (!res) {
       G.Audio.sfx('error');
@@ -260,15 +272,18 @@ G.GachaUI = (() => {
     for (const r of res) {
       const mon = G.DEX_BY[r.dex];
       const c = document.createElement('div');
-      c.className = 'pcard r' + r.rarity + (r.shiny ? ' shiny' : '');
+      c.className = 'pcard r' + r.rarity + (r.shiny ? ' shiny' : '') + (r.sold ? ' sold' : '');
       c.style.setProperty('--rc', r.shiny ? '#9ae6ff' : G.Gacha.RARITY_COLOR[r.rarity]);
       c.innerHTML = `<div class="stars">${G.UI.stars(r.rarity, 24)}</div>`;
       c.appendChild(G.UI.spriteCanvas(r.dex, 132, 120, { lively: r.rarity >= 4 || r.shiny, scale: 2, shiny: r.shiny }));
-      const tag = r.isNew
-        ? `<span class="new">${r.shiny ? '¡SHINY NUEVO!' : '¡NUEVO!'}</span>`
-        : r.box != null
-          ? `To Box ${r.box + 1}`
-          : '';
+      const newTag = `<span class="new">${r.shiny ? '¡SHINY NUEVO!' : '¡NUEVO!'}</span>`;
+      const tag = r.sold
+        ? `${r.isNew ? newTag + ' ' : ''}Box full · sold <span class="coin"></span> +${fmt(r.sold)}`
+        : r.isNew
+          ? newTag
+          : r.box != null
+            ? `To Box ${r.box + 1}`
+            : '';
       c.insertAdjacentHTML(
         'beforeend',
         `<b>${r.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${mon.name}</b><div class="tag">${tag}</div>`

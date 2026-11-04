@@ -183,17 +183,29 @@ G.Copies = (() => {
     return { ok: true, boxes: n + 1, price };
   }
 
-  /** The first box with room. With every box full it is the last one, until step 3a-4 (the full box warning and auto-sell). */
+  /** The first box with room, or -1 when every box is full (pokebox 3a-4: a new Pokemon is then sold on arrival). */
   function freeBox(save) {
     const n = boxCount(save);
     for (let b = 0; b < n; b++) if (inBox(save, b) < BOX_SIZE) return b;
-    return n - 1;
+    return -1;
   }
 
-  /** A new copy in the first box with room. Returns the compact record. */
+  /** Free places across the boxes you have (500 each, minus what they hold). */
+  function freePlaces(save) {
+    const n = boxCount(save),
+      per = new Array(n).fill(0);
+    for (const c of save.box || []) {
+      const b = c.b || 0;
+      if (b < n) per[b]++;
+    }
+    return per.reduce((a, k) => a + Math.max(0, BOX_SIZE - k), 0);
+  }
+
+  /** A new copy in the first box with room. Returns the compact record, or null when every box is full (nothing is saved). */
   function add(save, o, rnd = Math.random) {
-    const c = roll(o, rnd),
-      b = freeBox(save);
+    const b = freeBox(save);
+    if (b < 0) return null;
+    const c = roll(o, rnd);
     if (b) c.b = b;
     save.box.push(c);
     return c;
@@ -213,12 +225,15 @@ G.Copies = (() => {
 
   // ---------------- selling (step 3a-3) ----------------
 
-  /** PokeCoins a compact copy sells for: its species' rarity price, x3 for a shiny. A species with no rarity sells as 1 star. */
-  function priceOf(c) {
-    const p = G.DEX_BY && G.DEX_BY[c.d],
+  /** PokeCoins a species sells for: its rarity price, x3 for a shiny. A species with no rarity sells as 1 star. */
+  function priceFor(dex, shiny) {
+    const p = G.DEX_BY && G.DEX_BY[dex],
       r = p && SELL_PRICE[p.rarity] ? p.rarity : 1;
-    return SELL_PRICE[r] * (c.s ? SHINY_SELL : 1);
+    return SELL_PRICE[r] * (shiny ? SHINY_SELL : 1);
   }
+
+  /** What a compact copy sells for. */
+  const priceOf = (c) => priceFor(c.d, !!c.s);
 
   const isId = (id) => typeof id === 'string' && /^[0-9a-f-]{36}$/.test(id);
 
@@ -339,8 +354,10 @@ G.Copies = (() => {
     move,
     boxCount,
     inBox,
+    freePlaces,
     boxPrice,
     buyBox,
+    priceFor,
     sellPrice,
     sell,
     SELL_PRICE,

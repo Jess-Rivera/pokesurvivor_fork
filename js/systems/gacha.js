@@ -91,8 +91,10 @@ G.Gacha = (() => {
   /**
    * Does `n` pulls on banner `gen` on the save `save` (it modifies it).
    * Returns null if there are no coins, or the list of results:
-   *   { dex, rarity, shiny, isNew, uid, box }
+   *   { dex, rarity, shiny, isNew, uid, box, sold }
    * isNew: new to the Pokedex, or a first shiny. uid and box (from 0): the copy it made.
+   * Every roll is made first. With fewer free places than pulls, the places go to new species, then shinies, then higher
+   * rarity, then pull order (pokebox 3a-4, D2); the rest are sold on arrival (sold: the PokeCoins). Results stay in pull order.
    */
   function pull(save, n, gen = 1, use = 't1') {
     const cost = costOf(save, n, use);
@@ -103,12 +105,12 @@ G.Gacha = (() => {
     save.shiny = save.shiny || {};
     save.pity[gen] = save.pity[gen] || 0;
 
-    const out = [];
+    const rolls = [];
     for (let i = 0; i < n; i++) {
       save.pity[gen]++;
       let want;
       if (save.pity[gen] >= PITY_5) want = 5;
-      else if (n === 10 && i === n - 1 && !out.some((r) => r.rarity >= 4)) want = rollRarity(4);
+      else if (n === 10 && i === n - 1 && !rolls.some((r) => r.rarity >= 4)) want = rollRarity(4);
       else want = rollRarity();
 
       const { rarity, list } = poolNear(want, gen);
@@ -116,9 +118,29 @@ G.Gacha = (() => {
       const mon = G.U.pick(list);
       const canShiny = G.Sprites.hasShiny(mon.dex);
       const shiny = canShiny && (forceShiny > 0 ? (forceShiny--, true) : Math.random() < SHINY_RATE);
-      // Every pull is a copy, a repeat shiny included (it is no longer re-rolled). A repeat pays nothing: sell it from the box.
-      const got = G.DB.obtain(mon.dex, shiny, 'gacha', save);
-      out.push({ dex: mon.dex, rarity, shiny, isNew: got.isNew, uid: got.uid, box: got.box });
+      rolls.push({ dex: mon.dex, rarity, shiny });
+    }
+
+    // New or repeat, in pull order: the first of a species (or of its shiny) in this pull is the new one. A shiny also marks the species.
+    const seenN = new Set(),
+      seenS = new Set();
+    for (const r of rolls) {
+      r.isNew = r.shiny ? !save.shiny[r.dex] && !seenS.has(r.dex) : !save.owned[r.dex] && !seenN.has(r.dex);
+      seenN.add(r.dex);
+      if (r.shiny) seenS.add(r.dex);
+    }
+
+    // Placing: pull order when everything fits, else the D2 priority. Every pull is a copy, a repeat shiny included; a repeat pays nothing.
+    const rank = (r) => (r.isNew ? 100 : 0) + (r.shiny ? 10 : 0) + r.rarity;
+    const order = rolls.map((r, i) => i);
+    if (G.Copies.freePlaces(save) < n) order.sort((a, b) => rank(rolls[b]) - rank(rolls[a]) || a - b);
+    const out = new Array(n);
+    for (const i of order) {
+      const r = rolls[i],
+        got = G.DB.obtain(r.dex, r.shiny, 'gacha', save);
+      const res = { dex: r.dex, rarity: r.rarity, shiny: r.shiny, isNew: r.isNew, uid: got.uid, box: got.box };
+      if (got.sold) res.sold = got.sold;
+      out[i] = res;
     }
     save.stats.pulls = (save.stats.pulls || 0) + n;
     return out;

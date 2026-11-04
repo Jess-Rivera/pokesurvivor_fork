@@ -548,3 +548,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: G.Copies.sellPrice and sell, SELL_PRICE moved into copies.js (gacha REFUND points at it); Sell button in the Team detail pane; Sell on repeat gacha cards with a "Sold +N" tag; styles in bw-team.css and style.css. Harness sections 15 and 16, sources harness section 6, mutation runner now 29.
 - Not verified here (no node): check.js, mutation runner, smoke-ui, file:// probe. Bracket balance of every edited file and all 29 mutation patterns checked by script.
 - Stopped at: Jess's checks and feel-test of 3a-2, 3a-2b and 3a-3. Next: 3a-4, full boxes on a pull.
+
+## 2026-11-04, Pokebox 3a-4: full boxes (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D6 in the 3a-4 map): the approved warning plus a count; short pulls place new, then shiny, then rarity, then pull order; full boxes in a run sell on arrival to the saved coins; a sale on arrival still counts in the Pokedex; addCopy never sells; new fillBoxes.
+- Built: G.Copies.freePlaces and priceFor, add returns null when full (no last-box overflow); G.DB.obtain sells on arrival; gacha rolls all first, isNew in pull order, priority placement when short; Shop warning and "Box full · sold" cards; run banner line; G.Debug.fillBoxes, addCopy stops at full. Harness 17 and 18, sources 7a to 7d, mutation runner now 36 (4 gacha patterns updated for the new pull shape).
+- Deviation: with full boxes, a NEW rescue or wild shiny shows only the "boxes are full" line, not the inherited new-species line too (the run banner holds one message, and joining a Spanish key to new English text would break its translation).
+- Not verified here (no node). Stopped at: Jess's checks and feel-test of 3a-2 to 3a-4. Next: 3b.

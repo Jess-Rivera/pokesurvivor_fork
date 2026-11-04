@@ -8,6 +8,24 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Full boxes', 'Full boxes'],
+    new: [
+      [
+        'If your boxes do not have room for a whole pull, the Shop warns you first. You can still pull: whatever does not fit is sold right away at its sell price, and still counts in your Pokedex.',
+        'If your boxes do not have room for a whole pull, the Shop warns you first. You can still pull: whatever does not fit is sold right away at its sell price, and still counts in your Pokedex.',
+      ],
+      [
+        'When a pull does not fit, new Pokemon get the free places first, then shinies, then the rarest.',
+        'When a pull does not fit, new Pokemon get the free places first, then shinies, then the rarest.',
+      ],
+      [
+        'A Pokemon you rescue or catch as a shiny while your boxes are full is sold right away too, and the PokéCoins are yours.',
+        'A Pokemon you rescue or catch as a shiny while your boxes are full is sold right away too, and the PokéCoins are yours.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Sell your Pokemon', 'Sell your Pokemon'],
     new: [
       [

@@ -99,6 +99,52 @@ let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); 
   if (!rs || !rs.ok || rs.coins !== 45 || s.coins !== b4 + 45) bad('a pulled shiny Chikorita (1 star) sells for 45 ' + JSON.stringify(rs));
   console.log('6 a pulled copy sells for its rarity price, a shiny for x3');
 
+  // 7. full boxes on a pull (3a-4). Places go to new species, then shinies, then higher rarity, then pull order (D2); the rest sell.
+  const PR = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 };
+  const rank = r => (r.isNew ? 100 : 0) + (r.shiny ? 10 : 0) + r.rarity;
+  const fresh = (free) => { G.DB.playAsGuest(); const g = G.DB.save; g.tickets = { t1: 100, t10: 0 }; g.coins = 0; g.boxCount = 2;
+    for (let i = 0; i < 1000 - free; i++) C.add(g, { dex: 10, from: 'debug' }, rnd); return g; };
+  // a) 3 places, a random 10-pull: 3 copies, 7 sold for their prices, and no sold pull outranks a placed one.
+  { const g = fresh(3), n0 = g.box.length, out = GA.pull(g, 10, 1);
+    if (g.box.length !== n0 + 3) bad('3 free places take exactly 3 copies, got ' + (g.box.length - n0));
+    const sold = out.filter(r => r.sold), kept = out.filter(r => r.uid);
+    if (sold.length !== 7 || kept.length !== 3 || out.some(r => !!r.uid === !!r.sold)) bad('every result is kept or sold, never both ' + JSON.stringify(out));
+    const sum = sold.reduce((a, r) => a + PR[r.rarity] * (r.shiny ? 3 : 1), 0);
+    if (g.coins !== sum || sold.some(r => r.sold !== PR[r.rarity] * (r.shiny ? 3 : 1))) bad('each sold pull pays its price, total ' + sum + ', coins ' + g.coins);
+    if (sold.some(r => !g.owned[r.dex])) bad('a sold pull is still in the Pokedex');
+    for (const k of kept) for (const q of sold) { const a = out.indexOf(k), b = out.indexOf(q);
+      if (rank(q) > rank(k) || (rank(q) === rank(k) && b < a)) bad('a sold pull ' + b + ' outranks a placed pull ' + a); }
+    console.log('7a 3 free places: 3 placed by priority, 7 sold for their prices, all in the Pokedex'); }
+  // b) 1 place, rolls fixed: 9 repeat Pikachu (2 star) then a new Snorlax (the 4 star guarantee). The new one gets the place.
+  { const g = fresh(1); g.owned[25] = { at: 1, from: 'debug' };
+    const keepR = Math.random; Math.random = () => 0.5;
+    const out = GA.pull(g, 10, 1);
+    Math.random = keepR;
+    if (out[9].dex !== 143 || !out[9].isNew || !out[9].uid) bad('the new Snorlax in pull 10 gets the one place ' + JSON.stringify(out[9]));
+    if (out.slice(0, 9).some(r => r.dex !== 25 || r.isNew || r.sold !== 30)) bad('the 9 repeat Pikachu are sold for 30 each, in pull order ' + JSON.stringify(out.slice(0, 9)));
+    if (g.coins !== 270) bad('9 x 30 = 270, got ' + g.coins);
+    console.log('7b a new species in the last pull takes the only place; results stay in pull order'); }
+  // c) 1 place, rolls fixed: a repeat shiny Pikachu (2 star) first, 8 repeat Pikachu, a repeat Snorlax (4 star) last. The shiny wins.
+  { const g = fresh(1); g.owned[25] = g.owned[143] = { at: 1, from: 'debug' }; g.shiny[25] = { at: 1, from: 'debug' };
+    const keepR = Math.random; Math.random = () => 0.5; GA.debugForceShiny(1);
+    const out = GA.pull(g, 10, 1);
+    Math.random = keepR;
+    if (!out[0].shiny || !out[0].uid || out[9].dex !== 143 || out[9].sold !== 120) bad('the repeat shiny gets the place over the repeat 4 star ' + JSON.stringify([out[0], out[9]]));
+    if (out.slice(1, 9).some(r => r.sold !== 30)) bad('the 8 plain Pikachu are sold for 30');
+    if (g.coins !== 8 * 30 + 120) bad('8 x 30 + 120 = 360, got ' + g.coins);
+    console.log('7c a shiny outranks a higher rarity'); }
+  // c2) 1 place, rolls fixed, no shiny, all repeats: 9 Pikachu (2 star), Snorlax (4 star) last. The higher rarity beats pull order.
+  { const g = fresh(1); g.owned[25] = g.owned[143] = { at: 1, from: 'debug' };
+    const keepR = Math.random; Math.random = () => 0.5;
+    const out = GA.pull(g, 10, 1);
+    Math.random = keepR;
+    if (!out[9].uid || out[9].dex !== 143 || out.slice(0, 9).some(r => r.sold !== 30) || g.coins !== 270) bad('the 4 star in pull 10 beats the earlier 2 stars ' + JSON.stringify(out[9]) + ' coins ' + g.coins);
+    console.log('7c2 a higher rarity outranks pull order'); }
+  // d) enough room: no priority, pull order (the box edge in section 1 already checks the order).
+  { const g = fresh(10); const out = GA.pull(g, 10, 1);
+    if (out.some(r => r.sold || !r.uid) || g.coins !== 0) bad('with room for all 10, nothing is sold');
+    console.log('7d room for all: nothing sold'); }
+
   console.log(fail ? fail + ' FAILED' : 'pokebox-sources harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

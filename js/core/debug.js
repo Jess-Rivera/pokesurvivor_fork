@@ -30,7 +30,8 @@
  *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
  *   G.Debug.copies(dex)  list your Pokemon copies, or one species' (no arg: all), with the box size in the save
  *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
- *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates. Saved.
+ *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates; stops when the boxes are full. Saved.
+ *   G.Debug.fillBoxes(leave)  top your boxes up with Caterpie copies until `leave` places are free (default 0), to test full boxes. Saved.
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -1034,18 +1035,40 @@ G.Debug = (() => {
       console.warn('[Debug] no species with dex ' + dex);
       return false;
     }
-    // Exactly n copies, each through the same path the game uses (it also writes the Pokedex record).
-    for (let i = 0; i < n; i++) G.DB.obtain(dex, !!shiny, 'debug');
+    // n copies through the same path the game uses (it also writes the Pokedex record); never sells, it stops at full boxes.
+    let added = 0;
+    for (let i = 0; i < n && G.Copies.freePlaces(G.DB.save) > 0; i++) {
+      G.DB.obtain(dex, !!shiny, 'debug');
+      added++;
+    }
     G.DB.commit(true);
     console.log(
       '[Debug] added ' +
-        n +
+        added +
         ' ' +
         G.DEX_BY[dex].name +
         (shiny ? ' (shiny)' : '') +
+        (added < n ? ' (' + (n - added) + ' not added: your boxes are full)' : '') +
         '. Reopen the Team screen to see them.'
     );
     return true;
+  }
+
+  /** Top the boxes up with Caterpie copies until `leave` places are free. ?dev only. Saved. */
+  function fillBoxes(leave = 0) {
+    if (!on || !G.DB.save) return false;
+    const s = G.DB.save,
+      want = Math.max(0, Math.floor(+leave) || 0);
+    let added = 0;
+    while (G.Copies.freePlaces(s) > want) {
+      if (!G.DB.obtain(10, false, 'debug').uid) break; // no species data: stop rather than loop
+      added++;
+    }
+    G.DB.commit(true);
+    console.log(
+      '[Debug] added ' + added + ' Caterpie; ' + G.Copies.freePlaces(s) + ' free places left. Reopen the Team screen.'
+    );
+    return added;
   }
 
   function copy(id) {
@@ -1141,6 +1164,7 @@ G.Debug = (() => {
     copies,
     copy,
     addCopy,
+    fillBoxes,
     newcombat,
     cards,
     movechecker,

@@ -1087,8 +1087,10 @@ G.DB = (() => {
   /**
    * A Pokemon the player just got (gacha, rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
    * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
+   * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
    * @param s  the save to write (default: the loaded one; the gacha passes its own)
-   * @returns { isNew, uid, box }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if no species data.
+   * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
+   *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
    */
   function obtain(dex, shiny, from, s = save) {
     if (!s) return { isNew: false, uid: null, box: null };
@@ -1101,6 +1103,11 @@ G.DB = (() => {
     if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
     if (!Array.isArray(s.box)) s.box = [];
     const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });
+    if (!c) {
+      const sold = G.Copies.priceFor(dex, !!shiny);
+      s.coins = (Math.floor(+s.coins) || 0) + sold;
+      return { isNew, uid: null, box: null, sold };
+    }
     return { isNew, uid: G.Copies.longId(c.u), box: c.b || 0 };
   }
 

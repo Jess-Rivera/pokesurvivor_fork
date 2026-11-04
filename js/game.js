@@ -495,10 +495,13 @@ G.Game = (() => {
   /** You took a lost Pokemon home and it joins you (events.js). */
   G.onRescue = (dex, name) => {
     if (!G.DB.save || !pl) return;
-    // Always a new copy, a repeat too (pokebox 3a-2); a repeat no longer pays +150 coins.
+    // Always a new copy, a repeat too (pokebox 3a-2); a repeat no longer pays +150 coins. Full boxes: sold on arrival (3a-4).
     const got = G.DB.obtain(dex, false, 'rescue');
     G.DB.commit(true);
-    G.Spawner.say(got.isNew ? '¡' + name + ' se une a tu equipo!' : name + ' joined your box!', 4);
+    G.Spawner.say(
+      got.sold ? fullBoxLine(name, got.sold) : got.isNew ? '¡' + name + ' se une a tu equipo!' : name + ' joined your box!',
+      4
+    );
     G.Audio.sfx('shinyGet');
   };
 
@@ -511,11 +514,18 @@ G.Game = (() => {
     G.DB.commit(true);
     caught.push({ dex: e.dex, isNew: got.isNew });
     G.Spawner.say(
-      got.isNew ? '¡Has conseguido a ' + e.name + ' shiny!' : 'Another shiny ' + e.name + '! Added to your box.',
+      got.sold
+        ? fullBoxLine('shiny ' + e.name, got.sold)
+        : got.isNew
+          ? '¡Has conseguido a ' + e.name + ' shiny!'
+          : 'Another shiny ' + e.name + '! Added to your box.',
       4
     );
     G.Audio.sfx('shinyGet');
   };
+
+  /** The run banner when every box is full (pokebox 3a-4, D3): the coins already went to the saved PokeCoins. */
+  const fullBoxLine = (name, coins) => `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
 
   function endRun(dead = true) {
     if (state === 'over' || !pl) return;

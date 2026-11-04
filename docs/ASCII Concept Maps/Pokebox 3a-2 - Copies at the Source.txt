@@ -70,7 +70,7 @@ Riding along (Jess, 2026-11-04): FIX, top bar coins do not update on gain or spe
        gacha card:  "Repetido · coin +N"  becomes  "To Box N"   (the box it landed in)
      REC: as written.
 
- D6  Full boxes until 3a-4: unchanged (a new copy still overflows into the last box).
+ D6  Full boxes until 3a-4: unchanged (a new copy still overflows into the last box).  [REPLACED by 3a-4, 2026-11-04]
      REC: leave it; 3a-4 replaces it with the warning and auto-sell.
 
  D7  No safety net: a species that is owned but has no copy stays that way.
