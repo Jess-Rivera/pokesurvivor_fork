@@ -504,3 +504,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): clean save checkpoint instead of migrating. Old local saves are backed up, the player starts over, a one-button notice explains. Copy structure approved, gender, height and weight visible in the box, 500 per box, tab row Pokedex then Box 1, Box 2.
 - Found: tools/items_report.js --check failed on CRLF checkouts with identical content; it now ignores line endings. Nothing in the game reads IVs, natures or sizes yet.
 - Verified: check.js 33/33, format ok, smoke-ui, file:// probe from a real old-format save (notice, backup, new-player test, gacha, run, reload). 2500 copies: 278 KB box, about 1.8 ms per save. Stopped for the feel-test.
+
+## 2026-11-03, Pokebox step 2: box screen (Claude Code, home, feature/pokeboxes)
+- Built: Team screen tabs (Pokedex, Box 1, Box 2) as the third filter row, slots and lists by copy UUID, the same species on several slots, drag to a box tab, G.Debug.addCopy, gender icons, Nature, Ability, Height, Weight rows, IV band on the hexagon with larger numbers.
+- Decided (Jess): the hexagon base is see-through white, the IV band is the type color and shows only the increase. Pokedex tab double-click asks for a copy. Moves in a run stay per fighter (one per slot).
+- Found: a local helper in G.Copies.fill shadowed add (caught by the harness). The pixel font has no gender symbols, so they are icons. The hex stayed small under 820 px tall from an old 66% rule, now 84%.
+- Verified: check.js, format, smoke-ui, file:// probe (tabs, drags, swap, free, commit, reload, a run swapping between duplicates). Stopped for the feel-test.

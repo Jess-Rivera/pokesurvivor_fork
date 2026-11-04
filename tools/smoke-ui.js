@@ -96,6 +96,8 @@ async function check(browser, query, tag) {
       bad = [];
     let n = 0,
       rowsMax = 0;
+    // Pokedex tab: every species once, so the union of pools still covers every move (the box tabs list copies).
+    [...document.querySelectorAll('#ros-tabs .ros-tab')].find((t) => t.textContent === 'Pokédex').click();
     for (const cell of document.querySelectorAll('#ros-grid .cell')) {
       if (!G.DB.save.owned[+cell.dataset.dex]) continue;
       cell.click();

@@ -131,6 +131,7 @@ G.DB = (() => {
       teamItems: {}, // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
       box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
+      boxCount: 2, // boxes this player has
       trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
@@ -229,7 +230,8 @@ G.DB = (() => {
    * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny, uid } or null (uid = the copy in the slot, G.Copies).
    *   - older saves (a short, compact list or nothing at all) load into the
    *     first slots, padded with empty ones;
-   *   - a Pokemon that does not exist, or that repeats, becomes an empty slot;
+   *   - a Pokemon that does not exist, or a copy already in another slot, becomes an empty slot;
+   *   - the same species can fill several slots, as long as each slot has its own copy;
    *   - slot 0 is always the lead: it mirrors the chosen companion
    *     (partner / partnerShiny), which wins if the two ever disagree.
    * Safe to call as often as needed (it is called on load, on merge and on commit).
@@ -241,22 +243,35 @@ G.DB = (() => {
     const out = [];
     for (let i = 0; i < TEAM_SIZE; i++) {
       const t = src[i];
-      const ok = t && t.dex != null && !seen.has(t.dex) && (!G.DEX_BY || G.DEX_BY[t.dex]);
+      const ok = t && t.dex != null && !(t.uid && seen.has(t.uid)) && (!G.DEX_BY || G.DEX_BY[t.dex]);
       if (!ok) {
         out.push(null);
         continue;
       }
-      seen.add(t.dex);
+      if (t.uid) seen.add(t.uid);
       out.push(t.uid ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : { dex: t.dex, shiny: !!t.shiny });
     }
     if (s.partner != null) {
-      for (let i = 1; i < TEAM_SIZE; i++) if (out[i] && out[i].dex === s.partner) out[i] = null;
+      const fits = (t) => t && t.dex === s.partner && !!t.shiny === !!s.partnerShiny;
       const lead = { dex: s.partner, shiny: !!s.partnerShiny };
-      if (out[0] && out[0].uid) lead.uid = out[0].uid;
+      if (fits(out[0])) {
+        if (out[0].uid) lead.uid = out[0].uid;
+      } else {
+        // The lead changed: if that Pokemon is already in another slot, it moves up.
+        const i = out.findIndex(fits);
+        if (i > 0) {
+          if (out[i].uid) lead.uid = out[i].uid;
+          out[i] = null;
+        }
+      }
       out[0] = lead;
     }
     s.team = out;
     if (G.Copies) G.Copies.linkTeam(s);
+    // A species with no copy of its own for this slot cannot repeat.
+    out.forEach((t, i) => {
+      if (t && !t.uid && out.some((x, j) => j < i && x && x.dex === t.dex)) out[i] = null;
+    });
   }
 
   /**

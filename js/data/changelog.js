@@ -8,6 +8,20 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Pokemon boxes', 'Pokemon boxes'],
+    new: [
+      [
+        'The Team screen now has tabs: the Pokedex and your boxes. Pick a specific Pokemon from a box for your team, and drag it onto a box tab to move it. You can field the same species more than once.',
+        'The Team screen now has tabs: the Pokedex and your boxes. Pick a specific Pokemon from a box for your team, and drag it onto a box tab to move it. You can field the same species more than once.',
+      ],
+      [
+        'Every Pokemon now shows its own gender, nature, ability, height, weight and IVs. Nature, ability and IVs do not change anything in battle yet.',
+        'Every Pokemon now shows its own gender, nature, ability, height, weight and IVs. Nature, ability and IVs do not change anything in battle yet.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['Your save starts fresh', 'Your save starts fresh'],
     chg: [
       [

@@ -29,6 +29,7 @@
  *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
  *   G.Debug.copies(dex)  list your Pokemon copies, or one species' (no arg: all), with the box size in the save
  *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
+ *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates. Saved.
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -48,7 +49,8 @@ G.Debug = (() => {
       return false;
     }
 
-    // Every Pokemon owned + shiny.
+    // Every Pokemon owned + shiny, with every box so they all fit.
+    save.boxCount = G.Copies.BOX_MAX;
     let dexN = 0;
     for (const p of G.DEX) {
       G.DB.grant(p.dex, 'debug');
@@ -1000,6 +1002,28 @@ G.Debug = (() => {
     return list.length;
   }
 
+  function addCopy(dex, n = 1, shiny = false) {
+    if (!on || !G.DB.save) return false;
+    if (!G.DEX_BY[dex]) {
+      console.warn('[Debug] no species with dex ' + dex);
+      return false;
+    }
+    G.DB.grant(dex, 'debug');
+    if (shiny) G.DB.grantShiny(dex, 'debug');
+    G.DB.normalizeTeam(G.DB.save);
+    for (let i = 0; i < n; i++) G.Copies.add(G.DB.save, { dex, shiny: !!shiny, from: 'debug' });
+    G.DB.commit(true);
+    console.log(
+      '[Debug] added ' +
+        n +
+        ' ' +
+        G.DEX_BY[dex].name +
+        (shiny ? ' (shiny)' : '') +
+        '. Reopen the Team screen to see them.'
+    );
+    return true;
+  }
+
   function copy(id) {
     if (!on || !G.DB.save) return false;
     const save = G.DB.save;
@@ -1091,6 +1115,7 @@ G.Debug = (() => {
     hitbox,
     copies,
     copy,
+    addCopy,
     newcombat,
     cards,
     movechecker,

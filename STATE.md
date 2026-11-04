@@ -5,12 +5,12 @@ Last updated: 2026-11-03 (Claude Code, home). feature/item-rework-v2 is merged t
 
 ## Where we are
 - ITEM REWORK V2 is DONE for now and feel-tested good. Jess is happy with the item count.
-- Shipped: one drop table (js/data/drops.js, docs/ITEMS.md); Oran and Sitrus replace the heal pickup; a gym leader drops one item; rock and small chest 6 HP; Band, Specs, Muscle Band, Wise Glasses by category; 9 new Pokemon items (45 total); pickup lines ("Oran Berry: heal 30% HP"); Space and Enter no longer restart the run.
+- Shipped: one drop table (js/data/drops.js, docs/ITEMS.md); Oran and Sitrus replace the heal pickup; 9 new Pokemon items (45 total); pickup lines.
 - Playtest tune: pickup radius split (XP orbs 120 px plus the upgrade; everything else, coins included, fixed 78 px; magnet pickup and shrine hit both) and Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s). Numbers in BALANCE.md. Dropped items now draw their real sprite at 32.
 - PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
 
 ## Next
-1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 BUILT, uncommitted, awaiting Jess's feel-test: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration (old local saves are backed up and start over). Next: no-code plan for step 2, the box screen.
+1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 committed and feel-tested: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration. Step 2 BUILT, uncommitted, awaiting his feel-test: Team screen tabs and copies, duplicates on a team, gender, nature, ability, size and the IV hex. Next: no-code plan for step 3 (new copies at the source, selling, buying boxes).
 2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
 3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
 4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).

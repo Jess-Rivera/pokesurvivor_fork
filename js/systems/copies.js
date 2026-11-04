@@ -7,6 +7,7 @@
  *   u UUID in 22 characters   d dex   t obtained, seconds   m method letter   n nature, pokeapi id   i IVs, one character each
  *   g 0 male 1 female 2 none  x y height and weight scale   a ability slot    s shiny   e EVs   k nickname   h friendship
  *   v starting move override  p upgrades (id -> rank)       f favorite   l locked   o original trainer, if not this save   r form
+ *   b box, counted from 0, left out for the first box
  * Stat order everywhere: HP, Atk, Def, SpA, SpD, Spe (the game's stats array and pokeapi).
  */
 G.Copies = (() => {
@@ -16,10 +17,15 @@ G.Copies = (() => {
     SCALE_MAX = 255,
     NICK_MAX = 12,
     FRIEND_MAX = 255,
-    RANK_MAX = 5;
+    RANK_MAX = 5,
+    BOX_SIZE = 500,
+    BOX_START = 2,
+    BOX_MAX = 5;
   const HIDDEN_CHANCE = 0.05;
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
+  const STAT_LABEL = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
+  const titled = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const METHODS = { starter: 's', gacha: 'g', wild: 'w', rescue: 'r', debug: 'd', other: 'o' };
   const METHOD_NAME = {};
   for (const name in METHODS) METHOD_NAME[METHODS[name]] = name;
@@ -111,6 +117,10 @@ G.Copies = (() => {
       nature: nature[0],
       natureUp: nature[1],
       natureDown: nature[2],
+      natureLabel:
+        titled(nature[0]) +
+        (nature[1] === nature[2] ? ', neutral' : ` +${STAT_LABEL[nature[1]]} -${STAT_LABEL[nature[2]]}`),
+      box: c.b || 0,
       iv: [...c.i].map((ch) => IV_CHARS.indexOf(ch)),
       gender: GENDERS[c.g],
       heightScale: c.x,
@@ -119,6 +129,8 @@ G.Copies = (() => {
       weightKg: scaled(t[3], c.y) / 10,
       abilitySlot: c.a,
       ability: t[1][c.a - 1],
+      abilityName: G.SpeciesTraits.ABILITY_NAMES[t[1][c.a - 1]],
+      abilityHidden: c.a === 3,
       isShiny: !!c.s,
       ev: c.e ? c.e.slice() : [0, 0, 0, 0, 0, 0],
       friendship: c.h != null ? c.h : t[4],
@@ -137,6 +149,51 @@ G.Copies = (() => {
     return c ? read(c, save) : null;
   }
 
+  /** What every copy of a species shares: its possible abilities and its real size (the Pokedex tab). */
+  function species(dex) {
+    const t = traitsOf(dex);
+    return {
+      abilities: t[1]
+        .map((id, i) => (id ? { name: G.SpeciesTraits.ABILITY_NAMES[id], hidden: i === 2 } : null))
+        .filter(Boolean),
+      heightM: t[2] / 10,
+      weightKg: t[3] / 10,
+    };
+  }
+
+  // ---------------- boxes ----------------
+
+  const boxCount = (save) => Math.max(BOX_START, Math.min(BOX_MAX, Math.floor(+save.boxCount) || BOX_START));
+  const inBox = (save, box) => (save.box || []).filter((c) => (c.b || 0) === box).length;
+
+  /** The first box with room. With every box full it is the last one, until step 3 decides what a full box does. */
+  function freeBox(save) {
+    const n = boxCount(save);
+    for (let b = 0; b < n; b++) if (inBox(save, b) < BOX_SIZE) return b;
+    return n - 1;
+  }
+
+  /** A new copy in the first box with room. Returns the compact record. */
+  function add(save, o, rnd = Math.random) {
+    const c = roll(o, rnd),
+      b = freeBox(save);
+    if (b) c.b = b;
+    save.box.push(c);
+    return c;
+  }
+
+  /** Move a copy to another box. @returns 'ok' | 'full' | 'none' */
+  function move(save, id, box) {
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c || box < 0 || box >= boxCount(save)) return 'none';
+    if ((c.b || 0) === box) return 'ok';
+    if (inBox(save, box) >= BOX_SIZE) return 'full';
+    if (box) c.b = box;
+    else delete c.b;
+    return 'ok';
+  }
+
   // ---------------- keeping the save right ----------------
 
   /**
@@ -147,16 +204,16 @@ G.Copies = (() => {
   function fill(save, rnd = Math.random) {
     if (!Array.isArray(save.box)) save.box = [];
     const have = new Set(save.box.map((c) => c.d + (c.s ? 's' : 'n')));
-    const add = (coll, shiny) => {
+    const addMissing = (coll, shiny) => {
       for (const k of Object.keys(save[coll] || {})) {
         const dex = +k;
         if (have.has(dex + (shiny ? 's' : 'n')) || !traitsOf(dex)) continue;
         const rec = save[coll][k] || {};
-        save.box.push(roll({ dex, shiny, at: rec.at, from: rec.from }, rnd));
+        add(save, { dex, shiny, at: rec.at, from: rec.from }, rnd);
       }
     };
-    add('owned', false);
-    add('shiny', true);
+    addMissing('owned', false);
+    addMissing('shiny', true);
   }
 
   /** Point each team slot at a copy: it keeps a copy that still matches its species and shiny flag, otherwise it takes the first free match. */
@@ -188,6 +245,7 @@ G.Copies = (() => {
     }
     const whole = (v, max) => (Number.isFinite(+v) ? Math.max(0, Math.min(max, Math.floor(+v))) : 0);
     const seen = new Set();
+    save.boxCount = boxCount(save);
     save.box = save.box.filter((c) => {
       if (!c || typeof c.u !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(c.u) || seen.has(c.u)) return false;
       const t = traitsOf(c.d);
@@ -227,9 +285,33 @@ G.Copies = (() => {
         else delete c[flag];
       if (typeof c.o !== 'string' || !c.o) delete c.o;
       if (typeof c.r !== 'string' || !c.r) delete c.r;
+      if (c.b != null) c.b = whole(c.b, save.boxCount - 1);
+      if (!c.b) delete c.b;
       return true;
     });
   }
 
-  return { uuid, shortId, longId, roll, read, all, get, fill, linkTeam, clean, IV_MAX, EV_MAX, EV_TOTAL };
+  return {
+    uuid,
+    shortId,
+    longId,
+    roll,
+    read,
+    all,
+    get,
+    species,
+    add,
+    move,
+    boxCount,
+    inBox,
+    fill,
+    linkTeam,
+    clean,
+    IV_MAX,
+    EV_MAX,
+    EV_TOTAL,
+    BOX_SIZE,
+    BOX_START,
+    BOX_MAX,
+  };
 })();

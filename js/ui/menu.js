@@ -70,6 +70,8 @@ G.MenuUI = (() => {
     ctrl: rosCtrl,
     team: () => ros.team,
     sel: () => ros.dex,
+    selUid: () => ros.uid,
+    boxTab: () => (ros.tab === 'dex' ? null : ros.tab),
     pick: (dex) => rosSelectDex(dex),
     assign: true, // cells can be double-clicked or dragged onto a team slot
     compact: true, // filter chips show icons only (the name is the tooltip)
@@ -127,11 +129,10 @@ G.MenuUI = (() => {
         e.target.closest('input, textarea, select, button')
       )
         return;
-      const d = ros.dex,
-        cur = ros.team[ros.slot];
-      if (d == null || !G.DB.save.owned[d] || (cur && cur.dex === d)) return;
+      const cur = ros.team[ros.slot];
+      if (ros.dex == null || !G.DB.save.owned[ros.dex] || (ros.uid && cur && cur.uid === ros.uid)) return;
       e.preventDefault();
-      rosAssign(ros.slot, d);
+      rosPlace(ros.slot, ros.uid || ros.dex);
     });
     addEventListener('keydown', upgKey);
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
@@ -587,10 +588,16 @@ G.MenuUI = (() => {
     const sel = v.sel();
     $(v.pre + 'grid')
       .querySelectorAll('.cell')
-      .forEach((x) => x.classList.toggle('on', +x.dataset.dex === sel));
+      .forEach((x) =>
+        x.classList.toggle('on', x.dataset.uid ? x.dataset.uid === (v.selUid && v.selUid()) : +x.dataset.dex === sel)
+      );
   }
 
   function renderGrid(v) {
+    if (v.boxTab && v.boxTab() != null) {
+      rosRenderBox(v);
+      return;
+    }
     const s = G.DB.save;
     const grid = $(v.pre + 'grid');
     grid.innerHTML = '';
@@ -608,7 +615,7 @@ G.MenuUI = (() => {
       if (v.assign && own) {
         // Team screen: double-click puts it in the highlighted slot, or drag it onto any slot.
         cell.draggable = true;
-        cell.ondblclick = () => rosAssign(ros.slot, p.dex);
+        cell.ondblclick = () => rosPlace(ros.slot, p.dex);
         cell.ondragstart = (e) => {
           ros.drag = p.dex;
           e.dataTransfer.setData('text/plain', String(p.dex));
@@ -854,23 +861,39 @@ G.MenuUI = (() => {
   // A fullscreen editor for the 6 fixed team slots. It works on a COPY of the team (ros.team);
   // nothing is saved until Commit Team, and Back discards the edits.
   //   ros.slot   the highlighted slot (where Enter, a double-click or a drop goes)
-  //   ros.dex    the Pokémon shown on the right (a team member, or a preview from the list), null = empty slot
-  //   ros.shiny  Normal / Shiny look for ros.dex (switched by the shiny icon on its team slot)
-  //   ros.drag   dex being dragged (a list cell or a filled slot)
-  const ros = { team: [], slot: 0, dex: null, shiny: false, drag: null, dragSlot: null };
-  const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0] : null)));
+  //   ros.dex    the species shown on the right (a team member, or a preview from the list), null = empty slot
+  //   ros.uid    the copy shown on the right, null when it is a species from the Pokedex tab
+  //   ros.shiny  Normal / Shiny look for what is shown
+  //   ros.tab    the list below the filters: 'dex', or a box counted from 0
+  //   ros.drag   what is being dragged: a copy's uid (a box cell or a filled slot), or a dex (a Pokedex tab cell)
+  const ros = { team: [], slot: 0, dex: null, uid: null, shiny: false, tab: 0, drag: null, dragSlot: null };
+  const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0, x.uid || null] : null)));
+  const rosSlotOf = (t) => (t ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : null);
+  const escHtml = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  /** A copy's name (its nickname, else the species) with its gender symbol at the end. */
+  function rosNameHtml(c, p, iconPx = 20) {
+    const icon = c && c.gender === 'male' ? 'genderMale' : c && c.gender === 'female' ? 'genderFemale' : '';
+    const name =
+      c && c.nickname
+        ? `<span class="nm" translate="no">${escHtml(c.nickname)}</span>`
+        : `<span class="nm">${p.name}</span>`;
+    return `<b class="ros-nm">${name}${icon ? `<span class="ros-gender" title="${c.gender === 'male' ? 'Male' : 'Female'}">${G.Icons.html(icon, iconPx)}</span>` : ''}</b>`;
+  }
   const rosDirty = () => teamKey(ros.team) !== teamKey(G.DB.save.team);
 
   function openRoster() {
     const s = G.DB.save;
     G.DB.normalizeTeam(s);
-    ros.team = s.team.map((t) => (t ? { dex: t.dex, shiny: !!t.shiny } : null));
+    ros.team = s.team.map(rosSlotOf);
     ros.drag = null;
+    if (ros.tab !== 'dex' && ros.tab >= G.Copies.boxCount(s)) ros.tab = 0;
     rosChrome();
     G.UI.show('scr-roster'); // (no keepMenu: the main menu is hidden too)
     $('ros-back').onclick = rosBack;
     $('ros-commit').onclick = rosCommit;
     buildControls(rosView);
+    rosRenderTabs();
     renderGrid(rosView);
     // Drop a team card back on the list: that slot is freed.
     const grid = $('ros-grid');
@@ -920,7 +943,7 @@ G.MenuUI = (() => {
   function rosCommit() {
     const s = G.DB.save;
     if (!ros.team[0] || !rosDirty()) return;
-    s.team = ros.team.map((t) => (t ? { dex: t.dex, shiny: !!t.shiny } : null));
+    s.team = ros.team.map(rosSlotOf);
     s.partner = s.team[0].dex; // the lead is the companion
     s.partnerShiny = !!s.team[0].shiny;
     G.DB.commit();
@@ -933,6 +956,7 @@ G.MenuUI = (() => {
     ros.slot = slot;
     const t = ros.team[slot];
     ros.dex = t ? t.dex : null;
+    ros.uid = (t && t.uid) || null;
     ros.shiny = !!(t && t.shiny && G.DB.ownsShiny(t.dex));
     rosRenderAll();
     markGrid(rosView);
@@ -952,12 +976,157 @@ G.MenuUI = (() => {
     markGrid(rosView);
   }
 
-  /** Preview a Pokémon from the list on the right (the highlighted slot does not change). */
+  /** Preview a species from the Pokedex tab on the right (the highlighted slot does not change). */
   function rosSelectDex(dex) {
-    const t = ros.team.find((x) => x && x.dex === dex);
     ros.dex = dex;
-    ros.shiny = !!(t && t.shiny && G.DB.ownsShiny(dex));
+    ros.uid = null;
+    ros.shiny = false;
     rosRenderAll();
+  }
+
+  /** Preview a copy from a box on the right (the highlighted slot does not change). */
+  function rosSelectCopy(c) {
+    ros.dex = c.speciesID;
+    ros.uid = c.pokemonUUID;
+    ros.shiny = c.isShiny;
+    rosRenderAll();
+  }
+
+  // ---------------- the tab row and the box list ----------------
+
+  function rosRenderTabs() {
+    const s = G.DB.save,
+      box = $('ros-tabs');
+    box.innerHTML = '';
+    const tab = (label, value, title) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ros-tab' + (ros.tab === value ? ' on' : '');
+      b.dataset.sfx = 'click';
+      b.textContent = label;
+      b.title = title;
+      b.onclick = () => {
+        ros.tab = value;
+        rosRenderTabs();
+        renderGrid(rosView);
+        markGrid(rosView);
+      };
+      if (value !== 'dex') {
+        // Drop a copy on a box tab: it moves there. This is storage, so it saves at once and does not wait for Commit.
+        b.ondragover = (e) => {
+          if (typeof ros.drag !== 'string') return;
+          e.preventDefault();
+          b.classList.add('drop');
+        };
+        b.ondragleave = () => b.classList.remove('drop');
+        b.ondrop = (e) => {
+          e.preventDefault();
+          b.classList.remove('drop');
+          const uid = ros.drag;
+          ros.drag = ros.dragSlot = null;
+          if (typeof uid !== 'string') return;
+          const r = G.Copies.move(s, uid, value);
+          if (r === 'full') G.UI.toast(`${label} is full`);
+          else if (r === 'ok') {
+            G.DB.commit();
+            rosRenderTabs();
+            renderGrid(rosView);
+            markGrid(rosView);
+          }
+        };
+      }
+      box.appendChild(b);
+    };
+    tab('Pokédex', 'dex', 'Every species. Pick a copy from a box to put it on your team.');
+    for (let i = 0; i < G.Copies.boxCount(s); i++)
+      tab(`Box ${i + 1}`, i, `${G.Copies.inBox(s, i)} / ${G.Copies.BOX_SIZE} Pokémon`);
+    $('ros-own').style.display = ros.tab === 'dex' ? '' : 'none';
+  }
+
+  /** One copy's cell in a box: number, team badge or shiny mark, sprite, name with gender, rarity. */
+  function fillCopyCell(cell, c, p) {
+    const ts = ros.team.findIndex((t) => t && t.uid === c.pokemonUUID);
+    cell.className = 'cell' + (c.pokemonUUID === ros.uid ? ' on' : '');
+    cell.innerHTML = `<span class="no">${String(p.dex).padStart(3, '0')}</span>`;
+    if (ts === 0)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-r" title="Lead (slot 1)">${G.Icons.html('crown', 14)}</span>`
+      );
+    else if (ts > 0)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-r badge-slot" title="Roster slot ${ts + 1}">${ts + 1}</span>`
+      );
+    else if (c.isShiny)
+      cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Shiny">${G.Icons.html('shiny', 12)}</span>`);
+    cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, shadow: true, shiny: c.isShiny }));
+    cell.insertAdjacentHTML('beforeend', rosNameHtml(c, p, 10) + G.UI.stars(p.rarity, 9));
+  }
+
+  /** The open box, in the order the filters and sort give its species. */
+  function rosRenderBox(v) {
+    const s = G.DB.save,
+      grid = $(v.pre + 'grid');
+    grid.innerHTML = '';
+    const bySpecies = new Map();
+    let total = 0;
+    for (const c of G.Copies.all(s)) {
+      if (c.box !== ros.tab) continue;
+      total++;
+      if (!bySpecies.has(c.speciesID)) bySpecies.set(c.speciesID, []);
+      bySpecies.get(c.speciesID).push(c);
+    }
+    let shown = 0;
+    for (const p of filterSortDex(Object.assign({}, v.ctrl, { own: 'all' }))) {
+      for (const c of bySpecies.get(p.dex) || []) {
+        shown++;
+        const cell = document.createElement('div');
+        cell.dataset.dex = p.dex;
+        cell.dataset.uid = c.pokemonUUID;
+        fillCopyCell(cell, c, p);
+        cell.onclick = () => {
+          rosSelectCopy(c);
+          markGrid(v);
+        };
+        cell.ondblclick = () => rosPlace(ros.slot, c.pokemonUUID);
+        cell.draggable = true;
+        cell.ondragstart = (e) => {
+          ros.drag = c.pokemonUUID;
+          e.dataTransfer.setData('text/plain', c.pokemonUUID);
+          e.dataTransfer.effectAllowed = 'move';
+        };
+        cell.ondragend = () => {
+          ros.drag = null;
+        };
+        grid.appendChild(cell);
+      }
+    }
+    $(v.pre + 'shown').textContent = `${shown} shown · ${total} / ${G.Copies.BOX_SIZE} in this box`;
+    if (!shown)
+      grid.innerHTML = `<p class="sub" style="grid-column:1/-1">${total ? 'No Pokemon match these filters.' : 'This box is empty.'}</p>`;
+  }
+
+  /** Redraw the list's team badges after the team changed. */
+  function rosRefreshList(dexes) {
+    if (ros.tab === 'dex') {
+      refreshCells(rosView, dexes);
+      return;
+    }
+    const grid = $('ros-grid'),
+      cells = grid.querySelectorAll('.cell[data-uid]');
+    if (!cells.length) return;
+    const copies = new Map(G.Copies.all(G.DB.save).map((c) => [c.pokemonUUID, c]));
+    cells.forEach((cell) => {
+      const c = copies.get(cell.dataset.uid);
+      if (c) fillCopyCell(cell, c, G.DEX_BY[c.speciesID]);
+    });
+  }
+
+  /** Put what was picked in a slot: a copy goes in, a species from the Pokedex tab asks for a copy. */
+  function rosPlace(slot, what) {
+    if (typeof what === 'string') rosAssign(slot, what);
+    else G.UI.toast('Pick a copy from a box');
   }
 
   function rosRenderAll() {
@@ -967,57 +1136,55 @@ G.MenuUI = (() => {
   }
 
   /**
-   * Put `dex` in team slot `slot` (on the working copy). A Pokémon already on the team in another slot
+   * Put copy `uid` in team slot `slot` (on the working copy). A copy already on the team in another slot
    * SWAPS places with whoever is in `slot`, so nobody drops off. Slot 1 (the lead) can never be left empty.
    */
-  function rosAssign(slot, dex) {
+  function rosAssign(slot, uid) {
     const s = G.DB.save,
-      p = G.DEX_BY[dex];
+      c = G.Copies.get(s, uid),
+      p = c && G.DEX_BY[c.speciesID];
     if (!p) return;
-    if (!s.owned[dex]) {
-      G.UI.toast('You do not own that Pokémon yet');
-      return;
-    }
+    const dex = c.speciesID;
     const before = ros.team.map((t) => t && t.dex);
     const team = ros.team.slice();
-    const from = team.findIndex((t) => t && t.dex === dex);
+    const from = team.findIndex((t) => t && t.uid === uid);
     if (from === slot) {
       rosSelectSlot(slot);
       return;
     }
     const displaced = team[slot] || null;
-    let shiny;
     if (from >= 0) {
       if (from === 0 && !displaced) {
         G.UI.toast('Slot 1 is the lead and cannot be left empty');
         return;
       }
-      shiny = !!team[from].shiny;
       team[from] = displaced;
-    } else {
-      shiny = ros.dex === dex && ros.shiny && G.DB.ownsShiny(dex);
     }
-    team[slot] = { dex, shiny: !!shiny };
+    team[slot] = { dex, shiny: c.isShiny, uid };
     ros.team = team;
     ros.slot = slot;
     ros.dex = dex;
-    ros.shiny = !!shiny;
+    ros.uid = uid;
+    ros.shiny = c.isShiny;
     if (from >= 0 && displaced) G.UI.toast(`${p.name} and ${G.DEX_BY[displaced.dex].name} swapped slots`);
     rosRenderAll();
-    refreshCells(rosView, before.concat(ros.team.map((t) => t && t.dex)));
+    rosRefreshList(before.concat(ros.team.map((t) => t && t.dex)));
     markGrid(rosView);
   }
 
   /** Empty team slot `i` (on the working copy). Slot 1, the lead, is never emptied. */
   function rosFreeSlot(i) {
     if (i <= 0 || !ros.team[i]) return;
-    const gone = ros.team[i].dex;
+    const gone = ros.team[i];
     ros.team = ros.team.slice();
     ros.team[i] = null;
     ros.slot = i;
-    if (ros.dex === gone) ros.dex = null;
+    if (ros.uid && ros.uid === gone.uid) {
+      ros.dex = null;
+      ros.uid = null;
+    }
     rosRenderAll();
-    refreshCells(rosView, [gone]);
+    rosRefreshList([gone.dex]);
     markGrid(rosView);
   }
 
@@ -1030,8 +1197,8 @@ G.MenuUI = (() => {
     box.innerHTML = '';
     ros.team.forEach((t, slot) => {
       const mon = t && G.DEX_BY[t.dex];
-      const hasSh = !!(mon && G.DB.ownsShiny(t.dex));
-      const shiny = hasSh && !!t.shiny;
+      const copy = t && t.uid ? G.Copies.get(G.DB.save, t.uid) : null;
+      const shiny = !!(t && t.shiny);
       const b = document.createElement('div');
       b.className = 'ros-slot' + (mon ? '' : ' empty') + (slot === 0 ? ' lead' : '') + (slot === ros.slot ? ' on' : '');
       b.dataset.sfx = 'click';
@@ -1040,22 +1207,10 @@ G.MenuUI = (() => {
         b.appendChild(G.UI.spriteCanvas(mon.dex, 120, 120, { lively: true, scale: 3, hero: true, shiny }));
         b.insertAdjacentHTML(
           'beforeend',
-          `<div class="rinfo"><b>${mon.name}</b><span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
+          `<div class="rinfo">${rosNameHtml(copy, mon)}<span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
         );
-        // The shiny icon is the Normal / Shiny switch, shown only when the shiny is owned.
-        if (hasSh) {
-          const sh = document.createElement('button');
-          sh.type = 'button';
-          sh.className = 'rsh' + (shiny ? ' on' : '');
-          sh.title = `Shiny ${shiny ? 'on' : 'off'}: click to switch`;
-          sh.innerHTML = G.Icons.html('shiny', 18);
-          sh.onclick = (e) => {
-            e.stopPropagation();
-            rosToggleShiny(slot);
-          };
-          sh.ondblclick = (e) => e.stopPropagation();
-          b.appendChild(sh);
-        }
+        if (shiny)
+          b.insertAdjacentHTML('beforeend', `<span class="rsh" title="Shiny">${G.Icons.html('shiny', 18)}</span>`);
         const up = document.createElement('button');
         up.type = 'button';
         up.className = 'rupg';
@@ -1095,16 +1250,16 @@ G.MenuUI = (() => {
       b.ondrop = (e) => {
         e.preventDefault();
         b.classList.remove('drop');
-        const d = ros.drag != null ? ros.drag : +e.dataTransfer.getData('text/plain');
+        const d = ros.drag;
         ros.drag = ros.dragSlot = null;
-        if (d) rosAssign(slot, d);
+        if (d != null) rosPlace(slot, d);
       };
-      if (mon) {
+      if (mon && t.uid) {
         b.draggable = true; // drag a team card onto another slot to swap
         b.ondragstart = (e) => {
-          ros.drag = mon.dex;
+          ros.drag = t.uid;
           ros.dragSlot = slot; // dropped on the list, it frees this slot
-          e.dataTransfer.setData('text/plain', String(mon.dex));
+          e.dataTransfer.setData('text/plain', t.uid);
           e.dataTransfer.effectAllowed = 'move';
         };
         b.ondragend = () => {
@@ -1116,18 +1271,7 @@ G.MenuUI = (() => {
     });
   }
 
-  /** Switch a team member between its normal and shiny look (the shiny icon on its slot). */
-  function rosToggleShiny(slot) {
-    const t = ros.team[slot];
-    if (!t || !G.DB.ownsShiny(t.dex)) return;
-    ros.team = ros.team.slice();
-    ros.team[slot] = { dex: t.dex, shiny: !t.shiny };
-    if (ros.dex === t.dex) ros.shiny = !t.shiny;
-    rosRenderAll();
-    refreshCells(rosView, [t.dex]);
-  }
-
-  /** The detail column: name row, rarity and types, BST and the stat hexagon, ability, moves. No buttons. */
+  /** The detail column: name row, rarity and types, BST and the stat hexagon, nature, ability, size, moves. No buttons. */
   function rosRenderDetail() {
     const s = G.DB.save,
       box = $('ros-detail');
@@ -1140,9 +1284,10 @@ G.MenuUI = (() => {
     }
     const p = G.DEX_BY[dex];
     const own = !!s.owned[dex];
-    if (!G.DB.ownsShiny(dex)) ros.shiny = false;
+    const copy = ros.uid ? G.Copies.get(s, ros.uid) : null;
+    ros.shiny = !!(copy && copy.isShiny);
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-    const head = `<div class="ros-dh"><b>${own ? p.name : '???'}</b><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
     if (!own) {
       box.innerHTML =
         head +
@@ -1163,11 +1308,33 @@ G.MenuUI = (() => {
       `<div class="ros-db">
         <div class="ros-row"><span title="${G.Gacha.RARITY_NAME[p.rarity]}">${G.UI.stars(p.rarity, 24)}</span><span class="rtypes">${G.UI.typeChips(p.types)}</span></div>
         <div class="ros-box ros-stats"><span class="ros-bst">${G.Icons.bstStars(p.bst)}</span>${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}</div>
-        <div class="ros-row"><span>Ability</span><b>Coming soon</b></div>
+        ${rosInfoRows(copy, dex)}
         <div class="ros-box ros-mbox"><div class="ros-mh">Moves</div><div class="ros-moves">${moves}</div></div>
       </div>`;
     const hex = $('ros-hex');
-    if (hex) hex.appendChild(G.StatChart.make(p.stats, color, 340, 400, { radius: 0.4 }));
+    if (hex)
+      hex.appendChild(
+        G.StatChart.make(p.stats, color, 380, 364, { radius: 0.33, teamHex: true, iv: copy ? copy.iv : null })
+      );
+  }
+
+  /** Nature, Ability, Height, Weight of a copy. A species from the Pokedex tab has its possible abilities and real size, no nature. */
+  function rosInfoRows(copy, dex) {
+    const row = (label, value) => `<div class="ros-row"><span>${label}</span><b>${value}</b></div>`;
+    const abilityText = (a) => a.name + (a.hidden ? ' (Hidden)' : '');
+    if (copy)
+      return (
+        row('Nature', copy.natureLabel) +
+        row('Ability', abilityText({ name: copy.abilityName, hidden: copy.abilityHidden })) +
+        row('Height', copy.heightM.toFixed(2) + ' m') +
+        row('Weight', copy.weightKg.toFixed(1) + ' kg')
+      );
+    const sp = G.Copies.species(dex);
+    return (
+      row('Ability', sp.abilities.map(abilityText).join(' / ')) +
+      row('Height', sp.heightM.toFixed(1) + ' m') +
+      row('Weight', sp.weightKg.toFixed(1) + ' kg')
+    );
   }
 
   // ---------------- upgrades (B/W screen, display only) ----------------
@@ -1224,7 +1391,7 @@ G.MenuUI = (() => {
   /** The Pokémon the tab cycles through: the Team screen's draft team, else the saved one. */
   function upgParty() {
     const t = ros.team.some(Boolean) ? ros.team : G.DB.save.team || [];
-    return t.filter(Boolean).map((x) => x.dex);
+    return [...new Set(t.filter(Boolean).map((x) => x.dex))];
   }
 
   /**

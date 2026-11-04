@@ -22,7 +22,7 @@ let seed = 12345; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294
 const LINE = '{"u":"fzwqnksdToqcIV0Oj2obNA","d":143,"t":1793736000,"m":"g","n":11,"i":"47MFWJ","g":0,"x":142,"y":97,"a":2,"s":1,"e":[180,252,78,0,0,0],"k":"Mochi","h":120,"p":{"dmg":3,"hp":2},"f":1,"l":1}';
 { if (LINE.length !== 190) bad('the plan says 190 bytes, the line has ' + LINE.length);
   const c = C.read(JSON.parse(LINE), { trainerId: 'me' });
-  const WANT = { pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'gacha', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
+  const WANT = { abilityName: 'Thick Fat', abilityHidden: false, natureLabel: 'Adamant +Atk -SpA', box: 0, pokemonUUID: '7f3c2a9e-4b1d-4e8a-9c21-5d0e8f6a1b34', speciesID: 143, form: 'base', originalTrainerID: 'me', nickname: 'Mochi', dateObtained: 1793736000000, obtainedMethod: 'gacha', nature: 'adamant', natureUp: 1, natureDown: 3, gender: 'male', heightScale: 142, weightScale: 97, abilitySlot: 2, ability: 'thick-fat', isShiny: true, friendship: 120, startingMove: null, isFavorite: true, isLocked: true };
   for (const k in WANT) if (c[k] !== WANT[k]) bad('Snorlax ' + k + ' is ' + c[k]);
   if (!same(c.iv, [28, 31, 12, 5, 22, 9])) bad('Snorlax IVs in game stat order ' + c.iv);
   if (!same(c.ev, [180, 252, 78, 0, 0, 0])) bad('Snorlax EVs ' + c.ev);
@@ -140,6 +140,45 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   // Guests: a new save, nothing written.
   const n = store.size; G.DB.playAsGuest(); G.DB.grant(1, 'starter'); G.DB.commit(); if (G.DB.save.box.length !== 1 || store.size > n) bad('a guest has copies and writes nothing');
   console.log('7 clean save checkpoint: backup, one notice, accounts kept; new Pokemon become copies; a reload is stable');
+
+  // 8. display values, by hand from pokeapi
+  { const hard = C.read({ u: 'fzwqnksdToqcIV0Oj2obNA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 0, y: 0, a: 3 }, {});
+    if (hard.abilityName !== 'Gluttony' || !hard.abilityHidden || hard.natureLabel !== 'Hardy, neutral') bad('hidden ability and neutral nature labels ' + hard.abilityName + ' ' + hard.natureLabel);
+    const sp = C.species(143); if (!same(sp.abilities, [{ name: 'Immunity', hidden: false }, { name: 'Thick Fat', hidden: false }, { name: 'Gluttony', hidden: true }]) || sp.heightM !== 2.1 || sp.weightKg !== 460) bad('species view ' + JSON.stringify(sp));
+    if (!same(C.species(151).abilities, [{ name: 'Synchronize', hidden: false }])) bad('Mew has one ability'); }
+
+  // 9. boxes
+  { const b = { box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    if (C.boxCount(b) !== 2 || C.boxCount({ boxCount: 99 }) !== 5 || C.boxCount({ boxCount: 0 }) !== 2) bad('2 to 5 boxes');
+    for (let i = 0; i < 500; i++) C.add(b, { dex: 143, from: 'debug' }, rnd);
+    if (C.inBox(b, 0) !== 500 || C.inBox(b, 1) !== 0 || b.box.some(c => 'b' in c)) bad('the first 500 fill box 1, no box field saved');
+    const c = C.read(C.add(b, { dex: 143, from: 'debug' }, rnd), b);
+    if (c.box !== 1 || C.inBox(b, 1) !== 1) bad('copy 501 goes to box 2');
+    if (C.move(b, c.pokemonUUID, 0) !== 'full' || C.get(b, c.pokemonUUID).box !== 1) bad('a full box takes no more');
+    if (C.move(b, c.pokemonUUID, 2) !== 'none') bad('a box you do not have');
+    const first = C.read(b.box[0], b);
+    if (C.move(b, first.pokemonUUID, 1) !== 'ok' || C.get(b, first.pokemonUUID).box !== 1 || C.inBox(b, 0) !== 499) bad('a move');
+    if (C.move(b, c.pokemonUUID, 0) !== 'ok' || 'b' in b.box[b.box.length - 1]) bad('back to box 1 drops the field');
+    const j = { boxCount: 3, box: [{ u: 'AAAAAAAAAAAAAAAAAAAAAA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, b: 9 }] }; C.clean(j); if (j.box[0].b !== 2) bad('a box past your count is clamped');
+    console.log('8 display labels and species view; 9 boxes: 500 each, overflow to the next, moves, clean'); }
+
+  // 10. real normalizeTeam: copies on a team
+  { const D2 = G.DB; D2.playAsGuest(); const t = D2.save; D2.grant(7, 'starter'); t.partner = 7; D2.normalizeTeam(t);
+    for (let i = 0; i < 3; i++) C.add(t, { dex: 7, from: 'debug' }, rnd);
+    const ids = C.all(t).map(c => c.pokemonUUID);
+    const slot = i => ({ dex: 7, shiny: false, uid: ids[i] });
+    t.team = [slot(0), slot(1), slot(2), null, null, null]; D2.normalizeTeam(t);
+    if (!same(t.team.slice(0, 3).map(x => x && x.uid), ids.slice(0, 3))) bad('three copies of one species keep their slots ' + JSON.stringify(t.team));
+    t.team = [slot(0), slot(1), slot(1), null, null, null]; D2.normalizeTeam(t);
+    if (!t.team[0] || t.team[1].uid !== ids[1] || t.team[2] !== null) bad('one copy cannot fill two slots ' + JSON.stringify(t.team));
+    D2.grant(25, 'starter'); D2.normalizeTeam(t); const pika = C.all(t).find(c => c.speciesID === 25).pokemonUUID;
+    t.team = [slot(0), { dex: 25, shiny: false, uid: pika }, null, null, null, null]; t.partner = 25; D2.normalizeTeam(t);
+    if (t.team[0].uid !== pika || t.team[1] !== null) bad('a new lead already on the team moves up ' + JSON.stringify(t.team));
+    t.team = [{ dex: 25, shiny: false }, { dex: 25, shiny: false }, null, null, null, null]; D2.normalizeTeam(t);
+    if (t.team[0].uid !== pika || t.team[1] !== null) bad('a repeat with no copy of its own is emptied ' + JSON.stringify(t.team));
+    t.partner = 7; t.team = [slot(2), slot(0), null, null, null, null]; D2.normalizeTeam(t);
+    if (t.team[0].uid !== ids[2] || t.team[1].uid !== ids[0]) bad('the chosen copy stays the lead ' + JSON.stringify(t.team));
+    console.log('10 teams: the same species many times, never one copy twice, the lead keeps its copy'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

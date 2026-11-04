@@ -210,6 +210,62 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* A name with its gender symbol: a long name shortens, the symbol stays. */
+.ros-nm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ros-nm .nm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ros-gender {
+  flex: none;
+  line-height: 0;
+}
+#ros-grid .cell .ros-nm {
+  justify-content: center;
+  max-height: calc(100% - 52px);
+}
+/* The name in a box cell reads bottom to top; the symbol stays upright. */
+#ros-grid .cell .ros-gender {
+  transform: rotate(180deg);
+}
+/* Row 3 of the filters: Pokedex, Box 1, Box 2... */
+.ros-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ros-tab {
+  padding: 5px 14px;
+  border: 1px solid rgba(244, 248, 255, 0.35);
+  background: rgba(0, 33, 57, 0.5);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.ros-tab:hover,
+.ros-tab:focus-visible {
+  border-color: var(--bw-title);
+  outline: none;
+}
+.ros-tab.on {
+  background: var(--bw-title);
+  border-color: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.ros-tab.drop {
+  border-color: var(--gold);
+  background: rgba(255, 210, 63, 0.3);
+}
 .ros-slot.empty .rinfo b {
   color: var(--muted);
   font-weight: 400;
@@ -225,20 +281,12 @@
   padding: 2px 9px;
   font-size: 15px;
 }
-/* The shiny icon is the Normal / Shiny switch: dim when off. One art pixel in from the corner. */
+/* The shiny icon marks a shiny copy. One art pixel in from the corner. */
 .ros-slot .rsh {
   position: absolute;
   top: 17px;
   right: 30px;
-  padding: 0;
-  border: 0;
-  background: none;
   line-height: 0;
-  cursor: pointer;
-  opacity: 0.35;
-}
-.ros-slot .rsh.on {
-  opacity: 1;
 }
 /* Upgrade, in the bottom-right corner like the shiny star in the top-right: the label, then the arrow turned up. */
 .ros-slot .rupg {
@@ -314,7 +362,8 @@
 .ros-row b {
   margin-left: auto;
   font-weight: 400;
-  color: var(--muted);
+  color: #fff;
+  text-align: right;
 }
 .ros-row .rtypes {
   display: flex;
@@ -337,7 +386,7 @@
 }
 .ros-detail .stat-hex {
   display: block;
-  width: 88% !important;
+  width: 100% !important;
   height: auto !important;
   margin: 0 auto;
 }
@@ -374,7 +423,10 @@
 }
 @media (max-height: 820px) {
   .ros-detail .stat-hex {
-    width: 66% !important;
+    width: 84% !important;
+  }
+  .ros-detail .ros-row {
+    padding: 5px 14px;
   }
 }
 

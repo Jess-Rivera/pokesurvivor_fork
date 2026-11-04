@@ -12,7 +12,8 @@ IVs, natures, gender and EVs belong to one copy of a Pokemon, not to a species, 
 - [Approved] Gender is mainly for fun, with no combat effect.
 - [Approved] The box lives on the Team screen, in place of a single unified scroll, with one tab row: Pokedex, Box 1, Box 2 and so on. A player starts with 2 boxes and can buy up to 3 more.
 - [Approved] 500 copies per box, so a complete collection fits: 2 boxes hold every normal species (966), 4 also hold every shiny, and 5 hold 2500 copies.
-- [Approved] Gender, height and weight are visible to players in the box, since being fun is their job. A copy's other no-effect values stay debug-only.
+- [Approved] Gender, height, weight, nature, ability and IVs are visible on the Team screen (Jess, 2026-11-03, replaces hiding IVs, nature and ability). Friendship and the other no-effect values stay debug-only.
+- [Approved] Team screen display: gender at the end of the name on the team slot and detail window. Detail rows in this order under the hexagon: Nature, Ability, Height, Weight, then the moves box. The hexagon shows a see-through white base shape with a type-colored band over it showing only the IV increase. The band draws one IV as one base point, a simplification: in the formula a base point counts double at every level. Each stat's number is the base in a larger font with "+iv" in a smaller font right beside it, and the stat text is a little bigger.
 - [Approved] The copy structure below, including abilitySlot and the upgrades map.
 - [Approved] Clean save checkpoint: only playtesters have saves and this is a huge change, so saves from before the box are not migrated. The old save is kept in the browser as a backup (localStorage ps.backup.prebox.<account>), the player starts over, and a one-button notice says why.
 - [Approved] personalityValue is dropped.
@@ -44,6 +45,7 @@ Rolled means set once when the copy is created. Default means left out of the sa
 | friendship | Integer, 0 to 255 | Future feature | The species' base_happiness | None |
 | startingMove | Move id | Future override | Empty, uses G.startMoveOf | Move setup |
 | upgrades | Map of upgrade id to rank | Upgrade catalog | Empty | None until the catalog is wired |
+| box | Box number, from the first | First box with room, or player | First box | Box tabs |
 | isFavorite | Boolean | Player | false | Box sort and filter |
 | isLocked | Boolean | Player | false | Blocks selling |
 
@@ -124,7 +126,7 @@ No key names is smallest, but the position of every value becomes permanent, whi
 
 ## Build order (branch feature/pokeboxes)
 1. BUILT, awaiting feel-test. Copies, and a clean save checkpoint instead of migrating old saves. Keep `owned` as the Pokedex record. Team slots keep dex and shiny and gain the UUID. Debug viewers: G.Debug.copies, G.Debug.copy. Until step 3, G.Copies.fill turns new `owned` and `shiny` entries into copies; step 3 creates copies at the source and removes fill, or a sold copy would come back.
-2. Box screen: the tab row on the Team screen (Pokedex, Box 1, Box 2, and so on), choosing a specific copy for a team slot, repeats allowed on a team.
+2. BUILT, awaiting feel-test. Box screen: the tab row on the Team screen (Pokedex, Box 1, Box 2, and so on), choosing a specific copy for a team slot, repeats allowed on a team, the display rulings above. Adds a `box` field to a copy (which box it sits in, default the first) and a box count to the save (2 at the start).
 3. New copies from gacha, rescues, wild shinies and starters; selling; buying boxes.
 4. Stats: IVs and natures apply. First step that changes balance.
 5. EVs (docs/SPEED-IVEV-SLICE.md numbers need redoing with the 0.7x to 1.3x speed bounds).
