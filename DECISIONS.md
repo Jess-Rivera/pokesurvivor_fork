@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-03, Pokebox: unique copies of a Pokemon (Jess)
+The box comes before IVs and EVs. Every Pokemon is its own copy with a UUID, and IVs, nature, gender and EVs live on the copy, replacing the per-species storage of 2026-10-17. Natures now affect stats, replacing "nature ignored". Many copies of a species are allowed, shinies included, and on one team. Pulls always give a copy; selling is from the box or the gacha results. The box is a row of tabs on the Team screen: 2 boxes at the start, up to 3 more bought, any cap is per box. personalityValue dropped. Ability roll 5% hidden, the rest split evenly. Values with no effect yet are debug-only.
+Canonical: docs/proposals/pokebox-plan.md (until built), then docs/COMBAT-RULES.md "Stats and HP"
+
 ## 2026-11-03, Rocks and small chests break in 2 to 3 hits (Jess)
 A rock and a small chest take roughly 2 to 3 hits of an Ember, Water Gun or Tackle with no upgrades. Flat 6 HP each: 3 hits at level 1, 2 by level 10, 1 from about level 15 to 20, since prop damage grows with level.
 Canonical: BALANCE.md "Drops / economy"

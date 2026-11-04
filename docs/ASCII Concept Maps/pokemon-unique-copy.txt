@@ -1,0 +1,33 @@
+Pokebox/Multiple copies of Pokemon                                              
+                                                                                
+Items a pokemon a single copy of a pokemon will need{                           
+        pokemonUUID                UUID                  based ted at creation  
+        speciesID                  Dex #                 lookup value           
+        personalityValue           random 32bit value    generated at creation  
+        originalTrainerID          user UUID             based on original owner
+        nickname                   string                changeable value       
+        dateObtained               timestamp             generated at creation  
+        obtainedMethod             Enum                  gacha, trade           
+        nature                     Enum                  generated at creation  
+        iv.hp                      Interger              generated at creation  
+        iv.attack                  Interger              generated at creation  
+        iv.specialAttack           Interger              generated at creation  
+        iv.defense                 Interger              generated at creation  
+        iv.specialDefense          Interger              generated at creation  
+        iv.speed                   Interger              generated at creation  
+        gender                     Enum                  generated at creation  
+        ability                    String                generated at creation  
+        isShiny                    boolean               generated at creation  
+        ev.hp                      Interger              earned in game         
+        ev.attack                  Interger              earned in game         
+        ev.specialAttack           Interger              earned in game         
+        ev.defense                 Interger              earned in game         
+        ev.specialDefense          Interger              earned in game         
+        ev.speed                   Interger              earned in game         
+        friendship                 Interger              earned in game         
+        startingMove               moveID                selected               
+        upgradesPicked             Array                 via upgrade menu       
+        isFavorite                 boolean               changeable value       
+        isLocked                   boolean               changeable value       
+        form                       enum                  generated at creation                       
+}                                                                               

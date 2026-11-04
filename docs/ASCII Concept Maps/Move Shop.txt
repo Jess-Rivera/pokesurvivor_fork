@@ -1,0 +1,26 @@
+Shop Keep for Moves                                                
+ │                                                                 
+ ├─►New moves are no longer provided via                           
+ │    upgrade choice dialog on levelup                             
+ │                                                                 
+ ├─►At a random time between gyms, the Pokemart                    
+ │    will spawn. This will pause the game same                    
+ │    way as a choice upgrade will.                                
+ │                                                                 
+ ├─►Pokemart will open a shop UI. [placeholder upgrade style]      
+ │                                                                 
+ ├─►The shop will provide a random selection of moves              
+ │  ├►This is temporarily just based on type                       
+ │  │   So same type + normal                                      
+ │  └►Eventually it will be based on learn set                     
+ │                                                                 
+ ├─►In the shop you pick a pokemon slot to be active and           
+ │    it will list available moves. When you buy that move         
+ │    it will go into the first empty slot. If no slot exists      
+ │    you will be prevented from buying the item.                  
+ │                                                                 
+ └─►We'll start pricing moves at 5 x world level x character level.
+    └►Examples:                                                    
+      ├►World Level 1, Char Level 1: New move is 5gold             
+      ├►World level 10, Char Level 13: New move is 650 gold        
+      └►world level 50, char level 53: new move is  13250 gold     
