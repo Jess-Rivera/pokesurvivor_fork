@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-03',
+    title: ['Your save starts fresh', 'Your save starts fresh'],
+    chg: [
+      [
+        'Every Pokemon is becoming its own individual, so this update needs a clean save. Your old save is kept in this browser as a backup.',
+        'Every Pokemon is becoming its own individual, so this update needs a clean save. Your old save is kept in this browser as a backup.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
     title: ['Dropped items show their real sprite', 'Dropped items show their real sprite'],
     fix: [
       [

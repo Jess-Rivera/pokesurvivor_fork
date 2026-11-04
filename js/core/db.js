@@ -29,7 +29,8 @@ G.DB = (() => {
     K_SES = 'ps.session',
     K_SAVE = 'ps.save.';
   const K_CLOUD = 'ps.cloud.',
-    K_MIGRATED = 'ps.migrated.';
+    K_MIGRATED = 'ps.migrated.',
+    K_PREBOX = 'ps.backup.prebox.'; // a save from before the Pokebox, kept when it is replaced by a clean one
   const VERSION = 3;
   const START_COINS = 500;
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
@@ -42,6 +43,7 @@ G.DB = (() => {
   let guest = false;
   let save = null;
   let storageOk = true;
+  let resetNotice = false; // this load replaced a pre-Pokebox save; the game says so once
 
   // ---------------- safe local storage ----------------
 
@@ -128,6 +130,8 @@ G.DB = (() => {
       },
       teamItems: {}, // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
+      box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
+      trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
     return save;
@@ -175,6 +179,7 @@ G.DB = (() => {
       for (const coll of ['owned', 'shiny']) {
         for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
       }
+    if (G.Copies) G.Copies.clean(s);
     // Shortcuts: 4 slots with a move that exists (or null), no repeats.
     if (s.pbind && typeof s.pbind === 'object') {
       for (const d of Object.keys(s.pbind)) {
@@ -221,7 +226,7 @@ G.DB = (() => {
   const TEAM_SIZE = 6;
 
   /**
-   * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny } or null.
+   * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny, uid } or null (uid = the copy in the slot, G.Copies).
    *   - older saves (a short, compact list or nothing at all) load into the
    *     first slots, padded with empty ones;
    *   - a Pokemon that does not exist, or that repeats, becomes an empty slot;
@@ -230,6 +235,7 @@ G.DB = (() => {
    * Safe to call as often as needed (it is called on load, on merge and on commit).
    */
   function normalizeTeam(s) {
+    if (G.Copies) G.Copies.fill(s);
     const src = Array.isArray(s.team) ? s.team : [];
     const seen = new Set();
     const out = [];
@@ -241,13 +247,16 @@ G.DB = (() => {
         continue;
       }
       seen.add(t.dex);
-      out.push({ dex: t.dex, shiny: !!t.shiny });
+      out.push(t.uid ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : { dex: t.dex, shiny: !!t.shiny });
     }
     if (s.partner != null) {
       for (let i = 1; i < TEAM_SIZE; i++) if (out[i] && out[i].dex === s.partner) out[i] = null;
-      out[0] = { dex: s.partner, shiny: !!s.partnerShiny };
+      const lead = { dex: s.partner, shiny: !!s.partnerShiny };
+      if (out[0] && out[0].uid) lead.uid = out[0].uid;
+      out[0] = lead;
     }
     s.team = out;
+    if (G.Copies) G.Copies.linkTeam(s);
   }
 
   /**
@@ -358,7 +367,14 @@ G.DB = (() => {
 
   function loadLocal(k, name) {
     const s = read(K_SAVE + k);
-    return s ? migrate(s, name) : newSave(name);
+    if (!s) return newSave(name);
+    if (Array.isArray(s.box)) return migrate(s, name);
+    // Clean save checkpoint (Jess, 2026-11-03): a save from before the Pokebox is not migrated. It is kept aside and the player starts over.
+    if (!read(K_PREBOX + k)) write(K_PREBOX + k, s);
+    resetNotice = true;
+    const fresh = newSave(name);
+    write(K_SAVE + k, fresh);
+    return fresh;
   }
 
   function beginLocal(k, name) {
@@ -1043,6 +1059,12 @@ G.DB = (() => {
     setName,
     upgradesOf,
     normalizeTeam,
+    /** True once if this load replaced a pre-Pokebox save with a clean one. */
+    takeResetNotice() {
+      const v = resetNotice;
+      resetNotice = false;
+      return v;
+    },
     onSync(fn) {
       listeners.add(fn);
     },

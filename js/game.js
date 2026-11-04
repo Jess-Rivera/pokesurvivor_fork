@@ -1505,8 +1505,15 @@ G.Flow = {
     G.Audio.music('village');
     G.LoginUI.open();
   },
-  afterLogin() {
+  async afterLogin() {
     G.Audio.music('village');
+    if (G.DB.takeResetNotice())
+      await G.UI.ask('This update changes how every Pokemon is stored, so your save starts fresh.', {
+        title: 'New save needed',
+        ok: 'OK',
+        note: 'Your old save is kept in this browser as a backup.',
+        noCancel: true,
+      });
     if (!G.DB.save.partner) G.TestUI.start();
     else this.goMenu();
   },

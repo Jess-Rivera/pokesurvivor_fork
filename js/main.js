@@ -21,6 +21,8 @@
     'Stages',
     'Upgrades',
     'Evolvable',
+    'SpeciesTraits',
+    'Copies',
     'Items',
     'Drops',
     'World',

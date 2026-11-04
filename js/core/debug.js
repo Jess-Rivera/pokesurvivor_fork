@@ -27,6 +27,8 @@
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
  *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
+ *   G.Debug.copies(dex)  list your Pokemon copies, or one species' (no arg: all), with the box size in the save
+ *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -965,6 +967,51 @@ G.Debug = (() => {
 
   /** Slice 5b team-wide cards (?dev): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
    *  'vitamins:atk' and so on; an HP Vitamin refreshes every member's max HP). No arguments: prints the store and every card id. */
+  function copies(dex) {
+    if (!on || !G.DB.save) return false;
+    const save = G.DB.save,
+      list = G.Copies.all(save).filter((c) => dex == null || c.speciesID === dex);
+    console.table(
+      list.map((c) => ({
+        name: (G.DEX_BY[c.speciesID] || {}).name,
+        nickname: c.nickname,
+        shiny: c.isShiny,
+        gender: c.gender,
+        nature: c.nature,
+        iv: c.iv.join(' '),
+        ability: c.ability,
+        height: +c.heightM.toFixed(2),
+        weight: +c.weightKg.toFixed(1),
+        from: c.obtainedMethod,
+        uuid: c.pokemonUUID,
+      }))
+    );
+    console.log(
+      '[Debug] ' +
+        list.length +
+        ' of ' +
+        save.box.length +
+        ' copies. Box ' +
+        JSON.stringify(save.box).length +
+        ' bytes, whole save ' +
+        JSON.stringify(save).length +
+        ' bytes.'
+    );
+    return list.length;
+  }
+
+  function copy(id) {
+    if (!on || !G.DB.save) return false;
+    const save = G.DB.save;
+    let c = null;
+    if (typeof id === 'string') c = G.Copies.get(save, id);
+    else if (id != null) c = G.Copies.all(save).find((x) => x.speciesID === id) || null;
+    else if (save.team[0] && save.team[0].uid) c = G.Copies.get(save, save.team[0].uid);
+    if (!c) console.warn('[Debug] no copy found for ' + id);
+    else console.log('[Debug] ' + (G.DEX_BY[c.speciesID] || {}).name, c);
+    return c;
+  }
+
   function cards(id, n = 1) {
     if (!on) {
       console.warn('[Debug] add ?dev to the URL to enable debug tools.');
@@ -1042,6 +1089,8 @@ G.Debug = (() => {
     noSpawn,
     spawnOn,
     hitbox,
+    copies,
+    copy,
     newcombat,
     cards,
     movechecker,

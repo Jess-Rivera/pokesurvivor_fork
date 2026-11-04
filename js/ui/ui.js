@@ -86,7 +86,7 @@ G.UI = (() => {
   /** tone: 'bad' = red toast (a benched Pokemon fainted, slice E2b). */
   /**
    * In-game confirm dialog (the matching-UI replacement for the browser confirm()). Resolves true on Confirm / Enter, false on Cancel / Esc.
-   * @param o  { title, ok, cancel, note }  (note = a small second line, e.g. what you will have left)
+   * @param o  { title, ok, cancel, note, noCancel }  (note = a small second line, e.g. what you will have left; noCancel = a notice with one button)
    * It is NOT one of the SCREENS, so it opens on top of the current screen and leaves it as it was. A second call cancels the first.
    */
   let askDone = null;
@@ -101,6 +101,7 @@ G.UI = (() => {
       $('ask-note').textContent = o.note || '';
       ok.textContent = o.ok || 'Confirm';
       no.textContent = o.cancel || 'Cancel';
+      no.style.display = o.noCancel ? 'none' : '';
       const onKey = (e) => {
         if (e.key !== 'Enter' && e.key !== 'Escape') return;
         e.preventDefault();

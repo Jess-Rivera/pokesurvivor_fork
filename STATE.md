@@ -10,7 +10,7 @@ Last updated: 2026-11-03 (Claude Code, home). feature/item-rework-v2 is merged t
 - PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
 
 ## Next
-1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Copy structure approved; nothing built. Step 1 no-code plan is with Jess, waiting on his OK.
+1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 BUILT, uncommitted, awaiting Jess's feel-test: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration (old local saves are backed up and start over). Next: no-code plan for step 2, the box screen.
 2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
 3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
 4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).

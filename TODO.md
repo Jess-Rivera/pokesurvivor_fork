@@ -161,6 +161,7 @@ live queue, cross-reference the issue number.
   - Slice 7b-2a (2026-11-01): the legacy co-op hooks are gone from the game side (G.Combat.ghostCast / ghostOrbit, G.Moves.stackTotal, the move instance fields). js/net/coop.js still calls them and must be rewritten with this design.
 - Spikes on an owner faint (slice 4d decision B, 2026-10-30): a Spikes mine has no ownerDeath end, so it outlives a fainted owner. Harmless in single player (a faint ends the run); decide in the MP phase whether a downed co-op player's mines stay.
 - Co-op levelStart (game.js) has no empty-offer guard (solo maybeLevelUp does since 2026-10-18); add it when MP resumes.
+- Pokebox and cloud saves (2026-11-03): merge() in js/core/db.js must union save.box by UUID (today the newer box wins, so rolled values could change), and a pre-box cloud save skips the local clean save checkpoint (keeps its progress, gets freshly rolled copies). Decide both when the cloud phase starts. Detail: docs/proposals/pokebox-plan.md.
 - Co-op pickup radii (2026-11-03): the net state sends only Player.magnet (the XP radius). Player.itemMagnet is not synced, so a remote player's Magnet shrine x4 does not reach other machines for non-XP pickups. Add it to the snapshot when MP resumes.
 - Firebase layer (auth, Firestore, RTDB, cloud saves)
 - Cloudflare TURN worker

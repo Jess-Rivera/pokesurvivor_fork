@@ -14,6 +14,7 @@ IVs, natures, gender and EVs belong to one copy of a Pokemon, not to a species, 
 - [Approved] 500 copies per box, so a complete collection fits: 2 boxes hold every normal species (966), 4 also hold every shiny, and 5 hold 2500 copies.
 - [Approved] Gender, height and weight are visible to players in the box, since being fun is their job. A copy's other no-effect values stay debug-only.
 - [Approved] The copy structure below, including abilitySlot and the upgrades map.
+- [Approved] Clean save checkpoint: only playtesters have saves and this is a huge change, so saves from before the box are not migrated. The old save is kept in the browser as a backup (localStorage ps.backup.prebox.<account>), the player starts over, and a one-button notice says why.
 - [Approved] personalityValue is dropped.
 - [Approved] Ability roll: 5% hidden, the rest split evenly between normal abilities.
 - [Approved] startingMove is an override for a future feature: empty on every copy, and nothing can change it for now.
@@ -122,7 +123,7 @@ The Snorlax above, 190 bytes:
 No key names is smallest, but the position of every value becomes permanent, which makes adding fields riskier. Compact keeps named fields, and a new field is simply absent from old saves.
 
 ## Build order (branch feature/pokeboxes)
-1. Copies and migration, no visible change. Keep `owned` as the Pokedex record. Team slots keep dex and shiny and gain the UUID. Back up the old save first. Migration is safe to run twice. Add the debug viewer.
+1. BUILT, awaiting feel-test. Copies, and a clean save checkpoint instead of migrating old saves. Keep `owned` as the Pokedex record. Team slots keep dex and shiny and gain the UUID. Debug viewers: G.Debug.copies, G.Debug.copy. Until step 3, G.Copies.fill turns new `owned` and `shiny` entries into copies; step 3 creates copies at the source and removes fill, or a sold copy would come back.
 2. Box screen: the tab row on the Team screen (Pokedex, Box 1, Box 2, and so on), choosing a specific copy for a team slot, repeats allowed on a team.
 3. New copies from gacha, rescues, wild shinies and starters; selling; buying boxes.
 4. Stats: IVs and natures apply. First step that changes balance.
@@ -135,4 +136,4 @@ No key names is smallest, but the position of every value becomes permanent, whi
 - [Open] EV spending, earning, fill rate and Speed: see the IV and EV plan questions, to settle at step 5.
 
 ## Deferred hooks (cloud and multiplayer phase)
-Cloud save merge must union copies by UUID: until it does, merging two versions keeps only the newer box. Co-op reads species only. A Firestore document is limited to 1 MB, so check the save size against it if saves move to the cloud.
+Cloud save merge must union copies by UUID: until it does, merging two versions keeps only the newer box. The clean save checkpoint runs on local saves only: a pre-box cloud save would keep its progress and get freshly rolled copies, so decide what it should do when the cloud phase starts. Co-op reads species only. A Firestore document is limited to 1 MB, so check the save size against it if saves move to the cloud.

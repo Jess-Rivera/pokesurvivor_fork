@@ -498,3 +498,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): XP set is XP orbs only; Dowsing Machine +0.5 when built; steps 4 to 6 parked, happy with the item count; merge to main.
 - Found: dropped items looked up their icon by item id, so about 57 showed the fallback star and 12 an old hand-drawn icon. Also handed over once without Prettier (the check.js format line is warn-only).
 - Verified: check.js 32/32, format ok, smoke-ui (1 of 4 runs failed on a Charge.png request, cause not found), file:// probes and screenshots. Jess feel-tested: good. Stopped with the merge to main in his hands.
+
+## 2026-11-03, Pokebox step 1: unique copies (Claude Code, home, feature/pokeboxes)
+- Built: G.Copies (js/systems/copies.js), save.box in compact form, trainer id, team slots linked by UUID, generated js/data/species-traits.js, G.Debug.copies and G.Debug.copy. New Pokemon become copies through G.Copies.fill until step 3.
+- Decided (Jess): clean save checkpoint instead of migrating. Old local saves are backed up, the player starts over, a one-button notice explains. Copy structure approved, gender, height and weight visible in the box, 500 per box, tab row Pokedex then Box 1, Box 2.
+- Found: tools/items_report.js --check failed on CRLF checkouts with identical content; it now ignores line endings. Nothing in the game reads IVs, natures or sizes yet.
+- Verified: check.js 33/33, format ok, smoke-ui, file:// probe from a real old-format save (notice, backup, new-player test, gacha, run, reload). 2500 copies: 278 KB box, about 1.8 ms per save. Stopped for the feel-test.
