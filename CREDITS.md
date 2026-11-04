@@ -131,10 +131,13 @@ downloaded once and stored in `js/data/pokedex.js`.
 
 ## Font
 
+[Monogram](https://menez.io/) by Vinicius Menezio (Creative Commons Zero v1.0
+Universal, as stated in the font file), the main game font since 2026-11-03.
+
+No longer used in the game, kept in `assets/fonts/`:
 [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL Open Font License 1.1,
-license in `assets/fonts/OFL.txt`). The game uses a modified version,
-"Pixelify PS", with the numbers redrawn to tell them apart better
-(`tools/make_font.py`).
+license in `assets/fonts/OFL.txt`) and a modified version, "Pixelify PS", with the
+numbers redrawn to tell them apart better (`tools/make_font.py`).
 
 ## Trademark
 

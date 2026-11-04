@@ -116,7 +116,7 @@
 }
 .st-h {
   margin: calc(18 * var(--u)) 0 calc(6 * var(--u)) calc(4 * var(--u));
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(19 * var(--u)), 11px);
   color: var(--bw-sub);
@@ -176,7 +176,7 @@
   padding: 0;
   border: 0;
   background: none;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(16 * var(--u)), 10px);
   color: #a3a3b3;
@@ -202,7 +202,7 @@
   color: #fff;
 }
 .st-info {
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(16 * var(--u)), 10px);
   white-space: nowrap;
@@ -280,7 +280,7 @@
 }
 .st-note {
   margin: calc(8 * var(--u)) calc(4 * var(--u)) 0;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(15 * var(--u)), 10px);
   line-height: 1.45;
@@ -293,7 +293,7 @@
   margin: 0 0 calc(7 * var(--u));
   padding: calc(10 * var(--u)) calc(16 * var(--u));
   background: rgba(0, 99, 140, 0.35);
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(15 * var(--u)), 10px);
   line-height: 1.55;
@@ -316,7 +316,7 @@
   min-width: 0;
   padding: calc(14 * var(--u)) calc(18 * var(--u));
   background: rgba(0, 99, 140, 0.35);
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   font-weight: 400;
   font-size: max(calc(17 * var(--u)), 11px);
   line-height: 1.5;

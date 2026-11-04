@@ -25,7 +25,7 @@
     2px calc(100% - 20px),
     2px 20px
   );
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'MonogramUI', monospace;
   color: #fff;
   text-shadow: 2px 2px 0 var(--shadow);
   animation: bw-pop 0.12s ease-out;

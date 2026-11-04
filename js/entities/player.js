@@ -1179,7 +1179,7 @@ G.Player = class Player {
       if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
         const t = performance.now() / 1000;
         ctx.save();
-        ctx.font = '800 9px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '800 9px MonogramUI,"Segoe UI",sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#cfc6ff';
         ctx.strokeStyle = 'rgba(0,0,0,.7)';
@@ -1215,7 +1215,7 @@ G.Player = class Player {
           slow: 'SLW',
         };
         ctx.save();
-        ctx.font = '800 7px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '800 7px MonogramUI,"Segoe UI",sans-serif';
         ctx.textAlign = 'center';
         const gap = 2,
           h = 9,
@@ -1262,7 +1262,7 @@ G.Player = class Player {
     }
     if (this.tag) {
       ctx.save();
-      ctx.font = '700 7px Pixelify,"Segoe UI",sans-serif';
+      ctx.font = '700 7px MonogramUI,"Segoe UI",sans-serif';
       ctx.textAlign = 'center';
       const y = this.y - this.bodyH - 8;
       ctx.lineWidth = 2.5;
@@ -1271,7 +1271,7 @@ G.Player = class Player {
       ctx.fillStyle = this.dead ? '#ff8a96' : this.tagColor || '#fff';
       ctx.fillText(this.tag, this.x, y);
       if (this.dead) {
-        ctx.font = '700 6px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '700 6px MonogramUI,"Segoe UI",sans-serif';
         ctx.strokeText(this.revLabel || '', this.x, y - 8);
         ctx.fillText(this.revLabel || '', this.x, y - 8);
       }

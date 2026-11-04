@@ -512,3 +512,5 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Verified: check.js, format, smoke-ui, file:// probe (tabs, drags, swap, free, commit, reload, a run swapping between duplicates). Stopped for the feel-test.
 
 - 2026-11-03 tweaks after the step 2 feel-test (Jess): the IV band draws 2 IVs per base point at about 35% opacity, the Nature row shows only the name, the detail header gender icon is 10 px.
+
+- 2026-11-03 game font is now Monogram (MonogramUI face in css/style.css with size-adjust 150%, its middle dot from the fallback font). PokeBW and Korataki screens unchanged. Pixelify faces removed, files kept. Open: the old credit string at dev.html:330 and its lang-en key still name Pixelify.

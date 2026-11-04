@@ -109,7 +109,7 @@
     if (broken()) return;
     G.I18n.startDom();
     // Wait for the pixel font so the UI does not jump when it loads.
-    const ready = document.fonts && document.fonts.load ? document.fonts.load('16px Pixelify') : Promise.resolve();
+    const ready = document.fonts && document.fonts.load ? document.fonts.load('16px MonogramUI') : Promise.resolve();
     ready.catch(() => {}).then(() => G.Flow.boot());
   }
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', boot);

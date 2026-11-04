@@ -1,19 +1,17 @@
 /* ============ PokéSurvivor — interfaz estilo Mundo Misterioso ============
  * Cajas azules con doble borde blanco, como los menús de PMD, y fuente pixel
- * local (Pixelify Sans, OFL).
+ * local (Monogram).
  */
-/* Pixelify Sans con los números redibujados para que no se confundan (tools/make_font.py). */
+/* The game font (Jess, 2026-11-03). Monogram draws small for its size, so size-adjust makes every font size in the CSS and on canvases
+   read about as large as it did with the old font, and line heights stay about the same. It has one weight, used for all of them. */
 @font-face {
-  font-family: 'Pixelify';
-  src: url('../assets/fonts/PixelifyPS-400.ttf') format('truetype');
-  font-weight: 400 550;
+  font-family: 'MonogramUI';
+  src: url('../assets/fonts/monogram-extended.ttf') format('truetype');
+  font-weight: 100 900;
   font-display: block;
-}
-@font-face {
-  font-family: 'Pixelify';
-  src: url('../assets/fonts/PixelifyPS-700.ttf') format('truetype');
-  font-weight: 551 900;
-  font-display: block;
+  size-adjust: 150%;
+  unicode-range:
+    U+0-B6, U+B8-10FFFF; /* its middle dot sits high and reads as a stray mark, so that one character uses the next font */
 }
 @font-face {
   font-family: 'Monogram';
@@ -40,7 +38,7 @@
   --r3: #4fb4ff;
   --r4: #c47bff;
   --r5: #ffcb3d;
-  --font: 'Pixelify', 'Segoe UI', system-ui, sans-serif;
+  --font: 'MonogramUI', 'Segoe UI', system-ui, sans-serif;
 }
 
 * {
