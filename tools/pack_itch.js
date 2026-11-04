@@ -2,9 +2,9 @@
  *   node tools/pack_itch.js
  *
  * The zip has index.html at its ROOT (itch requires a root-level index.html)
- * and contains ONLY the files the browser build needs at runtime. Everything
- * else (dev.html, js/ source, docs, tools, configs, raw art, service worker)
- * is excluded.
+ * and contains the built files plus css/ and the WHOLE assets/ folder (Jess 2026-11-04:
+ * ship everything, staged art included, rather than maintain a ship list). Everything
+ * else (dev.html, js/ source, docs, tools, configs, service worker) is excluded.
  *
  * Flags:
  *   --no-build   Skip running tools/build.js (use the current index.html / app.min.js as-is).
@@ -44,15 +44,7 @@ if (!NO_BUILD) {
 // Individual files that must be in the zip (relative to ROOT).
 const INCLUDE_FILES = ['index.html', 'js/app.min.js', 'version.json', 'manifest.webmanifest', 'favicon.ico'];
 // Whole directories shipped as-is.
-const INCLUDE_DIRS = [
-  'css',
-  'assets/fonts',
-  'assets/icons',
-  'assets/items',
-  'assets/pokemon',
-  'assets/projectiles',
-  'assets/tileset',
-];
+const INCLUDE_DIRS = ['css', 'assets'];
 if (WITH_SW) INCLUDE_FILES.push('sw.js');
 
 // --- 3. Preflight: every listed path must exist --------------------------
