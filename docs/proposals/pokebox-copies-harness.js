@@ -436,7 +436,15 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     const other = mt(25, { box: 1 }); want(C.repeatsIn(t, 0), [p1, p3, p4], 'a Pikachu in Box 2 does not change Box 1');
     want(C.repeatsIn(t, 1), [], 'a lone copy in Box 2 is not a repeat');
     if (C.get(t, lone) === null || C.get(t, shinyP) === null || C.get(t, other) === null) bad('repeatsIn only reads');
-    console.log('21 bulk sell: each once, team / pending / locked / favorite skipped; Select repeats keeps team, locked, favorite, best IVs, oldest, per box, shinies apart'); }
+    // Pokebox step 5 F9: the copy with more EVs is kept over better IVs; equal EVs fall back to IVs, then the oldest.
+    { const q = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+      const mq = (o) => { const c = C.add(q, { dex: 25, from: 'debug' }, rnd); c.i = o.i; c.t = o.t; if (o.e) c.e = o.e; return C.longId(c.u); };
+      const hiIv = mq({ i: '777777', t: 100 }), evd = mq({ i: 'AAAAAA', t: 300, e: [4, 0, 0, 0, 0, 0] }), plain = mq({ i: 'BAAAAA', t: 200 });
+      const rec = id => q.box.find(c => C.longId(c.u) === id);
+      want(C.repeatsIn(q, 0), [hiIv, plain], 'the copy with 4 EVs is kept over one with 31 in every IV (F9)');
+      rec(hiIv).e = [0, 0, 4, 0, 0, 0]; want(C.repeatsIn(q, 0), [evd, plain], 'equal EVs (4 and 4): the better IVs are kept');
+      rec(hiIv).i = 'AAAAAA'; want(C.repeatsIn(q, 0), [evd, plain], 'equal EVs and IVs: the oldest is kept'); }
+    console.log('21 bulk sell: each once, team / pending / locked / favorite skipped; Select repeats keeps team, locked, favorite, most EVs, best IVs, oldest, per box, shinies apart'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

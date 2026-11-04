@@ -10,8 +10,8 @@
  * (level cancels), soft-saturated by g(r) toward asymmetric bounds, * BASE_PX px/s.
  * See docs/stat-model-design-notes.md, BALANCE.md, DECISIONS.md.
  *
- * IVs and the nature come from the copy of a Pokemon on the team (pokebox step 4): G.Copies.profileOf builds a profile(),
- * G.Player carries it as statProf. Enemies pass none and play neutral (0 IV, no nature). EVs stay 0 until pokebox step 5.
+ * IVs, EVs and the nature come from the copy of a Pokemon on the team (pokebox steps 4 and 5): G.Copies.profileOf builds a
+ * profile(), G.Player carries it as statProf. Enemies pass none and play neutral (0 IV, 0 EV, no nature).
  * Nature: x1.1 raised, x0.9 lowered, on the final stat, rounded down in whole numbers like the games. HP never.
  */
 G.Stats = (() => {
@@ -25,15 +25,19 @@ G.Stats = (() => {
   const XP_SCALAR = 0.035; // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
   // ---- per-copy stat profile (pokebox step 4) ----
-  // iv: six IVs, nat: six nature multipliers, both in stat order (HP, Atk, Def, SpA, SpD, Spe). HP's nature is always 1.
+  // iv: six IVs, nat: six nature multipliers, ev: six EVs (pokebox step 5), all in stat order (HP, Atk, Def, SpA, SpD, Spe).
+  // HP's nature is always 1.
   const NEUTRAL_PROFILE = Object.freeze({
     iv: Object.freeze([0, 0, 0, 0, 0, 0]),
     nat: Object.freeze([1, 1, 1, 1, 1, 1]),
+    ev: Object.freeze([0, 0, 0, 0, 0, 0]),
   });
-  /** The profile of a read copy (G.Copies.read): its IVs and nature. No copy, or one without six IVs, is neutral. */
+  const clampInt = (v, max) => Math.min(max, Math.max(0, Math.floor(+v) || 0));
+  /** The profile of a read copy (G.Copies.read): its IVs, EVs and nature. No copy, or one without six IVs, is neutral. */
   function profile(copy) {
     if (!copy || !Array.isArray(copy.iv) || copy.iv.length !== 6) return NEUTRAL_PROFILE;
     const iv = copy.iv.map((v) => Math.min(31, Math.max(0, Math.floor(+v) || 0))),
+      ev = [0, 1, 2, 3, 4, 5].map((k) => (Array.isArray(copy.ev) ? clampInt(copy.ev[k], 252) : 0)),
       nat = [1, 1, 1, 1, 1, 1],
       up = copy.natureUp,
       down = copy.natureDown;
@@ -41,7 +45,7 @@ G.Stats = (() => {
       nat[up] = 1.1;
       nat[down] = 0.9;
     }
-    return { iv, nat };
+    return { iv, nat, ev };
   }
 
   // ---- mainline stat core ----
@@ -65,9 +69,10 @@ G.Stats = (() => {
     const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
     return Math.exp(w * Math.tanh((MOVE_K * lr) / w));
   }
-  /** Base Speed stat -> movement px/s. Same for player and enemy. iv / nature: a copy's Speed IV and nature, default neutral. */
-  function speedToPx(baseSpe, iv = 0, nature = 1) {
-    const r = statValue(baseSpe, 50, iv, 0, nature) / statValue(SPEED_MEDIAN, 50);
+  /** Base Speed stat -> movement px/s. Same for player and enemy. iv / nature / ev: a copy's Speed IV, nature and EVs, default
+   *  neutral. */
+  function speedToPx(baseSpe, iv = 0, nature = 1, ev = 0) {
+    const r = statValue(baseSpe, 50, iv, ev, nature) / statValue(SPEED_MEDIAN, 50);
     return BASE_PX * moveTransfer(r);
   }
 
@@ -123,12 +128,14 @@ G.Stats = (() => {
   // atkBase/spaBase = attacker real base Atk/SpA (stats[1]/stats[3]). extraMul folds in the
   // upgrade/buff layer that used to live in pl.atk (atkMul * atk buffs). A status-cat move
   // uses Atk as its attacker stat (arbitrary but stable; its denominator is neutral anyway).
-  // prof: the attacker copy's IVs and nature (profile()); none is neutral. A status-cat move takes neither, like the stat cards.
+  // prof: the attacker copy's IVs, EVs and nature (profile()); none is neutral. A status-cat move takes none, like the stat cards.
   function attackFactor(atkBase, spaBase, level, move, extraMul = 1, prof = null) {
     const cat = moveCat(move),
       p = cat === 'status' || !prof ? NEUTRAL_PROFILE : prof;
     const aStat =
-      cat === 'special' ? spAtk(spaBase, level, p.iv[3], 0, p.nat[3]) : attack(atkBase, level, p.iv[1], 0, p.nat[1]);
+      cat === 'special'
+        ? spAtk(spaBase, level, p.iv[3], p.ev[3], p.nat[3])
+        : attack(atkBase, level, p.iv[1], p.ev[1], p.nat[1]);
     return ((((2 * level) / 5 + 2) * (move.dmg || 0) * aStat) / 50) * extraMul;
   }
 
@@ -200,12 +207,12 @@ G.Stats = (() => {
   // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
   function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1, prof = null) {
     // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
-    // prof: the player copy's IVs and nature (profile()); none is neutral.
+    // prof: the player copy's IVs, EVs and nature (profile()); none is neutral.
     const p = prof || NEUTRAL_PROFILE;
     const stat =
       cat === 'special'
-        ? spDef(playerSpdBase, playerLevel, p.iv[4], 0, p.nat[4])
-        : defense(playerDefBase, playerLevel, p.iv[2], 0, p.nat[2]);
+        ? spDef(playerSpdBase, playerLevel, p.iv[4], p.ev[4], p.nat[4])
+        : defense(playerDefBase, playerLevel, p.iv[2], p.ev[2], p.nat[2]);
     return (factor / Math.max(1, stat * defMul) + 2) * ENEMY_DMG_SCALAR;
   }
 

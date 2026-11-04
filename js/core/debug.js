@@ -32,7 +32,9 @@
  *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
  *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates; stops when the boxes are full. Saved.
  *   G.Debug.fillBoxes(leave)  top your boxes up with Caterpie copies until `leave` places are free (default 0), to test full boxes. Saved.
- *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, no nature) next to this copy
+ *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, 0 EV, no nature) next to this copy
+ *   G.Debug.evbank(hp, atk, def, spa, spd, spe)  set THIS run's six EV banks in EVs (decimals allowed, 3.742) to test the end-of-run
+ *                      allocation without an hour run; no args: logs them. Flags the run as tampered (it still allocates).
  *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
  *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
  *   G.Debug.on         true when ?dev is present.
@@ -1074,7 +1076,7 @@ G.Debug = (() => {
     return added;
   }
 
-  /** The active fighter's six stats at its level and its movement px/s, plain (0 IV, no nature) next to this copy. Before
+  /** The active fighter's six stats at its level and its movement px/s, plain (0 IV, 0 EV, no nature) next to this copy. Before
    *  cards, stages and items. ?dev only (pokebox step 4). */
   function fighter() {
     if (!on) {
@@ -1092,22 +1094,44 @@ G.Debug = (() => {
       names = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
     const rows = names.map((stat, i) => {
       const iv = pl.statIv(i),
+        ev = pl.statEv(i),
         nat = pl.statNat(i);
       return {
         stat,
         base: st[i],
         iv,
+        ev,
         nature: nat > 1 ? '+10%' : nat < 1 ? '-10%' : '',
         plain: i === 0 ? S.hpForLevel(st[0], L) : S.statValue(st[i], L),
-        copy: i === 0 ? S.hpForLevel(st[0], L, iv) : S.statValue(st[i], L, iv, 0, nat),
+        copy: i === 0 ? S.hpForLevel(st[0], L, iv, ev) : S.statValue(st[i], L, iv, ev, nat),
       };
     });
     console.table(rows);
     const px0 = S.speedToPx(st[5]),
-      px = S.speedToPx(st[5], pl.statIv(5), pl.statNat(5));
+      px = S.speedToPx(st[5], pl.statIv(5), pl.statNat(5), pl.statEv(5));
     const move = px0.toFixed(1) + ' -> ' + px.toFixed(1) + ' px/s';
     console.log('[Debug] ' + pl.mon.name + ' L' + L + ', movement ' + move + ' (before cards and items).');
     return { rows, px0, px };
+  }
+
+  /** Set THIS run's six EV banks, in EVs (decimals allowed: 3.742), to test the end-of-run allocation. No args: logs them. Flags
+   *  the run as tampered; it still allocates (pokebox step 5 F3). ?dev only. */
+  function evbank(...v) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return null;
+    }
+    if (!G.Game || !G.Game.player) {
+      console.warn('[Debug] no run in progress.');
+      return null;
+    }
+    if (v.length) {
+      G.Game.evBank = [0, 1, 2, 3, 4, 5].map((k) => Math.round((+v[k] || 0) * G.Copies.EV_UNIT));
+      G.Game.debugMaxed();
+    }
+    const b = G.Game.evBank.map((x) => x / G.Copies.EV_UNIT);
+    console.log('[Debug] EV banks (HP Atk Def SpA SpD Spe): ' + b.map((x) => x.toFixed(3)).join(' '));
+    return b;
   }
 
   /** Set the copy in team slot `slot` (0 to 5) to six IVs of `value` (0 to 31) and, if given, a nature by name. ?dev only. Saved.
@@ -1234,6 +1258,7 @@ G.Debug = (() => {
     fillBoxes,
     fighter,
     ivs,
+    evbank,
     newcombat,
     cards,
     movechecker,

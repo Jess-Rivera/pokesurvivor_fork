@@ -211,6 +211,12 @@ have identical HP at the same level (consistency goal met).
 - Size vs today (base 80): IV 15 +0% / +7% / +8% at L5 / L25 / L50; IV 31 +8% / +16% / +18%; IV 31 raised +15% / +27% / +29%; IV 0 lowered -15% / -11% / -11%. HP base 80: IV 31 +4% / +9% / +11%.
 - Movement (D3, through the 0.7x to 1.3x curve): base Spe 65 goes 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0; base 30 76.0 to 86.7; base 100 and up barely move (+2% or less). Feel risk to watch; if too big, soften MOVE_K later.
 
+## EVs (feature/pokeboxes, pokebox step 5, built 2026-11-04; TUNE before playtesters)
+- Earning (map F1, Jess 2026-11-04): a defeated enemy adds its species' typed mainline yield x a class rate to six run banks, in thousandths. Rates: wild 1/1000, elite 1/500, gym 1x (full yield), shiny x2 of its class (EV_RATE and SHINY_EV in js/systems/copies.js). Golden and thief units count as wild. Fractions and ungiven EVs are lost at run end.
+- Size (estimates: Kanto mean yields, 1.7 kills/s): wild-only 10 min run 0 whole EVs, 30 min ~3, 60 min ~9; each gym mon beaten adds 1 to 3 at 1x, so gym wins carry the progression.
+- Effect: 252 EVs in one stat, base 80, 0 IV: +29% / +33% / +36% at L10 / L25 / L50 (HP +17% / +20% / +22%). Movement with 252 Speed EVs: base 30 76.0 -> 100.9 px/s, base 65 107.0 -> 135.0, base 100 136.0 -> 138.6.
+- Plan and tables: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt. Design: docs/proposals/ev-progression.md.
+
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by
 feel with the interactive tuner over the real 966-species roster:

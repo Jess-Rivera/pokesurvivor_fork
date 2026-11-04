@@ -50,7 +50,7 @@ const mon = d => DEX_BY[d];
   }
   for (const [b, px] of [[30, 75.98169257208211], [65, 107.0], [100, 135.96190693783225], [130, 138.61553964258005]]) ok(near(S.speedToPx(b), px) && near(S.speedToPx(b, 0, 1), px), 'neutral movement base ' + b + ' = ' + px.toFixed(2));
   ok(S.profile(null) === S.NEUTRAL_PROFILE && S.profile({}) === S.NEUTRAL_PROFILE && S.profile({ iv: [1, 2] }) === S.NEUTRAL_PROFILE, 'no copy or a broken one: the neutral profile');
-  ok(same(S.NEUTRAL_PROFILE, { iv: [0, 0, 0, 0, 0, 0], nat: [1, 1, 1, 1, 1, 1] }) && Object.isFrozen(S.NEUTRAL_PROFILE.iv), 'the neutral profile is 0 IV, x1, frozen');
+  ok(same(S.NEUTRAL_PROFILE, { iv: [0, 0, 0, 0, 0, 0], nat: [1, 1, 1, 1, 1, 1], ev: [0, 0, 0, 0, 0, 0] }) && Object.isFrozen(S.NEUTRAL_PROFILE.iv), 'the neutral profile is 0 IV, x1, 0 EV (step 5), frozen');
 }
 
 // ===== 2. all 25 natures (mainline table by name, written out here) =====

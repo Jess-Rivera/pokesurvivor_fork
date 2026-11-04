@@ -24,6 +24,7 @@ G.Game = (() => {
   let time = 0,
     last = 0,
     pendingLevels = 0;
+  let evBank = [0, 0, 0, 0, 0, 0]; // pokebox step 5: this run's six EV banks in thousandths (G.Copies.killEvs), reset each run
   let pl = null;
   // ---- team (Phase A) ----
   let roster = []; // up to 6 fighter Players; pl === roster[activeIdx]
@@ -151,6 +152,7 @@ G.Game = (() => {
     biome = 0;
     time = 0;
     pendingLevels = 0;
+    evBank = [0, 0, 0, 0, 0, 0];
     runReal = performance.now();
     tampered = debugDirty;
 
@@ -228,6 +230,7 @@ G.Game = (() => {
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
     const save = G.DB.save;
     const f = new G.Player(mon, perks, shiny, G.Copies.profileOf(save, uid, mon.dex));
+    f.copyUid = uid || null; // pokebox step 5: whose copy this is, for the end-of-run EV allocation (pl.uid is co-op's)
     ((save.pbind && save.pbind[mon.dex]) || []).forEach((id, i) => {
       if (id) f.bind[id] = i;
     });
@@ -239,6 +242,18 @@ G.Game = (() => {
       f.setActive(0);
     }
     return f;
+  }
+
+  /** The run's team copies for the EV allocation (pokebox step 5): one entry per copy, fainted members included. */
+  function evTeam() {
+    const seen = new Set(),
+      out = [];
+    for (const f of roster)
+      if (f.copyUid && !seen.has(f.copyUid)) {
+        seen.add(f.copyUid);
+        out.push({ uid: f.copyUid, dex: f.dex, slot: f.teamSlot });
+      }
+    return out;
   }
 
   /** Living (not fainted) team members. */
@@ -581,6 +596,8 @@ G.Game = (() => {
         })
         .catch(() => {});
 
+    // Pokebox step 5: the run's EV banks and the team's copies, for the allocation screen. Co-op allocates nothing (deferred).
+    const evs = coop ? null : { bank: evBank.slice(), team: evTeam() };
     G.RunUI.showOver(
       {
         dead,
@@ -595,6 +612,7 @@ G.Game = (() => {
         moves: pl.moves,
         roster,
         caught,
+        evs,
         breakdown:
           Object.entries(parts)
             .filter(([, v]) => v)
@@ -1362,6 +1380,18 @@ G.Game = (() => {
     levelXp,
     flash,
     offerBond,
+    /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
+    evKill(e) {
+      const add = G.Copies.killEvs(e);
+      for (let k = 0; k < 6; k++) evBank[k] += add[k];
+    },
+    /** The run's six EV banks, in thousandths (a copy). G.Debug.evbank sets them. */
+    get evBank() {
+      return evBank.slice();
+    },
+    set evBank(v) {
+      if (Array.isArray(v) && v.length === 6) evBank = v.map((x) => Math.max(0, Math.round(+x) || 0));
+    },
     /** Badge package: queue n guaranteed level-ups (not a debug call, so the run is NOT flagged). */
     grantLevels(n = 1) {
       for (let i = 0; i < n; i++) {

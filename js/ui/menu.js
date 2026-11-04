@@ -1581,6 +1581,7 @@ G.MenuUI = (() => {
       ok: 'Sell',
       note:
         (c.isFavorite ? `${p.name} is a favorite. ` : '') +
+        (c.evTotal ? `It has ${c.evTotal} EVs. They are lost. ` : '') +
         (last
           ? `This is your last ${p.name}. The Pokédex keeps it.`
           : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`),
@@ -1728,16 +1729,24 @@ G.MenuUI = (() => {
     rosRenderAll();
   }
 
-  /** Nature, Ability, Height, Weight of a copy. A species from the Pokedex tab has its possible abilities and real size, no nature. */
+  /** Nature, Ability, Height, Weight and EVs of a copy. A species from the Pokedex tab has its possible abilities and real size, no nature. */
   function rosInfoRows(copy, dex) {
     const row = (label, value) => `<div class="ros-row"><span>${label}</span><b>${value}</b></div>`;
     const abilityText = (a) => a.name + (a.hidden ? ' (Hidden)' : '');
+    // Pokebox step 5: the nonzero EVs and the total, "Atk 252 · HP 180 · 432 / 510" (earned at the end of a run).
+    const evText = (c) =>
+      ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe']
+        .map((n, k) => (c.ev[k] ? n + ' ' + c.ev[k] : ''))
+        .filter(Boolean)
+        .concat(c.evTotal + ' / 510')
+        .join(' · ');
     if (copy)
       return (
         row('Nature', copy.natureName) +
         row('Ability', abilityText({ name: copy.abilityName, hidden: copy.abilityHidden })) +
         row('Height', copy.heightM.toFixed(2) + ' m') +
-        row('Weight', copy.weightKg.toFixed(1) + ' kg')
+        row('Weight', copy.weightKg.toFixed(1) + ' kg') +
+        row('EVs', evText(copy))
       );
     const sp = G.Copies.species(dex);
     return (

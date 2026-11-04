@@ -1,7 +1,7 @@
 /* ============ copies.js, unique copies of a Pokemon (G.Copies) ============
  * Every Pokemon a player owns is one copy with its own UUID, rolled once when it is created (docs/proposals/pokebox-plan.md).
  * save.box holds them in a compact form and this module is the only code that reads that form; the rest of the game
- * gets the full field names from read(). A copy's IVs and nature set its stats in a run (profileOf, G.Stats.profile; pokebox step 4).
+ * gets the full field names from read(). A copy's IVs, EVs and nature set its stats in a run (profileOf, G.Stats.profile; pokebox steps 4 and 5).
  *
  * Compact keys; a value at its default is left out:
  *   u UUID in 22 characters   d dex   t obtained, seconds   m method letter   n nature, pokeapi id   i IVs, one character each
@@ -24,6 +24,11 @@ G.Copies = (() => {
   const BOX_PRICES = { 3: 10000, 4: 25000, 5: 60000 }; // pokebox-plan "Rulings for step 3", bought in order
   const SELL_PRICE = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 }; // by the species' rarity, pokebox-plan "Rulings for step 3"
   const SHINY_SELL = 3; // a shiny sells for 3 times its rarity's price
+  // EVs (pokebox step 5, docs/proposals/ev-progression.md): a defeated enemy adds its species' typed EV yield x its class rate to
+  // the run's six banks, counted in whole thousandths of an EV so the banks stay exact. TUNE (BALANCE.md "EVs").
+  const EV_RATE = { wild: 1, elite: 2, gym: 1000 }; // thousandths per yield point: wild 1/1000, elite 1/500, gym the full yield
+  const SHINY_EV = 2; // a shiny counts double its class
+  const EV_UNIT = 1000; // thousandths in one whole EV
   const HIDDEN_CHANCE = 0.05;
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
@@ -133,6 +138,7 @@ G.Copies = (() => {
       abilityHidden: c.a === 3,
       isShiny: !!c.s,
       ev: c.e ? c.e.slice() : [0, 0, 0, 0, 0, 0],
+      evTotal: c.e ? c.e.reduce((a, v) => a + v, 0) : 0,
       friendship: c.h != null ? c.h : t[4],
       startingMove: c.v || null,
       upgrades: Object.assign({}, c.p),
@@ -175,6 +181,52 @@ G.Copies = (() => {
     if (iv != null) c.i = IV_CHARS[Math.min(IV_MAX, Math.max(0, Math.floor(+iv) || 0))].repeat(6);
     if (n) c.n = n;
     return read(c, save);
+  }
+
+  // ---------------- EVs (pokebox step 5) ----------------
+
+  /** A species' mainline EV yield, six numbers in stat order (pokeapi effort, species-traits.js). No data: all 0. */
+  function evYieldOf(dex) {
+    const t = traitsOf(dex);
+    return t && Array.isArray(t[5]) ? t[5].slice() : [0, 0, 0, 0, 0, 0];
+  }
+  /** The EV class of a defeated enemy: a gym mon, an elite, or wild (golden, thief and minion units included). */
+  const evClassOf = (e) => (e && e.gym ? 'gym' : e && e.elite ? 'elite' : 'wild');
+  /** What one defeated enemy adds to the run's six banks, in thousandths: typed yield x class rate, x2 for a shiny. */
+  function killEvs(e) {
+    const y = evYieldOf(e && e.dex),
+      r = EV_RATE[evClassOf(e)] * (e && e.shiny ? SHINY_EV : 1);
+    return y.map((v) => v * r);
+  }
+  /** The whole EVs six banks (in thousandths) can give; the fractions are dropped. */
+  const wholeEvs = (bank) => bank.map((v) => Math.floor(Math.max(0, v) / EV_UNIT));
+  /** Add n EVs in stat k to a copy, up to 252 in the stat and 510 in total. Returns how many landed (0 when the copy is gone). */
+  function addEvs(save, id, k, n) {
+    if (!isId(id) || !(k >= 0 && k <= 5)) return 0;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return 0;
+    const e = c.e ? c.e.slice() : [0, 0, 0, 0, 0, 0],
+      total = e.reduce((a, v) => a + v, 0),
+      put = Math.max(0, Math.min(Math.floor(+n) || 0, EV_MAX - e[k], EV_TOTAL - total));
+    if (!put) return 0;
+    e[k] += put;
+    c.e = e;
+    return put;
+  }
+  /** Give a run's whole EVs out: plan = [{ uid, stat, n }] in order, never more of a stat than the run banked (whole =
+   *  wholeEvs(bank)) and never across stats. Returns { given, left }, six numbers each. The caller saves. */
+  function applyEvPlan(save, whole, plan) {
+    const left = whole.slice(),
+      given = [0, 0, 0, 0, 0, 0];
+    for (const p of plan || []) {
+      const k = p && p.stat;
+      if (!(k >= 0 && k <= 5)) continue;
+      const got = addEvs(save, p.uid, k, Math.min(Math.floor(+p.n) || 0, left[k]));
+      left[k] -= got;
+      given[k] += got;
+    }
+    return { given, left };
   }
 
   /** What every copy of a species shares: its possible abilities and its real size (the Pokedex tab). */
@@ -379,7 +431,7 @@ G.Copies = (() => {
   /**
    * "Select repeats" (3b D10): in box `box` (from 0), every copy of a species beyond the one kept. Normal and shiny copies
    * are counted apart, so a shiny is never sold to keep a normal one. Kept, in order: on the team (save.team or `also`),
-   * locked, favorite, highest IV total, oldest, then box order. Never returns a team, locked or favorite copy. Other boxes
+   * locked, favorite, most EVs (pokebox step 5 F9), highest IV total, oldest, then box order. Never returns a team, locked or favorite copy. Other boxes
    * do not count.
    */
   function repeatsIn(save, box, also = []) {
@@ -397,6 +449,7 @@ G.Copies = (() => {
       groups.get(k).push(c);
     }
     const ivSum = (c) => [...c.i].reduce((a, ch) => a + IV_CHARS.indexOf(ch), 0);
+    const evSum = (c) => (c.e ? c.e.reduce((a, v) => a + v, 0) : 0); // pokebox step 5 F9: most EVs before best IVs
     const out = [];
     for (const list of groups.values()) {
       if (list.length < 2) continue;
@@ -404,7 +457,7 @@ G.Copies = (() => {
         .map((c, i) => ({
           c,
           i,
-          s: [team.has(longId(c.u)) ? 1 : 0, c.l ? 1 : 0, c.f ? 1 : 0, ivSum(c), -c.t],
+          s: [team.has(longId(c.u)) ? 1 : 0, c.l ? 1 : 0, c.f ? 1 : 0, evSum(c), ivSum(c), -c.t],
         }))
         .sort((a, b) => {
           for (let k = 0; k < a.s.length; k++) if (a.s[k] !== b.s[k]) return b.s[k] - a.s[k];
@@ -506,6 +559,15 @@ G.Copies = (() => {
     get,
     profileOf,
     setIvNature,
+    evYieldOf,
+    evClassOf,
+    killEvs,
+    wholeEvs,
+    addEvs,
+    applyEvPlan,
+    EV_RATE,
+    SHINY_EV,
+    EV_UNIT,
     species,
     add,
     move,

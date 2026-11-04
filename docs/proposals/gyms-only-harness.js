@@ -110,22 +110,21 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b))
 
 // 5. legendaries never reach the wild cast, the boss slots, an elite or the lost-Pokemon event
 { const leg = d => !!(G.DEX_BY[d] && G.DEX_BY[d].leg);
-  let castLeg = 0, bossLeg = 0, eliteLeg = 0, draws = 0;
+  let castLeg = 0, eliteLeg = 0, draws = 0;
   for (const reg of [null, 1, 4]) {
     G.Enemies.setRegion(reg);
     for (let k = 0; k < 40; k++) {
       const run = G.Enemies.rollRun();
       for (const tier of run.cast) for (const d of tier.list) if (leg(d.dex)) castLeg++;
-      for (const b of run.bosses) { draws++; if (leg(b.dex)) bossLeg++; }
     }
     const used = new Set();
     for (const t of [0, 300, 600, 900, 1200, 1500, 1800, 2400, 3000, 3600]) { const d = G.Enemies.eliteDef(t, used); if (d) { used.add(d.dex); draws++; if (leg(d.dex)) eliteLeg++; } }
   }
   G.Enemies.setRegion(null); G.Enemies.rollRun();
-  ok(!castLeg && !bossLeg && !eliteLeg, 'legendaries drawn: cast ' + castLeg + ', boss slots ' + bossLeg + ', elites ' + eliteLeg);
+  ok(!castLeg && !eliteLeg, 'legendaries drawn: cast ' + castLeg + ', elites ' + eliteLeg); // the timed boss slots were removed 2026-11-04
   const ev = fs.readFileSync(R + '/js/systems/events.js', 'utf8');
   ok(/G\.DEX\.filter\(\(?p\)? => p\.rarity <= 3 && !p\.leg/.test(ev), 'the lost-Pokemon event pool still excludes legendaries');
-  console.log('5 pools: ' + draws + ' boss and elite draws over 3 regions, no legendary; the lost-Pokemon pool keeps its leg filter'); }
+  console.log('5 pools: ' + draws + ' elite draws over 3 regions, no legendary; the lost-Pokemon pool keeps its leg filter'); }
 
 // 6. spawner, events and weather pause inside the gym arena (a control run outside it first, so the checks are not vacuous)
 const mgr = G.EnemyMgr, alive0 = mgr.bossAlive;

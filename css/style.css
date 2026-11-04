@@ -2286,6 +2286,7 @@ a.btn {
   #scr-levelup,
   #scr-pause,
   #scr-over,
+  #scr-evs,
   #scr-item,
   #scr-settings,
   #scr-legal,
@@ -3604,4 +3605,41 @@ a.btn {
 }
 .ask-note {
   margin: 0;
+}
+
+/* Pokebox step 5: end-of-run EV allocation (js/ui/run-ui.js showEvs) */
+#evs-grid {
+  overflow-x: auto;
+  margin: 8px 0 12px;
+}
+.evs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.evs-table th,
+.evs-table td {
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+.evs-table th small {
+  display: block;
+  color: var(--muted);
+  font-weight: normal;
+}
+.evs-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.04);
+}
+.evs-table td b {
+  display: inline-block;
+  min-width: 2.2em;
+}
+.evs-table td em {
+  color: #ffd23f;
+  font-style: normal;
+}
+.evs-table .btn.small {
+  padding: 2px 8px;
+  min-width: 0;
 }

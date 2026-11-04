@@ -21,6 +21,7 @@ G.UI = (() => {
     'scr-team',
     'scr-roster',
     'scr-over',
+    'scr-evs',
     'scr-nick',
     'scr-friends',
     'scr-lobby',

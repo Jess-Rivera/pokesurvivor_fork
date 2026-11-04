@@ -1,0 +1,65 @@
+// Mutation check for pokebox step 5, EVs (Node only; not a harness, so tools/check.js does not run it).
+// Usage from the repo root:  node docs/proposals/pokebox-evs-mutate.js
+// Each mutation breaks stats.js, player.js, copies.js, game.js, enemy.js or run-ui.js in one deliberate way, writes the copy to a
+// temp folder and runs docs/proposals/pokebox-evs-harness.js against it (PE_<FILE> env vars). The harness must fail every time; a
+// mutation it misses is a gap. A mutation whose text is not found is STALE (the code moved: update the text here).
+// Not mutated, with the reason: the allocation screen's markup, the [-] button and the column header (DOM, feel-tested and probed in
+// the browser; the harness has no DOM); the Team screen EVs row and the sell note in menu.js (display text); debug.js evbank and the
+// fighter EV column (console tools); the species-traits generator (tools/check.js runs species_traits.js --check, and section 2
+// checks the yields it wrote). Select repeats keeping most EVs is mutated in pokebox-copies-mutate.js (its harness owns repeatsIn).
+const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const root = path.resolve(__dirname, '../..');
+const harness = path.join(root, 'docs/proposals/pokebox-evs-harness.js');
+const SRC = { stats: ['js/core/stats.js', 'PE_STATS'], player: ['js/entities/player.js', 'PE_PLAYER'], copies: ['js/systems/copies.js', 'PE_COPIES'],
+  game: ['js/game.js', 'PE_GAME'], enemy: ['js/entities/enemy.js', 'PE_ENEMY'], runui: ['js/ui/run-ui.js', 'PE_RUNUI'] };
+// [name, file key, [[text to find, replacement], ...]]
+const M = [
+  ["the profile drops the EVs", "stats", [["(Array.isArray(copy.ev) ? clampInt(copy.ev[k], 252) : 0)", "0"]]],
+  ["floor(EV / 4) dropped", "stats", [["(2 * base + iv + Math.floor(ev / 4))", "(2 * base + iv + ev)"]]],
+  ["the yield is not divided (x1 instead of 1/1000)", "copies", [["const EV_RATE = { wild: 1, elite: 2, gym: 1000 };", "const EV_RATE = { wild: 1000, elite: 1000, gym: 1000 };"]]],
+  ["elites at the wild rate", "copies", [["const EV_RATE = { wild: 1, elite: 2, gym: 1000 };", "const EV_RATE = { wild: 1, elite: 1, gym: 1000 };"]]],
+  ["gyms at the wild rate", "copies", [["const EV_RATE = { wild: 1, elite: 2, gym: 1000 };", "const EV_RATE = { wild: 1, elite: 2, gym: 1 };"]]],
+  ["a shiny is not doubled", "copies", [["const SHINY_EV = 2;", "const SHINY_EV = 1;"]]],
+  ["a shiny is doubled twice", "copies", [["(e && e.shiny ? SHINY_EV : 1)", "(e && e.shiny ? SHINY_EV * SHINY_EV : 1)"]]],
+  ["an elite counts as a gym", "copies", [["(e && e.gym ? 'gym' : e && e.elite ? 'elite' : 'wild')", "(e && (e.gym || e.elite) ? 'gym' : 'wild')"]]],
+  ["a bank credits the wrong stat", "copies", [["return y.map((v) => v * r);", "return y.map((v, k) => y[(k + 1) % 6] * r);"]]],
+  ["the banks are summed into one", "copies", [["return y.map((v) => v * r);", "return y.map(() => y.reduce((a, v) => a + v, 0) * r);"]]],
+  ["withdrawing rounds up", "copies", [["Math.floor(Math.max(0, v) / EV_UNIT)", "Math.ceil(Math.max(0, v) / EV_UNIT)"]]],
+  ["fractions carry to the next run", "game", [["    pendingLevels = 0;\n    evBank = [0, 0, 0, 0, 0, 0];\n", "    pendingLevels = 0;\n"]]],
+  ["allocation passes the bank", "copies", [["Math.min(Math.floor(+p.n) || 0, left[k])", "Math.floor(+p.n) || 0"]]],
+  ["the 252 cap is ignored", "copies", [["Math.min(Math.floor(+n) || 0, EV_MAX - e[k], EV_TOTAL - total)", "Math.min(Math.floor(+n) || 0, EV_TOTAL - total)"]]],
+  ["the 510 cap is ignored", "copies", [["Math.min(Math.floor(+n) || 0, EV_MAX - e[k], EV_TOTAL - total)", "Math.min(Math.floor(+n) || 0, EV_MAX - e[k])"]]],
+  ["clean() lets EVs pass 510", "copies", [["const v = Math.min(left, whole(Array.isArray(c.e) ? c.e[k] : 0, EV_MAX));", "const v = whole(Array.isArray(c.e) ? c.e[k] : 0, EV_MAX);"]]],
+  ["a kill is not banked", "enemy", [["          G.Game.evKill(e); // pokebox step 5: the run's EV banks\n", ""]]],
+  ["evKill ignores the kill", "game", [["for (let k = 0; k < 6; k++) evBank[k] += add[k];", "for (let k = 0; k < 6; k++) evBank[k] += 0;"]]],
+  ["co-op allocates", "game", [["const evs = coop ? null : { bank", "const evs = { bank"]]],
+  ["buildFighter drops the copy", "game", [["    f.copyUid = uid || null;", "    f.copyUid = null;"]]],
+  ["constructor HP ignores EVs", "player", [["G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0), this.statEv(0))", "G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0))"]]],
+  ["maxHpAt ignores EVs", "player", [["G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0), this.statEv(0))", "G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0))"]]],
+  ["movement ignores EVs", "player", [["this.statNat(5), this.statEv(5))", "this.statNat(5))"]]],
+  ["damage dealt ignores EVs", "stats", [[": attack(atkBase, level, p.iv[1], p.ev[1], p.nat[1]);", ": attack(atkBase, level, p.iv[1], 0, p.nat[1]);"]]],
+  ["damage taken ignores EVs", "stats", [[": defense(playerDefBase, playerLevel, p.iv[2], p.ev[2], p.nat[2]);", ": defense(playerDefBase, playerLevel, p.iv[2], 0, p.nat[2]);"]]],
+  ["an empty run opens the screen", "runui", [["evGive = !!evWhole && evWhole.some((v) => v > 0) && r.evs.team.length > 0", "evGive = !!evWhole"]]],
+  ["leaving EVs does not ask", "runui", [["      if (n > 0) {\n        const yes = await G.UI.ask(", "      if (n < 0) {\n        const yes = await G.UI.ask("]]],
+  ["Done does not save", "runui", [["G.Copies.applyEvPlan(s, whole, flat);\n      G.DB.commit(true);", "G.Copies.applyEvPlan(s, whole, flat);"]]],
+  ["[+] ignores the 510 cap", "runui", [["evOf(i, k) < G.Copies.EV_MAX && totalOf(i) < G.Copies.EV_TOTAL", "evOf(i, k) < G.Copies.EV_MAX"]]],
+];
+const runHarness = env => cp.spawnSync(process.execPath, [harness, root], { encoding: 'utf8', env: Object.assign({}, process.env, env) });
+const failed = r => r.status !== 0 || /FAIL/.test(r.stdout || '');
+const clean = runHarness({});
+if (failed(clean)) { console.log('The harness fails on the real code; fix that first.\n' + clean.stdout); process.exit(1); }
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-evs-mut-'));
+let caught = 0, missed = 0, stale = 0;
+for (const [name, key, edits] of M) {
+  const [rel, env] = SRC[key];
+  let src = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n'), found = true;
+  for (const [a, b] of edits) { if (!src.includes(a)) { found = false; break; } src = src.replace(a, b); }
+  if (!found) { stale++; console.log('STALE  ' + name); continue; }
+  const f = path.join(tmp, key + '.js');
+  fs.writeFileSync(f, src);
+  if (failed(runHarness({ [env]: f }))) caught++;
+  else { missed++; console.log('MISSED ' + name); }
+}
+fs.rmSync(tmp, { recursive: true, force: true });
+console.log('pokebox evs mutations: ' + caught + '/' + M.length + ' caught' + (missed ? ', ' + missed + ' missed' : '') + (stale ? ', ' + stale + ' stale' : ''));
+process.exit(missed || stale ? 1 : 0);

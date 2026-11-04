@@ -18,6 +18,14 @@ G.CHANGELOG = [
         'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
         'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
       ],
+      [
+        'Your Pokemon now earn EVs. Every enemy you defeat adds a little to six EV banks, one per stat, by its species (gym Pokemon give the most, elites more than wild ones, shinies double). At the end of a run you give the whole EVs to your team, up to 252 in a stat and 510 per Pokemon. EVs raise stats for good; whatever you do not give is lost.',
+        'Your Pokemon now earn EVs. Every enemy you defeat adds a little to six EV banks, one per stat, by its species (gym Pokemon give the most, elites more than wild ones, shinies double). At the end of a run you give the whole EVs to your team, up to 252 in a stat and 510 per Pokemon. EVs raise stats for good; whatever you do not give is lost.',
+      ],
+      [
+        'The Team screen shows each Pokemon\'s EVs under Weight, and selling a Pokemon with EVs warns you first.',
+        'The Team screen shows each Pokemon\'s EVs under Weight, and selling a Pokemon with EVs warns you first.',
+      ],
     ],
     chg: [
       [

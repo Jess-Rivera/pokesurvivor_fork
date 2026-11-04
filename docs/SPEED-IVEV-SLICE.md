@@ -1,4 +1,6 @@
-# SPEED IV/EV INVESTMENT SLICE (design, NOT built, 2026-10-21)
+# SPEED IV/EV INVESTMENT SLICE (design, 2026-10-21), SUPERSEDED
+
+Superseded 2026-11-04 by pokebox steps 4 and 5 (docs/proposals/pokebox-plan.md, docs/proposals/ev-progression.md). The numbers below use the old 0.5x to 3.0x movement bounds; the current tables are in docs/ASCII Concept Maps/Pokebox 5 - EVs.txt.
 
 Goal (Jess): investing in Speed should be worthwhile, but Speed must stay level-independent and
 runtime-independent (Speed is a fixed species identity, DECISIONS 2026-10-17 Speed-Identity). So

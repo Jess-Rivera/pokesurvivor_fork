@@ -44,7 +44,7 @@
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
 
       // Enemy HP = real base HP through the mainline formula at the level-for-run-time
-      // (sc.t). Bosses keep their bespoke def.hp (BOSS_SLOTS) for now; wild enemies use
+      // (sc.t). Bosses (only gym leaders since 2026-10-31) keep their own def.hp; wild enemies use
       // the formula. No role/elite/co-op/density HP multipliers (removed this slice).
       // Gym-gate escalation (rework/gym-progression): a PLAIN wild enemy (not boss, not gym, not elite) spawned while a
       // gate has been ignored past its grace period gets +escBump levels. Read once at spawn (level is frozen here),
@@ -1807,6 +1807,7 @@
           if (G.Log.on) G.Log.kill(e);
           if (e.boss || e.elite) pl.bosses++;
           G.Progress.kill(e);
+          G.Game.evKill(e); // pokebox step 5: the run's EV banks
           corpses.push(e);
           list.splice(i, 1);
           byId.delete(e.id);

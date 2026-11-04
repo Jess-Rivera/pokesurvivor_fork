@@ -74,6 +74,7 @@ const M = [
   ['Select repeats ignores the team rule', 'copies', [['s: [team.has(longId(c.u)) ? 1 : 0, c.l ? 1 : 0,', 's: [0, c.l ? 1 : 0,']]],
   ['Select repeats counts other boxes', 'copies', [['      if ((c.b || 0) !== box) continue;\n      const k = c.d', '      const k = c.d']]],
   ['Select repeats mixes shinies with normals', 'copies', [["const k = c.d + (c.s ? 's' : 'n');", 'const k = c.d;']]],
+  ['Select repeats ignores EVs (step 5 F9)', 'copies', [['c.f ? 1 : 0, evSum(c), ivSum(c), -c.t]', 'c.f ? 1 : 0, ivSum(c), -c.t]']]],
   ['Sell repeats takes shinies', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && r.rarity <= 3']]],
   ['Sell repeats takes 4 stars', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && !r.shiny && r.rarity <= 4']]],
 ];
