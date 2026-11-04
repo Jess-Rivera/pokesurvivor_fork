@@ -34,7 +34,7 @@ CLOSED (8):
 - #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / no status]  (closed 2026-11-01)
 - #19 [Idea]: Gym-Roster implementation for Kanto  [feature / gyms / ready]  (closed 2026-11-02; still blocking 1, likely #5)
 
-NOT ON THE BOARD: the Pokebox work (feature/pokeboxes, steps 1 to 3 built; step 4 IVs and natures next). Consider an issue so the board shows it.
+NOT ON THE BOARD: the Pokebox work (feature/pokeboxes, steps 1 to 4 built; step 5 EVs next). Consider an issue so the board shows it.
 
 INCONSISTENCIES TO RESOLVE ON THE BOARD (Jess; the agent never mutates the tracker):
 - #5 and #11 carry `blocked`, but their only blocker is closed (#19 and #2 still count as blocking 1). Drop the label, or link a real open blocker.
@@ -62,7 +62,7 @@ live queue, cross-reference the issue number.
 - Balance pass: all branches DONE and merged (tune/damage closed 2026-10-19). Carry-overs are listed under 'Up next'. Tuning knobs: the tables at the end of js/data/enemies.js; numbers in BALANCE.md. Open logger gap: alive-by-class sample.
 
 ## Up next (local single-player)
-- POKEBOX (Jess, 2026-11-03): steps 1 to 3 built on feature/pokeboxes (step 3 on 2026-11-04: boxes, copies at the source, selling, full boxes, lock, favorite, nicknames, bulk sell); step 4 (IVs and natures apply) next. Handoff: docs/proposals/pokebox-plan.md.
+- POKEBOX (Jess, 2026-11-03): steps 1 to 3 built on feature/pokeboxes (step 3 on 2026-11-04: boxes, copies at the source, selling, full boxes, lock, favorite, nicknames, bulk sell); step 4 built 2026-11-04 (IVs and natures apply to run stats; awaiting Jess's node checks and feel-test); step 5 (EVs) next, after its [Open] list. Handoff: docs/proposals/pokebox-plan.md.
 - Font cleanup (2026-11-03): the old credit at dev.html:330 and its js/data/lang-en.js key still name Pixelify Sans (Spanish key, left under the i18n rule; Jess to say). tools/pack_itch.js packs all of assets/fonts, so unused fonts, including the full 3.7 MB Silver.ttf, still ship in that build; exclude them when publishing.
 - MOVE TUNING (Jess, 2026-11-03 playtest): "some moves are definitely in need of a tune". List not named yet; check each against docs/MOVE-INTENT.md, then a no-code plan.
 - ITEM BATCH 1, STEPS 4 TO 6, PARKED (Jess, 2026-11-03): 12 ground and 10 Pokemon items, approved and unbuilt, Dowsing Machine at +0.5. He is happy with the item count; start only if he reopens it. Detail: docs/proposals/item-rework-v2-handoff.md.
@@ -168,6 +168,7 @@ live queue, cross-reference the issue number.
 - Spikes on an owner faint (slice 4d decision B, 2026-10-30): a Spikes mine has no ownerDeath end, so it outlives a fainted owner. Harmless in single player (a faint ends the run); decide in the MP phase whether a downed co-op player's mines stay.
 - Co-op levelStart (game.js) has no empty-offer guard (solo maybeLevelUp does since 2026-10-18); add it when MP resumes.
 - Pokebox and cloud saves (2026-11-03): merge() in js/core/db.js must union save.box by UUID (today the newer box wins, so rolled values could change), and a pre-box cloud save skips the local clean save checkpoint (keeps its progress, gets freshly rolled copies). Decide both when the cloud phase starts. Detail: docs/proposals/pokebox-plan.md.
+- Pokebox IVs in co-op (step 4 D6, 2026-11-04): js/net/coop.js builds teammates with new G.Player(mon, {}, shiny), so they play neutral (0 IV, no nature). When MP resumes, send the copy's IVs and nature (or its profile) with the teammate and pass it as the 4th argument.
 - Pokebox nicknames and cloud saves (3b-2 E2, 2026-11-04): nicknames are cleaned on the client (G.Copies.cleanNickname, on typing and on every load). If saves or nicknames ever reach a server or other players, clean them there too, since a client can be bypassed.
 
 - Firebase layer (auth, Firestore, RTDB, cloud saves)

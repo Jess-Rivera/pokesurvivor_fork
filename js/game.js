@@ -161,7 +161,7 @@ G.Game = (() => {
     roster = [];
     save.team.forEach((t, slot) => {
       if (!t || !G.DEX_BY[t.dex]) return;
-      const f = buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex));
+      const f = buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex), t.uid);
       f.teamSlot = slot;
       roster.push(f);
     });
@@ -222,11 +222,12 @@ G.Game = (() => {
     endRun(false);
   }
 
-  /** Build one team member (a Player) with its moves, binds and bans applied. */
-  function buildFighter(mon, shiny) {
+  /** Build one team member (a Player) with its moves, binds and bans applied. uid: the team slot's copy, whose IVs and
+   *  nature set its stats (pokebox step 4); a missing copy plays neutral. */
+  function buildFighter(mon, shiny, uid) {
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
-    const f = new G.Player(mon, perks, shiny);
     const save = G.DB.save;
+    const f = new G.Player(mon, perks, shiny, G.Copies.profileOf(save, uid, mon.dex));
     ((save.pbind && save.pbind[mon.dex]) || []).forEach((id, i) => {
       if (id) f.bind[id] = i;
     });

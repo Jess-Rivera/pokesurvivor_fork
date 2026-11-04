@@ -1,7 +1,7 @@
 /* ============ copies.js, unique copies of a Pokemon (G.Copies) ============
  * Every Pokemon a player owns is one copy with its own UUID, rolled once when it is created (docs/proposals/pokebox-plan.md).
  * save.box holds them in a compact form and this module is the only code that reads that form; the rest of the game
- * gets the full field names from read(). Values with no effect yet (IVs, nature, ability) are debug-only (G.Debug.copy).
+ * gets the full field names from read(). A copy's IVs and nature set its stats in a run (profileOf, G.Stats.profile; pokebox step 4).
  *
  * Compact keys; a value at its default is left out:
  *   u UUID in 22 characters   d dex   t obtained, seconds   m method letter   n nature, pokeapi id   i IVs, one character each
@@ -147,6 +147,34 @@ G.Copies = (() => {
     const u = shortId(id),
       c = (save.box || []).find((x) => x.u === u);
     return c ? read(c, save) : null;
+  }
+
+  /** The stat profile (G.Stats.profile: IVs and nature) of a team slot's copy. A missing copy, a malformed id, or a copy of
+   *  another species plays neutral (pokebox step 4 D4). */
+  function profileOf(save, id, dex) {
+    let c = null;
+    try {
+      c = typeof id === 'string' && save ? get(save, id) : null;
+    } catch (e) {
+      c = null; // a malformed id plays neutral too
+    }
+    return G.Stats.profile(c && (dex == null || c.speciesID === dex) ? c : null);
+  }
+
+  /** Debug only (G.Debug.ivs): set a copy's six IVs to `iv` (0 to 31) and, when given, its nature by name. The caller saves.
+   *  Returns the read copy, { error: 'nature' } for an unknown nature name (nothing changes), or null when the copy is gone. */
+  function setIvNature(save, id, iv, natureName) {
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return null;
+    let n = 0;
+    if (natureName != null) {
+      n = G.SpeciesTraits.NATURES.findIndex((x) => x[0] === String(natureName).toLowerCase()) + 1;
+      if (!n) return { error: 'nature' };
+    }
+    if (iv != null) c.i = IV_CHARS[Math.min(IV_MAX, Math.max(0, Math.floor(+iv) || 0))].repeat(6);
+    if (n) c.n = n;
+    return read(c, save);
   }
 
   /** What every copy of a species shares: its possible abilities and its real size (the Pokedex tab). */
@@ -476,6 +504,8 @@ G.Copies = (() => {
     read,
     all,
     get,
+    profileOf,
+    setIvNature,
     species,
     add,
     move,

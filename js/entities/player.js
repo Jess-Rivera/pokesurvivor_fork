@@ -9,8 +9,9 @@ G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
    * @param perks mejoras permanentes ya resueltas (ver data/upgrades.js)
+   * @param statProf the team copy's IVs and nature (G.Stats.profile, pokebox step 4); none plays neutral
    */
-  constructor(mon, perks = {}, shiny = false) {
+  constructor(mon, perks = {}, shiny = false, statProf = null) {
     this.mon = mon;
     this.dex = mon.dex;
     this.shiny = shiny && G.Sprites.hasShiny(mon.dex);
@@ -43,17 +44,20 @@ G.Player = class Player {
     this.coinMul = perks.coinMul || 1;
 
     // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
-    // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
+    // perks.hp (flat HP upgrades) still adds on top. IVs and nature from the copy (statProf, pokebox step 4); EVs 0 until step 5.
     this.perksHp = perks.hp || 0;
+    this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;
     // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }; // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
     this.baseHpStat = mon.stats && mon.stats[0] != null ? mon.stats[0] : null;
-    this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
+    this.maxHp =
+      (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0)) : mon.hp) + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
-    this.baseSpd = mon.stats && mon.stats[5] != null ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
+    this.baseSpd =
+      mon.stats && mon.stats[5] != null ? G.Stats.speedToPx(mon.stats[5], this.statIv(5), this.statNat(5)) : mon.spd;
     this.baseAtk = mon.atk;
     // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
     // via G.Stats. Fallback 50 keeps a mon with no stats array working.
@@ -170,12 +174,22 @@ G.Player = class Player {
       this.baseSpAStat,
       this.level,
       m,
-      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul()
-    ); // run items (Brass Knuckles, Pikachu's Tear, Snowball)
+      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul(),
+      this.statProf
+    ); // run items (Brass Knuckles, Pikachu's Tear, Snowball); statProf: this copy's IVs and nature
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) {
-    return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp;
+    const hp = G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0));
+    return Math.round(hp * (1 + this.incOf('hp'))) + this.perksHp;
+  }
+  /** This copy's IV for stat i (HP, Atk, Def, SpA, SpD, Spe), 0 with no profile (pokebox step 4). */
+  statIv(i) {
+    return this.statProf ? this.statProf.iv[i] : 0;
+  }
+  /** This copy's nature multiplier for stat i: 1.1, 0.9 or 1. HP's is always 1. */
+  statNat(i) {
+    return this.statProf ? this.statProf.nat[i] : 1;
   }
   /** Stat bonus fraction: the stat cards plus the gym badge boosts, plus the team Vitamins card (slice 5b: a team read, so every member,
    *  bench and later ones included, has it). */
@@ -610,9 +624,12 @@ G.Player = class Player {
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
-        dStat = (cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level)) * defMul;
+        dStat =
+          (cat === 1
+            ? G.Stats.spDef(spdB, this.level, this.statIv(4), 0, this.statNat(4))
+            : G.Stats.defense(defB, this.level, this.statIv(2), 0, this.statNat(2))) * defMul;
       }
-      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul) * mul;
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf) * mul;
     }
     const afterDef = amount;
     let eff = null,

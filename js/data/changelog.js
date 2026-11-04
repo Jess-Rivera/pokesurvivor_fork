@@ -19,6 +19,12 @@ G.CHANGELOG = [
         'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
       ],
     ],
+    chg: [
+      [
+        "Every Pokemon's IVs and nature now change its stats in a run, like the main games. Each IV adds to its stat as you level up, and a nature raises one stat by 10% and lowers another by 10% (never HP). Speed IVs and nature change how fast you move.",
+        "Every Pokemon's IVs and nature now change its stats in a run, like the main games. Each IV adds to its stat as you level up, and a nature raises one stat by 10% and lowers another by 10% (never HP). Speed IVs and nature change how fast you move.",
+      ],
+    ],
   },
   {
     d: '2026-11-04',

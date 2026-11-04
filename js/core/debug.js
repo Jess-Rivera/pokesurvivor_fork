@@ -32,6 +32,9 @@
  *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
  *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates; stops when the boxes are full. Saved.
  *   G.Debug.fillBoxes(leave)  top your boxes up with Caterpie copies until `leave` places are free (default 0), to test full boxes. Saved.
+ *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, no nature) next to this copy
+ *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
+ *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -1071,6 +1074,70 @@ G.Debug = (() => {
     return added;
   }
 
+  /** The active fighter's six stats at its level and its movement px/s, plain (0 IV, no nature) next to this copy. Before
+   *  cards, stages and items. ?dev only (pokebox step 4). */
+  function fighter() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return null;
+    }
+    const pl = G.Game && G.Game.player;
+    if (!pl || !pl.mon || !pl.mon.stats || !pl.statIv) {
+      console.warn('[Debug] no run in progress.');
+      return null;
+    }
+    const st = pl.mon.stats,
+      L = pl.level,
+      S = G.Stats,
+      names = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
+    const rows = names.map((stat, i) => {
+      const iv = pl.statIv(i),
+        nat = pl.statNat(i);
+      return {
+        stat,
+        base: st[i],
+        iv,
+        nature: nat > 1 ? '+10%' : nat < 1 ? '-10%' : '',
+        plain: i === 0 ? S.hpForLevel(st[0], L) : S.statValue(st[i], L),
+        copy: i === 0 ? S.hpForLevel(st[0], L, iv) : S.statValue(st[i], L, iv, 0, nat),
+      };
+    });
+    console.table(rows);
+    const px0 = S.speedToPx(st[5]),
+      px = S.speedToPx(st[5], pl.statIv(5), pl.statNat(5));
+    const move = px0.toFixed(1) + ' -> ' + px.toFixed(1) + ' px/s';
+    console.log('[Debug] ' + pl.mon.name + ' L' + L + ', movement ' + move + ' (before cards and items).');
+    return { rows, px0, px };
+  }
+
+  /** Set the copy in team slot `slot` (0 to 5) to six IVs of `value` (0 to 31) and, if given, a nature by name. ?dev only. Saved.
+   *  Takes effect from the next run, which is flagged tampered (pokebox step 4 feel-tests). */
+  function ivs(slot = 0, value = null, nature = null) {
+    if (!on || !G.DB.save) return false;
+    const s = G.DB.save,
+      t = s.team && s.team[slot];
+    if (!t || !t.uid) {
+      console.warn('[Debug] team slot ' + slot + ' has no Pokemon.');
+      return false;
+    }
+    const c = G.Copies.setIvNature(s, t.uid, value, nature);
+    if (!c) {
+      console.warn('[Debug] the copy in team slot ' + slot + ' is gone.');
+      return false;
+    }
+    if (c.error) {
+      const all = G.SpeciesTraits.NATURES.map((x) => x[0]).join(', ');
+      console.warn('[Debug] unknown nature ' + nature + '. Natures: ' + all);
+      return false;
+    }
+    G.DB.commit(true);
+    G.Game.debugMaxed();
+    const name = (G.DEX_BY[c.speciesID] || {}).name;
+    const what = name + ': IVs ' + c.iv.join(' ') + ', ' + c.natureName;
+    console.log('[Debug] slot ' + slot + ' ' + what + '. Start a new run to use it.');
+    return c;
+  }
+
   function copy(id) {
     if (!on || !G.DB.save) return false;
     const save = G.DB.save;
@@ -1165,6 +1232,8 @@ G.Debug = (() => {
     copy,
     addCopy,
     fillBoxes,
+    fighter,
+    ivs,
     newcombat,
     cards,
     movechecker,

@@ -206,6 +206,11 @@ have identical HP at the same level (consistency goal met).
 - Future elite: NOT an HP multiplier — it will be "current enemy level + X" (a higher-level spawn),
   so HP falls out of the formula. (DECISIONS.md.)
 
+## IVs and natures (feature/pokeboxes, pokebox step 4, built 2026-11-04; TUNE by feel)
+- Mainline: stat = floor((2B + IV) x L / 100) + 5, then x1.1 raised / x0.9 lowered, rounded down (HP: IV only, never a nature). Enemies 0 IV, neutral (D2), so an average copy is a small net player buff. Plan and tables: docs/ASCII Concept Maps/Pokebox 4 - IVs and Natures Apply.txt.
+- Size vs today (base 80): IV 15 +0% / +7% / +8% at L5 / L25 / L50; IV 31 +8% / +16% / +18%; IV 31 raised +15% / +27% / +29%; IV 0 lowered -15% / -11% / -11%. HP base 80: IV 31 +4% / +9% / +11%.
+- Movement (D3, through the 0.7x to 1.3x curve): base Spe 65 goes 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0; base 30 76.0 to 86.7; base 100 and up barely move (+2% or less). Feel risk to watch; if too big, soften MOVE_K later.
+
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by
 feel with the interactive tuner over the real 966-species roster:

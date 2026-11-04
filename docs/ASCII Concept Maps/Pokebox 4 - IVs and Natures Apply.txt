@@ -1,0 +1,234 @@
+POKEBOX STEP 4: IVs AND NATURES APPLY TO STATS  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md (Rulings, The copy, Worked example).
+Rules: docs/COMBAT-RULES.md "Stats and HP" (natures +10% / -10%, HP never; IV per copy).
+First step that changes balance. Out of scope: EVs (step 5), the nature/IV tooltip (plan Open),
+nicknames in runs, co-op (deferred).
+
+=====================================================================
+ TODAY vs AFTER
+=====================================================================
+
+   save.team slot { dex, shiny, uid }
+        |
+        |  TODAY: game.js buildFighter reads dex + shiny only, the uid is ignored
+        |  AFTER: buildFighter also looks up the copy by uid
+        v
+   G.Copies.get(save, uid) --> { iv[6], natureUp, natureDown, ... }   (already stored, steps 1-3)
+        |
+        v
+   G.Stats "profile" for this copy:  iv[6] + nature multiplier per stat
+        |                            (neutral profile = 0 IV, x1.0 everywhere = today)
+        v
+   G.Player keeps the profile and passes it to every G.Stats call it makes:
+
+     stat     where it is read (player.js)               formula input
+     ----     --------------------------------           -------------------------
+     HP       constructor maxHp, maxHpAt (level ups,     + IV          (never nature)
+              syncLevel on the bench)
+     Atk      moveFactor -> attackFactor                 + IV, x nature
+     SpA      moveFactor -> attackFactor                 + IV, x nature
+     Def      hurt() -> applyPlayerDefense (+ LOG line)  + IV, x nature
+     SpD      hurt() -> applyPlayerDefense (+ LOG line)  + IV, x nature
+     Spe      constructor baseSpd -> speedToPx           + IV, x nature, at the L50 identity,
+                                                         then the transfer curve (D3)
+
+   Enemies, elites, gyms, Elite Four: no profile -> neutral -> unchanged (D2).
+   Save: no new fields (iv and nature are already in every copy). No migration, no save clear.
+
+=====================================================================
+ THE MATH  (mainline, D1)
+=====================================================================
+
+   stat   = floor( (2 x base + IV) x L / 100 ) + 5          (EV stays 0 until step 5)
+   final  = floor( stat x nature )       nature = 1.1 raised, 0.9 lowered, 1.0 otherwise
+            done in whole numbers (stat x 110 / 100, or x 90 / 100, rounded down), the way the
+            games do it, so a float like 63.9999 can never round a point away
+            (matches Bulbapedia / pokemondb, confirmed with Jess 2026-11-04)
+   HP     = ( floor( (2 x base + IV) x L / 100 ) + L + 10 ) x HP_SCALAR, rounded   (no nature)
+   Neutral natures (Hardy, Docile, Bashful, Quirky, Serious) raise and lower the same stat: x1.0.
+
+   Snorlax check (plan worked example, IV + nature only, L50, no EV), hand-derived:
+     stat   base  IV  nature   plain   this copy
+     HP     160   28   -        440     468
+     Atk    110   31   +10%     115     143
+     Def     65   12   -         70      76
+     SpA     65    5   -10%      70      64
+     SpD    110   22   -        115     126
+     Spe     30    9   -         35      39     movement 76.0 -> 76.9 px/s
+
+=====================================================================
+ HOW BIG IS IT  (versus today, where every copy plays as 0 IV neutral)
+=====================================================================
+
+   Atk/Def/SpA/SpD, base 80        L5      L25     L50
+     IV 15 (average)              +0%     +7%     +8%
+     IV 31                        +8%     +16%    +18%
+     IV 31 + raised nature        +15%    +27%    +29%
+     IV 0 + lowered nature        -15%    -11%    -11%
+   HP, base 80: IV 15 +0% / +4% / +5%,  IV 31 +4% / +9% / +11%
+   Low levels barely move (the floor eats small IVs); the gap opens as the run levels up.
+
+   Movement (px/s), through the 0.7x to 1.3x transfer curve:
+     base Spe   plain    IV 15    IV 31 +10%     IV 0 -10%
+       30        76.0     77.8      86.7 (+14%)    75.5 (-1%)
+       65       107.0    117.2     131.8 (+23%)    96.6 (-10%)
+      100       136.0    137.1     138.5 (+2%)    132.3 (-3%)
+      130       138.6    138.8     139.0 (+0%)    138.0 (-0%)
+   The curve is steepest at the median: mid-speed species swing the most, fast ones
+   are already near the 1.3x cap. (Feel risk, see D3.)
+
+=====================================================================
+ DECISIONS FOR JESS  (each one changes behavior, approve or change)
+=====================================================================
+
+ D1  Nature math is mainline: x1.1 / x0.9 on the final stat, rounded down,
+     HP never, the 5 neutral natures do nothing.                    REC: yes
+
+ D2  Enemies stay at 0 IV and neutral nature (wild, elites, gym leaders,
+     Elite Four), as today. So an average copy is a small net player buff
+     (about +5% to +8% mid to late run) and a 0 IV copy plays exactly like
+     today. Alternative: enemies at a flat 15 IVs keeps today's average
+     balance but makes every enemy tougher.                         REC: stay at 0
+     (the naked base layer is meant to be upgrade-dependent; IVs are the first
+      "this is my Pokemon" investment, so it should feel like a gain)
+
+ D3  Speed IVs and nature change movement, through the transfer curve (as
+     the plan's Snorlax example already assumes). Mid-speed species swing
+     about -10% to +23%; fast species barely move.                   REC: yes, then
+     feel-test a base-65 mon at both ends. If the swing feels too big, a later
+     tuning pass can soften it (MOVE_K), not this step.
+
+ D4  A team slot whose copy is missing (or has no uid) plays neutral, no
+     error and no repair.                                           REC: yes
+
+ D5  No Team screen change: the Nature row stays the name only (2026-11-03
+     ruling); marking the raised/lowered stat on the hexagon waits for the
+     tooltip Open.                                                  REC: yes
+
+ D6  Co-op (js/net/coop.js) keeps building neutral fighters; one TODO line
+     for the cloud phase.                                           REC: yes
+
+ D7  Where the nature goes in G.Stats: a new nature argument (default 1)
+     beside the existing iv / ev, rounded like mainline, OR folded into the
+     existing stage/item multipliers (extraMul, defMul), up to 1 point off
+     mainline.                                                      REC: new
+     argument (exact mainline numbers, and the Snorlax table stays true)
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/core/stats.js                                  (the one home for stat formulas)
+   ALREADY THERE (since 2026-10-17): statValue, hpForLevel, attack, defense,
+   spAtk, spDef all take iv and ev, default 0. Nothing passes them: the layer
+   above (attackFactor, applyDamage, applyPlayerDefense, speedToPx) calls them
+   with base and level only. There is NO nature slot anywhere (no x1 default).
+   The existing extraMul / defMul arguments are the stage and item multipliers.
+   +- a NEUTRAL profile and a profile builder from a read copy (iv, natureUp,
+   |  natureDown -> six IVs + six multipliers); species-traits is not needed here
+   +- statValue and the four stat functions gain a nature argument, default 1,
+   |  next to the existing iv / ev (floor after the +5, D1); hpForLevel unchanged
+   +- attackFactor and applyPlayerDefense take an optional profile, last
+   |  argument, default neutral, and forward its IV and nature into the
+   |  existing iv slot (enemy and elite callers do not change)
+   +- speedToPx takes an optional Spe IV and nature, default neutral
+   '- header comment: "IV/EV fixed at 0" becomes "IV and nature per copy, EV 0"
+   ALT (D7): fold the nature into the existing extraMul / defMul instead of a
+   new argument. Fewer signature changes, but the x1.1 lands on the unrounded
+   stat (off by at most 1 point vs mainline) and Speed still needs its own path.
+
+ js/entities/player.js
+   +- constructor takes the profile as a 4th argument (default neutral)
+   +- uses it at: maxHp (constructor), maxHpAt, baseSpd, moveFactor,
+   |  hurt() (the applyPlayerDefense call and the LOG dStat line)
+   '- the line 46 comment ("IV/EV 0 this slice") updated
+
+ js/game.js  buildFighter + the roster loop in startRun
+   +- the roster loop passes the whole team slot, not just dex + shiny
+   '- buildFighter looks up the copy by uid, builds the profile, passes it
+      to the Player (D4 neutral fallback)
+
+ js/core/debug.js
+   +- G.Debug.fighter(): the active fighter's six final stats and px/s,
+   |  plain next to this copy (the feel-test readout)
+   '- G.Debug.ivs(slot, value, nature): sets a team slot copy's six IVs to
+      value (0 to 31) and its nature by name, saves, marks the run as debug.
+      For A/B feel-tests without hunting for rolls.
+
+ Not touched: js/data/enemies.js, js/systems/gym.js, js/systems/elites.js
+ (neutral by default), js/ui/menu.js and statchart.js (D5), js/net/coop.js (D6).
+
+ After the build (free-edit): changelog new line (IVs and natures now change
+ stats), COMBAT-RULES drops the two "Code differs" notes, pokebox-plan step 4
+ status, BALANCE.md entry (the tables above), TODO line for D6, DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ NEW  docs/proposals/pokebox-stats-harness.js   (picked up by check.js, *harness*.js)
+   Loads the real js/core/stats.js, js/systems/copies.js and js/entities/player.js
+   with the same stubs the stat-stage and team-cards harnesses use. Checks,
+   all hand-derived from the MATH section, never copied from code output:
+     1. Neutral profile: every stat, HP and px/s equal today's numbers exactly
+        (bases 30 / 65 / 110 / 160 at L1, L25, L50)
+     2. All 25 natures: the right stat x1.1, the right stat x0.9, neutral five
+        change nothing, HP never changes
+     3. Rounding: floor after the +5, then floor after the nature
+     4. The Snorlax table above, all six stats and 76.9 px/s
+     5. A Player built with a profile: maxHp at L1 and after level-ups, bench
+        syncLevel keeps the HP fraction with the IV in
+     6. moveFactor carries Atk IV + nature for physical, SpA for special,
+        neither for status
+     7. hurt(): Def IV + nature for physical hits, SpD for special
+     8. Enemy calls (attackFactor/applyPlayerDefense/speedToPx with no
+        profile) unchanged
+     9. buildFighter path: two copies of the same species with different IVs
+        in two slots give two different fighters; a missing uid is neutral (D4)
+   Why new: no existing harness loads copies.js together with stats.js and
+   player.js; the pokebox harnesses test storage, the stat harnesses test stages.
+
+ NEW  docs/proposals/pokebox-stats-mutate.js    (mutation runner, run by hand)
+   Breaks one thing at a time and expects the new harness to FAIL each time:
+     - IV dropped from statValue
+     - IV dropped from hpForLevel
+     - nature applied to HP
+     - raised and lowered swapped
+     - nature applied before the +5
+     - Spe IV/nature ignored in speedToPx
+     - player hurt() ignores the profile (Def/SpD)
+     - moveFactor ignores the profile
+     - buildFighter ignores the uid (every copy neutral)
+   Why: proves each harness check catches the break it exists for.
+
+ UNCHANGED  every existing harness. They build fighters with no profile, so
+   they now double as the "neutral equals today" regression check. If one
+   moves, the default is wrong.
+ NO check.js change (the new harness matches its *harness*.js pattern).
+ NO intent scenarios (no move changes). NO new debug sets (the two debug
+   commands above are readouts/setters, not test sets).
+
+ UI CHECK (one-off file:// headless probe, not committed): click #tap-start,
+   start a run with a 31 IV copy in slot 1, read G.Debug.fighter(), no page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. Lead with a base-65 Speed species. G.Debug.ivs(0, 0, 'brave') (-Spe),
+      start a run, note G.Debug.fighter() and how it moves. Quit.
+   2. G.Debug.ivs(0, 31, 'jolly') (+Spe), same run start: movement should be
+      clearly faster (about 97 -> 132 px/s). This is the D3 check.
+   3. G.Debug.ivs(0, 31, 'adamant') with a physical mover: by L20 to L25,
+      common enemies should drop a hit sooner than with 'modest'.
+   4. Team screen still shows the same IVs and nature name; reload keeps them.
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Feel: D3 swing at the median Speed; mid-speed leads with a bad roll feel
+     sluggish next to a good roll of the same species.
+   - Balance: small net player buff from average IVs (D2), growing with level.
+   - Gacha value: a pull's IVs now matter, which makes repeats worth keeping
+     (Select repeats already keeps the best IVs).
+   - A missed call site would leave that stat neutral silently; harness 5 to 7
+     and the mutation runner cover every reader found (list in FILES).
