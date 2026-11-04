@@ -1375,12 +1375,72 @@ G.MenuUI = (() => {
         <div class="ros-box ros-stats"><span class="ros-bst">${G.Icons.bstStars(p.bst)}</span>${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}</div>
         ${rosInfoRows(copy, dex)}
         <div class="ros-box ros-mbox"><div class="ros-mh">Moves</div><div class="ros-moves">${moves}</div></div>
+        ${copy ? rosSellHtml(copy) : ''}
       </div>`;
     const hex = $('ros-hex');
     if (hex)
       hex.appendChild(
         G.StatChart.make(p.stats, color, 380, 364, { radius: 0.33, teamHex: true, iv: copy ? copy.iv : null })
       );
+    const sellBtn = $('ros-sell');
+    if (sellBtn && copy) sellBtn.onclick = () => rosSell(copy.pokemonUUID);
+  }
+
+  // ---------------- selling a copy (step 3a-3) ----------------
+
+  /** On the saved team, or in the uncommitted team edits: either way it cannot be sold. */
+  function rosOnTeam(uid) {
+    const has = (list) => (list || []).some((t) => t && t.uid === uid);
+    return has(G.DB.save.team) || has(ros.team);
+  }
+
+  /** The Sell button under Moves for a copy; disabled with the reason when it cannot be sold. */
+  function rosSellHtml(copy) {
+    const price = G.Copies.sellPrice(G.DB.save, copy.pokemonUUID);
+    if (price == null) return '';
+    const why = rosOnTeam(copy.pokemonUUID) ? 'Remove it from your team first.' : copy.isLocked ? 'Unlock it first.' : '';
+    return `<div class="ros-sell"><button type="button" class="btn gold small" id="ros-sell"${why ? ' disabled' : ' data-sfx="click"'}><span class="coin"></span> Sell for ${rosCoins(price)}</button>${why ? `<span class="sub">${why}</span>` : ''}</div>`;
+  }
+
+  /** Sell copy uid from the box: always a confirm first. Storage, like a box move: it saves at once and pending team edits stay pending. */
+  async function rosSell(uid) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid);
+    if (!c) return;
+    const p = G.DEX_BY[c.speciesID],
+      price = G.Copies.sellPrice(s, uid),
+      name = (c.isShiny ? 'shiny ' : '') + p.name,
+      last = G.Copies.all(s).filter((x) => x.speciesID === c.speciesID).length === 1;
+    const yes = await G.UI.ask(`Sell ${name} for ${rosCoins(price)} PokéCoins?`, {
+      title: 'Sell Pokémon',
+      ok: 'Sell',
+      note: last
+        ? `This is your last ${p.name}. The Pokédex keeps it.`
+        : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`,
+    });
+    if (!yes) return;
+    const pending = ros.team.filter((t) => t && t.uid).map((t) => t.uid);
+    const r = G.Copies.sell(s, uid, pending);
+    if (!r.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(
+        r.error === 'team'
+          ? 'Remove it from your team first.'
+          : r.error === 'locked'
+            ? 'Unlock it first.'
+            : 'That Pokémon is gone.'
+      );
+      rosRenderAll();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    G.UI.toast(`Sold ${name} for ${rosCoins(r.coins)} PokéCoins`);
+    if (ros.uid === uid) ros.uid = null; // the species view, never the next copy (no second sale by accident)
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
+    rosRenderAll();
   }
 
   /** Nature, Ability, Height, Weight of a copy. A species from the Pokedex tab has its possible abilities and real size, no nature. */

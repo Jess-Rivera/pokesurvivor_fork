@@ -432,6 +432,22 @@
 .ros-mbox {
   flex: 1 0 auto;
 }
+/* Sell a box copy (step 3a-3): under the moves box; the reason sits beside a disabled button. */
+.ros-sell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.ros-sell .btn .coin {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+.ros-sell .sub {
+  font-size: 13px;
+  color: var(--muted);
+}
 .ros-mh {
   margin: 0 0 6px;
   font-size: 17px;

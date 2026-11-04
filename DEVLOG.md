@@ -542,3 +542,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built (D1 to D4 in the 3a-2b map): G.DB.onSave listeners called on every commit (each in a try/catch, guests too); menu.js redraws the Team tab row while open, gacha-ui.js the current Shop tab while open and no pull is animating; G.Debug.tickets(n, m). Harness section 14, mutation runner now 22.
 - Not verified here (no node): same as 3a-2. Bracket balance and mutation patterns checked by script.
 - Stopped at: Jess's checks and feel-test of 3a-2 and 3a-2b together. Next: 3a-3, selling.
+
+## 2026-11-04, Pokebox 3a-3: selling (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D6 in the 3a-3 map): the last copy can be sold and the Pokedex keeps it; team and uncommitted-edit copies cannot; only repeat gacha cards sell; commons one click, 4 and 5 stars and shinies confirm; the box always confirms.
+- Built: G.Copies.sellPrice and sell, SELL_PRICE moved into copies.js (gacha REFUND points at it); Sell button in the Team detail pane; Sell on repeat gacha cards with a "Sold +N" tag; styles in bw-team.css and style.css. Harness sections 15 and 16, sources harness section 6, mutation runner now 29.
+- Not verified here (no node): check.js, mutation runner, smoke-ui, file:// probe. Bracket balance of every edited file and all 29 mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2, 3a-2b and 3a-3. Next: 3a-4, full boxes on a pull.

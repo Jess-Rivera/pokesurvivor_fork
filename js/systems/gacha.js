@@ -8,7 +8,7 @@
  *   - at 70 pulls without a 5★ in that banner, the next is a guaranteed 5★
  * Shiny: 1 in every 100 pulls comes in its shiny version.
  * Repeats: every pull is a new copy in the box, repeats and repeat shinies included (docs/proposals/pokebox-plan.md).
- * REFUND is kept as the sell price by rarity (x3 for a shiny), for selling from the box (step 3a-3).
+ * REFUND is the sell price by rarity (x3 for a shiny); it is G.Copies.SELL_PRICE, which owns it (copies.js loads first).
  *
  * Pulled with TICKETS (earned by playing):
  *   ×1   1 ticket
@@ -31,7 +31,7 @@ G.Gacha = (() => {
   ];
   const PITY_5 = 70;
   const SHINY_RATE = 1 / 100;
-  const REFUND = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 }; // the sell price from step 3a-3; a pull no longer pays it
+  const REFUND = G.Copies.SELL_PRICE; // the sell price (step 3a-3); a pull no longer pays it
   let forceShiny = 0; // for testing and videos: the next N come shiny
 
   const RARITY_NAME = { 1: 'Común', 2: 'Poco común', 3: 'Rara', 4: 'Épica', 5: 'Legendaria' };

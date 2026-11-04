@@ -83,8 +83,21 @@ let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); 
   const n = s.box.length; s.tickets.t1 = 0;
   if (GA.pull(s, 1, 1) !== null || s.box.length !== n) bad('no ticket, no pull, no copy');
   if (JSON.stringify(GA.REFUND) !== JSON.stringify({ 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 })) bad('the sell price table 15 / 30 / 60 / 120 / 300 is kept');
+  if (GA.REFUND !== C.SELL_PRICE) bad('the gacha and the box share one sell price table (G.Copies owns it)');
   if (s.coins !== 500) bad('coins never moved, ' + s.coins);
   console.log('5 no ticket, no pull; the sell price table is kept');
+
+  // 6. selling what a pull gave (3a-3): the result's uid sells for its rarity price, a shiny for x3.
+  const PRICE = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 };
+  const normal = res.find(r => !r.shiny && C.get(s, r.uid));
+  if (!normal) bad('the 10-pull left a normal copy to sell');
+  else {
+    const before = s.coins, r = C.sell(s, normal.uid);
+    if (!r.ok || r.coins !== PRICE[normal.rarity] || s.coins !== before + PRICE[normal.rarity] || C.get(s, normal.uid)) bad('a pulled ' + normal.rarity + ' star sells for ' + PRICE[normal.rarity] + ' ' + JSON.stringify(r));
+  }
+  const shiny = C.all(s).find(c => c.speciesID === 152 && c.isShiny), b4 = s.coins, rs = shiny && C.sell(s, shiny.pokemonUUID);
+  if (!rs || !rs.ok || rs.coins !== 45 || s.coins !== b4 + 45) bad('a pulled shiny Chikorita (1 star) sells for 45 ' + JSON.stringify(rs));
+  console.log('6 a pulled copy sells for its rarity price, a shiny for x3');
 
   console.log(fail ? fail + ' FAILED' : 'pokebox-sources harness: all passed');
   process.exit(fail ? 1 : 0);

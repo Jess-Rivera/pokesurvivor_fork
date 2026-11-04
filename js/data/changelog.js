@@ -8,6 +8,20 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Sell your Pokemon', 'Sell your Pokemon'],
+    new: [
+      [
+        'Sell a Pokemon from your box on the Team screen (pick it, then Sell under its moves), or sell a repeat straight from its card after a pull. Prices by rarity: 15, 30, 60, 120 and 300 PokéCoins, three times that for a shiny.',
+        'Sell a Pokemon from your box on the Team screen (pick it, then Sell under its moves), or sell a repeat straight from its card after a pull. Prices by rarity: 15, 30, 60, 120 and 300 PokéCoins, three times that for a shiny.',
+      ],
+      [
+        'A Pokemon on your team cannot be sold. Selling your last one of a species keeps it in your Pokedex.',
+        'A Pokemon on your team cannot be sold. Selling your last one of a species keeps it in your Pokedex.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Every Pokemon you get is kept', 'Every Pokemon you get is kept'],
     chg: [
       [

@@ -22,6 +22,8 @@ G.Copies = (() => {
     BOX_START = 2,
     BOX_MAX = 5;
   const BOX_PRICES = { 3: 10000, 4: 25000, 5: 60000 }; // pokebox-plan "Rulings for step 3", bought in order
+  const SELL_PRICE = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 }; // by the species' rarity, pokebox-plan "Rulings for step 3"
+  const SHINY_SELL = 3; // a shiny sells for 3 times its rarity's price
   const HIDDEN_CHANCE = 0.05;
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
@@ -209,6 +211,44 @@ G.Copies = (() => {
     return 'ok';
   }
 
+  // ---------------- selling (step 3a-3) ----------------
+
+  /** PokeCoins a compact copy sells for: its species' rarity price, x3 for a shiny. A species with no rarity sells as 1 star. */
+  function priceOf(c) {
+    const p = G.DEX_BY && G.DEX_BY[c.d],
+      r = p && SELL_PRICE[p.rarity] ? p.rarity : 1;
+    return SELL_PRICE[r] * (c.s ? SHINY_SELL : 1);
+  }
+
+  const isId = (id) => typeof id === 'string' && /^[0-9a-f-]{36}$/.test(id);
+
+  /** What copy `id` sells for, or null if the save has no such copy. */
+  function sellPrice(save, id) {
+    if (!isId(id)) return null;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    return c ? priceOf(c) : null;
+  }
+
+  /**
+   * Sells copy `id`: it leaves save.box and its price goes to save.coins. Never a copy on save.team, in `also`
+   * (the Team screen's uncommitted edits, as UUIDs), or locked. The Pokedex record (save.owned) is not touched.
+   * @returns { ok: true, coins, last } (last: no copy of the species is left) | { ok: false, error: 'team' | 'locked' | 'none' }
+   */
+  function sell(save, id, also = []) {
+    if (!isId(id)) return { ok: false, error: 'none' };
+    const u = shortId(id),
+      i = (save.box || []).findIndex((x) => x.u === u);
+    if (i < 0) return { ok: false, error: 'none' };
+    const c = save.box[i];
+    if ((save.team || []).some((t) => t && t.uid === id) || also.includes(id)) return { ok: false, error: 'team' };
+    if (c.l) return { ok: false, error: 'locked' };
+    const coins = priceOf(c);
+    save.box.splice(i, 1);
+    save.coins = (Math.floor(+save.coins) || 0) + coins;
+    return { ok: true, coins, last: !save.box.some((x) => x.d === c.d) };
+  }
+
   // ---------------- keeping the save right ----------------
 
   /** Point each team slot at a copy: it keeps a copy that still matches its species and shiny flag, otherwise it takes the first free match. */
@@ -301,6 +341,9 @@ G.Copies = (() => {
     inBox,
     boxPrice,
     buyBox,
+    sellPrice,
+    sell,
+    SELL_PRICE,
     linkTeam,
     clean,
     IV_MAX,

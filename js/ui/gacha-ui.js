@@ -273,12 +273,51 @@ G.GachaUI = (() => {
         'beforeend',
         `<b>${r.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${mon.name}</b><div class="tag">${tag}</div>`
       );
+      // A repeat can be sold straight from its card; a new one is sold from the box (fewer misclicks).
+      const price = !r.isNew && r.uid ? G.Copies.sellPrice(G.DB.save, r.uid) : null;
+      if (price != null) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn gold small pcard-sell';
+        b.dataset.sfx = 'click';
+        b.innerHTML = `<span class="coin"></span> Sell +${fmt(price)}`;
+        b.onclick = () => sellCard(r, c, b);
+        c.appendChild(b);
+      }
       out.appendChild(c);
       G.Audio.sfx('reveal', { rarity: r.rarity });
       await wait(n === 10 ? 150 : 0);
     }
     $('pull-close').classList.remove('hidden');
     busy = false;
+  }
+
+  /** Sell a repeat from its result card: one click for 1 to 3 stars, a confirm first for 4 and 5 stars and any shiny. No undo. */
+  async function sellCard(r, card, btn) {
+    const s = G.DB.save,
+      price = G.Copies.sellPrice(s, r.uid);
+    if (price == null) {
+      btn.remove();
+      return;
+    }
+    if (r.rarity >= 4 || r.shiny) {
+      const name = (r.shiny ? 'shiny ' : '') + G.DEX_BY[r.dex].name;
+      const yes = await G.UI.ask(`Sell ${name} for ${fmt(price)} PokéCoins?`, { title: 'Sell Pokémon', ok: 'Sell' });
+      if (!yes) return;
+    }
+    const res = G.Copies.sell(s, r.uid);
+    if (!res.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(res.error === 'team' ? 'Remove it from your team first.' : 'That Pokémon is gone.');
+      btn.remove();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    btn.remove();
+    card.classList.add('sold');
+    const tag = card.querySelector('.tag');
+    if (tag) tag.innerHTML = `Sold <span class="coin"></span> +${fmt(res.coins)}`;
   }
 
   function close() {

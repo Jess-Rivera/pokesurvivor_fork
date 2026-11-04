@@ -37,6 +37,14 @@ const M = [
   ['a save write never tells the screens', 'db', [['    redrawCoins();\n    redrawScreens();\n', '    redrawCoins();\n']]],
   ['one failing screen stops the rest', 'db', [['    for (const fn of saveHooks) {\n      try {\n        fn();\n      } catch (e) {\n        /* one screen failing never stops a save or the others */\n      }\n    }', '    try {\n      for (const fn of saveHooks) fn();\n    } catch (e) {\n      /* one screen failing never stops a save or the others */\n    }']]],
   ['guests never tell the screens', 'db', [['    redrawScreens();\n    if (guest || !key || !save) return false;\n', '    if (guest || !key || !save) return false;\n    redrawScreens();\n']]],
+  // ---- 3a-3: selling ----
+  ['a shiny sells at x1', 'copies', [['const SHINY_SELL = 3;', 'const SHINY_SELL = 1;']]],
+  ['the price is one rarity tier off', 'copies', [['return SELL_PRICE[r] * (c.s ? SHINY_SELL : 1);', 'return SELL_PRICE[Math.min(5, r + 1)] * (c.s ? SHINY_SELL : 1);']]],
+  ['a copy on the team can be sold', 'copies', [['if ((save.team || []).some((t) => t && t.uid === id) || also.includes(id))', 'if (also.includes(id))']]],
+  ['the uncommitted team edits are ignored', 'copies', [['if ((save.team || []).some((t) => t && t.uid === id) || also.includes(id))', 'if ((save.team || []).some((t) => t && t.uid === id))']]],
+  ['a locked copy can be sold', 'copies', [["    if (c.l) return { ok: false, error: 'locked' };\n", '']]],
+  ['a sale pays but keeps the copy', 'copies', [['    save.box.splice(i, 1);\n', '']]],
+  ['a sale removes the copy but pays nothing', 'copies', [['    save.coins = (Math.floor(+save.coins) || 0) + coins;', '    save.coins = Math.floor(+save.coins) || 0;']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-mut-'));
 let caught = 0;

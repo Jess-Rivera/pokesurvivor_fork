@@ -1054,6 +1054,21 @@ label {
   font-size: 12px;
   margin-top: 2px;
 }
+/* Sell a repeat from its gacha result card (step 3a-3). */
+.pcard .pcard-sell {
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.pcard .pcard-sell .coin,
+.pcard .tag .coin {
+  width: 12px;
+  height: 12px;
+  vertical-align: -2px;
+}
+.pcard.sold {
+  opacity: 0.55;
+}
 .pcard .new {
   color: var(--gold);
   font-weight: 700;

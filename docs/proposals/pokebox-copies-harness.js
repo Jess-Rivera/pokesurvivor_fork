@@ -1,4 +1,4 @@
-// Pokebox offline checks, steps 1 to 3a-2b (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
+// Pokebox offline checks, steps 1 to 3a-3 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
 // Real js/systems/copies.js, js/data/species-traits.js and js/core/db.js with a fake localStorage. Expected values are hand-derived from
 // docs/proposals/pokebox-plan.md and pokeapi (Snorlax 2.1 m, 460 kg, Immunity / Thick Fat / Gluttony, 12.5% female), not read back from code output.
 // PB_COPIES=<file> / PB_DB=<file> run it against another copies.js or db.js (docs/proposals/pokebox-copies-mutate.js uses these).
@@ -268,6 +268,46 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     delete global.document;
     D4.playAsGuest(); log.length = 0; D4.commit(); if (log.join('') !== 'abxc') bad('a guest save write tells the screens too, got ' + log.join(''));
     console.log('14 save listeners: once per write, in order, a failing one stops nothing, guests and a hidden bar included'); }
+
+  // 15. selling (3a-3). Prices from pokebox-plan "Rulings for step 3": 15 / 30 / 60 / 120 / 300 by the species' rarity, x3 shiny.
+  { const RAR = { 10: 1, 25: 2, 4: 3, 143: 4, 150: 5, 7: 1 }, WANT = { 10: 15, 25: 30, 4: 60, 143: 120, 150: 300 };
+    for (const d in RAR) G.DEX_BY[d].rarity = RAR[d];
+    const s = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    const mk = (dex, shiny) => C.read(C.add(s, { dex, shiny, from: 'debug' }, rnd), s).pokemonUUID;
+    for (const d in WANT) {
+      const n = C.sellPrice(s, mk(+d, false)), sh = C.sellPrice(s, mk(+d, true));
+      if (n !== WANT[d] || sh !== WANT[d] * 3) bad('dex ' + d + ' sells for ' + WANT[d] + ' and ' + WANT[d] * 3 + ' shiny, got ' + n + ' and ' + sh);
+    }
+    if (C.sellPrice(s, C.uuid()) !== null || C.sellPrice(s, 'junk') !== null) bad('a copy you do not have has no price');
+    const keep = mk(25), go = mk(25), before = s.box.length; s.coins = 100;
+    let r = C.sell(s, go);
+    if (!r.ok || r.coins !== 30 || s.coins !== 130 || s.box.length !== before - 1 || C.get(s, go) || !C.get(s, keep)) bad('a sale removes that one copy and pays 30 once ' + JSON.stringify(r) + ' coins ' + s.coins);
+    if (r.last) bad('other Pikachu are left, so not the last');
+    r = C.sell(s, go); if (r.ok || r.error !== 'none' || s.coins !== 130) bad('selling it again does nothing ' + JSON.stringify(r));
+    s.team[0] = { dex: 25, shiny: false, uid: keep };
+    r = C.sell(s, keep); if (r.ok || r.error !== 'team' || !C.get(s, keep) || s.coins !== 130) bad('a copy on the team cannot be sold ' + JSON.stringify(r));
+    s.team[0] = null;
+    r = C.sell(s, keep, [keep]); if (r.ok || r.error !== 'team' || !C.get(s, keep) || s.coins !== 130) bad('a copy in the uncommitted team edits cannot be sold ' + JSON.stringify(r));
+    const lk = mk(4); s.box[s.box.length - 1].l = 1;
+    r = C.sell(s, lk); if (r.ok || r.error !== 'locked' || !C.get(s, lk) || s.coins !== 130) bad('a locked copy cannot be sold ' + JSON.stringify(r));
+    if (C.sell(s, 'junk').ok || s.coins !== 130) bad('a junk id sells nothing');
+    s.owned[7] = { at: 1, from: 'debug' }; const solo = mk(7);
+    r = C.sell(s, solo); if (!r.ok || !r.last || r.coins !== 15 || !s.owned[7] || s.box.some(c => c.d === 7)) bad('the last copy sells, says last, the Pokedex keeps the species ' + JSON.stringify(r));
+    const b2 = mk(10); C.move(s, b2, 1); const inB2 = C.inBox(s, 1), inB1 = C.inBox(s, 0);
+    C.sell(s, b2); if (C.inBox(s, 1) !== inB2 - 1 || C.inBox(s, 0) !== inB1) bad('a sale from Box 2 lowers Box 2 only');
+    console.log('15 selling: 15 / 30 / 60 / 120 / 300, x3 shiny; one copy, paid once; team, pending, locked refused; the last one keeps the Pokedex'); }
+
+  // 16. a sale through the real save: commit, reload, the copy stays sold and the lead keeps its copy.
+  put('ps.session', K); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  { const D5 = G.DB, t = D5.save;
+    if (!t) bad('the tester save loads for section 16');
+    const a = D5.obtain(25, false, 'debug').uid, b = D5.obtain(25, false, 'debug').uid;
+    t.partner = 25; t.partnerShiny = false; t.team = [{ dex: 25, shiny: false, uid: a }, null, null, null, null, null]; D5.commit(true);
+    const lead = t.team[0].uid, r = C.sell(t, b), coins = t.coins; D5.commit(true);
+    load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const u = G.DB.save;
+    if (!r.ok || lead !== a || C.get(u, b) || !C.get(u, a) || u.team[0].uid !== a || u.coins !== coins) bad('a sale survives a reload and the lead keeps its copy ' + JSON.stringify([r, u.team[0], u.coins, coins]));
+    if (C.sell(u, a).error !== 'team') bad('after a reload the lead still cannot be sold');
+    console.log('16 a sale survives a reload; the lead keeps its copy and stays unsellable'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });
