@@ -29,7 +29,7 @@ G.StatChart = (() => {
     [4, 'SpD'],
     [3, 'SpA'],
   ];
-  const FONT = 'MonogramUI,"Segoe UI",system-ui,sans-serif';
+  const FONT = 'GameFont,"Segoe UI",system-ui,sans-serif';
   const SCALE = 2; // backing-store scale, for sharp text
 
   function make(stats, color, w = 220, h = 192, opts = {}) {

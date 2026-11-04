@@ -389,7 +389,7 @@ G.Events = (() => {
           // "!" bouncing above: it is waiting for you to touch it.
           const by = L.y - h - 14 - Math.abs(Math.sin(now * 5)) * 6;
           ctx.save();
-          ctx.font = '700 16px MonogramUI, monospace';
+          ctx.font = '700 16px GameFont, monospace';
           ctx.textAlign = 'center';
           ctx.lineWidth = 4;
           ctx.strokeStyle = '#000';

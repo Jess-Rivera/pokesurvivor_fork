@@ -10,7 +10,7 @@ Last updated: 2026-11-03 (Claude Code, home). feature/item-rework-v2 is merged t
 - PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
 
 ## Next
-1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 committed and feel-tested: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration. Step 2 BUILT, uncommitted, awaiting his feel-test: Team screen tabs and copies, duplicates on a team, gender, nature, ability, size and the IV hex. Next: no-code plan for step 3 (new copies at the source, selling, buying boxes).
+1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 committed and feel-tested: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration. Step 2 committed: Team screen tabs and copies, duplicates on a team, gender, nature, ability, size and the IV hex. Game font is now Silver (uncommitted; 3.7 MB, subsetting undecided). Step 3 calls are settled in the plan; next: its no-code plan (new copies at the source, selling, buying boxes).
 2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
 3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
 4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).

@@ -9,7 +9,12 @@ G.CHANGELOG = [
   {
     d: '2026-11-03',
     title: ['A new game font', 'A new game font'],
-    chg: [['The main font across the game is now Monogram.', 'The main font across the game is now Monogram.']],
+    chg: [
+      [
+        'The main font across the game is now Silver, by Poppy Works.',
+        'The main font across the game is now Silver, by Poppy Works.',
+      ],
+    ],
   },
   {
     d: '2026-11-03',

@@ -514,3 +514,5 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - 2026-11-03 tweaks after the step 2 feel-test (Jess): the IV band draws 2 IVs per base point at about 35% opacity, the Nature row shows only the name, the detail header gender icon is 10 px.
 
 - 2026-11-03 game font is now Monogram (MonogramUI face in css/style.css with size-adjust 150%, its middle dot from the fallback font). PokeBW and Korataki screens unchanged. Pixelify faces removed, files kept. Open: the old credit string at dev.html:330 and its lang-en key still name Pixelify.
+
+- 2026-11-03 game font changed again, to Silver by Poppy Works (CC BY 4.0, GameFont face in css/style.css, size-adjust 140%). Box prices approved. Open: Silver.ttf is 3.7 MB and the game waits for it at boot.

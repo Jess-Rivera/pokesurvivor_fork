@@ -132,9 +132,9 @@ No key names is smallest, but the position of every value becomes permanent, whi
 5. EVs (docs/SPEED-IVEV-SLICE.md numbers need redoing with the 0.7x to 1.3x speed bounds).
 
 ## Open
-- [Open] Price of boxes 3, 4 and 5.
-- [Open] What a pull does when the boxes are full. An x10 pull needs 10 free spaces.
-- [Open] Sell price. Proposed: the current repeat refund by rarity, x3 for a shiny. Today a first copy pays nothing, so selling it is new income, about one sale per species at most.
+- [Approved] Price of boxes 3, 4 and 5 (Jess, 2026-11-03): 10,000, 25,000, 60,000, in line with the team item slots (9,000, 23,000, 60,000). Run length for reference: early runs average 7 to 15 minutes, a full run (8 gyms and the Elite Four) about an hour.
+- [Approved] Full boxes on a pull (Jess, 2026-11-03): the pull is not blocked. When the free space is less than the pull's size, warn: "You don't have enough space. Any pokemon pulled that can't be placed in a slot will be automatically sold." Whatever does not fit is sold at the sell price.
+- [Approved] Sell price (Jess, 2026-11-03): the current repeat refund by rarity, 15, 30, 60, 120, 300, x3 for a shiny. Today a first copy pays nothing, so selling it is new income, about one sale per species at most.
 - [Open] EV spending, earning, fill rate and Speed: see the IV and EV plan questions, to settle at step 5.
 
 ## Deferred hooks (cloud and multiplayer phase)

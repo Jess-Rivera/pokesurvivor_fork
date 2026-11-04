@@ -1,17 +1,19 @@
 /* ============ PokéSurvivor — interfaz estilo Mundo Misterioso ============
  * Cajas azules con doble borde blanco, como los menús de PMD, y fuente pixel
- * local (Monogram).
+ * local (Silver).
  */
-/* The game font (Jess, 2026-11-03). Monogram draws small for its size, so size-adjust makes every font size in the CSS and on canvases
-   read about as large as it did with the old font, and line heights stay about the same. It has one weight, used for all of them. */
+/* The game font (Jess, 2026-11-03). Silver draws small for its size, so size-adjust makes every font size in the CSS and on canvases
+   read about as large as it did with the old font. Its own line metrics sit far below the baseline, so the overrides centre capitals in
+   their line and keep line heights about the same. It has one weight, used for all of them. */
 @font-face {
-  font-family: 'MonogramUI';
-  src: url('../assets/fonts/monogram-extended.ttf') format('truetype');
+  font-family: 'GameFont';
+  src: url('../assets/fonts/Silver.ttf') format('truetype');
   font-weight: 100 900;
   font-display: block;
-  size-adjust: 150%;
-  unicode-range:
-    U+0-B6, U+B8-10FFFF; /* its middle dot sits high and reads as a stray mark, so that one character uses the next font */
+  size-adjust: 140%;
+  ascent-override: 67%;
+  descent-override: 19%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: 'Monogram';
@@ -38,7 +40,7 @@
   --r3: #4fb4ff;
   --r4: #c47bff;
   --r5: #ffcb3d;
-  --font: 'MonogramUI', 'Segoe UI', system-ui, sans-serif;
+  --font: 'GameFont', 'Segoe UI', system-ui, sans-serif;
 }
 
 * {
