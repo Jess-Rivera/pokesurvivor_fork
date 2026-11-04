@@ -1,0 +1,225 @@
+POKEBOX STEP 3a, MICROSTEP 2: COPIES AT THE SOURCE, FILL REMOVED  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md "Step 3 handoff".
+Out of scope: selling (3a-3), full boxes on a pull (3a-4). Lock, favorite, nicknames, bulk sell (3b).
+Riding along (Jess, 2026-11-04): FIX, top bar coins do not update on gain or spend. See the end.
+
+=====================================================================
+ TODAY vs AFTER
+=====================================================================
+
+ TODAY (fill):
+   source --> writes owned / shiny record --> commit --> normalizeTeam
+                                                      --> G.Copies.fill makes a copy
+                                                          ONLY if that species has none
+   => a repeat makes no copy; a sold copy would come back on the next commit
+
+ AFTER:
+   source --> G.DB.obtain(dex, shiny, from)
+                 |-- writes the Pokedex record (owned, and shiny if shiny)  [unchanged meaning]
+                 |-- G.Copies.add: ONE new copy, every time, repeats too
+                 '-- returns { isNew, copy }
+   normalizeTeam no longer adds copies. fill is deleted.
+
+ One helper so every source does the same two writes in the same order,
+ and the harness can test it (db.js already loads in the copies harness).
+
+=====================================================================
+ SOURCES
+=====================================================================
+
+ source            file / spot                         today on a repeat        after
+ ----------------  ----------------------------------  -----------------------  ------------------------
+ gacha pull        js/systems/gacha.js pull()          coins (REFUND), shiny     a copy, no coins (D1)
+                                                       repeat re-rolled          repeat shiny kept (D2)
+ rescue event      js/game.js G.onRescue               +150 coins               see D3
+ wild shiny        js/game.js G.onShinyCaught          +300 coins               see D3
+ starter           js/ui/test.js (personality test)    n/a                      a starter copy
+ debug unlock-all  js/core/debug.js maxAll             fill did it              1 normal + 1 shiny copy
+                                                                                per species (1,932, 5 boxes)
+ debug addCopy     js/core/debug.js addCopy            fill + n                 exactly n
+
+ Unchanged: owns(), ownsShiny(), grant(), grantShiny() stay as Pokedex-record
+ writers (achievements, goals, the Pokedex tab read them). Co-op shinyCaught
+ hook untouched (deferred).
+
+=====================================================================
+ DECISIONS FOR JESS  (rule changes, each one approve or change)
+=====================================================================
+
+ D1  Gacha repeats pay NO coins from now on.             [Approved ruling, timing is new]
+     Between 3a-2 and 3a-3 there is no way to sell, so repeats only fill boxes.
+     REC: drop the refund now (keeping it would pay twice once selling lands).
+
+ D2  A repeat gacha shiny is kept, not re-rolled.         [Approved ruling]
+     Shiny hunting a missing species gets slower (the re-roll was a pity valve).
+     REC: build as ruled.
+
+ D3  Repeat rescue and repeat wild shiny.                 [Open in pokebox-plan]
+     a) a copy, no coins        b) coins as today, no copy      c) a copy AND the coins
+     REC: a). Same rule as the gacha, and a repeat now rolls new IVs and a new nature.
+
+ D4  A shiny of a species you do not own gives ONE copy.  [NEW rule]
+     Today: the shiny AND a free normal (fill made a copy for both records).
+     After: only the shiny copy; the Pokedex still marks the species owned.
+     REC: one copy. "You keep what you caught", and the free normal would be
+     a hidden second copy per shiny.
+
+ D5  Messages on a repeat (new English strings; new-species lines keep their inherited keys):
+       rescue:      "<name> joined your box!"
+       wild shiny:  "Another shiny <name>! Added to your box."
+       gacha card:  "Repetido · coin +N"  becomes  "To Box N"   (the box it landed in)
+     REC: as written.
+
+ D6  Full boxes until 3a-4: unchanged (a new copy still overflows into the last box).
+     REC: leave it; 3a-4 replaces it with the warning and auto-sell.
+
+ D7  No safety net: a species that is owned but has no copy stays that way.
+     Your save already has a copy for everything (fill ran on every commit).
+     REC: no net, since a net is exactly what would bring a sold copy back.
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/core/db.js
+   +- new obtain(dex, shiny, from): record first, then G.Copies.add; returns isNew + copy
+   +- normalizeTeam: the fill call at its top is removed
+   '- export obtain next to grant / grantShiny
+   why: one path for every source; no copy is ever made behind a source's back
+
+ js/systems/copies.js
+   '- fill and its export deleted; header and freeBox comments updated
+   why: plan "Step 3 handoff", or a sold copy comes back
+
+ js/systems/gacha.js  pull()
+   +- every result calls obtain; refund and the repeat-shiny re-roll removed
+   +- result: { dex, rarity, shiny, isNew, box }   (box = where the copy went)
+   +- REFUND table KEPT, exported (3a-3 reuses it as the sell price)
+   '- header comment "Repeats: they turn into Poke-coins" rewritten
+   why: D1, D2
+
+ js/ui/gacha-ui.js  results cards
+   '- repeat tag reads the box instead of the refund (D5)
+
+ js/game.js  G.onRescue, G.onShinyCaught
+   '- both call obtain; coin bonuses removed; repeat lines per D5
+   why: D3, D5
+
+ js/ui/test.js  starter
+   '- grant + copy through obtain
+ js/core/debug.js  maxAll, addCopy
+   '- maxAll obtains a normal + shiny per species; addCopy adds exactly n
+
+ After the build (free-edit): changelog.js (repeats become copies, no refund,
+ shiny repeats kept) + parse check, pokebox-plan status + D3/D4 rulings, DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ CHANGED  docs/proposals/pokebox-copies-harness.js
+   section 5 (fill) REPLACED by "obtain", hand-derived from the rulings:
+     - new species: owned record + 1 copy, isNew true, method letter right
+     - repeat: +1 copy, record unchanged (keeps the first date), isNew false
+     - shiny of an unowned species: owned + shiny records, ONE copy, shiny (D4)
+     - repeat shiny: +1 shiny copy, isNew false
+     - every method letter: starter s, gacha g, wild w, rescue r, debug d
+   sections 7 and 10: the starter / shiny / rescue lines move from grant + commit
+     to obtain (they relied on fill), same expected boxes and links
+   new rows in 7: grant alone + commit adds NO copy; a copy removed from save.box
+     stays gone through commit and reload (the "sold copy comes back" bug)
+   why here: obtain lives in db.js, which this harness already loads for real
+
+ NEW  docs/proposals/pokebox-sources-harness.js
+   loads the real gacha.js + db.js + copies.js with a small stub dex
+   (G.DEX, G.SPRITE_META, G.U.pick, G.Sprites.hasShiny, seeded Math.random)
+     - a 10-pull adds exactly 10 copies, coins unchanged (D1)
+     - a forced repeat shiny comes out as that species, shiny, a 2nd shiny copy (D2)
+     - isNew follows the Pokedex record, per result
+     - each result's box matches where the copy sits
+     - pity and the 4-star guarantee still hold (regression: the loop body changed)
+   why: no harness loads gacha.js today, and pull() is the biggest source
+
+ CHANGED  docs/proposals/pokebox-copies-mutate.js
+   gains PB_DB and PB_GACHA (both harnesses honor them), and these mutations:
+     - fill put back in normalizeTeam            (sold copy returns)
+     - obtain skips the copy on a repeat
+     - obtain also adds a normal copy for a shiny (D4)
+     - obtain makes the copy but no owned record
+     - the method letter dropped (every copy "other")
+     - the gacha refund put back
+     - the repeat-shiny re-roll put back
+     - a pull result reports the wrong box
+   Still run by hand, like the other runners (check.js only runs *harness*).
+   why: proves both harnesses catch each break
+
+ UI CHECK (one-off file:// headless probe, not committed)
+   10-pull: 10 cards, repeats say "To Box N", no coin change; in a run,
+   G.onRescue(25, 'Pikachu') twice and G.onShinyCaught on a repeat: box +1
+   each, no coins, D5 lines; new save + starter test: lead has a copy; no page errors.
+
+ INTENT SCENARIOS: none (no moves).   DEBUG SETS: none new.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. G.Debug.copies(25) -> note the count. Pull 10 on Kanto: coins unchanged,
+      repeats say "To Box N", box counts on the tabs go up by 10.
+   2. Start a run; in the console G.onRescue(25, 'Pikachu'): message D5,
+      no +150, G.Debug.copies(25) is one higher.
+   3. Reload: the counts stay (nothing added, nothing lost).
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Feel: until 3a-3, repeats pay nothing and cannot be sold (branch only).
+   - Box clutter: a 10-pull is up to 10 new cells; 1,000 slots fill after
+     roughly 100 ten-pulls with no selling. 3a-3 and 3b bulk sell answer it.
+   - Cloud merge (deferred): merging unions owned but not copies; already in
+     pokebox-plan "Deferred hooks".
+
+=====================================================================
+ RIDE-ALONG FIX: TOP BAR COINS GO STALE
+=====================================================================
+
+ WHY (from the code, not reproduced in a browser here)
+   the top bar number is drawn ONLY by G.UI.refreshCoins (js/ui/ui.js), called on:
+     screen opens (chrome, Team, Settings, Shop refresh) | achievement rewards
+     | cloud sync (G.DB.onSync)  <-- never fires on a LOCAL save
+   so on a local save, coins that change while a screen stays open are not redrawn:
+
+   coin write                         file                    redraws the top bar?
+   ---------------------------------  ----------------------  --------------------
+   buy a box (3a-1, mine)             js/systems/copies.js    NO  <- my miss
+   gacha repeat refund (until 3a-2)   js/systems/gacha.js     only when results close
+   team item / item slot buy          js/data/items.js        yes, via Shop refresh
+   run coins banked                   js/game.js endRun       on the next screen open
+   achievement reward                 js/systems/progress.js  yes
+   G.Debug.coins                      js/core/debug.js        yes
+   (3a-3 selling will be another)
+
+ FIX: one hook, not one call per spot
+   G.DB.commit (js/core/db.js) redraws the top bar after every save write,
+   when the top bar is showing. Every coin write above already commits.
+   No document or no G.UI (the Node harnesses): it does nothing.
+   Existing precedent: db.js already calls G.UI.refreshCoins after a cloud sync.
+
+ D8  Hook in G.DB.commit, so any future coin source updates for free.   REC: yes
+     (alternative: a refreshCoins call at each spot, easy to miss again, as I just did)
+
+ D9  The top bar formats coins in the Spanish style (12.000); the Shop and the
+     box tabs use 12,000. Switch the top bar to 12,000 to match.        REC: yes
+     (refreshCoins in js/ui/ui.js, one locale argument)
+
+ TESTS
+   CHANGED docs/proposals/pokebox-copies-harness.js section 7: stub G.UI.refreshCoins
+     as a counter and a topbar element; commit with the bar showing calls it once,
+     with the bar hidden does not, with no G.UI does not throw.
+     why here: it is the harness that loads the real db.js
+   CHANGED docs/proposals/pokebox-copies-mutate.js: + "commit no longer redraws coins"
+   UI CHECK (same probe): buy Box 3 on the Team screen, the top bar drops by
+     10,000 at once; G.Debug.coins still works; the number reads 12,000 style.
+
+ FEEL-TEST: on the Team screen, G.Debug.coins(100000), buy Box 3: the top bar
+   reads 90,000 right away, without leaving the screen.
+ CHANGELOG: one fix line ("PokeCoins in the top bar now update right away").

@@ -181,7 +181,7 @@ G.Copies = (() => {
     return { ok: true, boxes: n + 1, price };
   }
 
-  /** The first box with room. With every box full it is the last one, until step 3 decides what a full box does. */
+  /** The first box with room. With every box full it is the last one, until step 3a-4 (the full box warning and auto-sell). */
   function freeBox(save) {
     const n = boxCount(save);
     for (let b = 0; b < n; b++) if (inBox(save, b) < BOX_SIZE) return b;
@@ -210,26 +210,6 @@ G.Copies = (() => {
   }
 
   // ---------------- keeping the save right ----------------
-
-  /**
-   * Every owned species has a normal copy and every owned shiny a shiny copy. Only adds what is missing, so it is safe to call
-   * as often as needed. Until step 3 this is how a new Pokemon becomes a copy: gacha, rescues, wild shinies and starters still
-   * only write save.owned and save.shiny. Step 3 creates copies at the source and removes this, or a sold copy would come back.
-   */
-  function fill(save, rnd = Math.random) {
-    if (!Array.isArray(save.box)) save.box = [];
-    const have = new Set(save.box.map((c) => c.d + (c.s ? 's' : 'n')));
-    const addMissing = (coll, shiny) => {
-      for (const k of Object.keys(save[coll] || {})) {
-        const dex = +k;
-        if (have.has(dex + (shiny ? 's' : 'n')) || !traitsOf(dex)) continue;
-        const rec = save[coll][k] || {};
-        add(save, { dex, shiny, at: rec.at, from: rec.from }, rnd);
-      }
-    };
-    addMissing('owned', false);
-    addMissing('shiny', true);
-  }
 
   /** Point each team slot at a copy: it keeps a copy that still matches its species and shiny flag, otherwise it takes the first free match. */
   function linkTeam(save) {
@@ -321,7 +301,6 @@ G.Copies = (() => {
     inBox,
     boxPrice,
     buyBox,
-    fill,
     linkTeam,
     clean,
     IV_MAX,

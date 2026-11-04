@@ -495,28 +495,25 @@ G.Game = (() => {
   /** You took a lost Pokemon home and it joins you (events.js). */
   G.onRescue = (dex, name) => {
     if (!G.DB.save || !pl) return;
-    const isNew = !G.DB.owns(dex);
-    if (isNew) {
-      G.DB.grant(dex, 'rescue');
-      G.DB.commit(true);
-    } else pl.coins += 150;
-    G.Spawner.say(
-      isNew ? '¡' + name + ' se une a tu equipo!' : '¡' + name + ' te da las gracias! (+150 monedas, ya lo tenías)',
-      4
-    );
+    // Always a new copy, a repeat too (pokebox 3a-2); a repeat no longer pays +150 coins.
+    const got = G.DB.obtain(dex, false, 'rescue');
+    G.DB.commit(true);
+    G.Spawner.say(got.isNew ? '¡' + name + ' se une a tu equipo!' : name + ' joined your box!', 4);
     G.Audio.sfx('shinyGet');
   };
 
-  /** A wild shiny goes down: you keep it (and the normal version if you did not have it). */
+  /** A wild shiny goes down: you keep it, as one shiny copy (a repeat too; it no longer pays +300 coins). */
   G.onShinyCaught = (e) => {
     if (!G.DB.save || !pl) return;
     if (G.Coop.isHost) G.Coop.shinyCaught(e);
-    const isNew = G.DB.grantShiny(e.dex, 'wild');
+    const got = G.DB.obtain(e.dex, true, 'wild');
     G.DB.save.stats.shinies++;
     G.DB.commit(true);
-    caught.push({ dex: e.dex, isNew });
-    G.Spawner.say(isNew ? '¡Has conseguido a ' + e.name + ' shiny!' : '¡Otro ' + e.name + ' shiny! (+300 monedas)', 4);
-    if (!isNew) pl.coins += 300;
+    caught.push({ dex: e.dex, isNew: got.isNew });
+    G.Spawner.say(
+      got.isNew ? '¡Has conseguido a ' + e.name + ' shiny!' : 'Another shiny ' + e.name + '! Added to your box.',
+      4
+    );
     G.Audio.sfx('shinyGet');
   };
 

@@ -12,6 +12,7 @@
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
+ *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
@@ -49,12 +50,15 @@ G.Debug = (() => {
       return false;
     }
 
-    // Every Pokemon owned + shiny, with every box so they all fit.
+    // Every Pokemon owned + shiny, with every box so they all fit: one normal and one shiny copy per species, only where missing.
     save.boxCount = G.Copies.BOX_MAX;
+    const have = new Set((save.box || []).map((c) => c.d + (c.s ? 's' : 'n')));
     let dexN = 0;
     for (const p of G.DEX) {
-      G.DB.grant(p.dex, 'debug');
-      G.DB.grantShiny(p.dex, 'debug');
+      if (have.has(p.dex + 'n')) G.DB.grant(p.dex, 'debug');
+      else G.DB.obtain(p.dex, false, 'debug');
+      if (have.has(p.dex + 's')) G.DB.grantShiny(p.dex, 'debug');
+      else G.DB.obtain(p.dex, true, 'debug');
       dexN++;
     }
 
@@ -237,6 +241,28 @@ G.Debug = (() => {
     }
     console.log('[Debug] PokeCoins: ' + s.coins);
     return s.coins;
+  }
+
+  /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
+  function tickets(n, m) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const s = G.DB && G.DB.save;
+    if (!s) {
+      console.warn('[Debug] no save loaded.');
+      return false;
+    }
+    s.tickets = s.tickets || { t1: 0, t10: 0 };
+    const whole = (v) => Math.max(0, Math.floor(+v) || 0);
+    if (n != null || m != null) {
+      if (n != null) s.tickets.t1 = whole(n);
+      if (m != null) s.tickets.t10 = whole(m);
+      G.DB.commit();
+    }
+    console.log('[Debug] Pokeballs: ' + s.tickets.t1 + ' · Master Balls: ' + s.tickets.t10);
+    return { pokeballs: s.tickets.t1, masterBalls: s.tickets.t10 };
   }
 
   /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
@@ -1008,10 +1034,8 @@ G.Debug = (() => {
       console.warn('[Debug] no species with dex ' + dex);
       return false;
     }
-    G.DB.grant(dex, 'debug');
-    if (shiny) G.DB.grantShiny(dex, 'debug');
-    G.DB.normalizeTeam(G.DB.save);
-    for (let i = 0; i < n; i++) G.Copies.add(G.DB.save, { dex, shiny: !!shiny, from: 'debug' });
+    // Exactly n copies, each through the same path the game uses (it also writes the Pokedex record).
+    for (let i = 0; i < n; i++) G.DB.obtain(dex, !!shiny, 'debug');
     G.DB.commit(true);
     console.log(
       '[Debug] added ' +
@@ -1101,6 +1125,7 @@ G.Debug = (() => {
     runitem,
     runslots,
     coins,
+    tickets,
     unlockitem,
     loadout,
     ignite,

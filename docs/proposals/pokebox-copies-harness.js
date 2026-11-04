@@ -1,18 +1,17 @@
-// Pokebox offline checks, steps 1 to 3a-1 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
+// Pokebox offline checks, steps 1 to 3a-2b (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
 // Real js/systems/copies.js, js/data/species-traits.js and js/core/db.js with a fake localStorage. Expected values are hand-derived from
 // docs/proposals/pokebox-plan.md and pokeapi (Snorlax 2.1 m, 460 kg, Immunity / Thick Fat / Gluttony, 12.5% female), not read back from code output.
-// PB_COPIES=<file> runs it against another copies.js (docs/proposals/pokebox-copies-mutate.js uses this).
+// PB_COPIES=<file> / PB_DB=<file> run it against another copies.js or db.js (docs/proposals/pokebox-copies-mutate.js uses these).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
-const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
+const load = (p, env) => vm.runInThisContext(fs.readFileSync((env && process.env[env]) || R + '/' + p, 'utf8'), { filename: p });
 global.window = global;
 const store = new Map();
 global.localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k), get length() { return store.size; }, key: i => [...store.keys()][i] };
 global.location = { protocol: 'file:', hostname: '', search: '', href: 'file:///dev.html' };
 global.G = { U: {}, Items: null };
 load('js/data/species-traits.js');
-if (process.env.PB_COPIES) vm.runInThisContext(fs.readFileSync(process.env.PB_COPIES, 'utf8'), { filename: 'copies.js' });
-else load('js/systems/copies.js');
+load('js/systems/copies.js', 'PB_COPIES');
 const C = G.Copies, T = G.SpeciesTraits;
 G.DEX_BY = {}; for (const d in T.SPECIES) G.DEX_BY[d] = { dex: +d };
 let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); };
@@ -67,26 +66,26 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   const fresh = JSON.stringify({ ...C.roll({ dex: 143, from: 'gacha', at: 1793736000000 }, rnd), n: 11, x: 142, y: 97 }).length; if (fresh > 109) bad('a fresh copy is about 108 bytes, got ' + fresh);
   console.log('4 rolls: 47.5 / 47.5 / 5, 95 / 5, 100; real gender ratios; even IVs and natures; bell scale; about 108 bytes'); }
 
-// 5. fill and linkTeam
-{ const owned = { 143: { at: 1793736000000, from: 'gacha' }, 25: { at: 1000000, from: 'legend' } };
-  const s = { owned, shiny: { 25: { at: 2000000, from: 'wild' } }, box: [], team: [{ dex: 143, shiny: false }, { dex: 25, shiny: true }, null, null, null, null], trainerId: 'me' };
-  const before = JSON.stringify([s.owned, s.shiny]);
-  C.fill(s, rnd); C.linkTeam(s);
-  if (s.box.length !== 3) bad('2 species + 1 shiny is 3 copies, got ' + s.box.length);
+// 5. linkTeam (copies made directly here; the sources are section 12). fill is gone since step 3a-2.
+{ const s = { owned: { 143: {}, 25: {} }, shiny: { 25: {} }, box: [], team: [{ dex: 143, shiny: false }, { dex: 25, shiny: true }, null, null, null, null], trainerId: 'me' };
+  C.add(s, { dex: 143, at: 1793736000000, from: 'gacha' }, rnd);
+  C.add(s, { dex: 25, at: 1000000, from: 'legend' }, rnd);
+  C.add(s, { dex: 25, shiny: true, at: 2000000, from: 'wild' }, rnd);
+  C.linkTeam(s);
   const list = C.all(s), sn = list.find(c => c.speciesID === 143), sh = list.find(c => c.speciesID === 25 && c.isShiny), nm = list.find(c => c.speciesID === 25 && !c.isShiny);
-  if (sn.dateObtained !== 1793736000000 || sn.obtainedMethod !== 'gacha') bad('a copy keeps its owned date and origin');
-  if (nm.obtainedMethod !== 'other' || nm.dateObtained !== 1000000) bad('an origin no longer used becomes other');
-  if (sh.obtainedMethod !== 'wild' || sh.dateObtained !== 2000000) bad('a shiny copy keeps its shiny date and origin');
+  if (sn.dateObtained !== 1793736000000 || sn.obtainedMethod !== 'gacha') bad('a copy keeps the date and origin it was made with');
+  if (nm.obtainedMethod !== 'other' || nm.dateObtained !== 1000000) bad('an origin not on the list becomes other');
+  if (sh.obtainedMethod !== 'wild' || sh.dateObtained !== 2000000 || !sh.isShiny) bad('a shiny copy keeps its date and origin');
   if (s.team[0].uid !== sn.pokemonUUID || s.team[1].uid !== sh.pokemonUUID) bad('team slots link to the matching copy');
   const ids = JSON.stringify(s.box), team = JSON.stringify(s.team);
-  for (let i = 0; i < 3; i++) { C.fill(s, rnd); C.linkTeam(s); }
-  if (JSON.stringify(s.box) !== ids || JSON.stringify(s.team) !== team) bad('fill and linkTeam run again change nothing');
-  if (JSON.stringify([s.owned, s.shiny]) !== before) bad('owned and shiny are not touched');
+  for (let i = 0; i < 3; i++) C.linkTeam(s);
+  if (JSON.stringify(s.box) !== ids || JSON.stringify(s.team) !== team) bad('linkTeam run again changes nothing');
+  if (typeof C.fill !== 'undefined') bad('G.Copies.fill is gone (step 3a-2), or a sold copy comes back');
   s.team[1] = { dex: 25, shiny: false }; C.linkTeam(s); if (s.team[1].uid !== nm.pokemonUUID) bad('a slot the menu rewrote links again');
   s.team[1].uid = sh.pokemonUUID; C.linkTeam(s); if (s.team[1].uid !== nm.pokemonUUID) bad('a uid that does not fit the slot is replaced');
   s.team[1].uid = 'junk'; C.linkTeam(s); if (s.team[1].uid !== nm.pokemonUUID) bad('a junk uid is replaced');
   s.team[2] = { dex: 150, shiny: false }; C.linkTeam(s); if (s.team[2].uid) bad('no copy, no uid');
-  console.log('5 fill keeps dates and origins and only adds what is missing; team slots link and relink'); }
+  console.log('5 copies keep their date and origin; team slots link and relink; no fill'); }
 
 // 6. clean: a hand-edited box
 { const good = JSON.parse(LINE);
@@ -106,7 +105,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
 
 // 7. real db.js: the clean save checkpoint, fresh saves, team links through commit and reload
 (async () => {
-  load('js/core/db.js');
+  load('js/core/db.js', 'PB_DB');
   const D = G.DB, K = 'tester', SAVE = 'ps.save.' + K, BACK = 'ps.backup.prebox.' + K;
   const acc = { [K]: { name: 'Tester', salt: 'x', hash: 'y', created: 1 } };
   const put = (k, v) => store.set(k, JSON.stringify(v)), getj = k => JSON.parse(store.get(k) || 'null');
@@ -121,27 +120,34 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   if (D.takeResetNotice() !== true || D.takeResetNotice() !== false) bad('the notice shows once');
   if (!/^[0-9a-f-]{36}$/.test(s.trainerId || '')) bad('a new save has a trainer id');
 
-  // A starter through the existing grant path, as the personality test does it.
-  D.grant(7, 'starter'); s.partner = 7; s.team[0] = { dex: 7, shiny: false }; D.commit(true);
-  if (s.box.length !== 1 || s.team[0].uid !== C.all(s)[0].pokemonUUID || C.all(s)[0].obtainedMethod !== 'starter') bad('a new Pokemon becomes a copy on commit, linked to its slot');
-  D.grantShiny(25, 'wild'); D.grant(4, 'rescue'); D.commit(true);
-  if (s.box.length !== 4) bad('shiny + its normal + a rescue is 3 more copies, got ' + s.box.length);
+  // A starter through obtain, as the personality test does it.
+  D.obtain(7, false, 'starter'); s.partner = 7; s.team[0] = { dex: 7, shiny: false }; D.commit(true);
+  if (s.box.length !== 1 || s.team[0].uid !== C.all(s)[0].pokemonUUID || C.all(s)[0].obtainedMethod !== 'starter') bad('a starter is one copy, linked to its slot on commit');
+  D.obtain(25, true, 'wild'); D.obtain(4, false, 'rescue'); D.commit(true);
+  if (s.box.length !== 3) bad('a new shiny is one copy (no free normal) and a rescue another: 3 in all, got ' + s.box.length);
+  D.grant(1, 'debug'); D.commit(true);
+  if (s.box.length !== 3 || !s.owned[1]) bad('a Pokedex record alone makes no copy on commit, got ' + s.box.length);
   const disk = JSON.stringify(getj(SAVE).box), lead = s.team[0].uid, tr = s.trainerId;
   if (disk !== JSON.stringify(s.box)) bad('the box reaches the disk');
 
   // Reload: the same copies, no second reset, the backup is not overwritten.
   const back = store.get(BACK);
-  load('js/core/db.js'); await G.DB.ready(); const r = G.DB.save;
+  load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const r = G.DB.save;
   if (JSON.stringify(r.box) !== disk || r.team[0].uid !== lead || r.trainerId !== tr) bad('a reload keeps the same copies, links and trainer id');
   if (G.DB.takeResetNotice()) bad('no second notice');
   if (store.get(BACK) !== back) bad('the backup is not overwritten');
 
+  // A copy taken out of the box stays out through a commit and a reload (what fill would undo once selling exists).
+  r.box = r.box.filter(c => c.d !== 4); G.DB.commit(true);
+  load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  if (G.DB.save.box.some(c => c.d === 4) || G.DB.save.box.length !== 2 || !G.DB.save.owned[4]) bad('a removed copy does not come back, and the Pokedex keeps the species');
+
   // A second old save must not replace the first backup.
-  put(SAVE, { ...OLD, coins: 1 }); load('js/core/db.js'); await G.DB.ready();
+  put(SAVE, { ...OLD, coins: 1 }); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
   if (getj(BACK).coins !== 4242) bad('the first backup wins');
   // Guests: a new save, nothing written.
-  const n = store.size; G.DB.playAsGuest(); G.DB.grant(1, 'starter'); G.DB.commit(); if (G.DB.save.box.length !== 1 || store.size > n) bad('a guest has copies and writes nothing');
-  console.log('7 clean save checkpoint: backup, one notice, accounts kept; new Pokemon become copies; a reload is stable');
+  const n = store.size; G.DB.playAsGuest(); G.DB.obtain(1, false, 'starter'); G.DB.commit(); if (G.DB.save.box.length !== 1 || store.size > n) bad('a guest has copies and writes nothing');
+  console.log('7 clean save checkpoint: backup, one notice, accounts kept; copies come only from obtain; a removed copy stays gone');
 
   // 8. display values, by hand from pokeapi
   { const hard = C.read({ u: 'fzwqnksdToqcIV0Oj2obNA', d: 143, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 0, y: 0, a: 3 }, {});
@@ -173,7 +179,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     if (!same(t.team.slice(0, 3).map(x => x && x.uid), ids.slice(0, 3))) bad('three copies of one species keep their slots ' + JSON.stringify(t.team));
     t.team = [slot(0), slot(1), slot(1), null, null, null]; D2.normalizeTeam(t);
     if (!t.team[0] || t.team[1].uid !== ids[1] || t.team[2] !== null) bad('one copy cannot fill two slots ' + JSON.stringify(t.team));
-    D2.grant(25, 'starter'); D2.normalizeTeam(t); const pika = C.all(t).find(c => c.speciesID === 25).pokemonUUID;
+    D2.obtain(25, false, 'starter'); D2.normalizeTeam(t); const pika = C.all(t).find(c => c.speciesID === 25).pokemonUUID;
     t.team = [slot(0), { dex: 25, shiny: false, uid: pika }, null, null, null, null]; t.partner = 25; D2.normalizeTeam(t);
     if (t.team[0].uid !== pika || t.team[1] !== null) bad('a new lead already on the team moves up ' + JSON.stringify(t.team));
     t.team = [{ dex: 25, shiny: false }, { dex: 25, shiny: false }, null, null, null, null]; D2.normalizeTeam(t);
@@ -209,6 +215,59 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     if (C.read(C.add(f, { dex: 143, from: 'debug' }, rnd), f).box !== 2 || C.inBox(f, 2) !== 1) bad('copy 1001 goes to the bought Box 3');
     C.clean(f); if (f.boxCount !== 3 || f.box.length !== 1001) bad('clean keeps 3 boxes and every copy ' + f.boxCount + ' ' + f.box.length);
     console.log('11 buying boxes: 10,000 / 25,000 / 60,000 in order, never a sixth, short coins change nothing, Box 3 is used'); }
+
+  // 12. G.DB.obtain, the one path every source uses (step 3a-2). Expected from the 3a-2 map, D1 to D7, by hand.
+  { const D3 = G.DB; D3.playAsGuest(); const g = D3.save;
+    const copiesOf = (dex, shiny) => C.all(g).filter(c => c.speciesID === dex && c.isShiny === !!shiny);
+    let r = D3.obtain(143, false, 'gacha');
+    const first = g.owned[143] && g.owned[143].at;
+    if (!r.isNew || !first || copiesOf(143).length !== 1 || r.uid !== copiesOf(143)[0].pokemonUUID || r.box !== 0) bad('a new species: the record and one copy ' + JSON.stringify(r));
+    r = D3.obtain(143, false, 'gacha');
+    if (r.isNew || copiesOf(143).length !== 2 || g.owned[143].at !== first) bad('a repeat: one more copy, the record keeps its first date ' + JSON.stringify(r));
+    r = D3.obtain(25, true, 'wild');
+    if (!r.isNew || !g.owned[25] || !g.shiny[25] || copiesOf(25, true).length !== 1 || copiesOf(25).length !== 0) bad('a shiny of a species you lack: both records, one shiny copy only (D4)');
+    r = D3.obtain(25, true, 'wild');
+    if (r.isNew || copiesOf(25, true).length !== 2) bad('a repeat shiny is a second shiny copy');
+    r = D3.obtain(25, false, 'rescue');
+    if (r.isNew || copiesOf(25).length !== 1) bad('a normal after its shiny: a repeat for the Pokedex, and a copy');
+    const BY = { starter: 1, gacha: 4, wild: 7, rescue: 39, debug: 52 };
+    for (const from in BY) { const u = D3.obtain(BY[from], false, from).uid, c = u && C.get(g, u); if (!c || c.obtainedMethod !== from) bad('method ' + from + ' is kept on the copy'); }
+    const before = g.box.length, o = { owned: {}, shiny: {}, box: [] };
+    D3.obtain(150, true, 'gacha', o);
+    if (o.box.length !== 1 || !o.shiny[150] || !o.owned[150] || g.box.length !== before || g.owned[150]) bad('obtain writes the save it is given (the gacha path)');
+    r = D3.obtain(0, false, 'debug');
+    if (r.uid !== null || g.box.length !== before) bad('a species with no data: a record, no copy, no crash');
+    D3.grant(16, 'debug'); D3.normalizeTeam(g); if (copiesOf(16).length) bad('normalizeTeam makes no copy');
+    console.log('12 obtain: one copy every time, repeats too; a shiny is one copy; records keep their first date; methods kept');
+
+    // 13. the top bar coins redraw on every save write while the bar shows (ride-along fix, D8)
+    let calls = 0, hidden = false;
+    global.document = { getElementById: id => (id === 'topbar' ? { classList: { contains: k => k === 'hidden' && hidden } } : null) };
+    G.UI = { refreshCoins: () => calls++ };
+    D3.commit(); if (calls !== 1) bad('a save write redraws the top bar coins while it shows, got ' + calls);
+    hidden = true; D3.commit(); if (calls !== 1) bad('no redraw while the top bar is hidden (in a run), got ' + calls);
+    hidden = false; G.UI = { refreshCoins: () => { throw new Error('bar not built'); } };
+    try { D3.commit(); } catch (e) { bad('a redraw that throws never breaks a save'); }
+    delete G.UI; try { D3.commit(); } catch (e) { bad('no G.UI, no redraw, no throw'); }
+    delete global.document;
+    console.log('13 top bar coins: redrawn on a save write when shown, not when hidden, never breaks a save'); }
+
+  // 14. screens redraw on every save write (3a-2b, D2): G.DB.onSave. A signed-in save, so the write itself can be checked.
+  put('ps.session', K); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  { const D4 = G.DB, log = [];
+    if (!D4.save) bad('the tester save loads for section 14');
+    D4.onSave(() => log.push('a')); D4.onSave(() => log.push('b'));
+    D4.commit(); if (log.join('') !== 'ab') bad('two listeners run once per save write, in order, got ' + log.join(''));
+    D4.onSave(() => { log.push('x'); throw new Error('a screen broke'); }); D4.onSave(() => log.push('c'));
+    D4.save.coins = 777; log.length = 0;
+    let threw = false; try { D4.commit(); } catch (e) { threw = true; }
+    if (threw || log.join('') !== 'abxc') bad('a listener that throws stops neither the save nor the next listener, got ' + log.join(''));
+    if (getj(SAVE).coins !== 777) bad('the save is still written when a listener throws, disk has ' + getj(SAVE).coins);
+    global.document = { getElementById: id => (id === 'topbar' ? { classList: { contains: k => k === 'hidden' } } : null) };
+    log.length = 0; D4.commit(); if (log.join('') !== 'abxc') bad('listeners run while the top bar is hidden (each screen decides), got ' + log.join(''));
+    delete global.document;
+    D4.playAsGuest(); log.length = 0; D4.commit(); if (log.join('') !== 'abxc') bad('a guest save write tells the screens too, got ' + log.join(''));
+    console.log('14 save listeners: once per write, in order, a failing one stops nothing, guests and a hidden bar included'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

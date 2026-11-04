@@ -530,3 +530,15 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: G.Copies.boxPrice and buyBox (js/systems/copies.js), price tabs and rosBuyBox (js/ui/menu.js), .ros-buy styles (css/bw-team.css), harness section 11, docs/proposals/pokebox-copies-mutate.js (6 mutations), changelog entry.
 - Not verified here: this machine's sandbox cannot run node, so check.js, the mutation runner, smoke-ui and the file:// probe are for Jess to run. changelog.js bracket and quote balance checked by script.
 - Stopped at: Jess's checks and feel-test of 3a-1. Next: 3a-2, copies at the source and removing fill.
+
+## 2026-11-04, Pokebox 3a-2: copies at the source, coin redraw fix (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D9 in the 3a-2 map): every source makes a copy, repeats too, no coin payouts; repeat gacha shinies kept; a new shiny is one copy only; top bar redraws on every save write and reads 12,000.
+- Built: G.DB.obtain (db.js) used by gacha.js, game.js (rescue, wild shiny), test.js (starter), debug.js (maxAll, addCopy); G.Copies.fill removed; gacha result tags "To Box N"; redrawCoins in commit; ui.js en-US format. Harness sections 5, 7, 10 reworked, 12 and 13 new; docs/proposals/pokebox-sources-harness.js new; mutation runner now 19 mutations over both harnesses.
+- Not verified here (no node in this sandbox): check.js, mutation runner, smoke-ui, file:// probe. Bracket balance of every edited file and every mutation pattern (each found exactly once) checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2. Next: 3a-3, selling.
+
+## 2026-11-04, Pokebox 3a-2b: live price tabs, ticket debug (Quick, work, feature/pokeboxes)
+- Found (Jess): a dim box price tab stayed dim after G.Debug.coins; the Shop's Buy and Pull buttons had the same staleness.
+- Built (D1 to D4 in the 3a-2b map): G.DB.onSave listeners called on every commit (each in a try/catch, guests too); menu.js redraws the Team tab row while open, gacha-ui.js the current Shop tab while open and no pull is animating; G.Debug.tickets(n, m). Harness section 14, mutation runner now 22.
+- Not verified here (no node): same as 3a-2. Bracket balance and mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2 and 3a-2b together. Next: 3a-3, selling.

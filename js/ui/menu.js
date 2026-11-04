@@ -88,6 +88,11 @@ G.MenuUI = (() => {
   const menuOnTop = () => G.UI.isOpen('scr-menu') && document.querySelectorAll('.scr:not(.hidden)').length === 1;
 
   function init() {
+    // PokeCoins changed while the Team screen is open (a purchase, a debug command): the box price tabs follow at once.
+    // Only the tab row is redrawn: the grid, the selection and pending team edits stay as they are.
+    G.DB.onSave(() => {
+      if (G.UI.isOpen('scr-roster')) rosRenderTabs();
+    });
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
     for (const n of [

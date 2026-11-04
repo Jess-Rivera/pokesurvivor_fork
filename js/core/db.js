@@ -237,7 +237,6 @@ G.DB = (() => {
    * Safe to call as often as needed (it is called on load, on merge and on commit).
    */
   function normalizeTeam(s) {
-    if (G.Copies) G.Copies.fill(s);
     const src = Array.isArray(s.team) ? s.team : [];
     const seen = new Set();
     const out = [];
@@ -905,9 +904,38 @@ G.DB = (() => {
    * immediately; in the cloud:
    * @param urgent  true: the stuff that matters (pulls, purchases, Pokemon, prizes): right away
    *                'run': on finishing a game (at most every 30 min) · false: every 2 h
-   */
+
+  /** The top bar shows the coins: redraw it after every save write while it shows, so a coin change anywhere appears at once. */
+  function redrawCoins() {
+    if (typeof document === 'undefined' || !G.UI || !G.UI.refreshCoins) return;
+    const bar = document.getElementById('topbar');
+    if (!bar || bar.classList.contains('hidden')) return;
+    try {
+      G.UI.refreshCoins();
+    } catch (e) {
+      /* the bar is not built yet */
+    }
+  }
+
+  /** Screens that show save values (the Team screen price tabs, the Shop buttons) redraw on every save write; each one checks it is open. */
+  const saveHooks = [];
+  function onSave(fn) {
+    saveHooks.push(fn);
+  }
+  function redrawScreens() {
+    for (const fn of saveHooks) {
+      try {
+        fn();
+      } catch (e) {
+        /* one screen failing never stops a save or the others */
+      }
+    }
+  }
+
   function commit(urgent = false) {
     if (save) normalizeTeam(save); // before the guest check: guests play with a team too
+    redrawCoins();
+    redrawScreens();
     if (guest || !key || !save) return false;
     save.updated = Date.now();
     if (mode === 'local') return write(K_SAVE + key, save);
@@ -1056,6 +1084,26 @@ G.DB = (() => {
     return true;
   }
 
+  /**
+   * A Pokemon the player just got (gacha, rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
+   * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
+   * @param s  the save to write (default: the loaded one; the gacha passes its own)
+   * @returns { isNew, uid, box }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if no species data.
+   */
+  function obtain(dex, shiny, from, s = save) {
+    if (!s) return { isNew: false, uid: null, box: null };
+    s.owned = s.owned || {};
+    s.shiny = s.shiny || {};
+    const now = Date.now(),
+      isNew = shiny ? !s.shiny[dex] : !s.owned[dex];
+    if (!s.owned[dex]) s.owned[dex] = { at: now, from };
+    if (shiny && !s.shiny[dex]) s.shiny[dex] = { at: now, from };
+    if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
+    if (!Array.isArray(s.box)) s.box = [];
+    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });
+    return { isNew, uid: G.Copies.longId(c.u), box: c.b || 0 };
+  }
+
   return {
     ready,
     register,
@@ -1070,6 +1118,8 @@ G.DB = (() => {
     grant,
     ownsShiny,
     grantShiny,
+    obtain,
+    onSave,
     merge,
     setName,
     upgradesOf,

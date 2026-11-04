@@ -20,6 +20,11 @@ G.GachaUI = (() => {
     $('pull-10').onclick = () => pull(10, 't1');
     $('pull-10b').onclick = () => pull(10, 't10');
     $('pull-close').onclick = close;
+    // PokeCoins or Pokeballs changed while the Shop is open (a purchase, a debug command): its buttons follow at once.
+    // Not during the pull animation; closing it redraws anyway.
+    G.DB.onSave(() => {
+      if (G.UI.isOpen('scr-gacha') && !busy && $('pull-fx').classList.contains('hidden')) refresh();
+    });
 
     TABS.forEach(([k, n]) => {
       const b = document.createElement('button');
@@ -261,7 +266,9 @@ G.GachaUI = (() => {
       c.appendChild(G.UI.spriteCanvas(r.dex, 132, 120, { lively: r.rarity >= 4 || r.shiny, scale: 2, shiny: r.shiny }));
       const tag = r.isNew
         ? `<span class="new">${r.shiny ? '¡SHINY NUEVO!' : '¡NUEVO!'}</span>`
-        : `Repetido · <span class="coin"></span> +${r.refund}`;
+        : r.box != null
+          ? `To Box ${r.box + 1}`
+          : '';
       c.insertAdjacentHTML(
         'beforeend',
         `<b>${r.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${mon.name}</b><div class="tag">${tag}</div>`

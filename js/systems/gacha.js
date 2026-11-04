@@ -7,7 +7,8 @@
  *   - the x10 pull brings at least a 4★ or higher
  *   - at 70 pulls without a 5★ in that banner, the next is a guaranteed 5★
  * Shiny: 1 in every 100 pulls comes in its shiny version.
- * Repeats: they turn into Poke-coins (repeated shinies, triple).
+ * Repeats: every pull is a new copy in the box, repeats and repeat shinies included (docs/proposals/pokebox-plan.md).
+ * REFUND is kept as the sell price by rarity (x3 for a shiny), for selling from the box (step 3a-3).
  *
  * Pulled with TICKETS (earned by playing):
  *   ×1   1 ticket
@@ -30,7 +31,7 @@ G.Gacha = (() => {
   ];
   const PITY_5 = 70;
   const SHINY_RATE = 1 / 100;
-  const REFUND = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 };
+  const REFUND = { 1: 15, 2: 30, 3: 60, 4: 120, 5: 300 }; // the sell price from step 3a-3; a pull no longer pays it
   let forceShiny = 0; // for testing and videos: the next N come shiny
 
   const RARITY_NAME = { 1: 'Común', 2: 'Poco común', 3: 'Rara', 4: 'Épica', 5: 'Legendaria' };
@@ -90,7 +91,8 @@ G.Gacha = (() => {
   /**
    * Does `n` pulls on banner `gen` on the save `save` (it modifies it).
    * Returns null if there are no coins, or the list of results:
-   *   { dex, rarity, shiny, isNew, refund }
+   *   { dex, rarity, shiny, isNew, uid, box }
+   * isNew: new to the Pokedex, or a first shiny. uid and box (from 0): the copy it made.
    */
   function pull(save, n, gen = 1, use = 't1') {
     const cost = costOf(save, n, use);
@@ -111,30 +113,12 @@ G.Gacha = (() => {
 
       const { rarity, list } = poolNear(want, gen);
       if (rarity === 5) save.pity[gen] = 0;
-      let mon = G.U.pick(list);
-      let shiny = G.Sprites.hasShiny(mon.dex) && (forceShiny > 0 ? (forceShiny--, true) : Math.random() < SHINY_RATE);
-      // Shinies do not repeat: if you already have that one, another of the same rarity comes out
-      // whose shiny you are missing; if you have them all, a normal one comes out.
-      if (shiny && save.shiny[mon.dex]) {
-        const missing = list.filter((p) => G.Sprites.hasShiny(p.dex) && !save.shiny[p.dex]);
-        if (missing.length) mon = G.U.pick(missing);
-        else shiny = false;
-      }
-
-      let isNew = false,
-        refund = 0;
-      if (shiny) {
-        isNew = !save.shiny[mon.dex];
-        if (isNew) save.shiny[mon.dex] = { at: Date.now(), from: 'gacha' };
-        else refund = REFUND[rarity] * 3;
-        if (!save.owned[mon.dex]) save.owned[mon.dex] = { at: Date.now(), from: 'gacha' };
-      } else {
-        isNew = !save.owned[mon.dex];
-        if (isNew) save.owned[mon.dex] = { at: Date.now(), from: 'gacha' };
-        else refund = REFUND[rarity];
-      }
-      save.coins += refund;
-      out.push({ dex: mon.dex, rarity, shiny, isNew, refund });
+      const mon = G.U.pick(list);
+      const canShiny = G.Sprites.hasShiny(mon.dex);
+      const shiny = canShiny && (forceShiny > 0 ? (forceShiny--, true) : Math.random() < SHINY_RATE);
+      // Every pull is a copy, a repeat shiny included (it is no longer re-rolled). A repeat pays nothing: sell it from the box.
+      const got = G.DB.obtain(mon.dex, shiny, 'gacha', save);
+      out.push({ dex: mon.dex, rarity, shiny, isNew: got.isNew, uid: got.uid, box: got.box });
     }
     save.stats.pulls = (save.stats.pulls || 0) + n;
     return out;

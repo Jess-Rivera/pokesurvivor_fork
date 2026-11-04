@@ -8,6 +8,34 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Every Pokemon you get is kept', 'Every Pokemon you get is kept'],
+    chg: [
+      [
+        'Every Pokemon you pull, rescue or defeat as a shiny now goes into your box as its own Pokemon, repeats included. Repeats no longer turn into PokéCoins (that includes the +150 for a rescue and +300 for a wild shiny you already had).',
+        'Every Pokemon you pull, rescue or defeat as a shiny now goes into your box as its own Pokemon, repeats included. Repeats no longer turn into PokéCoins (that includes the +150 for a rescue and +300 for a wild shiny you already had).',
+      ],
+      [
+        'A repeat shiny from the Shop now stays a shiny and goes into your box, instead of turning into a different Pokemon.',
+        'A repeat shiny from the Shop now stays a shiny and goes into your box, instead of turning into a different Pokemon.',
+      ],
+      [
+        'A shiny of a species you did not have now gives you just the shiny, not a normal one as well. Your Pokedex still counts the species.',
+        'A shiny of a species you did not have now gives you just the shiny, not a normal one as well. Your Pokedex still counts the species.',
+      ],
+    ],
+    fix: [
+      [
+        'The PokéCoins in the top bar now update right away when you earn or spend them, and read like 12,000.',
+        'The PokéCoins in the top bar now update right away when you earn or spend them, and read like 12,000.',
+      ],
+      [
+        'Box prices on the Team screen and the Buy and Pull buttons in the Shop now update right away when your PokéCoins or Pokeballs change.',
+        'Box prices on the Team screen and the Buy and Pull buttons in the Shop now update right away when your PokéCoins or Pokeballs change.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Buy more boxes', 'Buy more boxes'],
     new: [
       [

@@ -1,0 +1,113 @@
+POKEBOX 3a-2b: LIVE PRICE TABS + TICKET DEBUG  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Rides on 3a-2 (the top bar coin redraw in G.DB.commit).
+Jess, 2026-11-04: "didn't have enough to buy a box, gave myself coins, and the box did not undim"
+                  + "a debug to set how many pokeballs (tickets) i have"
+
+=====================================================================
+ WHY THE TAB STAYS DIM
+=====================================================================
+
+   G.Debug.coins(100000)
+        |
+        v
+   G.DB.commit ---> top bar redrawn (3a-2 fix)        OK
+        |
+        x---------> Team screen price tabs            NOT redrawn
+        x---------> Shop: item Buy, slot Buy, pulls   NOT redrawn
+                    (they only redraw when you click a tab or reopen)
+
+ Same bug, two screens. Tickets have it too: give yourself Pokeballs
+ with the Shop open and the Pull buttons stay disabled.
+
+=====================================================================
+ FIX: SCREENS LISTEN FOR SAVE WRITES
+=====================================================================
+
+   G.DB.commit
+     |-- redraw top bar            (3a-2, unchanged)
+     '-- tell every save listener  (NEW: G.DB.onSave(fn))
+            |
+            |-- Team screen (menu.js): open?  -> redraw the tab row only
+            |                                    (grid, selection, pending
+            |                                     team edits untouched)
+            '-- Shop (gacha-ui.js):   open and no pull animation playing?
+                                      -> redraw the current Shop tab
+
+   A listener that throws is skipped; the save and the other listeners
+   still run. Fires for guests too (they see the same screens).
+
+=====================================================================
+ TICKET DEBUG
+=====================================================================
+
+   G.Debug.tickets()          logs: "Pokeballs: 12 · Master Balls: 1"
+   G.Debug.tickets(50)        Pokeballs = 50, Master Balls unchanged
+   G.Debug.tickets(50, 3)     Pokeballs = 50, Master Balls = 3
+   ?dev only, saved, clamped to whole numbers 0 and up (like coins).
+   Listed in the debug.js header next to G.Debug.coins.
+
+=====================================================================
+ DECISIONS FOR JESS
+=====================================================================
+
+ D1  Also fix the Shop (same bug: item Buy, slot Buy, Pull buttons).   REC: yes
+ D2  Screens listen for save writes (one hook) instead of each coin or
+     ticket change calling each screen.                              REC: yes
+ D3  Team screen redraws the TAB ROW only, not the grid.              REC: yes
+     (a grid redraw on every save would flicker and lose scroll)
+ D4  Name and shape: G.Debug.tickets(pokeballs, masterBalls).         REC: yes
+     Second number optional; Master Balls are the x10 tickets.
+
+ No game rule changes: this is UI refresh and a debug command.
+
+=====================================================================
+ FILES
+=====================================================================
+
+ js/core/db.js        + onSave(fn) listener list, run at the end of the
+                        commit's redraw step, each in a try/catch; exported
+ js/ui/menu.js        + init registers a listener: Team screen open ->
+                        rosRenderTabs
+ js/ui/gacha-ui.js    + init registers a listener: Shop open and the pull
+                        overlay hidden -> refresh (current tab)
+ js/core/debug.js     + tickets(t1, t10), header line, export
+
+ After the build (free-edit): changelog fix line ("prices and buttons
+ update right away when your PokeCoins or Pokeballs change"), DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ CHANGED  docs/proposals/pokebox-copies-harness.js  section 13
+   (it loads the real db.js, the file the hook lives in)
+     - a listener runs once per commit
+     - two listeners both run, in order
+     - a throwing listener: the save still writes, the next listener runs
+     - a guest commit runs the listeners (no save written)
+     - listeners still run while the top bar is hidden (screens decide)
+
+ CHANGED  docs/proposals/pokebox-copies-mutate.js   +3 mutations
+     - commit never calls the listeners
+     - one throwing listener stops the rest
+     - listeners skipped for guests
+   why: proves section 13 catches each break
+
+ NO new harness: the two screen listeners are one-line DOM calls and
+   G.Debug.tickets is a setter like G.Debug.coins; no harness loads
+   menu.js, gacha-ui.js or debug.js's save commands, and a DOM stub for
+   two lines would test the stub. Covered by the probe below instead.
+ NO check.js change. NO intent scenarios (no moves). NO debug sets.
+
+ UI CHECK (one-off file:// headless probe, not committed)
+   Team screen, coins 5,000: Box 3 tab dim. G.Debug.coins(100000):
+   Box 3 tab bright with no click. Shop open, 0 Pokeballs, Pull x1
+   disabled. G.Debug.tickets(10): Pull x1 and x10 enabled. No page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. Team screen, G.Debug.coins(5000): Box 3 dims at once.
+      G.Debug.coins(100000): it lights at once.
+   2. Shop, G.Debug.tickets(0): Pull buttons disable at once.
+      G.Debug.tickets(25, 2): they enable; the top bar shows 25 and 2.
