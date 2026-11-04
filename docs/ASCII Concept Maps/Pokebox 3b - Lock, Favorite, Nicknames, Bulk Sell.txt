@@ -1,0 +1,243 @@
+POKEBOX STEP 3b: LOCK, FAVORITE, NICKNAMES, BULK SELL  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md (copy fields isLocked, isFavorite, nickname).
+Three microsteps, each approved and built on its own:  3b-1 lock + favorite  ->  3b-2 nicknames  ->  3b-3 bulk sell
+APPROVED 2026-11-04 (Jess), all of D1 to D12, with two edits to 3b-2 (see "3b-2 EDITS" at the end):
+  nickname cleaning against injection + 16 characters; Favorites / Locked filter chips after BST.
+3b-1: BUILT 2026-11-04.
+3b-2: BUILT 2026-11-04 with E1 to E3 (Jess OK, same day). Clicking away from the rename field cancels, like Esc.
+3b-3: BUILT 2026-11-04. Two build choices: (1) normal and shiny copies are counted apart in Select repeats (pending
+  Jess's OK); (2) the select bar sits in the shown-count line (no separate footer), and ticks hidden by a filter
+  change are dropped, so a batch only sells what you can see.
+Already in place: the save fields (l, f, k), clean() clamps them, nicknames already display with translate="no"
+(js/ui/menu.js rosNameHtml), and sell() already refuses a locked copy. No save migration in any microstep.
+
+#####################################################################
+ 3b-1  LOCK + FAVORITE
+#####################################################################
+
+ Detail pane (a box copy selected), under Moves:
+   +-----------------------------------------------------------+
+   | [ (c) Sell for 30 ]  [ (lock) Lock ]  [ (heart) Favorite ] |
+   +-----------------------------------------------------------+
+   locked:     [ Sell for 30 ] dimmed "Unlock it first."  [ Unlock ]
+   favorite:   [ Unfavorite ]  (single Sell still works, its confirm says
+               "Pikachu is a favorite.")
+
+ Box cell marks (bottom-left, the shiny / team badge stays top-right):
+   +-----------+
+   | 025     1 |      (lock)  locked
+   |   mon     |      (heart) favorite
+   | (h)(l) Pik|      both can show
+   +-----------+
+
+ Toggling saves at once (storage, like a box move); pending team edits stay pending.
+
+ D1  Lock blocks EVERY sale: box, gacha card, bulk. A locked copy can still be
+     moved between boxes and put on the team.            [Approved 2026-11-03 for selling]
+     REC: yes
+ D2  [NEW RULE] Favorite is a mark that bulk sell and "Select repeats" (3b-3)
+     skip. A single sale of a favorite is still allowed; its confirm says so.
+     REC: yes (lock = hard stop, favorite = soft protection)
+ D3  [NEW RULE] No reordering: favorites are not moved to the front of a box.
+     REC: yes. Alternative: favorites first within their species.
+ D4  Marks: heart (existing icon) and a padlock (NEW pixel icon in
+     js/ui/icons.js, none exists today), bottom-left of the cell.
+     REC: yes
+
+ FILES
+   js/systems/copies.js  + setLocked(save, id, on), setFavorite(save, id, on):
+                           write l / f as 1, delete the key when off (compact form)
+   js/ui/menu.js         + Lock / Favorite buttons beside Sell (rosSellHtml area),
+                           favorite note in the rosSell confirm, marks in fillCopyCell
+   js/ui/icons.js        + 'lock' icon
+   css/bw-team.css       + button row, bottom-left marks
+
+ TESTS
+   CHANGED docs/proposals/pokebox-copies-harness.js  new section 19
+     - setLocked on: l = 1, read().isLocked true; off: key gone (not 0)
+     - setFavorite same with f; both together; unknown id returns false, no write
+     - a locked copy: sell refuses 'locked', move between boxes still works
+     - a favorite: single sell still works
+     - commit + reload keep both flags
+   CHANGED docs/proposals/pokebox-copies-mutate.js  +4
+     - setLocked off leaves l: 0 in the save
+     - setFavorite writes the l key
+     - a locked copy cannot be moved
+     - setLocked never writes
+   UI probe: toggle both, marks appear, Sell dims on lock, reload keeps them.
+ FEEL-TEST: lock a spare copy, Sell dims; favorite it, the heart shows; reload.
+
+#####################################################################
+ 3b-2  NICKNAMES
+#####################################################################
+
+ Detail header:   Pikachu (m)  [pencil]      click the name or the pencil
+                       |
+                       v
+                  [ Sparky______ ]  Enter saves, Esc cancels, empty = species name
+                  12 characters max, characters outside the font dropped as typed
+
+ Shows on: Team slots, box cells, detail header (rosNameHtml already does it).
+
+ D5  Edit inline in the detail header (text field, no dialog). Saves at once.
+     REC: yes (G.UI.ask has no text input, prompt() is banned by CLAUDE.md)
+ D6  [NEW RULE] Allowed characters = the trimmed game font's Latin set:
+     U+0020 to U+007E and U+00A0 to U+024F (tools/subset_silver.py keeps exactly
+     these for typed names). Anything else is dropped, so a nickname never falls
+     back to another font. 12 max (NICK_MAX, already in copies.js).
+     REC: yes
+ D7  [NEW RULE] Runs keep the species name (HUD, banners, results) for now;
+     a TODO line records it.                              REC: yes (menus only)
+ D8  The box search does not match nicknames yet (TODO line).  REC: yes
+
+ FILES
+   js/systems/copies.js  + setNickname(save, id, text): trims, keeps D6 characters,
+                           caps 12; empty deletes k; returns the stored name
+   js/ui/menu.js         + pencil and inline field in rosRenderDetail's header
+   css/bw-team.css       + field style
+   TODO.md               + D7 and D8 deferred lines
+
+ TESTS
+   CHANGED docs/proposals/pokebox-copies-harness.js  new section 20
+     - "  Sparky  " stores "Sparky"; 13 letters store 12
+     - "Zoë" kept (U+00EB); "Pika😀" stores "Pika"; "日本" stores nothing (key gone)
+     - empty or only spaces deletes k; read().nickname is ''
+     - unknown id returns null, no write; commit + reload keep the name
+   CHANGED docs/proposals/pokebox-copies-mutate.js  +4
+     - no 12 cap   - out-of-font characters kept   - empty stored as ''
+     - no trim
+   UI probe: rename, Enter, the slot and the cell show it; Esc restores.
+ FEEL-TEST: rename your lead, check the team slot, the box cell, a reload.
+
+#####################################################################
+ 3b-3  BULK SELL
+#####################################################################
+
+ A) BOX: select mode
+   tab row ... | Box 1 | Box 2 |            12 shown · 340 / 500 [Select]
+                                                                   |
+   select mode:                                                    v
+   +-----+ +-----+ +-----+ +-----+     [Select repeats] [Clear]
+   | [x] | | [ ] | |team | |lock |      team / locked / favorite cells
+   | mon | | mon | | dim | | dim |      cannot be ticked (dimmed)
+   +-----+ +-----+ +-----+ +-----+
+   footer:  [ Sell 14 for 420 ]  [ Cancel ]   -> one confirm, then all sold
+
+ B) GACHA RESULTS
+   [ Close ]  [ Sell repeats +105 ]   sells every unsold repeat 1 to 3 star
+                                      normal card of this pull, one click;
+                                      4 and 5 stars and shinies stay for
+                                      one-by-one (their confirm rule)
+
+ D9  Select mode lives in the box tab (toggle by the shown-count line); it
+     ends when you leave the tab or the screen.           REC: yes
+ D10 [NEW RULE] "Select repeats": in this box, ticks every copy of a species
+     beyond ONE kept copy. The kept one is, in order: on the team > locked >
+     favorite > highest IV total > oldest. Copies in other boxes do not count.
+     REC: yes (IVs matter from step 4, so keeping the best IVs is the useful default)
+ D11 [NEW RULE] Gacha "Sell repeats": 1 to 3 star normal repeats only, no
+     confirm (same as one-by-one clicks today); the button shows the total.
+     REC: yes
+ D12 The box batch always confirms once, with count and total.  REC: yes
+
+ FILES
+   js/systems/copies.js  + sellMany(save, ids, also): sells each that may be sold,
+                           skips team / pending / locked / favorite;
+                           -> { sold, coins, skipped: { team, locked, favorite } }
+                         + repeatsIn(save, box): the D10 pick
+   js/ui/menu.js         + select mode, tick state, footer bar, Select repeats
+   js/ui/gacha-ui.js     + Sell repeats button beside Close
+   css/bw-team.css + css/style.css  + tick and footer styles, the results button
+
+ TESTS
+   CHANGED docs/proposals/pokebox-copies-harness.js  new section 21
+     - sellMany of 5 sellable: 5 gone, coins = sum, sold 5
+     - mixed list: team, pending, locked, favorite each skipped and counted
+     - a repeated id in the list sells once
+     - repeatsIn: 4 Pikachu (IV totals 10, 90, 50, 90; the 2nd older) keeps the
+       older 90; with one favorite the favorite is kept; with one on the team
+       the team copy is kept; a lone copy is never picked
+     - repeatsIn ignores other boxes
+   CHANGED docs/proposals/pokebox-sources-harness.js  new section 8
+     - after a fixed 10-pull, selling the 1 to 3 star normal repeats by their
+       uids pays the hand-summed total; shinies and 4 stars are left
+   CHANGED docs/proposals/pokebox-copies-mutate.js  +6
+     - favorites not skipped   - team copies not skipped   - a repeated id paid twice
+     - repeatsIn keeps none    - repeatsIn ignores the team rule
+     - repeatsIn counts other boxes
+   UI probe: select mode, Select repeats ticks the right cells, Sell N,
+   confirm, counts drop; gacha Sell repeats leaves 4 stars and shinies.
+ FEEL-TEST: G.Debug.addCopy(25, 5), Select repeats in Box 1, sell; pull 10,
+   Sell repeats on the results.
+
+=====================================================================
+ SHARED (all three)
+=====================================================================
+ NO new harness file: copies.js, db.js, gacha.js are already loaded by
+   pokebox-copies-harness.js and pokebox-sources-harness.js; the rest is DOM.
+ NO check.js change. NO intent scenarios (no moves). NO new debug sets
+   (G.Debug.addCopy, fillBoxes, tickets cover the feel-tests).
+ After each build (free-edit): changelog, pokebox-plan status + rulings, DEVLOG.
+
+ RISKS
+   - 3b-3 is the largest UI piece (select mode in a grid that already handles
+     click, double-click and drag). Ticking replaces click-to-select only while
+     select mode is on; drag is off in select mode.
+   - D6 drops characters silently; the field could flash on a dropped key
+     (not planned, say if wanted).
+
+#####################################################################
+ 3b-2 EDITS (Jess, 2026-11-04)  -- new rules, approve before the 3b-2 build
+#####################################################################
+
+ E1  16 characters, not 12. NICK_MAX in copies.js 12 -> 16; clean() already
+     caps at NICK_MAX, so old names (12 or fewer) are untouched.
+     The copy table in pokebox-plan.md ("Text, 12 characters") updates to 16.
+
+ E2  Cleaning against injection, one function used on typing AND on every save
+     load (clean()), so a hand-edited save or a future cloud save is cleaned too:
+
+       typed text
+         |  1. keep only the font's Latin set (D6): U+0020 to U+007E, U+00A0 to U+024F
+         |     (drops control characters, zero-width and right-to-left marks, emoji)
+         |  2. drop the characters that can break out of markup or a string:
+         |        <  >  &  "  '  `  \  =  {  }
+         |  3. no-break space becomes a space; soft hyphen (U+00AD) is dropped
+         |  4. runs of spaces become one; trim both ends
+         |  5. cap at 16
+         v
+       stored nickname (or none: the species name shows)
+
+       Shown only through the existing escape (escHtml) with translate="no", never
+       as raw markup. Defense in depth: steps 1 and 2 make the text inert even if
+       some later screen forgets to escape it.
+
+     Limit, said plainly: character cleaning stops markup and script injection. It
+     cannot stop words aimed at an AI ("ignore your instructions"), since those are
+     ordinary letters. Nicknames are only ever displayed, never sent to an AI or a
+     server. Cloud phase (deferred): re-clean on the server too; TODO line.
+
+ E3  Filter chips after BST: [heart] Favorites and [padlock] Locked, a new chip set
+     in the Team screen filter row (dev.html #ros-filters, after #ros-bst):
+
+       Types ... | Rarity ... | BST ... | [heart] [lock]
+
+     a) Box tabs: a chip on shows only copies with that mark.
+     b) Both chips on: copies with EITHER mark (OR), like the other chip sets.
+     c) Pokedex tab: the two chips are hidden (marks belong to copies, not species).
+     d) Clear resets them; they stay on when you switch box tabs.
+     e) The shown-count line counts what the chips leave.
+
+ FILES (added to the 3b-2 list)
+   js/systems/copies.js  NICK_MAX 16; cleanNickname(text), used by setNickname and clean()
+   js/ui/menu.js         the chip set, the box filter, hidden on the Pokedex tab, Clear
+   dev.html              one chip-set container after #ros-bst
+   css/bw-team.css       chip icon sizing
+
+ TESTS (added to section 20)
+   - "<b>Hi</b>" stores "bHi/b"; 'a"b' stores "ab"; "x=`y`" stores "xy"
+   - "Bob\u200B" (zero-width) stores "Bob"; "A\u202EB" stores "AB"
+   - "Mr\u00A0\u00A0Mime" stores "Mr Mime"; 17 letters store 16
+   - a hand-edited save with k: "<img onerror=x>" loads as "img onerrorx" (clean())
+   - mutations (+3): cleaning skipped on load, the markup set not dropped, cap back to 12
+   - chip filter: DOM, checked in the UI probe (both chips, OR, hidden on Pokedex, Clear)

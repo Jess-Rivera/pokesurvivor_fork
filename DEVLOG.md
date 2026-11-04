@@ -554,3 +554,21 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: G.Copies.freePlaces and priceFor, add returns null when full (no last-box overflow); G.DB.obtain sells on arrival; gacha rolls all first, isNew in pull order, priority placement when short; Shop warning and "Box full · sold" cards; run banner line; G.Debug.fillBoxes, addCopy stops at full. Harness 17 and 18, sources 7a to 7d, mutation runner now 36 (4 gacha patterns updated for the new pull shape).
 - Deviation: with full boxes, a NEW rescue or wild shiny shows only the "boxes are full" line, not the inherited new-species line too (the run banner holds one message, and joining a Spanish key to new English text would break its translation).
 - Not verified here (no node). Stopped at: Jess's checks and feel-test of 3a-2 to 3a-4. Next: 3b.
+
+## 2026-11-04, Pokebox 3b-1: lock and favorite (Quick, work, feature/pokeboxes)
+- Decided (Jess): all of 3b (D1 to D12) approved, with edits to 3b-2: nickname cleaning against injection, 16 characters, Favorites and Locked filter chips after BST (E1 to E3 in the 3b map, awaiting his OK on the details).
+- Built 3b-1: G.Copies.setLocked and setFavorite (flag 1 on, key removed off); Lock and Favorite buttons beside Sell; heart and padlock marks bottom-left on box cells (new 'lock' pixel icon); favorite note in the sell confirm. Harness 19 and 19b, mutation runner now 40.
+- Not verified here (no node). Bracket balance, icon rows (12 x 12) and all 40 mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3b-1, and his OK on E1 to E3. Next: 3b-2.
+
+## 2026-11-04, Pokebox 3b-2: nicknames and mark filters (Quick, work, feature/pokeboxes)
+- Decided (Jess): E1 to E3 as written (16 characters, cleaning on typing and on every load, Favorites and Locked chips after BST, OR when both on). No AI in the game, so cleaning is about markup only.
+- Built: G.Copies.cleanNickname and setNickname, NICK_MAX 16, clean() uses the same rule; inline rename (pencil icon) in the Team detail header; #ros-marks chip set, box tabs only. Harness 20 and 20b (section 6 updated for 16), mutation runner now 47. TODO: nicknames in runs, nickname search, server-side cleaning in the cloud phase.
+- Choice made in the build: clicking away from the rename field cancels, like Esc (no surprise rename).
+- Not verified here (no node). Bracket balance, icon rows and all 47 mutation patterns checked by script; the 24 cleaning cases also checked against an independent model of the rule. Next: 3b-3, bulk sell.
+
+## 2026-11-04, Pokebox 3b-3: bulk sell (Quick, work, feature/pokeboxes)
+- Built (D9 to D12): G.Copies.sellMany and repeatsIn, G.Gacha.bulkSellable; Team screen Select mode (tick, Select repeats, Clear, Sell N for X with one confirm, Cancel; ends on leaving the tab); "Sell repeats +N" on the pull results. Harness 21, sources 8, mutation runner now 56.
+- Proposed in the build, awaiting Jess: Select repeats counts normal and shiny copies apart (D10 said per species).
+- Broke and fixed: two of the menu.js edits were overwritten by a later edit made against an older copy of the file; caught by a marker check, reapplied one at a time, then every 3a and 3b marker in all 13 touched files rechecked present.
+- Not verified here (no node). Stopped at: Jess's checks and feel-test of 3b-3. Step 3 done after that; next is step 4 (IVs and natures apply).

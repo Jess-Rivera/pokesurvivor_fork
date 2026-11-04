@@ -10,7 +10,8 @@ G.MenuUI = (() => {
   let dexSel = null;
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
-  const newCtrl = () => ({ region: 'all', own: 'all', q: '', types: [], rarity: [], bst: [], sort: 'dex', dir: 1 });
+  // marks (3b-2 E3): 'fav' and 'lock' chips, Team screen box tabs only.
+  const newCtrl = () => ({ region: 'all', own: 'all', q: '', types: [], rarity: [], bst: [], marks: [], sort: 'dex', dir: 1 });
   const dexCtrl = newCtrl();
   const rosCtrl = newCtrl(); // the Team screen keeps its own filters, separate from the Pokédex
   const BST_BANDS = [
@@ -129,6 +130,7 @@ G.MenuUI = (() => {
     addEventListener('keydown', (e) => {
       if (
         e.key !== 'Enter' ||
+        ros.select || // select mode (3b-3): Enter places nothing
         !G.UI.isOpen('scr-roster') ||
         G.UI.isOpen('scr-upgrades') ||
         e.target.closest('input, textarea, select, button')
@@ -454,6 +456,27 @@ G.MenuUI = (() => {
       bstBox.appendChild(b);
     }
 
+    // Favorites and Locked (3b-2 E3), after BST: only the Team screen has this chip set. Box tabs only; hidden on the Pokedex tab.
+    const markBox = el('marks');
+    if (markBox) {
+      if (!Array.isArray(c.marks)) c.marks = [];
+      markBox.innerHTML = '';
+      for (const [k, icon, label] of [
+        ['fav', 'heart', 'Favorites'],
+        ['lock', 'lock', 'Locked'],
+      ]) {
+        const b = document.createElement('button');
+        b.className = 'chip icon mark-chip' + (c.marks.includes(k) ? ' on' : '');
+        b.innerHTML = G.Icons.html(icon, 24);
+        b.title = label;
+        b.onclick = () => {
+          toggle(c.marks, k);
+          again();
+        };
+        markBox.appendChild(b);
+      }
+    }
+
     el('clear').onclick = () => {
       c.region = 'all';
       c.own = 'all';
@@ -461,6 +484,7 @@ G.MenuUI = (() => {
       c.types = [];
       c.rarity = [];
       c.bst = [];
+      c.marks = [];
       c.sort = 'dex';
       c.dir = 1;
       again();
@@ -871,7 +895,19 @@ G.MenuUI = (() => {
   //   ros.shiny  Normal / Shiny look for what is shown
   //   ros.tab    the list below the filters: 'dex', or a box counted from 0
   //   ros.drag   what is being dragged: a copy's uid (a box cell or a filled slot), or a dex (a Pokedex tab cell)
-  const ros = { team: [], slot: 0, dex: null, uid: null, shiny: false, tab: 0, drag: null, dragSlot: null };
+  const ros = {
+    team: [],
+    slot: 0,
+    dex: null,
+    uid: null,
+    shiny: false,
+    tab: 0,
+    drag: null,
+    dragSlot: null,
+    select: false, // bulk sell select mode (3b-3), one box tab at a time
+    ticked: new Set(), // copy UUIDs ticked in select mode
+    bulk: null, // the open box's shown copies, for the select bar
+  };
   const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0, x.uid || null] : null)));
   const rosSlotOf = (t) => (t ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : null);
   const escHtml = (s) =>
@@ -892,6 +928,8 @@ G.MenuUI = (() => {
     G.DB.normalizeTeam(s);
     ros.team = s.team.map(rosSlotOf);
     ros.drag = null;
+    ros.select = false;
+    ros.ticked.clear();
     if (ros.tab !== 'dex' && ros.tab >= G.Copies.boxCount(s)) ros.tab = 0;
     rosChrome();
     G.UI.show('scr-roster'); // (no keepMenu: the main menu is hidden too)
@@ -1011,6 +1049,11 @@ G.MenuUI = (() => {
       b.textContent = label;
       b.title = title;
       b.onclick = () => {
+        if (ros.tab !== value) {
+          // leaving a box tab ends select mode (3b D9)
+          ros.select = false;
+          ros.ticked.clear();
+        }
         ros.tab = value;
         rosRenderTabs();
         renderGrid(rosView);
@@ -1065,6 +1108,8 @@ G.MenuUI = (() => {
       box.appendChild(b);
     }
     $('ros-own').style.display = ros.tab === 'dex' ? '' : 'none';
+    const marks = $('ros-marks'); // marks belong to copies, not species: no chips on the Pokedex tab
+    if (marks) marks.style.display = ros.tab === 'dex' ? 'none' : '';
   }
 
   function rosCoins(v) {
@@ -1125,6 +1170,14 @@ G.MenuUI = (() => {
       );
     else if (c.isShiny)
       cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Shiny">${G.Icons.html('shiny', 12)}</span>`);
+    // Favorite and lock marks, bottom-left (3b-1). Not the class "locked": Pokedex cells use it for species you lack.
+    if (c.isFavorite || c.isLocked)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-l">${c.isFavorite ? `<span title="Favorite">${G.Icons.html('heart', 12)}</span>` : ''}${
+          c.isLocked ? `<span title="Locked">${G.Icons.html('lock', 12)}</span>` : ''
+        }</span>`
+      );
     cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, shadow: true, shiny: c.isShiny }));
     cell.insertAdjacentHTML('beforeend', rosNameHtml(c, p) + G.UI.stars(p.rarity, 9));
   }
@@ -1135,14 +1188,20 @@ G.MenuUI = (() => {
       grid = $(v.pre + 'grid');
     grid.innerHTML = '';
     const bySpecies = new Map();
-    let total = 0;
+    let total = 0,
+      marked = 0;
+    const marks = v.ctrl.marks || [];
+    const markOk = (c) => !marks.length || (marks.includes('fav') && c.isFavorite) || (marks.includes('lock') && c.isLocked);
     for (const c of G.Copies.all(s)) {
       if (c.box !== ros.tab) continue;
       total++;
+      if (!markOk(c)) continue; // Favorites / Locked chips (3b-2 E3): either mark when both are on
+      marked++;
       if (!bySpecies.has(c.speciesID)) bySpecies.set(c.speciesID, []);
       bySpecies.get(c.speciesID).push(c);
     }
     let shown = 0;
+    const shownIds = new Set();
     for (const p of filterSortDex(Object.assign({}, v.ctrl, { own: 'all' }))) {
       for (const c of bySpecies.get(p.dex) || []) {
         shown++;
@@ -1150,26 +1209,42 @@ G.MenuUI = (() => {
         cell.dataset.dex = p.dex;
         cell.dataset.uid = c.pokemonUUID;
         fillCopyCell(cell, c, p);
-        cell.onclick = () => {
-          rosSelectCopy(c);
-          markGrid(v);
-        };
-        cell.ondblclick = () => rosPlace(ros.slot, c.pokemonUUID);
-        cell.draggable = true;
-        cell.ondragstart = (e) => {
-          ros.drag = c.pokemonUUID;
-          e.dataTransfer.setData('text/plain', c.pokemonUUID);
-          e.dataTransfer.effectAllowed = 'move';
-        };
-        cell.ondragend = () => {
-          ros.drag = null;
-        };
+        shownIds.add(c.pokemonUUID);
+        if (ros.select) {
+          // Select mode (3b-3): a click ticks or unticks; no selecting, placing or dragging. Team, locked and favorite copies cannot be ticked.
+          rosTickClass(cell, c);
+          cell.onclick = () => {
+            if (!rosCanBulk(c)) return;
+            if (ros.ticked.has(c.pokemonUUID)) ros.ticked.delete(c.pokemonUUID);
+            else ros.ticked.add(c.pokemonUUID);
+            rosTickClass(cell, c);
+            rosBulkBar();
+          };
+        } else {
+          cell.onclick = () => {
+            rosSelectCopy(c);
+            markGrid(v);
+          };
+          cell.ondblclick = () => rosPlace(ros.slot, c.pokemonUUID);
+          cell.draggable = true;
+          cell.ondragstart = (e) => {
+            ros.drag = c.pokemonUUID;
+            e.dataTransfer.setData('text/plain', c.pokemonUUID);
+            e.dataTransfer.effectAllowed = 'move';
+          };
+          cell.ondragend = () => {
+            ros.drag = null;
+          };
+        }
         grid.appendChild(cell);
       }
     }
-    $(v.pre + 'shown').textContent = `${shown} shown · ${total} / ${G.Copies.BOX_SIZE} in this box`;
+    ros.bulk = { v, shown, total, ids: shownIds };
+    rosBulkBar();
     if (!shown)
-      grid.innerHTML = `<p class="sub" style="grid-column:1/-1">${total ? 'No Pokemon match these filters.' : 'This box is empty.'}</p>`;
+      grid.innerHTML = `<p class="sub" style="grid-column:1/-1">${
+        !total ? 'This box is empty.' : marks.length && !marked ? 'No marked Pokémon in this box.' : 'No Pokemon match these filters.'
+      }</p>`;
   }
 
   /** Redraw the list's team badges after the team changed. */
@@ -1184,7 +1259,9 @@ G.MenuUI = (() => {
     const copies = new Map(G.Copies.all(G.DB.save).map((c) => [c.pokemonUUID, c]));
     cells.forEach((cell) => {
       const c = copies.get(cell.dataset.uid);
-      if (c) fillCopyCell(cell, c, G.DEX_BY[c.speciesID]);
+      if (!c) return;
+      fillCopyCell(cell, c, G.DEX_BY[c.speciesID]);
+      if (ros.select) rosTickClass(cell, c);
     });
   }
 
@@ -1352,7 +1429,11 @@ G.MenuUI = (() => {
     const copy = ros.uid ? G.Copies.get(s, ros.uid) : null;
     ros.shiny = !!(copy && copy.isShiny);
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    // A box copy gets a pencil to rename it (3b-2); the name itself is clickable too.
+    const pencil = copy
+      ? `<button type="button" class="ros-nick-btn" id="ros-nick" title="Rename (up to ${G.Copies.NICK_MAX} characters)">${G.Icons.html('pencil', 16)}</button>`
+      : '';
+    const head = `<div class="ros-dh"><div class="ros-dn">${own ? rosNameHtml(copy, p) : '<b>???</b>'}${pencil}</div><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
     if (!own) {
       box.innerHTML =
         head +
@@ -1384,6 +1465,74 @@ G.MenuUI = (() => {
       );
     const sellBtn = $('ros-sell');
     if (sellBtn && copy) sellBtn.onclick = () => rosSell(copy.pokemonUUID);
+    const lockBtn = $('ros-lock'),
+      favBtn = $('ros-fav');
+    if (lockBtn && copy) lockBtn.onclick = () => rosToggle(copy.pokemonUUID, 'lock');
+    if (favBtn && copy) favBtn.onclick = () => rosToggle(copy.pokemonUUID, 'fav');
+    const nickBtn = $('ros-nick'),
+      nameEl = box.querySelector('.ros-dh .ros-nm');
+    if (nickBtn && copy) nickBtn.onclick = () => rosRename(copy.pokemonUUID);
+    if (nameEl && copy) {
+      nameEl.classList.add('renamable');
+      nameEl.onclick = () => rosRename(copy.pokemonUUID);
+    }
+  }
+
+  // ---------------- nicknames (step 3b-2) ----------------
+
+  /**
+   * Rename a box copy in place: the header name becomes a text field. Enter saves, Esc or clicking away cancels, an empty
+   * name goes back to the species name. Every key is cleaned as you type (G.Copies.cleanNickname), and again on save.
+   * Storage, like a box move: it saves at once and pending team edits stay pending.
+   */
+  function rosRename(uid) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid),
+      dn = document.querySelector('#ros-detail .ros-dn');
+    if (!c || !dn) return;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'field ros-nick-field';
+    inp.maxLength = G.Copies.NICK_MAX;
+    inp.setAttribute('translate', 'no');
+    inp.setAttribute('autocomplete', 'off');
+    inp.spellcheck = false;
+    inp.placeholder = G.DEX_BY[c.speciesID].name;
+    inp.value = c.nickname;
+    dn.innerHTML = '';
+    dn.appendChild(inp);
+    inp.focus();
+    inp.select();
+    let done = false;
+    const finish = (keep) => {
+      if (done) return;
+      done = true;
+      if (keep && G.Copies.setNickname(s, uid, inp.value) != null) {
+        G.Audio.sfx('confirm');
+        G.DB.commit(true);
+      }
+      rosRenderAll();
+      rosRefreshList([c.speciesID]);
+      markGrid(rosView);
+    };
+    inp.oninput = () => {
+      const clean = G.Copies.cleanNickname(inp.value, true);
+      if (clean === inp.value) return;
+      const at = Math.max(0, (inp.selectionStart || 0) - (inp.value.length - clean.length));
+      inp.value = clean;
+      inp.setSelectionRange(at, at);
+    };
+    inp.onkeydown = (e) => {
+      e.stopPropagation(); // the Team screen's Enter (place in slot) must not see this
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        finish(true);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        finish(false);
+      }
+    };
+    inp.onblur = () => finish(false);
   }
 
   // ---------------- selling a copy (step 3a-3) ----------------
@@ -1394,12 +1543,28 @@ G.MenuUI = (() => {
     return has(G.DB.save.team) || has(ros.team);
   }
 
-  /** The Sell button under Moves for a copy; disabled with the reason when it cannot be sold. */
+  /** Sell, Lock and Favorite under Moves for a copy; Sell is disabled with the reason when it cannot be sold. */
   function rosSellHtml(copy) {
     const price = G.Copies.sellPrice(G.DB.save, copy.pokemonUUID);
     if (price == null) return '';
     const why = rosOnTeam(copy.pokemonUUID) ? 'Remove it from your team first.' : copy.isLocked ? 'Unlock it first.' : '';
-    return `<div class="ros-sell"><button type="button" class="btn gold small" id="ros-sell"${why ? ' disabled' : ' data-sfx="click"'}><span class="coin"></span> Sell for ${rosCoins(price)}</button>${why ? `<span class="sub">${why}</span>` : ''}</div>`;
+    const lock = `<button type="button" class="btn ghost small" id="ros-lock" data-sfx="click" title="${copy.isLocked ? 'It can be sold again' : 'A locked Pokémon is never sold'}">${G.Icons.html('lock', 14)} ${copy.isLocked ? 'Unlock' : 'Lock'}</button>`;
+    const fav = `<button type="button" class="btn ghost small" id="ros-fav" data-sfx="click" title="${copy.isFavorite ? 'Remove the mark' : 'Bulk sell skips favorites'}">${G.Icons.html('heart', 14)} ${copy.isFavorite ? 'Unfavorite' : 'Favorite'}</button>`;
+    return `<div class="ros-sell"><button type="button" class="btn gold small" id="ros-sell"${why ? ' disabled' : ' data-sfx="click"'}><span class="coin"></span> Sell for ${rosCoins(price)}</button>${lock}${fav}${why ? `<span class="sub">${why}</span>` : ''}</div>`;
+  }
+
+  /** Lock / unlock or favorite / unfavorite a box copy (3b-1). Storage, like a box move: it saves at once, pending team edits stay pending. */
+  function rosToggle(uid, which) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid);
+    if (!c) return;
+    const ok =
+      which === 'lock' ? G.Copies.setLocked(s, uid, !c.isLocked) : G.Copies.setFavorite(s, uid, !c.isFavorite);
+    if (!ok) return;
+    G.DB.commit(true);
+    rosRenderAll();
+    rosRefreshList([c.speciesID]);
+    markGrid(rosView);
   }
 
   /** Sell copy uid from the box: always a confirm first. Storage, like a box move: it saves at once and pending team edits stay pending. */
@@ -1414,13 +1579,14 @@ G.MenuUI = (() => {
     const yes = await G.UI.ask(`Sell ${name} for ${rosCoins(price)} PokéCoins?`, {
       title: 'Sell Pokémon',
       ok: 'Sell',
-      note: last
-        ? `This is your last ${p.name}. The Pokédex keeps it.`
-        : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`,
+      note:
+        (c.isFavorite ? `${p.name} is a favorite. ` : '') +
+        (last
+          ? `This is your last ${p.name}. The Pokédex keeps it.`
+          : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`),
     });
     if (!yes) return;
-    const pending = ros.team.filter((t) => t && t.uid).map((t) => t.uid);
-    const r = G.Copies.sell(s, uid, pending);
+    const r = G.Copies.sell(s, uid, rosPending());
     if (!r.ok) {
       G.Audio.sfx('error');
       G.UI.toast(
@@ -1437,6 +1603,125 @@ G.MenuUI = (() => {
     G.DB.commit(true);
     G.UI.toast(`Sold ${name} for ${rosCoins(r.coins)} PokéCoins`);
     if (ros.uid === uid) ros.uid = null; // the species view, never the next copy (no second sale by accident)
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
+    rosRenderAll();
+  }
+
+  // ---------------- bulk sell (step 3b-3) ----------------
+
+  /** The uncommitted team edits' copies: none of them can be sold. */
+  function rosPending() {
+    return ros.team.filter((t) => t && t.uid).map((t) => t.uid);
+  }
+
+  /** Can this copy go in a batch? Never one on the team (saved or pending), locked, or a favorite (3b D2). */
+  function rosCanBulk(c) {
+    return !rosOnTeam(c.pokemonUUID) && !c.isLocked && !c.isFavorite;
+  }
+
+  /** A cell's look in select mode: ticked, or dimmed when it cannot be ticked. */
+  function rosTickClass(cell, c) {
+    cell.classList.toggle('tick', ros.ticked.has(c.pokemonUUID));
+    cell.classList.toggle('notick', !rosCanBulk(c));
+    if (!cell.querySelector('.tick-box')) cell.insertAdjacentHTML('beforeend', '<span class="tick-box"></span>');
+    cell.title = rosCanBulk(c) ? '' : rosOnTeam(c.pokemonUUID) ? 'On your team' : c.isLocked ? 'Locked' : 'Favorite';
+  }
+
+  /** The shown-count line, with Select, or in select mode: Select repeats, Clear, Sell N for X, Cancel (3b D9, D12). */
+  function rosBulkBar() {
+    const b = ros.bulk;
+    if (!b) return;
+    const s = G.DB.save,
+      bar = $(b.v.pre + 'shown');
+    bar.innerHTML = '';
+    bar.appendChild(document.createTextNode(`${b.shown} shown · ${b.total} / ${G.Copies.BOX_SIZE} in this box`));
+    if (!b.total) {
+      ros.select = false;
+      ros.ticked.clear();
+      return;
+    }
+    const wrap = document.createElement('span');
+    wrap.className = 'ros-bulk';
+    const btn = (label, cls, fn, off) => {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'btn small ' + cls;
+      x.innerHTML = label;
+      x.disabled = !!off;
+      if (!off) x.dataset.sfx = 'click';
+      x.onclick = fn;
+      wrap.appendChild(x);
+    };
+    const redraw = () => {
+      renderGrid(b.v);
+      markGrid(b.v);
+    };
+    if (!ros.select) {
+      btn('Select', 'ghost', () => {
+        ros.select = true;
+        ros.ticked.clear();
+        redraw();
+      });
+    } else {
+      for (const id of [...ros.ticked]) if (!b.ids.has(id) || !G.Copies.get(s, id)) ros.ticked.delete(id); // only what is shown
+      let coins = 0;
+      for (const id of ros.ticked) coins += G.Copies.sellPrice(s, id) || 0;
+      const n = ros.ticked.size;
+      btn('Select repeats', 'ghost', rosSelectRepeats);
+      btn('Clear', 'ghost', () => {
+        ros.ticked.clear();
+        redraw();
+      }, !n);
+      btn(`<span class="coin"></span> Sell ${n} for ${rosCoins(coins)}`, 'gold', rosSellTicked, !n);
+      btn('Cancel', 'ghost', () => {
+        ros.select = false;
+        ros.ticked.clear();
+        redraw();
+      });
+    }
+    bar.appendChild(wrap);
+  }
+
+  /** Tick every repeat in this box beyond the one kept (G.Copies.repeatsIn, 3b D10), among the copies the filters show. */
+  function rosSelectRepeats() {
+    const b = ros.bulk;
+    if (!b || typeof ros.tab !== 'number') return;
+    const pick = G.Copies.repeatsIn(G.DB.save, ros.tab, rosPending()).filter((id) => b.ids.has(id));
+    if (!pick.length) {
+      G.UI.toast('No repeats to select in this box');
+      return;
+    }
+    ros.ticked = new Set(pick);
+    renderGrid(b.v);
+    markGrid(b.v);
+  }
+
+  /** Sell every ticked copy after one confirm with the count and total (3b D12). Storage: it saves at once, pending team edits stay pending. */
+  async function rosSellTicked() {
+    const s = G.DB.save,
+      ids = [...ros.ticked];
+    if (!ids.length) return;
+    let coins = 0;
+    for (const id of ids) coins += G.Copies.sellPrice(s, id) || 0;
+    const yes = await G.UI.ask(`Sell ${ids.length} Pokémon for ${rosCoins(coins)} PokéCoins?`, {
+      title: 'Sell Pokémon',
+      ok: 'Sell',
+      note: 'Team, locked and favorite Pokémon are never part of a batch.',
+    });
+    if (!yes) return;
+    const r = G.Copies.sellMany(s, ids, rosPending());
+    ros.ticked.clear();
+    if (r.sold) {
+      G.Audio.sfx('confirm');
+      G.DB.commit(true);
+      G.UI.toast(`Sold ${r.sold} Pokémon for ${rosCoins(r.coins)} PokéCoins`);
+    } else {
+      G.Audio.sfx('error');
+      G.UI.toast('Nothing was sold');
+    }
+    if (ros.uid && !G.Copies.get(s, ros.uid)) ros.uid = null; // the species view, as after a single sale
     rosRenderTabs();
     renderGrid(rosView);
     markGrid(rosView);

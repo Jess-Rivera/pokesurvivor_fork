@@ -146,6 +146,10 @@ G.Gacha = (() => {
     return out;
   }
 
+  /** The pull results "Sell repeats" may sell (3b D11): repeats that made a copy, 1 to 3 stars, not shiny. 4 and 5 stars
+   *  and shinies are sold one by one (their confirm rule). */
+  const bulkSellable = (results) => (results || []).filter((r) => r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3);
+
   return {
     debugForceShiny(n = 1) {
       forceShiny = n;
@@ -161,5 +165,6 @@ G.Gacha = (() => {
     pool,
     featured,
     pull,
+    bulkSellable,
   };
 })();

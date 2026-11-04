@@ -53,6 +53,29 @@ const M = [
   ['a short pull places in plain pull order', 'gacha', [['if (G.Copies.freePlaces(save) < n) order.sort', 'if (false) order.sort']]],
   ['a shiny is not ranked above rarity', 'gacha', [['(r.shiny ? 10 : 0)', '(r.shiny ? 0 : 0)']]],
   ['results come back in placement order', 'gacha', [['      out[i] = res;', '      out[out.filter(Boolean).length] = res;']]],
+  // ---- 3b-1: lock and favorite ----
+  ['turning a flag off leaves a 0 in the save', 'copies', [['    else delete c[key];', '    else c[key] = 0;']]],
+  ['favorite writes the lock key', 'copies', [["setFlag(save, id, 'f', on)", "setFlag(save, id, 'l', on)"]]],
+  ['a locked copy cannot be moved', 'copies', [["if (!c || box < 0 || box >= boxCount(save)) return 'none';", "if (!c || box < 0 || box >= boxCount(save)) return 'none';\n    if (c.l) return 'none';"]]],
+  ['the flag setters never turn a flag on', 'copies', [['    if (on) c[key] = 1;', '    if (false) c[key] = 1;']]],
+  // ---- 3b-2: nicknames ----
+  ['the nickname cap is gone', 'copies', [["out = [...out].slice(0, NICK_MAX).join('');", "out = [...out].join('');"]]],
+  ['the nickname cap is back to 12', 'copies', [['NICK_MAX = 16,', 'NICK_MAX = 12,']]],
+  ['characters outside the font are kept', 'copies', [['if (!inFont || NICK_DROP.has(c)) continue;', 'if (NICK_DROP.has(c)) continue;']]],
+  ['markup characters are kept', 'copies', [['if (!inFont || NICK_DROP.has(c)) continue;', 'if (!inFont) continue;']]],
+  ['a cleared name is saved as an empty string', 'copies', [['    if (k) c.k = k;\n    else delete c.k;\n    return k;', '    c.k = k;\n    return k;']]],
+  ['spaces are not squeezed', 'copies', [["if (!typing) out = out.replace(/ {2,}/g, ' ').trim();", 'if (!typing) out = out.trim();']]],
+  ['a loaded save skips the nickname cleaning', 'copies', [["const nick = typeof c.k === 'string' ? cleanNickname(c.k) : '';", "const nick = typeof c.k === 'string' ? c.k.slice(0, NICK_MAX) : '';"]]],
+  // ---- 3b-3: bulk sell ----
+  ['bulk sell does not skip favorites', 'copies', [['      if (c.f) {\n        out.skipped.favorite++;\n        continue;\n      }\n', '']]],
+  ['bulk sell ignores the uncommitted team edits', 'copies', [['      const r = sell(save, id, also);', '      const r = sell(save, id);']]],
+  ['a repeated id is tried twice', 'copies', [['for (const id of new Set(ids || []))', 'for (const id of ids || [])']]],
+  ['Select repeats keeps none', 'copies', [['for (const { c } of ranked.slice(1))', 'for (const { c } of ranked)']]],
+  ['Select repeats ignores the team rule', 'copies', [['s: [team.has(longId(c.u)) ? 1 : 0, c.l ? 1 : 0,', 's: [0, c.l ? 1 : 0,']]],
+  ['Select repeats counts other boxes', 'copies', [['      if ((c.b || 0) !== box) continue;\n      const k = c.d', '      const k = c.d']]],
+  ['Select repeats mixes shinies with normals', 'copies', [["const k = c.d + (c.s ? 's' : 'n');", 'const k = c.d;']]],
+  ['Sell repeats takes shinies', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && r.rarity <= 3']]],
+  ['Sell repeats takes 4 stars', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && !r.shiny && r.rarity <= 4']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-mut-'));
 let caught = 0;

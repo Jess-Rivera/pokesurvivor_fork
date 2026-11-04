@@ -145,6 +145,21 @@ let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); 
     if (out.some(r => r.sold || !r.uid) || g.coins !== 0) bad('with room for all 10, nothing is sold');
     console.log('7d room for all: nothing sold'); }
 
+  // 8. "Sell repeats" on the results (3b-3 D11): repeats with a copy, 1 to 3 stars, not shiny, sold together.
+  //    Rolls fixed as in 7c: a repeat shiny Pikachu, 8 repeat Pikachu (2 star), a repeat Snorlax (4 star). Only the 8 qualify: 8 x 30 = 240.
+  { const g = fresh(20); g.owned[25] = g.owned[143] = { at: 1, from: 'debug' }; g.shiny[25] = { at: 1, from: 'debug' };
+    const keepR = Math.random; Math.random = () => 0.5; GA.debugForceShiny(1);
+    const out = GA.pull(g, 10, 1);
+    Math.random = keepR;
+    const pick = GA.bulkSellable(out);
+    if (pick.length !== 8 || pick.some(r => r.shiny || r.rarity > 3 || r.isNew || r.dex !== 25)) bad('Sell repeats picks the 8 plain Pikachu only ' + JSON.stringify(pick.map(r => [r.dex, r.rarity, r.shiny])));
+    const r = C.sellMany(g, pick.map(x => x.uid));
+    if (r.sold !== 8 || r.coins !== 240 || g.coins !== 240) bad('they sell for 240 together ' + JSON.stringify(r));
+    if (!C.get(g, out[0].uid) || !C.get(g, out[9].uid)) bad('the shiny and the 4 star are left for one by one');
+    const none = GA.bulkSellable([{ dex: 1, rarity: 1, isNew: true, uid: 'x' }, { dex: 1, rarity: 1, isNew: false, uid: null }, { dex: 1, rarity: 1, isNew: false, uid: null, sold: 15 }]);
+    if (none.length) bad('a new card, and a card with no copy (sold on arrival), are never picked');
+    console.log('8 Sell repeats: 1 to 3 star normal repeats only, sold together for their prices'); }
+
   console.log(fail ? fail + ' FAILED' : 'pokebox-sources harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

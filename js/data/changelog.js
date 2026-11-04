@@ -8,6 +8,44 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Sell many at once', 'Sell many at once'],
+    new: [
+      [
+        'On the Team screen, press Select in a box to tick Pokemon and sell them together. Select repeats ticks every extra copy of a species in that box and keeps the best one (on your team, locked, favorite, best IVs, then the oldest). Team, locked and favorite Pokemon are never sold in a batch.',
+        'On the Team screen, press Select in a box to tick Pokemon and sell them together. Select repeats ticks every extra copy of a species in that box and keeps the best one (on your team, locked, favorite, best IVs, then the oldest). Team, locked and favorite Pokemon are never sold in a batch.',
+      ],
+      [
+        'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
+        'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Nicknames and box filters', 'Nicknames and box filters'],
+    new: [
+      [
+        'Give a Pokemon in your box a nickname: click its name (or the pencil) on the Team screen, type up to 16 letters, press Enter. Esc cancels; an empty name goes back to the species name.',
+        'Give a Pokemon in your box a nickname: click its name (or the pencil) on the Team screen, type up to 16 letters, press Enter. Esc cancels; an empty name goes back to the species name.',
+      ],
+      [
+        'Two new filters after BST on the Team screen: show only your favorites, or only your locked Pokemon (both on shows either).',
+        'Two new filters after BST on the Team screen: show only your favorites, or only your locked Pokemon (both on shows either).',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Lock and favorite your Pokemon', 'Lock and favorite your Pokemon'],
+    new: [
+      [
+        'Lock a Pokemon in your box and it can never be sold; you can still move it and put it on your team. Mark a favorite with the heart. Both show on the box cell.',
+        'Lock a Pokemon in your box and it can never be sold; you can still move it and put it on your team. Mark a favorite with the heart. Both show on the box cell.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Full boxes', 'Full boxes'],
     new: [
       [

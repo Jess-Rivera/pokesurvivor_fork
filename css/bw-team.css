@@ -94,6 +94,43 @@
   top: 7px;
   right: 20px;
 }
+/* Favorite and lock marks (3b-1), bottom-left inside the cut corner. */
+#ros-grid .cell .badge-l {
+  position: absolute;
+  z-index: 3;
+  left: 10px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Bulk sell select mode (3b-3): a ticked cell gets a gold wash (inside the cell's clip shape), one that cannot be ticked dims. */
+#ros-grid .cell .tick-box {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  background: rgba(255, 210, 63, 0.32);
+  pointer-events: none;
+}
+#ros-grid .cell.tick .tick-box {
+  display: block;
+}
+#ros-grid .cell.notick {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#ros-shown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.ros-bulk {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 /* The name runs up the right side, read bottom to top like a spine (a 90 degree turn keeps pixel text crisp).
    It sits behind the sprite. */
 #ros-grid .cell b {
@@ -377,6 +414,36 @@
 .ros-dh .ros-nm span {
   font-size: inherit;
 }
+/* The name with its rename pencil (3b-2), and the text field that replaces them while renaming. */
+.ros-dn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ros-dh .ros-nm.renamable {
+  cursor: text;
+}
+.ros-nick-btn {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+.ros-nick-btn:hover,
+.ros-nick-btn:focus-visible {
+  filter: brightness(1.25);
+  outline: none;
+}
+.ros-nick-field {
+  width: 15em;
+  max-width: 100%;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 18px;
+}
 .ros-db {
   flex: 1;
   min-height: 0;
@@ -432,11 +499,12 @@
 .ros-mbox {
   flex: 1 0 auto;
 }
-/* Sell a box copy (step 3a-3): under the moves box; the reason sits beside a disabled button. */
+/* Sell, Lock and Favorite for a box copy (3a-3, 3b-1): under the moves box; the reason sits after the buttons. */
 .ros-sell {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 8px;
 }
 .ros-sell .btn .coin {

@@ -15,7 +15,7 @@ G.Copies = (() => {
     EV_MAX = 252,
     EV_TOTAL = 510,
     SCALE_MAX = 255,
-    NICK_MAX = 12,
+    NICK_MAX = 16, // pokebox 3b-2 E1 (was 12)
     FRIEND_MAX = 255,
     RANK_MAX = 5,
     BOX_SIZE = 500,
@@ -264,6 +264,132 @@ G.Copies = (() => {
     return { ok: true, coins, last: !save.box.some((x) => x.d === c.d) };
   }
 
+  // ---------------- lock and favorite (step 3b-1) ----------------
+
+  /** Turns a copy's one-letter flag on (1) or off (the key is removed, the compact form's default). False if no such copy. */
+  function setFlag(save, id, key, on) {
+    if (!isId(id)) return false;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return false;
+    if (on) c[key] = 1;
+    else delete c[key];
+    return true;
+  }
+
+  /** Locked: never sold (box, gacha card, bulk). It still moves between boxes and goes on the team. */
+  const setLocked = (save, id, on) => setFlag(save, id, 'l', on);
+  /** Favorite: a mark that bulk sell skips (3b-3); a single sale still works. */
+  const setFavorite = (save, id, on) => setFlag(save, id, 'f', on);
+
+  // ---------------- nicknames (step 3b-2) ----------------
+
+  /** Characters that could break out of markup, an attribute or a string, dropped even though the font has them (3b-2 E2). */
+  const NICK_DROP = new Set(['<', '>', '&', '"', "'", '`', '\\', '=', '{', '}']);
+
+  /**
+   * A nickname made safe (3b-2 D6 and E2): only the trimmed game font's Latin set (U+0020 to U+007E, U+00A0 to U+024F),
+   * no markup characters, no-break spaces as spaces, no soft hyphen; then spaces squeezed and trimmed, at most 16.
+   * Used as you type (typing = true: no squeeze or trim yet, so a space can be typed) and on save and every load.
+   */
+  function cleanNickname(text, typing = false) {
+    let out = '';
+    for (const ch of String(text == null ? '' : text)) {
+      const cp = ch.codePointAt(0);
+      if (cp === 0xad) continue;
+      const c = cp === 0xa0 ? ' ' : ch;
+      const inFont = (cp >= 0x20 && cp <= 0x7e) || (cp >= 0xa0 && cp <= 0x24f);
+      if (!inFont || NICK_DROP.has(c)) continue;
+      out += c;
+    }
+    if (!typing) out = out.replace(/ {2,}/g, ' ').trim();
+    out = [...out].slice(0, NICK_MAX).join('');
+    return typing ? out : out.trim();
+  }
+
+  /** Sets copy `id`'s nickname, cleaned. Empty after cleaning clears it (the species name shows). @returns the stored name ('' when cleared), or null if no such copy. */
+  function setNickname(save, id, text) {
+    if (!isId(id)) return null;
+    const u = shortId(id),
+      c = (save.box || []).find((x) => x.u === u);
+    if (!c) return null;
+    const k = cleanNickname(text);
+    if (k) c.k = k;
+    else delete c.k;
+    return k;
+  }
+
+  // ---------------- bulk sell (step 3b-3) ----------------
+
+  /**
+   * Sells every copy in `ids` that may be sold, each once: never one on save.team or in `also` (the uncommitted team
+   * edits), a locked one, or a favorite (bulk sell skips favorites, 3b D2).
+   * @returns { sold, coins, ids (the ones sold), skipped: { team, locked, favorite, none } }
+   */
+  function sellMany(save, ids, also = []) {
+    const out = { sold: 0, coins: 0, ids: [], skipped: { team: 0, locked: 0, favorite: 0, none: 0 } };
+    for (const id of new Set(ids || [])) {
+      const c = isId(id) ? (save.box || []).find((x) => x.u === shortId(id)) : null;
+      if (!c) {
+        out.skipped.none++;
+        continue;
+      }
+      if (c.f) {
+        out.skipped.favorite++;
+        continue;
+      }
+      const r = sell(save, id, also);
+      if (r.ok) {
+        out.sold++;
+        out.coins += r.coins;
+        out.ids.push(id);
+      } else out.skipped[r.error]++;
+    }
+    return out;
+  }
+
+  /**
+   * "Select repeats" (3b D10): in box `box` (from 0), every copy of a species beyond the one kept. Normal and shiny copies
+   * are counted apart, so a shiny is never sold to keep a normal one. Kept, in order: on the team (save.team or `also`),
+   * locked, favorite, highest IV total, oldest, then box order. Never returns a team, locked or favorite copy. Other boxes
+   * do not count.
+   */
+  function repeatsIn(save, box, also = []) {
+    const team = new Set(
+      (save.team || [])
+        .filter((t) => t && t.uid)
+        .map((t) => t.uid)
+        .concat(also)
+    );
+    const groups = new Map();
+    for (const c of save.box || []) {
+      if ((c.b || 0) !== box) continue;
+      const k = c.d + (c.s ? 's' : 'n');
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(c);
+    }
+    const ivSum = (c) => [...c.i].reduce((a, ch) => a + IV_CHARS.indexOf(ch), 0);
+    const out = [];
+    for (const list of groups.values()) {
+      if (list.length < 2) continue;
+      const ranked = list
+        .map((c, i) => ({
+          c,
+          i,
+          s: [team.has(longId(c.u)) ? 1 : 0, c.l ? 1 : 0, c.f ? 1 : 0, ivSum(c), -c.t],
+        }))
+        .sort((a, b) => {
+          for (let k = 0; k < a.s.length; k++) if (a.s[k] !== b.s[k]) return b.s[k] - a.s[k];
+          return a.i - b.i;
+        });
+      for (const { c } of ranked.slice(1)) {
+        const id = longId(c.u);
+        if (!team.has(id) && !c.l && !c.f) out.push(id);
+      }
+    }
+    return out;
+  }
+
   // ---------------- keeping the save right ----------------
 
   /** Point each team slot at a copy: it keeps a copy that still matches its species and shiny flag, otherwise it takes the first free match. */
@@ -324,7 +450,8 @@ G.Copies = (() => {
         });
         if (!c.e.some((v) => v > 0)) delete c.e;
       }
-      if (typeof c.k === 'string' && c.k) c.k = c.k.slice(0, NICK_MAX);
+      const nick = typeof c.k === 'string' ? cleanNickname(c.k) : ''; // a hand-edited or old save is cleaned like typed text
+      if (nick) c.k = nick;
       else delete c.k;
       if (c.h != null) c.h = whole(c.h, FRIEND_MAX);
       if (c.v != null && (typeof c.v !== 'string' || (G.MoveDefs && !G.MoveDefs[c.v]))) delete c.v;
@@ -360,6 +487,13 @@ G.Copies = (() => {
     priceFor,
     sellPrice,
     sell,
+    setLocked,
+    setFavorite,
+    sellMany,
+    repeatsIn,
+    cleanNickname,
+    setNickname,
+    NICK_MAX,
     SELL_PRICE,
     linkTeam,
     clean,

@@ -1,4 +1,4 @@
-// Pokebox offline checks, steps 1 to 3a-4 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
+// Pokebox offline checks, steps 1 to 3b-3 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
 // Real js/systems/copies.js, js/data/species-traits.js and js/core/db.js with a fake localStorage. Expected values are hand-derived from
 // docs/proposals/pokebox-plan.md and pokeapi (Snorlax 2.1 m, 460 kg, Immunity / Thick Fat / Gluttony, 12.5% female), not read back from code output.
 // PB_COPIES=<file> / PB_DB=<file> run it against another copies.js or db.js (docs/proposals/pokebox-copies-mutate.js uses these).
@@ -98,7 +98,7 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
   const c = C.read(s.box[1], {});
   if (c.dateObtained !== 0 || c.obtainedMethod !== 'other' || c.nature !== 'serious' || !same(c.iv, [0, 0, 0, 0, 0, 0]) || c.gender !== 'male' || c.heightScale !== 255 || c.weightScale !== 0 || c.abilitySlot !== 1 || !c.isShiny) bad('clamped fields ' + JSON.stringify(c));
   if (!same(c.ev, [252, 252, 6, 0, 0, 0])) bad('EVs capped at 252 and 510 total ' + c.ev);
-  if (c.nickname.length !== 12 || c.friendship !== 255 || c.upgrades.dmg !== 5 || !c.isFavorite || c.isLocked) bad('nickname, friendship, rank, flags ' + JSON.stringify(c));
+  if (c.nickname !== 'A name that is m' || c.friendship !== 255 || c.upgrades.dmg !== 5 || !c.isFavorite || c.isLocked) bad('nickname cut to 16 (3b-2 E1), friendship, rank, flags ' + JSON.stringify(c));
   const m = C.read(s.box[2], {}); if (m.gender !== 'none') bad('a genderless species stays genderless'); if (m.abilitySlot !== 3 && !T.SPECIES[81][1][2]) bad('slot');
   const x = { box: 'nope' }; C.clean(x); if (!same(x.box, [])) bad('a box that is not a list is emptied');
   console.log('6 clean: bad records go, values clamp, a valid copy is untouched'); }
@@ -347,6 +347,96 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const v = G.DB.save;
     if (v.coins !== c0 + 915 || v.box.length !== n || !v.shiny[150]) bad('the sale on arrival survives a reload ' + JSON.stringify([v.coins, v.box.length, n]));
     console.log('18 obtain with full boxes: sold on arrival for the sell price, the Pokedex counts it, a reload keeps it'); }
+
+  // 19. lock and favorite (3b-1, map D1 and D2). Compact form: l and f are 1 when on, the key is absent when off.
+  { const s = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    const a = C.read(C.add(s, { dex: 25, from: 'debug' }, rnd), s).pokemonUUID, b = C.read(C.add(s, { dex: 25, from: 'debug' }, rnd), s).pokemonUUID;
+    const rec = id => s.box.find(c => c.u === C.shortId(id));
+    if (C.setLocked(s, a, true) !== true || rec(a).l !== 1 || !C.get(s, a).isLocked) bad('lock on: l is 1 and the copy reads locked');
+    if (C.setFavorite(s, a, true) !== true || rec(a).f !== 1 || !C.get(s, a).isFavorite || !C.get(s, a).isLocked) bad('favorite on as well: both flags set');
+    if ('f' in rec(b) || 'l' in rec(b)) bad('the other copy is untouched');
+    C.setLocked(s, a, false); if ('l' in rec(a) || C.get(s, a).isLocked || !C.get(s, a).isFavorite) bad('lock off: the key is gone, favorite stays');
+    C.setFavorite(s, a, false); if ('f' in rec(a) || C.get(s, a).isFavorite) bad('favorite off: the key is gone');
+    const before = JSON.stringify(s.box);
+    if (C.setLocked(s, C.uuid(), true) !== false || C.setFavorite(s, 'junk', true) !== false || JSON.stringify(s.box) !== before) bad('an unknown id changes nothing and returns false');
+    C.setLocked(s, a, true);
+    let r = C.sell(s, a); if (r.ok || r.error !== 'locked' || !C.get(s, a)) bad('a locked copy cannot be sold (D1) ' + JSON.stringify(r));
+    if (C.move(s, a, 1) !== 'ok' || C.get(s, a).box !== 1 || !C.get(s, a).isLocked) bad('a locked copy still moves between boxes, still locked (D1)');
+    C.setFavorite(s, b, true); r = C.sell(s, b); if (!r.ok || r.coins !== 30) bad('a favorite can still be sold on its own (D2) ' + JSON.stringify(r));
+    console.log('19 lock and favorite: on writes 1, off removes the key; a locked copy cannot be sold but moves; a favorite still sells'); }
+
+  // 19b. both flags survive a commit and a reload through the real db.js.
+  put('ps.session', K); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  { const t = G.DB.save, c = t && C.all(t).find(x => x.speciesID === 10);
+    if (!c) bad('section 19b needs a Caterpie copy on the tester save');
+    else { C.setLocked(t, c.pokemonUUID, true); C.setFavorite(t, c.pokemonUUID, true); G.DB.commit(true);
+      load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const v = C.get(G.DB.save, c.pokemonUUID);
+      if (!v || !v.isLocked || !v.isFavorite) bad('lock and favorite survive a reload'); }
+    console.log('19b lock and favorite survive a commit and a reload'); }
+
+  // 20. nicknames (3b-2 D6, E1, E2). Expected strings worked out by hand from the rules: the font's Latin set only, no < > & " ' ` \ = { },
+  //     no-break space to space, soft hyphen dropped, spaces squeezed and trimmed, 16 at most.
+  { const N = C.cleanNickname;
+    const CASES = [
+      ['  Sparky  ', 'Sparky'], ['Abcdefghijklmnopq', 'Abcdefghijklmnop'], ['Zo\u00eb', 'Zo\u00eb'], ['Pika\u{1F600}', 'Pika'],
+      ['\u65e5\u672c', ''], ['   ', ''], ['', ''], [null, ''],
+      ['<b>Hi</b>', 'bHi/b'], ['a"b', 'ab'], ["it's", 'its'], ['x=`y`', 'xy'], ['{a}\\b&c', 'abc'],
+      ['Bob\u200b', 'Bob'], ['A\u202eB', 'AB'], ['Mr\u00a0\u00a0Mime', 'Mr Mime'], ['Mr   Mime', 'Mr Mime'], ['so\u00adft', 'soft'],
+      ['tab\tnew\nline', 'tabnewline'], ['<img onerror=x>', 'img onerrorx'], ['abcdefghijklmno pqr', 'abcdefghijklmno'],
+    ];
+    for (const [inp, want] of CASES) if (N(inp) !== want) bad('cleanNickname ' + JSON.stringify(inp) + ' is ' + JSON.stringify(want) + ', got ' + JSON.stringify(N(inp)));
+    if (N('Mr ', true) !== 'Mr ' || N('  a  b', true) !== '  a  b') bad('while typing, spaces are kept so a space can be typed');
+    if (N('<x>"y', true) !== 'xy' || N('Abcdefghijklmnopq', true).length !== 16) bad('while typing, characters are still dropped and capped');
+    if (C.NICK_MAX !== 16) bad('16 characters (E1), got ' + C.NICK_MAX);
+    const s = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    const u = C.read(C.add(s, { dex: 25, from: 'debug' }, rnd), s).pokemonUUID, rec = () => s.box.find(c => c.u === C.shortId(u));
+    if (C.setNickname(s, u, '  Sparky<3 ') !== 'Sparky3' || rec().k !== 'Sparky3' || C.get(s, u).nickname !== 'Sparky3') bad('setNickname stores the cleaned name');
+    if (C.setNickname(s, u, '\u65e5\u672c') !== '' || 'k' in rec() || C.get(s, u).nickname !== '') bad('a name that cleans to nothing clears it: no k key, the species name shows');
+    const before = JSON.stringify(s.box);
+    if (C.setNickname(s, C.uuid(), 'X') !== null || C.setNickname(s, 'junk', 'X') !== null || JSON.stringify(s.box) !== before) bad('an unknown id renames nothing and returns null');
+    const h = { box: [{ u: 'DDDDDDDDDDDDDDDDDDDDDD', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '<img onerror=x>' },
+      { u: 'EEEEEEEEEEEEEEEEEEEEEE', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: '\u202e\u200b' },
+      { u: 'FFFFFFFFFFFFFFFFFFFFFF', d: 25, t: 1, m: 'g', n: 1, i: 'AAAAAA', g: 0, x: 1, y: 1, a: 1, k: 'Twelve chars' }] };
+    C.clean(h);
+    if (h.box[0].k !== 'img onerrorx' || 'k' in h.box[1] || h.box[2].k !== 'Twelve chars') bad('clean() cleans a hand-edited save the same way, old names untouched ' + JSON.stringify(h.box.map(c => c.k)));
+    console.log('20 nicknames: the font set only, markup characters dropped, spaces squeezed, 16 max; setNickname and clean() share the rule'); }
+
+  // 20b. a nickname survives a commit and a reload through the real db.js, cleaned on the way in.
+  put('ps.session', K); load('js/core/db.js', 'PB_DB'); await G.DB.ready();
+  { const t = G.DB.save, c = t && C.all(t).find(x => x.speciesID === 10);
+    if (!c) bad('section 20b needs a Caterpie copy on the tester save');
+    else { C.setNickname(t, c.pokemonUUID, 'Wormy  McWormface'); G.DB.commit(true);
+      load('js/core/db.js', 'PB_DB'); await G.DB.ready(); const v = C.get(G.DB.save, c.pokemonUUID);
+      if (!v || v.nickname !== 'Wormy McWormface') bad('a nickname survives a reload, got ' + (v && JSON.stringify(v.nickname))); }
+    console.log('20b a nickname survives a commit and a reload'); }
+
+  // 21. bulk sell and "Select repeats" (3b-3, map D10 to D12). Prices by hand: Caterpie 1 star 15, Pikachu 2 star 30.
+  { const s = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    const mk = (dex, o = {}) => { const c = C.add(s, { dex, shiny: o.shiny, from: 'debug' }, rnd); if (o.i) c.i = o.i; if (o.t) c.t = o.t; if (o.box) c.b = o.box; return C.longId(c.u); };
+    const five = [1, 2, 3, 4, 5].map(() => mk(10));
+    let r = C.sellMany(s, five);
+    if (r.sold !== 5 || r.coins !== 75 || s.coins !== 75 || five.some(id => C.get(s, id)) || r.ids.length !== 5) bad('5 Caterpie sell for 75 in one batch ' + JSON.stringify(r));
+    const tm = mk(10), pd = mk(10), lk = mk(10), fv = mk(10), x = mk(10);
+    s.team[0] = { dex: 10, shiny: false, uid: tm }; C.setLocked(s, lk, true); C.setFavorite(s, fv, true); s.coins = 0;
+    r = C.sellMany(s, [tm, pd, lk, fv, x, 'junk', x], [pd]);
+    const sk = r.skipped;
+    if (r.sold !== 1 || r.coins !== 15 || s.coins !== 15 || sk.team !== 2 || sk.locked !== 1 || sk.favorite !== 1 || sk.none !== 1) bad('a mixed batch sells only the plain one, once; team, pending, locked, favorite and junk are skipped and counted ' + JSON.stringify(r));
+    if (![tm, pd, lk, fv].every(id => C.get(s, id)) || C.get(s, x)) bad('the skipped copies are all still there, the plain one is gone');
+    // Select repeats: 4 Pikachu in Box 1 with IV totals 10, 90, 50, 90 (the 2nd is older than the 4th). The older 90 is kept.
+    const t = { coins: 0, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    const mt = (dex, o = {}) => { const c = C.add(t, { dex, shiny: o.shiny, from: 'debug' }, rnd); if (o.i) c.i = o.i; if (o.t) c.t = o.t; if (o.box) c.b = o.box; return C.longId(c.u); };
+    const p1 = mt(25, { i: 'KAAAAA', t: 400 }), p2 = mt(25, { i: '774AAA', t: 100 }), p3 = mt(25, { i: '7TAAAA', t: 300 }), p4 = mt(25, { i: '774AAA', t: 200 });
+    const lone = mt(10), shinyP = mt(25, { shiny: true, i: 'AAAAAA', t: 50 });
+    const set = a => JSON.stringify([...a].sort()), want = (a, b, why) => { if (set(a) !== set(b)) bad(why + ' got ' + JSON.stringify(a)); };
+    want(C.repeatsIn(t, 0), [p1, p3, p4], 'the best IVs then the oldest are kept: the older 90 (p2); the lone Caterpie and the lone shiny are never picked');
+    C.setFavorite(t, p3, true); want(C.repeatsIn(t, 0), [p1, p2, p4], 'a favorite is kept over better IVs, and never picked');
+    C.setFavorite(t, p3, false); C.setLocked(t, p3, true); want(C.repeatsIn(t, 0), [p1, p2, p4], 'a locked one is kept over better IVs, and never picked');
+    C.setLocked(t, p3, false); t.team[0] = { dex: 25, shiny: false, uid: p1 }; want(C.repeatsIn(t, 0), [p2, p3, p4], 'the team copy is kept over better IVs, and never picked');
+    t.team[0] = null; want(C.repeatsIn(t, 0, [p4]), [p1, p2, p3], 'a copy in the uncommitted team edits is kept and never picked');
+    const other = mt(25, { box: 1 }); want(C.repeatsIn(t, 0), [p1, p3, p4], 'a Pikachu in Box 2 does not change Box 1');
+    want(C.repeatsIn(t, 1), [], 'a lone copy in Box 2 is not a repeat');
+    if (C.get(t, lone) === null || C.get(t, shinyP) === null || C.get(t, other) === null) bad('repeatsIn only reads');
+    console.log('21 bulk sell: each once, team / pending / locked / favorite skipped; Select repeats keeps team, locked, favorite, best IVs, oldest, per box, shinies apart'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });
