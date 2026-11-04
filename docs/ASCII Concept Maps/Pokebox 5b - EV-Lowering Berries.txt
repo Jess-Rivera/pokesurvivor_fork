@@ -1,0 +1,166 @@
+POKEBOX STEP 5b: EV-LOWERING BERRIES  (plan, 2026-11-04, no code)
+STATUS: PARKED 2026-11-04 (Jess). Jess is designing the UI (Shop berry rows, the Team screen
+Lower panel) in Photoshop at home first. Decisions G1 to G6 stay open until the mockups are in
+the repo (suggested: docs/mockups/); the panel layout below is a placeholder, the mockup wins.
+Branch: feature/pokeboxes. Source: docs/proposals/ev-progression.md "EV removal" (whittling items).
+Step 5 map F8 (split to 5b). Step 5 is built, checked and feel-tested.
+
+=====================================================================
+ THE LOOP
+=====================================================================
+
+   SHOP, Items tab                 SAVE                       TEAM SCREEN, a copy selected
+   ---------------                 ----                       ----------------------------
+   six berry rows                  save.evBerries             EVs row:  "Atk 252 · HP 180 · 432 / 510"  [Lower]
+   [buy 1]  300 coins each  ---->  { pomeg: 2, kelpsy: 0,          |
+   (G3, G4)                          ... }  (new, absent = 0)      v
+                                                              LOWER EVs panel (G5)
+                                                                stat  EVs   berry          own   use
+                                                                HP    180   Pomeg Berry      2   [-][+]  -> 160
+                                                                Atk   252   Kelpsy Berry     0   (none)
+                                                                Def    78   Qualot Berry     1   [-][+]  -> 78
+                                                                ...
+                                                                [Cancel]  [Lower]  -> one confirm, then saved
+
+   One berry = -10 EVs in its stat (G1). The EVs are gone, not refunded (G2):
+   the copy has room to earn them again in later runs.
+
+=====================================================================
+ THE BERRIES  (mainline names and stats; pokesprite icons already in
+               js/data/pokesprite-index.js: berry.pomeg ... berry.tamato)
+=====================================================================
+
+   id       name            stat    each
+   pomeg    Pomeg Berry     HP      -10
+   kelpsy   Kelpsy Berry    Atk     -10
+   qualot   Qualot Berry    Def     -10
+   hondew   Hondew Berry    SpA     -10
+   grepa    Grepa Berry     SpD     -10
+   tamato   Tamato Berry    Spe     -10
+
+   Not the in-run ground berries (Oran, Sitrus, the status berries): these
+   never drop in a run and never activate on contact.
+
+=====================================================================
+ PRICE CHECK  (estimates; the run-end coin formula in js/game.js endRun:
+               time/5 + kills x 0.25 + gyms x 80 + coins picked up)
+=====================================================================
+
+   run          coins (rough)     berries at 300
+   10 min        ~400 to 500         1
+   60 min        ~3,000+            10
+   for scale: sell a 1 star 15, box 3 10,000, team item 100,000
+
+   10 EVs = 2.5 stat points at L100. A full 252 respec is 26 berries (7,800).
+
+=====================================================================
+ DECISIONS FOR JESS  (each changes behavior; approve or change)
+=====================================================================
+
+ G1  Amount: one berry lowers its stat by 10 EVs, never below 0. It can't
+     be used on a stat at 0.                         REC: yes (mainline -10)
+
+ G2  The lowered EVs are lost, not returned to a pool. The copy can earn
+     them again (the 252 / 510 room opens up).        REC: yes (mainline;
+     the run banks have no carry-over by design, so a refund pool would be
+     a second bank)
+
+ G3  Source: the Shop's Items tab, for coins, always available. 300 coins
+     each, TUNE. Alternative: also a gym drop.     REC: Shop only, 300
+     (a coin sink with a fixed price; a drop would make respecs luck-based)
+
+ G4  Stock: the save keeps how many of each you own (save.evBerries),
+     up to 999 each. Absent in old saves = 0, so no migration.  REC: yes
+
+ G5  Where: the Team screen, any copy (team, locked, favorite included),
+     outside runs only. A Lower button on the EVs row opens a panel; you
+     pick counts per stat, then Lower asks once ("Lower Atk by 20 and Def
+     by 10? These EVs are lost.") and saves. Cancel changes nothing.
+     The button hides when the copy has no EVs.             REC: yes
+
+ G6  The berries do nothing else (mainline also raises friendship;
+     friendship has no effect here yet).                     REC: yes
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/systems/copies.js   (owns the EV rules and the compact save form)
+   +- EV_BERRIES: the six rows above (id, name, stat, amount 10), BERRY_PRICE
+   |  300, BERRY_MAX 999
+   +- berryCount(save, id); buyBerry(save, id) -> { ok, error 'poor'|'max' }
+   +- lowerEvs(save, uid, plan): plan = { stat: berries }, uses at most the
+   |  berries owned, never below 0, takes the berries, removes the EVs;
+   |  -> { ok, lowered[6], used{} } or { ok: false, error }
+   '- clean(): save.evBerries kept to the six ids, whole 0 to 999
+
+ js/ui/gacha-ui.js   refreshItems (the Shop Items tab)
+   '- a "Berries" block: six rows, icon, name, stat, owned, [Buy 300]
+
+ js/ui/menu.js + css/bw-team.css
+   +- rosInfoRows: the EVs row gains [Lower] when the copy has EVs
+   '- the Lower EVs panel over the detail pane (G5), one confirm, saves
+
+ dev.html   the panel's markup (like #scr-evs)
+
+ js/core/debug.js
+   '- G.Debug.evberries(n): set every berry's stock to n. Saved.
+
+ Not touched: runs, enemies, drops.js (G3), the step 5 banks.
+
+ After the build (free-edit): changelog new line, pokebox-plan 5b status +
+ G1 to G6 rulings, BALANCE.md (price), TODO (5b done), DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ NEW  docs/proposals/pokebox-evberries-harness.js   (picked up by check.js)
+   Loads the real species-traits.js and copies.js; reads menu.js, gacha-ui.js
+   and dev.html as text for the wiring. Hand-derived:
+     1. The six berries: ids, names, stats in order HP to Spe, 10 each
+     2. Buying: 300 coins each, coins down by 300, stock up by 1; poor
+        refuses and changes nothing; 999 refuses
+     3. Lowering: Atk 252 with 2 Kelpsy -> 232, 2 used; HP 5 with 1 Pomeg
+        -> 0 (never below 0), 1 used; a stat at 0 refuses; asking for 3 with
+        2 owned uses 2; total EVs drop by the same amount (510 -> 480)
+     4. Lost, not refunded: after lowering, nothing else on the copy or the
+        save gains EVs; a step 5 addEvs can fill the room again
+     5. Missing copy or bad id: refused, berries untouched
+     6. Save: no evBerries reads 0; clean() drops unknown ids and clamps to
+        whole 0 to 999; a round trip keeps the stock
+     7. Wiring: the Shop Items tab buys through buyBerry; the Team panel
+        lowers through lowerEvs after one G.UI.ask, then commits; the
+        Lower button only shows with EVs
+   Why new: the EV harness covers earning and giving; buying and lowering
+   are a new save field and new rules.
+
+ NEW  docs/proposals/pokebox-evberries-mutate.js   (mutation runner, by hand)
+   Each must make the harness fail: -1 instead of -10; lowering past 0; a
+   berry not taken; berries taken but EVs kept; the wrong stat lowered;
+   EVs refunded to another stat; coins not charged; charged twice; 999 cap
+   ignored; buying with too few coins; clean() keeps junk ids; the panel
+   skips the confirm; the panel does not save.
+
+ UNCHANGED  the step 4 and step 5 harnesses (lowerEvs is new code; addEvs,
+   the banks and the profile do not change).
+ NO check.js change. NO intent scenarios. NEW debug set: G.Debug.evberries(n).
+
+ UI CHECK (one-off file:// headless probe, not committed): G.Debug.coins(5000),
+   buy two Kelpsy in the Shop, a copy with Atk EVs, Lower, -20, confirm, the
+   EVs row updates, no page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. Shop, Items tab: buy a berry; coins and stock update at once.
+   2. G.Debug.evberries(5). Team screen, a copy with EVs: Lower, pick 2 in a
+      stat, Lower, confirm: -20 there, the total drops, stock 3.
+   3. Cancel changes nothing; a stat at 0 offers no berry.
+   4. Reload keeps the stock and the lowered EVs.
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Price is a guess from the coin formula; tune with real run payouts.
+   - Lost EVs at 1/1000 wild are slow to re-earn; gym runs refill faster.

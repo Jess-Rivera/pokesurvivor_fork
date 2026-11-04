@@ -12,4 +12,7 @@ Jeremy playtest
 - More Item Drops
 - Bomb guarantees screen clear, 3.0s delay for spawn
 - Magnetism
-- Flamethrower and some other moves hit through walls
+- Deeper walkthrough revealed the following:
+Location 22-14 [GB300]
+- Return Hose from GB300 to Manifold:
+Flamethrower and some other moves hit through walls

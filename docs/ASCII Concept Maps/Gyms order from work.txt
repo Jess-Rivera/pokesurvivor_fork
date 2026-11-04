@@ -1,0 +1,48 @@
+slot:               1             2             3             4             5             6
+BROCK     current   Golem         Rhydon        Omastar       Kabutops      Steelix       Aerodactyl
+          ace-1st   Steelix       Golem         Rhydon        Omastar       Kabutops      Aerodactyl
+          gen-1     Golem*        Steelix*      Rhydon        Omastar       Kabutops      Aerodactyl
+
+MISTY     current   Starmie       Gyarados      Golduck       Poliwrath     Lapras        Dewgong
+          ace-1st   = current
+          gen-1     Starmie*      Dewgong       Golduck       Poliwrath     Lapras        Gyarados
+
+SURGE     current   Raichu        Electrode     Magneton      Electabuzz    Jolteon       Porygon
+          ace-1st   = current
+          gen-1     Raichu*       Porygon       Magneton      Electrode     Electabuzz    Jolteon
+
+ERIKA     current   Victreebel    Vileplume     Tangela       Exeggutor     Parasect      Venusaur
+          ace-1st   Vileplume     Victreebel    Tangela       Exeggutor     Parasect      Venusaur
+          gen-1     Victreebel*   Tangela*      Vileplume*    Parasect      Venusaur      Exeggutor
+
+KOGA      current   Crobat        Weezing       Venomoth      Muk           Arbok         Tentacruel
+          ace-1st   Weezing       Crobat        Venomoth      Muk           Arbok         Tentacruel
+          gen-1     Weezing*      Muk*          Arbok         Venomoth      Tentacruel    Crobat
+
+SABRINA   current   Alakazam      Mr. Mime      Hypno         Jynx          Slowbro       Gengar
+          ace-1st   = current
+          gen-1     Alakazam*     Mr. Mime*     Jynx          Hypno         Slowbro       Gengar
+
+BLAINE    current   Arcanine      Rapidash      Magmar        Ninetales     Flareon       Charizard
+          ace-1st   = current
+          gen-1     = current     (Arcanine*, Rapidash*, then the fill lands in your order)
+
+GIOVANNI  current   Dugtrio       Marowak       Persian       Nidoqueen     Nidoking      Rhydon
+          ace-1st   Rhydon        Dugtrio       Marowak       Persian       Nidoqueen     Nidoking
+          gen-1     Rhydon*       Dugtrio*      Nidoqueen*    Nidoking*     Marowak       Persian
+
+LORELEI   current   Lapras        Cloyster      Dewgong       Jynx          Mamoswine     A-Sandslash
+          ace-1st   = current
+          gen-1     Dewgong*      Cloyster*     Jynx*         Lapras*       A-Sandslash   Mamoswine
+
+BRUNO     current   Machamp       Hitmonlee     Hitmonchan    Poliwrath     Steelix       A-Golem
+          ace-1st   = current
+          gen-1     Steelix*      Hitmonchan*   Hitmonlee*    Machamp*      A-Golem       Poliwrath
+
+AGATHA    current   Gengar        Crobat        Arbok         Weezing       A-Marowak     Mismagius
+          ace-1st   = current
+          gen-1     Gengar*       Crobat*       Arbok*        A-Marowak     Weezing       Mismagius
+
+LANCE     current   Dragonite     Aerodactyl    Gyarados      Charizard     Kingdra       Dragonair(p)
+          ace-1st   = current
+          gen-1     Gyarados*     Dragonair(p)* Aerodactyl*   Dragonite*    Charizard     Kingdra

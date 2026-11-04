@@ -34,7 +34,7 @@ CLOSED (8):
 - #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / no status]  (closed 2026-11-01)
 - #19 [Idea]: Gym-Roster implementation for Kanto  [feature / gyms / ready]  (closed 2026-11-02; still blocking 1, likely #5)
 
-NOT ON THE BOARD: the Pokebox work (feature/pokeboxes, steps 1 to 5 built; step 5b EV-lowering items next). Consider an issue so the board shows it.
+NOT ON THE BOARD: the Pokebox work (feature/pokeboxes, steps 1 to 5 built and feel-tested; step 5b EV-lowering berries parked until Jess's UI mockups). Mirror NOT re-synced at the 2026-11-04 wrap-up (the GitHub API returned empty). Consider an issue so the board shows it.
 
 INCONSISTENCIES TO RESOLVE ON THE BOARD (Jess; the agent never mutates the tracker):
 - #5 and #11 carry `blocked`, but their only blocker is closed (#19 and #2 still count as blocking 1). Drop the label, or link a real open blocker.
@@ -62,7 +62,7 @@ live queue, cross-reference the issue number.
 - Balance pass: all branches DONE and merged (tune/damage closed 2026-10-19). Carry-overs are listed under 'Up next'. Tuning knobs: the tables at the end of js/data/enemies.js; numbers in BALANCE.md. Open logger gap: alive-by-class sample.
 
 ## Up next (local single-player)
-- POKEBOX (Jess, 2026-11-03): steps 1 to 3 built on feature/pokeboxes (step 3 on 2026-11-04: boxes, copies at the source, selling, full boxes, lock, favorite, nicknames, bulk sell); step 4 built 2026-11-04 (IVs and natures apply to run stats; awaiting Jess's node checks and feel-test); step 4 feel-tested; step 5 (EVs) built 2026-11-04, awaiting Jess's node checks and feel-test; step 5b (EV-lowering items, map F8) next. Handoff: docs/proposals/pokebox-plan.md.
+- POKEBOX (Jess, 2026-11-03): steps 1 to 3 built on feature/pokeboxes (step 3 on 2026-11-04: boxes, copies at the source, selling, full boxes, lock, favorite, nicknames, bulk sell); step 4 built 2026-11-04 (IVs and natures apply to run stats; awaiting Jess's node checks and feel-test); step 4 feel-tested; step 5 (EVs) built and feel-tested 2026-11-04; step 5b (EV-lowering berries) PARKED until Jess's UI mockups (home, Photoshop); plan map has decisions G1 to G6 open. Handoff: docs/proposals/pokebox-plan.md.
 - Font cleanup (2026-11-03): the old credit at dev.html:330 and its js/data/lang-en.js key still name Pixelify Sans (Spanish key, left under the i18n rule; Jess to say). tools/pack_itch.js packs all of assets/fonts, so unused fonts, including the full 3.7 MB Silver.ttf, still ship in that build; exclude them when publishing.
 - MOVE TUNING (Jess, 2026-11-03 playtest): "some moves are definitely in need of a tune". List not named yet; check each against docs/MOVE-INTENT.md, then a no-code plan.
 - ITEM BATCH 1, STEPS 4 TO 6, PARKED (Jess, 2026-11-03): 12 ground and 10 Pokemon items, approved and unbuilt, Dowsing Machine at +0.5. He is happy with the item count; start only if he reopens it. Detail: docs/proposals/item-rework-v2-handoff.md.

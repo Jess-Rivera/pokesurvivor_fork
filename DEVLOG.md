@@ -579,3 +579,11 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Verified (Jess, his machine): check.js all harnesses passed, mutation runner 56/56, smoke-ui, format. This machine cannot run node; whole-feature feel-test still to do.
 - Broke and fixed: a TODO.md edit put two backlog lines at the top and dropped the "# TODO / ISSUES" heading; restored at wrap-up. Board mirror re-synced (13 open, 8 closed).
 - Stopped at: step 4 (IVs and natures apply), no-code plan first. Branch not merged to main.
+
+## 2026-11-04, Pokebox steps 4 and 5: IVs, natures, EVs (Quick, work, feature/pokeboxes)
+- Built step 4: a team copy's IVs and nature feed its run stats (G.Stats.profile, nature argument on statValue in whole numbers, G.Copies.profileOf, buildFighter passes the slot uid). Enemies stay 0 IV, neutral. Debug: G.Debug.fighter, G.Debug.ivs. New pokebox-stats harness and mutate runner (21).
+- Built step 5 from Jess's draft (docs/proposals/ev-progression.md): typed yields into six run banks, class rates wild 1/1000, elite 1/500, gym 1x, shiny x2 (F1, Jess's change to the flat 1/1000); end-of-run "Train your team" screen; EVs row and sell warning on the Team screen; Select repeats keeps most EVs. Species yields added to species-traits.js. Debug: G.Debug.evbank. New pokebox-evs harness and mutate runner (29).
+- Decided (Jess): step 4 D1 to D7, step 5 F1 to F10. Ride-along: the dead timed-boss data removed from js/data/enemies.js (no non-gym bosses exist).
+- Broke and fixed: none in the repo. One of my own hand-derived harness expectations was wrong (a capped copy) and was fixed before writing. Five step 4 mutation anchors moved with the EV arguments and were updated.
+- Verified: harnesses run in a sandbox copy here (step 4 122/122 and 21/21, step 5 61/61 and 29/29); Jess ran check.js and the runners on his machine and feel-tested both steps.
+- Stopped at: step 5b (EV-lowering berries) PARKED until Jess's Photoshop mockups; plan map has G1 to G6 open. Board mirror not re-synced (GitHub API returned empty).
