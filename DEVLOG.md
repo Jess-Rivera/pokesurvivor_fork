@@ -569,6 +569,13 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 
 ## 2026-11-04, Pokebox 3b-3: bulk sell (Quick, work, feature/pokeboxes)
 - Built (D9 to D12): G.Copies.sellMany and repeatsIn, G.Gacha.bulkSellable; Team screen Select mode (tick, Select repeats, Clear, Sell N for X with one confirm, Cancel; ends on leaving the tab); "Sell repeats +N" on the pull results. Harness 21, sources 8, mutation runner now 56.
-- Proposed in the build, awaiting Jess: Select repeats counts normal and shiny copies apart (D10 said per species).
+- Decided (Jess, after the build): Select repeats counts normal and shiny copies apart (refines D10).
 - Broke and fixed: two of the menu.js edits were overwritten by a later edit made against an older copy of the file; caught by a marker check, reapplied one at a time, then every 3a and 3b marker in all 13 touched files rechecked present.
 - Not verified here (no node). Stopped at: Jess's checks and feel-test of 3b-3. Step 3 done after that; next is step 4 (IVs and natures apply).
+
+## 2026-11-04, Session close: Pokebox step 3 done (Quick, work, feature/pokeboxes)
+- Built: all of Pokebox step 3 in nine microsteps (3a-1 to 3a-4, 3a-2b, 3b-1 to 3b-3), each with an ASCII map in docs/ASCII Concept Maps/. Ride-along fixes: top bar coins, box price tabs and Shop buttons redraw on every save; G.Debug.tickets and fillBoxes.
+- Decided (Jess): every D and E ruling in the 3a and 3b maps, plus Select repeats counting normal and shiny copies apart. Rescue event left as is.
+- Verified (Jess, his machine): check.js all harnesses passed, mutation runner 56/56, smoke-ui, format. This machine cannot run node; whole-feature feel-test still to do.
+- Broke and fixed: a TODO.md edit put two backlog lines at the top and dropped the "# TODO / ISSUES" heading; restored at wrap-up. Board mirror re-synced (13 open, 8 closed).
+- Stopped at: step 4 (IVs and natures apply), no-code plan first. Branch not merged to main.

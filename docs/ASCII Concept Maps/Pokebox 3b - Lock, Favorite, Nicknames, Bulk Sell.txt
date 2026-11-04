@@ -5,8 +5,8 @@ APPROVED 2026-11-04 (Jess), all of D1 to D12, with two edits to 3b-2 (see "3b-2 
   nickname cleaning against injection + 16 characters; Favorites / Locked filter chips after BST.
 3b-1: BUILT 2026-11-04.
 3b-2: BUILT 2026-11-04 with E1 to E3 (Jess OK, same day). Clicking away from the rename field cancels, like Esc.
-3b-3: BUILT 2026-11-04. Two build choices: (1) normal and shiny copies are counted apart in Select repeats (pending
-  Jess's OK); (2) the select bar sits in the shown-count line (no separate footer), and ticks hidden by a filter
+3b-3: BUILT 2026-11-04. Two build choices: (1) normal and shiny copies are counted apart in Select repeats (Jess
+  approved, same day); (2) the select bar sits in the shown-count line (no separate footer), and ticks hidden by a filter
   change are dropped, so a batch only sells what you can see.
 Already in place: the save fields (l, f, k), clean() clamps them, nicknames already display with translate="no"
 (js/ui/menu.js rosNameHtml), and sell() already refuses a locked copy. No save migration in any microstep.

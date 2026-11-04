@@ -6,40 +6,42 @@ has only the repo, e.g. Claude at home before its GitHub access is wired up) plu
 notes that have not yet been turned into issues. When the board and this file disagree, the BOARD wins.
 Playtester guide: CONTRIBUTING.md. PM rules: CLAUDE.md "Project management and issue tracking".
 
-## Board mirror (synced from the GitHub API 2026-10-31 ~12:05 PM, Quick)
-Update 2026-11-01 (Jess, board cleaned 2026-10-31): #15 closed; In progress = #1, #6, #17. Other labels below may be stale until the next full sync.
+## Board mirror (synced from the GitHub API 2026-11-04 ~8:15 AM, Quick)
 Open and closed issues as of this sync. Labels shown as type / area / status. The API gives dependency COUNTS only; the pairs in brackets are inferred from issue bodies.
 
-OPEN (15):
-- #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]  FIXED 2026-11-01 on fix/gym-gate-art (gate draws assets/tileset/gyms/gym-<arena>.png at half size); merge, close. Follow-up: the gate HUD notice and gauge in hud.js still use purple-ish colors, type-match them later.
-- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / ready]  (blocked_by 1 open of 2, likely #3; blocking 1, likely #11) (reopened)
-- #3  Full decision pass: re-classify all 64 in-game moves against the new axis schema  [design / moves / ready]  (blocking 1, likely #2)
-- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]  (no dependency link)
+OPEN (13):
+- #5  Gym progression: arena flow slice B (all-at-once multi-mon)  [feature / gyms / blocked]  (blocked_by 0 open of 1, likely #19 or #2, both closed)
 - #6  Gym sprite display fix is tracked as #1, harness for escalation clock/bump  [feature / gyms / ready]
 - #8  Tileset loader + map generator cleanup  [feature / engine / ready]
 - #9  Regional forms (blocks Lorelei, Agatha, Bruno gym builds)  [feature / gyms / blocked]  (no dependency link)
 - #10 Canonical type chart (0.5 / 2.0 / immune), on hold  [balance / engine / blocked]  (no dependency link)
-- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 1, likely #2)
+- #11 Canonical learnsets: real movepool per species  [feature / moves / blocked]  (blocked_by 0 open of 1, likely #2, closed)
 - #12 More accurate hitboxes (per-species circle radius)  [feature / engine / no status]
 - #13 New move path: routed moves never target idle props  [design / moves / no status]
 - #14 New move path: ranged moves lost boss priority  [design / moves / needs-triage]
-- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / no status]  (shot spacing, not the cd, see MOVE-INTENT string-shot)
-- #16 [Bug]: Animation Sync between move and Pokemon  [bug / no area / no status]  (filed 2026-10-30; the TODO "NEW-PATH MOVES MISALIGNED" item)
-- #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / blocked]  (no dependency link; waits on the post-7b merge, DECISIONS 2026-10-31) UNBLOCKED 2026-11-01: the branch merged into main (f9a2f2c). DONE on chore/lint-format 2026-11-01 (ESLint warn-only, Prettier format commit eb7d0a7); merge to main and close the issue.
+- #16 [Bug]: Animation Sync between move and Pokemon  [bug / no area / no status]
+- #18 [Bug]: Quick Attack & Aerial Ace Pass  [bug, balance / no area / no status]  (movement feels nauseating)
+- #20 Sabrina loop 1: add Reflect (team-side field)  [feature / gyms / blocked]  (waits on the fields slice, no issue to link)
+- #21 Koga loop 1: add Smokescreen (accuracy -1)  [feature / gyms / blocked]  (waits on the accuracy trackers slice, no issue to link)
 
-CLOSED (2):
-- #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24, completed; still counted as blocking 1)
-- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms / ready]  (closed 2026-10-24, completed)
+CLOSED (8):
+- #1  Gym sprite display: gate still draws rift prop + purple tint  [bug / gyms / ready]  (closed 2026-11-01)
+- #2  Moves import: resolver + 4 data files + 64-move conversion harness  [feature / moves / no status]  (closed 2026-10-31; still blocking 1, likely #11)
+- #3  Full decision pass: re-classify all 64 in-game moves  [design / moves / no status]  (closed 2026-10-31)
+- #4  Settle open move feel-calls (Flamethrower / Night Shade / Psycho Cut)  [design / moves / needs-triage]  (closed 2026-10-24)
+- #7  Boss damage slice: bosses/gym leaders on the A/D ratio path  [balance / gyms / ready]  (closed 2026-10-24)
+- #15 String Shot: both shots fire so fast they read as a single shot  [bug / moves / no status]  (closed 2026-10-31)
+- #17 Add ESLint + Prettier (after move-schema merge)  [no type / engine / no status]  (closed 2026-11-01)
+- #19 [Idea]: Gym-Roster implementation for Kanto  [feature / gyms / ready]  (closed 2026-11-02; still blocking 1, likely #5)
+
+NOT ON THE BOARD: the Pokebox work (feature/pokeboxes, steps 1 to 3 built; step 4 IVs and natures next). Consider an issue so the board shows it.
 
 INCONSISTENCIES TO RESOLVE ON THE BOARD (Jess; the agent never mutates the tracker):
-- #4 is CLOSED but still counted as a blocker (blocking 1); #2 shows 2 total blockers with 1 open, so the closed one is very likely #4. Remove the stale link.
-- #2 is labeled `ready` while it still has 1 open blocker (likely #3).
-- #3 is labeled `ready` but its 64-move conversion pass is done (2026-10-24 note below); consider closing it, which would also unblock #2.
-- #5, #9, #10 and #17 carry `blocked` with no dependency link; add the link or drop the label (#17 has no issue to link to: it waits on a merge).
-- #16 has no area or status label; #17 has no type label; #12, #13 and #15 have no status label.
-- #4 (closed) still carries `needs-triage`; #7 (closed) still carries `ready`.
-
-NOTE (unchanged from the 2026-10-24 sync): the feel-first 64-move conversion pass (#3) is COMPLETE: 63 of 64 moves converted in docs/move_rework_holding/move-conversions-described.json (bubble logged as a forgotten-move skip). #4's three feel-calls were decided in that pass. Board automation: closing an issue moves it to Shipped.
+- #5 and #11 carry `blocked`, but their only blocker is closed (#19 and #2 still count as blocking 1). Drop the label, or link a real open blocker.
+- #9 and #10 carry `blocked` with no dependency link. #20 and #21 wait on slices that have no issue yet.
+- Closed issues with stale status labels: #1, #7, #19 `ready`; #4 `needs-triage`.
+- Missing labels: #16 and #18 no area or status; #12 and #13 no status; #17 (closed) no type.
+- #6's title still points at #1, which is closed.
 
 ---
 
@@ -60,7 +62,7 @@ live queue, cross-reference the issue number.
 - Balance pass: all branches DONE and merged (tune/damage closed 2026-10-19). Carry-overs are listed under 'Up next'. Tuning knobs: the tables at the end of js/data/enemies.js; numbers in BALANCE.md. Open logger gap: alive-by-class sample.
 
 ## Up next (local single-player)
-- POKEBOX (Jess, 2026-11-03): steps 1 and 2 built on feature/pokeboxes, step 3 next. Handoff: docs/proposals/pokebox-plan.md.
+- POKEBOX (Jess, 2026-11-03): steps 1 to 3 built on feature/pokeboxes (step 3 on 2026-11-04: boxes, copies at the source, selling, full boxes, lock, favorite, nicknames, bulk sell); step 4 (IVs and natures apply) next. Handoff: docs/proposals/pokebox-plan.md.
 - Font cleanup (2026-11-03): the old credit at dev.html:330 and its js/data/lang-en.js key still name Pixelify Sans (Spanish key, left under the i18n rule; Jess to say). tools/pack_itch.js packs all of assets/fonts, so unused fonts, including the full 3.7 MB Silver.ttf, still ship in that build; exclude them when publishing.
 - MOVE TUNING (Jess, 2026-11-03 playtest): "some moves are definitely in need of a tune". List not named yet; check each against docs/MOVE-INTENT.md, then a no-code plan.
 - ITEM BATCH 1, STEPS 4 TO 6, PARKED (Jess, 2026-11-03): 12 ground and 10 Pokemon items, approved and unbuilt, Dowsing Machine at +0.5. He is happy with the item count; start only if he reopens it. Detail: docs/proposals/item-rework-v2-handoff.md.
@@ -102,6 +104,8 @@ live queue, cross-reference the issue number.
 - Gym follow-ups (feature/gym-roster, 2026-11-01): (a) DONE 2026-11-01: riders onto the player (ailments, drops, flinch, crits, leader raise and drain heal, opportunity factor; COMBAT-RULES). Surge's real Electric sets DONE 2026-11-01 (Thunder Shock on every Electric mon, Thunderbolt on the ace below 50% HP). (b) DONE 2026-11-01: novas have their own form (Dazzling Gleam lands). Also built: chain moves castable (hops search the caster's foes, so co-op players can take a hop later), strike (Thunderbolt) and homing shots. (c) DONE 2026-11-01: utility move picker (freshness x fit, docs/BOSS-AUTHORING.md THE PICK); the starvation sets now cast every move. Still open: a second, shorter melee cone rarely lands (reach decides the candidates); movement scoring is Gym AI Tier 2. (e) DONE 2026-11-01 (shot reach from flight, docs/BOSS-AUTHORING.md REACH): Psychic cast by a leader never lands (headless 2026-11-01, 2 casts 0 hits twice): it flies 80 px/s for 1.2 s with a 70 px wedge (about 166 px of reach) but its cast gate is the 420 px default range, and the far stance keeps 170 to 300 px. Fix options: a shot's reach from its travel (speed x lifetime + size) in G.Gyms.reachOf, or a range on Psychic's data. (d) WAITING on playtester feedback (Jess 2026-11-01: rosters are in, cards after playtests): tune gyms 2 to 8 (power, tempo, cards) after feel runs.
 
 ## Backlog
+- Pokebox nicknames in runs (3b-2 D7, Jess 2026-11-04): runs (HUD, banners, results) still show the species name; show the copy's nickname there later, through the same escaped, translate="no" path as the Team screen.
+- Pokebox search by nickname (3b-2 D8, 2026-11-04): the Team screen search matches species and moves, not nicknames yet.
 - Upgrade points catalog, wiring (opened 2026-11-02, branch fix/ui-upgrade): the B/W Upgrades popup over the Team screen shows the 19-upgrade catalog from docs/Economy Balance Ideas.md, display only (every rank 0, "0 / 40" points). Still to build: buying points with gold (the 40-point cost curve), spending them on ranks, applying the effects in runs, and saving them (new save fields, null-checked). The old G.Upgrades shop is deprecated (Jess, 2026-11-02): it can no longer be bought from, levels already bought still apply in runs until the new system replaces them. Its Veto picker (becomes Card Banish) and the per-Pokemon move shortcut slots (save.pbind) lost their screen with it; give shortcuts a new home or drop them.
 - Deferred hook (cloud/MP phase): co-op does not sync the Fly state (flyT, flyCd) or the flying lift; a remote flyer would still collide and be hit on other machines. (2026-11-02)
 - Accuracy and evasion stage trackers (Jess, 2026-11-01, Kanto import rulings set 1): add accuracy and evasion to the stage tracker model with the mainline hit chance 3/(3+n); needed before Double Team, Minimize, Sand-Attack, Smokescreen, Lock-On, Foresight and the Mud-Slap / Mirror Shot / Hone Claws riders can import. Rule: COMBAT-RULES "Stat stages"; per move: MOVE-INTENT. Game code: plan first.
@@ -164,7 +168,8 @@ live queue, cross-reference the issue number.
 - Spikes on an owner faint (slice 4d decision B, 2026-10-30): a Spikes mine has no ownerDeath end, so it outlives a fainted owner. Harmless in single player (a faint ends the run); decide in the MP phase whether a downed co-op player's mines stay.
 - Co-op levelStart (game.js) has no empty-offer guard (solo maybeLevelUp does since 2026-10-18); add it when MP resumes.
 - Pokebox and cloud saves (2026-11-03): merge() in js/core/db.js must union save.box by UUID (today the newer box wins, so rolled values could change), and a pre-box cloud save skips the local clean save checkpoint (keeps its progress, gets freshly rolled copies). Decide both when the cloud phase starts. Detail: docs/proposals/pokebox-plan.md.
-- Co-op pickup radii (2026-11-03): the net state sends only Player.magnet (the XP radius). Player.itemMagnet is not synced, so a remote player's Magnet shrine x4 does not reach other machines for non-XP pickups. Add it to the snapshot when MP resumes.
+- Pokebox nicknames and cloud saves (3b-2 E2, 2026-11-04): nicknames are cleaned on the client (G.Copies.cleanNickname, on typing and on every load). If saves or nicknames ever reach a server or other players, clean them there too, since a client can be bypassed.
+
 - Firebase layer (auth, Firestore, RTDB, cloud saves)
 - Cloudflare TURN worker
 - Multiplayer / co-op / networking (js/net/: social, net, coop, ranking, signups)
