@@ -872,13 +872,13 @@ G.MenuUI = (() => {
   const escHtml = (s) =>
     String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   /** A copy's name (its nickname, else the species) with its gender symbol at the end. */
-  function rosNameHtml(c, p, iconPx = 20) {
-    const icon = c && c.gender === 'male' ? 'genderMale' : c && c.gender === 'female' ? 'genderFemale' : '';
+  function rosNameHtml(c, p) {
+    const sym = c && c.gender === 'male' ? '♂' : c && c.gender === 'female' ? '♀' : '';
     const name =
       c && c.nickname
         ? `<span class="nm" translate="no">${escHtml(c.nickname)}</span>`
         : `<span class="nm">${p.name}</span>`;
-    return `<b class="ros-nm">${name}${icon ? `<span class="ros-gender" title="${c.gender === 'male' ? 'Male' : 'Female'}">${G.Icons.html(icon, iconPx)}</span>` : ''}</b>`;
+    return `<b class="ros-nm">${name}${sym ? `<span class="ros-gender ${c.gender}" title="${c.gender === 'male' ? 'Male' : 'Female'}">${sym}</span>` : ''}</b>`;
   }
   const rosDirty = () => teamKey(ros.team) !== teamKey(G.DB.save.team);
 
@@ -1061,7 +1061,7 @@ G.MenuUI = (() => {
     else if (c.isShiny)
       cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Shiny">${G.Icons.html('shiny', 12)}</span>`);
     cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, shadow: true, shiny: c.isShiny }));
-    cell.insertAdjacentHTML('beforeend', rosNameHtml(c, p, 10) + G.UI.stars(p.rarity, 9));
+    cell.insertAdjacentHTML('beforeend', rosNameHtml(c, p) + G.UI.stars(p.rarity, 9));
   }
 
   /** The open box, in the order the filters and sort give its species. */
@@ -1287,7 +1287,7 @@ G.MenuUI = (() => {
     const copy = ros.uid ? G.Copies.get(s, ros.uid) : null;
     ros.shiny = !!(copy && copy.isShiny);
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p, 10) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    const head = `<div class="ros-dh">${own ? rosNameHtml(copy, p) : '<b>???</b>'}<span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
     if (!own) {
       box.innerHTML =
         head +

@@ -7,7 +7,7 @@
    their line and keep line heights about the same. It has one weight, used for all of them. */
 @font-face {
   font-family: 'GameFont';
-  src: url('../assets/fonts/Silver.ttf') format('truetype');
+  src: url('../assets/fonts/Silver-game.ttf') format('truetype');
   font-weight: 100 900;
   font-display: block;
   size-adjust: 140%;

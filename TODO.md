@@ -60,6 +60,8 @@ live queue, cross-reference the issue number.
 - Balance pass: all branches DONE and merged (tune/damage closed 2026-10-19). Carry-overs are listed under 'Up next'. Tuning knobs: the tables at the end of js/data/enemies.js; numbers in BALANCE.md. Open logger gap: alive-by-class sample.
 
 ## Up next (local single-player)
+- POKEBOX (Jess, 2026-11-03): steps 1 and 2 built on feature/pokeboxes, step 3 next. Handoff: docs/proposals/pokebox-plan.md.
+- Font cleanup (2026-11-03): the old credit at dev.html:330 and its js/data/lang-en.js key still name Pixelify Sans (Spanish key, left under the i18n rule; Jess to say). tools/pack_itch.js packs all of assets/fonts, so unused fonts, including the full 3.7 MB Silver.ttf, still ship in that build; exclude them when publishing.
 - MOVE TUNING (Jess, 2026-11-03 playtest): "some moves are definitely in need of a tune". List not named yet; check each against docs/MOVE-INTENT.md, then a no-code plan.
 - ITEM BATCH 1, STEPS 4 TO 6, PARKED (Jess, 2026-11-03): 12 ground and 10 Pokemon items, approved and unbuilt, Dowsing Machine at +0.5. He is happy with the item count; start only if he reopens it. Detail: docs/proposals/item-rework-v2-handoff.md.
 - DODGE FOLLOW-UPS (built 2026-11-02): a touch button for mobile (last-pass mobile layout); the deferred Dodge Cooldown upgrade card and the planned Dash Distance stat (BUFF-TABLE, B = 2 ladder) now have Player.DODGE to scale. Co-op: dodge state is not sent over the net (deferred with the MP phase).

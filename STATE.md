@@ -1,24 +1,26 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-03 (Claude Code, home). feature/item-rework-v2 is merged to main. Current branch: feature/pokeboxes.
+Last updated: 2026-11-03, end of session (Claude Code, home). Branch: feature/pokeboxes, not merged to main.
 
 ## Where we are
-- ITEM REWORK V2 is DONE for now and feel-tested good. Jess is happy with the item count.
-- Shipped: one drop table (js/data/drops.js, docs/ITEMS.md); Oran and Sitrus replace the heal pickup; 9 new Pokemon items (45 total); pickup lines.
-- Playtest tune: pickup radius split (XP orbs 120 px plus the upgrade; everything else, coins included, fixed 78 px; magnet pickup and shrine hit both) and Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s). Numbers in BALANCE.md. Dropped items now draw their real sprite at 32.
-- PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
+- POKEBOX (unique Pokemon copies, then IVs, natures, EVs). Spec, rulings and the step 3 handoff: docs/proposals/pokebox-plan.md. Read it first for this work.
+- Steps 1 and 2 built, committed through 3beb78d, feel-tested by Jess: copies in save.box read only through G.Copies (js/systems/copies.js), a clean save checkpoint in place of migration, Team screen tabs (Pokedex, Box 1, Box 2), slots by copy UUID, repeats on a team, gender, Nature, Ability, Height, Weight rows, and the IV band on the hexagon.
+- Game font is Silver by Poppy Works, trimmed to js-used characters plus Latin (assets/fonts/Silver-game.ttf, 37 KB, tools/subset_silver.py), face GameFont in css/style.css. The B/W menus keep PokeBW and Korataki; Settings labels keep Monogram.
+- IVs, nature and ability show but do nothing in combat until step 4.
 
 ## Next
-1. POKEBOX (then IVs, natures, EVs): docs/proposals/pokebox-plan.md. Step 1 committed and feel-tested: copies in save.box through G.Copies, debug viewers, and a clean save checkpoint in place of migration. Step 2 committed: Team screen tabs and copies, duplicates on a team, gender, nature, ability, size and the IV hex. Game font is now Silver (uncommitted; 3.7 MB, subsetting undecided). Step 3 calls are settled in the plan; next: its no-code plan (new copies at the source, selling, buying boxes).
-2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
-3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
-4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).
+1. Pokebox step 3: no-code plan first (handoff in the plan). Its three priced rulings are settled; the [Open] list there still needs Jess.
+2. Step 4 (IVs and natures apply, first balance change), then step 5 (EVs).
+3. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Check each against docs/MOVE-INTENT.md, then a no-code plan.
+4. Run items second pass, then upgrade points (TODO.md "Upgrade points catalog").
 5. Gameplay queue: fields slice (Reflect), accuracy trackers (Smokescreen), gym loops, line of sight for cones.
+PARKED: item batch 1 steps 4 to 6 (docs/proposals/item-rework-v2-handoff.md). Do not start unless Jess reopens them.
 
 ## Watch
-- smoke-ui is flaky: 1 of 4 runs on 2026-11-03 failed with net::ERR_FAILED on assets/pokemon/7/Charge.png (the file exists); cause not found.
-- check.js reports 5 lint errors (warn-only), not traced.
+- smoke-ui is flaky: twice on 2026-11-03, once ERR_FAILED on assets/pokemon/7/Charge.png (the file exists), once a 30 s waitForFunction timeout. Both passed on rerun; cause not found.
+- check.js reports 5 lint errors (warn-only), not traced. Run npm run format before handing over.
+- At 1280 x 720 the Team detail pane shows about two rows of moves before scrolling.
 
 ## Open owner decisions
 - Run-only boss pool: how many distinct run items first (34 with the 9 drafted, 18 are Power Stones).
@@ -26,6 +28,6 @@ Last updated: 2026-11-03 (Claude Code, home). feature/item-rework-v2 is merged t
 - [Open] loop 2+: gym mons share stat raises. O4: badge boosts stacking. Psych Up, Baton Pass, Swagger, Psychic widening.
 
 ## Docs and code still differ (approved, not built)
-- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9), item batch 1 steps 4 to 6. Dodge: no touch button, not synced in co-op (TODO).
+- Pokebox steps 3 to 5. Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9), item batch 1 steps 4 to 6. Dodge: no touch button, not synced in co-op (TODO).
 
-Rules: CLAUDE.md. Run npm run format before handing over. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.
+Rules: CLAUDE.md. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.

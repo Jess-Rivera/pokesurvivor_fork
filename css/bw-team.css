@@ -225,7 +225,19 @@
 }
 .ros-gender {
   flex: none;
-  line-height: 0;
+}
+.ros-gender.male {
+  color: #7fbfff;
+}
+.ros-gender.female {
+  color: #ff9ec6;
+}
+/* Dark enough for the yellow header. */
+.ros-dh .ros-gender.male {
+  color: #0b4fa8;
+}
+.ros-dh .ros-gender.female {
+  color: #b5246a;
 }
 #ros-grid .cell .ros-nm {
   justify-content: center;
@@ -336,11 +348,14 @@
   text-shadow: none;
 }
 .ros-dh b {
-  font-size: 22px;
+  font-size: 20px;
 }
 .ros-dh span {
-  font-size: 14px;
+  font-size: 16px;
   white-space: nowrap;
+}
+.ros-dh .ros-nm span {
+  font-size: inherit;
 }
 .ros-db {
   flex: 1;
@@ -357,6 +372,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
+  font-size: 18px;
   background: rgba(0, 33, 57, 0.5);
 }
 .ros-row b {
@@ -368,6 +384,9 @@
 .ros-row .rtypes {
   display: flex;
   gap: 6px;
+}
+.ros-row .rtypes .type {
+  font-size: 14px;
 }
 .ros-box {
   position: relative;
@@ -395,7 +414,7 @@
 }
 .ros-mh {
   margin: 0 0 6px;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
 }
 .ros-moves {
@@ -410,7 +429,7 @@
   gap: 6px;
   min-width: 0;
   padding: 4px 8px;
-  font-size: 14px;
+  font-size: 16px;
   background: rgba(0, 0, 0, 0.25);
 }
 .ros-mv span {

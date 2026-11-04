@@ -252,16 +252,6 @@ G.Icons = (() => {
         '...kkkkkkk..',
       ],
     },
-    genderMale: {
-      outline: true,
-      pal: { b: '#6fb6ff' },
-      rows: ['....bbbb', '......bb', '.bbb.b.b', 'b...b..b', 'b...b...', 'b...b...', '.bbb....', '........'],
-    },
-    genderFemale: {
-      outline: true,
-      pal: { p: '#ff8fc0' },
-      rows: ['..ppp...', '.p...p..', '.p...p..', '.p...p..', '..ppp...', '...p....', '.ppppp..', '...p....'],
-    },
     magnet: {
       pal: { r: '#ff5f6d', s: '#c23a4b', w: '#e8e8f0' },
       rows: [

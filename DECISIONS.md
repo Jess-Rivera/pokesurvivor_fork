@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-03, Game font is Silver; Pokebox step 3 prices (Jess)
+The main game font is Silver by Poppy Works (CC BY 4.0), replacing Pixelify Sans, with its gender symbols used on the Team screen. The B/W menus keep their fonts. Boxes 3 to 5 cost 10,000, 25,000, 60,000. A pull with too little space warns, then auto-sells what does not fit at the old repeat refund.
+Canonical: docs/proposals/pokebox-plan.md "Rulings for step 3"; CREDITS.md "Font"
+
 ## 2026-11-03, Pokebox is a clean save checkpoint (Jess)
 Only playtesters have saves and this is a huge change, so saves from before the box are not migrated. A one-off owner exception to CLAUDE.md "Save-data migration safety", which still applies to everything else. The old save stays in the browser as a backup, and a notice tells the player.
 Canonical: docs/proposals/pokebox-plan.md "Rulings"

@@ -516,3 +516,11 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - 2026-11-03 game font is now Monogram (MonogramUI face in css/style.css with size-adjust 150%, its middle dot from the fallback font). PokeBW and Korataki screens unchanged. Pixelify faces removed, files kept. Open: the old credit string at dev.html:330 and its lang-en key still name Pixelify.
 
 - 2026-11-03 game font changed again, to Silver by Poppy Works (CC BY 4.0, GameFont face in css/style.css, size-adjust 140%). Box prices approved. Open: Silver.ttf is 3.7 MB and the game waits for it at boot.
+
+- 2026-11-03 Team detail pane text up 2 px (hex numbers too, name 20 px after fixing a style that had shrunk it to 14 px), gender is now the font symbol, colored, and the icons are gone.
+
+## 2026-11-03, Session close: Silver trimmed, Pokebox handoff (Claude Code, home, feature/pokeboxes)
+- Built: tools/subset_silver.py and assets/fonts/Silver-game.ttf, 3656 KB down to 37 KB, 419 characters. The game loads it; Silver.ttf stays as the source.
+- Decided (Jess): trim the font, box prices 10,000, 25,000, 60,000, the full box warning and auto-sell, sell price at the old repeat refund.
+- Found: the full font's 3.7 MB was the only large cost of the swap. 18 renders of game text matched the full font pixel for pixel.
+- Verified: check.js, format, smoke-ui, file:// probes. Stopped at the step 3 no-code plan, not started. The feature branch is not merged to main.

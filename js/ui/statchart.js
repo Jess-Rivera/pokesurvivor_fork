@@ -141,9 +141,9 @@ G.StatChart = (() => {
       const lx = al === 'left' ? x - 10 : al === 'right' ? x + 10 : x;
       ctx.textAlign = al;
       const big = !!opts.teamHex,
-        valFont = big ? `800 18px ${FONT}` : `800 14px ${FONT}`,
-        smallFont = big ? `700 13px ${FONT}` : `700 11px ${FONT}`,
-        dy = big ? 16 : 12;
+        valFont = big ? `800 20px ${FONT}` : `800 14px ${FONT}`,
+        smallFont = big ? `700 15px ${FONT}` : `700 11px ${FONT}`,
+        dy = big ? 18 : 12;
       ctx.font = smallFont;
       ctx.fillStyle = '#b9cbf0';
       ctx.fillText(label, lx, y - 2);

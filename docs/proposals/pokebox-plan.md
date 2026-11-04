@@ -1,12 +1,12 @@
 # Pokebox and unique Pokemon copies (plan, 2026-11-03)
 
-Source: Jess's field list in docs/ASCII Concept Maps/pokemon-unique-copy.txt. Nothing here is built. Tags follow CLAUDE.md "Requirement tags".
+Source: Jess's field list in docs/ASCII Concept Maps/pokemon-unique-copy.txt. Steps 1 and 2 are built; "Build order" has the status and "Step 3 handoff" is where to pick up. Tags follow CLAUDE.md "Requirement tags".
 
 ## Why
 IVs, natures, gender and EVs belong to one copy of a Pokemon, not to a species, so the box comes first and IVs and EVs build on it.
 
 ## Rulings (Jess, 2026-11-03)
-- [Approved] The player can own many copies of a species, shinies included, and can field the same species more than once on a team. Code differs: normalizeTeam in js/core/db.js removes repeats.
+- [Approved] The player can own many copies of a species, shinies included, and can field the same species more than once on a team. Fielding is built; more than one copy needs G.Debug.addCopy until step 3.
 - [Approved] A gacha pull always gives a copy. Selling happens from the box, or from the gacha results screen. Code differs: repeats pay coins and a repeat shiny re-rolls (js/systems/gacha.js).
 - [Approved] Natures affect stats (mainline +10% and -10%). Code differs: not in G.Stats.
 - [Approved] Gender is mainly for fun, with no combat effect.
@@ -20,7 +20,7 @@ IVs, natures, gender and EVs belong to one copy of a Pokemon, not to a species, 
 - [Approved] Ability roll: 5% hidden, the rest split evenly between normal abilities.
 - [Approved] startingMove is an override for a future feature: empty on every copy, and nothing can change it for now.
 - [Approved] Stat order is the pokeapi and game order everywhere: HP, Atk, Def, SpA, SpD, Spe.
-- [Approved] Values with no effect yet exist in the data and can be viewed with a debug command. Players do not see them yet.
+- [Approved] Values no screen shows yet exist in the data and can be viewed with a debug command (G.Debug.copy).
 
 ## The copy
 Rolled means set once when the copy is created. Default means left out of the save until it differs.
@@ -31,23 +31,23 @@ Rolled means set once when the copy is created. Default means left out of the sa
 | speciesID | Dex number | From the source | | Everything |
 | form | Enum | From the source | base | None until regional forms (#9) |
 | originalTrainerID | UUID | The save's trainer id | This save's id | None until trading |
-| nickname | Text | Player | Empty, shows the species name | Box |
-| dateObtained | Timestamp | Created | | Box |
-| obtainedMethod | Enum: starter, gacha, wild, rescue, debug | From the source | | Box |
-| nature | pokeapi id 1 to 25 | Rolled evenly | | Stats, from the stats step |
-| iv | 6 integers, 0 to 31 | Rolled evenly | | Stats, from the stats step |
-| gender | Enum: male, female, none | Rolled from the species' real ratio | | Display only |
-| heightScale | Integer, 0 to 255 | Rolled, see below | | Debug view until decided |
-| weightScale | Integer, 0 to 255 | Rolled, see below | | Debug view until decided |
-| abilitySlot | 1, 2 or 3 (hidden) | Rolled, see below | | None until abilities exist |
+| nickname | Text, 12 characters | Nothing sets it yet | Empty, shows the species name | Team screen |
+| dateObtained | Timestamp | Created | | Debug view |
+| obtainedMethod | Enum: starter, gacha, wild, rescue, debug, other | From the source | | Debug view |
+| nature | pokeapi id 1 to 25 | Rolled evenly | | Team screen; stats from step 4 |
+| iv | 6 integers, 0 to 31 | Rolled evenly | | Team screen; stats from step 4 |
+| gender | Enum: male, female, none | Rolled from the species' real ratio | | Team screen, display only |
+| heightScale | Integer, 0 to 255 | Rolled, see below | | Team screen |
+| weightScale | Integer, 0 to 255 | Rolled, see below | | Team screen |
+| abilitySlot | 1, 2 or 3 (hidden) | Rolled, see below | | Team screen, no effect until abilities exist |
 | isShiny | Boolean | From the source | false | Sprites |
 | ev | 6 integers, 252 each, 510 total | Earned | All 0 | Stats, from the EV step |
 | friendship | Integer, 0 to 255 | Future feature | The species' base_happiness | None |
 | startingMove | Move id | Future override | Empty, uses G.startMoveOf | Move setup |
 | upgrades | Map of upgrade id to rank | Upgrade catalog | Empty | None until the catalog is wired |
 | box | Box number, from the first | First box with room, or player | First box | Box tabs |
-| isFavorite | Boolean | Player | false | Box sort and filter |
-| isLocked | Boolean | Player | false | Blocks selling |
+| isFavorite | Boolean | Nothing sets it yet | false | None yet |
+| isLocked | Boolean | Nothing sets it yet | false | Will block selling (step 3) |
 
 [Approved] Changes from the concept list: personalityValue is removed. `ability` becomes `abilitySlot`, and the ability's name comes from species data, so a data fix cannot leave a copy with a wrong ability. `upgradesPicked` becomes `upgrades`, a map, since the catalog has ranks I to V.
 
@@ -119,23 +119,51 @@ The Snorlax above, 190 bytes:
 |---|---|---|---|
 | Written out in full | 304 bytes | 148 KB | 742 KB |
 | Short names, full values | 171 bytes | 84 KB | 417 KB |
-| Compact (proposed) | 108 bytes | 53 KB | 264 KB |
+| Compact (built) | 108 bytes | 53 KB | 264 KB |
 | Compact, no key names | 67 bytes | 33 KB | 164 KB |
 
 No key names is smallest, but the position of every value becomes permanent, which makes adding fields riskier. Compact keeps named fields, and a new field is simply absent from old saves.
 
 ## Build order (branch feature/pokeboxes)
-1. BUILT, awaiting feel-test. Copies, and a clean save checkpoint instead of migrating old saves. Keep `owned` as the Pokedex record. Team slots keep dex and shiny and gain the UUID. Debug viewers: G.Debug.copies, G.Debug.copy. Until step 3, G.Copies.fill turns new `owned` and `shiny` entries into copies; step 3 creates copies at the source and removes fill, or a sold copy would come back.
-2. BUILT, awaiting feel-test. Box screen: the tab row on the Team screen (Pokedex, Box 1, Box 2, and so on), choosing a specific copy for a team slot, repeats allowed on a team, the display rulings above. Adds a `box` field to a copy (which box it sits in, default the first) and a box count to the save (2 at the start).
-3. New copies from gacha, rescues, wild shinies and starters; selling; buying boxes.
+1. BUILT, committed, feel-tested. Copies, and a clean save checkpoint instead of migrating old saves. Keep `owned` as the Pokedex record. Team slots keep dex and shiny and gain the UUID. Debug viewers: G.Debug.copies, G.Debug.copy. Until step 3, G.Copies.fill turns new `owned` and `shiny` entries into copies; step 3 creates copies at the source and removes fill, or a sold copy would come back.
+2. BUILT, committed, feel-tested. Box screen: the tab row on the Team screen (Pokedex, Box 1, Box 2, and so on), choosing a specific copy for a team slot, repeats allowed on a team, the display rulings above. Adds a `box` field to a copy (which box it sits in, default the first) and a box count to the save (2 at the start).
+3. NEXT. New copies from gacha, rescues, wild shinies and starters; selling; buying boxes. See "Step 3 handoff".
 4. Stats: IVs and natures apply. First step that changes balance.
 5. EVs (docs/SPEED-IVEV-SLICE.md numbers need redoing with the 0.7x to 1.3x speed bounds).
 
-## Open
+## Step 3 handoff (start here)
+Give Jess a no-code plan first and wait for his OK (CLAUDE.md "Edit boundary"). Then build, test, and hand over for a feel-test.
+
+Scope:
+- Copies at the source: js/systems/gacha.js pull() (a pull always makes a copy; drop the repeat refund and the repeat-shiny re-roll), js/game.js G.onRescue and G.onShinyCaught, js/ui/test.js starter, js/core/debug.js. Use G.Copies.add. Keep writing `owned` and `shiny`, since they are the Pokedex record.
+- Remove G.Copies.fill and its call in normalizeTeam, or a sold copy comes back. Every source must create its copy first. The harness sections on fill move to the new path.
+- Selling: from the box, and from the gacha results screen, at the sell price below. A sold copy leaves save.box. Add a G.Copies sell function, and test it against team slots.
+- Full boxes: the warning and auto-sell below. G.Copies.add currently overflows into the last box; a pull must sell the overflow instead.
+- Buying boxes 3 to 5 at the prices below, raising save.boxCount (2 to 5).
+- The gacha results UI (js/ui/gacha-ui.js) reads `isNew` and `refund`; check it against the new results.
+
+Still [Open] for the plan, recommend an answer for each:
+- [Open] Where a box is bought: the Shop, or a "+" at the end of the tab row.
+- [Open] Can the last copy of a species be sold? Copies on the team and locked copies should not be.
+- [Open] A rescue of a species you own pays +150 coins today, and a repeat wild shiny +300: do these become copies?
+- [Open] Does step 3 add the favorite and lock buttons, nicknames and bulk sell, or only what selling needs?
+
+Where things are:
+- Compact form and rolls: js/systems/copies.js. Species data: js/data/species-traits.js, generated by tools/species_traits.js, kept current by check.js.
+- Team screen: js/ui/menu.js (rosRenderTabs, rosRenderBox, fillCopyCell, rosAssign, rosPlace, rosRenderDetail). Styles: css/bw-team.css. Hexagon: js/ui/statchart.js opts.teamHex and opts.iv.
+- Debug: G.Debug.copies(dex), G.Debug.copy(id), G.Debug.addCopy(dex, n, shiny).
+- Harness: docs/proposals/pokebox-copies-harness.js, in check.js. Also run tools/smoke-ui.js and a file:// headless run. Skip tools/smoke-newcombat.js.
+
+Traps found so far: run npm run format last and read check.js's format line, it only warns. Edit scripts with non-ASCII text or regexes go in a file, not a heredoc. Prettier reflows CSS and data files, so match current text.
+
+## Rulings for step 3
 - [Approved] Price of boxes 3, 4 and 5 (Jess, 2026-11-03): 10,000, 25,000, 60,000, in line with the team item slots (9,000, 23,000, 60,000). Run length for reference: early runs average 7 to 15 minutes, a full run (8 gyms and the Elite Four) about an hour.
 - [Approved] Full boxes on a pull (Jess, 2026-11-03): the pull is not blocked. When the free space is less than the pull's size, warn: "You don't have enough space. Any pokemon pulled that can't be placed in a slot will be automatically sold." Whatever does not fit is sold at the sell price.
 - [Approved] Sell price (Jess, 2026-11-03): the current repeat refund by rarity, 15, 30, 60, 120, 300, x3 for a shiny. Today a first copy pays nothing, so selling it is new income, about one sale per species at most.
-- [Open] EV spending, earning, fill rate and Speed: see the IV and EV plan questions, to settle at step 5.
+
+## Open for later steps
+- [Open] EV spending, earning, fill rate and Speed, to settle at step 5. Recommendations made to Jess: kills earn points by real yield and the player spends them on the Team screen with free refunds; only the Pokemon on the field earns, banked at run end, dead or not; a single tuning number aiming for about 8 to 10 full runs to reach 510; keep the plain Speed curve and show the real px/s gain, since at the 0.7x to 1.3x bounds fast species gain nothing from Speed investment.
+- [Open] A tooltip or in-game doc for natures and IVs. Accurate wording: at level 100, each IV adds 1 to the stat and each base point adds 2.
 
 ## Deferred hooks (cloud and multiplayer phase)
 Cloud save merge must union copies by UUID: until it does, merging two versions keeps only the newer box. The clean save checkpoint runs on local saves only: a pre-box cloud save would keep its progress and get freshly rolled copies, so decide what it should do when the cloud phase starts. Co-op reads species only. A Firestore document is limited to 1 MB, so check the save size against it if saves move to the cloud.

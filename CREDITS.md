@@ -132,9 +132,10 @@ downloaded once and stored in `js/data/pokedex.js`.
 ## Font
 
 Silver by Poppy Works (Creative Commons Attribution 4.0 International, CC BY 4.0),
-the main game font since 2026-11-03. Free for personal and commercial use with
-attribution. If this production's budget passes 100,000 USD in total spend or
-earnings, contact hello@poppy.works to license it.
+the main game font since 2026-11-03. The game loads a version trimmed to fewer
+characters (`assets/fonts/Silver-game.ttf`, `tools/subset_silver.py`). Free for
+personal and commercial use with attribution. If this production's budget passes
+100,000 USD in total spend or earnings, contact hello@poppy.works to license it.
 
 [Monogram](https://menez.io/) by Vinicius Menezio (Creative Commons Zero v1.0
 Universal, as stated in the font file), the Settings screen labels.
