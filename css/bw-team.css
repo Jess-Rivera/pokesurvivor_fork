@@ -278,6 +278,26 @@
   border-color: var(--gold);
   background: rgba(255, 210, 63, 0.3);
 }
+/* A box not bought yet: coin icon and price. Only the next box is bright; the rest are dimmed. */
+.ros-tab.ros-buy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold);
+}
+.ros-tab.ros-buy .coin {
+  width: 14px;
+  height: 14px;
+  vertical-align: 0;
+}
+.ros-tab.ros-buy.dim {
+  opacity: 0.45;
+  cursor: default;
+}
+.ros-tab.ros-buy.dim:hover,
+.ros-tab.ros-buy.dim:focus-visible {
+  border-color: rgba(244, 248, 255, 0.35);
+}
 .ros-slot.empty .rinfo b {
   color: var(--muted);
   font-weight: 400;

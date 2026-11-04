@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-04',
+    title: ['Buy more boxes', 'Buy more boxes'],
+    new: [
+      [
+        'You can buy Box 3, 4 and 5 from the price tabs at the end of the box tabs on the Team screen, for 10,000, 25,000 and 60,000 PokéCoins, in order.',
+        'You can buy Box 3, 4 and 5 from the price tabs at the end of the box tabs on the Team screen, for 10,000, 25,000 and 60,000 PokéCoins, in order.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-03',
     title: ['A new game font', 'A new game font'],
     chg: [

@@ -1040,7 +1040,67 @@ G.MenuUI = (() => {
     tab('Pokédex', 'dex', 'Every species. Pick a copy from a box to put it on your team.');
     for (let i = 0; i < G.Copies.boxCount(s); i++)
       tab(`Box ${i + 1}`, i, `${G.Copies.inBox(s, i)} / ${G.Copies.BOX_SIZE} Pokémon`);
+    // Boxes not bought yet: one price tab each. Only the next one is buyable; no drag and drop on these.
+    const have = G.Copies.boxCount(s);
+    for (let n = have + 1; n <= G.Copies.BOX_MAX; n++) {
+      const price = G.Copies.boxPrice(n),
+        next = n === have + 1,
+        live = next && s.coins >= price,
+        b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ros-tab ros-buy' + (live ? '' : ' dim');
+      if (live) b.dataset.sfx = 'click';
+      b.innerHTML = `<span class="coin"></span> ${rosCoins(price)}`;
+      b.title = !next
+        ? `Buy Box ${n - 1} first`
+        : live
+          ? `Buy Box ${n} for ${rosCoins(price)} PokéCoins`
+          : `Box ${n} costs ${rosCoins(price)} PokéCoins. You have ${rosCoins(s.coins || 0)}.`;
+      b.onclick = () => rosBuyBox(n);
+      box.appendChild(b);
+    }
     $('ros-own').style.display = ros.tab === 'dex' ? '' : 'none';
+  }
+
+  function rosCoins(v) {
+    return Math.floor(v).toLocaleString('en-US');
+  }
+
+  /** Buy box n from its price tab. Storage, like a box move: it saves at once, and pending team edits stay pending. */
+  async function rosBuyBox(n) {
+    const s = G.DB.save,
+      have = G.Copies.boxCount(s),
+      price = G.Copies.boxPrice(n);
+    if (n !== have + 1) {
+      G.Audio.sfx('error');
+      G.UI.toast(`Buy Box ${have + 1} first`);
+      return;
+    }
+    if (!(s.coins >= price)) {
+      G.Audio.sfx('error');
+      G.UI.toast('Not enough PokéCoins');
+      return;
+    }
+    const yes = await G.UI.ask(`Spend ${rosCoins(price)} PokéCoins on Box ${n}?`, {
+      title: 'Buy box',
+      ok: 'Buy',
+      note: `You have ${rosCoins(s.coins)}. You will have ${rosCoins(s.coins - price)} left.`,
+    });
+    if (!yes) return;
+    const r = G.Copies.buyBox(s);
+    if (!r.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You have every box');
+      rosRenderTabs();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    G.UI.toast(`Box ${r.boxes} unlocked!`);
+    ros.tab = r.boxes - 1;
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
   }
 
   /** One copy's cell in a box: number, team badge or shiny mark, sprite, name with gender, rarity. */

@@ -524,3 +524,9 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): trim the font, box prices 10,000, 25,000, 60,000, the full box warning and auto-sell, sell price at the old repeat refund.
 - Found: the full font's 3.7 MB was the only large cost of the swap. 18 renders of game text matched the full font pixel for pixel.
 - Verified: check.js, format, smoke-ui, file:// probes. Stopped at the step 3 no-code plan, not started. The feature branch is not merged to main.
+
+## 2026-11-04, Pokebox 3a-1: buying boxes (Quick, work, feature/pokeboxes)
+- Decided (Jess): step 3 in microsteps (3a copies, selling, boxes; 3b lock, favorite, nicknames, bulk sell). Boxes are bought on the Team screen from coin price tabs, in order, no Shop panel (D1 to D7 in the 3a-1 map).
+- Built: G.Copies.boxPrice and buyBox (js/systems/copies.js), price tabs and rosBuyBox (js/ui/menu.js), .ros-buy styles (css/bw-team.css), harness section 11, docs/proposals/pokebox-copies-mutate.js (6 mutations), changelog entry.
+- Not verified here: this machine's sandbox cannot run node, so check.js, the mutation runner, smoke-ui and the file:// probe are for Jess to run. changelog.js bracket and quote balance checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-1. Next: 3a-2, copies at the source and removing fill.

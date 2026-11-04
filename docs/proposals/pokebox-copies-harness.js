@@ -1,6 +1,7 @@
-// Pokebox step 1 offline checks (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
+// Pokebox offline checks, steps 1 to 3a-1 (Node only). Usage from the repo root:  node docs/proposals/pokebox-copies-harness.js .
 // Real js/systems/copies.js, js/data/species-traits.js and js/core/db.js with a fake localStorage. Expected values are hand-derived from
 // docs/proposals/pokebox-plan.md and pokeapi (Snorlax 2.1 m, 460 kg, Immunity / Thick Fat / Gluttony, 12.5% female), not read back from code output.
+// PB_COPIES=<file> runs it against another copies.js (docs/proposals/pokebox-copies-mutate.js uses this).
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const load = p => vm.runInThisContext(fs.readFileSync(R + '/' + p, 'utf8'), { filename: p });
@@ -10,7 +11,8 @@ global.localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setI
 global.location = { protocol: 'file:', hostname: '', search: '', href: 'file:///dev.html' };
 global.G = { U: {}, Items: null };
 load('js/data/species-traits.js');
-load('js/systems/copies.js');
+if (process.env.PB_COPIES) vm.runInThisContext(fs.readFileSync(process.env.PB_COPIES, 'utf8'), { filename: 'copies.js' });
+else load('js/systems/copies.js');
 const C = G.Copies, T = G.SpeciesTraits;
 G.DEX_BY = {}; for (const d in T.SPECIES) G.DEX_BY[d] = { dex: +d };
 let fail = 0; const bad = m => { fail++; if (fail < 40) console.log('FAIL', m); };
@@ -179,6 +181,34 @@ const rate = (dex, read) => { const c = {}; for (let i = 0; i < N; i++) { const 
     t.partner = 7; t.team = [slot(2), slot(0), null, null, null, null]; D2.normalizeTeam(t);
     if (t.team[0].uid !== ids[2] || t.team[1].uid !== ids[0]) bad('the chosen copy stays the lead ' + JSON.stringify(t.team));
     console.log('10 teams: the same species many times, never one copy twice, the lead keeps its copy'); }
+
+  // 11. buying boxes (step 3a-1). Prices from pokebox-plan "Rulings for step 3": Box 3 10,000, Box 4 25,000, Box 5 60,000, in order.
+  { if (C.boxPrice(3) !== 10000 || C.boxPrice(4) !== 25000 || C.boxPrice(5) !== 60000) bad('box prices ' + [3, 4, 5].map(C.boxPrice));
+    if (C.boxPrice(1) !== null || C.boxPrice(2) !== null || C.boxPrice(6) !== null) bad('boxes 1, 2 and 6 are never sold');
+    const s = { coins: 95000, boxCount: 2, box: [] };
+    const want = (r, ok, boxes, coins, count, why) => {
+      if (!!r.ok !== ok || (ok ? r.boxes !== boxes : r.error !== boxes) || s.coins !== coins || s.boxCount !== count) bad(why + ' ' + JSON.stringify(r) + ' coins ' + s.coins + ' boxCount ' + s.boxCount);
+    };
+    want(C.buyBox(s), true, 3, 85000, 3, 'Box 3 takes 10,000');
+    want(C.buyBox(s), true, 4, 60000, 4, 'Box 4 takes 25,000');
+    want(C.buyBox(s), true, 5, 0, 5, 'Box 5 takes 60,000');
+    want(C.buyBox(s), false, 'max', 0, 5, 'no sixth box');
+    s.coins = 1000000; want(C.buyBox(s), false, 'max', 1000000, 5, 'no sixth box, even when rich');
+    const p = { coins: 9999, boxCount: 2, box: [] }, before = JSON.stringify(p), r = C.buyBox(p);
+    if (r.ok || r.error !== 'poor' || JSON.stringify(p) !== before) bad('9,999 cannot buy Box 3 and nothing changes ' + JSON.stringify([r, p]));
+    const q = { coins: 24999, boxCount: 3, box: [] }, r4 = C.buyBox(q);
+    if (r4.ok || r4.error !== 'poor' || q.coins !== 24999 || q.boxCount !== 3) bad('24,999 cannot buy Box 4 ' + JSON.stringify([r4, q]));
+    const z = { boxCount: 2, box: [] }, rz = C.buyBox(z);
+    if (rz.ok || z.boxCount !== 2) bad('a save with no coins field buys nothing ' + JSON.stringify([rz, z]));
+    const e = { coins: 10000, boxCount: 2, box: [] }, re = C.buyBox(e);
+    if (!re.ok || e.coins !== 0 || e.boxCount !== 3) bad('exactly 10,000 buys Box 3 ' + JSON.stringify([re, e]));
+    // A bought box is used: with Box 1 and 2 full, the next copy lands in Box 3, and clean keeps the bought count.
+    const f = { coins: 10000, boxCount: 2, box: [], owned: {}, shiny: {}, team: [null, null, null, null, null, null] };
+    for (let i = 0; i < 1000; i++) C.add(f, { dex: 143, from: 'debug' }, rnd);
+    C.buyBox(f);
+    if (C.read(C.add(f, { dex: 143, from: 'debug' }, rnd), f).box !== 2 || C.inBox(f, 2) !== 1) bad('copy 1001 goes to the bought Box 3');
+    C.clean(f); if (f.boxCount !== 3 || f.box.length !== 1001) bad('clean keeps 3 boxes and every copy ' + f.boxCount + ' ' + f.box.length);
+    console.log('11 buying boxes: 10,000 / 25,000 / 60,000 in order, never a sixth, short coins change nothing, Box 3 is used'); }
   console.log(fail ? fail + ' FAILED' : 'pokebox-copies harness: all passed');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAIL', e && e.stack); process.exit(1); });

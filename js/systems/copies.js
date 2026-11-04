@@ -21,6 +21,7 @@ G.Copies = (() => {
     BOX_SIZE = 500,
     BOX_START = 2,
     BOX_MAX = 5;
+  const BOX_PRICES = { 3: 10000, 4: 25000, 5: 60000 }; // pokebox-plan "Rulings for step 3", bought in order
   const HIDDEN_CHANCE = 0.05;
   const IV_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // position = the IV, so a saved IV can never pass 31
   const GENDERS = ['male', 'female', 'none'];
@@ -163,6 +164,23 @@ G.Copies = (() => {
   const boxCount = (save) => Math.max(BOX_START, Math.min(BOX_MAX, Math.floor(+save.boxCount) || BOX_START));
   const inBox = (save, box) => (save.box || []).filter((c) => (c.b || 0) === box).length;
 
+  /** PokeCoins for box number n (counted from 1), or null for a box that is never sold (1, 2, past the max). */
+  const boxPrice = (n) => BOX_PRICES[n] || null;
+
+  /**
+   * Buys the next box, in order (3, then 4, then 5).
+   * @returns { ok: true, boxes, price } | { ok: false, error: 'max' | 'poor' }
+   */
+  function buyBox(save) {
+    const n = boxCount(save);
+    if (n >= BOX_MAX) return { ok: false, error: 'max' };
+    const price = boxPrice(n + 1);
+    if (!(save.coins >= price)) return { ok: false, error: 'poor' };
+    save.coins -= price;
+    save.boxCount = n + 1;
+    return { ok: true, boxes: n + 1, price };
+  }
+
   /** The first box with room. With every box full it is the last one, until step 3 decides what a full box does. */
   function freeBox(save) {
     const n = boxCount(save);
@@ -301,6 +319,8 @@ G.Copies = (() => {
     move,
     boxCount,
     inBox,
+    boxPrice,
+    buyBox,
     fill,
     linkTeam,
     clean,
