@@ -10,7 +10,9 @@
  * (level cancels), soft-saturated by g(r) toward asymmetric bounds, * BASE_PX px/s.
  * See docs/stat-model-design-notes.md, BALANCE.md, DECISIONS.md.
  *
- * IV/EV are in the formula but fixed at 0 for now (deferred; own storage later).
+ * IVs, EVs and the nature come from the copy of a Pokemon on the team (pokebox steps 4 and 5): G.Copies.profileOf builds a
+ * profile(), G.Player carries it as statProf. Enemies pass none and play neutral (0 IV, 0 EV, no nature).
+ * Nature: x1.1 raised, x0.9 lowered, on the final stat, rounded down in whole numbers like the games. HP never.
  */
 G.Stats = (() => {
   // ---- tunables (see BALANCE.md) ----
@@ -22,10 +24,36 @@ G.Stats = (() => {
     MOVE_MIN = 0.7; // movement transfer: slope + asymptotes
   const XP_SCALAR = 0.035; // turn-based -> survivor XP scalar (the one XP knob; tune by feel)
 
+  // ---- per-copy stat profile (pokebox step 4) ----
+  // iv: six IVs, nat: six nature multipliers, ev: six EVs (pokebox step 5), all in stat order (HP, Atk, Def, SpA, SpD, Spe).
+  // HP's nature is always 1.
+  const NEUTRAL_PROFILE = Object.freeze({
+    iv: Object.freeze([0, 0, 0, 0, 0, 0]),
+    nat: Object.freeze([1, 1, 1, 1, 1, 1]),
+    ev: Object.freeze([0, 0, 0, 0, 0, 0]),
+  });
+  const clampInt = (v, max) => Math.min(max, Math.max(0, Math.floor(+v) || 0));
+  /** The profile of a read copy (G.Copies.read): its IVs, EVs and nature. No copy, or one without six IVs, is neutral. */
+  function profile(copy) {
+    if (!copy || !Array.isArray(copy.iv) || copy.iv.length !== 6) return NEUTRAL_PROFILE;
+    const iv = copy.iv.map((v) => Math.min(31, Math.max(0, Math.floor(+v) || 0))),
+      ev = [0, 1, 2, 3, 4, 5].map((k) => (Array.isArray(copy.ev) ? clampInt(copy.ev[k], 252) : 0)),
+      nat = [1, 1, 1, 1, 1, 1],
+      up = copy.natureUp,
+      down = copy.natureDown;
+    if (up >= 1 && up <= 5 && down >= 1 && down <= 5 && up !== down) {
+      nat[up] = 1.1;
+      nat[down] = 0.9;
+    }
+    return { iv, nat, ev };
+  }
+
   // ---- mainline stat core ----
-  /** Mainline non-HP stat value. IV/EV additive, default 0. */
-  function statValue(base, level, iv = 0, ev = 0) {
-    return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
+  /** Mainline non-HP stat value. IV/EV additive, default 0. nature: 1.1 raised, 0.9 lowered, 1 otherwise. It applies to the
+   *  final stat, rounded down, in whole numbers (stat x 110 / 100) like the games, so a float can never cost a point. */
+  function statValue(base, level, iv = 0, ev = 0, nature = 1) {
+    const s = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
+    return nature == null || nature === 1 ? s : Math.floor((s * Math.round(nature * 100)) / 100);
   }
 
   // ---- HP (player + enemy, scales with level) ----
@@ -41,9 +69,10 @@ G.Stats = (() => {
     const w = lr >= 0 ? Math.log(MOVE_MAX) : Math.log(1 / MOVE_MIN);
     return Math.exp(w * Math.tanh((MOVE_K * lr) / w));
   }
-  /** Base Speed stat -> movement px/s. Same for player and enemy. */
-  function speedToPx(baseSpe) {
-    const r = statValue(baseSpe, 50) / statValue(SPEED_MEDIAN, 50);
+  /** Base Speed stat -> movement px/s. Same for player and enemy. iv / nature / ev: a copy's Speed IV, nature and EVs, default
+   *  neutral. */
+  function speedToPx(baseSpe, iv = 0, nature = 1, ev = 0) {
+    const r = statValue(baseSpe, 50, iv, ev, nature) / statValue(SPEED_MEDIAN, 50);
     return BASE_PX * moveTransfer(r);
   }
 
@@ -73,17 +102,17 @@ G.Stats = (() => {
   }
 
   // ---- Atk/Def/SpA/SpD: scale with level via the mainline statValue ----
-  function attack(base, level, iv = 0, ev = 0) {
-    return statValue(base, level, iv, ev);
+  function attack(base, level, iv = 0, ev = 0, nature = 1) {
+    return statValue(base, level, iv, ev, nature);
   }
-  function defense(base, level, iv = 0, ev = 0) {
-    return statValue(base, level, iv, ev);
+  function defense(base, level, iv = 0, ev = 0, nature = 1) {
+    return statValue(base, level, iv, ev, nature);
   }
-  function spAtk(base, level, iv = 0, ev = 0) {
-    return statValue(base, level, iv, ev);
+  function spAtk(base, level, iv = 0, ev = 0, nature = 1) {
+    return statValue(base, level, iv, ev, nature);
   }
-  function spDef(base, level, iv = 0, ev = 0) {
-    return statValue(base, level, iv, ev);
+  function spDef(base, level, iv = 0, ev = 0, nature = 1) {
+    return statValue(base, level, iv, ev, nature);
   }
 
   // ---- damage model (mainline A/D ratio, split into cast + impact halves) ----
@@ -99,8 +128,14 @@ G.Stats = (() => {
   // atkBase/spaBase = attacker real base Atk/SpA (stats[1]/stats[3]). extraMul folds in the
   // upgrade/buff layer that used to live in pl.atk (atkMul * atk buffs). A status-cat move
   // uses Atk as its attacker stat (arbitrary but stable; its denominator is neutral anyway).
-  function attackFactor(atkBase, spaBase, level, move, extraMul = 1) {
-    const aStat = moveCat(move) === 'special' ? spAtk(spaBase, level) : attack(atkBase, level);
+  // prof: the attacker copy's IVs, EVs and nature (profile()); none is neutral. A status-cat move takes none, like the stat cards.
+  function attackFactor(atkBase, spaBase, level, move, extraMul = 1, prof = null) {
+    const cat = moveCat(move),
+      p = cat === 'status' || !prof ? NEUTRAL_PROFILE : prof;
+    const aStat =
+      cat === 'special'
+        ? spAtk(spaBase, level, p.iv[3], p.ev[3], p.nat[3])
+        : attack(atkBase, level, p.iv[1], p.ev[1], p.nat[1]);
     return ((((2 * level) / 5 + 2) * (move.dmg || 0) * aStat) / 50) * extraMul;
   }
 
@@ -170,11 +205,15 @@ G.Stats = (() => {
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
   // (stats[2]/stats[4]) matching the attack category. Returns damage BEFORE type/weather/
   // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
-  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1) {
+  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1, prof = null) {
     // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
-    const dStat =
-      (cat === 'special' ? spDef(playerSpdBase, playerLevel) : defense(playerDefBase, playerLevel)) * defMul;
-    return (factor / Math.max(1, dStat) + 2) * ENEMY_DMG_SCALAR;
+    // prof: the player copy's IVs, EVs and nature (profile()); none is neutral.
+    const p = prof || NEUTRAL_PROFILE;
+    const stat =
+      cat === 'special'
+        ? spDef(playerSpdBase, playerLevel, p.iv[4], p.ev[4], p.nat[4])
+        : defense(playerDefBase, playerLevel, p.iv[2], p.ev[2], p.nat[2]);
+    return (factor / Math.max(1, stat * defMul) + 2) * ENEMY_DMG_SCALAR;
   }
 
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
@@ -186,6 +225,8 @@ G.Stats = (() => {
   }
 
   return {
+    NEUTRAL_PROFILE,
+    profile,
     HP_SCALAR,
     SPEED_MEDIAN,
     BASE_PX,

@@ -498,3 +498,92 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): XP set is XP orbs only; Dowsing Machine +0.5 when built; steps 4 to 6 parked, happy with the item count; merge to main.
 - Found: dropped items looked up their icon by item id, so about 57 showed the fallback star and 12 an old hand-drawn icon. Also handed over once without Prettier (the check.js format line is warn-only).
 - Verified: check.js 32/32, format ok, smoke-ui (1 of 4 runs failed on a Charge.png request, cause not found), file:// probes and screenshots. Jess feel-tested: good. Stopped with the merge to main in his hands.
+
+## 2026-11-03, Pokebox step 1: unique copies (Claude Code, home, feature/pokeboxes)
+- Built: G.Copies (js/systems/copies.js), save.box in compact form, trainer id, team slots linked by UUID, generated js/data/species-traits.js, G.Debug.copies and G.Debug.copy. New Pokemon become copies through G.Copies.fill until step 3.
+- Decided (Jess): clean save checkpoint instead of migrating. Old local saves are backed up, the player starts over, a one-button notice explains. Copy structure approved, gender, height and weight visible in the box, 500 per box, tab row Pokedex then Box 1, Box 2.
+- Found: tools/items_report.js --check failed on CRLF checkouts with identical content; it now ignores line endings. Nothing in the game reads IVs, natures or sizes yet.
+- Verified: check.js 33/33, format ok, smoke-ui, file:// probe from a real old-format save (notice, backup, new-player test, gacha, run, reload). 2500 copies: 278 KB box, about 1.8 ms per save. Stopped for the feel-test.
+
+## 2026-11-03, Pokebox step 2: box screen (Claude Code, home, feature/pokeboxes)
+- Built: Team screen tabs (Pokedex, Box 1, Box 2) as the third filter row, slots and lists by copy UUID, the same species on several slots, drag to a box tab, G.Debug.addCopy, gender icons, Nature, Ability, Height, Weight rows, IV band on the hexagon with larger numbers.
+- Decided (Jess): the hexagon base is see-through white, the IV band is the type color and shows only the increase. Pokedex tab double-click asks for a copy. Moves in a run stay per fighter (one per slot).
+- Found: a local helper in G.Copies.fill shadowed add (caught by the harness). The pixel font has no gender symbols, so they are icons. The hex stayed small under 820 px tall from an old 66% rule, now 84%.
+- Verified: check.js, format, smoke-ui, file:// probe (tabs, drags, swap, free, commit, reload, a run swapping between duplicates). Stopped for the feel-test.
+
+- 2026-11-03 tweaks after the step 2 feel-test (Jess): the IV band draws 2 IVs per base point at about 35% opacity, the Nature row shows only the name, the detail header gender icon is 10 px.
+
+- 2026-11-03 game font is now Monogram (MonogramUI face in css/style.css with size-adjust 150%, its middle dot from the fallback font). PokeBW and Korataki screens unchanged. Pixelify faces removed, files kept. Open: the old credit string at dev.html:330 and its lang-en key still name Pixelify.
+
+- 2026-11-03 game font changed again, to Silver by Poppy Works (CC BY 4.0, GameFont face in css/style.css, size-adjust 140%). Box prices approved. Open: Silver.ttf is 3.7 MB and the game waits for it at boot.
+
+- 2026-11-03 Team detail pane text up 2 px (hex numbers too, name 20 px after fixing a style that had shrunk it to 14 px), gender is now the font symbol, colored, and the icons are gone.
+
+## 2026-11-03, Session close: Silver trimmed, Pokebox handoff (Claude Code, home, feature/pokeboxes)
+- Built: tools/subset_silver.py and assets/fonts/Silver-game.ttf, 3656 KB down to 37 KB, 419 characters. The game loads it; Silver.ttf stays as the source.
+- Decided (Jess): trim the font, box prices 10,000, 25,000, 60,000, the full box warning and auto-sell, sell price at the old repeat refund.
+- Found: the full font's 3.7 MB was the only large cost of the swap. 18 renders of game text matched the full font pixel for pixel.
+- Verified: check.js, format, smoke-ui, file:// probes. Stopped at the step 3 no-code plan, not started. The feature branch is not merged to main.
+
+## 2026-11-04, Pokebox 3a-1: buying boxes (Quick, work, feature/pokeboxes)
+- Decided (Jess): step 3 in microsteps (3a copies, selling, boxes; 3b lock, favorite, nicknames, bulk sell). Boxes are bought on the Team screen from coin price tabs, in order, no Shop panel (D1 to D7 in the 3a-1 map).
+- Built: G.Copies.boxPrice and buyBox (js/systems/copies.js), price tabs and rosBuyBox (js/ui/menu.js), .ros-buy styles (css/bw-team.css), harness section 11, docs/proposals/pokebox-copies-mutate.js (6 mutations), changelog entry.
+- Not verified here: this machine's sandbox cannot run node, so check.js, the mutation runner, smoke-ui and the file:// probe are for Jess to run. changelog.js bracket and quote balance checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-1. Next: 3a-2, copies at the source and removing fill.
+
+## 2026-11-04, Pokebox 3a-2: copies at the source, coin redraw fix (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D9 in the 3a-2 map): every source makes a copy, repeats too, no coin payouts; repeat gacha shinies kept; a new shiny is one copy only; top bar redraws on every save write and reads 12,000.
+- Built: G.DB.obtain (db.js) used by gacha.js, game.js (rescue, wild shiny), test.js (starter), debug.js (maxAll, addCopy); G.Copies.fill removed; gacha result tags "To Box N"; redrawCoins in commit; ui.js en-US format. Harness sections 5, 7, 10 reworked, 12 and 13 new; docs/proposals/pokebox-sources-harness.js new; mutation runner now 19 mutations over both harnesses.
+- Not verified here (no node in this sandbox): check.js, mutation runner, smoke-ui, file:// probe. Bracket balance of every edited file and every mutation pattern (each found exactly once) checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2. Next: 3a-3, selling.
+
+## 2026-11-04, Pokebox 3a-2b: live price tabs, ticket debug (Quick, work, feature/pokeboxes)
+- Found (Jess): a dim box price tab stayed dim after G.Debug.coins; the Shop's Buy and Pull buttons had the same staleness.
+- Built (D1 to D4 in the 3a-2b map): G.DB.onSave listeners called on every commit (each in a try/catch, guests too); menu.js redraws the Team tab row while open, gacha-ui.js the current Shop tab while open and no pull is animating; G.Debug.tickets(n, m). Harness section 14, mutation runner now 22.
+- Not verified here (no node): same as 3a-2. Bracket balance and mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2 and 3a-2b together. Next: 3a-3, selling.
+
+## 2026-11-04, Pokebox 3a-3: selling (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D6 in the 3a-3 map): the last copy can be sold and the Pokedex keeps it; team and uncommitted-edit copies cannot; only repeat gacha cards sell; commons one click, 4 and 5 stars and shinies confirm; the box always confirms.
+- Built: G.Copies.sellPrice and sell, SELL_PRICE moved into copies.js (gacha REFUND points at it); Sell button in the Team detail pane; Sell on repeat gacha cards with a "Sold +N" tag; styles in bw-team.css and style.css. Harness sections 15 and 16, sources harness section 6, mutation runner now 29.
+- Not verified here (no node): check.js, mutation runner, smoke-ui, file:// probe. Bracket balance of every edited file and all 29 mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3a-2, 3a-2b and 3a-3. Next: 3a-4, full boxes on a pull.
+
+## 2026-11-04, Pokebox 3a-4: full boxes (Quick, work, feature/pokeboxes)
+- Decided (Jess, D1 to D6 in the 3a-4 map): the approved warning plus a count; short pulls place new, then shiny, then rarity, then pull order; full boxes in a run sell on arrival to the saved coins; a sale on arrival still counts in the Pokedex; addCopy never sells; new fillBoxes.
+- Built: G.Copies.freePlaces and priceFor, add returns null when full (no last-box overflow); G.DB.obtain sells on arrival; gacha rolls all first, isNew in pull order, priority placement when short; Shop warning and "Box full · sold" cards; run banner line; G.Debug.fillBoxes, addCopy stops at full. Harness 17 and 18, sources 7a to 7d, mutation runner now 36 (4 gacha patterns updated for the new pull shape).
+- Deviation: with full boxes, a NEW rescue or wild shiny shows only the "boxes are full" line, not the inherited new-species line too (the run banner holds one message, and joining a Spanish key to new English text would break its translation).
+- Not verified here (no node). Stopped at: Jess's checks and feel-test of 3a-2 to 3a-4. Next: 3b.
+
+## 2026-11-04, Pokebox 3b-1: lock and favorite (Quick, work, feature/pokeboxes)
+- Decided (Jess): all of 3b (D1 to D12) approved, with edits to 3b-2: nickname cleaning against injection, 16 characters, Favorites and Locked filter chips after BST (E1 to E3 in the 3b map, awaiting his OK on the details).
+- Built 3b-1: G.Copies.setLocked and setFavorite (flag 1 on, key removed off); Lock and Favorite buttons beside Sell; heart and padlock marks bottom-left on box cells (new 'lock' pixel icon); favorite note in the sell confirm. Harness 19 and 19b, mutation runner now 40.
+- Not verified here (no node). Bracket balance, icon rows (12 x 12) and all 40 mutation patterns checked by script.
+- Stopped at: Jess's checks and feel-test of 3b-1, and his OK on E1 to E3. Next: 3b-2.
+
+## 2026-11-04, Pokebox 3b-2: nicknames and mark filters (Quick, work, feature/pokeboxes)
+- Decided (Jess): E1 to E3 as written (16 characters, cleaning on typing and on every load, Favorites and Locked chips after BST, OR when both on). No AI in the game, so cleaning is about markup only.
+- Built: G.Copies.cleanNickname and setNickname, NICK_MAX 16, clean() uses the same rule; inline rename (pencil icon) in the Team detail header; #ros-marks chip set, box tabs only. Harness 20 and 20b (section 6 updated for 16), mutation runner now 47. TODO: nicknames in runs, nickname search, server-side cleaning in the cloud phase.
+- Choice made in the build: clicking away from the rename field cancels, like Esc (no surprise rename).
+- Not verified here (no node). Bracket balance, icon rows and all 47 mutation patterns checked by script; the 24 cleaning cases also checked against an independent model of the rule. Next: 3b-3, bulk sell.
+
+## 2026-11-04, Pokebox 3b-3: bulk sell (Quick, work, feature/pokeboxes)
+- Built (D9 to D12): G.Copies.sellMany and repeatsIn, G.Gacha.bulkSellable; Team screen Select mode (tick, Select repeats, Clear, Sell N for X with one confirm, Cancel; ends on leaving the tab); "Sell repeats +N" on the pull results. Harness 21, sources 8, mutation runner now 56.
+- Decided (Jess, after the build): Select repeats counts normal and shiny copies apart (refines D10).
+- Broke and fixed: two of the menu.js edits were overwritten by a later edit made against an older copy of the file; caught by a marker check, reapplied one at a time, then every 3a and 3b marker in all 13 touched files rechecked present.
+- Not verified here (no node). Stopped at: Jess's checks and feel-test of 3b-3. Step 3 done after that; next is step 4 (IVs and natures apply).
+
+## 2026-11-04, Session close: Pokebox step 3 done (Quick, work, feature/pokeboxes)
+- Built: all of Pokebox step 3 in nine microsteps (3a-1 to 3a-4, 3a-2b, 3b-1 to 3b-3), each with an ASCII map in docs/ASCII Concept Maps/. Ride-along fixes: top bar coins, box price tabs and Shop buttons redraw on every save; G.Debug.tickets and fillBoxes.
+- Decided (Jess): every D and E ruling in the 3a and 3b maps, plus Select repeats counting normal and shiny copies apart. Rescue event left as is.
+- Verified (Jess, his machine): check.js all harnesses passed, mutation runner 56/56, smoke-ui, format. This machine cannot run node; whole-feature feel-test still to do.
+- Broke and fixed: a TODO.md edit put two backlog lines at the top and dropped the "# TODO / ISSUES" heading; restored at wrap-up. Board mirror re-synced (13 open, 8 closed).
+- Stopped at: step 4 (IVs and natures apply), no-code plan first. Branch not merged to main.
+
+## 2026-11-04, Pokebox steps 4 and 5: IVs, natures, EVs (Quick, work, feature/pokeboxes)
+- Built step 4: a team copy's IVs and nature feed its run stats (G.Stats.profile, nature argument on statValue in whole numbers, G.Copies.profileOf, buildFighter passes the slot uid). Enemies stay 0 IV, neutral. Debug: G.Debug.fighter, G.Debug.ivs. New pokebox-stats harness and mutate runner (21).
+- Built step 5 from Jess's draft (docs/proposals/ev-progression.md): typed yields into six run banks, class rates wild 1/1000, elite 1/500, gym 1x, shiny x2 (F1, Jess's change to the flat 1/1000); end-of-run "Train your team" screen; EVs row and sell warning on the Team screen; Select repeats keeps most EVs. Species yields added to species-traits.js. Debug: G.Debug.evbank. New pokebox-evs harness and mutate runner (29).
+- Decided (Jess): step 4 D1 to D7, step 5 F1 to F10. Ride-along: the dead timed-boss data removed from js/data/enemies.js (no non-gym bosses exist).
+- Broke and fixed: none in the repo. One of my own hand-derived harness expectations was wrong (a capped copy) and was fixed before writing. Five step 4 mutation anchors moved with the EV arguments and were updated.
+- Verified: harnesses run in a sandbox copy here (step 4 122/122 and 21/21, step 5 61/61 and 29/29); Jess ran check.js and the runners on his machine and feel-tested both steps.
+- Stopped at: step 5b (EV-lowering berries) PARKED until Jess's Photoshop mockups; plan map has G1 to G6 open. Board mirror not re-synced (GitHub API returned empty).

@@ -5,6 +5,7 @@
 G.GachaUI = (() => {
   const $ = G.UI.$;
   let busy = false;
+  let cards = []; // the open results: { r, c (card), b (its Sell button or null), sold } (3b-3)
   let gen = 1;
   let tab = 'pokemon'; // 'pokemon' | 'items' | 'upgrades'
   let shopSel = null; // Team Items tab: the item shown in the detail column
@@ -20,6 +21,19 @@ G.GachaUI = (() => {
     $('pull-10').onclick = () => pull(10, 't1');
     $('pull-10b').onclick = () => pull(10, 't10');
     $('pull-close').onclick = close;
+    // "Sell repeats" on the results (3b-3 D11): beside Continue, only while there is something to sell.
+    const sellAll = document.createElement('button');
+    sellAll.id = 'pull-sellall';
+    sellAll.type = 'button';
+    sellAll.className = 'btn hidden';
+    sellAll.dataset.sfx = 'click';
+    sellAll.onclick = sellRepeats;
+    $('pull-close').before(sellAll);
+    // PokeCoins or Pokeballs changed while the Shop is open (a purchase, a debug command): its buttons follow at once.
+    // Not during the pull animation; closing it redraws anyway.
+    G.DB.onSave(() => {
+      if (G.UI.isOpen('scr-gacha') && !busy && $('pull-fx').classList.contains('hidden')) refresh();
+    });
 
     TABS.forEach(([k, n]) => {
       const b = document.createElement('button');
@@ -228,6 +242,22 @@ G.GachaUI = (() => {
 
   async function pull(n, use = 't1') {
     if (busy) return;
+    // Too little room: warn first (pokebox 3a-4). The pull is never blocked; whatever does not fit is sold on arrival.
+    const s = G.DB.save;
+    if (G.Gacha.costOf(s, n, use)) {
+      const free = G.Copies.freePlaces(s);
+      if (free < n) {
+        const yes = await G.UI.ask(
+          "You don't have enough space. Any pokemon pulled that can't be placed in a slot will be automatically sold.",
+          {
+            title: 'Not enough space',
+            ok: 'Pull anyway',
+            note: `${fmt(free)} free place${free === 1 ? '' : 's'}, ${n} Pokémon.`,
+          }
+        );
+        if (!yes || busy) return;
+      }
+    }
     const res = G.Gacha.pull(G.DB.save, n, gen, use);
     if (!res) {
       G.Audio.sfx('error');
@@ -243,7 +273,9 @@ G.GachaUI = (() => {
       slot = $('slot'),
       out = $('pull-results');
     out.innerHTML = '';
+    cards = [];
     $('pull-close').classList.add('hidden');
+    $('pull-sellall').classList.add('hidden');
     slot.style.display = '';
     fx.classList.remove('hidden');
 
@@ -255,27 +287,120 @@ G.GachaUI = (() => {
     for (const r of res) {
       const mon = G.DEX_BY[r.dex];
       const c = document.createElement('div');
-      c.className = 'pcard r' + r.rarity + (r.shiny ? ' shiny' : '');
+      c.className = 'pcard r' + r.rarity + (r.shiny ? ' shiny' : '') + (r.sold ? ' sold' : '');
       c.style.setProperty('--rc', r.shiny ? '#9ae6ff' : G.Gacha.RARITY_COLOR[r.rarity]);
       c.innerHTML = `<div class="stars">${G.UI.stars(r.rarity, 24)}</div>`;
       c.appendChild(G.UI.spriteCanvas(r.dex, 132, 120, { lively: r.rarity >= 4 || r.shiny, scale: 2, shiny: r.shiny }));
-      const tag = r.isNew
-        ? `<span class="new">${r.shiny ? '¡SHINY NUEVO!' : '¡NUEVO!'}</span>`
-        : `Repetido · <span class="coin"></span> +${r.refund}`;
+      const newTag = `<span class="new">${r.shiny ? '¡SHINY NUEVO!' : '¡NUEVO!'}</span>`;
+      const tag = r.sold
+        ? `${r.isNew ? newTag + ' ' : ''}Box full · sold <span class="coin"></span> +${fmt(r.sold)}`
+        : r.isNew
+          ? newTag
+          : r.box != null
+            ? `To Box ${r.box + 1}`
+            : '';
       c.insertAdjacentHTML(
         'beforeend',
         `<b>${r.shiny ? G.Icons.html('shiny', 12) + ' ' : ''}${mon.name}</b><div class="tag">${tag}</div>`
       );
+      // A repeat can be sold straight from its card; a new one is sold from the box (fewer misclicks).
+      const price = !r.isNew && r.uid ? G.Copies.sellPrice(G.DB.save, r.uid) : null;
+      const k = { r, c, b: null, sold: false };
+      cards.push(k);
+      if (price != null) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn gold small pcard-sell';
+        b.dataset.sfx = 'click';
+        b.innerHTML = `<span class="coin"></span> Sell +${fmt(price)}`;
+        b.onclick = () => sellCard(k);
+        c.appendChild(b);
+        k.b = b;
+      }
       out.appendChild(c);
       G.Audio.sfx('reveal', { rarity: r.rarity });
       await wait(n === 10 ? 150 : 0);
     }
     $('pull-close').classList.remove('hidden');
+    refreshSellAll();
     busy = false;
+  }
+
+  /** Sell a repeat from its result card: one click for 1 to 3 stars, a confirm first for 4 and 5 stars and any shiny. No undo. */
+  async function sellCard(k) {
+    const r = k.r,
+      s = G.DB.save,
+      price = G.Copies.sellPrice(s, r.uid);
+    if (price == null) {
+      if (k.b) k.b.remove();
+      return;
+    }
+    if (r.rarity >= 4 || r.shiny) {
+      const name = (r.shiny ? 'shiny ' : '') + G.DEX_BY[r.dex].name;
+      const yes = await G.UI.ask(`Sell ${name} for ${fmt(price)} PokéCoins?`, { title: 'Sell Pokémon', ok: 'Sell' });
+      if (!yes) return;
+    }
+    const res = G.Copies.sell(s, r.uid);
+    if (!res.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(res.error === 'team' ? 'Remove it from your team first.' : 'That Pokémon is gone.');
+      if (k.b) k.b.remove();
+      refreshSellAll();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    markSold(k, res.coins);
+    refreshSellAll();
+  }
+
+  /** A result card after its sale: dimmed, no button, "Sold +N". */
+  function markSold(k, coins) {
+    k.sold = true;
+    if (k.b) k.b.remove();
+    k.c.classList.add('sold');
+    const tag = k.c.querySelector('.tag');
+    if (tag) tag.innerHTML = `Sold <span class="coin"></span> +${fmt(coins)}`;
+  }
+
+  /** The cards "Sell repeats" would sell now: G.Gacha.bulkSellable, still unsold, still in the box. */
+  function bulkCards() {
+    const ok = new Set(G.Gacha.bulkSellable(cards.map((k) => k.r)).map((r) => r.uid));
+    return cards.filter((k) => !k.sold && ok.has(k.r.uid) && G.Copies.sellPrice(G.DB.save, k.r.uid) != null);
+  }
+
+  function refreshSellAll() {
+    const b = $('pull-sellall');
+    if (!b) return;
+    const list = bulkCards();
+    let coins = 0;
+    for (const k of list) coins += G.Copies.sellPrice(G.DB.save, k.r.uid);
+    b.classList.toggle('hidden', !list.length);
+    b.innerHTML = `<span class="coin"></span> Sell repeats +${fmt(coins)}`;
+    b.title = 'Sells the 1 to 3 star repeats that are not shiny. 4 and 5 stars and shinies sell one by one.';
+  }
+
+  /** Sell every 1 to 3 star normal repeat of this pull in one click, no confirm (3b D11). */
+  function sellRepeats() {
+    const list = bulkCards();
+    if (!list.length) return;
+    const price = new Map(list.map((k) => [k.r.uid, G.Copies.sellPrice(G.DB.save, k.r.uid)]));
+    const res = G.Copies.sellMany(
+      G.DB.save,
+      list.map((k) => k.r.uid)
+    );
+    if (res.sold) {
+      G.Audio.sfx('confirm');
+      G.DB.commit(true);
+      const gone = new Set(res.ids);
+      for (const k of list) if (gone.has(k.r.uid)) markSold(k, price.get(k.r.uid));
+    } else G.Audio.sfx('error');
+    refreshSellAll();
   }
 
   function close() {
     $('pull-fx').classList.add('hidden');
+    $('pull-sellall').classList.add('hidden');
     refresh();
   }
 

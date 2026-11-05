@@ -10,7 +10,18 @@ G.MenuUI = (() => {
   let dexSel = null;
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
-  const newCtrl = () => ({ region: 'all', own: 'all', q: '', types: [], rarity: [], bst: [], sort: 'dex', dir: 1 });
+  // marks (3b-2 E3): 'fav' and 'lock' chips, Team screen box tabs only.
+  const newCtrl = () => ({
+    region: 'all',
+    own: 'all',
+    q: '',
+    types: [],
+    rarity: [],
+    bst: [],
+    marks: [],
+    sort: 'dex',
+    dir: 1,
+  });
   const dexCtrl = newCtrl();
   const rosCtrl = newCtrl(); // the Team screen keeps its own filters, separate from the Pokédex
   const BST_BANDS = [
@@ -70,6 +81,8 @@ G.MenuUI = (() => {
     ctrl: rosCtrl,
     team: () => ros.team,
     sel: () => ros.dex,
+    selUid: () => ros.uid,
+    boxTab: () => (ros.tab === 'dex' ? null : ros.tab),
     pick: (dex) => rosSelectDex(dex),
     assign: true, // cells can be double-clicked or dragged onto a team slot
     compact: true, // filter chips show icons only (the name is the tooltip)
@@ -86,6 +99,11 @@ G.MenuUI = (() => {
   const menuOnTop = () => G.UI.isOpen('scr-menu') && document.querySelectorAll('.scr:not(.hidden)').length === 1;
 
   function init() {
+    // PokeCoins changed while the Team screen is open (a purchase, a debug command): the box price tabs follow at once.
+    // Only the tab row is redrawn: the grid, the selection and pending team edits stay as they are.
+    G.DB.onSave(() => {
+      if (G.UI.isOpen('scr-roster')) rosRenderTabs();
+    });
     // Preload the row art and fonts, so the first hover and the first open never draw half a menu.
     for (const n of ['row', 'row-sel', 'play', 'play-sel']) new Image().src = `assets/ui/menu/${n}.png`;
     for (const n of [
@@ -122,16 +140,16 @@ G.MenuUI = (() => {
     addEventListener('keydown', (e) => {
       if (
         e.key !== 'Enter' ||
+        ros.select || // select mode (3b-3): Enter places nothing
         !G.UI.isOpen('scr-roster') ||
         G.UI.isOpen('scr-upgrades') ||
         e.target.closest('input, textarea, select, button')
       )
         return;
-      const d = ros.dex,
-        cur = ros.team[ros.slot];
-      if (d == null || !G.DB.save.owned[d] || (cur && cur.dex === d)) return;
+      const cur = ros.team[ros.slot];
+      if (ros.dex == null || !G.DB.save.owned[ros.dex] || (ros.uid && cur && cur.uid === ros.uid)) return;
       e.preventDefault();
-      rosAssign(ros.slot, d);
+      rosPlace(ros.slot, ros.uid || ros.dex);
     });
     addEventListener('keydown', upgKey);
     document.querySelectorAll('#scr-menu [data-go]').forEach((b) => {
@@ -448,6 +466,27 @@ G.MenuUI = (() => {
       bstBox.appendChild(b);
     }
 
+    // Favorites and Locked (3b-2 E3), after BST: only the Team screen has this chip set. Box tabs only; hidden on the Pokedex tab.
+    const markBox = el('marks');
+    if (markBox) {
+      if (!Array.isArray(c.marks)) c.marks = [];
+      markBox.innerHTML = '';
+      for (const [k, icon, label] of [
+        ['fav', 'heart', 'Favorites'],
+        ['lock', 'lock', 'Locked'],
+      ]) {
+        const b = document.createElement('button');
+        b.className = 'chip icon mark-chip' + (c.marks.includes(k) ? ' on' : '');
+        b.innerHTML = G.Icons.html(icon, 24);
+        b.title = label;
+        b.onclick = () => {
+          toggle(c.marks, k);
+          again();
+        };
+        markBox.appendChild(b);
+      }
+    }
+
     el('clear').onclick = () => {
       c.region = 'all';
       c.own = 'all';
@@ -455,6 +494,7 @@ G.MenuUI = (() => {
       c.types = [];
       c.rarity = [];
       c.bst = [];
+      c.marks = [];
       c.sort = 'dex';
       c.dir = 1;
       again();
@@ -587,10 +627,16 @@ G.MenuUI = (() => {
     const sel = v.sel();
     $(v.pre + 'grid')
       .querySelectorAll('.cell')
-      .forEach((x) => x.classList.toggle('on', +x.dataset.dex === sel));
+      .forEach((x) =>
+        x.classList.toggle('on', x.dataset.uid ? x.dataset.uid === (v.selUid && v.selUid()) : +x.dataset.dex === sel)
+      );
   }
 
   function renderGrid(v) {
+    if (v.boxTab && v.boxTab() != null) {
+      rosRenderBox(v);
+      return;
+    }
     const s = G.DB.save;
     const grid = $(v.pre + 'grid');
     grid.innerHTML = '';
@@ -608,7 +654,7 @@ G.MenuUI = (() => {
       if (v.assign && own) {
         // Team screen: double-click puts it in the highlighted slot, or drag it onto any slot.
         cell.draggable = true;
-        cell.ondblclick = () => rosAssign(ros.slot, p.dex);
+        cell.ondblclick = () => rosPlace(ros.slot, p.dex);
         cell.ondragstart = (e) => {
           ros.drag = p.dex;
           e.dataTransfer.setData('text/plain', String(p.dex));
@@ -854,23 +900,53 @@ G.MenuUI = (() => {
   // A fullscreen editor for the 6 fixed team slots. It works on a COPY of the team (ros.team);
   // nothing is saved until Commit Team, and Back discards the edits.
   //   ros.slot   the highlighted slot (where Enter, a double-click or a drop goes)
-  //   ros.dex    the Pokémon shown on the right (a team member, or a preview from the list), null = empty slot
-  //   ros.shiny  Normal / Shiny look for ros.dex (switched by the shiny icon on its team slot)
-  //   ros.drag   dex being dragged (a list cell or a filled slot)
-  const ros = { team: [], slot: 0, dex: null, shiny: false, drag: null, dragSlot: null };
-  const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0] : null)));
+  //   ros.dex    the species shown on the right (a team member, or a preview from the list), null = empty slot
+  //   ros.uid    the copy shown on the right, null when it is a species from the Pokedex tab
+  //   ros.shiny  Normal / Shiny look for what is shown
+  //   ros.tab    the list below the filters: 'dex', or a box counted from 0
+  //   ros.drag   what is being dragged: a copy's uid (a box cell or a filled slot), or a dex (a Pokedex tab cell)
+  const ros = {
+    team: [],
+    slot: 0,
+    dex: null,
+    uid: null,
+    shiny: false,
+    tab: 0,
+    drag: null,
+    dragSlot: null,
+    select: false, // bulk sell select mode (3b-3), one box tab at a time
+    ticked: new Set(), // copy UUIDs ticked in select mode
+    bulk: null, // the open box's shown copies, for the select bar
+  };
+  const teamKey = (t) => JSON.stringify(t.map((x) => (x ? [x.dex, x.shiny ? 1 : 0, x.uid || null] : null)));
+  const rosSlotOf = (t) => (t ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : null);
+  const escHtml = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  /** A copy's name (its nickname, else the species) with its gender symbol at the end. */
+  function rosNameHtml(c, p) {
+    const sym = c && c.gender === 'male' ? '♂' : c && c.gender === 'female' ? '♀' : '';
+    const name =
+      c && c.nickname
+        ? `<span class="nm" translate="no">${escHtml(c.nickname)}</span>`
+        : `<span class="nm">${p.name}</span>`;
+    return `<b class="ros-nm">${name}${sym ? `<span class="ros-gender ${c.gender}" title="${c.gender === 'male' ? 'Male' : 'Female'}">${sym}</span>` : ''}</b>`;
+  }
   const rosDirty = () => teamKey(ros.team) !== teamKey(G.DB.save.team);
 
   function openRoster() {
     const s = G.DB.save;
     G.DB.normalizeTeam(s);
-    ros.team = s.team.map((t) => (t ? { dex: t.dex, shiny: !!t.shiny } : null));
+    ros.team = s.team.map(rosSlotOf);
     ros.drag = null;
+    ros.select = false;
+    ros.ticked.clear();
+    if (ros.tab !== 'dex' && ros.tab >= G.Copies.boxCount(s)) ros.tab = 0;
     rosChrome();
     G.UI.show('scr-roster'); // (no keepMenu: the main menu is hidden too)
     $('ros-back').onclick = rosBack;
     $('ros-commit').onclick = rosCommit;
     buildControls(rosView);
+    rosRenderTabs();
     renderGrid(rosView);
     // Drop a team card back on the list: that slot is freed.
     const grid = $('ros-grid');
@@ -920,7 +996,7 @@ G.MenuUI = (() => {
   function rosCommit() {
     const s = G.DB.save;
     if (!ros.team[0] || !rosDirty()) return;
-    s.team = ros.team.map((t) => (t ? { dex: t.dex, shiny: !!t.shiny } : null));
+    s.team = ros.team.map(rosSlotOf);
     s.partner = s.team[0].dex; // the lead is the companion
     s.partnerShiny = !!s.team[0].shiny;
     G.DB.commit();
@@ -933,6 +1009,7 @@ G.MenuUI = (() => {
     ros.slot = slot;
     const t = ros.team[slot];
     ros.dex = t ? t.dex : null;
+    ros.uid = (t && t.uid) || null;
     ros.shiny = !!(t && t.shiny && G.DB.ownsShiny(t.dex));
     rosRenderAll();
     markGrid(rosView);
@@ -952,12 +1029,261 @@ G.MenuUI = (() => {
     markGrid(rosView);
   }
 
-  /** Preview a Pokémon from the list on the right (the highlighted slot does not change). */
+  /** Preview a species from the Pokedex tab on the right (the highlighted slot does not change). */
   function rosSelectDex(dex) {
-    const t = ros.team.find((x) => x && x.dex === dex);
     ros.dex = dex;
-    ros.shiny = !!(t && t.shiny && G.DB.ownsShiny(dex));
+    ros.uid = null;
+    ros.shiny = false;
     rosRenderAll();
+  }
+
+  /** Preview a copy from a box on the right (the highlighted slot does not change). */
+  function rosSelectCopy(c) {
+    ros.dex = c.speciesID;
+    ros.uid = c.pokemonUUID;
+    ros.shiny = c.isShiny;
+    rosRenderAll();
+  }
+
+  // ---------------- the tab row and the box list ----------------
+
+  function rosRenderTabs() {
+    const s = G.DB.save,
+      box = $('ros-tabs');
+    box.innerHTML = '';
+    const tab = (label, value, title) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ros-tab' + (ros.tab === value ? ' on' : '');
+      b.dataset.sfx = 'click';
+      b.textContent = label;
+      b.title = title;
+      b.onclick = () => {
+        if (ros.tab !== value) {
+          // leaving a box tab ends select mode (3b D9)
+          ros.select = false;
+          ros.ticked.clear();
+        }
+        ros.tab = value;
+        rosRenderTabs();
+        renderGrid(rosView);
+        markGrid(rosView);
+      };
+      if (value !== 'dex') {
+        // Drop a copy on a box tab: it moves there. This is storage, so it saves at once and does not wait for Commit.
+        b.ondragover = (e) => {
+          if (typeof ros.drag !== 'string') return;
+          e.preventDefault();
+          b.classList.add('drop');
+        };
+        b.ondragleave = () => b.classList.remove('drop');
+        b.ondrop = (e) => {
+          e.preventDefault();
+          b.classList.remove('drop');
+          const uid = ros.drag;
+          ros.drag = ros.dragSlot = null;
+          if (typeof uid !== 'string') return;
+          const r = G.Copies.move(s, uid, value);
+          if (r === 'full') G.UI.toast(`${label} is full`);
+          else if (r === 'ok') {
+            G.DB.commit();
+            rosRenderTabs();
+            renderGrid(rosView);
+            markGrid(rosView);
+          }
+        };
+      }
+      box.appendChild(b);
+    };
+    tab('Pokédex', 'dex', 'Every species. Pick a copy from a box to put it on your team.');
+    for (let i = 0; i < G.Copies.boxCount(s); i++)
+      tab(`Box ${i + 1}`, i, `${G.Copies.inBox(s, i)} / ${G.Copies.BOX_SIZE} Pokémon`);
+    // Boxes not bought yet: one price tab each. Only the next one is buyable; no drag and drop on these.
+    const have = G.Copies.boxCount(s);
+    for (let n = have + 1; n <= G.Copies.BOX_MAX; n++) {
+      const price = G.Copies.boxPrice(n),
+        next = n === have + 1,
+        live = next && s.coins >= price,
+        b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ros-tab ros-buy' + (live ? '' : ' dim');
+      if (live) b.dataset.sfx = 'click';
+      b.innerHTML = `<span class="coin"></span> ${rosCoins(price)}`;
+      b.title = !next
+        ? `Buy Box ${n - 1} first`
+        : live
+          ? `Buy Box ${n} for ${rosCoins(price)} PokéCoins`
+          : `Box ${n} costs ${rosCoins(price)} PokéCoins. You have ${rosCoins(s.coins || 0)}.`;
+      b.onclick = () => rosBuyBox(n);
+      box.appendChild(b);
+    }
+    $('ros-own').style.display = ros.tab === 'dex' ? '' : 'none';
+    const marks = $('ros-marks'); // marks belong to copies, not species: no chips on the Pokedex tab
+    if (marks) marks.style.display = ros.tab === 'dex' ? 'none' : '';
+  }
+
+  function rosCoins(v) {
+    return Math.floor(v).toLocaleString('en-US');
+  }
+
+  /** Buy box n from its price tab. Storage, like a box move: it saves at once, and pending team edits stay pending. */
+  async function rosBuyBox(n) {
+    const s = G.DB.save,
+      have = G.Copies.boxCount(s),
+      price = G.Copies.boxPrice(n);
+    if (n !== have + 1) {
+      G.Audio.sfx('error');
+      G.UI.toast(`Buy Box ${have + 1} first`);
+      return;
+    }
+    if (!(s.coins >= price)) {
+      G.Audio.sfx('error');
+      G.UI.toast('Not enough PokéCoins');
+      return;
+    }
+    const yes = await G.UI.ask(`Spend ${rosCoins(price)} PokéCoins on Box ${n}?`, {
+      title: 'Buy box',
+      ok: 'Buy',
+      note: `You have ${rosCoins(s.coins)}. You will have ${rosCoins(s.coins - price)} left.`,
+    });
+    if (!yes) return;
+    const r = G.Copies.buyBox(s);
+    if (!r.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(r.error === 'poor' ? 'Not enough PokéCoins' : 'You have every box');
+      rosRenderTabs();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    G.UI.toast(`Box ${r.boxes} unlocked!`);
+    ros.tab = r.boxes - 1;
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
+  }
+
+  /** One copy's cell in a box: number, team badge or shiny mark, sprite, name with gender, rarity. */
+  function fillCopyCell(cell, c, p) {
+    const ts = ros.team.findIndex((t) => t && t.uid === c.pokemonUUID);
+    cell.className = 'cell' + (c.pokemonUUID === ros.uid ? ' on' : '');
+    cell.innerHTML = `<span class="no">${String(p.dex).padStart(3, '0')}</span>`;
+    if (ts === 0)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-r" title="Lead (slot 1)">${G.Icons.html('crown', 14)}</span>`
+      );
+    else if (ts > 0)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-r badge-slot" title="Roster slot ${ts + 1}">${ts + 1}</span>`
+      );
+    else if (c.isShiny)
+      cell.insertAdjacentHTML('beforeend', `<span class="badge-r" title="Shiny">${G.Icons.html('shiny', 12)}</span>`);
+    // Favorite and lock marks, bottom-left (3b-1). Not the class "locked": Pokedex cells use it for species you lack.
+    if (c.isFavorite || c.isLocked)
+      cell.insertAdjacentHTML(
+        'beforeend',
+        `<span class="badge-l">${c.isFavorite ? `<span title="Favorite">${G.Icons.html('heart', 12)}</span>` : ''}${
+          c.isLocked ? `<span title="Locked">${G.Icons.html('lock', 12)}</span>` : ''
+        }</span>`
+      );
+    cell.appendChild(G.UI.spriteCanvas(p.dex, 92, 80, { scale: 2, shadow: true, shiny: c.isShiny }));
+    cell.insertAdjacentHTML('beforeend', rosNameHtml(c, p) + G.UI.stars(p.rarity, 9));
+  }
+
+  /** The open box, in the order the filters and sort give its species. */
+  function rosRenderBox(v) {
+    const s = G.DB.save,
+      grid = $(v.pre + 'grid');
+    grid.innerHTML = '';
+    const bySpecies = new Map();
+    let total = 0,
+      marked = 0;
+    const marks = v.ctrl.marks || [];
+    const markOk = (c) =>
+      !marks.length || (marks.includes('fav') && c.isFavorite) || (marks.includes('lock') && c.isLocked);
+    for (const c of G.Copies.all(s)) {
+      if (c.box !== ros.tab) continue;
+      total++;
+      if (!markOk(c)) continue; // Favorites / Locked chips (3b-2 E3): either mark when both are on
+      marked++;
+      if (!bySpecies.has(c.speciesID)) bySpecies.set(c.speciesID, []);
+      bySpecies.get(c.speciesID).push(c);
+    }
+    let shown = 0;
+    const shownIds = new Set();
+    for (const p of filterSortDex(Object.assign({}, v.ctrl, { own: 'all' }))) {
+      for (const c of bySpecies.get(p.dex) || []) {
+        shown++;
+        const cell = document.createElement('div');
+        cell.dataset.dex = p.dex;
+        cell.dataset.uid = c.pokemonUUID;
+        fillCopyCell(cell, c, p);
+        shownIds.add(c.pokemonUUID);
+        if (ros.select) {
+          // Select mode (3b-3): a click ticks or unticks; no selecting, placing or dragging. Team, locked and favorite copies cannot be ticked.
+          rosTickClass(cell, c);
+          cell.onclick = () => {
+            if (!rosCanBulk(c)) return;
+            if (ros.ticked.has(c.pokemonUUID)) ros.ticked.delete(c.pokemonUUID);
+            else ros.ticked.add(c.pokemonUUID);
+            rosTickClass(cell, c);
+            rosBulkBar();
+          };
+        } else {
+          cell.onclick = () => {
+            rosSelectCopy(c);
+            markGrid(v);
+          };
+          cell.ondblclick = () => rosPlace(ros.slot, c.pokemonUUID);
+          cell.draggable = true;
+          cell.ondragstart = (e) => {
+            ros.drag = c.pokemonUUID;
+            e.dataTransfer.setData('text/plain', c.pokemonUUID);
+            e.dataTransfer.effectAllowed = 'move';
+          };
+          cell.ondragend = () => {
+            ros.drag = null;
+          };
+        }
+        grid.appendChild(cell);
+      }
+    }
+    ros.bulk = { v, shown, total, ids: shownIds };
+    rosBulkBar();
+    if (!shown)
+      grid.innerHTML = `<p class="sub" style="grid-column:1/-1">${
+        !total
+          ? 'This box is empty.'
+          : marks.length && !marked
+            ? 'No marked Pokémon in this box.'
+            : 'No Pokemon match these filters.'
+      }</p>`;
+  }
+
+  /** Redraw the list's team badges after the team changed. */
+  function rosRefreshList(dexes) {
+    if (ros.tab === 'dex') {
+      refreshCells(rosView, dexes);
+      return;
+    }
+    const grid = $('ros-grid'),
+      cells = grid.querySelectorAll('.cell[data-uid]');
+    if (!cells.length) return;
+    const copies = new Map(G.Copies.all(G.DB.save).map((c) => [c.pokemonUUID, c]));
+    cells.forEach((cell) => {
+      const c = copies.get(cell.dataset.uid);
+      if (!c) return;
+      fillCopyCell(cell, c, G.DEX_BY[c.speciesID]);
+      if (ros.select) rosTickClass(cell, c);
+    });
+  }
+
+  /** Put what was picked in a slot: a copy goes in, a species from the Pokedex tab asks for a copy. */
+  function rosPlace(slot, what) {
+    if (typeof what === 'string') rosAssign(slot, what);
+    else G.UI.toast('Pick a copy from a box');
   }
 
   function rosRenderAll() {
@@ -967,57 +1293,55 @@ G.MenuUI = (() => {
   }
 
   /**
-   * Put `dex` in team slot `slot` (on the working copy). A Pokémon already on the team in another slot
+   * Put copy `uid` in team slot `slot` (on the working copy). A copy already on the team in another slot
    * SWAPS places with whoever is in `slot`, so nobody drops off. Slot 1 (the lead) can never be left empty.
    */
-  function rosAssign(slot, dex) {
+  function rosAssign(slot, uid) {
     const s = G.DB.save,
-      p = G.DEX_BY[dex];
+      c = G.Copies.get(s, uid),
+      p = c && G.DEX_BY[c.speciesID];
     if (!p) return;
-    if (!s.owned[dex]) {
-      G.UI.toast('You do not own that Pokémon yet');
-      return;
-    }
+    const dex = c.speciesID;
     const before = ros.team.map((t) => t && t.dex);
     const team = ros.team.slice();
-    const from = team.findIndex((t) => t && t.dex === dex);
+    const from = team.findIndex((t) => t && t.uid === uid);
     if (from === slot) {
       rosSelectSlot(slot);
       return;
     }
     const displaced = team[slot] || null;
-    let shiny;
     if (from >= 0) {
       if (from === 0 && !displaced) {
         G.UI.toast('Slot 1 is the lead and cannot be left empty');
         return;
       }
-      shiny = !!team[from].shiny;
       team[from] = displaced;
-    } else {
-      shiny = ros.dex === dex && ros.shiny && G.DB.ownsShiny(dex);
     }
-    team[slot] = { dex, shiny: !!shiny };
+    team[slot] = { dex, shiny: c.isShiny, uid };
     ros.team = team;
     ros.slot = slot;
     ros.dex = dex;
-    ros.shiny = !!shiny;
+    ros.uid = uid;
+    ros.shiny = c.isShiny;
     if (from >= 0 && displaced) G.UI.toast(`${p.name} and ${G.DEX_BY[displaced.dex].name} swapped slots`);
     rosRenderAll();
-    refreshCells(rosView, before.concat(ros.team.map((t) => t && t.dex)));
+    rosRefreshList(before.concat(ros.team.map((t) => t && t.dex)));
     markGrid(rosView);
   }
 
   /** Empty team slot `i` (on the working copy). Slot 1, the lead, is never emptied. */
   function rosFreeSlot(i) {
     if (i <= 0 || !ros.team[i]) return;
-    const gone = ros.team[i].dex;
+    const gone = ros.team[i];
     ros.team = ros.team.slice();
     ros.team[i] = null;
     ros.slot = i;
-    if (ros.dex === gone) ros.dex = null;
+    if (ros.uid && ros.uid === gone.uid) {
+      ros.dex = null;
+      ros.uid = null;
+    }
     rosRenderAll();
-    refreshCells(rosView, [gone]);
+    rosRefreshList([gone.dex]);
     markGrid(rosView);
   }
 
@@ -1030,8 +1354,8 @@ G.MenuUI = (() => {
     box.innerHTML = '';
     ros.team.forEach((t, slot) => {
       const mon = t && G.DEX_BY[t.dex];
-      const hasSh = !!(mon && G.DB.ownsShiny(t.dex));
-      const shiny = hasSh && !!t.shiny;
+      const copy = t && t.uid ? G.Copies.get(G.DB.save, t.uid) : null;
+      const shiny = !!(t && t.shiny);
       const b = document.createElement('div');
       b.className = 'ros-slot' + (mon ? '' : ' empty') + (slot === 0 ? ' lead' : '') + (slot === ros.slot ? ' on' : '');
       b.dataset.sfx = 'click';
@@ -1040,22 +1364,10 @@ G.MenuUI = (() => {
         b.appendChild(G.UI.spriteCanvas(mon.dex, 120, 120, { lively: true, scale: 3, hero: true, shiny }));
         b.insertAdjacentHTML(
           'beforeend',
-          `<div class="rinfo"><b>${mon.name}</b><span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
+          `<div class="rinfo">${rosNameHtml(copy, mon)}<span class="rtypes">${G.UI.typeChips(mon.types)}</span></div>`
         );
-        // The shiny icon is the Normal / Shiny switch, shown only when the shiny is owned.
-        if (hasSh) {
-          const sh = document.createElement('button');
-          sh.type = 'button';
-          sh.className = 'rsh' + (shiny ? ' on' : '');
-          sh.title = `Shiny ${shiny ? 'on' : 'off'}: click to switch`;
-          sh.innerHTML = G.Icons.html('shiny', 18);
-          sh.onclick = (e) => {
-            e.stopPropagation();
-            rosToggleShiny(slot);
-          };
-          sh.ondblclick = (e) => e.stopPropagation();
-          b.appendChild(sh);
-        }
+        if (shiny)
+          b.insertAdjacentHTML('beforeend', `<span class="rsh" title="Shiny">${G.Icons.html('shiny', 18)}</span>`);
         const up = document.createElement('button');
         up.type = 'button';
         up.className = 'rupg';
@@ -1095,16 +1407,16 @@ G.MenuUI = (() => {
       b.ondrop = (e) => {
         e.preventDefault();
         b.classList.remove('drop');
-        const d = ros.drag != null ? ros.drag : +e.dataTransfer.getData('text/plain');
+        const d = ros.drag;
         ros.drag = ros.dragSlot = null;
-        if (d) rosAssign(slot, d);
+        if (d != null) rosPlace(slot, d);
       };
-      if (mon) {
+      if (mon && t.uid) {
         b.draggable = true; // drag a team card onto another slot to swap
         b.ondragstart = (e) => {
-          ros.drag = mon.dex;
+          ros.drag = t.uid;
           ros.dragSlot = slot; // dropped on the list, it frees this slot
-          e.dataTransfer.setData('text/plain', String(mon.dex));
+          e.dataTransfer.setData('text/plain', t.uid);
           e.dataTransfer.effectAllowed = 'move';
         };
         b.ondragend = () => {
@@ -1116,18 +1428,7 @@ G.MenuUI = (() => {
     });
   }
 
-  /** Switch a team member between its normal and shiny look (the shiny icon on its slot). */
-  function rosToggleShiny(slot) {
-    const t = ros.team[slot];
-    if (!t || !G.DB.ownsShiny(t.dex)) return;
-    ros.team = ros.team.slice();
-    ros.team[slot] = { dex: t.dex, shiny: !t.shiny };
-    if (ros.dex === t.dex) ros.shiny = !t.shiny;
-    rosRenderAll();
-    refreshCells(rosView, [t.dex]);
-  }
-
-  /** The detail column: name row, rarity and types, BST and the stat hexagon, ability, moves. No buttons. */
+  /** The detail column: name row, rarity and types, BST and the stat hexagon, nature, ability, size, moves. No buttons. */
   function rosRenderDetail() {
     const s = G.DB.save,
       box = $('ros-detail');
@@ -1140,9 +1441,14 @@ G.MenuUI = (() => {
     }
     const p = G.DEX_BY[dex];
     const own = !!s.owned[dex];
-    if (!G.DB.ownsShiny(dex)) ros.shiny = false;
+    const copy = ros.uid ? G.Copies.get(s, ros.uid) : null;
+    ros.shiny = !!(copy && copy.isShiny);
     const color = !own ? '#5b83d6' : ros.shiny ? '#9ae6ff' : G.U.TYPE_COLOR[p.types[0]];
-    const head = `<div class="ros-dh"><b>${own ? p.name : '???'}</b><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
+    // A box copy gets a pencil to rename it (3b-2); the name itself is clickable too.
+    const pencil = copy
+      ? `<button type="button" class="ros-nick-btn" id="ros-nick" title="Rename (up to ${G.Copies.NICK_MAX} characters)">${G.Icons.html('pencil', 16)}</button>`
+      : '';
+    const head = `<div class="ros-dh"><div class="ros-dn">${own ? rosNameHtml(copy, p) : '<b>???</b>'}${pencil}</div><span>Nº ${String(p.dex).padStart(3, '0')} · ${GEN_NAMES[p.gen - 1]}</span></div>`;
     if (!own) {
       box.innerHTML =
         head +
@@ -1163,11 +1469,314 @@ G.MenuUI = (() => {
       `<div class="ros-db">
         <div class="ros-row"><span title="${G.Gacha.RARITY_NAME[p.rarity]}">${G.UI.stars(p.rarity, 24)}</span><span class="rtypes">${G.UI.typeChips(p.types)}</span></div>
         <div class="ros-box ros-stats"><span class="ros-bst">${G.Icons.bstStars(p.bst)}</span>${p.stats ? '<div id="ros-hex" class="hex-wrap"></div>' : ''}</div>
-        <div class="ros-row"><span>Ability</span><b>Coming soon</b></div>
+        ${rosInfoRows(copy, dex)}
         <div class="ros-box ros-mbox"><div class="ros-mh">Moves</div><div class="ros-moves">${moves}</div></div>
+        ${copy ? rosSellHtml(copy) : ''}
       </div>`;
     const hex = $('ros-hex');
-    if (hex) hex.appendChild(G.StatChart.make(p.stats, color, 340, 400, { radius: 0.4 }));
+    if (hex)
+      hex.appendChild(
+        G.StatChart.make(p.stats, color, 380, 364, { radius: 0.33, teamHex: true, iv: copy ? copy.iv : null })
+      );
+    const sellBtn = $('ros-sell');
+    if (sellBtn && copy) sellBtn.onclick = () => rosSell(copy.pokemonUUID);
+    const lockBtn = $('ros-lock'),
+      favBtn = $('ros-fav');
+    if (lockBtn && copy) lockBtn.onclick = () => rosToggle(copy.pokemonUUID, 'lock');
+    if (favBtn && copy) favBtn.onclick = () => rosToggle(copy.pokemonUUID, 'fav');
+    const nickBtn = $('ros-nick'),
+      nameEl = box.querySelector('.ros-dh .ros-nm');
+    if (nickBtn && copy) nickBtn.onclick = () => rosRename(copy.pokemonUUID);
+    if (nameEl && copy) {
+      nameEl.classList.add('renamable');
+      nameEl.onclick = () => rosRename(copy.pokemonUUID);
+    }
+  }
+
+  // ---------------- nicknames (step 3b-2) ----------------
+
+  /**
+   * Rename a box copy in place: the header name becomes a text field. Enter saves, Esc or clicking away cancels, an empty
+   * name goes back to the species name. Every key is cleaned as you type (G.Copies.cleanNickname), and again on save.
+   * Storage, like a box move: it saves at once and pending team edits stay pending.
+   */
+  function rosRename(uid) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid),
+      dn = document.querySelector('#ros-detail .ros-dn');
+    if (!c || !dn) return;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'field ros-nick-field';
+    inp.maxLength = G.Copies.NICK_MAX;
+    inp.setAttribute('translate', 'no');
+    inp.setAttribute('autocomplete', 'off');
+    inp.spellcheck = false;
+    inp.placeholder = G.DEX_BY[c.speciesID].name;
+    inp.value = c.nickname;
+    dn.innerHTML = '';
+    dn.appendChild(inp);
+    inp.focus();
+    inp.select();
+    let done = false;
+    const finish = (keep) => {
+      if (done) return;
+      done = true;
+      if (keep && G.Copies.setNickname(s, uid, inp.value) != null) {
+        G.Audio.sfx('confirm');
+        G.DB.commit(true);
+      }
+      rosRenderAll();
+      rosRefreshList([c.speciesID]);
+      markGrid(rosView);
+    };
+    inp.oninput = () => {
+      const clean = G.Copies.cleanNickname(inp.value, true);
+      if (clean === inp.value) return;
+      const at = Math.max(0, (inp.selectionStart || 0) - (inp.value.length - clean.length));
+      inp.value = clean;
+      inp.setSelectionRange(at, at);
+    };
+    inp.onkeydown = (e) => {
+      e.stopPropagation(); // the Team screen's Enter (place in slot) must not see this
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        finish(true);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        finish(false);
+      }
+    };
+    inp.onblur = () => finish(false);
+  }
+
+  // ---------------- selling a copy (step 3a-3) ----------------
+
+  /** On the saved team, or in the uncommitted team edits: either way it cannot be sold. */
+  function rosOnTeam(uid) {
+    const has = (list) => (list || []).some((t) => t && t.uid === uid);
+    return has(G.DB.save.team) || has(ros.team);
+  }
+
+  /** Sell, Lock and Favorite under Moves for a copy; Sell is disabled with the reason when it cannot be sold. */
+  function rosSellHtml(copy) {
+    const price = G.Copies.sellPrice(G.DB.save, copy.pokemonUUID);
+    if (price == null) return '';
+    const why = rosOnTeam(copy.pokemonUUID)
+      ? 'Remove it from your team first.'
+      : copy.isLocked
+        ? 'Unlock it first.'
+        : '';
+    const lock = `<button type="button" class="btn ghost small" id="ros-lock" data-sfx="click" title="${copy.isLocked ? 'It can be sold again' : 'A locked Pokémon is never sold'}">${G.Icons.html('lock', 14)} ${copy.isLocked ? 'Unlock' : 'Lock'}</button>`;
+    const fav = `<button type="button" class="btn ghost small" id="ros-fav" data-sfx="click" title="${copy.isFavorite ? 'Remove the mark' : 'Bulk sell skips favorites'}">${G.Icons.html('heart', 14)} ${copy.isFavorite ? 'Unfavorite' : 'Favorite'}</button>`;
+    return `<div class="ros-sell"><button type="button" class="btn gold small" id="ros-sell"${why ? ' disabled' : ' data-sfx="click"'}><span class="coin"></span> Sell for ${rosCoins(price)}</button>${lock}${fav}${why ? `<span class="sub">${why}</span>` : ''}</div>`;
+  }
+
+  /** Lock / unlock or favorite / unfavorite a box copy (3b-1). Storage, like a box move: it saves at once, pending team edits stay pending. */
+  function rosToggle(uid, which) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid);
+    if (!c) return;
+    const ok = which === 'lock' ? G.Copies.setLocked(s, uid, !c.isLocked) : G.Copies.setFavorite(s, uid, !c.isFavorite);
+    if (!ok) return;
+    G.DB.commit(true);
+    rosRenderAll();
+    rosRefreshList([c.speciesID]);
+    markGrid(rosView);
+  }
+
+  /** Sell copy uid from the box: always a confirm first. Storage, like a box move: it saves at once and pending team edits stay pending. */
+  async function rosSell(uid) {
+    const s = G.DB.save,
+      c = G.Copies.get(s, uid);
+    if (!c) return;
+    const p = G.DEX_BY[c.speciesID],
+      price = G.Copies.sellPrice(s, uid),
+      name = (c.isShiny ? 'shiny ' : '') + p.name,
+      last = G.Copies.all(s).filter((x) => x.speciesID === c.speciesID).length === 1;
+    const yes = await G.UI.ask(`Sell ${name} for ${rosCoins(price)} PokéCoins?`, {
+      title: 'Sell Pokémon',
+      ok: 'Sell',
+      note:
+        (c.isFavorite ? `${p.name} is a favorite. ` : '') +
+        (c.evTotal ? `It has ${c.evTotal} EVs. They are lost. ` : '') +
+        (last
+          ? `This is your last ${p.name}. The Pokédex keeps it.`
+          : `You will have ${rosCoins((s.coins || 0) + price)} PokéCoins.`),
+    });
+    if (!yes) return;
+    const r = G.Copies.sell(s, uid, rosPending());
+    if (!r.ok) {
+      G.Audio.sfx('error');
+      G.UI.toast(
+        r.error === 'team'
+          ? 'Remove it from your team first.'
+          : r.error === 'locked'
+            ? 'Unlock it first.'
+            : 'That Pokémon is gone.'
+      );
+      rosRenderAll();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    G.DB.commit(true);
+    G.UI.toast(`Sold ${name} for ${rosCoins(r.coins)} PokéCoins`);
+    if (ros.uid === uid) ros.uid = null; // the species view, never the next copy (no second sale by accident)
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
+    rosRenderAll();
+  }
+
+  // ---------------- bulk sell (step 3b-3) ----------------
+
+  /** The uncommitted team edits' copies: none of them can be sold. */
+  function rosPending() {
+    return ros.team.filter((t) => t && t.uid).map((t) => t.uid);
+  }
+
+  /** Can this copy go in a batch? Never one on the team (saved or pending), locked, or a favorite (3b D2). */
+  function rosCanBulk(c) {
+    return !rosOnTeam(c.pokemonUUID) && !c.isLocked && !c.isFavorite;
+  }
+
+  /** A cell's look in select mode: ticked, or dimmed when it cannot be ticked. */
+  function rosTickClass(cell, c) {
+    cell.classList.toggle('tick', ros.ticked.has(c.pokemonUUID));
+    cell.classList.toggle('notick', !rosCanBulk(c));
+    if (!cell.querySelector('.tick-box')) cell.insertAdjacentHTML('beforeend', '<span class="tick-box"></span>');
+    cell.title = rosCanBulk(c) ? '' : rosOnTeam(c.pokemonUUID) ? 'On your team' : c.isLocked ? 'Locked' : 'Favorite';
+  }
+
+  /** The shown-count line, with Select, or in select mode: Select repeats, Clear, Sell N for X, Cancel (3b D9, D12). */
+  function rosBulkBar() {
+    const b = ros.bulk;
+    if (!b) return;
+    const s = G.DB.save,
+      bar = $(b.v.pre + 'shown');
+    bar.innerHTML = '';
+    bar.appendChild(document.createTextNode(`${b.shown} shown · ${b.total} / ${G.Copies.BOX_SIZE} in this box`));
+    if (!b.total) {
+      ros.select = false;
+      ros.ticked.clear();
+      return;
+    }
+    const wrap = document.createElement('span');
+    wrap.className = 'ros-bulk';
+    const btn = (label, cls, fn, off) => {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'btn small ' + cls;
+      x.innerHTML = label;
+      x.disabled = !!off;
+      if (!off) x.dataset.sfx = 'click';
+      x.onclick = fn;
+      wrap.appendChild(x);
+    };
+    const redraw = () => {
+      renderGrid(b.v);
+      markGrid(b.v);
+    };
+    if (!ros.select) {
+      btn('Select', 'ghost', () => {
+        ros.select = true;
+        ros.ticked.clear();
+        redraw();
+      });
+    } else {
+      for (const id of [...ros.ticked]) if (!b.ids.has(id) || !G.Copies.get(s, id)) ros.ticked.delete(id); // only what is shown
+      let coins = 0;
+      for (const id of ros.ticked) coins += G.Copies.sellPrice(s, id) || 0;
+      const n = ros.ticked.size;
+      btn('Select repeats', 'ghost', rosSelectRepeats);
+      btn(
+        'Clear',
+        'ghost',
+        () => {
+          ros.ticked.clear();
+          redraw();
+        },
+        !n
+      );
+      btn(`<span class="coin"></span> Sell ${n} for ${rosCoins(coins)}`, 'gold', rosSellTicked, !n);
+      btn('Cancel', 'ghost', () => {
+        ros.select = false;
+        ros.ticked.clear();
+        redraw();
+      });
+    }
+    bar.appendChild(wrap);
+  }
+
+  /** Tick every repeat in this box beyond the one kept (G.Copies.repeatsIn, 3b D10), among the copies the filters show. */
+  function rosSelectRepeats() {
+    const b = ros.bulk;
+    if (!b || typeof ros.tab !== 'number') return;
+    const pick = G.Copies.repeatsIn(G.DB.save, ros.tab, rosPending()).filter((id) => b.ids.has(id));
+    if (!pick.length) {
+      G.UI.toast('No repeats to select in this box');
+      return;
+    }
+    ros.ticked = new Set(pick);
+    renderGrid(b.v);
+    markGrid(b.v);
+  }
+
+  /** Sell every ticked copy after one confirm with the count and total (3b D12). Storage: it saves at once, pending team edits stay pending. */
+  async function rosSellTicked() {
+    const s = G.DB.save,
+      ids = [...ros.ticked];
+    if (!ids.length) return;
+    let coins = 0;
+    for (const id of ids) coins += G.Copies.sellPrice(s, id) || 0;
+    const yes = await G.UI.ask(`Sell ${ids.length} Pokémon for ${rosCoins(coins)} PokéCoins?`, {
+      title: 'Sell Pokémon',
+      ok: 'Sell',
+      note: 'Team, locked and favorite Pokémon are never part of a batch.',
+    });
+    if (!yes) return;
+    const r = G.Copies.sellMany(s, ids, rosPending());
+    ros.ticked.clear();
+    if (r.sold) {
+      G.Audio.sfx('confirm');
+      G.DB.commit(true);
+      G.UI.toast(`Sold ${r.sold} Pokémon for ${rosCoins(r.coins)} PokéCoins`);
+    } else {
+      G.Audio.sfx('error');
+      G.UI.toast('Nothing was sold');
+    }
+    if (ros.uid && !G.Copies.get(s, ros.uid)) ros.uid = null; // the species view, as after a single sale
+    rosRenderTabs();
+    renderGrid(rosView);
+    markGrid(rosView);
+    rosRenderAll();
+  }
+
+  /** Nature, Ability, Height, Weight and EVs of a copy. A species from the Pokedex tab has its possible abilities and real size, no nature. */
+  function rosInfoRows(copy, dex) {
+    const row = (label, value) => `<div class="ros-row"><span>${label}</span><b>${value}</b></div>`;
+    const abilityText = (a) => a.name + (a.hidden ? ' (Hidden)' : '');
+    // Pokebox step 5: the nonzero EVs and the total, "Atk 252 · HP 180 · 432 / 510" (earned at the end of a run).
+    const evText = (c) =>
+      ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe']
+        .map((n, k) => (c.ev[k] ? n + ' ' + c.ev[k] : ''))
+        .filter(Boolean)
+        .concat(c.evTotal + ' / 510')
+        .join(' · ');
+    if (copy)
+      return (
+        row('Nature', copy.natureName) +
+        row('Ability', abilityText({ name: copy.abilityName, hidden: copy.abilityHidden })) +
+        row('Height', copy.heightM.toFixed(2) + ' m') +
+        row('Weight', copy.weightKg.toFixed(1) + ' kg') +
+        row('EVs', evText(copy))
+      );
+    const sp = G.Copies.species(dex);
+    return (
+      row('Ability', sp.abilities.map(abilityText).join(' / ')) +
+      row('Height', sp.heightM.toFixed(1) + ' m') +
+      row('Weight', sp.weightKg.toFixed(1) + ' kg')
+    );
   }
 
   // ---------------- upgrades (B/W screen, display only) ----------------
@@ -1224,7 +1833,7 @@ G.MenuUI = (() => {
   /** The Pokémon the tab cycles through: the Team screen's draft team, else the saved one. */
   function upgParty() {
     const t = ros.team.some(Boolean) ? ros.team : G.DB.save.team || [];
-    return t.filter(Boolean).map((x) => x.dex);
+    return [...new Set(t.filter(Boolean).map((x) => x.dex))];
   }
 
   /**

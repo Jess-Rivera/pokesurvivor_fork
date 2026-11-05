@@ -37,7 +37,7 @@
   display: block;
   padding: 0;
   animation: none;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
 }
 #scr-menu.hidden {
   display: none;
@@ -167,7 +167,7 @@
   justify-content: flex-end;
   align-items: center;
   padding: 0 calc(24 * var(--u)) 0 0;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
 }
 #topbar.hidden {
   display: none;
@@ -265,7 +265,7 @@
   justify-content: flex-end;
   align-items: flex-end;
   padding: 0 calc(24 * var(--u)) 0 0;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
   pointer-events: none;
 }
 #botbar.hidden {
@@ -308,7 +308,7 @@
   left: calc(16 * var(--u));
   max-width: calc(100% - var(--bw-panel) - 48 * var(--u));
   line-height: max(calc(41 * var(--u)), 16px);
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
   font-size: max(calc(17 * var(--u)), 10px);
   color: rgba(140, 255, 247, 0.75);
   text-shadow: none;
@@ -354,7 +354,7 @@
   margin-bottom: 16px;
 }
 .boot-in p {
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
 }
 
 /* ---------- region select: cards slide out from under the panel over a dimmed overworld ----------
@@ -401,7 +401,7 @@
   border: 0;
   background: url('../assets/ui/menu/region.png') no-repeat 0 0 / 100% 100%;
   image-rendering: pixelated;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
   font-size: max(calc(30 * var(--u)), 13px);
   line-height: 1.1;
   color: #fff;

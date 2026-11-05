@@ -94,6 +94,43 @@
   top: 7px;
   right: 20px;
 }
+/* Favorite and lock marks (3b-1), bottom-left inside the cut corner. */
+#ros-grid .cell .badge-l {
+  position: absolute;
+  z-index: 3;
+  left: 10px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Bulk sell select mode (3b-3): a ticked cell gets a gold wash (inside the cell's clip shape), one that cannot be ticked dims. */
+#ros-grid .cell .tick-box {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  background: rgba(255, 210, 63, 0.32);
+  pointer-events: none;
+}
+#ros-grid .cell.tick .tick-box {
+  display: block;
+}
+#ros-grid .cell.notick {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#ros-shown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.ros-bulk {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 /* The name runs up the right side, read bottom to top like a spine (a 90 degree turn keeps pixel text crisp).
    It sits behind the sprite. */
 #ros-grid .cell b {
@@ -210,6 +247,94 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* A name with its gender symbol: a long name shortens, the symbol stays. */
+.ros-nm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ros-nm .nm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ros-gender {
+  flex: none;
+}
+.ros-gender.male {
+  color: #7fbfff;
+}
+.ros-gender.female {
+  color: #ff9ec6;
+}
+/* Dark enough for the yellow header. */
+.ros-dh .ros-gender.male {
+  color: #0b4fa8;
+}
+.ros-dh .ros-gender.female {
+  color: #b5246a;
+}
+#ros-grid .cell .ros-nm {
+  justify-content: center;
+  max-height: calc(100% - 52px);
+}
+/* The name in a box cell reads bottom to top; the symbol stays upright. */
+#ros-grid .cell .ros-gender {
+  transform: rotate(180deg);
+}
+/* Row 3 of the filters: Pokedex, Box 1, Box 2... */
+.ros-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ros-tab {
+  padding: 5px 14px;
+  border: 1px solid rgba(244, 248, 255, 0.35);
+  background: rgba(0, 33, 57, 0.5);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.ros-tab:hover,
+.ros-tab:focus-visible {
+  border-color: var(--bw-title);
+  outline: none;
+}
+.ros-tab.on {
+  background: var(--bw-title);
+  border-color: var(--bw-title);
+  color: #000;
+  text-shadow: none;
+}
+.ros-tab.drop {
+  border-color: var(--gold);
+  background: rgba(255, 210, 63, 0.3);
+}
+/* A box not bought yet: coin icon and price. Only the next box is bright; the rest are dimmed. */
+.ros-tab.ros-buy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold);
+}
+.ros-tab.ros-buy .coin {
+  width: 14px;
+  height: 14px;
+  vertical-align: 0;
+}
+.ros-tab.ros-buy.dim {
+  opacity: 0.45;
+  cursor: default;
+}
+.ros-tab.ros-buy.dim:hover,
+.ros-tab.ros-buy.dim:focus-visible {
+  border-color: rgba(244, 248, 255, 0.35);
+}
 .ros-slot.empty .rinfo b {
   color: var(--muted);
   font-weight: 400;
@@ -225,20 +350,12 @@
   padding: 2px 9px;
   font-size: 15px;
 }
-/* The shiny icon is the Normal / Shiny switch: dim when off. One art pixel in from the corner. */
+/* The shiny icon marks a shiny copy. One art pixel in from the corner. */
 .ros-slot .rsh {
   position: absolute;
   top: 17px;
   right: 30px;
-  padding: 0;
-  border: 0;
-  background: none;
   line-height: 0;
-  cursor: pointer;
-  opacity: 0.35;
-}
-.ros-slot .rsh.on {
-  opacity: 1;
 }
 /* Upgrade, in the bottom-right corner like the shiny star in the top-right: the label, then the arrow turned up. */
 .ros-slot .rupg {
@@ -288,11 +405,44 @@
   text-shadow: none;
 }
 .ros-dh b {
-  font-size: 22px;
+  font-size: 20px;
 }
 .ros-dh span {
-  font-size: 14px;
+  font-size: 16px;
   white-space: nowrap;
+}
+.ros-dh .ros-nm span {
+  font-size: inherit;
+}
+/* The name with its rename pencil (3b-2), and the text field that replaces them while renaming. */
+.ros-dn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ros-dh .ros-nm.renamable {
+  cursor: text;
+}
+.ros-nick-btn {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+.ros-nick-btn:hover,
+.ros-nick-btn:focus-visible {
+  filter: brightness(1.25);
+  outline: none;
+}
+.ros-nick-field {
+  width: 15em;
+  max-width: 100%;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 18px;
 }
 .ros-db {
   flex: 1;
@@ -309,16 +459,21 @@
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
+  font-size: 18px;
   background: rgba(0, 33, 57, 0.5);
 }
 .ros-row b {
   margin-left: auto;
   font-weight: 400;
-  color: var(--muted);
+  color: #fff;
+  text-align: right;
 }
 .ros-row .rtypes {
   display: flex;
   gap: 6px;
+}
+.ros-row .rtypes .type {
+  font-size: 14px;
 }
 .ros-box {
   position: relative;
@@ -337,16 +492,33 @@
 }
 .ros-detail .stat-hex {
   display: block;
-  width: 88% !important;
+  width: 100% !important;
   height: auto !important;
   margin: 0 auto;
 }
 .ros-mbox {
   flex: 1 0 auto;
 }
+/* Sell, Lock and Favorite for a box copy (3a-3, 3b-1): under the moves box; the reason sits after the buttons. */
+.ros-sell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ros-sell .btn .coin {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+.ros-sell .sub {
+  font-size: 13px;
+  color: var(--muted);
+}
 .ros-mh {
   margin: 0 0 6px;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
 }
 .ros-moves {
@@ -361,7 +533,7 @@
   gap: 6px;
   min-width: 0;
   padding: 4px 8px;
-  font-size: 14px;
+  font-size: 16px;
   background: rgba(0, 0, 0, 0.25);
 }
 .ros-mv span {
@@ -374,7 +546,10 @@
 }
 @media (max-height: 820px) {
   .ros-detail .stat-hex {
-    width: 66% !important;
+    width: 84% !important;
+  }
+  .ros-detail .ros-row {
+    padding: 5px 14px;
   }
 }
 
@@ -403,7 +578,7 @@
   border: 0;
   background: url('../assets/ui/team/btn.png') no-repeat 0 0 / 134px 36px;
   image-rendering: pixelated;
-  font-family: 'PokeBW', 'Pixelify', monospace;
+  font-family: 'PokeBW', 'GameFont', monospace;
   font-size: 18px;
   color: #fff;
   text-shadow: 2px 2px 0 #000;

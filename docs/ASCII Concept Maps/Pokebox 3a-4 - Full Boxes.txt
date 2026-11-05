@@ -1,0 +1,191 @@
+POKEBOX STEP 3a, MICROSTEP 4: FULL BOXES  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md "Rulings for step 3" (full boxes on a pull).
+Finishes 3a. Out of scope: lock, favorite, nicknames, bulk sell (3b).
+
+=====================================================================
+ TODAY vs AFTER
+=====================================================================
+
+ TODAY: every box full -> G.Copies.add drops the copy into the LAST box anyway
+        (Box 5 can hold 501, 502, ... no limit)
+
+ AFTER: every box full -> no copy is made. The Pokemon is SOLD on arrival
+        at its sell price (15/30/60/120/300, x3 shiny). The Pokedex record
+        is still written.
+
+=====================================================================
+ A PULL WITH TOO LITTLE ROOM  [Approved ruling, 2026-11-03]
+=====================================================================
+
+   click Pull x10, free places = 3  (< 10)
+        |
+        v
+   +--------------------------------------------------------------+
+   | Not enough space                                              |
+   | You don't have enough space. Any pokemon pulled that can't    |
+   | be placed in a slot will be automatically sold.               |
+   | 3 free places, 10 Pokemon.                                    |
+   |                              [ Pull anyway ]  [ Cancel ]      |
+   +--------------------------------------------------------------+
+        |                                   |
+        v                                   v
+   pull runs, never blocked            nothing spent
+        |
+        v
+   all 10 rolled first, then the 3 places go by PRIORITY (D2):
+     1. new to the Pokedex   2. shiny   3. higher rarity   4. pull order
+   the other 7 are sold on arrival, coins paid at once
+
+   result cards:
+   +--------+ +--------+ +---------------+
+   | NEW!   | | To Box2| | Box full      |
+   |  mon   | |  mon   | | sold +15      |  <- dimmed like a sold card,
+   |        | |[Sell+30]| |  (no button)  |     no Sell button
+   +--------+ +--------+ +---------------+
+
+   free places >= pull size: no warning, same as today.
+
+=====================================================================
+ FULL BOXES DURING A RUN  (rescue, wild shiny)
+=====================================================================
+
+   G.onRescue / G.onShinyCaught with every box full
+        -> sold on arrival, coins to your saved PokeCoins (D3)
+        -> message: "Your boxes are full: <name> was sold for N PokeCoins."
+           (new species keep their inherited line, then this line)
+
+=====================================================================
+ DECISIONS FOR JESS  (new rules flagged, approve or change)
+=====================================================================
+
+ D1  The warning text is the approved one, word for word, plus a count line
+     "3 free places, 10 Pokemon."; buttons "Pull anyway" / "Cancel".
+     REC: yes
+
+ D2  [NEW RULE] Who gets the free places in a pull: new to the Pokedex first,
+     then shiny, then higher rarity, then pull order.
+     REC: yes. Alternative: plain pull order (a new 5 star in card 10 would be
+     sold while a repeat 1 star in card 1 is kept: feels bad).
+
+ D3  [NEW RULE] Full boxes in a run: a rescue or wild shiny is sold on arrival
+     too, and the coins go straight to your saved PokeCoins (not the run's
+     coins), so nothing depends on how the run ends.
+     REC: yes (same rule as the pull; there is no box screen in a run)
+
+ D4  [NEW RULE] A Pokemon sold on arrival still counts in the Pokedex
+     (new species, new shiny, achievements), like selling your last copy.
+     REC: yes (matches 3a-3 D1)
+
+ D5  Debug: G.Debug.addCopy with full boxes adds what fits and logs the rest
+     as "not added"; it never sells. maxAll is unchanged (1,932 copies fit
+     in 5 boxes, 2,500 places).
+     REC: yes
+
+ D6  New debug command G.Debug.fillBoxes(leave): tops your boxes up with
+     debug copies (Caterpie, 1 star) until `leave` places are free. Saved.
+     REC: yes (feel-testing a full box otherwise takes hundreds of pulls)
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/systems/copies.js
+   +- freePlaces(save): sum of (500 - copies) over the boxes you have
+   +- add: returns null when every box is full (no overflow into the last box)
+   +- priceFor(dex, shiny): the sell price without a copy (for a sale on arrival)
+   '- freeBox / add comments updated
+   why: the box owns its own capacity
+
+ js/core/db.js  obtain
+   '- with no room: record written, coins paid, returns { isNew, uid: null,
+      box: null, sold: N }
+   why: one path, so the gacha, rescues and wild shinies share D3 and D4
+
+ js/systems/gacha.js  pull
+   +- roll all n first (pity, guarantee and shiny as today), then obtain in
+      D2 priority order; results stay in pull order for the cards
+   '- each result gains sold (coins) when it was sold on arrival
+   why: D2 needs every roll known before placing
+
+ js/ui/gacha-ui.js  pull + result cards
+   +- before pulling: free places < pull size -> the D1 warning (G.UI.ask)
+   '- sold-on-arrival cards: "Box full · sold +N", dimmed, no Sell button
+
+ js/game.js  G.onRescue, G.onShinyCaught
+   '- a sold result shows the D3 line (new English string)
+
+ js/core/debug.js
+   +- fillBoxes(leave), header line, export
+   '- addCopy stops at full and logs (D5)
+
+ After the build (free-edit): changelog (warning, auto-sell), pokebox-plan
+ status (3a done) + D2 to D4 rulings, the 3a-2 map's D6 note marked replaced,
+ DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ CHANGED  docs/proposals/pokebox-copies-harness.js   new section 17 "full boxes"
+   (loads the real copies.js and db.js, where capacity and obtain live)
+     - freePlaces: 2 empty boxes 1,000; after 997 copies 3; after buying
+       Box 3, 503; 5 full boxes 0
+     - add on full boxes returns null and saves nothing (no record 2,501)
+     - obtain on full boxes: no copy, coins +price (1 star 15, shiny 5 star
+       900), Pokedex record written, isNew kept, sold = price
+     - a full-box sale survives commit + reload (coins kept, no copy)
+     - priceFor matches sellPrice of a real copy, every rarity, shiny x3
+   why: section 9's "copy 501 goes to Box 2" stays; this adds the cap
+
+ CHANGED  docs/proposals/pokebox-sources-harness.js  new section 7
+   (loads the real gacha.js)
+     - 3 free places, a 10-pull: exactly 3 copies, 7 sold, coins = sum of
+       the 7 prices, every result has uid XOR sold
+     - D2 order: with 1 free place and a forced new species in the last
+       pull, that one gets the place
+     - D2 order: shiny before rarity, rarity before pull order
+     - results stay in pull order (card i = roll i)
+     - pity and the 4 star guarantee still hold with rolling first
+   why: the placement order is gacha logic; only this harness loads it
+
+ CHANGED  docs/proposals/pokebox-copies-mutate.js   +7 mutations
+     - add overflows into the last box again
+     - freePlaces off by one box
+     - a sale on arrival pays nothing
+     - a sale on arrival skips the Pokedex record
+     - the pull places in plain pull order (D2 ignored)
+     - shiny not ranked above rarity
+     - results come back in placement order, not pull order
+   why: proves sections 17 and 7 catch each break
+
+ NEW DEBUG SET  G.Debug.fillBoxes(leave)
+   look for: the tab counts read 500 / 500 except the last free places;
+   G.Debug.fillBoxes(0) then any pull warns and every card is sold.
+
+ NO new harness file (copies.js, db.js, gacha.js already loaded by the two
+ pokebox harnesses). NO check.js change. NO intent scenarios (no moves).
+
+ UI CHECK (one-off file:// headless probe, not committed)
+   fillBoxes(3), tickets(10), Pull x10: the warning shows the count;
+   Cancel spends nothing; Pull anyway: 3 kept cards, 7 "Box full · sold"
+   cards, top bar coins up by their sum; a run with full boxes:
+   G.onRescue(25, 'Pikachu') shows the D3 line; no page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. G.Debug.fillBoxes(3), G.Debug.tickets(10). Shop, Pull x10: warning,
+      Cancel spends nothing.
+   2. Pull anyway: 3 placed (new ones first), 7 sold, coins went up.
+   3. G.Debug.fillBoxes(0), start a run, G.onRescue(25, 'Pikachu'):
+      the "boxes are full" line, coins up 30 after the run.
+   4. Sell a few from the box, pull 1: no warning.
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Feel: a full box quietly converts pulls to coins; the warning and the
+     sold cards are the only signals. Box tab counts (500 / 500) help.
+   - Rolling first changes nothing about odds (same rolls, same order);
+     only placement changes. Harness section 7 checks pity still works.
+   - Save safety: no field added; old saves already store boxCount.

@@ -1,31 +1,35 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-03, end of session (Claude Code, home). feature/item-rework-v2 is being merged to main; start the next branch from main.
+Last updated: 2026-11-04, end of session (Quick, work machine). Branch: feature/pokeboxes, not merged to main.
 
 ## Where we are
-- ITEM REWORK V2 is DONE for now and feel-tested good. Jess is happy with the item count.
-- Shipped: one drop table (js/data/drops.js, docs/ITEMS.md); Oran and Sitrus replace the heal pickup; a gym leader drops one item; rock and small chest 6 HP; Band, Specs, Muscle Band, Wise Glasses by category; 9 new Pokemon items (45 total); pickup lines ("Oran Berry: heal 30% HP"); Space and Enter no longer restart the run.
-- Playtest tune: pickup radius split (XP orbs 120 px plus the upgrade; everything else, coins included, fixed 78 px; magnet pickup and shrine hit both) and Pinap retune (+0.5 for 20 s, +1 for 10 s, +2 for 5 s). Numbers in BALANCE.md. Dropped items now draw their real sprite at 32.
-- PARKED (Jess, 2026-11-03): batch 1 steps 4 to 6 (12 ground + 10 Pokemon items). Rulings stay approved and unbuilt; docs/proposals/item-rework-v2-handoff.md holds them. Do not start unless Jess reopens them.
+- POKEBOX steps 1 to 5 BUILT, checked and feel-tested by Jess (2026-11-04).
+  - Step 4: a team copy's IVs and nature feed its run stats (G.Stats.profile, G.Copies.profileOf). Enemies 0 IV, neutral.
+  - Step 5: EVs from kills into six typed run banks (wild 1/1000, elite 1/500, gym 1x, shiny x2), given out on the "Train your team" screen after the run (#scr-evs), 252 per stat, 510 per Pokemon. Design: docs/proposals/ev-progression.md. Rates are TUNE before playtesters (BALANCE.md "EVs").
+  - Ride-along: the dead timed-boss data (BOSS_SLOTS, bossScale, BOSSES) removed from js/data/enemies.js.
+- Step 5b (EV-lowering berries) PARKED: Jess is designing the UI in Photoshop at home. Plan map: docs/ASCII Concept Maps/Pokebox 5b - EV-Lowering Berries.txt, decisions G1 to G6 open; the map's panel layout is a placeholder, the mockup wins. Suggested home for mockups: docs/mockups/.
+- Spec, rulings, status: docs/proposals/pokebox-plan.md. Maps: docs/ASCII Concept Maps/Pokebox 4 and 5.
 
 ## Next
-1. Jess picks the next branch, cut from main. Nothing is chosen yet.
-2. Move tuning: Jess has moves to tune from the 10 min playtest, not named yet. Get the list, check each against docs/MOVE-INTENT.md, then give a no-code plan.
-3. Run items second pass (9 drafted, more needed before bosses go run-only), then upgrade points (TODO.md "Upgrade points catalog").
-4. Before the art branch: decide sprite scale, camera zoom and Pixi (benchmark first, own branch).
-5. Gameplay queue: fields slice (Reflect), accuracy trackers (Smokescreen), gym loops, line of sight for cones.
+1. Step 5b once the mockups are in the repo: settle G1 to G6, then build.
+2. Move tuning: moves from the 10 min playtest, not named yet (#18 Quick Attack / Aerial Ace may be one). Check each against docs/MOVE-INTENT.md, then a plan.
+3. Run items second pass, then upgrade points (TODO.md "Upgrade points catalog").
+4. Gameplay queue: fields slice (Reflect, #20), accuracy trackers (Smokescreen, #21), gym loops, line of sight for cones.
+PARKED: item batch 1 steps 4 to 6 (docs/proposals/item-rework-v2-handoff.md).
 
 ## Watch
-- smoke-ui is flaky: 1 of 4 runs on 2026-11-03 failed with net::ERR_FAILED on assets/pokemon/7/Charge.png (the file exists); cause not found.
-- check.js reports 5 lint errors (warn-only), not traced.
+- smoke-ui has been flaky (passes on rerun); check.js reports lint errors warn-only.
+- After big multi-edit builds, recheck markers (a stale-copy edit once overwrote menu.js work).
+- At 1280 x 720 the Team detail pane scrolls after about two rows of moves; step 5 added an EVs row.
+- Board mirror in TODO.md was not re-synced at this wrap-up (GitHub API returned empty); last good sync this morning.
 
 ## Open owner decisions
-- Run-only boss pool: how many distinct run items first (34 with the 9 drafted, 18 are Power Stones).
-- Pixel density and sprite scale; region unlock rule; grey out Friends and Leaderboard; Korataki W01 licence.
+- Board cleanup (TODO.md Board mirror): stale `blocked` on #5 and #11, stale labels on closed issues, Pokebox has no issue.
+- Run-only boss pool size; pixel density and sprite scale; region unlock rule; grey out Friends and Leaderboard; Korataki W01 licence.
 - [Open] loop 2+: gym mons share stat raises. O4: badge boosts stacking. Psych Up, Baton Pass, Swagger, Psychic widening.
 
 ## Docs and code still differ (approved, not built)
-- Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9), item batch 1 steps 4 to 6. Dodge: no touch button, not synced in co-op (TODO).
+- Step 5b; nicknames in runs and nickname search (TODO); co-op IVs and EVs (deferred). Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js legacy hooks, regional forms (#9), item batch 1 steps 4 to 6.
 
-Rules: CLAUDE.md. Run npm run format before handing over. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.
+Rules: CLAUDE.md. file:// limits: CSS mask-image is blocked (use clip-path); headless runs must click #tap-start first or keys go to Login.

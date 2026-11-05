@@ -217,7 +217,7 @@ out.push('');
 const body = out.join('\n') + '\n';
 const file = path.join(root, 'docs', 'ITEMS.md');
 if (process.argv.includes('--check')) {
-  const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '';
   if (cur !== body) {
     console.log('docs/ITEMS.md is out of date: run node tools/items_report.js');
     process.exit(1);

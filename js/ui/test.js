@@ -95,7 +95,7 @@ G.TestUI = (() => {
     save.starter = dex;
     save.partner = dex;
     save.personality = result ? { trait: result.trait, scores } : null;
-    G.DB.grant(dex, 'starter');
+    G.DB.obtain(dex, false, 'starter'); // the Pokedex record and the starter's copy
     G.DB.commit();
     G.UI.toast('¡' + G.DEX_BY[dex].name + ' se une a ti!');
     G.Flow.goMenu();

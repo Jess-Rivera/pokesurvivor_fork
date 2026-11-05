@@ -1,0 +1,184 @@
+POKEBOX STEP 3a, MICROSTEP 3: SELLING  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md "Rulings for step 3" (sell price) and "Step 3 handoff".
+Out of scope: full boxes on a pull (3a-4). Lock and favorite buttons, nicknames, bulk sell (3b).
+
+=====================================================================
+ SELL PRICE  [Approved 2026-11-03]
+=====================================================================
+
+   rarity      1*   2*   3*   4*    5*
+   normal      15   30   60   120   300
+   shiny       45   90   180  360   900     (x3)
+
+   Rarity = the species' rarity (same stars the box cell shows).
+
+=====================================================================
+ WHERE YOU SELL
+=====================================================================
+
+ A) TEAM SCREEN, a copy selected from a box (detail pane, under Moves)
+
+   +---------------------------------------+
+   | Pikachu (m)            No 025 · Kanto |
+   | ** rarity  [Electric]                 |
+   | ( hexagon )                           |
+   | Nature  Ability  Height  Weight       |
+   | Moves ...                             |
+   | [ (c) Sell for 30 ]                   |   <- copy not on the team
+   +---------------------------------------+
+     on the team (saved, or in your uncommitted edits):
+   | [ Sell for 30 ] dimmed                |
+   |   "Remove it from your team first."   |
+
+   click -> confirm "Sell Pikachu for 30 PokeCoins?"
+            note: "This is your last Pikachu. The Pokedex keeps it."  (only if last)
+         -> sold: coins +30, saved at once (like a box move), the box
+            cell is gone, the detail pane shows the species (Pokedex view),
+            tab counts and top bar update (3a-2b listeners)
+
+   Pokedex tab (a species, no copy chosen): no sell button.
+
+ B) GACHA RESULTS, after a pull (the cards)
+
+   +--------+  +--------+  +--------+
+   | NEW!   |  | To Box1|  | To Box1|
+   |  mon   |  |  mon   |  |  mon   |
+   |        |  |[Sell+30]| |[Sell+60]|
+   +--------+  +--------+  +--------+
+      new        repeat      repeat
+
+   click Sell on a repeat:
+     1* to 3*, not shiny   -> sold at once, no dialog
+     4* / 5* or shiny      -> confirm first
+   then the card reads "Sold +30" (no undo), coins +30
+
+=====================================================================
+ WHAT CAN'T BE SOLD
+=====================================================================
+
+   on the saved team ............ no ("Remove it from your team first.")
+   in uncommitted team edits .... no (same message)
+   locked ........................ no (nothing sets a lock until 3b; the rule
+                                       is in now so 3b is only the button)
+   already sold / not found ...... no ("That Pokemon is gone.")
+
+=====================================================================
+ DECISIONS FOR JESS  (each a rule, approve or change)
+=====================================================================
+
+ D1  The last copy of a species CAN be sold, with a "your last one" note.
+     The Pokedex keeps the species (owned stays), so collection
+     achievements and the Pokedex tab do not drop.           [closes plan Open]
+     REC: yes
+
+ D2  A copy in your uncommitted team edits counts as on the team.
+     REC: yes (otherwise you could sell a Pokemon you just slotted)
+
+ D3  Gacha cards: only repeats get a Sell button; new cards do not
+     (sell those from the box).                              REC: yes, fewer misclicks
+
+ D4  Gacha card confirm: none for 1* to 3* normals, a confirm for 4*, 5*
+     and any shiny.                                          REC: yes
+     (repeats of commons are the 10-pull clutter; a dialog per card is slow)
+
+ D5  The box always confirms (every rarity).                 REC: yes
+     (selling there is deliberate and rare until 3b bulk sell)
+
+ D6  After a box sale the detail pane shows the species, not the next copy.
+     REC: yes (selecting a neighbour risks a second accidental sale)
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/systems/copies.js
+   +- SELL_PRICE table (moves here from gacha.js; one owner), SHINY_SELL x3
+   +- sellPrice(save, id): by the species' rarity, x3 shiny; null if gone
+   +- sell(save, id, also): refuses team / also-listed (pending edits) /
+   |  locked / missing; removes the one record, pays coins
+   |  -> { ok, coins, last } | { ok: false, error: 'team'|'locked'|'none' }
+   '- exported
+   why: the box rules live in the module that owns save.box
+
+ js/systems/gacha.js
+   '- REFUND becomes G.Copies.SELL_PRICE (same object), so nothing else breaks
+     (copies.js loads first in dev.html, line 867 vs 893)
+
+ js/ui/menu.js  rosRenderDetail (about line 1340) + a small rosSell
+   +- Sell button under Moves when a box copy is selected
+   +- on the team or in ros.team: disabled with the message (D2)
+   '- confirm (D1 note, D5), sell, commit, clear the copy (D6), redraw
+      grid + tabs + detail
+
+ js/ui/gacha-ui.js  result cards (about line 260)
+   '- repeat cards get a Sell +N button; D4 confirm rule; then "Sold +N"
+
+ css/bw-team.css + the gacha card styles
+   '- the two buttons, the disabled state, the sold tag
+
+ After the build (free-edit): changelog new line (selling, prices),
+ pokebox-plan status + D1 to D6 rulings (closes the last-copy Open),
+ BALANCE.md sell prices, DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ CHANGED  docs/proposals/pokebox-copies-harness.js   new section 15 "selling"
+   (it loads the real copies.js and db.js; selling is a copies.js function)
+   stub G.DEX_BY gains rarity for the species used. Hand-derived from the
+   approved price table:
+     - prices: 1* 15, 2* 30, 3* 60, 4* 120, 5* 300; shiny x3 (5* shiny 900)
+     - a sale removes exactly that copy, pays exactly once, returns coins
+     - a second sale of the same id: 'none', coins unchanged
+     - a copy on save.team: 'team', nothing changes
+     - a copy only in the "also" list (pending edits): 'team'
+     - a locked copy: 'locked'
+     - last copy: sold, last = true, owned record kept
+     - after a sale, commit + reload: the copy stays gone, team links intact
+     - box counts drop in the right box
+   why here: no other harness loads copies.js
+
+ CHANGED  docs/proposals/pokebox-sources-harness.js  section 5
+   - GA.REFUND is G.Copies.SELL_PRICE (the same table, not a copy)
+   - a pulled repeat's uid sells for its rarity price (pull -> sell path)
+   why: the gacha card sells the uid the pull returns
+
+ CHANGED  docs/proposals/pokebox-copies-mutate.js   +7 mutations
+     - shiny sold at x1
+     - price by the wrong rarity (one tier off)
+     - a team copy can be sold
+     - the pending-edits list ignored
+     - a locked copy can be sold
+     - a sale pays but leaves the copy
+     - a sale removes the copy but pays nothing
+   why: proves sections 15 and 5 catch each break
+
+ NO new harness file: copies.js and gacha.js are already loaded by the two
+   pokebox harnesses; the buttons are DOM (probe below).
+ NO check.js change. NO intent scenarios (no moves). NO new debug sets.
+
+ UI CHECK (one-off file:// headless probe, not committed)
+   box: select a copy not on the team, Sell, confirm, coins +price, cell
+   gone, tab count -1; select the lead: button disabled with the message;
+   gacha: G.Debug.tickets(10), pull 10, a repeat 1* card sells in one
+   click and reads "Sold +15"; no page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. G.Debug.addCopy(25, 2). Team screen, Box 1, pick a spare Pikachu:
+      Sell for 30, confirm, coins +30, it is gone.
+   2. Pick your lead: Sell is dimmed with the message.
+   3. Slot a spare copy in an empty team slot WITHOUT Commit: Sell dimmed.
+   4. G.Debug.tickets(20), pull 10: repeat commons sell in one click;
+      a 4* or shiny repeat asks first.
+   5. Reload: sold copies stay sold, coins stay.
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Feel: a 10-pull of repeats is still up to 10 clicks until 3b bulk sell.
+   - Economy: first copies now have a sale value; about one sale per species
+     at most (already priced in the 2026-11-03 ruling).
+   - No undo on a sale (by design until a lock exists in 3b).

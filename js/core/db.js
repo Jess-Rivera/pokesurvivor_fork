@@ -29,7 +29,8 @@ G.DB = (() => {
     K_SES = 'ps.session',
     K_SAVE = 'ps.save.';
   const K_CLOUD = 'ps.cloud.',
-    K_MIGRATED = 'ps.migrated.';
+    K_MIGRATED = 'ps.migrated.',
+    K_PREBOX = 'ps.backup.prebox.'; // a save from before the Pokebox, kept when it is replaced by a clean one
   const VERSION = 3;
   const START_COINS = 500;
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
@@ -42,6 +43,7 @@ G.DB = (() => {
   let guest = false;
   let save = null;
   let storageOk = true;
+  let resetNotice = false; // this load replaced a pre-Pokebox save; the game says so once
 
   // ---------------- safe local storage ----------------
 
@@ -128,6 +130,9 @@ G.DB = (() => {
       },
       teamItems: {}, // F3d-2: id -> { at, from }: unlocked team items (run tier). Old saves get this (with the starters) from migrate
       teamLoadout: [], // F3d-2: team item ids equipped at the start of a run, by slot (an empty slot in the middle is null)
+      box: [], // every Pokemon owned, as compact copies (only G.Copies reads them)
+      boxCount: 2, // boxes this player has
+      trainerId: G.Copies ? G.Copies.uuid() : null, // this save's original trainer id, never changes
     };
     if (G.Items) G.Items.grantStarters(save); // Lucky Egg + Amulet Coin
     return save;
@@ -175,6 +180,7 @@ G.DB = (() => {
       for (const coll of ['owned', 'shiny']) {
         for (const d of Object.keys(s[coll] || {})) if (!G.DEX_BY[d]) delete s[coll][d];
       }
+    if (G.Copies) G.Copies.clean(s);
     // Shortcuts: 4 slots with a move that exists (or null), no repeats.
     if (s.pbind && typeof s.pbind === 'object') {
       for (const d of Object.keys(s.pbind)) {
@@ -221,10 +227,11 @@ G.DB = (() => {
   const TEAM_SIZE = 6;
 
   /**
-   * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny } or null.
+   * Keeps save.team a clean list of 6 FIXED slots, each { dex, shiny, uid } or null (uid = the copy in the slot, G.Copies).
    *   - older saves (a short, compact list or nothing at all) load into the
    *     first slots, padded with empty ones;
-   *   - a Pokemon that does not exist, or that repeats, becomes an empty slot;
+   *   - a Pokemon that does not exist, or a copy already in another slot, becomes an empty slot;
+   *   - the same species can fill several slots, as long as each slot has its own copy;
    *   - slot 0 is always the lead: it mirrors the chosen companion
    *     (partner / partnerShiny), which wins if the two ever disagree.
    * Safe to call as often as needed (it is called on load, on merge and on commit).
@@ -235,19 +242,35 @@ G.DB = (() => {
     const out = [];
     for (let i = 0; i < TEAM_SIZE; i++) {
       const t = src[i];
-      const ok = t && t.dex != null && !seen.has(t.dex) && (!G.DEX_BY || G.DEX_BY[t.dex]);
+      const ok = t && t.dex != null && !(t.uid && seen.has(t.uid)) && (!G.DEX_BY || G.DEX_BY[t.dex]);
       if (!ok) {
         out.push(null);
         continue;
       }
-      seen.add(t.dex);
-      out.push({ dex: t.dex, shiny: !!t.shiny });
+      if (t.uid) seen.add(t.uid);
+      out.push(t.uid ? { dex: t.dex, shiny: !!t.shiny, uid: t.uid } : { dex: t.dex, shiny: !!t.shiny });
     }
     if (s.partner != null) {
-      for (let i = 1; i < TEAM_SIZE; i++) if (out[i] && out[i].dex === s.partner) out[i] = null;
-      out[0] = { dex: s.partner, shiny: !!s.partnerShiny };
+      const fits = (t) => t && t.dex === s.partner && !!t.shiny === !!s.partnerShiny;
+      const lead = { dex: s.partner, shiny: !!s.partnerShiny };
+      if (fits(out[0])) {
+        if (out[0].uid) lead.uid = out[0].uid;
+      } else {
+        // The lead changed: if that Pokemon is already in another slot, it moves up.
+        const i = out.findIndex(fits);
+        if (i > 0) {
+          if (out[i].uid) lead.uid = out[i].uid;
+          out[i] = null;
+        }
+      }
+      out[0] = lead;
     }
     s.team = out;
+    if (G.Copies) G.Copies.linkTeam(s);
+    // A species with no copy of its own for this slot cannot repeat.
+    out.forEach((t, i) => {
+      if (t && !t.uid && out.some((x, j) => j < i && x && x.dex === t.dex)) out[i] = null;
+    });
   }
 
   /**
@@ -358,7 +381,14 @@ G.DB = (() => {
 
   function loadLocal(k, name) {
     const s = read(K_SAVE + k);
-    return s ? migrate(s, name) : newSave(name);
+    if (!s) return newSave(name);
+    if (Array.isArray(s.box)) return migrate(s, name);
+    // Clean save checkpoint (Jess, 2026-11-03): a save from before the Pokebox is not migrated. It is kept aside and the player starts over.
+    if (!read(K_PREBOX + k)) write(K_PREBOX + k, s);
+    resetNotice = true;
+    const fresh = newSave(name);
+    write(K_SAVE + k, fresh);
+    return fresh;
   }
 
   function beginLocal(k, name) {
@@ -874,9 +904,38 @@ G.DB = (() => {
    * immediately; in the cloud:
    * @param urgent  true: the stuff that matters (pulls, purchases, Pokemon, prizes): right away
    *                'run': on finishing a game (at most every 30 min) · false: every 2 h
-   */
+
+  /** The top bar shows the coins: redraw it after every save write while it shows, so a coin change anywhere appears at once. */
+  function redrawCoins() {
+    if (typeof document === 'undefined' || !G.UI || !G.UI.refreshCoins) return;
+    const bar = document.getElementById('topbar');
+    if (!bar || bar.classList.contains('hidden')) return;
+    try {
+      G.UI.refreshCoins();
+    } catch (e) {
+      /* the bar is not built yet */
+    }
+  }
+
+  /** Screens that show save values (the Team screen price tabs, the Shop buttons) redraw on every save write; each one checks it is open. */
+  const saveHooks = [];
+  function onSave(fn) {
+    saveHooks.push(fn);
+  }
+  function redrawScreens() {
+    for (const fn of saveHooks) {
+      try {
+        fn();
+      } catch (e) {
+        /* one screen failing never stops a save or the others */
+      }
+    }
+  }
+
   function commit(urgent = false) {
     if (save) normalizeTeam(save); // before the guest check: guests play with a team too
+    redrawCoins();
+    redrawScreens();
     if (guest || !key || !save) return false;
     save.updated = Date.now();
     if (mode === 'local') return write(K_SAVE + key, save);
@@ -1025,6 +1084,33 @@ G.DB = (() => {
     return true;
   }
 
+  /**
+   * A Pokemon the player just got (gacha, rescue, wild shiny, starter, debug): the Pokedex record, then one new copy, every time.
+   * A repeat is a copy too. A shiny gives only the shiny copy; the record still marks the species owned (pokebox 3a-2, D4).
+   * With every box full there is no copy: it is sold on arrival and the coins go to this save (pokebox 3a-4, D3 and D4).
+   * @param s  the save to write (default: the loaded one; the gacha passes its own)
+   * @returns { isNew, uid, box, sold }  isNew: new to the Pokedex, or a first shiny. uid, box (from 0): the new copy, null if none.
+   *   sold: the PokeCoins paid when it was sold on arrival (absent otherwise).
+   */
+  function obtain(dex, shiny, from, s = save) {
+    if (!s) return { isNew: false, uid: null, box: null };
+    s.owned = s.owned || {};
+    s.shiny = s.shiny || {};
+    const now = Date.now(),
+      isNew = shiny ? !s.shiny[dex] : !s.owned[dex];
+    if (!s.owned[dex]) s.owned[dex] = { at: now, from };
+    if (shiny && !s.shiny[dex]) s.shiny[dex] = { at: now, from };
+    if (!G.Copies || !G.SpeciesTraits || !G.SpeciesTraits.SPECIES[dex]) return { isNew, uid: null, box: null };
+    if (!Array.isArray(s.box)) s.box = [];
+    const c = G.Copies.add(s, { dex, shiny: !!shiny, from, at: now });
+    if (!c) {
+      const sold = G.Copies.priceFor(dex, !!shiny);
+      s.coins = (Math.floor(+s.coins) || 0) + sold;
+      return { isNew, uid: null, box: null, sold };
+    }
+    return { isNew, uid: G.Copies.longId(c.u), box: c.b || 0 };
+  }
+
   return {
     ready,
     register,
@@ -1039,10 +1125,18 @@ G.DB = (() => {
     grant,
     ownsShiny,
     grantShiny,
+    obtain,
+    onSave,
     merge,
     setName,
     upgradesOf,
     normalizeTeam,
+    /** True once if this load replaced a pre-Pokebox save with a clean one. */
+    takeResetNotice() {
+      const v = resetNotice;
+      resetNotice = false;
+      return v;
+    },
     onSync(fn) {
       listeners.add(fn);
     },

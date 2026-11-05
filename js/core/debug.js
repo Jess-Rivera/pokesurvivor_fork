@@ -12,6 +12,7 @@
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
+ *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
@@ -27,6 +28,15 @@
  *   G.Debug.spawn(k)   scale ALL wild spawns by k: 0 stops them (drip, tides, bursts, elites), 0.5 halves, 1 or no argument is normal again
  *   G.Debug.noSpawn() / spawnOn()  shortcuts for spawn(0) / spawn(1)
  *   G.Debug.movechecker(id, ...)  range and move-data check (?dev): up to 6 move ids, one per slot, ONE pinned dummy, range rings every 50 px out to 600, each move's data in the console; no id turns it off
+ *   G.Debug.copies(dex)  list your Pokemon copies, or one species' (no arg: all), with the box size in the save
+ *   G.Debug.copy(id)   every field of one copy, by UUID or dex (no arg: the lead's). Shows the values players do not see yet.
+ *   G.Debug.addCopy(dex, n, shiny)  add n more copies of a species (default 1), for testing duplicates; stops when the boxes are full. Saved.
+ *   G.Debug.fillBoxes(leave)  top your boxes up with Caterpie copies until `leave` places are free (default 0), to test full boxes. Saved.
+ *   G.Debug.fighter()  the active fighter's six stats at its level and its movement px/s: plain (0 IV, 0 EV, no nature) next to this copy
+ *   G.Debug.evbank(hp, atk, def, spa, spd, spe)  set THIS run's six EV banks in EVs (decimals allowed, 3.742) to test the end-of-run
+ *                      allocation without an hour run; no args: logs them. Flags the run as tampered (it still allocates).
+ *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
+ *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -46,11 +56,15 @@ G.Debug = (() => {
       return false;
     }
 
-    // Every Pokemon owned + shiny.
+    // Every Pokemon owned + shiny, with every box so they all fit: one normal and one shiny copy per species, only where missing.
+    save.boxCount = G.Copies.BOX_MAX;
+    const have = new Set((save.box || []).map((c) => c.d + (c.s ? 's' : 'n')));
     let dexN = 0;
     for (const p of G.DEX) {
-      G.DB.grant(p.dex, 'debug');
-      G.DB.grantShiny(p.dex, 'debug');
+      if (have.has(p.dex + 'n')) G.DB.grant(p.dex, 'debug');
+      else G.DB.obtain(p.dex, false, 'debug');
+      if (have.has(p.dex + 's')) G.DB.grantShiny(p.dex, 'debug');
+      else G.DB.obtain(p.dex, true, 'debug');
       dexN++;
     }
 
@@ -233,6 +247,28 @@ G.Debug = (() => {
     }
     console.log('[Debug] PokeCoins: ' + s.coins);
     return s.coins;
+  }
+
+  /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
+  function tickets(n, m) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const s = G.DB && G.DB.save;
+    if (!s) {
+      console.warn('[Debug] no save loaded.');
+      return false;
+    }
+    s.tickets = s.tickets || { t1: 0, t10: 0 };
+    const whole = (v) => Math.max(0, Math.floor(+v) || 0);
+    if (n != null || m != null) {
+      if (n != null) s.tickets.t1 = whole(n);
+      if (m != null) s.tickets.t10 = whole(m);
+      G.DB.commit();
+    }
+    console.log('[Debug] Pokeballs: ' + s.tickets.t1 + ' · Master Balls: ' + s.tickets.t10);
+    return { pokeballs: s.tickets.t1, masterBalls: s.tickets.t10 };
   }
 
   /** Unlock `n` run-item slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.runSlots, absent in old saves = 1). */
@@ -965,6 +1001,179 @@ G.Debug = (() => {
 
   /** Slice 5b team-wide cards (?dev): G.Debug.cards(id, n) grants n stacks of card `id` to the run's team store (Vitamins as
    *  'vitamins:atk' and so on; an HP Vitamin refreshes every member's max HP). No arguments: prints the store and every card id. */
+  function copies(dex) {
+    if (!on || !G.DB.save) return false;
+    const save = G.DB.save,
+      list = G.Copies.all(save).filter((c) => dex == null || c.speciesID === dex);
+    console.table(
+      list.map((c) => ({
+        name: (G.DEX_BY[c.speciesID] || {}).name,
+        nickname: c.nickname,
+        shiny: c.isShiny,
+        gender: c.gender,
+        nature: c.nature,
+        iv: c.iv.join(' '),
+        ability: c.ability,
+        height: +c.heightM.toFixed(2),
+        weight: +c.weightKg.toFixed(1),
+        from: c.obtainedMethod,
+        uuid: c.pokemonUUID,
+      }))
+    );
+    console.log(
+      '[Debug] ' +
+        list.length +
+        ' of ' +
+        save.box.length +
+        ' copies. Box ' +
+        JSON.stringify(save.box).length +
+        ' bytes, whole save ' +
+        JSON.stringify(save).length +
+        ' bytes.'
+    );
+    return list.length;
+  }
+
+  function addCopy(dex, n = 1, shiny = false) {
+    if (!on || !G.DB.save) return false;
+    if (!G.DEX_BY[dex]) {
+      console.warn('[Debug] no species with dex ' + dex);
+      return false;
+    }
+    // n copies through the same path the game uses (it also writes the Pokedex record); never sells, it stops at full boxes.
+    let added = 0;
+    for (let i = 0; i < n && G.Copies.freePlaces(G.DB.save) > 0; i++) {
+      G.DB.obtain(dex, !!shiny, 'debug');
+      added++;
+    }
+    G.DB.commit(true);
+    console.log(
+      '[Debug] added ' +
+        added +
+        ' ' +
+        G.DEX_BY[dex].name +
+        (shiny ? ' (shiny)' : '') +
+        (added < n ? ' (' + (n - added) + ' not added: your boxes are full)' : '') +
+        '. Reopen the Team screen to see them.'
+    );
+    return true;
+  }
+
+  /** Top the boxes up with Caterpie copies until `leave` places are free. ?dev only. Saved. */
+  function fillBoxes(leave = 0) {
+    if (!on || !G.DB.save) return false;
+    const s = G.DB.save,
+      want = Math.max(0, Math.floor(+leave) || 0);
+    let added = 0;
+    while (G.Copies.freePlaces(s) > want) {
+      if (!G.DB.obtain(10, false, 'debug').uid) break; // no species data: stop rather than loop
+      added++;
+    }
+    G.DB.commit(true);
+    console.log(
+      '[Debug] added ' + added + ' Caterpie; ' + G.Copies.freePlaces(s) + ' free places left. Reopen the Team screen.'
+    );
+    return added;
+  }
+
+  /** The active fighter's six stats at its level and its movement px/s, plain (0 IV, 0 EV, no nature) next to this copy. Before
+   *  cards, stages and items. ?dev only (pokebox step 4). */
+  function fighter() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return null;
+    }
+    const pl = G.Game && G.Game.player;
+    if (!pl || !pl.mon || !pl.mon.stats || !pl.statIv) {
+      console.warn('[Debug] no run in progress.');
+      return null;
+    }
+    const st = pl.mon.stats,
+      L = pl.level,
+      S = G.Stats,
+      names = ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
+    const rows = names.map((stat, i) => {
+      const iv = pl.statIv(i),
+        ev = pl.statEv(i),
+        nat = pl.statNat(i);
+      return {
+        stat,
+        base: st[i],
+        iv,
+        ev,
+        nature: nat > 1 ? '+10%' : nat < 1 ? '-10%' : '',
+        plain: i === 0 ? S.hpForLevel(st[0], L) : S.statValue(st[i], L),
+        copy: i === 0 ? S.hpForLevel(st[0], L, iv, ev) : S.statValue(st[i], L, iv, ev, nat),
+      };
+    });
+    console.table(rows);
+    const px0 = S.speedToPx(st[5]),
+      px = S.speedToPx(st[5], pl.statIv(5), pl.statNat(5), pl.statEv(5));
+    const move = px0.toFixed(1) + ' -> ' + px.toFixed(1) + ' px/s';
+    console.log('[Debug] ' + pl.mon.name + ' L' + L + ', movement ' + move + ' (before cards and items).');
+    return { rows, px0, px };
+  }
+
+  /** Set THIS run's six EV banks, in EVs (decimals allowed: 3.742), to test the end-of-run allocation. No args: logs them. Flags
+   *  the run as tampered; it still allocates (pokebox step 5 F3). ?dev only. */
+  function evbank(...v) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return null;
+    }
+    if (!G.Game || !G.Game.player) {
+      console.warn('[Debug] no run in progress.');
+      return null;
+    }
+    if (v.length) {
+      G.Game.evBank = [0, 1, 2, 3, 4, 5].map((k) => Math.round((+v[k] || 0) * G.Copies.EV_UNIT));
+      G.Game.debugMaxed();
+    }
+    const b = G.Game.evBank.map((x) => x / G.Copies.EV_UNIT);
+    console.log('[Debug] EV banks (HP Atk Def SpA SpD Spe): ' + b.map((x) => x.toFixed(3)).join(' '));
+    return b;
+  }
+
+  /** Set the copy in team slot `slot` (0 to 5) to six IVs of `value` (0 to 31) and, if given, a nature by name. ?dev only. Saved.
+   *  Takes effect from the next run, which is flagged tampered (pokebox step 4 feel-tests). */
+  function ivs(slot = 0, value = null, nature = null) {
+    if (!on || !G.DB.save) return false;
+    const s = G.DB.save,
+      t = s.team && s.team[slot];
+    if (!t || !t.uid) {
+      console.warn('[Debug] team slot ' + slot + ' has no Pokemon.');
+      return false;
+    }
+    const c = G.Copies.setIvNature(s, t.uid, value, nature);
+    if (!c) {
+      console.warn('[Debug] the copy in team slot ' + slot + ' is gone.');
+      return false;
+    }
+    if (c.error) {
+      const all = G.SpeciesTraits.NATURES.map((x) => x[0]).join(', ');
+      console.warn('[Debug] unknown nature ' + nature + '. Natures: ' + all);
+      return false;
+    }
+    G.DB.commit(true);
+    G.Game.debugMaxed();
+    const name = (G.DEX_BY[c.speciesID] || {}).name;
+    const what = name + ': IVs ' + c.iv.join(' ') + ', ' + c.natureName;
+    console.log('[Debug] slot ' + slot + ' ' + what + '. Start a new run to use it.');
+    return c;
+  }
+
+  function copy(id) {
+    if (!on || !G.DB.save) return false;
+    const save = G.DB.save;
+    let c = null;
+    if (typeof id === 'string') c = G.Copies.get(save, id);
+    else if (id != null) c = G.Copies.all(save).find((x) => x.speciesID === id) || null;
+    else if (save.team[0] && save.team[0].uid) c = G.Copies.get(save, save.team[0].uid);
+    if (!c) console.warn('[Debug] no copy found for ' + id);
+    else console.log('[Debug] ' + (G.DEX_BY[c.speciesID] || {}).name, c);
+    return c;
+  }
+
   function cards(id, n = 1) {
     if (!on) {
       console.warn('[Debug] add ?dev to the URL to enable debug tools.');
@@ -1030,6 +1239,7 @@ G.Debug = (() => {
     runitem,
     runslots,
     coins,
+    tickets,
     unlockitem,
     loadout,
     ignite,
@@ -1042,6 +1252,13 @@ G.Debug = (() => {
     noSpawn,
     spawnOn,
     hitbox,
+    copies,
+    copy,
+    addCopy,
+    fillBoxes,
+    fighter,
+    ivs,
+    evbank,
     newcombat,
     cards,
     movechecker,

@@ -30,9 +30,9 @@
  * Every species' class comes from the generated table js/data/enemy-classes.js (G.ENEMY_CLASSES).
  * The warned attacks are in systems/hazards.js.
  *
- * Bosses: strong NON-legendary Pokemon (pseudo-legendaries, Slaking...), at
- * random by power bands. Legendaries never spawn (the pokedex leg flag; the
- * gacha still has them).
+ * Bosses: gym leaders are the only bosses since 2026-10-31 (systems/gym.js); the old
+ * timed boss bands were removed on 2026-11-04. Legendaries never spawn (the pokedex
+ * leg flag; the gacha still has them).
  */
 G.Enemies = (() => {
   const TIERS = [
@@ -44,24 +44,11 @@ G.Enemies = (() => {
     { from: 500, bst: [530, 620], hp: 250, spd: 72, dmg: 28, xp: 38, cast: 9 },
   ];
 
-  // Boss bands: the minute they appear, base HP and BST band.
-  const BOSS_SLOTS = [
-    { at: 180, hp: 1400, dmg: 34, xp: 220, bst: [490, 545] },
-    { at: 360, hp: 3200, dmg: 42, xp: 420, bst: [520, 580] },
-    { at: 540, hp: 5600, dmg: 48, xp: 680, bst: [540, 600] },
-    { at: 720, hp: 9000, dmg: 56, xp: 1000, bst: [580, 700] },
-    { at: 900, hp: 16000, dmg: 68, xp: 1800, bst: [600, 700] },
-  ];
-
-  // Approximate base stats from the game ones (inverse of fetch_pokedex).
-  const baseHp = (p) => (p.hp - 70) / 0.45;
-  const baseSpd = (p) => (p.spd - 78) / 0.42;
-
   // Enemy HP/level/speed use the shared base-stats model in js/core/stats.js (G.Stats),
   // the SAME formulas as the player. enemyHp(baseHP, t) = HP at the level-for-run-time.
   // See DECISIONS.md and BALANCE.md.
-  // Opening discount: wild-enemy HP starts at OPENING_HP_START x the formula and rises linearly to 1.0 at the
-  // first boss slot (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
+  // Opening discount: wild-enemy HP starts at OPENING_HP_START x the formula and rises linearly to 1.0 at
+  // XP_BOOST_END (the same window as the XP boost in spawner.js). HP is fixed at spawn, so t is the spawn time.
   const OPENING_HP_START = 0.55;
   const openingHpK = (t) => {
     const end = G.Stats.XP_BOOST_END;
@@ -131,7 +118,7 @@ G.Enemies = (() => {
       // same px/s scale as the player. No tier template, no role mult, no time ramp.
       spd: G.Stats.speedToPx(G.DEX_BY[p.dex] && G.DEX_BY[p.dex].stats ? G.DEX_BY[p.dex].stats[5] : 65),
       dmg: Math.round(tier.dmg * (info.t ? 1.2 : 1)),
-      xp: Math.max(3, Math.round(tier.xp * (info.t ? 1.3 : 1))), // LEGACY for wild enemies (bosses still use their slot xp); XP now comes from bx
+      xp: Math.max(3, Math.round(tier.xp * (info.t ? 1.3 : 1))), // LEGACY for wild enemies; XP now comes from bx
       // XP (feature/xp-curve): base_experience of the species, and the tank bonus as a multiplier.
       bx: G.DEX_BY[p.dex] && G.DEX_BY[p.dex].bx != null ? G.DEX_BY[p.dex].bx : 100,
       xpMul: info.t ? 1.3 : 1,
@@ -294,7 +281,6 @@ G.Enemies = (() => {
   let cast = null; // [{ from, list: [def] }]
   let bagCache = null,
     bagKey = '';
-  let bosses = null; // [def de jefe]
 
   /** Draws the cast of a new run. */
   function rollRun() {
@@ -316,46 +302,13 @@ G.Enemies = (() => {
         if (f) f.flanker = true;
       }
     }
-    const used = new Set();
-    bosses = BOSS_SLOTS.map((slot) => {
-      const ok = (p) => regionOK(p) && !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);
-      let pool = G.DEX.filter((p) => ok(p) && p.bst >= slot.bst[0] && p.bst <= slot.bst[1]);
-      if (!pool.length) pool = G.DEX.filter((p) => ok(p) && p.bst >= 580);
-      // Safety: if a region is too thin to fill a boss band at all, fall back to ALL gens
-      // (keeps bosses from ever coming up empty; normal tiers still honor the region rule).
-      if (!pool.length) pool = G.DEX.filter((p) => !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex) && p.bst >= 580);
-      const p = G.U.pick(pool);
-      used.add(p.dex);
-      return {
-        at: slot.at,
-        dex: p.dex,
-        name: p.name,
-        // (Since 2026-10-10 tougher: x1.35 health and x1.2 damage.)
-        hp: Math.round(slot.hp * 1.35),
-        spd: Math.round(G.U.clamp(40 + baseSpd(p) * 0.5, 40, 100)),
-        dmg: Math.round(slot.dmg * 1.2),
-        xp: slot.xp,
-        behavior: FAMILY[classOf(p)] === 'range' ? 'ranged' : baseSpd(p) > 90 ? 'charger' : 'chase',
-        shotDmg: Math.round(slot.dmg * 0.55),
-        shotCd: 1.1,
-        range: 260,
-      };
-    });
-    return { cast, bosses };
+    return { cast };
   }
 
   function scale(t) {
     // HP now comes from enemyHp(baseHp, t) at spawn; carry t through. dmg/spd ramps
     // unchanged (damage is a later slice).
     return { t, dmg: 1 + t / 420, spd: 1 + Math.min(0.35, t / 1400) };
-  }
-
-  /**
-   * The bosses already bring their growing base health (1,400 ... 16,000), so
-   * they scale much more gently: with the normal curve the last reached 168,000 HP.
-   */
-  function bossScale(t) {
-    return { hp: 1 + t / 600, dmg: 1 + t / 600, spd: 1 };
   }
 
   /** The tier that applies at second `t`. */
@@ -656,11 +609,9 @@ G.Enemies = (() => {
 
   return {
     TIERS,
-    BOSS_SLOTS,
     eliteDef,
     rollRun,
     scale,
-    bossScale,
     bagAt,
     upcomingDex,
     candidates,
@@ -691,10 +642,6 @@ G.Enemies = (() => {
     enemyHp,
     openingHpK,
     levelForTime,
-    get BOSSES() {
-      if (!bosses) rollRun();
-      return bosses;
-    },
     get cast() {
       if (!cast) rollRun();
       return cast;

@@ -1,0 +1,235 @@
+POKEBOX STEP 5: EVs  (plan v3, 2026-11-04, no code)
+Branch: feature/pokeboxes. SOURCE DESIGN: docs/proposals/ev-progression.md (Jess's draft, 2026-11-04).
+v1 of this map (free pool, per-fighter earning, free refunds, E1 to E12) is REPLACED by the draft.
+Rules: docs/COMBAT-RULES.md "Stats and HP". Out of scope: the whittling items (F8), co-op (deferred).
+
+=====================================================================
+ THE LOOP  (per the draft)
+=====================================================================
+
+   IN A RUN                         RUN ENDS                     ALLOCATION SCREEN
+   --------                         --------                     -----------------
+   any enemy dies                   death or quit (F3)           six banks, whole part only
+     |                                |                            HP   1   (0.46 lost)
+     v                                v                            Atk  2   (0.55 lost)
+   its species' TYPED yield x       banks frozen                    ...
+   its class rate (F1) into that    fractions shown as lost        Spe  2   (0.11 lost)
+   bank (six banks, separate)                                     team copies as columns:
+   (Pidgey: Spe +0.001)                                            [-] n [+] per copy per stat
+                                                                   252 / 510 caps per copy
+                                                                   [Done] -> leftover discarded
+                                                                   (confirm if any left, F5)
+                                                                      |
+                                                                      v
+                                                                 EVs saved on each copy (key 'e',
+                                                                 already in the save), apply from
+                                                                 the next run, all six stats (F7)
+
+   No new save key: the banks are run-only. Old copies have no 'e': 0. No migration.
+   Banks count in whole thousandths (integers): 1000 wild Pidgey, 500 shiny ones, or 1 gym Pidgeot
+   (Spe 2 at 1x) are exact.
+
+=====================================================================
+ WHAT THE RATES GIVE  (estimates: Kanto mean yields, 1.7 kills/s from BALANCE.md)
+=====================================================================
+
+   mean yield per kill:  HP .24  Atk .42  Def .26  SpA .35  SpD .18  Spe .34
+
+   wild kills only      kills    whole EVs   (all six banks)
+     10 min             1,020       0
+     30 min             3,060       3
+     60 min             6,120       9
+
+   elites at 1/500: an elite yields 1 to 3, so each adds 0.002 to 0.006.
+     A handful per run is noise; elites move the bank only if many spawn.
+   gym mons at 1x: each gym mon beaten adds its full yield, 1 to 3 EVs.
+     So gym wins are the main EV source; a run that clears a gym always
+     banks something.
+   shiny: x2 of its class (a shiny wild is 0.002 per point).
+
+   4 EVs in one stat = +1 at L100, +0.5 at L50 (floor(EV / 4)).
+
+=====================================================================
+ DECISIONS FOR JESS  (the draft's open edges; each changes behavior)
+=====================================================================
+
+ APPROVED as recommended (Jess, 2026-11-04): F3, F4, F5, F7, F8 (whittling
+ items in step 5b), F9, F10. F6 approved with the wording below. F1 approved as a class table; F2 approved (golden/thief = wild, Elite Four =
+ gym, no non-gym bosses). BUILT 2026-11-04.
+
+
+ F1  Rate by enemy class (Jess, 2026-11-04, replaces the flat 1/1000):
+       class   rate per yield point   in thousandths   shiny (x2)
+       wild    1/1000                 1                1/500
+       elite   1/500                  2                1/250
+       gym     1x (full yield)        1000             2x
+     Every rate is a whole number of thousandths, so the banks stay exact
+     integers. One table in copies.js, TUNE before playtesters (BALANCE.md).
+     APPROVED in principle; F2 settles the edges.
+
+ F2  Classes come from the flags the kill loop already sees:
+       e.gym              -> gym     (gym leader mons)
+       e.elite            -> elite
+       everything else    -> wild    (golden and thief units included)  REC
+     No non-gym bosses exist (checked 2026-11-04): G.Boss.make, the only boss
+     spawn, is called only from gym-arena.js, and gym.js says "Gyms are the
+     only bosses (2026-10-31)". So the class reads e.gym, not e.boss.
+       e.shiny            -> x2 on top of its class
+     Elite Four is not built yet; when it is, it uses the gym rate.     REC
+     Every kill counts whoever landed it (DoT, bench timing irrelevant).
+
+ F3  When: the allocation screen opens after the run-over screen on a
+     death AND on a quit. Debug-flagged runs still allocate.        REC: yes
+
+ F4  Who can receive: the copies in the run's team (up to 6, fainted
+     ones included), not the boxes.                                 REC: yes
+
+ F5  Leaving with whole EVs unallocated: one confirm, "N EVs will be
+     discarded." Then gone (the draft's discard rule).              REC: yes
+
+ F6  Caps, per Pokemon copy (Jess, 2026-11-04): up to 252 EVs in any
+     one stat, up to 510 EVs total across all six. An allocation that would
+     pass either is refused; [+] greys out at the cap.          APPROVED
+
+ F7  EVs apply to all six stats, Speed through the movement curve (like
+     step 4 D3). Enemies stay at 0 EVs (like D2).                  REC: yes
+
+ F8  Whittling items (EV removal): split into step 5b. Mainline has the
+     six EV-lowering berries (Pomeg HP, Kelpsy Atk, Qualot Def, Hondew
+     SpA, Grepa SpD, Tamato Spe, -10 each since Gen 4); 5b decides the
+     amount, the source (drop, shop, gym reward) and where they are used.
+     Until 5b, allocated EVs cannot be removed.               REC: split to 5b
+
+ F9  Sell and Select repeats (changes 3b D10): the sell confirm adds "It
+     has N EVs. They are lost." Select repeats keeps team, locked,
+     favorite, MOST EVs, best IVs, oldest.                          REC: yes
+
+ F10 A run where every bank is under 1 skips the allocation screen and the
+     run-over screen shows one line, "No whole EVs this run", with the six
+     fractions it lost. Otherwise the screen opens.                REC: yes
+     (at 1/1000 this is most early runs; an empty screen is a dead click)
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ tools/species_traits.js + regenerated js/data/species-traits.js
+   '- each species row gains its six-stat yield (pokeapi pokemon_stats.csv,
+      effort); no row: all 0 (a kill banks nothing)
+
+ js/core/stats.js
+   '- the profile gains ev (six) from the copy; NEUTRAL gets six zeros;
+      attackFactor / applyPlayerDefense pass it into the existing ev slot;
+      speedToPx gains an ev argument (default 0)
+
+ js/entities/player.js
+   '- statEv(i) beside statIv / statNat; maxHp, maxHpAt, baseSpd, hurt() pass it
+
+ js/entities/enemy.js   the dead-enemy loop, at "pl.kills++" (solo and host)
+   '- adds the species yield x its class rate (F1, F2) to the run bank
+
+ js/game.js
+   +- the run bank: six integers in thousandths, reset at run start
+   +- buildFighter keeps the slot uid on the fighter
+   '- endRun hands the bank and the roster's copies to the allocation screen
+      (F3); co-op skips it (TODO line)
+
+ js/systems/copies.js
+   +- EV_RATE table (thousandths per yield point: wild 1, elite 2, gym 1000;
+   |  SHINY_EV 2) and classOf(enemy flags) -> 'wild' | 'elite' | 'gym' (F1, F2)
+   +- addEvs(save, uid, stat, n): F6 caps, returns how many landed
+   +- read() gains evTotal
+   '- repeatsIn keep order adds most EVs (F9)
+
+ js/ui/run-ui.js + css
+   '- the allocation screen after showOver (F3 to F6): bank rows, team
+      columns, [-] [+], Done with the F5 confirm; saves once on Done
+
+ js/ui/menu.js
+   +- rosInfoRows: an "EVs" row, the six values and the total ("EVs 252 Atk
+   |  180 HP ... 510 / 510"), display only; the hexagon stays as it is
+   '- the sell confirm note (F9)
+
+ js/core/debug.js
+   +- G.Debug.evbank(hp, atk, def, spa, spd, spe): set the CURRENT run's
+   |  banks in EVs (decimals allowed), to test allocation without an hour run
+   '- G.Debug.fighter(): an EV column
+
+ After the build (free-edit): changelog, COMBAT-RULES (EVs apply), pokebox-plan
+ step 5 status + F1 to F10 rulings (closes the step 5 [Open]), BALANCE.md (the
+ rate and the tables), SPEED-IVEV-SLICE.md marked superseded, TODO (co-op EVs,
+ step 5b whittling items), DEVLOG.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ NEW  docs/proposals/pokebox-evs-harness.js   (picked up by check.js)
+   Loads the real stats.js, player.js, species-traits.js, copies.js (stubs as in
+   pokebox-stats-harness.js); reads game.js, enemy.js and run-ui.js as text for
+   the wiring. Hand-derived, never copied from code output:
+     1. Math: the Snorlax step 5 column (HP 512, Atk 178, Def 85, SpA 64,
+        SpD 126, Spe 39); 3 EVs change nothing, 4 add 1 at L100
+     2. Yield data, written out from pokemon_stats.csv: Caterpie HP 1, Pidgey
+        Spe 1, Geodude Def 1, Snorlax HP 2; a species with no row banks 0
+     3. Bank: 1000 wild Pidgey = exactly 1 Spe (999 = 0); 500 elite Pidgey = 1;
+        1 gym Snorlax = 2 HP; a shiny wild Pidgey counts 2 thousandths, a shiny
+        gym Snorlax 4 HP; golden and thief units use the wild rate (F2); banks
+        never mix; the bank resets at run start
+     4. Withdraw: whole part only; 3.742 / 2.315 / 1.891 gives 3 / 2 / 1 (the
+        draft's example); fractions and leftovers are gone next run
+     5. Allocation: one bank split across two copies; never more than the
+        bank; 252 per stat and 510 total stop it (F6); a missing copy refuses
+     6. Save: a copy without 'e' reads six zeros; clean() clamps a bad 'e'
+        (still in place from step 1); round trip keeps it
+     7. The profile carries EVs into a real Player: HP, moveFactor, hurt(),
+        movement
+     8. Enemy calls with no profile: unchanged
+     9. Wiring: the kill loop banks the yield; endRun opens the allocation
+        screen on death and quit; co-op skips it; buildFighter keeps the uid
+   Why new: pokebox-stats-harness covers IVs and natures; banking and
+   allocation are new and no harness loads them.
+
+ NEW  docs/proposals/pokebox-evs-mutate.js   (mutation runner, run by hand)
+   Each must make the EV harness fail: EV dropped from the profile;
+   floor(EV / 4) dropped; yield not divided (x1 instead of 1/1000); elites at
+   the wild rate; gyms at the wild rate; shiny not doubled; shiny doubling the
+   class twice; a bank
+   credits the wrong stat; banks summed into one; fractions carried to the
+   next run; withdraw rounds up; allocation passes the bank; the 252 cap
+   ignored; the 510 cap ignored; the kill not banked; co-op allocates;
+   buildFighter drops the uid; repeatsIn ignores EVs.
+
+ CHANGED  docs/proposals/pokebox-stats-harness.js section 1: the neutral-profile
+   shape check gains six zero EVs (it compares the whole object).
+ CHANGED  docs/proposals/pokebox-copies-harness.js section 21: F9 rows (more EVs
+   kept over better IVs; ties fall to IVs, then oldest).
+ CHANGED  docs/proposals/pokebox-copies-mutate.js: +1, repeatsIn ignores EVs.
+ NO check.js change. NO intent scenarios (no move changes).
+ NEW debug set: G.Debug.evbank(...). Feel-test: G.Debug.evbank(0, 3.742, 2.315,
+   0, 0, 1.891) mid-run, quit, allocate 3 / 2 / 1 across two team members.
+
+ UI CHECK (one-off file:// headless probe, not committed): click #tap-start,
+   start a run, G.Debug.evbank(1, 2, 0, 0, 0, 3), quit, the allocation screen
+   shows HP 1 / Atk 2 / Spe 3, allocate, Done, the Team screen EVs row shows
+   them, no page errors.
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear)
+=====================================================================
+   1. A normal run, then the allocation screen: check the banks match the run
+      length (F1 table).
+   2. G.Debug.evbank(0, 3.742, 2.315, 0, 0, 1.891), quit: 3 / 2 / 1 to give,
+      fractions shown as lost; split Atk 2 + 1 across two members; Done.
+   3. Leave one EV unallocated: the F5 confirm.
+   4. Team screen: the EVs row; reload keeps it.
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Feel: wild-only early runs still bank 0; gym wins carry the progression.
+     TUNE the F1 table after playtests.
+   - The allocation screen adds a step after every run (F10 keeps 0 EV runs
+     from showing an empty one).
+   - Balance: a maxed stat is +36% at L50 on top of IVs, but at 1/1000 that is
+     far off.

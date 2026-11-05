@@ -8,6 +8,9 @@
  *                  a yellow "+10%" beside it. The yellow layer is skipped while every bonus is 0.
  *     opts.radius  hexagon radius as a fraction of the smaller canvas side (default 0.30; the Team screen uses 0.40 on a 340 x 400 canvas)
  *     opts.hpText  replaces the HP number (for example "105/105")
+ *     opts.teamHex  the Team screen look: the base shape is see-through white, larger numbers. `color` is then the IV band's color.
+ *     opts.iv      six IVs (with teamHex): a band in `color` from the base shape out to base + IV, and each number gets "+iv" beside it.
+ *                  The band draws 2 IVs as one base point, as in the stat formula (2 x base + IV). Without opts.iv there is no band and no "+iv".
  *     opts.after   six in-run percentages AFTER a pending change (level-up preview): a lighter dashed outline of the
  *                  new shape, and "+10% to +15%" on the axes that change
  *
@@ -26,7 +29,7 @@ G.StatChart = (() => {
     [4, 'SpD'],
     [3, 'SpA'],
   ];
-  const FONT = 'Pixelify,"Segoe UI",system-ui,sans-serif';
+  const FONT = 'GameFont,"Segoe UI",system-ui,sans-serif';
   const SCALE = 2; // backing-store scale, for sharp text
 
   function make(stats, color, w = 220, h = 192, opts = {}) {
@@ -46,13 +49,16 @@ G.StatChart = (() => {
       const a = -Math.PI / 2 + (i * Math.PI) / 3; // 6 axes, 60 degrees apart, starting at the top
       return [cx + Math.cos(a) * R * frac, cy + Math.sin(a) * R * frac];
     };
-    const poly = (fracs) => {
-      ctx.beginPath();
+    const trace = (fracs) => {
       fracs.forEach((f, i) => {
         const [x, y] = pt(i, f);
         i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       });
       ctx.closePath();
+    };
+    const poly = (fracs) => {
+      ctx.beginPath();
+      trace(fracs);
     };
 
     // grid: rings at 25 / 50 / 75 / 100 % and the six spokes
@@ -74,14 +80,28 @@ G.StatChart = (() => {
     // the Pokemon's shape (the lower layer when `layered`)
     const bonus = opts.bonus || [0, 0, 0, 0, 0, 0];
     const fr = AXES.map(([k]) => Math.max(0, Math.min(1, (stats[k] || 0) / MAX)));
+    const iv = opts.teamHex ? opts.iv : null;
+    const baseColor = opts.teamHex ? '#f4f8ff' : color;
     poly(fr);
-    ctx.fillStyle = color + (opts.layered ? '40' : '59'); // ~25% / ~35% opacity
+    ctx.fillStyle = baseColor + (opts.layered ? '40' : '59'); // ~25% / ~35% opacity
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = baseColor;
     ctx.lineJoin = 'round';
     ctx.stroke();
-    ctx.fillStyle = color;
+    // The IV band: only the increase, from the base shape out to base + IV. Past the outer edge it is clamped (the numbers stay true).
+    if (iv) {
+      const fi = AXES.map(([k]) => Math.max(0, Math.min(1, ((stats[k] || 0) + (iv[k] || 0) / 2) / MAX)));
+      ctx.beginPath();
+      trace(fi);
+      trace(fr);
+      ctx.fillStyle = color + '59'; // ~35% opacity, like the base shape
+      ctx.fill('evenodd');
+      poly(fi);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+    ctx.fillStyle = baseColor;
     fr.forEach((f, i) => {
       const [x, y] = pt(i, f);
       ctx.beginPath();
@@ -120,30 +140,38 @@ G.StatChart = (() => {
       const al = Math.abs(x - cx) < 4 ? 'center' : x > cx ? 'left' : 'right';
       const lx = al === 'left' ? x - 10 : al === 'right' ? x + 10 : x;
       ctx.textAlign = al;
-      ctx.font = `700 11px ${FONT}`;
+      const big = !!opts.teamHex,
+        valFont = big ? `800 20px ${FONT}` : `800 14px ${FONT}`,
+        smallFont = big ? `700 15px ${FONT}` : `700 11px ${FONT}`,
+        dy = big ? 18 : 12;
+      ctx.font = smallFont;
       ctx.fillStyle = '#b9cbf0';
       ctx.fillText(label, lx, y - 2);
       // value, then (layered) the yellow "+10%". Laid out as one line so it stays aligned on either side.
       const val = k === 0 && opts.hpText ? opts.hpText : String(stats[k]);
-      const bon = opts.layered && bonus[k] > 0 ? ' +' + Math.round(bonus[k] * 100) + '%' : '';
+      const bon = iv
+        ? ' +' + (iv[k] || 0)
+        : opts.layered && bonus[k] > 0
+          ? ' +' + Math.round(bonus[k] * 100) + '%'
+          : '';
       const chg =
         after && (after[k] || 0) !== (bonus[k] || 0)
           ? (bon ? ' to +' : ' +') + Math.round((after[k] || 0) * 100) + '%'
           : '';
-      ctx.font = `800 14px ${FONT}`;
+      ctx.font = valFont;
       const w1 = ctx.measureText(val).width;
-      ctx.font = `700 11px ${FONT}`;
+      ctx.font = smallFont;
       const w2 = bon ? ctx.measureText(bon).width : 0,
         w3 = chg ? ctx.measureText(chg).width : 0;
       const x0 = al === 'left' ? lx : al === 'right' ? lx - w1 - w2 - w3 : lx - (w1 + w2 + w3) / 2;
       ctx.textAlign = 'left';
-      ctx.font = `800 14px ${FONT}`;
+      ctx.font = valFont;
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(val, x0, y + 12);
-      ctx.font = `700 11px ${FONT}`;
+      ctx.fillText(val, x0, y + dy);
+      ctx.font = smallFont;
       if (bon) {
-        ctx.fillStyle = '#ffd23f';
-        ctx.fillText(bon, x0 + w1, y + 12);
+        ctx.fillStyle = iv ? '#ffffff' : '#ffd23f';
+        ctx.fillText(bon, x0 + w1, y + dy);
       }
       if (chg) {
         ctx.fillStyle = '#fff3b0';

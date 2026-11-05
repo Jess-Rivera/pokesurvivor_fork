@@ -94,7 +94,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 ### `js/core/` (engine services)
 - `util.js` creates `G`, shared helpers. `stats.js` (`G.Stats`) the shared combat-stat formulas (HP, attack factor, damage).
 - `simbus.js` (`G.SimBus`) the sim-to-presentation event bus (docs/SIM-PRESENT-BOUNDARY.md). `debug.js` (`G.Debug`) dev tools behind `?dev`, including `G.Debug.newcombat(set)` (move test scenes; the name outlived the removed flag).
-- `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic).
+- `db.js` the save layer (localStorage, salted SHA-256 passwords; also the merge logic). A save's Pokemon copies (`save.box`) are read only through `js/systems/copies.js` (G.Copies), rolled from the generated `js/data/species-traits.js` (`tools/species_traits.js`). The game font is the face GameFont in `css/style.css`, a trimmed Silver (`tools/subset_silver.py`).
 - `audio.js` Web Audio synthesizer + sound effects (scores live in `js/data/music.js`).
 - `input.js` keyboard/mouse, `touch.js` mobile joystick + touch controls.
 - `sprites.js` the PMD sprite animator (8 directions, per-animation frame sizes,

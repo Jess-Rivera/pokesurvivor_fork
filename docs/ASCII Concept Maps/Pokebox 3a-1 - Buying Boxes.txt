@@ -1,0 +1,142 @@
+POKEBOX STEP 3a, MICROSTEP 1: BUYING BOXES  (plan, 2026-11-04, no code)
+Branch: feature/pokeboxes. Spec: docs/proposals/pokebox-plan.md "Rulings for step 3".
+Out of scope here: copies at the source, removing fill, selling, full-box auto-sell (next microsteps).
+
+=====================================================================
+ WHAT THE PLAYER SEES  (Team screen tab row)
+=====================================================================
+
+ Start (2 boxes, 12,000 coins):
+ +---------+-------+-------+------------+------------+------------+
+ | Pokedex | Box 1 | Box 2 | (c) 10,000 | (c) 25,000 | (c) 60,000 |
+ +---------+-------+-------+------------+------------+------------+
+                             ^ buyable    ^ dimmed     ^ dimmed
+                                          "Buy Box 3   "Buy Box 4
+                                           first"       first"
+
+ After buying Box 3:
+ +---------+-------+-------+-------+------------+------------+
+ | Pokedex | Box 1 | Box 2 | Box 3 | (c) 25,000 | (c) 60,000 |
+ +---------+-------+-------+-------+------------+------------+
+                             ^ opens on purchase
+
+ All 5 owned: no price tabs left.
+ (c) = the game's coin icon, same one the Shop uses.
+
+=====================================================================
+ CLICK FLOW ON A PRICE TAB
+=====================================================================
+
+  click (c) price tab
+        |
+        +-- not the next box? ----> toast "Buy Box N first"      (error sfx)
+        |
+        +-- not enough coins? ----> toast "Not enough PokeCoins" (error sfx)
+        |
+        +-- confirm dialog (G.UI.ask)
+              title: "Buy box"
+              text:  "Spend 10,000 PokeCoins on Box 3? You have 12,000."
+              [Buy]  [Cancel]
+                |
+                +-- Buy: coins -10,000, boxCount 2 -> 3, saves AT ONCE
+                         (storage, like dragging a copy to a box tab;
+                          pending team edits stay pending until Commit)
+                         new Box 3 tab opens, grid redraws
+
+  Dragging a copy onto a price tab: nothing happens, no drop highlight.
+
+=====================================================================
+ DECISIONS FOR JESS  (each one is a rule, approve or change)
+=====================================================================
+
+ D1  Bought in order (3, then 4, then 5).         REC: yes, like item slots
+ D2  Later price tabs show but are dimmed.         REC: yes, tooltip says why
+ D3  Price text: full "10,000" vs short "10k".     REC: full, matches the Shop
+ D4  Unaffordable next tab: dimmed, click toasts.  REC: yes
+ D5  Buying opens the new box tab.                 REC: yes
+ D6  Purchase saves at once, outside Commit.       REC: yes, same as box moves
+ D7  The Shop gets NO box panel (Team screen only). REC: yes, one place to buy
+     -> closes pokebox-plan [Open] "where a box is bought"
+
+=====================================================================
+ FILES  (where, what, why)
+=====================================================================
+
+ js/systems/copies.js   (G.Copies, owns boxCount already)
+   +- box price table: Box 3 = 10,000, Box 4 = 25,000, Box 5 = 60,000
+   +- price lookup for a box number
+   +- buy-box function: checks next-in-order, max 5, coins;
+   |  charges coins, raises boxCount; returns ok / max / coins
+   +- exported next to boxCount, inBox, BOX_MAX
+   why: box rules stay in the one module that reads save boxes
+
+ js/ui/menu.js   (rosRenderTabs, around line 997)
+   +- after the owned Box tabs, one price tab per unbought box
+   +- price tabs use the coin icon markup; owned tabs keep plain text
+   +- price tabs get no drag/drop handlers
+   +- click flow above; on Buy: commit, select new tab, redraw tabs+grid
+   why: the tab row is where Jess wants boxes bought
+
+ css/bw-team.css   (.ros-tab, around line 257)
+   +- price tab look: gold text, coin icon sized to the tab font
+   +- dimmed state for locked / unaffordable
+   why: reads as "buy me" next to the plain Box tabs
+
+ After the build (free-edit docs):
+   js/data/changelog.js (then a parse check), BALANCE.md box prices,
+   pokebox-plan.md D7 ruling + status, DEVLOG line.
+
+=====================================================================
+ TESTS
+=====================================================================
+
+ CHANGED  docs/proposals/pokebox-copies-harness.js
+   new section "6 buying boxes"  (expected values hand-derived from
+   the pokebox-plan price ruling, not from code output)
+     - prices read 10,000 / 25,000 / 60,000 for Box 3 / 4 / 5
+     - 2 -> 3 -> 4 -> 5 in order, exact coins taken each time
+     - at 5 boxes: refused as "max", coins and boxCount unchanged
+     - short on coins: refused as "coins", nothing changes
+     - after buying Box 3 with Box 1 and 2 full, a new copy lands in Box 3
+     - clean() keeps a bought boxCount (does not clamp back to 2)
+   why here: the buy function lives in copies.js, which this harness
+   already loads; no other harness touches boxes
+
+ NEW  docs/proposals/pokebox-copies-mutate.js
+   pokebox has no mutation runner yet. It breaks copies.js on purpose
+   and expects section 6 to fail for each:
+     - price table shifted one tier
+     - coin check removed
+     - a sixth box allowed
+     - boxCount raised without charging
+     - coins charged without raising boxCount
+   why: proves the harness actually catches box-economy bugs
+
+ CHANGED  tools/check.js
+   register the new mutation runner (tools/ is free-edit)
+
+ UI CHECK (run once, not committed)
+   tools/smoke-ui.js as-is, plus a one-off file:// headless probe:
+   Team screen shows 3 price tabs, set coins, buy Box 3, the tab
+   appears and is selected, 2 price tabs left, no page errors.
+   Not added to smoke-ui.js since that suite is already flaky.
+
+ INTENT SCENARIOS: none (no moves touched).
+ DEBUG SETS: none new; feel-test uses G.Debug.coins(n).
+
+=====================================================================
+ FEEL-TEST  (hard reload dev.html?dev, no save clear: boxCount
+             is already in the save since step 2)
+=====================================================================
+   1. G.Debug.coins(5000)    -> Box 3 price tab dimmed, toast on click
+   2. G.Debug.coins(100000)  -> buy Box 3, confirm, tab opens, 90,000 left
+   3. Box 4 is now the bright one; buy 4 and 5, price tabs gone
+   4. Reload: 5 boxes stay
+
+=====================================================================
+ RISKS
+=====================================================================
+   - Tab row width: 6 tabs + 3 price tabs at 1280 x 720. If it wraps,
+     price tabs shrink to the icon + number. Checked in the probe.
+   - Coins on the Team screen: if the screen shows no balance, the
+     confirm text carries it ("You have N").

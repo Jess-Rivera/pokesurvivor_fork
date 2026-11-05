@@ -7,6 +7,162 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-04',
+    title: ['Sell many at once', 'Sell many at once'],
+    new: [
+      [
+        'On the Team screen, press Select in a box to tick Pokemon and sell them together. Select repeats ticks every extra copy of a species in that box and keeps the best one (on your team, locked, favorite, best IVs, then the oldest). Team, locked and favorite Pokemon are never sold in a batch.',
+        'On the Team screen, press Select in a box to tick Pokemon and sell them together. Select repeats ticks every extra copy of a species in that box and keeps the best one (on your team, locked, favorite, best IVs, then the oldest). Team, locked and favorite Pokemon are never sold in a batch.',
+      ],
+      [
+        'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
+        'After a pull, Sell repeats sells every 1 to 3 star repeat that is not shiny in one click.',
+      ],
+      [
+        'Your Pokemon now earn EVs. Every enemy you defeat adds a little to six EV banks, one per stat, by its species (gym Pokemon give the most, elites more than wild ones, shinies double). At the end of a run you give the whole EVs to your team, up to 252 in a stat and 510 per Pokemon. EVs raise stats for good; whatever you do not give is lost.',
+        'Your Pokemon now earn EVs. Every enemy you defeat adds a little to six EV banks, one per stat, by its species (gym Pokemon give the most, elites more than wild ones, shinies double). At the end of a run you give the whole EVs to your team, up to 252 in a stat and 510 per Pokemon. EVs raise stats for good; whatever you do not give is lost.',
+      ],
+      [
+        "The Team screen shows each Pokemon's EVs under Weight, and selling a Pokemon with EVs warns you first.",
+        "The Team screen shows each Pokemon's EVs under Weight, and selling a Pokemon with EVs warns you first.",
+      ],
+    ],
+    chg: [
+      [
+        "Every Pokemon's IVs and nature now change its stats in a run, like the main games. Each IV adds to its stat as you level up, and a nature raises one stat by 10% and lowers another by 10% (never HP). Speed IVs and nature change how fast you move.",
+        "Every Pokemon's IVs and nature now change its stats in a run, like the main games. Each IV adds to its stat as you level up, and a nature raises one stat by 10% and lowers another by 10% (never HP). Speed IVs and nature change how fast you move.",
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Nicknames and box filters', 'Nicknames and box filters'],
+    new: [
+      [
+        'Give a Pokemon in your box a nickname: click its name (or the pencil) on the Team screen, type up to 16 letters, press Enter. Esc cancels; an empty name goes back to the species name.',
+        'Give a Pokemon in your box a nickname: click its name (or the pencil) on the Team screen, type up to 16 letters, press Enter. Esc cancels; an empty name goes back to the species name.',
+      ],
+      [
+        'Two new filters after BST on the Team screen: show only your favorites, or only your locked Pokemon (both on shows either).',
+        'Two new filters after BST on the Team screen: show only your favorites, or only your locked Pokemon (both on shows either).',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Lock and favorite your Pokemon', 'Lock and favorite your Pokemon'],
+    new: [
+      [
+        'Lock a Pokemon in your box and it can never be sold; you can still move it and put it on your team. Mark a favorite with the heart. Both show on the box cell.',
+        'Lock a Pokemon in your box and it can never be sold; you can still move it and put it on your team. Mark a favorite with the heart. Both show on the box cell.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Full boxes', 'Full boxes'],
+    new: [
+      [
+        'If your boxes do not have room for a whole pull, the Shop warns you first. You can still pull: whatever does not fit is sold right away at its sell price, and still counts in your Pokedex.',
+        'If your boxes do not have room for a whole pull, the Shop warns you first. You can still pull: whatever does not fit is sold right away at its sell price, and still counts in your Pokedex.',
+      ],
+      [
+        'When a pull does not fit, new Pokemon get the free places first, then shinies, then the rarest.',
+        'When a pull does not fit, new Pokemon get the free places first, then shinies, then the rarest.',
+      ],
+      [
+        'A Pokemon you rescue or catch as a shiny while your boxes are full is sold right away too, and the PokéCoins are yours.',
+        'A Pokemon you rescue or catch as a shiny while your boxes are full is sold right away too, and the PokéCoins are yours.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Sell your Pokemon', 'Sell your Pokemon'],
+    new: [
+      [
+        'Sell a Pokemon from your box on the Team screen (pick it, then Sell under its moves), or sell a repeat straight from its card after a pull. Prices by rarity: 15, 30, 60, 120 and 300 PokéCoins, three times that for a shiny.',
+        'Sell a Pokemon from your box on the Team screen (pick it, then Sell under its moves), or sell a repeat straight from its card after a pull. Prices by rarity: 15, 30, 60, 120 and 300 PokéCoins, three times that for a shiny.',
+      ],
+      [
+        'A Pokemon on your team cannot be sold. Selling your last one of a species keeps it in your Pokedex.',
+        'A Pokemon on your team cannot be sold. Selling your last one of a species keeps it in your Pokedex.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Every Pokemon you get is kept', 'Every Pokemon you get is kept'],
+    chg: [
+      [
+        'Every Pokemon you pull, rescue or defeat as a shiny now goes into your box as its own Pokemon, repeats included. Repeats no longer turn into PokéCoins (that includes the +150 for a rescue and +300 for a wild shiny you already had).',
+        'Every Pokemon you pull, rescue or defeat as a shiny now goes into your box as its own Pokemon, repeats included. Repeats no longer turn into PokéCoins (that includes the +150 for a rescue and +300 for a wild shiny you already had).',
+      ],
+      [
+        'A repeat shiny from the Shop now stays a shiny and goes into your box, instead of turning into a different Pokemon.',
+        'A repeat shiny from the Shop now stays a shiny and goes into your box, instead of turning into a different Pokemon.',
+      ],
+      [
+        'A shiny of a species you did not have now gives you just the shiny, not a normal one as well. Your Pokedex still counts the species.',
+        'A shiny of a species you did not have now gives you just the shiny, not a normal one as well. Your Pokedex still counts the species.',
+      ],
+    ],
+    fix: [
+      [
+        'The PokéCoins in the top bar now update right away when you earn or spend them, and read like 12,000.',
+        'The PokéCoins in the top bar now update right away when you earn or spend them, and read like 12,000.',
+      ],
+      [
+        'Box prices on the Team screen and the Buy and Pull buttons in the Shop now update right away when your PokéCoins or Pokeballs change.',
+        'Box prices on the Team screen and the Buy and Pull buttons in the Shop now update right away when your PokéCoins or Pokeballs change.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Buy more boxes', 'Buy more boxes'],
+    new: [
+      [
+        'You can buy Box 3, 4 and 5 from the price tabs at the end of the box tabs on the Team screen, for 10,000, 25,000 and 60,000 PokéCoins, in order.',
+        'You can buy Box 3, 4 and 5 from the price tabs at the end of the box tabs on the Team screen, for 10,000, 25,000 and 60,000 PokéCoins, in order.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['A new game font', 'A new game font'],
+    chg: [
+      [
+        'The main font across the game is now Silver, by Poppy Works.',
+        'The main font across the game is now Silver, by Poppy Works.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['Pokemon boxes', 'Pokemon boxes'],
+    new: [
+      [
+        'The Team screen now has tabs: the Pokedex and your boxes. Pick a specific Pokemon from a box for your team, and drag it onto a box tab to move it. You can field the same species more than once.',
+        'The Team screen now has tabs: the Pokedex and your boxes. Pick a specific Pokemon from a box for your team, and drag it onto a box tab to move it. You can field the same species more than once.',
+      ],
+      [
+        'Every Pokemon now shows its own gender, nature, ability, height, weight and IVs. Nature, ability and IVs do not change anything in battle yet.',
+        'Every Pokemon now shows its own gender, nature, ability, height, weight and IVs. Nature, ability and IVs do not change anything in battle yet.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-03',
+    title: ['Your save starts fresh', 'Your save starts fresh'],
+    chg: [
+      [
+        'Every Pokemon is becoming its own individual, so this update needs a clean save. Your old save is kept in this browser as a backup.',
+        'Every Pokemon is becoming its own individual, so this update needs a clean save. Your old save is kept in this browser as a backup.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-03',
     title: ['Dropped items show their real sprite', 'Dropped items show their real sprite'],
     fix: [

@@ -160,6 +160,8 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 - Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
 - Pickup radius split (feature/item-rework-v2, 2026-11-03, Jess playtest; TUNE): XP orbs only keep the radius above (120 px, 264 px maxed). Every other pickup, coins included, uses a fixed 78 px (Player.itemMagnet) that the permanent upgrade does not touch. The magnet pickup still pulls everything, and the Magnet shrine x4 scales both radii (480 and 312 px at base). Was: one radius for everything.
 - Pinap bonus (feature/item-rework-v2, 2026-11-03, Jess playtest; TUNE): Pinap +0.5 points for 20 s, Silver +1 for 10 s, Golden +2 for 5 s, on the 1% wild ground roll (js/data/ground-items.js). Different tiers still stack, up to 4.5%. Was: +1, +5, +10 for 60 s, up to 17%.
+- Pokebox box prices (feature/pokeboxes, built 2026-11-04, Jess ruling 2026-11-03; TUNE): Box 3 10,000, Box 4 25,000, Box 5 60,000 PokeCoins, bought in order from the Team screen's price tabs (BOX_PRICES in js/systems/copies.js). In line with the team item slots (9,000, 23,000, 60,000). Boxes 1 and 2 are free. New.
+- Pokebox sell prices (feature/pokeboxes, built 2026-11-04, Jess ruling 2026-11-03; TUNE): by the species' rarity 15, 30, 60, 120, 300 PokeCoins, x3 for a shiny (SELL_PRICE and SHINY_SELL in js/systems/copies.js). The old gacha repeat refund, now paid on a sale instead of automatically. Gacha repeats and repeat rescues or wild shinies no longer pay coins (were the refund, +150 and +300).
 
 ## XP curve / run pacing (feature/xp-curve, applied 2026-10-18)
 - Cost: mainline Medium Fast, total n^3. xpToNext(L) = 3L^2 + 3L + 1 (G.Stats.xpToNext): L1 7, L10 331, L20 1261, L50 7651. Replaced floor((8 + 6L + 1.6 L^1.75) * 4).
@@ -203,6 +205,17 @@ have identical HP at the same level (consistency goal met).
   Rift legendary untouched (rifts planned for removal).
 - Future elite: NOT an HP multiplier — it will be "current enemy level + X" (a higher-level spawn),
   so HP falls out of the formula. (DECISIONS.md.)
+
+## IVs and natures (feature/pokeboxes, pokebox step 4, built 2026-11-04; TUNE by feel)
+- Mainline: stat = floor((2B + IV) x L / 100) + 5, then x1.1 raised / x0.9 lowered, rounded down (HP: IV only, never a nature). Enemies 0 IV, neutral (D2), so an average copy is a small net player buff. Plan and tables: docs/ASCII Concept Maps/Pokebox 4 - IVs and Natures Apply.txt.
+- Size vs today (base 80): IV 15 +0% / +7% / +8% at L5 / L25 / L50; IV 31 +8% / +16% / +18%; IV 31 raised +15% / +27% / +29%; IV 0 lowered -15% / -11% / -11%. HP base 80: IV 31 +4% / +9% / +11%.
+- Movement (D3, through the 0.7x to 1.3x curve): base Spe 65 goes 96.6 px/s (IV 0, lowered) to 131.8 (IV 31, raised) around a plain 107.0; base 30 76.0 to 86.7; base 100 and up barely move (+2% or less). Feel risk to watch; if too big, soften MOVE_K later.
+
+## EVs (feature/pokeboxes, pokebox step 5, built 2026-11-04; TUNE before playtesters)
+- Earning (map F1, Jess 2026-11-04): a defeated enemy adds its species' typed mainline yield x a class rate to six run banks, in thousandths. Rates: wild 1/1000, elite 1/500, gym 1x (full yield), shiny x2 of its class (EV_RATE and SHINY_EV in js/systems/copies.js). Golden and thief units count as wild. Fractions and ungiven EVs are lost at run end.
+- Size (estimates: Kanto mean yields, 1.7 kills/s): wild-only 10 min run 0 whole EVs, 30 min ~3, 60 min ~9; each gym mon beaten adds 1 to 3 at 1x, so gym wins carry the progression.
+- Effect: 252 EVs in one stat, base 80, 0 IV: +29% / +33% / +36% at L10 / L25 / L50 (HP +17% / +20% / +22%). Movement with 252 Speed EVs: base 30 76.0 -> 100.9 px/s, base 65 107.0 -> 135.0, base 100 136.0 -> 138.6.
+- Plan and tables: docs/ASCII Concept Maps/Pokebox 5 - EVs.txt. Design: docs/proposals/ev-progression.md.
 
 ## Movement / Speed stat (base-stats feature, slice 1) — LOCKED 2026-10-17
 Tunables for the Speed -> movement identity model (see docs/stat-model-design-notes.md). Chosen by

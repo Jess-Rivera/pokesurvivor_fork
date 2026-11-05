@@ -24,6 +24,7 @@ G.Game = (() => {
   let time = 0,
     last = 0,
     pendingLevels = 0;
+  let evBank = [0, 0, 0, 0, 0, 0]; // pokebox step 5: this run's six EV banks in thousandths (G.Copies.killEvs), reset each run
   let pl = null;
   // ---- team (Phase A) ----
   let roster = []; // up to 6 fighter Players; pl === roster[activeIdx]
@@ -151,6 +152,7 @@ G.Game = (() => {
     biome = 0;
     time = 0;
     pendingLevels = 0;
+    evBank = [0, 0, 0, 0, 0, 0];
     runReal = performance.now();
     tampered = debugDirty;
 
@@ -161,7 +163,7 @@ G.Game = (() => {
     roster = [];
     save.team.forEach((t, slot) => {
       if (!t || !G.DEX_BY[t.dex]) return;
-      const f = buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex));
+      const f = buildFighter(G.DEX_BY[t.dex], !!t.shiny && G.DB.ownsShiny(t.dex), t.uid);
       f.teamSlot = slot;
       roster.push(f);
     });
@@ -222,11 +224,13 @@ G.Game = (() => {
     endRun(false);
   }
 
-  /** Build one team member (a Player) with its moves, binds and bans applied. */
-  function buildFighter(mon, shiny) {
+  /** Build one team member (a Player) with its moves, binds and bans applied. uid: the team slot's copy, whose IVs and
+   *  nature set its stats (pokebox step 4); a missing copy plays neutral. */
+  function buildFighter(mon, shiny, uid) {
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
-    const f = new G.Player(mon, perks, shiny);
     const save = G.DB.save;
+    const f = new G.Player(mon, perks, shiny, G.Copies.profileOf(save, uid, mon.dex));
+    f.copyUid = uid || null; // pokebox step 5: whose copy this is, for the end-of-run EV allocation (pl.uid is co-op's)
     ((save.pbind && save.pbind[mon.dex]) || []).forEach((id, i) => {
       if (id) f.bind[id] = i;
     });
@@ -238,6 +242,18 @@ G.Game = (() => {
       f.setActive(0);
     }
     return f;
+  }
+
+  /** The run's team copies for the EV allocation (pokebox step 5): one entry per copy, fainted members included. */
+  function evTeam() {
+    const seen = new Set(),
+      out = [];
+    for (const f of roster)
+      if (f.copyUid && !seen.has(f.copyUid)) {
+        seen.add(f.copyUid);
+        out.push({ uid: f.copyUid, dex: f.dex, slot: f.teamSlot });
+      }
+    return out;
   }
 
   /** Living (not fainted) team members. */
@@ -495,30 +511,42 @@ G.Game = (() => {
   /** You took a lost Pokemon home and it joins you (events.js). */
   G.onRescue = (dex, name) => {
     if (!G.DB.save || !pl) return;
-    const isNew = !G.DB.owns(dex);
-    if (isNew) {
-      G.DB.grant(dex, 'rescue');
-      G.DB.commit(true);
-    } else pl.coins += 150;
+    // Always a new copy, a repeat too (pokebox 3a-2); a repeat no longer pays +150 coins. Full boxes: sold on arrival (3a-4).
+    const got = G.DB.obtain(dex, false, 'rescue');
+    G.DB.commit(true);
     G.Spawner.say(
-      isNew ? '¡' + name + ' se une a tu equipo!' : '¡' + name + ' te da las gracias! (+150 monedas, ya lo tenías)',
+      got.sold
+        ? fullBoxLine(name, got.sold)
+        : got.isNew
+          ? '¡' + name + ' se une a tu equipo!'
+          : name + ' joined your box!',
       4
     );
     G.Audio.sfx('shinyGet');
   };
 
-  /** A wild shiny goes down: you keep it (and the normal version if you did not have it). */
+  /** A wild shiny goes down: you keep it, as one shiny copy (a repeat too; it no longer pays +300 coins). */
   G.onShinyCaught = (e) => {
     if (!G.DB.save || !pl) return;
     if (G.Coop.isHost) G.Coop.shinyCaught(e);
-    const isNew = G.DB.grantShiny(e.dex, 'wild');
+    const got = G.DB.obtain(e.dex, true, 'wild');
     G.DB.save.stats.shinies++;
     G.DB.commit(true);
-    caught.push({ dex: e.dex, isNew });
-    G.Spawner.say(isNew ? '¡Has conseguido a ' + e.name + ' shiny!' : '¡Otro ' + e.name + ' shiny! (+300 monedas)', 4);
-    if (!isNew) pl.coins += 300;
+    caught.push({ dex: e.dex, isNew: got.isNew });
+    G.Spawner.say(
+      got.sold
+        ? fullBoxLine('shiny ' + e.name, got.sold)
+        : got.isNew
+          ? '¡Has conseguido a ' + e.name + ' shiny!'
+          : 'Another shiny ' + e.name + '! Added to your box.',
+      4
+    );
     G.Audio.sfx('shinyGet');
   };
+
+  /** The run banner when every box is full (pokebox 3a-4, D3): the coins already went to the saved PokeCoins. */
+  const fullBoxLine = (name, coins) =>
+    `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
 
   function endRun(dead = true) {
     if (state === 'over' || !pl) return;
@@ -573,6 +601,8 @@ G.Game = (() => {
         })
         .catch(() => {});
 
+    // Pokebox step 5: the run's EV banks and the team's copies, for the allocation screen. Co-op allocates nothing (deferred).
+    const evs = coop ? null : { bank: evBank.slice(), team: evTeam() };
     G.RunUI.showOver(
       {
         dead,
@@ -587,6 +617,7 @@ G.Game = (() => {
         moves: pl.moves,
         roster,
         caught,
+        evs,
         breakdown:
           Object.entries(parts)
             .filter(([, v]) => v)
@@ -1211,7 +1242,7 @@ G.Game = (() => {
     G.Touch.draw(ctx);
     if (G.Settings.get('fps')) {
       ctx.save();
-      ctx.font = '700 11px Pixelify, monospace';
+      ctx.font = '700 11px GameFont, monospace';
       ctx.textAlign = 'right';
       ctx.fillStyle = fpsShown >= 50 ? '#5fe08a' : fpsShown >= 30 ? '#ffd23f' : '#ff5f6d';
       ctx.fillText(fpsShown + ' FPS', w - 10, h - 8);
@@ -1354,6 +1385,18 @@ G.Game = (() => {
     levelXp,
     flash,
     offerBond,
+    /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
+    evKill(e) {
+      const add = G.Copies.killEvs(e);
+      for (let k = 0; k < 6; k++) evBank[k] += add[k];
+    },
+    /** The run's six EV banks, in thousandths (a copy). G.Debug.evbank sets them. */
+    get evBank() {
+      return evBank.slice();
+    },
+    set evBank(v) {
+      if (Array.isArray(v) && v.length === 6) evBank = v.map((x) => Math.max(0, Math.round(+x) || 0));
+    },
     /** Badge package: queue n guaranteed level-ups (not a debug call, so the run is NOT flagged). */
     grantLevels(n = 1) {
       for (let i = 0; i < n; i++) {
@@ -1505,8 +1548,15 @@ G.Flow = {
     G.Audio.music('village');
     G.LoginUI.open();
   },
-  afterLogin() {
+  async afterLogin() {
     G.Audio.music('village');
+    if (G.DB.takeResetNotice())
+      await G.UI.ask('This update changes how every Pokemon is stored, so your save starts fresh.', {
+        title: 'New save needed',
+        ok: 'OK',
+        note: 'Your old save is kept in this browser as a backup.',
+        noCancel: true,
+      });
     if (!G.DB.save.partner) G.TestUI.start();
     else this.goMenu();
   },

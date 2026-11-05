@@ -132,6 +132,42 @@ G.Icons = (() => {
         '............',
       ],
     },
+    // A locked Pokemon copy (pokebox 3b-1): a gold padlock.
+    lock: {
+      pal: { c: '#c9ccd8', w: '#f4f6ff', g: '#ffd23f', s: '#c9a227' },
+      rows: [
+        '............',
+        '....kkkk....',
+        '...kcwwck...',
+        '...kc..ck...',
+        '...kc..ck...',
+        '..kkkkkkkk..',
+        '..kgwgggsk..',
+        '..kggkkggk..',
+        '..kgggkgsk..',
+        '..kssssssk..',
+        '..kkkkkkkk..',
+        '............',
+      ],
+    },
+    // Rename a Pokemon copy (pokebox 3b-2): a pencil, tip down-left.
+    pencil: {
+      pal: { y: '#ffd23f', o: '#c9a227', p: '#ff9db0', w: '#f4f6ff', g: '#5a5a6e' },
+      rows: [
+        '........kk..',
+        '.......kppk.',
+        '......kkppk.',
+        '.....kyokk..',
+        '....kyok....',
+        '...kyok.....',
+        '..kyok......',
+        '.kwok.......',
+        '.kwwk.......',
+        'kgwk........',
+        'kgk.........',
+        '.k..........',
+      ],
+    },
     fist: {
       pal: { r: '#ff5f6d', s: '#c23a4b', w: '#ffd3d8', c: '#e8e8f0' },
       rows: [

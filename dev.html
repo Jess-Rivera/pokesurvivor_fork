@@ -49,8 +49,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PokeSwarm" />
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-    <link rel="preload" href="assets/fonts/PixelifyPS-400.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="assets/fonts/PixelifyPS-700.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="assets/fonts/Silver-game.ttf" as="font" type="font/ttf" crossorigin />
     <!-- seo:begin -->
     <!-- Datos estructurados para Google (tipo de página: videojuego gratuito) -->
     <script type="application/ld+json">
@@ -632,7 +631,9 @@
                 <div class="dex-chipset" id="ros-types"></div>
                 <div class="dex-chipset" id="ros-rarity"></div>
                 <div class="dex-chipset" id="ros-bst"></div>
+                <div class="dex-chipset" id="ros-marks"></div>
               </div>
+              <div class="ros-tabs" id="ros-tabs"></div>
             </div>
             <div class="dex-count sub" id="ros-shown"></div>
             <div class="grid ros-grid" id="ros-grid"></div>
@@ -833,6 +834,18 @@
       </div>
     </section>
 
+    <!-- pokebox step 5: end-of-run EV allocation (js/ui/run-ui.js showEvs) -->
+    <section id="scr-evs" class="scr dim hidden">
+      <div class="box center" style="width: min(760px, 100%)">
+        <h2>Train your team</h2>
+        <p id="evs-sub" class="sub"></p>
+        <div id="evs-grid"></div>
+        <div class="row" style="justify-content: center">
+          <button id="evs-done" class="btn gold">Done</button>
+        </div>
+      </div>
+    </section>
+
     <!-- datos generados -->
     <!-- scripts:begin -->
     <script defer src="js/core/util.js"></script>
@@ -863,6 +876,8 @@
     <script defer src="js/data/gym-contact.js"></script>
     <script defer src="js/data/upgrades.js"></script>
     <script defer src="js/data/evolvable.js"></script>
+    <script defer src="js/data/species-traits.js"></script>
+    <script defer src="js/systems/copies.js"></script>
     <script defer src="js/data/items.js"></script>
     <script defer src="js/data/ground-items.js"></script>
     <script defer src="js/data/drops.js"></script>

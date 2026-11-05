@@ -9,8 +9,9 @@ G.Player = class Player {
   /**
    * @param mon   entrada de G.DEX
    * @param perks mejoras permanentes ya resueltas (ver data/upgrades.js)
+   * @param statProf the team copy's IVs, EVs and nature (G.Stats.profile, pokebox steps 4 and 5); none plays neutral
    */
-  constructor(mon, perks = {}, shiny = false) {
+  constructor(mon, perks = {}, shiny = false, statProf = null) {
     this.mon = mon;
     this.dex = mon.dex;
     this.shiny = shiny && G.Sprites.hasShiny(mon.dex);
@@ -43,17 +44,23 @@ G.Player = class Player {
     this.coinMul = perks.coinMul || 1;
 
     // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
-    // perks.hp (flat HP upgrades) still adds on top. IV/EV 0 this slice (deferred).
+    // perks.hp (flat HP upgrades) still adds on top. IVs, EVs and nature from the copy (statProf, pokebox steps 4 and 5).
     this.perksHp = perks.hp || 0;
+    this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;
     // Stat cards (upgrade rework slice 2c): sum of increased percentages per stat, absent = 0.
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }; // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
     this.baseHpStat = mon.stats && mon.stats[0] != null ? mon.stats[0] : null;
-    this.maxHp = (this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1) : mon.hp) + this.perksHp;
+    const hp1 =
+      this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0), this.statEv(0)) : mon.hp;
+    this.maxHp = hp1 + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;
     // fall back to the old pre-derived mon.spd if stats are somehow absent.
-    this.baseSpd = mon.stats && mon.stats[5] != null ? G.Stats.speedToPx(mon.stats[5]) : mon.spd;
+    this.baseSpd =
+      mon.stats && mon.stats[5] != null
+        ? G.Stats.speedToPx(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))
+        : mon.spd;
     this.baseAtk = mon.atk;
     // Real base Atk/SpA (stats[1]/stats[3]) for the A/D damage model; scale with run level
     // via G.Stats. Fallback 50 keeps a mon with no stats array working.
@@ -170,12 +177,26 @@ G.Player = class Player {
       this.baseSpAStat,
       this.level,
       m,
-      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul()
-    ); // run items (Brass Knuckles, Pikachu's Tear, Snowball)
+      this.atkMulAll * G.Stats.itemCatMul(this, c) * (1 + si) * stg * this.runDmgMul(),
+      this.statProf
+    ); // run items (Brass Knuckles, Pikachu's Tear, Snowball); statProf: this copy's IVs and nature
   }
   /** Max HP at `level`: mainline HP x (1 + HP Up percentages) + flat perks. */
   maxHpAt(level) {
-    return Math.round(G.Stats.hpForLevel(this.baseHpStat, level) * (1 + this.incOf('hp'))) + this.perksHp;
+    const hp = G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0), this.statEv(0));
+    return Math.round(hp * (1 + this.incOf('hp'))) + this.perksHp;
+  }
+  /** This copy's IV for stat i (HP, Atk, Def, SpA, SpD, Spe), 0 with no profile (pokebox step 4). */
+  statIv(i) {
+    return this.statProf ? this.statProf.iv[i] : 0;
+  }
+  /** This copy's nature multiplier for stat i: 1.1, 0.9 or 1. HP's is always 1. */
+  statNat(i) {
+    return this.statProf ? this.statProf.nat[i] : 1;
+  }
+  /** This copy's EVs in stat i, 0 with no profile (pokebox step 5). */
+  statEv(i) {
+    return this.statProf && this.statProf.ev ? this.statProf.ev[i] : 0;
   }
   /** Stat bonus fraction: the stat cards plus the gym badge boosts, plus the team Vitamins card (slice 5b: a team read, so every member,
    *  bench and later ones included, has it). */
@@ -610,9 +631,12 @@ G.Player = class Player {
       if (LOG) {
         neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
         cat = atk.cat === 'special' ? 1 : 0;
-        dStat = (cat === 1 ? G.Stats.spDef(spdB, this.level) : G.Stats.defense(defB, this.level)) * defMul;
+        dStat =
+          (cat === 1
+            ? G.Stats.spDef(spdB, this.level, this.statIv(4), this.statEv(4), this.statNat(4))
+            : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
       }
-      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul) * mul;
+      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf) * mul;
     }
     const afterDef = amount;
     let eff = null,
@@ -1179,7 +1203,7 @@ G.Player = class Player {
       if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
         const t = performance.now() / 1000;
         ctx.save();
-        ctx.font = '800 9px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '800 9px GameFont,"Segoe UI",sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#cfc6ff';
         ctx.strokeStyle = 'rgba(0,0,0,.7)';
@@ -1215,7 +1239,7 @@ G.Player = class Player {
           slow: 'SLW',
         };
         ctx.save();
-        ctx.font = '800 7px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '800 7px GameFont,"Segoe UI",sans-serif';
         ctx.textAlign = 'center';
         const gap = 2,
           h = 9,
@@ -1262,7 +1286,7 @@ G.Player = class Player {
     }
     if (this.tag) {
       ctx.save();
-      ctx.font = '700 7px Pixelify,"Segoe UI",sans-serif';
+      ctx.font = '700 7px GameFont,"Segoe UI",sans-serif';
       ctx.textAlign = 'center';
       const y = this.y - this.bodyH - 8;
       ctx.lineWidth = 2.5;
@@ -1271,7 +1295,7 @@ G.Player = class Player {
       ctx.fillStyle = this.dead ? '#ff8a96' : this.tagColor || '#fff';
       ctx.fillText(this.tag, this.x, y);
       if (this.dead) {
-        ctx.font = '700 6px Pixelify,"Segoe UI",sans-serif';
+        ctx.font = '700 6px GameFont,"Segoe UI",sans-serif';
         ctx.strokeText(this.revLabel || '', this.x, y - 8);
         ctx.fillText(this.revLabel || '', this.x, y - 8);
       }

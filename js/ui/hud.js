@@ -2,7 +2,7 @@
  * Drawn in SCREEN coordinates (without the camera transform).
  */
 G.HUD = (() => {
-  const F = (w, s) => `${w} ${s}px Pixelify,"Segoe UI",system-ui,sans-serif`;
+  const F = (w, s) => `${w} ${s}px GameFont,"Segoe UI",system-ui,sans-serif`;
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();

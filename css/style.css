@@ -1,19 +1,19 @@
 /* ============ PokéSurvivor — interfaz estilo Mundo Misterioso ============
  * Cajas azules con doble borde blanco, como los menús de PMD, y fuente pixel
- * local (Pixelify Sans, OFL).
+ * local (Silver).
  */
-/* Pixelify Sans con los números redibujados para que no se confundan (tools/make_font.py). */
+/* The game font (Jess, 2026-11-03). Silver draws small for its size, so size-adjust makes every font size in the CSS and on canvases
+   read about as large as it did with the old font. Its own line metrics sit far below the baseline, so the overrides centre capitals in
+   their line and keep line heights about the same. It has one weight, used for all of them. */
 @font-face {
-  font-family: 'Pixelify';
-  src: url('../assets/fonts/PixelifyPS-400.ttf') format('truetype');
-  font-weight: 400 550;
+  font-family: 'GameFont';
+  src: url('../assets/fonts/Silver-game.ttf') format('truetype');
+  font-weight: 100 900;
   font-display: block;
-}
-@font-face {
-  font-family: 'Pixelify';
-  src: url('../assets/fonts/PixelifyPS-700.ttf') format('truetype');
-  font-weight: 551 900;
-  font-display: block;
+  size-adjust: 140%;
+  ascent-override: 67%;
+  descent-override: 19%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: 'Monogram';
@@ -40,7 +40,7 @@
   --r3: #4fb4ff;
   --r4: #c47bff;
   --r5: #ffcb3d;
-  --font: 'Pixelify', 'Segoe UI', system-ui, sans-serif;
+  --font: 'GameFont', 'Segoe UI', system-ui, sans-serif;
 }
 
 * {
@@ -898,6 +898,19 @@ label {
   flex-shrink: 0;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
 }
+/* "Sell repeats" on the results (3b-3): just above Continue, kept in view the same way. */
+#pull-sellall {
+  position: sticky;
+  bottom: 64px;
+  z-index: 2;
+  flex-shrink: 0;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+#pull-sellall .coin {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
 @media (max-height: 520px) {
   #pull-fx {
     gap: 10px;
@@ -1053,6 +1066,21 @@ label {
 .pcard .tag {
   font-size: 12px;
   margin-top: 2px;
+}
+/* Sell a repeat from its gacha result card (step 3a-3). */
+.pcard .pcard-sell {
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.pcard .pcard-sell .coin,
+.pcard .tag .coin {
+  width: 12px;
+  height: 12px;
+  vertical-align: -2px;
+}
+.pcard.sold {
+  opacity: 0.55;
 }
 .pcard .new {
   color: var(--gold);
@@ -2258,6 +2286,7 @@ a.btn {
   #scr-levelup,
   #scr-pause,
   #scr-over,
+  #scr-evs,
   #scr-item,
   #scr-settings,
   #scr-legal,
@@ -3576,4 +3605,41 @@ a.btn {
 }
 .ask-note {
   margin: 0;
+}
+
+/* Pokebox step 5: end-of-run EV allocation (js/ui/run-ui.js showEvs) */
+#evs-grid {
+  overflow-x: auto;
+  margin: 8px 0 12px;
+}
+.evs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.evs-table th,
+.evs-table td {
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+.evs-table th small {
+  display: block;
+  color: var(--muted);
+  font-weight: normal;
+}
+.evs-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.04);
+}
+.evs-table td b {
+  display: inline-block;
+  min-width: 2.2em;
+}
+.evs-table td em {
+  color: #ffd23f;
+  font-style: normal;
+}
+.evs-table .btn.small {
+  padding: 2px 8px;
+  min-width: 0;
 }
