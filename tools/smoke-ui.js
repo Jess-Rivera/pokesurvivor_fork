@@ -268,6 +268,61 @@ async function check(browser, query, tag) {
       (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : '')
   );
   ok(run.rowsNum >= 55, tag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');
+  // Move Shop step 4: the Trainer buys into a free slot, the forget step cancels and replaces, the Mart opens, and a held bond
+  // that a purchase made usable opens right after Leave. Last in this page: it leaves the bond screen open.
+  const shop = await page.evaluate(() => {
+    const pl = G.Game.player,
+      o = {},
+      sig = () => pl.slots.map((g) => g.map((m) => m.id).join('+')).join(',');
+    pl.invuln = 1e9;
+    pl.moves = [G.Moves.instance('tackle')];
+    pl.slots = [pl.moves.slice()];
+    pl.active = 0;
+    pl.bonds = 0;
+    G.Debug.silver(9999999);
+    o.open = G.Debug.trainer() === true && G.UI.isOpen('scr-shop') && G.Game.state === 'choice';
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) G.ShopUI.pickOffer(i);
+    o.buy = pl.slots.length === 2 && pl.active === 0;
+    for (let k = 0; k < 8 && pl.slots.length < pl.maxMoves; k++) G.ShopUI.pickOffer(k % 4);
+    o.full = pl.slots.length === pl.maxMoves;
+    const before = sig();
+    for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
+    o.forget = G.ShopUI.forgetting;
+    G.ShopUI.back();
+    o.cancel = !G.ShopUI.forgetting && sig() === before;
+    for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
+    for (let i = 3; i >= 0 && G.ShopUI.forgetting; i--) G.ShopUI.pickSlot(i);
+    o.replace = !G.ShopUI.forgetting && pl.slots.length === pl.maxMoves && sig() !== before;
+    G.ShopUI.leave();
+    o.left = !G.UI.isOpen('scr-shop') && G.Game.state === 'playing';
+    o.mart = G.Debug.mart() === true && G.UI.isOpen('scr-shop');
+    for (let i = 0; i < 4; i++) {
+      G.ShopUI.pickOffer(i);
+      G.ShopUI.pickMember(0);
+    }
+    G.ShopUI.leave();
+    // a held bond: open the Trainer with 1 loose move, buy a second, Leave; the bond screen opens on a following frame
+    pl.moves = [G.Moves.instance('tackle')];
+    pl.slots = [pl.moves.slice()];
+    pl.active = 0;
+    pl.bonds = 1;
+    G.Debug.trainer();
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) G.ShopUI.pickOffer(i);
+    o.bondHeld = !G.UI.isOpen('scr-bond');
+    G.ShopUI.leave();
+    return o;
+  });
+  await sleep(400);
+  shop.bondAfter = await page.evaluate(() => G.UI.isOpen('scr-bond'));
+  ok(shop.open, tag + ': G.Debug.trainer() opens the Move Trainer and pauses the run');
+  ok(shop.buy, tag + ': a purchase fills a free slot and keeps the active slot');
+  ok(shop.full && shop.forget, tag + ': with 4 slots full a purchase goes to the forget step');
+  ok(shop.cancel, tag + ': Cancel on the forget step changes nothing');
+  ok(shop.replace, tag + ': picking a slot replaces that move');
+  ok(shop.left, tag + ': Leave closes the shop and the run goes on');
+  ok(shop.mart, tag + ': G.Debug.mart() opens the TM Mart');
+  ok(shop.bondHeld, tag + ': an open shop holds back the bond screen');
+  ok(shop.bondAfter, tag + ': the held bond opens right after Leave');
   await sleep(500);
   ok(
     errs.length === 0,

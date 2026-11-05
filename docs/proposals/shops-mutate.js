@@ -21,7 +21,8 @@ const M = [
   ['shops spawn and age in an arena', 'shops', [['if (G.GymArena.inArena) return; // hidden in an arena, and their minute stops', '']]],
   ['shops spawn in co-op', 'shops', [['if (G.Coop.active) return; // no shops in co-op until co-op shops exist', '']]],
   // ---- entering ----
-  ['entering again without stepping off', 'shops', [['if (on && !s.on) enter(s);', 'if (on) enter(s);']]],
+  ['entering again without stepping off', 'shops', [['if (on && !s.on && !enter(s)) continue;', 'if (on && !enter(s)) continue;']]],
+  ['a refused entry is used up', 'shops', [['if (on && !s.on && !enter(s)) continue;', 'if (on && !s.on) enter(s);']]],
   // ---- wiring ----
   ['the gym return hook is gone', 'gym', [['if (G.Shops) G.Shops.afterGym(now());', '']]],
   ['the run start does not reset the shops', 'game', [['G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again', '']]],

@@ -45,7 +45,7 @@ Existing behavior changed by this step: the GYM ARROW (F1). Nothing else that ex
   retry      24 random tries per shop; if either fails, both retry in 2 s
              (as the gym gate's caller does). The minute starts when placed.
   art scale  1.5 to start (Trainer 117 x 108, Mart 96 x 107 world px; the
-             gym is 144 x 124). TUNE by feel.
+             gym is 144 x 124). TUNE by feel. Kept at 1.5 (Jess 2026-11-05).
 
 =====================================================================
  3. ARROWS

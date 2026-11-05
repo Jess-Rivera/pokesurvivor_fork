@@ -268,16 +268,37 @@ G.Player = class Player {
   }
 
   // ---------------- movimientos ----------------
-  addMove(id) {
+  /** @param stay  true: keep the current active slot (Move Shop purchases, step 4); false: switch to the new move (level-up cards). */
+  addMove(id, stay = false) {
     if (this.slots.length >= this.maxMoves || this.hasMove(id)) return false;
     const m = G.Moves.instance(id, 1);
     this.moves.push(m);
     const group = [m];
     this.slots.push(group);
     this.arrange();
+    if (stay) return true;
     // It switches to the new one, unless you are using a link (it does not take the group off you).
     if (!(this.slots[this.active] && this.slots[this.active].length > 1))
       this.setActive(this.slots.indexOf(group), true);
+    return true;
+  }
+
+  /**
+   * Move Shop (step 4, the forget step): `newId` takes the exact slot of the LOOSE move `oldId`, which is forgotten. A move inside a
+   * bond is fixed (Jess 2026-11-05) and is never replaced: false. The active slot index does not change. A live persistent effect of
+   * the forgotten move (an orbit, an aura) ends on the next sim tick by the orphan rule in js/systems/move-sim.js (upkeepPersistent).
+   */
+  replaceMove(oldId, newId) {
+    if (this.hasMove(newId)) return false;
+    const i = this.slots.findIndex((g) => g.length === 1 && g[0].id === oldId);
+    if (i < 0) return false;
+    const old = this.slots[i][0],
+      m = G.Moves.instance(newId, 1),
+      k = this.moves.indexOf(old);
+    if (k >= 0) this.moves[k] = m;
+    else this.moves.push(m);
+    this.slots[i] = [m];
+    this.arrange(); // fixed-slot bindings (Upgrades, Shortcuts) still apply; the active group is kept
     return true;
   }
 

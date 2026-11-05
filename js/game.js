@@ -691,7 +691,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return; // a shop holds it back until you leave
     // The link belongs to the team: any living member that can bond now may take it (picked on the screen).
     const choices = roster.filter((f) => !f.dead).map((f) => ({ f, opt: f.bondOptions() }));
     if (!choices.some((c) => c.opt)) {
@@ -713,6 +713,24 @@ G.Game = (() => {
       if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
       if (G.Coop.active) G.Coop.holdEnd();
     });
+  }
+
+  // ---------------- Move Shop (step 4) ----------------
+
+  /**
+   * Walking into a shop (js/systems/shops.js) opens its screen (js/ui/shop-ui.js) and pauses the run, like the bond screen.
+   * It never opens over another screen: false, so the visit is not used up and it tries again next frame. On Leave the run
+   * goes on; a held bond that a purchase made usable opens on the next frame (offerBond, as today).
+   */
+  function openShop(shop) {
+    if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return false;
+    state = 'choice';
+    G.Audio.sfx('confirm');
+    G.ShopUI.open(shop, () => {
+      if (state === 'choice') state = 'playing';
+    });
+    return true;
   }
 
   // ---------------- pickup ----------------
@@ -944,6 +962,10 @@ G.Game = (() => {
     }
     if (state === 'levelup') {
       G.RunUI.levelKeys();
+      return;
+    }
+    if (G.UI.isOpen('scr-shop')) {
+      G.ShopUI.keys();
       return;
     }
     if (G.UI.isOpen('scr-bond')) {
@@ -1389,6 +1411,7 @@ G.Game = (() => {
     levelXp,
     flash,
     offerBond,
+    openShop,
     /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
     evKill(e) {
       const add = G.Copies.killEvs(e);

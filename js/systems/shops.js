@@ -5,7 +5,14 @@
  * seen from the player (the second bearing is the first + 100 to 260 degrees), on free ground. If either finds no spot, both
  * retry RETRY s later. Each pair lasts LIFE s on the run clock (the dt it is given), so a pause or a menu stops it; it fades
  * out over the last FADE s. Walking onto a building's contact area enters it once; you step off before you can enter again.
- * Until the shop screens (step 4) entering only shows a short notice.
+ * Entering opens the shop screen (G.Game.openShop, js/ui/shop-ui.js, Move Shop step 4) and pauses the run. It never opens over
+ * another screen: the game refuses, and the visit is not used up (it tries again next frame while you stand on it).
+ * Step 4, stock and buying (plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt): the Trainer offers each member 4
+ * random moves from its level-up and egg pool it does not know, rolled the first time you look at that member and kept for this
+ * building; the Mart offers 4 random TMs, once per building, never sold out. Price: 5 x the whole ENEMY LV x the run level, paid on
+ * confirm. Full slots (or a third buff) go through a forget step: only LOOSE moves can be forgotten, since bonds are fixed (Jess
+ * 2026-11-05); with 2 buffs already, a buff may only replace a buff. No refund for a forgotten move. A purchase never changes the
+ * active slot. Fainted members cannot shop.
  * In a gym arena the shops are hidden and their clock stops (cannot happen in the normal schedule, a guard). Co-op: no
  * shops until co-op shops exist (TODO.md, deferred section).
  * Contact areas: G.ShopContact (js/data/shop-contact.js, baked by tools/gym_contact.js), so no canvas pixels are read on file://.
@@ -98,14 +105,14 @@ G.Shops = (() => {
       if (a0 == null) a0 = spot.a;
       got.push(spot);
     }
-    shops = got.map((s) => ({ kind: s.kind, x: s.x, y: s.y, t: 0, on: false }));
+    shops = got.map((s) => fresh(s.kind, s.x, s.y));
     for (const s of shops) artFor(s.kind);
     return true;
   }
 
-  /** Walking in (once per visit). Step 4 opens the shop screen here. */
+  /** Walking in (once per visit): the game opens the shop screen. False when it cannot now (another screen is open). */
   function enter(s) {
-    G.Spawner.say(KINDS[s.kind].name + ': opens soon', 2, true);
+    return G.Game.openShop(s);
   }
 
   /** Every map frame (solo). t = run time. */
@@ -120,9 +127,76 @@ G.Shops = (() => {
     }
     for (const s of shops) {
       const on = !pl.dead && onBuilding(s.kind, s.x, s.y, pl.x, pl.y);
-      if (on && !s.on) enter(s);
+      if (on && !s.on && !enter(s)) continue; // refused (another screen is open): the visit is not used up
       s.on = on;
     }
+  }
+
+  // ---- Move Shop step 4: stock, price and buying ----
+  const STOCK = 4; // offers per member (Trainer) or per building (Mart)
+
+  /** A shop on the map (or a debug one): its door, age, the standing-on flag and its stock. */
+  function fresh(kind, x, y) {
+    return { kind, x, y, t: 0, on: false, stock: new Map(), tms: null };
+  }
+
+  /** Silver for one move: 5 x the whole world level (the HUD's ENEMY LV) x the run level. */
+  function price(t, lvl) {
+    return 5 * Math.floor(G.Stats.levelForTime(t)) * lvl;
+  }
+  const priceNow = () => price(G.Game.st.time, G.Game.player ? G.Game.player.level : 1);
+
+  /** What this shop offers member f now. Trainer: f's 4, rolled once per building, known moves left out. Mart: the 4 TMs. */
+  function offers(shop, f) {
+    if (shop.kind === 'mart') {
+      if (!shop.tms) shop.tms = G.U.pickN(G.Moves.tmList(), STOCK);
+      return shop.tms.slice();
+    }
+    if (!f) return [];
+    let ids = shop.stock.get(f);
+    if (!ids) shop.stock.set(f, (ids = G.U.pickN(G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)), STOCK)));
+    return ids.filter((id) => !f.hasMove(id));
+  }
+
+  /**
+   * Can member f buy move `id` here now? { ok, why, cost, forget, allowed }. forget: the purchase needs the forget step, allowed =
+   * the slot indexes that may be forgotten (loose moves only; with 2 buffs already and a buff bought, buffs only).
+   */
+  function check(shop, f, id) {
+    const cost = priceNow();
+    if (!f || f.dead) return { ok: false, why: 'Fainted', cost };
+    if (f.hasMove(id)) return { ok: false, why: 'Knows it', cost };
+    if (shop.kind === 'mart' ? !(shop.tms || []).includes(id) : !offers(shop, f).includes(id))
+      return { ok: false, why: 'Not sold here', cost };
+    if (shop.kind === 'mart' && !G.Moves.canUseTm(f.mon, id)) return { ok: false, why: "Can't learn", cost };
+    if (G.Silver.whole < cost) return { ok: false, why: "Can't afford", cost };
+    const isBuff = G.MoveInfo.isBuff,
+      capped = isBuff(id) && f.moves.filter((m) => isBuff(m.id)).length >= 2;
+    if (f.slots.length < f.maxMoves && !capped) return { ok: true, cost, forget: false };
+    const allowed = [];
+    f.slots.forEach((g, i) => {
+      if (g.length === 1 && (!capped || isBuff(g[0].id))) allowed.push(i);
+    });
+    if (!allowed.length)
+      return { ok: false, why: f.slots.every((g) => g.length > 1) ? 'Every slot is bonded' : '2 buffs already', cost };
+    return { ok: true, cost, forget: true, allowed };
+  }
+
+  /** Buys `id` for member f, forgetting the move in `slot` when the forget step is needed. True when bought (and paid). */
+  function buy(shop, f, id, slot = null) {
+    const c = check(shop, f, id);
+    if (!c.ok) return false;
+    if (c.forget) {
+      if (slot == null || !c.allowed.includes(slot)) return false;
+      if (!f.replaceMove(f.slots[slot][0].id, id)) return false;
+    } else if (!f.addMove(id, true)) return false; // a purchase never changes the active slot
+    G.Silver.spend(c.cost);
+    if (shop.kind === 'trainer') {
+      const ids = shop.stock.get(f),
+        k = ids ? ids.indexOf(id) : -1;
+      if (k >= 0) ids.splice(k, 1); // a bought move leaves the stock
+    }
+    return true;
   }
 
   function reset() {
@@ -192,6 +266,11 @@ G.Shops = (() => {
     update,
     drawables,
     onBuilding,
+    price,
+    offers,
+    check,
+    buy,
+    nameOf: (kind) => (KINDS[kind] ? KINDS[kind].name : kind),
     /** Back on the map after a gym (G.Gym.onReturn): the next pair is due AFTER_GYM s later. */
     afterGym(t) {
       nextAt = t + AFTER_GYM;
@@ -218,6 +297,11 @@ G.Shops = (() => {
       if (!pl) return false;
       shops = [];
       return place(pl);
+    },
+    /** G.Debug.trainer() / mart(): open that shop's screen now with fresh stock, no building needed. */
+    debugOpen(kind) {
+      if (!KINDS[kind] || !G.Game.player) return false;
+      return G.Game.openShop(fresh(kind, G.Game.player.x, G.Game.player.y));
     },
   };
 })();

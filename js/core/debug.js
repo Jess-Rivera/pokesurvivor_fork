@@ -22,6 +22,7 @@
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
+ *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
  *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
  *   G.Debug.carrier(kind, n)       spawn n Status-class carriers of that status (slow|daze|paralysis|confusion|poison|trap|freeze|haste|sleep) just inside the view, to check the cap of 2, the close band and what a hit does
@@ -1256,6 +1257,27 @@ G.Debug = (() => {
     return ok;
   }
 
+  /** Open a shop screen now (dev only): 'trainer' or 'mart', fresh stock, no building. */
+  function openShopNow(kind) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const ok = G.Shops.debugOpen(kind);
+    if (!ok) console.warn('[Debug] close the open screen (pause, level-up, item, bond) and try again.');
+    return ok;
+  }
+  function trainer() {
+    return openShopNow('trainer');
+  }
+  function mart() {
+    return openShopNow('mart');
+  }
+
   return {
     on,
     elite,
@@ -1263,6 +1285,8 @@ G.Debug = (() => {
     levelUp,
     gym,
     shops,
+    trainer,
+    mart,
     maxAll,
     clearUpgrades,
     toggleUpgrades,

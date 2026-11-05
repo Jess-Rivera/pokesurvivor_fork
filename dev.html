@@ -767,6 +767,24 @@
       </div>
     </section>
 
+    <!-- Move Shop step 4: the Move Trainer and TM Mart screens (js/ui/shop-ui.js, G.ShopUI) -->
+    <section id="scr-shop" class="scr dim hidden">
+      <div class="box center mshop-box">
+        <h2 id="mshop-title">Move Trainer</h2>
+        <p id="mshop-silver" class="sub mshop-silver"></p>
+        <p id="mshop-sub" class="sub"></p>
+        <div class="mshop-cols">
+          <div id="mshop-team" class="cards mshop-team"></div>
+          <div id="mshop-offers" class="cards mshop-offers"></div>
+        </div>
+        <p id="mshop-hint" class="sub mshop-hint"></p>
+        <div class="row" style="justify-content: center">
+          <button id="mshop-back" class="btn hidden">Cancel</button>
+          <button id="mshop-leave" class="btn">Leave</button>
+        </div>
+      </div>
+    </section>
+
     <!-- In-game confirm dialog (G.UI.ask): replaces the browser confirm() for new screens. Not in the SCREENS list, so it sits on top of whatever is open. -->
     <section id="scr-ask" class="scr dim hidden">
       <div class="box center ask">
@@ -950,6 +968,7 @@
     <script defer src="js/ui/slots.js"></script>
     <script defer src="js/ui/gacha-ui.js"></script>
     <script defer src="js/ui/run-ui.js"></script>
+    <script defer src="js/ui/shop-ui.js"></script>
     <script defer src="js/ui/social-ui.js"></script>
     <script defer src="js/ui/ranking-ui.js"></script>
     <script defer src="js/ui/mod-ui.js"></script>

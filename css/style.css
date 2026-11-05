@@ -3643,3 +3643,62 @@ a.btn {
   padding: 2px 8px;
   min-width: 0;
 }
+/* Move Shop step 4: the Move Trainer and TM Mart screens (js/ui/shop-ui.js). Prefix mshop-, apart from the PokeCoin shop's shop- rules. */
+#scr-shop .mshop-box {
+  width: min(920px, 96vw);
+}
+.mshop-silver {
+  color: #e8eef7;
+  margin-bottom: 6px;
+}
+.mshop-cols {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.mshop-cols .mshop-team {
+  flex: 0 0 240px;
+  width: 240px;
+}
+.mshop-cols .mshop-offers {
+  flex: 1;
+  width: auto;
+}
+.card.mshop-sel {
+  border-color: var(--edge);
+  background: rgba(255, 255, 255, 0.14);
+}
+.card.mshop-na {
+  opacity: 0.45;
+  cursor: default;
+}
+.card.mshop-na:hover {
+  transform: none;
+}
+.mshop-price {
+  margin-left: auto;
+  font-size: 14px;
+  color: #e8eef7;
+  white-space: nowrap;
+}
+.mshop-coin {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  background: url('../assets/items/pickups/silver16.png') 0 0 / 213px 24px no-repeat;
+  image-rendering: pixelated;
+}
+.mshop-empty {
+  padding: 12px;
+}
+@media (max-width: 680px) {
+  .mshop-cols {
+    flex-direction: column;
+  }
+  .mshop-cols .mshop-team {
+    flex: none;
+    width: 100%;
+  }
+}

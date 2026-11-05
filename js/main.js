@@ -68,6 +68,7 @@
     'Sheet',
     'MenuUI',
     'RunUI',
+    'ShopUI',
     'SettingsUI',
     'Funding',
     'SupportUI',

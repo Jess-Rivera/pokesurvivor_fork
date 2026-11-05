@@ -20,7 +20,8 @@ const ok = (c, m) => { n++; if (!c) { fail++; console.log('FAIL ' + m); } };
 
 // ---- stubs ----
 const VIEW_R = 500; // the stubbed view radius (G.Camera.outerRadius)
-const said = [];
+const said = [], opened = [];
+let openOK = true; // the game's answer to openShop: false = another screen is open (Move Shop step 4)
 global.window = global;
 global.G = {
   U: { clamp: (v, a, b) => Math.max(a, Math.min(b, v)), dist: (a, b, c, d) => Math.hypot(c - a, d - b) },
@@ -29,7 +30,7 @@ global.G = {
   GymArena: { inArena: false },
   Coop: { active: false },
   Spawner: { say: (t) => said.push(t) },
-  Game: { player: null, st: { time: 0 } },
+  Game: { player: null, st: { time: 0 }, openShop: (sh) => { opened.push(sh.kind); return openOK; } },
 };
 vm.runInThisContext(fs.readFileSync(R + '/js/data/shop-contact.js', 'utf8'), { filename: 'shop-contact.js' });
 vm.runInThisContext(read('js/systems/shops.js'), { filename: 'shops.js' });
@@ -39,7 +40,7 @@ let seed = 7;
 Math.random = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const pl = { x: 1000, y: 1000, dead: false, bodyH: 32 };
 const tick = (t, dt = 0.5) => S.update(dt, pl, t);
-const fresh = () => { S.reset(); G.World.isFree = () => true; G.GymArena.inArena = false; G.Coop.active = false; pl.x = 1000; pl.y = 1000; said.length = 0; };
+const fresh = () => { S.reset(); G.World.isFree = () => true; G.GymArena.inArena = false; G.Coop.active = false; pl.x = 1000; pl.y = 1000; said.length = 0; opened.length = 0; openOK = true; };
 const kinds = () => S.list.map(s => s.kind).sort().join(',');
 // art pixel (ix, iy) of a building whose door is at (gx, gy), as a world point: art drawn at 1.5x, door at the art's bottom centre
 const ART = { trainer: [78, 72], mart: [64, 71] };
@@ -107,23 +108,29 @@ const artPt = (k, gx, gy, ix, iy) => ({ x: gx + (ix - ART[k][0] / 2 + 0.5) * 1.5
   tick(122);
   ok(S.list.length === 2, 'the retry places both once the ground is free'); }
 
-// 4. entering: once per visit, step off before entering again
+// 4. entering: once per visit, step off before entering again; a refused entry (another screen open) is not used up
 { fresh(); tick(120);
   const T = S.list.find(s => s.kind === 'trainer');
-  ok(said.length === 0, 'nothing is entered at placement (they spawn far away)');
+  ok(opened.length === 0, 'nothing is entered at placement (they spawn far away)');
   Object.assign(pl, artPt('trainer', T.x, T.y, 39, 66)); tick(120.5);
-  ok(said.length === 1 && said[0] === 'Move Trainer: opens soon', 'walking onto the Trainer enters it once: ' + said.join(' | '));
+  ok(opened.length === 1 && opened[0] === 'trainer', 'walking onto the Trainer opens its screen once: ' + opened.join(','));
   tick(121); tick(121.5);
-  ok(said.length === 1, 'standing on it does not enter again');
+  ok(opened.length === 1, 'standing on it does not open it again');
   Object.assign(pl, artPt('trainer', T.x, T.y, 36, 0)); tick(122);
-  ok(said.length === 1, 'the roof (drawn, not solid) does not count');
+  ok(opened.length === 1, 'the roof (drawn, not solid) does not count');
   Object.assign(pl, artPt('trainer', T.x, T.y, 39, 66)); tick(122.5);
-  ok(said.length === 2, 'stepping off and back on enters again');
+  ok(opened.length === 2, 'stepping off and back on opens it again');
   const M = S.list.find(s => s.kind === 'mart');
   Object.assign(pl, artPt('mart', M.x, M.y, 32, 65)); tick(123);
-  ok(said.length === 3 && said[2] === 'TM Mart: opens soon', 'walking onto the Mart enters it: ' + said[2]);
+  ok(opened.length === 3 && opened[2] === 'mart', 'walking onto the Mart opens its screen: ' + opened[2]);
   pl.dead = true; Object.assign(pl, artPt('trainer', T.x, T.y, 39, 66)); tick(123.5);
-  ok(said.length === 3, 'a fainted player enters nothing'); pl.dead = false; }
+  ok(opened.length === 3, 'a fainted player enters nothing'); pl.dead = false;
+  Object.assign(pl, artPt('trainer', T.x, T.y, 36, 0)); tick(124); // step off
+  openOK = false; Object.assign(pl, artPt('trainer', T.x, T.y, 39, 66)); tick(124.5); tick(125);
+  ok(opened.length === 5, 'refused while another screen is open: it asks again every frame, the visit is not used up (' + opened.length + ' asks)');
+  openOK = true; tick(125.5); tick(126);
+  ok(opened.length === 6, 'once the screen closes it opens, once (' + opened.length + ')');
+  ok(said.length === 0, 'no "opens soon" notice any more (step 4 opens the screen)'); }
 
 // 5. the masks, from the PNGs read by hand (move-trainer-contact.png 78 x 72, tm-mart-contact.png 64 x 71)
 { const C = G.ShopContact;

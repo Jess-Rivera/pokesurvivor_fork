@@ -105,6 +105,9 @@ const hitsOf = (tape, id) => tape.filter(e => e.type === 'move:hit' && (id == nu
   ok(groupsOf(r, 'fire-spin').size === 1 && [...groupsOf(r, 'fire-spin')][0] === s0, 'slots reordered (arrange): the same slot object keeps its group');
   r.slots = [[{ id: 'tackle', t: 0 }]]; r.act = 0; const t5 = run(r, null, 1 / 60, { reset: false });
   ok(groupsOf(r, 'fire-spin').size === 0 && ends(t5, 'notActive').length === 3, 'its slot removed from the slot list (a debug set switch, a removed move): the group ends that frame, notActive');
+  const u = mkP([['fire-spin'], ['tackle']]); run(u, [], 0.2);
+  u.slots[0] = [{ id: 'ember', t: 0 }]; const t6 = run(u, null, 1 / 60, { reset: false }); // Move Shop step 4: Player.replaceMove swaps the instance in place
+  ok(groupsOf(u, 'fire-spin').size === 0 && ends(t6, 'notActive').length === 3, 'its move replaced in the same slot (a Move Shop forget): the group ends that frame, notActive');
   console.log('1 R7: one group while active, notActive on swap, stun and slot removal, ownerDeath on a faint, fresh group on return, no cooldown, clear leaves none'); }
 
 // 1b. a shapeless self heal aura (slice 5a, Aqua Ring): one marker instance with no shape, no hits, the same R7 lifecycle

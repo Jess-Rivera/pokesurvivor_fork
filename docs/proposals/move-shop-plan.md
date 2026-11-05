@@ -14,29 +14,30 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] The two are always more than 90 degrees apart as seen from the player, both off screen.
 - [Approved] A shop stays for 1 minute, then it is gone. (Jess 2026-11-04)
 - [Approved] Step 3 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 3 - Buildings and arrows.txt F1 to F5): the gym's off-screen arrow also floats off the character (changes the old screen-edge arrow). Until step 4, walking in shows a one-line "opens soon" notice. The label shows seconds left and blinks for the last 10 s; the building fades out over the last 1 s. In a gym arena the shops are hidden and their minute stops. No shops in co-op until co-op shops exist. Doors spawn at the view radius + 140 to + 320 world px; if either finds no free ground, both retry 2 s later.
-- [Proposed] Entering pauses the run. Never over another menu.
+- [Approved] Entering pauses the run. Never over another menu. (Jess 2026-11-05, step 4 G3/G4)
 
 ## Move Trainer
 - [Approved] Shows your roster on the left. The selected member shows a random 4 moves from its level-up and egg pool, ignoring learn levels.
 - [Approved] Pick any roster member freely and buy any number of moves for any member.
 - [Approved] Selecting a member only chooses who you are shopping for. It does not swap your active Pokemon.
-- [Proposed] A move the member already knows is not offered, and a bought move leaves its stock. Each member's 4 are rolled once per building, so leaving and returning cannot reroll them. You can walk back in while the building lasts, after stepping off it.
+- [Approved] A move the member already knows is not offered, and a bought move leaves its stock. Each member's 4 are rolled once per building, so leaving and returning cannot reroll them. You can walk back in while the building lasts, after stepping off it. (Jess 2026-11-05, step 4 G3/G4)
 
 ## TM Mart
 - [Approved] Shows your roster on the left and a random 4 TMs, entirely random, so one or more may be unlearnable by your team.
 - [Approved] Any TM can be bought any number of times. Each purchase applies it to a single Pokemon that can learn it.
-- [Proposed] A Pokemon can use a TM when the move is on its TM list or its level-up and egg pool. Members who cannot, or who already know it, are shown as unavailable.
+- [Approved] A Pokemon can use a TM when the move is on its TM list or its level-up and egg pool. Members who cannot, or who already know it, are shown as unavailable. (Jess 2026-11-05, step 4 G3/G4)
 
 ## Full slots
 - [Approved] You can buy until all 4 slots are full. Buying another then asks you to forget a move or cancel.
-- [Proposed] You pay when the purchase is confirmed. A forgotten move gives no refund. The 2-buff learn limit still applies. A purchase does not change your active slot.
+- [Approved] Bonds are fixed (Jess 2026-11-05): the shop can never forget or replace a bonded move, so the forget step offers loose moves only. A bond changes only through the normal bond screen. A member whose slots are all bonds cannot buy.
+- [Approved] You pay when the purchase is confirmed. A forgotten move gives no refund. The 2-buff learn limit still applies. A purchase does not change your active slot. (Jess 2026-11-05, step 4 G3/G4)
 
 ## Pools
 - [Proposed] Learnsets come from every game in pokeapi-master/data/v2/csv/pokemon_moves.csv, baked to a generated data file, since file:// cannot fetch and the latest-game dataset (api_learnset_dataset.lean.json) drops too much: 68 species have no TMs in it, Machamp and Alakazam among them.
 - Measured for the 177 live moves and the 966 species in the dex, all games: level-up and egg median 9 per species, TM median 19. Every move has a learner. Volt Tackle is the one given by hand (the Pikachu line, tools/export_learnsets.js HAND). Draco Meteor is the one TM-only move. 15 species have no TMs (Caterpie, Ditto, Unown...).
 - [Approved] 48 species have under 4 level-up and egg moves (Magikarp 1, Ditto 0). They top up to 4 from their types, then Normal, attacks first, so a Trainer always has stock. Built, step 1.
 - [Approved] G.Moves.HELD is gone. Learn levels are ignored. Starting moves are unchanged. Built, step 1.
-- Note: the Pokedex and Team screens list the level-up and egg pool only. Step 4 decides whether they also list TMs, so Draco Meteor can be found.
+- [Approved] TMs on the Pokedex and Team screens: later, not in step 4 (Jess 2026-11-05, G2; TODO.md). Until then Draco Meteor, the one TM-only move, is found only in a TM Mart.
 
 ## Silver
 - [Approved] An in-run currency, Silver, shown in the upper left corner with a counter, using oblong_silver from assets/items/coins/spin_silver.png (row at y 408, 8 frames of 32 px, data in spin_silver.json).
@@ -55,7 +56,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 1. BUILT 2026-11-04. Learnset pools: js/data/learnsets.js from tools/export_learnsets.js, G.Moves.poolFor, tmList and canUseTm, HELD gone, level-up cards and the move search read the new pool. Check: docs/proposals/learnset-harness.js.
 2. BUILT 2026-11-05 (Quick), feel-tested by Jess the same day. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
 3. BUILT 2026-11-05 (Quick), feel test pending. Buildings: js/systems/shops.js (G.Shops), masks baked to js/data/shop-contact.js by tools/gym_contact.js, schedule hook in js/systems/gym.js onReturn, game.js reset / update / scene, hud.js floatArrow (gym and shops), G.Debug.shops. Check: docs/proposals/shops-harness.js, mutations shops-mutate.js.
-4. Shop screens: Move Trainer, TM Mart, forget or cancel, a debug command to open each.
+4. BUILT 2026-11-05 (Quick), feel test pending. Shop screens: js/ui/shop-ui.js (G.ShopUI) and the scr-shop screen, stock, price, check and buy in js/systems/shops.js, Player.addMove stay option and Player.replaceMove, G.Game.openShop (pause, never over another screen, holds back the bond screen), G.Debug.trainer / mart. Check: docs/proposals/shop-screens-harness.js, mutations shop-screens-mutate.js.
 5. Remove New Move cards, update smoke-ui (it expects them), docs and changelog.
 
 ## Deferred

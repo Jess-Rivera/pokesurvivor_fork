@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-05',
+    title: ['Move Trainer and TM Mart open', 'Move Trainer and TM Mart open'],
+    new: [
+      [
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
     title: ['Shops on the map', 'Shops on the map'],
     new: [
       [
