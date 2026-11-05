@@ -595,3 +595,10 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Found: benched Pokemon do not recharge, so rotating pays nothing today. gyms-only-harness already fails on main over a comment from Pokebox step 5; not fixed, awaiting Jess.
 - Verified: check.js 35 of 36 (that one failure), smoke-ui, a headless file:// run. Jess feel-tested.
 - Stopped at: going to playtesters; next major feature not yet picked (Move Shop recommended).
+
+## 2026-11-04, Move Shop design and step 1 (Claude Code, home, feature/move-shop)
+- Decided (Jess): Move Trainer and TM Mart as walk-in buildings, both at 2:00 and 90 s after each gym, off screen, over 90 degrees apart, 1 minute each. Silver as a run-only currency. Spec: docs/proposals/move-shop-plan.md.
+- Built step 1: js/data/learnsets.js from tools/export_learnsets.js (every game, Volt Tackle by hand), G.Moves.poolFor with a top-up to 4, tmList, canUseTm, HELD gone, move search rewritten.
+- Found: the latest-game dataset leaves 68 species with no TMs, so pools use all games. My first coverage numbers filtered the dex wrongly; corrected. The income bot stalled, so the Silver estimate is unmeasured.
+- Verified: learnset harness 29/29, check.js 36 of 37 (the known gyms-only comment failure), smoke-ui, all 177 moves run for about half a second each on file:// with no errors. Move search not checked on the real screen.
+- Stopped at: handoff to Quick, docs/proposals/move-shop-handoff.md. Steps 2 and 3 await Jess's OK.
