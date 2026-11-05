@@ -8,6 +8,22 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Over 100 new moves', 'Over 100 new moves'],
+    new: [
+      [
+        'Every imported move can now reach your team. Each Pokemon learns the moves it learns in the main games, from any game, instead of a pool based on its type.',
+        'Every imported move can now reach your team. Each Pokemon learns the moves it learns in the main games, from any game, instead of a pool based on its type.',
+      ],
+    ],
+    chg: [
+      [
+        'Searching a move on the Pokedex and Team screens now finds the Pokemon that really learn it.',
+        'Searching a move on the Pokedex and Team screens now finds the Pokemon that really learn it.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Playtest balance', 'Playtest balance'],
     chg: [
       [

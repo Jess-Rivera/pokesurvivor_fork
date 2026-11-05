@@ -14,6 +14,7 @@
     'Touch',
     'Sprites',
     'Camera',
+    'Learnsets',
     'Moves',
     'ENEMY_CLASSES',
     'Enemies',

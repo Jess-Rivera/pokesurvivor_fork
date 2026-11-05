@@ -508,24 +508,20 @@ G.MenuUI = (() => {
   }
 
   /** Move search (Pokedex and Team): the Pokemon that can learn a move whose name matches `q` (a word of the name starts with it (name-start matches rank first), so 'pulse'
-   *  finds Dark Pulse). Learnable = the Pokemon's type pools plus the shared Normal pool (G.Moves.poolFor). A Normal-type move is learnable
-   *  by everyone, so it matches only on its FULL name (typing 'bod' must not list the whole dex). Returns null when nothing applies. */
+   *  finds Dark Pulse). Learnable = G.Moves.poolFor. Returns null when nothing applies. */
   function moveQuery(q) {
     if (!q || q.length < 3) return null;
-    const types = new Set(),
-      weak = new Set();
-    let all = false; // types: the move NAME starts with q (ranked first); weak: only a later word does ('bit' -> Bug Bite)
+    const strong = new Set(),
+      weak = new Set(); // strong: the move NAME starts with q (ranked first); weak: only a later word does ('bit' -> Bug Bite)
     for (const m of G.Moves.ALL) {
-      if (G.Moves.RETIRED[m.id] || G.Moves.HELD.has(m.id)) continue; // retired (slice 7b) and held (Kanto batch 1) moves are learnable by no one
+      if (G.Moves.RETIRED[m.id]) continue; // retired (slice 7b) moves are learnable by no one
       const nm = m.name.toLowerCase();
-      if (m.type === 'normal') {
-        if (nm === q) all = true;
-      } else if (nm.startsWith(q)) types.add(m.type);
-      else if (nm.split(/[\s-]+/).some((w) => w.startsWith(q))) weak.add(m.type);
+      if (nm.startsWith(q)) strong.add(m.id);
+      else if (nm.split(/[\s-]+/).some((w) => w.startsWith(q))) weak.add(m.id);
     }
-    for (const t of types) weak.delete(t);
-    return all || types.size || weak.size ? { all, types, weak } : null;
+    return strong.size || weak.size ? { strong, weak } : null;
   }
+  const learnsAny = (p, ids) => G.Moves.poolFor(p).some((id) => ids.has(id));
 
   function filterSortDex(c) {
     const s = G.DB.save;
@@ -547,7 +543,7 @@ G.MenuUI = (() => {
         return false;
       if (c.q) {
         const num = String(p.dex).padStart(3, '0');
-        const byMove = !!mq && (mq.all || p.types.some((t) => mq.types.has(t) || mq.weak.has(t))); // can learn a move that matches (shown for unowned too: the type filters already reveal types)
+        const byMove = !!mq && (learnsAny(p, mq.strong) || learnsAny(p, mq.weak)); // can learn a move that matches (shown for unowned too: the type filters already reveal types)
         if (!(own && p.name.toLowerCase().includes(c.q)) && !num.includes(c.q) && String(p.dex) !== c.q && !byMove)
           return false;
       }
@@ -559,7 +555,7 @@ G.MenuUI = (() => {
     const sinkUnowned = key !== 'dex' && key !== 'name';
     // Ranking of a move search: name/# hits and moves whose NAME starts with the query first, word-only matches (Bug Bite for 'bit') below.
     const tier = (p) => {
-      if (!mq || mq.all || p.types.some((t) => mq.types.has(t))) return 0;
+      if (!mq || learnsAny(p, mq.strong)) return 0;
       const num = String(p.dex).padStart(3, '0');
       return (s.owned[p.dex] && p.name.toLowerCase().includes(c.q)) || num.includes(c.q) || String(p.dex) === c.q
         ? 0

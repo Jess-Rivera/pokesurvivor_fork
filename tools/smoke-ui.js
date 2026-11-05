@@ -133,7 +133,11 @@ async function check(browser, query, tag) {
     upg.back = G.UI.isOpen('scr-roster') && !G.UI.isOpen('scr-upgrades');
     return { n, seen: [...seen], bad, dexOk, rows: rowsMax, upg };
   });
-  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED).concat([...G.Moves.HELD])); // learnable by no one: retired (slice 7b) and held (Kanto batch 1)
+  const RET = await page.evaluate(() => {
+    // not in any level-up and egg pool: retired (slice 7b) and TM-only moves (the TM Mart sells those)
+    const inPool = new Set(G.DEX.flatMap((p) => G.Moves.poolFor(p)));
+    return G.Moves.ALL.map((m) => m.id).filter((id) => !inPool.has(id));
+  });
   const miss = ALL.filter((id) => !RET.includes(id) && !menu.seen.includes(id)),
     shownRet = RET.filter((id) => menu.seen.includes(id));
   ok(
@@ -147,7 +151,7 @@ async function check(browser, query, tag) {
   ok(
     !miss.length,
     tag +
-      ': the menus showed every move but the retired and held ones (' +
+      ': the menus showed every move in a level-up and egg pool (' +
       menu.seen.length +
       '/' +
       (ALL.length - RET.length) +
@@ -156,7 +160,7 @@ async function check(browser, query, tag) {
   );
   ok(
     !shownRet.length,
-    tag + ': no retired or held move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
+    tag + ': no retired or TM-only move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
   ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (up to ' + menu.rows + ' rows)');
   const u = menu.upg;
