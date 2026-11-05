@@ -587,3 +587,11 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Broke and fixed: none in the repo. One of my own hand-derived harness expectations was wrong (a capped copy) and was fixed before writing. Five step 4 mutation anchors moved with the EV arguments and were updated.
 - Verified: harnesses run in a sandbox copy here (step 4 122/122 and 21/21, step 5 61/61 and 29/29); Jess ran check.js and the runners on his machine and feel-tested both steps.
 - Stopped at: step 5b (EV-lowering berries) PARKED until Jess's Photoshop mockups; plan map has G1 to G6 open. Board mirror not re-synced (GitHub API returned empty).
+
+## 2026-11-04, Playtest round 1 balance (Claude Code, home, fix/playtest-round-1)
+- Merged feature/pokeboxes to main with step 5b parked. Triaged playtester feedback into Move Shop, balance, UX, and no reason to swap.
+- Built: base radius cuts on novas and Flamethrower, Area Up now adds covered area on every shape, wild drops cut (ground 0.4%, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%).
+- Decided (Jess): those numbers; Growl, Leer and Tail Whip included; Roar keeps its 160 px ruling. Melee loses Area Up reach as a known side effect.
+- Found: benched Pokemon do not recharge, so rotating pays nothing today. gyms-only-harness already fails on main over a comment from Pokebox step 5; not fixed, awaiting Jess.
+- Verified: check.js 35 of 36 (that one failure), smoke-ui, a headless file:// run. Jess feel-tested.
+- Stopped at: going to playtesters; next major feature not yet picked (Move Shop recommended).
