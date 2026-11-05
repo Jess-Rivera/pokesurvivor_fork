@@ -1814,7 +1814,7 @@ G.MenuUI = (() => {
       'Tactical Utility',
       [
         { name: 'Card Rerolls', ranks: [1, 2, 3], unit: '' },
-        { name: 'Card Banish', ranks: [1, 2, 3], unit: '' },
+        { name: 'Shop Rerolls', ranks: [1, 2, 3], unit: '' }, // was Card Banish (Jess 2026-11-05, Move Shop step 4c R1): +1 reroll per shop per rank
         { name: 'Starting Moves', ranks: [1, 2, 3], unit: '' },
         { name: 'Team Swap Cooldown Reduction', step: -10, unit: '%' },
       ],

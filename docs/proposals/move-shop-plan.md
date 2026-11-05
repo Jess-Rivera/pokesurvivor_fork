@@ -30,6 +30,8 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 ## Full slots
 - [Approved] You can buy until all 4 slots are full. Buying another then asks you to forget a move or cancel.
 - [Approved] Bonds are fixed (Jess 2026-11-05): the shop can never forget or replace a bonded move, so the forget step offers loose moves only. A bond changes only through the normal bond screen. A member whose slots are all bonds cannot buy.
+- [Approved] Every purchase asks first in the in-game dialog (G.UI.ask), at the moment you would pay; Cancel buys nothing and returns to the offers, or on a forget, to the forget list (Jess 2026-11-05, step 4b, H2). Nothing else in the shop works while the dialog is open.
+- [Approved] Ban becomes Shop Rerolls (Jess 2026-11-05, step 4c R1 to R5): every shop building has 1 free reroll (R2), shared by the team (R3), free (R4); R re-rolls the offers for the Pokemon you are shopping for, or the Mart's 4 TMs, avoiding the 4 just shown when the pool allows. The Upgrades catalog's Card Banish is renamed Shop Rerolls (+1 per building per rank, once upgrade points are wired). Old saved bans no longer filter anything (R5); save.pban is kept, unread.
 - [Approved] You pay when the purchase is confirmed. A forgotten move gives no refund. The 2-buff learn limit still applies. A purchase does not change your active slot. (Jess 2026-11-05, step 4 G3/G4)
 
 ## Pools
@@ -56,7 +58,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 1. BUILT 2026-11-04. Learnset pools: js/data/learnsets.js from tools/export_learnsets.js, G.Moves.poolFor, tmList and canUseTm, HELD gone, level-up cards and the move search read the new pool. Check: docs/proposals/learnset-harness.js.
 2. BUILT 2026-11-05 (Quick), feel-tested by Jess the same day. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
 3. BUILT 2026-11-05 (Quick), feel test pending. Buildings: js/systems/shops.js (G.Shops), masks baked to js/data/shop-contact.js by tools/gym_contact.js, schedule hook in js/systems/gym.js onReturn, game.js reset / update / scene, hud.js floatArrow (gym and shops), G.Debug.shops. Check: docs/proposals/shops-harness.js, mutations shops-mutate.js.
-4. BUILT 2026-11-05 (Quick), feel test pending. Shop screens: js/ui/shop-ui.js (G.ShopUI) and the scr-shop screen, stock, price, check and buy in js/systems/shops.js, Player.addMove stay option and Player.replaceMove, G.Game.openShop (pause, never over another screen, holds back the bond screen), G.Debug.trainer / mart. Check: docs/proposals/shop-screens-harness.js, mutations shop-screens-mutate.js.
+4. BUILT 2026-11-05 (Quick), feel-tested. Shop screens: js/ui/shop-ui.js (G.ShopUI) and the scr-shop screen, stock, price, check and buy in js/systems/shops.js, Player.addMove stay option and Player.replaceMove, G.Game.openShop (pause, never over another screen, holds back the bond screen), G.Debug.trainer / mart. 4b purchase confirm and 4c Shop Rerolls BUILT 2026-11-05, feel test pending. Check: docs/proposals/shop-screens-harness.js, mutations shop-screens-mutate.js.
 5. Remove New Move cards, update smoke-ui (it expects them), docs and changelog.
 
 ## Deferred

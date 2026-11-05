@@ -3,12 +3,13 @@
 // Each mutation breaks shops.js, player.js, game.js, dev.html, main.js or ui.js in one deliberate way, writes the copy to a temp
 // folder, and runs docs/proposals/shop-screens-harness.js against it (SS_<FILE> env vars). The harness must fail every time; a
 // mutation it misses is a gap.
-// Not mutated, with the reason: js/ui/shop-ui.js (DOM: drawing and key routing, checked by tools/smoke-ui.js and feel-tested; every
-// rule it shows comes from G.Shops.check, which is mutated here); G.Debug.trainer / mart (dev only, no game path).
+// Not mutated, with the reason: js/ui/shop-ui.js drawing (DOM, checked by tools/smoke-ui.js and feel-tested; every rule it shows comes
+// from G.Shops.check, which is mutated here); only its step 4b confirm wiring is mutated. G.Debug.trainer / mart (dev only, no game path).
 const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
 const root = path.resolve(__dirname, '../..');
 const SRC = { shops: ['js/systems/shops.js', 'SS_SHOPS'], player: ['js/entities/player.js', 'SS_PLAYER'], game: ['js/game.js', 'SS_GAME'],
-  dev: ['dev.html', 'SS_DEV'], main: ['js/main.js', 'SS_MAIN'], ui: ['js/ui/ui.js', 'SS_UI'] };
+  dev: ['dev.html', 'SS_DEV'], main: ['js/main.js', 'SS_MAIN'], ui: ['js/ui/ui.js', 'SS_UI'], shopui: ['js/ui/shop-ui.js', 'SS_SHOPUI'],
+  levelup: ['js/systems/levelup.js', 'SS_LEVELUP'] };
 const M = [
   // ---- price and paying ----
   ['the price drops the run level', 'shops', [['return 5 * Math.floor(G.Stats.levelForTime(t)) * lvl;', 'return 5 * Math.floor(G.Stats.levelForTime(t));']]],
@@ -35,6 +36,19 @@ const M = [
   ['the script tag is missing', 'dev', [['<script defer src="js/ui/shop-ui.js"></script>', '']]],
   ['the NEED array misses ShopUI', 'main', [["    'ShopUI',\n", '']]],
   ['SCREENS misses scr-shop', 'ui', [["    'scr-shop', // Move Shop step 4 (js/ui/shop-ui.js), so hideAll closes it too\n", '']]],
+  // ---- step 4b: the purchase confirm ----
+  ['a pick buys without asking', 'shopui', [['G.UI.ask(msg, opts).then(', 'Promise.resolve(true).then(']]],
+  ['keys work under the dialog', 'shopui', [['const busy = () => !cur || cur.asking;', 'const busy = () => !cur;']]],
+  ['Cancel on a forget drops the list', 'shopui', [['if (slot == null) cur.forget = null;', 'cur.forget = null;']]],
+  // ---- step 4c: Shop Rerolls ----
+  ['a reroll is free forever', 'shops', [['    shop.rerolls--;\n', '']]],
+  ['a reroll can show the same 4', 'shops', [['pool.filter((id) => !shown.includes(id)),', 'pool,']]],
+  ['a reroll offers known moves', 'shops', [['pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),', 'pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon),']]],
+  ['the count is per member', 'shops', [['    if (!(shop.rerolls > 0)) return false;\n', "    const rk = f ? 'rr' + f.dex : 'rerolls';\n    if (shop[rk] == null) shop[rk] = shop.rerolls;\n    if (!(shop[rk] > 0)) return false;\n"], ['    shop.rerolls--;\n', '    shop[rk]--;\n']]],
+  ['a reroll costs Silver', 'shops', [['    shop.rerolls--;\n', '    shop.rerolls--;\n    G.Silver.spend(1);\n']]],
+  ['rerolls work under the dialog', 'shopui', [['function rerollNow() {\n    if (busy() || cur.forget) return;', 'function rerollNow() {\n    if (cur.forget) return;']]],
+  ['bans still filter the level-up pool', 'levelup', [['(id) => !pl.hasMove(id) && !(buffs >= 2', '(id) => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2']]],
+  ['bans still filter Starting Moves', 'game', [['    f.addMove(G.startMoveOf(mon.dex));\n', '    f.addMove(G.startMoveOf(mon.dex));\n    f.banned = new Set((save.pban && save.pban[mon.dex]) || []);\n']]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shop-screens-mut-'));
 let caught = 0;

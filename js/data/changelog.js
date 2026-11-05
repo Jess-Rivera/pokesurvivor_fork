@@ -8,11 +8,27 @@
 G.CHANGELOG = [
   {
     d: '2026-11-05',
+    title: ['Shop rerolls', 'Shop rerolls'],
+    new: [
+      [
+        'Each Move Trainer and TM Mart now has a free Reroll (R): new moves for the Pokemon you are shopping for, or 4 new TMs.',
+        'Each Move Trainer and TM Mart now has a free Reroll (R): new moves for the Pokemon you are shopping for, or 4 new TMs.',
+      ],
+    ],
+    chg: [
+      [
+        'Move bans from the old Ban upgrade no longer apply. On the Upgrades screen, Card Banish is now Shop Rerolls.',
+        'Move bans from the old Ban upgrade no longer apply. On the Upgrades screen, Card Banish is now Shop Rerolls.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
     title: ['Move Trainer and TM Mart open', 'Move Trainer and TM Mart open'],
     new: [
       [
-        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
-        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. Every purchase asks you to confirm first. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. Every purchase asks you to confirm first. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
       ],
     ],
   },

@@ -5,12 +5,20 @@
  *   TM Mart       attack keys pick a TM, team keys (or a click on a Pokemon) buy it for that Pokemon.
  *   Forget step   slots full (or a third buff): attack keys pick the LOOSE move to forget; bonds are fixed and greyed out.
  *                 Esc or Cancel: nothing bought, nothing paid.
+ *   Confirm       (step 4b, Jess 2026-11-05) every purchase asks first, in the in-game dialog (G.UI.ask), at the moment you would
+ *                 pay. Buy / Enter buys; Cancel / Esc buys nothing: back to the offers, or on a forget, back to the forget list
+ *                 (H2). While the dialog is open the shop ignores every key and click (busy), so 1-4 or a team key cannot start a
+ *                 second purchase under it. The dialog itself takes Enter and Esc before the game sees them.
+ *   Reroll        (step 4c) R or the button: new offers for the Pokemon you are shopping for (Trainer) or 4 new TMs (Mart), free,
+ *                 from the building's count, shared by the team (G.Shops.reroll). Greyed out at 0, hidden on the forget step,
+ *                 ignored while the dialog is open.
  * Esc leaves the shop. Mouse and touch: click anything.
  */
 G.ShopUI = (() => {
   const $ = G.UI.$;
-  let cur = null; // { shop, onClose, f: member index, tm: Mart offer index, forget: { f, id } | null, note }
+  let cur = null; // { shop, onClose, f: member index, tm: Mart offer index, forget: { f, id } | null, note, asking }
 
+  const busy = () => !cur || cur.asking; // closed, or the confirm dialog is open
   const roster = () => G.Game.roster || [];
   const member = (i) => roster()[i] || null;
   const fmt = (n) => Math.floor(n).toLocaleString('en-US');
@@ -24,15 +32,16 @@ G.ShopUI = (() => {
         0,
         r.findIndex((f) => f === G.Game.player)
       );
-    cur = { shop, onClose, f: first, tm: 0, forget: null, note: '' };
+    cur = { shop, onClose, f: first, tm: 0, forget: null, note: '', asking: false };
     $('mshop-leave').onclick = leave;
     $('mshop-back').onclick = back;
+    $('mshop-reroll').onclick = rerollNow;
     render();
     G.UI.show('scr-shop');
   }
 
   function leave() {
-    if (!cur) return;
+    if (busy()) return;
     if (cur.forget) return back(); // Esc on the forget step cancels it first
     const cb = cur.onClose;
     cur = null;
@@ -43,7 +52,7 @@ G.ShopUI = (() => {
 
   /** Cancels the forget step: nothing bought, nothing paid. */
   function back() {
-    if (!cur || !cur.forget) return;
+    if (busy() || !cur.forget) return;
     cur.forget = null;
     cur.note = 'Cancelled: nothing bought.';
     G.Audio.sfx('back');
@@ -73,10 +82,15 @@ G.ShopUI = (() => {
     $('mshop-title').textContent = G.Shops.nameOf(shop.kind);
     $('mshop-silver').innerHTML = coin + ' ' + fmt(G.Silver.whole) + ' Silver · ' + fmt(cost) + ' a move';
     $('mshop-hint').textContent = mart
-      ? 'Pick a TM, then the Pokemon to teach it. A new move gets its own slot: press its number key in a run to use it.'
-      : 'A new move gets its own slot: press its number key in a run to use it. Bonds are fixed.';
+      ? 'Pick a TM, then the Pokemon to teach it. R rerolls the TMs. A new move gets its own slot: press its number key in a run to use it.'
+      : 'R rerolls the offers. A new move gets its own slot: press its number key in a run to use it. Bonds are fixed.';
     $('mshop-back').classList.toggle('hidden', !cur.forget);
     $('mshop-leave').classList.toggle('hidden', !!cur.forget);
+    const left = G.Shops.rerollsLeft(shop),
+      rb = $('mshop-reroll');
+    rb.classList.toggle('hidden', !!cur.forget);
+    rb.disabled = left <= 0;
+    rb.textContent = left > 0 ? 'Reroll (' + left + ' left) · R' : 'No rerolls left';
     renderTeam(mart);
     if (cur.forget) renderForget();
     else renderOffers(mart);
@@ -184,7 +198,7 @@ G.ShopUI = (() => {
 
   /** Team key i. Trainer: shop for that Pokemon. Mart: buy the picked TM for it. */
   function pickMember(i) {
-    if (!cur || cur.forget || !member(i)) return;
+    if (busy() || cur.forget || !member(i)) return;
     if (cur.shop.kind === 'mart') {
       const id = G.Shops.offers(cur.shop)[cur.tm];
       if (id) tryBuy(i, id);
@@ -198,7 +212,7 @@ G.ShopUI = (() => {
 
   /** Attack key i. Trainer: buy that offer for the Pokemon picked. Mart: pick that TM. */
   function pickOffer(i) {
-    if (!cur || cur.forget) return;
+    if (busy() || cur.forget) return;
     if (cur.shop.kind === 'mart') {
       if (i >= G.Shops.offers(cur.shop).length) return;
       cur.tm = i;
@@ -221,38 +235,90 @@ G.ShopUI = (() => {
       cur.forget = { f: fi, id };
       cur.note = '';
       G.Audio.sfx('select');
-    } else if (G.Shops.buy(cur.shop, f, id)) {
-      cur.note = f.mon.name + ' learned ' + mname(id) + '!';
-      G.Audio.sfx('confirm');
+    } else return confirmBuy(fi, id, null);
+    render();
+  }
+
+  /** R or the Reroll button (step 4c): new offers for the Pokemon you are shopping for, or 4 new TMs. Free, from the count. */
+  function rerollNow() {
+    if (busy() || cur.forget) return;
+    const mart = cur.shop.kind === 'mart',
+      f = mart ? null : member(cur.f);
+    if (!G.Shops.reroll(cur.shop, f)) {
+      cur.note =
+        G.Shops.rerollsLeft(cur.shop) <= 0 ? 'No rerolls left in this shop.' : f ? f.mon.name + ' cannot shop (fainted).' : '';
+      G.Audio.sfx('back');
+    } else {
+      if (mart) cur.tm = 0;
+      cur.note = mart ? 'Rerolled: 4 new TMs.' : 'Rerolled: new moves for ' + f.mon.name + '.';
+      G.Audio.sfx('select');
     }
     render();
   }
 
-  /** Attack key i on the forget step: forget that loose move. */
+  /** Attack key i on the forget step: forget that loose move (after the confirm). */
   function pickSlot(i) {
-    if (!cur || !cur.forget) return;
+    if (busy() || !cur.forget) return;
     const { f: fi, id } = cur.forget,
       f = member(fi),
-      g = f && f.slots[i];
-    if (!g) return;
-    const old = g.map((m) => m.name).join(' + ');
-    if (!G.Shops.buy(cur.shop, f, id, i)) {
+      c = G.Shops.check(cur.shop, f, id);
+    if (!f || !f.slots[i] || !c.ok || !c.forget || !c.allowed.includes(i)) {
       G.Audio.sfx('back');
       return;
     }
-    cur.forget = null;
-    cur.note = f.mon.name + ' forgot ' + old + ' and learned ' + mname(id) + '!';
-    G.Audio.sfx('confirm');
-    render();
+    confirmBuy(fi, id, i);
+  }
+
+  /**
+   * Asks before paying (step 4b). slot: the forget step's slot, or null for a free slot. Buy re-checks everything in G.Shops.buy.
+   * Cancel: back to the offers, or with a slot, back to the forget list (H2, Jess 2026-11-05).
+   */
+  function confirmBuy(fi, id, slot) {
+    const f = member(fi),
+      c = G.Shops.check(cur.shop, f, id),
+      old = slot == null ? null : f.slots[slot].map((m) => m.name).join(' + '),
+      mart = cur.shop.kind === 'mart',
+      msg =
+        old != null
+          ? f.mon.name + ' forgets ' + old + ' and learns ' + mname(id) + '?'
+          : mart
+            ? 'Teach ' + mname(id) + ' to ' + f.mon.name + '?'
+            : 'Buy ' + mname(id) + ' for ' + f.mon.name + '?',
+      note =
+        fmt(c.cost) +
+        ' Silver' +
+        (old != null ? ' · no refund for ' + old : '') +
+        ' · ' +
+        fmt(G.Silver.whole - c.cost) +
+        ' left',
+      opts = { title: G.Shops.nameOf(cur.shop.kind), ok: 'Buy', cancel: 'Cancel', note },
+      shop = cur.shop;
+    cur.asking = true;
+    G.Audio.sfx('select');
+    G.UI.ask(msg, opts).then((yes) => {
+      if (!cur || cur.shop !== shop) return;
+      cur.asking = false;
+      if (yes && G.Shops.buy(shop, f, id, slot)) {
+        cur.forget = null;
+        cur.note = old != null ? f.mon.name + ' forgot ' + old + ' and learned ' + mname(id) + '!' : f.mon.name + ' learned ' + mname(id) + '!';
+        G.Audio.sfx('confirm');
+      } else {
+        if (slot == null) cur.forget = null; // a free-slot buy: back to the offers; a forget keeps its list (H2)
+        cur.note = slot == null ? 'Cancelled: nothing bought.' : 'Cancelled: pick another move to forget, or Cancel.';
+        G.Audio.sfx('back');
+      }
+      render();
+    });
   }
 
   function keys() {
-    if (!cur) return;
+    if (busy()) return; // the confirm dialog takes its own keys (Enter, Esc); nothing else while it is open
     if (G.Input.tap('escape')) return leave();
     if (cur.forget) {
       for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) return pickSlot(i);
       return;
     }
+    if (G.Input.tap('keyr')) return rerollNow();
     for (let i = 0; i < 6; i++) if (G.Input.action('swap_' + (i + 1))) return pickMember(i);
     for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) return pickOffer(i);
   }
@@ -265,8 +331,13 @@ G.ShopUI = (() => {
     pickMember,
     pickOffer,
     pickSlot,
+    reroll: rerollNow,
     get isOpen() {
       return !!cur;
+    },
+    /** The confirm dialog is open (step 4b). */
+    get asking() {
+      return !!(cur && cur.asking);
     },
     get forgetting() {
       return !!(cur && cur.forget);

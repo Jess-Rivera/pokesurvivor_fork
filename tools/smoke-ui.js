@@ -268,12 +268,24 @@ async function check(browser, query, tag) {
       (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : '')
   );
   ok(run.rowsNum >= 55, tag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');
-  // Move Shop step 4: the Trainer buys into a free slot, the forget step cancels and replaces, the Mart opens, and a held bond
-  // that a purchase made usable opens right after Leave. Last in this page: it leaves the bond screen open.
-  const shop = await page.evaluate(() => {
+  // Move Shop step 4 and 4b: every purchase asks first (the in-game dialog). The Trainer buys into a free slot, the forget step
+  // cancels and replaces, the Mart opens, and a held bond that a purchase made usable opens right after Leave. Last in this page:
+  // it leaves the bond screen open.
+  const shop = await page.evaluate(async () => {
     const pl = G.Game.player,
       o = {},
-      sig = () => pl.slots.map((g) => g.map((m) => m.id).join('+')).join(',');
+      sig = () => pl.slots.map((g) => g.map((m) => m.id).join('+')).join(','),
+      tick = () => new Promise((r) => setTimeout(r, 0)),
+      answer = async (yes) => {
+        if (!G.ShopUI.asking) return false;
+        document.getElementById(yes ? 'ask-ok' : 'ask-no').click();
+        await tick();
+        return true;
+      },
+      buyOffer = async (i) => {
+        G.ShopUI.pickOffer(i);
+        return answer(true);
+      };
     pl.invuln = 1e9;
     pl.moves = [G.Moves.instance('tackle')];
     pl.slots = [pl.moves.slice()];
@@ -281,9 +293,28 @@ async function check(browser, query, tag) {
     pl.bonds = 0;
     G.Debug.silver(9999999);
     o.open = G.Debug.trainer() === true && G.UI.isOpen('scr-shop') && G.Game.state === 'choice';
-    for (let i = 0; i < 4 && pl.slots.length < 2; i++) G.ShopUI.pickOffer(i);
+    // 4b: a pick opens the dialog and buys nothing; Cancel changes nothing; a second pick under the dialog does nothing
+    const s0 = sig();
+    G.ShopUI.pickOffer(0);
+    o.asks = G.ShopUI.asking && !document.getElementById('scr-ask').classList.contains('hidden') && sig() === s0;
+    G.ShopUI.pickOffer(1);
+    G.ShopUI.pickMember(0);
+    o.underDialog = G.ShopUI.asking && sig() === s0;
+    await answer(false);
+    o.cancelBuy = !G.ShopUI.asking && sig() === s0;
+    // 4c: a reroll under the dialog does nothing; R (the reroll) gives new offers and greys the button at 0
+    const offTxt = () => [...document.querySelectorAll('#mshop-offers .nm')].map((e) => e.textContent).join('|'),
+      rb = document.getElementById('mshop-reroll'),
+      t0 = offTxt();
+    G.ShopUI.pickOffer(0);
+    G.ShopUI.reroll();
+    o.rerollUnder = G.ShopUI.asking && offTxt() === t0 && !rb.disabled;
+    await answer(false);
+    G.ShopUI.reroll();
+    o.reroll = offTxt() !== t0 && rb.disabled;
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) await buyOffer(i);
     o.buy = pl.slots.length === 2 && pl.active === 0;
-    for (let k = 0; k < 8 && pl.slots.length < pl.maxMoves; k++) G.ShopUI.pickOffer(k % 4);
+    for (let k = 0; k < 8 && pl.slots.length < pl.maxMoves; k++) await buyOffer(k % 4);
     o.full = pl.slots.length === pl.maxMoves;
     const before = sig();
     for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
@@ -291,7 +322,12 @@ async function check(browser, query, tag) {
     G.ShopUI.back();
     o.cancel = !G.ShopUI.forgetting && sig() === before;
     for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
-    for (let i = 3; i >= 0 && G.ShopUI.forgetting; i--) G.ShopUI.pickSlot(i);
+    // 4b H2: Cancel on the forget confirm goes back to the forget list
+    for (let i = 3; i >= 0 && !G.ShopUI.asking; i--) G.ShopUI.pickSlot(i);
+    await answer(false);
+    o.forgetCancel = G.ShopUI.forgetting && sig() === before;
+    for (let i = 3; i >= 0 && !G.ShopUI.asking; i--) G.ShopUI.pickSlot(i);
+    await answer(true);
     o.replace = !G.ShopUI.forgetting && pl.slots.length === pl.maxMoves && sig() !== before;
     G.ShopUI.leave();
     o.left = !G.UI.isOpen('scr-shop') && G.Game.state === 'playing';
@@ -299,15 +335,18 @@ async function check(browser, query, tag) {
     for (let i = 0; i < 4; i++) {
       G.ShopUI.pickOffer(i);
       G.ShopUI.pickMember(0);
+      await answer(true);
     }
+    G.ShopUI.back(); // a TM for a full team ends on the forget list: cancel it first
     G.ShopUI.leave();
+    o.martLeft = !G.UI.isOpen('scr-shop');
     // a held bond: open the Trainer with 1 loose move, buy a second, Leave; the bond screen opens on a following frame
     pl.moves = [G.Moves.instance('tackle')];
     pl.slots = [pl.moves.slice()];
     pl.active = 0;
     pl.bonds = 1;
     G.Debug.trainer();
-    for (let i = 0; i < 4 && pl.slots.length < 2; i++) G.ShopUI.pickOffer(i);
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) await buyOffer(i);
     o.bondHeld = !G.UI.isOpen('scr-bond');
     G.ShopUI.leave();
     return o;
@@ -315,12 +354,18 @@ async function check(browser, query, tag) {
   await sleep(400);
   shop.bondAfter = await page.evaluate(() => G.UI.isOpen('scr-bond'));
   ok(shop.open, tag + ': G.Debug.trainer() opens the Move Trainer and pauses the run');
-  ok(shop.buy, tag + ': a purchase fills a free slot and keeps the active slot');
+  ok(shop.asks, tag + ': picking an offer opens the confirm dialog and buys nothing yet');
+  ok(shop.underDialog, tag + ': picks under the open dialog do nothing');
+  ok(shop.cancelBuy, tag + ': Cancel on the dialog buys nothing');
+  ok(shop.rerollUnder, tag + ': a reroll under the open dialog does nothing');
+  ok(shop.reroll, tag + ': Reroll gives new offers and greys the button with none left');
+  ok(shop.buy, tag + ': Buy fills a free slot and keeps the active slot');
   ok(shop.full && shop.forget, tag + ': with 4 slots full a purchase goes to the forget step');
   ok(shop.cancel, tag + ': Cancel on the forget step changes nothing');
-  ok(shop.replace, tag + ': picking a slot replaces that move');
+  ok(shop.forgetCancel, tag + ': Cancel on the forget confirm returns to the forget list');
+  ok(shop.replace, tag + ': picking a slot and Buy replaces that move');
   ok(shop.left, tag + ': Leave closes the shop and the run goes on');
-  ok(shop.mart, tag + ': G.Debug.mart() opens the TM Mart');
+  ok(shop.mart && shop.martLeft, tag + ': G.Debug.mart() opens the TM Mart, and it closes again');
   ok(shop.bondHeld, tag + ': an open shop holds back the bond screen');
   ok(shop.bondAfter, tag + ': the held bond opens right after Leave');
   await sleep(500);

@@ -172,10 +172,11 @@ G.LevelUp = (() => {
       }
     }
     // --- new moves (active Pokemon only): today's draw, with the new-path buff test for the 2-buff limit ---
+    // (Old saved bans no longer filter this: the Ban upgrade is retired, Move Shop step 4c R5, Jess 2026-11-05.)
     if (pl.slots.length < pl.maxMoves) {
       const buffs = pl.moves.filter((m) => G.MoveInfo.isBuff(m.id)).length;
       const pool = G.Moves.poolFor(pl.mon).filter(
-        (id) => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id))
+        (id) => !pl.hasMove(id) && !(buffs >= 2 && G.MoveInfo.isBuff(id))
       );
       for (const id of G.U.pickN(pool, NEW_CANDIDATES)) add('newmove', newMoveCard(id));
     }

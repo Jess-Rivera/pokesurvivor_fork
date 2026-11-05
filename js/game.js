@@ -226,8 +226,9 @@ G.Game = (() => {
     endRun(false);
   }
 
-  /** Build one team member (a Player) with its moves, binds and bans applied. uid: the team slot's copy, whose IVs and
-   *  nature set its stats (pokebox step 4); a missing copy plays neutral. */
+  /** Build one team member (a Player) with its moves and binds applied. uid: the team slot's copy, whose IVs and
+   *  nature set its stats (pokebox step 4); a missing copy plays neutral. Saved bans (save.pban) are no longer read: the Ban
+   *  upgrade is retired (Move Shop step 4c R5, Jess 2026-11-05); db.js still cleans the field, so old saves load as before. */
   function buildFighter(mon, shiny, uid) {
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
     const save = G.DB.save;
@@ -237,9 +238,8 @@ G.Game = (() => {
       if (id) f.bind[id] = i;
     });
     f.addMove(G.startMoveOf(mon.dex));
-    f.banned = new Set(((save.pban && save.pban[mon.dex]) || []).slice(0, perks.bans));
     if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter((id) => !f.hasMove(id) && !f.banned.has(id) && !G.MoveInfo.isBuff(id));
+      const pool = G.Moves.poolFor(mon).filter((id) => !f.hasMove(id) && !G.MoveInfo.isBuff(id));
       if (pool.length) f.addMove(G.U.pick(pool));
       f.setActive(0);
     }

@@ -40,7 +40,7 @@ Dodge upgrades are planned for the future dodge mechanic.
 | Upgrade                      | Scope            | Max Rank |
 | :--------------------------- | :--------------- | :------: |
 | Card Rerolls                 | Run-wide         |   III    |
-| Card Banish                  | Run-wide         |   III    |
+| Shop Rerolls                 | Run-wide         |   III    |
 | Starting Moves               | Run-wide         |   III    |
 | Team Swap Cooldown Reduction | Pokémon-specific |    V     |
 
@@ -123,6 +123,8 @@ Catalog totals:
 | Pickup Range                 | 15%                  | 35%     | 60%      |         |         | 1      | 2 | 3 | 0 | 0 |
 | Item Drop Chance             | 5%                   | 12%     | 20%      |         |         | 1      | 2 | 3 | 0 | 0 |
 | Card Rerolls                 | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
-| Card Banish                  | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
+| Shop Rerolls                 | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
 | Starting Moves               | 1                    | 2       | 3        |         |         | 1      | 2 | 3 | 0 | 0 |
 |                              | Total Points to Fill |         |          |         |         | 222    |   |   |   |   |
+
+Note (Jess 2026-11-05, Move Shop step 4c R1): Card Banish became Shop Rerolls. Moves are now bought from a shop selection, so a banish of level-up cards no longer carries its weight. Each rank adds 1 reroll per shop building; every building already gives 1 free reroll.

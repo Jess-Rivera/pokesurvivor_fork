@@ -3,15 +3,17 @@
 // Under test, the sim side: js/systems/shops.js (G.Shops.price, offers, check, buy) and js/entities/player.js (addMove's stay option,
 // replaceMove) over the REAL move data, pokedex, learnsets, G.Moves, G.TeamCards (the buff test), G.MoveInfo, G.Stats and G.Silver,
 // with stubs for the game, audio and effects; plus the lines that wire the screen in (dev.html, js/main.js NEED, js/ui/ui.js SCREENS,
-// js/game.js openShop / offerBond / keys). The screen itself (js/ui/shop-ui.js) is DOM, checked by tools/smoke-ui.js and feel-tested.
-// Plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt sections 1 to 3 and 6 (v3: bonds are FIXED, Jess 2026-11-05);
+// js/game.js openShop / offerBond / keys; js/ui/shop-ui.js only as text for the step 4b confirm rule). The screen itself is DOM, checked by
+// tools/smoke-ui.js and feel-tested.
+// Plan: docs/ASCII Concept Maps/Move Shop step 4 - Shop screens.txt sections 1 to 3 and 6 (v3: bonds are FIXED, Jess 2026-11-05),
+// step 4b - Purchase confirm and Ban.txt (the confirm) and step 4c - Shop Reroll.txt (rerolls, old bans no longer read);
 // spec docs/proposals/move-shop-plan.md. Expected values are hand-derived from the plan and the spec (price = 5 x the whole ENEMY LV x
 // the run level; 4 offers; loose moves only in the forget step; 2 buffs at most), never read from the code under test.
 // The mutation runner (shop-screens-mutate.js) points the SS_* variables (SRC below) at altered copies; every mutation must make this fail.
 const fs = require('fs'), vm = require('vm');
 const R = process.argv[2] || '.';
 const SRC = { 'js/systems/shops.js': 'SS_SHOPS', 'js/entities/player.js': 'SS_PLAYER', 'js/game.js': 'SS_GAME', 'dev.html': 'SS_DEV',
-  'js/main.js': 'SS_MAIN', 'js/ui/ui.js': 'SS_UI' };
+  'js/main.js': 'SS_MAIN', 'js/ui/ui.js': 'SS_UI', 'js/ui/shop-ui.js': 'SS_SHOPUI', 'js/systems/levelup.js': 'SS_LEVELUP' };
 const pathOf = p => process.env[SRC[p]] || R + '/' + p;
 const read = p => fs.readFileSync(pathOf(p), 'utf8').replace(/\r\n/g, '\n');
 const load = p => vm.runInThisContext(read(p), { filename: p });
@@ -24,7 +26,7 @@ const ok = (c, m) => { n++; if (!c) { fail++; console.log('FAIL ' + m); } };
 let seed = 11;
 const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const noop = new Proxy(function () {}, { get: () => noop, apply: () => undefined, construct: () => ({}) });
-const game = { player: null, roster: [], st: { time: 390 }, openShop: () => true };
+const game = { player: null, roster: [], st: { time: 390 }, opened: null, openShop(sh) { this.opened = sh; return true; } };
 const base = {
   U: { clamp: (v, a, b) => Math.max(a, Math.min(b, v)), TYPE_COLOR: new Proxy({}, { get: () => '#888' }),
     pickN: (arr, k) => { const c = arr.slice(), out = []; while (out.length < k && c.length) out.push(c.splice(Math.floor(rnd() * c.length), 1)[0]); return out; } },
@@ -169,7 +171,52 @@ game.player = lead; game.roster = [lead];
   ok(/state = 'choice'/.test(op), 'game.js: the shop pauses the run');
   ok(body(g, 'function offerBond(').includes("'scr-shop'"), 'game.js: an open shop holds back the bond screen');
   ok(/G\.UI\.isOpen\('scr-shop'\)\) \{\s*G\.ShopUI\.keys\(\);/.test(g), 'game.js: the keys go to the shop screen while it is open');
-  ok(/^\s*openShop,/m.test(g), 'game.js: G.Game.openShop is exported'); }
+  ok(/^\s*openShop,/m.test(g), 'game.js: G.Game.openShop is exported');
+  // step 4b (Jess 2026-11-05): no purchase without a yes in the in-game dialog; nothing else works while it is open
+  const ui = code(read('js/ui/shop-ui.js'));
+  ok((ui.match(/G\.Shops\.buy\(/g) || []).length === 1 && /G\.UI\.ask\(msg, opts\)\.then\(\(yes\) => \{[\s\S]*?yes && G\.Shops\.buy\(/.test(ui),
+    'shop-ui.js: its only purchase call runs after a yes in G.UI.ask');
+  ok(!/\bconfirm\(|\balert\(|\bprompt\(/.test(ui), 'shop-ui.js: never the browser dialogs (CLAUDE.md coding conventions)');
+  ok(/const busy = \(\) => !cur \|\| cur\.asking;/.test(ui), 'shop-ui.js: busy while the dialog is open');
+  const guarded = ['leave', 'back', 'pickMember', 'pickOffer', 'pickSlot', 'rerollNow', 'keys'].filter(fn => !new RegExp('function ' + fn + '\\([^)]*\\) \\{\\s*if \\(busy\\(\\)').test(ui));
+  ok(!guarded.length, 'shop-ui.js: every key and click handler returns while busy: ' + guarded);
+  ok(/if \(slot == null\) cur\.forget = null;/.test(ui), 'shop-ui.js: Cancel on a forget keeps the forget list (H2), a free-slot Cancel goes back to the offers');
+  ok(/if \(G\.Input\.tap\('keyr'\)\) return rerollNow\(\);/.test(ui) && /\$\('mshop-reroll'\)\.onclick = rerollNow;/.test(ui) && /id="mshop-reroll"/.test(read('dev.html')),
+    'shop-ui.js: R and the Reroll button reroll (step 4c)'); }
+
+// 11. step 4c: Shop Rerolls (Ban becomes Reroll, Jess 2026-11-05): free (R4), 1 per building to start (R2), shared by the team (R3)
+{ const open = kind => { game.opened = null; S.debugOpen(kind); return game.opened; };
+  const p = mkF(25, [['thunder-shock']]), pool = M.poolFor(p.mon).filter(id => !p.hasMove(id)), shop = open('trainer');
+  ok(shop && S.rerollsLeft(shop) === 1, 'a new building has 1 reroll (R2): ' + (shop && S.rerollsLeft(shop)));
+  const o1 = S.offers(shop, p);
+  ok(S.reroll(shop, p), 'the Trainer rerolls Pikachu\'s offers');
+  const o2 = S.offers(shop, p);
+  ok(o2.length === 4 && o2.every(id => pool.includes(id)) && !o2.some(id => o1.includes(id)), '4 new offers from its pool, none of the 4 just shown: ' + o1 + ' -> ' + o2);
+  ok(S.rerollsLeft(shop) === 0, 'the count drops to 0');
+  ok(!S.reroll(shop, p) && S.offers(shop, p).join() === o2.join(), 'a second reroll is refused and changes nothing');
+  Sv.set(5000); const s2 = open('trainer'), ch = mkF(4, [['ember']]);
+  ok(S.reroll(s2, p) && near(Sv.amount, 5000), 'a reroll is free (R4): Silver unchanged ' + Sv.amount);
+  ok(!S.reroll(s2, ch), 'shared by the team (R3): after Pikachu\'s reroll, none left for Charmander in the same building');
+  ok(S.rerollsLeft(open('trainer')) === 1, 'the next building starts at 1 again');
+  let clean = 0;
+  for (let i = 0; i < 20; i++) { const sh = open('trainer'), a = S.offers(sh, p); S.reroll(sh, p); const b = S.offers(sh, p), raw = sh.stock.get(p) || [];
+    if (b.length === 4 && !b.some(id => a.includes(id) || p.hasMove(id)) && !raw.some(id => p.hasMove(id))) clean++; }
+  ok(clean === 20, '20 rerolls: always 4, never a known move, never one just shown (' + clean + ' / 20)');
+  const kp = M.poolFor(G.DEX_BY[129]), k = mkF(129, [[kp[0]]]), sk = open('trainer');
+  S.reroll(sk, k);
+  const ko = S.offers(sk, k);
+  ok(ko.length === 3 && !ko.includes(kp[0]) && ko.every(id => kp.includes(id)), 'Magikarp (pool of 4, knows 1): a reroll still shows its 3 others, never the known one: ' + ko);
+  const d = mkF(25, [['thunder-shock']], { dead: true }), sd = open('trainer');
+  ok(!S.reroll(sd, d) && S.rerollsLeft(sd) === 1, 'a fainted member: refused, nothing spent');
+  const m = open('mart'), t1 = S.offers(m);
+  ok(S.reroll(m, null), 'the Mart rerolls its TMs');
+  const t2 = S.offers(m), list = M.tmList();
+  ok(t2.length === 4 && t2.every(id => list.includes(id)) && !t2.some(id => t1.includes(id)), '4 new TMs from the TM list: ' + t1 + ' -> ' + t2);
+  ok(S.rerollsLeft(m) === 0, 'the Mart has its own count, now 0');
+  // R5: the retired Ban upgrade's saved bans are no longer read
+  ok(!/banned/.test(code(read('js/systems/levelup.js'))), 'levelup.js: the move cards no longer read bans');
+  const bf = body(code(read('js/game.js')), 'function buildFighter(');
+  ok(bf.length > 100 && !/pban|banned/.test(bf), 'game.js: buildFighter (Starting Moves extra pick) no longer reads bans'); }
 
 console.log(fail ? 'shop screens: ' + fail + ' of ' + n + ' checks FAILED' : 'shop screens: all ' + n + ' checks passed');
 process.exitCode = fail ? 1 : 0;

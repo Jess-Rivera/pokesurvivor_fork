@@ -134,10 +134,15 @@ G.Shops = (() => {
 
   // ---- Move Shop step 4: stock, price and buying ----
   const STOCK = 4; // offers per member (Trainer) or per building (Mart)
+  // Step 4c (Jess 2026-11-05): the old Ban upgrade becomes Shop Rerolls. Each building has its own count, shared by the whole team:
+  // 1 free (R2) plus the Shop Rerolls rank. The rank reads 0 until upgrade points are wired (js/ui/menu.js UPG_COLS, display only;
+  // TODO.md "Upgrade points"), so this is the one hook to change then. No save field.
+  const FREE_REROLLS = 1;
+  const rerollRank = () => 0;
 
-  /** A shop on the map (or a debug one): its door, age, the standing-on flag and its stock. */
+  /** A shop on the map (or a debug one): its door, age, the standing-on flag, its stock and its rerolls left. */
   function fresh(kind, x, y) {
-    return { kind, x, y, t: 0, on: false, stock: new Map(), tms: null };
+    return { kind, x, y, t: 0, on: false, stock: new Map(), tms: null, rerolls: FREE_REROLLS + rerollRank() };
   }
 
   /** Silver for one move: 5 x the whole world level (the HUD's ENEMY LV) x the run level. */
@@ -157,6 +162,29 @@ G.Shops = (() => {
     if (!ids) shop.stock.set(f, (ids = G.U.pickN(G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)), STOCK)));
     return ids.filter((id) => !f.hasMove(id));
   }
+
+  /**
+   * Step 4c: re-rolls this shop's offers, free, one from the building's count (shared by the team, R3/R4). Trainer: member f's 4;
+   * Mart: the 4 TMs. The new ones never include a known move and avoid the 4 just shown while the pool has enough others; a small
+   * pool fills back up from them. False, and nothing spent, with none left or no one to shop for.
+   */
+  function reroll(shop, f) {
+    if (!(shop.rerolls > 0)) return false;
+    const mart = shop.kind === 'mart';
+    if (!mart && (!f || f.dead)) return false;
+    const shown = offers(shop, f),
+      pool = mart ? G.Moves.tmList() : G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),
+      next = G.U.pickN(
+        pool.filter((id) => !shown.includes(id)),
+        STOCK
+      );
+    if (next.length < STOCK) next.push(...G.U.pickN(shown, STOCK - next.length));
+    if (mart) shop.tms = next;
+    else shop.stock.set(f, next);
+    shop.rerolls--;
+    return true;
+  }
+  const rerollsLeft = (shop) => Math.max(0, shop.rerolls | 0);
 
   /**
    * Can member f buy move `id` here now? { ok, why, cost, forget, allowed }. forget: the purchase needs the forget step, allowed =
@@ -270,6 +298,8 @@ G.Shops = (() => {
     offers,
     check,
     buy,
+    reroll,
+    rerollsLeft,
     nameOf: (kind) => (KINDS[kind] ? KINDS[kind].name : kind),
     /** Back on the map after a gym (G.Gym.onReturn): the next pair is due AFTER_GYM s later. */
     afterGym(t) {
