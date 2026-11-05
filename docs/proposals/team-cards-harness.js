@@ -319,7 +319,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   const mkT = (ids, o = {}) => { const p = mkP([ids], Object.assign({ maxMoves: 4 }, o)); p.moves = ids.map(id => G.Moves.instance(id)); return p; };
   const flat = (p, roster) => Object.values(L.teamFamilies(p, roster || [p])).flat();
   const s1 = TC.store(), P = mkT(['ember', 'swords-dance'], { teamCards: s1 }), all = flat(P), ids = all.map(c => c.team).filter(Boolean);
-  ok(all.length && all.every(c => c.type === 'team' || c.type === 'vitamins' || c.type === 'new'), 'flag on: only team cards, Vitamins and new moves (no legacy mechanic or stat card)');
+  ok(all.length && all.every(c => c.type === 'team' || c.type === 'vitamins'), 'only team cards and Vitamins (no legacy mechanic or stat card, no New Move card since Move Shop step 5)');
   const field = all.filter(c => c.type === 'team' && TC.cardOf(c.team).targets);
   ok(field.length && field.every(c => ['ember', 'swords-dance'].some(id => TC.usable(TC.cardOf(c.team), TC.defOf(P, id)))), 'every offered field card has a taker (' + field.map(c => c.team).join(' ') + ')');
   // Ember: a radial shot (count 1, spread 0.12, pierce 0) that travels, power 40, burn 10%; Swords Dance takes no field card
@@ -355,12 +355,12 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
       'self-only test walks emitted children: a damaging child is not a buff, a self-heal child is');
     ok(!TC.selfOnly({ payload: [{ t: 'stat', stat: 'spd', stages: -1, side: 'foe', scope: 'individual' }] }) && !TC.selfOnly({ payload: [] }), 'a lone foe stat drop is not a buff; a move with no effect is not one either'); }
   { const pf = G.Moves.poolFor; G.Moves.poolFor = () => ['agility', 'night-shade', 'ember'];
-    const nm = p => (L.teamFamilies(p, [p]).newmove || []).map(c => c.key);
-    const two = nm(mkT(['swords-dance', 'harden'], { teamCards: TC.store() })), one = nm(mkT(['swords-dance'], { teamCards: TC.store() }));
+    const fams = p => L.teamFamilies(p, [p]);
+    const a = fams(mkT(['swords-dance', 'harden'], { teamCards: TC.store() })), b = fams(mkT(['swords-dance'], { teamCards: TC.store() }));
     G.Moves.poolFor = pf;
-    ok(!two.includes('new:agility') && two.includes('new:night-shade') && two.includes('new:ember') && one.includes('new:agility'), '2-buff limit: with two buffs no third (Agility), Night Shade still offered; with one, Agility offered'); }
+    ok(!('newmove' in a) && !('newmove' in b), 'Move Shop step 5: no New Move family with free slots and a learnable pool (the 2-buff limit now lives in the shop)'); }
   { const o1 = L.offer(mkT(['ember', 'swords-dance'], { teamCards: TC.store() }), 3);
-    ok(o1.length === 3 && o1.every(c => c.type === 'team' || c.type === 'vitamins' || c.type === 'new'), 'offer(), flag on: three new-path cards'); }
+    ok(o1.length === 3 && o1.every(c => c.type === 'team' || c.type === 'vitamins'), 'offer(): three team or Vitamins cards'); }
   ok(L.families === undefined && L.teamOn === undefined, 'offer(): no legacy card path left (slice 7b-2a)');
   G.MoveRoute = ROUTE; G.Coop = COOP;
   console.log('7 level-up offer'); }

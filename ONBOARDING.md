@@ -124,7 +124,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/systems/` (gameplay rules)
 - `combat.js` enemy attacks on the player (enemy shots with wall cover, contact damage), `spawner.js` enemy spawning/waves, `levelup.js` the
-  card draft (team cards and New Move), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
+  card draft (team cards; moves come from the shops, `shops.js`), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
   (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),

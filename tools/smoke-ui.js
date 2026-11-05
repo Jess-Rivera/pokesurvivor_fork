@@ -200,35 +200,39 @@ async function check(browser, query, tag) {
     pl.moves = [G.Moves.instance('tackle')];
     pl.slots = [pl.moves.slice()];
     pl.active = 0;
-    const cards = [];
-    for (const id of ids) {
-      G.Moves.poolFor = () => [id];
-      const fam = G.LevelUp.teamFamilies(pl, roster).newmove || [];
-      if (id !== 'tackle') {
-        if (fam[0]) cards.push(fam[0]);
-        else out.bad.push('no card ' + id);
-      }
-    }
-    G.Moves.poolFor = pf;
-    for (let i = 0; i < cards.length; i += 3) {
-      G.RunUI.showLevelUp(pl.level, cards.slice(i, i + 3), () => {});
-      for (const [k, el] of [...document.querySelectorAll('#cards .card')].entries()) {
-        const c = cards[i + k],
-          id = c.key.slice(4),
-          nm = el.querySelector('.nm').textContent,
-          ds = el.querySelector('.ds').textContent;
+    // Move Shop step 5 (Jess 2026-11-05): moves come from the shops, so every move is checked as a Move Trainer offer, four at a time
+    // through a stubbed pool: its name, text, type-coloured icon box and icon. (This replaced the level-up New Move card check.)
+    const want = ids.filter((id) => id !== 'tackle');
+    for (let i = 0; i < want.length; i += 4) {
+      const grp = want.slice(i, i + 4);
+      G.Moves.poolFor = () => grp.slice();
+      G.ShopUI.open({ kind: 'trainer', stock: new Map(), tms: null, rerolls: 1 }, () => {});
+      const els = [...document.querySelectorAll('#mshop-offers .card')];
+      for (const id of grp) {
+        const el = els.find((e) => {
+          const n = e.querySelector('.nm');
+          return n && n.firstChild && n.firstChild.textContent === G.MoveInfo.name(id);
+        });
+        const ds = el ? el.querySelector('.ds').textContent : '',
+          wd = G.MoveInfo.desc(id);
         out.cards++;
         if (
-          !nm.startsWith(G.MoveInfo.name(id)) ||
-          !nm.includes(G.U.TYPE_NAME[G.MoveInfo.type(id)]) ||
-          ds.length < 5 ||
-          ds !== G.MoveInfo.desc(id) ||
+          !el ||
+          wd.length < 5 ||
+          !ds.startsWith(wd) ||
+          !el.querySelector('.ico').style.background ||
           !el.querySelector('.ico canvas,.ico img,.ico i,.ico span')
         )
-          out.bad.push('card ' + id + ' "' + nm + '" "' + ds + '"');
+          out.bad.push('offer ' + id + ' "' + (el ? el.textContent.replace(/\s+/g, ' ').slice(0, 90) : 'missing') + '"');
       }
+      G.ShopUI.leave();
     }
-    G.UI.hide('scr-levelup');
+    G.Moves.poolFor = pf;
+    // and a level-up never offers a New Move card any more, with free slots and a learnable pool
+    let nmCards = 0;
+    for (let k = 0; k < 30; k++)
+      nmCards += G.LevelUp.offer(pl, 3, roster).filter((c) => c.type === 'new' || c.family === 'newmove').length;
+    out.noNewMove = nmCards === 0 && !('newmove' in G.LevelUp.teamFamilies(pl, roster));
     // the pause sheet, four moves at a time
     for (let i = 0; i < ids.length; i += 4) {
       pl.moves = ids.slice(i, i + 4).map((id) => G.Moves.instance(id));
@@ -259,12 +263,13 @@ async function check(browser, query, tag) {
     Object.assign(pl, keep);
     return out;
   }, ALL);
-  ok(run.cards === ALL.length - 1, tag + ': a level-up card for every move but the held one (' + run.cards + ')');
+  ok(run.cards === ALL.length - 1, tag + ': a Move Trainer offer for every move but the held one (' + run.cards + ')');
+  ok(run.noNewMove, tag + ': level-ups offer no New Move card (moves come from the shops)');
   ok(run.sheet === ALL.length, tag + ': every move on the pause sheet (' + run.sheet + ')');
   ok(
     !run.bad.length,
     tag +
-      ': cards and sheet rows read right' +
+      ': shop offers and sheet rows read right' +
       (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : '')
   );
   ok(run.rowsNum >= 55, tag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');

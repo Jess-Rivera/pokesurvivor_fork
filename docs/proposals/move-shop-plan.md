@@ -48,18 +48,18 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] Price per move: 5 x world level x character level, from the concept map.
 - [Approved] Silver is run-only, so it needs no save field. It never adds to PokeCoins, and unspent Silver is lost at the end of the run. World level is the enemy level for the run time (G.Stats.levelForTime). (Jess 2026-11-05, step 2 plan)
 - [Approved] Step 2 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 2 - Silver.txt D1 to D4): the bump is a pop of about 1.3x for 0.18 s on the number only (the coin keeps spinning, no coin bounce; Jess 2026-11-05 after the feel test), restarted on every gain and never queued, the coin's and the digits' bottoms on one ground line, sized up 50% after the feel test (coin 36 px, number 30; Jess 2026-11-05), plus a number that rolls up like a slot reel and lands within 0.25 s of the last gain. Silver is hidden in co-op until co-op shops exist. Every kill pays the same formula, elites, bosses and gym mons included. No sound per coin.
-- Estimate, not measured: about 1 to 2 moves per shop if kills keep up with spawns. A fixed bot checks this during the build.
+- Estimate, not measured: about 1 to 2 moves per shop if kills keep up with spawns. No income bot (Jess 2026-11-05): judged by feel in playtests, and the price or income are tuned from there.
 
 ## Level-ups
-- [Approved] New Move cards leave the level-up screen once the shops are in (concept map).
+- [Approved] New Move cards leave the level-up screen once the shops are in (concept map). BUILT 2026-11-05 (step 5): moves come from the shops only, plus the starting move and the old Starting Moves perk.
 - Note: only the active group fires, so a bought move needs its slot key to be used. Worth a line in the shop text.
 
 ## Build order
 1. BUILT 2026-11-04. Learnset pools: js/data/learnsets.js from tools/export_learnsets.js, G.Moves.poolFor, tmList and canUseTm, HELD gone, level-up cards and the move search read the new pool. Check: docs/proposals/learnset-harness.js.
 2. BUILT 2026-11-05 (Quick), feel-tested by Jess the same day. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
 3. BUILT 2026-11-05 (Quick), feel test pending. Buildings: js/systems/shops.js (G.Shops), masks baked to js/data/shop-contact.js by tools/gym_contact.js, schedule hook in js/systems/gym.js onReturn, game.js reset / update / scene, hud.js floatArrow (gym and shops), G.Debug.shops. Check: docs/proposals/shops-harness.js, mutations shops-mutate.js.
-4. BUILT 2026-11-05 (Quick), feel-tested. Shop screens: js/ui/shop-ui.js (G.ShopUI) and the scr-shop screen, stock, price, check and buy in js/systems/shops.js, Player.addMove stay option and Player.replaceMove, G.Game.openShop (pause, never over another screen, holds back the bond screen), G.Debug.trainer / mart. 4b purchase confirm and 4c Shop Rerolls BUILT 2026-11-05, feel test pending. Check: docs/proposals/shop-screens-harness.js, mutations shop-screens-mutate.js.
-5. Remove New Move cards, update smoke-ui (it expects them), docs and changelog.
+4. BUILT and feel-tested 2026-11-05 (Quick). Shop screens: js/ui/shop-ui.js (G.ShopUI) and the scr-shop screen, stock, price, check and buy in js/systems/shops.js, Player.addMove stay option and Player.replaceMove, G.Game.openShop (pause, never over another screen, holds back the bond screen), G.Debug.trainer / mart. 4b purchase confirm and 4c Shop Rerolls also feel-tested. Check: docs/proposals/shop-screens-harness.js, mutations shop-screens-mutate.js.
+5. BUILT 2026-11-05 (Quick), feel test pending. New Move cards removed (levelup.js, the run-ui chip); smoke-ui checks a Move Trainer offer for every move; ui-readers and team-cards harnesses check no New Move card is offered. Build order complete.
 
 ## Deferred
 Co-op shops (local-first): note in TODO.md when step 4 lands. Replacing the 4-move stock count, shop sounds and final art scale are TUNE during the feel tests.

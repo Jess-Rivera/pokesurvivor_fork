@@ -73,7 +73,7 @@ G.RunUI = (() => {
         desc: c.desc,
         color: c.color,
         key: G.Input.keyLabel('attack_' + (i + 1)),
-        chip: c.type === 'new' ? 'New · ' + c.tag : c.tag,
+        chip: c.tag,
         chipColor: c.color === '#ffd23f' ? '#ffd23f' : c.color,
         icoHtml: c.icon ? G.Icons.html(c.icon, 32) : '',
         icoText: c.ico,

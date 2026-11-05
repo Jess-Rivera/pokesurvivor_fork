@@ -27,8 +27,7 @@ const M = [
   ['the arc row is dropped', 'sheet', [['if (s.radArc > 0 && s.radArc < TAU - 0.01) row(', 'if (false) row(']]],
   ['the effect line keeps plain damage', 'sheet', [["const defAil = d => G.MoveInfo.effects(d).filter(t => t !== 'damage').join(', ');", "const defAil = d => G.MoveInfo.effects(d).join(', ');"]]],
   // ---- levelup.js ----
-  ['the new-move card loses its text', 'levelup', [['desc: G.MoveInfo.desc(id),', "desc: '',"]]],
-  ['the 2-buff limit is dropped', 'levelup', [['!(pl.banned && pl.banned.has(id)) && !(buffs >= 2 && G.MoveInfo.isBuff(id)));', '!(pl.banned && pl.banned.has(id)));']]],
+  ['New Move cards are offered again (Move Shop step 5 removed them)', 'levelup', [['    return fam;\n  }', "    (fam.newmove = fam.newmove || []).push({ w: 1, family: 'newmove', type: 'new', key: 'new:x', title: 'x', desc: '', apply: () => true });\n    return fam;\n  }"]]],
   // ---- player.js ----
   ['Life Orb charges an always-on move', 'player', [['!(def && def.persistent) && ', '']]],
   ['the animation ignores the family', 'player', [["cone: 'Shoot' }[fam] || 'Attack';", "cone: 'Shoot' }[null] || 'Attack';"]]],

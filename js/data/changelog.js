@@ -8,6 +8,16 @@
 G.CHANGELOG = [
   {
     d: '2026-11-05',
+    title: ['Moves from shops', 'Moves from shops'],
+    chg: [
+      [
+        'Level-ups no longer offer New Move cards. New moves now come from the Move Trainer and TM Mart.',
+        'Level-ups no longer offer New Move cards. New moves now come from the Move Trainer and TM Mart.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
     title: ['Shop rerolls', 'Shop rerolls'],
     new: [
       [

@@ -1,34 +1,17 @@
 /* ============ levelup.js: the three level-up cards ============
- * Slice 5b team-wide cards (G.TeamCards: General, Space, Delivery, Payload, Vitamins) plus New Move: learn a new move (active
- * Pokemon only, only with a free slot; a link frees slots). The draw rolls a FAMILY first, then a card inside it. A card is only
- * offered if at least one team move can take it. Slice 7b-2a (Jess 2026-11-01): the legacy per-move mechanic cards and the
- * per-Pokemon stat cards are gone; these are the only cards. Plan: docs/ASCII Concept Maps/Slice 5b - Parts C to G Plan.txt.
+ * Slice 5b team-wide cards (G.TeamCards: General, Space, Delivery, Payload, Vitamins). The draw rolls a FAMILY first, then a card
+ * inside it. A card is only offered if at least one team move can take it. Move Shop step 5 (Jess 2026-11-05): the New Move card is
+ * gone; moves come from the Move Trainer and TM Mart (js/systems/shops.js), where the 2-buff limit now lives.
+ * Slice 7b-2a (Jess 2026-11-01): the legacy per-move mechanic cards and the per-Pokemon stat cards are gone; these are the only
+ * cards. Plan: docs/ASCII Concept Maps/Slice 5b - Parts C to G Plan.txt.
  */
 G.LevelUp = (() => {
-  const NEW_CANDIDATES = 6;
-
   // ---- slice 5b: team-wide cards on the new move path (build plan section 3; Parts C to G plan section 2E) ----
   // Weights and steps are slice 6 placeholders.
-  const TEAM_W = { newmove: 10, General: 8, Space: 10, Delivery: 8, Payload: 12 };
+  const TEAM_W = { General: 8, Space: 10, Delivery: 8, Payload: 12 };
   const TEAM_COLOR = { General: '#5fcb6a', Space: '#6ea4ff', Delivery: '#4dd6c8', Payload: '#ff8a4d' };
   const VIT_PICK = 3;
   const r1 = (v) => String(Math.round(v * 10) / 10);
-  /** A "learn a new move" card; name, type and text come from the resolved move data (slice 7a). */
-  function newMoveCard(id) {
-    const t = G.MoveInfo.type(id);
-    return {
-      w: 1,
-      family: 'newmove',
-      type: 'new',
-      key: 'new:' + id,
-      icon: 'move:' + id,
-      color: G.U.TYPE_COLOR[t],
-      tag: G.U.TYPE_NAME[t],
-      title: G.MoveInfo.name(id),
-      desc: G.MoveInfo.desc(id),
-      apply: (p) => p.addMove(id),
-    };
-  }
   /** Every routed move the team knows, once per id, with its folded def (one team store, so any holder gives the same copy). */
   function teamMoves(roster) {
     const out = [],
@@ -170,15 +153,6 @@ G.LevelUp = (() => {
         };
         add('General', card);
       }
-    }
-    // --- new moves (active Pokemon only): today's draw, with the new-path buff test for the 2-buff limit ---
-    // (Old saved bans no longer filter this: the Ban upgrade is retired, Move Shop step 4c R5, Jess 2026-11-05.)
-    if (pl.slots.length < pl.maxMoves) {
-      const buffs = pl.moves.filter((m) => G.MoveInfo.isBuff(m.id)).length;
-      const pool = G.Moves.poolFor(pl.mon).filter(
-        (id) => !pl.hasMove(id) && !(buffs >= 2 && G.MoveInfo.isBuff(id))
-      );
-      for (const id of G.U.pickN(pool, NEW_CANDIDATES)) add('newmove', newMoveCard(id));
     }
     return fam;
   }

@@ -62,7 +62,7 @@ See the spec. Facts found while planning:
 - Skip smoke-newcombat (flaky). Test on file://. Run npm run format last.
 
 ## Parked or waiting on Jess
-- gyms-only-harness fails on main and here: a comment at js/data/enemies.js:34 trips its search guard. A one-line rewording fixes it. Awaiting his OK, and it is the only known check.js failure.
+- gyms-only-harness comment failure: FIXED 2026-11-05 on feature/move-shop (enemies.js header comment reworded).
 - tools/pack_itch.js ships all of assets/, including the 308 MB assets/tileset/_not-shipped folder. Jess said to ignore this for now. Do not build for itch without raising it.
 - .gitignore line 66 ignores every subfolder of assets/tileset, so new art in a subfolder such as gyms stays out of the repo. Keep the shop art directly in assets/tileset.
 - assets/tileset/_not-shipped is not in git, so it is not on the work machine unless Jess copies it.
