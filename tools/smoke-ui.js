@@ -7,7 +7,8 @@
 //   level-up: a "new move" card for every move on the real level-up screen (name, text, type tag, icon);
 //   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; routed rows with numbers);
 //   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one;
-//   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run.
+//   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run;
+//   login: a first launch shows the PokeSwarm login, and Tab, Space and the arrows work in its text fields.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -436,6 +437,61 @@ async function regionFlow(browser, query, tag) {
   await page.close();
 }
 
+// Onboarding (2026-11-05): a first launch with no save shows the PokeSwarm login, in the menu's title font, and its text fields
+// take the browser's own keys (Tab moves to the password, Space and the arrows work while typing a name).
+async function loginFlow(browser, query, tag) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }); // fresh storage: no session, no save
+  const page = await ctx.newPage();
+  const errs = [];
+  page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push('console: ' + m.text());
+  });
+  await page.goto(`http://127.0.0.1:${PORT}/dev.html${query}`, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.G && G.DB && G.LoginUI, null, { timeout: 30000 });
+  await page.evaluate(async () => {
+    await G.DB.ready();
+    const t = document.getElementById('tap-start');
+    if (t && !t.classList.contains('hidden')) t.click();
+    G.LoginUI.open();
+  });
+  await sleep(300);
+  const scr = await page.evaluate(() => {
+    const s = document.getElementById('scr-login'),
+      t1 = s.querySelector('.logo .t1');
+    return {
+      shown: !s.classList.contains('hidden'),
+      title: t1 && t1.textContent.trim(),
+      font: t1 && getComputedStyle(t1).fontFamily,
+      oldName: /pok[eé]\s?survivor/i.test(s.textContent),
+      sub: !!s.querySelector('.logo .t2'),
+      official: !!s.querySelector('.login-official'),
+    };
+  });
+  ok(scr.shown, tag + ': the login screen shows on a first launch');
+  ok(scr.title === 'PokeSwarm', tag + ': the login title reads PokeSwarm (' + scr.title + ')');
+  ok(/korataki/i.test(scr.font || ''), tag + ': the login title uses the menu title font (' + scr.font + ')');
+  ok(!scr.oldName && !scr.sub && !scr.official, tag + ': no PokeSurvivor name, subtitle or official-site line');
+  await page.focus('#f-user');
+  await page.keyboard.type('Ash Ketchu');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.type('X');
+  ok(
+    (await page.inputValue('#f-user')) === 'Ash KetchXu',
+    tag + ': Space types and ArrowLeft moves the cursor in the name field'
+  );
+  await page.keyboard.press('Tab');
+  ok(
+    await page.evaluate(() => document.activeElement && document.activeElement.id === 'f-pass'),
+    tag + ': Tab moves from the name to the password'
+  );
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await ctx.close();
+}
+
 (async () => {
   const srv = cp.spawn('python', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1'], {
     cwd: root,
@@ -446,6 +502,7 @@ async function regionFlow(browser, query, tag) {
   try {
     await check(browser, '?dev', 'ui');
     await regionFlow(browser, '?dev', 'region');
+    await loginFlow(browser, '?dev', 'login');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

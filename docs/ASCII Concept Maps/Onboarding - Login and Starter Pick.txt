@@ -1,0 +1,187 @@
+ONBOARDING: LOGIN AND STARTER PICK   (feature/onboarding, plan 2026-11-05, Quick)
+Source: Jess's 2026-11-04 playtest. Branch: fix/onboarding-flow.
+Status: F1 and F2 BUILT 2026-11-05 (login only for D1; D2, D3, D4 yes). F3 redesigned by Jess, see REVISION below, awaiting S1 to S4.
+
+TESTER FINDINGS
+  F1  Login and account creation still say PokeSurvivor, not PokeSwarm.
+  F2  Tab does not move between the name and password fields.
+  F3  Personality test into a 29-starter grid feels disjointed from the rest of the game.
+
+==========================================================================
+F1  NAME ON THE FIRST SCREENS
+==========================================================================
+  Player-visible "PokeSurvivor" today:
+    dev.html  login logo ............ "PokeSurvivor" / "Mundo Misterioso"
+    dev.html  login tagline ......... "Survive the hordes with your companion..."
+    dev.html  login official line ... "Official site: pokesurvivor.com, if anyone asks you to pay..."
+    login.js  save-mode note ........ "not the official site ... pokesurvivor.com"
+    dev.html  rotate-phone prompt, noscript text, legal panel (3 lines), funding popup
+  NOT player-visible (leave): <meta>/og/twitter/JSON-LD tags, canonical URL,
+    db.js host list and internal email domain. These belong to the publish/cloud phase.
+
+  Change: login logo reads PokeSwarm, tagline and save note rewritten in English,
+    the pokesurvivor.com "official site" line removed (it is the original owner's
+    anti-scam notice for a site this fork does not run).
+  Scope of the rename beyond the login screen: decision D1.
+
+==========================================================================
+F2  TAB (root cause found)
+==========================================================================
+  js/core/input.js keydown listener, about line 136:
+    blocks the browser default for arrows, Space and Tab on EVERY keydown, everywhere,
+    so the page never moves focus. Tab is also bound to cycle_next (with E) in runs.
+  Same listener also means: Space cannot be typed into the name field and the arrow
+    keys cannot move the cursor in it. Testers likely hit this too.
+
+  Change: when the key event comes from a text field (input, textarea, select, or
+    contenteditable), skip the block and let the browser handle it. Everywhere else
+    (canvas, a run) it behaves exactly as today, so Tab still cycles targets in a run.
+  Rule change for approval: D4.
+
+==========================================================================
+F3  FLOW
+==========================================================================
+  TODAY (game.js afterLogin: no save.partner -> TestUI.start)
+
+   LOGIN ──> QUIZ (8 Qs, Spanish->EN) ──> RESULT "Your personality is..." ──> MENU
+                                             └─ "Choose another" ──> GRID of 29 ──┘
+             old .box style            old .box style            old .box style
+             (the menu is the B/W style; nothing before it is)
+
+  Starters (js/data/starters.js): 27 regional (3 per gen 1-9) + Psyduck + Slowpoke.
+  save.personality is written but read nowhere (db.js only carries it over). Safe to stop writing.
+
+  OPTION A  Picker only (quickest)
+   LOGIN ──> CHOOSE YOUR PARTNER ──> MENU
+             ┌──────────────────────────────────────────────┐
+             │ Kanto   [Bulba][Charm][Squirt]   ┌─────────┐ │
+             │ Johto   [....][....][....]       │ sprite  │ │
+             │ ...9 region rows...              │ types   │ │
+             │ Friends [Psyduck][Slowpoke]      │ move +  │ │
+             │                                  │ its info│ │
+             │                       [Choose]   └─────────┘ │
+             └──────────────────────────────────────────────┘
+     Quiz and result screens stop showing; their markup and data stay in place, unused.
+
+  OPTION B  Picker first, quiz optional
+   Same picker, plus a "Not sure? Take the quiz" button. Quiz -> picker with the
+     recommended partner preselected (no separate result screen).
+
+  OPTION C  Keep the quiz, merge the second hop
+   QUIZ ──> one screen: the recommended partner large + the region rows below it.
+
+  Common to all: English copy; region-row layout (same names as the region select);
+    the info panel shows the starting move's description (G.MoveInfo) in place of
+    the Spanish personality traits; styled like the B/W menu (D5).
+  Save safety: only save.starter and save.partner gate the flow, unchanged. Old saves
+    with a partner skip onboarding exactly as today. No new save fields.
+
+==========================================================================
+DECISIONS (each one is a behavior or rule change, approve separately)
+==========================================================================
+  D1  Rename scope: (a) login screen only, or (b) every player-visible "PokeSurvivor"
+      (adds rotate prompt, noscript, legal panel, funding popup). Meta/SEO/domain stay
+      either way. Recommend (b).
+  D2  Remove the pokesurvivor.com "official site" line and the "not the official
+      website" save note wording. Recommend yes.
+  D3  i18n: these screens' rewritten text is new English copy, written directly
+      (CLAUDE.md i18n rule); the Spanish keys they replace leave those screens. Their
+      lang-en.js entries become unused and stay put (prune later). Recommend yes.
+  D4  Text fields get normal browser keys (Tab, Space, arrows). Recommend yes.
+  D5  Flow: A, B or C above, and whether the login + picker take the B/W menu look
+      now or keep today's look. Recommend A with the B/W look.
+
+==========================================================================
+FILES (no code until approved)
+==========================================================================
+  dev.html ........ login logo/tagline/official line; picker markup (region rows,
+                    info panel); D1(b) strings; quiz/result sections untouched
+  js/ui/login.js .. save-mode note text (local reasons only; cloud branch untouched)
+  js/core/input.js  text-field exemption in the keydown block
+  js/ui/test.js ... start() opens the picker (A/B); picker builds region rows; info
+                    panel; stop writing save.personality
+  js/game.js ...... none (afterLogin already calls TestUI.start)
+  css/ ............ picker + login styling if D5 takes the B/W look
+  js/data/changelog.js (free edit) .. new: partner picker; fix: Tab in login fields;
+                    chg: PokeSwarm name on the first screens
+  Not touched: js/net/*, db.js cloud paths, Google/recovery flow (deferred).
+
+==========================================================================
+TESTS
+==========================================================================
+  1. NEW HARNESS  docs/proposals/input-keys-harness.js
+     Loads js/core/input.js with a fake window and fake key events. Checks:
+       - Tab, Space, arrows from a text field: default NOT blocked.
+       - Same keys from the canvas/body: default blocked (today's behavior).
+       - Tab from the canvas still registers as pressed (cycle_next keeps working).
+     Why new: no harness loads input.js; smoke-ui does not touch the login screen.
+     Added to tools/check.js's harness list, so it runs on this machine.
+  2. MUTATION RUNNER  docs/proposals/input-keys-mutate.js
+     Breaks input.js on purpose: (a) drops the exemption, (b) exempts everything,
+     (c) removes Tab from the blocked list. The harness must fail all three.
+  3. SMOKE  tools/smoke-ui.js, new "onboarding" pass (home only, Playwright):
+       fresh storage -> login shows PokeSwarm and no "PokeSurvivor" text;
+       focus name, press Tab -> focus is on password; type a name with a space;
+       Guest -> picker shows 9 region rows of 3 + 2 friends; pick one -> menu,
+       save.partner set; reload with that save -> straight to menu.
+     Why: these are DOM screens, which smoke-ui owns.
+  4. INTENT SCENARIOS: none (no moves change).
+  5. DEBUG SETS: none. Feel test: Play as guest (guests start with no partner, so
+     the picker shows every time, no save clearing needed). Hard reload after the build.
+
+==========================================================================
+REVISION 2026-11-05 (Jess): F3 = pick a REGION, get all 3 starters
+==========================================================================
+   LOGIN ──> CHOOSE YOUR REGION ──> MENU          (quiz + result screens no longer shown)
+
+   ┌──────────────────────────────────────────────────────────┐
+   │  Choose your starters                                    │
+   │  ┌───────────────┐┌───────────────┐┌───────────────┐     │
+   │  │ Kanto         ││ Johto         ││ Hoenn         │     │
+   │  │ [Bul][Cha][Sq]││ [Chi][Cyn][To]││ [Tre][Tor][Mu]│     │
+   │  └───────────────┘└───────────────┘└───────────────┘     │
+   │  │ Sinnoh │ Unova │ Kalos │   │ Alola │ Galar │ Paldea │  │
+   │  hover / tap a card: 3 names + starting moves; tap = pick │
+   │                                   [Back]  [Choose Kanto]  │
+   └──────────────────────────────────────────────────────────┘
+   Region names and order: the region select's REGION_CARDS (menu.js).
+   Groups come from G.STARTERS (already 3 per gen, grass / fire / water, dex order).
+
+   On Choose:  the 3 are obtained (copies, from 'starter'), team = [lead, 2nd, 3rd, -, -, -],
+               partner = lead, starter = lead. Old saves with a partner never see this screen.
+
+==========================================================================
+RULE CHANGES FOR F3 (approve separately)
+==========================================================================
+  S1  New players start with a TEAM OF 3, not 1. Balance: the first runs get the bench
+      from minute 0 (swap, bench recharge). Every later run is unchanged.
+  S2  Which one leads (partner, slot 0): (a) always the Grass starter, changeable on the
+      Team screen; or (b) the card's three are clickable and the clicked one leads.
+  S3  Psyduck and Slowpoke leave the starter pick (they belong to no region trio). Still
+      obtainable everywhere else. Their STARTERS rows stay, so old saves keep their moves.
+  S4  All 9 regions are pickable for starters, even though the region SELECT for runs is
+      Kanto-only today (REGIONS_OPEN). Starters are Pokemon you own, not a run pool.
+
+==========================================================================
+F3 FILES (no code until approved)
+==========================================================================
+  js/data/starters.js  G.STARTER_REGIONS: 9 groups of 3 dex numbers (data only)
+  js/ui/test.js ....... start() opens the region screen; region cards; choose(region)
+                        writes the 3 copies, team, partner, starter; stops writing personality
+  dev.html ............ #scr-starters markup becomes the region screen (English copy)
+  css/ ................ region cards in the B/W look
+  js/data/changelog.js  new: pick a region, start with its 3 starters
+
+==========================================================================
+F3 TESTS
+==========================================================================
+  1. NEW HARNESS  docs/proposals/starter-regions-harness.js
+     Loads pokedex.js + starters.js. Checks: 9 groups in REGION_CARDS order, 3 each,
+     every dex is that region's generation, each trio is Grass, Fire, Water in that order,
+     no Psyduck / Slowpoke, every member has a starting move. Why: nothing tests starter data.
+  2. MUTATION RUNNER  docs/proposals/starter-regions-mutate.js
+     Swaps two regions, drops a member, swaps a trio's order, puts Psyduck back. Must fail all.
+  3. SMOKE  tools/smoke-ui.js "onboarding" pass (home): fresh guest -> region screen with
+     9 cards x 3 sprites -> pick Johto -> menu, team = Chikorita, Cyndaquil, Totodile
+     (lead per S2), partner = lead; a save that has a partner skips the screen.
+  4. Intent scenarios and debug sets: none. Feel test: Play as guest.
