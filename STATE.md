@@ -1,18 +1,18 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-05 afternoon (Quick, work). Branch: main (next feature branch not named yet).
+Last updated: 2026-11-05 afternoon (Quick, work). Branch: fix/stale-mutations (cut from main 68fea95).
 
 ## Where we are
-- MOVE SHOP MERGED to main: 68fea95 (--no-ff, parents cbb8481 + 4a1c9f5), pushed, origin/main matches. Spec docs/proposals/move-shop-plan.md. Merge tree is identical to the branch tip, so no conflict edits.
+- MOVE SHOP MERGED to main: 68fea95 (--no-ff, parents cbb8481 + 4a1c9f5), pushed, origin/main matches. Spec docs/proposals/move-shop-plan.md.
 - The merge also brought 6da816f "Tileset art rearranging" and the DEVLOG rotation (4a1c9f5) into main.
 - DEVLOG rotated: entries 2026-10-25 to 2026-11-02 moved verbatim to docs/DEVLOG-archive.md; DEVLOG.md now about 30 KB.
 - Merged at work, so smoke-ui and npm run format have NOT run on this code (no Playwright or prettier here). Only check.js has.
 
 ## Next (in order)
 1. Home: pull main, node tools/check.js, smoke-ui, npm run format. If format changes files, commit them as their own "format" commit on main. A smoke-ui failure gets fixed on main.
-2. Name and cut the next feature branch from the updated main.
-3. Re-quote the 27 STALE mutation entries (TODO.md, own commit). Run shop-screens-, shops- and silver-mutate under real node (never run there).
+2. fix/stale-mutations: the 27 STALE entries are re-quoted (ui-readers 6, team-cards 21), pending Jess running both runners (19/19, 60/60) and check.js, then commit, push, merge to main. Scope stops at these 27 (Jess).
+3. Later: the two older stale entries (move-sim-mutate, stat-stage-mutate, TODO.md Backlog); run shop-screens-, shops- and silver-mutate under real node (never run there).
 4. Step 5 feel test (S1): is 0:00 to 2:00 on one move dull? If so, revisit the 2:00 shop timing.
 Then: tooltips (one mechanism, top confusions); encounter project (docs/Director AI Proposal.md); small: bench recharge test, Flamethrower through walls, Wide Lens.
 
@@ -21,7 +21,6 @@ Then: tooltips (one mechanism, top confusions); encounter project (docs/Director
 - Upgrades popup is display only; Shop Rerolls ranks feed rerollRank() in js/systems/shops.js (reads 0). Old Ban leftovers to remove later (TODO.md).
 - Board mirror in TODO.md last synced 2026-11-04 morning; the GitHub API returned nothing from Quick on 2026-11-05. Move Shop has no issue.
 - feature/move-shop can be deleted locally and on origin once home checks pass (Jess's call).
-- DEVLOG.md has mixed CRLF/LF line endings (pre-existing); prettier or autocrlf will settle it.
 - tools/pack_itch.js ships the 308 MB _not-shipped folder; parked.
 
 ## Open owner decisions
