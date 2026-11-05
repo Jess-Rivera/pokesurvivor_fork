@@ -11,7 +11,17 @@ G.MenuUI = (() => {
   // Pokedex control state. region: 'all' | gen#; own: 'all'|'own'|'miss';
   // q: search; types/rarity/bst: multi-select (empty = all); sort + dir.
   // marks (3b-2 E3): 'fav' and 'lock' chips, Team screen box tabs only.
-  const newCtrl = () => ({ region: 'all', own: 'all', q: '', types: [], rarity: [], bst: [], marks: [], sort: 'dex', dir: 1 });
+  const newCtrl = () => ({
+    region: 'all',
+    own: 'all',
+    q: '',
+    types: [],
+    rarity: [],
+    bst: [],
+    marks: [],
+    sort: 'dex',
+    dir: 1,
+  });
   const dexCtrl = newCtrl();
   const rosCtrl = newCtrl(); // the Team screen keeps its own filters, separate from the Pokédex
   const BST_BANDS = [
@@ -1191,7 +1201,8 @@ G.MenuUI = (() => {
     let total = 0,
       marked = 0;
     const marks = v.ctrl.marks || [];
-    const markOk = (c) => !marks.length || (marks.includes('fav') && c.isFavorite) || (marks.includes('lock') && c.isLocked);
+    const markOk = (c) =>
+      !marks.length || (marks.includes('fav') && c.isFavorite) || (marks.includes('lock') && c.isLocked);
     for (const c of G.Copies.all(s)) {
       if (c.box !== ros.tab) continue;
       total++;
@@ -1243,7 +1254,11 @@ G.MenuUI = (() => {
     rosBulkBar();
     if (!shown)
       grid.innerHTML = `<p class="sub" style="grid-column:1/-1">${
-        !total ? 'This box is empty.' : marks.length && !marked ? 'No marked Pokémon in this box.' : 'No Pokemon match these filters.'
+        !total
+          ? 'This box is empty.'
+          : marks.length && !marked
+            ? 'No marked Pokémon in this box.'
+            : 'No Pokemon match these filters.'
       }</p>`;
   }
 
@@ -1547,7 +1562,11 @@ G.MenuUI = (() => {
   function rosSellHtml(copy) {
     const price = G.Copies.sellPrice(G.DB.save, copy.pokemonUUID);
     if (price == null) return '';
-    const why = rosOnTeam(copy.pokemonUUID) ? 'Remove it from your team first.' : copy.isLocked ? 'Unlock it first.' : '';
+    const why = rosOnTeam(copy.pokemonUUID)
+      ? 'Remove it from your team first.'
+      : copy.isLocked
+        ? 'Unlock it first.'
+        : '';
     const lock = `<button type="button" class="btn ghost small" id="ros-lock" data-sfx="click" title="${copy.isLocked ? 'It can be sold again' : 'A locked Pokémon is never sold'}">${G.Icons.html('lock', 14)} ${copy.isLocked ? 'Unlock' : 'Lock'}</button>`;
     const fav = `<button type="button" class="btn ghost small" id="ros-fav" data-sfx="click" title="${copy.isFavorite ? 'Remove the mark' : 'Bulk sell skips favorites'}">${G.Icons.html('heart', 14)} ${copy.isFavorite ? 'Unfavorite' : 'Favorite'}</button>`;
     return `<div class="ros-sell"><button type="button" class="btn gold small" id="ros-sell"${why ? ' disabled' : ' data-sfx="click"'}><span class="coin"></span> Sell for ${rosCoins(price)}</button>${lock}${fav}${why ? `<span class="sub">${why}</span>` : ''}</div>`;
@@ -1558,8 +1577,7 @@ G.MenuUI = (() => {
     const s = G.DB.save,
       c = G.Copies.get(s, uid);
     if (!c) return;
-    const ok =
-      which === 'lock' ? G.Copies.setLocked(s, uid, !c.isLocked) : G.Copies.setFavorite(s, uid, !c.isFavorite);
+    const ok = which === 'lock' ? G.Copies.setLocked(s, uid, !c.isLocked) : G.Copies.setFavorite(s, uid, !c.isFavorite);
     if (!ok) return;
     G.DB.commit(true);
     rosRenderAll();
@@ -1671,10 +1689,15 @@ G.MenuUI = (() => {
       for (const id of ros.ticked) coins += G.Copies.sellPrice(s, id) || 0;
       const n = ros.ticked.size;
       btn('Select repeats', 'ghost', rosSelectRepeats);
-      btn('Clear', 'ghost', () => {
-        ros.ticked.clear();
-        redraw();
-      }, !n);
+      btn(
+        'Clear',
+        'ghost',
+        () => {
+          ros.ticked.clear();
+          redraw();
+        },
+        !n
+      );
       btn(`<span class="coin"></span> Sell ${n} for ${rosCoins(coins)}`, 'gold', rosSellTicked, !n);
       btn('Cancel', 'ghost', () => {
         ros.select = false;

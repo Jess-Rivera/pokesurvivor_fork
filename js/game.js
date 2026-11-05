@@ -515,7 +515,11 @@ G.Game = (() => {
     const got = G.DB.obtain(dex, false, 'rescue');
     G.DB.commit(true);
     G.Spawner.say(
-      got.sold ? fullBoxLine(name, got.sold) : got.isNew ? '¡' + name + ' se une a tu equipo!' : name + ' joined your box!',
+      got.sold
+        ? fullBoxLine(name, got.sold)
+        : got.isNew
+          ? '¡' + name + ' se une a tu equipo!'
+          : name + ' joined your box!',
       4
     );
     G.Audio.sfx('shinyGet');
@@ -541,7 +545,8 @@ G.Game = (() => {
   };
 
   /** The run banner when every box is full (pokebox 3a-4, D3): the coins already went to the saved PokeCoins. */
-  const fullBoxLine = (name, coins) => `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
+  const fullBoxLine = (name, coins) =>
+    `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
 
   function endRun(dead = true) {
     if (state === 'over' || !pl) return;

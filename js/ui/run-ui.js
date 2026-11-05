@@ -226,7 +226,9 @@ G.RunUI = (() => {
   }
   /** The fractions six banks (in thousandths) lose at the end of the run: "HP 0.240 · Atk 0.430". */
   function evLost(bank) {
-    const parts = bank.map((v, k) => (v % 1000 ? EV_STATS[k] + ' ' + ((v % 1000) / 1000).toFixed(3) : '')).filter(Boolean);
+    const parts = bank
+      .map((v, k) => (v % 1000 ? EV_STATS[k] + ' ' + ((v % 1000) / 1000).toFixed(3) : ''))
+      .filter(Boolean);
     return parts.join(' · ') || 'nothing';
   }
 

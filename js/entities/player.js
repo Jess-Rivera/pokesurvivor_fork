@@ -51,7 +51,8 @@ G.Player = class Player {
     this.inc = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
     this.badge = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }; // run-long gym badge boosts (systems/gym.js), kept apart from the stat cards
     this.baseHpStat = mon.stats && mon.stats[0] != null ? mon.stats[0] : null;
-    const hp1 = this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0), this.statEv(0)) : mon.hp;
+    const hp1 =
+      this.baseHpStat != null ? G.Stats.hpForLevel(this.baseHpStat, 1, this.statIv(0), this.statEv(0)) : mon.hp;
     this.maxHp = hp1 + this.perksHp;
     this.hp = this.maxHp;
     // Movement from the real base Speed stat (stats[5]) via the identity model;

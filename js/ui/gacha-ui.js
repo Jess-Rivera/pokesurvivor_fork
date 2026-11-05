@@ -249,7 +249,11 @@ G.GachaUI = (() => {
       if (free < n) {
         const yes = await G.UI.ask(
           "You don't have enough space. Any pokemon pulled that can't be placed in a slot will be automatically sold.",
-          { title: 'Not enough space', ok: 'Pull anyway', note: `${fmt(free)} free place${free === 1 ? '' : 's'}, ${n} Pokémon.` }
+          {
+            title: 'Not enough space',
+            ok: 'Pull anyway',
+            note: `${fmt(free)} free place${free === 1 ? '' : 's'}, ${n} Pokémon.`,
+          }
         );
         if (!yes || busy) return;
       }
@@ -381,7 +385,10 @@ G.GachaUI = (() => {
     const list = bulkCards();
     if (!list.length) return;
     const price = new Map(list.map((k) => [k.r.uid, G.Copies.sellPrice(G.DB.save, k.r.uid)]));
-    const res = G.Copies.sellMany(G.DB.save, list.map((k) => k.r.uid));
+    const res = G.Copies.sellMany(
+      G.DB.save,
+      list.map((k) => k.r.uid)
+    );
     if (res.sold) {
       G.Audio.sfx('confirm');
       G.DB.commit(true);
