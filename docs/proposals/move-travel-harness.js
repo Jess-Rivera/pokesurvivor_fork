@@ -92,7 +92,7 @@ function rate(id, got, N = 10000, s = 21) {
 const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', BB = 'bubble-beam', AS = 'aura-sphere';
 
 // 1. aimTrack (MOVE-INTENT flamethrower): turn at most 1.4 x dt toward the tracked enemy, sticky, re-picked, reach-limited
-{ const RATE = 1.4, REACH = 250 + 10;     // radRadius 250, lens 1, enemy radius 10: the cast gate's min(420, reach + r)
+{ const RATE = 1.4, REACH = 150 + 10;     // radRadius 150, lens 1, enemy radius 10: the cast gate's min(420, reach + r)
   for (const dt of DTS) {     // the cast frame's step aims straight at A; from frame 2 the cone turns toward A moved to 90 degrees
     const o = mkP([[FT]]), A = mkE(150, 0), hs = [];
     run(o, [A], 0.9, { dt, each: k => { const c = inst1(FT); hs.push(c ? c.heading : null); if (k === 1) { A.x = 0; A.y = 150; } } });
@@ -100,15 +100,15 @@ const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', 
     hs.forEach((h, i) => { const want = Math.min(Math.PI / 2, RATE * i * dt); if (h == null || !near(h, want, 1e-9)) bad++; if (i && h - hs[i - 1] > RATE * dt + 1e-12) fast++; });
     ok(bad === 0 && fast === 0, 'aimTrack dt ' + dtName(dt) + ': heading after step k is 1.4 x (k - 1) x dt, never faster (' + bad + ' off, ' + fast + ' fast; last ' + (hs[hs.length - 1] || 0).toFixed(4) + ')');
   }
-  for (const [y, why] of [[300, 'beyond reach 260 but inside range 420 (the reach limit)'], [500, 'beyond range']]) {
+  for (const [y, why] of [[300, 'beyond reach 160 but inside range 420 (the reach limit)'], [500, 'beyond range']]) {
     const o = mkP([[FT]]), A = mkE(150, 0); let moved = 0;
     run(o, [A], 0.9, { each: k => { const c = inst1(FT); if (k === 1) { A.x = 0; A.y = y; } else if (c && c.heading !== 0) moved++; } });
     ok(moved === 0, 'the heading holds when the only enemy moves ' + why + ' (' + moved + ' frames turned)');
   }
-  { const o = mkP([[FT]]), A = mkE(200, 0); let B = null, moved = 0, wrong = 0;
+  { const o = mkP([[FT]]), A = mkE(130, 0); let B = null, moved = 0, wrong = 0;
     run(o, [A], 0.9, { each: k => { const c = inst1(FT); if (k === 1) { B = mkE(0, 60); enemies.push(B); } else if (c) { if (c.heading !== 0) moved++; if (c.track !== A) wrong++; } } });
     ok(moved === 0 && wrong === 0, 'sticky: the live cast target in reach is kept while a nearer enemy appears (' + moved + ' turned, ' + wrong + ' off target)'); }
-  { const o = mkP([[FT]]), A = mkE(200, 0); let B, C; const log = {};
+  { const o = mkP([[FT]]), A = mkE(130, 0); let B, C; const log = {};
     run(o, [A], 0.9, { each: k => { const c = inst1(FT);
       if (k === 1) { B = mkE(0, 150); C = mkE(0, -100); enemies.push(B, C); }
       if (c) log[k] = { h: c.heading, t: c.track };
@@ -117,10 +117,10 @@ const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', 
     const dh = k => log[k].h - log[k - 1].h;
     ok(log[6].t === C && near(dh(6), -RATE / 60, 1e-9), 'the cast target dies: the cone re-picks the nearest in reach (C at 100) and turns toward it');
     ok(log[26].t === B && near(dh(26), RATE / 60, 1e-9), 'that one dies too: it re-picks again (B) and turns back, sticky re-pick whenever lost'); }
-  for (const dt of DTS) {     // S at 90 degrees, 180 px: inside the cone once heading >= pi/2 - 0.45 - asin(10 / 180) (D18)
-    const o = mkP([[FT]]), A = mkE(220, 0); let S = null;
-    const tape = run(o, [A], 0.95, { dt, each: k => { if (k === 1) { A.x = 0; A.y = 220; S = mkE(0, 180); enemies.push(S); } } });
-    const need = Math.PI / 2 - 0.45 - Math.asin(10 / 180); let k = 2; while (RATE * (k - 1) * dt < need - 1e-12) k++;
+  for (const dt of DTS) {     // S at 90 degrees, 130 px: inside the cone once heading >= pi/2 - 0.45 - asin(10 / 130) (D18)
+    const o = mkP([[FT]]), A = mkE(140, 0); let S = null;
+    const tape = run(o, [A], 0.95, { dt, each: k => { if (k === 1) { A.x = 0; A.y = 140; S = mkE(0, 130); enemies.push(S); } } });
+    const need = Math.PI / 2 - 0.45 - Math.asin(10 / 130); let k = 2; while (RATE * (k - 1) * dt < need - 1e-12) k++;
     ok(near(firstHit(tape, S, FT), k * dt, 1e-9), 'dt ' + dtName(dt) + ': the side enemy is first hit as the cone swings onto it at ' + (k * dt).toFixed(4) + ' s (' + firstHit(tape, S, FT) + ')');
   }
   { const o = mkP([[FT]]); let bad = 0;
@@ -131,9 +131,9 @@ const FT = 'flamethrower', RS = 'rock-slide', PS = 'psychic', CF = 'confusion', 
     const o = mkP([['syn-cone-fixed']]), A = mkE(150, 0); let moved = 0;
     run(o, [A], 0.9, { each: k => { const c = inst1('syn-cone-fixed'); if (k === 1) { A.x = 0; A.y = 150; } else if (c && c.heading !== 0) moved++; } });
     ok(moved === 0, 'a cone without aimTrack never turns (' + moved + ')'); }
-  { const o = mkP([[FT]]), A = mkE(200, 0); let B; const log = {};
-    run(o, [A], 0.5, { each: k => { const c = inst1(FT); if (k === 1) { A.x = 0; A.y = REACH + 15; B = mkE(0, -200); enemies.push(B); } if (c) log[k] = c; } });
-    ok(log[3] && log[3].track === B && log[3].heading < 0, 'the cast target walks out of reach (275 > 260): the cone drops it and re-picks the enemy in reach'); }
+  { const o = mkP([[FT]]), A = mkE(130, 0); let B; const log = {};
+    run(o, [A], 0.5, { each: k => { const c = inst1(FT); if (k === 1) { A.x = 0; A.y = REACH + 15; B = mkE(0, -130); enemies.push(B); } if (c) log[k] = c; } });
+    ok(log[3] && log[3].track === B && log[3].heading < 0, 'the cast target walks out of reach (175 > 160): the cone drops it and re-picks the enemy in reach'); }
   console.log('1 aimTrack: clamped at 1.4 rad/s, holds with nothing in reach, sticky, re-picks whenever lost, reach-limited, rides the owner'); }
 
 // 2. Flamethrower: riders and commitment unchanged

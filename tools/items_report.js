@@ -92,7 +92,7 @@ out.push(
     'Wild kill',
     'Ground item ' +
       pct(wildGroundBase) +
-      ' (plus the live Pinap bonus), then one shared roll for Oran Berry 0.55%, Sitrus Berry 0.4%, magnet 0.8%, bomb 0.6%, plus x2 ticket 1 in 400, plus XP'
+      ' (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus x2 ticket 1 in 400, plus XP'
   )
 );
 out.push(

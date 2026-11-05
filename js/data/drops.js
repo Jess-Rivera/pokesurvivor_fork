@@ -16,7 +16,7 @@
  */
 G.Drops = (() => {
   const K = {
-    groundBase: 0.01, // extra ground item roll per wild kill (Jess: 1%)
+    groundBase: 0.004, // extra ground item roll per wild kill (Jess 2026-11-04, playtest: 0.4%, was 1%)
     eliteItem: 0.5, // chance of a Pokemon item from an elite (its Berry is guaranteed)
     runBoss: 0.05, // placeholder chance a boss item is a RUN item (boss will become run-only later)
     runGym: 0.1, // placeholder chance a gym item is a RUN item
@@ -30,11 +30,11 @@ G.Drops = (() => {
       { pickup: 'ticket', p: K.ticket, value: 1, jx: 6 },
       {
         oneOf: [
-          // The healing berries replace the old heal pickup (1.2% x 30% heal = 0.36% of max HP per kill); 0.55% Oran (30%) + 0.40% Sitrus (50%) is the same total.
-          { pickup: 'ground', p: 0.0055, value: 'oran', jx: 8 },
-          { pickup: 'ground', p: 0.004, value: 'sitrus', jx: 8 },
-          { pickup: 'magnet', p: 0.008 },
-          { pickup: 'bomb', p: 0.006 },
+          // Playtest cut (Jess 2026-11-04): Oran 0.55% to 0.2%, Sitrus 0.4% to 0.1%, magnet 0.8% to 0.4%, bomb 0.6% to 0.1%.
+          { pickup: 'ground', p: 0.002, value: 'oran', jx: 8 },
+          { pickup: 'ground', p: 0.001, value: 'sitrus', jx: 8 },
+          { pickup: 'magnet', p: 0.004 },
+          { pickup: 'bomb', p: 0.001 },
         ],
       },
       { pickup: 'ground', p: (ctx) => K.groundBase + G.Grounds.dropBonus(ctx.lead), value: 'ground', jx: 10, jy: 6 },

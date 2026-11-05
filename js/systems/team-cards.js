@@ -71,18 +71,21 @@ G.TeamCards = (() => {
   // ---- field maps, one per card (section 3 of the build plan) ----
   function area(d) {
     const out = [];
+    // Area Up adds covered area, the same step for every shape (Jess 2026-11-04): a radius grows by the square root, a beam's long side by the step
+    const AREAL = { areal: true };
     for (const [n] of nodes(d)) {
       const s = n.space,
         dv = n.delivery || {},
         g = dv.grow;
-      if (s && num(s.radRadius)) out.push(T(s, 'radRadius'));
+      if (s && num(s.radRadius)) out.push(T(s, 'radRadius', 'radRadius', AREAL));
       if (s && num(s.linLength)) out.push(T(s, wide(s) ? 'linWidth' : 'linLength')); // the long side: a beam's length, a wave's width
       if (num(dv.orbitRadius)) out.push(T(dv, 'orbitRadius'));
       if (g && (g.dim || 'radRadius') !== 'radArc') {
         // a growing size scales its whole curve, like the lens (D36)
-        const dim = g.dim || 'radRadius';
-        if (num(g.growSpeed)) out.push(T(g, 'growSpeed', dim));
-        if (num(g.max)) out.push(T(g, 'max', dim));
+        const dim = g.dim || 'radRadius',
+          opt = dim === 'radRadius' ? AREAL : null;
+        if (num(g.growSpeed)) out.push(T(g, 'growSpeed', dim, opt));
+        if (num(g.max)) out.push(T(g, 'max', dim, opt));
       }
     }
     return out;
@@ -292,8 +295,8 @@ G.TeamCards = (() => {
       for (const [o, key, , opt] of targets(c, d)) {
         let P = pools.get(o);
         if (!P) pools.set(o, (P = {}));
-        const p = P[key] || (P[key] = { add: 0, inc: 0, rate: 0, comp: 0, floor: null, max: null });
-        p[opt && opt.comp ? 'comp' : c.mode] += k * c.step;
+        const p = P[key] || (P[key] = { add: 0, inc: 0, rate: 0, comp: 0, areal: 0, floor: null, max: null });
+        p[opt && opt.comp ? 'comp' : opt && opt.areal ? 'areal' : c.mode] += k * c.step;
         if (opt && opt.floor != null) p.floor = opt.floor;
         if (opt && opt.max != null) p.max = opt.max;
         touched = true;
@@ -305,7 +308,7 @@ G.TeamCards = (() => {
         const p = P[key],
           b = o[key];
         if (typeof b === 'number') {
-          let v = ((b + p.add) * (1 + p.inc) * (1 + p.comp)) / (1 + p.rate);
+          let v = ((b + p.add) * (1 + p.inc) * Math.sqrt(1 + p.areal) * (1 + p.comp)) / (1 + p.rate);
           if (p.floor != null) v = Math.max(v, b * p.floor);
           if (p.max != null) v = Math.min(v, p.max);
           o[key] = v;

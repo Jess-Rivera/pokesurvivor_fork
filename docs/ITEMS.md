@@ -13,7 +13,7 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 
 | Source | What it drops |
 | --- | --- |
-| Wild kill | Ground item 1% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.55%, Sitrus Berry 0.4%, magnet 0.8%, bomb 0.6%, plus x2 ticket 1 in 400, plus XP |
+| Wild kill | Ground item 0.4% (plus the live Pinap bonus), then one shared roll for Oran Berry 0.2%, Sitrus Berry 0.1%, magnet 0.4%, bomb 0.1%, plus x2 ticket 1 in 400, plus XP |
 | Elite | Guaranteed heal berry (Oran or Sitrus, 50/50), one guaranteed ground item roll, 50% chance of a Pokemon item, big XP burst |
 | Boss | 10 coins, one guaranteed item (5% it is a run item, else a Pokemon item), and the wild extras above |
 | Gym leader | 10 coins, one guaranteed item (10% it is a run item, else a Pokemon item). No XP, the badge pays a level |
@@ -29,54 +29,54 @@ Drop chances and sources are owned by js/data/drops.js (one table per source). R
 
 ## Ground items (44)
 
-Chance columns are per wild kill (base 1% ground roll times the item weight, plus the direct Oran and Sitrus drops) and per elite (its guaranteed ground roll times the weight, plus its guaranteed berry). Pinaps raise the wild roll.
+Chance columns are per wild kill (base 0.4% ground roll times the item weight, plus the direct Oran and Sitrus drops) and per elite (its guaranteed ground roll times the weight, plus its guaranteed berry). Pinaps raise the wild roll.
 
 | Item | What it does | Weight | Per wild kill | Per elite |
 | --- | --- | --- | --- | --- |
-| X Attack | Team Attack +1 for 30 s | 6% | 0.06% | 6% |
-| X Defense | Team Defense +1 for 30 s | 6% | 0.06% | 6% |
-| X Sp. Atk | Team Sp. Atk +1 for 30 s | 6% | 0.06% | 6% |
-| X Sp. Def | Team Sp. Def +1 for 30 s | 6% | 0.06% | 6% |
-| X Speed | Team Speed +1 for 30 s | 6% | 0.06% | 6% |
-| Oran Berry | Heals 30% of max HP | 9% | 0.64% | 59% |
-| Sitrus Berry | Heals 50% of max HP | 6.5% | 0.465% | 56.5% |
-| Occa Berry | Halves super-effective Fire hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Passho Berry | Halves super-effective Water hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Yache Berry | Halves super-effective Ice hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Coba Berry | Halves super-effective Flying hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Charti Berry | Halves super-effective Rock hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Chilan Berry | Halves Normal-type hits for 10 s | 1.11% | 0.011% | 1.11% |
-| Liechi Berry | Team Attack +1 for 10 s | 2.5% | 0.025% | 2.5% |
-| Ganlon Berry | Team Defense +1 for 10 s | 2.5% | 0.025% | 2.5% |
-| Salac Berry | Team Speed +1 for 10 s | 2.5% | 0.025% | 2.5% |
-| Petaya Berry | Team Sp. Atk +1 for 10 s | 2.5% | 0.025% | 2.5% |
-| Apicot Berry | Team Sp. Def +1 for 10 s | 2.5% | 0.025% | 2.5% |
-| Starf Berry | A random team stat +2 for 10 s | 1.5% | 0.015% | 1.5% |
-| Lansat Berry | +20% critical hit chance for 10 s | 1% | 0.01% | 1% |
-| Kee Berry | +10% Defense for 10 s | 3% | 0.03% | 3% |
-| Maranga Berry | +10% Sp. Def for 10 s | 3% | 0.03% | 3% |
-| Pinap Berry | Ground drop chance +0.5 points for 20 s | 2.5% | 0.025% | 2.5% |
-| Silver Pinap Berry | Ground drop chance +1 point for 10 s | 1% | 0.01% | 1% |
-| Golden Pinap Berry | Ground drop chance +2 points for 5 s | 0.5% | 0.005% | 0.5% |
-| Cheri Berry | Stored in the berry bag: blocks the next Paralysis | 1.5% | 0.015% | 1.5% |
-| Chesto Berry | Stored in the berry bag: blocks the next Sleep | 1.5% | 0.015% | 1.5% |
-| Pecha Berry | Stored in the berry bag: blocks the next Poison | 1.5% | 0.015% | 1.5% |
-| Rawst Berry | Stored in the berry bag: blocks the next Burn | 1.5% | 0.015% | 1.5% |
-| Aspear Berry | Stored in the berry bag: blocks the next Freeze | 1.5% | 0.015% | 1.5% |
-| Persim Berry | Stored in the berry bag: blocks the next Confusion | 1.5% | 0.015% | 1.5% |
-| Lum Berry | Stored in the berry bag: blocks the next of any of those six statuses | 0.5% | 0.005% | 0.5% |
+| X Attack | Team Attack +1 for 30 s | 6% | 0.024% | 6% |
+| X Defense | Team Defense +1 for 30 s | 6% | 0.024% | 6% |
+| X Sp. Atk | Team Sp. Atk +1 for 30 s | 6% | 0.024% | 6% |
+| X Sp. Def | Team Sp. Def +1 for 30 s | 6% | 0.024% | 6% |
+| X Speed | Team Speed +1 for 30 s | 6% | 0.024% | 6% |
+| Oran Berry | Heals 30% of max HP | 9% | 0.236% | 59% |
+| Sitrus Berry | Heals 50% of max HP | 6.5% | 0.126% | 56.5% |
+| Occa Berry | Halves super-effective Fire hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Passho Berry | Halves super-effective Water hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Wacan Berry | Halves super-effective Electric hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Rindo Berry | Halves super-effective Grass hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Yache Berry | Halves super-effective Ice hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Chople Berry | Halves super-effective Fighting hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Kebia Berry | Halves super-effective Poison hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Shuca Berry | Halves super-effective Ground hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Coba Berry | Halves super-effective Flying hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Payapa Berry | Halves super-effective Psychic hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Tanga Berry | Halves super-effective Bug hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Charti Berry | Halves super-effective Rock hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Kasib Berry | Halves super-effective Ghost hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Haban Berry | Halves super-effective Dragon hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Colbur Berry | Halves super-effective Dark hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Babiri Berry | Halves super-effective Steel hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Roseli Berry | Halves super-effective Fairy hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Chilan Berry | Halves Normal-type hits for 10 s | 1.11% | 0.004% | 1.11% |
+| Liechi Berry | Team Attack +1 for 10 s | 2.5% | 0.01% | 2.5% |
+| Ganlon Berry | Team Defense +1 for 10 s | 2.5% | 0.01% | 2.5% |
+| Salac Berry | Team Speed +1 for 10 s | 2.5% | 0.01% | 2.5% |
+| Petaya Berry | Team Sp. Atk +1 for 10 s | 2.5% | 0.01% | 2.5% |
+| Apicot Berry | Team Sp. Def +1 for 10 s | 2.5% | 0.01% | 2.5% |
+| Starf Berry | A random team stat +2 for 10 s | 1.5% | 0.006% | 1.5% |
+| Lansat Berry | +20% critical hit chance for 10 s | 1% | 0.004% | 1% |
+| Kee Berry | +10% Defense for 10 s | 3% | 0.012% | 3% |
+| Maranga Berry | +10% Sp. Def for 10 s | 3% | 0.012% | 3% |
+| Pinap Berry | Ground drop chance +0.5 points for 20 s | 2.5% | 0.01% | 2.5% |
+| Silver Pinap Berry | Ground drop chance +1 point for 10 s | 1% | 0.004% | 1% |
+| Golden Pinap Berry | Ground drop chance +2 points for 5 s | 0.5% | 0.002% | 0.5% |
+| Cheri Berry | Stored in the berry bag: blocks the next Paralysis | 1.5% | 0.006% | 1.5% |
+| Chesto Berry | Stored in the berry bag: blocks the next Sleep | 1.5% | 0.006% | 1.5% |
+| Pecha Berry | Stored in the berry bag: blocks the next Poison | 1.5% | 0.006% | 1.5% |
+| Rawst Berry | Stored in the berry bag: blocks the next Burn | 1.5% | 0.006% | 1.5% |
+| Aspear Berry | Stored in the berry bag: blocks the next Freeze | 1.5% | 0.006% | 1.5% |
+| Persim Berry | Stored in the berry bag: blocks the next Confusion | 1.5% | 0.006% | 1.5% |
+| Lum Berry | Stored in the berry bag: blocks the next of any of those six statuses | 0.5% | 0.002% | 0.5% |
 
 ## Pokemon items (45)
 

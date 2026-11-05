@@ -117,8 +117,8 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(e.scale === 1, 'a gym leader mon is drawn at player size (scale ' + e.scale + ')');
   const wild = G.Boss.make({ dex: 74, name: 'Geodude', hp: 100, spd: 40, dmg: 20, xp: 0, behavior: 'chase' }, 0, 0); ok(wild.scale > 1, 'a non-gym boss keeps its enlarged scale');
   const t = b.def('tackle'), r = b.def('rock-throw'), h = b.def('harden');
-  ok(near(t.basePower, 52) && near(t.space.radRadius, 70.2) && near(t.space.radArc, 1.7) && near(t.cd, 0.5), 'Tackle folded: Power 52, reach 70.2, arc 1.7, cd 0.5: ' + JSON.stringify([t.basePower, t.space.radRadius, t.space.radArc, t.cd]));
-  ok(near(r.basePower, 58.5) && r.space.count === 3 && near(r.space.radRadius, 11.7) && near(r.delivery.moveSpeed, 377) && near(r.cd, 35 / 15 * 0.5, 1e-3), 'Rock Throw folded: Power 58.5, 3 rocks, size 11.7, 377 px/s, cd 1.167: ' + JSON.stringify([r.basePower, r.space.count, r.space.radRadius, r.delivery.moveSpeed, r.cd]));
+  ok(near(t.basePower, 52) && near(t.space.radRadius, 54 * Math.sqrt(1.3)) && near(t.space.radArc, 1.7) && near(t.cd, 0.5), 'Tackle folded: Power 52, reach 61.6, arc 1.7, cd 0.5: ' + JSON.stringify([t.basePower, t.space.radRadius, t.space.radArc, t.cd]));
+  ok(near(r.basePower, 58.5) && r.space.count === 3 && near(r.space.radRadius, 9 * Math.sqrt(1.3)) && near(r.delivery.moveSpeed, 377) && near(r.cd, 35 / 15 * 0.5, 1e-3), 'Rock Throw folded: Power 58.5, 3 rocks, size 10.3, 377 px/s, cd 1.167: ' + JSON.stringify([r.basePower, r.space.count, r.space.radRadius, r.delivery.moveSpeed, r.cd]));
   ok(h === G.MoveDefs.harden, 'no card fits Harden, so it runs the frozen def');
   ok(G.MoveDefs.tackle.basePower === 40 && G.MoveDefs['rock-throw'].space.count === 1, 'the frozen defs are untouched');
   ok(e.foes().length === 1 && e.foes()[0] === pl, 'the player is its only foe'); pl.dead = true; ok(e.foes().length === 0, 'a fainted player is no foe'); pl.dead = false;
@@ -138,12 +138,12 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   fresh(); const e2 = mkBoss(), b2 = e2.brain; b2.init(); b2.wait = 0; b2.mode = 'close';
   pl.x = 60; pl.y = 0; frame(e2); ok(b2.tell && near(b2.tell.ang, 0), 'second tell aimed at 0');
   pl.x = 0; pl.y = 60; run(e2, 0.6); ok(casts.tackle === 1 && pl.hurts.length === 0, 'the cone fires along the locked aim and misses a player who stepped aside');
-  // out of reach: 70.2 + 12 = 82.2 px
+  // out of reach: 54 x sqrt 1.3 = 61.6, + 12 = 73.6 px
   fresh(); const e3 = mkBoss(), b3 = e3.brain; b3.init(); b3.wait = 0; b3.mode = 'close';
   for (const s of e3.slots[0]) if (s.id === 'rock-throw') s.t = 99;     // only Tackle is ready
-  pl.x = 84; pl.y = 0; frame(e3); ok(!b3.tell, 'no Tackle tell at 84 px (reach 70.2 + body 12)');
-  pl.x = 81; frame(e3); ok(b3.tell && b3.tell.id === 'tackle', 'a Tackle tell at 81 px');
-  console.log('3 Tackle: 0.45 s tell, lands at its end with the Power 52 factor ' + tackleFactor().toFixed(1) + ', no knockback, the locked aim misses a sidestep, reach 82 px with your body'); }
+  pl.x = 75; pl.y = 0; frame(e3); ok(!b3.tell, 'no Tackle tell at 75 px (reach 61.6 + body 12)');
+  pl.x = 72; frame(e3); ok(b3.tell && b3.tell.id === 'tackle', 'a Tackle tell at 72 px');
+  console.log('3 Tackle: 0.45 s tell, lands at its end with the Power 52 factor ' + tackleFactor().toFixed(1) + ', no knockback, the locked aim misses a sidestep, reach 74 px with your body'); }
 
 // 4. Rock Throw: a 0.5 s tell, three rocks at 377 px/s along the locked aim, Rock STAB, range 420
 { fresh(); const e = mkBoss(), b = e.brain; b.init(); b.wait = 0; b.mode = 'far';
@@ -342,10 +342,10 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     ok(pl.hurts.length === 1 && pl2.hurts.length === 1, 'with two foes 40 px apart the chain hops to the second: ' + [pl.hurts.length, pl2.hurts.length]); }
   { const [e, b] = one('hex'); pl.x = 200; pl.y = 0; decoy.x = 260; decoy.hits = 0; run(e, 1.2);
     ok(casts.hex >= 1 && pl.hurts.length >= 1 && decoy.hits === 0, 'Hex is cast, hits the player and never hops to the wild enemy'); }
-  { const [e, b] = one('bulldoze'); pl.x = 215; pl.y = 0; frame(e); ok(!b.tell, 'no Bulldoze tell at 215 px (reach 200 + body 12)');
-    pl.x = 205; frame(e); ok(b.tell && b.tell.form === 'nova' && near(b.tell.wind, 0.45), 'a 0.45 s nova tell at 205 px');
-    run(e, 1); ok(pl.hurts.length === 1, 'the ring reaches the player at 205 px: ' + pl.hurts.length);
-    ok(near(b.reach(), 200), "the brain's close reach is the nova's full growth (200)"); }
+  { const [e, b] = one('bulldoze'); pl.x = 155; pl.y = 0; frame(e); ok(!b.tell, 'no Bulldoze tell at 155 px (reach 140 + body 12)');
+    pl.x = 145; frame(e); ok(b.tell && b.tell.form === 'nova' && near(b.tell.wind, 0.45), 'a 0.45 s nova tell at 145 px');
+    run(e, 1); ok(pl.hurts.length === 1, 'the ring reaches the player at 145 px: ' + pl.hurts.length);
+    ok(near(b.reach(), 140), "the brain's close reach is the nova's full growth (140)"); }
   { const [e, b] = one('dazzling-gleam'); pl.x = 140; pl.y = 0; frame(e); ok(b.tell && b.tell.form === 'nova', 'a Dazzling Gleam tell at 140 px (reach 130 + body 12)');
     run(e, 1); ok(pl.hurts.length === 1, 'Dazzling Gleam lands (it never could as a 1 px melee): ' + pl.hurts.length);
     const [e2, b2] = one('dazzling-gleam'); pl.x = 100; pl.y = 0; frame(e2); pl.x = -100; run(e2, 1); ok(pl.hurts.length === 0, 'its half ring keeps the locked aim and misses a player behind it'); }
@@ -394,7 +394,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     const id = b.tell && b.tell.id; e.applyFlinch();
     ok(!b.tell && id && slot(e, id).last === t, 'a flinched tell still stamps its move (' + id + ') as used at the tell start'); }
   // the two starvation sets from the 2026-11-01 browser run: every move is cast within 25 s
-  const sets = [[['bulldoze', 'thunderbolt', 'thunder-shock', 'confusion'], 205], [['thunder-shock', 'confusion', 'psychic'], 150]];
+  const sets = [[['bulldoze', 'thunderbolt', 'thunder-shock', 'confusion'], 145], [['thunder-shock', 'confusion', 'psychic'], 150]];
   const outs = [];
   for (const [ids, at] of sets) { const [e] = mk3(ids); pl.x = at; pl.y = 0; run(e, 25);
     for (const id of ids) ok(casts[id] >= 1, ids.join('+') + ' at ' + at + ' px: ' + id + ' cast within 25 s: ' + JSON.stringify(casts));

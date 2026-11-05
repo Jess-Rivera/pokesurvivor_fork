@@ -84,8 +84,8 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   if (!e.boss || !e.gym) bad('not a gym boss'); if (e.maxHp !== def.hp) bad('maxHp');
   const mt = e.brain.def('tackle'), mr = e.brain.def('rock-throw');
   // Brock's cards folded by the real card rules: Damage +10% each (x3), Count +1 each (x2), Velocity +15% each (x3), Area +15% each (x2)
-  if (!near(mr.basePower, 45 * 1.3) || mr.space.count !== 3 || !near(mr.space.radRadius, 9 * 1.3) || !near(mr.delivery.moveSpeed, 260 * 1.45)) bad('Rock Throw cards: ' + JSON.stringify([mr.basePower, mr.space.count, mr.space.radRadius, mr.delivery.moveSpeed]));
-  if (!near(mt.basePower, 40 * 1.3) || !near(mt.space.radRadius, 54 * 1.3) || !near(mt.space.radArc, 1.7)) bad('Tackle cards: ' + JSON.stringify([mt.basePower, mt.space.radRadius, mt.space.radArc]));
+  if (!near(mr.basePower, 45 * 1.3) || mr.space.count !== 3 || !near(mr.space.radRadius, 9 * Math.sqrt(1.3)) || !near(mr.delivery.moveSpeed, 260 * 1.45)) bad('Rock Throw cards: ' + JSON.stringify([mr.basePower, mr.space.count, mr.space.radRadius, mr.delivery.moveSpeed]));
+  if (!near(mt.basePower, 40 * 1.3) || !near(mt.space.radRadius, 54 * Math.sqrt(1.3)) || !near(mt.space.radArc, 1.7)) bad('Tackle cards: ' + JSON.stringify([mt.basePower, mt.space.radRadius, mt.space.radArc]));
   const ft = e.brain.factor(adapt(mt)), fr = e.brain.factor(adapt(mr));
   const want = G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 58.5, 'physical') * 1.5 / G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 52, 'physical');
   if (!near(fr / ft, want)) bad('power ratio incl. STAB ' + fr / ft + ' vs ' + want);

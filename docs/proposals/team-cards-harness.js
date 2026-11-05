@@ -92,14 +92,17 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 
 // ===== 2. one row per field card (build plan section 3) =====
 { // Area Up +15%
-  let d = F('ember', [['area']]); ok(near(d.space.radRadius, 7 * 1.15), 'Area: a point grows (Ember radRadius 7 to 8.05)');
+  let d = F('ember', [['area']]); ok(near(d.space.radRadius, 7 * Math.sqrt(1.15)), 'Area: a point grows by covered area (Ember radRadius 7 x sqrt 1.15)');
   d = F('hydro-pump', [['area']]); ok(near(d.space.linLength, REAL['hydro-pump'].space.linLength * 1.15) && d.space.linWidth === REAL['hydro-pump'].space.linWidth, 'Area: beam length, not width');
-  d = F('fire-spin', [['area']]); ok(near(d.delivery.orbitRadius, REAL['fire-spin'].delivery.orbitRadius * 1.15) && near(d.space.radRadius, REAL['fire-spin'].space.radRadius * 1.15), 'Area: orbit radius and orb size');
-  d = F('bulldoze', [['area', 2]]); ok(near(d.delivery.grow.growSpeed, 500 * 1.3) && near(d.delivery.grow.max, 200 * 1.3), 'Area: a growing radius scales its whole curve (500, 200 x 1.3)');
+  d = F('fire-spin', [['area']]); ok(near(d.delivery.orbitRadius, REAL['fire-spin'].delivery.orbitRadius * 1.15) && near(d.space.radRadius, REAL['fire-spin'].space.radRadius * Math.sqrt(1.15)), 'Area: orbit radius (x 1.15) and orb size (by covered area)');
+  d = F('bulldoze', [['area', 2]]); ok(near(d.delivery.grow.growSpeed, 350 * Math.sqrt(1.3)) && near(d.delivery.grow.max, 140 * Math.sqrt(1.3)), 'Area: a growing radius scales its whole curve (350, 140 x sqrt 1.3)');
   d = F('heat-wave', [['area']]); ok(near(d.space.linWidth, 60 * 1.15) && d.space.linLength === 16 && near(d.delivery.grow.growSpeed, 0.667 * 1.15) && near(d.delivery.grow.max, 260 * 1.15), 'Area: a wave widens (its width and width curve), not deepens');
   d = F('heat-wave', [['presence']]); ok(d.space.linLength > 16 && d.space.linWidth === 60, 'Presence: a wave gets deeper, not wider');
   d = F('psychic', [['area']]); ok(near(d.delivery.grow.growSpeed, 1.5) && near(d.delivery.grow.max, 2), 'Area: an arc growth is not a size growth');
-  d = F('discharge', [['area']]); ok(near(kid(d).move.delivery.grow.max, 110 * 1.15), 'Area: an emitted ring grows too (110 x 1.15; 220 before slice 6)');
+  d = F('discharge', [['area']]); ok(near(kid(d).move.delivery.grow.max, 110 * Math.sqrt(1.15)), 'Area: an emitted ring grows too (110 x sqrt 1.15; 220 before slice 6)');
+  { const q = F('earthquake', [['area', 5]]), f = F('flamethrower', [['area', 5]]), h = F('hydro-pump', [['area', 5]]);
+    ok(near((q.delivery.grow.max / 200) ** 2, 1.75) && near((f.space.radRadius / 150) ** 2, 1.75) && near(h.space.linLength / REAL['hydro-pump'].space.linLength, 1.75), 'Area: 5 picks are the same 1.75 x covered area on a ring, a cone and a beam');
+    ok(near(q.delivery.grow.max / q.delivery.grow.growSpeed, 200 / 500), 'Area: a ring takes the same time to reach full size'); }
   // Presence Up +15%, radArc capped at 360
   d = F('vine-whip', [['presence']]); ok(near(d.space.radArc, 1.3 * 1.15), 'Presence: an arc widens (1.3 x 1.15)');
   d = F('body-slam', [['presence', 20]]); ok(near(d.space.radArc, 6.2832), 'Presence: the arc caps at 360 degrees');

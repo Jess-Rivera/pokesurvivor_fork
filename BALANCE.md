@@ -21,6 +21,8 @@ re-tune later.
   from Vampire Survivors, Brotato, and Halls of Torment where useful.
 
 ## Moves
+- Playtest round 1 sizes (fix/playtest-round-1, Jess 2026-11-04; TUNE): base radius cut, time to full size kept. Hyper Voice 380 to 200, Earthquake 260 to 200, Dark Pulse 200 to 160, Bulldoze 200 to 140, Growl, Leer and Tail Whip 160 to 120, Flamethrower 250 to 150. Roar stays 160 (its own MOVE-INTENT ruling). Why: Hyper Voice covered more area than the whole view, and Flamethrower was over twice the longest melee cone. Source: docs/move_rework_holding/move-conversions-described.json.
+- Area Up (fix/playtest-round-1, Jess 2026-11-04; TUNE): still +15% per pick, now of covered area on every shape. A radius grows by the square root of 1 + 0.15 x picks (5 picks: radius x1.32, area x1.75; was radius x1.75, area x3.06). A beam's length, a wave's width and an orbit's radius keep 1 + 0.15 x picks. Why: round shapes gained area with the square of the step, beams in a straight line. Melee cones lose reach from this too (Tackle after 5 picks: 71 px, was 94). js/systems/team-cards.js.
 ### Canonical power migration (2026-10-17)
 - All 64 moves now carry canonical mainline base power in the `dmg` field (Approach B: field name kept,
   values migrated). Status moves = dmg 0 (they route through the neutral denominator, no A/D ratio).
@@ -156,6 +158,7 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 - 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
 
 ## Drops / economy
+- Wild drop cut (fix/playtest-round-1, Jess 2026-11-04, playtesters; TUNE): ground item roll 1% to 0.4%, Oran 0.55% to 0.2%, Sitrus 0.4% to 0.1%, magnet 0.8% to 0.4%, bomb 0.6% to 0.1% (js/data/drops.js). Direct berry healing 0.365% to 0.11% of max HP per kill. Elites, chests, grass, rocks and the Pinap bonus unchanged. If kills keep up with spawns, a heal berry at 5 min comes about every 69 s (was 23 s), a ground item about every 63 s (was 25 s). The Pinap line below still reads "1% wild ground roll": the base is 0.4% now.
 - Rock and small chest HP (feature/item-rework-v2, 2026-11-03, Jess; TUNE): rock 34 to 6, chest 22 to 6 (js/world/world.js). Prop damage has no STAB or type and grows with level. A 40 power move (Ember, Water Gun, Tackle, no upgrades) does about 2.2 at level 1, so 3 hits; 2 hits by level 10; 1 hit from about level 15 to 20. Was: 16 and 10 hits at level 1.
 - Pickup magnet (fix/ui-upgrade, 2026-11-02, Jeremy playtest "Magnetism"; TUNE): base radius 78 to 120 px (player.js), and the permanent Magnet upgrade from +12% to +20% per level, max 6 (upgrades.js), so it tops out near 264 px. The Magnet shrine x4 scales from the new base. Was: 78 px base, about 134 px maxed.
 - Pickup radius split (feature/item-rework-v2, 2026-11-03, Jess playtest; TUNE): XP orbs only keep the radius above (120 px, 264 px maxed). Every other pickup, coins included, uses a fixed 78 px (Player.itemMagnet) that the permanent upgrade does not touch. The magnet pickup still pulls everything, and the Magnet shrine x4 scales both radii (480 and 312 px at base). Was: one radius for everything.
