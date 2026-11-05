@@ -1,0 +1,163 @@
+MOVE SHOP STEP 2: SILVER   (plan, 2026-11-05, APPROVED as proposed by Jess, BUILT the same day)
+Spec: docs/proposals/move-shop-plan.md "Silver". Handoff: docs/proposals/move-shop-handoff.md.
+Existing behavior changed by this step: NONE (top-left of the run HUD is empty today, hud.js line 428).
+
+=====================================================================
+ 1. FLOW
+=====================================================================
+
+  startRun ──► Silver = 100 (whole run, shared by the whole team)
+                  │
+  enemy dies ──► kill site (enemy.js ~1806, next to evKill)
+                  │      skip: remote enemies, thief that escapes (not a kill)
+                  ▼
+           + max(1, worldLevel / 10)      worldLevel = G.Stats.levelForTime(t)
+                  │                        (true run level, NO escalation bump,
+                  │                         NO gym offset; fraction kept inside)
+                  ▼
+           HUD top-left:  [spinning silver coin] 1,234
+                  │        number = whole coins only
+                  ▼
+           bump on every gain (restart, never queue)
+                  │
+  endRun ──► Silver dropped. Never touches pl.coins, PokeCoins or the save.
+
+=====================================================================
+ 2. INCOME PER KILL (from the approved formula)
+=====================================================================
+
+  run time   world lv   paid per kill
+  ───────────────────────────────────
+   0:00        1.0        1   (min 1)
+   2:00        4.3        1   (min 1)
+   5:31       10.0        1.0  <- formula takes over here
+  10:00       17.3        1.73
+  15:00       25.5        2.55
+  20:00       33.7        3.37
+  30:00       50.0        5.0
+
+  Fraction example at 15:00: kill, kill  = 5.10 inside, HUD shows 5.
+
+=====================================================================
+ 3. FILES, PER PIECE
+=====================================================================
+
+  A. THE SILVER COIN IMAGE
+  ────────────────────────
+  tools/cut_pickup_gifs.py (dev tool, free edit)
+     after the gold block (lines 87 to 92): same block for spin_silver.png,
+     spin_silver.json, row 'oblong_silver 0.png', output silver16.png.
+     reuse cut16 (line 67), do not rewrite it.
+     generated file gets a 'silver' entry matching 'gold' (line 102).
+  OUTPUT (game data, this is what needs the OK):
+     assets/items/pickups/silver16.png    142 x 16, 8 frames, 2 px gap
+     js/data/pickup-sprites.js            regenerated, + silver entry
+  Verify once while building: whole-sheet alpha box (3,2,138,14), frame 0
+  (3,2,13,14), git status shows ONLY those two files changed.
+  Needs assets/raw/coins.gif on this machine (checked before running).
+
+  B. THE COUNTER  (new module, keeps game.js out of it)
+  ────────────────────────────────────────────────────
+  js/systems/silver.js   NEW, registers G.Silver
+     reset to 100 / add an amount / pay for a kill at run time t /
+     whole coins for display / spend (for step 4, unused yet).
+     lives on the run, NOT on the Pokemon, so a swap keeps it with no
+     extra line in the swap copy list (game.js 276 to 288).
+  dev.html          add the script tag (systems block, before game.js)
+  js/main.js        add to the NEED array
+  js/game.js        startRun (line 125): reset Silver
+  js/entities/enemy.js  kill site (line 1806): pay Silver for the kill
+
+  C. THE HUD
+  ──────────
+  js/ui/hud.js   new drawSilver, called from draw() at px 16 / py 22
+     ┌──────────────────────────┐
+     │ (o) 1,234                │  coin 24 px (16 art px x 1.5, same as
+     │                          │  the gold pickup), smoothing off,
+     │                          │  spins on the run clock (pauses with it)
+     └──────────────────────────┘
+     reuses the image-loading pattern from pickup.js drawSprite.
+     the HUD tracks the last value it drew; a rise = restart the bump.
+
+  D. DEBUG
+  ────────
+  js/core/debug.js   G.Debug.silver(n): set this run's Silver (no arg logs
+     it). ?dev only, in-run only. For the feel test now, prices in step 4.
+
+  E. AFTER THE BUILD (free edit)
+  ──────────────────────────────
+  js/data/changelog.js  "new" line for Silver (parse-checked)
+  STATE.md, DEVLOG.md, move-shop-plan.md build order
+
+=====================================================================
+ 4. DECISIONS FOR JESS (each one separate)
+=====================================================================
+
+  D1  BUMP STYLE   (new feature, nothing existing changes)
+      proposed:  coin + number pop to ~1.3x and settle in ~0.18 s,
+                 restarted on every gain, never queued
+               + number rolls up like a slot reel toward the real value;
+                 when the gap is big it closes faster (never lags > ~0.4 s)
+      alt:       pop only, number jumps straight to the value
+
+  D2  CO-OP RUNS   (cloud phase is deferred)
+      proposed:  Silver counter hidden in co-op runs until co-op shops
+                 exist. The co-op panel already uses the top-left
+                 (hud.js line 578), so this also avoids a clash.
+                 One-line note in TODO.md under deferred.
+      alt:       show it, push the co-op panel down
+
+  D3  WHICH KILLS PAY
+      proposed:  every kill pays the same formula, including elites,
+                 bosses and gym arena mons (spec says "each kill").
+      alt:       bosses/elites pay a multiple (would be a new rule)
+
+  D4  NO SOUND per coin (it would be spam at high kill rates).
+      shop sounds are already TUNE for later per the spec.
+
+=====================================================================
+ 5. TESTS
+=====================================================================
+
+  NEW HARNESS   docs/proposals/silver-harness.js   (picked up by check.js
+                automatically, since it matches *harness*.js)
+     checks:
+     - a run starts at 100; a second run starts at 100 again (no carry)
+     - pay at 0:00 and 2:00 = 1 (the min), 5:31 = 1.0, 15:00 = 2.55,
+       30:00 = 5.0, all hand-derived from the formula, not from code output
+     - fractions add up: two kills at 15:00 = 5.10, whole shows 5
+     - uses the plain run level: a run with escalation or gyms done pays
+       the same as one without
+     - remote enemies and an escaped thief pay 0
+     - endRun: PokeCoins earned are identical with 0 and with 9,999 Silver
+     - no new key appears in the save object after a run
+     why new: no existing harness touches run-only currency, and the
+     PokeCoin end-of-run maths is the one thing Silver must never leak into.
+
+  MUTATION RUNNER   docs/proposals/silver-mutate.js   (run by hand, like
+                    the other *-mutate.js files)
+     breaks, one at a time, and expects the harness to FAIL each:
+     - removes the min-1 floor
+     - reads the bumped / gym-offset level instead of the plain one
+     - rounds each kill's pay instead of keeping the fraction
+     - adds Silver into the end-of-run PokeCoins
+     - skips the reset at run start
+     why: proves each harness check really bites.
+
+  EXISTING CHANGED   tools/smoke-ui.js (dev tool, free edit)
+     after a run starts: G.Silver exists, shows 100, and the HUD frame
+     draws without an error. Catches a missing dev.html tag or NEED entry.
+
+  check.js       no change (the new harness is found by its name).
+  intent scenarios / debug sets: none (no moves change).
+
+=====================================================================
+ 6. YOUR FEEL TEST (about a minute)
+=====================================================================
+
+  hard reload dev.html?dev (new script + new image). No save clear needed.
+  - 100 Silver top-left with a crisp (not blurry) spinning coin
+  - kill a few: the bump reads well, even in a dense pack
+  - G.Debug.silver(99999): the number still fits, nothing overlaps
+  - swap Pokemon: Silver stays the same
+  - end the run: PokeCoins look the same as before this change

@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-05',
+    title: ['Silver', 'Silver'],
+    new: [
+      [
+        'Silver: a new coin for the current run, shown in the top-left corner. Every run starts with 100 and each defeated enemy adds more, a little more the longer the run goes. It is saved for the coming Move Shop and does not change the PokeCoins you earn.',
+        'Silver: a new coin for the current run, shown in the top-left corner. Every run starts with 100 and each defeated enemy adds more, a little more the longer the run goes. It is saved for the coming Move Shop and does not change the PokeCoins you earn.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-04',
     title: ['Over 100 new moves', 'Over 100 new moves'],
     new: [

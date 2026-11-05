@@ -1808,6 +1808,7 @@
           if (e.boss || e.elite) pl.bosses++;
           G.Progress.kill(e);
           G.Game.evKill(e); // pokebox step 5: the run's EV banks
+          G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
           corpses.push(e);
           list.splice(i, 1);
           byId.delete(e.id);

@@ -147,6 +147,7 @@ G.Game = (() => {
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();
+    G.Silver.reset(); // Move Shop step 2: every run starts with 100 Silver, nothing carries over
     G.World.reset(coop ? coop.seed : Math.floor(Math.random() * 1e6));
     G.World.setBiome(0, true);
     biome = 0;

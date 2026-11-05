@@ -42,7 +42,8 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] A tactile bump on each coin added, slot machine style.
 - [Approved] Each kill pays world level / 10, minimum 1. A run starts with 100.
 - [Approved] Price per move: 5 x world level x character level, from the concept map.
-- [Proposed] Silver is run-only, so it needs no save field. It never adds to PokeCoins, and unspent Silver is lost at the end of the run. World level is the enemy level for the run time (G.Stats.levelForTime).
+- [Approved] Silver is run-only, so it needs no save field. It never adds to PokeCoins, and unspent Silver is lost at the end of the run. World level is the enemy level for the run time (G.Stats.levelForTime). (Jess 2026-11-05, step 2 plan)
+- [Approved] Step 2 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 2 - Silver.txt D1 to D4): the bump is a pop of about 1.3x for 0.18 s on the number only (the coin keeps spinning, no coin bounce; Jess 2026-11-05 after the feel test), restarted on every gain and never queued, the coin's and the digits' bottoms on one ground line, sized up 50% after the feel test (coin 36 px, number 30; Jess 2026-11-05), plus a number that rolls up like a slot reel and lands within 0.25 s of the last gain. Silver is hidden in co-op until co-op shops exist. Every kill pays the same formula, elites, bosses and gym mons included. No sound per coin.
 - Estimate, not measured: about 1 to 2 moves per shop if kills keep up with spawns. A fixed bot checks this during the build.
 
 ## Level-ups
@@ -51,7 +52,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 
 ## Build order
 1. BUILT 2026-11-04. Learnset pools: js/data/learnsets.js from tools/export_learnsets.js, G.Moves.poolFor, tmList and canUseTm, HELD gone, level-up cards and the move search read the new pool. Check: docs/proposals/learnset-harness.js.
-2. Silver: the counter, kill income, the bump.
+2. BUILT 2026-11-05 (Quick), feel test pending. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
 3. Buildings: contact masks, spawn rules, red arrows, both arrow types float off the character.
 4. Shop screens: Move Trainer, TM Mart, forget or cancel, a debug command to open each.
 5. Remove New Move cards, update smoke-ui (it expects them), docs and changelog.

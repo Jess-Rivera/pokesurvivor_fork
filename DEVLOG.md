@@ -602,3 +602,12 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Found: the latest-game dataset leaves 68 species with no TMs, so pools use all games. My first coverage numbers filtered the dex wrongly; corrected. The income bot stalled, so the Silver estimate is unmeasured.
 - Verified: learnset harness 29/29, check.js 36 of 37 (the known gyms-only comment failure), smoke-ui, all 177 moves run for about half a second each on file:// with no errors. Move search not checked on the real screen.
 - Stopped at: handoff to Quick, docs/proposals/move-shop-handoff.md. Steps 2 and 3 await Jess's OK.
+
+## 2026-11-05, Move Shop step 2, Silver (Quick, work, feature/move-shop)
+- Jess: step 1 feel test passed. Step 2 plan approved as proposed (D1 pop plus rolling number, D2 hidden in co-op, D3 every kill pays the same, D4 no sound).
+- Built: js/systems/silver.js (G.Silver: 100 at run start, kill pays world level / 10 min 1, fraction kept), reset in startRun, pay in the enemy.js kill loop, HUD counter top-left (hud.js drawSilver), silver16.png and its pickup-sprites.js entry (cut_pickup_gifs.py extended), G.Debug.silver, dev.html tag and NEED entry, changelog.
+- Tests: docs/proposals/silver-harness.js (30 checks) and silver-mutate.js (15 mutations), smoke-ui gains a 100 Silver check. Silver sheet alpha boxes match the handoff; the same cut reproduces coin16.png pixel for pixel.
+- Broke/limits: node is not reachable from Quick here, so the harness and mutations ran in a shim and check.js, smoke-ui and prettier were NOT run. The GitHub issues API returned nothing.
+- Feel test (Jess): coin bottom and number bottom misaligned (6 px). Fixed (2b): one ground line, digits placed by their measured bottom; the pop moved to the number only. Coin bounce (bounce_silver) proposed, then dropped by Jess.
+- Then +50% size (Jess): coin 24 to 36 px, number 20 to 30, ground line y 39 to 46. At x2.25 the coin's foot is 31.5 px, so it is floored (rounding sank it 1 px). Re-measured: bottoms match in every spin frame and mid-pop.
+- Stopped at: Jess to re-check, run the checks, commit; then plan step 3.

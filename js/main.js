@@ -54,6 +54,7 @@
     'GymArena',
     'Weather',
     'Progress',
+    'Silver',
     'Hazards',
     'Social',
     'Net',

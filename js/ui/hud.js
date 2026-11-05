@@ -409,6 +409,88 @@ G.HUD = (() => {
     }
   }
 
+  // ---------- Silver counter (Move Shop step 2, js/systems/silver.js) ----------
+  // The spinning silver coin (16 art px drawn at 24 with smoothing off, like the gold pickup in js/entities/pickup.js)
+  // and the whole-coin count, both standing on one ground line: the coin's lowest opaque row and the digits' lowest
+  // pixel sit on the same screen row. Every gain restarts a short pop of the NUMBER only (the coin keeps spinning,
+  // Jess 2026-11-05), scaled from the number's bottom-left so it never leaves the ground line, never queued, so it
+  // stays readable at high kill rates. The number rolls up toward the real value like a slot reel, at a speed set at
+  // each gain so it always lands within SILVER_ROLL seconds. A spend, or a new run, shows the new value straight away.
+  const SILVER_POP = 0.18, // s, the pop settles in this long
+    SILVER_ROLL = 0.25, // s, the rolling number lands in this long after the last gain
+    SILVER_ROLL_MIN = 25, // coins per second, the slowest roll (small gains)
+    // Size (Jess 2026-11-05, +50% after the feel test): the 16 art px coin drawn at 36 (x2.25), the number at 30, a 45 px
+    // gap from the coin's left edge to the number. FOOT: screen px from the top of the coin cell to the bottom of its
+    // lowest opaque row (art rows 2 to 13 in every spin frame, so the bottom edge is art row 14).
+    SILVER_COIN = 36,
+    SILVER_FONT = 30,
+    SILVER_GAP = 45,
+    SILVER_COIN_FOOT = (14 * SILVER_COIN) / 16;
+  const silver = { img: null, ready: false, shown: -1, target: -1, rate: 0, pop: 0, at: 0, t: 0 };
+  function silverImg() {
+    if (!silver.img && G.PickupSprites && G.PickupSprites.silver) {
+      silver.img = new Image();
+      silver.img.onload = () => {
+        silver.ready = true;
+      };
+      silver.img.src = G.PickupSprites.silver.src;
+    }
+    return silver.ready ? silver.img : null;
+  }
+  /** x: left edge of the coin; ground: the screen row both the coin's and the digits' bottoms sit on. */
+  function drawSilver(ctx, x, ground, st) {
+    const now = performance.now() / 1000,
+      dt = Math.min(0.1, Math.max(0, now - silver.at)),
+      target = G.Silver.whole;
+    silver.at = now;
+    if (silver.target < 0 || target < silver.target || st.time < silver.t) {
+      silver.shown = target; // first frame, a spend or a new run: no roll
+      silver.pop = 0;
+    } else if (target > silver.target) {
+      silver.pop = 1; // a gain restarts the pop
+      silver.rate = Math.max(SILVER_ROLL_MIN, (target - silver.shown) / SILVER_ROLL);
+    }
+    silver.target = target;
+    silver.t = st.time;
+    if (silver.shown < target) silver.shown = Math.min(target, silver.shown + silver.rate * dt);
+    silver.pop = Math.max(0, silver.pop - dt / SILVER_POP);
+    const k = 1 + 0.3 * silver.pop * silver.pop,
+      img = silverImg(),
+      S = G.PickupSprites && G.PickupSprites.silver;
+    ctx.save();
+    if (img) {
+      const f = Math.floor((st.time * 1000) / S.ms[0]) % S.n; // spins on the run clock, so it stops with the game
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        img,
+        f * (S.cell + G.PickupSprites.pad),
+        S.y,
+        S.cell,
+        S.cell,
+        x,
+        Math.floor(ground - SILVER_COIN_FOOT), // floor, not round: at x2.25 the foot is 31.5, and rounding up sinks the coin 1 px below the digits
+        SILVER_COIN,
+        SILVER_COIN
+      );
+    }
+    const txt = Math.floor(silver.shown).toLocaleString('en-US');
+    ctx.font = F(800, SILVER_FONT);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    // The digits' real bottom, measured in this font (a pixel font can dip below its baseline), so the bottom of the
+    // digits, not the baseline, lands on the ground line.
+    const m = ctx.measureText('0123456789'),
+      foot = m.actualBoundingBoxDescent || 0;
+    ctx.translate(x + SILVER_GAP, ground);
+    ctx.scale(k, k);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.strokeText(txt, 0, -foot);
+    ctx.fillStyle = '#e8eef7';
+    ctx.fillText(txt, 0, -foot);
+    ctx.restore();
+  }
+
   function draw(ctx, w, h, pl, st) {
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -435,6 +517,12 @@ G.HUD = (() => {
     const teamRight = drawTeam(ctx, w, h);
     const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
     drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+
+    // ---------- Silver (top-left; hidden in co-op until co-op shops exist, the co-op panel uses this corner) ----------
+    if (!G.Coop.active) {
+      const sa = touch ? G.Touch.safeArea() : null;
+      drawSilver(ctx, px + (sa ? Math.min(44, sa.left) : 0), 46 + (sa ? Math.min(20, sa.top) : 0), st);
+    }
 
     // ---------- reloj / bioma / kills ----------
     ctx.textAlign = 'center';

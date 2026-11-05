@@ -183,6 +183,9 @@ async function check(browser, query, tag) {
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());
   await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
+  // Move Shop step 2: Silver is loaded (dev.html tag and NEED entry) and a run starts with 100 (a quick kill may add some).
+  const silver = await page.evaluate(() => (G.Silver ? G.Silver.whole : null));
+  ok(silver >= 100, tag + ': a run starts with 100 Silver (' + silver + ')');
   const run = await page.evaluate(async (ids) => {
     const pl = G.Game.player,
       roster = G.Game.roster,

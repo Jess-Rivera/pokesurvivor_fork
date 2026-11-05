@@ -12,6 +12,7 @@
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
+ *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
@@ -247,6 +248,21 @@ G.Debug = (() => {
     }
     console.log('[Debug] PokeCoins: ' + s.coins);
     return s.coins;
+  }
+
+  /** Set this run's Silver to `n` (or log it). ?dev only, in a run only. Not saved: Silver is run-only (js/systems/silver.js). */
+  function silver(n) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first: Silver only exists in a run.');
+      return false;
+    }
+    if (n != null) G.Silver.set(n);
+    console.log('[Debug] Silver: ' + G.Silver.whole + ' (' + G.Silver.amount.toFixed(2) + ' inside)');
+    return G.Silver.whole;
   }
 
   /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
@@ -1239,6 +1255,7 @@ G.Debug = (() => {
     runitem,
     runslots,
     coins,
+    silver,
     tickets,
     unlockitem,
     loadout,
