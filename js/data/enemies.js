@@ -31,8 +31,8 @@
  * The warned attacks are in systems/hazards.js.
  *
  * Bosses: gym leaders are the only bosses since 2026-10-31 (systems/gym.js); the old
- * timed boss bands were removed on 2026-11-04. Legendaries never spawn (the pokedex
- * leg flag; the gacha still has them).
+ * timed boss bands were removed on 2026-11-04.
+ * Legendaries never spawn (the pokedex leg flag; the gacha still has them).
  */
 G.Enemies = (() => {
   const TIERS = [

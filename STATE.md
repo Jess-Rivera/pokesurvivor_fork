@@ -1,34 +1,34 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-04, evening (Claude Code, home). Branch: fix/playtest-round-1, merging to main.
+Last updated: 2026-11-05, end of session (Quick, work). Branch: feature/move-shop.
 
 ## Where we are
-- POKEBOX steps 1 to 5 merged to main. Step 5b (EV-lowering berries) PARKED until Jess's mockups are in docs/mockups/; settle G1 to G6 (docs/ASCII Concept Maps/Pokebox 5b - EV-Lowering Berries.txt), then build on its own branch off main.
-- Playtest round 1 balance BUILT and feel-tested by Jess, going out to playtesters: smaller novas and Flamethrower, Area Up adds covered area on every shape, far fewer wild drops. Numbers: BALANCE.md "Moves" and "Drops / economy".
+- MOVE SHOP build order COMPLETE (spec docs/proposals/move-shop-plan.md, maps docs/ASCII Concept Maps/Move Shop step *.txt): learnsets, Silver, buildings and arrows, shop screens, purchase confirm, Shop Rerolls (was Ban), New Move cards retired. All feel-tested except step 5.
+- Pushed through 72815a5 (4b, 4c). NOT committed yet: step 5, the gyms-only comment fix (js/data/enemies.js), today's docs.
+- check.js on the work machine: 39/40 before the gyms-only fix, expect 40/40. smoke-ui and npm run format have NOT run on this work (no Playwright or prettier here).
 
-## Playtester feedback (2026-11-04)
-Move Shop wanted; nova and cone with Area Up dominant (fixed, watch); unclear UX (specifics owed by Jess); no reason to switch off your best Pokemon (benched Pokemon do not recharge, ruling 2026-10-20).
-
-## Next (major features, Jess picks)
-1. Move Shop: concept map docs/ASCII Concept Maps/Move Shop.txt; no spec yet. Needs a gold economy check on its prices. Recommended first. Gacha overhaul has no definition yet; Jess to say what changes.
-2. Tooltips and explanations: one mechanism, then the top confusions; G.MoveInfo already generates move text.
-3. Encounter project: Director AI (docs/Director AI Proposal.md, phase 1 is a fixed threat budget), routes per region (no notes in the repo yet), then the hard type chart last. Risk: one-slot players on a resistant route have nothing to swap to.
-4. Small candidates: bench recharge test (reverses a ruling, needs Jess's call), the wall bug from Jeremy's notes (Flamethrower through walls), Wide Lens still scales radius directly (about +32% area).
-Older queue: run items, upgrade points, fields (#20), accuracy trackers (#21), gym loops.
+## Next (in order)
+1. Work: node tools/check.js, commit step 5, push.
+2. Home: pull, check.js, smoke-ui, npm run format (commit if it changes files), then git merge --no-ff feature/move-shop into main, check.js, push. origin/main cbb8481 is the branch base, no conflicts. The branch also carries 6da816f "Tileset art rearranging".
+3. After the merge: re-quote the 27 STALE mutation entries (TODO.md, own commit). Run shop-screens-, shops- and silver-mutate under real node (never run there).
+4. Step 5 feel test (S1): is 0:00 to 2:00 on one move dull? If so, revisit the 2:00 shop timing.
+Then: tooltips (one mechanism, top confusions); encounter project (docs/Director AI Proposal.md); small: bench recharge test, Flamethrower through walls, Wide Lens.
 
 ## Watch
-- check.js has ONE known failure, already on main: gyms-only-harness search guard trips on a comment at js/data/enemies.js:34 (Pokebox step 5). Fix is a one-line rewording; awaiting Jess's OK.
-- Next playtest: early game pace with less reach and healing, Hyper Voice worth taking, Area Up on melee, gym leaders with these moves.
-- smoke-ui can be flaky (rerun); check.js lint is warn-only.
-- Board mirror in TODO.md not re-synced since the morning of 2026-11-04.
+- Silver income unmeasured, no bot (Jess): judge by feel. Shops are the only move source after the starting move.
+- Upgrades popup is display only; Shop Rerolls ranks feed rerollRank() in js/systems/shops.js (reads 0). Old Ban leftovers to remove later (TODO.md).
+- Board mirror in TODO.md last synced 2026-11-04 morning; the GitHub API returned nothing from Quick all of 2026-11-05. Move Shop has no issue.
+- DEVLOG.md is about 97 KB, past the ~40 KB rotation rule.
+- tools/pack_itch.js ships the 308 MB _not-shipped folder; parked. Local main is behind origin here.
 
 ## Open owner decisions
-- Board cleanup: stale `blocked` on #5 and #11, stale labels on closed issues; Pokebox and Move Shop have no issue.
+- Board cleanup: stale `blocked` on #5 and #11.
 - Boss pool size; sprite scale; region unlock rule; grey out Friends and Leaderboard; Korataki W01 licence.
-- [Open] loop 2+: gym mons share raises. O4: badge stacking. Psych Up, Baton Pass, Swagger, Psychic widening.
+- [Open] loop 2+ gym raises; O4 badge stacking; Psych Up, Baton Pass, Swagger, Psychic widening.
+- Owed by Jess: what testers found unclear (tooltips scope), bench recharge call.
 
 ## Docs and code still differ (approved, not built)
-- Step 5b; nicknames in runs and search (TODO); co-op IVs and EVs (deferred). Multi-mon arena (#5), gym AI Tier 2, js/net/coop.js hooks, regional forms (#9), item batch 1 steps 4 to 6 (parked).
+- Pokebox 5b (parked for mockups); nicknames in runs; co-op IVs, EVs, Silver and shops (deferred); multi-mon arena (#5); gym AI Tier 2; regional forms (#9); item batch 1 steps 4 to 6; TMs on the Pokedex and Team screens.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs must click #tap-start first.

@@ -124,7 +124,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/systems/` (gameplay rules)
 - `combat.js` enemy attacks on the player (enemy shots with wall cover, contact damage), `spawner.js` enemy spawning/waves, `levelup.js` the
-  card draft (team cards and New Move), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
+  card draft (team cards; moves come from the shops, `shops.js`), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
   (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),
@@ -157,7 +157,7 @@ in English. Do not add those new English strings to `lang-en.js`.
   `*harness*.js` under docs/, the move-data steps). Move tools: `export_moves.js` (source JSON to moves-generated.js; `--check` guards hand edits),
   `validate_moves.js` (grammar and validator rules; `--resolved` checks the resolver output), `move_parity.js` (new vs legacy cd and power),
   `move_report.js` (the per-move report; `--report` writes docs/current feature planning/move-report.md), `smoke-newcombat.js` (headless browser smoke of the move path),
-  `smoke-ui.js` (headless: every move in the menus, level-up cards, pause sheet and icons), `kind-guard.js` (the legacy move guard, run by check.js).
+  `export_learnsets.js` (bakes pokeapi-master learnsets into js/data/learnsets.js, run by check.js with --check), `smoke-ui.js` (headless: every move in the menus, level-up cards, pause sheet and icons), `kind-guard.js` (the legacy move guard, run by check.js).
 - `docs/proposals/` the offline harnesses (`*-harness.js`, run by check.js) and mutation runners (`*-mutate.js`, run by hand).
 
 ## 6. Deferred server/ops facts

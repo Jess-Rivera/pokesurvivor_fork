@@ -1,0 +1,151 @@
+MOVE SHOP STEP 5: RETIRE NEW MOVE CARDS + INCOME BOT   (2026-11-05: BUILT without the bot)
+OUTCOME (Jess 2026-11-05): no income bot; just retire the move cards. Built sections 1, 2 and 5 except
+the tools/income-bot.js parts. S2 and S3 moot. S1 (0:00 to 2:00 on one move) is watched by feel.
+Also found: ui-readers-mutate.js line 30 targeted the removed card's text, so it went too (one
+replacement entry covers both lines 30 and 31).
+----------------------------------------------------------------- original plan below
+MOVE SHOP STEP 5: RETIRE NEW MOVE CARDS + INCOME BOT   (plan, 2026-11-05, superseded by the outcome above)
+Spec: docs/proposals/move-shop-plan.md "Level-ups" ([Approved] New Move cards leave the level-up screen once
+the shops are in) and build order 5. The income estimate (1 to 2 moves per shop) was never measured.
+Existing behavior changed: the level-up screen loses New Move cards (approved); S1 flags the feel risk.
+
+=====================================================================
+ 1. WHAT CHANGES IN A RUN
+=====================================================================
+
+  TODAY                                   AFTER STEP 5
+  level-up ──► 3 cards from              level-up ──► 3 cards from
+     New Move (w 10) | General (8)           General (8) | Space (10)
+     Space (10) | Delivery (8)               Delivery (8) | Payload (12)
+     Payload (12)                            (same weights, New Move gone)
+  moves come from: level-ups + shops     moves come from: SHOPS ONLY
+                                          (+ the starting move, + the old
+                                           Starting Moves perk if bought)
+
+  RUN TIMELINE (moves you can get)
+  0:00 ──────── 2:00 ═══ 3:00 ──── 4:00 gym 1 ... return ── +90 s ═══ +150 s
+  start move    shop pair                                   shop pair
+  (1, or 2)     (Silver: 100 + kills)                       (Silver since)
+
+  Nothing else changes: team cards, Vitamins, rerolls of the level-up
+  cards, the empty-offer skip, bonds, the shops.
+
+=====================================================================
+ 2. FILES
+=====================================================================
+
+  js/systems/levelup.js   remove the New Move card (newMoveCard,
+     NEW_CANDIDATES, the newmove block in teamFamilies, its weight in
+     TEAM_W); header comment updated. The 2-buff limit now lives only
+     in the shop (shops.js check, already tested).
+  js/ui/run-ui.js         drop the dead "New · " chip branch for
+     type 'new' cards (line 76). Nothing else reads it.
+  js/game.js              NO change: the Starting Moves perk keeps
+     its one random extra move from the pool (old deprecated upgrade,
+     still applies to saves that bought it).
+  tools/income-bot.js     NEW dev tool (section 3)
+  After the build (free edit): changelog "chg", GDD.md (level-up
+     section lines 249 and 252), ONBOARDING.md line 127, spec (step 5
+     BUILT, build order done), BALANCE.md (bot numbers once Jess runs
+     it), STATE, DEVLOG, TODO (the two stale mutations resolve, below).
+
+=====================================================================
+ 3. THE INCOME BOT  (tools/income-bot.js, a dev tool, never ships)
+=====================================================================
+
+  Same harness as smoke-ui: Playwright headless (PLAYWRIGHT_DIR),
+  a local server, dev.html?dev, the save's team, G.Game.startRun().
+
+  loop every ~100 ms of real time, run at 4x (G.Game.debugSpeed(4)):
+    invulnerable (pl.invuln) ── stands still, auto-attacks, the magnet
+    collects XP
+    any screen open? ──► level-up: pick card 1   item: leave it
+                         bond: first options      pause: resume
+    a gym gate opens  ──► step onto it (teleport to the door) ──► fight
+                          (invulnerable, wins eventually) ──► return
+    a shop pair spawns ──► step onto the Trainer, then:
+        buy ATTACK moves only (power > 0, not a buff) for the active
+        Pokemon while Silver lasts and a slot is free (no forgetting),
+        always confirming; then set the active slot to the strongest
+        attack   <- the old stall: it learned a non-attack and stayed on it
+        leave
+
+  output, per shop (printed, and written to
+  docs/proposals/income-bot-last.txt so I can read it next session):
+
+    run  shop at  kills since  Silver on  price  affordable  bought
+                  last shop    arrival           moves
+    1    2:00     ...          ...        ...    ...         ...
+    1    5:3x     ...          ...        ...    ...         ...
+  plus kills / min per minute, level per minute, run end time.
+  options: --runs N (default 3), --until MM:SS (default 12:00)
+
+=====================================================================
+ 4. DECISIONS FOR JESS
+=====================================================================
+
+  S1  THE FIRST 2 MINUTES ON ONE MOVE   (FEEL RISK, existing timeline)
+      Today level-ups hand you a move or two before 2:00. After step 5
+      you play 0:00 to 2:00 on the starting move alone (2 with the
+      old Starting Moves perk), until the first shop.
+      proposed:  keep the approved 2:00 shop; the bot prints the kill
+                 rate in that window and you feel-test it. Tune after.
+      alt A:     first shop pair at 1:00 (changes the approved 2:00)
+      alt B:     one free move purchase at the first shop
+
+  S2  BOT REACH   (tool scope, no game change)
+      proposed:  the bot enters gyms (teleports onto the gate, wins
+                 invulnerable) so it measures the post-gym shops too,
+                 to 12:00 by default.
+      alt:       stop at 4:00 (measures the 2:00 shop only)
+
+  S3  NO TUNING IN STEP 5
+      proposed:  step 5 measures; any change to the price, the income
+                 or the 2:00 time is its own decision once you have the
+                 numbers (BALANCE.md gets them).
+
+=====================================================================
+ 5. TESTS
+=====================================================================
+
+  CHANGED  docs/proposals/ui-readers-harness.js  section 6 (level-up cards)
+     today: an Ember New Move card reads its name, type and text; the
+            2-buff limit hides Agility
+     after: no 'newmove' family is ever offered (with a free slot and a
+            learnable pool); the card text checks move to the shop
+            (smoke-ui below); the 2-buff limit is covered by
+            shop-screens-harness section 7
+     why: the cards it checks no longer exist.
+  CHANGED  docs/proposals/team-cards-harness.js  section 7 (level-up offer)
+     the 2-buff New Move row becomes "no New Move family"; offer() types
+     are team or vitamins only
+  CHANGED  docs/proposals/team-cards-mutate.js line 78 and
+           docs/proposals/ui-readers-mutate.js line 31
+     both mutate the New Move filter (and are STALE today, TODO.md).
+     The code they target is removed, so the two entries are removed,
+     and each gets one replacement: "New Move cards are offered again"
+     (puts the newmove family back), which the changed rows must catch.
+     This clears the stale-mutation TODO line.
+  CHANGED  tools/smoke-ui.js
+     "a level-up card for every move" becomes "a Move Trainer offer for
+     every move": four moves at a time through G.Debug.trainer() with a
+     stubbed pool, each offer shows its name, type colour, text and
+     icon (the same checks as before, on the shop card). Plus: a forced
+     level-up offers no New Move card.
+  NEW TOOL tools/income-bot.js  (not a harness: check.js only syntax-
+     checks it, since it needs a browser; run by hand)
+     measures section 3. Needed because the income estimate is the
+     open economy question and nothing measures it today.
+  NOT      check.js, shop and silver harnesses, intent scenarios, debug
+           sets (no move data changes).
+
+=====================================================================
+ 6. YOUR SIDE
+=====================================================================
+
+  node tools/check.js, the two changed mutation runners, smoke-ui,
+  then node tools/income-bot.js (about 3 runs x 3 min real time at 4x)
+  feel test: hard reload dev.html?dev, play to 3:00
+  - level-ups show team cards only
+  - 0:00 to 2:00 on one move: dull, or fine? (S1)
+  - the 2:00 shop: what can you afford?

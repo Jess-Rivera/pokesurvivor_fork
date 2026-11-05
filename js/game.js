@@ -143,10 +143,12 @@ G.Game = (() => {
     G.Spawner.reset();
     G.GymArena.reset();
     G.Gym.reset();
+    G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
     G.Weather.reset();
     G.Path.clear();
     G.Hazards.clear();
+    G.Silver.reset(); // Move Shop step 2: every run starts with 100 Silver, nothing carries over
     G.World.reset(coop ? coop.seed : Math.floor(Math.random() * 1e6));
     G.World.setBiome(0, true);
     biome = 0;
@@ -224,8 +226,9 @@ G.Game = (() => {
     endRun(false);
   }
 
-  /** Build one team member (a Player) with its moves, binds and bans applied. uid: the team slot's copy, whose IVs and
-   *  nature set its stats (pokebox step 4); a missing copy plays neutral. */
+  /** Build one team member (a Player) with its moves and binds applied. uid: the team slot's copy, whose IVs and
+   *  nature set its stats (pokebox step 4); a missing copy plays neutral. Saved bans (save.pban) are no longer read: the Ban
+   *  upgrade is retired (Move Shop step 4c R5, Jess 2026-11-05); db.js still cleans the field, so old saves load as before. */
   function buildFighter(mon, shiny, uid) {
     const perks = G.Upgrades.perks(G.DB.upgradesOf(mon.dex));
     const save = G.DB.save;
@@ -235,9 +238,8 @@ G.Game = (() => {
       if (id) f.bind[id] = i;
     });
     f.addMove(G.startMoveOf(mon.dex));
-    f.banned = new Set(((save.pban && save.pban[mon.dex]) || []).slice(0, perks.bans));
     if (perks.startMoves >= 2) {
-      const pool = G.Moves.poolFor(mon).filter((id) => !f.hasMove(id) && !f.banned.has(id) && !G.MoveInfo.isBuff(id));
+      const pool = G.Moves.poolFor(mon).filter((id) => !f.hasMove(id) && !G.MoveInfo.isBuff(id));
       if (pool.length) f.addMove(G.U.pick(pool));
       f.setActive(0);
     }
@@ -689,7 +691,7 @@ G.Game = (() => {
    */
   function offerBond(quiet = false) {
     if (!pl || pl.bonds <= 0 || pl.dead || (state !== 'playing' && state !== 'held') || G.GymArena.inArena) return;
-    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup'].some(G.UI.isOpen)) return;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return; // a shop holds it back until you leave
     // The link belongs to the team: any living member that can bond now may take it (picked on the screen).
     const choices = roster.filter((f) => !f.dead).map((f) => ({ f, opt: f.bondOptions() }));
     if (!choices.some((c) => c.opt)) {
@@ -711,6 +713,24 @@ G.Game = (() => {
       if (state === 'choice') state = holdBy.length ? 'held' : 'playing';
       if (G.Coop.active) G.Coop.holdEnd();
     });
+  }
+
+  // ---------------- Move Shop (step 4) ----------------
+
+  /**
+   * Walking into a shop (js/systems/shops.js) opens its screen (js/ui/shop-ui.js) and pauses the run, like the bond screen.
+   * It never opens over another screen: false, so the visit is not used up and it tries again next frame. On Leave the run
+   * goes on; a held bond that a purchase made usable opens on the next frame (offerBond, as today).
+   */
+  function openShop(shop) {
+    if (!pl || pl.dead || state !== 'playing' || G.Coop.active) return false;
+    if (['scr-bond', 'scr-pause', 'scr-item', 'scr-levelup', 'scr-shop'].some(G.UI.isOpen)) return false;
+    state = 'choice';
+    G.Audio.sfx('confirm');
+    G.ShopUI.open(shop, () => {
+      if (state === 'choice') state = 'playing';
+    });
+    return true;
   }
 
   // ---------------- pickup ----------------
@@ -944,6 +964,10 @@ G.Game = (() => {
       G.RunUI.levelKeys();
       return;
     }
+    if (G.UI.isOpen('scr-shop')) {
+      G.ShopUI.keys();
+      return;
+    }
     if (G.UI.isOpen('scr-bond')) {
       // Pokemon step: the team keys (1 to 6); move steps: the attack keys.
       const mon = G.RunUI.bondPickingMon();
@@ -1153,6 +1177,7 @@ G.Game = (() => {
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
     G.GymArena.update(dt, pl, time);
+    G.Shops.update(dt, pl, time); // Move Shop step 3: the buildings on the map
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
@@ -1205,6 +1230,7 @@ G.Game = (() => {
     for (const e of extra) items.push({ y: e.y, ent: e });
     const gate = G.GymArena.drawable();
     if (gate) items.push({ y: gate.y, ent: gate });
+    for (const s of G.Shops.drawables()) items.push({ y: s.y, ent: s });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {
@@ -1385,6 +1411,7 @@ G.Game = (() => {
     levelXp,
     flash,
     offerBond,
+    openShop,
     /** Pokebox step 5: a defeated enemy adds its EV yield to the run's banks (enemy.js, the dead-enemy loop). */
     evKill(e) {
       const add = G.Copies.killEvs(e);

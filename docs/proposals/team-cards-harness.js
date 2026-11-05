@@ -173,8 +173,10 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
 // ===== 3. cardLock, eligibility counts, order =====
 { ok(!can('count', 'giga-drain') && !can('pierce', 'giga-drain') && !can('count', 'meteor-mash') && !can('pierce', 'meteor-mash'), 'cardLock: Giga Drain and Meteor Mash (its shots too)');
   ok(F('giga-drain', [['count', 3], ['pierce', 3]]) === REAL['giga-drain'], 'cardLock: locked fields never move');
-  load('js/data/moves.js'); // for G.Moves.HELD (the full load is in section 10)
-  const list = c => Object.keys(REAL).filter(id => !G.Moves.HELD.has(id) && can(c, id)).sort().join(' '); // the pre-Kanto moves; batch 1 is checked at its batch review
+  G.Learnsets = null; // this harness runs with no baked learnsets: G.Moves.poolFor falls back to types and Normal
+  // The Kanto imports, frozen when G.Moves.HELD went away (2026-11-04): this check covers the pre-Kanto moves; batch 1 is checked at its batch review.
+  const KANTO1 = new Set('slash screech lovely-kiss recover supersonic glare swift double-slap mega-kick spike-cannon take-down growl leer mega-punch wrap bind double-edge fury-attack mean-look scary-face sing stomp strength tail-whip superpower brick-break cross-chop focus-blast close-combat submission double-kick bulk-up drain-punch dynamic-punch sky-uppercut hypnosis calm-mind barrier amnesia meditate thunder-punch thunder thunder-wave wild-charge charge-beam shock-wave thunder-fang volt-tackle zap-cannon mega-drain sleep-powder stun-spore power-whip energy-ball spore leaf-blade synthesis earthquake earth-power bone-club drill-run sand-tomb sludge-bomb poison-jab acid poison-fang sludge-wave acid-armor cross-poison gunk-shot poison-powder surf waterfall water-pulse scald aqua-tail clamp fire-blast flare-blitz fire-punch overheat blaze-kick fire-fang crunch nasty-plot dragon-pulse draco-meteor dragon-breath dragon-claw twister blizzard ice-punch aurora-beam frost-breath ice-fang stone-edge ancient-power rock-tomb leech-life megahorn signal-beam air-slash air-cutter confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail fly defense-curl roar fissure future-sight'.split(' '));
+  const list = c => Object.keys(REAL).filter(id => !KANTO1.has(id) && can(c, id)).sort().join(' ');
   const want = { count: 'aura-sphere bonemerang bubble-beam discharge ember fairy-wind fire-spin gust leaf-storm mud-shot poison-sting razor-leaf rock-throw shadow-ball string-shot water-gun',
     pierce: 'aura-sphere bubble-beam confusion ember fairy-wind gust hex mud-shot poison-sting quick-attack rock-throw shadow-ball sludge string-shot thunder-shock water-gun will-o-wisp',
     time: 'discharge flame-wheel toxic toxic-spikes will-o-wisp', chain: 'hex thunder-shock thunderbolt', delay: 'rock-slide', recoil: 'substitute' };
@@ -317,7 +319,7 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
   const mkT = (ids, o = {}) => { const p = mkP([ids], Object.assign({ maxMoves: 4 }, o)); p.moves = ids.map(id => G.Moves.instance(id)); return p; };
   const flat = (p, roster) => Object.values(L.teamFamilies(p, roster || [p])).flat();
   const s1 = TC.store(), P = mkT(['ember', 'swords-dance'], { teamCards: s1 }), all = flat(P), ids = all.map(c => c.team).filter(Boolean);
-  ok(all.length && all.every(c => c.type === 'team' || c.type === 'vitamins' || c.type === 'new'), 'flag on: only team cards, Vitamins and new moves (no legacy mechanic or stat card)');
+  ok(all.length && all.every(c => c.type === 'team' || c.type === 'vitamins'), 'only team cards and Vitamins (no legacy mechanic or stat card, no New Move card since Move Shop step 5)');
   const field = all.filter(c => c.type === 'team' && TC.cardOf(c.team).targets);
   ok(field.length && field.every(c => ['ember', 'swords-dance'].some(id => TC.usable(TC.cardOf(c.team), TC.defOf(P, id)))), 'every offered field card has a taker (' + field.map(c => c.team).join(' ') + ')');
   // Ember: a radial shot (count 1, spread 0.12, pierce 0) that travels, power 40, burn 10%; Swords Dance takes no field card
@@ -353,12 +355,12 @@ const timeOf = list => (list.find(e => e.time != null) || {}).time;
       'self-only test walks emitted children: a damaging child is not a buff, a self-heal child is');
     ok(!TC.selfOnly({ payload: [{ t: 'stat', stat: 'spd', stages: -1, side: 'foe', scope: 'individual' }] }) && !TC.selfOnly({ payload: [] }), 'a lone foe stat drop is not a buff; a move with no effect is not one either'); }
   { const pf = G.Moves.poolFor; G.Moves.poolFor = () => ['agility', 'night-shade', 'ember'];
-    const nm = p => (L.teamFamilies(p, [p]).newmove || []).map(c => c.key);
-    const two = nm(mkT(['swords-dance', 'harden'], { teamCards: TC.store() })), one = nm(mkT(['swords-dance'], { teamCards: TC.store() }));
+    const fams = p => L.teamFamilies(p, [p]);
+    const a = fams(mkT(['swords-dance', 'harden'], { teamCards: TC.store() })), b = fams(mkT(['swords-dance'], { teamCards: TC.store() }));
     G.Moves.poolFor = pf;
-    ok(!two.includes('new:agility') && two.includes('new:night-shade') && two.includes('new:ember') && one.includes('new:agility'), '2-buff limit: with two buffs no third (Agility), Night Shade still offered; with one, Agility offered'); }
+    ok(!('newmove' in a) && !('newmove' in b), 'Move Shop step 5: no New Move family with free slots and a learnable pool (the 2-buff limit now lives in the shop)'); }
   { const o1 = L.offer(mkT(['ember', 'swords-dance'], { teamCards: TC.store() }), 3);
-    ok(o1.length === 3 && o1.every(c => c.type === 'team' || c.type === 'vitamins' || c.type === 'new'), 'offer(), flag on: three new-path cards'); }
+    ok(o1.length === 3 && o1.every(c => c.type === 'team' || c.type === 'vitamins'), 'offer(): three team or Vitamins cards'); }
   ok(L.families === undefined && L.teamOn === undefined, 'offer(): no legacy card path left (slice 7b-2a)');
   G.MoveRoute = ROUTE; G.Coop = COOP;
   console.log('7 level-up offer'); }

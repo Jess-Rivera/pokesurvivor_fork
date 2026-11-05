@@ -7,6 +7,84 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-05',
+    title: ['Moves from shops', 'Moves from shops'],
+    chg: [
+      [
+        'Level-ups no longer offer New Move cards. New moves now come from the Move Trainer and TM Mart.',
+        'Level-ups no longer offer New Move cards. New moves now come from the Move Trainer and TM Mart.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
+    title: ['Shop rerolls', 'Shop rerolls'],
+    new: [
+      [
+        'Each Move Trainer and TM Mart now has a free Reroll (R): new moves for the Pokemon you are shopping for, or 4 new TMs.',
+        'Each Move Trainer and TM Mart now has a free Reroll (R): new moves for the Pokemon you are shopping for, or 4 new TMs.',
+      ],
+    ],
+    chg: [
+      [
+        'Move bans from the old Ban upgrade no longer apply. On the Upgrades screen, Card Banish is now Shop Rerolls.',
+        'Move bans from the old Ban upgrade no longer apply. On the Upgrades screen, Card Banish is now Shop Rerolls.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
+    title: ['Move Trainer and TM Mart open', 'Move Trainer and TM Mart open'],
+    new: [
+      [
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. Every purchase asks you to confirm first. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+        'Walk into a Move Trainer to buy moves your Pokemon can learn, or into a TM Mart to buy TMs, with Silver. Pick any Pokemon on your team to shop for. Every purchase asks you to confirm first. With all slots full you choose a move to forget, or cancel. Bonded moves are fixed and cannot be forgotten.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
+    title: ['Shops on the map', 'Shops on the map'],
+    new: [
+      [
+        'A Move Trainer and a TM Mart now appear on the map at 2:00, and again 90 seconds after each gym. They stay for one minute, and red arrows show the way. Their shop screens are coming soon.',
+        'A Move Trainer and a TM Mart now appear on the map at 2:00, and again 90 seconds after each gym. They stay for one minute, and red arrows show the way. Their shop screens are coming soon.',
+      ],
+    ],
+    chg: [
+      [
+        'The arrow to an open gym now floats next to your Pokemon instead of sitting at the edge of the screen.',
+        'The arrow to an open gym now floats next to your Pokemon instead of sitting at the edge of the screen.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
+    title: ['Silver', 'Silver'],
+    new: [
+      [
+        'Silver: a new coin for the current run, shown in the top-left corner. Every run starts with 100 and each defeated enemy adds more, a little more the longer the run goes. It is saved for the coming Move Shop and does not change the PokeCoins you earn.',
+        'Silver: a new coin for the current run, shown in the top-left corner. Every run starts with 100 and each defeated enemy adds more, a little more the longer the run goes. It is saved for the coming Move Shop and does not change the PokeCoins you earn.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
+    title: ['Over 100 new moves', 'Over 100 new moves'],
+    new: [
+      [
+        'Every imported move can now reach your team. Each Pokemon learns the moves it learns in the main games, from any game, instead of a pool based on its type.',
+        'Every imported move can now reach your team. Each Pokemon learns the moves it learns in the main games, from any game, instead of a pool based on its type.',
+      ],
+    ],
+    chg: [
+      [
+        'Searching a move on the Pokedex and Team screens now finds the Pokemon that really learn it.',
+        'Searching a move on the Pokedex and Team screens now finds the Pokemon that really learn it.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-04',
     title: ['Playtest balance', 'Playtest balance'],
     chg: [

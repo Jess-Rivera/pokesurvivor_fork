@@ -409,6 +409,135 @@ G.HUD = (() => {
     }
   }
 
+  // ---------- Silver counter (Move Shop step 2, js/systems/silver.js) ----------
+  // The spinning silver coin (16 art px drawn at 24 with smoothing off, like the gold pickup in js/entities/pickup.js)
+  // and the whole-coin count, both standing on one ground line: the coin's lowest opaque row and the digits' lowest
+  // pixel sit on the same screen row. Every gain restarts a short pop of the NUMBER only (the coin keeps spinning,
+  // Jess 2026-11-05), scaled from the number's bottom-left so it never leaves the ground line, never queued, so it
+  // stays readable at high kill rates. The number rolls up toward the real value like a slot reel, at a speed set at
+  // each gain so it always lands within SILVER_ROLL seconds. A spend, or a new run, shows the new value straight away.
+  const SILVER_POP = 0.18, // s, the pop settles in this long
+    SILVER_ROLL = 0.25, // s, the rolling number lands in this long after the last gain
+    SILVER_ROLL_MIN = 25, // coins per second, the slowest roll (small gains)
+    // Size (Jess 2026-11-05, +50% after the feel test): the 16 art px coin drawn at 36 (x2.25), the number at 30, a 45 px
+    // gap from the coin's left edge to the number. FOOT: screen px from the top of the coin cell to the bottom of its
+    // lowest opaque row (art rows 2 to 13 in every spin frame, so the bottom edge is art row 14).
+    SILVER_COIN = 36,
+    SILVER_FONT = 30,
+    SILVER_GAP = 45,
+    SILVER_COIN_FOOT = (14 * SILVER_COIN) / 16;
+  const silver = { img: null, ready: false, shown: -1, target: -1, rate: 0, pop: 0, at: 0, t: 0 };
+  function silverImg() {
+    if (!silver.img && G.PickupSprites && G.PickupSprites.silver) {
+      silver.img = new Image();
+      silver.img.onload = () => {
+        silver.ready = true;
+      };
+      silver.img.src = G.PickupSprites.silver.src;
+    }
+    return silver.ready ? silver.img : null;
+  }
+  /** x: left edge of the coin; ground: the screen row both the coin's and the digits' bottoms sit on. */
+  function drawSilver(ctx, x, ground, st) {
+    const now = performance.now() / 1000,
+      dt = Math.min(0.1, Math.max(0, now - silver.at)),
+      target = G.Silver.whole;
+    silver.at = now;
+    if (silver.target < 0 || target < silver.target || st.time < silver.t) {
+      silver.shown = target; // first frame, a spend or a new run: no roll
+      silver.pop = 0;
+    } else if (target > silver.target) {
+      silver.pop = 1; // a gain restarts the pop
+      silver.rate = Math.max(SILVER_ROLL_MIN, (target - silver.shown) / SILVER_ROLL);
+    }
+    silver.target = target;
+    silver.t = st.time;
+    if (silver.shown < target) silver.shown = Math.min(target, silver.shown + silver.rate * dt);
+    silver.pop = Math.max(0, silver.pop - dt / SILVER_POP);
+    const k = 1 + 0.3 * silver.pop * silver.pop,
+      img = silverImg(),
+      S = G.PickupSprites && G.PickupSprites.silver;
+    ctx.save();
+    if (img) {
+      const f = Math.floor((st.time * 1000) / S.ms[0]) % S.n; // spins on the run clock, so it stops with the game
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        img,
+        f * (S.cell + G.PickupSprites.pad),
+        S.y,
+        S.cell,
+        S.cell,
+        x,
+        Math.floor(ground - SILVER_COIN_FOOT), // floor, not round: at x2.25 the foot is 31.5, and rounding up sinks the coin 1 px below the digits
+        SILVER_COIN,
+        SILVER_COIN
+      );
+    }
+    const txt = Math.floor(silver.shown).toLocaleString('en-US');
+    ctx.font = F(800, SILVER_FONT);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    // The digits' real bottom, measured in this font (a pixel font can dip below its baseline), so the bottom of the
+    // digits, not the baseline, lands on the ground line.
+    const m = ctx.measureText('0123456789'),
+      foot = m.actualBoundingBoxDescent || 0;
+    ctx.translate(x + SILVER_GAP, ground);
+    ctx.scale(k, k);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.strokeText(txt, 0, -foot);
+    ctx.fillStyle = '#e8eef7';
+    ctx.fillText(txt, 0, -foot);
+    ctx.restore();
+  }
+
+  // ---------- floating arrows (Move Shop step 3) ----------
+  // An off-screen target gets an arrow that floats ARROW_R world px from the character's middle, pointing at it, with its
+  // label beyond the tip (world px, so the gap is the same at any window size). Used by the gym gate (purple, Jess
+  // 2026-11-05, it used to sit at the screen edge) and the Move Shop buildings (red).
+  const ARROW_R = 60;
+  const GYM_ARROW = { halo: '#b48aff', edge: '#1a0b33', main: '#a06bff', lite: '#e2d0ff', text: '#e2d0ff' },
+    SHOP_ARROW = { halo: '#ff5f6d', edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
+  function floatArrow(ctx, cam, pl, tx, ty, s, label, beat, textA = 1) {
+    const ox = pl.x,
+      oy = pl.y - (pl.bodyH || 32) / 2;
+    const a = Math.atan2(ty - oy, tx - ox),
+      ca = Math.cos(a),
+      sa = Math.sin(a);
+    ctx.save();
+    ctx.translate((ox + ca * ARROW_R - cam.left()) * cam.scale, (oy + sa * ARROW_R - cam.top()) * cam.scale);
+    ctx.globalAlpha = 0.14 + beat * 0.16;
+    ctx.fillStyle = s.halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, 18 + beat * 5, 0, 6.2832);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    const tri = (k) => {
+      ctx.beginPath();
+      ctx.moveTo(ca * 22 * k, sa * 22 * k);
+      ctx.lineTo(Math.cos(a + 2.45) * 12 * k, Math.sin(a + 2.45) * 12 * k);
+      ctx.lineTo(Math.cos(a - 2.45) * 12 * k, Math.sin(a - 2.45) * 12 * k);
+      ctx.closePath();
+    };
+    tri(1.15);
+    ctx.fillStyle = s.edge;
+    ctx.fill();
+    tri(1);
+    ctx.fillStyle = beat > 0.5 ? s.lite : s.main;
+    ctx.fill();
+    ctx.globalAlpha = textA;
+    ctx.font = F(800, 11);
+    ctx.textAlign = ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center';
+    const lx = ca * 30,
+      ly = sa * 30 + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,.85)';
+    ctx.strokeText(label, lx, ly);
+    ctx.fillStyle = s.text;
+    ctx.fillText(label, lx, ly);
+    ctx.restore();
+  }
+
   function draw(ctx, w, h, pl, st) {
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -435,6 +564,12 @@ G.HUD = (() => {
     const teamRight = drawTeam(ctx, w, h);
     const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
     drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+
+    // ---------- Silver (top-left; hidden in co-op until co-op shops exist, the co-op panel uses this corner) ----------
+    if (!G.Coop.active) {
+      const sa = touch ? G.Touch.safeArea() : null;
+      drawSilver(ctx, px + (sa ? Math.min(44, sa.left) : 0), 46 + (sa ? Math.min(20, sa.top) : 0), st);
+    }
 
     // ---------- reloj / bioma / kills ----------
     ctx.textAlign = 'center';
@@ -577,8 +712,8 @@ G.HUD = (() => {
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
-    // Gym gate: a big arrow pulsing at the edge if off-screen and, if visible,
-    // an arrow bouncing above; in the arena, a GYM tag.
+    // Gym gate: off screen, an arrow floating off the character (floatArrow); on screen, an arrow bouncing above;
+    // in the arena, a GYM tag.
     const gate = G.GymArena.gate;
     if (gate) {
       const gym = gate.gym;
@@ -607,44 +742,8 @@ G.HUD = (() => {
         ' m';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) {
-        const M = 52,
-          ex = G.U.clamp(sx, M, w - M),
-          ey = G.U.clamp(sy, M + 70, h - M - 80);
-        const a = Math.atan2(sy - ey, sx - ex),
-          ca = Math.cos(a),
-          sa = Math.sin(a);
-        ctx.translate(ex, ey);
-        // Halo que late.
-        ctx.globalAlpha = 0.18 + beat * 0.22;
-        ctx.fillStyle = '#b48aff';
-        ctx.beginPath();
-        ctx.arc(0, 0, 30 + beat * 8, 0, 6.2832);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        const tri = (k) => {
-          ctx.beginPath();
-          ctx.moveTo(ca * 40 * k, sa * 40 * k);
-          ctx.lineTo(Math.cos(a + 2.45) * 20 * k, Math.sin(a + 2.45) * 20 * k);
-          ctx.lineTo(Math.cos(a - 2.45) * 20 * k, Math.sin(a - 2.45) * 20 * k);
-          ctx.closePath();
-        };
-        tri(1.12);
-        ctx.fillStyle = '#1a0b33';
-        ctx.fill();
-        tri(1);
-        ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff';
-        ctx.fill();
-        ctx.font = F(800, 12);
-        ctx.textAlign = ca > 0.3 ? 'right' : ca < -0.3 ? 'left' : 'center';
-        const lx = -ca * 34,
-          ly = -sa * 30 + 4;
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        ctx.strokeText(label, lx, ly);
-        ctx.fillStyle = '#e2d0ff';
-        ctx.fillText(label, lx, ly);
-      } else {
+      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_ARROW, label, beat);
+      else {
         // Above the gate: a bouncing down arrow.
         const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
         ctx.translate(sx, by);
@@ -668,6 +767,48 @@ G.HUD = (() => {
         ctx.fillText(l2, 0, -18);
       }
       ctx.restore();
+    }
+
+    // Move Shop buildings (js/systems/shops.js, step 3): off screen, a red arrow floating off the character; on screen,
+    // a red arrow bouncing above the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres.
+    {
+      const now = performance.now() / 1000,
+        beat = 0.5 + Math.sin(now * 7) * 0.5,
+        blinkOff = Math.floor(now * 4) % 2 === 0;
+      for (const s of G.Shops.list) {
+        const sx = (s.x - cam.left()) * cam.scale,
+          sy = (s.y - cam.top()) * cam.scale,
+          ta = (s.left <= G.Shops.BLINK && blinkOff ? 0.35 : 1) * s.alpha,
+          secs = Math.ceil(s.left) + ' s';
+        if (sx < 0 || sx > w || sy < 0 || sy > h) {
+          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_ARROW, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, beat, ta);
+        } else {
+          const by = (s.y - s.h - cam.top()) * cam.scale - 16 - Math.abs(Math.sin(now * 4)) * 10;
+          ctx.save();
+          ctx.globalAlpha = s.alpha;
+          ctx.translate(sx, by);
+          ctx.beginPath();
+          ctx.moveTo(-15, -12);
+          ctx.lineTo(15, -12);
+          ctx.lineTo(0, 8);
+          ctx.closePath();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = SHOP_ARROW.edge;
+          ctx.stroke();
+          ctx.fillStyle = beat > 0.5 ? SHOP_ARROW.lite : SHOP_ARROW.main;
+          ctx.fill();
+          ctx.globalAlpha = ta;
+          ctx.font = F(800, 11);
+          ctx.textAlign = 'center';
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = 'rgba(0,0,0,.85)';
+          ctx.strokeText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          ctx.fillStyle = SHOP_ARROW.text;
+          ctx.fillText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          ctx.restore();
+        }
+      }
     }
     if (G.GymArena.inArena) {
       ctx.textAlign = 'center';

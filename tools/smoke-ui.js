@@ -133,7 +133,11 @@ async function check(browser, query, tag) {
     upg.back = G.UI.isOpen('scr-roster') && !G.UI.isOpen('scr-upgrades');
     return { n, seen: [...seen], bad, dexOk, rows: rowsMax, upg };
   });
-  const RET = await page.evaluate(() => Object.keys(G.Moves.RETIRED).concat([...G.Moves.HELD])); // learnable by no one: retired (slice 7b) and held (Kanto batch 1)
+  const RET = await page.evaluate(() => {
+    // not in any level-up and egg pool: retired (slice 7b) and TM-only moves (the TM Mart sells those)
+    const inPool = new Set(G.DEX.flatMap((p) => G.Moves.poolFor(p)));
+    return G.Moves.ALL.map((m) => m.id).filter((id) => !inPool.has(id));
+  });
   const miss = ALL.filter((id) => !RET.includes(id) && !menu.seen.includes(id)),
     shownRet = RET.filter((id) => menu.seen.includes(id));
   ok(
@@ -147,7 +151,7 @@ async function check(browser, query, tag) {
   ok(
     !miss.length,
     tag +
-      ': the menus showed every move but the retired and held ones (' +
+      ': the menus showed every move in a level-up and egg pool (' +
       menu.seen.length +
       '/' +
       (ALL.length - RET.length) +
@@ -156,7 +160,7 @@ async function check(browser, query, tag) {
   );
   ok(
     !shownRet.length,
-    tag + ': no retired or held move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
+    tag + ': no retired or TM-only move in the menus' + (shownRet.length ? ' (' + shownRet.join(' ') + ')' : '')
   );
   ok(menu.dexOk, tag + ': the Team screen lists its moves with names and icons (up to ' + menu.rows + ' rows)');
   const u = menu.upg;
@@ -179,6 +183,12 @@ async function check(browser, query, tag) {
   // ---- a run: level-up cards and the pause sheet for every move ----
   await page.evaluate(() => G.Game.startRun());
   await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 20000 });
+  // Move Shop step 2: Silver is loaded (dev.html tag and NEED entry) and a run starts with 100 (a quick kill may add some).
+  const silver = await page.evaluate(() => (G.Silver ? G.Silver.whole : null));
+  ok(silver >= 100, tag + ': a run starts with 100 Silver (' + silver + ')');
+  // Move Shop step 3: the debug command places both buildings; the frames after it draw them and their red arrows (any draw error lands in errs).
+  const shopN = await page.evaluate(() => (G.Debug.shops() ? G.Shops.list.length : 0));
+  ok(shopN === 2, tag + ': G.Debug.shops() places a Move Trainer and a TM Mart (' + shopN + ')');
   const run = await page.evaluate(async (ids) => {
     const pl = G.Game.player,
       roster = G.Game.roster,
@@ -190,35 +200,39 @@ async function check(browser, query, tag) {
     pl.moves = [G.Moves.instance('tackle')];
     pl.slots = [pl.moves.slice()];
     pl.active = 0;
-    const cards = [];
-    for (const id of ids) {
-      G.Moves.poolFor = () => [id];
-      const fam = G.LevelUp.teamFamilies(pl, roster).newmove || [];
-      if (id !== 'tackle') {
-        if (fam[0]) cards.push(fam[0]);
-        else out.bad.push('no card ' + id);
-      }
-    }
-    G.Moves.poolFor = pf;
-    for (let i = 0; i < cards.length; i += 3) {
-      G.RunUI.showLevelUp(pl.level, cards.slice(i, i + 3), () => {});
-      for (const [k, el] of [...document.querySelectorAll('#cards .card')].entries()) {
-        const c = cards[i + k],
-          id = c.key.slice(4),
-          nm = el.querySelector('.nm').textContent,
-          ds = el.querySelector('.ds').textContent;
+    // Move Shop step 5 (Jess 2026-11-05): moves come from the shops, so every move is checked as a Move Trainer offer, four at a time
+    // through a stubbed pool: its name, text, type-coloured icon box and icon. (This replaced the level-up New Move card check.)
+    const want = ids.filter((id) => id !== 'tackle');
+    for (let i = 0; i < want.length; i += 4) {
+      const grp = want.slice(i, i + 4);
+      G.Moves.poolFor = () => grp.slice();
+      G.ShopUI.open({ kind: 'trainer', stock: new Map(), tms: null, rerolls: 1 }, () => {});
+      const els = [...document.querySelectorAll('#mshop-offers .card')];
+      for (const id of grp) {
+        const el = els.find((e) => {
+          const n = e.querySelector('.nm');
+          return n && n.firstChild && n.firstChild.textContent === G.MoveInfo.name(id);
+        });
+        const ds = el ? el.querySelector('.ds').textContent : '',
+          wd = G.MoveInfo.desc(id);
         out.cards++;
         if (
-          !nm.startsWith(G.MoveInfo.name(id)) ||
-          !nm.includes(G.U.TYPE_NAME[G.MoveInfo.type(id)]) ||
-          ds.length < 5 ||
-          ds !== G.MoveInfo.desc(id) ||
+          !el ||
+          wd.length < 5 ||
+          !ds.startsWith(wd) ||
+          !el.querySelector('.ico').style.background ||
           !el.querySelector('.ico canvas,.ico img,.ico i,.ico span')
         )
-          out.bad.push('card ' + id + ' "' + nm + '" "' + ds + '"');
+          out.bad.push('offer ' + id + ' "' + (el ? el.textContent.replace(/\s+/g, ' ').slice(0, 90) : 'missing') + '"');
       }
+      G.ShopUI.leave();
     }
-    G.UI.hide('scr-levelup');
+    G.Moves.poolFor = pf;
+    // and a level-up never offers a New Move card any more, with free slots and a learnable pool
+    let nmCards = 0;
+    for (let k = 0; k < 30; k++)
+      nmCards += G.LevelUp.offer(pl, 3, roster).filter((c) => c.type === 'new' || c.family === 'newmove').length;
+    out.noNewMove = nmCards === 0 && !('newmove' in G.LevelUp.teamFamilies(pl, roster));
     // the pause sheet, four moves at a time
     for (let i = 0; i < ids.length; i += 4) {
       pl.moves = ids.slice(i, i + 4).map((id) => G.Moves.instance(id));
@@ -249,15 +263,116 @@ async function check(browser, query, tag) {
     Object.assign(pl, keep);
     return out;
   }, ALL);
-  ok(run.cards === ALL.length - 1, tag + ': a level-up card for every move but the held one (' + run.cards + ')');
+  ok(run.cards === ALL.length - 1, tag + ': a Move Trainer offer for every move but the held one (' + run.cards + ')');
+  ok(run.noNewMove, tag + ': level-ups offer no New Move card (moves come from the shops)');
   ok(run.sheet === ALL.length, tag + ': every move on the pause sheet (' + run.sheet + ')');
   ok(
     !run.bad.length,
     tag +
-      ': cards and sheet rows read right' +
+      ': shop offers and sheet rows read right' +
       (run.bad.length ? '\n        ' + run.bad.slice(0, 8).join('\n        ') : '')
   );
   ok(run.rowsNum >= 55, tag + ': routed sheet rows show the folded numbers (' + run.rowsNum + ' moves with numbers)');
+  // Move Shop step 4 and 4b: every purchase asks first (the in-game dialog). The Trainer buys into a free slot, the forget step
+  // cancels and replaces, the Mart opens, and a held bond that a purchase made usable opens right after Leave. Last in this page:
+  // it leaves the bond screen open.
+  const shop = await page.evaluate(async () => {
+    const pl = G.Game.player,
+      o = {},
+      sig = () => pl.slots.map((g) => g.map((m) => m.id).join('+')).join(','),
+      tick = () => new Promise((r) => setTimeout(r, 0)),
+      answer = async (yes) => {
+        if (!G.ShopUI.asking) return false;
+        document.getElementById(yes ? 'ask-ok' : 'ask-no').click();
+        await tick();
+        return true;
+      },
+      buyOffer = async (i) => {
+        G.ShopUI.pickOffer(i);
+        return answer(true);
+      };
+    pl.invuln = 1e9;
+    pl.moves = [G.Moves.instance('tackle')];
+    pl.slots = [pl.moves.slice()];
+    pl.active = 0;
+    pl.bonds = 0;
+    G.Debug.silver(9999999);
+    o.open = G.Debug.trainer() === true && G.UI.isOpen('scr-shop') && G.Game.state === 'choice';
+    // 4b: a pick opens the dialog and buys nothing; Cancel changes nothing; a second pick under the dialog does nothing
+    const s0 = sig();
+    G.ShopUI.pickOffer(0);
+    o.asks = G.ShopUI.asking && !document.getElementById('scr-ask').classList.contains('hidden') && sig() === s0;
+    G.ShopUI.pickOffer(1);
+    G.ShopUI.pickMember(0);
+    o.underDialog = G.ShopUI.asking && sig() === s0;
+    await answer(false);
+    o.cancelBuy = !G.ShopUI.asking && sig() === s0;
+    // 4c: a reroll under the dialog does nothing; R (the reroll) gives new offers and greys the button at 0
+    const offTxt = () => [...document.querySelectorAll('#mshop-offers .nm')].map((e) => e.textContent).join('|'),
+      rb = document.getElementById('mshop-reroll'),
+      t0 = offTxt();
+    G.ShopUI.pickOffer(0);
+    G.ShopUI.reroll();
+    o.rerollUnder = G.ShopUI.asking && offTxt() === t0 && !rb.disabled;
+    await answer(false);
+    G.ShopUI.reroll();
+    o.reroll = offTxt() !== t0 && rb.disabled;
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) await buyOffer(i);
+    o.buy = pl.slots.length === 2 && pl.active === 0;
+    for (let k = 0; k < 8 && pl.slots.length < pl.maxMoves; k++) await buyOffer(k % 4);
+    o.full = pl.slots.length === pl.maxMoves;
+    const before = sig();
+    for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
+    o.forget = G.ShopUI.forgetting;
+    G.ShopUI.back();
+    o.cancel = !G.ShopUI.forgetting && sig() === before;
+    for (let i = 0; i < 4 && !G.ShopUI.forgetting; i++) G.ShopUI.pickOffer(i);
+    // 4b H2: Cancel on the forget confirm goes back to the forget list
+    for (let i = 3; i >= 0 && !G.ShopUI.asking; i--) G.ShopUI.pickSlot(i);
+    await answer(false);
+    o.forgetCancel = G.ShopUI.forgetting && sig() === before;
+    for (let i = 3; i >= 0 && !G.ShopUI.asking; i--) G.ShopUI.pickSlot(i);
+    await answer(true);
+    o.replace = !G.ShopUI.forgetting && pl.slots.length === pl.maxMoves && sig() !== before;
+    G.ShopUI.leave();
+    o.left = !G.UI.isOpen('scr-shop') && G.Game.state === 'playing';
+    o.mart = G.Debug.mart() === true && G.UI.isOpen('scr-shop');
+    for (let i = 0; i < 4; i++) {
+      G.ShopUI.pickOffer(i);
+      G.ShopUI.pickMember(0);
+      await answer(true);
+    }
+    G.ShopUI.back(); // a TM for a full team ends on the forget list: cancel it first
+    G.ShopUI.leave();
+    o.martLeft = !G.UI.isOpen('scr-shop');
+    // a held bond: open the Trainer with 1 loose move, buy a second, Leave; the bond screen opens on a following frame
+    pl.moves = [G.Moves.instance('tackle')];
+    pl.slots = [pl.moves.slice()];
+    pl.active = 0;
+    pl.bonds = 1;
+    G.Debug.trainer();
+    for (let i = 0; i < 4 && pl.slots.length < 2; i++) await buyOffer(i);
+    o.bondHeld = !G.UI.isOpen('scr-bond');
+    G.ShopUI.leave();
+    return o;
+  });
+  await sleep(400);
+  shop.bondAfter = await page.evaluate(() => G.UI.isOpen('scr-bond'));
+  ok(shop.open, tag + ': G.Debug.trainer() opens the Move Trainer and pauses the run');
+  ok(shop.asks, tag + ': picking an offer opens the confirm dialog and buys nothing yet');
+  ok(shop.underDialog, tag + ': picks under the open dialog do nothing');
+  ok(shop.cancelBuy, tag + ': Cancel on the dialog buys nothing');
+  ok(shop.rerollUnder, tag + ': a reroll under the open dialog does nothing');
+  ok(shop.reroll, tag + ': Reroll gives new offers and greys the button with none left');
+  ok(shop.buy, tag + ': Buy fills a free slot and keeps the active slot');
+  ok(shop.full && shop.forget, tag + ': with 4 slots full a purchase goes to the forget step');
+  ok(shop.cancel, tag + ': Cancel on the forget step changes nothing');
+  ok(shop.forgetCancel, tag + ': Cancel on the forget confirm returns to the forget list');
+  ok(shop.replace, tag + ': picking a slot and Buy replaces that move');
+  ok(shop.left, tag + ': Leave closes the shop and the run goes on');
+  ok(shop.mart && shop.martLeft, tag + ': G.Debug.mart() opens the TM Mart, and it closes again');
+  ok(shop.bondHeld, tag + ': an open shop holds back the bond screen');
+  ok(shop.bondAfter, tag + ': the held bond opens right after Leave');
   await sleep(500);
   ok(
     errs.length === 0,

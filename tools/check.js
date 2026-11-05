@@ -116,6 +116,7 @@ for (const [name, args, show] of [
   ['validate_moves.js', [], /^moves:/],
   ['validate_moves.js', ['--resolved'], /^resolved moves:/],
   ['move_parity.js', [], /^parity:/],
+  ['export_learnsets.js', ['--check'], /current/],
   ['gym_contact.js', ['--check'], /current/],
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],

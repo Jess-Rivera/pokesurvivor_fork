@@ -1,16 +1,19 @@
-// tools/gym_contact.js: bake the gym contact mask (assets/tileset/gyms/gym-contact.png) into js/data/gym-contact.js.
-// The game reads the baked data instead of reading canvas pixels at runtime, since Firefox blocks pixel reads of images
-// opened from file:// (a tainted canvas). Run this after repainting the PNG.
-// Usage: node tools/gym_contact.js            write js/data/gym-contact.js
-//        node tools/gym_contact.js --check    exit 1 if the data file does not match the PNG (used by tools/check.js)
+// tools/gym_contact.js: bake the building contact masks into data files: the gym (assets/tileset/gyms/gym-contact.png into
+// js/data/gym-contact.js) and the two Move Shop buildings (assets/tileset/move-trainer-contact.png and tm-mart-contact.png into
+// js/data/shop-contact.js, Move Shop step 3). The game reads the baked data instead of reading canvas pixels at runtime, since
+// Firefox blocks pixel reads of images opened from file:// (a tainted canvas). Run this after repainting a mask PNG.
+// Usage: node tools/gym_contact.js            write both data files
+//        node tools/gym_contact.js --check    exit 1 if a data file does not match its PNG (used by tools/check.js)
 const fs = require('fs'),
   path = require('path'),
   zlib = require('zlib');
 const root = path.resolve(__dirname, '..');
 const PNG = path.join(root, 'assets/tileset/gyms/gym-contact.png'),
   OUT = path.join(root, 'js/data/gym-contact.js');
+const SHOP_PNGS = { trainer: 'assets/tileset/move-trainer-contact.png', mart: 'assets/tileset/tm-mart-contact.png' },
+  SHOP_OUT = path.join(root, 'js/data/shop-contact.js');
 
-// Minimal PNG reader: 8-bit RGBA, non-interlaced (what the gym art uses). Returns { w, h, alpha(x, y) }.
+// Minimal PNG reader: 8-bit RGBA, non-interlaced (what the building art uses). Returns { w, h, alpha(x, y) }.
 function readPng(file) {
   const buf = fs.readFileSync(file);
   let p = 8,
@@ -62,8 +65,8 @@ function readPng(file) {
 }
 
 // Each row is its solid runs "x0-x1" (x1 exclusive), comma separated; rows are joined by "/".
-function build() {
-  const { w, h, alpha } = readPng(PNG);
+function maskRows(file) {
+  const { w, h, alpha } = readPng(file);
   const rows = [];
   for (let y = 0; y < h; y++) {
     const runs = [];
@@ -78,6 +81,11 @@ function build() {
     }
     rows.push(runs.join(','));
   }
+  return { w, h, rows: rows.join('/') };
+}
+
+function build() {
+  const { w, h, rows } = maskRows(PNG);
   return (
     '/* ============ gym-contact.js: the gym building contact mask (GENERATED, do not edit) ============\n' +
     ' * Baked from assets/tileset/gyms/gym-contact.png by tools/gym_contact.js; rerun it after repainting the PNG.\n' +
@@ -92,21 +100,45 @@ function build() {
     h +
     ',\n' +
     "  rows: '" +
-    rows.join('/') +
+    rows +
     "',\n" +
     '};\n'
   );
 }
 
-const text = build();
-if (process.argv.includes('--check')) {
-  const cur = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8').replace(/\r\n/g, '\n') : '';
-  if (cur !== text) {
-    console.log('STALE js/data/gym-contact.js does not match gym-contact.png (run node tools/gym_contact.js)');
-    process.exit(1);
+function buildShops() {
+  let s =
+    '/* ============ shop-contact.js: the Move Shop building contact masks (GENERATED, do not edit) ============\n' +
+    ' * Baked from assets/tileset/move-trainer-contact.png and tm-mart-contact.png by tools/gym_contact.js; rerun it after\n' +
+    ' * repainting either PNG. Per building: w and h in art pixels; rows: one entry per art row, top to bottom, separated by "/";\n' +
+    ' * each row lists its solid runs "x0-x1" (x1 exclusive). Read by js/systems/shops.js (onBuilding).\n' +
+    ' */\n' +
+    'G.ShopContact = {\n';
+  for (const [k, rel] of Object.entries(SHOP_PNGS)) {
+    const m = maskRows(path.join(root, rel));
+    s += '  ' + k + ': {\n    w: ' + m.w + ',\n    h: ' + m.h + ",\n    rows: '" + m.rows + "',\n  },\n";
   }
-  console.log('gym contact: current');
+  return s + '};\n';
+}
+
+const outs = [
+  [OUT, build(), 'gym-contact.js'],
+  [SHOP_OUT, buildShops(), 'shop-contact.js'],
+];
+if (process.argv.includes('--check')) {
+  let bad = 0;
+  for (const [file, text, name] of outs) {
+    const cur = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n') : '';
+    if (cur !== text) {
+      console.log('STALE js/data/' + name + ' does not match its PNG (run node tools/gym_contact.js)');
+      bad++;
+    }
+  }
+  if (bad) process.exit(1);
+  console.log('building contact: current (gym, Move Trainer, TM Mart)');
 } else {
-  fs.writeFileSync(OUT, text);
-  console.log('wrote js/data/gym-contact.js');
+  for (const [file, text, name] of outs) {
+    fs.writeFileSync(file, text);
+    console.log('wrote js/data/' + name);
+  }
 }

@@ -1,0 +1,254 @@
+MOVE SHOP STEP 4: SHOP SCREENS   (plan v3, 2026-11-05; APPROVED by Jess, BUILT the same day; bonds are FIXED)
+Spec: docs/proposals/move-shop-plan.md "Move Trainer", "TM Mart", "Full slots", "Silver" (price).
+Step 3 built the buildings; walking in shows "opens soon". This step swaps in the screens.
+Existing behavior changed by this step: NONE. (Level-up New Move cards still work; step 5 removes them.)
+
+=====================================================================
+ 1. FLOW
+=====================================================================
+
+  walk in ──► another screen open (level-up, item, bond, pause)?
+                 │ yes: wait, the visit is not used up. Opens when
+                 │      that screen closes, if you are still on it.
+                 │ no
+                 ▼
+            RUN PAUSES (same as the bond screen; the shop's minute stops)
+                 ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │ MOVE TRAINER                                   (o) 1,234     │
+  │ ┌───────────┐  ┌──────────────────────────────────────────┐  │
+  │ │ 1 Pikachu ◄│  │ [1] Thunderbolt   ELECTRIC     660 (o)   │  │
+  │ │ 2 Charmndr │  │ [2] Quick Attack  NORMAL       660 (o)   │  │
+  │ │ 3 Bulbsr   │  │ [3] Volt Tackle   ELECTRIC     660 (o)   │  │
+  │ │ 4 (fainted)│  │ [4] Iron Tail     STEEL   can't afford   │  │
+  │ └───────────┘  └──────────────────────────────────────────┘  │
+  │ A new move gets its own slot: press its number key in a run   │
+  │ to use it.                                   [Esc] Leave      │
+  └──────────────────────────────────────────────────────────────┘
+     keys: team keys 1-6 pick WHO you shop for (no swap in the run)
+           attack keys 1-4 buy an offer · Esc leaves
+           mouse / touch: click anything
+
+  buy ──► free slot?  yes ──► pay, learn it, stay on your current slot
+                      no  ──► FORGET step (below)
+
+  FORGET STEP (slots full). Bonds are FIXED (Jess 2026-11-05): a bond
+  slot cannot be picked here. Only loose moves can be forgotten.
+
+  ┌─ FORGET A MOVE? ─────────────────────────────────────────────┐
+  │ Pikachu's slots are full. Thunderbolt replaces:              │
+  │  [1] Thundershock                                            │
+  │  [2] Tackle + Growl + Swift      BOND · fixed   (greyed out) │
+  │  [3] Fly                                                     │
+  │  [4] Thunder Wave                                            │
+  │  [Esc] Cancel  (nothing bought, nothing paid)                │
+  └──────────────────────────────────────────────────────────────┘
+     attack keys 1-4 = the same keys you fire each slot with.
+     The picked move is forgotten; the new one takes that exact slot.
+
+  NO LOOSE SLOT AT ALL (4 slots, every one a bond):
+     that member's offers show "every slot is bonded" and cannot be
+     bought. Other members can still shop.
+
+  TM MART: same screen. Offers are 4 random TMs; each member is marked
+  can learn / can't learn / knows it. Pick an offer, then the member.
+
+=====================================================================
+ 2. STOCK
+=====================================================================
+
+  Move Trainer   per member: 4 random from its level-up and egg pool,
+                 minus moves it knows. Rolled the first time you look at
+                 that member, kept for this building: leaving and coming
+                 back shows the same 4. A bought move leaves the stock.
+                 Fewer than 4 left: show fewer.
+  TM Mart        4 random from the whole TM list, once per building.
+                 Never sold out: buy one for each member who can learn it.
+  Next building pair: everything rolls fresh.
+
+=====================================================================
+ 3. PRICE  (approved: 5 x world level x character level)
+=====================================================================
+
+  world level = the whole number on the HUD's ENEMY LV (top right)
+  character level = the run level (the whole team shares it)
+
+  run time   ENEMY LV   your lv   price
+  ─────────────────────────────────────
+   2:00         4          5       100
+   2:00         4          8       160
+   6:30        11         12       660
+  10:00        17         18     1,530
+
+  Paid on confirm. A forgotten move refunds nothing. Short of Silver:
+  the offer shows "can't afford" and cannot be picked.
+
+  WATCH (no change proposed, the numbers are approved):
+     income per kill = world level / 10, price = 5 x world level x your lv
+     -> world level cancels out:
+        moves per shop ~= kills since the last shop / (50 x your lv)
+        at lv 12: about 600 kills per move.
+     The step 5 bot measures real kill counts before anything is tuned.
+
+=====================================================================
+ 3b. WHEN YOU HOLD A BOND  (how it works today, plus the shop)
+=====================================================================
+
+  Today: a held bond is re-checked EVERY frame of play (game.js), and
+  the bond screen opens as soon as it has something to join (2 loose
+  moves, or 1 loose move + a bond with room). Learning a move from a
+  level-up card is how a held bond usually becomes usable.
+
+  With the shop:
+
+   walk in ─► bond screen already open?  It cannot be: a usable bond
+              opens the moment it is usable, and the shop waits for
+              any open screen (G3). So a pending bond is ALWAYS
+              chosen first, then the shop opens.
+       │
+       ▼
+   shop open ─► buy 1, buy 2 ... (bond screen held back, you may still
+       │        be shopping; you pick the bond with your final lineup)
+       ▼
+   Leave ─► next frame: the bond screen opens if a purchase made the
+            bond usable. Pick it as today.
+
+  Side effect worth knowing (no change proposed): a bond JOINS two
+  slots into one, so it frees a slot. If you leave, bond, and walk back
+  in within the shop's minute, that freed slot takes a purchase without
+  forgetting anything.
+
+=====================================================================
+ 4. FILES
+=====================================================================
+
+  js/entities/player.js
+     addMove gets an option to stay on the current slot (the shop uses
+     it; level-up cards keep switching as today).
+     NEW replaceMove(old, new): the new move takes a LOOSE move's exact
+     slot. It refuses a move inside a bond (bonds are fixed, G1). Its fixed-slot binding
+     (Upgrades, Shortcuts) still applies through arrange.
+     A forgotten move's live persistent effect (an orbit, an aura) ends
+     on the next frame by the existing orphan rule in move-sim.js
+     (upkeepPersistent); a shield or heal over time runs out on its own.
+  js/systems/shops.js
+     stock per building and member, the price, the checks (afford, free
+     slot, 2-buff limit, can learn, knows it, fainted), buy and replace.
+     Entering calls the game to open the screen instead of the notice.
+  js/ui/shop-ui.js   NEW, G.ShopUI: draws the screen and the forget step.
+  dev.html   one new screen section (scr-shop) + the script tag
+  js/main.js NEED  + 'ShopUI'
+  js/game.js
+     open the shop: pause (state 'choice', like the bond screen), back
+     to play on Leave. Keys for the shop screen. The shop screen joins
+     the list of screens that hold back the bond screen and the item
+     choice, and that hold back the shop.
+  css/style.css   only if the existing card styles do not fit the
+     two-column layout (a few rules, no change to existing classes)
+  js/core/debug.js  G.Debug.trainer() and G.Debug.mart(): open each
+     screen now, fresh stock, no building needed
+  After the build (free edit): changelog, spec, BALANCE, STATE, DEVLOG.
+
+=====================================================================
+ 5. DECISIONS FOR JESS
+=====================================================================
+
+  G1  BONDS ARE FIXED   (new rule)   APPROVED (Jess 2026-11-05, revised)
+      A bonded slot can never be changed by the shop: its moves cannot
+      be forgotten or replaced. The only way a bond changes is the normal
+      bond screen, adding a loose move when you hold a link (as today).
+      The forget step lists bond slots greyed out. A member whose 4 slots
+      are all bonds cannot buy from the Trainer or the Mart.
+
+  G2  TMs ON THE POKEDEX AND TEAM SCREENS   APPROVED: later, TODO.md
+      Today they list level-up and egg moves only, so Draco Meteor (the
+      one TM-only move) cannot be found there.
+      proposed:  not in step 4. The TM Mart itself shows who can learn
+                 each TM. One line in TODO.md.
+      alt:       add a "TMs" group to both screens now (smoke-ui changes)
+
+  G3  ENTERING   APPROVED
+      proposed:  entering pauses the run; it never opens over another
+                 screen, it waits (section 1) and the visit is not used up.
+
+  G4  THE SHOP RULES STILL MARKED PROPOSED IN THE SPEC   APPROVED as listed
+      - a known move is not offered; a bought move leaves the stock
+      - each member's 4 are rolled once per building (no reroll by
+        walking out and in)
+      - a TM is usable when it is on the member's TM list or its pool;
+        members who can't, or already know it, show as unavailable
+      - pay on confirm, no refund for a forgotten move
+      - the 2-buff limit applies (a buff may replace a buff)
+      - a purchase never changes your active slot
+      - fainted members are listed but cannot be shopped for
+      - price uses the whole ENEMY LV the HUD shows (section 3)
+
+  (G5 dropped: skills never bond already, bondOptions in player.js skips
+   them, and with bonds fixed no skill can reach a bond seat.)
+
+=====================================================================
+ 6. TESTS
+=====================================================================
+
+  NEW HARNESS   docs/proposals/shop-screens-harness.js   (check.js finds it)
+     sim side only (shops.js + player.js over the real move data and
+     learnsets), expected values hand-derived from this map:
+     - price table rows from section 3
+     - Trainer stock: 4, from the pool, none known; same 4 on reopen;
+       a bought move gone; a member with 2 unknown moves gets 2
+     - TM stock: 4 from the TM list, same on reopen; Charmander can
+       learn Dragon Claw, Bulbasaur not Fire Blast (as learnset-harness)
+     - buy with a free slot: Silver down by the price, move learned,
+       active slot index and group unchanged
+     - short of Silver: refused, nothing changes
+     - full slots: replace a loose move -> same slot index; picking
+       a bond slot is refused and nothing changes; cancel -> moves,
+       slots, active and Silver all unchanged
+     - every slot bonded: buying is refused for that member, allowed
+       for another
+     - 2-buff limit: third buff refused; buff replacing a buff allowed
+     - bond order (wiring): scr-shop is in the list of screens that
+       hold back the bond screen
+     - fainted member: refused
+     - entry while another screen is open does not use up the visit
+     - wiring: dev.html (scr-shop, shop-ui.js before game.js), NEED
+       'ShopUI', shops.js calls the game's open, not the notice
+     why new: no harness covers buying, replacing or the shop stock;
+     team-cards and learnset harnesses cover neither.
+
+  MUTATION RUNNER   docs/proposals/shop-screens-mutate.js   (by hand)
+     - the price drops the character level   - no charge on a buy
+     - a refund on forget                    - a buy switches the slot
+     - known moves offered                   - stock rerolls on reopen
+     - replace appends instead of in place   - cancel still charges
+     - the 2-buff limit removed              - a fainted member can buy
+     - a bonded move can be replaced (G1)    - the shop no longer holds
+                                               back the bond screen
+     - the script tag / NEED entry missing
+     why: proves each check bites.
+
+  CHANGED   docs/proposals/move-persist-harness.js: one row, a replaced
+            move's persistent group ends on the next tick. The orphan
+            rule exists but nothing exercises it with a replaced move.
+  CHANGED   tools/smoke-ui.js: in a run, G.Debug.silver(99999), open the
+            Trainer and buy into a free slot, fill the slots, buy again
+            and replace, open the Mart and buy, no console errors. Then
+            with a held bond: buy a move, Leave, the bond screen opens.
+            The Pokedex / Team pool-only checks stay (G2).
+  NOT       check.js, intent scenarios, move debug sets (no move
+            changes).
+
+=====================================================================
+ 7. YOUR FEEL TEST (about a minute)
+=====================================================================
+
+  hard reload dev.html?dev. No save clear.
+  - G.Debug.silver(5000), G.Debug.trainer(): roster left, 4 offers
+  - buy one: Silver drops, you stay on your slot, new key works
+  - switch member with the team keys: its own 4 offers
+  - fill 4 slots, buy again: the forget list; cancel; then replace
+  - with a bond: its slot is greyed out in the forget list
+  - hold a bond (win a gym with fewer than 2 loose moves, so the link
+    waits), buy a move, Leave: the bond screen opens next
+  - G.Debug.mart(): pick a TM, then a member who can learn it
+  - walk into a real building with a level-up open: shop waits

@@ -5,8 +5,9 @@
  *
  *   G.Moves.ALL           every resolved def (built on first use: moves.js loads before the resolver)
  *   G.Moves.RETIRED       retired id -> replacement id (D-BUBBLE, D-HAIL): out of every pool; a save naming one loads the replacement
- *   G.Moves.HELD          ids in the catalog but out of every player pool (Kanto batch 1, until learnset pools)
- *   G.Moves.poolFor(mon)  the move ids it can learn: its types' pools plus the shared Normal pool
+ *   G.Moves.poolFor(mon)  the move ids it can learn: its level-up and egg moves from any game (G.Learnsets), topped up to TOP_UP
+ *   G.Moves.tmList()      every move on some species' TM list (the TM Mart's stock)
+ *   G.Moves.canUseTm(mon, id)  can it learn this TM: the move is on its TM list or in its pool
  *   G.Moves.instance(id)  a move in a slot: id, name, type and cd from the def, and its timer t
  *   G.Moves.startFor(mon) its starting move by main type (when the Pokemon does not bring one)
  *
@@ -15,39 +16,72 @@
 (() => {
   // Retired moves (slice 7b, D-BUBBLE and D-HAIL, Jess 2026-11-01): out of every pool; a save that names one loads its replacement.
   const RETIRED = { bubble: 'water-gun', hail: 'water-gun' };
-  // Kanto import batch 1 (Jess 2026-11-01): in the catalog (gym leaders, debug) but out of every player pool until pools follow
-  // mainline learnsets; the type pools would otherwise triple and the shared Normal pool go from 7 to 31. Defense Curl joined
-  // 2026-11-02 for Brock's loop-1 Geodude.
-  const HELD = new Set(
-    (
-      'slash screech lovely-kiss recover supersonic glare swift double-slap mega-kick spike-cannon take-down growl ' +
-      'leer mega-punch wrap bind double-edge fury-attack mean-look scary-face sing stomp strength tail-whip ' +
-      'superpower brick-break cross-chop focus-blast close-combat submission double-kick bulk-up drain-punch ' +
-      'dynamic-punch sky-uppercut hypnosis calm-mind barrier amnesia meditate thunder-punch thunder thunder-wave ' +
-      'wild-charge charge-beam shock-wave thunder-fang volt-tackle zap-cannon mega-drain sleep-powder stun-spore ' +
-      'power-whip energy-ball spore leaf-blade synthesis earthquake earth-power bone-club drill-run sand-tomb ' +
-      'sludge-bomb poison-jab acid poison-fang sludge-wave acid-armor cross-poison gunk-shot poison-powder surf ' +
-      'waterfall water-pulse scald aqua-tail clamp fire-blast flare-blitz fire-punch overheat blaze-kick fire-fang ' +
-      'crunch nasty-plot dragon-pulse draco-meteor dragon-breath dragon-claw twister blizzard ice-punch aurora-beam ' +
-      'frost-breath ice-fang stone-edge ancient-power rock-tomb leech-life megahorn signal-beam air-slash air-cutter ' +
-      'confuse-ray shadow-punch shadow-claw moonblast play-rough moonlight iron-tail fly defense-curl roar fissure future-sight'
-    ).split(' ')
-  );
+  // A species with fewer learnset moves than this (Magikarp 1, Ditto 0) tops up from its types and Normal, attacks first (Jess 2026-11-04).
+  const TOP_UP = 4;
 
   let all = null,
-    pool = null;
+    pool = null,
+    tms = null;
+  const pools = new Map(), // dex -> its move pool
+    tmSets = new Map(); // dex -> the Set of its TMs
   function build() {
     all = Object.values(G.MoveDefs);
     pool = {};
-    for (const d of all) if (!RETIRED[d.id] && !HELD.has(d.id)) (pool[d.type] = pool[d.type] || []).push(d.id);
+    for (const d of all) if (!RETIRED[d.id]) (pool[d.type] = pool[d.type] || []).push(d.id);
   }
 
-  /** Moves this Pokemon can learn (its types + normal). */
-  function poolFor(mon) {
+  /** The moves of `mon`'s types plus Normal, attacks first. */
+  function typePool(mon) {
     if (!pool) build();
-    const ids = new Set(pool.normal);
+    const ids = new Set();
     for (const t of mon.types) for (const id of pool[t] || []) ids.add(id);
-    return [...ids];
+    for (const id of pool.normal) ids.add(id);
+    const hits = (id) => (G.MoveDefs[id].power != null ? 0 : 1);
+    return [...ids].sort((a, b) => hits(a) - hits(b));
+  }
+
+  /** A baked learnset list (G.Learnsets: k 0 = level-up and egg, 1 = machine), live moves only; null when the species has no entry. */
+  function learnset(dex, k) {
+    const L = G.Learnsets,
+      row = L && L.by[dex];
+    if (!row) return null;
+    return row[k]
+      ? row[k]
+          .split(',')
+          .map((i) => L.moves[i])
+          .filter((id) => G.MoveDefs[id] && !RETIRED[id])
+      : [];
+  }
+
+  /** Moves this Pokemon can learn. Ignores learn levels. A caller may filter the result but never changes it. */
+  function poolFor(mon) {
+    let ids = pools.get(mon.dex);
+    if (!ids) {
+      ids = learnset(mon.dex, 0);
+      if (!ids) return typePool(mon); // no learnset entry: its types and Normal
+      for (const id of typePool(mon)) {
+        if (ids.length >= TOP_UP) break;
+        if (!ids.includes(id)) ids.push(id);
+      }
+      pools.set(mon.dex, ids);
+    }
+    return ids;
+  }
+
+  /** Every live move that is a TM for some species. */
+  function tmList() {
+    if (!tms) {
+      const seen = new Set();
+      for (const dex of Object.keys(G.Learnsets.by)) for (const id of learnset(dex, 1)) seen.add(id);
+      tms = [...seen].sort();
+    }
+    return tms;
+  }
+
+  function canUseTm(mon, id) {
+    let set = tmSets.get(mon.dex);
+    if (!set) tmSets.set(mon.dex, (set = new Set(learnset(mon.dex, 1) || [])));
+    return set.has(id) || poolFor(mon).includes(id);
   }
 
   /** A move in a run's slot. Its numbers come from the team's folded def (G.TeamCards.defOf) when it casts. */
@@ -89,8 +123,9 @@
       return all;
     },
     RETIRED,
-    HELD,
     poolFor,
+    tmList,
+    canUseTm,
     instance,
     startFor,
   };

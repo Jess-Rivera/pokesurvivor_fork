@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-04, Move Shop: Move Trainer and TM Mart buildings, Silver, learnset pools from every game (Jess)
+New moves come from two walk-in buildings instead of level-up cards. Both spawn off screen, over 90 degrees apart, at 2:00 regardless of the elite and 90 s after each gym, and last 1 minute. The Trainer sells a random 4 from a member's level-up and egg pool, the Mart a random 4 TMs. Paid with Silver, a run-only currency: world level / 10 per kill, minimum 1, 100 at the start. Full slots ask you to forget a move or cancel. Pools come from every game because the latest-game dataset leaves 68 species with no TMs; the Kanto hold ends. The gacha overhaul is a separate branch.
+Canonical: docs/proposals/move-shop-plan.md
+
 ## 2026-11-04, Playtest round 1: smaller novas and Flamethrower, Area Up adds area, fewer wild drops (Jess)
 Playtesters found novas and Flamethrower too big, Area Up favoring them, and drops too common. Base radii are cut. Area Up stays +15% per pick but now means covered area on every shape, so a radius grows by a square root and a beam's length as before. Wild drops: ground 0.4%, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%. Roar keeps its 160 px ruling. Melee reach from Area Up drops as a known side effect. Numbers stay TUNE.
 Canonical: BALANCE.md "Moves" and "Drops / economy"; docs/MOVE-INTENT.md flamethrower

@@ -1,0 +1,122 @@
+MOVE SHOP STEP 2b: SILVER ALIGNMENT + NUMBER POP   (2026-11-05, BUILT)
+OUTCOME (Jess 2026-11-05): the coin bounce (bounce_silver, sections 1 and 3 below) is DROPPED, no new
+image. Built instead: the alignment fix (section 2) and the pop on the NUMBER only (E1 alt), scaled
+from the number's bottom-left so it never leaves the ground line. E2 and E3 no longer apply.
+Measured with the game font and the real coin sheet (old -> new, screen rows):
+   coin bottom 38 -> 38   digits bottom 32 -> 38   popped digits bottom 38   (a comma dips 2 lower)
+Section 5 tests: no harness change needed (no new sheet); silver-harness 30/30, mutations 15/15.
+---------------------------------------------------------------------- original plan below
+MOVE SHOP STEP 2b: SILVER BOUNCE + ALIGNMENT   (plan, 2026-11-05, superseded by the outcome above)
+From Jess's step 2 feel test: (1) the coin's bottom does not line up with the bottom of the
+number; (2) play bounce_silver each time the number goes up.
+Changes an approved ruling: YES, step 2 D1 (the pop). See E1.
+
+=====================================================================
+ 1. THE SOURCE ART (checked, nothing written yet)
+=====================================================================
+
+  assets/items/coins/bounce_silver.png + .json, tag oblong_silver
+  (the same coin face as the spin), row y 600, 10 frames, 100 ms each
+  = 1.0 s per bounce. Cells are 32 x 48 (taller than the spin's 32 x 32,
+  room for the hop).
+
+  Cut to half size the same way as the spin (no blur) -> 16 x 24 cells:
+
+  frame   0    1    2    3    4    5    6    7    8    9
+  bottom  22   19   17   16   15   15   16   17   19   22   (art px row)
+          rest                peak                    landed
+          └────────── hop of 7 art px = about 11 screen px ──────────┘
+
+  Frame 0 is the spin's frame 0, pixel for pixel, sitting 8 rows lower.
+  So the bounce starts and lands with no visible jump from the spin.
+
+=====================================================================
+ 2. ALIGNMENT FIX (the bug)
+=====================================================================
+
+  today:  coin centred on a line, number centred on the same line.
+          The pixel font's digits and the coin have different empty
+          margins, so their bottoms miss.
+
+  fix:    ONE ground line. The coin's lowest opaque row sits on it, and
+          the number's baseline sits on it (digits have no descenders).
+
+     XP bar  ═══════════════════════════  y 0..7
+             (o)  ← bounce peak, top at y 12
+     
+             (o) 1,234
+     ground ──────────────  y 42   coin bottom + number bottom
+
+  The ground moves from about y 39 to y 42 so the bounce peak
+  clears the XP bar.
+
+=====================================================================
+ 3. FILES
+=====================================================================
+
+  tools/cut_pickup_gifs.py   (dev tool, free edit)
+     the existing half-size cut gets an optional size (default 16 x 16,
+     so coin16 and silver16 come out byte-identical, checked when run).
+     new block: bounce_silver oblong_silver row -> silverbounce16.png.
+  assets/items/pickups/silverbounce16.png   NEW, 178 x 24, 10 frames
+  js/data/pickup-sprites.js   + a silverBounce entry (10 frames,
+     16 wide, 24 tall, 100 ms)
+  js/ui/hud.js drawSilver     the ground line; the spin at rest; the
+     bounce on a gain (rule E2); the pop per E1. Nothing else changes.
+  NOT touched: silver.js, enemy.js, game.js (income is unchanged).
+  After the build (free edit): changelog "chg" line, spec, STATE, DEVLOG.
+
+=====================================================================
+ 4. DECISIONS FOR JESS
+=====================================================================
+
+  E1  THE POP (changes step 2 D1)
+      proposed:  drop the 1.3x pop. The bounce is the bump now, and the
+                 number keeps rolling up. Two motions at once is busy.
+      alt:       keep the pop on the number only, bounce on the coin
+
+  E2  A GAIN DURING A BOUNCE  (one bounce is 1.0 s, kills come faster)
+      proposed:  PLAY THROUGH. A bounce is never restarted. If more
+                 Silver came in mid-air, the coin hops again as soon as
+                 it lands. At high kill rates it keeps hopping, one hop
+                 a second; when kills stop it lands and goes back to
+                 spinning. The rolling number still shows every gain.
+      alt A:     restart on every gain (the D1 rule). At several kills
+                 a second the coin never leaves the ground and jitters.
+      alt B:     play through, but at double speed (0.5 s a hop)
+
+  E3  SPIN DURING THE HOP
+      proposed:  the coin does not spin during a hop (the bounce art
+                 has its own turn at frames 1 and 8). If a gain lands
+                 mid-spin it snaps to the face-on frame, one 125 ms
+                 frame, barely visible.
+
+=====================================================================
+ 5. TESTS
+=====================================================================
+
+  CHANGED  docs/proposals/silver-harness.js, section 9 (the coin sheet):
+     + silverbounce16.png is 178 x 24
+     + pickup-sprites.js has a silverBounce entry: 10 frames, 16 x 24,
+       pointing at that file
+     why: a missing or mis-sized sheet would leave the coin blank on
+     a gain. That is load-time data a harness can check.
+
+  NOT changed  docs/proposals/silver-mutate.js: the hop timing and the
+     ground line are drawn per frame, already listed there as
+     feel-tested, so no new mutation. The 15 current ones must still
+     be caught.
+  NOT changed  check.js, smoke-ui.js (no new script, no new module).
+  NO new harness, intent scenario or debug set (no moves change, and
+     G.Debug.silver already drives a gain for the feel test).
+
+=====================================================================
+ 6. YOUR FEEL TEST
+=====================================================================
+
+  hard reload dev.html?dev (new image). No save clear.
+  - standing still: the coin spins, its bottom on the digits' bottom
+  - one kill: one hop, lands, back to spinning
+  - a dense pack: keeps hopping, never jitters, number keeps rolling
+  - G.Debug.silver(99999): a big jump still lands in about 0.25 s
+  - the hop peak does not touch the XP bar

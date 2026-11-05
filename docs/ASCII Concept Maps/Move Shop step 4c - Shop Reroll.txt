@@ -1,0 +1,144 @@
+MOVE SHOP STEP 4c: SHOP REROLL (Ban becomes Reroll)   (plan, 2026-11-05, APPROVED as proposed by Jess, BUILT the same day)
+From Jess 2026-11-05: Ban no longer carries its weight now that moves are bought from a selection; turn it into Reroll.
+Existing behavior changed: R1 (catalog + economy doc), R5 (old bans stop applying). Flagged below.
+
+=====================================================================
+ 1. WHERE BAN ACTUALLY STANDS TODAY (found while planning)
+=====================================================================
+
+  OLD shop  G.Upgrades (js/data/upgrades.js), "Veto" / "Ban"
+            DEPRECATED 2026-11-02 (TODO.md): nothing can be bought,
+            levels already bought still apply in runs. Its picker
+            screen is GONE, so no one can choose a banned move any
+            more; only bans saved before 11-02 (save.pban) still work.
+            Read by: level-up New Move cards, the Starting Moves
+            extra pick (game.js buildFighter).
+  NEW screen  Upgrades popup (js/ui/menu.js UPG_COLS, display only,
+            every rank 0, from docs/Economy Balance Ideas.md):
+              Tactical Utility
+                Card Rerolls   ranks 1 / 2 / 3   level-up cards
+                Card Banish    ranks 1 / 2 / 3   <- this is "Ban" now
+            Nothing on it is wired yet (TODO.md "Upgrade points").
+
+  => "Ban becomes Reroll" = Card Banish becomes SHOP REROLLS on the
+     new catalog. Its ranks do nothing until upgrade points are wired,
+     so the shop needs its own baseline now (R2).
+
+=====================================================================
+ 2. HOW A SHOP REROLL WORKS
+=====================================================================
+
+  ┌─ MOVE TRAINER ──────────────────────────────── (o) 4,340 ──┐
+  │ Pikachu: [1] Thunderbolt [2] Swift [3] Agility [4] Slam    │
+  │                                   [R] Reroll (1 left)       │
+  └────────────────────────────────────────────────────────────┘
+        R or click ──► Trainer: Pikachu's 4 offers re-roll
+                       Mart: the 4 TMs re-roll (shared by the team)
+                       count - 1, no dialog (free)
+        0 left ──► button greyed out "No rerolls left"
+
+  new offers: from the same pool, minus moves it knows, and minus the
+              4 just shown while the pool has enough others (so a
+              reroll always shows something new when it can)
+  count:      per BUILDING, shared by the whole team (Trainer and Mart
+              each have their own); the next pair starts fresh
+              per building = 1 (baseline, R2) + Shop Rerolls rank (0
+              until upgrade points are wired)
+
+=====================================================================
+ 3. FILES
+=====================================================================
+
+  js/systems/shops.js   reroll(shop, f): the rule in section 2; a
+     reroll count on each building (fresh() and the debug shops);
+     rerollsLeft(shop). Rank read stays 0 until upgrade points exist
+     (one named hook, no save field).
+  js/ui/shop-ui.js      the Reroll button and the R key (same key as
+     the level-up reroll); greyed at 0; ignored while busy or on the
+     forget step.
+  dev.html              the button in scr-shop.
+  js/ui/menu.js         UPG_COLS: "Card Banish" -> "Shop Rerolls"
+     (display only, same 3 ranks 1 / 2 / 3).
+  js/systems/levelup.js + js/game.js   (R5) stop reading bans: the
+     level-up move pool and the Starting Moves extra pick no longer
+     filter save.pban. Save untouched (db.js keeps cleaning it; the
+     old 'ban' level stays in the save, unread).
+  css/style.css         only if the button needs a rule (mshop-).
+  After the build (free edit): docs/Economy Balance Ideas.md row,
+     TODO.md (Veto line), changelog, spec, BALANCE, STATE, DEVLOG.
+
+=====================================================================
+ 4. DECISIONS FOR JESS (each separate)
+=====================================================================
+
+  R1  CARD BANISH BECOMES SHOP REROLLS   (CHANGES THE APPROVED CATALOG)
+      docs/Economy Balance Ideas.md and the Upgrades popup list Card
+      Banish, Tactical Utility, ranks 1 / 2 / 3.
+      proposed:  rename it Shop Rerolls, same ranks; each rank is +1
+                 reroll per building.
+      alt:       remove Card Banish, and fold shop rerolls into Card
+                 Rerolls (one upgrade covers cards and shops)
+
+  R2  A FREE REROLL BEFORE ANY UPGRADE   (new rule)
+      proposed:  every building gives 1 reroll (like the level-up
+                 screen's 1 free reroll per run), so rerolling exists
+                 now; ranks add more later.
+      alt:       0 until upgrade points are wired (reroll invisible
+                 for now)
+
+  R3  WHAT ONE REROLL COVERS
+      proposed:  the Trainer's count is shared by the team: one reroll
+                 re-rolls the Pokemon you are shopping for.
+      alt:       per member (each Pokemon gets its own count)
+
+  R4  COST
+      proposed:  free, limited by the count (VS Reroll; matches the
+                 level-up reroll). No dialog.
+      alt:       Silver per reroll, Brotato-style rising price (would
+                 get the confirm dialog)
+
+  R5  OLD BANS STOP APPLYING   (CHANGES EXISTING BEHAVIOR, old saves)
+      Saves that set bans before 11-02 still filter level-up cards
+      and the Starting Moves extra pick.
+      proposed:  stop reading them now (the Ban upgrade is retired; no
+                 screen exists to change them). Save data kept, unread.
+      alt:       keep them until step 5 removes the New Move cards
+
+=====================================================================
+ 5. TESTS
+=====================================================================
+
+  CHANGED  docs/proposals/shop-screens-harness.js  (no new harness: the
+           reroll is part of the shop stock it already covers)
+     + Trainer reroll: 4 new offers, none known, none of the previous 4
+       when the pool has 4 others; count 1 -> 0; a second reroll is
+       refused and changes nothing
+     + Magikarp-size pool: a reroll with too few others still shows
+       4 (some repeats), never a known move
+     + Mart reroll: 4 new TMs, all from the TM list
+     + R3: one reroll on the Trainer used for Pikachu leaves 0 for
+       Charmander in the same building
+     + a fresh building starts at 1 again (R2)
+     + R5 wiring: levelup.js and game.js no longer read banned /
+       pban (comments stripped)
+  CHANGED  docs/proposals/shop-screens-mutate.js
+     + "a reroll is free forever" (count never drops)
+     + "a reroll can show the same 4"
+     + "a reroll offers known moves"
+     + "the count is per member" (if R3 as proposed)
+     + "bans still filter the level-up pool" (R5)
+  CHANGED  tools/smoke-ui.js  (the shop pass)
+     R in the Trainer changes the offers and greys the button at 0;
+     a reroll under the confirm dialog does nothing.
+  NOT      check.js, other harnesses, intent scenarios, debug sets.
+
+=====================================================================
+ 6. YOUR FEEL TEST
+=====================================================================
+
+  hard reload dev.html?dev. No save clear.
+  - G.Debug.silver(5000), G.Debug.trainer(): R once, 4 new offers,
+    button greys out
+  - switch Pokemon: R is still used up (shared, R3)
+  - G.Debug.mart(): its own reroll, 4 new TMs
+  - Upgrades popup: Tactical Utility shows Shop Rerolls

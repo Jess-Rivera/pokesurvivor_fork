@@ -54,4 +54,5 @@ G.PickupSprites = {
     },
   },
   gold: { src: 'assets/items/pickups/coin16.png', y: 0, n: 8, cell: 16, ms: [125] },
+  silver: { src: 'assets/items/pickups/silver16.png', y: 0, n: 8, cell: 16, ms: [125] },
 };

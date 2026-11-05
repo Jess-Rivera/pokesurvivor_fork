@@ -70,6 +70,7 @@ for (const f of [
   'js/data/move-overrides.js',
   'js/data/move-handler.js',
   'js/data/move-resolver.js',
+  'js/data/learnsets.js',
   'js/data/moves.js',
   'js/data/types.js',
   'js/data/items.js',

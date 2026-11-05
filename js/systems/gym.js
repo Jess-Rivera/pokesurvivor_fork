@@ -205,6 +205,7 @@ G.Gym = (() => {
     esc = null; // snap-back: bump cleared, next wild spawns read 0 -> correct run-time level
     nextAt = beaten < list().length ? now() + GAP : null;
     G.Elites.afterGate(now());
+    if (G.Shops) G.Shops.afterGym(now()); // Move Shop step 3: the next Trainer and Mart come 90 s after the return (guarded: the gym harnesses load gym.js without shops.js)
     if (g && g.escBumpSeen) G.SimBus.emit('gym:calm', { leader: g.leader });
   }
 

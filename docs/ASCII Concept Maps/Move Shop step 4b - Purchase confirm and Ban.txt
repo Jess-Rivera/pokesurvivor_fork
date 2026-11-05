@@ -1,0 +1,122 @@
+MOVE SHOP STEP 4b: PURCHASE CONFIRM + BAN IN THE SHOP   (2026-11-05: confirm BUILT; H2 approved as proposed;
+H1 SUPERSEDED, Jess: Ban no longer carries its weight, it becomes Reroll, see Move Shop step 4c - Shop Reroll.txt)
+From Jess's step 4 feel test: a confirmation window instead of click-to-buy. Plus the open Ban question.
+Existing behavior changed: H1 (Ban) if approved. The confirm only changes the new shop screens.
+
+=====================================================================
+ 1. CONFIRM FLOW  (uses G.UI.ask, the in-game dialog; CLAUDE.md: never confirm())
+=====================================================================
+
+  FREE SLOT
+    pick offer ──► ┌─ MOVE TRAINER ──────────────────────────┐
+                   │ Buy Thunderbolt for Pikachu?             │
+                   │ 660 Silver · 4,340 left                  │
+                   │        [Buy] Enter     [Cancel] Esc      │
+                   └──────────────────────────────────────────┘
+          Buy ──► paid, learned, back to the offers
+          Cancel ──► nothing changes, back to the offers
+
+  SLOTS FULL
+    pick offer ──► forget list (as now) ──► pick a loose move ──►
+                   ┌─ MOVE TRAINER ──────────────────────────┐
+                   │ Pikachu forgets Tackle and learns        │
+                   │ Thunderbolt?                             │
+                   │ 660 Silver · no refund for Tackle ·      │
+                   │ 4,340 left                               │
+                   │        [Buy] Enter     [Cancel] Esc      │
+                   └──────────────────────────────────────────┘
+          Buy ──► paid, replaced, back to the offers
+          Cancel ──► back to the FORGET LIST (pick another move, or Esc out)
+
+  TM MART
+    pick TM ──► pick member ──► same dialog ("Teach Dragon Claw to
+    Charmander?") ──► forget list first if its slots are full
+
+  ONE confirm per purchase, always at the moment you would pay.
+  While the dialog is open the shop ignores every other key and click
+  (otherwise 1-4 / team keys would start a second purchase under it).
+
+=====================================================================
+ 2. BAN (the "Veto" upgrade)  WHAT IT IS TODAY
+=====================================================================
+
+  Upgrades screen (per Pokemon, bought with PokeCoins, saved):
+    "Ban" (code name Veto), max 3 levels (js/data/upgrades.js: base 300, grow 1.9)
+    each level = ban 1 move for THAT species ("it never shows up in
+    your cards"); the starting move cannot be banned. Saved per
+    species (save.pban), applied at run start (game.js line 240).
+
+  Read today by:  level-up New Move cards (levelup.js)
+                  the startMoves perk's extra move (game.js)
+  NOT read by:    the Move Trainer stock (step 4)
+
+  STEP 5 removes the New Move cards ──► Ban would then do nothing at
+  all in a normal run, on an upgrade players paid for.
+
+=====================================================================
+ 3. FILES
+=====================================================================
+
+  js/ui/shop-ui.js   a pending-purchase state; pick offer / member /
+     forget slot opens G.UI.ask instead of buying; Buy calls
+     G.Shops.buy (which re-checks everything); Cancel returns as in
+     section 1; every input ignored while the dialog is open.
+  js/systems/shops.js   (only with H1) the Trainer's stock and check
+     leave out that member's banned moves.
+  After the build (free edit): changelog "chg" line, spec, STATE, DEVLOG.
+  NOT touched: ui.js (ask already exists), game.js, player.js.
+
+=====================================================================
+ 4. DECISIONS FOR JESS
+=====================================================================
+
+  H1  BAN IN THE MOVE TRAINER   (CHANGES WHAT AN EXISTING UPGRADE DOES)
+      proposed:  the Trainer never offers a member a move banned for
+                 its species, so Ban keeps its value after step 5 (it
+                 shapes your 4 offers instead of your cards).
+                 The TM Mart is NOT filtered: its 4 TMs are shared by
+                 the whole team, and every TM is a deliberate pick.
+      alt A:     filter the Mart too (a banned TM shows "Banned" for
+                 that member)
+      alt B:     Ban stays cards-only; decide its future in step 5
+                 (refund or rework)
+
+  H2  CANCEL ON THE FORGET CONFIRM   (new, nothing existing changes)
+      proposed:  back to the forget list (try another move)
+      alt:       back to the offers (start over)
+
+=====================================================================
+ 5. TESTS
+=====================================================================
+
+  CHANGED  docs/proposals/shop-screens-harness.js
+     + section 10 wiring: shop-ui.js calls G.UI.ask before every
+       G.Shops.buy (comments stripped), and its pick handlers return
+       early while a dialog is pending
+     + (H1) section 2: a member with Thunderbolt banned is never
+       offered it; check() refuses it ("Banned"); another member of a
+       different species still can be; the Mart is unaffected
+     why: the confirm is a rule ("no purchase without a yes") the sim
+     harness can guard as wiring; the Ban filter is sim logic.
+  CHANGED  docs/proposals/shop-screens-mutate.js
+     + "a pick buys without asking" (the ask call removed)
+     + "keys work under the dialog" (the pending guard removed)
+     + (H1) "banned moves are offered"
+  CHANGED  tools/smoke-ui.js  (the step 4 shop pass)
+     pick an offer: the dialog opens and nothing is bought; Cancel:
+     nothing changes; pick again and Buy: bought. Forget step: Cancel
+     on the dialog returns to the forget list (H2). A second pick while
+     the dialog is open changes nothing.
+  NOT      check.js, other harnesses, intent scenarios, debug sets.
+
+=====================================================================
+ 6. YOUR FEEL TEST
+=====================================================================
+
+  hard reload dev.html?dev. No save clear.
+  - G.Debug.silver(5000), G.Debug.trainer(), press 1: dialog, Esc,
+    nothing bought; 1 again, Enter: bought
+  - fill the slots, buy, pick a move to forget: dialog names it;
+    Cancel returns to the list
+  - (H1) ban a move on the Upgrades screen, start a run,
+    G.Debug.trainer(): never offered to that Pokemon

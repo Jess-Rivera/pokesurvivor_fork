@@ -12,6 +12,7 @@
  *   G.Debug.unlockitem(id|'all') unlock a team item for the pre-run loadout (no id: logs the ids). Saved.
  *   G.Debug.loadout(id, id, ...) set the pre-run loadout directly (cleaned: unlocked only, one Stone, within your slots). No ids: logs it. Saved.
  *   G.Debug.coins(n)   set your PokeCoins to n (no arg: logs the balance). Saved. For testing Shop prices.
+ *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
@@ -20,6 +21,8 @@
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
+ *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
+ *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
  *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
  *   G.Debug.carrier(kind, n)       spawn n Status-class carriers of that status (slow|daze|paralysis|confusion|poison|trap|freeze|haste|sleep) just inside the view, to check the cap of 2, the close band and what a hit does
@@ -247,6 +250,21 @@ G.Debug = (() => {
     }
     console.log('[Debug] PokeCoins: ' + s.coins);
     return s.coins;
+  }
+
+  /** Set this run's Silver to `n` (or log it). ?dev only, in a run only. Not saved: Silver is run-only (js/systems/silver.js). */
+  function silver(n) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first: Silver only exists in a run.');
+      return false;
+    }
+    if (n != null) G.Silver.set(n);
+    console.log('[Debug] Silver: ' + G.Silver.whole + ' (' + G.Silver.amount.toFixed(2) + ' inside)');
+    return G.Silver.whole;
   }
 
   /** Set the gacha tickets: n Pokeballs (x1), and m Master Balls (x10) when given. No arg: logs both. ?dev only. Saved. */
@@ -1224,12 +1242,51 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Place a Move Trainer and a TM Mart now (dev only), by the normal placement rules. */
+  function shops() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const ok = G.Shops.debugPlace();
+    console.log(ok ? '[Debug] Move Trainer and TM Mart placed, follow the red arrows' : '[Debug] no free ground found, try again');
+    return ok;
+  }
+
+  /** Open a shop screen now (dev only): 'trainer' or 'mart', fresh stock, no building. */
+  function openShopNow(kind) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const ok = G.Shops.debugOpen(kind);
+    if (!ok) console.warn('[Debug] close the open screen (pause, level-up, item, bond) and try again.');
+    return ok;
+  }
+  function trainer() {
+    return openShopNow('trainer');
+  }
+  function mart() {
+    return openShopNow('mart');
+  }
+
   return {
     on,
     elite,
     skipTo,
     levelUp,
     gym,
+    shops,
+    trainer,
+    mart,
     maxAll,
     clearUpgrades,
     toggleUpgrades,
@@ -1239,6 +1296,7 @@ G.Debug = (() => {
     runitem,
     runslots,
     coins,
+    silver,
     tickets,
     unlockitem,
     loadout,

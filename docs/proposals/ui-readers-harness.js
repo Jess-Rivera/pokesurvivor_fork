@@ -112,10 +112,11 @@ console.log('5 player.cast');
   const mkT = (ids, o = {}) => Object.assign({ mon: { types: ['fire'] }, maxMoves: 4, slots: ids.map(id => [{ id }]), moves: ids.map(id => G.Moves.instance(id)),
     hasMove(id) { return ids.includes(id); }, banned: null, teamCards: G.TeamCards.store(), incOf: () => 0, inc: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 } }, o);
   G.MoveRoute = { on: true, routed: id => !!D[id] };
-  const cards = G.LevelUp.teamFamilies(mkT(['tackle']), [mkT(['tackle'])]).newmove || [];
-  const em = cards.find(c => c.key === 'new:ember');
-  ok(em && em.title === 'Ember' && em.tag === tc.fire && em.color === tc.fire && em.desc === 'Shot: damage, 10% burn.' && em.icon === 'move:ember', 'flag on: the Ember card reads name, type and text from the def');
-  ok(!(G.LevelUp.teamFamilies(mkT(['harden', 'substitute']), []).newmove || []).some(c => c.key === 'new:agility'), 'flag on: Harden plus Substitute are two buffs, so no Agility');
+  // Move Shop step 5 (Jess 2026-11-05): the New Move card is gone. Its text checks moved to tools/smoke-ui.js (a Move Trainer offer
+  // for every move) and the 2-buff limit to docs/proposals/shop-screens-harness.js section 7.
+  const fam = G.LevelUp.teamFamilies(mkT(['tackle']), [mkT(['tackle'])]);
+  ok(!('newmove' in fam) && Object.values(fam).flat().every(c => c.type !== 'new'), 'a free slot and a learnable pool (Ember, Agility) offer no New Move card');
+  ok(!('newmove' in G.LevelUp.TEAM_W), 'the family weights have no New Move entry');
   G.Moves.poolFor = pf; G.MoveRoute = ROUTE; G.Coop = COOP; }
 console.log('6 level-up cards');
 

@@ -31,6 +31,7 @@ G.UI = (() => {
     'scr-bond',
     'scr-mod',
     'scr-inventory',
+    'scr-shop', // Move Shop step 4 (js/ui/shop-ui.js), so hideAll closes it too
   ];
 
   function show(id, keepMenu = false) {
