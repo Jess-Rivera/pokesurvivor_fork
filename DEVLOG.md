@@ -191,3 +191,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Broke or open: the GitHub API returned nothing all day (board mirror not re-synced); smoke-ui, format and the shop/silver mutation runners never ran under real node; DEVLOG.md is about 97 KB, past the rotation rule.
 - check.js: run by Jess, 39/40 before the gyms-only fix.
 - Stopped at: commit step 5 here; at home pull, smoke-ui, format, merge.
+
+## 2026-11-05, merges, DEVLOG rotation, onboarding F1 and F2 (Quick, work, fix/onboarding-flow)
+- Changed: DEVLOG rotated (entries 2026-10-25 to 2026-11-02 to docs/DEVLOG-archive.md, 97 KB to 30 KB). feature/move-shop merged to main 68fea95 at work (smoke-ui and format still owed at home). fix/stale-mutations: 27 entries re-quoted (25 prettier reflows, 2 real drift from the fold's areal pool), merged 91a0180, 19/19 and 60/60 under real node.
+- Onboarding (playtest 2026-11-04): login reads PokeSwarm in Korataki, subtitle and official-site line gone (dev.html, css/style.css); js/core/input.js lets text fields keep Tab, Space and arrows (root cause of the Tab bug). New docs/proposals/input-keys-harness.js (41) and input-keys-mutate.js (6), dry run passed here; smoke-ui login pass; changelog entry. Codex menu and onboarding added to TODO.md.
+- Decided (Jess): rename login screen only; quiz is out; F3 = pick a region and get all 3 starters (S1 to S4 in the plan still open).
+- Broke or open: GitHub API empty all day; check.js not run on the onboarding edits yet.
+- Stopped at: Jess to run check.js and input-keys-mutate, commit and push fix/onboarding-flow; F3 decisions next.
