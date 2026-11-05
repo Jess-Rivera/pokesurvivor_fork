@@ -377,6 +377,16 @@ label {
   letter-spacing: 3px;
   text-transform: uppercase;
 }
+/* The PokeSwarm title on the login screen: the main menu's title font and colours (bw-menu.css .bw-title).
+   Sizes stay with .logo .t1 and its phone rules. */
+.logo .t1.swarm {
+  font-family: 'Korataki', 'PokeBW', sans-serif;
+  font-weight: 800;
+  color: var(--bw-title, #fff000);
+  text-shadow: 0 4px 0 var(--bw-title-shade, #8f8500);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
 
 /* ============ PokeSurvivor REDUX menu-logo treatment ============ */
 /* Container must be inline-block so the stamp overlays the title and the
@@ -2501,13 +2511,6 @@ a.btn {
   font-size: 13px;
   color: var(--muted);
   text-align: center;
-}
-.login-official {
-  margin: -6px 0 12px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: center;
-  opacity: 0.85;
 }
 .login-links {
   margin-top: 10px;
