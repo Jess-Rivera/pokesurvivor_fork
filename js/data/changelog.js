@@ -8,6 +8,22 @@
 G.CHANGELOG = [
   {
     d: '2026-11-05',
+    title: ['Shops on the map', 'Shops on the map'],
+    new: [
+      [
+        'A Move Trainer and a TM Mart now appear on the map at 2:00, and again 90 seconds after each gym. They stay for one minute, and red arrows show the way. Their shop screens are coming soon.',
+        'A Move Trainer and a TM Mart now appear on the map at 2:00, and again 90 seconds after each gym. They stay for one minute, and red arrows show the way. Their shop screens are coming soon.',
+      ],
+    ],
+    chg: [
+      [
+        'The arrow to an open gym now floats next to your Pokemon instead of sitting at the edge of the screen.',
+        'The arrow to an open gym now floats next to your Pokemon instead of sitting at the edge of the screen.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
     title: ['Silver', 'Silver'],
     new: [
       [

@@ -4,18 +4,18 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-05, mid-session (Quick, work). Branch: feature/move-shop.
 
 ## Where we are
-- MOVE SHOP (spec docs/proposals/move-shop-plan.md, handoff docs/proposals/move-shop-handoff.md): step 1 BUILT, feel test passed (Jess 2026-11-05). Step 2 Silver BUILT 2026-11-05; Jess's feel test found the coin and number bottoms misaligned, fixed in 2b (number-only pop, no coin bounce, then +50% size, docs/ASCII Concept Maps/Move Shop step 2b - Silver bounce and alignment.txt). Re-check PENDING. Next: plan step 3 (buildings and arrows) as an ASCII map; then 4 and 5.
-- Step 2 not yet run on this machine: node is not reachable from Quick here, so Jess runs `node tools/check.js`, `node docs/proposals/silver-mutate.js`, smoke-ui and `npm run format`. Quick ran the silver harness (30/30) and all 15 mutations (15/15) in a shim, and parse-checked every edited file.
+- MOVE SHOP (spec docs/proposals/move-shop-plan.md): steps 1 and 2 BUILT and feel-tested (2026-11-05; Silver got a number-only pop and +50% size). Step 3 (buildings and arrows) BUILT 2026-11-05, approved as proposed (F1 to F5), feel test PENDING (docs/ASCII Concept Maps/Move Shop step 3 - Buildings and arrows.txt section 8). Next: plan step 4 (shop screens, forget or cancel); then 5.
+- node is not reachable from Quick here: Jess runs check.js, the silver and shops mutation runners, smoke-ui and `npm run format`. Quick runs the new harnesses and mutations in a shim.
 - POKEBOX steps 1 to 5 on main. Step 5b PARKED until Jess's mockups (docs/ASCII Concept Maps/Pokebox 5b - EV-Lowering Berries.txt).
 
 ## Next (major features, Jess picks)
-1. Move Shop steps 3 to 5. Gacha overhaul is its own later branch.
+1. Move Shop steps 4 and 5. Gacha overhaul is its own later branch.
 2. Tooltips and explanations: one mechanism, then the top confusions; G.MoveInfo already generates move text.
 3. Encounter project: Director AI (docs/Director AI Proposal.md), routes per region, then the hard type chart.
 4. Small: bench recharge test (reverses a ruling), the wall bug (Flamethrower through walls), Wide Lens.
 
 ## Watch
-- Step 3 plan: the gym arrow moving from the screen edge to near the character changes existing behavior, so it gets its own decision.
+- Step 3: the gym's off-screen arrow now floats off the character (F1, approved). gym.js calls G.Shops guarded, since the gym harnesses load gym.js without shops.js.
 - check.js ONE known failure (on main too): gyms-only-harness trips on a comment at js/data/enemies.js:34. One-line fix awaiting Jess's OK.
 - Silver income estimate (1 to 2 moves per shop) is unmeasured; the income bot stalls (fix in step 5).
 - tools/pack_itch.js ships the 308 MB _not-shipped folder; parked by Jess.

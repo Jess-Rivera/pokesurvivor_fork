@@ -52,6 +52,7 @@
     'SimBus',
     'GymPresent',
     'GymArena',
+    'Shops',
     'Weather',
     'Progress',
     'Silver',

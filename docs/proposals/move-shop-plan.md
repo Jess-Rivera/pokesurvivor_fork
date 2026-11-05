@@ -13,6 +13,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - [Approved] Two shops, one of each, spawn again 90 s after coming back from a gym. (Jess 2026-11-04)
 - [Approved] The two are always more than 90 degrees apart as seen from the player, both off screen.
 - [Approved] A shop stays for 1 minute, then it is gone. (Jess 2026-11-04)
+- [Approved] Step 3 rulings (Jess 2026-11-05, docs/ASCII Concept Maps/Move Shop step 3 - Buildings and arrows.txt F1 to F5): the gym's off-screen arrow also floats off the character (changes the old screen-edge arrow). Until step 4, walking in shows a one-line "opens soon" notice. The label shows seconds left and blinks for the last 10 s; the building fades out over the last 1 s. In a gym arena the shops are hidden and their minute stops. No shops in co-op until co-op shops exist. Doors spawn at the view radius + 140 to + 320 world px; if either finds no free ground, both retry 2 s later.
 - [Proposed] Entering pauses the run. Never over another menu.
 
 ## Move Trainer
@@ -52,8 +53,8 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 
 ## Build order
 1. BUILT 2026-11-04. Learnset pools: js/data/learnsets.js from tools/export_learnsets.js, G.Moves.poolFor, tmList and canUseTm, HELD gone, level-up cards and the move search read the new pool. Check: docs/proposals/learnset-harness.js.
-2. BUILT 2026-11-05 (Quick), feel test pending. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
-3. Buildings: contact masks, spawn rules, red arrows, both arrow types float off the character.
+2. BUILT 2026-11-05 (Quick), feel-tested by Jess the same day. Silver: js/systems/silver.js (G.Silver), the HUD counter (js/ui/hud.js drawSilver), kill income (js/entities/enemy.js kill loop), reset in startRun, assets/items/pickups/silver16.png, G.Debug.silver. Check: docs/proposals/silver-harness.js, mutations silver-mutate.js.
+3. BUILT 2026-11-05 (Quick), feel test pending. Buildings: js/systems/shops.js (G.Shops), masks baked to js/data/shop-contact.js by tools/gym_contact.js, schedule hook in js/systems/gym.js onReturn, game.js reset / update / scene, hud.js floatArrow (gym and shops), G.Debug.shops. Check: docs/proposals/shops-harness.js, mutations shops-mutate.js.
 4. Shop screens: Move Trainer, TM Mart, forget or cancel, a debug command to open each.
 5. Remove New Move cards, update smoke-ui (it expects them), docs and changelog.
 

@@ -610,4 +610,8 @@ Older entries (before 2026-10-25) were rotated to docs/DEVLOG-archive.md on 2026
 - Broke/limits: node is not reachable from Quick here, so the harness and mutations ran in a shim and check.js, smoke-ui and prettier were NOT run. The GitHub issues API returned nothing.
 - Feel test (Jess): coin bottom and number bottom misaligned (6 px). Fixed (2b): one ground line, digits placed by their measured bottom; the pop moved to the number only. Coin bounce (bounce_silver) proposed, then dropped by Jess.
 - Then +50% size (Jess): coin 24 to 36 px, number 20 to 30, ground line y 39 to 46. At x2.25 the coin's foot is 31.5 px, so it is floored (rounding sank it 1 px). Re-measured: bottoms match in every spin frame and mid-pop.
-- Stopped at: Jess to re-check, run the checks, commit; then plan step 3.
+- Jess re-checked: step 2 feel test passed.
+- Step 3 approved as proposed (F1 gym arrow floats too, F2 "opens soon" notice, F3 blink and fade, F4 hidden and paused in an arena, F5 none in co-op).
+- Built step 3: js/systems/shops.js (schedule, placement, 1-minute life, step-off entry, drawing), js/data/shop-contact.js from the extended tools/gym_contact.js (gym output byte-identical), gym.js onReturn hook (guarded), game.js reset / update / scene, hud.js floatArrow for the gym and both shops, G.Debug.shops, smoke-ui check, changelog.
+- Tests: shops-harness.js 47 checks and shops-mutate.js 14/14, in the shim again (no node here); silver still 30/30 and 15/15; every edited file parses; new files pass the gyms-only search guard.
+- Stopped at: Jess to run the checks and feel-test step 3, then commit; next, plan step 4.

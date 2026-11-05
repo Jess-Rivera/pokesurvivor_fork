@@ -21,6 +21,7 @@
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
+ *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
  *   G.Debug.statusSelf(kind)      put one of those statuses on the ACTIVE Pokemon (to feel what a hit would do)
  *   G.Debug.carrier(kind, n)       spawn n Status-class carriers of that status (slow|daze|paralysis|confusion|poison|trap|freeze|haste|sleep) just inside the view, to check the cap of 2, the close band and what a hit does
@@ -1240,12 +1241,28 @@ G.Debug = (() => {
     return true;
   }
 
+  /** Place a Move Trainer and a TM Mart now (dev only), by the normal placement rules. */
+  function shops() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (!G.Game.player) {
+      console.warn('[Debug] start a run first.');
+      return false;
+    }
+    const ok = G.Shops.debugPlace();
+    console.log(ok ? '[Debug] Move Trainer and TM Mart placed, follow the red arrows' : '[Debug] no free ground found, try again');
+    return ok;
+  }
+
   return {
     on,
     elite,
     skipTo,
     levelUp,
     gym,
+    shops,
     maxAll,
     clearUpgrades,
     toggleUpgrades,

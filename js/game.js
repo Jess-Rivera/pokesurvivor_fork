@@ -143,6 +143,7 @@ G.Game = (() => {
     G.Spawner.reset();
     G.GymArena.reset();
     G.Gym.reset();
+    G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
     G.Weather.reset();
     G.Path.clear();
@@ -1154,6 +1155,7 @@ G.Game = (() => {
     G.Hazards.update(dt);
     G.Interact.update(dt, pl);
     G.GymArena.update(dt, pl, time);
+    G.Shops.update(dt, pl, time); // Move Shop step 3: the buildings on the map
     if (!coop || G.Coop.isHost) G.Gym.update(dt, pl, time);
     G.Events.update(dt, all, time);
     G.Weather.update(dt, time, pl);
@@ -1206,6 +1208,7 @@ G.Game = (() => {
     for (const e of extra) items.push({ y: e.y, ent: e });
     const gate = G.GymArena.drawable();
     if (gate) items.push({ y: gate.y, ent: gate });
+    for (const s of G.Shops.drawables()) items.push({ y: s.y, ent: s });
     if (pl && state !== 'ui') for (const d of G.Events.drawables()) items.push({ y: d.y, ent: d });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) {

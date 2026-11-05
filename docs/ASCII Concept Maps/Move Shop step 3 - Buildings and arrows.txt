@@ -1,0 +1,198 @@
+MOVE SHOP STEP 3: BUILDINGS AND ARROWS   (plan, 2026-11-05, APPROVED as proposed by Jess, BUILT the same day)
+Spec: docs/proposals/move-shop-plan.md "Shops on the map". Handoff: docs/proposals/move-shop-handoff.md.
+Shop SCREENS are step 4. In this step you can see, find and walk into the buildings; see F2 for what
+walking in does until step 4.
+Existing behavior changed by this step: the GYM ARROW (F1). Nothing else that exists changes.
+
+=====================================================================
+ 1. TIMELINE (one run)
+=====================================================================
+
+  0:00 ─── 2:00 ════ 3:00 ─────── 4:00 gym 1 gate ... win ─┐
+           │ both    │ both gone   (gate stays until        │ back on map
+           │ spawn   │ (1 min)      entered, as now)        │
+           └─────────┘                                      ▼
+                                       return ── +90 s ════ +150 s ── +240 s next gate
+                                                 │ both    │ gone
+                                                 └─────────┘
+  Repeats after every gym return. Shops and a gym gate never overlap in
+  the normal schedule (shops end 1:00 before gym 1, and 1:30 before every
+  later gate), so the two arrow types are almost never on screen together.
+
+  "1 minute" is the run clock: it stops in pause, level-up and any menu.
+
+=====================================================================
+ 2. PLACEMENT
+=====================================================================
+
+                       Move Trainer
+                           [M]
+                            \
+          view circle  .-----\-----.
+                     /        \      \      both doors farther than
+                    |    (you) ●      |     view radius + 140 world px
+                     \        /      /      (fully off screen, any window)
+                      '------/------'
+                            /    bearings more than 90° apart
+                          [T]    (second = first + 100° to 260°)
+                       TM Mart
+
+  distance   view radius + 140 to + 320 world px      (TUNE)
+             view radius = G.Camera.outerRadius() (half the view diagonal + 40)
+             walk at median speed (107 px/s): about 3 s past the screen edge
+  ground     every sample of the building's contact area on free ground
+             (the same check the gym gate uses)
+  retry      24 random tries per shop; if either fails, both retry in 2 s
+             (as the gym gate's caller does). The minute starts when placed.
+  art scale  1.5 to start (Trainer 117 x 108, Mart 96 x 107 world px; the
+             gym is 144 x 124). TUNE by feel.
+
+=====================================================================
+ 3. ARROWS
+=====================================================================
+
+   building OFF screen                 building ON screen
+   ───────────────────                 ──────────────────
+          ▲  MOVE TRAINER · 42 s · 23 m         ▼   (bouncing, red)
+         /                                   [ M ]
+     (you)    arrow centre 60 world px
+              from you, pointing at the door
+              (world px: same gap at any window size or zoom)
+
+  shops   red #ff5f6d, label beyond the arrow tip: name · seconds left · metres
+          last 10 s: the label blinks; last 1 s: the building fades out
+  gym     same floating style, purple as now, its label text unchanged  (F1)
+
+=====================================================================
+ 4. ENTERING
+=====================================================================
+
+  walk onto the contact area ──► enter (fires ONCE)
+          │
+          stay on it ──► nothing more
+          │
+          step off ──► armed again ──► step back on ──► enter again
+
+  Contact areas: assets/tileset/move-trainer-contact.png and
+  tm-mart-contact.png (painted pixels = solid, both end at art row 69,
+  the door line). Baked to data so file:// never reads pixels.
+
+=====================================================================
+ 5. FILES
+=====================================================================
+
+  tools/gym_contact.js   (dev tool, free edit)
+     reads a list of masks instead of one. The gym output stays
+     byte-identical; it also writes js/data/shop-contact.js. Its --check
+     (already in check.js) then covers the shop masks too.
+  js/data/shop-contact.js   NEW, generated: both masks.
+     dev.html tag in the data block (like gym-contact.js, not in NEED).
+  js/systems/shops.js   NEW, registers G.Shops.
+     schedule (2:00, gym return + 90 s), placement, the 1-minute life,
+     entry with the step-off rule, drawing the buildings (same shadow
+     treatment as the gym). Its own mask reader: gym-arena.js is NOT
+     touched, so the gym gate cannot regress.
+  dev.html + js/main.js NEED   add shops.js / 'Shops' (after gym.js,
+     before game.js)
+  js/game.js       startRun: reset shops. Frame update: shops update right
+                   after the gym gate's. Scene: buildings join the
+                   Y-sorted drawables, like the gate.
+  js/systems/gym.js   onReturn: tell G.Shops the return time (one line,
+                   next to the elites' call)
+  js/ui/hud.js     shop arrows and markers (section 3); the gym's
+                   off-screen arrow moves from the edge to float off the
+                   character (F1). Its on-screen marker is unchanged.
+  js/core/debug.js G.Debug.shops(): place both now, by the normal
+                   placement rules. For the feel test.
+  After the build (free edit): changelog, spec, BALANCE (spawn numbers),
+  TODO (co-op note), STATE, DEVLOG.
+
+=====================================================================
+ 6. DECISIONS FOR JESS (each separate)
+=====================================================================
+
+  F1  THE GYM ARROW MOVES   (CHANGES EXISTING BEHAVIOR)
+      The spec approved "both arrows float about 60 px off the character"
+      (2026-11-04). Flagged here because it changes the gym arrow you
+      already play with.
+      proposed:  yes, the gym's off-screen arrow floats off the character
+                 like the shops', purple, same label text. On-screen bounce
+                 marker unchanged.
+      alt:       gym arrow stays at the screen edge; only shops float
+
+  F2  WHAT WALKING IN DOES UNTIL STEP 4
+      proposed:  a one-line toast ("Move Trainer: opens soon" /
+                 "TM Mart: opens soon"), no pause, step-off rule applies.
+                 Proves entry works now; step 4 swaps in the screen.
+      alt:       nothing at all until step 4
+
+  F3  EXPIRY CUE   (new, nothing existing changes)
+      proposed:  label shows seconds left; it blinks for the last 10 s;
+                 the building fades out over the last 1 s.
+      alt:       no warning, it just vanishes at 1:00
+
+  F4  SHOPS DURING A GYM ARENA   (cannot happen in the normal schedule)
+      proposed:  guard anyway: in an arena the shops are hidden and their
+                 minute stops; back on the map they resume.
+                 A shop time that falls inside an arena waits for return.
+      alt:       an arena removes any shops on the map
+
+  F5  CO-OP   (deferred)
+      proposed:  no shops in co-op until co-op shops exist; one line in
+                 TODO.md under deferred. (Silver is already hidden there.)
+
+=====================================================================
+ 7. TESTS
+=====================================================================
+
+  NEW HARNESS   docs/proposals/shops-harness.js   (check.js finds it by name)
+     checks, all expected values hand-derived from this map and the spec:
+     - schedule: none before 2:00; one Trainer and one Mart at 2:00; no
+       more until a gym return; both again 90 s after each return; no
+       spawn while in an arena (F4)
+     - life: gone after 60 s of run clock; no ageing while update is not
+       called (pause / menus); fade window is the last 1 s (F3)
+     - placement over 200 seeded tries: every door beyond view radius +
+       140; bearings more than 90° apart; a fully blocked ground places
+       nothing, then places once the ground clears (retry)
+     - entry: on the contact area fires once; staying does not refire;
+       off then on fires again; a transparent corner of the art does not
+       count
+     - masks: G.ShopContact sizes are 78 x 72 and 64 x 71; one solid and
+       one empty sample per building, read from the PNG by hand
+     - co-op active: never spawns (F5); reset clears everything
+     - wiring: dev.html order (shop-contact.js and gym.js before
+       shops.js, shops.js before game.js), NEED has 'Shops', gym.js
+       onReturn calls G.Shops, startRun resets them
+     why new: no harness covers map buildings other than the gym, and
+     the gym harnesses test the arena flow, not placement or entry.
+
+  MUTATION RUNNER   docs/proposals/shops-mutate.js   (run by hand)
+     breaks one at a time, the harness must FAIL each:
+     - the 90° check removed          - spawns on screen (distance 0)
+     - the minute never ends          - re-entry without stepping off
+     - the onReturn hook removed      - the 2:00 spawn repeats every frame
+     - spawns inside an arena         - reset skipped at run start
+     - spawns in co-op                - script tag / NEED entry missing
+     why: proves each check bites.
+
+  CHANGED   tools/gym_contact.js --check now covers three masks (gym,
+            Trainer, Mart). check.js itself: no change (same command,
+            same "current" output).
+  CHANGED   tools/smoke-ui.js: in a run, G.Debug.shops() places two
+            shops and a frame draws both arrows with no console errors.
+  NOT       no gym harness changes (none reads the HUD arrow or
+            gym-arena.js placement), no intent scenarios, no move debug
+            sets (no moves change).
+
+=====================================================================
+ 8. YOUR FEEL TEST (about a minute)
+=====================================================================
+
+  hard reload dev.html?dev. No save clear.
+  - G.Debug.skipTo(1.9): at 2:00 two red arrows, pointing apart
+  - walk to one: it appears from off screen, bounce marker above it
+  - walk in: the toast (F2), once; step off and back: again
+  - wait: label blinks at 10 s, building fades, gone at 1:00
+  - G.Debug.gym(): the gym arrow now floats near you (F1)
+  - building size (1.5) feels right next to the gym and the mons?

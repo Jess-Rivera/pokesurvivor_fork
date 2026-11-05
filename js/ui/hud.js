@@ -491,6 +491,53 @@ G.HUD = (() => {
     ctx.restore();
   }
 
+  // ---------- floating arrows (Move Shop step 3) ----------
+  // An off-screen target gets an arrow that floats ARROW_R world px from the character's middle, pointing at it, with its
+  // label beyond the tip (world px, so the gap is the same at any window size). Used by the gym gate (purple, Jess
+  // 2026-11-05, it used to sit at the screen edge) and the Move Shop buildings (red).
+  const ARROW_R = 60;
+  const GYM_ARROW = { halo: '#b48aff', edge: '#1a0b33', main: '#a06bff', lite: '#e2d0ff', text: '#e2d0ff' },
+    SHOP_ARROW = { halo: '#ff5f6d', edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
+  function floatArrow(ctx, cam, pl, tx, ty, s, label, beat, textA = 1) {
+    const ox = pl.x,
+      oy = pl.y - (pl.bodyH || 32) / 2;
+    const a = Math.atan2(ty - oy, tx - ox),
+      ca = Math.cos(a),
+      sa = Math.sin(a);
+    ctx.save();
+    ctx.translate((ox + ca * ARROW_R - cam.left()) * cam.scale, (oy + sa * ARROW_R - cam.top()) * cam.scale);
+    ctx.globalAlpha = 0.14 + beat * 0.16;
+    ctx.fillStyle = s.halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, 18 + beat * 5, 0, 6.2832);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    const tri = (k) => {
+      ctx.beginPath();
+      ctx.moveTo(ca * 22 * k, sa * 22 * k);
+      ctx.lineTo(Math.cos(a + 2.45) * 12 * k, Math.sin(a + 2.45) * 12 * k);
+      ctx.lineTo(Math.cos(a - 2.45) * 12 * k, Math.sin(a - 2.45) * 12 * k);
+      ctx.closePath();
+    };
+    tri(1.15);
+    ctx.fillStyle = s.edge;
+    ctx.fill();
+    tri(1);
+    ctx.fillStyle = beat > 0.5 ? s.lite : s.main;
+    ctx.fill();
+    ctx.globalAlpha = textA;
+    ctx.font = F(800, 11);
+    ctx.textAlign = ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center';
+    const lx = ca * 30,
+      ly = sa * 30 + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,.85)';
+    ctx.strokeText(label, lx, ly);
+    ctx.fillStyle = s.text;
+    ctx.fillText(label, lx, ly);
+    ctx.restore();
+  }
+
   function draw(ctx, w, h, pl, st) {
     ctx.save();
     ctx.textBaseline = 'alphabetic';
@@ -665,8 +712,8 @@ G.HUD = (() => {
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
-    // Gym gate: a big arrow pulsing at the edge if off-screen and, if visible,
-    // an arrow bouncing above; in the arena, a GYM tag.
+    // Gym gate: off screen, an arrow floating off the character (floatArrow); on screen, an arrow bouncing above;
+    // in the arena, a GYM tag.
     const gate = G.GymArena.gate;
     if (gate) {
       const gym = gate.gym;
@@ -695,44 +742,8 @@ G.HUD = (() => {
         ' m';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) {
-        const M = 52,
-          ex = G.U.clamp(sx, M, w - M),
-          ey = G.U.clamp(sy, M + 70, h - M - 80);
-        const a = Math.atan2(sy - ey, sx - ex),
-          ca = Math.cos(a),
-          sa = Math.sin(a);
-        ctx.translate(ex, ey);
-        // Halo que late.
-        ctx.globalAlpha = 0.18 + beat * 0.22;
-        ctx.fillStyle = '#b48aff';
-        ctx.beginPath();
-        ctx.arc(0, 0, 30 + beat * 8, 0, 6.2832);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        const tri = (k) => {
-          ctx.beginPath();
-          ctx.moveTo(ca * 40 * k, sa * 40 * k);
-          ctx.lineTo(Math.cos(a + 2.45) * 20 * k, Math.sin(a + 2.45) * 20 * k);
-          ctx.lineTo(Math.cos(a - 2.45) * 20 * k, Math.sin(a - 2.45) * 20 * k);
-          ctx.closePath();
-        };
-        tri(1.12);
-        ctx.fillStyle = '#1a0b33';
-        ctx.fill();
-        tri(1);
-        ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff';
-        ctx.fill();
-        ctx.font = F(800, 12);
-        ctx.textAlign = ca > 0.3 ? 'right' : ca < -0.3 ? 'left' : 'center';
-        const lx = -ca * 34,
-          ly = -sa * 30 + 4;
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        ctx.strokeText(label, lx, ly);
-        ctx.fillStyle = '#e2d0ff';
-        ctx.fillText(label, lx, ly);
-      } else {
+      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_ARROW, label, beat);
+      else {
         // Above the gate: a bouncing down arrow.
         const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
         ctx.translate(sx, by);
@@ -756,6 +767,48 @@ G.HUD = (() => {
         ctx.fillText(l2, 0, -18);
       }
       ctx.restore();
+    }
+
+    // Move Shop buildings (js/systems/shops.js, step 3): off screen, a red arrow floating off the character; on screen,
+    // a red arrow bouncing above the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres.
+    {
+      const now = performance.now() / 1000,
+        beat = 0.5 + Math.sin(now * 7) * 0.5,
+        blinkOff = Math.floor(now * 4) % 2 === 0;
+      for (const s of G.Shops.list) {
+        const sx = (s.x - cam.left()) * cam.scale,
+          sy = (s.y - cam.top()) * cam.scale,
+          ta = (s.left <= G.Shops.BLINK && blinkOff ? 0.35 : 1) * s.alpha,
+          secs = Math.ceil(s.left) + ' s';
+        if (sx < 0 || sx > w || sy < 0 || sy > h) {
+          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_ARROW, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, beat, ta);
+        } else {
+          const by = (s.y - s.h - cam.top()) * cam.scale - 16 - Math.abs(Math.sin(now * 4)) * 10;
+          ctx.save();
+          ctx.globalAlpha = s.alpha;
+          ctx.translate(sx, by);
+          ctx.beginPath();
+          ctx.moveTo(-15, -12);
+          ctx.lineTo(15, -12);
+          ctx.lineTo(0, 8);
+          ctx.closePath();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = SHOP_ARROW.edge;
+          ctx.stroke();
+          ctx.fillStyle = beat > 0.5 ? SHOP_ARROW.lite : SHOP_ARROW.main;
+          ctx.fill();
+          ctx.globalAlpha = ta;
+          ctx.font = F(800, 11);
+          ctx.textAlign = 'center';
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = 'rgba(0,0,0,.85)';
+          ctx.strokeText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          ctx.fillStyle = SHOP_ARROW.text;
+          ctx.fillText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          ctx.restore();
+        }
+      }
     }
     if (G.GymArena.inArena) {
       ctx.textAlign = 'center';
