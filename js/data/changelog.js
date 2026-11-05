@@ -8,6 +8,24 @@
 G.CHANGELOG = [
   {
     d: '2026-11-04',
+    title: ['Playtest balance', 'Playtest balance'],
+    chg: [
+      [
+        'Hyper Voice, Earthquake, Dark Pulse, Bulldoze, Growl, Leer, Tail Whip and Flamethrower now reach less far.',
+        'Hyper Voice, Earthquake, Dark Pulse, Bulldoze, Growl, Leer, Tail Whip and Flamethrower now reach less far.',
+      ],
+      [
+        'Area Up now adds the same share of covered area to every move, so round moves no longer gain far more than beams. Melee moves gain less reach from it too.',
+        'Area Up now adds the same share of covered area to every move, so round moves no longer gain far more than beams. Melee moves gain less reach from it too.',
+      ],
+      [
+        'Wild Pokemon drop items, Berries, magnets and especially bombs less often.',
+        'Wild Pokemon drop items, Berries, magnets and especially bombs less often.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-04',
     title: ['Sell many at once', 'Sell many at once'],
     new: [
       [

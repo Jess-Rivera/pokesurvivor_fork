@@ -19,23 +19,23 @@ const rate = (c, k) => (c[k] || 0) / N;
 const near = (got, want, tol) => Math.abs(got - want) <= tol;
 const chk = (name, got, want, tol) => { if (!near(got, want, tol)) bad(name + ' ' + got.toFixed(5) + ' want ' + want); };
 
-// wild: ticket 1/400, then ONE shared roll: Oran 0.55%, Sitrus 0.40%, magnet 0.8%, bomb 0.6%; ground pool 1% + Pinap bonus.
-// The berries replace the old 1.2% heal pickup (30% heal): 0.55% x 30% + 0.40% x 50% = 0.365% of max HP per kill, the old 0.36%.
+// wild (playtest cut, Jess 2026-11-04): ticket 1/400, then ONE shared roll: Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%; ground pool 0.4% + Pinap bonus.
+// Direct berries: 0.2% x 30% + 0.1% x 50% = 0.11% of max HP per kill (0.365% before the cut).
 { const c = sample('wild');
   chk('wild ticket', rate(c, 'ticket'), 1 / 400, 0.0006);
-  chk('wild oran', rate(c, 'ground:oran'), 0.0055, 0.001);
-  chk('wild sitrus', rate(c, 'ground:sitrus'), 0.004, 0.0009);
-  chk('wild magnet', rate(c, 'magnet'), 0.008, 0.0012);
-  chk('wild bomb', rate(c, 'bomb'), 0.006, 0.001);
-  chk('wild ground pool', rate(c, 'ground:pool'), 0.01, 0.0015);
+  chk('wild oran', rate(c, 'ground:oran'), 0.002, 0.0006);
+  chk('wild sitrus', rate(c, 'ground:sitrus'), 0.001, 0.0005);
+  chk('wild magnet', rate(c, 'magnet'), 0.004, 0.0008);
+  chk('wild bomb', rate(c, 'bomb'), 0.001, 0.0005);
+  chk('wild ground pool', rate(c, 'ground:pool'), 0.004, 0.001);
   if (c.heal) bad('the old heal pickup no longer drops from wild kills');
-  chk('wild healing per kill (fraction of max HP)', rate(c, 'ground:oran') * 0.3 + rate(c, 'ground:sitrus') * 0.5, 0.0036, 0.0006);
+  chk('wild healing per kill (fraction of max HP)', rate(c, 'ground:oran') * 0.3 + rate(c, 'ground:sitrus') * 0.5, 0.0011, 0.0004);
   const b = sample('wild', { lead: { bonus: 0.02 } });
-  chk('wild ground pool with golden pinap', rate(b, 'ground:pool'), 0.03, 0.002);
+  chk('wild ground pool with golden pinap', rate(b, 'ground:pool'), 0.024, 0.002);
   // berry, magnet and bomb never drop together (one shared roll)
   let both = 0; for (let i = 0; i < N; i++) { const k = G.Drops.roll('wild', 0, 0, { rnd, place() {} }).map(key).filter(k => k === 'ground:oran' || k === 'ground:sitrus' || k === 'magnet' || k === 'bomb'); if (k.length > 1) both++; }
   if (both) bad('berry/magnet/bomb dropped together ' + both);
-  console.log('wild: ticket 1/400, Oran 0.55%, Sitrus 0.40%, magnet 0.8%, bomb 0.6%, ground pool 1% + Pinap, exclusive extras, heal same as before'); }
+  console.log('wild: ticket 1/400, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%, ground pool 0.4% + Pinap, exclusive extras'); }
 
 // guaranteed and fixed-count sources
 const once = (src, want) => { const out = G.Drops.roll(src, 0, 0, { rnd, place() {} }); const c = {}; out.forEach(d => (c[d.pickup] = (c[d.pickup] || 0) + 1));

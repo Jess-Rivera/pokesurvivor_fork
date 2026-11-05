@@ -1233,7 +1233,7 @@
       "space": {
         "shape": "radial",
         "radArc": 0.9,
-        "radRadius": 250,
+        "radRadius": 150,
         "count": 1
       },
       "rehit": 0.2,
@@ -1742,10 +1742,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 760,
+          "growSpeed": 400,
           "dim": "radRadius",
           "per": "time",
-          "max": 380
+          "max": 200
         },
         "endOn": [
           {
@@ -1841,10 +1841,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 500,
+          "growSpeed": 350,
           "dim": "radRadius",
           "per": "time",
-          "max": 200
+          "max": 140
         },
         "endOn": [
           {
@@ -2210,10 +2210,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 500,
+          "growSpeed": 400,
           "dim": "radRadius",
           "per": "time",
-          "max": 200
+          "max": 160
         },
         "endOn": [
           {
@@ -3678,10 +3678,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 400,
+          "growSpeed": 300,
           "dim": "radRadius",
           "per": "time",
-          "max": 160
+          "max": 120
         },
         "endOn": [
           {
@@ -3724,10 +3724,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 400,
+          "growSpeed": 300,
           "dim": "radRadius",
           "per": "time",
-          "max": 160
+          "max": 120
         },
         "endOn": [
           {
@@ -4241,10 +4241,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 400,
+          "growSpeed": 300,
           "dim": "radRadius",
           "per": "time",
-          "max": 160
+          "max": 120
         },
         "endOn": [
           {
@@ -5764,10 +5764,10 @@
         "targeting": "none",
         "motion": "static",
         "grow": {
-          "growSpeed": 650,
+          "growSpeed": 500,
           "dim": "radRadius",
           "per": "time",
-          "max": 260
+          "max": 200
         },
         "endOn": [
           {

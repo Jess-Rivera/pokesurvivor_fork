@@ -138,7 +138,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 ### flamethrower
 - [Approved] Caster-state commitment: slowed plus freeze(all) for its 1.0 s cone. Built. (review 9.9 S13, S14)
 - [Approved] aimTrack is implemented and changes Flamethrower (the data already says it tracks). The aimTrack target rule is sticky: the cast target while it lives and is in range, then the nearest, re-picked whenever lost. (slice-4c.md 4c-3 decisions, Jess 2026-10-27) Built in slice 4c-3.
-- [Approved] "In range" for tracking means within the cone's reach, min(range 420, 250 + the enemy's radius), the same limit as its cast gate. An enemy that walks past reach is dropped and the nearest within reach re-picked; with none the heading holds. (Jess, 2026-10-29) Built in slice 4c-3.
+- [Approved] "In range" for tracking means within the cone's reach, min(range 420, 150 + the enemy's radius), the same limit as its cast gate (radius 150 since playtest round 1, Jess 2026-11-04; was 250). An enemy that walks past reach is dropped and the nearest within reach re-picked; with none the heading holds. (Jess, 2026-10-29) Built in slice 4c-3.
 - Ledger: B4-I07
 
 ### fly

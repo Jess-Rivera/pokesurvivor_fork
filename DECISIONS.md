@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-04, Playtest round 1: smaller novas and Flamethrower, Area Up adds area, fewer wild drops (Jess)
+Playtesters found novas and Flamethrower too big, Area Up favoring them, and drops too common. Base radii are cut. Area Up stays +15% per pick but now means covered area on every shape, so a radius grows by a square root and a beam's length as before. Wild drops: ground 0.4%, Oran 0.2%, Sitrus 0.1%, magnet 0.4%, bomb 0.1%. Roar keeps its 160 px ruling. Melee reach from Area Up drops as a known side effect. Numbers stay TUNE.
+Canonical: BALANCE.md "Moves" and "Drops / economy"; docs/MOVE-INTENT.md flamethrower
+
 ## 2026-11-03, Game font is Silver; Pokebox step 3 prices (Jess)
 The main game font is Silver by Poppy Works (CC BY 4.0), replacing Pixelify Sans, with its gender symbols used on the Team screen. The B/W menus keep their fonts. Boxes 3 to 5 cost 10,000, 25,000, 60,000. A pull with too little space warns, then auto-sells what does not fit at the old repeat refund.
 Canonical: docs/proposals/pokebox-plan.md "Rulings for step 3"; CREDITS.md "Font"

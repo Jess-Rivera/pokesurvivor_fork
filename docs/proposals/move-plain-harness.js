@@ -110,8 +110,8 @@ for (const id of ARCS) {
     [...pol(40, Math.PI), 0]]);                        // behind the caster
 }
 // Novas, rings (no targeting, grow from 1 px): everything inside the final reach once, nothing beyond it. Reach = max + 10.
-geo('hyper-voice', [[20, 0, 1], [100, 0, 1], [0, -200, 1], [-300, 0, 1], [0, 385, 1], [0, -395, 0], [-391, 0, 0]], 0.7);       // max 380 at 760 px/s over 0.5 s
-geo('dark-pulse', [[20, 0, 1], [0, 120, 1], [-205, 0, 1], [0, 215, 0], [300, 0, 0]], 0.6);                                       // max 200 at 500 px/s over 0.4 s
+geo('hyper-voice', [[20, 0, 1], [100, 0, 1], [0, -120, 1], [-180, 0, 1], [0, 205, 1], [0, -215, 0], [-211, 0, 0]], 0.7);       // max 200 at 400 px/s over 0.5 s
+geo('dark-pulse', [[20, 0, 1], [0, 100, 1], [-165, 0, 1], [0, 175, 0], [300, 0, 0]], 0.6);                                       // max 160 at 400 px/s over 0.4 s
 // Dazzling Gleam: a growing half circle aimed at the nearest enemy (the first growing partial arc). max 130, reach 140, 650 px/s over 0.2 s.
 geo('dazzling-gleam', [[30, 0, 1], [100, 60, 1], [100, -60, 1], [135, 0, 1], [141, 0, 0], [-40, 100, 0], [-30, -20, 0], [-100, 0, 0]], 0.5);
 // Bug Buzz: a persistent static circle, radius 120 (reach 130), hits on the first step; the rehit schedule is checked in section 5.
