@@ -89,6 +89,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: one normal run, nothing should change.
 
 **4. One hit contract (M).**
+- Detail approved 2026-11-06 (Jess), map: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard Typing.txt. Split: 4a the neutral hit contract (target family runs the defense and picks the side-effect rules; STAB and the scale travel in the hit, today's values); 4b a balance commit: STAB everywhere, wild Power 40 to 27, mainline type chart with true x0 immunity. Rules: COMBAT-RULES "Damage", "Type chart".
 - Files: move-effects.js, move-sim.js, player.js, enemy.js. Each family owns its attack calculation and its defense calculation (Jess, 2026-11-05: Player entities use the player calculations, Wild entities the wild ones), and `Elite` inherits the wild pair. Each family answers one "take this hit" contract, replacing the split between hits on enemies and hits on the player, including burn and poison. Numbers do not change: your hits keep their formula and a leader's hits on you keep theirs. The slice plan must place STAB and the two damage scalars (1.0 and 0.5), which sit in different halves today, before a player can hit a Player entity.
 - Tests: a parity harness pinning damage, riders, chains, Substitute and DoT before and after, written first; move-intent harness unchanged.
 - Risk: subtle rider bugs, which is why this comes before any leader work.

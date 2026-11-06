@@ -13,7 +13,7 @@ Last updated: 2026-11-06, Quick (work). Branch: feature/entity-model.
 ## Next (in order)
 1. Feel test still owed: win a gym, swap before spending the link, spend it on a benched member.
 2. Lint and format have never run on the work machine (`npm install` first).
-3. Slice 4 (one hit contract): plan first. It must place STAB and the two damage scalars (1.0, 0.5) before a player can hit a Player entity.
+3. Slice 4 APPROVED 2026-11-06 (map: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard Typing.txt). Build 4a first: hit-parity-harness.js WRITTEN 11-06, must pass on today's code BEFORE anything moves. Then 4b (STAB everywhere, wild Power 27, mainline chart, true x0), its own commit with a changelog entry.
 4. Slice 5 (`GymLeader`, Misty first): decide which select/shot/heal sounds are the human's.
 Also: delete merged branches (commands given 11-06); Step 5 feel test; Codex menu with tooltips.
 

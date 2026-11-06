@@ -246,3 +246,9 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Broke: first run failed 6 move harnesses and smoke-newcombat. The new aim method `foes()` collided with G.MoveSim's enemy-owner mark (slice 7a: a caster with foes() is a gym leader's mon), so your moves aimed at you. Renamed `aimTargets()`, added a harness check and a mutation.
 - Stopped at: Jess to run the checks, the mutation runner and the three smokes, then the feel test.
 - Re-run green: check.js 45/45, player-entity-mutate 35/35, smoke-newcombat all passed, smoke-team and smoke-ui re-run. Quick feel test OK (no gym). Committed slices 2 and 3 together.
+
+## 2026-11-06, slice 4 planned (Quick)
+- Decided (Jess): slice 4 splits into 4a (neutral hit contract) and 4b (balance): STAB everywhere at the mainline spot, wild STAB with ENEMY_POWER 40 to 27, the 0.5 scale is the human's, side effects picked by the target, flat damage stays flat, mainline type chart both ways with true x0 immunity (no boss exception, fixed-damage moves check immunity only). Lifts QA-12.
+- Changed: COMBAT-RULES "Damage" and "Type chart" ([Approved], code differs until 4b), a DECISIONS entry, the slice 4 map.
+- Found: leader STAB is folded before the +2 (about 0.5 HP low); wild contact and shots use the enemy's first type; every starter opens with a Grass, Fire or Water move, so no new team is fully walled by immunity.
+- Stopped at: build 4a, parity harness first.

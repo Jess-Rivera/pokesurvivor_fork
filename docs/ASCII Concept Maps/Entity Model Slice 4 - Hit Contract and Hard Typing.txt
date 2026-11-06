@@ -1,0 +1,345 @@
+ENTITY MODEL, SLICE 4: ONE HIT CONTRACT  +  4b: HARD TYPING (review map, 2026-11-06, Quick)
+Source: docs/proposals/host-model-plan.md "4. One hit contract"; docs/COMBAT-RULES.md "Damage", "Type chart".
+Status: [Approved] 2026-11-06. Every decision made: H1 to H5, S1 = B, T1 = true x0, T2, T3, I1 = I2 = I4 as
+proposed, I3 = A (mainline everywhere), I5 = A (mainline). No code written. Build order: 4a, then 4b.
+
+  4a  HIT CONTRACT   behavior-neutral (the plan rule for slices 1 to 4). Proven by a parity harness.
+  4b  MAINLINE      a deliberate BALANCE CHANGE (Jess, 2026-11-06): STAB everywhere + hard typing.
+                    Lifts the QA-12 hold. Own commit.
+  Why split: if both land together, a parity failure cannot tell a refactor bug from the new numbers.
+
+=====================================================================================
+ 4a. TODAY: TWO HIT PATHS, PICKED BY THE ATTACKER
+=====================================================================================
+
+  attacker -> target       entry                      attacker half            defender half
+  ----------------------   ------------------------   ----------------------   --------------------------------
+  you -> wild (move)       move-effects damage()      A = your moveFactor      (A/Def + 2) x STAB x 1.0 (DMG_SCALAR)
+                           -> Enemy.hurt(final dmg)                            x type x items x crit x chain
+  leader -> you (move)     move-effects hurtPlayer()  A = leader factor        (A/Def + 2) x 0.5 (ENEMY_DMG_SCALAR)
+                           -> Player.hurt(A, opts)       x STAB (folded in A)  x type x weather x berry x cushion
+                                                                               x crit x reduction, shield, sash
+  wild -> you (contact,    combat.js, hazards.js      A = enemyAttackFactor    same as the row above
+   shot, hazard)           -> Player.hurt(A, opts)       (no STAB)
+  burn/poison on wild      Enemy.dot()                1/16, 1/8, N/16 max HP   Enemy.hurt
+  burn/poison on you       Player.statusDot()         G.Status stDot           Player.hurt (pure)
+  riders                   APPLY table (wild) vs PL table (you), picked by owner.foes = "the attacker is a leader"
+
+  The problem at slice 5: a leader becomes a Player entity, and you hit it. Today's paths would
+  pick the WILD rider table (you are not a leader), give it no defense of its own, and STAB and
+  the two scalars sit in different halves, so the numbers come out wrong either way.
+
+=====================================================================================
+ 4a. AFTER: ONE CONTRACT, PICKED BY THE TARGET
+=====================================================================================
+
+     ATTACKER (any family)                         TARGET (its family's defense)
+    +----------------------------+   the hit     +--------------------------------------+
+    | A      attacker half       | ------------> | WildEntity.takeHit                   |
+    | stab   1.5 / 1 (H1)        |  {A, cat,     |   Def/SpD at its level, its stages   |
+    | type, cat, power           |   type, stab, |   (A/D + 2) x stab x 1.0 x type ...  |
+    | crit roll, crit mul        |   crit, mul,  |   Enemy.hurt as today                |
+    | chain hop, knockback       |   hop, knock, | PlayerEntity.takeHit                 |
+    | attacker items (Expert     |   who}        |   player Def/SpD, IV/EV, Iron/Zinc   |
+    |  Belt, Power Stone)        |               |   (A/D + 2) x stab x SCALE (H2) ...  |
+    +----------------------------+               |   Player.hurt as today               |
+                                                 +--------------------------------------+
+     DoT:     both families answer takeDot(kind, amount)   (status.js calls one name, H4)
+     riders:  the rider table is picked by the TARGET family, not the attacker (H3)
+     flat:    terrain, bombs, Rocky Helmet, altars, Fissure keep plain hurt(amount) (H5)
+
+  Every number today stays: you -> wild, leader -> you, wild -> you, DoT, riders, Substitute,
+  i-frames, Focus Sash, chain falloff, crit. Elite inherits the wild defense.
+
+=====================================================================================
+ 4a. FILES
+=====================================================================================
+  js/entities/enemy.js       WildEntity.takeHit: the wild defense half (moved from move-effects
+                             damage()), then Enemy.hurt. takeDot = today's dot().
+  js/entities/player.js      PlayerEntity.takeHit: today's Player.hurt defense, fed by the hit.
+                             takeDot = today's statusDot. The damage scale per H2.
+  js/systems/move-effects.js damage() and hurtPlayer() build one hit and call target.takeHit;
+                             applyHit picks the rider table by target family (H3).
+  js/core/stats.js           applyDamage and applyPlayerDefense take STAB and the scale as
+                             arguments instead of fixing them inside (same values).
+  js/systems/combat.js       wild contact and shots on you: takeHit instead of hurt(A, opts).
+  js/systems/hazards.js      the one hazard with an attack factor: takeHit.
+  js/systems/status.js       DoT damage calls takeDot on any host.
+  js/entities/boss-ai.js     the leader factor says its STAB is already folded (stab 1 in the hit).
+  Not in the plan text, added because they hold hits on you: combat.js, hazards.js, status.js,
+  stats.js, boss-ai.js. move-sim.js is NOT touched (who a move can hit stays the attacker's call).
+  Changelog: none (nothing a player sees changes).
+
+=====================================================================================
+ 4a. DECISIONS
+=====================================================================================
+  H1. DECIDED (Jess, 2026-11-06): STAB works everywhere, from anyone to anyone, at the mainline
+      spot: (A/D + 2) x 1.5 when the move or attack type is one of the ATTACKER's types.
+      4a carries stab in the hit but keeps today's values (neutral). The flip is in 4b, the
+      balance commit, with hard typing. What it changes, per attacker:
+
+        attacker -> target   today                        after (4b)
+        ------------------   --------------------------   ----------------------------------
+        you -> wild          (A/D + 2) x 1.5              same
+        leader -> you        (1.5A/D + 2) x 0.5 (folded)  (A/D + 2) x 1.5 x 0.5: +0.5 HP/hit
+        wild -> you          (A/D + 2) x 0.5, no STAB     x 1.5 on EVERY wild hit, see S1
+        you -> leader        (slice 5)                    the mainline formula, like wilds
+        flat damage          no STAB                      no STAB (see H5; mainline agrees)
+
+  S1. DECIDED (Jess, 2026-11-06): B. Wild STAB on, ENEMY_POWER 40 -> 27.
+      Found: a wild enemy's contact AND its shots use its first type (enemy.js atkType =
+      types[0]). So with STAB everywhere, every wild hit on you is STAB: x1.5 damage taken from
+      the whole horde, on top of hard typing.
+      A: take the x1.5. The game gets harder from minute one.
+      B (proposed): STAB on, and the wild placeholder Power (ENEMY_POWER, stats.js, marked
+         TEMPORARY until enemies draw real moves) goes 40 -> 27. Worked by hand:
+           today  (A/D + 2) x 0.5
+           B      (0.675 A/D + 2) x 1.5 x 0.5 = (1.01 A/D + 3) x 0.5   about +0.5 HP per hit
+         The rule is real STAB; the horde's damage stays about where it is.
+      C: STAB on for moves only (you and leaders); wild contact and shots stay without it.
+      Checked 2026-11-06: ENEMY_POWER is read only by the wild attack number (enemy.js
+      atkFactor). That one number feeds wild contact, wild shots and the hazards wild enemies
+      leave, and Elites (atkFactor0 x power x enrage), so all of them move together. Leaders
+      pass their own move power (boss-ai.js; its fallback is a literal 40), so B never
+      touches them. A hazard gets STAB only when its type is the enemy's own type.
+
+  H2. DECIDED: the 0.5 is the human's damage-taken scale. Every other target takes 1.0.
+
+  H3. DECIDED (Jess, 2026-11-06): the side effects of a hit ("riders") are picked by the TARGET.
+      A move hit has a damage part and side effects: flinch, knockback, burn or poison, stat
+      drops, berries. Today there are two side-effect rule sets, and the code picks one by
+      asking "is the ATTACKER a gym leader?":
+
+        side effect    rules for a hit ON YOU             rules for a hit ON A WILD
+        -----------    --------------------------------   --------------------------------
+        flinch         at most one roll per move/0.5 s    every hit rolls
+        knockback      only push moves (Roar) move you    every hit can shove it
+        burn, poison   G.Status (your DoT, berries)       its own burn and poison fields
+        Fissure KO     never                              can KO a plain wild
+
+      Today that question gives the right answer by luck: only leaders hit you with moves,
+      only you hit wilds. At slice 5 a leader is a Player entity and YOU hit it. "Is the
+      attacker a leader?" says no, so the leader would get the WILD rules: shoved by every
+      hit, flinched every hit, burned on fields it does not have.
+      Proposed: ask "what is the TARGET?" instead. A Player entity (you, a leader) gets the
+      left column, a wild entity the right. No change today; correct at slice 5.
+
+  H4. DECIDED: one DoT entry per family (takeDot); the two state models stay apart.
+
+  H5. DECIDED (Jess, 2026-11-06): flat damage stays outside the hit contract (I5 may refine it).
+      The contract is for ATTACKS: damage computed from the attacker's stats and divided by
+      the target's defense (an "attack factor"). Those get STAB, type, crit and defense.
+      FLAT damage is a fixed HP number: no attacker stat, no defense. It just subtracts.
+
+        stays flat (plain hurt), as today        where                 number
+        -------------------------------------    -------------------   ----------------------
+        lava and other damaging liquids          player.js, enemy.js   share of max HP
+        Bomb pickup                              game.js               60 + 14 x level, or KO
+        Rocky Helmet (when touched)              combat.js             15 + 4 x level
+        altars and chests (poison, blast, trap)  interact.js           fixed or share of HP
+        Fissure's one-hit KO                     move-effects.js       the target's HP
+        Dragon Rage, Night Shade (fixed moves)   move-effects.js       40, or your level
+        hazards with no attack factor            hazards.js            the hazard's dmg
+        legendary world bosses' contact          combat.js             their flat dmg
+
+      Why they stay out: there is no attacker half to move, and sending them through the
+      contract would mean inventing a defense and STAB for them, which changes the numbers.
+      Mainline agrees for the fixed moves (Dragon Rage ignores STAB). Two notes:
+       - flat hits on YOU still get the type chart when they have a type (Player.hurt does
+         that today), so hard typing reaches them. Legendary boss contact is the main one.
+       - world bosses on the flat path are a placeholder; moving them to attacks belongs to
+         the WorldBoss plan, not here.
+
+=====================================================================================
+ 4a. TESTS (named, per file)
+=====================================================================================
+  docs/proposals/hit-parity-harness.js   offline, Node   NEW, WRITTEN FIRST, green on today's code
+    | WRITTEN 2026-11-06 (behavior sections 1 to 6). Its structure pins (takeHit callers, rider table
+    |   by target) and hit-parity-mutate.js are added in the 4a build: they cannot pass on today's code.
+    | you -> wild: physical, special, status (PROP_DEF 50); STAB and none; type 2x, 0.5x,
+    |   immune, dual; crit x1.5 x Leek; Expert Belt, type item, Power Stone floor; Def/SpD
+    |   stages; chain hop falloff; wild Substitute; floor of 1
+    | leader -> you: physical and special; folded STAB; crit after defense; Iron/Zinc; Def/SpD
+    |   stages; melee cushion 0.75; dmgReduce cap 0.8; weather; Chilan and type-guard berries;
+    |   Substitute shield and spill; Focus Sash; i-frames 0.45; flying miss
+    | wild -> you: contact with its mul, a shot, an attack-factor hazard
+    | DoT: burn 1/16, poison 1/8, toxic N/16 on a wild; burn and poison stDot on you
+    | riders: flinch 0.5 s gap on you; push only on you; wild knockback; ailment routing
+    | Elite: inherits the wild defense, no knockback
+    | text: applyHit picks the rider table by target; no owner.foes in move-effects; combat.js
+    |   and hazards.js call takeHit
+    WHY: no harness compares the hit paths side by side; the move harnesses check you -> wild
+    only, boss-owner checks leader -> you on a stub body. Expected numbers are worked by hand
+    from the COMBAT-RULES formula and the BALANCE values, with the type values in ONE table at
+    the top (4b changes that table and nothing else). check.js: 45 -> 46 harnesses.
+
+  docs/proposals/hit-parity-mutate.js    mutation runner, run by hand   NEW
+    | breaks: STAB before the +2 on you -> wild; STAB twice; no STAB; the 0.5 scale on a wild;
+    | the 1.0 scale on you; type skipped; crit before defense on you; chain falloff skipped;
+    | rider table back to the attacker; takeDot dropped on one family; shield bypassed;
+    | i-frames ignored; floor of 1 removed; Elite takes knockback; combat.js calls hurt again
+    WHY: proves the parity harness catches each way the merge could shift a number.
+
+  Existing harnesses: fixture edits only, listed so nothing hides:
+    boss-owner, boss-split, gyms-only, gym-reward build a stub player body that records hurt();
+    each gets a takeHit that records the same fields. If any EXPECTED value has to change,
+    stop and find out why. move-intent harness: unchanged. Intent scenarios: none.
+  Smokes: smoke-newcombat (hits, Dragon Rage 40 flat, Giga Drain, riders), smoke-team,
+  smoke-ui, all unchanged. Debug sets: none new.
+  Feel test: a normal run (damage both ways, burn and poison on you and on wilds, Substitute).
+  The gym fight can wait for slice 5, since leaders change there anyway.
+
+=====================================================================================
+ 4b. MAINLINE MATCHUPS: STAB EVERYWHERE (H1, S1) + HARD TYPING (balance change, after 4a)
+=====================================================================================
+  STAB: the hit's stab is 1.5 whenever the attack type is one of the attacker's types, for
+  every attacker (H1). Leaders stop folding it into their factor (boss-ai.js). Wild per S1.
+
+  mainline     x2      x0.5     x0 (immune)    dual: multiply (x4, x0.25)
+  today        x1.6    x0.6     x0.3           dual capped [x0.3, x2.4]
+  proposed     x2.0    x0.5     T1             dual capped T2
+
+  examples (40-power hit, before -> after)     today    proposed
+  Ember on Bulbasaur (fire vs grass/poison)    x1.6     x2.0     +25%
+  Water Gun on Geodude (water vs rock/ground)  x2.4     x4.0     +67%  (today's cap ate it)
+  Tackle on Geodude (normal vs rock)           x0.6     x0.5     -17%
+  Karate Chop on Pidgey (fighting vs nrm/fly)  x0.96    x1.0
+  Thunder Shock on Geodude (ground immune)     x0.3     T1
+  Tackle on Gastly (ghost immune)              x0.3     T1
+  Misty's Water Gun on a Charmander you field  x1.6     x2.0     +25%  (both ways, see T3)
+
+  Why now: the soft chart's reason (types.js header) was "you only carry one active attack
+  and cannot switch Pokemon". Team swaps exist now, so matchups can be played around. Harder
+  typing also raises the value of team building and type items, the survivor-like "typed
+  damage as stat channels" idea in the design reference.
+
+  T1. DECIDED (Jess, 2026-11-06): true x0, mainline. What x0 needs is I1 to I5 below.
+  T2. DECIDED: [x0.25, x4] (mainline) for combos with NO immune type. Any immune type makes
+      the whole hit x0 (0 times anything is 0), so the clamp never lifts an immunity.
+      Proposed (was): Keeping x2.4 would make a double weakness only 1.2x a
+      single one.
+  T3. DECIDED: both ways.
+      Was proposed: yes, as the approved rule says (your attacks AND attacks on you). Feel risk:
+      a starter weak to a gym's type takes 2x, not 1.6x. Watch Misty against a Fire lead.
+
+=====================================================================================
+ 4b. WHAT TRUE x0 NEEDS (I1 to I5, DECIDED 2026-11-06: I1, I2, I4 as proposed; I3 = A; I5 = A)
+=====================================================================================
+
+  Today every hit has a floor of 1 damage, in 4 places:
+    move-effects.js damage()  Math.max(1, ...) twice      your attacks on wilds
+    enemy.js hurt()           Math.max(1, round(amount))  every hit on a wild
+    player.js hurt()          Math.max(1, raw)            every hit on you
+  An immune hit would still do 1, and no hit shows "no effect" (label() says 'weak' for x0).
+
+  I1. Immunity beats the floor. An x0 hit deals 0, both ways. Non-immune hits keep the
+      floor of 1. (Closes the COMBAT-RULES [Open] item "Does immunity override the floor of
+      1?", recommended yes there.)
+
+  I2. What an immune hit does.
+        part                         proposed
+        --------------------------   ---------------------------------------------------
+        damage                       0
+        side effects                 none: no burn, poison, flinch, knockback, stat drop,
+                                     drain heal (mainline: a move that does not affect the
+                                     target has no secondary effect)
+        on you                       no i-frames, no flash, no hurt sound or camera kick,
+                                     Substitute not drained, Focus Sash not used
+        geometry                     it still COUNTS as a hit: a shot stops on it (uses
+                                     its pierce), a chain can hop from it. No move-sim.js
+                                     change. (Alternative: immune targets are see-through
+                                     to your shots; needs move-sim.js, a bigger change.)
+        pure status moves            unchanged: they keep their own immunity lists
+                                     (G.Status, e.g. Electric types and paralysis)
+
+  I3. Bosses that you cannot hurt.
+      Found: a fight with nothing to hit it with. A gym leader enrages (you lose, slowly);
+      an Elite hunts you (you run); a Ghost horde blocks a Normal-only lead.
+      Escape valves today: team swaps, the Move Shop, Power Stone (its type already ignores
+      immunity, typeK floors it at 1).
+        A  DECIDED: mainline everywhere: x0 on wilds, Elites, leaders, world bosses.
+        B  (was proposed) mainline on wilds and gym leaders (you see a gym coming and can plan
+           the team), x0.25 floor on Elites and world bosses (they show up unannounced).
+        C  x0.25 floor on every boss-class target (QA-12's "boss-immunity rule").
+
+  I4. Feedback. A grey "Immune" text on the target (the status-immunity text already says
+      that), at most once per target every 0.5 s so a horde does not spam it. label()
+      returns 'immune'. Same on you.
+
+  I5. Fixed-damage moves and immunity (refines H5).
+      Mainline: fixed-damage moves skip resist and weakness but NOT immunity.
+        Dragon Rage (Dragon, 40)       cannot hit Fairy
+        Night Shade (Ghost, = level)   cannot hit Normal
+        Fissure (Ground, KO)           cannot hit Flying
+      Today they ignore type entirely (move-effects D12, "ignoresType by construction").
+        A  DECIDED: mainline: they check immunity only, still no resist or weakness.
+        B  they stay fully typeless (H5 exactly as approved).
+      Terrain, bombs, Rocky Helmet, altars stay typeless either way (not moves).
+
+  x0 FILES (added to 4b)
+    js/data/types.js           x0, label() 'immune'.
+    js/systems/move-effects.js the two floors, no riders on an immune hit (I2), flat moves
+                               per I5, the boss rule per I3.
+    js/entities/enemy.js       hurt: 0 passes, Immune text (I4).
+    js/entities/player.js      hurt: 0 passes, no i-frames, flash, sound, Sash, shield (I2).
+    docs/COMBAT-RULES.md       the [Open] floor item closed; "Type chart" [Approved] x0.
+
+  x0 TESTS (added to type-chart-harness and type-chart-mutate)
+    | x0 single, immune x weak dual = x0, immune x resist = x0; clamp only without immunity
+    | an immune hit: 0 damage, no rider of each kind, a shot stops on it (I2)
+    | on you: no i-frames, no sound, no Sash, shield untouched
+    | non-immune 0.25x still floors at 1; Power Stone still pierces immunity
+    | I3 boss rule per target class; I4 text once per 0.5 s per target; I5 per move
+    breaks: floor back on immune; riders on immune; i-frames on immune; clamp lifts x0;
+      Power Stone ignored; boss rule on the wrong class; Immune text every frame; I5 off
+
+  4b FILES
+    js/entities/boss-ai.js     the leader factor stops folding STAB (the hit carries it).
+    js/entities/enemy.js       wild contact and shots carry stab (S1); js/core/stats.js
+                               ENEMY_POWER 40 -> 27 if S1 = B.
+    js/data/types.js           SOFT becomes the mainline values per T1, the cap per T2,
+                               the header comment rewritten (English).
+    js/data/changelog.js       a "chg" entry: type matchups are now the mainline x2 / x0.5.
+    docs/COMBAT-RULES.md       "Type chart": hard chart [Approved], QA-12 hold lifted (T1 says
+                               what immunity is). DECISIONS.md: a dated entry. BALANCE.md: the
+                               new values and why.
+
+  4b TESTS
+    docs/proposals/type-chart-harness.js   NEW
+      | single x2.0 / x0.5; immune per T1; dual x4, x1, x0.25 and the T2 cap; immune x weak
+      | clamps; label() super / weak thresholds still right; Power Stone still floors at 1;
+      | Expert Belt still fires on any x > 1; both directions (Player.hurt and the wild defense)
+      WHY: nothing pins the chart's numbers today; the move harnesses read G.Types.mult and
+      follow whatever it says, so a wrong chart would pass them.
+    docs/proposals/type-chart-mutate.js    NEW: the soft values back, the 2.4 cap back, x0
+      immune with no floor rule, dual types added instead of multiplied, one side only.
+    hit-parity-harness.js: its type table and its STAB rows change (the deliberate edits):
+      leader -> you +0.5 HP per STAB hit; wild -> you x1.5 (S1 = A) or about +0.5 HP (S1 = B).
+    type-chart-harness also pins STAB: 1.5 for every attacker family, after the +2, never on
+      flat damage. type-chart-mutate adds: STAB folded before the +2, STAB missing on wild hits,
+      STAB on Dragon Rage.
+    docs/move_rework_holding/move-intent-scenarios.json: the karate-chop ratio scenario goes
+      from 0.375 (0.6 / 1.6) to 0.25 (0.5 / 2.0), note rewritten. Hand-derived.
+    items-f1-harness passes 1.6 only as "some x > 1": no change.
+    Feel test: Ember on a Bulbasaur, Water Gun on a Geodude, Tackle on a Geodude, and a fight
+    where your lead is weak to the enemies' type.
+
+=====================================================================================
+ RISKS
+=====================================================================================
+  - 4a: a rider or multiplier lands in a different order (crit before or after defense on
+    you, chain falloff last). The parity harness pins each, written before anything moves.
+  - 4a: four harness stubs need a takeHit (fixtures only). An expected value changing = stop.
+  - 4b: difficulty both ways. Early gyms against a weak lead get harder; double weaknesses
+    (Geodude to Water) become one-shots. That is the point, but watch the first gyms.
+  - 4b x0, both ways: some of YOUR Pokemon become immune to whole wild families (a Ghost
+    takes 0 from Normal and Fighting contact, Flying from Ground, Steel from Poison). That
+    is a big defensive swing for those teams; watch it.
+  - 4b x0: checked 2026-11-06. Tier 0 wilds (BST 180 to 330, from 0:00) can include Ghosts
+    (Gastly 310) in a region that has them. Every starter opens with Vine Whip, Razor Leaf,
+    Ember or Water Gun, and Grass, Fire and Water have no immunity in the chart, so a new team
+    can hurt everything. The risk returns only for a team built later around Normal moves.
+  - 4b x0 with I3 = A: an Elite or world boss immune to your team's types cannot be hurt.
+    Escape valves: swap, Move Shop, Power Stone, or run. Watch the first feel tests.
+  - 4b: tools/export_data.js publishes the chart for the web pages; it picks up the new
+    values on the next publish, no edit.
