@@ -1,0 +1,132 @@
+ENTITY MODEL, SLICE 2: TEAM MODULE (review map, 2026-11-06, Quick)
+Source: docs/proposals/host-model-plan.md "2. Team module". Behavior-neutral slice.
+Status: [Approved] 2026-11-06 (D1 = B, D2 as proposed). tools/smoke-team.js written, NOT run yet
+(no node or Playwright on the work machine). No game code written.
+
+WHY
+  Today the team lives as loose variables inside G.Game (roster, activeIdx, swapLock,
+  takeField, swapTo, faint branch). Slice 7 gives a GymLeader its own Team, so the
+  team logic must become a module both families can own.
+
+=====================================================================================
+ THE SPLIT
+=====================================================================================
+
+   js/systems/team.js  (NEW, pure rules)           js/game.js  (stays, presentation)
+  +-----------------------------------+          +-----------------------------------+
+  | members[]  (was roster)           |          | swap keys -> asks Team            |
+  | active     (was activeIdx)        |  answer  | Shake off (moves at slice 3)      |
+  | lock 5 s   (was swapLock)         | -------> | toasts, sfx, FX rings, camera     |
+  | canSwap -> OK / locked / trapped  |          | "Trapped!" text                   |
+  |   (also refuses: flying, fainted, |          | run progress carry (callback)     |
+  |    same slot, not playing)        | callback | Re-Do, faint beat, end of run     |
+  | takeField: endDodge, x/y, aim,    | <------- | equipRun, level sync              |
+  |   0.5 s i-frames                  |          | buildFighter, evTeam              |
+  | nextOnFaint: lowest living slot,  |          | pl = Team.active  (ONE place)     |
+  |   clears lock                     |          | G.Game API unchanged:             |
+  | benchTick: benchUpdate on others  |          |   roster, activeIndex,            |
+  | shared stores linked once:        |          |   swapCooldown, swapMax, swap()   |
+  |   stages, cards, dodges,          |          | coopApi shape unchanged (deferred)|
+  |   run items, berries, bonds (D1)  |          +-----------------------------------+
+  +-----------------------------------+
+   no sound, no camera, no text, no input in team.js
+
+  Load order: team.js goes in the dev.html script block AND the NEED array in main.js.
+  Save: save.team loads as today. No new save fields.
+
+=====================================================================================
+ FRAME ORDER (must not move)        today in game.js update(), playing state
+=====================================================================================
+
+   pl.dead?  --yes--> living mate?  --yes--> takeField(lowest slot), lock = 0, return
+      |                  |no
+      |                  +--> Re-Do unused? --yes--> revive all, takeField(last to faint),
+      |                  |                           lock = 0, return
+      |                  +--> faint beat (lock NOT ticking), 1.3 s, endRun
+      no
+      v
+   time += dt
+   lock ticks down          <-- Team.tickLock(dt), same spot
+   handleSwap()             <-- keys in game.js, rules in Team
+   shake / auto-shake
+   biome check
+   pl.update(dt)
+   bench tick + toast       <-- Team.benchTick(dt) returns who fainted, game.js toasts
+   ... enemies, moves, combat (untouched)
+
+=====================================================================================
+ TESTS (named, per file)
+=====================================================================================
+
+  STEP 1, written FIRST, passes on CURRENT code, then unchanged after the move:
+  tools/smoke-team.js   real browser, file://, clicks #tap-start first
+    | swap carries level/XP/kills/bosses/coins/tickets/bonds
+    | 5 s lock after a manual swap; swap refused while locked
+    | a gym-win link survives a swap and a faint swap
+    | bond screen on a BENCHED member spends exactly one link
+    | 0.5 s i-frames on the incoming mon (manual AND faint swap)
+    | refused while trapped ("Trapped!"), flying, or target fainted
+    | five stores stay shared; a swap does NOT refill dodges
+    | faint brings lowest living slot, clears the lock
+    | bench poison can faint a benched mon, with its toast
+    | Re-Do revives once, resumes on the last to faint
+    | wipe ends the run
+    | HUD swap cooldown and swap keys
+    | G.Game.activeIndex / pl match after every swap, faint, revive
+    WHY: nothing tests real swapping today; harnesses only call benchUpdate alone.
+    Not run by check.js (it is a smoke, like smoke-ui). Run it by hand each step.
+
+  docs/proposals/team-harness.js   offline, Node
+    | the module alone with fake members: canSwap answers, lock math,
+    | nextOnFaint ordering (gaps in slots), store linking, bench tick
+    | bonds: +1 on one member reads +1 on all; spend never below 0
+    | expected values derived by hand, not copied from output
+    WHY: the smoke proves the game; this proves the module, so slice 7 can reuse it.
+    check.js picks it up automatically (*harness*.js): 43 -> 44 harnesses.
+
+  docs/proposals/team-mutate.js   mutation runner, run by hand
+    | breaks: lock 5 -> 0, i-frames dropped, highest slot instead of lowest,
+    | lock not cleared on faint, swap allowed while trapped, dodges refilled,
+    | bonds kept per member instead of shared
+    WHY: proves team-harness actually catches those breaks.
+
+  Intent scenarios: none (no move changes).
+  Debug sets: none new. Feel test uses a normal team of 3.
+  Existing harnesses: no edits. If one needs an edit, stop and find out why.
+  check.js: no edit.
+
+=====================================================================================
+ RISKS
+=====================================================================================
+  - Frame order (above). Each call keeps its place; lock frozen during the faint beat.
+  - coopApi / run loop shape (co-op deferred, not tested, so keep it byte-for-byte).
+  - pl must be set in one place, or a stale pl reference survives a swap.
+
+=====================================================================================
+ DECISIONS FOR JESS
+=====================================================================================
+  D1. DECIDED (Jess, 2026-11-06): B. The unspent-link count is ONE Team store.
+      Not the bond groups: those are already per-mon slot data (a slot holding 2+
+      moves IS the group), untouched by this slice.
+
+        TODAY                               SLICE 2
+        pl.bonds = number on each mon       Team.bonds = one number
+        takeField copies it every swap      pl.bonds reads/writes Team.bonds
+        benched mons hold stale copies      no copy, nothing to drift
+
+        writers:  gym-arena.js win  (+1)          unchanged call site
+                  player.js fuse()  (-1)          unchanged call site
+                  game.js bond screen (sets left)  unchanged, now redundant but harmless
+        readers:  game.js offerBond, hud.js link icon   unchanged
+        a Player with no Team (co-op puppets) keeps its own number, as today.
+        Extra file touched: player.js (bonds field reads the Team when linked).
+        Save: bonds are run-only, no save field, nothing to migrate.
+
+  D2. Two things are called "swap lock" today:
+        team swap lock  5 s   game.js swapLock     -> moves to Team
+        slot hold       pl.swapT (Player.SWAP_LOCK, hold before switching MOVE slots)
+                                                    -> stays on the fighter (slice 3)
+      Proposed: Team takes only the first. Docs call the second "slot hold".
+
+FEEL TEST (about a minute): swap a few times, faint one mon on a team of 3, let a
+benched mon get poisoned. Nothing should feel different.

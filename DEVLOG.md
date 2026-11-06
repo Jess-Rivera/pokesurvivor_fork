@@ -225,3 +225,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Left on purpose: `e.elite` classification checks outside the class, including the two in the manager (bosses stat, no relocating).
 - Then planned slice 2 (Team module), detail in the plan. Found: no test covers real swapping, so a file:// smoke test comes first, on the current code.
 - Stopped at: slice 1 committed; slice 2 plan awaits Jess's OK, no slice 2 code written. Slice 1 feel test not confirmed.
+
+## 2026-11-06, slice 2 review and smoke test (Quick)
+- Reviewed slice 2 as an ASCII map (docs/ASCII Concept Maps/Entity Model Slice 2 - Team Module.txt). Slice 2 approved.
+- Decided (Jess): D1, the unspent-link count `pl.bonds` becomes a shared Team store (bond groups stay per-mon slot data); D2, Team takes only the 5 s team swap lock, `pl.swapT` is the "slot hold".
+- Changed: new tools/smoke-team.js (step 1: swap, lock, faint order, links, bench poison, Re-Do, wipe over file://). No game code.
+- Not verified: Quick cannot run node here and the work machine has no Playwright, so the smoke has never run. GitHub API empty again; board mirror still 2026-11-04.
+- Stopped at: run check.js and smoke-team.js at home on the current code, then build team.js.
