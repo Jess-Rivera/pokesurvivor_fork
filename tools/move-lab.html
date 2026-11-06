@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Move Lab (dev tool, never ships; Jess 2026-11-01). Every move in the catalog with the upgrade cards folded in, for hand authoring gym
      slots. It loads the game's own move scripts, so it never drifts from the game: open it from the repo (double-click, or through the
-     local server like dev.html). Cards here work like a gym slot's `cards`: held by one mon and applied to every one of its moves they fit.
+     local server like dev.html). Cards here work like a gym leader's `cards` (gained per loop, pooled): held by the mon and applied to every one of its moves they fit.
      "Load gym" pulls a leader's lineup for a loop and level through G.Gyms.lineup (loop N fields the first N mons). -->
 <html lang="en">
 <head>
@@ -107,7 +107,7 @@
   <section id="detail"></section>
   <section>
     <h2 id="cardsFor">Cards</h2>
-    <div class="note">Held by one mon and applied to every one of its moves they fit, like a gym slot's <code>cards</code>. Click a mon's name to edit its cards.</div>
+    <div class="note">Held by one mon and applied to every one of its moves they fit, like a gym leader's <code>cards</code> (the pool is held by every mon the gym fields). Click a mon's name to edit its cards.</div>
     <button class="btn" id="clear">Clear this mon's cards</button>
     <div id="cards"></div>
     <h2>Copy for gyms.js</h2>
@@ -157,7 +157,7 @@
   $('fType').innerHTML = '<option value="">All types</option>' + types.map((t) => `<option>${t}</option>`).join('');
   $('fForm').innerHTML = '<option value="">All leader forms</option>' + ['melee', 'nova', 'strike', 'shot', 'buff', 'none'].map((f) => `<option>${f}</option>`).join('');
 
-  /** The gym's lineup for that loop at that level (G.Gyms.lineup, the game's own rule): one mon per signature, its moves and cards copied. */
+  /** The gym's lineup for that loop at that level (G.Gyms.lineup, the game's own rule): one mon per signature, its loop's moves and the leader's card pool copied. */
   function loadGym() {
     st.gym = +$('gGym').value;
     st.loop = +$('gLoop').value;
@@ -171,8 +171,8 @@
         power: u.sig.power || 1,
         tempo: u.sig.tempo || 1,
       },
-      moves: u.sig.moves.map((m) => Object.assign({}, m)),
-      cards: Object.assign({}, u.sig.cards || {}),
+      moves: Gy.movesFor(u.sig, u.index, st.loop).map((m) => Object.assign({}, m)), // this loop's set
+      cards: Gy.cardsFor(GYMS[st.gym], st.loop), // the leader's pool for this loop, held by every mon
     }));
     st.act = 0;
     if (st.mons[0].moves[0]) st.sel = st.mons[0].moves[0].id;

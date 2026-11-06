@@ -205,3 +205,15 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests: starter-regions harness (164) and mutation runner (7/7), input-keys mutation 6/6 under real node, check.js all green, smoke-ui all checks passed (login fit, onboarding pass), file:// at 1280, 390 and 844 wide.
 - Broke or open: not feel-tested. Dead quiz code removed from test.js; res-ok and res-other buttons are unwired markup.
 - Stopped at: Jess feel-tests as guest (new guests always see the pick), then commits and pushes.
+
+## 2026-11-05, gym cards become the leader's pool (Claude Desktop)
+- Changed: gym `cards` moved from the roster slot to the gym, keyed by loop, holding the cards GAINED that loop; the pool for loop N is the running sum (G.Gyms.cardsFor) and every mon the gym fields holds it (gyms.js, gym.js makeDef). Brock's loop 1 pool is the old Geodude cards, so loop 1 is unchanged; loop 2 on he gains nothing yet (TUNE). Validator: loop key 1 to 6, whole stacks, running total within the cap, each card fits a move fielded the loop it is gained. BOSS-AUTHORING Cards section and move-lab text updated.
+- Decided (Jess): authored schedule, not mirroring the player; the number per loop is a TUNE value (a player holds about 60 upgrades by Brock loop 2). Also made docs/ASCII Concept Maps/Kanto Gyms 2-8 - Mons and Moves.txt (generated sheet of every gym 2 to 8 mon and move).
+- Tests: gym-harness (new 8b pool checks, 4 new negative cases), boss-owner-harness 247 (pool and cap-across-loops checks), check.js green; boss-owner-mutate 55/60 caught, 0 missed, 5 STALE patterns that were already stale at HEAD (melee tell, chain form, nova order, strike spot x2).
+- Stopped at: card numbers per gym not authored yet; Misty loop 1 is first.
+
+## 2026-11-05, host model: docs and audit (Claude Desktop)
+- Changed: step 0 and step 1 of Jess's host model. COMBAT-RULES "Host model" (strong hosts follow all player rules; weak hosts follow wild rules; legacy note on "strong host" meaning), two DECISIONS entries, a GLOSSARY row (not the co-op host), TODO item. New docs/proposals/host-model-audit.md (16-row gap table, five findings, architecture options A to C, restriction sketch, slice order, open decisions) and host-model-handoff.md for an Opus planning chat. No game code changed.
+- Decided (Jess): leaders swap as a team like the player; elites are weak hosts with added rules; tells stay for now.
+- Found: Player reads input in two places only; the team and swap layer lives in G.Game; status.js strong() is true for boss, elite and gym and false for the player (the opposite of the new model); the arena fields slot 0 only, so slice B changes shape.
+- Stopped at: Jess to commit this branch and open the Opus chat; gym cards for gyms 3 to 8 wait on its plan.

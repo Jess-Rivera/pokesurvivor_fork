@@ -64,6 +64,7 @@ G.Boss = (() => {
       e.teamCards = G.TeamCards.store();
       for (const id of Object.keys(g.cards || {})) G.TeamCards.add(e.teamCards, id, g.cards[id]);
       e.cdMul = 1 / g.tempo;
+      this.healsLeft = Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: the loop number (Jess 2026-11-05)
       e.aim = 0;
       e.strongHost = true;
       e.foes = () => {
@@ -325,14 +326,17 @@ G.Boss = (() => {
     }
 
     /** Self heals (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) cast with no tell, as buffs do, whenever the mon
-     *  is hurt and the move is off cooldown. */
+     *  is hurt and the move is off cooldown, at most as many times per fight as the loop number (loop 1: once, loop 2: twice; Jess
+     *  2026-11-05). A drain move (Giga Drain) is not a self heal and is never counted. */
     heals(now) {
       const e = this.e;
       if (!(e.hp < e.maxHp)) return;
       for (const s of e.activeGroup()) {
+        if (this.healsLeft <= 0) return;
         const d = this.def(s.id);
         if (s.t > 0 || G.Gyms.formOf(d) !== 'heal') continue;
         if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
+        this.healsLeft--;
         G.Gym.noteCast(s.id);
         G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
       }
