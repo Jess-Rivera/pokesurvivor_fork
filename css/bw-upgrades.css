@@ -5,7 +5,7 @@
  * (the Team screen's .bw-btn from bw-team.css). Inventory's frame and cut corners. Display only for now.
  */
 #scr-upgrades {
-  padding: calc(max(calc(46 * var(--u)), 20px) + 8px) 20px 8px; /* below the main menu's top bar */
+  padding: calc(max(calc(46 * var(--u)), 20px) + 8px) 8px 8px; /* below the main menu's top bar */
 }
 .upgw {
   position: relative;
@@ -48,7 +48,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 10px;
-  padding: 26px 40px 12px;
+  padding: 26px 32px 10px;
   background: var(--bw-title);
   color: #000;
   text-shadow: none;
@@ -72,7 +72,7 @@
   align-items: center;
   box-sizing: border-box;
   height: 72px; /* 24 px of it sits under the frame */
-  padding: 0 40px 24px;
+  padding: 0 32px 24px;
   background: var(--bw-charcoal);
   border-top: 2px solid var(--bw-line);
 }
@@ -93,7 +93,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px 32px 8px;
+  padding: 10px 24px 6px;
 }
 
 /* ---------- the four columns; they wrap on narrow windows and the whole block scrolls when short ---------- */
@@ -106,8 +106,8 @@
   justify-content: center;
   align-content: start;
   align-items: start;
-  column-gap: clamp(16px, 5vw, 76px);
-  row-gap: 24px;
+  column-gap: clamp(8px, 1.5vw, 40px);
+  row-gap: 16px;
 }
 .upg-col {
   display: flex;
