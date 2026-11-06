@@ -223,4 +223,5 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Changed: slice 1, structure only. enemy.js class is `G.WildEntity` (`G.Enemy` still names it); new js/entities/elite.js holds only the Elite mods; status.js and move-effects.js read named rules. Elite-class harness 67 checks, mutation runner 34/34. Fixtures in elites, status-sliceC, move-riders and boss-owner harnesses use the new class or rules, expectations unchanged.
 - Verified: check.js 43/43, smoke-ui, and a real Elite fought over file://.
 - Left on purpose: `e.elite` classification checks outside the class, including the two in the manager (bosses stat, no relocating).
-- Stopped at: Jess feel-tests an Elite and commits; slice 2 (Team module) is next.
+- Then planned slice 2 (Team module), detail in the plan. Found: no test covers real swapping, so a file:// smoke test comes first, on the current code.
+- Stopped at: slice 1 committed; slice 2 plan awaits Jess's OK, no slice 2 code written. Slice 1 feel test not confirmed.
