@@ -200,6 +200,16 @@ G.Status = (() => {
     return 'ok';
   }
 
+  /** The grey Immune note on a host hit by a type it is immune to (slice 4b, I4, Jess 2026-11-06): at most once per IMMUNE_GAP s
+   *  per host, so a horde does not spam it. The gap counts down in tick(). Returns true when it showed. */
+  const IMMUNE_GAP = 0.5;
+  function immuneNote(h) {
+    if (h.immCd > 0) return false;
+    h.immCd = IMMUNE_GAP;
+    text(h, 'Immune', '#a3abb8');
+    return true;
+  }
+
   function damage(h, name, amount, color) {
     if (h.takeDot) h.takeDot(name, amount, color); // the one DoT entry of both families (slice 4a, H4)
     else if (typeof h.dot === 'function') h.dot(name, amount, color); // hosts without takeDot (older test hosts)
@@ -243,6 +253,7 @@ G.Status = (() => {
       if (C.t <= 0) h.stCnf = null;
     }
     if (h.shakeCd > 0) h.shakeCd -= dt;
+    if (h.immCd > 0) h.immCd -= dt; // the Immune note gap (slice 4b, I4)
     if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze'); // a frozen sprite stops animating
     const T = h.stTrap;
     if (T && (T.t -= dt) <= 0) {
@@ -480,6 +491,7 @@ G.Status = (() => {
     jitter,
     sleepChance,
     swapLocked,
+    immuneNote,
     shakeable,
     shake,
     autoShake,

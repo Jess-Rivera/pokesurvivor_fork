@@ -29,8 +29,8 @@ Paths: since slice 7b (2026-11-01) there is one move path, the move schema path 
 
 - [Approved] Player to enemy damage uses the real mainline damage formula, tuned toward survivor feel by ONE scalar: `base = ((2*L/5 + 2) * Power * (Atk/Def)) / 50 + 2`, then `* STAB(1.5) * type * crit * SCALAR`. SCALAR is DMG_SCALAR, current value: see js/core/stats.js. (DECISIONS 2026-10-17 Damage model)
 - [Approved] L = attacker level (player's in-run level). Physical moves use Atk vs enemy Def; special moves use SpA vs enemy SpD, each scaled to level by statValue. Category comes from the move's `cat` via G.Stats.moveCat. (DECISIONS 2026-10-17 Damage model)
-- [Approved] STAB = 1.5x when the attack type matches one of the ATTACKER's types, for every attacker and every target (you, wild enemies, Elites, gym leaders), applied after the +2 (the mainline spot). Flat damage gets none. Code differs: gym leaders fold it into their attack half and wild hits have none; entity model slice 4b fixes both. (Jess 2026-11-06, slice 4 H1; DECISIONS 2026-10-17 Damage model; combat-architecture D8)
-- [Approved] Wild STAB is on (wild contact and shots use the enemy's first type), and the stand-in wild Power ENEMY_POWER goes 40 to 27 so horde damage stays about level. Code differs: slice 4b. (Jess 2026-11-06, slice 4 S1)
+- [Approved] STAB = 1.5x when the attack type matches one of the ATTACKER's types, for every attacker and every target (you, wild enemies, Elites, gym leaders), applied after the +2 (the mainline spot). Flat damage gets none. Built in entity model slice 4b (2026-11-06). (Jess 2026-11-06, slice 4 H1; DECISIONS 2026-10-17 Damage model; combat-architecture D8)
+- [Approved] Wild STAB is on (wild contact and shots use the enemy's first type), and the stand-in wild Power ENEMY_POWER goes 40 to 27 so horde damage stays about level. Built in slice 4b. (Jess 2026-11-06, slice 4 S1)
 - [Approved] Damage scale by target: hits on the human take ENEMY_DMG_SCALAR, every other target (wild, Elite, gym leader) takes DMG_SCALAR. Values: js/core/stats.js. (Jess 2026-11-06, slice 4 H2)
 - [Approved] Flat damage (terrain and liquids, bombs, Rocky Helmet, altars and chests, Fissure's KO, Dragon Rage, Night Shade) is outside the hit contract: no attacker half, no defense, no STAB. (Jess 2026-11-06, slice 4 H5)
 - [Approved] Implementation is split (attacker half at cast, defender half at impact) but is mathematically identical to the single formula; the +2 stays after the division and before the STAB/type/crit/scalar multipliers. (DECISIONS 2026-10-17 Damage model)
@@ -40,18 +40,19 @@ Paths: since slice 7b (2026-11-01) there is one move path, the move schema path 
   - dmg = max(1, D x typeK x itemDmgMul x critMul x handlerMul). (combat-architecture D11; handlerMul is move-path specific, see combat-architecture)
 - History (removed in slice 7b-2b, 2026-11-01): the legacy path multiplied the defender half by the move's per-cast normalization `move.norm`. applyDamage has no normalization now (combat-architecture D7).
 - [Approved] Floor: if reduction would make a hit 0, it does 1, except an immune (x0) hit, which does 0. (stat-model notes section 4)
-- [Approved] Immunity overrides the floor of 1. Code differs: slice 4b (no live effect today, since the softened chart has no 0x). (Jess 2026-11-06, slice 4 I1; closes the stat-model notes section 4 Open item)
+- [Approved] Immunity overrides the floor of 1. Built in slice 4b. (Jess 2026-11-06, slice 4 I1; closes the stat-model notes section 4 Open item)
 - [Approved] Crit: no base chance, +3% per Critical Hit card level, crit multiplies by 1.5. Move-based crit stages (12.5% / 50% / 100%) are DROPPED. (archive 2026-10-20 Status Slice D CLOSED; combat-architecture D10; CRIT_MUL in js/systems/combat.js)
 - [Approved] Gym leader hits on the player crit by the same rule: the leader's Critical Hit card level plus the move's own crit percent, no base chance, x1.5 applied after the player's defense. With no crit cards authored, only moves with a crit percent (Psycho Cut 15%) crit today. (Jess 2026-11-01; js/systems/move-effects.js hurtPlayer)
 - [Approved] The naked base-stat layer is intentionally upgrade-dependent: with base stats only, hits-to-kill a common enemy RAMPS over a run. This is BY DESIGN. Do not rebalance base stats to flatten it; tune the upgrade systems to fill the gap. The base layer's only job is a sane early hit-count (about 2 to 4) with a moderate ramp. (DECISIONS 2026-10-17 naked base-stat layer)
 
 ### Type chart
 
-- [Approved] The full mainline chart (6th gen onward): x2 / x0.5 / x0. Dual types multiply; a combo with no immune type clamps to [x0.25, x4]; any immune type makes the hit x0. Used both ways (your attacks and attacks on you). Code differs: built in entity model slice 4b. (Jess 2026-11-06, slice 4 T1 to T3; lifts the QA-12 hold)
+- [Approved] The full mainline chart (6th gen onward): x2 / x0.5 / x0. Dual types multiply; a combo with no immune type clamps to [x0.25, x4]; any immune type makes the hit x0. Used both ways (your attacks and attacks on you). Built in entity model slice 4b (js/data/types.js). (Jess 2026-11-06, slice 4 T1 to T3; lifts the QA-12 hold)
 - [Approved] An immune hit: 0 damage, no side effects (no ailment, flinch, knockback, stat change, drain), no hurt feedback on the human (no i-frames, flash, sound, camera kick, Focus Sash, Substitute drain). It still counts as a hit (a shot stops on it, a chain can hop from it). A grey "Immune" text shows at most once per 0.5 s per target. Pure status moves keep their own immunity lists. (Jess 2026-11-06, slice 4 I2, I4)
 - [Approved] Immunity is mainline on every target class: wild enemies, Elites, gym leaders and world bosses, no boss exception. Power Stone still pierces immunity for its type. (Jess 2026-11-06, slice 4 I3 = A)
 - [Approved] Fixed-damage moves (Dragon Rage, Night Shade, Fissure) check immunity only, never resistance or weakness, as in mainline. (Jess 2026-11-06, slice 4 I5 = A)
-- [Legacy behavior] The live code uses the SOFTENED chart (x1.6 / x0.6 / x0.3, dual capped [x0.3, x2.4]; js/data/types.js SOFT, MIN, MAX). Removed by entity model slice 4b. (QA-12)
+- History: until slice 4b the chart was SOFTENED (x1.6 / x0.6 / x0.3, dual capped [x0.3, x2.4]). (QA-12)
+- [Approved] Test dummies (the harness dummies hit by every move, and the debug test page's dummies) are typeless: x1 to every move, never immune. (Jess 2026-11-06, slice 4 D-T)
 
 ## Orthogonal dials
 

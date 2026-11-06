@@ -187,7 +187,7 @@ G.Stats = (() => {
   // swap to canonical move power when enemies draw real moves (see DECISIONS). Gentle
   // opening (~6% of L1 HP), natural ramp; late threat comes from density, not per-hit %.
   const ENEMY_DMG_SCALAR = 0.5;
-  const ENEMY_POWER = 40;
+  const ENEMY_POWER = 27; // slice 4b (S1, Jess 2026-11-06): 40 -> 27 with wild STAB on, so a wild hit lands about where it did
 
   // Enemy attack category from the higher offensive stat: SpA > Atk => 'special'.
   function enemyCat(atkBase, spaBase) {

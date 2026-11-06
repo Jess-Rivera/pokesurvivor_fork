@@ -67,7 +67,9 @@ G.Hazards = (() => {
         if (pl && !pl.dead && inside(h, pl.x, pl.y, pl.r)) {
           pl.invuln = 0;
           const w = G.Log.on ? G.Log.who(h.src, h.kind) : null;
-          if (h.atkFactor != null) pl.takeHit({ A: h.atkFactor, cat: h.atkCat, type: h.type, stab: 1, who: w }); // slice 4a
+          // slices 4a, 4b: STAB when the hazard's type is one of its source's types (S1)
+          const stab = h.src && h.src.types && h.src.types.includes(h.type) ? G.Stats.STAB : 1;
+          if (h.atkFactor != null) pl.takeHit({ A: h.atkFactor, cat: h.atkCat, type: h.type, stab, who: w });
           else pl.hurt(h.dmg, h.type, false, null, w);
         }
       }

@@ -9,6 +9,9 @@
 // those tables and nothing else. Sections 1 to 6 were written first and passed on the pre-4a code (2026-11-06). Sections 7 and 8
 // came with the 4a build: they check the new rules and wiring and could not pass before it. hit-parity-mutate.js points the HP_*
 // variables (SRC) at altered copies; every mutation must make this fail.
+// Slice 4b (Jess 2026-11-06) edits, each deliberate: the TYPE table becomes mainline, LEADER_STAB and WILD_STAB turn on, the
+// hand helpers return 0 for an immune hit (I1: immunity beats the floor of 1), the fake leader declares STAB with stabFor (as the
+// real leader body now does), and the two floor-of-1 cases move from an immune target (Spooky) to a new x0.25 one (Stony).
 const fs = require('fs'),
   vm = require('vm'),
   path = require('path');
@@ -47,8 +50,8 @@ const K = {
   SASH_IFRAME: 1.2,
   HELMET: (lvl) => 15 + lvl * 4,
 };
-const LEADER_STAB = false; // today a leader folds STAB into its attack half, so the hit adds none (4b: true, H1)
-const WILD_STAB = false; // today wild contact, shots and hazards carry no STAB (4b: true, S1)
+const LEADER_STAB = true; // slice 4b (H1): a leader's STAB travels in the hit, after the +2 (it was folded into its attack half)
+const WILD_STAB = true; // slice 4b (S1): wild contact, shots and hazards carry STAB (they had none)
 // Mainline chart rows for the attack types used here (js/data/types.js CHART, 6th gen onward).
 const RAW = {
   normal: { rock: 0.5, ghost: 0, steel: 0.5 },
@@ -56,12 +59,12 @@ const RAW = {
   water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
   fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
 };
-// How the live chart maps the mainline values today (the softened chart: types.js SOFT, MIN, MAX).
-const TYPE = { map: { 2: 1.6, 0.5: 0.6, 0: 0.3 }, min: 0.3, max: 2.4 };
+// How the live chart maps the mainline values (slice 4b: the mainline values themselves; any immune type makes the hit x0).
+const TYPE = { map: { 2: 2, 0.5: 0.5, 0: 0 }, min: 0.25, max: 4 };
 const tk = (atk, defTypes) => {
   let m = 1;
   for (const t of defTypes) if (RAW[atk][t] != null) m *= TYPE.map[RAW[atk][t]];
-  return Math.min(TYPE.max, Math.max(TYPE.min, m));
+  return m === 0 ? 0 : Math.min(TYPE.max, Math.max(TYPE.min, m));
 };
 const floor1 = (x) => Math.max(1, x); // the floor of 1 on every hit (COMBAT-RULES "Floor")
 const stageMul = (n) => (n >= 0 ? (2 + n) / 2 : 2 / (2 - n)); // mainline stat stage multiplier
@@ -75,6 +78,7 @@ const DEX_BY = {
   5: { dex: 5, name: 'Flamey', types: ['fire'], stats: [39, 52, 43, 60, 50, 65] },
   6: { dex: 6, name: 'Splashy', types: ['water'], stats: [44, 48, 65, 50, 64, 43] },
   7: { dex: 7, name: 'Birdy', types: ['normal', 'flying'], stats: [40, 45, 40, 35, 35, 56] },
+  8: { dex: 8, name: 'Stony', types: ['rock', 'steel'], stats: [50, 50, 100, 50, 50, 30] }, // slice 4b: a x0.25 target for the floor cases
 };
 
 // ---------------- the engine around the hit, stubbed ----------------
@@ -253,6 +257,9 @@ const mkLeader = (A = 3000, o = {}) =>
       strongHost: true,
       foes: () => (curPl ? [curPl] : []),
       moveFactor: () => A,
+      stabFor(m) {
+        return this.types.includes(m.type); // slice 4b: as the real leader body (boss-ai.js)
+      },
       onDealt() {},
       heal() {},
     },
@@ -285,6 +292,7 @@ function expWild(you, def, e, opt = {}) {
   const stab = !status && you.mon.types.includes(def.type) ? K.STAB : 1;
   let k = tk(def.type, e.types) * (W[def.type] || 1);
   if (you.stoneType === def.type) k = Math.max(1, k);
+  if (k === 0) return 0; // slice 4b (I1): an immune hit does nothing
   let items = 1;
   if (you.expertBelt && k > 1) items *= K.ITEM;
   if (you.typeBoost === def.type) items *= K.ITEM;
@@ -298,11 +306,13 @@ function expYou(pl, A, cat, type, opt = {}) {
   const defMul = (1 + (opt.inc || 0)) * (opt.stage || 1) * (pl.defItemMul || 1);
   const stat = (cat === 'special' ? S.spDef(st[4], LVL) : S.defense(st[2], LVL)) * defMul;
   let a = (A / Math.max(1, stat) + 2) * (opt.stab || 1) * (opt.scale != null ? opt.scale : K.YOU_SCALE) * (opt.mul || 1);
+  if (type && tk(type, pl.mon.types) === 0) return 0; // slice 4b (I1)
   if (type) a *= tk(type, pl.mon.types) * (W[type] || 1) * (opt.guard ? K.GUARD : 1);
   return floor1(a * (1 - Math.min(K.REDUCE_CAP, pl.dmgReduce || 0)) * (opt.cushion ? K.CUSHION : 1));
 }
 /** A flat hit on you (no attack factor): type chart, reduction, cushion and the floor only. */
 function expFlatYou(pl, amount, type) {
+  if (type && tk(type, pl.mon.types) === 0) return 0; // slice 4b (I1)
   const a = type ? amount * tk(type, pl.mon.types) * (W[type] || 1) : amount;
   return floor1(a * (1 - Math.min(K.REDUCE_CAP, pl.dmgReduce || 0)));
 }
@@ -318,7 +328,7 @@ const wipeW = () => {
       ok(near(G.Types.mult(a, ts), tk(a, ts)), 'chart: ' + a + ' on ' + ts.join('/') + ' is x' + f3(tk(a, ts)) + ' (game x' + f3(G.Types.mult(a, ts)) + ')');
     }
   ok(G.Types.label(tk('fire', ['grass'])) === 'super' && G.Types.label(tk('fire', ['water'])) === 'weak' && G.Types.label(1) === null, 'chart: super and weak labels');
-  console.log('1 chart: 4 attack types x 7 species match the hand table');
+  console.log('1 chart: 4 attack types x 8 species match the hand table');
 }
 
 // 2. your moves on a wild
@@ -401,7 +411,7 @@ const wipeW = () => {
     const e2 = mkW(1, { invuln: 1 });
     ok(lossOf(e2, () => hit(def, e2, you)) === 0, 'you -> wild, its i-frames: the hit misses');
     const weak = mkYou(5, { atkMul: 1e-9 }),
-      e3 = mkW(4);
+      e3 = mkW(8); // slice 4b: Stony (Normal x0.25, so the floor of 1 acts), since Spooky is now immune
     const g3 = lossOf(e3, () => hit(mv('normal', 'physical', 40), e3, weak));
     ok(near(g3, 1) && near(expWild(weak, mv('normal', 'physical', 40), e3), 1), 'you -> wild, the floor of 1: ' + f3(g3));
   }
@@ -527,7 +537,7 @@ const wipeW = () => {
     ok(lossOf(pl, () => hit(nd, pl, L)) === 0, 'leader -> you, in the air (Fly) the hit misses');
   }
   {
-    const pl = mkYou(4);
+    const pl = mkYou(8); // slice 4b: Stony (Normal x0.25, so the floor of 1 acts), since Spooky is now immune
     const got = lossOf(pl, () => hit(nd, pl, mkLeader(1e-9)));
     ok(near(got, 1) && near(expYou(pl, 1e-9, 'physical', 'normal'), 1), 'leader -> you, the floor of 1: ' + f3(got));
   }
@@ -706,7 +716,7 @@ const wipeW = () => {
     e = mkW(1),
     wd = mv('water', 'special', 60, [{ t: 'damage' }, { t: 'knockback', distance: 100 }]);
   const gw = lossOf(e, () => hit(wd, e, L));
-  const ww = floor1((3000 / Math.max(1, S.spDef(DEX_BY[1].stats[4], LVL)) + 2) * K.WILD_SCALE * tk('water', ['normal']));
+  const ww = floor1((3000 / Math.max(1, S.spDef(DEX_BY[1].stats[4], LVL)) + 2) * leaderStab(L, 'water') * K.WILD_SCALE * tk('water', ['normal']));
   ok(near(gw, ww) && near(e.kx, 100), 'a leader -> a wild: the wild defense (scale 1.0, its STAB folded) and the wild side effects (knockback 100): ' + f3(gw) + ' want ' + f3(ww));
   console.log('7 slice 4a rules: the target picks the side effects and the scale; your STAB on a Player entity lands after the +2');
 }

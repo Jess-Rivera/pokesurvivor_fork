@@ -141,7 +141,12 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
   crowd; a thin mob left frail mons like Charmander barely scratched at ~7%/hit). Bumped 0.35 -> 0.5
   on 2026-10-17 (frail-mon hit now ~8-10% of HP). Mewtwo still tanks (defense path confirmed working),
   so this raised the overall level without breaking bulky-vs-frail differentiation. Still tune by feel.
-- ENEMY_POWER = 40 — flat PLACEHOLDER (no per-enemy move yet). Temporary until enemies draw canonical
+- 2026-11-06, slice 4b (Jess, S1; TUNE by feel): ENEMY_POWER 40 -> 27, because every wild hit now takes STAB x1.5 (contact, shots and
+  hazards use the enemy's own first type). Worked by hand: (0.675 A/D + 2) x 1.5 x 0.5 = (1.01 A/D + 3) x 0.5, so a wild hit lands about
+  +0.5 HP over the old (A/D + 2) x 0.5. Elites build on the same factor, so they follow. Gym leaders pass their own move Power.
+- 2026-11-06, slice 4b (Jess, T1 to T3): the type chart is mainline, x2 / x0.5 / x0, both ways; dual clamp [x0.25, x4] unless immune.
+  Was x1.6 / x0.6 / x0.3, clamp [x0.3, x2.4]. Examples: Ember on Bulbasaur +25%, Water Gun on Geodude +67% (x4), Tackle on Geodude -17%.
+- (old) ENEMY_POWER = 40 — flat PLACEHOLDER (no per-enemy move yet). Temporary until enemies draw canonical
   move power. All enemy attacks (contact/shot/hazard) share this flat power; species variety comes from
   the real Atk/SpA stat, not from power (yet).
 - Natural ramp (chosen): single-hit absolute damage grows with enemy level (1.4@L1 -> 6.9@L50 for a

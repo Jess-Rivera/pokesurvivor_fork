@@ -683,6 +683,11 @@ G.PlayerEntity = class PlayerEntity {
       wk = 1;
     if (type) {
       tk = G.Types.mult(type, this.mon.types);
+      if (tk === 0) {
+        // slice 4b (I1, I2, I4): immune: no damage, no i-frames, flash, sound, camera kick, Focus Sash or shield drain
+        G.Status.immuneNote(this);
+        return 'immune';
+      }
       wk = G.Weather.mult(type);
       eff = G.Types.label(tk);
       // Type-guard berry (ground item, 10 s): a super-effective hit of its type is halved (Chilan: every Normal hit).

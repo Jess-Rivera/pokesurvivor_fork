@@ -73,6 +73,7 @@ G.Boss = (() => {
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
       e.moveFactor = (m) => this.factor(m);
+      e.stabFor = (m) => e.types.includes(m.type); // slice 4b (H1): a leader's STAB, as the player's
       e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
       e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
@@ -356,10 +357,9 @@ G.Boss = (() => {
     factor(m) {
       const e = this.e,
         special = m.cat === 'special';
-      const stab = e.types.includes(m.type) ? 1.5 : 1;
+      // slice 4b (H1, Jess 2026-11-06): no STAB here; the hit carries it (stabFor below, after the +2, the mainline spot)
       return (
         G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, e.gym.level, m.dmg || 40, special ? 'special' : 'physical') *
-        stab *
         e.gym.power *
         G.Gym.enrageMul(e) *
         G.Stages.mul(e, special ? 'spa' : 'atk')

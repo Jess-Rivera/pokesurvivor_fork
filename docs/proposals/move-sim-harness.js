@@ -98,18 +98,22 @@ function both(label, build, secs, want, count = 1) {
 const GOLDEN = {
   'neutral tackle': 20.313513513513513, 'neutral ember': 37.962162162162166, 'neutral water-gun': 25.30810810810811,
   'neutral hydro-pump': 53.27783783783784, 'neutral heat-wave': 77.73162162162163, 'neutral mud-shot': 32.446216216216214,
-  'neutral flamethrower': 81.66486486486487, 'ember vs grass (x1.6, STAB)': 60.73945945945947, 'ember vs grass, crit': 91.10918918918921,
+  'neutral flamethrower': 81.66486486486487, 'ember vs grass (x2, STAB)': 75.92432432432433, 'ember vs grass, crit': 113.88648648648652,
   'water-gun in rain (weather x1.5)': 37.962162162162166, 'ember, owner SpA stage x2': 72.92432432432433, 'tackle vs Def stage -1': 29.470270270270273,
-  'water-gun vs grass with Power Stone (floor 1)': 25.30810810810811, 'ember vs grass, Expert Belt + fire boost': 87.46482162162162,
-  'boss (atkLvl 0) defends at owner level': 33.08372093023256, 'weak owner tackle vs ghost (x0.3), crit, floor': 1.1179459459459458,
-  'weak owner tackle vs ghost, no crit, floor': 1.0 };
+  'water-gun vs grass with Power Stone (floor 1)': 25.30810810810811, 'ember vs grass, Expert Belt + fire boost': 109.33102702702703,
+  'boss (atkLvl 0) defends at owner level': 33.08372093023256, 'weak owner tackle vs rock (x0.5), crit': 1.8632432432432429,
+  'weak owner tackle vs rock/steel (x0.25), no crit, floor': 1.0, 'tackle vs ghost: immune, no hit': null };
+// Slice 4b (mainline chart, Jess 2026-11-06), hand-derived from the old goldens: ember vs grass x1.6 -> x2.0 is x1.25 on all three
+// ember rows (no floor in play). The weak tackle rows moved off ghost (now immune): the defender half D = 1.1179459... / (0.3 x 1.5)
+// does not depend on the target's types, so vs rock x0.5 with a crit it is D x 0.75, and vs rock/steel x0.25 it is D x 0.25 = 0.62,
+// floored to 1. null = no hit at all.
 const CANARY = ['tackle', 'ember', 'water-gun', 'hydro-pump', 'heat-wave', 'mud-shot', 'flamethrower'];
 function firstHit(id, o = {}, e = {}, extra = {}) {
   const w = run(Object.assign({ owner: mkO([id], o), enemies: [mkE(1, 30, 0, e)], seed: 7 }, extra), 0.5, 1 / 60);
   return w.enemies[0].log.length ? w.enemies[0].log[0].a : NaN;
 }
 const GC = [...CANARY.map(id => ['neutral ' + id, () => firstHit(id)]),
-  ['ember vs grass (x1.6, STAB)', () => firstHit('ember', {}, { types: ['grass'] })],
+  ['ember vs grass (x2, STAB)', () => firstHit('ember', {}, { types: ['grass'] })],
   ['ember vs grass, crit', () => firstHit('ember', { critChance: 1 }, { types: ['grass'] })],
   ['water-gun in rain (weather x1.5)', () => firstHit('water-gun', {}, {}, { weather: { water: 1.5 } })],
   ['ember, owner SpA stage x2', () => firstHit('ember', { spaStage: 2 })],
@@ -117,9 +121,10 @@ const GC = [...CANARY.map(id => ['neutral ' + id, () => firstHit(id)]),
   ['water-gun vs grass with Power Stone (floor 1)', () => firstHit('water-gun', { stoneType: 'water' }, { types: ['grass'] })],
   ['ember vs grass, Expert Belt + fire boost', () => firstHit('ember', { expertBelt: true, typeBoost: 'fire' }, { types: ['grass'] })],
   ['boss (atkLvl 0) defends at owner level', () => firstHit('ember', {}, { atkLvl: 0 })],
-  ['weak owner tackle vs ghost (x0.3), crit, floor', () => firstHit('tackle', { level: 2, extraMul: 1, critChance: 1 }, { types: ['ghost'] })],
-  ['weak owner tackle vs ghost, no crit, floor', () => firstHit('tackle', { level: 2, extraMul: 1 }, { types: ['ghost'] })]];
-for (const [k, f] of GC) { const v = f(); ok(near(v, GOLDEN[k]), 'golden ' + k + ': got ' + v + ', want ' + GOLDEN[k]); if (process.env.MOVE_SIM_TABLE) console.log('TABLE|' + k + '|' + v + '|' + GOLDEN[k]); }
+  ['weak owner tackle vs rock (x0.5), crit', () => firstHit('tackle', { level: 2, extraMul: 1, critChance: 1 }, { types: ['rock'] })],
+  ['weak owner tackle vs rock/steel (x0.25), no crit, floor', () => firstHit('tackle', { level: 2, extraMul: 1 }, { types: ['rock', 'steel'] })],
+  ['tackle vs ghost: immune, no hit', () => firstHit('tackle', {}, { types: ['ghost'] })]];
+for (const [k, f] of GC) { const v = f(); ok(GOLDEN[k] === null ? Number.isNaN(v) : near(v, GOLDEN[k]), 'golden ' + k + ': got ' + v + ', want ' + GOLDEN[k]); if (process.env.MOVE_SIM_TABLE) console.log('TABLE|' + k + '|' + v + '|' + GOLDEN[k]); }
 
 // ---- 2. property test: D6 to D11 re-derived here from the text, against applyHit called directly ----
 { fresh();
@@ -141,8 +146,8 @@ for (const [k, f] of GC) { const v = f(); ok(near(v, GOLDEN[k]), 'golden ' + k +
     let k = G.Types.mult(def.type, e.types) * (weather[def.type] || 1);
     if (o.stoneType === def.type) k = Math.max(1, k);
     const item = (o.expertBelt && k > 1 ? 1.2 : 1) * (o.typeBoost === def.type ? 1.2 : 1);
-    const want = Math.max(1, D * k * item * (crit ? 1.5 : 1));
-    ok(r && near(r.dmg, want) && near(e.log[0].a, want) && r.crit === crit, 'property case ' + i + ' ' + def.id + ': ' + (r && r.dmg) + ' vs ' + want);
+    const want = Math.max(1, D * k * item * (crit ? 1.5 : 1)), imm = k === 0; // slice 4b: an immune hit deals 0 and logs nothing (I1, I2)
+    ok(r && (imm ? r.dmg === 0 && !e.log.length && r.crit === false : near(r.dmg, want) && near(e.log[0].a, want) && r.crit === crit), 'property case ' + i + ' ' + def.id + ': ' + (r && r.dmg) + ' vs ' + (imm ? 0 : want));
   }
   weather = {}; }
 

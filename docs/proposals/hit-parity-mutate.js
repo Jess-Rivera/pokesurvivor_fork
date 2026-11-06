@@ -59,7 +59,7 @@ const M = [
   ['an Elite takes knockback', EL, 'this.immovable = true;', ''],
   ['DoT skips takeDot', SS, 'if (h.takeDot) h.takeDot(name, amount, color);', 'if (false) h.takeDot(name, amount, color);'],
   // the other callers (combat.js, hazards.js)
-  ['wild contact skips takeHit', CB, 'pl.takeHit({ A: e.atkFactor, cat: e.atkCat, type: e.atkType, stab: 1, mul: e.contactMul(), who: w });', 'pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);'],
+  ['wild contact skips takeHit', CB, 'res = pl.takeHit({ A: e.atkFactor, cat: e.atkCat, type: e.atkType, stab: stabOf(e, e.atkType), mul: e.contactMul(), who: w });', 'res = pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);'],
   ['a shot loses its multiplier', CB, 'mul: p.mul, who: w', 'mul: 1, who: w'],
   ['a hazard reads the wrong category', HZ, 'pl.takeHit({ A: h.atkFactor, cat: h.atkCat,', "pl.takeHit({ A: h.atkFactor, cat: 'special',"],
 ];

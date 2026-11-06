@@ -2,7 +2,7 @@ ENTITY MODEL, SLICE 4: ONE HIT CONTRACT  +  4b: HARD TYPING (review map, 2026-11
 Source: docs/proposals/host-model-plan.md "4. One hit contract"; docs/COMBAT-RULES.md "Damage", "Type chart".
 Status: [Approved] 2026-11-06. Every decision made: H1 to H5, S1 = B, T1 = true x0, T2, T3, I1 = I2 = I4 as
 proposed, I3 = A (mainline everywhere), I5 = A (mainline). Build order: 4a, then 4b.
-4a BUILT 2026-11-06 (Quick), not yet run. Built differently from the FILES list below (reasons in AS BUILT).
+4a BUILT and committed 2026-11-06. 4b BUILT 2026-11-06 (Quick), not yet run (see 4b AS BUILT).
 
   4a  HIT CONTRACT   behavior-neutral (the plan rule for slices 1 to 4). Proven by a parity harness.
   4b  MAINLINE      a deliberate BALANCE CHANGE (Jess, 2026-11-06): STAB everywhere + hard typing.
@@ -207,6 +207,38 @@ proposed, I3 = A (mainline everywhere), I5 = A (mainline). Build order: 4a, then
   The gym fight can wait for slice 5, since leaders change there anyway.
 
 =====================================================================================
+ 4b. PRE-BUILD SCAN (2026-11-06, Quick): what 4b breaks on purpose, and one new decision
+=====================================================================================
+  Expected values that move ON PURPOSE (each hand-derived, listed for Jess):
+    move-sim-harness GOLDEN     ember vs grass x3 rows: x1.6 -> x2.0 (each value x1.25, no floor in play);
+                                the two tackle-vs-ghost rows: x0.3 -> immune (no hit). Property test: an
+                                immune hit deals 0 and logs nothing (I1, I2); Power Stone still floors at 1.
+    boss-owner-harness          rockFactor loses its x1.5 (leaders stop folding STAB); the rock hit carries
+                                stab 1.5 instead.
+    gym-harness                 Rock Throw / Tackle factor ratio loses its x1.5, same reason.
+    hit-parity-harness          the TYPE table (x2 / x0.5 / x0, clamp [x0.25, x4] unless immune), the two
+                                STAB flags true, the floor exception for immune, the fake leader gets
+                                stabFor (leaders now declare STAB like players). Mutation patterns that
+                                name "stab: 1" in combat.js follow the new lines.
+    move-intent-scenarios.json  karate-chop ratio 0.375 -> 0.25 (0.5 / 2.0).
+  Unaffected: elites-harness (relative factors), items-f1 (1.6 is only "some x > 1"), boss-split.
+
+  D-T DECIDED (Jess, 2026-11-06): T-A, typeless dummies. Was: test dummies are Normal (Normie in 5 harnesses, boss-owner's player; the debug test
+  page spawns Rattata or Pidgey). With true x0, Ghost moves (Lick, Shadow Ball, Hex, Night Shade) do
+  nothing to them, and Ground moves (Mud Shot, Bulldoze, Bonemerang) nothing to Pidgey. Affected:
+  move-plain, move-persist, move-selfcast, team-cards, move-intent (scenarios on Normie), boss-owner
+  (Hex and Shadow Ball on its Normal player), smoke-newcombat sets core, riders, specials, persist,
+  arcs, shots, drops, motion.
+    T-A (proposed): harness dummies become TYPELESS (types the chart does not know: x1 to everything,
+        no immunity). One fixture line per harness; expected values that read the chart live follow.
+        The chart itself is pinned by hit-parity and the new type-chart harness.
+        Debug test page (js/core/debug.js, game code): spawned dummies get the same typeless types, so
+        every move set lands when you feel-test. Immunity is felt on real wilds.
+    T-B: keep Normal dummies; each Ghost or Ground test gets its own non-immune target, and the smoke
+        expects 0 hits for those sets on the debug page. More edits, and the debug page stops showing
+        those moves working.
+
+=====================================================================================
  4b. MAINLINE MATCHUPS: STAB EVERYWHERE (H1, S1) + HARD TYPING (balance change, after 4a)
 =====================================================================================
   STAB: the hit's stab is 1.5 whenever the attack type is one of the attacker's types, for
@@ -310,7 +342,22 @@ proposed, I3 = A (mainline everywhere), I5 = A (mainline). Build order: 4a, then
     breaks: floor back on immune; riders on immune; i-frames on immune; clamp lifts x0;
       Power Stone ignored; boss rule on the wrong class; Immune text every frame; I5 off
 
-  4b FILES
+  4b AS BUILT (2026-11-06)
+  - types.js mainline, label 'immune'. stats.js ENEMY_POWER 27. status.js immuneNote (0.5 s gap, ticked in
+    G.Status.tick). player.js hurt: an immune typed hit returns 'immune' before i-frames, Sash, shield.
+  - move-effects: immuneTo / immuneHit gate both branches of applyHit (moves that deal damage only; Power
+    Stone pierces through typeK). boss-ai: no STAB in factor(), stabFor on the body. combat.js stabOf for
+    contact and shots, no carrier or shot ailment on an immune hit; hazards STAB by source type.
+  - debug.js dummyTypes on all 8 test-dummy spawns. Rocky Helmet and the enemy bounce still fire on an
+    immune touch (they act on the attacker, not on you).
+  - Test edits: move-sim GOLDEN (3 ember rows x1.25; 2 tackle rows moved ghost -> rock, rock/steel; a new
+    immune row; property test knows immune), boss-owner and gym-harness (STAB out of the leader factor,
+    boss-owner checks stab in the hit), hit-parity (tables, helpers, fake leader stabFor, Stony for the
+    floor cases), typeless Normie in move-persist, move-selfcast, team-cards, move-intent; karate-chop
+    scenario 0.25 with its first enemy typed Normal; hit-parity-mutate contact pattern.
+  - New: type-chart-harness.js, type-chart-mutate.js (25).
+
+ 4b FILES (as planned)
     js/entities/boss-ai.js     the leader factor stops folding STAB (the hit carries it).
     js/entities/enemy.js       wild contact and shots carry stab (S1); js/core/stats.js
                                ENEMY_POWER 40 -> 27 if S1 = B.

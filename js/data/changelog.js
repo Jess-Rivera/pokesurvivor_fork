@@ -7,6 +7,24 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-06',
+    title: ['Type matchups', 'Type matchups'],
+    chg: [
+      [
+        'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
+        'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
+      ],
+      [
+        'The same-type attack bonus (x1.5) now applies to everyone: wild Pokemon and gym leaders get it too. Wild attacks were lowered to match, so wild hits land about as hard as before.',
+        'The same-type attack bonus (x1.5) now applies to everyone: wild Pokemon and gym leaders get it too. Wild attacks were lowered to match, so wild hits land about as hard as before.',
+      ],
+      [
+        'Dragon Rage, Night Shade and Fissure now miss Pokemon immune to their type (Fairy, Normal and Flying).',
+        'Dragon Rage, Night Shade and Fissure now miss Pokemon immune to their type (Fairy, Normal and Flying).',
+      ],
+    ],
+  },
+  {
     d: '2026-11-05',
     title: ['PokeSwarm login', 'PokeSwarm login'],
     new: [

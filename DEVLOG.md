@@ -259,3 +259,14 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Deviations: wild defense stays in move-effects (move-sim-harness fakes); boss-ai.js untouched. Test edits: parity sections 7 and 8, player-entity pinned list (+dmgTakenScale), boss-owner and gym-harness fixtures, 4 moved mutation patterns. New hit-parity-mutate.js (31).
 - Ran: everything green except player-entity-harness's isPlayer count in move-effects.js (2; 4a's target routing is a 3rd by design). Count 2 -> 3, plus a check that the 3rd is the routing.
 - Stopped at: rerun player-entity-harness, feel test, commit 4a.
+
+## 2026-11-06, slice 4b built (Quick)
+- 4a committed (one stale count fixed: 3 isPlayer sites in move-effects by design).
+- Decided (Jess): D-T, test dummies are typeless (harnesses and the debug test page) so true x0 does not wall the test sets.
+- Changed: mainline type chart with true x0 (types.js, move-effects gate, player.js, status.js Immune note), STAB everywhere (boss-ai stabFor, combat.js and hazards.js), ENEMY_POWER 27, debug dummies typeless, changelog 2026-11-06. Deliberate test edits listed in the slice 4 map "4b AS BUILT". New type-chart-harness.js and type-chart-mutate.js.
+- Stopped at: Jess to run the checks, both mutation runners and the smokes, then a balance feel test.
+
+## 2026-11-06, end of day (Quick)
+- Wrapped with slice 4b built and committed but NEVER RUN: check.js, both new mutation runners and the smokes were not run on 4b. STATE.md "START HERE" lists the exact first steps.
+- Board mirror not re-synced: the GitHub API returned empty all day (mirror still 2026-11-04).
+- Next: verify 4b and its balance feel test, then plan slice 5 (GymLeader, Misty first).

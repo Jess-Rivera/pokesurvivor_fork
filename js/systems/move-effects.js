@@ -49,7 +49,7 @@ G.MoveEffects = (() => {
     !(e.stg || e.trk) || cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def');
   function typeK(owner, type, e) {
     // D9: chart x weather, floored at 1 for the Power Stone's held type
-    const k = G.Types.mult(type, e.types) * G.Weather.mult(type);
+    const k = G.Types.mult(type, e.types || (e.mon && e.mon.types) || []) * G.Weather.mult(type); // a Player entity's types sit on mon
     return owner.stoneType && owner.stoneType === type ? Math.max(1, k) : k;
   }
   const critOf = (o) => (o.critChance || 0) + (o.stgTeam ? G.Stages.teamSum(o.stgTeam, 'crit') : 0);
@@ -114,7 +114,7 @@ G.MoveEffects = (() => {
 
   /**
    * The hit an attack hands its target (slice 4a, the one hit contract). The attacker decides its half: the attacker factor A (D6),
-   * STAB from the ATTACKER (D8; an owner with no stabFor, a gym leader's mon, folds STAB into A and sends 1), the crit roll (D10) and
+   * STAB from the ATTACKER (D8; every attacker declares it with stabFor since slice 4b, a gym leader's mon included), the crit roll (D10) and
    * its multiplier. The target's family runs the defense half: PlayerEntity.takeHit, or the wild defense in damage() below.
    */
   function blowOf(inst, e, rng) {
@@ -319,7 +319,7 @@ G.MoveEffects = (() => {
   const LATER = new Set(['emit', 'shield']); // emit: slice 4d; shield acts at cast (applyCast)
 
   /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
-   *  the folded Power, STAB, power knob, enrage and Attack stage); Player.hurt does the defender half and the type, as for every enemy hit.
+   *  the folded Power, power knob, enrage and Attack stage; STAB travels in the hit since slice 4b); Player.hurt does the defender half and the type, as for every enemy hit.
    *  Riders onto the player (gym-roster, Jess 2026-11-01): the payload runs in data order like applyHit. Damage takes statusBonus (Hex)
    *  and a crit (the D10 rule: the owner's crit cards plus the move's percent, x1.5 after your defense). Ailments go through G.Status
    *  (burn, poison and toxic as the player's damage over time), so immunity, one major, the hard-CC grace, berries and Shake off hold.
@@ -374,6 +374,7 @@ G.MoveEffects = (() => {
     knockback: shove, // a push-only move (Roar) pushes you; a damaging hit's knockback is still skipped on the player
   };
   function hitPlayer(inst, pl, hop, rng) {
+    if (immuneTo(inst, pl)) return immuneHit(pl); // slice 4b
     const def = inst.spec;
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(def.type, (pl.mon && pl.mon.types) || []), dealt: 0 };
     for (const fx of def.payload || []) {
@@ -385,8 +386,23 @@ G.MoveEffects = (() => {
     return hit;
   }
 
+  /** Slice 4b (I1, I2, I5, Jess 2026-11-06): a move that deals damage (an attack, a fixed or level damage hit, Fissure) does nothing to
+   *  a target immune to its type: no damage and no side effect. Pure status moves keep their own lists (G.Status). Power Stone pierces
+   *  immunity for its type (typeK floors it at 1). */
+  const dealsDamage = (def) =>
+    (def.payload || []).some(
+      (fx) => fx.t === 'damage' || (fx.t === 'special' && (FLAT[fx.handler] || fx.handler === 'ohkoWild'))
+    );
+  const immuneTo = (inst, e) => dealsDamage(inst.spec) && typeK(inst.cast.owner, inst.spec.type, e) === 0;
+  /** An immune hit (I2, I4): still a hit for the sim (a shot stops on it, a chain hops from it), 0 damage, the grey Immune note. */
+  function immuneHit(e) {
+    G.Status.immuneNote(e);
+    return { dmg: 0, crit: false, typeMult: 0, dealt: 0, immune: true };
+  }
+
   function applyHit(inst, e, hop, rng) {
     if (e.isPlayer) return hitPlayer(inst, e, hop, rng); // slice 4a (H3): a Player entity target takes the Player-entity rules, whoever attacks
+    if (immuneTo(inst, e)) return immuneHit(e); // slice 4b
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(inst.spec.type, e.types), dealt: 0 };
     for (const fx of inst.spec.payload || []) {
       const f = APPLY[fx.t];

@@ -94,7 +94,7 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   if (!near(mr.basePower, 45 * 1.3) || mr.space.count !== 3 || !near(mr.space.radRadius, 9 * Math.sqrt(1.3)) || !near(mr.delivery.moveSpeed, 260 * 1.45)) bad('Rock Throw cards: ' + JSON.stringify([mr.basePower, mr.space.count, mr.space.radRadius, mr.delivery.moveSpeed]));
   if (!near(mt.basePower, 40 * 1.3) || !near(mt.space.radRadius, 54 * Math.sqrt(1.3)) || !near(mt.space.radArc, 1.7)) bad('Tackle cards: ' + JSON.stringify([mt.basePower, mt.space.radRadius, mt.space.radArc]));
   const ft = e.brain.factor(adapt(mt)), fr = e.brain.factor(adapt(mr));
-  const want = G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 58.5, 'physical') * 1.5 / G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 52, 'physical');
+  const want = G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 58.5, 'physical') / G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 52, 'physical'); // slice 4b: STAB travels in the hit, not in the factor
   if (!near(fr / ft, want)) bad('power ratio incl. STAB ' + fr / ft + ' vs ' + want);
   if (e.atkFactor == null || e.atkCat !== 'physical') bad('contact factor / cat'); if (e.atkType !== 'normal') bad('contact type ' + e.atkType);
   const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 100)) bad('hurt() does not cut (the Defense stage acts in the damage ratio): ' + taken);

@@ -1,32 +1,35 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-06, Quick (work). Branch: feature/entity-model.
+Last updated: 2026-11-06 end of day, Quick (work). Branch: feature/entity-model.
+
+## START HERE (next session, either tool)
+Slice 4b is BUILT and committed but has NEVER RUN. Before anything else:
+1. `git pull --ff-only`, then: `node tools/check.js` (47/47), `node docs/proposals/type-chart-mutate.js` (25/25), `node docs/proposals/hit-parity-mutate.js` (31/31), `node docs/proposals/move-sim-mutate.js` (no STALE), `node tools/smoke-newcombat.js`, `node tools/smoke-team.js`, `node tools/smoke-ui.js`.
+2. On a FAIL: work out from the game code and COMBAT-RULES whether the test or the game is wrong, and tell Jess which, before editing. Never move an expected value to match output without that proof. List every test edit made after a run.
+3. Jess's balance feel test: Ember on Bulbasaur (x2), Water Gun on Geodude (x4), a Normal move on Gastly (0 and a grey Immune), horde damage about as before, every `G.Debug.newcombat()` set still lands (dummies are typeless).
+4. Green and feels right: Jess commits "4b verified". Then plan slice 5.
+What 4b changed, and every deliberate test edit: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard Typing.txt, "4b PRE-BUILD SCAN" and "4b AS BUILT". Rules: COMBAT-RULES "Damage", "Type chart".
 
 ## Where we are
-- Entity model plan: docs/proposals/host-model-plan.md (12 slices). Slice 1 built and committed; feel test not confirmed.
-- Slice 2 (Team module) BUILT and green 2026-11-06 (check.js, smoke-team, team-mutate, smoke-ui).
-- Slice 3 (`PlayerEntity`, `HumanPlayer`) BUILT and green 2026-11-06 (check.js 45/45, player-entity-mutate 35/35, smoke-team, smoke-ui, smoke-newcombat). Slices 2 and 3 quick feel test OK (Jess); the gym-win link part is still owed. D1 one file; D2 `isPlayer` = follows Player entity rules; D3 berry guards stay a Player-entity rule; D4 the in-play slot keys go through the controller too. Map: docs/ASCII Concept Maps/Entity Model Slice 3 - PlayerEntity and HumanPlayer.txt.
-- Slice 3 first run broke the move path: the aim method was named `foes()`, which G.MoveSim reads as a gym leader's mon (your hits skipped enemy defense, about 3x damage). Renamed `aimTargets()`.
-- Slice 3 files: js/entities/player.js, js/game.js (controller reads), js/main.js (NEED), docs/proposals/player-entity-harness.js, player-entity-mutate.js.
+- Entity model plan: docs/proposals/host-model-plan.md (12 slices). Slices 1, 2, 3, 4a built, green, committed.
+- 4b: mainline chart with true x0 immunity, STAB everywhere, ENEMY_POWER 40 to 27, typeless test dummies.
 
-## Next (in order)
-1. Feel test still owed: win a gym, swap before spending the link, spend it on a benched member.
-2. Lint and format have never run on the work machine (`npm install` first).
-3. Slice 4a BUILT 2026-11-06 and run: all green but one stale count (player-entity-harness expected 2 isPlayer sites in move-effects.js, 4a adds a 3rd by design; fixed). Rerun player-entity-harness, then feel test and commit. Then 4b (STAB everywhere, wild Power 27, mainline chart, true x0), own commit with a changelog entry.
-4. Slice 5 (`GymLeader`, Misty first): decide which select/shot/heal sounds are the human's.
-Also: delete merged branches (commands given 11-06); Step 5 feel test; Codex menu with tooltips.
+## Next (after 4b)
+1. Slice 5 (`GymLeader`, Misty first): plan as an ASCII map; decide which select, shot and heal sounds are the human's.
+2. Owed feel tests: win a gym, swap before spending the link, spend it on a benched member; slice 1 Elite fight.
+3. Work machine: `npm install` once so lint and format run.
+Also: delete merged branches (commands given 11-06); Codex menu with tooltips.
 
 ## Watch
-- File:// font: Chromium blocks assets/fonts/Silver-game.ttf over file:// (CORS; the preload in dev.html line 52). Check whether the game font shows in Chrome from file://. A fix needs a plan (dev.html is game code).
-- Leaders fire all moves at once; one active slot at slice 8 (setActive's rules and sound split there).
-- Two `e.elite` checks remain in the enemy manager. boss-owner-mutate: 5 stale patterns, fixed at slice 5.
-- Board mirror is from 2026-11-04; the GitHub API returned empty on 11-06.
-- Director AI is not in this plan; conflicts with the GDD AI principle [Open].
+- 4b feel risks: a lead weak to a gym's type takes x2; double weaknesses one-shot; an Elite immune to all your team's types cannot be hurt.
+- File:// font: Chromium blocks Silver-game.ttf over file:// (preload, dev.html line 52). Check in Chrome; a fix needs a plan.
+- Leaders fire all moves at once; one active slot at slice 8. boss-owner-mutate: 5 stale patterns, fix at slice 5.
+- TODO.md board mirror is from 2026-11-04; the GitHub API returned empty all of 11-06.
 
 ## Open owner decisions
 - Board cleanup: stale `blocked` on #5 and #11.
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out; Korataki licence.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 
-Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs must click #tap-start first.
+Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first. Smokes find Playwright via PLAYWRIGHT_DIR, then <user folder>\tools\playwright.

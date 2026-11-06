@@ -16,7 +16,7 @@ const load = p => vm.runInThisContext(fs.readFileSync(pathOf(p), 'utf8'), { file
 const noop = new Proxy(function () { }, { get: () => noop, apply: () => undefined, construct: () => ({}) });
 const TYPES = ['normal','fire','water','grass','electric','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
 const tc = {}; TYPES.forEach(t => tc[t] = '#888');
-const DEX_BY = { 1: { name: 'Normie', types: ['normal'], stats: [50, 50, 50, 50, 50, 65] } };
+const DEX_BY = { 1: { name: 'Normie', types: ['typeless'], stats: [50, 50, 50, 50, 50, 65] } /* typeless (slice 4b, D-T): x1 to every move */ };
 global.window = global; global.location = { search: '?dev' };
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
 let enemies = [];
