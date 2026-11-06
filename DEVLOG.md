@@ -217,3 +217,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): leaders swap as a team like the player; elites are weak hosts with added rules; tells stay for now.
 - Found: Player reads input in two places only; the team and swap layer lives in G.Game; status.js strong() is true for boss, elite and gym and false for the player (the opposite of the new model); the arena fields slot 0 only, so slice B changes shape.
 - Stopped at: Jess to commit this branch and open the Opus chat; gym cards for gyms 3 to 8 wait on its plan.
+
+## 2026-11-05, entity model plan and slice 1 (Claude Code)
+- Decided (Jess): `PlayerEntity` and `WildEntity` bases with sub-entities, reusable modules, one hit contract; each family owns its attack and defense calculations; Elites do not change. Plan: docs/proposals/host-model-plan.md, 12 slices. Merged the gym branch to main; work moved to feature/entity-model.
+- Changed: slice 1, structure only. enemy.js class is `G.WildEntity` (`G.Enemy` still names it); new js/entities/elite.js holds only the Elite mods; status.js and move-effects.js read named rules. Elite-class harness 67 checks, mutation runner 34/34. Fixtures in elites, status-sliceC, move-riders and boss-owner harnesses use the new class or rules, expectations unchanged.
+- Verified: check.js 43/43, smoke-ui, and a real Elite fought over file://.
+- Left on purpose: `e.elite` classification checks outside the class, including the two in the manager (bosses stat, no relocating).
+- Stopped at: Jess feel-tests an Elite and commits; slice 2 (Team module) is next.

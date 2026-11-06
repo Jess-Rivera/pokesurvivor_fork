@@ -118,7 +118,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `funding.js` support/funding config.
 
 ### `js/entities/`
-- `player.js`, `enemy.js` (plus the `EnemyMgr` manager), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
+- `player.js`, `enemy.js` (`G.WildEntity`, also named `G.Enemy`, plus the `EnemyMgr` manager), `elite.js` (`G.Elite`, a `WildEntity` holding only its mods), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
   enemy.js body plus a brain; the GymBrain makes every gym leader decision), `projectile.js` (enemy shots in flight; player moves live in G.MoveSim),
   `pickup.js`, `fx.js` and `vfx.js` (the 23 pixel-art attack shapes).
 

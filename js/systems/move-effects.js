@@ -265,7 +265,7 @@ G.MoveEffects = (() => {
   };
   /** Fissure (Jess 2026-11-01): only a wild foe can be KO'd outright; bosses, gym leaders, elites and the player take the hit alone. */
   function ohkoWild(inst, e, rng, fx) {
-    if (!foe(e) || e.isPlayer || e.boss || e.elite || e.gym || !(rng() < pct(fx.koChance || 0))) return;
+    if (!foe(e) || e.isPlayer || e.boss || e.koImmune || e.gym || !(rng() < pct(fx.koChance || 0))) return;
     G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 14, 'One-hit KO!', '#ffd23f');
     e.hurt(e.hp + (e.shield || 0) + 1, '#ffd23f', 0, 0, 0, null);
   }
@@ -288,7 +288,7 @@ G.MoveEffects = (() => {
       if (e.push) e.push(dx, dy, k);
       return;
     }
-    if (e.boss || e.elite) return;
+    if (e.boss || e.immovable) return;
     const [nx, ny] = G.U.norm(dx, dy);
     e.kx = (e.kx || 0) + nx * k;
     e.ky = (e.ky || 0) + ny * k;

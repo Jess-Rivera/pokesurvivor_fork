@@ -22,7 +22,7 @@ Terms: Player entity replaces strong host and Wild entity replaces weak host ("h
 5. One active slot, as the player. The AI picks the slot under the player's slot hold; gyms may author bonds.
 6. Voluntary swaps are a core leader feature, not an extra. Faint swaps come first only because they are the base the AI builds on.
 7. Status: leaders use one FIXED set of leader status rules (below), different from the player's, not a per-gym override. The AI shakes off at 3 taps per second.
-8. Elites keep knockback immunity and no Fissure KO as added rules, and lose the status cut and the short trap.
+8. Elites do not change how they work (Jess, 2026-11-05, replacing the earlier answer that dropped the status cut). An Elite inherits the wild rules, and its current differences stay as its mods on top, status cut included. A later change to wild entities reaches Elites automatically.
 9. Dodge: every leader has it. The AI gets a per-gym tuning knob for how often it uses it.
 10. Contact damage: removed; a gym may author it back.
 11. Progression: level stays gate time + 4 + escalation. Cards, IVs, EVs, nature and items are authored per loop, never a mirror of the player's picks. The heal cap stays per mon until the restriction block holds it.
@@ -32,7 +32,7 @@ Not in this plan: the Director (docs/Director AI Proposal.md). It manages the wi
 ## Corrections to the audit
 
 - Gap 9 said leaders take knockback. The player ignores knockback from damaging hits and only push moves (Roar) move them, so leaders do too.
-- Gap 7 called the status change a flip of `strong()`. In practice Elites leave the group, and leaders move to their own fixed set.
+- Gap 7 called the status change a flip of `strong()`. In practice Elites keep their status cut as an Elite mod, and leaders move to their own fixed set.
 - Trap on the player is only a swap lock, so it does nothing to a leader until voluntary swaps exist (slice 9).
 - Hit routing is larger than the audit implied. `Player.hurt` and `Enemy.hurt` take different arguments, the move effects choose their path by attacker and not by target, burn and poison have separate paths per class, the player's aim loop scans the enemy list (a leader would aim at itself) and `Player.hurt` shakes the camera. Slice 4 fixes this once, for both families.
 
@@ -60,13 +60,13 @@ The validator rejects unknown keys and bad shapes. It does not whitelist behavio
 
 ## Slices
 
-Each slice leaves the game playable and ends with `npm run format`, `node tools/check.js` and the file:// smoke-ui run. Sizes: S under a day, M a day or two, L several days. Slices 2 to 4 are behavior-neutral: harnesses must stay green without edits, and if one has to change, stop and find out why.
+Each slice leaves the game playable and ends with `npm run format`, `node tools/check.js` and the file:// smoke-ui run. Sizes: S under a day, M a day or two, L several days. Slices 1 to 4 are behavior-neutral: harnesses must stay green without edits apart from test fixtures that build the classes, and if one has to change otherwise, stop and find out why.
 
-**1. `WildEntity` and `Elite` (M).**
-- Files: enemy.js (the wild class named `WildEntity`, a new `Elite` subclass takes the scattered `e.elite` branches), elites.js, status.js (Elites leave `strong()`), move-effects.js, COMBAT-RULES.
-- Tests: elites-harness and the status slice harnesses gain "Elite takes the wild timers", "Elite still ignores knockback", "no Fissure KO"; mutation runner on each.
-- Risk: elites get easier to lock down with sleep builds.
-- Feel test: fight an overworld elite with a sleep or freeze move.
+**1. `WildEntity` and `Elite`, structure only (M). BUILT 2026-11-05.**
+- Files: enemy.js (the wild class named `WildEntity`), a new js/entities/elite.js (the `Elite` subclass takes the scattered `e.elite` behavior branches as its mods, including the status cut, knockback immunity and no Fissure KO), spawner.js, status.js and move-effects.js (read the named Elite rule), dev.html, main.js.
+- Tests: a new harness pins an Elite's values and mods, shows it inherits a wild rule changed on the base, and shows a plain wild enemy is unchanged; mutation runner; the elites-harness fixture builds the new class.
+- Risk: constructor order could give an Elite the wrong HP or size.
+- Feel test: fight an overworld elite. Nothing should change.
 
 **2. Team module (M).**
 - Files: a new js/systems/team.js (also added to the dev.html script list and the NEED array in main.js), game.js. The Team owns the roster, active member, swap lock, swap and faint rules and the shared stores (stages, cards, dodges, run items, berries). Toasts, sound and camera stay in `G.Game`, passed in as callbacks. `save.team` loads as today, with no new save fields.
@@ -81,7 +81,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: one normal run, nothing should change.
 
 **4. One hit contract (M).**
-- Files: move-effects.js, move-sim.js, player.js, enemy.js. Each family answers one "take this hit" contract, replacing the split between hits on enemies and hits on the player, including burn and poison. Numbers do not change: your hits keep their formula and a leader's hits on you keep theirs.
+- Files: move-effects.js, move-sim.js, player.js, enemy.js. Each family owns its attack calculation and its defense calculation (Jess, 2026-11-05: Player entities use the player calculations, Wild entities the wild ones), and `Elite` inherits the wild pair. Each family answers one "take this hit" contract, replacing the split between hits on enemies and hits on the player, including burn and poison. Numbers do not change: your hits keep their formula and a leader's hits on you keep theirs. The slice plan must place STAB and the two damage scalars (1.0 and 0.5), which sit in different halves today, before a player can hit a Player entity.
 - Tests: a parity harness pinning damage, riders, chains, Substitute and DoT before and after, written first; move-intent harness unchanged.
 - Risk: subtle rider bugs, which is why this comes before any leader work.
 - Feel test: a normal run plus one gym, nothing should change.
@@ -147,9 +147,9 @@ Later, separate plans: the Elite Four, `WorldBoss`, `Uber`. Co-op stays deferred
 | boss-split-harness and -mutate | Enemy body plus brain split | Retire at 12 |
 | gyms-only-harness and -mutate | gyms as the only boss type | Updated at 5, stays |
 | gym-reward-harness | badge package on a body's death | Moves to team wipe at 7 |
-| status-sliceC and D2 harnesses | old strong rules | Elite cases at 1, leader cases at 5 |
+| status-sliceC and D2 harnesses | old strong rules | Elite cases stay, leader cases change at 5 |
 | stat-stage-harness and -mutate | strong-host Gate, SS13 | Updated at 7 |
-| elites-harness | Elite HP, cadence | Gains added rules at 1 |
+| elites-harness | Elite HP, cadence | Fixture builds the new class at 1, expectations unchanged |
 
 ## Risks across the plan
 

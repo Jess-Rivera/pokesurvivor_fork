@@ -151,7 +151,7 @@ G.Spawner = (() => {
     let pt = null;
     for (let i = 0; i < 6 && !pt; i++) pt = freePoint(pl, Math.random() * 6.2832, isFlyer(def));
     if (!pt) pt = ringPoint(pl, Math.random() * 6.2832);
-    const e = new G.Enemy(def, pt[0], pt[1], G.Enemies.scale(t));
+    const e = new G.Elite(def, pt[0], pt[1], G.Enemies.scale(t));
     if (rollShiny(def.dex)) e.makeShiny();
     G.EnemyMgr.add(e);
     say('¡Un ' + e.name + ' élite apareció!', 3.2);

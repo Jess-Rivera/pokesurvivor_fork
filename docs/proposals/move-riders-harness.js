@@ -139,7 +139,7 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
     e.jump.t = 0.1; e.updateJump(0.1); ok(e.x > 0, 'rooted: a jump in the air still lands'); }
   { const e = mk(0, 0); e.fl = { ph: 'approach', t: 0, sector: -1, scanT: 0 }; root(e); const v = e.flankMove(0.05, near1, 0, 150); ok(v[0] === 0 && v[1] === 0, 'flanker: no motion at speed 0'); }
   { const e = mk(0, 0); root(e); const x0 = e.x; e.kx = 200; stepE(e, 0.3, far); ok(e.x > x0 + 5, 'a rooted enemy is still pushed by knockback'); }
-  for (const k of ['boss', 'elite', 'gym']) { const h = { x: 0, y: 0, maxHp: 100, hp: 100, types: ['normal'], [k]: k === 'gym' ? {} : true };
+  for (const k of ['boss', 'strongStatus', 'gym']) { const h = { x: 0, y: 0, maxHp: 100, hp: 100, types: ['normal'], [k]: k === 'gym' ? {} : true }; // strongStatus: the rule G.Elite turns on
     ok(St.apply(h, 'trap') === 'ok' && near(h.stTrap.t, 0.5), k + ': root cut to 0.5 s'); ok(St.apply(h, 'trap') === 'refresh' && near(h.stTrap.t, 0.5), k + ': no extension');
     St.tick(h, 0.55); ok(!h.stTrap && near(h.stWin.trap, 10), k + ': 10 s window after'); ok(St.apply(h, 'trap') === 'window', k + ': reapply blocked in the window');
     for (let i = 0; i < 101; i++) St.tick(h, 0.1); ok(St.apply(h, 'trap') === 'ok', k + ': reapply after the window'); }
@@ -153,7 +153,7 @@ const within4sd = (k, N, p) => Math.abs(k - N * p) <= 4 * Math.sqrt(N * p * (1 -
   ok(near(a.kx, 90) && near(b.kx, 90) && a.ky === 0, 'Tackle knock 90 like legacy: ' + a.kx);
   stepE(a, 0.5, far); stepE(b, 0.5, far); ok(near(a.x, b.x, 1e-9) && near(a.y, b.y, 1e-9), 'same displacement as the legacy path');
   const c = mk(0, 40); hitWith('body-slam', c, mkO(), () => 0.99, 0, { x: 0, y: 0 }); ok(near(c.ky, 140) && Math.abs(c.kx) < 1e-9, 'direction instance centre -> enemy');
-  for (const k of ['boss', 'elite']) { const e = mk(30, 0); e[k] = k === 'elite' ? { hp: 1, xpMul: 1 } : true; hitWith('tackle', e); ok(e.kx === 0, k + ' is not knocked'); }
+  for (const k of ['boss', 'immovable']) { const e = mk(30, 0); e[k] = true; hitWith('tackle', e); ok(e.kx === 0, k + ' is not knocked'); }
   const s = mk(30, 0); s.shield = 1e9; hitWith('tackle', s); ok(s.kx === 0, 'a shield-absorbed hit does not knock');
   console.log('5 knockback: 90 px impulse as legacy, same path, centre-to-enemy, bosses / elites / full shields unmoved'); }
 

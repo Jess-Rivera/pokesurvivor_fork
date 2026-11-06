@@ -77,7 +77,7 @@ console.log('1 CONTROL table: paralysis 10 s, freeze 2 s (+4 s window), sleep 2-
   console.log('5 freeze: 2 s then a 4 s window, never extended; sleep', Math.min(...ds).toFixed(2) + '-' + Math.max(...ds).toFixed(2), 's, no window'); }
 
 // 6. strong hosts: freeze / sleep at 25% then a 10 s window; paralysis, trap, confusion at full strength
-{ for (const tag of ['boss', 'elite', 'gym']) {
+{ for (const tag of ['boss', 'strongStatus', 'gym']) { // strongStatus: the rule G.Elite turns on (elite-class-harness pins that)
     const b = mk(1, 1e6, { [tag]: true });
     b.applyStatus('freeze'); if (!near(b.stMajor.t, 0.5)) bad(tag + ' freeze ' + b.stMajor.t);
     tickN(b, 0.6); if (b.stMajor) bad(tag + ' freeze did not end'); if (b.applyStatus('freeze') !== 'window' || b.applyStatus('sleep') !== 'ok') { /* sleep has its own window */ }

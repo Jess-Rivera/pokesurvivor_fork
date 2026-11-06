@@ -30,6 +30,7 @@
     'FX',
     'Projectiles',
     'EnemyMgr',
+    'Elite',
     'Boss',
     'Pickups',
     'Player',

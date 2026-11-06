@@ -543,13 +543,13 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   // the player's Roar on enemies: a wild one slides, a boss or an elite does not
   { const roar = G.MoveDefs.roar, mk = (o) => Object.assign({ id: 7000 + Math.random(), x: 50, y: 0, r: 10, dead: false, kx: 0, ky: 0, types: ['normal'], hurt() {} }, o),
       cast = { spec: roar, cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
-    const w = mk(), bo = mk({ boss: true }), el = mk({ elite: true });
+    const w = mk(), bo = mk({ boss: true }), el = mk({ immovable: true }); // immovable: the rule G.Elite turns on (elite-class-harness pins that)
     for (const t of [w, bo, el]) G.MoveEffects.applyHit(cast, t, 0, () => 0);
     ok(w.kx === 140 && w.ky === 0 && bo.kx === 0 && el.kx === 0, 'the player\'s Roar slides a wild enemy (knock 140 away) and never a boss or an elite: ' + [w.kx, bo.kx, el.kx]); }
   // b) Fissure: the KO roll on wild foes only; on the player a strike of power 120
   { const fx = G.MoveDefs.fissure.payload.find(f => f.handler === 'ohkoWild'), only = { spec: Object.assign({}, G.MoveDefs.fissure, { payload: [fx] }), cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
     const mk = (o) => Object.assign({ x: 0, y: 0, r: 10, dead: false, hp: 500, shield: 0, types: ['normal'], hurt(n) { this.hp -= n; if (this.hp <= 0) this.dead = true; } }, o);
-    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ elite: true });
+    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ koImmune: true }); // koImmune: the rule G.Elite turns on
     G.MoveEffects.applyHit(only, w1, 0, () => 0.29); G.MoveEffects.applyHit(only, w2, 0, () => 0.3);
     for (const t of [bo, gy, el]) G.MoveEffects.applyHit(only, t, 0, () => 0);
     ok(fx.koChance === 30 && w1.dead && !w2.dead, 'a wild foe is KO\'d on a roll under 0.30 and not at 0.30');

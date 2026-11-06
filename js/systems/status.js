@@ -56,7 +56,7 @@ G.Status = (() => {
   const GRACE = 2.5; // player: seconds after a hard CC ends in which no new hard CC lands
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
-  const strong = (h) => !!(h.boss || h.elite || h.gym); // the player is NOT strong any more (full timers + Shake off)
+  const strong = (h) => !!(h.boss || h.strongStatus || h.gym); // the player is NOT strong any more (full timers + Shake off)
   const typesOf = (h) => h.types || (h.mon && h.mon.types) || [];
   const fam = (k) => (k === 'toxic' ? 'poison' : k);
   const isControl = (k) => !!CONTROL[k];
