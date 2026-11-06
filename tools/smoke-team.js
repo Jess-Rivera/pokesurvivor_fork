@@ -13,10 +13,16 @@
 //   G.Game.player is roster[activeIndex] after every swap, faint and revive.
 // Enemy spawns are switched off on the test page so nothing else hurts the team. Fails on any page error, console error,
 // or a failed local (file://) request; remote requests (fonts, CDNs) are ignored so the check also runs offline.
+// Known file:// noise, reported as a note and not a failure: Chromium blocks font files over file:// (CORS, origin 'null'), so
+// assets/fonts/*.ttf fails to load in this run. It is not team behavior (first seen 2026-11-06, the preload in dev.html line 52).
 const path = require('path'),
   url = require('url');
 const root = path.resolve(__dirname, '..');
-const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
+// Playwright lookup, first that exists: PLAYWRIGHT_DIR, then <your user folder>\tools\playwright (work: jessvri), then the home default.
+const PW_DIRS = [process.env.PLAYWRIGHT_DIR, path.join(require('os').homedir(), 'tools', 'playwright'), 'C:\\Users\\boric\\tools\\playwright']
+  .filter(Boolean)
+  .map((d) => path.join(d, 'node_modules', 'playwright'));
+const PW = PW_DIRS.find((d) => require('fs').existsSync(d)) || PW_DIRS[0];
 const { chromium } = require(PW);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -31,12 +37,15 @@ async function boot(browser) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage();
   const errs = [];
+  const FONT = /assets\/fonts\/[^ ]*\.(ttf|otf|woff2?)/i;
+  page.notes = [];
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
   page.on('requestfailed', (r) => {
-    if (r.url().startsWith('file:')) errs.push('requestfailed: ' + r.url());
+    if (r.url().startsWith('file:')) (FONT.test(r.url()) ? page.notes : errs).push('requestfailed: ' + r.url());
   });
   page.on('console', (m) => {
-    if (m.type() === 'error' && !/net::ERR_/.test(m.text())) errs.push('console: ' + m.text());
+    if (m.type() !== 'error' || /net::ERR_/.test(m.text())) return;
+    (FONT.test(m.text()) ? page.notes : errs).push('console: ' + m.text().slice(0, 140));
   });
   await page.goto(url.pathToFileURL(path.join(root, 'dev.html')).href + '?dev', { waitUntil: 'load' });
   await page.waitForFunction(() => window.G && G.Game && G.DB && G.Status && G.Spawner, null, { timeout: 30000 });
@@ -276,6 +285,7 @@ async function run(browser) {
   ok((await page.evaluate(() => G.Game.state)) === 'over', 'wipe: the run ends (Re-Do is not used twice)');
 
   ok(errs.length === 0, 'no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
+  if (page.notes.length) console.log('note  known file:// font noise (not a failure): ' + page.notes.length + ' line(s), e.g. ' + page.notes[0].slice(0, 110));
   await ctx.close();
 }
 

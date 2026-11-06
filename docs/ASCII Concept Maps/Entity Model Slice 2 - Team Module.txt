@@ -1,7 +1,8 @@
 ENTITY MODEL, SLICE 2: TEAM MODULE (review map, 2026-11-06, Quick)
 Source: docs/proposals/host-model-plan.md "2. Team module". Behavior-neutral slice.
-Status: [Approved] 2026-11-06 (D1 = B, D2 as proposed). tools/smoke-team.js written, NOT run yet
-(no node or Playwright on the work machine). No game code written.
+Status: [Approved] 2026-11-06 (D1 = B, D2 as proposed). smoke-team passed 34/34 on the pre-slice code.
+BUILT 2026-11-06: team.js, game.js, player.js bonds accessor, dev.html, NEED, team-harness, team-mutate.
+game.js names the Team `runTeam` (endRun already has a local `team`, the co-op member list; no-shadow).
 
 WHY
   Today the team lives as loose variables inside G.Game (roster, activeIdx, swapLock,

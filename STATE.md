@@ -5,22 +5,23 @@ Last updated: 2026-11-06, Quick (work). Branch: feature/entity-model.
 
 ## Where we are
 - Entity model plan: docs/proposals/host-model-plan.md (12 slices). Slice 1 built and committed; feel test not confirmed.
-- Slice 2 (Team module) APPROVED 2026-11-06. D1: the unspent-link count becomes a shared Team store, `pl.bonds` reads it. D2: Team takes only the 5 s team lock; `pl.swapT` is the "slot hold", stays on the fighter. Map: docs/ASCII Concept Maps/Entity Model Slice 2 - Team Module.txt.
-- Step 1 WRITTEN, NEVER RUN: tools/smoke-team.js (file://, team of 3). Quick cannot run node here and Playwright is not on the work machine. No team.js, no game code changed.
-- check.js last green 43 of 43 (2026-11-05).
+- Slice 2 (Team module) BUILT and green 2026-11-06 (check.js, smoke-team, team-mutate, smoke-ui).
+- Slice 3 (`PlayerEntity`, `HumanPlayer`) BUILT and green 2026-11-06 (check.js 45/45, player-entity-mutate 35/35, smoke-team, smoke-ui, smoke-newcombat). Slices 2 and 3 quick feel test OK (Jess); the gym-win link part is still owed. D1 one file; D2 `isPlayer` = follows Player entity rules; D3 berry guards stay a Player-entity rule; D4 the in-play slot keys go through the controller too. Map: docs/ASCII Concept Maps/Entity Model Slice 3 - PlayerEntity and HumanPlayer.txt.
+- Slice 3 first run broke the move path: the aim method was named `foes()`, which G.MoveSim reads as a gym leader's mon (your hits skipped enemy defense, about 3x damage). Renamed `aimTargets()`.
+- Slice 3 files: js/entities/player.js, js/game.js (controller reads), js/main.js (NEED), docs/proposals/player-entity-harness.js, player-entity-mutate.js.
 
 ## Next (in order)
-1. Home: `node tools/check.js`, then `node tools/smoke-team.js` on the CURRENT code. It must pass before anything moves; on a FAIL, find out whether the smoke or the game is wrong first. Unverified spots: the 0.4 s i-frame checks after frames pass; digit keys under a non-default key preset; file:// console noise from the deferred ranking/net layer; a spawn on liquid breaking the full-HP check after Re-Do.
-2. Build slice 2: js/systems/team.js (dev.html + NEED), game.js, player.js bonds read, docs/proposals/team-harness.js (44 harnesses), docs/proposals/team-mutate.js. smoke-team stays unchanged and green.
-3. Slices 3 and 4, then slice 5 (`GymLeader`, Misty first).
-Also: delete merged branches feature/move-shop, fix/stale-mutations, feature/gym-upgrade-authoring; Step 5 feel test; Codex menu with tooltips.
+1. Feel test still owed: win a gym, swap before spending the link, spend it on a benched member.
+2. Lint and format have never run on the work machine (`npm install` first).
+3. Slice 4 (one hit contract): plan first. It must place STAB and the two damage scalars (1.0, 0.5) before a player can hit a Player entity.
+4. Slice 5 (`GymLeader`, Misty first): decide which select/shot/heal sounds are the human's.
+Also: delete merged branches (commands given 11-06); Step 5 feel test; Codex menu with tooltips.
 
 ## Watch
-- Leaders fire all moves at once; one active slot at slice 8.
-- Slice 4 must place STAB and the two damage scalars (1.0, 0.5) before a player can hit a Player entity.
+- File:// font: Chromium blocks assets/fonts/Silver-game.ttf over file:// (CORS; the preload in dev.html line 52). Check whether the game font shows in Chrome from file://. A fix needs a plan (dev.html is game code).
+- Leaders fire all moves at once; one active slot at slice 8 (setActive's rules and sound split there).
 - Two `e.elite` checks remain in the enemy manager. boss-owner-mutate: 5 stale patterns, fixed at slice 5.
 - Board mirror is from 2026-11-04; the GitHub API returned empty on 11-06.
-- Three Misty confusion pulses at 40% could chain-confuse: Ailment Up is the first knob.
 - Director AI is not in this plan; conflicts with the GDD AI principle [Open].
 
 ## Open owner decisions

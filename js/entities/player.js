@@ -5,7 +5,11 @@
  */
 /* Base-stats model (Speed -> movement px/s, HP -> maxHp) lives in js/core/stats.js
  * as G.Stats, shared with enemies. See docs/stat-model-design-notes.md, BALANCE.md. */
-G.Player = class Player {
+/* Entity model slice 3 (docs/proposals/host-model-plan.md, Jess 2026-11-06): G.PlayerEntity holds the rules every Player entity
+ * follows (stats, HP, moves, slots, links, dodge, Fly, statuses, hurt); it moves by this.controller and aims at this.aimTargets().
+ * G.HumanPlayer (below) is you: the keyboard controller, XP, coins, kills, tickets, pickup magnets, the hurt sound and camera
+ * kick, aiming at the enemy list. G.Player names the human class, as G.Enemy names the wild one. */
+G.PlayerEntity = class PlayerEntity {
   /**
    * @param mon   entrada de G.DEX
    * @param perks mejoras permanentes ya resueltas (ver data/upgrades.js)
@@ -38,10 +42,6 @@ G.Player = class Player {
     this.pikaTear = false; // +1.1x damage & speed per fainted teammate
     this.stoneType = null; // Power Stone: this type's moves ignore resistance + immunity (typeK)
     this.regenFlat = perks.regen || 0;
-    this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
-    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, tickets, magnet, bomb), fixed
-    this.xpMul = perks.xpMul || 1;
-    this.coinMul = perks.coinMul || 1;
 
     // Mainline-scaled HP from the real base HP stat (stats[0]); grows with run level.
     // perks.hp (flat HP upgrades) still adds on top. IVs, EVs and nature from the copy (statProf, pokebox steps 4 and 5).
@@ -73,7 +73,7 @@ G.Player = class Player {
     this.active = 0; // hueco activo
     this.swapT = 0; // hold left (s) before you may swap slots again
     this.maxMoves = 4; // huecos
-    this.bonds = 0; // links to use (reward from gym wins)
+    this.bonds = 0; // links to use (reward from gym wins); on a run team the count is the Team's (see the bonds accessor)
 
     // Team stage raises (slice E2a): the live applications of Swords Dance, Agility, Harden, Dragon Dance and Aqua Ring's regen. game.js
     // points every roster member at ONE shared object, so a raise cast by a teammate stays on whoever is on the field until it runs out.
@@ -81,19 +81,11 @@ G.Player = class Player {
     this.stgTeam = {};
 
     this.level = 1;
-    this.xp = 0;
-    this.xpNext = Player.xpFor(1);
-    this.kills = 0;
-    this.bosses = 0;
     this.rerolls = 0; // veces que ha cambiado las cartas de nivel en esta run
-    this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
     this.critChance = perks.crit || 0; // critical hit chance (Upgrades)
     this.critDmgMul = 1; // on top of the base crit multiplier (Leek)
     this.banned = new Set(); // movimientos vetados (Mejoras → Veto): no salen en las cartas
     this.bind = {}; // movimiento -> hueco fijo (0-3), elegido en Mejoras
-    this.coins = 0; // monedas recogidas en esta run
-    this.t1 = 0;
-    this.t10 = 0; // tickets del gacha recogidos en esta run
     this.dmgDealt = 0;
 
     this.invuln = 0;
@@ -391,7 +383,7 @@ G.Player = class Player {
   /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
    *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
   tryDodge(ax, ay) {
-    const D = Player.DODGE,
+    const D = PlayerEntity.DODGE,
       c = this.dodges,
       i = c.cd.indexOf(0);
     if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return false;
@@ -420,7 +412,7 @@ G.Player = class Player {
     }
     if (this.dodgeT <= 0) return;
     this.dodgeT = 0;
-    this.dodges.gap = Player.DODGE.gap;
+    this.dodges.gap = PlayerEntity.DODGE.gap;
   }
 
   setActive(i, free = false) {
@@ -438,7 +430,7 @@ G.Player = class Player {
     }
     this.active = i;
     G.Audio.sfx('select');
-    if (!free) this.swapT = Player.SWAP_LOCK;
+    if (!free) this.swapT = PlayerEntity.SWAP_LOCK;
     const m = this.slots[i][0];
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
   }
@@ -456,6 +448,16 @@ G.Player = class Player {
   // Each gym win gives a link. With it, moves are combined into a
   // single slot and fired at once. Only one group grows (up to BOND_MAX); if
   // none is in progress, the link joins two loose moves.
+  /** Unspent links. On a run team (entity model slice 2, Jess 2026-11-06) every member reads and spends the ONE Team count, so a
+   *  swap never copies it; a Player with no Team (a co-op puppet) keeps its own. The bond groups themselves stay in this.slots. */
+  get bonds() {
+    return this.team ? this.team.bonds : this._bonds || 0;
+  }
+  set bonds(v) {
+    if (this.team) this.team.bonds = v;
+    else this._bonds = v;
+  }
+
   static get BOND_MAX() {
     return 4;
   }
@@ -463,7 +465,7 @@ G.Player = class Player {
   /** What a link can do now: add to a group or join two loose ones. */
   bondOptions() {
     const loose = this.slots.filter((s, i) => s.length === 1 && !this.skillAt(i)).map((s) => s[0]); // a skill never bonds
-    const grow = this.slots.find((s) => s.length > 1 && s.length < Player.BOND_MAX);
+    const grow = this.slots.find((s) => s.length > 1 && s.length < PlayerEntity.BOND_MAX);
     if (grow) return loose.length ? { mode: 'add', group: grow, loose } : null;
     return loose.length >= 2 ? { mode: 'pair', group: null, loose } : null;
   }
@@ -626,6 +628,9 @@ G.Player = class Player {
    * @param type  attack type (type chart and weather); with no type, damage as-is
    * @param pure  damage not reduced by defense or melee (fixed-damage sources)
    */
+  /** Hurt feedback that belongs to the one at the keyboard (HumanPlayer). Called by hurt() only while on the field. */
+  onHurtFeel() {}
+
   hurt(amount, type = null, pure = false, atk = null, who = null) {
     if (this.flyT > 0 && !this.dot && !this.dead) return; // in the air: hits miss, but status damage over time (statusDot) lands
     if (this.invuln > 0 || this.dead) {
@@ -708,8 +713,7 @@ G.Player = class Player {
     this.flash = 0.14;
     if (!this.benched) {
       // a benched Pokemon taking DoT is silent: no shake, sound or numbers at its stale position (the toast says it fainted)
-      G.Audio.sfx('hurt');
-      G.Camera.kick(0.28);
+      this.onHurtFeel(); // the human's hurt sound and camera kick (HumanPlayer); a Player entity has none
       G.FX.dmgText(
         this.x,
         this.y - this.bodyH - 4,
@@ -803,28 +807,6 @@ G.Player = class Player {
     this.hp += amount;
   }
 
-  /** Returns how many levels it gained (there can be several at once). */
-  gainXp(amount) {
-    this.xp += amount * this.xpMul;
-    let leveled = 0;
-    while (this.xp >= this.xpNext) {
-      this.xp -= this.xpNext;
-      this.level++;
-      this.xpNext = Player.xpFor(this.level);
-      leveled++;
-    }
-    // HP scales with run level (mainline formula). Leveling tops up current HP by the
-    // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
-    if (leveled && this.baseHpStat != null) {
-      const newMax = this.maxHpAt(this.level);
-      const gain = newMax - this.maxHp;
-      if (gain > 0) {
-        this.maxHp = newMax;
-        this.hp += gain;
-      }
-    }
-    return leveled;
-  }
 
   /** Bring a benched teammate up to the shared run level: recompute maxHp for the
    *  new level, preserving current-hp fraction (so swapping is neither a free heal
@@ -832,12 +814,10 @@ G.Player = class Player {
   syncLevel(level) {
     if (this.baseHpStat == null || level <= this.level) {
       this.level = level;
-      this.xpNext = Player.xpFor(level);
       return;
     }
     const frac = this.maxHp > 0 ? this.hp / this.maxHp : 1;
     this.level = level;
-    this.xpNext = Player.xpFor(level);
     this.maxHp = this.maxHpAt(level);
     this.hp = Math.round(this.maxHp * frac);
   }
@@ -931,7 +911,7 @@ G.Player = class Player {
 
     // --- movement with collisions ---
     // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || this.stFl || this.stPush || G.Status.stunned(this) ? [0, 0] : G.Input.axis(); // frozen, asleep, flinched or pushed: no input
+    let [ax, ay] = this.frozen || this.stFl || this.stPush || G.Status.stunned(this) ? [0, 0] : this.controller.axis(); // frozen, asleep, flinched or pushed: no input (slice 3: the controller)
     if (this.stCnf && (ax || ay)) {
       // confused: your heading drifts (half weight)
       const m = Math.hypot(ax, ay),
@@ -948,7 +928,7 @@ G.Player = class Player {
     }
     // Dodge: a push, a flinch, freezing or sleep cancels the one in progress (its charge stays spent).
     if (this.dodgeT > 0 && (this.frozen || this.stFl || this.stPush || G.Status.stunned(this))) this.endDodge();
-    if (G.Input.action('dodge')) this.tryDodge(ax, ay);
+    if (this.controller.dodge()) this.tryDodge(ax, ay);
     const dodging = this.dodgeT > 0;
     this.walking = ax !== 0 || ay !== 0 || dodging;
     const s = this.spd;
@@ -968,7 +948,7 @@ G.Player = class Player {
       this.svy = this.dodgeVy;
     } else if (this.iceGlide) {
       // a dodge that ended on ice keeps its speed until you leave the ice; your keys turn the heading as slowly as ice steering
-      const v = Player.DODGE.dist / Player.DODGE.dur,
+      const v = PlayerEntity.DODGE.dist / PlayerEntity.DODGE.dur,
         [hx, hy] = ax || ay ? [ax, ay] : G.U.norm(this.svx || 0, this.svy || 0);
       const gx = G.U.damp(this.svx || 0, hx * v, 1.6, dt),
         gy = G.U.damp(this.svy || 0, hy * v, 1.6, dt),
@@ -992,7 +972,7 @@ G.Player = class Player {
       this.dodgeEl += dt;
       // past the shrink window the body grows back as soon as it fits where you stand (it never pops out of a gap mid-dodge)
       const fits = this.flyT > 0 || G.World.isFree(this.x, this.y, this.dodgeR0, true);
-      if (this.dodgeR0 && this.dodgeEl >= Player.DODGE.shrinkT && fits) {
+      if (this.dodgeR0 && this.dodgeEl >= PlayerEntity.DODGE.shrinkT && fits) {
         this.r = this.dodgeR0;
         this.dodgeR0 = 0;
       }
@@ -1028,8 +1008,8 @@ G.Player = class Player {
     //   melee and the rest:           what is touching you > the boss > the nearest
     // With a horde on top something is almost always touching you; if that always won,
     // ranged attacks would never hit the boss.
-    // With no enemies, it targets the nearest rock or chest.
-    const all = G.EnemyMgr.all();
+    // With no foes, it targets aimFallback() (yours: the nearest rock or chest). Foes are this.aimTargets() (slice 3; yours: the enemies).
+    const all = this.aimTargets();
     const m = this.activeMove();
     const md = m && G.MoveDefs[m.id];
     const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
@@ -1038,7 +1018,7 @@ G.Player = class Player {
     const tg =
       (ranged ? boss || threat : threat || boss) ||
       G.Projectiles.nearest(all, this.x, this.y, 520) ||
-      G.World.nearestBreakable(this.x, this.y, 200);
+      this.aimFallback();
     this.target = tg;
     if (tg) this.aim = Math.atan2(tg.y - this.y, tg.x - this.x);
     else if (this.walking) this.aim = this.moveAngle;
@@ -1047,6 +1027,16 @@ G.Player = class Player {
     const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
     this.anim.dir = G.Sprites.dirFromAngle(face);
     this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? s / 110 : 1);
+  }
+
+  /** What this entity aims at (slice 3). A bare Player entity has none; HumanPlayer: the enemy list. Not named foes(): G.MoveSim
+   *  reads a caster's foes() as the mark of an enemy owner (a gym leader's mon) and would turn your moves on yourself. */
+  aimTargets() {
+    return [];
+  }
+  /** What to aim at when no foe is in range. HumanPlayer: the nearest rock or chest. */
+  aimFallback() {
+    return null;
   }
 
   /** A flying player stays inside a gym arena's circle (its walls no longer hold it). */
@@ -1076,49 +1066,6 @@ G.Player = class Player {
     G.Audio.sfx('heal');
   }
 
-  // ---------------- companion (co-op) ----------------
-
-  /**
-   * A teammate on another computer: their owner sends their state (position, health,
-   * active move...) and it is followed smoothly here.
-   * n = { x, y, ang, walk, hp, maxHp, dead, mv, ml, mag, aim, rev }
-   */
-  netUpdate(dt) {
-    this.anim.update(dt);
-    const n = this.net;
-    if (!n) return;
-    if (this.flash > 0) this.flash -= dt;
-    if (this.attackFace > 0) this.attackFace -= dt;
-    if (G.U.dist2(this.x, this.y, n.x, n.y) > 300 * 300) {
-      this.x = n.x;
-      this.y = n.y;
-    } else {
-      this.x = G.U.damp(this.x, n.x, 14, dt);
-      this.y = G.U.damp(this.y, n.y, 14, dt);
-    }
-    if (n.hp < this.hp - 0.5 && !n.dead) this.flash = 0.14;
-    this.hp = n.hp;
-    this.maxHp = n.maxHp;
-    this.magnet = n.mag || this.magnet;
-    this.reviveT = n.rev || 0;
-    if (n.dead && !this.dead) {
-      this.dead = true;
-      this.anim.play('Faint', { hold: true });
-    } else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
-    // Active move (for the halo and the HUD).
-    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.MoveDefs[n.mv]) {
-      this.moves = [G.Moves.instance(n.mv)];
-      this.slots = [this.moves.slice()];
-      this.active = 0;
-    }
-    if (this.dead) return;
-    this.walking = !!n.walk;
-    this.moveAngle = n.ang;
-    this.aim = n.aim;
-    const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
-    this.anim.dir = G.Sprites.dirFromAngle(face);
-    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? this.baseSpd / 110 : 1);
-  }
 
   draw(ctx) {
     // Halo of the active move's type, on the ground.
@@ -1172,7 +1119,7 @@ G.Player = class Player {
         ctx.globalAlpha = 0.95;
         ctx.strokeStyle = t > 0 ? '#9fe8ff' : '#ffffff';
         ctx.beginPath();
-        ctx.arc(cx, cy, rr, -Math.PI / 2, -Math.PI / 2 + 6.2832 * (1 - t / Player.DODGE.cd));
+        ctx.arc(cx, cy, rr, -Math.PI / 2, -Math.PI / 2 + 6.2832 * (1 - t / PlayerEntity.DODGE.cd));
         ctx.stroke();
       });
       ctx.restore();
@@ -1300,7 +1247,7 @@ G.Player = class Player {
         this.r * 1.0,
         0,
         -Math.PI / 2,
-        -Math.PI / 2 + 6.2832 * Math.min(1, this.reviveT / G.Player.REVIVE_TIME)
+        -Math.PI / 2 + 6.2832 * Math.min(1, this.reviveT / PlayerEntity.REVIVE_TIME)
       );
       ctx.stroke();
       ctx.restore();
@@ -1324,3 +1271,148 @@ G.Player = class Player {
     }
   }
 };
+
+/** The controller of a Player entity with nobody driving it: it stands still and presses nothing. Slice 5 gives a leader its AI. */
+G.PlayerEntity.IDLE = {
+  axis: () => [0, 0],
+  dodge: () => false,
+  shake: () => false,
+  swapSlot: () => -1,
+  swapDir: () => 0,
+  slots: () => [],
+  cycles: () => [],
+};
+G.PlayerEntity.prototype.controller = G.PlayerEntity.IDLE;
+
+/* ============ HumanPlayer: you (entity model slice 3) ============
+ * Everything only the one at the keyboard has: the keyboard controller, XP and levels from orbs, coins, kills, bosses, gacha
+ * tickets, the pickup magnets, rerolls bought in Upgrades, the hurt sound and camera kick, aiming at the enemy list (and at rocks
+ * and chests when none is near), and the co-op follow. Set after the base constructor, which never reads them.
+ */
+G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
+  constructor(mon, perks = {}, shiny = false, statProf = null) {
+    super(mon, perks, shiny, statProf);
+    this.magnet = 120 * (perks.magnetMul || 1); // pull radius for XP orbs, the permanent upgrade scales it
+    this.itemMagnet = 78; // pull radius for every other pickup (coins, berries, items, tickets, magnet, bomb), fixed
+    this.xpMul = perks.xpMul || 1;
+    this.coinMul = perks.coinMul || 1;
+    this.xp = 0;
+    this.xpNext = HumanPlayer.xpFor(1);
+    this.kills = 0;
+    this.bosses = 0;
+    this.rerollBonus = perks.rerolls || 0; // rerolls bought in Upgrades (plus the free one)
+    this.coins = 0; // coins picked up this run
+    this.t1 = 0;
+    this.t10 = 0; // gacha tickets picked up this run
+  }
+
+  aimTargets() {
+    return G.EnemyMgr.all();
+  }
+  aimFallback() {
+    return G.World.nearestBreakable(this.x, this.y, 200);
+  }
+  onHurtFeel() {
+    G.Audio.sfx('hurt');
+    G.Camera.kick(0.28);
+  }
+
+  /** Returns how many levels it gained (there can be several at once). */
+  gainXp(amount) {
+    this.xp += amount * this.xpMul;
+    let leveled = 0;
+    while (this.xp >= this.xpNext) {
+      this.xp -= this.xpNext;
+      this.level++;
+      this.xpNext = HumanPlayer.xpFor(this.level);
+      leveled++;
+    }
+    // HP scales with run level (mainline formula). Leveling tops up current HP by the
+    // max-HP gain (Option A), so a level-up gives a little relief, not just a bigger bar.
+    if (leveled && this.baseHpStat != null) {
+      const newMax = this.maxHpAt(this.level);
+      const gain = newMax - this.maxHp;
+      if (gain > 0) {
+        this.maxHp = newMax;
+        this.hp += gain;
+      }
+    }
+    return leveled;
+  }
+
+  /** The shared run level on a benched teammate (the base keeps level and max HP), plus the XP needed for the next one. */
+  syncLevel(level) {
+    super.syncLevel(level);
+    this.xpNext = HumanPlayer.xpFor(level);
+  }
+
+  // ---------------- companion (co-op) ----------------
+
+  /**
+   * A teammate on another computer: their owner sends their state (position, health,
+   * active move...) and it is followed smoothly here.
+   * n = { x, y, ang, walk, hp, maxHp, dead, mv, ml, mag, aim, rev }
+   */
+  netUpdate(dt) {
+    this.anim.update(dt);
+    const n = this.net;
+    if (!n) return;
+    if (this.flash > 0) this.flash -= dt;
+    if (this.attackFace > 0) this.attackFace -= dt;
+    if (G.U.dist2(this.x, this.y, n.x, n.y) > 300 * 300) {
+      this.x = n.x;
+      this.y = n.y;
+    } else {
+      this.x = G.U.damp(this.x, n.x, 14, dt);
+      this.y = G.U.damp(this.y, n.y, 14, dt);
+    }
+    if (n.hp < this.hp - 0.5 && !n.dead) this.flash = 0.14;
+    this.hp = n.hp;
+    this.maxHp = n.maxHp;
+    this.magnet = n.mag || this.magnet;
+    this.reviveT = n.rev || 0;
+    if (n.dead && !this.dead) {
+      this.dead = true;
+      this.anim.play('Faint', { hold: true });
+    } else if (!n.dead && this.dead) this.revive(n.hp / (n.maxHp || 1));
+    // Active move (for the halo and the HUD).
+    if (n.mv && (!this.moves[0] || this.moves[0].id !== n.mv) && G.MoveDefs[n.mv]) {
+      this.moves = [G.Moves.instance(n.mv)];
+      this.slots = [this.moves.slice()];
+      this.active = 0;
+    }
+    if (this.dead) return;
+    this.walking = !!n.walk;
+    this.moveAngle = n.ang;
+    this.aim = n.aim;
+    const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
+    this.anim.dir = G.Sprites.dirFromAngle(face);
+    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? this.baseSpd / 110 : 1);
+  }
+};
+
+/** Your controller: the keyboard and touch, read exactly as before slice 3. slots() and cycles() list every key that went down this
+ *  frame, in key order, so two keys in one frame still act twice as before. */
+G.HumanPlayer.KEYBOARD = {
+  axis: () => G.Input.axis(),
+  dodge: () => G.Input.action('dodge'),
+  shake: () => G.Input.action('shake_off'),
+  swapSlot() {
+    for (let n = 0; n < 6; n++) if (G.Input.action('swap_' + (n + 1))) return n;
+    return -1;
+  },
+  swapDir: () => (G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0),
+  slots() {
+    const out = [];
+    for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) out.push(i);
+    return out;
+  },
+  cycles() {
+    const out = [];
+    if (G.Input.action('cycle_prev')) out.push(-1);
+    if (G.Input.action('cycle_next')) out.push(1);
+    return out;
+  },
+};
+G.HumanPlayer.prototype.controller = G.HumanPlayer.KEYBOARD;
+G.Player = G.HumanPlayer;

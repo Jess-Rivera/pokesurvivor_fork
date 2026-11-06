@@ -232,3 +232,17 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Changed: new tools/smoke-team.js (step 1: swap, lock, faint order, links, bench poison, Re-Do, wipe over file://). No game code.
 - Not verified: Quick cannot run node here and the work machine has no Playwright, so the smoke has never run. GitHub API empty again; board mirror still 2026-11-04.
 - Stopped at: run check.js and smoke-team.js at home on the current code, then build team.js.
+
+## 2026-11-06, slice 2 built (Quick)
+- Playwright installed on the work machine; smoke scripts now also find <user folder>\tools\playwright. smoke-team passed 34/34 on the pre-slice code.
+- Changed: new js/systems/team.js (`G.Team`); game.js uses it (`runTeam`, `carryRun`, `field`); player.js `bonds` reads the Team count; dev.html and NEED; team-harness.js and team-mutate.js (46 mutations). No changelog entry: nothing a player sees changes.
+- Found: Chromium blocks the Silver font over file:// (CORS); the smoke reports it as a note. May affect real play in Chrome.
+- Stopped at: Jess to run check.js, smoke-team, team-mutate and smoke-ui on the new code, then the feel test.
+
+## 2026-11-06, slice 3 planned and built (Quick)
+- Slice 2 came back green (check.js, smoke-team, team-mutate, smoke-ui).
+- Decided (Jess): slice 3 D1 one file, D2 `isPlayer` means "follows Player entity rules" (all 13 sites already do), D3 berry guards stay a Player-entity rule, D4 the in-play slot keys go through the controller now.
+- Changed: player.js split into `G.PlayerEntity` and `G.HumanPlayer` (`G.Player` names the human); game.js swap keys, Shake off and slot keys ask `pl.controller`; NEED; player-entity-harness.js and player-entity-mutate.js (35). No changelog: nothing a player sees changes.
+- Broke: first run failed 6 move harnesses and smoke-newcombat. The new aim method `foes()` collided with G.MoveSim's enemy-owner mark (slice 7a: a caster with foes() is a gym leader's mon), so your moves aimed at you. Renamed `aimTargets()`, added a harness check and a mutation.
+- Stopped at: Jess to run the checks, the mutation runner and the three smokes, then the feel test.
+- Re-run green: check.js 45/45, player-entity-mutate 35/35, smoke-newcombat all passed, smoke-team and smoke-ui re-run. Quick feel test OK (no gym). Committed slices 2 and 3 together.
