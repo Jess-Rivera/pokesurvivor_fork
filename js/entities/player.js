@@ -252,6 +252,11 @@ G.PlayerEntity = class PlayerEntity {
     if (this.snowball) m *= G.Items.snowballMul();
     return m;
   }
+  /** The damage scale on hits this entity takes (slice 4 H2): DMG_SCALAR for every Player entity but the human (a gym leader from
+   *  slice 5); HumanPlayer overrides it with ENEMY_DMG_SCALAR. */
+  get dmgTakenScale() {
+    return G.Stats.DMG_SCALAR;
+  }
   get reduction() {
     return Math.min(0.8, this.dmgReduce);
   }
@@ -551,6 +556,11 @@ G.PlayerEntity = class PlayerEntity {
   }
 
   // ---------------- damage and healing ----------------
+  /** The one DoT entry of a Player entity (slice 4a, H4): G.Status calls it; the state model stays G.Status stDot. */
+  takeDot(kind, amount, color) {
+    this.statusDot(kind, amount, color);
+  }
+
   /** Damage over time from G.Status (burn, poison, trap): a share of max HP, not reduced by defense, and it ignores the post-hit invulnerability. */
   /**
    * An enemy Status-class carrier's shot or touch lands (slice E1). `half` = a secondary carrier: half the duration.
@@ -647,7 +657,9 @@ G.PlayerEntity = class PlayerEntity {
     // (atk == null: terrain, lava, altar, DoT) keeps `amount` as-is.
     if (atk && !pure) {
       const st = this.mon.stats,
-        mul = atk.mul || 1; // mul: weak support / flanker strike, on the final damage
+        mul = atk.mul || 1, // mul: weak support / flanker strike, a crit, on the final damage
+        stab = atk.stab || 1, // the attacker's STAB, after the +2 (slice 4a; a gym leader folds it into its factor and sends 1)
+        scale = this.dmgTakenScale; // slice 4 H2: the human takes ENEMY_DMG_SCALAR, any other Player entity DMG_SCALAR
       const defB = st ? st[2] : 50,
         spdB = st ? st[4] : 50;
       const defMul =
@@ -655,14 +667,15 @@ G.PlayerEntity = class PlayerEntity {
         G.Stages.mul(this, atk.cat === 'special' ? 'spd' : 'def') *
         (this.defItemMul || 1); // Iron / Zinc, then the Def / Sp. Def stage (slice E2a), then Eviolite and Metal Powder
       if (LOG) {
-        neutral = (atk.factor / 50 + 2) * G.Stats.ENEMY_DMG_SCALAR * mul;
+        neutral = (atk.factor / 50 + 2) * stab * scale * mul;
         cat = atk.cat === 'special' ? 1 : 0;
         dStat =
           (cat === 1
             ? G.Stats.spDef(spdB, this.level, this.statIv(4), this.statEv(4), this.statNat(4))
             : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
       }
-      amount = G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf) * mul;
+      amount =
+        G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf, stab, scale) * mul;
     }
     const afterDef = amount;
     let eff = null,
@@ -742,6 +755,17 @@ G.PlayerEntity = class PlayerEntity {
       this.shield = null; // slice 4b: a faint ends the shield
       this.clearEffects(); // slice E2b: fainting wipes every status and own stage drop
     }
+  }
+
+  /**
+   * The one hit contract (slice 4a): an attack hands its hit here and the Player entity runs its own defense half, hurt() with the
+   * attack options. b = { A, cat ('physical' | 'special'), type, stab, mul, crit, critMul, who }. STAB lands after the +2 and the
+   * damage scale is this entity's (dmgTakenScale). Flat damage (terrain, DoT, items) keeps hurt(amount). A chain never hops onto a
+   * Player entity yet, so no hop falloff is read here.
+   */
+  takeHit(b) {
+    const mul = (b.mul || 1) * (b.crit ? b.critMul : 1);
+    return this.hurt(b.A, b.type, false, { factor: b.A, cat: b.cat, mul, crit: !!b.crit, stab: b.stab || 1 }, b.who);
   }
 
   /** Every status (major, confusion, trap, daze, drowsy, DoT, windows) and this Pokemon's own stage drops. The TEAM raises are shared and stay. */
@@ -1315,6 +1339,10 @@ G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
   onHurtFeel() {
     G.Audio.sfx('hurt');
     G.Camera.kick(0.28);
+  }
+  /** Your damage-taken scale (slice 4 H2): ENEMY_DMG_SCALAR, the dial for how hard everything hits you. */
+  get dmgTakenScale() {
+    return G.Stats.ENEMY_DMG_SCALAR;
   }
 
   /** Returns how many levels it gained (there can be several at once). */

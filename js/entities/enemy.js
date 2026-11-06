@@ -272,6 +272,11 @@
       if (this.hp <= 0) this.die();
     }
 
+    /** The one DoT entry of a wild entity (slice 4a, H4): G.Status and its own burn and poison ticks call it. */
+    takeDot(kind, amount, color) {
+      this.dot(kind, amount, color);
+    }
+
     /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
     dot(kind, amount, color) {
       const hp0 = this.hp;
@@ -535,7 +540,7 @@
         if (this.burnTick <= 0) {
           const S = G.Enemies.STATUS.burn;
           this.burnTick += S.turn;
-          this.dot('burn', this.maxHp * S.frac * this.burnMul, S.color);
+          this.takeDot('burn', this.maxHp * S.frac * this.burnMul, S.color);
           if (--this.burnLeft <= 0) this.burn = 0;
         }
       }
@@ -550,7 +555,7 @@
             this.poisonN = Math.min(S.cap, this.poisonN + 1);
             frac = S.step * this.poisonN;
           }
-          this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
+          this.takeDot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
           if (--this.poisonLeft <= 0) {
             this.poison = 0;
             this.poisonN = 0;

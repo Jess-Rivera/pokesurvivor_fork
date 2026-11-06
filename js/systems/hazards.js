@@ -67,7 +67,7 @@ G.Hazards = (() => {
         if (pl && !pl.dead && inside(h, pl.x, pl.y, pl.r)) {
           pl.invuln = 0;
           const w = G.Log.on ? G.Log.who(h.src, h.kind) : null;
-          if (h.atkFactor != null) pl.hurt(h.atkFactor, h.type, false, { factor: h.atkFactor, cat: h.atkCat }, w);
+          if (h.atkFactor != null) pl.takeHit({ A: h.atkFactor, cat: h.atkCat, type: h.type, stab: 1, who: w }); // slice 4a
           else pl.hurt(h.dmg, h.type, false, null, w);
         }
       }

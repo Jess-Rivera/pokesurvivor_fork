@@ -1,7 +1,8 @@
 ENTITY MODEL, SLICE 4: ONE HIT CONTRACT  +  4b: HARD TYPING (review map, 2026-11-06, Quick)
 Source: docs/proposals/host-model-plan.md "4. One hit contract"; docs/COMBAT-RULES.md "Damage", "Type chart".
 Status: [Approved] 2026-11-06. Every decision made: H1 to H5, S1 = B, T1 = true x0, T2, T3, I1 = I2 = I4 as
-proposed, I3 = A (mainline everywhere), I5 = A (mainline). No code written. Build order: 4a, then 4b.
+proposed, I3 = A (mainline everywhere), I5 = A (mainline). Build order: 4a, then 4b.
+4a BUILT 2026-11-06 (Quick), not yet run. Built differently from the FILES list below (reasons in AS BUILT).
 
   4a  HIT CONTRACT   behavior-neutral (the plan rule for slices 1 to 4). Proven by a parity harness.
   4b  MAINLINE      a deliberate BALANCE CHANGE (Jess, 2026-11-06): STAB everywhere + hard typing.
@@ -52,7 +53,23 @@ proposed, I3 = A (mainline everywhere), I5 = A (mainline). No code written. Buil
   i-frames, Focus Sash, chain falloff, crit. Elite inherits the wild defense.
 
 =====================================================================================
- 4a. FILES
+ 4a. AS BUILT (2026-11-06)
+  - PlayerEntity.takeHit(hit) feeds hurt() its attack options; hurt applies the hit's STAB after the +2 and
+    this.dmgTakenScale (base DMG_SCALAR, HumanPlayer ENEMY_DMG_SCALAR). takeDot on both families.
+  - move-effects: blowOf() builds the hit (A, STAB from the attacker, crit, crit mul); hurtPlayer calls
+    pl.takeHit; applyHit routes by e.isPlayer (H3). combat.js and hazards.js call takeHit.
+  - The wild defense half STAYS in move-effects damage() (now reading the hit's STAB and DMG_SCALAR), NOT
+    moved into WildEntity.takeHit: move-sim-harness (2000 checks) hits plain fake enemies that only have
+    hurt(). Moving it means rebuilding those fakes; revisit when something but a move hits a wild.
+  - boss-ai.js untouched: a leader body has no stabFor, so its hit carries stab 1 as today.
+  - Fixtures were boss-owner (real takeHit borrowed) and gym-harness (isPlayer + a recording takeHit),
+    not boss-split, gyms-only, gym-reward (those never load the hit code).
+  - status.js keeps a fallback for test hosts that only have dot or statusDot.
+  - 4 patterns in move-sim-mutate and pokebox-stats-mutate follow the moved lines, same breaks.
+  - First run (2026-11-06): one fail, player-entity-harness counted 2 isPlayer sites in move-effects.js;
+    4a's target routing (H3) is a 3rd. Expected count 2 -> 3, plus a check that the 3rd is that routing.
+
+ 4a. FILES (as planned)
 =====================================================================================
   js/entities/enemy.js       WildEntity.takeHit: the wild defense half (moved from move-effects
                              damage()), then Enemy.hurt. takeDot = today's dot().

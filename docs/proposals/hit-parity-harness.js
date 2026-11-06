@@ -6,8 +6,9 @@
 // Typing.txt. Expected numbers are worked by hand from docs/COMBAT-RULES.md "Damage": D = (A / max(1, Dstat) + 2) x STAB x scale,
 // then type, items, crit, chain falloff, floor of 1. The attacker half A is an input here (slice 4 does not touch it); Dstat comes
 // from the G.Stats stat primitives. Every rule constant sits in K, the STAB flags and the type values in RAW / TYPE: slice 4b edits
-// those tables and nothing else. The 4a structure pins (who calls takeHit) and the mutation runner come with the 4a build, since
-// they cannot pass on today's code. The HP_* variables (SRC) let a mutation runner point a file at an altered copy.
+// those tables and nothing else. Sections 1 to 6 were written first and passed on the pre-4a code (2026-11-06). Sections 7 and 8
+// came with the 4a build: they check the new rules and wiring and could not pass before it. hit-parity-mutate.js points the HP_*
+// variables (SRC) at altered copies; every mutation must make this fail.
 const fs = require('fs'),
   vm = require('vm'),
   path = require('path');
@@ -17,6 +18,7 @@ const SRC = {
   'js/data/types.js': 'HP_TYPES',
   'js/systems/status.js': 'HP_STATUS',
   'js/entities/enemy.js': 'HP_ENEMY',
+  'js/entities/elite.js': 'HP_ELITE',
   'js/entities/player.js': 'HP_PLAYER',
   'js/systems/move-effects.js': 'HP_FX',
   'js/systems/combat.js': 'HP_COMBAT',
@@ -295,7 +297,7 @@ function expYou(pl, A, cat, type, opt = {}) {
   const st = pl.mon.stats;
   const defMul = (1 + (opt.inc || 0)) * (opt.stage || 1) * (pl.defItemMul || 1);
   const stat = (cat === 'special' ? S.spDef(st[4], LVL) : S.defense(st[2], LVL)) * defMul;
-  let a = (A / Math.max(1, stat) + 2) * (opt.stab || 1) * K.YOU_SCALE * (opt.mul || 1);
+  let a = (A / Math.max(1, stat) + 2) * (opt.stab || 1) * (opt.scale != null ? opt.scale : K.YOU_SCALE) * (opt.mul || 1);
   if (type) a *= tk(type, pl.mon.types) * (W[type] || 1) * (opt.guard ? K.GUARD : 1);
   return floor1(a * (1 - Math.min(K.REDUCE_CAP, pl.dmgReduce || 0)) * (opt.cushion ? K.CUSHION : 1));
 }
@@ -666,6 +668,78 @@ const wipeW = () => {
     ok(near(g4, 1600 / 16 - 50) && !p4.shield, 'DoT on you: Substitute takes 50 first, the rest spills (' + f3(g4) + ')');
   }
   console.log('6 DoT: burn, poison, toxic on a wild; burn and poison on you, i-frames, Fly, Substitute');
+}
+
+// 7. slice 4a: the target picks the side-effect rules (H3) and the damage scale (H2); the attacker's STAB lands after the +2 (H1).
+//    These could not pass before 4a: a hit on a Player entity used to be routed by the attacker.
+{
+  const mkPE = (dex) => {
+    const t = new G.PlayerEntity(Object.assign({ hp: 50, spd: 60, atk: 50 }, DEX_BY[dex]));
+    t.level = LVL;
+    t.maxHp = t.hp = 1e6;
+    t.x = 40;
+    t.y = 0;
+    return t;
+  };
+  const you = mkYou(1),
+    tgt = mkPE(6);
+  ok(tgt.dmgTakenScale === K.WILD_SCALE && you.dmgTakenScale === K.YOU_SCALE, 'H2: a Player entity takes x' + tgt.dmgTakenScale + ', the human x' + you.dmgTakenScale);
+  const nd = mv('normal', 'physical', 40),
+    A = you.moveFactor({ cat: 'physical', dmg: 40, type: 'normal' });
+  const want = expYou(tgt, A, 'physical', 'normal', { stab: K.STAB, scale: K.WILD_SCALE });
+  const got = lossOf(tgt, () => hit(nd, tgt, you));
+  ok(near(got, want), 'you -> a Player entity: its own defense, your STAB after the +2, scale 1.0: ' + f3(got) + ' want ' + f3(want));
+  const t2 = mkPE(6);
+  let fl = 0;
+  t2.applyFlinch = () => {
+    fl++;
+    return true;
+  };
+  const rd = mv('normal', 'physical', 40, [{ t: 'damage' }, { t: 'knockback', distance: 100 }, { t: 'flinch' }]);
+  hit(rd, t2, you, { time: 0 });
+  hit(rd, t2, you, { time: 0.2 });
+  ok(fl === 1 && !t2.stPush && !t2.kx, 'you -> a Player entity: its side-effect rules (one flinch per 0.5 s, no knockback from a damaging hit)');
+  const t3 = mkPE(6);
+  hit(mv('normal', 'physical', 40, [{ t: 'damage' }, { t: 'ailment', id: 'burn', side: 'foe' }]), t3, you);
+  ok(t3.stDot && t3.stDot.k === 'burn' && !t3.burn, 'you -> a Player entity: burn lands on its DoT (G.Status), not on wild burn fields');
+  const L = mkLeader(3000),
+    e = mkW(1),
+    wd = mv('water', 'special', 60, [{ t: 'damage' }, { t: 'knockback', distance: 100 }]);
+  const gw = lossOf(e, () => hit(wd, e, L));
+  const ww = floor1((3000 / Math.max(1, S.spDef(DEX_BY[1].stats[4], LVL)) + 2) * K.WILD_SCALE * tk('water', ['normal']));
+  ok(near(gw, ww) && near(e.kx, 100), 'a leader -> a wild: the wild defense (scale 1.0, its STAB folded) and the wild side effects (knockback 100): ' + f3(gw) + ' want ' + f3(ww));
+  console.log('7 slice 4a rules: the target picks the side effects and the scale; your STAB on a Player entity lands after the +2');
+}
+
+// 8. slice 4a structure (text and prototypes): who sends hits and DoT through the contract.
+{
+  const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const body = (src, name) => {
+    const i = src.indexOf(name);
+    return i < 0 ? '' : src.slice(i, src.indexOf('\n  }\n', i));
+  };
+  const fxs = strip(read('js/systems/move-effects.js'));
+  const ah = body(fxs, 'function applyHit(');
+  ok(/if \(e\.isPlayer\) return hitPlayer\(inst, e, hop, rng\);/.test(ah) && !/owner\.foes/.test(ah), 'applyHit picks the side-effect rules by the target, never the attacker (H3)');
+  const hp = body(fxs, 'function hurtPlayer(');
+  ok(/pl\.takeHit\(b\);/.test(hp) && !/pl\.hurt\(/.test(hp), 'a move on a Player entity goes through takeHit');
+  const cb = strip(read('js/systems/combat.js'));
+  ok((cb.match(/pl\.takeHit\(\{/g) || []).length === 2 && !/pl\.hurt\([pe]\.atkFactor/.test(cb), 'combat.js: wild contact and shots go through takeHit');
+  const hz = strip(read('js/systems/hazards.js'));
+  ok(/pl\.takeHit\(\{ A: h\.atkFactor/.test(hz) && !/pl\.hurt\(h\.atkFactor/.test(hz), 'hazards.js: an attack-factor hazard goes through takeHit');
+  const sx = strip(read('js/systems/status.js'));
+  ok(/function damage\(h, name, amount, color\) \{\s*if \(h\.takeDot\) h\.takeDot\(name, amount, color\);/.test(sx), 'status.js: DoT damage calls takeDot first (H4)');
+  ok((strip(read('js/entities/enemy.js')).match(/this\.takeDot\(/g) || []).length === 2, "enemy.js: a wild entity's burn and poison ticks go through takeDot (H4)");
+  ok(typeof G.PlayerEntity.prototype.takeHit === 'function' && typeof G.PlayerEntity.prototype.takeDot === 'function' && typeof G.WildEntity.prototype.takeDot === 'function', 'both families answer takeDot; Player entities answer takeHit');
+  const own = (C, k) => Object.prototype.hasOwnProperty.call(C.prototype, k);
+  ok(!own(G.Elite, 'takeDot') && !own(G.HumanPlayer, 'takeHit') && !own(G.HumanPlayer, 'takeDot'), 'Elite and the human inherit their family entries, no override');
+  const d50 = S.defense(50, 20),
+    plain = (1000 / d50 + 2) * K.WILD_SCALE,
+    ph = { cat: 'physical' };
+  ok(near(S.applyDamage(1000, 50, 50, ph, 20, 1), plain) && near(S.applyDamage(1000, 50, 50, ph, 20, false), plain), 'applyDamage: a stab of 1 or false is no STAB');
+  ok(near(S.applyDamage(1000, 50, 50, ph, 20, true), plain * K.STAB) && near(S.applyDamage(1000, 50, 50, ph, 20, K.STAB), plain * K.STAB), 'applyDamage: a stab of true or 1.5 is STAB, after the +2');
+  ok(near(S.applyDamage(1000, 50, 50, { cat: 'status' }, 20, K.STAB), (1000 / K.PROP_DEF + 2) * K.WILD_SCALE), 'applyDamage: a status-category hit never takes STAB');
+  console.log('8 slice 4a structure: target routing, takeHit and takeDot callers, inheritance, the stab argument');
 }
 
 console.log(fail ? 'hit-parity harness: ' + fail + ' of ' + n + ' checks FAILED' : 'hit-parity harness: ' + n + '/' + n + ' checks passed');

@@ -22,7 +22,7 @@ G.Combat = (() => {
         const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
         const landed = pl.invuln <= 0;
         if (p.atkFactor != null)
-          pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
+          pl.takeHit({ A: p.atkFactor, cat: p.atkCat, type: p.mtype, stab: 1, mul: p.mul, who: w }); // slice 4a; wild STAB: 4b
         else pl.hurt(p.dmg, p.mtype, false, null, w);
         if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf); // a Status carrier's shot (slice E1)
         G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
@@ -47,7 +47,7 @@ G.Combat = (() => {
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
       if (e.atkFactor != null)
-        pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
+        pl.takeHit({ A: e.atkFactor, cat: e.atkCat, type: e.atkType, stab: 1, mul: e.contactMul(), who: w }); // slice 4a
       else pl.hurt(e.dmg, e.atkType, false, null, w);
       if (e.carrierSec && !pl.dead) {
         const k = e.secAil();

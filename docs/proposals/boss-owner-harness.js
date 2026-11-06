@@ -40,6 +40,7 @@ for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', '
   'js/systems/move-route.js', 'js/systems/move-render.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
 const origWarn = console.warn; console.warn = m => warns.push(String(m));
 const Sim = G.MoveSim, S = G.Stages, Gy = G.Gyms; G.Enemy.prototype.die = function () { this.dead = true; };
+pl.takeHit = G.PlayerEntity.prototype.takeHit; // slice 4a: a hit reaches a Player entity through the REAL takeHit, which feeds this recorded hurt()
 pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
@@ -348,7 +349,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
     run(e, 1.2); ok(pl.hurts.length === 1, 'Thunder Shock hits the player once: ' + pl.hurts.length);
     ok(decoy.hits === 0 && e.hp === hp0, 'its hop never reaches a wild enemy 30 px away, nor the leader');
     // co-op ready: a second foe within the 60 px hop range takes the hop
-    fresh(); const [e2, b2] = one('thunder-shock'), pl2 = { x: 240, y: 0, r: 12, dead: false, mon: { types: ['normal'] }, hurts: [], hurt(...a) { this.hurts.push(a); } };
+    fresh(); const [e2, b2] = one('thunder-shock'), pl2 = { x: 240, y: 0, r: 12, dead: false, mon: { types: ['normal'] }, isPlayer: true, takeHit: G.PlayerEntity.prototype.takeHit, hurts: [], hurt(...a) { this.hurts.push(a); } };
     e2.foes = () => [pl, pl2]; pl.x = 200; pl.y = 0; run(e2, 1.2);
     ok(pl.hurts.length === 1 && pl2.hurts.length === 1, 'with two foes 40 px apart the chain hops to the second: ' + [pl.hurts.length, pl2.hurts.length]); }
   { const [e, b] = one('hex'); pl.x = 200; pl.y = 0; decoy.x = 260; decoy.hits = 0; run(e, 1.2);

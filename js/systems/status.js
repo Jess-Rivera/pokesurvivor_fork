@@ -201,7 +201,8 @@ G.Status = (() => {
   }
 
   function damage(h, name, amount, color) {
-    if (h.dot) h.dot(name, amount, color);
+    if (h.takeDot) h.takeDot(name, amount, color); // the one DoT entry of both families (slice 4a, H4)
+    else if (typeof h.dot === 'function') h.dot(name, amount, color); // hosts without takeDot (older test hosts)
     else if (h.statusDot) h.statusDot(name, amount, color);
   }
 

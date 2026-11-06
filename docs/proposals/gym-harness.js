@@ -78,7 +78,10 @@ let g, def;
   if (def.gym.moves.length !== 3 || def.gym.level !== g.level) bad('def gym descriptor'); }
 
 // 3. leader entity: factors, stages, enrage
-const pl = { level: 5, x: 600, y: 0, hp: 100, r: 10, dead: false, mon: { types: ['normal'] }, hurt: (...a) => hurts.push(a) };
+// slice 4a: the stub is a Player entity (isPlayer) and answers the hit contract; player.js is not loaded here, so takeHit records
+// the same [factor, type, pure, { factor, cat, mul, crit }] a leader's hit recorded before
+const pl = { level: 5, x: 600, y: 0, hp: 100, r: 10, dead: false, mon: { types: ['normal'] }, isPlayer: true, hurt: (...a) => hurts.push(a),
+  takeHit: (b) => hurts.push([b.A, b.type, false, { factor: b.A, cat: b.cat, mul: (b.mul || 1) * (b.crit ? b.critMul : 1), crit: !!b.crit }]) };
 G.Game.player = pl;
 const mk = () => { const e = G.Boss.make(def, 0, 0); e.flying = false; return e; };
 const adapt = d => ({ cat: d.category, dmg: d.basePower, type: d.type });

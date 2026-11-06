@@ -112,7 +112,12 @@ G.MoveEffects = (() => {
     return [dx, dy, k];
   }
 
-  function damage(inst, e, rng, fx, hop, hit) {
+  /**
+   * The hit an attack hands its target (slice 4a, the one hit contract). The attacker decides its half: the attacker factor A (D6),
+   * STAB from the ATTACKER (D8; an owner with no stabFor, a gym leader's mon, folds STAB into A and sends 1), the crit roll (D10) and
+   * its multiplier. The target's family runs the defense half: PlayerEntity.takeHit, or the wild defense in damage() below.
+   */
+  function blowOf(inst, e, rng) {
     const def = inst.spec,
       o = inst.cast.owner;
     const sb = specialOf(def, 'statusBonus'); // D13: a POWER term, checked per hop target
@@ -121,25 +126,41 @@ G.MoveEffects = (() => {
       dmg: (def.basePower || 0) * (sb && G.Status.majorKind(e) ? sb.multiplier : 1),
       type: def.type,
     }; // adapter into G.Stats (D5: P = basePower)
-    const A = o.moveFactor(m); // D6, at hit time
-    const ds = enemyDefStats(e);
-    const D = G.Stats.applyDamage(A, ds.def, ds.spd, m, defLevel(e, o.level), o.stabFor(m), defStage(e, m.cat)); // D7, D8
-    const k = typeK(o, def.type, e);
     const cfx = fxOf(def, 'crit'),
-      kfx = fxOf(def, 'knockback');
-    const c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
-      crit = c > 0 && rng() < c; // D10: one roll per damage hit, only when it can crit
-    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (crit ? CRIT_MUL * (o.critDmgMul || 1) : 1)); // D11
+      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0);
+    return {
+      A: o.moveFactor(m), // D6, at hit time
+      m,
+      cat: def.category,
+      type: def.type,
+      stab: def.category !== 'status' && o.stabFor && o.stabFor(m) ? G.Stats.STAB : 1,
+      crit: c > 0 && rng() < c, // D10: one roll per damage hit, only when it can crit
+      critMul: CRIT_MUL * (o.critDmgMul || 1),
+      owner: o,
+    };
+  }
+
+  /** The wild defense half (D7 to D11, D15, D33): a hit on a wild entity or an Elite. */
+  function damage(inst, e, rng, fx, hop, hit) {
+    const def = inst.spec,
+      b = blowOf(inst, e, rng),
+      o = b.owner;
+    const ds = enemyDefStats(e),
+      scale = G.Stats.DMG_SCALAR; // slice 4 H2: every target but the human takes DMG_SCALAR
+    const D = G.Stats.applyDamage(b.A, ds.def, ds.spd, b.m, defLevel(e, o.level), b.stab, defStage(e, b.cat), scale); // D7, D8
+    const k = typeK(o, def.type, e);
+    const kfx = fxOf(def, 'knockback');
+    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (b.crit ? b.critMul : 1)); // D11
     const dmg = Math.max(1, full * hopMul(def, hop)); // D15: the chain reduction is applied last
     const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     const hp0 = e.hp,
       sh0 = e.shield || 0;
     const kn = knockOf(inst, e, kfx);
-    e.hurt(dmg, col, kn[0], kn[1], kn[2], crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
+    e.hurt(dmg, col, kn[0], kn[1], kn[2], b.crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg;
-    hit.crit = crit;
+    hit.crit = b.crit;
     hit.dealt = Math.max(0, hp0 - Math.max(0, e.hp)) + Math.max(0, sh0 - (e.shield || 0)); // D34: shield counted, overkill excluded
   }
 
@@ -309,26 +330,12 @@ G.MoveEffects = (() => {
   const FLINCH_GAP = 0.5; // seconds between two flinch rolls of one move on the player (COMBAT-RULES "Flinch on the player")
   function hurtPlayer(inst, pl, rng, fx, hop, hit) {
     const def = inst.spec,
-      o = inst.cast.owner;
-    const sb = specialOf(def, 'statusBonus'); // D13: checked before this hit's own riders land
-    const m = {
-        cat: def.category,
-        dmg: (def.basePower || 0) * (sb && G.Status.majorKind(pl) ? sb.multiplier : 1),
-        type: def.type,
-      },
-      A = o.moveFactor(m),
+      b = blowOf(inst, pl, rng),
       hp0 = pl.hp;
-    const cfx = fxOf(def, 'crit'),
-      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
-      crit = c > 0 && rng() < c; // D10: no base chance
-    pl.hurt(
-      A,
-      def.type,
-      false,
-      { factor: A, cat: def.category === 'special' ? 'special' : 'physical', mul: crit ? CRIT_MUL : 1, crit },
-      G.Log.on ? G.Log.who(o, def.id) : null
-    );
-    hit.crit = crit;
+    b.cat = def.category === 'special' ? 'special' : 'physical'; // a Player entity's defense knows physical and special only
+    b.who = G.Log.on ? G.Log.who(b.owner, def.id) : null;
+    pl.takeHit(b); // slice 4a: the Player entity runs its own defense half
+    hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
@@ -379,7 +386,7 @@ G.MoveEffects = (() => {
   }
 
   function applyHit(inst, e, hop, rng) {
-    if (inst.cast.owner.foes) return hitPlayer(inst, e, hop, rng); // slice 7a: an enemy owner's only foe is the player
+    if (e.isPlayer) return hitPlayer(inst, e, hop, rng); // slice 4a (H3): a Player entity target takes the Player-entity rules, whoever attacks
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(inst.spec.type, e.types), dealt: 0 };
     for (const fx of inst.spec.payload || []) {
       const f = APPLY[fx.t];

@@ -252,3 +252,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Changed: COMBAT-RULES "Damage" and "Type chart" ([Approved], code differs until 4b), a DECISIONS entry, the slice 4 map.
 - Found: leader STAB is folded before the +2 (about 0.5 HP low); wild contact and shots use the enemy's first type; every starter opens with a Grass, Fire or Water move, so no new team is fully walled by immunity.
 - Stopped at: build 4a, parity harness first.
+
+## 2026-11-06, slice 4a built (Quick)
+- hit-parity-harness passed 100/100 on the pre-4a code (after a fixture fix: the test Substitute lacked overflow, the expected numbers did not move).
+- Changed: PlayerEntity.takeHit and takeDot, dmgTakenScale (base 1.0, human 0.5); move-effects blowOf, hurtPlayer via takeHit, applyHit routed by target; combat.js and hazards.js via takeHit; WildEntity takeDot; status.js prefers takeDot; stats.js applyDamage and applyPlayerDefense take STAB and the scale. No numbers change.
+- Deviations: wild defense stays in move-effects (move-sim-harness fakes); boss-ai.js untouched. Test edits: parity sections 7 and 8, player-entity pinned list (+dmgTakenScale), boss-owner and gym-harness fixtures, 4 moved mutation patterns. New hit-parity-mutate.js (31).
+- Ran: everything green except player-entity-harness's isPlayer count in move-effects.js (2; 4a's target routing is a 3rd by design). Count 2 -> 3, plus a check that the 3rd is the routing.
+- Stopped at: rerun player-entity-harness, feel test, commit 4a.

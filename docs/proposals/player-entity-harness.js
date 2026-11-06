@@ -1,7 +1,7 @@
 // G.PlayerEntity and G.HumanPlayer offline checks (Node only), entity model slice 3. Usage from the repo root:
 //   node docs/proposals/player-entity-harness.js
 // Under test: js/entities/player.js (the base class, the human subclass, the IDLE and KEYBOARD controllers) and, as text, the
-// controller reads in js/game.js, the NEED entry in js/main.js and the 13 isPlayer sites (js/systems/status.js, move-effects.js).
+// controller reads in js/game.js, the NEED entry in js/main.js and the 14 isPlayer sites (js/systems/status.js, move-effects.js; the 14th is slice 4a's target routing).
 // Plan: docs/proposals/host-model-plan.md slice 3; map: docs/ASCII Concept Maps/Entity Model Slice 3 - PlayerEntity and HumanPlayer.txt.
 // Real util.js and stats.js; the engine around the entity is stubbed, and the input, camera and sound stubs record every call.
 // Expected values are worked out by hand (DODGE 150 px in 0.5 s, Medium Fast XP 3L^2 + 3L + 1, the pre-slice field values),
@@ -121,7 +121,7 @@ ok(Object.getPrototypeOf(HP.prototype) === PE.prototype, 'HumanPlayer extends Pl
   ok(h instanceof PE && h instanceof HP && e instanceof PE && !(e instanceof HP), 'a human is a Player entity; a bare entity is not a human');
   ok(h.isPlayer === true && e.isPlayer === true, 'isPlayer (follows Player entity rules) is true on both');
 }
-const want = ['aimFallback', 'aimTargets', 'constructor', 'controller', 'gainXp', 'netUpdate', 'onHurtFeel', 'syncLevel'];
+const want = ['aimFallback', 'aimTargets', 'constructor', 'controller', 'dmgTakenScale', 'gainXp', 'netUpdate', 'onHurtFeel', 'syncLevel']; // dmgTakenScale: slice 4a (H2)
 const own = Object.getOwnPropertyNames(HP.prototype).sort();
 ok(JSON.stringify(own) === JSON.stringify(want), 'HumanPlayer adds only the human parts: ' + own.join(' '));
 ok(PE.prototype.gainXp === undefined && PE.prototype.netUpdate === undefined, 'gainXp and the co-op follow are the human only');
@@ -304,7 +304,10 @@ ok(HP.prototype.controller === HP.KEYBOARD, 'the human defaults to the KEYBOARD 
   ok(/'Pickups',\s*'PlayerEntity',\s*'Player',/.test(read('js/main.js')), 'the NEED array lists PlayerEntity before Player');
   const count = (t) => (strip(t).match(/\bisPlayer\b/g) || []).length;
   ok(count(read('js/systems/status.js')) === 11, 'status.js: the 11 isPlayer rules are unchanged (' + count(read('js/systems/status.js')) + ')');
-  ok(count(read('js/systems/move-effects.js')) === 2, 'move-effects.js: the 2 isPlayer rules are unchanged');
+  // 3 since slice 4a (H3, Jess 2026-11-06): Fissure's no-KO and the push rule from slice 3, plus applyHit's routing by target
+  const fxText = read('js/systems/move-effects.js');
+  ok(count(fxText) === 3, 'move-effects.js: 3 isPlayer rules (' + count(fxText) + ')');
+  ok(/if \(e\.isPlayer\) return hitPlayer\(inst, e, hop, rng\);/.test(strip(fxText)), 'move-effects.js: the third is the target routing in applyHit (slice 4a, H3)');
   ok(count(ps) === 1 && /this\.isPlayer = true;/.test(baseBody), 'player.js: isPlayer is set once, on the base');
 }
 
