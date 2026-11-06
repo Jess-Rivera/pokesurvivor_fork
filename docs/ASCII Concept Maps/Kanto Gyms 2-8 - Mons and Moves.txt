@@ -1,0 +1,443 @@
+KANTO GYMS 2-8: MONS AND MOVES AS BUILT (generated 2026-11-05 from js/data/gyms.js and G.MoveDefs)
+================================================================================
+Purpose: a working sheet for authoring upgrade cards on gyms 2 to 8 (Brock loop 1 is the model:
+  docs/BOSS-AUTHORING.md "Cards"). Gym 1 (Brock) is omitted. Nothing here is a decision.
+
+HOW TO READ
+  Loop N fields the first N slots at once; slot K enters at loop K. A set applies from its loop key
+  until the next key (a loop with no set keeps the last earlier one).
+  form    how the leader casts it (G.Gyms.formOf): melee cone, nova ring, shot, strike, beam, buff, heal,
+          dash, returns, multi (burst), trail, delayed. "??" = no gym form (should never appear).
+  bp      base power per hit.   cast = bp x hits per cast (x2 = hits).   cd = cooldown in s, already divided by
+          the slot tempo; "Gate" = pure buff cast on its Gate, no cooldown.   P/s = cast / cd, the tools-only
+          D37 proxy (combat-architecture:D37), NOT damage dealt: real damage scales with the mon level, stats
+          and the player defense (ratio path), so compare moves with each other only.
+  reach   px from the leader centre (G.Gyms.reachOf); the far stance holds 170 to 300 px.
+  status  riders: ailment id chance%, flinch %, foe/self stat stages, heal, knockback px.
+  weight  WEIGHTING IS GONE since slice 7a: no per-move weights. Every move autocasts; THE PICK scores
+          freshness (seconds since last tell / cd) x fit (0.5 for a shot or strike while the player is inside
+          close reach) x opportunity (x1.5 Hex vs a major ailment, x0.75 ailment rider vs one already on,
+          x1.25 foe stat drop not yet on the player). 'share' below is an ESTIMATE of how the casts split among
+          the set's attacks, taken as proportional to 1/cd. Ties break melee, nova, strike, shot, list order.
+  hp<     the move joins the mon only below that fraction of max HP.
+  cards   the LEADER cards, gained per loop and pooled (G.Gyms.cardsFor); every fielded mon holds the whole pool. Shown per gym. Move numbers below are BASE (no cards folded).
+  lv      the gym level = run level when the gate spawns + 4. Stage bands (TUNE): 2-stage line final at 35, 3-stage mid 20, final 35.
+
+################################################################################
+GYM 2  MISTY   (water arena, Cascade Badge, badge boost +10% Sp. Def)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): loop 1: type:water 4, count 2, ailment 2, velocity 3, area 2
+
+ SLOT 1  Staryu(L1) > Starmie(L35)   enters loop 1   stance far   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Tackle                     normal   physical melee   40    40      0.5    80     54     64%    knockback 90
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     Water Pulse                water    special  shot    60    60      0.88   68.18  420    36%    confusion 20%
+     Recover (hp<35%)           normal   status   heal    0     -       12     -      -      -      heal 50% max HP
+     set total P/s (all attacks if all ready): 148.18   plus Harden, Recover (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    42%    -
+     Tackle                     normal   physical melee   40    40      0.5    80     54     58%    knockback 90
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 137.14   plus Harden (no damage)
+
+ SLOT 2  Seel(L1) > Dewgong(L35)   enters loop 2   stance close   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Powder Snow                ice      special  melee   40    40      0.7    57.14  48     50%    freeze 10%
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    50%    -
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 114.28   plus Harden (no damage)
+
+ SLOT 3  Psyduck(L1) > Golduck(L35)   enters loop 3   stance mixed   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    56%    -
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     44%    -
+     Agility (hp<50%)           psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 136.69   plus Agility (no damage)
+
+ SLOT 4  Poliwag(L1) > Poliwhirl(L20) > Poliwrath(L35)   enters loop 4   stance mixed   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    50%    -
+     Karate Chop                fighting physical melee   50    50      0.7    71.43  50     50%    knockback 110
+     Swords Dance (hp<50%)      normal   status   buff    0     -       Gate   -      -      -      self atk+2
+     set total P/s (all attacks if all ready): 128.57   plus Swords Dance (no damage)
+
+ SLOT 5  Lapras(L1)   enters loop 5   stance mixed   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    50%    -
+     Powder Snow                ice      special  melee   40    40      0.7    57.14  48     50%    freeze 10%
+     set total P/s (all attacks if all ready): 114.28
+
+ SLOT 6  Magikarp(L1) > Gyarados(L35)   enters loop 6   stance close   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     50%    knockback 70, flinch 30%
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    50%    -
+     Dragon Dance (hp<50%)      dragon   status   buff    0     -       Gate   -      -      -      self atk+1, self spd+1
+     set total P/s (all attacks if all ready): 142.85   plus Dragon Dance (no damage)
+
+################################################################################
+GYM 3  LT. SURGE   (electric arena, Thunder Badge, badge boost +10% Speed)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Pikachu(L1) > Raichu(L35)   enters loop 1   stance mixed   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    50%    paralysis 10%
+     Growl                      normal   status   nova    0     -       3      -      120    -      foe atk-1
+     Thunder Wave               electric status   shot    0     -       3.5    -      420    -      paralysis 100%
+     Quick Attack               normal   physical dash    40    40      0.58   68.97  420    50%    -
+     set total P/s (all attacks if all ready): 137.94   plus Growl, Thunder Wave (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    38%    paralysis 10%
+     Tackle                     normal   physical melee   40    40      0.5    80     54     44%    knockback 90
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     Thunderbolt (hp<50%)       electric special  strike  90    90      1.17   76.92  420    19%    paralysis 10%, chainDamageFalloff
+     set total P/s (all attacks if all ready): 225.89   plus Agility (no damage)
+
+ SLOT 2  Porygon(L1)   enters loop 2   stance mixed   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     100%   -
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 79.55   plus Agility (no damage)
+
+ SLOT 3  Magnemite(L1) > Magneton(L35)   enters loop 3   stance close   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    46%    paralysis 10%
+     Metal Claw                 steel    physical melee   47.5  47.5    0.5    95     50     54%    self atk+1 10%, knockback 60
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 163.97   plus Harden (no damage)
+
+ SLOT 4  Voltorb(L1) > Electrode(L35)   enters loop 4   stance close   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    46%    paralysis 10%
+     Tackle                     normal   physical melee   40    40      0.5    80     54     54%    knockback 90
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 148.97   plus Agility (no damage)
+
+ SLOT 5  Electabuzz(L1)   enters loop 5   stance close   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    55%    paralysis 10%
+     Karate Chop                fighting physical melee   50    50      0.7    71.43  50     45%    knockback 110
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 140.4   plus Agility (no damage)
+
+ SLOT 6  Eevee(L1) > Jolteon(L35)   enters loop 6   stance mixed   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Thunder Shock              electric special  shot    40    40      0.58   68.97  420    46%    paralysis 10%
+     Tackle                     normal   physical melee   40    40      0.5    80     54     54%    knockback 90
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 148.97   plus Agility (no damage)
+
+################################################################################
+GYM 4  ERIKA   (grass arena, Rainbow Badge, badge boost +10% HP)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Bellsprout(L1) > Weepinbell(L20) > Victreebel(L35)   enters loop 1   stance mixed   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Razor Leaf                 grass    physical returns 52.25 104.5 x20.7    149.29 210    45%    -
+     Acid                       poison   special  shot    40    40      0.58   68.97  367    55%    foe spDef-1 10%
+     Stun Spore                 grass    status   shot    0     -       3.5    -      112    -      paralysis 100%
+     Sleep Powder               grass    status   shot    0     -       4      -      112    -      sleep 100%
+     set total P/s (all attacks if all ready): 218.26   plus Stun Spore, Sleep Powder (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Vine Whip                  grass    physical melee   45    45      0.7    64.29  68     46%    knockback 60
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    18%    drain 50% of dmg
+     Sludge (hp<50%)            poison   special  shot    65    65      0.88   73.86  420    36%    poison 30%
+     set total P/s (all attacks if all ready): 181.01
+
+ SLOT 2  Tangela(L1)   enters loop 2   stance mixed   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Vine Whip                  grass    physical melee   45    45      0.7    64.29  68     71%    knockback 60
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    29%    drain 50% of dmg
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 107.15   plus Harden (no damage)
+
+ SLOT 3  Oddish(L1) > Gloom(L20) > Vileplume(L35)   enters loop 3   stance far   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    15%    drain 50% of dmg
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    31%    poison 30%
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    54%    poison 30%
+     set total P/s (all attacks if all ready): 146.72
+
+ SLOT 4  Paras(L1) > Parasect(L35)   enters loop 4   stance close   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Bug Bite                   bug      physical melee   60    60      0.42   142.86 44     81%    knockback 40, berrySteal
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    19%    drain 50% of dmg
+     Swords Dance (hp<50%)      normal   status   buff    0     -       Gate   -      -      -      self atk+2
+     set total P/s (all attacks if all ready): 185.72   plus Swords Dance (no damage)
+
+ SLOT 5  Bulbasaur(L1) > Ivysaur(L20) > Venusaur(L35)   enters loop 5   stance mixed   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Vine Whip                  grass    physical melee   45    45      0.7    64.29  68     71%    knockback 60
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    29%    drain 50% of dmg
+     Swords Dance (hp<50%)      normal   status   buff    0     -       Gate   -      -      -      self atk+2
+     set total P/s (all attacks if all ready): 107.15   plus Swords Dance (no damage)
+
+ SLOT 6  Exeggcute(L1) > Exeggutor(L35)   enters loop 6   stance mixed   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Giga Drain                 grass    special  shot    75    75      1.75   42.86  420    33%    drain 50% of dmg
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     67%    -
+     set total P/s (all attacks if all ready): 122.41
+
+################################################################################
+GYM 5  KOGA   (poison arena, Soul Badge, badge boost +10% Defense)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Koffing(L1) > Weezing(L35)   enters loop 1   stance far   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    100%   poison 30%
+     Toxic                      poison   status   trail   0     -       trail  -      -      -      -
+     set total P/s (all attacks if all ready): 73.86   plus Toxic (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    36%    poison 30%
+     Tackle                     normal   physical melee   40    40      0.5    80     54     64%    knockback 90
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 153.86   plus Harden (no damage)
+
+ SLOT 2  Grimer(L1) > Muk(L35)   enters loop 2   stance close   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    57%    poison 30%
+     Body Slam                  normal   physical melee   85    85      1.17   72.65  46     43%    paralysis 30%, knockback 140
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 146.51   plus Harden (no damage)
+
+ SLOT 3  Ekans(L1) > Arbok(L35)   enters loop 3   stance mixed   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     31%    knockback 70, flinch 30%
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    44%    poison 30%
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    25%    poison 30%
+     set total P/s (all attacks if all ready): 189.57
+
+ SLOT 4  Venonat(L1) > Venomoth(L35)   enters loop 4   stance mixed   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    64%    poison 30%
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     36%    -
+     set total P/s (all attacks if all ready): 109.55
+
+ SLOT 5  Tentacool(L1) > Tentacruel(L35)   enters loop 5   stance far   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    56%    -
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    44%    poison 30%
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 131   plus Harden (no damage)
+
+ SLOT 6  Zubat(L1) > Golbat(L20) > Crobat(L35)   enters loop 6   stance mixed   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Wing Attack                flying   physical melee   60    60      0.5    120    58     50%    knockback 70
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    50%    poison 30%
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 150   plus Agility (no damage)
+
+################################################################################
+GYM 6  SABRINA   (psychic arena, Marsh Badge, badge boost +10% Sp. Atk)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Abra(L1) > Kadabra(L20) > Alakazam(L35)   enters loop 1   stance far   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Psybeam                    psychic  special  beam    65    65      0.88   73.86  215    67%    confusion 10%
+     Calm Mind                  psychic  status   buff    0     -       Gate   -      -      -      self spAtk+1, self spDef+1
+     Future Sight               psychic  special  delayed 120   120     1.75   68.57  420    33%    -
+     set total P/s (all attacks if all ready): 142.43   plus Calm Mind (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Shadow Ball                ghost    special  shot    80    80      1.2    66.67  345    42%    foe spDef-1 20%
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     58%    -
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 146.22   plus Agility (no damage)
+
+ SLOT 2  Mr. Mime(L1)   enters loop 2   stance mixed   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     58%    -
+     Shadow Ball                ghost    special  shot    80    80      1.2    66.67  345    42%    foe spDef-1 20%
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 146.22   plus Harden (no damage)
+
+ SLOT 3  Jynx(L1)   enters loop 3   stance close   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Powder Snow                ice      special  melee   40    40      0.7    57.14  48     63%    freeze 10%
+     Shadow Ball                ghost    special  shot    80    80      1.2    66.67  345    37%    foe spDef-1 20%
+     set total P/s (all attacks if all ready): 123.81
+
+ SLOT 4  Drowzee(L1) > Hypno(L35)   enters loop 4   stance close   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     100%   -
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 79.55   plus Harden (no damage)
+
+ SLOT 5  Slowpoke(L1) > Slowbro(L35)   enters loop 5   stance far   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Water Gun                  water    special  shot    40    40      0.7    57.14  420    56%    -
+     Psycho Cut                 psychic  physical melee   70    70      0.88   79.55  48     44%    -
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 136.69   plus Harden (no damage)
+
+ SLOT 6  Gastly(L1) > Haunter(L20) > Gengar(L35)   enters loop 6   stance far   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Shadow Ball                ghost    special  shot    80    80      1.2    66.67  345    23%    foe spDef-1 20%
+     Lick                       ghost    physical melee   30    30      0.58   51.72  64     47%    paralysis 30%
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    31%    poison 30%
+     set total P/s (all attacks if all ready): 192.25
+
+################################################################################
+GYM 7  BLAINE   (fire arena, Volcano Badge, badge boost +10% Sp. Atk)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Growlithe(L1) > Arcanine(L35)   enters loop 1   stance mixed   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Roar                       normal   status   nova    0     -       5      -      160    -      knockback 140
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     50%    knockback 70, flinch 30%
+     Fire Blast                 fire     special  shot    93.5  93.5    3.5    26.71  399    10%    burn 10%
+     Take Down                  normal   physical melee   76.5  76.5    0.88   86.93  54     40%    recoil, knockback 90
+     set total P/s (all attacks if all ready): 199.35   plus Roar (no damage)
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    50%    burn 10%
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     50%    knockback 70, flinch 30%
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 142.85   plus Agility (no damage)
+
+ SLOT 2  Ponyta(L1) > Rapidash(L35)   enters loop 2   stance close   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Tackle                     normal   physical melee   40    40      0.5    80     54     58%    knockback 90
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    42%    burn 10%
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 137.14   plus Agility (no damage)
+
+ SLOT 3  Magmar(L1)   enters loop 3   stance mixed   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    36%    burn 10%
+     Karate Chop                fighting physical melee   50    50      0.7    71.43  50     36%    knockback 110
+     Sludge                     poison   special  shot    65    65      0.88   73.86  420    28%    poison 30%
+     set total P/s (all attacks if all ready): 202.43
+
+ SLOT 4  Vulpix(L1) > Ninetales(L35)   enters loop 4   stance far   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    63%    burn 10%
+     Shadow Ball                ghost    special  shot    80    80      1.2    66.67  345    37%    foe spDef-1 20%
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 123.81   plus Agility (no damage)
+
+ SLOT 5  Eevee(L1) > Flareon(L35)   enters loop 5   stance close   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     50%    knockback 70, flinch 30%
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    50%    burn 10%
+     Swords Dance (hp<50%)      normal   status   buff    0     -       Gate   -      -      -      self atk+2
+     set total P/s (all attacks if all ready): 142.85   plus Swords Dance (no damage)
+
+ SLOT 6  Charmander(L1) > Charmeleon(L20) > Charizard(L35)   enters loop 6   stance mixed   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Wing Attack                flying   physical melee   60    60      0.5    120    58     58%    knockback 70
+     Ember                      fire     special  shot    40    40      0.7    57.14  420    42%    burn 10%
+     Dragon Dance (hp<50%)      dragon   status   buff    0     -       Gate   -      -      -      self atk+1, self spd+1
+     set total P/s (all attacks if all ready): 177.14   plus Dragon Dance (no damage)
+
+################################################################################
+GYM 8  GIOVANNI   (ground arena, Earth Badge, badge boost +10% Attack)
+################################################################################
+ LEADER CARDS (gained per loop, pooled, held by every mon fielded): none yet
+
+ SLOT 1  Rhyhorn(L1) > Rhydon(L35)   enters loop 1   stance close   power x1   tempo x1
+   loops 1:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Earthquake                 ground   physical nova    100   100     1.75   57.14  200    20%    -
+     Body Slam                  normal   physical melee   85    85      1.17   72.65  46     30%    paralysis 30%, knockback 140
+     Fury Attack                normal   physical multi   12.75 38.25 x30.88   43.47  54     40%    -
+     Fissure                    ground   physical strike  120   120     3.5    34.29  420    10%    ohkoWild
+     set total P/s (all attacks if all ready): 207.55
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Body Slam                  normal   physical melee   85    85      1.17   72.65  46     33%    paralysis 30%, knockback 140
+     Mud Shot                   ground   special  shot    52.25 52.25   1.17   44.66  367    33%    foe spd-1
+     Rock Throw                 rock     physical shot    45    45      1.17   38.46  373    33%    knockback 90
+     Swords Dance (hp<50%)      normal   status   buff    0     -       Gate   -      -      -      self atk+2
+     set total P/s (all attacks if all ready): 155.77   plus Swords Dance (no damage)
+
+ SLOT 2  Diglett(L1) > Dugtrio(L35)   enters loop 2   stance close   power x1   tempo x1
+   loops 2-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Metal Claw                 steel    physical melee   47.5  47.5    0.5    95     50     70%    self atk+1 10%, knockback 60
+     Mud Shot                   ground   special  shot    52.25 52.25   1.17   44.66  367    30%    foe spd-1
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 139.66   plus Agility (no damage)
+
+ SLOT 3  NidoranF(L1) > Nidorina(L20) > Nidoqueen(L35)   enters loop 3   stance mixed   power x1   tempo x1
+   loops 3-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    47%    poison 30%
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     33%    knockback 70, flinch 30%
+     Body Slam                  normal   physical melee   85    85      1.17   72.65  46     20%    paralysis 30%, knockback 140
+     set total P/s (all attacks if all ready): 188.36
+
+ SLOT 4  NidoranM(L1) > Nidorino(L20) > Nidoking(L35)   enters loop 4   stance mixed   power x1   tempo x1
+   loops 4-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Poison Sting               poison   physical shot    15    15      0.5    30     420    47%    poison 30%
+     Mud Shot                   ground   special  shot    52.25 52.25   1.17   44.66  367    20%    foe spd-1
+     Karate Chop                fighting physical melee   50    50      0.7    71.43  50     33%    knockback 110
+     set total P/s (all attacks if all ready): 146.09
+
+ SLOT 5  Cubone(L1) > Marowak(L35)   enters loop 5   stance mixed   power x1   tempo x1
+   loops 5-6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Mud Shot                   ground   special  shot    52.25 52.25   1.17   44.66  367    50%    foe spd-1
+     Body Slam                  normal   physical melee   85    85      1.17   72.65  46     50%    paralysis 30%, knockback 140
+     Harden                     normal   status   buff    0     -       Gate   -      -      -      self def+1
+     set total P/s (all attacks if all ready): 117.31   plus Harden (no damage)
+
+ SLOT 6  Meowth(L1) > Persian(L35)   enters loop 6   stance close   power x1   tempo x1
+   loops 6:
+     move                       type     cat      form    bp    cast    cd     P/s    reach  share  status
+     Bite                       dark     physical melee   60    60      0.7    85.71  46     100%   knockback 70, flinch 30%
+     Agility                    psychic  status   buff    0     -       Gate   -      -      -      self spd+2
+     set total P/s (all attacks if all ready): 85.71   plus Agility (no damage)
+
+================================================================================
+NOTES FOR CARD AUTHORING
+  Cards apply to every move of the mon they fit (damage, count, velocity, area...); Team cards are not
+  allowed. A card must fit a move in at least one set of the slot, respect its cap and be a move card
+  (gym-harness.js validates it).
+  Brock slot 1 model: Tackle power 52 and reach 70, Rock Throw power 58.5 with 3 rocks of 11.7 px at 377 px/s.

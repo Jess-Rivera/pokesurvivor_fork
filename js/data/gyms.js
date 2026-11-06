@@ -4,10 +4,11 @@
  * move line is the id plus an optional hpBelow (the move joins the mon's moves only below that fraction of max HP). Per-loop sets
  * (Jess 2026-11-02): a slot's `sets` maps a loop number to its move lines, starting at the loop the slot enters (slot N enters loop N);
  * a loop with no set keeps the last earlier one (movesFor). They all cast
- * through G.MoveSim on their own cooldowns, pure buffs on their Gate (js/entities/boss-ai.js). A slot's `cards` are upgrade cards by
- * id from G.TeamCards (damage, count, velocity, area...), held by that mon only and folded by the SAME rules as the player's cards, so
- * each card applies to every one of the mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies
- * use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
+ * through G.MoveSim on their own cooldowns, pure buffs on their Gate (js/entities/boss-ai.js). A gym's `cards` are the LEADER's upgrade
+ * cards (Jess 2026-11-05: the leader plays like a player), by id from G.TeamCards (damage, count, velocity, area...). They are keyed by
+ * loop and hold the cards GAINED at that loop; the pool for loop N is the running sum of loops 1 to N (cardsFor). Every mon the gym
+ * fields in that loop holds the whole pool, folded by the SAME rules as the player's cards, so each card applies to every one of that
+ * mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
  * returns, beams, bursts, trails, delayed marks, self buffs, self heals).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
@@ -26,8 +27,8 @@ G.Gyms = (() => {
   const STAGE_BANDS = { mid: 20, final: 35 };
   const STANCES = ['close', 'far', 'mixed'];
   const STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
-  const GYM_KEYS = ['id', 'leader', 'badge', 'arena', 'boost', 'signatures'];
-  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'cards', 'sets'];
+  const GYM_KEYS = ['id', 'leader', 'badge', 'arena', 'boost', 'cards', 'signatures'];
+  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets'];
   const MOVE_KEYS = ['id', 'hpBelow'];
 
   /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'nova' (a ring or
@@ -143,23 +144,24 @@ G.Gyms = (() => {
       badge: 'Boulder Badge',
       arena: 'rock',
       boost: { stat: 'atk', pct: 0.1 },
+      // Brock's cards gained per loop (Jess 2026-11-05: per leader, cumulative). Loop 1 (Jess 2026-10-31, the pilot): Tackle Power 52, reach 70;
+      // Rock Throw Power 58.5, 3 rocks of size 11.7 at 377 px/s; Harden takes none. Loops 2 to 6 gain nothing yet (TUNE).
+      cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } },
       signatures: [
         // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (cooldowns, tell and recovery divided by it). Both TUNE, default 1.
-        // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned). Cards (Jess 2026-10-31): Tackle Power 52, reach 70; Rock Throw Power 58.5,
-        // 3 rocks of size 11.7 at 377 px/s; Harden takes none.
+        // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned).
         {
           line: ladder([74, 75, 76]),
           stance: 'mixed',
           power: 1,
           tempo: 1,
-          cards: { damage: 3, count: 2, velocity: 3, area: 2 },
           // Loop 1 (Jess 2026-11-02): Red/Blue Geodude, Tackle and Defense Curl, plus Jess's pilot Rock Throw. Loop 2 on: the pilot set.
           sets: {
             1: [{ id: 'tackle' }, { id: 'defense-curl' }, { id: 'rock-throw' }],
             2: [{ id: 'tackle' }, { id: 'rock-throw' }, { id: 'harden' }],
           },
         },
-        // Slots 2 to 6 (Gen-1 order, docs/GYM-ROSTERS.md): PROVISIONAL move sets (TUNE, no cards yet; the gym-roster branch authors them). Balance pass pending.
+        // Slots 2 to 6 (Gen-1 order, docs/GYM-ROSTERS.md): PROVISIONAL move sets (TUNE; they hold the gym's card pool from the loop they enter). Balance pass pending.
         // Slot 2: Onix -> Steelix (Gen-2 line-completion), the Defense wall.
         {
           line: ladder([95, 208]),
@@ -208,6 +210,10 @@ G.Gyms = (() => {
       badge: 'Cascade Badge',
       arena: 'water',
       boost: { stat: 'spd', pct: 0.1 },
+      // Misty's cards (Jess 2026-11-05): a special and status gym. Loop 1 (about level 12 to 15 at 8 min): Water Damage 4 and Count 2 and Velocity 3
+      // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Held back for a decision: Sp. Def 3 (the
+      // Vitamins card's Zinc; leaders have no team cards yet).
+      cards: { 1: { 'type:water': 4, count: 2, ailment: 2, velocity: 3, area: 2 } },
       signatures: [
         // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
         // Slot 1: Staryu -> Starmie, the signature ace.
@@ -218,7 +224,7 @@ G.Gyms = (() => {
           tempo: 1,
           // Loop 1 (Jess 2026-11-02): FRLG Staryu, the full lore set. Loop 2 on: the provisional set.
           sets: {
-            1: [{ id: 'tackle' }, { id: 'harden' }, { id: 'water-pulse' }, { id: 'recover' }],
+            1: [{ id: 'tackle' }, { id: 'harden' }, { id: 'water-pulse' }, { id: 'recover', hpBelow: 0.35 }], // Recover only below 35% (Jess 2026-11-05)
             2: [{ id: 'water-gun' }, { id: 'tackle' }, { id: 'harden' }],
           },
         },
@@ -680,6 +686,17 @@ G.Gyms = (() => {
     return out;
   }
 
+  /** The leader's card pool for loop `loop`: the running sum of the cards gained at loops 1 to `loop` ({ id: stacks }). A copy; pure. */
+  function cardsFor(entry, loop) {
+    const want = Number.isFinite(loop) ? Math.floor(loop) : 1,
+      pool = {};
+    for (const k of Object.keys((entry && entry.cards) || {}).sort((a, b) => a - b)) {
+      if (Number(k) > want) continue;
+      for (const id of Object.keys(entry.cards[k])) pool[id] = (pool[id] || 0) + entry.cards[k][id];
+    }
+    return pool;
+  }
+
   const unknownKeys = (o, allowed) => Object.keys(o).filter((k) => !allowed.includes(k));
   const sigName = (s) => (s && s.line && s.line[0] && G.DEX_BY[s.line[0].dex] ? G.DEX_BY[s.line[0].dex].name : '?');
 
@@ -744,21 +761,39 @@ G.Gyms = (() => {
         }
         if (!damaging) bad.push(L + ' needs at least one damaging move');
       }
-      // cards: the player's card rules, per mon (slice 7a); each must exist, be a move card, respect its cap and fit at least one move
-      // of any of its loop sets
-      const cards = s.cards || {},
-        allMoves = [].concat(...Object.values(s.sets || {}).filter(Array.isArray));
-      for (const id of Object.keys(cards)) {
-        const c = G.TeamCards.BY_ID[id],
-          n = cards[id];
-        if (!c) bad.push(who + ': unknown card ' + id);
-        else if (c.team) bad.push(who + ': ' + id + ' is a team card, and leaders use the base stage timers');
-        else if (!Number.isInteger(n) || n < 1) bad.push(who + ': card ' + id + ' needs a whole number of stacks');
-        else if (c.cap && n > c.cap) bad.push(who + ': card ' + id + ' is capped at ' + c.cap);
-        else if (!allMoves.some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
-          bad.push(who + ': card ' + id + ' fits none of its moves');
-      }
     });
+    // cards (Jess 2026-11-05): the leader's, gained per loop; each must exist, be a move card, a whole number of stacks, keep the running
+    // total within its cap, and fit at least one move of a mon fielded in the loop it is gained
+    const cards = g.cards || {},
+      roster = g.signatures || [];
+    if (g.cards != null && (typeof g.cards !== 'object' || Array.isArray(g.cards)))
+      bad.push('cards must be an object keyed by loop');
+    else {
+      const total = {};
+      for (const k of Object.keys(cards).sort((a, b) => a - b)) {
+        const L = (g.leader || '?') + ' cards loop ' + k;
+        if (!(Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS)) {
+          bad.push(L + ': cards are keyed by a loop from 1 to ' + LOOPS);
+          continue;
+        }
+        const moves = [].concat(
+          ...roster.slice(0, Number(k)).map((s, i) => (s && s.sets ? movesFor(s, i, Number(k)) : []))
+        );
+        for (const id of Object.keys(cards[k] || {})) {
+          const c = G.TeamCards.BY_ID[id],
+            n = cards[k][id];
+          if (!c) bad.push(L + ': unknown card ' + id);
+          else if (c.team) bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
+          else if (!Number.isInteger(n) || n < 1) bad.push(L + ': card ' + id + ' needs a whole number of stacks');
+          else {
+            total[id] = (total[id] || 0) + n;
+            if (c.cap && total[id] > c.cap) bad.push(L + ': card ' + id + ' is capped at ' + c.cap);
+            else if (!moves.some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
+              bad.push(L + ': card ' + id + ' fits none of the moves fielded that loop');
+          }
+        }
+      }
+    }
     return bad;
   }
 
@@ -778,6 +813,7 @@ G.Gyms = (() => {
     stageFor,
     lineup,
     movesFor,
+    cardsFor,
     formOf,
     reachOf,
     validate,

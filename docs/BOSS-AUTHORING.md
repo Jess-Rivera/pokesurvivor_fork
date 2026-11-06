@@ -37,11 +37,12 @@ The game derives (never type these):
 | badge | display name | gyms and Elite Four both give the package |
 | level | a number | ELITE FOUR ONLY, hard-set. Leave out for gyms. |
 | boost | stat and percent | optional override of the badge's run boost |
+| cards | { loop: { card: stacks } }, see Cards | optional; the leader's cards gained per loop, held by every mon the gym fields |
 | signatures | ordered list, 1 to 6 | order matters: loop N fields the first N at once (G.Gyms.lineup) |
 
 ## Cards (slice 7a, 2026-10-31; replaces the per-move stacks of 2026-10-19)
 
-A slot (signature) may carry `cards` (try them first in `tools/move-lab.html`, which folds any cards into a slot's moves and prints the block to paste): the player's upgrade cards by id from G.TeamCards (damage, count, velocity, area, presence, reach, cooldown, pierce, knockback, ailment...), for example `cards: damage 3, count 2, velocity 3, area 2`. They are held by that mon only and folded by the same rules as the player's cards, so a card applies to every one of the mon's moves it fits (Area Up grows both Tackle's reach and Rock Throw's rocks). No team cards (Gate, Duration, Regen, Vitamins). The validator rejects an unknown card, a team card, stacks over a card's cap and a card that fits none of the mon's moves. A leader mon plays like the player: its moves autocast on their own cooldowns through G.MoveSim, pure buffs on their Gate, with a tell before every attack (BOSS-REWORK section 3d).
+A gym carries `cards` (Jess 2026-11-05: the leader plays like a player, so the cards belong to the leader, not to one mon). Try them first in `tools/move-lab.html`, which folds any cards into a mon's moves and prints the block to paste. They are keyed by loop and hold the cards GAINED at that loop, authored as a schedule, for example `cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 }, 2: { damage: 1 } }`. The pool for loop N is the running sum of loops 1 to N (`G.Gyms.cardsFor`), so Brock keeps his loop 1 cards in loop 2 and adds the new ones. Every mon the gym fields in that loop holds the WHOLE pool, folded by the same rules as the player's cards, so a card applies to every one of that mon's moves it fits (Area Up grows both Tackle's reach and Rock Throw's rocks); a card that fits none of a mon's moves does nothing for it. The number of cards gained per loop is a TUNE value, authored per gym (it does not mirror the player's picks). No team cards (Gate, Duration, Regen, Vitamins). The validator rejects an unknown card, a team card, a loop key outside 1 to 6, a non-whole stack count, a running total over a card's cap, and a card that fits no move of any mon fielded in the loop it is gained.
 
 ## Signature fields
 
@@ -51,7 +52,6 @@ Optional tuning fields (added 2026-10-19, default 1, range above 0 up to 5): `po
 |---|---|---|
 | line | the evolution line, base form first, for example Geodude > Graveler > Golem | stored in gyms.js as a stage ladder of national dex numbers, each with the level it appears at; every dex must exist in the Pokedex |
 | stance | close, far, mixed | where it likes to fight. Default mixed. |
-| cards | upgrade cards by id and stacks, see above | optional; per mon |
 | sets | one move set per loop, 1 to 4 lines each, see below | per-loop sets (Jess 2026-11-02): keyed by loop number, the first at the loop the slot enters (slot N enters loop N), up to loop 6; a loop with no set keeps the last earlier one (G.Gyms.movesFor). Ids from the new move data (G.MoveDefs) with a gym form. In gyms.js, for example slot 1: `sets: { 1: [Tackle, Defense Curl, Rock Throw], 2: [Tackle, Rock Throw, Harden] }` holds the loop-2 set through loop 6. |
 | fury | optional: hpBelow 50, plus any of speed, cooldown, damage percents | OFF by default. Pending your OK. |
 
@@ -66,6 +66,7 @@ A signature is a roster SLOT, and a slot is an evolution LINE. The stage it show
 - REACH (Jess 2026-11-01): a melee cone reaches its radius, a nova its full growth (both plus the player's body), a strike its range (default 420). A shot reaches as far as it flies, speed x lifetime + size, capped at its range; a homing shot gets no credit for turning. So Shadow Ball 345, Rock Throw 373, Psychic 166, Thunder Shock and Confusion 420. The far stance (170 to 300 px) shrinks while the mon's longest ready shot or strike falls short of it: it keeps the player within that reach minus 20 px, backing off only 40 px inside that, so a Psychic user walks in to land it. Code: G.Gyms.reachOf, GymBrain.ranged().
 - Two close moves of different reach (found 2026-11-01, revised 2026-11-02): while any melee cone or nova is ready the brain keeps walking in, so against a player who stands still every close move lands (live loop-1 fights: Growlithe Bite 22 and Take Down 22, Rhyhorn Earthquake 17 and Body Slam 14). Against a player who backs off, the longer one is the one in reach, so the shorter cone lands less. Lore sets with two close moves (Blaine and Giovanni loop 1) are kept; feel-test them. Two or three shots are fine when their cooldowns leave room (docs/proposals/gym-harness.js check 10b proves every authored move gets cast).
 - per-loop sets: the first set at the slot's entry loop, every key a loop from the entry loop to 6; in each set 1 to 4 moves, at least one damaging move, optional hpBelow in (0, 1); cards as above (a card must fit a move of at least one set)
+- self heals (Recover, Synthesis, Moonlight; the heal form) are capped per fight at the loop number, per mon (Jess 2026-11-05): loop 1 casts it once, loop 2 twice, and so on. A drain move (Giga Drain) is not a self heal and is never capped. To make the one heal count, give it `hpBelow` so it is not spent at 99% HP.
 - stance close, far or mixed; power and tempo above 0 up to 5
 - stage ladder non-empty, first stage at level 1, levels strictly increasing integers, every dex real
 - unknown fields on a gym, slot or move are rejected (catches typos)
@@ -92,10 +93,12 @@ Rules the converter will enforce (it stops and tells you instead of guessing):
 kind: gym | elite4
 badge: <Badge name>
 level: <Elite Four only>
+cards:
+   loop 1: <card> <stacks>, ...
+   loop 2: <card> <stacks>, ...   (gained that loop; the pool is the running sum)
 signatures:
 1. <Species>
    stance: close | far | mixed
-   cards: <card> <stacks>, ...
    moves:
    - <move-id> | <only below %>
    - <move-id>
@@ -112,10 +115,11 @@ Loop 1 uses the FIRST signature only, so the pilot is Geodude alone. Canon has T
 kind: gym
 badge: Boulder Badge
 boost: atk +10%   (run-long, whole team; stat is hp, atk, def, spa, spd or spe)
+cards:
+   loop 1: damage 3, count 2, velocity 3, area 2
 signatures:
 1. Geodude
    stance: mixed
-   cards: damage 3, count 2, velocity 3, area 2
    moves:
    - tackle
    - rock-throw

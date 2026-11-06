@@ -91,6 +91,7 @@ and internal references all depend on the Spanish names staying as they are.
 | apuntado | targeting |
 | sala | room (co-op) |
 | anfitrión | host (co-op) |
+| strong host / weak host | NOT the co-op host. Combat rule classes (2026-11-05): a strong host follows all the player's rules (Player, Gym Leader, Uber, World Boss); a weak host follows the wild enemy rules (Elite, Wild). See docs/COMBAT-RULES.md "Host model". |
 | amigo / amigos | friend / friends |
 | apodo | nickname |
 | en línea | online |

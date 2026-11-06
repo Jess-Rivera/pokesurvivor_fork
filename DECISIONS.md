@@ -5,6 +5,14 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-05, Host model: gym leaders are strong hosts and follow every player rule (Jess)
+Entities are Strong Hosts (follow all the player's rules: Player, Gym Leader, Uber, World Boss) or Weak Hosts (follow the wild enemy rules: Elite, Wild Enemy). A gym leader can do anything a player can and Jess restricts by hand where wanted (default allow, authored restrictions); this replaces slice 7a's allow-list (12 move forms, no team cards). A leader fields a team that swaps like the player's, not all mons at once. An Elite is a wild enemy scaled up in size and stats with added rules, not a strong host with restrictions. Tells stay for now, as an authored restriction on the AI. The player becomes the reference strong host, so the old status meaning of "strong" (boss, elite, gym; not the player) flips. Code is unchanged so far.
+Canonical: docs/COMBAT-RULES.md "Host model"; audit and handoff: docs/proposals/host-model-audit.md, docs/proposals/host-model-handoff.md
+
+## 2026-11-05, Gym cards belong to the leader, per loop, pooled; self heals capped by loop (Jess)
+A gym's `cards` are the leader's: keyed by loop, the cards gained that loop, the pool for loop N the running sum of 1 to N, held by every mon fielded. Authored schedule, not a mirror of the player's picks; counts are TUNE (Misty loop 1 is 13 stacks, a player holds about 60 upgrades by Brock loop 2). A leader mon may cast self heals (Recover) at most its loop number times per fight, with Recover at hpBelow 35% so the heal counts. Both are authored restrictions under the host model above.
+Canonical: docs/BOSS-AUTHORING.md "Cards"; js/data/gyms.js, js/entities/boss-ai.js
+
 ## 2026-11-04, Move Shop: Move Trainer and TM Mart buildings, Silver, learnset pools from every game (Jess)
 New moves come from two walk-in buildings instead of level-up cards. Both spawn off screen, over 90 degrees apart, at 2:00 regardless of the elite and 90 s after each gym, and last 1 minute. The Trainer sells a random 4 from a member's level-up and egg pool, the Mart a random 4 TMs. Paid with Silver, a run-only currency: world level / 10 per kill, minimum 1, 100 at the start. Full slots ask you to forget a move or cancel. Pools come from every game because the latest-game dataset leaves 68 species with no TMs; the Kanto hold ends. The gacha overhaul is a separate branch.
 Canonical: docs/proposals/move-shop-plan.md

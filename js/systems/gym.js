@@ -156,13 +156,14 @@ G.Gym = (() => {
       // moves and cards are read by the GymBrain (boss-ai.js), which casts the moves through G.MoveSim with the cards folded in (slice 7a)
       gym: {
         level: lvl,
+        loop, // the loop this fight is in: it also caps the leader's self heals per fight (GymBrain.healsLeft)
         leader: g.leader,
         badge: g.badge,
         species: mon.name,
         stance: sig.stance,
         power: sig.power || 1,
         tempo: sig.tempo || 1,
-        cards: Object.assign({}, sig.cards),
+        cards: G.Gyms.cardsFor(entry, loop), // the leader's pool for this loop, held by every mon the gym fields (Jess 2026-11-05)
         moves: G.Gyms.movesFor(sig, slot, loop).map((m) => Object.assign({}, m)), // this loop's set (per-loop sets, Jess 2026-11-02)
         engagedAt: null,
       },

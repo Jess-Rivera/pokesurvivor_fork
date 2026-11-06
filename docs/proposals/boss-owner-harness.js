@@ -48,7 +48,7 @@ const BROCK = Gy.KANTO[0], SLOT1 = BROCK.signatures[0], PILOT = SLOT1.sets[2]; /
 
 // ---- builders ----
 const gymOf = (o = {}) => Object.assign({ level: 20, leader: 'Brock', badge: 'Boulder Badge', species: 'Geodude', stance: 'mixed', power: 1, tempo: 1,
-  cards: Object.assign({}, SLOT1.cards), moves: PILOT.map(m => Object.assign({}, m)), engagedAt: null }, o);
+  cards: Gy.cardsFor(BROCK, 1), moves: PILOT.map(m => Object.assign({}, m)), engagedAt: null }, o);
 function mkBoss(gym = gymOf()) {
   const e = G.Boss.make({ dex: 74, name: 'Geodude', hp: 1e6, spd: 40, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym }, 0, 0);
   e.flying = false; return e;
@@ -70,7 +70,11 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
 
 // 1. roster data and the validator
 { ok(!Gy.validate(BROCK).length, 'Brock validates: ' + Gy.validate(BROCK).join('; '));
-  ok(JSON.stringify(SLOT1.cards) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'slot 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
+  { const fake = { cards: { 1: { damage: 3 }, 2: { damage: 1, area: 1 } } };   // the leader pool is a running sum over loops (Jess 2026-11-05)
+  ok(JSON.stringify(Gy.cardsFor(fake, 1)) === '{"damage":3}' && JSON.stringify(Gy.cardsFor(fake, 2)) === '{"damage":4,"area":1}', 'a leader card pool is the running sum of the loops gained so far');
+  const over = JSON.parse(JSON.stringify(BROCK)); over.cards[2] = { count: 2 };
+  ok(Gy.validate(over).some(m => m.includes('capped at 3')), 'a cap counts the stacks gained in earlier loops'); }
+ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'Brock loop 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
   ok(PILOT.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 pilot set (loop 2 on)');
   ok(SLOT1.sets[1].map(m => m.id).join() === 'tackle,defense-curl,rock-throw', 'slot 1 loop 1: Tackle, Defense Curl, Rock Throw (Jess 2026-11-02)');
   ok(Gy.movesFor(SLOT1, 0, 1) === SLOT1.sets[1] && [2, 3, 6].every(L => Gy.movesFor(SLOT1, 0, L) === PILOT), 'movesFor: loop 1 its own set, loops 2 to 6 hold the pilot set');
@@ -95,12 +99,12 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(!forms('string-shot') && !forms('toxic-spikes'), 'an emitter of shots (String Shot) or a placed emitter (Toxic Spikes) still has no form');
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
-    ['unknown card', s => { s.cards.luck = 1; }, 'unknown card luck'],
-    ['team card', s => { s.cards.duration = 2; }, 'is a team card'],
-    ['card over its cap', s => { s.cards.count = 4; }, 'capped at 3'],
-    ['card that fits no move', s => { s.cards.heal = 1; }, 'fits none of its moves'],
-    ['fractional stacks', s => { s.cards.damage = 1.5; }, 'whole number of stacks'],
-    ['zero stacks', s => { s.cards.area = 0; }, 'whole number of stacks'],
+    ['unknown card', (s, c) => { c.cards[1].luck = 1; }, 'unknown card luck'],
+    ['team card', (s, c) => { c.cards[1].duration = 2; }, 'is a team card'],
+    ['card over its cap', (s, c) => { c.cards[1].count = 4; }, 'capped at 3'],
+    ['card that fits no move', (s, c) => { c.cards[1].heal = 1; }, 'fits none of the moves fielded that loop'],
+    ['fractional stacks', (s, c) => { c.cards[1].damage = 1.5; }, 'whole number of stacks'],
+    ['zero stacks', (s, c) => { c.cards[1].area = 0; }, 'whole number of stacks'],
     ['hpBelow out of range', s => { s.sets[1][2].hpBelow = 1.2; }, 'hpBelow must be in (0, 1)'],
     ['unknown move', s => { s.sets[1].push({ id: 'not-a-move' }); }, 'unknown move not-a-move'],
     ['move with no gym form', s => { s.sets[1][1].id = 'rock-slide'; }, 'has no gym form yet'],
@@ -267,12 +271,19 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
     e.hp = 10; hitWith(e, 'take-down', 0.99); ok(e.hp === 1, 'recoil never takes the leader below 1 HP: ' + e.hp);
     pl.loss = 0; e.hp = 1000; hitWith(e, 'take-down', 0.99); ok(e.hp === 1000, 'nothing dealt, no recoil'); }
   // self heal (Jess 2026-11-02, mainline): Recover casts with no tell while hurt, half max HP on its first tick, then its 12 s cooldown
-  { fresh(); const e = boss(['tackle', 'recover']); pl.x = 5000; const M = e.maxHp;
+  { fresh(); const e = mkBoss(gymOf({ moves: [{ id: 'tackle' }, { id: 'recover' }], cards: {}, loop: 3 })); pl.x = 5000; const M = e.maxHp;
     run(e, 1); ok(e.hp === M, 'at full HP no heal is cast');
     e.hp = 0.3 * M; run(e, 0.2); ok(near(e.hp, 0.8 * M), 'hurt to 30%: Recover lands half of max HP at once (80%): ' + (e.hp / M).toFixed(3));
     e.hp = 0.3 * M; run(e, 11); ok(near(e.hp, 0.3 * M), 'no second Recover inside its 12 s cooldown: ' + (e.hp / M).toFixed(3));
     run(e, 1.2); ok(near(e.hp, 0.8 * M), 'the next Recover lands once the 12 s cooldown is up: ' + (e.hp / M).toFixed(3));
     e.hp = 0.8 * M; run(e, 12.5); ok(e.hp === M, 'the heal stops at max HP'); }
+  // a leader's self heals are capped per fight at the loop number (Jess 2026-11-05): loop 1 casts Recover once, loop 2 twice, a drain is never counted
+  { const heals = (loop, secs) => { fresh(); const e = mkBoss(gymOf({ moves: [{ id: 'tackle' }, { id: 'recover' }], cards: {}, loop })); pl.x = 5000; const M = e.maxHp; let n = 0;
+      for (let t = 0; t < secs; t += 1) { e.hp = 0.3 * M; const before = e.hp; run(e, 1); if (e.hp > before + 0.1 * M) n++; } return n; };
+    ok(heals(1, 60) === 1, 'loop 1: Recover lands once in 60 s of being hurt, never again: ' + heals(1, 60));
+    ok(heals(2, 60) === 2, 'loop 2: Recover lands twice: ' + heals(2, 60));
+    ok(heals(5, 130) === 5, 'loop 5: Recover lands five times: ' + heals(5, 130));
+    fresh(); const nl = mkBoss(gymOf({ moves: [{ id: 'tackle' }, { id: 'recover' }], cards: {} })); ok(nl.brain.healsLeft === 1, 'a descriptor with no loop counts as loop 1: ' + nl.brain.healsLeft); }
   // Hex and crits
   { fresh(); const e = boss(['hex']), hex = (p) => G.Stats.enemyAttackFactor(80, 30, 20, p, 'special');
     hitWith(e, 'hex', 0.99); ok(near(pl.hurts[0].a[0], hex(65)), 'Hex on a clean player: Power 65: ' + pl.hurts[0].a[0]);

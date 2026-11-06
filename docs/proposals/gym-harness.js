@@ -45,7 +45,11 @@ G.Enemy.prototype.die = function () { this.dead = true; };
     ['old moves field', c => { c.signatures[0].moves = []; }, 'unknown field moves'],
     ['no damaging move', c => { c.signatures[0].sets[2] = [{ id: 'harden' }]; }, 'at least one damaging move'],
     ['move without a gym form', c => { c.signatures[0].sets[1][1].id = 'rock-slide'; }, 'no gym form yet'],
-    ['card the rules do not know', c => { c.signatures[0].cards = { 'not-a-card': 1 }; }, 'unknown card'],
+    ['card the rules do not know', c => { c.cards = { 1: { 'not-a-card': 1 } }; }, 'unknown card'],
+    ['cards left on a slot, they are the leader cards now', c => { c.signatures[0].cards = { damage: 1 }; }, 'unknown field cards'],
+    ['cards keyed by a bad loop', c => { c.cards[7] = { damage: 1 }; }, 'keyed by a loop from 1 to 6'],
+    ['cards over a cap across loops', c => { c.cards[2] = { count: 2 }; }, 'capped at 3'],
+    ['a card that fits no mon fielded that loop', c => { c.cards[2] = { heal: 1 }; }, 'fits none of the moves fielded that loop'],
     ['ladder not increasing', c => { c.signatures[0].line[1].minLevel = 1; }, 'stage levels must increase'],
     ['ladder first stage not 1', c => { c.signatures[0].line[0].minLevel = 5; }, 'first stage must start at level 1'],
     ['unknown dex in a stage', c => { c.signatures[0].line[2].dex = 99999; }, 'unknown dex 99999'],
@@ -149,6 +153,35 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   if (G.Gyms.lineup(brock, 99, 12).length !== 6) bad('loop 99 should clamp to the roster size'); if (G.Gyms.lineup(brock, 2.9, 12).length !== 2) bad('a fractional loop floors');
   console.log('8 lineup: loop 1..6 gives the first N slots in order; stage at level 12 is Geodude/Onix/Rhyhorn/Omanyte/Kabuto/Aerodactyl, at 35 the finals; odd loops clamp'); }
 
+// 8b. the leader's card pool (Jess 2026-11-05): gained per loop, the pool for loop N is the running sum of loops 1 to N, and every mon the
+// gym fields holds the whole pool. Expected from the rule, not from the code: Brock gains Damage 3, Count 2, Velocity 3, Area 2 at loop 1.
+{ const sum = (o, p) => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]])) === JSON.stringify(Object.keys(p).sort().map(k => [k, p[k]]));
+  const fake = { cards: { 1: { damage: 3 }, 2: { damage: 1, area: 1 }, 4: { count: 2 } } };
+  if (!sum(G.Gyms.cardsFor(fake, 1), { damage: 3 })) bad('pool loop 1 ' + JSON.stringify(G.Gyms.cardsFor(fake, 1)));
+  if (!sum(G.Gyms.cardsFor(fake, 2), { damage: 4, area: 1 })) bad('pool loop 2 does not accumulate ' + JSON.stringify(G.Gyms.cardsFor(fake, 2)));
+  if (!sum(G.Gyms.cardsFor(fake, 3), { damage: 4, area: 1 })) bad('pool loop 3 keeps the loop 2 pool ' + JSON.stringify(G.Gyms.cardsFor(fake, 3)));
+  if (!sum(G.Gyms.cardsFor(fake, 6), { damage: 4, area: 1, count: 2 })) bad('pool loop 6 ' + JSON.stringify(G.Gyms.cardsFor(fake, 6)));
+  if (!sum(G.Gyms.cardsFor({}, 3), {})) bad('a gym with no cards has an empty pool');
+  const pool = G.Gyms.cardsFor(fake, 2); pool.damage = 99; if (G.Gyms.cardsFor(fake, 2).damage !== 4) bad('cardsFor must return a copy');
+  const brock = G.Gyms.KANTO[0], saved = brock.cards;
+  brock.cards = { 1: { damage: 3, count: 2, velocity: 3, area: 2 }, 2: { damage: 1, area: 1 } };
+  G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240); const gc = G.Gym.gate;
+  G.Gym.debugLoop(1); const l1 = G.Gym.makeDef(gc, 0).gym.cards;
+  if (!sum(l1, { damage: 3, count: 2, velocity: 3, area: 2 })) bad('loop 1 def cards ' + JSON.stringify(l1));
+  G.Gym.debugLoop(2);
+  for (const slot of [0, 1]) { const c = G.Gym.makeDef(gc, slot).gym.cards;
+    if (!sum(c, { damage: 4, count: 2, velocity: 3, area: 3 })) bad('loop 2 slot ' + (slot + 1) + ' does not hold the whole pool ' + JSON.stringify(c)); }
+  brock.cards = saved; G.GymArena.gate = null; G.Gym.reset();
+  // Misty loop 1 (Jess 2026-11-05), folded by the card steps: Water Damage +15% x4 (60 to 96), Count +1 x2 (3 pulses), Ailment +10 x2 (20 to 40),
+  // Velocity +15% x3 (350 to 507.5), Area +15% x2 (the radius grows by the square root of 1.3); Tackle is Normal, so Water Damage leaves it alone
+  { const m = G.Gyms.KANTO[1], pool = G.Gyms.cardsFor(m, 1), wp = G.TeamCards.fold(G.MoveDefs['water-pulse'], pool), tk = G.TeamCards.fold(G.MoveDefs.tackle, pool);
+    const ail = wp.payload.find(p => p.t === 'ailment');
+    if (m.leader !== 'Misty' || Object.values(pool).reduce((a, b) => a + b, 0) !== 13) bad('Misty loop 1 pool is 13 stacks ' + JSON.stringify(pool));
+    if (!near(wp.basePower, 96) || wp.space.count !== 3 || ail.chance !== 40 || !near(wp.delivery.moveSpeed, 350 * 1.45) || !near(wp.space.radRadius, 6 * Math.sqrt(1.3))) bad('Misty Water Pulse folded ' + JSON.stringify([wp.basePower, wp.space.count, ail.chance, wp.delivery.moveSpeed, wp.space.radRadius]));
+    if (!near(tk.basePower, 40) || !near(tk.space.radRadius, 54 * Math.sqrt(1.3))) bad('Misty Tackle folded ' + JSON.stringify([tk.basePower, tk.space.radRadius]));
+    const rec = m.signatures[0].sets[1].find(x => x.id === 'recover'); if (!rec || rec.hpBelow !== 0.35) bad('Misty loop 1 Recover joins only below 35%'); }
+  console.log('8b card pool: gained per loop, running sum, every fielded mon holds it'); }
+
 // 9. loop accessor, roster and the escalation bump feeding the stage
 G.GymArena.gate = null; G.Gym.reset(); clock = 240; G.Gym.update(0.1, {}, 240);
 const g2 = G.Gym.gate; if (!g2) bad('no gate for sections 9 to 12');
@@ -174,7 +207,7 @@ const gate2 = G.Gym.gate;
     if (d.gym.level !== lv) bad('slot ' + slot + ' effective level ' + d.gym.level);
   }
   let threw = false; try { G.Gym.makeDef(gate2, 6); } catch (e) { threw = true; } if (!threw) bad('makeDef must refuse a slot that does not exist');
-  // every slot through the real brain and G.MoveSim: close range at full HP, then far at 40% HP (so hpBelow moves can fire); only authored moves, every authored move used, no errors
+  // every slot through the real brain and G.MoveSim: close range at full HP, then far at 30% HP (so every hpBelow move, down to Misty Recover at 35%, can fire); only authored moves, every authored move used, no errors
   const out = [];
   for (let slot = 0; slot < 6; slot++) {
     G.MoveSim.clear();
@@ -182,7 +215,7 @@ const gate2 = G.Gym.gate;
     const seen = {};
     let err = null;
     for (let i = 0; i < 90 * 20 && !err; i++) {
-      clock = 240 + i * 0.05; e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 900 ? 55 : 380; if (i === 900) e.hp = e.maxHp * 0.4;
+      clock = 240 + i * 0.05; e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 900 ? 55 : 380; if (i === 900) e.hp = e.maxHp * 0.3;
       try { pl.dead = false; for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { err = x.message; }
     }
     if (err) bad('slot ' + slot + ' ' + d.name + ' threw in the boss AI: ' + err);
@@ -208,7 +241,7 @@ const gate2 = G.Gym.gate;
       if (d.dex !== G.Gyms.stageFor(sig, 36).dex) bad(entry.leader + ' slot ' + slot + ' def dex ' + d.dex);
       const seen = {}; let err = null;
       for (let i = 0; i < 90 * 20 && !err; i++) {
-        clock = 240 + i * 0.05; e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 900 ? near : 380; if (i === 900) e.hp = e.maxHp * 0.4;
+        clock = 240 + i * 0.05; e.x = 0; e.y = 0; pl.y = 0; pl.x = i < 900 ? near : 380; if (i === 900) e.hp = e.maxHp * 0.3;
         try { pl.dead = false; for (const id of castsOf(() => { e.update(0.05, pl); G.MoveSim.step(0.05, clock); })) seen[id] = (seen[id] || 0) + 1; } catch (x) { err = x.message; }
       }
       if (err) bad(entry.leader + ' slot ' + slot + ' ' + d.name + ' threw in the boss AI: ' + err);
