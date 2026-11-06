@@ -7,7 +7,9 @@
 //   level-up: a "new move" card for every move on the real level-up screen (name, text, type tag, icon);
 //   sheet: every move on the pause sheet (name, summary, icon; no "undefined" or "NaN"; routed rows with numbers);
 //   icons: every move icon is drawn, with its family badge exactly when G.MoveInfo gives one;
-//   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run.
+//   region flow: the real menu, Play and region card path, then Space dodges and neither Space nor Enter starts a new run;
+//   login: a first launch shows the PokeSwarm login, and Tab, Space and the arrows work in its text fields.
+//   onboarding: a new guest picks a region (9 cards of 3) and starts with its three starters, Grass leading; a save with a partner skips it.
 // Fails on any page or console error.
 const path = require('path'),
   cp = require('child_process');
@@ -223,7 +225,9 @@ async function check(browser, query, tag) {
           !el.querySelector('.ico').style.background ||
           !el.querySelector('.ico canvas,.ico img,.ico i,.ico span')
         )
-          out.bad.push('offer ' + id + ' "' + (el ? el.textContent.replace(/\s+/g, ' ').slice(0, 90) : 'missing') + '"');
+          out.bad.push(
+            'offer ' + id + ' "' + (el ? el.textContent.replace(/\s+/g, ' ').slice(0, 90) : 'missing') + '"'
+          );
       }
       G.ShopUI.leave();
     }
@@ -436,6 +440,148 @@ async function regionFlow(browser, query, tag) {
   await page.close();
 }
 
+// Onboarding (2026-11-05): a first launch with no save shows the PokeSwarm login, in the menu's title font, and its text fields
+// take the browser's own keys (Tab moves to the password, Space and the arrows work while typing a name).
+async function loginFlow(browser, query, tag) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }); // fresh storage: no session, no save
+  const page = await ctx.newPage();
+  const errs = [];
+  page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push('console: ' + m.text());
+  });
+  await page.goto(`http://127.0.0.1:${PORT}/dev.html${query}`, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.G && G.DB && G.LoginUI, null, { timeout: 30000 });
+  await page.evaluate(async () => {
+    await G.DB.ready();
+    const t = document.getElementById('tap-start');
+    if (t && !t.classList.contains('hidden')) t.click();
+    G.LoginUI.open();
+  });
+  await sleep(300);
+  const scr = await page.evaluate(() => {
+    const s = document.getElementById('scr-login'),
+      t1 = s.querySelector('.logo .t1');
+    return {
+      shown: !s.classList.contains('hidden'),
+      title: t1 && t1.textContent.trim(),
+      font: t1 && getComputedStyle(t1).fontFamily,
+      oldName: /pok[eé]\s?survivor/i.test(s.textContent),
+      sub: !!s.querySelector('.logo .t2'),
+      official: !!s.querySelector('.login-official'),
+      fits: t1 && t1.scrollWidth <= t1.clientWidth,
+    };
+  });
+  ok(scr.fits, tag + ': the PokeSwarm title fits inside the login box');
+  ok(scr.shown, tag + ': the login screen shows on a first launch');
+  ok(scr.title === 'PokeSwarm', tag + ': the login title reads PokeSwarm (' + scr.title + ')');
+  ok(/korataki/i.test(scr.font || ''), tag + ': the login title uses the menu title font (' + scr.font + ')');
+  ok(!scr.oldName && !scr.sub && !scr.official, tag + ': no PokeSurvivor name, subtitle or official-site line');
+  await page.focus('#f-user');
+  await page.keyboard.type('Ash Ketchu');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.type('X');
+  ok(
+    (await page.inputValue('#f-user')) === 'Ash KetchXu',
+    tag + ': Space types and ArrowLeft moves the cursor in the name field'
+  );
+  await page.keyboard.press('Tab');
+  ok(
+    await page.evaluate(() => document.activeElement && document.activeElement.id === 'f-pass'),
+    tag + ': Tab moves from the name to the password'
+  );
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await ctx.close();
+}
+
+// Onboarding F3 (2026-11-05): a new guest goes straight to the region pick (9 cards of 3 sprites), picks Johto and lands in the
+// menu with Chikorita leading Cyndaquil and Totodile; a save that already has a partner skips the screen on the next load.
+async function onboardingFlow(browser, query, tag) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await ctx.newPage();
+  const errs = [];
+  page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push('console: ' + m.text());
+  });
+  await page.goto(`http://127.0.0.1:${PORT}/dev.html${query}`, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.G && G.DB && G.LoginUI, null, { timeout: 30000 });
+  await page.evaluate(async () => {
+    await G.DB.ready();
+    const t = document.getElementById('tap-start');
+    if (t && !t.classList.contains('hidden')) t.click();
+    G.LoginUI.open();
+  });
+  await sleep(300);
+  await page.click('#btn-guest');
+  await sleep(600);
+  const scr = await page.evaluate(() => {
+    const s = document.getElementById('scr-starters'),
+      cards = [...s.querySelectorAll('.region-card')];
+    return {
+      shown: !s.classList.contains('hidden'),
+      quiz: !document.getElementById('scr-test').classList.contains('hidden'),
+      names: cards.map((c) => c.querySelector('h3').textContent),
+      sprites: cards.map((c) => c.querySelectorAll('canvas').length),
+      okOff: document.getElementById('starter-ok').disabled,
+    };
+  });
+  ok(scr.shown && !scr.quiz, tag + ': a new guest lands on the starter pick, not the quiz');
+  ok(
+    scr.names.join() === 'Kanto,Johto,Hoenn,Sinnoh,Unova,Kalos,Alola,Galar,Paldea',
+    tag + ': 9 region cards in order (' + scr.names.join() + ')'
+  );
+  ok(scr.sprites.length === 9 && scr.sprites.every((n) => n === 3), tag + ': each card shows 3 sprites');
+  ok(scr.okOff, tag + ': Choose is disabled until a region is picked');
+  await page.click('.region-card[data-region="Johto"]');
+  const ready = await page.evaluate(() => ({
+    off: document.getElementById('starter-ok').disabled,
+    label: document.getElementById('starter-ok').textContent,
+    info: document.getElementById('starter-info').textContent,
+  }));
+  ok(!ready.off && ready.label === 'Choose Johto', tag + ': picking Johto enables "' + ready.label + '"');
+  ok(
+    /Chikorita/.test(ready.info) && /Cyndaquil/.test(ready.info) && /Totodile/.test(ready.info),
+    tag + ': the info line names the three'
+  );
+  await page.click('#starter-ok');
+  await sleep(800);
+  const res = await page.evaluate(() => {
+    const s = G.DB.save;
+    return {
+      team: s.team.map((t) => t && t.dex),
+      uids: s.team.slice(0, 3).every((t) => t && t.uid),
+      partner: s.partner,
+      starter: s.starter,
+      menu: !document.getElementById('scr-menu').classList.contains('hidden'),
+    };
+  });
+  ok(res.team.join() === '152,155,158,,,', tag + ': team is Chikorita, Cyndaquil, Totodile (' + res.team.join() + ')');
+  ok(res.uids, tag + ': each of the three slots is linked to its own copy');
+  ok(res.partner === 152 && res.starter === 152, tag + ': Chikorita leads (partner and starter)');
+  ok(res.menu, tag + ': the main menu opens');
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForFunction(() => window.G && G.DB && G.LoginUI, null, { timeout: 30000 });
+  await page.evaluate(async () => {
+    await G.DB.ready();
+    const t = document.getElementById('tap-start');
+    if (t && !t.classList.contains('hidden')) t.click();
+  });
+  await sleep(800);
+  ok(
+    await page.evaluate(() => document.getElementById('scr-starters').classList.contains('hidden')),
+    tag + ': a save with a partner skips the starter pick'
+  );
+  ok(
+    errs.length === 0,
+    tag + ': no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  await ctx.close();
+}
+
 (async () => {
   const srv = cp.spawn('python', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1'], {
     cwd: root,
@@ -446,6 +592,8 @@ async function regionFlow(browser, query, tag) {
   try {
     await check(browser, '?dev', 'ui');
     await regionFlow(browser, '?dev', 'region');
+    await loginFlow(browser, '?dev', 'login');
+    await onboardingFlow(browser, '?dev', 'onboarding');
   } catch (e) {
     fail++;
     console.log('FAIL  crashed: ' + ((e && e.stack) || e));

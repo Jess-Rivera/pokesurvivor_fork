@@ -39,6 +39,22 @@ G.STARTERS = [
 G.STARTER_BY = {};
 for (const s of G.STARTERS) G.STARTER_BY[s.dex] = s;
 
+/**
+ * The new-player pick: one region, its three starters in Grass, Fire, Water order (the Grass one leads).
+ * Region names and order follow the region select (menu.js REGION_CARDS). Psyduck and Slowpoke are not in any trio.
+ */
+G.STARTER_REGIONS = [
+  { name: 'Kanto', dex: [1, 4, 7] },
+  { name: 'Johto', dex: [152, 155, 158] },
+  { name: 'Hoenn', dex: [252, 255, 258] },
+  { name: 'Sinnoh', dex: [387, 390, 393] },
+  { name: 'Unova', dex: [495, 498, 501] },
+  { name: 'Kalos', dex: [650, 653, 656] },
+  { name: 'Alola', dex: [722, 725, 728] },
+  { name: 'Galar', dex: [810, 813, 816] },
+  { name: 'Paldea', dex: [906, 909, 912] },
+];
+
 /** Starting move of any Pokemon (starter or from the gacha). */
 G.startMoveOf = (dex) => {
   const s = G.STARTER_BY[dex];

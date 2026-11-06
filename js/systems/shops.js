@@ -159,7 +159,14 @@ G.Shops = (() => {
     }
     if (!f) return [];
     let ids = shop.stock.get(f);
-    if (!ids) shop.stock.set(f, (ids = G.U.pickN(G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)), STOCK)));
+    if (!ids)
+      shop.stock.set(
+        f,
+        (ids = G.U.pickN(
+          G.Moves.poolFor(f.mon).filter((id) => !f.hasMove(id)),
+          STOCK
+        ))
+      );
     return ids.filter((id) => !f.hasMove(id));
   }
 

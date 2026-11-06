@@ -128,12 +128,19 @@ G.Input = (() => {
     return (e.code || e.key).toLowerCase();
   }
 
+  /** True for a text field (input, textarea, select, contenteditable): the browser keeps its own keys there. */
+  function typing(t) {
+    return !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || '') || !!t.isContentEditable);
+  }
+
   addEventListener('keydown', (e) => {
     const c = code(e);
     if (!down.has(c)) pressed.add(c);
     down.add(c);
-    // Prevents the browser from scrolling with arrows/space during the game.
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'tab'].includes(c)) e.preventDefault();
+    // Prevents the browser from scrolling with arrows/space during the game. A text field is left alone, so Tab
+    // moves to the next field, Space types a space and the arrows move the cursor.
+    if (!typing(e.target) && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'space', 'tab'].includes(c))
+      e.preventDefault();
   });
   addEventListener('keyup', (e) => down.delete(code(e)));
   addEventListener('blur', () => {

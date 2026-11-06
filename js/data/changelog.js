@@ -8,6 +8,28 @@
 G.CHANGELOG = [
   {
     d: '2026-11-05',
+    title: ['PokeSwarm login', 'PokeSwarm login'],
+    new: [
+      [
+        'New players now pick a region and start with its three starters (Grass leads, then Fire and Water). The personality quiz is gone from the first screens.',
+        'New players now pick a region and start with its three starters (Grass leads, then Fire and Water). The personality quiz is gone from the first screens.',
+      ],
+    ],
+    chg: [
+      [
+        "The login screen now says PokeSwarm, in the main menu's title font. The old subtitle and the old official-site line are gone.",
+        "The login screen now says PokeSwarm, in the main menu's title font. The old subtitle and the old official-site line are gone.",
+      ],
+    ],
+    fix: [
+      [
+        'Tab now moves between the name and password fields. Space and the arrow keys also work normally in every text field.',
+        'Tab now moves between the name and password fields. Space and the arrow keys also work normally in every text field.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-05',
     title: ['Moves from shops', 'Moves from shops'],
     chg: [
       [
