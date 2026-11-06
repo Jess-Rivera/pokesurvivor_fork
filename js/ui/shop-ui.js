@@ -24,7 +24,8 @@ G.ShopUI = (() => {
   const fmt = (n) => Math.floor(n).toLocaleString('en-US');
   const coin = '<span class="mshop-coin"></span>';
   const mname = (id) => G.MoveInfo.name(id);
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const esc = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
   function open(shop, onClose) {
     const r = roster(),
@@ -158,7 +159,12 @@ G.ShopUI = (() => {
         el = card(
           (mart && i === cur.tm ? 'mshop-sel' : '') + (na ? ' mshop-na' : ''),
           ic.html,
-          esc(mname(id)) + '<span class="mshop-price">' + coin + ' ' + fmt(G.Shops.price(G.Game.st.time, G.Game.player.level)) + '</span>',
+          esc(mname(id)) +
+            '<span class="mshop-price">' +
+            coin +
+            ' ' +
+            fmt(G.Shops.price(G.Game.st.time, G.Game.player.level)) +
+            '</span>',
           esc(G.MoveInfo.desc(id) + tail),
           G.Input.keyLabel('attack_' + (i + 1)),
           () => pickOffer(i)
@@ -181,7 +187,11 @@ G.ShopUI = (() => {
     box.innerHTML = '';
     f.slots.forEach((g, i) => {
       const ok = allowed.includes(i),
-        why = ok ? 'Forget it, ' + mname(id) + ' takes this slot.' : g.length > 1 ? 'Bond · fixed' : 'Not a buff (2 buffs at most)',
+        why = ok
+          ? 'Forget it, ' + mname(id) + ' takes this slot.'
+          : g.length > 1
+            ? 'Bond · fixed'
+            : 'Not a buff (2 buffs at most)',
         ic = moveIco(g[0].id),
         el = card(
           (g.length > 1 ? 'bond' : '') + (ok ? '' : ' mshop-na'),
@@ -246,7 +256,11 @@ G.ShopUI = (() => {
       f = mart ? null : member(cur.f);
     if (!G.Shops.reroll(cur.shop, f)) {
       cur.note =
-        G.Shops.rerollsLeft(cur.shop) <= 0 ? 'No rerolls left in this shop.' : f ? f.mon.name + ' cannot shop (fainted).' : '';
+        G.Shops.rerollsLeft(cur.shop) <= 0
+          ? 'No rerolls left in this shop.'
+          : f
+            ? f.mon.name + ' cannot shop (fainted).'
+            : '';
       G.Audio.sfx('back');
     } else {
       if (mart) cur.tm = 0;
@@ -300,7 +314,10 @@ G.ShopUI = (() => {
       cur.asking = false;
       if (yes && G.Shops.buy(shop, f, id, slot)) {
         cur.forget = null;
-        cur.note = old != null ? f.mon.name + ' forgot ' + old + ' and learned ' + mname(id) + '!' : f.mon.name + ' learned ' + mname(id) + '!';
+        cur.note =
+          old != null
+            ? f.mon.name + ' forgot ' + old + ' and learned ' + mname(id) + '!'
+            : f.mon.name + ' learned ' + mname(id) + '!';
         G.Audio.sfx('confirm');
       } else {
         if (slot == null) cur.forget = null; // a free-slot buy: back to the offers; a forget keeps its list (H2)

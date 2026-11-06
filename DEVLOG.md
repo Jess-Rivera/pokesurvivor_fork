@@ -198,3 +198,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): rename login screen only; quiz is out; F3 = pick a region and get all 3 starters (S1 to S4 in the plan still open).
 - Broke or open: GitHub API empty all day; check.js not run on the onboarding edits yet.
 - Stopped at: Jess to run check.js and input-keys-mutate, commit and push fix/onboarding-flow; F3 decisions next.
+
+## 2026-11-05, onboarding F3 built, login width fix (Claude Desktop, fix/onboarding-flow)
+- Changed: new players pick a region on a 3x3 card screen and start with its 3 starters (Grass leads, then Fire, Water; team of 3, each slot linked to its own copy). js/data/starters.js gains G.STARTER_REGIONS; js/ui/test.js rewritten (quiz and result screens no longer shown, markup and data left in place, save.personality no longer written); #scr-starters markup and region-card CSS; changelog entry. Login box widened to 520px, title 30px under 420px wide.
+- Decided (Jess): S1 team of 3, S2 Grass always leads and no lead change on the home screen, S3 Psyduck and Slowpoke out of the pick, S4 all 9 regions pickable. Back on the pick logs out to the login.
+- Tests: starter-regions harness (164) and mutation runner (7/7), input-keys mutation 6/6 under real node, check.js all green, smoke-ui all checks passed (login fit, onboarding pass), file:// at 1280, 390 and 844 wide.
+- Broke or open: not feel-tested. Dead quiz code removed from test.js; res-ok and res-other buttons are unwired markup.
+- Stopped at: Jess feel-tests as guest (new guests always see the pick), then commits and pushes.

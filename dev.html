@@ -110,7 +110,7 @@
 
     <!-- ====== Inicio: login / registro / invitado ====== -->
     <section id="scr-login" class="scr hidden">
-      <div class="box" style="width: min(420px, 100%)">
+      <div class="box" style="width: min(520px, 100%)">
         <div class="logo">
           <div class="t1 swarm" translate="no">PokeSwarm</div>
         </div>
@@ -175,13 +175,13 @@
     <!-- ====== Elegir compañero ====== -->
     <section id="scr-starters" class="scr dim hidden">
       <div class="box wide">
-        <h2>Elige a tu compañero</h2>
-        <p class="sub">Los iniciales de todas las regiones, y dos amigos más.</p>
-        <div class="grid" id="starter-grid"></div>
+        <h2 translate="no">Choose your starters</h2>
+        <p class="sub" translate="no">Pick a region. You start with its three starters.</p>
+        <div class="region-grid" id="starter-grid"></div>
+        <p id="starter-info" class="region-info" translate="no">Select a region</p>
         <div class="row between" style="margin-top: 14px">
-          <button id="starter-back" class="btn ghost">Volver</button>
-          <span id="starter-info" class="grow" style="color: var(--muted)"></span>
-          <button id="starter-ok" class="btn gold" disabled>Elegir</button>
+          <button id="starter-back" class="btn ghost" translate="no">Back</button>
+          <button id="starter-ok" class="btn gold" translate="no" disabled>Choose</button>
         </div>
       </div>
     </section>

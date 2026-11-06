@@ -1,6 +1,6 @@
 ONBOARDING: LOGIN AND STARTER PICK   (feature/onboarding, plan 2026-11-05, Quick)
 Source: Jess's 2026-11-04 playtest. Branch: fix/onboarding-flow.
-Status: F1 and F2 BUILT 2026-11-05 (login only for D1; D2, D3, D4 yes). F3 redesigned by Jess, see REVISION below, awaiting S1 to S4.
+Status: F1, F2 and F3 BUILT 2026-11-05 (S1 team of 3, S2 Grass always leads and no lead change, S3 and S4 yes). Not feel-tested.
 
 TESTER FINDINGS
   F1  Login and account creation still say PokeSurvivor, not PokeSwarm.
