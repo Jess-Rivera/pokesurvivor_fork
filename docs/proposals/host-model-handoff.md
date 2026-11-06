@@ -1,5 +1,7 @@
 # Handoff for an Opus planning chat: the host model (2026-11-05)
 
+DONE 2026-11-05: the plan is docs/proposals/host-model-plan.md. This briefing is history.
+
 Paste or point the new chat at this file. It is a briefing, not a plan. Your job is to PLAN, in prose, with no code.
 
 ## Startup

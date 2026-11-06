@@ -1,5 +1,6 @@
 # Host model audit (step 1), 2026-11-05
 
+The open decisions below are answered and some findings corrected in docs/proposals/host-model-plan.md (2026-11-05); that plan wins.
 Read-only audit. No game code changed. Decision it serves: DECISIONS 2026-11-05 "Host model", rules in docs/COMBAT-RULES.md "Host model".
 Question: what separates a gym leader from the player today, and what must change for a leader to follow every player rule, with Jess restricting by hand?
 Tags per CLAUDE.md. Size: S under a day, M a day or two, L several days, XL a branch of its own.
