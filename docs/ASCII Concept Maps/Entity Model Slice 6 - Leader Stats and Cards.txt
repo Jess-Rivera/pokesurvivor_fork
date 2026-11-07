@@ -1,0 +1,171 @@
+ENTITY MODEL, SLICE 6: LEADER STATS AND CARDS (review map, 2026-11-07, Claude Code at home)
+Source: docs/proposals/host-model-plan.md "6. Stat pipeline and cards". Rules: docs/COMBAT-RULES.md "Host model", SS10.
+Status: [Proposed] 2026-11-07. Jess answered D1 to D6 the same day (ANSWERS below); Q1 to Q5 open, then
+the map is redrawn as one plan for approval.
+
+GOVERNING RULE (Jess, 2026-11-07; COMBAT-RULES "Host model", LEADER PRINCIPLE): a leader is treated as just
+another player's team, controlled by AI. Anything a player can have, a leader can have. Every difference
+from a player is hand authored per gym. The D2 recommendation below broke this rule (it followed the stale
+SS10 line, now fixed).
+
+WHY
+  Slice 5 gave Misty your body: your HP formula, your defense, your statuses. Her ATTACK and her STATS
+  are still the wild ones bolted on by the brain. Slice 6 finishes the match: a leader built from the same
+  inputs as a player has the same numbers as that player, then times the gym's own knobs (hpMult, power,
+  enrage). Misty gets the Zinc x3 that was held back on 11-05, and only Misty is re-tuned.
+
+=====================================================================================
+ WHAT THE CODE SCAN FOUND
+=====================================================================================
+
+  A. HER ATTACK IS STILL THE WILD FORMULA. The brain replaces her moveFactor with its own
+     (boss-ai.js factor: the enemy attack factor x power x enrage x stage). At today's inputs the
+     two formulas give the SAME number (neutral IVs, no nature, no Protein), so swapping is neutral.
+     What the wild one cannot do: Protein / Calcium, IVs, nature, held items. See D1.
+
+  B. HER DEFENSE ALREADY READS VITAMINS. She is a Player entity, so Iron and Zinc go through the same
+     incOf her hurt() already calls, and the brain already gives her a card store. Zinc is blocked
+     only by the validator ("leaders use the base stage timers"). Authoring it is one line.
+
+  C. AN ORDER BUG WAITING. Her max HP is set BEFORE the brain loads her cards, so a Vitamins HP Up
+     card would be silently ignored. Fixed here even though Misty authors none.
+
+  D. IVs, EVs AND NATURE ALREADY HAVE A HOME. A Player entity takes a stat profile (the same one your
+     Pokebox copy builds). A leader passes none today, so she plays neutral.
+
+  E. HELD ITEMS ARE NOT READY. Equipping goes through each item's own on / off code, written for your
+     mons. Nobody has checked those for a holder that is not on your team. See D4.
+
+=====================================================================================
+ THE SHAPE AFTER
+=====================================================================================
+
+     inputs (authored per gym, per loop)          the same pipeline you use        the gym's knobs
+    +----------------------------------+        +-------------------------+      +----------------+
+    | species, level                   |        | HP formula              |      | x hpMult (HP)  |
+    | IVs, EVs, nature  (D3, optional) | -----> | attack factor           | ---> | x power, enrage|
+    | move cards + Vitamins (D2)       |        | Def / Sp. Def           |      |   (attack)     |
+    +----------------------------------+        +-------------------------+      +----------------+
+
+  The test that proves it: build a plain Player entity and a leader from the same inputs. HP, attack
+  factor and damage taken must match, with only hpMult, power and enrage between them.
+
+=====================================================================================
+ MISTY'S NUMBERS (Staryu, the real formulas, run 2026-11-07)
+=====================================================================================
+
+  Fight time = her HP / the reference damage per second (the elite reference model the old 60 s HP came
+  from: Power 40, Sp. Atk 65, building over run time). Zinc x3 = Sp. Def +15%.
+
+    level    HP at 26    no Zinc    Zinc, special ref    Zinc, 50/50 ref    hpMult for 60 s (50/50)
+    -----    --------    -------    -----------------    ---------------    -----------------------
+      16       1820       66.6 s         74.3 s               70.2 s                22.2
+      18       1976       60.6 s         67.7 s               64.0 s                24.4
+      20       2184       58.7 s         65.7 s               62.0 s                25.2
+      22       2340       55.4 s         62.1 s               58.5 s                26.6
+      24       2496       51.2 s         57.5 s               54.2 s                28.8
+
+  Level 20 is the usual one (gate 2 at about 9 minutes, plus 4). With 25 she lands at about 59.6 s there.
+
+=====================================================================================
+ DECISIONS FOR JESS
+=====================================================================================
+
+  D1. Her attack uses YOUR attack formula, times power and enrage. RECOMMEND yes. Same numbers today;
+      it is what makes IVs, nature and Protein count for a leader.
+
+  D2. Which team cards a leader may hold. RECOMMEND Vitamins only (all six stats). Gate, Duration and
+      Regen stay banned: Gate and Duration would change the base stage timers SS10 gives enemies, and
+      Regen is a bench heal, which means nothing until she has a bench (slice 7). Authored as
+      "Vitamins, Sp. Def, 3 stacks". This rewrites the "no team cards" line in COMBAT-RULES SS10 and
+      BOSS-REWORK section 3 to "Vitamins only".
+
+  D3. IVs, EVs and nature. RECOMMEND build the authoring keys now (per mon, per loop, carried forward
+      like move sets; the validator checks IVs 0 to 31, EVs 0 to 252 with 510 total, a real nature),
+      but Misty authors NONE this slice, so Zinc is the only stat change you feel.
+
+  D4. Held items. RECOMMEND not in this slice. The first gym that wants one gets the item check then.
+      A TODO line records it.
+
+  D5. The fight-time reference. RECOMMEND half physical, half special. The old reference is all special,
+      so it would overstate what Zinc does against a physical team (74 s against 70 s at level 16).
+      Target 60 s at the usual level; the report prints levels 16 to 24 and FAILS if the usual level
+      is more than 10% off target.
+
+  D6. Misty's hpMult 26 -> 25 (TUNE). With Zinc and the 50/50 reference that is about 60 s at level 20,
+      67 s at 16, 52 s at 24. Brock and gyms 3 to 8 do not move.
+
+=====================================================================================
+ ANSWERS (Jess, 2026-11-07)
+=====================================================================================
+  D1  YES: the player attack formula at her level. The enrage bonus is to GO (see Q1).
+  D2  NO: any card a player can get, a leader can get. Team cards included.
+  D3  YES.
+  D4  Items are PART of this slice (see Q4).
+  D5  The fight-time report is scrapped, since it no longer fits. hpMult is tuned by feel.
+  D6  Misty's hpMult 25, for now.
+
+=====================================================================================
+ QUESTIONS (open, 2026-11-07)
+=====================================================================================
+  Q1  Enrage. Today it is the one clock that stops a fight from stalling (x bonus after 120 s). Remove it
+      outright for switched gyms, or turn it into an authored restriction (off unless a gym sets it)?
+      RECOMMEND the authored restriction, Misty off. The plan's "enrage restarts on each send-out"
+      (decision 3) then applies only to gyms that author it.
+  Q2  The gym's power and tempo knobs. power multiplies her damage; tempo shortens her cooldowns and her
+      tells. Neither exists for a player. RECOMMEND: power goes for switched gyms (cards do that job);
+      tempo becomes an authored restriction (default 1), since it is the AI's pace. Misty is at 1 and 1,
+      so nothing she does changes.
+  Q3  The built-in leader differences from slice 5: the fixed status table (shorter freeze and sleep, the
+      5 s window, auto shake), and no hit i-frames. Under the rule these are hidden differences.
+      RECOMMEND: the player's rules become the default, and each becomes an authored restriction. Misty
+      authors today's values, so her fight does not change. In this slice, or its own slice?
+  Q4  Items, both tiers? Held items (one per mon) fit now. Most run items read the TEAM (Brass Knuckles
+      and Sharp Scissors need 3 mons, Pikachu's Tear counts faints, Re-Do revives the team), and a
+      leader has one mon until slice 7. Items that only serve the human (coins, XP, pickups) would do
+      nothing. RECOMMEND: held items now; run items now too but team-reading ones wait for slice 7;
+      the validator rejects items that cannot work on a leader.
+  Q5  A card budget? A player gets about one card per level. RECOMMEND no hard cap, a validator warning
+      when a gym authors more cards than a player of that level could hold.
+
+=====================================================================================
+ BUILD ORDER (three steps, each leaves the game working)
+=====================================================================================
+
+  Step 0  TESTS FIRST, no game change
+    - Leader stats harness: a plain Player entity and Misty from the same inputs; HP (before hpMult),
+      attack factor (before power and enrage) and damage taken by Def and by Sp. Def, all worked by hand.
+      Must pass on today's code for the neutral case before anything moves.
+    - Fight-time report: the table above, for every gym with the switch on (only Misty). Joins check.js.
+
+  Step A  NEUTRAL: her attack through your formula (D1); HP after the cards load (C); the profile hook
+          and its validator keys (D3). No number Misty shows changes. Harnesses unchanged.
+
+  Step B  MISTY: Vitamins allowed (D2), her Zinc x3, hpMult 25 (D6). Rule text in COMBAT-RULES SS10
+          and BOSS-REWORK. Changelog entry. Then your feel test.
+
+=====================================================================================
+ FILES
+=====================================================================================
+  js/entities/gym-leader.js   HP after the brain; the stat profile from the gym.
+  js/entities/boss-ai.js      a leader keeps its own moveFactor, scaled by power and enrage; the old body
+                              keeps today's factor unchanged.
+  js/systems/gym.js           passes the authored profile into the leader's def.
+  js/data/gyms.js             validator: Vitamins, the profile keys; Misty's Zinc and hpMult.
+  js/data/changelog.js        one entry at step B.
+  docs/proposals/             leader-stats-harness.js, leader-stats-mutate.js, the fight-time report.
+  tools/check.js              runs the two new ones.
+  Not touched: stats.js (no formula moves; both formulas already live in G.Stats), player.js, hud.js.
+  No new save fields.
+
+=====================================================================================
+ BALANCE AND RISK
+=====================================================================================
+  Harder: Zinc cuts special damage on her by about 11% at level 20. Easier: 4% less HP. Net against a special
+    team: a little longer; against a physical team: a little shorter. About 60 s either way at level 20.
+  Risks: the attack swap (Step 0 pins it, so any drift fails before Step B); a gym harness that pins
+    the leader's factor through the brain (it gets a fixture edit, reported with its proof).
+  Way out: drop the Zinc line and set hpMult back to 26.
+
+  Feel test (about 2 minutes): G.Debug.gym(2) with a special-heavy team, then a physical one. Special
+  hits should feel a touch weaker on her, physical about the same. Fight length about a minute.

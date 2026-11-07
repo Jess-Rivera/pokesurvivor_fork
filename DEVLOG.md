@@ -277,3 +277,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Built slice 5: G.GymLeader on PlayerEntity, shared GymBrain, leader status set, no touch damage, Misty switched on. New smoke-gym, gym-leader harness (140) and mutate (51).
 - Repaired 30 stale mutation patterns. The map's AS BUILT lists every deviation and test edit.
 - Stopped at: Jess's feel test of Misty and Brock, then commit.
+
+## 2026-11-07 (Claude Code, home)
+- Slice 5 feel test PASSED (Jess): Misty feels good; she stutters on an arena edge now and then (TODO Up next, tune later).
+- Planned slice 6 (map: Entity Model Slice 6 - Leader Stats and Cards.txt). Found: her attack still uses the wild formula (same numbers today), Zinc is blocked only by the validator, max HP is set before her cards load.
+- Decided (Jess): a leader is another player's team run by AI; anything a player can have, it can have; every difference hand authored. Recorded as the LEADER PRINCIPLE (COMBAT-RULES "Host model", DECISIONS 11-07); stale "no team cards" lines in SS10 and BOSS-REWORK fixed.
+- Slice 6 answers: player attack formula, enrage to go, any card, IV/EV/nature keys, items in this slice, fight-time report scrapped, Misty hpMult 25.
+- Stopped at: Jess answers Q1 to Q5 (enrage, power and tempo, built-in leader status rules, item tiers, card budget), then the map is redrawn for approval. No game code changed.

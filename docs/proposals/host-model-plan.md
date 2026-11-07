@@ -98,7 +98,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: a normal run plus one gym, nothing should change.
 
 **5. `GymLeader`, Misty first, behind a per-gym switch (L).**
-- Detail approved 2026-11-06 (Jess), D1 to D6 as recommended: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt. BUILT 2026-11-06 (Claude Code at home), awaiting Jess's feel test. Deviations: the map, "AS BUILT".
+- Detail approved 2026-11-06 (Jess), D1 to D6 as recommended: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt. BUILT 2026-11-06 (Claude Code at home). Feel test PASSED 2026-11-07 (Jess); she stutters on an arena edge now and then, tune later (TODO). Deviations: the map, "AS BUILT".
 - Files: a new js/entities/gym-leader.js, enemy.js manager (accepts a leader for queries, updates and drawing), gym.js, gym-arena.js, boss-ai.js (the current brain moved behind a controller), hud.js, status.js (the fixed leader set), gyms.js (switch, `hpMult`, first restrictions: tells, heal limit, contact). Hit i-frames off, contact gone.
 - Every outside reader of a leader body keeps working: the boss bar, kill and achievement events (progress.js), EV class (copies.js), drops, the win trigger, the weather and log checks.
 - Other gyms stay on the old brain, so their harnesses keep passing unchanged.
@@ -108,6 +108,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: `G.Debug.gym()` to Misty. It should look like the same fight, with new status behavior and no touch damage.
 
 **6. Stat pipeline and cards (M).**
+- Detail [Proposed] 2026-11-07, awaiting Jess's OK on D1 to D6: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt.
 - Files: gym-leader.js, gyms.js (validator allows team cards, authored IVs, EVs, nature, items), stats.js only if a formula needs moving into `G.Stats`, COMBAT-RULES:SS10. Misty's Zinc x3 lands here. The `hpMult` harness goes live and reports fight time at each gym's expected levels.
 - Tests: leader stats match a player built with the same inputs; a Vitamin changes damage taken; the fight-time report stays near target.
 - Balance: leaders get stronger; Misty is re-tuned here, and only Misty.

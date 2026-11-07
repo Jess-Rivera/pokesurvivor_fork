@@ -1,6 +1,6 @@
 ENTITY MODEL, SLICE 5: GymLeader, MISTY FIRST (review map, 2026-11-06, Claude Code at home)
 Source: docs/proposals/host-model-plan.md "5. GymLeader". Rules: docs/COMBAT-RULES.md "Host model".
-Status: [Approved] 2026-11-06: D1 to D6 all as recommended. BUILT 2026-11-06 (Claude Code at home), see AS BUILT at the end. Awaiting Jess's feel test.
+Status: [Approved] 2026-11-06: D1 to D6 all as recommended. BUILT 2026-11-06 (Claude Code at home), see AS BUILT at the end. Feel test PASSED 2026-11-07 (Jess): feels good; she stutters on an edge now and then (TODO, tune later).
 
 WHY
   Today a leader's mon is a wild body with a brain bolted on. Slices 1 to 4 built the parts so it can be
