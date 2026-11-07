@@ -284,3 +284,11 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): a leader is another player's team run by AI; anything a player can have, it can have; every difference hand authored. Recorded as the LEADER PRINCIPLE (COMBAT-RULES "Host model", DECISIONS 11-07); stale "no team cards" lines in SS10 and BOSS-REWORK fixed.
 - Slice 6 answers: player attack formula, enrage to go, any card, IV/EV/nature keys, items in this slice, fight-time report scrapped, Misty hpMult 25.
 - Stopped at: Jess answers Q1 to Q5 (enrage, power and tempo, built-in leader status rules, item tiers, card budget), then the map is redrawn for approval. No game code changed.
+
+## 2026-11-07, late morning (Quick, work)
+- Slice 6 BUILT in three steps (0 neutral parity, A neutral pipeline, B Misty). Leaders use your attack formula; IVs, EVs, nature, team cards, held and run items authored per gym; status differences, i-frames, auto shake and enrage are authored restrictions; Life Orb pays its cost; validator, item ban list and card budget warning. Misty: Zinc 3, hpMult 25, no enrage.
+- Decided (Jess): Q1 to Q5 and N1 to N6 as recommended, plus Choice Band and Specs never on a leader, Bright Powder allowed, Rocky Helmet marked bugged and rejected (TODO). CLAUDE.md wins over the Quick agent setup (read-only git allowed, plans prose only).
+- Tests: leader-stats-harness (197) and leader-stats-mutate (38); first run caught 34, the 4 misses fixed (one was a real gap: the ban list was read from code). Jess ran check.js, both mutate runners, smoke-gym: clean. Feel test passed.
+- Close-out: npm ci, Prettier on 3 files, lint errors 22 to 0 (lang-en.js duplicate keys, two generated files ignored), 5 mutants re-pointed after formatting. Docs swept: host-model plan, BOSS-AUTHORING, COMBAT-RULES, BOSS-REWORK, BALANCE, DECISIONS, TODO, changelog.
+- Broke: nothing in game. Misty's arena-edge stutter (slice 5) persists. GitHub API empty all session, board mirror not re-synced.
+- Stopped at: slice 6 done; next is planning slice 7.
