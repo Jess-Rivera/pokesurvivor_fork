@@ -101,9 +101,13 @@ function gymOf(o = {}) {
 }
 const defOf = (gym) => ({ dex: STARYU, name: 'X', hp: 2000, spd: 100, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym });
 /** A leader built the game's way (G.Boss.make on a switched gym). */
-const leader = (gym = gymOf()) => G.Boss.make(defOf(gym), 0, 0);
+const leader = (gym = gymOf()) => {
+  const e = G.Boss.make(defOf(gym), 0, 0);
+  e.active = Math.max(0, e.slots.findIndex((g) => g[0].id !== 'tackle')); // slice 8: off the Tackle slot, so no melee cushion
+  return e;
+};
 /** A plain Player entity from the same inputs: same species, same level, neutral profile, no perks, no cards, no items. Its melee cushion
- *  is turned off by an empty active group, since a leader never has one (gym-leader-harness D4) and this compares the defender math only. */
+ *  is turned off by an empty active group, and the leader starts off its Tackle slot (slice 8), since this compares the defender math only. */
 function plain(prof = null) {
   const p = new G.PlayerEntity(G.DEX_BY[STARYU], {}, false, prof);
   p.level = LEVEL;

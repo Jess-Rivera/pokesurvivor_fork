@@ -48,7 +48,8 @@ G.Gyms = (() => {
   // With none authored a switched leader follows your rule.
   const RESTRICTION_KEYS = ['tells', 'healLimit', 'enrage', 'statusCut', 'ccWindow', 'autoShake', 'hitIframes'];
   const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets', 'ivs', 'evs', 'nature', 'item'];
-  const MOVE_KEYS = ['id', 'hpBelow'];
+  // bond (slice 8, Q5): the marked lines of a set share one slot on a Player-entity leader and fire together
+  const MOVE_KEYS = ['id', 'hpBelow', 'bond'];
   // Slice 6 (Q4 and N6, Jess 2026-11-07): items a leader may not hold, each with the reason the validator gives.
   const LEADER_ITEM_BAN = {
     amuletcoin: 'human only (coins)',
@@ -842,11 +843,14 @@ G.Gyms = (() => {
           continue;
         }
         if (set.length > MAX_MOVES) bad.push(L + ' has more than ' + MAX_MOVES + ' moves');
-        let damaging = 0;
+        let damaging = 0,
+          bonded = 0;
         for (const m of set) {
           for (const f of unknownKeys(m, MOVE_KEYS)) bad.push(L + ': ' + m.id + ' has unknown field ' + f);
           if (m.hpBelow != null && !(m.hpBelow > 0 && m.hpBelow < 1))
             bad.push(L + ': ' + m.id + ' hpBelow must be in (0, 1)');
+          if (m.bond != null && m.bond !== true) bad.push(L + ': ' + m.id + ' bond is true or absent');
+          if (m.bond === true) bonded++;
           const d = G.MoveDefs[m.id];
           if (!d) {
             bad.push(L + ': unknown move ' + m.id);
@@ -861,6 +865,10 @@ G.Gyms = (() => {
                 ' has no gym form yet (leaders cast melee cones, novas, shots, strikes, dashes, returns, beams, bursts, trails, delayed marks, self buffs and self heals)'
             );
         }
+        // slice 8 (Q5): the marked lines form one bond group of 2 to 4 (your BOND_MAX; MAX_MOVES caps the top), Player entity only
+        if (bonded === 1) bad.push(L + ': a bond needs 2 to 4 marked moves');
+        if (bonded && !g.playerEntity)
+          bad.push(L + ': bond needs playerEntity (the wild body casts every move at once)');
         if (!damaging) bad.push(L + ' needs at least one damaging move');
       }
     });

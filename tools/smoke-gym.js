@@ -124,7 +124,7 @@ async function fight(browser, n, leaderName, badge, isEntity) {
     .waitForFunction(
       (hp0) => {
         const b = G.EnemyMgr.all().find((e) => e.boss && !e.dead);
-        return b && b.hp < hp0 && b.slots[0].some((s) => s.last != null);
+        return b && b.hp < hp0 && b.slots.some((g) => g.some((s) => s.last != null)); // slice 8: a leader has one slot per move
       },
       start.hp,
       { timeout: 25000, polling: 100 }

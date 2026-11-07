@@ -107,6 +107,8 @@ const defOf = (dex, gym) => ({ dex, name: 'X', hp: HP, spd: 100, dmg: 20, xp: 0,
 function leader(dex = STARYU, gym = gymOf()) {
   const e = G.Boss.make(defOf(dex, gym), 0, 0);
   e.maxHp = e.hp = HP; // the same pool on both bodies, so a hit compares directly (the hpMult has its own check)
+  // slice 8: start off the Tackle slot, so the melee cushion (its own check in section 3) stays out of the hand numbers
+  e.active = Math.max(0, e.slots.findIndex((g) => g[0].id !== 'tackle'));
   return e;
 }
 function oldBody(dex = STARYU, gym = gymOf({ playerEntity: false })) {
@@ -191,8 +193,16 @@ W = {};
   ok(a.r.immune === true, 'an immune hit on a leader reports immune');
   parity('Power Stone pierces immunity', spec({ type: 'normal' }), G1, { stoneType: 'normal' }, GASTLY);
 }
-// the old rule that must NOT apply: the melee cushion (decision D4). Tackle sits in the leader's one group, and no 0.75 shows above.
-ok(leader().activeGroup().some((m) => m.id === 'tackle' && G.MoveDefs.tackle.balanceClass === 'melee'), 'the cushion check is live: a melee move is in the leader group');
+// the melee cushion is yours since slice 8 (Q6, replacing D4): 25% less while a melee move is in the active slot
+{
+  const e = leader();
+  e.active = e.slots.findIndex((g) => g[0].id === 'tackle');
+  ok(G.MoveDefs.tackle.balanceClass === 'melee' && e.activeGroup()[0].id === 'tackle', 'the cushion check is live: Tackle is the active slot');
+  const t = hit(e, spec({ type: 'normal' })).took;
+  ok(near(t, D * 0.75), 'with Tackle active a hit lands at 0.75: ' + t + ' want ' + D * 0.75);
+  const w = hit(leader(), spec({ type: 'normal' })).took;
+  ok(near(w, D), 'with Water Pulse active it lands in full: ' + w);
+}
 // flat damage: fixed and level damage
 {
   parity('fixed damage', spec({ payload: [{ t: 'special', handler: 'fixedDamage', amount: 40 }] }), 40);
@@ -338,7 +348,7 @@ reset();
   e.slots[0][0].t = 3;
   for (let i = 0; i < 10; i++) e.update(DT, human);
   ok(e.x === x0 && e.slots[0][0].t === 3, 'frozen: it does not move and the brain does not step (no recharge, as before)');
-  ok(e.moves === e.slots[0] && e.activeGroup().every((s) => s.type), 'its slots carry the move type (the halo)');
+  ok(e.moves.length === e.slots.flat().length && e.moves.every((s) => s.type) && e.activeGroup().every((s) => s.type), 'its slots carry the move type (the halo)');
 }
 // heal cap and tells from restrictions
 {
@@ -372,15 +382,20 @@ reset();
   ok(!Object.prototype.hasOwnProperty.call(e, 'heal') && !Object.prototype.hasOwnProperty.call(e, 'stabFor'), 'heal and stabFor are inherited, not installed by the brain');
   ok(Object.prototype.hasOwnProperty.call(oldBody(), 'heal'), 'the old body still gets them from the brain');
 }
-// flinch: the old leader rule (D5)
+// flinch: your rule since slice 8 (Q7, replacing D5): the tell is lost, the active slot restarts (cd + the 0.3 s hold), the others do not
 {
   const e = leader();
   e.brain.init();
-  const slot = e.slots[0][0];
-  slot.t = 0;
-  e.brain.tell = { slot: e.slots[0][1], id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
+  e.brain.wait = 0;
+  const act = e.activeGroup()[0], // Water Pulse, the starting slot
+    other = e.slots[0][0]; // Tackle
+  act.t = 0;
+  other.t = 0;
+  e.brain.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
   ok(e.applyFlinch() === true, 'a leader can flinch');
-  ok(e.brain.tell === null && slot.t === 0, 'a flinch loses the tell and does not restart its other moves');
+  ok(e.brain.tell === null, 'a flinch loses the tell');
+  ok(near(act.t, G.MoveDefs['water-pulse'].cd * e.cdMul + 0.3), 'the active slot restarts with the 0.3 s hold: ' + act.t);
+  ok(other.t === 0 && e.brain.wait === 0, 'another slot is untouched and no extra wait follows');
   ok(!!e.stFl, 'the recoil runs');
   const a = leader();
   a.stMajor = { k: 'sleep', t: 2, age: 0 };

@@ -9,6 +9,8 @@
  * effects, and the boss look. COMBAT-RULES "Host model".
  * Slice 7 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt): a switched gym
  * fields its loop lineup as one G.Team (G.GymLeader.team, below; the arena sends them out). Only the last to fall is the boss kill.
+ * Slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): one slot per authored move
+ * line and one active slot under your slot hold (the brain picks it), your melee cushion and your flinch rule.
  */
 G.GymLeader = class GymLeader extends G.PlayerEntity {
   /** @param def the leader's def from G.Gym.makeDef; def.gym holds its level, hpMult, moves, cards and restrictions */
@@ -31,7 +33,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.brain = new G.Boss.GymBrain(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads
     this.maxHp = this.maxHpAt(this.level);
     this.hp = this.maxHp;
-    this.moves = this.slots[0];
+    this.moves = this.slots.flat(); // every slot's moves (slice 8: one slot per authored line, bonded lines share one)
     for (const s of this.moves) s.type = G.MoveDefs[s.id].type;
     this.arm();
     this.heading = [0, 0];
@@ -96,6 +98,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
       this.fade -= dt;
       return;
     }
+    if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt); // slice 8: the slot hold (yours ticks in game.js)
     if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
     this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));
     const ox = this.x,
@@ -188,10 +191,12 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     if (this.hp < hp0 && this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
     return res;
   }
-  /** Flinch keeps the old leader rule until slice 8 (D5): the tell is lost. Your rule restarts the active group, here every move. */
+  /** Flinch, your rule since slice 8 (Q7, replacing D5): the tell is lost, and the active slot's moves restart plus the 0.3 s hold
+   *  (G.MoveSim.flinch); the other slots are untouched and no extra recovery wait follows. */
   applyFlinch() {
     if (this.dead || G.Status.stunned(this)) return false;
-    this.brain.flinch();
+    this.brain.tell = null;
+    G.MoveSim.flinch(this);
     return this.flinchRecoil();
   }
   /** The look of a hit on a boss (D6): the move type's color, yellow super, grey weak, orange crit, always big. */

@@ -434,7 +434,7 @@ G.PlayerEntity = class PlayerEntity {
       return;
     }
     this.active = i;
-    G.Audio.sfx('select');
+    this.onSwitchFeel(); // the select sound is yours (HumanPlayer); a leader's switch shows the ring only (slice 8, Q8)
     if (!free) this.swapT = PlayerEntity.SWAP_LOCK;
     const m = this.slots[i][0];
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
@@ -644,6 +644,8 @@ G.PlayerEntity = class PlayerEntity {
    */
   /** Hurt feedback that belongs to the one at the keyboard (HumanPlayer). Called by hurt() only while on the field. */
   onHurtFeel() {}
+  /** Slot-switch feedback that belongs to the one at the keyboard (HumanPlayer): the select sound. Called by setActive (slice 8). */
+  onSwitchFeel() {}
   /** The hit's number and burst on this entity (slice 5: a gym leader keeps the look of a boss). Called by hurt() only while on the field. */
   showHit(d, eff, atk) {
     G.FX.dmgText(
@@ -719,11 +721,10 @@ G.PlayerEntity = class PlayerEntity {
       amount *= (stone ? Math.max(1, tk * wk) : tk * wk) * guard;
     }
     // With a melee attack active you take 25% less: you have to
-    // be on top of the enemies to hit (they lagged far behind). Off for a gym leader until its one active slot (slice 8).
-    const close =
-      !this.isRival && this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
-        ? 0.75
-        : 1;
+    // be on top of the enemies to hit (they lagged far behind). A gym leader too, since its one active slot (slice 8, Q6).
+    const close = this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
+      ? 0.75
+      : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
     let d = Math.max(1, raw);
     if (this.shield) {
@@ -1381,6 +1382,9 @@ G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
   onHurtFeel() {
     G.Audio.sfx('hurt');
     G.Camera.kick(0.28);
+  }
+  onSwitchFeel() {
+    G.Audio.sfx('select');
   }
   /** Your damage-taken scale (slice 4 H2): ENEMY_DMG_SCALAR, the dial for how hard everything hits you. */
   get dmgTakenScale() {

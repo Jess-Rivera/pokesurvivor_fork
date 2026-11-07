@@ -33,7 +33,7 @@ const M = [
   ['hpMult does not carry forward', GY, 'if (k <= loop) at = m[k];', 'if (k === loop) at = m[k];'],
   // hit parity
   ['hit i-frames stay on', LD, "get hitIframes() {\n    const v = this.rule('hitIframes');", "get hitIframes() {\n    return 0.45;\n    const v = this.rule('hitIframes');"], // slice 6 retarget
-  ['the melee cushion stays on', PL, '!this.isRival && this.activeGroup()', 'this.activeGroup()'],
+  ['the melee cushion is off for a leader', PL, 'const close = this.activeGroup().some(', 'const close = !this.isRival && this.activeGroup().some('], // slice 8 retarget
   ['the attacker items are dropped', FX, 'b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl));', 'b.itemMul = 1;'],
   ['takeHit ignores the items', PL, '* (b.itemMul || 1);', ';'],
   ['Power Stone is dropped', FX, 'b.stone = b.owner.stoneType === def.type;', 'b.stone = false;'],
@@ -58,8 +58,8 @@ const M = [
   ['no self heal restriction', BR, 'rules.healLimit != null ? rules.healLimit : ', ''],
   ['tells cannot be turned off', BR, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
   ['the brain installs heal on the leader', BR, 'if (!e.isPlayer) {\n        e.stabFor', 'if (true) {\n        e.stabFor'],
-  ['flinch restarts every move', LD, 'this.brain.flinch();\n    return this.flinchRecoil();', 'G.MoveSim.flinch(this);\n    return this.flinchRecoil();'],
-  ['flinch keeps the tell', LD, 'this.brain.flinch();\n', ''],
+  ['flinch keeps the old D5 rule', LD, 'this.brain.tell = null;\n    G.MoveSim.flinch(this);', 'this.brain.flinch();'], // slice 8 retarget
+  ['flinch keeps the tell', LD, 'this.brain.tell = null;\n', ''], // slice 8 retarget
   ['an asleep leader flinches', LD, 'applyFlinch() {\n    if (this.dead || G.Status.stunned(this)) return false;', 'applyFlinch() {\n    if (this.dead) return false;'],
   ['the aim follows you through the tell', BR, 'after: RECOVER / tempo, ang, spot, fired: false };', 'after: RECOVER / tempo, ang, spot, fired: false, get ang2() { return 0; } }; Object.defineProperty(this.tell, "ang", { get: () => Math.atan2(G.Game.player.y - e.y, G.Game.player.x - e.x) });'],
   // enrage

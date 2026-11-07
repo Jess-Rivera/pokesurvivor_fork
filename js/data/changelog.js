@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Misty, rebuilt', 'Misty, rebuilt'],
     chg: [
       [
+        'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
+        'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
+      ],
+      [
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
       ],

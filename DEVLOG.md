@@ -319,3 +319,9 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Lesson: re-check every mutate runner's patterns after any code edit; the edge unstick left one STALE that its close-out missed.
 - Board: GitHub API empty all session, TODO.md mirror not re-synced (still 2026-11-04).
 - Stopped at: 7b checks owed; next is planning slice 8 in a new chat.
+
+## 2026-11-07, late (Quick, work)
+- Slice 8 planned (map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt), Q1 to Q10 as recommended, BUILT: one slot per move line, one active slot under your 0.4 s hold, stay unless 1.5x, heal then buff visits, bonds, your melee cushion and flinch rule on leaders.
+- Files: boss-ai.js, gym-leader.js, player.js (onSwitchFeel hook), gyms.js (bond key + validator), changelog.js; docs COMBAT-RULES, BOSS-AUTHORING.
+- Tests: NEW leader-slots-harness.js, leader-slots-mutate.js (22), leader-dps-report.js; changed gym-leader harness/mutate, leader-stats and player-entity harnesses, smoke-gym. STALE scan clean. Not run (no node here).
+- Stopped at: Jess runs the checks, the DPS report (Q10) and the Misty feel test.
