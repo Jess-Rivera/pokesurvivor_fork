@@ -6,7 +6,7 @@ Status: structure, decisions, slice order and leader status numbers approved by 
 
 Two entity families, built first, then the sub-entities on top:
 
-- `PlayerEntity`: moves, slots, Team, items, dodge, controller. Subclasses: `HumanPlayer` (input, camera, XP, coins, pickups), `GymLeader` (AI controller, `hpMult`, fixed status rules), `WorldBoss` and `Uber` (later plans).
+- `PlayerEntity`: moves, slots, Team, items, dodge, controller. Subclasses: `HumanPlayer` (input, camera, XP, coins, pickups), `GymLeader` (AI controller, `hpMult`, authored restrictions; slice 6), `WorldBoss` and `Uber` (later plans).
 - `WildEntity`: wild AI, morale. Subclass: `Elite` (size, HP, added rules).
 
 No shared parent class above the two families, since they have little code in common. What they share lives in reusable modules: `G.Status`, `G.Stages`, `G.MoveSim`, `G.MoveEffects`, `G.TeamCards`, `G.Stats`, the new Team module, and one hit contract that both families answer.
@@ -21,7 +21,7 @@ Terms: Player entity replaces strong host and Wild entity replaces weak host ("h
 4. Hit i-frames: off for leaders. Dodge, swap and dash i-frames stay.
 5. One active slot, as the player. The AI picks the slot under the player's slot hold; gyms may author bonds.
 6. Voluntary swaps are a core leader feature, not an extra. Faint swaps come first only because they are the base the AI builds on.
-7. Status: leaders use one FIXED set of leader status rules (below), different from the player's, not a per-gym override. The AI shakes off at 3 taps per second.
+7. Status (amended 2026-11-07, slice 6 Q3, under the LEADER PRINCIPLE): the player's status rules are the default for every leader, and each difference is an authored restriction (statusCut, ccWindow, autoShake, hitIframes). The table below is now Misty's authored values, not a fixed set. The AI shakes off at 3 taps per second unless a gym turns it off (N3).
 8. Elites do not change how they work (Jess, 2026-11-05, replacing the earlier answer that dropped the status cut). An Elite inherits the wild rules, and its current differences stay as its mods on top, status cut included. A later change to wild entities reaches Elites automatically.
 9. Dodge: every leader has it. The AI gets a per-gym tuning knob for how often it uses it.
 10. Contact damage: removed; a gym may author it back.
@@ -36,7 +36,7 @@ Not in this plan: the Director (docs/Director AI Proposal.md). It manages the wi
 - Trap on the player is only a swap lock, so it does nothing to a leader until voluntary swaps exist (slice 9).
 - Hit routing is larger than the audit implied. `Player.hurt` and `Enemy.hurt` take different arguments, the move effects choose their path by attacker and not by target, burn and poison have separate paths per class, the player's aim loop scans the enemy list (a leader would aim at itself) and `Player.hurt` shakes the camera. Slice 4 fixes this once, for both families.
 
-## Leader status rules [Approved, numbers TUNE]
+## Leader status rules [Approved, numbers TUNE; authored per gym since slice 6]
 
 | Rule | Player | Leader today | Leader |
 |---|---|---|---|
@@ -48,13 +48,13 @@ Not in this plan: the Director (docs/Director AI Proposal.md). It manages the wi
 | Trap | 8 s swap lock | 0.5 s root | 8 s swap lock |
 | Berry guards | yes | no | no |
 
-Estimated share of time asleep if the player reapplies as soon as allowed, at the average sleep roll: today about 9%, full player rules with auto-shake about 50%, this set about 21%. The set lives in one table in status.js, the same for every leader. `WorldBoss` and `Uber` choose later whether to share it.
+Estimated share of time asleep if the player reapplies as soon as allowed, at the average sleep roll: today about 9%, full player rules with auto-shake about 50%, this set about 21%. Since slice 6 (Q3) these numbers are Misty's authored restrictions in js/data/gyms.js, not a table in status.js; a leader that authors none gets the player's rules. `WorldBoss` and `Uber` choose later what to author.
 
-## Restriction block [Proposed]
+## Restriction block [Approved in part, built at gym level]
 
 Default allow. A `restrictions` block in js/data/gyms.js at three levels (gym, slot, loop), using the same keys as sets and cards; the narrowest level wins. It starts small in slice 5 and grows only when a slice needs an entry.
 
-Entries: tells on or off (and their lengths), heal limit per fight, contact damage, banned moves, banned cards, dodge rate, swap rate. `hpMult` sits beside it as a plain authored number, since it is scaling and not a restriction. Enrage and tempo stay gym rules, as today.
+Entries: tells on or off (and their lengths), heal limit per fight, contact damage, banned moves, banned cards, dodge rate, swap rate. `hpMult` sits beside it as a plain authored number, since it is scaling and not a restriction. Built so far (slices 5 and 6, gym level only; slot and loop levels come when a slice needs them): tells, healLimit, enrage (off unless authored on a switched gym), statusCut, ccWindow, autoShake (on unless false), hitIframes; with none authored a switched leader follows the player's rule. Tempo stays a slot knob, now read as the AI's pace; power must be 1 on a switched gym (cards do that job).
 
 The validator rejects unknown keys and bad shapes. It does not whitelist behavior, so a new move shape needs no validator change.
 
@@ -108,13 +108,14 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: `G.Debug.gym()` to Misty. It should look like the same fight, with new status behavior and no touch damage.
 
 **6. Stat pipeline and cards (M).**
-- Detail [Proposed] 2026-11-07, awaiting Jess's OK on D1 to D6: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt.
-- Files: gym-leader.js, gyms.js (validator allows team cards, authored IVs, EVs, nature, items), stats.js only if a formula needs moving into `G.Stats`, COMBAT-RULES:SS10. Misty's Zinc x3 lands here. The `hpMult` harness goes live and reports fight time at each gym's expected levels.
-- Tests: leader stats match a player built with the same inputs; a Vitamin changes damage taken; the fight-time report stays near target.
+- BUILT 2026-11-07 (Quick), steps 0, A and B. D1 to D6, Q1 to Q5 and N1 to N6 answered; plan, answers and as-built reports: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt. Tests clean on Jess's machine; feel test passed (the slice 5 arena-edge catch remains, TODO). Close-out: Prettier pass, lint errors cleared.
+- Files as built: gym-leader.js, boss-ai.js, gym.js, status.js, hud.js, gyms.js (team cards on switched gyms, IVs, EVs, nature, held and run items, restrictions, the leader item ban list), COMBAT-RULES "Host model" and SS10. stats.js untouched. Misty's Zinc x3 lands here. The fight-time report was scrapped (D5): hpMult is tuned by feel.
+- Tests as built: docs/proposals/leader-stats-harness.js (a: parity with a plain Player entity; b to h: profile, cards, items, restrictions, enrage, validator, card budget) and leader-stats-mutate.js (38 mutations).
 - Balance: leaders get stronger; Misty is re-tuned here, and only Misty.
 - Feel test: Misty's bulk now shows up against special moves.
 
 **7. Leader team and faint swaps (M).**
+- Carried from slice 6 (Jess 2026-11-07): the Regen card on leaders (it heals the bench; the validator rejects it until then); the team-reading run items Brass Knuckles, Sharp Scissors, Pikachu's Tear and Re-Do (their math reads YOUR roster through G.Game.roster, so they need the holder's team first; the validator rejects them until then).
 - Files: gym-leader.js (owns a Team), gym-arena.js (spawns the team, send-out beat, win only on team wipe, rewards once), gym.js (fight-length split, enrage restart per send-out), hud.js (team pips). Shared stages and dodges close the [Open] question in COMBAT-RULES:SS13. Retires the all-at-once lineup and replaces arena slice B (issue #5).
 - Tests: loop 2 Misty fields 2 mons, one faint swaps, the wipe wins, one badge only; enrage restarts; shared stages carry across a swap; mutation runner.
 - Risk: fight length in later loops.
@@ -146,7 +147,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 
 **12. Migrate gyms 2 to 8, delete the old brain (L, one gym per session).**
 - Files: gyms.js (switch on, cards, `hpMult` and restrictions per gym), then remove the switch, the old brain, `formOf`, `STRONG_HOST_GATE_MUL` and the gym branches left in the wild class. BOSS-AUTHORING, GYM-ROSTERS and the gyms sheet updated.
-- Tests: the fight-time report for every gym; smoke-ui fights one gym per session; the old-model harnesses retire here.
+- Tests: hpMult tuned by feel per gym (the fight-time report was scrapped in slice 6, D5); smoke-ui fights one gym per session; the old-model harnesses retire here.
 - Feel test: each gym as it moves over, and this is the natural point to bring in playtesters.
 
 Later, separate plans: the Elite Four, `WorldBoss`, `Uber`. Co-op stays deferred: a deferred-hook note goes to TODO.md at slice 5, since a leader entity is not replicated the way an Enemy is.

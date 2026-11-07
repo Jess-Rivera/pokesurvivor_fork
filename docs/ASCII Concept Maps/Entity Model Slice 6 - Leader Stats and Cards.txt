@@ -1,7 +1,8 @@
 ENTITY MODEL, SLICE 6: LEADER STATS AND CARDS (one plan, redrawn 2026-11-07, Quick at work)
 Source: docs/proposals/host-model-plan.md "6. Stat pipeline and cards". Rules: docs/COMBAT-RULES.md "Host model", SS10.
-Status: [Proposed] plan. D1 to D6 and Q1 to Q5 answered 2026-11-07 (log at the bottom). N1 to N5 below are NEW
-decisions this redraw surfaced; they need your OK before the build.
+Status: BUILT 2026-11-07 (steps 0, A and B; reports at the bottom). Every decision answered (D1 to D6, Q1 to Q5,
+N1 to N6). Tests clean, feel test passed (the slice 5 arena-edge catch remains, TODO). Close-out: Prettier pass,
+lint errors 22 to 0, five mutants re-pointed at the formatted lines.
 
 GOVERNING RULE (LEADER PRINCIPLE): a leader is another player's team run by AI. Anything a player can have, it can
 have. Every difference is hand authored per gym.
