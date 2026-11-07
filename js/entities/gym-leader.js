@@ -3,13 +3,15 @@
  * HP formula, hit defense, statuses, stages, walls), driven by the same G.Boss.GymBrain the old body uses. G.Boss.make builds one for a
  * gym with `playerEntity` in js/data/gyms.js; the other gyms stay on the wild body until slice 12. It lives in the enemy list, so your
  * aim, your moves and the HUD find it as before. One mon with all its moves in one group, as before: teams are slice 7, one active
- * slot slice 8. Its own: the attack factor (the brain's, slice 6 changes it), HP x hpMult, the fixed leader status rules (G.Status),
- * no hit i-frames, no touch damage (combat.js), the enrage trigger, drops and faint effects, and the boss look. COMBAT-RULES "Host model".
+ * slot slice 8. Slice 6: your attack formula (x the enrage, only when the gym authors
+ * it), your stat profile, cards (team cards included) and items. Its own: HP x hpMult, the authored restrictions (status cut, hard CC
+ * gap, auto shake, hit i-frames; none authored means your rules), no touch damage (combat.js), the enrage trigger, drops and faint
+ * effects, and the boss look. COMBAT-RULES "Host model".
  */
 G.GymLeader = class GymLeader extends G.PlayerEntity {
   /** @param def the leader's def from G.Gym.makeDef; def.gym holds its level, hpMult, moves, cards and restrictions */
   constructor(def, x, y) {
-    super(G.DEX_BY[def.dex]);
+    super(G.DEX_BY[def.dex], {}, false, def.gym.profile ? G.Stats.profile(def.gym.profile) : null); // slice 6 (D3): IVs, EVs, nature
     this.id = G.EnemyMgr.newId();
     this.def = def;
     this.name = this.mon.name;
@@ -24,11 +26,12 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.fade = 0; // seconds of the faint fade left; the enemy list drops a corpse at 0
     this.level = this.gym.level;
     this.hpMult = this.gym.hpMult;
+    this.brain = new G.Boss.GymBrain(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads
     this.maxHp = this.maxHpAt(this.level);
     this.hp = this.maxHp;
-    this.brain = new G.Boss.GymBrain(this);
     this.moves = this.slots[0];
     for (const s of this.moves) s.type = G.MoveDefs[s.id].type;
+    this.arm();
     this.heading = [0, 0];
     this.controller = Object.assign({}, G.PlayerEntity.IDLE, { axis: () => this.heading });
   }
@@ -37,12 +40,43 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   get isRival() {
     return true;
   }
-  /** The fixed leader status rules (G.Status LEADER), not per gym. */
+  /** Never a STRONG host (G.Status.strong); its status differences are the authored restrictions below (slice 6, Q3). */
   get leaderStatus() {
     return true;
   }
+  /** An authored restriction (js/data/gyms.js `restrictions`, slice 6 Q3), or null when the gym authors none (then your rule applies). */
+  rule(k) {
+    const r = this.gym.restrictions;
+    return r && r[k] != null ? r[k] : null;
+  }
+  /** Hit i-frames: authored, else yours. */
   get hitIframes() {
-    return 0;
+    const v = this.rule('hitIframes');
+    return v != null ? v : super.hitIframes;
+  }
+  /** Freeze and sleep length multiplier, read by G.Status: authored, else 1 (your length). */
+  get statusCut() {
+    const v = this.rule('statusCut');
+    return v != null ? v : 1;
+  }
+  /** Seconds after a hard CC ends with no new hard CC, read by G.Status: authored, else your G.Status.GRACE. */
+  get ccWindow() {
+    const v = this.rule('ccWindow');
+    return v != null ? v : G.Status.GRACE;
+  }
+  /** Your attack formula (slice 6, D1: Protein, IVs, nature, held and run items, stages) x the enrage, which is 1 unless the gym
+   *  authors it (G.Gym.enrageMul). The power knob is not read: a switched gym must leave it at 1 (G.Gyms.validate). */
+  moveFactor(m) {
+    return super.moveFactor(m) * G.Gym.enrageMul(this);
+  }
+  /** Equips the authored held item and run items through the same on / off code as yours (slice 6, Q4). Runs after the brain (Quick
+   *  Claw multiplies its tempo cooldown) and after max HP (Leftovers and Black Sludge read it). */
+  arm() {
+    if (this.gym.item) this.equip(this.gym.item);
+    for (const id of this.gym.runItems || []) {
+      G.Items.BY[id].on(this);
+      this.runItems.push(id);
+    }
   }
   /** The player formula x the authored hpMult (plan decision 2). */
   maxHpAt(level) {
@@ -57,7 +91,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
       this.fade -= dt;
       return;
     }
-    G.Status.autoShake(this, dt);
+    if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
     this.heading = G.Status.stunned(this) ? [0, 0] : this.steer(dt, pl);
     super.update(dt);
   }

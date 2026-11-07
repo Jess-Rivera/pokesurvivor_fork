@@ -74,12 +74,13 @@ G.Boss = (() => {
         return p && !p.dead ? [p] : [];
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
-      e.moveFactor = (m) => this.factor(m);
-      // A G.GymLeader (slice 5) inherits these three from G.PlayerEntity; the wild body gets them here.
+      // A G.GymLeader inherits these four from G.PlayerEntity (slice 5; the attack factor since slice 6, plan D1: your formula, so
+      // Protein, IVs, nature and held items count); the wild body gets them here.
       if (!e.isPlayer) {
         e.stabFor = (m) => e.types.includes(m.type); // slice 4b (H1): a leader's STAB, as the player's
         e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
         e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
+        e.moveFactor = (m) => this.factor(m); // the wild attack factor: power, enrage and the stage
       }
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
       this.contact = e.isPlayer ? null : dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null; // a Player entity has no touch damage
@@ -303,6 +304,7 @@ G.Boss = (() => {
         e.aim = c.ang;
         if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {
           G.Gym.noteCast(c.id);
+          this.orbCost(this.def(c.id));
           e.anim.play(CLOSE.includes(c.form) || c.form === 'dash' ? 'Attack' : 'Shoot', { speed: 1.4 });
         }
       }
@@ -318,6 +320,7 @@ G.Boss = (() => {
         if (s.t > 0 || G.Gyms.formOf(d) !== 'buff' || !G.MoveEffects.statReady(d, e)) continue;
         if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
         G.Gym.noteCast(s.id);
+        this.orbCost(d);
         const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e',
           vis = G.VFX.forMove(d); // the player's buff look: a ring and rising sprites
         G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
@@ -345,6 +348,7 @@ G.Boss = (() => {
         if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
         this.healsLeft--;
         G.Gym.noteCast(s.id);
+        this.orbCost(d);
         G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
       }
     }
@@ -370,6 +374,13 @@ G.Boss = (() => {
         G.Gym.enrageMul(e) *
         G.Stages.mul(e, special ? 'spa' : 'atk')
       );
+    }
+
+    /** Life Orb on a leader (slice 6, N6): each cast costs 1% of max HP (at least 1), never below 1 HP, the rule Player.cast applies to
+     *  you. An always-on move (a persistent def) is not an attack. The wild body holds no items. */
+    orbCost(d) {
+      const e = this.e;
+      if (e.isPlayer && e.hasItem('lifeorb') && !(d && d.persistent)) e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));
     }
 
     /** A cast's HP cost (recoil) on the mon: taken directly, never below 1 HP, with a grey number (Player.payHp's rule). */

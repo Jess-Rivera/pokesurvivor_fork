@@ -98,8 +98,10 @@ const LEVEL = 20,
   HP = 2000;
 const MOVES = [{ id: 'tackle' }, { id: 'water-pulse' }, { id: 'recover', hpBelow: 0.35 }];
 
+// Slice 6: the old fixed leader values are now authored restrictions (Misty's step A values), so these tests keep their meaning.
+const MISTY_A = { enrage: true, statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 };
 function gymOf(o = {}) {
-  return Object.assign({ level: LEVEL, loop: 1, leader: 'Misty', badge: 'Cascade Badge', species: 'Staryu', stance: 'far', power: 1, tempo: 1, cards: {}, moves: MOVES.map((m) => Object.assign({}, m)), engagedAt: null, playerEntity: true, hpMult: 26, restrictions: null }, o);
+  return Object.assign({ level: LEVEL, loop: 1, leader: 'Misty', badge: 'Cascade Badge', species: 'Staryu', stance: 'far', power: 1, tempo: 1, cards: {}, moves: MOVES.map((m) => Object.assign({}, m)), engagedAt: null, playerEntity: true, hpMult: 26, restrictions: MISTY_A }, o);
 }
 const defOf = (dex, gym) => ({ dex, name: 'X', hp: HP, spd: 100, dmg: 20, xp: 0, behavior: 'chase', shotDmg: 10, shotCd: 1, range: 260, gym });
 function leader(dex = STARYU, gym = gymOf()) {
@@ -501,7 +503,7 @@ reset();
 {
   const K = G.Gyms.KANTO,
     misty = K.find((g) => g.leader === 'Misty');
-  ok(misty.playerEntity === true && misty.hpMult[1] === 26, 'Misty is switched on, hpMult 26 on loop 1');
+  ok(misty.playerEntity === true && misty.hpMult[1] === 25, 'Misty is switched on, hpMult 25 on loop 1 (slice 6)');
   ok(!G.Gyms.validate(misty).length, 'Misty validates: ' + G.Gyms.validate(misty).join('; '));
   ok(K.filter((g) => g.playerEntity).length === 1, 'only Misty is switched on');
   const bad = (o) => G.Gyms.validate(Object.assign(JSON.parse(JSON.stringify(misty)), o));

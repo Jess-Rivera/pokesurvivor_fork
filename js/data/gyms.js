@@ -8,7 +8,9 @@
  * cards (Jess 2026-11-05: the leader plays like a player), by id from G.TeamCards (damage, count, velocity, area...). They are keyed by
  * loop and hold the cards GAINED at that loop; the pool for loop N is the running sum of loops 1 to N (cardsFor). Every mon the gym
  * fields in that loop holds the whole pool, folded by the SAME rules as the player's cards, so each card applies to every one of that
- * mon's moves it fits. Team cards (Gate, Duration, Regen, Vitamins) are not allowed: enemies use the base stage timers (COMBAT-RULES:SS10). formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
+ * mon's moves it fits. Team cards (Gate, Duration, Vitamins as 'vitamins:<stat>') are allowed only on a switched gym (`playerEntity`, slice 6 D2),
+ * since the wild body has no Vitamins path; Regen waits for slice 7 (it heals the bench). A switched slot also takes a build per loop
+ * (ivs, evs, nature, a held item; slice 6 D3 and Q4) and the gym takes `runItems` per loop, cumulative like cards. formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
  * returns, beams, bursts, trails, delayed marks, self buffs, self heals).
  *
  * A SIGNATURE is one roster slot (an evolution LINE). Its `line` is an ordered stage ladder [{ dex, minLevel }]: the stage shown is the
@@ -38,12 +40,29 @@ G.Gyms = (() => {
     'playerEntity',
     'hpMult',
     'restrictions',
+    'runItems',
   ];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
-  const RESTRICTION_KEYS = ['tells', 'healLimit'];
-  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets'];
+  // Slice 6 (Q1 to Q3): enrage (off unless true on a switched gym), statusCut, ccWindow, autoShake (on unless false), hitIframes.
+  // With none authored a switched leader follows your rule.
+  const RESTRICTION_KEYS = ['tells', 'healLimit', 'enrage', 'statusCut', 'ccWindow', 'autoShake', 'hitIframes'];
+  const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets', 'ivs', 'evs', 'nature', 'item'];
   const MOVE_KEYS = ['id', 'hpBelow'];
+  // Slice 6 (Q4 and N6, Jess 2026-11-07): items a leader may not hold, each with the reason the validator gives.
+  const LEADER_ITEM_BAN = {
+    amuletcoin: 'human only (coins)',
+    luckyegg: 'human only (XP)',
+    snowballbadge: 'it counts your kills',
+    brassknuckles: 'it reads a team (slice 7)',
+    sharpscissors: 'it reads a team (slice 7)',
+    pikachustear: 'it reads a team (slice 7)',
+    redo: 'it reads a team (slice 7)',
+    choiceband: 'a leader cannot honor the move lock',
+    choicespecs: 'a leader cannot honor the move lock',
+    rockyhelmet: 'Rocky Helmet is bugged: it fires on body touch only, see TODO',
+  };
+  const RUN_ITEM_MAX = 4; // your run item cap
 
   /** How a leader casts a new-path move (slice 7a), or null when it cannot yet: 'melee' (a cone at its body, aimed at you), 'nova' (a ring or
    *  half ring that grows out of its body: Heat Wave, Dazzling Gleam), 'shot' (shapes that travel along the aim, homing ones included:
@@ -225,11 +244,14 @@ G.Gyms = (() => {
       arena: 'water',
       boost: { stat: 'spd', pct: 0.1 },
       playerEntity: true, // entity model slice 5: the first gym on G.GymLeader
-      hpMult: { 1: 26 }, // TUNE: within 2% of the old HP at her usual level 18 to 20; slice 6's fight-time report tunes it
+      hpMult: { 1: 25 }, // TUNE by feel (slice 6, D6, Jess 2026-11-07): with Zinc 3, about a minute at her usual level 20 (2100 HP)
+      // Slice 6 (Q1, Q3): her authored differences from your rules, the old fixed leader values (half-length freeze and sleep, a 5 s
+      // hard CC gap, auto shake, no hit i-frames). No enrage (Q1): absent means off on a switched gym.
+      restrictions: { statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 },
       // Misty's cards (Jess 2026-11-05): a special and status gym. Loop 1 (about level 12 to 15 at 8 min): Water Damage 4 and Count 2 and Velocity 3
-      // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Held back for a decision: Sp. Def 3 (the
-      // Vitamins card's Zinc; leaders have no team cards yet).
-      cards: { 1: { 'type:water': 4, count: 2, ailment: 2, velocity: 3, area: 2 } },
+      // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Zinc 3 (the Vitamins card on Sp. Def,
+      // +15%) since slice 6 (D2, Jess 2026-11-07). 16 stacks in all.
+      cards: { 1: { 'type:water': 4, count: 2, ailment: 2, velocity: 3, area: 2, 'vitamins:spd': 3 } },
       signatures: [
         // PROVISIONAL move sets (TUNE, no cards yet; catalog moves with a gym form only). Balance pass pending.
         // Slot 1: Staryu -> Starmie, the signature ace.
@@ -724,6 +746,43 @@ G.Gyms = (() => {
     return at;
   }
 
+  /** The value a loop-keyed map holds for loop `loop`: that loop's entry, else the last earlier one; undefined with none. Pure. */
+  function perLoop(m, loop) {
+    let at;
+    for (const k of Object.keys(m || {})
+      .map(Number)
+      .sort((a, b) => a - b))
+      if (k <= loop) at = m[k];
+    return at;
+  }
+  /** A switched slot's stat profile input for loop `loop` (slice 6, D3), shaped like a read copy for G.Stats.profile; null when the
+   *  slot authors none (neutral). */
+  function profileFor(sig, loop) {
+    const iv = perLoop(sig && sig.ivs, loop),
+      ev = perLoop(sig && sig.evs, loop),
+      nat = perLoop(sig && sig.nature, loop);
+    if (!iv && !ev && !nat) return null;
+    const N = nat && G.SpeciesTraits ? G.SpeciesTraits.NATURES.find((x) => x[0] === nat) : null;
+    return { iv: iv || [0, 0, 0, 0, 0, 0], ev: ev || [0, 0, 0, 0, 0, 0], natureUp: N ? N[1] : 0, natureDown: N ? N[2] : 0 };
+  }
+  /** The leader's run items for loop `loop`: the ids gained at loops 1 to `loop`, in order (slice 6, Q4). A copy; pure. */
+  function runItemsFor(entry, loop) {
+    const out = [];
+    for (const k of Object.keys((entry && entry.runItems) || {})
+      .map(Number)
+      .sort((a, b) => a - b))
+      if (k <= loop) out.push(...entry.runItems[k]);
+    return out;
+  }
+  /** Card budget (slice 6, Q5 and N5): one stack is one level-up pick, and a player at level L has had L - 1. A warning when the pool
+   *  for loop `loop` is bigger, else null. Never a block. */
+  function budgetWarn(entry, loop, level) {
+    const n = Object.values(cardsFor(entry, loop)).reduce((a, b) => a + b, 0);
+    return n > level - 1
+      ? entry.leader + ' holds ' + n + ' card stacks at level ' + level + ', more than a player could hold (' + (level - 1) + ')'
+      : null;
+  }
+
   const unknownKeys = (o, allowed) => Object.keys(o).filter((k) => !allowed.includes(k));
   const sigName = (s) => (s && s.line && s.line[0] && G.DEX_BY[s.line[0].dex] ? G.DEX_BY[s.line[0].dex].name : '?');
 
@@ -805,6 +864,85 @@ G.Gyms = (() => {
       if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))
         bad.push((g.leader || '?') + ': healLimit is a whole number from 0');
     }
+    // slice 6 (Q1 to Q4): the new restrictions, power on a switched gym, the build keys and the items
+    if (rules != null) {
+      for (const k of ['enrage', 'autoShake'])
+        if (rules[k] != null && typeof rules[k] !== 'boolean') bad.push((g.leader || '?') + ': ' + k + ' is true or false');
+      if (rules.statusCut != null && !(typeof rules.statusCut === 'number' && rules.statusCut > 0 && rules.statusCut <= 1))
+        bad.push((g.leader || '?') + ': statusCut is in (0, 1]');
+      for (const k of ['ccWindow', 'hitIframes'])
+        if (rules[k] != null && !(typeof rules[k] === 'number' && rules[k] >= 0 && rules[k] <= 10))
+          bad.push((g.leader || '?') + ': ' + k + ' is seconds from 0 to 10');
+    }
+    const loopKey = (k) => Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS;
+    const itemBan = (id, tier, L) => {
+      const it = G.Items && G.Items.BY ? G.Items.BY[id] : null;
+      if (!it) return L + ': unknown item ' + id;
+      if (it.tier !== tier) return L + ': ' + id + ' is a ' + it.tier + ' item, not a ' + tier + ' one';
+      if (LEADER_ITEM_BAN[id]) return L + ': ' + id + ' cannot go on a leader, ' + LEADER_ITEM_BAN[id];
+      return null;
+    };
+    (g.signatures || []).forEach((s) => {
+      const who = sigName(s);
+      if (g.playerEntity && s.power != null && s.power !== 1)
+        bad.push(who + ': power must be 1 on a switched gym (cards do that job)');
+      for (const key of ['ivs', 'evs', 'nature', 'item']) {
+        const m = s[key];
+        if (m == null) continue;
+        if (!g.playerEntity) {
+          bad.push(who + ': ' + key + ' needs playerEntity (the wild body has no stat profile or items)');
+          continue;
+        }
+        if (typeof m !== 'object' || Array.isArray(m)) {
+          bad.push(who + ': ' + key + ' is keyed by loop');
+          continue;
+        }
+        for (const k of Object.keys(m)) {
+          const v = m[k],
+            L = who + ' ' + key + ' loop ' + k,
+            six = (max) => Array.isArray(v) && v.length === 6 && v.every((x) => Number.isInteger(x) && x >= 0 && x <= max);
+          if (!loopKey(k)) bad.push(L + ': keyed by a loop from 1 to ' + LOOPS);
+          else if (key === 'ivs' && !six(31)) bad.push(L + ': six IVs, each a whole number from 0 to 31');
+          else if (key === 'evs' && !six(252)) bad.push(L + ': six EVs, each a whole number from 0 to 252');
+          else if (key === 'evs' && v.reduce((a, b) => a + b, 0) > 510) bad.push(L + ': EVs total at most 510');
+          else if (key === 'nature' && !(typeof v === 'string' && G.SpeciesTraits && G.SpeciesTraits.NATURES.some((x) => x[0] === v)))
+            bad.push(L + ': ' + v + ' is not a nature');
+          else if (key === 'item') {
+            const why = itemBan(v, 'pokemon', L);
+            if (why) bad.push(why);
+          }
+        }
+      }
+    });
+    if (g.runItems != null) {
+      if (!g.playerEntity) bad.push((g.leader || '?') + ': runItems needs playerEntity');
+      else if (typeof g.runItems !== 'object' || Array.isArray(g.runItems))
+        bad.push((g.leader || '?') + ': runItems is keyed by loop');
+      else {
+        const held = [],
+          groups = {};
+        for (const k of Object.keys(g.runItems).sort((a, b) => a - b)) {
+          const L = (g.leader || '?') + ' runItems loop ' + k;
+          if (!loopKey(k) || !Array.isArray(g.runItems[k])) {
+            bad.push(L + ': a list keyed by a loop from 1 to ' + LOOPS);
+            continue;
+          }
+          for (const id of g.runItems[k]) {
+            const why = itemBan(id, 'run', L);
+            if (why) {
+              bad.push(why);
+              continue;
+            }
+            const grp = G.Items.BY[id].group;
+            if (held.includes(id)) bad.push(L + ': ' + id + ' is already held');
+            else if (grp && groups[grp]) bad.push(L + ': only one ' + grp + ' item (' + groups[grp] + ' is held)');
+            held.push(id);
+            if (grp && !groups[grp]) groups[grp] = id;
+          }
+        }
+        if (held.length > RUN_ITEM_MAX) bad.push((g.leader || '?') + ': at most ' + RUN_ITEM_MAX + ' run items, the player cap');
+      }
+    }
     // cards (Jess 2026-11-05): the leader's, gained per loop; each must exist, be a move card, a whole number of stacks, keep the running
     // total within its cap, and fit at least one move of a mon fielded in the loop it is gained
     const cards = g.cards || {},
@@ -823,15 +961,19 @@ G.Gyms = (() => {
           ...roster.slice(0, Number(k)).map((s, i) => (s && s.sets ? movesFor(s, i, Number(k)) : []))
         );
         for (const id of Object.keys(cards[k] || {})) {
-          const c = G.TeamCards.BY_ID[id],
+          const vit = id.startsWith('vitamins:') ? id.slice(9) : null, // a Vitamins stack names its stat (G.TeamCards.vit)
+            c = G.TeamCards.BY_ID[vit != null ? (STATS.includes(vit) ? 'vitamins' : '') : id],
             n = cards[k][id];
           if (!c) bad.push(L + ': unknown card ' + id);
-          else if (c.team) bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
+          else if (c.team && !g.playerEntity) bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
+          else if (c.id === 'regen') bad.push(L + ': regen waits for slice 7 (it heals the bench, and a leader has none yet)');
+          else if (c.id === 'vitamins' && vit == null)
+            bad.push(L + ': name the Vitamins stat, vitamins:hp, atk, def, spa, spd or spe');
           else if (!Number.isInteger(n) || n < 1) bad.push(L + ': card ' + id + ' needs a whole number of stacks');
           else {
             total[id] = (total[id] || 0) + n;
             if (c.cap && total[id] > c.cap) bad.push(L + ': card ' + id + ' is capped at ' + c.cap);
-            else if (!moves.some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
+            else if (!c.team && !moves.some((m) => G.MoveDefs[m.id] && G.TeamCards.targets(c, G.MoveDefs[m.id]).length))
               bad.push(L + ': card ' + id + ' fits none of the moves fielded that loop');
           }
         }
@@ -858,6 +1000,11 @@ G.Gyms = (() => {
     movesFor,
     cardsFor,
     hpMultFor,
+    perLoop,
+    profileFor,
+    runItemsFor,
+    budgetWarn,
+    LEADER_ITEM_BAN,
     formOf,
     reachOf,
     validate,

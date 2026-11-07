@@ -24,7 +24,7 @@ const M = [
   ['hpMult is dropped', LD, 'return Math.round(super.maxHpAt(level) * this.hpMult);', 'return super.maxHpAt(level);'],
   ['hpMult does not carry forward', GY, 'if (k <= loop) at = m[k];', 'if (k === loop) at = m[k];'],
   // hit parity
-  ['hit i-frames stay on', LD, 'get hitIframes() {\n    return 0;', 'get hitIframes() {\n    return 0.45;'],
+  ['hit i-frames stay on', LD, "get hitIframes() {\n    const v = this.rule('hitIframes');", "get hitIframes() {\n    return 0.45;\n    const v = this.rule('hitIframes');"], // slice 6 retarget
   ['the melee cushion stays on', PL, '!this.isRival && this.activeGroup()', 'this.activeGroup()'],
   ['the attacker items are dropped', FX, 'b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl));', 'b.itemMul = 1;'],
   ['takeHit ignores the items', PL, '* (b.itemMul || 1);', ';'],
@@ -41,9 +41,9 @@ const M = [
   ['the leader shows the player number', LD, "show = atk && atk.crit ? '#ff9a3c' : eff === 'super' ? '#ffe14d' : eff === 'weak' ? '#a3abb8' : col;", "show = '#ff6b7a';"],
   // status
   ['a leader is strong', ST, '&& !h.leaderStatus;', ';'],
-  ['no leader freeze and sleep cut', ST, "if (h.leaderStatus && (kind === 'freeze' || kind === 'sleep')) return base * LEADER.cut;", ''],
-  ['the 5 s gap is 2.5 s', ST, 'h.leaderStatus ? LEADER.window : GRACE', 'GRACE'],
-  ['the AI never shakes off', LD, 'G.Status.autoShake(this, dt);', ''],
+  ['no leader freeze and sleep cut', ST, "if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;", ''], // slice 6 retarget
+  ['the 5 s gap is 2.5 s', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'], // slice 6 retarget
+  ['the AI never shakes off', LD, "if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt);", ''], // slice 6 retarget
   // the brain
   ['the brain steps while frozen', LD, 'this.heading = G.Status.stunned(this) ? [0, 0] : this.steer(dt, pl);', 'this.heading = this.steer(dt, pl);'],
   ['the heading never reaches the controller', LD, '{ axis: () => this.heading }', '{}'],
@@ -70,7 +70,7 @@ const M = [
   ['applySlow missing', LD, 'this.slowT = Math.max(this.slowT, dur);', ''],
   // data and validator
   ['Misty is not switched on', GY, 'playerEntity: true, // entity model slice 5', '// entity model slice 5'],
-  ['Misty loses her hpMult', GY, 'hpMult: { 1: 26 },', 'hpMult: { 1: 13 },'],
+  ['Misty loses her hpMult', GY, 'hpMult: { 1: 25 },', 'hpMult: { 1: 13 },'], // slice 6 retarget
   ['unknown restrictions pass', GY, "for (const k of unknownKeys(rules, RESTRICTION_KEYS)) bad.push((g.leader || '?') + ': unknown restriction ' + k);", ''],
   ['bad tells pass', GY, "if (rules.tells != null && typeof rules.tells !== 'boolean')", 'if (false)'],
   ['bad healLimit passes', GY, 'if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))', 'if (false)'],

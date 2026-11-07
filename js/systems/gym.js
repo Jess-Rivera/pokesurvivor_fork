@@ -2,7 +2,8 @@
  * Gyms are the only bosses (2026-10-31). Gym 1 gate opens at 4:00; each later gate opens GAP seconds after the previous gym is beaten
  * AND the player is back on the map. A gate stays until entered. The gym level is the run-time level at gate spawn + LEVEL_OFFSET,
  * locked at spawn and shown on the gate. Inside, the leader fights with hand-authored moves and cards (G.Gyms). Losing (team wipe)
- * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps).
+ * ends the run. There is no arena timer: 120 s after the first hit the leader enrages (damage ramps). A switched gym (G.GymLeader)
+ * enrages only when it authors `enrage` (slice 6, Q1).
  * The gate and the arena themselves are systems/gym-arena.js; this module owns the schedule, the leader's def and the rewards.
  * Kanto gyms 1 to 8 (js/data/gyms.js), opened in list order. The badge boost is a team-wide stat bonus (Player.badge). See BOSS-REWORK.md section 3 and docs/BOSS-AUTHORING.md.
  * SIM/PRESENT: this module is simulation only. Everything the player sees or hears about the gym schedule (escalation toast and sound,
@@ -142,6 +143,8 @@ G.Gym = (() => {
     const tEq = Math.max(0, ((lvl - 1) / 49) * 1800);
     const base = { dex, baseHp: mon.stats ? mon.stats[0] : 50 };
     const hp = G.Elites.hpFor(base, tEq, G.Gyms.TTK).hp;
+    const warn = G.Gyms.budgetWarn(entry, loop, lvl); // slice 6 (Q5): more cards than a player of this level could hold, never a block
+    if (warn) console.warn('[Gym] ' + warn);
     return {
       dex,
       name: mon.name,
@@ -166,6 +169,9 @@ G.Gym = (() => {
         playerEntity: !!entry.playerEntity, // the slice 5 switch: G.Boss.make builds a G.GymLeader instead of the wild body
         hpMult: G.Gyms.hpMultFor(entry, loop),
         restrictions: entry.restrictions || null,
+        profile: G.Gyms.profileFor(sig, loop), // slice 6 (D3): this loop's IVs, EVs and nature, or null (neutral)
+        item: G.Gyms.perLoop(sig.item, loop) || null, // slice 6 (Q4): this loop's held item
+        runItems: G.Gyms.runItemsFor(entry, loop), // slice 6 (Q4): the run items gained at loops 1 to this one
         cards: G.Gyms.cardsFor(entry, loop), // the leader's pool for this loop, held by every mon the gym fields (Jess 2026-11-05)
         moves: G.Gyms.movesFor(sig, slot, loop).map((m) => Object.assign({}, m)), // this loop's set (per-loop sets, Jess 2026-11-02)
         engagedAt: null,
@@ -173,17 +179,22 @@ G.Gym = (() => {
     };
   }
 
+  /** Slice 6 (Q1): a switched gym (G.GymLeader) enrages only when it authors `enrage`; the wild body always does. */
+  function enrages(e) {
+    const x = e && e.gym;
+    return !!x && (!x.playerEntity || !!(x.restrictions && x.restrictions.enrage));
+  }
   /** Damage multiplier from the enrage clock: x1 until ENRAGE_AFTER s after the first hit, then up to x2 over ENRAGE_RAMP s. */
   function enrageMul(e) {
     const x = e.gym;
-    if (!x || x.engagedAt == null) return 1;
+    if (!x || x.engagedAt == null || !enrages(e)) return 1;
     const s = now() - x.engagedAt - G.Gyms.ENRAGE_AFTER;
     return s <= 0 ? 1 : 1 + (ENRAGE_MAX - 1) * Math.min(1, s / ENRAGE_RAMP);
   }
   /** Seconds to enrage (0 once enraged), or null before the first hit. */
   function enrageIn(e) {
     const x = e.gym;
-    if (!x || x.engagedAt == null) return null;
+    if (!x || x.engagedAt == null || !enrages(e)) return null;
     return Math.max(0, G.Gyms.ENRAGE_AFTER - (now() - x.engagedAt));
   }
 
@@ -236,6 +247,7 @@ G.Gym = (() => {
     makeDef,
     enrageMul,
     enrageIn,
+    enrages,
     onWin,
     onReturn,
     now,

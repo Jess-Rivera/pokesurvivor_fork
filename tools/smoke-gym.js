@@ -136,11 +136,15 @@ async function fight(browser, n, leaderName, badge, isEntity) {
   ok(fought, tag + ': the leader casts and your own moves hurt it');
   const engaged = await page.evaluate(() => {
     const b = G.EnemyMgr.all().find((e) => e.boss && !e.dead);
-    return { at: b.gym.engagedAt, left: G.Gym.enrageIn(b) };
+    return { at: b.gym.engagedAt, left: G.Gym.enrageIn(b), on: G.Gym.enrages(b) };
   });
+  // slice 6 (Q1): a switched gym enrages only when it authors one (Misty does not); the wild body always does
   ok(
-    engaged.at != null && engaged.left > 0,
-    tag + ': the first hit starts the enrage clock (' + Math.round(engaged.left) + ' s)'
+    engaged.at != null && (engaged.on ? engaged.left > 0 : engaged.left === null),
+    tag +
+      (engaged.on
+        ? ': the first hit starts the enrage clock (' + Math.round(engaged.left) + ' s)'
+        : ': the first hit engages it, and it never enrages (none authored)')
   );
 
   // the last blow comes from your own move

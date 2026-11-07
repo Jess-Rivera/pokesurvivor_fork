@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-07, Slice 6 built: leader stats, cards, items and restrictions (Jess)
+Q1 enrage off unless authored (Misty off); Q2 power goes on switched gyms, tempo stays as the AI's pace; Q3 the player's status rules are the default and each leader difference is an authored restriction (statusCut, ccWindow, autoShake, hitIframes), in slice 6; Q4 held and run items now, team readers wait for slice 7; Q5 no card cap, a dev warning above level - 1 stacks. N1 the old body keeps no team cards; N2 Gate and Duration legal on leaders, Regen waits for slice 7; N3 auto shake on by default; N4 tempo per slot; N6 Choice Band and Specs never on a leader, Life Orb pays its cost, Bright Powder allowed, Rocky Helmet rejected as bugged (TODO). Misty: Zinc 3, hpMult 25, no enrage.
+Canonical: docs/COMBAT-RULES.md, "Host model", LEADER STATS, CARDS, ITEMS AND RESTRICTIONS; plan: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt
+
 ## 2026-11-07, Leader principle: another player's team, controlled by AI (Jess)
 The governing rule for every Player-entity leader: it is treated as just another player's team, controlled by AI. Anything a player can have (any upgrade card, team cards included, held and run items, IVs, EVs, nature), a leader can have. Every difference from a player is hand authored per gym, never a hidden built-in rule. Slice 6 answers: D1 the player attack formula at her level, and the enrage bonus is to go; D2 any card a player can get; D3 IV, EV and nature keys yes; D4 items are part of slice 6; D5 the fight-time report is scrapped; D6 Misty's hpMult 25 for now. Supersedes the "no team cards" lines in COMBAT-RULES:SS10 and BOSS-REWORK section 3. Open follow-ups: slice 6 map, "QUESTIONS".
 Canonical: docs/COMBAT-RULES.md, "Host model", LEADER PRINCIPLE

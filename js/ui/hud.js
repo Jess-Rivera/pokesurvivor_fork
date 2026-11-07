@@ -626,7 +626,8 @@ G.HUD = (() => {
         w / 2,
         80
       );
-      if (boss.gym) {
+      if (boss.gym && G.Gym.enrages(boss)) {
+        // slice 6 (Q1): no enrage line for a switched gym that does not author one
         const left = G.Gym.enrageIn(boss);
         ctx.font = F(700, 10);
         ctx.fillStyle = left === 0 ? '#ff7070' : '#ffe9b0';

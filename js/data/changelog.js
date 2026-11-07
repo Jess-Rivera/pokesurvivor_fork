@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-07',
+    title: ['Misty, rebuilt', 'Misty, rebuilt'],
+    chg: [
+      [
+        'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
+        'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-06',
     title: ['Type matchups', 'Type matchups'],
     chg: [

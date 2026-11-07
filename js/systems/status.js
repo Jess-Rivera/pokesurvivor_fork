@@ -57,9 +57,9 @@ G.Status = (() => {
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
   const strong = (h) => !!(h.boss || h.strongStatus || h.gym) && !h.leaderStatus; // the player is NOT strong any more (full timers + Shake off); nor is a G.GymLeader
-  // The fixed leader status rules (host-model-plan "Leader status rules", Jess 2026-11-05, TUNE), for every G.GymLeader: freeze and sleep
-  // at half the player's length (1 s, 1 to 3 s), a longer no-new-hard-CC gap, and the AI shakes off at SHAKE.auto (G.GymLeader.update).
-  const LEADER = { cut: 0.5, window: 5 };
+  // Slice 6 (Q3, Jess 2026-11-07): a G.GymLeader's status differences are AUTHORED per gym (js/data/gyms.js `restrictions`); with none
+  // it gets your rules. It answers h.statusCut (freeze and sleep length multiplier) and h.ccWindow (the no-new-hard-CC gap, else GRACE);
+  // its auto shake is G.GymLeader.update. Misty authors the old fixed values (half length, a 5 s gap).
   const typesOf = (h) => h.types || (h.mon && h.mon.types) || [];
   const fam = (k) => (k === 'toxic' ? 'poison' : k);
   const isControl = (k) => !!CONTROL[k];
@@ -98,7 +98,7 @@ G.Status = (() => {
           : Array.isArray(S.dur)
             ? G.U.rand(S.dur[0], S.dur[1])
             : S.dur;
-    if (h.leaderStatus && (kind === 'freeze' || kind === 'sleep')) return base * LEADER.cut;
+    if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;
     return cutsStrong(h, kind) && strong(h) ? base * STRONG.cut : base;
   }
 
@@ -228,7 +228,7 @@ G.Status = (() => {
     const S = CONTROL[M.k],
       w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : S.window || 0;
     if (w > 0) (h.stWin || (h.stWin = {}))[M.k] = w;
-    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = h.leaderStatus ? LEADER.window : GRACE;
+    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = h.ccWindow != null ? h.ccWindow : GRACE;
     h.stMajor = null;
   }
 
