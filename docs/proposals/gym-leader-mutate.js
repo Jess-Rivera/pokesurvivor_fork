@@ -16,6 +16,14 @@ const LD = 'js/entities/gym-leader.js',
   GY = 'js/data/gyms.js';
 const ENV = { [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
 const M = [
+  // edge unstick (Jess 2026-11-07)
+  ['no edge side-step', LD, 'this.unstick(dt, this.steer(dt, pl));', 'this.steer(dt, pl);'],
+  ['the stuck test never runs', LD, 'this.noteStuck(dt, ox, oy);', ''],
+  ['no wait before the side-step', LD, 'if (this.stuckT > U.stuck && this.sideT <= 0) {', 'if (this.sideT <= 0) {'],
+  ['moving freely counts as stuck', LD, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],
+  ['a flinch counts as stuck', LD, 'if (this.mvRoot || this.stFl || ', 'if (this.mvRoot || '],
+  ['the smart side is ignored', LD, 'return l > r ? -1 : 1;', 'return this.brain.side < 0 ? -1 : 1;'],
+  ['the circling side is ignored', LD, 'return this.brain.side < 0 ? -1 : 1;\n', 'return 1;\n'],
   // the class and the switch
   ['the switch is ignored', BR, 'if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);', ''],
   ['every gym takes the leader body', BR, 'if (def.gym && def.gym.playerEntity) return', 'if (def.gym) return'],

@@ -1,0 +1,64 @@
+GYM LEADER - EDGE UNSTICK   (Jess 2026-11-07, approved: "Smart side")
+=====================================================================
+
+PROBLEM
+  Misty (G.GymLeader, a Player entity) stutters on the arena edge.
+  Walls already slide her (G.World.collide pushes out, keeps the tangent).
+  The arena rim is a staircase of square tiles; backing straight away from
+  you, her slide catches on each tile corner. The wild body has a stuck
+  side-step (enemy.js); slice 5 did not carry it over.
+
+FLOW (one frame, js/entities/gym-leader.js update)
+  brain heading (steer) --> side-step active? --yes--> turn heading 1.25 rad (72 deg) to `side`
+                                  | no
+                                  v
+  remember x, y --> Player entity step (move + wall slide, unchanged)
+                                  v
+  moved < 35% of heading x spd x dt ? --yes, for > 0.35 s--> pick side, side-step 0.7 s
+            | no --> stuck clock = 0
+
+  NEVER COUNTS AS STUCK
+    no heading (attacking, stunned) | dash (mvRoot) | flinch | push (Roar)
+    dodge | Fly | root (trap) | ice slide
+
+PICK SIDE (the "smart side")
+  probe both turned headings 24 px ahead, a test circle of her radius,
+  sliding on walls in 8 px steps (G.World.collide), measure how far it got
+    only one side gets >= 4 px further ----> that side
+    both about even (gap < 4 px) ----------> the side she circles (brain.side)
+    both get < 4 px (shut) ----------------> random, as wild
+
+NUMBERS  G.GymLeader.UNSTICK
+  slip 0.35 | stuck 0.35 s | side 0.7 s | turn 1.25 rad   <- the wild body's
+  probe 24 px | tie 4 px | shut 4 px                      <- smart side
+
+SCOPE
+  AI only: the human player is untouched (steer/update live in the subclass).
+  Run-scoped fields (stuckT, sideT, side): no save data, no load order change.
+
+AS BUILT (2026-11-07, Quick)
+  js/entities/gym-leader.js
+    constructor : stuckT, sideT, side
+    update      : heading = unstick(steer); note x,y; super.update; noteStuck
+    new methods : unstick, noteStuck, stuckFree, pickSide, probeSide
+    after class : G.GymLeader.UNSTICK
+  js/data/changelog.js : 2026-11-07 fix line
+  docs/proposals/gym-leader-harness.js  section 11 (hand-derived from this map)
+    a. pinned on a north wall: no side-step at 0.3 s, side-step by 0.4 s,
+       takes brain.side when both open, slides > 5 px along the wall
+    b. corner (north + east walls): takes the open west side over brain.side
+    c. moving freely 2 s: never side-steps
+    d. no heading 1 s: never stuck; a flinch frame never stuck; the same
+       frames without the flinch ARE stuck (proves d is not vacuous)
+  docs/proposals/gym-leader-mutate.js  7 new mutants
+    no side-step turn | stuck test never runs | no 0.35 s wait |
+    free movement counts | flinch counts | smart side ignored |
+    circling side ignored
+  Not checked here: the Quick sandbox cannot run node. Jess runs check.js,
+  the mutate runner and smoke-gym.
+
+FEEL TEST
+  hard reload dev.html?dev, fight Misty, back her into the rim and a pillar.
+  Want: she slides off within about half a second, no grinding.
+  If she still twitches in OPEN floor: different cause (the brain flipping
+  between back-off and circle at one exact distance), needs its own plan.

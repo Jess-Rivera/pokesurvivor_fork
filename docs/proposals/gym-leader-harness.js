@@ -516,5 +516,75 @@ reset();
   ok(!bad({ restrictions: { tells: false, healLimit: 2 } }).length, 'good restrictions pass');
 }
 
+// 11. edge unstick (Jess 2026-11-07, docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). Hand-derived from the map:
+// stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
+{
+  reset();
+  human.x = 0;
+  human.y = 5000;
+  const collide0 = G.World.collide;
+  // a wall on the north (y < 0), and with east, one on the east too (x > 0)
+  const wall = (east) => (b) => {
+    let hit = false;
+    if (b.y < 0) {
+      b.y = 0;
+      hit = true;
+    }
+    if (east && b.x > 0) {
+      b.x = 0;
+      hit = true;
+    }
+    return hit;
+  };
+  const run = (e, secs) => {
+    for (let i = 0; i < Math.round(secs / DT); i++) e.update(DT, human);
+  };
+  // a. pinned on the north wall, both sides open: after 0.35 s she side-steps to the side she circles, and slides along
+  G.World.collide = wall(false);
+  const a = leader();
+  a.steer = () => [0, -1];
+  a.brain.side = -1;
+  run(a, 0.3);
+  ok(a.sideT <= 0, 'unstick: no side-step after 0.3 s pinned');
+  run(a, 0.1);
+  ok(a.sideT > 0, 'unstick: pinned 0.4 s, she side-steps');
+  ok(a.side === -1, 'unstick: both sides open, she takes the side she circles: ' + a.side);
+  const x0 = a.x;
+  run(a, 0.2);
+  ok(a.x < x0 - 5, 'unstick: the side-step slides her west along the wall: ' + (a.x - x0).toFixed(1));
+  // b. a corner (north and east walls): the west side has room, the east has none, so she goes west over her circling side
+  G.World.collide = wall(true);
+  const b = leader();
+  b.steer = () => [0, -1];
+  b.brain.side = 1;
+  run(b, 0.4);
+  ok(b.sideT > 0 && b.side === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + b.side);
+  // c. moving freely she never side-steps
+  G.World.collide = () => false;
+  const c = leader();
+  c.steer = () => [1, 0];
+  let stepped = false;
+  for (let i = 0; i < 120; i++) {
+    c.update(DT, human);
+    if (c.sideT > 0) stepped = true;
+  }
+  ok(!stepped && c.x > 10, 'unstick: moving freely she never side-steps (moved ' + Math.round(c.x) + ')');
+  // d. frames that do not count: no heading (attacking or stunned), and a flinch moving her
+  G.World.collide = wall(false);
+  const d = leader();
+  d.steer = () => [0, 0];
+  run(d, 1);
+  ok(d.stuckT === 0 && d.sideT <= 0, 'unstick: standing still (attacking, stunned) is never stuck');
+  const f = leader();
+  f.heading = [0, -1];
+  f.stFl = { t: 1 };
+  for (let i = 0; i < 60; i++) f.noteStuck(DT, f.x, f.y);
+  ok(f.stuckT === 0 && f.sideT <= 0, 'unstick: a flinch frame is never stuck');
+  f.stFl = null;
+  for (let i = 0; i < 30; i++) f.noteStuck(DT, f.x, f.y);
+  ok(f.sideT > 0, 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
+  G.World.collide = collide0;
+}
+
 console.log(fail ? 'gym-leader-harness: ' + fail + ' of ' + n + ' FAILED' : 'gym-leader-harness: all ' + n + ' passed');
 process.exit(fail ? 1 : 0);

@@ -34,6 +34,9 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.arm();
     this.heading = [0, 0];
     this.controller = Object.assign({}, G.PlayerEntity.IDLE, { axis: () => this.heading });
+    this.stuckT = 0; // edge unstick (Jess 2026-11-07): seconds of moving far less than the heading meant
+    this.sideT = 0; // seconds left of the side-step
+    this.side = 1; // which way the side-step turns the heading (+1 is the brain's circling sense)
   }
 
   /** A Player entity the human fights: the hit paths and the dev log tell it from you by this. */
@@ -92,8 +95,11 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
       return;
     }
     if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
-    this.heading = G.Status.stunned(this) ? [0, 0] : this.steer(dt, pl);
+    this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));
+    const ox = this.x,
+      oy = this.y;
     super.update(dt);
+    this.noteStuck(dt, ox, oy);
   }
   /** Asks the brain where to go: the way to you (around walls, G.Path) and speed 1, so its answer is a heading for the controller. */
   steer(dt, pl) {
@@ -105,6 +111,70 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   }
   aimTargets() {
     return this.foes();
+  }
+
+  // Edge unstick (Jess 2026-11-07, map: docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). The wild body's side-step
+  // (enemy.js) on the Player entity, plus a smart side. Walls already slide her (G.World.collide); this frees her on corners.
+  /** While a side-step lasts, the heading turns UNSTICK.turn rad toward this.side. */
+  unstick(dt, h) {
+    if (this.sideT <= 0) return h;
+    this.sideT -= dt;
+    if (!h[0] && !h[1]) return h;
+    const a = Math.atan2(h[1], h[0]) + this.side * GymLeader.UNSTICK.turn,
+      m = Math.hypot(h[0], h[1]);
+    return [Math.cos(a) * m, Math.sin(a) * m];
+  }
+  /** After the step: moving under UNSTICK.slip of what the heading meant, for over UNSTICK.stuck s, starts a side-step. */
+  noteStuck(dt, ox, oy) {
+    const U = GymLeader.UNSTICK,
+      [hx, hy] = this.heading;
+    if (this.dead || this.stuckFree(hx, hy)) {
+      this.stuckT = 0;
+      return;
+    }
+    const want = Math.hypot(hx, hy) * this.spd * dt,
+      got = Math.hypot(this.x - ox, this.y - oy);
+    if (want <= 0.5 || got >= want * U.slip) {
+      this.stuckT = 0;
+      return;
+    }
+    this.stuckT += dt;
+    if (this.stuckT > U.stuck && this.sideT <= 0) {
+      this.sideT = U.side;
+      this.stuckT = 0;
+      this.side = this.pickSide();
+    }
+  }
+  /** Frames that never count as stuck: no heading (attacking, stunned), or something else moves her (dash, flinch, push,
+   *  dodge, Fly), a root holds her, or ice is sliding her. */
+  stuckFree(hx, hy) {
+    if (!hx && !hy) return true;
+    if (this.mvRoot || this.stFl || this.stPush || this.dodgeT > 0 || this.flyT > 0 || this.frozen) return true;
+    if (G.Status.stunned(this) || G.Status.rooted(this)) return true;
+    return this.inLiquid && !!G.World.liquidEffect(this.mon.types).slide;
+  }
+  /** The side with more room one probe ahead; about even, the side she circles (the brain's); both shut, random. */
+  pickSide() {
+    const U = GymLeader.UNSTICK,
+      l = this.probeSide(-1),
+      r = this.probeSide(1);
+    if (Math.max(l, r) < U.shut) return Math.random() < 0.5 ? -1 : 1;
+    if (Math.abs(l - r) < U.tie) return this.brain.side < 0 ? -1 : 1;
+    return l > r ? -1 : 1;
+  }
+  /** How far a test circle of her radius gets in UNSTICK.probe px along the turned heading, sliding on walls in 8 px steps. */
+  probeSide(s) {
+    const U = GymLeader.UNSTICK,
+      [hx, hy] = this.heading,
+      a = Math.atan2(hy, hx) + s * U.turn,
+      b = { x: this.x, y: this.y, r: this.r },
+      n = Math.ceil(U.probe / 8);
+    for (let k = 0; k < n; k++) {
+      b.x += (Math.cos(a) * U.probe) / n;
+      b.y += (Math.sin(a) * U.probe) / n;
+      G.World.collide(b);
+    }
+    return Math.hypot(b.x - this.x, b.y - this.y);
   }
 
   /** The first hit that lands starts the enrage clock, damage over time included; an immune hit does not. */
@@ -183,3 +253,6 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     ctx.fillRect(this.x - 45, y, 90 * Math.max(0, this.hp / this.maxHp), 3.4);
   }
 };
+/** Edge unstick numbers (Jess 2026-11-07). slip, stuck, side, turn: the wild body's (enemy.js). probe, tie, shut (px): the
+ *  smart side's look-ahead, the gap that counts as even, and the room below which a side counts as shut. */
+G.GymLeader.UNSTICK = { slip: 0.35, stuck: 0.35, side: 0.7, turn: 1.25, probe: 24, tie: 4, shut: 4 };

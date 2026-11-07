@@ -15,6 +15,12 @@ G.CHANGELOG = [
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
       ],
     ],
+    fix: [
+      [
+        'Misty no longer catches on the arena edge or a pillar. When she gets stuck she steps around it, toward the side with room.',
+        'Misty no longer catches on the arena edge or a pillar. When she gets stuck she steps around it, toward the side with room.',
+      ],
+    ],
   },
   {
     d: '2026-11-06',
