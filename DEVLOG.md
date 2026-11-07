@@ -312,3 +312,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): Q1 to Q6 as recommended. No changelog line (Misty authors none, nothing a player sees changes).
 - Tests: new leader-items-harness.js (yours parity, Brass Knuckles 1.667 on her 3, Tear reads hers, Re-Do flow and credit, Regen 0.5%/s, validator) and leader-items-mutate.js (17). Re-pointed: leader-stats harness (ban list six, Regen message) and mutant; leader-team "the first faint wins". Not run here.
 - Stopped at: Jess runs the checks.
+
+## 2026-11-07, wrap-up (Quick, work)
+- Session: Misty edge unstick (done, committed), slice 7 planned, 7a built (checks green, feel test passed), 7b built.
+- Game code touched this session: gym-leader.js, gym-arena.js, hud.js, gyms.js, items.js, changelog.js. check.js for 7b NOT run yet.
+- Lesson: re-check every mutate runner's patterns after any code edit; the edge unstick left one STALE that its close-out missed.
+- Board: GitHub API empty all session, TODO.md mirror not re-synced (still 2026-11-04).
+- Stopped at: 7b checks owed; next is planning slice 8 in a new chat.
