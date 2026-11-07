@@ -304,4 +304,5 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): Q1 to Q4 as recommended; Q5 corrected, leader stages exactly as yours (raises carry past a faint, end one Duration later). SS13 closed; COMBAT-RULES LEADER TEAM added.
 - Tests: new leader-team-harness.js (loop 1, loop 2 send-out, stores, raises, credit, bench DoT, scope guard, builder, data) and leader-team-mutate.js (15). Not run here (no node in the Quick sandbox).
 - Found: the edge unstick left one gym-leader-mutate pattern STALE ("the brain steps while frozen"); re-pointed. Loop 2+ is dev-only (no real loop counter), TODO.
+- Calls answered (Jess): Snowball per mon kept; win line now "Gym Leader <leader> Defeated!" (all gyms); enrage clock field only. 2 more mutants (17).
 - Stopped at: Jess runs the checks and the loop 2 feel test, then 7b.

@@ -140,6 +140,7 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   ok(a.phase === 'won', 'loop 1: her one faint wins at once, no beat');
   ok(G.Gym.badges.length === 1 && drops.join() === 'gym', 'loop 1: one badge and one gym drop: ' + drops.join());
   ok(human.kills === 1 && human.bosses === 1 && credits.join() === 'true', 'loop 1: one kill, one boss count');
+  ok(says.includes('Gym Leader Misty Defeated!'), 'loop 1: the win line names the leader: ' + says[says.length - 1]);
 }
 
 // 2. loop 2: two mons, the send-out beat, shared stores, raises past a faint, per mon vs once
@@ -192,6 +193,7 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   ok(a.phase === 'won', 'the wipe wins');
   ok(G.Gym.badges.length === 1 && drops.join() === 'gym', 'one badge and one gym drop for the team: ' + drops.join());
   ok(human.kills === 2 && human.bosses === 1 && credits.join() === 'false,true' && evKills.length === 2, 'two kills, one boss count, EVs per mon');
+  ok(says.includes('Gym Leader Misty Defeated!') && !says.some((s) => s.includes(s1.name + '!') && !s.includes('sends out')), 'the win line names the leader, not a mon');
 }
 
 // 2b. the bench ticks as yours: a burn on the benched slot 2 costs it HP
@@ -201,6 +203,7 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   s2.applyBurn(1);
   run(2.5);
   ok(s2.hp < s2.maxHp && !s2.dead, 'a burn on the bench ticks (bench parity): ' + Math.round(s2.hp) + ' of ' + s2.maxHp);
+  ok(s2.gym.engagedAt == null, "bench damage does not start the benched mon's enrage clock (field only)");
 }
 
 // 3. scope guard: an old-body gym stays one mon at loop 2
@@ -208,6 +211,11 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
   const a = open('Brock', 2);
   ok(a.team === null && G.GymArena.leaderTeam === null, 'Brock (old body) has no team, so no pips');
   ok(G.EnemyMgr.all().filter((e) => e.boss).length === 1, 'and fields one mon at loop 2, as before');
+  const b = G.EnemyMgr.all().find((e) => e.boss);
+  b.hp = 0;
+  b.dead = true;
+  run(0.1);
+  ok(a.phase === 'won' && says.includes('Gym Leader Brock Defeated!'), 'the old body wins with the leader line too: ' + says[says.length - 1]);
 }
 
 // 4. the team builder: run item ids back in once, slots in roster order

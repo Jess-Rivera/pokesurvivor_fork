@@ -14,6 +14,10 @@ G.CHANGELOG = [
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
       ],
+      [
+        'Beating a gym now says "Gym Leader Misty Defeated!" (or Brock, and so on) instead of naming one of their Pokémon.',
+        'Beating a gym now says "Gym Leader Misty Defeated!" (or Brock, and so on) instead of naming one of their Pokémon.',
+      ],
     ],
     new: [
       [

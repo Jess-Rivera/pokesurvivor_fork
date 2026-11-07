@@ -179,10 +179,12 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     return Math.hypot(b.x - this.x, b.y - this.y);
   }
 
-  /** The first hit that lands starts the enrage clock, damage over time included; an immune hit does not. */
+  /** The first hit that lands on the field starts the enrage clock, damage over time included; an immune hit does not, and
+   *  neither does damage on the bench (field only, Jess 2026-11-07, slice 7). */
   hurt(amount, type, pure, atk, who) {
     const hp0 = this.hp,
       res = super.hurt(amount, type, pure, atk, who);
+    if (this.benched) return res;
     if (this.hp < hp0 && this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();
     return res;
   }

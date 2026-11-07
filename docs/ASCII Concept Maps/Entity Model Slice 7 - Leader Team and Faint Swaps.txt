@@ -134,8 +134,9 @@ AS BUILT (7a, 2026-11-07, Quick; not run here, the Quick sandbox has no node)
     validator untouched: the existing hpMult loop check covers loop 2
     smoke-gym NOT extended to loop 2 (runs as the loop 1 regression); loop 2 is the harness plus the feel test
     pips sit above the boss bar, not under (the enrage line is under it); the bar hides during the 1.3 s beat
-  CALLS FOR JESS (built the way shown, easy to flip)
-    Snowball Badge feeds on every fainted mon (each is a kill), not only the last
-    the win line still names slot 1 ("You beat Staryu!", inherited Spanish key reads arena.dex)
-    a benched mon's enrage clock can start from bench DoT (the existing "DoT counts" rule); no effect today
+  CALLS (Jess 2026-11-07, answered)
+    Snowball Badge feeds on every fainted mon ............ KEEP (as built)
+    win line .............................................. "Gym Leader <leader> Defeated!" for every gym, old body too
+    enrage clock .......................................... FIELD ONLY: bench damage never starts it (gym-leader.js hurt)
+    tests: harness 1, 2, 2b, 3 check the line and the field-only clock; 2 new mutants (17 in all)
   NOT REACHABLE IN A NORMAL RUN: loop is dev-set only (G.Gym.debugLoop); TODO has the loop counter line.

@@ -292,7 +292,8 @@ G.GymArena = (() => {
     arena.endT = 5;
     G.Gym.onWin(arena.gym);
     G.Pickups.pullAll();
-    G.Spawner.say('¡Has vencido a ' + G.DEX_BY[arena.dex].name + '! Recoge el premio…', 3.4, true);
+    // names the leader, not a mon (Jess 2026-11-07); the old Spanish key in lang-en.js is now unused
+    G.Spawner.say('Gym Leader ' + arena.gym.leader + ' Defeated!', 3.4, true);
     G.Audio.sfx('legend');
     const pl = G.Game.player;
     if (pl) {

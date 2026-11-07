@@ -30,6 +30,9 @@ const M = [
   ['the cards are lost on the team', LD, 'for (const id of Object.keys(cards)) G.TeamCards.add(t.cards, id, cards[id]);', ''],
   ['the run item ids are lost', LD, 't.runItems.push(...ids);', ''],
   ['slots are not numbered', LD, 'members.forEach((m, i) => (m.teamSlot = i));', ''],
+  // the win line and the clock (Jess 2026-11-07)
+  ['the win line names a mon', AR, "'Gym Leader ' + arena.gym.leader + ' Defeated!'", "'Gym Leader ' + arena.gym.species + ' Defeated!'"],
+  ['a bench DoT starts the clock', LD, 'if (this.benched) return res;', ''],
   // the data
   ['Misty has no loop 2 hpMult', GY, 'hpMult: { 1: 25, 2: 19 },', 'hpMult: { 1: 25 },'],
 ];
