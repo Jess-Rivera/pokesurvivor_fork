@@ -1,0 +1,141 @@
+ENTITY MODEL SLICE 7 - LEADER TEAM AND FAINT SWAPS   (PLAN, 2026-11-07, Quick)   [Approved, 7a BUILT]
+==========================================================================================
+Source: docs/proposals/host-model-plan.md slice 7. Governing rule: COMBAT-RULES "Host model",
+LEADER PRINCIPLE (a leader is another player's team run by AI; every difference hand authored).
+Scope: switched gyms only (playerEntity, so Misty). Old-body gyms stay one mon until slice 12.
+
+WHAT EXISTS TODAY
+  arena spawns ONE mon (makeDef slot 0) ---- loop 2+ never fields slot 2 (all-at-once flow never built, #5)
+  G.Team (team.js) is pure, no sound/camera/input: built so a leader could own one (its header says so)
+  Misty data: slot 1 Staryu (sets loop 1, 2), slot 2 Seel (set loop 2), hpMult {1: 25}, cards loop 1 only
+  win check: arena.bossId gone  ->  won()      kill credit: enemy list, per body that dies
+
+PROPOSED SPLIT
+  7a  team + faint swaps + win on wipe + pips + shared stores        (M)   <- this map
+  7b  team-reading items (Brass Knuckles, Sharp Scissors, Pikachu's Tear, Re-Do) and Regen   (S to M)
+      items.js reads G.Game.roster today; 7b points it at the holder's team. Separate so 7a stays
+      behavior-neutral for YOU (items.js untouched in 7a).
+
+7a FLOW (loop N, switched gym)
+  enter arena
+     |
+     v
+  build lineup: one G.GymLeader per roster slot 1..N (makeDef per slot, own level/stage, own gym object)
+     |
+     v
+  G.Team.create(members, no carry)  -- shared stores linked exactly as yours:
+     team stages | team cards | run items | dodges | berries | links
+     personal stages, HP, statuses, cooldowns stay per mon
+     |
+     v
+  ONLY the active member is in the enemy list (bench is off-field, like your bench)
+     |
+     v
+  active mon faints ---------------------------------------------+
+     |                                                           |
+     | living bench?  yes                                        | no (team wiped)
+     v                                                           v
+  SEND-OUT BEAT  (Q2)                                         WIN, ONCE:
+   corpse fades, "Misty sends out Seel!"                       gym drop, badge package, link,
+   Team.nextOnFaint() = lowest living slot                     boss count, boss achievement
+   Team.sendIn(): at the fainted spot, 0.5 s i-frames,         arena -> 'won' as today
+   swap lock cleared (your rules)
+   new mon joins the enemy list, bossId follows it
+   its enrage clock starts on its first hit (own gym object)
+     |
+     +--> back to "active mon faints"
+
+  bench ticking: Team.benchTick each frame (parity; nothing reaches her bench until slice 9)
+
+PER MON vs ONCE  (Q3)
+  per fainted mon : kill, EV bank, Silver          (like any kill)
+  once, at wipe   : bosses++, boss achievement, gym drop roll, badge, link, camera burst
+
+HUD
+  boss bar = the active mon (as today)   +  team pips under it:  (o)(o)(x)  standing / fainted
+  pips only when the team has 2+ mons (loop 1 looks unchanged)
+
+FIGHT LENGTH  (Q4)   plan decision 3: 60 s loop 1, +30 s per extra mon, split evenly
+  loop 1:  1 mon  x 60 s  -> hpMult 25 (today, tuned)
+  loop 2:  2 mons x 45 s  -> starting hpMult 25 x 45/60 = about 19 per mon, authored as {1: 25, 2: 19}, TUNE by feel
+  authored number, not a hidden split rule in code (LEADER PRINCIPLE). Per-mon override stays available.
+
+SHARED STAGES  (Q5, closes COMBAT-RULES:SS13 [Open])   CORRECTED 2026-11-07 (Jess)
+  her stages work exactly like yours, no leader rule:
+    raises are team-wide (SS9)        -> Staryu's Harden is on the TEAM, so Seel has it on send-out
+    faint keeps team raises (FAINT AND REVIVE) -> they survive Staryu fainting
+    nobody refreshes them while the caster is down -> they end one Duration (6.1 s) after the last success
+    faint clears own drops and statuses -> a drop you put on Staryu does NOT carry to Seel
+
+  timeline:  Staryu Harden ...... faints | 1.3 s beat | Seel in, Harden still up | ends 6.1 s after last Harden
+             |<------------------------------- Duration 6.1 s ------------------------------->|
+
+FILES (7a)
+  js/entities/gym-leader.js   owns team membership; faint hands off instead of ending the fight
+  js/systems/gym-arena.js     builds the lineup + Team, send-out beat, win on wipe, rewards once
+  js/entities/enemy.js        manager: once-only boss credit for a team member that is not the last
+  js/ui/hud.js                team pips
+  js/data/gyms.js             Misty hpMult loop 2; validator: hpMult loops checked against roster size
+  js/systems/team.js          UNCHANGED (the point of slice 2)
+  js/data/changelog.js        "Misty fields her whole team from loop 2"
+  no new script file, so dev.html and NEED unchanged; no save fields
+
+TESTS
+  new docs/proposals/leader-team-harness.js (hand-derived from this map):
+    loop 1: one mon, no pips, win as today
+    loop 2: two mons; slot 1 faints -> slot 2 sent in after the beat, at the spot, 0.5 s i-frames
+    win only on wipe; gym drop / badge / link / boss count exactly once; kill + EV + Silver per mon
+    a raise carries across the send-out after the caster faints, and ends one Duration after its last success
+    a drop you put on the fainted mon does not carry to the next one
+    enrage (a test gym that authors it): clock restarts on the new mon's first hit
+    old-body gym at loop 2: still one mon (scope guard)
+  new leader-team-mutate.js; existing gym-leader / leader-stats harnesses stay green unchanged
+  smoke-gym: G.Gym.debugLoop(2), G.Debug.gym() to Misty, beat both, one badge
+
+RISKS
+  corpse + send-out in the same frame (the enemy list drops a dead body before the arena looks)
+  outside readers that assume "boss dead = fight over" (progress.js, hud boss bar, weather/log checks)
+  fight length in later loops (hpMult tuned by feel per loop)
+
+FEEL TEST
+  G.Gym.debugLoop(2), then Misty: does the send-out read clearly, is 90 s about right, one badge?
+
+QUESTIONS (recommendation first)
+  Q1  Split 7a / 7b as above?                          rec: yes
+  Q2  Send-out beat length and spot?                   rec: 1.3 s (your faint beat), at the fainted spot
+  Q3  Kill credit split as "PER MON vs ONCE"?          rec: yes
+  Q4  Misty loop 2 hpMult?                             rec: 19 per mon, TUNE
+  Q5  Shared stages as above (closes SS13)?            CORRECTED: same as yours, raises carry past a faint
+
+ANSWERS (Jess 2026-11-07): Q1 to Q4 as recommended. Q5 corrected as above, approved. Build 7a approved.
+
+AS BUILT (7a, 2026-11-07, Quick; not run here, the Quick sandbox has no node)
+  js/entities/gym-leader.js   onFaint: a member with living teammates drops `boss`, small burst, no gym drop
+                              G.GymLeader.team(members): G.Team.create, gym cards and run item ids back in once,
+                              teamSlot = roster order, max HP refreshed
+  js/systems/gym-arena.js     spawnLeader: switched gym -> makeDef per slot (own gym object each), team, slot 1 on field
+                              teamTick: bench tick, beat (SEND_BEAT 1.3), team raises tick in the beat, sendIn, wipe -> won
+                              leaderTeam getter for the HUD
+  js/ui/hud.js                pips ABOVE the boss bar (y 62), teams of 2+ only
+  js/data/gyms.js             Misty hpMult { 1: 25, 2: 19 }
+  js/data/changelog.js        2026-11-07 "new" line
+  tests  docs/proposals/leader-team-harness.js
+           1 loop 1: team of one, wins at once, one badge/drop/boss
+           2 loop 2: two mons, bench off the list, own gym objects, shared stores, Zinc 3 once (+15%), hpMult 19,
+             beat 1.3 s, fainted spot, 0.5 s i-frames, raise carries and ends at 6.1 s, own drop cleared,
+             per-mon kill vs one boss count, wipe wins with one badge and one gym drop
+           2b bench burn ticks      3 Brock loop 2 stays one mon      4 builder (run item ids, slots)      5 data
+         docs/proposals/leader-team-mutate.js  15 mutants
+         docs/proposals/gym-leader-mutate.js   2 re-pointed: Misty hpMult; "the brain steps while frozen" (STALE
+                                               since the edge unstick, missed at that close-out)
+  DEVIATIONS from the plan
+    gym.js untouched: hpMult is authored per loop (Q4), and per-slot makeDef gives each mon its own enrage clock
+    enemy.js untouched: the once-only boss credit is the leader's own `boss` flag, dropped on a mid-team faint
+    validator untouched: the existing hpMult loop check covers loop 2
+    smoke-gym NOT extended to loop 2 (runs as the loop 1 regression); loop 2 is the harness plus the feel test
+    pips sit above the boss bar, not under (the enrage line is under it); the bar hides during the 1.3 s beat
+  CALLS FOR JESS (built the way shown, easy to flip)
+    Snowball Badge feeds on every fainted mon (each is a kill), not only the last
+    the win line still names slot 1 ("You beat Staryu!", inherited Spanish key reads arena.dex)
+    a benched mon's enrage clock can start from bench DoT (the existing "DoT counts" rule); no effect today
+  NOT REACHABLE IN A NORMAL RUN: loop is dev-set only (G.Gym.debugLoop); TODO has the loop counter line.

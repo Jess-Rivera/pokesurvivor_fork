@@ -7,6 +7,8 @@
  * it), your stat profile, cards (team cards included) and items. Its own: HP x hpMult, the authored restrictions (status cut, hard CC
  * gap, auto shake, hit i-frames; none authored means your rules), no touch damage (combat.js), the enrage trigger, drops and faint
  * effects, and the boss look. COMBAT-RULES "Host model".
+ * Slice 7 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt): a switched gym
+ * fields its loop lineup as one G.Team (G.GymLeader.team, below; the arena sends them out). Only the last to fall is the boss kill.
  */
 G.GymLeader = class GymLeader extends G.PlayerEntity {
   /** @param def the leader's def from G.Gym.makeDef; def.gym holds its level, hpMult, moves, cards and restrictions */
@@ -205,6 +207,14 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.fade = 0.9;
     const q = G.Game.player;
     if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp);
+    if (this.team && this.team.living().length) {
+      // slice 7 (Q3): a member falls and the fight goes on. A kill like any (the enemy list pays it, the EVs and Silver);
+      // the boss count, the gym drop and the big burst wait for the last one.
+      this.boss = false;
+      G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ffd95e', 16, 160);
+      G.Audio.sfx('faint');
+      return;
+    }
     G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ffd95e', 34, 260);
     G.FX.ring(this.x, this.y, this.r, this.r * 6, '#ffd95e', 0.6, 6);
     G.Camera.kick(0.9);
@@ -256,3 +266,20 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
 /** Edge unstick numbers (Jess 2026-11-07). slip, stuck, side, turn: the wild body's (enemy.js). probe, tie, shut (px): the
  *  smart side's look-ahead, the gap that counts as even, and the room below which a side counts as shut. */
 G.GymLeader.UNSTICK = { slip: 0.35, stuck: 0.35, side: 0.7, turn: 1.25, probe: 24, tie: 4, shut: 4 };
+
+/** Slice 7: the members (G.GymLeader, slot order) as one G.Team, the module your team uses, so the same stores are shared: team
+ *  stages, team cards, run items, dodges, berries, links. Team.link hands every member fresh shared stores, so the gym's cards
+ *  (one pool per gym, Jess 2026-11-05) and run item ids go back in once; each member's run item on() already ran in arm(). */
+G.GymLeader.team = function (members) {
+  const ids = members[0].runItems.slice(),
+    cards = members[0].gym.cards || {};
+  members.forEach((m, i) => (m.teamSlot = i));
+  const t = G.Team.create(members, null);
+  for (const id of Object.keys(cards)) G.TeamCards.add(t.cards, id, cards[id]);
+  t.runItems.push(...ids);
+  for (const m of members) {
+    m.refreshMaxHp();
+    m.hp = m.maxHp;
+  }
+  return t;
+};

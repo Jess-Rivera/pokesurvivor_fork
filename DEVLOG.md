@@ -292,3 +292,16 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Close-out: npm ci, Prettier on 3 files, lint errors 22 to 0 (lang-en.js duplicate keys, two generated files ignored), 5 mutants re-pointed after formatting. Docs swept: host-model plan, BOSS-AUTHORING, COMBAT-RULES, BOSS-REWORK, BALANCE, DECISIONS, TODO, changelog.
 - Broke: nothing in game. Misty's arena-edge stutter (slice 5) persists. GitHub API empty all session, board mirror not re-synced.
 - Stopped at: slice 6 done; next is planning slice 7.
+
+## 2026-11-07, afternoon (Quick, work)
+- Misty's arena-edge stutter FIXED: G.GymLeader takes the wild body's stuck side-step (35% slip for 0.35 s, 0.7 s turn of 1.25 rad) plus a smart side (24 px look-ahead both ways, ties go to her circling side). AI only; your movement untouched.
+- Tests: gym-leader-harness section 11 (pinned, corner, free, not-stuck frames), 7 new mutants. Jess ran the checks: clean. Feel test passed, committed.
+- Process slip: the plan said the map was saved before it was; written at build time. Plans now get written before they are referenced.
+- Stopped at: planning slice 7 (map: Entity Model Slice 7 - Leader Team and Faint Swaps.txt), awaiting Jess's answers.
+
+## 2026-11-07, late afternoon (Quick, work)
+- Slice 7 planned and 7a BUILT: a switched gym fields its loop lineup as one G.Team; 1.3 s send-out beat at the fainted spot; win on wipe; per-mon kill vs once-only boss credit; HUD team pips; Misty hpMult {1: 25, 2: 19}.
+- Decided (Jess): Q1 to Q4 as recommended; Q5 corrected, leader stages exactly as yours (raises carry past a faint, end one Duration later). SS13 closed; COMBAT-RULES LEADER TEAM added.
+- Tests: new leader-team-harness.js (loop 1, loop 2 send-out, stores, raises, credit, bench DoT, scope guard, builder, data) and leader-team-mutate.js (15). Not run here (no node in the Quick sandbox).
+- Found: the edge unstick left one gym-leader-mutate pattern STALE ("the brain steps while frozen"); re-pointed. Loop 2+ is dev-only (no real loop counter), TODO.
+- Stopped at: Jess runs the checks and the loop 2 feel test, then 7b.

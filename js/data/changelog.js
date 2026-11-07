@@ -15,6 +15,12 @@ G.CHANGELOG = [
         'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
       ],
     ],
+    new: [
+      [
+        'Misty can now send out a team, one Pokémon at a time, with a pip for each above her health bar. Only from loop 2, which is not in the game yet.',
+        'Misty can now send out a team, one Pokémon at a time, with a pip for each above her health bar. Only from loop 2, which is not in the game yet.',
+      ],
+    ],
     fix: [
       [
         'Misty no longer catches on the arena edge or a pillar. When she gets stuck she steps around it, toward the side with room.',

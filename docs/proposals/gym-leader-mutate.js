@@ -53,7 +53,7 @@ const M = [
   ['the 5 s gap is 2.5 s', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'], // slice 6 retarget
   ['the AI never shakes off', LD, "if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt);", ''], // slice 6 retarget
   // the brain
-  ['the brain steps while frozen', LD, 'this.heading = G.Status.stunned(this) ? [0, 0] : this.steer(dt, pl);', 'this.heading = this.steer(dt, pl);'],
+  ['the brain steps while frozen', LD, 'this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));', 'this.heading = this.steer(dt, pl);'], // edge unstick retarget
   ['the heading never reaches the controller', LD, '{ axis: () => this.heading }', '{}'],
   ['no self heal restriction', BR, 'rules.healLimit != null ? rules.healLimit : ', ''],
   ['tells cannot be turned off', BR, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
@@ -78,7 +78,7 @@ const M = [
   ['applySlow missing', LD, 'this.slowT = Math.max(this.slowT, dur);', ''],
   // data and validator
   ['Misty is not switched on', GY, 'playerEntity: true, // entity model slice 5', '// entity model slice 5'],
-  ['Misty loses her hpMult', GY, 'hpMult: { 1: 25 },', 'hpMult: { 1: 13 },'], // slice 6 retarget
+  ['Misty loses her hpMult', GY, 'hpMult: { 1: 25, 2: 19 },', 'hpMult: { 1: 13, 2: 19 },'], // slice 7 retarget
   ['unknown restrictions pass', GY, "for (const k of unknownKeys(rules, RESTRICTION_KEYS)) bad.push((g.leader || '?') + ': unknown restriction ' + k);", ''],
   ['bad tells pass', GY, "if (rules.tells != null && typeof rules.tells !== 'boolean')", 'if (false)'],
   ['bad healLimit passes', GY, 'if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))', 'if (false)'],

@@ -98,7 +98,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: a normal run plus one gym, nothing should change.
 
 **5. `GymLeader`, Misty first, behind a per-gym switch (L).**
-- Detail approved 2026-11-06 (Jess), D1 to D6 as recommended: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt. BUILT 2026-11-06 (Claude Code at home). Feel test PASSED 2026-11-07 (Jess); she stutters on an arena edge now and then, tune later (TODO). Deviations: the map, "AS BUILT".
+- Detail approved 2026-11-06 (Jess), D1 to D6 as recommended: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt. BUILT 2026-11-06 (Claude Code at home). Feel test PASSED 2026-11-07 (Jess); she stutters on an arena edge now and then; FIXED 2026-11-07 (edge unstick, docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). Deviations: the map, "AS BUILT".
 - Files: a new js/entities/gym-leader.js, enemy.js manager (accepts a leader for queries, updates and drawing), gym.js, gym-arena.js, boss-ai.js (the current brain moved behind a controller), hud.js, status.js (the fixed leader set), gyms.js (switch, `hpMult`, first restrictions: tells, heal limit, contact). Hit i-frames off, contact gone.
 - Every outside reader of a leader body keeps working: the boss bar, kill and achievement events (progress.js), EV class (copies.js), drops, the win trigger, the weather and log checks.
 - Other gyms stay on the old brain, so their harnesses keep passing unchanged.
@@ -115,6 +115,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: Misty's bulk now shows up against special moves.
 
 **7. Leader team and faint swaps (M).**
+- Detail approved 2026-11-07 (Jess), Q1 to Q4 as recommended, Q5 corrected (stages exactly as yours). Split into 7a (team, faint swaps, win on wipe, pips) and 7b (the team-reading run items and Regen). Map: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt. 7a BUILT 2026-11-07 (Quick), awaiting Jess's checks and feel test; deviations in the map, "AS BUILT".
 - Carried from slice 6 (Jess 2026-11-07): the Regen card on leaders (it heals the bench; the validator rejects it until then); the team-reading run items Brass Knuckles, Sharp Scissors, Pikachu's Tear and Re-Do (their math reads YOUR roster through G.Game.roster, so they need the holder's team first; the validator rejects them until then).
 - Files: gym-leader.js (owns a Team), gym-arena.js (spawns the team, send-out beat, win only on team wipe, rewards once), gym.js (fight-length split, enrage restart per send-out), hud.js (team pips). Shared stages and dodges close the [Open] question in COMBAT-RULES:SS13. Retires the all-at-once lineup and replaces arena slice B (issue #5).
 - Tests: loop 2 Misty fields 2 mons, one faint swaps, the wipe wins, one badge only; enrage restarts; shared stages carry across a swap; mutation runner.

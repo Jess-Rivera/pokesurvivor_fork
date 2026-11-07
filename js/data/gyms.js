@@ -244,7 +244,7 @@ G.Gyms = (() => {
       arena: 'water',
       boost: { stat: 'spd', pct: 0.1 },
       playerEntity: true, // entity model slice 5: the first gym on G.GymLeader
-      hpMult: { 1: 25 }, // TUNE by feel (slice 6, D6, Jess 2026-11-07): with Zinc 3, about a minute at her usual level 20 (2100 HP)
+      hpMult: { 1: 25, 2: 19 }, // TUNE by feel (slice 6 D6, slice 7 Q4, Jess 2026-11-07): loop 1 about 60 s, loop 2 about 45 s a mon
       // Slice 6 (Q1, Q3): her authored differences from your rules, the old fixed leader values (half-length freeze and sleep, a 5 s
       // hard CC gap, auto shake, no hit i-frames). No enrage (Q1): absent means off on a switched gym.
       restrictions: { statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 },
