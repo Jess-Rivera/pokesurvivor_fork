@@ -181,6 +181,9 @@ G.GymArena = (() => {
       for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
       arena.team = G.GymLeader.team(members);
       e = arena.team.active;
+      // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
+      const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
+      if (warn) console.warn('[Gym] ' + warn);
     } else e = G.Boss.make(first, x, y); // the old body: one mon, as before (slice 12 moves it)
     e.flying = false; // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);
@@ -269,7 +272,8 @@ G.GymArena = (() => {
     const t = arena.team;
     t.benchTick(dt);
     if (!t.active.dead) return;
-    if (!t.living().length) {
+    const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
+    if (!t.living().length && !redo) {
       G.Coop.isHost && G.Coop.broadcast(['aw']);
       return won();
     }
@@ -277,11 +281,12 @@ G.GymArena = (() => {
     G.Stages.teamTick(t.stages, dt); // nobody on the field runs update() in the beat, so the team raises tick here (Q5)
     if ((arena.sendT -= dt) > 0) return;
     arena.sendT = null;
-    const next = t.sendIn(t.nextOnFaint());
+    const next = redo ? G.GymLeader.redo(t) : t.sendIn(t.nextOnFaint());
     next.flying = false;
     G.EnemyMgr.add(next);
     arena.bossId = next.id;
-    G.Spawner.say(arena.gym.leader + ' sends out ' + next.name + '!', 2.4);
+    const line = redo ? ' used Re-Do! The whole team is back!' : ' sends out ' + next.name + '!';
+    G.Spawner.say(arena.gym.leader + line, 2.4);
     G.Camera.kick(0.7);
     G.Audio.sfx('boss');
   }

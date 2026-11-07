@@ -235,7 +235,7 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   ok(!errs(td).length, 'Gate and Duration pass on a switched gym (no move fit needed): ' + errs(td).join('; '));
   const rg = clone(MISTY);
   rg.cards[1].regen = 1;
-  ok(has(errs(rg), 'regen waits for slice 7'), 'Regen is rejected until slice 7');
+  ok(has(errs(rg), 'regen needs a loop that fields 2+ mons'), 'Regen is rejected at a loop that fields one mon (slice 7b, Q5)');
   const bare = clone(MISTY);
   bare.cards[1].vitamins = 1;
   ok(has(errs(bare), 'name the Vitamins stat'), 'a bare Vitamins card must name its stat');
@@ -258,15 +258,11 @@ const ZERO = [0, 0, 0, 0, 0, 0],
     amuletcoin: 'human only (coins)',
     luckyegg: 'human only (XP)',
     snowballbadge: 'it counts your kills',
-    brassknuckles: 'it reads a team (slice 7)',
-    sharpscissors: 'it reads a team (slice 7)',
-    pikachustear: 'it reads a team (slice 7)',
-    redo: 'it reads a team (slice 7)',
     choiceband: 'a leader cannot honor the move lock',
     choicespecs: 'a leader cannot honor the move lock',
     rockyhelmet: 'Rocky Helmet is bugged',
   };
-  ok(Object.keys(G.Gyms.LEADER_ITEM_BAN).sort().join() === Object.keys(ban).sort().join(), 'the code bans exactly these ten: ' + Object.keys(G.Gyms.LEADER_ITEM_BAN).join());
+  ok(Object.keys(G.Gyms.LEADER_ITEM_BAN).sort().join() === Object.keys(ban).sort().join(), 'the code bans exactly these six (slice 7b lifted the four team readers): ' + Object.keys(G.Gyms.LEADER_ITEM_BAN).join());
   let held = 0;
   for (const it of Object.values(G.Items.BY)) {
     if (it.tier !== 'pokemon' || ban[it.id]) continue;

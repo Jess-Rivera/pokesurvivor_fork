@@ -26,7 +26,7 @@ const M = [
   ['the build does not carry forward', GY, '      if (k <= loop) at = m[k];\n    return at;\n  }\n  /** A switched slot', '      if (k === loop) at = m[k];\n    return at;\n  }\n  /** A switched slot'],
   // D2, N1, N2: cards
   ['team cards stay banned on a switched gym', GY, 'else if (c.team && !g.playerEntity)', 'else if (c.team)'],
-  ['Regen is allowed', GY, "else if (c.id === 'regen')\n            bad.push(", 'else if (false)\n            bad.push('],
+  ['Regen is allowed', GY, "else if (c.id === 'regen' && Math.min(Number(k), roster.length) < 2)", 'else if (false)'], // slice 7b retarget
   ['a bare Vitamins card passes', GY, "else if (c.id === 'vitamins' && vit == null)", 'else if (false)'],
   ['team cards must fit a move', GY, 'else if (!c.team && !moves.some((m) =>', 'else if (!moves.some((m) =>'],
   // Q4, N6: items

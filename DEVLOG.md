@@ -305,4 +305,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests: new leader-team-harness.js (loop 1, loop 2 send-out, stores, raises, credit, bench DoT, scope guard, builder, data) and leader-team-mutate.js (15). Not run here (no node in the Quick sandbox).
 - Found: the edge unstick left one gym-leader-mutate pattern STALE ("the brain steps while frozen"); re-pointed. Loop 2+ is dev-only (no real loop counter), TODO.
 - Calls answered (Jess): Snowball per mon kept; win line now "Gym Leader <leader> Defeated!" (all gyms); enrage clock field only. 2 more mutants (17).
-- Stopped at: Jess runs the checks and the loop 2 feel test, then 7b.
+- 7a checks green, loop 2 feel test passed (Jess). Stopped at: planning 7b.
+
+## 2026-11-07, evening (Quick, work)
+- Slice 7b BUILT: the team-reading items read the holder's team (items.js teamOf, yours unchanged); Re-Do on a leader (wipe, 1.3 s beat, team back, last to fall out, once); Regen legal at a loop of 2+ mons; four items off the leader ban list; 3+ dev warning.
+- Decided (Jess): Q1 to Q6 as recommended. No changelog line (Misty authors none, nothing a player sees changes).
+- Tests: new leader-items-harness.js (yours parity, Brass Knuckles 1.667 on her 3, Tear reads hers, Re-Do flow and credit, Regen 0.5%/s, validator) and leader-items-mutate.js (17). Re-pointed: leader-stats harness (ban list six, Regen message) and mutant; leader-team "the first faint wins". Not run here.
+- Stopped at: Jess runs the checks.

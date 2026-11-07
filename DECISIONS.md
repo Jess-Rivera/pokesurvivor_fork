@@ -5,6 +5,10 @@ A dated log of decisions. It is NOT a register of settled rules: each entry give
 The full original text of every entry is in docs/DECISIONS-archive.md, which is history. Search it by keyword before assuming a topic was never decided.
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 
+## 2026-11-07, Slice 7b: team items and Regen on leaders (Jess)
+Q1 Brass Knuckles, Sharp Scissors and Pikachu's Tear read the holder's team (yours unchanged; no team falls back to the roster). Q2 the 3+ rule stays for leaders, authoring on fewer gives a dev warning. Q3 Re-Do on a leader: once per fight, after the 1.3 s beat, the last to fall back on the field. Q4 a revived mon pays kill, EVs and Silver again; boss count, badge and drop once. Q5 Regen allowed except at a loop fielding one mon. Q6 Misty authors none (tuning later). The four team readers leave the leader ban list.
+Canonical: docs/COMBAT-RULES.md, "Host model", LEADER TEAM; plan: docs/ASCII Concept Maps/Entity Model Slice 7b - Leader Team Items and Regen.txt
+
 ## 2026-11-07, Slice 7a: a leader fields its team, one mon at a time (Jess)
 Q1 split: 7a is the team, faint swaps, win on wipe and pips; 7b the team-reading run items and Regen. Q2 a 1.3 s send-out beat, the next mon at the fainted spot. Q3 per fainted mon a kill, EVs and Silver; once at the wipe the boss count, gym drop, badge and link. Q4 Misty hpMult 19 a mon from loop 2 (TUNE). Q5 corrected by Jess: her stages work exactly like yours, so team raises carry to the next mon even after the caster faints and end one Duration after the last success; own drops clear at the faint. Closes COMBAT-RULES:SS13's open question. Old-body gyms stay one mon until slice 12. Calls: Snowball Badge feeds on every fainted mon; the win line is "Gym Leader <leader> Defeated!" for every gym; a leader mon's enrage clock starts only on the field.
 Canonical: docs/COMBAT-RULES.md, "Host model", LEADER TEAM; plan: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt

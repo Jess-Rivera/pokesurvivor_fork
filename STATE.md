@@ -4,21 +4,20 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-07 late afternoon, Quick (work machine). Branch: feature/entity-model.
 
 ## START HERE (next session, either tool)
-Slice 7a (leader team and faint swaps) is BUILT, NOT YET CHECKED: the Quick sandbox cannot run node.
-Jess runs: node tools/check.js, node docs/proposals/leader-team-mutate.js, node docs/proposals/gym-leader-mutate.js,
-node tools/smoke-gym.js; then feel test G.Gym.debugLoop(2) + G.Debug.gym(2) in dev.html?dev.
-Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 7 - Leader Team and Faint Swaps.txt (its 3 calls answered and built).
-Then 7b: the team-reading run items and Regen on leaders.
+Slice 7b (team items and Regen on leaders) is BUILT, NOT YET CHECKED (the Quick sandbox cannot run node).
+Jess runs: node tools/check.js, node docs/proposals/leader-items-mutate.js, node docs/proposals/leader-team-mutate.js,
+node docs/proposals/leader-stats-mutate.js. Feel test: a run of yours with Brass Knuckles or Pikachu's Tear, unchanged.
+Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 7b - Leader Team Items and Regen.txt. Then slice 8.
 
 ## Where we are
-- Entity model slices 1 to 6 built and feel-tested; 7a built. Misty: Zinc 3, hpMult {1: 25, 2: 19}, no enrage.
+- Entity model slices 1 to 7a built and feel-tested; 7b built. No gym authors the team items or Regen yet (Q6). Misty: Zinc 3, hpMult {1: 25, 2: 19}, no enrage.
 - Edge unstick fixed and committed. Its close-out missed one STALE gym-leader-mutate pattern, re-pointed now.
 - Loop 2+ is dev-only (no real loop counter): the leader teams are invisible in a normal run (TODO).
 - Lint: 0 errors, 69 warnings in inherited code (do not --fix).
 
 ## Next
-1. Checks and the loop 2 feel test for 7a.
-2. Slice 7b.
+1. Checks for 7b.
+2. Slice 8 (leader AI, slot choice).
 3. Owed feel tests: win a gym, swap before spending the link, spend it on a benched member; slice 1 Elite fight.
 Also: delete merged branches; Codex menu with tooltips.
 
@@ -33,7 +32,7 @@ Also: delete merged branches; Codex menu with tooltips.
 - GitHub API returned empty again: TODO.md board mirror is still from 2026-11-04.
 
 ## Open owner decisions
-- Board cleanup: #5 (slice 7a replaces it, close it) and stale `blocked` on #11.
+- Board cleanup: #5 (slice 7a replaced it, close it) and stale `blocked` on #11.
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out; Korataki licence.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 

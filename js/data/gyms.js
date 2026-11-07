@@ -9,7 +9,7 @@
  * loop and hold the cards GAINED at that loop; the pool for loop N is the running sum of loops 1 to N (cardsFor). Every mon the gym
  * fields in that loop holds the whole pool, folded by the SAME rules as the player's cards, so each card applies to every one of that
  * mon's moves it fits. Team cards (Gate, Duration, Vitamins as 'vitamins:<stat>') are allowed only on a switched gym (`playerEntity`, slice 6 D2),
- * since the wild body has no Vitamins path; Regen waits for slice 7 (it heals the bench). A switched slot also takes a build per loop
+ * since the wild body has no Vitamins path; Regen needs a loop that fields 2+ mons (slice 7b). A switched slot also takes a build per loop
  * (ivs, evs, nature, a held item; slice 6 D3 and Q4) and the gym takes `runItems` per loop, cumulative like cards. formOf says which moves a leader can cast (melee cones, novas, shots, strikes, dashes,
  * returns, beams, bursts, trails, delayed marks, self buffs, self heals).
  *
@@ -54,10 +54,6 @@ G.Gyms = (() => {
     amuletcoin: 'human only (coins)',
     luckyegg: 'human only (XP)',
     snowballbadge: 'it counts your kills',
-    brassknuckles: 'it reads a team (slice 7)',
-    sharpscissors: 'it reads a team (slice 7)',
-    pikachustear: 'it reads a team (slice 7)',
-    redo: 'it reads a team (slice 7)',
     choiceband: 'a leader cannot honor the move lock',
     choicespecs: 'a leader cannot honor the move lock',
     rockyhelmet: 'Rocky Helmet is bugged: it fires on body touch only, see TODO',
@@ -781,6 +777,14 @@ G.Gyms = (() => {
   }
   /** Card budget (slice 6, Q5 and N5): one stack is one level-up pick, and a player at level L has had L - 1. A warning when the pool
    *  for loop `loop` is bigger, else null. Never a block. */
+  /** Slice 7b (Q2): Brass Knuckles and Sharp Scissors need a team of 3+, as yours; authored on a smaller team they do nothing.
+   *  A dev warning, never a block. Pure. */
+  function teamItemWarn(leader, runItems, size) {
+    const min = (G.Items && G.Items.HP_TEAM_MIN) || 3,
+      idle = (runItems || []).filter((id) => id === 'brassknuckles' || id === 'sharpscissors');
+    if (!idle.length || size >= min) return null;
+    return leader + ' holds ' + idle.join(' and ') + ' with ' + size + ' mons: inactive below ' + min;
+  }
   function budgetWarn(entry, loop, level) {
     const n = Object.values(cardsFor(entry, loop)).reduce((a, b) => a + b, 0);
     return n > level - 1
@@ -988,8 +992,8 @@ G.Gyms = (() => {
           if (!c) bad.push(L + ': unknown card ' + id);
           else if (c.team && !g.playerEntity)
             bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
-          else if (c.id === 'regen')
-            bad.push(L + ': regen waits for slice 7 (it heals the bench, and a leader has none yet)');
+          else if (c.id === 'regen' && Math.min(Number(k), roster.length) < 2)
+            bad.push(L + ': regen needs a loop that fields 2+ mons (it heals the bench; slice 7b, Q5)');
           else if (c.id === 'vitamins' && vit == null)
             bad.push(L + ': name the Vitamins stat, vitamins:hp, atk, def, spa, spd or spe');
           else if (!Number.isInteger(n) || n < 1) bad.push(L + ': card ' + id + ' needs a whole number of stacks');
@@ -1023,6 +1027,7 @@ G.Gyms = (() => {
     movesFor,
     cardsFor,
     hpMultFor,
+    teamItemWarn,
     perLoop,
     profileFor,
     runItemsFor,

@@ -209,8 +209,9 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.fade = 0.9;
     const q = G.Game.player;
     if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp);
-    if (this.team && this.team.living().length) {
-      // slice 7 (Q3): a member falls and the fight goes on. A kill like any (the enemy list pays it, the EVs and Silver);
+    if (this.team && (this.team.living().length || G.GymLeader.redoReady(this.team))) {
+      // slice 7 (Q3): a member falls and the fight goes on (slice 7b: so does the last, while an unused Re-Do is held).
+      // A kill like any (the enemy list pays it, the EVs and Silver);
       // the boss count, the gym drop and the big burst wait for the last one.
       this.boss = false;
       G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ffd95e', 16, 160);
@@ -284,4 +285,17 @@ G.GymLeader.team = function (members) {
     m.hp = m.maxHp;
   }
   return t;
+};
+/** Slice 7b (Q3): the team holds Re-Do and has not used it this fight. */
+G.GymLeader.redoReady = (t) => t.runItems.includes('redo') && !t.redoUsed;
+/** Slice 7b (Q3, Q4): Re-Do as yours. Every member back to full HP, statuses cleared (your revive), the boss mark back on, each
+ *  enrage clock reset (it restarts on each send-out); the last to fall takes the field. Once per fight. */
+G.GymLeader.redo = function (t) {
+  t.redoUsed = true;
+  for (const m of t.members) {
+    m.revive(1);
+    m.boss = true;
+    m.gym.engagedAt = null;
+  }
+  return t.sendIn(t.activeIdx);
 };

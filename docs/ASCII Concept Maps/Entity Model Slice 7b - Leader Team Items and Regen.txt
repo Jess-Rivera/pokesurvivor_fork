@@ -1,0 +1,109 @@
+ENTITY MODEL SLICE 7B - LEADER TEAM ITEMS AND REGEN   (PLAN, 2026-11-07, Quick)   [Approved, BUILT]
+=====================================================================================
+Source: host-model-plan.md slice 7 (carried from slice 6). Rule: LEADER PRINCIPLE.
+Unlocks on leaders: Brass Knuckles, Sharp Scissors, Pikachu's Tear, Re-Do, and the HP Regen card.
+Misty authors NONE of them, so nothing changes in a fight until a gym authors one (Q6).
+
+WHAT IS WRONG TODAY
+  G.Items.teamHpMul / faintMul read G.Game.roster = YOUR team, whoever holds the item
+     -> on Misty, Brass Knuckles would scale off YOUR team's HP          (so the validator bans 4 items)
+  Re-Do lives in game.js, your final-faint branch only                    (a leader's wipe never asks)
+  HP Regen card: benchUpdate already heals a benched member, leaders' bench already ticks (7a)
+     -> only the validator line "regen waits for slice 7" blocks it
+
+FIX, ONE PICTURE
+                         holder.team ? holder.team.members : G.Game.roster   (fallback: no team, as today)
+  teamHpMul(holder) ---->  Brass Knuckles, Sharp Scissors   (team HP fraction, 3+ members)
+  faintMul(holder)  ---->  Pikachu's Tear                   (1.1 ^ fainted members)
+  runHud(id, holder) --->  your HUD readout (same numbers)
+  YOU: your Team's members IS the roster array (game.js), so your numbers do not change
+
+RE-DO ON A LEADER  (Q3)                                        today's win path (7a) in brackets
+  last mon faints --> Re-Do held and unused?
+      no  --> [win once: badge, gym drop, link, boss count]
+      yes --> no boss count, no gym drop yet
+              1.3 s beat (the send-out beat)
+              whole team revived to full HP, statuses cleared (your revive)
+              the LAST TO FALL comes back on the field (your Re-Do resumes on the last to faint)
+              "Misty used Re-Do! Her team is back!"   pips go gold again
+              used up for this fight
+              --> next wipe is the real win, once
+  (the corpse fade 0.9 s ends inside the 1.3 s beat, so a revived body never sits in the corpse list)
+
+KILL CREDIT WITH RE-DO  (Q4)
+  each faint is a kill (EVs, Silver), so a revived mon pays again when it falls again
+  boss count, gym drop, badge, link: once, at the real wipe
+
+HP REGEN ON A LEADER  (Q5)
+  allowed, rejected at a loop that fields ONE mon (your rule: a team of one is never offered Regen)
+  heals benched mons only, 0.5% max HP/s per stack (your card, read in benchUpdate)
+
+BRASS KNUCKLES / SHARP SCISSORS 3+ RULE  (Q2)
+  unchanged for leaders: inactive below 3 members (loops 1, 2)
+  validator: allowed, plus a dev console warning when authored at a loop fielding < 3 (like the card budget)
+
+DECISIONS (rule changes, each needs your call; recommendation first)
+  Q1  Team-reading items read the HOLDER's team (yours unchanged, fallback when no team)     rec: yes
+  Q2  3+ rule stays for leaders; allowed with a dev warning below 3                          rec: yes
+  Q3  Re-Do on a leader: once per fight, after the 1.3 s beat, resume on the last to fall    rec: yes
+  Q4  A revived leader mon pays kill, EVs, Silver again when it falls again                  rec: yes
+  Q5  Regen: allowed except at a one-mon loop                                                rec: yes
+  Q6  Author any of these on Misty now?                                rec: no, tuning pass later
+
+STAYS BANNED: Snowball Badge (counts your kills), Amulet Coin, Lucky Egg, Choice Band/Specs, Rocky Helmet
+
+FILES
+  js/data/items.js        one holder-team helper; teamHpMul, faintMul, runHud read it
+  js/systems/gym-arena.js Re-Do branch in teamTick (wipe -> beat -> revive -> send in)
+  js/entities/gym-leader.js onFaint: no boss credit / gym drop while Re-Do is ready
+  js/data/gyms.js         ban list loses the 4 team readers; Regen check -> one-mon loop only; the 3+ warning
+  NO changelog line: nothing a player sees changes (Misty authors none). No new script file, no save fields.
+
+TESTS
+  NEW docs/proposals/leader-items-harness.js   (hand math from this map; fixture gyms, 3 to 4 mons)
+    1 yours unchanged: a human whose team is the roster gets the same teamHpMul / faintMul as before;
+      a holder with no team falls back to G.Game.roster
+    2 Brass Knuckles on a 3-mon leader team at 40% team HP = 1 + 0.6 / 0.9 = 1.667; at 2 mons: 1
+    3 Pikachu's Tear: one of HER mons fainted = 1.1, while YOUR team has two fainted (reads hers, not yours)
+    4 Re-Do: wipe -> no badge / drop / boss count -> 1.3 s -> all full HP, last to fall on field ->
+      second wipe wins once; Re-Do not used a second time; kills = 2 x team size
+    5 Regen 1 stack: a benched mon heals 0.5% max HP/s, the active one does not
+    6 validator: the 4 items legal; Regen rejected at a one-mon loop, legal at two; the 3+ warning text
+    why new: leader-team-harness pins the team itself; this needs bigger fixture teams and your-side parity
+  NEW docs/proposals/leader-items-mutate.js   about 12 mutants:
+    readers back on G.Game.roster | no fallback | Re-Do ignored | Re-Do every wipe | Re-Do pays the gym
+    drop | revive resumes on slot 1 | no beat before revive | Regen allowed at one mon | Regen never allowed |
+    ban list keeps redo | 3+ warning dropped | revived mon keeps boss = false
+  CHANGED existing harnesses (the bans were placeholders "until slice 7"):
+    leader-stats-harness.js  lines 237-238: "Regen is rejected until slice 7" -> rejected at a one-mon loop
+                             lines 260-269: ban list of ten -> six (the 4 team readers removed)
+    leader-stats-mutate.js   "Regen is allowed" re-pointed at the new one-mon check
+  NOT CHANGED: items-f1 / f3 harnesses (no team on their stubs, so the fallback keeps them as is), check.js,
+    smoke-gym, intent scenarios, debug sets
+
+FEEL TEST
+  yours only: a normal run with Brass Knuckles or Pikachu's Tear should feel exactly the same.
+  The leader side has no in-game case until a gym authors one (Q6).
+
+ANSWERS (Jess 2026-11-07): Q1 to Q6 as recommended.
+
+AS BUILT (2026-11-07, Quick; not run here, the Quick sandbox has no node)
+  js/data/items.js          teamOf(holder) = holder.team.members, else G.Game.roster; teamHpMul, faintMul, runHud read it;
+                            exports HP_TEAM_MIN and teamOf
+  js/entities/gym-leader.js onFaint: the last mon with an unused Re-Do takes the mid-team path (no boss credit, no drop)
+                            G.GymLeader.redoReady(t), G.GymLeader.redo(t): revive(1) all, boss back on, engagedAt reset,
+                            redoUsed, sendIn(activeIdx)
+  js/systems/gym-arena.js   teamTick: wipe + redoReady -> the same 1.3 s beat -> redo; line "<leader> used Re-Do!
+                            The whole team is back!"; spawnLeader logs teamItemWarn
+  js/data/gyms.js           ban list six; Regen rejected when min(loop, roster) < 2; teamItemWarn(leader, runItems, size)
+  tests  NEW leader-items-harness.js  sections 1 to 6 as planned (fixture gyms: Misty clones with redo, brassknuckles,
+                                      pikachustear at loop 1)
+         NEW leader-items-mutate.js   17 mutants (the 12 planned plus: 3+ rule dropped, readout on your roster,
+                                      revive at half HP, clocks not reset, Regen never allowed)
+         CHANGED leader-stats-harness.js  Regen message, ban list ten -> six
+         CHANGED leader-stats-mutate.js   "Regen is allowed" re-pointed
+         CHANGED leader-team-mutate.js    "the first faint wins" re-pointed (the wipe line now also checks Re-Do)
+  DEVIATIONS
+    the Re-Do line is "The whole team is back!", not "Her team is back!" (every leader, any pronoun)
+    Re-Do resets each mon's enrage clock (the approved "restarts on each send-out"; no effect, Misty has no enrage)
+    the 3+ warning fires at spawn (gym-arena.js), not in the validator, since the validator does not know the loop size
