@@ -1,15 +1,12 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-07 close-out, Quick (work machine). Branch: feature/entity-model (closing).
+Last updated: 2026-11-07 evening, Quick (work machine). Branch: feature/gym-leader-ai (entity model merged, checks green).
 
 ## START HERE (next session, either tool)
-1. Run the close-out checks: `node tools/check.js`, then the mutate runners gym-leader, leader-stats,
-   leader-team, boss-owner, then `node tools/smoke-gym.js` (Misty, Brock, Lt. Surge). Paste any FAIL/MISSED/STALE.
-2. Feel test Brock: `G.Debug.gym(1)`, then `G.Gym.debugLoop = 2` (Geodude, then Onix).
-3. Green: commit, merge feature/entity-model into main, cut feature/gym-leader-ai (the assistant gives the commands).
-4. New branch, first task: the GymLeaderAI design doc (Director-style, see docs/Director AI Proposal.md). No code
-   until Jess signs off. Starting material: the slice 9 v2 map and slice 8's sense().
+1. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md (drafted 2026-11-07, [Proposed]). No code until then.
+2. On approval: P1 = slice 9a prose plan (map v2 A1 to A5 plus the rolling windows), then build.
+3. Brock feel test (`G.Debug.gym(1)`, `G.Gym.debugLoop = 2`) still owed if not done.
 
 ## Where we are
 - Entity model slices 1 to 8 built; 7b and 8 checks green (Jess). Close-out built, checks owed:
