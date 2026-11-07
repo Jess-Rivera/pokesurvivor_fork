@@ -98,6 +98,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: a normal run plus one gym, nothing should change.
 
 **5. `GymLeader`, Misty first, behind a per-gym switch (L).**
+- Detail proposed 2026-11-06, awaiting Jess (decisions D1 to D6): docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt.
 - Files: a new js/entities/gym-leader.js, enemy.js manager (accepts a leader for queries, updates and drawing), gym.js, gym-arena.js, boss-ai.js (the current brain moved behind a controller), hud.js, status.js (the fixed leader set), gyms.js (switch, `hpMult`, first restrictions: tells, heal limit, contact). Hit i-frames off, contact gone.
 - Every outside reader of a leader body keeps working: the boss bar, kill and achievement events (progress.js), EV class (copies.js), drops, the win trigger, the weather and log checks.
 - Other gyms stay on the old brain, so their harnesses keep passing unchanged.

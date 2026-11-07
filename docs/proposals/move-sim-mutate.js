@@ -8,7 +8,7 @@ const SRC = { sim: path.join(root, 'js/systems/move-sim.js'), fx: path.join(root
 const M = [
   ['pierce off by one (n + 2 enemies)', 'sim', [['if (inst.struck > inst.pierce) continue;', 'if (inst.struck > inst.pierce + 1) continue;'], ["inst.struck > inst.pierce ? 'pierce'", "inst.struck > inst.pierce + 1 ? 'pierce'"]]],
   ['eligibility check skipped', 'sim', [['if (!elig(rec, inst)) continue;', '']]],
-  ['crit applied after the 1 HP floor', 'fx', [['Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (crit ? CRIT_MUL : 1))', 'Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k)) * (crit ? CRIT_MUL : 1)']]],
+  ['crit applied after the 1 HP floor', 'fx', [['Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (b.crit ? b.critMul : 1))', 'Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k)) * (b.crit ? b.critMul : 1)']]],
   ['crit rolled even when it cannot crit', 'fx', [['crit: c > 0 && rng() < c', 'crit: rng() < c']]],
   ['crit rolled with Math.random', 'fx', [['crit: c > 0 && rng() < c', 'crit: c > 0 && Math.random() < c']]],
   ['attacker half frozen at cast', 'fx', [['A: o.moveFactor(m), // D6', 'A: inst.cast.A || (inst.cast.A = o.moveFactor(m)), // D6']]],

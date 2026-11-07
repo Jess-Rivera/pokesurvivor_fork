@@ -1,0 +1,199 @@
+ENTITY MODEL, SLICE 5: GymLeader, MISTY FIRST (review map, 2026-11-06, Claude Code at home)
+Source: docs/proposals/host-model-plan.md "5. GymLeader". Rules: docs/COMBAT-RULES.md "Host model".
+Status: [Proposed], awaiting Jess. Decisions D1 to D6 below. Nothing built.
+
+WHY
+  Today a leader's mon is a wild body with a brain bolted on. Slices 1 to 4 built the parts so it can be
+  a Player entity instead: same HP formula, same hit defense, same status engine as you, driven by AI.
+  Slice 5 does this for Misty only, behind a per-gym switch. Every other gym stays on the old body.
+  One mon, all moves in one group, as today. Teams are slice 7, one active slot is slice 8.
+
+=====================================================================================
+ THE SHAPE
+=====================================================================================
+
+     Brock, gyms 3 to 8 (switch off)                 Misty (switch on)
+    +--------------------------------+             +--------------------------------+
+    | WildEntity body                |             | G.GymLeader                    |
+    |   + GymBrain sets its fields   |             |   extends G.PlayerEntity       |
+    |   + wild hit path, 25% CC      |             |   controller = the GymBrain    |
+    |   + touch damage               |             |   Player-entity hit, leader    |
+    +---------------+----------------+             |   status set, no touch damage  |
+                    |                              +---------------+----------------+
+                    +---------- THE SAME GymBrain <----------------+
+                                (utility pick, tells, stance, buffs, heals)
+
+  Key choice: ONE brain, not two. The GymBrain stays the single decision maker and talks to whichever
+  body it has. So "the old brain" never forks, and a brain fix reaches every gym. Only the BODY is
+  duplicated until slice 12, which narrows the accepted duplication in the plan.
+
+  Each frame, Misty: the brain decides, the controller hands PlayerEntity.update a heading, and the base
+  class moves her by your rules. Frozen or asleep, the brain does not step (as today: no recharge either).
+
+  What the leader takes from where
+    from PlayerEntity    stats, statuses, stages, walls, hits, payHp, heal, STAB, status pills
+    from the GymBrain    every decision, tells, cast timing
+    its own              the attack factor (today's numbers, slice 6 changes it), the enrage trigger,
+                         faint effects and drops, corpse fade, boss glow and gold bar, AI shake off
+
+=====================================================================================
+ WHAT THE CODE SCAN FOUND (the plan's outline did not list these)
+=====================================================================================
+
+  A. SIX WAYS YOUR HITS WOULD COME OUT WRONG. A hit on a Player entity takes the path built for leader
+     hits on you, which never needed these:
+       gap                                     without a fix, on Misty
+       --------------------------------------  ------------------------------------------
+       Expert Belt, Charcoal-type held items   silently stop working
+       Power Stone (resist floor and pierce)   stops working on a resisted or immune type
+       Fixed and level damage (Seismic Toss)   does NOTHING, a console note only
+       Damage dealt, Shell Bell                stop counting
+       Status-category damage moves            use her Def instead of the neutral 50
+       Melee cushion (25% less)                ALWAYS ON, since Tackle sits in her one group (D4)
+     All closed in step A, with the parity harness proving each.
+
+  B. FLAT DAMAGE CALLS WOULD MISFIRE. The two families' hurt takes different arguments, so a bomb passes
+     its COLOR where a Player entity expects a TYPE. Sites: bomb (game.js), ground traps (interact.js),
+     flat moves and Fissure (move-effects.js), Rocky Helmet (combat.js). See D1.
+
+  C. MISSING METHODS WOULD CRASH. Ground traps and G.Debug call applyPoison, applySlow, applyBurn and
+     applyStatus on whatever is in the enemy list. The leader answers all four through G.Status.
+
+  D. HUMAN-ONLY THINGS IN THE BASE hurt(). The dev log writes every hit as a hit on YOU, so a leader
+     would corrupt the log. Faint has no hook for drops, fanfare or the Snowball Badge. The enemy
+     manager needs an id and a fade to hold a corpse. Each gets a small hook or gate.
+
+  E. ALREADY TRUE, NO WORK. Hit i-frames off (a wild body never had any); knockback (bosses already
+     ignore it); type chart and weather (both paths apply them); defense math (same formula at DMG_SCALAR,
+     level and stage, confirmed in stats.js); liquid (all of Misty's roster is Water, so unslowed. Lava
+     for other gyms is checked at slice 12).
+
+  F. THE SOUND QUESTION (STATE "decide which select, shot and heal sounds are the human's").
+     None of the three fire in slice 5: a leader never calls setActive, cast or revive, and leader casts
+     are already skipped by move:cast. No sound changes now. It returns at slice 8 with slot switching;
+     the recommendation then is human only, since they announce YOUR actions.
+
+=====================================================================================
+ HP: THE STARTING hpMult (the player's formula x an authored number)
+=====================================================================================
+
+  Staryu, today's HP against the player formula. Gate 2 opens around level 18 to 20 in a normal run.
+
+    level    today    player formula    ratio    at hpMult 26    difference
+    -----    -----    --------------    -----    ------------    ----------
+      14      1398           64          21.8        1664          +19%
+      16      1640           70          23.4        1820          +11%
+      18      1957           76          25.8        1976           +1%
+      20      2232           84          26.6        2184           -2%
+      22      2535           90          28.2        2340           -8%
+      24      2926           96          30.5        2496          -15%
+
+  So: 26 for loop 1 matches a normal run. Dawdling at the gate now makes Misty relatively softer than
+  today, though her attacks still grow. Slice 6's fight-time report tunes it.
+
+=====================================================================================
+ STATUS (the approved table, in one place in status.js)
+=====================================================================================
+
+    rule                       Misty today      Misty after
+    ------------------------   --------------   ----------------------------------
+    freeze                     0.5 s            1 s
+    sleep                      0.5 to 1.5 s     1 to 3 s
+    no new hard CC after one   10 s             5 s (paralysis now counts too)
+    shake off                  none             always, 3 taps per second
+    trap                       0.5 s root       8 s swap lock, so no effect until slice 9
+    berry guards               no               no (her bag is empty)
+
+  Old-body gyms and Elites keep the 25% cut and 10 s window unchanged.
+
+=====================================================================================
+ DECISIONS FOR JESS
+=====================================================================================
+
+  D1. Flat damage. RECOMMEND A.
+      A: one new "take flat damage" entry that both families answer, and all flat sites call it. Clean,
+         and it extends slice 4's contract. About 7 call sites, proven by the existing harnesses.
+      B: the leader's hurt guesses which argument shape it got. Smaller, but fragile, and against the
+         structure-first rule.
+
+  D2. Misty's hpMult = 26 on loop 1, carried forward to later loops the same way sets and cards carry.
+      RECOMMEND yes. A loop number key allows a per-mon override later, as the plan says.
+
+  D3. First restrictions block. The plan text says tells, heal limit and contact. RECOMMEND tells (on or
+      off) and heal limit only, with today's values as the defaults. Contact is left out until a gym
+      really wants it back, since building it for a Player entity costs real code that nothing would use.
+      Your plan rule is "grows only when a slice needs an entry". Tell lengths also wait.
+
+  D4. Melee cushion (25% less damage while a melee move is active). RECOMMEND off for leaders until slice 8,
+      then decide. With all moves in one group it would be permanently on, a hidden +33% to her bulk.
+
+  D5. Flinch. RECOMMEND today's leader flinch (cancels the tell) until slice 8. Your rule restarts the
+      active group's cooldowns, and with one group that would restart ALL her moves on every flinch.
+
+  D6. Her look. RECOMMEND:
+      - Hit numbers: today's (type color, yellow super, orange crit, always big), not your red ones.
+      - Body: the Player-entity draw, plus today's boss glow and gold bar. NEW, and it should read as
+        better: her status pills and her stage arcs now show, the same as yours.
+
+=====================================================================================
+ BUILD ORDER (four commits, each one leaves the game working)
+=====================================================================================
+
+  Step 0  TESTS FIRST, no game change
+    - tools/smoke-gym.js, NEW: over file://, fights Misty, takes the badge, returns to the map. Must
+      pass on TODAY's code first. Needs G.Debug.gym(n) to jump to a gym (a small debug.js change).
+    - Parity harness: pins today's hit on Misty for each gap in A.
+    - Repairs: move-sim-mutate's 10 stale patterns, boss-owner-mutate's 5.
+
+  Step A  NEUTRAL: the hit carries the attacker's items; flat damage entry (D1); hooks in hurt (hit
+          i-frames, number look, faint, log gate, cushion). Nothing a player can see. Harnesses unchanged.
+
+  Step B  G.GymLeader, switch OFF: the class, controller, status table, restrictions (D3), hpMult,
+          validator keys, dev.html and NEED. No gym uses it yet. New leader harness and mutation runner.
+
+  Step C  SWITCH ON for Misty. Parity, smoke-gym, changelog entry. Then your feel test.
+
+=====================================================================================
+ FILES
+=====================================================================================
+  js/entities/gym-leader.js   NEW. The class. Loads after player.js.
+  js/entities/player.js       hooks in hurt; the flat entry; the hit's attacker items.
+  js/entities/enemy.js        the flat entry; the manager hands a leader its id.
+  js/entities/boss-ai.js      make() picks the body by the switch; the brain sets body fields only on the
+                              old body; it exposes a controller. No change to how it decides.
+  js/systems/move-effects.js  the hit gaps in A; flat entry.
+  js/systems/status.js        the leader table; "strong" no longer means a Player entity.
+  js/systems/combat.js        no touch damage from a Player entity; flat entry for Rocky Helmet.
+  js/systems/interact.js, js/game.js   flat entry.
+  js/systems/gym.js           builds the leader for a switched gym.
+  js/data/gyms.js             Misty's switch, hpMult, restrictions; validator keys.
+  js/core/debug.js            G.Debug.gym(n).
+  dev.html, js/main.js        script list and NEED.
+  js/data/changelog.js        one entry at step C.
+  Not touched: hud.js and progress.js (they read fields the leader has). No new save fields.
+  Co-op: deferred-hook note goes to TODO.md, since a leader is not replicated the way an Enemy is.
+
+=====================================================================================
+ TESTS
+=====================================================================================
+  Parity: same move and stats, old body against leader, damage equal, for neutral, super, resisted,
+    crit, Expert Belt, type item, Power Stone, Seismic Toss, DoT, a status-category move.
+  Leader harness (expected values by hand): status table; shake rate; no touch damage; tell aim stays
+    locked; enrage on first hit and on DoT; immune hit does not engage; heal limit; faint pays drops,
+    kill, boss count and EV class once; validator rejects an unknown restriction key.
+  Must stay green unedited: all other harnesses, since other gyms stay on the old body. Expected edits:
+    gyms-only (the plan says so). Any other test edit gets reported with its proof, per STATE.
+
+=====================================================================================
+ BALANCE AND RISK
+=====================================================================================
+  Easier: no touch damage; she spends more time asleep (about 21% against 9%, the plan's estimate); less
+    HP if you reach her late (table above). Harder: trap no longer roots her; more HP if you reach her early.
+  Only Misty changes. Her Zinc x3 stays at slice 6.
+
+  Risks: the aim lock (the base update re-aims every frame; test above); draw order and corpse handling
+  with a non-Enemy in the list; every reader of a leader body. Way out: turn the switch off.
+
+  Feel test (about 2 minutes): G.Debug.gym(2), fight Misty. Same fight, no touch damage, her statuses
+  showing, and sleep and freeze holding her longer than before. Take the badge. Then Brock: must feel
+  exactly as before.
