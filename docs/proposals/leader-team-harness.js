@@ -208,14 +208,14 @@ const faint = (e) => e.hurt(e.hp + 1, null, true);
 
 // 3. scope guard: an old-body gym stays one mon at loop 2
 {
-  const a = open('Brock', 2);
-  ok(a.team === null && G.GymArena.leaderTeam === null, 'Brock (old body) has no team, so no pips');
+  const a = open('Lt. Surge', 2); // close-out: Brock is switched since 2026-11-07, Lt. Surge is the next old-body gym
+  ok(a.team === null && G.GymArena.leaderTeam === null, 'Lt. Surge (old body) has no team, so no pips');
   ok(G.EnemyMgr.all().filter((e) => e.boss).length === 1, 'and fields one mon at loop 2, as before');
   const b = G.EnemyMgr.all().find((e) => e.boss);
   b.hp = 0;
   b.dead = true;
   run(0.1);
-  ok(a.phase === 'won' && says.includes('Gym Leader Brock Defeated!'), 'the old body wins with the leader line too: ' + says[says.length - 1]);
+  ok(a.phase === 'won' && says.includes('Gym Leader Lt. Surge Defeated!'), 'the old body wins with the leader line too: ' + says[says.length - 1]);
 }
 
 // 4. the team builder: run item ids back in once, slots in roster order

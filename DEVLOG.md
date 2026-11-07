@@ -325,3 +325,9 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Files: boss-ai.js, gym-leader.js, player.js (onSwitchFeel hook), gyms.js (bond key + validator), changelog.js; docs COMBAT-RULES, BOSS-AUTHORING.
 - Tests: NEW leader-slots-harness.js, leader-slots-mutate.js (22), leader-dps-report.js; changed gym-leader harness/mutate, leader-stats and player-entity harnesses, smoke-gym. STALE scan clean. Not run (no node here).
 - Stopped at: Jess runs the checks, the DPS report (Q10) and the Misty feel test.
+
+## 2026-11-07, close-out (Quick, work)
+- Jess ran the 7b and 8 checks: green. Slice 9 v1 and v2 maps shelved: the GymLeaderAI gets its own branch (feature/gym-leader-ai), Director-style.
+- Close-out approved (B1 to B6 as recommended) and BUILT: Brock on G.GymLeader beside Misty (hpMult 16 / 12, Misty's restrictions). Gyms 3 to 8 stay on the old brain for the playtesters.
+- Tests: gym-leader-harness section 10 + new section 12 (Brock's moves on the new body); Lt. Surge is the old-body example in leader-stats, leader-team, smoke-gym; four old-brain harnesses turn Brock's switch off. Changelog line; a cut Misty line fixed.
+- Stopped at: Jess runs the checks and the Brock feel test, then commit, merge, new branch.

@@ -2,8 +2,8 @@
 // A check, not a harness: tools/check.js only syntax-checks it, since it needs a browser. Playwright is NOT a repo dependency
 // (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright), as in tools/smoke-team.js. Usage from the repo root:
 //   node tools/smoke-gym.js
-// Runs dev.html?dev over file:// (how Jess plays) and fights gym 2 (Misty, a G.GymLeader from slice 5 on) and gym 1 (Brock, the old
-// body until slice 12) through the real game: the gate opens, the arena starts, the leader casts at you, YOUR OWN MOVES take its last
+// Runs dev.html?dev over file:// (how Jess plays) and fights gym 2 (Misty, a G.GymLeader from slice 5 on), gym 1 (Brock, one since the
+// entity model close-out) and gym 3 (Lt. Surge, the old body until slice 12) through the real game: the gate opens, the arena starts, the leader casts at you, YOUR OWN MOVES take its last
 // HP, and the win pays one badge, one link, a kill, a boss count and the leader's EVs, then you return to the map. Written to pass on
 // the code BEFORE slice 5 changes a leader, then to pass with Misty switched over: only the body lines at the marked spot differ.
 // The test keeps your Pokemon alive and beside the leader, and switches wild spawns off. Fails on any page error, console error or
@@ -223,7 +223,8 @@ async function fight(browser, n, leaderName, badge, isEntity) {
   const MISTY_IS_ENTITY = process.env.SMOKE_GYM_BEFORE !== '1'; // SMOKE_GYM_BEFORE=1: the pre-slice run, Misty still on the old body
   try {
     await fight(browser, 2, 'Misty', 'Cascade Badge', MISTY_IS_ENTITY);
-    await fight(browser, 1, 'Brock', 'Boulder Badge', false);
+    await fight(browser, 1, 'Brock', 'Boulder Badge', true); // close-out (2026-11-07): Brock is a G.GymLeader
+    await fight(browser, 3, 'Lt. Surge', 'Thunder Badge', false); // the old body until slice 12
   } catch (e) {
     ok(false, 'threw: ' + (e && e.message));
   }

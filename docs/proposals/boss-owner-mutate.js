@@ -47,7 +47,7 @@ const M = [
   ['a blocked ailment keeps its score', 'brain', [['k *= OPP_BLOCKED;', '']]],
   ['the drop opportunity ignores the tracker', 'brain', [['!G.Stages.tracker(pl, G.MoveEffects.statKey(fx.stat), src, false)', 'true']]],
   ['the opportunity is left out of the score', 'brain', [['* this.opp(d, pl) };', ' };']]],
-  ['team cards allowed on a leader', 'gyms', [["else if (c.team && !g.playerEntity)", "else if (false)"]]], // slice 6 retarget: Brock (old body) still rejects them
+  ['team cards allowed on a leader', 'gyms', [["else if (c.team && !g.playerEntity)", "else if (false)"]]], // slice 6 retarget; close-out: a gym with the switch off still rejects them
   ['card caps not checked', 'gyms', [['if (c.cap && total[id] > c.cap)', 'if (false)']]],
   ['a beam counts as a melee cone', 'gyms', [["if (v.motion === 'static' && v.targeting === 'nearest' && radial) return 'melee';", "if (v.motion === 'static' && v.targeting === 'nearest') return 'melee';"]]],
   ['a chain move has no gym form again', 'gyms', [["if (d.casterState) return null;", "if (d.casterState || (d.space && d.space.chainHops)) return null;"]]],

@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Misty, rebuilt', 'Misty, rebuilt'],
     chg: [
       [
+        'Brock now fights the way Misty does: one move at a time, his own team from loop 2, and the same rules for sleep and freeze. Touching him no longer hurts you, and he no longer enrages. His health is tuned to about the same fight length as before.',
+        'Brock now fights the way Misty does: one move at a time, his own team from loop 2, and the same rules for sleep and freeze. Touching him no longer hurts you, and he no longer enrages. His health is tuned to about the same fight length as before.',
+      ],
+      [
         'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
         'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
       ],

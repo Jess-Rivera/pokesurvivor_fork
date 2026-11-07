@@ -101,7 +101,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
     ['unknown card', (s, c) => { c.cards[1].luck = 1; }, 'unknown card luck'],
-    ['team card', (s, c) => { c.cards[1].duration = 2; }, 'is a team card'],
+    ['team card on the old body', (s, c) => { delete c.playerEntity; c.cards[1].duration = 2; }, 'is a team card'], // close-out: Brock is switched, so the clone turns it off
     ['card over its cap', (s, c) => { c.cards[1].count = 4; }, 'capped at 3'],
     ['card that fits no move', (s, c) => { c.cards[1].heal = 1; }, 'fits none of the moves fielded that loop'],
     ['fractional stacks', (s, c) => { c.cards[1].damage = 1.5; }, 'whole number of stacks'],

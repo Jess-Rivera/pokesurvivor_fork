@@ -162,7 +162,8 @@ const T = base.Game.st, // the gym clock (G.Gym.now reads it)
   SPC = { id: 'test-special', cat: 'special', dmg: 60, type: 'water' },
   PHY = { id: 'test-physical', cat: 'physical', dmg: 40, type: 'normal' },
   MISTY = G.Gyms.KANTO.find((g) => g.leader === 'Misty'),
-  BROCK = G.Gyms.KANTO.find((g) => g.leader === 'Brock');
+  BROCK = G.Gyms.KANTO.find((g) => g.leader === 'Brock'),
+  SURGE = G.Gyms.KANTO.find((g) => g.leader === 'Lt. Surge'); // close-out: the wild-body example (Brock is switched since 2026-11-07)
 const clone = (g) => JSON.parse(JSON.stringify(g));
 const errs = (g) => G.Gyms.validate(g);
 const has = (list, s) => list.some((m) => m.includes(s));
@@ -246,7 +247,7 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   const luck = clone(MISTY);
   luck.cards[1]['vitamins:luck'] = 1;
   ok(has(errs(luck), 'unknown card vitamins:luck'), 'a Vitamins stat that does not exist is rejected');
-  const wild = clone(BROCK);
+  const wild = clone(SURGE);
   wild.cards = { 1: Object.assign({}, (wild.cards || {})[1], { 'vitamins:spd': 1 }) };
   ok(has(errs(wild), 'is a team card'), 'N1: the wild body still rejects team cards');
 }
@@ -455,7 +456,7 @@ const ZERO = [0, 0, 0, 0, 0, 0],
     return errs(g);
   };
   ok(has(v((g) => (g.signatures[0].power = 2)), 'power must be 1 on a switched gym'), 'power 2 on a switched gym is rejected');
-  ok(!has(v((g) => (g.signatures[0].power = 2), BROCK), 'power must be 1'), 'the wild body keeps its power knob');
+  ok(!has(v((g) => (g.signatures[0].power = 2), SURGE), 'power must be 1'), 'the wild body keeps its power knob');
   ok(has(v((g) => (g.signatures[0].ivs = { 1: [32, 0, 0, 0, 0, 0] })), 'six IVs'), 'IV 32 is rejected');
   ok(has(v((g) => (g.signatures[0].evs = { 1: [253, 0, 0, 0, 0, 0] })), 'six EVs'), 'EV 253 is rejected');
   ok(has(v((g) => (g.signatures[0].evs = { 1: [252, 252, 7, 0, 0, 0] })), 'EVs total at most 510'), 'EVs 511 in total are rejected');
@@ -463,8 +464,8 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   ok(has(v((g) => (g.signatures[0].nature = { 1: 'grumpy' })), 'grumpy is not a nature'), 'a fake nature is rejected');
   ok(!v((g) => ((g.signatures[0].nature = { 1: 'modest' }), (g.signatures[0].ivs = { 1: IV31 }))).length, 'a real nature and IVs pass');
   ok(has(v((g) => (g.signatures[0].ivs = { 9: ZERO })), 'keyed by a loop from 1 to'), 'a build loop out of range is rejected');
-  ok(has(v((g) => (g.signatures[0].ivs = { 1: ZERO }), BROCK), 'needs playerEntity'), 'a build on the wild body is rejected');
-  ok(has(v((g) => (g.runItems = { 1: ['firestone'] }), BROCK), 'runItems needs playerEntity'), 'run items on the wild body are rejected');
+  ok(has(v((g) => (g.signatures[0].ivs = { 1: ZERO }), SURGE), 'needs playerEntity'), 'a build on the wild body is rejected');
+  ok(has(v((g) => (g.runItems = { 1: ['firestone'] }), SURGE), 'runItems needs playerEntity'), 'run items on the wild body are rejected');
   ok(has(v((g) => (g.restrictions.statusCut = 2)), 'statusCut is in (0, 1]'), 'statusCut 2 is rejected');
   ok(has(v((g) => (g.restrictions.enrage = 'yes')), 'enrage is true or false'), 'enrage yes is rejected');
   ok(has(v((g) => (g.restrictions.autoShake = 1)), 'autoShake is true or false'), 'autoShake 1 is rejected');

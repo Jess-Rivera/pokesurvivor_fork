@@ -174,6 +174,12 @@ G.Gyms = (() => {
       badge: 'Boulder Badge',
       arena: 'rock',
       boost: { stat: 'atk', pct: 0.1 },
+      // Entity model close-out (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt):
+      // Brock joins Misty on G.GymLeader. hpMult from the old 60 s model at his gate level (Geodude L12: 1029 / 62),
+      // loop 2 scaled as Misty's was; TUNE by feel. Status: Misty's restriction set (B2). No enrage (B3), no touch (B4).
+      playerEntity: true,
+      hpMult: { 1: 16, 2: 12 },
+      restrictions: { hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 },
       // Brock's cards gained per loop (Jess 2026-11-05: per leader, cumulative). Loop 1 (Jess 2026-10-31, the pilot): Tackle Power 52, reach 70;
       // Rock Throw Power 58.5, 3 rocks of size 11.7 at 377 px/s; Harden takes none. Loops 2 to 6 gain nothing yet (TUNE).
       cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } },

@@ -66,6 +66,10 @@ G.Enemy.prototype.die = function () { this.dead = true; };
   for (const [name, mut, needle] of cases) { const out = flags(mut); if (!out.some(m => m.includes(needle))) bad('validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
   console.log('1 authoring: Brock (six slots) valid across every region; ' + cases.length + ' negative cases each flagged'); }
 
+// Entity model close-out (2026-11-07): Brock is on G.GymLeader now; this harness pins the OLD brain, so it runs his data with
+// the switch off (gym-leader.js is not loaded here). The switched Brock is pinned in gym-leader-harness.js. Retires at slice 12.
+G.Gyms.KANTO[0].playerEntity = false;
+
 // 2. gate and def
 let g, def;
 { G.GymArena = { inArena: false, gate: null, openGate: info => { G.GymArena.gate = { gym: info }; return true; } };

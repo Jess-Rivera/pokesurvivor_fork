@@ -130,6 +130,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: does the leader read as a player switching moves?
 
 **9. Leader AI, voluntary swaps (M).**
+- Detail v2 proposed 2026-11-07 (Quick; Jess: the GymLeaderAI first, so swaps are never rebuilt): 9a a team-level G.GymLeaderAI that drives each leader mon through the same controller calls your keyboard answers and swaps through the same Team path (behavior-neutral), then 9b the swap decisions inside it. A1 to A5 and Q1 to Q10 awaiting Jess: docs/ASCII Concept Maps/Entity Model Slice 9 - Leader Voluntary Swaps.txt.
 - Files: boss-ai.js, gyms.js (swap rate). Swaps on bad matchup, low HP or a status, under the player's 5 s swap lock and 0.5 s i-frames. Trap now matters, and bench ticking applies.
 - Tests: bad-matchup swap fires, swap lock holds, a trapped leader cannot swap, bench DoT can faint a mon.
 - Risk: swap loops that stall a fight, so the AI needs a minimum time on field.
@@ -147,7 +148,8 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Risk: some shapes may look wrong from a leader, so they get banned or tuned one at a time.
 - Feel test: move-lab with new shapes on a leader.
 
-**12. Migrate gyms 2 to 8, delete the old brain (L, one gym per session).**
+**12. Migrate gyms 3 to 8, delete the old brain (L, one gym per session).**
+- Brock moved early, 2026-11-07 (entity model close-out, Jess: Brock and Misty are the gyms he playtests): docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt. Slices 9 to 12 move to the feature/gym-leader-ai branch.
 - Files: gyms.js (switch on, cards, `hpMult` and restrictions per gym), then remove the switch, the old brain, `formOf`, `STRONG_HOST_GATE_MUL` and the gym branches left in the wild class. BOSS-AUTHORING, GYM-ROSTERS and the gyms sheet updated.
 - Tests: hpMult tuned by feel per gym (the fight-time report was scrapped in slice 6, D5); smoke-ui fights one gym per session; the old-model harnesses retire here.
 - Feel test: each gym as it moves over, and this is the natural point to bring in playtesters.

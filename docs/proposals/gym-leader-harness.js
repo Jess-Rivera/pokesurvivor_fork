@@ -520,7 +520,11 @@ reset();
     misty = K.find((g) => g.leader === 'Misty');
   ok(misty.playerEntity === true && misty.hpMult[1] === 25, 'Misty is switched on, hpMult 25 on loop 1 (slice 6)');
   ok(!G.Gyms.validate(misty).length, 'Misty validates: ' + G.Gyms.validate(misty).join('; '));
-  ok(K.filter((g) => g.playerEntity).length === 1, 'only Misty is switched on');
+  ok(K.filter((g) => g.playerEntity).map((g) => g.leader).join() === 'Brock,Misty', 'Brock and Misty are switched on, nothing else');
+  const brock = K.find((g) => g.leader === 'Brock');
+  ok(brock.hpMult[1] === 16 && brock.hpMult[2] === 12, 'Brock hpMult 16 on loop 1, 12 on loop 2 (close-out B1)');
+  ok(!G.Gyms.validate(brock).length, 'Brock validates: ' + G.Gyms.validate(brock).join('; '));
+  ok(JSON.stringify(brock.restrictions) === JSON.stringify({ hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 }), "Brock carries Misty's restriction set (B2)");
   const bad = (o) => G.Gyms.validate(Object.assign(JSON.parse(JSON.stringify(misty)), o));
   ok(bad({ restrictions: { contact: true } }).some((m) => m.includes('unknown restriction contact')), 'an unknown restriction is rejected');
   ok(bad({ restrictions: { tells: 'no' } }).some((m) => m.includes('tells')), 'a bad tells value is rejected');
@@ -599,6 +603,31 @@ reset();
   for (let i = 0; i < 30; i++) f.noteStuck(DT, f.x, f.y);
   ok(f.sideT > 0, 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
   G.World.collide = collide0;
+}
+
+// 12. Brock on the new body (entity model close-out): every loop 1 move casts through the real G.GymLeader with his real cards, and
+// nothing else does. Up close 20 s, then at range 20 s (no hpBelow line in his set). Geodude, dex 74.
+{
+  reset();
+  const brock = G.Gyms.KANTO.find((g) => g.leader === 'Brock'),
+    sig = brock.signatures[0],
+    want = G.Gyms.movesFor(sig, 0, 1).map((m) => m.id);
+  ok(want.join() === 'tackle,defense-curl,rock-throw', 'Brock loop 1 set by hand: ' + want.join());
+  const e = leader(74, gymOf({ leader: 'Brock', species: 'Geodude', cards: G.Gyms.cardsFor(brock, 1), stance: sig.stance, moves: G.Gyms.movesFor(sig, 0, 1).map((m) => Object.assign({}, m)) }));
+  ok(e instanceof G.GymLeader && e.slots.length === 3, 'Brock builds as a G.GymLeader with one slot per move');
+  const hold = (secs, hx) => {
+    for (let i = 0, N = Math.round(secs / DT); i < N; i++) {
+      clock += DT;
+      human.x = hx;
+      human.y = 0;
+      e.x = e.y = 0;
+      e.update(DT, human);
+    }
+  };
+  hold(20, 30);
+  hold(20, 200);
+  ok(want.every((id) => casts[id] >= 1), 'every Brock loop 1 move casts: ' + JSON.stringify(casts) + ' want ' + want.join());
+  ok(Object.keys(casts).every((id) => want.includes(id)), 'and nothing else');
 }
 
 console.log(fail ? 'gym-leader-harness: ' + fail + ' of ' + n + ' FAILED' : 'gym-leader-harness: all ' + n + ' passed');
