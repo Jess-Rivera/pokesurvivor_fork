@@ -21,7 +21,7 @@ global.window = global; global.location = { search: '?dev' };     // 7b flip: th
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
 let clock = 0, enrage = 1; const casts = {}, warns = [], hazards = [];
 const plTackle = { id: 'tackle', t: Infinity };     // 7b flip: G.MoveSim ticks the player's slots too; this one never recharges, so the player never casts
-const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['normal'] }, hurts: [], isPlayer: true, loss: 0,     // loss: the HP a hit takes (drain tests)
+const pl = { x: 0, y: 0, r: 12, dead: false, hp: 1e9, maxHp: 1e9, bodyH: 20, mon: { types: ['typeless'] }, hurts: [], isPlayer: true, loss: 0, // typeless (slice 4b, D-T): no move is immune or super effective     // loss: the HP a hit takes (drain tests)
   hurt(...a) { this.hurts.push({ a, t: clock, x: this.x, y: this.y }); this.hp -= this.loss; }, slots: [[plTackle]], activeGroup: () => [plTackle], cast() { pl.casted = (pl.casted || 0) + 1; } };
 const base = { U: { TYPE_COLOR: tc, TYPE_NAME: tc, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), rand: (a, b) => a + (b - a) * rnd(), randInt: (a, b) => a + Math.floor((b - a + 1) * rnd()),
     pickN: a => a, damp: (a, b) => b, norm: (x, y) => { const n = Math.hypot(x, y) || 1; return [x / n, y / n]; }, dist: (a, b, c, d) => Math.hypot(a - c, b - d),
@@ -40,7 +40,8 @@ for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', '
   'js/systems/move-route.js', 'js/systems/move-render.js']) { try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } }
 const origWarn = console.warn; console.warn = m => warns.push(String(m));
 const Sim = G.MoveSim, S = G.Stages, Gy = G.Gyms; G.Enemy.prototype.die = function () { this.dead = true; };
-pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body
+pl.takeHit = G.PlayerEntity.prototype.takeHit; // slice 4a: a hit reaches a Player entity through the REAL takeHit, which feeds this recorded hurt()
+pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchRecoil = G.Player.prototype.flinchRecoil; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body (slice 5 split its recoil out)
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
@@ -64,9 +65,9 @@ function frame(e, { bx = 0, by = 0, each = null } = {}) {
 }
 const run = (e, secs, opt) => { for (let i = 0, N = Math.round(secs / DT); i < N; i++) frame(e, opt); };
 function fresh() { Sim.clear(); Sim.setRng(rnd); pl.hurts = []; pl.dead = false; pl.x = 0; pl.y = 0; clock = 0; enrage = 1; for (const k in casts) delete casts[k];
-  G.Status.clear(pl); S.clear(pl); pl.stFl = pl.flRoll = null; pl.walking = false; pl.svx = pl.svy = 0; pl.loss = 0; pl.hp = pl.maxHp; pl.mon.types = ['normal']; plTackle.t = Infinity; }
+  G.Status.clear(pl); S.clear(pl); pl.stFl = pl.flRoll = null; pl.walking = false; pl.svx = pl.svy = 0; pl.loss = 0; pl.hp = pl.maxHp; pl.mon.types = ['typeless']; plTackle.t = Infinity; }
 const tackleFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 40 * 1.3, 'physical');                 // Normal on a Rock/Ground mon: no STAB
-const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3, 'physical') * 1.5;             // Rock: STAB
+const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3, 'physical');                   // Rock: STAB travels in the hit (slice 4b), not in the factor
 
 // 1. roster data and the validator
 { ok(!Gy.validate(BROCK).length, 'Brock validates: ' + Gy.validate(BROCK).join('; '));
@@ -100,7 +101,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   const flags = mut => { const c = JSON.parse(JSON.stringify(BROCK)); mut(c.signatures[0], c); return Gy.validate(c); };
   const cases = [
     ['unknown card', (s, c) => { c.cards[1].luck = 1; }, 'unknown card luck'],
-    ['team card', (s, c) => { c.cards[1].duration = 2; }, 'is a team card'],
+    ['team card on the old body', (s, c) => { delete c.playerEntity; c.cards[1].duration = 2; }, 'is a team card'], // close-out: Brock is switched, so the clone turns it off
     ['card over its cap', (s, c) => { c.cards[1].count = 4; }, 'capped at 3'],
     ['card that fits no move', (s, c) => { c.cards[1].heal = 1; }, 'fits none of the moves fielded that loop'],
     ['fractional stacks', (s, c) => { c.cards[1].damage = 1.5; }, 'whole number of stacks'],
@@ -136,7 +137,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   ok(b.tell && b.tell.form === 'melee' && b.tell.id === 'tackle' && near(b.tell.wind, 0.45) && near(b.tell.ang, 0), 'a Tackle tell starts with the player in reach: ' + JSON.stringify(b.tell && [b.tell.id, b.tell.wind, b.tell.ang]));
   run(e, 0.45 - 2 * DT); ok(!pl.hurts.length && !casts.tackle, 'nothing lands before the tell ends');
   run(e, 3 * DT); ok(casts.tackle === 1 && pl.hurts.length === 1, 'the cone lands when the tell ends (' + pl.hurts.length + ' hit)');
-  const h = pl.hurts[0]; ok(h && near(h.a[0], tackleFactor()) && h.a[1] === 'normal' && h.a[3].cat === 'physical' && h.a[3].mul === 1, 'the hit is the boss ratio factor with Power 52, Normal, physical: ' + (h && h.a[0]) + ' vs ' + tackleFactor());
+  const h = pl.hurts[0]; ok(h && near(h.a[0], tackleFactor()) && h.a[1] === 'normal' && h.a[3].cat === 'physical' && h.a[3].mul === 1 && h.a[3].stab === 1, 'the hit is the boss ratio factor with Power 52, Normal, physical: ' + (h && h.a[0]) + ' vs ' + tackleFactor());
   ok(h && h.x === 60 && h.y === 0, 'no knockback on the player');
   // locked aim: the player sidesteps 90 degrees during the tell (still within 70 px) and the cone misses
   fresh(); const e2 = mkBoss(), b2 = e2.brain; b2.init(); b2.wait = 0; b2.mode = 'close';
@@ -161,7 +162,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   ok(near(Math.max(...rocks.map(i => i.heading)) - Math.min(...rocks.map(i => i.heading)), 0.12), 'the three rocks fan 0.12 rad around the aim');
   run(e, 1.2);
   const first = pl.hurts[0];
-  ok(first && first.a[1] === 'rock' && near(first.a[0], rockFactor()), 'a rock hit is Rock with STAB and Power 58.5: ' + (first && first.a[0]) + ' vs ' + rockFactor());
+  ok(first && first.a[1] === 'rock' && near(first.a[0], rockFactor()) && first.a[3].stab === 1.5, 'a rock hit is Rock with STAB and Power 58.5: ' + (first && first.a[0]) + ' vs ' + rockFactor());
   const lands = t0 + 0.5 + (300 - 12 - 11.7) / 377;     // the rock's edge meets the player's edge
   ok(first && Math.abs(first.t - lands) <= 3 * DT, 'the first rock lands about ' + (lands - t0).toFixed(3) + ' s after the tell started: ' + (first && (first.t - t0).toFixed(3)));
   // locked aim: the player moves away from the line during the tell; the rocks keep the old line
@@ -250,7 +251,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
     hitWith(e, 'body-slam', 0); ok(pl.stMajor && pl.stMajor.k === 'paralysis', 'Body Slam, roll 0: paralysis on the player');
     hitWith(e, 'sludge', 0); ok(!pl.stDot, 'Sludge cannot poison a paralyzed player (one major at a time)'); }
   { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4, 'Sludge poisons through the damage over time: 4 turns: ' + JSON.stringify(pl.stDot));
-    fresh(); pl.mon.types = ['poison']; hitWith(e, 'sludge', 0); ok(!pl.stDot, 'a Poison-type player is immune'); pl.mon.types = ['normal'];
+    fresh(); pl.mon.types = ['poison']; hitWith(e, 'sludge', 0); ok(!pl.stDot, 'a Poison-type player is immune'); pl.mon.types = ['typeless'];
     fresh(); hitWith(e, 'ember', 0); ok(pl.stDot && pl.stDot.k === 'burn', 'Ember burns');
     fresh(); hitWith(e, 'powder-snow', 0); ok(pl.stMajor && pl.stMajor.k === 'freeze' && G.Status.stunned(pl), 'Powder Snow freezes');
     fresh(); pl.stWin = { hard: 1 }; hitWith(e, 'powder-snow', 0); ok(!pl.stMajor, 'no freeze inside the 2.5 s hard-CC grace'); }
@@ -348,7 +349,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
     run(e, 1.2); ok(pl.hurts.length === 1, 'Thunder Shock hits the player once: ' + pl.hurts.length);
     ok(decoy.hits === 0 && e.hp === hp0, 'its hop never reaches a wild enemy 30 px away, nor the leader');
     // co-op ready: a second foe within the 60 px hop range takes the hop
-    fresh(); const [e2, b2] = one('thunder-shock'), pl2 = { x: 240, y: 0, r: 12, dead: false, mon: { types: ['normal'] }, hurts: [], hurt(...a) { this.hurts.push(a); } };
+    fresh(); const [e2, b2] = one('thunder-shock'), pl2 = { x: 240, y: 0, r: 12, dead: false, mon: { types: ['normal'] }, isPlayer: true, takeHit: G.PlayerEntity.prototype.takeHit, hurts: [], hurt(...a) { this.hurts.push(a); } };
     e2.foes = () => [pl, pl2]; pl.x = 200; pl.y = 0; run(e2, 1.2);
     ok(pl.hurts.length === 1 && pl2.hurts.length === 1, 'with two foes 40 px apart the chain hops to the second: ' + [pl.hurts.length, pl2.hurts.length]); }
   { const [e, b] = one('hex'); pl.x = 200; pl.y = 0; decoy.x = 260; decoy.hits = 0; run(e, 1.2);
@@ -543,13 +544,13 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   // the player's Roar on enemies: a wild one slides, a boss or an elite does not
   { const roar = G.MoveDefs.roar, mk = (o) => Object.assign({ id: 7000 + Math.random(), x: 50, y: 0, r: 10, dead: false, kx: 0, ky: 0, types: ['normal'], hurt() {} }, o),
       cast = { spec: roar, cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
-    const w = mk(), bo = mk({ boss: true }), el = mk({ elite: true });
+    const w = mk(), bo = mk({ boss: true }), el = mk({ immovable: true }); // immovable: the rule G.Elite turns on (elite-class-harness pins that)
     for (const t of [w, bo, el]) G.MoveEffects.applyHit(cast, t, 0, () => 0);
     ok(w.kx === 140 && w.ky === 0 && bo.kx === 0 && el.kx === 0, 'the player\'s Roar slides a wild enemy (knock 140 away) and never a boss or an elite: ' + [w.kx, bo.kx, el.kx]); }
   // b) Fissure: the KO roll on wild foes only; on the player a strike of power 120
   { const fx = G.MoveDefs.fissure.payload.find(f => f.handler === 'ohkoWild'), only = { spec: Object.assign({}, G.MoveDefs.fissure, { payload: [fx] }), cast: { owner: pl, time: 0 }, x: 0, y: 0, age: 0 };
     const mk = (o) => Object.assign({ x: 0, y: 0, r: 10, dead: false, hp: 500, shield: 0, types: ['normal'], hurt(n) { this.hp -= n; if (this.hp <= 0) this.dead = true; } }, o);
-    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ elite: true });
+    const w1 = mk(), w2 = mk(), bo = mk({ boss: true }), gy = mk({ gym: {} }), el = mk({ koImmune: true }); // koImmune: the rule G.Elite turns on
     G.MoveEffects.applyHit(only, w1, 0, () => 0.29); G.MoveEffects.applyHit(only, w2, 0, () => 0.3);
     for (const t of [bo, gy, el]) G.MoveEffects.applyHit(only, t, 0, () => 0);
     ok(fx.koChance === 30 && w1.dead && !w2.dead, 'a wild foe is KO\'d on a roll under 0.30 and not at 0.30');

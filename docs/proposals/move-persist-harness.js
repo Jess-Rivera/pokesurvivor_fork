@@ -15,7 +15,7 @@ const load = p => { const f = process.env[SRC[p]] || R + '/' + p; vm.runInThisCo
 const noop = new Proxy(function () { }, { get: () => noop, apply: () => undefined, construct: () => ({}) });
 const TYPES = ['normal','fire','water','grass','electric','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
 const tc = {}; TYPES.forEach(t => tc[t] = '#888');
-const DEX_BY = { 1: { name: 'Normie', types: ['normal'], stats: [50, 50, 50, 50, 50, 65] } };
+const DEX_BY = { 1: { name: 'Normie', types: ['typeless'], stats: [50, 50, 50, 50, 50, 65] } /* typeless (slice 4b, D-T): x1 to every move */ };
 global.window = global; global.location = { search: '?dev' };
 let seed = 4242; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296; Math.random = rnd;
 const seeded = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };

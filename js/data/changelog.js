@@ -7,6 +7,62 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-07',
+    title: ['Misty, rebuilt', 'Misty, rebuilt'],
+    chg: [
+      [
+        'Brock now fights the way Misty does: one move at a time, his own team from loop 2, and the same rules for sleep and freeze. Touching him no longer hurts you, and he no longer enrages. His health is tuned to about the same fight length as before.',
+        'Brock now fights the way Misty does: one move at a time, his own team from loop 2, and the same rules for sleep and freeze. Touching him no longer hurts you, and he no longer enrages. His health is tuned to about the same fight length as before.',
+      ],
+      [
+        'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
+        'Misty now uses one move at a time, like you, and switches between them as the fight goes. You can see each switch by the colored ring around her. While she has a close-range move like Tackle selected she takes a little less damage, the same as you, and a flinch now resets her selected move.',
+      ],
+      [
+        'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
+        'Misty now builds her team the way you build yours. She carries a Zinc, so your special attacks hit her a little softer, and she has a bit less HP to make up for it. She no longer enrages: no countdown, and her hits stay the same strength for the whole fight.',
+      ],
+      [
+        'Beating a gym now says "Gym Leader Misty Defeated!" (or Brock, and so on) instead of naming one of their Pokémon.',
+        'Beating a gym now says "Gym Leader Misty Defeated!" (or Brock, and so on) instead of naming one of their Pokémon.',
+      ],
+    ],
+    new: [
+      [
+        'Misty can now send out a team, one Pokémon at a time, with a pip for each above her health bar. Only from loop 2, which is not in the game yet.',
+        'Misty can now send out a team, one Pokémon at a time, with a pip for each above her health bar. Only from loop 2, which is not in the game yet.',
+      ],
+    ],
+    fix: [
+      [
+        'Misty no longer catches on the arena edge or a pillar. When she gets stuck she steps around it, toward the side with room.',
+        'Misty no longer catches on the arena edge or a pillar. When she gets stuck she steps around it, toward the side with room.',
+      ],
+    ],
+  },
+  {
+    d: '2026-11-06',
+    title: ['Type matchups', 'Type matchups'],
+    chg: [
+      [
+        'Misty now fights by the same rules as you. Touching her no longer hurts, and your status moves hold her differently: sleep and freeze last longer than before, but she shakes them off, and Trap no longer roots her. Other gyms follow later.',
+        'Misty now fights by the same rules as you. Touching her no longer hurts, and your status moves hold her differently: sleep and freeze last longer than before, but she shakes them off, and Trap no longer roots her. Other gyms follow later.',
+      ],
+      [
+        'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
+        'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
+      ],
+      [
+        'The same-type attack bonus (x1.5) now applies to everyone: wild Pokemon and gym leaders get it too. Wild attacks were lowered to match, so wild hits land about as hard as before.',
+        'The same-type attack bonus (x1.5) now applies to everyone: wild Pokemon and gym leaders get it too. Wild attacks were lowered to match, so wild hits land about as hard as before.',
+      ],
+      [
+        'Dragon Rage, Night Shade and Fissure now miss Pokemon immune to their type (Fairy, Normal and Flying).',
+        'Dragon Rage, Night Shade and Fissure now miss Pokemon immune to their type (Fairy, Normal and Flying).',
+      ],
+    ],
+  },
+  {
     d: '2026-11-05',
     title: ['PokeSwarm login', 'PokeSwarm login'],
     new: [

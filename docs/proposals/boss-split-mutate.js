@@ -10,8 +10,8 @@ const M = [
   ['applyFlinch skips the brain', 'enemy', [['if (this.brain) this.brain.flinch();', '']]],
   ['the arena spawns a plain enemy', 'arena', [['G.Boss.make(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5)', 'new G.Enemy(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5, { hp: 1, spd: 1, dmg: 1 }, true)']]],
   ['G.Boss.make forgets the brain', 'brain', [['if (e.gym) e.brain = new GymBrain(e);', '']]],
-  ['a gym method copied back onto the body', 'enemy', [['cy() { return this.y; }', 'cy() { return this.y; }\n    gymPick(dist) { return null; }']]],
-  ['touch stops writing the contact type', 'brain', [["e.atkCat = d.category === 'special' ? 'special' : 'physical'; e.atkType = d.type;", "e.atkCat = d.category === 'special' ? 'special' : 'physical';"]]],
+  ['a gym method copied back onto the body', 'enemy', [['cy() {\n      return this.y;\n    }', 'cy() {\n      return this.y;\n    }\n    gymPick(dist) { return null; }']]],
+  ['touch stops writing the contact type', 'brain', [["e.atkCat = d.category === 'special' ? 'special' : 'physical';\n      e.atkType = d.type;", "e.atkCat = d.category === 'special' ? 'special' : 'physical';"]]],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bosssplit-mut-'));
 let caught = 0;

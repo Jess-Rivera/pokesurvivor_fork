@@ -1,13 +1,9 @@
-/* ============ types.js — type chart ============
- * The one from the games (6th gen onward), but SOFTENED for a survivor,
- * where you only carry one active attack and cannot switch Pokemon:
- *
- *   juegos   ×2      ×0,5    ×0 (inmune)
- *   here     x1.6    x0.6    x0.3
- *
- * With two types they multiply (x1.6 · x1.6 = x2.56), capped at [x0.3, x2.4].
- * Used both ways: your attacks against enemies and the enemies'
- * against you (their main type, or their shot's).
+/* ============ types.js: the type chart ============
+ * The mainline chart (6th gen onward), as in the games (entity model slice 4b, Jess 2026-11-06):
+ *   x2 super effective, x0.5 not very effective, x0 immune.
+ * Two types multiply (x4, x1, x0.25). A combo with no immune type stays within [x0.25, x4]; any immune type makes
+ * the hit x0 (no damage and no side effects, see js/systems/move-effects.js). Used both ways: your attacks on
+ * enemies and theirs on you. A type the chart does not know (the test dummies' 'typeless') takes x1 from all.
  */
 G.Types = (() => {
   // attacker -> { defender: the games' multiplier } (the x1 ones are not listed)
@@ -65,23 +61,22 @@ G.Types = (() => {
     steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
     fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 },
   };
-  const SOFT = { 2: 1.6, 0.5: 0.6, 0: 0.3 };
-  const MIN = 0.3,
-    MAX = 2.4;
+  const MIN = 0.25,
+    MAX = 4;
 
   /** Multiplier of an attack of type `atk` against a Pokemon of types `def`. */
   function mult(atk, def) {
     const row = CHART[atk];
     if (!row || !def) return 1;
     let m = 1;
-    for (const t of def) if (row[t] != null) m *= SOFT[row[t]];
-    return G.U.clamp(m, MIN, MAX);
+    for (const t of def) if (row[t] != null) m *= row[t];
+    return m === 0 ? 0 : G.U.clamp(m, MIN, MAX); // the clamp never lifts an immunity
   }
 
-  /** 'super' | 'weak' | null, to show the notice. */
+  /** 'immune' | 'super' | 'weak' | null, to show the notice. */
   function label(m) {
-    return m > 1.05 ? 'super' : m < 0.95 ? 'weak' : null;
+    return m === 0 ? 'immune' : m > 1.05 ? 'super' : m < 0.95 ? 'weak' : null;
   }
 
-  return { CHART, mult, label };
+  return { CHART, MIN, MAX, mult, label };
 })();

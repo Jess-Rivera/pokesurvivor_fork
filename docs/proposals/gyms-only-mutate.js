@@ -6,12 +6,12 @@ const fs = require('fs'), os = require('os'), path = require('path'), cp = requi
 const root = path.resolve(__dirname, '../..');
 const SRC = { arena: ['js/systems/gym-arena.js', 'GYMSONLY_ARENA'], spawner: ['js/systems/spawner.js', 'GYMSONLY_SPAWNER'], enemies: ['js/data/enemies.js', 'GYMSONLY_ENEMIES'],
   ach: ['js/data/achievements.js', 'GYMSONLY_ACH'], goals: ['js/ui/goals-ui.js', 'GYMSONLY_GOALS'] };
-const LEG = 'const ok = p => regionOK(p) && !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);', NOLEG = 'const ok = p => regionOK(p) && G.SPRITE_META[p.dex] && !used.has(p.dex);';
+const LEG = 'const ok = (p) => regionOK(p) && !p.leg && G.SPRITE_META[p.dex] && !used.has(p.dex);', NOLEG = 'const ok = (p) => regionOK(p) && G.SPRITE_META[p.dex] && !used.has(p.dex);';
 const M = [
   ['G.Judgment left registered', 'arena', [['G.GymArena = (() => {', 'G.Judgment = { active: false };\nG.GymArena = (() => {']]],
   ['spawner ignores the gym arena', 'spawner', [['if (G.GymArena.inArena) return;', '']]],
-  ['leg filter dropped in enemies.js (boss slots and elites)', 'enemies', [[LEG, NOLEG], [LEG, NOLEG]]],
-  ['rift1 back in achievements', 'ach', [["{ id: 'mis10',", "{ id: 'rift1', cat: 'otros', tier: 1, name: 'Al otro lado', desc: 'x', value: () => 0, goal: 1, reward: { t1: 3 } },\n    { id: 'mis10',"]]],
+  ['leg filter dropped in enemies.js (boss slots and elites)', 'enemies', [[LEG, NOLEG]]],
+  ['rift1 back in achievements', 'ach', [["{\n      id: 'mis10',", "{ id: 'rift1', cat: 'otros', tier: 1, name: 'Al otro lado', desc: 'x', value: () => 0, goal: 1, reward: { t1: 3 } },\n    {\n      id: 'mis10',"]]],
   ['goals screen crashes on an unknown saved id', 'goals', [['if (!a) continue;', '']]],
   ['a gym win stops granting the Bond', 'arena', [['pl.bonds++;', '']]],
 ];

@@ -1,0 +1,162 @@
+ENTITY MODEL, SLICE 3: PlayerEntity AND HumanPlayer (review map, 2026-11-06, Quick)
+Source: docs/proposals/host-model-plan.md "3. PlayerEntity and HumanPlayer". Behavior-neutral slice.
+Status: [Approved] 2026-11-06: D1, D2, D3 as proposed; D4 = B (slot keys route through the controller now).
+Slice 2 came back green. BUILT 2026-11-06 (Quick). Awaiting Jess's run of the checks and the feel test.
+
+WHY
+  Slice 5 makes a gym leader a Player entity: same moves, slots, Team, dodge and status rules as you,
+  but driven by AI. Today one class does both jobs (the rules AND your keyboard, camera, XP, coins).
+  Slice 3 splits it so a leader can take the rules without the human parts.
+
+=====================================================================================
+ THE SPLIT (both classes in js/entities/player.js, see D1)
+=====================================================================================
+
+   G.PlayerEntity  (base: the rules)              G.HumanPlayer  (you)  = G.Player, as today
+  +------------------------------------+         +------------------------------------+
+  | stats, HP, level, maxHp, syncLevel |         | controller default = the keyboard  |
+  | moves, slots, bonds, slot hold     | extends | xp, xpNext, gainXp, xpMul          |
+  | dodge, Fly, statuses, stages       | <------ | kills, bosses, coins, coinMul      |
+  | hurt (numbers, flash, faint)       |         | tickets t1 / t10                   |
+  | revive, benchUpdate, keepInArena   |         | magnet, itemMagnet (pickups)       |
+  | movement: reads this.controller    |         | rerollBonus                        |
+  | aiming:   reads this.aimTargets()        |         | aimTargets() = the enemy list            |
+  |                                    |         | aim fallback = nearest rock/chest  |
+  | isPlayer = true (D2)               |         | on hurt: hurt sound + camera kick  |
+  |                                    |         | netUpdate (co-op, deferred, as-is) |
+  +------------------------------------+         +------------------------------------+
+
+  G.Player keeps naming the human class (like G.Enemy names WildEntity), so game.js, coop.js and
+  every harness that builds from G.Player.prototype keep working. Statics (DODGE, SWAP_LOCK,
+  BOND_MAX, REVIVE_TIME, xpFor) live on the base and are inherited.
+
+=====================================================================================
+ THE CONTROLLER (what reads the keyboard)
+=====================================================================================
+
+   TODAY                                    SLICE 3
+   player.js  G.Input.axis()       ----->   controller.axis()      (movement)
+   player.js  G.Input.action dodge ----->   controller.dodge()     (dodge)
+   game.js    G.Input swap_1..6    ----->   controller.swapSlot()  (direct swap key)
+   game.js    G.Input swap_prev/next ---->  controller.swapDir()   (cycle swap)
+   game.js    G.Input shake_off    ----->   controller.shake()     (Shake off)
+   game.js    G.Input attack_1..4  ----->   controller.slots()     (slot keys down, list) D4
+   game.js    G.Input cycle_prev/next --->  controller.cycles()    (cycle keys down, list) D4
+   (lists, so two keys in one frame still act twice, in key order, exactly as before)
+
+   The human controller is one object that reads G.Input exactly as today, at the same point in
+   the frame. It is the HumanPlayer default, so a test fake built from the prototype still reads
+   the keyboard. A leader (slice 5) gets an AI controller; the new harness drives a scripted one.
+   Auto-shake (the accessibility setting) stays in game.js, unchanged.
+   D4: only the IN-PLAY branch of the key handler moves. It still calls pl.setActive(i) and
+   pl.cycle(dir) at the same moment; setActive stays whole (its rules/sound split is slice 8).
+   Menus (item choice, shops, pause) and the HUD key labels keep reading G.Input: they are UI.
+
+=====================================================================================
+ EVERY isPlayer SITE (13 in game code, all "follows Player entity rules")
+=====================================================================================
+
+  file             line  what it decides                         family rule?  leader later
+  ---------------  ----  --------------------------------------  ------------  ----------------
+  status.js          86  trap is not cut like freeze/sleep        Player ent.   same (8 s lock)
+  status.js          93  trap = swap lock, not a 2 s root         Player ent.   same
+  status.js         112  trap branch: roots only non-players      Player ent.   same
+  status.js         124  2.5 s no-new-hard-CC window applies      Player ent.   5 s (slice 5)
+  status.js         134  berry guard blocks a major status        see D3        see D3
+  status.js         140  berry guard blocks confusion             see D3        see D3
+  status.js         198  berry guard blocks burn/poison           see D3        see D3
+  status.js         214  hard-CC window starts when CC ends       Player ent.   5 s (slice 5)
+  status.js         249  trap end window for strong WILD hosts    Wild only     unchanged
+  status.js         305  rooted(): trap roots non-players only    Player ent.   same
+  status.js         354  Shake off works                          Player ent.   AI, 3 taps/s
+  move-effects.js   268  Fissure cannot KO you                    Player ent.   same
+  move-effects.js   287  a push uses push(), not knockback        Player ent.   same
+
+  Result: no site means "is the human". The human-only code is all inside player.js (input,
+  camera, hurt sound, XP, coins, pickups), which the class split handles. So no site changes.
+
+=====================================================================================
+ FILES
+=====================================================================================
+  js/entities/player.js  base class first, then HumanPlayer; human fields set in the subclass
+                         constructor AFTER the base (the base never reads them); hurt calls a
+                         human hook for sound + camera (same !benched gate as today).
+  js/game.js             handleSwap, the Shake off line and the in-play slot keys (D4) ask
+                         pl.controller instead of G.Input.
+  js/main.js             NEED gains 'PlayerEntity' so a missing base shows the load screen.
+  dev.html               no change (same file). Changelog: none (nothing a player sees).
+
+=====================================================================================
+ TESTS (named, per file)
+=====================================================================================
+
+  docs/proposals/player-entity-harness.js   offline, Node   NEW
+    | structure: G.Player is G.HumanPlayer, extends G.PlayerEntity; HumanPlayer adds only the
+    |   human list above (like elite-class-harness pins Elite's mods)
+    | a PlayerEntity on a SCRIPTED controller walks its axis at its speed, dodges on command,
+    |   and never reads G.Input, the camera or the hurt sound (stubs record any call)
+    | aiming reads aimTargets(): a scripted foe list wins over the enemy list
+    | no foes() on a Player entity (G.MoveSim reads foes() as a gym leader's mon; found 11-06)
+    | human: aimTargets() is the enemy list, rock/chest fallback, hurt kicks camera + sound once,
+    |   benched hurt stays silent
+    | human fields (xp, coins, kills, tickets, magnet, xpMul, coinMul) on the human only;
+    |   gainXp on the human only; statics reachable on both classes
+    | isPlayer true on both; the 13 sites unchanged (text pin)
+    | game.js: swap, Shake off and the in-play slot keys read pl.controller, not G.Input;
+    |   the in-play branch has no G.Input call left; menu branches still read G.Input (D4)
+    | KEYBOARD: attack 3 -> [2]; attack 1 + 3 -> [0, 2]; cycle prev -> [-1]; both -> [-1, 1];
+    |   lowest swap key wins; swap next beats previous; Shake off and dodge read their own keys
+    | game.js text: each slot key calls setActive once, each cycle key cycle once
+    WHY: no existing harness builds a Player entity without the human parts. input-keys,
+    status and move harnesses prove the HUMAN is unchanged, not that the split holds.
+    check.js picks it up automatically: 44 -> 45 harnesses.
+
+  docs/proposals/player-entity-mutate.js   mutation runner, run by hand   NEW
+    | breaks: the base reads G.Input again; HumanPlayer stops extending the base; camera kick
+    | moves to the base; the base aims at the enemy list; no default controller; dodge ignores
+    | the controller; XP or coins set in the base; gainXp in the base; game.js Shake off or a
+    | swap key reads G.Input directly; G.Player names the base; an attack key reads G.Input
+    | directly in play (D4); the slot key calls setActive twice; cycle goes the wrong way
+    WHY: proves the harness catches each way the split could leak.
+
+  Proof of no change (existing, NO edits): input-keys, status (A to E2b), move-*, team-cards,
+  stat-stage, team-harness, smoke-team (34/34), smoke-ui, smoke-newcombat (moves on the real you).
+  If any needs an edit, stop and find out why.
+  Intent scenarios: none (no move changes). Debug sets: none.
+
+=====================================================================================
+ RISKS
+=====================================================================================
+  - Constructor order: a human field read by base code before the subclass sets it. The harness
+    pins the field lists; the smoke runs catch the rest.
+  - Harness fakes: about 25 files load player.js by path and ~12 build from G.Player.prototype.
+    One file (D1) and keeping the names (D2) mean none of them change.
+  - Co-op puppets (coop.js new G.Player) stay humans; deferred, not tested.
+
+=====================================================================================
+ DECISIONS FOR JESS
+=====================================================================================
+  D1. One file or two.
+      Proposed: both classes in js/entities/player.js (base first). A separate
+      player-entity.js would mean editing the load list of ~25 harnesses and tools, which the
+      plan forbids for a neutral slice. Slice 1 split elite.js because Elite was small and new.
+
+  D2. What isPlayer means.
+      Proposed: keep the name, defined as "follows Player entity rules", set on the base. All 13
+      sites are already that. No isHuman flag until a site needs one. Renaming would touch the
+      fakes in 6 harnesses (they set isPlayer: true by hand).
+
+  D3. Berry guards on a leader. RULE INTERPRETATION, approved table says leaders get none.
+      Proposed: the 3 berry sites stay Player-entity rules. A leader never triggers them because
+      its berry bag (a Team store) stays empty: leaders pick up no ground items. If a gym ever
+      authors berries for a leader, they WOULD work, and we revisit then.
+      Alternative: make the 3 sites human-only at slice 5 (strict table reading).
+
+  D4. DECIDED (Jess, 2026-11-06): B. The in-play slot keys (attack 1 to 4, cycle) go through the
+      controller now, same call site. setActive is not split (slice 8). Cycle is human-only.
+
+  Left for slice 5 (not decided here): the select/shot/heal sounds stay in the base for now.
+  When a leader becomes a Player entity, decide which are the human's.
+
+FEEL TEST (about a minute): one normal run. Walk, dodge, swap, Shake off while confused or
+asleep, take hits (camera kick and hurt sound), pick up XP and coins. Nothing should change.

@@ -1059,13 +1059,18 @@ G.Items = (() => {
     const r = G.Game && G.Game.roster;
     return (typeof r === 'function' ? r() : r) || [];
   }
-  /** Team-HP-scaled multiplier 1.0 (full) -> 2.0 (<=10%), linear; OFF (1.0) unless the roster has HP_TEAM_MIN+ members. */
+  /** The holder's team (slice 7b, Jess 2026-11-07): a gym leader's own G.Team, yours too (your Team's members ARE the roster
+   *  array), else the run roster for a holder with no team, as before. */
+  function teamOf(pl) {
+    return pl && pl.team && Array.isArray(pl.team.members) ? pl.team.members : rosterOf();
+  }
+  /** Team-HP-scaled multiplier 1.0 (full) -> 2.0 (<=10%), linear; OFF (1.0) unless the holder's team has HP_TEAM_MIN+ members. */
   function teamHpMul(pl) {
-    const roster = rosterOf();
-    if (roster.length < HP_TEAM_MIN) return 1;
+    const team = teamOf(pl);
+    if (team.length < HP_TEAM_MIN) return 1;
     let hp = 0,
       max = 0;
-    for (const f of roster) {
+    for (const f of team) {
       hp += Math.max(0, f.hp);
       max += f.maxHp;
     }
@@ -1075,11 +1080,11 @@ G.Items = (() => {
     if (frac <= HP_SCALE_MIN) return 2;
     return 1 + (1 - frac) / (1 - HP_SCALE_MIN); // 100% -> 1.0, 10% -> 2.0, linear between
   }
-  /** Pikachu's Tear: FAINT_STEP ^ (number of fainted teammates). */
+  /** Pikachu's Tear: FAINT_STEP ^ (number of fainted members of the holder's team). */
   function faintMul(pl) {
-    const roster = rosterOf();
+    const team = teamOf(pl);
     let n = 0;
-    for (const f of roster) if (f.dead) n++;
+    for (const f of team) if (f.dead) n++;
     return Math.pow(FAINT_STEP, n);
   }
   /** Snowball Badge: x (1 + total killed HP / SNOWBALL_DIV). */
@@ -1104,7 +1109,7 @@ G.Items = (() => {
     const def = BY[id];
     if (!def) return null;
     const out = { name: def.name, desc: def.desc, live: null };
-    const roster = rosterOf();
+    const roster = teamOf(pl);
     const pct = (m) => Math.round((m - 1) * 100);
     if (id === 'snowballbadge') {
       out.live = Math.round(snowballHp).toLocaleString() + ' HP \u2192 +' + pct(snowballMul()) + '% dmg';
@@ -1140,6 +1145,8 @@ G.Items = (() => {
     buySlot,
     RUN_SLOTS_DEFAULT,
     RUN_SLOTS_MAX,
+    HP_TEAM_MIN,
+    teamOf,
     teamHpMul,
     faintMul,
     snowballMul,

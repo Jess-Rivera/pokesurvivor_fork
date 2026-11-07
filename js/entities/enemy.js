@@ -9,6 +9,9 @@
  *
  * The manager keeps a spatial grid (rebuilt every frame) for
  * separation between enemies and the projectile collisions.
+ *
+ * G.WildEntity (entity model slice 1, Jess 2026-11-05) is the wild base class; G.Enemy names the same class, and gym leaders' bodies
+ * still use it until plan slice 12 (docs/proposals/host-model-plan.md). G.Elite (elite.js) extends it, so a change here reaches elites.
  */
 (() => {
   let nextId = 1;
@@ -27,7 +30,7 @@
   // assumes this and game.js's 1/30 s frame cap; move-motion-harness.js checks they agree, so rerun it after a retune.
   const KNOCK_DECAY = 0.0015;
 
-  class Enemy {
+  class WildEntity {
     constructor(def, x, y, sc, boss = false) {
       this.id = nextId++;
       this.def = def;
@@ -36,9 +39,16 @@
       this.x = x;
       this.y = y;
       this.boss = boss;
-      this.elite = def.elite || null; // overworld elite descriptor (systems/elites.js); a regular wild Enemy otherwise
-      // A gym leader's mon is drawn at player size, so its moves reach exactly as the player's do (slice 7a, Jess 2026-10-31).
-      this.scale = def.gym ? 1 : boss ? bossScale(def.dex) : this.elite ? Math.max(1.5, bossScale(def.dex)) : 1;
+      this.elite = null; // overworld elite descriptor (systems/elites.js), set by G.Elite; a plain wild entity otherwise
+      // Rules a subclass may turn on (G.Elite does); read here and by status.js and move-effects.js
+      this.immovable = false; // no knockback, no push
+      this.koImmune = false; // no Fissure KO
+      this.strongStatus = false; // the strong status timers (status.js)
+      this.noMorale = false; // no pain, no fear, no panic, and its faint scares nobody
+      this.ignoresLiquid = false; // not slowed or burned by liquids
+      this.bigFx = false; // the wide HP bar and the big faint burst
+      this.barColor = '#ff5f6d';
+      this.scale = this.sizeFor(def, boss);
       this.anim = new G.Sprites.Animator(def.dex, this.scale);
       this.r = G.Sprites.bodyRadius(def.dex, this.scale);
       this.bodyH = G.Sprites.bodyHeight(def.dex, this.scale);
@@ -49,12 +59,8 @@
       // Gym-gate escalation (rework/gym-progression): a PLAIN wild enemy (not boss, not gym, not elite) spawned while a
       // gate has been ignored past its grace period gets +escBump levels. Read once at spawn (level is frozen here),
       // so escalation ramps as new spawns come in hot and snaps back when the bump clears on the win. 0 otherwise.
-      const wildBump = !boss && !def.gym && !this.elite && G.Gym ? G.Gym.escBump() : 0;
-      this.maxHp = boss
-        ? Math.round(def.hp * (sc.hp || 1))
-        : this.elite
-          ? this.elite.hp
-          : G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0, wildBump);
+      const wildBump = this.spawnBump(def, boss);
+      this.maxHp = boss ? Math.round(def.hp * (sc.hp || 1)) : this.spawnHp(def, sc, wildBump);
       this.hp = this.maxHp;
       // Speed = fixed species identity (def.spd is already px/s via G.Stats.speedToPx).
       // No run-time ramp (sc.spd) for wild enemies: Speed does not scale in-run, same as
@@ -66,7 +72,7 @@
       // (def.bx undefined) keep the flat def.xp. xpMul collects the
       // tank / elite / shiny / golden multipliers.
       this.bx = def.bx != null ? def.bx : null;
-      this.xpMul = (def.xpMul || 1) * (this.elite ? this.elite.xpMul : 1);
+      this.xpMul = def.xpMul || 1;
       this.behavior = def.behavior;
 
       const types = (G.DEX_BY[def.dex] && G.DEX_BY[def.dex].types) || [];
@@ -161,7 +167,7 @@
       this.weakCd = G.U.rand(1, G.Enemies.SEEK.shotCd);
       // Status carrier (slice E1): one hand-authored status per species (G.Enemies.CARRIER_OF). A primary carrier turns into the close-band
       // 'carrier' behavior while ACTIVE (carrierCheck, cap CARRIER.cap, haste exempt); a secondary one keeps its class and its shots / touches carry it.
-      this.carrier = boss || this.elite ? null : G.Enemies.carrierOf(def.dex);
+      this.carrier = boss ? null : G.Enemies.carrierOf(def.dex);
       this.carrierSec = !!this.carrier && this.cls !== 'status';
       this.carrierOn = false;
       this.carrierT = G.U.rand(0, 2);
@@ -169,6 +175,35 @@
       this.pulseT = G.U.rand(1, G.Enemies.CARRIER.nova.every);
       this._ail = null;
     }
+
+    /** Drawn size. A gym leader's mon is at player size, so its moves reach exactly as the player's do (slice 7a, Jess 2026-10-31). */
+    sizeFor(def, boss) {
+      return def.gym ? 1 : boss ? bossScale(def.dex) : 1;
+    }
+
+    /** Levels from gym-gate escalation, read once at spawn: plain wild entities only. */
+    spawnBump(def, boss) {
+      return !boss && !def.gym && G.Gym ? G.Gym.escBump() : 0;
+    }
+
+    /** Max HP of a non-boss at spawn. */
+    spawnHp(def, sc, wildBump) {
+      return G.Enemies.enemyHp(def.baseHp != null ? def.baseHp : 50, sc.t || 0, wildBump);
+    }
+
+    /** Runs on every hit that lands (a subclass hook). */
+    onDamaged() {}
+
+    /** What a local faint leaves behind. */
+    dropLoot() {
+      /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop its coins and one guaranteed
+         item (picked up by the arena's pullAll), see data/drops.js. */
+      if (this.gym) G.Drops.roll('gym', this.x, this.y);
+      else G.Pickups.dropXp(this.x, this.y, this.xp);
+    }
+
+    /** Draws over the HP bar (a subclass hook). */
+    drawBarTag() {}
 
     cy() {
       return this.y;
@@ -187,7 +222,7 @@
 
     /** Golden hour (events.js): double experience and sometimes coins. */
     makeGolden() {
-      if (this.golden || this.boss || this.elite || this.behavior === 'thief') return;
+      if (this.golden || this.boss || this.behavior === 'thief') return;
       this.golden = true;
       this.xp *= 2;
       this.xpMul *= 2;
@@ -224,16 +259,27 @@
         amount -= a;
       }
       this.hp -= amount;
-      if (this.elite && !this.remote) G.Elites.engage(this);
-      if (!this.boss && !this.elite) this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp); // morale: HP lost recently, as a fraction of max (capped)
+      this.onDamaged();
+      if (!this.boss && !this.noMorale)
+        this.pain = Math.min(G.Enemies.MORALE.painFull, this.pain + amount / this.maxHp); // morale: HP lost recently, as a fraction of max (capped)
       this.showHurt(d, color, dirX, dirY, eff);
-      if (knock > 0 && !this.boss && !this.elite) {
+      if (knock > 0 && !this.boss && !this.immovable) {
         const [nx, ny] = G.U.norm(dirX, dirY);
         this.kx += nx * knock;
         this.ky += ny * knock;
       }
       if (G.Coop.isHost) G.Coop.hurtShown(this, d, color);
       if (this.hp <= 0) this.die();
+    }
+
+    /** The one DoT entry of a wild entity (slice 4a, H4): G.Status and its own burn and poison ticks call it. */
+    takeDot(kind, amount, color) {
+      this.dot(kind, amount, color);
+    }
+
+    /** The one flat damage entry of a wild entity (slice 5, D1): bombs, ground traps, fixed damage. Same answer as PlayerEntity.takeFlat. */
+    takeFlat(amount, color, dirX = 0, dirY = 0, knock = 0) {
+      this.hurt(amount, color, dirX, dirY, knock, null);
     }
 
     /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
@@ -376,9 +422,9 @@
         if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd)
           G.Items.snowballAdd(this.maxHp);
       }
-      if (!this.boss && !this.elite) this.spreadFear();
+      if (!this.boss && !this.noMorale) this.spreadFear();
       this.anim.play('Faint', { hold: true });
-      const big = this.boss || this.elite;
+      const big = this.boss || this.bigFx;
       const col = big ? '#ffd95e' : '#ffffff';
       const cy = this.y - this.bodyH * 0.5;
       G.FX.burst(this.x, cy, col, big ? 34 : 9, big ? 260 : 120);
@@ -403,17 +449,7 @@
         const lvl = Math.max(1, ...G.Game.everyone().map((p) => p.level || 1));
         this.xp = G.Stats.xpYield(this.bx, this.atkLvl, lvl) * this.xpMul * G.Spawner.xpBoost();
       }
-      // Elite: a burst of big XP orbs (plain: no x10 ticket / magnet), a guaranteed Berry, a chance at an item, a TTK readout.
-      if (this.elite) {
-        G.Camera.kick(0.6);
-        G.Pickups.dropXp(this.x, this.y, this.xp, true);
-        G.Drops.roll('elite', this.x, this.y); // the guaranteed Berry, a ground roll, a chance at an item (data/drops.js)
-        G.Elites.noteDeath(this);
-      } else if (this.gym) {
-        /* a gym leader drops no XP: the badge package pays a level instead (Gym.onWin). It does drop its coins and one guaranteed
-           item (picked up by the arena's pullAll), see data/drops.js. */
-        G.Drops.roll('gym', this.x, this.y);
-      } else G.Pickups.dropXp(this.x, this.y, this.xp);
+      this.dropLoot();
       if (this.golden) G.Drops.roll('golden', this.x, this.y);
       // Treasure imp: Meowth drops coins; Gholdengo, an x10 ticket.
       if (this.behavior === 'thief') {
@@ -509,7 +545,7 @@
         if (this.burnTick <= 0) {
           const S = G.Enemies.STATUS.burn;
           this.burnTick += S.turn;
-          this.dot('burn', this.maxHp * S.frac * this.burnMul, S.color);
+          this.takeDot('burn', this.maxHp * S.frac * this.burnMul, S.color);
           if (--this.burnLeft <= 0) this.burn = 0;
         }
       }
@@ -524,7 +560,7 @@
             this.poisonN = Math.min(S.cap, this.poisonN + 1);
             frac = S.step * this.poisonN;
           }
-          this.dot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
+          this.takeDot(bad ? 'toxic' : 'poison', this.maxHp * frac * this.poisonMul, S.color);
           if (--this.poisonLeft <= 0) {
             this.poison = 0;
             this.poisonN = 0;
@@ -553,8 +589,7 @@
 
       // --- terreno ---
       let terrainMul = 1;
-      // (Elites are not slowed or burned by liquids.)
-      if (!this.flying && !this.elite && G.World.isLiquid(this.x, this.y)) {
+      if (!this.flying && !this.ignoresLiquid && G.World.isLiquid(this.x, this.y)) {
         const le = G.World.liquidEffect(this.types);
         if (le.dmg) {
           this.lavaTick -= dt;
@@ -911,7 +946,7 @@
       const M = G.Enemies.MORALE,
         reach = Math.min(M.fearMaxPx, M.fearRadiusK * this.r);
       for (const e of G.EnemyMgr.queryCircle(this.x, this.y, reach)) {
-        if (e === this || e.dead || e.boss || e.elite || !(e.keepsDistance() || e.isSeeker())) continue;
+        if (e === this || e.dead || e.boss || e.noMorale || !(e.keepsDistance() || e.isSeeker())) continue;
         const d = Math.hypot(e.x - this.x, e.y - this.y);
         if (d < reach) e.fear = Math.min(1, e.fear + M.killFear * (1 - d / reach));
       }
@@ -919,7 +954,7 @@
 
     /** Morale 0..1 of a band-holder: scared by kills close to it, and by losing a lot of its HP fast. */
     moraleNow() {
-      if (this.elite) return 1; // elites never panic
+      if (this.noMorale) return 1; // never panics
       const M = G.Enemies.MORALE;
       return (1 - M.fearWeight * this.fear) * (1 - M.painWeight * Math.min(1, this.pain / M.painFull));
     }
@@ -1369,7 +1404,7 @@
       }; // minions pay a quarter of a normal kill
       for (let i = 0; i < 2; i++) {
         const a = Math.random() * 6.2832;
-        const m = new Enemy(
+        const m = new WildEntity(
           def,
           this.x + Math.cos(a) * 30,
           this.y + Math.sin(a) * 22,
@@ -1539,38 +1574,17 @@
           12
         );
 
-      if (this.boss || this.elite || this.hp < this.maxHp) {
-        const w = this.boss || this.elite ? 90 : Math.max(22, this.r * 2);
+      if (this.boss || this.bigFx || this.hp < this.maxHp) {
+        const w = this.boss || this.bigFx ? 90 : Math.max(22, this.r * 2);
         const y = this.y - this.bodyH - 10;
         ctx.fillStyle = 'rgba(0,0,0,.6)';
         ctx.fillRect(this.x - w / 2, y, w, 3.4);
-        ctx.fillStyle = this.boss ? '#ffcb3d' : this.elite ? '#ff9f43' : '#ff5f6d';
+        ctx.fillStyle = this.boss ? '#ffcb3d' : this.barColor;
         ctx.fillRect(this.x - w / 2, y, w * Math.max(0, this.hp / this.maxHp), 3.4);
         // Panic meter: a thin bar under the HP bar, only on damaged morale units that are at least meterShow of the way to
         // panic (100% = the panic line). A panicking unit shows it full.
-        if (this.elite) {
-          // Name tag over the bar; it turns red with the enrage countdown once engaged.
-          const left = G.Elites.enrageIn(this),
-            enr = left === 0;
-          ctx.save();
-          ctx.font = '700 9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          ctx.fillStyle = 'rgba(0,0,0,.7)';
-          ctx.fillText(
-            this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''),
-            this.x + 1,
-            y - 2 + 1
-          );
-          ctx.fillStyle = enr ? '#ff5050' : '#ffd9a8';
-          ctx.fillText(
-            this.name.toUpperCase() + (enr ? ' · ENRAGED' : left != null ? ' · ' + Math.ceil(left) + 's' : ''),
-            this.x,
-            y - 2
-          );
-          ctx.restore();
-        }
-        if (!this.boss && !this.elite && (this.keepsDistance() || this.isSeeker())) {
+        this.drawBarTag(ctx, y);
+        if (!this.boss && !this.noMorale && (this.keepsDistance() || this.isSeeker())) {
           const M = G.Enemies.MORALE,
             p = this.panic ? 1 : Math.min(1, (1 - this.moraleNow()) / (1 - M.panicBelow));
           if (p >= M.meterShow) {
@@ -1586,8 +1600,10 @@
 
   // ---------------- gestor ----------------
 
-  G.Enemy = Enemy;
-  Enemy.KNOCK_DECAY = KNOCK_DECAY;
+  G.WildEntity = WildEntity;
+  G.Enemy = WildEntity;
+  WildEntity.KNOCK_DECAY = KNOCK_DECAY;
+  WildEntity.bossScale = bossScale;
 
   G.EnemyMgr = (() => {
     let list = []; // vivos
@@ -1619,7 +1635,7 @@
     function addRemote(o) {
       if (byId.has(o.id)) return byId.get(o.id);
       const def = { dex: o.dex, hp: o.hp, spd: 0, dmg: o.dmg, xp: 0, behavior: o.beh || 'remote' };
-      const e = new Enemy(def, o.x, o.y, { hp: 1, spd: 1, dmg: 1 }, o.boss);
+      const e = new WildEntity(def, o.x, o.y, { hp: 1, spd: 1, dmg: 1 }, o.boss);
       e.id = o.id;
       e.remote = true;
       if (o.shiny) e.makeShiny();
@@ -1896,6 +1912,7 @@
       bossAlive,
       shinies,
       nearestPlayer,
+      newId: () => nextId++, // a body that is not a wild entity (G.GymLeader) takes its id here
       get count() {
         return list.length;
       },

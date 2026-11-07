@@ -1,0 +1,96 @@
+ENTITY MODEL CLOSE-OUT - BROCK ON THE NEW SYSTEM   (PLAN, 2026-11-07, Quick)   [Approved, BUILT]
+=====================================================================================
+Scope (Jess 2026-11-07): Brock and Misty on G.GymLeader; gyms 3 to 8 stay on the old brain for the playtesters.
+Then feature/entity-model closes, and feature/gym-leader-ai picks up slices 9 to 12 (AI, swaps, dodge, gyms 3 to 8).
+Size: S. Game code: Brock's data entry only (gyms.js) + one changelog line. No engine code.
+
+WHY IT IS SMALL
+  Brock's moves vs forms Misty already runs on the new body:
+    Tackle       melee   (Misty: Tackle)          Body Slam  melee  (Onix, loop 2)
+    Rock Throw   shot    (Misty: Water Pulse)     Harden     buff   (Misty: Harden)
+    Defense Curl buff    (Misty: Harden)
+  -> no new move shape. power 1 and tempo 1 everywhere already (the validator's switched-gym rule).
+  His cards (damage, count, velocity, area) are plain cards, legal on both bodies.
+
+WHAT CHANGES FOR BROCK (each a rule change, your call)
+  today (old body)                         switched (G.GymLeader)
+  -------------------------------------    -------------------------------------
+  HP: old 60 s elite model                 your HP formula x hpMult            (B1)
+  status: the old strong-host rules        Misty's set, or your rules         (B2)
+  enrage x2 from 120 s after engaging      off unless authored                (B3)
+  touch hurts you (Tackle numbers)         no touch damage (plan decision 10) (B4)
+  wild attack formula                      your attack formula (slice 6 D1)   (B5)
+  all moves live, one group                one slot at a time, melee cushion on Tackle, your flinch (slice 8)
+  loop 2: Geodude only                     loop 2: Geodude then Onix, faint swaps, pips (slice 7)
+
+B1 HP, WORKED (old model at his gate level vs the new formula; Brock's gate is at 4:00, gym level about 11 to 12)
+  Geodude   L10: 858 / 56 = 15.3    L12: 1029 / 62 = 16.6    L14: 1257 / 70 = 18.0
+  Onix      L10: 680 / 54 = 12.6    L12:  810 / 60 = 13.5
+  Staryu    L12: 1133 / 58 = 19.5   L14: 1398 / 64 = 21.8   (Misty's parity; she was tuned to 25, about 15% above)
+  -> start hpMult { 1: 16, 2: 12 }  (loop 1 parity; loop 2 scaled 25 -> 19 as Misty's was). TUNE by feel.
+  Note: on your defense formula Geodude's Def 100 shrugs off physical hits harder than the old body did,
+  so special moves will feel the bigger drop. Feel decides.
+
+DECISIONS (recommendation first)
+  B1  hpMult { 1: 16, 2: 12 }, tuned by feel after                                           rec: yes
+  B2  Status: copy Misty's restrictions (half freeze and sleep, 5 s hard CC gap, auto shake,
+      no hit i-frames) so both leaders you test play by the same rules                        rec: copy Misty's
+  B3  Enrage off (as Misty, slice 6 Q1)                                                        rec: off
+  B4  No touch damage (plan decision 10). Brock is the gym where touch mattered most            rec: accept
+  B5  Your attack formula; damage moves, tune by feel with B1                                  rec: accept
+  B6  Branch close-out with gyms 3 to 8 on the old brain: the two-path window (plan "Risks")
+      stays open into feature/gym-leader-ai, where slice 12 closes it                          rec: yes
+
+FILES
+  js/data/gyms.js          Brock's entry: playerEntity true, hpMult, restrictions (B2). Nothing else in it changes.
+  js/data/changelog.js     one chg line: Brock now fights like Misty (one move at a time, a team from loop 2,
+                           no touch damage, no enrage)
+  docs                     host-model-plan slice 12 note (Brock moved early), STATE, DEVLOG
+
+TESTS (no new files; the old-body examples move from Brock to Lt. Surge, the next gym still on the old brain)
+  CHANGED docs/proposals/gym-leader-harness.js
+    section 10: "only Misty is switched on" -> "Brock and Misty, nothing else"; Brock validates; his hpMult 16 / 12
+    NEW section 12 (in this harness, since it already drives a real G.GymLeader): every Brock loop 1 move
+      (Tackle, Defense Curl, Rock Throw) casts through the leader with his real cards, and nothing else casts
+      (the Misty block, copied for Brock). Why: no test fires his moves on the new body today.
+  CHANGED docs/proposals/leader-stats-harness.js   lines 249, 458, 466, 467: the "wild body" validator cases use
+    Lt. Surge, not Brock (they need a gym without playerEntity)
+  CHANGED docs/proposals/leader-team-harness.js    lines 211 to 218: "Brock (old body) has no team" -> Lt. Surge
+  CHANGED docs/proposals/gym-harness.js            the cases that build Brock's slots expecting the old body
+    (around line 217) build them with the switch off, so they keep pinning the old brain until slice 12
+  CHANGED docs/proposals/boss-owner-harness.js + boss-owner-mutate.js   the "team cards rejected on the old body"
+    case and its mutant (mutate line 50) point at Lt. Surge
+  CHANGED tools/smoke-gym.js   Brock's fight runs as a switched gym (flag true); adds Lt. Surge as the old-body
+    control fight, so the smoke still covers both paths
+  NOT CHANGED: check.js, intent scenarios, debug sets, the leader-slots / leader-items harnesses
+  Build-time: the gym-harness Brock cases get read in full first; if more of them pin the old body than the
+  ones above, I list them before touching anything.
+
+FEEL TEST  (G.Debug.gym(1), then G.Gym.debugLoop = 2)
+  loop 1: about a 60 s fight? Defense Curl in the gaps, Rock Throw at range, Tackle up close.
+  loop 2: Geodude, then Onix after the faint, pips over the bar.
+
+THEN (you run the git; I give the commands at that point)
+  checks green -> commit -> merge feature/entity-model into main -> cut feature/gym-leader-ai
+  first task on the new branch: the GymLeaderAI design doc (Director-style, no code until you sign off)
+
+ANSWERS (Jess 2026-11-07): B1 to B6 as recommended.
+
+AS BUILT (2026-11-07, Quick; not run here, no node)
+  js/data/gyms.js        Brock: playerEntity true, hpMult { 1: 16, 2: 12 }, restrictions = Misty's set (keys in another
+                         order, so no mutant pattern matches twice). Nothing else in the entry changed.
+  js/data/changelog.js   one chg line (2026-11-07). My first edit cut a Misty line short; fixed and re-checked, it parses.
+  docs                   COMBAT-RULES leader line, host-model-plan slice 12
+  tests  gym-leader-harness.js  section 10: Brock and Misty switched, Brock hpMult and restrictions, Brock validates;
+                                NEW section 12: Brock loop 1 (Tackle, Defense Curl, Rock Throw) through the real G.GymLeader
+         leader-stats-harness   the wild-body validator cases use Lt. Surge
+         leader-team-harness    the old-body scope guard uses Lt. Surge
+         boss-owner-harness     the "team card" case turns the switch off on its Brock clone; mutate line 50 comment only
+         smoke-gym.js           Brock fights as a Player entity; Lt. Surge added as the old-body control
+  DEVIATION (found reading gym-harness in full, as promised): FOUR harnesses drive Brock's real arena or def on the old
+    brain without loading gym-leader.js: gym-harness (sections 3, 5, 10), gyms-only, gym-reward and boss-split. Each now
+    turns Brock's switch off after loading, with a comment (they pin the old brain and retire at slice 12). Simpler than
+    moving each to Lt. Surge, whose cards, sets and numbers differ from the hand values they check.
+  STALE scan: no mutant pattern lost or doubled in gyms.js.
+  RISK to watch in the run: section 12 needs Defense Curl to get a buff visit (slice 8 rule: only when nothing in reach
+    is ready). If it FAILs on defense-curl, that is a real finding (Brock's fast Tackle starves his buff), not test noise.

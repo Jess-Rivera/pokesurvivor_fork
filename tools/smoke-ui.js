@@ -14,7 +14,15 @@
 const path = require('path'),
   cp = require('child_process');
 const root = path.resolve(__dirname, '..');
-const PW = path.join(process.env.PLAYWRIGHT_DIR || 'C:\\Users\\boric\\tools\\playwright', 'node_modules', 'playwright');
+// Playwright lookup, first that exists: PLAYWRIGHT_DIR, then <your user folder>\tools\playwright (work: jessvri), then the home default.
+const PW_DIRS = [
+  process.env.PLAYWRIGHT_DIR,
+  path.join(require('os').homedir(), 'tools', 'playwright'),
+  'C:\\Users\\boric\\tools\\playwright',
+]
+  .filter(Boolean)
+  .map((d) => path.join(d, 'node_modules', 'playwright'));
+const PW = PW_DIRS.find((d) => require('fs').existsSync(d)) || PW_DIRS[0];
 const PORT = 8965 + Math.floor(Math.random() * 200);
 const { chromium } = require(PW);
 

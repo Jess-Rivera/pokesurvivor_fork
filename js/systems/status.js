@@ -56,7 +56,10 @@ G.Status = (() => {
   const GRACE = 2.5; // player: seconds after a hard CC ends in which no new hard CC lands
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
-  const strong = (h) => !!(h.boss || h.elite || h.gym); // the player is NOT strong any more (full timers + Shake off)
+  const strong = (h) => !!(h.boss || h.strongStatus || h.gym) && !h.leaderStatus; // the player is NOT strong any more (full timers + Shake off); nor is a G.GymLeader
+  // Slice 6 (Q3, Jess 2026-11-07): a G.GymLeader's status differences are AUTHORED per gym (js/data/gyms.js `restrictions`); with none
+  // it gets your rules. It answers h.statusCut (freeze and sleep length multiplier) and h.ccWindow (the no-new-hard-CC gap, else GRACE);
+  // its auto shake is G.GymLeader.update. Misty authors the old fixed values (half length, a 5 s gap).
   const typesOf = (h) => h.types || (h.mon && h.mon.types) || [];
   const fam = (k) => (k === 'toxic' ? 'poison' : k);
   const isControl = (k) => !!CONTROL[k];
@@ -95,6 +98,7 @@ G.Status = (() => {
           : Array.isArray(S.dur)
             ? G.U.rand(S.dur[0], S.dur[1])
             : S.dur;
+    if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;
     return cutsStrong(h, kind) && strong(h) ? base * STRONG.cut : base;
   }
 
@@ -200,8 +204,21 @@ G.Status = (() => {
     return 'ok';
   }
 
+  /** The grey Immune note on a host hit by a type it is immune to (slice 4b, I4, Jess 2026-11-06): at most once per IMMUNE_GAP s
+   *  per host, so a horde does not spam it. The gap counts down in tick(). Returns true when it showed. */
+  const IMMUNE_GAP = 0.5;
+  function immuneNote(h) {
+    if (h.immCd > 0) return false;
+    h.immCd = IMMUNE_GAP;
+    text(h, 'Immune', '#a3abb8');
+    return true;
+  }
+
   function damage(h, name, amount, color) {
-    if (h.dot) h.dot(name, amount, color);
+    if (h.takeDot)
+      h.takeDot(name, amount, color); // the one DoT entry of both families (slice 4a, H4)
+    else if (typeof h.dot === 'function')
+      h.dot(name, amount, color); // hosts without takeDot (older test hosts)
     else if (h.statusDot) h.statusDot(name, amount, color);
   }
 
@@ -211,7 +228,7 @@ G.Status = (() => {
     const S = CONTROL[M.k],
       w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : S.window || 0;
     if (w > 0) (h.stWin || (h.stWin = {}))[M.k] = w;
-    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = GRACE;
+    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = h.ccWindow != null ? h.ccWindow : GRACE;
     h.stMajor = null;
   }
 
@@ -242,6 +259,7 @@ G.Status = (() => {
       if (C.t <= 0) h.stCnf = null;
     }
     if (h.shakeCd > 0) h.shakeCd -= dt;
+    if (h.immCd > 0) h.immCd -= dt; // the Immune note gap (slice 4b, I4)
     if (h.anim) h.anim.frozen = !!(h.stMajor && h.stMajor.k === 'freeze'); // a frozen sprite stops animating
     const T = h.stTrap;
     if (T && (T.t -= dt) <= 0) {
@@ -479,6 +497,7 @@ G.Status = (() => {
     jitter,
     sleepChance,
     swapLocked,
+    immuneNote,
     shakeable,
     shake,
     autoShake,

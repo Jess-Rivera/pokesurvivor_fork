@@ -21,6 +21,9 @@ global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, 
 try { load('js/core/util.js'); } catch (e) { }
 ['js/core/stats.js', 'js/core/simbus.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/systems/team-cards.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js', 'js/ui/gym-present.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
+// Entity model close-out (2026-11-07): Brock is on G.GymLeader now; this harness pins the OLD brain, so it runs his data with
+// the switch off (gym-leader.js is not loaded here). The switched Brock is pinned in gym-leader-harness.js. Retires at slice 12.
+G.Gyms.KANTO[0].playerEntity = false;
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 
 G.GymArena.reset(); G.Gym.reset(); G.Elites.reset();

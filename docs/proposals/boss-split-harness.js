@@ -27,6 +27,9 @@ try { load('js/core/util.js'); } catch (e) { }
  'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/systems/team-cards.js',
  'js/data/enemies.js', 'js/data/gyms.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/boss-ai.js', 'js/systems/elites.js', 'js/systems/gym-arena.js', 'js/systems/gym.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
+// Entity model close-out (2026-11-07): Brock is on G.GymLeader now; this harness pins the OLD brain, so it runs his data with
+// the switch off (gym-leader.js is not loaded here). The switched Brock is pinned in gym-leader-harness.js. Retires at slice 12.
+G.Gyms.KANTO[0].playerEntity = false;
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 40) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 G.Enemy.prototype.die = function () { this.dead = true; };

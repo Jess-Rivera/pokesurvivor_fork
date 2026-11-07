@@ -27,7 +27,7 @@ const M = [
   ["maxHpAt ignores the IV", "player", [["G.Stats.hpForLevel(this.baseHpStat, level, this.statIv(0), this.statEv(0))", "G.Stats.hpForLevel(this.baseHpStat, level, 0, this.statEv(0))"]]],
   ["constructor movement ignores the profile", "player", [["G.Stats.speedToPx(mon.stats[5], this.statIv(5), this.statNat(5), this.statEv(5))", "G.Stats.speedToPx(mon.stats[5], 0, 1, this.statEv(5))"]]],
   ["moveFactor ignores the profile", "player", [["this.runDmgMul(),\n      this.statProf\n", "this.runDmgMul()\n"]]],
-  ["hurt ignores the profile", "player", [["this.level, defMul, this.statProf) * mul;", "this.level, defMul) * mul;"]]],
+  ["hurt ignores the profile", "player", [["this.level, defMul, this.statProf, stab, scale) * mul;", "this.level, defMul, null, stab, scale) * mul;"]]],
   ["the Player drops its profile", "player", [["this.statProf = statProf || G.Stats.NEUTRAL_PROFILE;", "this.statProf = G.Stats.NEUTRAL_PROFILE;"]]],
   ["profileOf ignores the uid", "copies", [["c = typeof id === 'string' && save ? get(save, id) : null;", "c = null;"]]],
   ["profileOf ignores a species mismatch", "copies", [["G.Stats.profile(c && (dex == null || c.speciesID === dex) ? c : null)", "G.Stats.profile(c)"]]],

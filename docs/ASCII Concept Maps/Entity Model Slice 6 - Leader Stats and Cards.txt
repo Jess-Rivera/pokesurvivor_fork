@@ -1,0 +1,256 @@
+ENTITY MODEL, SLICE 6: LEADER STATS AND CARDS (one plan, redrawn 2026-11-07, Quick at work)
+Source: docs/proposals/host-model-plan.md "6. Stat pipeline and cards". Rules: docs/COMBAT-RULES.md "Host model", SS10.
+Status: BUILT 2026-11-07 (steps 0, A and B; reports at the bottom). Every decision answered (D1 to D6, Q1 to Q5,
+N1 to N6). Tests clean, feel test passed (the slice 5 arena-edge catch remains, TODO). Close-out: Prettier pass,
+lint errors 22 to 0, five mutants re-pointed at the formatted lines.
+
+GOVERNING RULE (LEADER PRINCIPLE): a leader is another player's team run by AI. Anything a player can have, it can
+have. Every difference is hand authored per gym.
+
+=====================================================================================
+ THE SHAPE AFTER
+=====================================================================================
+
+   authored per gym / slot / loop             the pipeline YOU use                 authored differences
+  +---------------------------------+       +------------------------------+     +----------------------------+
+  | species, level                  |       | HP formula (+ HP Up)         |     | hpMult        (HP)         |
+  | IVs, EVs, nature      (D3)      | ----> | attack factor (Protein, IVs, | --> | enrage        (off unless) |
+  | cards, team cards incl (D2)     |       |   nature, held + run items)  |     | tempo         (AI pace)    |
+  | held item, run items  (Q4)      |       | Def / Sp. Def (Iron, Zinc)   |     | status rules  (Q3)         |
+  +---------------------------------+       +------------------------------+     +----------------------------+
+                                                                                   power: GONE on switched gyms
+
+  Construction order (fixes scan finding C):
+    brain loads cards --> stat profile set --> max HP --> held + run items equipped --> HP filled
+
+=====================================================================================
+ NEW DECISIONS (N1 to N5), flagged as rule changes
+=====================================================================================
+  N1  Wild-body gyms (Brock, gyms 3 to 8) keep "no team cards" until they switch (slice 12): their body has no
+      Vitamins path, so a team card would do nothing. RECOMMEND yes. Only playerEntity gyms get D2.
+  N2  D2 side effect: Gate and Duration cards are legal on a leader and change ITS stage timers exactly as they
+      change yours. Regen is rejected by the validator until slice 7 (it heals the bench; she has none).
+      RECOMMEND yes. Misty authors neither, so nothing she does changes.
+  N3  Auto shake default. Your default is "you tap"; an AI has no hands, so "off" would leave a leader frozen
+      the full length, a hidden handicap. RECOMMEND default ON at the auto rate (same as a player with the
+      accessibility setting on). Misty authors on (today's behavior).
+  N4  Tempo stays authored PER SLOT (where it lives now, and per mon fits teams in slice 7), reclassified as the
+      AI's pace. The validator rejects power other than 1 on a switched gym. RECOMMEND yes.
+  N5  Card budget measure: one stack = one level-up pick; a player at level L has had L - 1 picks. The level is
+      only known at gate spawn, so the check runs at fight start as a dev log WARNING (never a block). Misty
+      (13 stacks + Zinc 3 = 16) warns at level 16 only. RECOMMEND yes; Misty gets NO held item this slice so
+      the feel test isolates Zinc, hpMult and enrage.
+
+=====================================================================================
+ PLAN, PER FEATURE (what, where, why)
+=====================================================================================
+
+  [1] ATTACK THROUGH YOUR FORMULA (D1)
+      js/entities/boss-ai.js  brain constructor (where it sets the mon's move factor): for a G.GymLeader it no
+                              longer overrides the factor, so the Player entity's own one runs (Protein, IVs,
+                              nature, held items, run items, stages). The wild body keeps today's factor
+                              untouched. The leader's factor gets x enrage only when the gym authors enrage.
+      WHY: same numbers today at neutral inputs; it is what makes every player input count.
+
+  [2] ORDER FIX AND STAT PROFILE (C, D3)
+      js/entities/gym-leader.js  constructor: set the stat profile from the gym, then max HP, then items, then
+                                 HP. Header comment rewritten (no more "fixed leader status rules").
+      js/systems/gym.js          leader def builder: passes this loop's profile and items into def.gym.
+      js/data/gyms.js            new slot keys ivs, evs, nature (per loop, carried forward like move sets).
+                                 Validator: IVs 0 to 31, EVs 0 to 252 each and 510 total, a real nature.
+      WHY: an HP Up card is silently lost today; IVs and nature need a way in.
+
+  [3] CARDS (D2, N1, N2)
+      js/data/gyms.js  card validator: team cards legal on playerEntity gyms, still rejected on the wild body;
+                       Regen rejected ("waits for slice 7"); team cards skip the "fits a fielded move" check
+                       (they target the mon, not a move); caps still apply on the running total.
+      WHY: D2. The rest of the card path (team card store, Vitamins read by Def and Sp. Def) already works.
+
+  [4] ITEMS, BOTH TIERS (Q4)
+      js/data/gyms.js         slot key `item` (one held item, per loop, carried forward); gym key `runItems`
+                              (gained per loop, cumulative, like cards). Validator: the item exists, the right
+                              tier in the right key, max 4 run items (your cap), and not on the leader reject
+                              list below.
+      js/entities/gym-leader.js  equips the held item and puts each run item on her (same on / off code as yours).
+      Leader reject list (validator message names the reason):
+        human only ......... Amulet Coin (coins), Lucky Egg (XP)
+        reads YOUR side .... Snowball Badge (counts your kills, run-wide)
+        reads a team ....... Brass Knuckles, Sharp Scissors, Pikachu's Tear, Re-Do  (back in slice 7)
+        + any held item step 0 finds whose effect only fires on your code path (named in the step 0 report)
+      WHY: the team-HP and faint math reads YOUR roster today, so a leader holding Brass Knuckles would scale
+      off your team's HP. That is a real bug, not just a no-op.
+
+  [5] ENRAGE AND POWER (Q1, Q2, N4)
+      js/data/gyms.js   new restriction `enrage` (true / false, absent = off). Validator: power must be 1 on a
+                        switched gym.
+      js/systems/gym.js enrage multiplier and countdown return "none" for a switched gym without `enrage`, so
+                        the HUD countdown disappears on its own (hud.js not touched).
+      WHY: Q1 and Q2. "Enrage restarts on each send-out" (host-model-plan decision 3) applies only where authored.
+
+  [6] STATUS RULES AS RESTRICTIONS (Q3, N3)
+      js/data/gyms.js        new restrictions: statusCut (freeze and sleep length, 0 to 1, default 1),
+                             ccWindow (seconds of no new hard CC, default your 2.5), autoShake (default ON, N3),
+                             hitIframes (seconds, default yours).
+      js/systems/status.js   the leader status table reads the holder's authored values; a leader with none
+                             gets your rules.
+      js/entities/gym-leader.js  i-frames and auto shake read the restrictions.
+      WHY: Q3, the last hidden differences become authored ones.
+
+  [7] CARD BUDGET (Q5, N5)
+      js/systems/gym.js  at fight start, a dev log warning when stacks > level - 1. No block.
+
+  [8] MISTY (step B only)
+      js/data/gyms.js  Misty: Vitamins Sp. Def 3 (Zinc) added to loop 1 cards, hpMult 26 -> 25, enrage absent
+                       (off). In step A she authors today's values (enrage on, statusCut 0.5, ccWindow 5,
+                       autoShake on, hitIframes 0), so step A changes nothing she does.
+
+=====================================================================================
+ BUILD ORDER (each step leaves the game working)
+=====================================================================================
+  Step 0  TESTS FIRST, no game change. New harness passes its neutral cases on today's code.
+  Step A  NEUTRAL: features 1 to 7. Misty authors today's values. Every existing harness unchanged in meaning.
+  Step B  MISTY: feature 8. Docs: COMBAT-RULES SS10 (team cards: any a player can get, minus the reject list)
+          and "Host model" (status rules are authored), BOSS-REWORK section 3, BALANCE.md (Misty hpMult 25,
+          Zinc 3, enrage off). Changelog entry. Then your feel test.
+
+=====================================================================================
+ TESTS
+=====================================================================================
+  NEW  docs/proposals/leader-stats-harness.js
+       Checks, each worked by hand:
+         a. parity: a plain Player entity and Misty from the same inputs give the same HP (before hpMult),
+            attack factor (before enrage) and damage taken by Def and by Sp. Def
+         b. profile: IVs, EVs and nature move both by the same amount
+         c. cards: an HP Up card raises her max HP (the order bug); Zinc 3 cuts Sp. Def damage exactly as on you;
+            Gate and Duration change her stage timers as yours; Regen rejected
+         d. items: every held item equips and unequips on her with stats back to exact and nothing thrown;
+            Focus Sash, Leftovers, Mystic Water and Choice Specs do their thing on her; every reject-list item
+            is rejected with its reason; a 5th run item rejected
+         e. restrictions: none authored = your status rules, i-frames and auto shake ON; Misty's authored values
+            = today's numbers
+         f. enrage: absent = x1 at 300 s and no countdown; authored = today's ramp
+         g. validator: power 2 on a switched gym, IV 32, EV 253, EV total 511, a fake nature, a team card on the
+            wild body, a held item in runItems: each rejected
+         h. budget: 16 stacks at level 16 warns, at level 17 does not
+       WHY: gym-leader-harness pins the leader against fixed values; nothing compares her to a plain Player
+       entity, and nothing covers profile, card order, items or restriction defaults.
+  NEW  docs/proposals/leader-stats-mutate.js
+       Breaks, one at a time, and expects the harness to fail on each: the brain's factor override restored for
+       the leader; max HP set before cards; profile not passed; held item not equipped; the run item reject
+       list emptied; Regen allowed; restriction defaults switched back to today's leader values; enrage always
+       on; power allowed on switched gyms; budget warning removed.
+       WHY: proves the harness catches each of those breaks.
+  EDIT docs/proposals/gym-leader-harness.js  its fixture leader authors Misty's step A values, so the 5 s gap
+       and half-length freeze tests keep their meaning once defaults become yours.
+  EDIT docs/proposals/gym-leader-mutate.js   any mutant aimed at the old fixed leader table is retargeted to the
+       restriction read (checked in step 0, reported with proof).
+  CHECK docs/proposals/gym-harness.js section 3 (enrage ramp): if it runs on Misty, it moves to Brock (wild
+       body keeps the clock). Reported in step 0.
+  NO EDIT boss-owner-harness.js: its "team card is rejected" case is on Brock, still true under N1.
+  EDIT tools/check.js  runs the two new files.
+  Intent scenarios: none (no move behavior changes). Debug sets: none new.
+  Re-run: node tools/check.js, smoke-gym (file://).
+
+=====================================================================================
+ BALANCE, RISK, WAY OUT
+=====================================================================================
+  Misty after step B: Zinc cuts special damage on her about 11% at level 20, HP 4% lower. About a minute.
+  Feel risk: no enrage means a stalling team never gets pushed. Watch for a fight dragging past 2 minutes.
+  Feel risk (future gyms): Leftovers heals 1.5% of max HP, and a leader's max HP is x hpMult, so it is about
+    33 HP/s on Misty's numbers, close to doubling a 60 s fight. Same rule as yours, but tune hpMult with it.
+  Risk: the attack swap; step 0 pins it, so drift fails before step B.
+  Way out: drop the Zinc line, hpMult back to 26, author enrage on.
+  No new save fields.
+
+  Feel test (about 2 minutes): G.Debug.gym(2) with a special-heavy team, then a physical one. Special hits a
+  touch weaker on her, physical about the same, about a minute each, no enrage countdown on the HUD.
+
+=====================================================================================
+ ANSWER LOG (Jess, 2026-11-07)
+=====================================================================================
+  D1 yes, your attack formula at her level. D2 any card a player can get. D3 yes. D4 items in this slice.
+  D5 fight-time report scrapped, hpMult tuned by feel. D6 Misty hpMult 25.
+  Q1 enrage off unless authored, Misty off. Q2 power goes, tempo authored. Q3 your rules are the default,
+  each difference authored, in this slice. Q4 held and run items now, team readers wait for slice 7,
+  validator rejects what cannot work. Q5 no cap, a warning.
+
+=====================================================================================
+ STEP 0 REPORT (2026-11-07, Quick)
+=====================================================================================
+  Written: docs/proposals/leader-stats-harness.js, section a only (neutral parity, hand numbers: HP 84 / 2184,
+    factor 396 special and 184 physical, 39.037 taken by Def and by Sp. Def). b to h and leader-stats-mutate.js
+    land with step A, since their targets do not exist yet.
+  check.js: NO edit needed. It already runs every *harness*.js under docs/; mutate runners are run by hand.
+  gym-harness.js section 3 (enrage ramp) runs on Brock (wild body): no move needed.
+  gym-leader-mutate.js: retarget in step A the mutants aimed at the fixed leader table ("a leader is strong",
+    "no leader freeze and sleep cut", "the 5 s gap is 2.5 s", "the AI never shakes off", "hit i-frames stay
+    on"); in step B "Misty loses her hpMult" (its pattern is hpMult 26).
+  Held items on a leader (scan): stats ones work through the Player entity. Order matters: Quick Claw after the
+    brain (it overwrites cdMul with tempo), Leftovers and Black Sludge after max HP. Four do NOT work as on you:
+      Rocky Helmet .... fires when something touches the holder; nothing touches a leader
+      Bright Powder ... speeds up dodge charges; the AI never dodges
+      Choice Band / Specs ... the +40% is paid for by the move lock; the brain ignores the lock (free buff)
+      Life Orb ........ the HP cost is paid in Player.cast, which only your move path calls (free +30%)
+    OPEN (N6): reject these four for now, or wire the lock and the Life Orb cost into the brain in step A.
+  N6 ANSWERS (Jess, 2026-11-07):
+    Choice Band / Specs: never on a leader. The validator rejects them ("a leader cannot honor the move lock").
+    Life Orb: works properly. Step A: the brain pays 1% of max HP (min 1, never below 1 HP) on each leader cast,
+      the same rule as Player.cast. Tests: harness d (cost per cast, the floor), mutant "the brain skips the cost".
+    Bright Powder: allowed. The leader AI will dodge (a later slice); until then it does nothing on a leader.
+    Rocky Helmet: OPEN. Its code fires only on body touch (combat.js, a wild enemy touching you), not on melee
+      hits as its description says. Nothing touches a leader, and a leader's melee cone on you does not trigger
+      YOUR helmet either (a gap on your side too).
+    Rocky Helmet ANSWER (Jess, 2026-11-07): marked bugged (TODO.md Up next). The validator rejects it on leaders
+      ("Rocky Helmet is bugged: it fires on body touch only, see TODO") until the melee fix lands.
+    Final leader reject list: Amulet Coin, Lucky Egg, Snowball Badge, Brass Knuckles, Sharp Scissors, Pikachu's
+      Tear, Re-Do (team readers, back in slice 7), Choice Band, Choice Specs, Rocky Helmet. Tests: harness d checks
+      each with its reason; Life Orb pays its cost; Bright Powder equips cleanly.
+
+=====================================================================================
+ STEP A REPORT (2026-11-07, Quick): built, waiting on Jess's runs
+=====================================================================================
+  Step 0 passed on Jess's machine (leader-stats-harness section a, check.js clean).
+  Written:
+    boss-ai.js      the wild factor now lives in the wild-body block only (D1); orbCost: Life Orb on each cast (N6)
+    gym-leader.js   profile into the Player entity; brain, then max HP, then arm() (held item, run items); rule();
+                    hitIframes / statusCut / ccWindow from the restrictions, else yours; moveFactor = yours x enrage;
+                    auto shake unless autoShake false (N3)
+    status.js       the fixed LEADER table is gone; reads h.statusCut and h.ccWindow
+    gym.js          makeDef passes profile, item, runItems; budget warning at fight start (N5); enrages(): a switched
+                    gym only when it authors enrage (Q1)
+    gyms.js         keys: slot ivs / evs / nature / item, gym runItems, restrictions enrage / statusCut / ccWindow /
+                    autoShake / hitIframes; LEADER_ITEM_BAN; validator for all of it; team cards on switched gyms
+                    (vitamins:<stat>, Gate, Duration; Regen rejected); power 1 on switched gyms; perLoop,
+                    profileFor, runItemsFor, budgetWarn. Misty authors today's values (enrage on, cut 0.5, gap 5,
+                    auto shake, no i-frames), so nothing she does changes.
+    hud.js          PLAN CORRECTION: the plan said hud.js untouched, but with enrage off the HUD would show "HIT IT TO
+                    ENGAGE" for the whole fight. It now skips the enrage line when the gym does not enrage.
+    tests           leader-stats-harness b to h; leader-stats-mutate.js (38 mutants); gym-leader-harness fixture
+                    authors Misty's step A values; gym-leader-mutate: 4 mutants retargeted.
+  Choice made in the build (consistent with N1): ivs, evs, nature, item and runItems on a wild-body gym are rejected
+    ("needs playerEntity"), since that body has no stat profile or items.
+  Note: gym-leader-mutate "hpMult does not carry forward" now matches twice (perLoop has the same line); the replace
+    hits the first one, hpMultFor, so it still tests what it says.
+  Checked here: all 10 changed files parse; all 38 + 51 mutation patterns are found.
+  Jess's run (09:18): harness 197/197; gym-leader-mutate 51/51; check.js 49/49 harnesses; smoke-gym all passed.
+    leader-stats-mutate 34/38. The 4 misses, fixed:
+      max HP before the cards ... the mutant was a no-op (max HP was set again after the brain); it now moves the line
+      any nature passes ......... the mutant only dropped the string check, the nature lookup still ran; now it drops both
+      ban list emptied, Rocky Helmet allowed ... a REAL gap: the harness read the ban list from the code, so emptying it
+        emptied the test. The list and reasons are now hand-written in the harness, and it checks the code bans exactly them.
+    Also: the carry-forward check now fails cleanly instead of crashing.
+  Correction to N5: the warning fires when stacks exceed level - 1, so at every level up to the stack count, not only at
+    it. Misty today (13 stacks) warns at level 13 and below; after Zinc (16), at 16 and below. Her usual level 18 to 20
+    stays quiet. Debug fights at level 5 warn in the console (seen in the gym-harness output); that is expected.
+  Jess's re-run (09:20): harness passes, leader-stats-mutate 38/38; feel test: Misty unchanged. Step A DONE.
+
+=====================================================================================
+ STEP B REPORT (2026-11-07, Quick): built, waiting on Jess's runs and feel test
+=====================================================================================
+  gyms.js     Misty: cards add 'vitamins:spd': 3 (16 stacks), hpMult 25, restrictions drop enrage.
+  docs        COMBAT-RULES "Host model" (new LEADER STATS line; LEADER RULES and the legacy line updated; SS10 notes the
+              build), BOSS-REWORK section 3 (enrage, attack formula, cards, power), BALANCE.md (Misty), DECISIONS.md.
+  changelog   2026-11-07 entry.
+  tests       leader-stats-harness: Misty step B block (2100 HP, Zinc, never enrages), restrictions, budget 16;
+              gym-leader-harness and gym-leader-mutate: hpMult 25; tools/smoke-gym: a gym with no enrage expects no
+              countdown (Brock still checks his).

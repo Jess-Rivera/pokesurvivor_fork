@@ -49,7 +49,7 @@ G.MoveEffects = (() => {
     !(e.stg || e.trk) || cat === 'status' ? 1 : G.Stages.mul(e, cat === 'special' ? 'spd' : 'def');
   function typeK(owner, type, e) {
     // D9: chart x weather, floored at 1 for the Power Stone's held type
-    const k = G.Types.mult(type, e.types) * G.Weather.mult(type);
+    const k = G.Types.mult(type, e.types || (e.mon && e.mon.types) || []) * G.Weather.mult(type); // a Player entity's types sit on mon
     return owner.stoneType && owner.stoneType === type ? Math.max(1, k) : k;
   }
   const critOf = (o) => (o.critChance || 0) + (o.stgTeam ? G.Stages.teamSum(o.stgTeam, 'crit') : 0);
@@ -112,7 +112,12 @@ G.MoveEffects = (() => {
     return [dx, dy, k];
   }
 
-  function damage(inst, e, rng, fx, hop, hit) {
+  /**
+   * The hit an attack hands its target (slice 4a, the one hit contract). The attacker decides its half: the attacker factor A (D6),
+   * STAB from the ATTACKER (D8; every attacker declares it with stabFor since slice 4b, a gym leader's mon included), the crit roll (D10) and
+   * its multiplier. The target's family runs the defense half: PlayerEntity.takeHit, or the wild defense in damage() below.
+   */
+  function blowOf(inst, e, rng) {
     const def = inst.spec,
       o = inst.cast.owner;
     const sb = specialOf(def, 'statusBonus'); // D13: a POWER term, checked per hop target
@@ -121,25 +126,41 @@ G.MoveEffects = (() => {
       dmg: (def.basePower || 0) * (sb && G.Status.majorKind(e) ? sb.multiplier : 1),
       type: def.type,
     }; // adapter into G.Stats (D5: P = basePower)
-    const A = o.moveFactor(m); // D6, at hit time
-    const ds = enemyDefStats(e);
-    const D = G.Stats.applyDamage(A, ds.def, ds.spd, m, defLevel(e, o.level), o.stabFor(m), defStage(e, m.cat)); // D7, D8
-    const k = typeK(o, def.type, e);
     const cfx = fxOf(def, 'crit'),
-      kfx = fxOf(def, 'knockback');
-    const c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
-      crit = c > 0 && rng() < c; // D10: one roll per damage hit, only when it can crit
-    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (crit ? CRIT_MUL * (o.critDmgMul || 1) : 1)); // D11
+      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0);
+    return {
+      A: o.moveFactor(m), // D6, at hit time
+      m,
+      cat: def.category,
+      type: def.type,
+      stab: def.category !== 'status' && o.stabFor && o.stabFor(m) ? G.Stats.STAB : 1,
+      crit: c > 0 && rng() < c, // D10: one roll per damage hit, only when it can crit
+      critMul: CRIT_MUL * (o.critDmgMul || 1),
+      owner: o,
+    };
+  }
+
+  /** The wild defense half (D7 to D11, D15, D33): a hit on a wild entity or an Elite. */
+  function damage(inst, e, rng, fx, hop, hit) {
+    const def = inst.spec,
+      b = blowOf(inst, e, rng),
+      o = b.owner;
+    const ds = enemyDefStats(e),
+      scale = G.Stats.DMG_SCALAR; // slice 4 H2: every target but the human takes DMG_SCALAR
+    const D = G.Stats.applyDamage(b.A, ds.def, ds.spd, b.m, defLevel(e, o.level), b.stab, defStage(e, b.cat), scale); // D7, D8
+    const k = typeK(o, def.type, e);
+    const kfx = fxOf(def, 'knockback');
+    const full = Math.max(1, D * k * G.Stats.itemDmgMul(o, def.type, k) * (b.crit ? b.critMul : 1)); // D11
     const dmg = Math.max(1, full * hopMul(def, hop)); // D15: the chain reduction is applied last
     const col = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     const hp0 = e.hp,
       sh0 = e.shield || 0;
     const kn = knockOf(inst, e, kfx);
-    e.hurt(dmg, col, kn[0], kn[1], kn[2], crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
+    e.hurt(dmg, col, kn[0], kn[1], kn[2], b.crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg;
-    hit.crit = crit;
+    hit.crit = b.crit;
     hit.dealt = Math.max(0, hp0 - Math.max(0, e.hp)) + Math.max(0, sh0 - (e.shield || 0)); // D34: shield counted, overkill excluded
   }
 
@@ -244,7 +265,8 @@ G.MoveEffects = (() => {
     const hp0 = e.hp,
       sh0 = e.shield || 0;
     const kn = knockOf(inst, e, kfx);
-    e.hurt(dmg, col, kn[0], kn[1], kn[2], null);
+    if (e.takeFlat) e.takeFlat(dmg, col, kn[0], kn[1], kn[2]);
+    else e.hurt(dmg, col, kn[0], kn[1], kn[2], null); // hosts without takeFlat (older test hosts)
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg;
@@ -265,7 +287,7 @@ G.MoveEffects = (() => {
   };
   /** Fissure (Jess 2026-11-01): only a wild foe can be KO'd outright; bosses, gym leaders, elites and the player take the hit alone. */
   function ohkoWild(inst, e, rng, fx) {
-    if (!foe(e) || e.isPlayer || e.boss || e.elite || e.gym || !(rng() < pct(fx.koChance || 0))) return;
+    if (!foe(e) || e.isPlayer || e.boss || e.koImmune || e.gym || !(rng() < pct(fx.koChance || 0))) return;
     G.FX.dmgText(e.x, e.y - (e.bodyH || 20) - 14, 'One-hit KO!', '#ffd23f');
     e.hurt(e.hp + (e.shield || 0) + 1, '#ffd23f', 0, 0, 0, null);
   }
@@ -288,7 +310,7 @@ G.MoveEffects = (() => {
       if (e.push) e.push(dx, dy, k);
       return;
     }
-    if (e.boss || e.elite) return;
+    if (e.boss || e.immovable) return;
     const [nx, ny] = G.U.norm(dx, dy);
     e.kx = (e.kx || 0) + nx * k;
     e.ky = (e.ky || 0) + ny * k;
@@ -298,7 +320,7 @@ G.MoveEffects = (() => {
   const LATER = new Set(['emit', 'shield']); // emit: slice 4d; shield acts at cast (applyCast)
 
   /** Slice 7a (D-ENEMY): a gym leader's move on the player. The attacker half is the leader's (owner.moveFactor: the boss ratio path with
-   *  the folded Power, STAB, power knob, enrage and Attack stage); Player.hurt does the defender half and the type, as for every enemy hit.
+   *  the folded Power, power knob, enrage and Attack stage; STAB travels in the hit since slice 4b); Player.hurt does the defender half and the type, as for every enemy hit.
    *  Riders onto the player (gym-roster, Jess 2026-11-01): the payload runs in data order like applyHit. Damage takes statusBonus (Hex)
    *  and a crit (the D10 rule: the owner's crit cards plus the move's percent, x1.5 after your defense). Ailments go through G.Status
    *  (burn, poison and toxic as the player's damage over time), so immunity, one major, the hard-CC grace, berries and Shake off hold.
@@ -309,27 +331,19 @@ G.MoveEffects = (() => {
   const FLINCH_GAP = 0.5; // seconds between two flinch rolls of one move on the player (COMBAT-RULES "Flinch on the player")
   function hurtPlayer(inst, pl, rng, fx, hop, hit) {
     const def = inst.spec,
-      o = inst.cast.owner;
-    const sb = specialOf(def, 'statusBonus'); // D13: checked before this hit's own riders land
-    const m = {
-        cat: def.category,
-        dmg: (def.basePower || 0) * (sb && G.Status.majorKind(pl) ? sb.multiplier : 1),
-        type: def.type,
-      },
-      A = o.moveFactor(m),
+      b = blowOf(inst, pl, rng),
       hp0 = pl.hp;
-    const cfx = fxOf(def, 'crit'),
-      c = critOf(o) + (cfx ? pct(cfx.critChance || 0) : 0),
-      crit = c > 0 && rng() < c; // D10: no base chance
-    pl.hurt(
-      A,
-      def.type,
-      false,
-      { factor: A, cat: def.category === 'special' ? 'special' : 'physical', mul: crit ? CRIT_MUL : 1, crit },
-      G.Log.on ? G.Log.who(o, def.id) : null
-    );
-    hit.crit = crit;
+    b.neutral = !!pl.isRival && def.category === 'status'; // slice 5: on a gym leader a status-category hit divides by the neutral 50, as on a wild entity
+    b.cat = def.category === 'special' ? 'special' : 'physical'; // a Player entity's defense knows physical and special only
+    b.who = G.Log.on ? G.Log.who(b.owner, def.id) : null;
+    b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl)); // slice 5: the attacker's Expert Belt and type items (a leader has none yet)
+    b.stone = b.owner.stoneType === def.type; // slice 5: the attacker's Power Stone
+    b.color = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
+    pl.takeHit(b); // slice 4a: the Player entity runs its own defense half
+    hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
+    b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt; // slice 5: your damage on a gym leader counts, Shell Bell included
+    if (b.owner.onDealt) b.owner.onDealt(hit.dealt);
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
   function ailPlayer(inst, pl, rng, fx, hop) {
@@ -354,8 +368,9 @@ G.MoveEffects = (() => {
     stat,
     heal,
     recoil,
-    special: (inst, pl, rng, fx) => {
+    special: (inst, pl, rng, fx, hop, hit) => {
       if (SPECIAL[fx.handler] === read || fx.handler === 'ohkoWild') return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here; the player is never KO'd outright
+      if (pl.isRival && FLAT[fx.handler]) return special(inst, pl, rng, fx, hop, hit); // slice 5: your Seismic Toss on a gym leader; a leader's flat move on you is still not built
       if (!noted.has(inst.spec.id + ':' + fx.handler)) {
         noted.add(inst.spec.id + ':' + fx.handler);
         console.warn(
@@ -367,6 +382,7 @@ G.MoveEffects = (() => {
     knockback: shove, // a push-only move (Roar) pushes you; a damaging hit's knockback is still skipped on the player
   };
   function hitPlayer(inst, pl, hop, rng) {
+    if (immuneTo(inst, pl)) return immuneHit(pl); // slice 4b
     const def = inst.spec;
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(def.type, (pl.mon && pl.mon.types) || []), dealt: 0 };
     for (const fx of def.payload || []) {
@@ -378,8 +394,23 @@ G.MoveEffects = (() => {
     return hit;
   }
 
+  /** Slice 4b (I1, I2, I5, Jess 2026-11-06): a move that deals damage (an attack, a fixed or level damage hit, Fissure) does nothing to
+   *  a target immune to its type: no damage and no side effect. Pure status moves keep their own lists (G.Status). Power Stone pierces
+   *  immunity for its type (typeK floors it at 1). */
+  const dealsDamage = (def) =>
+    (def.payload || []).some(
+      (fx) => fx.t === 'damage' || (fx.t === 'special' && (FLAT[fx.handler] || fx.handler === 'ohkoWild'))
+    );
+  const immuneTo = (inst, e) => dealsDamage(inst.spec) && typeK(inst.cast.owner, inst.spec.type, e) === 0;
+  /** An immune hit (I2, I4): still a hit for the sim (a shot stops on it, a chain hops from it), 0 damage, the grey Immune note. */
+  function immuneHit(e) {
+    G.Status.immuneNote(e);
+    return { dmg: 0, crit: false, typeMult: 0, dealt: 0, immune: true };
+  }
+
   function applyHit(inst, e, hop, rng) {
-    if (inst.cast.owner.foes) return hitPlayer(inst, e, hop, rng); // slice 7a: an enemy owner's only foe is the player
+    if (e.isPlayer) return hitPlayer(inst, e, hop, rng); // slice 4a (H3): a Player entity target takes the Player-entity rules, whoever attacks
+    if (immuneTo(inst, e)) return immuneHit(e); // slice 4b
     const hit = { dmg: 0, crit: false, typeMult: G.Types.mult(inst.spec.type, e.types), dealt: 0 };
     for (const fx of inst.spec.payload || []) {
       const f = APPLY[fx.t];

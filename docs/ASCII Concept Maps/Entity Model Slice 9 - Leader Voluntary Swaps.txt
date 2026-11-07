@@ -1,0 +1,142 @@
+ENTITY MODEL SLICE 9 - GYM LEADER AI + VOLUNTARY SWAPS   (PLAN v2, 2026-11-07, Quick)   [Proposed]
+=====================================================================================
+Source: host-model-plan.md slice 9, decision 6. Rule: LEADER PRINCIPLE.
+v2 (Jess 2026-11-07): build the GymLeaderAI FIRST, so swaps (and later dodge) plug into it and are never rebuilt.
+Split: 9a = the AI structure, behavior-neutral.  9b = the swap decisions inside it.
+Switched gyms only (Misty). Loop 1 fields one mon, so 9b changes nothing there; loop 2 (G.Gym.debugLoop = 2) is the case.
+
+WHY v1 WAS WRONG
+  v1: decision in GymBrain (one per MON)  +  swap code written fresh in gym-arena.js
+      -> a per-mon brain cannot own trainer memory (who was saved, swaps left), and the arena swap is a 2nd swap path
+      -> slice 10 dodge would need its own wiring again
+  v2: ONE trainer AI per leader team, answering the SAME controller your keyboard answers
+
+THE SHAPE (yours vs hers, side by side)
+
+  YOU                                         GYM LEADER
+  keyboard (G.Input)                          G.GymLeaderAI  (one per team, the trainer)
+     |                                           |  owns: team, per-fight memory, the sensing calls
+     v                                           v
+  HumanPlayer.KEYBOARD controller             ai.controllerFor(member)   (same 7 calls)
+     axis()      keys                            axis()      the member's GymBrain heading   (today's)
+     dodge()     Space                           dodge()     false            -> slice 10 answers it
+     shake()     key                             shake()     (autoShake stays as is, N3)
+     swapSlot()  1-6                             swapSlot()  -1 in 9a         -> 9b answers it
+     swapDir()   Q/E                             swapDir()   0
+     slots()     attack keys                     slots()     []  (GymBrain.pickSlot keeps slot choice, A3)
+     cycles()    -                               cycles()    []
+     |                                           |
+     v                                           v
+  game.js handleSwap reads swapSlot()          gym-arena.js teamTick reads swapSlot()   (same pattern)
+     |                                           |
+     v                                           v
+  Team.canSwap -> Team.swap   <==== THE SAME RULES (team.js, unchanged) ====>   Team.canSwap -> Team.swap
+     |                                           |
+     v                                           v
+  your effects (camera, sound, ring)          her effects (enemy list in/out, ring, line)
+  PlayerEntity.update reads dodge()           PlayerEntity.update reads dodge()   (already wired: slice 10 = free)
+
+  GymBrain (per MON) stays the "hands": movement, slot choice, tells, casts. Untouched by 9a and 9b.
+
+9a - GYM LEADER AI STRUCTURE  (behavior-neutral: every harness green, no feel change)
+  new js/entities/gym-leader-ai.js     G.GymLeaderAI: create(team) gives every member its controller;
+                                       sense() and matchup() live here (moved from boss-ai, re-exported there)
+  js/entities/gym-leader.js            controller comes from the AI (fallback today's, for a leader with no team)
+  js/entities/boss-ai.js               sense() moves out; G.Boss.sense stays as an alias (slice 8 tests read it)
+  js/systems/gym-arena.js              spawnLeader builds the AI with the team; teamTick ticks the team lock and
+                                       reads active.controller.swapSlot() through canSwap -> swap (answers -1 now)
+  js/entities/enemy.js                 EnemyMgr.withdraw(e): out of the list and grid, no kill, no corpse
+  dev.html (after gym-leader.js, line 921) + NEED in js/main.js ('GymLeaderAI', after 'GymLeader')
+  check: an in-arena swap request (test-forced) runs YOUR rules end to end, before any decision exists
+
+9b - SWAP DECISIONS  (inside G.GymLeaderAI.swapSlot; the v1 rules, unchanged in substance)
+  MAY SHE SWAP?  2+ living | lock 0 | not trapped | not in the air   (Team.canSwap, yours)
+                 + no tell running | no move commitment | on field >= MIN_FIELD 8 s | swaps left     (the AI)
+  WHY? first that fires
+     1 HARD CC   asleep or frozen, >= 1.5 s left                                  --> healthiest bench mon
+     2 LOW HP    < 25%, no self heal left, this mon not saved yet                 --> best matchup mon >= 50% HP
+     3 MATCHUP   best bench matchup >= 2x the active's                            --> that mon (>= 40% HP)
+  MATCHUP  offense(m) = best open damaging move: type x your types x STAB 1.5
+           defense(m) = max(0.25, your active move's type x m's types)      score = offense / defense
+     Bulbasaur, Vine Whip:  Staryu 1 / 2 = 0.5   Seel 2 / 2 = 1.0   --> 1.0 >= 2 x 0.5, Seel in after 8 s
+     Charmander, Ember:     Staryu 3 / 0.5 = 6   Seel 3 / 0.5 = 6   --> no swap
+  SWAP EFFECTS  outgoing: shapes and commitments end (G.MoveSim.clear), withdraw (no kill paid), keeps HP,
+                statuses, own drops; cooldowns freeze on the bench.  incoming: Team.swap (0.5 s i-frames, 5 s lock),
+                enters the list, bossId follows. Ring + "<leader> switches to <mon>!", no camera kick.
+  BENCH FAINT   enters the list already fainted with no fade: the normal kill payer pays it once (you get the
+                kill, EVs, Silver), silent, no gym drop; a bench wipe in the send-out beat wins, drop at arena center
+
+STRUCTURE DECISIONS (9a; recommendation first)
+  A1  A new file js/entities/gym-leader-ai.js (G.GymLeaderAI), one per leader team             rec: yes
+      (alt: inside boss-ai.js, no new script; but boss-ai is per-mon and retires its old half at slice 12)
+  A2  The AI talks to the game ONLY through the controller calls your keyboard answers, and the
+      arena runs the same Team.canSwap -> Team.swap path as game.js                             rec: yes
+  A3  Slot choice stays in GymBrain.pickSlot (slice 8, per mon). Moving it behind controller.slots()
+      is possible later; not needed for swaps or dodge                                          rec: stays
+  A4  Sensing (sense, matchup) moves to the AI file; G.Boss.sense stays as an alias                rec: yes
+  A5  The trainer memory (saved flags, swaps left, field time) lives on the AI, not on the mons   rec: yes
+
+SWAP DECISIONS (9b; unchanged from v1, recommendation first)
+  Q1  your swap rules unchanged (5 s lock, 0.5 s i-frames, trap blocks, no swap in the air);
+      she may swap while asleep or frozen, as you can                                            rec: yes
+  Q2  triggers and order above (1.5 s, 25%, 50%, 2x, 40%: TUNE)                                    rec: yes
+  Q3  MIN_FIELD 8 s on the field first (faint swap and Re-Do start the clock too)                  rec: 8 s
+  Q4  no voluntary swap inside a tell or a move commitment                                         rec: yes
+  Q5  a withdrawn mon keeps HP, statuses, own drops; cooldowns freeze; its shapes end              rec: yes
+  Q6  new restriction swapLimit (per fight; absent = no cap, 0 = never). Misty authors none        rec: yes
+  Q7  a bench faint pays you like any kill, silently, no gym drop; a bench wipe wins as usual       rec: yes
+  Q8  feedback: ring + "<leader> switches to <mon>!", no kick, no boss sound                        rec: yes
+  Q9  each mon keeps its own enrage clock across a voluntary swap                                  rec: yes
+  Q10 "your recent damage" stays unbuilt (low HP reads her HP only)                                rec: yes
+
+WHAT THIS BUYS LATER
+  slice 10 dodge   = the AI answers dodge(); PlayerEntity.update already calls it and tryDodge has your rules
+  per-gym swap / dodge rates = AI knobs read from restrictions (swapLimit now, dodgeRate at 10)
+  slice 12 (gyms 2 to 8) = each switched gym gets the same AI, nothing per gym
+
+FILES (both parts)
+  NEW js/entities/gym-leader-ai.js   9a structure, 9b swapSlot()
+  js/systems/gym-arena.js            9a AI + swap read + lock tick; 9b bench-faint payout, center drop
+  js/entities/gym-leader.js          9a controller from the AI; 9b fieldT reset on taking the field, bench onFaint
+                                     silent (no burst, no sound, no drop)
+  js/entities/boss-ai.js             9a sense moves out (alias kept)
+  js/entities/enemy.js               9a EnemyMgr.withdraw (kill payer lines untouched: pokebox-evs and silver
+                                     mutants point at them)
+  js/data/gyms.js                    9b RESTRICTION_KEYS + swapLimit; validator: whole number >= 0
+  dev.html, js/main.js               9a the new script + NEED
+  js/data/changelog.js               9b one new line (Misty can switch Pokemon mid-fight, loop 2 only); 9a none
+  team.js NOT changed (its rules are used as they are). No save fields, no lang-en entries.
+
+TESTS
+  NEW docs/proposals/leader-ai-harness.js   (9a; hand-derived, real modules as gym-leader-harness loads them)
+    1 every member gets a controller from the AI with all 7 calls; axis is the brain heading (today's numbers)
+    2 swapSlot -1 everywhere: a loop 2 fight runs exactly as slice 8 (same casts, same faint swap, same win)
+    3 forced request (test sets swapSlot = 1): canSwap -> swap; 5 s lock, 0.5 s i-frames, bossId follows,
+      Staryu withdrawn with no kill, Seel in the list; a second request inside 5 s refused ('locked');
+      trapped refused ('trapped'); in the air refused
+    4 the team lock ticks in the arena (it never did)
+    5 G.Boss.sense is the AI's sense (slice 8 tests keep passing)
+    why new: no harness drives a leader through a controller or the Team swap path
+  NEW docs/proposals/leader-ai-mutate.js    about 10 mutants: no controller from the AI | axis not the brain's |
+    arena ignores swapSlot | arena skips canSwap | lock never ticks | withdraw pays a kill | withdraw leaves the
+    body in the grid | i-frames not given | bossId not moved | sense alias dropped
+  NEW docs/proposals/leader-swaps-harness.js  (9b) the 10 sections of v1: matchup rows by hand, 8 s floor,
+    lock, trap, hard CC, low HP once, gates (tell, dash, air, one living, 30% target), swapLimit + validator,
+    bench (status kept, poison ticks, cooldowns hold, bench faint pays once, bench wipe wins once), enrage kept
+    why new: the decisions need scripted scenes per trigger; leader-ai-harness only pins the plumbing
+  NEW docs/proposals/leader-swaps-mutate.js   (9b) about 20 mutants, the v1 list
+  CHANGED leader-team-mutate.js  'the bench does not tick' re-pointed (9b: benchTick gains the faint callback)
+  NOT CHANGED: check.js, team-harness (team.js untouched), intent scenarios, debug sets
+
+ORDER
+  9a build -> your checks (with the owed 7b and 8) -> 9b build -> checks -> feel test
+
+FEEL TEST  (after 9b; G.Debug.gym() to Misty, G.Gym.debugLoop = 2)
+  a. Bulbasaur with Vine Whip: Seel comes in after ~8 s with the ring and the line.
+  b. Charmander with Ember: no voluntary swap.
+  c. Put Staryu to sleep: she may swap out; trap her first and she cannot.
+  After 9a alone: nothing should feel different.
+
+WATCH (build)
+  120 columns; re-check every mutate runner's patterns against the edited files (gym-arena, gym-leader,
+  boss-ai, enemy, gyms, main.js, dev.html), pokebox-evs and silver included

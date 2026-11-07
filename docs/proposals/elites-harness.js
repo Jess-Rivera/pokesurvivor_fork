@@ -13,12 +13,12 @@ const base = { U: null, Sprites: { Animator: class { update() { } loop() { } pla
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
 ['js/core/util.js'].forEach(p => { try { load(p); } catch (e) { } });
 if (!G.U || !G.U.clamp) { console.log('util failed'); process.exit(1); }
-['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/systems/elites.js'].forEach(p => {
+['js/core/stats.js', 'js/data/pokedex.js', 'js/data/sprites-meta.js', 'js/data/moves.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/systems/elites.js'].forEach(p => {
   try { load(p); } catch (e) { console.log('load failed', p, e.message); process.exit(1); } });
 let fail = 0; const bad = m => { fail++; if (fail < 30) console.log('FAIL', m); };
 const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const placed = [];
-G.Spawner = { CAP: 64, placeElite: (def, t) => { const e = new G.Enemy(def, 100, 100, G.Enemies.scale(t)); e.id = placed.length + 1; placed.push(e); G.EnemyMgr._list.push(e); return e; } };
+G.Spawner = { CAP: 64, placeElite: (def, t) => { const e = new G.Elite(def, 100, 100, G.Enemies.scale(t)); e.id = placed.length + 1; placed.push(e); G.EnemyMgr._list.push(e); return e; } };
 const EL = []; G.EnemyMgr = { _list: EL, all: () => EL, get count() { return EL.length; } };
 G.Enemy.prototype.die = function () { this.dead = true; };
 
@@ -97,7 +97,7 @@ G.Enemy.prototype.die = function () { this.dead = true; };
   w.leaving = true; run(w, 3); if (!(w.x > 200)) bad('leaving unit did not walk away: x ' + w.x); if (w.touchCd <= 0) bad('leaving unit can touch');
   for (const beh of ['chase', 'ranged', 'charger', 'zoner', 'fan', 'beamer']) {
     const d = Object.assign({ dex: 130, baseHp: 95, spd: 60, dmg: 8, xp: 1, behavior: beh, bx: 200, shotDmg: 8, shotCd: 2, range: 190, fanN: 3, zones: 2 }, { elite: { hp: 500, hpMul: 5, pow: 1.5, xpMul: 6, engagedAt: null, enrage: 1 } });
-    const e = new G.Enemy(d, 300, 0, { t: 60, dmg: 1, hp: 1, spd: 1 }, false); run(e, 4); if (e.dead) bad(beh + ' elite died'); }
+    const e = new G.Elite(d, 300, 0, { t: 60, dmg: 1, hp: 1, spd: 1 }); run(e, 4); if (e.dead) bad(beh + ' elite died'); }
   console.log('6 update paths: leaving walks off (x ' + Math.round(w.x) + '), elite ran as chase/ranged/charger/zoner/fan/beamer' + (errs.length ? ', errors: ' + errs.join(' | ') : ', no errors')); if (errs.length) bad('update errors'); }
 
 console.log(fail ? fail + ' FAILED' : 'ALL OK');

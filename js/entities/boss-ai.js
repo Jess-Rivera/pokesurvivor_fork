@@ -18,6 +18,10 @@
  * closer while its longest ready ranged move falls short of that (it walks in to use it, Jess 2026-11-01);
  * below 30% HP it favors far. Touching the body hurts with the melee move's numbers (the contact move), recomputed every step so the
  * enrage and stages count. There is no fury: the enrage is the 120 s clock (systems/gym.js).
+ * Entity model slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): on a G.GymLeader
+ * each authored move line is its own slot (bonded lines share one) and only the active slot casts, as yours. pickSlot chooses the slot
+ * under your 0.4 s slot hold: a self heal first, then stay unless another slot scores SWITCH_MARGIN times more, then a buff visit
+ * when nothing in reach is ready. Movement still reads every open slot. The wild body keeps one group and is unchanged.
  */
 G.Boss = (() => {
   // seconds of wind-up before an attack (Jess 2026-10-31; dash TUNE 2026-11-02; returns, beam, multi TUNE 2026-11-02), divided by tempo; a
@@ -51,6 +55,33 @@ G.Boss = (() => {
   const SHOT_IN = 20, // far mode with a short ranged move ready: FAR shrinks to its reach minus this, so it lands
     BAND = 40; // and NEAR to at most this much inside the shrunk FAR
   const adapt = (d) => ({ cat: d.category, dmg: d.basePower || 0, type: d.type }); // the damage adapter G.MoveEffects uses (D5: P = basePower)
+  const SWITCH_MARGIN = 1.5; // TUNE (slice 8, Q2): another slot must score this many times the active one to pull a leader off it
+  const SPOT = ['strike', 'dash', 'delayed']; // forms that lock your spot at the tell's start
+  /** An hpBelow move joins only below its line (slice 8: a leader's slot that holds one is closed above it). */
+  const open = (e, s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow;
+  /** Slice 8 (Q1, Q5): a Player-entity leader's slots, one per authored move line. The lines marked `bond` join one group, placed
+   *  where the first of them stands (your rule: one group grows). */
+  function slotsOf(moves) {
+    const out = [];
+    let bond = null;
+    for (const m of moves) {
+      const s = { id: m.id, t: 0, hpBelow: m.hpBelow };
+      if (!m.bond) out.push([s]);
+      else if (bond) bond.push(s);
+      else out.push((bond = [s]));
+    }
+    return out;
+  }
+  /** Slice 8 (Q9): what a leader senses of the scene, with no gym rule in it, so a later brain (slice 9 swaps, the Director) can reuse
+   *  it. Your missing stat drops stay per move in opp(), since they depend on the move's source. */
+  function sense(self, foe) {
+    return {
+      dist: G.U.dist(self.x, self.y, foe.x, foe.y),
+      hpFrac: self.maxHp > 0 ? self.hp / self.maxHp : 1,
+      foeMajor: G.Status.majorKind(foe),
+      foeR: foe.r || 0,
+    };
+  }
 
   class GymBrain {
     /** The body becomes a sim owner: one group with the authored moves, its own card store, tempo as the cooldown multiplier, the player
@@ -60,23 +91,32 @@ G.Boss = (() => {
       this.on = false; // the fight state starts on the first step (init)
       const g = e.gym;
       e.atkLvl = g.level;
-      e.slots = [g.moves.map((m) => ({ id: m.id, t: 0, hpBelow: m.hpBelow }))];
+      // slice 8: a Player-entity leader takes one slot per line (its `active` starts at 0, G.PlayerEntity); the wild body one group
+      e.slots = e.isPlayer ? slotsOf(g.moves) : [g.moves.map((m) => ({ id: m.id, t: 0, hpBelow: m.hpBelow }))];
       e.teamCards = G.TeamCards.store();
       for (const id of Object.keys(g.cards || {})) G.TeamCards.add(e.teamCards, id, g.cards[id]);
       e.cdMul = 1 / g.tempo;
-      this.healsLeft = Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: the loop number (Jess 2026-11-05)
+      const rules = g.restrictions || {}; // the gym's authored restrictions (js/data/gyms.js); absent means the defaults below
+      this.tells = rules.tells !== false;
+      this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: by default the loop number (Jess 2026-11-05)
       e.aim = 0;
       e.strongHost = true;
       e.foes = () => {
         const p = G.Game.player;
         return p && !p.dead ? [p] : [];
       };
-      e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
-      e.moveFactor = (m) => this.factor(m);
-      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
-      e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
+      // the open moves of the active slot (a leader's; the wild body's one group)
+      e.activeGroup = () => (e.isPlayer ? e.slots[e.active] || [] : e.slots[0]).filter((s) => open(e, s));
+      // A G.GymLeader inherits these four from G.PlayerEntity (slice 5; the attack factor since slice 6, plan D1: your formula, so
+      // Protein, IVs, nature and held items count); the wild body gets them here.
+      if (!e.isPlayer) {
+        e.stabFor = (m) => e.types.includes(m.type); // slice 4b (H1): a leader's STAB, as the player's
+        e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
+        e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
+        e.moveFactor = (m) => this.factor(m); // the wild attack factor: power, enrage and the stage
+      }
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
-      this.contact = dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
+      this.contact = e.isPlayer ? null : dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null; // a Player entity has no touch damage
       this.touch();
       e.atkFactor0 = e.atkFactor;
     }
@@ -84,7 +124,7 @@ G.Boss = (() => {
     init() {
       const st = this.e.gym.stance;
       this.on = true;
-      this.melee = this.e.slots[0].some((s) => CLOSE.includes(G.Gyms.formOf(this.def(s.id))));
+      this.melee = this.e.slots.flat().some((s) => CLOSE.includes(G.Gyms.formOf(this.def(s.id))));
       this.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5;
       this.mode = st === 'far' || !this.melee ? 'far' : 'close';
       this.modeT = G.U.rand(6, 8);
@@ -105,8 +145,10 @@ G.Boss = (() => {
       const e = this.e,
         now = G.Gym.now();
       this.touch();
-      for (const s of e.slots[0]) if (s.t > 0) s.t = Math.max(0, s.t - dt); // every move recharges, as the player's do
+      // every move recharges, inactive slots too, as the player's do
+      for (const g of e.slots) for (const s of g) if (s.t > 0) s.t = Math.max(0, s.t - dt);
       if (this.wait > 0) this.wait -= dt;
+      if (e.isPlayer) this.pickSlot(pl, now); // slice 8: the slot choice, before the casts, under your slot hold
       this.buffs(now);
       this.heals(now);
       G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as the player's does
@@ -151,15 +193,22 @@ G.Boss = (() => {
       return [vx, vy, 'Walk'];
     }
 
-    /** The first ready move of `form` in the mon's group, or null. */
+    /** Every move the mon moves for (slice 8): on a leader the open moves of all its slots, so it walks in for a move on another slot
+     *  and switches to it once in reach; on the wild body its one group, as before. */
+    pool() {
+      const e = this.e;
+      return e.isPlayer ? e.slots.flat().filter((s) => open(e, s)) : e.activeGroup();
+    }
+
+    /** The first ready move of `form` the mon moves for (pool), or null. */
     ready(form) {
-      for (const s of this.e.activeGroup()) if (s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form) return s;
+      for (const s of this.pool()) if (s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form) return s;
       return null;
     }
     /** The reach of the mon's close moves (the largest melee cone or nova), from its center: the player's reach, since the mon is player-sized. */
     reach() {
       let r = 0;
-      for (const s of this.e.slots[0]) {
+      for (const s of this.e.slots.flat()) {
         const d = this.def(s.id),
           f = G.Gyms.formOf(d);
         if (CLOSE.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
@@ -167,10 +216,10 @@ G.Boss = (() => {
       return r;
     }
 
-    /** The reach of the mon's longest ready ranged move (RANGED), or Infinity when none is ready: far mode keeps you inside it. */
+    /** The reach of the longest ready ranged move it moves for (RANGED, pool), or Infinity when none is ready: far mode keeps you inside it. */
     ranged() {
       let r = -Infinity;
-      for (const s of this.e.activeGroup()) {
+      for (const s of this.pool()) {
         if (s.t > 0) continue;
         const d = this.def(s.id),
           f = G.Gyms.formOf(d);
@@ -183,14 +232,15 @@ G.Boss = (() => {
      *  strike: its range; a shot: how far it flies, capped at its range) gets a score, and the highest starts its tell. Score = freshness x fit. Freshness: seconds since the
      *  move's last tell started (the fight's first pick for one never cast), over its cooldown, so every move gets turns and fast moves
      *  still come more often. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's close reach. Ties: ORDER, then
-     *  the move's place in the group. Opportunity: see opp(). No randomness. this.scores keeps the last pick's scores for the ?dev overlay. */
-    attack(dist, pl, now) {
+     *  the move's place in the group. Opportunity: see opp(). No randomness. this.scores keeps the last pick's scores for the ?dev overlay.
+     *  Slice 8: `group` defaults to the active group; `dry` only scores it and returns the best candidate (pickSlot reads every slot). */
+    attack(dist, pl, now, group = this.e.activeGroup(), dry = false) {
       if (this.t0 == null) this.t0 = now;
       const close = this.reach(),
         blank = close > 0 && dist <= close + (pl.r || 0);
       let best = null;
       const scores = [];
-      for (const s of this.e.activeGroup()) {
+      for (const s of group) {
         if (s.t > 0) continue;
         const d = this.def(s.id),
           form = G.Gyms.formOf(d),
@@ -203,11 +253,62 @@ G.Boss = (() => {
         scores.push(c);
         if (!best || c.score > best.score || (c.score === best.score && c.rank < best.rank)) best = c;
       }
+      if (dry) return best;
       this.scores = scores.map((c) => ({ id: c.s.id, score: c.score, picked: c === best }));
       if (!best) return false;
       best.s.last = now;
       this.start(best.s, best.d, best.form, pl);
       return true;
+    }
+
+    /** Slice 8 (Q2 to Q4, Jess 2026-11-07): a leader's slot choice, under your 0.4 s slot hold and never inside a tell. In order:
+     *  1 a self heal slot that can cast while hurt (the heal cap still counts); 2 stay on the active slot while it has a ready move in
+     *  reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with nothing ready in reach, a
+     *  buff slot whose Gate is open. A switch is your setActive: the hold and the type ring, no sound (Q8). */
+    pickSlot(pl, now) {
+      const e = this.e;
+      if (e.slots.length < 2 || this.tell || e.mvRoot || e.stFl || e.swapT > 0) return;
+      const S = sense(e, pl),
+        go = (i) => i !== e.active && e.setActive(i),
+        slotWith = (form, ok) =>
+          e.slots.findIndex((g) =>
+            g.some((s) => open(e, s) && s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form && ok(s))
+          );
+      if (S.hpFrac < 1 && this.healsLeft > 0) {
+        const h = slotWith('heal', () => true);
+        if (h >= 0) return go(h);
+      }
+      let cur = null,
+        top = null,
+        at = -1;
+      e.slots.forEach((g, i) => {
+        const c = this.attack(S.dist, pl, now, g.filter((s) => open(e, s)), true);
+        if (!c) return;
+        if (i === e.active) cur = c;
+        if (!top || c.score > top.score || (c.score === top.score && c.rank < top.rank)) {
+          top = c;
+          at = i;
+        }
+      });
+      if (top) {
+        if (!cur || top.score >= SWITCH_MARGIN * cur.score) go(at);
+        return;
+      }
+      const b = slotWith('buff', (s) => G.MoveEffects.statReady(this.def(s.id), e));
+      if (b >= 0) go(b);
+    }
+
+    /** Slice 8 (Q5): the other attack moves of the active slot that are ready now (a bonded slot holds 2 to 4), marked as cast now. */
+    bondOf(slot) {
+      const now = G.Gym.now(),
+        out = [];
+      for (const s of this.e.activeGroup()) {
+        const form = G.Gyms.formOf(this.def(s.id));
+        if (s === slot || s.t > 0 || ORDER.indexOf(form) < 0) continue;
+        s.last = now;
+        out.push({ s, form });
+      }
+      return out;
     }
 
     /** Opportunity (Jess 2026-11-01): x OPP_HEX for a statusBonus move while you carry a major ailment, x OPP_BLOCKED for a move with a
@@ -241,10 +342,15 @@ G.Boss = (() => {
         tempo = e.gym.tempo,
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
-      const wind = TELL[form] / tempo,
+      // slice 8 (Q5): the other ready attacks of a bonded slot fire with this one
+      const bond = e.isPlayer ? this.bondOf(slot) : [],
+        // a gym with tells off fires on the next frame, with no warning shown; a bonded tell lasts its longest member's
+        wind = this.tells ? bond.reduce((w, b) => Math.max(w, TELL[b.form]), TELL[form]) / tempo : 0,
         spot = form === 'strike' || form === 'dash' || form === 'delayed' ? { x: pl.x, y: pl.y } : null;
       this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
+      if (bond.length) Object.assign(this.tell, { bond, lock: { x: pl.x, y: pl.y } });
       e.aim = ang;
+      if (!this.tells) return;
       e.anim.play('Charge', { speed: 1.4 });
       if (form === 'dash') {
         const len = Math.min(Math.hypot(spot.x - e.x, spot.y - e.y), G.Gyms.reachOf(d, form)),
@@ -296,14 +402,25 @@ G.Boss = (() => {
         e.aim = c.ang;
         if (G.MoveSim.castAt(e, c.slot, this.def(c.id), now, c.ang, c.spot)) {
           G.Gym.noteCast(c.id);
+          this.orbCost(this.def(c.id));
           e.anim.play(CLOSE.includes(c.form) || c.form === 'dash' ? 'Attack' : 'Shoot', { speed: 1.4 });
         }
+        if (c.bond) for (const b of c.bond) this.fireBond(b, c, now);
       }
       if (c.t >= c.wind + c.after) this.tell = null;
       return [0, 0, 'Idle'];
     }
 
-    /** Pure buffs cast the moment their Gate opens (SS8), with no tell, even during an attack's tell. A fizzle waits one Gate (the sim). */
+    /** A bonded member's cast on the tell's release (slice 8, Q5): the same aim; a spot form takes your spot locked at the tell's start. */
+    fireBond(b, c, now) {
+      const d = this.def(b.s.id);
+      if (!G.MoveSim.castAt(this.e, b.s, d, now, c.ang, SPOT.includes(b.form) ? c.lock : null)) return;
+      G.Gym.noteCast(b.s.id);
+      this.orbCost(d);
+    }
+
+    /** Pure buffs cast the moment their Gate opens (SS8), with no tell, even during an attack's tell. A fizzle waits one Gate (the sim).
+     *  On a leader (slice 8, Q3) only from the active slot, so pickSlot visits it. */
     buffs(now) {
       const e = this.e;
       for (const s of e.activeGroup()) {
@@ -311,6 +428,7 @@ G.Boss = (() => {
         if (s.t > 0 || G.Gyms.formOf(d) !== 'buff' || !G.MoveEffects.statReady(d, e)) continue;
         if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
         G.Gym.noteCast(s.id);
+        this.orbCost(d);
         const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e',
           vis = G.VFX.forMove(d); // the player's buff look: a ring and rising sprites
         G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
@@ -338,6 +456,7 @@ G.Boss = (() => {
         if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
         this.healsLeft--;
         G.Gym.noteCast(s.id);
+        this.orbCost(d);
         G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
       }
     }
@@ -356,14 +475,21 @@ G.Boss = (() => {
     factor(m) {
       const e = this.e,
         special = m.cat === 'special';
-      const stab = e.types.includes(m.type) ? 1.5 : 1;
+      // slice 4b (H1, Jess 2026-11-06): no STAB here; the hit carries it (stabFor below, after the +2, the mainline spot)
       return (
         G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, e.gym.level, m.dmg || 40, special ? 'special' : 'physical') *
-        stab *
         e.gym.power *
         G.Gym.enrageMul(e) *
         G.Stages.mul(e, special ? 'spa' : 'atk')
       );
+    }
+
+    /** Life Orb on a leader (slice 6, N6): each cast costs 1% of max HP (at least 1), never below 1 HP, the rule Player.cast applies to
+     *  you. An always-on move (a persistent def) is not an attack. The wild body holds no items. */
+    orbCost(d) {
+      const e = this.e;
+      if (e.isPlayer && e.hasItem('lifeorb') && !(d && d.persistent))
+        e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));
     }
 
     /** A cast's HP cost (recoil) on the mon: taken directly, never below 1 HP, with a grey number (Player.payHp's rule). */
@@ -395,12 +521,13 @@ G.Boss = (() => {
     }
   }
 
-  /** The only boss spawn: a boss body (enemy.js) with a GymBrain when the def carries a gym leader descriptor. */
+  /** The only boss spawn: a G.GymLeader for a switched gym (slice 5, js/entities/gym-leader.js); else a boss body (enemy.js) with a GymBrain when the def carries a gym leader descriptor. */
   function make(def, x, y) {
+    if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);
     const e = new G.Enemy(def, x, y, { hp: 1, spd: 1, dmg: 1 }, true);
     if (e.gym) e.brain = new GymBrain(e);
     return e;
   }
 
-  return { make, GymBrain, TELL, RECOVER };
+  return { make, GymBrain, TELL, RECOVER, sense, SWITCH_MARGIN };
 })();

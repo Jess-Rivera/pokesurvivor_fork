@@ -217,3 +217,117 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Decided (Jess): leaders swap as a team like the player; elites are weak hosts with added rules; tells stay for now.
 - Found: Player reads input in two places only; the team and swap layer lives in G.Game; status.js strong() is true for boss, elite and gym and false for the player (the opposite of the new model); the arena fields slot 0 only, so slice B changes shape.
 - Stopped at: Jess to commit this branch and open the Opus chat; gym cards for gyms 3 to 8 wait on its plan.
+
+## 2026-11-05, entity model plan and slice 1 (Claude Code)
+- Decided (Jess): `PlayerEntity` and `WildEntity` bases with sub-entities, reusable modules, one hit contract; each family owns its attack and defense calculations; Elites do not change. Plan: docs/proposals/host-model-plan.md, 12 slices. Merged the gym branch to main; work moved to feature/entity-model.
+- Changed: slice 1, structure only. enemy.js class is `G.WildEntity` (`G.Enemy` still names it); new js/entities/elite.js holds only the Elite mods; status.js and move-effects.js read named rules. Elite-class harness 67 checks, mutation runner 34/34. Fixtures in elites, status-sliceC, move-riders and boss-owner harnesses use the new class or rules, expectations unchanged.
+- Verified: check.js 43/43, smoke-ui, and a real Elite fought over file://.
+- Left on purpose: `e.elite` classification checks outside the class, including the two in the manager (bosses stat, no relocating).
+- Then planned slice 2 (Team module), detail in the plan. Found: no test covers real swapping, so a file:// smoke test comes first, on the current code.
+- Stopped at: slice 1 committed; slice 2 plan awaits Jess's OK, no slice 2 code written. Slice 1 feel test not confirmed.
+
+## 2026-11-06, slice 2 review and smoke test (Quick)
+- Reviewed slice 2 as an ASCII map (docs/ASCII Concept Maps/Entity Model Slice 2 - Team Module.txt). Slice 2 approved.
+- Decided (Jess): D1, the unspent-link count `pl.bonds` becomes a shared Team store (bond groups stay per-mon slot data); D2, Team takes only the 5 s team swap lock, `pl.swapT` is the "slot hold".
+- Changed: new tools/smoke-team.js (step 1: swap, lock, faint order, links, bench poison, Re-Do, wipe over file://). No game code.
+- Not verified: Quick cannot run node here and the work machine has no Playwright, so the smoke has never run. GitHub API empty again; board mirror still 2026-11-04.
+- Stopped at: run check.js and smoke-team.js at home on the current code, then build team.js.
+
+## 2026-11-06, slice 2 built (Quick)
+- Playwright installed on the work machine; smoke scripts now also find <user folder>\tools\playwright. smoke-team passed 34/34 on the pre-slice code.
+- Changed: new js/systems/team.js (`G.Team`); game.js uses it (`runTeam`, `carryRun`, `field`); player.js `bonds` reads the Team count; dev.html and NEED; team-harness.js and team-mutate.js (46 mutations). No changelog entry: nothing a player sees changes.
+- Found: Chromium blocks the Silver font over file:// (CORS); the smoke reports it as a note. May affect real play in Chrome.
+- Stopped at: Jess to run check.js, smoke-team, team-mutate and smoke-ui on the new code, then the feel test.
+
+## 2026-11-06, slice 3 planned and built (Quick)
+- Slice 2 came back green (check.js, smoke-team, team-mutate, smoke-ui).
+- Decided (Jess): slice 3 D1 one file, D2 `isPlayer` means "follows Player entity rules" (all 13 sites already do), D3 berry guards stay a Player-entity rule, D4 the in-play slot keys go through the controller now.
+- Changed: player.js split into `G.PlayerEntity` and `G.HumanPlayer` (`G.Player` names the human); game.js swap keys, Shake off and slot keys ask `pl.controller`; NEED; player-entity-harness.js and player-entity-mutate.js (35). No changelog: nothing a player sees changes.
+- Broke: first run failed 6 move harnesses and smoke-newcombat. The new aim method `foes()` collided with G.MoveSim's enemy-owner mark (slice 7a: a caster with foes() is a gym leader's mon), so your moves aimed at you. Renamed `aimTargets()`, added a harness check and a mutation.
+- Stopped at: Jess to run the checks, the mutation runner and the three smokes, then the feel test.
+- Re-run green: check.js 45/45, player-entity-mutate 35/35, smoke-newcombat all passed, smoke-team and smoke-ui re-run. Quick feel test OK (no gym). Committed slices 2 and 3 together.
+
+## 2026-11-06, slice 4 planned (Quick)
+- Decided (Jess): slice 4 splits into 4a (neutral hit contract) and 4b (balance): STAB everywhere at the mainline spot, wild STAB with ENEMY_POWER 40 to 27, the 0.5 scale is the human's, side effects picked by the target, flat damage stays flat, mainline type chart both ways with true x0 immunity (no boss exception, fixed-damage moves check immunity only). Lifts QA-12.
+- Changed: COMBAT-RULES "Damage" and "Type chart" ([Approved], code differs until 4b), a DECISIONS entry, the slice 4 map.
+- Found: leader STAB is folded before the +2 (about 0.5 HP low); wild contact and shots use the enemy's first type; every starter opens with a Grass, Fire or Water move, so no new team is fully walled by immunity.
+- Stopped at: build 4a, parity harness first.
+
+## 2026-11-06, slice 4a built (Quick)
+- hit-parity-harness passed 100/100 on the pre-4a code (after a fixture fix: the test Substitute lacked overflow, the expected numbers did not move).
+- Changed: PlayerEntity.takeHit and takeDot, dmgTakenScale (base 1.0, human 0.5); move-effects blowOf, hurtPlayer via takeHit, applyHit routed by target; combat.js and hazards.js via takeHit; WildEntity takeDot; status.js prefers takeDot; stats.js applyDamage and applyPlayerDefense take STAB and the scale. No numbers change.
+- Deviations: wild defense stays in move-effects (move-sim-harness fakes); boss-ai.js untouched. Test edits: parity sections 7 and 8, player-entity pinned list (+dmgTakenScale), boss-owner and gym-harness fixtures, 4 moved mutation patterns. New hit-parity-mutate.js (31).
+- Ran: everything green except player-entity-harness's isPlayer count in move-effects.js (2; 4a's target routing is a 3rd by design). Count 2 -> 3, plus a check that the 3rd is the routing.
+- Stopped at: rerun player-entity-harness, feel test, commit 4a.
+
+## 2026-11-06, slice 4b built (Quick)
+- 4a committed (one stale count fixed: 3 isPlayer sites in move-effects by design).
+- Decided (Jess): D-T, test dummies are typeless (harnesses and the debug test page) so true x0 does not wall the test sets.
+- Changed: mainline type chart with true x0 (types.js, move-effects gate, player.js, status.js Immune note), STAB everywhere (boss-ai stabFor, combat.js and hazards.js), ENEMY_POWER 27, debug dummies typeless, changelog 2026-11-06. Deliberate test edits listed in the slice 4 map "4b AS BUILT". New type-chart-harness.js and type-chart-mutate.js.
+- Stopped at: Jess to run the checks, both mutation runners and the smokes, then a balance feel test.
+
+## 2026-11-06, end of day (Quick)
+- Wrapped with slice 4b built and committed but NEVER RUN: check.js, both new mutation runners and the smokes were not run on 4b. STATE.md "START HERE" lists the exact first steps.
+- Board mirror not re-synced: the GitHub API returned empty all day (mirror still 2026-11-04).
+- Next: verify 4b and its balance feel test, then plan slice 5 (GymLeader, Misty first).
+
+## 2026-11-06, night (Claude Code, home)
+- 4b: checks green once real; Jess's feel test passed. Two http smokes fail intermittently on a Windows socket limit (ERR_NO_BUFFER_SPACE), not the game.
+- Decided (Jess): slice 5 D1 to D6 as recommended (one flat damage entry, Misty hpMult 26, restrictions start with tells and healLimit, cushion and player flinch off for leaders until slice 8, boss look kept).
+- Built slice 5: G.GymLeader on PlayerEntity, shared GymBrain, leader status set, no touch damage, Misty switched on. New smoke-gym, gym-leader harness (140) and mutate (51).
+- Repaired 30 stale mutation patterns. The map's AS BUILT lists every deviation and test edit.
+- Stopped at: Jess's feel test of Misty and Brock, then commit.
+
+## 2026-11-07 (Claude Code, home)
+- Slice 5 feel test PASSED (Jess): Misty feels good; she stutters on an arena edge now and then (TODO Up next, tune later).
+- Planned slice 6 (map: Entity Model Slice 6 - Leader Stats and Cards.txt). Found: her attack still uses the wild formula (same numbers today), Zinc is blocked only by the validator, max HP is set before her cards load.
+- Decided (Jess): a leader is another player's team run by AI; anything a player can have, it can have; every difference hand authored. Recorded as the LEADER PRINCIPLE (COMBAT-RULES "Host model", DECISIONS 11-07); stale "no team cards" lines in SS10 and BOSS-REWORK fixed.
+- Slice 6 answers: player attack formula, enrage to go, any card, IV/EV/nature keys, items in this slice, fight-time report scrapped, Misty hpMult 25.
+- Stopped at: Jess answers Q1 to Q5 (enrage, power and tempo, built-in leader status rules, item tiers, card budget), then the map is redrawn for approval. No game code changed.
+
+## 2026-11-07, late morning (Quick, work)
+- Slice 6 BUILT in three steps (0 neutral parity, A neutral pipeline, B Misty). Leaders use your attack formula; IVs, EVs, nature, team cards, held and run items authored per gym; status differences, i-frames, auto shake and enrage are authored restrictions; Life Orb pays its cost; validator, item ban list and card budget warning. Misty: Zinc 3, hpMult 25, no enrage.
+- Decided (Jess): Q1 to Q5 and N1 to N6 as recommended, plus Choice Band and Specs never on a leader, Bright Powder allowed, Rocky Helmet marked bugged and rejected (TODO). CLAUDE.md wins over the Quick agent setup (read-only git allowed, plans prose only).
+- Tests: leader-stats-harness (197) and leader-stats-mutate (38); first run caught 34, the 4 misses fixed (one was a real gap: the ban list was read from code). Jess ran check.js, both mutate runners, smoke-gym: clean. Feel test passed.
+- Close-out: npm ci, Prettier on 3 files, lint errors 22 to 0 (lang-en.js duplicate keys, two generated files ignored), 5 mutants re-pointed after formatting. Docs swept: host-model plan, BOSS-AUTHORING, COMBAT-RULES, BOSS-REWORK, BALANCE, DECISIONS, TODO, changelog.
+- Broke: nothing in game. Misty's arena-edge stutter (slice 5) persists. GitHub API empty all session, board mirror not re-synced.
+- Stopped at: slice 6 done; next is planning slice 7.
+
+## 2026-11-07, afternoon (Quick, work)
+- Misty's arena-edge stutter FIXED: G.GymLeader takes the wild body's stuck side-step (35% slip for 0.35 s, 0.7 s turn of 1.25 rad) plus a smart side (24 px look-ahead both ways, ties go to her circling side). AI only; your movement untouched.
+- Tests: gym-leader-harness section 11 (pinned, corner, free, not-stuck frames), 7 new mutants. Jess ran the checks: clean. Feel test passed, committed.
+- Process slip: the plan said the map was saved before it was; written at build time. Plans now get written before they are referenced.
+- Stopped at: planning slice 7 (map: Entity Model Slice 7 - Leader Team and Faint Swaps.txt), awaiting Jess's answers.
+
+## 2026-11-07, late afternoon (Quick, work)
+- Slice 7 planned and 7a BUILT: a switched gym fields its loop lineup as one G.Team; 1.3 s send-out beat at the fainted spot; win on wipe; per-mon kill vs once-only boss credit; HUD team pips; Misty hpMult {1: 25, 2: 19}.
+- Decided (Jess): Q1 to Q4 as recommended; Q5 corrected, leader stages exactly as yours (raises carry past a faint, end one Duration later). SS13 closed; COMBAT-RULES LEADER TEAM added.
+- Tests: new leader-team-harness.js (loop 1, loop 2 send-out, stores, raises, credit, bench DoT, scope guard, builder, data) and leader-team-mutate.js (15). Not run here (no node in the Quick sandbox).
+- Found: the edge unstick left one gym-leader-mutate pattern STALE ("the brain steps while frozen"); re-pointed. Loop 2+ is dev-only (no real loop counter), TODO.
+- Calls answered (Jess): Snowball per mon kept; win line now "Gym Leader <leader> Defeated!" (all gyms); enrage clock field only. 2 more mutants (17).
+- 7a checks green, loop 2 feel test passed (Jess). Stopped at: planning 7b.
+
+## 2026-11-07, evening (Quick, work)
+- Slice 7b BUILT: the team-reading items read the holder's team (items.js teamOf, yours unchanged); Re-Do on a leader (wipe, 1.3 s beat, team back, last to fall out, once); Regen legal at a loop of 2+ mons; four items off the leader ban list; 3+ dev warning.
+- Decided (Jess): Q1 to Q6 as recommended. No changelog line (Misty authors none, nothing a player sees changes).
+- Tests: new leader-items-harness.js (yours parity, Brass Knuckles 1.667 on her 3, Tear reads hers, Re-Do flow and credit, Regen 0.5%/s, validator) and leader-items-mutate.js (17). Re-pointed: leader-stats harness (ban list six, Regen message) and mutant; leader-team "the first faint wins". Not run here.
+- Stopped at: Jess runs the checks.
+
+## 2026-11-07, wrap-up (Quick, work)
+- Session: Misty edge unstick (done, committed), slice 7 planned, 7a built (checks green, feel test passed), 7b built.
+- Game code touched this session: gym-leader.js, gym-arena.js, hud.js, gyms.js, items.js, changelog.js. check.js for 7b NOT run yet.
+- Lesson: re-check every mutate runner's patterns after any code edit; the edge unstick left one STALE that its close-out missed.
+- Board: GitHub API empty all session, TODO.md mirror not re-synced (still 2026-11-04).
+- Stopped at: 7b checks owed; next is planning slice 8 in a new chat.
+
+## 2026-11-07, late (Quick, work)
+- Slice 8 planned (map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt), Q1 to Q10 as recommended, BUILT: one slot per move line, one active slot under your 0.4 s hold, stay unless 1.5x, heal then buff visits, bonds, your melee cushion and flinch rule on leaders.
+- Files: boss-ai.js, gym-leader.js, player.js (onSwitchFeel hook), gyms.js (bond key + validator), changelog.js; docs COMBAT-RULES, BOSS-AUTHORING.
+- Tests: NEW leader-slots-harness.js, leader-slots-mutate.js (22), leader-dps-report.js; changed gym-leader harness/mutate, leader-stats and player-entity harnesses, smoke-gym. STALE scan clean. Not run (no node here).
+- Stopped at: Jess runs the checks, the DPS report (Q10) and the Misty feel test.
+
+## 2026-11-07, close-out (Quick, work)
+- Jess ran the 7b and 8 checks: green. Slice 9 v1 and v2 maps shelved: the GymLeaderAI gets its own branch (feature/gym-leader-ai), Director-style.
+- Close-out approved (B1 to B6 as recommended) and BUILT: Brock on G.GymLeader beside Misty (hpMult 16 / 12, Misty's restrictions). Gyms 3 to 8 stay on the old brain for the playtesters.
+- Tests: gym-leader-harness section 10 + new section 12 (Brock's moves on the new body); Lt. Surge is the old-body example in leader-stats, leader-team, smoke-gym; four old-brain harnesses turn Brock's switch off. Changelog line; a cut Misty line fixed.
+- Stopped at: Jess runs the checks and the Brock feel test, then commit, merge, new branch.

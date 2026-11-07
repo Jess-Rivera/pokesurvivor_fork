@@ -66,6 +66,10 @@ G.Enemy.prototype.die = function () { this.dead = true; };
   for (const [name, mut, needle] of cases) { const out = flags(mut); if (!out.some(m => m.includes(needle))) bad('validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
   console.log('1 authoring: Brock (six slots) valid across every region; ' + cases.length + ' negative cases each flagged'); }
 
+// Entity model close-out (2026-11-07): Brock is on G.GymLeader now; this harness pins the OLD brain, so it runs his data with
+// the switch off (gym-leader.js is not loaded here). The switched Brock is pinned in gym-leader-harness.js. Retires at slice 12.
+G.Gyms.KANTO[0].playerEntity = false;
+
 // 2. gate and def
 let g, def;
 { G.GymArena = { inArena: false, gate: null, openGate: info => { G.GymArena.gate = { gym: info }; return true; } };
@@ -78,7 +82,10 @@ let g, def;
   if (def.gym.moves.length !== 3 || def.gym.level !== g.level) bad('def gym descriptor'); }
 
 // 3. leader entity: factors, stages, enrage
-const pl = { level: 5, x: 600, y: 0, hp: 100, r: 10, dead: false, mon: { types: ['normal'] }, hurt: (...a) => hurts.push(a) };
+// slice 4a: the stub is a Player entity (isPlayer) and answers the hit contract; player.js is not loaded here, so takeHit records
+// the same [factor, type, pure, { factor, cat, mul, crit }] a leader's hit recorded before
+const pl = { level: 5, x: 600, y: 0, hp: 100, r: 10, dead: false, mon: { types: ['normal'] }, isPlayer: true, hurt: (...a) => hurts.push(a),
+  takeHit: (b) => hurts.push([b.A, b.type, false, { factor: b.A, cat: b.cat, mul: (b.mul || 1) * (b.crit ? b.critMul : 1), crit: !!b.crit }]) };
 G.Game.player = pl;
 const mk = () => { const e = G.Boss.make(def, 0, 0); e.flying = false; return e; };
 const adapt = d => ({ cat: d.category, dmg: d.basePower, type: d.type });
@@ -91,7 +98,7 @@ const castsOf = fn => { const tape = G.SimBus.record(); fn(); G.SimBus.stopRecor
   if (!near(mr.basePower, 45 * 1.3) || mr.space.count !== 3 || !near(mr.space.radRadius, 9 * Math.sqrt(1.3)) || !near(mr.delivery.moveSpeed, 260 * 1.45)) bad('Rock Throw cards: ' + JSON.stringify([mr.basePower, mr.space.count, mr.space.radRadius, mr.delivery.moveSpeed]));
   if (!near(mt.basePower, 40 * 1.3) || !near(mt.space.radRadius, 54 * Math.sqrt(1.3)) || !near(mt.space.radArc, 1.7)) bad('Tackle cards: ' + JSON.stringify([mt.basePower, mt.space.radRadius, mt.space.radArc]));
   const ft = e.brain.factor(adapt(mt)), fr = e.brain.factor(adapt(mr));
-  const want = G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 58.5, 'physical') * 1.5 / G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 52, 'physical');
+  const want = G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 58.5, 'physical') / G.Stats.enemyAttackFactor(e.atkBase, e.spaBase, def.gym.level, 52, 'physical'); // slice 4b: STAB travels in the hit, not in the factor
   if (!near(fr / ft, want)) bad('power ratio incl. STAB ' + fr / ft + ' vs ' + want);
   if (e.atkFactor == null || e.atkCat !== 'physical') bad('contact factor / cat'); if (e.atkType !== 'normal') bad('contact type ' + e.atkType);
   const hp0 = e.hp; e.hurt(100); const taken = hp0 - e.hp; if (!near(taken, 100)) bad('hurt() does not cut (the Defense stage acts in the damage ratio): ' + taken);
@@ -233,7 +240,8 @@ const gate2 = G.Gym.gate;
     let used = 0, total = 0;
     for (let slot = 0; slot < entry.signatures.length; slot++) {
       G.MoveSim.clear();
-      const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot), e = G.Boss.make(d, 0, 0); e.flying = false;
+      const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot); d.gym.playerEntity = false; // slice 5: this check drives the shared brain, on the old body for every gym (Misty's real G.GymLeader: gym-leader-harness)
+      const e = G.Boss.make(d, 0, 0); e.flying = false;
       // just inside its SHORTEST close reach: with a close move ready the brain walks in to contact, so every close move is in reach
       // (2026-11-02: loop-1 sets mix reaches, Bite 46 beside Take Down 54, Body Slam 46 beside Earthquake 260)
       const closeR = e.slots[0].map(s => { const d = e.brain.def(s.id), f = G.Gyms.formOf(d); return ['melee', 'nova'].includes(f) ? G.Gyms.reachOf(d, f) : Infinity; }),

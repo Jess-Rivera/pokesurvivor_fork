@@ -7,6 +7,8 @@
  *   win    the leader falls: G.Gym.onWin pays the badge package, the pickups fly to the player and each player gets a
  *          LINK (fuses moves, see Player.fuse); 5 s later you return to the map where you were and the fusion is chosen
  *   lose   there is no arena timer: a team wipe ends the run (game.js); the enrage clock is the pressure (gym.js)
+ *   team   slice 7: a switched gym (G.GymLeader) fields its loop lineup as one G.Team. Only the mon on the field is in the
+ *          enemy list; when it faints, SEND_BEAT s later the lowest living slot takes its spot. The win is the team wipe.
  *
  * While the arena lasts, the map enemies are stashed (EnemyMgr.stash) and nothing else spawns (spawner, events and
  * weather check inArena); on returning everything is as it was.
@@ -18,8 +20,9 @@
 G.GymArena = (() => {
   const ARENA_R = 11;
   const WEATHER_T = 135; // seconds of the arena's own weather (the theme's), unchanged from before the gyms-only change
+  const SEND_BEAT = 1.3; // slice 7 (Q2, Jess 2026-11-07): seconds from a leader mon's faint to the next send-out
   let gate = null; // { x, y, t, gym }: the gate on the map; gym = the gate info from G.Gym
-  let arena = null; // { tx, ty, r, dex, shiny, type, gym, x, y, back, biome, t, phase, endT, bossId }
+  let arena = null; // { tx, ty, r, dex, shiny, type, gym, x, y, back, biome, t, phase, endT, bossId, team, sendT }
   let asked = false;
   const GATE_ART_SCALE = 0.5; // the gym building images are 288x248; drawn at half size on the map
   const GATE_ART_W = 288,
@@ -166,8 +169,22 @@ G.GymArena = (() => {
   }
 
   function spawnLeader(g) {
-    const ts = TS();
-    const e = G.Boss.make(G.Gym.makeDef(g), arena.x, arena.y - ts * 3.5);
+    const ts = TS(),
+      x = arena.x,
+      y = arena.y - ts * 3.5,
+      first = G.Gym.makeDef(g);
+    let e;
+    if (first.gym.playerEntity) {
+      // slice 7: the whole loop lineup as one team; slot 1 takes the field, the rest wait off it (not in the enemy list)
+      const n = G.Gym.roster(g).length,
+        members = [G.Boss.make(first, x, y)];
+      for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
+      arena.team = G.GymLeader.team(members);
+      e = arena.team.active;
+      // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
+      const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
+      if (warn) console.warn('[Gym] ' + warn);
+    } else e = G.Boss.make(first, x, y); // the old body: one mon, as before (slice 12 moves it)
     e.flying = false; // collides with walls like you, so your shots can reach it
     G.EnemyMgr.add(e);
     arena.bossId = e.id;
@@ -189,6 +206,8 @@ G.GymArena = (() => {
       phase: 'fight',
       endT: 0,
       bossId: 0,
+      team: null, // slice 7: a switched gym's G.Team
+      sendT: null, // seconds left of the send-out beat, null when none is running
     });
     gate = null;
     asked = false;
@@ -235,6 +254,7 @@ G.GymArena = (() => {
     if (arena.phase === 'fight') {
       if (!authority()) return;
       keepInside();
+      if (arena.team) return teamTick(dt);
       const boss = G.EnemyMgr.get(arena.bossId);
       if (!boss || boss.dead) {
         G.Coop.isHost && G.Coop.broadcast(['aw']);
@@ -246,13 +266,39 @@ G.GymArena = (() => {
     if (arena.endT <= 0) finish();
   }
 
+  /** Slice 7: a switched gym's fight. The bench ticks as yours does; the faint of the mon on the field starts the send-out
+   *  beat, and the lowest living slot takes the fainted spot (G.Team.sendIn: 0.5 s i-frames, the lock cleared). Wipe: the win. */
+  function teamTick(dt) {
+    const t = arena.team;
+    t.benchTick(dt);
+    if (!t.active.dead) return;
+    const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
+    if (!t.living().length && !redo) {
+      G.Coop.isHost && G.Coop.broadcast(['aw']);
+      return won();
+    }
+    if (arena.sendT == null) arena.sendT = SEND_BEAT;
+    G.Stages.teamTick(t.stages, dt); // nobody on the field runs update() in the beat, so the team raises tick here (Q5)
+    if ((arena.sendT -= dt) > 0) return;
+    arena.sendT = null;
+    const next = redo ? G.GymLeader.redo(t) : t.sendIn(t.nextOnFaint());
+    next.flying = false;
+    G.EnemyMgr.add(next);
+    arena.bossId = next.id;
+    const line = redo ? ' used Re-Do! The whole team is back!' : ' sends out ' + next.name + '!';
+    G.Spawner.say(arena.gym.leader + line, 2.4);
+    G.Camera.kick(0.7);
+    G.Audio.sfx('boss');
+  }
+
   function won() {
     if (!arena || arena.phase !== 'fight') return;
     arena.phase = 'won';
     arena.endT = 5;
     G.Gym.onWin(arena.gym);
     G.Pickups.pullAll();
-    G.Spawner.say('¡Has vencido a ' + G.DEX_BY[arena.dex].name + '! Recoge el premio…', 3.4, true);
+    // names the leader, not a mon (Jess 2026-11-07); the old Spanish key in lang-en.js is now unused
+    G.Spawner.say('Gym Leader ' + arena.gym.leader + ' Defeated!', 3.4, true);
     G.Audio.sfx('legend');
     const pl = G.Game.player;
     if (pl) {
@@ -347,6 +393,10 @@ G.GymArena = (() => {
     },
     get inArena() {
       return !!arena;
+    },
+    /** Slice 7: the leader's G.Team in a switched gym's arena (the HUD pips read it), else null. */
+    get leaderTeam() {
+      return arena ? arena.team || null : null;
     },
   };
 })();

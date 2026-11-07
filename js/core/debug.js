@@ -20,7 +20,7 @@
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
- *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
+ *   G.Debug.gym(n)     open the next gym gate now, or gym n's (walk into it to fight; losing ends the run)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
@@ -492,6 +492,14 @@ G.Debug = (() => {
     return made;
   }
 
+  /** Test dummies are typeless (slice 4b, D-T, Jess 2026-11-06): every move lands at x1 and none is immune, so a test set shows
+   *  every move working. Immunity is felt on real wild enemies. */
+  function dummyTypes(e) {
+    e.types = ['typeless'];
+    e.atkType = 'typeless';
+    return e;
+  }
+
   /** Scale every wild spawn by k (0 = none: drip, tides, bursts and elites all stop; 1 = normal). Enemies already alive stay. Flags the run as tampered. ?dev only. */
   function spawn(k = 1) {
     if (!on) {
@@ -651,6 +659,7 @@ G.Debug = (() => {
       const put = (x, y, ail) => {
         const e = new G.Enemy(Object.assign({}, def, { behavior: 'chase' }), x, y, G.Enemies.scale(G.Game.time));
         e.maxHp = e.hp = 1e9;
+        dummyTypes(e);
         e.spd = 20;
         if (ail) NC_AIL[ail](e);
         G.EnemyMgr.add(e);
@@ -684,6 +693,7 @@ G.Debug = (() => {
             G.Enemies.scale(G.Game.time)
           );
           e.maxHp = e.hp = 1e9;
+          dummyTypes(e);
           e.spd = 20;
           G.EnemyMgr.add(e);
           n++;
@@ -722,6 +732,7 @@ G.Debug = (() => {
             G.Enemies.scale(G.Game.time)
           );
           e.maxHp = e.hp = 1e9;
+          dummyTypes(e);
           e.spd = 20;
           G.EnemyMgr.add(e);
           n++;
@@ -751,6 +762,7 @@ G.Debug = (() => {
             G.Enemies.scale(G.Game.time)
           );
           e.maxHp = e.hp = 1e9;
+          dummyTypes(e);
           e.spd = 20;
           G.EnemyMgr.add(e);
           n++;
@@ -776,6 +788,7 @@ G.Debug = (() => {
             G.Enemies.scale(G.Game.time)
           );
           e.maxHp = e.hp = 1e9;
+          dummyTypes(e);
           e.spd = 20;
           G.EnemyMgr.add(e);
           n++;
@@ -801,6 +814,7 @@ G.Debug = (() => {
             G.Enemies.scale(G.Game.time)
           );
           e.maxHp = e.hp = 1e9;
+          dummyTypes(e);
           e.spd = i % 2 ? 45 : 20;
           G.EnemyMgr.add(e);
           n++;
@@ -826,6 +840,7 @@ G.Debug = (() => {
           G.Enemies.scale(G.Game.time)
         );
         e.maxHp = e.hp = 1e9;
+        dummyTypes(e);
         if (riders) e.spd = 40;
         else e.stMajor = { k: 'sleep', t: 1e9, age: 0 };
         G.EnemyMgr.add(e);
@@ -921,6 +936,7 @@ G.Debug = (() => {
       G.Enemies.scale(G.Game.time)
     );
     e.maxHp = e.hp = 1e9;
+    dummyTypes(e);
     e.spd = 0;
     e.touchCd = Infinity; // no contact damage (combat.js skips an enemy whose contact timer is running)
     const ax = e.x,
@@ -1232,13 +1248,13 @@ G.Debug = (() => {
     return true;
   }
 
-  /** Opens the next gym gate now (dev only). Enter it to fight; a loss ends the run. */
-  function gym() {
+  /** Opens the next gym gate now (dev only), or gym n's (1 is the first) when n is given. Enter it to fight; a loss ends the run. */
+  function gym(n) {
     if (!on) {
       console.warn('[Debug] add ?dev to the URL to enable debug tools.');
       return false;
     }
-    G.Gym.debugOpen();
+    G.Gym.debugOpen(n);
     return true;
   }
 

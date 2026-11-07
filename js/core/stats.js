@@ -143,7 +143,7 @@ G.Stats = (() => {
   // (stats[2]/stats[4]). Returns damage INCLUDING STAB and the scalar but BEFORE type/crit
   // (those stay at the call site). A status-cat move divides by the neutral PROP_DEF and
   // never gets STAB. The +2 is mainline: after the division, before the multipliers.
-  function applyDamage(factor, defBase, spdBase, move, level, stab, defMul = 1) {
+  function applyDamage(factor, defBase, spdBase, move, level, stab, defMul = 1, scale = DMG_SCALAR) {
     // defMul: the defender's Def / SpD STAGE multiplier (G.Stages.mul), applied to the final stat. A status-cat move ignores it.
     const cat = moveCat(move);
     const dStat =
@@ -152,9 +152,10 @@ G.Stats = (() => {
         : cat === 'special'
           ? spDef(spdBase, level) * defMul
           : defense(defBase, level) * defMul;
-    const stabMul = stab && cat !== 'status' ? STAB : 1;
+    // stab: true or false (sheet.js and older callers), or the multiplier the attacker sends with its hit (slice 4a; 1 is none)
+    const stabMul = cat === 'status' ? 1 : stab === true ? STAB : stab > 0 ? stab : 1;
     // Slice 7b-2b: the legacy per-cast norm factor is gone (COMBAT-RULES "Damage"); every hit is a full mainline event.
-    return (factor / Math.max(1, dStat) + 2) * stabMul * DMG_SCALAR;
+    return (factor / Math.max(1, dStat) + 2) * stabMul * scale; // scale: DMG_SCALAR on every target but the human (slice 4 H2)
   }
 
   // Prop damage: same attacker factor, neutral denominator, no STAB (props are typeless).
@@ -186,7 +187,7 @@ G.Stats = (() => {
   // swap to canonical move power when enemies draw real moves (see DECISIONS). Gentle
   // opening (~6% of L1 HP), natural ramp; late threat comes from density, not per-hit %.
   const ENEMY_DMG_SCALAR = 0.5;
-  const ENEMY_POWER = 40;
+  const ENEMY_POWER = 27; // slice 4b (S1, Jess 2026-11-06): 40 -> 27 with wild STAB on, so a wild hit lands about where it did
 
   // Enemy attack category from the higher offensive stat: SpA > Atk => 'special'.
   function enemyCat(atkBase, spaBase) {
@@ -205,7 +206,18 @@ G.Stats = (() => {
   // Defender half at impact: complete the ratio against the PLAYER's real base Def/SpD
   // (stats[2]/stats[4]) matching the attack category. Returns damage BEFORE type/weather/
   // reduction/melee-cushion (those stay in player.hurt). +2 mainline, then the scalar.
-  function applyPlayerDefense(factor, playerDefBase, playerSpdBase, cat, playerLevel, defMul = 1, prof = null) {
+  // stab: the attacker's STAB multiplier, after the +2 (slice 4a; 1 is none). scale: the target's damage-taken scale (slice 4 H2).
+  function applyPlayerDefense(
+    factor,
+    playerDefBase,
+    playerSpdBase,
+    cat,
+    playerLevel,
+    defMul = 1,
+    prof = null,
+    stab = 1,
+    scale = ENEMY_DMG_SCALAR
+  ) {
     // defMul: Iron / Zinc stat cards. Applied to the final stat (not the base) so +5% is not lost to the level-1 floor.
     // prof: the player copy's IVs, EVs and nature (profile()); none is neutral.
     const p = prof || NEUTRAL_PROFILE;
@@ -213,7 +225,7 @@ G.Stats = (() => {
       cat === 'special'
         ? spDef(playerSpdBase, playerLevel, p.iv[4], p.ev[4], p.nat[4])
         : defense(playerDefBase, playerLevel, p.iv[2], p.ev[2], p.nat[2]);
-    return (factor / Math.max(1, stat * defMul) + 2) * ENEMY_DMG_SCALAR;
+    return (factor / Math.max(1, stat * defMul) + 2) * stab * scale;
   }
 
   // A move's damage category: 'physical' | 'special' | 'status'. Prefer the move's
@@ -249,6 +261,7 @@ G.Stats = (() => {
     moveCat,
     DMG_SCALAR,
     STAB,
+    PROP_DEF,
     attackFactor,
     applyDamage,
     applyDamageProp,

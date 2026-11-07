@@ -1,0 +1,170 @@
+ENTITY MODEL SLICE 8 - LEADER AI, SLOT CHOICE   (PLAN, 2026-11-07, Quick)   [Approved, BUILT]
+=====================================================================================
+Source: host-model-plan.md slice 8, decision 5 (one active slot, the AI picks under your slot hold, gyms may author bonds).
+Rule: LEADER PRINCIPLE (your rule is the default; each difference is authored).
+Also owns: the leader melee cushion (player.js hurt) and the leader flinch rule (gym-leader.js applyFlinch, D5).
+Switched gyms only (Misty). The old brain on the wild body (gyms 2 to 8) is not touched.
+
+TODAY vs SLICE 8
+  today (slice 7)                                  slice 8
+  ---------------------------------------------    ---------------------------------------------
+  slots = [ [tackle, harden, pulse, recover] ]     slots = [ [tackle] [harden] [pulse] [recover] ]
+          one group, ALL moves live                        one ACTIVE slot, like yours
+  attack(): best ready move across all 4           pickSlot(): best SLOT, then attack() inside it
+  Harden: casts whenever its Gate opens            Harden: casts only while its slot is active
+  Recover: casts whenever hurt (below 35%)         Recover: its slot must be visited
+  cushion: off (no single active slot)             cushion: your rule (25% less with a melee slot active)
+  flinch: tell lost, other moves untouched (D5)    flinch: your rule (tell lost + active slot restarts)
+
+ONE FRAME (Player-entity leader)
+  every slot recharges (yours do too, inactive included)
+  hold ticks down (your 0.4 s slot hold, PlayerEntity.SWAP_LOCK)
+     |
+     v
+  SENSE (snapshot, no gym rules inside) ---> dist, inside close reach?, your major status, your missing drops
+     |
+     v
+  PICK SLOT  (skipped while the hold > 0 or a tell runs)
+     1  heal visit:  Recover slot open (below its line), hurt, heals left  --> switch, it casts      (Q4)
+     2  stay:        active slot has a ready move in reach, and no slot beats it by 1.5x  --> stay   (Q2)
+     3  switch:      best slot score (= its best move's score: freshness x fit x opportunity)       (Q2)
+     4  buff visit:  nothing in reach is ready, a buff's Gate is open  --> switch, it casts        (Q3)
+     |                (switch = setActive: hold 0.4 s, the type ring on the mon, no select sound)    (Q8)
+     v
+  ATTACK inside the active slot only (today's tell, aim lock, recovery; unchanged numbers)
+     bonded slot: ONE tell (the longest member's), every ready member fires on release, one aim     (Q5)
+     |
+     v
+  MOVE: stance logic unchanged; it still walks in for a ready melee move in ANY slot (it switches
+        to it once in reach), so positioning reads the same as slice 7
+
+SLOT SCORE, WORKED (Misty loop 1, you 250 px away, all moves fresh)
+  [tackle]   out of reach (melee)                    --> no score
+  [harden]   buff, never scored as an attack           --> visit only by rule 4
+  [pulse]    in reach, fresh 1.0 x fit 1 x opp 1      = 1.0   --> PICK
+  [recover]  closed (HP above 35%)                     --> no score
+  you walk to 60 px: [tackle] 1.0 vs [pulse] 1.0 x POINT_BLANK 0.5 = 0.5
+     active is pulse, its move is ready in reach, but tackle beats it by 2x (>= 1.5) --> switch to tackle
+
+BONDS (authored, optional; Misty authors none)
+  a move line may carry  bond: true ; the marked lines of one set form ONE group (your rule: one group grows)
+  validator: 2 to 4 marked lines per set, needs playerEntity, unknown keys still rejected
+  example fixture: Staryu loop 2 { water-gun bond, tackle bond, harden } --> slots [ [water-gun, tackle] [harden] ]
+
+DECISIONS (each changes how a leader plays; recommendation first)
+  Q1  Layout: one slot per authored move line; an hpBelow move's slot is closed above its line     rec: yes
+  Q2  Switch policy: stay while the active slot has a ready move in reach, unless another slot
+      scores 1.5x (TUNE); never inside the 0.4 s hold. (Alternative: re-pick every attack,
+      which flickers slots every ~0.85 s and reads as twitchy, not as a player)                  rec: stay rule
+  Q3  Pure buffs cast only from the active slot (yours); visited when the Gate is open and
+      nothing in reach is ready. Misty's Harden climbs slower than the ~30 s to +6 today          rec: yes
+  Q4  Self heal: its slot is visited first when open and she is hurt; heal cap unchanged          rec: yes
+  Q5  Bonds: bond: true on move lines, one group per set; a bonded slot tells once and fires
+      every ready member on release                                                               rec: yes
+  Q6  Melee cushion ON for leaders (25% less damage taken while a melee move is in the active
+      slot). Close-stance mons get a little tankier up close                                       rec: yes
+  Q7  Flinch: your rule replaces D5 (tell lost, the active slot's moves restart + 0.3 s hold;
+      inactive slots untouched). The extra brain recovery wait after a flinch goes               rec: yes
+  Q8  Switch feedback: the type ring on the mon (your look), no select sound (that is your UI)    rec: yes
+  Q9  Sensing holds distance, your status, your missing drops. "Your recent damage" waits for
+      slice 9 (swaps on low HP need it), so no unread field now                                   rec: yes
+  Q10 Damage: no tempo or power change in this slice. The DPS report below compares with slice 7;
+      a raise is its own call after your feel test                                                rec: yes
+
+EXPECTED BALANCE
+  attacks: small drop (the hold mostly overlaps the 0.5 s tell + 0.35 s recovery); the stay rule adds
+  some idle seconds at a bad range. Harden: fewer casts (visits only). Cushion: Misty tankier on Tackle.
+  Flinch: harsher than D5 on the active slot. Net: likely a bit easier; the report puts a number on it.
+
+FILES
+  js/entities/boss-ai.js     GymBrain, Player-entity branch only: slots per line (bond groups joined), active 0,
+                             activeGroup = the active slot (hpBelow filter kept); step recharges every slot and ticks
+                             the leader's hold; buffs() and heals() read the active slot; new sense() (plain function,
+                             exported for reuse) and pickSlot() (rules 1 to 4); attack() unchanged inside the slot;
+                             a bonded tell fires every ready member; scores keep the slot index (dev overlay).
+                             Old body path: byte-for-byte the same.
+  js/entities/gym-leader.js  moves = the flat list of every slot's moves (halo, harness readers); applyFlinch: lose the
+                             tell, then your G.MoveSim.flinch; ticks its own hold (the human's ticks in game.js)
+  js/entities/player.js      the cushion line drops the leader exclusion; setActive's select sound moves behind a
+                             human-only hook (onSwitchFeel, like onHurtFeel), so you hear it exactly as today
+  js/data/gyms.js            MOVE_KEYS gains bond; validator: bond shape rules above
+  js/data/changelog.js       one chg line (Misty uses one move slot at a time, like you)
+  tools/smoke-gym.js         line 127 reads every slot, not slots[0]
+  NO new script file, no save fields, no lang-en entries (no new player-facing strings besides the changelog).
+
+TESTS
+  NEW docs/proposals/leader-slots-harness.js   (hand math from this map; Misty plus fixture gyms)
+    1 layout: Misty loop 1 = 4 slots of one move, active 0; Staryu loop 2 bond fixture = 2 slots;
+      the old wild body still has one group (old brain untouched)
+    2 hold: after a switch no switch for 0.4 s; the hold ticks on the leader with no game.js
+    3 pick: you at 250 px picks Water Pulse; at 60 px switches to Tackle (2x beats 1.5x); stay rule:
+      active slot ready in reach and the best other slot at 1.4x --> it stays
+    4 only the active slot fires: a ready Water Pulse on an inactive slot never starts a tell
+    5 buff visit: Gate open, nothing in reach ready --> switch to Harden, it casts, no cast from the bench
+    6 heal: below 35% and hurt --> Recover slot first; above the line its slot cannot be picked;
+      healLimit still caps it
+    7 bond: one tell, both members fire on release on the same aim; validator: 1 marked line, 5 marked,
+      bond without playerEntity, all rejected
+    8 cushion: Tackle active --> a hit lands at 0.75; Water Pulse active --> 1
+    9 flinch: tell lost, active slot cds = cd + 0.3, inactive slots untouched; asleep cannot flinch
+   10 sense: snapshot values on a scripted scene; it never reads e.gym (stays reusable)
+    why new: gym-leader-harness pins the one-group leader; slot choice needs its own scripted scenarios
+  NEW docs/proposals/leader-slots-mutate.js   about 16 mutants:
+    all moves live again | hold ignored | hold never ticks | inactive slot fires | buff casts from the bench |
+    no buff visit | heal visit after attacks | closed hpBelow slot pickable | stay rule off | margin 1.0 |
+    bond fires one member | bond tells per member | cushion still off | flinch keeps D5 | flinch restarts
+    every slot | sense reads the gym
+  NEW docs/proposals/leader-dps-report.js   (a report, NOT a harness: check.js only runs *harness*.js)
+    scripted 60 s Misty loop 1 vs a still dummy at 60, 160 and 250 px: casts per move, damage per second,
+    Harden stage reached; slice 7 numbers from the same fight with the slots rebuilt as one group
+    (harness-side, no game hook). You run it by hand once; it prints the drop for Q10.
+  CHANGED existing:
+    gym-leader-harness.js  194-195 "the cushion must NOT apply" --> it applies at 0.75 with Tackle active;
+                           338-341 slots[0] reads --> the active slot and the flat moves list;
+                           375-388 flinch D5 case --> your rule
+    gym-leader-mutate.js   lines 36, 61, 62 re-pointed (cushion, the two flinch mutants)
+    smoke-gym.js           the slot read above
+  NOT CHANGED: check.js, intent scenarios (no move data changes), debug sets, leader-stats / team / items
+    harnesses (their stubs set your activeGroup only; re-checked at build)
+
+FEEL TEST  (G.Debug.gym() to Misty, then G.Gym.debugLoop = 2)
+  Does she read as a player switching moves? Watch the ring on each switch; Harden should come in gaps,
+  not mid-fight; up close she sits on Tackle and is a bit tankier.
+
+WATCH (build)
+  keep new lines within 120 columns; after the edits, re-check every mutate runner's patterns against the
+  edited files (gym-leader, leader-stats, leader-team, leader-items, boss-owner)
+
+ANSWERS (Jess 2026-11-07): Q1 to Q10 as recommended.
+
+AS BUILT (2026-11-07, Quick; not run here: no node in the Quick sandbox or on-device)
+  js/entities/boss-ai.js     slotsOf (one slot per line, bonded lines joined), open(e, s) (the hpBelow line, shared),
+                             sense(self, foe) exported (dist, hpFrac, foeMajor, foeR); activeGroup = the active slot;
+                             pool() = every open move (movement: ready, ranged) ; reach/init read every slot;
+                             step recharges every slot, calls pickSlot before buffs/heals; attack(dist, pl, now,
+                             group, dry) scores any group; pickSlot rules 1 to 4; bondOf + fireBond; start() wind =
+                             longest bonded member. SWITCH_MARGIN 1.5 exported. Old body: same paths, one group.
+  js/entities/gym-leader.js  moves = slots.flat(); update ticks swapT; applyFlinch = drop the tell + G.MoveSim.flinch
+  js/entities/player.js      cushion line has no leader exclusion; setActive calls onSwitchFeel (base empty,
+                             HumanPlayer plays 'select')
+  js/data/gyms.js            MOVE_KEYS + bond; validator: bond true or absent, a bond of one, bond needs playerEntity
+  js/data/changelog.js       one chg line (2026-11-07)
+  docs                       COMBAT-RULES leader rules line, BOSS-AUTHORING bonds line, host-model-plan slice 8
+  tests  NEW leader-slots-harness.js   sections 1 to 10 as planned (fixtures: Misty loop 1, Tackle + Water Pulse,
+                                       Tackle + Harden, a Recover line, a Tackle + Water Pulse bond)
+         NEW leader-slots-mutate.js    22 mutants (the 16 planned plus: bonded lines split, select sound on a
+                                       leader, a pick inside a tell, three validator mutants)
+         NEW leader-dps-report.js      prints slice 7 vs slice 8 at 60, 160, 250 px (index = casts x attack
+                                       factor, as if every cast landed)
+         CHANGED gym-leader-harness.js leader() starts off the Tackle slot; the D4 line -> a 0.75 / 1 cushion check;
+                                       the moves/slots read; flinch section -> your rule
+         CHANGED gym-leader-mutate.js  cushion and both flinch mutants re-pointed
+         CHANGED leader-stats-harness.js leader() starts off the Tackle slot (the defender parity)
+         CHANGED player-entity-harness.js HumanPlayer's own method list gains onSwitchFeel
+         CHANGED tools/smoke-gym.js    reads every slot
+  STALE check (here, by script): every pattern in every *-mutate.js that points at boss-ai, player, gym-leader or
+    gyms is still found; the 22 new ones are each found exactly once.
+  DEVIATIONS
+    sense() holds no "your missing drops": they depend on the move's source, so opp() keeps reading them per move
+    the ?dev score overlay still shows the active slot's scores only (no slot index)
+    a bonded member fires even when out of reach (your bonded group fires together too)

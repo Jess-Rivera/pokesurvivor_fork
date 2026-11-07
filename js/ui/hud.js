@@ -626,7 +626,8 @@ G.HUD = (() => {
         w / 2,
         80
       );
-      if (boss.gym) {
+      if (boss.gym && G.Gym.enrages(boss)) {
+        // slice 6 (Q1): no enrage line for a switched gym that does not author one
         const left = G.Gym.enrageIn(boss);
         ctx.font = F(700, 10);
         ctx.fillStyle = left === 0 ? '#ff7070' : '#ffe9b0';
@@ -636,6 +637,22 @@ G.HUD = (() => {
           98
         );
       }
+    }
+
+    // ---------- leader team pips (slice 7): one per mon, gold standing, grey fainted; teams of 2+ only ----------
+    const lt = G.GymArena && G.GymArena.leaderTeam;
+    if (lt && Array.isArray(lt.members) && lt.members.length > 1) {
+      const n = lt.members.length,
+        gap = 14;
+      lt.members.forEach((m, i) => {
+        ctx.beginPath();
+        ctx.arc(w / 2 + (i - (n - 1) / 2) * gap, 62, 4, 0, 6.2832);
+        ctx.fillStyle = m.dead ? 'rgba(90,90,90,.85)' : '#ffcb3d';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.6)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
     }
 
     // ---------- elite bar (an overworld elite; the boss bar wins if both are up) ----------

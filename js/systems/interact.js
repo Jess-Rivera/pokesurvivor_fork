@@ -164,11 +164,11 @@ G.Interact = (() => {
         if (e.remote) continue;
         if (k === 0) {
           e.applyPoison(2);
-          e.hurt(14 + lvl * 3, '#d47cf0');
+          e.takeFlat(14 + lvl * 3, '#d47cf0');
         } else if (k === 1) {
           e.applySlow(0.65, 4.5);
-          e.hurt(4, '#8bd94a');
-        } else e.hurt(90 + lvl * 18, '#ff7b3d', e.x - x, e.y - y, 220);
+          e.takeFlat(4, '#8bd94a');
+        } else e.takeFlat(90 + lvl * 18, '#ff7b3d', e.x - x, e.y - y, 220);
       }
     }
     if (pl && !pl.dead && !(pl.flyT > 0) && G.U.dist2(x, y, pl.x, pl.y) < (TRAP_R * 0.7) ** 2) {

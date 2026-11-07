@@ -6,6 +6,9 @@
  * Everything happens on the ground plane: (x, y) are feet / shadow.
  */
 G.Combat = (() => {
+  /** STAB on a hit of type t from attacker a (slice 4b, H1 and S1): x1.5 when t is one of the attacker's types. */
+  const stabOf = (a, t) => (a && t && a.types && a.types.includes(t) ? G.Stats.STAB : 1);
+
   function resolve(dt, pl, now) {
     const projectiles = G.Projectiles.all();
 
@@ -21,10 +24,18 @@ G.Combat = (() => {
         // a flying player (Fly) is passed by
         const w = G.Log.on ? G.Log.who(p.src, 'shot') : null;
         const landed = pl.invuln <= 0;
+        let res;
         if (p.atkFactor != null)
-          pl.hurt(p.atkFactor, p.mtype, false, { factor: p.atkFactor, cat: p.atkCat, mul: p.mul }, w);
-        else pl.hurt(p.dmg, p.mtype, false, null, w);
-        if (p.ail && landed && !pl.dead) pl.inflict(p.ail, p.ailHalf); // a Status carrier's shot (slice E1)
+          res = pl.takeHit({
+            A: p.atkFactor,
+            cat: p.atkCat,
+            type: p.mtype,
+            stab: stabOf(p.src, p.mtype),
+            mul: p.mul,
+            who: w,
+          });
+        else res = pl.hurt(p.dmg, p.mtype, false, null, w);
+        if (p.ail && landed && !pl.dead && res !== 'immune') pl.inflict(p.ail, p.ailHalf); // a Status carrier's shot (slice E1)
         G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
         projectiles.splice(i, 1);
       }
@@ -33,6 +44,7 @@ G.Combat = (() => {
     // --- enemy <-> player contact ---
     if (pl.dead || pl.flyT > 0) return; // nothing touches a flying player
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, pl.r + 40)) {
+      if (e.isRival) continue; // a G.GymLeader has no touch damage (slice 5); a gym may author it back later
       // Contact gap: wild melee reaches CONTACT.hit x the radius sum (it stops at CONTACT.stop x); bosses keep 1.0.
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
@@ -46,10 +58,18 @@ G.Combat = (() => {
       e.strike(pl);
       // Wild: enemy attack factor + category via the A/D ratio. Boss: flat def.dmg (deferred).
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
+      let res;
       if (e.atkFactor != null)
-        pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);
-      else pl.hurt(e.dmg, e.atkType, false, null, w);
-      if (e.carrierSec && !pl.dead) {
+        res = pl.takeHit({
+          A: e.atkFactor,
+          cat: e.atkCat,
+          type: e.atkType,
+          stab: stabOf(e, e.atkType),
+          mul: e.contactMul(),
+          who: w,
+        });
+      else res = pl.hurt(e.dmg, e.atkType, false, null, w);
+      if (e.carrierSec && !pl.dead && res !== 'immune') {
         const k = e.secAil();
         if (k) pl.inflict(k, true);
       } // a secondary carrier's touch (slice E1)

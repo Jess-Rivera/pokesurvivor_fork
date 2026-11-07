@@ -59,7 +59,8 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 ## Gyms (feature/boss-rework, Brock pilot built 2026-10-19; all numbers TUNE)
 - Gate: 4:00, then 4:00 after each return. Level = run-time level at gate spawn + 4, locked.
 - HP: the elite reference model with TTK 60 s at the gym level (Brock: about 1030 HP at Lv 12, 16.6x a wild unit). Size: player size since slice 7a (was up to 2x boss sizing).
-- Damage: ratio path, the move's Power after the mon's cards and its category (slice 7a; was the catalog Power). Enrage 120 s after the first hit, x1.0 to x2.0 over 30 s. Fury off.
+- Damage: ratio path, the move's Power after the mon's cards and its category (slice 7a; was the catalog Power). Enrage 120 s after the first hit, x1.0 to x2.0 over 30 s (a Player-entity gym only when authored, slice 6). Fury off.
+- Misty (entity model slice 6, Jess 2026-11-07; TUNE by feel, the fight-time report is scrapped): hpMult 25 (was 26), Zinc 3 added (Vitamins Sp. Def, +15% Sp. Def), enrage off. Staryu HP x 25 at levels 16 / 18 / 20 / 22 / 24: 1750 / 1900 / 2100 / 2250 / 2400. Target about a minute at her usual level 20. Her authored status values are unchanged (freeze and sleep x0.5, 5 s hard CC gap, auto shake, no hit i-frames). Card budget warning above level - 1 stacks: her 16 stacks warn at level 16 and below. Way out: drop Zinc, hpMult 26, enrage on.
 - FIRST RETUNE (Jess's feel test, Squirtle dual-weak and Charmander, 'not even a little threatened'): a Lv 12 Geodude hit for 5 to 18% of the player's HP per attack and attacked about once per 2.7 s, so the fight was over before it mattered. Jess's diagnosis: the leader's moves have no upgrades, so he is only a stat level-up. SO the real fix is authored upgrade STACKS per gym move (below). The crude per-gym knobs power (damage multiplier) and tempo (attack-rate multiplier) exist but are back at 1 for Brock so the stacks are measured cleanly. A [Gym] readout prints on a win (and G.Gym.report() after a loss): fight time, total and lowest HP, casts per move. Tune from those.
 - FEEL TEST RESULT (Jess, 2026-10-19, with the stacks, at the realistic level 7 to 9 versus Brock's 12): Butterfree level 8 was tough and he died once, not cheap, learnable; Ghastly level 8 about the same. Both felt doable with smart play. The earlier tests were at level 12 (no level gap) and before the stacks, hence 'harmless'. ACCEPTED as the Brock baseline; do not retune without new data.
 - [History] Brock's stacks v1 (2026-10-19 to 2026-10-31, the baseline accepted above): Rock Throw = Effect x3, Count x2, Recharge x2, Size x1, Speed x1; Tackle = Effect x2, Area x1, Arc x1, Recharge x2; Harden = Duration x2. Wind-up 0.5 s shots, 0.45 s melee; shared cooldown plus 0.2 to 0.5 s jitter.
@@ -141,7 +142,12 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
   crowd; a thin mob left frail mons like Charmander barely scratched at ~7%/hit). Bumped 0.35 -> 0.5
   on 2026-10-17 (frail-mon hit now ~8-10% of HP). Mewtwo still tanks (defense path confirmed working),
   so this raised the overall level without breaking bulky-vs-frail differentiation. Still tune by feel.
-- ENEMY_POWER = 40 — flat PLACEHOLDER (no per-enemy move yet). Temporary until enemies draw canonical
+- 2026-11-06, slice 4b (Jess, S1; TUNE by feel): ENEMY_POWER 40 -> 27, because every wild hit now takes STAB x1.5 (contact, shots and
+  hazards use the enemy's own first type). Worked by hand: (0.675 A/D + 2) x 1.5 x 0.5 = (1.01 A/D + 3) x 0.5, so a wild hit lands about
+  +0.5 HP over the old (A/D + 2) x 0.5. Elites build on the same factor, so they follow. Gym leaders pass their own move Power.
+- 2026-11-06, slice 4b (Jess, T1 to T3): the type chart is mainline, x2 / x0.5 / x0, both ways; dual clamp [x0.25, x4] unless immune.
+  Was x1.6 / x0.6 / x0.3, clamp [x0.3, x2.4]. Examples: Ember on Bulbasaur +25%, Water Gun on Geodude +67% (x4), Tackle on Geodude -17%.
+- (old) ENEMY_POWER = 40 — flat PLACEHOLDER (no per-enemy move yet). Temporary until enemies draw canonical
   move power. All enemy attacks (contact/shot/hazard) share this flat power; species variety comes from
   the real Atk/SpA stat, not from power (yet).
 - Natural ramp (chosen): single-hit absolute damage grows with enemy level (1.4@L1 -> 6.9@L50 for a

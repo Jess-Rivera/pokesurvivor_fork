@@ -27,11 +27,8 @@ G.Game = (() => {
   let evBank = [0, 0, 0, 0, 0, 0]; // pokebox step 5: this run's six EV banks in thousandths (G.Copies.killEvs), reset each run
   let pl = null;
   // ---- team (Phase A) ----
-  let roster = []; // up to 6 fighter Players; pl === roster[activeIdx]
-  let activeIdx = 0;
-  let swapLock = 0; // seconds until you can swap again (5s lockout)
-  const SWAP_LOCK = 5,
-    SWAP_IFRAME = 0.5;
+  let roster = []; // up to 6 fighter Players (the Team's members); pl === runTeam.active
+  let runTeam = null; // G.Team (entity model slice 2): who is on the field, the 5 s swap lock, the shared stores
   const BOMB_QUIET = 3; // s with no wild spawns after a Bomb pickup (Jeremy playtest, 2026-11-01)
   let caught = []; // shinies obtained in this run
   let biome = -1;
@@ -169,36 +166,12 @@ G.Game = (() => {
       f.teamSlot = slot;
       roster.push(f);
     });
-    // Team buffs: every member points at ONE shared stage store (stgTeam), so a buff cast
-    // by one Pokemon (Swords Dance, Agility, Harden, Dragon Dance, Aqua Ring) stays active on
-    // whoever is on the field until its own timer runs out. Only the active
-    // member runs Player.update(), so the shared timers still tick exactly once
-    // per frame, including while the caster sits on the bench. The object is never reassigned.
-    roster.forEach((f) => {
-      f.stgTeam = roster[0].stgTeam;
-    });
-    // Slice 5b: ONE team card store per run, shared by every member (team-wide cards). Run state only, never saved. Since the slice 7b flip
-    // these are the only upgrade cards (the legacy per-move cards are off, deleted in 7b-2).
-    const teamCards = G.TeamCards.store();
-    roster.forEach((f) => {
-      f.teamCards = teamCards;
-    });
-    // Run-tier items (Lucky Egg, Amulet Coin...) are shared by the whole team: ONE id array on every member (never reassigned).
-    const runItems = [];
-    roster.forEach((f) => {
-      f.runItems = runItems;
-    });
-    const dodges = { cd: [0, 0], gap: 0 }; // the dodge charges are the team's: a swap never hands you fresh ones
-    roster.forEach((f) => {
-      f.dodges = dodges;
-    });
-    const berries = []; // the team berry bag (data/ground-items.js, status berries): one shared array too
-    roster.forEach((f) => {
-      f.berries = berries;
-    });
-    activeIdx = 0;
-    pl = roster[0];
-    swapLock = 0;
+    // The Team (js/systems/team.js) links ONE store of each kind to every member, never reassigned: team stages (a buff cast by
+    // one Pokemon stays on whoever is on the field until its timer runs out; only the active member runs Player.update(), so the
+    // shared timers tick once per frame), team cards (slice 5b, run state only), run-tier items, dodge charges (a swap never hands
+    // you fresh ones), the berry bag, and the unspent links. Slot 1 leads with the lock at 0.
+    runTeam = G.Team.create(roster, carryRun);
+    pl = runTeam.active;
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
@@ -264,30 +237,28 @@ G.Game = (() => {
   }
 
   /**
-   * Put roster member i on the field. Shared by the manual swap and the
-   * faint auto-swap so the carried-over state can never drift between them.
-   * The incoming member takes the outgoing one's position and aim, plus the
-   * run-shared progress (level/XP, kills, bosses, coins, tickets), and gets a
-   * short invulnerability window.
+   * The run-shared progress the incoming member takes from the outgoing one (level/XP, kills, bosses, coins, tickets). The Team calls
+   * it on every manual swap, faint swap and Re-Do. Unspent links are not copied: they are one Team store (slice 2, Jess 2026-11-06).
    */
-  function takeField(i) {
-    const next = roster[i];
-    pl.endDodge(); // the outgoing body grows back; the incoming one starts on foot
-    next.x = pl.x;
-    next.y = pl.y;
-    next.aim = pl.aim;
-    next.level = pl.level;
-    next.xp = pl.xp;
-    next.xpNext = pl.xpNext;
-    next.kills = pl.kills;
-    next.bosses = pl.bosses;
-    next.coins = pl.coins;
-    next.bonds = pl.bonds; // links are the team's: the one on the field holds the live count
-    next.t1 = pl.t1;
-    next.t10 = pl.t10;
-    next.invuln = Math.max(next.invuln || 0, SWAP_IFRAME);
-    activeIdx = i;
-    pl = next;
+  function carryRun(from, to) {
+    to.level = from.level;
+    to.xp = from.xp;
+    to.xpNext = from.xpNext;
+    to.kills = from.kills;
+    to.bosses = from.bosses;
+    to.coins = from.coins;
+    to.t1 = from.t1;
+    to.t10 = from.t10;
+  }
+
+  /**
+   * Put roster member i on the field: 'swap' (manual, locks swapping) or 'in' (faint swap or Re-Do, clears the lock). The Team moves
+   * the body (position, aim, dodge end, i-frames, carry); pl follows it here, the only place a swap changes pl.
+   */
+  function field(i, how) {
+    if (how === 'swap') runTeam.swap(i);
+    else runTeam.sendIn(i);
+    pl = runTeam.active;
     G.Sprites.preload([pl.dex], 4000, pl.shiny);
   }
 
@@ -296,22 +267,17 @@ G.Game = (() => {
    */
   let swapNoteT = 0;
   function swapTo(i) {
-    if (i < 0 || i >= roster.length || i === activeIdx) return false;
-    const next = roster[i];
-    if (!next || next.dead) return false;
-    if (swapLock > 0 || state !== 'playing' || pl.dead) return false;
-    if (pl.flyT > 0) return false; // no team swaps in the air (Fly)
-    if (G.Status.swapLocked(pl)) {
+    const why = runTeam ? runTeam.canSwap(i, state === 'playing') : 'no'; // 'ok', 'locked', 'trapped' or 'no' (G.Team)
+    if (why === 'trapped') {
       // trapped (slice E1): no manual swaps until it wears off
       if (!swapNoteT || time - swapNoteT > 0.8) {
         swapNoteT = time;
         G.FX.dmgText(pl.x, pl.y - 40, 'Trapped!', G.Status.CONTROL.trap.color);
         G.Audio.sfx('hurt');
       }
-      return false;
     }
-    takeField(i);
-    swapLock = SWAP_LOCK;
+    if (why !== 'ok') return false;
+    field(i, 'swap');
     G.Camera.shake = 0;
     G.FX.ring(pl.x, pl.y, 6, 70, '#9fe8ff', 0.4, 4);
     G.Audio.sfx('confirm');
@@ -320,19 +286,21 @@ G.Game = (() => {
 
   /** Keyboard swap: cycle prev/next (skipping fainted) and direct-to-slot. */
   function handleSwap() {
-    if (roster.length < 2 || swapLock > 0 || state !== 'playing' || pl.dead) return;
-    // Direct keys are by SLOT number; an empty slot (or a fainted member) does nothing.
-    for (let n = 0; n < 6; n++) {
-      if (!G.Input.action('swap_' + (n + 1))) continue;
+    if (roster.length < 2 || runTeam.lock > 0 || state !== 'playing' || pl.dead) return;
+    // The swap input comes from the member's controller (slice 3; yours reads the keyboard). Direct keys are by SLOT number; an
+    // empty slot (or a fainted member) does nothing.
+    const c = pl.controller,
+      n = c.swapSlot();
+    if (n >= 0) {
       const j = roster.findIndex((f) => f.teamSlot === n);
       if (j >= 0) swapTo(j);
       return;
     }
-    const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;
+    const dir = c.swapDir();
     if (!dir) return;
     for (let step = 1; step <= roster.length; step++) {
-      const j = (activeIdx + dir * step + roster.length * step) % roster.length;
-      if (!roster[j].dead && j !== activeIdx) {
+      const j = (runTeam.activeIdx + dir * step + roster.length * step) % roster.length;
+      if (!roster[j].dead && j !== runTeam.activeIdx) {
         swapTo(j);
         return;
       }
@@ -947,7 +915,7 @@ G.Game = (() => {
       for (const e of G.EnemyMgr.all()) {
         if (mine ? !G.Camera.sees(e.x, e.y, 0) : G.U.dist2(e.x, e.y, who.x, who.y) > R * R) continue;
         const tough = e.boss || e.gym || e.elite;
-        e.hurt(tough ? 60 + pl.level * 14 : e.hp + (e.shield || 0) + 1, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
+        e.takeFlat(tough ? 60 + pl.level * 14 : e.hp + (e.shield || 0) + 1, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
       }
       G.Spawner.quiet(BOMB_QUIET);
     }
@@ -1001,11 +969,10 @@ G.Game = (() => {
       return;
     } // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
-    for (let i = 0; i < 4; i++) {
-      if (G.Input.action('attack_' + (i + 1))) pl.setActive(i);
-    }
-    if (G.Input.action('cycle_prev')) pl.cycle(-1);
-    if (G.Input.action('cycle_next')) pl.cycle(1);
+    // Move slots (slice 3, D4): the member's controller lists the slot keys and cycle keys that went down this frame, in key order.
+    const c = pl.controller;
+    for (const i of c.slots()) pl.setActive(i);
+    for (const d of c.cycles()) pl.cycle(d);
   }
 
   // ---------------- loop ----------------
@@ -1086,10 +1053,8 @@ G.Game = (() => {
       // living member with the LOWEST slot number (slot 1 first, then 2, and so on).
       const alive = roster.filter((f) => !f.dead && f !== pl);
       if (alive.length) {
-        const next = alive.reduce((a, b) => (b.teamSlot < a.teamSlot ? b : a));
         if (G.Log.on) G.Log.redo(pl.runItems.includes('redo'), redoUsed, roster.length, alive.length, 0);
-        takeField(roster.indexOf(next));
-        swapLock = 0;
+        field(runTeam.nextOnFaint(), 'in'); // clears the swap lock
         deathT = 0;
         G.FX.ring(pl.x, pl.y, 8, 90, '#ff8a96', 0.5, 5);
         G.Audio.sfx('shiny');
@@ -1100,12 +1065,11 @@ G.Game = (() => {
       if (pl.runItems.includes('redo') && !redoUsed) {
         redoUsed = true;
         if (G.Log.on) G.Log.redo(true, false, roster.length, 0, 1);
-        const reviveIdx = activeIdx; // the Pokemon that just fainted (the final faint); resume on it, not slot 1
+        const reviveIdx = runTeam.activeIdx; // the Pokemon that just fainted (the final faint); resume on it, not slot 1
         for (const f of roster) {
           f.revive(1);
         } // revive(frac): 1 = full HP
-        takeField(reviveIdx);
-        swapLock = 0;
+        field(reviveIdx, 'in'); // clears the swap lock
         deathT = 0;
         G.FX.ring(pl.x, pl.y, 10, 120, '#ffe08a', 0.7, 6);
         G.Audio.sfx('shiny');
@@ -1128,9 +1092,9 @@ G.Game = (() => {
     time += dt;
     G.Log.t = time;
     if (G.Log.on) G.Log.sample();
-    if (swapLock > 0) swapLock = Math.max(0, swapLock - dt);
+    runTeam.tickLock(dt);
     handleSwap();
-    if (G.Input.action('shake_off') && G.Status.shake(pl))
+    if (pl.controller.shake() && G.Status.shake(pl))
       G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // Shake off (slice E1)
     else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt))
       G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // accessibility auto-shake, 3 taps/s (E2e)
@@ -1147,14 +1111,10 @@ G.Game = (() => {
     pl.frozen = coop && (G.UI.isOpen('scr-pause') || G.UI.isOpen('scr-item'));
     pl.update(dt);
     // Benched teammates (slice E2b): statuses, DoT and stage drops keep ticking, so a poisoned or burning one can faint on the bench.
-    for (const f of roster) {
-      if (f === pl || f.dead) continue;
-      f.benchUpdate(dt);
-      if (f.dead) {
-        G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad');
-        G.Audio.sfx('faint');
-      }
-    }
+    runTeam.benchTick(dt, (f) => {
+      G.UI.toast(f.mon.name + ' fainted on the bench!', 3200, 'bad');
+      G.Audio.sfx('faint');
+    });
     if (coop) {
       for (const p of G.Coop.puppets()) p.netUpdate(dt);
       if (pl.dead) reviveTick(dt);
@@ -1496,13 +1456,13 @@ G.Game = (() => {
       offerItem(id);
     },
     get activeIndex() {
-      return activeIdx;
+      return runTeam ? runTeam.activeIdx : 0;
     },
     get swapCooldown() {
-      return swapLock;
+      return runTeam ? runTeam.lock : 0;
     },
     get swapMax() {
-      return SWAP_LOCK;
+      return G.Team.SWAP_LOCK;
     },
     swap(i) {
       return swapTo(i);
