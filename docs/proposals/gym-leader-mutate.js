@@ -1,0 +1,105 @@
+// Mutation check for entity model slice 5 (Node only; not a harness, so tools/check.js does not run it).
+// Usage from the repo root:  node docs/proposals/gym-leader-mutate.js
+// Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs gym-leader-harness.js against it (GL_<FILE>).
+// The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
+const fs = require('fs'),
+  os = require('os'),
+  path = require('path'),
+  cp = require('child_process');
+const root = path.resolve(__dirname, '..', '..');
+const LD = 'js/entities/gym-leader.js',
+  PL = 'js/entities/player.js',
+  BR = 'js/entities/boss-ai.js',
+  ST = 'js/systems/status.js',
+  FX = 'js/systems/move-effects.js',
+  CB = 'js/systems/combat.js',
+  GY = 'js/data/gyms.js';
+const ENV = { [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
+const M = [
+  // the class and the switch
+  ['the switch is ignored', BR, 'if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);', ''],
+  ['every gym takes the leader body', BR, 'if (def.gym && def.gym.playerEntity) return', 'if (def.gym) return'],
+  ['no enemy list id', LD, 'this.id = G.EnemyMgr.newId();', ''],
+  ['it is not the boss', LD, 'this.boss = true;', 'this.boss = false;'],
+  ['hpMult is dropped', LD, 'return Math.round(super.maxHpAt(level) * this.hpMult);', 'return super.maxHpAt(level);'],
+  ['hpMult does not carry forward', GY, 'if (k <= loop) at = m[k];', 'if (k === loop) at = m[k];'],
+  // hit parity
+  ['hit i-frames stay on', LD, 'get hitIframes() {\n    return 0;', 'get hitIframes() {\n    return 0.45;'],
+  ['the melee cushion stays on', PL, '!this.isRival && this.activeGroup()', 'this.activeGroup()'],
+  ['the attacker items are dropped', FX, 'b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl));', 'b.itemMul = 1;'],
+  ['takeHit ignores the items', PL, '* (b.itemMul || 1);', ';'],
+  ['Power Stone is dropped', FX, 'b.stone = b.owner.stoneType === def.type;', 'b.stone = false;'],
+  ['Power Stone does not pierce immunity', PL, 'if (tk === 0 && !stone) {', 'if (tk === 0) {'],
+  ['Power Stone has no floor', PL, '(stone ? Math.max(1, tk * wk) : tk * wk)', '(tk * wk)'],
+  ['a status-category hit uses her Def', FX, "b.neutral = !!pl.isRival && def.category === 'status';", 'b.neutral = false;'],
+  ['flat moves do nothing on a leader', FX, 'if (pl.isRival && FLAT[fx.handler]) return special(inst, pl, rng, fx, hop, hit);', ''],
+  ['a leader flat move hits you', FX, 'if (pl.isRival && FLAT[fx.handler]) return', 'if (FLAT[fx.handler]) return'],
+  ['your damage is not counted', FX, 'b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt;', ''],
+  ['Shell Bell hears nothing', FX, 'if (b.owner.onDealt) b.owner.onDealt(hit.dealt);', ''],
+  ['takeFlat reads the color as a type', PL, 'return this.hurt(amount, null, true, color ? { color } : null);', 'return this.hurt(amount, color, false);'],
+  ['the wild flat entry drops the amount', 'js/entities/enemy.js', 'this.hurt(amount, color, dirX, dirY, knock, null);', ''],
+  ['the leader shows the player number', LD, "show = atk && atk.crit ? '#ff9a3c' : eff === 'super' ? '#ffe14d' : eff === 'weak' ? '#a3abb8' : col;", "show = '#ff6b7a';"],
+  // status
+  ['a leader is strong', ST, '&& !h.leaderStatus;', ';'],
+  ['no leader freeze and sleep cut', ST, "if (h.leaderStatus && (kind === 'freeze' || kind === 'sleep')) return base * LEADER.cut;", ''],
+  ['the 5 s gap is 2.5 s', ST, 'h.leaderStatus ? LEADER.window : GRACE', 'GRACE'],
+  ['the AI never shakes off', LD, 'G.Status.autoShake(this, dt);', ''],
+  // the brain
+  ['the brain steps while frozen', LD, 'this.heading = G.Status.stunned(this) ? [0, 0] : this.steer(dt, pl);', 'this.heading = this.steer(dt, pl);'],
+  ['the heading never reaches the controller', LD, '{ axis: () => this.heading }', '{}'],
+  ['no self heal restriction', BR, 'rules.healLimit != null ? rules.healLimit : ', ''],
+  ['tells cannot be turned off', BR, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
+  ['the brain installs heal on the leader', BR, 'if (!e.isPlayer) {\n        e.stabFor', 'if (true) {\n        e.stabFor'],
+  ['flinch restarts every move', LD, 'this.brain.flinch();\n    return this.flinchRecoil();', 'G.MoveSim.flinch(this);\n    return this.flinchRecoil();'],
+  ['flinch keeps the tell', LD, 'this.brain.flinch();\n', ''],
+  ['an asleep leader flinches', LD, 'applyFlinch() {\n    if (this.dead || G.Status.stunned(this)) return false;', 'applyFlinch() {\n    if (this.dead) return false;'],
+  ['the aim follows you through the tell', BR, 'after: RECOVER / tempo, ang, spot, fired: false };', 'after: RECOVER / tempo, ang, spot, fired: false, get ang2() { return 0; } }; Object.defineProperty(this.tell, "ang", { get: () => Math.atan2(G.Game.player.y - e.y, G.Game.player.x - e.x) });'],
+  // enrage
+  ['no enrage clock', LD, 'if (this.hp < hp0 && this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();', ''],
+  ['every hit restarts the clock', LD, 'if (this.hp < hp0 && this.gym.engagedAt == null)', 'if (this.hp < hp0)'],
+  ['an immune hit engages', LD, 'if (this.hp < hp0 && this.gym.engagedAt == null)', 'if (this.gym.engagedAt == null)'],
+  // touch, faint
+  ['touch damage stays', CB, 'if (e.isRival) continue;', ''],
+  ['no drop on the faint', LD, "G.Drops.roll('gym', this.x, this.y);", ''],
+  ['no faint hook', PL, '      this.onFaint();\n', ''],
+  ['the corpse never fades', LD, 'this.fade -= dt;', ''],
+  ['no fade starts', LD, 'this.fade = 0.9;', ''],
+  // what the enemy list calls
+  ['applyBurn missing', LD, "G.Status.applyDot(this, 'burn', mul, durMul);", ''],
+  ['applyPoison ignores Toxic', LD, "lv >= 2 ? 'toxic' : 'poison'", "'poison'"],
+  ['applySlow missing', LD, 'this.slowT = Math.max(this.slowT, dur);', ''],
+  // data and validator
+  ['Misty is not switched on', GY, 'playerEntity: true, // entity model slice 5', '// entity model slice 5'],
+  ['Misty loses her hpMult', GY, 'hpMult: { 1: 26 },', 'hpMult: { 1: 13 },'],
+  ['unknown restrictions pass', GY, "for (const k of unknownKeys(rules, RESTRICTION_KEYS)) bad.push((g.leader || '?') + ': unknown restriction ' + k);", ''],
+  ['bad tells pass', GY, "if (rules.tells != null && typeof rules.tells !== 'boolean')", 'if (false)'],
+  ['bad healLimit passes', GY, 'if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))', 'if (false)'],
+  ['the switch needs no hpMult', GY, 'if (g.playerEntity && !(g.hpMult && g.hpMult[1] > 0))', 'if (false)'],
+];
+ENV['js/entities/enemy.js'] = 'GL_ENEMY';
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gym-leader-mut-'));
+let caught = 0,
+  bad = 0;
+for (const [name, file, a, b] of M) {
+  const s = fs.readFileSync(path.join(root, file), 'utf8');
+  if (!s.includes(a)) {
+    console.log('STALE mutation (pattern not found): ' + name);
+    bad++;
+    continue;
+  }
+  const out = path.join(tmp, path.basename(file));
+  fs.writeFileSync(out, s.replace(a, b));
+  const env = Object.assign({}, process.env, { [ENV[file]]: out });
+  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/gym-leader-harness.js')], { env, encoding: 'utf8' });
+  const lines = (r.stdout + r.stderr).trim().split('\n');
+  if (r.status !== 0) {
+    caught++;
+    console.log('caught  ' + name + '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')');
+  } else {
+    bad++;
+    console.log('MISSED  ' + name);
+  }
+}
+fs.rmSync(tmp, { recursive: true, force: true });
+console.log(caught + '/' + M.length + ' mutations caught');
+process.exit(bad ? 1 : 0);

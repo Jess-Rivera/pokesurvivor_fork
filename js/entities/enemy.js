@@ -277,6 +277,11 @@
       this.dot(kind, amount, color);
     }
 
+    /** The one flat damage entry of a wild entity (slice 5, D1): bombs, ground traps, fixed damage. Same answer as PlayerEntity.takeFlat. */
+    takeFlat(amount, color, dirX = 0, dirY = 0, knock = 0) {
+      this.hurt(amount, color, dirX, dirY, knock, null);
+    }
+
     /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
     dot(kind, amount, color) {
       const hp0 = this.hp;
@@ -1907,6 +1912,7 @@
       bossAlive,
       shinies,
       nearestPlayer,
+      newId: () => nextId++, // a body that is not a wild entity (G.GymLeader) takes its id here
       get count() {
         return list.length;
       },

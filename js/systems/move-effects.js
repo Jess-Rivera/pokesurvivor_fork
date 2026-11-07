@@ -265,7 +265,8 @@ G.MoveEffects = (() => {
     const hp0 = e.hp,
       sh0 = e.shield || 0;
     const kn = knockOf(inst, e, kfx);
-    e.hurt(dmg, col, kn[0], kn[1], kn[2], null);
+    if (e.takeFlat) e.takeFlat(dmg, col, kn[0], kn[1], kn[2]);
+    else e.hurt(dmg, col, kn[0], kn[1], kn[2], null); // hosts without takeFlat (older test hosts)
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
     if (o.onDealt) o.onDealt(dmg);
     hit.dmg = dmg;
@@ -332,11 +333,17 @@ G.MoveEffects = (() => {
     const def = inst.spec,
       b = blowOf(inst, pl, rng),
       hp0 = pl.hp;
+    b.neutral = !!pl.isRival && def.category === 'status'; // slice 5: on a gym leader a status-category hit divides by the neutral 50, as on a wild entity
     b.cat = def.category === 'special' ? 'special' : 'physical'; // a Player entity's defense knows physical and special only
     b.who = G.Log.on ? G.Log.who(b.owner, def.id) : null;
+    b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl)); // slice 5: the attacker's Expert Belt and type items (a leader has none yet)
+    b.stone = b.owner.stoneType === def.type; // slice 5: the attacker's Power Stone
+    b.color = (G.U && G.U.TYPE_COLOR && G.U.TYPE_COLOR[def.type]) || '#fff';
     pl.takeHit(b); // slice 4a: the Player entity runs its own defense half
     hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
+    b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt; // slice 5: your damage on a gym leader counts, Shell Bell included
+    if (b.owner.onDealt) b.owner.onDealt(hit.dealt);
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
   function ailPlayer(inst, pl, rng, fx, hop) {
@@ -361,8 +368,9 @@ G.MoveEffects = (() => {
     stat,
     heal,
     recoil,
-    special: (inst, pl, rng, fx) => {
+    special: (inst, pl, rng, fx, hop, hit) => {
       if (SPECIAL[fx.handler] === read || fx.handler === 'ohkoWild') return; // statusBonus is read by hurtPlayer, chainDamageFalloff and the stubs do nothing here; the player is never KO'd outright
+      if (pl.isRival && FLAT[fx.handler]) return special(inst, pl, rng, fx, hop, hit); // slice 5: your Seismic Toss on a gym leader; a leader's flat move on you is still not built
       if (!noted.has(inst.spec.id + ':' + fx.handler)) {
         noted.add(inst.spec.id + ':' + fx.handler);
         console.warn(

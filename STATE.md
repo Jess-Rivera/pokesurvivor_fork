@@ -1,31 +1,32 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-06 end of day, Quick (work). Branch: feature/entity-model.
+Last updated: 2026-11-06 night, Claude Code (home). Branch: feature/entity-model.
 
 ## START HERE (next session, either tool)
-Slice 4b is BUILT and committed but has NEVER RUN. Before anything else:
-1. `git pull --ff-only`, then: `node tools/check.js` (47/47), `node docs/proposals/type-chart-mutate.js` (25/25), `node docs/proposals/hit-parity-mutate.js` (31/31), `node docs/proposals/move-sim-mutate.js` (no STALE), `node tools/smoke-newcombat.js`, `node tools/smoke-team.js`, `node tools/smoke-ui.js`.
-2. On a FAIL: work out from the game code and COMBAT-RULES whether the test or the game is wrong, and tell Jess which, before editing. Never move an expected value to match output without that proof. List every test edit made after a run.
-3. Jess's balance feel test: Ember on Bulbasaur (x2), Water Gun on Geodude (x4), a Normal move on Gastly (0 and a grey Immune), horde damage about as before, every `G.Debug.newcombat()` set still lands (dummies are typeless).
-4. Green and feels right: Jess commits "4b verified". Then plan slice 5.
-What 4b changed, and every deliberate test edit: docs/ASCII Concept Maps/Entity Model Slice 4 - Hit Contract and Hard Typing.txt, "4b PRE-BUILD SCAN" and "4b AS BUILT". Rules: COMBAT-RULES "Damage", "Type chart".
+Slice 5 is BUILT: Misty is a real `G.GymLeader` (a Player entity) behind a per-gym switch. Every other gym stays on the old body.
+Owed by Jess: the feel test, `G.Debug.gym(2)` in dev.html?dev: same fight, no touch damage, her status pills showing, sleep and freeze holding longer; watch for her catching on an arena rock (the wild stuck side-step was not carried over); take the badge. Then `G.Debug.gym(1)`: Brock must feel exactly as before.
+Good: Jess commits. Bad: the way out is removing `playerEntity` from Misty in js/data/gyms.js.
+What changed, every deviation and every test edit: docs/ASCII Concept Maps/Entity Model Slice 5 - GymLeader, Misty First.txt, "AS BUILT".
 
 ## Where we are
-- Entity model plan: docs/proposals/host-model-plan.md (12 slices). Slices 1, 2, 3, 4a built, green, committed.
-- 4b: mainline chart with true x0 immunity, STAB everywhere, ENEMY_POWER 40 to 27, typeless test dummies.
+- Entity model plan: docs/proposals/host-model-plan.md (12 slices). Slices 1 to 4b verified and committed; 5 built.
+- 4b is green: Jess's feel test passed 11-06.
+- Mutation runners were repaired 11-06 (30 stale patterns). `move-sim-mutate` used to stop at its first stale one.
 
-## Next (after 4b)
-1. Slice 5 (`GymLeader`, Misty first): plan as an ASCII map; decide which select, shot and heal sounds are the human's.
+## Next
+1. Slice 6 (stat pipeline and cards): leader stats match a player built the same way, Misty's Zinc x3, the fight-time report tunes `hpMult`. Plan as an ASCII map.
 2. Owed feel tests: win a gym, swap before spending the link, spend it on a benched member; slice 1 Elite fight.
 3. Work machine: `npm install` once so lint and format run.
 Also: delete merged branches (commands given 11-06); Codex menu with tooltips.
 
 ## Watch
-- 4b feel risks: a lead weak to a gym's type takes x2; double weaknesses one-shot; an Elite immune to all your team's types cannot be hurt.
-- File:// font: Chromium blocks Silver-game.ttf over file:// (preload, dev.html line 52). Check in Chrome; a fix needs a plan.
-- Leaders fire all moves at once; one active slot at slice 8. boss-owner-mutate: 5 stale patterns, fix at slice 5.
-- TODO.md board mirror is from 2026-11-04; the GitHub API returned empty all of 11-06.
+- Smokes over http (smoke-ui, smoke-newcombat) fail about 1 run in 3 with `ERR_NO_BUFFER_SPACE`, a Windows socket limit, not the game. Repeat before believing a resource failure. smoke-team and smoke-gym use file://.
+- Slice 8 decisions parked: melee cushion on leaders, your flinch rule on leaders, select and shot sounds (recommended human only).
+- 4b feel risks: double weaknesses one-shot; an Elite immune to all your team's types cannot be hurt.
+- File:// font: Chromium blocks Silver-game.ttf (preload, dev.html line 52). Check in Chrome; a fix needs a plan.
+- `move-sim-mutate` "routing filter ignored" is a real MISS (28/29), older than slice 5.
+- TODO.md board mirror is from 2026-11-04.
 
 ## Open owner decisions
 - Board cleanup: stale `blocked` on #5 and #11.

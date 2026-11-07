@@ -26,7 +26,14 @@ G.Combat = (() => {
         const landed = pl.invuln <= 0;
         let res;
         if (p.atkFactor != null)
-          res = pl.takeHit({ A: p.atkFactor, cat: p.atkCat, type: p.mtype, stab: stabOf(p.src, p.mtype), mul: p.mul, who: w });
+          res = pl.takeHit({
+            A: p.atkFactor,
+            cat: p.atkCat,
+            type: p.mtype,
+            stab: stabOf(p.src, p.mtype),
+            mul: p.mul,
+            who: w,
+          });
         else res = pl.hurt(p.dmg, p.mtype, false, null, w);
         if (p.ail && landed && !pl.dead && res !== 'immune') pl.inflict(p.ail, p.ailHalf); // a Status carrier's shot (slice E1)
         G.FX.burst(p.x, p.y - G.LIFT, p.color, 7, 110);
@@ -37,6 +44,7 @@ G.Combat = (() => {
     // --- enemy <-> player contact ---
     if (pl.dead || pl.flyT > 0) return; // nothing touches a flying player
     for (const e of G.EnemyMgr.queryCircle(pl.x, pl.y, pl.r + 40)) {
+      if (e.isRival) continue; // a G.GymLeader has no touch damage (slice 5); a gym may author it back later
       // Contact gap: wild melee reaches CONTACT.hit x the radius sum (it stops at CONTACT.stop x); bosses keep 1.0.
       const reach = (e.r + pl.r) * (e.boss ? 1 : G.Enemies.CONTACT.hit);
       if (G.U.dist2(e.x, e.y, pl.x, pl.y) > reach * reach) continue;
@@ -52,7 +60,14 @@ G.Combat = (() => {
       const w = G.Log.on ? G.Log.who(e, 'contact') : null;
       let res;
       if (e.atkFactor != null)
-        res = pl.takeHit({ A: e.atkFactor, cat: e.atkCat, type: e.atkType, stab: stabOf(e, e.atkType), mul: e.contactMul(), who: w });
+        res = pl.takeHit({
+          A: e.atkFactor,
+          cat: e.atkCat,
+          type: e.atkType,
+          stab: stabOf(e, e.atkType),
+          mul: e.contactMul(),
+          who: w,
+        });
       else res = pl.hurt(e.dmg, e.atkType, false, null, w);
       if (e.carrierSec && !pl.dead && res !== 'immune') {
         const k = e.secAil();

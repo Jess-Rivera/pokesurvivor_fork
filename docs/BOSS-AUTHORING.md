@@ -39,6 +39,9 @@ The game derives (never type these):
 | boost | stat and percent | optional override of the badge's run boost |
 | cards | { loop: { card: stacks } }, see Cards | optional; the leader's cards gained per loop, held by every mon the gym fields |
 | signatures | ordered list, 1 to 6 | order matters: loop N fields the first N at once (G.Gyms.lineup) |
+| playerEntity | true, or leave out | entity model slice 5: the leader is a G.GymLeader, following the player's rules. Needs hpMult. Misty only so far. |
+| hpMult | { loop: number }, loop 1 required with playerEntity | multiplies the player HP formula; a loop with no entry keeps the last earlier one. Set per gym (Misty 26, TUNE). |
+| restrictions | { tells, healLimit }, optional | default allow. tells: false removes wind-ups. healLimit: self heals per fight, a whole number from 0 (default: the loop number). Unknown keys are rejected. |
 
 ## Cards (slice 7a, 2026-10-31; replaces the per-move stacks of 2026-10-19)
 

@@ -48,8 +48,8 @@ const M = [
   ['the human takes the 1.0 scale', PL, 'return G.Stats.ENEMY_DMG_SCALAR;', 'return G.Stats.DMG_SCALAR;'],
   ['every Player entity takes the 0.5 scale', PL, 'return G.Stats.DMG_SCALAR;', 'return G.Stats.ENEMY_DMG_SCALAR;'],
   ['hurt drops the STAB of the hit', PL, 'stab = atk.stab || 1,', 'stab = 1,'],
-  ['takeHit drops the crit', PL, 'const mul = (b.mul || 1) * (b.crit ? b.critMul : 1);', 'const mul = b.mul || 1;'],
-  ['the crit folded before your defense', PL, 'return this.hurt(b.A, b.type, false, { factor: b.A, cat: b.cat, mul, crit: !!b.crit, stab: b.stab || 1 }, b.who);', 'const cA = b.A * (b.crit ? b.critMul : 1);\n    return this.hurt(cA, b.type, false, { factor: cA, cat: b.cat, mul: b.mul || 1, crit: !!b.crit, stab: b.stab || 1 }, b.who);'],
+  ['takeHit drops the crit', PL, 'const mul = (b.mul || 1) * (b.crit ? b.critMul : 1) * (b.itemMul || 1);', 'const mul = (b.mul || 1) * (b.itemMul || 1);'],
+  ['the crit folded before your defense', PL, 'const mul = (b.mul || 1) * (b.crit ? b.critMul : 1) * (b.itemMul || 1);\n    return this.hurt(\n      b.A,\n      b.type,\n      false,\n      {\n        factor: b.A,', 'const mul = (b.mul || 1) * (b.itemMul || 1);\n    const cA = b.A * (b.crit ? b.critMul : 1);\n    return this.hurt(\n      cA,\n      b.type,\n      false,\n      {\n        factor: cA,'],
   ['your type chart skipped', PL, 'tk = G.Types.mult(type, this.mon.types);', 'tk = 1;'],
   ['Substitute bypassed on you', PL, 'if (this.shield) {\n      // move schema slice 4b (Substitute)', 'if (false) {\n      // move schema slice 4b (Substitute)'],
   ['i-frames ignored on you', PL, 'if (this.invuln > 0 || this.dead) {', 'if (this.dead) {'],
@@ -57,10 +57,10 @@ const M = [
   // DoT and the other families (enemy.js, elite.js, status.js)
   ['takeDot dropped on a wild', EN, '    takeDot(kind, amount, color) {\n      this.dot(kind, amount, color);\n    }', '    takeDot() {}'],
   ['an Elite takes knockback', EL, 'this.immovable = true;', ''],
-  ['DoT skips takeDot', SS, 'if (h.takeDot) h.takeDot(name, amount, color);', 'if (false) h.takeDot(name, amount, color);'],
+  ['DoT skips takeDot', SS, 'if (h.takeDot)\n      h.takeDot(name, amount, color);', 'if (false)\n      h.takeDot(name, amount, color);'],
   // the other callers (combat.js, hazards.js)
-  ['wild contact skips takeHit', CB, 'res = pl.takeHit({ A: e.atkFactor, cat: e.atkCat, type: e.atkType, stab: stabOf(e, e.atkType), mul: e.contactMul(), who: w });', 'res = pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);'],
-  ['a shot loses its multiplier', CB, 'mul: p.mul, who: w', 'mul: 1, who: w'],
+  ['wild contact skips takeHit', CB, 'res = pl.takeHit({\n          A: e.atkFactor,\n          cat: e.atkCat,\n          type: e.atkType,\n          stab: stabOf(e, e.atkType),\n          mul: e.contactMul(),\n          who: w,\n        });', 'res = pl.hurt(e.atkFactor, e.atkType, false, { factor: e.atkFactor, cat: e.atkCat, mul: e.contactMul() }, w);'],
+  ['a shot loses its multiplier', CB, 'mul: p.mul,\n            who: w', 'mul: 1,\n            who: w'],
   ['a hazard reads the wrong category', HZ, 'pl.takeHit({ A: h.atkFactor, cat: h.atkCat,', "pl.takeHit({ A: h.atkFactor, cat: 'special',"],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hit-parity-mut-'));

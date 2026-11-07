@@ -270,3 +270,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Wrapped with slice 4b built and committed but NEVER RUN: check.js, both new mutation runners and the smokes were not run on 4b. STATE.md "START HERE" lists the exact first steps.
 - Board mirror not re-synced: the GitHub API returned empty all day (mirror still 2026-11-04).
 - Next: verify 4b and its balance feel test, then plan slice 5 (GymLeader, Misty first).
+
+## 2026-11-06, night (Claude Code, home)
+- 4b: checks green once real; Jess's feel test passed. Two http smokes fail intermittently on a Windows socket limit (ERR_NO_BUFFER_SPACE), not the game.
+- Decided (Jess): slice 5 D1 to D6 as recommended (one flat damage entry, Misty hpMult 26, restrictions start with tells and healLimit, cushion and player flinch off for leaders until slice 8, boss look kept).
+- Built slice 5: G.GymLeader on PlayerEntity, shared GymBrain, leader status set, no touch damage, Misty switched on. New smoke-gym, gym-leader harness (140) and mutate (51).
+- Repaired 30 stale mutation patterns. The map's AS BUILT lists every deviation and test edit.
+- Stopped at: Jess's feel test of Misty and Brock, then commit.

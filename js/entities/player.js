@@ -593,6 +593,10 @@ G.PlayerEntity = class PlayerEntity {
   applyFlinch() {
     if (this.dead || G.Status.stunned(this)) return false;
     G.MoveSim.flinch(this);
+    return this.flinchRecoil();
+  }
+  /** The flinch's body half: back half your body at 2x your speed if moving, then still 0.2 to 0.3 s. */
+  flinchRecoil() {
     const sp = this.walking ? Math.hypot(this.svx || 0, this.svy || 0) : 0;
     this.stFl =
       sp > 0
@@ -629,7 +633,7 @@ G.PlayerEntity = class PlayerEntity {
     const inv = this.invuln;
     this.invuln = 0;
     this.dot = true; // status damage still lands in the air (Fly)
-    this.hurt(amount, null, true);
+    this.hurt(amount, null, true, color ? { color } : null);
     this.dot = false;
     if (!this.dead) this.invuln = inv;
   }
@@ -640,15 +644,32 @@ G.PlayerEntity = class PlayerEntity {
    */
   /** Hurt feedback that belongs to the one at the keyboard (HumanPlayer). Called by hurt() only while on the field. */
   onHurtFeel() {}
+  /** The hit's number and burst on this entity (slice 5: a gym leader keeps the look of a boss). Called by hurt() only while on the field. */
+  showHit(d, eff, atk) {
+    G.FX.dmgText(
+      this.x,
+      this.y - this.bodyH - 4,
+      '-' + Math.round(d),
+      eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a',
+      eff === 'super' || !!(atk && atk.crit) // a gym leader's crit shows big
+    );
+    G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
+  }
+  /** Called once when hurt() faints this entity, after its effects are wiped. A gym leader pays its drops here (slice 5). */
+  onFaint() {}
+  /** Seconds of invulnerability a hit leaves (slice 5: a gym leader has none, COMBAT-RULES "Host model"). */
+  get hitIframes() {
+    return 0.45;
+  }
 
   hurt(amount, type = null, pure = false, atk = null, who = null) {
     if (this.flyT > 0 && !this.dot && !this.dead) return; // in the air: hits miss, but status damage over time (statusDot) lands
+    const LOG = G.Log.on && !this.isRival; // the dev log's hit lines are hits on you
     if (this.invuln > 0 || this.dead) {
-      if (G.Log.on && !this.dead) G.Log.block(who, atk ? atk.factor : amount, this.invuln);
+      if (LOG && !this.dead) G.Log.block(who, atk ? atk.factor : amount, this.invuln);
       return;
     }
-    const LOG = G.Log.on,
-      hp0 = this.hp;
+    const hp0 = this.hp;
     let neutral = amount,
       dStat = 0,
       cat = -1;
@@ -674,8 +695,9 @@ G.PlayerEntity = class PlayerEntity {
             ? G.Stats.spDef(spdB, this.level, this.statIv(4), this.statEv(4), this.statNat(4))
             : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
       }
-      amount =
-        G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf, stab, scale) * mul;
+      amount = atk.neutral
+        ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader (slice 5): the neutral denominator, as on a wild entity
+        : G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf, stab, scale) * mul;
     }
     const afterDef = amount;
     let eff = null,
@@ -683,7 +705,8 @@ G.PlayerEntity = class PlayerEntity {
       wk = 1;
     if (type) {
       tk = G.Types.mult(type, this.mon.types);
-      if (tk === 0) {
+      const stone = !!(atk && atk.stone); // the attacker's Power Stone: its type ignores resistance and immunity (typeK's floor at 1)
+      if (tk === 0 && !stone) {
         // slice 4b (I1, I2, I4): immune: no damage, no i-frames, flash, sound, camera kick, Focus Sash or shield drain
         G.Status.immuneNote(this);
         return 'immune';
@@ -693,13 +716,14 @@ G.PlayerEntity = class PlayerEntity {
       // Type-guard berry (ground item, 10 s): a super-effective hit of its type is halved (Chilan: every Normal hit).
       const guard =
         this.stgTeam && G.Stages.teamSum(this.stgTeam, 'guard_' + type) > 0 && (tk > 1 || type === 'normal') ? 0.5 : 1;
-      amount *= tk * wk * guard;
+      amount *= (stone ? Math.max(1, tk * wk) : tk * wk) * guard;
     }
     // With a melee attack active you take 25% less: you have to
-    // be on top of the enemies to hit (they lagged far behind).
-    const close = this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
-      ? 0.75
-      : 1;
+    // be on top of the enemies to hit (they lagged far behind). Off for a gym leader until its one active slot (slice 8).
+    const close =
+      !this.isRival && this.activeGroup().some((m) => G.MoveDefs[m.id] && G.MoveDefs[m.id].balanceClass === 'melee')
+        ? 0.75
+        : 1;
     const raw = pure ? amount : amount * (1 - this.reduction) * close;
     let d = Math.max(1, raw);
     if (this.shield) {
@@ -727,19 +751,12 @@ G.PlayerEntity = class PlayerEntity {
         (d > raw ? 1 : 0) | (pure ? 4 : 0),
         this.spd
       );
-    this.invuln = 0.45;
+    this.invuln = this.hitIframes;
     this.flash = 0.14;
     if (!this.benched) {
       // a benched Pokemon taking DoT is silent: no shake, sound or numbers at its stale position (the toast says it fainted)
       this.onHurtFeel(); // the human's hurt sound and camera kick (HumanPlayer); a Player entity has none
-      G.FX.dmgText(
-        this.x,
-        this.y - this.bodyH - 4,
-        '-' + Math.round(d),
-        eff === 'super' ? '#ff3048' : eff === 'weak' ? '#c9a0a8' : '#ff6b7a',
-        eff === 'super' || !!(atk && atk.crit) // a gym leader's crit shows big
-      );
-      G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
+      this.showHit(d, eff, atk, type);
     }
     // Focus Band: survives the hit with 1 health (once every 60 s).
     if (this.hp <= 0 && this.hasItem('focussash') && performance.now() - this.sashT > 60000) {
@@ -759,18 +776,40 @@ G.PlayerEntity = class PlayerEntity {
       this.reviveT = 0;
       this.shield = null; // slice 4b: a faint ends the shield
       this.clearEffects(); // slice E2b: fainting wipes every status and own stage drop
+      this.onFaint();
     }
   }
 
   /**
    * The one hit contract (slice 4a): an attack hands its hit here and the Player entity runs its own defense half, hurt() with the
-   * attack options. b = { A, cat ('physical' | 'special'), type, stab, mul, crit, critMul, who }. STAB lands after the +2 and the
-   * damage scale is this entity's (dmgTakenScale). Flat damage (terrain, DoT, items) keeps hurt(amount). A chain never hops onto a
-   * Player entity yet, so no hop falloff is read here.
+   * attack options. b = { A, cat ('physical' | 'special'), type, stab, mul, crit, critMul, itemMul, stone, neutral, who }. STAB lands after the +2 and the
+   * damage scale is this entity's (dmgTakenScale). itemMul and stone are the attacker's held items (slice 5); neutral: the status-category
+   * denominator. Flat damage takes takeFlat. A chain never hops onto a Player entity yet, so no hop falloff is read here.
    */
   takeHit(b) {
-    const mul = (b.mul || 1) * (b.crit ? b.critMul : 1);
-    return this.hurt(b.A, b.type, false, { factor: b.A, cat: b.cat, mul, crit: !!b.crit, stab: b.stab || 1 }, b.who);
+    const mul = (b.mul || 1) * (b.crit ? b.critMul : 1) * (b.itemMul || 1);
+    return this.hurt(
+      b.A,
+      b.type,
+      false,
+      {
+        factor: b.A,
+        cat: b.cat,
+        mul,
+        crit: !!b.crit,
+        stab: b.stab || 1,
+        stone: !!b.stone,
+        neutral: !!b.neutral,
+        color: b.color,
+      },
+      b.who
+    );
+  }
+
+  /** The one flat damage entry of a Player entity (slice 5, D1): no defense, type or STAB. The direction and knock of a wild hit do not
+   *  apply: a Player entity is moved only by push moves. The color is for a gym leader's number. */
+  takeFlat(amount, color) {
+    return this.hurt(amount, null, true, color ? { color } : null);
   }
 
   /** Every status (major, confusion, trap, daze, drowsy, DoT, windows) and this Pokemon's own stage drops. The TEAM raises are shared and stay. */
@@ -827,7 +866,7 @@ G.PlayerEntity = class PlayerEntity {
     const before = this.hp;
     this.hp = Math.min(this.maxHp, this.hp + amount);
     const got = Math.round(this.hp - before);
-    if (G.Log.on) G.Log.heal(amount, this.hp - before, this.hp, this.maxHp);
+    if (G.Log.on && !this.isRival) G.Log.heal(amount, this.hp - before, this.hp, this.maxHp);
     if (got >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 6, '+' + got, '#5fe08a');
   }
 
@@ -835,7 +874,6 @@ G.PlayerEntity = class PlayerEntity {
     this.maxHp += amount;
     this.hp += amount;
   }
-
 
   /** Bring a benched teammate up to the shared run level: recompute maxHp for the
    *  new level, preserving current-hp fraction (so swapping is neither a free heal
@@ -1095,7 +1133,6 @@ G.PlayerEntity = class PlayerEntity {
     G.Audio.sfx('heal');
   }
 
-
   draw(ctx) {
     // Halo of the active move's type, on the ground.
     const m = this.activeMove();
@@ -1242,7 +1279,7 @@ G.PlayerEntity = class PlayerEntity {
           h = 9,
           ws = L.map((x) => Math.ceil(ctx.measureText(TAG[x.k] || x.k.slice(0, 3).toUpperCase()).width) + 6);
         let x = this.x - (ws.reduce((a, b) => a + b, 0) + gap * (L.length - 1)) / 2;
-        const y = this.y - this.bodyH - (this.tag ? 24 : 14);
+        const y = this.y - this.bodyH - (this.tag || this.isRival ? 24 : 14); // above the name tag, or a gym leader's HP bar
         L.forEach((st, i) => {
           if (st.t != null) mx[st.k] = Math.max(mx[st.k] || 0, st.t);
           ctx.fillStyle = 'rgba(20,0,6,.82)';

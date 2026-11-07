@@ -41,7 +41,7 @@ for (const p of ['js/core/stats.js', 'js/data/enemies.js', 'js/data/types.js', '
 const origWarn = console.warn; console.warn = m => warns.push(String(m));
 const Sim = G.MoveSim, S = G.Stages, Gy = G.Gyms; G.Enemy.prototype.die = function () { this.dead = true; };
 pl.takeHit = G.PlayerEntity.prototype.takeHit; // slice 4a: a hit reaches a Player entity through the REAL takeHit, which feeds this recorded hurt()
-pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body
+pl.applyFlinch = G.Player.prototype.applyFlinch; pl.flinchRecoil = G.Player.prototype.flinchRecoil; pl.flinchMove = G.Player.prototype.flinchMove;     // the real player flinch on the stub body (slice 5 split its recoil out)
 let fail = 0, n = 0; const ok = (c, m) => { n++; if (!c) { fail++; if (fail < 60) console.log('FAIL', m); } };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;

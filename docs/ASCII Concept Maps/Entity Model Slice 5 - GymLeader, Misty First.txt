@@ -1,6 +1,6 @@
 ENTITY MODEL, SLICE 5: GymLeader, MISTY FIRST (review map, 2026-11-06, Claude Code at home)
 Source: docs/proposals/host-model-plan.md "5. GymLeader". Rules: docs/COMBAT-RULES.md "Host model".
-Status: [Proposed], awaiting Jess. Decisions D1 to D6 below. Nothing built.
+Status: [Approved] 2026-11-06: D1 to D6 all as recommended. BUILT 2026-11-06 (Claude Code at home), see AS BUILT at the end. Awaiting Jess's feel test.
 
 WHY
   Today a leader's mon is a wild body with a brain bolted on. Slices 1 to 4 built the parts so it can be
@@ -197,3 +197,29 @@ WHY
   Feel test (about 2 minutes): G.Debug.gym(2), fight Misty. Same fight, no touch damage, her statuses
   showing, and sleep and freeze holding her longer than before. Take the badge. Then Brock: must feel
   exactly as before.
+
+=====================================================================================
+ AS BUILT (2026-11-06), where it differs from the plan above
+=====================================================================================
+  - One working tree, not four commits: steps A to C landed in the same files in one session.
+  - Parity runs at runtime instead of as a pin written first: gym-leader-harness hits the old body and the
+    leader with the same hit, both against the hand number, since the old body still exists.
+  - The leader status rule is a cut of 0.5 on freeze and sleep, not separate numbers: 2 s becomes 1 s and
+    2 to 6 s becomes 1 to 3 s, so a move's own stated length scales too. Same approved table.
+  - Rocky Helmet stays on hurt, not the flat entry: it only fires on touch, and a leader has no touch.
+  - Fissure's KO stays on hurt: it is guarded against every Player entity before the call.
+  - Restrictions live at the gym level only (tells, healLimit). Misty authors none, so the defaults apply.
+  - The stuck side-step of the wild body is not carried over; the leader keeps G.Path and wall sliding.
+    Watch for her catching on an arena rock in the feel test.
+  - The move halo under her body shows her first move's type, since all moves sit in one group until slice 8.
+
+  Test edits, each deliberate:
+  - boss-owner-harness fixture: the stub player also borrows flinchRecoil (slice 5 split it out of applyFlinch).
+  - hit-parity-harness: the takeDot text pin allows a line break (format reflowed it; same code).
+  - gym-harness: the every-gym brain check forces the old body. Misty's real G.GymLeader version of that check
+    moved to gym-leader-harness. No expected number moved.
+  - Stale patterns repaired, breaks unchanged: move-sim-mutate 10, boss-owner-mutate 9, hit-parity-mutate 5,
+    type-chart-mutate 2, gyms-only-mutate 2, boss-split-mutate 2. Before this, move-sim-mutate stopped at its first stale pattern.
+  New: tools/smoke-gym.js (file://, passed on the old body first), gym-leader-harness.js, gym-leader-mutate.js (51).
+  Known gap, older than this slice: move-sim-mutate "routing filter ignored" is MISSED (28/29). It mutates the
+  flinch site, which move-sim-harness does not drive.

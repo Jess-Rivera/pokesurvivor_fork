@@ -236,7 +236,8 @@ const gate2 = G.Gym.gate;
     let used = 0, total = 0;
     for (let slot = 0; slot < entry.signatures.length; slot++) {
       G.MoveSim.clear();
-      const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot), e = G.Boss.make(d, 0, 0); e.flying = false;
+      const sig = entry.signatures[slot], d = G.Gym.makeDef(gate, slot); d.gym.playerEntity = false; // slice 5: this check drives the shared brain, on the old body for every gym (Misty's real G.GymLeader: gym-leader-harness)
+      const e = G.Boss.make(d, 0, 0); e.flying = false;
       // just inside its SHORTEST close reach: with a close move ready the brain walks in to contact, so every close move is in reach
       // (2026-11-02: loop-1 sets mix reaches, Bite 46 beside Take Down 54, Body Slam 46 beside Earthquake 260)
       const closeR = e.slots[0].map(s => { const d = e.brain.def(s.id), f = G.Gyms.formOf(d); return ['melee', 'nova'].includes(f) ? G.Gyms.reachOf(d, f) : Infinity; }),

@@ -261,6 +261,7 @@ G.Stats = (() => {
     moveCat,
     DMG_SCALAR,
     STAB,
+    PROP_DEF,
     attackFactor,
     applyDamage,
     applyDamageProp,

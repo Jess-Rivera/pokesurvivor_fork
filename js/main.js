@@ -36,6 +36,7 @@
     'Pickups',
     'PlayerEntity',
     'Player',
+    'GymLeader',
     'Combat',
     'Spawner',
     'LevelUp',

@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Type matchups', 'Type matchups'],
     chg: [
       [
+        'Misty now fights by the same rules as you. Touching her no longer hurts, and your status moves hold her differently: sleep and freeze last longer than before, but she shakes them off, and Trap no longer roots her. Other gyms follow later.',
+        'Misty now fights by the same rules as you. Touching her no longer hurts, and your status moves hold her differently: sleep and freeze last longer than before, but she shakes them off, and Trap no longer roots her. Other gyms follow later.',
+      ],
+      [
         'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
         'Type matchups now follow the main games: super effective hits do x2, not very effective x0.5, and a type that is immune takes no damage at all (a grey Immune shows). Two weaknesses stack to x4.',
       ],

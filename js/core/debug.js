@@ -20,7 +20,7 @@
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
- *   G.Debug.gym()      open the next gym gate now (walk into it to fight; losing ends the run)
+ *   G.Debug.gym(n)     open the next gym gate now, or gym n's (walk into it to fight; losing ends the run)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
@@ -1248,13 +1248,13 @@ G.Debug = (() => {
     return true;
   }
 
-  /** Opens the next gym gate now (dev only). Enter it to fight; a loss ends the run. */
-  function gym() {
+  /** Opens the next gym gate now (dev only), or gym n's (1 is the first) when n is given. Enter it to fight; a loss ends the run. */
+  function gym(n) {
     if (!on) {
       console.warn('[Debug] add ?dev to the URL to enable debug tools.');
       return false;
     }
-    G.Gym.debugOpen();
+    G.Gym.debugOpen(n);
     return true;
   }
 

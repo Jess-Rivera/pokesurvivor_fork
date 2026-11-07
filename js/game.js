@@ -915,7 +915,7 @@ G.Game = (() => {
       for (const e of G.EnemyMgr.all()) {
         if (mine ? !G.Camera.sees(e.x, e.y, 0) : G.U.dist2(e.x, e.y, who.x, who.y) > R * R) continue;
         const tough = e.boss || e.gym || e.elite;
-        e.hurt(tough ? 60 + pl.level * 14 : e.hp + (e.shield || 0) + 1, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
+        e.takeFlat(tough ? 60 + pl.level * 14 : e.hp + (e.shield || 0) + 1, '#ff7b3d', e.x - who.x, e.y - who.y, 160);
       }
       G.Spawner.quiet(BOMB_QUIET);
     }

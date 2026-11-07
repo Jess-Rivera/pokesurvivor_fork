@@ -738,7 +738,7 @@ const wipeW = () => {
   const hz = strip(read('js/systems/hazards.js'));
   ok(/pl\.takeHit\(\{ A: h\.atkFactor/.test(hz) && !/pl\.hurt\(h\.atkFactor/.test(hz), 'hazards.js: an attack-factor hazard goes through takeHit');
   const sx = strip(read('js/systems/status.js'));
-  ok(/function damage\(h, name, amount, color\) \{\s*if \(h\.takeDot\) h\.takeDot\(name, amount, color\);/.test(sx), 'status.js: DoT damage calls takeDot first (H4)');
+  ok(/function damage\(h, name, amount, color\) \{\s*if \(h\.takeDot\)\s*h\.takeDot\(name, amount, color\);/.test(sx), 'status.js: DoT damage calls takeDot first (H4)');
   ok((strip(read('js/entities/enemy.js')).match(/this\.takeDot\(/g) || []).length === 2, "enemy.js: a wild entity's burn and poison ticks go through takeDot (H4)");
   ok(typeof G.PlayerEntity.prototype.takeHit === 'function' && typeof G.PlayerEntity.prototype.takeDot === 'function' && typeof G.WildEntity.prototype.takeDot === 'function', 'both families answer takeDot; Player entities answer takeHit');
   const own = (C, k) => Object.prototype.hasOwnProperty.call(C.prototype, k);

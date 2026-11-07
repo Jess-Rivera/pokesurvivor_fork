@@ -56,7 +56,10 @@ G.Status = (() => {
   const GRACE = 2.5; // player: seconds after a hard CC ends in which no new hard CC lands
   const HARD = ['sleep', 'freeze', 'paralysis'];
 
-  const strong = (h) => !!(h.boss || h.strongStatus || h.gym); // the player is NOT strong any more (full timers + Shake off)
+  const strong = (h) => !!(h.boss || h.strongStatus || h.gym) && !h.leaderStatus; // the player is NOT strong any more (full timers + Shake off); nor is a G.GymLeader
+  // The fixed leader status rules (host-model-plan "Leader status rules", Jess 2026-11-05, TUNE), for every G.GymLeader: freeze and sleep
+  // at half the player's length (1 s, 1 to 3 s), a longer no-new-hard-CC gap, and the AI shakes off at SHAKE.auto (G.GymLeader.update).
+  const LEADER = { cut: 0.5, window: 5 };
   const typesOf = (h) => h.types || (h.mon && h.mon.types) || [];
   const fam = (k) => (k === 'toxic' ? 'poison' : k);
   const isControl = (k) => !!CONTROL[k];
@@ -95,6 +98,7 @@ G.Status = (() => {
           : Array.isArray(S.dur)
             ? G.U.rand(S.dur[0], S.dur[1])
             : S.dur;
+    if (h.leaderStatus && (kind === 'freeze' || kind === 'sleep')) return base * LEADER.cut;
     return cutsStrong(h, kind) && strong(h) ? base * STRONG.cut : base;
   }
 
@@ -211,8 +215,10 @@ G.Status = (() => {
   }
 
   function damage(h, name, amount, color) {
-    if (h.takeDot) h.takeDot(name, amount, color); // the one DoT entry of both families (slice 4a, H4)
-    else if (typeof h.dot === 'function') h.dot(name, amount, color); // hosts without takeDot (older test hosts)
+    if (h.takeDot)
+      h.takeDot(name, amount, color); // the one DoT entry of both families (slice 4a, H4)
+    else if (typeof h.dot === 'function')
+      h.dot(name, amount, color); // hosts without takeDot (older test hosts)
     else if (h.statusDot) h.statusDot(name, amount, color);
   }
 
@@ -222,7 +228,7 @@ G.Status = (() => {
     const S = CONTROL[M.k],
       w = strong(h) && (M.k === 'freeze' || M.k === 'sleep') ? STRONG.window : S.window || 0;
     if (w > 0) (h.stWin || (h.stWin = {}))[M.k] = w;
-    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = GRACE;
+    if (h.isPlayer && HARD.includes(M.k)) (h.stWin || (h.stWin = {})).hard = h.leaderStatus ? LEADER.window : GRACE;
     h.stMajor = null;
   }
 

@@ -163,6 +163,9 @@ G.Gym = (() => {
         stance: sig.stance,
         power: sig.power || 1,
         tempo: sig.tempo || 1,
+        playerEntity: !!entry.playerEntity, // the slice 5 switch: G.Boss.make builds a G.GymLeader instead of the wild body
+        hpMult: G.Gyms.hpMultFor(entry, loop),
+        restrictions: entry.restrictions || null,
         cards: G.Gyms.cardsFor(entry, loop), // the leader's pool for this loop, held by every mon the gym fields (Jess 2026-11-05)
         moves: G.Gyms.movesFor(sig, slot, loop).map((m) => Object.assign({}, m)), // this loop's set (per-loop sets, Jess 2026-11-02)
         engagedAt: null,
@@ -217,8 +220,9 @@ G.Gym = (() => {
   }
 
   return {
-    /** Dev: open the next gate on the next frame. */
-    debugOpen() {
+    /** Dev: open the next gate on the next frame, or gym n's (1 is the first gym of the region). */
+    debugOpen(n) {
+      if (Number.isInteger(n) && n >= 1 && n <= list().length) beaten = n - 1;
       nextAt = 0;
     },
     FIRST_AT,

@@ -19,7 +19,11 @@ const path = require('path'),
   url = require('url');
 const root = path.resolve(__dirname, '..');
 // Playwright lookup, first that exists: PLAYWRIGHT_DIR, then <your user folder>\tools\playwright (work: jessvri), then the home default.
-const PW_DIRS = [process.env.PLAYWRIGHT_DIR, path.join(require('os').homedir(), 'tools', 'playwright'), 'C:\\Users\\boric\\tools\\playwright']
+const PW_DIRS = [
+  process.env.PLAYWRIGHT_DIR,
+  path.join(require('os').homedir(), 'tools', 'playwright'),
+  'C:\\Users\\boric\\tools\\playwright',
+]
   .filter(Boolean)
   .map((d) => path.join(d, 'node_modules', 'playwright'));
 const PW = PW_DIRS.find((d) => require('fs').existsSync(d)) || PW_DIRS[0];
@@ -116,7 +120,11 @@ async function run(browser) {
     return out;
   });
   ok(a.n === 3 && a.slots === '0,1,2', 'start: a team of 3 in slots 1 to 3 (' + a.slots + ')');
-  ok(!a.stores.length, 'start: stages, cards, run items, dodges and berries are one shared object' + (a.stores.length ? ' (not: ' + a.stores.join(' ') + ')' : ''));
+  ok(
+    !a.stores.length,
+    'start: stages, cards, run items, dodges and berries are one shared object' +
+      (a.stores.length ? ' (not: ' + a.stores.join(' ') + ')' : '')
+  );
   ok(a.lock0 === 0 && a.after.i === 0 && a.after.same, 'start: slot 1 leads, lock 0, player is roster[activeIndex]');
   ok(a.self === false, 'refused: swapping to the slot already on the field');
   ok(a.fainted === false, 'refused: swapping to a fainted member');
@@ -147,7 +155,10 @@ async function run(browser) {
     return out;
   });
   ok(b.okSwap && b.v.slot === 1 && b.v.same, 'manual swap: slot 2 takes the field, player is roster[activeIndex]');
-  ok(b.carry === '37,2,123,4,1,5,true', 'manual swap: kills, bosses, coins, tickets, XP and level carry (' + b.carry + ')');
+  ok(
+    b.carry === '37,2,123,4,1,5,true',
+    'manual swap: kills, bosses, coins, tickets, XP and level carry (' + b.carry + ')'
+  );
   ok(b.bonds === 2, 'manual swap: unspent links carry (' + b.bonds + ')');
   ok(b.pos, 'manual swap: position and aim carry');
   ok(b.v.inv >= 0.5, 'manual swap: 0.5 s i-frames on the incoming member (' + b.v.inv + ')');
@@ -156,13 +167,23 @@ async function run(browser) {
 
   // ---- C. the lock counts down and refuses; then the slot key ----
   await sleep(1000);
-  const c = await page.evaluate(() => ({ lock: G.Game.swapCooldown, refused: G.Game.swap(2) === false, i: G.Game.activeIndex }));
-  ok(c.lock > 3.4 && c.lock < 4.6 && c.refused && c.i === 1, 'lock: about 4 s left after 1 s, a swap is refused (' + c.lock.toFixed(2) + ')');
+  const c = await page.evaluate(() => ({
+    lock: G.Game.swapCooldown,
+    refused: G.Game.swap(2) === false,
+    i: G.Game.activeIndex,
+  }));
+  ok(
+    c.lock > 3.4 && c.lock < 4.6 && c.refused && c.i === 1,
+    'lock: about 4 s left after 1 s, a swap is refused (' + c.lock.toFixed(2) + ')'
+  );
   await waitFor(() => G.Game.swapCooldown === 0, null, 7000);
   await page.keyboard.press('Digit3');
   await waitFor(() => G.Game.roster[G.Game.activeIndex].teamSlot === 2, null, 2000).catch(() => {});
   const ck = await view();
-  ok(ck.slot === 2 && ck.lock > 4.5 && ck.same, 'keys: the slot 3 key swaps to slot 3 and locks (' + ck.slot + ', ' + ck.lock.toFixed(2) + ')');
+  ok(
+    ck.slot === 2 && ck.lock > 4.5 && ck.same,
+    'keys: the slot 3 key swaps to slot 3 and locks (' + ck.slot + ', ' + ck.lock.toFixed(2) + ')'
+  );
 
   // ---- D. faint swap: lowest living slot, lock cleared, i-frames, carry ----
   await page.evaluate(() => {
@@ -192,7 +213,10 @@ async function run(browser) {
   await page.keyboard.press('KeyZ');
   await waitFor(() => G.Game.activeIndex === 1, null, 2000).catch(() => {});
   const e = await view();
-  ok(e.slot === 1 && e.same && e.lock > 4.5, 'keys: the previous key skips the fainted slot 3 and swaps to slot 2 (' + e.slot + ')');
+  ok(
+    e.slot === 1 && e.same && e.lock > 4.5,
+    'keys: the previous key skips the fainted slot 3 and swaps to slot 2 (' + e.slot + ')'
+  );
 
   // ---- F. the bond screen on a benched member spends exactly one link ----
   const f = await page.evaluate(() => {
@@ -284,8 +308,17 @@ async function run(browser) {
   await waitFor(() => G.Game.state === 'over', null, 6000).catch(() => {});
   ok((await page.evaluate(() => G.Game.state)) === 'over', 'wipe: the run ends (Re-Do is not used twice)');
 
-  ok(errs.length === 0, 'no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : ''));
-  if (page.notes.length) console.log('note  known file:// font noise (not a failure): ' + page.notes.length + ' line(s), e.g. ' + page.notes[0].slice(0, 110));
+  ok(
+    errs.length === 0,
+    'no console or page errors' + (errs.length ? '\n        ' + errs.slice(0, 5).join('\n        ') : '')
+  );
+  if (page.notes.length)
+    console.log(
+      'note  known file:// font noise (not a failure): ' +
+        page.notes.length +
+        ' line(s), e.g. ' +
+        page.notes[0].slice(0, 110)
+    );
   await ctx.close();
 }
 

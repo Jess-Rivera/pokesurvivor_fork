@@ -64,7 +64,9 @@ G.Boss = (() => {
       e.teamCards = G.TeamCards.store();
       for (const id of Object.keys(g.cards || {})) G.TeamCards.add(e.teamCards, id, g.cards[id]);
       e.cdMul = 1 / g.tempo;
-      this.healsLeft = Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: the loop number (Jess 2026-11-05)
+      const rules = g.restrictions || {}; // the gym's authored restrictions (js/data/gyms.js); absent means the defaults below
+      this.tells = rules.tells !== false;
+      this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: by default the loop number (Jess 2026-11-05)
       e.aim = 0;
       e.strongHost = true;
       e.foes = () => {
@@ -73,11 +75,14 @@ G.Boss = (() => {
       };
       e.activeGroup = () => e.slots[0].filter((s) => s.hpBelow == null || e.hp < e.maxHp * s.hpBelow); // an hpBelow move joins only below its line
       e.moveFactor = (m) => this.factor(m);
-      e.stabFor = (m) => e.types.includes(m.type); // slice 4b (H1): a leader's STAB, as the player's
-      e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
-      e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
+      // A G.GymLeader (slice 5) inherits these three from G.PlayerEntity; the wild body gets them here.
+      if (!e.isPlayer) {
+        e.stabFor = (m) => e.types.includes(m.type); // slice 4b (H1): a leader's STAB, as the player's
+        e.heal = (n) => this.heal(n); // a drain move (Giga Drain) heals from the damage dealt to you, a self heal (Recover) from max HP
+        e.payHp = (n) => this.payHp(n); // recoil (Take Down, Jess 2026-11-02): the mon pays as the player does, never below 1 HP
+      }
       const dmg = g.moves.map((m) => m.id).filter((id) => this.def(id).basePower > 0);
-      this.contact = dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null;
+      this.contact = e.isPlayer ? null : dmg.find((id) => G.Gyms.formOf(this.def(id)) === 'melee') || dmg[0] || null; // a Player entity has no touch damage
       this.touch();
       e.atkFactor0 = e.atkFactor;
     }
@@ -242,10 +247,11 @@ G.Boss = (() => {
         tempo = e.gym.tempo,
         ang = Math.atan2(pl.y - e.y, pl.x - e.x),
         col = G.U.TYPE_COLOR[d.type] || '#ff7a9e';
-      const wind = TELL[form] / tempo,
+      const wind = this.tells ? TELL[form] / tempo : 0, // a gym with tells off fires on the next frame, with no warning shown
         spot = form === 'strike' || form === 'dash' || form === 'delayed' ? { x: pl.x, y: pl.y } : null;
       this.tell = { slot, id: d.id, form, t: 0, wind, after: RECOVER / tempo, ang, spot, fired: false };
       e.aim = ang;
+      if (!this.tells) return;
       e.anim.play('Charge', { speed: 1.4 });
       if (form === 'dash') {
         const len = Math.min(Math.hypot(spot.x - e.x, spot.y - e.y), G.Gyms.reachOf(d, form)),
@@ -395,8 +401,9 @@ G.Boss = (() => {
     }
   }
 
-  /** The only boss spawn: a boss body (enemy.js) with a GymBrain when the def carries a gym leader descriptor. */
+  /** The only boss spawn: a G.GymLeader for a switched gym (slice 5, js/entities/gym-leader.js); else a boss body (enemy.js) with a GymBrain when the def carries a gym leader descriptor. */
   function make(def, x, y) {
+    if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);
     const e = new G.Enemy(def, x, y, { hp: 1, spd: 1, dmg: 1 }, true);
     if (e.gym) e.brain = new GymBrain(e);
     return e;

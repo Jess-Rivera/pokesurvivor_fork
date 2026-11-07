@@ -27,7 +27,21 @@ G.Gyms = (() => {
   const STAGE_BANDS = { mid: 20, final: 35 };
   const STANCES = ['close', 'far', 'mixed'];
   const STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
-  const GYM_KEYS = ['id', 'leader', 'badge', 'arena', 'boost', 'cards', 'signatures'];
+  const GYM_KEYS = [
+    'id',
+    'leader',
+    'badge',
+    'arena',
+    'boost',
+    'cards',
+    'signatures',
+    'playerEntity',
+    'hpMult',
+    'restrictions',
+  ];
+  // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
+  // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
+  const RESTRICTION_KEYS = ['tells', 'healLimit'];
   const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets'];
   const MOVE_KEYS = ['id', 'hpBelow'];
 
@@ -210,6 +224,8 @@ G.Gyms = (() => {
       badge: 'Cascade Badge',
       arena: 'water',
       boost: { stat: 'spd', pct: 0.1 },
+      playerEntity: true, // entity model slice 5: the first gym on G.GymLeader
+      hpMult: { 1: 26 }, // TUNE: within 2% of the old HP at her usual level 18 to 20; slice 6's fight-time report tunes it
       // Misty's cards (Jess 2026-11-05): a special and status gym. Loop 1 (about level 12 to 15 at 8 min): Water Damage 4 and Count 2 and Velocity 3
       // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Held back for a decision: Sp. Def 3 (the
       // Vitamins card's Zinc; leaders have no team cards yet).
@@ -697,6 +713,17 @@ G.Gyms = (() => {
     return pool;
   }
 
+  /** A G.GymLeader's HP multiplier in loop `loop`: the entry for that loop, else the last earlier one. 1 for a gym with none. Pure. */
+  function hpMultFor(g, loop) {
+    const m = g.hpMult || {};
+    let at = 1;
+    for (const k of Object.keys(m)
+      .map(Number)
+      .sort((a, b) => a - b))
+      if (k <= loop) at = m[k];
+    return at;
+  }
+
   const unknownKeys = (o, allowed) => Object.keys(o).filter((k) => !allowed.includes(k));
   const sigName = (s) => (s && s.line && s.line[0] && G.DEX_BY[s.line[0].dex] ? G.DEX_BY[s.line[0].dex].name : '?');
 
@@ -762,6 +789,22 @@ G.Gyms = (() => {
         if (!damaging) bad.push(L + ' needs at least one damaging move');
       }
     });
+    // entity model slice 5: the switch needs an hpMult from loop 1; restrictions are checked for shape, not for what they allow
+    if (g.playerEntity != null && g.playerEntity !== true)
+      bad.push((g.leader || '?') + ': playerEntity is true or absent');
+    if (g.playerEntity && !(g.hpMult && g.hpMult[1] > 0))
+      bad.push((g.leader || '?') + ': playerEntity needs an hpMult for loop 1');
+    for (const k of Object.keys(g.hpMult || {}))
+      if (!(Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS && g.hpMult[k] > 0))
+        bad.push((g.leader || '?') + ': hpMult is keyed by a loop from 1 to ' + LOOPS + ', each above 0');
+    const rules = g.restrictions;
+    if (rules != null) {
+      for (const k of unknownKeys(rules, RESTRICTION_KEYS)) bad.push((g.leader || '?') + ': unknown restriction ' + k);
+      if (rules.tells != null && typeof rules.tells !== 'boolean')
+        bad.push((g.leader || '?') + ': tells is true or false');
+      if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))
+        bad.push((g.leader || '?') + ': healLimit is a whole number from 0');
+    }
     // cards (Jess 2026-11-05): the leader's, gained per loop; each must exist, be a move card, a whole number of stacks, keep the running
     // total within its cap, and fit at least one move of a mon fielded in the loop it is gained
     const cards = g.cards || {},
@@ -814,6 +857,7 @@ G.Gyms = (() => {
     lineup,
     movesFor,
     cardsFor,
+    hpMultFor,
     formOf,
     reachOf,
     validate,

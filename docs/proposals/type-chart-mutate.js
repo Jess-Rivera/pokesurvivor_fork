@@ -42,7 +42,7 @@ const M = [
   ['flat damage takes STAB', FX, 'const dmg = Math.max(1, amount * hopMul(def, hop));', 'const dmg = Math.max(1, amount * hopMul(def, hop) * 1.5);'],
   ['an immune hit shows no note', FX, '    G.Status.immuneNote(e);\n    return { dmg: 0', '    return { dmg: 0'],
   // immunity on you (player.js)
-  ['an immune hit on you falls through to the floor of 1', PL, '      if (tk === 0) {\n        // slice 4b', '      if (false) {\n        // slice 4b'],
+  ['an immune hit on you falls through to the floor of 1', PL, '      if (tk === 0 && !stone) {\n        // slice 4b', '      if (false) {\n        // slice 4b'],
   ['an immune hit on you gives i-frames', PL, "        G.Status.immuneNote(this);\n        return 'immune';", "        G.Status.immuneNote(this);\n        this.invuln = 0.45;\n        return 'immune';"],
   // the Immune note gap (status.js)
   ['the Immune note on every hit', SS, '    if (h.immCd > 0) return false;\n', ''],
@@ -51,7 +51,7 @@ const M = [
   ['an immune touch still lands its carrier ailment', CB, "if (e.carrierSec && !pl.dead && res !== 'immune') {", 'if (e.carrierSec && !pl.dead) {'],
   ['an immune shot still lands its ailment', CB, "if (p.ail && landed && !pl.dead && res !== 'immune')", 'if (p.ail && landed && !pl.dead)'],
   // STAB everywhere and the wild Power
-  ['wild contact without STAB', CB, 'stab: stabOf(e, e.atkType), mul: e.contactMul()', 'stab: 1, mul: e.contactMul()'],
+  ['wild contact without STAB', CB, 'stab: stabOf(e, e.atkType),\n          mul: e.contactMul()', 'stab: 1,\n          mul: e.contactMul()'],
   ['wild shots without STAB', CB, 'stab: stabOf(p.src, p.mtype)', 'stab: 1'],
   ['STAB on any attack type', CB, 'const stabOf = (a, t) => (a && t && a.types && a.types.includes(t) ? G.Stats.STAB : 1);', 'const stabOf = () => G.Stats.STAB;'],
   ['hazards without STAB', HZ, 'const stab = h.src && h.src.types && h.src.types.includes(h.type) ? G.Stats.STAB : 1;', 'const stab = 1;'],
