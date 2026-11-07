@@ -763,7 +763,12 @@ G.Gyms = (() => {
       nat = perLoop(sig && sig.nature, loop);
     if (!iv && !ev && !nat) return null;
     const N = nat && G.SpeciesTraits ? G.SpeciesTraits.NATURES.find((x) => x[0] === nat) : null;
-    return { iv: iv || [0, 0, 0, 0, 0, 0], ev: ev || [0, 0, 0, 0, 0, 0], natureUp: N ? N[1] : 0, natureDown: N ? N[2] : 0 };
+    return {
+      iv: iv || [0, 0, 0, 0, 0, 0],
+      ev: ev || [0, 0, 0, 0, 0, 0],
+      natureUp: N ? N[1] : 0,
+      natureDown: N ? N[2] : 0,
+    };
   }
   /** The leader's run items for loop `loop`: the ids gained at loops 1 to `loop`, in order (slice 6, Q4). A copy; pure. */
   function runItemsFor(entry, loop) {
@@ -779,7 +784,14 @@ G.Gyms = (() => {
   function budgetWarn(entry, loop, level) {
     const n = Object.values(cardsFor(entry, loop)).reduce((a, b) => a + b, 0);
     return n > level - 1
-      ? entry.leader + ' holds ' + n + ' card stacks at level ' + level + ', more than a player could hold (' + (level - 1) + ')'
+      ? entry.leader +
+          ' holds ' +
+          n +
+          ' card stacks at level ' +
+          level +
+          ', more than a player could hold (' +
+          (level - 1) +
+          ')'
       : null;
   }
 
@@ -867,8 +879,12 @@ G.Gyms = (() => {
     // slice 6 (Q1 to Q4): the new restrictions, power on a switched gym, the build keys and the items
     if (rules != null) {
       for (const k of ['enrage', 'autoShake'])
-        if (rules[k] != null && typeof rules[k] !== 'boolean') bad.push((g.leader || '?') + ': ' + k + ' is true or false');
-      if (rules.statusCut != null && !(typeof rules.statusCut === 'number' && rules.statusCut > 0 && rules.statusCut <= 1))
+        if (rules[k] != null && typeof rules[k] !== 'boolean')
+          bad.push((g.leader || '?') + ': ' + k + ' is true or false');
+      if (
+        rules.statusCut != null &&
+        !(typeof rules.statusCut === 'number' && rules.statusCut > 0 && rules.statusCut <= 1)
+      )
         bad.push((g.leader || '?') + ': statusCut is in (0, 1]');
       for (const k of ['ccWindow', 'hitIframes'])
         if (rules[k] != null && !(typeof rules[k] === 'number' && rules[k] >= 0 && rules[k] <= 10))
@@ -900,12 +916,16 @@ G.Gyms = (() => {
         for (const k of Object.keys(m)) {
           const v = m[k],
             L = who + ' ' + key + ' loop ' + k,
-            six = (max) => Array.isArray(v) && v.length === 6 && v.every((x) => Number.isInteger(x) && x >= 0 && x <= max);
+            six = (max) =>
+              Array.isArray(v) && v.length === 6 && v.every((x) => Number.isInteger(x) && x >= 0 && x <= max);
           if (!loopKey(k)) bad.push(L + ': keyed by a loop from 1 to ' + LOOPS);
           else if (key === 'ivs' && !six(31)) bad.push(L + ': six IVs, each a whole number from 0 to 31');
           else if (key === 'evs' && !six(252)) bad.push(L + ': six EVs, each a whole number from 0 to 252');
           else if (key === 'evs' && v.reduce((a, b) => a + b, 0) > 510) bad.push(L + ': EVs total at most 510');
-          else if (key === 'nature' && !(typeof v === 'string' && G.SpeciesTraits && G.SpeciesTraits.NATURES.some((x) => x[0] === v)))
+          else if (
+            key === 'nature' &&
+            !(typeof v === 'string' && G.SpeciesTraits && G.SpeciesTraits.NATURES.some((x) => x[0] === v))
+          )
             bad.push(L + ': ' + v + ' is not a nature');
           else if (key === 'item') {
             const why = itemBan(v, 'pokemon', L);
@@ -940,7 +960,8 @@ G.Gyms = (() => {
             if (grp && !groups[grp]) groups[grp] = id;
           }
         }
-        if (held.length > RUN_ITEM_MAX) bad.push((g.leader || '?') + ': at most ' + RUN_ITEM_MAX + ' run items, the player cap');
+        if (held.length > RUN_ITEM_MAX)
+          bad.push((g.leader || '?') + ': at most ' + RUN_ITEM_MAX + ' run items, the player cap');
       }
     }
     // cards (Jess 2026-11-05): the leader's, gained per loop; each must exist, be a move card, a whole number of stacks, keep the running
@@ -965,8 +986,10 @@ G.Gyms = (() => {
             c = G.TeamCards.BY_ID[vit != null ? (STATS.includes(vit) ? 'vitamins' : '') : id],
             n = cards[k][id];
           if (!c) bad.push(L + ': unknown card ' + id);
-          else if (c.team && !g.playerEntity) bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
-          else if (c.id === 'regen') bad.push(L + ': regen waits for slice 7 (it heals the bench, and a leader has none yet)');
+          else if (c.team && !g.playerEntity)
+            bad.push(L + ': ' + id + ' is a team card, and leaders use the base stage timers');
+          else if (c.id === 'regen')
+            bad.push(L + ': regen waits for slice 7 (it heals the bench, and a leader has none yet)');
           else if (c.id === 'vitamins' && vit == null)
             bad.push(L + ': name the Vitamins stat, vitamins:hp, atk, def, spa, spd or spe');
           else if (!Number.isInteger(n) || n < 1) bad.push(L + ': card ' + id + ' needs a whole number of stacks');

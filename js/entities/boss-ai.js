@@ -380,7 +380,8 @@ G.Boss = (() => {
      *  you. An always-on move (a persistent def) is not an attack. The wild body holds no items. */
     orbCost(d) {
       const e = this.e;
-      if (e.isPlayer && e.hasItem('lifeorb') && !(d && d.persistent)) e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));
+      if (e.isPlayer && e.hasItem('lifeorb') && !(d && d.persistent))
+        e.hp = Math.max(1, e.hp - Math.max(1, e.maxHp * 0.01));
     }
 
     /** A cast's HP cost (recoil) on the mon: taken directly, never below 1 HP, with a grey number (Player.payHp's rule). */

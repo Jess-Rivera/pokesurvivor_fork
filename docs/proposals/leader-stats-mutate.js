@@ -22,11 +22,11 @@ const M = [
   ['the items go on before the brain', LD, '    this.brain = new G.Boss.GymBrain(this); // first', '    this.arm();\n    this.brain = new G.Boss.GymBrain(this); // first'],
   // D3: the profile
   ['the profile is not passed', LD, 'def.gym.profile ? G.Stats.profile(def.gym.profile) : null', 'null'],
-  ['profileFor drops the nature', GY, 'natureUp: N ? N[1] : 0, natureDown: N ? N[2] : 0', 'natureUp: 0, natureDown: 0'],
+  ['profileFor drops the nature', GY, 'natureUp: N ? N[1] : 0,\n      natureDown: N ? N[2] : 0,', 'natureUp: 0,\n      natureDown: 0,'],
   ['the build does not carry forward', GY, '      if (k <= loop) at = m[k];\n    return at;\n  }\n  /** A switched slot', '      if (k === loop) at = m[k];\n    return at;\n  }\n  /** A switched slot'],
   // D2, N1, N2: cards
   ['team cards stay banned on a switched gym', GY, 'else if (c.team && !g.playerEntity)', 'else if (c.team)'],
-  ['Regen is allowed', GY, "else if (c.id === 'regen') bad.push(", 'else if (false) bad.push('],
+  ['Regen is allowed', GY, "else if (c.id === 'regen')\n            bad.push(", 'else if (false)\n            bad.push('],
   ['a bare Vitamins card passes', GY, "else if (c.id === 'vitamins' && vit == null)", 'else if (false)'],
   ['team cards must fit a move', GY, 'else if (!c.team && !moves.some((m) =>', 'else if (!moves.some((m) =>'],
   // Q4, N6: items
@@ -49,7 +49,7 @@ const M = [
   ['auto shake is off by default', LD, "if (this.rule('autoShake') !== false)", "if (this.rule('autoShake') === true)"],
   ['status ignores the authored cut', ST, "if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;", ''],
   ['status ignores the authored gap', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'],
-  ['restriction values are not checked', GY, "if (rules.statusCut != null && !(typeof rules.statusCut === 'number'", "if (false && !(typeof rules.statusCut === 'number'"],
+  ['restriction values are not checked', GY, "rules.statusCut != null &&\n        !(typeof rules.statusCut === 'number'", "false &&\n        !(typeof rules.statusCut === 'number'"],
   // Q1, Q2: enrage and power
   ['enrage is always on', GM, 'return !!x && (!x.playerEntity || !!(x.restrictions && x.restrictions.enrage));', 'return !!x;'],
   ['enrage never reaches her factor', LD, 'return super.moveFactor(m) * G.Gym.enrageMul(this);', 'return super.moveFactor(m);'],
@@ -57,7 +57,7 @@ const M = [
   // D3 validator
   ['IVs above 31 pass', GY, "else if (key === 'ivs' && !six(31))", "else if (key === 'ivs' && !six(99))"],
   ['the EV total is not checked', GY, 'v.reduce((a, b) => a + b, 0) > 510)', 'v.reduce((a, b) => a + b, 0) > 9999)'],
-  ['any nature passes', GY, "else if (key === 'nature' && !(typeof v === 'string' && G.SpeciesTraits && G.SpeciesTraits.NATURES.some((x) => x[0] === v)))", 'else if (false)'],
+  ['any nature passes', GY, "key === 'nature' &&\n            !(typeof v === 'string' && G.SpeciesTraits && G.SpeciesTraits.NATURES.some((x) => x[0] === v))", 'false'],
   ['a build on the wild body passes', GY, "        if (!g.playerEntity) {\n          bad.push(who + ': ' + key + ' needs playerEntity", "        if (false) {\n          bad.push(who + ': ' + key + ' needs playerEntity"],
   // Q5, N5: the budget
   ['the budget never warns', GY, 'return n > level - 1\n', 'return false\n'],
