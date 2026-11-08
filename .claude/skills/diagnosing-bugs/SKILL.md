@@ -1,6 +1,6 @@
 ---
 name: diagnosing-bugs
-description: Diagnosis loop for hard bugs and performance regressions: build a red-capable feedback loop, minimise, hypothesise, probe, fix with a regression test. Run only when the user says "diagnose" or "debug this".
+description: 'Diagnosis loop for hard bugs and performance regressions: build a red-capable feedback loop, minimise, hypothesise, probe, fix with a regression test. Run only when the user says "diagnose" or "debug this".'
 disable-model-invocation: true
 ---
 

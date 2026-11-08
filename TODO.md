@@ -12,8 +12,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 5. #22 slice 9a (map v2 A1 to A5 plus the rolling windows): prose plan, then build.
 6. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
 7. #24 real gym loop counter.
-8. Board cleanup, Jess's call: close #5 (slice 7a replaced it); drop the stale `blocked` label on #11;
-   retitle #6.
+8. Board cleanup, Jess's call: close #5 (slice 7a replaced it). (#11 label and #6 retitle done in triage.)
 9. Chore for Jess: delete merged branches (the assistant lists them).
 
 ## Open issues by area (numbers only, titles via gh)

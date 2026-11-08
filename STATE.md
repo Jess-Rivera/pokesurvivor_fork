@@ -5,7 +5,7 @@ Updated 2026-11-08, Claude Code (home). On main; chore/docs-cleanup merged (#26,
 
 ## START HERE (next session, either tool)
 1. Jess pulls main into feature/gym-leader-ai (fast-forward, the branch has no unique commits). Do not resume gym work before that.
-2. Check that /triage loads in a new session (it did not appear in the skill list this session). Then #28 (architecture skill) is unblocked.
+2. /triage works (it is user-invoked, so it never shows in the model's skill list). #28 (architecture skill) is unblocked; drop its stale `blocked` label.
 3. Then the gym AI: Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md ([Proposed]); order and issue numbers are in TODO.md.
 
 ## Where we are
