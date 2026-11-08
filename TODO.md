@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-08 session, on feature/gym-leader-ai)
-1. Leader AI: #34 (slice 5a, GymBrain out) built, feel test owed. Then #39 (slice 5b, personalities), opened by agreeing its
+1. Leader AI: #34 (slice 5a, GymBrain out) shipped. Next #39 (slice 5b, personalities), opened by agreeing its
    goal, done check and test. Roster UI #35 can read G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
    Owner call: leaders' timers pause while stunned (yours run); rule it, then it becomes an issue.
 2. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
@@ -16,7 +16,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30 (branch rules); not a task now.
 
 ## Open issues by area (numbers only, titles via gh)
-- Gyms: #6 #9 #20 #21 #24 #30 #34 #39
+- Gyms: #6 #9 #20 #21 #24 #30 #39
 - Moves: #11 #13 #14 #38
 - Engine: #8 #10 #12
 - UI: #25 #35 #37

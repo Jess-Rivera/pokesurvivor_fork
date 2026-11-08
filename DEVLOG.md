@@ -391,3 +391,4 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Step 2: leaders run G.MoveSim.turn (tick without the step; castDue hook) after their slot press. Found and fixed a double recharge (the inactive loop compared groups; a leader's active group is a filtered copy). Drift: at most 3 frames, 4.6 px; Jess accepted, traces re-recorded.
 - Test: leader-ai-harness 470, mutate checks 92/92, 58/58, 22/22, 38/38; check red only on the two #30 harnesses; smoke-gym green.
 - Found: a leader's timers pause while it is stunned (yours run); left for Jess to rule. Stopped at: Jess's feel test of 5a.
+- Jess feel-tested 5a: approved ("looks great"). #34 closed and shipped; #39 unblocked (ready).

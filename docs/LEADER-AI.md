@@ -105,6 +105,6 @@
 3. (Built 2026-11-08, #32; feel-tested and approved.) Confidence, pacing and triggers (with lines), the dodge lean and the gap-closing dodge.
 4. (Built 2026-11-08, #33; feel-tested and approved. The only exploit is your usual lead.) Run memory, behavior tracking and exploiting patterns.
 5. Split (Jess, 2026-11-08, decision `2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities`), structure first:
-   - 5a (#34; built 2026-11-08, feel test owed): GymBrain's remaining pieces replaced by the AI player's own, behavior-neutral (on your scheduler a slot choice reads last frame's timers: at most 3 frames later on a cast, accepted). Movement and the slot choice move into the AI player; a leader casts through your cast path, the tell kept as its authored difference (`tells`). Gyms 3 to 8 keep GymBrain.
+   - 5a (#34; built 2026-11-08, feel-tested and approved): GymBrain's remaining pieces replaced by the AI player's own, behavior-neutral (on your scheduler a slot choice reads last frame's timers: at most 3 frames later on a cast, accepted). Movement and the slot choice move into the AI player; a leader casts through your cast path, the tell kept as its authored difference (`tells`). Gyms 3 to 8 keep GymBrain.
    - 5b: authoring each leader's personality: `range`, `buffBias`, `swapWill`, `aimError`, `randomness`, `risk`, `memoryUse`, `exploit`. Brock a wall, Misty tempo.
 The leader-roster UI on the player side is its own issue.

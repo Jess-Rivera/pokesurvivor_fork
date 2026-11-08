@@ -1,17 +1,16 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-08, Claude Code (home), slice 5a built.
+Updated 2026-11-08, Claude Code (home), slice 5a shipped.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess feel-tests #34 (slice 5a): Misty and Brock should play as before.
-3. Then open #39 (slice 5b, personalities) by agreeing its goal, done check and test.
+2. Open #39 (slice 5b, personalities) by agreeing its goal, done check and test.
 
 ## Where we are
 - Slice 5 split (decision 2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities): 5a #34, 5b #39.
-- 5a built 2026-11-08 (Needs Playtest): GymBrain is gone from Player-entity leaders. Movement and slot choice are
+- 5a shipped 2026-11-08 (feel test approved): GymBrain is gone from Player-entity leaders. Movement and slot choice are
   G.LeaderAI's (steer, legsOf, pickSlot); the tell, reach filter and heal cap are G.GymLeader.Caster, on your sim
   scheduler (G.MoveSim.turn, castDue hook). Shared tuning G.Boss.TUNE until slice 12. Drift vs GymBrain (accepted):
   at most 3 frames on a cast, 4.6 px. Fixed on the way: the inactive recharge skipped by group, not slot.
