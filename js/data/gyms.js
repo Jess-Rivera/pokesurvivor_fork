@@ -63,7 +63,24 @@ G.Gyms = (() => {
     'matchupX',
     'matchupHp',
     'randomness',
+    // slice 3 (#32): style, confidence and pacing
+    'aggression',
+    'confStart',
+    'confSwing',
+    'confMin',
+    'confMax',
+    'pushAfter',
+    'breatherMax',
+    'gapClose',
+    'lean',
   ];
+  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'breatherMax', 'gapClose', 'randomness']; // 0 to 1
+  // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
+  // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
+  // with `at` seconds. Then any of: line, slot (1-based), swap (1-based team slot), set ({ setting: value }) with optional `for`
+  // seconds, and `repeat` (true: every time, every `at` s for time).
+  const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time'];
+  const TRIGGER_KEYS = ['on', 'below', 'side', 'at', 'repeat', 'line', 'slot', 'swap', 'set', 'for'];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
   // Slice 6 (Q1 to Q3): enrage (off unless true on a switched gym), statusCut, ccWindow, autoShake (on unless false), hitIframes.
@@ -202,6 +219,16 @@ G.Gyms = (() => {
       playerEntity: true,
       hpMult: { 1: 16, 2: 12 },
       restrictions: { hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 },
+      // LEADER-AI slice 3 (#32, Jess 2026-11-08): the defensive wall, low aggression (his ceiling stays under the gap-closing line).
+      // Lines are drafts (Jess: ok for now). Half HP: he gets serious, aggression 0.5 for 10 s.
+      ai: {
+        aggression: 0.35,
+        triggers: [
+          { on: 'start', line: "Rock holds its ground. Let's see you move it." },
+          { on: 'hp', below: 0.5, line: 'Time to get serious.', set: { aggression: 0.5 }, for: 10 },
+        ],
+        lines: { up: "That's what solid defense looks like!", down: "You're chipping through. Not bad." },
+      },
       // Brock's cards gained per loop (Jess 2026-11-05: per leader, cumulative). Loop 1 (Jess 2026-10-31, the pilot): Tackle Power 52, reach 70;
       // Rock Throw Power 58.5, 3 rocks of size 11.7 at 377 px/s; Harden takes none. Loops 2 to 6 gain nothing yet (TUNE).
       cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } },
@@ -273,6 +300,15 @@ G.Gyms = (() => {
       // Slice 6 (Q1, Q3): her authored differences from your rules, the old fixed leader values (half-length freeze and sleep, a 5 s
       // hard CC gap, auto shake, no hit i-frames). No enrage (Q1): absent means off on a switched gym.
       restrictions: { statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 },
+      // LEADER-AI slice 3 (#32, Jess 2026-11-08): hit and run, high aggression (fast mons, status). Lines are drafts (Jess: ok for now).
+      ai: {
+        aggression: 0.68,
+        triggers: [
+          { on: 'start', line: 'Think you can keep your head above water?' },
+          { on: 'hp', below: 0.5, line: "Okay, now I'm annoyed!" },
+        ],
+        lines: { up: 'Go with the flow, or get swept away!', down: 'Hmph. Lucky shot.' },
+      },
       // Misty's cards (Jess 2026-11-05): a special and status gym. Loop 1 (about level 12 to 15 at 8 min): Water Damage 4 and Count 2 and Velocity 3
       // on Water Pulse (96 power, 3 pulses, 40% confusion with Ailment 2), Area 2 on Tackle and Pulse. Zinc 3 (the Vitamins card on Sp. Def,
       // +15%) since slice 6 (D2, Jess 2026-11-07). 16 stacks in all.
@@ -935,12 +971,50 @@ G.Gyms = (() => {
       const L = g.leader || '?',
         num = (v) => typeof v === 'number' && v >= 0;
       if (!g.playerEntity) bad.push(L + ': ai needs playerEntity (the wild body has no AI player)');
-      for (const k of unknownKeys(g.ai, AI_KEYS)) bad.push(L + ': unknown ai setting ' + k);
+      for (const k of unknownKeys(g.ai, AI_KEYS.concat(['triggers', 'lines'])))
+        bad.push(L + ': unknown ai setting ' + k);
       for (const k of AI_KEYS) {
         const v = g.ai[k];
         if (v == null || num(v)) continue;
         if (typeof v !== 'object' || Array.isArray(v) || !Object.keys(v).every((n) => loopKey(n) && num(v[n])))
           bad.push(L + ': ai ' + k + ' is a number from 0, or keyed by loop');
+      }
+      for (const k of AI_UNIT) {
+        const v = g.ai[k],
+          vals = v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
+        if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(L + ': ai ' + k + ' is from 0 to 1');
+      }
+      const str = (s) => typeof s === 'string' && s.length > 0;
+      const tr = g.ai.triggers;
+      if (tr != null && !Array.isArray(tr)) bad.push(L + ': ai triggers is a list');
+      (Array.isArray(tr) ? tr : []).forEach((t, i) => {
+        const T = L + ': trigger ' + (i + 1);
+        if (!t || typeof t !== 'object') return bad.push(T + ' is an object');
+        for (const k of unknownKeys(t, TRIGGER_KEYS)) bad.push(T + ': unknown key ' + k);
+        if (!TRIGGER_ON.includes(t.on)) bad.push(T + ': unknown trigger on ' + t.on);
+        if (t.on === 'hp' && !(typeof t.below === 'number' && t.below > 0 && t.below < 1))
+          bad.push(T + ': hp needs below in (0, 1)');
+        if (t.on === 'faint' && t.side !== 'yours' && t.side !== 'own')
+          bad.push(T + ": faint needs side 'yours' or 'own'");
+        if (t.on === 'time' && !(typeof t.at === 'number' && t.at > 0))
+          bad.push(T + ': time needs at, seconds above 0');
+        if (t.line != null && !str(t.line)) bad.push(T + ': line is text');
+        for (const k of ['slot', 'swap'])
+          if (t[k] != null && !(Number.isInteger(t[k]) && t[k] >= 1)) bad.push(T + ': ' + k + ' is a 1-based number');
+        if (t.set != null)
+          for (const k of Object.keys(t.set))
+            if (!AI_KEYS.includes(k) || !num(t.set[k]))
+              bad.push(T + ': set ' + k + ' is a known setting with a number from 0');
+        if (t.for != null && !(typeof t.for === 'number' && t.for > 0)) bad.push(T + ': for is seconds above 0');
+        if (t.line == null && t.slot == null && t.swap == null && t.set == null) bad.push(T + ' does nothing');
+      });
+      const ln = g.ai.lines;
+      if (ln != null) {
+        if (typeof ln !== 'object' || Array.isArray(ln)) bad.push(L + ': ai lines is { up, down }');
+        else {
+          for (const k of unknownKeys(ln, ['up', 'down'])) bad.push(L + ': unknown ai line ' + k);
+          for (const k of ['up', 'down']) if (ln[k] != null && !str(ln[k])) bad.push(L + ': ai line ' + k + ' is text');
+        }
       }
     }
     const itemBan = (id, tier, L) => {

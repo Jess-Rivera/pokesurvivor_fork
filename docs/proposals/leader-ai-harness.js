@@ -25,7 +25,8 @@ Math.random = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 429496
 
 let says = [],
   kicks = 0,
-  sounds = [];
+  sounds = [],
+  bannerUp = false; // slice 3: whether another banner is showing (a leader's line waits for it)
 const human = { x: 0, y: 0, r: 12, dead: false, hp: 1e6, maxHp: 1e6, bodyH: 20, level: 20, mon: { types: ['typeless'] }, hurts: [], isPlayer: true, invuln: 0, kills: 0, bosses: 0, bonds: 0, runItems: [] };
 human.hurt = (...a) => human.hurts.push(a);
 human.takeHit = (b) => human.hurts.push([b]);
@@ -78,7 +79,7 @@ const base = {
   Items: {},
   Silver: { kill() {} },
   Progress: { kill() {} },
-  Spawner: { xpBoost: () => 1, say: (t) => says.push(t) },
+  Spawner: { xpBoost: () => 1, say: (t) => says.push(t), banner: () => (bannerUp ? { text: '', t: 1 } : null) },
   Elites: { hpFor: () => ({ hp: 1000 }), afterGate() {} },
   Pickups: { pullAll() {} },
 };
@@ -92,7 +93,7 @@ try {
 const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-info.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const NEW = ['js/systems/leader-info.js', 'js/entities/leader-ai.js'];
 // leader-ai-mutate.js points one of these at a broken copy
-const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER' };
+const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS' };
 const missing = [];
 for (const p of FILES) {
   const alt = OVERRIDE[p] && process.env[OVERRIDE[p]];
@@ -109,8 +110,9 @@ for (const p of FILES) {
   }
 }
 // Sections 1 to 4 are slice 1's: its own swap and dodge decisions (slice 2) stay off there, so the parity trace and the forced
-// swap checks see the behavior-neutral wrapper. Sections 5 on turn them on.
-if ('LeaderAI' in base && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true });
+// swap checks see the behavior-neutral wrapper. Sections 5 on turn them on. Slice 3's own (confidence, pacing, triggers) stay off
+// through section 10 too, so slice 2's checks see slice 2's behavior; sections 11 on turn them on.
+if ('LeaderAI' in base && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
 
 let fail = 0,
   n = 0;
@@ -422,7 +424,7 @@ if (built2) {
     const { ai } = at(open('Misty', 2));
     const want = { think: 0.25, reflex: 0.15, threatWindow: 0.6, dodgeRead: 6, dodgeReserve: 0, minField: 8, swapLimit: null, margin: 1.1, ccLeft: 1.5, lowHp: 0.25, lowTo: 0.5, matchupX: 2, matchupHp: 0.4, randomness: 0 };
     const off = Object.keys(want).filter((k) => ai.set[k] !== want[k]);
-    ok(!off.length, 'Misty authors no ai, so every setting is the agreed baseline' + (off.length ? ': ' + off.map((k) => k + '=' + ai.set[k]).join(', ') : ''));
+    ok(!off.length, 'Misty authors none of these, so each is the agreed baseline' + (off.length ? ': ' + off.map((k) => k + '=' + ai.set[k]).join(', ') : ''));
     const s2 = AI.settings({ loop: 2, ai: { minField: { 1: 5, 3: 9 }, swapLimit: 2 } }),
       s3 = AI.settings({ loop: 3, ai: { minField: { 1: 5, 3: 9 } } });
     ok(s2.minField === 5 && s3.minField === 9 && s2.swapLimit === 2 && s2.reflex === 0.15, 'an authored setting keyed by loop takes the last earlier loop; one not authored keeps the baseline');
@@ -678,6 +680,7 @@ if (built2) {
   {
     set(false, true);
     let { ai, s1: e } = go('Misty', 2, 1);
+    ai.set.aggression = 0.5; // slice 3: no dodge lean, so these see slice 2's sideways dodge (Misty authors 0.68)
     // the bag maps every dodge: 20 threats, 4 s apart (two charges, 7 s each, never run dry at that pace)
     const reads = [];
     let exact = 0,
@@ -700,6 +703,7 @@ if (built2) {
     ok(dir === 12, 'sideways to the path, away from it on even floor (the shot passes north of her: she goes south): ' + dir);
     // the same seed replays the same reads
     ({ ai, s1: e } = go('Misty', 2, 1));
+    ai.set.aggression = 0.5;
     const again = [];
     for (let k = 0; k < 10; k++) {
       run(3);
@@ -891,6 +895,514 @@ if (built2) {
     ok(drops === 0 && !sounds.includes('faint') && !sounds.includes('bossDown') && !says.length, 'silently, with no gym drop: ' + sounds.join(',') + ' | ' + says.join(','));
     ok(a.phase === 'fight' && t.active === s2 && !s2.dead, 'and the fight goes on');
     G.Drops.roll = roll0;
+  }
+
+  // ======================= slice 3 (#32): confidence, pacing, triggers and lines =======================
+  // Expected values are hand-derived from LEADER-AI (CONFIDENCE, PACING, DODGE DIRECTION, GAP-CLOSING DODGE, TRIGGERS, LINES) and
+  // the agreed numbers in issue #32 and decision 2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice:
+  // Misty authors aggression 0.68, Brock 0.35; aggr = aggression + (conf - 0.5) x 0.6.
+  const built3 = AI.CONF && AI.PACE && typeof AI.prototype.aggr === 'function';
+  ok(built3, 'slice 3 is built: G.LeaderAI.CONF, PACE and aggr() defined');
+  if (built3) {
+    const C = AI.CONF,
+      P = AI.PACE;
+    /** A fight with only the named switches on, your HP at 100 (a hit's fraction reads plainly) and no other banner up. */
+    const go3 = (name, loop, on = {}, dist) => {
+      Object.assign(AI.off, { swaps: !on.swaps, dodges: !on.dodges, confidence: !on.confidence, pacing: !on.pacing, triggers: !on.triggers });
+      const r = at(open(name, loop, dist));
+      Object.assign(human, { hp: 100, maxHp: 100 });
+      bannerUp = false;
+      return r;
+    };
+    // a hit on screen: a leader mon's shape strikes you (its instance names the owner), or yours strikes it (the event names it)
+    let fakeId = -5e6;
+    const hitYou = (e, frac) => {
+      const inst = { id: --fakeId, cast: { owner: e } },
+        L = G.MoveSim.list();
+      L.push(inst);
+      G.SimBus.emit('move:hit', { moveId: 'tackle', instId: inst.id, enemyId: null, dmg: frac * human.maxHp, crit: false, typeMult: 1, x: 0, y: 0, hop: 0 });
+      L.splice(L.indexOf(inst), 1);
+    };
+    const hitHer = (e, frac) => G.SimBus.emit('move:hit', { moveId: 'ember', instId: -1, enemyId: e.id, dmg: frac * e.maxHp, crit: false, typeMult: 1, x: 0, y: 0, hop: 0 });
+    const TICK = 0.25 + DT + 1e-9; // a choice made on the think tick lands within one tick (no tell: you stand far away)
+
+    // ---------------- 11. the settings, the constants, the authoring and the validator ----------------
+    {
+      const want = { aggression: 0.5, confStart: 0.5, confSwing: 1, confMin: 0.2, confMax: 0.9, pushAfter: 6, breatherMax: 0.25, gapClose: 0.7, lean: 45 };
+      const bad = Object.keys(want).filter((k) => AI.BASE[k] !== want[k]);
+      ok(!bad.length, 'the slice 3 baselines are the agreed ones' + (bad.length ? ': ' + bad.map((k) => k + '=' + AI.BASE[k]).join(', ') : ''));
+      ok(near(C.hit, 0.03) && near(C.faint, 0.15) && near(C.drift, 0.01) && near(C.trade, 0.1) && near(C.pull, 0.6) && near(C.swing, 0.25) && C.swingCd === 20, 'the confidence constants: hit 0.03, faint 0.15, drift 0.01 at a 10% trade, pull 0.6, a 0.25 swing line every 20 s at most');
+      ok(P.pushLen === 5 && near(P.pressConf, 0.7) && near(P.pressHp, 0.4) && near(P.pressure, 0.15) && P.breathLen === 3 && P.gap0 === 8 && P.gapK === 16, 'the pacing constants: push 5 s, press at 0.7 with you under 40%, a breather after 15% in 2 s, 3 s long, then 8 + 16 x aggr s');
+      ok(AI.LINE_WAIT === 4, 'a line waits at most 4 s for the banner');
+      ok(go3('Misty', 2).ai.set.aggression === 0.68 && go3('Brock', 2).ai.set.aggression === 0.35, 'Misty authors aggression 0.68, Brock 0.35 (Jess 2026-11-08)');
+      const misty = K[gymIdx('Misty')],
+        errs = (ai) => G.Gyms.validate(Object.assign({}, misty, { ai })),
+        n0 = errs(undefined).length;
+      ok(errs(misty.ai).length === n0 && errs(K[gymIdx('Brock')].ai).length === n0, "Misty's and Brock's authored ai pass the validator");
+      ok(errs({ aggression: 1.2 }).some((s) => /ai aggression is from 0 to 1/.test(s)), 'an aggression above 1 is refused');
+      ok(errs({ triggers: [{ on: 'dawn', line: 'x' }] }).some((s) => /unknown trigger on dawn/.test(s)), 'an unknown condition is named');
+      ok(errs({ triggers: [{ on: 'hp', line: 'x' }] }).some((s) => /hp needs below/.test(s)), 'an HP trigger needs its line');
+      ok(errs({ triggers: [{ on: 'faint', side: 'theirs', line: 'x' }] }).some((s) => /faint needs side/.test(s)), 'a faint trigger needs a side');
+      ok(errs({ triggers: [{ on: 'time', line: 'x' }] }).some((s) => /time needs at/.test(s)), 'a time trigger needs its seconds');
+      ok(errs({ triggers: [{ on: 'start' }] }).some((s) => /does nothing/.test(s)), 'a trigger with no action is refused');
+      ok(errs({ triggers: [{ on: 'start', set: { bogus: 1 } }] }).some((s) => /set bogus/.test(s)), 'a set names a known setting');
+      ok(errs({ triggers: [{ on: 'start', line: 'x', jump: 1 }] }).some((s) => /unknown key jump/.test(s)), 'an unknown trigger key is named');
+      ok(errs({ triggers: [{ on: 'start', swap: 0 }] }).some((s) => /swap is a 1-based/.test(s)), 'a swap is a 1-based team slot');
+      ok(errs({ lines: { up: 3 } }).some((s) => /ai line up is text/.test(s)) && errs({ lines: { sideways: 'x' } }).some((s) => /unknown ai line/.test(s)), 'swing lines are up and down, as text');
+      const all = { triggers: [{ on: 'start', line: 'a' }, { on: 'hp', below: 0.5, swap: 2, set: { aggression: 0.9 }, for: 3 }, { on: 'faint', side: 'own', slot: 1 }, { on: 'sendIn', line: 'b', repeat: true }, { on: 'time', at: 9, line: 'c' }], lines: { up: 'u', down: 'd' } };
+      ok(errs(all).length === n0, 'every condition and action the spec names (but exploiting a pattern, slice 4) passes');
+    }
+
+    // ---------------- 12. confidence ----------------
+    {
+      let { t, ai, s1 } = go3('Misty', 2, { confidence: true });
+      run(1);
+      ok(near(ai.conf, 0.5), 'confidence starts at confStart 0.5: ' + ai.conf);
+      hitHer(s1, 0.05);
+      frame();
+      ok(near(ai.conf, 0.47), 'a hit taken: -0.03: ' + ai.conf);
+      hitYou(s1, 0.05);
+      hitYou(s1, 0.05);
+      frame();
+      ok(near(ai.conf, 0.53), 'two hits landed: +0.06: ' + ai.conf);
+      you[1].dead = true;
+      frame();
+      ok(near(ai.conf, 0.68), 'one of your mons faints: +0.15: ' + ai.conf);
+      you[1].dead = false;
+      faint(t.active);
+      until(2, () => t.active !== s1 && !t.active.dead);
+      frame();
+      ok(near(ai.conf, 0.53), 'its own mon faints: -0.15 (heard once the next mon thinks): ' + ai.conf);
+      ({ ai, s1 } = go3('Misty', 2, { confidence: true }));
+      for (let i = 0; i < 30; i++) hitHer(s1, 0.001);
+      frame();
+      ok(near(ai.conf, 0.2), '30 hits taken stop at the floor 0.2: ' + ai.conf);
+      for (let i = 0; i < 40; i++) hitYou(s1, 0.001);
+      frame();
+      ok(near(ai.conf, 0.9), 'and 40 landed stop at the ceiling 0.9: ' + ai.conf);
+      ({ ai, s1 } = go3('Misty', 2, { confidence: true }));
+      ai.set.confSwing = 2;
+      hitYou(s1, 0.01);
+      frame();
+      ok(near(ai.conf, 0.56), 'confSwing 2 doubles a hit: ' + ai.conf);
+      // the long window: one 12% hit (a 10%+ trade) drifts it +0.01 a second for the 15 s it stays in the window
+      ({ ai, s1 } = go3('Misty', 2, { confidence: true }));
+      run(0.5);
+      hitYou(s1, 0.12);
+      frame();
+      ok(near(ai.conf, 0.53 + 0.01 * DT), 'a 12% hit: +0.03, then the drift starts: ' + ai.conf);
+      run(16);
+      ok(Math.abs(ai.conf - 0.68) <= 2e-3, 'and stops when it leaves the 15 s window: 0.53 + 0.15 = 0.68: ' + ai.conf);
+      // effective aggression and the swap margin
+      const ag = (c) => ((ai.conf = c), ai.aggr()),
+        mg = (c) => ((ai.conf = c), ai.swapMargin());
+      ok(near(ag(0.5), 0.68) && near(ag(0.9), 0.92) && near(ag(0.2), 0.5), 'Misty aggr: 0.68 at 0.5, 0.92 at the ceiling, 0.50 at the floor: ' + [ag(0.5), ag(0.9), ag(0.2)].join(', '));
+      ok(near(mg(0.5), 1.1) && near(mg(0.9), 1.21) && near(mg(0.2), 1.0175), 'the swap margin: 1.1 at 0.5, 1.21 at the ceiling, 1.0175 at the floor');
+      const b = go3('Brock', 2, { confidence: true }).ai;
+      b.conf = 0.9;
+      ok(near(b.aggr(), 0.59) && b.aggr() < b.set.gapClose, 'Brock at his ceiling: aggr 0.59, under the gap-closing line: ' + b.aggr());
+      ({ ai, s1 } = go3('Misty', 2, {}));
+      hitYou(s1, 0.5);
+      hitHer(s1, 0.01);
+      you[1].dead = true;
+      run(1);
+      you[1].dead = false;
+      ok(near(ai.conf, 0.5), 'with confidence off nothing moves it: ' + ai.conf);
+      // only her own shapes count as her hits (the harness does not step the sim, so hits are emitted as the sim emits them)
+      ({ ai, s1 } = go3('Misty', 2, { confidence: true }));
+      const wild = { id: -4e6, cast: { owner: { foes: () => [human] } } },
+        L = G.MoveSim.list();
+      L.push(wild);
+      G.SimBus.emit('move:hit', { moveId: 'tackle', instId: wild.id, enemyId: null, dmg: 50, crit: false, typeMult: 1, x: 0, y: 0, hop: 0 });
+      L.splice(L.indexOf(wild), 1);
+      G.SimBus.emit('move:hit', { moveId: 'tackle', instId: -123, enemyId: null, dmg: 50, crit: false, typeMult: 1, x: 0, y: 0, hop: 0 });
+      G.SimBus.emit('move:hit', { moveId: 'ember', instId: -1, enemyId: 999999, dmg: 50, crit: false, typeMult: 1, x: 0, y: 0, hop: 0 });
+      frame();
+      const w = G.GymArena.leaderInfo.windows();
+      ok(near(ai.conf, 0.5) && w.dealtLong === 0 && w.takenLong === 0, "another owner's hit, an unknown shape and a hit on a mon not hers count for nothing");
+      hitYou(s1, 0.2);
+      hitHer(s1, 0.05);
+      frame();
+      const w2 = G.GymArena.leaderInfo.windows();
+      ok(near(w2.dealt, 0.2) && near(w2.taken, 0.05) && near(w2.dealtLong, 0.2) && w2.sinceHit < 2 * DT, 'her hit and yours fill both windows as fractions of max HP: ' + JSON.stringify(w2));
+      run(2.1);
+      const w3 = G.GymArena.leaderInfo.windows();
+      ok(w3.dealt === 0 && near(w3.dealtLong, 0.2), 'after 2 s they leave the short window and stay in the long one');
+    }
+
+    // ---------------- 13. pacing: push, breather, the cap, a mon arriving ----------------
+    {
+      // frustration: Misty at 0.68 waits 6 x (1.5 - 0.68) = 4.92 s without landing a hit
+      let { t, ai, s1, s2 } = go3('Misty', 2, { pacing: true });
+      const pushAt = until(8, () => ai.stance === 'push');
+      ok(pushAt != null && pushAt >= 4.92 - 1e-9 && pushAt <= 4.92 + TICK, 'frustration: a push after 4.92 s with no hit landed: ' + pushAt);
+      ok(/frustration/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
+      frame();
+      ok(s1.brain.hold === 'close' && s1.brain.mode === 'close', 'a push holds the close stance: ' + s1.brain.hold + ' ' + s1.brain.mode);
+      const endAt = until(6, () => ai.stance !== 'push');
+      ok(endAt != null && Math.abs(endAt - 5) <= 2 * DT + 1e-9, 'with no hit the push ends after 5 s: ' + endAt);
+      const again = until(6, () => ai.stance === 'push');
+      ok(again != null && again >= 4.92 - 1e-9 && again <= 4.92 + TICK, 'the next push waits 4.92 s from the end of the last: ' + again);
+      hitYou(t.active, 0.01);
+      frame();
+      ok(ai.stance === 'neutral' && /landed/.test(ai.stanceWhy), 'a hit landed ends the push: ' + ai.stance + ' (' + ai.stanceWhy + ')');
+      frame();
+      ok(s1.brain.hold == null, 'and releases the stance');
+      // bolder: aggression 0.9 waits 6 x 0.6 = 3.6 s
+      ({ ai } = go3('Misty', 2, { pacing: true }));
+      ai.set.aggression = 0.9;
+      const bold = until(8, () => ai.stance === 'push');
+      ok(bold != null && bold >= 3.6 - 1e-9 && bold <= 3.6 + TICK, 'higher aggression pushes sooner: 3.6 s at 0.9: ' + bold);
+      // pressing an advantage: confidence 0.7 or more while you are under 40%
+      ({ ai } = go3('Misty', 2, { pacing: true }));
+      run(1);
+      ai.conf = 0.75;
+      human.hp = 45;
+      run(0.3);
+      ok(ai.stance === 'neutral', 'confident, you at 45%: no press');
+      human.hp = 39;
+      run(0.3);
+      ok(ai.stance === 'push' && /press/.test(ai.stanceWhy), 'you at 39%: it presses: ' + ai.stanceWhy);
+      ({ ai } = go3('Misty', 2, { pacing: true }));
+      run(1);
+      ai.conf = 0.69;
+      human.hp = 10;
+      run(0.3);
+      ok(ai.stance === 'neutral', 'at confidence 0.69 it does not press');
+      // a breather: 16% dealt in the short window, 3 x (1.5 - 0.68) = 2.46 s long, then a wait of 8 + 16 x 0.68 = 18.88 s
+      ({ t, ai, s1, s2 } = go3('Misty', 2, { pacing: true }));
+      run(20);
+      hitYou(s1, 0.16);
+      const br = until(0.5, () => ai.stance === 'breather');
+      ok(br != null && br <= TICK, 'sustained pressure (16% in 2 s) earns a breather on the next tick: ' + br);
+      ok(/pressure/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
+      frame();
+      ok(s1.brain.hold === 'far' && s1.brain.mode === 'far', 'a breather holds the far stance');
+      let endClock = null;
+      const len = until(4, () => ai.stance !== 'breather' && (endClock = ai.clock) != null);
+      ok(len != null && Math.abs(len - 2.46) <= 2 * DT + 1e-9, 'it lasts 2.46 s: ' + len);
+      ok(endClock != null && near(ai.breathNext, endClock + 18.88), 'the next may start 18.88 s after it ends: ' + (ai.breathNext - endClock));
+      run(3);
+      hitYou(s1, 0.16);
+      ok(until(0.5, () => ai.stance === 'breather') == null, 'pressure 3 s later: no breather yet');
+      while (ai.clock < ai.breathNext - 0.6) frame();
+      hitYou(s1, 0.16);
+      ok(until(0.5, () => ai.stance === 'breather') == null, 'nor 0.6 s before the wait ends');
+      while (ai.clock < ai.breathNext) frame();
+      hitYou(s1, 0.16);
+      ok(until(0.5, () => ai.stance === 'breather') != null, 'but once it ends');
+      // its quiet slot: Staryu's Harden (slot 3) when its Gate is open (statReady stands in for an open Gate), with you 120 px off,
+      // inside Water Gun's reach, where GymBrain alone keeps an attack slot
+      const sr = G.MoveEffects.statReady;
+      const quiet = (breathe) => {
+        const r = go3('Misty', 2, { pacing: true });
+        run(20);
+        G.MoveEffects.statReady = () => true;
+        if (breathe) {
+          hitYou(r.s1, 0.16);
+          until(0.5, () => r.ai.stance === 'breather');
+        }
+        let on = null,
+          off = 0;
+        for (let i = 1; i <= 140; i++) {
+          human.x = r.s1.x;
+          human.y = r.s1.y + 120;
+          frame();
+          if (r.s1.active === 2 && on == null) on = i * DT;
+          else if (on != null && r.s1.active !== 2) off++;
+        }
+        G.MoveEffects.statReady = sr;
+        return { on, off };
+      };
+      const alone = quiet(false),
+        calm = quiet(true);
+      ok(alone.on == null || alone.off > 0, 'with you in reach and no breather, GymBrain does not stay on Harden: ' + JSON.stringify(alone));
+      ok(calm.on != null && calm.on <= 0.5 && calm.off === 0, 'in a breather it presses its buff slot (Harden, slot 3) and stays on it: ' + JSON.stringify(calm));
+      // it never holds back a cast: Psyduck (Misty loop 3, no buff open at full HP) keeps casting at you through its breather
+      ({ t, ai } = go3('Misty', 3, { pacing: true }));
+      run(1);
+      ai.requestSwap(2);
+      frame();
+      const psy = t.active;
+      ok(psy.dex === 54, 'Psyduck is on the field: ' + psy.dex);
+      run(19);
+      hitYou(psy, 0.16);
+      until(0.5, () => ai.stance === 'breather');
+      let casts = 0;
+      const offCast = G.SimBus.on('move:cast', (ev) => ev.ownerId === psy.id && casts++);
+      for (let i = 0; i < 200 && ai.stance === 'breather'; i++) {
+        human.x = psy.x;
+        human.y = psy.y + 180;
+        frame();
+      }
+      offCast();
+      ok(ai.stance === 'neutral' && casts > 0, 'in a breather it still casts (nothing is held back): ' + casts + ' casts');
+      // a mon arriving ends a breather and starts neutral; the breather share is the fight's, the swap does not reset it
+      ({ t, ai, s1, s2 } = go3('Misty', 2, { pacing: true }));
+      run(20);
+      hitYou(s1, 0.16);
+      until(0.5, () => ai.stance === 'breather');
+      run(1);
+      const bt = ai.breathT;
+      ai.requestSwap(1);
+      frame();
+      ok(t.active === s2 && ai.stance === 'neutral', 'a mon arriving ends the breather: Seel starts neutral');
+      ok(ai.breathT >= bt - 1e-9, 'and the breather time is kept: ' + bt.toFixed(2) + ' then ' + ai.breathT.toFixed(2));
+      frame();
+      ok(s2.brain.hold == null, 'Seel holds no stance');
+      // the cap: at aggression 0 a breather is 4.5 s and the wait 8 s (36% of the time), so breatherMax 25% has to cut them
+      ({ t, ai } = go3('Misty', 2, { pacing: true }));
+      ai.set.aggression = 0;
+      let worst = -1,
+        cut = 0;
+      const end0 = ai.endStance.bind(ai);
+      ai.endStance = (why) => {
+        if (why === 'breatherMax') cut++;
+        end0(why);
+      };
+      for (let i = 0; i < 60 * 60; i++) {
+        if (i % 30 === 0) hitYou(t.active, 0.16);
+        frame();
+        worst = Math.max(worst, ai.breathT - 0.25 * ai.clock);
+      }
+      ok(worst <= DT + 1e-9, 'under constant pressure the breathers never pass 25% of the fight: worst ' + worst.toFixed(4));
+      ok(cut > 0 && ai.breathT > 0.2 * ai.clock, 'the cap cut ' + cut + ' of them, and they still fill most of the share: ' + (ai.breathT / ai.clock).toFixed(3));
+    }
+
+    // ---------------- 14. the dodge lean ----------------
+    {
+      // you stand 300 px east of her (or `at`); the shot passes just north of her going east, so slice 2's dodge is straight south.
+      // The angle is measured from south toward east (you): (aggr - 0.5) x 2 x 45 degrees, never past you.
+      const leanOf = (aggression, conf, at = [300, 0]) => {
+        const { ai, s1: e } = go3('Misty', 2, { dodges: true });
+        ai.set.aggression = aggression;
+        ai.conf = conf;
+        for (let k = 0; k < 10; k++) {
+          run(3);
+          e.dodges.cd = [0, 0];
+          const s = shoot(e);
+          let read = null,
+            dv = null;
+          for (let i = 0; i < 60; i++) {
+            human.x = e.x + at[0];
+            human.y = e.y + at[1];
+            const was = e.dodgeT > 0;
+            step();
+            const n = ai.log.find((d) => d.act === 'threat' && d.serial === s.cast.serial);
+            if (n && read == null) read = n.read;
+            if (read && !dv && !was && e.dodgeT > 0) dv = [e.dodgeVx, e.dodgeVy];
+          }
+          drop();
+          if (dv) return (Math.atan2(dv[0], dv[1]) * 180) / Math.PI;
+        }
+        return null;
+      };
+      const deg = (a, b) => a != null && Math.abs(a - b) <= 0.01;
+      let a = leanOf(0.68, 0.9);
+      ok(deg(a, 37.8), 'Misty winning (conf 0.9, aggr 0.92): 37.8 degrees toward you: ' + a);
+      a = leanOf(0.68, 0.2);
+      ok(deg(a, 0), 'Misty at the floor (aggr 0.50): straight sideways: ' + a);
+      a = leanOf(0.35, 0.5);
+      ok(deg(a, -13.5), "Brock's 0.35 at neutral: 13.5 degrees away from you: " + a);
+      a = leanOf(0.5, 0.5);
+      ok(deg(a, 0), 'aggr 0.5: straight sideways: ' + a);
+      const past = (Math.atan2(100, 275) * 180) / Math.PI;
+      a = leanOf(1, 0.9, [100, 275]);
+      ok(deg(a, past), 'aggr 1 (45 degrees) with you ' + past.toFixed(2) + ' degrees off: it turns only as far as you: ' + a);
+    }
+
+    // ---------------- 15. the gap-closing dodge ----------------
+    {
+      // Misty loop 2 Staryu has Tackle (melee). You stand east, `extra` px past its reach (plus your body); one dodge is 150 px.
+      const gap = (name, loop, conf, { cd = [0, 0], reserve = 0, extra = 75, ready = true, stance = null } = {}) => {
+        const { ai, s1: e } = go3(name, loop, { pacing: true });
+        ai.conf = conf;
+        ai.set.dodgeReserve = reserve;
+        if (stance) {
+          ai.clock = 100; // so breatherMax (25% of the fight so far) does not end it at once
+          ai.startStance(stance, 'test', 10);
+        }
+        const reach = e.brain.reach() + human.r;
+        let dv = null,
+          at = null;
+        for (let i = 1; i <= 30 && !dv; i++) {
+          e.dodges.cd = cd.slice();
+          if (!ready) for (const g of e.slots) for (const s of g) s.t = 99;
+          human.x = e.x + reach + extra;
+          human.y = e.y;
+          const was = e.dodgeT > 0;
+          frame();
+          if (!was && e.dodgeT > 0) {
+            dv = [e.dodgeVx, e.dodgeVy];
+            at = i * DT;
+          }
+        }
+        return { dv, at, noted: ai.log.some((d) => d.act === 'gap') };
+      };
+      let g = gap('Misty', 2, 0.6);
+      ok(g.dv && g.dv[0] > 0 && Math.abs(g.dv[1]) < 1e-6 && g.noted, 'aggr 0.74, Tackle ready, you 75 px out of reach: it dodges straight at you: ' + JSON.stringify(g.dv));
+      ok(g.at != null && g.at <= TICK, 'on the think tick: ' + g.at);
+      ok(!gap('Misty', 2, 0.53).dv, 'aggr 0.698, just under 0.7: no');
+      ok(!gap('Misty', 2, 0.6, { cd: [0, 6] }).dv, 'one charge ready: kept back for threats');
+      ok(!gap('Misty', 2, 0.6, { reserve: 1 }).dv, 'dodgeReserve 1 with two ready: kept back (it needs one more than the reserve plus one)');
+      ok(gap('Misty', 2, 0.6, { extra: 150 }).dv, 'you exactly one dodge out: it goes');
+      ok(!gap('Misty', 2, 0.6, { extra: 151 }).dv, 'one px more than a dodge: no');
+      ok(!gap('Misty', 2, 0.6, { extra: -5 }).dv, 'you already in reach: no');
+      ok(!gap('Misty', 2, 0.6, { ready: false }).dv, 'no close move ready: no');
+      ok(!gap('Misty', 2, 0.6, { stance: 'breather' }).dv, 'in a breather: no');
+      ok(!gap('Brock', 2, 0.9).dv, 'Brock at his ceiling (aggr 0.59): never');
+    }
+
+    // ---------------- 16. triggers and lines ----------------
+    {
+      // Misty's authored lines
+      let { t, ai, s1, s2 } = go3('Misty', 2, { triggers: true });
+      run(0.1);
+      ok(says.includes('Misty: Think you can keep your head above water?'), 'the fight-start line: ' + says.join(' | '));
+      says = [];
+      s1.hp = s1.maxHp * 0.49;
+      run(0.05);
+      const annoyed = () => says.filter((x) => x === "Misty: Okay, now I'm annoyed!").length;
+      ok(annoyed() === 1, 'crossing half HP says her line: ' + says.join(' | '));
+      s1.hp = s1.maxHp * 0.6;
+      frame();
+      s1.hp = s1.maxHp * 0.4;
+      run(0.2);
+      ok(annoyed() === 1, 'once: crossing again says nothing');
+      // Brock's: aggression 0.5 for 10 s, then back to 0.35
+      ({ ai, s1 } = go3('Brock', 2, { triggers: true }));
+      run(1);
+      says = [];
+      s1.hp = s1.maxHp * 0.45;
+      run(0.1);
+      ok(says.includes('Brock: Time to get serious.') && ai.set.aggression === 0.5, 'Brock under half HP: his line and aggression 0.5: ' + says.join(' | '));
+      run(9.8);
+      ok(ai.set.aggression === 0.5, 'for 10 s');
+      run(0.3);
+      ok(ai.set.aggression === 0.35, 'then back to 0.35: ' + ai.set.aggression);
+      // each condition and action, on Misty with one authored trigger at a time
+      const fresh = (list, loop = 2) => {
+        const r = go3('Misty', loop, { triggers: true });
+        r.ai.useTriggers(list);
+        says = [];
+        return r;
+      };
+      const said = (x) => says.filter((s) => s === 'Misty: ' + x).length;
+      ({ s1 } = fresh([{ on: 'hp', below: 0.5, line: 'R', repeat: true }]));
+      s1.hp = s1.maxHp * 0.4;
+      frame();
+      s1.hp = s1.maxHp * 0.6;
+      frame();
+      s1.hp = s1.maxHp * 0.4;
+      run(0.1);
+      ok(said('R') === 2, 'a repeating HP trigger fires on each crossing: ' + said('R'));
+      fresh([{ on: 'faint', side: 'yours', line: 'F' }]);
+      run(0.2);
+      you[1].dead = true;
+      run(0.1);
+      you[1].dead = false;
+      ok(said('F') === 1, 'your faint');
+      ({ t } = fresh([{ on: 'faint', side: 'own', line: 'O' }]));
+      run(0.5);
+      faint(t.active);
+      run(2);
+      ok(said('O') === 1, 'its own faint (said once the next mon is out)');
+      fresh([{ on: 'sendIn', line: 'S' }]);
+      run(0.2);
+      ok(said('S') === 0, 'no send-in of yours yet');
+      youActive = 1;
+      run(0.1);
+      ok(said('S') === 1, 'you send in a mon');
+      youActive = 0;
+      fresh([{ on: 'time', at: 3, line: 'T' }]);
+      const tAt = until(4, () => said('T') > 0);
+      ok(tAt != null && tAt >= 3 - 1e-9 && tAt <= 3 + DT + 1e-9, 'time 3 s: at 3 s: ' + tAt);
+      fresh([{ on: 'time', at: 2, line: 'P', repeat: true }]);
+      run(6.1);
+      ok(said('P') === 3, 'time every 2 s, repeating: 3 in 6.1 s: ' + said('P'));
+      // actions through your controls
+      ({ t, s1, s2 } = fresh([{ on: 'time', at: 1, swap: 2 }]));
+      run(1.1);
+      ok(t.active === s2 && says.includes('Misty switches to Seel!'), 'a swap action goes through your swap: Seel is in');
+      ({ t, s1 } = fresh([{ on: 'time', at: 1, swap: 2 }]));
+      t.lock = 3;
+      run(1.2);
+      ok(t.active === s1, 'under the swap lock it is refused');
+      run(3);
+      ok(t.active === s1, 'and dropped, as your key press is');
+      ({ s1 } = fresh([{ on: 'time', at: 1, slot: 3 }]));
+      ok(until(1.1, () => s1.active === 2) != null, 'a slot action presses slot 3');
+      ({ s1 } = fresh([{ on: 'time', at: 1, slot: 3 }]));
+      s1.swapT = 5;
+      run(1.2);
+      ok(s1.active !== 2, 'under your 0.4 s slot hold (here 5 s) it is refused');
+      ({ ai } = fresh([{ on: 'time', at: 1, set: { aggression: 0.9 } }]));
+      run(1.1);
+      ok(ai.set.aggression === 0.9, 'a set with no `for` holds');
+      run(20);
+      ok(ai.set.aggression === 0.9, 'for the rest of the fight');
+      // a trigger waits out a commitment; a line waits for the banner, at most 4 s
+      ({ s1 } = fresh([{ on: 'time', at: 1, line: 'B' }]));
+      run(0.5);
+      s1.mvRoot = true;
+      run(1.5);
+      ok(said('B') === 0, 'inside a commitment the trigger waits');
+      s1.mvRoot = false;
+      frame();
+      ok(said('B') === 1, 'and fires on the first free frame');
+      fresh([{ on: 'time', at: 1, line: 'Q' }]);
+      bannerUp = true;
+      run(1.5);
+      ok(said('Q') === 0, 'another banner up: the line waits');
+      bannerUp = false;
+      frame();
+      ok(said('Q') === 1, 'and shows once it clears');
+      fresh([{ on: 'time', at: 1, line: 'D' }]);
+      bannerUp = true;
+      run(5.2);
+      bannerUp = false;
+      run(0.1);
+      ok(said('D') === 0, 'a line that waited more than 4 s is dropped');
+      // swing lines: up at +0.27, down only after the 20 s cooldown
+      ({ ai, s1 } = go3('Misty', 2, { triggers: true, confidence: true }));
+      run(0.5);
+      says = [];
+      for (let i = 0; i < 9; i++) hitYou(s1, 0.001);
+      run(0.05);
+      ok(said('Go with the flow, or get swept away!') === 1, 'a swing of +0.27 says her up line: ' + says.join(' | '));
+      for (let i = 0; i < 9; i++) hitHer(s1, 0.001);
+      run(1);
+      ok(said('Hmph. Lucky shot.') === 0, 'back down 0.27 at once: no line inside the 20 s cooldown');
+      ok(until(20, () => said('Hmph. Lucky shot.') > 0) != null, 'the down line once the cooldown is over');
+      ok(says.filter((x) => /^Misty: (Go with|Hmph)/.test(x)).length === 2, 'two swing lines in all, no spam');
+    }
+
+    // ---------------- 17. a close fight with everything on ----------------
+    {
+      const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }, 160);
+      const look = () => t.members.map((m) => [m.maxHp, m.cdMul, m.gym.tempo, m.gym.power, m.gym.level].join()).join('|');
+      const before = look(),
+        stances = new Set();
+      let worst = -1,
+        err = null;
+      for (let i = 0; i < 40 * 60 && !err; i++) {
+        try {
+          frame();
+        } catch (x) {
+          err = x;
+        }
+        stances.add(ai.stance);
+        worst = Math.max(worst, ai.breathT - ai.set.breatherMax * ai.clock);
+      }
+      ok(!err, 'a 40 s close fight runs: ' + (err ? err.stack : 'no error'));
+      ok(stances.size >= 2, 'and changes stance: ' + [...stances].join(', '));
+      ok(worst <= DT + 1e-9, 'the breathers stay under their share');
+      ok(ai.conf >= 0.2 - 1e-9 && ai.conf <= 0.9 + 1e-9, 'confidence stays between floor and ceiling: ' + ai.conf.toFixed(3));
+      ok(look() === before, 'no HP, cooldown, tempo, power or level was changed (NO RUBBER BANDING)');
+    }
+    Object.assign(human, { hp: 1e6, maxHp: 1e6 });
+    bannerUp = false;
+    Object.assign(AI.off, { confidence: false, pacing: false, triggers: false });
   }
   set(true, true);
 }

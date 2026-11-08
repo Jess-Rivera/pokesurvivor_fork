@@ -368,3 +368,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Test: leader-ai-harness 159 checks, leader-ai-mutate 27/27; five old leader harnesses run with the AI's decisions off; silver and EV text checks follow payKill. check red only on the two #30 harnesses (same failures as before); smokes gym and team green.
 - Jess feel-tested slice 2: approved ("craaaazy, in a good way"); TELL READING promoted to [Approved]. #31 closed and shipped, #32 unblocked (ready).
 - Stopped at: open #32 (slice 3) in a new chat.
+
+## 2026-11-08 (Claude Code, home), leader AI slice 3 (#32)
+- Opened #32 with Jess: confidence shifts an effective aggression (aggression + (conf - 0.5) x 0.6) and the swap margin; pacing is a leader-wide stance (neutral, push, breather), a push on frustration or to press an advantage. Ruling: a breather is back off plus a slot choice, never a held cast (moves auto-fire; decision file). Misty 0.68 (hit and run), Brock 0.35 (wall). Gap-close keeps one charge back; lines queue behind the banner.
+- Built: fight events and 2 s / 15 s windows (G.LeaderInfo), confidence, pacing, lean, gap-closing dodge, triggers and lines (G.LeaderAI), GymBrain `hold`, validator for ai.triggers and ai.lines, Misty and Brock authoring, overlay status, G.Debug.leaderAI switches.
+- Calls made without a ruling (on #32): a line waits 4 s, not 3 (the send-out banner is 3.2 s); a trigger swap skips minField and swapLimit.
+- Test: leader-ai-harness 324, leader-ai-mutate 68/68; five old leader harnesses load leader-info and run with slice 3 off; check red only on the two #30 harnesses (failures identical to HEAD); smoke-gym green; a file:// Misty probe saw real hits move confidence, gap-closing dodges and both lines.
+- Stopped at: #32 in Needs Playtest, waiting for Jess's feel test.

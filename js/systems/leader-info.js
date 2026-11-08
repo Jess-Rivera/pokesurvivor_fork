@@ -7,18 +7,67 @@
  *            a bond, when two different moves are cast with no slot switch seen between them (only the active slot casts, and
  *            the switch shows as your setActive ring), at any gap.
  *   THREATS  slice 2 (#31): your shapes in flight that reach the leader's body soon (threats(), read by its dodge)
+ *   FIGHT    slice 3 (#32): what the screen shows of the trade, for confidence and pacing. Hits from 'move:hit' (the damage number
+ *            on screen) as fractions of the struck mon's max HP; faints (an HP bar at 0, the roster) and your send-ins (the roster's
+ *            active mon). events() hands them to the AI player once; windows() sums the hits over the last SHORT and LONG seconds.
  *   Held-item reveals: #36. Stale reveals across fights: slice 4 (run memory).
- * It hears the sim through G.SimBus ('move:cast', 'slot:switch'), registered once here (SimBus rules); the arena points it at the
- * fight's record (create) and away from it (end), so an old fight's record never hears a new cast.
+ * It hears the sim through G.SimBus ('move:cast', 'slot:switch', 'move:hit'), registered once here (SimBus rules); the arena points it
+ * at the fight's record (create) and away from it (end), so an old fight's record never hears a new cast.
  */
 G.LeaderInfo = (() => {
   let cur = null; // the fight's record, or null outside a switched gym's fight
+  const SHORT = 2,
+    LONG = 15; // the rolling windows, seconds (LEADER-AI ROLLING WINDOWS, TUNE)
 
   class Info {
     /** @param leader the leader's G.Team */
     constructor(leader) {
       this.leader = leader;
       this.mons = new Map(); // key -> { moves: [ids, first cast first], bonds: [[ids]], run: [ids since the last switch] }
+      this.t = 0; // fight seconds, advanced by tick()
+      this.hits = []; // { t, k: 'dealt' | 'taken', frac } inside the LONG window
+      this.feed = []; // events not yet handed to the AI player: { k: 'landed' | 'taken' | 'faint' | 'sendIn', ... }
+      this.lastHit = 0; // when the leader last landed a hit (the fight's start until then)
+      this.downYou = (G.Game.roster || []).map((m) => !!m.dead);
+      this.downOwn = leader.members.map((m) => !!m.dead);
+      this.yourActive = G.Game.activeIndex;
+    }
+    /** One frame of the fight: faints on either side and your send-ins become events, and old hits leave the long window. */
+    tick(dt) {
+      this.t += dt;
+      (G.Game.roster || []).forEach((m, i) => {
+        if (m.dead && !this.downYou[i]) this.feed.push({ k: 'faint', side: 'yours' });
+        this.downYou[i] = !!m.dead;
+      });
+      this.leader.members.forEach((m, i) => {
+        if (m.dead && !this.downOwn[i]) this.feed.push({ k: 'faint', side: 'own' });
+        this.downOwn[i] = !!m.dead;
+      });
+      if (G.Game.activeIndex !== this.yourActive) {
+        this.yourActive = G.Game.activeIndex;
+        this.feed.push({ k: 'sendIn' });
+      }
+      while (this.hits.length && this.hits[0].t < this.t - LONG) this.hits.shift();
+    }
+    /** A hit seen on screen: 'dealt' (the leader's, on you) or 'taken' (yours, on the leader), `frac` of the struck mon's max HP. */
+    hit(k, frac) {
+      this.hits.push({ t: this.t, k, frac });
+      this.feed.push({ k: k === 'dealt' ? 'landed' : 'taken', frac });
+      if (k === 'dealt') this.lastHit = this.t;
+    }
+    /** The events since the last call, each handed out once. */
+    events() {
+      return this.feed.splice(0);
+    }
+    /** The rolling windows: hits dealt and taken (fractions of max HP) over the last SHORT and LONG seconds, and the seconds since
+     *  the leader last landed a hit. */
+    windows() {
+      const w = { dealt: 0, taken: 0, dealtLong: 0, takenLong: 0, sinceHit: this.t - this.lastHit };
+      for (const h of this.hits) {
+        w[h.k + 'Long'] += h.frac;
+        if (h.t >= this.t - SHORT) w[h.k] += h.frac;
+      }
+      return w;
     }
     /** A mon of yours: its copy uid, else its team slot. */
     keyOf(m) {
@@ -113,6 +162,20 @@ G.LeaderInfo = (() => {
   G.SimBus.on('slot:switch', (ev) => {
     const k = cur && yours(ev);
     if (k != null) cur.switched(k);
+  });
+  // a hit on a leader mon names it (enemyId); a leader mon's hit on you names none, so its shape says whose it is
+  G.SimBus.on('move:hit', (ev) => {
+    if (!cur) return;
+    const team = cur.leader.members;
+    if (ev.enemyId != null) {
+      const m = team.find((x) => x.id === ev.enemyId);
+      if (m) cur.hit('taken', (ev.dmg || 0) / Math.max(1, m.maxHp));
+      return;
+    }
+    const inst = G.MoveSim.list().find((i) => i.id === ev.instId),
+      pl = G.Game.player;
+    if (inst && inst.cast && team.includes(inst.cast.owner) && pl)
+      cur.hit('dealt', (ev.dmg || 0) / Math.max(1, pl.maxHp));
   });
 
   return {

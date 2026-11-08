@@ -5,8 +5,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-08 session, on feature/gym-leader-ai)
-1. Leader AI: #31 (slice 2) shipped. Next #32 (slice 3: confidence, pacing, triggers, the dodge lean and gap-closing dodge), then
-   #33, #34, each opened by agreeing its goal, done check and test.
+1. Leader AI: #32 (slice 3) built, Needs Playtest (two calls on the issue await an OK). Then #33, #34, each opened by agreeing
+   its goal, done check and test.
    Roster UI #35 can read G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
 2. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
 3. #37 replace Korataki with Michroma (licence; before any hosting).

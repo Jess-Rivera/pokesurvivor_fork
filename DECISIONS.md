@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-08, Leader AI slice 3 opened; a breather is back off plus slot choice (Jess)](docs/decisions/2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice.md)
 - [2026-11-08, Leader AI slice 2 shipped; tell reading approved (Jess)](docs/decisions/2026-11-08-leader-ai-slice-2-shipped-tell-reading-approved.md)
 - [2026-11-08, Korataki is personal-use only; Michroma replaces it (Jess)](docs/decisions/2026-11-08-korataki-is-personal-use-only-michroma-replaces-it.md)
 - [2026-11-08, Leader AI: an AI player through your controls (Jess)](docs/decisions/2026-11-08-leader-ai-an-ai-player-through-your-controls.md)

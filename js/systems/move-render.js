@@ -455,6 +455,7 @@ G.MoveRender = (() => {
       }
       // slice 2 (#31): its last decisions with their reasons and scores, newest first
       const ai = G.GymArena.leaderAI;
+      if (ai) lines.push(ai.status()); // slice 3 (#32): confidence, effective aggression, the stance and its reason
       if (ai) for (const d of ai.log.slice(-4).reverse()) lines.push(d.t.toFixed(1) + ' ' + d.act + ': ' + d.text);
       ctx.fillStyle = '#ffd95e';
       lines.forEach((line, i) => ctx.fillText(line, lead.x, lead.y + 22 + 11 * i));

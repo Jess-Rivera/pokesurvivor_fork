@@ -1,4 +1,5 @@
-// Mutation check for Leader AI slice 2 (#31), swap and dodge decisions (Node only; not a harness, so tools/check.js does not run it).
+// Mutation check for Leader AI slices 2 (#31, swap and dodge decisions) and 3 (#32, confidence, pacing, triggers and lines) (Node
+// only; not a harness, so tools/check.js does not run it).
 // Usage from the repo root:  node docs/proposals/leader-ai-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-ai-harness.js against it
 // (LA_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
@@ -10,16 +11,18 @@ const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
   IN = 'js/systems/leader-info.js',
   AR = 'js/systems/gym-arena.js',
-  LD = 'js/entities/gym-leader.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER' };
+  LD = 'js/entities/gym-leader.js',
+  BR = 'js/entities/boss-ai.js',
+  GY = 'js/data/gyms.js';
+const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS' };
 const M = [
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],
   ['swapLimit is ignored', AI, "if (S.swapLimit != null && this.swaps >= S.swapLimit) return 'swapLimit';", ''],
   ['a send-in does not restart the clock', AR, 't.ai.arrived(false);', ''],
   ['a voluntary swap does not restart the clock', AR, 't.ai.arrived(true);', ''],
-  ['the margin is off', AI, 'if (best.score < S.stay * S.margin - LeaderAI.EPS) {', 'if (best.score < S.stay - LeaderAI.EPS) {'],
-  ['a swap is decided inside a tell', AI, 'if (this.due && (G.Status.stunned(e) || !this.busy(e))) {', 'if (this.due) {'],
+  ['the margin is off', AI, 'if (best.score < S.stay * margin - LeaderAI.EPS) {', 'if (best.score < S.stay - LeaderAI.EPS) {'],
+  ['a swap is decided inside a tell', AI, 'const free = G.Status.stunned(e) || !this.busy(e);', 'const free = true;'],
   ['the recovery counts as the tell', AI, 'return !!((c && !c.fired) || e.mvRoot', 'return !!(c || e.mvRoot'],
   // the triggers
   ['cc ignores the time left', AI, 'M.t >= S.ccLeft - LeaderAI.EPS', 'M.t > 0'],
@@ -39,12 +42,58 @@ const M = [
   ['the bag rolls dice', AI, 'for (let i = 0; i < n; i++) a.push(i < this.reads);', 'for (let i = 0; i < n; i++) a.push(this.rng() < this.reads / n);'],
   ['the floor is ignored', AI, 'left = Math.abs(l - r) < G.GymLeader.UNSTICK.tie ? off >= 0 : l > r;', 'left = off >= 0;'],
   ['it dodges toward the path', AI, '? off >= 0 : l > r;', '? off < 0 : l > r;'],
-  ['a still shape: dodged sideways', AI, 'if (!th.vx && !th.vy) return G.U.norm(e.x - th.x, e.y - th.y);', ''],
+  ['a still shape: dodged sideways', AI, 'if (!th.vx && !th.vy) return this.lean(e, G.U.norm(e.x - th.x, e.y - th.y));', ''],
   ['a miss is a threat', IN, 'if (d2 > reach * reach) return null;', ''],
   // the swap consequences
   ['a bench faint is not paid', AR, 'G.EnemyMgr.payKill(f, G.Game.player);', ''],
   ['a bench faint is the boss kill', AR, 'f.boss = false;\n', ''],
   ['a bench faint is loud', LD, 'if (this.benched) return; // a faint on the bench', 'if (false) return; // a faint on the bench'],
+  // slice 3 (#32): confidence
+  ['aggr ignores confidence', AI, '(this.conf - 0.5) * LeaderAI.CONF.pull', '0'],
+  ['the swap margin ignores confidence', AI, '(1 + (this.conf - 0.5) * LeaderAI.CONF.marginK)', '1'],
+  ['no floor or ceiling', AI, 'this.conf = G.U.clamp(this.conf, S.confMin, S.confMax);', ''],
+  ['its own faint lifts it', AI, "(ev.side === 'yours' ? C.faint : -C.faint)", 'C.faint'],
+  ['confSwing is ignored', AI, 'k = LeaderAI.off.confidence ? 0 : S.confSwing;', 'k = LeaderAI.off.confidence ? 0 : 1;'],
+  ['no drift', AI, 'if (Math.abs(lead) >= C.trade - LeaderAI.EPS) this.conf +=', 'if (false) this.conf +='],
+  ['the long window never empties', IN, 'while (this.hits.length && this.hits[0].t < this.t - LONG) this.hits.shift();', ''],
+  ['any shape counts as hers', IN, 'if (inst && inst.cast && team.includes(inst.cast.owner) && pl)', 'if (pl)'],
+  ['its own faints are not seen', IN, "if (m.dead && !this.downOwn[i]) this.feed.push({ k: 'faint', side: 'own' });", ''],
+  ['your send-in is not seen', IN, "this.feed.push({ k: 'sendIn' });", ''],
+  // pacing
+  ['the breather cap is off', AI, "const cap = this.stance === 'breather' && this.breathT >= S.breatherMax * this.clock - LeaderAI.EPS;", 'const cap = false;'],
+  ['no wait between breathers', AI, 'this.clock >= this.breathNext - LeaderAI.EPS &&', 'true &&'],
+  ['a breather length ignores aggression', AI, 'P.breathLen * (1.5 - a)', 'P.breathLen'],
+  ['frustration ignores aggression', AI, 'S.pushAfter * (1.5 - a)', 'S.pushAfter'],
+  ['a landed hit does not end a push', AI, "if (this.stance === 'push') this.endStance('landed a hit');", ''],
+  ['no pressing an advantage', AI, 'if (this.conf >= P.pressConf - LeaderAI.EPS && you && you.hp < you.maxHp * P.pressHp)', 'if (false)'],
+  ['a mon arriving keeps the stance', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", ''],
+  ['a swap resets the breather share', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", "this.breathT = 0;\n    if (this.stance !== 'neutral') this.endStance('a mon arrives');"],
+  ['a breather picks no quiet slot', AI, 'if (q >= 0) i = q !== e.active ? q : -1;', ''],
+  ['a breather holds back casts', BR, "if (this.wait <= 0 && !e.stFl && this.attack(dist, pl, now)) return [0, 0, 'Idle'];", "if (this.wait <= 0 && !e.stFl && this.hold !== 'far' && this.attack(dist, pl, now)) return [0, 0, 'Idle'];"],
+  ['the stance hold is ignored', BR, "if (this.hold) this.mode = tight ? 'far' : this.hold;", ''],
+  // the lean and the gap-closing dodge
+  ['no lean', AI, 'if (!p || Math.abs(a) < LeaderAI.EPS) return [dx, dy];', 'return [dx, dy];'],
+  ['the lean goes past you', AI, '(a > 0 ? Math.min(a, Math.abs(to)) : a)', 'a'],
+  ['the lean goes the wrong way', AI, 'r = Math.sign(to) *', 'r = -Math.sign(to) *'],
+  ['gapClose is ignored', AI, 'if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;', 'if (this.pending || e.dodgeT > 0) return;'],
+  ['a gap-close spends the last charge', AI, 'if (ready <= S.dodgeReserve + 1) return;', 'if (ready <= S.dodgeReserve) return;'],
+  ['a gap-close with no close move ready', AI, 'if (!b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE', 'if (false && !b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE'],
+  ['a gap-close ignores the dodge length', AI, 'if (d <= reach || d - G.PlayerEntity.DODGE.dist > reach) return;', 'if (d <= reach) return;'],
+  ['a gap-close in a breather', AI, "if (!info || this.stance === 'breather') return;", 'if (!info) return;'],
+  // triggers and lines
+  ['repeat is ignored', AI, 'if (tr.fired && !tr.d.repeat) continue;', 'if (tr.fired) continue;'],
+  ['once is ignored', AI, 'if (tr.fired && !tr.d.repeat) continue;', ''],
+  ['a trigger fires inside a commitment', AI, 'if (free) this.fireTriggers(e);', 'this.fireTriggers(e);'],
+  ['an HP line never re-arms', AI, 'if (frac >= d.below) tr.arm = true;', ''],
+  ['a set lasts forever', AI, 'd.for != null ? this.clock + d.for : Infinity', 'Infinity'],
+  ['a trigger slot skips your slot hold', AI, 'if (d.slot != null) this.pressSlot(e, d.slot - 1, true);', 'if (d.slot != null) e.setActive(d.slot - 1, true);'],
+  ['a line ignores the banner', AI, 'if (G.Spawner.banner()) return;', ''],
+  ['a line is never dropped', AI, 'if (this.clock - l.at > LeaderAI.LINE_WAIT + LeaderAI.EPS) {', 'if (false) {'],
+  ['no swing line cooldown', AI, 'if (this.clock - this.swingAt >= C.swingCd - LeaderAI.EPS) {', 'if (true) {'],
+  // the validator and the authoring
+  ['the 0 to 1 check is off', GY, "if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(", 'if (false) bad.push('],
+  ['a trigger may do nothing', GY, "if (t.line == null && t.slot == null && t.swap == null && t.set == null) bad.push(T + ' does nothing');", ''],
+  ["Misty's aggression is the baseline", GY, 'aggression: 0.68,', 'aggression: 0.5,'],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-ai-mut-'));
 let caught = 0,

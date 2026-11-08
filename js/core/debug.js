@@ -22,7 +22,7 @@
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym(n)     open the next gym gate now, or gym n's (walk into it to fight; losing ends the run)
  *   G.Debug.leaderSwap(slot)  in a switched gym's fight, the leader AI asks to swap to its team slot (1 is the first); your swap rules decide it (Leader AI slice 1)
- *   G.Debug.leaderAI({ swaps, dodges })  turn the leader AI's own swaps or dodges on or off (true / false); no argument prints them and its last decisions (slice 2)
+ *   G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers })  turn the leader AI's own decisions on or off (true / false); no argument prints them, its status and its last decisions (slices 2, 3)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
@@ -1283,15 +1283,16 @@ G.Debug = (() => {
       console.warn('[Debug] add ?dev to the URL to enable debug tools.');
       return false;
     }
-    const off = G.LeaderAI.off;
-    if (opts) {
-      if (opts.swaps != null) off.swaps = !opts.swaps;
-      if (opts.dodges != null) off.dodges = !opts.dodges;
-    }
+    const off = G.LeaderAI.off,
+      KEYS = ['swaps', 'dodges', 'confidence', 'pacing', 'triggers']; // slice 3 (#32) adds the last three
+    if (opts) for (const k of KEYS) if (opts[k] != null) off[k] = !opts[k];
     const ai = G.GymArena.leaderAI;
-    console.log('[LeaderAI] swaps ' + (off.swaps ? 'off' : 'on') + ', dodges ' + (off.dodges ? 'off' : 'on'));
+    console.log('[LeaderAI] ' + KEYS.map((k) => k + ' ' + (off[k] ? 'off' : 'on')).join(', '));
+    if (ai) console.log('  ' + ai.status());
     if (ai) for (const d of ai.log.slice(-12)) console.log('  ' + d.t.toFixed(2) + ' s  ' + d.act + ': ' + d.text);
-    return { swaps: !off.swaps, dodges: !off.dodges };
+    const out = {};
+    for (const k of KEYS) out[k] = !off[k];
+    return out;
   }
 
   /** Place a Move Trainer and a TM Mart now (dev only), by the normal placement rules. */

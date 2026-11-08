@@ -157,13 +157,17 @@ G.Boss = (() => {
       G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for the player
       if (e.mvRoot) return [0, 0, 'Walk']; // a live dash (Quick Attack) carries the body; the brain does not steer until it is back
       if (this.tell) return this.telling(dt, now);
-      this.modeT -= dt;
       if (!this.low && e.hp < e.maxHp * LOW_HP) {
         this.low = true;
         this.farLike = 0.8;
       }
+      // LEADER-AI slice 3 (#32): the AI player's pacing holds a stance ('close' a push, 'far' a breather) and pauses the alternation; a
+      // push with no melee move walks to the inner edge of its far band instead (tight)
+      const tight = this.hold === 'close' && !this.melee;
+      if (this.hold) this.mode = tight ? 'far' : this.hold;
+      else this.modeT -= dt;
       // It always alternates: at its favorite range it stays longer (7-9 s) than at the other (4-5 s). A mon with no melee move stays far.
-      if (this.modeT <= 0) {
+      if (!this.hold && this.modeT <= 0) {
         this.mode = this.mode === 'far' && this.melee ? 'close' : 'far';
         this.modeT = (this.mode === 'far') === this.farLike > 0.5 ? G.U.rand(7, 9) : G.U.rand(4, 5);
         this.side = -this.side;
@@ -177,8 +181,9 @@ G.Boss = (() => {
         vy = ux * spd * this.side;
       };
       if (this.mode === 'far') {
-        const out = Math.min(FAR, this.ranged() - SHOT_IN),
+        let out = Math.min(FAR, this.ranged() - SHOT_IN),
           inn = Math.min(NEAR, out - BAND);
+        if (tight) [out, inn] = [inn, inn - BAND];
         if (dist < inn) {
           vx = -ux * spd;
           vy = -uy * spd;

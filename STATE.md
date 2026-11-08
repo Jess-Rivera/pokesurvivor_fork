@@ -6,14 +6,15 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Open #32 (slice 3, ready) in a new chat: agree its goal, done check and test (branch rules "Slice shape"), then the prose plan.
-   Its scope additions (dodge lean, gap-closing dodge) are in the #32 comments and LEADER-AI.
+2. Jess feel-tests #32 (slice 3, Needs Playtest): Misty and Brock, G.Debug.hitbox() shows conf, aggr, stance and reason.
+   Two calls on #32 await his OK (line wait 4 s; trigger swaps skip minField and swapLimit). Then #33.
 
 ## Where we are
-- Leader AI (docs/LEADER-AI.md): slices 1 (#22) and 2 (#31) shipped 2026-11-08 (Jess feel-tested slice 2: approved). G.LeaderAI swaps (triggers vs STAY,
-  minField 8 s, swapLimit) and dodges (threats from G.LeaderInfo, reflex 0.15 s, seeded bag 6 per 10). Baselines G.LeaderAI.BASE;
-  a gym may author `ai` in js/data/gyms.js. Dev: G.Debug.leaderAI({ swaps, dodges }); decision lines in G.Debug.hitbox().
-  Test: docs/proposals/leader-ai-harness.js (159), leader-ai-mutate.js (27/27).
+- Leader AI (docs/LEADER-AI.md): slices 1 (#22) and 2 (#31) shipped; slice 3 (#32) built 2026-11-08, not yet feel-tested:
+  confidence, pacing (push, breather), dodge lean, gap-closing dodge, triggers and lines. Misty aggression 0.68, Brock 0.35.
+  Baselines G.LeaderAI.BASE, CONF, PACE; a gym authors `ai` (settings, triggers, lines) in js/data/gyms.js.
+  Dev: G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers }).
+  Test: docs/proposals/leader-ai-harness.js (324), leader-ai-mutate.js (68/68).
 - #38 (swap keeps moves in flight, all Player entities) is filed, not started. #37 font swap to Michroma is filed.
 - Held-item reveals: #36, blocked on an item rework. Roster UI #35 can read G.GymArena.leaderInfo.rosters().
 - Gyms 3 to 8 stay on the old brain. Two leader paths until slice 12.
