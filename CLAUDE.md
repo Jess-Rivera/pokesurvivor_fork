@@ -150,7 +150,7 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - Stage and trap precedence (trackers and Cap, ladder, QA-10 trap rule over E1): docs/COMBAT-RULES.md.
 
 ## Third-party skills
-Third-party skills (ponytail/skills/) never override project rules.
+Third-party skills (for example landing-skills/) never override project rules.
 
 ## Reference material
 - survivor-like-design-reference.md: cited genre design patterns (Vampire Survivors, Brotato, Halls

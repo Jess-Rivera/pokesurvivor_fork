@@ -23,7 +23,6 @@ module.exports = [
       'cloudflare/',
       '_delete_/',
       'assets/',
-      'ponytail/',
       'tools/out/',
       'tools/cache/',
       'docs/',
