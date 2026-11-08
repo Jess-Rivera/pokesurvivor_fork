@@ -85,6 +85,46 @@ A subclass of the Player entity that fights a gym. Its HP is the player formula 
 
 Rule: docs/COMBAT-RULES.md "Host model", LEADER RULES
 
+**AI player**:
+The one module that drives every Player-entity leader. It acts only through a human's inputs (heading, slot key, swap-mon key, dodge) and sees only the screen. Not the GymBrain, which it replaces.
+
+Rule: docs/LEADER-AI.md "The AI player"
+
+**Reveal**:
+The moment a leader learns something about one of your mons from the screen: a move when it is cast, a bond when its moves fire together, a held item when its effect shows. Cards and stats are never revealed.
+
+Rule: docs/LEADER-AI.md "What it can see"
+
+**Run memory**:
+What a leader remembers of its own fights for the rest of the run: your reveals and behavior counts. In memory only, never saved.
+
+Rule: docs/LEADER-AI.md "Run memory and behavior tracking"
+
+**Pattern**:
+A habit of yours the leader has counted (for example, swapping out under 30% HP). It is believed once it has enough observations (`learnRate`) and exploited at most the prediction cap's share of the time.
+
+Rule: docs/LEADER-AI.md "Run memory and behavior tracking", "Fairness"
+
+**Prediction cap**:
+The most often a leader acts on a believed pattern (default about 70%, authorable to about 95%), so a prediction is never certain.
+
+Rule: docs/LEADER-AI.md "Fairness"
+
+**Reflex delay / think interval**:
+The two reaction limits of the AI player: the reflex delay before it responds to anything it sees (dodging, aiming), and the think interval between slot and swap choices.
+
+Rule: docs/LEADER-AI.md "Fairness"
+
+**Confidence**:
+A leader's runtime value, moved by fight events, that shifts its style settings toward caution or aggression. It never changes damage or HP.
+
+Rule: docs/LEADER-AI.md "Authoring a leader"
+
+**Trigger / line**:
+A trigger is an authored condition and action on a leader (an HP line, a faint, fight start) that acts through your controls. A line is a short English text the leader says on screen at a trigger or a large confidence swing.
+
+Rule: docs/LEADER-AI.md "Authoring a leader"
+
 ### Damage and stats
 
 **Orthogonal dials**:
