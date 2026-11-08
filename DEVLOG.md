@@ -331,3 +331,16 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Close-out approved (B1 to B6 as recommended) and BUILT: Brock on G.GymLeader beside Misty (hpMult 16 / 12, Misty's restrictions). Gyms 3 to 8 stay on the old brain for the playtesters.
 - Tests: gym-leader-harness section 10 + new section 12 (Brock's moves on the new body); Lt. Surge is the old-body example in leader-stats, leader-team, smoke-gym; four old-brain harnesses turn Brock's switch off. Changelog line; a cut Misty line fixed.
 - Stopped at: Jess runs the checks and the Brock feel test, then commit, merge, new branch.
+
+## 2026-11-08 (Claude Code, home)
+- Workflow overhaul: guard hook (.claude/hooks/guard-git.js, allowlist) and CLAUDE.md "Git and GitHub" let the assistant commit and manage issues, board and PRs; TODO.md became a handoff, the old notes are frozen in docs/TODO-notes-2026-11.md.
+- Skills from Pocock's set, adapted: grilling, triage, diagnosing-bugs installed; tdd became docs/TEST-FIRST.md; domain-modeling became GLOSSARY.md (Spanish tables moved to docs/SPANISH-CODE-REFERENCE.md); codebase-design became glossary terms and TEST-FIRST rules. Skipped: code-review, git-guardrails.
+- Issues filed: #22 to #28 (#26 stale TODO.md references, high priority; #27 DECISIONS split; #28 architecture skill, blocked on #27). Labels added: priority:high, needs-info, wontfix.
+- No game code touched; check.js not run. Commits f1730d03, f2b27f79, 91799748 on chore/skill-choice-update.
+- Stopped at: Jess merges the branch, starts chore/docs-cleanup in a new session.
+
+## 2026-11-08 (Claude Code, home), docs cleanup
+- #26: stale TODO.md references repointed to docs/TODO-notes-2026-11.md, issues #9 and #17, or plan docs; two slice overviews now cite CLAUDE.md "Git and GitHub"; MOVE-INTENT priority:1 retagged [Approved] (ignored as a mechanic). Commit b0122f5a.
+- #27: DECISIONS.md split into 135 files in docs/decisions/ (lossless, bytes verified) with an index. Decided: decisions are cited by file name alone, Q/QA numbers are history; CLAUDE.md rule and CONTEXT.md pointers updated. Commit 5fcfe971. Filed #29 (promote review CP1 rulings).
+- Not green: gym-harness and leader-stats-harness each fail one Misty check, lint shows 7 errors in guard-git.js. No js/ change on this branch, so none caused here; not investigated. /triage did not show in the session skill list.
+- Stopped at: Jess pushes and merges chore/docs-cleanup into main, then pulls main into feature/gym-leader-ai.

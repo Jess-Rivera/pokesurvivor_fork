@@ -16,7 +16,7 @@ Read with: docs/current feature planning/move-consistency-review.md (Checkpoint 
 | move-consistency-review:CP1-Q8 / range | One `range` value, tunable. Global default 420 px, kept as a named constant beside the cooldown tuning (G.MoveResolver.TUNING), with an optional per-move `delivery.range` override. Covers: `nearest` acquisition, `location` reach, `returns` turnaround distance, maximum reposition distance |
 | D-1 | Re-authored novas start at 1 px (MOVE-AXIS-SCHEMA "Grammar decisions", Jess 2026-10-26; built in slice 3a), `grow.max` = today's radius, growSpeed unchanged. The original "near the caster's body radius" wording is superseded |
 | Instance cap | Placed objects that have neither a time lifetime nor HP are capped at 8 live per move slot (named constant, default 8); placing a 9th removes that slot's oldest. Timed objects are bounded by their lifetime. Spikes keeps no timeout |
-| D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (DECISIONS:Q14). Superseded 2026-10-30: maxStacks is retired (COMBAT-RULES "Stat stages"; DECISIONS 2026-10-30) |
+| D-2 | maxStacks values for Leaf Storm and Metal Claw. Settled: default 1 for every move (2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and). Superseded 2026-10-30: maxStacks is retired (COMBAT-RULES "Stat stages"; DECISIONS 2026-10-30) |
 | D-3 | Meteor Mash: the projectile hits enemy 1; at enemy 1's position at impact, a 3-projectile fan is emitted that ignores enemy 1 |
 | D-4 | Approved: per-move routing behind `?newcombat` until slice 7. Done: slice 7b removed the flag and the list (2026-11-01); every move with a resolved def that is not retired runs in G.MoveSim |
 
@@ -109,7 +109,7 @@ Accept when: Jess has a ranked table and has decided whether any normalization i
 
 ### 2.1 Can the axes express the 63 moves?
 
-Yes, after the slice 3a grammar additions (persistent, range, instance-level delay, stat duration and maxStacks defaults, start-size grow, the instance cap constant) and two definitions since settled (spread, move-consistency-review:F1, and location pick, move-consistency-review:F3: MOVE-AXIS-SCHEMA `spread` and `locationPick` rows). Behavior that remains intentionally unexpressed: Toxic's escalating poison and continuous ribbon (accepted stand-ins), source priority (no real-time analogue), Fire Spin's legacy stat strip and half-strength burn (dropped, confirmed: DECISIONS:QA-10 and DECISIONS:Q17, burn at full standard length plus trap, no strip).
+Yes, after the slice 3a grammar additions (persistent, range, instance-level delay, stat duration and maxStacks defaults, start-size grow, the instance cap constant) and two definitions since settled (spread, move-consistency-review:F1, and location pick, move-consistency-review:F3: MOVE-AXIS-SCHEMA `spread` and `locationPick` rows). Behavior that remains intentionally unexpressed: Toxic's escalating poison and continuous ribbon (accepted stand-ins), source priority (no real-time analogue), Fire Spin's legacy stat strip and half-strength burn (dropped, confirmed: 2026-10-28-fire-spin-applies-burn-and-trap-and-does-not-strip-stat and 2026-10-28-fire-spin-burn-at-the-full-standard-length-trap-no-strip, burn at full standard length plus trap, no strip).
 
 ### 2.2 New findings from this pass (not in Checkpoint 1)
 

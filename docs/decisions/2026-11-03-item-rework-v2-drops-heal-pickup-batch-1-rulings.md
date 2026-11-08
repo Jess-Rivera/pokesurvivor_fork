@@ -1,0 +1,6 @@
+## 2026-11-03, Item rework v2: drops, heal pickup, batch 1 rulings (Jess)
+Drops: every chance lives in G.Drops. The heal pickup is retired everywhere; Oran takes its place at the same rates (grass, rocks, small chests), and wild kills drop Oran 0.55% or Sitrus 0.40%. A gym leader drops one item, not two, plus its 10 coins.
+Batch 1 is 12 ground and 19 Pokemon items. No species-locked items: Thick Club, Light Ball, Lucky Punch, Leek and the two Powders are generic. Eviolite stays, working while the holder can still evolve. Choice Band physical only, Choice Specs special only, both keep the lock; Muscle Band and Wise Glasses become physical and special only. Gems and run items come later.
+Rulings: raise items (Weakness Policy and the like) trigger on the holder's hit and raise the TEAM, keeping COMBAT-RULES SCOPE. Covert Cloak becomes Protective Pads and does not block trap. Leek also gives +10% crit. Jaboca and Rowap deal 12.5% of max HP, capped at 60 + 14 x level on bosses, elites and gyms. King's Rock rolls once per target per 0.5 s. Eject Button ignores trap and the swap lock, then starts the lock. Shed Shell also halves the holder's swap lock.
+Canonical: docs/ITEMS.md (generated) and js/data/drops.js for drops; docs/proposals/item-rework-v2-handoff.md for batch 1 until it is built
+

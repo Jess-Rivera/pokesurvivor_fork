@@ -24,7 +24,7 @@ This does not change the local-first scope.
 Start ("catch me up") and end steps: see CONTEXT.md "Session start" and "Session end".
 
 ## Keep docs lean
-DECISIONS ~10 lines/entry, DEVLOG ~6 lines/entry, STATE.md under 3 KB. Rotate to archives past ~40 KB.
+DECISIONS ~10 lines/entry (one file each in docs/decisions/), DEVLOG ~6 lines/entry, STATE.md under 3 KB. Rotate to archives past ~40 KB.
 
 ## Efficient repository exploration
 
@@ -106,7 +106,7 @@ issue numbers. It never duplicates an issue's content.
 - When work is agreed, it becomes an issue (clear title, type + area + status labels, a concrete done-condition),
   not a TODO line. Draft a batch of more than about five new issues for Jess to approve first.
 - When a slice lands, comment on its issue with what shipped, and move the card to Needs Playtest (never straight
-  to Shipped; Jess ships). A ruling goes in DECISIONS.md, the task it implies goes in an issue, with a link.
+  to Shipped; Jess ships). A ruling goes in a new docs/decisions/ file plus an index line in DECISIONS.md, the task it implies goes in an issue, with a link.
 - At session end, rewrite the TODO.md handoff from what actually happened, and STATE.md as before.
 Full detail, label taxonomy, board columns, PM behaviors and the playtester/template rules:
 **docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
@@ -123,7 +123,7 @@ No em-dashes, anywhere. Use commas, parentheses, "since"/"because" instead.
 Spec rules carry one of four tags. `[Approved]` is owner-approved intended behavior (items marked LOCKED, RESOLVED, DECIDED, DEFAULT ACCEPTED, APPROVED or signed off, never DRAFT, PROPOSED, OPEN or TBD); approved but not yet built is still `[Approved]` with a short "code differs, see TODO" note. `[Legacy behavior]` is what the live game does today where it differs from an approved rule, and always names the slice that removes it. `[Proposed]` is written but not approved. `[Open]` is a recorded question with no answer. When tags or dates conflict, the later dated owner decision wins.
 
 ## Cross-document IDs
-An ID cited outside the file that defines it carries that file's name: `<file name without .md>:<ID>`, for example `combat-architecture:D16`, `DECISIONS:Q14`, `move-consistency-review:CP1-Q17`. The prefix names the file that DEFINES the ID, never the file that cites it, so one ID reads the same everywhere. A bare ID is fine only inside its own file. Keep any qualifier the defining file needs (CP1 in the review). Use the full file name, no aliases. Applies to new and edited text; older references are swept separately (TODO.md Backlog).
+An ID cited outside the file that defines it carries that file's name: `<file name without .md>:<ID>`, for example `combat-architecture:D16`, `2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and`, `move-consistency-review:CP1-Q17`. The prefix names the file that DEFINES the ID, never the file that cites it, so one ID reads the same everywhere. A bare ID is fine only inside its own file. Keep any qualifier the defining file needs (CP1 in the review). Use the full file name, no aliases. Decisions are the exception: each is one file in docs/decisions/ and is cited by that file name alone (no ID suffix, never renamed); the Q and QA numbers inside the 2026-10-28 entries are history, not identifiers. Applies to new and edited text; older references are swept separately (docs/TODO-notes-2026-11.md, "Cross-document ID sweep").
 
 ## Where current rules live
 - Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board; TODO.md is the next-session handoff that points at its issue numbers.
@@ -134,10 +134,10 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - Per-move intended behavior: docs/MOVE-INTENT.md. Validation scenarios: docs/current feature planning/combat-validation-and-handoff.md.
 - Run progression (level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops): BOSS-REWORK.md. Gym rosters: docs/GYM-ROSTERS.md. Boss authoring template: docs/BOSS-AUTHORING.md.
 - Game concept and summaries (umbrella): GDD.md. Module map, load order, build: ONBOARDING.md. Game language: GLOSSARY.md (fuzzy or conflicting terms get flagged and the entry updated, see its last section). Spanish code names: docs/SPANISH-CODE-REFERENCE.md. Sim and present boundary: docs/SIM-PRESENT-BOUNDARY.md. Tuned values: BALANCE.md.
-- Dated decision history: DECISIONS.md (a log; each entry's `Canonical:` line names the spec that holds the rule), then docs/DECISIONS-archive.md.
+- Dated decision history: DECISIONS.md (the index) and one file per decision in docs/decisions/ (a log; each entry's `Canonical:` line names the spec that holds the rule), then docs/DECISIONS-archive.md.
 
 ## Which document wins
-- DECISIONS.md is a log, not a settled register. The spec named in an entry's `Canonical:` line wins.
+- DECISIONS.md and docs/decisions/ are a log, not a settled register. The spec named in an entry's `Canonical:` line wins.
 - MOVE-AXIS-SCHEMA owns move grammar, combat-architecture owns move runtime, MOVE-INTENT owns per-move rulings. Review section 9 (move-consistency-review.md) is history, not a single source.
 - A MOVE-INTENT ruling beats COMBAT-RULES and the grammar defaults for the named move.
 - COMBAT-RULES beats BOSS-REWORK 3c, the archive, the stat-model notes, BUFF-TABLE, BALANCE and architecture D6 to D11 for combat rules.

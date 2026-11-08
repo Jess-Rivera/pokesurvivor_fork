@@ -5,7 +5,7 @@ Started from pokeapi data only (stat, stages, chance, target, damage class). No 
 Replaces the D-MC5 question (slice-overview:D-MC5) if approved: there is no maxStacks formula left to decide.
 
 ## Why
-The live rules tie stat stacking to maxStacks, duration and cooldown together (COMBAT-RULES "Stat stages and maxStacks", DECISIONS:Q13, DECISIONS:Q14, DECISIONS:Q15 / QA-11, D-FOECAP, D-LEAF, MOVE-INTENT dragon-dance). They conflict on Metal Claw and Meteor Mash (D-MC5) and need a per-move exception list. The move schema covers what a stat change IS (stat, stages, side, scope, chance) but not how it behaves over time, which is what this note defines. Importing the rest of the mainline moves needs one rule with no per-move authoring.
+The live rules tie stat stacking to maxStacks, duration and cooldown together (COMBAT-RULES "Stat stages and maxStacks", 2026-10-28-a-self-buffs-duration-is-never-shorter-than-its-cooldown, 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and, 2026-10-28-for-a-self-buff-maxstacks-min-floor-duration-cooldown-6-new / 2026-10-28-a-self-buffs-maxstacks-is-min-floor-duration-cooldown-6, D-FOECAP, D-LEAF, MOVE-INTENT dragon-dance). They conflict on Metal Claw and Meteor Mash (D-MC5) and need a per-move exception list. The move schema covers what a stat change IS (stat, stages, side, scope, chance) but not how it behaves over time, which is what this note defines. Importing the rest of the mainline moves needs one rule with no per-move authoring.
 
 ## The shapes (pokeapi move_meta + move_meta_stat_changes, counts are mainline moves)
 | Shape | Count | In the pool today |
@@ -51,7 +51,7 @@ Mainline's real cost for Leaf Storm is the switch; here the bench already exists
 
 ## What it retires (if approved)
 - The `maxStacks` field (self and foe) and live-copy counting per move.
-- DECISIONS:Q13 (duration never shorter than cooldown), DECISIONS:Q15 / QA-11 formula, DECISIONS:Q14's "maxStacks 1 default" part, D-FOECAP (combat-architecture:H24).
+- 2026-10-28-a-self-buffs-duration-is-never-shorter-than-its-cooldown (duration never shorter than cooldown), 2026-10-28-for-a-self-buff-maxstacks-min-floor-duration-cooldown-6-new / 2026-10-28-a-self-buffs-maxstacks-is-min-floor-duration-cooldown-6 formula, 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and's "maxStacks 1 default" part, D-FOECAP (combat-architecture:H24).
 - MOVE-INTENT dragon-dance exceptions, MOVE-INTENT leaf-storm D-LEAF (replaced by R4, R5 and R12), MOVE-INTENT bug-buzz and ice-beam held-at -1, String Shot's two -2 hits ruling.
 - D-MC5.
 - The legacy ROLL_GAP and procSelf model stay on the legacy path until slice 7b removes it.

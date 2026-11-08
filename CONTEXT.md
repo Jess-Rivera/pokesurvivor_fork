@@ -24,12 +24,12 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
    - Compare with main: `git log --oneline main..<branch>` (what the branch adds) and `git log --oneline <branch>..origin/main` (what main gained, so the branch may need a merge of main).
    - Sanity check after the pull: `node tools/check.js` must end with all harnesses passed, then open dev.html?dev.
    - Before leaving a machine: commit and push, so the other side starts from the same tree.
-Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (they are large). Search them by keyword when a topic comes up.
+Do NOT read DEVLOG.md or BALANCE.md whole (they are large). Search them by keyword when a topic comes up. DECISIONS.md is now a short index; open one file in docs/decisions/ for the ruling.
 Archives (search only): docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md.
 
 ## Session end (do this before stopping or switching machines)
 1. Rewrite STATE.md (keep it under 3 KB; replace, do not append) and the TODO.md handoff (what is next, as issue numbers; file an issue for anything agreed that has none).
-2. Append a short DEVLOG.md entry at the end (about 6 lines: what changed, what was decided, what broke, where we stopped).
+2. Append a short DEVLOG.md entry at the end (about 6 lines: what changed, what was decided, what broke, where we stopped). A new ruling is a new docs/decisions/ file plus an index line in DECISIONS.md.
 3. Commit (the assistant may, see CLAUDE.md "Git and GitHub") and remind Jess to push, so the other tool pulls a current tree.
 Both tools follow this symmetric discipline. If STATE.md looks stale after a git pull, suspect the other tool skipped it.
 

@@ -6,7 +6,7 @@ Every move the Kanto lore movesets call for that the move catalog does not have 
 
 - Counted: every loop set (L1 to L6) on every boss mon, including borrowed (+), subset (^) and composite sets. Holds (=) repeat an earlier set and add nothing.
 - Not counted: the "alts" lines (alternative sets that were not picked) and Brock (his map is `Brock Movesets by Loop.txt`).
-- The map is a planning draft with a stale slot order (TODO.md: redo it to the Gen-1 order). Reordering moves sets between loops but does not change which moves appear, so this list holds unless sets themselves change.
+- The map is a planning draft with a stale slot order (docs/TODO-notes-2026-11.md, "Gym roster reorder follow-ups": redo it to the Gen-1 order). Reordering moves sets between loops but does not change which moves appear, so this list holds unless sets themselves change.
 - "Sets" is how many loop sets name the move, a rough import priority.
 - Hi Jump Kick (Yellow and Crystal spelling) and High Jump Kick (Let's Go) are one move, `high-jump-kick`.
 

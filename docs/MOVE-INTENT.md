@@ -91,7 +91,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Needs a COMBAT-RULES change: evasion and accuracy stages join the tracker model (see "Stat stages").
 
 ### dragon-dance
-- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to DECISIONS:Q13 (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
+- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to 2026-10-28-a-self-buffs-duration-is-never-shorter-than-its-cooldown (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
 - Ledger: B4-I05
 
 ### dragon-rage
@@ -283,7 +283,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - [Approved] A new Quick Attack (or any reposition) waits while the owner's dash is still live, so two dashes never fight over the position; a swept dash at speed 0 waits too. The cooldown counts from when the dash can start. (Jess approved the 4c-2 build, 2026-10-29)
 - [Approved] A rooted movement commitment from a move in the same active group holds Quick Attack at the cast gate: it waits and casts as the root ends, so rooted means you cannot move. The cooldown counts from when it can start. No current move roots its caster (Flamethrower's commitment is slowed, which does not hold a dash; its Speed -2 just makes the dash slower), so this guards future moves. (Jess, 2026-10-29) Built (4c-2 review).
 - [Approved] The dash carries a 3 s time cap as a safety net (endOn time 3 beside returned); a normal dash takes about 0.5 s. If the cap fires mid-dash, the owner stays where it is and the root lifts; no snap back. Every swept dash needs a time cap (validator rule swept-needs-time). (Jess, 2026-10-29) Built (4c-2 review).
-- [Open] `priority: 1` ("always first" in a bonded group) is not built: the move sim does not order casts by priority. TODO.md Backlog.
+- [Approved] `priority: 1` ("always first" in a bonded group) is not built, by ruling: priority is ignored as a mechanic (Jess, 2026-11-01; docs/TODO-notes-2026-11.md, "Move priority in a bonded group").
 - [Approved] Priority is ignored as a mechanic (no cast ordering, no instant cast); a bonded group casts in slot order. Closes the Quick Attack priority question and the bonded-group priority item. (Jess, 2026-11-01, Kanto import rulings set 4)
 - [Approved] A gym leader casts it too (the dash form): 0.6 s tell (TUNE) with a warning line to the spot locked at its start, the dash, one hit there, back to its start; the leader keeps the i-frames (the whole dash plus 0.3 s) and deals no body-contact damage while dashing. (Jess, 2026-11-02) Checks: boss-owner-harness.js 16.
 - Ledger: B4-I17

@@ -39,7 +39,7 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 - Measured for the 177 live moves and the 966 species in the dex, all games: level-up and egg median 9 per species, TM median 19. Every move has a learner. Volt Tackle is the one given by hand (the Pikachu line, tools/export_learnsets.js HAND). Draco Meteor is the one TM-only move. 15 species have no TMs (Caterpie, Ditto, Unown...).
 - [Approved] 48 species have under 4 level-up and egg moves (Magikarp 1, Ditto 0). They top up to 4 from their types, then Normal, attacks first, so a Trainer always has stock. Built, step 1.
 - [Approved] G.Moves.HELD is gone. Learn levels are ignored. Starting moves are unchanged. Built, step 1.
-- [Approved] TMs on the Pokedex and Team screens: later, not in step 4 (Jess 2026-11-05, G2; TODO.md). Until then Draco Meteor, the one TM-only move, is found only in a TM Mart.
+- [Approved] TMs on the Pokedex and Team screens: later, not in step 4 (Jess 2026-11-05, G2; docs/TODO-notes-2026-11.md). Until then Draco Meteor, the one TM-only move, is found only in a TM Mart.
 
 ## Silver
 - [Approved] An in-run currency, Silver, shown in the upper left corner with a counter, using oblong_silver from assets/items/coins/spin_silver.png (row at y 408, 8 frames of 32 px, data in spin_silver.json).
@@ -62,4 +62,4 @@ Playtesters asked for it, Jeremy's notes say there are not enough new move upgra
 5. BUILT 2026-11-05 (Quick), feel test pending. New Move cards removed (levelup.js, the run-ui chip); smoke-ui checks a Move Trainer offer for every move; ui-readers and team-cards harnesses check no New Move card is offered. Build order complete.
 
 ## Deferred
-Co-op shops (local-first): note in TODO.md when step 4 lands. Replacing the 4-move stock count, shop sounds and final art scale are TUNE during the feel tests.
+Co-op shops (local-first): open a `deferred` issue when step 4 lands. Replacing the 4-move stock count, shop sounds and final art scale are TUNE during the feel tests.

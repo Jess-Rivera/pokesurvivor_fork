@@ -78,7 +78,7 @@ mons, in what order) is a design decision per leader.
   Kingdra (Seadra, Lance in Let's Go), Mismagius (Misdreavus, Agatha). ALOLAN FORMS are
   IN (Jess 2026-10-22: they exist in the games, so rosters name them). pokedex.js has no
   regional forms today, so building them needs dex, sprite and data support (code plan,
-  tracked in TODO.md); until then the regular form is the stand-in. First cases: Alolan
+  tracked in issue #9); until then the regular form is the stand-in. First cases: Alolan
   Sandslash (Lorelei), Alolan Marowak (Agatha). Alolan Ninetales still fails the canon
   test (not on Lorelei's team).
 - PINNED-STAGE SLOT (LOCKED 2026-10-22, Jess): a slot may be pinned to a stage so one

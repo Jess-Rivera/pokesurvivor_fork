@@ -1,0 +1,4 @@
+## 2026-11-01, Kanto gyms 2 to 8 authored; badge boosts for every Kanto badge (Jess)
+Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine and Giovanni join Brock in js/data/gyms.js with their locked rosters (Gen-1 order) and PROVISIONAL move sets from catalog moves that have a gym form; power and tempo 1, no cards yet. Badge boosts, each +10% to one stat for the run: Boulder Atk, Cascade SpD, Thunder Spe, Rainbow HP, Soul Def, Marsh SpA, Volcano SpA, Earth Atk (repeats stack). Brock slots reordered (Onix line to slot 2). Surge has no castable Electric move (Thunder Shock chains), so his mons use Normal and Steel stand-ins until boss casts and riders are widened (next, Jess). Authoring rule found: one melee cone per slot, since the brain only lands its longest-reach melee.
+Canonical: js/data/gyms.js (data), BOSS-REWORK.md section 3g (badge boosts), docs/BOSS-AUTHORING.md (authoring rule)
+

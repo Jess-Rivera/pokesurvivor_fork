@@ -1,0 +1,4 @@
+## 2026-11-07, Leader principle: another player's team, controlled by AI (Jess)
+The governing rule for every Player-entity leader: it is treated as just another player's team, controlled by AI. Anything a player can have (any upgrade card, team cards included, held and run items, IVs, EVs, nature), a leader can have. Every difference from a player is hand authored per gym, never a hidden built-in rule. Slice 6 answers: D1 the player attack formula at her level, and the enrage bonus is to go; D2 any card a player can get; D3 IV, EV and nature keys yes; D4 items are part of slice 6; D5 the fight-time report is scrapped; D6 Misty's hpMult 25 for now. Supersedes the "no team cards" lines in COMBAT-RULES:SS10 and BOSS-REWORK section 3. Open follow-ups: slice 6 map, "QUESTIONS".
+Canonical: docs/COMBAT-RULES.md, "Host model", LEADER PRINCIPLE
+

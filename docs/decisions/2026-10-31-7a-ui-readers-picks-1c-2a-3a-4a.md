@@ -1,0 +1,4 @@
+## 2026-10-31, 7a UI readers: picks 1c, 2a, 3a, 4a (Jess)
+Menus, level-up cards, icons, the HUD, the sheet and player.js read the resolved def (G.MoveDefs, through G.MoveInfo for display), never the legacy `kind`. 1c: a move's card text is generated from its def (shape plus effects), not copied from moves.js. 2a: the icon badge comes from the def's shape, motion and anchor (14 badges change, listed in slice-7a.md Results). 3a: player.js gameplay readers migrate: the melee damage-taken cut reads balanceClass, ranged targeting reads a travelling shot or a beam, Life Orb skips persistent defs; the buff test is self-only on both flags. 4a: the sheet's routed rows read the folded def; flag-off rows stay until 7b. The 7a guard (tools/kind-guard.js) fails on any legacy read outside 7b's files; known leftovers are tagged legacy-7b.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Results"
+
