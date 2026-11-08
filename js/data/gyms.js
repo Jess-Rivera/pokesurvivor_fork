@@ -41,6 +41,28 @@ G.Gyms = (() => {
     'hpMult',
     'restrictions',
     'runItems',
+    'ai',
+  ];
+  // LEADER-AI "Authoring a leader" (slice 2, #31): `ai` is the AI player's settings on a switched gym, each a number from 0 or keyed by
+  // loop; a setting not authored takes the baseline in code (G.LeaderAI.BASE). The keys built so far:
+  const AI_KEYS = [
+    'think',
+    'reflex',
+    'threatWindow',
+    'dodgeRead',
+    'dodgeReserve',
+    'minField',
+    'swapLimit',
+    'stay',
+    'margin',
+    'ccLeft',
+    'ccScore',
+    'lowHp',
+    'lowTo',
+    'lowScore',
+    'matchupX',
+    'matchupHp',
+    'randomness',
   ];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
@@ -909,6 +931,18 @@ G.Gyms = (() => {
           bad.push((g.leader || '?') + ': ' + k + ' is seconds from 0 to 10');
     }
     const loopKey = (k) => Number.isInteger(Number(k)) && Number(k) >= 1 && Number(k) <= LOOPS;
+    if (g.ai != null) {
+      const L = g.leader || '?',
+        num = (v) => typeof v === 'number' && v >= 0;
+      if (!g.playerEntity) bad.push(L + ': ai needs playerEntity (the wild body has no AI player)');
+      for (const k of unknownKeys(g.ai, AI_KEYS)) bad.push(L + ': unknown ai setting ' + k);
+      for (const k of AI_KEYS) {
+        const v = g.ai[k];
+        if (v == null || num(v)) continue;
+        if (typeof v !== 'object' || Array.isArray(v) || !Object.keys(v).every((n) => loopKey(n) && num(v[n])))
+          bad.push(L + ': ai ' + k + ' is a number from 0, or keyed by loop');
+      }
+    }
     const itemBan = (id, tier, L) => {
       const it = G.Items && G.Items.BY ? G.Items.BY[id] : null;
       if (!it) return L + ': unknown item ' + id;

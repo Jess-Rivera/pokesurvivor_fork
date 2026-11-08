@@ -4,7 +4,7 @@
 - **Owns:** the AI player, the information model (rosters, reveals), run memory and behavior tracking, the decision loop, the fairness limits, the settings list, confidence, pacing, triggers and lines, the checks.
 - **Does not own:** what a leader IS (stats, HP, cards, items, restrictions, team, faint and voluntary swap consequences): docs/COMBAT-RULES.md "Host model". Gym progression and rosters: BOSS-REWORK.md, docs/GYM-ROSTERS.md.
 - **Source:** grilling session, Jess 2026-11-08 (decision `2026-11-08-leader-ai-an-ai-player-through-your-controls`), then compared with the 2026-11-07 proposal (docs/proposals/gym-leader-ai-design.md and the slice 9 v2 map, now history); the parts adopted from them are in this file.
-- **Code:** slice 1 built 2026-11-08 (#22): G.LeaderAI (js/entities/leader-ai.js), G.LeaderInfo (js/systems/leader-info.js); the leader's swap step in js/systems/gym-arena.js. The GymBrain (js/entities/boss-ai.js) still decides movement, slots and casts underneath until slice 5. Test: docs/proposals/leader-ai-harness.js. See "Build order".
+- **Code:** slice 1 built 2026-11-08 (#22): G.LeaderAI (js/entities/leader-ai.js), G.LeaderInfo (js/systems/leader-info.js); the leader's swap step in js/systems/gym-arena.js. Slice 2 built 2026-11-08 (#31): the swap and dodge decisions in G.LeaderAI (settings G.LeaderAI.BASE, authored per gym as `ai` in js/data/gyms.js), the threats view in G.LeaderInfo, the bench faint pay in gym-arena.js. The GymBrain (js/entities/boss-ai.js) still decides movement, slots and casts underneath until slice 5. Test: docs/proposals/leader-ai-harness.js (mutation check: leader-ai-mutate.js). Dev: G.Debug.leaderAI({ swaps, dodges }), and the decision lines in the G.Debug.hitbox() overlay. See "Build order".
 
 ## The AI player
 
@@ -41,10 +41,16 @@
 ## The decision loop
 
 - [Approved] TICK. The AI decides on a tick (the `think` interval, baseline 0.25 s, TUNE), never inside a tell or a move commitment. The reflex delay applies on top to anything it reacts to.
+- [Proposed] TELL READING (slice 2 build, 2026-11-08, for Jess to confirm in the feel test). "Inside a tell" means its wind-up, until the move fires; the 0.35 s recovery after it is not the tell. A think tick that lands inside a tell or a commitment is not skipped: its choice waits for the first frame out of it. Why: at close range GymBrain is in a tell or its recovery about 86% of the time, so with the recovery counted and ticks skipped Misty never swapped and most dodges expired.
 - [Approved] HARD GATES FIRST, never scored: your rules (Team.canSwap, tryDodge) and the AI's own gates (the stall guards below, no tell, no commitment). [Open] The full list of AI gates is defined in the slice that first needs each one.
 - [Approved] SCORED CHOICES. Each open action (STAY, a slot, a swap to bench mon i, a dodge, a pacing change) gets a score from considerations times the leader's settings. STAY has a baseline, and an action must beat it by a margin, so nothing fires without a reason and choices do not flicker.
 - [Approved] DETERMINISTIC RATES. Rates and the prediction cap are fixed counters ("acts 7 times in 10"), not dice. `randomness` draws from a random source seeded per fight; a harness fixes the seed, so every outcome stays hand-derivable.
 - [Approved] THREAT, for dodging: one of your live shapes whose path crosses its body soon.
+- [Approved] DODGE DIRECTION (Jess, 2026-11-08). Sideways to the threat's path, to the side with more open floor. Later, aggression and confidence lean it: the more aggressive or confident, the more it angles toward you to close distance; the less, the more it angles away (code differs: slice 3, #32).
+- [Approved] GAP-CLOSING DODGE (Jess, 2026-11-08). With enough aggression a leader may also dodge with no threat at all, purely to close distance so a short-range move of its own comes into reach. It spends a charge like any dodge, so `dodgeReserve` keeps charges back for threats (code differs: slice 3, #32).
+- [Approved] DODGE READ BAG (Jess, 2026-11-08; replaces the same day's roll with a missed-dodge bonus). `dodgeRead` is a shuffle bag: each block of 10 threats holds exactly that many reads (baseline 6), in an order shuffled from its own per-fight seeded source (separate from `randomness`'s). No streak cap: a run across a block join may be longer (Jess, 2026-11-08). Exact over every block, never certain, hand-derivable with the seed fixed. One threat is one of your casts with shapes in flight (a fan counts once). Built in slice 2 (#31).
+- [Approved] THREAT TIMING (Jess, 2026-11-08). Threats are noticed on any frame, not only on the think tick; a read threat is answered exactly `reflex` later. A threat is a shape whose path reaches its body within 0.6 s (TUNE). Swaps and every other choice wait for the tick.
+- [Approved] Dodges run in every switched fight, loop 1 single-mon fights included (Jess, 2026-11-08).
 
 ## Fairness: smart, not oppressive
 
@@ -66,7 +72,7 @@
   - `randomness` (0 to 1): how often it tries an option that is not its best, so it does not play like a machine.
   - Confidence: `confStart`, `confSwing`, `confMin`, `confMax`.
 - [Approved] SWAP AND SLOT CHOICES weigh the matchup and your revealed moves, scaled by `memoryUse`. Voluntary swaps follow your swap rules, for hard CC, low HP, matchup, a trap or a buff setup, as often as `swapWill` and confidence allow. The slice 9 v2 swap triggers are considerations, with their numbers as the baseline thresholds (TUNE): asleep or frozen with 1.5 s or more left (to the healthiest bench mon); under 25% HP with no self heal left, once per mon (to the best matchup at 50% HP or more); a bench matchup 2x the active's or better (that mon, at 40% HP or more).
-- [Approved] MATCHUP, per mon m: offense = its best open damaging move's type x your active mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score = offense / defense. Your attack is your active mon's most threatening revealed move; before any has shown, the AI guesses an attack of your mon's own type (Pikachu: Electric), replaced as soon as a real move shows. Worked: you Bulbasaur with Vine Whip, Staryu 1 / 2 = 0.5, Seel 2 / 2 = 1.0, so Seel comes in after `minField`; you Charmander with Ember, Staryu and Seel both 3 / 0.5 = 6, so no swap.
+- [Approved] MATCHUP, per mon m: offense = its best open damaging move's type x your active mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score = offense / defense. Your attack is your active mon's most threatening revealed move; before any has shown, the AI guesses an attack of your mon's own type (Pikachu: Electric), replaced as soon as a real move shows. Ties (Jess, 2026-11-08): "most threatening" is the highest type multiplier against m, then the higher power; for a two-type mon with no reveal, the guess is the type that hits m harder. Worked: you Bulbasaur with Vine Whip, Staryu 1 / 2 = 0.5, Seel 2 / 2 = 1.0, so Seel comes in after `minField`; you Charmander with Ember, Staryu and Seel both 3 / 0.5 = 6, so no swap.
 - [Approved] CONFIDENCE is a runtime value, moved by fight events and the rolling windows: up on hits landed and an HP or kill lead, down on hits taken and its own faints. Low confidence shifts the style settings toward caution and swapping; high toward aggression. Authored: start, swing, floor and ceiling.
 - [Approved] PACING, driven by `aggression`: after sustained pressure on you the leader takes a short breather (far stance, no new tell), and after a long spell without landing a hit it pushes (close stance). Higher aggression means shorter, rarer breathers and earlier pushes. A breather has a maximum share of fight time (TUNE). It is a visible stance change, never a hidden number.
 - [Approved] TRIGGERS, a few per leader, each once unless marked repeating.
@@ -85,7 +91,7 @@
 
 [Approved] One slice each, feel-tested before the next:
 1. (Built 2026-11-08, #22; held-item reveals split to #36.) The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
-2. Swap and dodge decisions (the decision loop, the matchup, the stall guards).
+2. (Built 2026-11-08, #31.) Swap and dodge decisions (the decision loop, the matchup, the stall guards, the dodge bag).
 3. Confidence, pacing and triggers (with lines).
 4. Run memory, behavior tracking and exploiting patterns.
 5. Authoring each leader's personality; GymBrain's remaining pieces replaced by the AI player's own.

@@ -359,3 +359,11 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Test: docs/proposals/leader-ai-harness.js (55 checks; parity against a trace recorded before the build). Harness and mutate retargets in 9 files. Smokes gym and team green; check red only on the two #30 harnesses.
 - Jess feel-tested a loop 2 Misty fight: all good (the reveal overlay needs G.Debug.hitbox(), not ?dev alone). #22 closed and shipped, #31 now ready.
 - Stopped at: open #31 (slice 2) in a new chat.
+
+## 2026-11-08 (Claude Code, home), leader AI slice 2 (#31)
+- Korataki is personal-use only: Michroma replaces it (decision file, #37). New #38: a swap keeps moves already in flight, for every Player entity (rule change; today a swap deletes them).
+- Rulings (docs/LEADER-AI.md): dodge sideways to the open floor (later leaned by aggression and confidence, plus a gap-closing dodge, both in #32); dodgeRead is a seeded shuffle bag, 6 per 10, no streak cap; threats noticed on any frame, answered exactly reflex later, 0.6 s window; matchup tie-breaks; dodges in loop 1 too.
+- Built: swap triggers vs STAY, stall guards, matchup, dodges, the bag, the decision log (G.LeaderAI), threats (G.LeaderInfo), bench faint paid silently (EnemyMgr.payKill split out), `ai` settings per gym, G.Debug.leaderAI.
+- Found while building: at close range GymBrain is in a tell or its recovery 86% of the time, so Misty never swapped. Built as [Proposed] TELL READING (wind-up only; a held tick waits for the first free frame), for Jess to confirm.
+- Test: leader-ai-harness 159 checks, leader-ai-mutate 27/27; five old leader harnesses run with the AI's decisions off; silver and EV text checks follow payKill. check red only on the two #30 harnesses (same failures as before); smokes gym and team green.
+- Stopped at: #31 in Needs Playtest, feel test owed (loop 2 via dev).

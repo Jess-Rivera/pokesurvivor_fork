@@ -72,7 +72,8 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
 // 6. the kill loop pays every dead enemy once, never a remote enemy or a thief that escapes
 { const e = code(read('js/entities/enemy.js'));
   ok((e.match(/G\.Silver/g) || []).length === 1, 'enemy.js reads Silver in exactly one place');
-  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{[^}]*G\.Silver\.kill\(G\.Game\.st\.time\);[^}]*continue;/.test(e),
+  // Leader AI slice 2: the pay lives in payKill (a leader's bench faint is paid through it too), called from the dead-enemy branch
+  ok(/if \(e\.remote\) continue;\s*if \(e\.dead\) \{\s*payKill\(e, pl\);[^}]*continue;/.test(e) && /function payKill\(e, pl\) \{[^}]*G\.Silver\.kill\(G\.Game\.st\.time\);/.test(e),
     'enemy.js: the pay sits in the dead-enemy branch, after remote enemies are skipped, on the run clock'); }
 
 // 7. the HUD: whole coins, hidden in co-op

@@ -274,7 +274,7 @@ G.GymArena = (() => {
   function teamTick(dt) {
     const t = arena.team;
     t.tickLock(dt);
-    t.benchTick(dt);
+    t.benchTick(dt, benchFaint);
     if (!t.active.dead) return t.ai.swapFrame((c) => voluntary(t, t.requested(c)));
     const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
     if (!t.living().length && !redo) {
@@ -289,6 +289,7 @@ G.GymArena = (() => {
     next.flying = false;
     G.EnemyMgr.add(next);
     arena.bossId = next.id;
+    t.ai.arrived(false); // a faint send-in and Re-Do start the minField clock too (LEADER-AI STALL GUARDS)
     const line = redo ? ' used Re-Do! The whole team is back!' : ' sends out ' + next.name + '!';
     G.Spawner.say(arena.gym.leader + line, 2.4);
     G.Camera.kick(0.7);
@@ -310,6 +311,14 @@ G.GymArena = (() => {
     arena.bossId = next.id;
     G.FX.ring(next.x, next.y, 6, 70, G.U.TYPE_COLOR[next.types[0]] || '#ffd95e', 0.4, 4);
     G.Spawner.say(arena.gym.leader + ' switches to ' + next.name + '!', 2.4);
+    t.ai.arrived(true);
+  }
+
+  /** LEADER-AI slice 2 (COMBAT-RULES "LEADER VOLUNTARY SWAPS"): a leader mon that faints on the bench pays you like any kill, once and
+   *  silently (no burst, sound or line), with no gym drop; it is not the boss kill, which stays with the last to fall. */
+  function benchFaint(f) {
+    f.boss = false;
+    G.EnemyMgr.payKill(f, G.Game.player);
   }
 
   function won() {

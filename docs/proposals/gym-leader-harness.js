@@ -82,6 +82,8 @@ for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', '
   }
 }
 
+// Leader AI slice 2 (#31): this harness predates the AI player's own swap and dodge decisions; they stay off here (leader-ai-harness.js tests them)
+if (G.LeaderAI && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true });
 let fail = 0,
   n = 0;
 const ok = (c, m) => {

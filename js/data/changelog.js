@@ -7,6 +7,24 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-08',
+    title: ['Leaders that think', 'Leaders that think'],
+    new: [
+      [
+        'Misty and Brock now dodge your attacks, the same dodge you have: two charges, and a short moment to react, so they will not dodge everything. They dodge sideways, toward open floor.',
+        'Misty and Brock now dodge your attacks, the same dodge you have: two charges, and a short moment to react, so they will not dodge everything. They dodge sideways, toward open floor.',
+      ],
+      [
+        'From loop 2 they also switch Pokémon on their own, with your swap rules: when the matchup turns against them, when their Pokémon is asleep or frozen, or to save one at low health. Each Pokémon stays out at least 8 seconds first, and you see the ring and "Misty switches to Seel!".',
+        'From loop 2 they also switch Pokémon on their own, with your swap rules: when the matchup turns against them, when their Pokémon is asleep or frozen, or to save one at low health. Each Pokémon stays out at least 8 seconds first, and you see the ring and "Misty switches to Seel!".',
+      ],
+      [
+        'A leader Pokémon that faints on the bench (to a burn or poison) now counts as your kill.',
+        'A leader Pokémon that faints on the bench (to a burn or poison) now counts as your kill.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-07',
     title: ['Misty, rebuilt', 'Misty, rebuilt'],
     chg: [

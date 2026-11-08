@@ -166,12 +166,17 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   probeSide(s) {
     const U = GymLeader.UNSTICK,
       [hx, hy] = this.heading,
-      a = Math.atan2(hy, hx) + s * U.turn,
-      b = { x: this.x, y: this.y, r: this.r },
-      n = Math.ceil(U.probe / 8);
+      a = Math.atan2(hy, hx) + s * U.turn;
+    return this.room(Math.cos(a), Math.sin(a), U.probe);
+  }
+  /** The open floor along the unit way (dx, dy): how far a test circle of her radius gets in `dist` px, sliding on walls in 8 px
+   *  steps. The edge unstick and the AI player's dodge side (LEADER-AI DODGE DIRECTION) read it. */
+  room(dx, dy, dist) {
+    const b = { x: this.x, y: this.y, r: this.r },
+      n = Math.ceil(dist / 8);
     for (let k = 0; k < n; k++) {
-      b.x += (Math.cos(a) * U.probe) / n;
-      b.y += (Math.sin(a) * U.probe) / n;
+      b.x += (dx * dist) / n;
+      b.y += (dy * dist) / n;
       G.World.collide(b);
     }
     return Math.hypot(b.x - this.x, b.y - this.y);
@@ -206,6 +211,7 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   }
   /** The boss faint: the fade, the burst, its coins and item (a level is paid by the badge, not orbs), and the Snowball Badge's feed. */
   onFaint() {
+    if (this.benched) return; // a faint on the bench is silent: no burst, sound or drop (the arena pays the kill, LEADER-AI slice 2)
     this.fade = 0.9;
     const q = G.Game.player;
     if (q && q.runItems && q.runItems.includes('snowballbadge') && G.Items.snowballAdd) G.Items.snowballAdd(this.maxHp);

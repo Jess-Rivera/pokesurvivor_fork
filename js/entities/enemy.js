@@ -1799,6 +1799,17 @@
     // Seconds a straggler has to be out of sight before coming back out ahead.
     const LAG_T = 2.5;
 
+    /** A kill paid to `pl`: the count, the log, the run's progress, the EV banks and Silver. A gym leader's mon that faints on the
+     *  bench (not in this list) is paid through here too (gym-arena.js, COMBAT-RULES "LEADER VOLUNTARY SWAPS"). */
+    function payKill(e, pl) {
+      pl.kills++;
+      if (G.Log.on) G.Log.kill(e);
+      if (e.boss || e.elite) pl.bosses++;
+      G.Progress.kill(e);
+      G.Game.evKill(e); // pokebox step 5: the run's EV banks
+      G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+    }
+
     function update(dt, players) {
       if (!Array.isArray(players)) players = [players];
       const pl = players[0];
@@ -1826,12 +1837,7 @@
         const e = list[i];
         if (e.remote) continue;
         if (e.dead) {
-          pl.kills++;
-          if (G.Log.on) G.Log.kill(e);
-          if (e.boss || e.elite) pl.bosses++;
-          G.Progress.kill(e);
-          G.Game.evKill(e); // pokebox step 5: the run's EV banks
-          G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+          payKill(e, pl);
           corpses.push(e);
           list.splice(i, 1);
           byId.delete(e.id);
@@ -1913,6 +1919,7 @@
       restore,
       clearRemote,
       update,
+      payKill,
       drawables,
       queryCircle,
       queryCircleEach,

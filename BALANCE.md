@@ -163,6 +163,13 @@ Owner of the rulings: docs/MOVE-INTENT.md (per-move entries); the values live in
 ## Dodge (fix/ui-upgrade, built 2026-11-02; TUNE)
 - 150 px over 0.5 s (300 px/s), 2 charges, 7 s cooldown each (Jess's band 5 to 10 s), 0.2 s gap, body circle 20% for the first 0.3 s. One place: Player.DODGE in js/entities/player.js. Ice glide holds 300 px/s.
 
+## Leader AI (feature/gym-leader-ai slice 2, #31, built 2026-11-08; all TUNE by feel)
+Baselines in G.LeaderAI.BASE (js/entities/leader-ai.js); a gym overrides any of them as `ai` in js/data/gyms.js, each a number or keyed by loop. Spec: docs/LEADER-AI.md.
+- Timing: think tick 0.25 s, reflex 0.15 s, threat window 0.6 s (a shot that reaches the body within it is a threat).
+- Dodge: dodgeRead 6 per block of 10 threats (seeded shuffle bag, no streak cap), dodgeReserve 0.
+- Swaps: minField 8 s, swapLimit none. STAY 1, margin 1.1. Triggers: asleep or frozen with 1.5 s+ left (score 3, to the healthiest); under 25% HP with no self heal, once per mon (score 2.5, to the best matchup at 50%+); a bench matchup 2x or better at 40%+ (score: the ratio).
+- randomness 0 (on with personalities, slice 5).
+
 ## Drops / economy
 - Wild drop cut (fix/playtest-round-1, Jess 2026-11-04, playtesters; TUNE): ground item roll 1% to 0.4%, Oran 0.55% to 0.2%, Sitrus 0.4% to 0.1%, magnet 0.8% to 0.4%, bomb 0.6% to 0.1% (js/data/drops.js). Direct berry healing 0.365% to 0.11% of max HP per kill. Elites, chests, grass, rocks and the Pinap bonus unchanged. If kills keep up with spawns, a heal berry at 5 min comes about every 69 s (was 23 s), a ground item about every 63 s (was 25 s). The Pinap line below still reads "1% wild ground roll": the base is 0.4% now.
 - Rock and small chest HP (feature/item-rework-v2, 2026-11-03, Jess; TUNE): rock 34 to 6, chest 22 to 6 (js/world/world.js). Prop damage has no STAB or type and grows with level. A 40 power move (Ember, Water Gun, Tackle, no upgrades) does about 2.2 at level 1, so 3 hits; 2 hits by level 10; 1 hit from about level 15 to 20. Was: 16 and 10 hits at level 1.

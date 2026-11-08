@@ -6,6 +6,7 @@
  *            a move, from its first cast this fight ("on screen" = cast since the fight's start, no camera check);
  *            a bond, when two different moves are cast with no slot switch seen between them (only the active slot casts, and
  *            the switch shows as your setActive ring), at any gap.
+ *   THREATS  slice 2 (#31): your shapes in flight that reach the leader's body soon (threats(), read by its dodge)
  *   Held-item reveals: #36. Stale reveals across fights: slice 4 (run memory).
  * It hears the sim through G.SimBus ('move:cast', 'slot:switch'), registered once here (SimBus rules); the arena points it at the
  * fight's record (create) and away from it (end), so an old fight's record never hears a new cast.
@@ -56,6 +57,47 @@ G.LeaderInfo = (() => {
     switched(key) {
       this.rec(key).run = [];
     }
+    /** THREATS (slice 2, #31): your shapes on the field as the screen shows them, one entry per cast of yours (a fan counts once) whose
+     *  shapes reach `body` within `horizon` s: { serial, moveId, x, y, vx, vy, eta }, eta the seconds to the first contact, from its
+     *  nearest shape. Positions, motion and sizes only: never a cooldown, a timer of yours or your next input. */
+    threats(body, horizon, dt) {
+      const out = new Map();
+      for (const inst of G.MoveSim.list()) {
+        const o = inst.cast && inst.cast.owner;
+        if (!o || !o.isPlayer || o.isRival || inst.hitless || inst.armed === false || !inst.shape) continue;
+        const v = velOf(inst, dt),
+          eta = etaOf(inst, v, body, horizon);
+        if (eta == null) continue;
+        const k = inst.cast.serial,
+          had = out.get(k);
+        if (!had || eta < had.eta)
+          out.set(k, { serial: k, moveId: inst.cast.moveId, x: inst.x, y: inst.y, vx: v[0], vy: v[1], eta });
+      }
+      return [...out.values()];
+    }
+  }
+
+  /** A shape's motion on screen: its travel velocity, else how far it moved in the last step. */
+  function velOf(inst, dt) {
+    if (inst.vx != null) return [inst.vx, inst.vy];
+    return dt > 0 && inst.prevX != null ? [(inst.x - inst.prevX) / dt, (inst.y - inst.prevY) / dt] : [0, 0];
+  }
+  /** Seconds until a shape first touches the body, or null when it does not within `horizon`. A still shape (a strike waiting to land,
+   *  a beam, a nova) is a threat while the body is inside it and it lands in time; a moving one, when its straight path passes within
+   *  its radius plus the body's. */
+  function etaOf(inst, [vx, vy], b, horizon) {
+    const s = inst.shape,
+      wait = inst.wait || 0;
+    if (wait > horizon) return null;
+    const v2 = vx * vx + vy * vy;
+    if (s.family === 'linear' || v2 < 1) return G.MoveGeom.contains(s, inst.x, inst.y, b.x, b.y, b.r) ? wait : null;
+    const rx = b.x - inst.x,
+      ry = b.y - inst.y,
+      reach = s.r + b.r,
+      t = G.U.clamp((rx * vx + ry * vy) / v2, 0, horizon),
+      d2 = (rx - vx * t) ** 2 + (ry - vy * t) ** 2;
+    if (d2 > reach * reach) return null;
+    return Math.max(0, t - Math.sqrt((reach * reach - d2) / v2));
   }
 
   /** The key of a SimBus owner of yours, or null for a leader mon, a wild one or a mon not on your roster. */

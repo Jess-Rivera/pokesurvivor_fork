@@ -169,6 +169,7 @@ G.Gym = (() => {
         playerEntity: !!entry.playerEntity, // the slice 5 switch: G.Boss.make builds a G.GymLeader instead of the wild body
         hpMult: G.Gyms.hpMultFor(entry, loop),
         restrictions: entry.restrictions || null,
+        ai: entry.ai || null, // LEADER-AI "Authoring a leader": the AI player's settings, each a number or keyed by loop (G.LeaderAI.settings)
         profile: G.Gyms.profileFor(sig, loop), // slice 6 (D3): this loop's IVs, EVs and nature, or null (neutral)
         item: G.Gyms.perLoop(sig.item, loop) || null, // slice 6 (Q4): this loop's held item
         runItems: G.Gyms.runItemsFor(entry, loop), // slice 6 (Q4): the run items gained at loops 1 to this one

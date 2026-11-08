@@ -136,7 +136,7 @@ const evOf = (s, id) => C.get(s, id).ev;
 
 // ===== 9. wiring (text): the kill banks, the run resets, endRun hands over, the screen gives and saves =====
 { const g = TXT.game, e = TXT.enemy, u = TXT.runui;
-  ok(/if \(e\.dead\) \{\s*pl\.kills\+\+;[\s\S]{0,400}G\.Game\.evKill\(e\);/.test(e), 'enemy.js: every dead enemy banks its EVs in the kill loop');
+  ok(/if \(e\.dead\) \{\s*payKill\(e, pl\);/.test(e) && /function payKill\(e, pl\) \{\s*pl\.kills\+\+;[\s\S]{0,400}G\.Game\.evKill\(e\);/.test(e), 'enemy.js: every dead enemy banks its EVs in the kill loop (payKill, Leader AI slice 2)');
   ok(/evKill\(e\) \{\s*const add = G\.Copies\.killEvs\(e\);\s*for \(let k = 0; k < 6; k\+\+\) evBank\[k\] \+= add\[k\];/.test(g), 'game.js: evKill adds killEvs to the six banks');
   ok(/\n    pendingLevels = 0;\n    evBank = \[0, 0, 0, 0, 0, 0\];\n/.test(g), 'game.js: each run starts with empty banks (no fraction carries over)');
   ok(/f\.copyUid = uid \|\| null;/.test(g) && /out\.push\(\{ uid: f\.copyUid, dex: f\.dex, slot: f\.teamSlot \}\)/.test(g), 'game.js: each fighter keeps its copy; evTeam lists the copies');
