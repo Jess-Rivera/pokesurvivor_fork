@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-08, Claude Code (home). Branch: chore/docs-cleanup (from main), #26 and #27 committed, not yet pushed or merged.
+Updated 2026-11-08, Claude Code (home). Branch: chore/docs-cleanup (from main), #26 and #27 committed, unmerged.
 
 ## START HERE (next session, either tool)
 1. Jess pushes and merges chore/docs-cleanup into main, then pulls main into feature/gym-leader-ai. Do not resume gym work before that.
