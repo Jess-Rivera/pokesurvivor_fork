@@ -20,6 +20,21 @@ Adapted from the ideas in mattpocock/skills (tdd). Applies to sim and data logic
 ## Mocking
 Load the real modules. Stub only what the browser provides (world, camera, FX, the gym clock; the harnesses use a Proxy no-op). Time and randomness are the boundary: pin them. Never mock your own modules or internal collaborators, and assert through the G.* surface, not by reaching into private state. Mutation copies use the existing `<PREFIX>_<FILE>` environment overrides.
 
+## Designing for testability
+Adapted from mattpocock/skills (codebase-design). Terms are in GLOSSARY.md "Design language".
+- **The interface is the test surface.** Callers and tests cross the same seam. If a scenario has to reach past the interface into private state, the module is probably the wrong shape.
+- **Take inputs, do not reach for them.** Pass time, randomness and world state in, so a harness can pin them, instead of reading globals deep inside.
+- **Return results where it is cheap**, instead of only changing state, so a scenario can assert on the return.
+- **Small surface.** Fewer functions and parameters mean fewer scenarios and simpler setup.
+- **Deletion test before adding a wrapper.** If deleting it would leave the complexity where it was, do not add it.
+- **One variation is not a seam.** Do not add an indirection layer for a variation that does not exist yet.
+- **When modules merge or move (a refactor):**
+  - Keep the hand-derived scenarios; delete one only when its behavior is gone.
+  - Repoint the harness source maps and the *-mutate.js file paths (the `<PREFIX>_<FILE>` overrides) and refresh any STALE pattern.
+  - Update the dev.html script list and the `NEED` array in js/main.js for any file added, removed or reordered.
+  - Do not rename Spanish identifiers or i18n keys, keep old saves loading, and watch per-frame hot paths.
+  - The harness is green before and after (step 5 above).
+
 ## Tests that do not count
 - **Implementation-coupled**: breaks on a refactor with no behavior change.
 - **Tautological**: the expectation is computed the way the code computes it, so it passes by construction.

@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-07 session, branch feature/gym-leader-ai)
-1. After the skills branch (chore/skill-choice-update) merges: #26 (high priority), repoint the stale TODO.md references in the docs; then #27, split DECISIONS.md into docs/decisions/.
+1. After the skills branch (chore/skill-choice-update) merges: #26 (high priority), repoint the stale TODO.md references in the docs; then #27, split DECISIONS.md into docs/decisions/; then #28, the improve-codebase-architecture skill (blocked on #27).
 2. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md. No code until then. Unblocks #22.
 3. #22 slice 9a (map v2 A1 to A5 plus the rolling windows): prose plan, then build.
 4. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
@@ -20,7 +20,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 - Engine: #8 #10 #12
 - UI: #25
 - Bugs: #16 #18 #26
-- Docs: #27
+- Docs: #27 #28
 
 ## Deferred (cloud and multiplayer phase, do not start)
 Open an issue labeled `deferred`; old notes are in docs/TODO-notes-2026-11.md.

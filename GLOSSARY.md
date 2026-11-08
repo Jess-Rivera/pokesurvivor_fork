@@ -191,6 +191,44 @@ How long a stage tracker holds after its last success, 6.1 s at base.
 
 Rule: docs/COMBAT-RULES.md "Stat stages"
 
+### Design language
+
+Words used in plans and refactors. In this codebase a module is usually one `G.*` file under js/.
+
+**Module**:
+Anything with an interface and an implementation: a function, a `G.*` file, or a slice that spans several files.
+_Avoid_: unit, component, service
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Interface**:
+Everything a caller must know to use a module correctly: the call shape, but also invariants, ordering, error modes, required setup and timing.
+_Avoid_: API, signature
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Seam**:
+The place where a module's interface lives, where behavior can be changed or observed without editing inside. Tests are written at seams, and each slice's plan names its seams.
+_Avoid_: boundary (docs/SIM-PRESENT-BOUNDARY.md keeps its name)
+
+Rule: docs/TEST-FIRST.md "The cycle", step 1
+
+**Depth**:
+How much behavior a caller or test gets per unit of interface it must learn. A deep module hides a lot behind a small interface; a shallow one has an interface nearly as complex as its implementation.
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Leverage**:
+What callers get from depth: one implementation pays back across many call sites and scenarios.
+
+**Locality**:
+What maintainers get from depth: change, bugs and knowledge concentrate in one place instead of spreading across callers.
+
+**Deletion test**:
+Imagine deleting a module. If the complexity vanishes, it was a pass-through; if it reappears across many callers, the module was earning its keep.
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
 ### How we work
 
 **Slice**:
