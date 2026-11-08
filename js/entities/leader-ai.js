@@ -23,6 +23,12 @@
  *   TRIGGERS    authored in the gym's ai.triggers, each once unless `repeat`; they wait out a tell or commitment and act through
  *               your controls (a slot press, a swap request), a setting for a while, or a line. ai.lines: up and down on a big swing.
  *   LINES       "<leader>: <line>" on the banner, queued while another banner shows, dropped after LINE_WAIT s.
+ * Slice 4 (#33): run memory (G.LeaderMemory, fed by G.LeaderInfo) and the first exploit (Jess 2026-11-08, decision
+ * 2026-11-08-leader-ai-slice-4-opened-the-usual-lead-is-the-first-exploit).
+ *   LEAD        on the fight's first free think tick: a lead pattern it believes (learnRate sightings of one mon of yours, the one
+ *               with the most field time in a fight) asks the prediction cap bag (predictCap acts per BAG chances, run long). When
+ *               it acts, the 'exploit' trigger fires and it swaps to its best matchup against that mon, without waiting out minField
+ *               (it counts as a voluntary swap); already on the best one, it stays and still says its line.
  */
 G.LeaderAI = class LeaderAI {
   /** @param members the leader mons it drives, in slot order; @param team their G.Team, or null for a lone mon */
@@ -64,6 +70,7 @@ G.LeaderAI = class LeaderAI {
     this.lines = []; // queued lines: { text, at }
     this.temp = []; // settings a trigger changed for a while: { k, old, until }
     this.started = false;
+    this.opened = false; // slice 4: the lead read has had its one chance this fight
     this.useTriggers(auth.triggers || []);
     this.controller = {
       axis: () => this.active.heading,
@@ -107,6 +114,7 @@ G.LeaderAI = class LeaderAI {
     const free = G.Status.stunned(e) || !this.busy(e);
     if (this.due && free) {
       this.due = false;
+      if (!this.opened) this.open(e);
       if (!LeaderAI.off.pacing) this.pace(e, pl);
       if (!LeaderAI.off.swaps) this.decide(e);
     }
@@ -235,10 +243,10 @@ G.LeaderAI = class LeaderAI {
     return b.healsLeft > 0 && b.pool().some((s) => G.Gyms.formOf(b.def(s.id)) === 'heal');
   }
 
-  /** LEADER-AI MATCHUP for leader mon m against your mon on the field: offense = its best open damaging move's type x your mon's
-   *  types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score = offense / defense. */
-  matchup(m) {
-    const you = LeaderAI.yours();
+  /** LEADER-AI MATCHUP for leader mon m against your mon `you` (the one on the field unless a prediction names another): offense =
+   *  its best open damaging move's type x your mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score =
+   *  offense / defense. */
+  matchup(m, you = LeaderAI.yours()) {
     if (!you) return 1;
     const yt = LeaderAI.typesOf(you);
     let off = 0;
@@ -247,13 +255,12 @@ G.LeaderAI = class LeaderAI {
       if (!(d.basePower > 0)) continue;
       off = Math.max(off, G.Types.mult(d.type, yt) * (m.types.includes(d.type) ? 1.5 : 1));
     }
-    return off / Math.max(0.25, G.Types.mult(this.yourAttack(m).type, m.types));
+    return off / Math.max(0.25, G.Types.mult(this.yourAttack(m, you).type, m.types));
   }
   /** Your mon's most threatening revealed damaging move against m: the highest type multiplier, then the higher power. Before any is
    *  revealed, a guess of its own type (a two-type mon: the type that hits m harder). Only what G.LeaderInfo has seen is read. */
-  yourAttack(m) {
-    const you = LeaderAI.yours(),
-      info = G.LeaderInfo.current;
+  yourAttack(m, you = LeaderAI.yours()) {
+    const info = G.LeaderInfo.current;
     let best = null;
     for (const id of you && info ? info.reveals(you).moves : []) {
       const d = G.MoveDefs[id];
@@ -268,6 +275,43 @@ G.LeaderAI = class LeaderAI {
       if (!best || k > best.k) best = { id: null, type, k, power: 0 };
     }
     return best || { id: null, type: 'normal', k: 1, power: 0 };
+  }
+
+  // ---------------- run memory (slice 4) ----------------
+
+  /** LEAD: the fight's one chance to act on the lead pattern it believes (the header). A lone mon has no one to swap to, so it
+   *  only says its line. */
+  open(e) {
+    this.opened = true;
+    const info = G.LeaderInfo.current,
+      mem = info && info.mem;
+    if (LeaderAI.off.memory || !mem) return;
+    const S = this.set,
+      pat = G.LeaderMemory.lead(mem, S.learnRate);
+    if (!pat) return this.note('memory', 'no lead pattern it believes (learnRate ' + S.learnRate + ')');
+    const you = (G.Game.roster || []).find((m) => !m.dead && info.keyOf(m) === pat.key);
+    if (!you) return this.note('memory', 'the mon it expects is not on your team: ' + pat.key);
+    const who = (you.mon && you.mon.name) || pat.key;
+    if (!mem.cap) mem.cap = new LeaderAI.Bag(S.predictCap, LeaderAI.capSeed());
+    if (!mem.cap.next()) return this.note('exploit', 'held back by the prediction cap: ' + who + ' x' + pat.n);
+    const t = this.team,
+      here = t ? t.activeIdx : 0,
+      list = t ? t.members.map((m, j) => ({ m, j })).filter((c) => !c.m.dead) : [{ m: e, j: 0 }];
+    for (const c of list) c.score = this.matchup(c.m, you);
+    // the mon on the field wins a tie: no swap without a better matchup
+    const best = list.reduce(
+      (a, b) => (b.score > a.score + LeaderAI.EPS ? b : a),
+      list.find((c) => c.j === here) || list[0]
+    );
+    const scores = list.map((c) => c.m.name + ' ' + c.score.toFixed(2)).join(', ');
+    this.note('exploit', 'your usual lead is ' + who + ' (' + pat.n + ' sightings): ' + scores, {
+      j: best.j,
+      key: pat.key,
+    });
+    this.heard({ k: 'exploit' });
+    if (best.j === here) return;
+    this.why = { why: 'exploit', out: e };
+    this.requestSwap(best.j);
   }
 
   // ---------------- dodges ----------------
@@ -485,7 +529,11 @@ G.LeaderAI = class LeaderAI {
   heard(ev) {
     for (const tr of this.trig) {
       const d = tr.d;
-      if ((ev.k === 'faint' && d.on === 'faint' && d.side === ev.side) || (ev.k === 'sendIn' && d.on === 'sendIn'))
+      if (
+        (ev.k === 'faint' && d.on === 'faint' && d.side === ev.side) ||
+        (ev.k === 'sendIn' && d.on === 'sendIn') ||
+        (ev.k === 'exploit' && d.on === 'exploit')
+      )
         tr.due = true;
     }
   }
@@ -514,7 +562,7 @@ G.LeaderAI = class LeaderAI {
       tr.fired++;
       const d = tr.d;
       this.note('trigger', d.on + (d.line ? ': ' + d.line : ''));
-      if (d.line) this.say(d.line);
+      if (d.line) this.say(d.line, d.on === 'exploit'); // a read goes ahead of the queue, so the banner does not drop it
       if (d.slot != null) this.pressSlot(e, d.slot - 1, true);
       if (d.swap != null) {
         this.why = { why: 'trigger', out: e };
@@ -529,9 +577,11 @@ G.LeaderAI = class LeaderAI {
       }
     }
   }
-  /** Queues "<leader>: <text>" for the banner. */
-  say(text) {
-    this.lines.push({ text: this.name + ': ' + text, at: this.clock });
+  /** Queues "<leader>: <text>" for the banner (`first`: ahead of the lines already waiting). */
+  say(text, first = false) {
+    const l = { text: this.name + ': ' + text, at: this.clock };
+    if (first) this.lines.unshift(l);
+    else this.lines.push(l);
   }
   /** Shows the next queued line once no other banner is up; one older than LINE_WAIT s is dropped. */
   flushLines() {
@@ -612,6 +662,9 @@ G.LeaderAI.BASE = Object.freeze({
   breatherMax: 0.25,
   gapClose: 0.7,
   lean: 45,
+  // slice 4 (#33): learnRate sightings before a pattern is believed; predictCap acts per BAG chances to act on one
+  learnRate: 3,
+  predictCap: 7,
 });
 G.LeaderAI.BAG = 10;
 /** Slice 3 (all TUNE, BALANCE.md "Leader AI"). CONF: each hit landed or taken, each faint (yours up, its own down), the drift per
@@ -642,11 +695,14 @@ G.LeaderAI.HOLD = Object.freeze({ neutral: null, push: 'close', breather: 'far' 
 G.LeaderAI.CLOSE = Object.freeze(['melee', 'nova', 'multi']); // the forms a gap-closing dodge brings into reach
 G.LeaderAI.LINE_WAIT = 4; // seconds a line may wait for the banner (the send-out line shows 3.2 s)
 G.LeaderAI.LINE_T = 2.4; // seconds a line shows
-/** Dev and harness switches: turn its own swap, dodge, confidence, pacing or trigger decisions off (the slice 1 parity runs with all
- *  off; slice 2's checks with the slice 3 ones off). */
-G.LeaderAI.off = { swaps: false, dodges: false, confidence: false, pacing: false, triggers: false };
+/** Dev and harness switches: turn its own swap, dodge, confidence, pacing, trigger or memory (slice 4: acting on a pattern) decisions
+ *  off (the slice 1 parity runs with all off; slice 2's checks with the slice 3 ones off). */
+G.LeaderAI.off = { swaps: false, dodges: false, confidence: false, pacing: false, triggers: false, memory: false };
 /** The dodge bag's seed for every fight from now on (the harness fixes it); null: a new one each fight. */
 G.LeaderAI.seed = null;
+/** The prediction cap bag's seed: its own source, derived from `seed` when the harness fixes one. */
+G.LeaderAI.capSeed = () =>
+  G.LeaderAI.seed != null ? (G.LeaderAI.seed ^ 0x9e3779b9) >>> 0 : (Date.now() ^ 0x5bd1e995) >>> 0;
 
 /** LEADER-AI DODGE READ BAG: each block of BAG threats holds exactly `reads` reads, in an order shuffled from its own seeded source
  *  (mulberry32, separate from the game's Math.random and from `randomness`), so the rate is exact per block and replayable. */

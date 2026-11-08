@@ -73,13 +73,17 @@ G.Gyms = (() => {
     'breatherMax',
     'gapClose',
     'lean',
+    // slice 4 (#33): run memory. learnRate: sightings before a pattern is believed; predictCap: acts per 10 chances (0 to 10)
+    'learnRate',
+    'predictCap',
   ];
   const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'breatherMax', 'gapClose', 'randomness']; // 0 to 1
   // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
   // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
-  // with `at` seconds. Then any of: line, slot (1-based), swap (1-based team slot), set ({ setting: value }) with optional `for`
-  // seconds, and `repeat` (true: every time, every `at` s for time).
-  const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time'];
+  // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, slot
+  // (1-based), swap (1-based team slot), set ({ setting: value }) with optional `for` seconds, and `repeat` (true: every time, every
+  // `at` s for time).
+  const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time', 'exploit'];
   const TRIGGER_KEYS = ['on', 'below', 'side', 'at', 'repeat', 'line', 'slot', 'swap', 'set', 'for'];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
@@ -221,11 +225,13 @@ G.Gyms = (() => {
       restrictions: { hitIframes: 0, autoShake: true, ccWindow: 5, statusCut: 0.5 },
       // LEADER-AI slice 3 (#32, Jess 2026-11-08): the defensive wall, low aggression (his ceiling stays under the gap-closing line).
       // Lines are drafts (Jess: ok for now). Half HP: he gets serious, aggression 0.5 for 10 s.
+      // Slice 4 (#33): he keeps the baseline learnRate (3 fights to read your usual lead); the exploit line is a draft.
       ai: {
         aggression: 0.35,
         triggers: [
           { on: 'start', line: "Rock holds its ground. Let's see you move it." },
           { on: 'hp', below: 0.5, line: 'Time to get serious.', set: { aggression: 0.5 }, for: 10 },
+          { on: 'exploit', line: 'Same partner as last time? I came prepared.' },
         ],
         lines: { up: "That's what solid defense looks like!", down: "You're chipping through. Not bad." },
       },
@@ -301,11 +307,14 @@ G.Gyms = (() => {
       // hard CC gap, auto shake, no hit i-frames). No enrage (Q1): absent means off on a switched gym.
       restrictions: { statusCut: 0.5, ccWindow: 5, autoShake: true, hitIframes: 0 },
       // LEADER-AI slice 3 (#32, Jess 2026-11-08): hit and run, high aggression (fast mons, status). Lines are drafts (Jess: ok for now).
+      // Slice 4 (#33, Jess 2026-11-08): the sharper reader, learnRate 2 (your usual lead from her third fight); the line is a draft.
       ai: {
         aggression: 0.68,
+        learnRate: 2,
         triggers: [
           { on: 'start', line: 'Think you can keep your head above water?' },
           { on: 'hp', below: 0.5, line: "Okay, now I'm annoyed!" },
+          { on: 'exploit', line: "I know who you lean on. Let's see them handle this!" },
         ],
         lines: { up: 'Go with the flow, or get swept away!', down: 'Hmph. Lucky shot.' },
       },
@@ -984,6 +993,10 @@ G.Gyms = (() => {
           vals = v == null ? [] : typeof v === 'object' ? Object.values(v) : [v];
         if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(L + ': ai ' + k + ' is from 0 to 1');
       }
+      const cap = g.ai.predictCap,
+        caps = cap == null ? [] : typeof cap === 'object' ? Object.values(cap) : [cap];
+      if (caps.some((x) => typeof x === 'number' && x > 10))
+        bad.push(L + ': ai predictCap is from 0 to 10 (acts per 10)');
       const str = (s) => typeof s === 'string' && s.length > 0;
       const tr = g.ai.triggers;
       if (tr != null && !Array.isArray(tr)) bad.push(L + ': ai triggers is a list');

@@ -1,5 +1,5 @@
-// Mutation check for Leader AI slices 2 (#31, swap and dodge decisions) and 3 (#32, confidence, pacing, triggers and lines) (Node
-// only; not a harness, so tools/check.js does not run it).
+// Mutation check for Leader AI slices 2 (#31, swap and dodge decisions), 3 (#32, confidence, pacing, triggers and lines) and 4
+// (#33, run memory and the lead read) (Node only; not a harness, so tools/check.js does not run it).
 // Usage from the repo root:  node docs/proposals/leader-ai-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-ai-harness.js against it
 // (LA_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
@@ -10,11 +10,12 @@ const fs = require('fs'),
 const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
   IN = 'js/systems/leader-info.js',
+  MM = 'js/systems/leader-memory.js',
   AR = 'js/systems/gym-arena.js',
   LD = 'js/entities/gym-leader.js',
   BR = 'js/entities/boss-ai.js',
   GY = 'js/data/gyms.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS' };
+const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS' };
 const M = [
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],
@@ -94,6 +95,32 @@ const M = [
   ['the 0 to 1 check is off', GY, "if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(", 'if (false) bad.push('],
   ['a trigger may do nothing', GY, "if (t.line == null && t.slot == null && t.swap == null && t.set == null) bad.push(T + ' does nothing');", ''],
   ["Misty's aggression is the baseline", GY, 'aggression: 0.68,', 'aggression: 0.5,'],
+  // slice 4 (#33): the store and the pattern
+  ['the store outlives the run', MM, '    end() {\n      store = null;', '    end() {'],
+  ['learnRate is ignored', MM, 'return best && !tie && best.n >= learnRate ? best : null;', 'return best && !tie ? best : null;'],
+  ['a tie is a pattern', MM, '} else if (n === best.n) tie = true;', '}'],
+  // the feed
+  ['the lead is the first mon seen', IN, 'if (t > 0 && (!best || t > best.t)) best = { k, t };', 'if (t > 0 && !best) best = { k, t };'],
+  ['a faint send-in is a swap', IN, 'if (out.dead) return G.LeaderMemory.bump(this.mem.team.afterFaint, kIn);', ''],
+  ['every swap is low HP', IN, 'm.hp / m.maxHp < LOW', 'm.hp / m.maxHp < 1'],
+  ['sentIn never ends', IN, 'if (this.t - this.leaderAt <= SENT) out.push', 'if (true) out.push'],
+  ['a dodge counts every frame', IN, 'started = dodging && !this.dodging;', 'started = dodging;'],
+  // stale reveals
+  ['no stale reveals', IN, 'for (const id of this.staleOf(key, m.maxMoves || FULL))', 'for (const id of [])'],
+  ['a stale move outlives 10 s', IN, '(this.field.get(key) || 0) >= STALE - 1e-9', 'false'],
+  ['a stale move is never seen missing', IN, 'return seen.length >= full ? [] : old.filter', 'return old.filter'],
+  // the read
+  ['no read', AI, 'if (!this.opened) this.open(e);', ''],
+  ['the read waits out minField', AI, 'if (best.j === here) return;', 'if (best.j === here || this.swapGate()) return;'],
+  ['the cap is ignored', AI, 'if (!mem.cap.next()) return', 'if (false) return'],
+  ['a tie swaps', AI, '(b.score > a.score + LeaderAI.EPS ? b : a)', '(b.score >= a.score - LeaderAI.EPS ? b : a)'],
+  ['the read is of your mon on the field', AI, 'for (const c of list) c.score = this.matchup(c.m, you);', 'for (const c of list) c.score = this.matchup(c.m);'],
+  ['the memory switch is ignored', AI, 'if (LeaderAI.off.memory || !mem) return;', 'if (!mem) return;'],
+  ['the read line waits its turn', AI, 'if (d.line) this.say(d.line, d.on === \'exploit\');', 'if (d.line) this.say(d.line);'],
+  ['no exploit trigger', AI, "(ev.k === 'exploit' && d.on === 'exploit')", 'false'],
+  // the authoring and the validator
+  ["Misty's learnRate is the baseline", GY, '        learnRate: 2,\n', ''],
+  ['the predictCap check is off', GY, 'if (caps.some((x) => typeof x === \'number\' && x > 10))', 'if (false)'],
 ];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-ai-mut-'));
 let caught = 0,

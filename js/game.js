@@ -139,6 +139,7 @@ G.Game = (() => {
     G.Pickups.clear();
     G.Spawner.reset();
     G.GymArena.reset();
+    G.LeaderMemory.start(); // Leader AI slice 4: every leader starts the run knowing nothing of you (after the arena books its fight)
     G.Gym.reset();
     G.Shops.reset(); // Move Shop step 3: the first pair is due at 2:00 again
     G.Events.reset();
@@ -512,6 +513,7 @@ G.Game = (() => {
     if (G.Coop.active) G.Coop.end();
     if (coop) G.Social.setPlaying(false);
     state = 'over';
+    G.LeaderMemory.end(); // Leader AI slice 4: what the leaders remembered of you dies with the run, never saved
     G.Audio.music(null);
     G.Audio.sfx(dead ? 'gameover' : 'back');
     const save = G.DB.save;

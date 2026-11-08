@@ -22,7 +22,9 @@
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym(n)     open the next gym gate now, or gym n's (walk into it to fight; losing ends the run)
  *   G.Debug.leaderSwap(slot)  in a switched gym's fight, the leader AI asks to swap to its team slot (1 is the first); your swap rules decide it (Leader AI slice 1)
- *   G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers })  turn the leader AI's own decisions on or off (true / false); no argument prints them, its status and its last decisions (slices 2, 3)
+ *   G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers, memory })  turn the leader AI's own decisions on or off (true / false); no argument prints them, its status and its last decisions (slices 2 to 4)
+ *   G.Debug.leaderMemory()  print what every leader remembers of you this run (Leader AI slice 4)
+ *   G.Debug.leaderLead(leader, slot, n)  seed n lead sightings of your team slot `slot` (1 is the first) into that leader's memory, e.g. leaderLead('Misty', 1, 2): her next fight reads it (slice 4 feel test)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
@@ -1284,7 +1286,7 @@ G.Debug = (() => {
       return false;
     }
     const off = G.LeaderAI.off,
-      KEYS = ['swaps', 'dodges', 'confidence', 'pacing', 'triggers']; // slice 3 (#32) adds the last three
+      KEYS = ['swaps', 'dodges', 'confidence', 'pacing', 'triggers', 'memory']; // slice 3 (#32) adds three, slice 4 (#33) memory
     if (opts) for (const k of KEYS) if (opts[k] != null) off[k] = !opts[k];
     const ai = G.GymArena.leaderAI;
     console.log('[LeaderAI] ' + KEYS.map((k) => k + ' ' + (off[k] ? 'off' : 'on')).join(', '));
@@ -1293,6 +1295,39 @@ G.Debug = (() => {
     const out = {};
     for (const k of KEYS) out[k] = !off[k];
     return out;
+  }
+
+  /** Dev only (Leader AI slice 4): what every leader remembers of you this run, as plain data (null outside a run). */
+  function leaderMemory() {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const d = G.LeaderMemory.dump();
+    console.log('[LeaderMemory] ' + (d ? JSON.stringify(d, null, 2) : 'no run store'));
+    return d;
+  }
+
+  /** Dev only (Leader AI slice 4 feel test): n lead sightings of your team slot `slot` (1-based) for the named leader, as if you had
+   *  led with it in n earlier fights. It writes around the information layer, so it is a dev tool only. */
+  function leaderLead(leader, slot = 1, n = 1) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const g = G.Gyms.listFor(null).find((x) => String(x.leader).toLowerCase() === String(leader).toLowerCase()),
+      m = (G.Game.roster || [])[slot - 1],
+      rec = g && G.LeaderMemory.record(g.id);
+    if (!rec || !m) {
+      console.warn('[Debug] leaderLead needs a run, a known leader and a filled team slot');
+      return false;
+    }
+    const key = G.LeaderInfo.keyOf(m);
+    for (let i = 0; i < n; i++) G.LeaderMemory.bump(rec.team.leads, key);
+    console.log(
+      '[LeaderMemory] ' + g.leader + ' lead sightings: ' + JSON.stringify(Object.fromEntries(rec.team.leads))
+    );
+    return true;
   }
 
   /** Place a Move Trainer and a TM Mart now (dev only), by the normal placement rules. */
@@ -1341,6 +1376,8 @@ G.Debug = (() => {
     gym,
     leaderSwap,
     leaderAI,
+    leaderMemory,
+    leaderLead,
     shops,
     trainer,
     mart,

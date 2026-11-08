@@ -21,6 +21,7 @@
     'Status',
     'Stages',
     'Team',
+    'LeaderMemory',
     'LeaderInfo',
     'Upgrades',
     'Evolvable',

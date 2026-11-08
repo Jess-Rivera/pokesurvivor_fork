@@ -181,7 +181,7 @@ G.GymArena = (() => {
         members = [G.Boss.make(first, x, y)];
       for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
       arena.team = G.GymLeader.team(members);
-      arena.info = G.LeaderInfo.create(arena.team); // what its AI player can see (LEADER-AI slice 1)
+      arena.info = G.LeaderInfo.create(arena.team, g.id); // what its AI player can see (LEADER-AI slice 1), its run memory (slice 4)
       e = arena.team.active;
       // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
       const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);

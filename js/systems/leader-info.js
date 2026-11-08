@@ -10,7 +10,12 @@
  *   FIGHT    slice 3 (#32): what the screen shows of the trade, for confidence and pacing. Hits from 'move:hit' (the damage number
  *            on screen) as fractions of the struck mon's max HP; faints (an HP bar at 0, the roster) and your send-ins (the roster's
  *            active mon). events() hands them to the AI player once; windows() sums the hits over the last SHORT and LONG seconds.
- *   Held-item reveals: #36. Stale reveals across fights: slice 4 (run memory).
+ *   MEMORY   slice 4 (#33): with a run store (G.LeaderMemory), every observation is written to the leader's record as it shows: your
+ *            casts and bonds, slot switches, swaps (tagged with the visible reasons), dodges, field time and range; at the fight's
+ *            end, one lead sighting (your mon with the most field time). STALE REVEALS: a move remembered from an earlier fight counts
+ *            as revealed until that mon has STALE s on the field this fight, or has cast as many other moves as a mon carries (its
+ *            move set is then seen without it).
+ *   Held-item reveals: #36.
  * It hears the sim through G.SimBus ('move:cast', 'slot:switch', 'move:hit'), registered once here (SimBus rules); the arena points it
  * at the fight's record (create) and away from it (end), so an old fight's record never hears a new cast.
  */
@@ -18,11 +23,29 @@ G.LeaderInfo = (() => {
   let cur = null; // the fight's record, or null outside a switched gym's fight
   const SHORT = 2,
     LONG = 15; // the rolling windows, seconds (LEADER-AI ROLLING WINDOWS, TUNE)
+  // slice 4 (all TUNE, BALANCE.md "Leader AI"): a stale reveal's field time, the swap tags' lines (your HP fraction; seconds since a
+  // leader mon arrived), and the moves a mon carries when its own count is not known
+  const STALE = 10,
+    LOW = 0.3,
+    SENT = 2,
+    FULL = 4;
 
   class Info {
-    /** @param leader the leader's G.Team */
-    constructor(leader) {
+    /** @param leader the leader's G.Team; @param gymId its gym, whose run record (G.LeaderMemory) this fight reads and writes */
+    constructor(leader, gymId = null) {
       this.leader = leader;
+      this.mem = G.LeaderMemory.record(gymId); // null with no run store
+      this.fight = this.mem ? this.mem.fights + 1 : 1;
+      this.stale = new Map(); // key -> the moves remembered from earlier fights
+      if (this.mem)
+        for (const [k, m] of this.mem.mons) {
+          const ids = [...m.moves.keys()];
+          if (ids.length) this.stale.set(k, ids);
+        }
+      this.field = new Map(); // key -> seconds on the field this fight
+      this.dodging = false;
+      this.leaderIdx = leader.activeIdx;
+      this.leaderAt = 0; // when a leader mon last took the field (the first one at the fight's start)
       this.mons = new Map(); // key -> { moves: [ids, first cast first], bonds: [[ids]], run: [ids since the last switch] }
       this.t = 0; // fight seconds, advanced by tick()
       this.hits = []; // { t, k: 'dealt' | 'taken', frac } inside the LONG window
@@ -43,11 +66,71 @@ G.LeaderInfo = (() => {
         if (m.dead && !this.downOwn[i]) this.feed.push({ k: 'faint', side: 'own' });
         this.downOwn[i] = !!m.dead;
       });
+      if (this.leader.activeIdx !== this.leaderIdx) {
+        this.leaderIdx = this.leader.activeIdx;
+        this.leaderAt = this.t;
+      }
       if (G.Game.activeIndex !== this.yourActive) {
+        this.swapped(this.yourActive, G.Game.activeIndex);
         this.yourActive = G.Game.activeIndex;
         this.feed.push({ k: 'sendIn' });
       }
       while (this.hits.length && this.hits[0].t < this.t - LONG) this.hits.shift();
+      this.watchYou(dt);
+    }
+    /** Your mon on the field this frame: its field time, its range to the leader's mon and the start of a dodge. */
+    watchYou(dt) {
+      const m = (G.Game.roster || [])[G.Game.activeIndex],
+        pl = G.Game.player;
+      if (!m || m.dead) return;
+      const key = this.keyOf(m);
+      this.field.set(key, (this.field.get(key) || 0) + dt);
+      const dodging = !!(pl && pl.dodgeT > 0),
+        started = dodging && !this.dodging;
+      this.dodging = dodging;
+      if (!this.mem) return;
+      const r = G.LeaderMemory.mon(this.mem, key),
+        e = this.leader.active;
+      r.fieldT += dt;
+      if (pl && e && !e.dead) r.range += G.U.dist(pl.x, pl.y, e.x, e.y) * dt;
+      if (started) r.dodges++;
+    }
+    /** You changed the mon on the field from roster index i0 to i1: a send-in after a faint, or a swap tagged with its reasons. */
+    swapped(i0, i1) {
+      const R = G.Game.roster || [],
+        out = R[i0],
+        into = R[i1];
+      if (!this.mem || !out || !into) return;
+      const kIn = this.keyOf(into);
+      if (out.dead) return G.LeaderMemory.bump(this.mem.team.afterFaint, kIn);
+      const r = G.LeaderMemory.mon(this.mem, this.keyOf(out));
+      r.swapsOut++;
+      G.LeaderMemory.bump(r.into, kIn);
+      for (const k of this.tagsOf(out)) r.tags[k]++;
+      G.LeaderMemory.mon(this.mem, kIn).swapsIn++;
+    }
+    /** LEADER-AI WHY YOU SWAPPED: what the screen showed as mon `m` of yours left: low HP (under LOW), a type disadvantage (the
+     *  leader's mon on the field has a type that hits it super effectively), a status or a trap, its slot on cooldown (the HUD ring),
+     *  a leader mon sent in within SENT s. */
+    tagsOf(m) {
+      const out = [],
+        e = this.leader.active,
+        types = (m.mon && m.mon.types) || (G.DEX_BY[m.dex] && G.DEX_BY[m.dex].types) || [];
+      if (m.maxHp > 0 && m.hp / m.maxHp < LOW) out.push('low');
+      if (e && types.length && (e.types || []).some((t) => G.Types.mult(t, types) > 1)) out.push('disadvantage');
+      if (m.stMajor || m.stTrap) out.push('status');
+      const g = m.slots && m.slots[m.active];
+      if (g && g.length && g.every((s) => s.t > 0)) out.push('cooldown');
+      if (this.t - this.leaderAt <= SENT) out.push('sentIn');
+      return out;
+    }
+    /** The fight is over: one lead sighting for your mon with the most field time, and the fight is booked. */
+    close() {
+      if (!this.mem) return;
+      let best = null;
+      for (const [k, t] of this.field) if (t > 0 && (!best || t > best.t)) best = { k, t };
+      if (best) G.LeaderMemory.bump(this.mem.team.leads, best.k);
+      this.mem.fights++;
     }
     /** A hit seen on screen: 'dealt' (the leader's, on you) or 'taken' (yours, on the leader), `frac` of the struck mon's max HP. */
     hit(k, frac) {
@@ -69,9 +152,8 @@ G.LeaderInfo = (() => {
       }
       return w;
     }
-    /** A mon of yours: its copy uid, else its team slot. */
     keyOf(m) {
-      return m.copyUid != null ? m.copyUid : 'slot:' + m.teamSlot;
+      return keyOf(m);
     }
     rec(key) {
       let r = this.mons.get(key);
@@ -87,24 +169,46 @@ G.LeaderInfo = (() => {
         leader: side(this.leader.members, this.leader.activeIdx),
       };
     }
-    /** What a mon of yours has revealed: copies of its moves and bonds. */
+    /** What a mon of yours has revealed: copies of its moves (this fight's first, then the stale ones still counting) and bonds. */
     reveals(m) {
-      const r = this.mons.get(this.keyOf(m));
-      return { moves: r ? r.moves.slice() : [], bonds: r ? r.bonds.map((b) => b.slice()) : [] };
+      const key = this.keyOf(m),
+        r = this.mons.get(key),
+        moves = r ? r.moves.slice() : [];
+      for (const id of this.staleOf(key, m.maxMoves || FULL)) if (!moves.includes(id)) moves.push(id);
+      return { moves, bonds: r ? r.bonds.map((b) => b.slice()) : [] };
+    }
+    /** LEADER-AI STALE REVEALS: the remembered moves of `key` that still count: none once it has STALE s on the field this fight, or
+     *  once this fight has revealed `full` moves of it (its whole set, seen without the rest). */
+    staleOf(key, full) {
+      const old = this.stale.get(key);
+      if (!old || (this.field.get(key) || 0) >= STALE - 1e-9) return [];
+      const seen = (this.mons.get(key) || { moves: [] }).moves;
+      return seen.length >= full ? [] : old.filter((id) => !seen.includes(id));
     }
     /** A cast of yours: the move is revealed, and joins the bond of every move cast since the last switch. */
     cast(key, id) {
       const r = this.rec(key);
       if (!r.moves.includes(id)) r.moves.push(id);
       if (!r.run.includes(id)) r.run.push(id);
+      const mem = this.mem && G.LeaderMemory.mon(this.mem, key);
+      if (mem) mem.moves.set(id, this.fight);
       if (r.run.length < 2) return;
-      // a move is in one slot, so a bond that shares a move with this run is the same slot: merge them
-      const mine = r.bonds.filter((b) => b.some((x) => r.run.includes(x))),
-        merged = [...new Set(mine.flat().concat(r.run))];
-      r.bonds = r.bonds.filter((b) => !mine.includes(b)).concat([merged]);
+      r.bonds = merge(r.bonds, r.run, (b) => b);
+      if (mem)
+        mem.bonds = merge(
+          mem.bonds,
+          r.run,
+          (b) => b.ids,
+          (ids) => ({ ids, fight: this.fight })
+        );
     }
-    switched(key) {
+    /** A slot switch of yours (the ring): the bond run restarts; the memory counts it and the slot it went to. */
+    switched(key, slot) {
       this.rec(key).run = [];
+      if (!this.mem) return;
+      const r = G.LeaderMemory.mon(this.mem, key);
+      r.switches++;
+      if (slot != null) r.toSlot[slot] = (r.toSlot[slot] || 0) + 1;
     }
     /** THREATS (slice 2, #31): your shapes on the field as the screen shows them, one entry per cast of yours (a fan counts once) whose
      *  shapes reach `body` within `horizon` s: { serial, moveId, x, y, vx, vy, eta }, eta the seconds to the first contact, from its
@@ -124,6 +228,19 @@ G.LeaderInfo = (() => {
       }
       return [...out.values()];
     }
+  }
+
+  /** A mon of yours: its copy uid, else its team slot (the key of its reveals and of its run memory). */
+  function keyOf(m) {
+    return m.copyUid != null ? m.copyUid : 'slot:' + m.teamSlot;
+  }
+
+  /** A move is in one slot, so a bond that shares a move with this run is the same slot: merge them. `ids` reads a bond's moves,
+   *  `make` builds one from its moves. */
+  function merge(bonds, run, ids, make = (x) => x) {
+    const mine = bonds.filter((b) => ids(b).some((x) => run.includes(x))),
+      merged = [...new Set(mine.map(ids).flat().concat(run))];
+    return bonds.filter((b) => !mine.includes(b)).concat([make(merged)]);
   }
 
   /** A shape's motion on screen: its travel velocity, else how far it moved in the last step. */
@@ -161,7 +278,7 @@ G.LeaderInfo = (() => {
   });
   G.SimBus.on('slot:switch', (ev) => {
     const k = cur && yours(ev);
-    if (k != null) cur.switched(k);
+    if (k != null) cur.switched(k, ev.slot);
   });
   // a hit on a leader mon names it (enemyId); a leader mon's hit on you names none, so its shape says whose it is
   G.SimBus.on('move:hit', (ev) => {
@@ -179,14 +296,19 @@ G.LeaderInfo = (() => {
   });
 
   return {
-    /** A switched gym's fight starts: a fresh record for the leader team `leader`, the one the bus feeds from now on. */
-    create(leader) {
-      return (cur = new Info(leader));
+    /** A switched gym's fight starts: a fresh record for the leader team `leader` of gym `gymId`, the one the bus feeds from now on. */
+    create(leader, gymId = null) {
+      return (cur = new Info(leader, gymId));
     },
-    /** The fight is over (or the arena reset): the bus feeds no record. */
+    /** The fight is over (or the arena reset): its lead sighting is booked and the bus feeds no record. */
     end() {
+      if (cur) cur.close();
       cur = null;
     },
+    keyOf,
+    STALE,
+    LOW,
+    SENT,
     get current() {
       return cur;
     },

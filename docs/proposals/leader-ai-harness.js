@@ -90,10 +90,10 @@ try {
   /* it reads the DOM at the end; G.U is set before that */
 }
 // The engine in dev.html order. The slice's two new files load only when they exist, so the record run works on the code before it.
-const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-info.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
+const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const NEW = ['js/systems/leader-info.js', 'js/entities/leader-ai.js'];
 // leader-ai-mutate.js points one of these at a broken copy
-const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS' };
+const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS' };
 const missing = [];
 for (const p of FILES) {
   const alt = OVERRIDE[p] && process.env[OVERRIDE[p]];
@@ -949,8 +949,8 @@ if (built2) {
       ok(errs({ triggers: [{ on: 'start', line: 'x', jump: 1 }] }).some((s) => /unknown key jump/.test(s)), 'an unknown trigger key is named');
       ok(errs({ triggers: [{ on: 'start', swap: 0 }] }).some((s) => /swap is a 1-based/.test(s)), 'a swap is a 1-based team slot');
       ok(errs({ lines: { up: 3 } }).some((s) => /ai line up is text/.test(s)) && errs({ lines: { sideways: 'x' } }).some((s) => /unknown ai line/.test(s)), 'swing lines are up and down, as text');
-      const all = { triggers: [{ on: 'start', line: 'a' }, { on: 'hp', below: 0.5, swap: 2, set: { aggression: 0.9 }, for: 3 }, { on: 'faint', side: 'own', slot: 1 }, { on: 'sendIn', line: 'b', repeat: true }, { on: 'time', at: 9, line: 'c' }], lines: { up: 'u', down: 'd' } };
-      ok(errs(all).length === n0, 'every condition and action the spec names (but exploiting a pattern, slice 4) passes');
+      const all = { triggers: [{ on: 'start', line: 'a' }, { on: 'hp', below: 0.5, swap: 2, set: { aggression: 0.9 }, for: 3 }, { on: 'faint', side: 'own', slot: 1 }, { on: 'sendIn', line: 'b', repeat: true }, { on: 'time', at: 9, line: 'c' }, { on: 'exploit', line: 'e' }], lines: { up: 'u', down: 'd' } };
+      ok(errs(all).length === n0, 'every condition and action the spec names (exploiting a pattern since slice 4) passes');
     }
 
     // ---------------- 12. confidence ----------------
@@ -1399,6 +1399,316 @@ if (built2) {
       ok(worst <= DT + 1e-9, 'the breathers stay under their share');
       ok(ai.conf >= 0.2 - 1e-9 && ai.conf <= 0.9 + 1e-9, 'confidence stays between floor and ceiling: ' + ai.conf.toFixed(3));
       ok(look() === before, 'no HP, cooldown, tempo, power or level was changed (NO RUBBER BANDING)');
+    }
+
+    // ======================= slice 4 (#33): run memory and the first exploit =======================
+    // Expected values are hand-derived from LEADER-AI ("Run memory and behavior tracking", STALE REVEALS, PREDICTION CAP) and the
+    // opening agreed in issue #33 (Jess 2026-11-08): learnRate 3 (Misty authors 2), predictCap 7 in 10 as a seeded run-long bag, the
+    // usual lead = the mon of yours with the most field time in a fight, its read skips minField, no swap but the line when already
+    // on the best matchup. Your mons: Bulbasaur 'uid-bulba' (Grass/Poison), Charmander 'slot:1' (Fire, no copy uid).
+    const Mem = G.LeaderMemory;
+    const built4 = !!(Mem && Mem.lead && AI.BASE.learnRate != null && typeof AI.prototype.open === 'function');
+    ok(built4, 'slice 4 is built: G.LeaderMemory, G.LeaderAI.BASE.learnRate and the opening read defined');
+    if (built4) {
+      const B = 'uid-bulba',
+        C4 = 'slot:1',
+        MISTY = K[gymIdx('Misty')].id,
+        BROCK = K[gymIdx('Brock')].id;
+      /** One whole fight: `plan` is [[your roster index on the field, seconds], ...]; then the arena resets, which books it. */
+      const fight = (name, loop, plan = [[0, 1]], on = {}) => {
+        const r = go3(name, loop, on);
+        for (const [act, secs] of plan) {
+          youActive = act;
+          run(secs);
+        }
+        G.GymArena.reset();
+        return r;
+      };
+      const fresh4 = () => {
+        G.GymArena.reset();
+        Mem.start();
+      };
+      const exploits = (ai) => ai.log.filter((d) => d.act === 'exploit' && /^your usual lead/.test(d.text)).length;
+      const holds = (ai) => ai.log.filter((d) => d.act === 'exploit' && /^held back/.test(d.text)).length;
+      const MLINE = "Misty: I know who you lean on. Let's see them handle this!";
+
+      // ---------------- 18. the settings and the authoring ----------------
+      {
+        ok(AI.BASE.learnRate === 3 && AI.BASE.predictCap === 7, 'the baselines: learnRate 3, predictCap 7 (of 10)');
+        ok(go3('Misty', 2).ai.set.learnRate === 2 && go3('Brock', 2).ai.set.learnRate === 3, 'Misty authors learnRate 2; Brock keeps the baseline 3');
+        ok(go3('Misty', 2).ai.set.predictCap === 7 && go3('Brock', 2).ai.set.predictCap === 7, 'both keep predictCap 7');
+        const errs = (ai) => G.Gyms.validate(Object.assign({}, K[gymIdx('Misty')], { ai })),
+          n0 = errs(undefined).length;
+        ok(errs(K[gymIdx('Misty')].ai).length === n0 && errs(K[gymIdx('Brock')].ai).length === n0, "Misty's and Brock's ai (with their exploit lines) pass the validator");
+        ok(errs({ learnRate: 2, predictCap: { 1: 5, 2: 9 } }).length === n0, 'learnRate and predictCap take numbers and loop keys');
+        ok(errs({ predictCap: 11 }).some((s) => /predictCap is from 0 to 10/.test(s)), 'a predictCap above 10 is refused');
+        ok(errs({ triggers: [{ on: 'exploit' }] }).some((s) => /does nothing/.test(s)), 'an exploit trigger needs an action');
+        const said = (who) => (K[gymIdx(who)].ai.triggers || []).some((t) => t.on === 'exploit' && t.line);
+        ok(said('Misty') && said('Brock'), 'Misty and Brock each author an exploit line');
+      }
+
+      // ---------------- 19. the store: run-scoped, never saved, fed only by the information layer ----------------
+      {
+        Mem.end();
+        ok(!Mem.on && Mem.record(MISTY) === null, 'outside a run there is no store and no record');
+        Mem.start();
+        const rec = Mem.record(MISTY);
+        ok(rec && rec.fights === 0 && rec.mons.size === 0 && rec.team.leads.size === 0, 'startRun: an empty record');
+        ok(Mem.record(BROCK) !== rec && Mem.record(MISTY) === rec, 'one record per leader, keyed by gym id');
+        Mem.end();
+        ok(Mem.record(MISTY) === null, 'endRun: the store is gone');
+        const src = (p) => fs.readFileSync(path.join(R, p), 'utf8'),
+          body = (s, fn) => s.slice(s.indexOf('function ' + fn + '('), s.indexOf('\n  function ', s.indexOf('function ' + fn + '(') + 10));
+        ok(/G\.LeaderMemory\.start\(\)/.test(body(src('js/game.js'), 'startRun')), 'G.Game.startRun starts the store');
+        ok(/G\.LeaderMemory\.end\(\)/.test(body(src('js/game.js'), 'endRun')), 'G.Game.endRun drops it');
+        const ms = src('js/systems/leader-memory.js');
+        ok(!/SimBus|G\.DB|localStorage/.test(ms), 'the memory module hears nothing and writes no save (only G.LeaderInfo feeds it)');
+        // a cast with no fight running, or after one ends, is not remembered
+        fresh4();
+        reveal(bulba, 'vine-whip');
+        ok(Mem.record(MISTY).mons.size === 0, 'a cast outside a fight is not remembered');
+        const { t, ai, s1, s2 } = go3('Misty', 2),
+          mon = (k) => Mem.record(MISTY).mons.get(k);
+        G.SimBus.emit('move:cast', { moveId: 'water-gun', ownerId: s1.id, ownerUid: null, ownerSlot: 0, rival: true, x: 0, y: 0, aim: 0, enemy: true });
+        ok(!mon(B) && !mon(C4), "her own cast writes nothing about your mons");
+        reveal(bulba, 'vine-whip');
+        reveal(bulba, 'razor-leaf');
+        ok(mon(B).moves.get('vine-whip') === 1 && mon(B).moves.get('razor-leaf') === 1, 'your casts are remembered with the fight they were confirmed in (fight 1)');
+        ok(mon(B).bonds.length === 1 && mon(B).bonds[0].ids.slice().sort().join() === 'razor-leaf,vine-whip' && mon(B).bonds[0].fight === 1, 'and the bond, as the information layer revealed it');
+        G.SimBus.emit('slot:switch', { ownerUid: B, ownerSlot: 0, rival: false, slot: 2 });
+        ok(mon(B).switches === 1 && mon(B).toSlot[2] === 1, 'a slot switch is counted, with the slot it went to');
+        // field time and range, against the distance this harness measures each frame
+        let want = 0;
+        const t0 = mon(B).fieldT,
+          r0 = mon(B).range;
+        for (let i = 0; i < 120; i++) {
+          want += G.U.dist(human.x, human.y, t.active.x, t.active.y) * DT;
+          frame();
+        }
+        ok(near(mon(B).fieldT - t0, 2, 0.02), 'two seconds on the field: ' + (mon(B).fieldT - t0).toFixed(3));
+        ok(near(mon(B).range - r0, want, 0.02), 'its range is distance x seconds as the screen shows it: ' + Math.round(mon(B).range - r0) + ' vs ' + Math.round(want));
+        // dodges: one per dodge, however many frames it lasts
+        human.dodgeT = 0.3;
+        run(0.2);
+        human.dodgeT = 0;
+        frame();
+        human.dodgeT = 0.3;
+        frame();
+        human.dodgeT = 0;
+        frame();
+        ok(mon(B).dodges === 2, 'two dodges of yours: ' + mon(B).dodges);
+        // swaps and their tags. Staryu (Water) hits Charmander super effectively, not Bulbasaur (x0.5).
+        run(3); // past the 2 s after her send-out
+        Object.assign(bulba, { hp: 50, maxHp: 100 });
+        youActive = 1;
+        frame();
+        ok(mon(B).swapsOut === 1 && mon(B).into.get(C4) === 1 && mon(C4).swapsIn === 1, 'your swap: Bulbasaur out, into Charmander');
+        ok(Mem.TAGS.every((k) => mon(B).tags[k] === 0), 'at 50% HP, not at a disadvantage, no status, slot ready, 5 s after her send-out: no tag: ' + JSON.stringify(mon(B).tags));
+        run(1);
+        youActive = 0;
+        frame();
+        ok(mon(C4).tags.disadvantage === 1 && mon(C4).tags.low === 0, 'Charmander out against Staryu: the type disadvantage tag');
+        run(1);
+        Object.assign(bulba, { hp: 20, stMajor: { k: 'burn', t: 3 }, slots: [[{ t: 2 }]], active: 0 });
+        youActive = 1;
+        frame();
+        ok(mon(B).tags.low === 1 && mon(B).tags.status === 1 && mon(B).tags.cooldown === 1, 'at 20%, burned, slot on cooldown: low, status and cooldown: ' + JSON.stringify(mon(B).tags));
+        Object.assign(bulba, { hp: 100, stMajor: null, slots: [[{ t: 0 }]] });
+        run(1);
+        youActive = 0;
+        frame();
+        ai.requestSwap(1);
+        frame();
+        ok(t.active === s2, 'she sends in Seel');
+        run(1);
+        youActive = 1;
+        frame();
+        ok(mon(B).tags.sentIn === 1 && mon(B).tags.cooldown === 1, 'your swap 1 s after her mon arrived: the sentIn tag (and a ready slot adds no cooldown): ' + JSON.stringify(mon(B).tags));
+        run(2.5);
+        youActive = 0;
+        frame();
+        ok(mon(C4).tags.sentIn === 0, 'Charmander out 2.5 s later: no sentIn');
+        const outs = mon(B).swapsOut;
+        bulba.dead = true;
+        youActive = 1;
+        frame();
+        ok(Mem.record(MISTY).team.afterFaint.get(C4) === 1 && mon(B).swapsOut === outs, 'a send-in after a faint counts as who you send in, not a swap');
+        for (const k of ['hp', 'maxHp', 'stMajor', 'slots', 'active']) delete bulba[k];
+        bulba.dead = false;
+        G.GymArena.reset();
+        reveal(bulba, 'sleep-powder');
+        ok(!mon(B).moves.has('sleep-powder'), 'after the fight ends, a cast is not remembered');
+      }
+
+      // ---------------- 20. the lead sighting and when a pattern is believed ----------------
+      {
+        fresh4();
+        const rec = () => Mem.record(MISTY);
+        fight('Misty', 2, [[0, 4], [1, 6]]);
+        ok(rec().fights === 1 && rec().team.leads.get(C4) === 1 && !rec().team.leads.has(B), 'Bulbasaur 4 s then Charmander 6 s: one lead sighting, Charmander (the most field time)');
+        fight('Misty', 2, [[0, 5]]);
+        ok(Mem.lead(rec(), 1) === null && Mem.lead(rec(), 2) === null, 'one each: a tie is no pattern');
+        fight('Misty', 2, [[0, 5]]);
+        ok(Mem.lead(rec(), 2) && Mem.lead(rec(), 2).key === B && Mem.lead(rec(), 3) === null, 'Bulbasaur 2, Charmander 1: believed at learnRate 2, not at 3');
+        go3('Misty', 2);
+        G.GymArena.reset();
+        ok(rec().fights === 4 && Mem.lead(rec(), 2).n === 2, 'a fight with no field time is booked but adds no sighting');
+        // Misty (2) and Brock (3) on real fights, with a cap that always acts so only learnRate decides
+        const reads = (name, n) => {
+          fresh4();
+          const id = name === 'Misty' ? MISTY : BROCK,
+            got = [];
+          for (let i = 0; i < n; i++) {
+            Mem.record(id).cap = new AI.Bag(10, 1);
+            const { ai } = go3(name, 2);
+            run(0.5);
+            got.push(exploits(ai));
+            G.GymArena.reset();
+          }
+          return got.join('');
+        };
+        ok(reads('Misty', 4) === '0011', 'Misty acts on your lead from her third fight (2 sightings): ' + reads('Misty', 4));
+        ok(reads('Brock', 5) === '00011', 'Brock from his fourth (3 sightings): ' + reads('Brock', 5));
+      }
+
+      // ---------------- 21. the read: the counter of your usual lead, at once, with its line ----------------
+      {
+        // Misty loop 2: Staryu (Water Gun, Tackle) and Seel (Powder Snow, Water Gun). Against Bulbasaur (nothing revealed, guessed
+        // Grass): Staryu 1 / 2 = 0.5, Seel 2 / 2 = 1.0, so Seel. Against Charmander (guessed Fire): both 3 / 0.5 = 6, a tie, so Staryu stays.
+        const seeded = (key, n = 2, cap = 10) => {
+          fresh4();
+          const rec = Mem.record(MISTY);
+          for (let i = 0; i < n; i++) Mem.bump(rec.team.leads, key);
+          rec.cap = new AI.Bag(cap, 1);
+          return rec;
+        };
+        seeded(B);
+        let { t, ai, s2 } = go3('Misty', 2, { swaps: true, triggers: true });
+        youActive = 1; // Charmander on the field: the read is of Bulbasaur, who it expects to see
+        let at = until(1, () => t.active === s2);
+        ok(at != null && at <= TICK, 'believed (Bulbasaur 2): Seel comes in on the first think tick, not after minField 8 s: ' + at);
+        ok(ai.swaps === 1, 'it counts as a voluntary swap: ' + ai.swaps);
+        ok(says.includes(MLINE), 'and she says so: ' + says.join(' | '));
+        const note = ai.log.find((d) => d.act === 'exploit');
+        ok(note && note.key === B && /Staryu 0\.50, Seel 1\.00/.test(note.text), 'the log names the read and the scores: ' + (note && note.text));
+        run(10);
+        ok(exploits(ai) === 1 && says.filter((x) => x === MLINE).length === 1, 'once a fight');
+        const startAt = says.indexOf('Misty: Think you can keep your head above water?');
+        ok(startAt > says.indexOf(MLINE), 'the read goes ahead of her start line, which still shows after it: ' + says.join(' | '));
+        // already on the best matchup: no swap, the line still shows
+        seeded(C4);
+        ({ t, ai } = go3('Misty', 2, { swaps: true, triggers: true }));
+        const s1c = t.active;
+        run(1);
+        ok(t.active === s1c && ai.swaps === 0 && says.includes(MLINE), 'expecting Charmander (a tie, 6 and 6): Staryu stays, and she still says her line');
+        // not believed: no line, and the matchup swap waits out minField as before
+        seeded(B, 1);
+        ({ t, ai, s2 } = go3('Misty', 2, { swaps: true, triggers: true }));
+        at = until(9, () => t.active === s2);
+        ok(at != null && at >= 8 - 1e-9 && !says.includes(MLINE) && exploits(ai) === 0, 'one sighting: no read; Seel comes in at minField: ' + at);
+        // the memory switch
+        seeded(B);
+        AI.off.memory = true;
+        ({ t, ai } = go3('Misty', 2, { swaps: true, triggers: true }));
+        run(1);
+        AI.off.memory = false;
+        ok(t.active === t.members[0] && !says.includes(MLINE), 'G.LeaderAI.off.memory: no read');
+        // a lone mon (Misty loop 1, Staryu alone): the line, nothing to swap to
+        seeded(B);
+        let err = null;
+        try {
+          ({ t, ai } = go3('Misty', 1, { swaps: true, triggers: true }));
+          run(1);
+        } catch (x) {
+          err = x;
+        }
+        ok(!err && t.members.length === 1 && says.includes(MLINE), 'loop 1, a lone Staryu: the line only: ' + (err ? err.stack : 'no error'));
+      }
+
+      // ---------------- 22. the prediction cap: 7 in every 10, run long ----------------
+      {
+        fresh4();
+        const rec = Mem.record(MISTY);
+        Mem.bump(rec.team.leads, B);
+        Mem.bump(rec.team.leads, B);
+        const got = [];
+        for (let i = 0; i < 20; i++) {
+          const { ai } = go3('Misty', 2);
+          run(0.4);
+          got.push(exploits(ai) ? 1 : holds(ai) ? 0 : '?');
+          G.GymArena.reset();
+        }
+        const block = (k) => got.slice(k * 10, k * 10 + 10).reduce((a, b) => a + (b === 1 ? 1 : 0), 0);
+        ok(!got.includes('?'), 'every fight with a believed pattern draws once: ' + got.join(''));
+        ok(block(0) === 7 && block(1) === 7, 'exactly 7 acts in each block of 10 chances: ' + block(0) + ', ' + block(1));
+        ok(rec.cap.blocks === 2, 'one bag for the run, refilled per block: ' + rec.cap.blocks);
+        ok(got.includes(0) && got.slice(0, 10).indexOf(0) >= 0, 'so it can be baited: it holds back 3 times a block');
+      }
+
+      // ---------------- 23. stale reveals ----------------
+      {
+        fresh4();
+        let r = go3('Misty', 2);
+        reveal(bulba, 'vine-whip');
+        run(1);
+        G.GymArena.reset();
+        // the next fight: remembered before any cast
+        r = go3('Misty', 2);
+        let info = G.GymArena.leaderInfo;
+        ok(info.reveals(bulba).moves.join() === 'vine-whip' && info.reveals(charm).moves.length === 0, 'fight 2: Vine Whip still counts as revealed, before any cast');
+        ok(r.ai.yourAttack(r.s1).id === 'vine-whip', 'and the matchup reads it, not the guess');
+        youActive = 1;
+        run(20);
+        ok(info.reveals(bulba).moves.includes('vine-whip'), 'Bulbasaur off the field for 20 s: it still counts (its first 10 s on the field are not used)');
+        youActive = 0;
+        run(9.9);
+        ok(info.reveals(bulba).moves.includes('vine-whip'), 'after 9.9 s on the field: still');
+        run(0.2);
+        ok(!info.reveals(bulba).moves.includes('vine-whip'), 'after 10 s on the field: no longer');
+        reveal(bulba, 'vine-whip');
+        ok(info.reveals(bulba).moves.includes('vine-whip') && Mem.record(MISTY).mons.get(B).moves.get('vine-whip') === 2, 'cast again: revealed, and confirmed in fight 2');
+        G.GymArena.reset();
+        // seen missing: a whole move set (4) cast without it
+        go3('Misty', 2);
+        info = G.GymArena.leaderInfo;
+        for (const id of ['tackle', 'growl', 'razor-leaf']) reveal(bulba, id);
+        ok(info.reveals(bulba).moves.includes('vine-whip'), 'three other moves cast: Vine Whip may still be the fourth');
+        reveal(bulba, 'sleep-powder');
+        ok(!info.reveals(bulba).moves.includes('vine-whip'), 'a fourth: the set is seen without it');
+        G.GymArena.reset();
+        go3('Misty', 2);
+        ok(G.GymArena.leaderInfo.reveals(bulba).moves.includes('vine-whip'), 'the memory keeps it: stale again in the next fight');
+        ok(G.GymArena.leaderInfo.reveals(charm).moves.length === 0, 'a mon that never cast has nothing remembered');
+        G.GymArena.reset();
+        Mem.end();
+        go3('Misty', 2);
+        ok(G.GymArena.leaderInfo.reveals(bulba).moves.length === 0, 'with no run store, nothing is remembered');
+      }
+
+      // ---------------- 24. a close fight with a read and everything on ----------------
+      {
+        fresh4();
+        const rec = Mem.record(MISTY);
+        Mem.bump(rec.team.leads, B);
+        Mem.bump(rec.team.leads, B);
+        rec.cap = new AI.Bag(10, 1);
+        const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }, 160);
+        const look = () => t.members.map((m) => [m.maxHp, m.cdMul, m.gym.tempo, m.gym.power, m.gym.level].join()).join('|');
+        const before = look();
+        let err = null;
+        for (let i = 0; i < 30 * 60 && !err; i++) {
+          try {
+            frame();
+          } catch (x) {
+            err = x;
+          }
+        }
+        ok(!err, 'a 30 s close fight with a read runs: ' + (err ? err.stack : 'no error'));
+        ok(exploits(ai) === 1, 'with its one read');
+        ok(look() === before, 'no HP, cooldown, tempo, power or level was changed (NO RUBBER BANDING)');
+        G.GymArena.reset();
+        Mem.end();
+      }
     }
     Object.assign(human, { hp: 1e6, maxHp: 1e6 });
     bannerUp = false;
