@@ -94,7 +94,7 @@ Paths: since slice 7b (2026-11-01) there is one move path, the move schema path 
   - Strong Host: follows ALL the player's rules. Player, Gym Leader, Uber, World Boss. A gym leader can do anything a player can (moves of any shape, every card including team cards, items, dodge, a team that swaps like the player's); the designer then RESTRICTS by hand where wanted. Default allow, authored restrictions (for example the self-heal cap per fight, tells). This replaces the 2026-10-31 allow-list model (a fixed set of move forms, no team cards).
   - Weak Host: follows the wild enemy rules. Elite, Wild Enemy. An Elite is a wild enemy scaled up in size and stats, plus its own added rules; it is not a strong host with restrictions.
   - Gym tells (wind-up before an attack) stay for now as an authored restriction on the leader's AI; they may be removed later.
-- [Legacy behavior] Until the host-model slice (TODO.md, audit: docs/proposals/host-model-audit.md), the rules below that say "strong hosts" use the OLD meaning: boss, elite, gym leader, never the player (js/systems/status.js strong(), SS13, the 25% freeze and sleep cut, the trap root). Elites keep these rules as their own mods, and leaders follow the player's rules with their authored restrictions (slice 6).
+- [Legacy behavior] Until the host-model slice (docs/proposals/host-model-plan.md, audit: docs/proposals/host-model-audit.md), the rules below that say "strong hosts" use the OLD meaning: boss, elite, gym leader, never the player (js/systems/status.js strong(), SS13, the 25% freeze and sleep cut, the trap root). Elites keep these rules as their own mods, and leaders follow the player's rules with their authored restrictions (slice 6).
 
 ### Trap, enemies
 

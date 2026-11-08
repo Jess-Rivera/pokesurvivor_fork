@@ -461,6 +461,6 @@ Player statuses, all short with a grace window so nothing stunlocks:
 Delivery: the usual warned zone or beam, with a `status` field applied in `hazards.update` when it hits you. Each Status species carries
 its effects in the table (`fx`, strongest first, e.g. Vileplume's powders give daze and drowsy). A secondary Status (16 species) casts the same
 thing at half strength on its own timer. New icon for the support marker. New strings in English only. Co-op needs the `hz` broadcast to carry
-the status field; that is a deferred hook (local-first), noted in TODO.md.
+the status field; that is a deferred hook (local-first), noted in docs/TODO-notes-2026-11.md (status slice E).
 
 Open for slice 2: exact durations and the stunlock grace window, and whether paralysis should also make you miss turns. I will read `combat.js` for the cooldown hook before proposing numbers.

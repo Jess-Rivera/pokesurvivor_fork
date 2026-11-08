@@ -23,7 +23,7 @@
 | Run progression: level curve, elites, Density Bonus, gyms, badges, Elite Four, end of region, loops | BOSS-REWORK.md |
 | Gym rosters | docs/GYM-ROSTERS.md |
 | Tuned numbers | BALANCE.md and the js/data files named below |
-| Open work and status | STATE.md, TODO.md and the PokeSwarm board |
+| Open work and status | STATE.md, the TODO.md handoff and the PokeSwarm board |
 
 ## 1. Concept
 
@@ -337,7 +337,7 @@ Current behavior. Architecture: ONBOARDING.md.
 
 ## 11. Pending
 
-Open work is tracked in STATE.md, TODO.md and the PokeSwarm board, not here.
+Open work is tracked in STATE.md, the TODO.md handoff and the PokeSwarm board, not here.
 
 ## 12. Meta and endgame (approved, not built)
 

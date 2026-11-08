@@ -154,7 +154,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Tests: hpMult tuned by feel per gym (the fight-time report was scrapped in slice 6, D5); smoke-ui fights one gym per session; the old-model harnesses retire here.
 - Feel test: each gym as it moves over, and this is the natural point to bring in playtesters.
 
-Later, separate plans: the Elite Four, `WorldBoss`, `Uber`. Co-op stays deferred: a deferred-hook note goes to TODO.md at slice 5, since a leader entity is not replicated the way an Enemy is.
+Later, separate plans: the Elite Four, `WorldBoss`, `Uber`. Co-op stays deferred: a deferred-hook note goes to a `deferred` issue at slice 5, since a leader entity is not replicated the way an Enemy is.
 
 ## Harnesses that pin the old model
 

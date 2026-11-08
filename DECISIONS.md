@@ -129,7 +129,7 @@ Canonical: js/data/gyms.js (data), BOSS-REWORK.md section 3g (badge boosts), doc
 
 ## 2026-11-01, ESLint + Prettier setup choices (Jess: defaults)
 ESLint 9 flat config: eslint:recommended plus a short Airbnb-derived set (eqeqeq, no-var, prefer-const, no-shadow, no-unused-vars), not the full Airbnb config (it assumes ES modules and bans patterns this script-global code uses). Warn-only: tools/check.js prints the count and never fails on it. Prettier: single quotes, semicolons, 2-space, width 120, trailing commas es5, LF; .gitattributes and .editorconfig pin LF. One big-bang format commit comes next, its hash in .git-blame-ignore-revs.
-Canonical: TODO.md Backlog, "Lint and format tooling"; eslint.config.js; .prettierrc.json
+Canonical: issue #17 (closed), docs/TODO-notes-2026-11.md "Lint and format tooling"; eslint.config.js; .prettierrc.json
 
 ## 2026-11-01, Slice 7b done: one move path (Jess)
 The ?newcombat flag is gone: every move, player and gym leader, runs in G.MoveSim from its resolved def. Deleted: the legacy player-move engine (the player half of combat.js, player shots in projectile.js), kinds.js, mechanics.js, the legacy level-up cards and the choose screen, the ROUTED list (routed now means a resolved def that is not retired), the legacy stage stacking and the norm factor. Bubble and Hail retired (D-BUBBLE, D-HAIL). The legacy table is kept only for the tools (docs/move_rework_holding/legacy-moves.js). Not changed: js/net/coop.js still calls removed hooks (deferred, D-COOP). Skipped: the dead G.Log.hitOut cleanup in js/systems/log.js. Each step feel-tested by Jess.
@@ -190,7 +190,7 @@ Canonical: js/systems/team-cards.js selfOnly; docs/current feature planning/move
 
 ## 2026-10-31, ESLint and Prettier wait for the move-schema merge (Jess)
 Both tools are adopted, but neither lands until feature-test/new-move-schema merges into main (after 7b), so the branch never has to reconcile a whole-repo reformat. Then one chore branch off main: ESLint (script sourceType, browser globals plus G, ecma 2020, generated and vendored folders ignored, warn-only in check.js at first), and Prettier as one big-bang format commit, listed in .git-blame-ignore-revs. Prettier options are settled at that time, matching the house style (2-space, single quotes, semicolons).
-Canonical: TODO.md Backlog, "Lint and format tooling"
+Canonical: issue #17 (closed), docs/TODO-notes-2026-11.md "Lint and format tooling"
 
 ## 2026-10-30, Slice 5b card list: team-wide cards grouped by move axis (Jess)
 Upgrade cards on the new path are grouped General, Space, Delivery and Payload, each pointing at named move fields. Cooldown Down is added; Reach Up also lengthens flight time; Time Up only touches emitted or spawned things; Count Up only applies where copies spread out; HP Regen heals the bench only; the six stat cards become one Vitamins card with a pick of 3. Retired on the new path: Buff Stacks, the kind-damage cards, Size, Arc, Width, Shot Range, the old Duration, Projectile Speed, Fire Rate. Dodge Cooldown and Splash deferred.
@@ -315,7 +315,7 @@ Canonical: CLAUDE.md, "Where current rules live"
 
 ## 2026-10-28, Q1: Boss doc renames and moves happen in a later organization branch; nothing is renamed in this branch
 Boss doc renames and moves happen in a later organization branch; nothing is renamed in this branch. (owner answer Q1)
-Canonical: TODO.md, "Backlog"
+Canonical: docs/TODO-notes-2026-11.md, "Documentation follow-ups"
 
 ## 2026-10-28, Q2: Gym 1 at 4:00; each later gym 4:00 after the previous gym is beaten and the player has returned
 Gym 1 at 4:00; each later gym 4:00 after the previous gym is beaten and the player has returned. (owner answer Q2)
@@ -410,7 +410,7 @@ Canonical: docs/current feature planning/move-schema/slice-4c.md, "Decisions (mo
 
 ## 2026-10-28, Q24: The owner deletes temp-audit-outputs before the merge
 The owner deletes temp-audit-outputs before the merge. (owner answer Q24)
-Canonical: TODO.md, "Backlog"
+Canonical: docs/TODO-notes-2026-11.md, "Documentation follow-ups"
 
 ## 2026-10-28, A3-1: The Return Home completion bonus replaces the 60 and 90 minute time bonus (Q12)
 The Return Home completion bonus replaces the 60 and 90 minute time bonus (Q12). (owner answer A3-1)
