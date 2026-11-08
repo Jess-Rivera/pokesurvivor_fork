@@ -366,4 +366,5 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: swap triggers vs STAY, stall guards, matchup, dodges, the bag, the decision log (G.LeaderAI), threats (G.LeaderInfo), bench faint paid silently (EnemyMgr.payKill split out), `ai` settings per gym, G.Debug.leaderAI.
 - Found while building: at close range GymBrain is in a tell or its recovery 86% of the time, so Misty never swapped. Built as [Proposed] TELL READING (wind-up only; a held tick waits for the first free frame), for Jess to confirm.
 - Test: leader-ai-harness 159 checks, leader-ai-mutate 27/27; five old leader harnesses run with the AI's decisions off; silver and EV text checks follow payKill. check red only on the two #30 harnesses (same failures as before); smokes gym and team green.
-- Stopped at: #31 in Needs Playtest, feel test owed (loop 2 via dev).
+- Jess feel-tested slice 2: approved ("craaaazy, in a good way"); TELL READING promoted to [Approved]. #31 closed and shipped, #32 unblocked (ready).
+- Stopped at: open #32 (slice 3) in a new chat.

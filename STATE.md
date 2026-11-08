@@ -6,11 +6,11 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Feel test #31 (Needs Playtest): a loop 2 Misty or Brock fight (loop set via dev). Confirm or change LEADER-AI "TELL READING" [Proposed].
-3. Then #32 (slice 3), opened by agreeing its goal, done check and test.
+2. Open #32 (slice 3, ready) in a new chat: agree its goal, done check and test (branch rules "Slice shape"), then the prose plan.
+   Its scope additions (dodge lean, gap-closing dodge) are in the #32 comments and LEADER-AI.
 
 ## Where we are
-- Leader AI (docs/LEADER-AI.md): slices 1 (#22, shipped) and 2 (#31, built 2026-11-08) done. G.LeaderAI swaps (triggers vs STAY,
+- Leader AI (docs/LEADER-AI.md): slices 1 (#22) and 2 (#31) shipped 2026-11-08 (Jess feel-tested slice 2: approved). G.LeaderAI swaps (triggers vs STAY,
   minField 8 s, swapLimit) and dodges (threats from G.LeaderInfo, reflex 0.15 s, seeded bag 6 per 10). Baselines G.LeaderAI.BASE;
   a gym may author `ai` in js/data/gyms.js. Dev: G.Debug.leaderAI({ swaps, dodges }); decision lines in G.Debug.hitbox().
   Test: docs/proposals/leader-ai-harness.js (159), leader-ai-mutate.js (27/27).
@@ -36,7 +36,6 @@ See TODO.md (the handoff, with issue numbers).
 
 ## Open owner decisions
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
-- TELL READING (LEADER-AI, [Proposed]), via the #31 feel test.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.
