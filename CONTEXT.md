@@ -9,7 +9,7 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
 ## Session start (do this first, every session)
 1. Read this file and STATE.md (the short current handoff). Nothing else is required.
 2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
-3. Read TODO.md 'In progress' only if more detail is needed.
+3. Read TODO.md (the short next-session handoff), then `gh issue list` for live state. The board wins over any file.
 4. Tell Jess how to bring THIS machine's repo up to date (Jess runs these; the assistant lists them and what to check, under CLAUDE.md "Git"):
    - The remote is https://github.com/Jess-Rivera/pokesurvivor_fork.git. Work happens on a feature branch (STATE.md names the current one, e.g. feature/items), not on main.
    - `git status` (must be clean; if not, commit or stash first, never edit on a dirty tree after a tool switch).
@@ -21,9 +21,9 @@ Do NOT read DECISIONS.md, DEVLOG.md or BALANCE.md whole (they are large). Search
 Archives (search only): docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md.
 
 ## Session end (do this before stopping or switching machines)
-1. Rewrite STATE.md (keep it under 3 KB; replace, do not append).
+1. Rewrite STATE.md (keep it under 3 KB; replace, do not append) and the TODO.md handoff (what is next, as issue numbers; file an issue for anything agreed that has none).
 2. Append a short DEVLOG.md entry at the end (about 6 lines: what changed, what was decided, what broke, where we stopped).
-3. Remind Jess to commit and push, so the other tool pulls a current tree.
+3. Commit (the assistant may, see CLAUDE.md "Git and GitHub") and remind Jess to push, so the other tool pulls a current tree.
 Both tools follow this symmetric discipline. If STATE.md looks stale after a git pull, suspect the other tool skipped it.
 
 ## The two tools, one repo
