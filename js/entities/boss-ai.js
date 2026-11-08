@@ -540,5 +540,26 @@ G.Boss = (() => {
     return e;
   }
 
-  return { make, GymBrain, TELL, RECOVER, sense, SWITCH_MARGIN };
+  // Leader AI slice 5a (#34): the tuning a Player-entity leader shares with GymBrain (G.GymLeader.Caster, G.LeaderAI read it), one
+  // copy until gyms 3 to 8 switch (slice 12)
+  const TUNE = Object.freeze({
+    TELL,
+    RECOVER,
+    CLOSE,
+    RANGED,
+    ORDER,
+    SPOT,
+    POINT_BLANK,
+    OPP_HEX,
+    OPP_BLOCKED,
+    OPP_DROP,
+    MAJOR,
+    LOW_HP,
+    NEAR,
+    FAR,
+    SHOT_IN,
+    BAND,
+    SWITCH_MARGIN,
+  });
+  return { make, GymBrain, TELL, RECOVER, sense, SWITCH_MARGIN, TUNE, slotsOf, open };
 })();

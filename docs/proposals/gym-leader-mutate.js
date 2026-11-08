@@ -24,7 +24,7 @@ const M = [
   ['moving freely counts as stuck', LD, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],
   ['a flinch counts as stuck', LD, 'if (this.mvRoot || this.stFl || ', 'if (this.mvRoot || '],
   ['the smart side is ignored', LD, 'return l > r ? -1 : 1;', 'return this.brain.side < 0 ? -1 : 1;'],
-  ['the circling side is ignored', LD, 'return this.brain.side < 0 ? -1 : 1;\n', 'return 1;\n'],
+  ['the circling side is ignored', LD, 'return this.ai.legsOf(this).side < 0 ? -1 : 1;\n', 'return 1;\n'],
   // the class and the switch
   ['the switch is ignored', BR, 'if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);', ''],
   ['every gym takes the leader body', BR, 'if (def.gym && def.gym.playerEntity) return', 'if (def.gym) return'],
@@ -56,13 +56,13 @@ const M = [
   // the brain
   ['the brain steps while frozen', AI, 'e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));', 'e.heading = e.unstick(dt, this.steer(e, dt, pl));'], // LEADER-AI slice 1 retarget
   ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget
-  ['no self heal restriction', BR, 'rules.healLimit != null ? rules.healLimit : ', ''],
-  ['tells cannot be turned off', BR, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
-  ['the brain installs heal on the leader', BR, 'if (!e.isPlayer) {\n        e.stabFor', 'if (true) {\n        e.stabFor'],
-  ['flinch keeps the old D5 rule', LD, 'this.brain.tell = null;\n    G.MoveSim.flinch(this);', 'this.brain.flinch();'], // slice 8 retarget
-  ['flinch keeps the tell', LD, 'this.brain.tell = null;\n', ''], // slice 8 retarget
+  ['no self heal restriction', LD, 'rules.healLimit != null ? rules.healLimit : ', ''],
+  ['tells cannot be turned off', LD, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
+  ['the caster installs heal on the leader', LD, 'e.strongHost = true;', 'e.strongHost = true;\n    e.heal = (n) => n;'], // slice 5a retarget
+  ['flinch keeps the old D5 rule', LD, 'this.caster.tell = null;\n    G.MoveSim.flinch(this);', 'this.caster.tell = null;\n    this.caster.wait = 1;'], // slice 8, 5a retarget
+  ['flinch keeps the tell', LD, 'this.caster.tell = null;\n', ''], // slice 8, 5a retarget
   ['an asleep leader flinches', LD, 'applyFlinch() {\n    if (this.dead || G.Status.stunned(this)) return false;', 'applyFlinch() {\n    if (this.dead) return false;'],
-  ['the aim follows you through the tell', BR, 'after: RECOVER / tempo, ang, spot, fired: false };', 'after: RECOVER / tempo, ang, spot, fired: false, get ang2() { return 0; } }; Object.defineProperty(this.tell, "ang", { get: () => Math.atan2(G.Game.player.y - e.y, G.Game.player.x - e.x) });'],
+  ['the aim follows you through the tell', LD, 'after: T.RECOVER / tempo, ang, spot, fired: false };', 'after: T.RECOVER / tempo, ang, spot, fired: false, get ang2() { return 0; } }; Object.defineProperty(this.tell, "ang", { get: () => Math.atan2(G.Game.player.y - e.y, G.Game.player.x - e.x) });'],
   // enrage
   ['no enrage clock', LD, 'if (this.hp < hp0 && this.gym.engagedAt == null) this.gym.engagedAt = G.Gym.now();', ''],
   ['every hit restarts the clock', LD, 'if (this.hp < hp0 && this.gym.engagedAt == null)', 'if (this.hp < hp0)'],

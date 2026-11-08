@@ -70,7 +70,7 @@ const M = [
   ['a mon arriving keeps the stance', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", ''],
   ['a swap resets the breather share', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", "this.breathT = 0;\n    if (this.stance !== 'neutral') this.endStance('a mon arrives');"],
   ['a breather picks no quiet slot', AI, 'if (q >= 0) i = q !== e.active ? q : -1;', ''],
-  ['a breather holds back casts', BR, "if (this.wait <= 0 && !e.stFl && this.attack(dist, pl, now)) return [0, 0, 'Idle'];", "if (this.wait <= 0 && !e.stFl && this.hold !== 'far' && this.attack(dist, pl, now)) return [0, 0, 'Idle'];"],
+  ['a breather holds back casts', AI, 'if (c.release(dist, pl, now)) return [0, 0];', "if (hold !== 'far' && c.release(dist, pl, now)) return [0, 0];"], // slice 5a retarget
   ['the stance hold is ignored', BR, "if (this.hold) this.mode = tight ? 'far' : this.hold;", ''],
   // the lean and the gap-closing dodge
   ['no lean', AI, 'if (!p || Math.abs(a) < LeaderAI.EPS) return [dx, dy];', 'return [dx, dy];'],

@@ -51,6 +51,7 @@ G.LeaderAI = class LeaderAI {
     this.seen = new Set(); // your casts already counted as threats (one per cast)
     this.pending = null; // a read threat waiting out the reflex: { at, serial }
     this.log = []; // the last LOG_N decisions: { t, act, text, ... }
+    this.legs = new Map(); // slice 5a: each mon's movement state this fight (legsOf)
     // slice 3: confidence, pacing, triggers and lines
     const gym = (members[0] && members[0].gym) || {},
       auth = gym.ai || {};
@@ -100,7 +101,6 @@ G.LeaderAI = class LeaderAI {
    *  edge unstick on top. The brain's slot choice is pressed inside its step (pressSlot), before its casts. Then its own decisions:
    *  the dodge watch every frame, the swap choice on the think tick. */
   think(e, dt, pl) {
-    e.brain.hold = LeaderAI.off.pacing ? null : LeaderAI.HOLD[this.stance];
     e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));
     this.clock += dt;
     this.fieldT += dt;
@@ -124,15 +124,123 @@ G.LeaderAI = class LeaderAI {
     }
     this.flushLines();
   }
-  /** Asks the brain where to go: the way to you (around walls, G.Path) and speed 1, so its answer is a heading for the controller. */
+  /** Where to go (slice 5a: moved off GymBrain unchanged): the way to you (around walls, G.Path) at speed 1, so the answer is a
+   *  heading for the controller. The caster's frame runs first (recharge, the slot choice, buffs and heals, a tell's release); while
+   *  it holds the body, or when an attack starts, the heading is none. The stance alternates far and close (7 to 9 s at its favorite
+   *  range, 4 to 5 s at the other; a mon with no melee move stays far; below LOW_HP it favors far) unless pacing holds one (a push
+   *  holds close, a push with no melee move walks to the inner edge of its far band; a breather holds far). Far: it backs off inside
+   *  NEAR, circles you inside FAR and walks in beyond it, the band shrunk to its longest ready ranged move's reach. Close with every
+   *  close move recharging: it circles just outside its reach. */
   steer(e, dt, pl) {
+    const T = G.Boss.TUNE,
+      c = e.caster,
+      L = this.legsOf(e),
+      now = G.Gym.now();
     let [dx, dy] = G.U.norm(pl.x - e.x, pl.y - e.y);
     const pd = G.Path.dirFor(e, pl);
     if (pd) [dx, dy] = pd;
-    const [vx, vy] = e.brain.step(dt, pl, G.U.dist(e.x, e.y, pl.x, pl.y), dx, dy, 1, (i) => this.pressSlot(e, i));
+    const dist = G.U.dist(e.x, e.y, pl.x, pl.y);
+    if (!c.on) {
+      c.init();
+      this.startLegs(e, L);
+    }
+    if (c.prepare(dt, now, () => this.pressSlot(e, this.pickSlot(e, pl, now)))) return [0, 0];
+    if (!L.low && e.hp < e.maxHp * T.LOW_HP) {
+      L.low = true;
+      L.farLike = 0.8;
+    }
+    const hold = LeaderAI.off.pacing ? null : LeaderAI.HOLD[this.stance],
+      tight = hold === 'close' && !L.melee;
+    if (hold) L.mode = tight ? 'far' : hold;
+    else L.modeT -= dt;
+    if (!hold && L.modeT <= 0) {
+      L.mode = L.mode === 'far' && L.melee ? 'close' : 'far';
+      L.modeT = (L.mode === 'far') === L.farLike > 0.5 ? G.U.rand(7, 9) : G.U.rand(4, 5);
+      L.side = -L.side;
+    }
+    // a leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19)
+    let vx = dx,
+      vy = dy;
+    const [ux, uy] = G.U.norm(pl.x - e.x, pl.y - e.y);
+    const circle = () => {
+      vx = -uy * L.side;
+      vy = ux * L.side;
+    };
+    if (L.mode === 'far') {
+      let out = Math.min(T.FAR, c.ranged() - T.SHOT_IN),
+        inn = Math.min(T.NEAR, out - T.BAND);
+      if (tight) [out, inn] = [inn, inn - T.BAND];
+      if (dist < inn) {
+        vx = -ux;
+        vy = -uy;
+      } else if (dist < out) circle();
+    } else if (!T.CLOSE.some((f) => c.ready(f))) {
+      const r = c.reach() + (pl.r || 0) + 30;
+      if (dist < r) {
+        vx = -ux;
+        vy = -uy;
+      } else if (dist < r + 40) circle();
+    }
+    if (c.release(dist, pl, now)) return [0, 0];
     return [vx, vy];
   }
-  /** The brain chose slot i (or -1): `slots` answers it for this press only, and the body reads its controller as yours does. In a
+  /** Mon e's movement state this fight (its stance, the clock to the next switch, the circling side, its low HP mark): per-fight
+   *  state lives on the AI, never on the mons (LEADER-AI SCOPE). */
+  legsOf(e) {
+    let L = this.legs.get(e);
+    if (!L) this.legs.set(e, (L = {}));
+    return L;
+  }
+  /** The fight's first frame of mon e: its favorite range from the authored stance, the first switch in 6 to 8 s, a random side. */
+  startLegs(e, L) {
+    const st = e.gym.stance;
+    L.melee = e.slots.flat().some((s) => G.Boss.TUNE.CLOSE.includes(G.Gyms.formOf(e.caster.def(s.id))));
+    L.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5;
+    L.mode = st === 'far' || !L.melee ? 'far' : 'close';
+    L.modeT = G.U.rand(6, 8);
+    L.side = Math.random() < 0.5 ? -1 : 1;
+    L.low = false;
+  }
+  /** The slot choice (slice 5a: moved off GymBrain unchanged; entity model slice 8, Jess 2026-11-07), under your 0.4 s slot hold and
+   *  never inside a tell. In order: 1 a self heal slot that can cast while hurt (the heal cap counts); 2 stay on the active slot
+   *  while it has a ready move in reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with
+   *  nothing ready in reach, a buff slot whose Gate is open. The slot to press, or -1 to stay. */
+  pickSlot(e, pl, now) {
+    const c = e.caster;
+    if (e.slots.length < 2 || c.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
+    const S = G.Boss.sense(e, pl),
+      go = (i) => (i !== e.active ? i : -1),
+      slotWith = (form, ok) =>
+        e.slots.findIndex((g) =>
+          g.some((s) => G.Boss.open(e, s) && s.t <= 0 && G.Gyms.formOf(c.def(s.id)) === form && ok(s))
+        );
+    if (S.hpFrac < 1 && c.healsLeft > 0) {
+      const h = slotWith('heal', () => true);
+      if (h >= 0) return go(h);
+    }
+    let cur = null,
+      top = null,
+      at = -1;
+    e.slots.forEach((g, i) => {
+      const k = c.attack(
+        S.dist,
+        pl,
+        now,
+        g.filter((s) => G.Boss.open(e, s)),
+        true
+      );
+      if (!k) return;
+      if (i === e.active) cur = k;
+      if (!top || k.score > top.score || (k.score === top.score && k.rank < top.rank)) {
+        top = k;
+        at = i;
+      }
+    });
+    if (top) return !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? go(at) : -1;
+    const b = slotWith('buff', (s) => G.MoveEffects.statReady(c.def(s.id), e));
+    return b >= 0 ? go(b) : -1;
+  }
+  /** The slot choice picked slot i (or -1): `slots` answers it for this press only, and the body reads its controller as yours does. In a
    *  breather a ready buff or heal slot is pressed instead (pacing); a trigger's own press (`raw`) is never replaced. */
   pressSlot(e, i, raw = false) {
     if (!raw && this.stance === 'breather' && !LeaderAI.off.pacing) {
@@ -175,7 +283,7 @@ G.LeaderAI = class LeaderAI {
   /** Inside a tell (its wind-up, until the move fires; the recovery after it is not the tell) or a move commitment (a dash, a root, a
    *  cooldown freeze): no decision is made. */
   busy(e) {
-    const c = e.brain.tell;
+    const c = e.caster.tell;
     return !!((c && !c.fired) || e.mvRoot || G.MoveSim.commits(e).length);
   }
 
@@ -239,7 +347,7 @@ G.LeaderAI = class LeaderAI {
   }
   /** A self heal it can still cast this fight (the heal cap counts; an hpBelow heal counts once it is open). */
   healLeft(e) {
-    const b = e.brain;
+    const b = e.caster;
     return b.healsLeft > 0 && b.pool().some((s) => G.Gyms.formOf(b.def(s.id)) === 'heal');
   }
 
@@ -250,8 +358,8 @@ G.LeaderAI = class LeaderAI {
     if (!you) return 1;
     const yt = LeaderAI.typesOf(you);
     let off = 0;
-    for (const s of m.brain.pool()) {
-      const d = m.brain.def(s.id);
+    for (const s of m.caster.pool()) {
+      const d = m.caster.def(s.id);
       if (!(d.basePower > 0)) continue;
       off = Math.max(off, G.Types.mult(d.type, yt) * (m.types.includes(d.type) ? 1.5 : 1));
     }
@@ -479,7 +587,7 @@ G.LeaderAI = class LeaderAI {
   }
   /** A breather's quiet slot: a buff slot whose Gate is open, or a heal slot while hurt with a heal left; -1 when none. */
   quietSlot(e) {
-    const b = e.brain;
+    const b = e.caster;
     if (e.slots.length < 2 || b.tell || e.mvRoot || e.stFl) return -1;
     return e.slots.findIndex((g) =>
       g.some((s) => {
@@ -494,7 +602,7 @@ G.LeaderAI = class LeaderAI {
    *  one dodge more, and a charge to spare beyond dodgeReserve plus one kept for threats (Jess 2026-11-08). Straight at you. */
   gapClose(e, pl) {
     const S = this.set,
-      b = e.brain;
+      b = e.caster;
     if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;
     if (!b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE.includes(G.Gyms.formOf(b.def(s.id))))) return;
     const reach = b.reach() + (pl.r || 0),

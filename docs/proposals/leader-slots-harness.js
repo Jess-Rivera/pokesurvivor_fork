@@ -16,6 +16,7 @@ const SRC = {
   'js/data/gyms.js': 'LS_GYMS',
   'js/systems/gym.js': 'LS_GYM',
   'js/entities/enemy.js': 'LS_ENEMY',
+  'js/entities/leader-ai.js': 'LS_AI', // leader AI slice 5a: the slot choice moved to the AI player
 };
 const read = (p) => fs.readFileSync(process.env[SRC[p]] || path.join(R, p), 'utf8');
 const load = (p) => vm.runInThisContext(read(p), { filename: p });
@@ -155,13 +156,13 @@ G.Audio.sfx = (k) => sfx.push(k);
 const MISTY = G.Gyms.KANTO.find((g) => g.leader === 'Misty');
 const L1 = () => G.Gyms.movesFor(MISTY.signatures[0], 0, 1).map((m) => Object.assign({}, m));
 const ids = (e) => e.slots.map((g) => g.map((s) => s.id).join('+')).join(',');
-const reachOf = (e, id) => G.Gyms.reachOf(e.brain.def(id), G.Gyms.formOf(e.brain.def(id)));
+const reachOf = (e, id) => G.Gyms.reachOf(e.caster.def(id), G.Gyms.formOf(e.caster.def(id)));
 /** Every move ready, its last tell k(id) cooldowns ago, so its freshness is exactly k(id). */
 const fresh = (e, k) => {
   for (const g of e.slots)
     for (const s of g) {
       s.t = 0;
-      s.last = clock - k(s.id) * e.brain.def(s.id).cd * e.cdMul;
+      s.last = clock - k(s.id) * e.caster.def(s.id).cd * e.cdMul;
     }
 };
 const TWO = () => [{ id: 'tackle' }, { id: 'water-pulse' }];
@@ -203,7 +204,7 @@ reset();
   ok(!sfx.includes('select'), 'a leader switch plays no select sound');
   e.setActive(0);
   ok(e.active === 1, 'no switch inside the hold');
-  e.brain.pickSlot = () => -1;
+  e.ai.pickSlot = () => -1;
   run(e, 25, 5000);
   ok(e.swapT === 0, 'the hold ticks down on the leader itself, with no game.js: ' + e.swapT);
   e.setActive(0);
@@ -231,36 +232,36 @@ reset();
   const a = mk(0);
   fresh(a, () => 1);
   at(a, mid);
-  a.ai.pressSlot(a, a.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(a.active === 1 && near(a.swapT, 0.4), 'out of Tackle reach it switches to Water Pulse, holding 0.4 s: ' + a.active + ' ' + a.swapT);
   // b. inside reach, on Water Pulse: Tackle 1 against Water Pulse 1 x 0.5; 1 >= 1.5 x 0.5, so it switches to Tackle
   const b = mk(1);
   fresh(b, () => 1);
   at(b, close);
-  b.ai.pressSlot(b, b.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(b.active === 0, 'up close Tackle (1) beats Water Pulse (0.5) by 2x: switch');
   // c. the stay rule: on Tackle (1), Water Pulse 2.8 x 0.5 = 1.4 < 1.5, so it stays
   const c = mk(0);
   fresh(c, (id) => (id === 'tackle' ? 1 : 2.8));
   at(c, close);
-  c.ai.pressSlot(c, c.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(c.active === 0, 'Water Pulse at 1.4x does not pull it off a ready Tackle');
   // d. Water Pulse 3.2 x 0.5 = 1.6 >= 1.5, so it switches
   const d = mk(0);
   fresh(d, (id) => (id === 'tackle' ? 1 : 3.2));
   at(d, close);
-  d.ai.pressSlot(d, d.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  d.ai.pressSlot(d, d.ai.pickSlot(d, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(d.active === 1, 'Water Pulse at 1.6x does');
   // e. never inside the hold or a tell
   const h = mk(1);
   fresh(h, () => 1);
   at(h, close);
   h.swapT = 0.2;
-  h.ai.pressSlot(h, h.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(h.active === 1, 'no pick inside the hold');
   h.swapT = 0;
-  h.brain.tell = { fired: false };
-  h.ai.pressSlot(h, h.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  h.caster.tell = { fired: false };
+  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(h.active === 1, 'nor inside a tell');
 }
 
@@ -269,11 +270,11 @@ reset();
 {
   const e = leader(STARYU, gymOf({ moves: TWO() }));
   e.active = 0;
-  e.brain.init();
-  e.brain.wait = 0;
-  e.brain.pickSlot = () => -1;
+  e.caster.init();
+  e.caster.wait = 0;
+  e.ai.pickSlot = () => -1;
   run(e, 30, reachOf(e, 'tackle') + human.r + 20);
-  ok(!casts['water-pulse'] && !e.brain.tell, 'a ready Water Pulse on an inactive slot never starts a tell: ' + JSON.stringify(casts));
+  ok(!casts['water-pulse'] && !e.caster.tell, 'a ready Water Pulse on an inactive slot never starts a tell: ' + JSON.stringify(casts));
 }
 
 // 5. buff visits (Q3)
@@ -283,15 +284,15 @@ reset();
   const e = mk();
   e.active = 0;
   const away = reachOf(e, 'tackle') + human.r + 20;
-  ok(G.MoveEffects.statReady(e.brain.def('harden'), e), "precondition: Harden's Gate is open on a fresh leader");
+  ok(G.MoveEffects.statReady(e.caster.def('harden'), e), "precondition: Harden's Gate is open on a fresh leader");
   at(e, away);
-  e.ai.pressSlot(e, e.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  e.ai.pressSlot(e, e.ai.pickSlot(e, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(e.active === 1, 'nothing in reach is ready: it visits the Harden slot');
   const f = mk();
   f.active = 0;
-  f.brain.init();
-  f.brain.wait = 0;
-  f.brain.pickSlot = () => -1;
+  f.caster.init();
+  f.caster.wait = 0;
+  f.ai.pickSlot = () => -1;
   run(f, 30, away);
   ok(!casts.harden, 'Harden never casts from the bench: ' + JSON.stringify(casts));
   f.active = 1;
@@ -311,15 +312,15 @@ reset();
   };
   const a = mk();
   a.hp = a.maxHp * 0.3;
-  a.ai.pressSlot(a, a.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(a.active === 2, 'below 35%: the Recover slot first, ahead of a ready Water Pulse: ' + a.active);
   const b = mk();
   b.hp = b.maxHp * 0.5;
-  b.ai.pressSlot(b, b.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(b.active === 1, 'above its line the Recover slot is closed: Water Pulse: ' + b.active);
   const c = mk({ restrictions: { healLimit: 0 } });
   c.hp = c.maxHp * 0.3;
-  c.ai.pressSlot(c, c.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
+  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
   ok(c.active === 1, 'healLimit 0: no heal visit: ' + c.active);
 }
 
@@ -328,13 +329,13 @@ reset();
 {
   const e = leader(STARYU, gymOf({ moves: [{ id: 'tackle', bond: true }, { id: 'water-pulse', bond: true }, { id: 'harden' }] }));
   e.active = 0;
-  e.brain.init();
-  e.brain.wait = 0;
-  e.brain.pickSlot = () => -1;
+  e.caster.init();
+  e.caster.wait = 0;
+  e.ai.pickSlot = () => -1;
   fresh(e, () => 1);
   const close = Math.max(1, reachOf(e, 'tackle') - 5);
   run(e, 1, close);
-  const t = e.brain.tell;
+  const t = e.caster.tell;
   ok(!!t && t.id === 'tackle' && !!t.bond && t.bond.length === 1 && t.bond[0].s.id === 'water-pulse', 'one tell for the bonded slot: Tackle leads, Water Pulse rides');
   ok(!!t && near(t.wind, Math.max(G.Boss.TELL.melee, G.Boss.TELL.shot)), 'the tell lasts its longest member (0.5 s): ' + (t && t.wind));
   run(e, 40, close);
@@ -370,16 +371,16 @@ reset();
 {
   const e = leader(STARYU, gymOf({ moves: TWO() }));
   e.active = 1;
-  e.brain.init();
-  e.brain.wait = 0;
+  e.caster.init();
+  e.caster.wait = 0;
   const act = e.slots[1][0],
     other = e.slots[0][0];
   act.t = 0;
   other.t = 0;
-  e.brain.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
-  ok(e.applyFlinch() === true && e.brain.tell === null, 'a flinch loses the tell');
-  ok(near(act.t, e.brain.def('water-pulse').cd * e.cdMul + 0.3), 'the active slot restarts at cd + 0.3: ' + act.t);
-  ok(other.t === 0 && e.brain.wait === 0, 'the other slot is untouched, no extra wait');
+  e.caster.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
+  ok(e.applyFlinch() === true && e.caster.tell === null, 'a flinch loses the tell');
+  ok(near(act.t, e.caster.def('water-pulse').cd * e.cdMul + 0.3), 'the active slot restarts at cd + 0.3: ' + act.t);
+  ok(other.t === 0 && e.caster.wait === 0, 'the other slot is untouched, no extra wait');
   const s = leader();
   s.stMajor = { k: 'sleep', t: 2, age: 0 };
   ok(s.applyFlinch() === false, 'an asleep leader cannot flinch');

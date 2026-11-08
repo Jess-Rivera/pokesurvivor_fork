@@ -319,8 +319,8 @@ reset();
   for (let i = 0; i < 240 && !tell; i++) {
     clock += DT;
     e.update(DT, human);
-    if (e.brain.tell) {
-      tell = e.brain.tell;
+    if (e.caster.tell) {
+      tell = e.caster.tell;
       aim0 = tell.ang;
     }
   }
@@ -328,7 +328,7 @@ reset();
   human.x = -300; // you move: the aim stays locked
   human.y = 200;
   e.update(DT, human);
-  ok(e.brain.tell && e.brain.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
+  ok(e.caster.tell && e.caster.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
   for (let i = 0; i < 60; i++) {
     clock += DT;
     e.update(DT, human);
@@ -357,11 +357,11 @@ reset();
 {
   reset();
   const eLoop = leader(STARYU, gymOf({ loop: 2 }));
-  ok(eLoop.brain.healsLeft === 2, 'with no restriction the heal cap is the loop number');
+  ok(eLoop.caster.healsLeft === 2, 'with no restriction the heal cap is the loop number');
   const eNone = leader(STARYU, gymOf({ restrictions: { healLimit: 0 } }));
-  ok(eNone.brain.healsLeft === 0, 'healLimit 0 allows none');
+  ok(eNone.caster.healsLeft === 0, 'healLimit 0 allows none');
   const eTwo = leader(STARYU, gymOf({ restrictions: { healLimit: 3 } }));
-  ok(eTwo.brain.healsLeft === 3, 'healLimit overrides the loop number');
+  ok(eTwo.caster.healsLeft === 3, 'healLimit overrides the loop number');
   const noTell = leader(STARYU, gymOf({ restrictions: { tells: false }, moves: [{ id: 'water-pulse' }] }));
   human.x = 100;
   human.y = 0;
@@ -369,10 +369,10 @@ reset();
   for (let i = 0; i < 240 && wind == null; i++) {
     clock += DT;
     noTell.update(DT, human);
-    if (noTell.brain.tell) wind = noTell.brain.tell.wind;
+    if (noTell.caster.tell) wind = noTell.caster.tell.wind;
   }
   ok(wind === 0, 'tells off: no wind-up, got ' + wind);
-  ok(leader().brain.tells === true, 'tells are on by default');
+  ok(leader().caster.tells === true, 'tells are on by default');
 }
 // recoil and heal come from the Player entity
 {
@@ -388,17 +388,17 @@ reset();
 // flinch: your rule since slice 8 (Q7, replacing D5): the tell is lost, the active slot restarts (cd + the 0.3 s hold), the others do not
 {
   const e = leader();
-  e.brain.init();
-  e.brain.wait = 0;
+  e.caster.init();
+  e.caster.wait = 0;
   const act = e.activeGroup()[0], // Water Pulse, the starting slot
     other = e.slots[0][0]; // Tackle
   act.t = 0;
   other.t = 0;
-  e.brain.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
+  e.caster.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
   ok(e.applyFlinch() === true, 'a leader can flinch');
-  ok(e.brain.tell === null, 'a flinch loses the tell');
+  ok(e.caster.tell === null, 'a flinch loses the tell');
   ok(near(act.t, G.MoveDefs['water-pulse'].cd * e.cdMul + 0.3), 'the active slot restarts with the 0.3 s hold: ' + act.t);
-  ok(other.t === 0 && e.brain.wait === 0, 'another slot is untouched and no extra wait follows');
+  ok(other.t === 0 && e.caster.wait === 0, 'another slot is untouched and no extra wait follows');
   ok(!!e.stFl, 'the recoil runs');
   const a = leader();
   a.stMajor = { k: 'sleep', t: 2, age: 0 };
@@ -565,7 +565,7 @@ reset();
   G.World.collide = wall(false);
   const a = leader();
   a.ai.steer = () => [0, -1];
-  a.brain.side = -1;
+  a.ai.legsOf(a).side = -1;
   run(a, 0.3);
   ok(a.sideT <= 0, 'unstick: no side-step after 0.3 s pinned');
   run(a, 0.1);
@@ -578,7 +578,7 @@ reset();
   G.World.collide = wall(true);
   const b = leader();
   b.ai.steer = () => [0, -1];
-  b.brain.side = 1;
+  b.ai.legsOf(b).side = 1;
   run(b, 0.4);
   ok(b.sideT > 0 && b.side === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + b.side);
   // c. moving freely she never side-steps

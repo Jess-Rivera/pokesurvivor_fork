@@ -18,8 +18,8 @@ const M = [
   // D1: your attack formula
   ['the brain factor is put back on the leader', BR, '      // A G.GymLeader inherits these four', '      e.moveFactor = (m) => this.factor(m);\n      // A G.GymLeader inherits these four'],
   // finding C: the order
-  ['max HP is set before the cards', LD, '    this.brain = new G.Boss.GymBrain(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads\n    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n', '    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n    this.brain = new G.Boss.GymBrain(this);\n'],
-  ['the items go on before the brain', LD, '    this.brain = new G.Boss.GymBrain(this); // first', '    this.arm();\n    this.brain = new G.Boss.GymBrain(this); // first'],
+  ['max HP is set before the cards', LD, '    this.caster = new G.GymLeader.Caster(this); // first (slice 6, finding C): its card store holds the Vitamins that max HP reads\n    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n', '    this.maxHp = this.maxHpAt(this.level);\n    this.hp = this.maxHp;\n    this.caster = new G.GymLeader.Caster(this);\n'],
+  ['the items go on before the caster', LD, '    this.caster = new G.GymLeader.Caster(this); // first', '    this.arm();\n    this.caster = new G.GymLeader.Caster(this); // first'],
   // D3: the profile
   ['the profile is not passed', LD, 'def.gym.profile ? G.Stats.profile(def.gym.profile) : null', 'null'],
   ['profileFor drops the nature', GY, 'natureUp: N ? N[1] : 0,\n      natureDown: N ? N[2] : 0,', 'natureUp: 0,\n      natureDown: 0,'],

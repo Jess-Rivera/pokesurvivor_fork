@@ -197,6 +197,69 @@ function trace(name) {
   off();
   return { casts, ticks };
 }
+// Slice 5a (#34): the same walk with every AI decision on (swaps, dodges, confidence, pacing, triggers), loops 1 and 2, so the
+// movement that pacing holds, the slot choice, the tells and the casts all show. The active mon takes 30% of its max HP at 5 s and
+// 40% more at 9 s (the low HP stance, Misty's Recover, the hp triggers) and faints at 16 s. Every 6th frame: who, where, the
+// active slot, the stance and the tell (move, wind-up to 3 decimals, fired); every tell start; every cast with its aim.
+const TRACE5 = path.join(__dirname, 'leader-ai-5a-trace.json');
+const tellOf = (e) => (e.brain && e.brain.tell) || (e.caster && e.caster.tell) || null;
+function trace5(name, loop) {
+  const was = Object.assign({}, G.LeaderAI.off),
+    seed0 = G.LeaderAI.seed;
+  Object.assign(G.LeaderAI.off, { swaps: false, dodges: false, confidence: false, pacing: false, triggers: false, memory: false });
+  G.LeaderAI.seed = 7;
+  const a = open(name, loop, 160),
+    t = a.team,
+    cx = human.x,
+    cy = human.y,
+    casts = [],
+    tells = [],
+    ticks = [];
+  const off = G.SimBus.on('move:cast', (ev) => {
+    const i = t.members.findIndex((m) => m.id === ev.ownerId);
+    if (i >= 0) casts.push([frameNo, ev.moveId, i, +ev.aim.toFixed(3)]);
+  });
+  let last = null;
+  frameNo = 0;
+  try {
+    for (let f = 0; f < 26 * 60; f++) {
+      const ang = (f * DT * 2 * Math.PI) / 8;
+      human.x = cx + Math.cos(ang) * 120;
+      human.y = cy + Math.sin(ang) * 120;
+      const e0 = t.active;
+      if (!e0.dead && (f === 5 * 60 || f === 9 * 60)) e0.hurt(e0.maxHp * (f === 5 * 60 ? 0.3 : 0.4), null, true);
+      if (f === 16 * 60 && !e0.dead) faint(e0);
+      // a breather at 2 s (3 s long: the far stance and the quiet slot) and a voluntary swap request at 19 s (the bench has one)
+      if (f === 2 * 60) (t.ai || e0.ai).startStance('breather', 'trace', 3);
+      if (f === 19 * 60 && t.living().length > 1) (t.ai || e0.ai).requestSwap(t.members.findIndex((m) => m !== t.active && !m.dead));
+      frame();
+      const e = t.active,
+        c = tellOf(e);
+      if (c && c !== last) tells.push([frameNo, t.activeIdx, c.id, +c.wind.toFixed(3)]);
+      last = c;
+      if (frameNo % 6 === 0) {
+        const ai = t.ai || e.ai;
+        ticks.push([frameNo, t.activeIdx, +e.x.toFixed(2), +e.y.toFixed(2), e.active, ai.stance, c ? c.id : null, c ? +c.t.toFixed(3) : null, c ? c.fired : null]);
+      }
+    }
+  } finally {
+    off();
+    Object.assign(G.LeaderAI.off, was);
+    G.LeaderAI.seed = seed0;
+  }
+  return { casts, tells, ticks };
+}
+const trace5All = () => {
+  const out = {};
+  for (const name of ['Misty', 'Brock']) for (const loop of [1, 2]) out[name + loop] = trace5(name, loop);
+  return out;
+};
+if (process.env.LA_RECORD5A) {
+  const out = Object.assign({ recorded: new Date().toISOString().slice(0, 10) }, trace5All());
+  fs.writeFileSync(TRACE5, JSON.stringify(out));
+  console.log('leader-ai-harness: 5a trace recorded to ' + path.relative(R, TRACE5) + ' (' + Object.keys(out).filter((k) => k !== 'recorded').map((k) => k + ' ' + out[k].casts.length + ' casts, ' + out[k].tells.length + ' tells').join('; ') + ')');
+  process.exit(0);
+}
 if (RECORD) {
   const out = { recorded: new Date().toISOString().slice(0, 10), Misty: trace('Misty'), Brock: trace('Brock') };
   fs.writeFileSync(TRACE, JSON.stringify(out));
@@ -216,6 +279,24 @@ if (RECORD) {
       const ci = got.casts.findIndex((c, i) => JSON.stringify(c) !== JSON.stringify(w.casts[i]));
       ok(ci < 0 && got.casts.length === w.casts.length, name + ': every cast matches the recorded fight' + (ci >= 0 ? ', first drift at ' + JSON.stringify(got.casts[ci]) + ' vs ' + JSON.stringify(w.casts[ci]) : ''));
     }
+}
+// Slice 5a (#34) parity: the AI player without GymBrain plays the fights recorded on GymBrain (LA_RECORD5A=1, before the slice).
+{
+  const want = fs.existsSync(TRACE5) ? JSON.parse(fs.readFileSync(TRACE5, 'utf8')) : null;
+  ok(want, 'parity 5a: the trace exists (record it on the code before the slice: LA_RECORD5A=1)');
+  if (want) {
+    const got = trace5All();
+    for (const k of Object.keys(got)) {
+      const w = want[k],
+        g = got[k];
+      ok(w && w.casts.length > 10 && w.tells.length > 5, k + ': the recorded fight casts and tells (a trace worth comparing)');
+      if (!w) continue;
+      for (const part of ['ticks', 'tells', 'casts']) {
+        const i = g[part].findIndex((x, j) => JSON.stringify(x) !== JSON.stringify(w[part][j]));
+        ok(i < 0 && g[part].length === w[part].length, k + ': every ' + part.slice(0, -1) + ' matches the GymBrain fight' + (i >= 0 ? ', first drift at ' + JSON.stringify(g[part][i]) + ' vs ' + JSON.stringify(w[part][i]) : g[part].length !== w[part].length ? ', ' + g[part].length + ' vs ' + w[part].length : ''));
+      }
+    }
+  }
 }
 
 const built = !missing.length && G.LeaderAI && G.LeaderInfo;
@@ -255,15 +336,15 @@ if (built) {
     ok(sets.length > 0, 'in 10 s of fighting she changes slot at least once: ' + sets.length);
     ok(sets.every(([f, i]) => (answers.get(f) || []).includes(i)), 'every slot change came through slots() in the same frame');
     ok(other === 0, 'with no request, dodge, shake, cycles and the swap calls answer nothing (slice 1)');
-    // GymBrain's choice no longer switches by itself: it returns the slot
+    // the slot choice (GymBrain's until slice 5a, now the AI player's) never switches by itself: it returns the slot
     const e = t.active;
     let direct = 0;
     const s1 = e.setActive;
     e.setActive = () => direct++;
     e.swapT = 0;
-    const pick = e.brain.pickSlot(human, G.Gym.now());
+    const pick = e.ai.pickSlot(e, human, G.Gym.now());
     e.setActive = s1;
-    ok(direct === 0 && typeof pick === 'number', 'GymBrain.pickSlot returns its choice (' + pick + ') and never calls setActive');
+    ok(direct === 0 && typeof pick === 'number', 'the slot choice returns its choice (' + pick + ') and never calls setActive');
   }
 
   // ---------------- 3. a forced swap request runs your rules ----------------
@@ -559,14 +640,14 @@ if (built2) {
     ok(h.during == null && h.after != null && h.after <= DT + 1e-9, 'a commitment (a dash root) holds the swap; it fires on the first free frame: ' + h.after);
     // a wind-up that never fires (wind 99) stands in for a long tell
     h = hold(
-      (e) => (e.brain.tell = { fired: false, t: 0, wind: 99, after: 0 }),
-      (e) => (e.brain.tell = null),
+      (e) => (e.caster.tell = { fired: false, t: 0, wind: 99, after: 0 }),
+      (e) => (e.caster.tell = null),
       2.5
     );
     ok(h.during == null && h.after != null && h.after <= DT + 1e-9, 'a tell\'s wind-up holds it the same: ' + h.after);
     // the recovery after the move fired is not the tell: the swap comes on its tick
     h = hold(
-      (e) => (e.brain.tell = { fired: true, t: 0, wind: 0, after: 2.4 }),
+      (e) => (e.caster.tell = { fired: true, t: 0, wind: 0, after: 2.4 }),
       () => {},
       2.3
     );
@@ -609,7 +690,7 @@ if (built2) {
     const lone = at(open('Misty', 1));
     lone.s1.hp = lone.s1.maxHp * 0.2;
     ok(lone.ai.healLeft(lone.s1), 'Staryu with Recover open and a heal left: healLeft');
-    lone.s1.brain.healsLeft = 0;
+    lone.s1.caster.healsLeft = 0;
     ok(!lone.ai.healLeft(lone.s1), 'with the heal cap spent: none left');
     // matchup: Seel is 2x Staryu exactly (1.0 / 0.5) for you Bulbasaur; it needs Seel at 40%+
     youActive = 0;
@@ -1038,7 +1119,7 @@ if (built2) {
       ok(pushAt != null && pushAt >= 4.92 - 1e-9 && pushAt <= 4.92 + TICK, 'frustration: a push after 4.92 s with no hit landed: ' + pushAt);
       ok(/frustration/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
       frame();
-      ok(s1.brain.hold === 'close' && s1.brain.mode === 'close', 'a push holds the close stance: ' + s1.brain.hold + ' ' + s1.brain.mode);
+      ok(G.LeaderAI.HOLD[ai.stance] === 'close' && ai.legsOf(s1).mode === 'close', 'a push holds the close stance: ' + G.LeaderAI.HOLD[ai.stance] + ' ' + ai.legsOf(s1).mode);
       const endAt = until(6, () => ai.stance !== 'push');
       ok(endAt != null && Math.abs(endAt - 5) <= 2 * DT + 1e-9, 'with no hit the push ends after 5 s: ' + endAt);
       const again = until(6, () => ai.stance === 'push');
@@ -1047,7 +1128,7 @@ if (built2) {
       frame();
       ok(ai.stance === 'neutral' && /landed/.test(ai.stanceWhy), 'a hit landed ends the push: ' + ai.stance + ' (' + ai.stanceWhy + ')');
       frame();
-      ok(s1.brain.hold == null, 'and releases the stance');
+      ok(G.LeaderAI.HOLD[ai.stance] == null, 'and releases the stance');
       // bolder: aggression 0.9 waits 6 x 0.6 = 3.6 s
       ({ ai } = go3('Misty', 2, { pacing: true }));
       ai.set.aggression = 0.9;
@@ -1077,7 +1158,7 @@ if (built2) {
       ok(br != null && br <= TICK, 'sustained pressure (16% in 2 s) earns a breather on the next tick: ' + br);
       ok(/pressure/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
       frame();
-      ok(s1.brain.hold === 'far' && s1.brain.mode === 'far', 'a breather holds the far stance');
+      ok(G.LeaderAI.HOLD[ai.stance] === 'far' && ai.legsOf(s1).mode === 'far', 'a breather holds the far stance');
       let endClock = null;
       const len = until(4, () => ai.stance !== 'breather' && (endClock = ai.clock) != null);
       ok(len != null && Math.abs(len - 2.46) <= 2 * DT + 1e-9, 'it lasts 2.46 s: ' + len);
@@ -1149,7 +1230,7 @@ if (built2) {
       ok(t.active === s2 && ai.stance === 'neutral', 'a mon arriving ends the breather: Seel starts neutral');
       ok(ai.breathT >= bt - 1e-9, 'and the breather time is kept: ' + bt.toFixed(2) + ' then ' + ai.breathT.toFixed(2));
       frame();
-      ok(s2.brain.hold == null, 'Seel holds no stance');
+      ok(G.LeaderAI.HOLD[ai.stance] == null && ai.legsOf(s2).mode != null, 'Seel holds no stance');
       // the cap: at aggression 0 a breather is 4.5 s and the wait 8 s (36% of the time), so breatherMax 25% has to cut them
       ({ t, ai } = go3('Misty', 2, { pacing: true }));
       ai.set.aggression = 0;
@@ -1222,7 +1303,7 @@ if (built2) {
           ai.clock = 100; // so breatherMax (25% of the fight so far) does not end it at once
           ai.startStance(stance, 'test', 10);
         }
-        const reach = e.brain.reach() + human.r;
+        const reach = e.caster.reach() + human.r;
         let dv = null,
           at = null;
         for (let i = 1; i <= 30 && !dv; i++) {

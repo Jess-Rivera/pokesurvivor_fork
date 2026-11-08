@@ -304,13 +304,13 @@ const ZERO = [0, 0, 0, 0, 0, 0],
   {
     const wp = G.MoveDefs['water-pulse'],
       o = leader(gymOf({ item: 'lifeorb' }));
-    o.brain.orbCost(wp);
+    o.caster.orbCost(wp);
     ok(near(o.maxHp - o.hp, 21.84), 'Life Orb: one cast costs 21.84: ' + (o.maxHp - o.hp));
     o.hp = 5;
-    o.brain.orbCost(wp);
+    o.caster.orbCost(wp);
     ok(o.hp === 1, 'Life Orb never drops her below 1 HP: ' + o.hp);
     const n = leader();
-    n.brain.orbCost(wp);
+    n.caster.orbCost(wp);
     ok(n.hp === n.maxHp, 'no Life Orb, no cost');
     // through a real cast: the brain pays it on the cast
     const casts = {};
