@@ -17,7 +17,7 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
      3. **Needs triage:** counts of unlabeled and `needs-triage` issues, `needs-info` issues with a reply since the last note, and `blocked` issues whose blockers are all closed (likely stale labels). Offer /triage if any are nonzero.
      4. **Drift:** anything contradicting STATE.md or TODO.md (a closed issue still listed as next, a branch ahead or behind main).
    - Keep it to numbers and one-liners; do not read issue bodies unless a line needs it.
-4. Tell Jess how to bring THIS machine's repo up to date (Jess runs these; the assistant lists them and what to check, under CLAUDE.md "Git"):
+4. Tell Jess how to bring THIS machine's repo up to date (Jess runs these; the assistant lists them and what to check, under CLAUDE.md "Git and GitHub"):
    - The remote is https://github.com/Jess-Rivera/pokesurvivor_fork.git. Work happens on a feature branch (STATE.md names the current one, e.g. feature/items), not on main.
    - `git status` (must be clean; if not, commit or stash first, never edit on a dirty tree after a tool switch).
    - `git fetch origin`, then `git checkout <branch>` (use `git checkout -b <branch> origin/<branch>` if it does not exist locally), then `git pull --ff-only`. If ff-only fails, the two machines diverged: stop and tell the assistant.
