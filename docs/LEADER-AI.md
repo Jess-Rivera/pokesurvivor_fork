@@ -23,7 +23,7 @@
   - a held item is revealed when its effect shows (a Leftovers heal, a Focus Sash save). Code differs: split out of slice 1 to issue #36 (it may ride an item rework);
   - cards, IVs, EVs, nature and stats are never revealed.
 - [Approved] STALE REVEALS. In a later fight of the same run a remembered move still counts as revealed, until it is seen to be missing or for that mon's first 10 s on the field (TUNE), whichever ends first. New moves or items must be revealed again.
-  - [Proposed] (assistant, slice 4, for Jess to confirm at the feel test) "Seen missing" means that mon has cast a whole move set (as many different moves as it carries, 4) this fight without the remembered one. Built this way.
+  - [Approved] (Jess, 2026-11-08, slice 4 feel test) "Seen missing" means that mon has cast a whole move set (as many different moves as it carries, 4) this fight without the remembered one.
 
 ## Run memory and behavior tracking
 
@@ -103,6 +103,6 @@
 1. (Built 2026-11-08, #22; held-item reveals split to #36.) The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
 2. (Built 2026-11-08, #31.) Swap and dodge decisions (the decision loop, the matchup, the stall guards, the dodge bag).
 3. (Built 2026-11-08, #32; feel-tested and approved.) Confidence, pacing and triggers (with lines), the dodge lean and the gap-closing dodge.
-4. (Built 2026-11-08, #33; the only exploit is your usual lead.) Run memory, behavior tracking and exploiting patterns.
+4. (Built 2026-11-08, #33; feel-tested and approved. The only exploit is your usual lead.) Run memory, behavior tracking and exploiting patterns.
 5. Authoring each leader's personality; GymBrain's remaining pieces replaced by the AI player's own.
 The leader-roster UI on the player side is its own issue.

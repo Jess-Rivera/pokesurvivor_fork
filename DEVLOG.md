@@ -376,3 +376,11 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Test: leader-ai-harness 324, leader-ai-mutate 68/68; five old leader harnesses load leader-info and run with slice 3 off; check red only on the two #30 harnesses (failures identical to HEAD); smoke-gym green; a file:// Misty probe saw real hits move confidence, gap-closing dodges and both lines.
 - Jess feel-tested slice 3: approved ("feel test is great"), with both build calls (line wait 4 s; trigger swaps skip the stall guards). #32 closed and shipped; #33 unblocked (ready).
 - Stopped at: open #33 (slice 4) in a new chat.
+
+## 2026-11-08 (Claude Code, home), leader AI slice 4 (#33)
+- Opened #33 with Jess: the only exploit is your usual lead (the mon with the most field time in a fight, believed at learnRate sightings with no tie); learnRate 3, Misty authors 2; predictCap 7 in 10 as a run-long seeded bag; the read skips minField and speaks even with no swap; a dev seed for the feel test (rematches are dev-only until #24).
+- Built: G.LeaderMemory (new js/systems/leader-memory.js, startRun/endRun, never saved), the G.LeaderInfo feed (moves, bonds, switches, tagged swaps, dodges, field time, range, lead sighting), stale reveals, the read and the `exploit` trigger in G.LeaderAI, validator keys, G.Debug.leaderMemory and leaderLead.
+- Calls made without a ruling: "seen missing" = 4 other moves cast; tag lines 30% HP and 2 s; the read line goes first (the start line drops on a read fight).
+- Test: leader-ai-harness 449, leader-ai-mutate 89/89; check red only on the two #30 harnesses; smoke-gym green; a file:// probe saw Misty open with Seel and say her line at 2.4 s.
+- Jess feel-tested slice 4: approved ("it feels awesome"), with the three calls. #33 closed and shipped; #34 unblocked (ready).
+- Stopped at: open #34 (slice 5) in a new chat.

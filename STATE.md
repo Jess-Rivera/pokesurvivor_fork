@@ -1,17 +1,16 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-08, Claude Code (home), after slice 4.
+Updated 2026-11-08, Claude Code (home), slice 4 shipped.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess feel-tests #33 (slice 4, Needs Playtest): in a run, `G.Gym.debugLoop(2)`, `G.Debug.leaderLead('Misty', 1, 2)`, `G.Debug.gym(2)`.
-   Misty should open with the counter of your slot 1 mon and say her read line (7 times in 10: the cap may hold back). Then #34.
+2. Open #34 (slice 5, personalities, ready) in a new chat: agree its goal, done check and test (branch rules "Slice shape").
 
 ## Where we are
-- Slice 4 (#33) built 2026-11-08: G.LeaderMemory (run store), stale reveals, swap tags, the usual-lead read (learnRate 3, Misty 2;
-  predictCap 7 in 10). Three assistant calls to confirm: see decision 2026-11-08-leader-ai-slice-4-opened-the-usual-lead-is-the-first-exploit.
+- Slice 4 (#33) shipped 2026-11-08 (feel test approved): G.LeaderMemory (run store), stale reveals, swap tags, the usual-lead
+  read (learnRate 3, Misty 2; predictCap 7 in 10). Dev seed: G.Debug.leaderLead(leader, slot, n); rematches dev-only until #24.
 - Leader AI (docs/LEADER-AI.md): slices 1 (#22), 2 (#31) and 3 (#32) shipped 2026-11-08 (Jess feel-tested slice 3: approved):
   confidence, pacing (push, breather), dodge lean, gap-closing dodge, triggers and lines. Misty aggression 0.68, Brock 0.35.
   Baselines G.LeaderAI.BASE, CONF, PACE; a gym authors `ai` (settings, triggers, lines) in js/data/gyms.js.
