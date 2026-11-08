@@ -83,9 +83,9 @@
 - [Approved] TRIGGERS, a few per leader, each once unless marked repeating.
   - Conditions: fight start; its own HP crossing a line; a faint (yours or its own); you sending in a mon; time elapsed; starting to exploit a pattern (code differs: slice 4, #33; the others are slice 3, #32).
   - Actions (through your controls): choose a slot, swap to a mon, change a setting for a while, say a line.
-  - Built (slice 3): authored as `ai.triggers` in js/data/gyms.js (the shape is in the comment above AI_KEYS there; the validator checks it). A trigger waits out a tell or commitment, as every choice does. A slot press obeys your slot hold and a swap your swap rules (lock, trap, Fly); a trigger's swap does not wait for the AI's own stall guards (`minField`, `swapLimit`), since it is authored, but it counts as a voluntary swap. An HP trigger fires when the mon on the field crosses its line from above.
+  - Built (slice 3; the stall-guard skip approved by Jess, 2026-11-08): authored as `ai.triggers` in js/data/gyms.js (the shape is in the comment above AI_KEYS there; the validator checks it). A trigger waits out a tell or commitment, as every choice does. A slot press obeys your slot hold and a swap your swap rules (lock, trap, Fly); a trigger's swap does not wait for the AI's own stall guards (`minField`, `swapLimit`), since it is authored, but it counts as a voluntary swap. An HP trigger fires when the mon on the field crosses its line from above.
 - [Approved] LINES. A leader says short authored lines on screen at triggers and, optionally, on a large confidence swing (in from slice 3, with a cooldown so they do not spam; Jess, 2026-11-08) ("Brock: Let's get serious!"; "You always pull Pikachu when it's hurt, don't you?"). A voluntary swap always shows the ring plus "<leader> switches to <mon>!", with no camera kick and no boss sound. New strings are English only (CLAUDE.md "English-native i18n").
-  - Built (slice 3; Jess, 2026-11-08, decision C): a line shows as "<leader>: <line>" on the banner. While another banner is up it waits, at most 4 s, then it is dropped. Swing lines are `ai.lines` { up, down }.
+  - Built (slice 3; Jess, 2026-11-08, decision C, the 4 s wait approved at the feel test): a line shows as "<leader>: <line>" on the banner. While another banner is up it waits, at most 4 s, then it is dropped. Swing lines are `ai.lines` { up, down }.
 
 ## Checks
 
@@ -99,7 +99,7 @@
 [Approved] One slice each, feel-tested before the next:
 1. (Built 2026-11-08, #22; held-item reveals split to #36.) The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
 2. (Built 2026-11-08, #31.) Swap and dodge decisions (the decision loop, the matchup, the stall guards, the dodge bag).
-3. (Built 2026-11-08, #32.) Confidence, pacing and triggers (with lines), the dodge lean and the gap-closing dodge.
+3. (Built 2026-11-08, #32; feel-tested and approved.) Confidence, pacing and triggers (with lines), the dodge lean and the gap-closing dodge.
 4. Run memory, behavior tracking and exploiting patterns.
 5. Authoring each leader's personality; GymBrain's remaining pieces replaced by the AI player's own.
 The leader-roster UI on the player side is its own issue.

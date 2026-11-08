@@ -6,11 +6,10 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess feel-tests #32 (slice 3, Needs Playtest): Misty and Brock, G.Debug.hitbox() shows conf, aggr, stance and reason.
-   Two calls on #32 await his OK (line wait 4 s; trigger swaps skip minField and swapLimit). Then #33.
+2. Open #33 (slice 4, run memory, ready) in a new chat: agree its goal, done check and test (branch rules "Slice shape"), then the plan.
 
 ## Where we are
-- Leader AI (docs/LEADER-AI.md): slices 1 (#22) and 2 (#31) shipped; slice 3 (#32) built 2026-11-08, not yet feel-tested:
+- Leader AI (docs/LEADER-AI.md): slices 1 (#22), 2 (#31) and 3 (#32) shipped 2026-11-08 (Jess feel-tested slice 3: approved):
   confidence, pacing (push, breather), dodge lean, gap-closing dodge, triggers and lines. Misty aggression 0.68, Brock 0.35.
   Baselines G.LeaderAI.BASE, CONF, PACE; a gym authors `ai` (settings, triggers, lines) in js/data/gyms.js.
   Dev: G.Debug.leaderAI({ swaps, dodges, confidence, pacing, triggers }).

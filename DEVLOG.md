@@ -374,4 +374,5 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Built: fight events and 2 s / 15 s windows (G.LeaderInfo), confidence, pacing, lean, gap-closing dodge, triggers and lines (G.LeaderAI), GymBrain `hold`, validator for ai.triggers and ai.lines, Misty and Brock authoring, overlay status, G.Debug.leaderAI switches.
 - Calls made without a ruling (on #32): a line waits 4 s, not 3 (the send-out banner is 3.2 s); a trigger swap skips minField and swapLimit.
 - Test: leader-ai-harness 324, leader-ai-mutate 68/68; five old leader harnesses load leader-info and run with slice 3 off; check red only on the two #30 harnesses (failures identical to HEAD); smoke-gym green; a file:// Misty probe saw real hits move confidence, gap-closing dodges and both lines.
-- Stopped at: #32 in Needs Playtest, waiting for Jess's feel test.
+- Jess feel-tested slice 3: approved ("feel test is great"), with both build calls (line wait 4 s; trigger swaps skip the stall guards). #32 closed and shipped; #33 unblocked (ready).
+- Stopped at: open #33 (slice 4) in a new chat.
