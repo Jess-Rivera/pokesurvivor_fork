@@ -5,20 +5,20 @@ Updated 2026-11-08, Claude Code (home).
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
-1. Jess pulls this branch on the other machine.
+1. Jess pulls this branch on the other machine (main is already merged in).
 2. /triage works (it is user-invoked, so it never shows in the model's skill list). #28 (architecture skill) is ready.
-3. Then the gym AI: designed 2026-11-08 in docs/LEADER-AI.md (grilled fresh, compared with the old proposal, now history). Slices: #22, then #31 to #34; roster UI #35 (TODO.md).
+3. The gym AI: designed 2026-11-08 in docs/LEADER-AI.md (grilled fresh, compared with the old proposal, now history). Slices: #22, then #31 to #34; roster UI #35 (TODO.md).
 
 ## Where we are
 - Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
 - DECISIONS.md is now an index; each decision is a file in docs/decisions/, cited by file name (CLAUDE.md "Cross-document IDs"). Follow-up #29 (promote review CP1 rulings).
-- Entity slices 1 to 8 built, 7b and 8 green. Close-out built, checks owed:
+- Entity slices 1 to 8 built, 7b and 8 green. Close-out built (#23 feel-test list closed by Jess 2026-11-08; issues found in play get their own bug):
   Brock on G.GymLeader beside Misty (hpMult {1: 16, 2: 12}, Misty's restrictions, no enrage, no touch).
   Map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt.
 - Gyms 3 to 8 stay on the old brain for the playtesters (copy in about 4 days). Two leader paths until slice 12.
 - Slice 8 DPS report (Q10) still unread: no tempo or power change yet.
 - Lint: 0 errors (hook now linted as node code), 69 warnings in inherited code (do not --fix).
-- Red 2026-11-08, not investigated: gym-harness (Misty loop 1 pool), leader-stats-harness (Misty Zinc).
+- Red by design until #30: gym-harness (Misty loop 1 pool), leader-stats-harness (Misty Zinc). Any other red is real.
 
 ## Next
 See TODO.md (the handoff, with issue numbers).
@@ -33,7 +33,6 @@ See TODO.md (the handoff, with issue numbers).
 - `move-sim-mutate` "routing filter ignored" is a real MISS (28/29), older than slice 5.
 
 ## Open owner decisions
-- Board cleanup: see TODO.md item 5.
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out; Korataki licence.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 
