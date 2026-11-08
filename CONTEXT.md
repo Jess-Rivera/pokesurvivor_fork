@@ -22,7 +22,7 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
    - `git status` (must be clean; if not, commit or stash first, never edit on a dirty tree after a tool switch).
    - `git fetch origin`, then `git checkout <branch>` (use `git checkout -b <branch> origin/<branch>` if it does not exist locally), then `git pull --ff-only`. If ff-only fails, the two machines diverged: stop and tell the assistant.
    - Compare with main: `git log --oneline main..<branch>` (what the branch adds) and `git log --oneline <branch>..origin/main` (what main gained, so the branch may need a merge of main).
-   - Sanity check after the pull: `node tools/check.js` must end with all harnesses passed, then open dev.html?dev.
+   - Sanity check after the pull: `node tools/check.js` must end with "check: all passed" (add -v for every step), then open dev.html?dev.
    - Before leaving a machine: commit and push, so the other side starts from the same tree.
 Do NOT read DEVLOG.md or BALANCE.md whole (they are large). Search them by keyword when a topic comes up. DECISIONS.md is now a short index; open one file in docs/decisions/ for the ruling.
 Archives (search only): docs/DECISIONS-archive.md, docs/DEVLOG-archive.md, docs/TODO-archive.md, docs/MP-PARKED-NOTES.md.

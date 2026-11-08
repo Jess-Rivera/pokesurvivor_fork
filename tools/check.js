@@ -1,10 +1,13 @@
 // tools/check.js: syntax-check every game JS file, then run every offline harness.
 // Usage: node tools/check.js          (from the repo root or anywhere)
-// Exit code 1 if anything fails. Output is one line per failure and a short summary.
+//        node tools/check.js -v       (also print every passing step)
+// Exit code 1 if anything fails. Output is one line per failure and a one-line summary.
 const fs = require('fs'),
   path = require('path'),
   cp = require('child_process');
 const root = path.resolve(__dirname, '..');
+const VERBOSE = process.argv.includes('-v') || process.argv.includes('--verbose');
+const info = (...a) => VERBOSE && console.log(...a); // passing steps: shown only with -v
 const SKIP = new Set([
   'node_modules',
   'pokeapi-master',
@@ -46,7 +49,7 @@ for (const f of files) {
     console.log('SYNTAX FAIL ' + rel(f) + '\n   ' + (r.stderr || '').split('\n').slice(0, 4).join('\n   '));
   }
 }
-console.log('syntax: ' + (files.length - bad) + '/' + files.length + ' files OK');
+info('syntax: ' + (files.length - bad) + '/' + files.length + ' files OK');
 
 // 2. Harnesses: every *harness*.js under docs/ (exit code 0 and no line containing FAIL).
 // Known stale harnesses (skipped, with the reason). Remove an entry when it is fixed.
@@ -69,7 +72,7 @@ for (const h of harnesses) {
       'HARNESS FAIL ' + rel(h) + '\n   ' + (failLine || out[out.length - 1] || 'exit ' + r.status).slice(0, 200)
     );
   } else
-    console.log(
+    info(
       'ok  ' +
         rel(h) +
         '  (' +
@@ -78,7 +81,7 @@ for (const h of harnesses) {
         (out[out.length - 1] || '').slice(0, 60)
     );
 }
-console.log('harnesses: ' + (harnesses.length - hbad) + '/' + harnesses.length + ' passed');
+info('harnesses: ' + (harnesses.length - hbad) + '/' + harnesses.length + ' passed');
 // 2b. Invariant I1 guard: the new combat files (js/systems/move-*.js) must never mention the legacy move `kind`, comments included.
 let kbad = 0;
 const moveFiles = walk(path.join(root, 'js', 'systems'), (n) => /^move-.*\.js$/.test(n));
@@ -92,12 +95,12 @@ for (const f of moveFiles) {
     console.log('I1 GUARD FAIL ' + rel(f) + ':' + (hit + 1) + '  the word "kind" is not allowed in new combat files');
   }
 }
-console.log('I1 guard: ' + (kbad ? kbad + ' file(s) mention kind' : 'ok (' + moveFiles.length + ' move-*.js file(s))'));
+info('I1 guard: ' + (kbad ? kbad + ' file(s) mention kind' : 'ok (' + moveFiles.length + ' move-*.js file(s))'));
 // 2c. Legacy move guard (slice 7a, final in 7b-2b): no legacy move-table read (G.Moves.BY_ID, G.Kinds, a move's kind) in any game file (tools/kind-guard.js).
 const KG = require('./kind-guard.js').run(root);
 for (const h of KG.bad)
   console.log('7A GUARD FAIL ' + h.file + ':' + h.line + '  ' + h.rule + ' (read the resolved def or G.MoveInfo)');
-console.log(
+info(
   '7a guard: ' +
     (KG.bad.length
       ? KG.bad.length + ' legacy read(s)'
@@ -135,13 +138,14 @@ for (const [name, args, show] of [
           .slice(0, 8)
           .join('\n   ')
     );
-  } else console.log('ok  tools/' + name + '  ' + (out.find((l) => show.test(l)) || ''));
+  } else info('ok  tools/' + name + '  ' + (out.find((l) => show.test(l)) || ''));
 }
-console.log('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
+info('move data: ' + (mbad ? mbad + ' step(s) failed' : 'ok'));
 const FORMAT_GLOBS = require('../package.json')
   .scripts['format:check'].match(/"[^"]+"|\S+/g)
   .slice(2)
   .map((g) => g.replace(/"/g, ''));
+let lintLine = '';
 // 4. Lint (ESLint, warn-only for now: the count is printed, it never fails the run). Skipped if dev dependencies are not installed.
 try {
   const eslintBin = path.join(root, 'node_modules', 'eslint', 'bin', 'eslint.js');
@@ -157,7 +161,8 @@ try {
     errs += f.errorCount;
     warns += f.warningCount;
   }
-  console.log('lint: ' + errs + ' error(s), ' + warns + ' warning(s) (warn-only; run npx eslint . for detail)');
+  lintLine = 'lint: ' + errs + ' error(s), ' + warns + ' warning(s) (warn-only; run npx eslint . for detail)';
+  console.log(lintLine);
 } catch (e) {
   console.log('lint: skipped (npm install to enable)');
 }
@@ -170,10 +175,27 @@ try {
     encoding: 'utf8',
   });
   const drift = (r.stdout || '').split(/\r?\n/).filter(Boolean);
-  console.log(
-    'format: ' + (drift.length ? drift.length + ' file(s) need npm run format: ' + drift.slice(0, 5).join(', ') : 'ok')
-  );
+  const formatLine =
+    'format: ' + (drift.length ? drift.length + ' file(s) need npm run format: ' + drift.slice(0, 5).join(', ') : 'ok');
+  if (drift.length) console.log(formatLine);
+  else info(formatLine);
 } catch (e) {
   console.log('format: skipped (npm install to enable)');
 }
-process.exit(bad || hbad || mbad || kbad ? 1 : 0);
+const failed = bad || hbad || mbad || kbad;
+console.log(
+  failed
+    ? 'check: FAILED (' +
+        [bad && bad + ' syntax', hbad && hbad + ' harness', mbad && mbad + ' data', kbad && kbad + ' guard']
+          .filter(Boolean)
+          .join(', ') +
+        ')'
+    : 'check: all passed (' +
+        files.length +
+        ' files, ' +
+        harnesses.length +
+        ' harnesses' +
+        (lintLine ? '; ' + lintLine.replace(/ \(warn-only.*/, '') : '') +
+        ')'
+);
+process.exit(failed ? 1 : 0);
