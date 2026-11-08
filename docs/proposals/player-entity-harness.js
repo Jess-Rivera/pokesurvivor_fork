@@ -16,6 +16,7 @@ const SRC = {
   'js/main.js': 'PE3_MAIN',
   'js/systems/status.js': 'PE3_STATUS',
   'js/systems/move-effects.js': 'PE3_FX',
+  'js/systems/team.js': 'PE3_TEAM', // LEADER-AI slice 1: the swap input is read by G.Team.requested
 };
 const read = (p) => fs.readFileSync(process.env[SRC[p]] || path.join(R, p), 'utf8');
 const load = (p) => vm.runInThisContext(read(p), { filename: p });
@@ -297,9 +298,13 @@ ok(HP.prototype.controller === HP.KEYBOARD, 'the human defaults to the KEYBOARD 
     };
   const hs = strip(body('function handleSwap('));
   ok(hs.length > 100 && !hs.includes('G.Input'), 'handleSwap reads no keys itself');
-  ok(/const c = pl\.controller,\s*n = c\.swapSlot\(\);/.test(hs) && /const dir = c\.swapDir\(\);/.test(hs), 'handleSwap asks the controller for the slot key and the direction');
+  // LEADER-AI slice 1: the controller's swap input is read by G.Team.requested, the same for a leader's AI player
+  const tm = read('js/systems/team.js');
+  ok(/const j = runTeam\.requested\(pl\.controller\);/.test(hs) && /n = c\.swapSlot\(\);/.test(tm) && /const dir = c\.swapDir\(\);/.test(tm), 'handleSwap asks the controller for the slot key and the direction (through G.Team.requested)');
   ok(/if \(pl\.controller\.shake\(\) && G\.Status\.shake\(pl\)\)/.test(g) && !g.includes("G.Input.action('shake_off')"), 'Shake off asks the controller');
-  ok(/if \(state !== 'playing' \|\| !pl\) return;\s*(\/\/[^\n]*\n\s*)*const c = pl\.controller;\s*for \(const i of c\.slots\(\)\) pl\.setActive\(i\);\s*for \(const d of c\.cycles\(\)\) pl\.cycle\(d\);\s*\}/.test(g), 'in play, the slot and cycle keys come from the controller, each once, then the handler ends');
+  // LEADER-AI slice 1: the slot and cycle presses are PlayerEntity.takeSlotInput, the same for a leader's AI player
+  const pe = read('js/entities/player.js');
+  ok(/if \(state !== 'playing' \|\| !pl\) return;\s*(\/\/[^\n]*\n\s*)*pl\.takeSlotInput\(\);\s*\}/.test(g) && /takeSlotInput\(\) \{\s*const c = this\.controller;\s*for \(const i of c\.slots\(\)\) this\.setActive\(i\);\s*for \(const d of c\.cycles\(\)\) this\.cycle\(d\);\s*\}/.test(pe), 'in play, the slot and cycle keys come from the controller, each once, then the handler ends');
   ok(/if \(G\.Input\.action\('attack_' \+ \(i \+ 1\)\)\) G\.RunUI\.itemKey\(i\);/.test(g), 'the menus still read the attack keys themselves (D4)');
   ok(/'Pickups',\s*'PlayerEntity',\s*'Player',/.test(read('js/main.js')), 'the NEED array lists PlayerEntity before Player');
   const count = (t) => (strip(t).match(/\bisPlayer\b/g) || []).length;

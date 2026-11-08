@@ -351,3 +351,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Filed #31 to #35; #22 rescoped as slice 1. Branch rules now live in docs/branch-rules/feature-gym-leader-ai.md (slice shape rule moved out of CLAUDE.md).
 - No game code touched; check.js red only on the two #30 harnesses.
 - Stopped at: open slice 1 (#22) in a new chat by agreeing its goal, done check and test.
+
+## 2026-11-08 (Claude Code, home), leader AI slice 1 (#22)
+- Drift cleanup: #23 closed by Jess (the slice 1 Elite fight item made no sense), TODO and STATE fixed, area:docs label added (#28, #29). Held-item reveals split to #36 (may ride an item rework).
+- Rulings (in docs/LEADER-AI.md REVEALS): "on screen" = cast since the fight's start; a bond = two different moves of one mon cast with no slot switch seen between them, no time window (Jess dropped the 0.4 s window).
+- Built: G.LeaderAI (one per leader team, answers the seven controller calls, wraps GymBrain), G.LeaderInfo (rosters, move and bond reveals, keyed by copy uid else team slot), the leader's swap step through your rules, G.Debug.leaderSwap, a ?dev overlay. Shared with you: G.Team.requested and PlayerEntity.takeSlotInput. move:cast gains ownerUid, ownerSlot, rival; new slot:switch event.
+- Test: docs/proposals/leader-ai-harness.js (55 checks; parity against a trace recorded before the build). Harness and mutate retargets in 9 files. Smokes gym and team green; check red only on the two #30 harnesses.
+- Stopped at: Jess feel-tests a loop 2 Misty fight (G.Gym.debugLoop(2), G.Debug.gym(2), G.Debug.leaderSwap(2)).

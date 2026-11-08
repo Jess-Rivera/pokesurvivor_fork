@@ -139,8 +139,10 @@ G.Boss = (() => {
       return G.TeamCards.defOf(this.e, id);
     }
 
-    /** One frame of movement and casting; returns [vx, vy, anim] for the body's integration. */
-    step(dt, pl, dist, dx, dy, spd) {
+    /** One frame of movement and casting; returns [vx, vy, anim] for the body's integration. `onPick(i)` (a Player-entity leader,
+     *  LEADER-AI slice 1): the slot pickSlot chose, or -1, handed to the AI player, which presses it through your controls here,
+     *  before the casts, so the frame runs as when the brain switched by itself. */
+    step(dt, pl, dist, dx, dy, spd, onPick = null) {
       if (!this.on) this.init();
       const e = this.e,
         now = G.Gym.now();
@@ -148,7 +150,7 @@ G.Boss = (() => {
       // every move recharges, inactive slots too, as the player's do
       for (const g of e.slots) for (const s of g) if (s.t > 0) s.t = Math.max(0, s.t - dt);
       if (this.wait > 0) this.wait -= dt;
-      if (e.isPlayer) this.pickSlot(pl, now); // slice 8: the slot choice, before the casts, under your slot hold
+      if (e.isPlayer && onPick) onPick(this.pickSlot(pl, now)); // slice 8: the slot choice, before the casts, under your slot hold
       this.buffs(now);
       this.heals(now);
       G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as the player's does
@@ -264,12 +266,13 @@ G.Boss = (() => {
     /** Slice 8 (Q2 to Q4, Jess 2026-11-07): a leader's slot choice, under your 0.4 s slot hold and never inside a tell. In order:
      *  1 a self heal slot that can cast while hurt (the heal cap still counts); 2 stay on the active slot while it has a ready move in
      *  reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with nothing ready in reach, a
-     *  buff slot whose Gate is open. A switch is your setActive: the hold and the type ring, no sound (Q8). */
+     *  buff slot whose Gate is open. A switch is your setActive: the hold and the type ring, no sound (Q8).
+     *  LEADER-AI slice 1: it only chooses. It returns the slot to switch to, or -1 to stay, and the AI player presses it. */
     pickSlot(pl, now) {
       const e = this.e;
-      if (e.slots.length < 2 || this.tell || e.mvRoot || e.stFl || e.swapT > 0) return;
+      if (e.slots.length < 2 || this.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
       const S = sense(e, pl),
-        go = (i) => i !== e.active && e.setActive(i),
+        go = (i) => (i !== e.active ? i : -1),
         slotWith = (form, ok) =>
           e.slots.findIndex((g) =>
             g.some((s) => open(e, s) && s.t <= 0 && G.Gyms.formOf(this.def(s.id)) === form && ok(s))
@@ -296,12 +299,9 @@ G.Boss = (() => {
           at = i;
         }
       });
-      if (top) {
-        if (!cur || top.score >= SWITCH_MARGIN * cur.score) go(at);
-        return;
-      }
+      if (top) return !cur || top.score >= SWITCH_MARGIN * cur.score ? go(at) : -1;
       const b = slotWith('buff', (s) => G.MoveEffects.statReady(this.def(s.id), e));
-      if (b >= 0) go(b);
+      return b >= 0 ? go(b) : -1;
     }
 
     /** Slice 8 (Q5): the other attack moves of the active slot that are ready now (a bonded slot holds 2 to 4), marked as cast now. */

@@ -21,6 +21,7 @@
  *   G.Debug.skipTo(m)  jump the run clock to m minutes (enemy level and elite HP follow it; the run is flagged tampered)
  *   G.Debug.levelUp(n) queue n level-ups (same as calling G.Game.debugLevelUp() n times)
  *   G.Debug.gym(n)     open the next gym gate now, or gym n's (walk into it to fight; losing ends the run)
+ *   G.Debug.leaderSwap(slot)  in a switched gym's fight, the leader AI asks to swap to its team slot (1 is the first); your swap rules decide it (Leader AI slice 1)
  *   G.Debug.shops()    place a Move Trainer and a TM Mart now, by the normal placement rules (Move Shop step 3; the 2:00 and after-gym schedule is untouched)
  *   G.Debug.trainer() / G.Debug.mart()  open the Move Trainer or TM Mart screen now with fresh stock, no building needed (Move Shop step 4; pair with G.Debug.silver(n))
  *   G.Debug.status(kind, radius)  put burn|poison|toxic|paralysis|freeze|sleep|confusion|trap on every enemy near you (ignite is the same)
@@ -1258,6 +1259,22 @@ G.Debug = (() => {
     return true;
   }
 
+  /** In a switched gym's fight (dev only): the leader's AI player asks to swap to team slot `slot` (1 is the first). Your swap rules
+   *  decide it on the next frame: refused while locked, trapped or in the air, as yours (LEADER-AI slice 1). */
+  function leaderSwap(slot) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const ai = G.GymArena.leaderAI;
+    if (!ai) {
+      console.warn('[Debug] no switched gym fight is running (Misty or Brock).');
+      return false;
+    }
+    ai.requestSwap(slot - 1);
+    return true;
+  }
+
   /** Place a Move Trainer and a TM Mart now (dev only), by the normal placement rules. */
   function shops() {
     if (!on) {
@@ -1302,6 +1319,7 @@ G.Debug = (() => {
     skipTo,
     levelUp,
     gym,
+    leaderSwap,
     shops,
     trainer,
     mart,

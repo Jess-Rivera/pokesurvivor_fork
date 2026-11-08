@@ -108,6 +108,7 @@ G.GymArena = (() => {
     gate = null;
     arena = null;
     asked = false;
+    G.LeaderInfo.end();
   }
 
   // ---------------- the gate on the map ----------------
@@ -180,6 +181,7 @@ G.GymArena = (() => {
         members = [G.Boss.make(first, x, y)];
       for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
       arena.team = G.GymLeader.team(members);
+      arena.info = G.LeaderInfo.create(arena.team); // what its AI player can see (LEADER-AI slice 1)
       e = arena.team.active;
       // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
       const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
@@ -207,6 +209,7 @@ G.GymArena = (() => {
       endT: 0,
       bossId: 0,
       team: null, // slice 7: a switched gym's G.Team
+      info: null, // LEADER-AI slice 1: its AI player's information layer (G.LeaderInfo)
       sendT: null, // seconds left of the send-out beat, null when none is running
     });
     gate = null;
@@ -270,8 +273,9 @@ G.GymArena = (() => {
    *  beat, and the lowest living slot takes the fainted spot (G.Team.sendIn: 0.5 s i-frames, the lock cleared). Wipe: the win. */
   function teamTick(dt) {
     const t = arena.team;
+    t.tickLock(dt);
     t.benchTick(dt);
-    if (!t.active.dead) return;
+    if (!t.active.dead) return t.ai.swapFrame((c) => voluntary(t, t.requested(c)));
     const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
     if (!t.living().length && !redo) {
       G.Coop.isHost && G.Coop.broadcast(['aw']);
@@ -289,6 +293,23 @@ G.GymArena = (() => {
     G.Spawner.say(arena.gym.leader + line, 2.4);
     G.Camera.kick(0.7);
     G.Audio.sfx('boss');
+  }
+
+  /** LEADER-AI slice 1: the AI player's swap request for member j (-1 none), checked by your rules (G.Team.canSwap: the 5 s lock,
+   *  trap, Fly). The outgoing mon's shapes end and it leaves the enemy list for the bench, standing; the incoming one takes its spot
+   *  with the 0.5 s i-frames (G.Team.swap). The spec's look: the ring and the line, no camera kick, no boss sound. */
+  function voluntary(t, j) {
+    if (j < 0 || t.canSwap(j) !== 'ok') return;
+    const out = t.active;
+    G.MoveSim.clear(out); // as your swap (move-route.js): the benched one's shapes, commitments, heal over time and shield end
+    out.brain.tell = null;
+    const next = t.swap(j);
+    G.EnemyMgr.remove(out);
+    next.flying = false;
+    G.EnemyMgr.add(next);
+    arena.bossId = next.id;
+    G.FX.ring(next.x, next.y, 6, 70, G.U.TYPE_COLOR[next.types[0]] || '#ffd95e', 0.4, 4);
+    G.Spawner.say(arena.gym.leader + ' switches to ' + next.name + '!', 2.4);
   }
 
   function won() {
@@ -313,6 +334,7 @@ G.GymArena = (() => {
     const pl = G.Game.player;
     const a = arena;
     arena = null;
+    G.LeaderInfo.end();
     G.Gym.onReturn(a.gym);
     G.World.setBiome(a.biome, true);
     G.Weather.clear();
@@ -397,6 +419,13 @@ G.GymArena = (() => {
     /** Slice 7: the leader's G.Team in a switched gym's arena (the HUD pips read it), else null. */
     get leaderTeam() {
       return arena ? arena.team || null : null;
+    },
+    /** LEADER-AI slice 1: the leader team's AI player and its information layer in a switched gym's arena, else null. */
+    get leaderAI() {
+      return arena && arena.team ? arena.team.ai : null;
+    },
+    get leaderInfo() {
+      return arena ? arena.info || null : null;
     },
   };
 })();

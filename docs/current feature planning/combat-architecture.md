@@ -119,7 +119,8 @@ Timing and determinism: sim functions take (dt, now, rng). Harnesses step with a
 - Lifetime: the carrying instance's (an emitter is its instance, DECIDED move-consistency-review:CP1-Q7).
 
 ### C7. Events (SimBus, plain data, I8)
-- 'move:cast' { moveId, ownerId, x, y, aim }.
+- 'move:cast' { moveId, ownerId, ownerUid, ownerSlot, rival, x, y, aim, enemy }. ownerUid and ownerSlot (the owner's copy uid and team slot, null when absent) and rival key the leader AI's reveals, since your mons carry no id (docs/LEADER-AI.md, slice 1).
+- 'slot:switch' { ownerUid, ownerSlot, rival, slot }: a Player entity's setActive, the switch its ring shows (the leader AI's bond rule, docs/LEADER-AI.md REVEALS).
 - 'move:hit' { moveId, instId, enemyId, dmg, crit, typeMult, x, y, hop } (hop = chain index, 0 for a direct hit).
 - 'move:emit' { moveId, parentId, x, y, count }.
 - 'move:end' { moveId, instId, reason, x, y }.

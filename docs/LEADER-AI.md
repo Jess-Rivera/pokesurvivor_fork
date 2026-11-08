@@ -4,7 +4,7 @@
 - **Owns:** the AI player, the information model (rosters, reveals), run memory and behavior tracking, the decision loop, the fairness limits, the settings list, confidence, pacing, triggers and lines, the checks.
 - **Does not own:** what a leader IS (stats, HP, cards, items, restrictions, team, faint and voluntary swap consequences): docs/COMBAT-RULES.md "Host model". Gym progression and rosters: BOSS-REWORK.md, docs/GYM-ROSTERS.md.
 - **Source:** grilling session, Jess 2026-11-08 (decision `2026-11-08-leader-ai-an-ai-player-through-your-controls`), then compared with the 2026-11-07 proposal (docs/proposals/gym-leader-ai-design.md and the slice 9 v2 map, now history); the parts adopted from them are in this file.
-- **Code:** not built. Today a leader runs G.Boss.GymBrain (js/entities/boss-ai.js). See "Build order".
+- **Code:** slice 1 built 2026-11-08 (#22): G.LeaderAI (js/entities/leader-ai.js), G.LeaderInfo (js/systems/leader-info.js); the leader's swap step in js/systems/gym-arena.js. The GymBrain (js/entities/boss-ai.js) still decides movement, slots and casts underneath until slice 5. Test: docs/proposals/leader-ai-harness.js. See "Build order".
 
 ## The AI player
 
@@ -18,9 +18,9 @@
 - [Approved] THE SCREEN ONLY. The AI reads what a human would see on screen: positions, projectiles and hazards in flight, attack tells, HP bars, types, statuses and stage markers, and both rosters. It never reads live cooldown timers, hidden numbers (cards, IVs, EVs, nature, exact stats), RNG or your next input. One information layer produces everything the AI and its memory read, so nothing can reach the AI around it.
 - [Approved] ROSTERS. Both sides see the other's full roster from the fight's start: each mon's species and whether it is active, on the bench or fainted. The player side gets a matching leader-roster UI (code differs: not built).
 - [Approved] REVEALS, per mon of yours (keyed by its copy's `pokemonUUID`, which a fighter carries as `copyUid`; the team slot stands in when it is null):
-  - a move is revealed the first time it is cast on screen, and then the AI knows everything about it: type, category, power, shape, effects and its cooldown length. Never how much of its live timer is left;
-  - a bond is revealed when its moves are seen firing together;
-  - a held item is revealed when its effect shows (a Leftovers heal, a Focus Sash save);
+  - a move is revealed the first time it is cast on screen ("on screen" means cast at any point since the fight's start, Jess 2026-11-08; no camera check), and then the AI knows everything about it: type, category, power, shape, effects and its cooldown length. Never how much of its live timer is left;
+  - a bond is revealed when two different moves of one mon are cast with no slot switch seen between them (Jess 2026-11-08). Only the active slot casts, so both came from one slot; the switch is visible (your setActive ring), so the AI may know it. No time window: a bond whose moves have unlike cooldowns still reveals. Never read from move data or the SimBus;
+  - a held item is revealed when its effect shows (a Leftovers heal, a Focus Sash save). Code differs: split out of slice 1 to issue #36 (it may ride an item rework);
   - cards, IVs, EVs, nature and stats are never revealed.
 - [Approved] STALE REVEALS. In a later fight of the same run a remembered move still counts as revealed, until it is seen to be missing or for that mon's first 10 s on the field (TUNE), whichever ends first. New moves or items must be revealed again.
 
@@ -84,7 +84,7 @@
 ## Build order
 
 [Approved] One slice each, feel-tested before the next:
-1. The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
+1. (Built 2026-11-08, #22; held-item reveals split to #36.) The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
 2. Swap and dodge decisions (the decision loop, the matchup, the stall guards).
 3. Confidence, pacing and triggers (with lines).
 4. Run memory, behavior tracking and exploiting patterns.

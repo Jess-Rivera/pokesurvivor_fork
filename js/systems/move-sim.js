@@ -456,6 +456,9 @@ G.MoveSim = (() => {
     G.SimBus.emit('move:cast', {
       moveId: def.id,
       ownerId: o.id != null ? o.id : null,
+      ownerUid: o.copyUid != null ? o.copyUid : null, // the leader AI's reveal key (LEADER-AI REVEALS): your mons carry no id
+      ownerSlot: o.teamSlot != null ? o.teamSlot : null,
+      rival: !!o.isRival,
       x: o.x,
       y: o.y,
       aim: pick.aim,

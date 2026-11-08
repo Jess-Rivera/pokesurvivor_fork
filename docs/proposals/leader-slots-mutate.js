@@ -16,7 +16,7 @@ const M = [
   // layout and the hold
   ['all moves live again (one group)', BR, 'e.slots = e.isPlayer ? slotsOf(g.moves) :', 'e.slots = false ? slotsOf(g.moves) :'],
   ['bonded lines get their own slots', BR, '      if (!m.bond) out.push([s]);', '      if (true) out.push([s]);'],
-  ['a leader switch sets no hold', BR, 'i !== e.active && e.setActive(i)', 'i !== e.active && e.setActive(i, true)'],
+  ['a leader switch sets no hold', PL, 'for (const i of c.slots()) this.setActive(i);', 'for (const i of c.slots()) this.setActive(i, true);'], // LEADER-AI slice 1: pressed through your takeSlotInput
   ['the hold never ticks on a leader', LD, 'if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt);', ''],
   ['the select sound plays for a leader', PL, "this.onSwitchFeel(); // the select sound is yours", "G.Audio.sfx('select'); // the select sound is yours"],
   // only the active slot
@@ -25,9 +25,9 @@ const M = [
   // the pick
   ['no heal visit', BR, 'if (h >= 0) return go(h);', ''],
   ['a closed hpBelow slot is pickable', BR, 'g.some((s) => open(e, s) && s.t <= 0', 'g.some((s) => s.t <= 0'],
-  ['the stay rule is off', BR, 'if (!cur || top.score >= SWITCH_MARGIN * cur.score) go(at);', 'go(at);'],
+  ['the stay rule is off', BR, 'return !cur || top.score >= SWITCH_MARGIN * cur.score ? go(at) : -1;', 'return go(at);'], // LEADER-AI slice 1 retarget
   ['the margin is 1', BR, 'const SWITCH_MARGIN = 1.5;', 'const SWITCH_MARGIN = 1;'],
-  ['no buff visit', BR, 'if (b >= 0) go(b);', ''],
+  ['no buff visit', BR, 'return b >= 0 ? go(b) : -1;', 'return -1;'], // LEADER-AI slice 1 retarget
   ['it picks inside a tell', BR, 'if (e.slots.length < 2 || this.tell ||', 'if (e.slots.length < 2 ||'],
   // bonds
   ['a bonded slot fires one member', BR, 'if (c.bond) for (const b of c.bond) this.fireBond(b, c, now);', ''],

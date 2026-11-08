@@ -439,6 +439,24 @@ G.MoveRender = (() => {
           )
         );
     }
+    // the leader AI's information layer (LEADER-AI slice 1): both rosters, then what each mon of yours has revealed, under the leader
+    const info = G.GymArena && G.GymArena.leaderInfo,
+      lead = info && info.leader.active;
+    if (lead && !lead.dead && G.Camera.sees(lead.x, lead.y, 40)) {
+      const name = (dex) => (G.DEX_BY[dex] ? G.DEX_BY[dex].name : '#' + dex),
+        side = (list) => list.map((m) => name(m.dex) + ' ' + m.state).join(' | '),
+        r = info.rosters(),
+        lines = ['you: ' + side(r.you), 'leader: ' + side(r.leader)];
+      for (const m of G.Game.roster || []) {
+        const v = info.reveals(m);
+        if (!v.moves.length) continue;
+        const bonds = v.bonds.map((b) => b.join('+'));
+        lines.push(name(m.dex) + ': ' + v.moves.join(', ') + (bonds.length ? ' | bond ' + bonds.join(', ') : ''));
+      }
+      ctx.fillStyle = '#ffd95e';
+      lines.forEach((line, i) => ctx.fillText(line, lead.x, lead.y + 22 + 11 * i));
+      ctx.fillStyle = '#ffffff';
+    }
     const pl = G.Game && G.Game.player; // the player (4b): HP, shield, team stages and commitments
     if (pl && !pl.dead) {
       const sh = pl.shield,

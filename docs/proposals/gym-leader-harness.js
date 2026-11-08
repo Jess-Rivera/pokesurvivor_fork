@@ -18,6 +18,7 @@ const SRC = {
   'js/data/gyms.js': 'GL_GYMS',
   'js/systems/gym.js': 'GL_GYM',
   'js/entities/enemy.js': 'GL_ENEMY',
+  'js/entities/leader-ai.js': 'GL_AI', // LEADER-AI slice 1: the heading and the edge unstick call moved to the AI player
 };
 const read = (p) => fs.readFileSync(process.env[SRC[p]] || path.join(R, p), 'utf8');
 const load = (p) => vm.runInThisContext(read(p), { filename: p });
@@ -72,7 +73,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {
@@ -561,7 +562,7 @@ reset();
   // a. pinned on the north wall, both sides open: after 0.35 s she side-steps to the side she circles, and slides along
   G.World.collide = wall(false);
   const a = leader();
-  a.steer = () => [0, -1];
+  a.ai.steer = () => [0, -1];
   a.brain.side = -1;
   run(a, 0.3);
   ok(a.sideT <= 0, 'unstick: no side-step after 0.3 s pinned');
@@ -574,14 +575,14 @@ reset();
   // b. a corner (north and east walls): the west side has room, the east has none, so she goes west over her circling side
   G.World.collide = wall(true);
   const b = leader();
-  b.steer = () => [0, -1];
+  b.ai.steer = () => [0, -1];
   b.brain.side = 1;
   run(b, 0.4);
   ok(b.sideT > 0 && b.side === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + b.side);
   // c. moving freely she never side-steps
   G.World.collide = () => false;
   const c = leader();
-  c.steer = () => [1, 0];
+  c.ai.steer = () => [1, 0];
   let stepped = false;
   for (let i = 0; i < 120; i++) {
     c.update(DT, human);
@@ -591,7 +592,7 @@ reset();
   // d. frames that do not count: no heading (attacking or stunned), and a flinch moving her
   G.World.collide = wall(false);
   const d = leader();
-  d.steer = () => [0, 0];
+  d.ai.steer = () => [0, 0];
   run(d, 1);
   ok(d.stuckT === 0 && d.sideT <= 0, 'unstick: standing still (attacking, stunned) is never stuck');
   const f = leader();

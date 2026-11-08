@@ -13,11 +13,12 @@ const LD = 'js/entities/gym-leader.js',
   ST = 'js/systems/status.js',
   FX = 'js/systems/move-effects.js',
   CB = 'js/systems/combat.js',
-  GY = 'js/data/gyms.js';
-const ENV = { [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
+  GY = 'js/data/gyms.js',
+  AI = 'js/entities/leader-ai.js';
+const ENV = { [AI]: 'GL_AI', [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
 const M = [
   // edge unstick (Jess 2026-11-07)
-  ['no edge side-step', LD, 'this.unstick(dt, this.steer(dt, pl));', 'this.steer(dt, pl);'],
+  ['no edge side-step', AI, 'e.unstick(dt, this.steer(e, dt, pl));', 'this.steer(e, dt, pl);'], // LEADER-AI slice 1 retarget
   ['the stuck test never runs', LD, 'this.noteStuck(dt, ox, oy);', ''],
   ['no wait before the side-step', LD, 'if (this.stuckT > U.stuck && this.sideT <= 0) {', 'if (this.sideT <= 0) {'],
   ['moving freely counts as stuck', LD, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],
@@ -53,8 +54,8 @@ const M = [
   ['the 5 s gap is 2.5 s', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'], // slice 6 retarget
   ['the AI never shakes off', LD, "if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt);", ''], // slice 6 retarget
   // the brain
-  ['the brain steps while frozen', LD, 'this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));', 'this.heading = this.steer(dt, pl);'], // edge unstick retarget
-  ['the heading never reaches the controller', LD, '{ axis: () => this.heading }', '{}'],
+  ['the brain steps while frozen', AI, 'e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));', 'e.heading = e.unstick(dt, this.steer(e, dt, pl));'], // LEADER-AI slice 1 retarget
+  ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget
   ['no self heal restriction', BR, 'rules.healLimit != null ? rules.healLimit : ', ''],
   ['tells cannot be turned off', BR, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
   ['the brain installs heal on the leader', BR, 'if (!e.isPlayer) {\n        e.stabFor', 'if (true) {\n        e.stabFor'],

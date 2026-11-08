@@ -7,7 +7,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine (main is already merged in).
 2. /triage works (it is user-invoked, so it never shows in the model's skill list). #28 (architecture skill) is ready.
-3. The gym AI: designed 2026-11-08 in docs/LEADER-AI.md (grilled fresh, compared with the old proposal, now history). Slices: #22, then #31 to #34; roster UI #35 (TODO.md).
+3. The gym AI (docs/LEADER-AI.md): slice 1 (#22) built 2026-11-08, awaiting Jess's feel test; then #31 to #34; roster UI #35, item reveals #36 (TODO.md).
 
 ## Where we are
 - Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.

@@ -70,7 +70,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {
@@ -201,7 +201,7 @@ reset();
   ok(!sfx.includes('select'), 'a leader switch plays no select sound');
   e.setActive(0);
   ok(e.active === 1, 'no switch inside the hold');
-  e.brain.pickSlot = () => {};
+  e.brain.pickSlot = () => -1;
   run(e, 25, 5000);
   ok(e.swapT === 0, 'the hold ticks down on the leader itself, with no game.js: ' + e.swapT);
   e.setActive(0);
@@ -229,36 +229,36 @@ reset();
   const a = mk(0);
   fresh(a, () => 1);
   at(a, mid);
-  a.brain.pickSlot(human, clock);
+  a.ai.pressSlot(a, a.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(a.active === 1 && near(a.swapT, 0.4), 'out of Tackle reach it switches to Water Pulse, holding 0.4 s: ' + a.active + ' ' + a.swapT);
   // b. inside reach, on Water Pulse: Tackle 1 against Water Pulse 1 x 0.5; 1 >= 1.5 x 0.5, so it switches to Tackle
   const b = mk(1);
   fresh(b, () => 1);
   at(b, close);
-  b.brain.pickSlot(human, clock);
+  b.ai.pressSlot(b, b.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(b.active === 0, 'up close Tackle (1) beats Water Pulse (0.5) by 2x: switch');
   // c. the stay rule: on Tackle (1), Water Pulse 2.8 x 0.5 = 1.4 < 1.5, so it stays
   const c = mk(0);
   fresh(c, (id) => (id === 'tackle' ? 1 : 2.8));
   at(c, close);
-  c.brain.pickSlot(human, clock);
+  c.ai.pressSlot(c, c.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(c.active === 0, 'Water Pulse at 1.4x does not pull it off a ready Tackle');
   // d. Water Pulse 3.2 x 0.5 = 1.6 >= 1.5, so it switches
   const d = mk(0);
   fresh(d, (id) => (id === 'tackle' ? 1 : 3.2));
   at(d, close);
-  d.brain.pickSlot(human, clock);
+  d.ai.pressSlot(d, d.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(d.active === 1, 'Water Pulse at 1.6x does');
   // e. never inside the hold or a tell
   const h = mk(1);
   fresh(h, () => 1);
   at(h, close);
   h.swapT = 0.2;
-  h.brain.pickSlot(human, clock);
+  h.ai.pressSlot(h, h.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(h.active === 1, 'no pick inside the hold');
   h.swapT = 0;
   h.brain.tell = { fired: false };
-  h.brain.pickSlot(human, clock);
+  h.ai.pressSlot(h, h.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(h.active === 1, 'nor inside a tell');
 }
 
@@ -269,7 +269,7 @@ reset();
   e.active = 0;
   e.brain.init();
   e.brain.wait = 0;
-  e.brain.pickSlot = () => {};
+  e.brain.pickSlot = () => -1;
   run(e, 30, reachOf(e, 'tackle') + human.r + 20);
   ok(!casts['water-pulse'] && !e.brain.tell, 'a ready Water Pulse on an inactive slot never starts a tell: ' + JSON.stringify(casts));
 }
@@ -283,13 +283,13 @@ reset();
   const away = reachOf(e, 'tackle') + human.r + 20;
   ok(G.MoveEffects.statReady(e.brain.def('harden'), e), "precondition: Harden's Gate is open on a fresh leader");
   at(e, away);
-  e.brain.pickSlot(human, clock);
+  e.ai.pressSlot(e, e.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(e.active === 1, 'nothing in reach is ready: it visits the Harden slot');
   const f = mk();
   f.active = 0;
   f.brain.init();
   f.brain.wait = 0;
-  f.brain.pickSlot = () => {};
+  f.brain.pickSlot = () => -1;
   run(f, 30, away);
   ok(!casts.harden, 'Harden never casts from the bench: ' + JSON.stringify(casts));
   f.active = 1;
@@ -309,15 +309,15 @@ reset();
   };
   const a = mk();
   a.hp = a.maxHp * 0.3;
-  a.brain.pickSlot(human, clock);
+  a.ai.pressSlot(a, a.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(a.active === 2, 'below 35%: the Recover slot first, ahead of a ready Water Pulse: ' + a.active);
   const b = mk();
   b.hp = b.maxHp * 0.5;
-  b.brain.pickSlot(human, clock);
+  b.ai.pressSlot(b, b.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(b.active === 1, 'above its line the Recover slot is closed: Water Pulse: ' + b.active);
   const c = mk({ restrictions: { healLimit: 0 } });
   c.hp = c.maxHp * 0.3;
-  c.brain.pickSlot(human, clock);
+  c.ai.pressSlot(c, c.brain.pickSlot(human, clock)); // the AI player presses the brain's choice (LEADER-AI slice 1)
   ok(c.active === 1, 'healLimit 0: no heal visit: ' + c.active);
 }
 
@@ -328,7 +328,7 @@ reset();
   e.active = 0;
   e.brain.init();
   e.brain.wait = 0;
-  e.brain.pickSlot = () => {};
+  e.brain.pickSlot = () => -1;
   fresh(e, () => 1);
   const close = Math.max(1, reachOf(e, 'tackle') - 5);
   run(e, 1, close);

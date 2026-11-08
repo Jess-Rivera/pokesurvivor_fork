@@ -287,24 +287,10 @@ G.Game = (() => {
   /** Keyboard swap: cycle prev/next (skipping fainted) and direct-to-slot. */
   function handleSwap() {
     if (roster.length < 2 || runTeam.lock > 0 || state !== 'playing' || pl.dead) return;
-    // The swap input comes from the member's controller (slice 3; yours reads the keyboard). Direct keys are by SLOT number; an
-    // empty slot (or a fainted member) does nothing.
-    const c = pl.controller,
-      n = c.swapSlot();
-    if (n >= 0) {
-      const j = roster.findIndex((f) => f.teamSlot === n);
-      if (j >= 0) swapTo(j);
-      return;
-    }
-    const dir = c.swapDir();
-    if (!dir) return;
-    for (let step = 1; step <= roster.length; step++) {
-      const j = (runTeam.activeIdx + dir * step + roster.length * step) % roster.length;
-      if (!roster[j].dead && j !== runTeam.activeIdx) {
-        swapTo(j);
-        return;
-      }
-    }
+    // The swap input comes from the member's controller (slice 3; yours reads the keyboard), read by the Team (G.Team.requested),
+    // the same for a leader's AI player.
+    const j = runTeam.requested(pl.controller);
+    if (j >= 0) swapTo(j);
   }
 
   /** All players in the game (you first). */
@@ -970,9 +956,7 @@ G.Game = (() => {
     } // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
     // Move slots (slice 3, D4): the member's controller lists the slot keys and cycle keys that went down this frame, in key order.
-    const c = pl.controller;
-    for (const i of c.slots()) pl.setActive(i);
-    for (const d of c.cycles()) pl.cycle(d);
+    pl.takeSlotInput();
   }
 
   // ---------------- loop ----------------

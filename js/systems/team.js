@@ -110,6 +110,24 @@ G.Team = (() => {
       return this.members.indexOf(next);
     }
 
+    /**
+     * The member index a controller's swap input asks for this frame, or -1 (slice 3; LEADER-AI "Your controls only": yours and a
+     * leader's AI player read the same way). Direct keys are by SLOT number, an empty slot or a fainted member does nothing; a
+     * direction steps from the member on the field, skipping the fainted. Check canSwap before swapping.
+     */
+    requested(c) {
+      const m = this.members,
+        n = c.swapSlot();
+      if (n >= 0) return m.findIndex((f) => f.teamSlot === n);
+      const dir = c.swapDir();
+      if (!dir) return -1;
+      for (let step = 1; step <= m.length; step++) {
+        const j = (this.activeIdx + dir * step + m.length * step) % m.length;
+        if (!m[j].dead && j !== this.activeIdx) return j;
+      }
+      return -1;
+    }
+
     tickLock(dt) {
       if (this.lock > 0) this.lock = Math.max(0, this.lock - dt);
     }

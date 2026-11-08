@@ -438,6 +438,21 @@ G.PlayerEntity = class PlayerEntity {
     if (!free) this.swapT = PlayerEntity.SWAP_LOCK;
     const m = this.slots[i][0];
     G.FX.ring(this.x, this.y - G.LIFT * 0.5, 6, this.r * 3.4, G.U.TYPE_COLOR[m.type], 0.3, 3);
+    // the ring is the switch you can see, so the leader AI may know it (LEADER-AI REVEALS: a bond needs no switch between casts)
+    G.SimBus.emit('slot:switch', {
+      ownerUid: this.copyUid != null ? this.copyUid : null,
+      ownerSlot: this.teamSlot != null ? this.teamSlot : null,
+      rival: !!this.isRival,
+      slot: i,
+    });
+  }
+
+  /** The slot keys and cycle keys the controller lists this frame, in key order (slice 3, D4): yours from game.js, a leader's
+   *  from its AI player (G.LeaderAI), so both switch under the same slot hold. */
+  takeSlotInput() {
+    const c = this.controller;
+    for (const i of c.slots()) this.setActive(i);
+    for (const d of c.cycles()) this.cycle(d);
   }
 
   cycle(dir) {

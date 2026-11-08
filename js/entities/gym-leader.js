@@ -11,6 +11,8 @@
  * fields its loop lineup as one G.Team (G.GymLeader.team, below; the arena sends them out). Only the last to fall is the boss kill.
  * Slice 8 (Jess 2026-11-07, map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt): one slot per authored move
  * line and one active slot under your slot hold (the brain picks it), your melee cushion and your flinch rule.
+ * Leader AI slice 1 (#22, docs/LEADER-AI.md): the AI player (G.LeaderAI, js/entities/leader-ai.js) drives it through your controller;
+ * the brain's heading and slot choice reach the body only as its answers.
  */
 G.GymLeader = class GymLeader extends G.PlayerEntity {
   /** @param def the leader's def from G.Gym.makeDef; def.gym holds its level, hpMult, moves, cards and restrictions */
@@ -36,8 +38,9 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.moves = this.slots.flat(); // every slot's moves (slice 8: one slot per authored line, bonded lines share one)
     for (const s of this.moves) s.type = G.MoveDefs[s.id].type;
     this.arm();
-    this.heading = [0, 0];
-    this.controller = Object.assign({}, G.PlayerEntity.IDLE, { axis: () => this.heading });
+    this.heading = [0, 0]; // the AI player's last heading for this mon (G.LeaderAI.think); the edge unstick reads it too
+    this.ai = new G.LeaderAI([this]); // its own AI player until G.GymLeader.team gives the team one (LEADER-AI "One module")
+    this.controller = this.ai.controller;
     this.stuckT = 0; // edge unstick (Jess 2026-11-07): seconds of moving far less than the heading meant
     this.sideT = 0; // seconds left of the side-step
     this.side = 1; // which way the side-step turns the heading (+1 is the brain's circling sense)
@@ -90,8 +93,8 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     return Math.round(super.maxHpAt(level) * this.hpMult);
   }
 
-  /** One frame: the AI shakes off at the auto rate, the brain picks the heading (not while frozen or asleep, when it does not step at
-   *  all), and the Player entity rules do the rest. The enemy list passes the nearest player, and keeps updating a corpse for its fade. */
+  /** One frame: the AI shakes off at the auto rate, the AI player thinks (its heading and slot presses, G.LeaderAI.think), and the
+   *  Player entity rules do the rest. The enemy list passes the nearest player, and keeps updating a corpse for its fade. */
   update(dt, pl) {
     if (this.dead) {
       this.anim.update(dt);
@@ -100,19 +103,11 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     }
     if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt); // slice 8: the slot hold (yours ticks in game.js)
     if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
-    this.heading = G.Status.stunned(this) ? [0, 0] : this.unstick(dt, this.steer(dt, pl));
+    this.ai.think(this, dt, pl);
     const ox = this.x,
       oy = this.y;
     super.update(dt);
     this.noteStuck(dt, ox, oy);
-  }
-  /** Asks the brain where to go: the way to you (around walls, G.Path) and speed 1, so its answer is a heading for the controller. */
-  steer(dt, pl) {
-    let [dx, dy] = G.U.norm(pl.x - this.x, pl.y - this.y);
-    const pd = G.Path.dirFor(this, pl);
-    if (pd) [dx, dy] = pd;
-    const [vx, vy] = this.brain.step(dt, pl, G.U.dist(this.x, this.y, pl.x, pl.y), dx, dy, 1);
-    return [vx, vy];
   }
   aimTargets() {
     return this.foes();
@@ -283,6 +278,7 @@ G.GymLeader.team = function (members) {
     cards = members[0].gym.cards || {};
   members.forEach((m, i) => (m.teamSlot = i));
   const t = G.Team.create(members, null);
+  t.ai = new G.LeaderAI(members, t); // one AI player for the team (LEADER-AI): every member presses through its one controller
   for (const id of Object.keys(cards)) G.TeamCards.add(t.cards, id, cards[id]);
   t.runItems.push(...ids);
   for (const m of members) {

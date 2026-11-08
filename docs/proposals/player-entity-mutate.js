@@ -13,8 +13,10 @@ const ENV = {
   'js/main.js': 'PE3_MAIN',
   'js/systems/status.js': 'PE3_STATUS',
   'js/systems/move-effects.js': 'PE3_FX',
+  'js/systems/team.js': 'PE3_TEAM',
 };
 const P = 'js/entities/player.js',
+  TM = 'js/systems/team.js',
   GM = 'js/game.js',
   MN = 'js/main.js',
   ST = 'js/systems/status.js';
@@ -49,11 +51,12 @@ const M = [
   ['Shake off reads the dodge key', P, "shake: () => G.Input.action('shake_off'),", "shake: () => G.Input.action('dodge'),"],
   // game.js asks the controller
   ['Shake off reads the keyboard', GM, 'if (pl.controller.shake() && G.Status.shake(pl))', "if (G.Input.action('shake_off') && G.Status.shake(pl))"],
-  ['the swap direction reads the keyboard', GM, '    const dir = c.swapDir();\n', "    const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;\n"],
-  ['the direct swap key reads the keyboard', GM, '      n = c.swapSlot();', "      n = [0, 1, 2, 3, 4, 5].findIndex((k) => G.Input.action('swap_' + (k + 1)));"],
-  ['an attack key reads the keyboard in play', GM, '    for (const i of c.slots()) pl.setActive(i);', "    for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) pl.setActive(i);"],
-  ['a slot key calls setActive twice', GM, '    for (const i of c.slots()) pl.setActive(i);', '    for (const i of c.slots()) {\n      pl.setActive(i);\n      pl.setActive(i);\n    }'],
-  ['the cycle keys are dropped', GM, '    for (const d of c.cycles()) pl.cycle(d);\n', ''],
+  // LEADER-AI slice 1: the swap input moved to G.Team.requested, the slot and cycle presses to PlayerEntity.takeSlotInput
+  ['the swap direction reads the keyboard', TM, '      const dir = c.swapDir();\n', "      const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;\n"],
+  ['the direct swap key reads the keyboard', TM, '        n = c.swapSlot();', "        n = [0, 1, 2, 3, 4, 5].findIndex((k) => G.Input.action('swap_' + (k + 1)));"],
+  ['an attack key reads the keyboard in play', P, '    for (const i of c.slots()) this.setActive(i);', "    for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) this.setActive(i);"],
+  ['a slot key calls setActive twice', P, '    for (const i of c.slots()) this.setActive(i);', '    for (const i of c.slots()) {\n      this.setActive(i);\n      this.setActive(i);\n    }'],
+  ['the cycle keys are dropped', P, '    for (const d of c.cycles()) this.cycle(d);\n', ''],
   ['the menus lose their attack keys', GM, "for (let i = 0; i < 4; i++) if (G.Input.action('attack_' + (i + 1))) G.RunUI.itemKey(i);", 'for (const i of pl.controller.slots()) G.RunUI.itemKey(i);'],
   // loading and the isPlayer sites
   ['NEED does not list PlayerEntity', MN, "    'PlayerEntity',\n", ''],

@@ -118,7 +118,7 @@ in English. Do not add those new English strings to `lang-en.js`.
 - `funding.js` support/funding config.
 
 ### `js/entities/`
-- `player.js`, `enemy.js` (`G.WildEntity`, also named `G.Enemy`, plus the `EnemyMgr` manager), `elite.js` (`G.Elite`, a `WildEntity` holding only its mods), `gym-leader.js` (`G.GymLeader`, a `PlayerEntity` driven by the GymBrain, for a gym with `playerEntity` in gyms.js; loads after player.js), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
+- `player.js`, `enemy.js` (`G.WildEntity`, also named `G.Enemy`, plus the `EnemyMgr` manager), `elite.js` (`G.Elite`, a `WildEntity` holding only its mods), `gym-leader.js` (`G.GymLeader`, a `PlayerEntity` driven through your controls by its AI player, for a gym with `playerEntity` in gyms.js; loads after player.js), `leader-ai.js` (`G.LeaderAI`, the AI player, one per leader team: it wraps the GymBrain's heading and slot choice as controller answers, docs/LEADER-AI.md; loads after gym-leader.js), `boss-ai.js` (`G.Boss`: `G.Boss.make` spawns a boss as an
   enemy.js body plus a brain; the GymBrain makes every gym leader decision), `projectile.js` (enemy shots in flight; player moves live in G.MoveSim),
   `pickup.js`, `fx.js` and `vfx.js` (the 23 pixel-art attack shapes).
 
@@ -127,7 +127,7 @@ in English. Do not add those new English strings to `lang-en.js`.
   card draft (team cards; moves come from the shops, `shops.js`), `gacha.js` pulls/rarity/pity, `gym-arena.js` (`G.GymArena`, the gym gate and the leader's type arena),
   `weather.js`, `events.js` (mid-run events), `hazards.js` (traps/altars/springs),
   `interact.js`, `pathing.js` (BFS distance-field pathfinding), `progress.js`
-  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages),
+  (coins/tickets/profile), `status.js` and `stages.js` (ailments and stat stages), `leader-info.js` (`G.LeaderInfo`, what a leader's AI player can see: both rosters and your reveals, fed by the SimBus; loads after team.js),
   `elites.js`, `gym.js` (run progression, BOSS-REWORK.md), `log.js` (dev logger).
 - The move system (every move, player and gym leader, since slice 7b): `move-route.js` (`G.MoveRoute`, the per-frame entry and `routed(id)`: a resolved def that is not retired), `move-sim.js` (`G.MoveSim`, headless casts, instances, motion, collision, persistent upkeep; `castAt` for an enemy owner), `move-geom.js` (shapes and containment), `move-effects.js` (payload appliers, hits on the player too), `move-render.js` (drawing only), `team-cards.js` (`G.TeamCards`, the team card store, the fold onto a def and `STATS`, the Vitamins card's six stats). Rules: docs/current feature planning/combat-architecture.md.
 

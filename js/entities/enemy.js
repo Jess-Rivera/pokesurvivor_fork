@@ -1630,6 +1630,13 @@
     function get(id) {
       return byId.get(id);
     }
+    /** Takes a living unit out of the list, no corpse (a leader mon going to the bench, LEADER-AI slice 1). */
+    function remove(e) {
+      byId.delete(e.id);
+      const i = list.indexOf(e);
+      if (i >= 0) list.splice(i, 1);
+      if (G.Coop.isHost) G.Coop.enemyGone(e, false);
+    }
 
     /** Local copy of a host's enemy (co-op). */
     function addRemote(o) {
@@ -1899,6 +1906,7 @@
       all,
       add,
       get,
+      remove,
       addRemote,
       removeRemote,
       stash,
