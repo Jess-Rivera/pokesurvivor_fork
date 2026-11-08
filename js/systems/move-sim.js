@@ -32,14 +32,17 @@
  * within range. delay (D28): an instance with delivery.delay spends whole steps waiting (no motion, collision, aging or endOn; only an
  * owner faint ends it, as it would anyway), then acts as if cast in the frame after its wait ran out; 'move:land' marks that first
  * live step for the render. falls (R8): a world shape that never moves; the drop is drawn by the render, moveSpeed is ignored.
- * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon, js/entities/boss-ai.js) names its foes (owner.foes(), the player). Its brain
- * times the casts and calls castAt with the aim it locked at the tell; its shapes collide only with those foes (never enemies or
+ * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon: G.GymLeader.Caster, or the old body's GymBrain) names its foes (owner.foes(),
+ * the player). It times its attacks and calls castAt with the aim it locked at the tell (a Player-entity leader runs turn for the
+ * rest, leader AI slice 5a); its shapes collide only with those foes (never enemies or
  * props), and a hit goes through G.MoveEffects to the player's own hurt. The step is shared, so its shapes move with everyone's.
  *
  *   tick(dt, owner, now)  cooldowns and casts for the owner's slots (owner.slots groups, owner.activeGroup()) that pass the
  *                         routing filter, then step.
  *   step(dt, now)         all live instances, in the frame order of architecture B: motion (age first), growth (inside
  *                         G.MoveGeom.shapeOf), collision and eligibility, payload, termination.
+ *   turn(dt, owner, now)  leader AI slice 5a: tick without the step, for a Player-entity leader's own frame; an owner with
+ *                         castDue is handed each due slot instead of the cast (its authored rules decide)
  *   castAt(owner, slot, def, now, aim, target)   slice 7a: one cast now along `aim` (no cast gate), for a gym leader's brain; `target`
  *                         is the { x, y } spot a target-anchored strike lands on (Thunderbolt), locked at its tell
  *   persist(owner, now)   slice 3 of the gym lore sets (Jess 2026-11-02): the persistent upkeep alone, for a gym leader's brain, so a
@@ -634,7 +637,17 @@ G.MoveSim = (() => {
     if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');
   }
 
+  /** A due slot casts, or, for an owner with castDue (a Player-entity leader, G.GymLeader.Caster; leader AI slice 5a), is handed to
+   *  it: its authored rules decide (an attack waits for its tell, a self heal for the heal cap). */
+  const fire = (o, slot, def, now) => (o.castDue ? o.castDue(slot, def, now) : castSlot(o, slot, def, now));
+
   function tick(dt, o, now) {
+    turn(dt, o, now);
+    step(dt, now);
+  }
+  /** Leader AI slice 5a (#34): an owner's own part of tick, everything but the shared step. A Player-entity leader runs it from its
+   *  own frame, after its slot press, as yours runs after yours; the step runs once, in your tick. */
+  function turn(dt, o, now) {
     if (o.dead) {
       upkeepPersistent(o, now);
       endOwner(o);
@@ -645,7 +658,7 @@ G.MoveSim = (() => {
       if (o.flyT > 0) {
         // Fly: every slot timer is frozen and nothing casts until landing; the persistent groups end (a slot switch)
         upkeepPersistent(o, now);
-        return step(dt, now);
+        return;
       }
       const act = o.activeGroup();
       // S13: a frozen timer does not run and does not cast. The active group goes first and its hold is decided before its casts (a
@@ -662,17 +675,19 @@ G.MoveSim = (() => {
             slot.t -= dt;
             if (slot.t > EPS) continue;
           }
-          if (G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);
+          if (G.MoveEffects.statReady(def, o)) fire(o, slot, def, now);
           continue;
         }
         if (def.cd == null) continue;
         slot.t -= dt;
-        if (slot.t <= EPS) castSlot(o, slot, def, now);
+        if (slot.t <= EPS) fire(o, slot, def, now);
       }
+      // by slot, not by group: a leader's active group is a filtered copy (its closed hpBelow moves recharge here)
       for (const g of o.slots)
         if (g !== act)
           for (const slot of g) {
             // inactive slots recharge too
+            if (act.includes(slot)) continue;
             const def = defOf(o, slot.id);
             if (
               !def ||
@@ -686,7 +701,6 @@ G.MoveSim = (() => {
           }
       upkeepPersistent(o, now); // slice 4c-1 (R7): after the casts, so a new group acts this frame like any root
     }
-    step(dt, now);
   }
 
   // ---- motion table, keyed by delivery.motion (I3) ----
@@ -1138,6 +1152,7 @@ G.MoveSim = (() => {
 
   return {
     tick,
+    turn,
     step,
     clear,
     castAt,

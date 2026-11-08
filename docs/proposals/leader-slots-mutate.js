@@ -23,7 +23,8 @@ const M = [
   ['the select sound plays for a leader', PL, "this.onSwitchFeel(); // the select sound is yours", "G.Audio.sfx('select'); // the select sound is yours"],
   // only the active slot
   ['an inactive slot fires', LD, '(e.slots[e.active] || [])', 'e.slots.flat()'],
-  ['a buff casts from the bench', LD, 'buffs(now) {\n    const e = this.e;\n    for (const s of e.activeGroup()) {', 'buffs(now) {\n    const e = this.e;\n    for (const s of this.pool()) {'],
+  // slice 5a step 2: buffs come from your sim pass (active group only); the break is the caster casting them from every slot
+  ['a buff casts from the bench', LD, '    G.MoveSim.turn(dt, e, now);\n', "    G.MoveSim.turn(dt, e, now);\n    for (const s of this.pool()) if (G.Gyms.formOf(this.def(s.id)) === 'buff' && G.MoveEffects.statReady(this.def(s.id), e)) this.buff(s, this.def(s.id), now);\n"],
   // the pick
   ['no heal visit', AI, 'if (h >= 0) return go(h);', ''],
   ['a closed hpBelow slot is pickable', AI, 'g.some((s) => G.Boss.open(e, s) && s.t <= 0', 'g.some((s) => s.t <= 0'],

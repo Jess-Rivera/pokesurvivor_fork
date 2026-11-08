@@ -306,6 +306,7 @@ G.GymLeader.Caster = class Caster {
       return p && !p.dead ? [p] : [];
     };
     e.activeGroup = () => (e.slots[e.active] || []).filter((s) => G.Boss.open(e, s)); // the open moves of the active slot
+    e.castDue = (slot, def, now) => this.due(slot, def, now); // your sim scheduler hands it each due slot (G.MoveSim.turn)
     e.atkFactor0 = e.atkFactor;
   }
 
@@ -320,19 +321,16 @@ G.GymLeader.Caster = class Caster {
     return G.TeamCards.defOf(this.e, id);
   }
 
-  /** The start of the mon's frame (the AI player calls it from its steer): every move recharges (inactive slots too, as yours do),
-   *  the slot choice `pick` is pressed under your slot hold, buffs and self heals cast, the persistent and heal over time upkeep runs.
-   *  True while the body is held: a live dash carries it, or a tell runs (its release fires here). */
+  /** The start of the mon's frame (the AI player calls it from its steer): the slot choice `pick` is pressed under your slot hold,
+   *  then your own sim pass runs for it, as yours runs after your keys (G.MoveSim.turn: commitments, heal over time, every move
+   *  recharging, inactive slots too, the persistent upkeep), handing each due slot to `due`. True while the body is held: a live dash
+   *  carries it, or a tell runs (its release fires here). */
   prepare(dt, now, pick) {
     if (!this.on) this.init();
     const e = this.e;
-    for (const g of e.slots) for (const s of g) if (s.t > 0) s.t = Math.max(0, s.t - dt);
     if (this.wait > 0) this.wait -= dt;
     pick();
-    this.buffs(now);
-    this.heals(now);
-    G.MoveSim.persist(e, now); // a persistent slot (Toxic's trail) lives while it is in the active group, as yours does
-    G.MoveEffects.upkeep(dt, e); // heal over time ticks (a self heal lands on its first tick), as the sim does for you
+    G.MoveSim.turn(dt, e, now);
     if (e.mvRoot) return true; // a live dash (Quick Attack) carries the body
     if (this.tell) {
       this.telling(dt, now);
@@ -531,41 +529,40 @@ G.GymLeader.Caster = class Caster {
     this.orbCost(d);
   }
 
-  /** Pure buffs cast the moment their Gate opens (SS8), with no tell, even during an attack's tell; only from the active slot, so the
-   *  slot choice visits it. A fizzle waits one Gate (the sim). */
-  buffs(now) {
-    const e = this.e;
-    for (const s of e.activeGroup()) {
-      const d = this.def(s.id);
-      if (s.t > 0 || G.Gyms.formOf(d) !== 'buff' || !G.MoveEffects.statReady(d, e)) continue;
-      if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
-      G.Gym.noteCast(s.id);
-      this.orbCost(d);
-      const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e',
-        vis = G.VFX.forMove(d); // your buff look: a ring and rising sprites
-      G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
-      for (let i = 0; i < 3; i++)
-        G.FX.sp(vis.buff || 'arrow', vis.pal, e.x + G.U.rand(-e.r * 1.4, e.r * 1.4), e.y - G.U.rand(0, e.bodyH * 0.8), {
-          vy: -70,
-          life: 0.6,
-        });
-    }
+  /** A slot of the active group your sim scheduler says is due (G.MoveSim.turn: a cooldown run out, a pure buff's Gate open). A pure
+   *  buff casts now, with no tell, even during an attack's tell; a self heal casts now while the mon is hurt and a heal is left; an
+   *  attack never fires here, it waits for its tell (release). */
+  due(s, d, now) {
+    const f = G.Gyms.formOf(d);
+    if (f === 'buff') this.buff(s, d, now);
+    else if (f === 'heal') this.heal(s, d, now);
   }
-  /** Self heals (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) cast with no tell, as buffs do, whenever the mon
-   *  is hurt and the move is off cooldown, at most healsLeft times this fight. A drain move (Giga Drain) is not a self heal. */
-  heals(now) {
+  /** A pure buff (SS8) from the active slot, so the slot choice visits it. A fizzle waits one Gate (the sim). Your buff look: a ring
+   *  and rising sprites. */
+  buff(s, d, now) {
     const e = this.e;
-    if (!(e.hp < e.maxHp)) return;
-    for (const s of e.activeGroup()) {
-      if (this.healsLeft <= 0) return;
-      const d = this.def(s.id);
-      if (s.t > 0 || G.Gyms.formOf(d) !== 'heal') continue;
-      if (!G.MoveSim.castAt(e, s, d, now, e.aim)) continue;
-      this.healsLeft--;
-      G.Gym.noteCast(s.id);
-      this.orbCost(d);
-      G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
-    }
+    if (!G.MoveSim.castAt(e, s, d, now, e.aim)) return;
+    G.Gym.noteCast(s.id);
+    this.orbCost(d);
+    const col = G.U.TYPE_COLOR[d.type] || '#ff7a9e',
+      vis = G.VFX.forMove(d);
+    G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, col, 0.35, 2.5);
+    for (let i = 0; i < 3; i++)
+      G.FX.sp(vis.buff || 'arrow', vis.pal, e.x + G.U.rand(-e.r * 1.4, e.r * 1.4), e.y - G.U.rand(0, e.bodyH * 0.8), {
+        vy: -70,
+        life: 0.6,
+      });
+  }
+  /** A self heal (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) while the mon is hurt, at most healsLeft times
+   *  this fight. A drain move (Giga Drain) is not a self heal. */
+  heal(s, d, now) {
+    const e = this.e;
+    if (!(e.hp < e.maxHp) || this.healsLeft <= 0) return;
+    if (!G.MoveSim.castAt(e, s, d, now, e.aim)) return;
+    this.healsLeft--;
+    G.Gym.noteCast(s.id);
+    this.orbCost(d);
+    G.FX.ring(e.x, e.y, e.r * 2.4, e.r * 1.1, '#5fe08a', 0.35, 2.5);
   }
   /** Life Orb (slice 6, N6): each cast costs 1% of max HP (at least 1), never below 1 HP, the rule Player.cast applies to you. An
    *  always-on move (a persistent def) is not an attack. */

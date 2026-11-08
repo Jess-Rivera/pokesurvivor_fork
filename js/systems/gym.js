@@ -156,10 +156,11 @@ G.Gym = (() => {
       shotDmg: 10,
       shotCd: 1,
       range: 260,
-      // moves and cards are read by the GymBrain (boss-ai.js), which casts the moves through G.MoveSim with the cards folded in (slice 7a)
+      // moves and cards are read by G.GymLeader.Caster on a switched gym (leader AI slice 5a), else by the GymBrain (boss-ai.js); both
+      // cast the moves through G.MoveSim with the cards folded in (slice 7a)
       gym: {
         level: lvl,
-        loop, // the loop this fight is in: it also caps the leader's self heals per fight (GymBrain.healsLeft)
+        loop, // the loop this fight is in: it also caps the leader's self heals per fight (healsLeft)
         leader: g.leader,
         badge: g.badge,
         species: mon.name,

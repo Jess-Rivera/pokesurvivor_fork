@@ -384,3 +384,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Test: leader-ai-harness 449, leader-ai-mutate 89/89; check red only on the two #30 harnesses; smoke-gym green; a file:// probe saw Misty open with Seel and say her line at 2.4 s.
 - Jess feel-tested slice 4: approved ("it feels awesome"), with the three calls. #33 closed and shipped; #34 unblocked (ready).
 - Stopped at: open #34 (slice 5) in a new chat.
+
+## 2026-11-08 (Claude Code, home), leader AI slice 5a (#34)
+- Opened #34 with Jess: slice 5 split into 5a (#34, GymBrain out, behavior-neutral) and 5b (#39, personalities, every remaining style and memory setting; Brock a wall, Misty tempo). Casting on your path with the tell as the authored difference; GymBrain's reach filter kept for 5a.
+- Step 1 (b91e26a7): a 5a parity trace (all AI decisions on, loops 1 and 2) recorded on GymBrain first; movement and slot choice moved to G.LeaderAI, the cast rules to G.GymLeader.Caster, tuning shared as G.Boss.TUNE. Trace matched tick for tick.
+- Step 2: leaders run G.MoveSim.turn (tick without the step; castDue hook) after their slot press. Found and fixed a double recharge (the inactive loop compared groups; a leader's active group is a filtered copy). Drift: at most 3 frames, 4.6 px; Jess accepted, traces re-recorded.
+- Test: leader-ai-harness 470, mutate checks 92/92, 58/58, 22/22, 38/38; check red only on the two #30 harnesses; smoke-gym green.
+- Found: a leader's timers pause while it is stunned (yours run); left for Jess to rule. Stopped at: Jess's feel test of 5a.

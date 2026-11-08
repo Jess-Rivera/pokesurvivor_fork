@@ -29,6 +29,10 @@
  *               with the most field time in a fight) asks the prediction cap bag (predictCap acts per BAG chances, run long). When
  *               it acts, the 'exploit' trigger fires and it swaps to its best matchup against that mon, without waiting out minField
  *               (it counts as a voluntary swap); already on the best one, it stays and still says its line.
+ * Slice 5a (#34, decision 2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities): GymBrain is gone from Player-
+ * entity leaders. Movement (steer, legsOf) and the slot choice (pickSlot) are this module's own; the tell, the reach filter and the
+ * heal cap are the body's authored cast rules (G.GymLeader.Caster), on your sim scheduler (G.MoveSim.turn). Where slices 1 to 4
+ * below say "the brain", read those.
  */
 G.LeaderAI = class LeaderAI {
   /** @param members the leader mons it drives, in slot order; @param team their G.Team, or null for a lone mon */
@@ -799,7 +803,7 @@ G.LeaderAI.PACE = Object.freeze({
   gap0: 8,
   gapK: 16,
 });
-G.LeaderAI.HOLD = Object.freeze({ neutral: null, push: 'close', breather: 'far' }); // the GymBrain stance each pacing stance holds
+G.LeaderAI.HOLD = Object.freeze({ neutral: null, push: 'close', breather: 'far' }); // the movement stance each pacing stance holds (steer)
 G.LeaderAI.CLOSE = Object.freeze(['melee', 'nova', 'multi']); // the forms a gap-closing dodge brings into reach
 G.LeaderAI.LINE_WAIT = 4; // seconds a line may wait for the banner (the send-out line shows 3.2 s)
 G.LeaderAI.LINE_T = 2.4; // seconds a line shows
