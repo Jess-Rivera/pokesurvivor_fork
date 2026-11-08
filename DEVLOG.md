@@ -344,3 +344,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - #27: DECISIONS.md split into 135 files in docs/decisions/ (lossless, bytes verified) with an index. Decided: decisions are cited by file name alone, Q/QA numbers are history; CLAUDE.md rule and CONTEXT.md pointers updated. Commit 5fcfe971. Filed #29 (promote review CP1 rulings).
 - Not green: gym-harness and leader-stats-harness each fail one Misty check, lint shows 7 errors in guard-git.js. No js/ change on this branch, so none caused here; not investigated. /triage did not show in the session skill list.
 - Stopped at: Jess pushes and merges chore/docs-cleanup into main, then pulls main into feature/gym-leader-ai.
+
+## 2026-11-08 (Claude Code, home), triage fix and leader AI design
+- /triage was never broken: disable-model-invocation hides it from the model's list. The real fault was diagnosing-bugs, whose unquoted description broke its YAML (quoted). Triage pass: #14 #24 #25 ready, label and board mismatches fixed, #5 closed (superseded by slice 7a), #28 ready.
+- Leader AI designed fresh by grilling (old proposal frozen first), then compared with it and the slice 9 v2 map (both now history). Spec: docs/LEADER-AI.md; decision 2026-11-08-leader-ai-an-ai-player-through-your-controls; 8 glossary terms; COMBAT-RULES LEADER VOLUNTARY SWAPS.
+- Filed #31 to #35; #22 rescoped as slice 1. Branch rules now live in docs/branch-rules/feature-gym-leader-ai.md (slice shape rule moved out of CLAUDE.md).
+- No game code touched; check.js red only on the two #30 harnesses.
+- Stopped at: open slice 1 (#22) in a new chat by agreeing its goal, done check and test.
