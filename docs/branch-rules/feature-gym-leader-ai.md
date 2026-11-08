@@ -1,0 +1,18 @@
+# Branch rules: feature/gym-leader-ai
+
+Rules that hold only while this branch is open. Read at session start when STATE.md names this branch. General agent rules stay in CLAUDE.md; where the two differ for work on this branch, this file wins.
+
+## What this branch builds
+The leader AI: the AI player that drives Player-entity leaders. Spec: docs/LEADER-AI.md (it wins over every older leader-AI text). The old proposal (docs/proposals/gym-leader-ai-design.md) and the slice 9 v2 map are history; do not build on them.
+Slices, in order: #22 (slice 1), #31, #32, #33, #34. Roster UI: #35 (independent).
+
+## Slice shape (Jess, 2026-11-08)
+Every slice opens with three things, agreed with Jess before any build: its goal, how we know it is done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan (CLAUDE.md "Edit boundary and workflow") and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries the three opening items as its done-condition.
+
+## Standing rulings on this branch
+- gym-harness and leader-stats-harness stay red until the branch nears completion (#30); `check: FAILED (2 harness)` from those two is expected, any other failure is not.
+- Gyms 3 to 8 stay on the old GymBrain; only Misty and Brock get the AI player.
+
+## Before this branch merges
+- #30 resolved and `node tools/check.js` ends with "check: all passed".
+- Move any rule here that should outlive the branch to its permanent home, then mark this file history.

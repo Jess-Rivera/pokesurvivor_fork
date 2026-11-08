@@ -7,7 +7,7 @@ everything that must survive a tool switch lives here as a file.
 All agent rules live in CLAUDE.md (the only full statement); read it with this file.
 
 ## Session start (do this first, every session)
-1. Read this file and STATE.md (the short current handoff). Nothing else is required.
+1. Read this file and STATE.md (the short current handoff), plus the branch rules file STATE.md names, if any. Nothing else is required.
 2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
 3. Read TODO.md (the short next-session handoff), then give the **catch-up briefing**, read-only (change nothing on GitHub; fixing things is /triage):
    - Pull live state: `gh issue list --state open --json number,title,labels,updatedAt` and the PokeSwarm board (`gh project item-list 2 --owner Jess-Rivera --format json --limit 200`). The board wins over any file. If gh is unavailable (Quick), say so and fall back to the TODO.md list.

@@ -78,7 +78,7 @@
 
 - [Approved] A dev overlay and log of every AI decision with its reason and scores.
 - [Approved] A headless harness that the limits hold: no response faster than `reflex`, no decision inside a tell or commitment, no dodge with zero charges, no choice that reads a move it has not seen revealed, nothing read that the information layer did not produce.
-- [Approved] Each slice opens with its goal, how we know it is done, and the test that validates it (CLAUDE.md "Slice shape"); that test is written at the slice's start.
+- [Approved] Each slice opens with its goal, how we know it is done, and the test that validates it (docs/branch-rules/feature-gym-leader-ai.md "Slice shape"); that test is written at the slice's start.
 - [Approved] Jess's feel test is the final judge. No win-rate simulation for now.
 
 ## Build order

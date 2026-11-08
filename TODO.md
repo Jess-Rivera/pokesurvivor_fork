@@ -9,7 +9,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 2. Look at the two red harnesses (gym-harness Misty loop 1 pool, leader-stats-harness Misty Zinc); file an issue for each real one. Hook lint errors are fixed.
 3. #28, the improve-codebase-architecture skill (ready; four open questions in the issue). #29 (CP1 rulings into docs/decisions/) needs Jess to sort settled from superseded.
 4. Leader AI (spec docs/LEADER-AI.md): slice 1 is #22, then #31 to #34 in order; roster UI #35. Open #22 by
-   agreeing its goal, done check and test (CLAUDE.md "Slice shape"), then the prose plan.
+   agreeing its goal, done check and test (docs/branch-rules/feature-gym-leader-ai.md "Slice shape"), then the prose plan.
 6. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
 7. #24 real gym loop counter.
 8. Chore for Jess: delete merged branches (the assistant lists them).

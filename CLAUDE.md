@@ -72,10 +72,6 @@ Dividing line: "does this change what the game does when you run it?"
   - EXCEPTION: `js/data/changelog.js` is free-edit (patch notes, purely informational). Edit it directly without approval, but verify it still parses as valid JS (a syntax error there breaks the bundle). It is the only js/data/*.js file that is free-edit.
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 - Also NO: the dev tools and checks under tools/ (they never ship in the game; Jess, 2026-11-01). Edit them directly, then run node tools/check.js and any smoke the change touches.
-
-## Slice shape (Jess, 2026-11-08)
-Every slice opens with three things, agreed before any build: its goal, how we know it is done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries the three opening items as its done-condition.
-
 ## Git and GitHub (what the assistant may do)
 Enforced in Claude Code by the PreToolUse hook .claude/hooks/guard-git.js (registered in .claude/settings.json).
 It is an allowlist: a git or gh command not named here is blocked until Jess decides about it. Other tools
@@ -129,6 +125,7 @@ Spec rules carry one of four tags. `[Approved]` is owner-approved intended behav
 An ID cited outside the file that defines it carries that file's name: `<file name without .md>:<ID>`, for example `combat-architecture:D16`, `2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and`, `move-consistency-review:CP1-Q17`. The prefix names the file that DEFINES the ID, never the file that cites it, so one ID reads the same everywhere. A bare ID is fine only inside its own file. Keep any qualifier the defining file needs (CP1 in the review). Use the full file name, no aliases. Decisions are the exception: each is one file in docs/decisions/ and is cited by that file name alone (no ID suffix, never renamed); the Q and QA numbers inside the 2026-10-28 entries are history, not identifiers. Applies to new and edited text; older references are swept separately (docs/TODO-notes-2026-11.md, "Cross-document ID sweep").
 
 ## Where current rules live
+- Branch rules: the feature branch in progress may have docs/branch-rules/<branch>.md (STATE.md names it); read it at session start. It wins over this file for work on that branch.
 - Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board; TODO.md is the next-session handoff that points at its issue numbers.
 - General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
