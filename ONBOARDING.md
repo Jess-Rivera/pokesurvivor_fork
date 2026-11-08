@@ -7,8 +7,8 @@
 - **Last reconciled:** not yet
 
 A practical map of the PokeSurvivor codebase for an English-speaking developer who
-wants to fork it and add features. Pair this with GLOSSARY.md (Spanish to English
-terms) and GDD.md (game design). Written from reading the source.
+wants to fork it and add features. Pair this with GLOSSARY.md (the game language),
+docs/SPANISH-CODE-REFERENCE.md (Spanish to English code names) and GDD.md (game design). Written from reading the source.
 
 Open this reference only when a task needs architecture, module routing, load-order,
 or build-pipeline information. Do not include it in routine chat startup context.

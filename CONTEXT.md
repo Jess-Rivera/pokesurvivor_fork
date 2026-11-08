@@ -9,7 +9,14 @@ All agent rules live in CLAUDE.md (the only full statement); read it with this f
 ## Session start (do this first, every session)
 1. Read this file and STATE.md (the short current handoff). Nothing else is required.
 2. Say where we left off and the top open items. ("Catch me up" means exactly this.)
-3. Read TODO.md (the short next-session handoff), then `gh issue list` for live state. The board wins over any file.
+3. Read TODO.md (the short next-session handoff), then give the **catch-up briefing**, read-only (change nothing on GitHub; fixing things is /triage):
+   - Pull live state: `gh issue list --state open --json number,title,labels,updatedAt` and the PokeSwarm board (`gh project item-list 2 --owner Jess-Rivera --format json --limit 200`). The board wins over any file. If gh is unavailable (Quick), say so and fall back to the TODO.md list.
+   - Report in about 15 lines, in this order:
+     1. **Suggested for today:** the top 2 or 3 from TODO.md, plus any `priority:high` or `ready` issue not already on that list, each with its issue number and a one-line reason.
+     2. **Owed by you:** Needs Playtest cards and owed feel tests, and any open owner decision that blocks something (name what it blocks).
+     3. **Needs triage:** counts of unlabeled and `needs-triage` issues, `needs-info` issues with a reply since the last note, and `blocked` issues whose blockers are all closed (likely stale labels). Offer /triage if any are nonzero.
+     4. **Drift:** anything contradicting STATE.md or TODO.md (a closed issue still listed as next, a branch ahead or behind main).
+   - Keep it to numbers and one-liners; do not read issue bodies unless a line needs it.
 4. Tell Jess how to bring THIS machine's repo up to date (Jess runs these; the assistant lists them and what to check, under CLAUDE.md "Git"):
    - The remote is https://github.com/Jess-Rivera/pokesurvivor_fork.git. Work happens on a feature branch (STATE.md names the current one, e.g. feature/items), not on main.
    - `git status` (must be clean; if not, commit or stash first, never edit on a dirty tree after a tool switch).

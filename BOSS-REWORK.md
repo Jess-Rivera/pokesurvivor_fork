@@ -141,7 +141,7 @@ Every rule below is [Approved] and approved, not built (code differs, see TODO: 
 - Remove Arceus's Judgment (judgment.js 706 lines, its hooks in spawner.js and rift.js, `G.Judgment.AT`, related achievements, missions and lang-en.js keys).
 - Remove the old boss AI (bossInit, bossMove, bossStart, bossCast, bossEnd, enrage in enemy.js) once nothing uses it.
 - Remove BOSS_SLOTS, bossScale (enemies.js), spawnBoss and bossIdx (spawner.js).
-- Mark GLOSSARY entries (jefe / grieta) and update ONBOARDING / GDD.
+- Mark the jefe / grieta rows in docs/SPANISH-CODE-REFERENCE.md and update ONBOARDING / GDD.
 
 ## 6. Change log and code touch points (history)
 Moved verbatim to docs/DECISIONS-archive.md on 2026-10-28 (B5b), under "BOSS-REWORK section 6 (change log and code touch points), moved 2026-10-28". Current progression rules are in sections 1 to 4a; code state is in STATE.md and the code itself.
