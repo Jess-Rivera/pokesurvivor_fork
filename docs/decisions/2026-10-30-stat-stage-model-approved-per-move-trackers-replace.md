@@ -1,0 +1,5 @@
+## 2026-10-30, Stat stage model approved: per-move trackers replace maxStacks (Jess)
+R1 to R13 of docs/proposals/stat-stage-model.md approved as COMBAT-RULES:SS1 to SS13. One tracker per (Pokemon, move, stat); global Gate 6.0 s and Duration 6.1 s; every success refreshes, a success with the Gate open climbs by the move's pokeapi stages; a dry window resets only that tracker. Self drops climb on Gate x 2. Strong hosts follow the model with STRONG_HOST_GATE_MUL 1 (Brock's Harden reaches +6 in about 30 s). Two team-wide cards (Gate, Duration).
+Retires maxStacks, the stat `duration` field, Q13, Q14, Q15 / QA-11, D-FOECAP, D-LEAF, D-MC5 and the per-move stage rulings for Bug Buzz, Ice Beam, Dragon Dance, Leaf Storm, Metal Claw, Meteor Mash and String Shot. Built in slice 5 on this branch, not its own branch. Left [Open]: Bond tax, stage-manipulation moves, raises on foes and whole-field moves.
+Canonical: docs/COMBAT-RULES.md, "Stat stages"; docs/MOVE-INTENT.md (the seven moves above); combat-architecture section H, H26; docs/MOVE-AXIS-SCHEMA.md, "Retired stat fields"
+

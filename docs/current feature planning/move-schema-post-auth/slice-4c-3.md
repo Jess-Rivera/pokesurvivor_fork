@@ -16,7 +16,7 @@ Psychic re-picks its steering target once: when the cast target is lost it turns
 
 ## Corrections to the handoff
 - Startup: read MOVE-AXIS-SCHEMA `delay` instead of "review section 9.1 row Q17".
-- P2 "(D1, D2)": these mean MOVE-INTENT flamethrower, not architecture D1 and D2. "DECIDED Q13" in P2 and "Q17" in P5 are review Checkpoint 1 numbers (turnRate units, delay), not DECISIONS Q13 or Q17.
+- P2 "(D1, D2)": these mean MOVE-INTENT flamethrower, not architecture D1 and D2. "DECIDED Q13" in P2 and "Q17" in P5 are review Checkpoint 1 numbers (turnRate units, delay), not the 2026-10-28 DECISIONS entries of those numbers (decisions are cited by file name).
 - Ignore ../move-schema/slice-4c.md "aimTrack rotates ... toward the nearest enemy"; the sticky rule wins.
 - P10 Docs: update architecture D23, D28, R8, R9, validation 2.5 scenario 5 (test only), the MOVE-AXIS-SCHEMA `aimTrack` row and grammar comment (sticky rule), and this file; the review edits are dropped.
 - Finish: update this file and slice-overview.md in this folder, including a whole-4c summary.

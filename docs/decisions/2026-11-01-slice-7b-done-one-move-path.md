@@ -1,0 +1,4 @@
+## 2026-11-01, Slice 7b done: one move path (Jess)
+The ?newcombat flag is gone: every move, player and gym leader, runs in G.MoveSim from its resolved def. Deleted: the legacy player-move engine (the player half of combat.js, player shots in projectile.js), kinds.js, mechanics.js, the legacy level-up cards and the choose screen, the ROUTED list (routed now means a resolved def that is not retired), the legacy stage stacking and the norm factor. Bubble and Hail retired (D-BUBBLE, D-HAIL). The legacy table is kept only for the tools (docs/move_rework_holding/legacy-moves.js). Not changed: js/net/coop.js still calls removed hooks (deferred, D-COOP). Skipped: the dead G.Log.hitOut cleanup in js/systems/log.js. Each step feel-tested by Jess.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7b.md, "Results"
+

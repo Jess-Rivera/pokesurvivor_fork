@@ -1,0 +1,4 @@
+## 2026-11-07, Slice 6 built: leader stats, cards, items and restrictions (Jess)
+Q1 enrage off unless authored (Misty off); Q2 power goes on switched gyms, tempo stays as the AI's pace; Q3 the player's status rules are the default and each leader difference is an authored restriction (statusCut, ccWindow, autoShake, hitIframes), in slice 6; Q4 held and run items now, team readers wait for slice 7; Q5 no card cap, a dev warning above level - 1 stacks. N1 the old body keeps no team cards; N2 Gate and Duration legal on leaders, Regen waits for slice 7; N3 auto shake on by default; N4 tempo per slot; N6 Choice Band and Specs never on a leader, Life Orb pays its cost, Bright Powder allowed, Rocky Helmet rejected as bugged (TODO). Misty: Zinc 3, hpMult 25, no enrage.
+Canonical: docs/COMBAT-RULES.md, "Host model", LEADER STATS, CARDS, ITEMS AND RESTRICTIONS; plan: docs/ASCII Concept Maps/Entity Model Slice 6 - Leader Stats and Cards.txt
+

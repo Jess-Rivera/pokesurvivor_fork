@@ -137,7 +137,7 @@ History since slice 7b (2026-11-01): the legacy move code is deleted. What was k
 | projectile.js homing via G.U.damp | DO NOT REUSE for turnRate | DECIDED move-consistency-review:CP1-Q13: turnRate is rad/s (clamped turn), legacy homing is an exponential damp |
 | projectile.js boomerang (resets `hits` at turnaround) | REUSE THE RULE | it is exactly the leg reset proposed for move-consistency-review:CP1-Q2 |
 | procAilments / procFlinch roll gap (0.5 s) | DROP for the new path | DECIDED move-consistency-review:CP1-Q14: every eligible hit rolls; the rehit time is the throttle |
-| G.Stages.add / teamAdd / mul / ladder | KEEP the ladder and mul. The per-move live-application cap for self-buffs built in slice 4c-0 is replaced in slice 5 by the per-(Pokemon, move, stat) tracker model (COMBAT-RULES "Stat stages"; H26) | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists (superseded 2026-10-30 by H26); scope per DECISIONS:Q16 |
+| G.Stages.add / teamAdd / mul / ladder | KEEP the ladder and mul. The per-move live-application cap for self-buffs built in slice 4c-0 is replaced in slice 5 by the per-(Pokemon, move, stat) tracker model (COMBAT-RULES "Stat stages"; H26) | DECIDED move-consistency-review:CP1-Q4 maxStacks semantics fit its `src`-tagged application lists (superseded 2026-10-30 by H26); scope per 2026-10-28-maxstacks-applies-only-to-self-buffs-foe-debuffs-have-no |
 | G.Stats.attackFactor / applyDamage | KEEP, call with a two-field adapter (category, power) | it reads `move.dmg`, `move.cat`, `move.norm`; the new path passes { cat, dmg } and no norm |
 | drainHeal, Big Root, onDealt, dmgDealt, itemDmgMul, typeKFor (Power Stone), isCrit | KEEP | existing item and stat layers must keep working |
 | Prop damage (rocks, chests, grass) | KEEP behavior | every legacy kind damages props in its area; the new path does the same via propsInCircle |
@@ -273,7 +273,7 @@ The rules R1 to R9 are the complete list of places where one axis is allowed to 
 
 Other interactions found in the audit:
 - Upgrades x resolved definitions: upgrades never touch G.MoveDefs (I2); a pierce card on an UNLIMITED or shapeless move is excluded at offer time (slice 5).
-- Stat riders: Leaf Storm and Metal Claw roll per enemy hit or per cast; the tracker model bounds them (COMBAT-RULES "Stat stages", SS2 and SS4; H26). The per-move cap, DECISIONS:Q14 and D-LEAF are retired (2026-10-30).
+- Stat riders: Leaf Storm and Metal Claw roll per enemy hit or per cast; the tracker model bounds them (COMBAT-RULES "Stat stages", SS2 and SS4; H26). The per-move cap, 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and and D-LEAF are retired (2026-10-30).
 - Overlapping placed instances (trail patches): each patch is its own instance and hits independently (Flame Wheel). Correct by the rules; flagged for the simulator, not changed.
 - Delay x lifetime: D28 starts endOn time after the delay; telegraph is a render phase.
 - Enemy hurt invulnerability: Enemy.hurt has no i-frames for enemies today (verify in slice 3c); interval moves rely on that.
@@ -287,7 +287,7 @@ Other interactions found in the audit:
 
 ## G. Implementation slices (proposed replacement for slices 3 to 6)
 
-> **HISTORY from 2026-10-28.** Section G is the slice plan as approved on 2026-10-26. It is superseded by docs/current feature planning/move-schema-post-auth/slice-overview.md (slice order, the 4c split, slices 5 to 7). Values below that later decisions changed (for example stat default maxStacks 6, now 1 per DECISIONS:Q14) are not live.
+> **HISTORY from 2026-10-28.** Section G is the slice plan as approved on 2026-10-26. It is superseded by docs/current feature planning/move-schema-post-auth/slice-overview.md (slice order, the 4c split, slices 5 to 7). Values below that later decisions changed (for example stat default maxStacks 6, now 1 per 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and) are not live.
 
 Each slice is handed to the coding model alone, with this document and the slice file. Game-affecting slices follow the CLAUDE.md workflow (prose plan, Jess OKs, build, harness, write).
 
@@ -360,7 +360,7 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 | id | rule | tag | source |
 | --- | --- | --- | --- |
 | H1 | Return legs: the back leg may hit again. Hit records keyed by leg (R2), no new field. | [Approved] | 9.1 Q2 |
-| H2 | Stat riders: self and team riders fired per hit, bounded by the per-move cap (C7). A capped application refreshed that move's oldest. Removed in slice 5 (2026-10-31): H26 replaces it (self-side rolls once per cast). | History | 9.1 Q4 (cap wording superseded by DECISIONS:Q14 and DECISIONS:Q16; rule superseded 2026-10-30 by H26) |
+| H2 | Stat riders: self and team riders fired per hit, bounded by the per-move cap (C7). A capped application refreshed that move's oldest. Removed in slice 5 (2026-10-31): H26 replaces it (self-side rolls once per cast). | History | 9.1 Q4 (cap wording superseded by 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and and 2026-10-28-maxstacks-applies-only-to-self-buffs-foe-debuffs-have-no; rule superseded 2026-10-30 by H26) |
 | H3 | Accuracy folds into `basePower` = power x accuracy / 100 (resolver). See D1. | [Approved] | 9.1 Q6 |
 | H4 | An emitter is its own instance. Schedule: `cast` emits first at activation, `interval` first at `every` (D29). | [Approved] | 9.1 Q7 |
 | H5 | Every eligible hit rolls its riders. The legacy 0.5 s roll gap is dropped for the new path, and the rehit time is the throttle. See D32. | [Approved] | 9.1 Q14 |
@@ -374,7 +374,7 @@ Source: docs/current feature planning/move-consistency-review.md section 9 (Chec
 | H13 | Emitted children deal full parent power each (Gust, Fairy Wind 3 hits, Discharge 2, Meteor Mash 1 + 3). Measure in the Stage 5 simulator first. | [Approved] (DEFAULT ACCEPTED) | 9.3 F4 |
 | H14 | An emitter never emits at or after its end. | [Approved] (DEFAULT ACCEPTED) | 9.3 F6 |
 | H15 | Orbit y-squash is rendering only; the sim hitbox is a true circle. Supersedes the OPEN note in D25. | [Approved] (default accepted) | 9.7 item 5; slice-4c.md decisions |
-| H16 | Caps are per move and add across moves. | [Approved] | 9.8 D-2 (the D-2 cap values are superseded by DECISIONS:Q14) |
+| H16 | Caps are per move and add across moves. | [Approved] | 9.8 D-2 (the D-2 cap values are superseded by 2026-10-28-every-move-defaults-to-maxstacks-1-including-metal-claw-and) |
 | H17 | Root and enemy movement (4a build): four phases bypass the speed product (leaving units, jumpers, boss dash, boss leap). A jump in the air lands, a crouch waits, leaving units are rooted, a boss dash stays in place. Strong hosts are not extended while rooted; wild roots refresh to the longer. Pushes (separation, knockback, flinch recoil) still move a rooted enemy. The trap rule itself is in COMBAT-RULES "Trap, enemies". | [Approved] | 9.8 |
 | H18 | Stat stacking per Pokemon (S4): a self stat is tagged with the move id plus the casting Pokemon, so stat stage trackers are per Pokemon (COMBAT-RULES:SS1). Built. | [Approved] | 9.9 S4; js/systems/move-effects.js header |
 | H19 | Flat damage is flat (S5). See D14. Built. | [Approved] | 9.9 S5 |

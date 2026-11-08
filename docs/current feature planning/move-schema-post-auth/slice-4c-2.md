@@ -14,7 +14,7 @@ MOVE-INTENT quick-attack (centre landing, one enemy hit at B, i-frames whole das
 ## Corrections to the handoff
 - Startup: read the owners above instead of "Review section 9.1 rows Q2, Q3, Q8 and F5".
 - P8 "(D2)" and "(D3)": these mean MOVE-INTENT quick-attack (i-frames, dash lock), not architecture D2 and D3.
-- "Q3 decided" means move-consistency-review:CP1-Q3 (Quick Attack), not DECISIONS:Q3.
+- "Q3 decided" means move-consistency-review:CP1-Q3 (Quick Attack), not 2026-10-28-first-elite-at-2-00-each-later-elite-2-00-after-return-none.
 - P12 Docs: update architecture D26, D27, D33, R1, R2 and this file; the F5 and review 9.7 edits are dropped (MOVE-INTENT holds them).
 - Finish: update this file and slice-overview.md in this folder.
 - The R2 test is "2 hits per enemy per bone, one per leg" (the old slice-4c.md wording "per leg" is wrong).

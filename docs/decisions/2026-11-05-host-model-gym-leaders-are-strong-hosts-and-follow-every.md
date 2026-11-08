@@ -1,0 +1,4 @@
+## 2026-11-05, Host model: gym leaders are strong hosts and follow every player rule (Jess)
+Entities are Strong Hosts (follow all the player's rules: Player, Gym Leader, Uber, World Boss) or Weak Hosts (follow the wild enemy rules: Elite, Wild Enemy). A gym leader can do anything a player can and Jess restricts by hand where wanted (default allow, authored restrictions); this replaces slice 7a's allow-list (12 move forms, no team cards). A leader fields a team that swaps like the player's, not all mons at once. An Elite is a wild enemy scaled up in size and stats with added rules, not a strong host with restrictions. Tells stay for now, as an authored restriction on the AI. The player becomes the reference strong host, so the old status meaning of "strong" (boss, elite, gym; not the player) flips. Code is unchanged so far.
+Canonical: docs/COMBAT-RULES.md "Host model"; audit and handoff: docs/proposals/host-model-audit.md, docs/proposals/host-model-handoff.md
+

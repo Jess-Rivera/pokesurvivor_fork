@@ -1,0 +1,4 @@
+## 2026-10-31, Gym leader mons play like the player: cards per mon, autocast, Tier 1 AI (Jess)
+Amends D-ENEMY. Each roster mon is its own sim owner holding upgrade cards (the player's card rules, per mon, no team cards), not hand-set numbers. Its moves autocast through G.MoveSim like the player's (one group, per-move cooldowns, pure buffs on their Gate per SS8); the brain only moves. Mons are drawn at player size, so cone reach is measured from the center like the player's. Every enemy cast keeps a tell with the aim locked at its start (0.5 s shots, 0.45 s melee, 0.3 s buffs; BOSS-REWORK's 0.3 to 0.45 is corrected). Riders: damage only, no knockback on the player. Contact: fixed to Tackle, never swapped. Tempo and power stay as per-mon knobs. Scope: player-like shell plus Tier 1 movement AI in 7a; Tier 2 smart play gets its own branch after the merge.
+Canonical: docs/current feature planning/move-schema-post-auth/slice-7a.md, "Blocking decisions"
+

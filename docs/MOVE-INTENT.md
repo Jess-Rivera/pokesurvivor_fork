@@ -91,7 +91,7 @@ Filled 2026-10-28 (Phase 4 batch B4a) from docs/current feature planning/move-co
 - Needs a COMBAT-RULES change: evasion and accuracy stages join the tracker model (see "Stat stages").
 
 ### dragon-dance
-- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to DECISIONS:Q13 (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
+- [Approved] No per-move exception: COMBAT-RULES "Stat stages" applies, one tracker each on Attack and Speed, +1 per climb; as a pure buff move it has no cooldown of its own and casts when its Gate opens (SS1, SS8). The 2026-10-28 CP3 exception to 2026-10-28-a-self-buffs-duration-is-never-shorter-than-its-cooldown (raises shorter than the cooldown, maxStacks floor 1) is retired with Q13 and maxStacks. (Jess, 2026-10-30)
 - Ledger: B4-I05
 
 ### dragon-rage
