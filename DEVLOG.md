@@ -357,4 +357,5 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Rulings (in docs/LEADER-AI.md REVEALS): "on screen" = cast since the fight's start; a bond = two different moves of one mon cast with no slot switch seen between them, no time window (Jess dropped the 0.4 s window).
 - Built: G.LeaderAI (one per leader team, answers the seven controller calls, wraps GymBrain), G.LeaderInfo (rosters, move and bond reveals, keyed by copy uid else team slot), the leader's swap step through your rules, G.Debug.leaderSwap, a ?dev overlay. Shared with you: G.Team.requested and PlayerEntity.takeSlotInput. move:cast gains ownerUid, ownerSlot, rival; new slot:switch event.
 - Test: docs/proposals/leader-ai-harness.js (55 checks; parity against a trace recorded before the build). Harness and mutate retargets in 9 files. Smokes gym and team green; check red only on the two #30 harnesses.
-- Stopped at: Jess feel-tests a loop 2 Misty fight (G.Gym.debugLoop(2), G.Debug.gym(2), G.Debug.leaderSwap(2)).
+- Jess feel-tested a loop 2 Misty fight: all good (the reveal overlay needs G.Debug.hitbox(), not ?dev alone). #22 closed and shipped, #31 now ready.
+- Stopped at: open #31 (slice 2) in a new chat.

@@ -6,19 +6,19 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine (main is already merged in).
-2. /triage works (it is user-invoked, so it never shows in the model's skill list). #28 (architecture skill) is ready.
-3. The gym AI (docs/LEADER-AI.md): slice 1 (#22) built 2026-11-08, awaiting Jess's feel test; then #31 to #34; roster UI #35, item reveals #36 (TODO.md).
+2. Leader AI slice 2 is #31 (ready): open it by agreeing its goal, done check and test (branch rules "Slice shape"), then the prose plan.
 
 ## Where we are
-- Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
-- DECISIONS.md is now an index; each decision is a file in docs/decisions/, cited by file name (CLAUDE.md "Cross-document IDs"). Follow-up #29 (promote review CP1 rulings).
-- Entity slices 1 to 8 built, 7b and 8 green. Close-out built (#23 feel-test list closed by Jess 2026-11-08; issues found in play get their own bug):
-  Brock on G.GymLeader beside Misty (hpMult {1: 16, 2: 12}, Misty's restrictions, no enrage, no touch).
-  Map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt.
-- Gyms 3 to 8 stay on the old brain for the playtesters (copy in about 4 days). Two leader paths until slice 12.
+- Leader AI (docs/LEADER-AI.md): slice 1 (#22) shipped 2026-11-08. G.LeaderAI (js/entities/leader-ai.js) drives each leader team
+  through your seven controller calls, still wrapping GymBrain for movement, slots and casts. G.LeaderInfo (js/systems/leader-info.js)
+  holds both rosters and your move and bond reveals. Leader voluntary swaps exist (dev and test only: G.Debug.leaderSwap(slot)).
+  Test: docs/proposals/leader-ai-harness.js, with parity against docs/proposals/leader-ai-trace.json (re-record only on purpose:
+  LA_RECORD=1). Reveal overlay: G.Debug.hitbox() in a fight.
+- Held-item reveals: #36, blocked on an item rework. Roster UI #35 can read G.GymArena.leaderInfo.rosters().
+- Gyms 3 to 8 stay on the old brain. Two leader paths until slice 12.
 - Slice 8 DPS report (Q10) still unread: no tempo or power change yet.
-- Lint: 0 errors (hook now linted as node code), 69 warnings in inherited code (do not --fix).
-- Red by design until #30: gym-harness (Misty loop 1 pool), leader-stats-harness (Misty Zinc). Any other red is real.
+- Lint: 0 errors, 69 warnings in inherited code (do not --fix).
+- check.js: red only on gym-harness and leader-stats-harness, by design until #30.
 
 ## Next
 See TODO.md (the handoff, with issue numbers).
@@ -26,6 +26,7 @@ See TODO.md (the handoff, with issue numbers).
 ## Watch
 - Quick cannot run node. After ANY code edit, re-check mutate patterns against the edited files.
 - Keep new code within Prettier's 120 columns, or a format pass makes mutation patterns STALE.
+- boss-split-mutate "the arena spawns a plain enemy" is STALE (older than slice 1).
 - If gym-leader-harness section 12 FAILs on defense-curl: Brock's Tackle may starve his buff visit (slice 8 rule).
 - http smokes fail ~1 run in 3 (ERR_NO_BUFFER_SPACE); repeat first.
 - Rocky Helmet bugged, rejected on leaders. Bright Powder inert until the AI dodges.
