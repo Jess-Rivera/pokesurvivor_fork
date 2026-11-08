@@ -17,10 +17,7 @@ Last updated: 2026-11-07 evening, Quick (work machine). Branch: feature/gym-lead
 - Lint: 0 errors, 69 warnings in inherited code (do not --fix).
 
 ## Next
-1. Close-out checks, merge, new branch, design doc.
-2. A real gym loop counter (loop is dev-set only: G.Gym.debugLoop).
-3. Owed feel tests: win a gym, swap before spending the link, spend it on a benched member; slice 1 Elite fight.
-Also: delete merged branches; Codex menu.
+See TODO.md (the handoff, with issue numbers).
 
 ## Watch
 - Quick cannot run node. After ANY code edit, re-check mutate patterns against the edited files.
@@ -30,10 +27,9 @@ Also: delete merged branches; Codex menu.
 - Rocky Helmet bugged, rejected on leaders. Bright Powder inert until the AI dodges.
 - File:// font: Chromium blocks Silver-game.ttf (dev.html line 52).
 - `move-sim-mutate` "routing filter ignored" is a real MISS (28/29), older than slice 5.
-- GitHub API empty again: TODO.md board mirror is from 2026-11-04.
 
 ## Open owner decisions
-- Board cleanup: close #5 (slice 7a replaced it); stale `blocked` on #11.
+- Board cleanup: see TODO.md item 5.
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out; Korataki licence.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 

@@ -17,7 +17,8 @@ Remote visibility via local checkout: there is no GitHub connector, and GitHub's
 (commits, branches, issues, PRs) are JS-rendered and cannot be fetched reliably. So the bridge
 between work and home stays the LOCAL CHECKOUT: when the agent needs to see remote state, Jess pulls
 or checks out the branch locally and the agent reads the working tree and git metadata directly.
-This does not change the Git rule (Jess still runs all git himself) or the local-first scope.
+Where `gh` is available (Claude Code) the assistant reads remote state directly and this is only the fallback.
+This does not change the local-first scope.
 
 ## Session rituals
 Start ("catch me up") and end steps: see CONTEXT.md "Session start" and "Session end".
@@ -46,7 +47,7 @@ Build and perfect the LOCAL single-player game first. DEFERRED until Jess explic
 Firebase (auth, Firestore, RTDB, cloud saves), the Cloudflare TURN worker, and the whole
 multiplayer/co-op/networking stack (js/net/: social, net, coop, ranking, signups), plus friends,
 rooms, and online leaderboards. Do not propose or write cloud/MP changes until then; build the local
-side only and note any deferred hook in TODO.md.
+side only and open an issue labeled deferred for any deferred hook.
 
 ## English-native i18n
 - Inherited Spanish code: the game was authored in Spanish and translated at runtime by js/core/i18n.js
@@ -72,24 +73,43 @@ Dividing line: "does this change what the game does when you run it?"
 - NO (edit directly, no proposal): the Markdown project docs (CONTEXT, STATE, DEVLOG, DECISIONS, BALANCE, TODO, CLAUDE, docs/).
 - Also NO: the dev tools and checks under tools/ (they never ship in the game; Jess, 2026-11-01). Edit them directly, then run node tools/check.js and any smoke the change touches.
 
-## Git, hard prohibition on changing the repo
-The AI assistant MAY run read-only git commands to inspect state: status, diff, log, show, blame,
-branch (list only), ls-files, ls-tree, rev-parse, config --get. `git fetch` is also allowed (it only updates
-remote-tracking refs, so the assistant can tell Jess whether he is behind). Any git command that changes the repository, the index, the working tree, refs, config or
-the remote is FORBIDDEN, under any circumstances: this includes add, commit, push, pull, merge,
-rebase, reset, checkout, switch, restore, stash, cherry-pick, revert, tag, branch (create/delete/rename),
-clean, rm, mv, apply, am, config (set), remote (add/remove), and submodule or worktree changes. When in
-doubt whether a command writes anything, do not run it and ask Jess. For every change-making step the
-assistant gives Jess exact commands, explains them, and advises strategy (branching, staging, commit
-messages). Jess runs all of those himself.
+## Git and GitHub (what the assistant may do)
+Enforced in Claude Code by the PreToolUse hook .claude/hooks/guard-git.js (registered in .claude/settings.json).
+It is an allowlist: a git or gh command not named here is blocked until Jess decides about it. Other tools
+without hooks (Amazon Quick) follow the same list on trust.
+
+The assistant MAY:
+- Read-only git: status, diff, log, show, blame, branch (list only), ls-files, ls-tree, rev-parse, config --get,
+  remote -v, `git fetch`.
+- Stage and commit on the branch Jess has checked out (add, commit). Commit at slice boundaries once
+  `node tools/check.js` and `npm run format` are clean, and at session end, so a tool switch never starts from a
+  dirty tree. Never --amend, never --no-verify.
+- GitHub through `gh`: create, edit, comment on, label, close and reopen issues; create labels; add and edit board
+  items on the PokeSwarm project (the token needs the `project` scope, Jess runs `gh auth refresh -s project`);
+  open a PR from a branch Jess has already pushed; read anything.
+
+The assistant MUST NOT (Jess runs these; the assistant gives the exact commands, explains them, and advises
+strategy on branching, staging and messages):
+- Anything that moves or publishes history or changes branches: push, pull, merge, rebase, reset, checkout,
+  switch, branch create/delete/rename, stash, cherry-pick, revert, tag, clean, restore, rm, mv, apply, am,
+  config (set), remote (add/remove), submodule, worktree, amend, force of any kind.
+- On GitHub: merge or close a PR, delete anything (issue, label, repo, release), `gh api` writes, settings,
+  auth, workflow runs, releases.
+When in doubt whether a command writes something not listed above, do not run it and ask Jess.
 Commit messages carry no "Co-Authored-By" line and no AI signature of any kind.
 
 ## Project management and issue tracking (the assistant is Jess's PM)
-The assistant acts as Jess's expert PM, not just a coder. The tracker is GitHub Issues + the
-"PokeSwarm" Project board (the board wins for "what's next"; TODO.md is being migrated to it).
-The assistant NEVER runs `gh`, or any git command that changes anything, to mutate the tracker: it drafts the exact commands and Jess
-runs them (same weight as the git rule). Full detail, label taxonomy, board columns, PM behaviors
-and the playtester/template rules: **docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
+The assistant acts as Jess's expert PM, not just a coder. The tracker is GitHub Issues + the "PokeSwarm" Project
+board, and the board wins for "what's next". The assistant creates and maintains issues and board cards itself (see
+"Git and GitHub"). TODO.md is only the next-session handoff: a short list of what is next, each line pointing at
+issue numbers. It never duplicates an issue's content.
+- When work is agreed, it becomes an issue (clear title, type + area + status labels, a concrete done-condition),
+  not a TODO line. Draft a batch of more than about five new issues for Jess to approve first.
+- When a slice lands, comment on its issue with what shipped, and move the card to Needs Playtest (never straight
+  to Shipped; Jess ships). A ruling goes in DECISIONS.md, the task it implies goes in an issue, with a link.
+- At session end, rewrite the TODO.md handoff from what actually happened, and STATE.md as before.
+Full detail, label taxonomy, board columns, PM behaviors and the playtester/template rules:
+**docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
 
 ## Performance stance
 Vision first, trim fat later. Ignore small per-frame millisecond differences now. BUT treat a visible
@@ -106,7 +126,7 @@ Spec rules carry one of four tags. `[Approved]` is owner-approved intended behav
 An ID cited outside the file that defines it carries that file's name: `<file name without .md>:<ID>`, for example `combat-architecture:D16`, `DECISIONS:Q14`, `move-consistency-review:CP1-Q17`. The prefix names the file that DEFINES the ID, never the file that cites it, so one ID reads the same everywhere. A bare ID is fine only inside its own file. Keep any qualifier the defining file needs (CP1 in the review). Use the full file name, no aliases. Applies to new and edited text; older references are swept separately (TODO.md Backlog).
 
 ## Where current rules live
-- Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board, then TODO.md.
+- Agent rules: this file. Session ritual and startup pointers: CONTEXT.md. Current handoff, tracking and the code-gap list: STATE.md. Work queue: the "PokeSwarm" board; TODO.md is the next-session handoff that points at its issue numbers.
 - General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
 - Move runtime (invariants, data flow, executors, move-path specifics): docs/current feature planning/combat-architecture.md.
