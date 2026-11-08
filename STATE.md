@@ -1,14 +1,15 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-07 evening, Quick (work machine). Branch: feature/gym-leader-ai (entity model merged, checks green).
+Last updated: 2026-11-08, Claude Code (home). Branch: chore/skill-choice-update (merging to main), then chore/docs-cleanup.
 
 ## START HERE (next session, either tool)
-1. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md (drafted 2026-11-07, [Proposed]). No code until then.
-2. On approval: P1 = slice 9a prose plan (map v2 A1 to A5 plus the rolling windows), then build.
-3. Brock feel test (`G.Debug.gym(1)`, `G.Gym.debugLoop = 2`) still owed if not done.
+1. Start a NEW session so the skills and rules load (grilling, triage, diagnosing-bugs; hook .claude/hooks/guard-git.js).
+2. On chore/docs-cleanup (from main): #26 (stale TODO.md references), then #27 (split DECISIONS.md into docs/decisions/), two commits. Do not resume gym work until it is merged and pulled into feature/gym-leader-ai.
+3. Then the gym AI: Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md ([Proposed]); order and issue numbers are in TODO.md.
 
 ## Where we are
+- Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills adopted: grilling, triage, diagnosing-bugs. Docs: docs/TEST-FIRST.md (say "tdd"), GLOSSARY.md (game language), docs/SPANISH-CODE-REFERENCE.md. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
 - Entity model slices 1 to 8 built; 7b and 8 checks green (Jess). Close-out built, checks owed:
   Brock on G.GymLeader beside Misty (hpMult {1: 16, 2: 12}, Misty's restrictions, no enrage, no touch).
   Map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt.
