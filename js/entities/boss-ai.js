@@ -282,7 +282,13 @@ G.Boss = (() => {
         top = null,
         at = -1;
       e.slots.forEach((g, i) => {
-        const c = this.attack(S.dist, pl, now, g.filter((s) => open(e, s)), true);
+        const c = this.attack(
+          S.dist,
+          pl,
+          now,
+          g.filter((s) => open(e, s)),
+          true
+        );
         if (!c) return;
         if (i === e.active) cur = c;
         if (!top || c.score > top.score || (c.score === top.score && c.rank < top.rank)) {
