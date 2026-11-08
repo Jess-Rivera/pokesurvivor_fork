@@ -1,23 +1,24 @@
 # LEADER-AI, the AI player that drives a Player-entity leader
 
 - **Role:** The single home for how a Player-entity leader decides what to do: what it can see, what it remembers, how it is limited, and how each leader's behavior is authored.
-- **Owns:** the AI player, the information model (rosters, reveals), run memory and behavior tracking, the fairness limits, the settings list, confidence, triggers and lines, the checks.
-- **Does not own:** what a leader IS (stats, HP, cards, items, restrictions, team, faint swaps): docs/COMBAT-RULES.md "Host model". Gym progression and rosters: BOSS-REWORK.md, docs/GYM-ROSTERS.md.
-- **Source:** grilling session, Jess 2026-11-08 (decision `2026-11-08-leader-ai-an-ai-player-through-your-controls`). Designed fresh; the frozen docs/proposals/gym-leader-ai-design.md is compared against it afterwards.
+- **Owns:** the AI player, the information model (rosters, reveals), run memory and behavior tracking, the decision loop, the fairness limits, the settings list, confidence, pacing, triggers and lines, the checks.
+- **Does not own:** what a leader IS (stats, HP, cards, items, restrictions, team, faint and voluntary swap consequences): docs/COMBAT-RULES.md "Host model". Gym progression and rosters: BOSS-REWORK.md, docs/GYM-ROSTERS.md.
+- **Source:** grilling session, Jess 2026-11-08 (decision `2026-11-08-leader-ai-an-ai-player-through-your-controls`), then compared with the 2026-11-07 proposal (docs/proposals/gym-leader-ai-design.md and the slice 9 v2 map, now history); the parts adopted from them are in this file.
 - **Code:** not built. Today a leader runs G.Boss.GymBrain (js/entities/boss-ai.js). See "Build order".
 
 ## The AI player
 
-- [Approved] ONE MODULE. Every Player-entity leader (Gym Leaders now; Elite Four, Uber and World Boss when they become Player entities) is driven by one AI player module. Each leader's behavior is data in its def (js/data/gyms.js for gyms), never code per leader. It replaces G.Boss.GymBrain on the switched gyms (Misty, Brock) first; gyms 3 to 8 keep the old brain until they switch (slice 12 of the host-model plan).
-- [Approved] YOUR CONTROLS ONLY. The AI acts only through the inputs a human player has: a movement heading, the slot key, the swap-mon key and the dodge button. It never calls a cast, a swap or a move effect directly. Anything a leader does that a player cannot do is an authored difference (COMBAT-RULES "Host model", LEADER PRINCIPLE), never a hidden power of the AI. Triggers (below) also act through these inputs.
-- [Approved] YOUR RULES. Its inputs obey your rules: the 0.4 s slot hold, the swap lock and trap lock, send-in i-frames, the dodge's two charges and cooldowns, stuns that block input.
+- [Approved] ONE MODULE. Every Player-entity leader (Gym Leaders now; Elite Four, Uber and World Boss when they become Player entities) is driven by one AI player module, one per leader team. Each leader's behavior is data in its def (js/data/gyms.js for gyms), never code per leader. It replaces G.Boss.GymBrain on the switched gyms (Misty, Brock) first; gyms 3 to 8 keep the old brain until they switch (slice 12 of the host-model plan). It is separate from the wild Director: no threat budget, no population control.
+- [Approved] YOUR CONTROLS ONLY. The AI acts only through the controller your keyboard answers, all seven calls of G.PlayerEntity.IDLE: `axis` (heading), `dodge`, `shake`, `swapSlot` (swap mon), `swapDir`, `slots` (slot keys), `cycles`. It never calls a cast, a swap or a move effect directly. Anything a leader does that a player cannot do is an authored difference (COMBAT-RULES "Host model", LEADER PRINCIPLE), never a hidden power of the AI. Triggers (below) also act through these calls. Shake-off stays on the authored `autoShake` restriction for now; `shake` answers nothing.
+- [Approved] YOUR RULES. Its inputs obey your rules: the 0.4 s slot hold, the swap lock and trap lock, send-in i-frames, no swap in the air, the dodge's two charges and cooldowns, stuns that block input. A refused request is a no-op, as yours is.
+- [Approved] VISIBLE. Every AI action reads on screen as the same action of yours would (a swap, a dodge, a stance change), never as a hidden number.
 
 ## What it can see (the information model)
 
-- [Approved] THE SCREEN ONLY. The AI reads what a human would see on screen: positions, projectiles and hazards in flight, attack tells, HP bars, types, statuses and stage markers, and both rosters. It never reads cooldown timers, hidden numbers (cards, IVs, EVs, nature, exact stats), RNG or your next input. One information layer produces everything the AI and its memory read, so nothing can reach the AI around it.
+- [Approved] THE SCREEN ONLY. The AI reads what a human would see on screen: positions, projectiles and hazards in flight, attack tells, HP bars, types, statuses and stage markers, and both rosters. It never reads live cooldown timers, hidden numbers (cards, IVs, EVs, nature, exact stats), RNG or your next input. One information layer produces everything the AI and its memory read, so nothing can reach the AI around it.
 - [Approved] ROSTERS. Both sides see the other's full roster from the fight's start: each mon's species and whether it is active, on the bench or fainted. The player side gets a matching leader-roster UI (code differs: not built).
 - [Approved] REVEALS, per mon of yours (keyed by its copy's `pokemonUUID`, which a fighter carries as `copyUid`; the team slot stands in when it is null):
-  - a move is revealed the first time it is cast on screen;
+  - a move is revealed the first time it is cast on screen, and then the AI knows everything about it: type, category, power, shape, effects and its cooldown length. Never how much of its live timer is left;
   - a bond is revealed when its moves are seen firing together;
   - a held item is revealed when its effect shows (a Leftovers heal, a Focus Sash save);
   - cards, IVs, EVs, nature and stats are never revealed.
@@ -25,7 +26,7 @@
 
 ## Run memory and behavior tracking
 
-- [Approved] SCOPE. Each leader remembers only its own fights, for the rest of the run. Nothing is shared between leaders and nothing carries into the next run.
+- [Approved] SCOPE. Each leader remembers only its own fights, for the rest of the run. Nothing is shared between leaders and nothing carries into the next run. Per-fight state (field time, swaps used, who was saved at low HP) lives on the AI, never on the mons.
 - [Approved] STORAGE. In memory only, run-scoped like Silver: created empty at G.Game.startRun, dropped at endRun, never written to the save (a run has no mid-run resume, so there is nothing to migrate). The leader entity is rebuilt every fight, so the store lives outside it and each fight's leader reads and writes its own record.
   - One record per leader, keyed by gym id.
   - Inside it, one entry per mon of yours (keyed as in REVEALS): its revealed moves, bonds and held item, each with when it was last confirmed; its behavior counts; the reason tags counted against its swaps.
@@ -34,44 +35,58 @@
 - [Approved] WHAT IS TRACKED, per mon and per team: slot and bond choices (how often you switch, which you favor); mon swaps (how often, out of which mon, into which); dodges (when, how often); your fighting range.
 - [Approved] WHY YOU SWAPPED. Every swap is tagged with the visible context at that moment: your HP was low, you were at a type disadvantage, you were trapped or carried a status, the active slot was on cooldown, a leader mon had just been sent in. The tags are counted per mon ("swaps out under 30% HP 4 times in 5"). Plain rules, no machine learning.
 - [Approved] FEED. Observations come only from the information layer, at the moment the thing shows on screen (a cast, a swap, a dodge, an item effect).
+- [Approved] ROLLING WINDOWS, per fight: averages over a short window (about 2 s) and a long one (about 15 s, TUNE) of damage it deals and takes, both HP trends, your movement (speed, standing still) and the time since it last landed a hit. They feed confidence and pacing.
 - Later, not now: a mid-run resume would save this store with the run (every field null-checked with a default, CLAUDE.md "Save-data migration safety"). Co-op would key entries per human player too; deferred (CLAUDE.md "Local-first").
+
+## The decision loop
+
+- [Approved] TICK. The AI decides on a tick (the `think` interval, baseline 0.25 s, TUNE), never inside a tell or a move commitment. The reflex delay applies on top to anything it reacts to.
+- [Approved] HARD GATES FIRST, never scored: your rules (Team.canSwap, tryDodge) and the AI's own gates (the stall guards below, no tell, no commitment). [Open] The full list of AI gates is defined in the slice that first needs each one.
+- [Approved] SCORED CHOICES. Each open action (STAY, a slot, a swap to bench mon i, a dodge, a pacing change) gets a score from considerations times the leader's settings. STAY has a baseline, and an action must beat it by a margin, so nothing fires without a reason and choices do not flicker.
+- [Approved] DETERMINISTIC RATES. Rates and the prediction cap are fixed counters ("acts 7 times in 10"), not dice. `randomness` draws from a random source seeded per fight; a harness fixes the seed, so every outcome stays hand-derivable.
+- [Approved] THREAT, for dodging: one of your live shapes whose path crosses its body soon.
 
 ## Fairness: smart, not oppressive
 
-- [Approved] HUMAN LIMITS are the main fairness levers, all authored per leader: a reflex delay before it responds to anything it sees (dodging, aiming), a think interval between slot and swap choices, aim error, and a dodge that reads a threat only after the reflex delay and only with a charge left.
+- [Approved] HUMAN LIMITS are the main fairness levers, all authored per leader: a reflex delay before it responds to anything it sees (dodging, aiming; baseline 0.15 s, TUNE), the think interval, aim error, and a dodge that reads a threat only after the reflex delay and only with a charge left.
 - [Approved] PREDICTION CAP. A pattern the leader believes is acted on at most a capped share of the time (default about 70%, TUNE; a very hard leader can author up to about 95%), and still waits out the delays. A prediction is never certain, so you can bait it.
+- [Approved] STALL GUARDS. A voluntary swap needs `minField` seconds on the field first (baseline 8 s; a faint swap and Re-Do start the clock too), and at most `swapLimit` voluntary swaps per fight (absent no cap, 0 never).
 - [Approved] TELLS stay as an authored difference, on by default for every gym (the existing `tells` restriction); a gym may shorten or remove them.
-- [Approved] NO RUBBER BANDING. The leader never secretly eases off when you are losing or presses when you are winning. Difficulty comes only from its settings and build. Confidence changes behavior, never damage or HP.
+- [Approved] NO RUBBER BANDING. The leader never changes stats, HP, damage, tempo, cooldowns or any authored number, and never secretly eases off when you are losing or presses when you are winning. Difficulty comes only from its settings and build. Confidence and pacing change behavior only.
 
 ## Authoring a leader
 
-- [Approved] ONE FLAT LIST OF SETTINGS, no presets. A setting a leader does not author falls back to one baseline value set in code. Starter list:
+- [Approved] ONE FLAT LIST OF SETTINGS, no presets. A setting a leader does not author falls back to one baseline value set in code. Any setting may be keyed per loop, like the build keys. Starter list:
   - Reaction: `reflex` (seconds), `think` (seconds).
   - `aimError`.
   - Dodge: `dodgeRead` (how often it reads a threat), `dodgeReserve` (charges it keeps back).
-  - Style: `aggression`, `range` (preferred distance), `risk`, `buffBias`, `swapWill`.
+  - Style: `aggression` (also drives pacing, below), `range` (preferred distance), `risk`, `buffBias`, `swapWill`.
+  - Swaps: `minField`, `swapLimit`, and the swap thresholds (below).
   - Memory: `memoryUse` (how much its choices lean on revealed moves and your patterns), `learnRate` (how many observations before it believes a pattern), `exploit` (how hard it acts on a believed pattern), `predictCap` (the prediction cap).
   - `randomness` (0 to 1): how often it tries an option that is not its best, so it does not play like a machine.
   - Confidence: `confStart`, `confSwing`, `confMin`, `confMax`.
-- [Approved] SWAP AND SLOT CHOICES weigh the type matchup between its mons and your active mon's types, plus your revealed moves (it will not send its Water mon into a Pikachu it has seen use Thunder Wave), scaled by `memoryUse`. Voluntary swaps follow your swap rules, for matchup, low HP, a trap or a buff setup, as often as `swapWill` and confidence allow.
-- [Approved] CONFIDENCE is a runtime value, moved by fight events: up on hits landed and an HP or kill lead, down on hits taken and its own faints. Low confidence shifts the style settings toward caution and swapping; high toward aggression. Authored: start, swing, floor and ceiling.
+- [Approved] SWAP AND SLOT CHOICES weigh the matchup and your revealed moves, scaled by `memoryUse`. Voluntary swaps follow your swap rules, for hard CC, low HP, matchup, a trap or a buff setup, as often as `swapWill` and confidence allow. The slice 9 v2 swap triggers are considerations, with their numbers as the baseline thresholds (TUNE): asleep or frozen with 1.5 s or more left (to the healthiest bench mon); under 25% HP with no self heal left, once per mon (to the best matchup at 50% HP or more); a bench matchup 2x the active's or better (that mon, at 40% HP or more).
+- [Approved] MATCHUP, per mon m: offense = its best open damaging move's type x your active mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score = offense / defense. Your attack is your active mon's most threatening revealed move; before any has shown, the AI guesses an attack of your mon's own type (Pikachu: Electric), replaced as soon as a real move shows. Worked: you Bulbasaur with Vine Whip, Staryu 1 / 2 = 0.5, Seel 2 / 2 = 1.0, so Seel comes in after `minField`; you Charmander with Ember, Staryu and Seel both 3 / 0.5 = 6, so no swap.
+- [Approved] CONFIDENCE is a runtime value, moved by fight events and the rolling windows: up on hits landed and an HP or kill lead, down on hits taken and its own faints. Low confidence shifts the style settings toward caution and swapping; high toward aggression. Authored: start, swing, floor and ceiling.
+- [Approved] PACING, driven by `aggression`: after sustained pressure on you the leader takes a short breather (far stance, no new tell), and after a long spell without landing a hit it pushes (close stance). Higher aggression means shorter, rarer breathers and earlier pushes. A breather has a maximum share of fight time (TUNE). It is a visible stance change, never a hidden number.
 - [Approved] TRIGGERS, a few per leader, each once unless marked repeating.
   - Conditions: fight start; its own HP crossing a line; a faint (yours or its own); you sending in a mon; time elapsed; starting to exploit a pattern.
   - Actions (through your controls): choose a slot, swap to a mon, change a setting for a while, say a line.
-- [Approved] LINES. A leader says short authored lines on screen at triggers and, optionally, on a large confidence swing ("Brock: Let's get serious!"; "You always pull Pikachu when it's hurt, don't you?"). New strings are English only (CLAUDE.md "English-native i18n").
+- [Approved] LINES. A leader says short authored lines on screen at triggers and, optionally, on a large confidence swing ("Brock: Let's get serious!"; "You always pull Pikachu when it's hurt, don't you?"). A voluntary swap always shows the ring plus "<leader> switches to <mon>!", with no camera kick and no boss sound. New strings are English only (CLAUDE.md "English-native i18n").
 
 ## Checks
 
 - [Approved] A dev overlay and log of every AI decision with its reason and scores.
-- [Approved] A headless harness that the limits hold: no response faster than `reflex`, no dodge with zero charges, no choice that reads a move it has not seen revealed, nothing read that the information layer did not produce.
+- [Approved] A headless harness that the limits hold: no response faster than `reflex`, no decision inside a tell or commitment, no dodge with zero charges, no choice that reads a move it has not seen revealed, nothing read that the information layer did not produce.
+- [Approved] Each slice opens with its goal, how we know it is done, and the test that validates it (CLAUDE.md "Slice shape"); that test is written at the slice's start.
 - [Approved] Jess's feel test is the final judge. No win-rate simulation for now.
 
 ## Build order
 
-[Approved] One slice each, feel-tested before the next (issues filed after the comparison with the frozen proposal):
-1. The controls layer and the information model (rosters, reveals), Misty and Brock on the baseline settings.
-2. Swap and dodge decisions.
-3. Confidence and triggers (with lines).
+[Approved] One slice each, feel-tested before the next:
+1. The controls layer and the information model (rosters, reveals). The AI player wraps GymBrain's movement and pickSlot as its `axis` and `slots` answers, so Misty and Brock play exactly as today (behavior-neutral), on the baseline settings.
+2. Swap and dodge decisions (the decision loop, the matchup, the stall guards).
+3. Confidence, pacing and triggers (with lines).
 4. Run memory, behavior tracking and exploiting patterns.
-5. Authoring each leader's personality.
+5. Authoring each leader's personality; GymBrain's remaining pieces replaced by the AI player's own.
 The leader-roster UI on the player side is its own issue.

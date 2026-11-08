@@ -6,10 +6,10 @@ Updated 2026-11-08, Claude Code (home). On main; chore/docs-cleanup merged (#26,
 ## START HERE (next session, either tool)
 1. Jess pulls main into feature/gym-leader-ai (fast-forward, the branch has no unique commits). Do not resume gym work before that.
 2. /triage works (it is user-invoked, so it never shows in the model's skill list). #28 (architecture skill) is ready.
-3. Then the gym AI: a fresh design by /grilling (docs/proposals/gym-leader-ai-design.md is FROZEN, do not read it until the compare step); order and issue numbers are in TODO.md.
+3. Then the gym AI: designed 2026-11-08 in docs/LEADER-AI.md (grilled fresh, compared with the old proposal, now history). Next: Jess approves the drafted slice issues; order and issue numbers are in TODO.md.
 
 ## Where we are
-- Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs; also docs/TEST-FIRST.md, GLOSSARY.md. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
+- Workflow overhaul done 2026-11-08: the assistant may commit and manage issues, board and PRs (CLAUDE.md "Git and GitHub", enforced by the hook); TODO.md is a handoff pointing at issue numbers; "catch me up" runs a read-only briefing (CONTEXT.md). Skills: grilling, triage, diagnosing-bugs. landing-skills/ stays untracked until #28 (improve-codebase-architecture) resolves.
 - DECISIONS.md is now an index; each decision is a file in docs/decisions/, cited by file name (CLAUDE.md "Cross-document IDs"). Follow-up #29 (promote review CP1 rulings).
 - Entity slices 1 to 8 built, 7b and 8 green. Close-out built, checks owed:
   Brock on G.GymLeader beside Misty (hpMult {1: 16, 2: 12}, Misty's restrictions, no enrage, no touch).

@@ -1,4 +1,6 @@
-ENTITY MODEL SLICE 9 - GYM LEADER AI + VOLUNTARY SWAPS   (PLAN v2, 2026-11-07, Quick)   [Proposed]
+ENTITY MODEL SLICE 9 - GYM LEADER AI + VOLUNTARY SWAPS   (PLAN v2, 2026-11-07, Quick)   HISTORY
+HISTORY since 2026-11-08 (Jess): replaced by docs/LEADER-AI.md (its build order) and COMBAT-RULES "LEADER VOLUNTARY SWAPS".
+The parts adopted from this map are there. Do not build on this file.
 =====================================================================================
 Source: host-model-plan.md slice 9, decision 6. Rule: LEADER PRINCIPLE.
 v2 (Jess 2026-11-07): build the GymLeaderAI FIRST, so swaps (and later dodge) plug into it and are never rebuilt.
