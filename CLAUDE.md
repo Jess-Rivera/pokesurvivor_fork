@@ -130,9 +130,10 @@ An ID cited outside the file that defines it carries that file's name: `<file na
 - General combat rules (stats and HP, damage, orthogonal dials, G.Stats, the swap rule, status effects including trap, damage over time, stat stages (the tracker model)): docs/COMBAT-RULES.md.
 - Move data shape (axes, fields, enums, file roles, validator rules): docs/MOVE-AXIS-SCHEMA.md.
 - Move runtime (invariants, data flow, executors, move-path specifics): docs/current feature planning/combat-architecture.md.
+- Test-first practice (say "tdd"): docs/TEST-FIRST.md.
 - Per-move intended behavior: docs/MOVE-INTENT.md. Validation scenarios: docs/current feature planning/combat-validation-and-handoff.md.
 - Run progression (level curve, gyms, elites, Elite Four, escalation, badges, region completion and loops): BOSS-REWORK.md. Gym rosters: docs/GYM-ROSTERS.md. Boss authoring template: docs/BOSS-AUTHORING.md.
-- Game concept and summaries (umbrella): GDD.md. Module map, load order, build: ONBOARDING.md. Terms: GLOSSARY.md. Sim and present boundary: docs/SIM-PRESENT-BOUNDARY.md. Tuned values: BALANCE.md.
+- Game concept and summaries (umbrella): GDD.md. Module map, load order, build: ONBOARDING.md. Game language: GLOSSARY.md (fuzzy or conflicting terms get flagged and the entry updated, see its last section). Spanish code names: docs/SPANISH-CODE-REFERENCE.md. Sim and present boundary: docs/SIM-PRESENT-BOUNDARY.md. Tuned values: BALANCE.md.
 - Dated decision history: DECISIONS.md (a log; each entry's `Canonical:` line names the spec that holds the rule), then docs/DECISIONS-archive.md.
 
 ## Which document wins

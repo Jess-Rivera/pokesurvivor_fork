@@ -1,227 +1,275 @@
-# GLOSSARY, Spanish to English developer reference
+# PokeSwarm
 
-This codebase is authored in Spanish. The game runs in English at runtime through
-the i18n system (see `js/core/i18n.js` and `js/data/lang-en.js`), but the source
-code, folder names, comments and many identifiers are Spanish. This glossary lets
-you navigate and read the code WITHOUT renaming anything. Do not rename folders or
-identifiers: the routing (the `/guia/`, `/pokedex/` URLs), the i18n dictionary keys
-and internal references all depend on the Spanish names staying as they are.
+A local-first, Pokemon-themed survivor-like for the browser. This glossary names the game's own language so design talk, specs and code use one word per idea. Spanish identifiers and folder names are mapped in docs/SPANISH-CODE-REFERENCE.md.
 
-## Folder names (do NOT rename, they are public URLs)
+## Language
 
-| Folder | English | Role |
-|---|---|---|
-| `apoyar` | support | "Support the project" page |
-| `contacto` | contact | Contact page |
-| `guia` | guide | Game guide page (SEO) |
-| `legendarios` | legendaries | Legendaries page (SEO) |
-| `logros` | achievements | Achievements page (SEO) |
-| `movimientos` | moves | Moves page (SEO) |
-| `novedades` | news / changelog | News page (SEO) |
-| `objetos` | items | Items page (SEO) |
-| `pokedex` | pokedex | Pokedex page (SEO) |
-| `shinies` | shinies | Shinies page (SEO) |
-| `tipos` | types | Types page (SEO) |
-| `en` | english | English versions of the SEO pages |
+### Run and progression
 
-## Core game / domain terms
+**Run**:
+One play session, from the start to death or Return Home. Death still commits EVs and progress.
 
-| Spanish | English |
-|---|---|
-| juego | game |
-| jugador | player |
-| partida | game / run |
-| run | run (a single play session) |
-| ronda | round |
-| pantalla | screen |
-| menú | menu |
-| ajustes | settings |
-| mejora / mejoras | upgrade / upgrades |
-| movimiento / movimientos | move / moves (attacks) |
-| ataque | attack |
-| defensa | defense |
-| velocidad | speed |
-| vida | health / HP |
-| salud | health |
-| nivel | level |
-| experiencia | experience / XP |
-| enemigo / enemigos | enemy / enemies |
-| jefe / jefes | boss / bosses (REMOVED as a timed spawn, see BOSS-REWORK.md; the word survives in code) |
-| oleada / marea | wave / tide (of enemies) |
-| grieta | rift (REMOVED 2026-10-31 with rift.js; gym gates use the gym arena, js/systems/gym-arena.js) |
-| arena | arena |
-| bioma | biome |
-| clima | weather |
-| altar | altar |
-| manantial | spring (healing) |
-| cofre | chest |
-| candado | lock (locked chest) |
-| trampa / trampas | trap / traps |
-| roca / rocas | rock / rocks |
-| hierba | grass |
-| lava | lava |
-| agua | water |
-| moneda / monedas | coin / coins (Poke-coins) |
-| ticket / tickets | ticket / tickets (gacha currency) |
-| gacha | gacha |
-| tirada | pull (gacha) |
-| banner | banner (gacha, per region) |
-| rareza | rarity |
-| pity | pity (gacha guarantee) |
-| compañero | companion (the player's Pokemon) |
-| colección | collection |
-| starter / iniciales | starters |
-| shiny / shinies | shiny / shinies |
-| legendario / legendarios | legendary / legendaries |
-| logro / logros | achievement / achievements |
-| misión / misiones | quest / mission |
-| diaria / semanal | daily / weekly |
-| medalla | medal |
-| título | title |
-| perfil | profile |
-| objeto / objetos | item / items |
-| familia | family (move family) |
-| potenciador | buff |
-| nova | nova (move family) |
-| aura | aura (move family) |
-| proyectil | projectile |
-| cuerpo a cuerpo | melee |
-| rayo | beam |
-| orbe / orbes | orb / orbs |
-| apuntado | targeting |
-| sala | room (co-op) |
-| anfitrión | host (co-op) |
-| Player entity / Wild entity | Combat rule classes (2026-11-05), replacing "strong host / weak host" (which is NOT the co-op host). A Player entity has everything a player has, and a subclass adds its own rules (Player, Gym Leader, World Boss, Uber). A Wild entity follows the wild enemy rules (Wild Enemy, Elite). See docs/COMBAT-RULES.md "Host model". |
-| amigo / amigos | friend / friends |
-| apodo | nickname |
-| en línea | online |
-| invitación | invitation |
-| ranking | ranking / leaderboard |
-| tabla | table (leaderboard tab) |
-| test de personalidad | personality test |
-| rasgo | trait |
+_Avoid_: game, partida
 
-## Pokemon types (Spanish -> English)
+Rule: BOSS-REWORK.md section 4
 
-The official English names live in the i18n dictionary (`js/data/lang-en.js`).
+**Gym**:
+A fight at a gate on the map: a type-matched arena against a leader's signature Pokemon with hand-authored moves, at the run-time level + 4. Replaced the rifts.
 
-| Spanish | English |
-|---|---|
-| Normal | Normal |
-| Fuego | Fire |
-| Agua | Water |
-| Planta | Grass |
-| Eléctrico | Electric |
-| Hielo | Ice |
-| Lucha | Fighting |
-| Veneno | Poison |
-| Tierra | Ground |
-| Volador | Flying |
-| Psíquico | Psychic |
-| Bicho | Bug |
-| Roca | Rock |
-| Fantasma | Ghost |
-| Dragón | Dragon |
-| Siniestro | Dark |
-| Acero | Steel |
-| Hada | Fairy |
+_Avoid_: rift, grieta
 
-Regions: `Teselia` = Unova (the rest keep their names: Kanto, Johto, Hoenn,
-Sinnoh, Kalos, Alola, Galar, Paldea).
+Rule: BOSS-REWORK.md sections 1 and 3
 
-## Permanent upgrades (per Pokemon)
+**Elite**:
+An overworld wild enemy sized up in size and stats. It follows the wild rules plus its own mods, with no level offset. Replaced the timed bosses.
 
-| Spanish | English (likely intent) |
-|---|---|
-| Vitalidad | Vitality (max health) |
-| Fuerza | Strength (damage) |
-| Zancada | Stride (move speed) |
-| Reflejos | Reflexes (cooldown / attack speed) |
-| Coraza | Carapace (defense) |
-| Síntesis | Synthesis (regen) |
-| Imán | Magnet (pickup range) |
-| Sabiduría | Wisdom (XP) |
-| Fortuna | Fortune (coins) |
-| Repertorio | Repertoire (start with 2 moves) |
+_Avoid_: boss (as a timed spawn)
 
-## Common identifier fragments in code
+Rule: BOSS-REWORK.md section 2; docs/COMBAT-RULES.md "Host model", ELITES DO NOT CHANGE
 
-These show up inside variable, function and key names. Knowing them makes the
-code readable even though they are not renamed.
+**Elite Four**:
+Four gates that open at once after Gym 8, with levels hard-set per encounter. Not built yet.
 
-| Fragment | Meaning |
-|---|---|
-| `vida` | health |
-| `dano` / `danio` / `daño` | damage |
-| `vel` | speed (velocidad) |
-| `niv` / `nivel` | level |
-| `exp` | experience |
-| `enem` | enemy (enemigo) |
-| `jug` / `jugador` | player |
-| `jefe` | boss (system removed, see BOSS-REWORK.md) |
-| `mov` | move (movimiento) |
-| `mej` | upgrade (mejora) |
-| `tipo` | type |
-| `arma` | weapon / attack build |
-| `moneda` / `mon` | coin |
-| `ticket` | ticket |
-| `apodo` | nickname |
-| `sala` | room |
-| `anfitrion` | host |
-| `guardar` | save |
-| `cargar` | load |
-| `dibujar` / `pintar` | draw / paint |
-| `actualizar` | update |
-| `empezar` / `iniciar` | start |
-| `acabar` / `terminar` | end / finish |
-| `elegir` | choose |
-| `mostrar` | show |
-| `ocultar` | hide |
-| `calcular` | compute |
-| `pantalla` | screen |
-| `ronda` / `partida` | run / game |
-| `hv` (in sprites-meta) | hover flag (floats in sprite) |
-| `sa` (in sprites-meta) | shiny-alt geometry flag |
-| `leg` (in pokedex) | legendary / singular flag |
+Rule: BOSS-REWORK.md section 4
 
-## Move schema terms (the new move path)
+**Badge**:
+The reward package of a gym win: a run-long team stat boost, a guaranteed item, a guaranteed level, a Bond, and a full team revive. The Elite Four give it without the revive.
 
-English-native terms of the move schema rewrite. Owners: docs/MOVE-AXIS-SCHEMA.md (grammar) and
-docs/current feature planning/combat-architecture.md (runtime); this table only names them.
+Rule: BOSS-REWORK.md section 3g
 
-| Term | Meaning |
-|---|---|
-| axis | one of the three parts of a move: `space` (shape), `delivery` (where, how it moves, when it ends), `payload` (effects) |
-| resolved definition | a move after defaults, derived values (cd, basePower, range) and overrides; `G.MoveDefs`, deep-frozen |
-| routed | `G.MoveRoute.routed(id)`: the move has a resolved def and is not retired, so G.MoveSim runs it (the ROUTED list and the `?newcombat` flag were removed in slice 7b) |
-| legacy path | the old `kind`-based player-move code (the player half of combat.js, the old moves.js table, kinds.js, mechanics.js); deleted in slice 7b (2026-11-01). Its table is archived at docs/move_rework_holding/legacy-moves.js for the tools |
-| G.MoveInfo | js/ui/move-info.js: what the menus, cards, icons and cast animation show about a move (name, type, badge, generated text), read from `G.MoveDefs` |
-| badge | the small move family glyph on a move icon; derived from the def's shape, motion and anchor for display only, never read by gameplay |
-| 7a guard | tools/kind-guard.js (run by check.js): fails on any legacy move-table read (`G.Moves.BY_ID`, `G.Kinds`, a move's `kind`) in a game file; since 7b-2b no file is exempt but js/net/ (D-COOP) |
-| legacy-7b | history: a code comment tag on a legacy read left for slice 7b. None remain, and since 7b-2b the guard excuses nothing for it (it still lists a stray tag) |
-| enemy owner | a gym leader mon casting through G.MoveSim as the cast's owner, with its own cards (D-ENEMY, slice 7a) |
-| instance | one live hitbox spawned by a cast (one per `space.count`) |
-| group | the `count` instances of one spawn; a persistent slot keeps one group alive |
-| `endOn` | the conditions that end an instance (time, wall, offScreen, returned, ownerDeath, notActive) |
-| persistent | `persistent: true`: the slot owns the move's life, no cooldown; ends on a swap, stun or faint, respawns after an instance end (H25) |
-| aura / pulse | a persistent move with no `endOn` / with an `endOn` time, which respawns each cycle |
-| self-cast | `anchor: self`, a shapeless cast (Swords Dance); its effects carry their own duration, no `endOn` |
-| hit policy | when one instance may hit the same enemy again: `oncePerInstance`, `interval` (every `rehit` s) |
-| pierce | how many enemies an instance passes through before it ends; UNLIMITED never ends it |
-| lens | the area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius |
-| cast gate | the check that holds a cast until a target is in reach (retries every 0.05 s) |
-| maxStacks | RETIRED 2026-10-30 by the stat stage model; on the new path until slice 5, the live applications one self-buff move may keep on its host |
-| stage tracker | one per (Pokemon, move, stat) on a recipient: its stages, Gate timer and Duration timer (COMBAT-RULES "Stat stages") |
-| stage Gate | minimum time between two climbs of one stage tracker, 6.0 s at base (x2 for self drops); not the cast gate |
-| stage Duration | how long a stage tracker holds after its last success, 6.1 s at base |
-| intent scenario | a staged fight in move-intent-scenarios.json with a hand-derived expected outcome |
-| batch review | Jess's sign-off of newly routed moves that have no MOVE-INTENT entry (CLAUDE.md "Move review rule") |
-| harness / mutation runner | an offline test file under docs/proposals/ run by check.js / a script that breaks the code on purpose to prove the harness catches it |
+**Region Complete**:
+All 8 gym leaders and all 4 Elite Four defeated.
 
-## Note on strings vs. comments
+Rule: BOSS-REWORK.md section 4
 
-Spanish string LITERALS in the JS (text shown to the player) are intentionally
-left in Spanish: the i18n system translates them at runtime using `lang-en.js`,
-keyed on the exact Spanish string. Those inherited literals stay as they are. New
-user-facing strings are authored directly in English with NO lang-en.js entry and no
-Spanish version (CLAUDE.md "English-native i18n").
+**Loop**:
+A run starts at Loop 1. Loop N fields the first N mons of every gym and Elite Four roster, all at once. Six loops per region. Continuing to the next loop is called Keep Going (also "Unlock Safeties").
+
+Rule: BOSS-REWORK.md section 4a (approved, not built)
+
+**Return Home**:
+The end-of-region choice that goes back to the main menu with the completion bonus.
+
+Rule: BOSS-REWORK.md section 4a
+
+### Combat entities
+
+**Player entity**:
+The combat rule class that has everything a player has. Subclasses add their own rules: Player, Gym Leader, World Boss, Uber.
+
+_Avoid_: strong host
+
+Rule: docs/COMBAT-RULES.md "Host model"
+
+**Wild entity**:
+The combat rule class that follows the wild enemy rules: Wild Enemy and Elite.
+
+_Avoid_: weak host
+
+Rule: docs/COMBAT-RULES.md "Host model"
+
+**Host (co-op)**:
+The player who owns a co-op room. Not a combat rule class; say "Player entity" or "Wild entity" for those.
+
+_Avoid_: using "host" for the combat classes
+
+Rule: docs/proposals/host-model-audit.md
+
+**Leader principle**:
+A leader is treated as just another player's team, controlled by AI. Anything a player can have, a leader can have, and every difference is hand authored per gym, never a hidden built-in rule.
+
+Rule: docs/COMBAT-RULES.md "Host model", LEADER PRINCIPLE
+
+**Gym Leader**:
+A subclass of the Player entity that fights a gym. Its HP is the player formula times an authored `hpMult` per gym and loop.
+
+Rule: docs/COMBAT-RULES.md "Host model", LEADER RULES
+
+### Damage and stats
+
+**Orthogonal dials**:
+Three independent scalars: the shared HP scalar, the player-to-enemy damage scalar, and the enemy-to-player damage scalar. A move's Power changes only the damage side, never HP.
+
+Rule: docs/COMBAT-RULES.md "Orthogonal dials"
+
+**Swap rule**:
+Every slotted move runs its own cooldown whether active or not. Only the active group fires. A short hold after a swap stops instant back-and-forth swapping.
+
+Rule: docs/COMBAT-RULES.md "Swap rule"
+
+**Bond**:
+A group of slotted moves that fire and take hits together (a bonded group). Under rework (Slot Compression and Synergy). What a "Bond" badge reward means is still open.
+
+Rule: docs/COMBAT-RULES.md "Swap rule"
+
+**Stage**:
+One step of a stat change from a move, straight from the mainline data (Swords Dance is +2, Leaf Storm is -2).
+
+Rule: docs/COMBAT-RULES.md "Stat stages"
+
+**Cap**:
+The plus or minus 6 limit on a stage.
+
+Rule: docs/COMBAT-RULES.md "Stat stages"
+
+### Moves (the move schema)
+
+English-native terms of the move schema rewrite. Owners: docs/MOVE-AXIS-SCHEMA.md (grammar) and docs/current feature planning/combat-architecture.md (runtime); this section only names the terms.
+
+**axis**:
+One of the three parts of a move: `space` (shape), `delivery` (where, how it moves, when it ends), `payload` (effects).
+
+**resolved definition**:
+A move after defaults, derived values (cd, basePower, range) and overrides; `G.MoveDefs`, deep-frozen.
+
+**routed**:
+`G.MoveRoute.routed(id)`: the move has a resolved def and is not retired, so G.MoveSim runs it. The ROUTED list and the `?newcombat` flag were removed in slice 7b.
+
+**legacy path**:
+The old `kind`-based player-move code (the player half of combat.js, the old moves.js table, kinds.js, mechanics.js), deleted in slice 7b (2026-11-01). Its table is archived at docs/move_rework_holding/legacy-moves.js for the tools.
+
+**G.MoveInfo**:
+js/ui/move-info.js: what the menus, cards, icons and cast animation show about a move (name, type, badge, generated text), read from `G.MoveDefs`.
+
+**badge (move)**:
+The small move family glyph on a move icon, derived from the def's shape, motion and anchor for display only, never read by gameplay. Not the gym Badge above.
+
+**7a guard**:
+tools/kind-guard.js (run by check.js): fails on any legacy move-table read (`G.Moves.BY_ID`, `G.Kinds`, a move's `kind`) in a game file. Since 7b-2b no file is exempt except js/net/ (D-COOP).
+
+**legacy-7b**:
+History: a code comment tag on a legacy read left for slice 7b. None remain, and the guard excuses nothing for it (it still lists a stray tag).
+
+**enemy owner**:
+A gym leader mon casting through G.MoveSim as the cast's owner, with its own cards (D-ENEMY, slice 7a).
+
+**instance**:
+One live hitbox spawned by a cast (one per `space.count`).
+
+**group**:
+The `count` instances of one spawn; a persistent slot keeps one group alive.
+
+**`endOn`**:
+The conditions that end an instance (time, wall, offScreen, returned, ownerDeath, notActive).
+
+**persistent**:
+`persistent: true`: the slot owns the move's life, no cooldown; ends on a swap, stun or faint, respawns after an instance end (H25).
+
+**aura / pulse**:
+A persistent move with no `endOn` / with an `endOn` time, which respawns each cycle.
+
+**self-cast**:
+`anchor: self`, a shapeless cast (Swords Dance); its effects carry their own duration, no `endOn`.
+
+**hit policy**:
+When one instance may hit the same enemy again: `oncePerInstance`, `interval` (every `rehit` s).
+
+**pierce**:
+How many enemies an instance passes through before it ends; UNLIMITED never ends it.
+
+**lens**:
+The area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius.
+
+**cast gate**:
+The check that holds a cast until a target is in reach (retries every 0.05 s). Not the stage Gate.
+
+**maxStacks**:
+RETIRED 2026-10-30 by the stat stage model; on the new path until slice 5, the live applications one self-buff move may keep on its host.
+
+**stage tracker**:
+One per (Pokemon, move, stat) on a recipient: its stages, Gate timer and Duration timer.
+
+Rule: docs/COMBAT-RULES.md "Stat stages"
+
+**stage Gate**:
+The minimum time between two climbs of one stage tracker, 6.0 s at base (x2 for self drops). Not the cast gate.
+
+Rule: docs/COMBAT-RULES.md "Stat stages"
+
+**stage Duration**:
+How long a stage tracker holds after its last success, 6.1 s at base.
+
+Rule: docs/COMBAT-RULES.md "Stat stages"
+
+### Design language
+
+Words used in plans and refactors. In this codebase a module is usually one `G.*` file under js/.
+
+**Module**:
+Anything with an interface and an implementation: a function, a `G.*` file, or a slice that spans several files.
+_Avoid_: unit, component, service
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Interface**:
+Everything a caller must know to use a module correctly: the call shape, but also invariants, ordering, error modes, required setup and timing.
+_Avoid_: API, signature
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Seam**:
+The place where a module's interface lives, where behavior can be changed or observed without editing inside. Tests are written at seams, and each slice's plan names its seams.
+_Avoid_: boundary (docs/SIM-PRESENT-BOUNDARY.md keeps its name)
+
+Rule: docs/TEST-FIRST.md "The cycle", step 1
+
+**Depth**:
+How much behavior a caller or test gets per unit of interface it must learn. A deep module hides a lot behind a small interface; a shallow one has an interface nearly as complex as its implementation.
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+**Leverage**:
+What callers get from depth: one implementation pays back across many call sites and scenarios.
+
+**Locality**:
+What maintainers get from depth: change, bugs and knowledge concentrate in one place instead of spreading across callers.
+
+**Deletion test**:
+Imagine deleting a module. If the complexity vanishes, it was a pass-through; if it reappears across many callers, the module was earning its keep.
+
+Rule: docs/TEST-FIRST.md "Designing for testability"
+
+### How we work
+
+**Slice**:
+One separately planned, built and feel-tested step of a feature, with its own harness scenarios.
+
+Rule: docs/TEST-FIRST.md
+
+**Prose plan**:
+The no-code plan in chat that Jess approves before any game-code edit.
+
+Rule: CLAUDE.md "Edit boundary and workflow"
+
+**Feel test**:
+Jess playing a change in the browser. It is the last check of every change.
+
+Rule: CLAUDE.md "Edit boundary and workflow"
+
+**Requirement tag**:
+`[Approved]`, `[Legacy behavior]`, `[Proposed]` or `[Open]`, the status of a spec rule.
+
+Rule: CLAUDE.md "Requirement tags"
+
+**intent scenario**:
+A staged fight in move-intent-scenarios.json with a hand-derived expected outcome.
+
+Rule: docs/MOVE-INTENT.md
+
+**batch review**:
+Jess's sign-off of newly routed moves that have no MOVE-INTENT entry.
+
+Rule: CLAUDE.md "Move review rule"
+
+**harness / mutation runner**:
+An offline test file under docs/proposals/ run by check.js / a script that breaks the code on purpose to prove the harness catches it.
+
+Rule: docs/TEST-FIRST.md
+
+## Keeping this file
+
+- A glossary, not a spec: each entry says what a thing IS in one or two sentences. The rule lives in the spec named on its `Rule:` line.
+- Only this project's terms. General programming terms do not belong.
+- English only. Spanish code names go in docs/SPANISH-CODE-REFERENCE.md.
+- When a term is resolved in chat, the assistant adds or edits the entry right away and says so in one line. When a word is fuzzy, overloaded, or conflicts with an entry here, or when something said about how a thing works disagrees with the code or spec, the assistant flags it in one line and asks which is right.
+- Terms the assistant could not define from the specs: link, tempo, power, enrage. They wait for a grilling session.
