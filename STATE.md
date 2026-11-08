@@ -1,10 +1,10 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-08, Claude Code (home). Branch: chore/docs-cleanup (from main), #26 and #27 committed, unmerged.
+Updated 2026-11-08, Claude Code (home). On main; chore/docs-cleanup merged (#26, #27 shipped), ponytail removed.
 
 ## START HERE (next session, either tool)
-1. Jess pushes and merges chore/docs-cleanup into main, then pulls main into feature/gym-leader-ai. Do not resume gym work before that.
+1. Jess pulls main into feature/gym-leader-ai (fast-forward, the branch has no unique commits). Do not resume gym work before that.
 2. Check that /triage loads in a new session (it did not appear in the skill list this session). Then #28 (architecture skill) is unblocked.
 3. Then the gym AI: Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md ([Proposed]); order and issue numbers are in TODO.md.
 
@@ -16,7 +16,7 @@ Updated 2026-11-08, Claude Code (home). Branch: chore/docs-cleanup (from main), 
   Map: docs/ASCII Concept Maps/Entity Model Close-Out - Brock Switch.txt.
 - Gyms 3 to 8 stay on the old brain for the playtesters (copy in about 4 days). Two leader paths until slice 12.
 - Slice 8 DPS report (Q10) still unread: no tempo or power change yet.
-- Lint: 7 errors (all in .claude/hooks/guard-git.js, new), 69 warnings in inherited code (do not --fix).
+- Lint: 0 errors (hook now linted as node code), 69 warnings in inherited code (do not --fix).
 - Red 2026-11-08, not investigated: gym-harness (Misty loop 1 pool), leader-stats-harness (Misty Zinc).
 
 ## Next
