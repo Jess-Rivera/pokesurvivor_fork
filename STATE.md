@@ -1,7 +1,7 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-08, Claude Code (home). Branch: chore/skill-choice-update (merging to main), then chore/docs-cleanup.
+Last updated: 2026-11-08, Claude Code (home). Branch: chore/docs-cleanup (cut from main after the skills branch merged).
 
 ## START HERE (next session, either tool)
 1. Start a NEW session so the skills and rules load (grilling, triage, diagnosing-bugs; hook .claude/hooks/guard-git.js).
