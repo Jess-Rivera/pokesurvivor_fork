@@ -338,3 +338,9 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Issues filed: #22 to #28 (#26 stale TODO.md references, high priority; #27 DECISIONS split; #28 architecture skill, blocked on #27). Labels added: priority:high, needs-info, wontfix.
 - No game code touched; check.js not run. Commits f1730d03, f2b27f79, 91799748 on chore/skill-choice-update.
 - Stopped at: Jess merges the branch, starts chore/docs-cleanup in a new session.
+
+## 2026-11-08 (Claude Code, home), docs cleanup
+- #26: stale TODO.md references repointed to docs/TODO-notes-2026-11.md, issues #9 and #17, or plan docs; two slice overviews now cite CLAUDE.md "Git and GitHub"; MOVE-INTENT priority:1 retagged [Approved] (ignored as a mechanic). Commit b0122f5a.
+- #27: DECISIONS.md split into 135 files in docs/decisions/ (lossless, bytes verified) with an index. Decided: decisions are cited by file name alone, Q/QA numbers are history; CLAUDE.md rule and CONTEXT.md pointers updated. Commit 5fcfe971. Filed #29 (promote review CP1 rulings).
+- Not green: gym-harness and leader-stats-harness each fail one Misty check, lint shows 7 errors in guard-git.js. No js/ change on this branch, so none caused here; not investigated. /triage did not show in the session skill list.
+- Stopped at: Jess pushes and merges chore/docs-cleanup into main, then pulls main into feature/gym-leader-ai.

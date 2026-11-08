@@ -4,23 +4,25 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Next (from the 2026-11-07 session, branch feature/gym-leader-ai)
-1. After the skills branch (chore/skill-choice-update) merges: #26 (high priority), repoint the stale TODO.md references in the docs; then #27, split DECISIONS.md into docs/decisions/; then #28, the improve-codebase-architecture skill (blocked on #27).
-2. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md. No code until then. Unblocks #22.
-3. #22 slice 9a (map v2 A1 to A5 plus the rolling windows): prose plan, then build.
-4. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
-5. #24 real gym loop counter.
-6. Board cleanup, Jess's call: close #5 (slice 7a replaced it); drop the stale `blocked` label on #11;
+## Next (from the 2026-11-08 session, branch chore/docs-cleanup)
+1. Jess: push and merge chore/docs-cleanup (closes #26 and #27), then pull main into feature/gym-leader-ai.
+2. Look at the two red harnesses (gym-harness Misty loop 1 pool, leader-stats-harness Misty Zinc) and the 7 lint errors in .claude/hooks/guard-git.js; file an issue for each real one.
+3. #28, the improve-codebase-architecture skill (unblocked once #27 is merged). #29 (CP1 rulings into docs/decisions/) needs Jess to sort settled from superseded.
+4. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md. No code until then. Unblocks #22.
+5. #22 slice 9a (map v2 A1 to A5 plus the rolling windows): prose plan, then build.
+6. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
+7. #24 real gym loop counter.
+8. Board cleanup, Jess's call: close #5 (slice 7a replaced it); drop the stale `blocked` label on #11;
    retitle #6.
-7. Chore for Jess: delete merged branches (the assistant lists them).
+9. Chore for Jess: delete merged branches (the assistant lists them).
 
 ## Open issues by area (numbers only, titles via gh)
 - Gyms: #5 #9 #20 #21 #22 #23 #24
 - Moves: #11 #13 #14
 - Engine: #8 #10 #12
 - UI: #25
-- Bugs: #16 #18 #26
-- Docs: #27 #28
+- Bugs: #16 #18
+- Docs: #28 #29
 
 ## Deferred (cloud and multiplayer phase, do not start)
 Open an issue labeled `deferred`; old notes are in docs/TODO-notes-2026-11.md.
