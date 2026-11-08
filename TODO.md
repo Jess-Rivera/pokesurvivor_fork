@@ -8,7 +8,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 1. Jess: pull main into feature/gym-leader-ai (chore/docs-cleanup is merged; #26 and #27 shipped).
 2. Look at the two red harnesses (gym-harness Misty loop 1 pool, leader-stats-harness Misty Zinc); file an issue for each real one. Hook lint errors are fixed.
 3. #28, the improve-codebase-architecture skill (ready; four open questions in the issue). #29 (CP1 rulings into docs/decisions/) needs Jess to sort settled from superseded.
-4. Jess answers G1 to G11 in docs/proposals/gym-leader-ai-design.md. No code until then. Unblocks #22.
+4. Fresh gym leader AI design by /grilling, then compare it with the FROZEN docs/proposals/gym-leader-ai-design.md
+   (do not read that file before the compare step). No code until then. Unblocks #22.
 5. #22 slice 9a (map v2 A1 to A5 plus the rolling windows): prose plan, then build.
 6. #23 owed feel tests (Brock, gym win and swap, slice 1 Elite fight).
 7. #24 real gym loop counter.
