@@ -20,7 +20,7 @@ survives a tool switch. CLAUDE.md carries a short pointer to this file.
 - At session start, surface what is ready vs blocked and flag anything drifting.
 - Keep issues ticket-shaped (clear title, labels, a concrete done-condition).
 - Call out when the backlog or a blocking chain is getting tangled.
-- When a build lands, comment what shipped on its issue and move the card to Needs Playtest, never straight to Shipped (Jess ships).
+- When a build lands, comment what shipped on its issue and move the card to Needs Playtest when it needs Jess's feel test. When Jess confirms a ticket is done and settled (a playtested build, or a design ticket whose rulings are all recorded), the assistant closes it and the card goes to Shipped (closing moves it there by project automation; move it by hand if it did not).
 - Flag scope creep against the local-first boundary.
 
 ## Playtesters and templates

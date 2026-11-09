@@ -104,8 +104,9 @@ board, and the board wins for "what's next". The assistant creates and maintains
 issue numbers. It never duplicates an issue's content.
 - When work is agreed, it becomes an issue (clear title, type + area + status labels, a concrete done-condition),
   not a TODO line. Draft a batch of more than about five new issues for Jess to approve first.
-- When a slice lands, comment on its issue with what shipped, and move the card to Needs Playtest (never straight
-  to Shipped; Jess ships). A ruling goes in a new docs/decisions/ file plus an index line in DECISIONS.md, the task it implies goes in an issue, with a link.
+- When a slice lands, comment on its issue with what shipped, and move the card to Needs Playtest when it needs Jess's
+  feel test. When Jess confirms a ticket is done and settled, the assistant closes it and the card goes to Shipped
+  (closing moves it there by project automation). A ruling goes in a new docs/decisions/ file plus an index line in DECISIONS.md, the task it implies goes in an issue, with a link.
 - At session end, rewrite the TODO.md handoff from what actually happened, and STATE.md as before.
 Full detail, label taxonomy, board columns, PM behaviors and the playtester/template rules:
 **docs/PM-WORKFLOW.md**. Playtester guide: CONTRIBUTING.md.
