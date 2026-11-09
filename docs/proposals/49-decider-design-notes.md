@@ -10,8 +10,8 @@ Started 2026-11-09, Jess with Claude Code (home). Read "HANDOFF" first.
   2026-11-09-49-leader-sharpness-base-plus-loop-growth). The three managers and the Arbiter are SUPERSEDED (Jess,
   2026-11-09): splitting by control channel was both too simple and too complex, since real tactics span channels.
   Their round 1 questions are void; proposal B is moot.
-- Goals settled the same day (nine goals, outcome targets, cost profiles). Next: the fixed action list, then the
-  rest of the "Open" list at the end of this file.
+- Goals (nine, outcome targets, cost profiles) and the action pool (ten verbs) settled the same day. Next: the rest
+  of the "Open" list at the end of this file (default leader, overlay, done-condition and end-goal test first).
 - Working rule: emergent, not scripted (see "Design principle"). Recommend scores, never hard rules on top; raise any
   fairness limit that seems to need a hard rule as a question.
 - Not started: no code and no LEADER-AI edit. The DECIDER section is written when the session closes.
@@ -153,10 +153,10 @@ Supersedes the three managers and the Arbiter. Where the Strategy layer above sa
   - Partial credit: when no plan of 4 actions reaches a goal (Finish while you are at 80%), its best plan still
     counts at value x the fraction of the gap it closes. A Kite plan that only backs off (no hit possible) scores
     this way too.
-  - Bait: your moves fire when ready and their slot is active, so the cooldown window predicts your shot without a
-    habit model. A typical plan: draw your shot (be in its path as its window opens), then punish. The dodge stays
-    reflex; Bait's very high damage-taken weight makes the reflex spend a charge readily. Works only on revealed
-    moves and sharpens as the window narrows (loop 1 Brock baits badly, loop 6 Brock well).
+  - Bait: your moves fire when ready and their slot is active, and the cast gate fires a targeted move the moment a
+    target enters its reach, so the cooldown window predicts your shot without a habit model. The plan is draw your
+    shot, dodge your shot, use slot (Jess: an intentional dodge that is not a dash). Works only on revealed moves and
+    sharpens as the window narrows (loop 1 Brock baits badly, loop 6 Brock well).
   - Heals: any goal's plan may use a heal action, counted as negative damage taken in its cost; Conserve is the
     goal for when recovering is the point.
   - Each goal's utility score comes from the Strategy rules above (considerations x the leader's goal weight).
@@ -169,15 +169,44 @@ Supersedes the three managers and the Arbiter. Where the Strategy layer above sa
 - World state: a compact snapshot from Belief (distance against each own slot's reach, own slot readiness, your
   threat readiness per revealed move from the cooldown window, both sides' HP, statuses and stages, bench matchups,
   dodge charges, active slot). Never read from the game.
-- Actions: about 15 tactical verbs fixed in code, each lasting about 0.3 to 2 s and free to span channels (close to
-  slot X's reach, hold at range, activate slot X, wait for a window, swap to mon Y, dash in, back off, ...). Each has
-  preconditions, expected effects, a cost, a duration estimate, tags, and a steering routine that answers the
-  Controller every frame.
-- Signature actions: a leader may add named actions to its own pool, built only from the existing preconditions,
-  effects and verbs with its own numbers (data, no new code path), e.g. Brock's "Sandbag": hold at range with Defense
-  Curl active. #39 stays data.
-- Personality on costs: a multiplier per action tag (approach, retreat, buff, swap, dash, wait, attack), with an
-  optional per-action override; a missing override takes its tag's value. Plus goal weights (Strategy).
+- Actions (`/grilling planner details`, Jess 2026-11-09): ten verbs fixed in code, filled in per slot, mon or range
+  (about 25 to 40 concrete actions). Each has preconditions, expected effects, a cost, a computed duration estimate,
+  a tag, and a steering routine that answers the Controller every frame. Fact behind it: the cast gate holds a
+  targeted move until a target is inside its reach (js/systems/move-sim.js), and a buff or heal fires the moment it
+  is ready, so "attack" means "slot X active and you in its reach".
+
+  | Verb                        | Tag       | Precondition                              | Expected effect                        | Steering                                  |
+  |-----------------------------|-----------|-------------------------------------------|----------------------------------------|-------------------------------------------|
+  | Close to reach (slot X)     | approach  | none                                      | distance within X's reach              | toward your predicted position            |
+  | Hold at range (R)           | position  | none                                      | distance about R, time passes          | circle you at R (sideways lowers your hit chance) |
+  | Back off                    | retreat   | none                                      | outside your best revealed reach       | away from you, wall-aware                 |
+  | Dash in (slot X)            | dash      | a charge beyond the reserve; X's reach within one dodge | within X's reach, a charge spent | `dodge` toward you                     |
+  | Wait for a window           | wait      | none                                      | time passes until a named event        | keep spacing                              |
+  | Draw your shot (your move M)| approach  | M revealed; M's window opens within about 1 s | M fired                            | step into M's reach timed to its window   |
+  | Dodge your shot (M)         | dodge     | a spare charge; M about to fire or just fired | M avoided (success from `reflex`, `dodgeRead`) | `dodge` sideways out of its path |
+  | Use slot X                  | from move | X ready, or ready within the action       | the move's data: damage, status, stage, heal | activate X; stay in reach until it fires |
+  | Swap to mon Y               | swap      | swap lock open, Y alive                   | Y active, new matchup                  | `swapSlot` or `swapDir`                   |
+  | Recover                     | wait      | something spent (a cooldown or a charge)  | that resource back                     | keep distance, time passes                |
+
+  - Use slot is one verb: its effects and tag come from the move's data (attack, status, buff, heal), so new moves
+    need no planner change.
+  - Every movement verb names the slot it keeps active ("back off with Water Gun active"); the planner picks it as
+    part of the action. No hidden pick rule.
+  - Dodge your shot is planned but fires on the reflex clock: the plan commits to it ahead, and the dodge goes the
+    moment the shot is noticed (Perception, after `reflex`), never on the think tick, so THREAT TIMING holds. It
+    still goes through `dodgeRead` and `reflex` (expecting a shot does not make the dodge perfect) [Proposed]. The
+    reflex layer still handles threats no plan expected. Its cost: your hit's damage x (1 - its expected success).
+  - Durations are computed (travel time; time to ready plus the tell; the window's time); an action ends on its
+    effect or at 1.5 x its estimate (TUNE).
+  - Coverage: every goal's target is reachable (hits: a movement verb plus Use slot; Setback, Buff: Use slot;
+    Bait: Draw, Dodge, Use slot; Finish: chained Use slots; Conserve: a heal Use slot or Recover).
+- Signature actions: a leader may add named actions to its own pool: one base verb, plus extra preconditions from the
+  shared list, plus its own cost multiplier, plus an optional line (data, no new code path). Examples: Brock's
+  "Sandbag" = Hold at range, own Defense at +1 or more, cost x0.6; Misty's "Riptide" = Dash in, you are slowed, cost
+  x0.7. #39 stays data.
+- Personality on costs: a multiplier per action tag (approach, retreat, position, wait, dash, dodge, swap, and from
+  the move attack, status, buff, heal: 11 tags), with an optional per-action override; a missing override takes its
+  tag's value. Plus goal weights (Strategy).
 - Search: plans of at most 4 actions; the cheapest plan per goal that reaches its target state (A*, small).
 - Replanning: every think tick (the running plan competes with its commitment bonus), and at once when the running
   action's precondition breaks.
@@ -220,8 +249,7 @@ Supersedes the three managers and the Arbiter. Where the Strategy layer above sa
 
 ## Open
 - The profile and base-value numbers (TUNE; starting values come with the build plan).
-- The fixed action list (names, preconditions, effects, tags) and the signature action data format.
-- Durative and uncertain actions: is the 1.5 x timeout enough; how a hit chance enters effects.
+- How hit chance is estimated for Use slot (your movement, the shape, `aimError`).
 - Growth form: a fixed step per loop (assumed) or a percentage.
 - The default leader with no personality; the ?dev overlay contents.
 - The done-condition and the end-goal test. Candidate: over a run, a player who stays on one slot gets punished
