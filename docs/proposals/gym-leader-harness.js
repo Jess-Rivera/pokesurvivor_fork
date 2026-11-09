@@ -185,7 +185,18 @@ parity('Expert Belt on a super-effective hit', spec({ type: 'grass' }), D * 2 * 
 parity('Expert Belt does nothing on a neutral hit', spec({ type: 'normal' }), D, { expertBelt: true });
 parity('a matching type item', spec({ type: 'normal' }), D * 1.2, { typeBoost: 'normal' });
 parity('Power Stone floors a resisted hit at x1', spec({ type: 'fire' }), D, { stoneType: 'fire' });
-parity('a status-category hit divides by the neutral 50, no STAB', spec({ type: 'normal', category: 'status' }), 1000 / 50 + 2, { stabFor: () => true });
+// #41 (decision 2026-11-09-the-leader-ai-chooses-its-attacks): a status-category hit, no STAB. The old body divides by the neutral
+// 50 (1000 / 50 + 2 = 22); a leader takes your rule, its Def 27 (D); a gym authoring wildStatusDivisor gets the neutral 50 back.
+{
+  texts = [];
+  const st = spec({ type: 'normal', category: 'status' }),
+    a = hit(oldBody(), st, owner({ stabFor: () => true })),
+    b = hit(leader(), st, owner({ stabFor: () => true })),
+    c = hit(leader(STARYU, gymOf({ restrictions: Object.assign({}, MISTY_A, { wildStatusDivisor: true }) })), st, owner({ stabFor: () => true }));
+  ok(near(a.took, 1000 / 50 + 2), 'a status-category hit: the old body divides by the neutral 50, no STAB: ' + a.took + ' want 22');
+  ok(near(b.took, D), 'a status-category hit: the leader takes your rule (its Def), no STAB: ' + b.took + ' want ' + D);
+  ok(near(c.took, 1000 / 50 + 2), 'a status-category hit: with wildStatusDivisor the leader divides by the neutral 50: ' + c.took + ' want 22');
+}
 W.water = 1.5;
 parity('weather on the type', spec({ type: 'water' }), D * 0.5 * 1.5);
 W = {};

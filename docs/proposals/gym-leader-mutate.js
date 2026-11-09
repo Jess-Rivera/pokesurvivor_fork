@@ -40,7 +40,8 @@ const M = [
   ['Power Stone is dropped', FX, 'b.stone = b.owner.stoneType === def.type;', 'b.stone = false;'],
   ['Power Stone does not pierce immunity', PL, 'if (tk === 0 && !stone) {', 'if (tk === 0) {'],
   ['Power Stone has no floor', PL, '(stone ? Math.max(1, tk * wk) : tk * wk)', '(tk * wk)'],
-  ['a status-category hit uses her Def', FX, "b.neutral = !!pl.isRival && def.category === 'status';", 'b.neutral = false;'],
+  ['wildStatusDivisor is ignored', FX, " && pl.rule('wildStatusDivisor') === true;", ';'], // #41: your rule unless authored
+  ['a leader never takes the wild divisor', FX, " && pl.rule('wildStatusDivisor') === true;", ' && false;'],
   ['flat moves do nothing on a leader', FX, 'if (pl.isRival && FLAT[fx.handler]) return special(inst, pl, rng, fx, hop, hit);', ''],
   ['a leader flat move hits you', FX, 'if (pl.isRival && FLAT[fx.handler]) return', 'if (FLAT[fx.handler]) return'],
   ['your damage is not counted', FX, 'b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt;', ''],
