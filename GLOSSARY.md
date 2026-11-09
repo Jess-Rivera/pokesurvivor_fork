@@ -90,6 +90,23 @@ The one module that drives every Player-entity leader. It acts only through a hu
 
 Rule: docs/LEADER-AI.md "The AI player"
 
+**Body**:
+The thing on the field you interact with: the mon a Player entity fields, where its HP, stats, statuses, stages, slots, dodges and swap lock live, and what you can hit and kill. It obeys the rules and decides nothing. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader` (its authored cast rules, `G.GymLeader.Caster`, are part of the body).
+
+_Avoid_: brain (GymBrain was a body and a decider in one)
+
+Rule: docs/branch-rules/feature-gym-leader-ai.md "Why #40 to #42 exist"
+
+**AI** (of a leader):
+The "person" on the other side of the screen: it decides (where to go, which slot, when to dodge or swap) and enforces no rule. Code: `G.LeaderAI`, with what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). Yours is you at the keyboard. Same thing as the AI player.
+
+Rule: docs/LEADER-AI.md "The AI player"
+
+**Controller**:
+The only channel between a decider and a body: the seven calls (heading, dodge, shake, swap mon, swap direction, slot keys, cycle). The decider answers, the body reads the answers under its rules. Yours is `G.HumanPlayer.KEYBOARD`; a leader's is its AI's `controller`. Rules live in the body, decisions in the AI, and only the controller crosses between them.
+
+Rule: docs/LEADER-AI.md "YOUR CONTROLS ONLY"
+
 **Reveal**:
 The moment a leader learns something about one of your mons from the screen: a move when it is cast, a bond when its moves fire together, a held item when its effect shows. Cards and stats are never revealed.
 
