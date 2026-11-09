@@ -6,8 +6,8 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. #49 design session continues: read docs/proposals/49-decider-design-notes.md "HANDOFF", then `/grilling planner`.
-   The Decider is a hybrid: utility goal choice plus GOAP planning plus a reflex layer. No code until the session closes.
+2. #49 design session continues: read docs/proposals/49-decider-design-notes.md "HANDOFF", then
+   `/grilling planner details` (the notes' "Open" list). The planner's shape is settled. No code until the session closes.
 3. After #49: #39 (personalities, re-scoped onto #49). #44 and #46 any time (both ready). #48 research (ready).
 
 ## Where we are

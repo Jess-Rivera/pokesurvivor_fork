@@ -160,6 +160,28 @@ A trigger is an authored condition and action on a leader (an HP line, a faint, 
 
 Rule: docs/LEADER-AI.md "Authoring a leader"
 
+**Goal / plan / plan action**:
+The planner's three terms inside a leader's Decider. A goal is one of the seven intents (Pressure, Trade, Kite, Conserve, Endure, Setup, Finish), with a target state and a value. A plan is up to 4 plan actions that reach a goal. A plan action is a tactical verb (close to a slot's reach, hold at range, activate a slot, swap to a mon, dash in, back off) with preconditions, expected effects and a cost in HP traded; it answers the Controller every frame.
+
+_Avoid_: "action" alone (moves and the Controller also act); manager (superseded)
+
+Rule: docs/proposals/49-decider-design-notes.md "Planner layer" (moves to docs/LEADER-AI.md DECIDER when #49 closes)
+
+**Signature action**:
+A plan action one leader adds to its own pool, built only from the existing preconditions, effects and verbs with its own numbers. Authored data, never a new code path.
+
+Rule: docs/proposals/49-decider-design-notes.md "Planner layer" (moves to docs/LEADER-AI.md DECIDER when #49 closes)
+
+**Sharpness / style**:
+The two kinds of leader setting. Sharpness is how well it learns and judges (`misjudge`, `memoryUse`, `reflex`, `dodgeRead`) and grows with the loop: a per-leader base plus a per-loop growth. Style is how it likes to play (goal weights, cost multipliers, `range`, `swapWill`, `risk`) and stays flat per leader.
+
+Rule: docs/proposals/49-decider-design-notes.md "Planner layer" (moves to docs/LEADER-AI.md DECIDER when #49 closes)
+
+**Misjudgment** (`misjudge`):
+A sharpness setting: seeded noise on each candidate plan's cost, drawn per think tick, so a leader sometimes thinks a bad plan is good. Not `randomness`, which picks a worse goal on purpose.
+
+Rule: docs/proposals/49-decider-design-notes.md "Planner layer" (moves to docs/LEADER-AI.md DECIDER when #49 closes)
+
 ### Damage and stats
 
 **Orthogonal dials**:

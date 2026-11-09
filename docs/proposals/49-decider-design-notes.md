@@ -5,20 +5,16 @@ rulings move to a DECIDER section in docs/LEADER-AI.md plus a decision file, and
 Started 2026-11-09, Jess with Claude Code (home). Read "HANDOFF" first.
 
 ## HANDOFF (for the next chat, 2026-11-09)
-- Where we are: Belief is settled. Strategy is settled as utility scoring, but its "intents" must be re-read as GOALS
-  under the new shape (below). The three managers and the Arbiter are SUPERSEDED (Jess, 2026-11-09): splitting by
-  control channel (swap, movement, slot) was both too simple and too complex, since real tactics span channels. Their
-  round 1 grilling questions were never answered and are void; proposal B is moot.
-- Next: open `/grilling planner` (the grilling skill now opens with a play-back of the overview and the frontiers).
-  Frontiers to play back: the goal list (do the seven intents become goals, or goal weights?); the action set with
-  preconditions and effects (likely 12 to 20 actions, each may span channels, e.g. "close in with my melee slot");
-  action costs and effects as expected values from Belief, plus personality as action cost modifiers; plan horizon
-  (about depth 3 to 4) and when to replan (think tick, or a broken precondition); plan commitment as a scored cost;
-  how the reflex layer (threat dodge) interrupts a plan; the ?dev overlay (goal, plan, why); the default leader; then
-  the done-condition and the end-goal test.
+- Where we are: Belief, Strategy (now goal choice) and the planner's shape are settled ("Planner layer" below,
+  decisions 2026-11-09-49-decider-is-utility-goals-plus-goap-planner and
+  2026-11-09-49-leader-sharpness-base-plus-loop-growth). The three managers and the Arbiter are SUPERSEDED (Jess,
+  2026-11-09): splitting by control channel was both too simple and too complex, since real tactics span channels.
+  Their round 1 questions are void; proposal B is moot.
+- Next: `/grilling planner details`. The frontier is the "Open" list at the end of this file, starting with each
+  goal's target state and value in HP units, then the fixed action list.
 - Working rule: emergent, not scripted (see "Design principle"). Recommend scores, never hard rules on top; raise any
   fairness limit that seems to need a hard rule as a question.
-- Not started: no code, no LEADER-AI edit, no decision file yet. All of that comes when the session closes.
+- Not started: no code and no LEADER-AI edit. The DECIDER section is written when the session closes.
 
 ## Shape (Jess, 2026-11-09): a hybrid, utility goals plus GOAP planning
 ```
@@ -126,6 +122,58 @@ seven intents become the goals themselves is the first planner-grilling question
 - The breather's 25% share cap is dropped: Conserve stops scoring well once there is nothing left to recover.
 - Default leader (no personality): every intent weight 1, baseline settings; the feel test judges it.
 
+## Planner layer (grilling `/grilling planner`, Jess 2026-11-09)
+Supersedes the three managers and the Arbiter. Where the Strategy layer above says "managers", read "the planner".
+- Goals: the seven intents are the goals. Each has a target state (examples, thresholds open: Finish = your active
+  mon fainted; Setup = +N stages and danger low; Conserve = key cooldowns ready and danger low; Pressure = in reach
+  with a hit ready; Trade = at its preferred range with a hit ready; Kite = danger low and outside your reach; Endure =
+  long-window HP trade positive) and a utility score from the Strategy rules.
+- Goal choice: on every think tick it plans for every goal and ranks each (goal, plan) pair by goal value minus plan
+  cost; the current plan adds its commitment bonus; `randomness` draws from the ranking (seeded, fixed tie-breaks).
+  A great goal with no cheap plan loses.
+- One currency: goal values and costs are both in HP traded as a fraction of the opponent's max HP. Cost = expected
+  damage taken (danger x duration) minus expected damage dealt (opportunity x hit chance), plus a small time term,
+  all read from Belief. A goal's value is its utility x a per-goal value in those units (Finish is worth the KO).
+- World state: a compact snapshot from Belief (distance against each own slot's reach, own slot readiness, your
+  threat readiness per revealed move from the cooldown window, both sides' HP, statuses and stages, bench matchups,
+  dodge charges, active slot). Never read from the game.
+- Actions: about 15 tactical verbs fixed in code, each lasting about 0.3 to 2 s and free to span channels (close to
+  slot X's reach, hold at range, activate slot X, wait for a window, swap to mon Y, dash in, back off, ...). Each has
+  preconditions, expected effects, a cost, a duration estimate, tags, and a steering routine that answers the
+  Controller every frame.
+- Signature actions: a leader may add named actions to its own pool, built only from the existing preconditions,
+  effects and verbs with its own numbers (data, no new code path), e.g. Brock's "Sandbag": hold at range with Defense
+  Curl active. #39 stays data.
+- Personality on costs: a multiplier per action tag (approach, retreat, buff, swap, dash, wait, attack), with an
+  optional per-action override; a missing override takes its tag's value. Plus goal weights (Strategy).
+- Search: plans of at most 4 actions; the cheapest plan per goal that reaches its target state (A*, small).
+- Replanning: every think tick (the running plan competes with its commitment bonus), and at once when the running
+  action's precondition breaks.
+- Executor: runs the current action's steering through the seven controller calls; an action ends when its effect
+  holds or its time runs out (about 1.5 x its estimate, TUNE, open), then the next action, or a replan if its
+  precondition fails.
+- Reflex: threat dodges stay reflex (Perception notices, after `reflex`; the spend is a score weighted by the current
+  goal). After a dodge the plan resumes if its preconditions hold, else it replans at once.
+- Dash in: the gap-closing dodge becomes a planner action; the one-charge reserve is a cost on it, not a rule.
+- Swaps: "swap to Y" is a planner action whose effect is the new matchup; `minField` and `swapWill` are cost terms;
+  the lead exploit raises its value at fight start. Swaps chain into plans (swap to Onix, then Rock Tomb).
+- Misjudgment: a new setting `misjudge`, seeded noise on each candidate plan's cost, drawn once per plan per think
+  tick and held for that tick. It is the leader thinking a bad plan is good, unlike `randomness` (picking a worse
+  goal on purpose). The commitment bonus keeps noise alone from flipping plans.
+- Sharpness grows with the loop: `misjudge`, `memoryUse`, `reflex` and `dodgeRead` each take a per-leader base plus
+  a per-loop growth (12 leaders, 6 loops: 24 values per setting). Unauthored values fall back to the code baseline.
+  Growth is a fixed step per loop, held inside the setting's valid range (form open). Style settings (goal weights,
+  cost multipliers, `range`, `swapWill`, `risk`) stay flat per leader: loop 6 Brock is still a wall, a sharper one,
+  and may out-think loop 1 Lance. The four-setting scope is [Proposed] (Jess: "likely"); `misjudge` is approved.
+- Learning in the run is separate from sharpness: run memory makes a leader better at you over a run; sharpness is
+  how good it is at learning and judging at all.
+- Cast timing is fixed: a move fires when ready and its slot is active, so you cannot vary its timing. Your cadence
+  on a slot can differ from the move's base cooldown (your stats and cards), which is what the window learns. Your
+  counter-play is cycling slots (denies clean observations, costs you damage), swapping, and movement (the
+  straight-line position guess misreads a curve). The planner also plans as if you will not react, so baiting its
+  commitments works.
+- ?dev overlay (sketch, open): the current goal, the plan's steps with their costs, the top three alternatives.
+
 ## Spec revisions this session implies (for the LEADER-AI DECIDER rewrite)
 - REVEALS: "knows its cooldown length" becomes the learned cooldown window (Belief).
 - Ruling C: `predictCap` no longer caps cooldown inference; the window's minimum width does.
@@ -133,10 +181,17 @@ seven intents become the goals themselves is the first planner-grilling question
 - TRIGGERS: forced actions removed (a stub kept); lines become voice on intent changes and events.
 - ROLLING WINDOWS: the long window goes from about 15 s to 10 s.
 - DODGE READ BAG: the bag decides noticing only; spending a charge is a scored choice.
+- GAP-CLOSING DODGE: becomes the "dash in" planner action; the extra charge kept back becomes a cost.
+- SWAP AND SLOT CHOICES: become planner actions; the slice 9 v2 swap thresholds become cost and value terms.
+- SETTINGS LIST: adds `misjudge`, signature actions and per-tag cost multipliers; the four sharpness settings take
+  a base plus per-loop growth.
 
 ## Open
-- The planner layer: see HANDOFF for the frontiers.
-- Each goal's considerations and curves in detail (with the planner).
+- Each goal's exact target state and thresholds, and each goal's value in HP units.
+- The fixed action list (names, preconditions, effects, tags) and the signature action data format.
+- Durative and uncertain actions: is the 1.5 x timeout enough; how a hit chance enters effects.
+- Growth form: a fixed step per loop (assumed) or a percentage.
+- The default leader with no personality; the ?dev overlay contents.
+- The done-condition and the end-goal test. Candidate: over a run, a player who stays on one slot gets punished
+  more than one who cycles slots; loop 1 Brock loses measurably more scripted duels than loop 6 Brock.
 - [Open] Bench cooldowns (waits on Jess's bench-recharge call).
-- Then: the intents list; each manager's options and considerations and their curves; the default leader with no
-  personality; the ?dev overlay; the done-condition and the end-goal test.

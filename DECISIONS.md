@@ -6,6 +6,8 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-09, #49: misjudgment, and leader sharpness grows with the loop (Jess)](docs/decisions/2026-11-09-49-leader-sharpness-base-plus-loop-growth.md), build #49, authored in #39
+- [2026-11-09, #49: the Decider is utility goals plus a GOAP planner (Jess)](docs/decisions/2026-11-09-49-decider-is-utility-goals-plus-goap-planner.md), build #49
 - [2026-11-09, #47 splits; the Decider becomes a full utility AI (Jess)](docs/decisions/2026-11-09-47-split-and-utility-ai-overhaul.md), build #47 (47a) and #49 (47b)
 - [2026-11-09, #43 opening: the movement split in two steps (Jess)](docs/decisions/2026-11-09-43-movement-split-opening.md), build #43
 - [2026-11-09, #42 item 11: a leader's attacks wait on your cast gate (Jess)](docs/decisions/2026-11-09-42-leader-attacks-wait-on-your-cast-gate.md), build #47
