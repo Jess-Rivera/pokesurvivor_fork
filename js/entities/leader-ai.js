@@ -31,7 +31,8 @@
  *               (it counts as a voluntary swap); already on the best one, it stays and still says its line.
  * Slice 5a (#34, decision 2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities): GymBrain is gone from Player-
  * entity leaders. Movement (steer, legsOf) and the slot choice (pickSlot) are this module's own; the tell, the reach filter and the
- * heal cap are the body's authored cast rules (G.GymLeader.Caster), on your sim scheduler (G.MoveSim.turn). Where slices 1 to 4
+ * heal cap are the leader's authored SimPass rules (G.GymLeader.SimPass; #41: the Caster is gone, its attack score is attackScore
+ * here), on your sim scheduler (G.MoveSim.turn). Where slices 1 to 4
  * below say "the brain", read those.
  */
 G.LeaderAI = class LeaderAI {
@@ -145,7 +146,6 @@ G.LeaderAI = class LeaderAI {
    *  close move recharging: it circles just outside its reach. */
   steer(e, dt, pl) {
     const T = G.Boss.TUNE,
-      c = e.caster,
       L = this.legsOf(e),
       now = G.Gym.now();
     let [dx, dy] = G.U.norm(pl.x - e.x, pl.y - e.y);
@@ -154,7 +154,7 @@ G.LeaderAI = class LeaderAI {
     const dist = G.U.dist(e.x, e.y, pl.x, pl.y);
     if (L.mode == null) this.startLegs(e, L);
     this.pressSlot(e, this.pickSlot(e, pl, now));
-    if (c.held()) return [0, 0];
+    if (e.isHeld()) return [0, 0];
     if (!L.low && e.hp < e.maxHp * T.LOW_HP) {
       L.low = true;
       L.farLike = 0.8;
@@ -177,15 +177,15 @@ G.LeaderAI = class LeaderAI {
       vy = ux * L.side;
     };
     if (L.mode === 'far') {
-      let out = Math.min(T.FAR, c.ranged() - T.SHOT_IN),
+      let out = Math.min(T.FAR, this.ranged(e) - T.SHOT_IN),
         inn = Math.min(T.NEAR, out - T.BAND);
       if (tight) [out, inn] = [inn, inn - T.BAND];
       if (dist < inn) {
         vx = -ux;
         vy = -uy;
       } else if (dist < out) circle();
-    } else if (!T.CLOSE.some((f) => c.ready(f))) {
-      const r = c.reach() + (pl.r || 0) + 30;
+    } else if (!T.CLOSE.some((f) => this.ready(e, f))) {
+      const r = this.reach(e) + (pl.r || 0) + 30;
       if (dist < r) {
         vx = -ux;
         vy = -uy;
@@ -200,10 +200,97 @@ G.LeaderAI = class LeaderAI {
     if (!L) this.legs.set(e, (L = {}));
     return L;
   }
+
+  // ---------------- what its own moves can do (its HUD) and the attack score (#41: the Decider's, off the old Caster) ----------------
+
+  /** Every move mon e moves for: the open moves of all its slots, so it walks in for a move on another slot and switches to it once
+   *  in reach. */
+  pool(e) {
+    return e.slots.flat().filter((s) => G.Boss.open(e, s));
+  }
+  /** The first ready move of `form` mon e moves for (pool), or null. */
+  ready(e, form) {
+    for (const s of this.pool(e)) if (s.t <= 0 && G.Gyms.formOf(e.moveDef(s.id)) === form) return s;
+    return null;
+  }
+  /** The reach of mon e's close moves (the largest melee cone or nova), from its center: yours, since the mon is player-sized. */
+  reach(e) {
+    let r = 0;
+    for (const s of e.slots.flat()) {
+      const d = e.moveDef(s.id),
+        f = G.Gyms.formOf(d);
+      if (G.Boss.TUNE.CLOSE.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
+    }
+    return r;
+  }
+  /** The reach of mon e's longest ready ranged move it moves for (pool), or Infinity when none is ready: far mode keeps you inside it. */
+  ranged(e) {
+    let r = -Infinity;
+    for (const s of this.pool(e)) {
+      if (s.t > 0) continue;
+      const d = e.moveDef(s.id),
+        f = G.Gyms.formOf(d);
+      if (G.Boss.TUNE.RANGED.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
+    }
+    return r > -Infinity ? r : Infinity;
+  }
+  /** The attack score of a slot's moves (Jess 2026-11-01, the utility pick): every ready attack you are in reach of (a melee cone or a
+   *  nova: its reach plus your body; a strike: its range; a shot: how far it flies, capped at its range) gets a score, and the best
+   *  one is the slot's. Score = freshness x fit x opportunity. Freshness: seconds since the move's last wind-up started (the fight's
+   *  first score for one never cast), over its cooldown. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's
+   *  close reach. Ties: ORDER, then the move's place in the group. No randomness. The slot choice (pickSlot) compares slots by it. */
+  attackScore(e, dist, pl, now, group) {
+    const T = G.Boss.TUNE,
+      L = this.legsOf(e);
+    if (L.t0 == null) L.t0 = now;
+    const close = this.reach(e),
+      blank = close > 0 && dist <= close + (pl.r || 0);
+    let best = null;
+    for (const s of group) {
+      if (s.t > 0) continue;
+      const d = e.moveDef(s.id),
+        form = G.Gyms.formOf(d),
+        rank = T.ORDER.indexOf(form);
+      if (rank < 0) continue;
+      const near = T.CLOSE.includes(form);
+      if (dist > G.Gyms.reachOf(d, form) + (near ? pl.r || 0 : 0)) continue;
+      const fresh = (now - (s.last != null ? s.last : L.t0)) / Math.max(0.05, d.cd * e.cdMul),
+        c = { s, d, form, rank, score: fresh * (blank && !near ? T.POINT_BLANK : 1) * this.opportunity(e, d, pl) };
+      if (!best || c.score > best.score || (c.score === best.score && c.rank < best.rank)) best = c;
+    }
+    return best;
+  }
+  /** Opportunity (Jess 2026-11-01): x OPP_HEX for a statusBonus move while you carry a major ailment, x OPP_BLOCKED for a move with a
+   *  major ailment rider while you already carry one, x OPP_DROP for a move with a foe stat drop that is not on you yet (no tracker from
+   *  this move and mon). Each applies once; 1 otherwise. */
+  opportunity(e, d, pl) {
+    const T = G.Boss.TUNE,
+      p = d.payload || [],
+      major = G.Status.majorKind(pl);
+    let k = 1;
+    if (major && p.some((fx) => fx.t === 'special' && fx.handler === 'statusBonus')) k *= T.OPP_HEX;
+    if (major && p.some((fx) => fx.t === 'ailment' && fx.side === 'foe' && T.MAJOR.has(fx.id))) k *= T.OPP_BLOCKED;
+    const src = G.MoveEffects.srcOf(d, e);
+    if (
+      p.some(
+        (fx) =>
+          fx.t === 'stat' &&
+          fx.side === 'foe' &&
+          fx.stages < 0 &&
+          !G.Stages.tracker(pl, G.MoveEffects.statKey(fx.stat), src, false)
+      )
+    )
+      k *= T.OPP_DROP;
+    return k;
+  }
+  /** The last slot choice's scores for mon e, for the ?dev overlay (one per scored slot, the pick marked). */
+  scoresOf(e) {
+    return this.legsOf(e).scores || null;
+  }
   /** The fight's first frame of mon e: its favorite range from the authored stance, the first switch in 6 to 8 s, a random side. */
   startLegs(e, L) {
     const st = e.gym.stance;
-    L.melee = e.slots.flat().some((s) => G.Boss.TUNE.CLOSE.includes(G.Gyms.formOf(e.caster.def(s.id))));
+    L.melee = e.slots.flat().some((s) => G.Boss.TUNE.CLOSE.includes(G.Gyms.formOf(e.moveDef(s.id))));
     L.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5;
     L.mode = st === 'far' || !L.melee ? 'far' : 'close';
     L.modeT = G.U.rand(6, 8);
@@ -215,38 +302,43 @@ G.LeaderAI = class LeaderAI {
    *  while it has a ready move in reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with
    *  nothing ready in reach, a buff slot whose Gate is open. The slot to press, or -1 to stay. */
   pickSlot(e, pl, now) {
-    const c = e.caster;
-    if (e.slots.length < 2 || c.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
+    if (e.slots.length < 2 || e.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
     const S = G.Boss.sense(e, pl),
       go = (i) => (i !== e.active ? i : -1),
       slotWith = (form, ok) =>
         e.slots.findIndex((g) =>
-          g.some((s) => G.Boss.open(e, s) && s.t <= 0 && G.Gyms.formOf(c.def(s.id)) === form && ok(s))
+          g.some((s) => G.Boss.open(e, s) && s.t <= 0 && G.Gyms.formOf(e.moveDef(s.id)) === form && ok(s))
         );
-    if (S.hpFrac < 1 && c.healsLeft > 0) {
+    if (S.hpFrac < 1 && e.healsLeft > 0) {
       const h = slotWith('heal', () => true);
       if (h >= 0) return go(h);
     }
     let cur = null,
       top = null,
       at = -1;
+    const scored = [];
     e.slots.forEach((g, i) => {
-      const k = c.attack(
+      const k = this.attackScore(
+        e,
         S.dist,
         pl,
         now,
-        g.filter((s) => G.Boss.open(e, s)),
-        true
+        g.filter((s) => G.Boss.open(e, s))
       );
       if (!k) return;
+      scored.push({ k, i });
       if (i === e.active) cur = k;
       if (!top || k.score > top.score || (k.score === top.score && k.rank < top.rank)) {
         top = k;
         at = i;
       }
     });
-    if (top) return !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? go(at) : -1;
-    const b = slotWith('buff', (s) => G.MoveEffects.statReady(c.def(s.id), e));
+    if (top) {
+      const pick = !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? at : e.active;
+      this.legsOf(e).scores = scored.map(({ k, i }) => ({ id: k.s.id, score: k.score, picked: i === pick }));
+      return go(pick);
+    }
+    const b = slotWith('buff', (s) => G.MoveEffects.statReady(e.moveDef(s.id), e));
     return b >= 0 ? go(b) : -1;
   }
   /** The slot choice picked slot i (or -1): the press waits in the controller (`slots`, in press order) until the body reads it, as
@@ -291,7 +383,7 @@ G.LeaderAI = class LeaderAI {
   /** Inside a tell (its wind-up, until the move fires; the recovery after it is not the tell) or a move commitment (a dash, a root, a
    *  cooldown freeze): no decision is made. */
   busy(e) {
-    const c = e.caster.tell;
+    const c = e.tell;
     return !!((c && !c.fired) || e.mvRoot || G.MoveSim.commits(e).length);
   }
 
@@ -355,8 +447,7 @@ G.LeaderAI = class LeaderAI {
   }
   /** A self heal it can still cast this fight (the heal cap counts; an hpBelow heal counts once it is open). */
   healLeft(e) {
-    const b = e.caster;
-    return b.healsLeft > 0 && b.pool().some((s) => G.Gyms.formOf(b.def(s.id)) === 'heal');
+    return e.healsLeft > 0 && this.pool(e).some((s) => G.Gyms.formOf(e.moveDef(s.id)) === 'heal');
   }
 
   /** LEADER-AI MATCHUP for leader mon m against your mon `you` (the one on the field unless a prediction names another): offense =
@@ -366,8 +457,8 @@ G.LeaderAI = class LeaderAI {
     if (!you) return 1;
     const yt = LeaderAI.typesOf(you);
     let off = 0;
-    for (const s of m.caster.pool()) {
-      const d = m.caster.def(s.id);
+    for (const s of this.pool(m)) {
+      const d = m.moveDef(s.id);
       if (!(d.basePower > 0)) continue;
       off = Math.max(off, G.Types.mult(d.type, yt) * (m.types.includes(d.type) ? 1.5 : 1));
     }
@@ -595,25 +686,23 @@ G.LeaderAI = class LeaderAI {
   }
   /** A breather's quiet slot: a buff slot whose Gate is open, or a heal slot while hurt with a heal left; -1 when none. */
   quietSlot(e) {
-    const b = e.caster;
-    if (e.slots.length < 2 || b.tell || e.mvRoot || e.stFl) return -1;
+    if (e.slots.length < 2 || e.tell || e.mvRoot || e.stFl) return -1;
     return e.slots.findIndex((g) =>
       g.some((s) => {
         if (s.t > 0 || (s.hpBelow != null && e.hp >= e.maxHp * s.hpBelow)) return false;
-        const d = b.def(s.id),
+        const d = e.moveDef(s.id),
           f = G.Gyms.formOf(d);
-        return (f === 'buff' && G.MoveEffects.statReady(d, e)) || (f === 'heal' && e.hp < e.maxHp && b.healsLeft > 0);
+        return (f === 'buff' && G.MoveEffects.statReady(d, e)) || (f === 'heal' && e.hp < e.maxHp && e.healsLeft > 0);
       })
     );
   }
   /** LEADER-AI GAP-CLOSING DODGE: bold enough (aggr at gapClose or more), a close move ready, you just outside its reach and inside
    *  one dodge more, and a charge to spare beyond dodgeReserve plus one kept for threats (Jess 2026-11-08). Straight at you. */
   gapClose(e, pl) {
-    const S = this.set,
-      b = e.caster;
+    const S = this.set;
     if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;
-    if (!b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE.includes(G.Gyms.formOf(b.def(s.id))))) return;
-    const reach = b.reach() + (pl.r || 0),
+    if (!this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE.includes(G.Gyms.formOf(e.moveDef(s.id))))) return;
+    const reach = this.reach(e) + (pl.r || 0),
       d = G.U.dist(e.x, e.y, pl.x, pl.y);
     if (d <= reach || d - G.PlayerEntity.DODGE.dist > reach) return;
     const ready = e.dodges.cd.filter((c) => c <= 0).length;

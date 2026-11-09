@@ -125,7 +125,7 @@ G.Gyms = (() => {
    *  hazards behind the mon while it moves, as the player's does: Toxic). Import batch (Jess 2026-11-02): 'delayed' (your spot, locked
    *  at the cast, hit when the move's delay ends: Future Sight). A chain move takes its shape's form; its hops search the
    *  caster's foes (G.MoveSim). Other emitters, delays, persistent moves and caster commitments have no gym form; validate() rejects
-   *  them instead of letting them misfire. Read by G.GymLeader.Caster and the GymBrain too. */
+   *  them instead of letting them misfire. Read by the leader SimPass (G.GymLeader.SimPass) and the GymBrain too. */
   function formOf(d) {
     if (!d) return null;
     const v = d.delivery || {},

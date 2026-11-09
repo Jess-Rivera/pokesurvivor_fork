@@ -540,7 +540,7 @@ G.Boss = (() => {
     return e;
   }
 
-  // Leader AI slice 5a (#34): the tuning a Player-entity leader shares with GymBrain (G.GymLeader.Caster, G.LeaderAI read it), one
+  // Leader AI slice 5a (#34): the tuning a Player-entity leader shares with GymBrain (G.GymLeader.SimPass, G.LeaderAI read it), one
   // copy until gyms 3 to 8 switch (slice 12)
   const TUNE = Object.freeze({
     TELL,

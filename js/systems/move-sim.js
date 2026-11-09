@@ -32,7 +32,7 @@
  * within range. delay (D28): an instance with delivery.delay spends whole steps waiting (no motion, collision, aging or endOn; only an
  * owner faint ends it, as it would anyway), then acts as if cast in the frame after its wait ran out; 'move:land' marks that first
  * live step for the render. falls (R8): a world shape that never moves; the drop is drawn by the render, moveSpeed is ignored.
- * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon: G.GymLeader.Caster, or the old body's GymBrain) names its foes (owner.foes(),
+ * Slice 7a (D-ENEMY): an enemy owner (a gym leader's mon: G.GymLeader with its SimPass, or the old body's GymBrain) names its foes (owner.foes(),
  * the player). It times its attacks and calls castAt with the aim it locked at the tell (a Player-entity leader runs turn for the
  * rest, leader AI slice 5a); its shapes collide only with those foes (never enemies or
  * props), and a hit goes through G.MoveEffects to the player's own hurt. The step is shared, so its shapes move with everyone's.
@@ -637,7 +637,7 @@ G.MoveSim = (() => {
     if (orphans.length) endGroup(orphans, o.dead ? 'ownerDeath' : 'notActive');
   }
 
-  /** A due slot casts, or, for an owner with castDue (a Player-entity leader, G.GymLeader.Caster; leader AI slice 5a), is handed to
+  /** A due slot casts, or, for an owner with castDue (a Player-entity leader, G.GymLeader.SimPass.due; #41), is handed to
    *  it: its authored rules decide (an attack waits for its tell, a self heal for the heal cap). */
   const fire = (o, slot, def, now) => (o.castDue ? o.castDue(slot, def, now) : castSlot(o, slot, def, now));
 

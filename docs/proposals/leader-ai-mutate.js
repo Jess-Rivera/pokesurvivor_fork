@@ -24,12 +24,17 @@ const M = [
   ['the active slot recharges twice', SM, '            if (act.includes(slot)) continue;\n', ''],
   ['the caster skips your sim pass', LD, '    G.MoveSim.turn(dt, e, now);\n', ''],
   // #40: the leader's frame takes your shape (decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim)
-  ['a stun leaves the wind-up running', LD, 'if (this.tell && !this.tell.fired && G.Status.stunned(e)) this.cancel();', ''],
+  ['a stun leaves the wind-up running', LD, 'if (e.tell && !e.tell.fired && G.Status.stunned(e)) this.cancel(e);', ''],
   ['a cancelled attack counts as cast', LD, 'c.slot.last = c.prevLast;', ''],
-  ['a stunned body starts a wind-up', LD, '!G.Status.stunned(this.e) && this.attack(', 'this.attack('],
+  ['a stunned body starts a wind-up', LD, 'return !G.Status.stunned(this) && !this.stFl', 'return !this.stFl'], // #41 retarget: the Body's acceptance
   ['the body never reads its slot keys', LD, '    this.takeSlotInput();\n', ''],
-  ['the sim pass runs before the body', LD, '    this.takeSlotInput();\n    const ox = this.x,\n      oy = this.y;\n    super.update(dt);\n    this.noteStuck(dt, ox, oy);\n    if (!this.dead) this.caster.frame(dt, pl);', '    this.takeSlotInput();\n    if (!this.dead) this.caster.frame(dt, pl);\n    const ox = this.x,\n      oy = this.y;\n    super.update(dt);\n    this.noteStuck(dt, ox, oy);'],
-  ['the first wait is hard-coded', LD, 'this.wait = this.firstWait;', 'this.wait = 1.6;'],
+  ['the sim pass runs before the body', LD, '    this.takeSlotInput();\n    const ox = this.x,\n      oy = this.y;\n    super.update(dt);\n    this.noteStuck(dt, ox, oy);\n    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());', '    this.takeSlotInput();\n    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());\n    const ox = this.x,\n      oy = this.y;\n    super.update(dt);\n    this.noteStuck(dt, ox, oy);'],
+  ['the first wait is hard-coded', LD, 'this.firstWaitLeft = rules.firstWait != null ? rules.firstWait : 0;', 'this.firstWaitLeft = 1.6;'],
+  // #41: the Body accepts, the SimPass resolves, through your due handoff
+  ['the first wait is ignored by the Body', LD, ' && !(this.firstWaitLeft > 0);', ';'],
+  ['a flinch hold accepts an attack', LD, 'return !G.Status.stunned(this) && !this.stFl', 'return !G.Status.stunned(this)'],
+  ['an attack starts with no due handoff', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', "    if (running && e.tell === running) this.telling(e, dt, now);\n    else if (!e.tell) for (const s of e.activeGroup()) if (s.t <= 0.5) this.due(e, s, e.moveDef(s.id), now);"],
+  ['a new wind-up advances on its first frame', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', '    if (e.tell) this.telling(e, dt, now);'],
   ['the AI gates its heading on a stun', AI, 'e.heading = e.unstick(dt, this.steer(e, dt, pl));', 'e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));'],
   ['the AI stops deciding while stunned', AI, 'e.heading = e.unstick(dt, this.steer(e, dt, pl));', 'if (G.Status.stunned(e)) return;\n    e.heading = e.unstick(dt, this.steer(e, dt, pl));'],
   ['a slot press is answered once for good', AI, '        this.slotQ = [];\n        return q;', '        return q;'],
@@ -50,7 +55,7 @@ const M = [
   // the triggers
   ['cc ignores the time left', AI, 'M.t >= S.ccLeft - LeaderAI.EPS', 'M.t > 0'],
   ['the low HP save repeats', AI, 'if (frac(e) < S.lowHp && !this.saved.has(e) && !this.healLeft(e)) {', 'if (frac(e) < S.lowHp && !this.healLeft(e)) {'],
-  ['a spent heal cap still counts', AI, 'return b.healsLeft > 0 && b.pool()', 'return b.pool()'],
+  ['a spent heal cap still counts', AI, 'return e.healsLeft > 0 && this.pool(e)', 'return this.pool(e)'],
   ['the matchup HP floor is off', AI, 'if (frac(c.m) < S.matchupHp - LeaderAI.EPS) continue;', ''],
   // the matchup
   ['no STAB', AI, '(m.types.includes(d.type) ? 1.5 : 1)', '1'],
@@ -92,7 +97,9 @@ const M = [
   ['a mon arriving keeps the stance', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", ''],
   ['a swap resets the breather share', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", "this.breathT = 0;\n    if (this.stance !== 'neutral') this.endStance('a mon arrives');"],
   ['a breather picks no quiet slot', AI, 'if (q >= 0) i = q !== e.active ? q : -1;', ''],
-  ['a breather holds back casts', LD, 'if (pl && !pl.dead) this.release(', "if (pl && !pl.dead && e.ai.stance !== 'breather') this.release("], // #40 retarget: the release is the body's
+  ['a breather holds back casts', LD, '    if (!pl) return;
+    const near', "    if (!pl || e.ai.stance === 'breather') return;
+    const near"], // #40, #41 retarget: the attack start is the SimPass's
   ['the stance hold is ignored', BR, "if (this.hold) this.mode = tight ? 'far' : this.hold;", ''],
   // the lean and the gap-closing dodge
   ['no lean', AI, 'if (!p || Math.abs(a) < LeaderAI.EPS) return [dx, dy];', 'return [dx, dy];'],
@@ -100,7 +107,7 @@ const M = [
   ['the lean goes the wrong way', AI, 'r = Math.sign(to) *', 'r = -Math.sign(to) *'],
   ['gapClose is ignored', AI, 'if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;', 'if (this.pending || e.dodgeT > 0) return;'],
   ['a gap-close spends the last charge', AI, 'if (ready <= S.dodgeReserve + 1) return;', 'if (ready <= S.dodgeReserve) return;'],
-  ['a gap-close with no close move ready', AI, 'if (!b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE', 'if (false && !b.pool().some((s) => s.t <= 0 && LeaderAI.CLOSE'],
+  ['a gap-close with no close move ready', AI, 'if (!this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE', 'if (false && !this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE'],
   ['a gap-close ignores the dodge length', AI, 'if (d <= reach || d - G.PlayerEntity.DODGE.dist > reach) return;', 'if (d <= reach) return;'],
   ['a gap-close in a breather', AI, "if (!info || this.stance === 'breather') return;", 'if (!info) return;'],
   // triggers and lines

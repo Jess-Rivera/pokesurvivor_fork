@@ -202,7 +202,7 @@ function trace(name) {
 // 40% more at 9 s (the low HP stance, Misty's Recover, the hp triggers) and faints at 16 s. Every 6th frame: who, where, the
 // active slot, the stance and the tell (move, wind-up to 3 decimals, fired); every tell start; every cast with its aim.
 const TRACE5 = path.join(__dirname, 'leader-ai-5a-trace.json');
-const tellOf = (e) => (e.brain && e.brain.tell) || (e.caster && e.caster.tell) || null;
+const tellOf = (e) => (e.brain && e.brain.tell) || (e.isHeld ? e.tell : null) || null;
 function trace5(name, loop) {
   const was = Object.assign({}, G.LeaderAI.off),
     seed0 = G.LeaderAI.seed;
@@ -642,14 +642,14 @@ if (built2) {
     ok(h.during == null && h.after != null && h.after <= DT + 1e-9, 'a commitment (a dash root) holds the swap; it fires on the first free frame: ' + h.after);
     // a wind-up that never fires (wind 99) stands in for a long tell
     h = hold(
-      (e) => (e.caster.tell = { fired: false, t: 0, wind: 99, after: 0 }),
-      (e) => (e.caster.tell = null),
+      (e) => (e.tell = { fired: false, t: 0, wind: 99, after: 0 }),
+      (e) => (e.tell = null),
       2.5
     );
     ok(h.during == null && h.after != null && h.after <= DT + 1e-9, 'a tell\'s wind-up holds it the same: ' + h.after);
     // the recovery after the move fired is not the tell: the swap comes on its tick
     h = hold(
-      (e) => (e.caster.tell = { fired: true, t: 0, wind: 0, after: 2.4 }),
+      (e) => (e.tell = { fired: true, t: 0, wind: 0, after: 2.4 }),
       () => {},
       2.3
     );
@@ -692,7 +692,7 @@ if (built2) {
     const lone = at(open('Misty', 1));
     lone.s1.hp = lone.s1.maxHp * 0.2;
     ok(lone.ai.healLeft(lone.s1), 'Staryu with Recover open and a heal left: healLeft');
-    lone.s1.caster.healsLeft = 0;
+    lone.s1.healsLeft = 0;
     ok(!lone.ai.healLeft(lone.s1), 'with the heal cap spent: none left');
     // matchup: Seel is 2x Staryu exactly (1.0 / 0.5) for you Bulbasaur; it needs Seel at 40%+
     youActive = 0;
@@ -1305,7 +1305,7 @@ if (built2) {
           ai.clock = 100; // so breatherMax (25% of the fight so far) does not end it at once
           ai.startStance(stance, 'test', 10);
         }
-        const reach = e.caster.reach() + human.r;
+        const reach = e.ai.reach(e) + human.r;
         let dv = null,
           at = null;
         for (let i = 1; i <= 30 && !dv; i++) {
@@ -1858,7 +1858,7 @@ if (built2) {
         frame();
         G.MoveSim.turn(DT, twin, G.Gym.now());
         still = still && G.Status.stunned(e);
-        tellSeen = tellSeen || !!e.caster.tell;
+        tellSeen = tellSeen || !!e.tell;
       }
       ok(still, '12a: she stays asleep for the whole second');
       const t1 = e.slots.flat().map((s) => s.t),
@@ -1900,7 +1900,7 @@ if (built2) {
       for (let i = 0; i < 20 * 60 && !c; i++) {
         lasts = new Map(e.slots.flat().map((s) => [s, s.last]));
         frame();
-        const t = e.caster.tell;
+        const t = e.tell;
         if (t && !t.fired && t.wind > 3 * DT) c = t;
       }
       ok(c, '12d: a wind-up starts');
@@ -1909,7 +1909,7 @@ if (built2) {
         sleep(e, 1);
         const f0 = frameNo;
         frame();
-        ok(e.caster.tell == null, '12d: the stun cancels the wind-up');
+        ok(e.tell == null, '12d: the stun cancels the wind-up');
         ok(c.slot.t <= 0, '12d: the move stays ready: ' + c.slot.t);
         ok(marked.every((s) => s.last === lasts.get(s)), '12d: its freshness is restored (a cancelled attack is not a cast)');
         run(0.9);
@@ -1931,7 +1931,7 @@ if (built2) {
       let c = null;
       for (let i = 0; i < 20 * 60 && !c; i++) {
         frame();
-        const t = e.caster.tell;
+        const t = e.tell;
         if (t && t.fired && t.wind + t.after - t.t > 6 * DT) c = t;
       }
       ok(c, '12e: a tell fires and its recovery runs');
@@ -1939,11 +1939,11 @@ if (built2) {
         const left = Math.round((c.wind + c.after - c.t) / DT);
         sleep(e);
         for (let i = 0; i < left - 2; i++) frame();
-        ok(e.caster.tell === c, '12e: asleep, the recovery is still running ' + (left - 2) + ' frames on');
+        ok(e.tell === c, '12e: asleep, the recovery is still running ' + (left - 2) + ' frames on');
         frame();
         frame();
         frame();
-        ok(e.caster.tell !== c, '12e: and it ends on time while she sleeps');
+        ok(e.tell !== c, '12e: and it ends on time while she sleeps');
       }
     }
     // 12f. the first-attack wait: 0 when absent (you attack the moment the fight starts), else the authored firstWait
@@ -1953,7 +1953,7 @@ if (built2) {
           e = a.team.active;
         for (let i = 0; i < 8 * 60; i++) {
           frame();
-          if (e.caster.tell) return e.ai.clock;
+          if (e.tell) return e.ai.clock;
         }
         return null;
       };
@@ -2006,10 +2006,9 @@ if (built2) {
       .readFileSync(process.env[env] || path.join(R, file), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/\/\/.*$/gm, '');
-  // read today's shape too, so before the build these checks fail on their own lines instead of crashing
-  const defOf = (e, id) => (e.moveDef ? e.moveDef(id) : e.caster.def(id));
-  const tellNow = (e) => (e.caster ? e.caster.tell : e.tell);
-  const healsOf = (e) => (e.caster ? e.caster.healsLeft : e.healsLeft);
+  const defOf = (e, id) => e.moveDef(id);
+  const tellNow = (e) => e.tell;
+  const healsOf = (e) => e.healsLeft;
   const accepts = (e) => (typeof e.acceptsAttack === 'function' ? e.acceptsAttack() : null);
   const casts = [];
   const offCast = G.SimBus.on('move:cast', (ev) => casts.push({ f: frameNo, id: ev.moveId, owner: ev.ownerId }));
@@ -2059,8 +2058,7 @@ if (built2) {
         ok(!tellNow(e), '13d: and no wind-up has started');
         run(0.6);
         ok(accepts(e) === true || !!tellNow(e), '13d: past 1 s it accepts');
-        if (e.caster) e.caster.tell = null;
-        else e.tell = null;
+        e.tell = null;
         e.stMajor = { k: 'sleep', t: 10, age: 0 };
         ok(accepts(e) === false, '13d: asleep, it refuses');
         e.stMajor = null;
@@ -2076,8 +2074,7 @@ if (built2) {
       const a = open('Misty', 2, 60),
         e = a.team.active;
       run(0.1);
-      if (e.caster) e.caster.tell = null;
-      else e.tell = null;
+      e.tell = null;
       e.swapT = 5; // the slot hold keeps the active slot (no slot press lands)
       const act = e.slots[e.active].filter((s) => G.Gyms.formOf(defOf(e, s.id)) !== 'buff' && G.Gyms.formOf(defOf(e, s.id)) !== 'heal');
       ok(act.length > 0, '13e: the active slot holds an attack');

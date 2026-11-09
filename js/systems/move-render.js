@@ -428,8 +428,9 @@ G.MoveRender = (() => {
         .map((s) => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
         .concat(G.Stages.list(e).map((s) => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
       if (parts.length) ctx.fillText(parts.join(' | '), e.x, e.y - (e.bodyH || 30) - 16);
-      // a gym leader's last utility pick (G.GymLeader.Caster attack, or the old body's GymBrain): one line per scored move, the pick marked
-      const sc = (e.caster || e.brain || {}).scores;
+      // a gym leader's last utility pick (its Decider's slot scores, G.LeaderAI attackScore, or the old body's GymBrain): one line per
+      // scored move, the pick marked
+      const sc = e.ai && e.ai.scoresOf ? e.ai.scoresOf(e) : (e.brain || {}).scores;
       if (sc)
         sc.forEach((c, i) =>
           ctx.fillText(

@@ -330,8 +330,8 @@ reset();
   for (let i = 0; i < 240 && !tell; i++) {
     clock += DT;
     e.update(DT, human);
-    if (e.caster.tell) {
-      tell = e.caster.tell;
+    if (e.tell) {
+      tell = e.tell;
       aim0 = tell.ang;
     }
   }
@@ -339,7 +339,7 @@ reset();
   human.x = -300; // you move: the aim stays locked
   human.y = 200;
   e.update(DT, human);
-  ok(e.caster.tell && e.caster.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
+  ok(e.tell && e.tell.ang === aim0, 'the tell keeps its locked aim while the Player entity update re-aims each frame');
   for (let i = 0; i < 60; i++) {
     clock += DT;
     e.update(DT, human);
@@ -368,11 +368,11 @@ reset();
 {
   reset();
   const eLoop = leader(STARYU, gymOf({ loop: 2 }));
-  ok(eLoop.caster.healsLeft === 2, 'with no restriction the heal cap is the loop number');
+  ok(eLoop.healsLeft === 2, 'with no restriction the heal cap is the loop number');
   const eNone = leader(STARYU, gymOf({ restrictions: { healLimit: 0 } }));
-  ok(eNone.caster.healsLeft === 0, 'healLimit 0 allows none');
+  ok(eNone.healsLeft === 0, 'healLimit 0 allows none');
   const eTwo = leader(STARYU, gymOf({ restrictions: { healLimit: 3 } }));
-  ok(eTwo.caster.healsLeft === 3, 'healLimit overrides the loop number');
+  ok(eTwo.healsLeft === 3, 'healLimit overrides the loop number');
   const noTell = leader(STARYU, gymOf({ restrictions: { tells: false }, moves: [{ id: 'water-pulse' }] }));
   human.x = 100;
   human.y = 0;
@@ -380,10 +380,10 @@ reset();
   for (let i = 0; i < 240 && wind == null; i++) {
     clock += DT;
     noTell.update(DT, human);
-    if (noTell.caster.tell) wind = noTell.caster.tell.wind;
+    if (noTell.tell) wind = noTell.tell.wind;
   }
   ok(wind === 0, 'tells off: no wind-up, got ' + wind);
-  ok(leader().caster.tells === true, 'tells are on by default');
+  ok(leader().tellsOn === true, 'tells are on by default');
 }
 // recoil and heal come from the Player entity
 {
@@ -399,17 +399,16 @@ reset();
 // flinch: your rule since slice 8 (Q7, replacing D5): the tell is lost, the active slot restarts (cd + the 0.3 s hold), the others do not
 {
   const e = leader();
-  e.caster.init();
-  e.caster.wait = 0;
+  e.firstWaitLeft = 0;
   const act = e.activeGroup()[0], // Water Pulse, the starting slot
     other = e.slots[0][0]; // Tackle
   act.t = 0;
   other.t = 0;
-  e.caster.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
+  e.tell = { slot: act, id: 'water-pulse', form: 'shot', t: 0, wind: 0.5, after: 0.3, ang: 0, spot: null, fired: false };
   ok(e.applyFlinch() === true, 'a leader can flinch');
-  ok(e.caster.tell === null, 'a flinch loses the tell');
+  ok(e.tell === null, 'a flinch loses the tell');
   ok(near(act.t, G.MoveDefs['water-pulse'].cd * e.cdMul + 0.3), 'the active slot restarts with the 0.3 s hold: ' + act.t);
-  ok(other.t === 0 && e.caster.wait === 0, 'another slot is untouched and no extra wait follows');
+  ok(other.t === 0 && e.firstWaitLeft === 0, 'another slot is untouched and no extra wait follows');
   ok(!!e.stFl, 'the recoil runs');
   const a = leader();
   a.stMajor = { k: 'sleep', t: 2, age: 0 };

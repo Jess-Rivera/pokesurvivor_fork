@@ -58,10 +58,10 @@ const M = [
   ["a frozen leader's timers stop", LD, '    G.MoveSim.turn(dt, e, now);', '    if (!G.Status.stunned(e)) G.MoveSim.turn(dt, e, now);'], // #40 retarget: a stun keeps the timers running, as yours
   ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget
   ['no self heal restriction', LD, 'rules.healLimit != null ? rules.healLimit : ', ''],
-  ['tells cannot be turned off', LD, 'this.tells = rules.tells !== false;', 'this.tells = true;'],
-  ['the caster installs heal on the leader', LD, 'e.strongHost = true;', 'e.strongHost = true;\n    e.heal = (n) => n;'], // slice 5a retarget
-  ['flinch keeps the old D5 rule', LD, 'this.caster.tell = null;\n    G.MoveSim.flinch(this);', 'this.caster.tell = null;\n    this.caster.wait = 1;'], // slice 8, 5a retarget
-  ['flinch keeps the tell', LD, 'this.caster.tell = null;\n', ''], // slice 8, 5a retarget
+  ['tells cannot be turned off', LD, "return this.rule('tells') !== false;", 'return true;'], // #41 retarget: the Body's tellsOn
+  ['the caster installs heal on the leader', LD, '    this.strongHost = true;\n', '    this.strongHost = true;\n    this.heal = (n) => n;\n'], // slice 5a, #41 retarget
+  ['flinch keeps the old D5 rule', LD, '    this.tell = null;\n    G.MoveSim.flinch(this);', '    this.tell = null;\n    this.firstWaitLeft = 1;'], // slice 8, 5a, #41 retarget
+  ['flinch keeps the tell', LD, '    this.tell = null;\n    G.MoveSim.flinch(this);', '    G.MoveSim.flinch(this);'], // slice 8, 5a, #41 retarget
   ['an asleep leader flinches', LD, 'applyFlinch() {\n    if (this.dead || G.Status.stunned(this)) return false;', 'applyFlinch() {\n    if (this.dead) return false;'],
   ['the aim follows you through the tell', LD, 'after: T.RECOVER / tempo, ang, spot, fired: false };', 'after: T.RECOVER / tempo, ang, spot, fired: false, get ang2() { return 0; } }; Object.defineProperty(this.tell, "ang", { get: () => Math.atan2(G.Game.player.y - e.y, G.Game.player.x - e.x) });'],
   // enrage

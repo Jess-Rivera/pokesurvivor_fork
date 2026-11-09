@@ -303,7 +303,7 @@ G.GymArena = (() => {
     if (j < 0 || t.canSwap(j) !== 'ok') return;
     const out = t.active;
     G.MoveSim.clear(out); // as your swap (move-route.js): the benched one's shapes, commitments, heal over time and shield end
-    out.caster.tell = null;
+    out.tell = null;
     const next = t.swap(j);
     G.EnemyMgr.remove(out);
     next.flying = false;
