@@ -220,3 +220,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - #45 built and shipped (behavior-neutral); #37 Michroma replaces Korataki (Regular weight, files deleted, history left), look approved, shipped.
 - PM rule fixed in CLAUDE.md and PM-WORKFLOW: the assistant closes and ships once Jess confirms; Needs Playtest is for feel tests.
 - #41 shipped (initial playtest reports good), #43 unblocked. Fixed a pre-existing STALE mutant (boss-owner-mutate "far mode ignores a short ready shot", now 62/62). DEVLOG rotated. Stopped at: open #43 next session.
+
+## 2026-11-09 (Claude Code, home), #43 built (both steps); #48 filed
+- #43 opened with Jess: two steps, rulings in decision 2026-11-09-43-movement-split-opening. Test first: a movement trace for you and a Misty mon (14 scenarios, stub map), recorded on the pre-split code.
+- Step A (neutral): Body checks acceptHeading, acceptDodge, acceptsCast; G.PlayerEntity.SimPass in js/entities/player-sim-pass.js. Cast refusal is acceptsCast, not acceptsAttack (that would refuse a leader's buffs in a flinch hold). Trace 85/85 unchanged.
+- Step B: a leader's frame runs your order (swapStep, fieldFrame, shakeStep, tickSlotLock); G.EnemyMgr.replace keeps the list loop safe. Misty2 5a trace re-recorded (swap one frame earlier, max 2.2 px). Order checks 95/95, mutate 29/29.
+- Broke and fixed: the harness's first fence crossed its own midpoint; added a long-frame and a dodge-turn scenario after mutants missed. Pre-existing mutate MISS and STALE recorded in STATE Watch.
+- Filed #48 (research: HumanPlayer rules out of game.js). Unblocked #47 and #46. Stopped at: #43 in Needs Playtest; next #47.
