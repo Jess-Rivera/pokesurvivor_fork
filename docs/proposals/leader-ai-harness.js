@@ -1993,5 +1993,200 @@ if (built2) {
   }
 }
 
+// ---------------- 13. #41: each role does only its own job (decisions 2026-11-09-four-roles-decider-controller-body-sim-pass, ----------------
+// 2026-11-09-the-leader-ai-chooses-its-attacks, 2026-11-09-41-the-caster-splits-into-body-and-sim-pass). Expected values are
+// hand-derived from the rulings, never from code output: the Decider chooses (slots, the heal score), the Body holds the state and
+// accepts or refuses (stun, flinch hold, firstWait), the SimPass resolves (the wind-up, every cast); there is no Caster.
+{
+  const AI = G.LeaderAI,
+    was = Object.assign({}, AI.off);
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
+  const code = (env, file) =>
+    fs
+      .readFileSync(process.env[env] || path.join(R, file), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+  // read today's shape too, so before the build these checks fail on their own lines instead of crashing
+  const defOf = (e, id) => (e.moveDef ? e.moveDef(id) : e.caster.def(id));
+  const tellNow = (e) => (e.caster ? e.caster.tell : e.tell);
+  const healsOf = (e) => (e.caster ? e.caster.healsLeft : e.healsLeft);
+  const accepts = (e) => (typeof e.acceptsAttack === 'function' ? e.acceptsAttack() : null);
+  const casts = [];
+  const offCast = G.SimBus.on('move:cast', (ev) => casts.push({ f: frameNo, id: ev.moveId, owner: ev.ownerId }));
+  try {
+    // 13a. the shape: the Caster is gone; the Body has its acceptance check, the leader's SimPass its own module
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      ok(G.GymLeader.Caster === undefined && e.caster === undefined, '13a: there is no Caster');
+      ok(G.GymLeader.SimPass && typeof G.GymLeader.SimPass.frame === 'function', "13a: the leader's SimPass is its own module");
+      ok(typeof e.acceptsAttack === 'function', '13a: the Body has an acceptance check for an attack');
+      const leader = code('LA_LEADER', 'js/entities/gym-leader.js');
+      ok(!/POINT_BLANK|OPP_HEX|OPP_DROP|OPP_BLOCKED/.test(leader), '13a: no attack scoring is left on the Body or the SimPass');
+      ok(/POINT_BLANK/.test(code('LA_AI', 'js/entities/leader-ai.js')), '13a: the scoring lives in the Decider');
+    }
+    // 13b. item 8: the old brain's fields are gone from the Body
+    {
+      const a = open('Brock', 1, 160),
+        e = a.team.active;
+      ok(e.atkBase === undefined && e.spaBase === undefined && e.atkFactor0 === undefined, '13b: no atkBase, spaBase or atkFactor0 on a leader');
+    }
+    // 13c. item 16: the Decider keeps its tell and commitment gate while stunned (no stun check of its own): a think tick that lands
+    // while she is asleep inside a commitment waits for the first frame out of it, exactly as it would awake
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      run(0.5);
+      const HOLD = { id: 'la41-hold', cd: 1, type: 'normal', category: 'status', delivery: { anchor: 'self', targeting: 'self' }, casterState: { commitment: { cooldown: { type: 'freeze', id: 'la41-none', t: 2 } } }, payload: [] };
+      G.MoveSim.castAt(e, { id: HOLD.id, t: 0 }, HOLD, G.Gym.now(), 0);
+      e.stMajor = { k: 'sleep', t: 10, age: 0 };
+      run(0.5); // two think ticks (0.25 s) pass inside the commitment
+      ok(G.MoveSim.commits(e).length > 0 && G.Status.stunned(e), '13c: asleep inside the commitment');
+      ok(e.ai.due === true, '13c: the tick waits (it is not spent while she is asleep in a commitment)');
+      e.stMajor = null;
+      G.MoveSim.clear(e);
+    }
+    // 13d. item 17 and the stun: the Body accepts an attack only with the first wait over, awake and with no flinch hold
+    {
+      const g = K[gymIdx('Misty')],
+        old = g.restrictions;
+      g.restrictions = Object.assign({}, old, { firstWait: 1 });
+      try {
+        const a = open('Misty', 2, 60),
+          e = a.team.active;
+        run(0.5);
+        ok(accepts(e) === false, '13d: with firstWait 1 s the Body refuses an attack at 0.5 s');
+        ok(!tellNow(e), '13d: and no wind-up has started');
+        run(0.6);
+        ok(accepts(e) === true || !!tellNow(e), '13d: past 1 s it accepts');
+        if (e.caster) e.caster.tell = null;
+        else e.tell = null;
+        e.stMajor = { k: 'sleep', t: 10, age: 0 };
+        ok(accepts(e) === false, '13d: asleep, it refuses');
+        e.stMajor = null;
+        e.stFl = 0.2;
+        ok(accepts(e) === false, '13d: in a flinch hold, it refuses');
+        e.stFl = 0;
+      } finally {
+        g.restrictions = old;
+      }
+    }
+    // 13e. item 10: an attack starts only through your sim's due handoff: not while its timer runs, and on the frame it comes due
+    {
+      const a = open('Misty', 2, 60),
+        e = a.team.active;
+      run(0.1);
+      if (e.caster) e.caster.tell = null;
+      else e.tell = null;
+      e.swapT = 5; // the slot hold keeps the active slot (no slot press lands)
+      const act = e.slots[e.active].filter((s) => G.Gyms.formOf(defOf(e, s.id)) !== 'buff' && G.Gyms.formOf(defOf(e, s.id)) !== 'heal');
+      ok(act.length > 0, '13e: the active slot holds an attack');
+      for (const s of e.slots.flat()) s.t = 0.5;
+      let started = null;
+      for (let i = 0; i < 60 && !started; i++) {
+        frame();
+        const t = tellNow(e);
+        if (t) started = { f: i + 1, slot: t.slot };
+      }
+      ok(started && act.includes(started.slot), '13e: the wind-up is for the active slot: ' + (started && started.slot.id));
+      ok(started && started.f >= 29 && started.f <= 31, '13e: it starts on the frame the 0.5 s timer comes due (frame 30): ' + (started && started.f));
+    }
+    // 13f. item 5: a status-category hit on a leader takes your rule (no wild divisor of 50); the authored wildStatusDivisor brings it back
+    {
+      const SYN = { id: 'la41-status-hit', name: 'la41', type: 'normal', category: 'status', basePower: 40, power: null, hitPolicy: 'oncePerInstance', payload: [{ t: 'damage' }], delivery: { anchor: 'self', targeting: 'self' } };
+      const hitOn = (e, owner) => {
+        let blow = null;
+        const take = e.takeHit;
+        e.takeHit = (b) => ((blow = b), take.call(e, b));
+        const hp0 = e.hp;
+        G.MoveEffects.applyHit({ spec: SYN, cast: { owner, time: 0 }, age: 0 }, e, 0, () => 0.99);
+        e.takeHit = take;
+        return { blow, lost: hp0 - e.hp };
+      };
+      const g = K[gymIdx('Misty')],
+        old = g.restrictions;
+      const a = open('Misty', 2, 160),
+        e = a.team.active,
+        owner = a.team.members.find((m) => m !== e);
+      e.invuln = 0;
+      const mine = hitOn(e, owner);
+      ok(mine.blow && mine.blow.neutral === false, '13f: with none authored, the hit takes your rule (no neutral divisor)');
+      e.hp = e.maxHp;
+      e.invuln = 0;
+      Object.defineProperty(e, 'isRival', { value: false, configurable: true });
+      const yours = hitOn(e, owner);
+      delete e.isRival;
+      ok(near(mine.lost, yours.lost, 1e-9), '13f: it deals what the same hit deals on you: ' + mine.lost.toFixed(3) + ' vs ' + yours.lost.toFixed(3));
+      g.restrictions = Object.assign({}, old, { wildStatusDivisor: true });
+      try {
+        e.hp = e.maxHp;
+        e.invuln = 0;
+        const wild = hitOn(e, owner);
+        ok(wild.blow && wild.blow.neutral === true, '13f: wildStatusDivisor true divides by the neutral 50 again');
+        const errs = (r) => G.Gyms.validate(Object.assign({}, g, { restrictions: Object.assign({}, old, r) }));
+        ok(errs({ wildStatusDivisor: true }).length === 0 && errs({ wildStatusDivisor: false }).length === 0, '13f: the validator accepts true or false');
+        ok(errs({ wildStatusDivisor: 1 }).some((x) => /wildStatusDivisor/.test(x)), '13f: and rejects anything else');
+      } finally {
+        g.restrictions = old;
+      }
+    }
+    // 13g. item 6: a self heal is the Decider's choice. The SimPass casts a due heal whenever the Body accepts it, as yours (full HP
+    // too); the Decider scores a heal slot low while unhurt, so with another slot to press it moves off it
+    {
+      const healSlot = (e) => e.slots.findIndex((g) => g.some((s) => G.Gyms.formOf(defOf(e, s.id)) === 'heal'));
+      const a = open('Misty', 1, 5000),
+        e = a.team.active,
+        h = healSlot(e);
+      ok(h >= 0, '13g: Misty loop 1 carries a self heal');
+      if (h >= 0) {
+        const hs = e.slots[h].find((s) => G.Gyms.formOf(defOf(e, s.id)) === 'heal');
+        hs.hpBelow = undefined; // open at any HP for this check (her Recover is authored below 35%)
+        e.active = h;
+        e.hp = e.maxHp;
+        e.swapT = 5; // the slot hold keeps her on it
+        hs.t = 0;
+        const left = healsOf(e),
+          f0 = frameNo;
+        frame();
+        ok(casts.some((c) => c.f > f0 && c.id === hs.id && c.owner === e.id), '13g: at full HP a due heal on the active slot casts, as yours');
+        ok(healsOf(e) === left - 1, '13g: and spends one heal: ' + left + ' -> ' + healsOf(e));
+      }
+      const b = open('Misty', 1, 5000),
+        f = b.team.active,
+        k = healSlot(f);
+      if (k >= 0) {
+        const hs = f.slots[k].find((s) => G.Gyms.formOf(defOf(f, s.id)) === 'heal');
+        hs.hpBelow = undefined;
+        f.active = k;
+        f.hp = f.maxHp;
+        f.swapT = 0;
+        hs.t = 0;
+        // no other pull: every other move is recharging and every buff is closed, so only the heal's low score moves her off it
+        for (const g of f.slots)
+          for (const s of g) {
+            if (s === hs) continue;
+            if (G.Gyms.formOf(defOf(f, s.id)) === 'buff') s.hpBelow = 0;
+            else s.t = 5;
+          }
+        const left = healsOf(f),
+          f0 = frameNo;
+        frame();
+        ok(f.active !== k, '13g: unhurt, with only recharging slots to press, the Decider still moves off the heal slot: ' + f.active);
+        ok(!casts.some((c) => c.f > f0 && c.id === hs.id) && healsOf(f) === left, '13g: and no heal is spent');
+      }
+    }
+    // 13h. item 7: the edge unstick is the Decider's (its answer is the heading); the Body has none
+    {
+      const leader = code('LA_LEADER', 'js/entities/gym-leader.js');
+      ok(!/noteStuck|unstick|UNSTICK|probeSide/.test(leader), '13h: no edge unstick on the Body');
+      ok(G.LeaderAI.UNSTICK && typeof G.LeaderAI.prototype.unstick === 'function', '13h: the Decider holds it');
+    }
+  } finally {
+    offCast();
+    Object.assign(AI.off, was);
+    G.GymArena.reset();
+  }
+}
+
 console.log(fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed');
 process.exit(fail ? 1 : 0);
