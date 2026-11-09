@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
-1. Leader AI, in order: #41 built (Needs Playtest, playtesters). #42 ruled and closed 2026-11-09. Next #43
+1. Leader AI, in order: #41 shipped and #42 ruled, both closed 2026-11-09. Next #43
    (movement split, all Player entities, plus the #42 item 13 swap order); then #47 (leader attacks wait on your cast
    gate, move-in score); then #39 (slice 5b, personalities). Any time: #44 (leader flat moves on
    you). After #43: #46 (explicit sides, leaders off the enemy list).
@@ -17,7 +17,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30 (branch rules); not a task now.
 
 ## Open issues by area (numbers only, titles via gh)
-- Gyms: #6 #9 #20 #21 #24 #30 #39 #41 #47
+- Gyms: #6 #9 #20 #21 #24 #30 #39 #47
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #43 #46
 - UI: #25 #35
