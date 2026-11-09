@@ -107,7 +107,7 @@ _Avoid_: hands as a separate term (it is the Controller)
 Rule: docs/LEADER-AI.md "FRAME", "YOUR CONTROLS ONLY"
 
 **Body**:
-The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Code differs: the body's update still carries out its own movement and dodge travel, and the stun's refusal of a new attack sits in the SimPass (#43), and a leader's attack choice still sits in `G.GymLeader.Caster` (moving to the AI in #41).
+The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass, and a refusal passes nothing on. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Code differs: the body's update still carries out its own movement and dodge travel, and the stun's refusal of a new attack sits in the SimPass (#43), and a leader's attack choice still sits in `G.GymLeader.Caster` (moving to the AI in #41).
 
 _Avoid_: brain
 
