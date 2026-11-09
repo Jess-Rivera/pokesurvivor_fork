@@ -28,8 +28,6 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     this.gym = def.gym;
     this.flying = false;
     this.types = this.mon.types || [];
-    this.atkBase = this.baseAtkStat; // the brain's attack factor reads these two
-    this.spaBase = this.baseSpAStat;
     this.fade = 0; // seconds of the faint fade left; the enemy list drops a corpse at 0
     this.level = this.gym.level;
     this.hpMult = this.gym.hpMult;
@@ -314,7 +312,6 @@ G.GymLeader.Caster = class Caster {
     };
     e.activeGroup = () => (e.slots[e.active] || []).filter((s) => G.Boss.open(e, s)); // the open moves of the active slot
     e.castDue = (slot, def, now) => this.due(slot, def, now); // your sim scheduler hands it each due slot (G.MoveSim.turn)
-    e.atkFactor0 = e.atkFactor;
   }
 
   init() {

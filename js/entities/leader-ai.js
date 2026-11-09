@@ -6,7 +6,7 @@
  * Misty and Brock move and cast as before. `shake`, `swapDir` and `cycles` answer nothing yet (shake-off stays the authored autoShake).
  * Slice 2 (#31): its own swap and dodge decisions, on its settings (BASE below, or the gym's `ai` in js/data/gyms.js).
  *   SWAPS   on the think tick, never inside a tell's wind-up or a move commitment: a tick that lands inside one waits for the first
- *           frame out of it (a stunned mon is not acting, so asleep it may still swap, as you may). Gates first: minField seconds on the field, swapLimit voluntary swaps a fight. Then each bench mon is scored by
+ *           frame out of it, stunned or not (#41: no stun check of its own; asleep it may still swap, as you may, outside a commitment). Gates first: minField seconds on the field, swapLimit voluntary swaps a fight. Then each bench mon is scored by
  *           the spec's triggers (asleep or frozen, low HP with no self heal, a better matchup) against STAY, and the best fires only
  *           if it beats STAY x margin. Pressed through `swapSlot`; the arena's swap step runs your rules.
  *   DODGES  a threat (G.LeaderInfo threats) is noticed on any frame; the dodge bag says whether it is read; a read threat is answered
@@ -121,8 +121,9 @@ G.LeaderAI = class LeaderAI {
       this.tickT += this.set.think;
       this.due = true;
     }
-    // a tick that lands inside a tell or commitment waits for the first frame out of it (it is never skipped)
-    const free = G.Status.stunned(e) || !this.busy(e);
+    // a tick that lands inside a tell or commitment waits for the first frame out of it (it is never skipped), stunned or not: the
+    // Decider keeps no stun check of its own (#41, LEADER-AI FRAME)
+    const free = !this.busy(e);
     if (this.due && free) {
       this.due = false;
       if (!this.opened) this.open(e);

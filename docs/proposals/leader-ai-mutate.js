@@ -33,13 +33,15 @@ const M = [
   ['the AI stops deciding while stunned', AI, 'e.heading = e.unstick(dt, this.steer(e, dt, pl));', 'if (G.Status.stunned(e)) return;\n    e.heading = e.unstick(dt, this.steer(e, dt, pl));'],
   ['a slot press is answered once for good', AI, '        this.slotQ = [];\n        return q;', '        return q;'],
   ['the validator ignores firstWait', GY, "if (rules.firstWait != null && !(typeof rules.firstWait === 'number' && rules.firstWait >= 0))", 'if (false)'],
+  // #41 (decision 2026-11-09-four-roles-decider-controller-body-sim-pass): each role does only its own job
+  ['the AI keeps its stun exception', AI, 'const free = !this.busy(e);', 'const free = G.Status.stunned(e) || !this.busy(e);'],
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],
   ['swapLimit is ignored', AI, "if (S.swapLimit != null && this.swaps >= S.swapLimit) return 'swapLimit';", ''],
   ['a send-in does not restart the clock', AR, 't.ai.arrived(false);', ''],
   ['a voluntary swap does not restart the clock', AR, 't.ai.arrived(true);', ''],
   ['the margin is off', AI, 'if (best.score < S.stay * margin - LeaderAI.EPS) {', 'if (best.score < S.stay - LeaderAI.EPS) {'],
-  ['a swap is decided inside a tell', AI, 'const free = G.Status.stunned(e) || !this.busy(e);', 'const free = true;'],
+  ['a swap is decided inside a tell', AI, 'const free = !this.busy(e);', 'const free = true;'],
   ['the recovery counts as the tell', AI, 'return !!((c && !c.fired) || e.mvRoot', 'return !!(c || e.mvRoot'],
   // the triggers
   ['cc ignores the time left', AI, 'M.t >= S.ccLeft - LeaderAI.EPS', 'M.t > 0'],
