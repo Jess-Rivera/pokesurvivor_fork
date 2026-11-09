@@ -234,3 +234,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Belief settled: learned cooldown windows (edges close on clean gaps by a memoryUse factor, stretch plus overshoot on a cadence change, kept for the run), derived facts, confidence value.
 - Strategy settled: seven intents, scored commitment, confidence in scores and commitment, triggers become events and voice (stub kept), no caps. Rule: emergent, not scripted.
 - The three managers were superseded the same day: Jess chose a hybrid, utility goal choice plus GOAP planning plus a reflex layer. Grilling skill now opens with a play-back. Stopped at: `/grilling planner` next chat.
+
+## 2026-11-09 (Claude Code, home), #49 design session closed
+- `/grilling planner`, then `planner details`: the Decider is utility goals plus a GOAP planner plus reflex. Spec: LEADER-AI "The Decider (#49)"; notes file now history.
+- Nine goals with outcome targets and per-goal cost profiles (danger only as cost; Jess renamed and added Setback and Bait). Ten verbs, incl. a planned dodge for Bait (Jess), 4-action plans, partial credit.
+- New `misjudge`; sharpness grows per loop (base plus growth per leader). Cast timing is fixed (Jess correction), so counter-play is slot cycling.
+- Superseded LEADER-AI rules retagged [Legacy behavior] with the #49 slice that removes each. Two decision files, glossary terms.
+- Stopped at: the four #49 slice issues and a ?dev Escape pause toggle drafted for Jess's OK.

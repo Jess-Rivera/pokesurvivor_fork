@@ -1,7 +1,7 @@
 # #49 design session notes (the Decider: utility goals plus GOAP planning)
 
-Working notes for the #49 design session (branch rules "Slice shape"). Not a spec. When the session closes, its
-rulings move to a DECIDER section in docs/LEADER-AI.md plus a decision file, and this file becomes history.
+HISTORY (session closed 2026-11-09). The rules now live in docs/LEADER-AI.md "The Decider (#49)", which wins over
+this file. Kept for the reasoning and the worked examples. Do not build from it.
 Started 2026-11-09, Jess with Claude Code (home). Read "HANDOFF" first.
 
 ## HANDOFF (for the next chat, 2026-11-09)
@@ -10,8 +10,10 @@ Started 2026-11-09, Jess with Claude Code (home). Read "HANDOFF" first.
   2026-11-09-49-leader-sharpness-base-plus-loop-growth). The three managers and the Arbiter are SUPERSEDED (Jess,
   2026-11-09): splitting by control channel was both too simple and too complex, since real tactics span channels.
   Their round 1 questions are void; proposal B is moot.
-- Goals (nine, outcome targets, cost profiles) and the action pool (ten verbs) settled the same day. Next: the rest
-  of the "Open" list at the end of this file (default leader, overlay, done-condition and end-goal test first).
+- Goals (nine, outcome targets, cost profiles) and the action pool (ten verbs) settled the same day, then the default
+  leader, hit chance, growth form, overlay, scope, tests and the four build slices. SESSION CLOSED 2026-11-09: the
+  rules are in docs/LEADER-AI.md "The Decider (#49)". The "Open" list below is kept as history; what is still open
+  is tagged there.
 - Working rule: emergent, not scripted (see "Design principle"). Recommend scores, never hard rules on top; raise any
   fairness limit that seems to need a hard rule as a question.
 - Not started: no code and no LEADER-AI edit. The DECIDER section is written when the session closes.

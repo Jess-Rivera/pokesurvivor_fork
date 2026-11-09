@@ -5,8 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
-1. #49 design session, continue: docs/proposals/49-decider-design-notes.md "HANDOFF", then `/grilling planner details`
-   (planner shape settled; next: goal target states, the action list, the end-goal test). Then #39 (slice 5b, personalities, re-scoped onto #49).
+1. #49 build: approve the drafted slice issues, then slice 1 (Belief). Spec: LEADER-AI "The Decider (#49)". Then #39 (slice 5b, personalities, re-scoped onto #49).
    Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
    G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework). #43 and #47 shipped 2026-11-09.
 2. #48 research: HumanPlayer rules out of game.js into their own files (findings doc first).
