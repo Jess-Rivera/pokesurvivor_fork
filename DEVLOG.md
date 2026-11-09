@@ -392,3 +392,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Test: leader-ai-harness 470, mutate checks 92/92, 58/58, 22/22, 38/38; check red only on the two #30 harnesses; smoke-gym green.
 - Found: a leader's timers pause while it is stunned (yours run); left for Jess to rule. Stopped at: Jess's feel test of 5a.
 - Jess feel-tested 5a: approved ("looks great"). #34 closed and shipped; #39 unblocked (ready).
+
+## 2026-11-09 (Claude Code, home), stunned-leader ruling and the GymLeader vs HumanPlayer audit
+- Jess ruled: a stunned leader keeps its timers running like yours (decision 2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you); #40 filed.
+- Root cause: 5a moved GymBrain's one step into G.LeaderAI whole, so the sim pass and slot press sit inside steering, skipped while stunned.
+- Audit of GymLeader vs HumanPlayer: 15 differences marked. #40 widened to items 1 to 4 (frame takes your shape, stun mid wind-up cancels it, authored first-attack wait); #41 cleanup (5 to 9); #42 needs rulings (10 to 15). All before #39.
+- Branch rules gained "Why #40 to #42 exist"; GLOSSARY gained Body, AI and Controller. No code changed.
+- Found: docs/proposals/items-f3d2-harness.js moved to the repo root mid-session (not by the assistant, not committed); Jess to restore. Stopped at: #40 build, waiting on the firstWait placement.

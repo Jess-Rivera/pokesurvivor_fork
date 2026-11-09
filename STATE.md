@@ -6,7 +6,9 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Open #39 (slice 5b, personalities) by agreeing its goal, done check and test.
+2. Build #40 (plan agreed 2026-11-09, see its body and comment): first confirm with Jess that the authored first-attack
+   wait goes in the gym restrictions block as `firstWait` (default 1.6 s); then harness scenarios first, then build.
+   Order: #40, #41, #42 (Jess rules each item), then #39. Branch rules "Why #40 to #42 exist" says why.
 
 ## Where we are
 - Slice 5 split (decision 2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities): 5a #34, 5b #39.
