@@ -15,10 +15,10 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30 (branch rules); not a task now.
 
 ## Open issues by area (numbers only, titles via gh)
-- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #50 #51 #52 #53
+- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #51 #52 #53
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48
-- UI: #25 #35 #54
+- UI: #25 #35
 - Items: #36
 - Bugs: #16 #18
 - Docs: #28 #29
