@@ -227,3 +227,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Step B: a leader's frame runs your order (swapStep, fieldFrame, shakeStep, tickSlotLock); G.EnemyMgr.replace keeps the list loop safe. Misty2 5a trace re-recorded (swap one frame earlier, max 2.2 px). Order checks 95/95, mutate 29/29.
 - Broke and fixed: the harness's first fence crossed its own midpoint; added a long-frame and a dodge-turn scenario after mutants missed. Pre-existing mutate MISS and STALE recorded in STATE Watch.
 - Filed #48 (research: HumanPlayer rules out of game.js). Unblocked #47 and #46. Jess feel test passed; #43 closed and shipped. Next #47.
+
+## 2026-11-09 (Claude Code, home), #47 shipped; #49 design session opened
+- #47 (47a, cast gate) feel test passed, closed. STATE and TODO had still named it next; fixed here.
+- #49 opened with Jess: a hierarchical AI with belief and opponent modeling. Notes: docs/proposals/49-decider-design-notes.md.
+- Belief settled: learned cooldown windows (edges close on clean gaps by a memoryUse factor, stretch plus overshoot on a cadence change, kept for the run), derived facts, confidence value.
+- Strategy settled: seven intents, scored commitment, confidence in scores and commitment, triggers become events and voice (stub kept), no caps. Rule: emergent, not scripted.
+- The three managers were superseded the same day: Jess chose a hybrid, utility goal choice plus GOAP planning plus a reflex layer. Grilling skill now opens with a play-back. Stopped at: `/grilling planner` next chat.

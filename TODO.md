@@ -5,9 +5,10 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
-1. #43 shipped 2026-11-09 (feel test passed). Leader AI, in order: #47 (leader attacks wait on your cast gate, move-in score; unblocked), then #39 (slice 5b,
-   personalities). Any time: #44 (leader flat moves on you). #46 (explicit sides; unblocked). Roster UI #35 can read
-   G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
+1. #49 design session, continue: docs/proposals/49-decider-design-notes.md "HANDOFF", then `/grilling planner`
+   (utility goals plus GOAP planning plus a reflex layer). Then #39 (slice 5b, personalities, re-scoped onto #49).
+   Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
+   G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework). #43 and #47 shipped 2026-11-09.
 2. #48 research: HumanPlayer rules out of game.js into their own files (findings doc first).
 3. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
 4. #28, the improve-codebase-architecture skill (ready). #29 needs Jess to sort settled from superseded CP1 rulings.
