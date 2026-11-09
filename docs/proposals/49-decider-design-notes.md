@@ -10,8 +10,8 @@ Started 2026-11-09, Jess with Claude Code (home). Read "HANDOFF" first.
   2026-11-09-49-leader-sharpness-base-plus-loop-growth). The three managers and the Arbiter are SUPERSEDED (Jess,
   2026-11-09): splitting by control channel was both too simple and too complex, since real tactics span channels.
   Their round 1 questions are void; proposal B is moot.
-- Next: `/grilling planner details`. The frontier is the "Open" list at the end of this file, starting with each
-  goal's target state and value in HP units, then the fixed action list.
+- Goals settled the same day (nine goals, outcome targets, cost profiles). Next: the fixed action list, then the
+  rest of the "Open" list at the end of this file.
 - Working rule: emergent, not scripted (see "Design principle"). Recommend scores, never hard rules on top; raise any
   fairness limit that seems to need a hard rule as a question.
 - Not started: no code and no LEADER-AI edit. The DECIDER section is written when the session closes.
@@ -89,6 +89,7 @@ times, break conditions, share caps or forced actions on top of the utility. Whe
 rule, it is raised as a question, never slipped in.
 
 ## Strategy layer (grilling, Jess 2026-11-09; re-read as goal choice under the hybrid shape)
+The seven-intent list below is superseded by the nine goals in "Planner layer"; its scoring rules stand.
 Everything below stands as the utility scoring rules. Where it says an intent "hands down a table to the managers",
 that part is superseded: under the hybrid, the chosen goal (and its weights) steers the planner instead. Whether the
 seven intents become the goals themselves is the first planner-grilling question.
@@ -124,10 +125,41 @@ seven intents become the goals themselves is the first planner-grilling question
 
 ## Planner layer (grilling `/grilling planner`, Jess 2026-11-09)
 Supersedes the three managers and the Arbiter. Where the Strategy layer above says "managers", read "the planner".
-- Goals: the seven intents are the goals. Each has a target state (examples, thresholds open: Finish = your active
-  mon fainted; Setup = +N stages and danger low; Conserve = key cooldowns ready and danger low; Pressure = in reach
-  with a hit ready; Trade = at its preferred range with a hit ready; Kite = danger low and outside your reach; Endure =
-  long-window HP trade positive) and a utility score from the Strategy rules.
+- Goals (`/grilling planner details`, Jess 2026-11-09): nine goals fixed in code, replacing the seven intents. Each
+  target is an OUTCOME (something landed or gained), never a position, so every plan ends in its payoff. Danger is
+  never a threshold in a target: it enters only as cost. Each goal carries a fixed cost profile in code (weights on
+  damage taken, damage dealt and time, TUNE); leaders never edit profiles.
+
+  | Goal      | Outcome target                                         | Dmg taken | Dmg dealt | Time            |
+  |-----------|--------------------------------------------------------|-----------|-----------|-----------------|
+  | Endurance | land a hit                                             | high      | neutral   | very low        |
+  | Maintain  | land a hit from its preferred range                    | neutral   | neutral   | neutral         |
+  | Pressure  | land a hit                                             | low       | high      | high (rushes)   |
+  | Setback   | land a status, or lower one of your stages             | neutral   | neutral   | neutral         |
+  | Kite      | land a hit from outside your reach                     | very high | normal    | low             |
+  | Buff      | gain at least +1 stage                                 | high      | ignored   | low             |
+  | Bait      | land a hit while your best revealed move is on cooldown | very high | high      | low             |
+  | Finish    | your active mon fainted                                | lowest    | high      | neutral         |
+  | Conserve  | a resource recovered (heal, cooldown, dodge charge)    | highest   | ignored   | low             |
+
+  - Endurance and Pressure share a target and differ only in profile (the slow safe exchange against the fast risky
+    one). Endurance replaces Endure, Maintain replaces Trade, Buff replaces Setup; Setback and Bait are new.
+  - `risk` (per leader) multiplies the damage-taken weight in every profile.
+  - Values: each goal's base value is a TUNE constant in code, in HP-fraction units; a leader shapes it only through
+    its goal weight. Buff's value is the extra damage that stage is expected to deal over the long window (10 s), so
+    it shrinks near the cap or near the end. Finish is worth your active mon's current HP fraction plus a KO bonus
+    (TUNE, about 0.3); the KO bonus lives in Finish only (other goals count HP dealt). Conserve's value is the
+    HP-equivalent of what it recovers, so it scores nothing when nothing is spent (replaces the 25% cap).
+  - Partial credit: when no plan of 4 actions reaches a goal (Finish while you are at 80%), its best plan still
+    counts at value x the fraction of the gap it closes. A Kite plan that only backs off (no hit possible) scores
+    this way too.
+  - Bait: your moves fire when ready and their slot is active, so the cooldown window predicts your shot without a
+    habit model. A typical plan: draw your shot (be in its path as its window opens), then punish. The dodge stays
+    reflex; Bait's very high damage-taken weight makes the reflex spend a charge readily. Works only on revealed
+    moves and sharpens as the window narrows (loop 1 Brock baits badly, loop 6 Brock well).
+  - Heals: any goal's plan may use a heal action, counted as negative damage taken in its cost; Conserve is the
+    goal for when recovering is the point.
+  - Each goal's utility score comes from the Strategy rules above (considerations x the leader's goal weight).
 - Goal choice: on every think tick it plans for every goal and ranks each (goal, plan) pair by goal value minus plan
   cost; the current plan adds its commitment bonus; `randomness` draws from the ranking (seeded, fixed tie-breaks).
   A great goal with no cheap plan loses.
@@ -187,7 +219,7 @@ Supersedes the three managers and the Arbiter. Where the Strategy layer above sa
   a base plus per-loop growth.
 
 ## Open
-- Each goal's exact target state and thresholds, and each goal's value in HP units.
+- The profile and base-value numbers (TUNE; starting values come with the build plan).
 - The fixed action list (names, preconditions, effects, tags) and the signature action data format.
 - Durative and uncertain actions: is the 1.5 x timeout enough; how a hit chance enters effects.
 - Growth form: a fixed step per loop (assumed) or a percentage.

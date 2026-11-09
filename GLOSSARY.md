@@ -161,7 +161,7 @@ A trigger is an authored condition and action on a leader (an HP line, a faint, 
 Rule: docs/LEADER-AI.md "Authoring a leader"
 
 **Goal / plan / plan action**:
-The planner's three terms inside a leader's Decider. A goal is one of the seven intents (Pressure, Trade, Kite, Conserve, Endure, Setup, Finish), with a target state and a value. A plan is up to 4 plan actions that reach a goal. A plan action is a tactical verb (close to a slot's reach, hold at range, activate a slot, swap to a mon, dash in, back off) with preconditions, expected effects and a cost in HP traded; it answers the Controller every frame.
+The planner's three terms inside a leader's Decider. A goal is one of nine fixed in code (Endurance, Maintain, Pressure, Setback, Kite, Buff, Bait, Finish, Conserve), with an outcome target (something landed or gained), a value and a cost profile. A plan is up to 4 plan actions that reach a goal. A plan action is a tactical verb (close to a slot's reach, hold at range, activate a slot, swap to a mon, dash in, back off) with preconditions, expected effects and a cost in HP traded; it answers the Controller every frame.
 
 _Avoid_: "action" alone (moves and the Controller also act); manager (superseded)
 
