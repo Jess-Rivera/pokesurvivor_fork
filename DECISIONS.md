@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-09, #43 opening: the movement split in two steps (Jess)](docs/decisions/2026-11-09-43-movement-split-opening.md), build #43
 - [2026-11-09, #42 item 11: a leader's attacks wait on your cast gate (Jess)](docs/decisions/2026-11-09-42-leader-attacks-wait-on-your-cast-gate.md), build #47
 - [2026-11-09, #42 item 14: two sides, HumanPlayers and everyone else (Jess)](docs/decisions/2026-11-09-42-sides-humanplayer-and-everyone-else.md), build #46
 - [2026-11-09, #42 item 15: a leader's autoShake is your accessibility setting, on (Jess)](docs/decisions/2026-11-09-42-leader-auto-shake-is-your-accessibility-setting.md)
