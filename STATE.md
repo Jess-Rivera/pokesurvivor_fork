@@ -6,7 +6,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess approves the drafted #49 slice issues (four slices plus the ?dev pause toggle), then #49 slice 1 (Belief)
+2. #50 (#49 slice 1, Belief), then #51, #52, #53. #54 (?dev Escape pause, no menu) any time. Slice 1
    opens with its goal, done-check and test. Spec: LEADER-AI "The Decider (#49)".
 3. After #49: #39 (personalities, re-scoped onto #49). #44 and #46 any time (both ready). #48 research (ready).
 
