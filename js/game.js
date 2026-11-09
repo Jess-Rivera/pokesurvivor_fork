@@ -108,7 +108,7 @@ G.Game = (() => {
     }
     if (state === 'playing') {
       state = 'paused';
-      G.RunUI.showPause();
+      if (!G.Debug.quietPauseActive()) G.RunUI.showPause(); // ?dev quiet pause (#54): freeze the frame, no menu
       G.Audio.sfx('pause');
     } else if (state === 'paused') {
       state = 'playing';

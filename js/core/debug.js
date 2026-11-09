@@ -44,6 +44,8 @@
  *                      allocation without an hour run; no args: logs them. Flags the run as tampered (it still allocates).
  *   G.Debug.ivs(slot, v, nature)  set the copy in team slot `slot` (0 to 5) to six IVs of v (0 to 31) and, if given, a nature by
  *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
+ *   G.Debug.quietPause(on)  Escape (and P, and the pause button) pause and unpause with no pause menu, so the frame stays
+ *                      readable; no arg toggles, true/false sets. Session only, not saved (#54).
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -527,6 +529,20 @@ G.Debug = (() => {
     G.MoveRender.overlay = v == null ? !G.MoveRender.overlay : !!v;
     return G.MoveRender.overlay;
   }
+
+  /** Quiet pause (#54): while on, Escape, P and the pause button freeze the frame without opening the pause menu, so an
+   *  overlay stays readable. quietPause() toggles, quietPause(true|false) sets. Session only, not saved. Needs ?dev. */
+  let quietPauseOn = false;
+  function quietPause(enabled) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    quietPauseOn = enabled == null ? !quietPauseOn : !!enabled;
+    console.log('[Debug] quiet pause ' + (quietPauseOn ? 'ON: pausing shows no menu' : 'OFF: the pause menu is back'));
+    return quietPauseOn;
+  }
+  const quietPauseActive = () => on && quietPauseOn;
 
   /** New move system quick test (slice 3d, ?dev): a set of routed moves, one per slot (cycle slots to try each), wild spawns
    *  stopped, the overlay on, and 24 dummy enemies in 8 directions at 50, 130 and 220 px with a huge HP pool. Returns how many dummies
@@ -1404,6 +1420,8 @@ G.Debug = (() => {
     noSpawn,
     spawnOn,
     hitbox,
+    quietPause,
+    quietPauseActive,
     copies,
     copy,
     addCopy,
