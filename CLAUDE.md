@@ -163,6 +163,8 @@ Third-party skills (for example landing-skills/) never override project rules.
   umbrella (summaries and pointers); where it differs from a subsystem spec, the subsystem spec wins.
 
 ## Coding conventions
+- Names are descriptive: a variable, constant, method or setting says what it is for when read on its own (wildStatusDivisor,
+  acceptsAttack), never one letter or an unclear abbreviation. Applies to new and touched code. (Jess, 2026-11-09)
 - New code must use G.UI.ask, never confirm/alert/prompt. Spanish messages stay G.T() keys; titles
   and buttons are English. (DECISIONS 2026-10-21)
 - New combat-stat formulas (and any retuning of constants like HP_SCALAR or SPEED_MEDIAN) happen in
