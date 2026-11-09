@@ -247,4 +247,5 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - #50 opening: Jess ruled memoryUse closes each edge by memoryUse itself (higher learns faster; Brock example fixed to 1.0 to 1.36); baseline 0.5, start width 1.8 s, min 0.2 s. Bench cooldowns stay open (they change HumanPlayer too); Belief mirrors the live rule (field time).
 - #50 build: G.LeaderBelief (js/systems/leader-belief.js), the Decider's only door. Info times clean gaps in field time and keeps them in run memory; Belief replays them into windows. Matchup and yourAttack moved off the Decider; danger and opportunity via G.Stats.visibleHitFrac. Long window 15 to 10 s.
 - Tests: leader-ai-harness section 14 (584 pass), leader-ai-mutate 125/125 (4 retargeted to Belief), smoke-gym and smoke-pause pass. Every harness load list gained leader-belief.js.
-- Stopped at: both on Needs Playtest; #51 next.
+- Fix after Jess's console read: a slot switch had made Belief forget the last cast (move believed ready); now it only spoils the next gap.
+- Jess feel-tested both: closed. #51 unblocked (ready). Stopped at: #51 opening, next session.

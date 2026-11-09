@@ -1,20 +1,20 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-09, Claude Code (home): #54 and #50 (#49 slice 1, Belief) built, both on Needs Playtest.
+Updated 2026-11-09, Claude Code (home): #54 and #50 (#49 slice 1, Belief) shipped, feel-tested and closed.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
-1. Jess pulls this branch on the other machine, and feel-tests #54 (G.Debug.quietPause(), then Escape) and #50
-   (Misty and Brock should play as before; only confidence drift is shorter, 10 s window).
-2. #51 (#49 slice 2: planner core, executor and overlay), then #52, #53. Each opens with its goal, done-check and test.
+1. Jess pulls this branch on the other machine.
+2. #51 (ready) (#49 slice 2: planner core, executor and overlay), then #52, #53. Each opens with its goal, done-check and test.
    Spec: LEADER-AI "The Decider (#49)".
 3. After #49: #39 (personalities). #44 and #46 any time (both ready). #48 research (ready).
 
 ## Where we are
 - Terms: every Player entity runs Decider, Controller, Body, SimPass (LEADER-AI "FRAME", GLOSSARY).
 - #50: G.LeaderBelief is the Decider's only door. Cooldown windows come from clean gaps G.LeaderInfo times in field time
-  (the one place that mirrors the bench rule) and keeps in run memory. Danger and opportunity exist but nothing reads them
+  (the one place that mirrors the bench rule) and keeps in run memory; a slot switch spoils the next gap but keeps
+  the last cast's time. Danger and opportunity exist but nothing reads them
   until #51. Decision 2026-11-09-50-cooldown-window-memoryuse-and-baseline.
 - #54: ?dev quiet pause; auto-pause (tab hidden, portrait) still shows the menu.
 - #38 swap keeps moves in flight: not started. #36 item reveals blocked. Roster UI #35.

@@ -5,8 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
-0. Feel tests owed: #54 (quiet pause) and #50 (Belief; Misty and Brock should play as before, confidence drift shorter).
-1. #49 build: #51 (slice 2, planner core, executor and overlay), then #52, #53. #50 and #54 built 2026-11-09. Spec: LEADER-AI "The Decider (#49)". Then #39 (slice 5b, personalities, re-scoped onto #49).
+1. #49 build: #51 (slice 2, planner core, executor and overlay), then #52, #53. #50 and #54 shipped and closed 2026-11-09. Spec: LEADER-AI "The Decider (#49)". Then #39 (slice 5b, personalities, re-scoped onto #49).
    Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
    G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework). #43 and #47 shipped 2026-11-09.
 2. #48 research: HumanPlayer rules out of game.js into their own files (findings doc first).
