@@ -88,8 +88,17 @@ G.Gyms = (() => {
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
   // loop (a loop with no entry keeps the last earlier one). `restrictions` starts small: default allow, each key turns one thing down.
   // Slice 6 (Q1 to Q3): enrage (off unless true on a switched gym), statusCut, ccWindow, autoShake (on unless false), hitIframes.
-  // With none authored a switched leader follows your rule.
-  const RESTRICTION_KEYS = ['tells', 'healLimit', 'enrage', 'statusCut', 'ccWindow', 'autoShake', 'hitIframes'];
+  // With none authored a switched leader follows your rule. #40: firstWait, seconds before the first attack (0 when absent, as yours).
+  const RESTRICTION_KEYS = [
+    'tells',
+    'healLimit',
+    'enrage',
+    'statusCut',
+    'ccWindow',
+    'autoShake',
+    'hitIframes',
+    'firstWait',
+  ];
   const SIG_KEYS = ['line', 'stance', 'power', 'tempo', 'sets', 'ivs', 'evs', 'nature', 'item'];
   // bond (slice 8, Q5): the marked lines of a set share one slot on a Player-entity leader and fire together
   const MOVE_KEYS = ['id', 'hpBelow', 'bond'];
@@ -960,6 +969,8 @@ G.Gyms = (() => {
         bad.push((g.leader || '?') + ': tells is true or false');
       if (rules.healLimit != null && !(Number.isInteger(rules.healLimit) && rules.healLimit >= 0))
         bad.push((g.leader || '?') + ': healLimit is a whole number from 0');
+      if (rules.firstWait != null && !(typeof rules.firstWait === 'number' && rules.firstWait >= 0))
+        bad.push((g.leader || '?') + ': firstWait is a number of seconds from 0');
     }
     // slice 6 (Q1 to Q4): the new restrictions, power on a switched gym, the build keys and the items
     if (rules != null) {

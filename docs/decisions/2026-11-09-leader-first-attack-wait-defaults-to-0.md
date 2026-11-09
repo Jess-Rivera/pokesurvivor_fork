@@ -1,0 +1,3 @@
+## 2026-11-09, A leader's first-attack wait defaults to 0, like you (Jess)
+Asked while opening #40: the hard-coded 1.6 s first-attack wait (Caster.init) becomes the authored gym restriction `firstWait`, and its baseline is 0, not 1.6 s. Reason: you start attacking the moment a gym fight starts, so the leader does too (leader principle: no hidden built-in difference). A gym that wants a delay authors one. Supersedes the "baseline 1.6 s" line in 2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you. Built in #40. Risk to feel-test: Misty and Brock now cast on frame one of the fight.
+Canonical: docs/LEADER-AI.md (YOUR RULES); COMBAT-RULES "Host model" (LEADER PRINCIPLE)

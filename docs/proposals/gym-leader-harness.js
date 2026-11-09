@@ -345,12 +345,12 @@ reset();
     e.update(DT, human);
   }
   ok(e.x > 10, 'the heading moves it with the Player entity movement: x ' + e.x);
-  // frozen: no step, no movement
+  // frozen: no movement, but its timers keep running as yours do (#40, decision 2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you)
   const x0 = e.x;
   e.stMajor = { k: 'freeze', t: 5, age: 0 };
   e.slots[0][0].t = 3;
   for (let i = 0; i < 10; i++) e.update(DT, human);
-  ok(e.x === x0 && e.slots[0][0].t === 3, 'frozen: it does not move and the brain does not step (no recharge, as before)');
+  ok(e.x === x0 && Math.abs(e.slots[0][0].t - (3 - 10 * DT)) < 1e-9, 'frozen: it does not move, and its move recharges for the 10 frames: ' + e.slots[0][0].t);
   ok(e.moves.length === e.slots.flat().length && e.moves.every((s) => s.type) && e.activeGroup().every((s) => s.type), 'its slots carry the move type (the halo)');
 }
 // heal cap and tells from restrictions

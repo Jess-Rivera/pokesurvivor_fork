@@ -107,6 +107,11 @@ The only channel between a decider and a body: the seven calls (heading, dodge, 
 
 Rule: docs/LEADER-AI.md "YOUR CONTROLS ONLY"
 
+**Sim pass**:
+The last step of a Player entity's frame: the game resolving rules and inputs (move timers, heal over time, commitments, due casts, then the shared step). It cares about nothing upstream. Yours is `G.MoveRoute.tick`; a leader's runs `G.MoveSim.turn` at the end of its own frame. The flow for every Player entity: the AI (or you) decides, the controller carries it, the body follows it under its rules, the sim pass resolves.
+
+Rule: docs/decisions/2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim.md
+
 **Reveal**:
 The moment a leader learns something about one of your mons from the screen: a move when it is cast, a bond when its moves fire together, a held item when its effect shows. Cards and stats are never revealed.
 

@@ -4,10 +4,10 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Next (from the 2026-11-08 session, on feature/gym-leader-ai)
-1. Leader AI: #34 (slice 5a, GymBrain out) shipped. Next #39 (slice 5b, personalities), opened by agreeing its
-   goal, done check and test. Roster UI #35 can read G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
-   #40 first (next to build): leader frame takes your shape, stuns keep timers running (plan agreed 2026-11-09). Then #41 cleanup; #42 needs Jess's rulings, ideally before #39.
+## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
+1. Leader AI, in order: feel-test #40 (built, Needs Playtest: instant first attack, sleep cancels a wind-up); then #41 cleanup
+   (open with goal, done check, test); then #42 (Jess rules items 10 to 15); then #39 (slice 5b, personalities).
+   Roster UI #35 can read G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
 2. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
 3. #37 replace Korataki with Michroma (licence; before any hosting).
 4. #28, the improve-codebase-architecture skill (ready; four open questions in the issue). #29 (CP1 rulings into docs/decisions/) needs Jess to sort settled from superseded.

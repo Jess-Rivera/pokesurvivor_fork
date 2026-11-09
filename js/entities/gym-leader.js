@@ -94,8 +94,11 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     return Math.round(super.maxHpAt(level) * this.hpMult);
   }
 
-  /** One frame: the AI shakes off at the auto rate, the AI player thinks (its heading and slot presses, G.LeaderAI.think), and the
-   *  Player entity rules do the rest. The enemy list passes the nearest player, and keeps updating a corpse for its fade. */
+  /** One frame, your flow (#40, decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim): the AI player decides
+   *  (G.LeaderAI.think: its heading, slot presses and dodge wait in the controller), the body reads its slot keys as yours are read
+   *  in game.js, the Player entity rules follow the answers under the body's statuses, then the leader's sim pass resolves
+   *  (Caster.frame). The AI shakes off at the auto rate first. The enemy list passes the nearest player, and keeps updating a corpse
+   *  for its fade. */
   update(dt, pl) {
     if (this.dead) {
       this.anim.update(dt);
@@ -105,10 +108,12 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt); // slice 8: the slot hold (yours ticks in game.js)
     if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
     this.ai.think(this, dt, pl);
+    this.takeSlotInput();
     const ox = this.x,
       oy = this.y;
     super.update(dt);
     this.noteStuck(dt, ox, oy);
+    if (!this.dead) this.caster.frame(dt, pl);
   }
   aimTargets() {
     return this.foes();
@@ -281,8 +286,9 @@ G.GymLeader.UNSTICK = { slip: 0.35, stuck: 0.35, side: 0.7, turn: 1.25, probe: 2
  *  differs from yours is authored (COMBAT-RULES "Host model"): every attack is telegraphed under the `tells` restriction (a wind-up
  *  with the aim locked at its start, then a recovery, one at a time, standing still), it starts only when you are inside the move's
  *  real reach (a shot: how far it flies), self heals are capped per fight (`healLimit`, else the loop number), and the first attack
- *  waits 1.6 s. Pure buffs and self heals cast with no tell. Movement and the slot choice are the AI player's (G.LeaderAI); it reads
- *  what its moves can do here (pool, ready, reach, ranged, attack scores), as you read your HUD. The tuning is G.Boss.TUNE, shared
+ *  waits the authored `firstWait` (0 when absent, as you attack the moment a fight starts: decision
+ *  2026-11-09-leader-first-attack-wait-defaults-to-0). Pure buffs and self heals cast with no tell. Movement and the slot choice
+ *  are the AI player's (G.LeaderAI); it reads what its moves can do here (pool, ready, reach, ranged, attack scores), as you read your HUD. The tuning is G.Boss.TUNE, shared
  *  with the wild bodies of gyms 3 to 8 until they switch. */
 G.GymLeader.Caster = class Caster {
   /** The body becomes a sim owner: one slot per authored move line (bonded lines share one), its card store, tempo as the cooldown
@@ -299,6 +305,7 @@ G.GymLeader.Caster = class Caster {
     const rules = g.restrictions || {}; // the gym's authored restrictions (js/data/gyms.js); absent means the defaults below
     this.tells = rules.tells !== false;
     this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1); // self heals this fight: by default the loop number (Jess 2026-11-05)
+    this.firstWait = rules.firstWait != null ? rules.firstWait : 0; // seconds before the first attack (#40)
     e.aim = 0;
     e.strongHost = true;
     e.foes = () => {
@@ -313,7 +320,7 @@ G.GymLeader.Caster = class Caster {
   init() {
     this.on = true;
     this.tell = null;
-    this.wait = 1.6;
+    this.wait = this.firstWait;
   }
 
   /** The def this mon casts: the frozen move data with its cards folded in (G.TeamCards). */
@@ -321,27 +328,39 @@ G.GymLeader.Caster = class Caster {
     return G.TeamCards.defOf(this.e, id);
   }
 
-  /** The start of the mon's frame (the AI player calls it from its steer): the slot choice `pick` is pressed under your slot hold,
-   *  then your own sim pass runs for it, as yours runs after your keys (G.MoveSim.turn: commitments, heal over time, every move
-   *  recharging, inactive slots too, the persistent upkeep), handing each due slot to `due`. True while the body is held: a live dash
-   *  carries it, or a tell runs (its release fires here). */
-  prepare(dt, now, pick) {
+  /** The leader's sim pass, the end of its frame after the body (#40: your flow; yours is G.MoveRoute.tick after pl.update). The
+   *  first attack's wait runs; a stun cancels an unfired tell (the body's rule: the attack does not fire, the move stays ready, its
+   *  freshness is restored); then your own sim pass runs for it (G.MoveSim.turn: commitments, heal over time, every move recharging,
+   *  inactive slots too, the persistent upkeep), handing each due slot to `due`. A live dash (Quick Attack) carries the body; else a
+   *  tell runs (its release fires here), or an attack you are in reach of starts its tell. Nothing starts while stunned. */
+  frame(dt, pl) {
     if (!this.on) this.init();
-    const e = this.e;
+    const e = this.e,
+      now = G.Gym.now();
     if (this.wait > 0) this.wait -= dt;
-    pick();
+    if (this.tell && !this.tell.fired && G.Status.stunned(e)) this.cancel();
     G.MoveSim.turn(dt, e, now);
-    if (e.mvRoot) return true; // a live dash (Quick Attack) carries the body
-    if (this.tell) {
-      this.telling(dt, now);
-      return true;
-    }
-    return false;
+    if (e.mvRoot) return;
+    if (this.tell) return this.telling(dt, now);
+    if (pl && !pl.dead) this.release(G.U.dist(e.x, e.y, pl.x, pl.y), pl, now);
   }
-  /** After the AI player's movement: the first attack's wait over and no flinch hold, an attack you are in reach of starts its tell.
-   *  True when one did (the body stands still this frame). */
+  /** True while the body is held: a live dash carries it, or a tell runs. The AI player reads it as you see your own wind-up. */
+  held() {
+    return !!(this.e.mvRoot || this.tell);
+  }
+  /** A stun mid wind-up (Jess 2026-11-09, option A): the tell is dropped, the move and its bonded members keep their cooldown (still
+   *  ready) and get back the freshness mark they had before it started, so a cancelled attack does not count as cast. Its warning
+   *  visuals fade on their own, as after a flinch. */
+  cancel() {
+    const c = this.tell;
+    c.slot.last = c.prevLast;
+    for (const b of c.bond || []) b.s.last = b.prev;
+    this.tell = null;
+  }
+  /** The first attack's wait over, not stunned and no flinch hold, an attack you are in reach of starts its tell. True when one did
+   *  (the body stands still from the next frame). */
   release(dist, pl, now) {
-    return this.wait <= 0 && !this.e.stFl && this.attack(dist, pl, now);
+    return this.wait <= 0 && !this.e.stFl && !G.Status.stunned(this.e) && this.attack(dist, pl, now);
   }
 
   /** Every move the mon moves for: the open moves of all its slots, so it walks in for a move on another slot and switches to it
@@ -406,8 +425,10 @@ G.GymLeader.Caster = class Caster {
     if (dry) return best;
     this.scores = scores.map((c) => ({ id: c.s.id, score: c.score, picked: c === best }));
     if (!best) return false;
+    const prev = best.s.last;
     best.s.last = now;
     this.start(best.s, best.d, best.form, pl);
+    this.tell.prevLast = prev; // a stun mid wind-up gives it back (cancel)
     return true;
   }
   /** The other attack moves of the active slot that are ready now (a bonded slot holds 2 to 4), marked as cast now. */
@@ -417,8 +438,8 @@ G.GymLeader.Caster = class Caster {
     for (const s of this.e.activeGroup()) {
       const form = G.Gyms.formOf(this.def(s.id));
       if (s === slot || s.t > 0 || G.Boss.TUNE.ORDER.indexOf(form) < 0) continue;
+      out.push({ s, form, prev: s.last });
       s.last = now;
-      out.push({ s, form });
     }
     return out;
   }

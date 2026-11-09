@@ -232,36 +232,42 @@ reset();
   const a = mk(0);
   fresh(a, () => 1);
   at(a, mid);
-  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock));
+  a.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(a.active === 1 && near(a.swapT, 0.4), 'out of Tackle reach it switches to Water Pulse, holding 0.4 s: ' + a.active + ' ' + a.swapT);
   // b. inside reach, on Water Pulse: Tackle 1 against Water Pulse 1 x 0.5; 1 >= 1.5 x 0.5, so it switches to Tackle
   const b = mk(1);
   fresh(b, () => 1);
   at(b, close);
-  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock));
+  b.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(b.active === 0, 'up close Tackle (1) beats Water Pulse (0.5) by 2x: switch');
   // c. the stay rule: on Tackle (1), Water Pulse 2.8 x 0.5 = 1.4 < 1.5, so it stays
   const c = mk(0);
   fresh(c, (id) => (id === 'tackle' ? 1 : 2.8));
   at(c, close);
-  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock));
+  c.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(c.active === 0, 'Water Pulse at 1.4x does not pull it off a ready Tackle');
   // d. Water Pulse 3.2 x 0.5 = 1.6 >= 1.5, so it switches
   const d = mk(0);
   fresh(d, (id) => (id === 'tackle' ? 1 : 3.2));
   at(d, close);
-  d.ai.pressSlot(d, d.ai.pickSlot(d, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  d.ai.pressSlot(d, d.ai.pickSlot(d, human, clock));
+  d.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(d.active === 1, 'Water Pulse at 1.6x does');
   // e. never inside the hold or a tell
   const h = mk(1);
   fresh(h, () => 1);
   at(h, close);
   h.swapT = 0.2;
-  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock));
+  h.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(h.active === 1, 'no pick inside the hold');
   h.swapT = 0;
   h.caster.tell = { fired: false };
-  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock));
+  h.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(h.active === 1, 'nor inside a tell');
 }
 
@@ -286,7 +292,8 @@ reset();
   const away = reachOf(e, 'tackle') + human.r + 20;
   ok(G.MoveEffects.statReady(e.caster.def('harden'), e), "precondition: Harden's Gate is open on a fresh leader");
   at(e, away);
-  e.ai.pressSlot(e, e.ai.pickSlot(e, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  e.ai.pressSlot(e, e.ai.pickSlot(e, human, clock));
+  e.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(e.active === 1, 'nothing in reach is ready: it visits the Harden slot');
   const f = mk();
   f.active = 0;
@@ -312,15 +319,18 @@ reset();
   };
   const a = mk();
   a.hp = a.maxHp * 0.3;
-  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock));
+  a.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(a.active === 2, 'below 35%: the Recover slot first, ahead of a ready Water Pulse: ' + a.active);
   const b = mk();
   b.hp = b.maxHp * 0.5;
-  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock));
+  b.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(b.active === 1, 'above its line the Recover slot is closed: Water Pulse: ' + b.active);
   const c = mk({ restrictions: { healLimit: 0 } });
   c.hp = c.maxHp * 0.3;
-  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock)); // the AI player presses its slot choice (LEADER-AI slice 1)
+  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock));
+  c.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
   ok(c.active === 1, 'healLimit 0: no heal visit: ' + c.active);
 }
 

@@ -21,7 +21,7 @@ const M = [
   ['no send-out beat', AR, 'if (arena.sendT == null) arena.sendT = SEND_BEAT;', 'if (arena.sendT == null) arena.sendT = 0;'],
   ['the first faint wins', AR, 'if (!t.living().length && !redo) {', 'if (true) {'], // slice 7b retarget
   ['the beat does not tick team raises', AR, 'G.Stages.teamTick(t.stages, dt);', ''],
-  ['the bench does not tick', AR, 't.benchTick(dt);', ''],
+  ['the bench does not tick', AR, 't.benchTick(dt, benchFaint);', ''],
   ['the arena does not follow the next mon', AR, 'arena.bossId = next.id;', ''],
   // per mon vs once
   ['a mid-team faint is the boss', LD, 'this.boss = false;', ''],

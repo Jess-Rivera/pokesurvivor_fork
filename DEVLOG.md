@@ -399,3 +399,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Audit of GymLeader vs HumanPlayer: 15 differences marked. #40 widened to items 1 to 4 (frame takes your shape, stun mid wind-up cancels it, authored first-attack wait); #41 cleanup (5 to 9); #42 needs rulings (10 to 15). All before #39.
 - Branch rules gained "Why #40 to #42 exist"; GLOSSARY gained Body, AI and Controller. No code changed.
 - Found: docs/proposals/items-f3d2-harness.js moved to the repo root mid-session (not by the assistant, not committed); Jess to restore. Stopped at: #40 build, waiting on the firstWait placement.
+
+## 2026-11-09 (Claude Code, home), #40 built: the leader's frame runs your flow
+- Jess ruled: firstWait defaults to 0 (you attack at once, so the leader does); every Player entity runs one flow, decide, hands, body, sim pass (two new decisions; GLOSSARY gained Sim pass).
+- Built #40: G.LeaderAI decides with no stun gate, slot presses are queued controller answers; G.GymLeader reads its keys, runs the body, then Caster.frame (first wait, stun cancel with freshness restored, G.MoveSim.turn, the tell); the `firstWait` restriction and validator.
+- Tests first: leader-ai-harness section 12 (508 pass), leader-ai-mutate 102/102 (10 new); gym-leader, leader-slots and leader-team harness and mutate sets adapted (one already-stale pattern fixed); smoke-gym passes on file://.
+- Both parity traces re-recorded: the order shift alone is at most 2 frames and 5.5 px a cast (one Brock reach-edge flip in the slice 1 trace), then firstWait 0.
+- Stopped at: #40 in Needs Playtest; next #41.

@@ -40,7 +40,7 @@ G.LeaderAI = class LeaderAI {
     this.members = members;
     this.team = team;
     this.set = LeaderAI.settings(members[0] && members[0].gym);
-    this.slotAnswer = LeaderAI.NONE; // this frame's slot presses, set only while the brain's pick is pressed (pressSlot)
+    this.slotQ = []; // this frame's slot presses (pressSlot), in press order; the body reads them once, as your keys (#40)
     this.swapReq = -1; // a requested team slot, waiting for the arena's swap step
     this.swapAnswer = -1; // the team slot `swapSlot` answers, set only during that step (swapFrame)
     this.dodgeAnswer = false; // a dodge press for this frame's body update; reading it spends it, as a key press
@@ -87,7 +87,12 @@ G.LeaderAI = class LeaderAI {
       shake: () => false,
       swapSlot: () => this.swapAnswer,
       swapDir: () => 0,
-      slots: () => this.slotAnswer,
+      slots: () => {
+        const q = this.slotQ;
+        if (!q.length) return LeaderAI.NONE;
+        this.slotQ = [];
+        return q;
+      },
       cycles: () => LeaderAI.NONE,
     };
     for (const m of members) {
@@ -101,11 +106,13 @@ G.LeaderAI = class LeaderAI {
     return this.team ? this.team.active : this.members[0];
   }
 
-  /** One frame for mon `e`: its heading from the brain (none while stunned, when the brain does not step at all), with the body's
-   *  edge unstick on top. The brain's slot choice is pressed inside its step (pressSlot), before its casts. Then its own decisions:
-   *  the dodge watch every frame, the swap choice on the think tick. */
+  /** One frame for mon `e`, the decider's part of the flow (#40, decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-
+   *  body-sim): it decides, and its answers wait in the controller for the body, which follows them under its rules (a stun refuses
+   *  the heading and the dodge, as yours), then the sim pass resolves. It decides while stunned too, as you can press keys asleep.
+   *  The heading (with the body's edge unstick on top) and the slot choice come from steer; then the dodge watch every frame, the
+   *  swap choice on the think tick. */
   think(e, dt, pl) {
-    e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));
+    e.heading = e.unstick(dt, this.steer(e, dt, pl));
     this.clock += dt;
     this.fieldT += dt;
     this.feel(e, dt);
@@ -129,9 +136,9 @@ G.LeaderAI = class LeaderAI {
     this.flushLines();
   }
   /** Where to go (slice 5a: moved off GymBrain unchanged): the way to you (around walls, G.Path) at speed 1, so the answer is a
-   *  heading for the controller. The caster's frame runs first (recharge, the slot choice, buffs and heals, a tell's release); while
-   *  it holds the body, or when an attack starts, the heading is none. The stance alternates far and close (7 to 9 s at its favorite
-   *  range, 4 to 5 s at the other; a mon with no melee move stays far; below LOW_HP it favors far) unless pacing holds one (a push
+   *  heading for the controller. The slot choice is pressed first (an answer the body reads, #40); while the body is held (a tell
+   *  runs or a dash carries it, as you see your own wind-up), the heading is none. The stance alternates far and close (7 to 9 s at
+   *  its favorite range, 4 to 5 s at the other; a mon with no melee move stays far; below LOW_HP it favors far) unless pacing holds one (a push
    *  holds close, a push with no melee move walks to the inner edge of its far band; a breather holds far). Far: it backs off inside
    *  NEAR, circles you inside FAR and walks in beyond it, the band shrunk to its longest ready ranged move's reach. Close with every
    *  close move recharging: it circles just outside its reach. */
@@ -144,11 +151,9 @@ G.LeaderAI = class LeaderAI {
     const pd = G.Path.dirFor(e, pl);
     if (pd) [dx, dy] = pd;
     const dist = G.U.dist(e.x, e.y, pl.x, pl.y);
-    if (!c.on) {
-      c.init();
-      this.startLegs(e, L);
-    }
-    if (c.prepare(dt, now, () => this.pressSlot(e, this.pickSlot(e, pl, now)))) return [0, 0];
+    if (L.mode == null) this.startLegs(e, L);
+    this.pressSlot(e, this.pickSlot(e, pl, now));
+    if (c.held()) return [0, 0];
     if (!L.low && e.hp < e.maxHp * T.LOW_HP) {
       L.low = true;
       L.farLike = 0.8;
@@ -185,7 +190,6 @@ G.LeaderAI = class LeaderAI {
         vy = -uy;
       } else if (dist < r + 40) circle();
     }
-    if (c.release(dist, pl, now)) return [0, 0];
     return [vx, vy];
   }
   /** Mon e's movement state this fight (its stance, the clock to the next switch, the circling side, its low HP mark): per-fight
@@ -244,16 +248,15 @@ G.LeaderAI = class LeaderAI {
     const b = slotWith('buff', (s) => G.MoveEffects.statReady(c.def(s.id), e));
     return b >= 0 ? go(b) : -1;
   }
-  /** The slot choice picked slot i (or -1): `slots` answers it for this press only, and the body reads its controller as yours does. In a
-   *  breather a ready buff or heal slot is pressed instead (pacing); a trigger's own press (`raw`) is never replaced. */
+  /** The slot choice picked slot i (or -1): the press waits in the controller (`slots`, in press order) until the body reads it, as
+   *  your keys wait for game.js (#40). In a breather a ready buff or heal slot is pressed instead (pacing); a trigger's own press
+   *  (`raw`) is never replaced. */
   pressSlot(e, i, raw = false) {
     if (!raw && this.stance === 'breather' && !LeaderAI.off.pacing) {
       const q = this.quietSlot(e);
       if (q >= 0) i = q !== e.active ? q : -1;
     }
-    this.slotAnswer = i >= 0 ? [i] : LeaderAI.NONE;
-    e.takeSlotInput();
-    this.slotAnswer = LeaderAI.NONE;
+    if (i >= 0) this.slotQ.push(i);
   }
 
   /** Asks to swap to team slot `slot` (its own swap choice, G.Debug.leaderSwap and the harness). Pressed on the next swap step. */

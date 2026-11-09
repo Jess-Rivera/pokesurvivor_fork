@@ -6,6 +6,8 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-09, Every Player entity runs one flow: decide, hands, body, sim pass (Jess)](docs/decisions/2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim.md), shapes #40
+- [2026-11-09, A leader's first-attack wait defaults to 0, like you (Jess)](docs/decisions/2026-11-09-leader-first-attack-wait-defaults-to-0.md), built in #40
 - [2026-11-09, A stunned leader keeps its timers running, like you (Jess)](docs/decisions/2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you.md), fix in #40 (widened: leader frame takes your shape), follow-ups #41 #42
 - [2026-11-08, Leader AI slice 5a shipped (Jess)](docs/decisions/2026-11-08-leader-ai-slice-5a-shipped.md)
 - [2026-11-08, Leader AI slice 5 split: GymBrain out first, then personalities (Jess)](docs/decisions/2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities.md)

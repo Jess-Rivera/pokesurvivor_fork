@@ -54,7 +54,7 @@ const M = [
   ['the 5 s gap is 2.5 s', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'], // slice 6 retarget
   ['the AI never shakes off', LD, "if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt);", ''], // slice 6 retarget
   // the brain
-  ['the brain steps while frozen', AI, 'e.heading = G.Status.stunned(e) ? [0, 0] : e.unstick(dt, this.steer(e, dt, pl));', 'e.heading = e.unstick(dt, this.steer(e, dt, pl));'], // LEADER-AI slice 1 retarget
+  ["a frozen leader's timers stop", LD, '    G.MoveSim.turn(dt, e, now);', '    if (!G.Status.stunned(e)) G.MoveSim.turn(dt, e, now);'], // #40 retarget: a stun keeps the timers running, as yours
   ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget
   ['no self heal restriction', LD, 'rules.healLimit != null ? rules.healLimit : ', ''],
   ['tells cannot be turned off', LD, 'this.tells = rules.tells !== false;', 'this.tells = true;'],

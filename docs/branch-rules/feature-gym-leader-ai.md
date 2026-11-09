@@ -13,7 +13,8 @@ Every slice opens with three things, agreed with Jess before any build: its goal
 Slice 5a had to change no behavior, so it moved GymBrain's one step (move, choose, cast, all skipped while stunned) into the AI player whole. The old brain's shape survived inside a Player-entity leader, and nobody compared it to your frame. #40 to #42 remove that shape. They come before #39, because personalities would be built on top of it.
 - **The bar:** a player entity that is not HumanPlayer is your frame plus authored differences. When it differs from HumanPlayer and `game.js`, the difference is either authored per subtype or more restrictive level (such as a gym) (restrictions, `ai` settings) or it's a bug.
 - **How to check:** compare against your code, never against GymBrain's. Parity with GymBrain proves only that nothing changed, not that it's right.
-- **How to fix:** input goes through the controller, rules stay in the body, decisions stay in the AI. A fixed difference becomes an authored setting with today's value as the baseline.
+- **How to fix:** input goes through the controller, rules stay in the body, decisions stay in the AI. A fixed difference becomes an authored setting with today's value as the baseline, unless Jess rules another (firstWait: 0, as yours).
+- **The flow:** decide, hands, body, sim pass, each blind to the others' jobs (decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim; LEADER-AI "FRAME"). #40 built it for the frame.
 
 ## Standing rulings on this branch
 - gym-harness and leader-stats-harness stay red until the branch nears completion (#30); `check: FAILED (2 harness)` from those two is expected, any other failure is not.

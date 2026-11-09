@@ -281,6 +281,8 @@ if (RECORD) {
     }
 }
 // Slice 5a (#34) parity: the AI player without GymBrain plays the fights recorded on GymBrain (LA_RECORD5A=1, before the slice).
+// Re-recorded on #40 (2026-11-09) for two named changes: the sim pass runs after the body (your flow; on its own at most 2 frames
+// per cast and 5.5 px, same moves) and firstWait 0 (the first wind-up starts at once instead of after 1.6 s). Both traces.
 {
   const want = fs.existsSync(TRACE5) ? JSON.parse(fs.readFileSync(TRACE5, 'utf8')) : null;
   ok(want, 'parity 5a: the trace exists (record it on the code before the slice: LA_RECORD5A=1)');
@@ -1796,6 +1798,199 @@ if (built2) {
     Object.assign(AI.off, { confidence: false, pacing: false, triggers: false });
   }
   set(true, true);
+}
+
+// ---------------- 12. #40: the leader's frame takes your shape (decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim) ----------------
+// The AI decides, the controller carries it, the body follows it under its rules, the sim pass resolves. Expected values are
+// hand-derived from the rulings: a stun blocks movement, dodge and a new wind-up only; timers, heal over time and commitments keep
+// running (2026-11-09-a-stunned-leader-keeps-its-timers-running-like-you); slot presses land as yours do (your setActive has no stun
+// rule); a stun mid wind-up cancels it with the move still ready and its freshness restored; the first-attack wait is the authored
+// `firstWait`, 0 when absent (2026-11-09-leader-first-attack-wait-defaults-to-0).
+{
+  const AI = G.LeaderAI,
+    was = Object.assign({}, AI.off);
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
+  const sleep = (m, t = 10) => (m.stMajor = { k: 'sleep', t, age: 0 });
+  const wake = (m) => (m.stMajor = null);
+  const casts = [];
+  const offCast = G.SimBus.on('move:cast', (ev) => casts.push({ f: frameNo, id: ev.moveId, owner: ev.ownerId }));
+  // a self cast with a timed commitment (a cooldown freeze naming no slot, so no timer is held) and a heal over time
+  const HOLD = {
+    id: 'la40-hold',
+    cd: 1,
+    type: 'normal',
+    category: 'status',
+    delivery: { anchor: 'self', targeting: 'self' },
+    casterState: { commitment: { cooldown: { type: 'freeze', id: 'la40-none', t: 3 } } },
+    payload: [{ t: 'heal', amount: { fraction: 0.02, of: 'maxHP' }, per: 0.5, duration: 4, side: 'self' }],
+  };
+  try {
+    // 12a. timers, heal over time and commitments advance during a stun, exactly as a stunned owner on your sim path
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      run(1);
+      // your side: a plain sim owner (no castDue, as you are) with the same slots, asleep for the same frames
+      const twin = { id: 'la40-twin', x: e.x, y: e.y, r: 10, dead: false, hp: e.maxHp * 0.5, maxHp: e.maxHp, cdMul: e.cdMul, aim: 0, active: e.active };
+      twin.slots = e.slots.map((g) => g.map((s) => ({ id: s.id, t: s.t, hpBelow: s.hpBelow })));
+      twin.activeGroup = () => twin.slots[twin.active];
+      twin.heal = (h) => (twin.hp = Math.min(twin.maxHp, twin.hp + h));
+      for (const o of [e, twin]) {
+        G.MoveSim.castAt(o, { id: HOLD.id, t: 0 }, HOLD, G.Gym.now(), 0);
+        for (const s of o.slots.flat()) s.t = 5;
+        sleep(o);
+      }
+      e.hp = e.maxHp * 0.5;
+      e.regen = 0;
+      e.bellHeal = 0;
+      const t0 = e.slots.flat().map((s) => s.t),
+        w0 = twin.slots.flat().map((s) => s.t),
+        c0 = G.MoveSim.commits(e).find((c) => c.moveId === HOLD.id),
+        tc0 = G.MoveSim.commits(twin).find((c) => c.moveId === HOLD.id),
+        hp0 = e.hp,
+        th0 = twin.hp,
+        x0 = e.x,
+        y0 = e.y;
+      ok(c0 && tc0 && near(c0.left, 3) && near(tc0.left, 3), '12a: both carry the 3 s commitment');
+      let still = true,
+        tellSeen = false;
+      for (let i = 0; i < 60; i++) {
+        frame();
+        G.MoveSim.turn(DT, twin, G.Gym.now());
+        still = still && G.Status.stunned(e);
+        tellSeen = tellSeen || !!e.caster.tell;
+      }
+      ok(still, '12a: she stays asleep for the whole second');
+      const t1 = e.slots.flat().map((s) => s.t),
+        w1 = twin.slots.flat().map((s) => s.t);
+      ok(t1.every((t, i) => near(t0[i] - t, 1, 1e-6)), '12a: every slot timer of hers ran 1 s while asleep: ' + t0.map((t, i) => (t - t1[i]).toFixed(4)).join());
+      ok(w1.every((t, i) => near(w0[i] - t, 1, 1e-6)), '12a: and so did yours: ' + w0.map((t, i) => (t - w1[i]).toFixed(4)).join());
+      const c1 = G.MoveSim.commits(e).find((c) => c.moveId === HOLD.id),
+        tc1 = G.MoveSim.commits(twin).find((c) => c.moveId === HOLD.id);
+      ok(c1 && tc1 && near(c1.left, 2, 1e-6) && near(tc1.left, 2, 1e-6), '12a: the commitment ran 1 s on both: ' + (c1 && c1.left) + ' vs ' + (tc1 && tc1.left));
+      ok(near(e.hp - hp0, 2 * 0.02 * e.maxHp, 1e-6), '12a: her heal over time ticked twice (0.5 s apart): ' + ((e.hp - hp0) / e.maxHp).toFixed(4));
+      ok(near(twin.hp - th0, e.hp - hp0, 1e-6), '12a: the same as yours');
+      // 12b. the body refuses what a stun blocks: no movement and no new wind-up
+      ok(e.x === x0 && e.y === y0, '12b: asleep, she does not move');
+      ok(!tellSeen, '12b: asleep, no wind-up starts (her moves were ready again before the end, you in reach)');
+      G.MoveSim.clear(twin);
+    }
+    // 12c. a slot press during a stun lands under your rules (your slot keys work while you are asleep)
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      run(1);
+      sleep(e);
+      e.swapT = 0;
+      const j = e.slots.findIndex((g, k) => k !== e.active && !e.skillAt(k));
+      ok(j >= 0, '12c: she has another slot to press');
+      e.ai.pressSlot(e, j, true);
+      frame();
+      ok(e.active === j, '12c: asleep, her slot press lands: ' + e.active + ' vs ' + j);
+      e.ai.pressSlot(e, e.active === 0 ? 1 : 0, true);
+      frame();
+      ok(e.active === j, '12c: and your 0.4 s slot hold refuses the next one, as yours');
+    }
+    // 12d. a stun mid wind-up cancels it: no fire, the move stays ready, its freshness restored; after waking she casts normally
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      let c = null,
+        lasts = new Map();
+      for (let i = 0; i < 20 * 60 && !c; i++) {
+        lasts = new Map(e.slots.flat().map((s) => [s, s.last]));
+        frame();
+        const t = e.caster.tell;
+        if (t && !t.fired && t.wind > 3 * DT) c = t;
+      }
+      ok(c, '12d: a wind-up starts');
+      if (c) {
+        const marked = [c.slot].concat((c.bond || []).map((b) => b.s));
+        sleep(e, 1);
+        const f0 = frameNo;
+        frame();
+        ok(e.caster.tell == null, '12d: the stun cancels the wind-up');
+        ok(c.slot.t <= 0, '12d: the move stays ready: ' + c.slot.t);
+        ok(marked.every((s) => s.last === lasts.get(s)), '12d: its freshness is restored (a cancelled attack is not a cast)');
+        run(0.9);
+        ok(!casts.some((k) => k.f > f0 && k.id === c.id && k.owner === e.id), '12d: it never fires while she sleeps');
+        wake(e);
+        const f1 = frameNo;
+        let fired = false;
+        for (let i = 0; i < 6 * 60 && !fired; i++) {
+          frame();
+          fired = casts.some((k) => k.f > f1 && k.owner === e.id);
+        }
+        ok(fired, '12d: after waking she casts normally');
+      }
+    }
+    // 12e. a stun during the recovery leaves the recovery alone: it ends on time
+    {
+      const a = open('Misty', 2, 160),
+        e = a.team.active;
+      let c = null;
+      for (let i = 0; i < 20 * 60 && !c; i++) {
+        frame();
+        const t = e.caster.tell;
+        if (t && t.fired && t.wind + t.after - t.t > 6 * DT) c = t;
+      }
+      ok(c, '12e: a tell fires and its recovery runs');
+      if (c) {
+        const left = Math.round((c.wind + c.after - c.t) / DT);
+        sleep(e);
+        for (let i = 0; i < left - 2; i++) frame();
+        ok(e.caster.tell === c, '12e: asleep, the recovery is still running ' + (left - 2) + ' frames on');
+        frame();
+        frame();
+        frame();
+        ok(e.caster.tell !== c, '12e: and it ends on time while she sleeps');
+      }
+    }
+    // 12f. the first-attack wait: 0 when absent (you attack the moment the fight starts), else the authored firstWait
+    {
+      const firstTell = (name) => {
+        const a = open(name, 2, 60),
+          e = a.team.active;
+        for (let i = 0; i < 8 * 60; i++) {
+          frame();
+          if (e.caster.tell) return e.ai.clock;
+        }
+        return null;
+      };
+      for (const name of ['Misty', 'Brock']) {
+        const g = K[gymIdx(name)];
+        ok(!g.restrictions || g.restrictions.firstWait == null, '12f: ' + name + ' authors no firstWait');
+        const at = firstTell(name);
+        ok(at != null && at <= 2 * DT + 1e-9, '12f: ' + name + ' with none: the first wind-up starts at once: ' + at);
+      }
+      const g = K[gymIdx('Misty')],
+        old = g.restrictions;
+      g.restrictions = Object.assign({}, old, { firstWait: 1 });
+      try {
+        const at = firstTell('Misty');
+        ok(at != null && at >= 1 - 1e-9 && at <= 1 + 2 * DT + 1e-9, '12f: an authored firstWait 1 s is honored: ' + at);
+      } finally {
+        g.restrictions = old;
+      }
+      const errs = (r) => G.Gyms.validate(Object.assign({}, g, { restrictions: Object.assign({}, old, r) }));
+      ok(errs({ firstWait: 1.5 }).length === 0 && errs({ firstWait: 0 }).length === 0, '12f: the validator accepts firstWait 0 or more');
+      ok(errs({ firstWait: -1 }).some((x) => /firstWait/.test(x)) && errs({ firstWait: 'soon' }).some((x) => /firstWait/.test(x)), '12f: and rejects a negative or non-number one');
+    }
+    // 12g. the shape: steering runs no sim pass and presses no slot directly, and the AI has no stun gate
+    {
+      const src = fs
+        .readFileSync(process.env.LA_AI || path.join(R, 'js/entities/leader-ai.js'), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, ''); // the code only, not its comments
+      ok(!/MoveSim\.turn|\.prepare\(/.test(src), '12g: the AI never runs the sim pass');
+      ok(!/takeSlotInput/.test(src), '12g: the AI never makes the body read its keys (the body does, as yours)');
+      ok(!/stunned\(e\)\s*\?\s*\[0,\s*0\]/.test(src), '12g: the AI has no stun gate on its heading');
+    }
+  } finally {
+    offCast();
+    Object.assign(AI.off, was);
+    G.GymArena.reset();
+  }
 }
 
 console.log(fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed');
