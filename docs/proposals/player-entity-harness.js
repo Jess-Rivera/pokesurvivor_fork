@@ -17,6 +17,7 @@ const SRC = {
   'js/systems/status.js': 'PE3_STATUS',
   'js/systems/move-effects.js': 'PE3_FX',
   'js/systems/team.js': 'PE3_TEAM', // LEADER-AI slice 1: the swap input is read by G.Team.requested
+  'js/entities/player-sim-pass.js': 'PE3_SIMPASS', // #43: the movement steps
 };
 const read = (p) => fs.readFileSync(process.env[SRC[p]] || path.join(R, p), 'utf8');
 const load = (p) => vm.runInThisContext(read(p), { filename: p });
@@ -83,7 +84,7 @@ global.G = new Proxy(base, {
     return true;
   },
 });
-for (const p of ['js/core/util.js', 'js/core/stats.js', 'js/entities/player.js']) {
+for (const p of ['js/core/util.js', 'js/core/stats.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js']) {
   try {
     load(p);
   } catch (e) {
@@ -131,7 +132,9 @@ ok(PE.prototype.gainXp === undefined && PE.prototype.netUpdate === undefined, 'g
     e = new PE(MON);
   ok(!('foes' in h) && !('foes' in e), "no foes on a Player entity: G.MoveSim reads foes() as an enemy owner (a gym leader's mon)");
 }
-ok(['aimTargets', 'aimFallback', 'onHurtFeel', 'hurt', 'update', 'tryDodge', 'setActive', 'cycle', 'syncLevel'].every((k) => typeof PE.prototype[k] === 'function'), 'the rules stay on the base');
+ok(['aimTargets', 'aimFallback', 'onHurtFeel', 'hurt', 'update', 'acceptHeading', 'acceptDodge', 'acceptsCast', 'setActive', 'cycle', 'syncLevel'].every((k) => typeof PE.prototype[k] === 'function'), 'the rules stay on the base');
+// #43 (LEADER-AI FRAME): the Body only accepts or refuses; its SimPass steps carry the movement out, for every Player entity
+ok(['tick', 'overTime', 'cancelDodge', 'startDodge', 'move', 'aim'].every((k) => PE.SimPass && typeof PE.SimPass[k] === 'function'), 'G.PlayerEntity.SimPass holds the movement steps');
 ok(PE.DODGE.dist === 150 && PE.DODGE.dur === 0.5 && HP.DODGE.dist === 150, 'DODGE (150 px in 0.5 s) on both classes');
 ok(PE.SWAP_LOCK === 0.4 && HP.SWAP_LOCK === 0.4 && PE.BOND_MAX === 4 && HP.BOND_MAX === 4 && PE.REVIVE_TIME === 3 && HP.REVIVE_TIME === 3, 'slot hold 0.4 s, 4 moves per bond, 3 s revive, on both');
 ok(PE.xpFor(1) === 7 && HP.xpFor(1) === 7 && PE.xpFor(5) === 91, 'xpFor: 7 to level 2, 91 from 5 to 6, on both');
@@ -287,6 +290,13 @@ ok(HP.prototype.controller === HP.KEYBOARD, 'the human defaults to the KEYBOARD 
     z = ps.indexOf('G.PlayerEntity.IDLE = {'),
     baseBody = strip(ps.slice(a, z));
   ok(a >= 0 && z > a, 'player.js: the base class comes first, then IDLE');
+  {
+    // #43 done-condition: the body's update holds only acceptance checks and state; the SimPass moves, ticks and aims
+    const u0 = baseBody.indexOf('  update(dt) {'),
+      upd = baseBody.slice(u0, baseBody.indexOf('\n  }\n', u0)),
+      moves = ['G.World', '.x +=', '.y +=', '.svx =', 'G.Status.tick', 'this.hp =', 'aimTargets()', 'dodgeT -='].filter((k) => upd.includes(k));
+    ok(u0 >= 0 && !moves.length, "the base update moves, ticks and aims nothing itself (#43)" + (moves.length ? ' (' + moves.join(' ') + ')' : ''));
+  }
   const leaks = ['G.Input', 'G.Camera', 'G.EnemyMgr', 'nearestBreakable', "sfx('hurt')"].filter((k) => baseBody.includes(k));
   ok(!leaks.length, 'the base class never reads the keyboard, camera, enemy list, rocks or the hurt sound' + (leaks.length ? ' (' + leaks.join(' ') + ')' : ''));
   ok(/if \(!this\.benched\) \{\s*this\.onHurtFeel\(\);/.test(baseBody), 'hurt calls the hook only while on the field');

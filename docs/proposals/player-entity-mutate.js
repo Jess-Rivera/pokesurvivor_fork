@@ -14,16 +14,20 @@ const ENV = {
   'js/systems/status.js': 'PE3_STATUS',
   'js/systems/move-effects.js': 'PE3_FX',
   'js/systems/team.js': 'PE3_TEAM',
+  'js/entities/player-sim-pass.js': 'PE3_SIMPASS',
 };
 const P = 'js/entities/player.js',
+  SP = 'js/entities/player-sim-pass.js',
   TM = 'js/systems/team.js',
   GM = 'js/game.js',
   MN = 'js/main.js',
   ST = 'js/systems/status.js';
 const M = [
   // the split leaks
-  ['the base reads the keyboard again', P, '? [0, 0] : this.controller.axis();', '? [0, 0] : G.Input.axis();'],
-  ['the dodge ignores the controller', P, '    if (this.controller.dodge()) this.tryDodge(ax, ay);', "    if (G.Input.action('dodge')) this.tryDodge(ax, ay);"],
+  ['the base reads the keyboard again', P, '    let [ax, ay] = this.controller.axis(); // slice 3', '    let [ax, ay] = G.Input.axis(); // slice 3'], // #43: the Body's acceptHeading
+  ['the dodge ignores the controller', P, '    if (this.controller.dodge()) {', "    if (G.Input.action('dodge')) {"], // #43 retarget
+  ['the update moves the body itself again', P, '    const speed = S.move(this, heading, dt);', '    const speed = S.move(this, heading, dt);\n    this.x += 0;'],
+  ['the SimPass is skipped', P, '    const speed = S.move(this, heading, dt);', '    const speed = this.spd;'],
   ['HumanPlayer stops extending the base', P, 'G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {', 'G.HumanPlayer = class HumanPlayer extends class { constructor(...a) { return new G.PlayerEntity(...a); } } {'],
   ['the camera kick moves to the base', P, '  onHurtFeel() {}\n', '  onHurtFeel() {\n    G.Camera.kick(0.28);\n  }\n'],
   ['the hurt sound moves to the base', P, '  onHurtFeel() {}\n', "  onHurtFeel() {\n    G.Audio.sfx('hurt');\n  }\n"],
@@ -31,7 +35,7 @@ const M = [
   ['hurt never calls the hook', P, "this.onHurtFeel(); // the human's", "// the human's"],
   ['the base aims at the enemy list', P, '  aimTargets() {\n    return [];\n  }', '  aimTargets() {\n    return G.EnemyMgr.all();\n  }'],
   ['the aim method is named foes again', P, '  aimTargets() {\n    return G.EnemyMgr.all();\n  }', '  aimTargets() {\n    return G.EnemyMgr.all();\n  }\n  foes() {\n    return G.EnemyMgr.all();\n  }'],
-  ['aiming ignores aimTargets()', P, '    const all = this.aimTargets();', '    const all = G.EnemyMgr.all();'],
+  ['aiming ignores aimTargets()', SP, '    const all = e.aimTargets();', '    const all = G.EnemyMgr.all();'], // #43: the SimPass's aim
   ['the base falls back to rocks', P, '  aimFallback() {\n    return null;\n  }', '  aimFallback() {\n    return G.World.nearestBreakable(this.x, this.y, 200);\n  }'],
   ['the human has no default keyboard', P, 'G.HumanPlayer.prototype.controller = G.HumanPlayer.KEYBOARD;\n', ''],
   ['the base defaults to the keyboard', P, 'G.PlayerEntity.prototype.controller = G.PlayerEntity.IDLE;', "G.PlayerEntity.prototype.controller = { axis: () => G.Input.axis(), dodge: () => G.Input.action('dodge') };"],

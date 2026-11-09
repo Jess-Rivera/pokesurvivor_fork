@@ -411,10 +411,10 @@ G.MoveSim = (() => {
 
   /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the cast gate. */
   function castSlot(o, slot, def, now, forced) {
-    if (G.Status.stunned(o)) {
+    if (o.acceptsCast ? !o.acceptsCast() : G.Status.stunned(o)) {
       slot.t = RETRY;
       return null;
-    } // a stunned owner casts nothing; the move stays ready
+    } // a Player entity's Body refuses a new cast while stunned (#43); any other owner: a stunned one casts nothing. The move stays ready
     const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
     if (!gate) {
       slot.t = RETRY;

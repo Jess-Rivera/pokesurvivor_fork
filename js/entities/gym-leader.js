@@ -106,10 +106,10 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
   get tellsOn() {
     return this.rule('tells') !== false;
   }
-  /** The Body's acceptance of an attack (LEADER-AI FRAME): refused while stunned, in a flinch hold or before the authored first wait
-   *  is over. A refusal passes nothing on. */
+  /** The Body's acceptance of an attack (LEADER-AI FRAME): your cast refusal (a stun, acceptsCast), plus a flinch hold and the
+   *  authored first wait. A refusal passes nothing on. */
   acceptsAttack() {
-    return !G.Status.stunned(this) && !this.stFl && !(this.firstWaitLeft > 0);
+    return this.acceptsCast() && !this.stFl && !(this.firstWaitLeft > 0);
   }
   /** True while the body is held: a live dash carries it, or a wind-up runs. The AI player reads it as you see your own wind-up. */
   isHeld() {

@@ -107,14 +107,14 @@ _Avoid_: hands as a separate term (it is the Controller)
 Rule: docs/LEADER-AI.md "FRAME", "YOUR CONTROLS ONLY"
 
 **Body**:
-The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass, and a refusal passes nothing on. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Code differs: the body's update still carries out its own movement and dodge travel, and the stun's refusal of a new attack sits in the SimPass (#43).
+The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass, and a refusal passes nothing on. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Its checks, on every Player entity: `acceptHeading`, `acceptDodge`, `acceptsCast` (a stun refuses a new cast); a leader adds `acceptsAttack` (#43 step A).
 
 _Avoid_: brain
 
 Rule: docs/LEADER-AI.md "FRAME"
 
 **SimPass**:
-The last step of a Player entity's frame: it resolves what the Body accepted and everything nobody asked for (move timers, damage and heal over time, commitments, due casts, other entities' hits), updating the game state. It never asks why. Authored "how it plays out" differences (a tell before release, the enrage) live here. Yours is `G.MoveRoute.tick`; a leader's is `G.GymLeader.SimPass`, which runs `G.MoveSim.turn` at the end of its own frame.
+The last step of a Player entity's frame: it resolves what the Body accepted and everything nobody asked for (move timers, damage and heal over time, commitments, due casts, other entities' hits), updating the game state. It never asks why. Authored "how it plays out" differences (a tell before release, the enrage) live here. Every Player entity's movement step is `G.PlayerEntity.SimPass` (timers, statuses, over-time effects, the dodge's travel, walking, ice, pushes, flinch recoil, liquid terrain, the target pick), run inside its update (#43). The casts: yours `G.MoveRoute.tick`; a leader's `G.GymLeader.SimPass`, which runs `G.MoveSim.turn` at the end of its own frame.
 
 _Avoid_: sim (alone)
 

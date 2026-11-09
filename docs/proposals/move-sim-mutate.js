@@ -27,7 +27,7 @@ const M = [
   ['steering re-picks forever', 'sim', [['if (!inst.retargeted) {', 'if (true) {']]],
   ['oscillation offset along the heading', 'sim', [['inst.x = inst.bx + Math.cos(inst.heading) * along - Math.sin(inst.heading) * off;', 'inst.x = inst.bx + Math.cos(inst.heading) * along + Math.cos(inst.heading) * off;']]],
   ['cooldown ignores cdMul floor order (cd x 0.9)', 'sim', [['slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1));', 'slot.t = buff ? 0 : Math.max(0.05, def.cd * 0.9);']]],
-  ['stunned owner still casts', 'sim', [['if (G.Status.stunned(o)) {\n      slot.t = RETRY;\n      return null;\n    } // a stunned owner', '// a stunned owner']]],
+  ['stunned owner still casts', 'sim', [['if (o.acceptsCast ? !o.acceptsCast() : G.Status.stunned(o)) {\n      slot.t = RETRY;\n      return null;\n    } // a Player entity', '// a Player entity']]], // #43 retarget: the Body's acceptsCast
   ['fizzle refunds the cooldown', 'sim', [['if (buff) slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o));\n      return null;', 'slot.t = RETRY;\n      return null;']]],
   ['STAB dropped (owner.stabFor ignored)', 'fx', [['o.stabFor(m)', 'false']]],
   // slice 3d

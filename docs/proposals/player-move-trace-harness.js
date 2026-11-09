@@ -141,7 +141,7 @@ const base = {
 const warn0 = console.warn;
 console.warn = (m, ...a) => (/^\[Gym\]/.test(m) ? undefined : warn0(m, ...a)); // the card-stack dev warning, once per fight
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-const OVERRIDE = { 'js/entities/player.js': 'PM_PLAYER', 'js/entities/gym-leader.js': 'PM_LEADER', 'js/systems/move-sim.js': 'PM_SIM', 'js/systems/gym-arena.js': 'PM_ARENA' };
+const OVERRIDE = { 'js/entities/player.js': 'PM_PLAYER', 'js/entities/player-sim-pass.js': 'PM_SIMPASS', 'js/entities/gym-leader.js': 'PM_LEADER', 'js/systems/move-sim.js': 'PM_SIM', 'js/systems/gym-arena.js': 'PM_ARENA' };
 try {
   load('js/core/util.js');
 } catch (e) {
@@ -253,6 +253,13 @@ const SC = {
     axis: (f) => (f < 70 ? [0, -1] : [0, 0]),
     dodge: (f) => f === 4 || f === 10 || f === 95, // the second press lands in the gap time and is refused
   },
+  dodgeTurn: {
+    // walking right, it turns up and dodges the same frame: the dodge and the facing go up. Pressed again 2 frames after the dodge
+    // ends (inside the 0.2 s gap, a charge still ready): refused. Pressed after the gap: down.
+    frames: 100,
+    axis: (f) => (f < 10 ? [1, 0] : f < 42 ? [0, -1] : [0, 1]),
+    dodge: (f) => f === 10 || f === 42 || f === 56,
+  },
   ice: {
     frames: 150,
     map: (sx, sy) => ({ liquid: { kind: 'ice', x0: sx - 60, x1: sx + 110, y0: sy - 200, y1: sy + 200 } }),
@@ -360,6 +367,11 @@ for (const who of Object.keys(HOSTS)) {
   ok(g('walk')[35][1] > 30 && last('walk')[8] === 0, who + ' walk: it walks right, then stands');
   ok(g('wallSlide').every((r) => r[1] <= 30 + 1e-6) && last('wallSlide')[2] > 5, who + ' wallSlide: held left of the wall (r 10), sliding down');
   ok(last('dodgeGap')[2] < -30, who + ' dodgeGap: the shrunk body passed the fence gap');
+  {
+    const t = g('dodgeTurn');
+    ok(t.slice(10, 39).every((r) => r[4] > 0 && Math.abs(r[9] + Math.PI / 2) < 1e-6), who + ' dodgeTurn: the dodge and the facing go up');
+    ok(t[42][4] === 0 && t[56][4] > 0, who + ' dodgeTurn: the press in the gap is refused, the one after it starts a dodge');
+  }
   ok(g('ice')[45][6] > 0, who + ' ice: still sliding right 15 frames after letting go');
   ok(g('push')[12][6] > 300, who + ' push: the Roar push carries it right');
   {

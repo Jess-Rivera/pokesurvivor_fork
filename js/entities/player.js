@@ -385,28 +385,42 @@ G.PlayerEntity = class PlayerEntity {
     const dc = this.hasItem('brightpowder') ? dt / 0.85 : dt;
     for (let i = 0; i < c.cd.length; i++) if (c.cd[i] > 0) c.cd[i] = Math.max(0, c.cd[i] - dc);
   }
-  /** Starts a dodge along (ax, ay), or your last heading when standing still. Needs a ready charge, the gap after the last dodge to
-   *  be over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root). */
-  tryDodge(ax, ay) {
-    const D = PlayerEntity.DODGE,
-      c = this.dodges,
-      i = c.cd.indexOf(0);
-    if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return false;
-    if (this.frozen || this.stFl || this.stPush || this.mvRoot || G.Status.stunned(this)) return false;
-    const [nx, ny] = ax || ay ? G.U.norm(ax, ay) : [Math.cos(this.moveAngle), Math.sin(this.moveAngle)],
-      v = D.dist / D.dur;
-    c.cd[i] = D.cd;
-    this.dodgeT = D.dur;
-    this.dodgeEl = 0;
-    this.dodgeVx = nx * v;
-    this.dodgeVy = ny * v;
-    this.iceGlide = false;
-    if (!this.dodgeR0) {
-      this.dodgeR0 = this.r;
-      this.r *= D.shrink;
+  /** The Body's acceptance of a heading (LEADER-AI FRAME): frozen, asleep, flinched or pushed, it refuses (null: nothing passes on to
+   *  the SimPass). Otherwise the controller's heading under your statuses: confused, it drifts (half weight); dazed, it is jittered
+   *  (slice E1). (In co-op pausing does not stop the game: `frozen`, you just stay still.) */
+  acceptHeading() {
+    if (this.frozen || this.stFl || this.stPush || G.Status.stunned(this)) return null;
+    let [ax, ay] = this.controller.axis(); // slice 3: the controller
+    if (this.stCnf && (ax || ay)) {
+      const m = Math.hypot(ax, ay),
+        w = G.Status.wander(this, ax / m, ay / m, 0.5);
+      ax = w[0] * m;
+      ay = w[1] * m;
     }
-    G.FX.burst(this.x, this.y, '#d8d0b8', 6, 60);
-    return true;
+    if (this.stDaze && (ax || ay)) {
+      const m = Math.hypot(ax, ay),
+        j = G.Status.jitter(this, ax / m, ay / m);
+      ax = j[0] * m;
+      ay = j[1] * m;
+    }
+    return [ax, ay];
+  }
+  /** The Body's acceptance of a dodge along the accepted heading, or your last heading when there is none: a ready charge, the gap
+   *  after the last dodge over, and nothing holding your movement (frozen, asleep, flinched, pushed, or a move's dash or root).
+   *  Accepted: { charge, nx, ny } for the SimPass to start (G.PlayerEntity.SimPass.startDodge). Refused: null. */
+  acceptDodge(heading) {
+    const c = this.dodges,
+      i = c.cd.indexOf(0);
+    if (this.dead || this.dodgeT > 0 || c.gap > 0 || i < 0) return null;
+    if (this.frozen || this.stFl || this.stPush || this.mvRoot || G.Status.stunned(this)) return null;
+    const [ax, ay] = heading || [0, 0],
+      [nx, ny] = ax || ay ? G.U.norm(ax, ay) : [Math.cos(this.moveAngle), Math.sin(this.moveAngle)];
+    return { charge: i, nx, ny };
+  }
+  /** The Body's acceptance of a new cast (LEADER-AI FRAME, YOUR RULES): a stun refuses it; the move stays ready. G.MoveSim asks it
+   *  before any cast of a Player entity. A leader's attacks have more refusals (G.GymLeader acceptsAttack). */
+  acceptsCast() {
+    return !G.Status.stunned(this);
   }
   /** Ends the dodge (finished, cancelled, or swapped out): the body grows back and the gap before the next dodge starts. */
   endDodge() {
@@ -958,158 +972,29 @@ G.PlayerEntity = class PlayerEntity {
   }
 
   // ---------------- ciclo ----------------
+  /** One frame of the body (#43, LEADER-AI "FRAME"): the SimPass ticks the timers, statuses and over-time effects; the Body accepts or
+   *  refuses this frame's heading and dodge; the SimPass carries them out (G.PlayerEntity.SimPass, in js/entities/player-sim-pass.js)
+   *  and picks the target; then the walk animation. */
   update(dt) {
     this.anim.update(dt);
     if (this.dead) return;
-    if (this.invuln > 0) this.invuln -= dt;
-    if (this.flash > 0) this.flash -= dt;
-    if (this.attackFace > 0) this.attackFace -= dt;
-    if (this.flyT > 0 && (this.flyT -= dt) <= 0) this.land();
-    else if (this.flyT <= 0 && this.flyCd > 0) this.flyCd = Math.max(0, this.flyCd - dt);
-    this.tickDodges(dt);
-    if (this.skillAt(this.active)) {
-      // a skill never stays active (it may land there when slots change): the first castable slot takes over
-      const i = this.slots.findIndex((g, k) => !this.skillAt(k));
-      if (i >= 0) this.active = i;
-    }
-
-    G.Stages.teamTick(this.stgTeam, dt); // the shared team raises: only the active member runs update(), so they tick exactly once per frame
-    if (this.slowT > 0) this.slowT -= dt;
-    G.Status.tick(this, dt);
-    G.Stages.tick(this, dt);
+    const S = G.PlayerEntity.SimPass;
+    S.tick(this, dt);
     if (this.dead) return;
-    if (this.bellHeal > 0) {
-      const h = Math.min(this.bellHeal, 4 * dt);
-      this.hp = Math.min(this.maxHp, this.hp + h);
-      this.bellHeal -= h;
+    S.overTime(this, dt);
+    const heading = this.acceptHeading();
+    S.cancelDodge(this);
+    if (this.controller.dodge()) {
+      const dodge = this.acceptDodge(heading);
+      if (dodge) S.startDodge(this, dodge);
     }
-    if (this.power && (this.power.t -= dt) <= 0) {
-      this.power.def.off(this);
-      this.power = null;
-    }
-    this.tickShield(dt);
-    if (this.regen > 0) this.hp = Math.min(this.maxHp, this.hp + this.regen * dt);
-    // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
-    if (this.sludgeHurt && !this.dead) this.hp = Math.max(1, this.hp - this.maxHp * 0.01 * dt);
-
-    // --- movement with collisions ---
-    // (In co-op pausing does not stop the game: you just stay still.)
-    let [ax, ay] = this.frozen || this.stFl || this.stPush || G.Status.stunned(this) ? [0, 0] : this.controller.axis(); // frozen, asleep, flinched or pushed: no input (slice 3: the controller)
-    if (this.stCnf && (ax || ay)) {
-      // confused: your heading drifts (half weight)
-      const m = Math.hypot(ax, ay),
-        w = G.Status.wander(this, ax / m, ay / m, 0.5);
-      ax = w[0] * m;
-      ay = w[1] * m;
-    }
-    if (this.stDaze && (ax || ay)) {
-      // dazed: the heading is jittered (slice E1)
-      const m = Math.hypot(ax, ay),
-        j = G.Status.jitter(this, ax / m, ay / m);
-      ax = j[0] * m;
-      ay = j[1] * m;
-    }
-    // Dodge: a push, a flinch, freezing or sleep cancels the one in progress (its charge stays spent).
-    if (this.dodgeT > 0 && (this.frozen || this.stFl || this.stPush || G.Status.stunned(this))) this.endDodge();
-    if (this.controller.dodge()) this.tryDodge(ax, ay);
-    const dodging = this.dodgeT > 0;
-    this.walking = ax !== 0 || ay !== 0 || dodging;
-    const s = this.spd;
-    // Ice: you slide (the velocity changes slowly).
-    const slide = this.inLiquid && G.World.liquidEffect(this.mon.types).slide;
-    if (!slide) this.iceGlide = false;
-    if (this.stPush) {
-      // a push (Roar) moves you; it ends after PUSH_T
-      this.svx = this.stPush.vx;
-      this.svy = this.stPush.vy;
-      if ((this.stPush.t -= dt) <= 0) this.stPush = null;
-    } else if (this.stFl)
-      [this.svx, this.svy] = this.flinchMove(dt); // the flinch recoil moves you
-    else if (dodging) {
-      // a dodge holds its heading and speed, ice or not
-      this.svx = this.dodgeVx;
-      this.svy = this.dodgeVy;
-    } else if (this.iceGlide) {
-      // a dodge that ended on ice keeps its speed until you leave the ice; your keys turn the heading as slowly as ice steering
-      const v = PlayerEntity.DODGE.dist / PlayerEntity.DODGE.dur,
-        [hx, hy] = ax || ay ? [ax, ay] : G.U.norm(this.svx || 0, this.svy || 0);
-      const gx = G.U.damp(this.svx || 0, hx * v, 1.6, dt),
-        gy = G.U.damp(this.svy || 0, hy * v, 1.6, dt),
-        g = Math.hypot(gx, gy) || 1;
-      this.svx = (gx / g) * v;
-      this.svy = (gy / g) * v;
-    } else {
-      this.svx = slide ? G.U.damp(this.svx || 0, ax * s * 1.15, 1.6, dt) : ax * s;
-      this.svy = slide ? G.U.damp(this.svy || 0, ay * s * 1.15, 1.6, dt) : ay * s;
-    }
-    // Fast moves step in 4 px pieces so the shrunk body cannot skip over a thin obstacle on a long frame.
-    const steps = Math.max(1, Math.ceil((Math.hypot(this.svx, this.svy) * dt) / 4));
-    for (let k = 0; k < steps; k++) {
-      this.x += (this.svx * dt) / steps;
-      this.y += (this.svy * dt) / steps;
-      if (this.flyT > 0) this.keepInArena();
-      else G.World.collide(this); // in the air walls and objects do not block
-    }
-    if (dodging) {
-      this.moveAngle = Math.atan2(this.dodgeVy, this.dodgeVx);
-      this.dodgeEl += dt;
-      // past the shrink window the body grows back as soon as it fits where you stand (it never pops out of a gap mid-dodge)
-      const fits = this.flyT > 0 || G.World.isFree(this.x, this.y, this.dodgeR0, true);
-      if (this.dodgeR0 && this.dodgeEl >= PlayerEntity.DODGE.shrinkT && fits) {
-        this.r = this.dodgeR0;
-        this.dodgeR0 = 0;
-      }
-      if (this.dodgeT > dt + 1e-6)
-        this.dodgeT -= dt; // the epsilon keeps 0.5 s at 30 frames, not 31
-      else {
-        this.endDodge();
-        this.iceGlide =
-          !(this.flyT > 0) && G.World.isLiquid(this.x, this.y) && !!G.World.liquidEffect(this.mon.types).slide;
-      }
-    } else if (this.walking) this.moveAngle = Math.atan2(ay, ax);
-
-    // --- liquid terrain ---
-    this.inLiquid = !(this.flyT > 0) && G.World.isLiquid(this.x, this.y);
-    if (this.inLiquid) {
-      const le = G.World.liquidEffect(this.mon.types);
-      if (le.dmg) {
-        this.lavaTick -= dt;
-        if (this.lavaTick <= 0) {
-          this.lavaTick = le.every;
-          this.invuln = 0;
-          this.hurt(Math.max(le.flat, this.maxHp * le.dmg * 0.5));
-          G.FX.burst(this.x, this.y - 4, le.color, 5, 70);
-        }
-      } else if (this.walking && Math.random() < dt * 8) {
-        G.FX.burst(this.x, this.y, le.slide ? '#ffffff' : '#b3defa', 2, 40);
-      }
-    }
-
-    // --- targeting: nearest enemy; if none, toward where you walk ---
-    // Target priority based on the active attack:
-    //   ranged (a shot that travels, or a beam): the boss if in range > what is touching you > the nearest
-    //   melee and the rest:           what is touching you > the boss > the nearest
-    // With a horde on top something is almost always touching you; if that always won,
-    // ranged attacks would never hit the boss.
-    // With no foes, it targets aimFallback() (yours: the nearest rock or chest). Foes are this.aimTargets() (slice 3; yours: the enemies).
-    const all = this.aimTargets();
-    const m = this.activeMove();
-    const md = m && G.MoveDefs[m.id];
-    const ranged = !!md && ((md.delivery || {}).motion === 'travels' || (md.space || {}).shape === 'linear');
-    const threat = G.Projectiles.nearest(all, this.x, this.y, this.r + 24);
-    const boss = all.find((e) => e.boss && !e.dead && G.U.dist(this.x, this.y, e.x, e.y) < 330);
-    const tg =
-      (ranged ? boss || threat : threat || boss) ||
-      G.Projectiles.nearest(all, this.x, this.y, 520) ||
-      this.aimFallback();
-    this.target = tg;
-    if (tg) this.aim = Math.atan2(tg.y - this.y, tg.x - this.x);
-    else if (this.walking) this.aim = this.moveAngle;
+    const speed = S.move(this, heading, dt);
+    S.aim(this);
 
     // --- animation: look at the target when attacking, otherwise where it walks ---
     const face = this.attackFace > 0 || !this.walking ? this.aim : this.moveAngle;
     this.anim.dir = G.Sprites.dirFromAngle(face);
-    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? s / 110 : 1);
+    this.anim.loop(this.walking ? 'Walk' : 'Idle', this.walking ? speed / 110 : 1);
   }
 
   /** What this entity aims at (slice 3). A bare Player entity has none; HumanPlayer: the enemy list. Not named foes(): G.MoveSim

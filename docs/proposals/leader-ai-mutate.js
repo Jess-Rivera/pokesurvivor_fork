@@ -26,13 +26,13 @@ const M = [
   // #40: the leader's frame takes your shape (decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim)
   ['a stun leaves the wind-up running', LD, 'if (e.tell && !e.tell.fired && G.Status.stunned(e)) this.cancel(e);', ''],
   ['a cancelled attack counts as cast', LD, 'c.slot.last = c.prevLast;', ''],
-  ['a stunned body starts a wind-up', LD, 'return !G.Status.stunned(this) && !this.stFl', 'return !this.stFl'], // #41 retarget: the Body's acceptance
+  ['a stunned body starts a wind-up', LD, 'return this.acceptsCast() && !this.stFl', 'return !this.stFl'], // #41 retarget: the Body's acceptance (#43: built on your acceptsCast)
   ['the body never reads its slot keys', LD, '    this.takeSlotInput();\n', ''],
   ['the sim pass runs before the body', LD, '    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt }; // state the Decider reads (its edge unstick, #41)\n    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());', '    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());\n    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt };'],
   ['the first wait is hard-coded', LD, 'this.firstWaitLeft = rules.firstWait != null ? rules.firstWait : 0;', 'this.firstWaitLeft = 1.6;'],
   // #41: the Body accepts, the SimPass resolves, through your due handoff
   ['the first wait is ignored by the Body', LD, ' && !(this.firstWaitLeft > 0);', ';'],
-  ['a flinch hold accepts an attack', LD, 'return !G.Status.stunned(this) && !this.stFl', 'return !G.Status.stunned(this)'],
+  ['a flinch hold accepts an attack', LD, 'return this.acceptsCast() && !this.stFl', 'return this.acceptsCast()'],
   ['an attack starts with no due handoff', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', "    if (running && e.tell === running) this.telling(e, dt, now);\n    else if (!e.tell) for (const s of e.activeGroup()) if (s.t <= 0.5) this.due(e, s, e.moveDef(s.id), now);"],
   ['a new wind-up advances on its first frame', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', '    if (e.tell) this.telling(e, dt, now);'],
   ['the AI gates its heading on a stun', AI, 'e.heading = this.unstick(e, dt, this.steer(e, dt, pl));', 'e.heading = G.Status.stunned(e) ? [0, 0] : this.unstick(e, dt, this.steer(e, dt, pl));'],
