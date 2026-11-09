@@ -406,3 +406,10 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Tests first: leader-ai-harness section 12 (508 pass), leader-ai-mutate 102/102 (10 new); gym-leader, leader-slots and leader-team harness and mutate sets adapted (one already-stale pattern fixed); smoke-gym passes on file://.
 - Both parity traces re-recorded: the order shift alone is at most 2 frames and 5.5 px a cast (one Brock reach-edge flip in the slice 1 trace), then firstWait 0.
 - Jess feel-tested #40: passed; closed and shipped. Stopped at: next #41.
+
+## 2026-11-09 (Claude Code, home), #41 built: four roles, the Caster split
+- Jess tightened the terms: Decider, Controller, Body, SimPass (a refusal passes nothing on); authoring layers Player, class, instance; the AI chooses its attacks; items 5 and 6 take your baseline; the Caster splits; a bonded group fires as yours; names are descriptive (CLAUDE.md). Four decision files.
+- Built #41 in five steps, tests first (leader-ai-harness section 13): dead fields gone, no AI stun exception, `wildStatusDivisor` (off), Body `acceptsAttack` plus G.GymLeader.SimPass plus the attack score in G.LeaderAI, heal whenever due with the Decider moving off a heal-only slot, edge unstick on the Decider (reads the Body's `lastStep`).
+- Broke and fixed: the first unstick measured the whole frame (410 false side-steps); the Body now records its own step. Mutation counts are vacuous while a harness is red (memory note).
+- Tests: leader-ai 544, gym-leader 161, leader-slots 41 all pass; parity traces unchanged; mutate 113, 59, 22; smoke-gym passes. Filed #43 (movement split), #44 (flat moves both ways).
+- Jess short feel test passed; #41 stays in Needs Playtest for playtesters. Stopped at: next #42 items 11 to 15.
