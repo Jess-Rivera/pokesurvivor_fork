@@ -85,32 +85,45 @@ A subclass of the Player entity that fights a gym. Its HP is the player formula 
 
 Rule: docs/COMBAT-RULES.md "Host model", LEADER RULES
 
-**AI player**:
-The one module that drives every Player-entity leader. It acts only through a human's inputs (heading, slot key, swap-mon key, dodge) and sees only the screen. Not the GymBrain, which it replaces.
+The four roles below are every Player entity's frame, in order: the Decider decides, the Controller carries, the Body accepts or refuses, the SimPass resolves. Each is blind to the others' jobs.
 
-Rule: docs/LEADER-AI.md "The AI player"
+**Decider**:
+Whoever decides for a Player entity: you, or a leader's AI. It takes in the screen only (your eyes; the AI's eyes are `G.LeaderInfo`, plus its own HUD as you see yours) and answers commands to the Controller. It decides and enforces no rule; it keeps no stun check of its own.
 
-**Body**:
-The thing on the field you interact with: the mon a Player entity fields, where its HP, stats, statuses, stages, slots, dodges and swap lock live, and what you can hit and kill. It obeys the rules and decides nothing. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader` (its authored cast rules, `G.GymLeader.Caster`, are part of the body).
+_Avoid_: mind, brain (GymBrain was a body and a decider in one)
 
-_Avoid_: brain (GymBrain was a body and a decider in one)
+Rule: docs/LEADER-AI.md "FRAME"
 
-Rule: docs/branch-rules/feature-gym-leader-ai.md "Why #40 to #42 exist"
-
-**AI** (of a leader):
-The "person" on the other side of the screen: it decides (where to go, which slot, when to dodge or swap) and enforces no rule. Code: `G.LeaderAI`, with what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). Yours is you at the keyboard. Same thing as the AI player.
+**AI player** (also "the AI", of a leader):
+A leader's Decider: the one module that drives every Player-entity leader. Code: `G.LeaderAI`, with what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). It acts only through the Controller. Not the GymBrain, which it replaces.
 
 Rule: docs/LEADER-AI.md "The AI player"
 
 **Controller**:
-The only channel between a decider and a body: the seven calls (heading, dodge, shake, swap mon, swap direction, slot keys, cycle). The decider answers, the body reads the answers under its rules. Yours is `G.HumanPlayer.KEYBOARD`; a leader's is its AI's `controller`. Rules live in the body, decisions in the AI, and only the controller crosses between them.
+Your hands, or the AI's `controller`: the only channel from the Decider to the Body. It carries the Decider's answers as requests through the seven calls (heading, dodge, shake, swap mon, swap direction, slot keys, cycle) and decides and filters nothing. Yours is `G.HumanPlayer.KEYBOARD`.
 
-Rule: docs/LEADER-AI.md "YOUR CONTROLS ONLY"
+_Avoid_: hands as a separate term (it is the Controller)
 
-**Sim pass**:
-The last step of a Player entity's frame: the game resolving rules and inputs (move timers, heal over time, commitments, due casts, then the shared step). It cares about nothing upstream. Yours is `G.MoveRoute.tick`; a leader's runs `G.MoveSim.turn` at the end of its own frame. The flow for every Player entity: the AI (or you) decides, the controller carries it, the body follows it under its rules, the sim pass resolves.
+Rule: docs/LEADER-AI.md "FRAME", "YOUR CONTROLS ONLY"
 
-Rule: docs/decisions/2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim.md
+**Body**:
+The mon a Player entity fields: what you can hit and kill. It holds the state (HP, stats, statuses, stages, slots, dodges, locks) and checks each request against its acceptance rules (statuses, locks, authored "allowed to do" restrictions); what it accepts goes to the SimPass. It decides nothing and changes no state itself. Yours is `G.HumanPlayer`; a leader's is `G.GymLeader`. Code differs: the body's update still carries out its own movement and dodge travel, and the stun's refusal of a new attack sits in the SimPass (#43), and a leader's attack choice still sits in `G.GymLeader.Caster` (moving to the AI in #41).
+
+_Avoid_: brain
+
+Rule: docs/LEADER-AI.md "FRAME"
+
+**SimPass**:
+The last step of a Player entity's frame: it resolves what the Body accepted and everything nobody asked for (move timers, damage and heal over time, commitments, due casts, other entities' hits), updating the game state. It never asks why. Authored "how it plays out" differences (a tell before release, the enrage) live here. Yours is `G.MoveRoute.tick`; a leader's runs `G.MoveSim.turn` at the end of its own frame (`G.GymLeader.Caster.frame`).
+
+_Avoid_: sim (alone)
+
+Rule: docs/LEADER-AI.md "FRAME"
+
+**Authoring layers**:
+Where a Player entity's differences from you come from, in order: the Player parent (your rules), then its class's authoring (every World Boss is a raid fight), then its instance's (a gym, "Gyarados, World Boss"). A layer with no authoring falls through to the one above. Class authoring is one declared list per class, never checks scattered in code.
+
+Rule: docs/COMBAT-RULES.md "Host model", LEADER PRINCIPLE
 
 **Reveal**:
 The moment a leader learns something about one of your mons from the screen: a move when it is cast, a bond when its moves fire together, a held item when its effect shows. Cards and stats are never revealed.
