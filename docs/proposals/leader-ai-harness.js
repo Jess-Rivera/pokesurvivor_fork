@@ -2236,7 +2236,7 @@ if (built2) {
     // 14e. readiness on 0.7 to 1.6
     const W = { lo: 0.7, hi: 1.6 };
     ok(B.readinessIn(W, 0.5) === 0 && near(B.readinessIn(W, 1.15), 0.5) && B.readinessIn(W, 2.0) === 1, '14e: readiness 0 at 0.5 s, 0.5 at 1.15 s, 1 at 2.0 s');
-    ok(B.readinessIn(W, null) === 1, '14e: a move not cast since your last switch is believed ready');
+    ok(B.readinessIn(W, null) === 1, '14e: a move with no cast seen this fight is believed ready');
 
     // a fight: vine-whip's base cooldown is 1.1 s for these checks (test only)
     G.MoveDefs = Object.assign({}, realDefs, { 'vine-whip': Object.assign({}, realDefs['vine-whip'], { cd: 1.1 }) });
@@ -2256,12 +2256,14 @@ if (built2) {
     ok(win(b.window(bulba, 'vine-whip'), 0.7, 1.6), '14f: a clean field-time gap of 1.2 narrows it to 0.7 to 1.6: ' + show(b.window(bulba, 'vine-whip')));
     run(1.15);
     ok(near(b.readiness(bulba, 'vine-whip'), 0.5, 1e-6), '14f: 1.15 s later it is half ready: ' + b.readiness(bulba, 'vine-whip'));
-    // 14g. a slot switch between two casts spoils the gap
+    // 14g. a slot switch between two casts spoils the gap, but not the time of the last cast (your cooldowns run on every slot):
+    // 1.2 s after the cast on 0.2 to 2.0, readiness (1.2 - 0.2) / 1.8 = 5 / 9
     ({ b, info, e } = fight());
     cast(bulba, 'vine-whip');
     run(0.6);
     switched(bulba);
     run(0.6);
+    ok(near(info.sinceCast(bulba, 'vine-whip'), 1.2, 1e-6) && near(b.readiness(bulba, 'vine-whip'), 5 / 9, 1e-6), '14g: after a switch the last cast still counts: 1.2 s since it, readiness 5/9: ' + b.readiness(bulba, 'vine-whip'));
     cast(bulba, 'vine-whip');
     ok(win(b.window(bulba, 'vine-whip'), 0.2, 2.0) && info.gapsOf(bulba, 'vine-whip').length === 0, '14g: a switch between the casts: no gap, the window stays 0.2 to 2.0: ' + show(b.window(bulba, 'vine-whip')));
     ok(b.readiness(bulba, 'vine-whip') === 0, '14g: and the cast after the switch restarts its clock');

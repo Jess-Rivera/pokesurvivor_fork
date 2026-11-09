@@ -51,7 +51,7 @@ G.LeaderInfo = (() => {
       this.leaderIdx = leader.activeIdx;
       this.leaderAt = 0; // when a leader mon last took the field (the first one at the fight's start)
       this.mons = new Map(); // key -> { moves: [ids, first cast first], bonds: [[ids]], run: [ids since the last switch] }
-      this.lastCast = new Map(); // key -> Map(move id -> that mon's field time at its last cast this fight, since the last switch)
+      this.lastCast = new Map(); // key -> Map(move id -> { at: that mon's field time at its last cast this fight, clean: no switch since })
       this.gaps = new Map(); // key -> Map(move id -> [clean gaps, s]) this fight, used when there is no run store
       this.t = 0; // fight seconds, advanced by tick()
       this.hits = []; // { t, k: 'dealt' | 'taken', frac } inside the LONG window
@@ -210,7 +210,8 @@ G.LeaderInfo = (() => {
         );
     }
     /** GAPS: the mon's field time is the clock (the one place that mirrors the bench rule). A second cast of a move with no switch
-     *  since the first is a clean gap, kept for the fight and, with a run store, in the mon's run record. */
+     *  since the first is a clean gap, kept for the fight and, with a run store, in the mon's run record. A switch spoils the next gap
+     *  but never the time of the last cast: your cooldowns keep running on every slot, and the leader saw the cast. */
     castClock(key) {
       return this.field.get(key) || 0;
     }
@@ -218,8 +219,9 @@ G.LeaderInfo = (() => {
       const at = this.castClock(key);
       let last = this.lastCast.get(key);
       if (!last) this.lastCast.set(key, (last = new Map()));
-      if (last.has(id)) {
-        const gap = at - last.get(id);
+      const prev = last.get(id);
+      if (prev && prev.clean) {
+        const gap = at - prev.at;
         if (gap > 0) {
           let own = this.gaps.get(key);
           if (!own) this.gaps.set(key, (own = new Map()));
@@ -229,13 +231,13 @@ G.LeaderInfo = (() => {
           }
         }
       }
-      last.set(id, at);
+      last.set(id, { at, clean: true });
     }
-    /** Seconds of that mon's field time since its last cast of move `id` this fight, or null when not cast since the last switch. */
+    /** Seconds of that mon's field time since its last cast of move `id` this fight (slot switches included), or null when not cast. */
     sinceCast(m, id) {
       const key = this.keyOf(m),
         last = this.lastCast.get(key);
-      return last && last.has(id) ? this.castClock(key) - last.get(id) : null;
+      return last && last.has(id) ? this.castClock(key) - last.get(id).at : null;
     }
     /** Every clean gap seen of move `id` on mon `m`: the run's (earlier fights too) with a run store, else this fight's. */
     gapsOf(m, id) {
@@ -248,7 +250,7 @@ G.LeaderInfo = (() => {
     switched(key, slot) {
       this.rec(key).run = [];
       const last = this.lastCast.get(key);
-      if (last) last.clear(); // GAPS: a switch between two casts spoils the gap
+      if (last) for (const c of last.values()) c.clean = false; // GAPS: a switch spoils the next gap, not the last cast's time
       if (!this.mem) return;
       const r = G.LeaderMemory.mon(this.mem, key);
       r.switches++;
