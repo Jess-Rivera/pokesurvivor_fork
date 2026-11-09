@@ -123,7 +123,7 @@ Each slice leaves the game playable and ends with `npm run format`, `node tools/
 - Feel test: Misty loop 2.
 
 **8. Leader AI, slot choice (M).**
-- Detail approved 2026-11-07 (Jess), Q1 to Q10 as recommended; BUILT 2026-11-07 (Quick), awaiting Jess's checks and the DPS report. Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt. Also closed the leader melee cushion (now yours) and the leader flinch rule (yours, replacing D5).
+- Detail approved 2026-11-07 (Jess), Q1 to Q10 as recommended; BUILT 2026-11-07 (Quick), awaiting Jess's checks and the DPS report (Q10 closed as superseded 2026-11-09, decision 2026-11-09-slice-8-dps-report-q10-closed-as-superseded). Map and AS BUILT: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt. Also closed the leader melee cushion (now yours) and the leader flinch rule (yours, replacing D5).
 - Files: boss-ai.js, gyms.js (authored bonds). One active slot under the player's hold; the utility score now chooses a slot. Pure buffs only cast while their slot is active, so the AI must visit them. The sensing part (distance, your status, your recent damage) is kept separate from gym rules so it can be reused later, with nothing built for the Director now.
 - Tests: scripted scenarios for slot pick, the hold, buff visits and bonded casts; damage output compared with slice 7.
 - Balance: leader damage drops, so `power` or `tempo` may need a raise.

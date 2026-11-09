@@ -70,6 +70,7 @@ DECISIONS (each changes how a leader plays; recommendation first)
       slice 9 (swaps on low HP need it), so no unread field now                                   rec: yes
   Q10 Damage: no tempo or power change in this slice. The DPS report below compares with slice 7;
       a raise is its own call after your feel test                                                rec: yes
+      CLOSED 2026-11-09 as superseded, report never run (decision 2026-11-09-slice-8-dps-report-q10-closed-as-superseded)
 
 EXPECTED BALANCE
   attacks: small drop (the hold mostly overlaps the 0.5 s tell + 0.35 s recovery); the stay rule adds

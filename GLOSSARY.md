@@ -246,7 +246,7 @@ How many enemies an instance passes through before it ends; UNLIMITED never ends
 The area multiplier (`moveRadiusMul`) applied to radii, arcs, beam length and orbit radius.
 
 **cast gate**:
-The check that holds a cast until a target is in reach (retries every 0.05 s). Not the stage Gate.
+The check that holds a cast until a target is in reach (retries every 0.05 s). Not the stage Gate. A leader's attacks wait on it too, as yours (2026-11-09-42-leader-attacks-wait-on-your-cast-gate; code differs, a Body reach check before the tell, see #47).
 
 **maxStacks**:
 RETIRED 2026-10-30 by the stat stage model; on the new path until slice 5, the live applications one self-buff move may keep on its host.

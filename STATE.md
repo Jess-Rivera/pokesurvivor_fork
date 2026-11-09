@@ -6,7 +6,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. #42: Jess rules items 11 to 15 (item 10 ruled and built in #41). Then #43 (movement split), then #39.
+2. #43 (movement split, plus #42 item 13), then #47 (cast gate, move-in score), then #39. #45 any time.
 
 ## Where we are
 - Terms (2026-11-09): every Player entity runs Decider, Controller, Body, SimPass (LEADER-AI "FRAME", GLOSSARY).
@@ -16,9 +16,10 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
   edge unstick). `wildStatusDivisor` restriction (off): your status-category hits on leaders use their Def.
 - #40 shipped. 5a (#34) and slices 1 to 4 shipped.
 - Test: leader-ai-harness 544, gym-leader 161, leader-slots 41; mutate 113, 59, 22. Parity traces unchanged.
-- Filed: #43 movement split (blocked until #41 ships), #44 leader flat moves on you (ready).
+- #42 ruled and closed 2026-11-09 (items 11 to 15: decision files 2026-11-09-42-*). Filed #45 strongHost out (ready),
+  #46 explicit sides (after #43), #47 leader attacks on your cast gate (after #43). #43 blocked until #41 ships. #44 ready.
 - #38 swap keeps moves in flight, #37 font swap: not started. #36 item reveals blocked. Roster UI #35.
-- Gyms 3 to 8 stay on the old brain until slice 12. Slice 8 DPS report (Q10) still unread.
+- Gyms 3 to 8 stay on the old brain until slice 12. Slice 8 DPS report (Q10) closed as superseded.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30. Lint 0 errors, 72 warnings.
 
 ## Watch
@@ -32,7 +33,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 - `move-sim-mutate` "routing filter ignored" is a real MISS (28/29), older than slice 5.
 
 ## Open owner decisions
-- #42 items 11 to 15 (before #39). Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
+- Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.

@@ -1,3 +1,5 @@
+// HISTORY (2026-11-09): Q10 closed as superseded, decision 2026-11-09-slice-8-dps-report-q10-closed-as-superseded. It no longer runs
+// (broke at leader AI slice 1, #22) and compares two GymBrain versions that no longer drive Misty or Brock. Do not revive.
 // Slice 8 DPS report (Node only; NOT a harness, so tools/check.js never runs it). Usage:  node docs/proposals/leader-dps-report.js
 // Map: docs/ASCII Concept Maps/Entity Model Slice 8 - Leader Slot Choice.txt (Q10). Misty loop 1, her real moves, cards and restrictions,
 // 60 s against a still dummy at three distances, twice: slice 8 (one slot per move) and slice 7 (the same slots rebuilt as one group, so
