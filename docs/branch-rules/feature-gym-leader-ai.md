@@ -4,10 +4,16 @@ Rules that hold only while this branch is open. Read at session start when STATE
 
 ## What this branch builds
 The leader AI: the AI player that drives Player-entity leaders. Spec: docs/LEADER-AI.md (it wins over every older leader-AI text). The old proposal (docs/proposals/gym-leader-ai-design.md) and the slice 9 v2 map are history; do not build on them.
-Slices, in order: #22 (slice 1), #31, #32, #33, #34 (5a, GymBrain out), #39 (5b, personalities). Roster UI: #35 (independent).
+Slices, in order: #22 (slice 1), #31, #32, #33, #34 (5a, GymBrain out), then #40, #41, #42 (the GymBrain shape out, all before 5b), then #39 (5b, personalities). Roster UI: #35 (independent).
 
 ## Slice shape (Jess, 2026-11-08)
 Every slice opens with three things, agreed with Jess before any build: its goal, how we know it is done, and the test that validates it (written at the slice's start, as the end-goal test). Then the prose plan (CLAUDE.md "Edit boundary and workflow") and the build. A slice closes by updating every doc, issue and plan it touched. The slice's issue carries the three opening items as its done-condition.
+
+## Why #40 to #42 exist (Jess, 2026-11-09)
+Slice 5a had to change no behavior, so it moved GymBrain's one step (move, choose, cast, all skipped while stunned) into the AI player whole. The old brain's shape survived inside a Player-entity leader, and nobody compared it to your frame. #40 to #42 remove that shape. They come before #39, because personalities would be built on top of it.
+- **The bar:** a player entity that is not HumanPlayer is your frame plus authored differences. When it differs from HumanPlayer and `game.js`, the difference is either authored per subtype or more restrictive level (such as a gym) (restrictions, `ai` settings) or it's a bug.
+- **How to check:** compare against your code, never against GymBrain's. Parity with GymBrain proves only that nothing changed, not that it's right.
+- **How to fix:** input goes through the controller, rules stay in the body, decisions stay in the AI. A fixed difference becomes an authored setting with today's value as the baseline.
 
 ## Standing rulings on this branch
 - gym-harness and leader-stats-harness stay red until the branch nears completion (#30); `check: FAILED (2 harness)` from those two is expected, any other failure is not.
