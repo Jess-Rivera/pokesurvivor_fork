@@ -336,10 +336,22 @@ G.LeaderAI = class LeaderAI {
     if (top) {
       const pick = !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? at : e.active;
       this.legsOf(e).scores = scored.map(({ k, i }) => ({ id: k.s.id, score: k.score, picked: i === pick }));
-      return go(pick);
+      return this.offHeal(e, S, go(pick));
     }
     const b = slotWith('buff', (s) => G.MoveEffects.statReady(e.moveDef(s.id), e));
-    return b >= 0 ? go(b) : -1;
+    return this.offHeal(e, S, b >= 0 ? go(b) : -1);
+  }
+  /** #41 (decision 2026-11-09-41-the-caster-splits-into-body-and-sim-pass): a self heal casts whenever due, as yours, so not healing
+   *  while unhurt is this choice. Unhurt, a heal slot scores near zero, below any other slot: when the choice is to stay (-1) on an
+   *  active slot whose self heal is ready, it presses the first other slot holding no self heal instead. A bonded group fires as
+   *  yours, so a heal Jess bonds into an attack slot is not avoided (its slot holds attacks too). */
+  offHeal(e, S, choice) {
+    if (choice >= 0 || S.hpFrac < 1) return choice;
+    const isHeal = (s) => G.Gyms.formOf(e.moveDef(s.id)) === 'heal',
+      act = e.slots[e.active] || [];
+    if (!act.length || !act.every(isHeal) || !act.some((s) => G.Boss.open(e, s) && s.t <= 0)) return choice;
+    const j = e.slots.findIndex((g, i) => i !== e.active && g.length && !g.some(isHeal));
+    return j >= 0 ? j : choice;
   }
   /** The slot choice picked slot i (or -1): the press waits in the controller (`slots`, in press order) until the body reads it, as
    *  your keys wait for game.js (#40). In a breather a ready buff or heal slot is pressed instead (pacing); a trigger's own press

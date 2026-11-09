@@ -43,6 +43,8 @@ const M = [
   ['a leader always takes the wild divisor', EF, " && pl.rule('wildStatusDivisor') === true;", ';'],
   ['a leader never takes the wild divisor', EF, " && pl.rule('wildStatusDivisor') === true;", ' && false;'],
   ['the validator ignores wildStatusDivisor', GY, "if (rules.wildStatusDivisor != null && typeof rules.wildStatusDivisor !== 'boolean')", 'if (false)'],
+  ['a heal waits until hurt again', LD, '    if (e.healsLeft <= 0) return;', '    if (!(e.hp < e.maxHp) || e.healsLeft <= 0) return;'],
+  ['unhurt it sits on the heal slot', AI, 'if (choice >= 0 || S.hpFrac < 1) return choice;', 'return choice;'],
   ['the AI keeps its stun exception', AI, 'const free = !this.busy(e);', 'const free = G.Status.stunned(e) || !this.busy(e);'],
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],

@@ -341,7 +341,7 @@ G.GymLeader.SimPass = {
     if (running && e.tell === running) this.telling(e, dt, now);
   },
   /** A due slot of the active group, handed over by your sim scheduler (G.MoveSim.turn: a cooldown run out, a pure buff's Gate open).
-   *  A pure buff casts now, with no tell, even during a wind-up; a self heal casts now while the mon is hurt and a heal is left; an
+   *  A pure buff casts now, with no tell, even during a wind-up; a self heal casts now while a heal is left (full HP too, as yours); an
    *  attack starts its wind-up when the Body accepts it (LEADER-AI FRAME: awake, no flinch hold, the first wait over), no wind-up runs,
    *  no dash carries the body and you are in its reach. Refused, nothing happens: the slot stays due and is handed over again. */
   due(e, s, d, now) {
@@ -477,10 +477,10 @@ G.GymLeader.SimPass = {
         life: 0.6,
       });
   },
-  /** A self heal (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) while the mon is hurt, at most healsLeft times
-   *  this fight. A drain move (Giga Drain) is not a self heal. */
+  /** A self heal (Recover, Synthesis, Moonlight; Jess 2026-11-02, mainline strength) whenever due, as yours (#41: whether to heal
+   *  is the Decider's choice, by the slot it presses), at most healsLeft times this fight. A drain move (Giga Drain) is not a self heal. */
   heal(e, s, d, now) {
-    if (!(e.hp < e.maxHp) || e.healsLeft <= 0) return;
+    if (e.healsLeft <= 0) return;
     if (!G.MoveSim.castAt(e, s, d, now, e.aim)) return;
     e.healsLeft--;
     G.Gym.noteCast(s.id);
