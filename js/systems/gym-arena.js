@@ -109,6 +109,7 @@ G.GymArena = (() => {
     arena = null;
     asked = false;
     G.LeaderInfo.end();
+    G.LeaderBelief.end();
   }
 
   // ---------------- the gate on the map ----------------
@@ -182,6 +183,7 @@ G.GymArena = (() => {
       for (let i = 1; i < n; i++) members.push(G.Boss.make(G.Gym.makeDef(g, i), x, y));
       arena.team = G.GymLeader.team(members);
       arena.info = G.LeaderInfo.create(arena.team, g.id); // what its AI player can see (LEADER-AI slice 1), its run memory (slice 4)
+      arena.belief = G.LeaderBelief.create(arena.info); // #50: what it believes, the Decider's only door
       e = arena.team.active;
       // slice 7b (Q2): Brass Knuckles or Sharp Scissors on fewer than 3 mons do nothing; a dev warning, never a block
       const warn = G.Gyms.teamItemWarn(first.gym.leader, first.gym.runItems, n);
@@ -210,6 +212,7 @@ G.GymArena = (() => {
       bossId: 0,
       team: null, // slice 7: a switched gym's G.Team
       info: null, // LEADER-AI slice 1: its AI player's information layer (G.LeaderInfo)
+      belief: null, // #50: what its AI player believes (G.LeaderBelief)
       sendT: null, // seconds left of the send-out beat, null when none is running
     });
     gate = null;
@@ -357,6 +360,7 @@ G.GymArena = (() => {
     const a = arena;
     arena = null;
     G.LeaderInfo.end();
+    G.LeaderBelief.end();
     G.Gym.onReturn(a.gym);
     G.World.setBiome(a.biome, true);
     G.Weather.clear();
@@ -449,6 +453,10 @@ G.GymArena = (() => {
     },
     get leaderInfo() {
       return arena ? arena.info || null : null;
+    },
+    /** #50: the leader's Belief in a switched gym's arena, else null. */
+    get leaderBelief() {
+      return arena ? arena.belief || null : null;
     },
   };
 })();

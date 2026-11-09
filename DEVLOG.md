@@ -241,3 +241,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - New `misjudge`; sharpness grows per loop (base plus growth per leader). Cast timing is fixed (Jess correction), so counter-play is slot cycling.
 - Superseded LEADER-AI rules retagged [Legacy behavior] with the #49 slice that removes each. Two decision files, glossary terms.
 - Stopped at: the four #49 slice issues and a ?dev Escape pause toggle drafted for Jess's OK.
+
+## 2026-11-09 (Claude Code, home), #54 and #50 built
+- #54: G.Debug.quietPause() (?dev, session only) makes Escape, P and the pause button freeze the frame with no menu. Test: tools/smoke-pause.js (file://).
+- #50 opening: Jess ruled memoryUse closes each edge by memoryUse itself (higher learns faster; Brock example fixed to 1.0 to 1.36); baseline 0.5, start width 1.8 s, min 0.2 s. Bench cooldowns stay open (they change HumanPlayer too); Belief mirrors the live rule (field time).
+- #50 build: G.LeaderBelief (js/systems/leader-belief.js), the Decider's only door. Info times clean gaps in field time and keeps them in run memory; Belief replays them into windows. Matchup and yourAttack moved off the Decider; danger and opportunity via G.Stats.visibleHitFrac. Long window 15 to 10 s.
+- Tests: leader-ai-harness section 14 (584 pass), leader-ai-mutate 125/125 (4 retargeted to Belief), smoke-gym and smoke-pause pass. Every harness load list gained leader-belief.js.
+- Stopped at: both on Needs Playtest; #51 next.

@@ -23,6 +23,7 @@
     'Team',
     'LeaderMemory',
     'LeaderInfo',
+    'LeaderBelief',
     'Upgrades',
     'Evolvable',
     'SpeciesTraits',

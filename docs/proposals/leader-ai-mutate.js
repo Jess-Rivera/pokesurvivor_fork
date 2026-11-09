@@ -1,5 +1,5 @@
 // Mutation check for Leader AI slices 2 (#31, swap and dodge decisions), 3 (#32, confidence, pacing, triggers and lines), 4
-// (#33, run memory and the lead read), 5a (#34) and #40 (the leader's frame takes your shape) (Node only; not a harness, so tools/check.js does not run it).
+// (#33, run memory and the lead read), 5a (#34), #40 (the leader's frame takes your shape) and #50 (Belief, the cooldown window) (Node only; not a harness, so tools/check.js does not run it).
 // Usage from the repo root:  node docs/proposals/leader-ai-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-ai-harness.js against it
 // (LA_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
@@ -10,6 +10,7 @@ const fs = require('fs'),
 const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
   IN = 'js/systems/leader-info.js',
+  BE = 'js/systems/leader-belief.js',
   MM = 'js/systems/leader-memory.js',
   AR = 'js/systems/gym-arena.js',
   LD = 'js/entities/gym-leader.js',
@@ -17,8 +18,21 @@ const AI = 'js/entities/leader-ai.js',
   GY = 'js/data/gyms.js',
   SM = 'js/systems/move-sim.js',
   EF = 'js/systems/move-effects.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
+const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
 const M = [
+  // #50 (#49 slice 1): Belief, the cooldown window and the gaps it is derived from
+  ['the window never narrows', BE, '    lo += (gap - lo) * memoryUse;\n', ''],
+  ['a gap outside has no overshoot', BE, 'if (gap < lo) lo = gap - overshoot;', 'if (gap < lo) lo = gap;'],
+  ['no minimum width', BE, 'if (hi - lo < TUNE.minWidth) {', 'if (false) {'],
+  ['readiness has no ramp', BE, 'return (since - win.lo) / (win.hi - win.lo);', 'return 1;'],
+  ['danger ignores readiness', BE, 'return size * (a.id ? this.readiness(you, a.id) : 1);', 'return size;'],
+  ['opportunity ignores its timers', BE, 'if (s.t > 0 || !d ||', 'if (!d ||'],
+  ['a switch keeps the gap clean', IN, '      if (last) last.clear(); // GAPS: a switch between two casts spoils the gap\n', ''],
+  ['the cast clock runs on the bench', IN, 'return this.field.get(key) || 0;', 'return this.t;'],
+  ['the gaps are not kept for the run', IN, 'for (const store of mem ? [own, mem.gaps] : [own]) {', 'for (const store of [own]) {'],
+  ['the long window stays 15 s', IN, 'LONG = 10;', 'LONG = 15;'],
+  ['the Decider keeps its memoryUse', AI, 'info.tick(dt, S.memoryUse);', 'info.tick(dt);'],
+  ['the Decider reads Info directly', AI, '  watch(e, dt) {\n    const info = G.LeaderBelief.current;', '  watch(e, dt) {\n    const info = G.LeaderInfo.current;'],
   // slice 5a (#34): a leader on your sim scheduler
   ['your scheduler ignores castDue', SM, '(o.castDue ? o.castDue(slot, def, now) : castSlot(o, slot, def, now))', 'castSlot(o, slot, def, now)'],
   ['the active slot recharges twice', SM, '            if (act.includes(slot)) continue;\n', ''],
@@ -61,10 +75,10 @@ const M = [
   ['a spent heal cap still counts', AI, 'return e.healsLeft > 0 && this.pool(e)', 'return this.pool(e)'],
   ['the matchup HP floor is off', AI, 'if (frac(c.m) < S.matchupHp - LeaderAI.EPS) continue;', ''],
   // the matchup
-  ['no STAB', AI, '(m.types.includes(d.type) ? 1.5 : 1)', '1'],
-  ['every move of yours counts as revealed', AI, "for (const id of you && info ? info.reveals(you).moves : []) {", "for (const id of ['vine-whip', 'ember', 'tackle', 'growl']) {"],
-  ['a tie ignores power', AI, '(k === best.k && d.basePower > best.power)', 'false'],
-  ['the guess takes the first type', AI, 'if (!best || k > best.k) best = { id: null, type, k, power: 0 };', 'if (!best) best = { id: null, type, k, power: 0 };'],
+  ['no STAB', BE, '(m.types.includes(d.type) ? 1.5 : 1)', '1'],
+  ['every move of yours counts as revealed', BE, "for (const id of you && belief ? belief.reveals(you).moves : []) {", "for (const id of ['vine-whip', 'ember', 'tackle', 'growl']) {"],
+  ['a tie ignores power', BE, '(k === best.k && d.basePower > best.power)', 'false'],
+  ['the guess takes the first type', BE, 'if (!best || k > best.k) best = { id: null, type, k, power: 0 };', 'if (!best) best = { id: null, type, k, power: 0 };'],
   // dodges
   ['no reflex', AI, 'this.pending = { at: this.clock + S.reflex, serial: th.serial };', 'this.pending = { at: this.clock, serial: th.serial };'],
   ['a dodge inside a commitment', AI, 'if (this.busy(e)) return; // held', 'if (false) return; // held'],

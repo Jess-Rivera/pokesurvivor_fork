@@ -95,9 +95,21 @@ _Avoid_: mind, brain (GymBrain was a body and a decider in one)
 Rule: docs/LEADER-AI.md "FRAME"
 
 **AI player** (also "the AI", of a leader):
-A leader's Decider: the one module that drives every Player-entity leader. Code: `G.LeaderAI`, with what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). It acts only through the Controller. Not the GymBrain, which it replaces.
+A leader's Decider: the one module that drives every Player-entity leader. Code: `G.LeaderAI`, with what it believes (`G.LeaderBelief`, its only door, #50), what it sees (`G.LeaderInfo`) and remembers (`G.LeaderMemory`). It acts only through the Controller. Not the GymBrain, which it replaces.
 
 Rule: docs/LEADER-AI.md "The AI player"
+
+**Belief** (of a leader):
+What a leader's Decider believes about the fight, derived each time it is read from what `G.LeaderInfo` saw and `G.LeaderMemory` kept: your cooldown windows and readiness, the matchup, danger and opportunity, the rolling windows. It only derives and stores no observation. Code: `G.LeaderBelief` (#50). Not perception (`G.LeaderInfo`) and not memory.
+
+_Avoid_: knowledge, model (the opponent model is one part of it)
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" BELIEF
+
+**Cooldown window** (of a leader):
+The span of seconds in which a leader believes one of your moves comes back, per revealed move: opened on its base cooldown, narrowed by each clean gap (two casts with the slot kept active), never narrower than the minimum width. Readiness ramps across it. Measured in your mon's field time, so a benched mon's clock waits as its cooldowns do.
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" COOLDOWN WINDOW
 
 **Controller**:
 Your hands, or the AI's `controller`: the only channel from the Decider to the Body. It carries the Decider's answers as requests through the seven calls (heading, dodge, shake, swap mon, swap direction, slot keys, cycle) and decides and filters nothing. Yours is `G.HumanPlayer.KEYBOARD`.

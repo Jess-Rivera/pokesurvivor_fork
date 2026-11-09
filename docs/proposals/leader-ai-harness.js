@@ -90,10 +90,10 @@ try {
   /* it reads the DOM at the end; G.U is set before that */
 }
 // The engine in dev.html order. The slice's two new files load only when they exist, so the record run works on the code before it.
-const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
+const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const NEW = ['js/systems/leader-info.js', 'js/entities/leader-ai.js'];
 // leader-ai-mutate.js points one of these at a broken copy
-const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM', 'js/systems/move-effects.js': 'LA_EFFECTS' };
+const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/leader-belief.js': 'LA_BELIEF', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM', 'js/systems/move-effects.js': 'LA_EFFECTS' };
 const missing = [];
 for (const p of FILES) {
   const alt = OVERRIDE[p] && process.env[OVERRIDE[p]];
@@ -1076,14 +1076,14 @@ if (built2) {
       hitYou(s1, 0.01);
       frame();
       ok(near(ai.conf, 0.56), 'confSwing 2 doubles a hit: ' + ai.conf);
-      // the long window: one 12% hit (a 10%+ trade) drifts it +0.01 a second for the 15 s it stays in the window
+      // the long window: one 12% hit (a 10%+ trade) drifts it +0.01 a second for the 10 s it stays in the window (#50: the long window is 10 s)
       ({ ai, s1 } = go3('Misty', 2, { confidence: true }));
       run(0.5);
       hitYou(s1, 0.12);
       frame();
       ok(near(ai.conf, 0.53 + 0.01 * DT), 'a 12% hit: +0.03, then the drift starts: ' + ai.conf);
       run(16);
-      ok(Math.abs(ai.conf - 0.68) <= 2e-3, 'and stops when it leaves the 15 s window: 0.53 + 0.15 = 0.68: ' + ai.conf);
+      ok(Math.abs(ai.conf - 0.63) <= 2e-3, 'and stops when it leaves the 10 s window: 0.53 + 0.10 = 0.63: ' + ai.conf);
       // effective aggression and the swap margin
       const ag = (c) => ((ai.conf = c), ai.aggr()),
         mg = (c) => ((ai.conf = c), ai.swapMargin());
@@ -2193,6 +2193,142 @@ if (built2) {
   } finally {
     offCast();
     Object.assign(AI.off, was);
+    G.GymArena.reset();
+  }
+}
+
+// ---------------- 14. #50 (#49 slice 1): Belief, the Decider's only door (docs/LEADER-AI.md BELIEF, COOLDOWN WINDOW) ----------------
+// Written at the slice's start. Expected values are hand-derived from the spec and decision
+// 2026-11-09-50-cooldown-window-memoryuse-and-baseline (memoryUse 0.5 baseline, start width 1.8 s, min width 0.2 s), never from code
+// output. Gaps and readiness run on your mon's field time (the live bench rule: a benched mon's cooldowns wait).
+{
+  const AI = G.LeaderAI,
+    B = G.LeaderBelief,
+    Mem = G.LeaderMemory,
+    was = Object.assign({}, AI.off),
+    realDefs = G.MoveDefs;
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true, memory: true });
+  const cast = (m, moveId) => G.SimBus.emit('move:cast', { moveId, ownerId: null, ownerUid: m.copyUid, ownerSlot: m.teamSlot, rival: false, x: 0, y: 0, aim: 0, enemy: false });
+  const switched = (m) => G.SimBus.emit('slot:switch', { ownerUid: m.copyUid, ownerSlot: m.teamSlot, rival: false, slot: 1 });
+  const win = (w, lo, hi) => !!w && near(w.lo, lo, 1e-9) && near(w.hi, hi, 1e-9);
+  const show = (w) => (w ? w.lo.toFixed(4) + ' to ' + w.hi.toFixed(4) : 'null');
+  const bulba = you[0];
+  try {
+    // 14a. the baselines
+    ok(B && B.TUNE.startWidth === 1.8 && B.TUNE.minWidth === 0.2 && AI.BASE.memoryUse === 0.5, '14a: start width 1.8 s, min width 0.2 s, memoryUse 0.5');
+    // 14b. the worked examples (the rule alone)
+    ok(win(B.opened(1.1), 0.2, 2.0), '14b: a reveal of a 1.1 s move opens 0.2 to 2.0: ' + show(B.opened(1.1)));
+    ok(win(B.learn({ lo: 0.2, hi: 2.0 }, 1.2, 0.5), 0.7, 1.6), '14b: clean gap 1.2, memoryUse 0.5: 0.7 to 1.6: ' + show(B.learn({ lo: 0.2, hi: 2.0 }, 1.2, 0.5)));
+    ok(win(B.learn({ lo: 0.2, hi: 2.0 }, 1.2, 0.8), 1.0, 1.36), '14b: memoryUse 0.8 learns faster: 1.0 to 1.36: ' + show(B.learn({ lo: 0.2, hi: 2.0 }, 1.2, 0.8)));
+    // 14c. a gap outside: stretch by the overshoot (1.8 x 0.5 = 0.9), then narrow
+    ok(win(B.learn({ lo: 0.2, hi: 2.0 }, 3.0, 0.5), 1.6, 3.45), '14c: slower, gap 3.0: stretch to 3.9, narrow to 1.6 to 3.45: ' + show(B.learn({ lo: 0.2, hi: 2.0 }, 3.0, 0.5)));
+    ok(win(B.learn({ lo: 0.7, hi: 1.6 }, 0.6, 0.5), 0.15, 1.1), '14c: faster, 0.7 to 1.6, gap 0.6: stretch to -0.3, narrow to 0.15 to 1.1: ' + show(B.learn({ lo: 0.7, hi: 1.6 }, 0.6, 0.5)));
+    // 14d. the minimum width: never under 0.2, the gap kept inside
+    {
+      let w = { lo: 0.2, hi: 2.0 },
+        good = true;
+      for (let i = 0; i < 12; i++) {
+        w = B.learn(w, 1.2, 0.5);
+        if (w.hi - w.lo < 0.2 - 1e-9 || w.lo > 1.2 || w.hi < 1.2) good = false;
+      }
+      ok(good && near(w.hi - w.lo, 0.2, 1e-9), '14d: 12 clean gaps of 1.2: the width stops at 0.2 with 1.2 inside: ' + show(w));
+    }
+    // 14e. readiness on 0.7 to 1.6
+    const W = { lo: 0.7, hi: 1.6 };
+    ok(B.readinessIn(W, 0.5) === 0 && near(B.readinessIn(W, 1.15), 0.5) && B.readinessIn(W, 2.0) === 1, '14e: readiness 0 at 0.5 s, 0.5 at 1.15 s, 1 at 2.0 s');
+    ok(B.readinessIn(W, null) === 1, '14e: a move not cast since your last switch is believed ready');
+
+    // a fight: vine-whip's base cooldown is 1.1 s for these checks (test only)
+    G.MoveDefs = Object.assign({}, realDefs, { 'vine-whip': Object.assign({}, realDefs['vine-whip'], { cd: 1.1 }) });
+    const fight = () => {
+      const a = open('Misty', 2);
+      return { a, b: G.GymArena.leaderBelief, info: G.GymArena.leaderInfo, e: a.team.active };
+    };
+    // 14f. the arena holds one Belief over its Info; an unrevealed move has no window and is ready
+    let { b, info, e } = fight();
+    ok(b && b.info === info && B.current === b, '14f: the arena makes a Belief over its Info');
+    ok(b.window(bulba, 'vine-whip') === null && b.readiness(bulba, 'vine-whip') === 1, '14f: an unrevealed move has no window and is believed ready');
+    cast(bulba, 'vine-whip');
+    ok(win(b.window(bulba, 'vine-whip'), 0.2, 2.0), '14f: its first cast opens 0.2 to 2.0: ' + show(b.window(bulba, 'vine-whip')));
+    ok(b.readiness(bulba, 'vine-whip') === 0, '14f: right after the cast it is believed not ready');
+    run(1.2);
+    cast(bulba, 'vine-whip');
+    ok(win(b.window(bulba, 'vine-whip'), 0.7, 1.6), '14f: a clean field-time gap of 1.2 narrows it to 0.7 to 1.6: ' + show(b.window(bulba, 'vine-whip')));
+    run(1.15);
+    ok(near(b.readiness(bulba, 'vine-whip'), 0.5, 1e-6), '14f: 1.15 s later it is half ready: ' + b.readiness(bulba, 'vine-whip'));
+    // 14g. a slot switch between two casts spoils the gap
+    ({ b, info, e } = fight());
+    cast(bulba, 'vine-whip');
+    run(0.6);
+    switched(bulba);
+    run(0.6);
+    cast(bulba, 'vine-whip');
+    ok(win(b.window(bulba, 'vine-whip'), 0.2, 2.0) && info.gapsOf(bulba, 'vine-whip').length === 0, '14g: a switch between the casts: no gap, the window stays 0.2 to 2.0: ' + show(b.window(bulba, 'vine-whip')));
+    ok(b.readiness(bulba, 'vine-whip') === 0, '14g: and the cast after the switch restarts its clock');
+    // 14h. the bench: field time only, so a benched mon's clock waits
+    ({ b, info, e } = fight());
+    cast(bulba, 'vine-whip');
+    run(0.3);
+    youActive = 1;
+    run(5);
+    youActive = 0;
+    ok(near(info.sinceCast(bulba, 'vine-whip'), 0.3, 1e-6), '14h: 0.3 s on the field, 5 s benched: 0.3 s since the cast: ' + info.sinceCast(bulba, 'vine-whip'));
+    run(0.9);
+    cast(bulba, 'vine-whip');
+    ok(win(b.window(bulba, 'vine-whip'), 0.7, 1.6), '14h: the gap across the bench stint is 1.2 field seconds: 0.7 to 1.6: ' + show(b.window(bulba, 'vine-whip')));
+    // 14i. run memory: fight 2 opens with fight 1's learned window
+    Mem.start();
+    try {
+      ({ b, info, e } = fight());
+      cast(bulba, 'vine-whip');
+      run(1.2);
+      cast(bulba, 'vine-whip');
+      ({ b, info, e } = fight());
+      ok(info.fight === 2, '14i: the second fight of the run');
+      ok(win(b.window(bulba, 'vine-whip'), 0.7, 1.6), '14i: it opens with the learned 0.7 to 1.6 (the reveal is remembered): ' + show(b.window(bulba, 'vine-whip')));
+      ok(b.readiness(bulba, 'vine-whip') === 1, '14i: not cast yet this fight: believed ready');
+      G.GymArena.leaderAI.set.memoryUse = 0.8;
+      frame();
+      ok(win(b.window(bulba, 'vine-whip'), 1.0, 1.36), '14i: the window is derived from the kept gaps, so the Decider setting memoryUse 0.8 reads them as 1.0 to 1.36: ' + show(b.window(bulba, 'vine-whip')));
+    } finally {
+      Mem.end();
+    }
+    // 14j. the long window is 10 s
+    ({ b, info, e } = fight());
+    info.hit('dealt', 0.1);
+    run(9.9);
+    ok(near(b.windows().dealtLong, 0.1), '14j: a hit is in the long window at 9.9 s: ' + b.windows().dealtLong);
+    run(0.2);
+    ok(b.windows().dealtLong === 0, '14j: and out of it at 10.1 s: ' + b.windows().dealtLong);
+    // 14k. danger and opportunity. The visible hit, hand-derived: Bulbasaur (49 Atk) level 20 on Staryu (55 Def, 30 HP) level 12, a
+    // 45-power physical move, STAB 1.5, scale 1: Atk 24, factor (10 x 45 x 24) / 50 = 216, Def 18, (216 / 18 + 2) x 1.5 = 21;
+    // HP round((7 + 12 + 10) x 2) = 58. Neutral 21 / 58, a 2x type 42 / 58.
+    const bul = G.DEX_BY[1].stats,
+      sta = G.DEX_BY[120].stats;
+    ok(near(G.Stats.visibleHitFrac(bul, 20, sta, 12, 45, 'physical', 1.5, 1, 1), 21 / 58, 1e-9), '14k: the visible hit, neutral: 21 / 58');
+    ok(near(G.Stats.visibleHitFrac(bul, 20, sta, 12, 45, 'physical', 1.5, 2, 1), 42 / 58, 1e-9), '14k: a 2x type doubles it: 42 / 58');
+    ok(G.Stats.visibleHitFrac(bul, 20, sta, 12, 45, 'physical', 1.5, 0, 1) === 0, '14k: an immune hit is 0');
+    ({ b, info, e } = fight());
+    cast(bulba, 'vine-whip');
+    ok(b.danger(e, bulba) === 0, '14k: danger is 0 right after your cast (readiness 0)');
+    run(2.1);
+    const full = b.danger(e, bulba);
+    ok(full > 0 && b.readiness(bulba, 'vine-whip') === 1, '14k: and full once past the window: ' + full.toFixed(4));
+    for (const g of e.slots) for (const s of g) s.t = 5;
+    ok(b.opportunity(e, bulba) === 0, '14k: opportunity is 0 while every one of her moves recharges (her exact timers)');
+    const dmgSlot = e.slots.flat().find((s) => (e.moveDef(s.id).basePower || 0) > 0);
+    dmgSlot.t = 0;
+    ok(b.opportunity(e, bulba) > 0, '14k: and above 0 once a damaging move is ready: ' + b.opportunity(e, bulba).toFixed(4));
+    // 14l. the Decider reads Belief, never Info
+    const ai = fs
+      .readFileSync(process.env.LA_AI || path.join(R, 'js/entities/leader-ai.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    ok(!/G\.LeaderInfo/.test(ai) && /G\.LeaderBelief\.current/.test(ai), '14l: the Decider has no G.LeaderInfo read; it reads G.LeaderBelief');
+  } finally {
+    G.MoveDefs = realDefs;
+    Object.assign(AI.off, was);
+    youActive = 0;
     G.GymArena.reset();
   }
 }

@@ -1,7 +1,7 @@
 /* ============ leader-ai.js: the AI player that drives a Player-entity leader (G.LeaderAI) ============
  * Spec: docs/LEADER-AI.md (Jess 2026-11-08). One AI player per leader team; it acts only through the controller your keyboard
  * answers, the seven calls of G.PlayerEntity.IDLE, so your rules (slot hold, swap lock, trap, Fly, stuns, dodge charges) decide every
- * press. What it can see: G.LeaderInfo.
+ * press. What it can see: G.LeaderBelief (#50), its only door; Belief derives from G.LeaderInfo, which it never reads itself.
  * Slice 1 (#22): the controls layer. It wraps G.Boss.GymBrain: the brain's heading becomes `axis` and its slot choice `slots`, so
  * Misty and Brock move and cast as before. `shake`, `swapDir` and `cycles` answer nothing yet (shake-off stays the authored autoShake).
  * Slice 2 (#31): its own swap and dodge decisions, on its settings (BASE below, or the gym's `ai` in js/data/gyms.js).
@@ -543,34 +543,11 @@ G.LeaderAI = class LeaderAI {
    *  its best open damaging move's type x your mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score =
    *  offense / defense. */
   matchup(m, you = LeaderAI.yours()) {
-    if (!you) return 1;
-    const yt = LeaderAI.typesOf(you);
-    let off = 0;
-    for (const s of this.pool(m)) {
-      const d = m.moveDef(s.id);
-      if (!(d.basePower > 0)) continue;
-      off = Math.max(off, G.Types.mult(d.type, yt) * (m.types.includes(d.type) ? 1.5 : 1));
-    }
-    return off / Math.max(0.25, G.Types.mult(this.yourAttack(m, you).type, m.types));
+    return G.LeaderBelief.matchup(m, you); // #50: the matchup is Belief's (moved unchanged)
   }
-  /** Your mon's most threatening revealed damaging move against m: the highest type multiplier, then the higher power. Before any is
-   *  revealed, a guess of its own type (a two-type mon: the type that hits m harder). Only what G.LeaderInfo has seen is read. */
+  /** Your mon's most threatening revealed damaging move against m, as Belief holds it (#50; moved unchanged). */
   yourAttack(m, you = LeaderAI.yours()) {
-    const info = G.LeaderInfo.current;
-    let best = null;
-    for (const id of you && info ? info.reveals(you).moves : []) {
-      const d = G.MoveDefs[id];
-      if (!d || !(d.basePower > 0)) continue;
-      const k = G.Types.mult(d.type, m.types);
-      if (!best || k > best.k || (k === best.k && d.basePower > best.power))
-        best = { id, type: d.type, k, power: d.basePower };
-    }
-    if (best) return best;
-    for (const type of you ? LeaderAI.typesOf(you) : []) {
-      const k = G.Types.mult(type, m.types);
-      if (!best || k > best.k) best = { id: null, type, k, power: 0 };
-    }
-    return best || { id: null, type: 'normal', k: 1, power: 0 };
+    return G.LeaderBelief.yourAttack(m, you);
   }
 
   // ---------------- run memory (slice 4) ----------------
@@ -579,7 +556,7 @@ G.LeaderAI = class LeaderAI {
    *  only says its line. */
   open(e) {
     this.opened = true;
-    const info = G.LeaderInfo.current,
+    const info = G.LeaderBelief.current,
       mem = info && info.mem;
     if (LeaderAI.off.memory || !mem) return;
     const S = this.set,
@@ -614,7 +591,7 @@ G.LeaderAI = class LeaderAI {
 
   /** Every frame: new threats go through the bag; a read one is answered `reflex` after it was noticed. */
   watch(e, dt) {
-    const info = G.LeaderInfo.current;
+    const info = G.LeaderBelief.current;
     if (!info || e.dead) return;
     const S = this.set,
       list = info.threats(e, S.threatWindow, dt);
@@ -686,12 +663,12 @@ G.LeaderAI = class LeaderAI {
   /** Every frame: the fight's events move confidence (confSwing scales them; 0 while confidence is off), the long window drifts it
    *  toward whoever leads the trade, the stance runs its clock, triggers hear their events, and a big swing says a line. */
   feel(e, dt) {
-    const info = G.LeaderInfo.current,
+    const info = G.LeaderBelief.current,
       S = this.set,
       C = LeaderAI.CONF,
       k = LeaderAI.off.confidence ? 0 : S.confSwing;
     if (info) {
-      info.tick(dt);
+      info.tick(dt, S.memoryUse);
       for (const ev of info.events()) {
         if (ev.k === 'landed') {
           this.lastHit = this.clock;
@@ -735,7 +712,7 @@ G.LeaderAI = class LeaderAI {
     const S = this.set,
       P = LeaderAI.PACE,
       a = this.aggr(),
-      info = G.LeaderInfo.current;
+      info = G.LeaderBelief.current;
     if (!info || this.stance === 'breather') return;
     const w = info.windows();
     if (
@@ -962,6 +939,8 @@ G.LeaderAI.BASE = Object.freeze({
   // slice 4 (#33): learnRate sightings before a pattern is believed; predictCap acts per BAG chances to act on one
   learnRate: 3,
   predictCap: 7,
+  // #50 (#49 slice 1): how fast the cooldown window closes on each clean gap (0 to 1, higher learns faster; G.LeaderBelief)
+  memoryUse: 0.5,
 });
 G.LeaderAI.BAG = 10;
 /** Slice 3 (all TUNE, BALANCE.md "Leader AI"). CONF: each hit landed or taken, each faint (yours up, its own down), the drift per

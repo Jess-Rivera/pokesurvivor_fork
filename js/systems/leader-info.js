@@ -15,6 +15,10 @@
  *            end, one lead sighting (your mon with the most field time). STALE REVEALS: a move remembered from an earlier fight counts
  *            as revealed until that mon has STALE s on the field this fight, or has cast as many other moves as a mon carries (its
  *            move set is then seen without it).
+ *   GAPS     #50 (#49 slice 1): when each move of yours was last cast and the clean gaps between two casts of one move (its slot
+ *            kept active between them: a slot switch spoils the gap), both measured in that mon's field time, so a benched mon's
+ *            clock waits as its cooldowns do today (player.js benchUpdate; LEADER-AI [Open] bench cooldowns: this clock is the one
+ *            place that mirrors the bench rule). The gaps go to run memory with the reveal. G.LeaderBelief turns them into windows.
  *   Held-item reveals: #36.
  * It hears the sim through G.SimBus ('move:cast', 'slot:switch', 'move:hit'), registered once here (SimBus rules); the arena points it
  * at the fight's record (create) and away from it (end), so an old fight's record never hears a new cast.
@@ -22,7 +26,7 @@
 G.LeaderInfo = (() => {
   let cur = null; // the fight's record, or null outside a switched gym's fight
   const SHORT = 2,
-    LONG = 15; // the rolling windows, seconds (LEADER-AI ROLLING WINDOWS, TUNE)
+    LONG = 10; // the rolling windows, seconds (LEADER-AI ROLLING WINDOWS, TUNE; long 10 s from #50)
   // slice 4 (all TUNE, BALANCE.md "Leader AI"): a stale reveal's field time, the swap tags' lines (your HP fraction; seconds since a
   // leader mon arrived), and the moves a mon carries when its own count is not known
   const STALE = 10,
@@ -47,6 +51,8 @@ G.LeaderInfo = (() => {
       this.leaderIdx = leader.activeIdx;
       this.leaderAt = 0; // when a leader mon last took the field (the first one at the fight's start)
       this.mons = new Map(); // key -> { moves: [ids, first cast first], bonds: [[ids]], run: [ids since the last switch] }
+      this.lastCast = new Map(); // key -> Map(move id -> that mon's field time at its last cast this fight, since the last switch)
+      this.gaps = new Map(); // key -> Map(move id -> [clean gaps, s]) this fight, used when there is no run store
       this.t = 0; // fight seconds, advanced by tick()
       this.hits = []; // { t, k: 'dealt' | 'taken', frac } inside the LONG window
       this.feed = []; // events not yet handed to the AI player: { k: 'landed' | 'taken' | 'faint' | 'sendIn', ... }
@@ -192,6 +198,7 @@ G.LeaderInfo = (() => {
       if (!r.run.includes(id)) r.run.push(id);
       const mem = this.mem && G.LeaderMemory.mon(this.mem, key);
       if (mem) mem.moves.set(id, this.fight);
+      this.timeCast(key, id, mem);
       if (r.run.length < 2) return;
       r.bonds = merge(r.bonds, r.run, (b) => b);
       if (mem)
@@ -202,9 +209,46 @@ G.LeaderInfo = (() => {
           (ids) => ({ ids, fight: this.fight })
         );
     }
+    /** GAPS: the mon's field time is the clock (the one place that mirrors the bench rule). A second cast of a move with no switch
+     *  since the first is a clean gap, kept for the fight and, with a run store, in the mon's run record. */
+    castClock(key) {
+      return this.field.get(key) || 0;
+    }
+    timeCast(key, id, mem) {
+      const at = this.castClock(key);
+      let last = this.lastCast.get(key);
+      if (!last) this.lastCast.set(key, (last = new Map()));
+      if (last.has(id)) {
+        const gap = at - last.get(id);
+        if (gap > 0) {
+          let own = this.gaps.get(key);
+          if (!own) this.gaps.set(key, (own = new Map()));
+          for (const store of mem ? [own, mem.gaps] : [own]) {
+            if (!store.has(id)) store.set(id, []);
+            store.get(id).push(gap);
+          }
+        }
+      }
+      last.set(id, at);
+    }
+    /** Seconds of that mon's field time since its last cast of move `id` this fight, or null when not cast since the last switch. */
+    sinceCast(m, id) {
+      const key = this.keyOf(m),
+        last = this.lastCast.get(key);
+      return last && last.has(id) ? this.castClock(key) - last.get(id) : null;
+    }
+    /** Every clean gap seen of move `id` on mon `m`: the run's (earlier fights too) with a run store, else this fight's. */
+    gapsOf(m, id) {
+      const key = this.keyOf(m),
+        mem = this.mem && this.mem.mons.get(key),
+        own = mem ? mem.gaps : this.gaps.get(key);
+      return (own && own.get(id)) || [];
+    }
     /** A slot switch of yours (the ring): the bond run restarts; the memory counts it and the slot it went to. */
     switched(key, slot) {
       this.rec(key).run = [];
+      const last = this.lastCast.get(key);
+      if (last) last.clear(); // GAPS: a switch between two casts spoils the gap
       if (!this.mem) return;
       const r = G.LeaderMemory.mon(this.mem, key);
       r.switches++;

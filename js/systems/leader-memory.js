@@ -7,7 +7,7 @@
  *   MON     one per mon of yours, keyed as G.LeaderInfo keys it (copy uid, else the team slot): the moves seen (id -> the fight it was
  *           last confirmed in), bonds ({ ids, fight }), slot switches (and how often to each slot), swaps out and in, whom it was swapped
  *           into, the reason tags counted against its swaps, dodges, seconds on the field and range (distance x seconds, so range /
- *           fieldT is its average fighting range).
+ *           fieldT is its average fighting range), and (#50) the clean gaps between two casts of each move (G.LeaderInfo GAPS).
  *   TEAM    lead sightings (each fight books the mon of yours with the most field time) and who you send in after a faint.
  * Only observations are stored, and only G.LeaderInfo writes them (it hears the screen; this module hears nothing). Which patterns a
  * leader believes is derived from the counts with its settings at each fight (lead() below), so retuning applies to old observations.
@@ -34,6 +34,7 @@ G.LeaderMemory = (() => {
         dodges: 0,
         fieldT: 0,
         range: 0,
+        gaps: new Map(), // #50: move id -> the clean gaps between two of its casts (G.LeaderInfo GAPS), every fight
       };
       rec.mons.set(key, m);
     }
@@ -90,6 +91,7 @@ G.LeaderMemory = (() => {
           mons[k] = Object.assign({}, m, {
             moves: Object.fromEntries(m.moves),
             into: Object.fromEntries(m.into),
+            gaps: Object.fromEntries(m.gaps),
             avgRange: m.fieldT > 0 ? Math.round(m.range / m.fieldT) : null,
           });
         out[id] = {
