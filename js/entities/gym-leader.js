@@ -129,25 +129,35 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     return Math.round(super.maxHpAt(level) * this.hpMult);
   }
 
-  /** One frame, the four roles (LEADER-AI "FRAME"): the Decider (G.LeaderAI.think: its heading, slot presses and dodge wait in the
-   *  Controller), then the Body reads its slot keys as yours are read in game.js and the Player entity rules follow the answers under
-   *  its statuses, then the leader's SimPass resolves (G.GymLeader.SimPass.frame). The AI shakes off at the auto rate first. The enemy list passes the nearest player, and keeps updating a corpse
-   *  for its fade. */
+  /** One frame, the four roles in your order (LEADER-AI "FRAME", #43 step B): the Decider (G.LeaderAI.think: its heading, slot presses,
+   *  dodge and swap answers wait in the Controller), the slot keys (yours: game.js handleKeys), then the swap point (the team's lock and
+   *  mon swap, G.GymArena.swapStep, as your handleSwap), then fieldFrame on whoever is on the field now. The enemy list passes the nearest
+   *  player, and keeps updating a corpse for its fade. */
   update(dt, pl) {
     if (this.dead) {
       this.anim.update(dt);
       this.fade -= dt;
       return;
     }
-    if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt); // slice 8: the slot hold (yours ticks in game.js)
-    if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt); // N3: on unless the gym turns it off (an AI has no hands)
     this.ai.think(this, dt, pl);
     this.takeSlotInput();
+    const next = this.team ? G.GymArena.swapStep(this.team, dt) : null;
+    (next || this).fieldFrame(dt); // a swap: the incoming mon runs the rest of this frame, as yours does after swapTo
+  }
+  /** The frame from the swap point on, in your order (game.js): shake, the body (the Player entity rules under its statuses), the slot
+   *  hold, then the leader's SimPass (G.GymLeader.SimPass.frame). */
+  fieldFrame(dt) {
+    this.shakeStep(dt);
     const ox = this.x,
       oy = this.y;
     super.update(dt);
     this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt }; // state the Decider reads (its edge unstick, #41)
+    this.tickSlotLock(dt);
     if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());
+  }
+  /** Your auto shake setting, on for a leader unless its gym turns it off (N3; an AI has no hands). */
+  autoShakeOn() {
+    return this.rule('autoShake') !== false;
   }
   aimTargets() {
     return this.foes();

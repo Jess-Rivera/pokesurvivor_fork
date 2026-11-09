@@ -53,7 +53,7 @@ const M = [
   ['a leader is strong', ST, '&& !h.leaderStatus;', ';'],
   ['no leader freeze and sleep cut', ST, "if (h.statusCut != null && (kind === 'freeze' || kind === 'sleep')) return base * h.statusCut;", ''], // slice 6 retarget
   ['the 5 s gap is 2.5 s', ST, 'h.ccWindow != null ? h.ccWindow : GRACE', 'GRACE'], // slice 6 retarget
-  ['the AI never shakes off', LD, "if (this.rule('autoShake') !== false) G.Status.autoShake(this, dt);", ''], // slice 6 retarget
+  ['the AI never shakes off', LD, "    return this.rule('autoShake') !== false;", '    return false;'], // slice 6 retarget; #43: the leader's autoShakeOn
   // the brain
   ["a frozen leader's timers stop", LD, '    G.MoveSim.turn(dt, e, now);', '    if (!G.Status.stunned(e)) G.MoveSim.turn(dt, e, now);'], // #40 retarget: a stun keeps the timers running, as yours
   ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget

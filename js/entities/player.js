@@ -461,6 +461,23 @@ G.PlayerEntity = class PlayerEntity {
     });
   }
 
+  /** The slot hold (swapT) runs down, once per frame, after the body and before the sim pass: yours in game.js, a leader's in its own
+   *  frame (#43 step B, decision 2026-11-09-42-one-swap-clock-and-one-swap-point). */
+  tickSlotLock(dt) {
+    if (!this.dead && this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt);
+  }
+  /** Your accessibility setting `autoShake` (Shake off taps itself 3 times a second). A bare Player entity has it off; HumanPlayer reads
+   *  the settings menu, a leader has it on unless its gym turns it off (2026-11-09-42-leader-auto-shake-is-your-accessibility-setting). */
+  autoShakeOn() {
+    return false;
+  }
+  /** Shake off (slice E1), after the swap point and before the body: the controller's shake press, else the auto shake. One path for
+   *  every Player entity (#43 step B); the white ring shows each shake. */
+  shakeStep(dt) {
+    if (this.controller.shake() && G.Status.shake(this)) G.FX.ring(this.x, this.y, 4, 34, '#ffffff', 0.18, 2);
+    else if (this.autoShakeOn() && G.Status.autoShake(this, dt)) G.FX.ring(this.x, this.y, 4, 34, '#ffffff', 0.18, 2); // 3 taps/s (E2e)
+  }
+
   /** The slot keys and cycle keys the controller lists this frame, in key order (slice 3, D4): yours from game.js, a leader's
    *  from its AI player (G.LeaderAI), so both switch under the same slot hold. */
   takeSlotInput() {
@@ -1275,6 +1292,9 @@ G.HumanPlayer = class HumanPlayer extends G.PlayerEntity {
 
   aimTargets() {
     return G.EnemyMgr.all();
+  }
+  autoShakeOn() {
+    return !!G.Settings.get('autoShake');
   }
   aimFallback() {
     return G.World.nearestBreakable(this.x, this.y, 200);

@@ -19,7 +19,7 @@ const M = [
   ['all moves live again (one group)', LD, 'this.slots = G.Boss.slotsOf(g.moves);', 'this.slots = [g.moves.map((m) => ({ id: m.id, t: 0, hpBelow: m.hpBelow }))];'],
   ['bonded lines get their own slots', BR, '      if (!m.bond) out.push([s]);', '      if (true) out.push([s]);'],
   ['a leader switch sets no hold', PL, 'for (const i of c.slots()) this.setActive(i);', 'for (const i of c.slots()) this.setActive(i, true);'], // LEADER-AI slice 1: pressed through your takeSlotInput
-  ['the hold never ticks on a leader', LD, 'if (this.swapT > 0) this.swapT = Math.max(0, this.swapT - dt);', ''],
+  ['the hold never ticks on a leader', LD, '    this.tickSlotLock(dt);\n    if (!this.dead) G.GymLeader.SimPass.frame', '    if (!this.dead) G.GymLeader.SimPass.frame'], // #43: fieldFrame
   ['the select sound plays for a leader', PL, "this.onSwitchFeel(); // the select sound is yours", "G.Audio.sfx('select'); // the select sound is yours"],
   // only the active slot
   ['an inactive slot fires', LD, '(this.slots[this.active] || [])', 'this.slots.flat()'],

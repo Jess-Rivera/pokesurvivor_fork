@@ -283,6 +283,9 @@ if (RECORD) {
 // Slice 5a (#34) parity: the AI player without GymBrain plays the fights recorded on GymBrain (LA_RECORD5A=1, before the slice).
 // Re-recorded on #40 (2026-11-09) for two named changes: the sim pass runs after the body (your flow; on its own at most 2 frames
 // per cast and 5.5 px, same moves) and firstWait 0 (the first wind-up starts at once instead of after 1.6 s). Both traces.
+// Re-recorded on #43 step B (2026-11-09) for your order (decision 2026-11-09-42-one-swap-clock-and-one-swap-point): only Misty2 moved. Its
+// voluntary swap lands before the body, so the incoming mon walks one frame more (at most 2.2 px, aims within 0.008 rad); the slot hold
+// ticks after the body, so the wind-ups after the swap back start 1 frame later. Same moves in the same order, no cast moved over 1 frame.
 {
   const want = fs.existsSync(TRACE5) ? JSON.parse(fs.readFileSync(TRACE5, 'utf8')) : null;
   ok(want, 'parity 5a: the trace exists (record it on the code before the slice: LA_RECORD5A=1)');

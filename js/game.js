@@ -1080,10 +1080,7 @@ G.Game = (() => {
     if (G.Log.on) G.Log.sample();
     runTeam.tickLock(dt);
     handleSwap();
-    if (pl.controller.shake() && G.Status.shake(pl))
-      G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // Shake off (slice E1)
-    else if (G.Settings.get('autoShake') && G.Status.autoShake(pl, dt))
-      G.FX.ring(pl.x, pl.y, 4, 34, '#ffffff', 0.18, 2); // accessibility auto-shake, 3 taps/s (E2e)
+    pl.shakeStep(dt); // Shake off (slice E1), or the accessibility auto shake (E2e): one path for every Player entity (#43)
 
     const b = Math.floor(time / 240);
     if (b !== biome && !G.GymArena.inArena) {
@@ -1115,7 +1112,7 @@ G.Game = (() => {
     } else G.Spawner.tickBanner(dt);
     G.EnemyMgr.update(dt, all);
     G.EnemyMgr.rebuildGrid();
-    if (!pl.dead && pl.swapT > 0) pl.swapT = Math.max(0, pl.swapT - dt); // the swap lock (was in the legacy G.Combat.tick until 7b-2a)
+    pl.tickSlotLock(dt); // the slot hold, after the body and before your sim pass (a leader's runs at the same point of its frame, #43)
     G.MoveRoute.tick(dt, pl, time); // the player's moves and gym leaders' casts run in G.MoveSim (slice 7b flip)
     G.Projectiles.update(dt, pl, G.EnemyMgr.all());
     G.Combat.resolve(dt, pl, time);

@@ -141,7 +141,7 @@ const base = {
 const warn0 = console.warn;
 console.warn = (m, ...a) => (/^\[Gym\]/.test(m) ? undefined : warn0(m, ...a)); // the card-stack dev warning, once per fight
 global.G = new Proxy(base, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
-const OVERRIDE = { 'js/entities/player.js': 'PM_PLAYER', 'js/entities/player-sim-pass.js': 'PM_SIMPASS', 'js/entities/gym-leader.js': 'PM_LEADER', 'js/systems/move-sim.js': 'PM_SIM', 'js/systems/gym-arena.js': 'PM_ARENA' };
+const OVERRIDE = { 'js/entities/player.js': 'PM_PLAYER', 'js/entities/player-sim-pass.js': 'PM_SIMPASS', 'js/entities/gym-leader.js': 'PM_LEADER', 'js/systems/move-sim.js': 'PM_SIM', 'js/systems/gym-arena.js': 'PM_ARENA', 'js/entities/enemy.js': 'PM_ENEMY' };
 try {
   load('js/core/util.js');
 } catch (e) {
@@ -177,7 +177,7 @@ const script = (o = {}) =>
   Object.assign({ axis: () => [0, 0], dodge: () => false, shake: () => false, swapSlot: () => -1, swapDir: () => 0, slots: () => [], cycles: () => [] }, o);
 
 // ---------------- the two hosts ----------------
-/** Your mon, alone on the stub map, stepped in game.js order: slot keys, the body, the slot lock, G.MoveRoute.tick. */
+/** Your mon, alone on the stub map, stepped in game.js order: slot keys, shake, the body, the slot lock, G.MoveRoute.tick. */
 function youHost() {
   G.EnemyMgr.clear();
   G.MoveSim.clear();
@@ -196,22 +196,24 @@ function youHost() {
       time += dt;
       G.Game.st.time = time;
       e.takeSlotInput();
+      if (e.shakeStep) e.shakeStep(dt); // #43 step B: your shake path (game.js), now a Player entity step
       e.update(dt);
-      if (!e.dead && e.swapT > 0) e.swapT = Math.max(0, e.swapT - dt);
+      if (e.tickSlotLock) e.tickSlotLock(dt);
+      else if (!e.dead && e.swapT > 0) e.swapT = Math.max(0, e.swapT - dt);
       G.MoveRoute.tick(dt, e, time);
     },
   };
 }
 const K = G.Gyms.listFor(null);
 /** Misty's lead at loop 1 in a real gym fight, stepped as the game does (the enemy list, then the arena). */
-function leaderHost() {
+function leaderHost(loop = 1) {
   current = target;
   G.GymArena.reset();
   G.Gym.reset();
   G.EnemyMgr.clear();
   G.MoveSim.clear();
   G.MoveSim.setRng(Math.random);
-  G.Gym.debugLoop(1);
+  G.Gym.debugLoop(loop);
   G.Game.st.time = 0;
   const idx = K.findIndex((g) => g.leader === 'Misty'),
     k = K[idx];
@@ -384,6 +386,84 @@ for (const who of Object.keys(HOSTS)) {
   ok(last('flyLand')[1] <= 20 + 1e-6, who + ' flyLand: it comes down beside the wall');
   ok(g('longFrame').every((r) => r[2] <= 30 + 1e-6), who + ' longFrame: the thin fence holds on a long frame');
   ok(last('lava')[3] < g('lava')[0][3], who + ' lava: the lava hurts it');
+}
+
+// ---------------- #43 step B: a leader's frame runs in your order ----------------
+// Decision 2026-11-09-42-one-swap-clock-and-one-swap-point. Yours, read from js/game.js (the slot keys in handleKeys, before update):
+// the swap point (handleSwap), the shake, the body, the slot hold, your sim pass. A leader's frame is logged live and must run the same
+// steps in the same order, after its Decider. The step B checks run only once the steps exist (the record run is on the old code).
+if (G.PlayerEntity.prototype.tickSlotLock && G.GymArena.swapStep) {
+  const g = fs.readFileSync(process.env.PM_GAME || path.join(R, 'js/game.js'), 'utf8'),
+    u0 = g.indexOf('  function update(dt) {'),
+    upd = g.slice(u0, g.indexOf('\n  function ', u0 + 10)),
+    yours = [];
+  for (const k of ['handleSwap();', 'pl.shakeStep(dt);', 'pl.update(dt);', 'pl.tickSlotLock(dt);', 'G.MoveRoute.tick(dt, pl, time);'])
+    yours.push(upd.indexOf(k, yours.length ? yours[yours.length - 1] : 0)); // each after the last (the death beat runs its own pl.update first)
+  ok(yours.every((i, k) => i > 0 && (k === 0 || i > yours[k - 1])), 'game.js: your frame runs swap, shake, body, slot hold, sim pass in that order (' + yours.join(' ') + ')');
+  ok(g.indexOf('pl.takeSlotInput();') > 0 && g.indexOf('pl.takeSlotInput();') < u0, 'game.js: your slot keys are read before your frame (handleKeys)');
+
+  const log = [],
+    PE = G.PlayerEntity.prototype,
+    wrap = (obj, k, tag) => {
+      const f = obj[k];
+      obj[k] = function (...a) {
+        log.push(tag);
+        return f.apply(this, a);
+      };
+      return () => (obj[k] = f);
+    };
+  const h = leaderHost(2), // loop 2: Misty fields two mons
+    t = h.arena.team,
+    first = t.active;
+  const undo = [
+    wrap(G.LeaderAI.prototype, 'think', 'decide'),
+    wrap(PE, 'takeSlotInput', 'slots'),
+    wrap(G.GymArena, 'swapStep', 'swap'),
+    wrap(PE, 'shakeStep', 'shake'),
+    wrap(PE, 'update', 'body'),
+    wrap(PE, 'tickSlotLock', 'lock'),
+    wrap(G.GymLeader.SimPass, 'frame', 'sim'),
+  ];
+  try {
+    h.step(DT);
+    ok(log.join(' ') === 'decide slots swap shake body lock sim', "a leader's frame: Decider, then your order (" + log.join(' ') + ')');
+
+    // a swap lands at the swap point of the frame it is answered in: before any body runs, and the incoming mon runs the rest
+    // of that frame once. A plain list member after the leader is updated once, not skipped.
+    const other = { id: 99999, x: first.x + 400, y: first.y, r: 10, dead: false, ups: 0, update() { this.ups++; }, hurt() {}, draw() {} };
+    G.EnemyMgr.add(other);
+    for (let i = 0; i < 6 * 60; i++) h.step(DT); // past the fight's first swap lock
+    const j = t.members.findIndex((m) => m !== t.active && !m.dead);
+    ok(j >= 0 && t.lock === 0, 'a bench member is ready and the swap lock is clear (' + t.lock + ')');
+    log.length = 0;
+    other.ups = 0;
+    const out = t.active;
+    let bodies = [];
+    const undoBody = wrap(PE, 'update', 'body2');
+    const f0 = PE.update;
+    PE.update = function (dt) {
+      bodies.push(this);
+      return f0.call(this, dt);
+    };
+    t.ai.requestSwap(j);
+    G.Game.st.time += DT;
+    G.EnemyMgr.update(DT, target);
+    const landedInList = t.active !== out;
+    G.GymArena.update(DT, target);
+    PE.update = f0;
+    undoBody();
+    ok(landedInList, "the swap lands in the leader's own frame (the enemy list's update), not in the arena step after it");
+    ok(bodies.length === 1 && bodies[0] === t.active && t.active !== out, 'the incoming mon runs the body this frame, once; the outgoing one does not');
+    ok(log.indexOf('swap') >= 0 && log.indexOf('swap') < log.indexOf('shake'), 'the swap comes before the shake and the body');
+    ok(other.ups === 1, 'the list member after the leader is updated once (' + other.ups + ')');
+    ok(G.EnemyMgr.all().filter((e) => e === t.active).length === 1 && !G.EnemyMgr.all().includes(out), 'the incoming mon is in the list once, the outgoing one is gone');
+    // the team's swap lock (5 s, COMBAT-RULES) runs down at the swap point, once per frame, as yours does before handleSwap
+    for (let i = 0; i < 60; i++) h.step(DT);
+    ok(Math.abs(t.lock - 4) < 1e-6, 'the swap lock runs down 1 s in 60 frames after the swap (' + t.lock + ')');
+    G.EnemyMgr.remove(other);
+  } finally {
+    for (const u of undo) u();
+  }
 }
 
 if (RECORD) {

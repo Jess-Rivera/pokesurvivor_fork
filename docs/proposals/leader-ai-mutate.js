@@ -28,7 +28,7 @@ const M = [
   ['a cancelled attack counts as cast', LD, 'c.slot.last = c.prevLast;', ''],
   ['a stunned body starts a wind-up', LD, 'return this.acceptsCast() && !this.stFl', 'return !this.stFl'], // #41 retarget: the Body's acceptance (#43: built on your acceptsCast)
   ['the body never reads its slot keys', LD, '    this.takeSlotInput();\n', ''],
-  ['the sim pass runs before the body', LD, '    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt }; // state the Decider reads (its edge unstick, #41)\n    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());', '    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());\n    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt };'],
+  ['the sim pass runs before the body', LD, '    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt }; // state the Decider reads (its edge unstick, #41)\n    this.tickSlotLock(dt);\n    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());', '    if (!this.dead) G.GymLeader.SimPass.frame(this, dt, G.Gym.now());\n    super.update(dt);\n    this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt };\n    this.tickSlotLock(dt);'], // #43 retarget: fieldFrame
   ['the first wait is hard-coded', LD, 'this.firstWaitLeft = rules.firstWait != null ? rules.firstWait : 0;', 'this.firstWaitLeft = 1.6;'],
   // #41: the Body accepts, the SimPass resolves, through your due handoff
   ['the first wait is ignored by the Body', LD, ' && !(this.firstWaitLeft > 0);', ';'],

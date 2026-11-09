@@ -54,7 +54,7 @@ const M = [
   ['swap previous wins over next', P, "swapDir: () => (G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0),", "swapDir: () => (G.Input.action('swap_prev') ? -1 : G.Input.action('swap_next') ? 1 : 0),"],
   ['Shake off reads the dodge key', P, "shake: () => G.Input.action('shake_off'),", "shake: () => G.Input.action('dodge'),"],
   // game.js asks the controller
-  ['Shake off reads the keyboard', GM, 'if (pl.controller.shake() && G.Status.shake(pl))', "if (G.Input.action('shake_off') && G.Status.shake(pl))"],
+  ['Shake off reads the keyboard', P, 'if (this.controller.shake() && G.Status.shake(this))', "if (G.Input.action('shake_off') && G.Status.shake(this))"], // #43: shakeStep
   // LEADER-AI slice 1: the swap input moved to G.Team.requested, the slot and cycle presses to PlayerEntity.takeSlotInput
   ['the swap direction reads the keyboard', TM, '      const dir = c.swapDir();\n', "      const dir = G.Input.action('swap_next') ? 1 : G.Input.action('swap_prev') ? -1 : 0;\n"],
   ['the direct swap key reads the keyboard', TM, '        n = c.swapSlot();', "        n = [0, 1, 2, 3, 4, 5].findIndex((k) => G.Input.action('swap_' + (k + 1)));"],

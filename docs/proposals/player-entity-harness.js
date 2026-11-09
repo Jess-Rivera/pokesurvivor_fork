@@ -123,7 +123,7 @@ ok(Object.getPrototypeOf(HP.prototype) === PE.prototype, 'HumanPlayer extends Pl
   ok(h instanceof PE && h instanceof HP && e instanceof PE && !(e instanceof HP), 'a human is a Player entity; a bare entity is not a human');
   ok(h.isPlayer === true && e.isPlayer === true, 'isPlayer (follows Player entity rules) is true on both');
 }
-const want = ['aimFallback', 'aimTargets', 'constructor', 'controller', 'dmgTakenScale', 'gainXp', 'netUpdate', 'onHurtFeel', 'onSwitchFeel', 'syncLevel']; // dmgTakenScale: slice 4a (H2); onSwitchFeel: slice 8 (Q8)
+const want = ['aimFallback', 'aimTargets', 'autoShakeOn', 'constructor', 'controller', 'dmgTakenScale', 'gainXp', 'netUpdate', 'onHurtFeel', 'onSwitchFeel', 'syncLevel']; // dmgTakenScale: slice 4a (H2); onSwitchFeel: slice 8 (Q8)
 const own = Object.getOwnPropertyNames(HP.prototype).sort();
 ok(JSON.stringify(own) === JSON.stringify(want), 'HumanPlayer adds only the human parts: ' + own.join(' '));
 ok(PE.prototype.gainXp === undefined && PE.prototype.netUpdate === undefined, 'gainXp and the co-op follow are the human only');
@@ -311,7 +311,8 @@ ok(HP.prototype.controller === HP.KEYBOARD, 'the human defaults to the KEYBOARD 
   // LEADER-AI slice 1: the controller's swap input is read by G.Team.requested, the same for a leader's AI player
   const tm = read('js/systems/team.js');
   ok(/const j = runTeam\.requested\(pl\.controller\);/.test(hs) && /n = c\.swapSlot\(\);/.test(tm) && /const dir = c\.swapDir\(\);/.test(tm), 'handleSwap asks the controller for the slot key and the direction (through G.Team.requested)');
-  ok(/if \(pl\.controller\.shake\(\) && G\.Status\.shake\(pl\)\)/.test(g) && !g.includes("G.Input.action('shake_off')"), 'Shake off asks the controller');
+  // #43 step B: the shake is one Player entity step (shakeStep), called by game.js at your swap point
+  ok(/pl\.shakeStep\(dt\);/.test(g) && /if \(this\.controller\.shake\(\) && G\.Status\.shake\(this\)\)/.test(ps) && !g.includes("G.Input.action('shake_off')"), 'Shake off asks the controller');
   // LEADER-AI slice 1: the slot and cycle presses are PlayerEntity.takeSlotInput, the same for a leader's AI player
   const pe = read('js/entities/player.js');
   ok(/if \(state !== 'playing' \|\| !pl\) return;\s*(\/\/[^\n]*\n\s*)*pl\.takeSlotInput\(\);\s*\}/.test(g) && /takeSlotInput\(\) \{\s*const c = this\.controller;\s*for \(const i of c\.slots\(\)\) this\.setActive\(i\);\s*for \(const d of c\.cycles\(\)\) this\.cycle\(d\);\s*\}/.test(pe), 'in play, the slot and cycle keys come from the controller, each once, then the handler ends');

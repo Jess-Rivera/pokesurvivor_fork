@@ -273,9 +273,9 @@ G.GymArena = (() => {
    *  beat, and the lowest living slot takes the fainted spot (G.Team.sendIn: 0.5 s i-frames, the lock cleared). Wipe: the win. */
   function teamTick(dt) {
     const t = arena.team;
-    t.tickLock(dt);
     t.benchTick(dt, benchFaint);
-    if (!t.active.dead) return t.ai.swapFrame((c) => voluntary(t, t.requested(c)));
+    if (!t.active.dead) return; // the lock and the voluntary swap run in the leader's own frame (swapStep, #43)
+    t.tickLock(dt);
     const redo = !t.living().length && G.GymLeader.redoReady(t); // slice 7b (Q3): the wipe waits for Re-Do
     if (!t.living().length && !redo) {
       G.Coop.isHost && G.Coop.broadcast(['aw']);
@@ -296,22 +296,35 @@ G.GymArena = (() => {
     G.Audio.sfx('boss');
   }
 
+  /** The swap point of the leader's frame, as your handleSwap in game.js (#43 step B, decision
+   *  2026-11-09-42-one-swap-clock-and-one-swap-point): the team's swap lock runs down, then its AI player's swap answer is read. Called
+   *  by the active leader mon after its slot keys, before its body. Returns the incoming mon when a swap landed (it runs the rest of the
+   *  frame), else null. */
+  function swapStep(t, dt) {
+    if (!arena || arena.team !== t || arena.phase !== 'fight' || t.active.dead) return null;
+    t.tickLock(dt);
+    let next = null;
+    t.ai.swapFrame((c) => (next = voluntary(t, t.requested(c)) || null));
+    return next;
+  }
+
   /** LEADER-AI slice 1: the AI player's swap request for member j (-1 none), checked by your rules (G.Team.canSwap: the 5 s lock,
    *  trap, Fly). The outgoing mon's shapes end and it leaves the enemy list for the bench, standing; the incoming one takes its spot
-   *  with the 0.5 s i-frames (G.Team.swap). The spec's look: the ring and the line, no camera kick, no boss sound. */
+   *  in the list and on the field with the 0.5 s i-frames (G.Team.swap). The spec's look: the ring and the line, no camera kick, no
+   *  boss sound. Returns the incoming mon. */
   function voluntary(t, j) {
-    if (j < 0 || t.canSwap(j) !== 'ok') return;
+    if (j < 0 || t.canSwap(j) !== 'ok') return null;
     const out = t.active;
     G.MoveSim.clear(out); // as your swap (move-route.js): the benched one's shapes, commitments, heal over time and shield end
     out.tell = null;
     const next = t.swap(j);
-    G.EnemyMgr.remove(out);
     next.flying = false;
-    G.EnemyMgr.add(next);
+    G.EnemyMgr.replace(out, next); // in place: the swap lands inside the enemy list's update, which must skip no one
     arena.bossId = next.id;
     G.FX.ring(next.x, next.y, 6, 70, G.U.TYPE_COLOR[next.types[0]] || '#ffd95e', 0.4, 4);
     G.Spawner.say(arena.gym.leader + ' switches to ' + next.name + '!', 2.4);
     t.ai.arrived(true);
+    return next;
   }
 
   /** LEADER-AI slice 2 (COMBAT-RULES "LEADER VOLUNTARY SWAPS"): a leader mon that faints on the bench pays you like any kill, once and
@@ -410,6 +423,7 @@ G.GymArena = (() => {
   return {
     reset,
     update,
+    swapStep,
     drawable,
     onEvent,
     openGate,

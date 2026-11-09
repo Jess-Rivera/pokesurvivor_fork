@@ -1630,6 +1630,20 @@
     function get(id) {
       return byId.get(id);
     }
+    /** `next` takes `out`'s place in the list (a leader's voluntary swap, #43): safe inside update(), which neither skips anyone nor
+     *  runs `next` again this frame. */
+    function replace(out, next) {
+      const i = list.indexOf(out);
+      if (i < 0) return add(next);
+      list[i] = next;
+      byId.delete(out.id);
+      byId.set(next.id, next);
+      if (G.Coop.isHost) {
+        G.Coop.enemyGone(out, false);
+        G.Coop.enemyAdded(next);
+      }
+      return next;
+    }
     /** Takes a living unit out of the list, no corpse (a leader mon going to the bench, LEADER-AI slice 1). */
     function remove(e) {
       byId.delete(e.id);
@@ -1911,6 +1925,7 @@
       clear,
       all,
       add,
+      replace,
       get,
       remove,
       addRemote,
