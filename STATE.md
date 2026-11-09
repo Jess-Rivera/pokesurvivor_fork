@@ -1,16 +1,15 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-09, Claude Code (home), #40 built.
+Updated 2026-11-09, Claude Code (home), #40 shipped.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess feel-tests #40 (Needs Playtest): leaders attack at once (firstWait 0); a sleep mid wind-up cancels it.
-3. Then #41 (cleanup, ready): open it with goal, done check and test. Then #42 (Jess rules each item), then #39.
+2. Open #41 (cleanup, ready) with goal, done check and test. Then #42 (Jess rules each item), then #39.
 
 ## Where we are
-- #40 built 2026-11-09: the leader's frame runs your flow (decide, hands, body, sim pass; decision
+- #40 shipped 2026-11-09 (feel test passed): the leader's frame runs your flow (decide, hands, body, sim pass; decision
   2026-11-09-every-player-entity-runs-one-flow-decide-hands-body-sim; LEADER-AI "FRAME"). The AI has no stun gate;
   the body refuses movement, dodge and a new wind-up; slot presses and swaps land; timers keep running; a stun mid
   wind-up cancels it. `firstWait` restriction, 0 when absent (2026-11-09-leader-first-attack-wait-defaults-to-0).

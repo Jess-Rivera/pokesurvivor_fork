@@ -405,4 +405,4 @@ Older entries (before 2026-11-03) were rotated to docs/DEVLOG-archive.md on 2026
 - Built #40: G.LeaderAI decides with no stun gate, slot presses are queued controller answers; G.GymLeader reads its keys, runs the body, then Caster.frame (first wait, stun cancel with freshness restored, G.MoveSim.turn, the tell); the `firstWait` restriction and validator.
 - Tests first: leader-ai-harness section 12 (508 pass), leader-ai-mutate 102/102 (10 new); gym-leader, leader-slots and leader-team harness and mutate sets adapted (one already-stale pattern fixed); smoke-gym passes on file://.
 - Both parity traces re-recorded: the order shift alone is at most 2 frames and 5.5 px a cast (one Brock reach-edge flip in the slice 1 trace), then firstWait 0.
-- Stopped at: #40 in Needs Playtest; next #41.
+- Jess feel-tested #40: passed; closed and shipped. Stopped at: next #41.
