@@ -333,7 +333,8 @@ G.MoveEffects = (() => {
     const def = inst.spec,
       b = blowOf(inst, pl, rng),
       hp0 = pl.hp;
-    b.neutral = !!pl.isRival && def.category === 'status'; // slice 5: on a gym leader a status-category hit divides by the neutral 50, as on a wild entity
+    // #41: a status-category hit takes your rule on a leader too, unless its gym authors wildStatusDivisor (the wild neutral 50)
+    b.neutral = !!pl.isRival && def.category === 'status' && pl.rule('wildStatusDivisor') === true;
     b.cat = def.category === 'special' ? 'special' : 'physical'; // a Player entity's defense knows physical and special only
     b.who = G.Log.on ? G.Log.who(b.owner, def.id) : null;
     b.itemMul = G.Stats.itemDmgMul(b.owner, def.type, typeK(b.owner, def.type, pl)); // slice 5: the attacker's Expert Belt and type items (a leader has none yet)

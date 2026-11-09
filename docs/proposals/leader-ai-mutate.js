@@ -15,8 +15,9 @@ const AI = 'js/entities/leader-ai.js',
   LD = 'js/entities/gym-leader.js',
   BR = 'js/entities/boss-ai.js',
   GY = 'js/data/gyms.js',
-  SM = 'js/systems/move-sim.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM' };
+  SM = 'js/systems/move-sim.js',
+  EF = 'js/systems/move-effects.js';
+const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
 const M = [
   // slice 5a (#34): a leader on your sim scheduler
   ['your scheduler ignores castDue', SM, '(o.castDue ? o.castDue(slot, def, now) : castSlot(o, slot, def, now))', 'castSlot(o, slot, def, now)'],
@@ -34,6 +35,9 @@ const M = [
   ['a slot press is answered once for good', AI, '        this.slotQ = [];\n        return q;', '        return q;'],
   ['the validator ignores firstWait', GY, "if (rules.firstWait != null && !(typeof rules.firstWait === 'number' && rules.firstWait >= 0))", 'if (false)'],
   // #41 (decision 2026-11-09-four-roles-decider-controller-body-sim-pass): each role does only its own job
+  ['a leader always takes the wild divisor', EF, " && pl.rule('wildStatusDivisor') === true;", ';'],
+  ['a leader never takes the wild divisor', EF, " && pl.rule('wildStatusDivisor') === true;", ' && false;'],
+  ['the validator ignores wildStatusDivisor', GY, "if (rules.wildStatusDivisor != null && typeof rules.wildStatusDivisor !== 'boolean')", 'if (false)'],
   ['the AI keeps its stun exception', AI, 'const free = !this.busy(e);', 'const free = G.Status.stunned(e) || !this.busy(e);'],
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],

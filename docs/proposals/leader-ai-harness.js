@@ -93,7 +93,7 @@ try {
 const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const NEW = ['js/systems/leader-info.js', 'js/entities/leader-ai.js'];
 // leader-ai-mutate.js points one of these at a broken copy
-const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM' };
+const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM', 'js/systems/move-effects.js': 'LA_EFFECTS' };
 const missing = [];
 for (const p of FILES) {
   const alt = OVERRIDE[p] && process.env[OVERRIDE[p]];
@@ -2118,6 +2118,8 @@ if (built2) {
       delete e.isRival;
       ok(near(mine.lost, yours.lost, 1e-9), '13f: it deals what the same hit deals on you: ' + mine.lost.toFixed(3) + ' vs ' + yours.lost.toFixed(3));
       g.restrictions = Object.assign({}, old, { wildStatusDivisor: true });
+      const live = e.gym.restrictions;
+      e.gym.restrictions = g.restrictions; // the leader was built before the edit: hand it the authored set
       try {
         e.hp = e.maxHp;
         e.invuln = 0;
@@ -2128,6 +2130,7 @@ if (built2) {
         ok(errs({ wildStatusDivisor: 1 }).some((x) => /wildStatusDivisor/.test(x)), '13f: and rejects anything else');
       } finally {
         g.restrictions = old;
+        e.gym.restrictions = live;
       }
     }
     // 13g. item 6: a self heal is the Decider's choice. The SimPass casts a due heal whenever the Body accepts it, as yours (full HP

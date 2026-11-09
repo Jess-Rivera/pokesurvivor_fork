@@ -713,7 +713,7 @@ G.PlayerEntity = class PlayerEntity {
             : G.Stats.defense(defB, this.level, this.statIv(2), this.statEv(2), this.statNat(2))) * defMul;
       }
       amount = atk.neutral
-        ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader (slice 5): the neutral denominator, as on a wild entity
+        ? (amount / G.Stats.PROP_DEF + 2) * scale * mul // a status-category hit on a gym leader that authors wildStatusDivisor (#41): the neutral denominator
         : G.Stats.applyPlayerDefense(amount, defB, spdB, atk.cat, this.level, defMul, this.statProf, stab, scale) * mul;
     }
     const afterDef = amount;
