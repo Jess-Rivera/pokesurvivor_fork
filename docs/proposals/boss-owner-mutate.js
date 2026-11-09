@@ -54,7 +54,7 @@ const M = [
   ['the nova reach is its starting radius', 'gyms', [["if (form === 'nova') return d.delivery.grow.max;", "if (form === 'nova') return d.space.radRadius;"]]],
   ['a shot reaches its range, not its flight', 'gyms', [["if (form !== 'shot') return range;", 'return range;']]],
   ['a long shot is not capped at its range', 'gyms', [['return life ? Math.min(range, ', 'return life ? (']]],
-  ['far mode ignores a short ready shot', 'brain', [['const out = Math.min(FAR, this.ranged() - SHOT_IN)', 'const out = FAR']]],
+  ['far mode ignores a short ready shot', 'brain', [['let out = Math.min(FAR, this.ranged() - SHOT_IN)', 'let out = FAR']]],
   ['far mode closes in to the shot reach with no band', 'brain', [['inn = Math.min(NEAR, out - BAND);', 'inn = NEAR;']]],
   ['the brain never picks a nova', 'brain', [["const ORDER = ['melee', 'nova', 'multi',", "const ORDER = ['melee', 'multi',"]]],
   ['the strike follows the player instead of the locked spot', 'brain', [["form === 'delayed' ? { x: pl.x, y: pl.y } : null;", "form === 'delayed' ? pl : null;"]]],
