@@ -549,7 +549,7 @@ reset();
 }
 
 // 11. edge unstick (Jess 2026-11-07, docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt). Hand-derived from the map:
-// stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
+// #41: the Decider's (G.LeaderAI), its state per mon in legsOf. stuck = moved under 35% of the heading's step for over 0.35 s; side-step 0.7 s at 1.25 rad; smart side by look-ahead.
 {
   reset();
   human.x = 0;
@@ -568,6 +568,9 @@ reset();
     }
     return hit;
   };
+  const L = (e) => e.ai.legsOf(e),
+    stepping = (e) => L(e).sideStepT > 0,
+    stuck = (e) => L(e).stuckT || 0;
   const run = (e, secs) => {
     for (let i = 0; i < Math.round(secs / DT); i++) e.update(DT, human);
   };
@@ -577,10 +580,10 @@ reset();
   a.ai.steer = () => [0, -1];
   a.ai.legsOf(a).side = -1;
   run(a, 0.3);
-  ok(a.sideT <= 0, 'unstick: no side-step after 0.3 s pinned');
+  ok(!stepping(a), 'unstick: no side-step after 0.3 s pinned');
   run(a, 0.1);
-  ok(a.sideT > 0, 'unstick: pinned 0.4 s, she side-steps');
-  ok(a.side === -1, 'unstick: both sides open, she takes the side she circles: ' + a.side);
+  ok(stepping(a), 'unstick: pinned 0.4 s, she side-steps');
+  ok(L(a).sideStepWay === -1, 'unstick: both sides open, she takes the side she circles: ' + L(a).sideStepWay);
   const x0 = a.x;
   run(a, 0.2);
   ok(a.x < x0 - 5, 'unstick: the side-step slides her west along the wall: ' + (a.x - x0).toFixed(1));
@@ -590,7 +593,7 @@ reset();
   b.ai.steer = () => [0, -1];
   b.ai.legsOf(b).side = 1;
   run(b, 0.4);
-  ok(b.sideT > 0 && b.side === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + b.side);
+  ok(stepping(b) && L(b).sideStepWay === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + L(b).sideStepWay);
   // c. moving freely she never side-steps
   G.World.collide = () => false;
   const c = leader();
@@ -598,7 +601,7 @@ reset();
   let stepped = false;
   for (let i = 0; i < 120; i++) {
     c.update(DT, human);
-    if (c.sideT > 0) stepped = true;
+    if (stepping(c)) stepped = true;
   }
   ok(!stepped && c.x > 10, 'unstick: moving freely she never side-steps (moved ' + Math.round(c.x) + ')');
   // d. frames that do not count: no heading (attacking or stunned), and a flinch moving her
@@ -606,15 +609,15 @@ reset();
   const d = leader();
   d.ai.steer = () => [0, 0];
   run(d, 1);
-  ok(d.stuckT === 0 && d.sideT <= 0, 'unstick: standing still (attacking, stunned) is never stuck');
+  ok(stuck(d) === 0 && !stepping(d), 'unstick: standing still (attacking, stunned) is never stuck');
   const f = leader();
   f.heading = [0, -1];
   f.stFl = { t: 1 };
-  for (let i = 0; i < 60; i++) f.noteStuck(DT, f.x, f.y);
-  ok(f.stuckT === 0 && f.sideT <= 0, 'unstick: a flinch frame is never stuck');
+  for (let i = 0; i < 60; i++) f.ai.noteStuck(f, DT, 0);
+  ok(stuck(f) === 0 && !stepping(f), 'unstick: a flinch frame is never stuck');
   f.stFl = null;
-  for (let i = 0; i < 30; i++) f.noteStuck(DT, f.x, f.y);
-  ok(f.sideT > 0, 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
+  for (let i = 0; i < 30; i++) f.ai.noteStuck(f, DT, 0);
+  ok(stepping(f), 'unstick: the same frames with no flinch are stuck (so the check above is not vacuous)');
   G.World.collide = collide0;
 }
 

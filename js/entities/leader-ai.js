@@ -110,10 +110,13 @@ G.LeaderAI = class LeaderAI {
   /** One frame for mon `e`, the decider's part of the flow (#40, decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-
    *  body-sim): it decides, and its answers wait in the controller for the body, which follows them under its rules (a stun refuses
    *  the heading and the dodge, as yours), then the sim pass resolves. It decides while stunned too, as you can press keys asleep.
-   *  The heading (with the body's edge unstick on top) and the slot choice come from steer; then the dodge watch every frame, the
-   *  swap choice on the think tick. */
+   *  The heading (with its edge unstick on top, #41: the Decider's, read from how far the last frame moved her) and the slot choice
+   *  come from steer; then the dodge watch every frame, the swap choice on the think tick. */
   think(e, dt, pl) {
-    e.heading = e.unstick(dt, this.steer(e, dt, pl));
+    const L = this.legsOf(e),
+      step = e.lastStep;
+    if (step && L.lastHeading) this.noteStuck(e, step.dt, step.moved, L.lastHeading);
+    e.heading = this.unstick(e, dt, this.steer(e, dt, pl));
     this.clock += dt;
     this.fieldT += dt;
     this.feel(e, dt);
@@ -136,6 +139,80 @@ G.LeaderAI = class LeaderAI {
       if (free) this.fireTriggers(e);
     }
     this.flushLines();
+    L.lastHeading = e.heading; // the next think reads how far the body's step moved her along it (e.lastStep)
+  }
+
+  // ---------------- edge unstick (Jess 2026-11-07, map: docs/ASCII Concept Maps/Gym Leader - Edge Unstick.txt) ----------------
+  // The wild body's side-step (enemy.js), plus a smart side. Walls already slide her (G.World.collide); this frees her on corners.
+  // #41: the Decider's, so it comes out as heading; the state is per mon in legsOf (stuckT, sideStepT, sideStepWay).
+
+  /** While a side-step lasts, the heading turns UNSTICK.turn rad toward its way. */
+  unstick(e, dt, h) {
+    const L = this.legsOf(e);
+    if (!(L.sideStepT > 0)) return h;
+    L.sideStepT -= dt;
+    if (!h[0] && !h[1]) return h;
+    const a = Math.atan2(h[1], h[0]) + L.sideStepWay * LeaderAI.UNSTICK.turn,
+      m = Math.hypot(h[0], h[1]);
+    return [Math.cos(a) * m, Math.sin(a) * m];
+  }
+  /** After a body step that moved her `moved` px with `heading` over dt (her own step only, as the Body records it): moving under
+   *  UNSTICK.slip of what the heading meant, for over UNSTICK.stuck s, starts a side-step. */
+  noteStuck(e, dt, moved, heading = e.heading) {
+    const U = LeaderAI.UNSTICK,
+      L = this.legsOf(e),
+      [hx, hy] = heading;
+    if (e.dead || this.stuckFree(e, hx, hy)) {
+      L.stuckT = 0;
+      return;
+    }
+    const want = Math.hypot(hx, hy) * e.spd * dt,
+      got = moved;
+    if (want <= 0.5 || got >= want * U.slip) {
+      L.stuckT = 0;
+      return;
+    }
+    L.stuckT = (L.stuckT || 0) + dt;
+    if (L.stuckT > U.stuck && !(L.sideStepT > 0)) {
+      L.sideStepT = U.side;
+      L.stuckT = 0;
+      L.sideStepWay = this.pickSide(e, heading);
+    }
+  }
+  /** Frames that never count as stuck: no heading (attacking, stunned), or something else moves her (dash, flinch, push, dodge,
+   *  Fly), a root holds her, or ice is sliding her. */
+  stuckFree(e, hx, hy) {
+    if (!hx && !hy) return true;
+    if (e.mvRoot || e.stFl || e.stPush || e.dodgeT > 0 || e.flyT > 0 || e.frozen) return true;
+    if (G.Status.stunned(e) || G.Status.rooted(e)) return true;
+    return e.inLiquid && !!G.World.liquidEffect(e.mon.types).slide;
+  }
+  /** The side with more room one probe ahead; about even, the side she circles; both shut, random. */
+  pickSide(e, heading) {
+    const U = LeaderAI.UNSTICK,
+      l = this.probeSide(e, -1, heading),
+      r = this.probeSide(e, 1, heading);
+    if (Math.max(l, r) < U.shut) return Math.random() < 0.5 ? -1 : 1;
+    if (Math.abs(l - r) < U.tie) return this.legsOf(e).side < 0 ? -1 : 1;
+    return l > r ? -1 : 1;
+  }
+  /** How far a test circle of her radius gets in UNSTICK.probe px along the heading turned toward way s. */
+  probeSide(e, s, [hx, hy]) {
+    const U = LeaderAI.UNSTICK,
+      a = Math.atan2(hy, hx) + s * U.turn;
+    return this.room(e, Math.cos(a), Math.sin(a), U.probe);
+  }
+  /** The open floor she sees along the unit way (dx, dy): how far a test circle of her radius gets in `dist` px, sliding on walls in
+   *  8 px steps. The edge unstick and the dodge side (LEADER-AI DODGE DIRECTION) read it. */
+  room(e, dx, dy, dist) {
+    const b = { x: e.x, y: e.y, r: e.r },
+      n = Math.ceil(dist / 8);
+    for (let k = 0; k < n; k++) {
+      b.x += (dx * dist) / n;
+      b.y += (dy * dist) / n;
+      G.World.collide(b);
+    }
+    return Math.hypot(b.x - e.x, b.y - e.y);
   }
   /** Where to go (slice 5a: moved off GymBrain unchanged): the way to you (around walls, G.Path) at speed 1, so the answer is a
    *  heading for the controller. The slot choice is pressed first (an answer the body reads, #40); while the body is held (a tell
@@ -577,9 +654,9 @@ G.LeaderAI = class LeaderAI {
     const [ux, uy] = G.U.norm(th.vx, th.vy),
       off = (e.x - th.x) * -uy + (e.y - th.y) * ux, // > 0: the body is on the (-uy, ux) side of the path
       D = G.PlayerEntity.DODGE.dist,
-      l = e.room(-uy, ux, D),
-      r = e.room(uy, -ux, D),
-      left = Math.abs(l - r) < G.GymLeader.UNSTICK.tie ? off >= 0 : l > r;
+      l = this.room(e, -uy, ux, D),
+      r = this.room(e, uy, -ux, D),
+      left = Math.abs(l - r) < LeaderAI.UNSTICK.tie ? off >= 0 : l > r;
     return this.lean(e, left ? [-uy, ux] : [uy, -ux]);
   }
   /** LEADER-AI DODGE DIRECTION, slice 3: the dodge turns by (aggr - 0.5) x 2 x `lean` degrees, toward you above 0.5 (never past
@@ -844,6 +921,9 @@ G.LeaderAI = class LeaderAI {
   }
 };
 G.LeaderAI.NONE = Object.freeze([]);
+/** Edge unstick numbers (Jess 2026-11-07). slip, stuck, side, turn: the wild body's (enemy.js). probe, tie, shut (px): the
+ *  smart side's look-ahead, the gap that counts as even, and the room below which a side counts as shut. */
+G.LeaderAI.UNSTICK = Object.freeze({ slip: 0.35, stuck: 0.35, side: 0.7, turn: 1.25, probe: 24, tie: 4, shut: 4 });
 G.LeaderAI.EPS = 1e-6;
 G.LeaderAI.FAR = 99; // the matchup ratio when your mon cannot be hurt by the one on the field (offense 0)
 G.LeaderAI.LOG_N = 40;

@@ -17,14 +17,14 @@ const LD = 'js/entities/gym-leader.js',
   AI = 'js/entities/leader-ai.js';
 const ENV = { [AI]: 'GL_AI', [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
 const M = [
-  // edge unstick (Jess 2026-11-07)
-  ['no edge side-step', AI, 'e.unstick(dt, this.steer(e, dt, pl));', 'this.steer(e, dt, pl);'], // LEADER-AI slice 1 retarget
-  ['the stuck test never runs', LD, 'this.noteStuck(dt, ox, oy);', ''],
-  ['no wait before the side-step', LD, 'if (this.stuckT > U.stuck && this.sideT <= 0) {', 'if (this.sideT <= 0) {'],
-  ['moving freely counts as stuck', LD, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],
-  ['a flinch counts as stuck', LD, 'if (this.mvRoot || this.stFl || ', 'if (this.mvRoot || '],
-  ['the smart side is ignored', LD, 'return l > r ? -1 : 1;', 'return this.brain.side < 0 ? -1 : 1;'],
-  ['the circling side is ignored', LD, 'return this.ai.legsOf(this).side < 0 ? -1 : 1;\n', 'return 1;\n'],
+  // edge unstick (Jess 2026-11-07; #41: the Decider's, G.LeaderAI)
+  ['no edge side-step', AI, 'e.heading = this.unstick(e, dt, this.steer(e, dt, pl));', 'e.heading = this.steer(e, dt, pl);'],
+  ['the stuck test never runs', AI, '    if (step && L.lastHeading) this.noteStuck(e, step.dt, step.moved, L.lastHeading);\n', ''],
+  ['no wait before the side-step', AI, 'if (L.stuckT > U.stuck && !(L.sideStepT > 0)) {', 'if (!(L.sideStepT > 0)) {'],
+  ['moving freely counts as stuck', AI, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],
+  ['a flinch counts as stuck', AI, 'if (e.mvRoot || e.stFl || ', 'if (e.mvRoot || '],
+  ['the smart side is ignored', AI, 'return l > r ? -1 : 1;', 'return this.legsOf(e).side < 0 ? -1 : 1;'],
+  ['the circling side is ignored', AI, 'return this.legsOf(e).side < 0 ? -1 : 1;\n', 'return 1;\n'],
   // the class and the switch
   ['the switch is ignored', BR, 'if (def.gym && def.gym.playerEntity) return new G.GymLeader(def, x, y);', ''],
   ['every gym takes the leader body', BR, 'if (def.gym && def.gym.playerEntity) return', 'if (def.gym) return'],
