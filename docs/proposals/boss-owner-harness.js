@@ -127,7 +127,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   ok(h === G.MoveDefs.harden, 'no card fits Harden, so it runs the frozen def');
   ok(G.MoveDefs.tackle.basePower === 40 && G.MoveDefs['rock-throw'].space.count === 1, 'the frozen defs are untouched');
   ok(e.foes().length === 1 && e.foes()[0] === pl, 'the player is its only foe'); pl.dead = true; ok(e.foes().length === 0, 'a fainted player is no foe'); pl.dead = false;
-  ok(e.strongHost === true && near(e.cdMul, 1) && near(G.MoveEffects.gateMulOf(e), S.STRONG_HOST_GATE_MUL), 'a strong host: the strong-host Gate multiplier, cdMul 1 at tempo 1');
+  ok(!('strongHost' in e) && S.STRONG_HOST_GATE_MUL === undefined && near(e.cdMul, 1) && near(G.MoveEffects.gateMulOf(e), 1), 'your Gate (#45): no strong-host flag or multiplier, a cardless boss has Gate multiplier 1, cdMul 1 at tempo 1');
   ok(near(G.MoveEffects.gateMulOf({}), 1), 'an owner with no cards and not a strong host keeps the base Gate');
   console.log('2 owner: player size, Tackle 52 / 70.2 px / cd 0.5, Rock Throw 58.5 x3 rocks 11.7 px at 377 px/s / cd 1.167, Harden unfolded, the player is its only foe'); }
 
@@ -258,7 +258,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
   // foe drops on your own tracker, the leader's own raise and drain
   { fresh(); const e = boss(['mud-shot']), src = G.MoveEffects.srcOf(e.brain.def('mud-shot'), e);
     hitWith(e, 'mud-shot', 0.99); const t = S.tracker(pl, 'spe', src, false);
-    ok(S.stage(pl, 'spe') === -1 && t && near(t.g, 6 * S.STRONG_HOST_GATE_MUL), 'Mud Shot: Speed -1 on your own tracker, the strong-host Gate (6 s): ' + JSON.stringify(t));
+    ok(S.stage(pl, 'spe') === -1 && t && near(t.g, 6), 'Mud Shot: Speed -1 on your own tracker, your plain Gate (6 s): ' + JSON.stringify(t));
     hitWith(e, 'mud-shot', 0.99); ok(S.stage(pl, 'spe') === -1, 'a second hit inside the Gate only refreshes'); }
   { fresh(); const e = boss(['metal-claw']); hitWith(e, 'metal-claw', 0.99); ok(S.stage(e, 'atk') === 0, 'Metal Claw, roll 0.99: no raise');
     hitWith(e, 'metal-claw', 0); ok(S.stage(e, 'atk') === 1 && e.trk && e.trk.atk && S.stage(pl, 'atk') === 0, "Metal Claw, roll 0: Attack +1 on the leader's own tracker, none on you"); }

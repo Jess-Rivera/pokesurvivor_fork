@@ -59,7 +59,7 @@ const M = [
   ['the heading never reaches the controller', AI, 'axis: () => this.active.heading,', 'axis: () => [0, 0],'], // LEADER-AI slice 1 retarget
   ['no self heal restriction', LD, 'rules.healLimit != null ? rules.healLimit : ', ''],
   ['tells cannot be turned off', LD, "return this.rule('tells') !== false;", 'return true;'], // #41 retarget: the Body's tellsOn
-  ['the caster installs heal on the leader', LD, '    this.strongHost = true;\n', '    this.strongHost = true;\n    this.heal = (n) => n;\n'], // slice 5a, #41 retarget
+  ['the caster installs heal on the leader', LD, '    this.aim = 0;\n', '    this.aim = 0;\n    this.heal = (n) => n;\n'], // slice 5a, #41 retarget, #45 retarget
   ['flinch keeps the old D5 rule', LD, '    this.tell = null;\n    G.MoveSim.flinch(this);', '    this.tell = null;\n    this.firstWaitLeft = 1;'], // slice 8, 5a, #41 retarget
   ['flinch keeps the tell', LD, '    this.tell = null;\n    G.MoveSim.flinch(this);', '    G.MoveSim.flinch(this);'], // slice 8, 5a, #41 retarget
   ['an asleep leader flinches', LD, 'applyFlinch() {\n    if (this.dead || G.Status.stunned(this)) return false;', 'applyFlinch() {\n    if (this.dead) return false;'],

@@ -100,7 +100,6 @@ G.Boss = (() => {
       this.tells = rules.tells !== false;
       this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1); // self heals this mon may cast this fight: by default the loop number (Jess 2026-11-05)
       e.aim = 0;
-      e.strongHost = true;
       e.foes = () => {
         const p = G.Game.player;
         return p && !p.dead ? [p] : [];

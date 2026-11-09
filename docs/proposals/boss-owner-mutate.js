@@ -31,7 +31,6 @@ const M = [
   ['a hit on the player names it as an enemy', 'sim', [['enemyId: o.foes ? null : e.id', 'enemyId: e.id']]],
   ['the player takes the knockback', 'fx', [['hp0 = pl.hp;', 'hp0 = pl.hp; pl.x += 20;']]],
   ['a team raise with no team store is lost', 'fx', [["const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;", "const teamOf = (fx, o) => fx.scope === 'team';"]]],
-  ['the strong-host Gate multiplier is dropped', 'fx', [['* (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1)', '* (o.strongHost ? 2 : 1)']]],
   ['ailments skip the player', 'fx', [['    ailment: ailPlayer,', '    ailment: inDamage,']]],
   ['burn and poison go through the control table', 'fx', [['if (DOT.has(fx.id)) {', 'if (false) {']]],
   ['foe drops skip the player', 'fx', [['    flinch: flinchPlayer,\n    stat,', '    flinch: flinchPlayer,\n    stat: inDamage,']]],

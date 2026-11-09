@@ -38,11 +38,10 @@ G.Stages = (() => {
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // ---- stat stage trackers (slice 5a): base timers SS7, Self-drop Gate SS12, Strong-host Gate SS13 (dormant until slice 7a) ----
+  // ---- stat stage trackers (slice 5a): base timers SS7, Self-drop Gate SS12 ----
   const GATE = 6.0,
     DURATION = 6.1,
-    SELF_DROP_GATE_MUL = 2,
-    STRONG_HOST_GATE_MUL = 1;
+    SELF_DROP_GATE_MUL = 2;
   /** The Gate a success climbs on: the base Gate, x2 for a drop a Pokemon puts on itself (SS12), x `mul` (slice 5b, SS10: the caster
    *  team's Gate card, G.TeamCards.gateMul; 1 for enemies and when omitted). */
   function gateOf(selfDrop, mul = 1) {
@@ -311,7 +310,6 @@ G.Stages = (() => {
     GATE,
     DURATION,
     SELF_DROP_GATE_MUL,
-    STRONG_HOST_GATE_MUL,
     gateOf,
     trackOwn,
     trackTeam,

@@ -88,7 +88,6 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
     for (const id of Object.keys(g.cards || {})) G.TeamCards.add(this.teamCards, id, g.cards[id]);
     this.cdMul = 1 / g.tempo;
     this.aim = 0;
-    this.strongHost = true;
     this.tell = null;
     this.healsLeft = rules.healLimit != null ? rules.healLimit : Math.max(1, Math.floor(g.loop) || 1);
     this.firstWaitLeft = rules.firstWait != null ? rules.firstWait : 0;

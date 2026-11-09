@@ -211,9 +211,8 @@ G.MoveEffects = (() => {
   /** Slice 7a: a team-scope raise lands on the team tracker only when the owner has a team store; a gym leader's mon has none, so its
    *  Harden raises itself (TODO: whether a gym's mons share raises in loop 2+). */
   const teamOf = (fx, o) => fx.scope === 'team' && !!o.stgTeam;
-  /** The Gate multiplier on every stat change `o` causes: its team's Gate card (SS10), times STRONG_HOST_GATE_MUL for a strong host (SS13). */
-  const gateMulOf = (o) =>
-    (o.teamCards ? G.TeamCards.gateMul(o) : 1) * (o.strongHost ? G.Stages.STRONG_HOST_GATE_MUL : 1);
+  /** The Gate multiplier on every stat change `o` causes: its team's Gate card (SS10), as yours (SS13; the strong-host Gate is gone, #45). */
+  const gateMulOf = (o) => (o.teamCards ? G.TeamCards.gateMul(o) : 1);
 
   // SS8 (slice 5a): a pure buff move has no damage and no shape: its payload is only self stat changes (Swords Dance, Agility, Harden,
   // Dragon Dance). It casts when its Gate opens instead of on a cooldown.
