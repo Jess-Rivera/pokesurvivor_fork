@@ -409,25 +409,28 @@ G.MoveSim = (() => {
       !cms.some((m) => m.o === o && m.part === 'movement' && m.type === 'rooted') &&
       (def.delivery.repositionMode !== 'swept' || speedOf(o) * (def.delivery.dashMult || 1) > EPS));
 
-  /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the cast gate. */
+  /** The cast gate after the Body (#47a, decision 2026-11-09-42-leader-attacks-wait-on-your-cast-gate): the targeting gate (AIM), or
+   *  `forced` in its place, then P3 (the cast cost would kill, or a shield is live) and 4c-2 (no dash over a live dash, no dash at speed
+   *  0). The pick, or null when it holds the cast. Pure: no roll and no state change, so a leader's tell can ask it first (gateOpen). */
+  function gateOf(o, def, forced) {
+    const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
+    if (!gate || !G.MoveEffects.canCast(def, o) || !repoCanGo(def, o)) return null;
+    return gate;
+  }
+  /** Would your cast gate let `def` fire for `o` now (gateOf, no `forced`)? A Player-entity leader's tell starts only when it would. */
+  const gateOpen = (o, def) => !!gateOf(o, def, null);
+
+  /** `forced` (slice 7a, castAt): a gym leader's cast with the aim its brain locked at the tell; it replaces the targeting gate. */
   function castSlot(o, slot, def, now, forced) {
     if (o.acceptsCast ? !o.acceptsCast() : G.Status.stunned(o)) {
       slot.t = RETRY;
       return null;
     } // a Player entity's Body refuses a new cast while stunned (#43); any other owner: a stunned one casts nothing. The move stays ready
-    const gate = forced || (AIM[def.delivery.targeting] ? AIM[def.delivery.targeting](o, def) : null);
+    const gate = gateOf(o, def, forced);
     if (!gate) {
       slot.t = RETRY;
       return null;
-    } // cast gate: retry every 0.05 s
-    if (!G.MoveEffects.canCast(def, o)) {
-      slot.t = RETRY;
-      return null;
-    } // P3: the cost would kill, or a shield is live; cooldown not spent
-    if (!repoCanGo(def, o)) {
-      slot.t = RETRY;
-      return null;
-    } // 4c-2: no dash over a live dash, no dash at speed 0
+    } // the cast gate holds: retry every 0.05 s, the cooldown not spent
     const buff = G.MoveEffects.isPureBuff(def); // SS8 (slice 5a): a pure buff has no cooldown; its trackers decide when it casts
     slot.t = buff ? 0 : Math.max(0.05, def.cd * (o.cdMul || 1)); // D3
     if (G.Status.fizzle(o, rng)) {
@@ -1156,6 +1159,8 @@ G.MoveSim = (() => {
     step,
     clear,
     castAt,
+    gateOpen,
+    RETRY, // a refused cast's wait, seconds: a Player-entity leader's refusals wait it too (#47a)
     persist: upkeepPersistent,
     flinch,
     setRng: (fn) => {

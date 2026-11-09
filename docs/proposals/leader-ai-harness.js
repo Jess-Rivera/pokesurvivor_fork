@@ -286,6 +286,11 @@ if (RECORD) {
 // Re-recorded on #43 step B (2026-11-09) for your order (decision 2026-11-09-42-one-swap-clock-and-one-swap-point): only Misty2 moved. Its
 // voluntary swap lands before the body, so the incoming mon walks one frame more (at most 2.2 px, aims within 0.008 rad); the slot hold
 // ticks after the body, so the wind-ups after the swap back start 1 frame later. Same moves in the same order, no cast moved over 1 frame.
+// Re-recorded on #47a (2026-11-09) for your cast gate (decision 2026-11-09-42-leader-attacks-wait-on-your-cast-gate): a refused attack
+// waits your 0.05 s retry instead of being re-asked every frame. Misty1 identical. Misty2: same casts on the same frames, positions
+// within 2.74 px (a refused slot reads 0.05 s on her HUD for 3 frames). Brock1 and Brock2: 7 tells and 9 casts up to 2 frames later
+// (the retry grid), same moves in the same order, positions within 1.9 px, release aims within 0.153 rad (you circle 2 frames more
+// at Tackle range).
 {
   const want = fs.existsSync(TRACE5) ? JSON.parse(fs.readFileSync(TRACE5, 'utf8')) : null;
   ok(want, 'parity 5a: the trace exists (record it on the code before the slice: LA_RECORD5A=1)');
@@ -1913,7 +1918,8 @@ if (built2) {
         const f0 = frameNo;
         frame();
         ok(e.tell == null, '12d: the stun cancels the wind-up');
-        ok(c.slot.t <= 0, '12d: the move stays ready: ' + c.slot.t);
+        // ready: its cooldown is not spent; asleep, the Body refuses it and it waits your 0.05 s retry, as yours (#47a)
+        ok(c.slot.t <= G.MoveSim.RETRY + 1e-9, '12d: the move stays ready (at most your retry wait): ' + c.slot.t);
         ok(marked.every((s) => s.last === lasts.get(s)), '12d: its freshness is restored (a cancelled attack is not a cast)');
         run(0.9);
         ok(!casts.some((k) => k.f > f0 && k.id === c.id && k.owner === e.id), '12d: it never fires while she sleeps');

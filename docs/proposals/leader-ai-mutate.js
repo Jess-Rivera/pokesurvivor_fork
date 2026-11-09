@@ -100,7 +100,7 @@ const M = [
   ['a mon arriving keeps the stance', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", ''],
   ['a swap resets the breather share', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", "this.breathT = 0;\n    if (this.stance !== 'neutral') this.endStance('a mon arrives');"],
   ['a breather picks no quiet slot', AI, 'if (q >= 0) i = q !== e.active ? q : -1;', ''],
-  ['a breather holds back casts', LD, '    if (!pl) return;\n    const near', "    if (!pl || e.ai.stance === 'breather') return;\n    const near"], // #40, #41 retarget: the attack start is the SimPass's
+  ['a breather holds back casts', LD, '    if (!pl || !e.acceptsAttack()', "    if (!pl || e.ai.stance === 'breather' || !e.acceptsAttack()"], // #40, #41, #47a retarget: the attack start is the SimPass's
   ['the stance hold is ignored', BR, "if (this.hold) this.mode = tight ? 'far' : this.hold;", ''],
   // the lean and the gap-closing dodge
   ['no lean', AI, 'if (!p || Math.abs(a) < LeaderAI.EPS) return [dx, dy];', 'return [dx, dy];'],

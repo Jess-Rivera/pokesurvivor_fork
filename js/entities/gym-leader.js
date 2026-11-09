@@ -257,9 +257,9 @@ G.GymLeader = class GymLeader extends G.PlayerEntity {
  *  after the Body. It resolves and decides nothing: the state lives on the Body (G.GymLeader: tell, healsLeft, firstWaitLeft), the
  *  choices are the Decider's (G.LeaderAI picks the slot; nothing below the slot is chosen). What differs from yours is authored
  *  (COMBAT-RULES "Host model"): an attack is telegraphed under the `tells` restriction (a wind-up with the aim locked at its start,
- *  then a recovery, one at a time, standing still), it starts only when you are inside the move's real reach (a shot: how far it
- *  flies; #42 item 11, temporary), and self heals are capped per fight (`healLimit`, else the loop number). Pure buffs and self heals
- *  cast with no tell. The tuning is G.Boss.TUNE, shared with the wild bodies of gyms 3 to 8 until they switch. */
+ *  then a recovery, one at a time, standing still) that starts when your cast gate would let the move fire (#47a, decision
+ *  2026-11-09-42-leader-attacks-wait-on-your-cast-gate), and self heals are capped per fight (`healLimit`, else the loop number). Pure
+ *  buffs and self heals cast with no tell. The tuning is G.Boss.TUNE, shared with the wild bodies of gyms 3 to 8 until they switch. */
 G.GymLeader.SimPass = {
   /** One pass: the first wait runs; a stun cancels an unfired wind-up; then your own sim pass runs for it (G.MoveSim.turn: commitments,
    *  heal over time, every move recharging, inactive slots too, the persistent upkeep), handing each due slot to `due`. A live dash
@@ -275,18 +275,20 @@ G.GymLeader.SimPass = {
   },
   /** A due slot of the active group, handed over by your sim scheduler (G.MoveSim.turn: a cooldown run out, a pure buff's Gate open).
    *  A pure buff casts now, with no tell, even during a wind-up; a self heal casts now while a heal is left (full HP too, as yours); an
-   *  attack starts its wind-up when the Body accepts it (LEADER-AI FRAME: awake, no flinch hold, the first wait over), no wind-up runs,
-   *  no dash carries the body and you are in its reach. Refused, nothing happens: the slot stays due and is handed over again. */
+   *  attack starts its wind-up when no wind-up runs, no dash carries the body, the Body accepts it (LEADER-AI FRAME: awake, no flinch
+   *  hold, the first wait over) and your cast gate would let it fire (G.MoveSim.gateOpen: the same targeting, cost and dash rules as
+   *  yours, #47a). Refused by the Body or the gate, it waits your 0.05 s retry, as yours; while a wind-up or dash runs, it is handed
+   *  over again next frame (one at a time, the authored tell). */
   due(e, s, d, now) {
-    const T = G.Boss.TUNE,
-      form = G.Gyms.formOf(d);
+    const form = G.Gyms.formOf(d);
     if (form === 'buff') return this.buff(e, s, d, now);
     if (form === 'heal') return this.heal(e, s, d, now);
-    if (T.ORDER.indexOf(form) < 0 || e.tell || e.mvRoot || !e.acceptsAttack()) return;
+    if (G.Boss.TUNE.ORDER.indexOf(form) < 0 || e.tell || e.mvRoot) return;
     const pl = e.foes()[0];
-    if (!pl) return;
-    const near = T.CLOSE.includes(form);
-    if (G.U.dist(e.x, e.y, pl.x, pl.y) > G.Gyms.reachOf(d, form) + (near ? pl.r || 0 : 0)) return;
+    if (!pl || !e.acceptsAttack() || !G.MoveSim.gateOpen(e, d)) {
+      s.t = G.MoveSim.RETRY;
+      return;
+    }
     const prev = s.last;
     s.last = now;
     this.start(e, s, d, form, pl);
