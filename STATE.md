@@ -16,7 +16,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
   at most 3 frames on a cast, 4.6 px. Fixed on the way: the inactive recharge skipped by group, not slot.
 - Slices 1 to 4 shipped (#22, #31, #32, #33). Misty aggression 0.68, learnRate 2; Brock 0.35.
 - Test: leader-ai-harness.js (470, two parity traces re-recorded on 5a), leader-ai-mutate.js (92/92).
-- Ruled 2026-11-09: a stunned leader keeps its timers running like yours; fix is #40 (ready).
+- Ruled 2026-11-09: a stunned leader keeps its timers running like yours; fix is #40 (ready, widened: frame takes your shape). Audit follow-ups: #41 cleanup, #42 needs rulings (before #39).
 - #38 swap keeps moves in flight, #37 font swap: filed, not started. #36 item reveals blocked. Roster UI #35.
 - Gyms 3 to 8 stay on the old brain until slice 12. Slice 8 DPS report (Q10) still unread.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30. Lint 0 errors, 72 warnings.
