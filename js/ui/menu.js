@@ -120,7 +120,7 @@ G.MenuUI = (() => {
     for (const n of ['box', 'box-sel']) new Image().src = `assets/ui/upgrades/${n}.png`;
     if (document.fonts) {
       document.fonts.load('16px PokeBW').catch(() => {});
-      document.fonts.load('800 16px Korataki').catch(() => {});
+      document.fonts.load('16px Michroma').catch(() => {});
     }
     rows = [...document.querySelectorAll('#scr-menu [data-go]')];
     rows.forEach((b, i) => {

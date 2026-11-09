@@ -11,9 +11,9 @@
   font-display: block;
 }
 @font-face {
-  font-family: 'Korataki';
-  src: url('../assets/fonts/Korataki%20W01%20ExtraBold.ttf') format('truetype');
-  font-weight: 800;
+  font-family: 'Michroma';
+  src: url('../assets/fonts/Michroma-Regular.ttf') format('truetype'); /* SIL OFL, licence beside it (#37) */
+  font-weight: 400;
   font-display: block;
 }
 
@@ -83,8 +83,8 @@
 }
 .bw-title {
   margin: calc(56 * var(--u)) 0 0 calc(36 * var(--u));
-  font-family: 'Korataki', 'PokeBW', sans-serif;
-  font-weight: 800;
+  font-family: 'Michroma', 'PokeBW', sans-serif;
+  font-weight: 400;
   font-size: calc(50 * var(--u));
   line-height: 1;
   color: var(--bw-title);
@@ -345,8 +345,8 @@
 
 /* ---------- loading and "press to start" screens: the menu's title and row fonts ---------- */
 .boot-in h1 {
-  font-family: 'Korataki', 'PokeBW', sans-serif;
-  font-weight: 800;
+  font-family: 'Michroma', 'PokeBW', sans-serif;
+  font-weight: 400;
   font-size: clamp(40px, 8vw, 64px);
   line-height: 1;
   color: var(--bw-title);

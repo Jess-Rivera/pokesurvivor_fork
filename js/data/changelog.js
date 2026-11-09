@@ -7,6 +7,16 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-09',
+    title: ['A new title font', 'A new title font'],
+    chg: [
+      [
+        'The menu and login titles now use the Michroma font, which the game is free to share.',
+        'The menu and login titles now use the Michroma font, which the game is free to share.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-08',
     title: ['Leaders that think', 'Leaders that think'],
     new: [
