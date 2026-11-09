@@ -1,16 +1,16 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-09, Claude Code (home): #43 built (steps A and B), Needs Playtest.
+Updated 2026-11-09, Claude Code (home): #43 shipped (feel test passed).
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
-1. Jess pulls this branch on the other machine, then feel-tests #43 (Misty and Brock loop 2: swaps, the shake ring).
-2. #47 (cast gate, move-in score), then #39. #44 any time. #46 after #43 (now unblocked). #48 research after #43.
+1. Jess pulls this branch on the other machine.
+2. #47 (cast gate, move-in score), then #39. #44 and #46 any time (both ready). #48 research (ready).
 
 ## Where we are
 - Terms: every Player entity runs Decider, Controller, Body, SimPass (LEADER-AI "FRAME", GLOSSARY).
-- #43 built 2026-11-09 (decision 2026-11-09-43-movement-split-opening). Step A, behavior-neutral: the Body's checks
+- #43 shipped 2026-11-09 (decision 2026-11-09-43-movement-split-opening). Step A, behavior-neutral: the Body's checks
   acceptHeading, acceptDodge, acceptsCast; G.PlayerEntity.SimPass (js/entities/player-sim-pass.js) moves, ticks, aims.
   Step B: a leader's frame runs your order (G.GymArena.swapStep, fieldFrame, shakeStep, tickSlotLock; G.EnemyMgr.replace).
   Misty2 5a trace re-recorded (swap one frame earlier). Test: player-move-trace-harness 95, mutate 29.
@@ -32,6 +32,6 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## Open owner decisions
 - Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
-- Owed by Jess: #43 feel test, tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
+- Owed by Jess: tooltip confusions, move tuning list, animation mismatch details, bench recharge call.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.

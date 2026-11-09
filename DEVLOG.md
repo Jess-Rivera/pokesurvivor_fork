@@ -226,4 +226,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Step A (neutral): Body checks acceptHeading, acceptDodge, acceptsCast; G.PlayerEntity.SimPass in js/entities/player-sim-pass.js. Cast refusal is acceptsCast, not acceptsAttack (that would refuse a leader's buffs in a flinch hold). Trace 85/85 unchanged.
 - Step B: a leader's frame runs your order (swapStep, fieldFrame, shakeStep, tickSlotLock); G.EnemyMgr.replace keeps the list loop safe. Misty2 5a trace re-recorded (swap one frame earlier, max 2.2 px). Order checks 95/95, mutate 29/29.
 - Broke and fixed: the harness's first fence crossed its own midpoint; added a long-frame and a dodge-turn scenario after mutants missed. Pre-existing mutate MISS and STALE recorded in STATE Watch.
-- Filed #48 (research: HumanPlayer rules out of game.js). Unblocked #47 and #46. Stopped at: #43 in Needs Playtest; next #47.
+- Filed #48 (research: HumanPlayer rules out of game.js). Unblocked #47 and #46. Jess feel test passed; #43 closed and shipped. Next #47.
