@@ -7,8 +7,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
 2. #59 (unblock the duels), then #53, then #39. Feel test note on #39: default weights move and dodge a lot, attack less.
-
-4. Any time: #44, #46, #56 (stale mutation patterns), #57 and #58 (planner gaps). #48 research.
+3. Any time: #44, #46, #56 (stale mutation patterns), #57 and #58 (planner gaps). #48 research.
 
 ## Where we are
 - Terms: every Player entity runs Decider, Controller, Body, SimPass (LEADER-AI "FRAME", GLOSSARY).
