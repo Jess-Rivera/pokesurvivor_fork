@@ -108,3 +108,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Chips, item square, icon canvas and cursor moved into the overlay kit (#62 unchanged). Canvas keeps the old pieces only as the fallback; its buff chips start right of the roster until #66.
 - A "two chips cover the name" worry was a test artefact: one major status at a time (COMBAT-RULES), so a row shows one chip. Feel test: the roster "HP" became the life meter's italic text. Spanish species names filed as #73.
 - Stopped at: #62 and #63 closed, HUD-STYLE #63 sizes approved. Next: #65, #66, #67; #68 and #69 any time.
+
+## 2026-11-10 (Claude Code, home), #65 built: map panel, weather card, kills line (feature/leader-roster-ui)
+- js/ui/hud-map-panel.js: World Level (old ENEMY LV), Region, Map (biome name; named places filed as #75), kills line top centre hidden in arenas. Coins leave the run HUD (Jess). Canvas line, ENEMY LV and weather chip are fallback only.
+- Weather card: Jess asked for a slide in with a stopping bounce, slide off, and a Clear Sky card that slides in, holds 2 s and fades (the only fade exit). Feel test reshaped it into the B2 tab (b2-lower Y1 to AA3) at 3x: type colours for the greens, Slate body (#e7e7e7 is not on the Panels and lines palette; white fails on #adadad at 2.2:1), icon behind the stripe, timer inside the lower rim running out toward the edge.
+- Icons: Jess swapped in Bulbapedia white icons; tools/rip_weather_icons.py cut the unofficial sheet's 30 circles into unofficial/ as spare art (#74).
+- Smoke: a map panel run (placement, text, arena hide, full card sequence, edge, colours, layering). check.js red only on the two #30 harnesses.
+- Stopped at: #65 in Needs Playtest awaiting Jess's last look. Next: #66, #67; #68 and #69 any time.
