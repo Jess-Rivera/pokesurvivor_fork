@@ -250,7 +250,8 @@
   image-rendering: pixelated;
 }
 
-/* status chips: B2 status tags, fill inside a 2 px shade frame, with a timer bar and a sliding glow */
+/* status chips: the B2 capsule buttons (b2-lower Y17 to Z17), the fill inside a 4 px stepped shade rim drawn as pixels,
+   with a timer bar and a sliding glow; the timer's place and the glow's clip come from the shape (hud-player-panel.js) */
 .hud-chips {
   display: flex;
   gap: 6px;
@@ -259,12 +260,14 @@
   position: relative;
   width: 70px;
   height: 24px;
-  box-sizing: border-box;
-  border: 2px solid;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.hud-chip-shape {
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 .hud-chip .hud-text {
   position: relative;
@@ -272,14 +275,16 @@
 }
 .hud-chip-timer {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
   height: 2px;
   background: #ffffff;
   transform-origin: 0 0;
 }
-.hud-chip::after {
+.hud-chip-glow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.hud-chip-glow::after {
   /* the sliding glow: a pre-made light band moved by transform only (HUD-STYLE "Performance") */
   content: '';
   position: absolute;

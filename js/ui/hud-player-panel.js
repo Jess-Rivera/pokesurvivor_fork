@@ -55,6 +55,58 @@ G.HudPlayerPanel = (() => {
   };
   const hasChip = (statusKey) => !!CHIP_STYLES[statusKey];
 
+  // Chip outline: the B2 capsule buttons (b2-lower Y17 to Z17), stepped corners at the rip's 12 rows. Each entry is how
+  // many art pixels that row's edge sits in from the chip's sides. The shade rim is 2 art pixels thick (Jess, 2026-11-10:
+  // the shade border made thicker, in place of the rip's dark outline); the fill is the outline shrunk by the rim.
+  const CHIP_EDGE_INSETS = [2, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2],
+    CHIP_RIM_ART = 2,
+    CHIP_ART_WIDTH = CHIPS.width / ART_PIXEL,
+    CHIP_ART_ROWS = CHIP_EDGE_INSETS.length;
+  // Per row: the fill's inset from each side (a pixel is fill when every pixel within the rim's reach is inside the
+  // outline), or null for a row that is all rim.
+  const CHIP_FILL_INSETS = CHIP_EDGE_INSETS.map((_, row) => {
+    if (row < CHIP_RIM_ART || row >= CHIP_ART_ROWS - CHIP_RIM_ART) return null;
+    let deepest = 0;
+    for (let near = row - CHIP_RIM_ART; near <= row + CHIP_RIM_ART; near++)
+      deepest = Math.max(deepest, CHIP_EDGE_INSETS[near]);
+    return deepest + CHIP_RIM_ART;
+  });
+  const chipShapeRows = (fill, shade) => (row) => {
+    const edge = CHIP_EDGE_INSETS[row],
+      inner = CHIP_FILL_INSETS[row];
+    if (inner == null) return [[edge, CHIP_ART_WIDTH - 2 * edge, shade]];
+    return [
+      [edge, inner - edge, shade],
+      [inner, CHIP_ART_WIDTH - 2 * inner, fill],
+      [CHIP_ART_WIDTH - inner, inner - edge, shade],
+    ];
+  };
+  // The sliding glow stays on the fill: clipped to the fill's stepped outline, in screen pixels.
+  const CHIP_FILL_CLIP = (() => {
+    const rows = CHIP_FILL_INSETS.map((inset, row) => ({ inset, row })).filter((entry) => entry.inset != null),
+      leftSide = [],
+      rightSide = [];
+    for (const { inset, row } of rows) {
+      const top = row * ART_PIXEL,
+        bottom = (row + 1) * ART_PIXEL,
+        left = inset * ART_PIXEL,
+        right = CHIPS.width - inset * ART_PIXEL;
+      leftSide.push(left + 'px ' + top + 'px', left + 'px ' + bottom + 'px');
+      rightSide.unshift(right + 'px ' + top + 'px', right + 'px ' + bottom + 'px');
+    }
+    return 'polygon(' + leftSide.concat(rightSide).join(', ') + ')';
+  })();
+  // The timer bar runs along the lowest fill row, inside the cut corners.
+  const CHIP_TIMER_PLACE = (() => {
+    const lowestRow = CHIP_ART_ROWS - CHIP_RIM_ART - 1,
+      inset = CHIP_FILL_INSETS[lowestRow] * ART_PIXEL;
+    return {
+      left: inset + 'px',
+      width: CHIPS.width - 2 * inset + 'px',
+      bottom: CHIP_RIM_ART * ART_PIXEL + 'px',
+    };
+  })();
+
   // Silver: the rolling count and the pop on each gain (as the canvas counter it replaces, Jess 2026-11-05).
   const SILVER_POP = 0.18, // s, the pop settles in this long
     SILVER_POP_GROWTH = 0.5, // the count grows up to 1.5x on a gain (Jess, 2026-11-10; was 1.3x)
@@ -236,15 +288,22 @@ G.HudPlayerPanel = (() => {
     return html`<div class="hud-chips" style=${place(CHIPS.x, CHIPS.y)}>
       ${chips.value.map(
         (chip) =>
-          html`<div
-            key=${chip.key}
-            class="hud-chip"
-            style=${{ background: chip.fill, borderColor: chip.shade, '--chip-shade': chip.shade }}
-          >
+          html`<div key=${chip.key} class="hud-chip">
+            <${PixelShape}
+              artWidth=${CHIP_ART_WIDTH}
+              artRows=${CHIP_ART_ROWS}
+              artPixel=${ART_PIXEL}
+              paintRow=${chipShapeRows(chip.fill, chip.shade)}
+              className="hud-chip-shape"
+            />
             <span class="hud-text">${chip.label}</span>
+            <div class="hud-chip-glow" style=${{ clipPath: CHIP_FILL_CLIP }}></div>
             ${
               chip.timer != null
-                ? html`<div class="hud-chip-timer" style=${{ transform: `scaleX(${chip.timer})` }}></div>`
+                ? html`<div
+                    class="hud-chip-timer"
+                    style=${{ ...CHIP_TIMER_PLACE, transform: `scaleX(${chip.timer})` }}
+                  ></div>`
                 : null
             }
           </div>`

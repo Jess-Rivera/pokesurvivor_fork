@@ -335,15 +335,19 @@ const panelState = (page) =>
       };
     });
     const chips = [...panel.querySelectorAll('.hud-chip')].map((chip) => {
-      const rect = chip.getBoundingClientRect();
+      const rect = chip.getBoundingClientRect(),
+        pixels = [...chip.querySelectorAll('.hud-chip-shape rect')],
+        shade = pixels[0] ? getComputedStyle(pixels[0]).fill : null,
+        fillPixel = pixels.find((pixel) => getComputedStyle(pixel).fill !== shade);
       return {
         label: chip.textContent.trim(),
         left: rect.left,
         top: rect.top,
         width: rect.width,
         height: rect.height,
-        fill: getComputedStyle(chip).backgroundColor,
-        shade: getComputedStyle(chip).borderTopColor,
+        fill: fillPixel ? getComputedStyle(fillPixel).fill : null,
+        shade,
+        cornerCut: !!pixels[0] && Number(pixels[0].getAttribute('x')) > 0, // the top row starts in from the side
         timer: !!chip.querySelector('.hud-chip-timer'),
       };
     });
@@ -546,8 +550,9 @@ async function playerPanel(browser) {
       state.chips[0].width === PANEL.chip.width &&
       state.chips[0].height === PANEL.chip.height &&
       state.chips[0].fill === PANEL.parFill &&
+      state.chips[0].cornerCut &&
       state.chips[0].timer,
-    'player: the PAR chip is 70 x 24 at its place, in the PAR fill, with a timer bar'
+    'player: the PAR chip is 70 x 24 at its place, in the PAR fill, with cut corners and a timer bar'
   );
   ok(
     state.prompt &&

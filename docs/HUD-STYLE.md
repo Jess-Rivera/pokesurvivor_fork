@@ -293,6 +293,7 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
 | `b2-lower` B12 to D12   | The "FIGHT!" badge: solid lozenge, pointed ends                                       | Shake Off prompt (#62)    |
 | `b2-lower` Y4 to AB5    | Bag buttons: checker body, chamfered corners, coloured rim                            | Held item square (#62)    |
 | `b2-hpbars` Q16 to AD16 | Status tags: small rectangles, fill inside a 1-pixel shade frame                      | Status chips (#62)        |
+| `b2-lower` Y17 to Z17   | Capsule buttons: stepped cut corners, coloured rim, outline                           | Status chip outline (#62) |
 
 ### Enemy name bar (pilot, #64)
 
@@ -351,9 +352,12 @@ B2 art pixel, half the enemy bar's scale.
 - `[Approved]` **Active slot: the B2 selection cursor** (`b2-lower` Z2 to AC3, option a): four corner brackets in Title
   yellow `#fff000` with a `#101010` outline, just outside the slot's corners. Each bracket is one continuous yellow L
   inside one unbroken outline (fixed 2026-11-10: the corner pixel was outline, which split it into two bars).
-- `[Approved]` **Status chips: the B2 status tags** (`b2-hpbars` Q16 to AD16): a rectangle, the fill inside a 2 px shade
-  frame, the 3-letter mainline label (SLP, PSN, BRN, FRZ, PAR; bad poison is PSN on the dark shade). A 2 px white timer
-  bar along the bottom. (Corrects the plan's "slanted parallelograms": the rip's tags are rectangles.)
+- `[Approved]` **Status chips: the B2 status tags** (`b2-hpbars` Q16 to AD16) for colour and label, in the outline of
+  the B2 capsule buttons (`b2-lower` Y17 to Z17; Jess, 2026-11-10, #62 playtest): stepped cut corners over the rip's 12
+  art rows (each side in by 2, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2 art pixels), drawn as pixels at 2x. The fill sits inside a
+  4 px (2 art pixel) shade rim; the thicker shade rim stands in for the rip's dark outline, so no outline is drawn. The
+  3-letter mainline label (SLP, PSN, BRN, FRZ, PAR; bad poison is PSN on the dark shade). A 2 px white timer bar along
+  the lowest fill row, inside the corners; the glow is clipped to the fill.
 - `[Approved]` **Shake Off prompt: the B2 "FIGHT!" badge** (`b2-lower` B12 to D12): pointed ends, an outline, a shade
   rim, the Lv yellow fill with a 3-row shade band at the bottom. Its width follows the text.
 - `[Approved]` **Held item: the B2 bag button** (`b2-lower` Y4 to AB5): a 40 px square with chamfered corners, the bar
