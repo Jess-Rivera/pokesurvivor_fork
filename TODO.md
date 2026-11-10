@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-09 session, on feature/gym-leader-ai)
-1. #52 (swap, dash, draw, dodge) built: Jess feel-tests Misty and Brock, then close. Then #59 (the three blocked duels), #53, #39.
+1. #59 (the three blocked duels), then #53, then #39 (#52 closed; its feel-test tuning note is on #39).
    Planner gaps #57, #58. Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
    G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
 2. #56 refresh 42 stale mutation patterns.
@@ -16,7 +16,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30 (branch rules); not a task now.
 
 ## Open issues by area (numbers only, titles via gh)
-- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #52 #53 #57 #58 #59
+- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #59
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48 #56
 - UI: #25 #35

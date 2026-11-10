@@ -1,13 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-09, Claude Code (home): #52 built, in Needs Playtest. #59 filed for the three blocked duels.
+Updated 2026-11-09, Claude Code (home): #52 closed (feel test good). #59 filed for the three blocked duels.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. Jess feel-tests #52 (Misty and Brock): swaps, dashes, planned dodges; watch for hitches. If good, close it.
-3. Then #59 (unblock the duels), #53, then #39.
+2. #59 (unblock the duels), then #53, then #39. Feel test note on #39: default weights move and dodge a lot, attack less.
+
 4. Any time: #44, #46, #56 (stale mutation patterns), #57 and #58 (planner gaps). #48 research.
 
 ## Where we are
@@ -34,6 +34,6 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 
 ## Open owner decisions
 - Bench recharge (changes every Player entity). Boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
-- Owed by Jess: #52 feel test; tooltip confusions, move tuning list, animation mismatch details.
+- Owed by Jess: tooltip confusions, move tuning list, animation mismatch details.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.

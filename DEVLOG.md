@@ -274,4 +274,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Built in the planner, Belief and G.LeaderAI; the old swap choice, the gap-closing dodge and their settings deleted. Harness section 16 written first; old trigger and gap-close sections retired.
 - Found while building: the matchup swap never won at range (no trade inside 4 steps), fixed by the long-window term; a dash or planned dodge lost its step when a replan kept it; a Recover planned asleep crashed.
 - Three duels (Bait, counter-play, learning) blocked on #59: reflex dodges starve the planned one, and his landed hits cannot depend on what you do. Planner ~3.4 ms per choice, 10.4 ms worst (accepted, watch at the feel test).
-- Stopped at: #52 in Needs Playtest (feel test Misty and Brock).
+- Jess feel-tested: working as intended; #52 closed. Default weights (all 1) move, dodge and retreat a lot and attack less: noted on #39 for authoring.
