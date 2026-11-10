@@ -476,7 +476,7 @@ G.HUD = (() => {
     silver.t = st.time;
     if (silver.shown < target) silver.shown = Math.min(target, silver.shown + silver.rate * dt);
     silver.pop = Math.max(0, silver.pop - dt / SILVER_POP);
-    const k = 1 + 0.3 * silver.pop * silver.pop,
+    const k = 1 + 0.5 * silver.pop * silver.pop, // up to 1.5x, as the overlay's counter (#62)
       img = silverImg(),
       S = G.PickupSprites && G.PickupSprites.silver;
     ctx.save();

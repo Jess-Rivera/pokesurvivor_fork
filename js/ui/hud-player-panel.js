@@ -57,6 +57,7 @@ G.HudPlayerPanel = (() => {
 
   // Silver: the rolling count and the pop on each gain (as the canvas counter it replaces, Jess 2026-11-05).
   const SILVER_POP = 0.18, // s, the pop settles in this long
+    SILVER_POP_GROWTH = 0.5, // the count grows up to 1.5x on a gain (Jess, 2026-11-10; was 1.3x)
     SILVER_ROLL = 0.25, // s, the rolling number lands in this long after the last gain
     SILVER_ROLL_MIN = 25; // coins per second, the slowest roll (small gains)
 
@@ -377,7 +378,7 @@ G.HudPlayerPanel = (() => {
           backgroundPosition: `${-silverFrame.value * (sheet.cell + G.PickupSprites.pad) * 2}px ${-sheet.y * 2}px`,
         }
       : place(SILVER.right - SILVER.coinSize, SILVER.coinY);
-    const scale = 1 + 0.3 * silverPop.value * silverPop.value;
+    const scale = 1 + SILVER_POP_GROWTH * silverPop.value * silverPop.value;
     return html`<div class="hud-silver-coin" style=${coinStyle}></div>
       <div
         class="hud-text hud-silver-count"

@@ -426,7 +426,7 @@ B2 art pixel, half the enemy bar's scale.
   piece tumbling (its width flips) and swaying as it falls. About 45 pieces per corner (fewer on low graphics). If you
   pick before it reaches the bottom, what is left fades out over 1 s.
 - `[Approved]` **Silver:** the coin spins on the run clock; the count rolls up to a gain within 0.25 s and pops (up to
-  1.3x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter).
+  1.5x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter; the pop grew from 1.3x to 1.5x, Jess 2026-11-10).
 
 ---
 
