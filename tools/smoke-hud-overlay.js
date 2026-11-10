@@ -984,6 +984,9 @@ const dpsState = (page) =>
       })),
       colours: [...colours],
       tickColumns,
+      fonts: ['.hud-dps-name', '.hud-dps-number', '.hud-dps-unit'].map((selector) =>
+        getComputedStyle(panel.querySelector(selector)).fontFamily.split(',')[0].replace(/['"]/g, '').trim()
+      ),
     };
   });
 
@@ -1009,6 +1012,17 @@ async function dpsPanel(browser) {
   ok(state.name === 'Squirtle', 'dps: the header names the active Pokemon (' + state.name + ')');
   ok(state.number === '0', 'dps: 0 DPS before any hit (' + state.number + ')');
   ok(!state.divider && state.cards.length === 0, 'dps: no divider and no list before a card is picked');
+  // the panel is a "module": Michroma for all its text (Jess, 2026-11-10), declared as HudModule
+  ok(
+    state.fonts.every((font) => font === 'HudModule'),
+    'dps: name, number and unit use Michroma (' + state.fonts.join(' ') + ')'
+  );
+  ok(
+    /font-family: 'HudModule';[^}]*Michroma-Regular.ttf/.test(
+      fs.readFileSync(path.join(root, 'css/hud-overlay.css'), 'utf8')
+    ),
+    'dps: HudModule is the Michroma file'
+  );
 
   // a 600 damage hit by Squirtle, through the real after-hit hook: the 5 s number is 600 over the finished seconds (at
   // most 5) once its second finishes
@@ -1071,6 +1085,22 @@ async function dpsPanel(browser) {
     state.cards.map((card) => card.total).join(' ') === summary.map((row) => row.total).join(' '),
     'dps: each row shows its total (' + state.cards.map((card) => card.total).join(' ') + ')'
   );
+
+  // the Settings toggle (default on) hides the panel and brings it back; the record keeps running while hidden
+  ok(await page.evaluate(() => G.Settings.get('showDpsPanel')), 'dps: the setting defaults to on');
+  const secondsBefore = await page.evaluate(() => {
+    G.Settings.set('showDpsPanel', false);
+    return G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory);
+  });
+  await page.waitForTimeout(1200);
+  ok((await dpsState(page)) === null, 'dps: the setting off hides the panel');
+  ok(
+    (await page.evaluate(() => G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory))) > secondsBefore,
+    'dps: the record keeps running while the panel is hidden'
+  );
+  await page.evaluate(() => G.Settings.set('showDpsPanel', true));
+  await page.waitForTimeout(100);
+  ok((await dpsState(page)) !== null, 'dps: the setting on brings it back');
   return { context, errors, page };
 }
 

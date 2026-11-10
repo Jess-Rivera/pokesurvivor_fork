@@ -263,6 +263,13 @@ G.SettingsUI = (() => {
       ) +
       boolRow('calm', 'Shake & Flash', 'Calm tones down the camera shake and the bright flashes.', 'Calm', 'Not Calm') +
       boolRow('fps', 'Show FPS', 'Frames per second, in the bottom corner during a run.', 'Yes', 'No') +
+      boolRow(
+        'showDpsPanel',
+        'DPS Panel',
+        "The damage per second graph and your run's upgrade cards, top left during a run.",
+        'Yes',
+        'No'
+      ) +
       (canFull()
         ? optRow('Fullscreen', 'Fullscreen hides the browser bars.', [
             ['data-full="1"', 'Fullscreen', isFull()],

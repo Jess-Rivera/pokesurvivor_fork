@@ -9,6 +9,9 @@
  * Then a divider and the run's team upgrade cards (G.TeamCards.summary, the team sheet's "Run Cards" rows and order); the divider
  * and list hide while no card is picked.
  *
+ * Font: Michroma for everything in the panel, not the pixel HUD font: the panel is a "module", not part of the game
+ * world (Jess, 2026-11-10). Hidden by the Settings toggle showDpsPanel (default on).
+ *
  * Read only: the record and the cards are read once per frame and the page only changes when a second finishes, the
  * active Pokemon changes or a card is picked. The timed buff and status chips are not here (#76).
  */
@@ -48,9 +51,9 @@ G.HudDpsPanel = (() => {
     const list = cards.value;
     return html`<div class="hud-dps">
       <div class="hud-dps-header">
-        <div class="hud-text hud-dps-name">${activeName.value}</div>
+        <div class="hud-dps-name">${activeName.value}</div>
         <div class="hud-dps-rate">
-          <span class="hud-dps-number">${dpsText.value}</span><span class="hud-text"> DPS</span>
+          <span class="hud-dps-number">${dpsText.value}</span><span class="hud-dps-unit"> DPS</span>
         </div>
       </div>
       <${Sparkline} />
@@ -61,8 +64,8 @@ G.HudDpsPanel = (() => {
                 ${list.map(
                   (card) =>
                     html`<div class="hud-dps-card" key=${card.id}>
-                      <span class="hud-text hud-dps-card-name">${card.label}</span>
-                      <span class="hud-text hud-dps-card-total">${card.total}</span>
+                      <span class="hud-dps-card-name">${card.label}</span>
+                      <span class="hud-dps-card-total">${card.total}</span>
                     </div>`
                 )}
               </div>`
@@ -139,7 +142,8 @@ G.HudDpsPanel = (() => {
   }
 
   function sync(showing) {
-    const player = showing && G.Game.player;
+    // the Settings toggle (default on) hides only the panel; the record keeps running for later screens
+    const player = showing && G.Settings.get('showDpsPanel') !== false && G.Game.player;
     visible.value = !!player;
     if (!player) return;
     const history = player.team && player.team.dpsHistory;

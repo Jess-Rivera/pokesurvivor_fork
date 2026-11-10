@@ -7,6 +7,7 @@
  *   calm        true/false                        less shake and flashing
  *   fps         true/false                        FPS counter
  *   autoShake   true/false                        accessibility: Shake off taps itself at 3 taps/s (status slice E2e)
+ *   showDpsPanel true/false                       the HUD's DPS-Upgrades panel, top left during a run (#66; default on)
  *   stick       0.8 | 1 | 1.25                    touch joystick size
  *   stickMode   'float' | 'fixed'                 joystick where you put your finger, or always in place
  *   pad         { bar, pause, stick } | null      where the buttons go on mobile (centered, in
@@ -23,6 +24,7 @@ G.Settings = (() => {
     calm: false,
     fps: false,
     autoShake: false,
+    showDpsPanel: true,
     stick: 1,
     stickMode: 'float',
     pad: null,

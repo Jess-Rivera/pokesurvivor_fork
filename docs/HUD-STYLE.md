@@ -107,6 +107,11 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
 - `[Approved]` **Display numbers: BoldPixels** (16 px grid, fixed-width digits) at 32 or 48 px.
   - For large numbers: World Level, Lv NN.
 
+- `[Approved]` **Module panels use Michroma** (Jess, 2026-11-10): the DPS-Upgrades panel (#66) is a "module", not part of
+  the game world, so all its text is Michroma (`assets/fonts/Michroma-Regular.ttf`, SIL OFL, the menus' face), declared
+  in the HUD as `HudModule`. Smooth, so the crisp-size and hard-outline rules do not apply to it; it takes a soft dark
+  shadow instead. Its digits are not fixed width.
+
 - `[Approved]` **No PokeBW in the HUD.** It has only 81 characters (no plus, minus, accented capitals, female or male
   signs).
 
@@ -450,17 +455,20 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 
 - `[Approved]` **Name and contents:** the DPS-Upgrades panel (not "Active Slot"), top left: a header, the DPS sparkline,
   a divider, then the list of the run's team upgrade cards. It grows down with its list.
+- `[Approved]` **Settings toggle:** "DPS Panel" (Yes / No) under Show FPS, default on (Jess, 2026-11-10). Off hides the
+  panel only; the DPS record keeps running.
+- `[Approved]` **Font:** Michroma for all its text ("Fonts", module panels).
 - `[Approved]` **Header:** the active Pokemon's name, and the team's DPS averaged over the last 5 s.
 - `[Approved]` **Sparkline:** one continuous team line through swaps, one point per second, the last 30 s, newest at the
   right edge. Each stretch is the first type's SV Base colour of the Pokemon on the field that second; a faint tick marks
   every swap, so two Pokemon of the same type back to back still read. The scale fits the highest point shown.
 - `[Approved]` **Not here:** the timed buff, berry, altar power and leftover status chips (#76).
 - `[Proposed]` **Box:** Panel body `#181818` at 50%, a 2 px Slate `#495151` rim, 4 px stepped corners (2 px steps).
-- `[Proposed]` **Header text:** the name in 20 px text; the number in BoldPixels at 30 px in Title yellow `#fff000`,
-  then " DPS" in 20 px text.
+- `[Proposed]` **Header text:** the name at 16 px; the number at 24 px in Title yellow `#fff000`, then " DPS" at 14 px;
+  a soft `#101010` shadow on all panel text.
 - `[Proposed]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
   a 2 px white column at 35%; the colour changes at the midpoint between two seconds, where the tick sits.
-- `[Proposed]` **List:** a 2 px Slate divider; one row per card, its name in 20 px text on the left and its total on the
+- `[Proposed]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
   right in Secondary text `#8cfff7`, in the team sheet's "Run Cards" order. The divider and list hide until a card is
   picked.
 
@@ -615,6 +623,6 @@ Placed from the top left corner. `[Proposed]` from the build, waiting for the fe
 | Element         | Wireframe (at 1080p)       | Built                                                       |
 | --------------- | -------------------------- | ----------------------------------------------------------- |
 | Panel           | 325 px wide, x 14, y 12    | 320 px wide, x 16, y 16, 12 px padding, 10 px between parts |
-| Header          | "Active Slot[DPS]", 30 px  | 30 px tall: name 20 px, number 30 px                        |
+| Header          | "Active Slot[DPS]", 30 px  | 24 px tall: name 16 px, number 24 px, "DPS" 14 px (Michroma) |
 | Sparkline strip | 278 x 44                   | 296 x 44 (a 292 x 40 canvas inside the 2 px outline)        |
-| List rows       | 42 px apart                | 20 px text, 28 px apart                                     |
+| List rows       | 42 px apart                | 14 px Michroma, 24 px apart                                 |
