@@ -11,6 +11,7 @@ const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
   IN = 'js/systems/leader-info.js',
   BE = 'js/systems/leader-belief.js',
+  PL = 'js/systems/leader-planner.js',
   MM = 'js/systems/leader-memory.js',
   AR = 'js/systems/gym-arena.js',
   LD = 'js/entities/gym-leader.js',
@@ -18,7 +19,7 @@ const AI = 'js/entities/leader-ai.js',
   GY = 'js/data/gyms.js',
   SM = 'js/systems/move-sim.js',
   EF = 'js/systems/move-effects.js';
-const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
+const ENV = { [AI]: 'LA_AI', [IN]: 'LA_INFO', [BE]: 'LA_BELIEF', [PL]: 'LA_PLANNER', [MM]: 'LA_MEM', [AR]: 'LA_ARENA', [LD]: 'LA_LEADER', [BR]: 'LA_BRAIN', [GY]: 'LA_GYMS', [SM]: 'LA_SIM', [EF]: 'LA_EFFECTS' };
 const M = [
   // #50 (#49 slice 1): Belief, the cooldown window and the gaps it is derived from
   ['the window never narrows', BE, '    lo += (gap - lo) * memoryUse;\n', ''],
@@ -50,8 +51,8 @@ const M = [
   ['a flinch hold accepts an attack', LD, 'return this.acceptsCast() && !this.stFl', 'return this.acceptsCast()'],
   ['an attack starts with no due handoff', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', "    if (running && e.tell === running) this.telling(e, dt, now);\n    else if (!e.tell) for (const s of e.activeGroup()) if (s.t <= 0.5) this.due(e, s, e.moveDef(s.id), now);"],
   ['a new wind-up advances on its first frame', LD, '    if (running && e.tell === running) this.telling(e, dt, now);', '    if (e.tell) this.telling(e, dt, now);'],
-  ['the AI gates its heading on a stun', AI, 'e.heading = this.unstick(e, dt, this.steer(e, dt, pl));', 'e.heading = G.Status.stunned(e) ? [0, 0] : this.unstick(e, dt, this.steer(e, dt, pl));'],
-  ['the AI stops deciding while stunned', AI, 'e.heading = this.unstick(e, dt, this.steer(e, dt, pl));', 'if (G.Status.stunned(e)) return;\n    e.heading = this.unstick(e, dt, this.steer(e, dt, pl));'],
+  ['the AI gates its heading on a stun', AI, 'e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));', 'e.heading = G.Status.stunned(e) ? [0, 0] : this.unstick(e, dt, this.execute(e, dt, pl, free));'], // #51 retarget
+  ['the AI stops deciding while stunned', AI, 'e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));', 'if (G.Status.stunned(e)) return;\n    e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));'], // #51 retarget
   ['the unstick reads the whole frame, not its own step', LD, 'this.lastStep = { moved: Math.hypot(this.x - ox, this.y - oy), dt };', 'this.lastStep = { moved: 0, dt };'],
   ['a slot press is answered once for good', AI, '        this.slotQ = [];\n        return q;', '        return q;'],
   ['the validator ignores firstWait', GY, "if (rules.firstWait != null && !(typeof rules.firstWait === 'number' && rules.firstWait >= 0))", 'if (false)'],
@@ -60,15 +61,15 @@ const M = [
   ['a leader never takes the wild divisor', EF, " && pl.rule('wildStatusDivisor') === true;", ' && false;'],
   ['the validator ignores wildStatusDivisor', GY, "if (rules.wildStatusDivisor != null && typeof rules.wildStatusDivisor !== 'boolean')", 'if (false)'],
   ['a heal waits until hurt again', LD, '    if (e.healsLeft <= 0) return;', '    if (!(e.hp < e.maxHp) || e.healsLeft <= 0) return;'],
-  ['unhurt it sits on the heal slot', AI, 'if (choice >= 0 || S.hpFrac < 1) return choice;', 'return choice;'],
-  ['the AI keeps its stun exception', AI, 'const free = !this.busy(e);', 'const free = G.Status.stunned(e) || !this.busy(e);'],
+  ['unhurt it sits on the heal slot', AI, 'if (e.hp < e.maxHp || !act.length || !act.every(isHeal)) return e.active;', 'return e.active;'], // #51 retarget: keptSlot
+  ['the AI keeps its stun exception', AI, 'const free = !this.busy(e),', 'const free = G.Status.stunned(e) || !this.busy(e),'], // #51 retarget
   // the stall guards and STAY
   ['minField is ignored', AI, "if (this.fieldT < S.minField - LeaderAI.EPS) return 'minField';", ''],
   ['swapLimit is ignored', AI, "if (S.swapLimit != null && this.swaps >= S.swapLimit) return 'swapLimit';", ''],
   ['a send-in does not restart the clock', AR, 't.ai.arrived(false);', ''],
   ['a voluntary swap does not restart the clock', AR, 't.ai.arrived(true);', ''],
   ['the margin is off', AI, 'if (best.score < S.stay * margin - LeaderAI.EPS) {', 'if (best.score < S.stay - LeaderAI.EPS) {'],
-  ['a swap is decided inside a tell', AI, 'const free = !this.busy(e);', 'const free = true;'],
+  ['a swap is decided inside a tell', AI, 'const free = !this.busy(e),', 'const free = true,'], // #51 retarget
   ['the recovery counts as the tell', AI, 'return !!((c && !c.fired) || e.mvRoot', 'return !!(c || e.mvRoot'],
   // the triggers
   ['cc ignores the time left', AI, 'M.t >= S.ccLeft - LeaderAI.EPS', 'M.t > 0'],
@@ -105,18 +106,7 @@ const M = [
   ['any shape counts as hers', IN, 'if (inst && inst.cast && team.includes(inst.cast.owner) && pl)', 'if (pl)'],
   ['its own faints are not seen', IN, "if (m.dead && !this.downOwn[i]) this.feed.push({ k: 'faint', side: 'own' });", ''],
   ['your send-in is not seen', IN, "this.feed.push({ k: 'sendIn' });", ''],
-  // pacing
-  ['the breather cap is off', AI, "const cap = this.stance === 'breather' && this.breathT >= S.breatherMax * this.clock - LeaderAI.EPS;", 'const cap = false;'],
-  ['no wait between breathers', AI, 'this.clock >= this.breathNext - LeaderAI.EPS &&', 'true &&'],
-  ['a breather length ignores aggression', AI, 'P.breathLen * (1.5 - a)', 'P.breathLen'],
-  ['frustration ignores aggression', AI, 'S.pushAfter * (1.5 - a)', 'S.pushAfter'],
-  ['a landed hit does not end a push', AI, "if (this.stance === 'push') this.endStance('landed a hit');", ''],
-  ['no pressing an advantage', AI, 'if (this.conf >= P.pressConf - LeaderAI.EPS && you && you.hp < you.maxHp * P.pressHp)', 'if (false)'],
-  ['a mon arriving keeps the stance', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", ''],
-  ['a swap resets the breather share', AI, "if (this.stance !== 'neutral') this.endStance('a mon arrives');", "this.breathT = 0;\n    if (this.stance !== 'neutral') this.endStance('a mon arrives');"],
-  ['a breather picks no quiet slot', AI, 'if (q >= 0) i = q !== e.active ? q : -1;', ''],
-  ['a breather holds back casts', LD, '    if (!pl || !e.acceptsAttack()', "    if (!pl || e.ai.stance === 'breather' || !e.acceptsAttack()"], // #40, #41, #47a retarget: the attack start is the SimPass's
-  ['the stance hold is ignored', BR, "if (this.hold) this.mode = tight ? 'far' : this.hold;", ''],
+  // pacing: gone in #51 (its mutations with it)
   // the lean and the gap-closing dodge
   ['no lean', AI, 'if (!p || Math.abs(a) < LeaderAI.EPS) return [dx, dy];', 'return [dx, dy];'],
   ['the lean goes past you', AI, '(a > 0 ? Math.min(a, Math.abs(to)) : a)', 'a'],
@@ -125,20 +115,37 @@ const M = [
   ['a gap-close spends the last charge', AI, 'if (ready <= S.dodgeReserve + 1) return;', 'if (ready <= S.dodgeReserve) return;'],
   ['a gap-close with no close move ready', AI, 'if (!this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE', 'if (false && !this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE'],
   ['a gap-close ignores the dodge length', AI, 'if (d <= reach || d - G.PlayerEntity.DODGE.dist > reach) return;', 'if (d <= reach) return;'],
-  ['a gap-close in a breather', AI, "if (!info || this.stance === 'breather') return;", 'if (!info) return;'],
   // triggers and lines
   ['repeat is ignored', AI, 'if (tr.fired && !tr.d.repeat) continue;', 'if (tr.fired) continue;'],
   ['once is ignored', AI, 'if (tr.fired && !tr.d.repeat) continue;', ''],
   ['a trigger fires inside a commitment', AI, 'if (free) this.fireTriggers(e);', 'this.fireTriggers(e);'],
   ['an HP line never re-arms', AI, 'if (frac >= d.below) tr.arm = true;', ''],
   ['a set lasts forever', AI, 'd.for != null ? this.clock + d.for : Infinity', 'Infinity'],
-  ['a trigger slot skips your slot hold', AI, 'if (d.slot != null) this.pressSlot(e, d.slot - 1, true);', 'if (d.slot != null) e.setActive(d.slot - 1, true);'],
   ['a line ignores the banner', AI, 'if (G.Spawner.banner()) return;', ''],
   ['a line is never dropped', AI, 'if (this.clock - l.at > LeaderAI.LINE_WAIT + LeaderAI.EPS) {', 'if (false) {'],
   ['no swing line cooldown', AI, 'if (this.clock - this.swingAt >= C.swingCd - LeaderAI.EPS) {', 'if (true) {'],
+  // #51 (#49 slice 2): the planner and the executor
+  ['Finish has no KO bonus', PL, 'world.you.hpFraction + TUNE.koBonus : null;', 'world.you.hpFraction : null;'],
+  ['risk is ignored', PL, 'p.taken * world.risk * s.taken', 'p.taken * s.taken'],
+  ['damage dealt is not in the cost', PL, ' - dealtWeight * s.dealt', ''],
+  ['no time term', PL, ' + p.time * s.duration', ''],
+  ['no commitment bonus', PL, 'bonus = running.invested * TUNE.commitPerSecond * world.stubbornness * utility(goal, world);', 'bonus = 0;'],
+  ['confidence leaves Pressure and Finish alone', PL, "if (goal === 'pressure' || goal === 'finish') return weight * (0.5 + conf);", ''],
+  ['plans run past their payoff', PL, '          if (done.has(goal)) continue;\n', ''],
+  ['randomness is ignored', PL, 'if (world.randomness > 0 && draw && ranking.length > 1 && draw() < world.randomness)', 'if (false)'],
+  ['no partial credit', PL, '} else if (!best[goal]) {', '} else if (false) {'],
+  ['plans of 5 actions', PL, 'maxSteps: 4,', 'maxSteps: 5,'],
+  ['your shots ignore their reach', PL, '      if (closest > threat.reach + world.own.radius) return;\n', ''],
+  ['no sideways escape', PL, 'escape = you.sidewaysSpeed * (move.tell + flight) + aimError,', 'escape = aimError,'],
+  ['Finish counts its damage twice', PL, "costOf(world, goal, steps, goal !== 'finish')", 'costOf(world, goal, steps)'],
+  ['Recover counts what the plan spent', PL, 'const left = m.remaining - state.time;', 'const left = Math.max(m.remaining - state.time, m.cooldown);'],
+  ['a broken action waits for the tick', AI, '        if (free && !LeaderAI.off.planner) this.replan(e, this.replanNow);\n', ''],
+  ['it plans inside a tell', AI, 'if (!LeaderAI.off.planner && free && (tick || this.replanNow))', 'if (!LeaderAI.off.planner && (tick || this.replanNow))'],
+  ['the planner switch is ignored', AI, '    if (LeaderAI.off.planner || !plan) return [0, 0];', '    if (!plan) return [0, 0];'],
   // the validator and the authoring
   ['the 0 to 1 check is off', GY, "if (vals.some((x) => typeof x === 'number' && x > 1)) bad.push(", 'if (false) bad.push('],
-  ['a trigger may do nothing', GY, "if (t.line == null && t.slot == null && t.swap == null && t.set == null) bad.push(T + ' does nothing');", ''],
+  ['a trigger may do nothing', GY, "if (t.line == null && t.set == null) bad.push(T + ' does nothing');", ''], // #51 retarget
+  ['a trigger may force a swap', GY, '          if (t[k] != null)', '          if (false)'],
   ["Misty's aggression is the baseline", GY, 'aggression: 0.68,', 'aggression: 0.5,'],
   // slice 4 (#33): the store and the pattern
   ['the store outlives the run', MM, '    end() {\n      store = null;', '    end() {'],

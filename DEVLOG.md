@@ -249,3 +249,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Tests: leader-ai-harness section 14 (584 pass), leader-ai-mutate 125/125 (4 retargeted to Belief), smoke-gym and smoke-pause pass. Every harness load list gained leader-belief.js.
 - Fix after Jess's console read: a slot switch had made Belief forget the last cast (move believed ready); now it only spoils the next gap.
 - Jess feel-tested both: closed. #51 unblocked (ready). Stopped at: #51 opening, next session.
+
+## 2026-11-09 (Claude Code, home), #51 built (#49 slice 2: planner core, executor, overlay)
+- Opening ruled: split kept (6 verbs now, 4 in #52); slot stance ignored (range 220); slice 1 and 5a parity traces retired; trigger `set` kept, forced slot and swap refused. Decision 2026-11-09-51-opening-stance-traces-and-set-trigger.
+- Built G.LeaderPlanner (nine goals, cost profiles, full search of plans up to 4 actions, commitment bonus, seeded randomness) on a snapshot from G.LeaderBelief; executor in G.LeaderAI; old slot choice, pacing and forced triggers gone. Overlay: goal, steps with costs, top 3 alternatives, window bars.
+- Found in the build: hit sizes ignored hpMult (your hit read 117% of a leader mon); plans ran past their payoff; Finish won every tick at any HP. Fixed; four calls left [Proposed] for Jess in LEADER-AI.
+- Tests: leader-ai-harness section 15 (568 pass; 15l and 15m add frame-order, risk and confidence checks the retired traces had covered), leader-ai-mutate 131/131, leader-slots-mutate 16/16 (a press-hold check added), gym-leader-mutate 59/59, player-move-trace re-recorded (4 leader scenarios, yours unchanged), smoke-leader-overlay (new, file://) and smoke-gym pass. Planner about 4.4 ms per choice at 4 slots.
+- Stopped at: Jess's feel test of #51 and the four build calls.

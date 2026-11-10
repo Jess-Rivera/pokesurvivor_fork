@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-09, #51 opening: slot stance ignored, parity traces retired, the `set` trigger kept (Jess)](docs/decisions/2026-11-09-51-opening-stance-traces-and-set-trigger.md), build #51
 - [2026-11-09, #50 opening: the cooldown window's `memoryUse` reading and its code baseline (Jess)](docs/decisions/2026-11-09-50-cooldown-window-memoryuse-and-baseline.md), build #50
 - [2026-11-09, #49: misjudgment, and leader sharpness grows with the loop (Jess)](docs/decisions/2026-11-09-49-leader-sharpness-base-plus-loop-growth.md), build #49, authored in #39
 - [2026-11-09, #49: the Decider is utility goals plus a GOAP planner (Jess)](docs/decisions/2026-11-09-49-decider-is-utility-goals-plus-goap-planner.md), build #49

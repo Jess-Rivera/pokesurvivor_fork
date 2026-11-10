@@ -25,13 +25,7 @@ const M = [
   ['an inactive slot fires', LD, '(this.slots[this.active] || [])', 'this.slots.flat()'],
   // slice 5a step 2: buffs come from your sim pass (active group only); the break is the SimPass casting them from every slot
   ['a buff casts from the bench', LD, '    G.MoveSim.turn(dt, e, now);\n', "    G.MoveSim.turn(dt, e, now);\n    for (const s of e.slots.flat()) if (G.Gyms.formOf(e.moveDef(s.id)) === 'buff' && G.MoveEffects.statReady(e.moveDef(s.id), e)) this.buff(e, s, e.moveDef(s.id), now);\n"],
-  // the pick
-  ['no heal visit', AI, 'if (h >= 0) return go(h);', ''],
-  ['a closed hpBelow slot is pickable', AI, 'g.some((s) => G.Boss.open(e, s) && s.t <= 0', 'g.some((s) => s.t <= 0'],
-  ['the stay rule is off', AI, 'const pick = !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? at : e.active;', 'const pick = at;'],
-  ['the margin is 1', BR, 'const SWITCH_MARGIN = 1.5;', 'const SWITCH_MARGIN = 1;'],
-  ['no buff visit', AI, 'return this.offHeal(e, S, b >= 0 ? go(b) : -1);', 'return this.offHeal(e, S, -1);'], // #41 retarget
-  ['it picks inside a tell', AI, 'if (e.slots.length < 2 || e.tell ||', 'if (e.slots.length < 2 ||'],
+  // the pick: retired in #51 with the old slot choice (the planner's own mutations are in leader-ai-mutate.js)
   // bonds
   ['a bonded slot fires one member', LD, 'if (c.bond) for (const b of c.bond) this.fireBond(e, b, c, now);', ''],
   ['the bond tell is the first move only', LD, 'bond.reduce((w, b) => Math.max(w, T.TELL[b.form]), T.TELL[form])', 'T.TELL[form]'],

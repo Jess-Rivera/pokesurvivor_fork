@@ -148,7 +148,7 @@ try {
   /* it reads the DOM at the end; G.U is set before that */
 }
 // dev.html order. A file the split adds is listed in OPTIONAL and loads only when it exists, so the record run works on the code before.
-const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-route.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
+const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-route.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const OPTIONAL = ['js/entities/player-sim-pass.js'];
 for (const p of FILES) {
   if (OPTIONAL.includes(p) && !fs.existsSync(path.join(R, p))) continue;
@@ -159,8 +159,12 @@ for (const p of FILES) {
     process.exit(1);
   }
 }
-// the AI player's own decisions off (as leader-ai-harness trace5): the trace is about the body, not the AI's choices
-Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true, memory: true });
+// the AI player's own decisions off (as leader-ai-harness trace5): the trace is about the body, not the AI's choices.
+// Re-recorded on #51 (2026-11-09, decision 2026-11-09-51-opening-stance-traces-and-set-trigger): the planner replaced the old slot
+// choice and stance clock, so the leader rows changed for two named reasons only: the old stance setup's random draws are gone (the
+// seeded rolls after it shift: daze, confusion, the flinch hold), and with the planner off she keeps her first slot (the old slot
+// choice pressed others). Your rows are unchanged.
+Object.assign(G.LeaderAI.off, { planner: true, swaps: true, dodges: true, confidence: true, triggers: true, memory: true }); // #51: the planner too
 
 let fail = 0,
   n = 0;

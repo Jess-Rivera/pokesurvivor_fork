@@ -24,6 +24,7 @@
     'LeaderMemory',
     'LeaderInfo',
     'LeaderBelief',
+    'LeaderPlanner',
     'Upgrades',
     'Evolvable',
     'SpeciesTraits',

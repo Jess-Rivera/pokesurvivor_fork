@@ -428,9 +428,9 @@ G.MoveRender = (() => {
         .map((s) => s.k + (s.t != null ? ' ' + s.t.toFixed(1) : ''))
         .concat(G.Stages.list(e).map((s) => s.stat + (s.stage > 0 ? '+' : '') + s.stage));
       if (parts.length) ctx.fillText(parts.join(' | '), e.x, e.y - (e.bodyH || 30) - 16);
-      // a gym leader's last utility pick (its Decider's slot scores, G.LeaderAI attackScore, or the old body's GymBrain): one line per
-      // scored move, the pick marked
-      const sc = e.ai && e.ai.scoresOf ? e.ai.scoresOf(e) : (e.brain || {}).scores;
+      // the old body's GymBrain slot pick (gyms 3 to 8): one line per scored move, the pick marked. A Player-entity leader's plan is
+      // drawn with its information layer below (#51)
+      const sc = !e.ai && (e.brain || {}).scores;
       if (sc)
         sc.forEach((c, i) =>
           ctx.fillText(
@@ -456,10 +456,32 @@ G.MoveRender = (() => {
       }
       // slice 2 (#31): its last decisions with their reasons and scores, newest first
       const ai = G.GymArena.leaderAI;
-      if (ai) lines.push(ai.status()); // slice 3 (#32): confidence, effective aggression, the stance and its reason
+      if (ai) lines.push(ai.status()); // #51: confidence, effective aggression, the goal with its value and cost
+      if (ai && ai.overlayLines) lines.push(...ai.overlayLines()); // #51: the plan's steps with costs, the top three alternatives
       if (ai) for (const d of ai.log.slice(-4).reverse()) lines.push(d.t.toFixed(1) + ' ' + d.act + ': ' + d.text);
       ctx.fillStyle = '#ffd95e';
       lines.forEach((line, i) => ctx.fillText(line, lead.x, lead.y + 22 + 11 * i));
+      // #51: a cooldown-window bar per revealed move of yours (LEADER-AI OVERLAY): 0 to BAR_S seconds since its last cast, the
+      // window shaded, the time since that cast as a tick (no tick: not cast since your last switch, believed ready)
+      const bars = ai && ai.windowBars ? ai.windowBars() : [],
+        BAR_S = 4,
+        BAR_W = 120,
+        y0 = lead.y + 26 + 11 * lines.length;
+      bars.forEach((b, i) => {
+        const x0 = lead.x - BAR_W / 2,
+          y = y0 + 12 * i,
+          px = (t) => x0 + (Math.min(BAR_S, Math.max(0, t)) / BAR_S) * BAR_W;
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(x0, y, BAR_W, 6);
+        ctx.fillStyle = 'rgba(255,217,94,0.8)';
+        ctx.fillRect(px(b.lo), y, Math.max(1, px(b.hi) - px(b.lo)), 6);
+        if (b.since != null) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(px(b.since) - 1, y - 2, 2, 10);
+        }
+        ctx.fillStyle = '#ffd95e';
+        ctx.fillText(b.id, x0 - 4 - ctx.measureText(b.id).width / 2, y + 6);
+      });
       ctx.fillStyle = '#ffffff';
     }
     const pl = G.Game && G.Game.player; // the player (4b): HP, shield, team stages and commitments

@@ -1302,7 +1302,7 @@ G.Debug = (() => {
       return false;
     }
     const off = G.LeaderAI.off,
-      KEYS = ['swaps', 'dodges', 'confidence', 'pacing', 'triggers', 'memory']; // slice 3 (#32) adds three, slice 4 (#33) memory
+      KEYS = ['planner', 'swaps', 'dodges', 'confidence', 'triggers', 'memory']; // #51: planner replaces pacing
     if (opts) for (const k of KEYS) if (opts[k] != null) off[k] = !opts[k];
     const ai = G.GymArena.leaderAI;
     console.log('[LeaderAI] ' + KEYS.map((k) => k + ' ' + (off[k] ? 'off' : 'on')).join(', '));

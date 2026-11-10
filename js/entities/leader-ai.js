@@ -16,9 +16,7 @@
  * Slice 3 (#32): confidence, pacing, triggers and lines (Jess 2026-11-08, decision 2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice).
  *   CONFIDENCE  one value per team, moved by what G.LeaderInfo shows (hits landed and taken, faints, the long window's trade),
  *               between confMin and confMax. It shifts the effective aggression (aggr) and the swap margin; never a stat or a number.
- *   PACING      on the think tick: a stance, neutral, push (GymBrain's close stance: frustration, or pressing an advantage) or
- *               breather (the far stance, plus a buff or heal slot when one is ready; it never holds back a cast). A breather keeps
- *               under breatherMax of the fight; a mon arriving starts neutral. The bold gap-closing dodge rides the same tick.
+ *   PACING      (gone in #51: the planner's goals replace it) a stance, neutral, push or breather, on the think tick.
  *   LEAN        the dodge turns toward you with aggr above 0.5, away below it.
  *   TRIGGERS    authored in the gym's ai.triggers, each once unless `repeat`; they wait out a tell or commitment and act through
  *               your controls (a slot press, a swap request), a setting for a while, or a line. ai.lines: up and down on a big swing.
@@ -34,6 +32,12 @@
  * heal cap are the leader's authored SimPass rules (G.GymLeader.SimPass; #41: the Caster is gone, its attack score is attackScore
  * here), on your sim scheduler (G.MoveSim.turn). Where slices 1 to 4
  * below say "the brain", read those.
+ * #51 (#49 slice 2, decision 2026-11-09-51-opening-stance-traces-and-set-trigger): the planner drives it. On every think tick
+ * G.LeaderPlanner picks a goal and a plan of up to 4 actions from Belief's snapshot; the executor here steers each action through the
+ * controller every frame (the heading, and the slot the action keeps active), ends it on its effect or at 1.5 x its estimate, and
+ * replans at once when the plan runs out or the running action's precondition breaks. GONE: the stance clock (far and close), the
+ * old slot choice (attackScore, pickSlot, offHeal), pacing (push, neutral, breather) and a trigger's forced slot and swap (an unused
+ * hook stays). The swap choice, the lead exploit, reflex dodges and the gap-closing dodge stay until #52.
  */
 G.LeaderAI = class LeaderAI {
   /** @param members the leader mons it drives, in slot order; @param team their G.Team, or null for a lone mon */
@@ -62,14 +66,16 @@ G.LeaderAI = class LeaderAI {
       auth = gym.ai || {};
     this.name = gym.leader || 'Leader';
     this.conf = this.set.confStart;
-    this.stance = 'neutral'; // 'neutral', 'push' or 'breather'
-    this.stanceWhy = '';
-    this.stanceT = 0; // seconds in the current stance
-    this.stanceLen = 0; // how long it lasts at most
-    this.breathT = 0; // breather seconds this fight (breatherMax)
-    this.breathNext = 0; // the clock from which another breather may start
-    this.lastHit = 0; // the clock when it last landed a hit
-    this.pushEnd = 0; // the clock when the last push ended (frustration counts from the later of the two)
+    // #51: the plan it runs ({ goal, steps, at, stepT, lastT }), the last choice (for the overlay), when the goal was taken up
+    // (the commitment bonus), and `randomness`'s own seeded source
+    this.plan = null;
+    this.choice = null;
+    this.world = null;
+    this.goalSince = 0;
+    this.replanNow = false;
+    this.draw = G.LeaderPlanner.seeded(
+      LeaderAI.seed != null ? (LeaderAI.seed ^ 0x2545f491) >>> 0 : (Date.now() ^ 0x2545f491) >>> 0
+    );
     this.swingRef = this.conf; // confidence at the last swing line
     this.swingAt = -Infinity;
     this.lineSet = auth.lines || {};
@@ -110,28 +116,33 @@ G.LeaderAI = class LeaderAI {
   /** One frame for mon `e`, the decider's part of the flow (#40, decision 2026-11-09-every-player-entity-runs-one-flow-decide-hands-
    *  body-sim): it decides, and its answers wait in the controller for the body, which follows them under its rules (a stun refuses
    *  the heading and the dodge, as yours), then the sim pass resolves. It decides while stunned too, as you can press keys asleep.
-   *  The heading (with its edge unstick on top, #41: the Decider's, read from how far the last frame moved her) and the slot choice
-   *  come from steer; then the dodge watch every frame, the swap choice on the think tick. */
+   *  #51: Belief updates first; on a think tick (or at once when the plan ran out or broke) it plans; then the executor answers the
+   *  heading (with the edge unstick on top) and the slot press; then the dodge watch every frame, and on the tick the gap-closing
+   *  dodge and the swap choice. */
   think(e, dt, pl) {
     const L = this.legsOf(e),
       step = e.lastStep;
     if (step && L.lastHeading) this.noteStuck(e, step.dt, step.moved, L.lastHeading);
-    e.heading = this.unstick(e, dt, this.steer(e, dt, pl));
     this.clock += dt;
     this.fieldT += dt;
     this.feel(e, dt);
-    if (!LeaderAI.off.dodges) this.watch(e, dt);
     if ((this.tickT -= dt) <= LeaderAI.EPS) {
       this.tickT += this.set.think;
       this.due = true;
     }
     // a tick that lands inside a tell or commitment waits for the first frame out of it (it is never skipped), stunned or not: the
     // Decider keeps no stun check of its own (#41, LEADER-AI FRAME)
-    const free = !this.busy(e);
-    if (this.due && free) {
+    const free = !this.busy(e),
+      tick = this.due && free;
+    if (tick) {
       this.due = false;
       if (!this.opened) this.open(e);
-      if (!LeaderAI.off.pacing) this.pace(e, pl);
+    }
+    if (!LeaderAI.off.planner && free && (tick || this.replanNow)) this.replan(e, tick ? 'tick' : this.replanNow);
+    e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));
+    if (!LeaderAI.off.dodges) this.watch(e, dt);
+    if (tick) {
+      if (!LeaderAI.off.dodges) this.gapClose(e, pl);
       if (!LeaderAI.off.swaps) this.decide(e);
     }
     if (!LeaderAI.off.triggers) {
@@ -214,81 +225,197 @@ G.LeaderAI = class LeaderAI {
     }
     return Math.hypot(b.x - e.x, b.y - e.y);
   }
-  /** Where to go (slice 5a: moved off GymBrain unchanged): the way to you (around walls, G.Path) at speed 1, so the answer is a
-   *  heading for the controller. The slot choice is pressed first (an answer the body reads, #40); while the body is held (a tell
-   *  runs or a dash carries it, as you see your own wind-up), the heading is none. The stance alternates far and close (7 to 9 s at
-   *  its favorite range, 4 to 5 s at the other; a mon with no melee move stays far; below LOW_HP it favors far) unless pacing holds one (a push
-   *  holds close, a push with no melee move walks to the inner edge of its far band; a breather holds far). Far: it backs off inside
-   *  NEAR, circles you inside FAR and walks in beyond it, the band shrunk to its longest ready ranged move's reach. Close with every
-   *  close move recharging: it circles just outside its reach. */
-  steer(e, dt, pl) {
-    const T = G.Boss.TUNE,
-      L = this.legsOf(e),
-      now = G.Gym.now();
-    let [dx, dy] = G.U.norm(pl.x - e.x, pl.y - e.y);
-    const pd = G.Path.dirFor(e, pl);
-    if (pd) [dx, dy] = pd;
-    const dist = G.U.dist(e.x, e.y, pl.x, pl.y);
-    if (L.mode == null) this.startLegs(e, L);
-    this.pressSlot(e, this.pickSlot(e, pl, now));
-    if (e.isHeld()) return [0, 0];
-    if (!L.low && e.hp < e.maxHp * T.LOW_HP) {
-      L.low = true;
-      L.farLike = 0.8;
+  // ---------------- the executor (#51): the plan's actions steered through the controller ----------------
+
+  /** Asks the planner for a goal and a plan from Belief's snapshot (LEADER-AI CHOICE). The running plan competes with its commitment
+   *  bonus; a new plan that starts with the running action keeps its clock. Logs a change of goal. */
+  replan(e, why) {
+    this.replanNow = false;
+    this.lastWhy = why; // why it last planned: 'tick', 'plan done', 'broken: ...' or 'a mon arrives' (the overlay and the harness)
+    const belief = G.LeaderBelief.current,
+      world = belief && belief.snapshot ? belief.snapshot(e, this.set, this.conf) : null;
+    if (!world || !Array.isArray(world.slots)) {
+      this.plan = null;
+      return;
     }
-    const hold = LeaderAI.off.pacing ? null : LeaderAI.HOLD[this.stance],
-      tight = hold === 'close' && !L.melee;
-    if (hold) L.mode = tight ? 'far' : hold;
-    else L.modeT -= dt;
-    if (!hold && L.modeT <= 0) {
-      L.mode = L.mode === 'far' && L.melee ? 'close' : 'far';
-      L.modeT = (L.mode === 'far') === L.farLike > 0.5 ? G.U.rand(7, 9) : G.U.rand(4, 5);
-      L.side = -L.side;
+    const was = this.plan,
+      running = was && was.steps[was.at],
+      choice = G.LeaderPlanner.choose(
+        world,
+        running ? { goal: was.goal, step: running, invested: this.clock - this.goalSince } : null,
+        this.draw
+      );
+    this.world = world;
+    this.choice = choice;
+    const pick = choice.pick;
+    if (!pick) {
+      this.plan = null;
+      return;
     }
-    // a leader moves at its species speed, always: no chase bonus, no slower circling (Jess, 2026-10-19)
-    let vx = dx,
-      vy = dy;
-    const [ux, uy] = G.U.norm(pl.x - e.x, pl.y - e.y);
-    const circle = () => {
-      vx = -uy * L.side;
-      vy = ux * L.side;
+    const keep = !!running && G.LeaderPlanner.sameAction(pick.steps[0], running);
+    // only a change of goal is logged (the overlay shows the running plan): plan changes every few ticks would push the other
+    // decisions out of the LOG_N log
+    if (!was || was.goal !== pick.goal) {
+      this.goalSince = this.clock;
+      this.note('goal', pick.goal + ' (' + why + '): ' + this.planText(pick));
+    }
+    this.plan = {
+      goal: pick.goal,
+      steps: pick.steps,
+      at: 0,
+      stepT: keep ? was.stepT : 0,
+      lastT: keep ? was.lastT : this.timersOf(e, pick.steps[0]),
+      value: pick.value,
+      cost: pick.cost,
     };
-    if (L.mode === 'far') {
-      let out = Math.min(T.FAR, this.ranged(e) - T.SHOT_IN),
-        inn = Math.min(T.NEAR, out - T.BAND);
-      if (tight) [out, inn] = [inn, inn - T.BAND];
-      if (dist < inn) {
-        vx = -ux;
-        vy = -uy;
-      } else if (dist < out) circle();
-    } else if (!T.CLOSE.some((f) => this.ready(e, f))) {
-      const r = this.reach(e) + (pl.r || 0) + 30;
-      if (dist < r) {
-        vx = -ux;
-        vy = -uy;
-      } else if (dist < r + 40) circle();
-    }
-    return [vx, vy];
   }
-  /** Mon e's movement state this fight (its stance, the clock to the next switch, the circling side, its low HP mark): per-fight
-   *  state lives on the AI, never on the mons (LEADER-AI SCOPE). */
+  /** A plan as one line: each step's verb and what it names. */
+  planText(c) {
+    return c.steps.map((s) => this.stepText(s)).join(', ');
+  }
+  stepText(s) {
+    if (s.verb === 'close' || s.verb === 'use') return s.verb + ' ' + (s.slot + 1);
+    if (s.verb === 'hold') return 'hold ' + Math.round(s.range);
+    if (s.verb === 'wait') return s.yourMove != null ? 'wait for your ' + s.yourMove : 'wait for ' + (s.slot + 1);
+    return s.verb;
+  }
+  /** The cooldowns of the slot a step names, to see a cast land (a cooldown that jumps up), or null. */
+  timersOf(e, step) {
+    const g = step && step.slot != null ? e.slots[step.slot] : null;
+    return g ? g.map((s) => s.t) : null;
+  }
+  /** One frame of the running action: is it done (its effect, or 1.5 x its estimate) or broken (its precondition), then the slot it
+   *  keeps active and its heading. With no plan (or the planner off) it stands and presses nothing. */
+  execute(e, dt, pl, free) {
+    let plan = this.plan;
+    if (LeaderAI.off.planner || !plan) return [0, 0];
+    plan.stepT += dt;
+    const state = this.stepState(e, plan.steps[plan.at], pl);
+    if (state !== 'running') {
+      if (state === 'done' && plan.at + 1 < plan.steps.length) {
+        plan.at++;
+        plan.stepT = 0;
+        plan.lastT = this.timersOf(e, plan.steps[plan.at]);
+      } else {
+        this.replanNow = state === 'done' ? 'plan done' : 'broken: ' + state;
+        if (free && !LeaderAI.off.planner) this.replan(e, this.replanNow);
+        plan = this.plan;
+        if (!plan) return [0, 0];
+      }
+    }
+    const step = plan.steps[plan.at],
+      keep = this.keptSlot(e, plan, step);
+    if (keep != null && keep !== e.active && e.slots.length > 1 && !(e.tell || e.mvRoot || e.stFl || e.swapT > 0))
+      this.pressSlot(e, keep);
+    if (e.isHeld()) return [0, 0];
+    return this.headingFor(e, step, pl);
+  }
+  /** 'done', 'running', or why the running action's precondition broke. */
+  stepState(e, step, pl) {
+    const T = G.LeaderPlanner.TUNE,
+      belief = G.LeaderBelief.current,
+      at = (belief && belief.yourGuess()) || pl,
+      dist = G.U.dist(e.x, e.y, at.x, at.y),
+      r = pl.r || 0,
+      plan = this.plan;
+    if (plan.stepT >= T.stepTimeout * Math.max(step.duration, this.set.think) - LeaderAI.EPS) return 'done';
+    if (step.verb === 'close') return dist <= step.reach + r ? 'done' : 'running';
+    if (step.verb === 'hold' || step.verb === 'recover')
+      return plan.stepT >= step.duration - LeaderAI.EPS ? 'done' : 'running';
+    if (step.verb === 'backOff') return dist >= step.to ? 'done' : 'running';
+    if (step.verb === 'wait' && step.yourMove != null) {
+      const since = belief && belief.sinceCast(LeaderAI.yours(), step.yourMove);
+      if (since != null && since < plan.stepT - LeaderAI.EPS) return 'done';
+      return dist > step.reach + (e.r || 0) + T.slack ? 'you left its reach' : 'running';
+    }
+    const group = e.slots[step.slot] || [];
+    if (step.verb === 'wait') return group.some((s) => G.Boss.open(e, s) && s.t <= 0) ? 'done' : 'running';
+    // use: done once a move of the slot is cast (its cooldown jumps up); broken when you leave its reach or it can no longer cast
+    const was = plan.lastT,
+      cast = !!was && group.some((s, i) => s.t > (was[i] || 0) + 0.1);
+    plan.lastT = group.map((s) => s.t);
+    if (cast) return 'done';
+    if (step.tag === 'heal' && !(e.healsLeft > 0)) return 'no heal left';
+    if (step.tag === 'buff') return 'running';
+    if (step.tag === 'heal') return 'running';
+    let reach = 0;
+    for (const s of group) {
+      const d = e.moveDef(s.id),
+        f = G.Gyms.formOf(d);
+      if (f && f !== 'buff' && f !== 'heal') reach = Math.max(reach, G.Gyms.reachOf(d, f));
+    }
+    if (dist > reach + r + T.slack && !e.tell) return 'you left its reach';
+    return 'running';
+  }
+  /** The slot an action keeps active (LEADER-AI ACTIONS: every movement verb names one): its own, else the next Use step's, else the
+   *  active slot, unless that one holds only self heals while unhurt (a self heal casts whenever due, so not healing is this
+   *  choice): then the first other slot with no self heal. */
+  keptSlot(e, plan, step) {
+    if (step.keepSlot != null) return step.keepSlot;
+    for (let i = plan.at + 1; i < plan.steps.length; i++)
+      if (plan.steps[i].keepSlot != null) return plan.steps[i].keepSlot;
+    const isHeal = (s) => G.Gyms.formOf(e.moveDef(s.id)) === 'heal',
+      act = e.slots[e.active] || [];
+    if (e.hp < e.maxHp || !act.length || !act.every(isHeal)) return e.active;
+    const j = e.slots.findIndex((g, i) => i !== e.active && g.length && !g.some(isHeal));
+    return j >= 0 ? j : e.active;
+  }
+  /** The heading an action steers: toward your guessed position (around walls, G.Path) to close or reach, at the range band to hold,
+   *  away (the more open of three ways) to back off, else circling you at the distance it has. At species speed, always (Jess,
+   *  2026-10-19). */
+  headingFor(e, step, pl) {
+    const belief = G.LeaderBelief.current,
+      at = (belief && belief.yourGuess()) || pl,
+      L = this.legsOf(e),
+      dist = G.U.dist(e.x, e.y, at.x, at.y),
+      [ux, uy] = G.U.norm(at.x - e.x, at.y - e.y),
+      toward = () => G.Path.dirFor(e, at) || [ux, uy],
+      circle = () => [-uy * L.side, ux * L.side],
+      band = G.LeaderPlanner.TUNE.rangeBand;
+    if (L.side == null) L.side = Math.random() < 0.5 ? -1 : 1;
+    if (step.verb === 'close') return toward();
+    if (step.verb === 'hold') {
+      if (dist > step.range + band) return toward();
+      if (dist < step.range - band) return this.awayFrom(e, ux, uy);
+      return circle();
+    }
+    if (step.verb === 'backOff') return this.awayFrom(e, ux, uy);
+    if (step.verb === 'use' && step.tag !== 'buff' && step.tag !== 'heal') {
+      const group = e.slots[step.slot] || [];
+      let reach = 0;
+      for (const s of group) {
+        const d = e.moveDef(s.id),
+          f = G.Gyms.formOf(d);
+        if (f && f !== 'buff' && f !== 'heal') reach = Math.max(reach, G.Gyms.reachOf(d, f));
+      }
+      if (dist > reach + (pl.r || 0) - G.LeaderPlanner.TUNE.closeInset) return toward();
+    }
+    return circle();
+  }
+  /** Straight away from you, or 45 degrees either side when that way has more open floor (G.World, as the edge unstick reads it). */
+  awayFrom(e, ux, uy) {
+    const ways = [0, 0.785, -0.785].map((a) => {
+      const c = Math.cos(a),
+        s = Math.sin(a),
+        dx = -ux * c + uy * s,
+        dy = -ux * s - uy * c;
+      return { way: [dx, dy], room: this.room(e, dx, dy, 48) };
+    });
+    return ways.reduce((a, b) => (b.room > a.room + LeaderAI.UNSTICK.tie ? b : a)).way;
+  }
+  /** Mon e's movement state this fight (its circling side and the edge unstick's clocks): per-fight state lives on the AI, never on
+   *  the mons (LEADER-AI SCOPE). */
   legsOf(e) {
     let L = this.legs.get(e);
     if (!L) this.legs.set(e, (L = {}));
     return L;
   }
 
-  // ---------------- what its own moves can do (its HUD) and the attack score (#41: the Decider's, off the old Caster) ----------------
+  // ---------------- what its own moves can do (its HUD) ----------------
 
-  /** Every move mon e moves for: the open moves of all its slots, so it walks in for a move on another slot and switches to it once
-   *  in reach. */
+  /** Every move mon e moves for: the open moves of all its slots. */
   pool(e) {
     return e.slots.flat().filter((s) => G.Boss.open(e, s));
-  }
-  /** The first ready move of `form` mon e moves for (pool), or null. */
-  ready(e, form) {
-    for (const s of this.pool(e)) if (s.t <= 0 && G.Gyms.formOf(e.moveDef(s.id)) === form) return s;
-    return null;
   }
   /** The reach of mon e's close moves (the largest melee cone or nova), from its center: yours, since the mon is player-sized. */
   reach(e) {
@@ -300,144 +427,9 @@ G.LeaderAI = class LeaderAI {
     }
     return r;
   }
-  /** The reach of mon e's longest ready ranged move it moves for (pool), or Infinity when none is ready: far mode keeps you inside it. */
-  ranged(e) {
-    let r = -Infinity;
-    for (const s of this.pool(e)) {
-      if (s.t > 0) continue;
-      const d = e.moveDef(s.id),
-        f = G.Gyms.formOf(d);
-      if (G.Boss.TUNE.RANGED.includes(f)) r = Math.max(r, G.Gyms.reachOf(d, f));
-    }
-    return r > -Infinity ? r : Infinity;
-  }
-  /** The attack score of a slot's moves (Jess 2026-11-01, the utility pick): every ready attack you are in reach of (a melee cone or a
-   *  nova: its reach plus your body; a strike: its range; a shot: how far it flies, capped at its range) gets a score, and the best
-   *  one is the slot's. Score = freshness x fit x opportunity. Freshness: seconds since the move's last wind-up started (the fight's
-   *  first score for one never cast), over its cooldown. Fit: 1, or POINT_BLANK for a shot or strike while you are inside the mon's
-   *  close reach. Ties: ORDER, then the move's place in the group. No randomness. The slot choice (pickSlot) compares slots by it. */
-  attackScore(e, dist, pl, now, group) {
-    const T = G.Boss.TUNE,
-      L = this.legsOf(e);
-    if (L.t0 == null) L.t0 = now;
-    const close = this.reach(e),
-      blank = close > 0 && dist <= close + (pl.r || 0);
-    let best = null;
-    for (const s of group) {
-      if (s.t > 0) continue;
-      const d = e.moveDef(s.id),
-        form = G.Gyms.formOf(d),
-        rank = T.ORDER.indexOf(form);
-      if (rank < 0) continue;
-      const near = T.CLOSE.includes(form);
-      if (dist > G.Gyms.reachOf(d, form) + (near ? pl.r || 0 : 0)) continue;
-      const fresh = (now - (s.last != null ? s.last : L.t0)) / Math.max(0.05, d.cd * e.cdMul),
-        c = { s, d, form, rank, score: fresh * (blank && !near ? T.POINT_BLANK : 1) * this.opportunity(e, d, pl) };
-      if (!best || c.score > best.score || (c.score === best.score && c.rank < best.rank)) best = c;
-    }
-    return best;
-  }
-  /** Opportunity (Jess 2026-11-01): x OPP_HEX for a statusBonus move while you carry a major ailment, x OPP_BLOCKED for a move with a
-   *  major ailment rider while you already carry one, x OPP_DROP for a move with a foe stat drop that is not on you yet (no tracker from
-   *  this move and mon). Each applies once; 1 otherwise. */
-  opportunity(e, d, pl) {
-    const T = G.Boss.TUNE,
-      p = d.payload || [],
-      major = G.Status.majorKind(pl);
-    let k = 1;
-    if (major && p.some((fx) => fx.t === 'special' && fx.handler === 'statusBonus')) k *= T.OPP_HEX;
-    if (major && p.some((fx) => fx.t === 'ailment' && fx.side === 'foe' && T.MAJOR.has(fx.id))) k *= T.OPP_BLOCKED;
-    const src = G.MoveEffects.srcOf(d, e);
-    if (
-      p.some(
-        (fx) =>
-          fx.t === 'stat' &&
-          fx.side === 'foe' &&
-          fx.stages < 0 &&
-          !G.Stages.tracker(pl, G.MoveEffects.statKey(fx.stat), src, false)
-      )
-    )
-      k *= T.OPP_DROP;
-    return k;
-  }
-  /** The last slot choice's scores for mon e, for the ?dev overlay (one per scored slot, the pick marked). */
-  scoresOf(e) {
-    return this.legsOf(e).scores || null;
-  }
-  /** The fight's first frame of mon e: its favorite range from the authored stance, the first switch in 6 to 8 s, a random side. */
-  startLegs(e, L) {
-    const st = e.gym.stance;
-    L.melee = e.slots.flat().some((s) => G.Boss.TUNE.CLOSE.includes(G.Gyms.formOf(e.moveDef(s.id))));
-    L.farLike = st === 'far' ? 0.8 : st === 'close' ? 0.2 : 0.5;
-    L.mode = st === 'far' || !L.melee ? 'far' : 'close';
-    L.modeT = G.U.rand(6, 8);
-    L.side = Math.random() < 0.5 ? -1 : 1;
-    L.low = false;
-  }
-  /** The slot choice (slice 5a: moved off GymBrain unchanged; entity model slice 8, Jess 2026-11-07), under your 0.4 s slot hold and
-   *  never inside a tell. In order: 1 a self heal slot that can cast while hurt (the heal cap counts); 2 stay on the active slot
-   *  while it has a ready move in reach that no other slot beats by SWITCH_MARGIN; 3 else the slot with the best attack score; 4 with
-   *  nothing ready in reach, a buff slot whose Gate is open. The slot to press, or -1 to stay. */
-  pickSlot(e, pl, now) {
-    if (e.slots.length < 2 || e.tell || e.mvRoot || e.stFl || e.swapT > 0) return -1;
-    const S = G.Boss.sense(e, pl),
-      go = (i) => (i !== e.active ? i : -1),
-      slotWith = (form, ok) =>
-        e.slots.findIndex((g) =>
-          g.some((s) => G.Boss.open(e, s) && s.t <= 0 && G.Gyms.formOf(e.moveDef(s.id)) === form && ok(s))
-        );
-    if (S.hpFrac < 1 && e.healsLeft > 0) {
-      const h = slotWith('heal', () => true);
-      if (h >= 0) return go(h);
-    }
-    let cur = null,
-      top = null,
-      at = -1;
-    const scored = [];
-    e.slots.forEach((g, i) => {
-      const k = this.attackScore(
-        e,
-        S.dist,
-        pl,
-        now,
-        g.filter((s) => G.Boss.open(e, s))
-      );
-      if (!k) return;
-      scored.push({ k, i });
-      if (i === e.active) cur = k;
-      if (!top || k.score > top.score || (k.score === top.score && k.rank < top.rank)) {
-        top = k;
-        at = i;
-      }
-    });
-    if (top) {
-      const pick = !cur || top.score >= G.Boss.TUNE.SWITCH_MARGIN * cur.score ? at : e.active;
-      this.legsOf(e).scores = scored.map(({ k, i }) => ({ id: k.s.id, score: k.score, picked: i === pick }));
-      return this.offHeal(e, S, go(pick));
-    }
-    const b = slotWith('buff', (s) => G.MoveEffects.statReady(e.moveDef(s.id), e));
-    return this.offHeal(e, S, b >= 0 ? go(b) : -1);
-  }
-  /** #41 (decision 2026-11-09-41-the-caster-splits-into-body-and-sim-pass): a self heal casts whenever due, as yours, so not healing
-   *  while unhurt is this choice. Unhurt, a heal slot scores near zero, below any other slot: when the choice is to stay (-1) on an
-   *  active slot whose self heal is ready, it presses the first other slot holding no self heal instead. A bonded group fires as
-   *  yours, so a heal Jess bonds into an attack slot is not avoided (its slot holds attacks too). */
-  offHeal(e, S, choice) {
-    if (choice >= 0 || S.hpFrac < 1) return choice;
-    const isHeal = (s) => G.Gyms.formOf(e.moveDef(s.id)) === 'heal',
-      act = e.slots[e.active] || [];
-    if (!act.length || !act.every(isHeal) || !act.some((s) => G.Boss.open(e, s) && s.t <= 0)) return choice;
-    const j = e.slots.findIndex((g, i) => i !== e.active && g.length && !g.some(isHeal));
-    return j >= 0 ? j : choice;
-  }
-  /** The slot choice picked slot i (or -1): the press waits in the controller (`slots`, in press order) until the body reads it, as
-   *  your keys wait for game.js (#40). In a breather a ready buff or heal slot is pressed instead (pacing); a trigger's own press
-   *  (`raw`) is never replaced. */
-  pressSlot(e, i, raw = false) {
-    if (!raw && this.stance === 'breather' && !LeaderAI.off.pacing) {
-      const q = this.quietSlot(e);
-      if (q >= 0) i = q !== e.active ? q : -1;
-    }
+  /** The slot to press (or -1): the press waits in the controller (`slots`, in press order) until the body reads it, as your keys
+   *  wait for game.js (#40). */
+  pressSlot(e, i) {
     if (i >= 0) this.slotQ.push(i);
   }
 
@@ -461,7 +453,8 @@ G.LeaderAI = class LeaderAI {
   arrived(voluntary) {
     this.fieldT = 0;
     this.pending = null;
-    if (this.stance !== 'neutral') this.endStance('a mon arrives');
+    this.plan = null; // #51: a mon arriving plans afresh
+    this.replanNow = 'a mon arrives';
     if (voluntary) {
       this.swaps++;
       if (this.why && this.why.why === 'low') this.saved.add(this.why.out);
@@ -661,7 +654,7 @@ G.LeaderAI = class LeaderAI {
     return this.set.margin * (1 + (this.conf - 0.5) * LeaderAI.CONF.marginK);
   }
   /** Every frame: the fight's events move confidence (confSwing scales them; 0 while confidence is off), the long window drifts it
-   *  toward whoever leads the trade, the stance runs its clock, triggers hear their events, and a big swing says a line. */
+   *  toward whoever leads the trade, triggers hear their events, and a big swing says a line. */
   feel(e, dt) {
     const info = G.LeaderBelief.current,
       S = this.set,
@@ -670,11 +663,8 @@ G.LeaderAI = class LeaderAI {
     if (info) {
       info.tick(dt, S.memoryUse);
       for (const ev of info.events()) {
-        if (ev.k === 'landed') {
-          this.lastHit = this.clock;
-          this.conf += C.hit * k;
-          if (this.stance === 'push') this.endStance('landed a hit');
-        } else if (ev.k === 'taken') this.conf -= C.hit * k;
+        if (ev.k === 'landed') this.conf += C.hit * k;
+        else if (ev.k === 'taken') this.conf -= C.hit * k;
         else if (ev.k === 'faint') this.conf += (ev.side === 'yours' ? C.faint : -C.faint) * k;
         this.heard(ev);
       }
@@ -683,12 +673,6 @@ G.LeaderAI = class LeaderAI {
       if (Math.abs(lead) >= C.trade - LeaderAI.EPS) this.conf += Math.sign(lead) * C.drift * dt * k;
     }
     this.conf = G.U.clamp(this.conf, S.confMin, S.confMax);
-    if (this.stance !== 'neutral') {
-      this.stanceT += dt;
-      if (this.stance === 'breather') this.breathT += dt;
-      const cap = this.stance === 'breather' && this.breathT >= S.breatherMax * this.clock - LeaderAI.EPS;
-      if (cap || this.stanceT >= this.stanceLen - LeaderAI.EPS) this.endStance(cap ? 'breatherMax' : 'its time is up');
-    }
     for (let i = this.temp.length - 1; i >= 0; i--) {
       const t = this.temp[i];
       if (this.clock < t.until - LeaderAI.EPS) continue;
@@ -706,64 +690,9 @@ G.LeaderAI = class LeaderAI {
       }
     }
   }
-  /** The pacing choice on the think tick: a breather after sustained pressure on you (the short window, once breathNext has come and
-   *  while under breatherMax), else a push on frustration or to press an advantage, else the bold gap-closing dodge. */
-  pace(e, pl) {
-    const S = this.set,
-      P = LeaderAI.PACE,
-      a = this.aggr(),
-      info = G.LeaderBelief.current;
-    if (!info || this.stance === 'breather') return;
-    const w = info.windows();
-    if (
-      w.dealt >= P.pressure - LeaderAI.EPS &&
-      this.clock >= this.breathNext - LeaderAI.EPS &&
-      this.breathT < S.breatherMax * this.clock - LeaderAI.EPS
-    )
-      return this.startStance(
-        'breather',
-        'pressure: ' + Math.round(w.dealt * 100) + '% dealt in 2 s',
-        P.breathLen * (1.5 - a)
-      );
-    if (this.stance === 'push') return this.gapClose(e, pl);
-    const quiet = this.clock - Math.max(this.lastHit, this.pushEnd),
-      you = G.Game.player;
-    if (quiet >= S.pushAfter * (1.5 - a) - LeaderAI.EPS)
-      return this.startStance('push', 'frustration: no hit for ' + quiet.toFixed(1) + ' s', P.pushLen);
-    if (this.conf >= P.pressConf - LeaderAI.EPS && you && you.hp < you.maxHp * P.pressHp)
-      return this.startStance('push', 'press: you are at ' + Math.round((you.hp / you.maxHp) * 100) + '%', P.pushLen);
-    this.gapClose(e, pl);
-  }
-  startStance(stance, why, len) {
-    this.stance = stance;
-    this.stanceWhy = why;
-    this.stanceT = 0;
-    this.stanceLen = len;
-    this.note(stance, why + ', ' + len.toFixed(2) + ' s at most');
-  }
-  endStance(why) {
-    if (this.stance === 'breather')
-      this.breathNext = this.clock + LeaderAI.PACE.gap0 + LeaderAI.PACE.gapK * this.aggr();
-    if (this.stance === 'push') this.pushEnd = this.clock;
-    this.note('neutral', this.stance + ' ends: ' + why);
-    this.stance = 'neutral';
-    this.stanceWhy = why;
-    this.stanceT = 0;
-  }
-  /** A breather's quiet slot: a buff slot whose Gate is open, or a heal slot while hurt with a heal left; -1 when none. */
-  quietSlot(e) {
-    if (e.slots.length < 2 || e.tell || e.mvRoot || e.stFl) return -1;
-    return e.slots.findIndex((g) =>
-      g.some((s) => {
-        if (s.t > 0 || (s.hpBelow != null && e.hp >= e.maxHp * s.hpBelow)) return false;
-        const d = e.moveDef(s.id),
-          f = G.Gyms.formOf(d);
-        return (f === 'buff' && G.MoveEffects.statReady(d, e)) || (f === 'heal' && e.hp < e.maxHp && e.healsLeft > 0);
-      })
-    );
-  }
   /** LEADER-AI GAP-CLOSING DODGE: bold enough (aggr at gapClose or more), a close move ready, you just outside its reach and inside
-   *  one dodge more, and a charge to spare beyond dodgeReserve plus one kept for threats (Jess 2026-11-08). Straight at you. */
+   *  one dodge more, and a charge to spare beyond dodgeReserve plus one kept for threats (Jess 2026-11-08). Straight at you. On the
+   *  think tick (#51: no longer inside pacing, which is gone; #52 makes it the planner's Dash in). */
   gapClose(e, pl) {
     const S = this.set;
     if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;
@@ -777,17 +706,61 @@ G.LeaderAI = class LeaderAI {
     this.dodgeAnswer = true;
     this.note('gap', 'dodges in: you are ' + Math.round(d) + ' px, its reach ' + Math.round(reach));
   }
-  /** One line for the ?dev overlay. */
+  /** One line for the ?dev overlay: confidence, effective aggression and the goal it runs (#51). */
   status() {
+    const p = this.plan;
     return (
       'conf ' +
       this.conf.toFixed(2) +
       '  aggr ' +
       this.aggr().toFixed(2) +
-      '  ' +
-      this.stance +
-      (this.stanceWhy ? ': ' + this.stanceWhy : '')
+      '  goal ' +
+      (p ? p.goal + ' (value ' + p.value.toFixed(3) + ', cost ' + p.cost.toFixed(3) + ')' : 'none')
     );
+  }
+  /** The ?dev overlay's plan lines (LEADER-AI OVERLAY): the plan's steps, each with its cost for the goal (the running one marked),
+   *  then the top three alternatives, each goal with its value and cost. */
+  overlayLines() {
+    const p = this.plan,
+      out = [];
+    if (!p || !this.world) return out;
+    p.steps.forEach((s, i) =>
+      out.push(
+        (i === p.at ? '> ' : '  ') +
+          (i + 1) +
+          ' ' +
+          this.stepText(s) +
+          ' ' +
+          s.duration.toFixed(2) +
+          ' s, cost ' +
+          G.LeaderPlanner.costOf(this.world, p.goal, [s]).toFixed(3)
+      )
+    );
+    const alts = ((this.choice && this.choice.ranking) || []).filter((c) => c.goal !== p.goal).slice(0, 3);
+    for (const c of alts)
+      out.push(
+        '  alt ' +
+          c.goal +
+          ' value ' +
+          c.value.toFixed(3) +
+          ' cost ' +
+          c.cost.toFixed(3) +
+          (c.partial ? ' (partial)' : '')
+      );
+    return out;
+  }
+  /** The cooldown-window bars for the overlay: each revealed move of your mon on the field with its window and the time since its
+   *  last cast, as Belief holds them. */
+  windowBars() {
+    const belief = G.LeaderBelief.current,
+      you = LeaderAI.yours();
+    if (!belief || !you) return [];
+    const out = [];
+    for (const id of belief.reveals(you).moves) {
+      const win = belief.window(you, id);
+      if (win) out.push({ id, lo: win.lo, hi: win.hi, since: belief.sinceCast(you, id) });
+    }
+    return out;
   }
 
   // ---------------- triggers and lines (slice 3) ----------------
@@ -834,11 +807,7 @@ G.LeaderAI = class LeaderAI {
       const d = tr.d;
       this.note('trigger', d.on + (d.line ? ': ' + d.line : ''));
       if (d.line) this.say(d.line, d.on === 'exploit'); // a read goes ahead of the queue, so the banner does not drop it
-      if (d.slot != null) this.pressSlot(e, d.slot - 1, true);
-      if (d.swap != null) {
-        this.why = { why: 'trigger', out: e };
-        this.requestSwap(d.swap - 1);
-      }
+      this.forcedAction(e, d);
       for (const k of Object.keys(d.set || {})) {
         const had = this.temp.find((t) => t.k === k),
           until = d.for != null ? this.clock + d.for : Infinity;
@@ -848,6 +817,9 @@ G.LeaderAI = class LeaderAI {
       }
     }
   }
+  /** #51 (LEADER-AI TRIGGERS): the hook a trigger's forced action used (a slot press, a swap). Kept unused: forced slot and swap
+   *  actions are gone (the gyms.js validator refuses them); triggers feed lines and settings only. */
+  forcedAction() {}
   /** Queues "<leader>: <text>" for the banner (`first`: ahead of the lines already waiting). */
   say(text, first = false) {
     const l = { text: this.name + ': ' + text, at: this.clock };
@@ -925,15 +897,13 @@ G.LeaderAI.BASE = Object.freeze({
   matchupX: 2,
   matchupHp: 0.4,
   randomness: 0,
-  // slice 3 (#32): style, confidence and pacing. aggression, the conf* values, breatherMax and gapClose are 0 to 1; pushAfter
-  // seconds at aggr 0.5 (x (1.5 - aggr)); lean degrees at aggr 0 or 1
+  // slice 3 (#32): style and confidence. aggression, the conf* values and gapClose are 0 to 1; lean degrees at aggr 0 or 1
+  // (#51: pushAfter and breatherMax went with pacing)
   aggression: 0.5,
   confStart: 0.5,
   confSwing: 1,
   confMin: 0.2,
   confMax: 0.9,
-  pushAfter: 6,
-  breatherMax: 0.25,
   gapClose: 0.7,
   lean: 45,
   // slice 4 (#33): learnRate sightings before a pattern is believed; predictCap acts per BAG chances to act on one
@@ -941,13 +911,18 @@ G.LeaderAI.BASE = Object.freeze({
   predictCap: 7,
   // #50 (#49 slice 1): how fast the cooldown window closes on each clean gap (0 to 1, higher learns faster; G.LeaderBelief)
   memoryUse: 0.5,
+  // #51 (#49 slice 2): the planner's settings. range: Maintain's preferred distance (px; the slot stance is not read, decision
+  // 2026-11-09-51-opening-stance-traces-and-set-trigger); aimError (px) in the hit chance; risk x the damage-taken weight;
+  // stubbornness x the commitment bonus
+  range: 220,
+  aimError: 0,
+  risk: 1,
+  stubbornness: 1,
 });
 G.LeaderAI.BAG = 10;
 /** Slice 3 (all TUNE, BALANCE.md "Leader AI"). CONF: each hit landed or taken, each faint (yours up, its own down), the drift per
  *  second while the long window's trade is `trade` or more, `pull` (aggr per unit of confidence off 0.5), `marginK` (the swap margin's
- *  share), the swing that says a line and the cooldown between those lines. PACE: a push's length, pressing an advantage (confidence
- *  and your HP fraction), the pressure that earns a breather (dealt in the short window), its length at aggr 0.5 (x (1.5 - aggr)) and
- *  the wait after one (gap0 + gapK x aggr). */
+ *  share), the swing that says a line and the cooldown between those lines. (#51: PACE and HOLD went with pacing.) */
 G.LeaderAI.CONF = Object.freeze({
   hit: 0.03,
   faint: 0.15,
@@ -958,22 +933,12 @@ G.LeaderAI.CONF = Object.freeze({
   swing: 0.25,
   swingCd: 20,
 });
-G.LeaderAI.PACE = Object.freeze({
-  pushLen: 5,
-  pressConf: 0.7,
-  pressHp: 0.4,
-  pressure: 0.15,
-  breathLen: 3,
-  gap0: 8,
-  gapK: 16,
-});
-G.LeaderAI.HOLD = Object.freeze({ neutral: null, push: 'close', breather: 'far' }); // the movement stance each pacing stance holds (steer)
 G.LeaderAI.CLOSE = Object.freeze(['melee', 'nova', 'multi']); // the forms a gap-closing dodge brings into reach
 G.LeaderAI.LINE_WAIT = 4; // seconds a line may wait for the banner (the send-out line shows 3.2 s)
 G.LeaderAI.LINE_T = 2.4; // seconds a line shows
-/** Dev and harness switches: turn its own swap, dodge, confidence, pacing, trigger or memory (slice 4: acting on a pattern) decisions
- *  off (the slice 1 parity runs with all off; slice 2's checks with the slice 3 ones off). */
-G.LeaderAI.off = { swaps: false, dodges: false, confidence: false, pacing: false, triggers: false, memory: false };
+/** Dev and harness switches: turn its own planner (#51: off, it stands and presses no slot), swap, dodge (the gap-closing dodge
+ *  too), confidence, trigger or memory (slice 4: acting on a pattern) decisions off. */
+G.LeaderAI.off = { planner: false, swaps: false, dodges: false, confidence: false, triggers: false, memory: false };
 /** The dodge bag's seed for every fight from now on (the harness fixes it); null: a new one each fight. */
 G.LeaderAI.seed = null;
 /** The prediction cap bag's seed: its own source, derived from `seed` when the harness fixes one. */

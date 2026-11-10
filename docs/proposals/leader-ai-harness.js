@@ -1,9 +1,8 @@
 // Leader AI slice 1 (#22): the controls layer and the information model (Node only). Usage from the repo root:
 //   node docs/proposals/leader-ai-harness.js             run every check
-//   LA_RECORD=1 node docs/proposals/leader-ai-harness.js record the parity trace from the code as it is (before the slice)
 // Spec: docs/LEADER-AI.md ("The AI player", "What it can see", "Build order" 1). Written at the slice's start as its end-goal test
 // (docs/branch-rules/feature-gym-leader-ai.md "Slice shape"). Loads the real engine as leader-team-harness.js does, then:
-//   1 parity: a seeded Misty and Brock loop 2 fight replays the trace recorded before the slice, tick for tick (behavior-neutral)
+//   1 parity: retired in #51 (history); section 15's determinism duel replaces it
 //   2 controls: every call of a leader's controller comes from the one AI player of its team; a slot change arrives only through slots()
 //   3 a forced swap request runs your rules end to end (lock, trap, Fly, i-frames, the bench, the enemy list, the line, no kick or sound)
 //   4 the information model: both rosters, move reveals only after a cast, bond reveals by the no-switch rule (Jess 2026-11-08), keys
@@ -12,8 +11,6 @@ const fs = require('fs'),
   vm = require('vm'),
   path = require('path');
 const R = path.resolve(__dirname, '..', '..');
-const RECORD = !!process.env.LA_RECORD;
-const TRACE = path.join(__dirname, 'leader-ai-trace.json');
 const load = (p) => vm.runInThisContext(fs.readFileSync(path.join(R, p), 'utf8'), { filename: p });
 const noop = new Proxy(function () {}, { get: () => noop, apply: () => undefined, construct: () => ({}) });
 global.window = global;
@@ -90,10 +87,10 @@ try {
   /* it reads the DOM at the end; G.U is set before that */
 }
 // The engine in dev.html order. The slice's two new files load only when they exist, so the record run works on the code before it.
-const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
+const FILES = ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/team.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/entities/leader-ai.js', 'js/systems/combat.js', 'js/systems/gym.js', 'js/systems/gym-arena.js'];
 const NEW = ['js/systems/leader-info.js', 'js/entities/leader-ai.js'];
 // leader-ai-mutate.js points one of these at a broken copy
-const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/leader-belief.js': 'LA_BELIEF', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM', 'js/systems/move-effects.js': 'LA_EFFECTS' };
+const OVERRIDE = { 'js/entities/leader-ai.js': 'LA_AI', 'js/systems/leader-memory.js': 'LA_MEM', 'js/systems/leader-info.js': 'LA_INFO', 'js/systems/leader-belief.js': 'LA_BELIEF', 'js/systems/leader-planner.js': 'LA_PLANNER', 'js/systems/gym-arena.js': 'LA_ARENA', 'js/entities/gym-leader.js': 'LA_LEADER', 'js/entities/boss-ai.js': 'LA_BRAIN', 'js/data/gyms.js': 'LA_GYMS', 'js/systems/move-sim.js': 'LA_SIM', 'js/systems/move-effects.js': 'LA_EFFECTS' };
 const missing = [];
 for (const p of FILES) {
   const alt = OVERRIDE[p] && process.env[OVERRIDE[p]];
@@ -112,7 +109,7 @@ for (const p of FILES) {
 // Sections 1 to 4 are slice 1's: its own swap and dodge decisions (slice 2) stay off there, so the parity trace and the forced
 // swap checks see the behavior-neutral wrapper. Sections 5 on turn them on. Slice 3's own (confidence, pacing, triggers) stay off
 // through section 10 too, so slice 2's checks see slice 2's behavior; sections 11 on turn them on.
-if ('LeaderAI' in base && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
+if ('LeaderAI' in base && G.LeaderAI.off) Object.assign(G.LeaderAI.off, { swaps: true, dodges: true, confidence: true, triggers: true });
 
 let fail = 0,
   n = 0;
@@ -167,154 +164,18 @@ const run = (secs) => {
 };
 const faint = (e) => e.hurt(e.hp + 1, null, true);
 
-// ---------------- 1. parity: the fight runs as before the slice ----------------
-// You walk a slow circle (radius 120 px, 8 s a lap) round a point 160 px south of the arena center, close enough that she chases,
-// circles, switches slots and casts. Slot 1 is fainted at 12 s so the faint send-in is in the trace. Every 6th frame: who is on the
-// field, where (2 decimals) and the active move slot; every cast: the frame, the move and which member cast it.
-function trace(name) {
-  const a = open(name, 2, 160),
-    t = a.team,
-    cx = human.x,
-    cy = human.y,
-    casts = [],
-    ticks = [];
-  const off = G.SimBus.on('move:cast', (ev) => {
-    const i = t.members.findIndex((m) => m.id === ev.ownerId);
-    if (i >= 0) casts.push([frameNo, ev.moveId, i]);
-  });
-  frameNo = 0;
-  for (let f = 0; f < 24 * 60; f++) {
-    const ang = (f * DT * 2 * Math.PI) / 8;
-    human.x = cx + Math.cos(ang) * 120;
-    human.y = cy + Math.sin(ang) * 120;
-    if (f === 12 * 60 && !t.active.dead) faint(t.active);
-    frame();
-    if (frameNo % 6 === 0) {
-      const e = t.active;
-      ticks.push([frameNo, t.activeIdx, +e.x.toFixed(2), +e.y.toFixed(2), e.active]);
-    }
-  }
-  off();
-  return { casts, ticks };
-}
-// Slice 5a (#34): the same walk with every AI decision on (swaps, dodges, confidence, pacing, triggers), loops 1 and 2, so the
-// movement that pacing holds, the slot choice, the tells and the casts all show. The active mon takes 30% of its max HP at 5 s and
-// 40% more at 9 s (the low HP stance, Misty's Recover, the hp triggers) and faints at 16 s. Every 6th frame: who, where, the
-// active slot, the stance and the tell (move, wind-up to 3 decimals, fired); every tell start; every cast with its aim.
-const TRACE5 = path.join(__dirname, 'leader-ai-5a-trace.json');
-const tellOf = (e) => (e.brain && e.brain.tell) || (e.isHeld ? e.tell : null) || null;
-function trace5(name, loop) {
-  const was = Object.assign({}, G.LeaderAI.off),
-    seed0 = G.LeaderAI.seed;
-  Object.assign(G.LeaderAI.off, { swaps: false, dodges: false, confidence: false, pacing: false, triggers: false, memory: false });
-  G.LeaderAI.seed = 7;
-  const a = open(name, loop, 160),
-    t = a.team,
-    cx = human.x,
-    cy = human.y,
-    casts = [],
-    tells = [],
-    ticks = [];
-  const off = G.SimBus.on('move:cast', (ev) => {
-    const i = t.members.findIndex((m) => m.id === ev.ownerId);
-    if (i >= 0) casts.push([frameNo, ev.moveId, i, +ev.aim.toFixed(3)]);
-  });
-  let last = null;
-  frameNo = 0;
-  try {
-    for (let f = 0; f < 26 * 60; f++) {
-      const ang = (f * DT * 2 * Math.PI) / 8;
-      human.x = cx + Math.cos(ang) * 120;
-      human.y = cy + Math.sin(ang) * 120;
-      const e0 = t.active;
-      if (!e0.dead && (f === 5 * 60 || f === 9 * 60)) e0.hurt(e0.maxHp * (f === 5 * 60 ? 0.3 : 0.4), null, true);
-      if (f === 16 * 60 && !e0.dead) faint(e0);
-      // a breather at 2 s (3 s long: the far stance and the quiet slot) and a voluntary swap request at 19 s (the bench has one)
-      if (f === 2 * 60) (t.ai || e0.ai).startStance('breather', 'trace', 3);
-      if (f === 19 * 60 && t.living().length > 1) (t.ai || e0.ai).requestSwap(t.members.findIndex((m) => m !== t.active && !m.dead));
-      frame();
-      const e = t.active,
-        c = tellOf(e);
-      if (c && c !== last) tells.push([frameNo, t.activeIdx, c.id, +c.wind.toFixed(3)]);
-      last = c;
-      if (frameNo % 6 === 0) {
-        const ai = t.ai || e.ai;
-        ticks.push([frameNo, t.activeIdx, +e.x.toFixed(2), +e.y.toFixed(2), e.active, ai.stance, c ? c.id : null, c ? +c.t.toFixed(3) : null, c ? c.fired : null]);
-      }
-    }
-  } finally {
-    off();
-    Object.assign(G.LeaderAI.off, was);
-    G.LeaderAI.seed = seed0;
-  }
-  return { casts, tells, ticks };
-}
-const trace5All = () => {
-  const out = {};
-  for (const name of ['Misty', 'Brock']) for (const loop of [1, 2]) out[name + loop] = trace5(name, loop);
-  return out;
-};
-if (process.env.LA_RECORD5A) {
-  const out = Object.assign({ recorded: new Date().toISOString().slice(0, 10) }, trace5All());
-  fs.writeFileSync(TRACE5, JSON.stringify(out));
-  console.log('leader-ai-harness: 5a trace recorded to ' + path.relative(R, TRACE5) + ' (' + Object.keys(out).filter((k) => k !== 'recorded').map((k) => k + ' ' + out[k].casts.length + ' casts, ' + out[k].tells.length + ' tells').join('; ') + ')');
-  process.exit(0);
-}
-if (RECORD) {
-  const out = { recorded: new Date().toISOString().slice(0, 10), Misty: trace('Misty'), Brock: trace('Brock') };
-  fs.writeFileSync(TRACE, JSON.stringify(out));
-  console.log('leader-ai-harness: trace recorded to ' + path.relative(R, TRACE) + ' (Misty ' + out.Misty.casts.length + ' casts, Brock ' + out.Brock.casts.length + ')');
-  process.exit(0);
-}
-{
-  const want = fs.existsSync(TRACE) ? JSON.parse(fs.readFileSync(TRACE, 'utf8')) : null;
-  ok(want, 'parity: the trace exists (record it on the code before the slice: LA_RECORD=1)');
-  if (want)
-    for (const name of ['Misty', 'Brock']) {
-      const got = trace(name),
-        w = want[name];
-      ok(w.casts.length > 10 && w.ticks.some((k) => k[4] > 0), name + ': the recorded fight casts and switches slots (a trace worth comparing)');
-      const ti = got.ticks.findIndex((k, i) => JSON.stringify(k) !== JSON.stringify(w.ticks[i]));
-      ok(ti < 0 && got.ticks.length === w.ticks.length, name + ': every tick matches the recorded fight' + (ti >= 0 ? ', first drift at ' + JSON.stringify(got.ticks[ti]) + ' vs ' + JSON.stringify(w.ticks[ti]) : ''));
-      const ci = got.casts.findIndex((c, i) => JSON.stringify(c) !== JSON.stringify(w.casts[i]));
-      ok(ci < 0 && got.casts.length === w.casts.length, name + ': every cast matches the recorded fight' + (ci >= 0 ? ', first drift at ' + JSON.stringify(got.casts[ci]) + ' vs ' + JSON.stringify(w.casts[ci]) : ''));
-    }
-}
-// Slice 5a (#34) parity: the AI player without GymBrain plays the fights recorded on GymBrain (LA_RECORD5A=1, before the slice).
-// Re-recorded on #40 (2026-11-09) for two named changes: the sim pass runs after the body (your flow; on its own at most 2 frames
-// per cast and 5.5 px, same moves) and firstWait 0 (the first wind-up starts at once instead of after 1.6 s). Both traces.
-// Re-recorded on #43 step B (2026-11-09) for your order (decision 2026-11-09-42-one-swap-clock-and-one-swap-point): only Misty2 moved. Its
-// voluntary swap lands before the body, so the incoming mon walks one frame more (at most 2.2 px, aims within 0.008 rad); the slot hold
-// ticks after the body, so the wind-ups after the swap back start 1 frame later. Same moves in the same order, no cast moved over 1 frame.
-// Re-recorded on #47a (2026-11-09) for your cast gate (decision 2026-11-09-42-leader-attacks-wait-on-your-cast-gate): a refused attack
-// waits your 0.05 s retry instead of being re-asked every frame. Misty1 identical. Misty2: same casts on the same frames, positions
-// within 2.74 px (a refused slot reads 0.05 s on her HUD for 3 frames). Brock1 and Brock2: 7 tells and 9 casts up to 2 frames later
-// (the retry grid), same moves in the same order, positions within 1.9 px, release aims within 0.153 rad (you circle 2 frames more
-// at Tackle range).
-{
-  const want = fs.existsSync(TRACE5) ? JSON.parse(fs.readFileSync(TRACE5, 'utf8')) : null;
-  ok(want, 'parity 5a: the trace exists (record it on the code before the slice: LA_RECORD5A=1)');
-  if (want) {
-    const got = trace5All();
-    for (const k of Object.keys(got)) {
-      const w = want[k],
-        g = got[k];
-      ok(w && w.casts.length > 10 && w.tells.length > 5, k + ': the recorded fight casts and tells (a trace worth comparing)');
-      if (!w) continue;
-      for (const part of ['ticks', 'tells', 'casts']) {
-        const i = g[part].findIndex((x, j) => JSON.stringify(x) !== JSON.stringify(w[part][j]));
-        ok(i < 0 && g[part].length === w[part].length, k + ': every ' + part.slice(0, -1) + ' matches the GymBrain fight' + (i >= 0 ? ', first drift at ' + JSON.stringify(g[part][i]) + ' vs ' + JSON.stringify(w[part][i]) : g[part].length !== w[part].length ? ', ' + g[part].length + ' vs ' + w[part].length : ''));
-      }
-    }
-  }
-}
+// ---------------- 1. parity: RETIRED (#51, decision 2026-11-09-51-opening-stance-traces-and-set-trigger) ----------------
+// The slice 1 and 5a parity traces (leader-ai-trace.json, leader-ai-5a-trace.json, kept as history) proved behavior-neutral steps
+// against GymBrain. #51 changes behavior by design (the planner drives movement and slots), so they cannot hold; the determinism
+// duel in section 15 replaces them.
 
 const built = !missing.length && G.LeaderAI && G.LeaderInfo;
 ok(built, 'the slice is built: ' + (missing.length ? missing.join(', ') + ' missing' : 'G.LeaderAI and G.LeaderInfo defined'));
 if (built) {
   // ---------------- 2. controls: one AI player per team answers all seven calls ----------------
   {
-    const a = open('Misty', 2, 160),
+    // #51: you stand 40 px off (inside Tackle and Water Gun), so its plans use both slots as each recharges
+    const a = open('Misty', 2, 40),
       t = a.team,
       ai = G.GymArena.leaderAI,
       c = ai && ai.controller,
@@ -346,15 +207,15 @@ if (built) {
     ok(sets.length > 0, 'in 10 s of fighting she changes slot at least once: ' + sets.length);
     ok(sets.every(([f, i]) => (answers.get(f) || []).includes(i)), 'every slot change came through slots() in the same frame');
     ok(other === 0, 'with no request, dodge, shake, cycles and the swap calls answer nothing (slice 1)');
-    // the slot choice (GymBrain's until slice 5a, now the AI player's) never switches by itself: it returns the slot
+    // the executor (#51; the slot choice until then) never switches by itself: its press waits in the controller
     const e = t.active;
     let direct = 0;
     const s1 = e.setActive;
     e.setActive = () => direct++;
     e.swapT = 0;
-    const pick = e.ai.pickSlot(e, human, G.Gym.now());
+    const heading = e.ai.execute(e, DT, human, true);
     e.setActive = s1;
-    ok(direct === 0 && typeof pick === 'number', 'the slot choice returns its choice (' + pick + ') and never calls setActive');
+    ok(direct === 0 && Array.isArray(heading), 'the executor answers a heading and never calls setActive');
   }
 
   // ---------------- 3. a forced swap request runs your rules ----------------
@@ -815,13 +676,16 @@ if (built2) {
       G.World.collide = collide0;
     }
     ok(r && r.dodge && r.dodge.vy < 0, 'with a wall to the south, the dodge goes north, to the open floor');
-    // a still shape (a strike waiting 0.3 s to land on her): straight away from its centre
+    // a still shape (a strike waiting 0.3 s to land on her): straight away from its centre. #51: her planner is off for this check,
+    // so she stands where the shape was placed (it used to rely on her walking straight at you)
     r = null;
+    AI.off.planner = true;
     for (let k = 0; k < 10 && !(r && r.read); k++) {
       run(3);
       r = threat(ai, e, { dx: 0, dy: 10, vx: 0, vy: 0, wait: 0.3, family: 'circle' });
     }
-    // its centre is 10 px south of her (the way she walks, to you), so away from it is north
+    AI.off.planner = false;
+    // its centre is 10 px south of her, so away from it is north
     ok(r && r.dodge && r.dodge.vy < 0 && Math.abs(r.dodge.vx) < 1e-6, 'a still shape: straight away from its centre');
     // a shot that misses (passes 120 px north) is no threat
     run(3);
@@ -992,14 +856,13 @@ if (built2) {
   // Expected values are hand-derived from LEADER-AI (CONFIDENCE, PACING, DODGE DIRECTION, GAP-CLOSING DODGE, TRIGGERS, LINES) and
   // the agreed numbers in issue #32 and decision 2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice:
   // Misty authors aggression 0.68, Brock 0.35; aggr = aggression + (conf - 0.5) x 0.6.
-  const built3 = AI.CONF && AI.PACE && typeof AI.prototype.aggr === 'function';
-  ok(built3, 'slice 3 is built: G.LeaderAI.CONF, PACE and aggr() defined');
+  const built3 = AI.CONF && typeof AI.prototype.aggr === 'function'; // #51: PACE went with pacing
+  ok(built3, 'slice 3 is built: G.LeaderAI.CONF and aggr() defined');
   if (built3) {
-    const C = AI.CONF,
-      P = AI.PACE;
+    const C = AI.CONF;
     /** A fight with only the named switches on, your HP at 100 (a hit's fraction reads plainly) and no other banner up. */
     const go3 = (name, loop, on = {}, dist) => {
-      Object.assign(AI.off, { swaps: !on.swaps, dodges: !on.dodges, confidence: !on.confidence, pacing: !on.pacing, triggers: !on.triggers });
+      Object.assign(AI.off, { swaps: !on.swaps, dodges: !on.dodges, confidence: !on.confidence, planner: on.planner === false, triggers: !on.triggers });
       const r = at(open(name, loop, dist));
       Object.assign(human, { hp: 100, maxHp: 100 });
       bannerUp = false;
@@ -1019,11 +882,11 @@ if (built2) {
 
     // ---------------- 11. the settings, the constants, the authoring and the validator ----------------
     {
-      const want = { aggression: 0.5, confStart: 0.5, confSwing: 1, confMin: 0.2, confMax: 0.9, pushAfter: 6, breatherMax: 0.25, gapClose: 0.7, lean: 45 };
+      const want = { aggression: 0.5, confStart: 0.5, confSwing: 1, confMin: 0.2, confMax: 0.9, gapClose: 0.7, lean: 45 };
       const bad = Object.keys(want).filter((k) => AI.BASE[k] !== want[k]);
       ok(!bad.length, 'the slice 3 baselines are the agreed ones' + (bad.length ? ': ' + bad.map((k) => k + '=' + AI.BASE[k]).join(', ') : ''));
       ok(near(C.hit, 0.03) && near(C.faint, 0.15) && near(C.drift, 0.01) && near(C.trade, 0.1) && near(C.pull, 0.6) && near(C.swing, 0.25) && C.swingCd === 20, 'the confidence constants: hit 0.03, faint 0.15, drift 0.01 at a 10% trade, pull 0.6, a 0.25 swing line every 20 s at most');
-      ok(P.pushLen === 5 && near(P.pressConf, 0.7) && near(P.pressHp, 0.4) && near(P.pressure, 0.15) && P.breathLen === 3 && P.gap0 === 8 && P.gapK === 16, 'the pacing constants: push 5 s, press at 0.7 with you under 40%, a breather after 15% in 2 s, 3 s long, then 8 + 16 x aggr s');
+      ok(AI.PACE === undefined && AI.HOLD === undefined && AI.BASE.pushAfter === undefined && AI.BASE.breatherMax === undefined, '#51: pacing is gone (no PACE, HOLD, pushAfter or breatherMax)');
       ok(AI.LINE_WAIT === 4, 'a line waits at most 4 s for the banner');
       ok(go3('Misty', 2).ai.set.aggression === 0.68 && go3('Brock', 2).ai.set.aggression === 0.35, 'Misty authors aggression 0.68, Brock 0.35 (Jess 2026-11-08)');
       const misty = K[gymIdx('Misty')],
@@ -1038,10 +901,10 @@ if (built2) {
       ok(errs({ triggers: [{ on: 'start' }] }).some((s) => /does nothing/.test(s)), 'a trigger with no action is refused');
       ok(errs({ triggers: [{ on: 'start', set: { bogus: 1 } }] }).some((s) => /set bogus/.test(s)), 'a set names a known setting');
       ok(errs({ triggers: [{ on: 'start', line: 'x', jump: 1 }] }).some((s) => /unknown key jump/.test(s)), 'an unknown trigger key is named');
-      ok(errs({ triggers: [{ on: 'start', swap: 0 }] }).some((s) => /swap is a 1-based/.test(s)), 'a swap is a 1-based team slot');
+      ok(errs({ triggers: [{ on: 'start', swap: 2 }] }).some((s) => /swap is gone/.test(s)) && errs({ triggers: [{ on: 'start', line: 'x', slot: 1 }] }).some((s) => /slot is gone/.test(s)), '#51: a forced swap or slot is refused (the planner decides)');
       ok(errs({ lines: { up: 3 } }).some((s) => /ai line up is text/.test(s)) && errs({ lines: { sideways: 'x' } }).some((s) => /unknown ai line/.test(s)), 'swing lines are up and down, as text');
-      const all = { triggers: [{ on: 'start', line: 'a' }, { on: 'hp', below: 0.5, swap: 2, set: { aggression: 0.9 }, for: 3 }, { on: 'faint', side: 'own', slot: 1 }, { on: 'sendIn', line: 'b', repeat: true }, { on: 'time', at: 9, line: 'c' }, { on: 'exploit', line: 'e' }], lines: { up: 'u', down: 'd' } };
-      ok(errs(all).length === n0, 'every condition and action the spec names (exploiting a pattern since slice 4) passes');
+      const all = { triggers: [{ on: 'start', line: 'a' }, { on: 'hp', below: 0.5, set: { aggression: 0.9 }, for: 3 }, { on: 'faint', side: 'own', line: 'f' }, { on: 'sendIn', line: 'b', repeat: true }, { on: 'time', at: 9, line: 'c' }, { on: 'exploit', line: 'e' }], lines: { up: 'u', down: 'd' } };
+      ok(errs(all).length === n0, 'every condition and action the spec names (exploiting a pattern since slice 4; #51: lines and settings) passes');
     }
 
     // ---------------- 12. confidence ----------------
@@ -1121,144 +984,7 @@ if (built2) {
       ok(w3.dealt === 0 && near(w3.dealtLong, 0.2), 'after 2 s they leave the short window and stay in the long one');
     }
 
-    // ---------------- 13. pacing: push, breather, the cap, a mon arriving ----------------
-    {
-      // frustration: Misty at 0.68 waits 6 x (1.5 - 0.68) = 4.92 s without landing a hit
-      let { t, ai, s1, s2 } = go3('Misty', 2, { pacing: true });
-      const pushAt = until(8, () => ai.stance === 'push');
-      ok(pushAt != null && pushAt >= 4.92 - 1e-9 && pushAt <= 4.92 + TICK, 'frustration: a push after 4.92 s with no hit landed: ' + pushAt);
-      ok(/frustration/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
-      frame();
-      ok(G.LeaderAI.HOLD[ai.stance] === 'close' && ai.legsOf(s1).mode === 'close', 'a push holds the close stance: ' + G.LeaderAI.HOLD[ai.stance] + ' ' + ai.legsOf(s1).mode);
-      const endAt = until(6, () => ai.stance !== 'push');
-      ok(endAt != null && Math.abs(endAt - 5) <= 2 * DT + 1e-9, 'with no hit the push ends after 5 s: ' + endAt);
-      const again = until(6, () => ai.stance === 'push');
-      ok(again != null && again >= 4.92 - 1e-9 && again <= 4.92 + TICK, 'the next push waits 4.92 s from the end of the last: ' + again);
-      hitYou(t.active, 0.01);
-      frame();
-      ok(ai.stance === 'neutral' && /landed/.test(ai.stanceWhy), 'a hit landed ends the push: ' + ai.stance + ' (' + ai.stanceWhy + ')');
-      frame();
-      ok(G.LeaderAI.HOLD[ai.stance] == null, 'and releases the stance');
-      // bolder: aggression 0.9 waits 6 x 0.6 = 3.6 s
-      ({ ai } = go3('Misty', 2, { pacing: true }));
-      ai.set.aggression = 0.9;
-      const bold = until(8, () => ai.stance === 'push');
-      ok(bold != null && bold >= 3.6 - 1e-9 && bold <= 3.6 + TICK, 'higher aggression pushes sooner: 3.6 s at 0.9: ' + bold);
-      // pressing an advantage: confidence 0.7 or more while you are under 40%
-      ({ ai } = go3('Misty', 2, { pacing: true }));
-      run(1);
-      ai.conf = 0.75;
-      human.hp = 45;
-      run(0.3);
-      ok(ai.stance === 'neutral', 'confident, you at 45%: no press');
-      human.hp = 39;
-      run(0.3);
-      ok(ai.stance === 'push' && /press/.test(ai.stanceWhy), 'you at 39%: it presses: ' + ai.stanceWhy);
-      ({ ai } = go3('Misty', 2, { pacing: true }));
-      run(1);
-      ai.conf = 0.69;
-      human.hp = 10;
-      run(0.3);
-      ok(ai.stance === 'neutral', 'at confidence 0.69 it does not press');
-      // a breather: 16% dealt in the short window, 3 x (1.5 - 0.68) = 2.46 s long, then a wait of 8 + 16 x 0.68 = 18.88 s
-      ({ t, ai, s1, s2 } = go3('Misty', 2, { pacing: true }));
-      run(20);
-      hitYou(s1, 0.16);
-      const br = until(0.5, () => ai.stance === 'breather');
-      ok(br != null && br <= TICK, 'sustained pressure (16% in 2 s) earns a breather on the next tick: ' + br);
-      ok(/pressure/.test(ai.stanceWhy), 'its reason: ' + ai.stanceWhy);
-      frame();
-      ok(G.LeaderAI.HOLD[ai.stance] === 'far' && ai.legsOf(s1).mode === 'far', 'a breather holds the far stance');
-      let endClock = null;
-      const len = until(4, () => ai.stance !== 'breather' && (endClock = ai.clock) != null);
-      ok(len != null && Math.abs(len - 2.46) <= 2 * DT + 1e-9, 'it lasts 2.46 s: ' + len);
-      ok(endClock != null && near(ai.breathNext, endClock + 18.88), 'the next may start 18.88 s after it ends: ' + (ai.breathNext - endClock));
-      run(3);
-      hitYou(s1, 0.16);
-      ok(until(0.5, () => ai.stance === 'breather') == null, 'pressure 3 s later: no breather yet');
-      while (ai.clock < ai.breathNext - 0.6) frame();
-      hitYou(s1, 0.16);
-      ok(until(0.5, () => ai.stance === 'breather') == null, 'nor 0.6 s before the wait ends');
-      while (ai.clock < ai.breathNext) frame();
-      hitYou(s1, 0.16);
-      ok(until(0.5, () => ai.stance === 'breather') != null, 'but once it ends');
-      // its quiet slot: Staryu's Harden (slot 3) when its Gate is open (statReady stands in for an open Gate), with you 120 px off,
-      // inside Water Gun's reach, where GymBrain alone keeps an attack slot
-      const sr = G.MoveEffects.statReady;
-      const quiet = (breathe) => {
-        const r = go3('Misty', 2, { pacing: true });
-        run(20);
-        G.MoveEffects.statReady = () => true;
-        if (breathe) {
-          hitYou(r.s1, 0.16);
-          until(0.5, () => r.ai.stance === 'breather');
-        }
-        let on = null,
-          off = 0;
-        for (let i = 1; i <= 140; i++) {
-          human.x = r.s1.x;
-          human.y = r.s1.y + 120;
-          frame();
-          if (r.s1.active === 2 && on == null) on = i * DT;
-          else if (on != null && r.s1.active !== 2) off++;
-        }
-        G.MoveEffects.statReady = sr;
-        return { on, off };
-      };
-      const alone = quiet(false),
-        calm = quiet(true);
-      ok(alone.on == null || alone.off > 0, 'with you in reach and no breather, GymBrain does not stay on Harden: ' + JSON.stringify(alone));
-      ok(calm.on != null && calm.on <= 0.5 && calm.off === 0, 'in a breather it presses its buff slot (Harden, slot 3) and stays on it: ' + JSON.stringify(calm));
-      // it never holds back a cast: Psyduck (Misty loop 3, no buff open at full HP) keeps casting at you through its breather
-      ({ t, ai } = go3('Misty', 3, { pacing: true }));
-      run(1);
-      ai.requestSwap(2);
-      frame();
-      const psy = t.active;
-      ok(psy.dex === 54, 'Psyduck is on the field: ' + psy.dex);
-      run(19);
-      hitYou(psy, 0.16);
-      until(0.5, () => ai.stance === 'breather');
-      let casts = 0;
-      const offCast = G.SimBus.on('move:cast', (ev) => ev.ownerId === psy.id && casts++);
-      for (let i = 0; i < 200 && ai.stance === 'breather'; i++) {
-        human.x = psy.x;
-        human.y = psy.y + 180;
-        frame();
-      }
-      offCast();
-      ok(ai.stance === 'neutral' && casts > 0, 'in a breather it still casts (nothing is held back): ' + casts + ' casts');
-      // a mon arriving ends a breather and starts neutral; the breather share is the fight's, the swap does not reset it
-      ({ t, ai, s1, s2 } = go3('Misty', 2, { pacing: true }));
-      run(20);
-      hitYou(s1, 0.16);
-      until(0.5, () => ai.stance === 'breather');
-      run(1);
-      const bt = ai.breathT;
-      ai.requestSwap(1);
-      frame();
-      ok(t.active === s2 && ai.stance === 'neutral', 'a mon arriving ends the breather: Seel starts neutral');
-      ok(ai.breathT >= bt - 1e-9, 'and the breather time is kept: ' + bt.toFixed(2) + ' then ' + ai.breathT.toFixed(2));
-      frame();
-      ok(G.LeaderAI.HOLD[ai.stance] == null && ai.legsOf(s2).mode != null, 'Seel holds no stance');
-      // the cap: at aggression 0 a breather is 4.5 s and the wait 8 s (36% of the time), so breatherMax 25% has to cut them
-      ({ t, ai } = go3('Misty', 2, { pacing: true }));
-      ai.set.aggression = 0;
-      let worst = -1,
-        cut = 0;
-      const end0 = ai.endStance.bind(ai);
-      ai.endStance = (why) => {
-        if (why === 'breatherMax') cut++;
-        end0(why);
-      };
-      for (let i = 0; i < 60 * 60; i++) {
-        if (i % 30 === 0) hitYou(t.active, 0.16);
-        frame();
-        worst = Math.max(worst, ai.breathT - 0.25 * ai.clock);
-      }
-      ok(worst <= DT + 1e-9, 'under constant pressure the breathers never pass 25% of the fight: worst ' + worst.toFixed(4));
-      ok(cut > 0 && ai.breathT > 0.2 * ai.clock, 'the cap cut ' + cut + ' of them, and they still fill most of the share: ' + (ai.breathT / ai.clock).toFixed(3));
-    }
+    // ---------------- 13. pacing: RETIRED (#51: the planner's goals replace push, neutral and breather; history in git) ----------------
 
     // ---------------- 14. the dodge lean ----------------
     {
@@ -1305,14 +1031,11 @@ if (built2) {
     // ---------------- 15. the gap-closing dodge ----------------
     {
       // Misty loop 2 Staryu has Tackle (melee). You stand east, `extra` px past its reach (plus your body); one dodge is 150 px.
-      const gap = (name, loop, conf, { cd = [0, 0], reserve = 0, extra = 75, ready = true, stance = null } = {}) => {
-        const { ai, s1: e } = go3(name, loop, { pacing: true });
+      // #51: it rides the think tick with the dodges switch (pacing, and with it the breather, is gone)
+      const gap = (name, loop, conf, { cd = [0, 0], reserve = 0, extra = 75, ready = true } = {}) => {
+        const { ai, s1: e } = go3(name, loop, { dodges: true });
         ai.conf = conf;
         ai.set.dodgeReserve = reserve;
-        if (stance) {
-          ai.clock = 100; // so breatherMax (25% of the fight so far) does not end it at once
-          ai.startStance(stance, 'test', 10);
-        }
         const reach = e.ai.reach(e) + human.r;
         let dv = null,
           at = null;
@@ -1340,7 +1063,6 @@ if (built2) {
       ok(!gap('Misty', 2, 0.6, { extra: 151 }).dv, 'one px more than a dodge: no');
       ok(!gap('Misty', 2, 0.6, { extra: -5 }).dv, 'you already in reach: no');
       ok(!gap('Misty', 2, 0.6, { ready: false }).dv, 'no close move ready: no');
-      ok(!gap('Misty', 2, 0.6, { stance: 'breather' }).dv, 'in a breather: no');
       ok(!gap('Brock', 2, 0.9).dv, 'Brock at his ceiling (aggr 0.59): never');
     }
 
@@ -1411,22 +1133,17 @@ if (built2) {
       fresh([{ on: 'time', at: 2, line: 'P', repeat: true }]);
       run(6.1);
       ok(said('P') === 3, 'time every 2 s, repeating: 3 in 6.1 s: ' + said('P'));
-      // actions through your controls
-      ({ t, s1, s2 } = fresh([{ on: 'time', at: 1, swap: 2 }]));
+      // #51: a trigger forces no swap or slot (the validator refuses them; the hook is an unused stub), so one fed in anyway does
+      // nothing; its line still shows
+      ({ t, s1, s2, ai } = fresh([{ on: 'time', at: 1, swap: 2, line: 'W' }]));
+      let forced = 0;
+      const hook0 = ai.forcedAction;
+      ai.forcedAction = function () {
+        forced++;
+        return hook0.apply(this, arguments);
+      };
       run(1.1);
-      ok(t.active === s2 && says.includes('Misty switches to Seel!'), 'a swap action goes through your swap: Seel is in');
-      ({ t, s1 } = fresh([{ on: 'time', at: 1, swap: 2 }]));
-      t.lock = 3;
-      run(1.2);
-      ok(t.active === s1, 'under the swap lock it is refused');
-      run(3);
-      ok(t.active === s1, 'and dropped, as your key press is');
-      ({ s1 } = fresh([{ on: 'time', at: 1, slot: 3 }]));
-      ok(until(1.1, () => s1.active === 2) != null, 'a slot action presses slot 3');
-      ({ s1 } = fresh([{ on: 'time', at: 1, slot: 3 }]));
-      s1.swapT = 5;
-      run(1.2);
-      ok(s1.active !== 2, 'under your 0.4 s slot hold (here 5 s) it is refused');
+      ok(forced === 1 && t.active === s1 && said('W') === 1, '#51: a forced swap reaches only the unused hook (Seel stays out), its line shows');
       ({ ai } = fresh([{ on: 'time', at: 1, set: { aggression: 0.9 } }]));
       run(1.1);
       ok(ai.set.aggression === 0.9, 'a set with no `for` holds');
@@ -1470,24 +1187,28 @@ if (built2) {
 
     // ---------------- 17. a close fight with everything on ----------------
     {
-      const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }, 160);
+      const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, triggers: true }, 160);
       const look = () => t.members.map((m) => [m.maxHp, m.cdMul, m.gym.tempo, m.gym.power, m.gym.level].join()).join('|');
       const before = look(),
-        stances = new Set();
-      let worst = -1,
+        goals = new Set();
+      let planned = 0,
         err = null;
+      // #51: your Bulbasaur casts Vine Whip every 1.5 s (revealed, so its reach and window are believed)
       for (let i = 0; i < 40 * 60 && !err; i++) {
+        if (i % 90 === 0) G.SimBus.emit('move:cast', { moveId: 'vine-whip', ownerId: null, ownerUid: you[0].copyUid, ownerSlot: you[0].teamSlot, rival: false, x: human.x, y: human.y, aim: 0, enemy: false });
         try {
           frame();
         } catch (x) {
           err = x;
         }
-        stances.add(ai.stance);
-        worst = Math.max(worst, ai.breathT - ai.set.breatherMax * ai.clock);
+        if (ai.plan) {
+          planned++;
+          goals.add(ai.plan.goal);
+        }
       }
       ok(!err, 'a 40 s close fight runs: ' + (err ? err.stack : 'no error'));
-      ok(stances.size >= 2, 'and changes stance: ' + [...stances].join(', '));
-      ok(worst <= DT + 1e-9, 'the breathers stay under their share');
+      ok(planned >= 0.9 * 40 * 60, '#51: it runs a plan almost all fight: ' + planned + ' of ' + 40 * 60 + ' frames');
+      ok(goals.size >= 2, '#51: and changes goal: ' + [...goals].join(', '));
       ok(ai.conf >= 0.2 - 1e-9 && ai.conf <= 0.9 + 1e-9, 'confidence stays between floor and ceiling: ' + ai.conf.toFixed(3));
       ok(look() === before, 'no HP, cooldown, tempo, power or level was changed (NO RUBBER BANDING)');
     }
@@ -1783,7 +1504,7 @@ if (built2) {
         Mem.bump(rec.team.leads, B);
         Mem.bump(rec.team.leads, B);
         rec.cap = new AI.Bag(10, 1);
-        const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true }, 160);
+        const { t, ai } = go3('Misty', 2, { swaps: true, dodges: true, confidence: true, triggers: true }, 160);
         const look = () => t.members.map((m) => [m.maxHp, m.cdMul, m.gym.tempo, m.gym.power, m.gym.level].join()).join('|');
         const before = look();
         let err = null;
@@ -1803,7 +1524,7 @@ if (built2) {
     }
     Object.assign(human, { hp: 1e6, maxHp: 1e6 });
     bannerUp = false;
-    Object.assign(AI.off, { confidence: false, pacing: false, triggers: false });
+    Object.assign(AI.off, { confidence: false, triggers: false });
   }
   set(true, true);
 }
@@ -1817,7 +1538,7 @@ if (built2) {
 {
   const AI = G.LeaderAI,
     was = Object.assign({}, AI.off);
-  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, triggers: true });
   const sleep = (m, t = 10) => (m.stMajor = { k: 'sleep', t, age: 0 });
   const wake = (m) => (m.stMajor = null);
   const casts = [];
@@ -2009,7 +1730,7 @@ if (built2) {
 {
   const AI = G.LeaderAI,
     was = Object.assign({}, AI.off);
-  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true });
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, triggers: true });
   const code = (env, file) =>
     fs
       .readFileSync(process.env[env] || path.join(R, file), 'utf8')
@@ -2031,7 +1752,8 @@ if (built2) {
       ok(typeof e.acceptsAttack === 'function', '13a: the Body has an acceptance check for an attack');
       const leader = code('LA_LEADER', 'js/entities/gym-leader.js');
       ok(!/POINT_BLANK|OPP_HEX|OPP_DROP|OPP_BLOCKED/.test(leader), '13a: no attack scoring is left on the Body or the SimPass');
-      ok(/POINT_BLANK/.test(code('LA_AI', 'js/entities/leader-ai.js')), '13a: the scoring lives in the Decider');
+      // #51: the old attack score is gone; choosing is the planner's (the Decider's own module, G.LeaderPlanner)
+      ok(typeof G.LeaderPlanner.choose === 'function' && !/POINT_BLANK/.test(code('LA_AI', 'js/entities/leader-ai.js')), '13a: the scoring lives in the Decider (its planner)');
     }
     // 13b. item 8: the old brain's fields are gone from the Body
     {
@@ -2207,7 +1929,7 @@ if (built2) {
     Mem = G.LeaderMemory,
     was = Object.assign({}, AI.off),
     realDefs = G.MoveDefs;
-  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, pacing: true, triggers: true, memory: true });
+  Object.assign(AI.off, { swaps: true, dodges: true, confidence: true, triggers: true, memory: true });
   const cast = (m, moveId) => G.SimBus.emit('move:cast', { moveId, ownerId: null, ownerUid: m.copyUid, ownerSlot: m.teamSlot, rival: false, x: 0, y: 0, aim: 0, enemy: false });
   const switched = (m) => G.SimBus.emit('slot:switch', { ownerUid: m.copyUid, ownerSlot: m.teamSlot, rival: false, slot: 1 });
   const win = (w, lo, hi) => !!w && near(w.lo, lo, 1e-9) && near(w.hi, hi, 1e-9);
@@ -2332,6 +2054,291 @@ if (built2) {
     Object.assign(AI.off, was);
     youActive = 0;
     G.GymArena.reset();
+  }
+}
+
+// ---------------- 15. #51 (#49 slice 2): goals, the planner and the executor (docs/LEADER-AI.md "The Decider (#49)") ----------------
+// Written at the slice's start (issue #51). Expected values are hand-derived from the spec, decision
+// 2026-11-09-51-opening-stance-traces-and-set-trigger and the #51 plan's starting numbers (G.LeaderPlanner PROFILE, BASE_VALUE, TUNE),
+// never from code output. The worlds are hand-made snapshots (Belief's shape), so every number below can be checked on paper.
+// Profiles (taken, dealt, time per s): Endurance 1.5, 1, 0.002; Maintain 1, 1, 0.01; Pressure 0.6, 1.5, 0.02; Kite 2, 1, 0.005;
+// Bait 2, 1.5, 0.005; Finish 0.3, 1.5, 0.01; Conserve 2.5, 0, 0.005. Values: Endurance 0.1, Maintain 0.1, Pressure 0.12, Kite 0.1,
+// Bait 0.14; Finish your HP + 0.3; confidence 0.5 leaves every utility at 1.
+if (G.LeaderPlanner) {
+  const P = G.LeaderPlanner,
+    AI = G.LeaderAI;
+  /** A hand-made world: one slot per move, you `distance` px off, no danger unless `threats` names some. */
+  const world = (o = {}) =>
+    Object.assign(
+      {
+        distance: 100,
+        preferredRange: 220,
+        aimError: 0,
+        risk: 1,
+        stubbornness: 1,
+        randomness: 0,
+        confidence: 0.5,
+        own: { speed: 100, radius: 10, hpFraction: 1, healsLeft: 0, activeSlot: 0, dodgeCharges: { ready: 2, total: 2, nextBackIn: 0 } },
+        slots: (o.moves || [jab()]).map((m, index) => ({ index, moves: [m] })),
+        you: Object.assign({ hpFraction: 1, radius: 10, sidewaysSpeed: 0, bestReach: 160, bestHit: 0, baitMoveId: null, threats: [] }, o.you || {}),
+      },
+      o.top || {}
+    );
+  const move = (o) => Object.assign({ cooldown: 2, remaining: 0, hitFraction: 0.1, tell: 0.5, travelSpeed: 0, halfWidth: 10, setsBack: false }, o);
+  const jab = (o = {}) => move(Object.assign({ id: 'jab', form: 'melee', tag: 'attack', reach: 50 }, o));
+  const gun = (o = {}) => move(Object.assign({ id: 'gun', form: 'shot', tag: 'attack', reach: 300, hitFraction: 0.05, cooldown: 1 }, o));
+  const of = (choice, goal) => choice.ranking.find((c) => c.goal === goal);
+  const text = (c) => (c ? c.steps.map((s) => s.verb + (s.slot != null ? ' ' + (s.slot + 1) : '')).join(', ') : 'none');
+
+  // 15a. hit chance (LEADER-AI COST): a shot 200 px off at 400 px/s flies 0.5 s, plus its 0.5 s tell, while you step sideways at
+  // 60 px/s: escape 60 px against a half width of 10 + your 10: 20 / (20 + 60) = 0.25. A cone in reach: 1. 20 px past a reach (the
+  // edge is reach + your body): halfway down the 40 px falloff, 0.5.
+  const yu = { radius: 10, sidewaysSpeed: 60 };
+  ok(near(P.hitChance(gun({ travelSpeed: 400 }), 200, yu), 0.25), '15a: a shot you strafe: 0.25: ' + P.hitChance(gun({ travelSpeed: 400 }), 200, yu));
+  ok(P.hitChance(jab(), 55, yu) === 1, '15a: a cone in reach always lands');
+  ok(near(P.hitChance(jab(), 80, { radius: 10, sidewaysSpeed: 0 }), 0.5), '15a: 20 px past its reach: 0.5');
+  ok(near(P.hitChance(gun({ travelSpeed: 400 }), 200, yu, 20), 20 / 100), '15a: aimError 20 px adds to the escape: 20 / 100');
+
+  // 15b. the cheapest plan (A world: a jab, reach 50, you 100 px off with your 10 px body). Close to reach walks to 50 + 10 - 5 = 55
+  // px: 0.45 s at 100 px/s. Use slot: no wait, its 0.5 s tell, a sure hit for 0.1. Pressure: 0.6 x 0 - 1.5 x 0.1 + 0.02 x 0.95 =
+  // -0.131, so 0.12 + 0.131 = 0.251. Endurance: -0.1 + 0.002 x 0.95 = -0.0981, 0.1981. No plan longer than 4 steps.
+  {
+    const c = P.choose(world());
+    const pr = of(c, 'pressure');
+    ok(pr && text(pr) === 'close 1, use 1' && near(pr.cost, -0.131) && near(pr.score, 0.251), '15b: Pressure: close 1, use 1, cost -0.131, score 0.251: ' + text(pr) + ' ' + (pr && pr.cost));
+    ok(near(of(c, 'endurance').score, 0.1981), '15b: Endurance 0.1981: ' + of(c, 'endurance').score);
+    ok(c.pick.goal === 'pressure', '15b: Pressure wins it: ' + c.pick.goal);
+    ok(c.ranking.every((r) => r.steps.length <= 4) && c.nodes > 0, '15b: no plan is longer than 4 actions (' + c.nodes + ' plans searched)');
+    ok(!of(c, 'kite') && !of(c, 'maintain') && !of(c, 'bait'), '15b: a lone jab cannot outreach you, hold your range or bait: no Kite, Maintain or Bait');
+  }
+
+  // 15c. Finish: you at 8%: the jab's 0.1 KOs. Value 0.08 + 0.3 = 0.38; cost 0.3 x 0 - 1.5 x 0.1 + 0.01 x 0.95 = -0.1405; 0.5205.
+  // You at 80%: no 4-step plan deals 0.8. Its best partial plan: close, then three jabs (each recast waits its 2 s): 0.3 dealt in
+  // 0.95 + 2.5 + 2.5 = 5.95 s; value 0.3 (the KO bonus) x 0.3 / 0.8 = 0.1125, cost (dealt left out, flagged) 0.01 x 5.95 = 0.0595.
+  {
+    let c = P.choose(world({ you: { hpFraction: 0.08 } }));
+    const fi = of(c, 'finish');
+    ok(c.pick.goal === 'finish' && near(fi.value, 0.38) && near(fi.score, 0.5205), '15c: you at 8%: Finish wins, value 0.38, score 0.5205: ' + c.pick.goal + ' ' + fi.score);
+    c = P.choose(world({ you: { hpFraction: 0.8 } }));
+    const part = of(c, 'finish');
+    ok(part && part.partial && near(part.value, 0.1125) && near(part.cost, 0.0595) && part.steps.length === 4, '15c: you at 80%: partial credit, value 0.1125, cost 0.0595, 4 steps: ' + (part && [part.value, part.cost, text(part)].join(' ')));
+    ok(c.pick.goal === 'pressure', '15c: and Pressure wins at 80%');
+  }
+
+  // 15d. Buff (worth 0.2 here), the jab on a 10 s cooldown, no danger: use 2 now, 0 s, cost 0, score 0.2. Endurance must wait out the
+  // jab: 0.45 + 9.55 + 0.5 = 10.5 s, -0.1 + 0.002 x 10.5 = -0.079, 0.179. Pressure: -0.15 + 0.21 = 0.06. Conserve: the jab's cooldown
+  // back in 10 s, worth its 0.1: 0.1 - 0.005 x 10 = 0.05.
+  {
+    const harden = move({ id: 'harden', form: 'buff', tag: 'buff', reach: 0, hitFraction: 0, tell: 0, cooldown: 0, buffReady: true, buffValue: 0.2 });
+    const c = P.choose(world({ moves: [jab({ remaining: 10 }), harden] }));
+    ok(c.pick.goal === 'buff' && text(c.pick) === 'use 2' && near(c.pick.score, 0.2), '15d: Buff wins: use 2, 0.2: ' + c.pick.goal + ' ' + text(c.pick));
+    ok(near(of(c, 'endurance').score, 0.179) && near(of(c, 'pressure').score, 0.06) && near(of(c, 'conserve').score, 0.05), '15d: Endurance 0.179, Pressure 0.06, Conserve 0.05');
+    const shut = P.choose(world({ moves: [jab({ remaining: 10 }), Object.assign({}, harden, { buffReady: false, buffValue: 0 })] }));
+    ok(!of(shut, 'buff'), '15d: a buff worth 0 (its stage at +6) has no plan');
+    ok(!of(P.choose(world()), 'conserve'), '15d: with nothing spent, Conserve has no plan (worth 0)');
+  }
+
+  // 15e. danger (your revealed Whip, 0.2 a hit, reach 120, every 1 s, ready now). You 200 px off (outside 120 + her 10). The jab
+  // (0.1, reach 50) is ready, the gun (0.05, reach 300) is 4 s from ready. Closing for the jab takes 1.45 s inside your reach: two
+  // Whips (0.4). Pressure that way: 0.24 - 0.15 + 0.02 x 1.95 = 0.129, so -0.009; waiting 4.5 s for the gun from where it stands:
+  // -0.075 + 0.09 = 0.015, so 0.105. Endurance on the gun: -0.05 + 0.009 = -0.041, 0.141. Kite (200 is outside your reach):
+  // -0.05 + 0.0225 = -0.0275, 0.1275. So Endurance, then Kite, both above Pressure.
+  const D = () =>
+    world({
+      top: { distance: 200 },
+      moves: [jab(), gun({ remaining: 4 })],
+      you: { bestReach: 120, baitMoveId: 'whip', threats: [{ id: 'whip', category: 'physical', hitFraction: 0.2, reach: 120, cycle: 1, nextFireIn: 0 }] },
+    });
+  {
+    const c = P.choose(D());
+    ok(near(of(c, 'endurance').score, 0.141) && near(of(c, 'kite').score, 0.1275) && near(of(c, 'pressure').score, 0.105), '15e: Endurance 0.141, Kite 0.1275, Pressure 0.105: ' + ['endurance', 'kite', 'pressure'].map((g) => of(c, g).score.toFixed(4)).join(', '));
+    ok(c.pick.goal === 'endurance', '15e: with high danger Endurance beats Pressure: ' + c.pick.goal);
+    const calm = D();
+    calm.you = Object.assign({}, calm.you, { threats: [], baitMoveId: null, bestReach: 160 });
+    const c2 = P.choose(calm);
+    ok(c2.pick.goal === 'pressure' && near(c2.pick.score, 0.231) && text(c2.pick) === 'close 1, use 1', '15e: the same world with no shots of yours: Pressure closes for the jab, 0.231: ' + c2.pick.goal + ' ' + text(c2.pick));
+  }
+
+  // 15f. the commitment bonus: seconds invested x 0.01 x stubbornness 1 (x Kite's utility 1). Kite running 2 s: 0.1275 + 0.02 =
+  // 0.1475 beats Endurance's 0.141, so it keeps its plan; 0.5 s: 0.1325, so the clearly better Endurance takes over.
+  {
+    const first = of(P.choose(D()), 'kite').steps[0];
+    ok(P.choose(D(), { goal: 'kite', step: first, invested: 2 }).pick.goal === 'kite', '15f: Kite 2 s in keeps a near-tie (0.1475 against 0.141)');
+    ok(P.choose(D(), { goal: 'kite', step: first, invested: 0.5 }).pick.goal === 'endurance', '15f: 0.5 s in (0.1325), Endurance takes over');
+    ok(P.choose(D(), { goal: 'kite', step: { verb: 'backOff' }, invested: 2 }).pick.goal === 'endurance', '15f: no bonus when its plan no longer starts with the running action');
+  }
+
+  // 15g. randomness: 0 always takes the top and never draws; 1 always draws, and one seed gives one sequence
+  {
+    let draws = 0;
+    const counted = () => (draws++, 0.5);
+    for (let k = 0; k < 5; k++) ok(P.choose(D(), null, counted).pick.goal === 'endurance', '15g: randomness 0 takes the top');
+    ok(draws === 0, '15g: and never draws');
+    const wild = () => Object.assign(D(), { randomness: 1 }),
+      seq = (seed) => {
+        const draw = P.seeded(seed);
+        return Array.from({ length: 12 }, () => P.choose(wild(), null, draw).pick.goal).join();
+      };
+    ok(seq(7) === seq(7), '15g: one seed, one sequence: ' + seq(7));
+    ok(!seq(7).split(',').includes('endurance'), '15g: randomness 1 never takes the top');
+  }
+
+  // 15h. the executor in a real fight (Misty loop 2, you 40 px off): an attack it runs breaks once you leave that slot's reach (plus
+  // the 40 px slack), and it replans on that frame, not on the next tick
+  {
+    const a = open('Misty', 2, 40),
+      ai = G.GymArena.leaderAI,
+      t = a.team;
+    let found = false;
+    for (let f = 0; f < 20 * 60 && !found; f++) {
+      frame();
+      const p = ai.plan,
+        s = p && p.steps[p.at];
+      found = !!(s && s.verb === 'use' && s.tag === 'attack' && !t.active.tell && !ai.busy(t.active));
+    }
+    ok(found, '15h: it runs a Use slot attack within 20 s');
+    human.x += 3000;
+    ai.tickT = 1; // no think tick on this frame
+    frame();
+    ok(/^broken/.test(ai.lastWhy || ''), '15h: you leave its reach: it replans at once: ' + ai.lastWhy);
+    human.x -= 3000;
+  }
+
+  // 15i. the limits: no choice inside a tell or commitment; the planner reads only its world (no G. read but its own name)
+  {
+    const a = open('Brock', 1, 60),
+      ai = G.GymArena.leaderAI,
+      t = a.team;
+    let inside = 0,
+      plans = 0;
+    const re0 = ai.replan;
+    ai.replan = function (e, why) {
+      plans++;
+      if (this.busy(e)) inside++;
+      return re0.call(this, e, why);
+    };
+    run(20);
+    ai.replan = re0;
+    ok(plans > 40 && inside === 0, '15i: ' + plans + ' plans in 20 s, none inside a tell or commitment');
+    const src = fs
+      .readFileSync(process.env.LA_PLANNER || path.join(R, 'js/systems/leader-planner.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    ok((src.match(/\bG\.[A-Za-z]+/g) || []).every((m) => m === 'G.LeaderPlanner'), '15i: the planner reads nothing of the game, only its world');
+    ok(!t.members.some((m) => m.ai.stance !== undefined) && typeof ai.pace !== 'function' && typeof ai.pickSlot !== 'function', '15i: the old stance, pacing and slot choice are gone');
+  }
+
+  // 15j. the determinism duel: Brock loop 1, you circling 120 px round a point 160 px south, casting Vine Whip every 1.5 s, 20 s.
+  // Every 15 frames: the goal, the step it runs, its position. One seed twice: one trace. At randomness 0 (the default leader) nothing
+  // seeded is read in this duel, so the seed check runs at randomness 0.3: there another seed gives another trace.
+  {
+    const duel = (duelSeed, randomness = 0) => {
+      const seed0 = AI.seed,
+        random0 = Math.random;
+      AI.seed = duelSeed;
+      const a = open('Brock', 1, 160),
+        ai = G.GymArena.leaderAI,
+        cx = human.x,
+        cy = human.y,
+        out = [];
+      ai.set.randomness = randomness;
+      if (duelSeed !== 7) {
+        // a different seed: the game's own source too (it sets her circling side)
+        let s2 = duelSeed * 7919;
+        Math.random = () => (s2 = (s2 * 1664525 + 1013904223) % 4294967296) / 4294967296;
+      }
+      for (let f = 0; f < 20 * 60; f++) {
+        const ang = (f * DT * 2 * Math.PI) / 8;
+        human.x = cx + Math.cos(ang) * 120;
+        human.y = cy + Math.sin(ang) * 120;
+        if (f % 90 === 0) G.SimBus.emit('move:cast', { moveId: 'vine-whip', ownerId: null, ownerUid: you[0].copyUid, ownerSlot: you[0].teamSlot, rival: false, x: human.x, y: human.y, aim: 0, enemy: false });
+        frame();
+        const e = a.team.active,
+          p = ai.plan;
+        if (f % 15 === 0) out.push([f, p ? p.goal : null, p ? ai.stepText(p.steps[p.at]) : null, +e.x.toFixed(2), +e.y.toFixed(2)]);
+      }
+      Math.random = random0;
+      AI.seed = seed0;
+      return JSON.stringify(out);
+    };
+    const one = duel(7),
+      two = duel(7);
+    ok(one === two, '15j: one seed, one trace (' + JSON.parse(one).length + ' samples)');
+    ok(duel(7, 0.3) === duel(7, 0.3), '15j: at randomness 0.3 too');
+    ok(duel(7, 0.3) !== duel(8, 0.3), '15j: and there another seed gives another trace');
+    ok(new Set(JSON.parse(one).map((r) => r[1])).size >= 2, '15j: and the goal changes during the duel: ' + [...new Set(JSON.parse(one).map((r) => r[1]))].join(', '));
+  }
+
+  // 15k. the overlay's reads: the plan's lines (each step with its cost, then the alternatives) and a window bar per revealed move
+  {
+    open('Misty', 2, 40);
+    const ai = G.GymArena.leaderAI;
+    G.SimBus.emit('move:cast', { moveId: 'vine-whip', ownerId: null, ownerUid: you[0].copyUid, ownerSlot: you[0].teamSlot, rival: false, x: 0, y: 0, aim: 0, enemy: false });
+    run(1);
+    const lines = ai.overlayLines(),
+      bars = ai.windowBars();
+    ok(/goal \w+ \(value/.test(ai.status()), '15k: the status line names the goal with its value and cost: ' + ai.status());
+    ok(lines.length >= 1 && /cost -?\d/.test(lines[0]), '15k: the plan lines: ' + lines.join(' / '));
+    ok(lines.some((l) => /^ {2}alt /.test(l)), '15k: with the alternatives');
+    ok(bars.length === 1 && bars[0].id === 'vine-whip' && bars[0].lo < bars[0].hi && bars[0].since != null, '15k: one window bar for your revealed Vine Whip: ' + JSON.stringify(bars));
+  }
+  // 15l. the frame order checks the retired parity traces used to carry (hand facts, LEADER-AI FRAME and #40, #41, #43):
+  // the body steps before the SimPass, a wind-up started this frame first advances next frame, the edge unstick reads the body's
+  // own step, and a slot press is answered once
+  {
+    const a = open('Misty', 2, 60),
+      ai = G.GymArena.leaderAI,
+      t = a.team,
+      sim0 = G.GymLeader.SimPass.frame;
+    let order = 0,
+      checked = 0,
+      before = null;
+    G.GymLeader.SimPass.frame = function (e, dt, now) {
+      if (e === t.active) {
+        checked++;
+        if (e.lastStep === before) order++;
+      }
+      return sim0.call(this, e, dt, now);
+    };
+    let fresh = null;
+    for (let f = 0; f < 10 * 60; f++) {
+      before = t.active.lastStep;
+      const had = t.active.tell;
+      frame();
+      const now = t.active.tell;
+      if (!had && now && !fresh) fresh = now.t;
+    }
+    G.GymLeader.SimPass.frame = sim0;
+    ok(checked > 500 && order === 0, '15l: every frame the body steps (a new lastStep) before the SimPass runs: ' + order + ' of ' + checked + ' out of order');
+    ok(fresh === 0, '15l: a wind-up started this frame has not advanced yet (t 0): ' + fresh);
+    // free floor, you 300 px off and moving: she walks without ever being stuck, so no side-step starts
+    const b = open('Brock', 1, 300),
+      bt = b.team;
+    let stepped = 0;
+    for (let f = 0; f < 6 * 60; f++) {
+      human.x += 1;
+      frame();
+      if (ai !== G.GymArena.leaderAI && (G.GymArena.leaderAI.legsOf(bt.active).sideStepT || 0) > 0) stepped++;
+    }
+    ok(stepped === 0, '15l: on open floor the edge unstick never side-steps her (it reads her own step): ' + stepped + ' frames');
+    // a press is answered once, as a key press
+    const c = G.GymArena.leaderAI.controller;
+    c.slots();
+    G.GymArena.leaderAI.pressSlot(bt.active, 1);
+    const first = c.slots(),
+      second = c.slots();
+    ok(first.length === 1 && first[0] === 1 && second.length === 0, '15l: a press is answered once: ' + JSON.stringify([first, second]));
+  }
+  // 15m. risk and confidence, off their neutral values. One step that takes 0.4, deals 0.1 in 1.95 s: Pressure at risk 1 is
+  // 0.6 x 0.4 - 1.5 x 0.1 + 0.02 x 1.95 = 0.129; at risk 2 the taken weight doubles: 0.48 - 0.15 + 0.039 = 0.369. Confidence 0.9:
+  // Pressure and Finish x (0.5 + 0.9) = 1.4, Conserve and Endurance x (1.5 - 0.9) = 0.6, the rest 1.
+  {
+    const P = G.LeaderPlanner,
+      step = [{ taken: 0.4, dealt: 0.1, duration: 1.95, tag: 'attack' }],
+      w = (risk, confidence = 0.5) => ({ risk, confidence });
+    ok(near(P.costOf(w(1), 'pressure', step), 0.129) && near(P.costOf(w(2), 'pressure', step), 0.369), '15m: risk 2 doubles the damage-taken weight: ' + P.costOf(w(2), 'pressure', step));
+    const u = (g) => P.utility(g, w(1, 0.9));
+    ok(near(u('pressure'), 1.4) && near(u('finish'), 1.4) && near(u('conserve'), 0.6) && near(u('endurance'), 0.6) && u('kite') === 1, '15m: confidence 0.9 raises Pressure and Finish to 1.4, lowers Conserve and Endurance to 0.6');
   }
 }
 

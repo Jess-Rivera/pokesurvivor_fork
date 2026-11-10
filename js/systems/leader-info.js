@@ -88,6 +88,16 @@ G.LeaderInfo = (() => {
     watchYou(dt) {
       const m = (G.Game.roster || [])[G.Game.activeIndex],
         pl = G.Game.player;
+      if (pl) {
+        // #51: your motion as the screen shows it (where you are and how fast you moved last frame), for Belief's guess of you
+        const was = this.youAt;
+        this.youAt = {
+          x: pl.x,
+          y: pl.y,
+          vx: was && dt > 0 ? (pl.x - was.x) / dt : 0,
+          vy: was && dt > 0 ? (pl.y - was.y) / dt : 0,
+        };
+      }
       if (!m || m.dead) return;
       const key = this.keyOf(m);
       this.field.set(key, (this.field.get(key) || 0) + dt);

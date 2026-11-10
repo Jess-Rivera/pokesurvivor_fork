@@ -71,7 +71,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {
@@ -204,72 +204,23 @@ reset();
   ok(!sfx.includes('select'), 'a leader switch plays no select sound');
   e.setActive(0);
   ok(e.active === 1, 'no switch inside the hold');
-  e.ai.pickSlot = () => -1;
+  e.ai.execute = () => [0, 0]; // #51: its planner stands down (no heading, no slot press)
   run(e, 25, 5000);
   ok(e.swapT === 0, 'the hold ticks down on the leader itself, with no game.js: ' + e.swapT);
   e.setActive(0);
   ok(e.active === 0, 'after the hold the switch goes through');
+  // #51: a press through the controller (the AI player's, as your key) holds the slot too (it was checked by the retired pick)
+  e.swapT = 0;
+  e.ai.pressSlot(e, 1);
+  e.takeSlotInput();
+  ok(e.active === 1 && near(e.swapT, 0.4), 'a slot pressed through the controller switches and holds 0.4 s: ' + e.active + ' ' + e.swapT);
   sfx.length = 0;
   G.HumanPlayer.prototype.onSwitchFeel.call({});
   ok(sfx.includes('select'), 'your switch still plays the select sound');
 }
 
-// 3. the pick (Q2). Score = freshness x fit (POINT_BLANK 0.5 for a shot inside the close reach) x opportunity (1 here).
-reset();
-{
-  const mk = (active) => {
-    const e = leader(STARYU, gymOf({ moves: TWO() }));
-    e.active = active;
-    return e;
-  };
-  const e0 = mk(0),
-    TK = reachOf(e0, 'tackle'),
-    WP = reachOf(e0, 'water-pulse'),
-    mid = TK + human.r + 20,
-    close = Math.max(1, TK - 5);
-  ok(mid < WP, 'precondition: a spot past Tackle and inside Water Pulse: ' + TK + ' / ' + WP);
-  // a. past Tackle's reach, on Tackle: only Water Pulse scores, so it switches, with the hold
-  const a = mk(0);
-  fresh(a, () => 1);
-  at(a, mid);
-  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock));
-  a.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(a.active === 1 && near(a.swapT, 0.4), 'out of Tackle reach it switches to Water Pulse, holding 0.4 s: ' + a.active + ' ' + a.swapT);
-  // b. inside reach, on Water Pulse: Tackle 1 against Water Pulse 1 x 0.5; 1 >= 1.5 x 0.5, so it switches to Tackle
-  const b = mk(1);
-  fresh(b, () => 1);
-  at(b, close);
-  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock));
-  b.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(b.active === 0, 'up close Tackle (1) beats Water Pulse (0.5) by 2x: switch');
-  // c. the stay rule: on Tackle (1), Water Pulse 2.8 x 0.5 = 1.4 < 1.5, so it stays
-  const c = mk(0);
-  fresh(c, (id) => (id === 'tackle' ? 1 : 2.8));
-  at(c, close);
-  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock));
-  c.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(c.active === 0, 'Water Pulse at 1.4x does not pull it off a ready Tackle');
-  // d. Water Pulse 3.2 x 0.5 = 1.6 >= 1.5, so it switches
-  const d = mk(0);
-  fresh(d, (id) => (id === 'tackle' ? 1 : 3.2));
-  at(d, close);
-  d.ai.pressSlot(d, d.ai.pickSlot(d, human, clock));
-  d.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(d.active === 1, 'Water Pulse at 1.6x does');
-  // e. never inside the hold or a tell
-  const h = mk(1);
-  fresh(h, () => 1);
-  at(h, close);
-  h.swapT = 0.2;
-  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock));
-  h.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(h.active === 1, 'no pick inside the hold');
-  h.swapT = 0;
-  h.tell = { fired: false };
-  h.ai.pressSlot(h, h.ai.pickSlot(h, human, clock));
-  h.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(h.active === 1, 'nor inside a tell');
-}
+// 3. the pick (Q2): RETIRED in #51 (decision 2026-11-09-51-opening-stance-traces-and-set-trigger). The old slot choice (freshness x
+// fit x opportunity, SWITCH_MARGIN) is gone; the planner picks slots by goal value and cost, checked in leader-ai-harness.js section 15.
 
 // 4. only the active slot casts
 reset();
@@ -277,7 +228,7 @@ reset();
   const e = leader(STARYU, gymOf({ moves: TWO() }));
   e.active = 0;
   e.firstWaitLeft = 0;
-  e.ai.pickSlot = () => -1;
+  e.ai.execute = () => [0, 0]; // #51: its planner stands down (no heading, no slot press)
   run(e, 30, reachOf(e, 'tackle') + human.r + 20);
   ok(!casts['water-pulse'] && !e.tell, 'a ready Water Pulse on an inactive slot never starts a tell: ' + JSON.stringify(casts));
 }
@@ -290,14 +241,11 @@ reset();
   e.active = 0;
   const away = reachOf(e, 'tackle') + human.r + 20;
   ok(G.MoveEffects.statReady(e.moveDef('harden'), e), "precondition: Harden's Gate is open on a fresh leader");
-  at(e, away);
-  e.ai.pressSlot(e, e.ai.pickSlot(e, human, clock));
-  e.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(e.active === 1, 'nothing in reach is ready: it visits the Harden slot');
+  // #51: the old "nothing in reach: visit the buff slot" rule is gone; the planner's Buff goal decides (leader-ai-harness section 15)
   const f = mk();
   f.active = 0;
   f.firstWaitLeft = 0;
-  f.ai.pickSlot = () => -1;
+  f.ai.execute = () => [0, 0]; // #51: its planner stands down (no heading, no slot press)
   run(f, 30, away);
   ok(!casts.harden, 'Harden never casts from the bench: ' + JSON.stringify(casts));
   f.active = 1;
@@ -305,32 +253,8 @@ reset();
   ok(casts.harden === 1, 'from the active slot it casts: ' + casts.harden);
 }
 
-// 6. the self heal visit (Q4) and the closed hpBelow slot (Q1)
-reset();
-{
-  const mk = (o = {}) => {
-    const e = leader(STARYU, gymOf(Object.assign({ moves: [{ id: 'tackle' }, { id: 'water-pulse' }, { id: 'recover', hpBelow: 0.35 }] }, o)));
-    e.active = 0;
-    fresh(e, () => 1);
-    at(e, reachOf(e, 'tackle') + human.r + 20);
-    return e;
-  };
-  const a = mk();
-  a.hp = a.maxHp * 0.3;
-  a.ai.pressSlot(a, a.ai.pickSlot(a, human, clock));
-  a.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(a.active === 2, 'below 35%: the Recover slot first, ahead of a ready Water Pulse: ' + a.active);
-  const b = mk();
-  b.hp = b.maxHp * 0.5;
-  b.ai.pressSlot(b, b.ai.pickSlot(b, human, clock));
-  b.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(b.active === 1, 'above its line the Recover slot is closed: Water Pulse: ' + b.active);
-  const c = mk({ restrictions: { healLimit: 0 } });
-  c.hp = c.maxHp * 0.3;
-  c.ai.pressSlot(c, c.ai.pickSlot(c, human, clock));
-  c.takeSlotInput(); // the AI presses its choice and the body reads it, as yours (LEADER-AI slice 1, #40)
-  ok(c.active === 1, 'healLimit 0: no heal visit: ' + c.active);
-}
+// 6. the self heal visit (Q4): RETIRED in #51 with the old slot choice; the planner's heal (Use slot, a heal) and Conserve decide, and a
+// closed hpBelow slot is not in its world (leader-ai-harness section 15).
 
 // 7. bonds (Q5): one tell, the longest member's length, every ready member fires on the release; the validator
 reset();
@@ -338,7 +262,7 @@ reset();
   const e = leader(STARYU, gymOf({ moves: [{ id: 'tackle', bond: true }, { id: 'water-pulse', bond: true }, { id: 'harden' }] }));
   e.active = 0;
   e.firstWaitLeft = 0;
-  e.ai.pickSlot = () => -1;
+  e.ai.execute = () => [0, 0]; // #51: its planner stands down (no heading, no slot press)
   fresh(e, () => 1);
   const close = Math.max(1, reachOf(e, 'tackle') - 5);
   run(e, 1, close);

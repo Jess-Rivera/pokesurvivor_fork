@@ -73,7 +73,7 @@ try {
 } catch (e) {
   /* it reads the DOM at the end; G.U is set before that */
 }
-for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
+for (const p of ['js/core/stats.js', 'js/data/pokedex.js', 'js/data/types.js', 'js/data/enemy-classes.js', 'js/data/enemies.js', 'js/systems/status.js', 'js/systems/stages.js', 'js/entities/enemy.js', 'js/entities/elite.js', 'js/entities/player.js', 'js/entities/player-sim-pass.js', 'js/entities/gym-leader.js', 'js/systems/leader-memory.js', 'js/systems/leader-info.js', 'js/systems/leader-belief.js', 'js/systems/leader-planner.js', 'js/entities/leader-ai.js', 'js/core/simbus.js', 'js/systems/move-geom.js', 'js/data/move-attributes.js', 'js/data/moves-generated.js', 'js/data/move-overrides.js', 'js/data/move-handler.js', 'js/data/move-resolver.js', 'js/data/moves.js', 'js/systems/team-cards.js', 'js/systems/move-sim.js', 'js/systems/move-effects.js', 'js/data/gyms.js', 'js/entities/boss-ai.js', 'js/systems/combat.js']) {
   try {
     load(p);
   } catch (e) {
@@ -351,6 +351,8 @@ reset();
   const e = leader();
   human.x = 1000;
   human.y = 0;
+  // #51: outside an arena there is no Belief, so its planner has nothing to plan on; the Decider's heading is set here, east
+  e.ai.execute = () => [1, 0];
   for (let i = 0; i < 100; i++) {
     clock += DT;
     e.update(DT, human);
@@ -415,6 +417,17 @@ reset();
   ok(a.applyFlinch() === false, 'an asleep leader cannot flinch');
 }
 
+// #51: outside an arena a leader has no Belief, so its planner has nothing to plan on. Tests about the Body (every move casting)
+// press each slot in turn through the controller instead, one second each, as a key would.
+function cycleSlots(e) {
+  let t = 0;
+  e.ai.execute = function (m, dt) {
+    t += dt;
+    const want = Math.floor(t) % m.slots.length;
+    if (want !== m.active) this.pressSlot(m, want);
+    return [0, 0];
+  };
+}
 // every move of Misty's loop 1 set fires through the real G.GymLeader, her real cards folded (moved here from gym-harness, which keeps the old body)
 {
   reset();
@@ -422,6 +435,7 @@ reset();
     sig = misty.signatures[0],
     want = G.Gyms.movesFor(sig, 0, 1).map((m) => m.id);
   const e = leader(STARYU, gymOf({ cards: G.Gyms.cardsFor(misty, 1), stance: sig.stance, moves: G.Gyms.movesFor(sig, 0, 1).map((m) => Object.assign({}, m)) }));
+  cycleSlots(e);
   const hold = (secs, hx) => {
     for (let i = 0, N = Math.round(secs / DT); i < N; i++) {
       clock += DT;
@@ -577,7 +591,7 @@ reset();
   // a. pinned on the north wall, both sides open: after 0.35 s she side-steps to the side she circles, and slides along
   G.World.collide = wall(false);
   const a = leader();
-  a.ai.steer = () => [0, -1];
+  a.ai.execute = () => [0, -1];
   a.ai.legsOf(a).side = -1;
   run(a, 0.3);
   ok(!stepping(a), 'unstick: no side-step after 0.3 s pinned');
@@ -590,14 +604,14 @@ reset();
   // b. a corner (north and east walls): the west side has room, the east has none, so she goes west over her circling side
   G.World.collide = wall(true);
   const b = leader();
-  b.ai.steer = () => [0, -1];
+  b.ai.execute = () => [0, -1];
   b.ai.legsOf(b).side = 1;
   run(b, 0.4);
   ok(stepping(b) && L(b).sideStepWay === -1, 'unstick: in a corner she takes the open side, not her circling side: ' + L(b).sideStepWay);
   // c. moving freely she never side-steps
   G.World.collide = () => false;
   const c = leader();
-  c.ai.steer = () => [1, 0];
+  c.ai.execute = () => [1, 0];
   let stepped = false;
   for (let i = 0; i < 120; i++) {
     c.update(DT, human);
@@ -607,7 +621,7 @@ reset();
   // d. frames that do not count: no heading (attacking or stunned), and a flinch moving her
   G.World.collide = wall(false);
   const d = leader();
-  d.ai.steer = () => [0, 0];
+  d.ai.execute = () => [0, 0];
   run(d, 1);
   ok(stuck(d) === 0 && !stepping(d), 'unstick: standing still (attacking, stunned) is never stuck');
   const f = leader();
@@ -631,6 +645,7 @@ reset();
   ok(want.join() === 'tackle,defense-curl,rock-throw', 'Brock loop 1 set by hand: ' + want.join());
   const e = leader(74, gymOf({ leader: 'Brock', species: 'Geodude', cards: G.Gyms.cardsFor(brock, 1), stance: sig.stance, moves: G.Gyms.movesFor(sig, 0, 1).map((m) => Object.assign({}, m)) }));
   ok(e instanceof G.GymLeader && e.slots.length === 3, 'Brock builds as a G.GymLeader with one slot per move');
+  cycleSlots(e);
   const hold = (secs, hx) => {
     for (let i = 0, N = Math.round(secs / DT); i < N; i++) {
       clock += DT;

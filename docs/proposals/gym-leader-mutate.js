@@ -18,7 +18,7 @@ const LD = 'js/entities/gym-leader.js',
 const ENV = { [AI]: 'GL_AI', [LD]: 'GL_LEADER', [PL]: 'GL_PLAYER', [BR]: 'GL_BRAIN', [ST]: 'GL_STATUS', [FX]: 'GL_FX', [CB]: 'GL_COMBAT', [GY]: 'GL_GYMS' };
 const M = [
   // edge unstick (Jess 2026-11-07; #41: the Decider's, G.LeaderAI)
-  ['no edge side-step', AI, 'e.heading = this.unstick(e, dt, this.steer(e, dt, pl));', 'e.heading = this.steer(e, dt, pl);'],
+  ['no edge side-step', AI, 'e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));', 'e.heading = this.execute(e, dt, pl, free);'], // #51 retarget
   ['the stuck test never runs', AI, '    if (step && L.lastHeading) this.noteStuck(e, step.dt, step.moved, L.lastHeading);\n', ''],
   ['no wait before the side-step', AI, 'if (L.stuckT > U.stuck && !(L.sideStepT > 0)) {', 'if (!(L.sideStepT > 0)) {'],
   ['moving freely counts as stuck', AI, 'if (want <= 0.5 || got >= want * U.slip) {', 'if (want <= 0.5) {'],

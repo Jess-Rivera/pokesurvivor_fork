@@ -106,6 +106,18 @@ _Avoid_: knowledge, model (the opponent model is one part of it)
 
 Rule: docs/LEADER-AI.md "The Decider (#49)" BELIEF
 
+**Goal** (of a leader):
+One of the nine outcomes a leader's Decider can aim for on a think tick (Endurance, Maintain, Pressure, Setback, Kite, Buff, Bait, Finish, Conserve): a target that is something landed or gained, never a position, with a fixed cost profile. Leaders only weight them. Code: `G.LeaderPlanner.GOALS` (#51). Not a stance (pacing is gone).
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" GOALS
+
+**Plan** and **action** (of a leader):
+A plan is at most 4 actions that reach a goal's target, the cheapest found on the think tick; an action is one of the verbs (Close to reach, Hold at range, Back off, Wait for a window, Use slot, Recover; #52 adds Dash in, Draw your shot, Dodge your shot, Swap) filled in per slot, range or move of yours. The executor in `G.LeaderAI` steers each through the Controller. Code: `G.LeaderPlanner` (#51).
+
+_Avoid_: script, routine (nothing is scripted: every plan comes out of scores)
+
+Rule: docs/LEADER-AI.md "The Decider (#49)" PLANS, ACTIONS
+
 **Cooldown window** (of a leader):
 The span of seconds in which a leader believes one of your moves comes back, per revealed move: opened on its base cooldown, narrowed by each clean gap (two casts with the slot kept active), never narrower than the minimum width. Readiness ramps across it. Measured in your mon's field time, so a benched mon's clock waits as its cooldowns do.
 

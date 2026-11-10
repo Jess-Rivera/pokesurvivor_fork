@@ -69,20 +69,23 @@ G.Gyms = (() => {
     'confSwing',
     'confMin',
     'confMax',
-    'pushAfter',
-    'breatherMax',
     'gapClose',
     'lean',
     // slice 4 (#33): run memory. learnRate: sightings before a pattern is believed; predictCap: acts per 10 chances (0 to 10)
     'learnRate',
     'predictCap',
+    // #51 (#49 slice 2): the planner's. range (px), aimError (px), risk and stubbornness (multipliers)
+    'range',
+    'aimError',
+    'risk',
+    'stubbornness',
   ];
-  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'breatherMax', 'gapClose', 'randomness']; // 0 to 1
+  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'gapClose', 'randomness']; // 0 to 1
   // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
   // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
-  // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, slot
-  // (1-based), swap (1-based team slot), set ({ setting: value }) with optional `for` seconds, and `repeat` (true: every time, every
-  // `at` s for time).
+  // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set
+  // ({ setting: value }) with optional `for` seconds, and `repeat` (true: every time, every `at` s for time). #51: a forced `slot` or
+  // `swap` is refused (the planner decides slots, decision 2026-11-09-51-opening-stance-traces-and-set-trigger).
   const TRIGGER_ON = ['start', 'hp', 'faint', 'sendIn', 'time', 'exploit'];
   const TRIGGER_KEYS = ['on', 'below', 'side', 'at', 'repeat', 'line', 'slot', 'swap', 'set', 'for'];
   // Entity model slice 5: `playerEntity` true makes the gym's leader a G.GymLeader; `hpMult` then multiplies the player HP formula, keyed by
@@ -1028,13 +1031,14 @@ G.Gyms = (() => {
           bad.push(T + ': time needs at, seconds above 0');
         if (t.line != null && !str(t.line)) bad.push(T + ': line is text');
         for (const k of ['slot', 'swap'])
-          if (t[k] != null && !(Number.isInteger(t[k]) && t[k] >= 1)) bad.push(T + ': ' + k + ' is a 1-based number');
+          if (t[k] != null)
+            bad.push(T + ': ' + k + ' is gone (#51: a trigger forces no slot or swap; the planner decides)');
         if (t.set != null)
           for (const k of Object.keys(t.set))
             if (!AI_KEYS.includes(k) || !num(t.set[k]))
               bad.push(T + ': set ' + k + ' is a known setting with a number from 0');
         if (t.for != null && !(typeof t.for === 'number' && t.for > 0)) bad.push(T + ': for is seconds above 0');
-        if (t.line == null && t.slot == null && t.swap == null && t.set == null) bad.push(T + ' does nothing');
+        if (t.line == null && t.set == null) bad.push(T + ' does nothing');
       });
       const ln = g.ai.lines;
       if (ln != null) {
