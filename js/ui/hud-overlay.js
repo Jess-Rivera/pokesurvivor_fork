@@ -74,7 +74,8 @@ G.HudOverlay = (() => {
 
   // Shared SVG fills, referenced by id from any shape on the page.
   const BAR_CHECKER = 'url(#hud-bar-checker)', // the B2 HP bar body: 1-pixel checker of the panel body and checker
-    TYPE_CHECKER = 'url(#hud-type-checker)'; // the B2 move button body: 2x2 dark squares on 1-pixel light lines
+    TYPE_CHECKER = 'url(#hud-type-checker)', // the B2 move button body: 2x2 dark squares on 1-pixel light lines
+    SLOT_GRID = 'url(#hud-slot-grid)'; // the HUD move slots: the same grid with 3x3 dark squares (Jess, 2026-11-10)
 
   // ---------- pixel shapes ----------
   /**
@@ -296,6 +297,10 @@ G.HudOverlay = (() => {
           <rect x="0" y="0" width="3" height="3" fill=${PALETTE.typeBodyLight} />
           <rect x="0" y="0" width="2" height="2" fill=${PALETTE.typeBodyDark} />
         </pattern>
+        <pattern id="hud-slot-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="4" height="4" fill=${PALETTE.typeBodyLight} />
+          <rect x="0" y="0" width="3" height="3" fill=${PALETTE.typeBodyDark} />
+        </pattern>
       </defs>
     </svg>`;
   }
@@ -350,6 +355,7 @@ G.HudOverlay = (() => {
     hpBand,
     BAR_CHECKER,
     TYPE_CHECKER,
+    SLOT_GRID,
     BAR_ART_ROWS,
     PixelShape,
     createLifeBar,

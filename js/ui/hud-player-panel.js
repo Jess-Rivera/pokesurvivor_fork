@@ -12,7 +12,7 @@
 G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, hooks, PALETTE, BAR_CHECKER, PixelShape, createLifeBar, typeColours } = overlay.kit;
+  const { html, signal, hooks, PALETTE, BAR_CHECKER, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
@@ -31,10 +31,12 @@ G.HudPlayerPanel = (() => {
     CHIPS = { x: -244, y: 172, width: 70, height: 24, gap: 6 },
     PROMPT = { centreX: -21, y: 208, artRows: 24, padArt: 14 },
     PORTRAIT = { centreX: -281, y: 36, size: 116 },
-    ITEM = { right: -351, y: 74, artSize: 20, nameY: 48 },
+    ITEM = { x: 222, y: 74, artSize: 20, nameY: 48 }, // right of the slots (Jess, 2026-11-10: swapped with Lv)
     SILVER = { right: -260, coinY: 160, coinSize: 32 }, // 12 px below the chips' line (Jess, 2026-11-10)
-    LEVEL = { x: 222, labelY: 116, numberY: 60 }, // the label sits 8 px clear of the number's tall glyphs
-    BOND = { x: 222, y: 36, icon: 24 },
+    // Lv: left of the portrait, right-aligned 12 px clear of its ring (Jess, 2026-11-10: swapped with the held item). The
+    // label sits 8 px clear of the number's tall glyphs; the bond count stays under the number.
+    LEVEL = { right: -351, labelY: 116, numberY: 60 },
+    BOND = { right: -351, y: 36, icon: 24 },
     TIMER = { centreX: -3, y: 10 },
     LEVEL_RATTLE_MS = 650; // the rattle's 0.6 s (css/hud-overlay.css hud-lv-rattle) and a frame to spare
 
@@ -83,6 +85,8 @@ G.HudPlayerPanel = (() => {
 
   const layout = () => (centreX.value = Math.floor(innerWidth / 2));
   const place = (x, y) => ({ left: x + 'px', bottom: y + 'px' });
+  /** A piece whose RIGHT edge sits at x (from the centre line). */
+  const placeRight = (x, y) => ({ right: -x + 'px', bottom: y + 'px' });
 
   // ---------- shapes ----------
   /**
@@ -109,12 +113,8 @@ G.HudPlayerPanel = (() => {
       [right - 1, 1, rim.light],
       [right, 1, PALETTE.outline],
     ];
-    // the body: plain light grey (Jess, 2026-11-10: no checker), flat black for an empty slot
-    const body = [
-      left + 4,
-      right - 3 - (left + 4),
-      inner || (rim === EMPTY_RIM ? PALETTE.body : PALETTE.typeBodyLight),
-    ];
+    // the body: the B2 grid with its dark squares 50% larger (Jess, 2026-11-10); flat black for an empty slot
+    const body = [left + 4, right - 3 - (left + 4), inner || (rim === EMPTY_RIM ? PALETTE.body : SLOT_GRID)];
     return [body, ...ends];
   }
 
@@ -206,10 +206,9 @@ G.HudPlayerPanel = (() => {
 
   let itemCanvas = null;
   function HeldItem() {
-    const held = item.value,
-      size = ITEM.artSize * ART_PIXEL;
+    const held = item.value;
     const rim = held ? PALETTE.lvFill : PALETTE.slate;
-    return html`<div class="hud-item" style=${place(ITEM.right - size, ITEM.y)}>
+    return html`<div class="hud-item" style=${place(ITEM.x, ITEM.y)}>
         <${PixelShape}
           artWidth=${ITEM.artSize}
           artRows=${ITEM.artSize}
@@ -224,7 +223,7 @@ G.HudPlayerPanel = (() => {
           style=${{ visibility: held ? 'visible' : 'hidden' }}
         ></canvas>
       </div>
-      ${held ? html`<div class="hud-text hud-item-name" style=${{ right: -ITEM.right + 'px', bottom: ITEM.nameY + 'px' }}>${held.name}</div>` : null}`;
+      ${held ? html`<div class="hud-text hud-item-name" style=${place(ITEM.x, ITEM.nameY)}>${held.name}</div>` : null}`;
   }
 
   function LifeMeter() {
@@ -349,17 +348,17 @@ G.HudPlayerPanel = (() => {
   }
 
   function Level() {
-    return html`<div class="hud-text hud-lv-label" style=${place(LEVEL.x, LEVEL.labelY)}>Lv.</div>
+    return html`<div class="hud-text hud-lv-label" style=${placeRight(LEVEL.right, LEVEL.labelY)}>Lv.</div>
       <div
         key=${'lv' + levelRattle.value}
         class=${'hud-lv-number' + (levelRattling.value ? ' is-rattling' : '')}
-        style=${place(LEVEL.x, LEVEL.numberY)}
+        style=${placeRight(LEVEL.right, LEVEL.numberY)}
       >
         ${level}
       </div>
       ${
         bonds.value > 0
-          ? html`<div class="hud-bond" style=${place(BOND.x, BOND.y)}>
+          ? html`<div class="hud-bond" style=${placeRight(BOND.right, BOND.y)}>
               <img src=${G.Icons.url('bond')} alt="" style=${{ width: BOND.icon + 'px', height: BOND.icon + 'px' }} />
               ${bonds.value > 1 ? html`<span class="hud-text">×${bonds.value}</span>` : null}
             </div>`

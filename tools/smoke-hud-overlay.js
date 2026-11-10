@@ -272,13 +272,13 @@ const PANEL = {
   well: 36,
   chip: { left: 960 - 244, top: 1080 - 172 - 24, width: 70, height: 24 },
   prompt: { top: 1080 - 208 - 48, height: 48, centre: 960 - 21 },
-  item: { right: 960 - 351, top: 1080 - 74 - 40, size: 40 },
+  item: { left: 960 + 222, top: 1080 - 74 - 40, size: 40 }, // right of the slots (swapped with Lv, 2026-11-10)
   coin: { right: 960 - 260, top: 1080 - 160 - 32, size: 32 }, // 12 px below the chips' line
-  levelLeft: 960 + 222,
+  levelRight: 960 - 351, // left of the portrait, right-aligned (swapped with the held item)
   hpTextLeft: 960 + 218,
   timerCentre: 960 - 3,
   bondPink: '#ff8ad8',
-  slotBody: '#393939', // plain light grey (Jess, 2026-11-10)
+  slotGrid: 'url(#hud-slot-grid)', // the B2 grid, dark squares 50% larger (Jess, 2026-11-10)
   capital: (type) => type.charAt(0).toUpperCase() + type.slice(1),
   // SV Base, as computed colours (HUD-STYLE "Type colours")
   typeBase: {
@@ -375,6 +375,8 @@ const panelState = (page) =>
     };
   });
 
+const confettiStillFalling = (confetti) => confetti.pieces > 0 && !confetti.fading;
+
 async function playerPanel(browser) {
   const { context, page, errors } = await boot(browser);
   await page.evaluate(() => G.Game.startRun());
@@ -398,7 +400,7 @@ async function playerPanel(browser) {
       p.maxHp = 300;
       p.hp = 140;
       p.xp = p.xpNext * 0.5;
-      const card = G.UI.isOpen('scr-levelup') && document.querySelector('#cards .card');
+      const card = !window.__holdCards && G.UI.isOpen('scr-levelup') && document.querySelector('#cards .card');
       if (card) card.click();
     }, 20);
     return pl.slots.map((group) => group.length);
@@ -463,8 +465,8 @@ async function playerPanel(browser) {
   ok(state.slots[0].fills.includes(PANEL.bondPink), 'player: the bonded slot has the bond pink rim');
   ok(
     state.slots.every((slot) => !slot.fills.includes('url(#hud-type-checker)')) &&
-      state.slots[1].fills.includes(PANEL.slotBody),
-    'player: slot bodies are plain light grey, no checker'
+      state.slots[1].fills.includes(PANEL.slotGrid),
+    'player: slot bodies are the larger B2 grid'
   );
   const wellTypes = await page.evaluate(() =>
     G.Game.player.slots.map((group) => group.map((move) => move.type || G.MoveInfo.type(move.id)))
@@ -501,10 +503,10 @@ async function playerPanel(browser) {
 
   ok(
     state.item &&
-      state.item.right === PANEL.item.right &&
+      state.item.left === PANEL.item.left &&
       state.item.top === PANEL.item.top &&
       state.item.width === PANEL.item.size,
-    'player: the held item square is 40 px, right edge at x ' + PANEL.item.right
+    'player: the held item square is 40 px, right of the slots at x ' + PANEL.item.left
   );
   ok(state.itemName === 'Leftovers', 'player: the held item name reads "' + state.itemName + '"');
   ok(
@@ -516,8 +518,8 @@ async function playerPanel(browser) {
   );
   ok(/^\d[\d,]*$/.test(state.silver || ''), 'player: Silver shows whole coins (' + state.silver + ')');
   ok(
-    state.levelBox.left === PANEL.levelLeft && /^\d+$/.test(state.level),
-    'player: Lv ' + state.level + ' right of the slots'
+    state.levelBox.right === PANEL.levelRight && /^\d+$/.test(state.level),
+    'player: Lv ' + state.level + ' left of the portrait, right edge at x ' + PANEL.levelRight
   );
   ok(
     /^\d+:\d\d$/.test(state.timerText) && Math.abs(state.timer.left + state.timer.width / 2 - PANEL.timerCentre) <= 1,
@@ -578,6 +580,67 @@ async function playerPanel(browser) {
   ok((await panelState(page)).rattling, 'player: a level-up rattles the Lv number');
   await page.waitForTimeout(800);
   ok(!(await panelState(page)).rattling, 'player: the rattle ends after about 0.6 s');
+
+  // a real level-up (#62, Jess 2026-11-10): the number rattles while you keep playing; the cards open once it settles
+  // (1.1 s of run time), with confetti from the popup's top corners; after a pick the confetti fades out within 1 s
+  await page.evaluate(() => {
+    window.__holdCards = true;
+    window.__runTimeAtLevel = G.Game.st.time;
+    G.Game.grantLevels(1);
+  });
+  await page.waitForTimeout(80);
+  ok((await panelState(page)).rattling, 'level-up: the Lv number rattles at once');
+  await page.waitForTimeout(420);
+  let flow = await page.evaluate(() => ({
+    cards: G.UI.isOpen('scr-levelup'),
+    state: G.Game.state,
+    ran: G.Game.st.time - window.__runTimeAtLevel,
+  }));
+  ok(
+    !flow.cards && flow.state === 'playing' && flow.ran > 0.3,
+    'level-up: at 0.5 s no cards yet and the game keeps playing (' + flow.state + ', ' + flow.ran.toFixed(2) + ' s run)'
+  );
+  await page.waitForTimeout(1000);
+  flow = await page.evaluate(() => ({
+    cards: G.UI.isOpen('scr-levelup'),
+    state: G.Game.state,
+    confetti: G.Confetti.state(),
+  }));
+  ok(flow.cards && flow.state === 'levelup', 'level-up: the cards are open by 1.5 s and pause the game');
+  ok(
+    flow.confetti.pieces > 20 && !flow.confetti.fading,
+    'level-up: confetti bursts with the cards (' + flow.confetti.pieces + ' pieces)'
+  );
+  await page.waitForTimeout(400);
+  ok(
+    confettiStillFalling(await page.evaluate(() => G.Confetti.state())),
+    'level-up: the confetti keeps falling while the game is paused'
+  );
+  // pick the first card; a Vitamins card asks for a stat on the same screen, so pick again until it closes
+  for (let tries = 0; tries < 3 && (await page.evaluate(() => G.UI.isOpen('scr-levelup'))); tries++) {
+    await page.evaluate(() => document.querySelector('#cards .card').click());
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(90);
+  flow = await page.evaluate(() => ({
+    state: G.Game.state,
+    confetti: G.Confetti.state(),
+    openScreens: [...document.querySelectorAll('.scr:not(.hidden)')].map((screen) => screen.id),
+  }));
+  ok(
+    flow.state === 'playing' && flow.confetti.fading,
+    'level-up: a pick resumes play and the confetti starts fading (' +
+      flow.state +
+      ', open: ' +
+      flow.openScreens.join(' ') +
+      ')'
+  );
+  await page.waitForTimeout(1100);
+  ok(
+    (await page.evaluate(() => G.Confetti.state())).pieces === 0,
+    'level-up: the confetti is gone within 1 s of the pick'
+  );
+  await page.evaluate(() => (window.__holdCards = false));
 
   // the debug toggle hides the panel with the rest of the overlay
   await page.evaluate(() => G.Debug.hudOverlay(false));

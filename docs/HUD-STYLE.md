@@ -337,7 +337,8 @@ B2 art pixel, half the enemy bar's scale.
   short 45 degree run down to a flat point (art rows 6 to 8), then a steep run back, one pixel across per two rows. The
   right end is the same profile turned 180 degrees. Flat top and bottom.
   - The slanted ends: outline, Light, Base, outline (one art pixel each). Top and bottom: outline, Dark.
-  - The body is plain light grey `#393939`, no checker (Jess, 2026-11-10).
+  - The body is the B2 grid with its dark squares 50% larger (Jess, 2026-11-10): 3x3 art-pixel `#292929` squares on
+    1-pixel `#393939` lines, repeating every 4 art pixels (8 px on screen).
   - Four 36 px wells per slot, always drawn (dark `#181818` circles with a 2 px `#101010` ring), filled left to right:
     one move fills the first, a bond fills one well per move.
   - `[Approved]` **A move's well** (Jess, 2026-11-10): filled with its SV type colour (Base), the white type glyph
@@ -357,16 +358,15 @@ B2 art pixel, half the enemy bar's scale.
   rim, the Lv yellow fill with a 3-row shade band at the bottom. Its width follows the text.
 - `[Approved]` **Held item: the B2 bag button** (`b2-lower` Y4 to AB5): a 40 px square with chamfered corners, the bar
   checker body, a slate rim when empty and the Lv yellow rim while holding an item. The item icon at 1x (32 px), its name
-  below at 20 px, right-aligned to the square so it never runs into the portrait ring.
+  below at 20 px, left-aligned to the square. It sits right of the move slots (Jess, 2026-11-10: swapped with Lv).
 - `[Approved]` **Life meter:** the enemy bar's shape (B2 dark HP bar) at 2x, with "current / max" as 20 px text right
   after its end (Jess, 2026-11-10: "for now"; B2 itself prints the numbers inside the bar, `b2-hpbars` C32 to P35).
 - `[Approved]` **Portrait and EXP ring:** the 40 px portrait at exactly 2x (80 px), cropped by a circle with a 4 px
   `#101010` stroke, inside a 12 px EXP ring with a 2 px outline: 116 px across. The ring is one flat band (Jess,
   2026-11-10: no darker blue shade): the EXP blue `#00baf3` for progress, clockwise from the top, and `#7f7f7f` for the
   rest.
-- `[Approved]` **Lv:** "Lv." at 20 px in the Lv yellow, the number below in BoldPixels at 48 px.
-- `[Open]` Swapping the held item and Lv places (Jess is considering it, 2026-11-10): Lv would go left of the portrait,
-  the item square right of the slots with its name left-aligned under it; the bond count stays with Lv.
+- `[Approved]` **Lv:** "Lv." at 20 px in the Lv yellow, the number below in BoldPixels at 48 px, both right-aligned left
+  of the portrait, 12 px clear of its ring (Jess, 2026-11-10: swapped with the held item).
 - `[Proposed]` **Bond count** (no place in the wireframe): the bond icon at 2x (24 px) with "×N" under the Lv number,
   only while you have bonds to spend.
 - `[Proposed]` **Run timer:** 20 px dim text (45% opacity, as the wireframe's grey), centred under the slots.
@@ -416,8 +416,15 @@ B2 art pixel, half the enemy bar's scale.
   canvas bar).
 - `[Approved]` **Level up: the Lv number rattles** (Jess, 2026-11-10), as if held up on a stick and shaken: it pivots on
   its bottom (so the top swings further than the bottom), rises a few pixels, grows to 1.3x and tilts each way by up to
-  9 degrees with a little sideways shake, settling over 0.6 s. A level gained behind the level-up cards rattles as the
-  panel comes back; a pause never replays it.
+  9 degrees with a little sideways shake, settling over 0.6 s. A pause never replays it.
+- `[Approved]` **Level-up order** (Jess, 2026-11-10): the number rattles while you keep playing; once it settles (1.1 s
+  of run time after the level: the 0.6 s rattle and half a second) the upgrade cards pop up and pause the game as before.
+  Levels still queued after a pick open straight on. The wait is `LEVEL_CARDS_DELAY` in `js/game.js`.
+- `[Approved]` **Level-up confetti** (Jess, 2026-11-10; `js/ui/confetti.js`): as the cards pop up, confetti bursts up and
+  out of the popup's two top corners and showers down the whole screen, still falling while the game is paused under the
+  cards. Pixel art: 2 px blocks on a 2 px grid in the palette's Lv yellow, EXP blue, HP green, bond pink and white, each
+  piece tumbling (its width flips) and swaying as it falls. About 45 pieces per corner (fewer on low graphics). If you
+  pick before it reaches the bottom, what is left fades out over 1 s.
 - `[Approved]` **Silver:** the coin spins on the run clock; the count rolls up to a gain within 0.25 s and pops (up to
   1.3x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter).
 
@@ -460,15 +467,15 @@ the plan; those wait on the feel test.
 | Element               | Wireframe (at 1080p)              | Built                                                                        |
 | --------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
 | Portrait and EXP ring | 118 px across, centre x -281      | 116 px, centre x -281, y 36 (`[Proposed]`: plan said 42)                     |
-| Held item square      | about 40 px, left of the portrait | 40 px, right edge x -351, y 74; name below at y 48                           |
+| Held item square      | about 40 px, left of the portrait | 40 px at x +222 (right of the slots, swapped), y 74; name below at y 48      |
 | Life meter            | 460 x 22, x -251 to +210          | 462 px wide (231 art), 24 px with its shadow, x -252, y 140                  |
 | HP text               | (none)                            | x +218, y 147, 20 px                                                         |
 | Status chips          | 70 x 19, 6 px apart               | 70 x 24, 6 px apart, from x -244, y 172 (`[Proposed]`: 24 high for the text) |
 | Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 208                        |
 | Move slots            | 206 x 44, 2x2, gaps 5 and 3       | 210 x 44 (105 x 22 art), gaps 6 and 4, from x -216, y 36                     |
 | Wells                 | about 42 px                       | 36 px, centres 47 px from each end, evenly spread                            |
-| Lv                    | right of the slots                | x +222: "Lv." at y 116, the number (48 px) at y 60                           |
-| Bond count            | (none)                            | x +222, y 36 (`[Proposed]`)                                                  |
+| Lv                    | right of the slots                | right edge x -351 (left of the portrait, swapped): "Lv." y 116, number y 60  |
+| Bond count            | (none)                            | right edge x -351, y 36 (`[Proposed]`)                                       |
 | Silver                | above-left of the portrait        | coin 32 px, right edge x -260, y 160; count 6 px left of it at 30 px         |
 | Run timer             | centred under the slots           | centre x -3, y 10                                                            |
 

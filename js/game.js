@@ -23,7 +23,8 @@ G.Game = (() => {
   let state = 'ui';
   let time = 0,
     last = 0,
-    pendingLevels = 0;
+    pendingLevels = 0,
+    cardsDueAt = null; // run time the level-up cards open at (#62: after the HUD's Lv rattle settles), null while none wait
   let evBank = [0, 0, 0, 0, 0, 0]; // pokebox step 5: this run's six EV banks in thousandths (G.Copies.killEvs), reset each run
   let pl = null;
   // ---- team (Phase A) ----
@@ -153,6 +154,7 @@ G.Game = (() => {
     time = 0;
     pendingLevels = 0;
     evBank = [0, 0, 0, 0, 0, 0];
+    cardsDueAt = null;
     runReal = performance.now();
     tampered = debugDirty;
 
@@ -612,6 +614,11 @@ G.Game = (() => {
 
   // ---------------- level up ----------------
 
+  // #62 (Jess, 2026-11-10): a gained level first rattles the Lv number on the HUD while you keep playing; the cards open
+  // once it settles (the 0.6 s rattle in css/hud-overlay.css, then half a second). Run time, so a pause holds the wait.
+  // Levels still queued after a pick open straight on.
+  const LEVEL_CARDS_DELAY = 1.1;
+
   function maybeLevelUp() {
     if (pendingLevels <= 0 || state !== 'playing') return;
     if (G.Coop.active) {
@@ -623,8 +630,11 @@ G.Game = (() => {
     }
     // Never open cards with the Pokemon down (dying and picking up XP in the same frame).
     if (pl.dead) return;
+    if (cardsDueAt === null) cardsDueAt = time + LEVEL_CARDS_DELAY;
+    if (time < cardsDueAt) return;
     const cards = G.LevelUp.offer(pl, 3, roster);
     pendingLevels--;
+    cardsDueAt = pendingLevels > 0 ? time : null; // a queued level opens next, with no second wait
     // Nothing left to offer (every move maxed, slots full): skip the screen so the run cannot soft-lock.
     if (!cards.length) return;
     state = 'levelup';
@@ -634,6 +644,8 @@ G.Game = (() => {
       card.apply(pl);
       state = 'playing';
     });
+    // confetti from the popup's top corners; it fades out over 1 s once the screen closes (js/ui/confetti.js)
+    if (G.Confetti) G.Confetti.burstFrom('scr-levelup');
   }
 
   // ---------------- links ----------------

@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['A new gym leader bar', 'A new gym leader bar'],
     new: [
       [
+        'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
+        'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
+      ],
+      [
         "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
         "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
       ],
