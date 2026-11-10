@@ -101,3 +101,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Level up (decision 2026-11-10-level-up-rattle-then-cards-with-confetti): the number rattles while you play; cards open 1.1 s later with confetti from the popup's corners (js/ui/confetti.js).
 - Smoke covers the panel's 1080p layout and the level-up order (a 2 px slot shift fails it). A Vitamins card made one run flaky until the test finished its stat pick. Touch is #72 (deferred).
 - Stopped at: #62 in Needs Playtest. Next: #63, #68, #69.
+
+## 2026-11-10 (Claude Code, home), #62 closed and #63 built and closed (feature/leader-roster-ui)
+- #62 last round: status chips take the B2 capsule outline (b2-lower Y17 to Z17) with a 4 px shade rim; Jess closed it.
+- #63: roster rows (b2-lower Y15 to AA16 box in the first type, portrait circle, name, benched chips inside, HP bar along the bottom), held item squares, 2x2 berry bag, run item boxes (AD4 to AG5, icon in the white patch, name above, live line beside). Jess's plan review reshaped most pieces; only filled slots, team of one hidden.
+- Chips, item square, icon canvas and cursor moved into the overlay kit (#62 unchanged). Canvas keeps the old pieces only as the fallback; its buff chips start right of the roster until #66.
+- A "two chips cover the name" worry was a test artefact: one major status at a time (COMBAT-RULES), so a row shows one chip. Feel test: the roster "HP" became the life meter's italic text. Spanish species names filed as #73.
+- Stopped at: #62 and #63 closed, HUD-STYLE #63 sizes approved. Next: #65, #66, #67; #68 and #69 any time.
