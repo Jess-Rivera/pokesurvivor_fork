@@ -680,7 +680,7 @@
 .hud-weather-timer {
   height: 6px; /* two art rows just inside the lower rim: Light over Base */
   background: linear-gradient(var(--timer-light) 0 3px, var(--timer-base) 3px 6px);
-  transform-origin: 0 0;
+  transform-origin: 100% 0; /* held at the screen edge: the left end runs out toward it (Jess, 2026-11-10) */
 }
 .hud-weather.is-enter {
   animation: hud-weather-enter 0.6s ease-out both;

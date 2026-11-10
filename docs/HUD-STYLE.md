@@ -435,7 +435,7 @@ Jess set these on 2026-11-10 (the #65 plan review). Built, waiting for the feel 
     katakana. It sits in the raised tab, peeking above the stripe, with its lower part behind it.
   - **Name:** in the stripe, where the rip has "POKEMON", in 30 px text in the weather's Light colour.
   - **Effect line:** an ultra short line in the body under the stripe, in 20 px white text.
-  - **Timer:** a bar just inside the lower coloured rim, two art rows (Light over Base), that shrinks with the weather's
+  - **Timer:** a bar just inside the lower coloured rim, two art rows (Light over Base), that shrinks toward the screen edge with the weather's
     time left. Clear Sky has none.
 - `[Approved]` **Coins leave the HUD:** the old biome, kills and coins line is gone and coins are not shown in a run
   (Jess, 2026-11-10); Silver is the run currency on screen.
