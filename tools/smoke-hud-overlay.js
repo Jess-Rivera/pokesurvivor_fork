@@ -832,9 +832,19 @@ const mapState = (page) =>
       card: card
         ? {
             phase: ['is-enter', 'is-exit', 'is-fade'].find((name) => card.classList.contains(name)),
-            name: card.querySelector('.hud-weather-words .hud-text').textContent,
+            name: card.querySelector('.hud-weather-name').textContent.trim(),
+            nameColour: getComputedStyle(card.querySelector('.hud-weather-name')).color,
             icon: card.querySelector('img').getAttribute('src'),
             timer: !!card.querySelector('.hud-weather-timer'),
+            timerFill: card.querySelector('.hud-weather-timer')
+              ? getComputedStyle(card.querySelector('.hud-weather-timer')).backgroundImage
+              : '',
+            right: Math.round(card.getBoundingClientRect().right),
+            // the icon sits between the two layers of the shape: the stripe is drawn over it
+            iconBetweenLayers: [...card.children]
+              .map((child) => child.tagName.toLowerCase())
+              .join(' ')
+              .startsWith('svg img svg'),
           }
         : null,
       expectedLevel: String(Math.floor(G.Enemies.levelForTime(G.Game.st.time))),
@@ -876,6 +886,19 @@ async function mapPanel(browser) {
     shown && shown.phase === 'is-enter' && shown.name === 'Rain' && /rain-white\.png$/.test(shown.icon) && shown.timer,
     'weather: rain slides in with its icon and a timer (' + JSON.stringify(shown) + ')'
   );
+  await page.waitForTimeout(600); // past the 0.6 s slide in
+  shown = await card();
+  // Water's SV colours (HUD-STYLE Type colours, hand-copied): Light #74ACF5, Base #2980EF
+  ok(
+    shown && shown.right === 1920,
+    'weather: the card runs to the screen edge once it lands (' + (shown && shown.right) + ')'
+  );
+  ok(shown && shown.nameColour === 'rgb(116, 172, 245)', 'weather: the name is in the weather type Light colour');
+  ok(
+    shown && /rgb\(116, 172, 245\)/.test(shown.timerFill) && /rgb\(41, 128, 239\)/.test(shown.timerFill),
+    'weather: the timer is Light over Base'
+  );
+  ok(shown && shown.iconBetweenLayers, 'weather: the icon is under the stripe layer');
 
   // a change of weather: the old card slides off, the new one slides in, no Clear Sky between
   await page.evaluate(() => G.Weather.debugStart('fog', 60));

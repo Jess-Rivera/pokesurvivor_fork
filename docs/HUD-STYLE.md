@@ -424,11 +424,19 @@ Jess set these on 2026-11-10 (the #65 plan review). Built, waiting for the feel 
 - `[Proposed]` **Map panel, top right, right-aligned:** World Level as a BoldPixels number at 48 px over a "World Level"
   label (20 px text); then Region and Map in Dim text. World Level is the level wild Pokemon spawn at (the old canvas
   ENEMY LV). Region is hidden when the run has none. Map is the biome's English name.
-- `[Proposed]` **Weather card** under the map lines, only while a weather is on: a `#181818` box at 80%, a 3 px rim in
-  the weather's SV type colour (Base) with a 2 px inner line in its Dark (sun Fire, rain Water, sandstorm Rock, snow Ice,
-  fog Ghost, Clear Sky Normal). It holds a white Bulbapedia weather icon at 48 px (`assets/icons/weather/*-white.png`),
-  the name in 20 px text, and an ultra short effect line in Dim text. A 2 px white timer bar at 60% along its bottom
-  shrinks with the weather's time left.
+- `[Approved]` **Weather card: the B2 tab** (`b2-lower` Y1 to AA3) at 3 px per art pixel (Jess, 2026-11-10; may shrink
+  after the feel test). It shows under the map lines only while a weather is on, and runs into the screen's right edge
+  (the rip is cut flat there).
+  - The rip's corners, slopes and pointed left end are copied pixel for pixel; the straight runs stretch to fit the text.
+  - The rip's greens are the weather's SV type colours, Dark, Base and Light: sun Fire, rain Water, sandstorm Rock,
+    snow Ice, fog Ghost, Clear Sky Normal.
+  - The rip's grid body is solid Slate `#495151`; the stripe stays Frame `#212121`.
+  - **Icon:** a white Bulbapedia weather icon at 54 px (`assets/icons/weather/*-white.png`) where the rip has its
+    katakana. It sits in the raised tab, peeking above the stripe, with its lower part behind it.
+  - **Name:** in the stripe, where the rip has "POKEMON", in 30 px text in the weather's Light colour.
+  - **Effect line:** an ultra short line in the body under the stripe, in 20 px white text.
+  - **Timer:** a bar just inside the lower coloured rim, two art rows (Light over Base), that shrinks with the weather's
+    time left. Clear Sky has none.
 - `[Approved]` **Coins leave the HUD:** the old biome, kills and coins line is gone and coins are not shown in a run
   (Jess, 2026-11-10); Silver is the run currency on screen.
 - `[Proposed]` **Kills line:** "NNN Kills" in Dim text, centred at the top; hidden during arena fights (gym leaders), as

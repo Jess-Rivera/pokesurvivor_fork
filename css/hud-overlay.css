@@ -663,38 +663,23 @@
   transform: translateX(-50%);
 }
 
-/* the weather card: a dark box with a rim in its weather's type colour; it slides in with a stopping bounce, slides off
-   when the weather ends, and the Clear Sky card fades out instead (Jess, 2026-11-10); lengths match hud-map-panel.js */
+/* the weather card: the B2 tab (b2-lower Y1 to AA3) drawn by hud-map-panel.js, flush with the screen's right edge; it
+   slides in with a stopping bounce, slides off when the weather ends, and the Clear Sky card fades out instead
+   (Jess, 2026-11-10); lengths match hud-map-panel.js */
 .hud-weather {
   position: relative;
   margin-top: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px 12px 10px;
-  background: rgba(24, 24, 24, 0.8);
-  border: 3px solid var(--rim);
-  box-shadow: inset 0 0 0 2px var(--rim-dark);
+  margin-right: -24px; /* the map panel sits 24 px in; the card runs to the edge */
   text-align: left;
 }
-.hud-weather-icon {
-  width: 48px;
-  height: 48px;
-  flex: none;
-}
-.hud-weather-words {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.hud-weather > * {
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 .hud-weather-timer {
-  position: absolute;
-  left: 5px;
-  right: 5px;
-  bottom: 4px;
-  height: 2px;
-  background: #ffffff;
-  opacity: 0.6;
+  height: 6px; /* two art rows just inside the lower rim: Light over Base */
+  background: linear-gradient(var(--timer-light) 0 3px, var(--timer-base) 3px 6px);
   transform-origin: 0 0;
 }
 .hud-weather.is-enter {
