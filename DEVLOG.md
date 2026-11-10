@@ -262,4 +262,9 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Built tools/mutate-runner.js (pool, own temp file per mutant, ordered output, FAIL counts, `-v`, MUTATE_JSON) and tools/mutate-compare.js; all 35 *-mutate.js scripts now just list mutations and call the runner. STALE no longer aborts a run.
 - Verified: the old serial scripts and the new ones agree on all 855 verdicts compared; leader-ai-mutate 131/131 in 5 min 56 s (was ~45 min; matches last session's 131/131 on the same code). check.js unchanged (the 2 #30 reds).
 - Found: 42 STALE patterns hidden by the old abort-at-first-stale (Prettier reformat), filed as #56.
-- Stopped at: Jess tries the runner; #51 feel test still owed.
+- Jess confirmed: #55 closed.
+
+## 2026-11-09 (Claude Code, home), #51 closed
+- Jess feel-tested Misty and Brock: good. Approved the four build calls (a) to (d) (decision 2026-11-09-51-build-calls-approved); LEADER-AI tag now [Approved].
+- The two known planner gaps filed: #57 (circling lowers your hit chance), #58 (your shots along the action's path).
+- #52 unblocked (ready). Stopped at: #52 opening with Jess.

@@ -1,20 +1,19 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-09, Claude Code (home): #51 built, needs Jess's feel test. #55 (parallel mutation runner) built, needs Jess's try.
+Updated 2026-11-09, Claude Code (home): #51 closed (feel test good, calls a to d approved). #55 closed. #52 next.
 Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leader-ai.md (read it now).
 
 ## START HERE (next session, either tool)
 1. Jess pulls this branch on the other machine.
-2. #51 feel test (Needs Playtest): Misty and Brock with ?dev, G.Debug.hitbox() for the plan overlay, G.Debug.quietPause()
-   to read it frozen. Then rule the four [Proposed] #51 build calls (LEADER-AI "The Decider (#49)").
-3. Then #52 (swap, dash, draw, dodge), #53, then #39. #44, #46, #56 any time. #48 research.
+2. #52 (swap, dash, draw, dodge): open it with Jess (goal, done, test), then the prose plan. Then #53, then #39.
+3. Any time: #44, #46, #56 (stale mutation patterns), #57 and #58 (planner gaps). #48 research.
 
 ## Where we are
 - Terms: every Player entity runs Decider, Controller, Body, SimPass (LEADER-AI "FRAME", GLOSSARY).
 - #51: G.LeaderPlanner (js/systems/leader-planner.js) picks one of nine goals and a plan of up to 4 actions each think
   tick from Belief's snapshot; the executor in G.LeaderAI steers it. Old slot choice, pacing and forced trigger actions
-  gone; slot stance not read (range 220). Decision 2026-11-09-51-opening-stance-traces-and-set-trigger.
+  gone; slot stance not read (range 220). Decisions 2026-11-09-51-opening-stance-traces-and-set-trigger, -51-build-calls-approved.
 - Swap choice, lead exploit, reflex dodges, gap-closing dodge unchanged until #52.
 - Gyms 3 to 8 stay on the old brain until slice 12.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30.
@@ -33,7 +32,7 @@ Branch: feature/gym-leader-ai. Branch rules: docs/branch-rules/feature-gym-leade
 - Rocky Helmet bugged, rejected on leaders. Bright Powder: recheck now the AI dodges.
 
 ## Open owner decisions
-- #51 build calls (a) to (d), [Proposed] in LEADER-AI. Bench recharge (changes every Player entity). Boss pool size;
+- Bench recharge (changes every Player entity). Boss pool size;
   sprite scale; region unlock rule; Friends and Leaderboard grey-out.
 - Owed by Jess: tooltip confusions, move tuning list, animation mismatch details.
 
