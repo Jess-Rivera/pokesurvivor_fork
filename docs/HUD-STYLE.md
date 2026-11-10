@@ -2,7 +2,7 @@
 
 Status: DRAFT, sections lock one at a time with Jess. Builds #62 to #67 follow it once every section is `[Approved]`.
 Layout lives in the wireframe (assets/excalidraw/run_screen_mockup.png); this file owns the look. The wireframe's fonts are an
-Excalidraw limitation, not choices. Rulings: 2026-11-10-hud-fixed-sizes-from-the-1080p-mockup,
+Excalidraw limitation, not choices. Other mainline palettes for future use: docs/UI-PALETTES.md. Rulings: 2026-11-10-hud-fixed-sizes-from-the-1080p-mockup,
 2026-11-10-hud-on-preact-and-pngs-as-design-basis.
 
 ## Rendering
@@ -70,18 +70,71 @@ B/W colours come in pairs (a bright fill over a dark shade); keep the pairs toge
   100%, about 55%, 45% and 33% of the bright tone.
 - `[Approved]` Gym colours (the active leader circle's ring) are the gym's type colour, once the gym art is recoloured to the
   SV palette (#69); assets/tileset/gyms/gym-colors.json is the reference.
-- `[Proposed]` Panels and lines: panel `#181818`, frame `#212121`, checker `#303030`, slate `#495151`, light greys `#adadad`
-  and `#c6c6c6`, off-white track `#f3f3f3`; the menus' accent line `#29ceff`, secondary text `#8cfff7`, title `#fff000` over
-  `#8f8500`, ink shadow `#00213a`.
-- `[Proposed]` Text: white `#ffffff` with a `#101010` outline; dim text (Region, Map, Kills) white at about 45% opacity.
-- `[Proposed]` Bars (B2/W2 rip, fill over shade): HP `#00fb49` / `#008a28`, `#f3b200` / `#9a6110`, `#fb3041` / `#922030`;
-  empty track `#f3f3f3` / `#adadad`; EXP `#00baf3` / `#00799a`; Lv label `#f3b200` / `#9a6110`; male `#00baf3`, female `#fb3041`.
-- `[Proposed]` Status chips (B2/W2 rip, fill over shade): SLP `#848484` / `#4a4a4a`, PSN `#d631de` / `#6b2942`, bad PSN
-  `#d631de` / `#391042`, BRN `#e75a4a` / `#b50000`, FRZ `#218cf7` / `#005a8c`, PAR `#efad00` / `#ad6b00`; statuses the B/W
-  games lack get a pair ramped from their type colour.
-- `[Open]` Life meter: B/W thresholds (green above 50%, yellow to 20%, red below) or always red as the wireframe shows.
-- `[Open]` Frames: Black 2 (dark) or White 2 (light).
-- `[Open]` Shake Off prompt: Lv gold flashing to white, or a dedicated alert orange.
+- `[Approved]` The wireframe's colours are an Excalidraw limitation, not choices: every HUD colour comes from our palettes
+  (this section, or a set adopted from docs/UI-PALETTES.md).
+- `[Approved]` Life meters (yours and the enemy Player entity's) use the B/W thresholds: green above 50%, yellow from 50% down
+  to 20%, red below 20%. Colours in the Bars table.
+- `[Approved]` Frames are Black 2 (dark charcoal), not White 2.
+
+The tables below are `[Proposed]`, sampled from the B2/W2 HP bar rip (assets/ui/BW Pokedex rip) and the menus' CSS, for Jess
+to review; each locks when marked `[Approved]`.
+
+`[Proposed]` Panels and lines
+
+| Role | Colour | Source |
+|---|---|---|
+| Panel body | `#181818` | B2 bar frame, menus `--bw-charcoal` |
+| Frame | `#212121` | B2 bar frame |
+| Checker (body texture, with the panel colour) | `#303030` | B2 bar frame |
+| Slate | `#495151` | B2 bar frame |
+| Light grey | `#adadad` | B2 bar track shade |
+| Light grey, lighter | `#c6c6c6` | B2 rip |
+| Off-white track | `#f3f3f3` | B2 bar track |
+| Accent line | `#29ceff` | menus `--bw-line` |
+| Secondary text | `#8cfff7` | menus `--bw-sub` |
+| Title | `#fff000` | menus `--bw-title` |
+| Title shade | `#8f8500` | menus `--bw-title-shade` |
+| Ink shadow | `#00213a` | menus `--bw-ink-shadow` |
+
+`[Proposed]` Text
+
+| Role | Colour |
+|---|---|
+| Text | `#ffffff` |
+| Text outline | `#101010` |
+| Dim text (Region, Map, Kills) | `#ffffff` at about 45% opacity |
+
+`[Proposed]` Bars (fill over shade)
+
+| Bar | Fill | Shade |
+|---|---|---|
+| HP above 50% | `#00fb49` | `#008a28` |
+| HP 50% to 20% | `#f3b200` | `#9a6110` |
+| HP below 20% | `#fb3041` | `#922030` |
+| Empty track | `#f3f3f3` | `#adadad` |
+| EXP (the portrait ring) | `#00baf3` | `#00799a` |
+| Lv label | `#f3b200` | `#9a6110` |
+| Male sign | `#00baf3` | `#00799a` |
+| Female sign | `#fb3041` | `#922030` |
+
+`[Proposed]` Status chips (fill over shade); statuses the B/W games lack get a pair ramped from their type colour.
+
+| Status | Fill | Shade |
+|---|---|---|
+| SLP | `#848484` | `#4a4a4a` |
+| PSN | `#d631de` | `#6b2942` |
+| Bad PSN | `#d631de` | `#391042` |
+| BRN | `#e75a4a` | `#b50000` |
+| FRZ | `#218cf7` | `#005a8c` |
+| PAR | `#efad00` | `#ad6b00` |
+
+`[Open]` Shake Off prompt (flashing): pick a pair from our palettes.
+
+| Option | Fill | Shade | Light (flash) | Source |
+|---|---|---|---|---|
+| A, Lv gold | `#f3b200` | `#9a6110` | `#ffffff` | B2/W2 Lv label |
+| B, Orange | `#FF7F00` | `#A65300` | `#FFAC59` | UI-PALETTES Regions "Orange" (same as SV Fighting) |
+| C, Physical | `#EB5628` | `#99381A` | `#F29173` | UI-PALETTES Attacks "Physical" |
 
 ## Shapes
 - `[Open]` Slants, frames, corners, line widths, transparency.
