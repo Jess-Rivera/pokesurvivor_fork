@@ -10,7 +10,8 @@
  * and list hide while no card is picked.
  *
  * Font: Michroma for everything in the panel, not the pixel HUD font: the panel is a "module", not part of the game
- * world (Jess, 2026-11-10). Hidden by the Settings toggle showDpsPanel (default on).
+ * world (Jess, 2026-11-10). Hidden by the Settings toggle showDpsPanel (default on); the whole panel takes the
+ * dpsPanelOpacity slider (default 60%).
  *
  * Read only: the record and the cards are read once per frame and the page only changes when a second finishes, the
  * active Pokemon changes or a card is picked. The timed buff and status chips are not here (#76).
@@ -24,12 +25,15 @@ G.HudDpsPanel = (() => {
     SPARK_WIDTH = 292, // the canvas inside the strip's 2 px outline
     SPARK_HEIGHT = 40,
     LINE_WIDTH = 2,
-    SWAP_TICK = 'rgba(255, 255, 255, 0.35)';
+    SWAP_TICK = 'rgba(255, 255, 255, 0.35)',
+    DEFAULT_OPACITY = 0.6, // Settings > DPS Panel Opacity (Jess, 2026-11-10): the whole panel, 20% to 100%
+    MIN_OPACITY = 0.2;
 
   // ---------- state the page shows (signals) ----------
   const visible = signal(false),
     activeName = signal(''),
     dpsText = signal('0'),
+    panelOpacity = signal(DEFAULT_OPACITY),
     spark = signal({ teamDamage: [], outSlot: [], slotColours: [] }),
     cards = signal([]);
 
@@ -49,7 +53,7 @@ G.HudDpsPanel = (() => {
   function DpsPanel() {
     if (!visible.value) return null;
     const list = cards.value;
-    return html`<div class="hud-dps">
+    return html`<div class="hud-dps" style=${{ opacity: panelOpacity.value }}>
       <div class="hud-dps-header">
         <div class="hud-dps-name">${activeName.value}</div>
         <div class="hud-dps-rate">
@@ -146,6 +150,8 @@ G.HudDpsPanel = (() => {
     const player = showing && G.Settings.get('showDpsPanel') !== false && G.Game.player;
     visible.value = !!player;
     if (!player) return;
+    const opacitySetting = +G.Settings.get('dpsPanelOpacity');
+    panelOpacity.value = opacitySetting > 0 ? Math.min(1, Math.max(MIN_OPACITY, opacitySetting)) : DEFAULT_OPACITY;
     const history = player.team && player.team.dpsHistory;
     if (history !== lastHistory) {
       // a new run: read everything fresh

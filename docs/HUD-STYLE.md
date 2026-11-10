@@ -457,6 +457,8 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
   a divider, then the list of the run's team upgrade cards. It grows down with its list.
 - `[Approved]` **Settings toggle:** "DPS Panel" (Yes / No) under Show FPS, default on (Jess, 2026-11-10). Off hides the
   panel only; the DPS record keeps running.
+- `[Approved]` **Opacity slider:** Settings > DPS Panel Opacity sets one opacity for the whole panel (box, text, graph
+  and list together), 20% to 100% in steps of 5, default 60% (Jess, 2026-11-10). The box's own 50% body sits under it.
 - `[Approved]` **Font:** Michroma for all its text ("Fonts", module panels).
 - `[Approved]` **Header:** the active Pokemon's name, and the team's DPS averaged over the last 5 s.
 - `[Approved]` **Sparkline:** one continuous team line through swaps, one point per second, the last 30 s, newest at the

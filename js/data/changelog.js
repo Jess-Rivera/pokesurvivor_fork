@@ -11,8 +11,8 @@ G.CHANGELOG = [
     title: ['A new gym leader bar', 'A new gym leader bar'],
     new: [
       [
-        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off.",
-        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off.",
+        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off, and DPS Panel Opacity makes it fainter or stronger.",
+        "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off, and DPS Panel Opacity makes it fainter or stronger.",
       ],
       [
         'Top right of the screen: the World Level, your region and the map you are on. When weather rolls in, a card slides in with its icon and what it does, and a Clear Sky card follows when it passes. Your kill count sits at the top centre and hides during gym fights.',

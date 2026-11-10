@@ -1086,6 +1086,20 @@ async function dpsPanel(browser) {
     'dps: each row shows its total (' + state.cards.map((card) => card.total).join(' ') + ')'
   );
 
+  // Settings > DPS Panel Opacity: the whole panel at one opacity, default 60%, 20% at the least (Jess, 2026-11-10)
+  const opacity = () => page.evaluate(() => +getComputedStyle(document.querySelector('.hud-dps')).opacity);
+  ok(
+    Math.abs((await opacity()) - 0.6) < 0.001,
+    'dps: the whole panel is at 60% by default (' + (await opacity()) + ')'
+  );
+  await page.evaluate(() => G.Settings.set('dpsPanelOpacity', 0.9));
+  await page.waitForTimeout(100);
+  ok(Math.abs((await opacity()) - 0.9) < 0.001, 'dps: the slider value applies at once (' + (await opacity()) + ')');
+  await page.evaluate(() => G.Settings.set('dpsPanelOpacity', 0.05));
+  await page.waitForTimeout(100);
+  ok(Math.abs((await opacity()) - 0.2) < 0.001, 'dps: never below 20% (' + (await opacity()) + ')');
+  await page.evaluate(() => G.Settings.set('dpsPanelOpacity', 0.6));
+
   // the Settings toggle (default on) hides the panel and brings it back; the record keeps running while hidden
   ok(await page.evaluate(() => G.Settings.get('showDpsPanel')), 'dps: the setting defaults to on');
   const secondsBefore = await page.evaluate(() => {

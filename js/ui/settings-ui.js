@@ -146,6 +146,9 @@ G.SettingsUI = (() => {
   };
   const sliderRow = (label, key, hint) =>
     `<div class="st-row"${hintAttr(hint)}><span class="st-lab">${esc(label)}</span><span class="st-val st-slide"><input type="range" min="0" max="100" value="${Math.round(G.Audio.settings[key] * 100)}" data-vol="${key}" aria-label="${esc(label)}"></span></div>`;
+  /** A slider for a G.Settings number (not a volume): shown as min..max percent in steps, stored as a fraction. */
+  const settingSliderRow = (key, label, hint, minPercent, maxPercent, stepPercent) =>
+    `<div class="st-row"${hintAttr(hint)}><span class="st-lab">${esc(label)}</span><span class="st-val st-slide"><input type="range" min="${minPercent}" max="${maxPercent}" step="${stepPercent}" value="${Math.round(G.Settings.get(key) * 100)}" data-setting-slider="${key}" aria-label="${esc(label)}"></span></div>`;
   const infoRow = (label, text, hint) =>
     `<div class="st-row"${hintAttr(hint)}><span class="st-lab">${esc(label)}</span><span class="st-val st-info" translate="no">${esc(text)}</span></div>`;
   /** A whole-row button: the label and an arrow. */
@@ -269,6 +272,14 @@ G.SettingsUI = (() => {
         "The damage per second graph and your run's upgrade cards, top left during a run.",
         'Yes',
         'No'
+      ) +
+      settingSliderRow(
+        'dpsPanelOpacity',
+        'DPS Panel Opacity',
+        'How see-through the DPS panel is: its box, text and graph together. Left is fainter.',
+        20,
+        100,
+        5
       ) +
       (canFull()
         ? optRow('Fullscreen', 'Fullscreen hides the browser bars.', [
@@ -395,6 +406,10 @@ G.SettingsUI = (() => {
     box.querySelectorAll('input[data-vol]').forEach((r) => {
       r.oninput = () => G.Audio.setVolume(r.dataset.vol, r.value / 100);
       r.onchange = () => G.Audio.sfx('click');
+    });
+    box.querySelectorAll('input[data-setting-slider]').forEach((slider) => {
+      slider.oninput = () => G.Settings.set(slider.dataset.settingSlider, slider.value / 100);
+      slider.onchange = () => G.Audio.sfx('click');
     });
     box.querySelectorAll('[data-mute]').forEach((b) => {
       b.onclick = () => {
