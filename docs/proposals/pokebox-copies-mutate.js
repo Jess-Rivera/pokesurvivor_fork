@@ -6,7 +6,7 @@
 // Not mutated, with the reason: the price tabs and confirm dialog in js/ui/menu.js, the gacha result tags in js/ui/gacha-ui.js, the
 // rescue and wild shiny messages in js/game.js, and the debug commands (DOM or one-line callers of G.DB.obtain; feel-tested and probed
 // in the browser, the harnesses have no DOM).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { copies: ['js/systems/copies.js', 'PB_COPIES'], db: ['js/core/db.js', 'PB_DB'], gacha: ['js/systems/gacha.js', 'PB_GACHA'] };
 const HARNESSES = ['docs/proposals/pokebox-copies-harness.js', 'docs/proposals/pokebox-sources-harness.js'];
@@ -78,30 +78,12 @@ const M = [
   ['Sell repeats takes shinies', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && r.rarity <= 3']]],
   ['Sell repeats takes 4 stars', 'gacha', [['r && !r.isNew && r.uid && !r.shiny && r.rarity <= 3', 'r && !r.isNew && r.uid && !r.shiny && r.rarity <= 4']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  let hit = false, why = '';
-  for (const h of HARNESSES) {
-    const r = cp.spawnSync(process.execPath, [path.join(root, h), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-    if (r.status !== 0) {
-      const lines = (r.stdout + r.stderr).trim().split('\n');
-      hit = true; why = path.basename(h) + ': ' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100);
-      break;
-    }
-  }
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + why + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'pokebox-copies-mutate',
+  root,
+  harnesses: ['docs/proposals/pokebox-copies-harness.js', 'docs/proposals/pokebox-sources-harness.js'],
+  args: [root],
+  crlf: true,
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

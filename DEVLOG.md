@@ -256,3 +256,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Found in the build: hit sizes ignored hpMult (your hit read 117% of a leader mon); plans ran past their payoff; Finish won every tick at any HP. Fixed; four calls left [Proposed] for Jess in LEADER-AI.
 - Tests: leader-ai-harness section 15 (568 pass; 15l and 15m add frame-order, risk and confidence checks the retired traces had covered), leader-ai-mutate 131/131, leader-slots-mutate 16/16 (a press-hold check added), gym-leader-mutate 59/59, player-move-trace re-recorded (4 leader scenarios, yours unchanged), smoke-leader-overlay (new, file://) and smoke-gym pass. Planner about 4.4 ms per choice at 4 slots.
 - Stopped at: Jess's feel test of #51 and the four build calls.
+
+## 2026-11-09 (Claude Code, home), #55 built (parallel mutation runner)
+- Ruled at the opening (Jess): no fail-fast, every harness run completes; low priority and half the cores by default so the PC stays usable (`--full`, `--workers N`).
+- Built tools/mutate-runner.js (pool, own temp file per mutant, ordered output, FAIL counts, `-v`, MUTATE_JSON) and tools/mutate-compare.js; all 35 *-mutate.js scripts now just list mutations and call the runner. STALE no longer aborts a run.
+- Verified: the old serial scripts and the new ones agree on all 855 verdicts compared; leader-ai-mutate 131/131 in 5 min 56 s (was ~45 min; matches last session's 131/131 on the same code). check.js unchanged (the 2 #30 reds).
+- Found: 42 STALE patterns hidden by the old abort-at-first-stale (Prettier reformat), filed as #56.
+- Stopped at: Jess tries the runner; #51 feel test still owed.

@@ -2,7 +2,7 @@
 // does not run it). Usage from the repo root:  node docs/proposals/move-travel-mutate.js
 // Each mutation breaks move-sim.js, move-effects.js or move-geom.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/move-travel-harness.js against it. The harness must fail every time; a mutation it misses is a gap in the tests.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { sim: 'js/systems/move-sim.js', fx: 'js/systems/move-effects.js', geom: 'js/systems/move-geom.js' };
 const ENV = { sim: 'TRAVEL_SIM', fx: 'TRAVEL_FX', geom: 'TRAVEL_GEOM' };
@@ -48,18 +48,12 @@ const M = [
   ['vx / vy left as the base drift', 'sim', [['inst.vx = Math.cos(inst.heading) * va - Math.sin(inst.heading) * vc; inst.vy = Math.sin(inst.heading) * va + Math.cos(inst.heading) * vc;', '']]],
   ['the loop is ignored', 'sim', [['if (p.loop) {', 'if (false) {']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-travel-mut-'));
-let caught = 0;
-for (const [name, file, edits] of M) {
-  let s = fs.readFileSync(path.join(root, SRC[file]), 'utf8'), applied = 0;
-  for (const [a, b] of edits) if (s.includes(a)) { s = s.replace(a, b); applied++; }
-  if (!applied) { console.log('MUTATION DID NOT APPLY: ' + name + '  (' + edits[0][0] + ')'); process.exit(2); }
-  const out = path.join(tmp, file + '.js'); fs.writeFileSync(out, s);
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/move-travel-harness.js'), root], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-}
-console.log('mutations caught: ' + caught + '/' + M.length);
-process.exit(caught === M.length ? 0 : 1);
+
+require('../../tools/mutate-runner.js')({
+  label: 'move-travel-mutate',
+  root,
+  harnesses: ['docs/proposals/move-travel-harness.js'],
+  args: [root],
+  applyMode: 'any',
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which], edits, env: { [ENV[which]]: '<out>' } })),
+});

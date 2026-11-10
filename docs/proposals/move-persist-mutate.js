@@ -3,7 +3,7 @@
 // Each mutation breaks move-sim.js, move-effects.js or move-resolver.js in one deliberate way, writes the copy to a temp folder, and
 // runs docs/proposals/move-persist-harness.js against it. The harness must fail every time; a mutation it misses is a gap in the tests.
 // The validator rules are guarded by their own self-test fixtures in tools/validate_moves.js (run by tools/check.js).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { sim: 'js/systems/move-sim.js', fx: 'js/systems/move-effects.js', res: 'js/data/move-resolver.js' };
 const ENV = { sim: 'PERSIST_SIM', fx: 'PERSIST_FX', res: 'PERSIST_RESOLVER' };
@@ -27,17 +27,11 @@ const M = [
   ['a teleport sweeps the whole jump', 'sim', [['> TELEPORT * TELEPORT) { inst.prevX = inst.x; inst.prevY = inst.y; }', '> TELEPORT * TELEPORT && false) { }']]],
   ['freeze removed', 'res', [['G.MoveDefs = freeze(resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers));', 'G.MoveDefs = resolve(G.MoveData, G.MoveOverrides, G.MoveHandlers);']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-persist-mut-'));
-let caught = 0;
-for (const [name, file, edits] of M) {
-  let s = fs.readFileSync(path.join(root, SRC[file]), 'utf8');
-  for (const [a, b] of edits) { if (!s.includes(a)) { console.log('MUTATION DID NOT APPLY: ' + name + '  (' + a + ')'); process.exit(2); } s = s.replace(a, b); }
-  const out = path.join(tmp, file + '.js'); fs.writeFileSync(out, s);
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/move-persist-harness.js'), root], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-}
-console.log('mutations caught: ' + caught + '/' + M.length);
-process.exit(caught === M.length ? 0 : 1);
+
+require('../../tools/mutate-runner.js')({
+  label: 'move-persist-mutate',
+  root,
+  harnesses: ['docs/proposals/move-persist-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which], edits, env: { [ENV[which]]: '<out>' } })),
+});

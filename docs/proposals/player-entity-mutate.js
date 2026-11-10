@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/player-entity-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs player-entity-harness.js against
 // it (PE3_PLAYER, PE3_GAME, PE3_MAIN, PE3_STATUS, PE3_FX). The harness must fail every time; a miss is a gap.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = {
   'js/entities/player.js': 'PE3_PLAYER',
@@ -66,27 +63,10 @@ const M = [
   ['NEED does not list PlayerEntity', MN, "    'PlayerEntity',\n", ''],
   ['a status rule stops treating you as a Player entity', ST, "(kind === 'trap' && !h.isPlayer)", "(kind === 'trap')"],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pe3-mut-'));
-let caught = 0;
-for (const [name, rel, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, rel), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    process.exitCode = 1;
-    continue;
-  }
-  const f = path.join(tmp, 'mutated.js');
-  fs.writeFileSync(f, s.replace(a, b));
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/player-entity-harness.js')], {
-    cwd: root,
-    env: Object.assign({}, process.env, { [ENV[rel]]: f }),
-    encoding: 'utf8',
-  });
-  const lines = (r.stdout + r.stderr).trim().split('\n'),
-    hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100) + ')' : ''));
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'player-entity-mutate',
+  root,
+  harnesses: ['docs/proposals/player-entity-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

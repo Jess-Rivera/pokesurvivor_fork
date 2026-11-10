@@ -3,11 +3,10 @@
 // Each mutation breaks js/core/debug.js or js/systems/move-render.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/debug-movechecker-harness.js against it. The harness must fail every time; a mutation it misses is a gap in the tests.
 // The unmutated sources must pass first. The list below is plain JSON (double quotes) so a sandbox bundler can read it too.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { debug: path.join(root, 'js/core/debug.js'), render: path.join(root, 'js/systems/move-render.js') };
 const ENV = { debug: 'MC_DEBUG_SRC', render: 'MC_RENDER_SRC' };
-const HARNESS = path.join(root, 'docs/proposals/debug-movechecker-harness.js');
 // @@M-BEGIN
 const M = [
   ["spawning not stopped", "debug", [["spawn(0);     // movechecker start", "// (no spawn stop)"]]],
@@ -34,19 +33,11 @@ const M = [
   ["rings unlabelled", "render", [["ctx.fillText(String(r), pl.x, pl.y - r - 2);", ""]]]
 ];
 // @@M-END
-const run = env => cp.spawnSync(process.execPath, [HARNESS], { cwd: root, env: Object.assign({}, process.env, env), encoding: 'utf8' });
-const base = run({});
-if (base.status !== 0) { console.log('BASELINE FAILS: fix the harness or the sources first\n' + (base.stdout + base.stderr).trim().split('\n').slice(0, 6).join('\n')); process.exit(2); }
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'movechecker-mut-'));
-let caught = 0;
-for (const [name, file, edits] of M) {
-  let s = fs.readFileSync(SRC[file], 'utf8');
-  for (const [a, b] of edits) { if (!s.includes(a)) { console.log('MUTATION DID NOT APPLY: ' + name + '  (' + a + ')'); process.exit(2); } s = s.replace(a, b); }
-  const out = path.join(tmp, file + '.js'); fs.writeFileSync(out, s);
-  const r = run({ [ENV[file]]: out });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-}
-console.log('mutations caught: ' + caught + '/' + M.length);
-process.exit(caught === M.length ? 0 : 1);
+
+require('../../tools/mutate-runner.js')({
+  label: 'debug-movechecker-mutate',
+  root,
+  harnesses: ['docs/proposals/debug-movechecker-harness.js'],
+  baseline: true,
+  mutants: M.map(([name, which, edits]) => ({ name, file: path.relative(root, SRC[which]), edits, env: { [ENV[which]]: '<out>' } })),
+});

@@ -6,7 +6,7 @@
 // Not mutated, with the reason: the arrow and marker drawing (drawn per frame, feel-tested; the harness only checks they are
 // wired); the building art and shadow (drawn, feel-tested); G.Debug.shops (dev only, no game path); the mask baking (its own
 // --check in tools/check.js compares the data to the PNGs).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { shops: ['js/systems/shops.js', 'SH_SHOPS'], game: ['js/game.js', 'SH_GAME'], gym: ['js/systems/gym.js', 'SH_GYM'],
   dev: ['dev.html', 'SH_DEV'], main: ['js/main.js', 'SH_MAIN'] };
@@ -31,23 +31,12 @@ const M = [
   ['the contact data tag is missing', 'dev', [['<script defer src="js/data/shop-contact.js"></script>', '']]],
   ['the NEED array misses Shops', 'main', [["    'Shops',\n", '']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shops-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/shops-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'shops-mutate',
+  root,
+  harnesses: ['docs/proposals/shops-harness.js'],
+  args: [root],
+  crlf: true,
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

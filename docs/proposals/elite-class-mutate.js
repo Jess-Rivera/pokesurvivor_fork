@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/elite-class-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs elite-class-harness.js against it
 // (EC_FILE, EC_FROM). The harness must fail every time; a miss is a gap.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ELITE = 'js/entities/elite.js', WILD = 'js/entities/enemy.js', ST = 'js/systems/status.js', ME = 'js/systems/move-effects.js', SP = 'js/systems/spawner.js';
 const M = [
@@ -41,18 +41,10 @@ const M = [
   ['Fissure ignores the rule', ME, 'e.boss || e.koImmune || e.gym', 'e.boss || e.gym'],
   ['the push ignores the rule', ME, 'if (e.boss || e.immovable) return;', 'if (e.boss) return;'],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'elite-mut-'));
-let caught = 0;
-for (const [name, rel, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, rel), 'utf8');
-  if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; continue; }
-  const f = path.join(tmp, 'mutated.js');
-  fs.writeFileSync(f, s.replace(a, b));
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/elite-class-harness.js')], { cwd: root, env: Object.assign({}, process.env, { EC_FILE: rel, EC_FROM: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100) + ')' : ''));
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'elite-class-mutate',
+  root,
+  harnesses: ['docs/proposals/elite-class-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { EC_FILE: file, EC_FROM: '<out>' } })),
+});

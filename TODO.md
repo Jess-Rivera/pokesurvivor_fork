@@ -9,7 +9,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
    four [Proposed] #51 build calls in LEADER-AI "The Decider (#49)". Then #52 (slice 3: swap, dash, draw, dodge), #53, then #39.
    Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
    G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
-2. #55 faster mutation checks (parallel, stop at the first failure); next after #51 lands.
+2. #55 built (parallel mutation runner, Needs Playtest): Jess tries `node docs/proposals/leader-ai-mutate.js` and confirms. #56 refresh 42 stale
+   mutation patterns (found by #55).
 3. #48 research: HumanPlayer rules out of game.js into their own files (findings doc first).
 4. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
 5. #28, the improve-codebase-architecture skill (ready). #29 needs Jess to sort settled from superseded CP1 rulings.
@@ -19,7 +20,7 @@ The two red harnesses (gym-harness, leader-stats-harness) are expected red until
 ## Open issues by area (numbers only, titles via gh)
 - Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #51 #52 #53
 - Moves: #11 #13 #14 #38 #44
-- Engine: #8 #10 #12 #46 #48 #55
+- Engine: #8 #10 #12 #46 #48 #55 #56
 - UI: #25 #35
 - Items: #36
 - Bugs: #16 #18

@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/input-keys-mutate.js
 // Each mutation breaks js/core/input.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/input-keys-harness.js against it (IK_INPUT). The harness must fail every time; a miss is a gap.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const REL = 'js/core/input.js';
 const M = [
@@ -13,22 +13,10 @@ const M = [
   ['Tab is no longer blocked outside text fields', [["'space', 'tab'].includes(c)", "'space'].includes(c)"]]],
   ['Tab no longer counts for cycle_next', [["cycle_next: ['keye', 'tab'],", "cycle_next: ['keye'],"]]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'input-keys-mut-'));
-let caught = 0;
-for (const [name, edits] of M) {
-  let s = fs.readFileSync(path.join(root, REL), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, 'input.js');
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/input-keys-harness.js')], { cwd: root, env: Object.assign({}, process.env, { IK_INPUT: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'input-keys-mutate',
+  root,
+  harnesses: ['docs/proposals/input-keys-harness.js'],
+  mutants: M.map(([name, edits]) => ({ name, file: REL, edits, env: { IK_INPUT: '<out>' } })),
+});

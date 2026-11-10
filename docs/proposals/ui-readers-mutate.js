@@ -4,7 +4,7 @@
 // and runs docs/proposals/ui-readers-harness.js against it (UR_<FILE> env vars). The harness must fail every time; a miss is a gap.
 // Patterns may span lines: .gitattributes pins *.js to LF, so a Windows checkout matches them too. Not mutated, with the reason: the 7a guard (the harness plants
 // one line per rule into tools/kind-guard.js scanText directly); hud.js and the menus (DOM, covered by tools/smoke-ui.js).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const SRC = { info: ['js/ui/move-info.js', 'UR_INFO'], sheet: ['js/ui/sheet.js', 'UR_SHEET'], levelup: ['js/systems/levelup.js', 'UR_LEVELUP'],
   player: ['js/entities/player.js', 'UR_PLAYER'], stats: ['js/core/stats.js', 'UR_STATS'] };
@@ -34,23 +34,11 @@ const M = [
   // ---- stats.js ----
   ['moveCat with no cat ignores the def', 'stats', [["return d ? d.category : 'physical';", "return 'physical';"]]]
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ui-readers-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/ui-readers-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'ui-readers-mutate',
+  root,
+  harnesses: ['docs/proposals/ui-readers-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

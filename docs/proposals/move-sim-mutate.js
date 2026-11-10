@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/move-sim-mutate.js
 // Each mutation breaks move-sim.js or move-effects.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/move-sim-harness.js against it. The harness must fail every time; a mutation it misses is a gap in the tests.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { sim: path.join(root, 'js/systems/move-sim.js'), fx: path.join(root, 'js/systems/move-effects.js') };
 const M = [
@@ -37,17 +37,11 @@ const M = [
   ['props left out of the sweep', 'sim', [['p.x, p.y, p.r)) cands.push(p);', 'p.x, p.y, p.r)) {}']]],
   ['props emit move:hit', 'sim', [["if (e.hp > 0) G.MoveEffects.applyProp(inst, e);\n        continue;", "if (e.hp > 0) G.MoveEffects.applyProp(inst, e);\n        G.SimBus.emit('move:hit', { moveId: inst.spec.id, enemyId: null });\n        continue;"]]]
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-sim-mut-'));
-let caught = 0;
-for (const [name, file, edits] of M) {
-  let s = fs.readFileSync(SRC[file], 'utf8');
-  for (const [a, b] of edits) { if (!s.includes(a)) { console.log('MUTATION DID NOT APPLY: ' + name + '  (' + a + ')'); process.exit(2); } s = s.replace(a, b); }
-  const out = path.join(tmp, file + '.js'); fs.writeFileSync(out, s);
-  const env = Object.assign({}, process.env, file === 'sim' ? { MOVE_SIM_SRC: out } : { MOVE_FX_SRC: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/move-sim-harness.js'), root], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-}
-console.log('mutations caught: ' + caught + '/' + M.length);
-process.exit(caught === M.length ? 0 : 1);
+
+require('../../tools/mutate-runner.js')({
+  label: 'move-sim-mutate',
+  root,
+  harnesses: ['docs/proposals/move-sim-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: path.relative(root, SRC[which]), edits, env: { [which === 'sim' ? 'MOVE_SIM_SRC' : 'MOVE_FX_SRC']: '<out>' } })),
+});

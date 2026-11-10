@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/boss-split-mutate.js
 // Each mutation breaks enemy.js, boss-ai.js or gym-arena.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/boss-split-harness.js against it (BOSSSPLIT_<FILE> env vars). The harness must fail every time.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { enemy: ['js/entities/enemy.js', 'BOSSSPLIT_ENEMY'], brain: ['js/entities/boss-ai.js', 'BOSSSPLIT_BRAIN'], arena: ['js/systems/gym-arena.js', 'BOSSSPLIT_ARENA'] };
 const M = [
@@ -13,23 +13,11 @@ const M = [
   ['a gym method copied back onto the body', 'enemy', [['cy() {\n      return this.y;\n    }', 'cy() {\n      return this.y;\n    }\n    gymPick(dist) { return null; }']]],
   ['touch stops writing the contact type', 'brain', [["e.atkCat = d.category === 'special' ? 'special' : 'physical';\n      e.atkType = d.type;", "e.atkCat = d.category === 'special' ? 'special' : 'physical';"]]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bosssplit-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/boss-split-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name);
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught !== M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'boss-split-mutate',
+  root,
+  harnesses: ['docs/proposals/boss-split-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

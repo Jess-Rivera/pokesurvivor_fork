@@ -3,7 +3,7 @@
 // Each mutation breaks boss-ai.js, move-sim.js, move-effects.js, gyms.js, move-route.js, move-render.js, enemy.js or player.js in one deliberate way,
 // writes the copy to a temp folder, and runs docs/proposals/boss-owner-harness.js against it (OWNER_<FILE> env vars). The harness must fail
 // every time.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { brain: ['js/entities/boss-ai.js', 'OWNER_BRAIN'], sim: ['js/systems/move-sim.js', 'OWNER_SIM'], fx: ['js/systems/move-effects.js', 'OWNER_FX'],
   gyms: ['js/data/gyms.js', 'OWNER_GYMS'], route: ['js/systems/move-route.js', 'OWNER_ROUTE'], render: ['js/systems/move-render.js', 'OWNER_RENDER'], enemy: ['js/entities/enemy.js', 'OWNER_ENEMY'],
@@ -72,23 +72,11 @@ const M = [
   ['the render plays your cast for Brock', 'render', [['|| ev.enemy ||', '||']]],
   ['gym leaders keep the boss scale', 'enemy', [['return def.gym ? 1 : boss ? bossScale(def.dex) : 1;', 'return boss ? bossScale(def.dex) : 1;']]]
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bossowner-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/boss-owner-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name);
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught !== M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'boss-owner-mutate',
+  root,
+  harnesses: ['docs/proposals/boss-owner-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

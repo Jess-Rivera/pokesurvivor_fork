@@ -5,6 +5,7 @@ Adapted from the ideas in mattpocock/skills (tdd). Applies to sim and data logic
 ## Where tests live
 - Harnesses: docs/proposals/*-harness.js (node; tools/check.js finds them by name and fails on a nonzero exit or any FAIL line).
 - Mutation checks: docs/proposals/*-mutate.js (manual, `node docs/proposals/<area>-mutate.js`; check.js does not run them).
+  Every one runs through tools/mutate-runner.js (#55): a script lists its mutations and calls the runner, which runs them in parallel at low priority (half the cores; `--full` for every core but two, `--workers N`), runs each harness to the end (a caught line says how many checks broke; `-v` lists them all), and reports STALE patterns without stopping. `node tools/mutate-compare.js <script>` checks that the parallel verdicts match one worker's.
 - Harness and mutate files never ship, so they are free-edit like tools/. The game-code change they cover still needs the prose plan and Jess's OK (CLAUDE.md "Edit boundary and workflow").
 - Quick can write them but cannot run node; it hands Jess the commands.
 

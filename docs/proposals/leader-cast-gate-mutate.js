@@ -3,10 +3,7 @@
 // Each mutation breaks one part of "a leader's attack goes through your cast gate" (js/entities/gym-leader.js, the leader's due step;
 // js/systems/move-sim.js, gateOf and gateOpen), writes the copy to a temp folder and runs leader-cast-gate-harness.js against it
 // (CG_LEADER, CG_SIM). The harness must fail every time; a miss is a gap. STALE means the pattern no longer matches.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = { 'js/entities/gym-leader.js': 'CG_LEADER', 'js/systems/move-sim.js': 'CG_SIM' };
 const LD = 'js/entities/gym-leader.js',
@@ -23,26 +20,10 @@ const M = [
   ['the retry is one frame', SM, '    RETRY = 0.05,', '    RETRY = 1 / 60,'],
   ['the melee gate ignores the foe body', SM, '      const t = nearest(o, o.x, o.y, R, (e) => Math.min(R, reach + e.r));', '      const t = nearest(o, o.x, o.y, R, () => Math.min(R, reach));'],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cg-mutate-'));
-let caught = 0,
-  stale = 0,
-  miss = 0;
-for (const [name, file, from, to] of M) {
-  const src = fs.readFileSync(path.join(root, file), 'utf8');
-  if (!src.includes(from)) {
-    console.log('STALE  ' + name);
-    stale++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, src.replace(from, to));
-  const r = cp.spawnSync(process.execPath, [path.join(__dirname, 'leader-cast-gate-harness.js')], { cwd: root, env: Object.assign({}, process.env, { [ENV[file]]: out }), encoding: 'utf8' });
-  fs.unlinkSync(out);
-  if (r.status !== 0) caught++;
-  else {
-    console.log('MISS   ' + name);
-    miss++;
-  }
-}
-fs.rmdirSync(tmp);
-console.log('leader-cast-gate-mutate: ' + caught + '/' + M.length + ' caught' + (stale ? ', ' + stale + ' STALE' : '') + (miss ? ', ' + miss + ' MISS' : ''));
+
+require('../../tools/mutate-runner.js')({
+  label: 'leader-cast-gate-mutate',
+  root,
+  harnesses: ['docs/proposals/leader-cast-gate-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

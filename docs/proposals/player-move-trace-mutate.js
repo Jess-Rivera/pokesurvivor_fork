@@ -3,10 +3,7 @@
 // Each mutation breaks one rule of the Body (acceptHeading, acceptDodge, acceptsCast) or one SimPass step (js/entities/player-sim-pass.js,
 // the cast refusal in G.MoveSim), writes the copy to a temp folder and runs player-move-trace-harness.js against it (PM_PLAYER,
 // PM_SIMPASS, PM_SIM, PM_LEADER, and for step B PM_GAME, PM_ARENA, PM_ENEMY). The trace must fail every time; a miss is a gap. STALE means the pattern no longer matches.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = {
   'js/entities/player.js': 'PM_PLAYER',
@@ -59,26 +56,10 @@ const M = [
   ['replace removes and re-adds', EN, '      list[i] = next;\n', '      list.splice(i, 1);\n      list.push(next);\n'],
   ['your frame loses its shake step', GM, '    pl.shakeStep(dt);', ''],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-mutate-'));
-let caught = 0,
-  stale = 0,
-  miss = 0;
-for (const [name, file, from, to] of M) {
-  const src = fs.readFileSync(path.join(root, file), 'utf8');
-  if (!src.includes(from)) {
-    console.log('STALE  ' + name);
-    stale++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, src.replace(from, to));
-  const r = cp.spawnSync(process.execPath, [path.join(__dirname, 'player-move-trace-harness.js')], { cwd: root, env: Object.assign({}, process.env, { [ENV[file]]: out }), encoding: 'utf8' });
-  fs.unlinkSync(out);
-  if (r.status !== 0) caught++;
-  else {
-    console.log('MISS   ' + name);
-    miss++;
-  }
-}
-fs.rmdirSync(tmp);
-console.log('player-move-trace-mutate: ' + caught + '/' + M.length + ' caught' + (stale ? ', ' + stale + ' STALE' : '') + (miss ? ', ' + miss + ' MISS' : ''));
+
+require('../../tools/mutate-runner.js')({
+  label: 'player-move-trace-mutate',
+  root,
+  harnesses: ['docs/proposals/player-move-trace-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

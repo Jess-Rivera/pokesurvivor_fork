@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/stat-stage-mutate.js
 // Each mutation breaks stages.js, move-effects.js or move-sim.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/stat-stage-harness.js against it (STAGE_<FILE> env vars). The harness must fail every time; a mutation it misses is a gap.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { stages: ['js/systems/stages.js', 'STAGE_STAGES'], fx: ['js/systems/move-effects.js', 'STAGE_FX'], sim: ['js/systems/move-sim.js', 'STAGE_SIM'] };
 const M = [
@@ -19,23 +19,11 @@ const M = [
     '        if (G.MoveEffects.isPureBuff(def) && G.MoveEffects.statReady(def, o)) castSlot(o, slot, def, now);\n        if (slot.t > 0) slot.t = Math.max(0, slot.t - dt);\n']]],
   ['a fizzled pure buff does not wait', 'sim', [['{ if (buff) slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o)); return null; }', '{ return null; }']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stat-stage-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/stat-stage-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught !== M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'stat-stage-mutate',
+  root,
+  harnesses: ['docs/proposals/stat-stage-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

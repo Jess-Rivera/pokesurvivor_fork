@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/team-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs team-harness.js against it
 // (TM_TEAM, TM_PLAYER, TM_GAME, TM_DEV, TM_MAIN). The harness must fail every time; a miss is a gap.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = {
   'js/systems/team.js': 'TM_TEAM',
@@ -70,27 +67,10 @@ const M = [
   ['dev.html does not load team.js', D, '    <script defer src="js/systems/team.js"></script>\n', ''],
   ['NEED does not list Team', MN, "    'Team',\n", ''],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'team-mut-'));
-let caught = 0;
-for (const [name, rel, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, rel), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    process.exitCode = 1;
-    continue;
-  }
-  const f = path.join(tmp, 'mutated' + path.extname(rel));
-  fs.writeFileSync(f, s.replace(a, b));
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/team-harness.js')], {
-    cwd: root,
-    env: Object.assign({}, process.env, { [ENV[rel]]: f }),
-    encoding: 'utf8',
-  });
-  const lines = (r.stdout + r.stderr).trim().split('\n'),
-    hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100) + ')' : ''));
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'team-mutate',
+  root,
+  harnesses: ['docs/proposals/team-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

@@ -3,7 +3,7 @@
 // Each mutation breaks move-sim.js or move-effects.js in one deliberate way, writes the copy to a temp folder, and runs
 // docs/proposals/move-motion-harness.js against it. The harness must fail every time; a mutation it misses is a gap in the tests.
 // Not mutated: the range cap on the dash point, since the nearest-target cast gate (R9) already keeps every target inside range.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { sim: 'js/systems/move-sim.js', fx: 'js/systems/move-effects.js' };
 const ENV = { sim: 'MOTION_SIM', fx: 'MOTION_FX' };
@@ -34,17 +34,11 @@ const M = [
   ['the pull is not clamped', 'fx', [['if (dx * tx + dy * ty > 0) k = Math.min(', 'if (false) k = Math.min(']]],
   ['the clamp also cuts pushes', 'fx', [['if (dx * tx + dy * ty > 0) k = Math.min(', 'if (true) k = Math.min(']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'move-motion-mut-'));
-let caught = 0;
-for (const [name, file, edits] of M) {
-  let s = fs.readFileSync(path.join(root, SRC[file]), 'utf8');
-  for (const [a, b] of edits) { if (!s.includes(a)) { console.log('MUTATION DID NOT APPLY: ' + name + '  (' + a + ')'); process.exit(2); } s = s.replace(a, b); }
-  const out = path.join(tmp, file + '.js'); fs.writeFileSync(out, s);
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/move-motion-harness.js'), root], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-}
-console.log('mutations caught: ' + caught + '/' + M.length);
-process.exit(caught === M.length ? 0 : 1);
+
+require('../../tools/mutate-runner.js')({
+  label: 'move-motion-mutate',
+  root,
+  harnesses: ['docs/proposals/move-motion-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which], edits, env: { [ENV[which]]: '<out>' } })),
+});

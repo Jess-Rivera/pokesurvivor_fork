@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/leader-team-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-team-harness.js against it
 // (LT_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const LD = 'js/entities/gym-leader.js',
   AR = 'js/systems/gym-arena.js',
@@ -36,29 +33,11 @@ const M = [
   // the data
   ['Misty has no loop 2 hpMult', GY, 'hpMult: { 1: 25, 2: 19 },', 'hpMult: { 1: 25 },'],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-team-mut-'));
-let caught = 0,
-  bad = 0;
-for (const [name, file, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    bad++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, s.replace(a, b));
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/leader-team-harness.js')], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n');
-  if (r.status !== 0) {
-    caught++;
-    console.log('caught  ' + name + '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')');
-  } else {
-    bad++;
-    console.log('MISSED  ' + name);
-  }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-process.exit(bad ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'leader-team-mutate',
+  root,
+  harnesses: ['docs/proposals/leader-team-harness.js'],
+  crlf: true,
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

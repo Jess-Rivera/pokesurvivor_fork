@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/type-chart-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs type-chart-harness.js against it
 // (the TY_* variables). The harness must fail every time; a miss is a gap. A STALE line means the target text moved: fix the pattern.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = {
   'js/data/types.js': 'TY_TYPES',
@@ -61,27 +58,10 @@ const M = [
   // test dummies (debug.js)
   ['debug dummies keep their species types', DB, "    e.types = ['typeless'];\n", ''],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'type-chart-mut-'));
-let caught = 0;
-for (const [name, rel, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, rel), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    process.exitCode = 1;
-    continue;
-  }
-  const f = path.join(tmp, 'mutated.js');
-  fs.writeFileSync(f, s.replace(a, b));
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/type-chart-harness.js')], {
-    cwd: root,
-    env: Object.assign({}, process.env, { [ENV[rel]]: f }),
-    encoding: 'utf8',
-  });
-  const lines = (r.stdout + r.stderr).trim().split('\n'),
-    hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100) + ')' : ''));
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'type-chart-mutate',
+  root,
+  harnesses: ['docs/proposals/type-chart-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

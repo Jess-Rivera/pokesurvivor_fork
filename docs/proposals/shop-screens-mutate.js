@@ -5,7 +5,7 @@
 // mutation it misses is a gap.
 // Not mutated, with the reason: js/ui/shop-ui.js drawing (DOM, checked by tools/smoke-ui.js and feel-tested; every rule it shows comes
 // from G.Shops.check, which is mutated here); only its step 4b confirm wiring is mutated. G.Debug.trainer / mart (dev only, no game path).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { shops: ['js/systems/shops.js', 'SS_SHOPS'], player: ['js/entities/player.js', 'SS_PLAYER'], game: ['js/game.js', 'SS_GAME'],
   dev: ['dev.html', 'SS_DEV'], main: ['js/main.js', 'SS_MAIN'], ui: ['js/ui/ui.js', 'SS_UI'], shopui: ['js/ui/shop-ui.js', 'SS_SHOPUI'],
@@ -50,23 +50,12 @@ const M = [
   ['bans still filter the level-up pool', 'levelup', [['(id) => !pl.hasMove(id) && !(buffs >= 2', '(id) => !pl.hasMove(id) && !(pl.banned && pl.banned.has(id)) && !(buffs >= 2']]],
   ['bans still filter Starting Moves', 'game', [['    f.addMove(G.startMoveOf(mon.dex));\n', '    f.addMove(G.startMoveOf(mon.dex));\n    f.banned = new Set((save.pban && save.pban[mon.dex]) || []);\n']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shop-screens-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/shop-screens-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'shop-screens-mutate',
+  root,
+  harnesses: ['docs/proposals/shop-screens-harness.js'],
+  args: [root],
+  crlf: true,
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

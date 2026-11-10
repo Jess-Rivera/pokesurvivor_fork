@@ -3,10 +3,7 @@
 // Usage from the repo root:  node docs/proposals/leader-ai-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-ai-harness.js against it
 // (LA_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const AI = 'js/entities/leader-ai.js',
   IN = 'js/systems/leader-info.js',
@@ -174,29 +171,10 @@ const M = [
   ["Misty's learnRate is the baseline", GY, '        learnRate: 2,\n', ''],
   ['the predictCap check is off', GY, 'if (caps.some((x) => typeof x === \'number\' && x > 10))', 'if (false)'],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'leader-ai-mut-'));
-let caught = 0,
-  bad = 0;
-for (const [name, file, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, file), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    bad++;
-    continue;
-  }
-  const out = path.join(tmp, path.basename(file));
-  fs.writeFileSync(out, s.replace(a, b));
-  const env = Object.assign({}, process.env, { [ENV[file]]: out });
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/leader-ai-harness.js')], { env, encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n');
-  if (r.status !== 0) {
-    caught++;
-    console.log('caught  ' + name + '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')');
-  } else {
-    bad++;
-    console.log('MISSED  ' + name);
-  }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-process.exit(bad ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'leader-ai-mutate',
+  root,
+  harnesses: ['docs/proposals/leader-ai-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

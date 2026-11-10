@@ -2,7 +2,7 @@
 // Usage from the repo root:  node docs/proposals/move-riders-mutate.js
 // Each mutation breaks move-effects.js, stages.js, status.js or enemy.js in one deliberate way, writes the copy to a temp folder, and
 // runs docs/proposals/move-riders-harness.js against it (RIDERS_<FILE> env vars). The harness must fail every time.
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { fx: ['js/systems/move-effects.js', 'RIDERS_FX'], stages: ['js/systems/stages.js', 'RIDERS_STAGES'],
   status: ['js/systems/status.js', 'RIDERS_STATUS'], enemy: ['js/entities/enemy.js', 'RIDERS_ENEMY'] };
@@ -32,23 +32,11 @@ const M = [
   ['rooted jumper starts a jump', 'enemy', [['else if (dist < 250 && !G.Status.rooted(this))', 'else if (dist < 250)']]],
   ['rooted crouch does not hold', 'enemy', [["if (j.t < 0 && G.Status.rooted(this)) { this.anim.loop('Idle'); return; }", '']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'riders-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/move-riders-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name);
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught !== M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'move-riders-mutate',
+  root,
+  harnesses: ['docs/proposals/move-riders-harness.js'],
+  args: [root],
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

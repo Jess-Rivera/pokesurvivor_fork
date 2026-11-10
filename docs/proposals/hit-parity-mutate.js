@@ -2,10 +2,7 @@
 // Usage from the repo root:  node docs/proposals/hit-parity-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs hit-parity-harness.js against it
 // (the HP_* variables). The harness must fail every time; a miss is a gap. A STALE line means the target text moved: fix the pattern.
-const fs = require('fs'),
-  os = require('os'),
-  path = require('path'),
-  cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const ENV = {
   'js/core/stats.js': 'HP_STATS',
@@ -63,27 +60,10 @@ const M = [
   ['a shot loses its multiplier', CB, 'mul: p.mul,\n            who: w', 'mul: 1,\n            who: w'],
   ['a hazard reads the wrong category', HZ, 'pl.takeHit({ A: h.atkFactor, cat: h.atkCat,', "pl.takeHit({ A: h.atkFactor, cat: 'special',"],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'hit-parity-mut-'));
-let caught = 0;
-for (const [name, rel, a, b] of M) {
-  const s = fs.readFileSync(path.join(root, rel), 'utf8');
-  if (!s.includes(a)) {
-    console.log('STALE mutation (pattern not found): ' + name);
-    process.exitCode = 1;
-    continue;
-  }
-  const f = path.join(tmp, 'mutated.js');
-  fs.writeFileSync(f, s.replace(a, b));
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/hit-parity-harness.js')], {
-    cwd: root,
-    env: Object.assign({}, process.env, { [ENV[rel]]: f }),
-    encoding: 'utf8',
-  });
-  const lines = (r.stdout + r.stderr).trim().split('\n'),
-    hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find((l) => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 100) + ')' : ''));
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'hit-parity-mutate',
+  root,
+  harnesses: ['docs/proposals/hit-parity-harness.js'],
+  mutants: M.map(([name, file, a, b]) => ({ name, file, edits: [[a, b]], env: { [ENV[file]]: '<out>' } })),
+});

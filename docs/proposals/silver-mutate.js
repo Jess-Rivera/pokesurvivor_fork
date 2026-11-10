@@ -5,7 +5,7 @@
 // it misses is a gap.
 // Not mutated, with the reason: the HUD pop and roll (drawn per frame, feel-tested); G.Debug.silver (dev only, no game path);
 // the coin sheet pixels (checked once against the gold cut when it was made, 2026-11-05).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
 const SRC = { silver: ['js/systems/silver.js', 'SV_SILVER'], game: ['js/game.js', 'SV_GAME'], enemy: ['js/entities/enemy.js', 'SV_ENEMY'],
   hud: ['js/ui/hud.js', 'SV_HUD'], dev: ['dev.html', 'SV_DEV'], main: ['js/main.js', 'SV_MAIN'] };
@@ -29,23 +29,12 @@ const M = [
   ['the script tag is missing', 'dev', [['    <script defer src="js/systems/silver.js"></script>\n', '']]],
   ['the NEED array misses Silver', 'main', [["    'Silver',\n", '']]],
 ];
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'silver-mut-'));
-let caught = 0;
-for (const [name, which, edits] of M) {
-  const [rel, env] = SRC[which];
-  let s = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
-  for (const [a, b] of edits) {
-    if (!s.includes(a)) { console.log('STALE mutation (pattern not found): ' + name); process.exitCode = 1; s = null; break; }
-    s = s.replace(a, b);
-  }
-  if (s == null) continue;
-  const f = path.join(tmp, path.basename(rel));
-  fs.writeFileSync(f, s);
-  const r = cp.spawnSync(process.execPath, [path.join(root, 'docs/proposals/silver-harness.js'), root], { env: Object.assign({}, process.env, { [env]: f }), encoding: 'utf8' });
-  const lines = (r.stdout + r.stderr).trim().split('\n'), hit = r.status !== 0;
-  if (hit) caught++;
-  console.log((hit ? 'caught  ' : 'MISSED  ') + name + (hit ? '  (' + (lines.find(l => l.startsWith('FAIL')) || lines[lines.length - 1]).slice(0, 110) + ')' : ''));
-  fs.unlinkSync(f);
-}
-console.log(caught + '/' + M.length + ' mutations caught');
-if (caught < M.length) process.exitCode = 1;
+
+require('../../tools/mutate-runner.js')({
+  label: 'silver-mutate',
+  root,
+  harnesses: ['docs/proposals/silver-harness.js'],
+  args: [root],
+  crlf: true,
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});

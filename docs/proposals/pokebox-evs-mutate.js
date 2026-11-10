@@ -7,9 +7,8 @@
 // the browser; the harness has no DOM); the Team screen EVs row and the sell note in menu.js (display text); debug.js evbank and the
 // fighter EV column (console tools); the species-traits generator (tools/check.js runs species_traits.js --check, and section 2
 // checks the yields it wrote). Select repeats keeping most EVs is mutated in pokebox-copies-mutate.js (its harness owns repeatsIn).
-const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const path = require('path');
 const root = path.resolve(__dirname, '../..');
-const harness = path.join(root, 'docs/proposals/pokebox-evs-harness.js');
 const SRC = { stats: ['js/core/stats.js', 'PE_STATS'], player: ['js/entities/player.js', 'PE_PLAYER'], copies: ['js/systems/copies.js', 'PE_COPIES'],
   game: ['js/game.js', 'PE_GAME'], enemy: ['js/entities/enemy.js', 'PE_ENEMY'], runui: ['js/ui/run-ui.js', 'PE_RUNUI'] };
 // [name, file key, [[text to find, replacement], ...]]
@@ -44,22 +43,14 @@ const M = [
   ["Done does not save", "runui", [["G.Copies.applyEvPlan(s, whole, flat);\n      G.DB.commit(true);", "G.Copies.applyEvPlan(s, whole, flat);"]]],
   ["[+] ignores the 510 cap", "runui", [["evOf(i, k) < G.Copies.EV_MAX && totalOf(i) < G.Copies.EV_TOTAL", "evOf(i, k) < G.Copies.EV_MAX"]]],
 ];
-const runHarness = env => cp.spawnSync(process.execPath, [harness, root], { encoding: 'utf8', env: Object.assign({}, process.env, env) });
-const failed = r => r.status !== 0 || /FAIL/.test(r.stdout || '');
-const clean = runHarness({});
-if (failed(clean)) { console.log('The harness fails on the real code; fix that first.\n' + clean.stdout); process.exit(1); }
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pokebox-evs-mut-'));
-let caught = 0, missed = 0, stale = 0;
-for (const [name, key, edits] of M) {
-  const [rel, env] = SRC[key];
-  let src = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n'), found = true;
-  for (const [a, b] of edits) { if (!src.includes(a)) { found = false; break; } src = src.replace(a, b); }
-  if (!found) { stale++; console.log('STALE  ' + name); continue; }
-  const f = path.join(tmp, key + '.js');
-  fs.writeFileSync(f, src);
-  if (failed(runHarness({ [env]: f }))) caught++;
-  else { missed++; console.log('MISSED ' + name); }
-}
-fs.rmSync(tmp, { recursive: true, force: true });
-console.log('pokebox evs mutations: ' + caught + '/' + M.length + ' caught' + (missed ? ', ' + missed + ' missed' : '') + (stale ? ', ' + stale + ' stale' : ''));
-process.exit(missed || stale ? 1 : 0);
+
+require('../../tools/mutate-runner.js')({
+  label: 'pokebox-evs-mutate',
+  root,
+  harnesses: ['docs/proposals/pokebox-evs-harness.js'],
+  args: [root],
+  crlf: true,
+  baseline: true,
+  failed: (r) => r.status !== 0 || /FAIL/.test(r.stdout || ''),
+  mutants: M.map(([name, which, edits]) => ({ name, file: SRC[which][0], edits, env: { [SRC[which][1]]: '<out>' } })),
+});
