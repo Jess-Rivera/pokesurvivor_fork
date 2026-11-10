@@ -1,0 +1,147 @@
+/* ============ hud-overlay.css: the HTML HUD above the game canvas (#64 pilot) ============
+ * Look and numbers: docs/HUD-STYLE.md. Built by js/ui/hud-overlay.js. Fixed CSS pixels at their 1080p sizes, never scaled.
+ * Every colour comes from the HUD-STYLE palette.
+ */
+@font-face {
+  font-family: 'HudText';
+  src: url('../assets/fonts/Truth-And-Ideals-10px.ttf') format('truetype');
+  font-display: block;
+}
+
+.hud-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 5; /* above the game canvas, below every screen (.scr is 20) */
+  pointer-events: none;
+  user-select: none;
+  font-family: 'HudText', monospace;
+  font-synthesis: none; /* no browser-made bold or slant, except the HP label's slant below */
+  color: #ffffff;
+  /* the name line's size (20 px, Jess 2026-11-10; G.Debug.hudNameSize tries 30 or 40) and its font pixel, a tenth of it */
+  --name-size: 20px;
+  --font-pixel: 2px;
+}
+
+/* ---------- enemy name bar ---------- */
+.hud-boss {
+  position: absolute;
+}
+.hud-boss-line {
+  display: flex;
+  justify-content: space-between;
+  height: var(--name-size);
+  font-size: var(--name-size);
+  line-height: var(--name-size);
+  white-space: nowrap;
+  /* the text outline: one font pixel, in the Text outline colour */
+  text-shadow:
+    var(--font-pixel) 0 0 #101010,
+    calc(-1 * var(--font-pixel)) 0 0 #101010,
+    0 var(--font-pixel) 0 #101010,
+    0 calc(-1 * var(--font-pixel)) 0 #101010,
+    var(--font-pixel) var(--font-pixel) 0 #101010,
+    calc(-1 * var(--font-pixel)) var(--font-pixel) 0 #101010,
+    var(--font-pixel) calc(-1 * var(--font-pixel)) 0 #101010,
+    calc(-1 * var(--font-pixel)) calc(-1 * var(--font-pixel)) 0 #101010;
+}
+.hud-boss-bar {
+  position: relative;
+}
+.hud-boss-bar svg {
+  display: block;
+  shape-rendering: crispEdges;
+}
+.hud-boss-hp {
+  /* the "HP" label: 20 px text (2 px font pixel), its outline's top one bar row above the bar, as B2's tab. Italic by the
+     browser's own slant, as Word fakes it (the font has no italic face; Jess, 2026-11-10) */
+  position: absolute;
+  top: -4px;
+  font-size: 20px;
+  font-style: italic;
+  font-synthesis: style;
+  line-height: 24px;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}
+.hud-boss-fill,
+.hud-boss-piece {
+  position: absolute;
+  height: 9px;
+}
+.hud-boss-fill {
+  transform-origin: 0 0;
+}
+.hud-boss-fill.is-growing {
+  transition: transform 0.3s linear; /* heals grow the fill */
+}
+.hud-boss-piece {
+  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
+}
+@keyframes hud-piece-fall {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+/* ---------- leader portrait circles ---------- */
+.hud-boss-circles {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.hud-circle {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  box-sizing: border-box;
+  border: 4px solid #101010; /* 4 px stroke around the 40 px portrait (Jess, 2026-11-10) */
+  border-radius: 50%;
+  overflow: hidden;
+}
+.hud-circle img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+.hud-circle.is-active {
+  border-color: var(--ring-base);
+}
+.hud-circle.is-pulsing {
+  /* the whole circle flickers while the swap-in i-frames last, as the sprite does (player.js: 45% and full, 9 a second) */
+  animation: hud-circle-flicker 0.111s steps(1) infinite;
+}
+@keyframes hud-circle-flicker {
+  0% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.hud-circle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #101010;
+  opacity: 0;
+  transition: opacity 0.3s linear;
+}
+.hud-circle.is-fainted::after {
+  opacity: 0.65; /* darkly dimmed */
+}

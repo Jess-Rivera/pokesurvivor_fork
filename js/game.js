@@ -1025,6 +1025,7 @@ G.Game = (() => {
 
     if (pl && state !== 'ui') render();
     else Backdrop.render(ctx, w, h, dpr, dt);
+    G.HudOverlay.sync(!!pl && state !== 'ui'); // #64: the HTML HUD reads the frame just drawn
     G.UI.tick(dt);
 
     G.Input.endFrame();

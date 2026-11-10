@@ -7,6 +7,20 @@
  */
 G.CHANGELOG = [
   {
+    d: '2026-11-10',
+    title: ['A new gym leader bar', 'A new gym leader bar'],
+    new: [
+      [
+        "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
+        "Gym fights have a new leader bar at the top: \"Brock's Geodude\" and its level above a Black 2 style HP bar, and the leader's team as portrait circles below it. The Pokémon on the field has a ring in the gym's colour.",
+      ],
+      [
+        'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
+        'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
+      ],
+    ],
+  },
+  {
     d: '2026-11-09',
     title: ['A new title font', 'A new title font'],
     chg: [

@@ -2,6 +2,7 @@
  * Drawn in SCREEN coordinates (without the camera transform).
  */
 G.HUD = (() => {
+  const ENRAGE_LINE_BELOW_OVERLAY = 178; // px from the top: below the overlay's name line, bar and circles (#64)
   const F = (w, s) => `${w} ${s}px GameFont,"Segoe UI",system-ui,sans-serif`;
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -614,18 +615,23 @@ G.HUD = (() => {
 
     // ---------- boss bar ----------
     const boss = G.EnemyMgr.all().find((e) => e.boss && !e.dead);
+    // #64: a gym leader's name bar and team circles are on the HTML overlay (js/ui/hud-overlay.js); the canvas keeps the
+    // bar for other bosses, and for gyms too if the overlay's libraries failed to load
+    const overlayDrawsGym = !!(G.HudOverlay && G.HudOverlay.ready);
     if (boss) {
-      const bw = Math.min(420, w - 80);
-      bar(ctx, (w - bw) / 2, 70, bw, 12, boss.hp / boss.maxHp, '#ffcb3d');
-      ctx.font = F(800, 10);
-      ctx.fillStyle = '#20160a';
-      ctx.fillText(
-        boss.gym
-          ? (boss.gym.leader + "'S " + boss.name + ' · LV ' + boss.gym.level).toUpperCase()
-          : boss.name.toUpperCase(),
-        w / 2,
-        80
-      );
+      if (!(boss.gym && overlayDrawsGym)) {
+        const bw = Math.min(420, w - 80);
+        bar(ctx, (w - bw) / 2, 70, bw, 12, boss.hp / boss.maxHp, '#ffcb3d');
+        ctx.font = F(800, 10);
+        ctx.fillStyle = '#20160a';
+        ctx.fillText(
+          boss.gym
+            ? (boss.gym.leader + "'S " + boss.name + ' · LV ' + boss.gym.level).toUpperCase()
+            : boss.name.toUpperCase(),
+          w / 2,
+          80
+        );
+      }
       if (boss.gym && G.Gym.enrages(boss)) {
         // slice 6 (Q1): no enrage line for a switched gym that does not author one
         const left = G.Gym.enrageIn(boss);
@@ -634,14 +640,15 @@ G.HUD = (() => {
         ctx.fillText(
           left === 0 ? 'ENRAGED' : left != null ? 'ENRAGE IN ' + Math.ceil(left) + ' s' : 'HIT IT TO ENGAGE',
           w / 2,
-          98
+          overlayDrawsGym ? ENRAGE_LINE_BELOW_OVERLAY : 98 // under the overlay's circles until it gets its own HUD design
         );
       }
     }
 
     // ---------- leader team pips (slice 7): one per mon, gold standing, grey fainted; teams of 2+ only ----------
+    // #64: replaced by the overlay's portrait circles; drawn only if the overlay is not running
     const lt = G.GymArena && G.GymArena.leaderTeam;
-    if (lt && Array.isArray(lt.members) && lt.members.length > 1) {
+    if (!overlayDrawsGym && lt && Array.isArray(lt.members) && lt.members.length > 1) {
       const n = lt.members.length,
         gap = 14;
       lt.members.forEach((m, i) => {

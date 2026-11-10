@@ -20,3 +20,4 @@ js/data/lang-en.js
 package-lock.json
 index.html
 *.md
+js/vendor/

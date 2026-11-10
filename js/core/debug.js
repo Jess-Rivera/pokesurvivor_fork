@@ -46,6 +46,9 @@
  *                      name ('jolly'). Saved; takes effect from the next run, which is flagged tampered.
  *   G.Debug.quietPause(on)  Escape (and P, and the pause button) pause and unpause with no pause menu, so the frame stays
  *                      readable; no arg toggles, true/false sets. Session only, not saved (#54).
+ *   G.Debug.hudOverlay(show)  hide or show the HTML HUD overlay (#64) to compare the frame rate with Settings > FPS on;
+ *                      no arg toggles. Session only.
+ *   G.Debug.hudNameSize(px)  the overlay name line's size: no arg flips 20 and 30 px, or 20 / 30 / 40 (#64 feel test).
  *   G.Debug.on         true when ?dev is present.
  *
  * Any run played after maxAll() is flagged tampered via G.Game.debugMaxed(),
@@ -543,6 +546,38 @@ G.Debug = (() => {
     return quietPauseOn;
   }
   const quietPauseActive = () => on && quietPauseOn;
+
+  /** #64 feel test: the overlay's name line size. hudNameSize() flips 20 and 30 px; hudNameSize(20|30|40) sets it (whole
+   *  multiples of the font's 10 px grid, so it stays crisp). Session only. Needs ?dev. */
+  let hudNameSizePixels = 20;
+  function hudNameSize(pixels) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    if (pixels == null) pixels = hudNameSizePixels === 20 ? 30 : 20;
+    if (![20, 30, 40].includes(pixels)) {
+      console.warn('[Debug] hudNameSize takes 20, 30 or 40 (the font is crisp only at multiples of 10)');
+      return hudNameSizePixels;
+    }
+    hudNameSizePixels = G.HudOverlay.setNameSize(pixels);
+    console.log('[Debug] HUD name line at ' + pixels + ' px');
+    return pixels;
+  }
+
+  /** #64: hide or show the HTML HUD overlay, to compare the frame rate with and without it (turn on Settings > FPS).
+   *  hudOverlay() toggles, hudOverlay(true|false) shows or hides. Session only. Needs ?dev. */
+  let hudOverlayHidden = false;
+  function hudOverlay(show) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    hudOverlayHidden = show == null ? !hudOverlayHidden : !show;
+    G.HudOverlay.setHidden(hudOverlayHidden);
+    console.log('[Debug] HUD overlay ' + (hudOverlayHidden ? 'HIDDEN (the canvas HUD still draws)' : 'SHOWN'));
+    return !hudOverlayHidden;
+  }
 
   /** New move system quick test (slice 3d, ?dev): a set of routed moves, one per slot (cycle slots to try each), wild spawns
    *  stopped, the overlay on, and 24 dummy enemies in 8 directions at 50, 130 and 220 px with a huge HP pool. Returns how many dummies
@@ -1421,6 +1456,8 @@ G.Debug = (() => {
     spawnOn,
     hitbox,
     quietPause,
+    hudOverlay,
+    hudNameSize,
     quietPauseActive,
     copies,
     copy,

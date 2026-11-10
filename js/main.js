@@ -74,6 +74,7 @@
     'Icons',
     'UI',
     'HUD',
+    'HudOverlay',
     'Sheet',
     'MenuUI',
     'RunUI',
