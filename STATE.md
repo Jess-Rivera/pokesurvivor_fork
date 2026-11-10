@@ -1,14 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-10, Claude Code (home): #65 built (map panel, weather card, kills line), in Needs Playtest.
+Updated 2026-11-10, Claude Code (home): #65 closed (map panel, weather card, kills line).
 Branch: feature/leader-roster-ui (branched from feature/gym-leader-ai at f9478ea0; carries its unmerged work).
 No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md still governs the leader AI work it carries.
 
 ## START HERE (next session, either tool)
 1. Jess pushes this branch (this session's commits), then pulls it on the other machine. There: python tools/grid_rips.py.
-2. Owed by Jess: a last look at #65 after the timer flip, then close it (or say so and the assistant closes it); the
-   #64 frame-rate check on the work laptop (Settings > FPS, G.Debug.hudOverlay() in a heavy run); the #59 feel test.
+2. Owed by Jess:    #64 frame-rate check on the work laptop (Settings > FPS, G.Debug.hudOverlay() in a heavy run); the #59 feel test.
 3. Next HUD work: #66 (it replaces the canvas buff chips), then #67; #68 and #69 any time.
 
 ## Where we are

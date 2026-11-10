@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-10 #65 session, on feature/leader-roster-ui)
-1. HUD (#35): Jess's last look at #65 (timer flipped), then close it. Then #66 (replaces the canvas buff chips), then
+1. HUD (#35): #65 closed. Next #66 (replaces the canvas buff chips), then
    #67, each locking its own HUD-STYLE choices. Owed by Jess: the #64 frame-rate check on the work laptop.
 2. SV type colours: #68 (game-wide G.U.TYPE_COLOR), #69 (gym building recolour).
 3. Triage: #73 (Spanish species names on the HUD), #74 (spare weather art), #75 (named places for the Map line).
