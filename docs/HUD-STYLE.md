@@ -38,7 +38,50 @@ Excalidraw limitation, not choices. Rulings: 2026-11-10-hud-fixed-sizes-from-the
   text, the same standing as the Pokemon sprites; no credit line possible.
 
 ## Colour palette
-- `[Open]` The B/W tokens, HP thresholds, EXP, status, type and gym colours (gym reference: assets/tileset/gyms/gym-colors.json).
+B/W colours come in pairs (a bright fill over a dark shade); keep the pairs together.
+
+- `[Approved]` **Type colours: the Bulbapedia Scarlet/Violet palette is canonical for the HUD and all UI** (Jess, 2026-11-10).
+  Base fills, dark for shades and outlines, light for highlights. The game-wide move off `G.U.TYPE_COLOR` is #68.
+
+  | Type | Light | Base | Dark |
+  |---|---|---|---|
+  | Normal | `#C1C2C1` | `#9FA19F` | `#676967` |
+  | Fire | `#EF7374` | `#E62829` | `#961A1B` |
+  | Water | `#74ACF5` | `#2980EF` | `#1B539B` |
+  | Grass | `#82C274` | `#3FA129` | `#29691B` |
+  | Electric | `#FCD659` | `#FAC000` | `#A37D00` |
+  | Ice | `#81DFF7` | `#3DCEF3` | `#28869E` |
+  | Fighting | `#FFAC59` | `#FF8000` | `#A65300` |
+  | Poison | `#B884DD` | `#9141CB` | `#5E2A84` |
+  | Ground | `#B88E6F` | `#915121` | `#5E3515` |
+  | Flying | `#ADD2F5` | `#81B9EF` | `#54789B` |
+  | Psychic | `#F584A8` | `#EF4179` | `#9B2A4F` |
+  | Bug | `#B8C26A` | `#91A119` | `#5E6910` |
+  | Rock | `#CBC7AD` | `#AFA981` | `#726E54` |
+  | Ghost | `#A284A2` | `#704170` | `#492A49` |
+  | Dragon | `#8D98EC` | `#5060E1` | `#343E92` |
+  | Dark | `#998B8C` | `#624D4E` | `#403233` |
+  | Steel | `#98C2D1` | `#60A1B8` | `#3E6978` |
+  | Fairy | `#F5A2F5` | `#EF70EF` | `#9B499B` |
+
+- `[Approved]` How a type shows (from assets/ui/BW Pokedex rip, the B2 lower-screen battle rip): an angled rim in the type's
+  colour around a `#393939` / `#292929` checker body with a `#000000` outline.
+- `[Approved]` Colours with no mainline set (gym colours, new statuses) that need more steps are ramped as the B2 buttons are:
+  100%, about 55%, 45% and 33% of the bright tone.
+- `[Approved]` Gym colours (the active leader circle's ring) are the gym's type colour, once the gym art is recoloured to the
+  SV palette (#69); assets/tileset/gyms/gym-colors.json is the reference.
+- `[Proposed]` Panels and lines: panel `#181818`, frame `#212121`, checker `#303030`, slate `#495151`, light greys `#adadad`
+  and `#c6c6c6`, off-white track `#f3f3f3`; the menus' accent line `#29ceff`, secondary text `#8cfff7`, title `#fff000` over
+  `#8f8500`, ink shadow `#00213a`.
+- `[Proposed]` Text: white `#ffffff` with a `#101010` outline; dim text (Region, Map, Kills) white at about 45% opacity.
+- `[Proposed]` Bars (B2/W2 rip, fill over shade): HP `#00fb49` / `#008a28`, `#f3b200` / `#9a6110`, `#fb3041` / `#922030`;
+  empty track `#f3f3f3` / `#adadad`; EXP `#00baf3` / `#00799a`; Lv label `#f3b200` / `#9a6110`; male `#00baf3`, female `#fb3041`.
+- `[Proposed]` Status chips (B2/W2 rip, fill over shade): SLP `#848484` / `#4a4a4a`, PSN `#d631de` / `#6b2942`, bad PSN
+  `#d631de` / `#391042`, BRN `#e75a4a` / `#b50000`, FRZ `#218cf7` / `#005a8c`, PAR `#efad00` / `#ad6b00`; statuses the B/W
+  games lack get a pair ramped from their type colour.
+- `[Open]` Life meter: B/W thresholds (green above 50%, yellow to 20%, red below) or always red as the wireframe shows.
+- `[Open]` Frames: Black 2 (dark) or White 2 (light).
+- `[Open]` Shake Off prompt: Lv gold flashing to white, or a dedicated alert orange.
 
 ## Shapes
 - `[Open]` Slants, frames, corners, line widths, transparency.
