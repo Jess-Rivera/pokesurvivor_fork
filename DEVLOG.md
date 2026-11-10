@@ -94,3 +94,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - #64 built and closed: Preact, htm and Signals vendored; js/ui/hud-overlay.js draws the name line, the B2 bar (3x), cut-and-fall HP loss, heal grow, and portrait circles with a gym-colour ring and swap flicker. Smoke test covers dev.html and the built bundle.
 - Feel test changes: 4 px circle stroke, whole-circle flicker, 20 px name line (lean on 2x), HP label as browser-slanted italic text (a pixel-stepped italic face was tried and read badly).
 - Stopped at: pilot done; owed the work-laptop frame-rate check. Canvas timer and area line overlap the name line until their own slices. Next: rest of #61, #68, #69.
+
+## 2026-11-10 (Claude Code, home), #62 character info panel and the level-up flow (feature/leader-roster-ui)
+- #61 ruled a soft dependency (Jess); #62 built: portrait and EXP ring, life meter with current / max, B2 status chips, Shake Off badge (3 flashes a second), B2 move buttons with type-glyph wells, held item, Lv, Silver, timer. Overlay split into a core kit plus one file per panel; the #64 pilot moved unchanged.
+- Feel-test rounds: slot profile copied from the rip row for row, the B2 grid back with larger squares, clock-wipe cooldown, flat EXP ring, Lv rattle on a pivot, Lv and held item swapped, Silver lower and popping to 1.5x, cursor corner fixed.
+- Level up (decision 2026-11-10-level-up-rattle-then-cards-with-confetti): the number rattles while you play; cards open 1.1 s later with confetti from the popup's corners (js/ui/confetti.js).
+- Smoke covers the panel's 1080p layout and the level-up order (a 2 px slot shift fails it). A Vitamins card made one run flaky until the test finished its stat pick. Touch is #72 (deferred).
+- Stopped at: #62 in Needs Playtest. Next: #63, #68, #69.
