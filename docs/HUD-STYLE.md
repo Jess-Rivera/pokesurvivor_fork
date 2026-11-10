@@ -397,8 +397,8 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
   portrait and almost to the right rim: the rip's italic pixel "HP" label (copied pixel for pixel) and a framed track.
   The fill is two art rows, the HP band's fill over its shade, using the life meter thresholds.
 - `[Approved]` **Benched status chips:** a benched Pokemon's chips (the #62 chips) sit inside its box, top right. Benched
-  statuses keep ticking. The active Pokemon's row shows none, since the bottom panel has them. `[Open]` two chips cover a
-  short name (seen 2026-11-10 with Pikachu, PAR and BRN); the row is sized for the longest name and one chip.
+  statuses keep ticking. The active Pokemon's row shows none, since the bottom panel has them. A Pokemon holds one major
+  status at a time (COMBAT-RULES), so a row shows at most one chip; the row is sized for the longest name and one chip.
 - `[Approved]` **Held item square:** the #62 square at 48 px, right of each row, with no name under it.
 - `[Approved]` **Rows shown:** only filled slots, stacked with no gaps, each keeping its own key. A team of one shows no
   roster.
