@@ -444,6 +444,26 @@ Jess set these on 2026-11-10 (the #65 plan review). Built, waiting for the feel 
 - The `assets/icons/weather/unofficial/` circles (cut by `tools/rip_weather_icons.py`) are not used; they are spare art
   for future weathers.
 
+### DPS-Upgrades panel (#66)
+
+Jess set these on 2026-11-10 (the #66 plan review); the look below is the build's, waiting for the feel test.
+
+- `[Approved]` **Name and contents:** the DPS-Upgrades panel (not "Active Slot"), top left: a header, the DPS sparkline,
+  a divider, then the list of the run's team upgrade cards. It grows down with its list.
+- `[Approved]` **Header:** the active Pokemon's name, and the team's DPS averaged over the last 5 s.
+- `[Approved]` **Sparkline:** one continuous team line through swaps, one point per second, the last 30 s, newest at the
+  right edge. Each stretch is the first type's SV Base colour of the Pokemon on the field that second; a faint tick marks
+  every swap, so two Pokemon of the same type back to back still read. The scale fits the highest point shown.
+- `[Approved]` **Not here:** the timed buff, berry, altar power and leftover status chips (#76).
+- `[Proposed]` **Box:** Panel body `#181818` at 50%, a 2 px Slate `#495151` rim, 4 px stepped corners (2 px steps).
+- `[Proposed]` **Header text:** the name in 20 px text; the number in BoldPixels at 30 px in Title yellow `#fff000`,
+  then " DPS" in 20 px text.
+- `[Proposed]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
+  a 2 px white column at 35%; the colour changes at the midpoint between two seconds, where the tick sits.
+- `[Proposed]` **List:** a 2 px Slate divider; one row per card, its name in 20 px text on the left and its total on the
+  right in Secondary text `#8cfff7`, in the team sheet's "Run Cards" order. The divider and list hide until a card is
+  picked.
+
 ## Motion
 
 - `[Open]` Slides, flashes, glows, timings for the elements not yet settled.
@@ -587,3 +607,14 @@ items from the right edge.
 | Run item box      | 142 x 48, 39 px from the right  | 280 x 64 (140 x 32 art), 24 px from the right, slot 1 42 px up                 |
 | Run item name     | inside the box                  | 30 px, above the box, 2 px gap; slots 104 px apart                             |
 | Run item patch    | (none)                          | 22 art wide, from art row 13 to the bottom outline; icon 32 px                 |
+
+### DPS-Upgrades panel (#66)
+
+Placed from the top left corner. `[Proposed]` from the build, waiting for the feel test.
+
+| Element         | Wireframe (at 1080p)       | Built                                                       |
+| --------------- | -------------------------- | ----------------------------------------------------------- |
+| Panel           | 325 px wide, x 14, y 12    | 320 px wide, x 16, y 16, 12 px padding, 10 px between parts |
+| Header          | "Active Slot[DPS]", 30 px  | 30 px tall: name 20 px, number 30 px                        |
+| Sparkline strip | 278 x 44                   | 296 x 44 (a 292 x 40 canvas inside the 2 px outline)        |
+| List rows       | 42 px apart                | 20 px text, 28 px apart                                     |

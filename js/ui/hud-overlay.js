@@ -9,6 +9,7 @@
  *   js/ui/hud-roster-panel.js  the team roster, held items and berry bag, lower left (#63)
  *   js/ui/hud-run-items-panel.js  the run item column, lower right (#63)
  *   js/ui/hud-map-panel.js     World Level, Region, Map and the weather card (top right), the kills line (#65)
+ *   js/ui/hud-dps-panel.js     the DPS-Upgrades panel: DPS sparkline and the run's team upgrade cards (top left) (#66)
  *
  * Read only: G.HudOverlay.sync(inRun) runs once per frame from G.Game after the canvas is drawn. Each panel copies what it
  * shows into signals and never writes game state. Unchanged values touch nothing on the page.

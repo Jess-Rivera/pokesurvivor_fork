@@ -721,3 +721,102 @@
     opacity: 0;
   }
 }
+
+/* ---------- DPS-Upgrades panel, top left (#66) ----------
+   Panel body at about 50% (the wireframe's "~50% transparent"), a Slate rim with 4 px stepped corners; it grows down with
+   its list. HUD-STYLE "DPS-Upgrades panel". */
+.hud-dps {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 320px;
+  box-sizing: border-box;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(24, 24, 24, 0.5); /* Panel body #181818 */
+  box-shadow: inset 0 0 0 2px #495151; /* Slate rim */
+  clip-path: polygon(
+    4px 0,
+    calc(100% - 4px) 0,
+    calc(100% - 4px) 2px,
+    calc(100% - 2px) 2px,
+    calc(100% - 2px) 4px,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 2px) calc(100% - 4px),
+    calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 4px) calc(100% - 2px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    4px calc(100% - 2px),
+    2px calc(100% - 2px),
+    2px calc(100% - 4px),
+    0 calc(100% - 4px),
+    0 4px,
+    2px 4px,
+    2px 2px,
+    4px 2px
+  );
+}
+.hud-dps-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  height: 30px;
+}
+.hud-dps-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-dps-rate {
+  white-space: nowrap;
+}
+.hud-dps-number {
+  font-family: 'HudDigits', 'HudText', monospace;
+  font-size: 30px;
+  line-height: 30px;
+  color: #fff000; /* Title yellow */
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}
+.hud-dps-spark {
+  width: 296px;
+  height: 44px;
+  box-sizing: border-box;
+  border: 2px solid #101010; /* outline */
+  background: #212121; /* Frame: the recessed strip */
+}
+.hud-dps-spark canvas {
+  display: block;
+}
+.hud-dps-divider {
+  height: 2px;
+  background: #495151; /* Slate divider */
+}
+.hud-dps-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hud-dps-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hud-dps-card-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-dps-card-total {
+  color: #8cfff7; /* Secondary text */
+}

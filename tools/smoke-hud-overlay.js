@@ -1,5 +1,5 @@
 // tools/smoke-hud-overlay.js: headless browser check for the HTML HUD: the #64 pilot (the enemy name bar and the leader portrait
-// circles) and the #62 character info panel (js/ui/hud-*.js, docs/HUD-STYLE.md). A check, not a harness: check.js syntax-checks it.
+// circles), the #62 character info panel, the #66 DPS-Upgrades panel (js/ui/hud-*.js, docs/HUD-STYLE.md). A check, not a harness: check.js syntax-checks it.
 // Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright), as in tools/smoke-gym.js.
 // Usage from the repo root:
 //   node tools/smoke-hud-overlay.js          dev.html over file:// (how Jess plays)
@@ -953,6 +953,127 @@ async function mapPanel(browser) {
   return { context: gym.context, errors, page: gym.page };
 }
 
+/** #66: the DPS-Upgrades panel (top left): header, sparkline colours and swap tick, the team upgrade list. */
+const dpsState = (page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector('.hud-dps');
+    if (!panel) return null;
+    const rect = panel.getBoundingClientRect(),
+      canvas = panel.querySelector('.hud-dps-spark canvas'),
+      pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data,
+      colours = new Set();
+    let tickColumns = 0;
+    for (let x = 0; x < canvas.width; x++) {
+      // a swap tick: a faint white column from top to bottom (sampled at the top row, where the line rarely is)
+      const top = (x + 0 * canvas.width) * 4;
+      if (pixels[top + 3] > 0 && pixels[top] > 200 && pixels[top + 1] > 200 && pixels[top + 2] > 200) tickColumns++;
+    }
+    for (let index = 0; index < pixels.length; index += 4)
+      if (pixels[index + 3] === 255)
+        colours.add('#' + [0, 1, 2].map((k) => pixels[index + k].toString(16).padStart(2, '0')).join(''));
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: Math.round(rect.width),
+      name: panel.querySelector('.hud-dps-name').textContent.trim(),
+      number: panel.querySelector('.hud-dps-number').textContent.trim(),
+      divider: !!panel.querySelector('.hud-dps-divider'),
+      cards: [...panel.querySelectorAll('.hud-dps-card')].map((row) => ({
+        label: row.querySelector('.hud-dps-card-name').textContent.trim(),
+        total: row.querySelector('.hud-dps-card-total').textContent.trim(),
+      })),
+      colours: [...colours],
+      tickColumns,
+    };
+  });
+
+async function dpsPanel(browser) {
+  const { context, page, errors } = await boot(browser);
+  // Squirtle (Water) in slot 1, Charmander (Fire) in slot 2
+  await page.evaluate(
+    () => (G.DB.save.team = [{ dex: 7, shiny: false }, { dex: 4, shiny: false }, null, null, null, null])
+  );
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await page.evaluate(() => {
+    G.Spawner.update = () => {}; // test page only: no wild spawns, so no damage but the test's own
+    G.EnemyMgr.clear();
+    for (const member of G.Game.roster) member.invuln = 1e9;
+  });
+  await page.waitForTimeout(150);
+  let state = await dpsState(page);
+  ok(!!state, 'dps: the panel shows in a run');
+  if (!state) return { context, errors, page };
+  // HUD-STYLE "DPS-Upgrades panel", hand-copied: 16 px in from the top left, 320 px wide
+  ok(state.left === 16 && state.top === 16 && state.width === 320, 'dps: 16 px in from the top left, 320 px wide');
+  ok(state.name === 'Squirtle', 'dps: the header names the active Pokemon (' + state.name + ')');
+  ok(state.number === '0', 'dps: 0 DPS before any hit (' + state.number + ')');
+  ok(!state.divider && state.cards.length === 0, 'dps: no divider and no list before a card is picked');
+
+  // a 600 damage hit by Squirtle, through the real after-hit hook: the 5 s number is 600 over the finished seconds (at
+  // most 5) once its second finishes
+  const hitSecond = await page.evaluate(() => {
+    G.Game.player.onDealt(600);
+    return G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory);
+  });
+  await page.waitForFunction(
+    (second) => G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory) > second,
+    hitSecond,
+    { timeout: 3000, polling: 50 }
+  );
+  await page.waitForTimeout(80);
+  const finished = await page.evaluate(() => G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory));
+  state = await dpsState(page);
+  const expected = String(Math.round(600 / Math.min(5, finished)));
+  ok(
+    state.number === expected,
+    'dps: 600 damage reads ' + expected + ' DPS after ' + finished + ' s (' + state.number + ')'
+  );
+  // Water Base #2980EF (HUD-STYLE Type colours)
+  ok(state.colours.includes('#2980ef'), "dps: Squirtle's stretch is Water Base (" + state.colours.join(' ') + ')');
+
+  // swap to Charmander and hit: the line turns Fire Base #E62829 and a swap tick appears
+  await page.evaluate(() => G.Game.swap(1));
+  await page.waitForFunction(() => G.Game.player.mon.name === 'Charmander', null, { timeout: 3000 });
+  const swapSecond = await page.evaluate(() => {
+    G.Game.player.invuln = 1e9;
+    G.Game.player.onDealt(900);
+    return G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory);
+  });
+  await page.waitForFunction(
+    (second) => G.DpsHistory.finishedSeconds(G.Game.player.team.dpsHistory) > second + 1,
+    swapSecond,
+    { timeout: 4000, polling: 50 }
+  );
+  await page.waitForTimeout(80);
+  state = await dpsState(page);
+  ok(state.name === 'Charmander', 'dps: the header follows the swap (' + state.name + ')');
+  ok(
+    state.colours.includes('#2980ef') && state.colours.includes('#e62829'),
+    'dps: one continuous line, Water then Fire (' + state.colours.join(' ') + ')'
+  );
+  ok(state.tickColumns >= 1, 'dps: a swap tick marks the change (' + state.tickColumns + ' columns)');
+
+  // team upgrade cards: two Gate Reduction picks and one Vitamins (Attack); the list follows the pick order
+  await page.evaluate(() => {
+    G.TeamCards.add(G.Game.player.teamCards, 'gate', 2);
+    G.TeamCards.add(G.Game.player.teamCards, 'vitamins:atk', 1);
+  });
+  await page.waitForTimeout(100);
+  state = await dpsState(page);
+  const summary = await page.evaluate(() => G.TeamCards.summary(G.Game.player.teamCards));
+  ok(state.divider, 'dps: the divider shows once a card is picked');
+  ok(
+    state.cards.map((card) => card.label).join(' | ') === 'Gate Reduction | Vitamins: Attack',
+    'dps: the list names the run cards (' + state.cards.map((card) => card.label).join(' | ') + ')'
+  );
+  ok(
+    state.cards.map((card) => card.total).join(' ') === summary.map((row) => row.total).join(' '),
+    'dps: each row shows its total (' + state.cards.map((card) => card.total).join(' ') + ')'
+  );
+  return { context, errors, page };
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -973,7 +1094,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel];
+  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel, dpsPanel];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');

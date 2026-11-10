@@ -53,6 +53,7 @@
     'MoveResolver',
     'MoveDefs',
     'TeamCards',
+    'DpsHistory',
     'MoveGeom',
     'MoveSim',
     'MoveEffects',

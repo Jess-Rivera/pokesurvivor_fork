@@ -976,9 +976,11 @@ G.PlayerEntity = class PlayerEntity {
     return { a, b };
   }
 
-  /** Shell Bell: a little health for the damage you do (cap 4/s). */
+  /** After every hit this Pokemon lands: the Shell Bell heal (a little health for the damage you do, cap 4/s), and the
+   *  team's damage record (#66; your run team only, leaders have none). */
   onDealt(dmg) {
     if (this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+    if (this.team && this.team.dpsHistory) G.DpsHistory.record(this.team.dpsHistory, this, dmg);
   }
 
   /** An altar's power (see systems/interact.js): it applies and removes itself. */

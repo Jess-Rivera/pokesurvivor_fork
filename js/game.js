@@ -175,6 +175,7 @@ G.Game = (() => {
     // you fresh ones), the berry bag, and the unspent links. Slot 1 leads with the lock at 0.
     runTeam = G.Team.create(roster, carryRun);
     pl = runTeam.active;
+    runTeam.dpsHistory = G.DpsHistory.create(); // #66: the run's damage per second, for the HUD's DPS-Upgrades panel
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
@@ -1093,6 +1094,7 @@ G.Game = (() => {
     if (G.Log.on) G.Log.sample();
     runTeam.tickLock(dt);
     handleSwap();
+    G.DpsHistory.advance(runTeam.dpsHistory, dt, pl); // #66: run time only; after the swap keys, so a second shows who ended it
     pl.shakeStep(dt); // Shake off (slice E1), or the accessibility auto shake (E2e): one path for every Player entity (#43)
 
     const b = Math.floor(time / 240);
