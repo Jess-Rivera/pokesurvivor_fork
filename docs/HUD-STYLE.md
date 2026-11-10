@@ -536,7 +536,7 @@ about as low as it goes before the coin meets the portrait ring.
 Placed from the screen's bottom edge, as the character info panel: the roster and berries from the left edge, the run
 items from the right edge.
 
-`[Proposed]` from the build (2026-11-10), waiting on Jess's feel test.
+`[Approved]` from the build (Jess, 2026-11-10: feel test good, #63 closed).
 
 | Element           | Wireframe (at 1080p)            | Built                                                                          |
 | ----------------- | ------------------------------- | ------------------------------------------------------------------------------ |
