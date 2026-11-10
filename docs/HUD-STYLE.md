@@ -451,7 +451,7 @@ Jess set these on 2026-11-10 (the #65 plan review). Built, waiting for the feel 
 
 ### DPS-Upgrades panel (#66)
 
-Jess set these on 2026-11-10 (the #66 plan review); the look below is the build's, waiting for the feel test.
+Jess set these on 2026-11-10 (the #66 plan review); the look below is the build's, approved after the feel test (#66 closed).
 
 - `[Approved]` **Name and contents:** the DPS-Upgrades panel (not "Active Slot"), top left: a header, the DPS sparkline,
   a divider, then the list of the run's team upgrade cards. It grows down with its list.
@@ -465,12 +465,12 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
   right edge. Each stretch is the first type's SV Base colour of the Pokemon on the field that second; a faint tick marks
   every swap, so two Pokemon of the same type back to back still read. The scale fits the highest point shown.
 - `[Approved]` **Not here:** the timed buff, berry, altar power and leftover status chips (#76).
-- `[Proposed]` **Box:** Panel body `#181818` at 50%, a 2 px Slate `#495151` rim, 4 px stepped corners (2 px steps).
-- `[Proposed]` **Header text:** the name at 16 px; the number at 24 px in Title yellow `#fff000`, then " DPS" at 14 px;
+- `[Approved]` **Box:** Panel body `#181818` at 50%, a 2 px Slate `#495151` rim, 4 px stepped corners (2 px steps).
+- `[Approved]` **Header text:** the name at 16 px; the number at 24 px in Title yellow `#fff000`, then " DPS" at 14 px;
   a soft `#101010` shadow on all panel text.
-- `[Proposed]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
+- `[Approved]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
   a 2 px white column at 35%; the colour changes at the midpoint between two seconds, where the tick sits.
-- `[Proposed]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
+- `[Approved]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
   right in Secondary text `#8cfff7` (a trailing % at 10 px, Jess 2026-11-10), in the team sheet's "Run Cards" order. The divider and list hide until a card is
   picked.
 
@@ -620,7 +620,7 @@ items from the right edge.
 
 ### DPS-Upgrades panel (#66)
 
-Placed from the top left corner. `[Proposed]` from the build, waiting for the feel test.
+Placed from the top left corner. `[Approved]` from the build (Jess, 2026-11-10: feel test good, #66 closed).
 
 | Element         | Wireframe (at 1080p)       | Built                                                       |
 | --------------- | -------------------------- | ----------------------------------------------------------- |

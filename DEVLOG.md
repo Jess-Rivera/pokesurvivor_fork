@@ -115,3 +115,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Icons: Jess swapped in Bulbapedia white icons; tools/rip_weather_icons.py cut the unofficial sheet's 30 circles into unofficial/ as spare art (#74).
 - Smoke: a map panel run (placement, text, arena hide, full card sequence, edge, colours, layering). check.js red only on the two #30 harnesses.
 - Stopped at: #65 in Needs Playtest awaiting Jess's last look. Next: #66, #67; #68 and #69 any time.
+
+## 2026-11-10 (Claude Code, home), #66 built and closed: DPS-Upgrades panel (feature/leader-roster-ui)
+- G.DpsHistory (js/systems/dps-history.js): every second of the run for your team (team damage, slot out at the second's end, each member's own), fed by Player.onDealt (credits the caster, so in-flight moves after a swap count for their caster), advanced in run time by game.js. Harness: docs/proposals/dps-history-harness.js.
+- js/ui/hud-dps-panel.js, top left: name and 5 s team DPS, one continuous 30 s sparkline in each Pokemon's type Base with swap ticks (colour changes at the midpoint), the run's team cards. Jess renamed it from "Active Slot"; buff and status chips split to #76 and stay on the canvas.
+- Feel test rounds: Michroma for the whole panel (a "module", HUD-STYLE Fonts), Settings > DPS Panel toggle (default on) and DPS Panel Opacity slider (20 to 100%, default 60%), a 10 px % after card totals.
+- The panel showed two Cooldown Down picks as -23%: correct, rate cards divide (cd / (1 + stacks x step)); the level-up card's "-15%" reads additive. Filed #77 (wording audit plus Jess's ruling).
+- Stopped at: #66 closed, HUD-STYLE #66 Approved, #35 checklist ticked for #62 to #66. Next: #67, #77; #76 waits on Jess.
