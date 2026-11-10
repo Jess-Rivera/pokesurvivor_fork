@@ -471,7 +471,7 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 - `[Proposed]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
   a 2 px white column at 35%; the colour changes at the midpoint between two seconds, where the tick sits.
 - `[Proposed]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
-  right in Secondary text `#8cfff7`, in the team sheet's "Run Cards" order. The divider and list hide until a card is
+  right in Secondary text `#8cfff7` (a trailing % at 10 px, Jess 2026-11-10), in the team sheet's "Run Cards" order. The divider and list hide until a card is
   picked.
 
 ## Motion

@@ -50,6 +50,13 @@ G.HudDpsPanel = (() => {
     </div>`;
   }
 
+  /** A card total, with a trailing % drawn smaller: in Michroma it is as big as a digit (Jess, 2026-11-10). */
+  function CardTotal(total) {
+    const text = String(total);
+    if (!text.endsWith('%')) return text;
+    return html`${text.slice(0, -1)}<span class="hud-dps-percent">%</span>`;
+  }
+
   function DpsPanel() {
     if (!visible.value) return null;
     const list = cards.value;
@@ -69,7 +76,7 @@ G.HudDpsPanel = (() => {
                   (card) =>
                     html`<div class="hud-dps-card" key=${card.id}>
                       <span class="hud-dps-card-name">${card.label}</span>
-                      <span class="hud-dps-card-total">${card.total}</span>
+                      <span class="hud-dps-card-total">${CardTotal(card.total)}</span>
                     </div>`
                 )}
               </div>`

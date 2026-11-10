@@ -834,3 +834,6 @@
 .hud-dps-card-total {
   color: #8cfff7; /* Secondary text */
 }
+.hud-dps-percent {
+  font-size: 10px; /* the % after a card total, smaller than its 14 px number (Jess, 2026-11-10) */
+}
