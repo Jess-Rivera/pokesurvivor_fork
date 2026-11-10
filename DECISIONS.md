@@ -6,6 +6,9 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-10, HUD pilot look: enemy name bar and leader circles (Jess)](docs/decisions/2026-11-10-hud-pilot-name-bar-and-leader-circles.md), build #64
+- [2026-11-10, HUD portraits are SpriteCollab's Normal face, normal and shiny only (Jess)](docs/decisions/2026-11-10-hud-portraits-spritecollab-normal-face.md), build #62 to #64
+- [2026-11-10, The HUD palette is a working palette, every colour labelled with a job (Jess)](docs/decisions/2026-11-10-hud-palette-is-a-working-palette.md), build #61 to #67
 - [2026-11-10, The Bulbapedia SV type palette is canonical for the HUD and all UI (Jess)](docs/decisions/2026-11-10-sv-type-palette-canonical-for-ui.md), build #68 and #69
 - [2026-11-10, The HUD is a Preact overlay; PNGs are a design basis, not shipped art (Jess)](docs/decisions/2026-11-10-hud-on-preact-and-pngs-as-design-basis.md), build #61 to #67
 - [2026-11-10, HUD sizes are fixed pixels, taken from the mockup at 1080p (Jess)](docs/decisions/2026-11-10-hud-fixed-sizes-from-the-1080p-mockup.md), build #35 and later HUD slices

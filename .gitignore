@@ -64,3 +64,5 @@ docs/move_rework_holding/api_learnset_dataset.json
 .aider*
 docs/*-snapshot.*
 assets/tileset/_not-shipped/*
+# gridded reference copies of the B/W rips, rebuilt by python tools/grid_rips.py
+/assets/ui/BW Pokedex rip/_grid/
