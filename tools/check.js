@@ -121,6 +121,7 @@ for (const [name, args, show] of [
   ['move_parity.js', [], /^parity:/],
   ['export_learnsets.js', ['--check'], /current/],
   ['gym_contact.js', ['--check'], /current/],
+  ['gym_colors.js', ['--check'], /current/],
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],
   ['species_traits.js', ['--check'], /current/],
