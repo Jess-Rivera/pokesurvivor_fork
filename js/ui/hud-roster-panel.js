@@ -49,21 +49,16 @@ G.HudRosterPanel = (() => {
     ['oBoLLL', 'G'],
   ];
   const STRAIGHT_LEFT = ['oBoLLo', 'G'];
-  // The B2 "HP" bar's label (b2-lower Y16 to Z16): f the label plate, W white, g and s its greys, t the track's frame.
-  const HP_LABEL = [
-    '  fffffffffffff',
-    '  fWWfWWffWWWWgf',
-    ' fgWggWgfgWsfWWf',
-    ' fWWWWWffWWWWgft',
-    'fgWggWgfgWWfffft',
-    'fWWfWWffWWgf   t',
-    'fffffffffff',
-  ];
-  const BAR_ROWS = HP_LABEL.length,
-    TRACK_LEFT = 15, // the track's left frame column, from the bar's left edge
+  // The B2 small bar (b2-lower Y16 to Z16): the "HP" label is the life meter's (20 px italic HUD text, Jess 2026-11-10:
+  // the same style as the centre bar), then the track's frame (t) and its empty inside (f), rows 2 to 5 of the bar.
+  const LABEL_ART = 12, // "HP" at 20 px with its outline is 24 px wide, as the life meter's label (hud-overlay.js)
+    TRACK_LEFT = LABEL_ART, // the track's left frame column, from the bar's left edge, right after the label
+    TRACK_TOP = 2, // the track's frame rows: 2 and 5, its inside 3 and 4
     BAR_RIGHT = ROW.artWidth - 8 - BAR.artLeft, // the track's right frame column: one pixel clear of the right rim
     FILL_LEFT = BAR.artLeft + TRACK_LEFT + 1,
-    FILL_ART_WIDTH = BAR_RIGHT - TRACK_LEFT - 1;
+    FILL_ART_WIDTH = BAR_RIGHT - TRACK_LEFT - 1,
+    // the label's 24 px line centred on the track's frame
+    LABEL_TOP = (BAR.artTop + TRACK_TOP) * ART_PIXEL + 2 * ART_PIXEL - 12;
 
   /** The box and its HP bar as a grid of letters, one string per art row. */
   const BOX_GRID = (() => {
@@ -78,17 +73,17 @@ G.HudRosterPanel = (() => {
       const fromTop = Math.min(row, rows - 1 - row);
       grid.push(rowOf(fromTop < LEFT_END.length ? LEFT_END[fromTop] : STRAIGHT_LEFT).split(''));
     }
-    // stamp the HP bar: the label, then the track's frame and its empty inside
-    for (let barRow = 0; barRow < BAR_ROWS; barRow++) {
-      const line = grid[BAR.artTop + barRow],
+    // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
+    for (let trackRow = 0; trackRow < 4; trackRow++) {
+      const line = grid[BAR.artTop + TRACK_TOP + trackRow],
         stamp = (column, letter) => (line[BAR.artLeft + column] = letter);
-      HP_LABEL[barRow].split('').forEach((letter, column) => letter !== ' ' && stamp(column, letter));
-      if (barRow === 2) for (let column = TRACK_LEFT + 1; column <= BAR_RIGHT; column++) stamp(column, 't');
-      if (barRow === 3 || barRow === 4) {
+      if (trackRow === 0 || trackRow === 3)
+        for (let column = TRACK_LEFT; column <= BAR_RIGHT; column++) stamp(column, 't');
+      else {
+        stamp(TRACK_LEFT, 't');
         for (let column = TRACK_LEFT + 1; column < BAR_RIGHT; column++) stamp(column, 'f');
         stamp(BAR_RIGHT, 't');
       }
-      if (barRow === 5) for (let column = TRACK_LEFT; column <= BAR_RIGHT; column++) stamp(column, 't');
     }
     return grid.map((line) => line.join(''));
   })();
@@ -100,9 +95,6 @@ G.HudRosterPanel = (() => {
     L: rim.light,
     G: SLOT_GRID,
     f: PALETTE.frame,
-    W: '#ffffff',
-    g: PALETTE.paperEdge,
-    s: PALETTE.labelLight,
     t: PALETTE.trackEdge,
   });
   /** paintRow for a grid of letters: runs of one letter become one rectangle. */
@@ -163,6 +155,7 @@ G.HudRosterPanel = (() => {
             transform: `scaleX(${row.fill})`,
           }}
         ></div>
+        <span class="hud-hp-label" style=${{ left: BAR.artLeft * ART_PIXEL + 'px', top: LABEL_TOP + 'px' }}>HP</span>
         <div
           class="hud-roster-face"
           style=${{ left: FACE.left + 'px', top: FACE.top + 'px', width: FACE.size + 'px', height: FACE.size + 'px' }}

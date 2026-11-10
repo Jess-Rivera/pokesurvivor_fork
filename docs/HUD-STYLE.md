@@ -394,8 +394,9 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
   left-aligned just right of it, a little below the middle of the space above the bar; the slot's key on the top left
   corner.
 - `[Approved]` **Roster HP bar: the B2 small bar** (`b2-lower` Y16 to Z16) inside the box along the bottom, right of the
-  portrait and almost to the right rim: the rip's italic pixel "HP" label (copied pixel for pixel) and a framed track.
-  The fill is two art rows, the HP band's fill over its shade, using the life meter thresholds.
+  portrait and almost to the right rim: a framed track whose fill is two art rows, the HP band's fill over its shade,
+  using the life meter thresholds. Its "HP" label is the life meter's (20 px italic HUD text with the text outline,
+  Jess 2026-11-10: the same style as the centre bar, not the rip's pixel label), centred on the track's left end.
 - `[Approved]` **Benched status chips:** a benched Pokemon's chips (the #62 chips) sit inside its box, top right. Benched
   statuses keep ticking. The active Pokemon's row shows none, since the bottom panel has them. A Pokemon holds one major
   status at a time (COMBAT-RULES), so a row shows at most one chip; the row is sized for the longest name and one chip.
@@ -543,7 +544,7 @@ items from the right edge.
 | Row width         | (none)                          | the widest species name in the HUD font (116 px, measured) and one chip        |
 | Portrait circle   | about 30 px                     | 44 px, 14 px in from the row's left edge                                       |
 | Name              | inside the row                  | 20 px, x 66 in the row, top 17                                                 |
-| HP bar            | (red line under the name)       | 7 art rows from art column 33, top at art row 19; fill 83 art pixels           |
+| HP bar            | (red line under the name)       | "HP" at 20 px from x 66; track 4 art rows at art row 21, art columns 45 to 131; fill 85 art pixels |
 | Held item square  | about 32 px, right of the row   | 48 px (24 art), 8 px right of the row, centred on it                           |
 | Berry bag         | 2x2, 40 px squares              | 40 px squares, columns 128 px apart, rows 72 px apart, 12 px above the roster  |
 | Run item box      | 142 x 48, 39 px from the right  | 280 x 64 (140 x 32 art), 24 px from the right, slot 1 42 px up                 |

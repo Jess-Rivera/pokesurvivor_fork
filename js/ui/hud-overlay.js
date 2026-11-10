@@ -45,8 +45,7 @@ G.HudOverlay = (() => {
     lvDark: '#6d5000', // the Lv yellow at 45% (HUD-STYLE "Ramps for new colours"): the run item box's corner shade
     cursor: '#fff000', // Title yellow: the B2 selection cursor
     trackEdge: '#313131', // the roster HP track's frame (b2-lower Y16 to Z16)
-    labelLight: '#b5b5b5', // the roster "HP" label's light grey
-    paperEdge: '#848484', // the roster "HP" label's shade, and the run item icon patch's edge (b2-lower AD4 to AG5)
+    paperEdge: '#848484', // the run item icon patch's edge (b2-lower AD4 to AG5)
     paper: '#e7e7e7', // the run item icon patch
   };
   // A fainted roster row's rim: the greys of the panel, as a type ramp (HUD-STYLE "Roster rows").
