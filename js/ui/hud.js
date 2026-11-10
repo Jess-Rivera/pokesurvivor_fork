@@ -4,6 +4,27 @@
 G.HUD = (() => {
   const ENRAGE_LINE_BELOW_OVERLAY = 178; // px from the top: below the overlay's name line, bar and circles (#64)
   const F = (w, s) => `${w} ${s}px GameFont,"Segoe UI",system-ui,sans-serif`;
+  // #62: the character info panel (portrait and EXP ring, life meter, status chips, Shake Off, move slots, held item, Lv,
+  // Silver, run timer) is on the HTML overlay (js/ui/hud-player-panel.js). Set each frame in draw(); while false (the
+  // overlay's libraries failed to load) the canvas keeps drawing its old pieces.
+  let overlayDrawsPlayer = false;
+
+  /**
+   * How much of a move's cooldown is left, 0 (ready) to 1, for its icon's shade. Shared with the overlay's move slots.
+   * A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove):
+   * that sawtooth is not a cooldown, so <= 0.05 s reads as ready. simCd: the resolver cd, set on a slot routed through the
+   * new move system; absent otherwise. An always-on move (a persistent def: orbits, auras, trails) has no cooldown to show
+   * (slice 7a). Fly's icon shows the flight left while up, then the recharge from landing.
+   */
+  function moveCooldownFraction(pl, m) {
+    if (G.MoveEffects.skillOf(G.MoveDefs[m.id]) === 'fly') {
+      const flyFx = pl.skillFx('fly');
+      return pl.flyT > 0 ? G.U.clamp(pl.flyT / flyFx.duration, 0, 1) : G.U.clamp(pl.flyCd / flyFx.cooldown, 0, 1);
+    }
+    return (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
+      ? 0
+      : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
+  }
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -366,9 +387,9 @@ G.HUD = (() => {
   const stMax = {};
   /** Statuses on the player (slice E1), stacked above the buffs in the same lower-left column: red border, timer bar, and a "Tap H!" prompt while Shake off can help. */
   function drawDebuffs(ctx, pl, x0, y, CH, GAPV) {
-    const L = G.Status.list(pl);
+    // #62: with the overlay up, its chips show the major statuses, poison and burn, and it shows the Shake Off prompt
+    const L = G.Status.list(pl).filter((s) => !(overlayDrawsPlayer && G.HudPlayerPanel.hasChip(s.k)));
     for (const k in stMax) if (!L.some((s) => s.k === k)) delete stMax[k];
-    if (!L.length) return;
     ctx.textAlign = 'left';
     for (const s of L) {
       if (s.t != null) stMax[s.k] = Math.max(stMax[s.k] || 0, s.t);
@@ -393,7 +414,7 @@ G.HUD = (() => {
       }
       y = top - GAPV;
     }
-    if (G.Status.shakeable(pl)) {
+    if (!overlayDrawsPlayer && G.Status.shakeable(pl)) {
       const key = G.Input.keyLabel('shake_off') || '?';
       const txt = G.Settings.get('autoShake') ? 'SHAKING OFF...' : 'TAP ' + key + ' TO SHAKE OFF!';
       ctx.font = F(800, 16);
@@ -545,21 +566,25 @@ G.HUD = (() => {
     G.Touch.clearButtons();
     const touch = G.Touch.active;
 
-    // ---------- barra de experiencia (borde superior) ----------
-    const xpF = pl.xp / pl.xpNext;
-    ctx.fillStyle = 'rgba(0,0,0,.5)';
-    ctx.fillRect(0, 0, w, 7);
-    const g = ctx.createLinearGradient(0, 0, w, 0);
-    g.addColorStop(0, '#4fd1ff');
-    g.addColorStop(1, '#a98bff');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
+    overlayDrawsPlayer = !!(G.HudPlayerPanel && G.HudPlayerPanel.ready);
+
+    // ---------- barra de experiencia (borde superior; #62: the overlay's portrait ring replaces it) ----------
+    if (!overlayDrawsPlayer) {
+      const xpF = pl.xp / pl.xpNext;
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(0, 0, w, 7);
+      const g = ctx.createLinearGradient(0, 0, w, 0);
+      g.addColorStop(0, '#4fd1ff');
+      g.addColorStop(1, '#a98bff');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w * G.U.clamp(xpF, 0, 1), 7);
+    }
 
     // Name / HP / level now live in the bottom strip (drawn below); top-left is free.
     const px = 16,
       py = 22;
     const safeB = touch ? Math.min(28, G.Touch.safeArea().bottom) : 0;
-    drawHpStrip(ctx, w, h, pl, safeB);
+    if (!overlayDrawsPlayer) drawHpStrip(ctx, w, h, pl, safeB);
 
     // ---------- team strip (lower-left, only with a real team) ----------
     const teamRight = drawTeam(ctx, w, h);
@@ -567,7 +592,7 @@ G.HUD = (() => {
     drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
 
     // ---------- Silver (top-left; hidden in co-op until co-op shops exist, the co-op panel uses this corner) ----------
-    if (!G.Coop.active) {
+    if (!G.Coop.active && !overlayDrawsPlayer) {
       const sa = touch ? G.Touch.safeArea() : null;
       drawSilver(ctx, px + (sa ? Math.min(44, sa.left) : 0), 46 + (sa ? Math.min(20, sa.top) : 0), st);
     }
@@ -576,7 +601,7 @@ G.HUD = (() => {
     ctx.textAlign = 'center';
     ctx.font = F(800, 26);
     ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.fillText(G.U.mmss(st.time), w / 2, 42);
+    if (!overlayDrawsPlayer) ctx.fillText(G.U.mmss(st.time), w / 2, 42); // #62: the overlay shows it under the moves
     ctx.font = F(600, 10);
     ctx.fillStyle = '#8fa3c4';
     ctx.fillText(
@@ -918,20 +943,9 @@ G.HUD = (() => {
       sy = G.U.clamp(pb[1] * h - S / 2, 24, h - S - 6 - BAR_LIFT); // never covers the HP strip
     }
     const BOND = '#ff8ad8';
-    // A move that is ready but has no target (or the caster is frozen) re-arms m.t to 0.05 every frame (combat.js tickMove): that sawtooth is not a cooldown, so <= 0.05 s reads as ready.
-    // simCd: the resolver cd, set on a slot routed through the new move system (?dev&newcombat, slice 3d); absent otherwise.
-    // An always-on move (a persistent def: orbits, auras, trails) has no cooldown to show (slice 7a).
-    const flyFx = pl.skillFx('fly'); // Fly's icon: the flight left while up, then the recharge from landing
-    const cdOf = (m) =>
-      G.MoveEffects.skillOf(G.MoveDefs[m.id]) === 'fly'
-        ? pl.flyT > 0
-          ? G.U.clamp(pl.flyT / flyFx.duration, 0, 1)
-          : G.U.clamp(pl.flyCd / flyFx.cooldown, 0, 1)
-        : (G.MoveDefs[m.id] && G.MoveDefs[m.id].persistent) || m.t <= 0.05
-          ? 0
-          : G.U.clamp(m.t / ((m.simCd || m.cd) * pl.cdMul), 0, 1);
+    const cdOf = (m) => moveCooldownFraction(pl, m);
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n && !overlayDrawsPlayer; i++) {
       const g = pl.slots[i] || [];
       const m = g[0];
       const fused = g.length > 1;
@@ -1015,7 +1029,7 @@ G.HUD = (() => {
     }
 
     // ---------- held link (there are not yet two loose moves) ----------
-    if (pl.bonds > 0) {
+    if (pl.bonds > 0 && !overlayDrawsPlayer) {
       const bx = sx + totalW + 12,
         by = sy + S / 2 - 12;
       G.Icons.draw(ctx, 'bond', bx, by, 24);
@@ -1028,7 +1042,7 @@ G.HUD = (() => {
     }
 
     // ---------- equipped item (to the left of the moves) ----------
-    {
+    if (!overlayDrawsPlayer) {
       const ix = sx - S - 18,
         iy = sy;
       roundRect(ctx, ix, iy, S, S, 12);
@@ -1263,5 +1277,5 @@ G.HUD = (() => {
     }
   }
 
-  return { draw, roundRect, bar, BAR_LIFT };
+  return { draw, roundRect, bar, BAR_LIFT, moveCooldownFraction };
 })();

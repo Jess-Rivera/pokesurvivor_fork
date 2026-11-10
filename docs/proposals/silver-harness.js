@@ -78,7 +78,10 @@ const code = src => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''
 
 // 7. the HUD: whole coins, hidden in co-op
 { const h = code(read('js/ui/hud.js')), calls = (h.match(/(?<!function )drawSilver\(/g) || []).length;
-  ok(calls === 1 && /if \(!G\.Coop\.active\) \{[^}]*drawSilver\(ctx/.test(h), 'hud.js draws Silver once, only outside co-op (' + calls + ' call(s))');
+  // #62: the canvas counter is the fallback when the HTML overlay is down; the overlay's player panel draws it otherwise
+  ok(calls === 1 && /if \(!G\.Coop\.active && !overlayDrawsPlayer\) \{[^}]*drawSilver\(ctx/.test(h), 'hud.js draws Silver once, only outside co-op and only without the overlay (' + calls + ' call(s))');
+  const panel = code(read('js/ui/hud-player-panel.js'));
+  ok(/silverShown\.value = !G\.Coop\.active;/.test(panel) && /Math\.floor\(silverState\.shown\)/.test(panel), 'hud-player-panel.js: Silver hidden in co-op, whole coins');
   ok(/const target = G\.Silver\.whole|target = G\.Silver\.whole/.test(h), 'hud.js shows the whole count'); }
 
 // 8. loading: the script tag sits after stats.js and before game.js, and the NEED array lists it

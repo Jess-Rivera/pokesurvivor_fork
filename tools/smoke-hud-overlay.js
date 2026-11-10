@@ -1,5 +1,5 @@
-// tools/smoke-hud-overlay.js: headless browser check for the HTML HUD pilot (#64): the enemy name bar and the leader portrait
-// circles on the overlay (js/ui/hud-overlay.js, docs/HUD-STYLE.md). A check, not a harness: tools/check.js only syntax-checks it.
+// tools/smoke-hud-overlay.js: headless browser check for the HTML HUD: the #64 pilot (the enemy name bar and the leader portrait
+// circles) and the #62 character info panel (js/ui/hud-*.js, docs/HUD-STYLE.md). A check, not a harness: check.js syntax-checks it.
 // Playwright is NOT a repo dependency (PLAYWRIGHT_DIR, default C:\Users\boric\tools\playwright), as in tools/smoke-gym.js.
 // Usage from the repo root:
 //   node tools/smoke-hud-overlay.js          dev.html over file:// (how Jess plays)
@@ -119,10 +119,10 @@ const overlayState = (page) =>
       barLeft: bar.left,
       barWidth: bar.width,
       barRightGap: innerWidth - bar.right,
-      pieces: panel.querySelectorAll('.hud-boss-piece').length,
+      pieces: panel.querySelectorAll('.hud-lifebar-piece').length,
       // the test's own hit is 30% of the bar; Brock's Life Orb costs (1% a cast) cut small pieces of their own
-      bigPieces: [...panel.querySelectorAll('.hud-boss-piece')].filter((piece) => piece.offsetWidth > 100).length,
-      growing: !!panel.querySelector('.hud-boss-fill.is-growing'),
+      bigPieces: [...panel.querySelectorAll('.hud-lifebar-piece')].filter((piece) => piece.offsetWidth > 100).length,
+      growing: !!panel.querySelector('.hud-lifebar-fill.is-growing'),
       circles: circles.map((circle) => {
         const box = circle.getBoundingClientRect();
         return {
@@ -256,6 +256,278 @@ async function surge(browser) {
   return { context, errors, page };
 }
 
+// #62 character info panel, HUD-STYLE "Panel sizes at 1080p" hand-copied: x from the screen centre (960), y from the
+// bottom edge (1080) to the piece's bottom. Screen top = 1080 - y - height.
+const PANEL = {
+  life: { left: 960 - 252, top: 1080 - 144 - 24, width: 462 },
+  portrait: { left: 960 - 281 - 58, top: 1080 - 36 - 116, size: 116 },
+  slots: [
+    { left: 744, top: 1080 - 88 - 48 },
+    { left: 960, top: 1080 - 88 - 48 },
+    { left: 744, top: 1080 - 36 - 48 },
+    { left: 960, top: 1080 - 36 - 48 },
+  ],
+  slotWidth: 210,
+  slotHeight: 48,
+  well: 36,
+  chip: { left: 960 - 244, top: 1080 - 176 - 24, width: 70, height: 24 },
+  prompt: { top: 1080 - 212 - 48, height: 48, centre: 960 - 21 },
+  item: { right: 960 - 351, top: 1080 - 74 - 40, size: 40 },
+  coin: { right: 960 - 260, top: 1080 - 176 - 32, size: 32 },
+  levelLeft: 960 + 222,
+  hpTextLeft: 960 + 218,
+  timerCentre: 960 - 3,
+  bondPink: '#ff8ad8',
+  parFill: 'rgb(239, 173, 0)', // #efad00
+  badPoisonShade: 'rgb(57, 16, 66)', // #391042
+};
+
+const panelState = (page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector('.hud-player');
+    if (!panel) return null;
+    const box = (selector) => {
+      const element = panel.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, top: rect.top, right: rect.right, width: rect.width, height: rect.height };
+    };
+    const slots = [...panel.querySelectorAll('.hud-slot')].map((slot) => {
+      const rect = slot.getBoundingClientRect();
+      return {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        active: slot.classList.contains('is-active'),
+        cursors: slot.querySelectorAll('.hud-cursor').length,
+        wells: [...slot.querySelectorAll('.hud-well')].map((well) => well.getBoundingClientRect().width),
+        icons: slot.querySelectorAll('.hud-well img').length,
+        key: slot.querySelector('.hud-slot-key').textContent,
+        fills: [...slot.querySelectorAll('rect')].map((shapeRect) => shapeRect.getAttribute('fill').toLowerCase()),
+      };
+    });
+    const chips = [...panel.querySelectorAll('.hud-chip')].map((chip) => {
+      const rect = chip.getBoundingClientRect();
+      return {
+        label: chip.textContent.trim(),
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        fill: getComputedStyle(chip).backgroundColor,
+        shade: getComputedStyle(chip).borderTopColor,
+        timer: !!chip.querySelector('.hud-chip-timer'),
+      };
+    });
+    const text = (selector) => {
+      const element = panel.querySelector(selector);
+      return element ? element.textContent.trim() : null;
+    };
+    return {
+      life: box('.hud-life svg'),
+      portrait: box('.hud-portrait'),
+      face: panel.querySelector('.hud-portrait-face img')?.getAttribute('src'),
+      exp: panel.querySelector('.hud-portrait').style.getPropertyValue('--exp'),
+      slots,
+      chips,
+      prompt: box('.hud-prompt'),
+      promptText: text('.hud-prompt-text'),
+      item: box('.hud-item'),
+      itemName: text('.hud-item-name'),
+      coin: box('.hud-silver-coin'),
+      silver: text('.hud-silver-count'),
+      level: text('.hud-lv-number'),
+      levelBox: box('.hud-lv-number'),
+      hpText: text('.hud-hp-text'),
+      hpTextBox: box('.hud-hp-text'),
+      timer: box('.hud-timer'),
+      timerText: text('.hud-timer'),
+      bond: !!panel.querySelector('.hud-bond'),
+    };
+  });
+
+async function playerPanel(browser) {
+  const { context, page, errors } = await boot(browser);
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  const moves = await page.evaluate(() => {
+    G.Spawner.update = () => {}; // test page only: no wild spawns
+    G.EnemyMgr.clear();
+    const pl = G.Game.player;
+    // three more moves, then bond the first two loose ones: slots are [bond of 2], [one], [one], [empty]
+    const extra = Object.keys(G.MoveDefs).filter((id) => !pl.hasMove(id) && !G.MoveDefs[id].persistent);
+    for (const id of extra.slice(0, 3)) pl.addMove(id, true);
+    pl.bonds = 1;
+    const option = pl.bondOptions();
+    if (option) pl.fuse(option.loose.slice(0, 2));
+    pl.bonds = 0;
+    pl.setActive(0, true);
+    pl.item = 'leftovers';
+    window.__keep = setInterval(() => {
+      const p = G.Game.player;
+      if (!p || p.dead) return;
+      p.maxHp = 300;
+      p.hp = 140;
+      p.xp = p.xpNext * 0.5;
+      const card = G.UI.isOpen('scr-levelup') && document.querySelector('#cards .card');
+      if (card) card.click();
+    }, 20);
+    return pl.slots.map((group) => group.length);
+  });
+  await page.waitForTimeout(300);
+  let state = await panelState(page);
+  ok(!!state, 'player: the character info panel shows in a run');
+  if (!state) return { context, errors, page };
+
+  ok(
+    state.life.left === PANEL.life.left && state.life.top === PANEL.life.top && state.life.width === PANEL.life.width,
+    'player: the life meter is ' +
+      PANEL.life.width +
+      ' px at (' +
+      PANEL.life.left +
+      ', ' +
+      PANEL.life.top +
+      ') (got ' +
+      [state.life.width, state.life.left, state.life.top].join(', ') +
+      ')'
+  );
+  ok(
+    state.hpText === '140 / 300' && state.hpTextBox.left === PANEL.hpTextLeft,
+    'player: "' + state.hpText + '" at the end of the life meter'
+  );
+  ok(
+    state.portrait.left === PANEL.portrait.left &&
+      state.portrait.top === PANEL.portrait.top &&
+      state.portrait.width === PANEL.portrait.size,
+    'player: the portrait ring is ' +
+      PANEL.portrait.size +
+      ' px at (' +
+      PANEL.portrait.left +
+      ', ' +
+      PANEL.portrait.top +
+      ')'
+  );
+  ok(/\/Portrait\.png$/.test(state.face || ''), 'player: the portrait shows ' + state.face);
+  ok(state.exp === '180deg', 'player: half the EXP fills half the ring (' + state.exp + ')');
+
+  ok(state.slots.length === 4, 'player: all four move slots show (' + moves.join(',') + ' moves per slot)');
+  ok(
+    state.slots.every(
+      (slot, index) =>
+        slot.left === PANEL.slots[index].left &&
+        slot.top === PANEL.slots[index].top &&
+        slot.width === PANEL.slotWidth &&
+        slot.height === PANEL.slotHeight
+    ),
+    'player: slots are 210 x 48 in a 2x2 grid at their 1080p places'
+  );
+  ok(
+    state.slots.every((slot) => slot.wells.length === 4 && slot.wells.every((width) => width === PANEL.well)),
+    'player: every slot has four 36 px wells'
+  );
+  ok(
+    state.slots.map((slot) => slot.icons).join(',') === moves.concat([0, 0, 0, 0]).slice(0, 4).join(','),
+    'player: one icon per move, a bond fills one well per move (' +
+      state.slots.map((slot) => slot.icons).join(',') +
+      ')'
+  );
+  ok(state.slots[0].fills.includes(PANEL.bondPink), 'player: the bonded slot has the bond pink rim');
+  ok(
+    state.slots[3].icons === 0 && !state.slots[3].fills.includes(PANEL.bondPink),
+    'player: the empty slot is the dark disabled button'
+  );
+  ok(
+    state.slots[0].active && state.slots[0].cursors === 4 && state.slots.slice(1).every((slot) => slot.cursors === 0),
+    'player: only the active slot has the four cursor corners'
+  );
+  ok(
+    state.slots.every((slot) => slot.key.length > 0),
+    'player: every slot shows its key (' + state.slots.map((slot) => slot.key).join(' ') + ')'
+  );
+
+  ok(
+    state.item &&
+      state.item.right === PANEL.item.right &&
+      state.item.top === PANEL.item.top &&
+      state.item.width === PANEL.item.size,
+    'player: the held item square is 40 px, right edge at x ' + PANEL.item.right
+  );
+  ok(state.itemName === 'Leftovers', 'player: the held item name reads "' + state.itemName + '"');
+  ok(
+    state.coin &&
+      state.coin.right === PANEL.coin.right &&
+      state.coin.top === PANEL.coin.top &&
+      state.coin.width === PANEL.coin.size,
+    'player: the Silver coin is 32 px (2x), right edge at x ' + PANEL.coin.right
+  );
+  ok(/^\d[\d,]*$/.test(state.silver || ''), 'player: Silver shows whole coins (' + state.silver + ')');
+  ok(
+    state.levelBox.left === PANEL.levelLeft && /^\d+$/.test(state.level),
+    'player: Lv ' + state.level + ' right of the slots'
+  );
+  ok(
+    /^\d+:\d\d$/.test(state.timerText) && Math.abs(state.timer.left + state.timer.width / 2 - PANEL.timerCentre) <= 1,
+    'player: the run timer "' + state.timerText + '" is centred under the slots'
+  );
+  ok(state.chips.length === 0 && state.prompt === null, 'player: no status, no chips and no Shake Off prompt');
+
+  // statuses: paralysis and burn get chips (PAR first, as the status list orders them); Shake Off can work on paralysis
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    pl.stMajor = { k: 'paralysis', t: 6 };
+    pl.burn = 1;
+  });
+  await page.waitForTimeout(100);
+  state = await panelState(page);
+  ok(
+    state.chips.map((chip) => chip.label).join(' ') === 'PAR BRN',
+    'player: paralysis and burn show as chips (' + state.chips.map((chip) => chip.label).join(' ') + ')'
+  );
+  ok(
+    state.chips[0] &&
+      state.chips[0].left === PANEL.chip.left &&
+      state.chips[0].top === PANEL.chip.top &&
+      state.chips[0].width === PANEL.chip.width &&
+      state.chips[0].height === PANEL.chip.height &&
+      state.chips[0].fill === PANEL.parFill &&
+      state.chips[0].timer,
+    'player: the PAR chip is 70 x 24 at its place, in the PAR fill, with a timer bar'
+  );
+  ok(
+    state.prompt &&
+      state.prompt.top === PANEL.prompt.top &&
+      state.prompt.height === PANEL.prompt.height &&
+      Math.abs(state.prompt.left + state.prompt.width / 2 - PANEL.prompt.centre) <= 2 &&
+      /to Shake Off!$/.test(state.promptText),
+    'player: the Shake Off prompt "' + (state.promptText || '') + '" is centred over the life meter'
+  );
+
+  // bad poison: the PSN chip with the darker shade
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    pl.stMajor = null;
+    pl.burn = 0;
+    pl.poison = 2;
+  });
+  await page.waitForTimeout(100);
+  state = await panelState(page);
+  ok(
+    state.chips.length === 1 && state.chips[0].label === 'PSN' && state.chips[0].shade === PANEL.badPoisonShade,
+    'player: bad poison is the PSN chip with the dark shade (' + (state.chips[0] && state.chips[0].shade) + ')'
+  );
+  ok(state.prompt === null, 'player: nothing to shake off, no prompt');
+
+  // the debug toggle hides the panel with the rest of the overlay
+  await page.evaluate(() => G.Debug.hudOverlay(false));
+  await page.waitForTimeout(60);
+  ok((await panelState(page)) === null, 'player: G.Debug.hudOverlay(false) hides the panel');
+  await page.evaluate(() => G.Debug.hudOverlay(true));
+  await page.waitForTimeout(60);
+  ok((await panelState(page)) !== null, 'player: G.Debug.hudOverlay(true) brings it back');
+  return { context, errors, page };
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -276,7 +548,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge];
+  const runs = [brock, surge, playerPanel];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');

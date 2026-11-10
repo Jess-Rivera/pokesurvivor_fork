@@ -18,6 +18,14 @@ G.CHANGELOG = [
         'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
         'Each hit cuts the lost HP off the bar: the piece hangs for a moment so you can see how much you took, then falls away. Heals grow the bar back.',
       ],
+      [
+        "A new panel at the bottom of the screen: your Pokemon's portrait inside its experience ring, a Black 2 style HP bar with your HP, your level, your held item and your Silver.",
+        "A new panel at the bottom of the screen: your Pokemon's portrait inside its experience ring, a Black 2 style HP bar with your HP, your level, your held item and your Silver.",
+      ],
+      [
+        "Your four moves sit in Black 2 style move buttons with their type's colour, bonded moves side by side in one button; your status shows as a Black 2 tag, and the Shake Off prompt flashes above your HP bar.",
+        "Your four moves sit in Black 2 style move buttons with their type's colour, bonded moves side by side in one button; your status shows as a Black 2 tag, and the Shake Off prompt flashes above your HP bar.",
+      ],
     ],
   },
   {

@@ -75,6 +75,8 @@
     'UI',
     'HUD',
     'HudOverlay',
+    'HudBossPanel',
+    'HudPlayerPanel',
     'Sheet',
     'MenuUI',
     'RunUI',

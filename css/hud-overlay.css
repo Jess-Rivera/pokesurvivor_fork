@@ -1,10 +1,16 @@
-/* ============ hud-overlay.css: the HTML HUD above the game canvas (#64 pilot) ============
- * Look and numbers: docs/HUD-STYLE.md. Built by js/ui/hud-overlay.js. Fixed CSS pixels at their 1080p sizes, never scaled.
- * Every colour comes from the HUD-STYLE palette.
+/* ============ hud-overlay.css: the HTML HUD above the game canvas ============
+ * Look and numbers: docs/HUD-STYLE.md. Built by js/ui/hud-overlay.js and its panels (hud-boss-panel.js, #64;
+ * hud-player-panel.js, #62). Fixed CSS pixels at their 1080p sizes, never scaled. Every colour comes from the HUD-STYLE
+ * palette.
  */
 @font-face {
   font-family: 'HudText';
   src: url('../assets/fonts/Truth-And-Ideals-10px.ttf') format('truetype');
+  font-display: block;
+}
+@font-face {
+  font-family: 'HudDigits'; /* BoldPixels: display numbers (Lv), 16 px grid, fixed-width digits; CC-BY-SA 4.0 */
+  src: url('../assets/fonts/BoldPixels.ttf') format('truetype');
   font-display: block;
 }
 
@@ -20,12 +26,100 @@
   font-family: 'HudText', monospace;
   font-synthesis: none; /* no browser-made bold or slant, except the HP label's slant below */
   color: #ffffff;
-  /* the name line's size (20 px, Jess 2026-11-10; G.Debug.hudNameSize tries 30 or 40) and its font pixel, a tenth of it */
+  /* the enemy name line's size (20 px, Jess 2026-11-10; G.Debug.hudNameSize tries 30 or 40) and its font pixel */
   --name-size: 20px;
   --font-pixel: 2px;
 }
+.hud-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.hud-pixels {
+  display: block;
+  shape-rendering: crispEdges;
+}
 
-/* ---------- enemy name bar ---------- */
+/* HUD text: 20 px body, white with eight hard shadows one font pixel out (HUD-STYLE "Fonts") */
+.hud-text {
+  font-size: 20px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}
+/* 30 px text: a 3 px font pixel */
+.hud-text-30,
+.hud-prompt-text,
+.hud-silver-count {
+  font-size: 30px;
+  line-height: 30px;
+  text-shadow:
+    3px 0 0 #101010,
+    -3px 0 0 #101010,
+    0 3px 0 #101010,
+    0 -3px 0 #101010,
+    3px 3px 0 #101010,
+    -3px 3px 0 #101010,
+    3px -3px 0 #101010,
+    -3px -3px 0 #101010;
+}
+
+/* ---------- the B2 life bar (both panels) ---------- */
+.hud-lifebar {
+  position: relative;
+}
+.hud-hp-label {
+  /* the "HP" label: 20 px text (2 px font pixel). Italic by the browser's own slant, as Word fakes it (the font has no
+     italic face; Jess, 2026-11-10) */
+  position: absolute;
+  font-size: 20px;
+  font-style: italic;
+  font-synthesis: style;
+  line-height: 24px;
+  text-shadow:
+    2px 0 0 #101010,
+    -2px 0 0 #101010,
+    0 2px 0 #101010,
+    0 -2px 0 #101010,
+    2px 2px 0 #101010,
+    -2px 2px 0 #101010,
+    2px -2px 0 #101010,
+    -2px -2px 0 #101010;
+}
+.hud-lifebar-fill,
+.hud-lifebar-piece {
+  position: absolute;
+}
+.hud-lifebar-fill {
+  transform-origin: 0 0;
+}
+.hud-lifebar-fill.is-growing {
+  transition: transform 0.3s linear; /* heals grow the fill */
+}
+.hud-lifebar-piece {
+  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
+}
+@keyframes hud-piece-fall {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+/* ---------- enemy name bar (#64) ---------- */
 .hud-boss {
   position: absolute;
 }
@@ -50,55 +144,8 @@
 .hud-boss-bar {
   position: relative;
 }
-.hud-boss-bar svg {
-  display: block;
-  shape-rendering: crispEdges;
-}
-.hud-boss-hp {
-  /* the "HP" label: 20 px text (2 px font pixel), its outline's top one bar row above the bar, as B2's tab. Italic by the
-     browser's own slant, as Word fakes it (the font has no italic face; Jess, 2026-11-10) */
-  position: absolute;
-  top: -4px;
-  font-size: 20px;
-  font-style: italic;
-  font-synthesis: style;
-  line-height: 24px;
-  text-shadow:
-    2px 0 0 #101010,
-    -2px 0 0 #101010,
-    0 2px 0 #101010,
-    0 -2px 0 #101010,
-    2px 2px 0 #101010,
-    -2px 2px 0 #101010,
-    2px -2px 0 #101010,
-    -2px -2px 0 #101010;
-}
-.hud-boss-fill,
-.hud-boss-piece {
-  position: absolute;
-  height: 9px;
-}
-.hud-boss-fill {
-  transform-origin: 0 0;
-}
-.hud-boss-fill.is-growing {
-  transition: transform 0.3s linear; /* heals grow the fill */
-}
-.hud-boss-piece {
-  animation: hud-piece-fall 0.4s cubic-bezier(0.55, 0, 1, 0.45) 1s forwards; /* holds 1 s, then falls and fades */
-}
-@keyframes hud-piece-fall {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-}
 
-/* ---------- leader portrait circles ---------- */
+/* ---------- leader portrait circles (#64) ---------- */
 .hud-boss-circles {
   display: flex;
   gap: 6px;
@@ -144,4 +191,260 @@
 }
 .hud-circle.is-fainted::after {
   opacity: 0.65; /* darkly dimmed */
+}
+
+/* ---------- character info panel (#62): pieces placed from the screen's bottom centre ---------- */
+.hud-player {
+  position: fixed;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+.hud-player > * {
+  position: absolute;
+}
+
+/* portrait with the EXP ring: outline, shade, fill, shade (fill over shade, as the bars), then the portrait's 4 px stroke */
+.hud-portrait {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: #101010;
+}
+.hud-exp-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+.hud-exp-shade-outer {
+  inset: 2px;
+  background: conic-gradient(#00799a 0 var(--exp), #464646 var(--exp) 360deg);
+}
+.hud-exp-fill {
+  inset: 6px;
+  background: conic-gradient(#00baf3 0 var(--exp), #7f7f7f var(--exp) 360deg);
+}
+.hud-exp-shade-inner {
+  inset: 10px;
+  background: conic-gradient(#00799a 0 var(--exp), #464646 var(--exp) 360deg);
+}
+.hud-portrait-face {
+  position: absolute;
+  inset: 14px;
+  box-sizing: border-box;
+  border: 4px solid #101010;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #101010;
+}
+.hud-portrait-face img {
+  display: block;
+  width: 80px; /* the 40 px portrait at exactly 2x */
+  height: 80px;
+  image-rendering: pixelated;
+}
+
+/* held item: the B2 bag button with the item's icon at 1x */
+.hud-item {
+  width: 40px;
+  height: 40px;
+}
+.hud-item-icon {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.hud-item-name {
+  text-align: right;
+}
+
+/* status chips: B2 status tags, fill inside a 2 px shade frame, with a timer bar and a sliding glow */
+.hud-chips {
+  display: flex;
+  gap: 6px;
+}
+.hud-chip {
+  position: relative;
+  width: 70px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 2px solid;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hud-chip .hud-text {
+  position: relative;
+  top: -1px;
+}
+.hud-chip-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #ffffff;
+  transform-origin: 0 0;
+}
+.hud-chip::after {
+  /* the sliding glow: a pre-made light band moved by transform only (HUD-STYLE "Performance") */
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -20px;
+  width: 12px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translateX(0) skewX(-20deg);
+  animation: hud-chip-glow 1.6s linear infinite;
+}
+@keyframes hud-chip-glow {
+  0% {
+    transform: translateX(0) skewX(-20deg);
+  }
+  40%,
+  100% {
+    transform: translateX(110px) skewX(-20deg);
+  }
+}
+
+/* Shake Off prompt: the B2 "FIGHT!" badge in the Lv yellow, flashing to white 3 times a second */
+.hud-prompt {
+  height: 48px;
+}
+.hud-prompt svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.hud-prompt-flash {
+  opacity: 0;
+  animation: hud-prompt-flash 0.333s steps(1) infinite;
+}
+@keyframes hud-prompt-flash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.hud-prompt-text {
+  position: absolute;
+  left: 28px;
+  top: 9px;
+}
+
+/* move slots: the B2 move button, four wells, the key on the left point, the B2 selection cursor on the active one */
+.hud-slot svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.hud-well {
+  position: absolute;
+  top: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #181818;
+  box-shadow: inset 0 0 0 2px #101010;
+}
+.hud-well img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+}
+.hud-well-shade {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 16, 16, 0.6);
+  transform-origin: 0 0; /* the shade empties from the bottom up */
+}
+.hud-well-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+}
+.hud-slot-key {
+  position: absolute;
+  left: -2px;
+  top: 4px;
+}
+.hud-cursor {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.hud-cursor-top-left {
+  left: -4px;
+  top: -4px;
+}
+.hud-cursor-top-right {
+  right: -4px;
+  top: -4px;
+  transform: scaleX(-1);
+}
+.hud-cursor-bottom-left {
+  left: -4px;
+  bottom: -4px;
+  transform: scaleY(-1);
+}
+.hud-cursor-bottom-right {
+  right: -4px;
+  bottom: -4px;
+  transform: scale(-1, -1);
+}
+
+/* Lv: the label in the Lv yellow, the number in BoldPixels at 48 px (3 px font pixel) */
+.hud-lv-label {
+  color: #f3b200;
+}
+.hud-lv-number {
+  font-family: 'HudDigits', 'HudText', monospace;
+  font-size: 48px;
+  line-height: 48px;
+  white-space: nowrap;
+  text-shadow:
+    3px 0 0 #101010,
+    -3px 0 0 #101010,
+    0 3px 0 #101010,
+    0 -3px 0 #101010,
+    3px 3px 0 #101010,
+    -3px 3px 0 #101010,
+    3px -3px 0 #101010,
+    -3px -3px 0 #101010;
+}
+.hud-bond {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.hud-bond img {
+  image-rendering: pixelated;
+}
+
+/* Silver: the spinning coin at 2x and the count at 30 px, popping from its bottom right on each gain */
+.hud-silver-coin {
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+.hud-silver-count {
+  transform-origin: 100% 100%;
+}
+
+/* run timer: dim text, centred under the move slots */
+.hud-timer {
+  width: 200px;
+  margin-left: -100px;
+  text-align: center;
+  opacity: 0.45;
 }

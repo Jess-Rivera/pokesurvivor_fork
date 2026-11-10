@@ -3,7 +3,8 @@
 The in-run screen's look. Tracked on #61.
 
 > **Status:** DRAFT. Sections lock one at a time with Jess.
-> Builds #62 to #67 follow this file once every section is `[Approved]`.
+> #61 is a soft dependency for #62 to #67 (Jess, 2026-11-10): each panel build locks its own shapes, motion and sizes
+> here as it goes, rather than waiting for every section.
 
 **What this file owns:** the look (rendering, fonts, colours, shapes, motion, sizes).
 
@@ -285,8 +286,13 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
 | `b2-upper` A4 to L6     | The same bar with EXP; its EXP track's right edge (L6) sets the HP fill's end         | Enemy name bar            |
 | `b2-hpbars` C31 to AD35 | Name, gender and Lv above the bar (Charizard, Noibat examples)                        | Enemy name bar layout     |
 | `b2-upper` AD5 to AJ6   | B2 party circles: red healthy, orange statused, grey fainted, black empty             | Leader portrait circles   |
-| `b2-lower` V4 to W4     | Lozenge: flat black body, thin grey rim, point on the left, slant on the right        | To place                  |
+| `b2-lower` V4 to W4     | Lozenge: flat black body, thin grey rim, point on the left, slant on the right        | Empty move slot (#62)     |
 | `b2-lower` Z19 to AA19  | Lozenge: points on both ends, checker body, grey rim with a white glint on each point | To place                  |
+| `b2-lower` F15 to J16   | B2 fight menu: four move buttons in a 2x2 grid; type rims at V5 to W21                | Move slots (#62)          |
+| `b2-lower` Z2 to AC3    | B2 selection cursor: corner brackets                                                  | Active move slot (#62)    |
+| `b2-lower` B12 to D12   | The "FIGHT!" badge: solid lozenge, pointed ends                                       | Shake Off prompt (#62)    |
+| `b2-lower` Y4 to AB5    | Bag buttons: checker body, chamfered corners, coloured rim                            | Held item square (#62)    |
+| `b2-hpbars` Q16 to AD16 | Status tags: small rectangles, fill inside a 1-pixel shade frame                      | Status chips (#62)        |
 
 ### Enemy name bar (pilot, #64)
 
@@ -321,6 +327,42 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
 - `[Approved]` **Size:** the portrait at exactly 1x (40 px), so it stays crisp; a 4 px stroke outside it makes the circle
   48 px across (Jess, 2026-11-10: 2 px read too thin in the pilot).
 
+### Character info panel (#62)
+
+Jess approved these shapes on 2026-11-10 (bonded rim option a, active slot option a). Everything is redrawn at 2 px per
+B2 art pixel, half the enemy bar's scale.
+
+- `[Approved]` **Move slots: the B2 fight-menu move button** (`b2-lower` F15 to J16): a point on the left (art row 7), a
+  chevron on the right (mirrored, row 16), 45 degree slants, flat top and bottom.
+  - The slanted ends: outline, Light, Base, outline (one art pixel each). Top and bottom: outline, Dark, outline.
+  - The body is the type checker (`#292929` 2x2 squares on `#393939` lines, as the rip).
+  - Four 36 px wells per slot, always drawn (dark `#181818` circles with a 2 px `#101010` ring), filled left to right:
+    one move fills the first, a bond fills one well per move. The move's icon sits in its well at exactly 2x.
+  - The slot's key at 20 px on its left point.
+- `[Approved]` **Rim colour:** a single move takes its SV type colours; a bonded slot takes the bond pink (option a); an
+  empty slot is the B2 disabled button (`b2-lower` V4): flat `#181818` body, `#212121` rim.
+- `[Approved]` **Active slot: the B2 selection cursor** (`b2-lower` Z2 to AC3, option a): four corner brackets in Title
+  yellow `#fff000` with a `#101010` outline, just outside the slot's corners.
+- `[Approved]` **Status chips: the B2 status tags** (`b2-hpbars` Q16 to AD16): a rectangle, the fill inside a 2 px shade
+  frame, the 3-letter mainline label (SLP, PSN, BRN, FRZ, PAR; bad poison is PSN on the dark shade). A 2 px white timer
+  bar along the bottom. (Corrects the plan's "slanted parallelograms": the rip's tags are rectangles.)
+- `[Approved]` **Shake Off prompt: the B2 "FIGHT!" badge** (`b2-lower` B12 to D12): pointed ends, an outline, a shade
+  rim, the Lv yellow fill with a 3-row shade band at the bottom. Its width follows the text.
+- `[Approved]` **Held item: the B2 bag button** (`b2-lower` Y4 to AB5): a 40 px square with chamfered corners, the bar
+  checker body, a slate rim when empty and the Lv yellow rim while holding an item. The item icon at 1x (32 px), its name
+  below at 20 px, right-aligned to the square so it never runs into the portrait ring.
+- `[Approved]` **Life meter:** the enemy bar's shape (B2 dark HP bar) at 2x, with "current / max" as 20 px text right
+  after its end (Jess, 2026-11-10: "for now"; B2 itself prints the numbers inside the bar, `b2-hpbars` C32 to P35).
+- `[Approved]` **Portrait and EXP ring:** the 40 px portrait at exactly 2x (80 px), cropped by a circle with a 4 px
+  `#101010` stroke, inside a 12 px EXP ring striped shade, fill, shade (as the bars), with a 2 px outline: 116 px across.
+  The ring fills clockwise from the top; the empty part is the dark bar's empty track.
+- `[Approved]` **Lv:** "Lv." at 20 px in the Lv yellow, the number below in BoldPixels at 48 px.
+- `[Proposed]` **Bond count** (no place in the wireframe): the bond icon at 2x (24 px) with "×N" under the Lv number,
+  only while you have bonds to spend.
+- `[Proposed]` **Run timer:** 20 px dim text (45% opacity, as the wireframe's grey), centred under the slots.
+- `[Open]` Psychic's rim (`#EF4179`) and the bond pink (`#ff8ad8`) read close at 2x. Seen in the first screenshot; Jess to
+  judge in the feel test.
+
 ---
 
 ## Motion
@@ -352,6 +394,18 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
   was barely noticeable).
 - `[Approved]` Faint: the circle fades to its dimmed look over 0.3 s.
 
+### Character info panel (#62)
+
+- `[Approved]` **Life meter:** the enemy bar's cut and fall and its growing heals, unchanged.
+- `[Approved]` **Status chips:** a light band slides across each chip about every 1.6 s (moved by transform only); the
+  timer bar shrinks with the status's time left (against the most time seen since it appeared).
+- `[Approved]` **Shake Off prompt:** flashes between the Lv yellow and white 3 times a second, the usual
+  photosensitivity limit (Jess, 2026-11-10). Text 30 px; "Shaking off..." while auto-shake is on.
+- `[Approved]` **Move wells:** the cooldown shade covers the well and empties from the bottom up; a cast flashes the
+  well white, fading over 0.18 s (both as the old canvas bar).
+- `[Approved]` **Silver:** the coin spins on the run clock; the count rolls up to a gain within 0.25 s and pops (up to
+  1.3x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter).
+
 ---
 
 ## Panel sizes at 1080p
@@ -379,3 +433,29 @@ of the screen, rounded to whole pixels.
 
 `[Approved]` The bar is drawn at 3 px per B2 art pixel so its height lands on the wireframe's (33 px against 36). The
 name above it is 20 px text (2 px font pixel): 30 px read too pixelated in the pilot (Jess, 2026-11-10).
+
+### Character info panel (#62)
+
+The wireframe's game area is 1920 x 1121 at this scale (not 16:9), so this panel is placed from the screen's bottom
+edge, not the top. x is from the screen's centre line (960 at 1080p), y from the bottom edge to the piece's bottom.
+
+`[Approved]` from the #62 plan (Jess, 2026-11-10), except the rows marked `[Proposed]`, where the build moved a number off
+the plan; those wait on the feel test.
+
+| Element               | Wireframe (at 1080p)              | Built                                                                        |
+| --------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| Portrait and EXP ring | 118 px across, centre x -281      | 116 px, centre x -281, y 36 (`[Proposed]`: plan said 42)                     |
+| Held item square      | about 40 px, left of the portrait | 40 px, right edge x -351, y 74; name below at y 48                           |
+| Life meter            | 460 x 22, x -251 to +210          | 462 px wide (231 art), 24 px with its shadow, x -252, y 144 (`[Proposed]`)   |
+| HP text               | (none)                            | x +218, y 151, 20 px                                                         |
+| Status chips          | 70 x 19, 6 px apart               | 70 x 24, 6 px apart, from x -244, y 176 (`[Proposed]`: 24 high for the text) |
+| Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 212                        |
+| Move slots            | 206 x 44, 2x2, gaps 5 and 3       | 210 x 48 (105 x 24 art), gaps 6 and 4, from x -216, y 36 (`[Proposed]`)      |
+| Wells                 | about 42 px                       | 36 px (the icon at 2x), centres 47 px from each end, evenly spread           |
+| Lv                    | right of the slots                | x +222: "Lv." at y 116, the number (48 px) at y 68                           |
+| Bond count            | (none)                            | x +222, y 36 (`[Proposed]`)                                                  |
+| Silver                | above-left of the portrait        | coin 32 px, right edge x -260, y 176; count 6 px left of it at 30 px         |
+| Run timer             | centred under the slots           | centre x -3, y 10                                                            |
+
+The slots grew from 44 to 48 px so a 36 px well (an icon at exactly 2x) fits inside the button's top and bottom lines;
+the pieces above moved up to keep their gaps.
