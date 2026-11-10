@@ -259,25 +259,48 @@ async function surge(browser) {
 // #62 character info panel, HUD-STYLE "Panel sizes at 1080p" hand-copied: x from the screen centre (960), y from the
 // bottom edge (1080) to the piece's bottom. Screen top = 1080 - y - height.
 const PANEL = {
-  life: { left: 960 - 252, top: 1080 - 144 - 24, width: 462 },
+  life: { left: 960 - 252, top: 1080 - 140 - 24, width: 462 },
   portrait: { left: 960 - 281 - 58, top: 1080 - 36 - 116, size: 116 },
   slots: [
-    { left: 744, top: 1080 - 88 - 48 },
-    { left: 960, top: 1080 - 88 - 48 },
-    { left: 744, top: 1080 - 36 - 48 },
-    { left: 960, top: 1080 - 36 - 48 },
+    { left: 744, top: 1080 - 84 - 44 },
+    { left: 960, top: 1080 - 84 - 44 },
+    { left: 744, top: 1080 - 36 - 44 },
+    { left: 960, top: 1080 - 36 - 44 },
   ],
   slotWidth: 210,
-  slotHeight: 48,
+  slotHeight: 44, // the rip's 44 rows (Jess, 2026-11-10)
   well: 36,
-  chip: { left: 960 - 244, top: 1080 - 176 - 24, width: 70, height: 24 },
-  prompt: { top: 1080 - 212 - 48, height: 48, centre: 960 - 21 },
+  chip: { left: 960 - 244, top: 1080 - 172 - 24, width: 70, height: 24 },
+  prompt: { top: 1080 - 208 - 48, height: 48, centre: 960 - 21 },
   item: { right: 960 - 351, top: 1080 - 74 - 40, size: 40 },
-  coin: { right: 960 - 260, top: 1080 - 176 - 32, size: 32 },
+  coin: { right: 960 - 260, top: 1080 - 160 - 32, size: 32 }, // 12 px below the chips' line
   levelLeft: 960 + 222,
   hpTextLeft: 960 + 218,
   timerCentre: 960 - 3,
   bondPink: '#ff8ad8',
+  slotBody: '#393939', // plain light grey (Jess, 2026-11-10)
+  capital: (type) => type.charAt(0).toUpperCase() + type.slice(1),
+  // SV Base, as computed colours (HUD-STYLE "Type colours")
+  typeBase: {
+    normal: 'rgb(159, 161, 159)',
+    fire: 'rgb(230, 40, 41)',
+    water: 'rgb(41, 128, 239)',
+    grass: 'rgb(63, 161, 41)',
+    electric: 'rgb(250, 192, 0)',
+    ice: 'rgb(61, 206, 243)',
+    fighting: 'rgb(255, 128, 0)',
+    poison: 'rgb(145, 65, 203)',
+    ground: 'rgb(145, 81, 33)',
+    flying: 'rgb(129, 185, 239)',
+    psychic: 'rgb(239, 65, 121)',
+    bug: 'rgb(145, 161, 25)',
+    rock: 'rgb(175, 169, 129)',
+    ghost: 'rgb(112, 65, 112)',
+    dragon: 'rgb(80, 96, 225)',
+    dark: 'rgb(98, 77, 78)',
+    steel: 'rgb(96, 161, 184)',
+    fairy: 'rgb(239, 112, 239)',
+  },
   parFill: 'rgb(239, 173, 0)', // #efad00
   badPoisonShade: 'rgb(57, 16, 66)', // #391042
 };
@@ -302,7 +325,11 @@ const panelState = (page) =>
         active: slot.classList.contains('is-active'),
         cursors: slot.querySelectorAll('.hud-cursor').length,
         wells: [...slot.querySelectorAll('.hud-well')].map((well) => well.getBoundingClientRect().width),
-        icons: slot.querySelectorAll('.hud-well img').length,
+        icons: slot.querySelectorAll('.hud-well-disc img').length,
+        glyphs: [...slot.querySelectorAll('.hud-well-disc img')].map((image) => image.getAttribute('src')),
+        discs: [...slot.querySelectorAll('.hud-well-disc')].map((disc) => getComputedStyle(disc).backgroundColor),
+        badges: slot.querySelectorAll('.hud-well-badge').length,
+        wipes: [...slot.querySelectorAll('.hud-well-shade')].map((shade) => shade.style.getPropertyValue('--wipe')),
         key: slot.querySelector('.hud-slot-key').textContent,
         fills: [...slot.querySelectorAll('rect')].map((shapeRect) => shapeRect.getAttribute('fill').toLowerCase()),
       };
@@ -338,6 +365,7 @@ const panelState = (page) =>
       coin: box('.hud-silver-coin'),
       silver: text('.hud-silver-count'),
       level: text('.hud-lv-number'),
+      rattling: !!panel.querySelector('.hud-lv-number.is-rattling'),
       levelBox: box('.hud-lv-number'),
       hpText: text('.hud-hp-text'),
       hpTextBox: box('.hud-hp-text'),
@@ -434,6 +462,31 @@ async function playerPanel(browser) {
   );
   ok(state.slots[0].fills.includes(PANEL.bondPink), 'player: the bonded slot has the bond pink rim');
   ok(
+    state.slots.every((slot) => !slot.fills.includes('url(#hud-type-checker)')) &&
+      state.slots[1].fills.includes(PANEL.slotBody),
+    'player: slot bodies are plain light grey, no checker'
+  );
+  const wellTypes = await page.evaluate(() =>
+    G.Game.player.slots.map((group) => group.map((move) => move.type || G.MoveInfo.type(move.id)))
+  );
+  ok(
+    state.slots[1].glyphs[0] === 'assets/icons/types/' + PANEL.capital(wellTypes[1][0]) + '_icon.png' &&
+      state.slots[1].discs[0] === PANEL.typeBase[wellTypes[1][0]],
+    'player: a well is its type colour with the white type glyph (' +
+      state.slots[1].glyphs[0] +
+      ', ' +
+      state.slots[1].discs[0] +
+      ')'
+  );
+  ok(
+    state.slots.every((slot) => slot.badges === slot.icons),
+    'player: every move shows its family badge (' + state.slots.map((slot) => slot.badges).join(',') + ')'
+  );
+  ok(
+    state.slots.every((slot) => slot.wipes.every((wipe) => /^\d+deg$/.test(wipe))),
+    'player: the cooldown is a clock wipe (' + state.slots[0].wipes.join(' ') + ')'
+  );
+  ok(
     state.slots[3].icons === 0 && !state.slots[3].fills.includes(PANEL.bondPink),
     'player: the empty slot is the dark disabled button'
   );
@@ -517,6 +570,14 @@ async function playerPanel(browser) {
     'player: bad poison is the PSN chip with the dark shade (' + (state.chips[0] && state.chips[0].shade) + ')'
   );
   ok(state.prompt === null, 'player: nothing to shake off, no prompt');
+
+  // level up: the number rattles once, then settles; a pause does not replay it
+  ok(!state.rattling, 'player: no rattle before a level-up');
+  await page.evaluate(() => G.Game.player.level++);
+  await page.waitForTimeout(80);
+  ok((await panelState(page)).rattling, 'player: a level-up rattles the Lv number');
+  await page.waitForTimeout(800);
+  ok(!(await panelState(page)).rattling, 'player: the rattle ends after about 0.6 s');
 
   // the debug toggle hides the panel with the rest of the overlay
   await page.evaluate(() => G.Debug.hudOverlay(false));

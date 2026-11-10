@@ -204,7 +204,8 @@
   position: absolute;
 }
 
-/* portrait with the EXP ring: outline, shade, fill, shade (fill over shade, as the bars), then the portrait's 4 px stroke */
+/* portrait with the EXP ring: a 2 px outline, one 12 px band (the EXP blue over the empty track's grey, no shade; Jess,
+   2026-11-10), then the portrait's 4 px stroke */
 .hud-portrait {
   width: 116px;
   height: 116px;
@@ -215,17 +216,9 @@
   position: absolute;
   border-radius: 50%;
 }
-.hud-exp-shade-outer {
+.hud-exp-ring {
   inset: 2px;
-  background: conic-gradient(#00799a 0 var(--exp), #464646 var(--exp) 360deg);
-}
-.hud-exp-fill {
-  inset: 6px;
   background: conic-gradient(#00baf3 0 var(--exp), #7f7f7f var(--exp) 360deg);
-}
-.hud-exp-shade-inner {
-  inset: 10px;
-  background: conic-gradient(#00799a 0 var(--exp), #464646 var(--exp) 360deg);
 }
 .hud-portrait-face {
   position: absolute;
@@ -346,31 +339,45 @@
 }
 .hud-well {
   position: absolute;
-  top: 6px;
+  top: 4px;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #181818;
-  box-shadow: inset 0 0 0 2px #101010;
 }
-.hud-well img {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  image-rendering: pixelated;
-}
-.hud-well-shade {
+.hud-well-disc {
   position: absolute;
   inset: 0;
-  background: rgba(16, 16, 16, 0.6);
-  transform-origin: 0 0; /* the shade empties from the bottom up */
+  border-radius: 50%;
+  overflow: hidden;
+  background: #181818; /* an empty well; a move fills it with its type colour */
+  box-shadow: inset 0 0 0 2px #101010;
+}
+.hud-well-disc img {
+  /* the type glyph, 64 px art at exactly half size (smooth art, so smooth scaling) */
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 32px;
+  height: 32px;
+}
+.hud-well-shade {
+  /* the cooldown as a clock wipe: the shade covers what is left, shrinking clockwise from the top */
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(transparent 0 var(--wipe), rgba(16, 16, 16, 0.6) var(--wipe) 360deg);
 }
 .hud-well-flash {
   position: absolute;
   inset: 0;
   background: #ffffff;
+}
+.hud-well-badge {
+  /* the move family badge (7 art px) at 2x on the well's bottom right */
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
 }
 .hud-slot-key {
   position: absolute;
@@ -407,6 +414,7 @@
   color: #f3b200;
 }
 .hud-lv-number {
+  transform-origin: 50% 100%; /* held from below, like a sign on a stick: the top swings further than the bottom */
   font-family: 'HudDigits', 'HudText', monospace;
   font-size: 48px;
   line-height: 48px;
@@ -420,6 +428,39 @@
     -3px 3px 0 #101010,
     3px -3px 0 #101010,
     -3px -3px 0 #101010;
+}
+.hud-lv-number.is-rattling {
+  /* level up: raised and rattled on its stick (Jess, 2026-11-10), about 0.6 s, transform only */
+  animation: hud-lv-rattle 0.6s ease-out;
+}
+@keyframes hud-lv-rattle {
+  0% {
+    transform: none;
+  }
+  12% {
+    transform: translateY(-6px) scale(1.3) rotate(-9deg) translateX(-2px);
+  }
+  24% {
+    transform: translateY(-6px) scale(1.3) rotate(9deg) translateX(2px);
+  }
+  36% {
+    transform: translateY(-5px) scale(1.27) rotate(-8deg) translateX(-2px);
+  }
+  48% {
+    transform: translateY(-5px) scale(1.24) rotate(7deg) translateX(2px);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.2) rotate(-5deg) translateX(-1px);
+  }
+  72% {
+    transform: translateY(-3px) scale(1.14) rotate(4deg) translateX(1px);
+  }
+  86% {
+    transform: translateY(-1px) scale(1.06) rotate(-2deg);
+  }
+  100% {
+    transform: none;
+  }
 }
 .hud-bond {
   display: flex;

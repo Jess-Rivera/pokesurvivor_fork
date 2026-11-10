@@ -332,17 +332,24 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
 Jess approved these shapes on 2026-11-10 (bonded rim option a, active slot option a). Everything is redrawn at 2 px per
 B2 art pixel, half the enemy bar's scale.
 
-- `[Approved]` **Move slots: the B2 fight-menu move button** (`b2-lower` F15 to J16): a point on the left (art row 7), a
-  chevron on the right (mirrored, row 16), 45 degree slants, flat top and bottom.
-  - The slanted ends: outline, Light, Base, outline (one art pixel each). Top and bottom: outline, Dark, outline.
-  - The body is the type checker (`#292929` 2x2 squares on `#393939` lines, as the rip).
+- `[Approved]` **Move slots: the B2 fight-menu move button** (`b2-lower` F15 to J16), its profile copied row for row
+  at half the rip's 44 rows (Jess, 2026-11-10: the first build's long 45 degree slants read too pointed). Left end: a
+  short 45 degree run down to a flat point (art rows 6 to 8), then a steep run back, one pixel across per two rows. The
+  right end is the same profile turned 180 degrees. Flat top and bottom.
+  - The slanted ends: outline, Light, Base, outline (one art pixel each). Top and bottom: outline, Dark.
+  - The body is plain light grey `#393939`, no checker (Jess, 2026-11-10).
   - Four 36 px wells per slot, always drawn (dark `#181818` circles with a 2 px `#101010` ring), filled left to right:
-    one move fills the first, a bond fills one well per move. The move's icon sits in its well at exactly 2x.
+    one move fills the first, a bond fills one well per move.
+  - `[Approved]` **A move's well** (Jess, 2026-11-10): filled with its SV type colour (Base), the white type glyph
+    (`assets/icons/types/<Type>_icon.png`, 64 px art) at exactly half size (32 px), and the move's family badge (7 art
+    px, as in the corner of the old move icon) at 2x on the well's bottom right. The 20x20 type icons stay everywhere
+    else in the game.
   - The slot's key at 20 px on its left point.
 - `[Approved]` **Rim colour:** a single move takes its SV type colours; a bonded slot takes the bond pink (option a); an
   empty slot is the B2 disabled button (`b2-lower` V4): flat `#181818` body, `#212121` rim.
 - `[Approved]` **Active slot: the B2 selection cursor** (`b2-lower` Z2 to AC3, option a): four corner brackets in Title
-  yellow `#fff000` with a `#101010` outline, just outside the slot's corners.
+  yellow `#fff000` with a `#101010` outline, just outside the slot's corners. Each bracket is one continuous yellow L
+  inside one unbroken outline (fixed 2026-11-10: the corner pixel was outline, which split it into two bars).
 - `[Approved]` **Status chips: the B2 status tags** (`b2-hpbars` Q16 to AD16): a rectangle, the fill inside a 2 px shade
   frame, the 3-letter mainline label (SLP, PSN, BRN, FRZ, PAR; bad poison is PSN on the dark shade). A 2 px white timer
   bar along the bottom. (Corrects the plan's "slanted parallelograms": the rip's tags are rectangles.)
@@ -354,9 +361,12 @@ B2 art pixel, half the enemy bar's scale.
 - `[Approved]` **Life meter:** the enemy bar's shape (B2 dark HP bar) at 2x, with "current / max" as 20 px text right
   after its end (Jess, 2026-11-10: "for now"; B2 itself prints the numbers inside the bar, `b2-hpbars` C32 to P35).
 - `[Approved]` **Portrait and EXP ring:** the 40 px portrait at exactly 2x (80 px), cropped by a circle with a 4 px
-  `#101010` stroke, inside a 12 px EXP ring striped shade, fill, shade (as the bars), with a 2 px outline: 116 px across.
-  The ring fills clockwise from the top; the empty part is the dark bar's empty track.
+  `#101010` stroke, inside a 12 px EXP ring with a 2 px outline: 116 px across. The ring is one flat band (Jess,
+  2026-11-10: no darker blue shade): the EXP blue `#00baf3` for progress, clockwise from the top, and `#7f7f7f` for the
+  rest.
 - `[Approved]` **Lv:** "Lv." at 20 px in the Lv yellow, the number below in BoldPixels at 48 px.
+- `[Open]` Swapping the held item and Lv places (Jess is considering it, 2026-11-10): Lv would go left of the portrait,
+  the item square right of the slots with its name left-aligned under it; the bond count stays with Lv.
 - `[Proposed]` **Bond count** (no place in the wireframe): the bond icon at 2x (24 px) with "×N" under the Lv number,
   only while you have bonds to spend.
 - `[Proposed]` **Run timer:** 20 px dim text (45% opacity, as the wireframe's grey), centred under the slots.
@@ -401,8 +411,13 @@ B2 art pixel, half the enemy bar's scale.
   timer bar shrinks with the status's time left (against the most time seen since it appeared).
 - `[Approved]` **Shake Off prompt:** flashes between the Lv yellow and white 3 times a second, the usual
   photosensitivity limit (Jess, 2026-11-10). Text 30 px; "Shaking off..." while auto-shake is on.
-- `[Approved]` **Move wells:** the cooldown shade covers the well and empties from the bottom up; a cast flashes the
-  well white, fading over 0.18 s (both as the old canvas bar).
+- `[Approved]` **Move wells:** the cooldown is a clock wipe (Jess, 2026-11-10): a 60% `#101010` shade covers the part
+  still recharging and shrinks clockwise from the top. A cast flashes the well white, fading over 0.18 s (as the old
+  canvas bar).
+- `[Approved]` **Level up: the Lv number rattles** (Jess, 2026-11-10), as if held up on a stick and shaken: it pivots on
+  its bottom (so the top swings further than the bottom), rises a few pixels, grows to 1.3x and tilts each way by up to
+  9 degrees with a little sideways shake, settling over 0.6 s. A level gained behind the level-up cards rattles as the
+  panel comes back; a pause never replays it.
 - `[Approved]` **Silver:** the coin spins on the run clock; the count rolls up to a gain within 0.25 s and pops (up to
   1.3x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter).
 
@@ -446,16 +461,17 @@ the plan; those wait on the feel test.
 | --------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
 | Portrait and EXP ring | 118 px across, centre x -281      | 116 px, centre x -281, y 36 (`[Proposed]`: plan said 42)                     |
 | Held item square      | about 40 px, left of the portrait | 40 px, right edge x -351, y 74; name below at y 48                           |
-| Life meter            | 460 x 22, x -251 to +210          | 462 px wide (231 art), 24 px with its shadow, x -252, y 144 (`[Proposed]`)   |
-| HP text               | (none)                            | x +218, y 151, 20 px                                                         |
-| Status chips          | 70 x 19, 6 px apart               | 70 x 24, 6 px apart, from x -244, y 176 (`[Proposed]`: 24 high for the text) |
-| Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 212                        |
-| Move slots            | 206 x 44, 2x2, gaps 5 and 3       | 210 x 48 (105 x 24 art), gaps 6 and 4, from x -216, y 36 (`[Proposed]`)      |
-| Wells                 | about 42 px                       | 36 px (the icon at 2x), centres 47 px from each end, evenly spread           |
-| Lv                    | right of the slots                | x +222: "Lv." at y 116, the number (48 px) at y 68                           |
+| Life meter            | 460 x 22, x -251 to +210          | 462 px wide (231 art), 24 px with its shadow, x -252, y 140                  |
+| HP text               | (none)                            | x +218, y 147, 20 px                                                         |
+| Status chips          | 70 x 19, 6 px apart               | 70 x 24, 6 px apart, from x -244, y 172 (`[Proposed]`: 24 high for the text) |
+| Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 208                        |
+| Move slots            | 206 x 44, 2x2, gaps 5 and 3       | 210 x 44 (105 x 22 art), gaps 6 and 4, from x -216, y 36                     |
+| Wells                 | about 42 px                       | 36 px, centres 47 px from each end, evenly spread                            |
+| Lv                    | right of the slots                | x +222: "Lv." at y 116, the number (48 px) at y 60                           |
 | Bond count            | (none)                            | x +222, y 36 (`[Proposed]`)                                                  |
-| Silver                | above-left of the portrait        | coin 32 px, right edge x -260, y 176; count 6 px left of it at 30 px         |
+| Silver                | above-left of the portrait        | coin 32 px, right edge x -260, y 160; count 6 px left of it at 30 px         |
 | Run timer             | centred under the slots           | centre x -3, y 10                                                            |
 
-The slots grew from 44 to 48 px so a 36 px well (an icon at exactly 2x) fits inside the button's top and bottom lines;
-the pieces above moved up to keep their gaps.
+The slots are back to the wireframe's 44 px since the B2 profile (2026-11-10) uses two-row top and bottom edges, which
+leaves 36 px inside for a well. Silver sits 12 px below the chips' line (Jess, 2026-11-10: "can come down a bit"),
+about as low as it goes before the coin meets the portrait ring.

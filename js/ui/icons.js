@@ -2181,6 +2181,34 @@ G.Icons = (() => {
     return cv;
   }
 
+  /**
+   * A move family badge on its own (7x7: the dark square with the yellow glyph, as in the corner of a move icon), as an
+   * SVG data URL. Used by the HUD's move wells (js/ui/hud-player-panel.js), which show the type glyph separately.
+   */
+  function badge(kind) {
+    if (!KIND_GLYPH[kind]) return null;
+    const key = 'badge:' + kind;
+    let u = urls.get(key);
+    if (!u) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 7;
+      const c = cv.getContext('2d', { willReadFrequently: true }); // read in svgOf()
+      c.fillStyle = K;
+      c.fillRect(0, 0, 7, 7);
+      c.fillStyle = '#2b3454';
+      c.fillRect(1, 1, 5, 5);
+      c.fillStyle = '#ffd23f';
+      KIND_GLYPH[kind].forEach((row, y) =>
+        [...row].forEach((ch, x) => {
+          if (ch === '#') c.fillRect(x + 1, y + 1, 1, 1);
+        })
+      );
+      u = svgOf(cv);
+      urls.set(key, u);
+    }
+    return u;
+  }
+
   function url(name) {
     let u = urls.get(name);
     if (!u) {
@@ -2388,5 +2416,5 @@ G.Icons = (() => {
     r.setProperty('--ico-cursor', `url("${url('cursor')}")`);
   }
 
-  return { canvas, url, html, draw, twinkle, rarity, bstStars, RARITY_BALL, installCss, UI, TYPE_GLYPH };
+  return { canvas, url, badge, html, draw, twinkle, rarity, bstStars, RARITY_BALL, installCss, UI, TYPE_GLYPH };
 })();

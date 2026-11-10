@@ -12,31 +12,31 @@
 G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, hooks, PALETTE, TYPE_CHECKER, BAR_CHECKER, PixelShape, createLifeBar, typeColours } =
-    overlay.kit;
+  const { html, signal, hooks, PALETTE, BAR_CHECKER, PixelShape, createLifeBar, typeColours } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
   const ART_PIXEL = 2, // every shape here is drawn at 2 px per B2 art pixel
     LIFE_ART_WIDTH = 231, // 462 px
-    LIFE = { x: -252, y: 144 },
+    LIFE = { x: -252, y: 140 },
     HP_LABEL_TOP = -6,
-    HP_TEXT = { x: 218, y: 151 },
-    SLOT_ART_WIDTH = 105, // 210 x 48 px
-    SLOT_ART_ROWS = 24,
+    HP_TEXT = { x: 218, y: 147 },
+    SLOT_ART_WIDTH = 105, // 210 x 44 px
+    SLOT_ART_ROWS = 22, // the rip's 44 rows at half height
     SLOT_COLUMN_GAP = 6,
     SLOT_ROW_GAP = 4,
     GRID = { x: -216, y: 36 },
     WELLS_PER_SLOT = 4, // a bond holds up to 4 moves (PlayerEntity.BOND_MAX)
     WELL_SIZE = 36,
-    CHIPS = { x: -244, y: 176, width: 70, height: 24, gap: 6 },
-    PROMPT = { centreX: -21, y: 212, artRows: 24, padArt: 14 },
+    CHIPS = { x: -244, y: 172, width: 70, height: 24, gap: 6 },
+    PROMPT = { centreX: -21, y: 208, artRows: 24, padArt: 14 },
     PORTRAIT = { centreX: -281, y: 36, size: 116 },
     ITEM = { right: -351, y: 74, artSize: 20, nameY: 48 },
-    SILVER = { right: -260, coinY: 176, coinSize: 32 },
-    LEVEL = { x: 222, labelY: 116, numberY: 68 },
+    SILVER = { right: -260, coinY: 160, coinSize: 32 }, // 12 px below the chips' line (Jess, 2026-11-10)
+    LEVEL = { x: 222, labelY: 116, numberY: 60 }, // the label sits 8 px clear of the number's tall glyphs
     BOND = { x: 222, y: 36, icon: 24 },
-    TIMER = { centreX: -3, y: 10 };
+    TIMER = { centreX: -3, y: 10 },
+    LEVEL_RATTLE_MS = 650; // the rattle's 0.6 s (css/hud-overlay.css hud-lv-rattle) and a frame to spare
 
   // Bonded slots: the bond colour (#ff8ad8, the game's bond pink) ramped as HUD-STYLE "Ramps for new colours".
   const BOND_RIM = { light: '#ffd3f1', base: '#ff8ad8', dark: '#8c4c77' };
@@ -65,6 +65,8 @@ G.HudPlayerPanel = (() => {
     expAngle = signal(0),
     hpText = signal(''),
     level = signal(''),
+    levelRattle = signal(0), // counts level-ups; each one remounts the number, which replays its rattle
+    levelRattling = signal(false), // true for the rattle's length after a level-up
     bonds = signal(0),
     chips = signal([]), // { key, label, fill, shade, timer (0 to 1, or null) }
     prompt = signal(''), // the Shake Off text, or '' when nothing can be shaken off
@@ -83,14 +85,20 @@ G.HudPlayerPanel = (() => {
   const place = (x, y) => ({ left: x + 'px', bottom: y + 'px' });
 
   // ---------- shapes ----------
-  /** The B2 move button (b2-lower F15 to J16): a point on the left, a chevron on the right, 45 degree slants. */
+  /**
+   * The B2 move button's left end, row by row, at half the rip's height (b2-lower F15 to J16, measured 2026-11-10): a short
+   * 45 degree run down to a flat point (rows 6 to 8), then a steep run back, one pixel across per two rows.
+   */
+  const slotLeftEdge = (row) => (row <= 5 ? 6 - row : row <= 8 ? 0 : Math.ceil((row - 8) / 2));
+
+  /** The B2 move button: the left end above, and the right end the same profile turned 180 degrees. */
   function slotRow(row, rim) {
     const width = SLOT_ART_WIDTH,
       rows = SLOT_ART_ROWS,
-      left = Math.abs(row - 7), // the left point is on row 7
-      right = width - 1 - Math.abs(row - (rows - 1 - 7)); // the right point mirrors it (row 16)
+      left = slotLeftEdge(row),
+      right = width - 1 - slotLeftEdge(rows - 1 - row);
     if (row === 0 || row === rows - 1) return [[left, right - left + 1, PALETTE.outline]];
-    const inner = row === 1 || row === rows - 2 ? rim.dark : row === 2 || row === rows - 3 ? PALETTE.outline : null;
+    const inner = row === 1 || row === rows - 2 ? rim.dark : null;
     const ends = [
       [left, 1, PALETTE.outline],
       [left + 1, 1, rim.light],
@@ -101,7 +109,12 @@ G.HudPlayerPanel = (() => {
       [right - 1, 1, rim.light],
       [right, 1, PALETTE.outline],
     ];
-    const body = [left + 4, right - 3 - (left + 4), inner || (rim === EMPTY_RIM ? PALETTE.body : TYPE_CHECKER)];
+    // the body: plain light grey (Jess, 2026-11-10: no checker), flat black for an empty slot
+    const body = [
+      left + 4,
+      right - 3 - (left + 4),
+      inner || (rim === EMPTY_RIM ? PALETTE.body : PALETTE.typeBodyLight),
+    ];
     return [body, ...ends];
   }
 
@@ -150,8 +163,15 @@ G.HudPlayerPanel = (() => {
   /** The B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline. */
   function CursorCorner({ corner }) {
     const size = 7;
+    // one continuous yellow L inside one unbroken outline (row 2 keeps the yellow at the corner)
     const rows = (row) => {
-      if (row === 0 || row === 2) return [[0, size, PALETTE.outline]];
+      if (row === 0) return [[0, size, PALETTE.outline]];
+      if (row === 2)
+        return [
+          [0, 1, PALETTE.outline],
+          [1, 1, PALETTE.cursor],
+          [2, size - 2, PALETTE.outline],
+        ];
       if (row === 1)
         return [
           [0, 1, PALETTE.outline],
@@ -177,9 +197,7 @@ G.HudPlayerPanel = (() => {
       class="hud-portrait"
       style=${{ ...place(PORTRAIT.centreX - PORTRAIT.size / 2, PORTRAIT.y), '--exp': expAngle.value + 'deg' }}
     >
-      <div class="hud-exp-ring hud-exp-shade-outer"></div>
-      <div class="hud-exp-ring hud-exp-fill"></div>
-      <div class="hud-exp-ring hud-exp-shade-inner"></div>
+      <div class="hud-exp-ring"></div>
       <div class="hud-portrait-face">
         ${dex ? html`<img src=${portraitSource(dex, shiny)} data-dex=${dex} alt="" onError=${portraitFallback} />` : null}
       </div>
@@ -284,19 +302,23 @@ G.HudPlayerPanel = (() => {
     for (let well = 0; well < WELLS_PER_SLOT; well++) {
       const move = slot.moves[well],
         cooldown = cooldowns[well] || { shade: 0, flash: 0 };
+      // a move: its type colour filling the well, the type glyph (assets/icons/types/<Type>_icon.png) at half size, the
+      // cooldown as a clock wipe, the cast flash, and the family badge at 2x on the well's bottom right
       wells.push(
         html`<div class="hud-well" style=${{ left: wellCentre(well) - WELL_SIZE / 2 + 'px' }}>
-          ${
-            move
-              ? html`<img
-                    src=${move.icon}
-                    alt=""
-                    style=${{ width: move.iconSize + 'px', height: move.iconSize + 'px' }}
-                  />
-                  <div class="hud-well-shade" style=${{ transform: `scaleY(${cooldown.shade})` }}></div>
-                  <div class="hud-well-flash" style=${{ opacity: cooldown.flash }}></div>`
-              : null
-          }
+          <div class="hud-well-disc" style=${move ? { background: move.fill } : null}>
+            ${
+              move
+                ? html`<img src=${move.glyph} alt="" />
+                    <div
+                      class="hud-well-shade"
+                      style=${{ '--wipe': Math.round((1 - cooldown.shade) * 360) + 'deg' }}
+                    ></div>
+                    <div class="hud-well-flash" style=${{ opacity: cooldown.flash }}></div>`
+                : null
+            }
+          </div>
+          ${move && move.badge ? html`<img class="hud-well-badge" src=${move.badge} alt="" />` : null}
         </div>`
       );
     }
@@ -328,7 +350,13 @@ G.HudPlayerPanel = (() => {
 
   function Level() {
     return html`<div class="hud-text hud-lv-label" style=${place(LEVEL.x, LEVEL.labelY)}>Lv.</div>
-      <div class="hud-lv-number" style=${place(LEVEL.x, LEVEL.numberY)}>${level}</div>
+      <div
+        key=${'lv' + levelRattle.value}
+        class=${'hud-lv-number' + (levelRattling.value ? ' is-rattling' : '')}
+        style=${place(LEVEL.x, LEVEL.numberY)}
+      >
+        ${level}
+      </div>
       ${
         bonds.value > 0
           ? html`<div class="hud-bond" style=${place(BOND.x, BOND.y)}>
@@ -388,13 +416,14 @@ G.HudPlayerPanel = (() => {
     itemDrawnAt = 0,
     itemDraws = 0,
     drawnCanvas = null,
-    lastPortraitKey = '';
+    lastPortraitKey = '',
+    lastLevel = 0,
+    lastPlayer = null,
+    rattleEndsAt = 0;
 
-  const iconSizeOf = (name) => {
-    const canvas = G.Icons.canvas(name);
-    return canvas && canvas.width ? canvas.width * 2 : WELL_SIZE; // the icon at exactly 2x
-  };
-  const moveType = (move) => move.type || (G.MoveInfo && G.MoveInfo.type(move.id));
+  const moveType = (move) => move.type || (G.MoveInfo && G.MoveInfo.type(move.id)) || 'normal';
+  const TYPE_GLYPH_PATH = 'assets/icons/types/';
+  const glyphOf = (type) => TYPE_GLYPH_PATH + type.charAt(0).toUpperCase() + type.slice(1) + '_icon.png';
 
   function readSlots(player) {
     const keyOf = (group) => group.map((move) => move.id).join('+');
@@ -416,8 +445,9 @@ G.HudPlayerPanel = (() => {
           active: index === player.active && group.length > 0,
           moves: group.map((move) => ({
             id: move.id,
-            icon: G.Icons.url('move:' + move.id),
-            iconSize: iconSizeOf('move:' + move.id),
+            fill: typeColours(moveType(move)).base,
+            glyph: glyphOf(moveType(move)),
+            badge: G.Icons.badge(G.MoveInfo.badge(move.id)),
           })),
         };
       });
@@ -530,6 +560,18 @@ G.HudPlayerPanel = (() => {
     expAngle.value = Math.round(expFraction * 360);
     lifeBar.update(player.hp, player.maxHp, player.dead, player);
     hpText.value = Math.ceil(Math.max(0, player.hp)) + ' / ' + Math.round(player.maxHp);
+    // level up: the number rattles. A level gained while the panel was hidden (the level-up cards) rattles as it comes
+    // back; a new run (a new player) starts quiet.
+    const now = performance.now();
+    if (player !== lastPlayer) {
+      lastPlayer = player;
+      lastLevel = player.level;
+    } else if (player.level > lastLevel) {
+      lastLevel = player.level;
+      levelRattle.value = levelRattle.value + 1;
+      rattleEndsAt = now + LEVEL_RATTLE_MS;
+    }
+    levelRattling.value = now < rattleEndsAt;
     level.value = String(player.level);
     bonds.value = player.bonds || 0;
     readChips(player);
