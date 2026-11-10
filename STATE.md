@@ -7,7 +7,7 @@ No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md
 
 ## START HERE (next session, either tool)
 1. Jess pushes this branch (this session's commits), then pulls it on the other machine. There: python tools/grid_rips.py.
-2. Owed by Jess:    #64 frame-rate check on the work laptop (Settings > FPS, G.Debug.hudOverlay() in a heavy run); the #59 feel test.
+2. Owed by Jess: the #64 frame-rate check on the work laptop (Settings > FPS, G.Debug.hudOverlay() in a heavy run); the #59 feel test.
 3. Next HUD work: #66 (it replaces the canvas buff chips), then #67; #68 and #69 any time.
 
 ## Where we are
