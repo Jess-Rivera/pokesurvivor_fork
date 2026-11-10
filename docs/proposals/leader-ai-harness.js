@@ -2422,8 +2422,11 @@ if (G.LeaderPlanner) {
     // that land while `main` cools (a punish), your `main` casts. Decision 2026-11-09-52-swap-matchup-window-and-duels (option a):
     // Bait is a draw or a wait for your move, then a dodge, then a use (Brock starts inside Ember's 420 px reach, so a wait is his
     // draw); counter-play and learning run against Fire Blast (3.5 s), since your Ember's 0.7 s leaves almost no cooldown to read.
-    // Those three are BLOCKED on #59 (Jess, 2026-11-09, option 1): reflex dodges spend the charges a planned dodge needs, and the
-    // hits he lands cannot depend on what you do while he fires whenever ready inside your reach.
+    // #59 (Jess, 2026-11-09): counter-play and learning measure the share of your `main` shots he avoids, not his hits (his casts
+    // fire whenever ready in your reach, so his hits cannot depend on what you do). A shot gets through when it touches his active
+    // mon's body as it is that frame (a dodge has no i-frames: it moves him 150 px and shrinks his circle), and is spent; a shot
+    // that flies out its 1.5 s without touching him was avoided. Only `main` shots count (Fire Blast; your Embers every 0.7 s
+    // would swamp it), and only those whose flight ended.
     {
       const reachOf = (d) => G.Gyms.reachOf(d, G.Gyms.formOf(d));
       const castYours = (d, at, e) => {
@@ -2435,7 +2438,7 @@ if (G.LeaderPlanner) {
           y = at.y,
           s = { id: -(9e6 + G.Game.st.time * 1000), cast: { owner: human, serial: Math.round(9e6 + G.Game.st.time * 6000), moveId: d.id }, spec: { id: d.id, delivery: { motion: 'travels' } }, x, y, prevX: x, prevY: y, vx: ux * speed, vy: uy * speed, wait: 0, armed: true, shape: { family: 'point', x, y, heading: 0, r: 12 } };
         G.MoveSim.list().push(s);
-        return { s, until: G.Game.st.time + 1.5 };
+        return { s, until: G.Game.st.time + 1.5, main: false };
       };
       // the harness never steps the move sim (section 9), so no shape resolves a hit: a hit of his is a damaging cast that starts
       // with you inside its reach. You stand still, so the planner's own hit chance for it is 1 (LEADER-AI COST)
@@ -2470,8 +2473,15 @@ if (G.LeaderPlanner) {
         let next = main,
           lastMain = -99,
           mainCasts = 0,
+          mainShots = 0,
+          mainThrough = 0,
           hits = 0,
           punish = 0;
+        const spend = (i) => {
+          const L = G.MoveSim.list();
+          if (L.indexOf(flying[i].s) >= 0) L.splice(L.indexOf(flying[i].s), 1);
+          flying.splice(i, 1);
+        };
         for (let f = 0; f < secs * 60; f++) {
           const e = a.team.active,
             t = G.Game.st.time,
@@ -2482,7 +2492,10 @@ if (G.LeaderPlanner) {
             d = pick === main ? mainDef : altDef;
           if (!e.dead && cooldown[pick] <= 0 && dist <= reachOf(d) + (e.r || 0)) {
             const shot = castYours(d, human, e);
-            if (shot) flying.push(shot);
+            if (shot) {
+              shot.main = pick === main;
+              flying.push(shot);
+            }
             cooldown[pick] = d.cd;
             if (pick === main) {
               lastMain = t;
@@ -2498,12 +2511,20 @@ if (G.LeaderPlanner) {
             sh.s.shape.x = sh.s.x;
             sh.s.shape.y = sh.s.y;
           }
-          for (let i = flying.length - 1; i >= 0; i--)
-            if (G.Game.st.time >= flying[i].until) {
-              const L = G.MoveSim.list();
-              if (L.indexOf(flying[i].s) >= 0) L.splice(L.indexOf(flying[i].s), 1);
-              flying.splice(i, 1);
+          for (let i = flying.length - 1; i >= 0; i--) {
+            const sh = flying[i],
+              on = a.team.active;
+            if (on && !on.dead && G.U.dist(sh.s.x, sh.s.y, on.x, on.y) <= sh.s.shape.r + (on.r || 0)) {
+              if (sh.main) {
+                mainShots++;
+                mainThrough++;
+              }
+              spend(i);
+            } else if (G.Game.st.time >= sh.until) {
+              if (sh.main) mainShots++;
+              spend(i);
             }
+          }
           frame();
           human.hp = 100; // you never faint in a duel
           const got = counting.n;
@@ -2521,7 +2542,8 @@ if (G.LeaderPlanner) {
         youActive = 0;
         counting = null;
         Object.assign(human, { hp: 1e6, maxHp: 1e6 });
-        return { ai, done, mainCasts, hits, punish, rate: mainCasts ? punish / mainCasts : 0 };
+        const avoided = mainShots ? (mainShots - mainThrough) / mainShots : 0;
+        return { ai, done, mainCasts, mainShots, mainThrough, avoided, hits, punish, rate: mainCasts ? punish / mainCasts : 0 };
       };
       // Bait emerges: a bait plan whose draw (or wait for your Ember), dodge and use steps all completed, in order, and hits during
       // Ember's cooldown
@@ -2535,27 +2557,43 @@ if (G.LeaderPlanner) {
           .filter((run) => /(draw|waitYours) dodge (\w+ )*?use/.test(run + ' ')).length;
       const r = duel();
       const completed = baitRuns(r.done);
-      blocked(completed >= 1, '16e: Bait emerges: Brock completes a draw (or wait for your Ember), dodge, use plan (' + completed + ' times; Ember cast ' + r.mainCasts + ' times)', 59);
+      // BLOCKED on #60 (Jess, 2026-11-09): Bait is parked, since the planner never finds a planned dodge worth it at these cooldowns
+      blocked(completed >= 1, '16e: Bait emerges: Brock completes a draw (or wait for your Ember), dodge, use plan (' + completed + ' times; Ember cast ' + r.mainCasts + ' times)', 60);
       ok(r.punish >= 1, '16e: and lands hits while Ember cools: ' + r.punish + ' of ' + r.hits + ' hits');
       // the planned dodge goes through the bag and reflex: every dodge press follows a read threat by reflex or more
       const notes = r.ai.log,
         early = notes.filter((d) => d.act === 'dodge' && d.serial != null && !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read));
       ok(early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' did not');
-      // counter-play: cycling slots is punished less than staying on one (Fire Blast, cycled with Ember)
-      const stay = duel({ main: 'fire-blast', alt: 'ember', secs: 40 }),
-        cyc = duel({ main: 'fire-blast', alt: 'ember', secs: 40, cycle: true });
-      blocked(cyc.punish < stay.punish, '16e: counter-play: cycling Fire Blast and Ember is punished less during Fire Blast\'s cooldown than staying on it: ' + cyc.punish + ' vs ' + stay.punish + ' (hits ' + cyc.hits + ' vs ' + stay.hits + ')', 59);
-      // learning: the punish rate in fight 3 of a run beats fight 1 (run memory keeps the cooldown window between fights)
-      G.GymArena.reset();
-      G.LeaderMemory.start();
-      const f1 = duel({ main: 'fire-blast', alt: 'ember' });
-      G.GymArena.reset();
-      duel({ main: 'fire-blast', alt: 'ember' });
-      G.GymArena.reset();
-      const f3 = duel({ main: 'fire-blast', alt: 'ember' });
-      G.GymArena.reset();
-      G.LeaderMemory.end();
-      blocked(f3.rate > f1.rate, '16e: learning: fight 3 punishes Fire Blast more often than fight 1: ' + f3.rate.toFixed(3) + ' vs ' + f1.rate.toFixed(3), 59);
+      // counter-play: cycling slots gets more of your Fire Blasts through than staying on it (cycling keeps his window for it wide).
+      // Each side sums several seeded duels, since one duel holds only about a dozen Fire Blasts and one dodge would flip it.
+      const SEEDS = [7, 11, 13, 17, 19],
+        pct = (x) => Math.round(x * 100) + '%',
+        sum = (runs) => {
+          const shots = runs.reduce((t, r) => t + r.mainShots, 0),
+            through = runs.reduce((t, r) => t + r.mainThrough, 0);
+          return { shots, avoided: shots ? (shots - through) / shots : 0 };
+        },
+        stay = sum(SEEDS.map((duelSeed) => duel({ main: 'fire-blast', alt: 'ember', secs: 40, duelSeed }))),
+        cyc = sum(SEEDS.map((duelSeed) => duel({ main: 'fire-blast', alt: 'ember', secs: 40, cycle: true, duelSeed })));
+      ok(cyc.shots > 0 && stay.shots > 0 && cyc.avoided < stay.avoided, '16e: counter-play: cycling Fire Blast and Ember gets more Fire Blasts through than staying on it: he avoids ' + pct(cyc.avoided) + ' of ' + cyc.shots + ' vs ' + pct(stay.avoided) + ' of ' + stay.shots);
+      // learning: fight 3 of a run avoids a bigger share of your Fire Blasts than fight 1 (run memory keeps the cooldown window),
+      // one run per seed
+      const firsts = [],
+        thirds = [];
+      for (const duelSeed of SEEDS) {
+        G.GymArena.reset();
+        G.LeaderMemory.start();
+        firsts.push(duel({ main: 'fire-blast', alt: 'ember', duelSeed }));
+        G.GymArena.reset();
+        duel({ main: 'fire-blast', alt: 'ember', duelSeed });
+        G.GymArena.reset();
+        thirds.push(duel({ main: 'fire-blast', alt: 'ember', duelSeed }));
+        G.GymArena.reset();
+        G.LeaderMemory.end();
+      }
+      const f1 = sum(firsts),
+        f3 = sum(thirds);
+      ok(f1.shots > 0 && f3.shots > 0 && f3.avoided > f1.avoided, '16e: learning: fight 3 avoids more of your Fire Blasts than fight 1: ' + pct(f3.avoided) + ' of ' + f3.shots + ' vs ' + pct(f1.avoided) + ' of ' + f1.shots);
       // determinism: one seed, one trace
       const t1 = [],
         t2 = [];

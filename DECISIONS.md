@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-09, #59: a reflex dodge weighs the plan it would break; duels count shots avoided; Bait parked (Jess)](docs/decisions/2026-11-09-59-reflex-weighs-the-plan-bait-parked.md), build #59
 - [2026-11-09, #52 build: a swap's matchup over the long window, the duels' shape, planner cost (Jess)](docs/decisions/2026-11-09-52-swap-matchup-window-and-duels.md), build #52
 - [2026-11-09, #52 opening: stall guards stay gates, the planned dodge's cost, what a swap is worth (Jess)](docs/decisions/2026-11-09-52-opening-stall-guards-dodge-cost-swap-value.md), build #52
 - [2026-11-09, #51 build calls (a) to (d) approved; the two planner gaps filed (Jess)](docs/decisions/2026-11-09-51-build-calls-approved.md), built in #51, gaps #57 #58

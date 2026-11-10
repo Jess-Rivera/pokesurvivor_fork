@@ -1,5 +1,5 @@
 // Mutation check for Leader AI slices 2 (#31, swap and dodge decisions), 3 (#32, confidence, pacing, triggers and lines), 4
-// (#33, run memory and the lead read), 5a (#34), #40 (the leader's frame takes your shape) and #50 (Belief, the cooldown window) (Node only; not a harness, so tools/check.js does not run it).
+// (#33, run memory and the lead read), 5a (#34), #40 (the leader's frame takes your shape), #50 (Belief, the cooldown window) and #52 to #59 (the planner actions, the reflex) (Node only; not a harness, so tools/check.js does not run it).
 // Usage from the repo root:  node docs/proposals/leader-ai-mutate.js
 // Each mutation breaks one file in one deliberate way, writes the copy to a temp folder, and runs leader-ai-harness.js against it
 // (LA_<FILE>). The harness must fail every time; a miss is a gap, a stale pattern is reported as STALE.
@@ -140,6 +140,9 @@ const M = [
   ['a dodge ignores reflex', PL, 'if (distance / threat.travelSpeed < (world.reflex || 0) - EPS) return 0;', ''],
   ['the swap gate ignores minField', AI, "if (this.swapGate() && !(this.expectYou && this.swapGate() === 'minField')) return false;", "if (this.swapGate() === 'swapLimit') return false;"],
   ['the reflex keep check is off', AI, 'if (k.hit < k.keep - LeaderAI.EPS) {', 'if (false) {'],
+  // #59: a reflex dodge weighs the plan it would break (decision 2026-11-09-59-reflex-weighs-the-plan-bait-parked)
+  ['a reflex spends the plan\'s charge', AI, 'keptBack = S.dodgeReserve + (planWorth > 0 ? 1 : 0);', 'keptBack = S.dodgeReserve;'],
+  ['the plan is worth nothing', AI, 'return ahead ? Math.max(0, (plan.value || 0) - (plan.cost || 0)) : 0;', 'return 0;'],
   ['the read still forces a swap', AI, 'this.expectYou = you; // #52', 'this.requestSwap(best.j); // #52'],
   ['no sideways escape', PL, 'escape = you.sidewaysSpeed * (move.tell + flight) + aimError,', 'escape = aimError,'],
   ['Finish counts its damage twice', PL, "costOf(world, goal, steps, goal !== 'finish')", 'costOf(world, goal, steps)'],

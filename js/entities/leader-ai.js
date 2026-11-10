@@ -44,6 +44,8 @@
  * triggers, the low HP save), the gap-closing dodge and the lead read's forced swap. A reflex dodge (a threat no plan expected) that
  * would spend down to dodgeReserve is a score: your hit x the current goal's damage-taken weight x risk against the kept-back worth
  * (your best hit x TUNE.keepCharge). A planned dodge is the watch's answer to its own move, without that check.
+ * #59: while the running plan still has a Dodge your shot step ahead, a reflex dodge that would spend the charge that step needs
+ * weighs your hit against what the plan is worth (its value minus its cost), since spending the charge breaks the plan.
  */
 G.LeaderAI = class LeaderAI {
   /** @param members the leader mons it drives, in slot order; @param team their G.Team, or null for a lone mon */
@@ -636,10 +638,17 @@ G.LeaderAI = class LeaderAI {
     }
     const x = this.expect,
       planned = !!x && !x.done && x.moveId === th.moveId;
-    if (!planned && ready - 1 <= S.dodgeReserve) {
-      const k = this.keepScore(th);
-      if (k.hit < k.keep - LeaderAI.EPS) {
-        this.note('dodge', 'kept for later: ' + th.moveId + ' ' + k.hit.toFixed(3) + ' under ' + k.keep.toFixed(3));
+    const planWorth = planned ? 0 : this.plannedDodgeWorth(),
+      keptBack = S.dodgeReserve + (planWorth > 0 ? 1 : 0);
+    if (!planned && ready - 1 <= keptBack) {
+      const k = this.keepScore(th),
+        keep = ready - 1 <= S.dodgeReserve ? Math.max(k.keep, planWorth) : planWorth;
+      if (k.hit < keep - LeaderAI.EPS) {
+        const forWhat = keep === planWorth ? ' (kept for the plan)' : '';
+        this.note(
+          'dodge',
+          'kept for later: ' + th.moveId + ' ' + k.hit.toFixed(3) + ' under ' + keep.toFixed(3) + forWhat
+        );
         return;
       }
     }
@@ -647,6 +656,17 @@ G.LeaderAI = class LeaderAI {
     e.heading = this.dodgeDir(e, th);
     this.dodgeAnswer = true;
     this.note('dodge', (planned ? 'planned, ' : '') + 'pressed against ' + th.moveId, { serial: th.serial });
+  }
+  /** #59 REFLEX: what the running plan is worth (its value minus its cost) while it still has a Dodge your shot step ahead that has
+   *  not been answered; 0 when it has none, or when the plan is worth nothing. */
+  plannedDodgeWorth() {
+    const plan = this.plan,
+      x = this.expect;
+    if (!plan) return 0;
+    const ahead = plan.steps.some(
+      (s, i) => i >= plan.at && s.verb === 'dodge' && !(x && x.plan === plan && x.at === i && x.done)
+    );
+    return ahead ? Math.max(0, (plan.value || 0) - (plan.cost || 0)) : 0;
   }
   /** #52 REFLEX: a dodge that would spend down to dodgeReserve, as a score: your hit (its size on the planner's last world, your
    *  best hit when it is not there) x the current goal's damage-taken weight x risk, against the charge kept back (your best hit x
