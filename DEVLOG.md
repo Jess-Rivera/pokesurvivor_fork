@@ -275,3 +275,9 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Found while building: the matchup swap never won at range (no trade inside 4 steps), fixed by the long-window term; a dash or planned dodge lost its step when a replan kept it; a Recover planned asleep crashed.
 - Three duels (Bait, counter-play, learning) blocked on #59: reflex dodges starve the planned one, and his landed hits cannot depend on what you do. Planner ~3.4 ms per choice, 10.4 ms worst (accepted, watch at the feel test).
 - Jess feel-tested: working as intended; #52 closed. Default weights (all 1) move, dodge and retreat a lot and attack less: noted on #39 for authoring.
+
+## 2026-11-09 (Claude Code, home), #59 built (reflex weighs the plan; duels count shots avoided)
+- Opening agreed in plain terms: Brock's reflex dodges spend his charges before a planned dodge can use one. Jess: weigh it (not a hard hold); the duels count the share of Fire Blasts avoided (decision 2026-11-09-59-reflex-weighs-the-plan-bait-parked).
+- Test first: 16e counter-play and learning count Fire Blasts avoided, summed over 5 seeds (one duel held only ~12 shots). Built: a reflex dodge that would use a planned dodge's charge goes only if your hit beats the plan's worth.
+- Result: counter-play 20% vs 26% (was 27 vs 26), learning 29% vs 24%; both pass. Found: the planner never plans a dodge at all (0 in 5 seeds even vs Fire Blast), so Bait was parked on #60 (Jess: cooldowns sit in 0 to 2.5 s).
+- Two mutations added; the mutation run skipped (Jess). #53's stale blocked label removed. Stopped at: #59 in Needs Playtest; #53 next.
