@@ -4,22 +4,22 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Next (from the 2026-11-09 #59 session, on feature/gym-leader-ai)
-1. Feel test #59 (Needs Playtest), then #53, then #39 (its feel-test tuning note is on #39). #60: Bait ruling (parked).
-   Planner gaps #57, #58. Any time: #44 (leader flat moves on you). #46 (explicit sides). Roster UI #35 can read
-   G.GymArena.leaderInfo.rosters(). Item reveals #36 (blocked on an item rework).
-2. #56 refresh 42 stale mutation patterns.
-3. #48 research: HumanPlayer rules out of game.js into their own files (findings doc first).
-4. #38 swap keeps moves already in flight (all Player entities; its own plan and harness).
-5. #28, the improve-codebase-architecture skill (ready). #29 needs Jess to sort settled from superseded CP1 rulings.
+## Next (from the 2026-11-10 #61 / #64 session, on feature/leader-roster-ui)
+1. HUD (#35): rest of #61 (shapes, motion and sizes for the remaining panels, going panel by panel from the wireframe).
+   Then #62, #63, #65 to #67 as #61 settles each. Owed by Jess: the #64 frame-rate check on the work laptop.
+2. SV type colours: #68 (game-wide G.U.TYPE_COLOR), #69 (gym building recolour).
+3. #71: Jess settles the non-major status icon animations (the Offsets.png head-point idea is noted there).
+4. Leader AI (carried from gym-leader-ai): feel test #59, then #53, then #39. #60 Bait ruling. Planner gaps #57, #58.
+   Any time: #44, #46. Item reveals #36 (blocked).
+5. #56 stale mutation patterns. #48 research. #38 swap keeps moves in flight. #28 (ready), #29 (needs Jess).
 6. #24 real gym loop counter. Chore for Jess: delete merged branches (the assistant lists them).
-The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30 (branch rules); not a task now.
+The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30; not a task now.
 
 ## Open issues by area (numbers only, titles via gh)
-- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #59 #60
+- UI and HUD: #25 #35 #61 #62 #63 #65 #66 #67 #68 #71
+- Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #59 #60 #69
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48 #56
-- UI: #25 #35
 - Items: #36
 - Bugs: #16 #18
 - Docs: #28 #29
