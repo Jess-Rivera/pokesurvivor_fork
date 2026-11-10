@@ -8,6 +8,10 @@ G.HUD = (() => {
   // Silver, run timer) is on the HTML overlay (js/ui/hud-player-panel.js). Set each frame in draw(); while false (the
   // overlay's libraries failed to load) the canvas keeps drawing its old pieces.
   let overlayDrawsPlayer = false;
+  // #63: the team roster, held items and berry bag (js/ui/hud-roster-panel.js) and the run item column
+  // (js/ui/hud-run-items-panel.js) are on the overlay too; the same fallback applies.
+  let overlayDrawsRoster = false,
+    overlayDrawsRunItems = false;
 
   /**
    * How much of a move's cooldown is left, 0 (ready) to 1, for its icon's shade. Shared with the overlay's move slots.
@@ -567,6 +571,8 @@ G.HUD = (() => {
     const touch = G.Touch.active;
 
     overlayDrawsPlayer = !!(G.HudPlayerPanel && G.HudPlayerPanel.ready);
+    overlayDrawsRoster = !!(G.HudRosterPanel && G.HudRosterPanel.ready);
+    overlayDrawsRunItems = !!(G.HudRunItemsPanel && G.HudRunItemsPanel.ready);
 
     // ---------- barra de experiencia (borde superior; #62: the overlay's portrait ring replaces it) ----------
     if (!overlayDrawsPlayer) {
@@ -587,9 +593,12 @@ G.HUD = (() => {
     if (!overlayDrawsPlayer) drawHpStrip(ctx, w, h, pl, safeB);
 
     // ---------- team strip (lower-left, only with a real team) ----------
-    const teamRight = drawTeam(ctx, w, h);
-    const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
-    drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+    if (overlayDrawsRoster) drawBuffs(ctx, h, pl, G.HudRosterPanel.buffsLeft());
+    else {
+      const teamRight = drawTeam(ctx, w, h);
+      const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
+      drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);
+    }
 
     // ---------- Silver (top-left; hidden in co-op until co-op shops exist, the co-op panel uses this corner) ----------
     if (!G.Coop.active && !overlayDrawsPlayer) {
@@ -1062,7 +1071,7 @@ G.HUD = (() => {
 
     // ---------- run items (team-wide): a 1-wide column, bottom-right, mirroring the team column. ONLY unlocked slots are drawn
     // (G.Items.runSlots: 1 by default, up to 4). Slot 1 sits at the bottom and each unlocked slot stacks above it. ----------
-    {
+    if (!overlayDrawsRunItems) {
       const nSlots = G.Items.runSlots(G.DB.save),
         GAPR = 10,
         list = pl.runItems || [];

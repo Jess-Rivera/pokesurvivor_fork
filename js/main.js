@@ -77,6 +77,8 @@
     'HudOverlay',
     'HudBossPanel',
     'HudPlayerPanel',
+    'HudRosterPanel',
+    'HudRunItemsPanel',
     'Confetti',
     'Sheet',
     'MenuUI',

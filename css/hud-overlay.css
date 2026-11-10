@@ -236,17 +236,26 @@
   image-rendering: pixelated;
 }
 
-/* held item: the B2 bag button with the item's icon at 1x */
+/* held item: the B2 bag button with the item's icon at 1x (the kit's ItemSquare; the roster and berry bag use it too) */
 .hud-item {
   width: 40px;
   height: 40px;
 }
+.hud-item-square {
+  position: relative;
+}
+.hud-item-square svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
 .hud-item-icon {
   position: absolute;
-  left: 4px;
-  top: 4px;
+  left: 50%;
+  top: 50%;
   width: 32px;
   height: 32px;
+  margin: -16px 0 0 -16px;
   image-rendering: pixelated;
 }
 
@@ -482,6 +491,121 @@
 }
 .hud-silver-count {
   transform-origin: 100% 100%;
+}
+
+/* ---------- team roster, held items and berry bag (#63): pieces placed from the screen's bottom left ---------- */
+.hud-roster {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+.hud-roster > * {
+  position: absolute;
+}
+.hud-roster-row > * {
+  position: absolute;
+}
+.hud-roster-row > svg {
+  left: 0;
+  top: 0;
+}
+.hud-roster-fill {
+  transform-origin: 0 0;
+}
+.hud-roster-face {
+  /* the portrait in a circle: 40 px at 1x inside a 2 px stroke, as the leader circles */
+  box-sizing: border-box;
+  border: 2px solid #101010;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #101010;
+}
+.hud-roster-face img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+.hud-roster-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #101010;
+  opacity: 0;
+}
+.hud-roster-row.is-fainted .hud-roster-face::after {
+  opacity: 0.65; /* darkly dimmed, as the leader circles */
+}
+.hud-roster-row.is-fainted .hud-roster-name {
+  opacity: 0.5;
+}
+.hud-roster-chips {
+  display: flex;
+  justify-content: flex-end;
+}
+.hud-roster-cooldown {
+  /* the swap cooldown: a dark shade over the whole box, its right edge moving left as the cooldown runs out */
+  inset: 0;
+}
+.hud-roster-cooldown > div {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 16, 16, 0.6);
+  transform-origin: 0 0;
+}
+.hud-roster-key {
+  left: -2px;
+  top: 0;
+}
+.hud-roster-held,
+.hud-berry {
+  position: absolute;
+}
+
+/* ---------- run items (#63): pieces placed from the screen's bottom right ---------- */
+.hud-run-items {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+.hud-run-items > * {
+  position: absolute;
+}
+.hud-run-item > * {
+  position: absolute;
+}
+.hud-run-item > svg {
+  left: 0;
+  top: 0;
+}
+.hud-run-icon canvas {
+  display: block;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.hud-run-text {
+  display: flex;
+  align-items: center;
+  white-space: normal;
+  overflow: hidden;
+}
+.hud-run-text span {
+  /* at most two lines, cut with an ellipsis */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  padding: 2px; /* room for the text outline inside the clip */
+  line-clamp: 2;
+  overflow: hidden;
+}
+.hud-run-text.is-live {
+  color: #00baf3; /* a live tracker in the EXP blue, as the canvas column's cyan */
 }
 
 /* level-up confetti (js/ui/confetti.js): its own layer above the screens (.scr is 20), never catching the pointer */

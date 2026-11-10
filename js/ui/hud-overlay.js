@@ -6,6 +6,8 @@
  * portraits) and runs the per-frame read. Panels live in their own files and register with addPanel():
  *   js/ui/hud-boss-panel.js    the enemy name bar and leader portrait circles (#64)
  *   js/ui/hud-player-panel.js  the character info panel, bottom centre (#62)
+ *   js/ui/hud-roster-panel.js  the team roster, held items and berry bag, lower left (#63)
+ *   js/ui/hud-run-items-panel.js  the run item column, lower right (#63)
  *
  * Read only: G.HudOverlay.sync(inRun) runs once per frame from G.Game after the canvas is drawn. Each panel copies what it
  * shows into signals and never writes game state. Unchanged values touch nothing on the page.
@@ -40,8 +42,15 @@ G.HudOverlay = (() => {
     expShade: '#00799a',
     lvFill: '#f3b200',
     lvShade: '#9a6110',
+    lvDark: '#6d5000', // the Lv yellow at 45% (HUD-STYLE "Ramps for new colours"): the run item box's corner shade
     cursor: '#fff000', // Title yellow: the B2 selection cursor
+    trackEdge: '#313131', // the roster HP track's frame (b2-lower Y16 to Z16)
+    labelLight: '#b5b5b5', // the roster "HP" label's light grey
+    paperEdge: '#848484', // the roster "HP" label's shade, and the run item icon patch's edge (b2-lower AD4 to AG5)
+    paper: '#e7e7e7', // the run item icon patch
   };
+  // A fainted roster row's rim: the greys of the panel, as a type ramp (HUD-STYLE "Roster rows").
+  const FAINTED_RIM = { light: PALETTE.trackLight, base: PALETTE.slate, dark: PALETTE.checker };
   const HP_COLOURS = {
     high: { fill: '#00fb49', shade: '#008a28' },
     middle: { fill: '#f3b200', shade: '#9a6110' },
@@ -95,6 +104,215 @@ G.HudOverlay = (() => {
     >
       ${rectangles}
     </svg>`;
+  }
+
+  // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
+  function bagButtonRow(row, artSize, rimColour) {
+    const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
+      left = chamfer,
+      right = artSize - 1 - chamfer;
+    if (row === 0 || row === artSize - 1) return [[left, right - left + 1, PALETTE.outline]];
+    if (row === 1 || row === artSize - 2)
+      return [
+        [left, 1, PALETTE.outline],
+        [left + 1, right - left - 1, rimColour],
+        [right, 1, PALETTE.outline],
+      ];
+    return [
+      [left, 1, PALETTE.outline],
+      [left + 1, 1, rimColour],
+      [left + 2, right - left - 3, BAR_CHECKER],
+      [right - 1, 1, rimColour],
+      [right, 1, PALETTE.outline],
+    ];
+  }
+
+  /**
+   * An item icon (Pokesprite cell or app icon, through G.Icons.draw) painted on a small canvas at 1x. It paints on a change,
+   * then again at 0.5, 1, 2 and 4 s, since a Pokesprite cell paints only once its sheet has loaded.
+   */
+  function IconCanvas({ icon, size, className }) {
+    const canvasRef = preactHooks.useRef(null);
+    preactHooks.useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return undefined;
+      const paint = () => {
+        const context = canvas.getContext('2d');
+        context.imageSmoothingEnabled = false;
+        context.clearRect(0, 0, size, size);
+        if (icon) G.Icons.draw(context, icon, 0, 0, size);
+      };
+      paint();
+      const timers = [500, 1000, 2000, 4000].map((delay) => setTimeout(paint, delay));
+      return () => timers.forEach(clearTimeout);
+    }, [icon, size]);
+    return html`<canvas class=${className || ''} width=${size} height=${size} ref=${canvasRef}></canvas>`;
+  }
+
+  /**
+   * The held item square: the bag button with the item's icon at 1x in its centre; the Lv yellow rim when it holds
+   * something, slate when empty (HUD-STYLE "Character info panel"). artSize is in 2 px art pixels.
+   */
+  function ItemSquare({ icon, artSize }) {
+    const size = artSize * 2,
+      rim = icon ? PALETTE.lvFill : PALETTE.slate;
+    return html`<div class="hud-item-square" style=${{ width: size + 'px', height: size + 'px' }}>
+      <${PixelShape}
+        artWidth=${artSize}
+        artRows=${artSize}
+        artPixel=${2}
+        paintRow=${(row) => bagButtonRow(row, artSize, rim)}
+      />
+      ${icon ? html`<${IconCanvas} icon=${icon} size=${32} className="hud-item-icon" />` : null}
+    </div>`;
+  }
+
+  // ---------- the B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline ----------
+  function CursorCorner({ corner }) {
+    const size = 7;
+    // one continuous yellow L inside one unbroken outline (row 2 keeps the yellow at the corner)
+    const rows = (row) => {
+      if (row === 0) return [[0, size, PALETTE.outline]];
+      if (row === 2)
+        return [
+          [0, 1, PALETTE.outline],
+          [1, 1, PALETTE.cursor],
+          [2, size - 2, PALETTE.outline],
+        ];
+      if (row === 1)
+        return [
+          [0, 1, PALETTE.outline],
+          [1, size - 2, PALETTE.cursor],
+          [size - 1, 1, PALETTE.outline],
+        ];
+      if (row === size - 1) return [[0, 3, PALETTE.outline]];
+      return [
+        [0, 1, PALETTE.outline],
+        [1, 1, PALETTE.cursor],
+        [2, 1, PALETTE.outline],
+      ];
+    };
+    return html`<div class=${'hud-cursor hud-cursor-' + corner}>
+      <${PixelShape} artWidth=${size} artRows=${size} artPixel=${2} paintRow=${rows} />
+    </div>`;
+  }
+  const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+  const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
+
+  // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn ----------
+  const CHIP_STYLES = {
+    sleep: { label: 'SLP', fill: '#848484', shade: '#4a4a4a' },
+    poison: { label: 'PSN', fill: '#d631de', shade: '#6b2942' },
+    toxic: { label: 'PSN', fill: '#d631de', shade: '#391042' },
+    burn: { label: 'BRN', fill: '#e75a4a', shade: '#b50000' },
+    freeze: { label: 'FRZ', fill: '#218cf7', shade: '#005a8c' },
+    paralysis: { label: 'PAR', fill: '#efad00', shade: '#ad6b00' },
+  };
+  const hasChip = (statusKey) => !!CHIP_STYLES[statusKey];
+  // Chip outline: the B2 capsule buttons (b2-lower Y17 to Z17), stepped corners at the rip's 12 rows. Each entry is how
+  // many art pixels that row's edge sits in from the chip's sides. The shade rim is 2 art pixels thick (Jess, 2026-11-10:
+  // the shade border made thicker, in place of the rip's dark outline); the fill is the outline shrunk by the rim.
+  const CHIP_ART_PIXEL = 2,
+    CHIP_WIDTH = 70,
+    CHIP_EDGE_INSETS = [2, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2],
+    CHIP_RIM_ART = 2,
+    CHIP_ART_WIDTH = CHIP_WIDTH / CHIP_ART_PIXEL,
+    CHIP_ART_ROWS = CHIP_EDGE_INSETS.length;
+  // Per row: the fill's inset from each side (a pixel is fill when every pixel within the rim's reach is inside the
+  // outline), or null for a row that is all rim.
+  const CHIP_FILL_INSETS = CHIP_EDGE_INSETS.map((_, row) => {
+    if (row < CHIP_RIM_ART || row >= CHIP_ART_ROWS - CHIP_RIM_ART) return null;
+    let deepest = 0;
+    for (let near = row - CHIP_RIM_ART; near <= row + CHIP_RIM_ART; near++)
+      deepest = Math.max(deepest, CHIP_EDGE_INSETS[near]);
+    return deepest + CHIP_RIM_ART;
+  });
+  const chipShapeRows = (fill, shade) => (row) => {
+    const edge = CHIP_EDGE_INSETS[row],
+      inner = CHIP_FILL_INSETS[row];
+    if (inner == null) return [[edge, CHIP_ART_WIDTH - 2 * edge, shade]];
+    return [
+      [edge, inner - edge, shade],
+      [inner, CHIP_ART_WIDTH - 2 * inner, fill],
+      [CHIP_ART_WIDTH - inner, inner - edge, shade],
+    ];
+  };
+  // The sliding glow stays on the fill: clipped to the fill's stepped outline, in screen pixels.
+  const CHIP_FILL_CLIP = (() => {
+    const rows = CHIP_FILL_INSETS.map((inset, row) => ({ inset, row })).filter((entry) => entry.inset != null),
+      leftSide = [],
+      rightSide = [];
+    for (const { inset, row } of rows) {
+      const top = row * CHIP_ART_PIXEL,
+        bottom = (row + 1) * CHIP_ART_PIXEL,
+        left = inset * CHIP_ART_PIXEL,
+        right = CHIP_WIDTH - inset * CHIP_ART_PIXEL;
+      leftSide.push(left + 'px ' + top + 'px', left + 'px ' + bottom + 'px');
+      rightSide.unshift(right + 'px ' + top + 'px', right + 'px ' + bottom + 'px');
+    }
+    return 'polygon(' + leftSide.concat(rightSide).join(', ') + ')';
+  })();
+  // The timer bar runs along the lowest fill row, inside the cut corners.
+  const CHIP_TIMER_PLACE = (() => {
+    const lowestRow = CHIP_ART_ROWS - CHIP_RIM_ART - 1,
+      inset = CHIP_FILL_INSETS[lowestRow] * CHIP_ART_PIXEL;
+    return {
+      left: inset + 'px',
+      width: CHIP_WIDTH - 2 * inset + 'px',
+      bottom: CHIP_RIM_ART * CHIP_ART_PIXEL + 'px',
+    };
+  })();
+
+  /** One chip: { key, label, fill, shade, timer (0 to 1, or null) }. */
+  function Chip({ chip }) {
+    return html`<div class="hud-chip">
+      <${PixelShape}
+        artWidth=${CHIP_ART_WIDTH}
+        artRows=${CHIP_ART_ROWS}
+        artPixel=${CHIP_ART_PIXEL}
+        paintRow=${chipShapeRows(chip.fill, chip.shade)}
+        className="hud-chip-shape"
+      />
+      <span class="hud-text">${chip.label}</span>
+      <div class="hud-chip-glow" style=${{ clipPath: CHIP_FILL_CLIP }}></div>
+      ${
+        chip.timer != null
+          ? html`<div
+              class="hud-chip-timer"
+              style=${{ ...CHIP_TIMER_PLACE, transform: `scaleX(${chip.timer})` }}
+            ></div>`
+          : null
+      }
+    </div>`;
+  }
+
+  /**
+   * Reads one Pokemon's chips each frame. Each reader remembers the time each status started with (the highest seen since
+   * it appeared), so the timer bar runs from full to empty. read(entity) returns { chips, key }; key changes only when
+   * what the chips show changes (timers rounded to the bar's 35 art pixels).
+   */
+  function createChipReader() {
+    const statusPeak = {};
+    return function read(entity) {
+      const list = G.Status.list(entity).filter((status) => hasChip(status.k));
+      for (const key in statusPeak) if (!list.some((status) => status.k === key)) delete statusPeak[key];
+      const chips = list.map((status) => {
+        if (status.t != null) statusPeak[status.k] = Math.max(statusPeak[status.k] || 0, status.t);
+        const style = CHIP_STYLES[status.k];
+        const timer =
+          status.t != null && statusPeak[status.k] > 0
+            ? Math.max(0, Math.min(1, status.t / statusPeak[status.k]))
+            : null;
+        return {
+          key: status.k,
+          label: style.label,
+          fill: style.fill,
+          shade: style.shade,
+          timer: timer == null ? null : Math.round(timer * CHIP_ART_WIDTH) / CHIP_ART_WIDTH,
+        };
+      });
+      return { chips, key: chips.map((chip) => chip.key + ':' + chip.timer).join('|') };
+    };
   }
 
   // ---------- the B2 dark HP bar (b2-upper A1 to L3, HUD-STYLE "Enemy name bar"), at any art-pixel size ----------
@@ -357,7 +575,16 @@ G.HudOverlay = (() => {
     TYPE_CHECKER,
     SLOT_GRID,
     BAR_ART_ROWS,
+    FAINTED_RIM,
     PixelShape,
+    bagButtonRow,
+    IconCanvas,
+    ItemSquare,
+    Cursor,
+    CHIP_STYLES,
+    hasChip,
+    Chip,
+    createChipReader,
     createLifeBar,
     portraitSource,
     portraitFallback,

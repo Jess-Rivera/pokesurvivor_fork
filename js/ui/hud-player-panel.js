@@ -12,7 +12,8 @@
 G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
-  const { html, signal, hooks, PALETTE, BAR_CHECKER, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
+  const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
+  const { ItemSquare, Cursor, Chip, hasChip, createChipReader } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
@@ -43,69 +44,6 @@ G.HudPlayerPanel = (() => {
   // Bonded slots: the bond colour (#ff8ad8, the game's bond pink) ramped as HUD-STYLE "Ramps for new colours".
   const BOND_RIM = { light: '#ffd3f1', base: '#ff8ad8', dark: '#8c4c77' };
   const EMPTY_RIM = { light: PALETTE.checker, base: PALETTE.frame, dark: PALETTE.frame }; // the B2 disabled button (b2-lower V4)
-
-  // Status chips: the major statuses plus poison, bad poison and burn (HUD-STYLE "Status chips"), as B2's tags.
-  const CHIP_STYLES = {
-    sleep: { label: 'SLP', fill: '#848484', shade: '#4a4a4a' },
-    poison: { label: 'PSN', fill: '#d631de', shade: '#6b2942' },
-    toxic: { label: 'PSN', fill: '#d631de', shade: '#391042' },
-    burn: { label: 'BRN', fill: '#e75a4a', shade: '#b50000' },
-    freeze: { label: 'FRZ', fill: '#218cf7', shade: '#005a8c' },
-    paralysis: { label: 'PAR', fill: '#efad00', shade: '#ad6b00' },
-  };
-  const hasChip = (statusKey) => !!CHIP_STYLES[statusKey];
-
-  // Chip outline: the B2 capsule buttons (b2-lower Y17 to Z17), stepped corners at the rip's 12 rows. Each entry is how
-  // many art pixels that row's edge sits in from the chip's sides. The shade rim is 2 art pixels thick (Jess, 2026-11-10:
-  // the shade border made thicker, in place of the rip's dark outline); the fill is the outline shrunk by the rim.
-  const CHIP_EDGE_INSETS = [2, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2],
-    CHIP_RIM_ART = 2,
-    CHIP_ART_WIDTH = CHIPS.width / ART_PIXEL,
-    CHIP_ART_ROWS = CHIP_EDGE_INSETS.length;
-  // Per row: the fill's inset from each side (a pixel is fill when every pixel within the rim's reach is inside the
-  // outline), or null for a row that is all rim.
-  const CHIP_FILL_INSETS = CHIP_EDGE_INSETS.map((_, row) => {
-    if (row < CHIP_RIM_ART || row >= CHIP_ART_ROWS - CHIP_RIM_ART) return null;
-    let deepest = 0;
-    for (let near = row - CHIP_RIM_ART; near <= row + CHIP_RIM_ART; near++)
-      deepest = Math.max(deepest, CHIP_EDGE_INSETS[near]);
-    return deepest + CHIP_RIM_ART;
-  });
-  const chipShapeRows = (fill, shade) => (row) => {
-    const edge = CHIP_EDGE_INSETS[row],
-      inner = CHIP_FILL_INSETS[row];
-    if (inner == null) return [[edge, CHIP_ART_WIDTH - 2 * edge, shade]];
-    return [
-      [edge, inner - edge, shade],
-      [inner, CHIP_ART_WIDTH - 2 * inner, fill],
-      [CHIP_ART_WIDTH - inner, inner - edge, shade],
-    ];
-  };
-  // The sliding glow stays on the fill: clipped to the fill's stepped outline, in screen pixels.
-  const CHIP_FILL_CLIP = (() => {
-    const rows = CHIP_FILL_INSETS.map((inset, row) => ({ inset, row })).filter((entry) => entry.inset != null),
-      leftSide = [],
-      rightSide = [];
-    for (const { inset, row } of rows) {
-      const top = row * ART_PIXEL,
-        bottom = (row + 1) * ART_PIXEL,
-        left = inset * ART_PIXEL,
-        right = CHIPS.width - inset * ART_PIXEL;
-      leftSide.push(left + 'px ' + top + 'px', left + 'px ' + bottom + 'px');
-      rightSide.unshift(right + 'px ' + top + 'px', right + 'px ' + bottom + 'px');
-    }
-    return 'polygon(' + leftSide.concat(rightSide).join(', ') + ')';
-  })();
-  // The timer bar runs along the lowest fill row, inside the cut corners.
-  const CHIP_TIMER_PLACE = (() => {
-    const lowestRow = CHIP_ART_ROWS - CHIP_RIM_ART - 1,
-      inset = CHIP_FILL_INSETS[lowestRow] * ART_PIXEL;
-    return {
-      left: inset + 'px',
-      width: CHIPS.width - 2 * inset + 'px',
-      bottom: CHIP_RIM_ART * ART_PIXEL + 'px',
-    };
-  })();
 
   // Silver: the rolling count and the pop on each gain (as the canvas counter it replaces, Jess 2026-11-05).
   const SILVER_POP = 0.18, // s, the pop settles in this long
@@ -191,58 +129,6 @@ G.HudPlayerPanel = (() => {
     ];
   }
 
-  /** The B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body. */
-  function itemRow(row, rimColour) {
-    const size = ITEM.artSize,
-      chamfer = row < 2 ? 2 - row : row > size - 3 ? row - (size - 3) : 0,
-      left = chamfer,
-      right = size - 1 - chamfer;
-    if (row === 0 || row === size - 1) return [[left, right - left + 1, PALETTE.outline]];
-    if (row === 1 || row === size - 2)
-      return [
-        [left, 1, PALETTE.outline],
-        [left + 1, right - left - 1, rimColour],
-        [right, 1, PALETTE.outline],
-      ];
-    return [
-      [left, 1, PALETTE.outline],
-      [left + 1, 1, rimColour],
-      [left + 2, right - left - 3, BAR_CHECKER],
-      [right - 1, 1, rimColour],
-      [right, 1, PALETTE.outline],
-    ];
-  }
-
-  /** The B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline. */
-  function CursorCorner({ corner }) {
-    const size = 7;
-    // one continuous yellow L inside one unbroken outline (row 2 keeps the yellow at the corner)
-    const rows = (row) => {
-      if (row === 0) return [[0, size, PALETTE.outline]];
-      if (row === 2)
-        return [
-          [0, 1, PALETTE.outline],
-          [1, 1, PALETTE.cursor],
-          [2, size - 2, PALETTE.outline],
-        ];
-      if (row === 1)
-        return [
-          [0, 1, PALETTE.outline],
-          [1, size - 2, PALETTE.cursor],
-          [size - 1, 1, PALETTE.outline],
-        ];
-      if (row === size - 1) return [[0, 3, PALETTE.outline]];
-      return [
-        [0, 1, PALETTE.outline],
-        [1, 1, PALETTE.cursor],
-        [2, 1, PALETTE.outline],
-      ];
-    };
-    return html`<div class=${'hud-cursor hud-cursor-' + corner}>
-      <${PixelShape} artWidth=${size} artRows=${size} artPixel=${ART_PIXEL} paintRow=${rows} />
-    </div>`;
-  }
-
   // ---------- components ----------
   function Portrait() {
     const { dex, shiny } = portrait.value;
@@ -257,24 +143,10 @@ G.HudPlayerPanel = (() => {
     </div>`;
   }
 
-  let itemCanvas = null;
   function HeldItem() {
     const held = item.value;
-    const rim = held ? PALETTE.lvFill : PALETTE.slate;
     return html`<div class="hud-item" style=${place(ITEM.x, ITEM.y)}>
-        <${PixelShape}
-          artWidth=${ITEM.artSize}
-          artRows=${ITEM.artSize}
-          artPixel=${ART_PIXEL}
-          paintRow=${(row) => itemRow(row, rim)}
-        />
-        <canvas
-          class="hud-item-icon"
-          width="32"
-          height="32"
-          ref=${(element) => (itemCanvas = element)}
-          style=${{ visibility: held ? 'visible' : 'hidden' }}
-        ></canvas>
+        <${ItemSquare} icon=${held ? held.icon : null} artSize=${ITEM.artSize} />
       </div>
       ${held ? html`<div class="hud-text hud-item-name" style=${place(ITEM.x, ITEM.nameY)}>${held.name}</div>` : null}`;
   }
@@ -286,28 +158,7 @@ G.HudPlayerPanel = (() => {
 
   function Chips() {
     return html`<div class="hud-chips" style=${place(CHIPS.x, CHIPS.y)}>
-      ${chips.value.map(
-        (chip) =>
-          html`<div key=${chip.key} class="hud-chip">
-            <${PixelShape}
-              artWidth=${CHIP_ART_WIDTH}
-              artRows=${CHIP_ART_ROWS}
-              artPixel=${ART_PIXEL}
-              paintRow=${chipShapeRows(chip.fill, chip.shade)}
-              className="hud-chip-shape"
-            />
-            <span class="hud-text">${chip.label}</span>
-            <div class="hud-chip-glow" style=${{ clipPath: CHIP_FILL_CLIP }}></div>
-            ${
-              chip.timer != null
-                ? html`<div
-                    class="hud-chip-timer"
-                    style=${{ ...CHIP_TIMER_PLACE, transform: `scaleX(${chip.timer})` }}
-                  ></div>`
-                : null
-            }
-          </div>`
-      )}
+      ${chips.value.map((chip) => html`<${Chip} key=${chip.key} chip=${chip} />`)}
     </div>`;
   }
 
@@ -393,13 +244,7 @@ G.HudPlayerPanel = (() => {
       />
       ${wells}
       <span class="hud-text hud-slot-key">${slot.keyLabel}</span>
-      ${
-        slot.active
-          ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'].map(
-              (corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`
-            )
-          : null
-      }
+      ${slot.active ? html`<${Cursor} />` : null}
     </div>`;
   }
 
@@ -467,14 +312,11 @@ G.HudPlayerPanel = (() => {
   }
 
   // ---------- the per-frame read ----------
-  const statusPeak = {}; // seconds each chip's status started with (the highest time seen since it appeared)
+  const readChipsOf = createChipReader();
   const silverState = { shown: -1, target: -1, rate: 0, pop: 0, at: 0, time: 0 };
   let lastSlotsKey = '',
     lastChipsKey = '',
     lastItem = undefined,
-    itemDrawnAt = 0,
-    itemDraws = 0,
-    drawnCanvas = null,
     lastPortraitKey = '',
     lastLevel = 0,
     lastPlayer = null,
@@ -535,48 +377,19 @@ G.HudPlayerPanel = (() => {
   }
 
   function readChips(player) {
-    const list = G.Status.list(player).filter((status) => hasChip(status.k));
-    for (const key in statusPeak) if (!list.some((status) => status.k === key)) delete statusPeak[key];
-    const next = list.map((status) => {
-      if (status.t != null) statusPeak[status.k] = Math.max(statusPeak[status.k] || 0, status.t);
-      const style = CHIP_STYLES[status.k];
-      const timer =
-        status.t != null && statusPeak[status.k] > 0 ? Math.max(0, Math.min(1, status.t / statusPeak[status.k])) : null;
-      return {
-        key: status.k,
-        label: style.label,
-        fill: style.fill,
-        shade: style.shade,
-        timer: timer == null ? null : Math.round(timer * 35) / 35,
-      };
-    });
-    const key = next.map((chip) => chip.key + ':' + chip.timer).join('|');
-    if (key !== lastChipsKey) {
-      lastChipsKey = key;
-      chips.value = next;
+    const read = readChipsOf(player);
+    if (read.key !== lastChipsKey) {
+      lastChipsKey = read.key;
+      chips.value = read.chips;
     }
   }
 
   function readItem(player) {
     const id = player.item || null;
-    const now = performance.now();
-    if (id !== lastItem || itemCanvas !== drawnCanvas) {
-      lastItem = id;
-      drawnCanvas = itemCanvas;
-      const def = id && G.Items.BY[id];
-      item.value = def ? { id, name: def.name, icon: def.icon || id } : null;
-      itemDraws = 0;
-      itemDrawnAt = 0;
-    }
-    // draw the icon on a change, then twice more half a second apart: a Pokesprite cell paints once its sheet has loaded
-    if (item.value && itemCanvas && itemDraws < 3 && now - itemDrawnAt > 500) {
-      const context = itemCanvas.getContext('2d');
-      context.imageSmoothingEnabled = false;
-      context.clearRect(0, 0, 32, 32);
-      G.Icons.draw(context, item.value.icon, 0, 0, 32);
-      itemDraws++;
-      itemDrawnAt = now;
-    }
+    if (id === lastItem) return;
+    lastItem = id;
+    const def = id && G.Items.BY[id];
+    item.value = def ? { id, name: def.name, icon: def.icon || id } : null;
   }
 
   function readSilver(runTime) {

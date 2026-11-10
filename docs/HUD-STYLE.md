@@ -294,6 +294,9 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
 | `b2-lower` Y4 to AB5    | Bag buttons: checker body, chamfered corners, coloured rim                            | Held item square (#62)    |
 | `b2-hpbars` Q16 to AD16 | Status tags: small rectangles, fill inside a 1-pixel shade frame                      | Status chips (#62)        |
 | `b2-lower` Y17 to Z17   | Capsule buttons: stepped cut corners, coloured rim, outline                           | Status chip outline (#62) |
+| `b2-lower` Y15 to AA16  | Long box: stepped corners with a bump above each, grid body, coloured rim             | Roster rows (#63)         |
+| `b2-lower` Y16 to Z16   | Small bar: an italic pixel "HP" label on its plate, a thin framed track                | Roster HP bar (#63)       |
+| `b2-lower` AD4 to AG5   | Item box: slanted ends, corner bumps, a white slanted patch in the lower left         | Run items (#63)           |
 
 ### Enemy name bar (pilot, #64)
 
@@ -379,6 +382,40 @@ B2 art pixel, half the enemy bar's scale.
 
 ---
 
+### Roster, berry bag and run items (#63)
+
+Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px per B2 art pixel.
+
+- `[Approved]` **Roster rows: the B2 long box** (`b2-lower` Y15 to AA16). The rip's corners are copied pixel for pixel
+  (8 rows each, with the bump rising above the top edge); the straight sides are cut down so a row is 32 art rows. Left
+  rim, outside in: outline, Base, outline, two Light, outline; top and bottom edges: outline, Base, outline. The body is
+  the move slots' larger grid. The rim takes the Pokemon's first type's SV colours (Light, Base, Dark).
+- `[Approved]` **In the row:** the portrait in a 44 px circle on the left (40 px at 1x inside a 2 px stroke); the name
+  left-aligned just right of it, a little below the middle of the space above the bar; the slot's key on the top left
+  corner.
+- `[Approved]` **Roster HP bar: the B2 small bar** (`b2-lower` Y16 to Z16) inside the box along the bottom, right of the
+  portrait and almost to the right rim: the rip's italic pixel "HP" label (copied pixel for pixel) and a framed track.
+  The fill is two art rows, the HP band's fill over its shade, using the life meter thresholds.
+- `[Approved]` **Benched status chips:** a benched Pokemon's chips (the #62 chips) sit inside its box, top right. Benched
+  statuses keep ticking. The active Pokemon's row shows none, since the bottom panel has them. `[Open]` two chips cover a
+  short name (seen 2026-11-10 with Pikachu, PAR and BRN); the row is sized for the longest name and one chip.
+- `[Approved]` **Held item square:** the #62 square at 48 px, right of each row, with no name under it.
+- `[Approved]` **Rows shown:** only filled slots, stacked with no gaps, each keeping its own key. A team of one shows no
+  roster.
+- `[Approved]` **Active row:** the B2 selection cursor, as the active move slot. **Fainted:** the portrait darkly dimmed
+  (as the leader circles), the name at half opacity, an empty bar, and the rim in the panel greys (`#7f7f7f`, `#495151`,
+  `#303030` as Light, Base, Dark).
+- `[Approved]` **Berry bag:** the #62 held item square at 40 px with the berry's name under it, 2x2, only the purchased
+  slots; an empty slot is the square with a slate rim and no name.
+- `[Approved]` **Run items: the B2 item box** (`b2-lower` AD4 to AG5), 32 art rows: slanted ends (flat for 6 rows in the
+  middle, then one pixel in for every three rows out), corner bumps, the same rim order as the roster rows, in the Lv
+  yellow ramp (`#f3b200` Light, `#9a6110` Base, `#6d5000` corner shade). The white patch (`#e7e7e7`, its top and right
+  edges `#848484`) runs from the box's flat middle down to its bottom outline, and holds the item's icon at 1x.
+  - The item's name sits above the box, left-aligned, at 30 px.
+  - Right of the patch: the live tracker in the EXP blue when the item has one, otherwise its short description in
+    white, at most two lines with an ellipsis.
+  - Only unlocked slots show, slot 1 at the bottom. An empty slot shows the box with an empty patch and no name.
+
 ## Motion
 
 - `[Open]` Slides, flashes, glows, timings for the elements not yet settled.
@@ -431,6 +468,12 @@ B2 art pixel, half the enemy bar's scale.
   pick before it reaches the bottom, what is left fades out over 1 s.
 - `[Approved]` **Silver:** the coin spins on the run clock; the count rolls up to a gain within 0.25 s and pops (up to
   1.5x, settling in 0.18 s) from its bottom right; a spend or a new run shows the new value at once (as the old counter; the pop grew from 1.3x to 1.5x, Jess 2026-11-10).
+
+### Roster (#63)
+
+- `[Approved]` **Swap cooldown:** a 60% `#101010` shade over the whole box of every living benched row, clipped to the
+  box's outline. Its right edge moves left as the cooldown runs out (Jess, 2026-11-10).
+- `[Approved]` **Benched chips:** the #62 chip motion (sliding glow, timer bar).
 
 ---
 
@@ -486,3 +529,23 @@ the plan; those wait on the feel test.
 The slots are back to the wireframe's 44 px since the B2 profile (2026-11-10) uses two-row top and bottom edges, which
 leaves 36 px inside for a well. Silver sits 12 px below the chips' line (Jess, 2026-11-10: "can come down a bit"),
 about as low as it goes before the coin meets the portrait ring.
+
+### Roster, berry bag and run items (#63)
+
+Placed from the screen's bottom edge, as the character info panel: the roster and berries from the left edge, the run
+items from the right edge.
+
+`[Proposed]` from the build (2026-11-10), waiting on Jess's feel test.
+
+| Element           | Wireframe (at 1080p)            | Built                                                                          |
+| ----------------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| Roster row        | 206 x 40, x 16, 51 px apart     | 278 x 64 (139 x 32 art), x 16, 68 px apart; the lowest row 42 px up            |
+| Row width         | (none)                          | the widest species name in the HUD font (116 px, measured) and one chip        |
+| Portrait circle   | about 30 px                     | 44 px, 14 px in from the row's left edge                                       |
+| Name              | inside the row                  | 20 px, x 66 in the row, top 17                                                 |
+| HP bar            | (red line under the name)       | 7 art rows from art column 33, top at art row 19; fill 83 art pixels           |
+| Held item square  | about 32 px, right of the row   | 48 px (24 art), 8 px right of the row, centred on it                           |
+| Berry bag         | 2x2, 40 px squares              | 40 px squares, columns 128 px apart, rows 72 px apart, 12 px above the roster  |
+| Run item box      | 142 x 48, 39 px from the right  | 280 x 64 (140 x 32 art), 24 px from the right, slot 1 42 px up                 |
+| Run item name     | inside the box                  | 30 px, above the box, 2 px gap; slots 104 px apart                             |
+| Run item patch    | (none)                          | 22 art wide, from art row 13 to the bottom outline; icon 32 px                 |

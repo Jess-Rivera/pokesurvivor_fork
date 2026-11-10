@@ -657,6 +657,162 @@ async function playerPanel(browser) {
   return { context, errors, page };
 }
 
+/** #63: the roster rows, held items, benched chips and berry bag (lower left), and the run item column (lower right). */
+const rosterState = (page) =>
+  page.evaluate(() => {
+    const rows = [...document.querySelectorAll('.hud-roster-row')].map((row) => {
+      const rect = row.getBoundingClientRect();
+      return {
+        name: row.querySelector('.hud-roster-name').textContent.trim(),
+        key: row.querySelector('.hud-roster-key').textContent.trim(),
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        cursors: row.querySelectorAll('.hud-cursor').length,
+        chips: [...row.querySelectorAll('.hud-chip')].map((chip) => chip.textContent.trim()),
+        cooldown: !!row.querySelector('.hud-roster-cooldown'),
+        fainted: row.classList.contains('is-fainted'),
+      };
+    });
+    const held = [...document.querySelectorAll('.hud-roster-held')].map((square) => square.getBoundingClientRect());
+    const berries = [...document.querySelectorAll('.hud-berry')].length;
+    const berryNames = [...document.querySelectorAll('.hud-berry-name')].map((name) => name.textContent.trim());
+    const runBoxes = [...document.querySelectorAll('.hud-run-item')].map((box) => box.getBoundingClientRect());
+    const runNames = [...document.querySelectorAll('.hud-run-name')].map((name) => name.textContent.trim());
+    const runIcons = document.querySelectorAll('.hud-run-icon canvas').length;
+    return { rows, held, berries, berryNames, runBoxes, runNames, runIcons };
+  });
+
+async function rosterPanel(browser) {
+  const { context, page, errors } = await boot(browser);
+  await page.evaluate(() => {
+    const save = G.DB.save;
+    save.team = [{ dex: 7 }, { dex: 25 }, null, { dex: 1 }, { dex: 4 }, null]; // slot 3 left empty
+    save.berrySlots = 3;
+    save.runSlots = 2;
+  });
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await page.evaluate(() => {
+    G.Spawner.update = () => {}; // test page only: no wild spawns
+    G.EnemyMgr.clear();
+    for (const member of G.Game.roster) member.invuln = 1e9;
+  });
+  await page.waitForTimeout(150);
+  let state = await rosterState(page);
+  ok(
+    state.rows.map((row) => row.key).join(' ') === '1 2 4 5',
+    'roster: one row per filled slot, in slot order, keeping their keys (' +
+      state.rows.map((row) => row.key).join(' ') +
+      ')'
+  );
+  const first = state.rows[0],
+    last = state.rows[state.rows.length - 1];
+  ok(
+    first && first.left === 16 && first.width === 278 && first.height === 64,
+    'roster: rows are 278 x 64 at x 16 (' + (first && [first.left, first.width, first.height].join(', ')) + ')'
+  );
+  ok(last && last.top + last.height === 1080 - 42, 'roster: the lowest row sits 42 px above the bottom');
+  ok(
+    state.rows.every((row, index) => index === 0 || row.top - state.rows[index - 1].top === 68),
+    'roster: rows are 68 px apart'
+  );
+  ok(
+    state.held.length === 4 && state.held[0].left === 16 + 278 + 8 && state.held[0].width === 48,
+    'roster: a 48 px held item square 8 px right of each row'
+  );
+  ok(
+    first.cursors === 4 && state.rows.slice(1).every((row) => row.cursors === 0),
+    'roster: the active row (slot 1) wears the selection cursor, the others do not'
+  );
+  ok(
+    state.rows.every((row) => !row.cooldown),
+    'roster: no swap cooldown shade before a swap'
+  );
+
+  // a swap: the cursor moves, every other living row dims under the cooldown
+  await page.evaluate(() => G.Game.swap(1));
+  await page.waitForTimeout(100);
+  state = await rosterState(page);
+  ok(
+    state.rows[1].cursors === 4 && state.rows[0].cursors === 0,
+    'roster: after a swap to slot 2 the cursor is on its row'
+  );
+  ok(
+    !state.rows[1].cooldown && state.rows[0].cooldown && state.rows[2].cooldown && state.rows[3].cooldown,
+    'roster: the swap cooldown shades the benched rows, not the active one'
+  );
+
+  // a benched Pokemon's status shows as chips in its row; the active one's stay on the bottom panel
+  await page.evaluate(() => {
+    G.Game.roster[0].burn = 1;
+    G.Game.player.stMajor = { k: 'paralysis', t: 6 };
+  });
+  await page.waitForTimeout(100);
+  state = await rosterState(page);
+  ok(
+    state.rows[0].chips.join(' ') === 'BRN' && state.rows[1].chips.length === 0,
+    'roster: a benched burn shows a BRN chip in its row; the active row shows none (' +
+      state.rows[0].chips.join(' ') +
+      ' / ' +
+      state.rows[1].chips.join(' ') +
+      ')'
+  );
+
+  // a faint: the row dims and takes no cooldown shade
+  await page.evaluate(() => {
+    const member = G.Game.roster.find((fighter) => fighter.teamSlot === 3);
+    member.dead = true;
+    member.hp = 0;
+  });
+  await page.waitForTimeout(100);
+  state = await rosterState(page);
+  ok(state.rows[2].fainted && !state.rows[2].cooldown, 'roster: a fainted row is dimmed, with no cooldown shade');
+
+  // the berry bag follows the purchased slots; a stored berry shows its name
+  await page.evaluate(() => G.Game.player.berries.push('cheri'));
+  await page.waitForTimeout(100);
+  state = await rosterState(page);
+  ok(
+    state.berries === 3 && state.berryNames.join(',') === 'Cheri Berry',
+    'roster: 3 berry slots for 3 purchased; the stored Cheri Berry shows its name (' +
+      state.berries +
+      ', ' +
+      state.berryNames.join(',') +
+      ')'
+  );
+
+  // the run items follow the unlocked slots; an item shows its name and icon
+  await page.evaluate(() => G.Game.player.runItems.push('amuletcoin'));
+  await page.waitForTimeout(100);
+  state = await rosterState(page);
+  ok(
+    state.runBoxes.length === 2 && state.runNames.join(',') === 'Amulet Coin' && state.runIcons === 1,
+    'run items: 2 boxes for 2 unlocked slots; Amulet Coin shows its name and icon (' +
+      state.runBoxes.length +
+      ', ' +
+      state.runNames.join(',') +
+      ')'
+  );
+  const lowestRun = state.runBoxes[0];
+  ok(
+    lowestRun && lowestRun.right === 1920 - 24 && lowestRun.bottom === 1080 - 42 && lowestRun.width === 280,
+    'run items: slot 1 is the lowest box, 280 px wide, 24 px from the right and 42 px from the bottom'
+  );
+
+  // a team of one shows no roster; the berry bag drops to the corner
+  await page.evaluate(() => {
+    G.DB.save.team = [{ dex: 7 }, null, null, null, null, null];
+    G.Game.startRun();
+  });
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await page.waitForTimeout(150);
+  state = await rosterState(page);
+  ok(state.rows.length === 0 && state.berries === 3, 'roster: a team of one shows no rows, the berry bag stays');
+  return { context, errors, page };
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -677,7 +833,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge, playerPanel];
+  const runs = [brock, surge, playerPanel, rosterPanel];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');
