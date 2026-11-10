@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['A new gym leader bar', 'A new gym leader bar'],
     new: [
       [
+        'Top right of the screen: the World Level, your region and the map you are on. When weather rolls in, a card slides in with its icon and what it does, and a Clear Sky card follows when it passes. Your kill count sits at the top centre and hides during gym fights.',
+        'Top right of the screen: the World Level, your region and the map you are on. When weather rolls in, a card slides in with its icon and what it does, and a Clear Sky card follows when it passes. Your kill count sits at the top centre and hides during gym fights.',
+      ],
+      [
         'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
         'Levelling up now rattles your level number while you keep playing; a moment later the upgrade cards pop up with a burst of confetti.',
       ],

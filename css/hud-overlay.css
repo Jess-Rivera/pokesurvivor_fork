@@ -626,3 +626,113 @@
   text-align: center;
   opacity: 0.45;
 }
+
+/* ---------- map panel, top right, and the kills line, top centre (#65) ---------- */
+.hud-dim {
+  opacity: 0.45; /* Dim text (Region, Map, Kills): white at about 45% */
+}
+.hud-map {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+.hud-world-level {
+  font-family: 'HudDigits', 'HudText', monospace;
+  font-size: 48px;
+  line-height: 48px;
+  white-space: nowrap;
+  text-shadow:
+    3px 0 0 #101010,
+    -3px 0 0 #101010,
+    0 3px 0 #101010,
+    0 -3px 0 #101010,
+    3px 3px 0 #101010,
+    -3px 3px 0 #101010,
+    3px -3px 0 #101010,
+    -3px -3px 0 #101010;
+}
+.hud-kills {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* the weather card: a dark box with a rim in its weather's type colour; it slides in with a stopping bounce, slides off
+   when the weather ends, and the Clear Sky card fades out instead (Jess, 2026-11-10); lengths match hud-map-panel.js */
+.hud-weather {
+  position: relative;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 12px 10px;
+  background: rgba(24, 24, 24, 0.8);
+  border: 3px solid var(--rim);
+  box-shadow: inset 0 0 0 2px var(--rim-dark);
+  text-align: left;
+}
+.hud-weather-icon {
+  width: 48px;
+  height: 48px;
+  flex: none;
+}
+.hud-weather-words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hud-weather-timer {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 4px;
+  height: 2px;
+  background: #ffffff;
+  opacity: 0.6;
+  transform-origin: 0 0;
+}
+.hud-weather.is-enter {
+  animation: hud-weather-enter 0.6s ease-out both;
+}
+.hud-weather.is-exit {
+  animation: hud-weather-exit 0.38s ease-in both;
+}
+.hud-weather.is-fade {
+  animation: hud-weather-fade 0.7s linear both;
+}
+@keyframes hud-weather-enter {
+  0% {
+    transform: translateX(calc(100% + 40px));
+  }
+  62% {
+    transform: translateX(-14px);
+  }
+  82% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes hud-weather-exit {
+  0% {
+    transform: none;
+  }
+  100% {
+    transform: translateX(calc(100% + 40px));
+  }
+}
+@keyframes hud-weather-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

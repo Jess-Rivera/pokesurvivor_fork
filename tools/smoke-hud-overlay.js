@@ -813,6 +813,123 @@ async function rosterPanel(browser) {
   return { context, errors, page };
 }
 
+/** #65: World Level, Region and Map top right, the weather card's slide and Clear Sky steps, the kills line. */
+const mapState = (page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector('.hud-map'),
+      kills = document.querySelector('.hud-kills'),
+      card = document.querySelector('.hud-weather');
+    return {
+      panelRight: panel ? Math.round(panel.getBoundingClientRect().right) : null,
+      panelTop: panel ? Math.round(panel.getBoundingClientRect().top) : null,
+      lines: panel
+        ? [...panel.children].filter((child) => !child.matches('.hud-weather')).map((c) => c.textContent)
+        : [],
+      kills: kills ? kills.textContent : null,
+      killsCentre: kills
+        ? Math.round((kills.getBoundingClientRect().left + kills.getBoundingClientRect().right) / 2)
+        : 0,
+      card: card
+        ? {
+            phase: ['is-enter', 'is-exit', 'is-fade'].find((name) => card.classList.contains(name)),
+            name: card.querySelector('.hud-weather-words .hud-text').textContent,
+            icon: card.querySelector('img').getAttribute('src'),
+            timer: !!card.querySelector('.hud-weather-timer'),
+          }
+        : null,
+      expectedLevel: String(Math.floor(G.Enemies.levelForTime(G.Game.st.time))),
+      expectedMap: G.T(G.World.biomeName()),
+    };
+  });
+
+async function mapPanel(browser) {
+  const { context, page, errors } = await boot(browser);
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'playing', null, { timeout: 15000 });
+  await page.evaluate(() => {
+    G.Spawner.update = () => {}; // test page only: no wild spawns
+    G.EnemyMgr.clear();
+    G.Game.player.invuln = 1e9;
+    G.Game.player.kills = 123;
+    G.Weather.clear();
+  });
+  await page.waitForTimeout(150);
+  let state = await mapState(page);
+  ok(state.panelRight === 1920 - 24 && state.panelTop === 24, 'map: panel 24 px in from the top right corner');
+  ok(
+    state.lines[0] === state.expectedLevel && state.lines[1] === 'World Level',
+    'map: World Level number over its label (' + state.lines.slice(0, 2).join(' / ') + ')'
+  );
+  ok(
+    state.lines.includes(state.expectedMap),
+    'map: the Map line names the biome in English (' + state.expectedMap + ')'
+  );
+  ok(state.kills === '123 Kills', 'kills: "123 Kills" outside an arena (' + state.kills + ')');
+  ok(Math.abs(state.killsCentre - 960) <= 1, 'kills: centred at the top');
+  ok(state.card === null, 'weather: no card with no weather');
+
+  const card = async () => (await mapState(page)).card;
+  await page.evaluate(() => G.Weather.debugStart('rain', 60));
+  await page.waitForTimeout(150);
+  let shown = await card();
+  ok(
+    shown && shown.phase === 'is-enter' && shown.name === 'Rain' && /rain-white\.png$/.test(shown.icon) && shown.timer,
+    'weather: rain slides in with its icon and a timer (' + JSON.stringify(shown) + ')'
+  );
+
+  // a change of weather: the old card slides off, the new one slides in, no Clear Sky between
+  await page.evaluate(() => G.Weather.debugStart('fog', 60));
+  await page.waitForTimeout(100);
+  shown = await card();
+  ok(shown && shown.phase === 'is-exit' && shown.name === 'Rain', 'weather: on a change the old card slides off first');
+  await page.waitForTimeout(450); // past the 380 ms slide off
+  shown = await card();
+  ok(
+    shown && shown.phase === 'is-enter' && shown.name === 'Fog',
+    'weather: then the new weather slides in (not Clear Sky)'
+  );
+
+  // the weather ends: slide off, Clear Sky slides in, holds about 2 s, fades, gone
+  await page.evaluate(() => G.Weather.clear());
+  await page.waitForTimeout(100);
+  shown = await card();
+  ok(shown && shown.phase === 'is-exit' && shown.name === 'Fog', 'weather: on its end the card slides off');
+  await page.waitForTimeout(450);
+  shown = await card();
+  ok(
+    shown &&
+      shown.phase === 'is-enter' &&
+      shown.name === 'Clear Sky' &&
+      !shown.timer &&
+      /clear-white\.png$/.test(shown.icon),
+    'weather: Clear Sky slides in after it, with no timer'
+  );
+  await page.waitForTimeout(1900); // 0.6 s slide in + 2 s hold, from the slide in
+  shown = await card();
+  ok(shown && shown.phase === 'is-enter', 'weather: Clear Sky still holds just under 2.6 s after it arrived');
+  await page.waitForTimeout(900); // Clear Sky landed up to ~170 ms before the first look: now inside the 0.7 s fade
+  shown = await card();
+  ok(shown && shown.phase === 'is-fade', 'weather: then Clear Sky fades (its only exit that is not a slide)');
+  await page.waitForTimeout(800);
+  ok((await card()) === null, 'weather: and is gone after the fade');
+
+  // an arena fight hides the kills line; the map panel stays
+  await page.evaluate(() => {
+    G.Game.state = 'menu';
+  });
+  await context.close();
+  const gym = await boot(browser);
+  await enterGym(gym.page, 1, 2);
+  await gym.page.waitForTimeout(150);
+  state = await mapState(gym.page);
+  ok(state.kills === null, 'kills: hidden during an arena fight');
+  ok(state.panelRight === 1920 - 24, 'map: the panel stays in the arena');
+  await gym.page.evaluate(() => clearInterval(window.__keep));
+  errors.push(...gym.errors);
+  gym.page.notes.push(...page.notes);
+  return { context: gym.context, errors, page: gym.page };
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -833,7 +950,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge, playerPanel, rosterPanel];
+  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');

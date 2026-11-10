@@ -12,6 +12,9 @@ G.HUD = (() => {
   // (js/ui/hud-run-items-panel.js) are on the overlay too; the same fallback applies.
   let overlayDrawsRoster = false,
     overlayDrawsRunItems = false;
+  // #65: World Level, Region, Map, the weather card (top right) and the kills line (top centre) are on the overlay
+  // (js/ui/hud-map-panel.js); the old biome, kills and coins line, ENEMY LV and the weather chip are the fallback only.
+  let overlayDrawsMap = false;
 
   /**
    * How much of a move's cooldown is left, 0 (ready) to 1, for its icon's shade. Shared with the overlay's move slots.
@@ -573,6 +576,7 @@ G.HUD = (() => {
     overlayDrawsPlayer = !!(G.HudPlayerPanel && G.HudPlayerPanel.ready);
     overlayDrawsRoster = !!(G.HudRosterPanel && G.HudRosterPanel.ready);
     overlayDrawsRunItems = !!(G.HudRunItemsPanel && G.HudRunItemsPanel.ready);
+    overlayDrawsMap = !!(G.HudMapPanel && G.HudMapPanel.ready);
 
     // ---------- barra de experiencia (borde superior; #62: the overlay's portrait ring replaces it) ----------
     if (!overlayDrawsPlayer) {
@@ -611,27 +615,31 @@ G.HUD = (() => {
     ctx.font = F(800, 26);
     ctx.fillStyle = 'rgba(255,255,255,.95)';
     if (!overlayDrawsPlayer) ctx.fillText(G.U.mmss(st.time), w / 2, 42); // #62: the overlay shows it under the moves
-    ctx.font = F(600, 10);
-    ctx.fillStyle = '#8fa3c4';
-    ctx.fillText(
-      G.World.biomeName().toUpperCase() + '  ·  ' + pl.kills + ' DERROTADOS  ·  ' + pl.coins + ' MONEDAS',
-      w / 2,
-      58
-    );
+    if (!overlayDrawsMap) {
+      ctx.font = F(600, 10);
+      ctx.fillStyle = '#8fa3c4';
+      ctx.fillText(
+        G.World.biomeName().toUpperCase() + '  ·  ' + pl.kills + ' DERROTADOS  ·  ' + pl.coins + ' MONEDAS',
+        w / 2,
+        58
+      );
+    }
 
     // Enemy level (top-right): same size/color as the run timer, with an "ENEMY LV"
     // subtitle. Shows the level enemies currently spawn at (see G.Enemies.levelForTime).
-    ctx.textAlign = 'right';
-    ctx.font = F(800, 26);
-    ctx.fillStyle = 'rgba(255,255,255,.95)';
-    ctx.fillText(Math.floor(G.Enemies.levelForTime(st.time)), w - 16, 42);
-    ctx.font = F(600, 10);
-    ctx.fillStyle = '#8fa3c4';
-    ctx.fillText('ENEMY LV', w - 16, 58);
-    ctx.textAlign = 'left';
+    if (!overlayDrawsMap) {
+      ctx.textAlign = 'right';
+      ctx.font = F(800, 26);
+      ctx.fillStyle = 'rgba(255,255,255,.95)';
+      ctx.fillText(Math.floor(G.Enemies.levelForTime(st.time)), w - 16, 42);
+      ctx.font = F(600, 10);
+      ctx.fillStyle = '#8fa3c4';
+      ctx.fillText('ENEMY LV', w - 16, 58);
+      ctx.textAlign = 'left';
+    }
 
     // ---------- clima (arriba a la derecha) ----------
-    const wx = G.Weather.current;
+    const wx = overlayDrawsMap ? null : G.Weather.current;
     if (wx) {
       ctx.font = F(800, 11);
       ctx.textAlign = 'left';

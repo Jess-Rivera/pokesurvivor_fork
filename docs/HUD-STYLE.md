@@ -417,6 +417,25 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
     white, at most two lines with an ellipsis.
   - Only unlocked slots show, slot 1 at the bottom. An empty slot shows the box with an empty patch and no name.
 
+### Map panel and kills line (#65)
+
+Jess set these on 2026-11-10 (the #65 plan review). Built, waiting for the feel test.
+
+- `[Proposed]` **Map panel, top right, right-aligned:** World Level as a BoldPixels number at 48 px over a "World Level"
+  label (20 px text); then Region and Map in Dim text. World Level is the level wild Pokemon spawn at (the old canvas
+  ENEMY LV). Region is hidden when the run has none. Map is the biome's English name.
+- `[Proposed]` **Weather card** under the map lines, only while a weather is on: a `#181818` box at 80%, a 3 px rim in
+  the weather's SV type colour (Base) with a 2 px inner line in its Dark (sun Fire, rain Water, sandstorm Rock, snow Ice,
+  fog Ghost, Clear Sky Normal). It holds a white Bulbapedia weather icon at 48 px (`assets/icons/weather/*-white.png`),
+  the name in 20 px text, and an ultra short effect line in Dim text. A 2 px white timer bar at 60% along its bottom
+  shrinks with the weather's time left.
+- `[Approved]` **Coins leave the HUD:** the old biome, kills and coins line is gone and coins are not shown in a run
+  (Jess, 2026-11-10); Silver is the run currency on screen.
+- `[Proposed]` **Kills line:** "NNN Kills" in Dim text, centred at the top; hidden during arena fights (gym leaders), as
+  the wireframe says.
+- The `assets/icons/weather/unofficial/` circles (cut by `tools/rip_weather_icons.py`) are not used; they are spare art
+  for future weathers.
+
 ## Motion
 
 - `[Open]` Slides, flashes, glows, timings for the elements not yet settled.
@@ -475,6 +494,16 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
 - `[Approved]` **Swap cooldown:** a 60% `#101010` shade over the whole box of every living benched row, clipped to the
   box's outline. Its right edge moves left as the cooldown runs out (Jess, 2026-11-10).
 - `[Approved]` **Benched chips:** the #62 chip motion (sliding glow, timer bar).
+
+### Weather card (#65)
+
+- `[Approved]` **In:** slides in from past the right edge of the screen with a small stopping bounce (overshoots about
+  14 px, back about 5 px, settles), 0.6 s (Jess, 2026-11-10).
+- `[Approved]` **Out:** when its weather ends or changes, it slides back off the right edge (0.38 s), then the next card
+  slides in.
+- `[Approved]` **Clear Sky:** when a weather ends with no new one, a Clear Sky card slides in the same way, holds about
+  2 s, then fades to nothing (0.7 s). It is the only card that leaves by fading (Jess, 2026-11-10). A weather that
+  starts while Clear Sky is up slides it off instead.
 
 ---
 
