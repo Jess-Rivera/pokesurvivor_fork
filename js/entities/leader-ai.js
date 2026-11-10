@@ -6,16 +6,16 @@
  * Misty and Brock move and cast as before. `shake`, `swapDir` and `cycles` answer nothing yet (shake-off stays the authored autoShake).
  * Slice 2 (#31): its own swap and dodge decisions, on its settings (BASE below, or the gym's `ai` in js/data/gyms.js).
  *   SWAPS   on the think tick, never inside a tell's wind-up or a move commitment: a tick that lands inside one waits for the first
- *           frame out of it, stunned or not (#41: no stun check of its own; asleep it may still swap, as you may, outside a commitment). Gates first: minField seconds on the field, swapLimit voluntary swaps a fight. Then each bench mon is scored by
- *           the spec's triggers (asleep or frozen, low HP with no self heal, a better matchup) against STAY, and the best fires only
- *           if it beats STAY x margin. Pressed through `swapSlot`; the arena's swap step runs your rules.
+ *           frame out of it, stunned or not (#41: no stun check of its own; asleep it may still swap, as you may, outside a commitment). Gates first: minField seconds on the field, swapLimit voluntary swaps a fight.
+ *           (#52: the swap itself is the planner's Swap action; the triggers and STAY are gone.) Pressed through `swapSlot`; the
+ *           arena's swap step runs your rules.
  *   DODGES  a threat (G.LeaderInfo threats) is noticed on any frame; the dodge bag says whether it is read; a read threat is answered
  *           exactly `reflex` later, held while a tell or commitment lasts, dropped once it is gone. It presses `dodge` with a
  *           heading sideways to the threat's path, toward the more open floor, and keeps `dodgeReserve` charges back.
  *   LOG     every decision, with its reason and scores, for the ?dev overlay (move-render.js) and the harness.
  * Slice 3 (#32): confidence, pacing, triggers and lines (Jess 2026-11-08, decision 2026-11-08-leader-ai-slice-3-opened-breather-is-back-off-plus-slot-choice).
  *   CONFIDENCE  one value per team, moved by what G.LeaderInfo shows (hits landed and taken, faints, the long window's trade),
- *               between confMin and confMax. It shifts the effective aggression (aggr) and the swap margin; never a stat or a number.
+ *               between confMin and confMax. It shifts the effective aggression (aggr; #52: the swap margin is gone); never a stat or a number.
  *   PACING      (gone in #51: the planner's goals replace it) a stance, neutral, push or breather, on the think tick.
  *   LEAN        the dodge turns toward you with aggr above 0.5, away below it.
  *   TRIGGERS    authored in the gym's ai.triggers, each once unless `repeat`; they wait out a tell or commitment and act through
@@ -25,8 +25,9 @@
  * 2026-11-08-leader-ai-slice-4-opened-the-usual-lead-is-the-first-exploit).
  *   LEAD        on the fight's first free think tick: a lead pattern it believes (learnRate sightings of one mon of yours, the one
  *               with the most field time in a fight) asks the prediction cap bag (predictCap acts per BAG chances, run long). When
- *               it acts, the 'exploit' trigger fires and it swaps to its best matchup against that mon, without waiting out minField
- *               (it counts as a voluntary swap); already on the best one, it stays and still says its line.
+ *               it acts, the 'exploit' trigger fires and (#52) that tick's plan reads your shots as that mon's, with the swap open
+ *               without waiting out minField (decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value, C); a swap it
+ *               plans counts as a voluntary one. Already on the best matchup it stays, and still says its line.
  * Slice 5a (#34, decision 2026-11-08-leader-ai-slice-5-split-gymbrain-out-first-then-personalities): GymBrain is gone from Player-
  * entity leaders. Movement (steer, legsOf) and the slot choice (pickSlot) are this module's own; the tell, the reach filter and the
  * heal cap are the leader's authored SimPass rules (G.GymLeader.SimPass; #41: the Caster is gone, its attack score is attackScore
@@ -37,7 +38,12 @@
  * controller every frame (the heading, and the slot the action keeps active), ends it on its effect or at 1.5 x its estimate, and
  * replans at once when the plan runs out or the running action's precondition breaks. GONE: the stance clock (far and close), the
  * old slot choice (attackScore, pickSlot, offHeal), pacing (push, neutral, breather) and a trigger's forced slot and swap (an unused
- * hook stays). The swap choice, the lead exploit, reflex dodges and the gap-closing dodge stay until #52.
+ * hook stays).
+ * #52 (#49 slice 3, decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value): Swap to mon, Dash in, Draw your shot and
+ * Dodge your shot are planner actions, run by the executor here. GONE: the swap choice (STAY, the margin, the cc, low HP and matchup
+ * triggers, the low HP save), the gap-closing dodge and the lead read's forced swap. A reflex dodge (a threat no plan expected) that
+ * would spend down to dodgeReserve is a score: your hit x the current goal's damage-taken weight x risk against the kept-back worth
+ * (your best hit x TUNE.keepCharge). A planned dodge is the watch's answer to its own move, without that check.
  */
 G.LeaderAI = class LeaderAI {
   /** @param members the leader mons it drives, in slot order; @param team their G.Team, or null for a lone mon */
@@ -54,8 +60,8 @@ G.LeaderAI = class LeaderAI {
     this.due = false; // a think tick came and its swap choice waits for the first frame out of a tell or commitment
     this.fieldT = 0; // seconds the mon on the field has been there (minField)
     this.swaps = 0; // voluntary swaps this fight (swapLimit)
-    this.saved = new Set(); // mons already swapped out under the low HP line (once per mon)
-    this.why = null; // the reason of the swap request waiting for the arena's swap step
+    this.expect = null; // #52: the move of yours a planned Dodge your shot answers ({ moveId }), or null
+    this.expectYou = null; // #52: the mon of yours the lead read expects, for the tick it plans against it, or null
     this.bag = new LeaderAI.Bag(this.set.dodgeRead, LeaderAI.seed != null ? LeaderAI.seed : Date.now() >>> 0);
     this.seen = new Set(); // your casts already counted as threats (one per cast)
     this.pending = null; // a read threat waiting out the reflex: { at, serial }
@@ -117,8 +123,8 @@ G.LeaderAI = class LeaderAI {
    *  body-sim): it decides, and its answers wait in the controller for the body, which follows them under its rules (a stun refuses
    *  the heading and the dodge, as yours), then the sim pass resolves. It decides while stunned too, as you can press keys asleep.
    *  #51: Belief updates first; on a think tick (or at once when the plan ran out or broke) it plans; then the executor answers the
-   *  heading (with the edge unstick on top) and the slot press; then the dodge watch every frame, and on the tick the gap-closing
-   *  dodge and the swap choice. */
+   *  heading (with the edge unstick on top) and the slot press; then the dodge watch every frame. #52: swaps and dashes are plan
+   *  actions, so the tick has no choice of its own left. */
   think(e, dt, pl) {
     const L = this.legsOf(e),
       step = e.lastStep;
@@ -141,10 +147,6 @@ G.LeaderAI = class LeaderAI {
     if (!LeaderAI.off.planner && free && (tick || this.replanNow)) this.replan(e, tick ? 'tick' : this.replanNow);
     e.heading = this.unstick(e, dt, this.execute(e, dt, pl, free));
     if (!LeaderAI.off.dodges) this.watch(e, dt);
-    if (tick) {
-      if (!LeaderAI.off.dodges) this.gapClose(e, pl);
-      if (!LeaderAI.off.swaps) this.decide(e);
-    }
     if (!LeaderAI.off.triggers) {
       this.watchTriggers(e);
       if (free) this.fireTriggers(e);
@@ -233,7 +235,15 @@ G.LeaderAI = class LeaderAI {
     this.replanNow = false;
     this.lastWhy = why; // why it last planned: 'tick', 'plan done', 'broken: ...' or 'a mon arrives' (the overlay and the harness)
     const belief = G.LeaderBelief.current,
-      world = belief && belief.snapshot ? belief.snapshot(e, this.set, this.conf) : null;
+      world =
+        belief && belief.snapshot
+          ? belief.snapshot(e, this.set, this.conf, {
+              dodges: !LeaderAI.off.dodges,
+              swap: this.swapOpen(e),
+              expect: this.expectYou,
+            })
+          : null;
+    this.expectYou = null; // the lead read counts for the one tick it was made on
     if (!world || !Array.isArray(world.slots)) {
       this.plan = null;
       return;
@@ -265,9 +275,17 @@ G.LeaderAI = class LeaderAI {
       at: 0,
       stepT: keep ? was.stepT : 0,
       lastT: keep ? was.lastT : this.timersOf(e, pick.steps[0]),
+      pressed: keep && was.pressed === was.at ? 0 : -1, // #52: a kept action's one press is not made twice
       value: pick.value,
       cost: pick.cost,
     };
+    // #52: a kept dash or planned dodge follows its action into the new plan; a dropped one is abandoned
+    for (const k of ['expect', 'dashFor']) {
+      const x = this[k];
+      if (!x || x.plan !== was) continue;
+      if (keep && x.at === was.at) Object.assign(x, { plan: this.plan, at: 0 });
+      else if (k === 'expect') this.expect = null;
+    }
   }
   /** A plan as one line: each step's verb and what it names. */
   planText(c) {
@@ -277,6 +295,9 @@ G.LeaderAI = class LeaderAI {
     if (s.verb === 'close' || s.verb === 'use') return s.verb + ' ' + (s.slot + 1);
     if (s.verb === 'hold') return 'hold ' + Math.round(s.range);
     if (s.verb === 'wait') return s.yourMove != null ? 'wait for your ' + s.yourMove : 'wait for ' + (s.slot + 1);
+    if (s.verb === 'dash') return 'dash ' + (s.slot + 1);
+    if (s.verb === 'draw' || s.verb === 'dodge') return s.verb + ' your ' + s.yourMove;
+    if (s.verb === 'swap') return 'swap to ' + (s.name || 'slot ' + (s.team + 1));
     return s.verb;
   }
   /** The cooldowns of the slot a step names, to see a cast land (a cooldown that jumps up), or null. */
@@ -307,8 +328,30 @@ G.LeaderAI = class LeaderAI {
       keep = this.keptSlot(e, plan, step);
     if (keep != null && keep !== e.active && e.slots.length > 1 && !(e.tell || e.mvRoot || e.stFl || e.swapT > 0))
       this.pressSlot(e, keep);
+    this.press(e, plan, step, pl);
     if (e.isHeld()) return [0, 0];
     return this.headingFor(e, step, pl);
+  }
+  /** #52: the one press a Swap, Dash or Dodge your shot action makes, once per step: the swap request (the arena's swap step runs
+   *  your rules), the dodge toward you, or arming the watch for your move (it fires on the reflex clock, through the bag). */
+  press(e, plan, step, pl) {
+    if (plan.pressed === plan.at) return;
+    if (step.verb === 'swap') {
+      plan.pressed = plan.at;
+      this.note('swap', 'to ' + (step.name || 'slot ' + (step.team + 1)) + ' (' + plan.goal + ')', {
+        j: step.team,
+        why: plan.goal,
+      });
+      this.requestSwap(step.team);
+    } else if (step.verb === 'dash' && !(e.dodgeT > 0)) {
+      plan.pressed = plan.at;
+      this.dashFor = { e, at: plan.at, plan };
+      this.dodgeAnswer = true;
+      this.note('dash', 'dashes in: you are ' + Math.round(G.U.dist(e.x, e.y, pl.x, pl.y)) + ' px');
+    } else if (step.verb === 'dodge') {
+      plan.pressed = plan.at;
+      this.expect = { moveId: step.yourMove, plan, at: plan.at, done: false };
+    }
   }
   /** 'done', 'running', or why the running action's precondition broke. */
   stepState(e, step, pl) {
@@ -323,6 +366,25 @@ G.LeaderAI = class LeaderAI {
     if (step.verb === 'hold' || step.verb === 'recover')
       return plan.stepT >= step.duration - LeaderAI.EPS ? 'done' : 'running';
     if (step.verb === 'backOff') return dist >= step.to ? 'done' : 'running';
+    if (step.verb === 'swap')
+      return plan.stepT > LeaderAI.SWAP_WAIT - LeaderAI.EPS ? 'your rules refused the swap' : 'running'; // arriving replans
+    if (step.verb === 'dash') {
+      const d = this.dashFor;
+      if (d && d.plan === plan && d.at === plan.at) {
+        if (e.dodgeT > 0) d.seen = true;
+        else if (d.seen) return 'done';
+        else if (plan.stepT > LeaderAI.SWAP_WAIT - LeaderAI.EPS) return 'your rules refused the dash';
+      }
+      return 'running';
+    }
+    if (step.verb === 'dodge') {
+      const x = this.expect;
+      return x && x.plan === plan && x.at === plan.at && !x.done ? 'running' : 'done';
+    }
+    if (step.verb === 'draw') {
+      const since = belief && belief.sinceCast(LeaderAI.yours(), step.yourMove);
+      return since != null && since < plan.stepT - LeaderAI.EPS ? 'done' : 'running';
+    }
     if (step.verb === 'wait' && step.yourMove != null) {
       const since = belief && belief.sinceCast(LeaderAI.yours(), step.yourMove);
       if (since != null && since < plan.stepT - LeaderAI.EPS) return 'done';
@@ -373,7 +435,14 @@ G.LeaderAI = class LeaderAI {
       circle = () => [-uy * L.side, ux * L.side],
       band = G.LeaderPlanner.TUNE.rangeBand;
     if (L.side == null) L.side = Math.random() < 0.5 ? -1 : 1;
-    if (step.verb === 'close') return toward();
+    if (step.verb === 'close' || step.verb === 'dash') return toward();
+    if (step.verb === 'draw') {
+      // walk in so it arrives as your move's window opens: before that it holds outside its reach
+      const plan = this.plan,
+        early = plan && plan.stepT < step.duration - (step.walk || 0) - LeaderAI.EPS;
+      if (early && dist <= step.reach + (e.r || 0) + band) return circle();
+      return toward();
+    }
     if (step.verb === 'hold') {
       if (dist > step.range + band) return toward();
       if (dist < step.range - band) return this.awayFrom(e, ux, uy);
@@ -455,11 +524,8 @@ G.LeaderAI = class LeaderAI {
     this.pending = null;
     this.plan = null; // #51: a mon arriving plans afresh
     this.replanNow = 'a mon arrives';
-    if (voluntary) {
-      this.swaps++;
-      if (this.why && this.why.why === 'low') this.saved.add(this.why.out);
-    }
-    this.why = null;
+    this.expect = null;
+    if (voluntary) this.swaps++;
   }
 
   /** Inside a tell (its wind-up, until the move fires; the recovery after it is not the tell) or a move commitment (a dash, a root, a
@@ -471,24 +537,14 @@ G.LeaderAI = class LeaderAI {
 
   // ---------------- swaps ----------------
 
-  /** The swap choice on a think tick (think holds it while the mon is in a tell or commitment). */
-  decide(e) {
+  /** #52: whether a voluntary swap is open now, for the planner's Swap action: the swaps switch, a living bench mon your rules let
+   *  in (G.Team.canSwap: the lock, trap, Fly), and the stall guards (minField, swapLimit), which the lead read skips for its tick
+   *  (decision C). */
+  swapOpen(e) {
     const t = this.team;
-    if (!t || t.living().length < 2 || e.dead) return;
-    if (this.swapGate()) return;
-    const S = this.set,
-      cands = this.triggers(e);
-    if (!cands.length) return;
-    const best = cands.reduce((a, b) => (b.score > a.score || (b.score === a.score && b.j < a.j) ? b : a));
-    const scores = cands.map((c) => t.members[c.j].name + ' ' + c.why + ' ' + c.score.toFixed(2)).join(', ');
-    const margin = this.swapMargin();
-    if (best.score < S.stay * margin - LeaderAI.EPS) {
-      this.note('stay', 'nothing beats STAY ' + S.stay + ' x ' + margin.toFixed(3) + ': ' + scores);
-      return;
-    }
-    this.note('swap', 'to ' + t.members[best.j].name + ' (' + best.why + '): ' + scores, { j: best.j, why: best.why });
-    this.why = { why: best.why, out: e };
-    this.requestSwap(best.j);
+    if (LeaderAI.off.swaps || !t || e.dead || t.living().length < 2) return false;
+    if (this.swapGate() && !(this.expectYou && this.swapGate() === 'minField')) return false;
+    return t.members.some((m, j) => j !== t.activeIdx && t.canSwap(j) === 'ok');
   }
   /** The first stall guard that holds a voluntary swap ('minField', 'swapLimit'), or null when none does. */
   swapGate() {
@@ -497,41 +553,6 @@ G.LeaderAI = class LeaderAI {
     if (S.swapLimit != null && this.swaps >= S.swapLimit) return 'swapLimit';
     return null;
   }
-  /** Every bench mon a trigger sends in now: [{ j, why, score }]. LEADER-AI "SWAP AND SLOT CHOICES", the baseline thresholds:
-   *  cc (asleep or frozen with ccLeft s or more left: the healthiest bench mon), low (under lowHp with no self heal left, once per
-   *  mon: the best matchup at lowTo or more), matchup (a bench mon matchupX times the active's or better, at matchupHp or more). */
-  triggers(e) {
-    const S = this.set,
-      t = this.team,
-      frac = (m) => m.hp / m.maxHp,
-      bench = t.members.map((m, j) => ({ m, j })).filter((c) => c.j !== t.activeIdx && !c.m.dead),
-      top = (list, f) => list.reduce((a, b) => (!a || f(b) > f(a) ? b : a), null),
-      out = [];
-    const M = e.stMajor;
-    if (M && (M.k === 'sleep' || M.k === 'freeze') && M.t >= S.ccLeft - LeaderAI.EPS) {
-      const c = top(bench, (c) => frac(c.m));
-      if (c) out.push({ j: c.j, why: 'cc', score: S.ccScore });
-    }
-    if (frac(e) < S.lowHp && !this.saved.has(e) && !this.healLeft(e)) {
-      const c = top(
-        bench.filter((c) => frac(c.m) >= S.lowTo - LeaderAI.EPS),
-        (c) => this.matchup(c.m)
-      );
-      if (c) out.push({ j: c.j, why: 'low', score: S.lowScore });
-    }
-    const here = this.matchup(e);
-    for (const c of bench) {
-      if (frac(c.m) < S.matchupHp - LeaderAI.EPS) continue;
-      const r = here > 0 ? this.matchup(c.m) / here : LeaderAI.FAR;
-      if (r >= S.matchupX - LeaderAI.EPS) out.push({ j: c.j, why: 'matchup', score: Math.min(r, LeaderAI.FAR) });
-    }
-    return out;
-  }
-  /** A self heal it can still cast this fight (the heal cap counts; an hpBelow heal counts once it is open). */
-  healLeft(e) {
-    return e.healsLeft > 0 && this.pool(e).some((s) => G.Gyms.formOf(e.moveDef(s.id)) === 'heal');
-  }
-
   /** LEADER-AI MATCHUP for leader mon m against your mon `you` (the one on the field unless a prediction names another): offense =
    *  its best open damaging move's type x your mon's types x STAB 1.5; defense = max(0.25, your attack's type x m's types); score =
    *  offense / defense. */
@@ -576,8 +597,7 @@ G.LeaderAI = class LeaderAI {
     });
     this.heard({ k: 'exploit' });
     if (best.j === here) return;
-    this.why = { why: 'exploit', out: e };
-    this.requestSwap(best.j);
+    this.expectYou = you; // #52: this tick's plan reads your shots as that mon's, the swap open past minField (decision C)
   }
 
   // ---------------- dodges ----------------
@@ -597,6 +617,7 @@ G.LeaderAI = class LeaderAI {
         read,
       });
       if (read && !this.pending) this.pending = { at: this.clock + S.reflex, serial: th.serial };
+      else if (!read && this.expect && !this.expect.done && this.expect.moveId === th.moveId) this.expect.done = true;
     }
     const p = this.pending;
     if (!p || this.clock < p.at - LeaderAI.EPS) return;
@@ -613,9 +634,33 @@ G.LeaderAI = class LeaderAI {
       this.note('dodge', 'no charge to spare (' + ready + ' ready, ' + S.dodgeReserve + ' kept back)');
       return;
     }
+    const x = this.expect,
+      planned = !!x && !x.done && x.moveId === th.moveId;
+    if (!planned && ready - 1 <= S.dodgeReserve) {
+      const k = this.keepScore(th);
+      if (k.hit < k.keep - LeaderAI.EPS) {
+        this.note('dodge', 'kept for later: ' + th.moveId + ' ' + k.hit.toFixed(3) + ' under ' + k.keep.toFixed(3));
+        return;
+      }
+    }
+    if (planned) x.done = true;
     e.heading = this.dodgeDir(e, th);
     this.dodgeAnswer = true;
-    this.note('dodge', 'pressed against ' + th.moveId, { serial: th.serial });
+    this.note('dodge', (planned ? 'planned, ' : '') + 'pressed against ' + th.moveId, { serial: th.serial });
+  }
+  /** #52 REFLEX: a dodge that would spend down to dodgeReserve, as a score: your hit (its size on the planner's last world, your
+   *  best hit when it is not there) x the current goal's damage-taken weight x risk, against the charge kept back (your best hit x
+   *  the planner's keepCharge). With no plan the weight is 1. */
+  keepScore(th) {
+    const P = G.LeaderPlanner,
+      w = this.world,
+      threats = (w && w.you && w.you.threats) || [],
+      best = Math.max(0, ...threats.map((t) => t.hitFraction)),
+      mine = threats.find((t) => t.id === th.moveId),
+      size = mine ? mine.hitFraction : best,
+      goal = this.plan && this.plan.goal,
+      weight = (goal && P.PROFILE[goal] ? P.PROFILE[goal].taken : 1) * this.set.risk;
+    return { hit: size * weight, keep: best * P.TUNE.keepCharge };
   }
   /** LEADER-AI DODGE DIRECTION: sideways to the threat's path, to the side with more open floor (G.GymLeader room); about even, the
    *  side away from the path. A shape that is not moving (a strike waiting to land, a beam): straight away from it. */
@@ -648,10 +693,6 @@ G.LeaderAI = class LeaderAI {
   /** The effective aggression: the authored aggression nudged by confidence (CONF.pull per unit off 0.5), within 0 to 1. */
   aggr() {
     return G.U.clamp(this.set.aggression + (this.conf - 0.5) * LeaderAI.CONF.pull, 0, 1);
-  }
-  /** The swap margin with confidence: lower when unsure (it swaps more readily), higher when sure. */
-  swapMargin() {
-    return this.set.margin * (1 + (this.conf - 0.5) * LeaderAI.CONF.marginK);
   }
   /** Every frame: the fight's events move confidence (confSwing scales them; 0 while confidence is off), the long window drifts it
    *  toward whoever leads the trade, triggers hear their events, and a big swing says a line. */
@@ -689,22 +730,6 @@ G.LeaderAI = class LeaderAI {
         this.swingAt = this.clock;
       }
     }
-  }
-  /** LEADER-AI GAP-CLOSING DODGE: bold enough (aggr at gapClose or more), a close move ready, you just outside its reach and inside
-   *  one dodge more, and a charge to spare beyond dodgeReserve plus one kept for threats (Jess 2026-11-08). Straight at you. On the
-   *  think tick (#51: no longer inside pacing, which is gone; #52 makes it the planner's Dash in). */
-  gapClose(e, pl) {
-    const S = this.set;
-    if (this.aggr() < S.gapClose - LeaderAI.EPS || this.pending || e.dodgeT > 0) return;
-    if (!this.pool(e).some((s) => s.t <= 0 && LeaderAI.CLOSE.includes(G.Gyms.formOf(e.moveDef(s.id))))) return;
-    const reach = this.reach(e) + (pl.r || 0),
-      d = G.U.dist(e.x, e.y, pl.x, pl.y);
-    if (d <= reach || d - G.PlayerEntity.DODGE.dist > reach) return;
-    const ready = e.dodges.cd.filter((c) => c <= 0).length;
-    if (ready <= S.dodgeReserve + 1) return;
-    e.heading = G.U.norm(pl.x - e.x, pl.y - e.y);
-    this.dodgeAnswer = true;
-    this.note('gap', 'dodges in: you are ' + Math.round(d) + ' px, its reach ' + Math.round(reach));
   }
   /** One line for the ?dev overlay: confidence, effective aggression and the goal it runs (#51). */
   status() {
@@ -877,8 +902,8 @@ G.LeaderAI.EPS = 1e-6;
 G.LeaderAI.FAR = 99; // the matchup ratio when your mon cannot be hurt by the one on the field (offense 0)
 G.LeaderAI.LOG_N = 40;
 /** The baseline settings (LEADER-AI "Authoring a leader"; all TUNE, BALANCE.md "Leader AI"). Seconds: think, reflex, threatWindow,
- *  minField, ccLeft. dodgeRead: reads per block of BAG threats. swapLimit null: no cap. HP lines are fractions of max HP. stay, margin
- *  and the scores: a trigger scores ccScore, lowScore or the matchup ratio, and must beat stay x margin. randomness: off until slice 5. */
+ *  minField. dodgeRead: reads per block of BAG threats. swapLimit null: no cap. randomness: off until slice 5. #52: the swap choice's
+ *  stay, margin, cc, low HP and matchup settings and gapClose are gone; swapWill multiplies the planner's swap cost. */
 G.LeaderAI.BASE = Object.freeze({
   think: 0.25,
   reflex: 0.15,
@@ -887,24 +912,15 @@ G.LeaderAI.BASE = Object.freeze({
   dodgeReserve: 0,
   minField: 8,
   swapLimit: null,
-  stay: 1,
-  margin: 1.1,
-  ccLeft: 1.5,
-  ccScore: 3,
-  lowHp: 0.25,
-  lowTo: 0.5,
-  lowScore: 2.5,
-  matchupX: 2,
-  matchupHp: 0.4,
+  swapWill: 1,
   randomness: 0,
-  // slice 3 (#32): style and confidence. aggression, the conf* values and gapClose are 0 to 1; lean degrees at aggr 0 or 1
+  // slice 3 (#32): style and confidence. aggression and the conf* values are 0 to 1; lean degrees at aggr 0 or 1 (#52: gapClose gone)
   // (#51: pushAfter and breatherMax went with pacing)
   aggression: 0.5,
   confStart: 0.5,
   confSwing: 1,
   confMin: 0.2,
   confMax: 0.9,
-  gapClose: 0.7,
   lean: 45,
   // slice 4 (#33): learnRate sightings before a pattern is believed; predictCap acts per BAG chances to act on one
   learnRate: 3,
@@ -921,23 +937,22 @@ G.LeaderAI.BASE = Object.freeze({
 });
 G.LeaderAI.BAG = 10;
 /** Slice 3 (all TUNE, BALANCE.md "Leader AI"). CONF: each hit landed or taken, each faint (yours up, its own down), the drift per
- *  second while the long window's trade is `trade` or more, `pull` (aggr per unit of confidence off 0.5), `marginK` (the swap margin's
- *  share), the swing that says a line and the cooldown between those lines. (#51: PACE and HOLD went with pacing.) */
+ *  second while the long window's trade is `trade` or more, `pull` (aggr per unit of confidence off 0.5), the swing that says a line
+ *  and the cooldown between those lines. (#51: PACE and HOLD went with pacing; #52: marginK with the swap margin.) */
 G.LeaderAI.CONF = Object.freeze({
   hit: 0.03,
   faint: 0.15,
   drift: 0.01,
   trade: 0.1,
   pull: 0.6,
-  marginK: 0.25,
   swing: 0.25,
   swingCd: 20,
 });
-G.LeaderAI.CLOSE = Object.freeze(['melee', 'nova', 'multi']); // the forms a gap-closing dodge brings into reach
+G.LeaderAI.SWAP_WAIT = 0.1; // #52: seconds a swap or dash press may wait to land before the step counts as refused by your rules
 G.LeaderAI.LINE_WAIT = 4; // seconds a line may wait for the banner (the send-out line shows 3.2 s)
 G.LeaderAI.LINE_T = 2.4; // seconds a line shows
-/** Dev and harness switches: turn its own planner (#51: off, it stands and presses no slot), swap, dodge (the gap-closing dodge
- *  too), confidence, trigger or memory (slice 4: acting on a pattern) decisions off. */
+/** Dev and harness switches: turn its own planner (#51: off, it stands and presses no slot), swap (#52: the planner's Swap), dodge
+ *  (#52: Dash in and Dodge your shot too), confidence, trigger or memory (slice 4: acting on a pattern) decisions off. */
 G.LeaderAI.off = { planner: false, swaps: false, dodges: false, confidence: false, triggers: false, memory: false };
 /** The dodge bag's seed for every fight from now on (the harness fixes it); null: a new one each fight. */
 G.LeaderAI.seed = null;

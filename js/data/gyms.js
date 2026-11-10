@@ -53,15 +53,8 @@ G.Gyms = (() => {
     'dodgeReserve',
     'minField',
     'swapLimit',
-    'stay',
-    'margin',
-    'ccLeft',
-    'ccScore',
-    'lowHp',
-    'lowTo',
-    'lowScore',
-    'matchupX',
-    'matchupHp',
+    // #52 (#49 slice 3): the swap choice's stay, margin, cc, low HP and matchup keys and gapClose are gone. swapWill: x the swap cost
+    'swapWill',
     'randomness',
     // slice 3 (#32): style, confidence and pacing
     'aggression',
@@ -69,7 +62,6 @@ G.Gyms = (() => {
     'confSwing',
     'confMin',
     'confMax',
-    'gapClose',
     'lean',
     // slice 4 (#33): run memory. learnRate: sightings before a pattern is believed; predictCap: acts per 10 chances (0 to 10)
     'learnRate',
@@ -80,7 +72,7 @@ G.Gyms = (() => {
     'risk',
     'stubbornness',
   ];
-  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'gapClose', 'randomness']; // 0 to 1
+  const AI_UNIT = ['aggression', 'confStart', 'confMin', 'confMax', 'randomness']; // 0 to 1
   // slice 3: ai.triggers (LEADER-AI TRIGGERS) and ai.lines (up and down, on a big confidence swing). A trigger is { on, ... }:
   // 'start'; 'hp' with `below` (its own HP fraction); 'faint' with `side` ('yours' or 'own'); 'sendIn' (you send in a mon); 'time'
   // with `at` seconds; slice 4: 'exploit' (it starts acting on a pattern it believes: your usual lead). Then any of: line, set

@@ -2,9 +2,13 @@
  * Spec: docs/LEADER-AI.md "The Decider (#49)" (GOALS, GOAL VALUE AND SCORE, COST, CHOICE, PLANS, ACTIONS); #51, #49 slice 2.
  * Pure: it reads only the snapshot G.LeaderBelief hands it (never the game), so the harness can hand-derive every outcome.
  *   GOALS    nine, fixed in code (GOALS, in tie-break order); a leader only weights them (the default leader: every weight 1).
- *   ACTIONS  this slice's six verbs: close (to a slot's reach), hold (at the preferred range), backOff (outside your reach), wait (for
- *            its own slot to be ready, or for a move of yours to fire), use (a slot), recover (a spent charge or cooldown back).
- *            Dash in, Draw your shot, Dodge your shot and Swap are #52's.
+ *   ACTIONS  ten verbs: close (to a slot's reach), hold (at the preferred range), backOff (outside your reach), wait (for its own
+ *            slot to be ready, or for a move of yours to fire), use (a slot), recover (a spent charge or cooldown back); and #52's
+ *            dash (a dodge toward you that brings a slot into reach), draw (step into a move of yours as it comes ready, so it fires),
+ *            dodge (that drawn shot, planned; it fires on the reflex clock) and swap (to a bench mon, a plan's first step only).
+ *   STATE    the plan state carries which mon is on the field (state.mon: null the active one, else its bench index), its sleep or
+ *            freeze left (every action but a swap first stands it out), and its HP left: a step that takes it to 0 adds the KO
+ *            bonus to its damage taken (decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value, A), and nothing follows.
  *   SEARCH   every plan of at most TUNE.maxSteps actions, in full (a small tree), and for each goal the best scoring plan whose last
  *            step reaches its target. Costs can be negative (damage dealt is subtracted), which A* cannot search, so the tree is
  *            walked whole; the result is the same cheapest plan per goal.
@@ -60,9 +64,11 @@ G.LeaderPlanner = (() => {
     reachFalloff: 40, // px past a shape's reach over which the hit chance falls to 0
     stepTimeout: 1.5, // an action ends at this many times its estimate
     commitPerSecond: 0.01, // the commitment bonus per second invested, x stubbornness
-    buffWindow: 10, // seconds a stage is valued over (the long window)
+    buffWindow: 10, // seconds a stage (and a swap's matchup, #52) is valued over (the long window)
     slack: 40, // px a running action's reach precondition tolerates before it counts as broken
     buffGate: 6, // s a pure buff is closed after it casts, in a plan (the stage Gate, G.Stages GATE)
+    swapCost: 0.03, // a swap's own cost (HP fraction), x swapWill
+    keepCharge: 0.5, // a dodge or dash that spends down to dodgeReserve costs your best hit x this (decision B)
   });
   const TAGS = Object.freeze({
     close: 'approach',
@@ -70,6 +76,10 @@ G.LeaderPlanner = (() => {
     backOff: 'retreat',
     wait: 'wait',
     recover: 'wait',
+    dash: 'dash',
+    draw: 'approach',
+    dodge: 'dodge',
+    swap: 'swap',
   });
   const HIT_GOALS = new Set(['endurance', 'maintain', 'pressure', 'kite', 'bait']);
   const EPS = 1e-9;
@@ -99,17 +109,61 @@ G.LeaderPlanner = (() => {
   }
   const tagMultiplier = (world, tag) => (world.tagMultipliers && world.tagMultipliers[tag]) || 1;
 
+  /** The mon a plan state has on the field, as the planner reads it: its own state, slots and your shots sized against it. The
+   *  active mon is the world's; a bench mon (after a swap) is its bench entry, with the team's dodge charges (one team store). */
+  const views = new WeakMap();
+  function monOf(world, state) {
+    if (state.mon == null) return activeView(world);
+    let list = views.get(world);
+    if (!list) views.set(world, (list = []));
+    if (!list[state.mon]) {
+      const b = world.bench[state.mon];
+      list[state.mon] = {
+        own: Object.assign({}, world.own, {
+          speed: b.speed,
+          radius: b.radius || 0,
+          hpFraction: b.hpFraction,
+          healsLeft: b.healsLeft || 0,
+          activeSlot: b.activeSlot || 0,
+          stunLeft: 0,
+        }),
+        slots: b.slots,
+        threats: b.threats,
+        bestHit: Math.max(0, ...b.threats.map((t) => t.hitFraction)),
+      };
+    }
+    return list[state.mon];
+  }
+  const activeViews = new WeakMap();
+  function activeView(world) {
+    let v = activeViews.get(world);
+    if (!v)
+      activeViews.set(
+        world,
+        (v = { own: world.own, slots: world.slots, threats: world.you.threats, bestHit: world.you.bestHit || 0 })
+      );
+    return v;
+  }
+  const reserveOf = (world) => world.own.dodgeReserve || 0;
+
   /** The plan state at the start: now, here, its own exact timers, your believed next shots. */
   function startState(world) {
     return {
       time: 0,
       distance: world.distance,
+      mon: null,
       activeSlot: world.own.activeSlot,
       remaining: world.slots.map((slot) => slot.moves.map((m) => m.remaining)),
       threatNext: world.you.threats.map((t) => t.nextFireIn),
       chargesReady: world.own.dodgeCharges.ready,
       healsLeft: world.own.healsLeft,
       hpFraction: world.own.hpFraction,
+      hpLeft: world.own.hpFraction,
+      stunLeft: world.own.stunLeft || 0,
+      ko: false,
+      drew: false,
+      drawn: null,
+      dodged: false,
       dealt: 0,
     };
   }
@@ -118,13 +172,14 @@ G.LeaderPlanner = (() => {
 
   /** Your shots during an action from `state.time` for `duration`, at its closest distance: each threat fires at its next believed
    *  time when the leader is inside its reach, then every cycle; out of reach a ready shot waits. Returns the damage taken and
-   *  advances state.threatNext. */
+   *  advances state.threatNext. Sized against the mon the state has on the field. */
   function shotsDuring(world, state, closest, duration) {
     const from = state.time,
-      to = from + duration;
+      to = from + duration,
+      mon = monOf(world, state);
     let taken = 0;
-    world.you.threats.forEach((threat, k) => {
-      if (closest > threat.reach + world.own.radius) return;
+    mon.threats.forEach((threat, k) => {
+      if (closest > threat.reach + mon.own.radius) return;
       let next = Math.max(state.threatNext[k], from);
       while (next < to - EPS) {
         taken += threat.hitFraction;
@@ -145,16 +200,27 @@ G.LeaderPlanner = (() => {
   };
   const inReachOf = (world, move, distance) => distance <= move.reach + world.you.radius + EPS;
 
-  /** The concrete actions open in `state` (the six verbs filled in per slot, range or move of yours). `last` is the previous step,
-   *  so a verb never repeats itself back to back. */
+  /** The concrete actions open in `state` (the ten verbs filled in per slot, range, bench mon or move of yours). `last` is the
+   *  previous step, so a verb never repeats itself back to back. A KO ends the plan: nothing follows it. */
   function actionsIn(world, state, last) {
     const out = [],
-      same = (verb) => last && last.verb === verb;
-    world.slots.forEach((slot, i) => {
+      same = (verb) => last && last.verb === verb,
+      mon = monOf(world, state);
+    if (state.ko) return out;
+    // Swap to mon Y: only a plan's first step, when the swap is open (your rules and the stall guards, Belief's)
+    if (!last && state.mon == null && world.swap && world.swap.allowed && world.bench)
+      world.bench.forEach((b, i) => out.push({ verb: 'swap', to: i, team: b.team, name: b.name }));
+    const dodge = world.dodge,
+      spare = state.chargesReady > reserveOf(world);
+    mon.slots.forEach((slot, i) => {
       const reachable = slot.moves.filter((m) => m.tag === 'attack' || m.tag === 'status');
-      if (reachable.length && !same('close')) {
-        const reach = Math.max(...reachable.map((m) => m.reach));
-        if (state.distance > reach + world.you.radius) out.push({ verb: 'close', slot: i, reach });
+      if (reachable.length) {
+        const reach = Math.max(...reachable.map((m) => m.reach)),
+          edge = reach + world.you.radius;
+        if (!same('close') && state.distance > edge) out.push({ verb: 'close', slot: i, reach });
+        // Dash in (slot X): a dodge toward you, a charge beyond the reserve, X's reach within one dodge
+        if (dodge && spare && !same('dash') && state.distance > edge + EPS && state.distance - dodge.dist <= edge + EPS)
+          out.push({ verb: 'dash', slot: i, reach });
       }
       if (state.remaining[i].some((left) => left > EPS) && !(same('wait') && last.slot === i))
         out.push({ verb: 'wait', slot: i });
@@ -163,19 +229,40 @@ G.LeaderPlanner = (() => {
     if (!same('hold')) out.push({ verb: 'hold', range: world.preferredRange });
     const safe = world.you.bestReach + world.you.radius + TUNE.backOffPad;
     if (!same('backOff') && state.distance < safe - EPS) out.push({ verb: 'backOff', to: safe });
-    world.you.threats.forEach((threat, k) => {
-      if (threat.id == null || same('wait')) return;
-      if (state.distance > threat.reach + world.own.radius) return; // out of its reach it does not fire (Draw your shot is #52)
+    mon.threats.forEach((threat, k) => {
+      if (threat.id == null) return;
+      // Draw your shot (your move M): outside M's reach, step into it as its window opens, once a plan. Out of its reach it does
+      // not fire, so there is nothing to wait for
+      if (state.distance > threat.reach + mon.own.radius) {
+        if (!state.drew && !same('draw') && Number.isFinite(threat.reach))
+          out.push({ verb: 'draw', yourMove: threat.id, threat: k, reach: threat.reach });
+        return;
+      }
+      if (same('wait')) return;
       if (state.threatNext[k] > state.time + EPS)
         out.push({ verb: 'wait', yourMove: threat.id, threat: k, reach: threat.reach });
     });
+    // Dodge your shot (M): right after the step that drew M (a draw, or a wait for it: apply keeps `drawn` for the next step only),
+    // once a plan, with a charge to spare and a shot that flies long enough to be answered after reflex
+    if (dodge && spare && !state.dodged && state.drawn != null) {
+      const threat = mon.threats[state.drawn];
+      if (threat && dodgeSuccess(world, threat, state.distance) > 0)
+        out.push({ verb: 'dodge', yourMove: threat.id, threat: state.drawn });
+    }
     if (!same('recover') && recoverIn(world, state) != null) out.push({ verb: 'recover' });
     return out;
+  }
+  /** A planned dodge's expected success (LEADER-AI ACTIONS, decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value): the
+   *  dodge bag's read rate when your shot's flight from `distance` is at least `reflex`, else 0 (it lands before it can answer). */
+  function dodgeSuccess(world, threat, distance) {
+    if (!(threat.travelSpeed > 0)) return 0;
+    if (distance / threat.travelSpeed < (world.reflex || 0) - EPS) return 0;
+    return clamp((world.dodgeRead != null ? world.dodgeRead : 0) / (world.bag || 10), 0, 1);
   }
   /** Slot i can be used now: an attack or status move ready within the action and you in its reach, or a buff whose stage can
    *  rise, or a heal while hurt with one left. */
   function canUse(world, state, i) {
-    return world.slots[i].moves.some((m) => {
+    return monOf(world, state).slots[i].moves.some((m) => {
       if (m.tag === 'buff') return m.buffReady;
       if (m.tag === 'heal') return state.healsLeft > 0 && state.hpFraction < 1 - EPS;
       return inReachOf(world, m, state.distance);
@@ -186,10 +273,11 @@ G.LeaderPlanner = (() => {
    *  scores nothing when nothing is spent (LEADER-AI GOAL VALUE AND SCORE). */
   function recoverIn(world, state) {
     let best = null;
-    const charges = world.own.dodgeCharges;
+    const charges = world.own.dodgeCharges,
+      mon = monOf(world, state);
     if (state.chargesReady < charges.total && charges.nextBackIn > state.time + EPS)
-      best = { seconds: charges.nextBackIn - state.time, worth: world.you.bestHit, what: 'a dodge charge' };
-    world.slots.forEach((slot) =>
+      best = { seconds: charges.nextBackIn - state.time, worth: mon.bestHit, what: 'a dodge charge' };
+    mon.slots.forEach((slot) =>
       slot.moves.forEach((m) => {
         const left = m.remaining - state.time;
         if (m.tag !== 'attack' || left <= EPS) return;
@@ -198,12 +286,62 @@ G.LeaderPlanner = (() => {
     );
     return best;
   }
+  /** A mon's trade per second over the long window (the swap's matchup term): your shots' believed damage per second on it (each
+   *  shot's hit over its cycle), and its best attack's hit per second on you (its hit over its cooldown, 0.25 s at least, as Buff). */
+  function matchupRates(mon) {
+    let danger = 0,
+      opportunity = 0;
+    for (const t of mon.threats) danger += t.hitFraction / Math.max(0.05, t.cycle);
+    for (const slot of mon.slots)
+      for (const m of slot.moves)
+        if (m.tag === 'attack') opportunity = Math.max(opportunity, m.hitFraction / Math.max(0.25, m.cooldown));
+    return { danger, opportunity };
+  }
+  /** A charge spent: one fewer ready, and when that leaves none beyond the reserve, the kept-back cost (decision B). */
+  function spendCharge(world, state, next) {
+    next.chargesReady--;
+    return next.chargesReady <= reserveOf(world) ? monOf(world, state).bestHit * TUNE.keepCharge : 0;
+  }
 
-  /** One action applied: the next state and the step (its duration, damage taken and dealt, tag and what it achieved). */
+  /** One action applied: the next state and the step (its duration, damage taken and dealt, tag and what it achieved). After it,
+   *  the mon's HP left: a step that takes it to 0 adds the KO bonus to its taken, and the plan ends there (A). A drawn shot of yours
+   *  (a draw, or a wait for your move) is remembered for the next step only, for Dodge your shot. */
   function apply(world, state, action) {
+    const out = applyAction(world, state, action),
+      next = out.state,
+      step = out.step;
+    next.drawn = action.verb === 'draw' || (action.verb === 'wait' && action.yourMove != null) ? action.threat : null;
+    if (action.verb === 'swap') return out;
+    next.hpLeft = Math.min(1, state.hpLeft - step.taken);
+    if (!state.ko && step.taken > 0 && next.hpLeft <= EPS) {
+      step.taken += TUNE.koBonus;
+      next.ko = true;
+    }
+    return out;
+  }
+  /** The action itself. A sleep or freeze on the field is stood out first by every action but a swap: your shots land, it does
+   *  nothing, its own timers run. */
+  function applyAction(world, state, action) {
+    if (state.stunLeft > EPS && action.verb !== 'swap') {
+      const slept = copy(state),
+        stun = state.stunLeft,
+        taken = shotsDuring(world, slept, state.distance, stun);
+      advance(slept, stun);
+      slept.stunLeft = 0;
+      // what a Recover waits for may come back during the sleep: it keeps the resource it named before
+      const out = applyAction(
+        world,
+        slept,
+        action.verb === 'recover' ? Object.assign({ back: recoverIn(world, state) }, action) : action
+      );
+      out.step.duration += stun;
+      out.step.taken += taken;
+      return out;
+    }
     const next = copy(state),
-      own = world.own,
-      step = Object.assign({ taken: 0, dealt: 0, effect: null }, action);
+      mon = monOf(world, state),
+      own = mon.own,
+      step = Object.assign({ taken: 0, dealt: 0, extra: 0, effect: null }, action);
     const travel = (to) => Math.abs(to - state.distance) / Math.max(1, own.speed);
     if (action.verb === 'close') {
       const to = Math.max(0, action.reach + world.you.radius - TUNE.closeInset);
@@ -229,11 +367,59 @@ G.LeaderPlanner = (() => {
       step.duration = left.length ? Math.min(...left) : 0;
       step.taken = shotsDuring(world, next, state.distance, step.duration);
     } else if (action.verb === 'recover') {
-      const back = recoverIn(world, state);
-      step.duration = back.seconds;
+      const back = action.back
+        ? { ...action.back, seconds: action.back.seconds - state.time }
+        : recoverIn(world, state);
+      delete step.back;
+      step.duration = Math.max(0, back.seconds);
       step.taken = shotsDuring(world, next, state.distance, step.duration);
       step.effect = { kind: 'recovered', worth: back.worth, what: back.what };
       if (back.what === 'a dodge charge') next.chargesReady++;
+    } else if (action.verb === 'dash') {
+      const to = Math.max(0, state.distance - world.dodge.dist);
+      step.duration = world.dodge.time;
+      step.keepSlot = action.slot;
+      step.taken = shotsDuring(world, next, to, step.duration) + spendCharge(world, state, next);
+      next.distance = to;
+    } else if (action.verb === 'draw') {
+      // it walks to just inside M's reach, arriving as M's window opens (it waits outside when it would arrive early)
+      const to = Math.max(0, action.reach + own.radius - TUNE.closeInset);
+      step.walk = travel(to);
+      step.duration = Math.max(step.walk, state.threatNext[action.threat] - state.time);
+      step.taken = shotsDuring(world, next, to, step.duration + EPS); // M lands as it arrives
+      next.distance = to;
+      next.drew = true;
+      step.effect = { kind: 'yourShot', id: action.yourMove };
+    } else if (action.verb === 'dodge') {
+      const threat = mon.threats[action.threat];
+      step.duration = world.dodge.time;
+      step.taken =
+        -threat.hitFraction * dodgeSuccess(world, threat, state.distance) +
+        shotsDuring(world, next, state.distance, step.duration) +
+        spendCharge(world, state, next);
+      next.dodged = true;
+    } else if (action.verb === 'swap') {
+      // the incoming mon takes the field: its slots, timers, HP and your shots sized against it; the send-in i-frames take nothing
+      next.mon = action.to;
+      const incoming = monOf(world, next);
+      next.remaining = incoming.slots.map((slot) => slot.moves.map((m) => m.remaining));
+      next.activeSlot = incoming.own.activeSlot;
+      next.hpFraction = next.hpLeft = incoming.own.hpFraction;
+      next.healsLeft = incoming.own.healsLeft;
+      next.stunLeft = 0;
+      next.ko = false;
+      step.duration = world.swap.iframes;
+      shotsDuring(world, next, state.distance, step.duration);
+      step.extra = TUNE.swapCost * (world.swap.will != null ? world.swap.will : 1);
+      // the matchup over the long window, as Buff is valued: the damage per second your shots take off the incoming mon instead of
+      // the outgoing one, and its best hit per second on you instead of the outgoing one's (decision
+      // 2026-11-09-52-swap-matchup-window-and-duels). Signed: a worse matchup costs.
+      const out = monOf(world, state),
+        gain = matchupRates(out),
+        into = matchupRates(incoming);
+      step.taken = (into.danger - gain.danger) * TUNE.buffWindow;
+      step.dealt = (into.opportunity - gain.opportunity) * TUNE.buffWindow;
+      step.effect = { kind: 'swapped', taken: step.taken, dealt: step.dealt };
     } else if (action.verb === 'use') return useSlot(world, state, next, step);
     step.tag = TAGS[action.verb];
     advance(next, step.duration);
@@ -242,7 +428,7 @@ G.LeaderPlanner = (() => {
   /** Use slot X: it waits for its moves to be ready, then fires them together (a bonded slot), after the tell. */
   function useSlot(world, state, next, step) {
     const i = step.slot,
-      moves = world.slots[i].moves,
+      moves = monOf(world, state).slots[i].moves,
       usable = moves
         .map((m, j) => ({ m, j }))
         .filter(({ m }) =>
@@ -281,7 +467,7 @@ G.LeaderPlanner = (() => {
     }
     step.dealt = effect.dealt;
     effect.atRange = Math.abs(state.distance - world.preferredRange) <= TUNE.rangeBand + EPS;
-    effect.outsideYourReach = state.distance > world.you.bestReach + world.own.radius + EPS;
+    effect.outsideYourReach = state.distance > world.you.bestReach + monOf(world, state).own.radius + EPS;
     effect.yourMoveCooling = yourMoveCooling(world, state, fireAt);
     step.effect = effect;
     const first = firing[0] && firing[0].m;
@@ -301,14 +487,15 @@ G.LeaderPlanner = (() => {
   }
 
   /** The plan's cost for a goal: per step, damage taken (x risk) minus damage dealt, plus the time term, each weighted by the goal's
-   *  profile, x the step's tag multiplier. */
+   *  profile, plus the step's own cost (a swap's), x the step's tag multiplier. */
   function costOf(world, goal, steps, countDealt = true) {
     const p = PROFILE[goal],
       dealtWeight = countDealt ? p.dealt : 0;
     let cost = 0;
     for (const s of steps)
       cost +=
-        (p.taken * world.risk * s.taken - dealtWeight * s.dealt + p.time * s.duration) * tagMultiplier(world, s.tag);
+        (p.taken * world.risk * s.taken - dealtWeight * s.dealt + p.time * s.duration + (s.extra || 0)) *
+        tagMultiplier(world, s.tag);
     return cost;
   }
   /** What a goal's target is worth when the plan's last step reaches it, or null when it does not (LEADER-AI GOALS). */
@@ -432,7 +619,13 @@ G.LeaderPlanner = (() => {
 
   /** Two steps are the same action (the running one, for the commitment bonus). */
   const sameAction = (a, b) =>
-    !!a && !!b && a.verb === b.verb && a.slot === b.slot && a.yourMove === b.yourMove && a.range === b.range;
+    !!a &&
+    !!b &&
+    a.verb === b.verb &&
+    a.slot === b.slot &&
+    a.yourMove === b.yourMove &&
+    a.range === b.range &&
+    a.to === b.to;
 
   /** The choice: every goal's best plan ranked by score (fixed tie-break: GOALS order); the running plan's goal gets the commitment
    *  bonus (seconds invested x commitPerSecond x stubbornness, scaled as confidence scales that goal) when its plan still starts with
@@ -483,5 +676,6 @@ G.LeaderPlanner = (() => {
     seeded,
     startState,
     sameAction,
+    dodgeSuccess,
   };
 })();

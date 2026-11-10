@@ -120,6 +120,13 @@ const ok = (c, m) => {
     console.log('FAIL ' + m);
   }
 };
+/** A check whose outcome waits on an open issue (CLAUDE.md "Move review rule": blocked, never guessed): it prints its result
+ *  and the issue, and does not fail the run. One that starts to pass says so, so the issue can unblock it. */
+let blockedN = 0;
+const blocked = (c, m, issue) => {
+  blockedN++;
+  console.log((c ? 'BLOCKED (#' + issue + ', now passes: unblock it) ' : 'BLOCKED (#' + issue + ') ') + m);
+};
 const near = (a, b, e = 1e-6) => typeof a === 'number' && Math.abs(a - b) <= e * Math.max(1, Math.abs(b));
 const DT = 1 / 60;
 const K = G.Gyms.listFor(null);
@@ -374,7 +381,8 @@ if (built2) {
   // ---------------- 5. the settings: the baselines, authored ones keyed by loop, the validator ----------------
   {
     const { ai } = at(open('Misty', 2));
-    const want = { think: 0.25, reflex: 0.15, threatWindow: 0.6, dodgeRead: 6, dodgeReserve: 0, minField: 8, swapLimit: null, margin: 1.1, ccLeft: 1.5, lowHp: 0.25, lowTo: 0.5, matchupX: 2, matchupHp: 0.4, randomness: 0 };
+    // #52: the swap choice's margin, cc, low HP and matchup settings are gone; swapWill 1 is the swap cost's baseline
+    const want = { think: 0.25, reflex: 0.15, threatWindow: 0.6, dodgeRead: 6, dodgeReserve: 0, minField: 8, swapLimit: null, swapWill: 1, randomness: 0 };
     const off = Object.keys(want).filter((k) => ai.set[k] !== want[k]);
     ok(!off.length, 'Misty authors none of these, so each is the agreed baseline' + (off.length ? ': ' + off.map((k) => k + '=' + ai.set[k]).join(', ') : ''));
     const s2 = AI.settings({ loop: 2, ai: { minField: { 1: 5, 3: 9 }, swapLimit: 2 } }),
@@ -401,7 +409,7 @@ if (built2) {
     ok(swapAt != null && swapAt >= 8 - 1e-9, 'Seel comes in, and not before minField 8 s: ' + swapAt);
     ok(swapAt != null && swapAt <= 8.25 + DT + 1e-9, 'on the first think tick after 8 s: ' + swapAt);
     ok(says.includes('Misty switches to Seel!'), 'with the swap line: ' + says.join(' | '));
-    ok(ai.log.some((d) => d.act === 'swap' && d.why === 'matchup'), 'and the log names the matchup reason');
+    ok(ai.log.some((d) => d.act === 'swap' && d.why), 'and the log names the goal its plan swapped for (#52: the planner\'s Swap)');
     // you Charmander with Ember: Staryu 3 / 0.5 = 6, Seel 3 / 0.5 = 6, no swap
     ({ t, ai, s1, s2 } = go('Misty', 2, 1));
     reveal(charm, 'ember');
@@ -481,7 +489,11 @@ if (built2) {
       r.ai.set.swapLimit = lim;
       until(9, () => r.t.active === r.s2);
       run(16.5 - 9);
-      r.s2.stMajor = { k: 'sleep', t: 3, age: 0 };
+      // #52: a sleep is a reason to swap only when it costs: you stand inside your Vine Whip's reach (68) of asleep Seel, 6 s. Staying
+      // takes about 6 / 0.8 = 7 whips at 0.03 = 0.21; Staryu's worse matchup costs (0.048 - 0.037) x 10 = 0.11, plus the swap 0.03
+      human.x = r.s2.x + 40;
+      human.y = r.s2.y;
+      r.s2.stMajor = { k: 'sleep', t: 6, age: 0 };
       return { r, back: until(1, () => r.t.active === r.s1) };
     };
     let z = sleepSeel(1);
@@ -525,61 +537,10 @@ if (built2) {
     ok(h.during != null && h.during <= 0.75 + 0.25 + DT, 'the recovery after it fires does not hold it: ' + h.during);
   }
 
-  // ---------------- 8. the triggers at their edges, and STAY ----------------
-  {
-    set(true, false);
-    let { t, ai, s1, s2 } = go('Misty', 2, 1);
-    reveal(charm, 'ember'); // both matchups 6: no matchup trigger, so each case shows only its own
-    run(1);
-    const whys = () => ai.triggers(t.active).map((c) => c.why + ':' + t.members[c.j].dex);
-    ok(whys().length === 0, 'at full HP, awake, even matchups: no trigger');
-    s1.stMajor = { k: 'sleep', t: 1.51, age: 0 };
-    ok(whys().join() === 'cc:86', 'asleep with 1.51 s left: to the healthiest bench mon: ' + whys().join());
-    s1.stMajor.t = 1.49;
-    ok(whys().length === 0, 'with 1.49 s left: none');
-    s1.stMajor = { k: 'freeze', t: 1.51, age: 0 };
-    ok(whys().join() === 'cc:86', 'frozen counts the same');
-    s1.stMajor = null;
-    s1.hp = s1.maxHp * 0.249;
-    ok(whys().join() === 'low:86', 'under 25% HP with no self heal: to the best matchup at 50%+: ' + whys().join());
-    s1.hp = s1.maxHp * 0.251;
-    ok(whys().length === 0, 'at 25.1%: none');
-    s1.hp = s1.maxHp * 0.249;
-    s2.hp = s2.maxHp * 0.49;
-    ok(whys().length === 0, 'with the bench mon at 49%: none');
-    s2.hp = s2.maxHp * 0.5;
-    ok(whys().join() === 'low:86', 'at 50%: it goes');
-    // once per mon: the low swap happens, then Staryu back on the field has used its save
-    run(8);
-    ok(t.active === s2 && ai.saved.has(s1), 'the low HP swap fires and uses Staryu\'s save');
-    run(5.1);
-    ai.requestSwap(0);
-    frame();
-    s1.hp = s1.maxHp * 0.2;
-    ok(t.active === s1 && whys().length === 0, 'Staryu back under 25%: no second low HP swap: ' + whys().join());
-    // a self heal left blocks the low trigger (Misty loop 1 Staryu has Recover below 35%)
-    const lone = at(open('Misty', 1));
-    lone.s1.hp = lone.s1.maxHp * 0.2;
-    ok(lone.ai.healLeft(lone.s1), 'Staryu with Recover open and a heal left: healLeft');
-    lone.s1.healsLeft = 0;
-    ok(!lone.ai.healLeft(lone.s1), 'with the heal cap spent: none left');
-    // matchup: Seel is 2x Staryu exactly (1.0 / 0.5) for you Bulbasaur; it needs Seel at 40%+
-    youActive = 0;
-    ({ t, ai, s1, s2 } = at(open('Misty', 2)));
-    reveal(bulba, 'vine-whip');
-    run(1);
-    ok(whys().join() === 'matchup:86', 'a bench matchup 2x the active one: ' + whys().join());
-    s2.hp = s2.maxHp * 0.39;
-    ok(whys().length === 0, 'with Seel at 39%: none');
-    s2.hp = s2.maxHp * 0.4;
-    ok(whys().join() === 'matchup:86', 'at 40%: it goes');
-    // STAY: a trigger must beat stay x margin (the matchup scores its ratio, 2)
-    ai.set.margin = 2.5;
-    ok(until(9, () => t.active === s2) == null, 'with margin 2.5 the matchup (2) does not beat STAY');
-    s1.stMajor = { k: 'sleep', t: 4, age: 0 };
-    ok(until(0.5, () => t.active === s2) != null, 'but asleep (ccScore 3) does');
-    youActive = 0;
-  }
+  // ---------------- 8. the triggers at their edges, and STAY: RETIRED (#52) ----------------
+  // The swap triggers (cc, low HP, matchup) and STAY are gone: a swap is the planner's Swap action (decision
+  // 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value). Section 16 holds their replacements: 16b (asleep, swapWill), 16c (the
+  // KO term that stands in for the low HP trigger); the matchup swap and the stall guards stay checked in sections 6 and 7.
 
   // ---------------- 9. dodges ----------------
   // A shot of yours is a plain instance in the sim's list (the sim is not stepped here: the harness moves it), owned by you.
@@ -713,6 +674,14 @@ if (built2) {
     r = readOne(() => (e.dodges.cd = [0, 0]));
     ok(r.read && r.dodge && e.dodges.cd.filter((c) => c <= 0).length === 1, 'with two ready: one spent, one kept');
     ai.set.dodgeReserve = 0;
+    // #52 REFLEX: a dodge that would spend down to the reserve goes only when your hit x the goal's taken weight x risk reaches your
+    // best hit x 0.5. At risk 0.1 the weight is at most 2.5 x 0.1 = 0.25 of the hit, under the 0.5: one charge ready is kept; two are not
+    ai.set.risk = 0.1;
+    r = readOne(() => (e.dodges.cd = [0, 6]));
+    ok(r.read && !r.dodge && ai.log.some((d) => d.act === 'dodge' && /kept for later/.test(d.text)), '#52: risk 0.1, one charge ready: the reflex dodge is kept for later');
+    r = readOne(() => (e.dodges.cd = [0, 0]));
+    ok(r.read && r.dodge, '#52: with two ready it keeps a spare, so it dodges');
+    ai.set.risk = 1;
     // a commitment holds a read dodge; it fires on the first free frame while the threat lasts
     r = null;
     for (let k = 0; k < 10 && !(r && r.read); k++) {
@@ -882,7 +851,7 @@ if (built2) {
 
     // ---------------- 11. the settings, the constants, the authoring and the validator ----------------
     {
-      const want = { aggression: 0.5, confStart: 0.5, confSwing: 1, confMin: 0.2, confMax: 0.9, gapClose: 0.7, lean: 45 };
+      const want = { aggression: 0.5, confStart: 0.5, confSwing: 1, confMin: 0.2, confMax: 0.9, lean: 45 }; // #52: gapClose gone
       const bad = Object.keys(want).filter((k) => AI.BASE[k] !== want[k]);
       ok(!bad.length, 'the slice 3 baselines are the agreed ones' + (bad.length ? ': ' + bad.map((k) => k + '=' + AI.BASE[k]).join(', ') : ''));
       ok(near(C.hit, 0.03) && near(C.faint, 0.15) && near(C.drift, 0.01) && near(C.trade, 0.1) && near(C.pull, 0.6) && near(C.swing, 0.25) && C.swingCd === 20, 'the confidence constants: hit 0.03, faint 0.15, drift 0.01 at a 10% trade, pull 0.6, a 0.25 swing line every 20 s at most');
@@ -947,14 +916,12 @@ if (built2) {
       ok(near(ai.conf, 0.53 + 0.01 * DT), 'a 12% hit: +0.03, then the drift starts: ' + ai.conf);
       run(16);
       ok(Math.abs(ai.conf - 0.63) <= 2e-3, 'and stops when it leaves the 10 s window: 0.53 + 0.10 = 0.63: ' + ai.conf);
-      // effective aggression and the swap margin
-      const ag = (c) => ((ai.conf = c), ai.aggr()),
-        mg = (c) => ((ai.conf = c), ai.swapMargin());
+      // effective aggression (#52: the swap margin is gone)
+      const ag = (c) => ((ai.conf = c), ai.aggr());
       ok(near(ag(0.5), 0.68) && near(ag(0.9), 0.92) && near(ag(0.2), 0.5), 'Misty aggr: 0.68 at 0.5, 0.92 at the ceiling, 0.50 at the floor: ' + [ag(0.5), ag(0.9), ag(0.2)].join(', '));
-      ok(near(mg(0.5), 1.1) && near(mg(0.9), 1.21) && near(mg(0.2), 1.0175), 'the swap margin: 1.1 at 0.5, 1.21 at the ceiling, 1.0175 at the floor');
       const b = go3('Brock', 2, { confidence: true }).ai;
       b.conf = 0.9;
-      ok(near(b.aggr(), 0.59) && b.aggr() < b.set.gapClose, 'Brock at his ceiling: aggr 0.59, under the gap-closing line: ' + b.aggr());
+      ok(near(b.aggr(), 0.59), 'Brock at his ceiling: aggr 0.59: ' + b.aggr());
       ({ ai, s1 } = go3('Misty', 2, {}));
       hitYou(s1, 0.5);
       hitHer(s1, 0.01);
@@ -1028,43 +995,9 @@ if (built2) {
       ok(deg(a, past), 'aggr 1 (45 degrees) with you ' + past.toFixed(2) + ' degrees off: it turns only as far as you: ' + a);
     }
 
-    // ---------------- 15. the gap-closing dodge ----------------
-    {
-      // Misty loop 2 Staryu has Tackle (melee). You stand east, `extra` px past its reach (plus your body); one dodge is 150 px.
-      // #51: it rides the think tick with the dodges switch (pacing, and with it the breather, is gone)
-      const gap = (name, loop, conf, { cd = [0, 0], reserve = 0, extra = 75, ready = true } = {}) => {
-        const { ai, s1: e } = go3(name, loop, { dodges: true });
-        ai.conf = conf;
-        ai.set.dodgeReserve = reserve;
-        const reach = e.ai.reach(e) + human.r;
-        let dv = null,
-          at = null;
-        for (let i = 1; i <= 30 && !dv; i++) {
-          e.dodges.cd = cd.slice();
-          if (!ready) for (const g of e.slots) for (const s of g) s.t = 99;
-          human.x = e.x + reach + extra;
-          human.y = e.y;
-          const was = e.dodgeT > 0;
-          frame();
-          if (!was && e.dodgeT > 0) {
-            dv = [e.dodgeVx, e.dodgeVy];
-            at = i * DT;
-          }
-        }
-        return { dv, at, noted: ai.log.some((d) => d.act === 'gap') };
-      };
-      let g = gap('Misty', 2, 0.6);
-      ok(g.dv && g.dv[0] > 0 && Math.abs(g.dv[1]) < 1e-6 && g.noted, 'aggr 0.74, Tackle ready, you 75 px out of reach: it dodges straight at you: ' + JSON.stringify(g.dv));
-      ok(g.at != null && g.at <= TICK, 'on the think tick: ' + g.at);
-      ok(!gap('Misty', 2, 0.53).dv, 'aggr 0.698, just under 0.7: no');
-      ok(!gap('Misty', 2, 0.6, { cd: [0, 6] }).dv, 'one charge ready: kept back for threats');
-      ok(!gap('Misty', 2, 0.6, { reserve: 1 }).dv, 'dodgeReserve 1 with two ready: kept back (it needs one more than the reserve plus one)');
-      ok(gap('Misty', 2, 0.6, { extra: 150 }).dv, 'you exactly one dodge out: it goes');
-      ok(!gap('Misty', 2, 0.6, { extra: 151 }).dv, 'one px more than a dodge: no');
-      ok(!gap('Misty', 2, 0.6, { extra: -5 }).dv, 'you already in reach: no');
-      ok(!gap('Misty', 2, 0.6, { ready: false }).dv, 'no close move ready: no');
-      ok(!gap('Brock', 2, 0.9).dv, 'Brock at his ceiling (aggr 0.59): never');
-    }
+    // ---------------- 15. the gap-closing dodge: RETIRED (#52) ----------------
+    // It is the planner's Dash in now (a charge beyond the reserve, your reach within one dodge, the kept-back charge a cost): section
+    // 16a.
 
     // ---------------- 16. triggers and lines ----------------
     {
@@ -1413,6 +1346,30 @@ if (built2) {
         const s1c = t.active;
         run(1);
         ok(t.active === s1c && ai.swaps === 0 && says.includes(MLINE), 'expecting Charmander (a tie, 6 and 6): Staryu stays, and she still says her line');
+        // #52: the read reaches the planner only when it names a better matchup (a tie does not feed it), and it acts only through
+        // the plan: with the swaps switch off, a believed read swaps nothing
+        const fed = () => {
+          const b = G.LeaderBelief.current,
+            snap0 = b.snapshot;
+          let n = 0;
+          b.snapshot = function (e, set, conf, opts) {
+            if (opts && opts.expect) n++;
+            return snap0.apply(this, arguments);
+          };
+          return () => n;
+        };
+        seeded(C4);
+        go3('Misty', 2, { swaps: true, triggers: true });
+        let fedN = fed();
+        run(1);
+        ok(fedN() === 0, '#52: a tied read never feeds the planner: ' + fedN());
+        seeded(B);
+        ({ t, ai } = go3('Misty', 2, { swaps: false, triggers: true }));
+        youActive = 1;
+        fedN = fed();
+        run(1);
+        ok(t.active === t.members[0] && ai.swaps === 0 && says.includes(MLINE), '#52: swaps switched off: the read says its line and swaps nothing');
+        ok(fedN() === 1, '#52: and feeds the planner once, on its tick: ' + fedN());
         // not believed: no line, and the matchup swap waits out minField as before
         seeded(B, 1);
         ({ t, ai, s2 } = go3('Misty', 2, { swaps: true, triggers: true }));
@@ -2340,7 +2297,276 @@ if (G.LeaderPlanner) {
     const u = (g) => P.utility(g, w(1, 0.9));
     ok(near(u('pressure'), 1.4) && near(u('finish'), 1.4) && near(u('conserve'), 0.6) && near(u('endurance'), 0.6) && u('kite') === 1, '15m: confidence 0.9 raises Pressure and Finish to 1.4, lowers Conserve and Endurance to 0.6');
   }
+
+  // ---------------- 16. #52 (#49 slice 3): swap, dash, draw and dodge (docs/LEADER-AI.md ACTIONS, REFLEX) ----------------
+  // Written at the slice's start (issue #52; decision 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value). Hand-derived from
+  // the spec, that decision and the #52 plan's numbers: one dodge 150 px in 0.5 s (G.PlayerEntity.DODGE), the swap's send-in
+  // i-frames 0.5 s (G.Team), the swap cost 0.03 x swapWill, the kept-back charge your best hit x 0.5 (B), a step that takes the
+  // leader mon to 0 HP adds the KO bonus 0.3 to its damage taken (A), a planned dodge succeeds dodgeRead / 10 of the time when your
+  // shot's flight from its reach beats `reflex` (else it is never offered).
+  {
+    const own = (o = {}) => Object.assign({ speed: 100, radius: 10, hpFraction: 1, healsLeft: 0, activeSlot: 0, stunLeft: 0, dodgeReserve: 0, dodgeCharges: { ready: 2, total: 2, nextBackIn: 0 } }, o);
+    const dodgeOn = { dodge: { dist: 150, time: 0.5 }, reflex: 0.15, dodgeRead: 6, bag: 10 };
+    const whip = (o = {}) => Object.assign({ id: 'whip', category: 'physical', hitFraction: 0.2, reach: 120, cycle: 1, nextFireIn: 0, travelSpeed: 0 }, o);
+    const ember = (o = {}) => Object.assign({ id: 'ember', category: 'special', hitFraction: 0.2, reach: 150, cycle: 2, nextFireIn: 0, travelSpeed: 300 }, o);
+
+    // 16a. Dash in. A jab (reach 50, your body 10: its edge 60), you 200 px off: one dodge (150) brings you to 50, inside it.
+    // Pressure, dash 1 then use 1: taken 0, dealt 0.1, 0.5 + 0.5 s: cost -1.5 x 0.1 + 0.02 x 1 = -0.13. Walking instead (close 1,
+    // use 1: 145 px at 100 px/s, 1.45 s, then 0.5 s): -0.15 + 0.02 x 1.95 = -0.111. So it dashes.
+    {
+      let c = P.choose(world({ top: Object.assign({ distance: 200, own: own() }, dodgeOn) }));
+      ok(text(of(c, 'pressure')) === 'dash 1, use 1' && near(of(c, 'pressure').cost, -0.13), '16a: two charges, you one dodge past its reach: dash 1, use 1 at -0.13: ' + text(of(c, 'pressure')) + ' ' + (of(c, 'pressure') || {}).cost);
+      c = P.choose(world({ top: Object.assign({ distance: 200, own: own({ dodgeReserve: 1, dodgeCharges: { ready: 1, total: 2, nextBackIn: 3 } }) }, dodgeOn) }));
+      ok(text(of(c, 'pressure')) === 'close 1, use 1' && near(of(c, 'pressure').cost, -0.111), '16a: only the reserve ready (1 of reserve 1): it walks, -0.111: ' + text(of(c, 'pressure')));
+      c = P.choose(world({ top: Object.assign({ distance: 210, own: own() }, dodgeOn) }));
+      ok(text(of(c, 'pressure')) === 'dash 1, use 1', '16a: you exactly one dodge out (210 - 150 = 60, its edge): it dashes');
+      c = P.choose(world({ top: Object.assign({ distance: 211, own: own() }, dodgeOn) }));
+      ok(!/dash/.test(text(of(c, 'pressure'))), '16a: 1 px more: no dash: ' + text(of(c, 'pressure')));
+      // the kept-back charge (B): your whip reaches 20 (never her at 50 or 55), your best hit 0.2. One charge ready, reserve 0: the dash
+      // spends down to the reserve, so it takes 0.2 x 0.5 = 0.1: Pressure 0.6 x 0.1 - 0.15 + 0.02 = -0.07 (score 0.19) loses to the
+      // walk's -0.111 (0.231). Two ready: the dash keeps a spare, -0.13 (0.25), and wins.
+      const short = { threats: [whip({ reach: 20 })], bestReach: 20, bestHit: 0.2 };
+      c = P.choose(world({ you: short, top: Object.assign({ distance: 200, own: own({ dodgeCharges: { ready: 1, total: 2, nextBackIn: 3 } }) }, dodgeOn) }));
+      ok(text(of(c, 'pressure')) === 'close 1, use 1', '16a: a dash down to the reserve costs your best hit x 0.5, so with one charge it walks: ' + text(of(c, 'pressure')));
+      const oneReady = world({ you: short, top: Object.assign({ distance: 200, own: own({ dodgeCharges: { ready: 1, total: 2, nextBackIn: 3 } }) }, dodgeOn) }),
+        dashStep = P.apply(oneReady, P.startState(oneReady), { verb: 'dash', slot: 0, reach: 50 });
+      ok(near(dashStep.step.taken, 0.1) && near(dashStep.step.duration, 0.5) && near(dashStep.state.distance, 50) && dashStep.state.chargesReady === 0, '16a: that dash step: taken 0.1, 0.5 s, to 50 px, no charge left: ' + JSON.stringify([dashStep.step.taken, dashStep.step.duration, dashStep.state.distance, dashStep.state.chargesReady]));
+      c = P.choose(world({ you: short, top: Object.assign({ distance: 200, own: own() }, dodgeOn) }));
+      ok(text(of(c, 'pressure')) === 'dash 1, use 1', '16a: with two ready it dashes again');
+      c = P.choose(world({ top: { distance: 200 } }));
+      ok(!c.ranking.some((r) => r.steps.some((s) => s.verb === 'dash' || s.verb === 'dodge' || s.verb === 'draw' || s.verb === 'swap')), '16a: a world with no dodge and no bench (section 15\'s) offers none of the four');
+    }
+
+    // 16b. Swap out of a sleep. Asleep 3 s, in your whip's reach (0.2 a hit, every 1 s, ready now), her jab in reach (you 40 px off).
+    // Staying (use 1): she stands out the sleep, then the 0.5 s tell: 3.5 s, your whip at 0, 1, 2 and 3 s: taken 0.8; Endurance
+    // 1.5 x 0.8 - 0.1 + 0.002 x 3.5 = 1.107. Swapping to the bench mon (your whip hits it for 0.1): the swap's 0.5 s are its send-in
+    // i-frames, so the 0 s whip lands on nothing; then its jab (0.5 s tell) fires at 1.0 s, before the 1 s whip: dealt 0.1. The swap
+    // step carries the matchup over the 10 s long window (decision 2026-11-09-52-swap-matchup-window-and-duels): your whip takes 0.1 a
+    // second off the bench mon instead of 0.2, so taken (0.1 - 0.2) x 10 = -1.0; both jabs hit 0.1 every 2 s, so dealt 0.
+    // 1.5 x -1.0 - 0.1 + 0.002 x 1.0 + the swap cost 0.03 = -1.568.
+    {
+      const bench = [{ name: 'Seel', team: 1, hpFraction: 1, healsLeft: 0, speed: 100, radius: 10, slots: [{ index: 0, moves: [jab()] }], threats: [whip({ hitFraction: 0.1 })] }];
+      const asleep = (allowed, o = {}) =>
+        world({ you: { threats: [whip()], bestReach: 120, bestHit: 0.2 }, top: Object.assign({ distance: 40, own: own({ stunLeft: 3 }), swap: { allowed, iframes: 0.5, will: 1 }, bench }, o) });
+      let c = P.choose(asleep(true));
+      ok(text(of(c, 'endurance')) === 'swap, use 1' && near(of(c, 'endurance').cost, -1.568), '16b: asleep 3 s under fire: swap, use 1 at -1.568: ' + text(of(c, 'endurance')) + ' ' + (of(c, 'endurance') || {}).cost);
+      ok(of(c, 'endurance').steps[0].to === 0 && of(c, 'endurance').steps[0].team === 1, '16b: the swap names the bench mon (bench 0, team slot 1)');
+      c = P.choose(asleep(false));
+      ok(text(of(c, 'endurance')) === 'use 1' && near(of(c, 'endurance').cost, 1.107), '16b: a closed swap (a stall guard, your lock): it sleeps it out, 1.107: ' + text(of(c, 'endurance')) + ' ' + (of(c, 'endurance') || {}).cost);
+      c = P.choose(asleep(true, { swap: { allowed: true, iframes: 0.5, will: 2 } }));
+      ok(near(of(c, 'endurance').cost, -1.538), '16b: swapWill 2 doubles the swap cost: -1.5 - 0.1 + 0.002 + 0.06 = -1.538: ' + (of(c, 'endurance') || {}).cost);
+      ok(c.ranking.every((r) => r.steps.slice(1).every((s) => s.verb !== 'swap')), '16b: a swap is only ever a first step');
+      // awake, an even bench mon (the same whip size, the same jab), your whip next at 0.6 s. Staying: the jab fires at 0.5 s, before
+      // it: Endurance -0.1 + 0.002 x 0.5 = -0.099. Swapping: no matchup gain, and its jab fires at 1.0 s, after the 0.6 s whip (0.2):
+      // 1.5 x 0.2 - 0.1 + 0.002 x 1.0 + 0.03 = 0.232. So it stays.
+      const even = [Object.assign({}, bench[0], { threats: [whip({ nextFireIn: 0.6 })] })];
+      c = P.choose(world({ you: { threats: [whip({ nextFireIn: 0.6 })], bestReach: 120, bestHit: 0.2 }, top: { distance: 40, own: own(), swap: { allowed: true, iframes: 0.5, will: 1 }, bench: even } }));
+      ok(text(of(c, 'endurance')) === 'use 1' && near(of(c, 'endurance').cost, -0.099), '16b: an even bench mon, awake: no swap, -0.099: ' + text(of(c, 'endurance')) + ' ' + (of(c, 'endurance') || {}).cost);
+      // a swap is offered at the start, never after a step (awake, so the hold does not KO her: shots at 0.6, 1.6, 2.6 s, 0.6 taken)
+      const sw = world({ you: { threats: [whip({ nextFireIn: 0.6 })], bestReach: 120, bestHit: 0.2 }, top: { distance: 40, own: own(), swap: { allowed: true, iframes: 0.5, will: 1 }, bench: even } }),
+        s0 = P.startState(sw),
+        held = P.apply(sw, s0, { verb: 'hold', range: 220 });
+      ok(!held.state.ko && P.actionsIn(sw, s0, null).some((x) => x.verb === 'swap') && !P.actionsIn(sw, held.state, held.step).some((x) => x.verb === 'swap'), '16b: offered at the start, never after a step');
+    }
+
+    // 16c. The KO term (A). Awake, your whip ready in reach, her jab's 0.5 s tell: one whip lands (0.2). At full HP the step takes 0.2;
+    // at 15% HP that whip would KO her, so it takes 0.2 + 0.3 = 0.5.
+    {
+      const w = (hp) => world({ you: { threats: [whip()], bestReach: 120, bestHit: 0.2 }, top: { distance: 40, own: own({ hpFraction: hp }) } });
+      const at = (hp) => P.apply(w(hp), P.startState(w(hp)), { verb: 'use', slot: 0 }).step.taken;
+      ok(near(at(1), 0.2) && near(at(0.15), 0.5), '16c: a hit that would KO her adds the KO bonus 0.3: ' + at(1) + ', ' + at(0.15));
+    }
+
+    // 16d. Draw your shot, then Dodge your shot. Your Ember: reach 150, 300 px/s, 0.2 a hit, every 2 s, believed ready now. You 200
+    // px off; her gun reaches 300 (0.05 a hit, 1 s cooldown, 0.5 s tell). Draw walks to 150 + 10 - 5 = 155 (45 px, 0.45 s; Ember is
+    // ready, so no waiting): Ember fires into her (taken 0.2, its next cast 2 s on). Dodge: Ember flies 155 / 300 = 0.52 s, more than
+    // reflex 0.15, so it succeeds 6 in 10: taken -0.12, 0.5 s, one charge spent (one spare left: no B cost).
+    // Bait (taken 2, dealt 1.5, time 0.005). Draw, dodge, use 1 (the gun fires at 1.45 s, Ember cooling until 2.45): 2 x 0.08 -
+    // 1.5 x 0.05 + 0.005 x 1.45 = 0.09225. Cheaper still: use 1 first (the gun reaches you at 200, out of Ember's reach: fires at
+    // 0.5 s, dealt 0.05), then draw (Ember lands; its clock starts from the step's start, so next at 2.5), dodge (to 1.45 s), use 1 (the gun ready at 1.5: waits
+    // 0.05, fires at 1.45 + 0.05 + 0.5 = 2.0 s, Ember cooling): 2 x 0.08 - 1.5 x 0.1 + 0.005 x 2.0 = 0.02.
+    {
+      const w = (o = {}) => world({ moves: [gun()], you: { threats: [o.threat || ember()], baitMoveId: 'ember', bestReach: 150, bestHit: 0.2 }, top: Object.assign({ distance: 200, own: own(o.own) }, dodgeOn) });
+      const s0 = P.startState(w());
+      const draws = P.actionsIn(w(), s0, null).filter((a) => a.verb === 'draw');
+      ok(draws.length === 1 && draws[0].yourMove === 'ember', '16d: outside your Ember\'s reach, Draw your shot is open: ' + JSON.stringify(draws));
+      const d1 = P.apply(w(), s0, draws[0]);
+      ok(near(d1.step.duration, 0.45) && near(d1.step.taken, 0.2) && near(d1.state.distance, 155), '16d: draw: 0.45 s to 155 px, Ember lands (0.2): ' + JSON.stringify([d1.step.duration, d1.step.taken, d1.state.distance]));
+      const dodges = P.actionsIn(w(), d1.state, d1.step).filter((a) => a.verb === 'dodge');
+      ok(dodges.length === 1 && dodges[0].yourMove === 'ember', '16d: right after it, Dodge your shot is open');
+      const d2 = P.apply(w(), d1.state, dodges[0]);
+      ok(near(d2.step.taken, -0.12) && near(d2.step.duration, 0.5) && d2.state.chargesReady === 1, '16d: dodge: -0.2 x 0.6 = -0.12, 0.5 s, one charge spent: ' + JSON.stringify([d2.step.taken, d2.step.duration, d2.state.chargesReady]));
+      const c = P.choose(w());
+      ok(text(of(c, 'bait')) === 'use 1, draw, dodge, use 1' && near(of(c, 'bait').cost, 0.02), '16d: Bait is use 1, draw, dodge, use 1 at 0.02: ' + text(of(c, 'bait')) + ' ' + (of(c, 'bait') || {}).cost);
+      const three = P.apply(w(), d2.state, { verb: 'use', slot: 0 }),
+        threeCost = P.costOf(w(), 'bait', [d1.step, d2.step, three.step]);
+      ok(three.step.effect.yourMoveCooling && near(threeCost, 0.09225), '16d: and draw, dodge, use 1 reaches Bait too, at 0.09225: ' + threeCost);
+      ok(c.ranking.every((r) => r.steps.filter((s) => s.verb === 'draw').length <= 1 && r.steps.filter((s) => s.verb === 'dodge').length <= 1), '16d: Draw and Dodge at most once a plan');
+      const melee = ember({ id: 'scratch', reach: 150, travelSpeed: 0 });
+      const m1 = P.apply(w({ threat: melee }), P.startState(w({ threat: melee })), { verb: 'draw', yourMove: 'scratch', threat: 0, reach: 150 });
+      ok(!P.actionsIn(w({ threat: melee }), m1.state, m1.step).some((a) => a.verb === 'dodge'), '16d: a hit with no flight (it lands before reflex): no Dodge your shot');
+      // Ember from 30 px flies 0.1 s, under reflex 0.15: never answered; from 155 px (0.52 s) it succeeds 6 in 10
+      ok(P.dodgeSuccess(w(), ember(), 30) === 0 && near(P.dodgeSuccess(w(), ember(), 155), 0.6), '16d: a planned dodge needs reflex time: 0 from 30 px, 0.6 from 155 px');
+      // draw once a plan: after a draw and a back off (to 150 + 10 + 30 = 190 px, outside Ember's reach again) no second draw
+      const back = P.apply(w(), d1.state, { verb: 'backOff', to: 190 });
+      ok(back.state.distance > 160 && !P.actionsIn(w(), back.state, back.step).some((a) => a.verb === 'draw'), '16d: Draw at most once a plan, even back outside your reach');
+      ok(!P.actionsIn(w(), back.state, back.step).some((x) => x.verb === 'dodge'), '16d: and a step between the draw and the dodge closes the dodge');
+      const z = w({ own: { dodgeCharges: { ready: 0, total: 2, nextBackIn: 3 } } }),
+        z1 = P.apply(z, P.startState(z), draws[0]);
+      ok(!P.actionsIn(z, z1.state, z1.step).some((a) => a.verb === 'dodge'), '16d: zero charges: no Dodge your shot');
+    }
+
+    // 16e. The duels (LEADER-AI TESTS), Brock loop 1 against your Charmander, seeded. You stand still and cast whenever your move is
+    // ready and Brock is inside its reach: a shot flies at him (the threat he may dodge). `main` is the move you stay on; with `cycle`
+    // you alternate it with `alt`. Your HP bar reads 100, so his hits have their size. Counts: Brock's hits on you (see below), those
+    // that land while `main` cools (a punish), your `main` casts. Decision 2026-11-09-52-swap-matchup-window-and-duels (option a):
+    // Bait is a draw or a wait for your move, then a dodge, then a use (Brock starts inside Ember's 420 px reach, so a wait is his
+    // draw); counter-play and learning run against Fire Blast (3.5 s), since your Ember's 0.7 s leaves almost no cooldown to read.
+    // Those three are BLOCKED on #59 (Jess, 2026-11-09, option 1): reflex dodges spend the charges a planned dodge needs, and the
+    // hits he lands cannot depend on what you do while he fires whenever ready inside your reach.
+    {
+      const reachOf = (d) => G.Gyms.reachOf(d, G.Gyms.formOf(d));
+      const castYours = (d, at, e) => {
+        G.SimBus.emit('move:cast', { moveId: d.id, ownerId: null, ownerUid: you[1].copyUid, ownerSlot: you[1].teamSlot, rival: false, x: at.x, y: at.y, aim: 0, enemy: false });
+        const speed = (d.delivery && d.delivery.moveSpeed) || 0;
+        if (!(speed > 0)) return null;
+        const [ux, uy] = G.U.norm(e.x - at.x, e.y - at.y),
+          x = at.x,
+          y = at.y,
+          s = { id: -(9e6 + G.Game.st.time * 1000), cast: { owner: human, serial: Math.round(9e6 + G.Game.st.time * 6000), moveId: d.id }, spec: { id: d.id, delivery: { motion: 'travels' } }, x, y, prevX: x, prevY: y, vx: ux * speed, vy: uy * speed, wait: 0, armed: true, shape: { family: 'point', x, y, heading: 0, r: 12 } };
+        G.MoveSim.list().push(s);
+        return { s, until: G.Game.st.time + 1.5 };
+      };
+      // the harness never steps the move sim (section 9), so no shape resolves a hit: a hit of his is a damaging cast that starts
+      // with you inside its reach. You stand still, so the planner's own hit chance for it is 1 (LEADER-AI COST)
+      let counting = null;
+      G.SimBus.on('move:cast', (ev) => {
+        if (!counting || ev.ownerId == null) return;
+        const e = counting.team.find((m) => m.id === ev.ownerId),
+          d = G.MoveDefs[ev.moveId];
+        if (!e || !d || !(d.basePower > 0)) return;
+        if (G.U.dist(e.x, e.y, human.x, human.y) <= reachOf(d) + (human.r || 0)) counting.n++;
+      });
+      const duel = ({ main = 'ember', alt = 'tackle', cycle = false, secs = 30, duelSeed = 7, trace = null } = {}) => {
+        const seed0 = AI.seed;
+        AI.seed = duelSeed;
+        Object.assign(AI.off, { planner: false, swaps: false, dodges: false, confidence: false, triggers: false, memory: false });
+        const a = open('Brock', 1, 200);
+        youActive = 1;
+        Object.assign(human, { hp: 100, maxHp: 100 });
+        counting = { team: a.team.members, n: 0 };
+        const ai = G.GymArena.leaderAI,
+          done = [];
+        const step0 = ai.stepState.bind(ai);
+        ai.stepState = (e, stp, pl) => {
+          const r = step0(e, stp, pl);
+          if (r === 'done') done.push({ plan: ai.plan, at: ai.plan.at, verb: stp.verb === 'wait' && stp.yourMove != null ? 'waitYours' : stp.verb, goal: ai.plan.goal });
+          return r;
+        };
+        const mainDef = G.MoveDefs[main],
+          altDef = G.MoveDefs[alt],
+          cooldown = { [main]: 0, [alt]: 0 },
+          flying = [];
+        let next = main,
+          lastMain = -99,
+          mainCasts = 0,
+          hits = 0,
+          punish = 0;
+        for (let f = 0; f < secs * 60; f++) {
+          const e = a.team.active,
+            t = G.Game.st.time,
+            dist = G.U.dist(e.x, e.y, human.x, human.y);
+          cooldown[main] -= DT;
+          cooldown[alt] -= DT;
+          const pick = cycle ? next : main,
+            d = pick === main ? mainDef : altDef;
+          if (!e.dead && cooldown[pick] <= 0 && dist <= reachOf(d) + (e.r || 0)) {
+            const shot = castYours(d, human, e);
+            if (shot) flying.push(shot);
+            cooldown[pick] = d.cd;
+            if (pick === main) {
+              lastMain = t;
+              mainCasts++;
+            }
+            next = pick === main ? alt : main;
+          }
+          for (const sh of flying) {
+            sh.s.prevX = sh.s.x;
+            sh.s.prevY = sh.s.y;
+            sh.s.x += sh.s.vx * DT;
+            sh.s.y += sh.s.vy * DT;
+            sh.s.shape.x = sh.s.x;
+            sh.s.shape.y = sh.s.y;
+          }
+          for (let i = flying.length - 1; i >= 0; i--)
+            if (G.Game.st.time >= flying[i].until) {
+              const L = G.MoveSim.list();
+              if (L.indexOf(flying[i].s) >= 0) L.splice(L.indexOf(flying[i].s), 1);
+              flying.splice(i, 1);
+            }
+          frame();
+          human.hp = 100; // you never faint in a duel
+          const got = counting.n;
+          if (got > hits) {
+            if (G.Game.st.time - lastMain < mainDef.cd) punish += got - hits;
+            hits = got;
+          }
+          if (trace && f % 15 === 0) trace.push([f, ai.plan ? ai.plan.goal : null, ai.plan ? ai.stepText(ai.plan.steps[ai.plan.at]) : null, +e.x.toFixed(2), +e.y.toFixed(2)]);
+        }
+        for (const sh of flying) {
+          const L = G.MoveSim.list();
+          if (L.indexOf(sh.s) >= 0) L.splice(L.indexOf(sh.s), 1);
+        }
+        AI.seed = seed0;
+        youActive = 0;
+        counting = null;
+        Object.assign(human, { hp: 1e6, maxHp: 1e6 });
+        return { ai, done, mainCasts, hits, punish, rate: mainCasts ? punish / mainCasts : 0 };
+      };
+      // Bait emerges: a bait plan whose draw (or wait for your Ember), dodge and use steps all completed, in order, and hits during
+      // Ember's cooldown
+      // The plan is rebuilt on every think tick (its running action kept), so the check reads the stream of completed steps: a run of
+      // them under Bait holding a draw (or a wait for your move), then a dodge, then a use.
+      const baitRuns = (done) =>
+        done
+          .map((d) => (d.goal === 'bait' ? d.verb : '|'))
+          .join(' ')
+          .split('|')
+          .filter((run) => /(draw|waitYours) dodge (\w+ )*?use/.test(run + ' ')).length;
+      const r = duel();
+      const completed = baitRuns(r.done);
+      blocked(completed >= 1, '16e: Bait emerges: Brock completes a draw (or wait for your Ember), dodge, use plan (' + completed + ' times; Ember cast ' + r.mainCasts + ' times)', 59);
+      ok(r.punish >= 1, '16e: and lands hits while Ember cools: ' + r.punish + ' of ' + r.hits + ' hits');
+      // the planned dodge goes through the bag and reflex: every dodge press follows a read threat by reflex or more
+      const notes = r.ai.log,
+        early = notes.filter((d) => d.act === 'dodge' && d.serial != null && !notes.some((x) => x.act === 'threat' && x.serial === d.serial && x.read));
+      ok(early.length === 0, '16e: every dodge answers a threat the bag read: ' + early.length + ' did not');
+      // counter-play: cycling slots is punished less than staying on one (Fire Blast, cycled with Ember)
+      const stay = duel({ main: 'fire-blast', alt: 'ember', secs: 40 }),
+        cyc = duel({ main: 'fire-blast', alt: 'ember', secs: 40, cycle: true });
+      blocked(cyc.punish < stay.punish, '16e: counter-play: cycling Fire Blast and Ember is punished less during Fire Blast\'s cooldown than staying on it: ' + cyc.punish + ' vs ' + stay.punish + ' (hits ' + cyc.hits + ' vs ' + stay.hits + ')', 59);
+      // learning: the punish rate in fight 3 of a run beats fight 1 (run memory keeps the cooldown window between fights)
+      G.GymArena.reset();
+      G.LeaderMemory.start();
+      const f1 = duel({ main: 'fire-blast', alt: 'ember' });
+      G.GymArena.reset();
+      duel({ main: 'fire-blast', alt: 'ember' });
+      G.GymArena.reset();
+      const f3 = duel({ main: 'fire-blast', alt: 'ember' });
+      G.GymArena.reset();
+      G.LeaderMemory.end();
+      blocked(f3.rate > f1.rate, '16e: learning: fight 3 punishes Fire Blast more often than fight 1: ' + f3.rate.toFixed(3) + ' vs ' + f1.rate.toFixed(3), 59);
+      // determinism: one seed, one trace
+      const t1 = [],
+        t2 = [];
+      duel({ secs: 20, trace: t1 });
+      duel({ secs: 20, trace: t2 });
+      ok(JSON.stringify(t1) === JSON.stringify(t2), '16e: one seed, one trace (' + t1.length + ' samples)');
+      ok(!/gapClose|decide|triggers|swapMargin/.test(Object.getOwnPropertyNames(AI.prototype).filter((k) => ['gapClose', 'decide', 'triggers', 'swapMargin'].includes(k)).join()), '16e: the old swap choice and the gap-closing dodge are gone');
+      ok(['stay', 'margin', 'ccLeft', 'ccScore', 'lowHp', 'lowTo', 'lowScore', 'matchupX', 'matchupHp', 'gapClose'].every((k) => !(k in AI.BASE)) && AI.BASE.swapWill === 1, '16e: their settings are gone; swapWill 1 is the baseline');
+    }
+  }
 }
 
-console.log(fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed');
+console.log((fail ? 'leader-ai-harness: ' + fail + ' of ' + n + ' FAILED' : 'leader-ai-harness: all ' + n + ' passed') + (blockedN ? ' (' + blockedN + ' blocked)' : ''));
 process.exit(fail ? 1 : 0);

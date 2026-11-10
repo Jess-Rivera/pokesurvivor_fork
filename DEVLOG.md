@@ -268,3 +268,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-09
 - Jess feel-tested Misty and Brock: good. Approved the four build calls (a) to (d) (decision 2026-11-09-51-build-calls-approved); LEADER-AI tag now [Approved].
 - The two known planner gaps filed: #57 (circling lowers your hit chance), #58 (your shots along the action's path).
 - #52 unblocked (ready). Stopped at: #52 opening with Jess.
+
+## 2026-11-09 (Claude Code, home), #52 built (swap, dash, draw, dodge)
+- Opening and seven calls agreed (decisions 2026-11-09-52-opening-stall-guards-dodge-cost-swap-value, 2026-11-09-52-swap-matchup-window-and-duels): stall guards stay gates, swapWill a cost, planned dodge through the bag and reflex, swap worth its later steps plus its matchup over 10 s, the KO term, the kept-back charge, the lead read skips minField.
+- Built in the planner, Belief and G.LeaderAI; the old swap choice, the gap-closing dodge and their settings deleted. Harness section 16 written first; old trigger and gap-close sections retired.
+- Found while building: the matchup swap never won at range (no trade inside 4 steps), fixed by the long-window term; a dash or planned dodge lost its step when a replan kept it; a Recover planned asleep crashed.
+- Three duels (Bait, counter-play, learning) blocked on #59: reflex dodges starve the planned one, and his landed hits cannot depend on what you do. Planner ~3.4 ms per choice, 10.4 ms worst (accepted, watch at the feel test).
+- Stopped at: #52 in Needs Playtest (feel test Misty and Brock).

@@ -239,6 +239,7 @@ G.LeaderBelief = (() => {
           category: d.category,
           hitFraction: hitSize(you, m, d.basePower, d.category, d.type, G.Stats.DMG_SCALAR),
           reach: reachOfMove(d).reach,
+          travelSpeed: reachOfMove(d).form === 'shot' ? (d.delivery && d.delivery.moveSpeed) || 0 : 0,
           cycle,
           nextFireIn: since != null ? Math.max(0, cycle - since) : 0,
         });
@@ -252,15 +253,19 @@ G.LeaderBelief = (() => {
         category,
         hitFraction: hitSize(you, m, TUNE.guessPower, category, a.type, G.Stats.DMG_SCALAR),
         reach: Infinity,
+        travelSpeed: 0,
         cycle: TUNE.guessCycle,
         nextFireIn: 0,
       });
       return out;
     }
     /** The planner's world (G.LeaderPlanner): leader mon e's own exact state, your guessed position and motion, your shots, and the
-     *  settings it plans with. Null when there is no you to plan against. */
-    snapshot(e, settings, confidence) {
-      const you = yours(),
+     *  settings it plans with. Null when there is no you to plan against. #52: its bench (each living bench mon as the planner reads
+     *  it after a swap), its sleep or freeze left, the dodge (when its dodges are on) and whether a swap is open now (`opts.swap`,
+     *  the AI's: your rules and its stall guards). `opts.expect`: the mon of yours it expects (the lead read), whose shots it plans
+     *  against instead of the one on the field. */
+    snapshot(e, settings, confidence, opts = {}) {
+      const you = opts.expect || yours(),
         pl = G.Game.player,
         at = this.yourMotion(),
         guess = this.yourGuess();
@@ -269,7 +274,30 @@ G.LeaderBelief = (() => {
         threats = this.yourThreats(e, you),
         finite = threats.filter((t) => t.id != null && Number.isFinite(t.reach)),
         charges = (e.dodges && e.dodges.cd) || [],
-        spent = charges.filter((c) => c > 0);
+        spent = charges.filter((c) => c > 0),
+        major = e.stMajor,
+        team = e.ai && e.ai.team,
+        D = G.PlayerEntity.DODGE;
+      const bench = [];
+      if (team && opts.swap)
+        team.members.forEach((m, j) => {
+          if (j === team.activeIdx || m.dead) return;
+          const mine = this.yourThreats(m, you);
+          bench.push({
+            name: m.name,
+            team: j,
+            hpFraction: m.hp / m.maxHp,
+            healsLeft: m.healsLeft || 0,
+            speed: m.spd,
+            radius: m.r || 0,
+            activeSlot: m.active,
+            slots: m.slots.map((group, index) => ({
+              index,
+              moves: group.filter((s) => G.Boss.open(m, s)).map((s) => this.moveView(m, s, pl, you, mine)),
+            })),
+            threats: mine,
+          });
+        });
       return {
         distance: Math.hypot(guess.x - e.x, guess.y - e.y),
         preferredRange: settings.range,
@@ -278,12 +306,20 @@ G.LeaderBelief = (() => {
         stubbornness: settings.stubbornness,
         randomness: settings.randomness,
         confidence,
+        reflex: settings.reflex,
+        dodgeRead: settings.dodgeRead,
+        bag: G.LeaderAI ? G.LeaderAI.BAG : 10,
+        dodge: opts.dodges ? { dist: D.dist, time: D.dur } : null,
+        swap: bench.length ? { allowed: true, iframes: G.Team.SWAP_IFRAME, will: settings.swapWill } : null,
+        bench,
         own: {
           speed: e.spd,
           radius: e.r || 0,
           hpFraction: e.hp / e.maxHp,
           healsLeft: e.healsLeft || 0,
           activeSlot: e.active,
+          stunLeft: major && (major.k === 'sleep' || major.k === 'freeze') ? Math.max(0, major.t) : 0,
+          dodgeReserve: settings.dodgeReserve || 0,
           dodgeCharges: {
             ready: charges.length - spent.length,
             total: charges.length,
