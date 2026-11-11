@@ -569,6 +569,9 @@ draws them, from `G.STATUS_ANIMS` (`js/data/status-anims.js`, baked by `node too
   the orange-red ones its Base and Dark, white stays white (Jess, 2026-11-11). Attack's yellow nearly vanishes on yellow
   Pokemon and Sp. Atk's cyan sits close to the ring; watch both in the feel test. Accuracy and evasion have no stat
   colour yet.
+- `[Approved]` **No feet arcs** (Jess, 2026-11-11, #80): the old coloured arcs round your feet for team raises are
+  retired, since the stat-up effect and the chips (#76) show them. Regen has nothing on the sprite; it shows as the REG
+  chip only.
 - `[Approved]` **Slow and Haste show as Speed down and Speed up** for now, since COMBAT-RULES sums them into
   the Speed stage; their arrows stay in reserve for later (Jess, 2026-11-11).
 - `[Approved]` **Trap** is one icon for every Pokemon: your swap lock and the 2 s root on others read the same.

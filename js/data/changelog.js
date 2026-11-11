@@ -11,6 +11,10 @@ G.CHANGELOG = [
     title: ['Buffs join your status chips', 'Buffs join your status chips'],
     chg: [
       [
+        'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
+        'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
+      ],
+      [
         'Your status chips above the HP bar now show everything timed on your team in two bands. The lower band is what is hurting you: your status, then any lowered stats (ATK, DEF, SPA, SPD, SPE). The band above it is what is helping: raised stats, REG for regeneration, the berries by name (KEE, MAR, LAN, PIN, and one chip per type-guard berry in its type colour) and the altar power (FRY, THN, MAG, HST). Each has a timer bar. The Shake Off prompt moved up above them.',
         'Your status chips above the HP bar now show everything timed on your team in two bands. The lower band is what is hurting you: your status, then any lowered stats (ATK, DEF, SPA, SPD, SPE). The band above it is what is helping: raised stats, REG for regeneration, the berries by name (KEE, MAR, LAN, PIN, and one chip per type-guard berry in its type colour) and the altar power (FRY, THN, MAG, HST). Each has a timer bar. The Shake Off prompt moved up above them.',
       ],
