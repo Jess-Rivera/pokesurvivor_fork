@@ -28,9 +28,9 @@ G.PauseMenu = (() => {
   const OPEN_MS = [75, 235],
     CLOSE_MS = [38, 118],
     STEPS = OPEN_MS.length;
-  const BUTTON_ART_WIDTH = 105, // the run screen's move slot: 210 x 44 px at 2 px per art pixel
+  const BUTTON_ART_WIDTH = 105, // the run screen's move slot shape (105 x 22 art pixels)
     BUTTON_ART_ROWS = 22,
-    BUTTON_ART_PIXEL = 2;
+    BUTTON_ART_PIXEL = 3; // 315 x 66 px, 1.5x the run screen's slots (Jess, 2026-11-11)
   // Rim ramps (HUD-STYLE "Pause menu"): white at rest, green on focus.
   const REST_RIM = { light: '#ffffff', base: PALETTE.paper, dark: PALETTE.paperEdge },
     FOCUS_RIM = { light: '#9be895', base: '#38d030', dark: '#1d6c19' };
@@ -126,7 +126,7 @@ G.PauseMenu = (() => {
         artPixel=${BUTTON_ART_PIXEL}
         paintRow=${(row) => moveSlotRow(row, BUTTON_ART_WIDTH, BUTTON_ART_ROWS, rim, PALETTE.body)}
       />
-      <span class="hud-text">${button.label}</span>
+      <span class="hud-text hud-text-30">${button.label}</span>
     </button>`;
   }
 

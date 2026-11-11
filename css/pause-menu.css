@@ -113,10 +113,10 @@ body.pm-open .hud-overlay {
   transition-duration: 0.235s;
 }
 .pm-step2 .pm-cap-top {
-  transform: translateY(-140px);
+  transform: translateY(-150px); /* clear of the top button: the centre button ends at 134 */
 }
 .pm-step2 .pm-cap-bottom {
-  transform: translateY(140px);
+  transform: translateY(150px);
 }
 /* the closed ball's black band: gone as the caps part, back as they meet */
 .pm-band {
@@ -131,12 +131,13 @@ body.pm-open .hud-overlay {
 /* ---------- the buttons: the run screen's move slot, white rim, green when focused ---------- */
 .pm-buttons {
   position: absolute;
-  left: 150px;
-  top: 167px;
-  width: 210px;
+  left: 0;
+  top: 148px; /* three 66 px buttons and two 8 px gaps, centred on the ball's middle (255) */
+  width: 510px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
 }
 .pm-step2 .pm-buttons {
@@ -144,8 +145,8 @@ body.pm-open .hud-overlay {
 }
 .pm-button {
   position: relative;
-  width: 210px;
-  height: 44px;
+  width: 315px;
+  height: 66px;
   padding: 0;
   border: 0;
   background: none;

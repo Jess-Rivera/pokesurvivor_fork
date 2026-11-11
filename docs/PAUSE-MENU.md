@@ -23,7 +23,8 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
 - [Approved] The caps are a layer above the buttons, so the opening ball uncovers them.
 - [Approved] Closed, the halves meet and a white centre button with a black stroke fills the hole between their
   notches; it rides on the top cap as the ball opens.
-- [Approved] Buttons take the run screen's move slot shape, flat body, no grid.
+- [Approved] Buttons take the run screen's move slot shape, flat body, no grid, at 1.5x size (315 x 66 px, 30 px
+  text, 8 px apart), centred on the ball's middle; the open caps part 150 px each way to make room.
 - [Approved] Opening about 0.31 s (0.075 s dim and closed ball, 0.235 s ball and panels); closing is the reverse
   at about twice the speed (about 0.16 s). The second feel test halved both (Jess, 2026-11-11).
 - [Approved] The ball sits at the screen's centre. Run Info is the same size as the Pokemon detail panel, both the
