@@ -19,6 +19,7 @@ Slice 5a had to change no behavior, so it moved GymBrain's one step (move, choos
 ## Standing rulings on this branch
 - gym-harness and leader-stats-harness stay red until the branch nears completion (#30); `check: FAILED (2 harness)` from those two is expected, any other failure is not.
 - Gyms 3 to 8 stay on the old GymBrain; only Misty and Brock get the AI player.
+- Side branches (Jess, 2026-11-11): other features (UI work and the like) branch off feature/gym-leader-ai, not main, and merge back into it when done (as feature/leader-roster-ui did). Each finished feature brings the work back here, so the leader AI stays the main line. Main gets everything when this branch merges.
 
 ## Before this branch merges
 - #30 resolved and `node tools/check.js` ends with "check: all passed".

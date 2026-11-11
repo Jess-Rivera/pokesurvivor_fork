@@ -5,8 +5,8 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-11 session that finished feature/leader-roster-ui)
-1. Jess: fast-forward feature/gym-leader-ai to feature/leader-roster-ui, push; work continues on gym-leader-ai.
-2. Decide the path forward (fresh session). Candidates:
+1. Done: gym-leader-ai fast-forwarded and pushed. Side features branch off gym-leader-ai and merge back (branch rules, 2026-11-11).
+2. Decide the path forward. Candidates:
    - Finish gym-leader-ai: #53, then #39; planner gaps #57, #58; #30 before it merges to main.
    - Own branches, ready to start: #86 (whole levels at spawn), #82 pause menu (#83 team sheet), #75 map place names.
    - Any time: #44, #46, #56, #48, #38, #28, #24.

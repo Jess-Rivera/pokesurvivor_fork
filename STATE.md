@@ -5,8 +5,8 @@ Updated 2026-11-11, Claude Code (home): feature/leader-roster-ui finished (#35 c
 feature/gym-leader-ai. No branch rules file for leader-roster-ui; docs/branch-rules/feature-gym-leader-ai.md governs gym-leader-ai.
 
 ## START HERE (next session, either tool)
-1. Jess fast-forwards feature/gym-leader-ai to feature/leader-roster-ui and pushes (commands in the last chat; TODO.md item 1).
-2. Work on feature/gym-leader-ai from now on. Next session's job: decide the path forward (TODO.md).
+1. Done: gym-leader-ai fast-forwarded to leader-roster-ui and pushed.
+2. feature/gym-leader-ai is the main line. Side features (UI etc.) branch off it and merge back (branch rules file).
 3. Before gym-leader-ai merges to main: #30 (re-baseline the two red harnesses until check.js is all green).
 
 ## Where we are
