@@ -66,3 +66,8 @@ docs/*-snapshot.*
 assets/tileset/_not-shipped/*
 # gridded reference copies of the B/W rips, rebuilt by python tools/grid_rips.py
 /assets/ui/BW Pokedex rip/_grid/
+
+# ROM dumps and assets extracted from them: personal use only, never in this public repo
+assets/sprite extraction attempt/
+*.nds
+assets/raw/PMDRR status.png

@@ -250,8 +250,8 @@ Sampled from the B2/W2 HP bar rip (`assets/ui/BW Pokedex rip`) and the existing 
 #### `[Approved]` Status chips (fill over shade)
 
 Chips cover the major statuses only, as in mainline. Confusion, trap, daze, drowsy, slow and haste get no HUD chip: they
-show as their effect animating on the Pokemon (ducks circling for confusion, bouncing question marks for daze, pulsing
-green rings for trap), drawn on the canvas with the art's own colours.
+show only as their icon animating on the Pokemon, drawn on the canvas with the art's own colours. Every status, major or
+not, also has an on-sprite icon: see [On-sprite status icons](#on-sprite-status-icons-71).
 
 | Status  | Fill      | Shade     |
 | ------- | --------- | --------- |
@@ -488,6 +488,45 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 - `[Approved]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
   right in Secondary text `#8cfff7` (a trailing % at 10 px, Jess 2026-11-10), in the team sheet's "Run Cards" order. The divider and list hide until a card is
   picked.
+
+### On-sprite status icons (#71)
+
+Art, motion, colours and placement for the icon each status shows on the Pokemon, on the canvas, for every Pokemon
+(yours, benched, enemies, leaders). Kept together here rather than split over Shapes and Motion, since each row is one
+animation. Jess, 2026-11-10. Code differs (today: a 3-letter pill per status, a coloured ring under the feet, a text zzz
+for drowsy and sleep, in `js/entities/player.js`); building this is its own slice.
+
+- `[Approved]` **Style:** the Pokemon Mystery Dungeon: Rescue Team status icons (`assets/raw/PMDRR status.png`, ripped,
+  reference only): a chunky shape, a 1 px black outline `#000000`, three flat shades and a light highlight `#f0f0f0`,
+  drawn at sprite pixel scale. The repo is public, so ripped art never ships: every icon is redrawn as original art in
+  this style (or drawn in code) for the build slice.
+- `[Approved]` **Preview:** `python tools/status_icon_preview.py` writes the full sheet and an animated preview on a
+  Pikachu into the git-ignored `assets/sprite extraction attempt/status_preview/`.
+
+| Status     | Kind  | Art                                         | Motion                                                     | Colours (dark to light)                                          | Placement      | Source                          |
+| ---------- | ----- | ------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- | -------------- | ------------------------------- |
+| Burn       | major | Small flame                                 | 7-frame flicker, looping                                   | `#980000` `#d03800` `#f08058` `#f0e800`                          | Above the head | Sheet fire row (redraw)         |
+| Poison     | major | Skull                                       | 7 solid frames then 7 fading, looping                      | Skull greys mapped to `#6b2942` `#a82fb0` `#d631de` `#f0b0f0`     | Above the head | Sheet skull row (redraw)        |
+| Bad poison | major | Skull, darker                               | As poison, a little faster                                 | `#391042` `#6b2380` `#a82fb0` `#d631de`                          | Above the head | Sheet skull row (redraw)        |
+| Paralysis  | major | Lightning wrapped round the body            | Two jagged arcs turning and re-jagging, 4 frames, looping  | `#a06800` `#d8b000` `#f0e800`, highlight at the bends            | Around the body; the back half behind the sprite | New drawing                     |
+| Sleep      | major | Three Z's, small to large                   | Rise up and right one after another, fading in and out     | Pink `#d83860`, top row `#f0c0d0`                                | Above the head | Text, drawn in code             |
+| Freeze     | major | Ice block                                   | 6-frame shimmer                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Over the body  | Sheet ice row (redraw)          |
+| Confusion  | minor | Yellow birds                                | Circling the head                                          | `#a06800` `#d8b000` `#f0e800`                                    | Round the head | Sheet birds row (redraw)        |
+| Daze       | minor | Question mark                               | 10-frame bounce                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Above the head | Sheet "?" row (redraw)          |
+| Trap       | minor | Red X                                       | A light swipe across it, then a rest                       | `#980000` `#d03800` `#f08058`, swipe `#f0f0f0`                   | Above the head | Sheet X row (redraw)            |
+| Drowsy     | minor | One z                                       | Rises and fades, slower than sleep                         | Lavender `#9a8fd8`, top row `#d4ceff`                            | Above the head | Text, drawn in code             |
+| Slow       | minor | Arrow pointing down                         | 11-frame shine and bob downward                            | `#a06800` `#d8b000` `#f0e800`                                    | Above the head | Sheet arrow row (redraw)        |
+| Haste      | minor | Arrow pointing up                           | Slow's motion, upward                                      | `#0060b0` `#1898d8` `#88d8f0`                                    | Above the head | New drawing (slow's arrow, flipped, blue) |
+
+- `[Approved]` **Trap** is one icon for every Pokemon: your swap lock and the 2 s root on others read the same.
+- `[Approved]` **Sleep and drowsy** differ by colour, count and size, so drowsy reads as the warning before sleep.
+- `[Approved]` **Haste in blue** so it never reads as slow at a glance.
+- `[Proposed]` **Timings** (from the preview): burn 100 ms a frame, poison 100, bad poison 80, paralysis 70, freeze
+  140, confusion 90, daze 80, trap 60 then a 900 ms rest, slow and haste 80; sleep's cycle 1.8 s, drowsy's 2.6 s.
+- `[Proposed]` **Placement** uses the sprite's top and centre for now. SpriteCollab's per-frame head and centre points
+  (`-Offsets.png`, the #71 comment) would pin them frame by frame; that is a separate game-data change.
+- `[Open]` **Several statuses at once:** icons above the head take turns, sit side by side, or one wins by priority.
+  Paralysis, freeze and confusion use other spots, so they can show alongside an above-the-head icon.
 
 ## Motion
 
