@@ -23,10 +23,10 @@ G.PauseMenu = (() => {
   if (!overlay || !overlay.ready) return { ready: false };
   const { html, signal, preact, PALETTE, PixelShape, moveSlotRow } = overlay.kit;
 
-  // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.9x the first
-  // build's 700 ms; close is about twice as fast (Jess, 2026-11-11). Each matches a transition in css/pause-menu.css.
-  const OPEN_MS = [150, 470],
-    CLOSE_MS = [75, 235],
+  // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.31 s and close about
+  // twice as fast (Jess, 2026-11-11, second feel test: both halved). Each matches a transition in css/pause-menu.css.
+  const OPEN_MS = [75, 235],
+    CLOSE_MS = [38, 118],
     STEPS = OPEN_MS.length;
   const BUTTON_ART_WIDTH = 105, // the run screen's move slot: 210 x 44 px at 2 px per art pixel
     BUTTON_ART_ROWS = 22,

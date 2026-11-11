@@ -24,8 +24,8 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
 - [Approved] Closed, the halves meet and a white centre button with a black stroke fills the hole between their
   notches; it rides on the top cap as the ball opens.
 - [Approved] Buttons take the run screen's move slot shape, flat body, no grid.
-- [Approved] Opening is about 0.9x the first build (about 0.62 s: 0.15 s dim and closed ball, 0.47 s ball and
-  panels); closing is the reverse at about twice the speed (about 0.31 s).
+- [Approved] Opening about 0.31 s (0.075 s dim and closed ball, 0.235 s ball and panels); closing is the reverse
+  at about twice the speed (about 0.16 s). The second feel test halved both (Jess, 2026-11-11).
 - [Approved] The ball sits at the screen's centre. Run Info is the same size as the Pokemon detail panel, both the
   same distance either side of the ball; team and Run Inventory are centred under and over it.
 

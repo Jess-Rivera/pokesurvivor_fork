@@ -22,23 +22,23 @@
 }
 /* The run HUD steps aside while the menu is up (the menu's panels take its places). */
 .hud-overlay {
-  transition: opacity 0.15s linear;
+  transition: opacity 0.075s linear;
 }
 body.pm-open .hud-overlay {
   opacity: 0;
 }
 
-/* ---------- step 1: dim and the closed ball (open 150 ms, close 75 ms) ---------- */
+/* ---------- step 1: dim and the closed ball (open 75 ms, close 38 ms) ---------- */
 .pm-dim {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   opacity: 0;
-  transition: opacity 0.075s linear;
+  transition: opacity 0.038s linear;
 }
 .pm-step1 .pm-dim {
   opacity: 1;
-  transition-duration: 0.15s;
+  transition-duration: 0.075s;
 }
 .pm-stage {
   position: absolute;
@@ -57,13 +57,13 @@ body.pm-open .hud-overlay {
   opacity: 0;
   transform: scale(0.94);
   transition:
-    opacity 0.075s linear,
-    transform 0.075s ease-in;
+    opacity 0.038s linear,
+    transform 0.038s ease-in;
 }
 .pm-step1 .pm-centre {
   opacity: 1;
   transform: none;
-  transition-duration: 0.15s;
+  transition-duration: 0.075s;
   transition-timing-function: linear, ease-out;
 }
 
@@ -105,12 +105,12 @@ body.pm-open .hud-overlay {
   stroke-width: 5;
 }
 
-/* ---------- step 2: the ball opens and the panels slide in (open 470 ms, close 235 ms) ---------- */
+/* ---------- step 2: the ball opens and the panels slide in (open 235 ms, close 118 ms) ---------- */
 .pm-cap {
-  transition: transform 0.235s ease-in-out;
+  transition: transform 0.118s ease-in-out;
 }
 .pm-step2 .pm-cap {
-  transition-duration: 0.47s;
+  transition-duration: 0.235s;
 }
 .pm-step2 .pm-cap-top {
   transform: translateY(-140px);
@@ -121,11 +121,11 @@ body.pm-open .hud-overlay {
 /* the closed ball's black band: gone as the caps part, back as they meet */
 .pm-band {
   fill: #101010;
-  transition: opacity 0.05s linear 0.185s;
+  transition: opacity 0.025s linear 0.093s;
 }
 .pm-step2 .pm-band {
   opacity: 0;
-  transition: opacity 0.12s linear;
+  transition: opacity 0.06s linear;
 }
 
 /* ---------- the buttons: the run screen's move slot, white rim, green when focused ---------- */
@@ -175,13 +175,13 @@ body.pm-open .hud-overlay {
   box-shadow: 0 0 0 2px #101010;
   opacity: 0;
   transition:
-    transform 0.235s ease-in,
-    opacity 0.235s linear;
+    transform 0.118s ease-in,
+    opacity 0.118s linear;
 }
 .pm-step2 .pm-panel {
   opacity: 1;
   transform: none;
-  transition-duration: 0.47s;
+  transition-duration: 0.235s;
   transition-timing-function: ease-out, linear;
 }
 /* Run Info and the detail panel: the same size, 40 px either side of the ball (Jess, 2026-11-11) */

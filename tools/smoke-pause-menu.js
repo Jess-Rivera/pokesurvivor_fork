@@ -29,7 +29,7 @@ const ok = (c, m) => {
   console.log((c ? 'ok    ' : 'FAIL  ') + m);
   if (!c) fail++;
 };
-const FULL_MS = 900; // the whole opening is 0.62 s (OPEN_MS) and the closing 0.31 s (CLOSE_MS), plus slack
+const FULL_MS = 600; // the whole opening is 0.31 s (OPEN_MS) and the closing 0.16 s (CLOSE_MS), plus slack
 
 async function main() {
   const browser = await chromium.launch();
@@ -130,7 +130,8 @@ async function main() {
   await shot('pause-menu-closed-ball.png');
   await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
   const openMs = Date.now() - openedAt;
-  ok(openMs >= 500 && openMs <= 900, 'opening takes about 0.62 s (' + openMs + ' ms, key press included)');
+  await sleep(80); // the last transitions settle a frame or two after the step timer
+  ok(openMs >= 250 && openMs <= 600, 'opening takes about 0.31 s (' + openMs + ' ms, key press included)');
   s = await look();
   ok(s.fully && s.steps.join(',') === '1,2', 'fully open after the opening (steps ' + s.steps.join(',') + ')');
   ok(!(await clockMoves()), 'the run clock is stopped while paused');
@@ -169,8 +170,8 @@ async function main() {
   await page.waitForFunction(() => !G.PauseMenu.isOpen(), null, { timeout: 3000 });
   const closeMs = Date.now() - closedAt;
   ok(
-    closeMs <= 550,
-    'closing takes about 0.31 s, about twice as fast as opening (' + closeMs + ' ms, key press included)'
+    closeMs <= 380,
+    'closing takes about 0.16 s, about twice as fast as opening (' + closeMs + ' ms, key press included)'
   );
   ok((await page.evaluate(() => G.Log.t)) - timeAtClose < 0.1, 'the run clock stayed stopped during the closing');
   s = await look();
@@ -179,7 +180,7 @@ async function main() {
   ok(s.hudOpacity === 1 || (await sleep(300), (await look()).hudOpacity === 1), 'the run HUD is back');
 
   await key('Escape', FULL_MS);
-  await key('Escape', 150);
+  await key('Escape', 20); // the closing lasts about 0.16 s: turn it around early
   ok((await look()).closing, 'reopened, then closing again');
   await key('Escape', FULL_MS);
   s = await look();
