@@ -638,7 +638,7 @@ G.HUD = (() => {
     ctx.lineTo(apexX, 0);
     ctx.lineTo(apexX - CHEVRON_DEPTH, CHEVRON_HALF_HEIGHT);
     ctx.lineJoin = 'miter';
-    ctx.lineCap = 'butt';
+    ctx.lineCap = 'square'; // every layer squared off, so the ends carry the same border as the sides
     ctx.lineWidth = CHEVRON_OUTLINE_WIDTH;
     ctx.strokeStyle = TEXT_OUTLINE;
     ctx.stroke();
@@ -901,37 +901,34 @@ G.HUD = (() => {
       const gym = gate.gym;
       const sx = (gate.x - cam.left()) * cam.scale,
         sy = (gate.y - 40 - cam.top()) * cam.scale;
-      const gymGauge = () => {
-        // grace countdown, then the escalation readout (+N and climbing)
-        const g = G.Gym.graceLeft(),
-          b = G.Gym.escBump();
-        if (b > 0) return ' · +' + b + ' Escalating';
-        if (g != null && g > 0) return ' · ' + Math.ceil(g) + ' s';
-        return '';
-      };
+      const escalationBump = G.Gym.escBump(),
+        levelText = 'Lv.' + (gym.level + escalationBump);
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
       if (off) {
+        // "Gym·Lv.5·10m·29s" (Jess, 2026-11-10): seconds while the grace countdown runs; Lv includes any escalation.
+        const graceLeft = G.Gym.graceLeft(),
+          metres = Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32);
         const label =
-          'Gym ' +
-          (gym.idx + 1) +
-          ' · ' +
-          gym.leader +
-          ' · Lv ' +
-          (gym.level + G.Gym.escBump()) +
-          gymGauge() +
-          ' · ' +
-          Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32) +
-          ' m';
+          'Gym·' +
+          levelText +
+          '·' +
+          metres +
+          'm' +
+          (graceLeft != null && graceLeft > 0 ? '·' + Math.ceil(graceLeft) + 's' : '');
         floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_WAYFINDER, label);
-      } else
+      } else {
+        // Over the roof: the leader's name, then the level and the escalation readout under it.
+        const roofY = (gate.y - GATE_ROOF_WORLD_PX - cam.top()) * cam.scale;
+        wayfindingLabel(ctx, 'Gym Leader ' + gym.leader, sx, roofY - 32, 'center');
         wayfindingLabel(
           ctx,
-          'Gym Leader ' + gym.leader,
+          levelText + (escalationBump > 0 ? ' +' + escalationBump + ' Escalating' : ''),
           sx,
-          (gate.y - GATE_ROOF_WORLD_PX - cam.top()) * cam.scale - 10,
+          roofY - 10,
           'center'
         );
+      }
       ctx.restore();
     }
 
@@ -944,14 +941,15 @@ G.HUD = (() => {
         const sx = (s.x - cam.left()) * cam.scale,
           sy = (s.y - cam.top()) * cam.scale,
           ta = (s.left <= G.Shops.BLINK && blinkOff ? 0.35 : 1) * s.alpha,
-          secs = Math.ceil(s.left) + ' s';
+          secs = Math.ceil(s.left) + 's';
         if (sx < 0 || sx > w || sy < 0 || sy > h) {
-          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
-          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name + ' · ' + secs + ' · ' + m, ta);
+          // "TM Mart·11m·34s" (Jess, 2026-11-10)
+          const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + 'm';
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name + '·' + m + '·' + secs, ta);
         } else {
           ctx.save();
           ctx.globalAlpha = ta;
-          wayfindingLabel(ctx, s.name + ' · ' + secs, sx, (s.y - s.h - cam.top()) * cam.scale - 10, 'center');
+          wayfindingLabel(ctx, s.name + '·' + secs, sx, (s.y - s.h - cam.top()) * cam.scale - 10, 'center');
           ctx.restore();
         }
       }

@@ -284,6 +284,7 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 
 - A `#101010` line outside the Dark one keeps the blue readable over water.
 - No halo or aura behind the chevrons (Jess, 2026-11-10).
+- The border runs all the way around each chevron, ends included (square caps on every layer).
 - Labels are the standard HUD text (Fonts: Truth And Ideals 20 px, white, hard `#101010` outline).
 
 ---
@@ -570,9 +571,11 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
   - Strained hold, 1.4 s: trembles about 1 px along the arrow, irregular, and sags about 1 px by the end.
   - Slide back, 0.45 s, ease in and out, all together, no bounce.
   - Rest, 0.25 s, closed.
-- `[Proposed]` **Target on screen:** no arrow. A label floats over the roof: "Gym Leader Brock" over a gym gate (an
-  Elite Four gate will read "Elite Four Lance" once those exist); "Move Trainer · 58 s" over a shop, blinking for its
-  last 10 s. Labels are title case (Jess, 2026-11-10).
+- `[Proposed]` **Target on screen:** no arrow. A label floats over the roof: "Gym Leader Brock" over a gym gate with
+  "Lv.5" (and "+2 Escalating" once it escalates) under it (an Elite Four gate will read "Elite Four Lance" once those
+  exist); "Move Trainer·58s" over a shop, blinking for its last 10 s (Jess, 2026-11-10).
+- `[Proposed]` **Off-screen labels**, compact: "Gym·Lv.5·10m·29s" (seconds only while the grace countdown runs; Lv
+  includes any escalation), "TM Mart·11m·34s", "Move Trainer·10m·15s" (Jess, 2026-11-10).
 
 ---
 
