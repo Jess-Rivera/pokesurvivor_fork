@@ -5,7 +5,7 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
 ## Next (from the 2026-11-10 #67 session, on feature/leader-roster-ui)
-1. HUD (#35): #67 built (round 3), owed Jess's feel test, then close it and mark HUD-STYLE "Wayfinding arrows" Approved.
+1. HUD (#35): #67 closed, HUD-STYLE "Wayfinding arrows" Approved.
    #61: close or keep as the guide's tracker. #76 (buff and status chips) waits on Jess choosing a spot.
    Owed by Jess: the #64 frame-rate check on the work laptop.
 2. #77: audit upgrade card wording vs real effect; Jess rules on the rate cards (wording or subtractive with a cap).

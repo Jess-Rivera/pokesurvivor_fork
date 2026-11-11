@@ -128,4 +128,4 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Feel-test rounds: 28 px tall with 20 / 36 px gaps (14 px with 5 / 15 nested into one block), halo removed, square caps so the ends carry the border, labels in the standard HUD text (Truth And Ideals 20 px, hard #101010 outline).
 - On screen the bouncing arrows are gone: "Gym Leader Brock" with "Lv.5 (+n Escalating)" under it over the gym roof, "Move Trainer·58s" over a shop. Off screen: "Gym·Lv.5·10m·29s", "TM Mart·11m·34s".
 - shops-harness tracks the renamed constants and checks the roof label. check.js red only on the two #30 harnesses.
-- Stopped at: #67 in Needs Playtest (round 3, 94aa055b). Next: Jess's feel test of #67, then #77; #76 waits on Jess.
+- Stopped at: Jess's feel test passed; #67 closed, HUD-STYLE "Wayfinding arrows" Approved. Next: #77; #76 waits on Jess.

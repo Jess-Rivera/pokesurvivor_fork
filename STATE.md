@@ -1,14 +1,13 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-10, Claude Code (home): #67 built (chevron wayfinding arrows, roof labels), in Needs Playtest.
+Updated 2026-11-10, Claude Code (home): #67 closed (chevron wayfinding arrows, roof labels).
 Branch: feature/leader-roster-ui (branched from feature/gym-leader-ai at f9478ea0; carries its unmerged work).
 No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md still governs the leader AI work it carries.
 
 ## START HERE (next session, either tool)
 1. Jess pushes this branch, then pulls it on the other machine. There: python tools/grid_rips.py.
-2. Owed by Jess: #67 feel test (then HUD-STYLE "Wayfinding arrows" goes Proposed to Approved and #67 closes); the #64
-   frame-rate check on the work laptop; the #59 feel test.
+2. Owed by Jess: the #64 frame-rate check on the work laptop; the #59 feel test.
 3. Next HUD work: #77 card wording; #76 needs Jess to pick a spot for the buff and status chips first.
 
 ## Where we are
