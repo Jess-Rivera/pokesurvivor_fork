@@ -18,6 +18,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 SHEET_PATH = ROOT / "assets" / "raw" / "PMDRR status.png"
+CONFUSION_BIRDS_PATH = ROOT / "assets" / "raw" / "confuse-birds.png"  # Jess's fix of the sheet's birds row
+CONFUSION_FRAME_SIZE = (32, 16)
 POKEMON_IDLE_PATH = ROOT / "assets" / "pokemon" / "25" / "Idle.png"
 OUT_FOLDER = ROOT / "assets" / "sprite extraction attempt" / "status_preview"
 
@@ -49,6 +51,37 @@ def cut_row(sheet, top, bottom, cell_width=16):
         if cell.getbbox() is not None:
             frames.append(cell)
         left += cell_width
+    return frames
+
+
+def load_confusion_birds():
+    """The four-bird frames from confuse-birds.png. The strip's frames are split by full-height black columns at
+    uneven spacing, so each frame is re-centred: the middle of its four birds (its bounding box, since they sit evenly
+    round the circle) goes to the middle of a 32 x 16 cell."""
+    strip = Image.open(CONFUSION_BIRDS_PATH).convert("RGBA")
+    width, height = strip.size
+    separators = {x for x in range(width) if all(strip.getpixel((x, y))[:3] == (0, 0, 0) for y in range(height))}
+    spans = []
+    start = 0
+    for x in range(width + 1):
+        if x == width or x in separators:
+            if x > start:
+                spans.append((start, x))
+            start = x + 1
+    frames = []
+    cell_width, cell_height = CONFUSION_FRAME_SIZE
+    for left, right in spans:
+        piece = strip.crop((left, 0, right, height))
+        piece.putdata(
+            [(0, 0, 0, 0) if pixel[:3] == SHEET_BACKGROUND else pixel for pixel in piece.get_flattened_data()]
+        )
+        box = piece.getbbox()
+        if box is None:
+            continue
+        birds = piece.crop(box)
+        cell = Image.new("RGBA", CONFUSION_FRAME_SIZE, (0, 0, 0, 0))
+        cell.alpha_composite(birds, ((cell_width - birds.width) // 2, (cell_height - birds.height) // 2))
+        frames.append(cell)
     return frames
 
 
@@ -174,7 +207,7 @@ def z_glyph(size_name, fill, highlight):
 
 
 def build_statuses(sheet):
-    birds = cut_row(sheet, 128, 144)
+    birds = load_confusion_birds()
     question = cut_row(sheet, 48, 64)
     cross = cut_row(sheet, 66, 79)
     fire = cut_row(sheet, 111, 128)
@@ -211,7 +244,7 @@ def build_statuses(sheet):
         {"name": "Paralysis", "kind": "major", "layered": paralysis_frames(), "frameMs": 70, "place": "around body"},
         {"name": "Sleep", "kind": "major", "text": "sleep", "place": "above head"},
         {"name": "Freeze", "kind": "major", "frames": ice, "frameMs": 140, "place": "over body"},
-        {"name": "Confusion", "kind": "minor", "frames": birds, "frameMs": 90, "place": "circling head"},
+        {"name": "Confusion", "kind": "minor", "frames": birds, "frameMs": 120, "place": "circling head"},
         {"name": "Daze", "kind": "minor", "frames": question, "frameMs": 80, "place": "above head"},
         {
             "name": "Trap",
@@ -355,8 +388,8 @@ def place(layer, place_name, body_box, tile_origin):
     if place_name in ("around body", "over body"):
         centre_y = (top + bottom) // 2 + (2 if place_name == "around body" else 0)
         return tile_origin[0] + centre_x - layer.width // 2, tile_origin[1] + centre_y - layer.height // 2
-    if place_name == "circling head":
-        return tile_origin[0] + centre_x - layer.width // 2, tile_origin[1] + top - layer.height + 4
+    if place_name == "circling head":  # the circle's middle sits just above the top of the head
+        return tile_origin[0] + centre_x - layer.width // 2, tile_origin[1] + top - 3 - layer.height // 2
     return tile_origin[0] + centre_x - layer.width // 2, tile_origin[1] + top - layer.height - 1
 
 

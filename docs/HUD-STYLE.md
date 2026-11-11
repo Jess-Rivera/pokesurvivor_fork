@@ -511,7 +511,7 @@ for drowsy and sleep, in `js/entities/player.js`); building this is its own slic
 | Paralysis  | major | Lightning wrapped round the body            | Two jagged arcs turning and re-jagging, 4 frames, looping  | `#a06800` `#d8b000` `#f0e800`, highlight at the bends            | Around the body; the back half behind the sprite | New drawing                     |
 | Sleep      | major | Three Z's, small to large                   | Rise up and right one after another, fading in and out     | Pink `#d83860`, top row `#f0c0d0`                                | Above the head | Text, drawn in code             |
 | Freeze     | major | Ice block                                   | 6-frame shimmer                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Over the body  | Sheet ice row (redraw)          |
-| Confusion  | minor | Yellow birds                                | Circling the head                                          | `#a06800` `#d8b000` `#f0e800`                                    | Round the head | Sheet birds row (redraw)        |
+| Confusion  | minor | Four yellow birds                           | Circling the head, 4 frames of 32 x 16                     | `#a06800` `#d8b000` `#f0e800`                                    | The birds' middle just above the head | `assets/raw/confuse-birds.png`, Jess's fix of the sheet row (redraw) |
 | Daze       | minor | Question mark                               | 10-frame bounce                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Above the head | Sheet "?" row (redraw)          |
 | Trap       | minor | Red X                                       | A light swipe across it, then a rest                       | `#980000` `#d03800` `#f08058`, swipe `#f0f0f0`                   | Above the head | Sheet X row (redraw)            |
 | Drowsy     | minor | One z                                       | Rises and fades, slower than sleep                         | Lavender `#9a8fd8`, top row `#d4ceff`                            | Above the head | Text, drawn in code             |
@@ -522,7 +522,7 @@ for drowsy and sleep, in `js/entities/player.js`); building this is its own slic
 - `[Approved]` **Sleep and drowsy** differ by colour, count and size, so drowsy reads as the warning before sleep.
 - `[Approved]` **Haste in blue** so it never reads as slow at a glance.
 - `[Proposed]` **Timings** (from the preview): burn 100 ms a frame, poison 100, bad poison 80, paralysis 70, freeze
-  140, confusion 90, daze 80, trap 60 then a 900 ms rest, slow and haste 80; sleep's cycle 1.8 s, drowsy's 2.6 s.
+  140, confusion 120, daze 80, trap 60 then a 900 ms rest, slow and haste 80; sleep's cycle 1.8 s, drowsy's 2.6 s.
 - `[Proposed]` **Placement** uses the sprite's top and centre for now. SpriteCollab's per-frame head and centre points
   (`-Offsets.png`, the #71 comment) would pin them frame by frame; that is a separate game-data change.
 - `[Open]` **Several statuses at once:** icons above the head take turns, sit side by side, or one wins by priority.
