@@ -165,3 +165,12 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - #73: species names stored in English (14 fixed from pokeapi-master), tools/species_names.js in check.js. #85: elites use the enemy name bar; elite, shiny and swarm messages English in code.
 - Found: wild Pokemon spawn at fractional levels; Jess ruled whole levels, filed as #86 for its own branch. #87: Shake Off white draining bar.
 - All feel-tested and closed with #35 and #59; #61 kept as the style guide's tracker. Stopped at: fast-forward into feature/gym-leader-ai, path forward next session.
+
+## 2026-11-11 (Claude Code, home), pause menu slice 1 (#88) on feature/pause-menu-rework
+- Ruled: side features branch off feature/gym-leader-ai and merge back (decision 2026-11-11-side-branches-off-gym-leader-ai).
+- Jess's pause menu design saved as docs/PAUSE-MENU.md; #82 scoped, children #88 to #92 filed, #83 became slice 5, #93 split off.
+- #88 built: js/ui/pause-menu.js (Preact, HUD kit), css/pause-menu.css, tools/smoke-pause-menu.js. Three feel-test rounds
+  (timings, layering, centre button, move slot buttons, End Run asked inside the ball); decision 2026-11-11-88-pause-menu-shell.
+- Found and fixed: the Esc that closes Settings also unpaused. moveSlotRow moved into the HUD kit (run screen unchanged).
+- Stopped at: #88 closed; next #89.
+

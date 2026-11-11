@@ -6,6 +6,8 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-11, #82 and #88: the Poke Ball pause menu, its timings and the End Run question inside the ball (Jess)](docs/decisions/2026-11-11-88-pause-menu-shell.md), built in #88
+- [2026-11-11, side features branch off feature/gym-leader-ai and merge back (Jess)](docs/decisions/2026-11-11-side-branches-off-gym-leader-ai.md), in the branch rules
 - [2026-11-11, #84: upgrade card renames, speed framing for the dividing cards, All Damage Up at +5% (Jess)](docs/decisions/2026-11-11-84-upgrade-card-names-and-speed-framing.md), build in #84
 - [2026-11-11, #68 and #81: type-coloured text on the map uses Light; type chips in the reference-sheet style (Jess)](docs/decisions/2026-11-11-81-type-chips-and-type-text-on-the-map.md), built in #68 and #81
 - [2026-11-11, #76: timed effects join the status chips in a good band and a bad band (Jess)](docs/decisions/2026-11-11-76-effect-chips-in-good-and-bad-bands.md), build #76

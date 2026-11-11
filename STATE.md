@@ -1,32 +1,31 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-11, Claude Code (home): feature/leader-roster-ui finished (#35 closed) and is being fast-forwarded into
-feature/gym-leader-ai. No branch rules file for leader-roster-ui; docs/branch-rules/feature-gym-leader-ai.md governs gym-leader-ai.
+Updated 2026-11-11, Claude Code (home): on feature/pause-menu-rework (branched off feature/gym-leader-ai). Slice 1 (#88)
+shipped and closed. docs/branch-rules/feature-gym-leader-ai.md governs the parent branch; no rules file for this one.
 
 ## START HERE (next session, either tool)
-1. Done: gym-leader-ai fast-forwarded to leader-roster-ui and pushed.
-2. feature/gym-leader-ai is the main line. Side features (UI etc.) branch off it and merge back (branch rules file).
-3. Before gym-leader-ai merges to main: #30 (re-baseline the two red harnesses until check.js is all green).
+1. Branch: feature/pause-menu-rework. Spec: docs/PAUSE-MENU.md (Jess's design, mockup assets/ui/In Run Menu Reduced.png).
+2. Next: open #89 (slice 2, Pokemon detail panel and team panel): agree goal, done-condition and test, then the plan.
+3. When the pause menu (#82) is done, merge this branch back into feature/gym-leader-ai (side-branch pattern,
+   decision 2026-11-11-side-branches-off-gym-leader-ai). gym-leader-ai merges to main only after #30.
 
 ## Where we are
-- Run screen rework (#35) done: character panel, roster, run items, boss and elite name bar, map, DPS panel, arrows, chips.
-  #61 (docs/HUD-STYLE.md) stays open as the style guide's standing tracker.
-- Upgrade cards (#84): renamed with one-line hints; Attack, Stat Climb and Impact Speed are rate cards named as speeds;
-  All Damage Up +5%. Reference: docs/UPGRADE-CARDS.md. DPS panel lists cards by pick count (#77).
-- Species names are stored in English (#73); tools/species_names.js in check.js. Spawner messages are English in code.
-- Shake Off prompt has a white draining bar (#87, G.Status.shakeTarget).
-- Leader AI (carried): #59 closed; next #53, then #39. Bait parked on #60.
-- check.js: red only on gym-harness and leader-stats-harness, by design until #30.
+- Pause menu #82 (In Progress): slices #88 (shell, done), #89 (detail and team panels), #90 (inventory and held items,
+  Temporary Pocket), #91 (Run Info and per-Pokemon stats, new tracking and a best-record save field), #83 (Cards Taken),
+  #92 (end-of-run Team screen). #93 move tooltip rework is separate (needs-triage).
+- js/ui/pause-menu.js and css/pause-menu.css: Preact on the HUD kit, its own clickable layer (z 15). The kit now
+  shares moveSlotRow (run screen slots and menu buttons). Test: tools/smoke-pause-menu.js (all passed).
+- Co-op pause keeps the old sheet (scr-pause); G.UI.ask unchanged.
+- Leader AI (parked by choice): next #53, then #39. check.js red only on gym-harness and leader-stats-harness until #30.
 
 ## Watch
-- Headless frame-rate checks need the GPU flags (see tools/smoke-status-fx.js).
-- Headless file:// blocks fonts: screenshot HUD text over http. Python on Windows writes CRLF (use newline='').
+- Headless frame-rate checks need the GPU flags (tools/smoke-status-fx.js). Headless file:// blocks fonts.
+- Bash heredocs with long JS break: write edit scripts to the scratchpad and run them.
 - Untracked art in assets/raw and assets/excalidraw (Jess's; never staged by the assistant).
 
 ## Open owner decisions
-- #86 whole levels: gym leaders round to nearest, switch to round down too? Bait (#60).
-- Team sheet Run Cards display (#83, pause menu branch #82); #82 scope.
+- #86 whole levels (gym leaders round down too?). Bait (#60). #93 tooltip scope.
 - Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out. #74 spare weather art.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.
