@@ -696,14 +696,20 @@ label {
   height: 100%;
   background: var(--gold);
 }
+/* Type chip (#81, HUD-STYLE "Type chips"): white text with a hard Text outline pixel shadow (right, down, diagonal), inside
+   a 2 px rim in the type's SV Dark tone, after the Spriters Resource Pokedex type sheet. Built by G.UI.typeChip. */
 .type {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
-  color: #10131a;
-  text-shadow: none;
+  color: #ffffff;
+  text-shadow:
+    1px 0 0 #101010,
+    0 1px 0 #101010,
+    1px 1px 0 #101010;
+  box-shadow: inset 0 0 0 2px var(--type-rim, #495151);
   margin-right: 4px;
 }
 .filters {
@@ -1241,12 +1247,16 @@ label {
   border-radius: 6px;
   padding: 2px 8px;
 }
+/* Level-up card tag: the type chip's white text and pixel shadow, no rim, since it is not always a type (#81). */
 .tag-chip {
   font-size: 11px;
   padding: 2px 7px;
   border-radius: 5px;
-  color: #10131a;
-  text-shadow: none;
+  color: #ffffff;
+  text-shadow:
+    1px 0 0 #101010,
+    0 1px 0 #101010,
+    1px 1px 0 #101010;
   font-weight: 700;
 }
 

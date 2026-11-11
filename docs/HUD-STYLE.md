@@ -177,6 +177,17 @@ B/W colours come in pairs (a bright fill over a dark shade). Keep the pairs toge
   - around a `#393939` / `#292929` checker body,
   - with a `#000000` outline.
 
+### Type chips
+
+- `[Approved]` **Type chips follow the Spriters Resource Pokedex type sheet** (Jess, 2026-11-11, #81;
+  `assets/ui/BW Pokedex rip/pokedexbg/pokedexTypes.png`):
+  - the type's SV Base fill inside a 2 px rim in its SV Dark tone,
+  - white text with a hard pixel shadow one pixel right, down and diagonal, in Text outline `#101010` (not the sheet's
+    own grey: chips use only palette colours),
+  - the type name in today's casing ("Ghost", not "GHOST").
+- Built by `G.UI.typeChip` (js/ui/ui.js) for every chip: team screen, Pokedex, pause sheet.
+- The level-up card tag uses the same white text and shadow without the rim, since it is not always a type.
+
 ### Ramps for new colours
 
 - `[Approved]` Colours with no mainline set (gym colours, new statuses) that need more steps are ramped as the B2 buttons
@@ -228,11 +239,11 @@ Sampled from the B2/W2 HP bar rip (`assets/ui/BW Pokedex rip`) and the existing 
 
 #### `[Approved]` Text
 
-| Role                          | Colour                         |
-| ----------------------------- | ------------------------------ |
-| Text                          | `#ffffff`                      |
-| Text outline                  | `#101010`                      |
-| Dim text (Region, Map, Kills) | `#ffffff` at about 45% opacity |
+| Role                           | Colour                         |
+| ------------------------------ | ------------------------------ |
+| Text                           | `#ffffff`                      |
+| Text outline, type chip shadow | `#101010`                      |
+| Dim text (Region, Map, Kills)  | `#ffffff` at about 45% opacity |
 
 #### `[Approved]` Bars (fill over shade)
 

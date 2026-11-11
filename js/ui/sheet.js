@@ -176,7 +176,7 @@ G.Sheet = (() => {
                 `</div>`;
               return `<div class="sh-move" data-mi="${order.indexOf(m)}" tabindex="0">
           <div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>
-          <div class="txt"><div class="nm">${E(m.name)} <span class="type" style="background:${col}">${E(G.U.TYPE_NAME[m.type])}</span></div>
+          <div class="txt"><div class="nm">${E(m.name)} ${G.UI.typeChip(m.type)}</div>
             <div class="sum">${E(summary)}</div>
           </div>${panel}</div>`;
             })
