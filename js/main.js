@@ -73,6 +73,7 @@
     'Ranking',
     'MoveInfo',
     'Icons',
+    'StatusFx',
     'UI',
     'HUD',
     'HudOverlay',

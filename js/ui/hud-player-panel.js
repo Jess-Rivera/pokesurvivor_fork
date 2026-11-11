@@ -312,7 +312,7 @@ G.HudPlayerPanel = (() => {
   }
 
   // ---------- the per-frame read ----------
-  const readChipsOf = createChipReader();
+  const readChipsOf = createChipReader(true); // the character panel shows the minor statuses too (#78)
   const silverState = { shown: -1, target: -1, rate: 0, pop: 0, at: 0, time: 0 };
   let lastSlotsKey = '',
     lastChipsKey = '',
@@ -462,5 +462,6 @@ G.HudPlayerPanel = (() => {
   layout();
   addEventListener('resize', layout);
   overlay.addPanel({ id: 'player', View: PlayerPanel, sync });
-  return { ready: true, hasChip };
+  // what this panel shows as a chip, so the canvas status list (js/ui/hud.js) leaves it out
+  return { ready: true, hasChip: (statusKey) => hasChip(statusKey, true) };
 })();

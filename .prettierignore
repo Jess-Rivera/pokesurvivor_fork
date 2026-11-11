@@ -15,6 +15,7 @@ js/data/moves-generated.js
 js/data/learnsets.js
 js/data/evolvable.js
 js/data/species-traits.js
+js/data/status-anims.js
 tools/kanto-batch1-data.js
 js/data/lang-en.js
 package-lock.json

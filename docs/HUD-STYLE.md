@@ -249,9 +249,11 @@ Sampled from the B2/W2 HP bar rip (`assets/ui/BW Pokedex rip`) and the existing 
 
 #### `[Approved]` Status chips (fill over shade)
 
-Chips cover the major statuses only, as in mainline. Confusion, trap, daze, drowsy, slow and haste get no HUD chip: they
-show only as their icon animating on the Pokemon, drawn on the canvas with the art's own colours. Every status, major or
-not, also has an on-sprite icon: see [On-sprite status icons](#on-sprite-status-icons-71).
+Major chips are solid (fill over shade). `[Approved]` The minor statuses get chips too, in the character info panel only
+(Jess, 2026-11-11, #78): hollow, a `#101010` body inside a rim of the animation's own colour, with the text in that
+colour, so major and minor read apart at a glance. Majors sit at the left, minors after them. A benched Pokemon's roster
+row keeps the major chip only. Slow, haste and stat changes get no chip: they show as stat changes on the Pokemon. Every
+status also has an on-sprite animation: see [On-sprite status icons](#on-sprite-status-icons-71).
 
 | Status  | Fill      | Shade     |
 | ------- | --------- | --------- |
@@ -261,6 +263,13 @@ not, also has an on-sprite icon: see [On-sprite status icons](#on-sprite-status-
 | BRN     | `#e75a4a` | `#b50000` |
 | FRZ     | `#218cf7` | `#005a8c` |
 | PAR     | `#efad00` | `#ad6b00` |
+
+| Minor (hollow) | Rim and text | Body      |
+| -------------- | ------------ | --------- |
+| CNF            | `#d8b000`    | `#101010` |
+| DZE            | `#1f9fe7`    | `#101010` |
+| DRW            | `#e73963`    | `#101010` |
+| TRP            | `#adb5bd`    | `#101010` |
 
 #### `[Approved]` Shake Off prompt (flashing)
 
@@ -493,9 +502,9 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 
 Art, motion, colours and placement for the icon each status shows on the Pokemon, on the canvas, for every Pokemon
 (yours, benched, enemies, leaders). Kept together here rather than split over Shapes and Motion, since each row is one
-animation. Jess, 2026-11-10; art set switched to Jess's slowed-down set, 2026-11-11. Code differs (today: a 3-letter
-pill per status, a coloured ring under the feet, a text zzz for drowsy and sleep, in `js/entities/player.js`); building
-this is its own slice.
+animation. Jess, 2026-11-10; art set switched to Jess's slowed-down set, 2026-11-11. Built in #78: `js/ui/status-fx.js`
+draws them, from `G.STATUS_ANIMS` (`js/data/status-anims.js`, baked by `node tools/status_anims.js` from
+`assets/status/`, with the per-stat sheets in `assets/status/stats/`). Headless check: `node tools/smoke-status-fx.js`.
 
 - `[Approved]` **Art set:** Jess's own Aseprite redraw (Jess, 2026-11-11), replacing the Rescue Team icon rows for
   every status it covers, and fine to ship. Each animation is a sprite sheet plus a frame JSON in `assets/status/`,

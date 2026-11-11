@@ -142,7 +142,8 @@ in English. Do not add those new English strings to `lang-en.js`.
 
 ### `js/ui/`
 - `move-info.js` (`G.MoveInfo`: a move's display name, type, icon badge and generated card text, read from `G.MoveDefs`; loads
-  before icons.js), `icons.js` pixel-art icons drawn in code, then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
+  before icons.js), `icons.js` pixel-art icons drawn in code, `status-fx.js` (`G.StatusFx`: the on-sprite status and stat
+  change animations, drawn by every Pokemon from `G.STATUS_ANIMS` in `js/data/status-anims.js`), then `ui.js`, `hud.js`, `sheet.js` (the team sheet), `gym-present.js`, `login.js`,
   `menu.js`, `test.js` (personality test), and the per-screen UIs: `gacha-ui.js`,
   `run-ui.js`, `social-ui.js`, `ranking-ui.js`, `settings-ui.js`, `goals-ui.js`,
   `layout-ui.js`, `mod-ui.js`, `news-ui.js`, `slots.js` (gacha slot machine),

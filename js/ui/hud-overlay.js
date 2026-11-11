@@ -200,7 +200,9 @@ G.HudOverlay = (() => {
   const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
 
-  // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn ----------
+  // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn, solid; ----------
+  // the minor ones hollow (a dark body inside the coloured rim, coloured text), in the character panel only (#78)
+  const MINOR_CHIP_BODY = '#101010';
   const CHIP_STYLES = {
     sleep: { label: 'SLP', fill: '#848484', shade: '#4a4a4a' },
     poison: { label: 'PSN', fill: '#d631de', shade: '#6b2942' },
@@ -208,8 +210,15 @@ G.HudOverlay = (() => {
     burn: { label: 'BRN', fill: '#e75a4a', shade: '#b50000' },
     freeze: { label: 'FRZ', fill: '#218cf7', shade: '#005a8c' },
     paralysis: { label: 'PAR', fill: '#efad00', shade: '#ad6b00' },
+    // minors: the rim and text take each animation's own colour (assets/status/)
+    confusion: { label: 'CNF', fill: MINOR_CHIP_BODY, shade: '#d8b000', text: '#d8b000', minor: true },
+    daze: { label: 'DZE', fill: MINOR_CHIP_BODY, shade: '#1f9fe7', text: '#1f9fe7', minor: true },
+    drowsy: { label: 'DRW', fill: MINOR_CHIP_BODY, shade: '#e73963', text: '#e73963', minor: true },
+    trap: { label: 'TRP', fill: MINOR_CHIP_BODY, shade: '#adb5bd', text: '#adb5bd', minor: true },
   };
-  const hasChip = (statusKey) => !!CHIP_STYLES[statusKey];
+  /** Does this status get a chip? Minor ones only where the caller shows them (the character panel). */
+  const hasChip = (statusKey, includeMinors = false) =>
+    !!CHIP_STYLES[statusKey] && (includeMinors || !CHIP_STYLES[statusKey].minor);
   // Chip outline: the B2 capsule buttons (b2-lower Y17 to Z17), stepped corners at the rip's 12 rows. Each entry is how
   // many art pixels that row's edge sits in from the chip's sides. The shade rim is 2 art pixels thick (Jess, 2026-11-10:
   // the shade border made thicker, in place of the rip's dark outline); the fill is the outline shrunk by the rim.
@@ -264,7 +273,7 @@ G.HudOverlay = (() => {
     };
   })();
 
-  /** One chip: { key, label, fill, shade, timer (0 to 1, or null) }. */
+  /** One chip: { key, label, fill, shade, text (a minor's text colour, or null), timer (0 to 1, or null) }. */
   function Chip({ chip }) {
     return html`<div class="hud-chip">
       <${PixelShape}
@@ -274,7 +283,7 @@ G.HudOverlay = (() => {
         paintRow=${chipShapeRows(chip.fill, chip.shade)}
         className="hud-chip-shape"
       />
-      <span class="hud-text">${chip.label}</span>
+      <span class="hud-text" style=${chip.text ? { color: chip.text } : null}>${chip.label}</span>
       <div class="hud-chip-glow" style=${{ clipPath: CHIP_FILL_CLIP }}></div>
       ${
         chip.timer != null
@@ -292,10 +301,11 @@ G.HudOverlay = (() => {
    * it appeared), so the timer bar runs from full to empty. read(entity) returns { chips, key }; key changes only when
    * what the chips show changes (timers rounded to the bar's 35 art pixels).
    */
-  function createChipReader() {
+  function createChipReader(includeMinors = false) {
     const statusPeak = {};
     return function read(entity) {
-      const list = G.Status.list(entity).filter((status) => hasChip(status.k));
+      // G.Status.list puts the major first and the minors after it, so majors sit at the left
+      const list = G.Status.list(entity).filter((status) => hasChip(status.k, includeMinors));
       for (const key in statusPeak) if (!list.some((status) => status.k === key)) delete statusPeak[key];
       const chips = list.map((status) => {
         if (status.t != null) statusPeak[status.k] = Math.max(statusPeak[status.k] || 0, status.t);
@@ -309,6 +319,7 @@ G.HudOverlay = (() => {
           label: style.label,
           fill: style.fill,
           shade: style.shade,
+          text: style.text || null,
           timer: timer == null ? null : Math.round(timer * CHIP_ART_WIDTH) / CHIP_ART_WIDTH,
         };
       });

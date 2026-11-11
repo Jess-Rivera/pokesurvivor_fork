@@ -1510,6 +1510,7 @@
       // Those that float are already in the air in their sprite: they only sway a bit.
       // (And the ones that jump, in an arc.)
       const lift = (this.flying && !this.boss ? 1 + Math.sin(this.bob) * 1.5 : 0) + (this.jumpLift || 0);
+      G.StatusFx.drawBehind(ctx, this, lift); // the stat-up ring, under the sprite (#78)
       this.anim.draw(
         ctx,
         this.x,
@@ -1534,34 +1535,8 @@
         ctx.restore();
       }
 
-      if (this.burn > 0 || this.poison > 0 || (this.net && this.net.st & 3)) {
-        ctx.save();
-        ctx.globalAlpha = 0.45;
-        ctx.fillStyle = this.burn > 0 || (this.net && this.net.st & 1) ? '#ff8a3d' : '#c86bdc';
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.2, this.r * 0.5, 0, 0, 6.2832);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Control statuses (slice C): a colored ring under the feet, like burn and poison.
-      const cs = this.stMajor
-        ? G.Status.CONTROL[this.stMajor.k]
-        : this.stTrap
-          ? G.Status.CONTROL.trap
-          : this.stCnf
-            ? G.Status.CONTROL.confusion
-            : null;
-      if (cs) {
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = cs.color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832);
-        ctx.stroke();
-        ctx.restore();
-      }
+      // Statuses and stat changes (#78): looping animations on the sprite, majors on top of minors (G.StatusFx).
+      G.StatusFx.drawFront(ctx, this, lift);
 
       // Support ones: an icon above, to know who to go for first.
       const SUP = { healer: 'heart', shielder: 'shield', summoner: 'friends' };

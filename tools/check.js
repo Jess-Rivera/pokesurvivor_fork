@@ -125,6 +125,7 @@ for (const [name, args, show] of [
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],
   ['species_traits.js', ['--check'], /current/],
+  ['status_anims.js', ['--check'], /current/],
 ]) {
   const r = cp.spawnSync(process.execPath, [path.join(__dirname, name), ...args], { encoding: 'utf8' });
   const out = ((r.stdout || '') + (r.stderr || '')).trim().split('\n');

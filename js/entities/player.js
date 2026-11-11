@@ -1081,6 +1081,7 @@ G.PlayerEntity = class PlayerEntity {
 
     const alpha = this.invuln > 0 && !this.dead ? (Math.floor(this.invuln * 18) % 2 ? 0.45 : 1) : 1;
     const lift = this.flyT > 0 ? 22 + Math.sin(performance.now() / 160) * 3 : 0; // Fly: the sprite rises, the shadow stays on the ground
+    G.StatusFx.drawBehind(ctx, this, lift); // the stat-up ring, under the sprite (#78)
     this.anim.draw(
       ctx,
       this.x,
@@ -1130,95 +1131,8 @@ G.PlayerEntity = class PlayerEntity {
       i++;
     }
 
-    // Statuses (slice E1): a coloured ring under the feet for the most restrictive one, and a floating zzz while drowsy or asleep.
-    if (!this.dead) {
-      const S = G.Status,
-        cs = this.stMajor
-          ? S.CONTROL[this.stMajor.k]
-          : this.stCnf
-            ? S.CONTROL.confusion
-            : this.stDaze
-              ? S.CONTROL.daze
-              : this.stTrap
-                ? S.CONTROL.trap
-                : this.stDrow
-                  ? S.CONTROL.drowsy
-                  : null;
-      if (cs) {
-        ctx.save();
-        ctx.globalAlpha = 0.55;
-        ctx.strokeStyle = cs.color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.r * 1.35, this.r * 0.55, 0, 0, 6.2832);
-        ctx.stroke();
-        ctx.restore();
-      }
-      if (this.stDrow || (this.stMajor && this.stMajor.k === 'sleep')) {
-        const t = performance.now() / 1000;
-        ctx.save();
-        ctx.font = '800 9px GameFont,"Segoe UI",sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#cfc6ff';
-        ctx.strokeStyle = 'rgba(0,0,0,.7)';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-          const ph = (t * 0.7 + i / 3) % 1; // three letters rising and fading in turn
-          ctx.globalAlpha = Math.sin(ph * Math.PI);
-          const zx = this.x + 8 + ph * 8,
-            zy = this.y - this.bodyH - 4 - ph * 16;
-          ctx.strokeText('z', zx, zy);
-          ctx.fillText('z', zx, zy);
-        }
-        ctx.restore();
-      }
-    }
-
-    // Status icons above the head (slice E1): a small 3-letter pill per status with a thin timer bar. Drowsy has its zzz instead.
-    if (!this.dead) {
-      const L = G.Status.list(this).filter((x) => x.k !== 'drowsy');
-      const mx = this._stMax || (this._stMax = {});
-      for (const k in mx) if (!L.some((x) => x.k === k)) delete mx[k];
-      if (L.length) {
-        const TAG = {
-          burn: 'BRN',
-          poison: 'PSN',
-          toxic: 'TOX',
-          paralysis: 'PAR',
-          sleep: 'SLP',
-          freeze: 'FRZ',
-          confusion: 'CNF',
-          daze: 'DZE',
-          trap: 'TRP',
-          slow: 'SLW',
-        };
-        ctx.save();
-        ctx.font = '800 7px GameFont,"Segoe UI",sans-serif';
-        ctx.textAlign = 'center';
-        const gap = 2,
-          h = 9,
-          ws = L.map((x) => Math.ceil(ctx.measureText(TAG[x.k] || x.k.slice(0, 3).toUpperCase()).width) + 6);
-        let x = this.x - (ws.reduce((a, b) => a + b, 0) + gap * (L.length - 1)) / 2;
-        const y = this.y - this.bodyH - (this.tag || this.isRival ? 24 : 14); // above the name tag, or a gym leader's HP bar
-        L.forEach((st, i) => {
-          if (st.t != null) mx[st.k] = Math.max(mx[st.k] || 0, st.t);
-          ctx.fillStyle = 'rgba(20,0,6,.82)';
-          ctx.beginPath();
-          ctx.roundRect(x, y, ws[i], h, 3);
-          ctx.fill();
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = st.color;
-          ctx.stroke();
-          ctx.fillStyle = st.color;
-          ctx.fillText(TAG[st.k] || st.k.slice(0, 3).toUpperCase(), x + ws[i] / 2, y + 7);
-          if (st.t != null && mx[st.k] > 0) {
-            ctx.fillRect(x + 1, y + h + 1, (ws[i] - 2) * Math.max(0, Math.min(1, st.t / mx[st.k])), 1.5);
-          }
-          x += ws[i] + gap;
-        });
-        ctx.restore();
-      }
-    }
+    // Statuses and stat changes (#78): looping animations on the sprite, majors on top of minors (G.StatusFx).
+    G.StatusFx.drawFront(ctx, this, lift);
 
     // Co-op: a "reviving" ring and the name above.
     if (this.dead && this.reviveT > 0) {
