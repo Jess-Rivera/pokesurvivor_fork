@@ -158,3 +158,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - #69: tools/gym_recolor.js. Walls and glass carry export noise (spread up to ~40), so type parts need a 120 spread; the Ice roof's texture got amplified on vivid blue, fixed by snapping pixels within 14 of the old roof to the solid colour. PNG writer moved to tools/png.js.
 - smoke-ui, smoke-hud-overlay, smoke-team, smoke-gym pass. Jess feel-tested all three; closed.
 - Stopped at: #68, #69, #81 closed. Next: #77 ruling, triage; owed #80, #64, #59.
+
+## 2026-11-11 (Claude Code, home), upgrade cards (#77, #84), English species (#73), elite bar (#85), Shake Off bar (#87); branch finished (feature/leader-roster-ui)
+- docs/UPGRADE-CARDS.md audits every card against the real fold. #77: DPS panel lists cards by pick count (Vitamins by name). #83 (team sheet) and #82 (pause menu branch) filed.
+- #84 ruled (decision 2026-11-11-84-upgrade-card-names-and-speed-framing): renames and hints; Gate, Cooldown, Delay named as speeds; All Damage Up +5% (Brock 6 stacks, still +30%).
+- #73: species names stored in English (14 fixed from pokeapi-master), tools/species_names.js in check.js. #85: elites use the enemy name bar; elite, shiny and swarm messages English in code.
+- Found: wild Pokemon spawn at fractional levels; Jess ruled whole levels, filed as #86 for its own branch. #87: Shake Off white draining bar.
+- All feel-tested and closed with #35 and #59; #61 kept as the style guide's tracker. Stopped at: fast-forward into feature/gym-leader-ai, path forward next session.
