@@ -482,7 +482,7 @@ G.Log = (() => {
     const k = K[i];
     if (k === HIT_IN || k === HIT_OUT) {
       const ty = strs[F[i * NF + (k === HIT_IN ? 15 : 2)]];
-      return (G.U.TYPE_COLOR && G.U.TYPE_COLOR[ty]) || '#ccc';
+      return (G.U.TYPE_COLOR_LIGHT && G.U.TYPE_COLOR_LIGHT[ty]) || '#ccc'; // console text: the Light tone reads on a dark DevTools theme
     }
     return COLORS[k] || '#ccc';
   }

@@ -2082,7 +2082,7 @@ G.Icons = (() => {
     const cv = document.createElement('canvas');
     cv.width = cv.height = S;
     const c = cv.getContext('2d', { willReadFrequently: true }); // se lee en svgOf()
-    const col = G.U.TYPE_COLOR[type] || '#b0a99f';
+    const col = G.U.TYPE_COLOR[type] || G.U.TYPE_COLOR.normal;
     const dark = shade(col, 0.55),
       lite = shade(col, 1.3);
     // A disc with an outline, shadow bottom-right and highlight top-left.

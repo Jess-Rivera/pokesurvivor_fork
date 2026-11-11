@@ -57,28 +57,15 @@ G.HudOverlay = (() => {
     middle: { fill: '#f3b200', shade: '#9a6110' },
     low: { fill: '#fb3041', shade: '#922030' },
   };
-  // Bulbapedia Scarlet/Violet type colours (HUD-STYLE "Type colours"): Base for fills, Dark for shades and outlines,
-  // Light for highlights.
-  const TYPE_COLOURS = {
-    normal: { light: '#C1C2C1', base: '#9FA19F', dark: '#676967' },
-    fire: { light: '#EF7374', base: '#E62829', dark: '#961A1B' },
-    water: { light: '#74ACF5', base: '#2980EF', dark: '#1B539B' },
-    grass: { light: '#82C274', base: '#3FA129', dark: '#29691B' },
-    electric: { light: '#FCD659', base: '#FAC000', dark: '#A37D00' },
-    ice: { light: '#81DFF7', base: '#3DCEF3', dark: '#28869E' },
-    fighting: { light: '#FFAC59', base: '#FF8000', dark: '#A65300' },
-    poison: { light: '#B884DD', base: '#9141CB', dark: '#5E2A84' },
-    ground: { light: '#B88E6F', base: '#915121', dark: '#5E3515' },
-    flying: { light: '#ADD2F5', base: '#81B9EF', dark: '#54789B' },
-    psychic: { light: '#F584A8', base: '#EF4179', dark: '#9B2A4F' },
-    bug: { light: '#B8C26A', base: '#91A119', dark: '#5E6910' },
-    rock: { light: '#CBC7AD', base: '#AFA981', dark: '#726E54' },
-    ghost: { light: '#A284A2', base: '#704170', dark: '#492A49' },
-    dragon: { light: '#8D98EC', base: '#5060E1', dark: '#343E92' },
-    dark: { light: '#998B8C', base: '#624D4E', dark: '#403233' },
-    steel: { light: '#98C2D1', base: '#60A1B8', dark: '#3E6978' },
-    fairy: { light: '#F5A2F5', base: '#EF70EF', dark: '#9B499B' },
-  };
+  // Bulbapedia Scarlet/Violet type colours (HUD-STYLE "Type colours"), the game-wide table in G.U: Base for fills, Dark
+  // for shades and outlines, Light for highlights.
+  const TYPE_COLOURS = {};
+  for (const type of Object.keys(G.U.TYPE_COLOR))
+    TYPE_COLOURS[type] = {
+      light: G.U.TYPE_COLOR_LIGHT[type],
+      base: G.U.TYPE_COLOR[type],
+      dark: G.U.TYPE_COLOR_DARK[type],
+    };
   const typeColours = (type) => TYPE_COLOURS[type] || TYPE_COLOURS.normal;
   const hpBand = (fraction) => (fraction > 0.5 ? 'high' : fraction >= 0.2 ? 'middle' : 'low');
 

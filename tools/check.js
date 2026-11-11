@@ -122,6 +122,7 @@ for (const [name, args, show] of [
   ['export_learnsets.js', ['--check'], /current/],
   ['gym_contact.js', ['--check'], /current/],
   ['gym_colors.js', ['--check'], /current/],
+  ['type_colors.js', [], /current/],
   ['items_report.js', ['--check'], /current/],
   ['evolvable_data.js', ['--check'], /current/],
   ['species_traits.js', ['--check'], /current/],
