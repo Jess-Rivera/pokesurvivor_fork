@@ -525,19 +525,46 @@ G.HUD = (() => {
   // label beyond the tip. Used by the gym gate (Jess 2026-11-05, it used to sit at the screen edge) and the Move Shop
   // buildings. #67 (Jess, 2026-11-10): three chevrons that snap apart toward the target with a stop-bounce and a shine,
   // hold open trembling as if straining, then slide back closed. Colours: HUD-STYLE "Wayfinding arrows" (the Attacks set
-  // of UI-PALETTES: Special for gyms, Physical for shops; Base fill, Dark outline, Light for the shine and halo).
+  // of UI-PALETTES: Special for gyms, Physical for shops; Base fill, Dark outline, Light for the shine).
+  // A target on screen gets no arrow, only its label over the roof (wayfindingLabel).
   const ARROW_R = 60;
+  // The gym building's roof above the gate point, world px (gym-arena.js: 248 px art at GATE_ART_SCALE 0.5, drawn 4 px low).
+  const GATE_ROOF_WORLD_PX = 120;
   const GYM_WAYFINDER = { light: '#7D94CD', base: '#375AB2', dark: '#243B74' }, // Attacks / Special
     SHOP_WAYFINDER = { light: '#F29173', base: '#EB5628', dark: '#99381A' }; // Attacks / Physical
-  // The on-screen bouncing arrow over a visible shop roof keeps its old red (out of #67's scope).
-  const SHOP_ARROW = { edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
   const TEXT_WHITE = '#ffffff',
     TEXT_OUTLINE = '#101010'; // HUD-STYLE Text
+  // HUD-STYLE Fonts: Truth And Ideals (HudText, css/hud-overlay.css) at 20 px, outline one font pixel (2 px) of hard shadows.
+  const WAYFINDING_FONT = '20px HudText, monospace',
+    WAYFINDING_OUTLINE_PX = 2;
+  const OUTLINE_OFFSETS = [
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
+  ];
+
+  /** Standard HUD text on the canvas: white over eight hard #101010 shadows, at whole pixels so the font stays crisp. */
+  function wayfindingLabel(ctx, text, x, y, align) {
+    const left = Math.round(x),
+      baseline = Math.round(y);
+    ctx.font = WAYFINDING_FONT;
+    ctx.textAlign = align;
+    ctx.fillStyle = TEXT_OUTLINE;
+    for (const [dx, dy] of OUTLINE_OFFSETS)
+      ctx.fillText(text, left + dx * WAYFINDING_OUTLINE_PX, baseline + dy * WAYFINDING_OUTLINE_PX);
+    ctx.fillStyle = TEXT_WHITE;
+    ctx.fillText(text, left, baseline);
+  }
   // Chevron loop timing, seconds. One loop: snap out, stop-bounce, strained hold, slide back, rest.
   const CHEVRON_SNAP_SECONDS = 0.15,
     CHEVRON_BOUNCE_SECONDS = 0.15,
     CHEVRON_STAGGER_SECONDS = 0.03, // each chevron starts its snap this long after the one behind it
-    CHEVRON_HOLD_SECONDS = 0.7,
+    CHEVRON_HOLD_SECONDS = 1.4,
     CHEVRON_SLIDE_SECONDS = 0.45,
     CHEVRON_REST_SECONDS = 0.25;
   const CHEVRON_COUNT = 3;
@@ -547,17 +574,18 @@ G.HUD = (() => {
     CHEVRON_REST_START = CHEVRON_SLIDE_START + CHEVRON_SLIDE_SECONDS,
     CHEVRON_LOOP_SECONDS = CHEVRON_REST_START + CHEVRON_REST_SECONDS;
   // Chevron geometry, screen px, along the arrow's direction from the anchor ARROW_R out.
-  const CHEVRON_HALF_HEIGHT = 7, // 14 px tall
-    CHEVRON_DEPTH = 7, // apex to the arms' back ends
-    CHEVRON_BACK_OFFSET = -12, // where the back chevron's apex sits
-    CHEVRON_GAP_CLOSED = 5,
-    CHEVRON_GAP_OPEN = 15,
-    CHEVRON_OVERSHOOT_PX = 3, // how far past its open spot the front chevron flies before springing back
+  const CHEVRON_HALF_HEIGHT = 14, // 28 px tall
+    CHEVRON_DEPTH = 12, // apex to the arms' back ends
+    CHEVRON_BACK_OFFSET = -6, // where the back chevron's apex sits
+    CHEVRON_GAP_CLOSED = 20,
+    CHEVRON_GAP_OPEN = 36,
+    CHEVRON_OVERSHOOT_PX = 5, // how far past its open spot the front chevron flies before springing back
     CHEVRON_HOLD_CREEP_PX = 1, // how far the front chevron sags back by the end of the hold
     CHEVRON_TREMBLE_PX = 1, // the strained shake during the hold
-    CHEVRON_HALO_RADIUS = 22,
-    CHEVRON_HALO_ALPHA = 0.14,
-    CHEVRON_LABEL_GAP = 8; // label start beyond the furthest the front chevron's apex reaches
+    CHEVRON_OUTLINE_WIDTH = 9, // the #101010 edge
+    CHEVRON_DARK_WIDTH = 7,
+    CHEVRON_BASE_WIDTH = 4,
+    CHEVRON_LABEL_GAP = 10; // label start beyond the furthest the front chevron's apex reaches
   const CHEVRON_SPAN_OPEN = (CHEVRON_COUNT - 1) * CHEVRON_GAP_OPEN,
     CHEVRON_SPAN_TRAVEL = CHEVRON_SPAN_OPEN - (CHEVRON_COUNT - 1) * CHEVRON_GAP_CLOSED,
     CHEVRON_OVERSHOOT_FRACTION = CHEVRON_OVERSHOOT_PX / CHEVRON_SPAN_TRAVEL,
@@ -611,13 +639,13 @@ G.HUD = (() => {
     ctx.lineTo(apexX - CHEVRON_DEPTH, CHEVRON_HALF_HEIGHT);
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
-    ctx.lineWidth = 8;
+    ctx.lineWidth = CHEVRON_OUTLINE_WIDTH;
     ctx.strokeStyle = TEXT_OUTLINE;
     ctx.stroke();
-    ctx.lineWidth = 6;
+    ctx.lineWidth = CHEVRON_DARK_WIDTH;
     ctx.strokeStyle = palette.dark;
     ctx.stroke();
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = CHEVRON_BASE_WIDTH;
     ctx.strokeStyle = palette.base;
     ctx.stroke();
     if (shine > 0) {
@@ -638,14 +666,6 @@ G.HUD = (() => {
       loopTime = seconds % CHEVRON_LOOP_SECONDS;
     ctx.save();
     ctx.translate((ox + ca * ARROW_R - cam.left()) * cam.scale, (oy + sa * ARROW_R - cam.top()) * cam.scale);
-    // Faint steady halo around the open group.
-    const haloCentre = CHEVRON_BACK_OFFSET + CHEVRON_SPAN_OPEN / 2 - CHEVRON_DEPTH / 2;
-    ctx.globalAlpha = CHEVRON_HALO_ALPHA;
-    ctx.fillStyle = palette.light;
-    ctx.beginPath();
-    ctx.arc(ca * haloCentre, sa * haloCentre, CHEVRON_HALO_RADIUS, 0, 6.2832);
-    ctx.fill();
-    ctx.globalAlpha = 1;
     ctx.save();
     ctx.rotate(a);
     for (let chevronIndex = 0; chevronIndex < CHEVRON_COUNT; chevronIndex++) {
@@ -656,15 +676,9 @@ G.HUD = (() => {
     }
     ctx.restore();
     ctx.globalAlpha = textA;
-    ctx.font = F(800, 11);
-    ctx.textAlign = ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center';
     const lx = ca * CHEVRON_LABEL_DISTANCE,
-      ly = sa * CHEVRON_LABEL_DISTANCE + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = TEXT_OUTLINE;
-    ctx.strokeText(label, lx, ly);
-    ctx.fillStyle = TEXT_WHITE;
-    ctx.fillText(label, lx, ly);
+      ly = sa * CHEVRON_LABEL_DISTANCE + (sa > 0.3 ? 16 : sa < -0.3 ? -4 : 7);
+    wayfindingLabel(ctx, label, lx, ly, ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center');
     ctx.restore();
   }
 
@@ -879,68 +893,52 @@ G.HUD = (() => {
 
     if (G.Coop.active) drawCoop(ctx, w, h, pl, px, py + 4);
 
-    // Gym gate: off screen, an arrow floating off the character (floatArrow); on screen, an arrow bouncing above;
+    // Gym gate: off screen, chevrons floating off the character (floatArrow); on screen, a "Gym Leader <name>" label
+    // over the roof (#67, Jess 2026-11-10; an Elite Four gate will read "Elite Four <name>" once those gates exist);
     // in the arena, a GYM tag.
     const gate = G.GymArena.gate;
     if (gate) {
       const gym = gate.gym;
       const sx = (gate.x - cam.left()) * cam.scale,
         sy = (gate.y - 40 - cam.top()) * cam.scale;
-      const now = performance.now() / 1000,
-        beat = 0.5 + Math.sin(now * 7) * 0.5;
       const gymGauge = () => {
         // grace countdown, then the escalation readout (+N and climbing)
         const g = G.Gym.graceLeft(),
           b = G.Gym.escBump();
-        if (b > 0) return ' · +' + b + ' ESCALATING';
+        if (b > 0) return ' · +' + b + ' Escalating';
         if (g != null && g > 0) return ' · ' + Math.ceil(g) + ' s';
         return '';
       };
-      const label =
-        'GYM ' +
-        (gym.idx + 1) +
-        ' · ' +
-        gym.leader.toUpperCase() +
-        ' · LV ' +
-        (gym.level + G.Gym.escBump()) +
-        gymGauge() +
-        ' · ' +
-        Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32) +
-        ' m';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_WAYFINDER, label);
-      else {
-        // Above the gate: a bouncing down arrow.
-        const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
-        ctx.translate(sx, by);
-        ctx.beginPath();
-        ctx.moveTo(-15, -12);
-        ctx.lineTo(15, -12);
-        ctx.lineTo(0, 8);
-        ctx.closePath();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#1a0b33';
-        ctx.stroke();
-        ctx.fillStyle = beat > 0.5 ? '#e2d0ff' : '#a06bff';
-        ctx.fill();
-        ctx.font = F(800, 11);
-        ctx.textAlign = 'center';
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(0,0,0,.85)';
-        const l2 = 'GYM · LV ' + (gym.level + G.Gym.escBump()) + (G.Gym.escBump() > 0 ? ' +' + G.Gym.escBump() : '');
-        ctx.strokeText(l2, 0, -18);
-        ctx.fillStyle = '#e2d0ff';
-        ctx.fillText(l2, 0, -18);
-      }
+      if (off) {
+        const label =
+          'Gym ' +
+          (gym.idx + 1) +
+          ' · ' +
+          gym.leader +
+          ' · Lv ' +
+          (gym.level + G.Gym.escBump()) +
+          gymGauge() +
+          ' · ' +
+          Math.round(G.U.dist(pl.x, pl.y, gate.x, gate.y) / 32) +
+          ' m';
+        floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_WAYFINDER, label);
+      } else
+        wayfindingLabel(
+          ctx,
+          'Gym Leader ' + gym.leader,
+          sx,
+          (gate.y - GATE_ROOF_WORLD_PX - cam.top()) * cam.scale - 10,
+          'center'
+        );
       ctx.restore();
     }
 
-    // Move Shop buildings (js/systems/shops.js, step 3): off screen, a red arrow floating off the character; on screen,
-    // a red arrow bouncing above the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres.
+    // Move Shop buildings (js/systems/shops.js, step 3): off screen, chevrons floating off the character; on screen, a
+    // label over the roof. Label: name, seconds left (blinks for the last G.Shops.BLINK s), metres when off screen.
     {
       const now = performance.now() / 1000,
-        beat = 0.5 + Math.sin(now * 7) * 0.5,
         blinkOff = Math.floor(now * 4) % 2 === 0;
       for (const s of G.Shops.list) {
         const sx = (s.x - cam.left()) * cam.scale,
@@ -949,30 +947,11 @@ G.HUD = (() => {
           secs = Math.ceil(s.left) + ' s';
         if (sx < 0 || sx > w || sy < 0 || sy > h) {
           const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
-          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, ta);
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name + ' · ' + secs + ' · ' + m, ta);
         } else {
-          const by = (s.y - s.h - cam.top()) * cam.scale - 16 - Math.abs(Math.sin(now * 4)) * 10;
           ctx.save();
-          ctx.globalAlpha = s.alpha;
-          ctx.translate(sx, by);
-          ctx.beginPath();
-          ctx.moveTo(-15, -12);
-          ctx.lineTo(15, -12);
-          ctx.lineTo(0, 8);
-          ctx.closePath();
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = SHOP_ARROW.edge;
-          ctx.stroke();
-          ctx.fillStyle = beat > 0.5 ? SHOP_ARROW.lite : SHOP_ARROW.main;
-          ctx.fill();
           ctx.globalAlpha = ta;
-          ctx.font = F(800, 11);
-          ctx.textAlign = 'center';
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = 'rgba(0,0,0,.85)';
-          ctx.strokeText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
-          ctx.fillStyle = SHOP_ARROW.text;
-          ctx.fillText(s.name.toUpperCase() + ' · ' + secs, 0, -18);
+          wayfindingLabel(ctx, s.name + ' · ' + secs, sx, (s.y - s.h - cam.top()) * cam.scale - 10, 'center');
           ctx.restore();
         }
       }

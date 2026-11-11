@@ -11,8 +11,8 @@ G.CHANGELOG = [
     title: ['A new gym leader bar', 'A new gym leader bar'],
     new: [
       [
-        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now three chevrons that snap apart toward the target, strain to hold, and slide back together.',
-        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now three chevrons that snap apart toward the target, strain to hold, and slide back together.',
+        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now big chevrons that snap apart toward the target, strain to hold, and slide back together. Once the building is on screen, a name label over its roof replaces the bouncing arrow ("Gym Leader Brock").',
+        'The arrows pointing you to the gym gate (blue) and the Move Trainer and TM Mart (orange) are now big chevrons that snap apart toward the target, strain to hold, and slide back together. Once the building is on screen, a name label over its roof replaces the bouncing arrow ("Gym Leader Brock").',
       ],
       [
         "Top left of the screen: a new DPS panel. It names the Pokémon on the field, shows your team's damage per second over the last 5 seconds, and draws a 30 second graph in each Pokémon's type colour, with a tick where you swapped. Below it, every upgrade card you have picked this run. Settings > DPS Panel turns it off, and DPS Panel Opacity makes it fainter or stronger.",

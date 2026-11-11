@@ -277,14 +277,14 @@ Chosen over orange (the same as SV Fighting) and Physical (close to SV Fire).
 The chevrons floating off the character toward an off-screen target. Adopted from UI-PALETTES "Attacks" (Jess,
 2026-11-10). Approved after the #67 feel test.
 
-| Target                     | Set      | Fill (Base) | Outline (Dark) | Shine and halo (Light) |
-| -------------------------- | -------- | ----------- | -------------- | ---------------------- |
-| Gym gate                   | Special  | `#375AB2`   | `#243B74`      | `#7D94CD`              |
-| Move Trainer and TM Mart   | Physical | `#EB5628`   | `#99381A`      | `#F29173`              |
+| Target                   | Set      | Fill (Base) | Outline (Dark) | Shine (Light) |
+| ------------------------ | -------- | ----------- | -------------- | ------------- |
+| Gym gate                 | Special  | `#375AB2`   | `#243B74`      | `#7D94CD`     |
+| Move Trainer and TM Mart | Physical | `#EB5628`   | `#99381A`      | `#F29173`     |
 
 - A `#101010` line outside the Dark one keeps the blue readable over water.
-- The label is Text white over the Text outline.
-- The on-screen bouncing arrow above a visible gate or shop roof keeps its old colours (not part of #67).
+- No halo or aura behind the chevrons (Jess, 2026-11-10).
+- Labels are the standard HUD text (Fonts: Truth And Ideals 20 px, white, hard `#101010` outline).
 
 ---
 
@@ -559,17 +559,20 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 
 ### Wayfinding arrows (#67)
 
-- `[Proposed]` **Shape:** three open chevrons, 14 px tall, in a row pointing at the target. The back one sits 60 world px
-  from the character's middle. Gap 5 px closed, 15 px open. The label starts a fixed distance past the open tip, so it
+- `[Proposed]` **Shape:** three open chevrons, 28 px tall and 12 px deep, lines about 4 px (plus the Dark and black
+  edges), in a row pointing at the target. The back one sits 60 world px from the character's middle. Gap 20 px
+  closed (three separate shapes at rest), 36 px open. The label starts a fixed distance past the open tip, so it
   never moves with the animation (Jess, 2026-11-10).
-- `[Proposed]` **Loop, about 1.76 s** (each phase a named constant in js/ui/hud.js, `CHEVRON_*`):
+- `[Proposed]` **Loop, about 2.46 s** (each phase a named constant in js/ui/hud.js, `CHEVRON_*`):
   - Snap out, 0.15 s, quick ease-out. Each chevron starts 0.03 s after the one behind it.
-  - Stop-bounce, 0.15 s: the front overshoots about 3 px, springs back once with a small dip.
+  - Stop-bounce, 0.15 s: the front overshoots about 5 px, springs back once with a small dip.
   - A shine (Light) sweeps back to front across the snap and bounce.
-  - Strained hold, 0.7 s: trembles about 1 px along the arrow, irregular, and sags about 1 px by the end.
+  - Strained hold, 1.4 s: trembles about 1 px along the arrow, irregular, and sags about 1 px by the end.
   - Slide back, 0.45 s, ease in and out, all together, no bounce.
   - Rest, 0.25 s, closed.
-- `[Proposed]` **Halo:** faint and steady (Light at 14%), no pulse.
+- `[Proposed]` **Target on screen:** no arrow. A label floats over the roof: "Gym Leader Brock" over a gym gate (an
+  Elite Four gate will read "Elite Four Lance" once those exist); "Move Trainer · 58 s" over a shop, blinking for its
+  last 10 s. Labels are title case (Jess, 2026-11-10).
 
 ---
 
