@@ -1,0 +1,538 @@
+/* ============ pause-pokemon.js: the pause menu's Pokemon detail panel and team panel (#82, slice 2 #89) ============
+ * Spec: docs/PAUSE-MENU.md sections 4 and 5 (mockup assets/ui/In Run Menu Reduced.png). js/ui/pause-menu.js mounts the
+ * two components into its right and bottom panels and hands the keys over (Move_Left / Move_Right: previous and next).
+ *
+ * Detail panel (635 x 1028), the mockup's two-tier bars: the top bar in the first type's colour holds the name, the
+ * level box (deeper than the name band, a diagonal step down to it) and the HP bar under the name; the bottom bar in the
+ * second type's colour (the first for a single type) has a raised tab on the left with the previous and next arrows.
+ * Left column: the portrait with the EXP ring, the held item, then the Run Stats (#91) and Cards Taken (#83) boxes.
+ * Right column: the stat hex, then the move list (bonded groups framed together, a type coloured scroll bar). The boxes
+ * are the roster card's box with a flat body, rimmed in the first type.
+ *
+ * Stat hex, three layers (Jess, 2026-11-11), each stat from the game's formula (G.Stats) with the species' base stats and
+ * this copy's IVs, EVs and nature: black at 50% = the stats it started the run with (level 1, every member is built at
+ * level 1); white = the same at its level now; yellow = what cards and run effects add on top (the bonus the game uses in
+ * combat: incOf, and the real max HP). One scale for all three, the edge at the largest yellow value. HP is drawn at its
+ * mainline size (the game doubles HP, HP_SCALAR) so it does not dwarf the rest; the number printed is the game's.
+ *
+ * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
+ * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
+ * the shown one's portrait gets a green stroke and a shimmer. The Pokemon on the field wears the selection cursor.
+ *
+ * The game is paused while this shows, so it reads the team when the menu opens and when another Pokemon is picked,
+ * never per frame. It never writes game state.
+ */
+G.PausePokemon = (() => {
+  const overlay = G.HudOverlay;
+  if (!overlay || !overlay.ready) return { ready: false };
+  const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
+  const { ItemSquare, IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } =
+    overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback } = overlay.kit;
+
+  // ---------- sizes and places (1080p pixels inside each panel) ----------
+  const DETAIL = { width: 635, height: 1028 },
+    NAME_BAND = 64, // the top bar's name band
+    LEVEL_BOX = { left: 500, depth: 104, stepLeft: 468 }, // the level box drops below the band, a diagonal step down to it
+    BOTTOM_BAR = { top: 980, tabTop: 948, tabRight: 170, stepRight: 196 }, // the bottom bar and its raised arrow tab
+    LIFE = { left: 10, top: 70, artWidth: 160, labelTop: -6 },
+    HP_TEXT = { left: 340, top: 72 },
+    COLUMN_LEFT = { x: 16, width: 200 },
+    COLUMN_RIGHT = { x: 230, width: 390 },
+    PORTRAIT = { top: 124, size: 116 },
+    HELD = { top: 256, artSize: 24 },
+    RUN_STATS_BOX = { top: 320, height: 200 },
+    CARDS_BOX = { top: 536, height: 400 },
+    HEX_BOX = { top: 124, height: 376 },
+    MOVES_BOX = { top: 516, height: 420 },
+    BOX_PAD = 16, // inside a box, clear of its rim
+    HEX = { radius: 92, labelGap: 14 },
+    ARROW = { size: 13, artPixel: 3, top: 960, prevLeft: 30, nextLeft: 98 };
+  const TEAM = { columns: 3, cardArtWidth: 84, gap: 9, padLeft: 13, padTop: 12, rowGap: 8 };
+  const TEAM_CARD_WIDTH = TEAM.cardArtWidth * 2,
+    TEAM_CARD_HEIGHT = 64,
+    TEAM_SLOTS = 6,
+    TEAM_NAME_ROOM = TEAM_CARD_WIDTH - 66 - 12; // from the name's left to the right rim
+  const EMPTY_RIM = { light: PALETTE.checker, base: PALETTE.frame, dark: PALETTE.frame }; // the B2 disabled button
+  const BOND_PINK = '#ff8ad8'; // the game's bond colour (the run screen's bonded slots)
+  // Clockwise from the top, as the main games' summary: [index into the stat arrays, label, incOf key]
+  const HEX_AXES = [
+    [0, 'HP', 'hp'],
+    [1, 'Atk', 'atk'],
+    [2, 'Def', 'def'],
+    [5, 'Spe', 'spe'],
+    [4, 'SpD', 'spd'],
+    [3, 'SpA', 'spa'],
+  ];
+
+  // ---------- state ----------
+  const shownSlot = signal(0), // the team slot the detail panel shows
+    readCount = signal(0), // bumped on each read, so the panels redraw from the team as it is now
+    hoveredMove = signal(null); // { lines, top } for the move tooltip, or null
+  const life = createLifeBar({ artPixel: 2, artWidth: signal(LIFE.artWidth), labelTop: LIFE.labelTop });
+
+  const team = () => (G.Game && G.Game.roster) || [];
+  const memberIn = (slot) => team().find((member) => member.teamSlot === slot) || null;
+  const filledSlots = () =>
+    team()
+      .map((member) => member.teamSlot)
+      .sort((first, second) => first - second);
+  /** English type name from the type id (G.U.TYPE_NAME is the Spanish source text, and this menu is English only). */
+  const typeName = (type) =>
+    String(type || 'normal')
+      .charAt(0)
+      .toUpperCase() + String(type || 'normal').slice(1);
+  const typesOf = (member) => (member.mon && member.mon.types) || ['normal'];
+
+  // ---------- the stat hex's numbers ----------
+  /** The six stats ([HP, Atk, Def, SpA, SpD, Spe]) at `level` from base stats, IVs, EVs and nature (G.Stats). */
+  function statsAt(member, level) {
+    const base = (member.mon && member.mon.stats) || [0, 0, 0, 0, 0, 0];
+    return base.map((baseStat, index) =>
+      index === 0
+        ? G.Stats.hpForLevel(baseStat, level, member.statIv(0), member.statEv(0))
+        : G.Stats.statValue(baseStat, level, member.statIv(index), member.statEv(index), member.statNat(index))
+    );
+  }
+  /** { start, now, withRun, bonus }: six numbers each (bonus a fraction, 0.1 = +10%). */
+  function hexNumbers(member) {
+    const start = statsAt(member, 1),
+      now = statsAt(member, member.level);
+    const bonus = now.map((value, index) => {
+      if (index === 0) return value > 0 ? Math.max(0, Math.round(member.maxHp) / value - 1) : 0;
+      const key = HEX_AXES.find(([statIndex]) => statIndex === index)[2];
+      return Math.max(0, member.incOf(key));
+    });
+    const withRun = now.map((value, index) =>
+      index === 0 ? Math.max(value, Math.round(member.maxHp)) : Math.round(value * (1 + bonus[index]))
+    );
+    return { start, now, withRun, bonus };
+  }
+
+  // ---------- small pieces ----------
+  /** Text that squeezes sideways to fit `room` px when it is wider (long species names). */
+  function FitText({ text, room, className, style }) {
+    const ref = hooks.useRef(null);
+    hooks.useLayoutEffect(() => {
+      const element = ref.current;
+      if (!element) return;
+      element.style.transform = '';
+      const width = element.scrollWidth;
+      if (width > room) element.style.transform = `scaleX(${room / width})`;
+    });
+    return html`<span
+      ref=${ref}
+      class=${'pm-fit' + (className ? ' ' + className : '')}
+      style=${{ ...style, transformOrigin: '0 50%' }}
+      >${text}</span
+    >`;
+  }
+
+  /** A box: the roster card's box at any size with a flat body, rimmed in `rim`; its contents go inside. */
+  function Box({ left, top, width, height, rim, className, children }) {
+    return html`<div
+      class=${'pm-box' + (className ? ' ' + className : '')}
+      style=${{ left: left + 'px', top: top + 'px', width: width + 'px', height: height + 'px' }}
+    >
+      <${PixelShape}
+        artWidth=${width / 2}
+        artRows=${height / 2}
+        artPixel=${2}
+        paintRow=${letterRows(rosterBoxGrid(width / 2, height / 2, false), rosterColours(rim, PALETTE.body))}
+      />
+      ${children}
+    </div>`;
+  }
+
+  /** A pixel arrow (after b2-lower AC8 to AD8): a filled triangle with an outline, pointing left or right. */
+  function arrowRow(row, pointsRight) {
+    const size = ARROW.size,
+      middle = (size - 1) / 2,
+      reach = middle - Math.abs(row - middle), // 0 at the top and bottom rows, widest in the middle
+      length = Math.round(reach * 1.3) + 1;
+    const start = pointsRight ? 0 : size - length;
+    if (length <= 1) return [[start, 1, PALETTE.outline]];
+    return [
+      [start, 1, PALETTE.outline],
+      [start + 1, length - 2, '#ffffff'],
+      [start + length - 1, 1, PALETTE.outline],
+    ];
+  }
+  function Arrow({ direction, left }) {
+    const pointsRight = direction > 0;
+    return html`<button
+      type="button"
+      tabindex="-1"
+      class="pm-arrow"
+      data-step=${pointsRight ? 'next' : 'prev'}
+      style=${{ left: left + 'px', top: ARROW.top + 'px' }}
+      onMouseDown=${(event) => event.preventDefault()}
+      onClick=${() => step(direction)}
+    >
+      <${PixelShape}
+        artWidth=${ARROW.size}
+        artRows=${ARROW.size}
+        artPixel=${ARROW.artPixel}
+        paintRow=${(row) => arrowRow(row, pointsRight)}
+      />
+    </button>`;
+  }
+
+  // ---------- the detail panel ----------
+  const topBarPoints = [
+    [0, 0],
+    [DETAIL.width, 0],
+    [DETAIL.width, LEVEL_BOX.depth],
+    [LEVEL_BOX.left, LEVEL_BOX.depth],
+    [LEVEL_BOX.stepLeft, NAME_BAND],
+    [0, NAME_BAND],
+  ];
+  const bottomBarPoints = [
+    [0, BOTTOM_BAR.tabTop],
+    [BOTTOM_BAR.tabRight, BOTTOM_BAR.tabTop],
+    [BOTTOM_BAR.stepRight, BOTTOM_BAR.top],
+    [DETAIL.width, BOTTOM_BAR.top],
+    [DETAIL.width, DETAIL.height],
+    [0, DETAIL.height],
+  ];
+  const pointList = (points) => points.map(([x, y]) => x + ',' + y).join(' ');
+
+  function Bars({ firstType, secondType }) {
+    const top = typeColours(firstType),
+      bottom = typeColours(secondType);
+    return html`<svg class="pm-detail-bars" width=${DETAIL.width} height=${DETAIL.height}>
+      <polygon class="pm-detail-top" data-type=${firstType} points=${pointList(topBarPoints)} fill=${top.base} />
+      <polygon
+        class="pm-detail-bottom"
+        data-type=${secondType}
+        points=${pointList(bottomBarPoints)}
+        fill=${bottom.base}
+      />
+    </svg>`;
+  }
+
+  function Hex({ member }) {
+    const numbers = hexNumbers(member),
+      hpScale = G.Stats.HP_SCALAR || 1;
+    const plotted = (values) => values.map((value, index) => (index === 0 ? value / hpScale : value));
+    const edge = Math.max(1, ...plotted(numbers.withRun));
+    const width = COLUMN_RIGHT.width - 2 * BOX_PAD,
+      height = HEX_BOX.height - 2 * BOX_PAD,
+      centreX = width / 2,
+      centreY = height / 2 + 4;
+    const corner = (axis, fraction) => {
+      const angle = -Math.PI / 2 + (axis * Math.PI) / 3;
+      return [centreX + Math.cos(angle) * HEX.radius * fraction, centreY + Math.sin(angle) * HEX.radius * fraction];
+    };
+    const shape = (values) => {
+      const scaled = plotted(values);
+      return HEX_AXES.map(([statIndex], axis) =>
+        corner(axis, Math.max(0, Math.min(1, scaled[statIndex] / edge)))
+          .map((value) => value.toFixed(1))
+          .join(',')
+      ).join(' ');
+    };
+    const ring = (fraction) => HEX_AXES.map((axisEntry, axis) => corner(axis, fraction).join(',')).join(' ');
+    const anyBonus = numbers.bonus.some((value) => value > 0);
+    const labels = HEX_AXES.map(([statIndex, label], axis) => {
+      const [x, y] = corner(axis, 1),
+        side = Math.abs(x - centreX) < 4 ? 'middle' : x > centreX ? 'right' : 'left';
+      const style =
+        side === 'middle'
+          ? { left: x + 'px', top: (y < centreY ? y - HEX.labelGap - 44 : y + HEX.labelGap) + 'px' }
+          : side === 'right'
+            ? { left: x + HEX.labelGap + 'px', top: y - 22 + 'px' }
+            : { right: width - x + HEX.labelGap + 'px', top: y - 22 + 'px' };
+      const percent = Math.round(numbers.bonus[statIndex] * 100);
+      return html`<div key=${label} class=${'pm-hex-label is-' + side} data-stat=${label} style=${style}>
+        <div class="hud-text pm-hex-name">${label}</div>
+        <div class="hud-text pm-hex-value">
+          ${numbers.withRun[statIndex]}${percent > 0 ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
+        </div>
+      </div>`;
+    });
+    return html`<div
+      class="pm-hex"
+      style=${{ left: BOX_PAD + 'px', top: BOX_PAD + 'px', width: width + 'px', height: height + 'px' }}
+    >
+      <svg width=${width} height=${height}>
+        ${[0.25, 0.5, 0.75, 1].map(
+          (fraction) =>
+            html`<polygon class=${'pm-hex-ring' + (fraction === 1 ? ' is-edge' : '')} points=${ring(fraction)} />`
+        )}
+        ${HEX_AXES.map((axisEntry, axis) => {
+          const [x, y] = corner(axis, 1);
+          return html`<line class="pm-hex-spoke" x1=${centreX} y1=${centreY} x2=${x} y2=${y} />`;
+        })}
+        <polygon class="pm-hex-now" points=${shape(numbers.now)} />
+        ${anyBonus ? html`<polygon class="pm-hex-run" points=${shape(numbers.withRun)} />` : null}
+        <polygon class="pm-hex-start" points=${shape(numbers.start)} />
+      </svg>
+      ${labels}
+    </div>`;
+  }
+
+  /** The move list: every move grouped by bond, each with its summary line; hover shows the full numbers. */
+  function MoveList({ member, rim }) {
+    const scrollRef = hooks.useRef(null),
+      thumbState = hooks.useRef({ top: 0, height: 0 }); // the scroll bar's thumb, in px
+    const [, redraw] = hooks.useState(0);
+    const groups = member.slots.length ? member.slots : member.moves.map((move) => [move]);
+    const width = COLUMN_RIGHT.width - 2 * BOX_PAD - 14,
+      height = MOVES_BOX.height - 2 * BOX_PAD;
+    const measure = () => {
+      const element = scrollRef.current;
+      if (!element) return;
+      const ratio = element.clientHeight / Math.max(1, element.scrollHeight);
+      const next =
+        ratio >= 1
+          ? { top: 0, height: 0 }
+          : {
+              top: (element.scrollTop / element.scrollHeight) * element.clientHeight,
+              height: Math.max(24, ratio * element.clientHeight),
+            };
+      if (next.top !== thumbState.current.top || next.height !== thumbState.current.height) {
+        thumbState.current = next;
+        redraw((count) => count + 1);
+      }
+    };
+    hooks.useLayoutEffect(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      measure();
+    }, [member, readCount.value]);
+    const showDetail = (move, event) => {
+      const lines = G.Sheet.detailOf(member, move),
+        list = [lines.raw, lines.ail, lines.hit].filter(Boolean);
+      const panel = event.currentTarget.closest('.pm-detail');
+      const rowBox = event.currentTarget.getBoundingClientRect(),
+        panelBox = panel.getBoundingClientRect(),
+        scale = panelBox.height / DETAIL.height;
+      hoveredMove.value = list.length
+        ? { name: move.name, lines: list, top: (rowBox.top - panelBox.top) / scale }
+        : null;
+    };
+    const rows = groups.map((group, groupIndex) => {
+      const bonded = group.length > 1;
+      return html`<div key=${groupIndex} class=${'pm-move-group' + (bonded ? ' is-bonded' : '')}>
+        ${bonded ? html`<div class="hud-text pm-bond-caption" style=${{ color: BOND_PINK }}>Cast together</div>` : null}
+        ${group.map(
+          (move) =>
+            html`<div
+              key=${move.id}
+              class="pm-move"
+              data-move=${move.id}
+              onMouseEnter=${(event) => showDetail(move, event)}
+              onMouseLeave=${() => (hoveredMove.value = null)}
+            >
+              <${IconCanvas} icon=${'move:' + move.id} size=${32} className="pm-move-icon" />
+              <div class="pm-move-text">
+                <div class="pm-move-head">
+                  <span class="hud-text pm-move-name">${move.name}</span>
+                  <span
+                    class="hud-text pm-type-pill"
+                    style=${{ background: G.U.TYPE_COLOR[move.type], borderColor: G.U.TYPE_COLOR_DARK[move.type] }}
+                    >${typeName(move.type)}</span
+                  >
+                </div>
+                <div class="hud-text pm-move-summary">${G.Sheet.summaryOf(member, move)}</div>
+              </div>
+            </div>`
+        )}
+      </div>`;
+    });
+    const thumbNow = thumbState.current;
+    return html`<div
+        class="pm-move-scroll"
+        ref=${scrollRef}
+        onScroll=${() => {
+          hoveredMove.value = null;
+          measure();
+        }}
+        style=${{ left: BOX_PAD + 'px', top: BOX_PAD + 'px', width: width + 'px', height: height + 'px' }}
+      >
+        ${rows.length ? rows : html`<div class="hud-text pm-empty-note">No moves yet.</div>`}
+      </div>
+      <div
+        class="pm-scroll-track"
+        style=${{ right: BOX_PAD + 'px', top: BOX_PAD + 'px', height: height + 'px', background: rim.dark }}
+      >
+        ${
+          thumbNow.height
+            ? html`<div
+                class="pm-scroll-thumb"
+                style=${{ top: thumbNow.top + 'px', height: thumbNow.height + 'px', background: rim.base, borderColor: rim.light }}
+              ></div>`
+            : null
+        }
+      </div>`;
+  }
+
+  function MoveTooltip() {
+    const hovered = hoveredMove.value;
+    if (!hovered) return null;
+    return html`<div class="pm-move-tooltip" style=${{ top: hovered.top + 'px' }}>
+      <div class="hud-text pm-tooltip-name">${hovered.name}</div>
+      ${hovered.lines.map((line, index) => html`<div key=${index} class="hud-text pm-tooltip-line">${line}</div>`)}
+    </div>`;
+  }
+
+  function DetailPanel() {
+    readCount.value; // redraw on each read
+    const member = memberIn(shownSlot.value);
+    if (!member) return null;
+    const [firstType, secondType = firstType] = typesOf(member);
+    const rim = typeColours(firstType);
+    const active = G.Game.player;
+    const expFraction = active && active.xpNext > 0 ? Math.max(0, Math.min(1, active.xp / active.xpNext)) : 0; // run XP is shared
+    const held = member.item && G.Items.BY[member.item];
+    const hp = Math.ceil(Math.max(0, member.hp)),
+      maxHp = Math.round(member.maxHp);
+    const box = (column, place, extra) =>
+      html`<${Box}
+        left=${column.x}
+        top=${place.top}
+        width=${column.width}
+        height=${place.height}
+        rim=${rim}
+        className=${extra.className}
+        >${extra.children}<//
+      >`;
+    return html`<div class="pm-detail" data-slot=${member.teamSlot} data-dex=${member.dex}>
+      <${Bars} firstType=${firstType} secondType=${secondType} />
+      <${FitText} text=${member.mon.name} room=${LEVEL_BOX.stepLeft - 28} className="pm-detail-name" />
+      <div class="hud-text pm-detail-lv-label">Lv.</div>
+      <div class="hud-lv-number pm-detail-lv">${member.level}</div>
+      <div class="pm-detail-life" style=${{ left: LIFE.left + 'px', top: LIFE.top + 'px' }}><${life.View} /></div>
+      <div
+        class="hud-text pm-detail-hp"
+        data-hp=${hp}
+        data-max-hp=${maxHp}
+        style=${{ left: HP_TEXT.left + 'px', top: HP_TEXT.top + 'px' }}
+      >
+        ${hp} / ${maxHp}
+      </div>
+      ${member.dead ? html`<div class="hud-text pm-detail-fainted">Fainted</div>` : null}
+      <div
+        class="hud-portrait pm-detail-portrait"
+        style=${{
+          left: COLUMN_LEFT.x + (COLUMN_LEFT.width - PORTRAIT.size) / 2 + 'px',
+          top: PORTRAIT.top + 'px',
+          '--exp': Math.round(expFraction * 360) + 'deg',
+        }}
+      >
+        <div class="hud-exp-ring"></div>
+        <div class="hud-portrait-face">
+          <img
+            src=${portraitSource(member.dex, member.shiny)}
+            data-dex=${member.dex}
+            alt=""
+            onError=${portraitFallback}
+          />
+        </div>
+      </div>
+      <div class="pm-detail-held" style=${{ left: COLUMN_LEFT.x + 'px', top: HELD.top + 'px' }}>
+        <${ItemSquare} icon=${held ? held.icon || member.item : null} artSize=${HELD.artSize} />
+        <${FitText}
+          text=${held ? held.name : 'No held item'}
+          room=${COLUMN_LEFT.width - HELD.artSize * 2 - 10}
+          className=${'hud-text pm-held-name' + (held ? '' : ' is-empty')}
+        />
+      </div>
+      ${box(COLUMN_LEFT, RUN_STATS_BOX, {
+        className: 'pm-box-run-stats',
+        children: html`<div class="hud-text pm-box-title">Run Stats</div>`,
+      })}
+      ${box(COLUMN_LEFT, CARDS_BOX, {
+        className: 'pm-box-cards',
+        children: html`<div class="hud-text pm-box-title">Cards Taken</div>`,
+      })}
+      ${box(COLUMN_RIGHT, HEX_BOX, { className: 'pm-box-hex', children: html`<${Hex} member=${member} />` })}
+      ${box(COLUMN_RIGHT, MOVES_BOX, {
+        className: 'pm-box-moves',
+        children: html`<${MoveList} member=${member} rim=${rim} />`,
+      })}
+      <${MoveTooltip} />
+      <${Arrow} direction=${-1} left=${ARROW.prevLeft} />
+      <${Arrow} direction=${1} left=${ARROW.nextLeft} />
+    </div>`;
+  }
+
+  // ---------- the team panel ----------
+  function TeamCard({ slot }) {
+    const member = memberIn(slot),
+      column = slot % TEAM.columns,
+      row = Math.floor(slot / TEAM.columns);
+    const style = {
+      left: TEAM.padLeft + column * (TEAM_CARD_WIDTH + TEAM.gap) + 'px',
+      top: TEAM.padTop + row * (TEAM_CARD_HEIGHT + TEAM.rowGap) + 'px',
+    };
+    if (!member)
+      return html`<div class="pm-team-empty" data-slot=${slot} style=${style}>
+        <${PixelShape}
+          artWidth=${TEAM.cardArtWidth}
+          artRows=${32}
+          artPixel=${2}
+          paintRow=${letterRows(rosterBoxGrid(TEAM.cardArtWidth, 32, false), rosterColours(EMPTY_RIM, PALETTE.body))}
+        />
+      </div>`;
+    const fainted = !!member.dead,
+      fraction = member.maxHp > 0 ? Math.max(0, Math.min(1, member.hp / member.maxHp)) : 0,
+      shown = slot === shownSlot.value;
+    return html`<${RosterCard}
+      artWidth=${TEAM.cardArtWidth}
+      rim=${fainted ? FAINTED_RIM : typeColours(typesOf(member)[0])}
+      fill=${rosterFill(member.hp > 0 ? fraction : 0, fainted, TEAM.cardArtWidth)}
+      band=${hpBand(fraction)}
+      dex=${member.dex}
+      shiny=${!!member.shiny}
+      name=${html`<${FitText} text=${member.mon.name} room=${TEAM_NAME_ROOM} />`}
+      fainted=${fainted}
+      className=${'pm-team-card' + (shown ? ' is-shown' : '')}
+      faceClass=${shown ? 'pm-face-shown' : ''}
+      style=${style}
+      onClick=${() => select(slot)}
+    >
+      <span class="hud-text hud-roster-key">${G.Input.keyLabel('swap_' + (slot + 1)) || String(slot + 1)}</span>
+      ${member === G.Game.player && !fainted ? html`<${Cursor} />` : null}
+    <//>`;
+  }
+
+  function TeamPanel() {
+    readCount.value;
+    const cards = [];
+    for (let slot = 0; slot < TEAM_SLOTS; slot++) cards.push(html`<${TeamCard} key=${slot} slot=${slot} />`);
+    return html`<div class="pm-team" data-shown=${shownSlot.value}>${cards}</div>`;
+  }
+
+  // ---------- reading and picking ----------
+  function refreshLife() {
+    const member = memberIn(shownSlot.value);
+    if (member) life.update(member.hp, member.maxHp, member.dead, member);
+  }
+  /** The menu opened: show the Pokemon on the field. */
+  function read() {
+    const active = G.Game && G.Game.player;
+    const slots = filledSlots();
+    shownSlot.value = active && active.teamSlot != null ? active.teamSlot : slots.length ? slots[0] : 0;
+    hoveredMove.value = null;
+    life.reset();
+    refreshLife();
+    readCount.value = readCount.value + 1;
+  }
+  function select(slot) {
+    if (!memberIn(slot) || slot === shownSlot.value) return;
+    shownSlot.value = slot;
+    hoveredMove.value = null;
+    refreshLife();
+    G.Audio.sfx('select');
+  }
+  /** Previous (-1) or next (+1) Pokemon, wrapping, skipping empty slots. */
+  function step(direction) {
+    const slots = filledSlots();
+    if (slots.length < 2) return;
+    const here = Math.max(0, slots.indexOf(shownSlot.value));
+    select(slots[(here + direction + slots.length) % slots.length]);
+  }
+
+  return { ready: true, DetailPanel, TeamPanel, read, step, select, shownSlot: () => shownSlot.value };
+})();

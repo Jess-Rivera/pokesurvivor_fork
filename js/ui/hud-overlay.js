@@ -214,6 +214,173 @@ G.HudOverlay = (() => {
   const CURSOR_CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
   const Cursor = () => CURSOR_CORNERS.map((corner) => html`<${CursorCorner} key=${corner} corner=${corner} />`);
 
+  // ---------- the roster card (b2-lower Y15 to AA16): the run screen's roster rows and the pause menu's team panel ----------
+  // HUD-STYLE "Roster rows". The box is drawn at 2 px per art pixel, 32 rows tall; its width varies (the run screen's
+  // rows are 139 art pixels, the pause menu's team cards narrower). The same box with no HP bar and a flat body frames
+  // the pause menu's detail boxes (any height).
+  const ROSTER_ART_PIXEL = 2,
+    ROSTER_ART_ROWS = 32,
+    ROSTER_FACE = { left: 14, top: 10, size: 44 }, // the portrait circle: a 40 px portrait inside a 2 px stroke
+    ROSTER_NAME = { left: 66, top: 17 }, // just right of the portrait, a little below the middle of the space above the bar
+    ROSTER_BAR = { artLeft: 33, artTop: 19 }, // the HP bar: right of the portrait, along the bottom
+    // The B2 small bar (b2-lower Y16 to Z16): the "HP" label is the life meter's (20 px italic HUD text), then the track's
+    // frame (t) and its empty inside (f), rows 2 to 5 of the bar.
+    ROSTER_LABEL_ART = 12, // "HP" at 20 px with its outline is 24 px wide, as the life meter's label
+    ROSTER_TRACK_TOP = 2, // the track's frame rows: 2 and 5, its inside 3 and 4
+    // the label's 24 px line centred on the track's frame
+    ROSTER_LABEL_TOP = (ROSTER_BAR.artTop + ROSTER_TRACK_TOP) * ROSTER_ART_PIXEL + 2 * ROSTER_ART_PIXEL - 12;
+  // The left end of the rip's top 8 rows and one straight row, one letter per art pixel from the box's left edge; the
+  // rest of each row is its last letter's fill. The right end is the mirror, the bottom 8 rows the top's mirror.
+  //   o outline, D / B / L the rim's dark, base and light, G the body, space nothing.
+  const ROSTER_LEFT_END = [
+    ['      oooo', ' '], // the corner bump rises above the top edge
+    ['     oDBBDo', ' '],
+    ['    oDBooBD', 'o'],
+    ['   oDBoLBo', 'B'],
+    ['  oDBoLLL', 'o'],
+    [' oDBoLLLo', 'G'],
+    ['oDBoLLLo', 'G'],
+    ['oBoLLL', 'G'],
+  ];
+  const ROSTER_STRAIGHT_LEFT = ['oBoLLo', 'G'];
+  /** The track's right frame column (from the bar's left edge) for a card artWidth wide: one pixel clear of the right rim. */
+  const rosterBarRight = (artWidth) => artWidth - 8 - ROSTER_BAR.artLeft;
+  /** The fill's width in art pixels for a card artWidth wide. */
+  const rosterFillArtWidth = (artWidth) => rosterBarRight(artWidth) - ROSTER_LABEL_ART - 1;
+  const ROSTER_FILL_LEFT = ROSTER_BAR.artLeft + ROSTER_LABEL_ART + 1;
+
+  /** The box as a grid of letters, one string per art row; withBar stamps the HP bar's track. Cached per size. */
+  const rosterGrids = new Map();
+  function rosterBoxGrid(artWidth, artRows = ROSTER_ART_ROWS, withBar = true) {
+    const cacheKey = artWidth + 'x' + artRows + (withBar ? 'b' : '');
+    if (rosterGrids.has(cacheKey)) return rosterGrids.get(cacheKey);
+    const rowOf = ([left, fill]) => {
+      const right = left.split('').reverse().join('');
+      return left + fill.repeat(artWidth - 2 * left.length) + right;
+    };
+    const grid = [];
+    for (let row = 0; row < artRows; row++) {
+      const fromTop = Math.min(row, artRows - 1 - row);
+      grid.push(rowOf(fromTop < ROSTER_LEFT_END.length ? ROSTER_LEFT_END[fromTop] : ROSTER_STRAIGHT_LEFT).split(''));
+    }
+    if (withBar) {
+      // stamp the HP bar's track: its frame and its empty inside (the label is text, drawn over it in the row)
+      const barRight = rosterBarRight(artWidth);
+      for (let trackRow = 0; trackRow < 4; trackRow++) {
+        const line = grid[ROSTER_BAR.artTop + ROSTER_TRACK_TOP + trackRow],
+          stamp = (column, letter) => (line[ROSTER_BAR.artLeft + column] = letter);
+        if (trackRow === 0 || trackRow === 3)
+          for (let column = ROSTER_LABEL_ART; column <= barRight; column++) stamp(column, 't');
+        else {
+          stamp(ROSTER_LABEL_ART, 't');
+          for (let column = ROSTER_LABEL_ART + 1; column < barRight; column++) stamp(column, 'f');
+          stamp(barRight, 't');
+        }
+      }
+    }
+    const lines = grid.map((line) => line.join(''));
+    rosterGrids.set(cacheKey, lines);
+    return lines;
+  }
+  /** The letters' colours for a rim ramp; body is the box's inside (the slot grid on the run screen). */
+  const rosterColours = (rim, body = SLOT_GRID) => ({
+    o: PALETTE.outline,
+    D: rim.dark,
+    B: rim.base,
+    L: rim.light,
+    G: body,
+    f: PALETTE.frame,
+    t: PALETTE.trackEdge,
+  });
+  /** paintRow for a grid of letters: runs of one letter become one rectangle. */
+  const letterRows = (grid, colours) => (row) => {
+    const line = grid[row],
+      runs = [];
+    let start = 0;
+    for (let column = 1; column <= line.length; column++) {
+      if (column < line.length && line[column] === line[start]) continue;
+      if (line[start] !== ' ') runs.push([start, column - start, colours[line[start]]]);
+      start = column;
+    }
+    return runs;
+  };
+  /** The HP fill for a card artWidth wide: whole art pixels as a fraction of the track, one pixel while alive. */
+  function rosterFill(hpFraction, fainted, artWidth) {
+    const fillArt = rosterFillArtWidth(artWidth),
+      units = fainted || hpFraction <= 0 ? 0 : Math.max(1, Math.round(Math.min(1, hpFraction) * fillArt));
+    return units / fillArt;
+  }
+  const rosterStripes = (band) => {
+    const colours = HP_COLOURS[band];
+    return `linear-gradient(${colours.fill} 0 ${ROSTER_ART_PIXEL}px, ${colours.shade} ${ROSTER_ART_PIXEL}px ${2 * ROSTER_ART_PIXEL}px)`;
+  };
+  /**
+   * One roster card: the box rimmed in `rim`, the HP fill (fill from rosterFill, band from hpBand), the "HP" label, the
+   * portrait in its circle and the name. Extra pieces (chips, the cooldown shade, the key, the cursor) come as children.
+   * faceClass adds a class to the portrait circle (the pause menu's selected card).
+   */
+  function RosterCard({
+    artWidth,
+    rim,
+    fill,
+    band,
+    dex,
+    shiny,
+    name,
+    fainted,
+    className,
+    style,
+    faceClass,
+    onClick,
+    children,
+  }) {
+    const width = artWidth * ROSTER_ART_PIXEL,
+      height = ROSTER_ART_ROWS * ROSTER_ART_PIXEL;
+    return html`<div
+      class=${'hud-roster-row' + (fainted ? ' is-fainted' : '') + (className ? ' ' + className : '')}
+      style=${{ ...style, width: width + 'px', height: height + 'px' }}
+      onClick=${onClick}
+    >
+      <${PixelShape}
+        artWidth=${artWidth}
+        artRows=${ROSTER_ART_ROWS}
+        artPixel=${ROSTER_ART_PIXEL}
+        paintRow=${letterRows(rosterBoxGrid(artWidth), rosterColours(rim))}
+      />
+      <div
+        class="hud-roster-fill"
+        style=${{
+          left: ROSTER_FILL_LEFT * ROSTER_ART_PIXEL + 'px',
+          top: (ROSTER_BAR.artTop + 3) * ROSTER_ART_PIXEL + 'px',
+          width: rosterFillArtWidth(artWidth) * ROSTER_ART_PIXEL + 'px',
+          height: 2 * ROSTER_ART_PIXEL + 'px',
+          background: rosterStripes(band),
+          transform: `scaleX(${fill})`,
+        }}
+      ></div>
+      <span
+        class="hud-hp-label"
+        style=${{ left: ROSTER_BAR.artLeft * ROSTER_ART_PIXEL + 'px', top: ROSTER_LABEL_TOP + 'px' }}
+        >HP</span
+      >
+      <div
+        class=${'hud-roster-face' + (faceClass ? ' ' + faceClass : '')}
+        style=${{
+          left: ROSTER_FACE.left + 'px',
+          top: ROSTER_FACE.top + 'px',
+          width: ROSTER_FACE.size + 'px',
+          height: ROSTER_FACE.size + 'px',
+        }}
+      >
+        <img src=${portraitSource(dex, shiny)} data-dex=${dex} alt="" onError=${portraitFallback} />
+      </div>
+      <span class="hud-text hud-roster-name" style=${{ left: ROSTER_NAME.left + 'px', top: ROSTER_NAME.top + 'px' }}
+        >${name}</span
+      >
+      ${children}
+    </div>`;
+  }
+
   // ---------- status chips (HUD-STYLE "Status chips"): the major statuses plus poison, bad poison and burn, solid; ----------
   // the minor ones hollow (a dark body inside the coloured rim, coloured text), in the character panel only (#78)
   const MINOR_CHIP_BODY = '#101010';
@@ -742,6 +909,13 @@ G.HudOverlay = (() => {
     IconCanvas,
     ItemSquare,
     Cursor,
+    RosterCard,
+    ROSTER_ART_PIXEL,
+    ROSTER_ART_ROWS,
+    rosterBoxGrid,
+    rosterColours,
+    letterRows,
+    rosterFill,
     CHIP_STYLES,
     hasChip,
     Chip,

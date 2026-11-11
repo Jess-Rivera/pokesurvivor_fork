@@ -1,4 +1,4 @@
-// tools/smoke-pause-menu.js: headless browser check for the Poke Ball pause menu (#82, slice 1 #88; spec docs/PAUSE-MENU.md).
+// tools/smoke-pause-menu.js: headless browser check for the Poke Ball pause menu (#82, slices #88 and #89; spec docs/PAUSE-MENU.md).
 // A check, not a harness: tools/check.js only syntax-checks it, since it needs a browser. Playwright is NOT a repo
 // dependency (PLAYWRIGHT_DIR, as in tools/smoke-gym.js). Usage from the repo root:
 //   node tools/smoke-pause-menu.js [folder for screenshots]
@@ -9,6 +9,9 @@
 //   returns to it; End Run asks inside the ball: Resume and Settings slide off opposite sides, End (red) and No
 //   (white, focused) chase in behind Settings into its row; Move_Left / Move_Right switch (End keeps its red rim, its
 //   body goes dark red); Esc, Enter on No and a click on No bring the buttons back; End ends the run.
+//   #89: either Enter key presses the green button once, even after a click; the detail panel shows the shown
+//   Pokemon's name, level, HP numbers and fill, type coloured bars, the hex layers and every move; the arrows,
+//   Move_Left / Move_Right and team card clicks change it; missing members are empty frames.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -57,7 +60,7 @@ async function main() {
     const t = document.getElementById('tap-start');
     if (t && !t.classList.contains('hidden')) t.click(); // headless cannot play sound: pass "press to start" first
     const s = G.DB.save;
-    s.team = [{ dex: 7, shiny: false }, { dex: 1, shiny: false }, null, null, null, null];
+    s.team = [{ dex: 7, shiny: false }, { dex: 1, shiny: false }, null, { dex: 4, shiny: false }, null, null]; // a gap: empty frames
     s.partner = 7;
     s.partnerShiny = false;
   });
@@ -203,6 +206,149 @@ async function main() {
   await key('Escape', 300);
   s = await look();
   ok(!s.settings && s.fully && s.state === 'paused', 'Escape closes Settings and the menu stays open');
+
+  // ---- Enter, either key, presses the green button even after a click (#89: the Enter bug from #88) ----
+  // Settings was just clicked: a page button holding the browser's focus used to turn Enter into a click on itself.
+  const pressed = async (enterKey, buttonsDown) => {
+    await page.mouse.move(5, 5); // off the buttons: a reopening menu under the pointer takes the focus by hover
+    await sleep(60);
+    for (let n = 0; n < buttonsDown; n++) await key('ArrowDown', 60);
+    await key(enterKey, 300);
+    return look();
+  };
+  s = await look();
+  ok(s.focus === 'Settings', 'after the Settings click, Settings has the green focus');
+  s = await pressed('Enter', 1); // Settings -> Resume
+  ok(!s.settings && (s.closing || !s.open), 'main Enter on Resume (after a click) resumes, not the clicked button');
+  await page.waitForFunction(() => !G.PauseMenu.isOpen(), null, { timeout: 3000 });
+  await key('Escape', FULL_MS);
+  s = await pressed('NumpadEnter', 1); // Resume -> End Run
+  ok(
+    (await page.evaluate(() => G.PauseMenu.isAsking())) && s.fully,
+    'number pad Enter on End Run asks once (it stays asking)'
+  );
+  await key('Escape', SLIDE_MS);
+  await page.click('.pm-button[data-action="settings"]');
+  await sleep(200);
+  await key('Escape', 300);
+  await page.mouse.move(5, 5);
+  s = await pressed('Enter', 2); // Settings -> Resume -> End Run
+  ok(
+    (await page.evaluate(() => G.PauseMenu.isAsking())) && !s.settings,
+    'main Enter on End Run after a Settings click asks once, Settings stays shut'
+  );
+  await key('Escape', SLIDE_MS);
+  ok(
+    await page.evaluate(() => !document.querySelector('.pause-menu').contains(document.activeElement)),
+    'no menu button holds the page focus'
+  );
+
+  // ---- the Pokemon detail panel and the team panel (#89) ----
+  const panel = () =>
+    page.evaluate(() => {
+      const detail = document.querySelector('.pm-detail'),
+        fill = detail.querySelector('.hud-lifebar-fill');
+      const match = /scaleX\(([0-9.]+)\)/.exec((fill && fill.style.transform) || '');
+      const member = G.Game.roster.find((m) => m.teamSlot === +detail.dataset.slot);
+      const cards = [...document.querySelectorAll('.pm-team-card')];
+      return {
+        slot: +detail.dataset.slot,
+        activeSlot: G.Game.player.teamSlot,
+        name: detail.querySelector('.pm-detail-name').textContent,
+        level: detail.querySelector('.pm-detail-lv').textContent,
+        hpText: detail.querySelector('.pm-detail-hp').textContent.trim(),
+        hpFill: match ? +match[1] : null,
+        hpFraction: member.hp / member.maxHp,
+        expected: {
+          name: member.mon.name,
+          level: String(member.level),
+          hp: Math.ceil(member.hp) + ' / ' + Math.round(member.maxHp),
+          moves: (member.slots.length ? member.slots : member.moves.map((move) => [move])).flat().length,
+          topType: G.U.TYPE_COLOR[member.mon.types[0]],
+          bottomType: G.U.TYPE_COLOR[member.mon.types[1] || member.mon.types[0]],
+        },
+        topColour: detail.querySelector('.pm-detail-top').getAttribute('fill'),
+        bottomColour: detail.querySelector('.pm-detail-bottom').getAttribute('fill'),
+        layers: ['start', 'now', 'run'].filter((layer) => detail.querySelector('.pm-hex-' + layer)),
+        hexStats: [...detail.querySelectorAll('.pm-hex-label')].map((label) => label.dataset.stat),
+        moveRows: detail.querySelectorAll('.pm-move').length,
+        cards: cards.length,
+        empties: document.querySelectorAll('.pm-team-empty').length,
+        shownFaces: cards.filter((card) => card.querySelector('.pm-face-shown')).length,
+        teamShown: +document.querySelector('.pm-team').dataset.shown,
+      };
+    });
+  const filled = await page.evaluate(() =>
+    G.Game.roster.map((member) => member.teamSlot).sort((first, second) => first - second)
+  );
+  let p = await panel();
+  ok(p.slot === p.activeSlot, 'the detail panel opens on the Pokemon on the field (slot ' + p.slot + ')');
+  ok(p.name === p.expected.name && p.level === p.expected.level, 'name and level: ' + p.name + ', Lv ' + p.level);
+  ok(p.hpText === p.expected.hp, 'HP numbers: ' + p.hpText);
+  ok(
+    p.hpFill != null && Math.abs(p.hpFill - p.hpFraction) < 0.02,
+    'HP bar fill matches current / max (' + p.hpFill + ' vs ' + p.hpFraction.toFixed(3) + ')'
+  );
+  ok(
+    p.topColour === p.expected.topType && p.bottomColour === p.expected.bottomType,
+    'bars in the type colours (top ' + p.topColour + ', bottom ' + p.bottomColour + ')'
+  );
+  ok(p.layers.includes('start') && p.layers.includes('now'), 'stat hex: black start-of-run and white now layers');
+  ok(p.hexStats.join(',') === 'HP,Atk,Def,Spe,SpD,SpA', 'stat hex: six labels clockwise from HP');
+  ok(p.moveRows === p.expected.moves && p.moveRows > 0, 'move list: every move (' + p.moveRows + ')');
+  ok(
+    p.cards === filled.length && p.empties === 6 - filled.length,
+    'team panel: ' + p.cards + ' cards, ' + p.empties + ' empty frames'
+  );
+  ok(p.shownFaces === 1 && p.teamShown === p.slot, 'the shown card has the green portrait stroke');
+  // the yellow layer: a card's bonus on the shown Pokemon
+  await page.evaluate(() => {
+    G.Game.player.inc.atk += 0.25;
+    G.PauseMenu.hideNow();
+    G.PauseMenu.open();
+  });
+  await sleep(FULL_MS);
+  p = await panel();
+  ok(p.layers.join(',') === 'start,now,run', 'a card bonus adds the yellow layer');
+  ok(
+    await page.evaluate(() => /\+25%/.test(document.querySelector('.pm-hex-label[data-stat="Atk"]').textContent)),
+    'Atk shows the yellow +25%'
+  );
+  await shot('pause-menu-detail.png');
+
+  const focusBefore = (await look()).focus; // the reopen above put it back on Resume
+  const nextOf = (slot, direction) => filled[(filled.indexOf(slot) + direction + filled.length) % filled.length];
+  let before = p.slot;
+  await page.click('.pm-arrow[data-step="next"]');
+  await sleep(100);
+  p = await panel();
+  ok(p.slot === nextOf(before, 1) && p.name === p.expected.name, 'next arrow shows the next Pokemon (' + p.name + ')');
+  ok(
+    p.hpFill != null && Math.abs(p.hpFill - p.hpFraction) < 0.02 && p.hpText === p.expected.hp,
+    'its HP bar and numbers follow'
+  );
+  before = p.slot;
+  await page.click('.pm-arrow[data-step="prev"]');
+  await sleep(100);
+  ok((await panel()).slot === nextOf(before, -1), 'previous arrow goes back');
+  before = (await panel()).slot;
+  await key('ArrowRight', 100);
+  ok((await panel()).slot === nextOf(before, 1), 'Move_Right shows the next Pokemon');
+  await key('ArrowLeft', 100);
+  await key('ArrowLeft', 100);
+  ok((await panel()).slot === nextOf(before, -1), 'Move_Left shows the previous one, wrapping');
+  const target = filled[filled.length - 1];
+  await page.click('.pm-team-card >> nth=' + (filled.length - 1));
+  await sleep(100);
+  p = await panel();
+  ok(p.slot === target && p.teamShown === target, 'clicking a team card shows that Pokemon (slot ' + target + ')');
+  await page.click('.pm-team-empty >> nth=0');
+  await sleep(100);
+  ok((await panel()).slot === target, 'clicking an empty frame changes nothing');
+  ok(
+    (await look()).fully && (await look()).focus === focusBefore,
+    'the menu stays open, the focus untouched (' + focusBefore + ' then ' + (await look()).focus + ')'
+  );
 
   // ---- End Run asks inside the ball ----
   // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing

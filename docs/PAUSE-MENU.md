@@ -49,14 +49,21 @@ Three partitions, each a 2x2 grid of 4 square slots (Jess, 2026-11-11):
 Layout per the mockup: name, level and HP bar in the top bar; portrait; held item; per-Pokemon run stats; IV hex;
 cards taken; move list (bonded groups shown); prev and next arrows in the bottom bar.
 - [Approved] Panel size is static.
+- [Approved] The bars keep the mockup's two-tier shape (Jess, 2026-11-11): the top bar's level box drops below the
+  name band with a diagonal step; the bottom bar has a raised tab on the left for the arrows and a diagonal step down
+  to the full-width bar.
 - [Approved] Top and bottom bars use the type colour (dual types: top bar first type, bottom bar second type) with a 1px `#212121` frame. Back panel `#181818`.
 - [Approved] Portrait copies the character panel's (sprite circle with the EXP frame). The HP bar copies the
   character panel's, cut to fit, current/max percentage exact.
 - [Approved] Held item: a square slot with Remove (sends the item to the Temporary Pocket) and Give. Give puts the
   yellow corner highlight on the team panel and dims the giver as not selectable; its label becomes "Cancel" while
   giving; Cancel or Esc cancels and the label returns to "Give".
-- [Approved] IV hex, three layers (Jess, 2026-11-11): black at 50% opacity = base + IV + EV at level 1; white
-  (today's opacity) = the stats grown by level; yellow = what cards and run effects add.
+- [Approved] IV hex, three layers (Jess, 2026-11-11, clarified the same day): every stat from the game's own formula
+  (G.Stats, mainline: 2 x base + IV + EV/4, by level, times nature) with the species' base stats and this copy's IVs,
+  EVs and nature. Black at 50% opacity = the stats the Pokemon started the run with (level 1); white (today's
+  opacity) = the same at its level now, so it grows out from the black as it levels; yellow on top = what cards and run
+  effects add (the bonus combat uses). One scale for all three, the edge at the largest yellow value. HP is drawn at
+  its mainline size (the game doubles HP) so it does not dwarf the rest; the number printed is the game's.
 - [Approved] The per-Pokemon stats, Cards Taken, Move List and IV hex panels take b2-lower AA16-AD18 as inspiration,
   like the run screen's team roster slots but without the grid pattern. Borders use the first type's colour.
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.
@@ -70,7 +77,10 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 
 ## 5. Team panel (bottom)
 - [Approved] All 6 Pokemon in 3 columns by 2 rows, clickable, picking what the detail panel shows. Uses the same
-  cards as the run screen's roster slots, sized to fit. Missing team members show as empty frames.
+  cards as the run screen's roster slots, sized to fit: narrowed to 168 x 64 px with no status chips, long names
+  squeezed to fit; the panel is 548 px wide to hold three. Missing team members show as empty frames.
+- [Approved] The cards keep their typed borders. The shown Pokemon's portrait gets a green stroke and a shimmer that
+  slides from top left to bottom right, looping (Jess, 2026-11-11). The Pokemon on the field wears the selection cursor.
 
 ## 6. Run Info panel (left)
 - [Approved] Same design as the DPS-Upgrades panel, different content. Not affected by that panel's opacity or
@@ -82,7 +92,9 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 
 ## Scope notes
 - [Approved] Co-op pause keeps the old screen (multiplayer is deferred). Touch versions of the hover tooltips wait
-  for #72. Keyboard: Esc cancels Give and closes the menu; Move_Left and Move_Right do prev and next.
+  for #72. Keyboard: Esc cancels Give and closes the menu; Move_Left and Move_Right do prev and next; either Enter key (main
+  or number pad) presses the green button, and the menu's buttons never take the page's focus (the #88 Enter bug, fixed
+  in #89).
 - [Approved] The end-of-run Team screen moves to the new detail and team panels later on this branch.
 
 ## Open questions

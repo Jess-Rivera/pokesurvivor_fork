@@ -415,5 +415,5 @@ G.Sheet = (() => {
     }
   }
 
-  return { render, keys, moveLines, typicalDef, select };
+  return { render, keys, moveLines, typicalDef, select, summaryOf, detailOf }; // the last two: the pause menu (#89)
 })();

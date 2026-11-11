@@ -23,7 +23,8 @@
  * came and brings Resume and Settings back. End ends the run (G.Game's endRun).
  *
  * Layout: a 1920x1080 stage (the mockup's pixels), scaled down to fit smaller windows, never up.
- * Slice 1 draws the four panels as empty frames; their contents come in slices 2 to 4 (#89, #90, #91).
+ * The detail and team panels are js/ui/pause-pokemon.js (#89); Run Info and the Run Inventory are empty frames until
+ * #91 and #90.
  */
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
@@ -128,6 +129,12 @@ G.PauseMenu = (() => {
     );
   }
 
+  // The menu's buttons never take the page's keyboard focus (#89, the Enter bug from #88): a focused page button turns
+  // Enter into a click on itself, so after one click Enter pressed that button instead of the green one.
+  const keepPageFocus = (event) => event.preventDefault();
+  /** Either Enter key (the main one or the number pad's) on this frame. */
+  const enterTapped = () => G.Input.tap('enter') || G.Input.tap('numpadenter');
+
   /** One button in the move slot shape: rim colours (at rest and focused), focused body, art width, label. */
   function SlotButton({ id, label, rim, focusRim, focusBody, artWidth, focused, onEnter, onPress }) {
     const rimNow = focused ? focusRim || FOCUS_RIM : rim,
@@ -136,6 +143,8 @@ G.PauseMenu = (() => {
       type="button"
       class=${'pm-button' + (focused ? ' focused' : '')}
       data-action=${id}
+      tabindex="-1"
+      onMouseDown=${keepPageFocus}
       onMouseEnter=${onEnter}
       onClick=${onPress}
     >
@@ -189,14 +198,15 @@ G.PauseMenu = (() => {
     </div>`;
   }
 
-  // Slice 1: the four panels' frames at their mockup places; contents come in #89 to #91.
+  // The four panels at their mockup places. The detail and team panels are js/ui/pause-pokemon.js (#89); Run Info and
+  // the Run Inventory come in #91 and #90.
+  const pokemon = G.PausePokemon && G.PausePokemon.ready ? G.PausePokemon : null;
   function Panels() {
     return html`<div class="pm-panel pm-panel-info" data-panel="runInfo"></div>
       <div class="pm-panel pm-panel-detail" data-panel="detail">
-        <div class="pm-detail-bar pm-detail-top"></div>
-        <div class="pm-detail-bar pm-detail-bottom"></div>
+        ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
-      <div class="pm-panel pm-panel-team" data-panel="team"></div>
+      <div class="pm-panel pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
       <div class="pm-panel pm-panel-inventory" data-panel="inventory"></div>`;
   }
 
@@ -254,7 +264,9 @@ G.PauseMenu = (() => {
     whenClosed = null;
     if (root.classList.contains('pm-hidden')) {
       focus.value = 0;
+      if (root.contains(document.activeElement)) document.activeElement.blur();
       resetAsking();
+      if (pokemon) pokemon.read();
       fitStage();
       root.classList.remove('pm-hidden');
       document.body.classList.add('pm-open');
@@ -346,7 +358,8 @@ G.PauseMenu = (() => {
     if (id === 'endRun') startAsking();
     else if (actions[id]) actions[id]();
   }
-  /** Keys while paused (G.Game): Up / Down move the focus (Move_Left / Move_Right while End Run asks), Enter presses.
+  /** Keys while paused (G.Game): Up / Down move the focus, Enter presses, Move_Left / Move_Right show the previous and
+   *  next Pokemon (while End Run asks they switch End and No instead).
    *  Not while a dialog or Settings is on top. */
   function keys() {
     if (!isOpen() || target !== STEPS || G.UI.isOpen('scr-ask') || G.SettingsUI.isOpen) return;
@@ -356,15 +369,17 @@ G.PauseMenu = (() => {
         answerFocus.value = Math.max(0, Math.min(ANSWERS.length - 1, answerFocus.value + step));
         G.Audio.sfx('hover');
       }
-      if (G.Input.tap('enter')) pressAnswer(answerFocus.value);
+      if (enterTapped()) pressAnswer(answerFocus.value);
       return;
     }
+    const side = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
+    if (side && pokemon) pokemon.step(side); // the detail panel: previous and next Pokemon
     const move = (G.Input.action('move_down') ? 1 : 0) - (G.Input.action('move_up') ? 1 : 0);
     if (move) {
       focus.value = (focus.value + move + BUTTONS.length) % BUTTONS.length;
       G.Audio.sfx('hover');
     }
-    if (G.Input.tap('enter')) press(focus.value);
+    if (enterTapped()) press(focus.value);
   }
   /** G.Game hands in what the buttons do: { resume, endRun, settings }. */
   function wire(handlers) {
