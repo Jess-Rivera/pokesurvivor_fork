@@ -1,0 +1,22 @@
+{
+ "status": "drowsy",
+ "image": "drowsy.png",
+ "frameWidth": 24,
+ "frameHeight": 26,
+ "frameCount": 13,
+ "frameMs": [
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+ ]
+}

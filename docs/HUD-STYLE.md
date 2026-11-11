@@ -497,10 +497,11 @@ animation. Jess, 2026-11-10; art set switched to Jess's slowed-down set, 2026-11
 pill per status, a coloured ring under the feet, a text zzz for drowsy and sleep, in `js/entities/player.js`); building
 this is its own slice.
 
-- `[Approved]` **Art set:** Jess's slowed-down set (Jess, 2026-11-11), replacing the Rescue Team icon rows for every
-  status it covers. GIFs in the git-ignored `assets/sprite extraction attempt/status_preview/possible new ones/slowed
-  down/`, with a sheet and frame JSON per GIF in its `sheets/` (`python tools/gif_to_sheet.py "<folder>"`). The repo is
-  public, so ripped art never ships: anything ripped is redrawn as original art (or drawn in code) for the build slice.
+- `[Approved]` **Art set:** Jess's own Aseprite redraw (Jess, 2026-11-11), replacing the Rescue Team icon rows for
+  every status it covers, and fine to ship. Each animation is a sprite sheet plus a frame JSON in `assets/status/`,
+  named by the game's status key (`toxic` is bad poison): frame size, frame count and each frame's ms. Jess's GIFs
+  stay in the git-ignored `assets/sprite extraction attempt/status_preview/possible new ones/slowed down/`;
+  `python tools/gif_to_sheet.py "<folder>"` remakes the sheets from them.
 - `[Approved]` **Looping:** every status effect loops for as long as the status lasts. The one exception is the stat-up
   ring (`status-up-base-new`), which plays once when the stage is gained (Jess, 2026-11-11).
 - `[Approved]` **Preview:** `python tools/status_icon_preview.py` (the old Rescue Team sheet and Pikachu preview);
@@ -508,20 +509,20 @@ this is its own slice.
 
 | Status      | Kind  | Art                                          | Frames                 | Placement                          | Source                               |
 | ----------- | ----- | -------------------------------------------- | ---------------------- | ---------------------------------- | ------------------------------------ |
-| Burn | major | Small flame | 7 of 16 x 16, 100 ms | At the feet | `burned-new.gif` |
-| Poison | major | Purple bubbles that rise, swell and pop | 29 of 43 x 35, 100 ms | At the feet | `poisoned-new.gif` |
-| Bad poison | major | Poison's bubbles, darker | 29 of 43 x 35, 100 ms | At the feet | `badly-poisoned-new.gif` |
-| Paralysis | major | Lightning crackling round the body | 8 of 78 x 68, 100 ms | Centred on the body | `paralyzed-new.gif` |
+| Burn | major | Small flame | 7 of 16 x 16, 100 ms | At the feet | `assets/status/burn` |
+| Poison | major | Purple bubbles that rise, swell and pop | 29 of 43 x 35, 100 ms | At the feet | `assets/status/poison` |
+| Bad poison | major | Poison's bubbles, darker | 29 of 43 x 35, 100 ms | At the feet | `assets/status/toxic` |
+| Paralysis | major | Lightning crackling round the body | 8 of 78 x 68, 100 ms | Centred on the body | `assets/status/paralysis` |
 | Sleep | major | Three Z's, small to large, pink | 1.8 s cycle | Floating above the head | Text, drawn in code (no new art) |
-| Freeze | major | Ice block | 6 of 32 x 31, 100 ms | Centred on the body | `freeze-new.gif` |
-| Confusion | minor | Four yellow birds circling the head | 4 of 32 x 16, 120 ms | Floating above the head | `confused-alt-new.gif` |
-| Daze | minor | Question mark | 10 of 13 x 18, 100 ms | Floating above the head | `daze-new.gif` |
-| Trap | minor | A web that spins out round the Pokemon | 31 of 27 x 33, 100 ms | Centred on the body | `trapped-new.gif` |
-| Drowsy | minor | A pink bubble that grows and pops | 13 of 24 x 26, 100 ms | Floating above the head | `drowsy-new.gif` |
+| Freeze | major | Ice block | 6 of 32 x 31, 100 ms | Centred on the body | `assets/status/freeze` |
+| Confusion | minor | Four yellow birds circling the head | 4 of 32 x 16, 120 ms | Floating above the head | `assets/status/confusion` |
+| Daze | minor | Question mark | 10 of 13 x 18, 100 ms | Floating above the head | `assets/status/daze` |
+| Trap | minor | A web that spins out round the Pokemon | 31 of 27 x 33, 100 ms | Centred on the body | `assets/status/trap` |
+| Drowsy | minor | A pink bubble that grows and pops | 13 of 24 x 26, 100 ms | Floating above the head | `assets/status/drowsy` |
 | Slow | minor | Speed down's streaks, Speed colours | as Stat down | As Stat down | Arrow in reserve (old sheet row) |
 | Haste | minor | Speed up's ring and streaks, Speed colours | as Stat up | As Stat up | Arrow in reserve (flipped, blue) |
-| Stat up | minor | A blue ring at the feet, then rising streaks | 15 of 35 x 48, 100 ms | Ring at the feet, streaks centred on the body | `status-up-base-new` and `status-up-fore-new` |
-| Stat down | minor | Falling streaks | 11 of 31 x 47, 100 ms | Centred on the body | `status-down-new.gif` |
+| Stat up | minor | A blue ring at the feet, then rising streaks | 15 of 35 x 48, 100 ms | Ring at the feet, streaks centred on the body | `assets/status/stat-up-ring` and `stat-up` |
+| Stat down | minor | Falling streaks | 11 of 31 x 47, 100 ms | Centred on the body | `assets/status/stat-down` |
 
 - `[Approved]` **Stat colours:** stat up's streaks (the fore layer, not the ring, which stays blue) and stat down's
   streaks are recoloured per stat from UI-PALETTES "Pokemon Stats": the yellow streaks take the stat's Light and Base,

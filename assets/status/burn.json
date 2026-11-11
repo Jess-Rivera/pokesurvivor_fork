@@ -1,0 +1,16 @@
+{
+ "status": "burn",
+ "image": "burn.png",
+ "frameWidth": 16,
+ "frameHeight": 16,
+ "frameCount": 7,
+ "frameMs": [
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+ ]
+}

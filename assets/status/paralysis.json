@@ -1,0 +1,17 @@
+{
+ "status": "paralysis",
+ "image": "paralysis.png",
+ "frameWidth": 78,
+ "frameHeight": 68,
+ "frameCount": 8,
+ "frameMs": [
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+ ]
+}

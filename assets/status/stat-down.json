@@ -1,0 +1,20 @@
+{
+ "status": "stat-down",
+ "image": "stat-down.png",
+ "frameWidth": 31,
+ "frameHeight": 47,
+ "frameCount": 11,
+ "frameMs": [
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+ ]
+}

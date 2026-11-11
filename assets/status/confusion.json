@@ -1,0 +1,13 @@
+{
+ "status": "confusion",
+ "image": "confusion.png",
+ "frameWidth": 32,
+ "frameHeight": 16,
+ "frameCount": 4,
+ "frameMs": [
+  120,
+  120,
+  120,
+  120
+ ]
+}

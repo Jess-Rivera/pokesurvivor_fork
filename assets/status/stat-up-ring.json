@@ -1,0 +1,24 @@
+{
+ "status": "stat-up-ring",
+ "image": "stat-up-ring.png",
+ "frameWidth": 35,
+ "frameHeight": 48,
+ "frameCount": 15,
+ "frameMs": [
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100,
+  100
+ ]
+}
