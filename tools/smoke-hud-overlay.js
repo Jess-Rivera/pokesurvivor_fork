@@ -1237,6 +1237,43 @@ async function dpsPanel(browser) {
   return { context, errors, page };
 }
 
+/** An overworld elite gets the enemy name bar (Jess, 2026-11-11): "Elite <species>", its level, no circles; the canvas draws no
+ *  bar of its own, only the enrage line. Species names show as stored, in English (#73). */
+async function eliteBar(browser) {
+  const { context, page, errors } = await boot(browser);
+  await page.evaluate(() => G.Game.startRun());
+  await page.waitForFunction(() => G.Game.player && G.Game.state === 'play', null, { timeout: 15000 }).catch(() => {});
+  ok((await overlayState(page)) === null, 'elite: no enemy name bar before an elite');
+  const spawned = await page.evaluate(() => {
+    const elite = G.Debug.elite();
+    return elite ? { name: elite.name, level: Math.floor(elite.atkLvl), type: (elite.types || [])[0] } : null;
+  });
+  ok(!!spawned, 'elite: the dev spawner placed one');
+  await page.waitForTimeout(200);
+  const state = await overlayState(page);
+  ok(!!state, 'elite: the enemy name bar shows');
+  if (state && spawned) {
+    ok(state.name === 'Elite ' + spawned.name, 'elite: the name line reads "Elite <species>" (' + state.name + ')');
+    ok(
+      state.level === 'Lv. ' + spawned.level,
+      'elite: the level is its level for run time, rounded down like the World Level (' + state.level + ')'
+    );
+    ok(state.circles.length === 0, 'elite: no portrait circles (' + state.circles.length + ')');
+  }
+  // the species names are the English ones, so the HUD never needs the translator (tools/species_names.js holds the full check)
+  const names = await page.evaluate(() =>
+    [772, 994, 1006].map((dex) => G.DEX_BY[dex] && G.DEX_BY[dex].name).join(', ')
+  );
+  ok(names === 'Type: Null, Iron Moth, Iron Valiant', 'species: stored in English (' + names + ')');
+  await page.evaluate(() => {
+    const elite = G.Elites.current();
+    if (elite) ((elite.hp = 0), (elite.dead = true));
+  });
+  await page.waitForTimeout(200);
+  ok((await overlayState(page)) === null, 'elite: the bar hides once the elite is down');
+  return { context, errors, page };
+}
+
 async function built(browser) {
   const { context, page, errors } = await openPage(browser, 'index.html');
   await page.waitForTimeout(1500);
@@ -1257,7 +1294,7 @@ async function built(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel, dpsPanel];
+  const runs = [brock, surge, playerPanel, rosterPanel, mapPanel, dpsPanel, eliteBar];
   if (process.argv.includes('--built')) {
     if (fs.existsSync(path.join(root, 'index.html'))) runs.push(built);
     else ok(false, 'built index.html: missing, run node tools/build.js first');

@@ -378,6 +378,9 @@ redrawn in CSS at the HUD's size, never scaled up from the art.
   - Name, left-aligned: the leader's possessive and the active Pokemon, for example "Brock's Onix".
   - Lv, right-aligned: the active Pokemon's level, for example "Lv. 14".
   - No gender sign.
+- `[Approved]` **Overworld elites** use the same bar when no boss is up (Jess, 2026-11-11): "Elite Onix" on the left, the
+  level for run time rounded down (as the map's World Level) on the right, no portrait circles. The enrage line stays on
+  the canvas at the gym's spot below the bar. Species names show as stored: pokedex.js holds the English names (#73).
   - Length check: the longest case is a 12-letter Pokemon name after a long leader name ("Lt. Surge's "), about 24
     characters, roughly 340 px at 20 px text. That fits the bar's roughly 700 px width with the Lv on the right.
 - `[Approved]` **The HP label is italic text**, not the rip's art (Jess, 2026-11-10): "HP" in the HUD font at 20 px, solid

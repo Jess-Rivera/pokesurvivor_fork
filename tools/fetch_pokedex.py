@@ -81,9 +81,10 @@ def one(dex):
     base = {st['stat']['name']: st['base_stat'] for st in p['stats']}
     bst = sum(base.values())
 
+    # English names (#73, Jess 2026-11-11): the HUD shows species names as stored; tools/species_names.js checks them
     name_es = p['name'].capitalize()
     for n in s.get('names', []):
-        if n['language']['name'] == 'es':
+        if n['language']['name'] == 'en':
             name_es = n['name']
             break
 

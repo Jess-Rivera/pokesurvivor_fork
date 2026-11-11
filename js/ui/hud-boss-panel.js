@@ -1,6 +1,7 @@
 /* ============ hud-boss-panel.js: the enemy name bar and leader portrait circles (#64, on the HTML HUD) ============
  * A panel of js/ui/hud-overlay.js (the core and its kit). Look and numbers: docs/HUD-STYLE.md "Enemy name bar" and
- * "Leader portrait circles". Shows during a gym fight; reads the fight, never writes it.
+ * "Leader portrait circles". Shows during a gym fight, or for an overworld elite when no boss is up (no circles, "Elite Onix";
+ * Jess 2026-11-11). Reads the fight, never writes it. Species names show as stored: pokedex.js holds the English names (#73).
  */
 G.HudBossPanel = (() => {
   const overlay = G.HudOverlay;
@@ -86,8 +87,15 @@ G.HudBossPanel = (() => {
     return boss ? { arena, members: [boss], active: boss, activeIndex: 0 } : null;
   }
 
+  /** The overworld elite, or null. Any boss up wins, as on the canvas HUD; an elite is one Pokemon, so no circles. */
+  function readElite() {
+    if (G.EnemyMgr.all().some((enemy) => enemy.boss && !enemy.dead)) return null;
+    const elite = G.Elites && G.Elites.current();
+    return elite ? { arena: null, members: [], active: elite, activeIndex: 0, isElite: true } : null;
+  }
+
   function sync(showing) {
-    const fight = showing ? readFight() : null;
+    const fight = showing ? readFight() || readElite() : null;
     visible.value = !!fight;
     if (!fight) {
       lifeBar.reset();
@@ -95,9 +103,12 @@ G.HudBossPanel = (() => {
     }
     const active = fight.active,
       gym = active.gym || {};
-    nameText.value = (gym.leader ? gym.leader + "'s " : '') + active.name;
-    levelText.value = 'Lv. ' + (gym.level != null ? gym.level : active.level || '');
-    ringBase.value = typeColours(fight.arena && fight.arena.type).base;
+    nameText.value = fight.isElite ? 'Elite ' + active.name : (gym.leader ? gym.leader + "'s " : '') + active.name;
+    // an elite's level is its level-for-run-time (enemy.js atkLvl; elites never take the gate escalation bump), rounded down
+    // like the map panel's World Level, so the two always agree
+    const level = fight.isElite ? Math.floor(active.atkLvl) : gym.level != null ? gym.level : active.level;
+    levelText.value = 'Lv. ' + (level != null ? level : '');
+    ringBase.value = typeColours(fight.isElite ? (active.types || [])[0] : fight.arena && fight.arena.type).base;
     lifeBar.update(active.hp, active.maxHp, active.dead, active);
 
     // circles: rebuilt only when something they show changes
