@@ -4,8 +4,9 @@ Rewritten at the end of every session from what actually happened. Lines point a
 the issue holds the detail, this file never copies it. Live backlog: `gh issue list` and the PokeSwarm board
 (the board wins for "what's next"). Old long-form notes (frozen 2026-11-08): docs/TODO-notes-2026-11.md, search only.
 
-## Next (from the 2026-11-10 #66 session, on feature/leader-roster-ui)
-1. HUD (#35): #66 closed. Next #67 (floating arrows). #76 (buff and status chips) waits on Jess choosing a spot.
+## Next (from the 2026-11-10 #67 session, on feature/leader-roster-ui)
+1. HUD (#35): #67 built (round 3), owed Jess's feel test, then close it and mark HUD-STYLE "Wayfinding arrows" Approved.
+   #61: close or keep as the guide's tracker. #76 (buff and status chips) waits on Jess choosing a spot.
    Owed by Jess: the #64 frame-rate check on the work laptop.
 2. #77: audit upgrade card wording vs real effect; Jess rules on the rate cards (wording or subtractive with a cap).
 3. SV type colours: #68 (game-wide G.U.TYPE_COLOR), #69 (gym building recolour).

@@ -122,3 +122,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Feel test rounds: Michroma for the whole panel (a "module", HUD-STYLE Fonts), Settings > DPS Panel toggle (default on) and DPS Panel Opacity slider (20 to 100%, default 60%), a 10 px % after card totals.
 - The panel showed two Cooldown Down picks as -23%: correct, rate cards divide (cd / (1 + stacks x step)); the level-up card's "-15%" reads additive. Filed #77 (wording audit plus Jess's ruling).
 - Stopped at: #66 closed, HUD-STYLE #66 Approved, #35 checklist ticked for #62 to #66. Next: #67, #77; #76 waits on Jess.
+
+## 2026-11-10 (Claude Code, home), #67 built: chevron wayfinding arrows and roof labels (feature/leader-roster-ui)
+- #67 unblocked by Jess (no longer waits on #61). Off-screen arrows are three chevrons: Attacks/Special for gyms, Attacks/Physical for shops (UI-PALETTES, adopted in HUD-STYLE as Proposed). Loop: snap with a stagger, stop-bounce with a back-to-front shine, strained 1.4 s hold (tremble and sag), slide back, rest. Every number is a CHEVRON_* constant in js/ui/hud.js.
+- Feel-test rounds: 28 px tall with 20 / 36 px gaps (14 px with 5 / 15 nested into one block), halo removed, square caps so the ends carry the border, labels in the standard HUD text (Truth And Ideals 20 px, hard #101010 outline).
+- On screen the bouncing arrows are gone: "Gym Leader Brock" with "Lv.5 (+n Escalating)" under it over the gym roof, "Move Trainer·58s" over a shop. Off screen: "Gym·Lv.5·10m·29s", "TM Mart·11m·34s".
+- shops-harness tracks the renamed constants and checks the roof label. check.js red only on the two #30 harnesses.
+- Stopped at: #67 in Needs Playtest (round 3, 94aa055b). Next: Jess's feel test of #67, then #77; #76 waits on Jess.
