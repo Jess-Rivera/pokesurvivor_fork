@@ -63,9 +63,13 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   the online calculators and the other five's scale, while the HP bar keeps the game's number) with the species'
   base stats and this copy's IVs and EVs. Three bands, each growing out from the one inside it (no overlap): the first
   type's colour at 60% = the stats at level 1; white = the growth from level 1 to its level now; yellow = what cards
-  and run effects add (the bonus combat uses). The edge is 50 while the highest stat is under 50, else the next
-  multiple of 100 up (an HP of 26 sits about halfway). Each corner's text is the copy's make-up, not the drawn number:
-  the stat name (with the yellow "+X%" when run effects add some) over "base + [IV/EV]", for example "45 + [19/50]".
+  and run effects add (the bonus combat uses). The edge (Jess, 2026-11-11, replacing "50, then the next 100 up") is
+  300 when the highest drawn stat is 300 or less, 600 up to 600, else 1000; every value is drawn between 10% and 100%
+  of the radius, so a level 1 stat is never a dot and a value past 1000 sits on the rim. The edge number sits in a
+  break of the outer line between HP and Atk, turned along it, in blue. Each corner shows the stat name (with the
+  yellow "+X%" when run effects add some) over the final stat: HP as the game has it (after HP_SCALAR, the HP bar's
+  number) though the shape draws it at mainline size, the others with nature, level and run effects. Hovering a corner
+  shows the copy's make-up: "Base: N, IV: N, EV: N".
 - [Approved] The per-Pokemon stats, Cards Taken, Move List and IV hex panels take b2-lower AA16-AD18 as inspiration,
   like the run screen's team roster slots but without the grid pattern. Borders use the first type's colour.
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.

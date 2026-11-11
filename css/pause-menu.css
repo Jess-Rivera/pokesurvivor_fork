@@ -400,6 +400,41 @@ body.pm-open .hud-overlay {
 .pm-hex-bonus {
   color: #ffd23f;
 }
+/* the edge's number, in a break of the outer line between HP and Atk (Jess, 2026-11-11: blue, along the line) */
+.pm-hex-edge {
+  position: absolute;
+  color: #3d8ee0;
+  pointer-events: none;
+}
+/* hovering a corner: the copy's make-up, "Base: N, IV: N, EV: N" */
+.pm-hex-label {
+  cursor: default;
+}
+.pm-hex-tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 2;
+  padding: 8px 10px;
+  background: #181818;
+  border: 2px solid #495151;
+  box-shadow: 0 0 0 2px #101010;
+  pointer-events: none;
+}
+.pm-hex-label:hover .pm-hex-tip {
+  display: block;
+}
+/* the side corners' tips grow toward the hex's middle, so they stay inside the panel */
+.pm-hex-label.is-right .pm-hex-tip {
+  right: 0;
+}
+.pm-hex-label.is-left .pm-hex-tip {
+  left: 0;
+}
+.pm-hex-label.is-middle .pm-hex-tip {
+  left: 50%;
+  transform: translateX(-50%);
+}
 /* the move list: bonded groups framed in the bond pink, a type coloured scroll bar */
 .pm-move-scroll {
   overflow-y: auto;

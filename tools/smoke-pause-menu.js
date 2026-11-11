@@ -311,36 +311,77 @@ async function main() {
       const detail = document.querySelector('.pm-detail'),
         member = G.Game.roster.find((m) => m.teamSlot === +detail.dataset.slot);
       const order = { HP: 0, Atk: 1, Def: 2, SpA: 3, SpD: 4, Spe: 5 };
+      const keyOf = { 1: 'atk', 2: 'def', 3: 'spa', 4: 'spd', 5: 'spe' };
+      const finalOf = (i) =>
+        i === 0
+          ? Math.round(member.maxHp) // HP: the game's number, after HP_SCALAR
+          : Math.round(
+              G.Stats.statValue(
+                member.mon.stats[i],
+                member.level,
+                member.statIv(i),
+                member.statEv(i),
+                member.statNat(i)
+              ) *
+                (1 + Math.max(0, member.incOf(keyOf[i])))
+            );
+      const hexBox = detail.querySelector('.pm-hex'),
+        centreY = hexBox.offsetHeight / 2 + 4,
+        edgePath = hexBox.querySelector('.pm-hex-ring.is-edge').getAttribute('d'),
+        edgeLabel = hexBox.querySelector('.pm-hex-edge');
       return {
         texts: [...detail.querySelectorAll('.pm-hex-label')].map((label) => ({
-          shown: label.querySelector('.pm-hex-value').textContent.replace(/\s+/g, ' ').trim(),
-          expected:
+          shown: label.querySelector('.pm-hex-value').textContent.trim(),
+          expected: String(finalOf(order[label.dataset.stat])),
+          tip: label.querySelector('.pm-hex-tip').textContent.trim(),
+          expectedTip:
+            'Base: ' +
             member.mon.stats[order[label.dataset.stat]] +
-            ' + [' +
+            ', IV: ' +
             member.statIv(order[label.dataset.stat]) +
-            '/' +
-            member.statEv(order[label.dataset.stat]) +
-            ']',
+            ', EV: ' +
+            member.statEv(order[label.dataset.stat]),
         })),
-        edge: +detail.querySelector('.pm-hex').dataset.edge,
-        highest: Math.max(
-          member.maxHp / G.Stats.HP_SCALAR, // the hex draws HP at mainline size
-          ...[1, 2, 3, 4, 5].map((i) =>
-            G.Stats.statValue(member.mon.stats[i], member.level, member.statIv(i), member.statEv(i), member.statNat(i))
-          )
-        ),
+        edge: +hexBox.dataset.edge,
+        edgeLabel: edgeLabel.textContent.trim(),
+        // the label sits at the middle of the HP to Atk side, and the outer line starts and ends either side of it
+        edgeLabelAt: [parseFloat(edgeLabel.style.left), parseFloat(edgeLabel.style.top)],
+        sideMiddle: [hexBox.offsetWidth / 2 + (72 * Math.cos(-Math.PI / 6)) / 2, centreY - 72 / 2 - (72 * 0.5) / 2],
+        edgeOpen: !/Z\s*$/.test(edgePath),
+        hpStartReach: (centreY - +hexBox.querySelector('.pm-hex-start').getAttribute('points').split(/[ ,]/)[1]) / 72,
         startFill: detail.querySelector('.pm-hex-start').style.fill,
         typeColour: G.U.TYPE_COLOR[member.mon.types[0]],
       };
     });
   let hex = await hexMakeUp();
   ok(
-    hex.texts.every((text) => text.shown.startsWith(text.expected)),
-    'stat hex text is base + [IV/EV]: ' + hex.texts.map((text) => text.shown).join(', ')
+    hex.texts.every((text) => text.shown === text.expected),
+    'stat hex corners show the final stats (HP the game number): ' + hex.texts.map((text) => text.shown).join(', ')
   );
   ok(
-    hex.edge === (hex.highest < 50 ? 50 : Math.ceil(hex.highest / 100) * 100),
-    'stat hex edge ' + hex.edge + ' for a highest stat of ' + hex.highest
+    hex.texts.every((text) => text.tip === text.expectedTip),
+    'each corner hover reads ' + hex.texts[0].tip
+  );
+  await page.hover('.pm-hex-label[data-stat="Atk"]');
+  await sleep(80);
+  ok(
+    await page.evaluate(
+      () => getComputedStyle(document.querySelector('.pm-hex-label[data-stat="Atk"] .pm-hex-tip')).display !== 'none'
+    ),
+    'hovering a corner shows its tooltip'
+  );
+  await page.mouse.move(5, 5);
+  ok(hex.edge === 300, 'at level 1 the hex edge is 300 (' + hex.edge + ')');
+  ok(
+    hex.edgeLabel === '300' &&
+      hex.edgeOpen &&
+      Math.abs(hex.edgeLabelAt[0] - hex.sideMiddle[0]) < 1.5 &&
+      Math.abs(hex.edgeLabelAt[1] - hex.sideMiddle[1]) < 1.5,
+    'the edge number sits in a break of the outer line, midway between HP and Atk'
+  );
+  ok(
+    Math.abs(hex.hpStartReach - 0.1) < 0.02,
+    'a tiny level 1 stat is drawn at 10% of the radius (' + hex.hpStartReach.toFixed(3) + ')'
   );
   ok(
     await page.evaluate((colour) => {
@@ -373,29 +414,38 @@ async function main() {
     'Atk shows the yellow +25%'
   );
   await shot('pause-menu-detail.png');
-  // past 200 the edge steps to the next multiple of 100
-  const savedMaxHp = await page.evaluate(() => {
-    const member = G.Game.player,
-      saved = member.maxHp;
-    member.maxHp = 250 * G.Stats.HP_SCALAR; // 250 mainline HP
-    G.PauseMenu.hideNow();
-    G.PauseMenu.open();
-    return saved;
-  });
-  await sleep(FULL_MS);
-  hex = await hexMakeUp();
-  ok(hex.edge === 300, 'a mainline HP of 250 moves the hex edge to 300 (' + hex.edge + ')');
-  ok(
-    await page.evaluate(() => {
+  // the edge steps 300, 600, 1000; HP is drawn at mainline size; past 1000 a value clamps to the rim
+  const savedMaxHp = await page.evaluate(() => G.Game.player.maxHp);
+  const withMainlineHp = async (mainline) => {
+    await page.evaluate((value) => {
+      G.Game.player.maxHp = value * G.Stats.HP_SCALAR;
+      G.PauseMenu.hideNow();
+      G.PauseMenu.open();
+    }, mainline);
+    await sleep(FULL_MS);
+    const drawn = await page.evaluate(() => {
       const hexBox = document.querySelector('.pm-hex'),
         top = hexBox
           .querySelector('.pm-hex-run') // the outermost band: its first point is HP's tip
           .getAttribute('d')
           .match(/M[0-9.]+ ([0-9.]+)/)[1];
-      return Math.abs(+top - (hexBox.offsetHeight / 2 + 4 - 72 * (250 / 300))) < 1.5;
-    }),
-    'HP is drawn at its mainline size (250 of the 300 edge, not the game doubled 500)'
-  );
+      return (hexBox.offsetHeight / 2 + 4 - +top) / 72;
+    });
+    return { edge: (await hexMakeUp()).edge, reach: drawn };
+  };
+  for (const [mainline, edge] of [
+    [250, 300],
+    [400, 600],
+    [700, 1000],
+    [1500, 1000],
+  ]) {
+    const seen = await withMainlineHp(mainline),
+      reach = Math.min(1, mainline / edge);
+    ok(
+      seen.edge === edge && Math.abs(seen.reach - reach) < 0.02,
+      'a mainline HP of ' + mainline + ': edge ' + seen.edge + ', drawn at ' + seen.reach.toFixed(3) + ' of the radius'
+    );
+  }
   await page.evaluate((saved) => {
     G.Game.player.maxHp = saved;
     G.Game.player.hp = Math.min(G.Game.player.hp, saved);

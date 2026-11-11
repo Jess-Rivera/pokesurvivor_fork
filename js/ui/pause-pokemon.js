@@ -12,9 +12,10 @@
  * Stat hex (Jess, 2026-11-11): the real stats from the game's formula (G.Stats, HP at mainline size) with the species'
  * base stats and this copy's IVs, EVs and nature, as three bands growing out from each other: the first type's colour at
  * 60% = the stats at level 1 (every member starts the run there); white = the growth from level 1 to its level now;
- * yellow = what cards and run effects add (the bonus combat uses: incOf, and the real max HP). The edge is 50 while the
- * highest stat is under 50, else the next multiple of 100 up. Each corner's text is the copy's make-up, base + [IV/EV],
- * with the yellow "+X%".
+ * yellow = what cards and run effects add (the bonus combat uses: incOf, and the real max HP). The edge is 300, 600 or
+ * 1000 (the smallest that holds the highest drawn stat), printed in a break of the outer line between HP and Atk; every
+ * value is drawn between 10% and 100% of the radius. Each corner shows the final stat (HP as the game has it) with the
+ * yellow "+X%"; hovering it shows the copy's make-up, "Base: N, IV: N, EV: N".
  *
  * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
@@ -48,6 +49,7 @@ G.PausePokemon = (() => {
     MOVES_BOX = { top: 516, height: 420 },
     BOX_PAD = 16, // inside a box, clear of its rim
     HEX = { radius: 72, labelGap: 12, pad: 8 }, // pad: the hex uses the box out to its rim, room for the labels
+    EDGE_LABEL = { charWidth: 10, pad: 10 }, // the edge number's gap in the outer line: 20 px text, a little air
     ARROW = { size: 13, artPixel: 3, top: 960, prevLeft: 30, nextLeft: 98 };
   const TEAM = { columns: 3, cardArtWidth: 84, gap: 9, padLeft: 13, padTop: 12, rowGap: 8 };
   const TEAM_CARD_WIDTH = TEAM.cardArtWidth * 2,
@@ -113,8 +115,10 @@ G.PausePokemon = (() => {
     );
     return { start, now, withRun, bonus };
   }
-  /** The hex's edge (Jess, 2026-11-11): 50 while the highest stat is under 50, else the next multiple of 100 up. */
-  const hexEdge = (highest) => (highest < 50 ? 50 : Math.ceil(highest / 100) * 100);
+  /** The hex's edge (Jess, 2026-11-11): 300 up to a highest drawn stat of 300, 600 up to 600, else 1000 (past 1000 the
+   *  values clamp to the rim). */
+  const hexEdge = (highest) => (highest <= 300 ? 300 : highest <= 600 ? 600 : 1000);
+  const HEX_MIN_FRACTION = 0.1; // every drawn value is at least 10% of the radius, so a level 1 stat is not a dot
 
   // ---------- small pieces ----------
   /** Text that squeezes sideways to fit `room` px when it is wider (long species names). origin: the edge it holds. */
@@ -232,7 +236,7 @@ G.PausePokemon = (() => {
     };
     const shapePoints = (values) =>
       HEX_AXES.map(([statIndex], axis) =>
-        corner(axis, Math.max(0, Math.min(1, values[statIndex] / edge))).map((value) => value.toFixed(1))
+        corner(axis, Math.max(HEX_MIN_FRACTION, Math.min(1, values[statIndex] / edge))).map((value) => value.toFixed(1))
       );
     const shape = (values) =>
       shapePoints(values)
@@ -261,30 +265,44 @@ G.PausePokemon = (() => {
       const room = side === 'middle' ? width : side === 'right' ? width - x - HEX.labelGap : x - HEX.labelGap;
       const percent = Math.round(numbers.bonus[statIndex] * 100),
         baseStat = ((member.mon && member.mon.stats) || [])[statIndex] || 0;
-      // the text is the copy's make-up, base + [IV/EV] (Jess, 2026-11-11); the shape is the real stat. The yellow
-      // "+X%" rides on the name line, so the value line keeps its room.
+      // The corner shows the final stat (Jess, 2026-11-11): HP as the game has it (after HP_SCALAR, the HP bar's number)
+      // though the shape draws it at mainline size; the others with nature, level and run effects. The yellow "+X%"
+      // rides on the name line. Hover: the copy's make-up.
+      const finalStat = statIndex === 0 ? Math.round(member.maxHp) : Math.round(numbers.withRun[statIndex]);
       return html`<div key=${label} class=${'pm-hex-label is-' + side} data-stat=${label} style=${style}>
         <div class="hud-text pm-hex-name">
           ${label}${percent > 0 ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
         </div>
         <${FitText}
-          text=${baseStat + ' + [' + member.statIv(statIndex) + '/' + member.statEv(statIndex) + ']'}
+          text=${String(finalStat)}
           room=${room}
           className="hud-text pm-hex-value"
           origin=${side === 'left' ? '100% 50%' : side === 'middle' ? '50% 50%' : '0 50%'}
         />
+        <div class="hud-text pm-hex-tip">
+          ${'Base: ' + baseStat + ', IV: ' + member.statIv(statIndex) + ', EV: ' + member.statEv(statIndex)}
+        </div>
       </div>`;
     });
+    // The edge's number sits in a break of the outer line between HP and Atk, turned to run along it (Jess, 2026-11-11).
+    const [hpX, hpY] = corner(0, 1),
+      [atkX, atkY] = corner(1, 1);
+    const edgeText = String(edge),
+      gapHalf = (edgeText.length * EDGE_LABEL.charWidth + EDGE_LABEL.pad) / 2 / HEX.radius; // as a fraction of the side
+    const along = (fraction) => [hpX + (atkX - hpX) * fraction, hpY + (atkY - hpY) * fraction];
+    const edgeLine = [along(0.5 + gapHalf), ...[1, 2, 3, 4, 5, 0].map((axis) => corner(axis, 1)), along(0.5 - gapHalf)]
+      .map((point) => point.map((value) => value.toFixed(1)).join(' '))
+      .join(' L');
+    const [labelX, labelY] = along(0.5),
+      edgeAngle = (Math.atan2(atkY - hpY, atkX - hpX) * 180) / Math.PI;
     return html`<div
       class="pm-hex"
       data-edge=${edge}
       style=${{ left: HEX.pad + 'px', top: HEX.pad + 'px', width: width + 'px', height: height + 'px' }}
     >
       <svg width=${width} height=${height}>
-        ${[0.25, 0.5, 0.75, 1].map(
-          (fraction) =>
-            html`<polygon class=${'pm-hex-ring' + (fraction === 1 ? ' is-edge' : '')} points=${ring(fraction)} />`
-        )}
+        ${[0.25, 0.5, 0.75].map((fraction) => html`<polygon class="pm-hex-ring" points=${ring(fraction)} />`)}
+        <path class="pm-hex-ring is-edge" d=${'M' + edgeLine} />
         ${HEX_AXES.map((axisEntry, axis) => {
           const [x, y] = corner(axis, 1);
           return html`<line class="pm-hex-spoke" x1=${centreX} y1=${centreY} x2=${x} y2=${y} />`;
@@ -293,6 +311,16 @@ G.PausePokemon = (() => {
         <path class="pm-hex-now" d=${band(numbers.now, numbers.start)} />
         ${anyBonus ? html`<path class="pm-hex-run" d=${band(numbers.withRun, numbers.now)} />` : null}
       </svg>
+      <div
+        class="hud-text pm-hex-edge"
+        style=${{
+          left: labelX.toFixed(1) + 'px',
+          top: labelY.toFixed(1) + 'px',
+          transform: `translate(-50%, -50%) rotate(${edgeAngle.toFixed(1)}deg)`,
+        }}
+      >
+        ${edgeText}
+      </div>
       ${labels}
     </div>`;
   }
