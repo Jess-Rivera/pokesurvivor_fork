@@ -348,7 +348,7 @@ body.pm-open .hud-overlay {
   top: 16px;
   color: #7f7f7f;
 }
-/* the stat hex: black 50% = start of run, white = now, yellow = what cards and run effects add */
+/* the stat hex: type colour 60% = level 1, white = growth to its level now, yellow = what cards and run effects add */
 .pm-hex svg {
   position: absolute;
   left: 0;
@@ -366,20 +366,22 @@ body.pm-open .hud-overlay {
   stroke: rgba(244, 248, 255, 0.16);
   stroke-width: 1px;
 }
+/* three bands growing out from each other: each band is the ring between its shape and the one inside it */
+.pm-hex-start {
+  fill-opacity: 0.6; /* fill and stroke: the first type's colour, set by pause-pokemon.js */
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
 .pm-hex-now {
-  fill: rgba(244, 248, 255, 0.25);
+  fill: rgba(244, 248, 255, 0.6);
+  fill-rule: evenodd;
   stroke: #f4f8ff;
   stroke-width: 2px;
   stroke-linejoin: round;
 }
 .pm-hex-run {
-  fill: rgba(255, 210, 63, 0.6);
-  stroke: #ffd23f;
-  stroke-width: 2px;
-  stroke-linejoin: round;
-}
-.pm-hex-start {
-  fill: rgba(0, 0, 0, 0.5);
+  fill: rgba(255, 210, 63, 0.75);
+  fill-rule: evenodd; /* no outline: it would trace the white edge where nothing is added */
 }
 .pm-hex-label {
   position: absolute;

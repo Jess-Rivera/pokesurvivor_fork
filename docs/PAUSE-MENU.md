@@ -58,12 +58,13 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Held item: a square slot with Remove (sends the item to the Temporary Pocket) and Give. Give puts the
   yellow corner highlight on the team panel and dims the giver as not selectable; its label becomes "Cancel" while
   giving; Cancel or Esc cancels and the label returns to "Give".
-- [Approved] IV hex, three layers (Jess, 2026-11-11, clarified the same day): every stat from the game's own formula
-  (G.Stats, mainline: 2 x base + IV + EV/4, by level, times nature) with the species' base stats and this copy's IVs,
-  EVs and nature. Black at 50% opacity = the stats the Pokemon started the run with (level 1); white (today's
-  opacity) = the same at its level now, so it grows out from the black as it levels; yellow on top = what cards and run
-  effects add (the bonus combat uses). One scale for all three, the edge at the largest yellow value. HP is drawn at
-  its mainline size (the game doubles HP) so it does not dwarf the rest; the number printed is the game's.
+- [Approved] IV hex (Jess, 2026-11-11, settled after three rounds the same day): drawn in real stat numbers from the
+  game's formula (G.Stats, nature included; HP as the game shows it, so a level 1 Snivy has 24 HP) with the species'
+  base stats and this copy's IVs and EVs. Three bands, each growing out from the one inside it (no overlap): the first
+  type's colour at 60% = the stats at level 1; white = the growth from level 1 to its level now; yellow = what cards
+  and run effects add (the bonus combat uses). The edge is 50 while the highest stat is under 50, else the next
+  multiple of 100 up (an HP of 26 sits about halfway). Each corner's text is the copy's make-up, not the drawn number:
+  the stat name (with the yellow "+X%" when run effects add some) over "base + [IV/EV]", for example "45 + [19/50]".
 - [Approved] The per-Pokemon stats, Cards Taken, Move List and IV hex panels take b2-lower AA16-AD18 as inspiration,
   like the run screen's team roster slots but without the grid pattern. Borders use the first type's colour.
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.

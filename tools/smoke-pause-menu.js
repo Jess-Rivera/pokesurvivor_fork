@@ -128,10 +128,21 @@ async function main() {
 
   // ---- opening ----
   const openedAt = Date.now();
+  // step 1 lasts only 55 ms: catch the steps the moment the menu opens (recorded in the page, no round trip)
+  await page.evaluate(() => {
+    window.__firstSteps = null;
+    const watch = () => {
+      const layer = document.querySelector('.pause-menu');
+      if (G.PauseMenu.isOpen()) window.__firstSteps = [1, 2].filter((n) => layer.classList.contains('pm-step' + n));
+      else requestAnimationFrame(watch);
+    };
+    requestAnimationFrame(watch);
+  });
   await key('Escape');
   let s = await look();
+  const firstSteps = await page.evaluate(() => window.__firstSteps || []);
   ok(s.state === 'paused' && s.open && !s.oldScreen, 'Escape pauses and shows the Poke Ball menu, not the old sheet');
-  ok(s.steps.length === 1, 'mid-opening: step 1 (dim, closed ball) plays first (' + s.steps.join(',') + ')');
+  ok(firstSteps.join(',') === '1', 'mid-opening: step 1 (dim, closed ball) plays first (' + firstSteps.join(',') + ')');
   ok(s.centreButton, 'the top cap carries the white centre button');
   await shot('pause-menu-closed-ball.png');
   await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
@@ -293,8 +304,55 @@ async function main() {
     p.topColour === p.expected.topType && p.bottomColour === p.expected.bottomType,
     'bars in the type colours (top ' + p.topColour + ', bottom ' + p.bottomColour + ')'
   );
-  ok(p.layers.includes('start') && p.layers.includes('now'), 'stat hex: black start-of-run and white now layers');
+  ok(p.layers.includes('start') && p.layers.includes('now'), 'stat hex: the level 1 shape and the white growth band');
   ok(p.hexStats.join(',') === 'HP,Atk,Def,Spe,SpD,SpA', 'stat hex: six labels clockwise from HP');
+  const hexMakeUp = () =>
+    page.evaluate(() => {
+      const detail = document.querySelector('.pm-detail'),
+        member = G.Game.roster.find((m) => m.teamSlot === +detail.dataset.slot);
+      const order = { HP: 0, Atk: 1, Def: 2, SpA: 3, SpD: 4, Spe: 5 };
+      return {
+        texts: [...detail.querySelectorAll('.pm-hex-label')].map((label) => ({
+          shown: label.querySelector('.pm-hex-value').textContent.replace(/\s+/g, ' ').trim(),
+          expected:
+            member.mon.stats[order[label.dataset.stat]] +
+            ' + [' +
+            member.statIv(order[label.dataset.stat]) +
+            '/' +
+            member.statEv(order[label.dataset.stat]) +
+            ']',
+        })),
+        edge: +detail.querySelector('.pm-hex').dataset.edge,
+        highest: Math.max(
+          member.maxHp,
+          ...[1, 2, 3, 4, 5].map((i) =>
+            G.Stats.statValue(member.mon.stats[i], member.level, member.statIv(i), member.statEv(i), member.statNat(i))
+          )
+        ),
+        startFill: detail.querySelector('.pm-hex-start').style.fill,
+        typeColour: G.U.TYPE_COLOR[member.mon.types[0]],
+      };
+    });
+  let hex = await hexMakeUp();
+  ok(
+    hex.texts.every((text) => text.shown.startsWith(text.expected)),
+    'stat hex text is base + [IV/EV]: ' + hex.texts.map((text) => text.shown).join(', ')
+  );
+  ok(
+    hex.edge === (hex.highest < 50 ? 50 : Math.ceil(hex.highest / 100) * 100),
+    'stat hex edge ' + hex.edge + ' for a highest stat of ' + hex.highest
+  );
+  ok(
+    await page.evaluate((colour) => {
+      const probe = document.createElement('div');
+      probe.style.color = colour;
+      document.body.appendChild(probe);
+      const rgb = getComputedStyle(probe).color;
+      probe.remove();
+      return document.querySelector('.pm-hex-start').style.fill === rgb;
+    }, hex.typeColour),
+    'the level 1 shape is in the first type colour'
+  );
   ok(p.moveRows === p.expected.moves && p.moveRows > 0, 'move list: every move (' + p.moveRows + ')');
   ok(
     p.cards === filled.length && p.empties === 6 - filled.length,
@@ -315,6 +373,26 @@ async function main() {
     'Atk shows the yellow +25%'
   );
   await shot('pause-menu-detail.png');
+  // past 200 the edge steps to the next multiple of 100
+  const savedMaxHp = await page.evaluate(() => {
+    const member = G.Game.player,
+      saved = member.maxHp;
+    member.maxHp = 250;
+    G.PauseMenu.hideNow();
+    G.PauseMenu.open();
+    return saved;
+  });
+  await sleep(FULL_MS);
+  hex = await hexMakeUp();
+  ok(hex.edge === 300, 'a stat of 250 moves the hex edge to 300 (' + hex.edge + ')');
+  await page.evaluate((saved) => {
+    G.Game.player.maxHp = saved;
+    G.Game.player.hp = Math.min(G.Game.player.hp, saved);
+    G.PauseMenu.hideNow();
+    G.PauseMenu.open();
+  }, savedMaxHp);
+  await sleep(FULL_MS);
+  p = await panel();
 
   const focusBefore = (await look()).focus; // the reopen above put it back on Resume
   const nextOf = (slot, direction) => filled[(filled.indexOf(slot) + direction + filled.length) % filled.length];

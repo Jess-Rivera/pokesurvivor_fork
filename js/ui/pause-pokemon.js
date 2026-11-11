@@ -9,11 +9,12 @@
  * Right column: the stat hex, then the move list (bonded groups framed together, a type coloured scroll bar). The boxes
  * are the roster card's box with a flat body, rimmed in the first type.
  *
- * Stat hex, three layers (Jess, 2026-11-11), each stat from the game's formula (G.Stats) with the species' base stats and
- * this copy's IVs, EVs and nature: black at 50% = the stats it started the run with (level 1, every member is built at
- * level 1); white = the same at its level now; yellow = what cards and run effects add on top (the bonus the game uses in
- * combat: incOf, and the real max HP). One scale for all three, the edge at the largest yellow value. HP is drawn at its
- * mainline size (the game doubles HP, HP_SCALAR) so it does not dwarf the rest; the number printed is the game's.
+ * Stat hex (Jess, 2026-11-11): the real stats from the game's formula (G.Stats, HP as the game shows it) with the species'
+ * base stats and this copy's IVs, EVs and nature, as three bands growing out from each other: the first type's colour at
+ * 60% = the stats at level 1 (every member starts the run there); white = the growth from level 1 to its level now;
+ * yellow = what cards and run effects add (the bonus combat uses: incOf, and the real max HP). The edge is 50 while the
+ * highest stat is under 50, else the next multiple of 100 up. Each corner's text is the copy's make-up, base + [IV/EV],
+ * with the yellow "+X%".
  *
  * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
@@ -46,7 +47,7 @@ G.PausePokemon = (() => {
     HEX_BOX = { top: 124, height: 376 },
     MOVES_BOX = { top: 516, height: 420 },
     BOX_PAD = 16, // inside a box, clear of its rim
-    HEX = { radius: 92, labelGap: 14 },
+    HEX = { radius: 72, labelGap: 12, pad: 8 }, // pad: the hex uses the box out to its rim, room for the labels
     ARROW = { size: 13, artPixel: 3, top: 960, prevLeft: 30, nextLeft: 98 };
   const TEAM = { columns: 3, cardArtWidth: 84, gap: 9, padLeft: 13, padTop: 12, rowGap: 8 };
   const TEAM_CARD_WIDTH = TEAM.cardArtWidth * 2,
@@ -108,10 +109,12 @@ G.PausePokemon = (() => {
     );
     return { start, now, withRun, bonus };
   }
+  /** The hex's edge (Jess, 2026-11-11): 50 while the highest stat is under 50, else the next multiple of 100 up. */
+  const hexEdge = (highest) => (highest < 50 ? 50 : Math.ceil(highest / 100) * 100);
 
   // ---------- small pieces ----------
-  /** Text that squeezes sideways to fit `room` px when it is wider (long species names). */
-  function FitText({ text, room, className, style }) {
+  /** Text that squeezes sideways to fit `room` px when it is wider (long species names). origin: the edge it holds. */
+  function FitText({ text, room, className, style, origin = '0 50%' }) {
     const ref = hooks.useRef(null);
     hooks.useLayoutEffect(() => {
       const element = ref.current;
@@ -123,7 +126,7 @@ G.PausePokemon = (() => {
     return html`<span
       ref=${ref}
       class=${'pm-fit' + (className ? ' ' + className : '')}
-      style=${{ ...style, transformOrigin: '0 50%' }}
+      style=${{ ...style, transformOrigin: origin }}
       >${text}</span
     >`;
   }
@@ -213,25 +216,32 @@ G.PausePokemon = (() => {
 
   function Hex({ member }) {
     const numbers = hexNumbers(member),
-      hpScale = G.Stats.HP_SCALAR || 1;
-    const plotted = (values) => values.map((value, index) => (index === 0 ? value / hpScale : value));
-    const edge = Math.max(1, ...plotted(numbers.withRun));
-    const width = COLUMN_RIGHT.width - 2 * BOX_PAD,
-      height = HEX_BOX.height - 2 * BOX_PAD,
+      rim = typeColours(typesOf(member)[0]);
+    const edge = hexEdge(Math.max(...numbers.withRun));
+    const width = COLUMN_RIGHT.width - 2 * HEX.pad,
+      height = HEX_BOX.height - 2 * HEX.pad,
       centreX = width / 2,
       centreY = height / 2 + 4;
     const corner = (axis, fraction) => {
       const angle = -Math.PI / 2 + (axis * Math.PI) / 3;
       return [centreX + Math.cos(angle) * HEX.radius * fraction, centreY + Math.sin(angle) * HEX.radius * fraction];
     };
-    const shape = (values) => {
-      const scaled = plotted(values);
-      return HEX_AXES.map(([statIndex], axis) =>
-        corner(axis, Math.max(0, Math.min(1, scaled[statIndex] / edge)))
-          .map((value) => value.toFixed(1))
-          .join(',')
-      ).join(' ');
-    };
+    const shapePoints = (values) =>
+      HEX_AXES.map(([statIndex], axis) =>
+        corner(axis, Math.max(0, Math.min(1, values[statIndex] / edge))).map((value) => value.toFixed(1))
+      );
+    const shape = (values) =>
+      shapePoints(values)
+        .map((point) => point.join(','))
+        .join(' ');
+    const outline = (values) =>
+      'M' +
+      shapePoints(values)
+        .map((point) => point.join(' '))
+        .join(' L') +
+      ' Z';
+    /** The band between two shapes: only the growth, so the layers never mix their colours. */
+    const band = (outer, inner) => outline(outer) + ' ' + outline(inner);
     const ring = (fraction) => HEX_AXES.map((axisEntry, axis) => corner(axis, fraction).join(',')).join(' ');
     const anyBonus = numbers.bonus.some((value) => value > 0);
     const labels = HEX_AXES.map(([statIndex, label], axis) => {
@@ -243,17 +253,28 @@ G.PausePokemon = (() => {
           : side === 'right'
             ? { left: x + HEX.labelGap + 'px', top: y - 22 + 'px' }
             : { right: width - x + HEX.labelGap + 'px', top: y - 22 + 'px' };
-      const percent = Math.round(numbers.bonus[statIndex] * 100);
+      // the room a value line has before it squeezes: the whole width in the middle, else out to the box's edge
+      const room = side === 'middle' ? width : side === 'right' ? width - x - HEX.labelGap : x - HEX.labelGap;
+      const percent = Math.round(numbers.bonus[statIndex] * 100),
+        baseStat = ((member.mon && member.mon.stats) || [])[statIndex] || 0;
+      // the text is the copy's make-up, base + [IV/EV] (Jess, 2026-11-11); the shape is the real stat. The yellow
+      // "+X%" rides on the name line, so the value line keeps its room.
       return html`<div key=${label} class=${'pm-hex-label is-' + side} data-stat=${label} style=${style}>
-        <div class="hud-text pm-hex-name">${label}</div>
-        <div class="hud-text pm-hex-value">
-          ${numbers.withRun[statIndex]}${percent > 0 ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
+        <div class="hud-text pm-hex-name">
+          ${label}${percent > 0 ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
         </div>
+        <${FitText}
+          text=${baseStat + ' + [' + member.statIv(statIndex) + '/' + member.statEv(statIndex) + ']'}
+          room=${room}
+          className="hud-text pm-hex-value"
+          origin=${side === 'left' ? '100% 50%' : side === 'middle' ? '50% 50%' : '0 50%'}
+        />
       </div>`;
     });
     return html`<div
       class="pm-hex"
-      style=${{ left: BOX_PAD + 'px', top: BOX_PAD + 'px', width: width + 'px', height: height + 'px' }}
+      data-edge=${edge}
+      style=${{ left: HEX.pad + 'px', top: HEX.pad + 'px', width: width + 'px', height: height + 'px' }}
     >
       <svg width=${width} height=${height}>
         ${[0.25, 0.5, 0.75, 1].map(
@@ -264,9 +285,9 @@ G.PausePokemon = (() => {
           const [x, y] = corner(axis, 1);
           return html`<line class="pm-hex-spoke" x1=${centreX} y1=${centreY} x2=${x} y2=${y} />`;
         })}
-        <polygon class="pm-hex-now" points=${shape(numbers.now)} />
-        ${anyBonus ? html`<polygon class="pm-hex-run" points=${shape(numbers.withRun)} />` : null}
-        <polygon class="pm-hex-start" points=${shape(numbers.start)} />
+        <polygon class="pm-hex-start" points=${shape(numbers.start)} style=${{ fill: rim.base, stroke: rim.light }} />
+        <path class="pm-hex-now" d=${band(numbers.now, numbers.start)} />
+        ${anyBonus ? html`<path class="pm-hex-run" d=${band(numbers.withRun, numbers.now)} />` : null}
       </svg>
       ${labels}
     </div>`;
