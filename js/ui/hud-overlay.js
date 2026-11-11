@@ -327,6 +327,140 @@ G.HudOverlay = (() => {
     };
   }
 
+  // ---------- effect chips (#76, HUD-STYLE "Effect chips: good and bad bands"): statuses and stat drops in the bad ----------
+  // band, stat raises, the team's timed effects and the altar power in the good band. All solid; tags are 3 letters.
+  // Stat chips: UI-PALETTES "Pokemon Stats" Base and Dark, the colours of the #78 stat effects on the sprite.
+  const STAT_CHIP_STYLES = {
+    atk: { label: 'ATK', fill: '#EFCC18', shade: '#9B8510' },
+    def: { label: 'DEF', fill: '#E86412', shade: '#97410C' },
+    spa: { label: 'SPA', fill: '#14C3F1', shade: '#0D7F9D' },
+    spd: { label: 'SPD', fill: '#4A6ADF', shade: '#304591' },
+    spe: { label: 'SPE', fill: '#D51DAD', shade: '#8B1370' },
+  };
+  /** A bright colour's shade at about 55% of it (HUD-STYLE "Ramps for new colours"). */
+  function rampedShade(brightHex) {
+    const value = parseInt(brightHex.slice(1), 16);
+    const channel = (shift) =>
+      Math.round(((value >> shift) & 255) * 0.55)
+        .toString(16)
+        .padStart(2, '0');
+    return '#' + channel(16) + channel(8) + channel(0);
+  }
+  const rampedStyle = (label, fill) => ({ label, fill, shade: rampedShade(fill) });
+  // The team store's timed keys that are not stat stages, in the good band's order (the berries by their names)
+  const TEAM_EFFECT_STYLES = {
+    regen: rampedStyle('REG', '#5fe08a'),
+    pct_def: { ...STAT_CHIP_STYLES.def, label: 'KEE' },
+    pct_spd: { ...STAT_CHIP_STYLES.spd, label: 'MAR' },
+    crit: rampedStyle('LAN', '#ffb347'),
+    drop: rampedStyle('PIN', '#ffd23f'),
+  };
+  const ALTAR_POWER_TAGS = { dmg: 'FRY', spd: 'THN', mag: 'MAG', cd: 'HST' };
+  const GUARD_KEY_PREFIX = 'guard_';
+  let guardTagOfType = null; // type -> its guard berry's tag, built from G.Grounds.GUARD on first use
+  function guardTag(type) {
+    if (!guardTagOfType) {
+      guardTagOfType = {};
+      for (const berry in G.Grounds.GUARD) guardTagOfType[G.Grounds.GUARD[berry]] = berry.slice(0, 3).toUpperCase();
+    }
+    return guardTagOfType[type] || type.slice(0, 3).toUpperCase();
+  }
+  const EFFECT_BAND_CAPACITY = 12; // two lines of 6; past it the last slot reads "+N"
+  const OVERFLOW_STYLE = { fill: PALETTE.slate, shade: PALETTE.frame };
+
+  /** A band of chips that fits its 12 slots: when more are live, the last slot counts the ones left out. */
+  function fitBand(chips) {
+    if (chips.length <= EFFECT_BAND_CAPACITY) return chips;
+    const shown = chips.slice(0, EFFECT_BAND_CAPACITY - 1);
+    const hiddenCount = chips.length - shown.length;
+    shown.push({ key: 'overflow', label: '+' + hiddenCount, ...OVERFLOW_STYLE, text: null, timer: null });
+    return shown;
+  }
+
+  /**
+   * Reads the active Pokemon's effect chips each frame: read(entity) returns { bad, good, key }. bad holds the status
+   * chips (majors, then minors) and then the stats below 0; good holds the stats above 0, REG, the berries (Kee, Maranga,
+   * Lansat, Pinap, then each type guard in the order picked up) and the altar power. A stat's chip is its net stage (own
+   * plus team); its timer is the longest time left among the changes pushing it that way. Timers run against the most
+   * time seen since the chip appeared, as the status chips do.
+   */
+  function createEffectChipReader() {
+    const readStatusChips = createChipReader(true);
+    const timePeak = {};
+    return function read(entity) {
+      const seenKeys = new Set();
+      const timerFraction = (key, timeLeft) => {
+        seenKeys.add(key);
+        if (!(timeLeft > 0)) return null;
+        timePeak[key] = Math.max(timePeak[key] || 0, timeLeft);
+        return Math.round(Math.min(1, timeLeft / timePeak[key]) * CHIP_ART_WIDTH) / CHIP_ART_WIDTH;
+      };
+      const bad = readStatusChips(entity).chips.slice(),
+        good = [],
+        teamStore = entity.stgTeam;
+      for (const stat of G.Stages.STATS) {
+        const stage = G.Stages.stage(entity, stat);
+        if (!stage) continue;
+        const direction = Math.sign(stage);
+        let timeLeft = G.Stages.remaining(entity, stat, direction);
+        const teamTimer = direction > 0 && teamStore ? G.Stages.teamTimer(teamStore, stat) : null;
+        if (teamTimer) timeLeft = Math.max(timeLeft, teamTimer.t);
+        const key = 'stat_' + stat + (direction > 0 ? '_up' : '_down');
+        (direction > 0 ? good : bad).push({
+          key,
+          ...STAT_CHIP_STYLES[stat],
+          text: null,
+          timer: timerFraction(key, timeLeft),
+        });
+      }
+      if (teamStore) {
+        for (const effectKey in TEAM_EFFECT_STYLES) {
+          if (!G.Stages.teamLive(teamStore, effectKey)) continue;
+          const teamTimer = G.Stages.teamTimer(teamStore, effectKey);
+          good.push({
+            key: effectKey,
+            ...TEAM_EFFECT_STYLES[effectKey],
+            text: null,
+            timer: timerFraction(effectKey, teamTimer && teamTimer.t),
+          });
+        }
+        for (const storeKey of G.Stages.teamKeys(teamStore)) {
+          if (!storeKey.startsWith(GUARD_KEY_PREFIX) || !G.Stages.teamLive(teamStore, storeKey)) continue;
+          const type = storeKey.slice(GUARD_KEY_PREFIX.length),
+            colours = typeColours(type),
+            teamTimer = G.Stages.teamTimer(teamStore, storeKey);
+          good.push({
+            key: storeKey,
+            label: guardTag(type),
+            fill: colours.base,
+            shade: colours.dark,
+            text: null,
+            timer: timerFraction(storeKey, teamTimer && teamTimer.t),
+          });
+        }
+      }
+      const power = entity.power;
+      if (power && power.def) {
+        const key = 'altar_' + power.def.id;
+        seenKeys.add(key);
+        good.push({
+          key,
+          ...rampedStyle(ALTAR_POWER_TAGS[power.def.id] || power.def.id.slice(0, 3).toUpperCase(), power.def.color),
+          text: null,
+          timer:
+            power.dur > 0
+              ? Math.round(Math.max(0, Math.min(1, power.t / power.dur)) * CHIP_ART_WIDTH) / CHIP_ART_WIDTH
+              : null,
+        });
+      }
+      for (const key in timePeak) if (!seenKeys.has(key)) delete timePeak[key];
+      const badBand = fitBand(bad),
+        goodBand = fitBand(good);
+      const keyOf = (band) => band.map((chip) => chip.key + ':' + chip.label + ':' + chip.timer).join('|');
+      return { bad: badBand, good: goodBand, key: keyOf(badBand) + '#' + keyOf(goodBand) };
+    };
+  }
+
   // ---------- the B2 dark HP bar (b2-upper A1 to L3, HUD-STYLE "Enemy name bar"), at any art-pixel size ----------
   // Each span: [rip row, left offset, right offset from the bar's right edge R]. R is the top row's last pixel.
   const SHADOW_SPANS = [
@@ -597,6 +731,7 @@ G.HudOverlay = (() => {
     hasChip,
     Chip,
     createChipReader,
+    createEffectChipReader,
     createLifeBar,
     portraitSource,
     portraitFallback,

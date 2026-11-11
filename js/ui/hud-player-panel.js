@@ -13,7 +13,7 @@ G.HudPlayerPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
   const { html, signal, hooks, PALETTE, SLOT_GRID, PixelShape, createLifeBar, typeColours } = overlay.kit;
-  const { ItemSquare, Cursor, Chip, hasChip, createChipReader } = overlay.kit;
+  const { ItemSquare, Cursor, Chip, hasChip, createEffectChipReader } = overlay.kit;
   const { portraitSource, portraitFallback } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", character info panel) ----------
@@ -29,8 +29,9 @@ G.HudPlayerPanel = (() => {
     GRID = { x: -216, y: 36 },
     WELLS_PER_SLOT = 4, // a bond holds up to 4 moves (PlayerEntity.BOND_MAX)
     WELL_SIZE = 36,
-    CHIPS = { x: -244, y: 172, width: 70, height: 24, gap: 6 },
-    PROMPT = { centreX: -21, y: 208, artRows: 24, padArt: 14 },
+    // #76: two chip bands of two lines each at fixed heights; the good band sits 12 px above the bad band's top line
+    CHIP_BANDS = { x: -244, badY: 172, goodY: 238, chipsPerLine: 6, width: 70, gap: 6 },
+    PROMPT = { centreX: -21, y: 304, artRows: 24, padArt: 14 }, // above the four chip lines (#76)
     PORTRAIT = { centreX: -281, y: 36, size: 116 },
     ITEM = { x: 222, y: 74, artSize: 20, nameY: 48 }, // right of the slots (Jess, 2026-11-10: swapped with Lv)
     SILVER = { right: -260, coinY: 160, coinSize: 32 }, // 12 px below the chips' line (Jess, 2026-11-10)
@@ -61,7 +62,8 @@ G.HudPlayerPanel = (() => {
     levelRattle = signal(0), // counts level-ups; each one remounts the number, which replays its rattle
     levelRattling = signal(false), // true for the rattle's length after a level-up
     bonds = signal(0),
-    chips = signal([]), // { key, label, fill, shade, timer (0 to 1, or null) }
+    badChips = signal([]), // { key, label, fill, shade, text, timer (0 to 1, or null) }: statuses, then stat drops
+    goodChips = signal([]), // stat raises, the team's timed effects, the altar power
     prompt = signal(''), // the Shake Off text, or '' when nothing can be shaken off
     slots = signal([]), // per slot: { key, keyLabel, rim, active, moves: [{ id, icon, iconSize }] }
     moveCooldowns = signal([]), // per slot, per well: { shade (0 to 1), flash (0 to 1) }
@@ -156,10 +158,22 @@ G.HudPlayerPanel = (() => {
       <div class="hud-text hud-hp-text" style=${place(HP_TEXT.x, HP_TEXT.y)}>${hpText}</div>`;
   }
 
-  function Chips() {
-    return html`<div class="hud-chips" style=${place(CHIPS.x, CHIPS.y)}>
-      ${chips.value.map((chip) => html`<${Chip} key=${chip.key} chip=${chip} />`)}
+  const CHIP_BAND_WIDTH = CHIP_BANDS.chipsPerLine * CHIP_BANDS.width + (CHIP_BANDS.chipsPerLine - 1) * CHIP_BANDS.gap;
+  /** One band: up to 12 chips, filling its lower line first (wrap-reverse), left to right. */
+  function ChipBand({ band, chips, y }) {
+    return html`<div
+      class=${'hud-chips hud-chip-band is-' + band}
+      style=${{ ...place(CHIP_BANDS.x, y), width: CHIP_BAND_WIDTH + 'px' }}
+    >
+      ${chips.map((chip) => html`<${Chip} key=${chip.key} chip=${chip} />`)}
     </div>`;
+  }
+  function Chips() {
+    return html`<${ChipBand} band="bad" chips=${badChips.value} y=${CHIP_BANDS.badY} /><${ChipBand}
+        band="good"
+        chips=${goodChips.value}
+        y=${CHIP_BANDS.goodY}
+      />`;
   }
 
   function ShakePrompt() {
@@ -312,7 +326,7 @@ G.HudPlayerPanel = (() => {
   }
 
   // ---------- the per-frame read ----------
-  const readChipsOf = createChipReader(true); // the character panel shows the minor statuses too (#78)
+  const readChipsOf = createEffectChipReader(); // statuses (minors too, #78), stat changes and timed effects (#76)
   const silverState = { shown: -1, target: -1, rate: 0, pop: 0, at: 0, time: 0 };
   let lastSlotsKey = '',
     lastChipsKey = '',
@@ -380,7 +394,8 @@ G.HudPlayerPanel = (() => {
     const read = readChipsOf(player);
     if (read.key !== lastChipsKey) {
       lastChipsKey = read.key;
-      chips.value = read.chips;
+      badChips.value = read.bad;
+      goodChips.value = read.good;
     }
   }
 

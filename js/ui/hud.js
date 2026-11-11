@@ -712,8 +712,10 @@ G.HUD = (() => {
     if (!overlayDrawsPlayer) drawHpStrip(ctx, w, h, pl, safeB);
 
     // ---------- team strip (lower-left, only with a real team) ----------
-    if (overlayDrawsRoster) drawBuffs(ctx, h, pl, G.HudRosterPanel.buffsLeft());
-    else {
+    // #76: with the character panel up, its chip bands show the buffs, berries, altar power and stat drops
+    if (overlayDrawsRoster) {
+      if (!overlayDrawsPlayer) drawBuffs(ctx, h, pl, G.HudRosterPanel.buffsLeft());
+    } else {
       const teamRight = drawTeam(ctx, w, h);
       const bagRight = drawBerryBag(ctx, w, h, !!teamRight);
       drawBuffs(ctx, h, pl, teamRight ? teamRight + 12 : bagRight ? bagRight + 12 : 16);

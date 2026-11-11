@@ -271,7 +271,9 @@ const PANEL = {
   slotHeight: 44, // the rip's 44 rows (Jess, 2026-11-10)
   well: 36,
   chip: { left: 960 - 244, top: 1080 - 172 - 24, width: 70, height: 24 },
-  prompt: { top: 1080 - 208 - 48, height: 48, centre: 960 - 21 },
+  prompt: { top: 1080 - 304 - 48, height: 48, centre: 960 - 21 }, // above the four chip lines (#76)
+  // #76: chip lines, as tops at 1080p: the bad band at y 172 and 202, the good band at 238 and 268
+  chipLineTops: { bad: [1080 - 172 - 24, 1080 - 202 - 24], good: [1080 - 238 - 24, 1080 - 268 - 24] },
   item: { left: 960 + 222, top: 1080 - 74 - 40, size: 40 }, // right of the slots (swapped with Lv, 2026-11-10)
   coin: { right: 960 - 260, top: 1080 - 160 - 32, size: 32 }, // 12 px below the chips' line
   levelRight: 960 - 351, // left of the portrait, right-aligned (swapped with the held item)
@@ -577,6 +579,124 @@ async function playerPanel(browser) {
     'player: bad poison is the PSN chip with the dark shade (' + (state.chips[0] && state.chips[0].shade) + ')'
   );
   ok(state.prompt === null, 'player: nothing to shake off, no prompt');
+
+  // #76: the bad band (statuses, then stat drops) and the good band (raises, team effects, altar power), two lines each
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    pl.poison = 0;
+    pl.stMajor = { k: 'paralysis', t: 30 };
+    pl.stCnf = { t: 30 };
+    pl.stDaze = { t: 30 };
+    pl.stTrap = { t: 30 };
+    pl.stDrow = { t: 30 };
+    for (const stat of G.Stages.STATS) G.Stages.add(pl, stat, -1, 30);
+  });
+  await page.waitForTimeout(100);
+  state = await panelState(page);
+  const labels = (list) => list.map((chip) => chip.label).join(' ');
+  const onLine = (chip, top) => chip && chip.top === top && chip.width === PANEL.chip.width;
+  ok(
+    labels(state.chips) === 'PAR CNF DZE TRP DRW ATK DEF SPA SPD SPE',
+    'effect chips: the worst bad band is 10 chips, statuses then drops (' + labels(state.chips) + ')'
+  );
+  ok(
+    onLine(state.chips[0], PANEL.chipLineTops.bad[0]) &&
+      state.chips[0].left === PANEL.chip.left &&
+      onLine(state.chips[5], PANEL.chipLineTops.bad[0]) &&
+      onLine(state.chips[6], PANEL.chipLineTops.bad[1]) &&
+      state.chips[6].left === PANEL.chip.left,
+    'effect chips: the bad band fills its lower line (6 chips) first, then the line above'
+  );
+  ok(
+    state.prompt && state.prompt.top === PANEL.prompt.top,
+    'effect chips: Shake Off sits above the four chip lines (top ' + (state.prompt && state.prompt.top) + ')'
+  );
+  const clearance = await page.evaluate(() => {
+    const pl = G.Game.player,
+      cam = G.Camera,
+      canvas = document.querySelector('canvas'),
+      ratio = canvas.clientHeight / canvas.height;
+    return { feet: (pl.y - cam.top()) * cam.scale * ratio, head: (pl.y - pl.bodyH - cam.top()) * cam.scale * ratio };
+  });
+  ok(
+    state.prompt && state.prompt.top > clearance.feet,
+    'effect chips: Shake Off stays below your Pokemon (prompt top ' +
+      (state.prompt && state.prompt.top) +
+      ', feet at ' +
+      Math.round(clearance.feet) +
+      ')'
+  );
+  ok(
+    await page.evaluate(() => !document.querySelector('.hud-chip-band.is-good .hud-chip')),
+    'effect chips: nothing in the good band while only bad effects are live'
+  );
+
+  // the good band: five raises, REG, the four berries, two guards and the altar power is 13, so the last slot is "+2"
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    pl.stMajor = pl.stCnf = pl.stDaze = pl.stTrap = pl.stDrow = null;
+    G.Stages.clear(pl);
+    const timed = (key, n) => (pl.stgTeam[key] = [{ n, t: 20, dur: 20, src: 'smoke' }]);
+    for (const stat of G.Stages.STATS) timed(stat, 2);
+    for (const key of ['regen', 'pct_def', 'pct_spd', 'crit', 'drop', 'guard_fire', 'guard_water']) timed(key, 1);
+    pl.power = { def: { id: 'dmg', color: '#ff5f6d', off() {} }, t: 20, dur: 25 };
+  });
+  await page.waitForTimeout(100);
+  state = await panelState(page);
+  ok(
+    labels(state.chips) === 'ATK DEF SPA SPD SPE REG KEE MAR LAN PIN OCC +2',
+    'effect chips: 13 good effects fit as 11 and a "+2" (' + labels(state.chips) + ')'
+  );
+  ok(
+    onLine(state.chips[0], PANEL.chipLineTops.good[0]) && onLine(state.chips[6], PANEL.chipLineTops.good[1]),
+    'effect chips: the good band sits at its fixed lines even with the bad band empty'
+  );
+  ok(
+    state.chips[0] && state.chips[0].fill === 'rgb(239, 204, 24)' && state.chips[0].timer,
+    'effect chips: ATK is solid in the Attack stat colour, with a timer (' +
+      (state.chips[0] && state.chips[0].fill) +
+      ')'
+  );
+  ok(
+    state.chips[10] && state.chips[10].fill === PANEL.typeBase.fire,
+    'effect chips: the Occa guard is in the Fire type colour (' + (state.chips[10] && state.chips[10].fill) + ')'
+  );
+  ok(state.prompt === null, 'effect chips: buffs alone bring no Shake Off prompt');
+
+  // net stats: team +2 and own -3 on Speed is one SPE chip in the bad band; the altar chip shows once room is free
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    for (const key of Object.keys(pl.stgTeam)) delete pl.stgTeam[key];
+    pl.stgTeam.spe = [{ n: 2, t: 20, dur: 20, src: 'smoke' }];
+    G.Stages.add(pl, 'spe', -3, 20);
+  });
+  await page.waitForTimeout(100);
+  state = await panelState(page);
+  ok(
+    labels(state.chips) === 'SPE FRY' && state.chips[0].top === PANEL.chipLineTops.bad[0],
+    'effect chips: Speed +2 and -3 is one SPE drop chip; the Fury altar power is FRY (' + labels(state.chips) + ')'
+  );
+  const canvasBuffs = await page.evaluate(() => {
+    let drawn = false;
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...rest) {
+      if (/^FURIA|^FURY/i.test(String(text))) drawn = true;
+      return original.call(this, text, ...rest);
+    };
+    return new Promise((resolve) =>
+      setTimeout(() => {
+        CanvasRenderingContext2D.prototype.fillText = original;
+        resolve(drawn);
+      }, 200)
+    );
+  });
+  ok(!canvasBuffs, 'effect chips: the canvas buff stack stays off while the character panel is up');
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    for (const key of Object.keys(pl.stgTeam)) delete pl.stgTeam[key];
+    G.Stages.clear(pl);
+    pl.power = null;
+  });
 
   // level up: the number rattles once, then settles; a pause does not replay it
   ok(!state.rattling, 'player: no rattle before a level-up');

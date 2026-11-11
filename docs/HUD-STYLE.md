@@ -252,7 +252,9 @@ Sampled from the B2/W2 HP bar rip (`assets/ui/BW Pokedex rip`) and the existing 
 Major chips are solid (fill over shade). `[Approved]` The minor statuses get chips too, in the character info panel only
 (Jess, 2026-11-11, #78): hollow, a `#101010` body inside a rim of the animation's own colour, with the text in that
 colour, so major and minor read apart at a glance. Majors sit at the left, minors after them. A benched Pokemon's roster
-row keeps the major chip only. Slow, haste and stat changes get no chip: they show as stat changes on the Pokemon. Every
+row keeps the major chip only. `[Approved]` Stat changes get chips in the character info panel (Jess, 2026-11-11, #76,
+reversing #78's "no chip"): see [Effect chips](#approved-effect-chips-good-and-bad-bands-76). Slow shows as the SPE
+drop chip; haste has no chip of its own (it is in the Speed stage). Every
 status also has an on-sprite animation: see [On-sprite status icons](#on-sprite-status-icons-71).
 
 | Status  | Fill      | Shade     |
@@ -270,6 +272,35 @@ status also has an on-sprite animation: see [On-sprite status icons](#on-sprite-
 | DZE            | `#1f9fe7`    | `#101010` |
 | DRW            | `#e73963`    | `#101010` |
 | TRP            | `#adb5bd`    | `#101010` |
+
+#### `[Approved]` Effect chips: good and bad bands (#76)
+
+Jess, 2026-11-11 (decision `2026-11-11-76-effect-chips-in-good-and-bad-bands`). Built in #76, waiting for the feel test:
+`createEffectChipReader` in `js/ui/hud-overlay.js` reads them and `js/ui/hud-player-panel.js` draws the bands. The
+canvas stack in the lower left (`js/ui/hud.js` drawBuffs) is only the fallback for when the HTML HUD is off.
+
+- **Two bands, four lines,** in the character info panel's chip area, all in the status chip's shape and size (70 x 24):
+  - **Bad band** (next to the life meter, 2 lines): the major status, the minor statuses, then stat drops.
+  - **Good band** (above it, 2 lines): stat raises, REG, the berry effects, then the altar power.
+  - Your position says good or bad, so no colour has to carry that.
+- **Fixed heights:** the good band always starts on its own line, even when the bad band is empty, so chips never jump
+  when a status comes or goes. Each band fills its lower line first, 6 chips per line, left to right.
+- **Overflow:** a band needing more than 12 chips shows "+N" in its last slot. Counted maximum: bad 10 (one major, since
+  burn and poison block the others; four minors; five drops), good 11 plus the type guards (18 possible, one each).
+  Neither should overflow in real play. The pause menu holds the detail.
+- **Stat chips are net:** one chip per stat at its stage (own plus team), in the band its sign puts it in. No stage
+  digit: the on-sprite stat effect shows how big it is. Timer: the longest time left among the applications pushing
+  that way.
+- **Tags:** 3 letters, no icon. Every chip is solid (fill over shade); only the minor statuses stay hollow.
+
+| Chip                         | Tag                   | Fill and shade                                    |
+| ---------------------------- | --------------------- | ------------------------------------------------- |
+| Stat raise or drop           | ATK DEF SPA SPD SPE   | The stat's Base and Dark (UI-PALETTES "Pokemon Stats", as the #78 effect) |
+| Regen (Aqua Ring)            | REG                   | `#5fe08a` ramped (Working colour)                 |
+| Kee, Maranga                 | KEE MAR               | Defense's, Sp. Def's Base and Dark                |
+| Lansat, Pinap                | LAN PIN               | `#ffb347`, `#ffd23f` ramped (Working colours)     |
+| Type guard (one per berry)   | The berry: OCC PAS WAC RIN YAC CHO KEB SHU COB PAY TAN CHA KAS HAB COL BAB ROS CHI | The type's SV Base and Dark |
+| Altar power                  | FRY THN MAG HST       | The power's own colour, ramped                    |
 
 #### `[Approved]` Shake Off prompt (flashing)
 
@@ -695,7 +726,8 @@ the plan; those wait on the feel test.
 | Life meter            | 460 x 22, x -251 to +210          | 462 px wide (231 art), 24 px with its shadow, x -252, y 140                  |
 | HP text               | (none)                            | x +218, y 147, 20 px                                                         |
 | Status chips          | 70 x 19, 6 px apart               | 70 x 24, 6 px apart, from x -244, y 172 (`[Proposed]`: 24 high for the text) |
-| Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 208                        |
+| Effect chip lines (#76) | (none)                          | `[Approved]` bad band y 172 and 202; good band y 238 and 268 (12 px between bands) |
+| Shake Off prompt      | 304 x 48, centred on the bar      | 48 high, width from its text, centred on x -21, y 208; `[Approved]` y 304 above the four lines (#76) |
 | Move slots            | 206 x 44, 2x2, gaps 5 and 3       | 210 x 44 (105 x 22 art), gaps 6 and 4, from x -216, y 36                     |
 | Wells                 | about 42 px                       | 36 px, centres 47 px from each end, evenly spread                            |
 | Lv                    | right of the slots                | right edge x -351 (left of the portrait, swapped): "Lv." y 116, number y 60  |

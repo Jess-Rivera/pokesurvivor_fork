@@ -270,6 +270,10 @@
   display: flex;
   gap: 6px;
 }
+/* #76: a band of up to 12 chips in two lines of 6, the lower line filled first */
+.hud-chip-band {
+  flex-wrap: wrap-reverse;
+}
 .hud-chip {
   position: relative;
   width: 70px;
