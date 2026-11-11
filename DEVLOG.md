@@ -134,3 +134,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Jess chose the Rescue Team status icon style over the EoS effects (outlined icons read in a swarm). HUD-STYLE "On-sprite status icons (#71)": one row per status; trap is the red X with a glow swipe, sleep and drowsy are text Z's, haste a blue up arrow, paralysis a new lightning wrap; #71 widened to all twelve.
 - tools/status_icon_preview.py renders the sheet and a GIF on a Pikachu; confusion uses Jess's confuse-birds.png, split at its uneven separator columns and centred on the four birds.
 - Stopped at: #71 in Needs Playtest. Open: several statuses at once; timings Proposed.
+
+## 2026-11-11 (Claude Code, home), #71 settled and #78 built: on-sprite status animations (feature/leader-roster-ui)
+- Jess switched #71 to the slowed-down art set, Jess's own Aseprite redraw, so it ships. Rulings, all in HUD-STYLE "On-sprite status icons (#71)":
+  - Spots and layering: Jess's placement table (feet, body centre halfway up, above the head). Everything shows at once, the major over minors, and the head reads drowsy, daze, confusion from the bottom.
+  - Stat changes: streaks recoloured per stat, several at once on a 3 px circle a third of a loop apart. Haste and Slow show as Speed changes, with the arrows in reserve.
+  - Confusion is the birds. Minor statuses get hollow chips in the character panel.
+- #78 built: js/ui/status-fx.js; tools/status_anims.js bakes js/data/status-anims.js and the per-stat sheets in assets/status/stats/ (file:// blocks JSON reads and pixel reads). The pills, feet rings and zzz are retired.
+- tools/smoke-status-fx.js passes. Headless perf needs GPU flags: without them, 300 statused enemies looked like 40 ms frames, but with the GPU on they hold 60 fps.
+- Also: tools/gif_to_sheet.py, tools/status_icon_split.py; deferred #79 for co-op remote status flags.
+- Stopped at: Jess's feel test passed, #71 and #78 closed. Next: the old team-raise feet arcs (they double the stat-up effect), then #77.
