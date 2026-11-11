@@ -28,7 +28,7 @@ body.pm-open .hud-overlay {
   opacity: 0;
 }
 
-/* ---------- step 1: dim and the closed ball (open 75 ms, close 38 ms) ---------- */
+/* ---------- step 1: dim and the closed ball (open 55 ms, close 38 ms) ---------- */
 .pm-dim {
   position: absolute;
   inset: 0;
@@ -38,7 +38,7 @@ body.pm-open .hud-overlay {
 }
 .pm-step1 .pm-dim {
   opacity: 1;
-  transition-duration: 0.075s;
+  transition-duration: 0.055s;
 }
 .pm-stage {
   position: absolute;
@@ -63,7 +63,7 @@ body.pm-open .hud-overlay {
 .pm-step1 .pm-centre {
   opacity: 1;
   transform: none;
-  transition-duration: 0.075s;
+  transition-duration: 0.055s;
   transition-timing-function: linear, ease-out;
 }
 
@@ -105,12 +105,12 @@ body.pm-open .hud-overlay {
   stroke-width: 5;
 }
 
-/* ---------- step 2: the ball opens and the panels slide in (open 235 ms, close 118 ms) ---------- */
+/* ---------- step 2: the ball opens and the panels slide in (open 175 ms, close 118 ms) ---------- */
 .pm-cap {
   transition: transform 0.118s ease-in-out;
 }
 .pm-step2 .pm-cap {
-  transition-duration: 0.235s;
+  transition-duration: 0.175s;
 }
 .pm-step2 .pm-cap-top {
   transform: translateY(-150px); /* clear of the top button: the centre button ends at 134 */
@@ -125,7 +125,7 @@ body.pm-open .hud-overlay {
 }
 .pm-step2 .pm-band {
   opacity: 0;
-  transition: opacity 0.06s linear;
+  transition: opacity 0.045s linear;
 }
 
 /* ---------- the buttons: the run screen's move slot, white rim, green when focused ---------- */
@@ -142,6 +142,57 @@ body.pm-open .hud-overlay {
 }
 .pm-step2 .pm-buttons {
   pointer-events: auto;
+}
+/* the button layer stops at the ball's inner edge: buttons sliding off vanish there (centre 255,255 in ball pixels) */
+.pm-buttons {
+  height: 214px;
+  clip-path: circle(214px at 255px 107px);
+}
+
+/* ---------- End Run asks inside the ball (Jess, 2026-11-11): snappy slides, 0.15 s, the chasers 0.05 s behind ---------- */
+.pm-buttons .pm-button {
+  transition: transform 0.15s ease-out 0.05s; /* coming back after No: a beat behind the answers leaving */
+}
+.pm-buttons.pm-asking .pm-button {
+  transition: transform 0.15s ease-in; /* leaving at once */
+}
+.pm-settings-right.pm-asking [data-action='resume'],
+.pm-settings-left.pm-asking [data-action='settings'] {
+  transform: translateX(-420px);
+}
+.pm-settings-right.pm-asking [data-action='settings'],
+.pm-settings-left.pm-asking [data-action='resume'] {
+  transform: translateX(420px);
+}
+/* End and No share Settings' row; they wait off the side Resume leaves by and chase Settings in */
+.pm-answers {
+  position: absolute;
+  left: 0;
+  top: 148px;
+  width: 510px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  transform: translateX(-420px);
+  transition: transform 0.15s ease-in;
+}
+.pm-settings-left .pm-answers {
+  transform: translateX(420px);
+}
+.pm-buttons.pm-asking .pm-answers {
+  transform: none;
+  transition: transform 0.15s ease-out 0.05s;
+}
+.pm-answers .pm-button {
+  width: 168px;
+}
+.pm-buttons.pm-asking .pm-answers .pm-button {
+  transform: none;
+}
+.pm-no-slide,
+.pm-no-slide .pm-button,
+.pm-no-slide .pm-answers {
+  transition: none !important;
 }
 .pm-button {
   position: relative;
@@ -182,7 +233,7 @@ body.pm-open .hud-overlay {
 .pm-step2 .pm-panel {
   opacity: 1;
   transform: none;
-  transition-duration: 0.235s;
+  transition-duration: 0.175s;
   transition-timing-function: ease-out, linear;
 }
 /* Run Info and the detail panel: the same size, 40 px either side of the ball (Jess, 2026-11-11) */

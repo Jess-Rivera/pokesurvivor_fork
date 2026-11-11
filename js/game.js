@@ -57,7 +57,7 @@ G.Game = (() => {
       G.UI.hideAll();
     }, quitRun);
     if (G.PauseMenu.ready)
-      G.PauseMenu.wire({ resume: togglePause, endRun: confirmEndRun, settings: () => G.SettingsUI.open('sound') });
+      G.PauseMenu.wire({ resume: togglePause, endRun: endRunFromPause, settings: () => G.SettingsUI.open('sound') });
     Backdrop.init();
     last = performance.now();
     requestAnimationFrame(loop);
@@ -101,10 +101,9 @@ G.Game = (() => {
     else G.RunUI.showPause();
   }
 
-  /** The pause menu's End Run button: ask first, "No" is the default (Jess, 2026-11-11). */
-  async function confirmEndRun() {
-    const end = await G.UI.ask('', { title: 'End Run?', ok: 'End', cancel: 'No', danger: true, defaultCancel: true });
-    if (!end || state !== 'paused') return;
+  /** The pause menu's End answer (it asks inside the ball first, js/ui/pause-menu.js). */
+  function endRunFromPause() {
+    if (state !== 'paused') return;
     G.PauseMenu.hideNow();
     quitRun();
   }
@@ -131,6 +130,7 @@ G.Game = (() => {
       // The Poke Ball menu plays its closing first; the game stays paused until it is gone. Pausing again mid-close
       // turns it around.
       if (G.PauseMenu.ready && G.PauseMenu.isOpen()) {
+        if (G.PauseMenu.answerNo()) return; // End Run is asking: Esc or the pause key answer No, the menu stays
         if (G.PauseMenu.isClosing()) G.PauseMenu.open();
         else
           G.PauseMenu.close(() => {

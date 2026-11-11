@@ -6,7 +6,9 @@
 //   pause stops the run clock; the opening steps play in order; circle, ball, three buttons and four panels show;
 //   the HUD overlay steps aside; Up / Down and hover move the green focus; Esc closes with the clock still stopped
 //   until the menu is gone; Esc mid-close turns it around; Resume resumes; Settings opens over the menu and Esc
-//   returns to it; End Run asks (No white and default, End red), Enter keeps playing, End ends the run.
+//   returns to it; End Run asks inside the ball: Resume and Settings slide off opposite sides, End (red) and No
+//   (white, focused) chase in behind Settings into its row; Move_Left / Move_Right switch (End keeps its red rim, its
+//   body goes dark red); Esc, Enter on No and a click on No bring the buttons back; End ends the run.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -29,7 +31,8 @@ const ok = (c, m) => {
   console.log((c ? 'ok    ' : 'FAIL  ') + m);
   if (!c) fail++;
 };
-const FULL_MS = 600; // the whole opening is 0.31 s (OPEN_MS) and the closing 0.16 s (CLOSE_MS), plus slack
+const FULL_MS = 600; // the whole opening is 0.23 s (OPEN_MS) and the closing 0.16 s (CLOSE_MS), plus slack
+const SLIDE_MS = 350; // End Run's question: 0.15 s slides, the chasers 0.05 s behind, plus slack
 
 async function main() {
   const browser = await chromium.launch();
@@ -95,7 +98,7 @@ async function main() {
         fully: G.PauseMenu.isFullyOpen(),
         steps: [1, 2].filter((n) => layer.classList.contains('pm-step' + n)),
         ball: visible(document.querySelector('.pm-centre')),
-        buttons: [...document.querySelectorAll('.pm-button')].map((b) => b.textContent.trim()),
+        buttons: [...document.querySelectorAll('.pm-buttons > .pm-button')].map((b) => b.textContent.trim()),
         buttonsShown: getComputedStyle(document.querySelector('.pm-buttons')).opacity > 0.95,
         panels: [...document.querySelectorAll('.pm-panel')].filter(visible).map((p) => p.dataset.panel),
         focus: focused ? focused.textContent.trim() : null,
@@ -131,7 +134,7 @@ async function main() {
   await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
   const openMs = Date.now() - openedAt;
   await sleep(80); // the last transitions settle a frame or two after the step timer
-  ok(openMs >= 250 && openMs <= 600, 'opening takes about 0.31 s (' + openMs + ' ms, key press included)');
+  ok(openMs >= 180 && openMs <= 500, 'opening takes about 0.23 s (' + openMs + ' ms, key press included)');
   s = await look();
   ok(s.fully && s.steps.join(',') === '1,2', 'fully open after the opening (steps ' + s.steps.join(',') + ')');
   ok(!(await clockMoves()), 'the run clock is stopped while paused');
@@ -201,33 +204,128 @@ async function main() {
   s = await look();
   ok(!s.settings && s.fully && s.state === 'paused', 'Escape closes Settings and the menu stays open');
 
-  // ---- End Run asks ----
-  await page.click('.pm-button[data-action="endRun"]');
-  await sleep(200);
-  const ask = await page.evaluate(() => ({
-    title: document.getElementById('ask-title').textContent,
-    ok: document.getElementById('ask-ok').textContent,
-    okRed: document.getElementById('ask-ok').classList.contains('danger'),
-    no: document.getElementById('ask-no').textContent,
-    noWhite: document.getElementById('ask-no').classList.contains('white'),
-    noFocused: document.activeElement === document.getElementById('ask-no'),
-  }));
-  ok((await look()).ask && ask.title === 'End Run?', 'End Run asks "End Run?"');
-  ok(ask.no === 'No' && ask.noWhite && ask.noFocused, '"No" is white and has the focus');
-  ok(ask.ok === 'End' && ask.okRed, '"End" is red');
+  // ---- End Run asks inside the ball ----
+  // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing
+  const places = () =>
+    page.evaluate(() => {
+      const ball = document.querySelector('.pm-ball-back').getBoundingClientRect(),
+        centreX = ball.left + ball.width / 2,
+        centreY = ball.top + ball.height / 2;
+      const at = (id) => {
+        const r = document.querySelector('.pm-button[data-action="' + id + '"]').getBoundingClientRect();
+        return {
+          x: Math.round(r.left + r.width / 2 - centreX),
+          y: Math.round(r.top + r.height / 2 - centreY),
+          w: r.width,
+        };
+      };
+      const rims = (id) =>
+        [...document.querySelectorAll('.pm-button[data-action="' + id + '"] rect')].map((r) => r.getAttribute('fill'));
+      // the body: the widest rect that is not the outline
+      const body = (id) => {
+        const rects = [...document.querySelectorAll('.pm-button[data-action="' + id + '"] rect')].filter(
+          (r) => r.getAttribute('fill') !== '#101010'
+        );
+        rects.sort((a, b) => +b.getAttribute('width') - +a.getAttribute('width'));
+        return rects[0].getAttribute('fill');
+      };
+      const focused = document.querySelector('.pm-button.focused');
+      return {
+        endBody: body('end'),
+        asking: G.PauseMenu.isAsking(),
+        side: G.PauseMenu.askedSide(),
+        resume: at('resume'),
+        settings: at('settings'),
+        end: at('end'),
+        no: at('no'),
+        focus: focused ? focused.dataset.action : null,
+        endRims: rims('end'),
+        noRims: rims('no'),
+      };
+    });
+  const insideBall = (b) => Math.abs(b.x) + b.w / 2 < 214;
+  const offBall = (b) => Math.abs(b.x) - b.w / 2 > 214;
+  const askAndCheck = async (label) => {
+    await page.click('.pm-button[data-action="endRun"]');
+    await sleep(SLIDE_MS);
+    const p = await places();
+    ok(p.asking, label + ': End Run asks');
+    ok(
+      offBall(p.resume) &&
+        offBall(p.settings) &&
+        Math.sign(p.resume.x) === -p.side &&
+        Math.sign(p.settings.x) === p.side,
+      label +
+        ': Resume and Settings left by opposite sides (Settings to ' +
+        (p.side > 0 ? 'the right' : 'the left') +
+        ')'
+    );
+    ok(
+      insideBall(p.end) && insideBall(p.no) && p.end.y === p.settings.y && p.no.y === p.settings.y && p.end.x < p.no.x,
+      label + ": End and No sit side by side in Settings' row, inside the ball"
+    );
+    ok(p.focus === 'no', label + ': No has the focus');
+    return p;
+  };
+  const backAndCheck = async (label, side) => {
+    await sleep(SLIDE_MS);
+    const p = await places();
+    ok(!p.asking && Math.abs(p.resume.x) < 2 && Math.abs(p.settings.x) < 2, label + ': Resume and Settings are back');
+    ok(
+      offBall(p.end) && offBall(p.no) && Math.sign(p.end.x) === -side,
+      label + ': End and No went back out the side they came in by'
+    );
+    ok(p.focus === 'endRun', label + ': End Run has the focus');
+    s = await look();
+    ok(s.state === 'paused' && s.fully, label + ': still paused, the menu still open');
+  };
+
+  let asked = await askAndCheck('click');
+  ok(asked.endRims.includes('#e8202a') && asked.endBody === '#181818', 'End: red rim, plain body');
+  ok(asked.noRims.includes('#38d030'), 'No: green focus rim');
   await shot('pause-menu-end-run.png');
-  await key('Enter', 200);
-  s = await look();
-  ok(!s.ask && s.state === 'paused' && s.fully, 'Enter answers No: the run goes on, menu still open');
-  await page.click('.pm-button[data-action="endRun"]');
-  await sleep(200);
-  await page.click('#ask-ok');
+  await key('ArrowLeft', 100);
+  asked = await places();
+  ok(asked.focus === 'end', 'Move_Left moves the focus to End');
+  ok(
+    asked.endRims.includes('#e8202a') && asked.endBody === '#7c1016' && !asked.endRims.includes('#38d030'),
+    'End focused: still a red rim, body the dark red'
+  );
+  ok(asked.noRims.includes('#e7e7e7') && !asked.noRims.includes('#38d030'), 'No unfocused: white rim');
+  await key('ArrowUp', 100);
+  ok((await places()).focus === 'end', 'Up does nothing while asking');
+  await key('ArrowRight', 100);
+  ok((await places()).focus === 'no', 'Move_Right moves the focus back to No');
+  await key('Escape');
+  await backAndCheck('Esc', asked.side);
+
+  asked = await askAndCheck('again');
+  await page.click('.pm-button[data-action="no"]');
+  await page.mouse.move(5, 5); // off the buttons, or Settings sliding back under the pointer takes the focus by hover
+  await backAndCheck('click No', asked.side);
+
+  asked = await askAndCheck('keys');
+  await key('Enter');
+  await backAndCheck('Enter on No', asked.side);
+
+  const sides = new Set([asked.side]);
+  for (let tries = 0; tries < 12 && sides.size < 2; tries++) {
+    await page.click('.pm-button[data-action="endRun"]');
+    await sleep(60);
+    sides.add(await page.evaluate(() => G.PauseMenu.askedSide()));
+    await key('Escape', SLIDE_MS);
+  }
+  ok(sides.size === 2, 'the side is picked at random (both seen)');
+
+  await askAndCheck('end');
+  await page.click('.pm-button[data-action="end"]');
   await sleep(300);
   s = await look();
   ok(
     !s.open && s.state !== 'paused' && s.state !== 'playing',
     'End ends the run, the menu is gone (state ' + s.state + ')'
   );
+  ok(!s.ask, 'no popup was used');
 
   await page.evaluate(() => clearInterval(window.__keep));
   ok(errs.length === 0, 'no page or console errors' + (errs.length ? ': ' + errs.slice(0, 5).join(' | ') : ''));

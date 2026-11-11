@@ -354,6 +354,8 @@ to E14 and F15 to J18; values picked by eye, not sampled.
 | Ball inside (open)                         | `#000000`             | mockup             |
 | Menu button rim (rest)                     | `#ffffff`             | Jess, 2026-11-11   |
 | Menu button rim (focus or hover)           | `#38d030`             | mockup green, eyed |
+| End answer rim (light, base, dark)         | `#ff8a90` `#e8202a` `#7c1016` | eyed, ramped |
+| End answer body when focused               | `#7c1016`             | its dark rim, Jess |
 | Menu button body (flat, no grid)           | `#181818`             | panel body         |
 | Screen dim                                 | `#000000` at 55%      | eyed               |
 

@@ -104,17 +104,11 @@ G.UI = (() => {
       ok.textContent = o.ok || 'Confirm';
       no.textContent = o.cancel || 'Cancel';
       no.style.display = o.noCancel ? 'none' : '';
-      // o.danger: the confirm button is red. o.defaultCancel: Enter answers no, and the cancel button is the white,
-      // focused one (the pause menu's End Run, Jess 2026-11-11).
-      ok.className = 'btn ' + (o.danger ? 'danger' : 'gold');
-      no.className = 'btn' + (o.defaultCancel ? ' white' : '');
       const onKey = (e) => {
         if (e.key !== 'Enter' && e.key !== 'Escape') return;
         e.preventDefault();
         e.stopPropagation(); // the game must not also read this Esc / Enter
-        if (e.key === 'Escape') done(false);
-        else if (document.activeElement === ok || document.activeElement === no) done(document.activeElement === ok);
-        else done(!o.defaultCancel);
+        done(e.key === 'Enter');
       };
       const done = (v) => {
         if (askDone !== done) return;
@@ -128,7 +122,6 @@ G.UI = (() => {
       no.onclick = () => done(false);
       addEventListener('keydown', onKey, true);
       scr.classList.remove('hidden');
-      if (o.defaultCancel) no.focus();
     });
   }
 

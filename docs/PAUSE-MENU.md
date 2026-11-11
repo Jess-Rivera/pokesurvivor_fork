@@ -13,7 +13,12 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
   are in, the ball plays an open animation to the look of b2-lower F15-J18, cut inside the circle as in the mockup.
 - [Approved] The centre of the open ball holds three buttons: Resume, End Run and Settings. All white, with a green
   focus rim on hover or keyboard selection (Jess, 2026-11-11).
-- [Approved] End Run asks first: a confirmation "End Run?" with "No" (white, the default) and "End" (red).
+- [Approved] End Run asks inside the ball, no popup (Jess, 2026-11-11): Resume slides off to a random side and Settings
+  to the other, each vanishing at the ball's inner edge. End (red rim) and No (white rim) chase in behind Settings from
+  the side Resume left by, side by side in Settings' row, short enough to fit the ball; End Run stays in the middle. No
+  has the focus first; Move_Left and Move_Right switch, Enter presses, Esc or the pause key answer No (the menu stays).
+  No sends End and No back out the way they came and Resume and Settings back in. Focused, No's rim turns green; End
+  keeps its red rim and its body turns the red's dark shade. Snappy: 0.15 s slides, the chasers 0.05 s behind.
 - [Approved] Closing plays the opening in reverse: panels slide out, the ball closes, circle and dim fade.
 
 ## 2. Panels slide in, timing and layout (feel test, Jess 2026-11-11)
@@ -25,8 +30,8 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
   notches; it rides on the top cap as the ball opens.
 - [Approved] Buttons take the run screen's move slot shape, flat body, no grid, at 1.5x size (315 x 66 px, 30 px
   text, 8 px apart), centred on the ball's middle; the open caps part 150 px each way to make room.
-- [Approved] Opening about 0.31 s (0.075 s dim and closed ball, 0.235 s ball and panels); closing is the reverse
-  at about twice the speed (about 0.16 s). The second feel test halved both (Jess, 2026-11-11).
+- [Approved] Opening about 0.23 s (0.055 s dim and closed ball, 0.175 s ball and panels); closing is the reverse at
+  about 0.16 s. The second feel test halved both; the third set the opening halfway to the close (Jess, 2026-11-11).
 - [Approved] The ball sits at the screen's centre. Run Info is the same size as the Pokemon detail panel, both the
   same distance either side of the ball; team and Run Inventory are centred under and over it.
 
