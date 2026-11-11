@@ -1,38 +1,39 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-10, Claude Code (home): #67 closed (chevron wayfinding arrows, roof labels).
+Updated 2026-11-10, Claude Code (home): #71 spec written (on-sprite status icons, all twelve), now in Needs Playtest.
 Branch: feature/leader-roster-ui (branched from feature/gym-leader-ai at f9478ea0; carries its unmerged work).
 No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md still governs the leader AI work it carries.
 
 ## START HERE (next session, either tool)
-1. Jess pushes this branch, then pulls it on the other machine. There: python tools/grid_rips.py.
-2. Owed by Jess: the #64 frame-rate check on the work laptop; the #59 feel test.
-3. Next HUD work: #77 card wording; #76 needs Jess to pick a spot for the buff and status chips first.
+1. Jess pushes this branch, then pulls it on the other machine.
+2. Owed by Jess: look over the #71 preview GIF and close #71 (or adjust); the #64 frame-rate check; the #59 feel test.
+3. Next: settle the #71 open item (several statuses at once), then plan the #71 build slice. Also #77; #76 waits on a spot.
 
 ## Where we are
-- HUD: docs/HUD-STYLE.md is the look spec. The overlay is a core (js/ui/hud-overlay.js) plus panels: boss (#64), player
-  (#62), roster and run items (#63), map (#65), DPS-Upgrades (#66). Canvas pieces stay only as the fallback, except the
-  timed buff and status chips (canvas until #76) and world things (arrows, damage numbers).
-- Wayfinding (#67, js/ui/hud.js floatArrow): off screen, three chevrons (gym Attacks/Special, shops Attacks/Physical)
-  with a snap, bounce, strained hold, slide loop and compact labels ("Gym·Lv.5·10m·29s"). On screen, roof labels only
-  ("Gym Leader Brock" over "Lv.5 +n Escalating"). Timings and sizes are CHEVRON_* constants. Elite Four gates are not in
-  the game yet; their label will read "Elite Four <name>".
-- G.DpsHistory (js/systems/dps-history.js): every second of the run, for a later pause screen and end-of-run graph.
-- Leader AI (carried from gym-leader-ai): #59 in Needs Playtest, Bait parked on #60, gyms 3 to 8 on the old brain until slice 12.
+- On-sprite status icons: docs/HUD-STYLE.md "On-sprite status icons (#71)". Rescue Team icon style, one row per
+  status (art, motion, colours, placement, source). Ripped art is reference only (public repo); the build slice redraws.
+  Code today: 3-letter pills, a ring under the feet, a text zzz (js/entities/player.js, "slice E1").
+- Preview: python tools/status_icon_preview.py writes a sheet and an animated GIF on a Pikachu into
+  assets/sprite extraction attempt/status_preview/ (git-ignored).
+- Effect extraction: uv run tools/wan_extract.py "<rom>.nds" exports every Explorers of Sky effect (sheets, GIFs,
+  timing JSON) with by_name.html (moves, items, traps). The ROM, effect.bin and every export live in the git-ignored
+  assets/sprite extraction attempt/; *.nds and the ripped sheets in assets/raw are ignored too.
+- HUD: overlay core js/ui/hud-overlay.js plus panels (#62 to #66); #67 wayfinding arrows done.
+- Leader AI (carried): #59 in Needs Playtest, Bait parked on #60, gyms 3 to 8 on the old brain until slice 12.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30.
 
 ## Watch
+- Ripped art must never be committed: check git status for new files in assets/raw (all trainers.png, substitute.png
+  are untracked and unchecked).
 - Shops in the same direction as the gym: their arrows and labels overlap (predates #67).
-- Rate cards (Cooldown Down and friends) divide, so run totals read lower than step x picks: #77.
 - Some late-gen species names show in Spanish on the HUD: #73. Mobile dropped for now (#72).
-- Headless file:// blocks fonts: screenshot HUD text over http (python -m http.server).
-- Python on Windows writes CRLF (use newline=''); Bash heredocs eat backslashes and non-ASCII (use Write for scripts).
+- Headless file:// blocks fonts: screenshot HUD text over http. Python on Windows writes CRLF (use newline='').
+- skytemple-files needs Python 3.13 (no 3.14 wheel); uv run handles it from the script header.
 
 ## Open owner decisions
-- #77 rate-card wording vs maths. #76 where the buff and status chips live. Bait (#60). Bench recharge. Boss pool size;
-  sprite scale; region unlock rule; Friends and Leaderboard grey-out.
-- #71 non-major status icon animations. #61 still open though #67 no longer waits on it (close it or keep it as the guide's tracker).
-- #74 spare weather art; #75 named places for the Map line.
+- #71: what shows when several statuses stack. #77 rate-card wording vs maths. #76 chip spot. Bait (#60).
+- Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
+- #61 close or keep as the guide's tracker. #74 spare weather art; #75 named places for the Map line.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path); headless runs click #tap-start first.

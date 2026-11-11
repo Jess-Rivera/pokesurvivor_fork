@@ -129,3 +129,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - On screen the bouncing arrows are gone: "Gym Leader Brock" with "Lv.5 (+n Escalating)" under it over the gym roof, "Move Trainer·58s" over a shop. Off screen: "Gym·Lv.5·10m·29s", "TM Mart·11m·34s".
 - shops-harness tracks the renamed constants and checks the roof label. check.js red only on the two #30 harnesses.
 - Stopped at: Jess's feel test passed; #67 closed, HUD-STYLE "Wayfinding arrows" Approved. Next: #77; #76 waits on Jess.
+
+## 2026-11-10 (Claude Code, home), #71 spec: on-sprite status icons for all twelve statuses (feature/leader-roster-ui)
+- tools/wan_extract.py: exports Explorers of Sky effect.bin (from the .nds or the .bin) to sheets, GIFs and timing JSON via skytemple-files (Python 3.13 through uv); reads overlay 10's animation tables for by_name.html (moves, items, traps). Fixed signed 16-bit frame offsets and cached pieces (10 min to 11 s).
+- Jess chose the Rescue Team status icon style over the EoS effects (outlined icons read in a swarm). HUD-STYLE "On-sprite status icons (#71)": one row per status; trap is the red X with a glow swipe, sleep and drowsy are text Z's, haste a blue up arrow, paralysis a new lightning wrap; #71 widened to all twelve.
+- tools/status_icon_preview.py renders the sheet and a GIF on a Pikachu; confusion uses Jess's confuse-birds.png, split at its uneven separator columns and centred on the four birds.
+- Public repo: the ROM, effect.bin, exports and ripped sheets are git-ignored; shipped icons get redrawn. Bring-your-own-ROM loading was discussed, not filed.
+- Stopped at: #71 in Needs Playtest. Open: several statuses at once; timings Proposed.
