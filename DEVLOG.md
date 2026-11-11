@@ -144,3 +144,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - tools/smoke-status-fx.js passes. Headless perf needs GPU flags: without them, 300 statused enemies looked like 40 ms frames, but with the GPU on they hold 60 fps.
 - Also: tools/gif_to_sheet.py, tools/status_icon_split.py; deferred #79 for co-op remote status flags.
 - Stopped at: Jess's feel test passed, #71 and #78 closed. Next: the old team-raise feet arcs (they double the stat-up effect), then #77.
+
+## 2026-11-11 (Claude Code, home), #76 effect chip bands and #80 feet arcs retired (feature/leader-roster-ui)
+- #76 rulings (decision 2026-11-11-76-effect-chips-in-good-and-bad-bands): timed effects join the status chips. Bad band (statuses, net stat drops) next to the life meter, good band (net raises, REG, KEE MAR LAN PIN, one chip per guard berry, altar FRY THN MAG HST) above. Two lines of 6 each, fixed heights, "+N" past 12. 3-letter tags, no icon, no stage digit. Reverses #78's "no chip for stat changes".
+- Counted max: bad 10 (one major, since burn and poison block the others), good 11 plus guards.
+- Built: createEffectChipReader (hud-overlay.js), two bands in hud-player-panel.js, Shake Off y 208 to 304. The canvas buff stack only draws when the HTML HUD is off. smoke-hud-overlay gained 12 checks, all pass.
+- #80: feet arcs gone from Player.draw (leaders too); regen shows as the REG chip only (Jess). Needs a glance.
+- Stopped at: #76 closed, #80 in Needs Playtest. Next: #77 ruling, then #68 and #69.
