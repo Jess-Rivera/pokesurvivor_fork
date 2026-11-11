@@ -232,6 +232,7 @@ async function main() {
       const focused = document.querySelector('.pm-button.focused');
       return {
         endBody: body('end'),
+        noBody: body('no'),
         asking: G.PauseMenu.isAsking(),
         side: G.PauseMenu.askedSide(),
         resume: at('resume'),
@@ -282,7 +283,10 @@ async function main() {
 
   let asked = await askAndCheck('click');
   ok(asked.endRims.includes('#e8202a') && asked.endBody === '#181818', 'End: red rim, plain body');
-  ok(asked.noRims.includes('#38d030'), 'No: green focus rim');
+  ok(
+    asked.noRims.includes('#e7e7e7') && !asked.noRims.includes('#38d030') && asked.noBody === '#848484',
+    'No focused: still a white rim, body the dark shade of white'
+  );
   await shot('pause-menu-end-run.png');
   await key('ArrowLeft', 100);
   asked = await places();
@@ -291,7 +295,7 @@ async function main() {
     asked.endRims.includes('#e8202a') && asked.endBody === '#7c1016' && !asked.endRims.includes('#38d030'),
     'End focused: still a red rim, body the dark red'
   );
-  ok(asked.noRims.includes('#e7e7e7') && !asked.noRims.includes('#38d030'), 'No unfocused: white rim');
+  ok(asked.noRims.includes('#e7e7e7') && asked.noBody === '#181818', 'No unfocused: white rim, plain body');
   await key('ArrowUp', 100);
   ok((await places()).focus === 'end', 'Up does nothing while asking');
   await key('ArrowRight', 100);

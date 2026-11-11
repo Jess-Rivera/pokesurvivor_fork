@@ -17,7 +17,8 @@
  *
  * End Run asks inside the ball, no popup (Jess, 2026-11-11): Resume slides off to a random side and Settings to the other,
  * each vanishing at the ball's inner edge (the button layer is clipped to it). End (red rim) and No (white rim), short
- * enough to share Settings' row, chase in behind Settings from the side Resume left by. No has the focus first;
+ * enough to share Settings' row, chase in behind Settings from the side Resume left by; focused, an answer keeps its rim
+ * and its body turns the rim's dark shade. No has the focus first;
  * Move_Left / Move_Right switch, Enter presses, Esc or the pause key answer No. No sends End and No back out the way they
  * came and brings Resume and Settings back. End ends the run (G.Game's endRun).
  *
@@ -44,9 +45,9 @@ G.PauseMenu = (() => {
     END_RIM = { light: '#ff8a90', base: '#e8202a', dark: '#7c1016' }; // the End answer's red
   const ANSWER_ART_WIDTH = 56; // End and No: 168 x 66 px each, side by side in Settings' row inside the ball
   const ANSWERS = [
-    // End stays red when focused; its body turns the red's dark shade instead (Jess, 2026-11-11)
+    // Focused, each answer keeps its rim and its body turns the rim's dark shade (Jess, 2026-11-11)
     { id: 'end', label: 'End', rim: END_RIM, focusRim: END_RIM, focusBody: END_RIM.dark },
-    { id: 'no', label: 'No', rim: REST_RIM },
+    { id: 'no', label: 'No', rim: REST_RIM, focusRim: REST_RIM, focusBody: REST_RIM.dark },
   ];
   const STAGE_WIDTH = 1920,
     STAGE_HEIGHT = 1080;

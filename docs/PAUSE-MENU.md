@@ -17,8 +17,8 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
   to the other, each vanishing at the ball's inner edge. End (red rim) and No (white rim) chase in behind Settings from
   the side Resume left by, side by side in Settings' row, short enough to fit the ball; End Run stays in the middle. No
   has the focus first; Move_Left and Move_Right switch, Enter presses, Esc or the pause key answer No (the menu stays).
-  No sends End and No back out the way they came and Resume and Settings back in. Focused, No's rim turns green; End
-  keeps its red rim and its body turns the red's dark shade. Snappy: 0.15 s slides, the chasers 0.05 s behind.
+  No sends End and No back out the way they came and Resume and Settings back in. Focused, an answer keeps its rim and
+  its body turns the rim's dark shade (End dark red, No dark grey). Snappy: 0.15 s slides, the chasers 0.05 s behind.
 - [Approved] Closing plays the opening in reverse: panels slide out, the ball closes, circle and dim fade.
 
 ## 2. Panels slide in, timing and layout (feel test, Jess 2026-11-11)
