@@ -16,20 +16,14 @@ No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md
   Code today: 3-letter pills, a ring under the feet, a text zzz (js/entities/player.js, "slice E1").
 - Preview: python tools/status_icon_preview.py writes a sheet and an animated GIF on a Pikachu into
   assets/sprite extraction attempt/status_preview/ (git-ignored).
-- Effect extraction: uv run tools/wan_extract.py "<rom>.nds" exports every Explorers of Sky effect (sheets, GIFs,
-  timing JSON) with by_name.html (moves, items, traps). The ROM, effect.bin and every export live in the git-ignored
-  assets/sprite extraction attempt/; *.nds and the ripped sheets in assets/raw are ignored too.
 - HUD: overlay core js/ui/hud-overlay.js plus panels (#62 to #66); #67 wayfinding arrows done.
 - Leader AI (carried): #59 in Needs Playtest, Bait parked on #60, gyms 3 to 8 on the old brain until slice 12.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30.
 
 ## Watch
-- Ripped art must never be committed: check git status for new files in assets/raw (all trainers.png, substitute.png
-  are untracked and unchecked).
 - Shops in the same direction as the gym: their arrows and labels overlap (predates #67).
 - Some late-gen species names show in Spanish on the HUD: #73. Mobile dropped for now (#72).
 - Headless file:// blocks fonts: screenshot HUD text over http. Python on Windows writes CRLF (use newline='').
-- skytemple-files needs Python 3.13 (no 3.14 wheel); uv run handles it from the script header.
 
 ## Open owner decisions
 - #71: what shows when several statuses stack. #77 rate-card wording vs maths. #76 chip spot. Bait (#60).

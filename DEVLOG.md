@@ -131,8 +131,6 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Stopped at: Jess's feel test passed; #67 closed, HUD-STYLE "Wayfinding arrows" Approved. Next: #77; #76 waits on Jess.
 
 ## 2026-11-10 (Claude Code, home), #71 spec: on-sprite status icons for all twelve statuses (feature/leader-roster-ui)
-- tools/wan_extract.py: exports Explorers of Sky effect.bin (from the .nds or the .bin) to sheets, GIFs and timing JSON via skytemple-files (Python 3.13 through uv); reads overlay 10's animation tables for by_name.html (moves, items, traps). Fixed signed 16-bit frame offsets and cached pieces (10 min to 11 s).
 - Jess chose the Rescue Team status icon style over the EoS effects (outlined icons read in a swarm). HUD-STYLE "On-sprite status icons (#71)": one row per status; trap is the red X with a glow swipe, sleep and drowsy are text Z's, haste a blue up arrow, paralysis a new lightning wrap; #71 widened to all twelve.
 - tools/status_icon_preview.py renders the sheet and a GIF on a Pikachu; confusion uses Jess's confuse-birds.png, split at its uneven separator columns and centred on the four birds.
-- Public repo: the ROM, effect.bin, exports and ripped sheets are git-ignored; shipped icons get redrawn. Bring-your-own-ROM loading was discussed, not filed.
 - Stopped at: #71 in Needs Playtest. Open: several statuses at once; timings Proposed.
