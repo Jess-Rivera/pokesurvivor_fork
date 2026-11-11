@@ -1249,6 +1249,11 @@ async function eliteBar(browser) {
     return elite ? { name: elite.name, level: Math.floor(elite.atkLvl), type: (elite.types || [])[0] } : null;
   });
   ok(!!spawned, 'elite: the dev spawner placed one');
+  const banner = await page.evaluate(() => (G.Spawner.banner() || {}).text || '');
+  ok(
+    spawned && banner === 'An elite ' + spawned.name + ' appeared!',
+    'elite: the spawn message is English in code (' + banner + ')'
+  );
   await page.waitForTimeout(200);
   const state = await overlayState(page);
   ok(!!state, 'elite: the enemy name bar shows');

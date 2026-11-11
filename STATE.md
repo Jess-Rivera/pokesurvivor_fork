@@ -22,9 +22,7 @@ No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30.
 
 ## Watch
-- Shake Off sits at a fixed y 304 even with one status chip; reopen as a follow-up if it feels far off.
 - Headless frame-rate checks need the GPU flags (see tools/smoke-status-fx.js).
-- Shops in the same direction as the gym: their arrows and labels overlap (predates #67).
 - Some late-gen species names show in Spanish on the HUD: #73. Mobile dropped for now (#72).
 - Headless file:// blocks fonts: screenshot HUD text over http. Python on Windows writes CRLF (use newline='').
 
