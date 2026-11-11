@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-11, #84: upgrade card renames, speed framing for the dividing cards, All Damage Up at +5% (Jess)](docs/decisions/2026-11-11-84-upgrade-card-names-and-speed-framing.md), build in #84
 - [2026-11-11, #68 and #81: type-coloured text on the map uses Light; type chips in the reference-sheet style (Jess)](docs/decisions/2026-11-11-81-type-chips-and-type-text-on-the-map.md), built in #68 and #81
 - [2026-11-11, #76: timed effects join the status chips in a good band and a bad band (Jess)](docs/decisions/2026-11-11-76-effect-chips-in-good-and-bad-bands.md), build #76
 - [2026-11-10, Level up: the number rattles while you play, then the cards open with confetti (Jess)](docs/decisions/2026-11-10-level-up-rattle-then-cards-with-confetti.md), build #62

@@ -11,6 +11,18 @@ G.CHANGELOG = [
     title: ['Buffs join your status chips', 'Buffs join your status chips'],
     chg: [
       [
+        'Upgrade cards have clearer names, and each card now says what it does in one line. Cooldown Down is now Attack Speed Up, Gate Reduction is Stat Climb Speed Up and Delay Down is Impact Speed Up, so their numbers are exactly true. Other renames: Size Up, Width Up, Range Up, Lifetime Up, Projectile Count Up, Projectile Speed Up, Chain Hops Up, Bench Regeneration Up, Stat Change Duration Up, Recoil Reduction and Pick a Vitamin. Capped cards say how many times you can take them.',
+        'Upgrade cards have clearer names, and each card now says what it does in one line. Cooldown Down is now Attack Speed Up, Gate Reduction is Stat Climb Speed Up and Delay Down is Impact Speed Up, so their numbers are exactly true. Other renames: Size Up, Width Up, Range Up, Lifetime Up, Projectile Count Up, Projectile Speed Up, Chain Hops Up, Bench Regeneration Up, Stat Change Duration Up, Recoil Reduction and Pick a Vitamin. Capped cards say how many times you can take them.',
+      ],
+      [
+        'Damage Up is now All Damage Up at +5% per pick (was +10%). The type Damage cards stay at +15% and still add with it. Brock keeps the same damage as before.',
+        'Damage Up is now All Damage Up at +5% per pick (was +10%). The type Damage cards stay at +15% and still add with it. Brock keeps the same damage as before.',
+      ],
+      [
+        'The DPS panel now lists each upgrade card with how many times you picked it ("Attack Speed Up x3"), and Vitamins by name ("Protein x2").',
+        'The DPS panel now lists each upgrade card with how many times you picked it ("Attack Speed Up x3"), and Vitamins by name ("Protein x2").',
+      ],
+      [
         'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
         'The coloured rings around your feet for team stat boosts are gone: the rising stat effect on your Pokémon and the new chips already show them, and regeneration shows as its REG chip.',
       ],

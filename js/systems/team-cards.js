@@ -27,7 +27,8 @@
  *   gateMul(o), durOf(o)     part C (COMBAT-RULES:SS10): the caster team's Gate multiplier and stat stage Duration (1 and 6.1 s with no store)
  *   regen(store), vit(store, k)   part D: the benched heal per second (fraction of max HP) and the team Vitamins bonus on stat k
  *   hasStat(def), selfOnly(def)   part E: a Gate / Duration taker; the new-path buff test for the 2-buff limit (every effect on its own side)
- *   stepText(card), summary(store)   parts E and F: card text, and the team sheet's "Run Cards" rows { id, label, family, stacks, total }
+ *   stepText(card), hintText(card), summary(store)   parts E and F: card text, its plain explanation (#84), and the team
+ *                            sheet's "Run Cards" rows { id, label, family, stacks, total }
  */
 G.TeamCards = (() => {
   const TAU = 6.2832,
@@ -211,27 +212,158 @@ G.TeamCards = (() => {
   }
 
   // ---- the catalogue (Jess, 2026-10-30; build plan 2026-10-31). `team` cards change no move field. ----
+  // Names and hints: docs/decisions/2026-11-11-84-upgrade-card-names-and-speed-framing.md (#84). The ids never change (saves, gym rosters).
+  // speed: a rate card named as a speed, so its "+X%" is exactly true (a wait divided by 1 + stacks x step is X% more per second);
+  // speedMax: the speed its floor allows (Impact Speed: the delay floor of half, so twice as fast). hint: the level-up card's plain
+  // explanation, before "Works on" (Recoil Reduction's is built from the real numbers in levelup.js).
   const CARDS = [
-    { id: 'gate', label: 'Gate Reduction', family: 'General', team: true, mode: 'rate', step: 0.1 },
-    { id: 'duration', label: 'Duration Increase', family: 'General', team: true, mode: 'inc', step: 0.1 },
-    { id: 'regen', label: 'HP Regen', family: 'General', team: true, mode: 'add', step: 0.005 },
-    { id: 'vitamins', label: 'Vitamins', family: 'General', team: true, mode: 'add', step: 0.05 },
-    { id: 'area', label: 'Area Up', family: 'Space', mode: 'inc', step: 0.15, targets: area },
-    { id: 'presence', label: 'Presence Up', family: 'Space', mode: 'inc', step: 0.15, targets: presence },
-    { id: 'count', label: 'Count Up', family: 'Space', mode: 'add', step: 1, cap: 3, w: 0.5, targets: count },
-    { id: 'pierce', label: 'Pierce Up', family: 'Space', mode: 'add', step: 1, cap: 4, w: 0.5, targets: pierce },
-    { id: 'chain', label: 'Chain Up', family: 'Space', mode: 'add', step: 1, targets: chain },
-    { id: 'reach', label: 'Reach Up', family: 'Delivery', mode: 'inc', step: 0.15, targets: reach },
-    { id: 'delay', label: 'Delay Down', family: 'Delivery', mode: 'rate', step: 0.15, targets: delay },
-    { id: 'velocity', label: 'Velocity Up', family: 'Delivery', mode: 'inc', step: 0.15, targets: velocity },
-    { id: 'time', label: 'Time Up', family: 'Delivery', mode: 'inc', step: 0.15, targets: time },
-    { id: 'cooldown', label: 'Cooldown Down', family: 'Delivery', mode: 'rate', step: 0.15, targets: cooldown },
-    { id: 'damage', label: 'Damage Up', family: 'Payload', mode: 'inc', step: 0.1, targets: damage },
-    { id: 'knockback', label: 'Knockback Up', family: 'Payload', mode: 'inc', step: 0.2, targets: knockback },
-    { id: 'ailment', label: 'Ailment Chance Up', family: 'Payload', mode: 'add', step: 10, targets: ailment },
-    { id: 'heal', label: 'Heal Up', family: 'Payload', mode: 'inc', step: 0.15, targets: heal },
-    { id: 'shield', label: 'Shield Up', family: 'Payload', mode: 'inc', step: 0.15, targets: shield },
-    { id: 'recoil', label: 'Recoil Down', family: 'Payload', mode: 'rate', step: 0.15, targets: recoil },
+    { id: 'gate', label: 'Stat Climb Speed Up', family: 'General', team: true, mode: 'rate', speed: true, step: 0.1 },
+    { id: 'duration', label: 'Stat Change Duration Up', family: 'General', team: true, mode: 'inc', step: 0.1 },
+    { id: 'regen', label: 'Bench Regeneration Up', family: 'General', team: true, mode: 'add', step: 0.005 },
+    { id: 'vitamins', label: 'Pick a Vitamin', family: 'General', team: true, mode: 'add', step: 0.05 },
+    {
+      id: 'area',
+      label: 'Size Up',
+      family: 'Space',
+      mode: 'inc',
+      step: 0.15,
+      targets: area,
+      hint: 'The whole attack grows (+15% area).',
+    },
+    {
+      id: 'presence',
+      label: 'Width Up',
+      family: 'Space',
+      mode: 'inc',
+      step: 0.15,
+      targets: presence,
+      hint: 'Attacks get wider, never longer: cones open, beams thicken.',
+    },
+    {
+      id: 'count',
+      label: 'Projectile Count Up',
+      family: 'Space',
+      mode: 'add',
+      step: 1,
+      cap: 3,
+      w: 0.5,
+      targets: count,
+      hint: 'One more projectile.',
+    },
+    {
+      id: 'pierce',
+      label: 'Pierce Up',
+      family: 'Space',
+      mode: 'add',
+      step: 1,
+      cap: 4,
+      w: 0.5,
+      targets: pierce,
+      hint: 'Shots pass through one more foe.',
+    },
+    {
+      id: 'chain',
+      label: 'Chain Hops Up',
+      family: 'Space',
+      mode: 'add',
+      step: 1,
+      targets: chain,
+      hint: 'Chaining attacks jump to one more foe.',
+    },
+    {
+      id: 'reach',
+      label: 'Range Up',
+      family: 'Delivery',
+      mode: 'inc',
+      step: 0.15,
+      targets: reach,
+      hint: 'Attacks reach farther and shots fly farther.',
+    },
+    {
+      id: 'delay',
+      label: 'Impact Speed Up',
+      family: 'Delivery',
+      mode: 'rate',
+      speed: true,
+      speedMax: 1,
+      step: 0.15,
+      targets: delay,
+      hint: 'Delayed hits land sooner, up to twice as fast.',
+    },
+    {
+      id: 'velocity',
+      label: 'Projectile Speed Up',
+      family: 'Delivery',
+      mode: 'inc',
+      step: 0.15,
+      targets: velocity,
+      hint: 'Projectiles fly faster and orbits spin faster.',
+    },
+    {
+      id: 'time',
+      label: 'Lifetime Up',
+      family: 'Delivery',
+      mode: 'inc',
+      step: 0.15,
+      targets: time,
+      hint: 'Puddles, traps and placed zones last longer.',
+    },
+    {
+      id: 'cooldown',
+      label: 'Attack Speed Up',
+      family: 'Delivery',
+      mode: 'rate',
+      speed: true,
+      step: 0.15,
+      targets: cooldown,
+      hint: 'Moves fire more often; lingering and repeating hits tick faster.',
+    },
+    {
+      id: 'damage',
+      label: 'All Damage Up',
+      family: 'Payload',
+      mode: 'inc',
+      step: 0.05,
+      targets: damage,
+      hint: 'Every move hits harder. Adds with the type Damage cards.',
+    },
+    {
+      id: 'knockback',
+      label: 'Knockback Up',
+      family: 'Payload',
+      mode: 'inc',
+      step: 0.2,
+      targets: knockback,
+      hint: 'Hits push foes farther.',
+    },
+    {
+      id: 'ailment',
+      label: 'Ailment Chance Up',
+      family: 'Payload',
+      mode: 'add',
+      step: 10,
+      targets: ailment,
+      hint: 'Status ailments land more often, up to a 100% chance.',
+    },
+    {
+      id: 'heal',
+      label: 'Heal Up',
+      family: 'Payload',
+      mode: 'inc',
+      step: 0.15,
+      targets: heal,
+      hint: 'Drain and healing moves heal more.',
+    },
+    {
+      id: 'shield',
+      label: 'Shield Up',
+      family: 'Payload',
+      mode: 'inc',
+      step: 0.15,
+      targets: shield,
+      hint: 'Shields absorb more damage.',
+    },
+    { id: 'recoil', label: 'Recoil Reduction', family: 'Payload', mode: 'rate', step: 0.15, targets: recoil },
   ];
   const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   for (const t of TYPES)
@@ -243,7 +375,8 @@ G.TeamCards = (() => {
       step: 0.15,
       type: t,
       targets: (d) => (d.type === t ? damage(d) : []),
-    }); // shares Damage Up's pool (same field)
+      hint: cap1(t) + ' moves hit harder. Adds with All Damage Up.',
+    }); // shares All Damage Up's pool (same field)
   const BY_ID = {};
   for (const c of CARDS) BY_ID[c.id] = c;
   const cardOf = (id) => BY_ID[id] || null;
@@ -384,12 +517,19 @@ G.TeamCards = (() => {
 
   // ---- parts E and F: card text and the run summary ----
   const r1 = (v) => String(Math.round(v * 10) / 10);
-  /** The step as card text: '+15%', '-15%', '+1', '+10 pts', '+0.5%/s'. */
+  /** The step as card text: '+15%', '-15%', '+1', '+10 pts', '+0.5%/s'. A speed card is '+' (#84). */
   function stepText(c) {
     if (c.id === 'regen') return '+' + r1(c.step * 100) + '%/s';
     if (c.id === 'ailment') return '+' + c.step + ' pts';
     if (c.mode === 'add' && c.step >= 1) return '+' + c.step;
-    return (c.mode === 'rate' ? '-' : '+') + Math.round(c.step * 100) + '%';
+    return (c.mode === 'rate' && !c.speed ? '-' : '+') + Math.round(c.step * 100) + '%';
+  }
+  /** The level-up card's plain explanation (#84): the card's hint, plus "Can be taken N times per run" for a capped card. */
+  function hintText(c) {
+    const parts = [];
+    if (c.hint) parts.push(c.hint);
+    if (c.cap) parts.push('Can be taken ' + c.cap + ' times per run.');
+    return parts.join(' ');
   }
   const FAM = ['General', 'Space', 'Delivery', 'Payload'];
   const STAT_NAME = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
@@ -402,7 +542,8 @@ G.TeamCards = (() => {
     { id: 'spd', label: 'Zinc', stat: 'Sp. Def', color: '#6ea4ff', cat: null },
     { id: 'spe', label: 'Carbos', stat: 'Speed', color: '#4dd6c8', cat: null },
   ];
-  /** The total of `n` stacks: a rate card shows its real cut (1 - 1 / (1 + total)), a capped card counts to its cap. */
+  /** The total of `n` stacks: a speed card shows its speed (stacks x step, up to speedMax), another rate card its real cut
+   *  (1 - 1 / (1 + total)), a capped card counts to its cap. */
   function totalText(c, n) {
     const k = c.cap ? Math.min(n, c.cap) : n,
       v = k * c.step,
@@ -410,6 +551,7 @@ G.TeamCards = (() => {
     if (c.id === 'regen') return '+' + r1(v * 100) + '% max HP/s, benched only';
     if (c.id === 'ailment') return '+' + v + ' pts';
     if (c.mode === 'add' && c.step >= 1) return '+' + v + capped;
+    if (c.speed) return '+' + Math.round((c.speedMax != null ? Math.min(v, c.speedMax) : v) * 100) + '%';
     if (c.mode === 'rate') return '-' + Math.round((1 - 1 / (1 + v)) * 100) + '%';
     return '+' + Math.round(v * 100) + '%';
   }
@@ -459,6 +601,7 @@ G.TeamCards = (() => {
     hasStat,
     selfOnly,
     stepText,
+    hintText,
     summary,
     STAT_NAME,
     STATS,

@@ -7,7 +7,7 @@
  * drawn in the first type's Base colour of the Pokemon on the field when that second ended, and a faint tick marks each
  * swap, so two Pokemon of the same type back to back still read (Jess, 2026-11-10). The scale fits the highest point shown.
  * Then a divider and the run's team upgrade cards (G.TeamCards.summary, the team sheet's "Run Cards" rows and order), each as
- * its name and how many times it was picked ("Damage Up x3"), never a total (#77, Jess 2026-11-11). A Vitamins row names
+ * its name and how many times it was picked ("Attack Speed Up x3"), never a total (#77, Jess 2026-11-11). A Vitamins row names
  * the vitamin ("Protein x2"). The divider and list hide while no card is picked.
  *
  * Font: Michroma for everything in the panel, not the pixel HUD font: the panel is a "module", not part of the game

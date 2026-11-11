@@ -243,7 +243,7 @@ G.Gyms = (() => {
       },
       // Brock's cards gained per loop (Jess 2026-11-05: per leader, cumulative). Loop 1 (Jess 2026-10-31, the pilot): Tackle Power 52, reach 70;
       // Rock Throw Power 58.5, 3 rocks of size 11.7 at 377 px/s; Harden takes none. Loops 2 to 6 gain nothing yet (TUNE).
-      cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } },
+      cards: { 1: { damage: 6, count: 2, velocity: 3, area: 2 } }, // damage 6: All Damage Up is +5% since #84, so Brock keeps +30%
       signatures: [
         // power: damage multiplier on the ratio path; tempo: attack-rate multiplier (cooldowns, tell and recovery divided by it). Both TUNE, default 1.
         // Slot 1: Geodude -> Graveler -> Golem (the pilot; hand-tuned).

@@ -1188,7 +1188,7 @@ async function dpsPanel(browser) {
   );
   ok(state.tickColumns >= 1, 'dps: a swap tick marks the change (' + state.tickColumns + ' columns)');
 
-  // team upgrade cards: two Gate Reduction picks and one Vitamins (Attack); each row is the name and its pick count (#77)
+  // team upgrade cards: two Stat Climb Speed Up picks and one Vitamins (Attack); each row is the name and its pick count (#77)
   await page.evaluate(() => {
     G.TeamCards.add(G.Game.player.teamCards, 'gate', 2);
     G.TeamCards.add(G.Game.player.teamCards, 'vitamins:atk', 1);
@@ -1197,7 +1197,7 @@ async function dpsPanel(browser) {
   state = await dpsState(page);
   ok(state.divider, 'dps: the divider shows once a card is picked');
   ok(
-    state.cards.map((card) => card.label).join(' | ') === 'Gate Reduction | Protein',
+    state.cards.map((card) => card.label).join(' | ') === 'Stat Climb Speed Up | Protein',
     'dps: the list names the run cards (' + state.cards.map((card) => card.label).join(' | ') + ')'
   );
   ok(

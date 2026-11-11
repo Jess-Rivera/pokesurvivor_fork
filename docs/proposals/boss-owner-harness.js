@@ -75,7 +75,7 @@ const rockFactor = (lvl = 20) => G.Stats.enemyAttackFactor(80, 30, lvl, 45 * 1.3
   ok(JSON.stringify(Gy.cardsFor(fake, 1)) === '{"damage":3}' && JSON.stringify(Gy.cardsFor(fake, 2)) === '{"damage":4,"area":1}', 'a leader card pool is the running sum of the loops gained so far');
   const over = JSON.parse(JSON.stringify(BROCK)); over.cards[2] = { count: 2 };
   ok(Gy.validate(over).some(m => m.includes('capped at 3')), 'a cap counts the stacks gained in earlier loops'); }
-ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 2, velocity: 3, area: 2 }), 'Brock loop 1 cards are Damage 3, Count 2, Velocity 3, Area 2');
+ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 6, count: 2, velocity: 3, area: 2 }), 'Brock loop 1 cards are All Damage 6 (+30% at +5% since #84), Count 2, Velocity 3, Area 2');
   ok(PILOT.map(m => m.id).join() === 'tackle,rock-throw,harden', 'slot 1 pilot set (loop 2 on)');
   ok(SLOT1.sets[1].map(m => m.id).join() === 'tackle,defense-curl,rock-throw', 'slot 1 loop 1: Tackle, Defense Curl, Rock Throw (Jess 2026-11-02)');
   ok(Gy.movesFor(SLOT1, 0, 1) === SLOT1.sets[1] && [2, 3, 6].every(L => Gy.movesFor(SLOT1, 0, L) === PILOT), 'movesFor: loop 1 its own set, loops 2 to 6 hold the pilot set');
@@ -115,7 +115,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 3, count: 
     ['typo on a slot', s => { s.cardz = {}; }, 'unknown field cardz']
   ];
   for (const [name, mut, needle] of cases) { const out = flags(mut); ok(out.some(m => m.includes(needle)), 'validate missed "' + name + '" (wanted ' + needle + '): ' + JSON.stringify(out)); }
-  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with Damage 3, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
+  console.log('1 data: Brock valid; slot 1 loop 1 = Tackle, Defense Curl, Rock Throw, loop 2 on the pilot Tackle, Rock Throw, Harden with All Damage 6, Count 2, Velocity 3, Area 2; ' + cases.length + ' negative cases flagged'); }
 
 // 2. the owner: player size, its own folded defs, the player as its only foe
 { fresh(); const e = mkBoss(), b = e.brain;

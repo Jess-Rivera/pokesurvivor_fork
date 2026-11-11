@@ -21,8 +21,9 @@ re-tune later.
   from Vampire Survivors, Brotato, and Halls of Torment where useful.
 
 ## Moves
+- 2026-11-11, upgrades, Damage Up step: +10% -> +5% per pick, renamed All Damage Up (#84, Jess: all-type damage is too wide next to the +15% type cards; it still adds with them). Brock loop 1: damage 3 -> 6 so he keeps +30%.
 - Playtest round 1 sizes (fix/playtest-round-1, Jess 2026-11-04; TUNE): base radius cut, time to full size kept. Hyper Voice 380 to 200, Earthquake 260 to 200, Dark Pulse 200 to 160, Bulldoze 200 to 140, Growl, Leer and Tail Whip 160 to 120, Flamethrower 250 to 150. Roar stays 160 (its own MOVE-INTENT ruling). Why: Hyper Voice covered more area than the whole view, and Flamethrower was over twice the longest melee cone. Source: docs/move_rework_holding/move-conversions-described.json.
-- Area Up (fix/playtest-round-1, Jess 2026-11-04; TUNE): still +15% per pick, now of covered area on every shape. A radius grows by the square root of 1 + 0.15 x picks (5 picks: radius x1.32, area x1.75; was radius x1.75, area x3.06). A beam's length, a wave's width and an orbit's radius keep 1 + 0.15 x picks. Why: round shapes gained area with the square of the step, beams in a straight line. Melee cones lose reach from this too (Tackle after 5 picks: 71 px, was 94). js/systems/team-cards.js.
+- Area Up, named Size Up since #84 (fix/playtest-round-1, Jess 2026-11-04; TUNE): still +15% per pick, now of covered area on every shape. A radius grows by the square root of 1 + 0.15 x picks (5 picks: radius x1.32, area x1.75; was radius x1.75, area x3.06). A beam's length, a wave's width and an orbit's radius keep 1 + 0.15 x picks. Why: round shapes gained area with the square of the step, beams in a straight line. Melee cones lose reach from this too (Tackle after 5 picks: 71 px, was 94). js/systems/team-cards.js.
 ### Canonical power migration (2026-10-17)
 - All 64 moves now carry canonical mainline base power in the `dmg` field (Approach B: field name kept,
   values migrated). Status moves = dmg 0 (they route through the neutral denominator, no A/D ratio).
