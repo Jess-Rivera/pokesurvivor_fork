@@ -32,6 +32,8 @@ G.HudPlayerPanel = (() => {
     // #76: two chip bands of two lines each at fixed heights; the good band sits 12 px above the bad band's top line
     CHIP_BANDS = { x: -244, badY: 172, goodY: 238, chipsPerLine: 6, width: 70, gap: 6 },
     PROMPT = { centreX: -21, y: 304, artRows: 24, padArt: 14 }, // above the four chip lines (#76)
+    // the draining bar (Jess, 2026-11-11): white, on the two lowest shade rows inside the outline, clear of the pointed ends
+    PROMPT_TIMER = { bottomArt: 1, heightArt: 2, insetArt: 11 },
     PORTRAIT = { centreX: -281, y: 36, size: 116 },
     ITEM = { x: 222, y: 74, artSize: 20, nameY: 48 }, // right of the slots (Jess, 2026-11-10: swapped with Lv)
     SILVER = { right: -260, coinY: 160, coinSize: 32 }, // 12 px below the chips' line (Jess, 2026-11-10)
@@ -65,6 +67,7 @@ G.HudPlayerPanel = (() => {
     badChips = signal([]), // { key, label, fill, shade, text, timer (0 to 1, or null) }: statuses, then stat drops
     goodChips = signal([]), // stat raises, the team's timed effects, the altar power
     prompt = signal(''), // the Shake Off text, or '' when nothing can be shaken off
+    promptTimer = signal(null), // 0 to 1: time left on the status a Shake Off tap would shorten, or null
     slots = signal([]), // per slot: { key, keyLabel, rim, active, moves: [{ id, icon, iconSize }] }
     moveCooldowns = signal([]), // per slot, per well: { shade (0 to 1), flash (0 to 1) }
     item = signal(null), // { id, name, icon }
@@ -205,8 +208,43 @@ G.HudPlayerPanel = (() => {
               />`
           : null
       }
+      ${
+        artWidth && promptTimer.value != null
+          ? html`<div
+              class="hud-prompt-timer"
+              style=${{
+                left: PROMPT_TIMER.insetArt * ART_PIXEL + 'px',
+                width: (artWidth - 2 * PROMPT_TIMER.insetArt) * ART_PIXEL + 'px',
+                bottom: PROMPT_TIMER.bottomArt * ART_PIXEL + 'px',
+                height: PROMPT_TIMER.heightArt * ART_PIXEL + 'px',
+                transform: 'scaleX(' + promptTimer.value + ')',
+              }}
+            ></div>`
+          : null
+      }
       <span class="hud-text hud-prompt-text" ref=${textRef}>${text}</span>
     </div>`;
+  }
+
+  /** The Shake Off bar (Jess, 2026-11-11): the status a tap would shorten, from the most time seen since it became the target
+   *  down to the shake floor, where the prompt leaves. A stronger status taking over starts a full bar again. */
+  let promptTimerKey = null,
+    promptTimerPeak = 0;
+  function readPromptTimer(player) {
+    const target = G.Status.shakeTarget(player);
+    if (!target) {
+      promptTimerKey = null;
+      promptTimer.value = null;
+      return;
+    }
+    if (target.k !== promptTimerKey) {
+      promptTimerKey = target.k;
+      promptTimerPeak = 0;
+    }
+    promptTimerPeak = Math.max(promptTimerPeak, target.t);
+    const span = promptTimerPeak - target.floor,
+      fraction = span > 0 ? Math.max(0, Math.min(1, (target.t - target.floor) / span)) : 0;
+    promptTimer.value = Math.round(fraction * 100) / 100;
   }
 
   /** Well centres along a slot, in px from its left edge: clear of the slanted ends, evenly spread. */
@@ -462,6 +500,7 @@ G.HudPlayerPanel = (() => {
     level.value = String(player.level);
     bonds.value = player.bonds || 0;
     readChips(player);
+    readPromptTimer(player);
     prompt.value = G.Status.shakeable(player)
       ? G.Settings.get('autoShake')
         ? 'Shaking off...'

@@ -565,6 +565,47 @@ async function playerPanel(browser) {
     'player: the Shake Off prompt "' + (state.promptText || '') + '" is centred over the life meter'
   );
 
+  // the Shake Off bar (Jess, 2026-11-11): white, drains with the status a tap would shorten, drops on a tap
+  const promptBar = () =>
+    page.evaluate(() => {
+      const bar = document.querySelector('.hud-prompt-timer');
+      if (!bar) return null;
+      const match = /scaleX\(([\d.]+)\)/.exec(bar.style.transform);
+      return { fraction: match ? +match[1] : null, colour: getComputedStyle(bar).backgroundColor };
+    });
+  const barStart = await promptBar();
+  ok(
+    barStart && barStart.colour === 'rgb(255, 255, 255)' && barStart.fraction > 0.9,
+    'player: the Shake Off bar is white and full when the status lands (' + JSON.stringify(barStart) + ')'
+  );
+  await page.waitForTimeout(1000);
+  const barLater = await promptBar();
+  ok(
+    barLater && barStart && barLater.fraction < barStart.fraction - 0.1,
+    'player: the Shake Off bar drains (' +
+      (barStart && barStart.fraction) +
+      ' to ' +
+      (barLater && barLater.fraction) +
+      ')'
+  );
+  await page.evaluate(() => {
+    const pl = G.Game.player;
+    for (let tap = 0; tap < 4; tap++) {
+      pl.shakeCd = 0;
+      G.Status.shake(pl);
+    }
+  });
+  await page.waitForTimeout(100);
+  const barShaken = await promptBar();
+  ok(
+    barShaken && barLater && barShaken.fraction < barLater.fraction - 0.1,
+    'player: four Shake Off taps drop the bar (' +
+      (barLater && barLater.fraction) +
+      ' to ' +
+      (barShaken && barShaken.fraction) +
+      ')'
+  );
+
   // bad poison: the PSN chip with the darker shade
   await page.evaluate(() => {
     const pl = G.Game.player;

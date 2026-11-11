@@ -345,6 +345,11 @@
     opacity: 1;
   }
 }
+.hud-prompt-timer {
+  position: absolute;
+  background: #ffffff; /* the draining bar (Jess, 2026-11-11), steady while the badge flashes */
+  transform-origin: 0 0;
+}
 .hud-prompt-text {
   position: absolute;
   left: 28px;

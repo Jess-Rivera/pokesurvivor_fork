@@ -356,12 +356,18 @@ G.Status = (() => {
     return null;
   }
 
+  /** The status the next Shake off tap would shorten: { k, t, floor }, or null. Read only (the HUD prompt's draining bar). */
+  function shakeTarget(h) {
+    for (const k of SHAKE.order) {
+      const o = timeOf(h, k);
+      if (o && o.t > SHAKE.floor + 1e-6) return { k, t: o.t, floor: SHAKE.floor };
+    }
+    return null;
+  }
+
   /** Is anything on `h` that Shake off can work on right now? (HUD prompt.) */
   function shakeable(h) {
-    return SHAKE.order.some((k) => {
-      const o = timeOf(h, k);
-      return o && o.t > SHAKE.floor + 1e-6;
-    });
+    return !!shakeTarget(h);
   }
 
   /**
@@ -499,6 +505,7 @@ G.Status = (() => {
     swapLocked,
     immuneNote,
     shakeable,
+    shakeTarget,
     shake,
     autoShake,
     fizzle,

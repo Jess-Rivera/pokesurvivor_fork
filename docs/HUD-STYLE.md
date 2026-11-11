@@ -650,6 +650,9 @@ draws them, from `G.STATUS_ANIMS` (`js/data/status-anims.js`, baked by `node too
   timer bar shrinks with the status's time left (against the most time seen since it appeared).
 - `[Approved]` **Shake Off prompt:** flashes between the Lv yellow and white 3 times a second, the usual
   photosensitivity limit (Jess, 2026-11-10). Text 30 px; "Shaking off..." while auto-shake is on.
+- `[Approved]` **Shake Off draining bar** (Jess, 2026-11-11): a steady white bar on the badge's two lowest shade rows, clear of
+  the pointed ends. It follows the status the next tap would shorten (G.Status.shakeTarget), from the most time seen since
+  it became the target down to the shake floor, where the prompt leaves; a tap drops it, a stronger status refills it.
 - `[Approved]` **Move wells:** the cooldown is a clock wipe (Jess, 2026-11-10): a 60% `#101010` shade covers the part
   still recharging and shrinks clockwise from the top. A cast flashes the well white, fading over 0.18 s (as the old
   canvas bar).
