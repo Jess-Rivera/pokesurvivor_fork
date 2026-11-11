@@ -9,7 +9,7 @@
  * Right column: the stat hex, then the move list (bonded groups framed together, a type coloured scroll bar). The boxes
  * are the roster card's box with a flat body, rimmed in the first type.
  *
- * Stat hex (Jess, 2026-11-11): the real stats from the game's formula (G.Stats, HP as the game shows it) with the species'
+ * Stat hex (Jess, 2026-11-11): the real stats from the game's formula (G.Stats, HP at mainline size) with the species'
  * base stats and this copy's IVs, EVs and nature, as three bands growing out from each other: the first type's colour at
  * 60% = the stats at level 1 (every member starts the run there); white = the growth from level 1 to its level now;
  * yellow = what cards and run effects add (the bonus combat uses: incOf, and the real max HP). The edge is 50 while the
@@ -86,26 +86,30 @@ G.PausePokemon = (() => {
   const typesOf = (member) => (member.mon && member.mon.types) || ['normal'];
 
   // ---------- the stat hex's numbers ----------
-  /** The six stats ([HP, Atk, Def, SpA, SpD, Spe]) at `level` from base stats, IVs, EVs and nature (G.Stats). */
+  // HP is drawn at its mainline size (Jess, 2026-11-11): the game doubles every HP (HP_SCALAR, COMBAT-RULES), which would
+  // make HP tower over the other five; mainline matches the online calculators and the other stats' scale.
+  const mainlineHp = (gameHp) => gameHp / (G.Stats.HP_SCALAR || 1);
+  /** The six stats ([HP, Atk, Def, SpA, SpD, Spe]) at `level` from base stats, IVs, EVs and nature (G.Stats), HP mainline. */
   function statsAt(member, level) {
     const base = (member.mon && member.mon.stats) || [0, 0, 0, 0, 0, 0];
     return base.map((baseStat, index) =>
       index === 0
-        ? G.Stats.hpForLevel(baseStat, level, member.statIv(0), member.statEv(0))
+        ? mainlineHp(G.Stats.hpForLevel(baseStat, level, member.statIv(0), member.statEv(0)))
         : G.Stats.statValue(baseStat, level, member.statIv(index), member.statEv(index), member.statNat(index))
     );
   }
   /** { start, now, withRun, bonus }: six numbers each (bonus a fraction, 0.1 = +10%). */
   function hexNumbers(member) {
     const start = statsAt(member, 1),
-      now = statsAt(member, member.level);
+      now = statsAt(member, member.level),
+      maxHp = mainlineHp(Math.round(member.maxHp)); // the real max HP: HP Up cards and flat perks on top
     const bonus = now.map((value, index) => {
-      if (index === 0) return value > 0 ? Math.max(0, Math.round(member.maxHp) / value - 1) : 0;
+      if (index === 0) return value > 0 ? Math.max(0, maxHp / value - 1) : 0;
       const key = HEX_AXES.find(([statIndex]) => statIndex === index)[2];
       return Math.max(0, member.incOf(key));
     });
     const withRun = now.map((value, index) =>
-      index === 0 ? Math.max(value, Math.round(member.maxHp)) : Math.round(value * (1 + bonus[index]))
+      index === 0 ? Math.max(value, maxHp) : Math.round(value * (1 + bonus[index]))
     );
     return { start, now, withRun, bonus };
   }

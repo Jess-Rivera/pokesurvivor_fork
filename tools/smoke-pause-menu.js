@@ -324,7 +324,7 @@ async function main() {
         })),
         edge: +detail.querySelector('.pm-hex').dataset.edge,
         highest: Math.max(
-          member.maxHp,
+          member.maxHp / G.Stats.HP_SCALAR, // the hex draws HP at mainline size
           ...[1, 2, 3, 4, 5].map((i) =>
             G.Stats.statValue(member.mon.stats[i], member.level, member.statIv(i), member.statEv(i), member.statNat(i))
           )
@@ -377,14 +377,25 @@ async function main() {
   const savedMaxHp = await page.evaluate(() => {
     const member = G.Game.player,
       saved = member.maxHp;
-    member.maxHp = 250;
+    member.maxHp = 250 * G.Stats.HP_SCALAR; // 250 mainline HP
     G.PauseMenu.hideNow();
     G.PauseMenu.open();
     return saved;
   });
   await sleep(FULL_MS);
   hex = await hexMakeUp();
-  ok(hex.edge === 300, 'a stat of 250 moves the hex edge to 300 (' + hex.edge + ')');
+  ok(hex.edge === 300, 'a mainline HP of 250 moves the hex edge to 300 (' + hex.edge + ')');
+  ok(
+    await page.evaluate(() => {
+      const hexBox = document.querySelector('.pm-hex'),
+        top = hexBox
+          .querySelector('.pm-hex-run') // the outermost band: its first point is HP's tip
+          .getAttribute('d')
+          .match(/M[0-9.]+ ([0-9.]+)/)[1];
+      return Math.abs(+top - (hexBox.offsetHeight / 2 + 4 - 72 * (250 / 300))) < 1.5;
+    }),
+    'HP is drawn at its mainline size (250 of the 300 edge, not the game doubled 500)'
+  );
   await page.evaluate((saved) => {
     G.Game.player.maxHp = saved;
     G.Game.player.hp = Math.min(G.Game.player.hp, saved);

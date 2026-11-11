@@ -59,7 +59,8 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   yellow corner highlight on the team panel and dims the giver as not selectable; its label becomes "Cancel" while
   giving; Cancel or Esc cancels and the label returns to "Give".
 - [Approved] IV hex (Jess, 2026-11-11, settled after three rounds the same day): drawn in real stat numbers from the
-  game's formula (G.Stats, nature included; HP as the game shows it, so a level 1 Snivy has 24 HP) with the species'
+  game's formula (G.Stats, nature included; HP at its mainline size, before the game's HP_SCALAR doubling, so it matches
+  the online calculators and the other five's scale, while the HP bar keeps the game's number) with the species'
   base stats and this copy's IVs and EVs. Three bands, each growing out from the one inside it (no overlap): the first
   type's colour at 60% = the stats at level 1; white = the growth from level 1 to its level now; yellow = what cards
   and run effects add (the bonus combat uses). The edge is 50 while the highest stat is under 50, else the next
