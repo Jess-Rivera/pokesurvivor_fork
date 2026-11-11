@@ -16,9 +16,18 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
 - [Approved] End Run asks first: a confirmation "End Run?" with "No" (white, the default) and "End" (red).
 - [Approved] Closing plays the opening in reverse: panels slide out, the ball closes, circle and dim fade.
 
-## 2. Panels slide in
-- [Approved] Once the ball is fully open, the Pokemon detail panel slides in from the right, the team panel from the
-  bottom, the Run Info panel from the left, and the Run Inventory panel from the top.
+## 2. Panels slide in, timing and layout (feel test, Jess 2026-11-11)
+
+- [Approved] The panels slide in WHILE the ball opens (one step): Run Info from the left, the Pokemon detail panel
+  from the right, the team panel from the bottom, the Run Inventory from the top.
+- [Approved] The caps are a layer above the buttons, so the opening ball uncovers them.
+- [Approved] Closed, the halves meet and a white centre button with a black stroke fills the hole between their
+  notches; it rides on the top cap as the ball opens.
+- [Approved] Buttons take the run screen's move slot shape, flat body, no grid.
+- [Approved] Opening is about 0.9x the first build (about 0.62 s: 0.15 s dim and closed ball, 0.47 s ball and
+  panels); closing is the reverse at about twice the speed (about 0.31 s).
+- [Approved] The ball sits at the screen's centre. Run Info is the same size as the Pokemon detail panel, both the
+  same distance either side of the ball; team and Run Inventory are centred under and over it.
 
 ## 3. Run Inventory panel (top, not in the mockup)
 Three partitions, each a 2x2 grid of 4 square slots (Jess, 2026-11-11):

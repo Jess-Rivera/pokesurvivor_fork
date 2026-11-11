@@ -29,7 +29,7 @@ const ok = (c, m) => {
   console.log((c ? 'ok    ' : 'FAIL  ') + m);
   if (!c) fail++;
 };
-const FULL_MS = 900; // the whole opening or closing is 0.7 s (STEP_MS), plus slack
+const FULL_MS = 900; // the whole opening is 0.62 s (OPEN_MS) and the closing 0.31 s (CLOSE_MS), plus slack
 
 async function main() {
   const browser = await chromium.launch();
@@ -93,14 +93,18 @@ async function main() {
         open: G.PauseMenu.isOpen(),
         closing: G.PauseMenu.isClosing(),
         fully: G.PauseMenu.isFullyOpen(),
-        steps: [1, 2, 3].filter((n) => layer.classList.contains('pm-step' + n)),
+        steps: [1, 2].filter((n) => layer.classList.contains('pm-step' + n)),
         ball: visible(document.querySelector('.pm-centre')),
         buttons: [...document.querySelectorAll('.pm-button')].map((b) => b.textContent.trim()),
         buttonsShown: getComputedStyle(document.querySelector('.pm-buttons')).opacity > 0.95,
         panels: [...document.querySelectorAll('.pm-panel')].filter(visible).map((p) => p.dataset.panel),
         focus: focused ? focused.textContent.trim() : null,
-        focusRim: focused ? getComputedStyle(focused).backgroundColor : null,
-        otherRim: getComputedStyle(document.querySelector('.pm-button:not(.focused)')).backgroundColor,
+        // the move slot rim's base colour, drawn as SVG rects (the kit's moveSlotRow)
+        focusRim: focused ? [...focused.querySelectorAll('rect')].map((r) => r.getAttribute('fill')) : [],
+        otherRim: [...document.querySelector('.pm-button:not(.focused)').querySelectorAll('rect')].map((r) =>
+          r.getAttribute('fill')
+        ),
+        centreButton: !!document.querySelector('.pm-cap-top .pm-cap-button'),
         hudOpacity: +getComputedStyle(document.querySelector('.hud-overlay')).opacity,
         oldScreen: G.UI.isOpen('scr-pause'),
         settings: G.SettingsUI.isOpen,
@@ -117,13 +121,18 @@ async function main() {
   };
 
   // ---- opening ----
+  const openedAt = Date.now();
   await key('Escape');
   let s = await look();
   ok(s.state === 'paused' && s.open && !s.oldScreen, 'Escape pauses and shows the Poke Ball menu, not the old sheet');
-  ok(s.steps.length >= 1 && s.steps.length < 3, 'mid-opening: the steps are still playing (' + s.steps.join(',') + ')');
-  await sleep(FULL_MS);
+  ok(s.steps.length === 1, 'mid-opening: step 1 (dim, closed ball) plays first (' + s.steps.join(',') + ')');
+  ok(s.centreButton, 'the top cap carries the white centre button');
+  await shot('pause-menu-closed-ball.png');
+  await page.waitForFunction(() => G.PauseMenu.isFullyOpen(), null, { timeout: 3000 });
+  const openMs = Date.now() - openedAt;
+  ok(openMs >= 500 && openMs <= 900, 'opening takes about 0.62 s (' + openMs + ' ms, key press included)');
   s = await look();
-  ok(s.fully && s.steps.join(',') === '1,2,3', 'fully open after the opening (steps ' + s.steps.join(',') + ')');
+  ok(s.fully && s.steps.join(',') === '1,2', 'fully open after the opening (steps ' + s.steps.join(',') + ')');
   ok(!(await clockMoves()), 'the run clock is stopped while paused');
   ok(s.ball, 'the circle and ball are shown');
   ok(s.buttons.join('|') === 'Resume|End Run|Settings' && s.buttonsShown, 'buttons: ' + s.buttons.join(', '));
@@ -133,7 +142,10 @@ async function main() {
   );
   ok(s.hudOpacity === 0, 'the run HUD steps aside (opacity ' + s.hudOpacity + ')');
   ok(s.focus === 'Resume', 'Resume has the focus first');
-  ok(s.focusRim === 'rgb(56, 208, 48)' && s.otherRim === 'rgb(255, 255, 255)', 'focus rim green, others white');
+  ok(
+    s.focusRim.includes('#38d030') && !s.otherRim.includes('#38d030') && s.otherRim.includes('#e7e7e7'),
+    'move slot shaped buttons: focus rim green, others white'
+  );
   await shot('pause-menu-open.png');
 
   // ---- focus by key and by hover ----
@@ -149,11 +161,18 @@ async function main() {
   ok((await look()).focus === 'End Run', 'hover moves the focus');
 
   // ---- closing, and turning it around ----
+  const closedAt = Date.now();
   await key('Escape');
   s = await look();
   ok(s.state === 'paused' && s.closing, 'Escape starts the closing, the game still paused');
-  ok(!(await clockMoves()), 'the run clock stays stopped during the closing');
+  const timeAtClose = s.time;
   await page.waitForFunction(() => !G.PauseMenu.isOpen(), null, { timeout: 3000 });
+  const closeMs = Date.now() - closedAt;
+  ok(
+    closeMs <= 550,
+    'closing takes about 0.31 s, about twice as fast as opening (' + closeMs + ' ms, key press included)'
+  );
+  ok((await page.evaluate(() => G.Log.t)) - timeAtClose < 0.1, 'the run clock stayed stopped during the closing');
   s = await look();
   ok(s.state === 'playing' && !s.open, 'once the menu is gone, play resumes');
   ok(await clockMoves(), 'the run clock runs again');

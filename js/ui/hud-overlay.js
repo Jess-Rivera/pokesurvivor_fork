@@ -94,6 +94,33 @@ G.HudOverlay = (() => {
     </svg>`;
   }
 
+  // ---------- the B2 move button (b2-lower F15 to J16, measured 2026-11-10) ----------
+  /**
+   * Its left end, row by row, at half the rip's height (22 rows): a short 45 degree run down to a flat point (rows 6 to 8),
+   * then a steep run back, one pixel across per two rows. The right end is the same profile turned 180 degrees.
+   */
+  const moveSlotLeftEdge = (row) => (row <= 5 ? 6 - row : row <= 8 ? 0 : Math.ceil((row - 8) / 2));
+
+  /** One row of the B2 move button: outline, a rim ramp ({ light, base, dark }) at both ends, and bodyFill inside.
+   *  Used by the run screen's move slots (hud-player-panel.js) and the pause menu's buttons (pause-menu.js). */
+  function moveSlotRow(row, artWidth, artRows, rim, bodyFill) {
+    const left = moveSlotLeftEdge(row),
+      right = artWidth - 1 - moveSlotLeftEdge(artRows - 1 - row);
+    if (row === 0 || row === artRows - 1) return [[left, right - left + 1, PALETTE.outline]];
+    const inner = row === 1 || row === artRows - 2 ? rim.dark : null;
+    const ends = [
+      [left, 1, PALETTE.outline],
+      [left + 1, 1, rim.light],
+      [left + 2, 1, rim.base],
+      [left + 3, 1, PALETTE.outline],
+      [right - 3, 1, PALETTE.outline],
+      [right - 2, 1, rim.base],
+      [right - 1, 1, rim.light],
+      [right, 1, PALETTE.outline],
+    ];
+    return [[left + 4, right - 3 - (left + 4), inner || bodyFill], ...ends];
+  }
+
   // ---------- the B2 bag button (b2-lower Y4 to AB5): a square with chamfered corners, a rim and the checker body ----------
   function bagButtonRow(row, artSize, rimColour) {
     const chamfer = row < 2 ? 2 - row : row > artSize - 3 ? row - (artSize - 3) : 0,
@@ -711,6 +738,7 @@ G.HudOverlay = (() => {
     FAINTED_RIM,
     PixelShape,
     bagButtonRow,
+    moveSlotRow,
     IconCanvas,
     ItemSquare,
     Cursor,
