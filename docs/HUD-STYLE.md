@@ -508,20 +508,20 @@ this is its own slice.
 
 | Status      | Kind  | Art                                          | Frames                 | Placement                          | Source                               |
 | ----------- | ----- | -------------------------------------------- | ---------------------- | ---------------------------------- | ------------------------------------ |
-| Burn        | major | Small flame                                  | 7 of 16 x 16, 100 ms   | Above the head                     | `burned-new.gif`                     |
-| Poison      | major | Purple bubbles that rise, swell and pop      | 29 of 43 x 35, 100 ms  | Over the body                      | `poisoned-new.gif`                   |
-| Bad poison  | major | Poison's bubbles, darker                     | 29 of 43 x 35, 100 ms  | Over the body                      | `badly-poisoned-new.gif`             |
-| Paralysis   | major | Lightning crackling round the body           | 8 of 78 x 68, 100 ms   | Around the body                    | `paralyzed-new.gif`                  |
-| Sleep       | major | Three Z's, small to large, pink              | 1.8 s cycle            | Above the head                     | Text, drawn in code (no new art)     |
-| Freeze      | major | Ice block                                    | 6 of 32 x 31, 100 ms   | Over the body                      | `freeze-new.gif`                     |
-| Confusion   | minor | Four yellow birds circling the head          | 4 of 32 x 16, 120 ms   | The birds' middle just above the head | `confused-alt-new.gif`            |
-| Daze        | minor | Question mark                                | 10 of 13 x 18, 100 ms  | Above the head                     | `daze-new.gif`                       |
-| Trap        | minor | A web that spins out round the Pokemon       | 31 of 27 x 33, 100 ms  | Over the body                      | `trapped-new.gif`                    |
-| Drowsy      | minor | A pink bubble that grows and pops            | 13 of 24 x 26, 100 ms  | Beside the head                    | `drowsy-new.gif`                     |
-| Slow        | minor | Speed down's streaks, Speed colours          | as Stat down           | Over the body                      | Arrow in reserve (old sheet row)     |
-| Haste       | minor | Speed up's ring and streaks, Speed colours   | as Stat up             | Ring under the feet, streaks over the body | Arrow in reserve (flipped, blue) |
-| Stat up     | stage | A blue ring at the feet, then rising streaks | 15 of 35 x 48, 100 ms  | Ring under the feet, streaks over the body | `status-up-base-new` and `status-up-fore-new` |
-| Stat down   | stage | Falling streaks                              | 11 of 31 x 47, 100 ms  | Over the body                      | `status-down-new.gif`                |
+| Burn | major | Small flame | 7 of 16 x 16, 100 ms | At the feet | `burned-new.gif` |
+| Poison | major | Purple bubbles that rise, swell and pop | 29 of 43 x 35, 100 ms | At the feet | `poisoned-new.gif` |
+| Bad poison | major | Poison's bubbles, darker | 29 of 43 x 35, 100 ms | At the feet | `badly-poisoned-new.gif` |
+| Paralysis | major | Lightning crackling round the body | 8 of 78 x 68, 100 ms | Centred on the body | `paralyzed-new.gif` |
+| Sleep | major | Three Z's, small to large, pink | 1.8 s cycle | Floating above the head | Text, drawn in code (no new art) |
+| Freeze | major | Ice block | 6 of 32 x 31, 100 ms | Centred on the body | `freeze-new.gif` |
+| Confusion | minor | Four yellow birds circling the head | 4 of 32 x 16, 120 ms | Floating above the head | `confused-alt-new.gif` |
+| Daze | minor | Question mark | 10 of 13 x 18, 100 ms | Floating above the head | `daze-new.gif` |
+| Trap | minor | A web that spins out round the Pokemon | 31 of 27 x 33, 100 ms | Centred on the body | `trapped-new.gif` |
+| Drowsy | minor | A pink bubble that grows and pops | 13 of 24 x 26, 100 ms | Floating above the head | `drowsy-new.gif` |
+| Slow | minor | Speed down's streaks, Speed colours | as Stat down | As Stat down | Arrow in reserve (old sheet row) |
+| Haste | minor | Speed up's ring and streaks, Speed colours | as Stat up | As Stat up | Arrow in reserve (flipped, blue) |
+| Stat up | minor | A blue ring at the feet, then rising streaks | 15 of 35 x 48, 100 ms | Ring at the feet, streaks centred on the body | `status-up-base-new` and `status-up-fore-new` |
+| Stat down | minor | Falling streaks | 11 of 31 x 47, 100 ms | Centred on the body | `status-down-new.gif` |
 
 - `[Approved]` **Stat colours:** stat up's streaks (the fore layer, not the ring, which stays blue) and stat down's
   streaks are recoloured per stat from UI-PALETTES "Pokemon Stats": the yellow streaks take the stat's Light and Base,
@@ -534,12 +534,25 @@ this is its own slice.
 - `[Approved]` **Sleep and drowsy** read differently, so drowsy is the warning before sleep.
 - `[Approved]` **Several stat changes at once** all play together, each offset 3 px from the centre, evenly spaced
   round the circle, and each starts a third of its animation after the one before (Jess, 2026-11-11).
-- `[Proposed]` **Placement** uses the sprite's top and centre for now. SpriteCollab's per-frame head and centre points
-  (`-Offsets.png`, the #71 comment) would pin them frame by frame; that is a separate game-data change.
+- `[Approved]` **Placement** is the Placement column (Jess's table, 2026-11-11). Feet, head and body are the game's
+  own points on each Pokemon, not the preview GIFs':
+  - **Feet:** the entity's position (`x`, `y`), the sprite's ground anchor, where its shadow is drawn.
+  - **Head:** `y - bodyH`, where `bodyH` is the Idle frame's ground anchor height times the sprite scale
+    (`G.Sprites.bodyHeight`); damage numbers and the drowsy zzz float just above it today.
+  - **Body centre:** halfway between feet and head, `y - bodyH / 2` (Jess, 2026-11-11). The game has no single
+    body point yet (the switch ring uses `y - G.LIFT * 0.5`, the team icon its own crop), so the build slice adds
+    this one shared point.
+  - SpriteCollab's per-frame head and centre points (`-Offsets.png`, the #71 comment) could pin these frame by
+    frame later; that is a separate game-data change.
 - `[Approved]` **Confusion is the birds** (`confused-alt-new`), not the clouds: they leave the body clear for poison,
   paralysis, freeze and trap, and a crowd stays readable (Jess, 2026-11-11; `confusion_compare.gif`). Yellow birds
   nearly vanish on yellow Pokemon such as Pikachu; a darker outline or another colour is for the redraw.
-- `[Open]` **Several statuses at once** (not stat changes): take turns, side by side, or one wins by priority.
+- `[Approved]` **Several statuses at once** all show at the same time, each at its own spot, even every minor
+  status together: piling them up is part of the game (Jess, 2026-11-11). A Pokemon has at most one major status,
+  so two majors never meet. Icons that share a spot are drawn at the same time with no offset, the major always
+  layered on top of any minor (stat changes count as minor). The major ones also keep their chip in the character
+  info panel.
+- `[Approved]` **Order among minors above the head**, bottom to top: drowsy, daze, confusion (Jess, 2026-11-11).
 
 ## Motion
 
