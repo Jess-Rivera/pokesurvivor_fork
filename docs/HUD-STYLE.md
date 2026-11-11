@@ -493,40 +493,53 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
 
 Art, motion, colours and placement for the icon each status shows on the Pokemon, on the canvas, for every Pokemon
 (yours, benched, enemies, leaders). Kept together here rather than split over Shapes and Motion, since each row is one
-animation. Jess, 2026-11-10. Code differs (today: a 3-letter pill per status, a coloured ring under the feet, a text zzz
-for drowsy and sleep, in `js/entities/player.js`); building this is its own slice.
+animation. Jess, 2026-11-10; art set switched to Jess's slowed-down set, 2026-11-11. Code differs (today: a 3-letter
+pill per status, a coloured ring under the feet, a text zzz for drowsy and sleep, in `js/entities/player.js`); building
+this is its own slice.
 
-- `[Approved]` **Style:** the Pokemon Mystery Dungeon: Rescue Team status icons (`assets/raw/PMDRR status.png`, ripped,
-  reference only): a chunky shape, a 1 px black outline `#000000`, three flat shades and a light highlight `#f0f0f0`,
-  drawn at sprite pixel scale. The repo is public, so ripped art never ships: every icon is redrawn as original art in
-  this style (or drawn in code) for the build slice.
-- `[Approved]` **Preview:** `python tools/status_icon_preview.py` writes the full sheet and an animated preview on a
-  Pikachu into the git-ignored `assets/sprite extraction attempt/status_preview/`.
+- `[Approved]` **Art set:** Jess's slowed-down set (Jess, 2026-11-11), replacing the Rescue Team icon rows for every
+  status it covers. GIFs in the git-ignored `assets/sprite extraction attempt/status_preview/possible new ones/slowed
+  down/`, with a sheet and frame JSON per GIF in its `sheets/` (`python tools/gif_to_sheet.py "<folder>"`). The repo is
+  public, so ripped art never ships: anything ripped is redrawn as original art (or drawn in code) for the build slice.
+- `[Approved]` **Looping:** every status effect loops for as long as the status lasts. The one exception is the stat-up
+  ring (`status-up-base-new`), which plays once when the stage is gained (Jess, 2026-11-11).
+- `[Approved]` **Preview:** `python tools/status_icon_preview.py` (the old Rescue Team sheet and Pikachu preview);
+  `stat_change_preview.gif` in `status_preview/` shows the stat changes per stat and stacked.
 
-| Status     | Kind  | Art                                         | Motion                                                     | Colours (dark to light)                                          | Placement      | Source                          |
-| ---------- | ----- | ------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- | -------------- | ------------------------------- |
-| Burn       | major | Small flame                                 | 7-frame flicker, looping                                   | `#980000` `#d03800` `#f08058` `#f0e800`                          | Above the head | Sheet fire row (redraw)         |
-| Poison     | major | Skull                                       | 7 solid frames then 7 fading, looping                      | Skull greys mapped to `#6b2942` `#a82fb0` `#d631de` `#f0b0f0`     | Above the head | Sheet skull row (redraw)        |
-| Bad poison | major | Skull, darker                               | As poison, a little faster                                 | `#391042` `#6b2380` `#a82fb0` `#d631de`                          | Above the head | Sheet skull row (redraw)        |
-| Paralysis  | major | Lightning wrapped round the body            | Two jagged arcs turning and re-jagging, 4 frames, looping  | `#a06800` `#d8b000` `#f0e800`, highlight at the bends            | Around the body; the back half behind the sprite | New drawing                     |
-| Sleep      | major | Three Z's, small to large                   | Rise up and right one after another, fading in and out     | Pink `#d83860`, top row `#f0c0d0`                                | Above the head | Text, drawn in code             |
-| Freeze     | major | Ice block                                   | 6-frame shimmer                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Over the body  | Sheet ice row (redraw)          |
-| Confusion  | minor | Four yellow birds                           | Circling the head, 4 frames of 32 x 16                     | `#a06800` `#d8b000` `#f0e800`                                    | The birds' middle just above the head | `assets/raw/confuse-birds.png`, Jess's fix of the sheet row (redraw) |
-| Daze       | minor | Question mark                               | 10-frame bounce                                            | `#0060b0` `#1898d8` `#88d8f0`                                    | Above the head | Sheet "?" row (redraw)          |
-| Trap       | minor | Red X                                       | A light swipe across it, then a rest                       | `#980000` `#d03800` `#f08058`, swipe `#f0f0f0`                   | Above the head | Sheet X row (redraw)            |
-| Drowsy     | minor | One z                                       | Rises and fades, slower than sleep                         | Lavender `#9a8fd8`, top row `#d4ceff`                            | Above the head | Text, drawn in code             |
-| Slow       | minor | Arrow pointing down                         | 11-frame shine and bob downward                            | `#a06800` `#d8b000` `#f0e800`                                    | Above the head | Sheet arrow row (redraw)        |
-| Haste      | minor | Arrow pointing up                           | Slow's motion, upward                                      | `#0060b0` `#1898d8` `#88d8f0`                                    | Above the head | New drawing (slow's arrow, flipped, blue) |
+| Status      | Kind  | Art                                          | Frames                 | Placement                          | Source                               |
+| ----------- | ----- | -------------------------------------------- | ---------------------- | ---------------------------------- | ------------------------------------ |
+| Burn        | major | Small flame                                  | 7 of 16 x 16, 100 ms   | Above the head                     | `burned-new.gif`                     |
+| Poison      | major | Purple bubbles that rise, swell and pop      | 29 of 43 x 35, 100 ms  | Over the body                      | `poisoned-new.gif`                   |
+| Bad poison  | major | Poison's bubbles, darker                     | 29 of 43 x 35, 100 ms  | Over the body                      | `badly-poisoned-new.gif`             |
+| Paralysis   | major | Lightning crackling round the body           | 8 of 78 x 68, 100 ms   | Around the body                    | `paralyzed-new.gif`                  |
+| Sleep       | major | Three Z's, small to large, pink              | 1.8 s cycle            | Above the head                     | Text, drawn in code (no new art)     |
+| Freeze      | major | Ice block                                    | 6 of 32 x 31, 100 ms   | Over the body                      | `freeze-new.gif`                     |
+| Confusion   | minor | Four yellow birds circling the head          | 4 of 32 x 16, 120 ms   | The birds' middle just above the head | `confused-alt-new.gif`            |
+| Daze        | minor | Question mark                                | 10 of 13 x 18, 100 ms  | Above the head                     | `daze-new.gif`                       |
+| Trap        | minor | A web that spins out round the Pokemon       | 31 of 27 x 33, 100 ms  | Over the body                      | `trapped-new.gif`                    |
+| Drowsy      | minor | A pink bubble that grows and pops            | 13 of 24 x 26, 100 ms  | Beside the head                    | `drowsy-new.gif`                     |
+| Slow        | minor | Speed down's streaks, Speed colours          | as Stat down           | Over the body                      | Arrow in reserve (old sheet row)     |
+| Haste       | minor | Speed up's ring and streaks, Speed colours   | as Stat up             | Ring under the feet, streaks over the body | Arrow in reserve (flipped, blue) |
+| Stat up     | stage | A blue ring at the feet, then rising streaks | 15 of 35 x 48, 100 ms  | Ring under the feet, streaks over the body | `status-up-base-new` and `status-up-fore-new` |
+| Stat down   | stage | Falling streaks                              | 11 of 31 x 47, 100 ms  | Over the body                      | `status-down-new.gif`                |
 
+- `[Approved]` **Stat colours:** stat up's streaks (the fore layer, not the ring, which stays blue) and stat down's
+  streaks are recoloured per stat from UI-PALETTES "Pokemon Stats": the yellow streaks take the stat's Light and Base,
+  the orange-red ones its Base and Dark, white stays white (Jess, 2026-11-11). Attack's yellow nearly vanishes on yellow
+  Pokemon and Sp. Atk's cyan sits close to the ring; watch both in the feel test. Accuracy and evasion have no stat
+  colour yet.
+- `[Approved]` **Slow and Haste show as Speed down and Speed up** for now, since COMBAT-RULES sums them into
+  the Speed stage; their arrows stay in reserve for later (Jess, 2026-11-11).
 - `[Approved]` **Trap** is one icon for every Pokemon: your swap lock and the 2 s root on others read the same.
-- `[Approved]` **Sleep and drowsy** differ by colour, count and size, so drowsy reads as the warning before sleep.
-- `[Approved]` **Haste in blue** so it never reads as slow at a glance.
-- `[Proposed]` **Timings** (from the preview): burn 100 ms a frame, poison 100, bad poison 80, paralysis 70, freeze
-  140, confusion 120, daze 80, trap 60 then a 900 ms rest, slow and haste 80; sleep's cycle 1.8 s, drowsy's 2.6 s.
+- `[Approved]` **Sleep and drowsy** read differently, so drowsy is the warning before sleep.
+- `[Approved]` **Several stat changes at once** all play together, each offset 3 px from the centre, evenly spaced
+  round the circle, and each starts a third of its animation after the one before (Jess, 2026-11-11).
 - `[Proposed]` **Placement** uses the sprite's top and centre for now. SpriteCollab's per-frame head and centre points
   (`-Offsets.png`, the #71 comment) would pin them frame by frame; that is a separate game-data change.
-- `[Open]` **Several statuses at once:** icons above the head take turns, sit side by side, or one wins by priority.
-  Paralysis, freeze and confusion use other spots, so they can show alongside an above-the-head icon.
+- `[Approved]` **Confusion is the birds** (`confused-alt-new`), not the clouds: they leave the body clear for poison,
+  paralysis, freeze and trap, and a crowd stays readable (Jess, 2026-11-11; `confusion_compare.gif`). Yellow birds
+  nearly vanish on yellow Pokemon such as Pikachu; a darker outline or another colour is for the redraw.
+- `[Open]` **Several statuses at once** (not stat changes): take turns, side by side, or one wins by priority.
 
 ## Motion
 
