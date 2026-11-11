@@ -339,6 +339,24 @@ The chevrons floating off the character toward an off-screen target. Adopted fro
 - The border runs all the way around each chevron, ends included (square caps on every layer).
 - Labels are the standard HUD text (Fonts: Truth And Ideals 20 px, white, hard `#101010` outline).
 
+#### `[Proposed]` Pause menu (#88)
+
+Working colours for the Poke Ball pause menu (docs/PAUSE-MENU.md), awaiting Jess's feel test. Look after b2-lower A11
+to E14 and F15 to J18; values picked by eye, not sampled.
+
+| Role                                       | Colour                | Source             |
+| ------------------------------------------ | --------------------- | ------------------ |
+| Ball top cap                               | `#c8141c`             | b2-lower red, eyed |
+| Ball bottom cap                            | `#313a46`             | b2-lower slate     |
+| Ball cap edge                              | `#ffffff`             | b2-lower           |
+| Circle ring, outer edge                    | `#747474`             | b2-lower, eyed     |
+| Circle ring                                | `#575757`             | b2-lower, eyed     |
+| Ball inside (open)                         | `#000000`             | mockup             |
+| Menu button rim (rest)                     | `#ffffff`             | Jess, 2026-11-11   |
+| Menu button rim (focus or hover)           | `#38d030`             | mockup green, eyed |
+| Menu button body                           | `#101010`             | outline colour     |
+| Screen dim                                 | `#000000` at 55%      | eyed               |
+
 ---
 
 ## Shapes

@@ -1,0 +1,200 @@
+/* ============ pause-menu.css: the in-run pause menu (#82, slice 1 #88), built by js/ui/pause-menu.js ============
+ * Spec: docs/PAUSE-MENU.md. Places are the mockup's 1080p pixels (assets/ui/In Run Menu Reduced.png) on a
+ * 1920x1080 stage that shrinks to fit a smaller window (--pm-scale, never above 1).
+ * Steps: .pm-step1 dim and circle in, .pm-step2 the ball opens and the buttons show, .pm-step3 the panels slide in.
+ * Each transition's length matches STEP_MS in pause-menu.js. Colours: docs/HUD-STYLE.md palette ("Pause menu").
+ */
+.pause-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 15; /* above the HUD overlay (5), below every screen (.scr is 20: Settings and the confirm dialog) */
+  user-select: none;
+  --pm-scale: 1;
+  --pm-red: #c8141c;
+  --pm-slate: #313a46;
+  --pm-focus: #38d030;
+}
+.pause-menu.pm-hidden {
+  display: none;
+}
+/* The run HUD steps aside while the menu is up (the menu's panels take its places). */
+.hud-overlay {
+  transition: opacity 0.15s linear;
+}
+body.pm-open .hud-overlay {
+  opacity: 0;
+}
+
+.pm-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+.pm-step1 .pm-dim {
+  opacity: 1;
+}
+.pm-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--pm-scale));
+}
+
+/* ---------- the circle and the Poke Ball ---------- */
+.pm-centre {
+  position: absolute;
+  left: 725px; /* circle centre at (980, 530), as in the mockup */
+  top: 275px;
+  width: 510px;
+  height: 510px;
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 0.15s linear,
+    transform 0.15s ease-out;
+}
+.pm-step1 .pm-centre {
+  opacity: 1;
+  transform: none;
+}
+.pm-ball {
+  position: absolute;
+  inset: 0;
+}
+.pm-ring-outer {
+  fill: #747474;
+}
+.pm-ring {
+  fill: #575757;
+}
+.pm-ring-inner {
+  fill: #101010;
+}
+.pm-inside {
+  fill: #000000;
+}
+.pm-cap-red {
+  fill: var(--pm-red);
+}
+.pm-cap-slate {
+  fill: var(--pm-slate);
+}
+.pm-cap-edge {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-linejoin: miter;
+}
+.pm-cap {
+  transition: transform 0.3s ease-in-out;
+}
+.pm-step2 .pm-cap-top {
+  transform: translateY(-140px);
+}
+.pm-step2 .pm-cap-bottom {
+  transform: translateY(140px);
+}
+
+/* ---------- the buttons: white rim, green when focused ---------- */
+.pm-buttons {
+  position: absolute;
+  left: 155px;
+  top: 150px;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s linear;
+}
+.pm-step2 .pm-buttons {
+  opacity: 1;
+  pointer-events: auto;
+}
+.pm-button {
+  position: relative;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: #ffffff; /* the rim */
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
+  cursor: pointer;
+  font: inherit;
+}
+.pm-button::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: #101010;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+}
+.pm-button.focused {
+  background: var(--pm-focus);
+}
+.pm-button .hud-text {
+  position: relative;
+  font-family: 'HudText', monospace;
+  color: #ffffff;
+}
+
+/* ---------- the four panels (slice 1: empty frames at their mockup places) ---------- */
+.pm-panel {
+  position: absolute;
+  background: #181818;
+  border: 1px solid #212121;
+  box-shadow: 0 0 0 2px #101010;
+  opacity: 0;
+  transition:
+    transform 0.25s ease-out,
+    opacity 0.25s linear;
+}
+.pm-step3 .pm-panel {
+  opacity: 1;
+  transform: none;
+}
+.pm-panel-info {
+  left: 155px;
+  top: 432px;
+  width: 505px;
+  height: 205px;
+  transform: translateX(-720px);
+}
+.pm-panel-detail {
+  left: 1260px;
+  top: 25px;
+  width: 635px;
+  height: 1028px;
+  transform: translateX(700px);
+}
+.pm-panel-team {
+  left: 722px;
+  top: 855px;
+  width: 518px;
+  height: 160px;
+  transform: translateY(260px);
+}
+.pm-panel-inventory {
+  left: 722px; /* lined up with the team panel below the ball */
+  top: 40px;
+  width: 518px;
+  height: 176px;
+  transform: translateY(-260px);
+}
+.pm-detail-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #212121; /* slice 2 (#89): the type colour */
+}
+.pm-detail-top {
+  top: 0;
+}
+.pm-detail-bottom {
+  bottom: 0;
+}

@@ -2347,6 +2347,13 @@ body.touch .kbd-hint {
   background: #8a1f2e;
   border-color: #ff8a96;
 }
+/* G.UI.ask's default "no" (o.defaultCancel): white, so the safe answer reads first */
+.btn.white {
+  background: #f4f4f4;
+  color: #101010;
+  text-shadow: none;
+  border-color: #ffffff;
+}
 .row.wrap {
   flex-wrap: wrap;
 }

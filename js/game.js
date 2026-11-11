@@ -56,6 +56,8 @@ G.Game = (() => {
       state = 'playing';
       G.UI.hideAll();
     }, quitRun);
+    if (G.PauseMenu.ready)
+      G.PauseMenu.wire({ resume: togglePause, endRun: confirmEndRun, settings: () => G.SettingsUI.open('sound') });
     Backdrop.init();
     last = performance.now();
     requestAnimationFrame(loop);
@@ -89,8 +91,22 @@ G.Game = (() => {
     G.Touch.reset();
     if (state === 'playing' && !G.Coop.active) {
       state = 'paused';
-      G.RunUI.showPause();
+      showSoloPause();
     }
+  }
+
+  /** Solo pause screen: the Poke Ball menu (#82, js/ui/pause-menu.js); the old Team summary if its libraries failed to load. */
+  function showSoloPause() {
+    if (G.PauseMenu.ready) G.PauseMenu.open();
+    else G.RunUI.showPause();
+  }
+
+  /** The pause menu's End Run button: ask first, "No" is the default (Jess, 2026-11-11). */
+  async function confirmEndRun() {
+    const end = await G.UI.ask('', { title: 'End Run?', ok: 'End', cancel: 'No', danger: true, defaultCancel: true });
+    if (!end || state !== 'paused') return;
+    G.PauseMenu.hideNow();
+    quitRun();
   }
 
   /** Pause/continue (Esc or P key, or the mobile pause button). */
@@ -109,9 +125,21 @@ G.Game = (() => {
     }
     if (state === 'playing') {
       state = 'paused';
-      if (!G.Debug.quietPauseActive()) G.RunUI.showPause(); // ?dev quiet pause (#54): freeze the frame, no menu
+      if (!G.Debug.quietPauseActive()) showSoloPause(); // ?dev quiet pause (#54): freeze the frame, no menu
       G.Audio.sfx('pause');
     } else if (state === 'paused') {
+      // The Poke Ball menu plays its closing first; the game stays paused until it is gone. Pausing again mid-close
+      // turns it around.
+      if (G.PauseMenu.ready && G.PauseMenu.isOpen()) {
+        if (G.PauseMenu.isClosing()) G.PauseMenu.open();
+        else
+          G.PauseMenu.close(() => {
+            if (state !== 'paused') return;
+            state = 'playing';
+            G.UI.hideAll();
+          });
+        return;
+      }
       state = 'playing';
       G.UI.hideAll();
     }
@@ -121,6 +149,7 @@ G.Game = (() => {
 
   /** @param coop  { seed, host, members } for a group game */
   function startRun(coop = null) {
+    if (G.PauseMenu.ready) G.PauseMenu.hideNow();
     G.Log.clear();
     G.Log.t = 0;
     holdBy = [];
@@ -924,10 +953,16 @@ G.Game = (() => {
 
   // ---------------- keyboard ----------------
 
+  let settingsWasOpen = false; // Settings' own key listener closes it on Esc before this frame reads the same Esc
   function handleKeys() {
     if (G.SettingsUI.isOpen) {
+      settingsWasOpen = true;
       if (G.Input.tap('escape')) G.SettingsUI.close();
       return;
+    }
+    if (settingsWasOpen) {
+      settingsWasOpen = false;
+      if (G.Input.tap('escape')) return; // that Esc closed Settings: it must not also close the pause menu behind it
     }
     if (state === 'levelup') {
       G.RunUI.levelKeys();
@@ -966,7 +1001,8 @@ G.Game = (() => {
       return;
     }
     if (state === 'paused' || state === 'over') {
-      G.RunUI.pauseKeys();
+      if (G.PauseMenu.ready && G.PauseMenu.isOpen()) G.PauseMenu.keys();
+      else G.RunUI.pauseKeys();
       return;
     } // the summary sheet's keys (solo pause, end-of-run team view)
     if (state !== 'playing' || !pl) return;
