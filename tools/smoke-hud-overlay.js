@@ -1100,7 +1100,7 @@ const dpsState = (page) =>
       divider: !!panel.querySelector('.hud-dps-divider'),
       cards: [...panel.querySelectorAll('.hud-dps-card')].map((row) => ({
         label: row.querySelector('.hud-dps-card-name').textContent.trim(),
-        total: row.querySelector('.hud-dps-card-total').textContent.trim(),
+        count: row.querySelector('.hud-dps-card-count').textContent.trim(),
       })),
       colours: [...colours],
       tickColumns,
@@ -1188,22 +1188,21 @@ async function dpsPanel(browser) {
   );
   ok(state.tickColumns >= 1, 'dps: a swap tick marks the change (' + state.tickColumns + ' columns)');
 
-  // team upgrade cards: two Gate Reduction picks and one Vitamins (Attack); the list follows the pick order
+  // team upgrade cards: two Gate Reduction picks and one Vitamins (Attack); each row is the name and its pick count (#77)
   await page.evaluate(() => {
     G.TeamCards.add(G.Game.player.teamCards, 'gate', 2);
     G.TeamCards.add(G.Game.player.teamCards, 'vitamins:atk', 1);
   });
   await page.waitForTimeout(100);
   state = await dpsState(page);
-  const summary = await page.evaluate(() => G.TeamCards.summary(G.Game.player.teamCards));
   ok(state.divider, 'dps: the divider shows once a card is picked');
   ok(
-    state.cards.map((card) => card.label).join(' | ') === 'Gate Reduction | Vitamins: Attack',
+    state.cards.map((card) => card.label).join(' | ') === 'Gate Reduction | Protein',
     'dps: the list names the run cards (' + state.cards.map((card) => card.label).join(' | ') + ')'
   );
   ok(
-    state.cards.map((card) => card.total).join(' ') === summary.map((row) => row.total).join(' '),
-    'dps: each row shows its total (' + state.cards.map((card) => card.total).join(' ') + ')'
+    state.cards.map((card) => card.count).join(' ') === 'x2 x1',
+    'dps: each row shows its pick count, not a total (' + state.cards.map((card) => card.count).join(' ') + ')'
   );
 
   // Settings > DPS Panel Opacity: the whole panel at one opacity, default 60%, 20% at the least (Jess, 2026-11-10)

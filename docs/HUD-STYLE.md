@@ -537,8 +537,9 @@ Jess set these on 2026-11-10 (the #66 plan review); the look below is the build'
   a soft `#101010` shadow on all panel text.
 - `[Approved]` **Sparkline strip:** a recessed Frame `#212121` strip in a 2 px outline; the line 2 px wide; the swap tick
   a 2 px white column at 35%; the colour changes at the midpoint between two seconds, where the tick sits.
-- `[Approved]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and its total on the
-  right in Secondary text `#8cfff7` (a trailing % at 10 px, Jess 2026-11-10), in the team sheet's "Run Cards" order. The divider and list hide until a card is
+- `[Approved]` **List:** a 2 px Slate divider; one row per card at 14 px, its name on the left and how many times it
+  was picked on the right ("x3", never a total; Jess 2026-11-11, #77) in Secondary text `#8cfff7`, in the team sheet's
+  "Run Cards" order. A Vitamins row names the vitamin ("Protein x2", "Carbos x1"). What each card really does is #83's job. The divider and list hide until a card is
   picked.
 
 ### On-sprite status icons (#71)

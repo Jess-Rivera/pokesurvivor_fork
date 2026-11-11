@@ -6,8 +6,9 @@
  * Sparkline: one continuous team line, one point per second, the last 30 s, newest at the right edge. Each point is
  * drawn in the first type's Base colour of the Pokemon on the field when that second ended, and a faint tick marks each
  * swap, so two Pokemon of the same type back to back still read (Jess, 2026-11-10). The scale fits the highest point shown.
- * Then a divider and the run's team upgrade cards (G.TeamCards.summary, the team sheet's "Run Cards" rows and order); the divider
- * and list hide while no card is picked.
+ * Then a divider and the run's team upgrade cards (G.TeamCards.summary, the team sheet's "Run Cards" rows and order), each as
+ * its name and how many times it was picked ("Damage Up x3"), never a total (#77, Jess 2026-11-11). A Vitamins row names
+ * the vitamin ("Protein x2"). The divider and list hide while no card is picked.
  *
  * Font: Michroma for everything in the panel, not the pixel HUD font: the panel is a "module", not part of the game
  * world (Jess, 2026-11-10). Hidden by the Settings toggle showDpsPanel (default on); the whole panel takes the
@@ -50,13 +51,6 @@ G.HudDpsPanel = (() => {
     </div>`;
   }
 
-  /** A card total, with a trailing % drawn smaller: in Michroma it is as big as a digit (Jess, 2026-11-10). */
-  function CardTotal(total) {
-    const text = String(total);
-    if (!text.endsWith('%')) return text;
-    return html`${text.slice(0, -1)}<span class="hud-dps-percent">%</span>`;
-  }
-
   function DpsPanel() {
     if (!visible.value) return null;
     const list = cards.value;
@@ -76,7 +70,7 @@ G.HudDpsPanel = (() => {
                   (card) =>
                     html`<div class="hud-dps-card" key=${card.id}>
                       <span class="hud-dps-card-name">${card.label}</span>
-                      <span class="hud-dps-card-total">${CardTotal(card.total)}</span>
+                      <span class="hud-dps-card-count">x${card.picks}</span>
                     </div>`
                 )}
               </div>`
@@ -149,7 +143,14 @@ G.HudDpsPanel = (() => {
     const count = store ? store.n : 0;
     if (count === lastCardCount) return;
     lastCardCount = count;
-    cards.value = G.TeamCards.summary(store);
+    // a pick count per card, not the summary's total (#77); a Vitamins row by the vitamin's name (Protein, Carbos...)
+    const vitaminNames = {};
+    for (const vitamin of G.TeamCards.STATS) vitaminNames['vitamins:' + vitamin.id] = vitamin.label;
+    cards.value = G.TeamCards.summary(store).map((row) => ({
+      id: row.id,
+      label: vitaminNames[row.id] || row.label,
+      picks: row.stacks,
+    }));
   }
 
   function sync(showing) {
