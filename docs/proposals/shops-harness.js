@@ -173,8 +173,8 @@ const artPt = (k, gx, gy, ix, iy) => ({ x: gx + (ix - ART[k][0] / 2 + 0.5) * 1.5
   ok(/G\.Shops\.update\(dt, pl, time\)/.test(game), 'game.js: the frame updates the shops');
   ok(/for \(const s of G\.Shops\.drawables\(\)\) items\.push/.test(game), 'game.js: the scene draws the buildings, sorted by Y');
   const hud = code(read('js/ui/hud.js'));
-  ok(/if \(off\) floatArrow\(ctx, cam, pl, gate\.x, gate\.y, GYM_ARROW/.test(hud), 'hud.js: the gym arrow floats off the character');
-  ok(/for \(const s of G\.Shops\.list\)/.test(hud) && /floatArrow\(ctx, cam, pl, s\.x, s\.y, SHOP_ARROW/.test(hud), 'hud.js: each shop gets a red floating arrow'); }
+  ok(/if \(off\) floatArrow\(ctx, cam, pl, gate\.x, gate\.y, GYM_WAYFINDER/.test(hud), 'hud.js: the gym arrow floats off the character');
+  ok(/for \(const s of G\.Shops\.list\)/.test(hud) && /floatArrow\(ctx, cam, pl, s\.x, s\.y, SHOP_WAYFINDER/.test(hud), 'hud.js: each shop gets a floating arrow (#67 chevrons)'); }
 
 console.log(fail ? 'shops: ' + fail + ' of ' + n + ' checks FAILED' : 'shops: all ' + n + ' checks passed');
 process.exitCode = fail ? 1 : 0;

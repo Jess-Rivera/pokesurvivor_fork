@@ -520,49 +520,150 @@ G.HUD = (() => {
     ctx.restore();
   }
 
-  // ---------- floating arrows (Move Shop step 3) ----------
+  // ---------- floating arrows (Move Shop step 3, chevrons #67) ----------
   // An off-screen target gets an arrow that floats ARROW_R world px from the character's middle, pointing at it, with its
-  // label beyond the tip (world px, so the gap is the same at any window size). Used by the gym gate (purple, Jess
-  // 2026-11-05, it used to sit at the screen edge) and the Move Shop buildings (red).
+  // label beyond the tip. Used by the gym gate (Jess 2026-11-05, it used to sit at the screen edge) and the Move Shop
+  // buildings. #67 (Jess, 2026-11-10): three chevrons that snap apart toward the target with a stop-bounce and a shine,
+  // hold open trembling as if straining, then slide back closed. Colours: HUD-STYLE "Wayfinding arrows" (the Attacks set
+  // of UI-PALETTES: Special for gyms, Physical for shops; Base fill, Dark outline, Light for the shine and halo).
   const ARROW_R = 60;
-  const GYM_ARROW = { halo: '#b48aff', edge: '#1a0b33', main: '#a06bff', lite: '#e2d0ff', text: '#e2d0ff' },
-    SHOP_ARROW = { halo: '#ff5f6d', edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
-  function floatArrow(ctx, cam, pl, tx, ty, s, label, beat, textA = 1) {
+  const GYM_WAYFINDER = { light: '#7D94CD', base: '#375AB2', dark: '#243B74' }, // Attacks / Special
+    SHOP_WAYFINDER = { light: '#F29173', base: '#EB5628', dark: '#99381A' }; // Attacks / Physical
+  // The on-screen bouncing arrow over a visible shop roof keeps its old red (out of #67's scope).
+  const SHOP_ARROW = { edge: '#3a0a10', main: '#ff5f6d', lite: '#ffd0d5', text: '#ffd0d5' };
+  const TEXT_WHITE = '#ffffff',
+    TEXT_OUTLINE = '#101010'; // HUD-STYLE Text
+  // Chevron loop timing, seconds. One loop: snap out, stop-bounce, strained hold, slide back, rest.
+  const CHEVRON_SNAP_SECONDS = 0.15,
+    CHEVRON_BOUNCE_SECONDS = 0.15,
+    CHEVRON_STAGGER_SECONDS = 0.03, // each chevron starts its snap this long after the one behind it
+    CHEVRON_HOLD_SECONDS = 0.7,
+    CHEVRON_SLIDE_SECONDS = 0.45,
+    CHEVRON_REST_SECONDS = 0.25;
+  const CHEVRON_COUNT = 3;
+  const CHEVRON_HOLD_START =
+      CHEVRON_SNAP_SECONDS + CHEVRON_BOUNCE_SECONDS + (CHEVRON_COUNT - 1) * CHEVRON_STAGGER_SECONDS,
+    CHEVRON_SLIDE_START = CHEVRON_HOLD_START + CHEVRON_HOLD_SECONDS,
+    CHEVRON_REST_START = CHEVRON_SLIDE_START + CHEVRON_SLIDE_SECONDS,
+    CHEVRON_LOOP_SECONDS = CHEVRON_REST_START + CHEVRON_REST_SECONDS;
+  // Chevron geometry, screen px, along the arrow's direction from the anchor ARROW_R out.
+  const CHEVRON_HALF_HEIGHT = 7, // 14 px tall
+    CHEVRON_DEPTH = 7, // apex to the arms' back ends
+    CHEVRON_BACK_OFFSET = -12, // where the back chevron's apex sits
+    CHEVRON_GAP_CLOSED = 5,
+    CHEVRON_GAP_OPEN = 15,
+    CHEVRON_OVERSHOOT_PX = 3, // how far past its open spot the front chevron flies before springing back
+    CHEVRON_HOLD_CREEP_PX = 1, // how far the front chevron sags back by the end of the hold
+    CHEVRON_TREMBLE_PX = 1, // the strained shake during the hold
+    CHEVRON_HALO_RADIUS = 22,
+    CHEVRON_HALO_ALPHA = 0.14,
+    CHEVRON_LABEL_GAP = 8; // label start beyond the furthest the front chevron's apex reaches
+  const CHEVRON_SPAN_OPEN = (CHEVRON_COUNT - 1) * CHEVRON_GAP_OPEN,
+    CHEVRON_SPAN_TRAVEL = CHEVRON_SPAN_OPEN - (CHEVRON_COUNT - 1) * CHEVRON_GAP_CLOSED,
+    CHEVRON_OVERSHOOT_FRACTION = CHEVRON_OVERSHOOT_PX / CHEVRON_SPAN_TRAVEL,
+    CHEVRON_CREEP_FRACTION = CHEVRON_HOLD_CREEP_PX / CHEVRON_SPAN_TRAVEL;
+  const CHEVRON_LABEL_DISTANCE = CHEVRON_BACK_OFFSET + CHEVRON_SPAN_OPEN + CHEVRON_OVERSHOOT_PX + CHEVRON_LABEL_GAP;
+  const easeOutCubic = (u) => 1 - (1 - u) * (1 - u) * (1 - u),
+    easeInOutQuad = (u) => (u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u));
+
+  /** How open one chevron's gap is at loopTime: 0 closed, 1 open (a little past 1 during the overshoot). */
+  function chevronOpenAmount(loopTime, chevronIndex) {
+    const ownTime = loopTime - chevronIndex * CHEVRON_STAGGER_SECONDS;
+    if (ownTime < 0) return 0;
+    if (ownTime < CHEVRON_SNAP_SECONDS)
+      return easeOutCubic(ownTime / CHEVRON_SNAP_SECONDS) * (1 + CHEVRON_OVERSHOOT_FRACTION);
+    if (ownTime < CHEVRON_SNAP_SECONDS + CHEVRON_BOUNCE_SECONDS) {
+      // One spring back from the overshoot: past 1, a small dip under it, settled at 1.
+      const bounceProgress = (ownTime - CHEVRON_SNAP_SECONDS) / CHEVRON_BOUNCE_SECONDS;
+      return 1 + CHEVRON_OVERSHOOT_FRACTION * Math.cos(bounceProgress * Math.PI) * (1 - bounceProgress);
+    }
+    if (loopTime < CHEVRON_SLIDE_START) {
+      const holdProgress = Math.max(0, (loopTime - CHEVRON_HOLD_START) / CHEVRON_HOLD_SECONDS);
+      return 1 - CHEVRON_CREEP_FRACTION * holdProgress * holdProgress;
+    }
+    if (loopTime < CHEVRON_REST_START)
+      return (
+        (1 - CHEVRON_CREEP_FRACTION) * (1 - easeInOutQuad((loopTime - CHEVRON_SLIDE_START) / CHEVRON_SLIDE_SECONDS))
+      );
+    return 0;
+  }
+
+  /** The strained shake while held open: quick and irregular (two unrelated sines), up to CHEVRON_TREMBLE_PX. */
+  function chevronTremble(loopTime, chevronIndex, seconds) {
+    if (loopTime < CHEVRON_HOLD_START || loopTime >= CHEVRON_SLIDE_START) return 0;
+    const wobble =
+      Math.sin(seconds * 61 + chevronIndex * 2.1) * 0.6 + Math.sin(seconds * 37 + chevronIndex * 4.3) * 0.4;
+    return wobble * CHEVRON_TREMBLE_PX;
+  }
+
+  /** The shine's brightness on one chevron: a band sweeping back to front across the snap and bounce. */
+  function chevronShine(loopTime, chevronIndex) {
+    if (loopTime >= CHEVRON_HOLD_START) return 0;
+    const shinePosition = -0.5 + (loopTime / CHEVRON_HOLD_START) * (CHEVRON_COUNT + 0.5);
+    return Math.max(0, 1 - Math.abs(chevronIndex - shinePosition));
+  }
+
+  /** One open chevron, apex at (apexX, 0), pointing along +x. Black outline, Dark, Base, then the shine in Light. */
+  function strokeChevron(ctx, apexX, palette, shine) {
+    ctx.beginPath();
+    ctx.moveTo(apexX - CHEVRON_DEPTH, -CHEVRON_HALF_HEIGHT);
+    ctx.lineTo(apexX, 0);
+    ctx.lineTo(apexX - CHEVRON_DEPTH, CHEVRON_HALF_HEIGHT);
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = TEXT_OUTLINE;
+    ctx.stroke();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = palette.dark;
+    ctx.stroke();
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = palette.base;
+    ctx.stroke();
+    if (shine > 0) {
+      ctx.globalAlpha = shine;
+      ctx.strokeStyle = palette.light;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function floatArrow(ctx, cam, pl, tx, ty, palette, label, textA = 1) {
     const ox = pl.x,
       oy = pl.y - (pl.bodyH || 32) / 2;
     const a = Math.atan2(ty - oy, tx - ox),
       ca = Math.cos(a),
       sa = Math.sin(a);
+    const seconds = performance.now() / 1000,
+      loopTime = seconds % CHEVRON_LOOP_SECONDS;
     ctx.save();
     ctx.translate((ox + ca * ARROW_R - cam.left()) * cam.scale, (oy + sa * ARROW_R - cam.top()) * cam.scale);
-    ctx.globalAlpha = 0.14 + beat * 0.16;
-    ctx.fillStyle = s.halo;
+    // Faint steady halo around the open group.
+    const haloCentre = CHEVRON_BACK_OFFSET + CHEVRON_SPAN_OPEN / 2 - CHEVRON_DEPTH / 2;
+    ctx.globalAlpha = CHEVRON_HALO_ALPHA;
+    ctx.fillStyle = palette.light;
     ctx.beginPath();
-    ctx.arc(0, 0, 18 + beat * 5, 0, 6.2832);
+    ctx.arc(ca * haloCentre, sa * haloCentre, CHEVRON_HALO_RADIUS, 0, 6.2832);
     ctx.fill();
     ctx.globalAlpha = 1;
-    const tri = (k) => {
-      ctx.beginPath();
-      ctx.moveTo(ca * 22 * k, sa * 22 * k);
-      ctx.lineTo(Math.cos(a + 2.45) * 12 * k, Math.sin(a + 2.45) * 12 * k);
-      ctx.lineTo(Math.cos(a - 2.45) * 12 * k, Math.sin(a - 2.45) * 12 * k);
-      ctx.closePath();
-    };
-    tri(1.15);
-    ctx.fillStyle = s.edge;
-    ctx.fill();
-    tri(1);
-    ctx.fillStyle = beat > 0.5 ? s.lite : s.main;
-    ctx.fill();
+    ctx.save();
+    ctx.rotate(a);
+    for (let chevronIndex = 0; chevronIndex < CHEVRON_COUNT; chevronIndex++) {
+      const gap =
+        CHEVRON_GAP_CLOSED + (CHEVRON_GAP_OPEN - CHEVRON_GAP_CLOSED) * chevronOpenAmount(loopTime, chevronIndex);
+      const apexX = CHEVRON_BACK_OFFSET + chevronIndex * gap + chevronTremble(loopTime, chevronIndex, seconds);
+      strokeChevron(ctx, apexX, palette, chevronShine(loopTime, chevronIndex));
+    }
+    ctx.restore();
     ctx.globalAlpha = textA;
     ctx.font = F(800, 11);
     ctx.textAlign = ca > 0.3 ? 'left' : ca < -0.3 ? 'right' : 'center';
-    const lx = ca * 30,
-      ly = sa * 30 + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
+    const lx = ca * CHEVRON_LABEL_DISTANCE,
+      ly = sa * CHEVRON_LABEL_DISTANCE + (sa > 0.3 ? 10 : sa < -0.3 ? -2 : 4);
     ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(0,0,0,.85)';
+    ctx.strokeStyle = TEXT_OUTLINE;
     ctx.strokeText(label, lx, ly);
-    ctx.fillStyle = s.text;
+    ctx.fillStyle = TEXT_WHITE;
     ctx.fillText(label, lx, ly);
     ctx.restore();
   }
@@ -808,7 +909,7 @@ G.HUD = (() => {
         ' m';
       const off = sx < 0 || sx > w || sy < 0 || sy > h;
       ctx.save();
-      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_ARROW, label, beat);
+      if (off) floatArrow(ctx, cam, pl, gate.x, gate.y, GYM_WAYFINDER, label);
       else {
         // Above the gate: a bouncing down arrow.
         const by = sy - 46 - Math.abs(Math.sin(now * 4)) * 10;
@@ -848,7 +949,7 @@ G.HUD = (() => {
           secs = Math.ceil(s.left) + ' s';
         if (sx < 0 || sx > w || sy < 0 || sy > h) {
           const m = Math.round(G.U.dist(pl.x, pl.y, s.x, s.y) / 32) + ' m';
-          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_ARROW, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, beat, ta);
+          floatArrow(ctx, cam, pl, s.x, s.y, SHOP_WAYFINDER, s.name.toUpperCase() + ' · ' + secs + ' · ' + m, ta);
         } else {
           const by = (s.y - s.h - cam.top()) * cam.scale - 16 - Math.abs(Math.sin(now * 4)) * 10;
           ctx.save();
