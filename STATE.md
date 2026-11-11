@@ -1,23 +1,23 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-11, Claude Code (home): #76 built and closed (effect chip bands), #80 built (feet arcs retired).
+Updated 2026-11-11, Claude Code (home): SV type colours game-wide (#68), gyms recoloured (#69), type chips restyled (#81); all three closed.
 Branch: feature/leader-roster-ui (branched from feature/gym-leader-ai at f9478ea0; carries its unmerged work).
 No branch rules file for this branch; docs/branch-rules/feature-gym-leader-ai.md still governs the leader AI work it carries.
 
 ## START HERE (next session, either tool)
 1. Jess pushes this branch, then pulls it on the other machine.
 2. Owed by Jess: the #80 glance (no feet rings), the #64 frame-rate check on the work laptop, the #59 feel test.
-3. Next: #77 (needs Jess's rate-card ruling), then the SV type colours #68 and #69.
+3. Next: #77 (needs Jess's rate-card ruling), then triage (#73, #74, #75, stale `blocked` on #29).
 
 ## Where we are
-- Character panel chips (#76): a bad band (statuses, net stat drops) at y 172/202 and a good band (net raises, REG,
-  berries by name, one chip per guard, altar power) at 238/268; "+N" past 12 per band; Shake Off at y 304.
-  Reader: createEffectChipReader in js/ui/hud-overlay.js. Spec: HUD-STYLE "Effect chips: good and bad bands (#76)".
-  The canvas buff stack (js/ui/hud.js) draws only when the HTML HUD is off.
-- On-sprite status animations (#78): js/ui/status-fx.js from G.STATUS_ANIMS; rerun node tools/status_anims.js after
-  changing a sheet. No feet arcs any more (#80); a leader's regen has no visible cue now.
-- HUD: overlay core js/ui/hud-overlay.js plus panels (#62 to #67).
+- Type colours: G.U.TYPE_COLOR (SV Base), TYPE_COLOR_LIGHT, TYPE_COLOR_DARK in js/core/util.js; the HUD kit reads them.
+  tools/type_colors.js (in check.js) keeps them equal to HUD-STYLE "Type colours". Map text uses Light.
+- Type chips: G.UI.typeChip (js/ui/ui.js), style in css/style.css `.type`; spec HUD-STYLE "Type chips".
+- Gym art: recoloured by tools/gym_recolor.js (--sheet preview, --write); rerun node tools/gym_colors.js after.
+  PNG writer shared in tools/png.js.
+- Character panel chips (#76): good and bad bands; reader createEffectChipReader in js/ui/hud-overlay.js.
+- On-sprite status animations (#78): js/ui/status-fx.js; no feet arcs (#80).
 - Leader AI (carried): #59 in Needs Playtest, Bait parked on #60, gyms 3 to 8 on the old brain until slice 12.
 - check.js: red only on gym-harness and leader-stats-harness, by design until #30.
 

@@ -151,3 +151,10 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Built: createEffectChipReader (hud-overlay.js), two bands in hud-player-panel.js, Shake Off y 208 to 304. The canvas buff stack only draws when the HTML HUD is off. smoke-hud-overlay gained 12 checks, all pass.
 - #80: feet arcs gone from Player.draw (leaders too); regen shows as the REG chip only (Jess). Needs a glance.
 - Stopped at: #76 closed, #80 in Needs Playtest. Next: #77 ruling, then #68 and #69.
+
+## 2026-11-11 (Claude Code, home), SV type colours game-wide (#68), gyms recoloured (#69), type chips (#81) (feature/leader-roster-ui)
+- #68: G.U.TYPE_COLOR is the SV Base tone, with TYPE_COLOR_LIGHT and TYPE_COLOR_DARK beside it; the HUD kit's copy is gone. tools/type_colors.js (check.js) holds them to HUD-STYLE.
+- Rulings (decision 2026-11-11-81-type-chips-and-type-text-on-the-map): map text in Light (horde countdown, dev log); chips white text, #101010 pixel shadow (a palette colour, not the sheet's grey), SV Dark rim, casing unchanged; level-up tag gets text and shadow.
+- #69: tools/gym_recolor.js. Walls and glass carry export noise (spread up to ~40), so type parts need a 120 spread; the Ice roof's texture got amplified on vivid blue, fixed by snapping pixels within 14 of the old roof to the solid colour. PNG writer moved to tools/png.js.
+- smoke-ui, smoke-hud-overlay, smoke-team, smoke-gym pass. Jess feel-tested all three; closed.
+- Stopped at: #68, #69, #81 closed. Next: #77 ruling, triage; owed #80, #64, #59.
