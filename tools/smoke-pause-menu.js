@@ -327,6 +327,7 @@ async function main() {
             );
       const hexBox = detail.querySelector('.pm-hex'),
         centreY = hexBox.offsetHeight / 2 + 4,
+        radius = +hexBox.dataset.radius,
         edgePath = hexBox.querySelector('.pm-hex-ring.is-edge').getAttribute('d'),
         edgeLabel = hexBox.querySelector('.pm-hex-edge');
       return {
@@ -346,9 +347,13 @@ async function main() {
         edgeLabel: edgeLabel.textContent.trim(),
         // the label sits at the middle of the HP to Atk side, and the outer line starts and ends either side of it
         edgeLabelAt: [parseFloat(edgeLabel.style.left), parseFloat(edgeLabel.style.top)],
-        sideMiddle: [hexBox.offsetWidth / 2 + (72 * Math.cos(-Math.PI / 6)) / 2, centreY - 72 / 2 - (72 * 0.5) / 2],
+        sideMiddle: [
+          hexBox.offsetWidth / 2 + (radius * Math.cos(-Math.PI / 6)) / 2,
+          centreY - radius / 2 - (radius * 0.5) / 2,
+        ],
         edgeOpen: !/Z\s*$/.test(edgePath),
-        hpStartReach: (centreY - +hexBox.querySelector('.pm-hex-start').getAttribute('points').split(/[ ,]/)[1]) / 72,
+        hpStartReach:
+          (centreY - +hexBox.querySelector('.pm-hex-start').getAttribute('points').split(/[ ,]/)[1]) / radius,
         startFill: detail.querySelector('.pm-hex-start').style.fill,
         typeColour: G.U.TYPE_COLOR[member.mon.types[0]],
       };
@@ -370,7 +375,60 @@ async function main() {
     ),
     'hovering a corner shows its tooltip'
   );
+  // the HP tooltip opens down over the Atk and SpA corners: it must be the top element across its whole width
+  await page.hover('.pm-hex-label[data-stat="HP"]');
+  await sleep(80);
+  ok(
+    await page.evaluate(() => {
+      const tip = document.querySelector('.pm-hex-label[data-stat="HP"] .pm-hex-tip'),
+        box = tip.getBoundingClientRect();
+      tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
+      // a grid over the whole tooltip: it overlaps Atk and SpA only near its lower corners
+      const onTop = [0.03, 0.25, 0.5, 0.75, 0.97].every((across) =>
+        [0.1, 0.5, 0.9].every((down) =>
+          tip.contains(document.elementFromPoint(box.left + box.width * across, box.top + box.height * down))
+        )
+      );
+      tip.style.pointerEvents = '';
+      return onTop;
+    }),
+    'the HP tooltip is on top of the other corners'
+  );
   await page.mouse.move(5, 5);
+  // sized for the widest labels: a 4 digit stat and "+100%" on the side corners stay inside the hex box
+  const savedForFit = await page.evaluate(() => {
+    const member = G.Game.player,
+      saved = { maxHp: member.maxHp, atk: member.inc.atk, spa: member.inc.spa };
+    member.maxHp = 9999;
+    member.inc.atk += 1;
+    member.inc.spa += 1;
+    G.PauseMenu.hideNow();
+    G.PauseMenu.open();
+    return saved;
+  });
+  await sleep(FULL_MS);
+  ok(
+    await page.evaluate(() => {
+      const box = document.querySelector('.pm-box-hex').getBoundingClientRect();
+      return [...document.querySelectorAll('.pm-hex-label')].every((label) =>
+        [...label.querySelectorAll('.pm-hex-name, .pm-hex-value')].every((line) => {
+          const r = line.getBoundingClientRect();
+          return r.left >= box.left + 4 && r.right <= box.right - 4 && r.top >= box.top && r.bottom <= box.bottom;
+        })
+      );
+    }),
+    'with 9999 HP and +100% on Atk and SpA every hex label stays inside its box'
+  );
+  await page.evaluate((saved) => {
+    const member = G.Game.player;
+    member.maxHp = saved.maxHp;
+    member.hp = Math.min(member.hp, saved.maxHp);
+    member.inc.atk = saved.atk;
+    member.inc.spa = saved.spa;
+    G.PauseMenu.hideNow();
+    G.PauseMenu.open();
+  }, savedForFit);
+  await sleep(FULL_MS);
   ok(hex.edge === 300, 'at level 1 the hex edge is 300 (' + hex.edge + ')');
   ok(
     hex.edgeLabel === '300' &&
@@ -429,7 +487,7 @@ async function main() {
           .querySelector('.pm-hex-run') // the outermost band: its first point is HP's tip
           .getAttribute('d')
           .match(/M[0-9.]+ ([0-9.]+)/)[1];
-      return (hexBox.offsetHeight / 2 + 4 - +top) / 72;
+      return (hexBox.offsetHeight / 2 + 4 - +top) / +hexBox.dataset.radius;
     });
     return { edge: (await hexMakeUp()).edge, reach: drawn };
   };

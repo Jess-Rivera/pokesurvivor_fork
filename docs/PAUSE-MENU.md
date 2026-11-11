@@ -69,7 +69,8 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   break of the outer line between HP and Atk, turned along it, in blue. Each corner shows the stat name (with the
   yellow "+X%" when run effects add some) over the final stat: HP as the game has it (after HP_SCALAR, the HP bar's
   number) though the shape draws it at mainline size, the others with nature, level and run effects. Hovering a corner
-  shows the copy's make-up: "Base: N, IV: N, EV: N".
+  shows the copy's make-up: "Base: N, IV: N, EV: N", always on top of the other corners. The hex is as big as its box
+  allows with room for the widest labels (a 4 digit stat under "SpA +100%").
 - [Approved] The per-Pokemon stats, Cards Taken, Move List and IV hex panels take b2-lower AA16-AD18 as inspiration,
   like the run screen's team roster slots but without the grid pattern. Borders use the first type's colour.
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.

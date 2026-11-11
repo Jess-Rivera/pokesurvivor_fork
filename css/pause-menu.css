@@ -410,6 +410,10 @@ body.pm-open .hud-overlay {
 .pm-hex-label {
   cursor: default;
 }
+/* the hovered corner rises above the others, so its tooltip is always on top */
+.pm-hex-label:hover {
+  z-index: 5;
+}
 .pm-hex-tip {
   display: none;
   position: absolute;

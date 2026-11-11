@@ -48,7 +48,9 @@ G.PausePokemon = (() => {
     HEX_BOX = { top: 124, height: 376 },
     MOVES_BOX = { top: 516, height: 420 },
     BOX_PAD = 16, // inside a box, clear of its rim
-    HEX = { radius: 72, labelGap: 12, pad: 8 }, // pad: the hex uses the box out to its rim, room for the labels
+    // radius: as big as the box allows with room for the widest labels, a 4 digit stat under "SpA +100%" (Jess,
+    // 2026-11-11); pad: the hex uses the box out to its rim
+    HEX = { radius: 92, labelGap: 12, pad: 8 },
     EDGE_LABEL = { charWidth: 10, pad: 10 }, // the edge number's gap in the outer line: 20 px text, a little air
     ARROW = { size: 13, artPixel: 3, top: 960, prevLeft: 30, nextLeft: 98 };
   const TEAM = { columns: 3, cardArtWidth: 84, gap: 9, padLeft: 13, padTop: 12, rowGap: 8 };
@@ -298,6 +300,7 @@ G.PausePokemon = (() => {
     return html`<div
       class="pm-hex"
       data-edge=${edge}
+      data-radius=${HEX.radius}
       style=${{ left: HEX.pad + 'px', top: HEX.pad + 'px', width: width + 'px', height: height + 'px' }}
     >
       <svg width=${width} height=${height}>

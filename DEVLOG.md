@@ -174,3 +174,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Found and fixed: the Esc that closes Settings also unpaused. moveSlotRow moved into the HUD kit (run screen unchanged).
 - Stopped at: #88 closed; next #89.
 
+
+## 2026-11-11 (Claude Code, home), pause menu slice 2 (#89) on feature/pause-menu-rework
+- Built js/ui/pause-pokemon.js: detail panel (two-tier type bars, HP, portrait, held item, stat hex, move list by bond,
+  prev / next) and team panel (narrowed roster cards, empty frames, green stroke and shimmer on the shown one).
+- RosterCard moved into the HUD kit (run screen roster byte-identical before and after). Fixed the #88 Enter bug.
+- Stat hex ruled over several rounds: real stats in growing bands, HP mainline, edge 300 / 600 / 1000, final stats with a
+  Base / IV / EV hover (decision 2026-11-11-89-pause-menu-detail-panel-and-stat-hex). Move-info-in-the-hex idea dropped.
+- Filed #94 (Run Item title outside its card). Stopped at: #89 in Needs Playtest; next #90.
