@@ -19,7 +19,11 @@ const root = path.resolve(__dirname, '..'),
   // The shared walls, windows and door glass are not byte-identical between gyms (export noise and slightly tinted glass),
   // while the type parts differ by 130 or more. A pixel is a type part when one channel spreads at least this far across
   // the gyms. 60 still recoloured window glass; 120 leaves it alone (checked by eye on the before/after sheet, 2026-11-11).
-  TYPE_PART_MIN_SPREAD = 120;
+  TYPE_PART_MIN_SPREAD = 120,
+  // The roofs carry faint noise around the roof colour, and the Ice roof a speckled texture and a halo about 12 off it. The
+  // shading carry amplifies that on a vivid target, so a pixel within this many steps (every channel) of the old roof colour
+  // becomes exactly the new one: a solid roof. Real shading bands start at 15 (Normal) or further (2026-11-11).
+  ROOF_SNAP_DISTANCE = 14;
 
 // ---------- colour maths (HSL, 0..1) ----------
 function toHsl(red, green, blue) {
@@ -109,8 +113,10 @@ function differingPixels(gyms) {
 }
 
 function recolourGym(gym, differs, oldRoofHex, newRoofHex) {
-  const oldRoof = toHsl(...parseHex(oldRoofHex)),
-    newRoof = toHsl(...parseHex(newRoofHex)),
+  const oldRoofRgb = parseHex(oldRoofHex),
+    newRoofRgb = parseHex(newRoofHex),
+    oldRoof = toHsl(...oldRoofRgb),
+    newRoof = toHsl(...newRoofRgb),
     pixels = Buffer.from(gym.pixels);
   let changed = 0;
   for (let index = 0; index < differs.length; index++) {
@@ -119,7 +125,10 @@ function recolourGym(gym, differs, oldRoofHex, newRoofHex) {
     if (pixels[at + 3] === 0) continue;
     const colour = [pixels[at], pixels[at + 1], pixels[at + 2]];
     if (Math.min(...colour) >= EMBLEM_MIN_CHANNEL) continue;
-    pixels.set(recolourPixel(colour, oldRoof, newRoof), at);
+    const nearRoof = colour.every(
+      (channel, channelIndex) => Math.abs(channel - oldRoofRgb[channelIndex]) <= ROOF_SNAP_DISTANCE
+    );
+    pixels.set(nearRoof ? newRoofRgb : recolourPixel(colour, oldRoof, newRoof), at);
     changed++;
   }
   return { pixels, changed };
