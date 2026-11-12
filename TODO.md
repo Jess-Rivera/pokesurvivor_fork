@@ -27,8 +27,8 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    smoke-pause-menu, feel test, then edit #83's done-condition, comment and close. Then #92 (children of #82; it also
    retires the team sheet's Run Cards totals, still the old ones); merge back into feature/gym-leader-ai when #82 is
    done.
-   Pause menu tooltips moved to one shared top layer (with #83): re-run smoke-pause-menu and smoke-pause-inventory,
-   feel test. The "every tooltip everywhere" issue is FILED as #102.
+   Pause menu tooltips moved to one shared top layer (with #83): run smoke-pause-menu and smoke-pause-inventory
+   (both rewritten to read the layer), feel test. The "every tooltip everywhere" issue is FILED as #102.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: #97 and #99 new in Triage; #93 and #75 carry needs-triage; #72, #79 (deferred) and #74 sit in Triage; #86 is

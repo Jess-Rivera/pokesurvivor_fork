@@ -230,3 +230,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   Pokemon recruits, candy evolution with mainline requirements, Link Cable. Map Acquisition v1, decision filed.
 - Filed by Jess: #101 day/night (parked), #102 tooltips everywhere. Nothing in js/ touched; check.js not run.
 - Stopped at: file the acquisition parent issue; #83 checks and close still owed from earlier today.
+
+## 2026-11-12 afternoon (Quick, work), #83 Cards Taken and the shared tooltip layer
+- #91 feel test passed. #83 built: Cards Taken is the DPS panel's count list, filtered to this Pokemon's cards
+  (G.TeamCards.takenBy), team-only cards show real numbers on hover; the move tooltip gets a before/after "Cards:" line
+  from the real fold (G.TeamCards.changes). Detail tooltip widened to 558 px (16 px clear of both side panels).
+- Decided: every hover tooltip is the topmost layer; the pause menu draws all of them in one shared TooltipLayer
+  (chosen over a CSS lift). Everything else is #102. Two decision files filed.
+- Tests: team-cards harness 183/183 (25 new) in Quick's sandbox; both pause smokes rewritten for the layer, NOT run.
+- Broke: a few Python writes to the device silently did not land; redone with read-back. A smoke variable clashed
+  (sides), caught by the syntax check. The device link dropped once mid-session.
+- Stopped at: Jess runs check.js and both smokes, feel-tests, commits; check.js not run this session.

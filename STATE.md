@@ -1,34 +1,36 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-12 evening, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
+Last updated: 2026-11-12 wrap-up, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. #91 is CLOSED. #83 BUILT, still owed: Jess runs check.js and smoke-pause-menu, feel test, comment and close #83.
-   Then #92. Tooltip top layer (built with #83): re-run smoke-pause-menu and smoke-pause-inventory, feel test.
-2. File the acquisition parent issue (TODO "Next" item 10), then decide its slice order. Design only so far.
-3. Triage waiting (TODO "Next" item 3), plus new #101 and #102 in needs-triage.
+1. #83 BUILT, uncommitted until Jess commits. Owed: check.js, smoke-pause-menu, smoke-pause-inventory (both smokes
+   rewritten to read the shared tooltip layer), feel test, then edit #83's done-condition, comment and close.
+2. Then #92 (end-of-run Team screen on the new panels; it also retires the team sheet's old Run Cards totals and
+   is the natural home for #102's sheet tooltips). Merge back into feature/gym-leader-ai when #82 is done.
+3. File the acquisition parent issue (TODO "Next" item 10), then its slice order. Design only so far.
+4. Triage waiting (TODO "Next" item 3), plus #101 and #102 in needs-triage.
 
-## This session (design only, no js/ touched)
-- Types-by-region dashboard: docs/type-region-dashboard.html (static snapshot of pokedex.js + enemy-classes.js).
-- Region type maps PARKED: 8 type maps (all 18 types) + 1 Stage 3 map per region. Map: Biomes v2.
-- Acquisition rework DECIDED in direction (map: Acquisition v1, rounds 1 to 16):
-  gacha and tickets out (payouts become coins); rescue event (4% +4%/min roll, 60 s, UberElite, catch odds =
-  star-tier BST ladder x ball x time left, Flee by nature, 6-ball belt restocked with coins); Lost Pokemon
-  recruits Stage 1s with an evolution, any region, 20/12/6% by star; evolution only by candy + mainline
-  requirements (stones from gyms, Link Cable + trade items in the Shop, in-run flags, Team Menu evolve).
-- Day/night cycle filed as #101 (parked). Tooltip issue filed as #102.
+## Where we are
+- Cards Taken (#83): count list of the cards that touch this Pokemon (G.TeamCards.takenBy); team-only cards show real
+  numbers on hover. Move tooltip "Cards:" line, before and after with (max) (G.TeamCards.changes).
+- Every pause menu tooltip draws in one shared layer (kit TooltipLayer, the stage's last child, z-index 100; use
+  tooltipHandlers / showTooltip). Detail panel tooltip 558 px, 16 px clear of both side panels. Outside: #102.
+- Acquisition rework decided in direction (map Acquisition v1): gacha out, rescue catch, Lost Pokemon recruits,
+  candy evolution. Region type maps parked (Biomes v2). Day/night parked as #101.
+- team-cards harness 183/183 in Quick's sandbox bundle; nothing run on the machine yet this session.
 
 ## Watch
 - Quick has no node or browser: harness runs are sandbox bundles; check.js on the machine is truth.
-- GitHub API reaches Quick only partly; TODO.md is the fallback list. TODO has no "Board mirror" section.
+- Quick writing to the device: a bare open().write in Python can silently not land. Use `with open`, read it back.
+- GitHub API reaches Quick only partly (empty at wrap-up); TODO.md is the fallback. TODO has no "Board mirror".
 - Keep new code within 120 columns, or mutate patterns go STALE.
-- Blocked in the acquisition design: Accelgor (no Shelmet sprites), Gholdengo by evolution (no Gimmighoul),
-  9 move-gated lines until 8 moves are imported. Kingambit's rule cannot happen as written (elites never repeat).
+- Acquisition blockers: Accelgor (no Shelmet sprites), Gholdengo (no Gimmighoul), 9 move-gated lines until 8 moves
+  are imported; Kingambit's rule cannot happen as written.
 
 ## Open owner decisions
-- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja two copies, R4 Alcremie N,
-  A1/A3/C2 gacha removal and save migration, ball tiers, UberElite time limit X.
+- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja, R4 Alcremie N, gacha removal and save
+  migration, ball tiers, UberElite time limit.
 - #86 whole levels; #93 tooltip scope; #99 menu font; #97 upgrade rework (blocks #95); #60 Bait.
 
-Rules: CLAUDE.md. Acquisition: docs/ASCII Concept Maps/Acquisition v1 - Catch, Candy, Legendaries.txt.
+Rules: CLAUDE.md. Maps: docs/ASCII Concept Maps/ (Acquisition v1, Biomes v2, 91 series).

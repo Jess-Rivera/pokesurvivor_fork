@@ -99,6 +99,11 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] The move tooltip's "Cards:" line (Jess, 2026-11-12): each field the team's cards changed on that move,
   the move's own value then the one combat uses ("cd 1.2 s to 0.92 s", "burn 10% to 100% (max)"), "(max)" where a
   cap, floor or pick limit stopped it; a field two cards share is one entry. No line when no card touches the move.
+- [Approved] The detail panel's hover tooltip (moves, Run Stats, Cards Taken) is a fixed 558 px wide, spanning the
+  gap between Run Info and the detail panel with 16 px clear of each (Jess, 2026-11-12).
+- [Approved] Every pause menu tooltip is the topmost layer (Jess, 2026-11-12): all of them (items, held item, stat hex
+  corners, moves, Run Stats, Cards Taken) are drawn in one shared tooltip layer, the stage's last child (HUD-STYLE
+  "Fonts"). Leaving the anchor, scrolling its box, picking up an item, another Pokemon, or closing the menu hides it.
 - [Approved] Move list rows: today's per-move numbers plus the hit damage against a typical enemy. The move tooltip
   rework is a separate issue.
 - [Approved] Per Pokemon Run Stats panel holds the per-Pokemon numbers (kills, time on field, damage dealt, best hit,
