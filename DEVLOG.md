@@ -182,3 +182,13 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Stat hex ruled over several rounds: real stats in growing bands, HP mainline, edge 300 / 600 / 1000, final stats with a
   Base / IV / EV hover (decision 2026-11-11-89-pause-menu-detail-panel-and-stat-hex). Move-info-in-the-hex idea dropped.
 - Filed #94 (Run Item title outside its card). Stopped at: #89 in Needs Playtest; next #90.
+
+## 2026-11-11 (Claude Code, home), pause menu slice 3 (#90) and berry slots (#96) on feature/pause-menu-rework
+- #89 passed its feel test and closed. #96 built and closed: berry slots 2 to 4 on the Shop's Team Upgrades tab
+  (team item slot prices), G.Debug.berryslots, tools/smoke-berry-slots.js.
+- #90 built: js/ui/pause-inventory.js (three tight 2x2 grids, Temporary Pocket on G.Team, click and drag held item moves),
+  the in-ball "Destroy Items in Pocket?" prompt gating resume, kit ItemGrid shared with the run screen berry bag (no names).
+  Tooltips moved to GameFont after the feel test. tools/smoke-pause-inventory.js, 38 checks.
+- Filed #95 (hex counts meta HP as a run effect; blocked by the new #97 upgrade rework), #98 (hex +X% under the number;
+  also fixes the smoke-pause-menu fit check that fails at Jess's radius 110), #99 (menu font). Decision 2026-11-11-90-run-inventory-pocket-and-item-moves.
+- Stopped at: #90 in Needs Playtest (item moves, prompt, berry bag still to feel-test); tooltips confirmed.

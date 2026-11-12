@@ -6,6 +6,7 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-11, #90 and #96: Run Inventory grids, Temporary Pocket, click and drag held item moves, the pocket prompt in the ball, berry slots in the Shop (Jess)](docs/decisions/2026-11-11-90-run-inventory-pocket-and-item-moves.md), built in #90 and #96
 - [2026-11-11, #89: the pause menu's detail and team panels, and the stat hex in real stats with growing bands (Jess)](docs/decisions/2026-11-11-89-pause-menu-detail-panel-and-stat-hex.md), built in #89
 - [2026-11-11, #82 and #88: the Poke Ball pause menu, its timings and the End Run question inside the ball (Jess)](docs/decisions/2026-11-11-88-pause-menu-shell.md), built in #88
 - [2026-11-11, side features branch off feature/gym-leader-ai and merge back (Jess)](docs/decisions/2026-11-11-side-branches-off-gym-leader-ai.md), in the branch rules
