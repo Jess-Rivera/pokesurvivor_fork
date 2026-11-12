@@ -532,6 +532,14 @@ async function main() {
     p.cards === filled.length && p.empties === 6 - filled.length,
     'team panel: ' + p.cards + ' cards, ' + p.empties + ' empty frames'
   );
+  const teamFrame = await page.evaluate(() => {
+    const cs = getComputedStyle(document.querySelector('.pm-panel-team'));
+    return { background: cs.backgroundColor, border: cs.borderTopWidth, shadow: cs.boxShadow };
+  });
+  ok(
+    teamFrame.background === 'rgba(0, 0, 0, 0)' && teamFrame.border === '0px' && teamFrame.shadow === 'none',
+    'team panel: no frame behind the cards (' + JSON.stringify(teamFrame) + ')'
+  );
   ok(p.shownFaces === 1 && p.teamShown === p.slot, 'the shown card has the green portrait stroke');
   // the yellow layer: a card's bonus on the shown Pokemon
   await page.evaluate(() => {

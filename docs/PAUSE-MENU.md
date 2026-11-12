@@ -100,6 +100,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] All 6 Pokemon in 3 columns by 2 rows, clickable, picking what the detail panel shows. Uses the same
   cards as the run screen's roster slots, sized to fit: narrowed to 168 x 64 px with no status chips, long names
   squeezed to fit; the panel is 548 px wide to hold three. Missing team members show as empty frames.
+- [Approved] No frame behind the cards: the panel is just the six cards and empty frames (Jess, 2026-11-12).
 - [Approved] The cards keep their typed borders. The shown Pokemon's portrait gets a green stroke and a shimmer that
   slides from top left to bottom right, looping (Jess, 2026-11-11). The Pokemon on the field wears the selection cursor.
 

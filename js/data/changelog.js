@@ -21,6 +21,10 @@ G.CHANGELOG = [
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
       ],
+      [
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+        "The pause menu's team panel is just the six cards now, with no box behind them.",
+      ],
     ],
     fix: [
       [
