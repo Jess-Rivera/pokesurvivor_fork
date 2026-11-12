@@ -13,6 +13,8 @@
  *   finishedSeconds(record)           whole seconds completed so far (the current second is still filling)
  *   averageDps(record, seconds, slot) damage per second over the last finished seconds; slot null for the whole team
  *   recent(record, count)             the last finished seconds: { teamDamage, outSlot } arrays, oldest first
+ *   totalDamage(record, slot)         all the damage the record holds, the current second too; slot null for the team
+ *                                     (#91-2 Run Info's super effective share; 91-3 the Run Stats box's Damage, Share)
  */
 G.DpsHistory = (() => {
   const AVERAGE_SECONDS = 5; // the panel's number and the pause screen's average (Jess, 2026-11-10)
@@ -77,5 +79,13 @@ G.DpsHistory = (() => {
     };
   }
 
-  return { AVERAGE_SECONDS, create, advance, record, finishedSeconds, averageDps, recent };
+  function totalDamage(history, slot = null) {
+    if (!history) return 0;
+    const damage = slot == null ? history.teamDamage : history.memberDamage[slot] || [];
+    let total = 0;
+    for (const amount of damage) total += amount || 0;
+    return total;
+  }
+
+  return { AVERAGE_SECONDS, create, advance, record, finishedSeconds, averageDps, recent, totalDamage };
 })();

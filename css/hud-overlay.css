@@ -919,4 +919,6 @@
   left: -2px;
   width: 8px;
   border: 2px solid;
+  cursor: grab; /* the thumb can be dragged (#91-2 DD1) */
+  touch-action: none;
 }

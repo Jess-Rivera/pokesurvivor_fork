@@ -83,6 +83,7 @@
     'HudRosterPanel',
     'HudRunItemsPanel',
     'PauseMenu',
+    'PauseRunInfo',
     'Confetti',
     'Sheet',
     'MenuUI',

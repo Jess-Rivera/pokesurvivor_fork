@@ -263,6 +263,12 @@ G.Gym = (() => {
     debugLoop(n) {
       loop = Math.max(1, Math.min(G.Gyms.LOOPS, n | 0));
     },
+    /** Dev (G.Debug.runinfo, #91-2): set this run's badges and their split times, [{ badge, at }]. The gate schedule
+     *  is untouched. Cleared by reset() on a new run. */
+    debugBadges(entries) {
+      badges = entries.map((entry) => entry.badge);
+      splits = entries.map((entry) => entry.at);
+    },
     get loop() {
       return loop;
     },

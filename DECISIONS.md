@@ -6,6 +6,8 @@ The full original text of every entry is in docs/DECISIONS-archive.md, which is 
 Convention: new entries stay at most about 10 lines (date, what was decided, `Canonical:`); long detail belongs in the spec.
 New decisions: add one file docs/decisions/YYYY-MM-DD-slug.md (the entry as before: heading, short ruling, `Canonical:` line) and one index line below, newest first. A decision is cited by its file name (without .md); the name is permanent, never renamed. The Q and QA numbers inside the 2026-10-28 entries are history, not identifiers.
 
+- [2026-11-12, Acquisition: no gacha; catch Stage 1s in runs (UberElite, Pokeball Belt, Flee meter), evolve by Gym Leader candy, legendaries by loop clear (Jess)](docs/decisions/2026-11-12-acquisition-no-gacha-catch-candy-legendaries.md), direction only, A1 to A15 open
+- [2026-11-12, Region type maps: 8 type maps (all 18 types, 2-3 each) + a Stage 3 map per region, on-type first then off-type fill, own gen first (Jess)](docs/decisions/2026-11-12-region-type-maps-fill-rules.md), design only, D4 to D16 open
 - [2026-11-12, #90, #94, #98: the Temporary Pocket takes berries and run items, hex +X% under the number on the side corners, run item name inside its card (Jess)](docs/decisions/2026-11-12-90-pocket-takes-berries-and-run-items.md), built in #90, #94, #98
 - [2026-11-11, #90 and #96: Run Inventory grids, Temporary Pocket, click and drag held item moves, the pocket prompt in the ball, berry slots in the Shop (Jess)](docs/decisions/2026-11-11-90-run-inventory-pocket-and-item-moves.md), built in #90 and #96
 - [2026-11-11, #89: the pause menu's detail and team panels, and the stat hex in real stats with growing bands (Jess)](docs/decisions/2026-11-11-89-pause-menu-detail-panel-and-stat-hex.md), built in #89

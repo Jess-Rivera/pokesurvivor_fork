@@ -136,6 +136,9 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
     window does not count. Only kinds landed this run are listed ("None yet" when empty). Damage over time is
     the status ticks the team deals to enemies (burn, poison, toxic; a trap deals no damage, checked 2026-11-12).
   - The run name and time stay pinned while the rest scrolls; the scroll bar is slate.
+  - [Approved] (Jess, 2026-11-12, map 91-2D) DD1: every pause menu scroll bar can be dragged as well as wheeled
+    (Run Info, the move list, Cards Taken). DD3: Super effective is a share of the team's HIT damage; burn and poison
+    ticks are left out, since a tick can never be super effective.
 - [Approved] Region Best (Jess, 2026-11-12): a new save field, per region, absent from old saves (read as "No record
   yet"). Checked when a run ends (faint or End Run). Better = higher loop, then more gyms beaten, then the tie rule:
   same furthest place, two runs that cleared the same gym compare run end (the longer survival wins), two runs that

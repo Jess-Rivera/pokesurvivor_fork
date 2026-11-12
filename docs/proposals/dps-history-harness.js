@@ -93,5 +93,16 @@ D.record(history, second, 40); // before any advance: lands in second 0
 D.advance(history, 1, first);
 ok(D.recent(history, 30).teamDamage.join(',') === '40', 'zero and negative hits are skipped; an early hit lands in second 0');
 
+// 9. #91-2: totalDamage, everything the record holds (the current second too), for the team or one member; holes read 0
+history = D.create();
+D.record(history, first, 30);
+D.advance(history, 1, first);
+D.advance(history, 1, first); // second 1 passes with no damage: a hole
+D.record(history, second, 50);
+D.record(history, first, 20); // second 2, still filling
+ok(D.totalDamage(history) === 100, 'totalDamage: the team, 30 + 50 + 20, the current second included');
+ok(D.totalDamage(history, 0) === 50 && D.totalDamage(history, 2) === 50, 'totalDamage per member: slot 0 has 50, slot 2 has 50');
+ok(D.totalDamage(history, 4) === 0 && D.totalDamage(null) === 0, 'totalDamage: an empty slot and no record read 0');
+
 console.log(fail ? 'dps-history-harness: ' + fail + ' of ' + n + ' FAILED' : 'dps-history-harness: all ' + n + ' passed');
 process.exit(fail ? 1 : 0);

@@ -1,0 +1,73 @@
+REGION TYPE MAPS: BIOMES v2, 8 TYPE MAPS + 1 STAGE 3 MAP (2026-11-12, design only, no code)
+==========================================================================================
+Direction (Jess, 2026-11-12): maps 1-8 split all 18 types (each type once), map 9 = Stage 3 + high BST.
+Supersedes the v1 biome set ("Region Type Maps - Biomes v1.txt"). Fill rules D1-D3 unchanged.
+Stage = evolution line position from pokeapi pokemon_species.csv (evolves_from_species_id).
+"High BST" tested at >= 500. Wild = rarity < 5 (today's spawn rule).
+
+LAYOUT
+------
+  Region (gen N)
+    +-- maps 1-8  types, 18 types over 8 maps = 6 two-type + 2 three-type, every type once
+    +-- map 9     "Victory Road": Stage 3 OR BST >= 500, any type
+
+PROPOSED MAPS 1-8 (best thematic split found; 116,092 splits searched)
+---------------------------------------------------------------------
+  % = on-type cast slots across T1-T6 (100 = every slot on theme), Stage 3s shared
+  map                 types                    Kant Joht Hoen Sinn Unov Kalo Alol Gala Pald
+  Meandering Meadows  Grass+Bug                  61   78   87   89   91   94   98   98   98
+  Dark Volcano        Fire+Dark                  33   63   83   89   93   94   96   96   96
+  Frozen Shoals       Water+Ice                  74   91   96   98   98   98  100  100  100
+  Rocky Peaks         Rock+Ground+Steel          54   63   76   87   89   89   96   96   96
+  Neon City           Electric+Normal            54   78   80   89   91   91   93   94  100
+  Haunted Tower       Ghost+Poison               67   72   74   85   85   85   93   94  100
+  Mountain Temple     Psychic+Fairy+Fighting     63   80   85   91   91   96  100  100  100
+  Sky Pillar          Dragon+Flying              44   81   87   91   94   96  100  100  100
+  ------------------------------------------------------------------------------------------
+  Kanto average 56 (v1 was 72: v1 used Water 3 times, Grass/Dark/Rock/Flying/Poison twice)
+  All-region average 87.  Kanto lows: Dark Volcano (Gen 1 has 0 wild Dark), Sky Pillar (2 Dragons).
+
+MAP 9: STAGE 3 MAP, SHARED vs EXCLUSIVE (the big decision)
+----------------------------------------------------------
+  EXCLUSIVE = Stage 3 / BST>=500 species spawn ONLY on map 9.
+  Wild pool left for maps 1-8 per tier (cumulative region pool):
+             T1   T2   T3   T4   T5   T6         shared:  T5   T6
+  Kanto      49   55   35   26    3    0                   31    7
+  Johto      80   83   65   40    3    0                   49   12
+  Paldea    276  257  174  174   17    0                  192   75
+  -> T6 (530-620) is EMPTY on maps 1-8 in every region; T5 has 3 to 17.
+     From 6:20 on, maps 1-8 would borrow lower tiers: weaker enemies late. Breaks the power ramp.
+  -> Maps 1-8 on-theme drops too: Kanto avg 56 -> 41, all-region 87 -> 65.
+  SHARED = Stage 3s still spawn on maps 1-8 by type; map 9 just holds ONLY them.
+
+MAP 9 POOL (Stage 3 or BST >= 500)
+----------------------------------
+             own gen   cumulative   own gen M/R/S
+  Kanto        36          36          9/14/13
+  Johto        21          57          7/ 5/ 9
+  Hoenn        15          72          5/ 5/ 5
+  Sinnoh       28         100         12/ 5/11
+  Paldea       30         217         17/ 9/ 4
+  * Own gen alone never fills 6 tier casts. Kanto (no earlier gen): 1 of 6 tier casts
+    fill the mix (only 9 melee). Johto 4/6, Hoenn 5/6, Sinnoh onward 6/6 with earlier gens.
+  * BST spread is narrow (385 to 570), so BST tiers barely ramp on map 9:
+    T1 band 385-500 vs T6 band 530-570. The ramp would come from level-for-time alone.
+  * XP: map 9 species bx average 217 vs 60 for today's T1 species, about 3.6x XP per early kill.
+    The level-up cadence on map 9 would run far hotter in the first minutes.
+  * The showpieces never spawn: the 600-BST pseudo-legends are rarity 5 and wild requires < 5:
+    Dragonite, Tyranitar, Salamence, Metagross, Garchomp, Hydreigon, Goodra, Kommo-o,
+    Dragapult, Baxcalibur, also Slaking (670).
+  * Babies count as stage 1 in the raw chain: 9 species are Stage 3 only because of a baby
+    (Raichu, Clefable, Wigglytuff, Azumarill, Blissey, Roserade, Electivire, Magmortar, Togekiss).
+
+OPEN DECISIONS (each changes spawn behavior; not built)
+-------------------------------------------------------
+  D10 Stage 3s: SHARED (also on maps 1-8)  |  EXCLUSIVE to map 9      (rec: shared, see table)
+  D11 Map 9 tier ramp: BST bands re-cut over the map 9 pool  |  one pool, ramp by level only
+  D12 Map 9 XP: bx as today (hot opening)  |  tier XP template on map 9  |  scale bx down on map 9
+  D13 Pseudo-legends (rarity 5, not leg) on map 9: allow  |  keep the rarity < 5 rule
+  D14 Stage counting: babies count (Raichu = Stage 3)  |  babies skipped (Raichu = Stage 2)
+  D15 Kanto map 9 short of melee: relax the mix  |  fill with Stage 2 BST 450-499  |  lock map 9 until a later region
+  D16 Map 9 unlock: always open  |  after clearing maps 1-8 of the region
+  Still open from v1: D4 slot match, D5 lower-tier vs off-type order, D6 spawn weights,
+  D7 shared vs per-region biome set, D8 hordes, D9 Kanto T6.

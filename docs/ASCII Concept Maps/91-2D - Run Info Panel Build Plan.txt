@@ -1,0 +1,119 @@
+#91-2 PART D: THE RUN INFO PANEL, build plan (2026-11-12, Quick)  [Approved, BUILT with part E]
+DD1, DD2, DD3 approved as recommended (Jess, 2026-11-12). Built 2026-11-12 (Quick sandbox, not real node):
+run-info-harness 58/58, dps-history-harness 26/26, run-stats-harness 108/108; all 19 run-info mutants caught.
+smoke-pause-menu.js extended but NOT run (no browser in Quick): it is Jess's to run.
+Build notes (differences from the plan below):
+ - the game.js getter checks (shiniesCaught, runIsClean, regionKey) live in run-info-harness, beside the debug calls
+   that use them, not in run-stats-harness section 8
+ - two small additions the debug calls needed: G.Game.runIsClean (recordcheck's "a normal run end would refuse it")
+   and G.Gym.debugBadges([{ badge, at }]) (runinfo seeds badges and splits together, like debugLoop)
+ - runinfo('full') cannot seed "shinies caught" (the caught list writes the save); it shows the run's real count
+ - the smoke checks the written record shows in the SAME run; "carries into a new run" stays feel-test step 6
+Design: 91c (approved mock, R1 24 px / 36 px rows, scrolls, pinned header, slate bar). Data: parts A to C (built).
+Rules already approved: DR1 pace, DR5 Best wording, DK1 "--" before 1:00, S2 "None yet", F3 hide Faints sub-lines at 0.
+=====================================================================================================
+
+WHAT ALREADY EXISTS (reuse, do not rebuild)
+-----------------------------------------------------------------------------------------------------
+ need                          already there                                     use it as
+ the empty slot                pause-menu.js L254 <div pm-panel-info>             mount the panel inside it
+ refresh on open               pause-menu.js open() L321 pokemon.read()           one more line: runInfo.read()
+ a panel module pattern        pause-pokemon.js (kit from G.HudOverlay, ready,    same shape: G.PauseRunInfo
+                                 signals, read() bumps a counter)
+ scroll + bar                  kit ScrollBox (hud-overlay.js, built in A/B)       the scrolling body, slate colours
+ the DPS panel's look          css/hud-overlay.css .hud-dps-* (HudModule font,    same font, shadow, slate divider;
+                                 slate #495151 divider, yellow / cyan text)         new .pm-info-* sizes (24 / 36 px)
+ mm:ss                         G.U.mmss                                           every time on the panel
+ team kills                    player.kills (the HUD kills line reads it)         Kills, Kills per minute
+ region name                   G.MenuUI.GEN_NAMES + G.T (hud-map-panel L284)      header "KANTO RUN", "ALL REGIONS RUN"
+ whole EVs                     G.Copies.wholeEvs(bank) (end-of-run EV screen)     EVs Earned row, same rounding
+ move names                    member.moves[].name (the move list shows them)     Biggest hit's move name
+ status kinds                  RunStats totals().statuses (ids)                   name = the id capitalized
+ counters, faints, pace        G.RunStats.totals / mostFaints / downTime / pace   no new math in the panel
+ Region Best                   G.Game.regionBest (part C)                         Best / Next / Pace rows
+
+NEW, SMALL, AND WHY
+-----------------------------------------------------------------------------------------------------
+ G.DpsHistory.totalDamage(history, slot)   team damage (slot null) or one member's. Needed now for Super
+     effective %, and KNOWN for 91-3 (the Run Stats box's Damage and Share rows, map 91d). Built once here.
+ G.Game.shiniesCaught                      getter: this run's caught list length (game.js `caught`, L34).
+ G.PauseRunInfo.sections(snapshot)         PURE: snapshot in, sections of { label, value, tone } rows out.
+     All the panel's rules live here (hide, "None yet", "--", wording, colours), so an offline harness can
+     check them. The Preact view only draws what it returns.
+
+FILES
+-----------------------------------------------------------------------------------------------------
+ NEW js/ui/pause-run-info.js   G.PauseRunInfo: read() gathers ONE snapshot when the menu opens (the world is held
+                               still, F2: no per-frame reads), sections() builds the rows, Panel() draws:
+                               pinned header (run name, time) + ScrollBox body, opens at the top each read.
+ js/ui/pause-menu.js           L254 mount Panel in the info slot; open() calls read() beside pokemon.read().
+ css/pause-menu.css            .pm-panel-info children: header, section titles, rows, dividers (sizes only;
+                               font and shadow reuse the .hud-dps look).
+ js/systems/dps-history.js     totalDamage().
+ js/game.js                    shiniesCaught getter.
+ dev.html                      script tag after pause-pokemon.js, before pause-menu.js.
+ js/main.js                    'PauseRunInfo' in NEED (CLAUDE.md rule; note: PausePokemon / PauseInventory are
+                               not in NEED today, they are ready-guarded. Not fixed here.)
+ js/data/changelog.js          today's new: the Run Info panel and Region Best (free edit, parse-checked).
+
+ROW -> SOURCE  (every row from the snapshot; nothing reads the game while drawing)
+-----------------------------------------------------------------------------------------------------
+ header      "<REGION> RUN"  mm:ss(time)
+ PROGRESS    Loop, Badges "Boulder, Cascade (2)" (" Badge" dropped), Gym splits "Boulder 4:52  Cascade 9:10"
+ COMBAT      Kills, Kills/min (DK1), Elites, Biggest hit "Charizard  Flamethrower  2,450", Super effective %
+             (DD3), Damage taken / healed
+ FAINTS      Faints; Most faints "<name>  N times", Time fainted (both hidden at 0, F3)
+ STATUSES    2 columns, kinds landed only, "None yet" when empty (S2); Damage over time
+ LOOT        Coins, Silver "spent S / earned E" (whole coins), Items picked up, Shinies "seen N, caught M"
+ EVS EARNED  HP Atk Def SpA SpD Spe, one row (wholeEvs)
+ REGION BEST no record: "No record yet" (Next and Pace hidden)
+             Best (DR5): "Loop L, Gym G cleared, lasted mm:ss" / "Died at Loop L, Gym G, reached it mm:ss"
+             Next: "Loop L, Gym N  (best got there at mm:ss)"   Pace: ahead green, behind red, even / on pace
+             white, new best pace gold.  Numbers: 1,204 style (en-US separators).
+
+DECISIONS TO APPROVE
+-----------------------------------------------------------------------------------------------------
+ DD1 Drag the scroll bar. 91c says "mouse wheel, or drag the bar"; the shared ScrollBox is wheel only.
+     (a) add drag to ScrollBox: Run Info AND the move list (and 91-3 Cards Taken) get it  <- rec
+     (b) wheel only everywhere; 91c's "or drag" is dropped
+     (a) changes the move list too (it gains drag), so it is a behaviour change there.
+ DD2 Build part E (the 3 debug calls) together with D. 91c's smoke and the 7-step feel test seed the panel
+     THROUGH runinfo / regionbest / recordcheck; building D alone means seeding by hand, then rewriting
+     the smoke in E.  (a) D + E as one slice  <- rec   (b) D now, E next
+ DD3 Super effective % = super effective damage / the team's HIT damage (total damage minus DoT ticks). A
+     tick can never be super effective, so counting ticks below the line would make a burn team read low.
+     <- rec   (b) / all team damage, DoT included
+
+TESTS
+-----------------------------------------------------------------------------------------------------
+ NEW HARNESS  docs/proposals/run-info-harness.js
+   loads pause-run-info.js with a stub kit (no browser) and calls sections() on hand-built snapshots:
+   header names (a gen, All regions); badges drop " Badge"; Kills/min "--" before 1:00 then kills / minutes;
+   Faints sub-lines hidden at 0, lower slot on a tie (from mostFaints); Statuses only kinds landed, "None yet";
+   Super effective % over hit damage (DD3); Silver whole coins; Region Best: no record, cleared wording,
+   in-fight wording, Next row, each Pace kind's text and tone; numbers 1,204 and mm:ss 82:30
+   why: the panel's own rules are not logic any existing harness loads, and smoke is not in check.js
+ NEW MUTATION RUNNER  docs/proposals/run-info-mutate.js  (~10)
+   Kills/min shows a number before 1:00; Faints sub-lines show at 0; a 0-count status is listed; "None yet"
+   never shows; DoT counted below the super effective line; pace tones swapped; Best wording swapped
+   (cleared vs in fight); Next row shown with no record; the panel reads per frame (read() not on open);
+   the script tag / NEED entry missing
+   why: proves run-info-harness catches each one-word slip
+ EXTEND  docs/proposals/dps-history-harness.js: totalDamage team and per slot, holes read 0
+ EXTEND  docs/proposals/run-stats-harness.js section 8: game.js shiniesCaught getter (text check)
+ SMOKE (extend)  tools/smoke-pause-menu.js, the 91c list, seeded through the E calls (DD2):
+   runinfo('empty'): Faints 0 and sub-lines hidden, "None yet", "No record yet"; runinfo('full'): every row,
+   the move name on Biggest hit, the body scrolls with the wheel (and drag, DD1), header stays, reopens at
+   the top; runinfo('tie'): lower slot; regionbest({..}): Best / Next / Pace show; regionbest('clear') and
+   ('old'): "No record yet", no page error; recordcheck(): writes nothing; recordcheck('write'): carries over
+ INTENT SCENARIOS  none (no move behaviour changes)
+ DEBUG SET (feel)  the 7-step session in 91c; look for: every row reads, the panel scrolls smoothly and the
+   header never moves, Pace colour matches ahead / behind, nothing stutters on open
+ check.js          no change (it finds new *harness*.js under docs/ already)
+ STALE SCAN        pause-menu.js Panels / open(), hud-overlay.js ScrollBox (DD1), dps-history.js, game.js getters,
+                   dev.html script block, main.js NEED
+
+FEEL / PERF
+-----------------------------------------------------------------------------------------------------
+ One snapshot per open, no per-frame reads: the F2 hold-still stays intact. ~1278 px of content in ~980 px,
+ PROGRESS and COMBAT fit before the first scroll. 24 px Michroma rows match the DPS panel's family.

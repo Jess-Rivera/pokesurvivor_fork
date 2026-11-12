@@ -247,11 +247,14 @@ G.PauseMenu = (() => {
   }
 
   // The four panels at their mockup places. The detail and team panels are js/ui/pause-pokemon.js (#89), the Run
-  // Inventory js/ui/pause-inventory.js (#90); Run Info comes in #91.
+  // Inventory js/ui/pause-inventory.js (#90), Run Info js/ui/pause-run-info.js (#91-2).
+  const runInfo = G.PauseRunInfo && G.PauseRunInfo.ready ? G.PauseRunInfo : null;
   const pokemon = G.PausePokemon && G.PausePokemon.ready ? G.PausePokemon : null;
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null;
   function Panels() {
-    return html`<div class="pm-panel pm-panel-info" data-panel="runInfo"></div>
+    return html`<div class="pm-panel pm-panel-info" data-panel="runInfo">
+        ${runInfo ? html`<${runInfo.Panel} />` : null}
+      </div>
       <div class="pm-panel pm-panel-detail" data-panel="detail">
         ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
@@ -318,6 +321,7 @@ G.PauseMenu = (() => {
       focus.value = 0;
       if (root.contains(document.activeElement)) document.activeElement.blur();
       resetAsking();
+      if (runInfo) runInfo.read(); // #91-2: one snapshot of the run, the world is held still from here
       if (pokemon) pokemon.read();
       if (inventory) inventory.read();
       fitStage();

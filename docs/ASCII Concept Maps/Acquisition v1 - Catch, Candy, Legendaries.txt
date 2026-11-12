@@ -1,0 +1,177 @@
+ACQUISITION v1: CATCH, CANDY, LEGENDARIES (2026-11-12, design only, no code)
+============================================================================
+Direction (Jess, 2026-11-12): remove the gacha. A gacha pull can hand out an end-game mon
+(Mewtwo) on luck, which undercuts Pokemon investment and makes starters useless.
+Replace it with 3 tiers. Region type maps (Biomes v2) are parked; they feed tier 1 later.
+
+THE THREE TIERS
+---------------
+  TIER 1  IN RUN: CATCH (Stage 1 only)
+    rare event ──toast "[Stage 1] needs help!" + arrow (like shops / gyms)
+         │
+         ▼
+    UberElite guards it (above an Elite, near a strong Gym Leader mon)
+         │ defeat it under X seconds?
+         ├─ no  ──> the Stage 1 runs off, no catch
+         ▼ yes
+    catch phase: throw Poke Balls from the Pokeball Belt
+         ├─ catch ──> new unique copy in the Pokebox (IVs, nature, as today)
+         └─ fail  ──> Flee meter rises ──full──> it runs away
+    Pokeball Belt: 1 ball per run at the start, more via meta progression
+
+  TIER 2  META: EVOLUTION BY CANDY (the only route past Stage 1)
+    Gym Leader ──drops──> Exp Candy (mainline XS / S / M / L / XL)
+         │
+         ▼  (main menu)
+    feed a copy ──> permanent candy level ──reaches evo point──> evolves (Stage 2, Stage 3)
+    runs still start at level 1
+
+  TIER 3  LEGENDARIES (approved already, GDD 12, unchanged)
+    clear Loop 6 in one sitting ──> Legendary Boss ──win──> that legendary joins your Pokedex
+
+DATA CHECK (wild = rarity < 5, not legendary; pokeapi csvs in pokeapi-master/data/v2/csv)
+-----------------------------------------------------------------------------------------
+  Catchable Stage 1 species per region
+                     Kant Joht Hoen Sinn Unov Kalo Alol Gala Pald  total
+    babies skipped     74   46   63   31   62   31   43   34   41    425
+    babies count       63   48   63   38   62   31   43   34   41    423
+    (skipping babies makes Pikachu, Clefairy, Jigglypuff etc. Kanto Stage 1s, and
+     Pichu, Cleffa, Igglybuff are then never catchable)
+
+  Evolutions in the game: 458
+    by level ............ 327 (71%)   min level 7 to 64, median 30
+    by item (stones) ....  50
+    by trade ............  24
+    by friendship .......  18
+    other (move, place, time, special) 39
+    -> 131 evolutions have no level. Precedent: gym rosters already ignore
+       evolution requirements (Gym Loop-Count Roster Rule).
+
+  Exp to the evolution level (species growth rate, experience.csv)
+    Ivysaur 16 ......  2,535       Gyarados 20 ..... 10,000
+    Venusaur 32 ..... 27,021       Charizard 36 .... 40,007
+    median (lvl 30) . 27,000       Dragonite 55 ... 207,968
+    max: Hydreigon 64 ........... 327,680
+    In Exp Candy L (10,000 each): Charizard 4, median evo 3, Dragonite 21.
+    -> mainline curves gate pseudo-legends for free: about 5x a starter.
+
+  Branching evolutions: 19 split points (Eevee 8, Tyrogue 3, Applin 3, Gloom, Poliwhirl,
+    Slowpoke, Scyther, Wooper, Sneasel, Wurmple, Kirlia, Nincada, Snorunt, Clamperl,
+    Burmy, Yamask, Meowth, Charcadet; Cosmoem is legendary)
+  Evolutions added in a later gen: 45 (Golbat > Crobat Gen 2, Scyther > Scizor Gen 2,
+    Eevee > Sylveon Gen 6, Magneton > Magnezone Gen 4 ...)
+
+  The "lucky Mewtwo" problem, smaller version: 124 wild species never evolve, and
+  38 Stage 1s have BST >= 500 (Snorlax 540, Lapras 535, Aerodactyl 515, Scyther 500,
+  plus the Ultra Beasts and Paradoxes at 570). A first catch could be one of them.
+    Lever already in the data: capture_rate, 3 to 255, median 180, 129 Stage 1s under 50.
+
+  Left with NO source once the gacha goes:
+    Iron Leaves, Iron Valiant, Roaring Moon, Walking Wake (rarity 5, not legendary, never evolve)
+    mythicals (leg flag covers legendary AND singular; the Legendary Boss is per region)
+    babies, if babies are skipped
+
+WHAT ALREADY EXISTS TO BUILD ON
+-------------------------------
+  "needs help" event ... events.js Lost Pokemon: toast + mark + escort, LOST_TIME 120 s
+  arrow to a spot ...... shops / gyms arrows
+  UberElite HP ......... elites.js already sizes HP as player DPS x time-to-kill
+                         (min 3x a wild): "under X seconds" = a TTK budget, scales with your build
+  copies ............... Pokebox unique copies, IVs, natures, EVs (built)
+
+WHAT THE GACHA REMOVAL TOUCHES (current behavior that changes)
+--------------------------------------------------------------
+  gacha.js, gacha-ui.js, Shop > Pokemon tab
+  tickets: x1 shown as "Pokeball", x10 as "Master Ball" (GDD 7.5). NAME CLASH with the new
+    catch balls. Sources: wild kills (pickup.js TICKET_RATE), chests 1-3, Lost Pokemon prize,
+    Gholdengo imp, daily / weekly missions, achievements
+  rarity 1-5 field: drives gacha odds, sell price (15/30/60/120/300) and the spawn rule (< 5)
+  shinies: gacha 1 in 100 is the main source
+  Pokebox selling: copies came from pulls, so repeats were common; catches make them rare
+  existing saves: gacha copies of evolved mons and legendaries, banked tickets
+
+FEEL RISKS
+----------
+  * Belt = 1 means no retry: one failed throw after beating the UberElite wastes the
+    whole event. "Keep attempting until it flees" only exists from belt 2 up.
+  * Rare event x timer x catch chance x 1 ball = a slow trickle. Kanto has 74 to catch.
+    New accounts could go many runs with nothing new. (VS rule: no zero-progress runs;
+    candy from gyms covers that only if you already own something worth feeding.)
+  * UberElite in the middle of a run: a hard DPS check (the "boss tests your build"
+    pitfall). Telegraphed patterns or a gym-leader-style moveset keep it skill-based.
+  * Evolution power is permanent and stacks with the in-run curve: an evolved team's
+    base stats rise for every run after. That IS the investment loop, so budget it in BALANCE.
+
+OPEN DECISIONS (each changes current behavior; not built)
+--------------------------------------------------------
+  (A5, A10, A11 resolved 2026-11-12, see RESOLVED below)
+  A1  Gacha: remove entirely | keep as a cosmetic / shiny-only shop
+  A2  Tickets: retire (sources pay coins instead) | become the catch balls (rename) | keep for something else
+  A3  Existing saves: keep every owned copy (grandfather) | keep Stage 1s + legendaries only | convert extras to candy
+  A4  Babies: count as Stage 1 (Pichu catchable, Pikachu not) | skipped (Pikachu catchable, Pichu never)
+  A5  Never-evolving strong Stage 1s (Snorlax, Lapras, UBs, Paradoxes): catchable, gated by capture_rate
+      | map 9 / later loops only | not catchable
+  A6  Non-level evolutions (131): give each a candy level | stones as gym drops | ignore requirements (like gym rosters)
+  A7  Branching (19): player picks at the evo point | fixed default
+  A8  Later-gen evolutions (45): always allowed | only once that region is reached
+  A9  Candy cost: mainline exp curve per species (pseudo-legends ~5x) | flat candy per stage
+  A10 Permanent candy level: evolution meter ONLY | also gives stats (conflicts with "start at level 1")
+  A11 Belt 1: a failed throw ends the event | the first throw per event is free | a guaranteed first catch per account
+  A12 Catch chance: mainline capture_rate formula | flat | capture_rate + time left on the UberElite clock
+  A13 Event species: current map's types (links to type maps) | any Stage 1 of the region | the region's own gen first
+  A14 Shinies: shiny chance on the event mon | other
+  A15 Unreachable species (4 Paradoxes, mythicals): leave out | special events | Legendary Boss pool
+
+RESOLVED (Jess, 2026-11-12)
+---------------------------
+  A11 Belt 1: a missed throw ENDS the event. Retries (and the Flee meter) only exist from belt 2 up.
+  A5  Strong never-evolving Stage 1s (Snorlax, Lapras, UBs, Paradoxes): catchable, gated by capture_rate.
+  A10 Permanent candy level = evolution meter ONLY. No stats; every run still starts at level 1.
+      Permanent power comes from the evolved form's base stats.
+
+CATCH ODDS CHECK (mainline Gen 3/4 formula, 1 throw, pokeapi capture_rate)
+-------------------------------------------------------------------------
+  species        rate   full HP   1 HP   full HP, 2x ball
+  Snorlax          25     3.3%     9.7%       6.5%
+  Lapras           45     5.9%    17.5%      11.8%
+  Nihilego         45     5.9%    17.5%      11.8%
+  Bulbasaur        45     5.9%    17.5%      11.8%   <- starters
+  Dratini          45     5.9%    17.5%      11.8%   <- pseudo-legend base
+  Eevee            45     5.9%    17.5%      11.8%
+  Pidgey          255    33.3%    99.3%      66.7%
+  425 Stage 1s at full HP: median 23.5%, 153 under 10%, 300 under 25%
+
+  FINDING 1: capture_rate does NOT separate strong from weak. Bulbasaur, Dratini and Eevee sit at 45,
+    the same as Lapras, Scyther, Nihilego. Only Snorlax (25) is harder. A5 as stated makes starters
+    exactly as hard as Ultra Beasts. Investment-wise the real gate for Dratini is candy (21 L to
+    Dragonite); for Lapras / UBs there is no second gate.
+  FINDING 2: with A11 (miss ends it), raw mainline odds fail most events: a full-HP throw is
+    23.5% median and about 6% for anything good. The event's target is never damaged (you fought the
+    UberElite), so the HP term needs a stand-in.
+  -> A12 is now the load-bearing number. Candidate: time left on the UberElite clock plays the HP role
+     (kill fast = target "weakened" = the 1 HP column), so speed raises the odds and skill matters.
+  New option for A5's gap: a per-species catch multiplier for no-evolution strong mons (BST >= 500).
+
+PROPOSAL (Jess, 2026-11-12, after A11): new accounts start with a 6-ball belt; more belts are bought
+---------------------------------------------------------------------------------------------------
+  Chance of a catch within k throws (mainline odds as above):
+                                          1     2     3     4     6
+  Snorlax, full HP                        3%    6%   10%   13%   18%
+  rate 45 full HP (Bulbasaur, Lapras)     6%   11%   17%   22%   31%
+  median Stage 1, full HP                24%   41%   55%   66%   80%
+  rate 45 at "1 HP"                      18%   32%   44%   54%   68%
+  median Stage 1 at "1 HP"               70%   91%   97%   99%  100%
+  425 Stage 1s, 6 throws at "1 HP": only 10 under 50%. At full HP: 154 under 50%.
+
+  This reopens A11: with 6 balls a miss no longer ends the event, the Flee meter does.
+  Belt size only matters when it runs out before the Flee meter does:
+     balls per run  vs  events per run x throws before a flee
+  With 1 to 2 rare events per run and a Flee meter of ~3, a 6-ball belt is rarely empty,
+  so buying more belts would add little. The real knobs become Flee capacity and catch odds.
+
+  Open (B-series, replaces the A11 ruling if adopted):
+  B1  Belt refills every run (a capacity) | balls are consumed and restocked with coins
+  B2  "Additional belts": +6 balls each (12, 18) | +1 ball per purchase | a belt = a ball tier (Great, Ultra)
+  B3  Flee meter: fixed throws before a flee (e.g. 3) | rises by species (capture_rate) | rises by time
+  B4  Meta progression on: belt size | ball quality (Great 1.5x, Ultra 2x, mainline) | Flee capacity
+  B5  Currency for belts: coins (gacha gone, coins already buy upgrades) | gym drops

@@ -1532,6 +1532,15 @@ G.Game = (() => {
       return regionBest();
     },
     regionRecord,
+    regionKey,
+    /** #91-2: false once this run is flagged (debug tools, tampering): it never sets a record or posts a score. */
+    get runIsClean() {
+      return clean();
+    },
+    /** #91-2: shinies caught this run (Run Info "Shinies"). */
+    get shiniesCaught() {
+      return caught.length;
+    },
     st,
     // team (Phase A)
     get roster() {

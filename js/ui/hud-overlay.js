@@ -224,7 +224,8 @@ G.HudOverlay = (() => {
   /**
    * A scrolling box with the pause menu's thin scroll bar (dex-buttons AF2-AF20). Made for the move list in #89,
    * shared in #91-2 so Run Info and Cards Taken use the same one. The page's own bar is hidden; the thumb follows
-   * the scroll, at least 24 px tall, and hides when the content fits. No drag yet: the wheel scrolls it.
+   * the scroll, at least 24 px tall, and hides when the content fits. The wheel scrolls it, and the thumb can be
+   * dragged (#91-2 DD1).
    * box: { left, top, width, height } in px, the scrolling area; trackRight: the bar's gap to the parent's right edge;
    * colours: { track, thumb, thumbRim }; resetOn: values that send it back to the top when one changes (fixed length);
    * onScroll: called on every scroll, before the thumb moves (the move list drops its hover tooltip there).
@@ -233,6 +234,7 @@ G.HudOverlay = (() => {
     const scrollRef = preactHooks.useRef(null),
       thumbState = preactHooks.useRef({ top: 0, height: 0 }); // the thumb, in px
     const [, redraw] = preactHooks.useState(0);
+    const drag = preactHooks.useRef(null); // { pointerY, scrollTop } while the thumb is held
     const measure = () => {
       const element = scrollRef.current;
       if (!element) return;
@@ -253,6 +255,21 @@ G.HudOverlay = (() => {
       if (scrollRef.current) scrollRef.current.scrollTop = 0;
       measure();
     }, resetOn);
+    const holdThumb = (event) => {
+      const element = scrollRef.current;
+      if (!element) return;
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      drag.current = { pointerY: event.clientY, scrollTop: element.scrollTop };
+    };
+    const dragThumb = (event) => {
+      const element = scrollRef.current;
+      if (!drag.current || !element) return;
+      const screenScale = element.getBoundingClientRect().height / element.clientHeight; // the menu is scaled to fit
+      const movedThumb = (event.clientY - drag.current.pointerY) / screenScale;
+      element.scrollTop = drag.current.scrollTop + movedThumb * (element.scrollHeight / element.clientHeight);
+    };
+    const dropThumb = () => (drag.current = null);
     const thumbNow = thumbState.current;
     return html`<div
         class="hud-scroll-box"
@@ -273,6 +290,10 @@ G.HudOverlay = (() => {
           thumbNow.height
             ? html`<div
                 class="hud-scroll-thumb"
+                onPointerDown=${holdThumb}
+                onPointerMove=${dragThumb}
+                onPointerUp=${dropThumb}
+                onPointerCancel=${dropThumb}
                 style=${{
                   top: thumbNow.top + 'px',
                   height: thumbNow.height + 'px',

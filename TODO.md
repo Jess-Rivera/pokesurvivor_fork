@@ -41,6 +41,10 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    to the 6-space lines in enemy.js payKill and re-run both mutate scripts.
 8. Deferred hook (#91-2 C, map 91-2C): when the real loop counter lands and the loop can change mid-run, Region Best's
    "gyms" must become gyms cleared on the final loop, not G.Gym.splits.length.
+9. New issue to file (Quick, 2026-11-12): region type maps, 9 biome maps per region (decision
+   2026-11-12-region-type-maps-fill-rules). Design only; D4 to D9 open in docs/ASCII Concept Maps/Region Type Maps - Biomes v1.txt.
+   Related finding: Kanto T6 rolls no hordes (hordeTypes empty, events.js swaps in gold); Kanto T6 has 7 wild species.
+   Tool gap: tools/make_seo_pages.py is missing, so the publish command's last step fails.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh)

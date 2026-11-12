@@ -14,9 +14,18 @@ G.CHANGELOG = [
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
       ],
+      [
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+        'New in the pause menu: the Run Info panel on the left. It shows your progress, combat numbers, faints, the statuses you inflicted, loot, EVs earned and your Region Best.',
+      ],
+      [
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+        'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
+      ],
     ],
     chg: [
       ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
+      ["The pause menu's scroll bars can now be dragged.", "The pause menu's scroll bars can now be dragged."],
       [
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',

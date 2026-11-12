@@ -1,0 +1,66 @@
+REGION TYPE MAPS: BIOMES v1 (2026-11-12, design only, no code)
+==============================================================
+Follows "Region Type Maps Feasibility.txt". Rules D1-D3 approved by Jess today
+(docs/decisions/2026-11-12-region-type-maps-fill-rules.md). Biome set = PROPOSAL.
+
+APPROVED CAST FILL ORDER (per map, per BST tier, 9 species, mix 1-2 S / 3-5 M / 3-5 R)
+-------------------------------------------------------------------------------------
+  1. on-type,  own gen                 (has a map type)
+  2. on-type,  earlier gens            only if step 1 leaves a family short
+  3. off-type, own gen    \  fills the MISSING FAMILIES only
+  4. off-type, earlier    /  (same idea as the gym off-type fill rule)
+  5. ??? lower BST tier                today's poolFor borrow; see D5 below
+  Kanto T6 needs step 5 no matter what: only 7 wild Gen-1 species sit in 530-620.
+
+PROPOSED BIOME SET (shared by all 9 regions, 3 two-type + 6 three-type)
+------------------------------------------------------------------------
+  % = on-type cast slots across T1-T6, after steps 1-4 (100 = every slot on theme)
+  map                 types                    Kant Joht Hoen Sinn Unov Kalo Alol Gala Pald
+  Meandering Meadows  Grass+Bug+Normal           74   89   91   94   94   98  100  100  100
+  Dark Volcano        Fire+Dark+Rock             65   83   91   96   98   98   98   98   98
+  Tidal Coast         Water+Flying               83   94   98   98  100  100  100  100  100
+  Deep Caverns        Ground+Rock+Fighting       57   63   78   89   89   91   94   94   96
+  Power Plant         Electric+Steel+Poison      70   76   80   87   89   89   96   96  100
+  Haunted Tower       Ghost+Poison+Dark          67   76   78   85   85   87   98  100  100
+  Mystic Grove        Fairy+Psychic+Grass        69   80   85   91   91   96  100  100  100
+  Frozen Peaks        Ice+Water                  74   91   96   98   98   98  100  100  100
+  Dragon's Den        Dragon+Water+Flying        85   94   98   98  100  100  100  100  100
+  -------------------------------------------------------------------------------------
+  region average                                 72   83   88   93   94   95   99   99   99
+  all 18 types covered; doubled: Water x3, Grass Dark Rock Flying Poison x2
+
+  Why the third types: Power Plant was 22% in Kanto as Electric+Steel (+Poison = Grimer/Muk,
+  who live in the Kanto Power Plant); Mystic Grove 44% as Fairy+Psychic (+Grass = Exeggcute line).
+
+KANTO DETAIL: on-type slots of 9, T1..T6
+----------------------------------------
+                       T1 T2 T3 T4 T5 T6
+  Meandering Meadows    8  9  9  7  5  2
+  Dark Volcano          3  9  4  8  9  2
+  Tidal Coast           9  9  6  8  9  4
+  Deep Caverns          5  7  6  7  6  0
+  Power Plant           7  9  7  9  6  0
+  Haunted Tower         7  9  7  8  5  0
+  Mystic Grove          8  9  8  7  4  1
+  Frozen Peaks          9  9  5  7  7  3
+  Dragon's Den          9  9  7  8  9  4
+  T6 is off-theme everywhere: from 8:20 on, every Kanto map looks the same.
+
+SIGNATURE TYPE IS THIN IN KANTO (wild Gen-1 species of the map's lead type)
+---------------------------------------------------------------------------
+  Dragon 2 (Dratini, Dragonair)   Ghost 3 (Gastly line)   Ice 4   Fairy 5
+  -> Dragon's Den scores 85% only because Water/Flying carry it. It is a water map
+     with 2 dragons. Matters for acquisition: "focus Dragon" in Kanto = 2 species.
+
+OPEN DECISIONS (each changes spawn behavior; not built)
+-------------------------------------------------------
+  D4  type match: either slot (hordes today) | primary only
+  D5  step 5 order: lower-tier on-type BEFORE off-type (theme wins, enemies weaker)
+                    | off-type BEFORE lower tier (power ramp wins, theme thins)
+  D6  spawn weight: on-type species weighted up vs off-type fill (theme reads stronger
+      on screen even when 3 of 9 cast slots are off-type) | equal weights
+  D7  biome set: one shared set for all regions (names can be regional skins later)
+                 | hand-authored 9 per region
+  D8  hordes on type maps: map types only | any type in the tier | off-type hordes
+      as the "something new" beat
+  D9  Kanto T6: accept off-theme | cap Kanto at T5 cast + elites | fold into D5

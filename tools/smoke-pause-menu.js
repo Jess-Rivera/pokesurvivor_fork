@@ -14,6 +14,9 @@
 //   Move_Left / Move_Right and team card clicks change it; missing members are empty frames.
 //   F2 (2026-11-12): fully open, the world is held still and the HUD is hidden and unread; a resize or a setting
 //   change redraws one frame; after closing both run again.
+//   #91-2: Run Info, seeded through G.Debug.runinfo / regionbest / recordcheck: every section in order, the empty
+//   and full presets, the move name on Biggest hit, a tie, the bar dragged and the wheel, the pinned header, the reopen
+//   at the top, Region Best's Best / Next / Pace, clear and old, a dry and a written recordcheck.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -629,6 +632,115 @@ async function main() {
     (await look()).fully && (await look()).focus === focusBefore,
     'the menu stays open, the focus untouched (' + focusBefore + ' then ' + (await look()).focus + ')'
   );
+
+  // ---- #91-2: the Run Info panel (map 91c), seeded through the debug calls; it reads when the menu opens ----
+  const reopen = async () => {
+    await key('Escape', FULL_MS); // close
+    await key('Escape', FULL_MS); // open again: Run Info reads now
+  };
+  const runInfo = () =>
+    page.evaluate(() => {
+      const panel = document.querySelector('.pm-info');
+      if (!panel) return null;
+      const body = panel.querySelector('.hud-scroll-box'),
+        rows = {},
+        tones = {};
+      for (const each of panel.querySelectorAll('.pm-info-row')) {
+        const label = each.querySelector('.pm-info-label').textContent.trim(),
+          value = each.querySelector('.pm-info-value');
+        rows[label] = value.textContent.trim();
+        tones[label] = value.className;
+      }
+      const thumb = panel.querySelector('.hud-scroll-thumb');
+      const box = thumb ? thumb.getBoundingClientRect() : null;
+      return {
+        title: panel.querySelector('.pm-info-run').textContent.trim(),
+        sections: [...panel.querySelectorAll('.pm-info-title')].map((each) => each.textContent.trim()),
+        rows,
+        tones,
+        scrollTop: body.scrollTop,
+        overflows: body.scrollHeight > body.clientHeight + 1,
+        headerTop: Math.round(panel.querySelector('.pm-info-header').getBoundingClientRect().top),
+        thumb: box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : null,
+      };
+    });
+  const lowestSlot = () =>
+    page.evaluate(() => {
+      const lead = G.Game.roster.slice().sort((first, second) => first.teamSlot - second.teamSlot)[0];
+      return { name: lead.mon.name, move: lead.moves[0] ? lead.moves[0].name : '' };
+    });
+  await page.evaluate(() => {
+    G.Debug.runinfo('empty');
+    G.Debug.regionbest('clear');
+  });
+  await reopen();
+  let info = await runInfo();
+  ok(info && /RUN$/.test(info.title), 'Run Info shows, headed by the run name (' + (info && info.title) + ')');
+  ok(
+    info && info.sections.join('|') === 'Progress|Combat|Faints|Statuses inflicted|Loot|EVs earned|Region best',
+    'Run Info sections in the 91c order (' + (info && info.sections.join(', ')) + ')'
+  );
+  ok(info.rows.Faints === '0' && !('Most faints' in info.rows), "runinfo('empty'): Faints 0, its two lines hidden");
+  ok('None yet' in info.rows, "runinfo('empty'): Statuses inflicted reads None yet");
+  ok(info.rows.Best === 'No record yet' && !('Pace' in info.rows), 'no record: No record yet, no Next or Pace');
+  await page.evaluate(() => G.Debug.runinfo('full'));
+  await reopen();
+  info = await runInfo();
+  const lead = await lowestSlot();
+  ok(
+    info.rows['Biggest hit'].includes(lead.move) && info.rows['Biggest hit'].endsWith('2,450'),
+    "runinfo('full'): Biggest hit names its move (" + info.rows['Biggest hit'] + ')'
+  );
+  const kinds = ['Burn', 'Poison', 'Toxic', 'Paralysis', 'Sleep', 'Freeze', 'Confusion', 'Trap', 'Daze', 'Drowsy'];
+  ok(kinds.every((kind) => kind in info.rows), "runinfo('full'): every status kind shows");
+  ok(info.rows['Most faints'].startsWith(lead.name) && 'Time fainted' in info.rows, 'Most faints and Time fainted show');
+  ok(info.overflows && info.thumb && info.scrollTop === 0, 'the full panel overflows, shows its bar and opens at the top');
+  const headerAt = info.headerTop;
+  await page.mouse.move(info.thumb.x, info.thumb.y);
+  await page.mouse.down();
+  await page.mouse.move(info.thumb.x, info.thumb.y + 120, { steps: 4 });
+  await page.mouse.up();
+  await sleep(100);
+  info = await runInfo();
+  ok(info.scrollTop > 0 && info.headerTop === headerAt, 'dragging the bar scrolls the body (DD1); the header stays put');
+  await reopen();
+  info = await runInfo();
+  ok(info.scrollTop === 0, 'it reopens at the top');
+  await page.mouse.move(350, 600);
+  await page.mouse.wheel(0, 400);
+  await sleep(150);
+  info = await runInfo();
+  ok(info.scrollTop > 0 && info.headerTop === headerAt, 'the wheel scrolls the body; the header stays put');
+  await page.evaluate(() => G.Debug.runinfo('tie'));
+  await reopen();
+  info = await runInfo();
+  ok(info.rows['Most faints'].startsWith(lead.name), "runinfo('tie'): Most faints shows the lower slot (" + info.rows['Most faints'] + ')');
+  // the seeded run has 3 gyms by 14:20 and is past 20:00; this record had its 4th gym at 16:40, so the gap is growing
+  await page.evaluate(() => G.Debug.regionbest({ loop: 1, gyms: 4, time: 1500, splits: [250, 500, 800, 1000] }));
+  await reopen();
+  info = await runInfo();
+  ok(info.rows.Best === 'Loop 1, Gym 4 cleared, lasted 25:00', 'regionbest({..}): Best reads ' + info.rows.Best);
+  ok(info.rows.Next === 'Loop 1, Gym 4 (best got there at 16:40)', 'Next: ' + info.rows.Next);
+  ok(/^You're behind by /.test(info.rows.Pace) && info.tones.Pace.includes('is-behind'), 'Pace: behind, red (' + info.rows.Pace + ')');
+  for (const arg of ['clear', 'old']) {
+    await page.evaluate((how) => G.Debug.regionbest(how), arg);
+    await reopen();
+    info = await runInfo();
+    ok(info.rows.Best === 'No record yet', "regionbest('" + arg + "'): No record yet");
+  }
+  const dry = await page.evaluate(() => {
+    const result = G.Debug.recordcheck();
+    return { better: result.better, written: result.written, best: G.Game.regionBest };
+  });
+  ok(dry.better && !dry.written && dry.best === null, 'recordcheck(): a new best, nothing written');
+  const wrote = await page.evaluate(() => {
+    const result = G.Debug.recordcheck('write');
+    return { written: result.written, best: G.Game.regionBest };
+  });
+  ok(wrote.written && wrote.best && wrote.best.gyms === 3, "recordcheck('write'): this run is the record now");
+  await reopen();
+  info = await runInfo();
+  ok(/^Loop 1, Gym 3 cleared, lasted /.test(info.rows.Best) && info.rows.Pace === 'New best pace', 'the written record shows');
 
   // ---- End Run asks inside the ball ----
   // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing
