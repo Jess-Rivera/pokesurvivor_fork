@@ -22,10 +22,10 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    not visible to it, and the open items below are its source.
 10. Before leaving work: commit and `git push origin feature/pause-menu-rework`, so home starts from the same tree.
 
-## Next (from the 2026-11-12 session that closed #90, #94, #98)
-1. #91: pause menu Run Info panel and Per Pokemon Run Stats, in three slices (docs/ASCII Concept Maps/91e):
-   91-1 counters BUILT (Quick, 2026-11-12; checks owed on the machine), 91-2 Run Info panel (map 91c), 91-3 Run Stats
-   box (map 91d). Then #83, then #92 (children of #82); merge the branch back into feature/gym-leader-ai when #82 is done.
+## Next (from the 2026-11-12 Quick session that built all of #91)
+1. #91 BUILT (91-1, 91-2 A to E, 91-3; maps 91-2, 91-2C, 91-2D, 91-3). Owed: Jess's feel test (91c 7-step debug
+   session, then runinfo('full') and flip the team), re-run smoke-pause-menu, then comment on #91 and close it.
+   Then #83 (Cards Taken), then #92 (children of #82); merge back into feature/gym-leader-ai when #82 is done.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: #97 and #99 new in Triage; #93 and #75 carry needs-triage; #72, #79 (deferred) and #74 sit in Triage; #86 is
@@ -33,9 +33,7 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 4. Leader AI when ready: #53, then #39; planner gaps #57, #58; #30 before gym-leader-ai merges to main.
 5. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
    feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1, fix/ui-upgrade).
-6. New issue to file (Quick, 2026-11-12, from F2): the canvas FPS counter freezes while the pause menu holds the world
-   still. Fix later, its own issue. Map: docs/ASCII Concept Maps/Perf F2 - Freeze Behind the Pause Menu.txt (D3).
-   Also possible: F3, lighter HUD paint (static pixel SVGs baked to images), only if a new profile still shows it.
+6. FILED as #100 (the canvas FPS counter freezes behind the pause menu). Also possible: F3, lighter HUD paint (static pixel SVGs baked to images), only if a new profile still shows it.
 7. DONE (Quick, 2026-11-12, 91-2 A): Chore (found in the 91-1 STALE scan): silver-mutate "a kill pays nothing" and pokebox-evs-mutate's
    evKill pattern still carry 10-space indents from before payKill existed, so both are STALE (older than #91). Re-point
    to the 6-space lines in enemy.js payKill and re-run both mutate scripts.
@@ -45,10 +43,17 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    2026-11-12-region-type-maps-fill-rules). Design only; D4 to D9 open in docs/ASCII Concept Maps/Region Type Maps - Biomes v1.txt.
    Related finding: Kanto T6 rolls no hordes (hordeTypes empty, events.js swaps in gold); Kanto T6 has 7 wild species.
    Tool gap: tools/make_seo_pages.py is missing, so the publish command's last step fails.
+10. Chore (Quick, 2026-11-12, found in the 91-3 STALE scan): debug-movechecker-mutate.js has about 8 debug.js patterns
+   written before a Prettier pass ("spawn(0);     // movechecker start" with wide spacing), so they no longer match.
+   Older than #91. Re-point them to the current debug.js lines and re-run the script.
+11. Possible issue (Quick, 2026-11-12): PausePokemon and PauseInventory are not in main.js NEED (ready-guarded instead);
+    CLAUDE.md says every new file goes there. PauseRunInfo is. Decide whether to add the two.
+12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op (silver-harness cannot swap
+    that file). Add an SV_PANEL entry when co-op work starts.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh)
-- UI and HUD: #25 #61 #74 #75 #82 (#91 #83 #92) #93 #95 #99 #72 #79 (deferred)
+- UI and HUD: #25 #61 #74 #75 #82 (#91 #83 #92) #93 #95 #99 #100 #72 #79 (deferred)
 - Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #60
 - Moves: #11 #13 #14 #38 #44
 - Engine: #8 #10 #12 #46 #48 #56 #86 #97

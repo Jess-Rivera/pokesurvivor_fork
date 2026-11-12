@@ -211,3 +211,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
   mutants caught, plus 7 existing harnesses, all bundled in Quick's sandbox (not real node). Re-pointed 2 STALE mutants.
 - Broke: two parallel edits to player.js and enemy.js raced, one lost; the harness caught it, re-applied one at a time.
 - Stopped at: Jess runs check.js and the three mutate scripts, commits 91-1; next is 91-2 (Run Info panel).
+
+## 2026-11-12 (Quick, work), #91 built end to end: Run Info, Region Best, Run Stats box
+- 91-1 checks passed on the machine after two fixes: boss-owner-harness crashed stringifying stDot (its by is now the
+  caster); a STALE Brock cards mutant from #84 re-pointed.
+- 91-2: hits carry their move id; Silver earned / spent; Region Best (save.regionBest, solo and clean only, pace delta,
+  rules DR1 to DR5, RC1, RC2); Run Info panel (pause-run-info.js, pure sections()); debug runinfo / regionbest /
+  recordcheck. Cleanups: shared kit ScrollBox (now draggable), Silver kill pays once, onDealt takes named fields.
+- 91-3: Run Stats box, 12 rows scrolling in its 200 px box (Jess kept the size); G.U.compact, fieldSeconds, statusList.
+- Tests: run-info harness and mutate runner new (78 checks, 28 mutants); run-stats harness 108; all in Quick's sandbox.
+- Broke: a changelog entry mis-nested (parsed fine); smoke read the Statuses tooltip as one string. Both fixed.
+- Stopped at: Jess re-runs smoke-pause-menu, feel-tests #91; next is #83. GitHub API empty from Quick all session.
