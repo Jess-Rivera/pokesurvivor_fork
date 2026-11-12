@@ -200,3 +200,14 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - #94: run item name inside the card's top band, squeezed to fit; description starts at the patch top. Closed.
 - smoke-hud-overlay had 6 old failures (the pause team cards counted as roster rows, berry names gone since #90): fixed.
 - Decision 2026-11-12-90-pocket-takes-berries-and-run-items. Stopped at: next is #91.
+
+## 2026-11-12 (Quick, work), laptop perf, pause polish, #91 planned, 91-1 built
+- Perf (Firefox laptop): profile showed HUD paint 37% and the vignette fill 18%, Preact 1.3%. Built: Vignette setting
+  (Graphics, default off, cached); pause menu holds the world still and hides the HUD while fully open. Fixed: grids
+  vanished in the menu (.hud-defs hidden with the HUD). Team panel frame removed. All committed by Jess and feel-tested.
+- #91 planned panel by panel (maps 91, 91b to 91e, 91-1); every counting rule approved into PAUSE-MENU 4 and 6.
+- 91-1 built: G.RunStats + hooks (onDealt widened, onInflicted, onFaint, revive, restoreHp as the one heal path); burn
+  and poison now credit their inflicter, so the DPS panel reads higher for status teams. run-stats harness 70/70 and 36/36
+  mutants caught, plus 7 existing harnesses, all bundled in Quick's sandbox (not real node). Re-pointed 2 STALE mutants.
+- Broke: two parallel edits to player.js and enemy.js raced, one lost; the harness caught it, re-applied one at a time.
+- Stopped at: Jess runs check.js and the three mutate scripts, commits 91-1; next is 91-2 (Run Info panel).

@@ -23,8 +23,9 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 10. Before leaving work: commit and `git push origin feature/pause-menu-rework`, so home starts from the same tree.
 
 ## Next (from the 2026-11-12 session that closed #90, #94, #98)
-1. #91: pause menu Run Info panel and Per Pokemon Run Stats (new tracking). Then #83, then #92 (children of #82);
-   merge the branch back into feature/gym-leader-ai when #82 is done.
+1. #91: pause menu Run Info panel and Per Pokemon Run Stats, in three slices (docs/ASCII Concept Maps/91e):
+   91-1 counters BUILT (Quick, 2026-11-12; checks owed on the machine), 91-2 Run Info panel (map 91c), 91-3 Run Stats
+   box (map 91d). Then #83, then #92 (children of #82); merge the branch back into feature/gym-leader-ai when #82 is done.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: #97 and #99 new in Triage; #93 and #75 carry needs-triage; #72, #79 (deferred) and #74 sit in Triage; #86 is

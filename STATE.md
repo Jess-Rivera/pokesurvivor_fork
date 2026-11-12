@@ -1,36 +1,35 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Updated 2026-11-12, Claude Code (home): on feature/pause-menu-rework (branched off feature/gym-leader-ai). #90, #94 and
-#98 closed after Jess's feel test. docs/branch-rules/feature-gym-leader-ai.md governs the parent branch; none for this one.
+Last updated: 2026-11-12, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. Branch: feature/pause-menu-rework. Spec: docs/PAUSE-MENU.md.
-2. Next slice: #91 (Run Info panel and Per Pokemon Run Stats, with the new tracking), then #83 (Cards Taken), then #92
-   (end-of-run Team). When #82 is done, merge the branch back into feature/gym-leader-ai.
-3. Triage is waiting (see TODO.md item 3).
+1. If not done: run node tools/check.js plus run-stats-mutate, team-cards-mutate and gym-leader-mutate, then commit 91-1.
+2. Next slice: 91-2, the Run Info panel. Design settled in docs/ASCII Concept Maps/91c; build order in 91e.
+   Then 91-3 (Run Stats box, map 91d), then #83, then #92. Merge back into feature/gym-leader-ai when #82 is done.
+3. Triage still waiting (TODO.md "Next" item 3).
 
 ## Where we are
-- Pause menu #82: #88, #89, #90 shipped; #91, #83, #92 remain.
-- js/ui/pause-menu.js mounts js/ui/pause-pokemon.js (detail, team) and js/ui/pause-inventory.js (Run Inventory, item
-  moves, carry ghost). The Temporary Pocket lives on G.Team and holds three kinds ({ kind: 'held' | 'berry' | 'run',
-  id }): swapWithPocket for held items, storeToPocket and pocketToStore for berries and run items (run item on / off for
-  every member). G.Game asks G.PauseMenu.blockResume() before every resume.
-- Tests: smoke-pause-inventory, smoke-pause-menu, smoke-hud-overlay, smoke-berry-slots all pass.
-- Rulings: decisions 2026-11-11-90-run-inventory-pocket-and-item-moves and 2026-11-12-90-pocket-takes-berries-and-run-items.
-- Tabled: #95 (hex meta HP band) is blocked by #97 (permanent upgrade rework, needs triage and a design pass).
-- Leader AI parked by choice: #53, then #39. check.js red only on gym-harness and leader-stats-harness until #30.
+- Built today (Quick): Vignette setting (Graphics, default off, cached when on); pause menu holds the world still
+  while fully open (HUD hidden, no per-frame reads, one redraw on resize or a setting change); fix: the shared grid
+  patterns (.hud-defs) stay visible under the hidden HUD; team panel has no frame behind the cards.
+- 91-1 built: js/systems/run-stats.js (G.RunStats on runTeam.runStats, beside the DPS record). Burn and poison ticks
+  now credit their inflicter (damage, DPS, kill). Counters verified live by Jess in the console.
+- #91 rules, all [Approved] in docs/PAUSE-MENU.md sections 4 and 6: kill credit, DoT credit, faints, down time,
+  statuses inflicted, Taken / Healed, Region Best (new save field, debug-flagged runs never set it), debug tools.
+- Firefox laptop profile: Preact was 1.3%; the HUD's paint (37%) and the vignette fill (18%) were the costs.
 
 ## Watch
-- Headless: file:// blocks fonts; click #tap-start first; a run needs save.team set; frame-rate checks need GPU flags.
-- elementFromPoint skips pointer-events: none (smokes turn it on to probe a tooltip).
-- A CSS filter or animation on a slot traps its tooltip in that slot's layer: put effects on the square, not the slot.
-- The pause team cards reuse .hud-roster-row (with .pm-team-card): scope run screen probes with :not(.pm-team-card).
-- Bash heredocs with long JS, backticks or quotes break: write edit scripts to the scratchpad and run them.
-- Untracked art in assets/excalidraw (Redesign Main Menu) is Jess's; never staged by the assistant.
+- Quick has no node: harnesses ran bundled in its sandbox, not real node. Treat check.js on the machine as truth.
+- Never edit one file with two parallel edits: one was lost this session (the harness caught it).
+- Anything that hides .hud-overlay must leave .hud-defs visible (SVG patterns inherit visibility from their defs).
+- Keep new code within 120 columns (Prettier), or mutate patterns go STALE.
+- GitHub API returns empty most of the time from Quick; TODO.md is the fallback list.
+- Headless: file:// blocks fonts; click #tap-start first; frame-rate checks need GPU flags.
 
 ## Open owner decisions
-- #86 whole levels (gym leaders round down too?). Bait (#60). #93 tooltip scope. #99 menu font. #97 upgrade rework scope.
-- Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out. #74 spare weather art.
+- FPS counter freezes behind the pause menu (file an issue: TODO.md item 6). F3 HUD paint diet only if needed.
+- #86 whole levels; #93 tooltip scope; #99 menu font; #97 upgrade rework scope; #60 Bait.
+- Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
 
 Rules: CLAUDE.md. file://: mask-image is blocked (use clip-path).
