@@ -192,3 +192,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Filed #95 (hex counts meta HP as a run effect; blocked by the new #97 upgrade rework), #98 (hex +X% under the number;
   also fixes the smoke-pause-menu fit check that fails at Jess's radius 110), #99 (menu font). Decision 2026-11-11-90-run-inventory-pocket-and-item-moves.
 - Stopped at: #90 in Needs Playtest (item moves, prompt, berry bag still to feel-test); tooltips confirmed.
+
+## 2026-11-12 (Claude Code, home), #90 closed, #94 and #98 on feature/pause-menu-rework
+- #90 feel test: berries and run items now go into the Temporary Pocket (G.Team storeToPocket, pocketToStore) to be
+  destroyed on resume; run item effects turn off and on for the whole team; the Stone rule holds. Feel test passed, closed.
+- #98: side hex corners stack name / number / +X%; smoke-pause-menu green again at radius 110. Closed.
+- #94: run item name inside the card's top band, squeezed to fit; description starts at the patch top. Closed.
+- smoke-hud-overlay had 6 old failures (the pause team cards counted as roster rows, berry names gone since #90): fixed.
+- Decision 2026-11-12-90-pocket-takes-berries-and-run-items. Stopped at: next is #91.
