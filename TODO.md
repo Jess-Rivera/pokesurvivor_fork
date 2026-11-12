@@ -27,6 +27,8 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    smoke-pause-menu, feel test, then edit #83's done-condition, comment and close. Then #92 (children of #82; it also
    retires the team sheet's Run Cards totals, still the old ones); merge back into feature/gym-leader-ai when #82 is
    done.
+   Pause menu tooltips moved to one shared top layer (with #83): re-run smoke-pause-menu and smoke-pause-inventory,
+   feel test. The "every tooltip everywhere" issue is FILED as #102.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: #97 and #99 new in Triage; #93 and #75 carry needs-triage; #72, #79 (deferred) and #74 sit in Triage; #86 is
@@ -40,28 +42,30 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    to the 6-space lines in enemy.js payKill and re-run both mutate scripts.
 8. Deferred hook (#91-2 C, map 91-2C): when the real loop counter lands and the loop can change mid-run, Region Best's
    "gyms" must become gyms cleared on the final loop, not G.Gym.splits.length.
-9. New issue to file (Quick, 2026-11-12): region type maps, 9 biome maps per region (decision
-   2026-11-12-region-type-maps-fill-rules). Design only; D4 to D9 open in docs/ASCII Concept Maps/Region Type Maps - Biomes v1.txt.
+9. New issue to file (Quick, 2026-11-12): region type maps, PARKED. 8 type maps + 1 Stage 3 map per region (decision
+   2026-11-12-region-type-maps-fill-rules, map Region Type Maps - Biomes v2). Design only; D4 to D16 open.
    Related finding: Kanto T6 rolls no hordes (hordeTypes empty, events.js swaps in gold); Kanto T6 has 7 wild species.
    Tool gap: tools/make_seo_pages.py is missing, so the publish command's last step fails.
-10. New issues to file (Quick, 2026-11-12): (a) acquisition rework, gacha out, catch + candy + legendaries
-   (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1). Design only.
-   (b) day/night cycle on run time, random start point, may affect visuals, evolution flags and spawns.
-   Parked for its own design dive. Trade evolutions wait on multiplayer (deferred).
-10. Chore (Quick, 2026-11-12, found in the 91-3 STALE scan): debug-movechecker-mutate.js has about 8 debug.js patterns
+10. Acquisition rework (Quick, 2026-11-12): gacha out; rescue catch (UberElite + Pokeball Belt), Lost Pokemon recruits,
+   candy evolution with mainline requirements, legendaries by loop. Decision
+   2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1 (rounds 1 to 16). Design only.
+   To file: one parent issue, then slices. Children it spawns: the 8-move import (T3b), 15 new evolution items +
+   Link Cable (Shop), Accelgor route (no Shelmet sprites). Day/night is FILED as #101 (parked for its own dive).
+11. Chore (Quick, 2026-11-12, found in the 91-3 STALE scan): debug-movechecker-mutate.js has about 8 debug.js patterns
    written before a Prettier pass ("spawn(0);     // movechecker start" with wide spacing), so they no longer match.
    Older than #91. Re-point them to the current debug.js lines and re-run the script.
-11. Possible issue (Quick, 2026-11-12): PausePokemon and PauseInventory are not in main.js NEED (ready-guarded instead);
+12. Possible issue (Quick, 2026-11-12): PausePokemon and PauseInventory are not in main.js NEED (ready-guarded instead);
     CLAUDE.md says every new file goes there. PauseRunInfo is. Decide whether to add the two.
-12. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op (silver-harness cannot swap
+13. Test gap (low, co-op deferred): no mutant covers hud-player-panel.js hiding Silver in co-op (silver-harness cannot swap
     that file). Add an SV_PANEL entry when co-op work starts.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh)
-- UI and HUD: #25 #61 #74 #75 #82 (#91 #83 #92) #93 #95 #99 #100 #72 #79 (deferred)
+Partly checked against the GitHub API 2026-11-12 (Quick saw #85 to #102 only): #91 is CLOSED; #101, #102 are new.
+- UI and HUD: #25 #61 #74 #75 #82 (#83 #92) #93 #95 #99 #100 #102 #72 #79 (deferred)
 - Gyms: #6 #9 #20 #21 #24 #30 #39 #49 #53 #57 #58 #60
 - Moves: #11 #13 #14 #38 #44
-- Engine: #8 #10 #12 #46 #48 #56 #86 #97
+- Engine: #8 #10 #12 #46 #48 #56 #86 #97 #101 (day/night, parked)
 - Items: #36
 - Bugs: #16 #18
 - Docs: #28 #29

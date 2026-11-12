@@ -1,36 +1,34 @@
 # STATE, current handoff (read this right after CONTEXT.md)
 
 Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
-Last updated: 2026-11-12, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
+Last updated: 2026-11-12 evening, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. #91 DONE: Jess's feel test passed (2026-11-12, Quick). Owed: comment on #91 and close it (Quick has no gh, Jess runs it).
-2. #83 BUILT (Quick, 2026-11-12, decision 2026-11-12-83-cards-taken-counts-and-move-tooltip-changes): Cards Taken is
-   the DPS panel's count list for the cards that touch this Pokemon (G.TeamCards.takenBy); the move tooltip's "Cards:"
-   line shows before and after (G.TeamCards.changes). team-cards harness 183/183 in a sandbox bundle. Owed: Jess runs
-   check.js and smoke-pause-menu (new #83 block), feel test, then #83 comment and close. Then #92. Merge back into
-   feature/gym-leader-ai when #82 is done.
-3. Triage still waiting (TODO.md "Next" item 3).
+1. #91 is CLOSED. #83 BUILT, still owed: Jess runs check.js and smoke-pause-menu, feel test, comment and close #83.
+   Then #92. Tooltip top layer (built with #83): re-run smoke-pause-menu and smoke-pause-inventory, feel test.
+2. File the acquisition parent issue (TODO "Next" item 10), then decide its slice order. Design only so far.
+3. Triage waiting (TODO "Next" item 3), plus new #101 and #102 in needs-triage.
 
-## Where we are
-- Pause menu left panel: Run Info (js/ui/pause-run-info.js), sections Progress, Combat, Faints, Statuses, Loot, EVs,
-  Region Best with a speedrun pace delta. Detail panel: Run Stats box, 12 rows scrolling in its 200 px box.
-- Region Best: new save field save.regionBest (per region, 'all' for All regions), set only by clean solo runs.
-  Rules DR1 to DR5, RC1, RC2 in PAUSE-MENU 6 and map 91-2; Best = loop, then gyms, then the tie rules.
-- Shared kit ScrollBox (hud-overlay.js): every pause menu scroll bar, wheel and drag.
-- Debug: G.Debug.runinfo / regionbest / recordcheck (?dev). onDealt and RunStats.dealt take named fields.
-- Last check run (Jess, machine): check.js green bar the 2 Misty fails; smoke-pause-menu fixed after one bad read,
-  re-run owed.
+## This session (design only, no js/ touched)
+- Types-by-region dashboard: docs/type-region-dashboard.html (static snapshot of pokedex.js + enemy-classes.js).
+- Region type maps PARKED: 8 type maps (all 18 types) + 1 Stage 3 map per region. Map: Biomes v2.
+- Acquisition rework DECIDED in direction (map: Acquisition v1, rounds 1 to 16):
+  gacha and tickets out (payouts become coins); rescue event (4% +4%/min roll, 60 s, UberElite, catch odds =
+  star-tier BST ladder x ball x time left, Flee by nature, 6-ball belt restocked with coins); Lost Pokemon
+  recruits Stage 1s with an evolution, any region, 20/12/6% by star; evolution only by candy + mainline
+  requirements (stones from gyms, Link Cable + trade items in the Shop, in-run flags, Team Menu evolve).
+- Day/night cycle filed as #101 (parked). Tooltip issue filed as #102.
 
 ## Watch
-- Quick has no node or browser: its harness runs are sandbox bundles. check.js and the smokes on the machine are truth.
-- GitHub API returns empty from Quick almost every time; TODO.md is the fallback list.
-- Keep new code within 120 columns, or mutate patterns go STALE (three old ones re-pointed today).
-- Changelog edits: check every entry is a pair of strings, not just that the file parses (a bad nest parsed fine).
-- Anything that hides .hud-overlay must leave .hud-defs visible. file://: mask-image is blocked (use clip-path).
+- Quick has no node or browser: harness runs are sandbox bundles; check.js on the machine is truth.
+- GitHub API reaches Quick only partly; TODO.md is the fallback list. TODO has no "Board mirror" section.
+- Keep new code within 120 columns, or mutate patterns go STALE.
+- Blocked in the acquisition design: Accelgor (no Shelmet sprites), Gholdengo by evolution (no Gimmighoul),
+  9 move-gated lines until 8 moves are imported. Kingambit's rule cannot happen as written (elites never repeat).
 
 ## Open owner decisions
-- #86 whole levels; #93 tooltip scope; #99 menu font; #97 upgrade rework scope (blocks #95); #60 Bait.
-- Bench recharge; boss pool size; sprite scale; region unlock rule; Friends and Leaderboard grey-out.
+- Acquisition: Accelgor route, Kingambit rule, Gholdengo source, R1 Shedinja two copies, R4 Alcremie N,
+  A1/A3/C2 gacha removal and save migration, ball tiers, UberElite time limit X.
+- #86 whole levels; #93 tooltip scope; #99 menu font; #97 upgrade rework (blocks #95); #60 Bait.
 
-Rules: CLAUDE.md. Maps for #91: docs/ASCII Concept Maps/91c, 91d, 91e, 91-1, 91-2, 91-2C, 91-2D, 91-3.
+Rules: CLAUDE.md. Acquisition: docs/ASCII Concept Maps/Acquisition v1 - Catch, Candy, Legendaries.txt.

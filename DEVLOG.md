@@ -222,3 +222,11 @@ Older entries were rotated to docs/DEVLOG-archive.md (latest rotation 2026-11-10
 - Tests: run-info harness and mutate runner new (78 checks, 28 mutants); run-stats harness 108; all in Quick's sandbox.
 - Broke: a changelog entry mis-nested (parsed fine); smoke read the Statuses tooltip as one string. Both fixed.
 - Stopped at: Jess re-runs smoke-pause-menu, feel-tests #91; next is #83. GitHub API empty from Quick all session.
+
+## 2026-11-12 evening (Quick, work), design session: types by region, type maps, acquisition rework
+- Built a types-by-region dashboard (docs/type-region-dashboard.html). Found Kanto T6 rolls no hordes, publish needs a missing make_seo_pages.py.
+- Region type maps designed then PARKED: 8 type maps + a Stage 3 map per region (Biomes v2, decision filed).
+- Acquisition rework decided in direction over 16 rounds: gacha out, rescue catch (UberElite, belt, nature flee), Lost
+  Pokemon recruits, candy evolution with mainline requirements, Link Cable. Map Acquisition v1, decision filed.
+- Filed by Jess: #101 day/night (parked), #102 tooltips everywhere. Nothing in js/ touched; check.js not run.
+- Stopped at: file the acquisition parent issue; #83 checks and close still owed from earlier today.
