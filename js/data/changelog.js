@@ -22,6 +22,10 @@ G.CHANGELOG = [
         'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
         'Region Best: your furthest run in each region is kept, and Run Info shows your pace against it, ahead or behind, gym by gym.',
       ],
+      [
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+        "New in the pause menu: each Pokemon's page has a Run Stats box with its kills, time on the field, damage and share of the team's, best hit, super effective share, damage taken and healed, faints, time fainted, statuses inflicted and burn or poison damage. Hover Statuses to see each kind.",
+      ],
     ],
     chg: [
       ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],

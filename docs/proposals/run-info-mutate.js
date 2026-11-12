@@ -16,12 +16,14 @@ const SRC = {
   overlay: ['js/ui/hud-overlay.js', 'RI_OVERLAY'],
   dev: ['dev.html', 'RI_DEV'],
   main: ['js/main.js', 'RI_MAIN'],
+  util: ['js/core/util.js', 'RI_UTIL'],
+  pokemon: ['js/ui/pause-pokemon.js', 'RI_POKEMON'],
 };
 const M = [
   // ---- the panel's rules ----
   ['Kills per minute shows a number before 1:00', 'panel', [["snap.time < 60 ? '--'", "snap.time < 0 ? '--'"]]],
   ['the Faints lines show with no faint', 'panel', [['    if (snap.faints > 0) {', '    if (snap.faints >= 0) {']]],
-  ['a status at 0 is listed', 'panel', [['(kind) => snap.statuses[kind] > 0', '(kind) => snap.statuses[kind] >= 0']]],
+  ['a status at 0 is listed', 'panel', [['(kind) => counts[kind] > 0', '(kind) => counts[kind] >= 0']]],
   ['"None yet" never shows', 'panel', [["      : [{ label: 'None yet', value: '' }];", '      : [];']]],
   ['ticks count below the super effective line', 'panel', [['const hitDamage = snap.teamDamage - snap.dotDamage;', 'const hitDamage = snap.teamDamage;']]],
   ['ahead reads red', 'panel', [["clock(pace.delta), tone: 'ahead' }", "clock(pace.delta), tone: 'behind' }"]]],
@@ -29,6 +31,16 @@ const M = [
   ["the in-fight Best names the gym before the fight", 'panel', [["', Gym ' + (gyms + 1) + ', reached it '", "', Gym ' + gyms + ', reached it '"]]],
   ['behind reads as ahead', 'panel', [['value: "You\'re behind by " + clock', 'value: "You\'re ahead by " + clock']]],
   ['the badges keep " Badge"', 'panel', [["String(badge).replace(/ Badge$/, '')", 'String(badge)']]],
+  // ---- #91-3: the Run Stats box ----
+  ['compact starts at 1,000', 'util', [['if (size < 10000) return', 'if (size < 1000) return']]],
+  ['compact drops the decimal', 'util', [['Math.round((value / step) * 10) / 10', 'Math.round(value / step)']]],
+  ['Share divides by its own damage', 'pokemon', [['percent(numbers.damage, numbers.teamDamage)', 'percent(numbers.damage, numbers.damage)']]],
+  ['Super eff. counts ticks', 'pokemon', [['const hitDamage = numbers.damage - numbers.dotDamage;', 'const hitDamage = numbers.damage;']]],
+  ['Down reads only closed faints', 'pokemon', [['down: G.RunStats.downTime(record, slot, now),', 'down: counters.downTime,']]],
+  ['Statuses counts kinds, not landings', 'pokemon', [['compact(statusTotal)', 'compact(statuses.length)']]],
+  ['the box skips the shared status list', 'pokemon', [['const statuses = G.PauseRunInfo.statusList(numbers.statuses);', 'const statuses = Object.keys(numbers.statuses).map((kind) => ({ name: kind, count: numbers.statuses[kind] }));']]],
+  ['Statuses at 0 gets a hover', 'pokemon', [['tip: statusTip || null', "tip: statusTip || 'None'"]]],
+  ['the box is not drawn', 'pokemon', [['children: html`<${RunStatsBox} member=${member} rim=${rim} />`', 'children: null']]],
   // ---- wiring ----
   ['the panel does not read on open', 'menu', [['      if (runInfo) runInfo.read(); // #91-2: one snapshot of the run, the world is held still from here\n', '']]],
   ['the panel is not mounted', 'menu', [['${runInfo ? html`<${runInfo.Panel} />` : null}', '']]],

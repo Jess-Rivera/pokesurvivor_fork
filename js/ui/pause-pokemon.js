@@ -5,7 +5,8 @@
  * Detail panel (635 x 1028), the mockup's two-tier bars: the top bar in the first type's colour holds the name, the
  * level box (deeper than the name band, a diagonal step down to it) and the HP bar under the name; the bottom bar in the
  * second type's colour (the first for a single type) has a raised tab on the left with the previous and next arrows.
- * Left column: the portrait with the EXP ring, the held item, then the Run Stats (#91) and Cards Taken (#83) boxes.
+ * Left column: the portrait with the EXP ring, the held item, then the Run Stats (#91-3: twelve 26 px rows that scroll
+ * in the box, Jess 2026-11-12) and Cards Taken (#83) boxes.
  * Right column: the stat hex, then the move list (bonded groups framed together, a type coloured scroll bar). The boxes
  * are the roster card's box with a flat body, rimmed in the first type.
  *
@@ -28,8 +29,53 @@
  * after a held item moves, never per frame. It never writes game state (the moves are pause-inventory.js's).
  */
 G.PausePokemon = (() => {
+  // ---------- the Run Stats box's numbers and rows (#91-3; pure, so the offline harness loads them) ----------
+  /** One Pokemon's run, from the run's record (G.RunStats) and the DPS record (G.DpsHistory), at run time `now`. */
+  function runStatsNumbers(record, history, slot, now) {
+    const counters = G.RunStats.member(record, slot);
+    return {
+      kills: counters.kills,
+      field: G.DpsHistory.fieldSeconds(history, slot),
+      damage: G.DpsHistory.totalDamage(history, slot),
+      teamDamage: G.DpsHistory.totalDamage(history),
+      bestHit: counters.bestHit,
+      superDamage: counters.superDamage,
+      dotDamage: counters.dotDamage,
+      taken: counters.taken,
+      healed: counters.healed,
+      faints: counters.faints,
+      down: G.RunStats.downTime(record, slot, now),
+      statuses: counters.statuses,
+    };
+  }
+
+  /** The box's twelve rows in the 91d order. Zeros always show (RS3), so the box reads the same for every Pokemon. */
+  function runStatsRows(numbers) {
+    const compact = G.U.compact,
+      clock = G.U.mmss;
+    const percent = (part, whole) => (whole > 0 ? Math.round((part / whole) * 100) + '%' : '--');
+    const statuses = G.PauseRunInfo.statusList(numbers.statuses); // Run Info's order (one list)
+    const statusTotal = statuses.reduce((sum, status) => sum + status.count, 0);
+    const statusTip = statuses.map((status) => status.name + ' ' + status.count).join(', ');
+    const hitDamage = numbers.damage - numbers.dotDamage; // RS1: a tick is never super effective
+    return [
+      { label: 'Kills', value: compact(numbers.kills) },
+      { label: 'Field', value: clock(numbers.field) },
+      { label: 'Damage', value: compact(numbers.damage) },
+      { label: 'Share', value: percent(numbers.damage, numbers.teamDamage) },
+      { label: 'Best hit', value: compact(numbers.bestHit) },
+      { label: 'Super eff.', value: percent(numbers.superDamage, hitDamage) },
+      { label: 'Taken', value: compact(numbers.taken) },
+      { label: 'Healed', value: compact(numbers.healed) },
+      { label: 'Faints', value: compact(numbers.faints) },
+      { label: 'Down', value: clock(numbers.down) },
+      { label: 'Statuses', value: compact(statusTotal), tip: statusTip || null }, // P3: per kind on hover
+      { label: 'DoT dmg', value: compact(numbers.dotDamage) },
+    ];
+  }
+
   const overlay = G.HudOverlay;
-  if (!overlay || !overlay.ready) return { ready: false };
+  if (!overlay || !overlay.ready) return { ready: false, runStatsNumbers, runStatsRows };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
   const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox } = overlay.kit;
@@ -46,6 +92,7 @@ G.PausePokemon = (() => {
     COLUMN_RIGHT = { x: 230, width: 390 },
     PORTRAIT = { top: 124, size: 116 },
     HELD = { top: 256, artSize: 24 },
+    RUN_STATS = { top: 44, rowHeight: 26 }, // #91-3: the rows start under the box title
     RUN_STATS_BOX = { top: 320, height: 200 },
     CARDS_BOX = { top: 536, height: 400 },
     HEX_BOX = { top: 124, height: 376 },
@@ -343,21 +390,24 @@ G.PausePokemon = (() => {
     </div>`;
   }
 
+  /** The detail panel's hover tooltip (MoveTooltip), level with the hovered row; nothing with no lines. The move list
+   *  and the Run Stats box share it, since a tooltip inside a scrolling box would be clipped by it. */
+  function showTip(event, name, lines) {
+    const panel = event.currentTarget.closest('.pm-detail');
+    const rowBox = event.currentTarget.getBoundingClientRect(),
+      panelBox = panel.getBoundingClientRect(),
+      scale = panelBox.height / DETAIL.height;
+    hoveredMove.value = lines.length ? { name, lines, top: (rowBox.top - panelBox.top) / scale } : null;
+  }
+
   /** The move list: every move grouped by bond, each with its summary line; hover shows the full numbers. */
   function MoveList({ member, rim }) {
     const groups = member.slots.length ? member.slots : member.moves.map((move) => [move]);
     const width = COLUMN_RIGHT.width - 2 * BOX_PAD - 14,
       height = MOVES_BOX.height - 2 * BOX_PAD;
     const showDetail = (move, event) => {
-      const lines = G.Sheet.detailOf(member, move),
-        list = [lines.raw, lines.ail, lines.hit].filter(Boolean);
-      const panel = event.currentTarget.closest('.pm-detail');
-      const rowBox = event.currentTarget.getBoundingClientRect(),
-        panelBox = panel.getBoundingClientRect(),
-        scale = panelBox.height / DETAIL.height;
-      hoveredMove.value = list.length
-        ? { name: move.name, lines: list, top: (rowBox.top - panelBox.top) / scale }
-        : null;
+      const lines = G.Sheet.detailOf(member, move);
+      showTip(event, move.name, [lines.raw, lines.ail, lines.hit].filter(Boolean));
     };
     const rows = groups.map((group, groupIndex) => {
       const bonded = group.length > 1;
@@ -397,6 +447,38 @@ G.PausePokemon = (() => {
     >
       ${rows.length ? rows : html`<div class="hud-text pm-empty-note">No moves yet.</div>`}
     </${ScrollBox}>`;
+  }
+
+  /** The Run Stats box (#91-3): the shown Pokemon's run, read when the panel redraws (open, a Pokemon picked, an item
+   *  moved), never per frame. Twelve 26 px rows scroll in the box (Jess, 2026-11-12); Statuses lists kinds on hover. */
+  function RunStatsBox({ member, rim }) {
+    const game = G.Game,
+      history = member.team && member.team.dpsHistory;
+    const rows = runStatsRows(runStatsNumbers(game.runStats, history, member.teamSlot, game.st.time));
+    const width = COLUMN_LEFT.width - 2 * BOX_PAD - 14,
+      height = RUN_STATS_BOX.height - RUN_STATS.top - BOX_PAD;
+    return html`<div class="hud-text pm-box-title">Run Stats</div>
+      <${ScrollBox}
+        box=${{ left: BOX_PAD, top: RUN_STATS.top, width, height }}
+        trackRight=${BOX_PAD}
+        colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
+        resetOn=${[member, readCount.value]}
+        onScroll=${() => (hoveredMove.value = null)}
+      >
+        ${rows.map(
+          (row) =>
+            html`<div
+              key=${row.label}
+              class="pm-stats-row"
+              style=${{ height: RUN_STATS.rowHeight + 'px', lineHeight: RUN_STATS.rowHeight + 'px' }}
+              onMouseEnter=${row.tip ? (event) => showTip(event, row.label, [row.tip]) : null}
+              onMouseLeave=${row.tip ? () => (hoveredMove.value = null) : null}
+            >
+              <span class="hud-text pm-stats-label">${row.label}</span>
+              <span class="hud-text pm-stats-value">${row.value}</span>
+            </div>`
+        )}
+      </${ScrollBox}>`;
   }
 
   function MoveTooltip() {
@@ -486,7 +568,7 @@ G.PausePokemon = (() => {
       </div>
       ${box(COLUMN_LEFT, RUN_STATS_BOX, {
         className: 'pm-box-run-stats',
-        children: html`<div class="hud-text pm-box-title">Run Stats</div>`,
+        children: html`<${RunStatsBox} member=${member} rim=${rim} />`,
       })}
       ${box(COLUMN_LEFT, CARDS_BOX, {
         className: 'pm-box-cards',
@@ -586,5 +668,8 @@ G.PausePokemon = (() => {
     readCount.value = readCount.value + 1;
   }
 
-  return { ready: true, DetailPanel, TeamPanel, read, refresh, step, select, shownSlot: () => shownSlot.value };
+  const shown = () => shownSlot.value;
+  const runStats = { runStatsNumbers, runStatsRows };
+  const panels = { ready: true, DetailPanel, TeamPanel, read, refresh, step, select, shownSlot: shown };
+  return Object.assign(panels, runStats);
 })();

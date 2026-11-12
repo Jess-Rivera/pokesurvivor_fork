@@ -104,5 +104,14 @@ ok(D.totalDamage(history) === 100, 'totalDamage: the team, 30 + 50 + 20, the cur
 ok(D.totalDamage(history, 0) === 50 && D.totalDamage(history, 2) === 50, 'totalDamage per member: slot 0 has 50, slot 2 has 50');
 ok(D.totalDamage(history, 4) === 0 && D.totalDamage(null) === 0, 'totalDamage: an empty slot and no record read 0');
 
+// 10. #91-3: fieldSeconds, the finished seconds a slot ended on the field (the Run Stats box's Field)
+history = D.create();
+D.advance(history, 1, first);
+D.advance(history, 1, first);
+D.advance(history, 1, second); // a swap
+D.advance(history, 0.5, second); // second 3 is still running: not counted
+ok(D.fieldSeconds(history, 0) === 2 && D.fieldSeconds(history, 2) === 1, 'fieldSeconds: slot 0 had 2 s, slot 2 had 1 s');
+ok(D.fieldSeconds(history, 4) === 0 && D.fieldSeconds(null, 0) === 0, 'fieldSeconds: a slot never on the field and no record read 0');
+
 console.log(fail ? 'dps-history-harness: ' + fail + ' of ' + n + ' FAILED' : 'dps-history-harness: all ' + n + ' passed');
 process.exit(fail ? 1 : 0);

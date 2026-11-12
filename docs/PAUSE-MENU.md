@@ -96,7 +96,9 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Per Pokemon Run Stats panel holds the per-Pokemon numbers (kills, time on field, damage dealt, best hit,
   times fainted). It grows down into the Cards Taken area (they split that column vertically) or scrolls.
 - [Approved] Run Stats box (Jess, 2026-11-12, map docs/ASCII Concept Maps/91d - Run Stats Box (detail panel).txt):
-  grows to 360 px, Cards Taken shrinks to 240 px and scrolls. Rows: Kills, Field, Damage, Share, Best hit, Super
+  keeps its 200 px and scrolls its rows (26 px each) in the shared scroll box; Cards Taken keeps its 400 px (Jess,
+  2026-11-12, replacing "grows to 360 px, Cards Taken shrinks to 240"). Super eff. is a share of its HIT damage, burn
+  and poison ticks left out (RS1); every row shows at zero ("0", "0:00", "--"), so the box never changes (RS3). Rows: Kills, Field, Damage, Share, Best hit, Super
   eff., Taken, Healed, Faints, Down, Statuses (one total, per kind on hover), DoT dmg. Numbers past 9,999 read
   compact (41.2k, 1.3M).
 - [Approved] Kill credit (Jess, 2026-11-12): the Pokemon whose hit finished the enemy gets the kill; a burn or poison

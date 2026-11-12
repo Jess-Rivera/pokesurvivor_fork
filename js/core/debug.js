@@ -1287,6 +1287,15 @@ G.Debug = (() => {
     if (preset === 'empty') return;
     const now = Math.max(game.st.time, 1203); // 20:03, past the three splits below
     if (game.st.time < now) game.debugTime(now);
+    if (history) {
+      // field time in turns over the team, so each Run Stats box (#91-3) has its own Field
+      const seconds = Math.floor(now),
+        turnOf = (second) => roster[Math.floor((second * roster.length) / seconds)].teamSlot;
+      history.time = Math.max(history.time, now);
+      history.outSlot = Array.from({ length: seconds }, (unused, second) => turnOf(second));
+      history.teamDamage = new Array(seconds).fill(0);
+      history.lastOutSlot = player.teamSlot;
+    }
     G.Gym.debugBadges([
       { badge: 'Boulder Badge', at: 292 },
       { badge: 'Cascade Badge', at: 550 },
@@ -1298,7 +1307,8 @@ G.Debug = (() => {
       member.onDealt(400 + 100 * index, { moveId }); // a plain hit
       member.onDealt(600, { typeMult: 2, moveId }); // a super effective hit
       member.onDealt(900, { dot: true }); // burn and poison ticks
-      for (let kill = 0; kill < 40 + 10 * index; kill++, kills++) G.RunStats.kill(stats, member, kill === 0 && index < 3);
+      const elite = index < 3; // the first kill of the first three members is an elite
+      for (let kill = 0; kill < 40 + 10 * index; kill++, kills++) G.RunStats.kill(stats, member, kill === 0 && elite);
       G.RunStats.taken(stats, member, 500 + 100 * index);
       G.RunStats.healed(stats, member, 300 + 50 * index);
     });

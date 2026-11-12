@@ -751,3 +751,15 @@ body.pm-open .hud-overlay {
   display: flex;
   flex-direction: column;
 }
+
+/* the Run Stats box (#91-3, js/ui/pause-pokemon.js RunStatsBox): label left, number right, 26 px rows scrolling in the
+   box (Jess, 2026-11-12); the Statuses row's kinds show in the move tooltip on hover */
+.pm-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+.pm-stats-value {
+  color: #b9cbf0;
+}

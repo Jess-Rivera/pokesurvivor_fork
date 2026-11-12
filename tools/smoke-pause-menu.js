@@ -17,6 +17,8 @@
 //   #91-2: Run Info, seeded through G.Debug.runinfo / regionbest / recordcheck: every section in order, the empty
 //   and full presets, the move name on Biggest hit, a tie, the bar dragged and the wheel, the pinned header, the reopen
 //   at the top, Region Best's Best / Next / Pace, clear and old, a dry and a written recordcheck.
+//   #91-3: the Run Stats box: its twelve rows, the shown Pokemon's numbers on next and a card click, a compact
+//   Damage, no row overflowing, the box scrolling at 200 px, the Statuses hover.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -741,6 +743,66 @@ async function main() {
   await reopen();
   info = await runInfo();
   ok(/^Loop 1, Gym 3 cleared, lasted /.test(info.rows.Best) && info.rows.Pace === 'New best pace', 'the written record shows');
+
+  // ---- #91-3: the Run Stats box on the detail panel, seeded through runinfo('full') ----
+  const statsBox = () =>
+    page.evaluate(() => {
+      const box = document.querySelector('.pm-box-run-stats'),
+        rows = {};
+      const rowEls = [...box.querySelectorAll('.pm-stats-row')];
+      for (const each of rowEls)
+        rows[each.querySelector('.pm-stats-label').textContent.trim()] = each.querySelector('.pm-stats-value').textContent.trim();
+      const slot = +document.querySelector('.pm-detail').dataset.slot;
+      const scroller = box.querySelector('.hud-scroll-box');
+      return {
+        order: rowEls.map((each) => each.querySelector('.pm-stats-label').textContent.trim()).join('|'),
+        rows,
+        slot,
+        kills: G.RunStats.member(G.Game.runStats, slot).kills,
+        overflow: rowEls.some((each) => each.scrollWidth > each.clientWidth + 1),
+        scrolls: scroller.scrollHeight > scroller.clientHeight + 1,
+        height: Math.round(box.getBoundingClientRect().height / (document.querySelector('.pm-detail').getBoundingClientRect().height / 1028)),
+      };
+    });
+  await page.evaluate(() => {
+    G.Debug.runinfo('full');
+    const lead = G.Game.player;
+    G.DpsHistory.record(lead.team.dpsHistory, lead, 40000); // a five digit Damage, to read compact
+  });
+  await reopen();
+  let stats = await statsBox();
+  ok(stats.order === 'Kills|Field|Damage|Share|Best hit|Super eff.|Taken|Healed|Faints|Down|Statuses|DoT dmg',
+    'Run Stats box: twelve rows in the 91d order');
+  ok(stats.rows.Kills === String(stats.kills), 'Run Stats Kills is the shown Pokemon\'s (' + stats.rows.Kills + ')');
+  ok(/^\d+(\.\d)?k$/.test(stats.rows.Damage), 'a five digit Damage reads compact (' + stats.rows.Damage + ')');
+  ok(!stats.overflow, 'no Run Stats row overflows the 200 px column');
+  ok(stats.scrolls && stats.height === 200, 'the box keeps its 200 px and scrolls its rows (Jess, 2026-11-12)');
+  const firstShown = stats.slot;
+  await key('ArrowRight', 100);
+  stats = await statsBox();
+  ok(stats.slot !== firstShown && stats.rows.Kills === String(stats.kills), 'Move_Right: the box shows the next Pokemon\'s run');
+  await page.click('.pm-team-card >> nth=0');
+  await sleep(100);
+  stats = await statsBox();
+  ok(stats.rows.Kills === String(stats.kills), 'a team card click: the box shows that Pokemon\'s run');
+  await page.evaluate(() => {
+    const row = [...document.querySelectorAll('.pm-stats-row')].find((each) => each.textContent.includes('Statuses'));
+    row.scrollIntoView({ block: 'nearest' });
+  });
+  await sleep(100);
+  await page.hover('.pm-stats-row >> text=Statuses');
+  await sleep(100);
+  // the tooltip's title and lines are separate divs: read them apart (textContent runs them together)
+  const tip = await page.evaluate(() => {
+    const shown = document.querySelector('.pm-move-tooltip');
+    if (!shown) return { name: '', lines: '' };
+    const lines = [...shown.querySelectorAll('.pm-tooltip-line')].map((line) => line.textContent.trim());
+    return { name: shown.querySelector('.pm-tooltip-name').textContent.trim(), lines: lines.join(' | ') };
+  });
+  ok(
+    tip.name === 'Statuses' && /^\w+ \d+(, \w+ \d+)*$/.test(tip.lines),
+    'hovering Statuses lists the kinds (' + tip.name + ': ' + tip.lines + ')'
+  );
 
   // ---- End Run asks inside the ball ----
   // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing

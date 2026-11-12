@@ -73,11 +73,18 @@ G.PauseRunInfo = (() => {
     return { title: 'Faints', rows };
   }
 
+  /** The kinds landed (S2: count above 0), in the fixed order, an unknown kind last: [{ kind, name, count }]. Shared
+   *  with the detail panel's Run Stats box (#91-3), so both list the kinds the same way. */
+  function statusList(counts) {
+    const kinds = STATUS_ORDER.concat(Object.keys(counts).filter((kind) => !STATUS_ORDER.includes(kind)));
+    const landed = kinds.filter((kind) => counts[kind] > 0);
+    return landed.map((kind) => ({ kind, name: titled(kind), count: counts[kind] }));
+  }
+
   function statuses(snap) {
-    const kinds = STATUS_ORDER.concat(Object.keys(snap.statuses).filter((kind) => !STATUS_ORDER.includes(kind)));
-    const landed = kinds.filter((kind) => snap.statuses[kind] > 0); // S2: only kinds landed this run
+    const landed = statusList(snap.statuses);
     const rows = landed.length
-      ? landed.map((kind) => ({ label: titled(kind), value: number(snap.statuses[kind]) }))
+      ? landed.map((status) => ({ label: status.name, value: number(status.count) }))
       : [{ label: 'None yet', value: '' }];
     return {
       title: 'Statuses inflicted',
@@ -201,7 +208,7 @@ G.PauseRunInfo = (() => {
 
   // ---------- the view ----------
   const overlay = G.HudOverlay;
-  if (!overlay || !overlay.ready) return { ready: false, sections, snapshot };
+  if (!overlay || !overlay.ready) return { ready: false, sections, snapshot, statusList };
   const { html, signal, ScrollBox, PALETTE } = overlay.kit;
   const PANEL = { width: 635, height: 1028 },
     HEADER_HEIGHT = 56,
@@ -265,5 +272,5 @@ G.PauseRunInfo = (() => {
     </div>`;
   }
 
-  return { ready: true, Panel, read, sections, snapshot };
+  return { ready: true, Panel, read, sections, snapshot, statusList };
 })();

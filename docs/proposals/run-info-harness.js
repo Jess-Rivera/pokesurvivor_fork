@@ -17,6 +17,8 @@ const SRC = {
   'js/ui/hud-overlay.js': 'RI_OVERLAY',
   'dev.html': 'RI_DEV',
   'js/main.js': 'RI_MAIN',
+  'js/core/util.js': 'RI_UTIL',
+  'js/ui/pause-pokemon.js': 'RI_POKEMON',
 };
 const pathOf = (p) => process.env[SRC[p]] || R + '/' + p;
 const read = (p) => fs.readFileSync(pathOf(p), 'utf8').replace(/\r\n/g, '\n');
@@ -31,7 +33,8 @@ const ok = (condition, message) => {
 };
 global.window = global;
 global.location = { search: '' };
-for (const p of ['js/core/util.js', 'js/ui/pause-run-info.js']) vm.runInThisContext(read(p), { filename: p });
+const loads = ['js/core/util.js', 'js/ui/pause-run-info.js', 'js/systems/run-stats.js', 'js/systems/dps-history.js'];
+for (const p of loads.concat('js/ui/pause-pokemon.js')) vm.runInThisContext(read(p), { filename: p });
 const RI = G.PauseRunInfo;
 if (!RI || RI.ready !== false || typeof RI.sections !== 'function') {
   console.log('FAIL pause-run-info.js did not load its pure part without the HUD kit');
@@ -208,6 +211,67 @@ const value = (shown, title, label) => (row(shown, title, label) || {}).value;
   const overlay = read('js/ui/hud-overlay.js');
   ok(overlay.includes('event.currentTarget.setPointerCapture(event.pointerId);') && overlay.includes('onPointerMove=${dragThumb}'),
     'the shared ScrollBox thumb can be dragged (DD1)');
+}
+
+// 9. the Run Stats box (#91-3, map 91-3; 91d rows and P3 / P4, RS1, RS3, Jess 2026-11-12), pause-pokemon.js's pure part
+{
+  const compact = G.U.compact;
+  ok(compact(0) === '0' && compact(9999) === '9,999', 'compact: 0 and 9,999 stay whole numbers');
+  ok(compact(10000) === '10k' && compact(41234) === '41.2k', 'compact past 9,999: 10k (no .0) and 41.2k');
+  ok(compact(1300000) === '1.3M' && compact(999950) === '1M', 'compact: 1.3M, and 999,950 reads 1M, never 1000k');
+  const PP = G.PausePokemon;
+  ok(PP && PP.ready === false && typeof PP.runStatsRows === 'function', 'pause-pokemon.js loads its pure part with no HUD kit');
+  const numbers = (changes) =>
+    Object.assign(
+      { kills: 312, field: 400, damage: 41234, teamDamage: 108511, bestHit: 2450, superDamage: 15000, dotDamage: 5400 },
+      { taken: 3100, healed: 1800, faints: 6, down: 72, statuses: { sleep: 3, burn: 12, paralysis: 8 } },
+      changes
+    );
+  const rowsFor = (changes) => PP.runStatsRows(numbers(changes));
+  const cell = (rows, label) => rows.find((each) => each.label === label) || {};
+  const rows = rowsFor();
+  const order = rows.map((each) => each.label).join('|');
+  ok(order === 'Kills|Field|Damage|Share|Best hit|Super eff.|Taken|Healed|Faints|Down|Statuses|DoT dmg', 'twelve rows: ' + order);
+  ok(cell(rows, 'Kills').value === '312' && cell(rows, 'Field').value === '6:40' && cell(rows, 'Down').value === '1:12',
+    'Kills, and Field and Down in mm:ss');
+  ok(cell(rows, 'Damage').value === '41.2k' && cell(rows, 'Taken').value === '3,100' && cell(rows, 'DoT dmg').value === '5,400',
+    'compact numbers past 9,999 only (P4)');
+  ok(cell(rows, 'Share').value === '38%', 'Share: 41,234 of the team 108,511 is 38%');
+  ok(cell(rows, 'Super eff.').value === '42%', 'Super eff.: 15,000 of its 35,834 hit damage, ticks left out (RS1)');
+  ok(cell(rows, 'Statuses').value === '23' && cell(rows, 'Statuses').tip === 'Burn 12, Paralysis 8, Sleep 3',
+    'Statuses: one total, the kinds on hover in the fixed order (P3)');
+  const nothing = { kills: 0, field: 0, damage: 0, teamDamage: 0, bestHit: 0, superDamage: 0, dotDamage: 0, taken: 0 };
+  const zeros = rowsFor(Object.assign(nothing, { healed: 0, faints: 0, down: 0, statuses: {} }));
+  ok(zeros.length === 12, 'zeros: still twelve rows (RS3)');
+  ok(cell(zeros, 'Kills').value === '0' && cell(zeros, 'Field').value === '0:00' && cell(zeros, 'Down').value === '0:00',
+    'zeros read 0 and 0:00');
+  ok(cell(zeros, 'Share').value === '--' && cell(zeros, 'Super eff.').value === '--', 'no damage: Share and Super eff. read --');
+  ok(cell(zeros, 'Statuses').value === '0' && cell(zeros, 'Statuses').tip === null, 'no status landed: 0, and no hover');
+  ok(cell(rowsFor({ damage: 900, dotDamage: 900, superDamage: 0 }), 'Super eff.').value === '--',
+    'only ticks, no hit damage: Super eff. reads --');
+  // the numbers, read from real records
+  const record = G.RunStats.create(),
+    history = G.DpsHistory.create();
+  const first = { teamSlot: 0 },
+    second = { teamSlot: 2 };
+  G.DpsHistory.advance(history, 1, first);
+  G.DpsHistory.advance(history, 1, second);
+  G.DpsHistory.record(history, first, 300);
+  G.DpsHistory.record(history, second, 100);
+  G.RunStats.kill(record, first);
+  G.RunStats.faint(record, first, 5);
+  G.RunStats.revive(record, first, 10);
+  G.RunStats.faint(record, first, 30);
+  const mine = PP.runStatsNumbers(record, history, 0, 40);
+  ok(mine.kills === 1 && mine.damage === 300 && mine.teamDamage === 400, 'runStatsNumbers: its kills, its damage, the team damage');
+  ok(mine.field === 1 && mine.faints === 2 && mine.down === 15, 'runStatsNumbers: its field seconds, and down 5 s closed + 10 s open');
+  const list = G.PauseRunInfo.statusList({ sleep: 3, leech: 1, burn: 12, drowsy: 0 });
+  ok(list.map((each) => each.name + ' ' + each.count).join(', ') === 'Burn 12, Sleep 3, Leech 1',
+    'statusList: kinds landed, the fixed order, an unknown kind last (Run Info and the box share it)');
+  const pokemon = read('js/ui/pause-pokemon.js');
+  ok(pokemon.includes('children: html`<${RunStatsBox} member=${member} rim=${rim} />`'), 'the detail panel draws the box');
+  ok(/function RunStatsBox[\s\S]*?<\$\{ScrollBox\}[\s\S]*?resetOn=\$\{\[member, readCount\.value\]\}/.test(pokemon),
+    'the box scrolls in the shared ScrollBox and goes back to the top for each Pokemon');
 }
 
 console.log(fail ? 'run-info-harness: ' + fail + ' of ' + n + ' FAILED' : 'run-info-harness: all ' + n + ' passed');
