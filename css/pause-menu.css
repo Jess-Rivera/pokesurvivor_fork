@@ -189,9 +189,69 @@ body.pm-open .hud-overlay {
 .pm-buttons.pm-asking .pm-answers .pm-button {
   transform: none;
 }
+/* ---------- the Temporary Pocket asks inside the ball (#90, Jess 2026-11-11): all three buttons slide out to one side,
+   chased in from the other by "Destroy Items in Pocket?" (where End Run sits) over red Destroy and grey No ---------- */
+.pm-pocket-left.pm-asking-pocket > .pm-button {
+  transform: translateX(-420px);
+}
+.pm-pocket-right.pm-asking-pocket > .pm-button {
+  transform: translateX(420px);
+}
+.pm-asking-pocket > .pm-button {
+  transition: transform 0.15s ease-in;
+}
+.pm-pocket-ask {
+  position: absolute;
+  left: 0;
+  top: 74px;
+  width: 510px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(420px);
+  transition: transform 0.15s ease-in;
+}
+.pm-pocket-right .pm-pocket-ask {
+  transform: translateX(-420px);
+}
+.pm-buttons.pm-asking-pocket .pm-pocket-ask {
+  transform: none;
+  transition: transform 0.15s ease-out 0.05s;
+}
+.pm-pocket-ask-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.pm-pocket-ask .pm-pocket-ask-row .pm-button {
+  width: 168px;
+  transform: none;
+}
+.pm-pocket-header {
+  position: relative;
+  height: 66px;
+}
+.pm-pocket-header svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.pm-pocket-header .hud-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'HudText', monospace;
+  font-size: 24px;
+  line-height: 24px;
+  color: #ffffff;
+}
 .pm-no-slide,
 .pm-no-slide .pm-button,
-.pm-no-slide .pm-answers {
+.pm-no-slide .pm-answers,
+.pm-no-slide .pm-pocket-ask {
   transition: none !important;
 }
 .pm-button {
@@ -259,12 +319,56 @@ body.pm-open .hud-overlay {
   height: 160px;
   transform: translateY(260px);
 }
+/* the Run Inventory (#90): no frame, three tight 2x2 grids (100 x 100 each) 60 px apart, centred over the ball */
 .pm-panel-inventory {
-  left: 701px;
-  top: 40px;
-  width: 518px;
-  height: 176px;
+  left: 750px;
+  top: 60px;
+  width: 420px;
+  height: 100px;
   transform: translateY(-260px);
+}
+.pm-panel.pm-panel-inventory {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.pm-inventory {
+  display: flex;
+  gap: 60px;
+}
+/* near the screen's top: the tooltips open below the squares */
+.pm-inventory .hud-grid-tip {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+/* ---------- moving held items (#90, js/ui/pause-inventory.js): click or drag, the ghost follows the pointer ---------- */
+.pm-pocket-slot.is-filled,
+.pm-held-slot.is-filled {
+  cursor: grab;
+}
+.hud-grid-slot.is-lifted .hud-item-icon {
+  opacity: 0.25;
+}
+.pm-carry-ghost {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%) scale(var(--pm-scale));
+  pointer-events: none;
+  z-index: 30;
+}
+/* while the in-ball prompt asks, the pocket slots holding items pulse white */
+.pm-pocket-asking .pm-pocket-slot.is-filled {
+  animation: pm-pocket-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes pm-pocket-pulse {
+  from {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  to {
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+  }
 }
 /* ---------- the Pokemon detail panel and the team panel (#89, js/ui/pause-pokemon.js; PAUSE-MENU sections 4 and 5) ---------- */
 .pm-panel-detail,
@@ -326,13 +430,9 @@ body.pm-open .hud-overlay {
   top: 108px;
   color: #fb3041;
 }
-.pm-detail-held {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.pm-held-name.is-empty {
-  color: #7f7f7f;
+/* the held item slot: the square only, name and effect in its tooltip (#90) */
+.pm-detail-held .hud-grid-tip {
+  z-index: 20;
 }
 /* boxes: the roster card's box with a flat body, rimmed in the first type */
 .pm-box > svg {

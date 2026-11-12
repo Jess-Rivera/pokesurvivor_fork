@@ -502,7 +502,7 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
 - `[Approved]` **Active row:** the B2 selection cursor, as the active move slot. **Fainted:** the portrait darkly dimmed
   (as the leader circles), the name at half opacity, an empty bar, and the rim in the panel greys (`#7f7f7f`, `#495151`,
   `#303030` as Light, Base, Dark).
-- `[Approved]` **Berry bag:** the #62 held item square at 40 px with the berry's name under it, 2x2, only the purchased
+- `[Approved]` **Berry bag:** the #62 held item square at 40 px, no name (Jess, 2026-11-11, #90: names live in the pause menu tooltips), a tight 2x2 with half a square (20 px) between squares, only the purchased
   slots; an empty slot is the square with a slate rim and no name.
 - `[Approved]` **Run items: the B2 item box** (`b2-lower` AD4 to AG5), 32 art rows: slanted ends (flat for 6 rows in the
   middle, then one pixel in for every three rows out), corner bumps, the same rim order as the roster rows, in the Lv

@@ -35,15 +35,20 @@ Tags follow CLAUDE.md "Requirement tags". Everything Jess wrote is `[Approved]`;
 - [Approved] The ball sits at the screen's centre. Run Info is the same size as the Pokemon detail panel, both the
   same distance either side of the ball; team and Run Inventory are centred under and over it.
 
-## 3. Run Inventory panel (top, not in the mockup)
+## 3. Run Inventory (top, not in the mockup)
 Three partitions, each a 2x2 grid of 4 square slots (Jess, 2026-11-11):
-- [Approved] Left: the Berry Pocket. Slots not yet unlocked show dimmed. Icons only; hover tooltip with the berry's name and what it does.
-- [Approved] Centre: the run items (team items), locked slots dimmed, in the same squares with clear padding from the Berry Pocket. Icon
-  only, hover tooltip with name and effect.
-- [Approved] Right: the Temporary Pocket, 4 slots. Remove on the detail panel puts the held item here.
-- [Approved] Resuming with an item in the Temporary Pocket opens a prompt: "Can't resume with an item in the Temporary
-  Pocket. Destroy items in Temporary Pocket?" with "Destroy" and "Give to a Pokemon". Give returns to the menu.
-  Destroy loses the items (they can still be found again as normal pickups).
+- [Approved] No panel frame (the empty placeholder frame from #88 goes, Jess 2026-11-11): the three tight 2x2 grids sit
+  in a 3x1 row, sliding in from the top. The grid is the run screen berry bag's tight grid (HUD-STYLE "Berry bag").
+- [Approved] No labels anywhere in the inventory: every item's name and effect is in its hover tooltip.
+- [Approved] Left: the Berry Pocket. Slots not yet unlocked show dimmed.
+- [Approved] Centre: the run items (team items), locked slots dimmed, with clear padding from the Berry Pocket.
+- [Approved] Right: the Temporary Pocket, 4 slots, always open. It holds held items taken off a Pokemon.
+- [Approved] Resuming (Resume, Esc or P) with an item in the Temporary Pocket asks inside the ball, like End Run
+  (Jess, 2026-11-11, replacing the dialog with "Give to a Pokemon"): the three buttons slide out to one side, left or
+  right at random, chased by a three-box column of move slots, "Destroy Items in Pocket?" on top, then a red
+  "Destroy" and a grey "No". While it asks, the pocket slots that hold items pulse with a white glow. Destroy empties
+  the pocket and resumes; No returns to the buttons. Destroyed items can still be found again as normal pickups.
+  End Run is not gated (the pocket ends with the run).
 
 ## 4. Pokemon detail panel (right)
 Layout per the mockup: name, level and HP bar in the top bar; portrait; held item; per-Pokemon run stats; IV hex;
@@ -55,9 +60,13 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Top and bottom bars use the type colour (dual types: top bar first type, bottom bar second type) with a 1px `#212121` frame. Back panel `#181818`.
 - [Approved] Portrait copies the character panel's (sprite circle with the EXP frame). The HP bar copies the
   character panel's, cut to fit, current/max percentage exact.
-- [Approved] Held item: a square slot with Remove (sends the item to the Temporary Pocket) and Give. Give puts the
-  yellow corner highlight on the team panel and dims the giver as not selectable; its label becomes "Cancel" while
-  giving; Cancel or Esc cancels and the label returns to "Give".
+- [Approved] Held item: a square slot only, no name and no buttons; its name and effect are in the hover tooltip
+  (Jess, 2026-11-11, replacing the Remove and Give buttons).
+- [Approved] Moving held items (Jess, 2026-11-11): click, or drag and drop, works for every held item in the menu,
+  between the detail panel's held slot, the Temporary Pocket and the team panel's cards. Click picks the item up,
+  a second click puts it down; no highlight shows where it can go (Jess, 2026-11-11: the player figures it out).
+  Putting it anywhere that is not a fitting slot, Esc, or clicking the item again returns it to where it came from. Putting it on a Pokemon that holds one swaps the two (the other item
+  goes where this one came from). The detail held slot onto the pocket takes the item off.
 - [Approved] IV hex (Jess, 2026-11-11, settled after three rounds the same day): drawn in real stat numbers from the
   game's formula (G.Stats, nature included; HP at its mainline size, before the game's HP_SCALAR doubling, so it matches
   the online calculators and the other five's scale, while the HP bar keeps the game's number) with the species'
@@ -99,7 +108,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 
 ## Scope notes
 - [Approved] Co-op pause keeps the old screen (multiplayer is deferred). Touch versions of the hover tooltips wait
-  for #72. Keyboard: Esc cancels Give and closes the menu; Move_Left and Move_Right do prev and next; either Enter key (main
+  for #72. Keyboard: Esc cancels a held item move first, then closes the menu; Move_Left and Move_Right do prev and next; either Enter key (main
   or number pad) presses the green button, and the menu's buttons never take the page's focus (the #88 Enter bug, fixed
   in #89).
 - [Approved] The end-of-run Team screen moves to the new detail and team panels later on this branch.

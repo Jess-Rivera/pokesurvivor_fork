@@ -182,6 +182,45 @@ G.HudOverlay = (() => {
     </div>`;
   }
 
+  /**
+   * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
+   * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
+   * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
+   * tip = the hover tooltip (none on the run screen); attrs = extra attributes for the slot's element (data-*, handlers).
+   */
+  function ItemGrid({ slots, artSize = 20, className }) {
+    const size = artSize * 2,
+      gap = size / 2;
+    return html`<div
+      class=${'hud-item-grid' + (className ? ' ' + className : '')}
+      style=${{ gridTemplateColumns: `${size}px ${size}px`, gap: gap + 'px' }}
+    >
+      ${slots.map(
+        (slot) =>
+          html`<div
+            key=${slot.key}
+            class=${
+              'hud-grid-slot' +
+              (slot.icon ? ' is-filled' : '') +
+              (slot.locked ? ' is-locked' : '') +
+              (slot.className ? ' ' + slot.className : '')
+            }
+            ...${slot.attrs || {}}
+          >
+            <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
+            ${
+              slot.tip
+                ? html`<div class="hud-grid-tip">
+                    <div class="hud-text hud-grid-tip-name">${slot.tip.name}</div>
+                    ${slot.tip.desc ? html`<div class="hud-text hud-grid-tip-desc">${slot.tip.desc}</div>` : null}
+                  </div>`
+                : null
+            }
+          </div>`
+      )}
+    </div>`;
+  }
+
   // ---------- the B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline ----------
   function CursorCorner({ corner }) {
     const size = 7;
@@ -332,6 +371,7 @@ G.HudOverlay = (() => {
     style,
     faceClass,
     onClick,
+    attrs,
     children,
   }) {
     const width = artWidth * ROSTER_ART_PIXEL,
@@ -340,6 +380,7 @@ G.HudOverlay = (() => {
       class=${'hud-roster-row' + (fainted ? ' is-fainted' : '') + (className ? ' ' + className : '')}
       style=${{ ...style, width: width + 'px', height: height + 'px' }}
       onClick=${onClick}
+      ...${attrs || {}}
     >
       <${PixelShape}
         artWidth=${artWidth}
@@ -908,6 +949,7 @@ G.HudOverlay = (() => {
     moveSlotRow,
     IconCanvas,
     ItemSquare,
+    ItemGrid,
     Cursor,
     RosterCard,
     ROSTER_ART_PIXEL,

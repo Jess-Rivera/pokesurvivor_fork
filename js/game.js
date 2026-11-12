@@ -131,6 +131,7 @@ G.Game = (() => {
       // turns it around.
       if (G.PauseMenu.ready && G.PauseMenu.isOpen()) {
         if (G.PauseMenu.answerNo()) return; // End Run is asking: Esc or the pause key answer No, the menu stays
+        if (G.PauseMenu.blockResume()) return; // #90: a picked-up item goes back, or the Temporary Pocket asks first
         if (G.PauseMenu.isClosing()) G.PauseMenu.open();
         else
           G.PauseMenu.close(() => {

@@ -21,16 +21,19 @@
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
  * the shown one's portrait gets a green stroke and a shimmer. The Pokemon on the field wears the selection cursor.
  *
- * The game is paused while this shows, so it reads the team when the menu opens and when another Pokemon is picked,
- * never per frame. It never writes game state.
+ * The held item slot is the square only (name and effect in its tooltip); it and the team cards are places a held item
+ * can be clicked or dragged to (js/ui/pause-inventory.js does the moves, #90).
+ *
+ * The game is paused while this shows, so it reads the team when the menu opens, when another Pokemon is picked and
+ * after a held item moves, never per frame. It never writes game state (the moves are pause-inventory.js's).
  */
 G.PausePokemon = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
-  const { ItemSquare, IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } =
-    overlay.kit;
-  const { createLifeBar, portraitSource, portraitFallback } = overlay.kit;
+  const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback, ItemGrid } = overlay.kit;
+  const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
   // ---------- sizes and places (1080p pixels inside each panel) ----------
   const DETAIL = { width: 635, height: 1028 },
@@ -432,8 +435,24 @@ G.PausePokemon = (() => {
     </div>`;
   }
 
+  /** The held item slot (#90): the square only, its name and effect in the tooltip, a place items can be moved to and
+   *  from (js/ui/pause-inventory.js). */
+  function heldSlot(member, held) {
+    const place = 'held:' + member.teamSlot,
+      lifted = inventory && inventory.isCarried(place),
+      carrying = inventory && inventory.isCarrying();
+    return {
+      key: 'held',
+      icon: held ? held.icon || member.item : null,
+      tip: held && !carrying ? { name: held.name, desc: held.desc } : null,
+      className: 'pm-held-slot' + (lifted ? ' is-lifted' : ''),
+      attrs: inventory ? inventory.placeAttributes(place) : null,
+    };
+  }
+
   function DetailPanel() {
     readCount.value; // redraw on each read
+    if (inventory) inventory.carriedSignal.value; // and when an item is picked up or put down
     const member = memberIn(shownSlot.value);
     if (!member) return null;
     const [firstType, secondType = firstType] = typesOf(member);
@@ -486,13 +505,11 @@ G.PausePokemon = (() => {
           />
         </div>
       </div>
-      <div class="pm-detail-held" style=${{ left: COLUMN_LEFT.x + 'px', top: HELD.top + 'px' }}>
-        <${ItemSquare} icon=${held ? held.icon || member.item : null} artSize=${HELD.artSize} />
-        <${FitText}
-          text=${held ? held.name : 'No held item'}
-          room=${COLUMN_LEFT.width - HELD.artSize * 2 - 10}
-          className=${'hud-text pm-held-name' + (held ? '' : ' is-empty')}
-        />
+      <div
+        class="pm-detail-held"
+        style=${{ left: COLUMN_LEFT.x + (COLUMN_LEFT.width - HELD.artSize * 2) / 2 + 'px', top: HELD.top + 'px' }}
+      >
+        <${ItemGrid} slots=${[heldSlot(member, held)]} artSize=${HELD.artSize} />
       </div>
       ${box(COLUMN_LEFT, RUN_STATS_BOX, {
         className: 'pm-box-run-stats',
@@ -547,6 +564,7 @@ G.PausePokemon = (() => {
       faceClass=${shown ? 'pm-face-shown' : ''}
       style=${style}
       onClick=${() => select(slot)}
+      attrs=${inventory ? { 'data-drop': 'team:' + slot } : null}
     >
       <span class="hud-text hud-roster-key">${G.Input.keyLabel('swap_' + (slot + 1)) || String(slot + 1)}</span>
       ${member === G.Game.player && !fainted ? html`<${Cursor} />` : null}
@@ -590,5 +608,10 @@ G.PausePokemon = (() => {
     select(slots[(here + direction + slots.length) % slots.length]);
   }
 
-  return { ready: true, DetailPanel, TeamPanel, read, step, select, shownSlot: () => shownSlot.value };
+  /** Redraw from the team as it is now (a held item moved, js/ui/pause-inventory.js). */
+  function refresh() {
+    readCount.value = readCount.value + 1;
+  }
+
+  return { ready: true, DetailPanel, TeamPanel, read, refresh, step, select, shownSlot: () => shownSlot.value };
 })();

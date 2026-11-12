@@ -6,7 +6,7 @@
  * first type, its portrait in a circle, its name, a benched Pokemon's status chips, and the B2 "HP" bar (b2-lower Y16 to
  * Z16) along the bottom. The held item square sits to the right of each row. The active row wears the selection cursor;
  * the others dim under the swap cooldown. A team of one shows no roster, since the bottom panel already shows it.
- * Above the roster: the berry bag, 2x2, only the purchased slots. Reads the team once per frame, never writes it.
+ * Above the roster: the berry bag, the kit's tight 2x2 grid, only the purchased slots, no names. Reads the team once per frame, never writes it.
  *
  * Positions are fixed CSS pixels from the screen's bottom left (the wireframe is not 16:9, so the lower panels are placed
  * from the bottom).
@@ -15,8 +15,17 @@ G.HudRosterPanel = (() => {
   const overlay = G.HudOverlay;
   if (!overlay.ready) return { ready: false };
   const { html, signal, FAINTED_RIM, typeColours, hpBand } = overlay.kit;
-  const { ItemSquare, Cursor, Chip, createChipReader, RosterCard, ROSTER_ART_PIXEL, ROSTER_ART_ROWS, rosterFill } =
-    overlay.kit;
+  const {
+    ItemSquare,
+    ItemGrid,
+    Cursor,
+    Chip,
+    createChipReader,
+    RosterCard,
+    ROSTER_ART_PIXEL,
+    ROSTER_ART_ROWS,
+    rosterFill,
+  } = overlay.kit;
 
   // ---------- sizes and places (HUD-STYLE "Panel sizes at 1080p", roster and berry bag) ----------
   const ART_PIXEL = ROSTER_ART_PIXEL,
@@ -25,12 +34,13 @@ G.HudRosterPanel = (() => {
     ROW = { artRows: ROSTER_ART_ROWS, artWidth: 139, left: 16, bottom: 42, gap: 4 },
     CHIP_ROW = { right: 14, top: 12, gap: 6 }, // a benched Pokemon's chips, top right inside the box
     HELD = { artSize: 24, gap: 8 }, // the held item square, right of the row, centred on it
-    BERRY = { artSize: 20, column: 128, rowPitch: 72, gapAbove: 12, nameGap: 4 };
+    BERRY = { artSize: 20, gapAbove: 12 }; // the kit's tight 2x2 grid: 40 px squares, 20 px apart, no names (#90)
   const ROW_WIDTH = ROW.artWidth * ART_PIXEL,
     ROW_HEIGHT = ROW.artRows * ART_PIXEL,
     ROW_PITCH = ROW_HEIGHT + ROW.gap,
     HELD_SIZE = HELD.artSize * ART_PIXEL,
-    BERRY_SIZE = BERRY.artSize * ART_PIXEL;
+    BERRY_SIZE = BERRY.artSize * ART_PIXEL,
+    BERRY_PITCH = BERRY_SIZE * 1.5; // a square and the half-square gap
 
   // The swap cooldown shade is clipped to the box's outline (the corners' 45 degree steps, without the bumps).
   const BOX_CLIP = (() => {
@@ -44,7 +54,7 @@ G.HudRosterPanel = (() => {
 
   // ---------- state the page shows (signals) ----------
   const rows = signal([]), // per filled slot, top to bottom: see readRow
-    berries = signal([]), // per purchased slot: { key, name, icon } or { key } when empty
+    berries = signal([]), // per purchased slot: { key, icon } or { key } when empty
     showRoster = signal(false),
     visible = signal(false);
 
@@ -97,34 +107,16 @@ G.HudRosterPanel = (() => {
   const berriesBottom = (rowCount) =>
     rowCount ? ROW.bottom + rowCount * ROW_PITCH - ROW.gap + BERRY.gapAbove : ROW.bottom;
 
+  /** The berry bag: the kit's tight 2x2 grid, only the purchased slots, no names (Jess, 2026-11-11, #90). */
   function BerryBag() {
-    const list = berries.value,
-      gridRowCount = Math.ceil(list.length / 2),
-      bottomEdge = berriesBottom(showRoster.value ? rows.value.length : 0);
-    return list.map((berry, index) => {
-      const column = index % 2,
-        gridRow = Math.floor(index / 2),
-        cellBottom = bottomEdge + (gridRowCount - 1 - gridRow) * BERRY.rowPitch,
-        left = ROW.left + column * BERRY.column;
-      return html`<div
-          key=${berry.key}
-          class="hud-berry"
-          style=${{ left: left + 'px', bottom: cellBottom + 20 + BERRY.nameGap + 'px' }}
-        >
-          <${ItemSquare} icon=${berry.icon || null} artSize=${BERRY.artSize} />
-        </div>
-        ${
-          berry.name
-            ? html`<div
-                key=${berry.key + 'name'}
-                class="hud-text hud-berry-name"
-                style=${{ left: left + 'px', bottom: cellBottom + 'px' }}
-              >
-                ${berry.name}
-              </div>`
-            : null
-        }`;
-    });
+    const list = berries.value;
+    if (!list.length) return null;
+    return html`<div
+      class="hud-berry-bag"
+      style=${{ left: ROW.left + 'px', bottom: berriesBottom(showRoster.value ? rows.value.length : 0) + 'px' }}
+    >
+      <${ItemGrid} slots=${list} artSize=${BERRY.artSize} />
+    </div>`;
   }
 
   function RosterPanel() {
@@ -206,7 +198,7 @@ G.HudRosterPanel = (() => {
     const next = [];
     for (let index = 0; index < slotCount; index++) {
       const def = held[index] && G.Grounds.BY[held[index]];
-      next.push(def ? { key: 'berry' + index, name: def.name, icon: 'ps:' + def.icon } : { key: 'berry' + index });
+      next.push(def ? { key: 'berry' + index, icon: 'ps:' + def.icon } : { key: 'berry' + index });
     }
     const key = next.map((berry) => berry.icon || '-').join('|');
     if (key !== lastBerriesKey) {
@@ -227,7 +219,7 @@ G.HudRosterPanel = (() => {
   function buffsLeft() {
     if (showRoster.value) return ROW.left + ROW_WIDTH + HELD.gap + HELD_SIZE + 12;
     const columns = Math.min(2, berries.value.length);
-    return columns ? ROW.left + (columns - 1) * BERRY.column + BERRY_SIZE + 12 : 16;
+    return columns ? ROW.left + (columns - 1) * BERRY_PITCH + BERRY_SIZE + 12 : 16;
   }
 
   overlay.addPanel({ id: 'roster', View: RosterPanel, sync });

@@ -575,8 +575,44 @@
   top: 0;
 }
 .hud-roster-held,
-.hud-berry {
+.hud-berry-bag {
   position: absolute;
+}
+
+/* ---------- the tight 2x2 item grid (#90): the berry bag and the pause menu's Run Inventory ---------- */
+.hud-item-grid {
+  display: grid;
+}
+.hud-grid-slot {
+  position: relative;
+}
+.hud-grid-slot.is-locked {
+  opacity: 0.3;
+}
+/* the hover tooltip: name and effect, above the square, on top of everything near it */
+.hud-grid-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 5;
+  display: none;
+  padding: 8px 12px;
+  background: #181818;
+  border: 2px solid #f3b200;
+  box-shadow: 0 0 0 2px #101010;
+  pointer-events: none;
+}
+.hud-grid-slot.is-filled:hover .hud-grid-tip {
+  display: block;
+}
+.hud-grid-tip-name {
+  color: #ffd23f;
+}
+.hud-grid-tip-desc {
+  margin-top: 6px;
+  width: 300px;
+  white-space: normal;
 }
 
 /* ---------- run items (#63): pieces placed from the screen's bottom right ---------- */

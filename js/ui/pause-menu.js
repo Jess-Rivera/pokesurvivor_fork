@@ -22,9 +22,14 @@
  * Move_Left / Move_Right switch, Enter presses, Esc or the pause key answer No. No sends End and No back out the way they
  * came and brings Resume and Settings back. End ends the run (G.Game's endRun).
  *
+ * Resuming with items in the Temporary Pocket (#90, Jess 2026-11-11) asks inside the ball the same way: all three buttons
+ * slide out to one side at random, chased in from the other by "Destroy Items in Pocket?" (in End Run's row) over a red
+ * Destroy and a grey No, while the pocket's filled slots pulse white. Destroy empties the pocket and resumes; No (or Esc,
+ * or the pause key) brings the buttons back. G.Game asks blockResume() before every resume (Resume, Esc, P).
+ *
  * Layout: a 1920x1080 stage (the mockup's pixels), scaled down to fit smaller windows, never up.
- * The detail and team panels are js/ui/pause-pokemon.js (#89); Run Info and the Run Inventory are empty frames until
- * #91 and #90.
+ * The detail and team panels are js/ui/pause-pokemon.js (#89), the Run Inventory and the held item moves
+ * js/ui/pause-inventory.js (#90); Run Info is an empty frame until #91.
  */
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
@@ -50,6 +55,12 @@ G.PauseMenu = (() => {
     { id: 'end', label: 'End', rim: END_RIM, focusRim: END_RIM, focusBody: END_RIM.dark },
     { id: 'no', label: 'No', rim: REST_RIM, focusRim: REST_RIM, focusBody: REST_RIM.dark },
   ];
+  const GREY_RIM = { light: '#c4c4c4', base: '#8c8c8c', dark: '#4c4c4c' }; // the pocket prompt's No (Jess, 2026-11-11)
+  const POCKET_ANSWERS = [
+    { id: 'destroy', label: 'Destroy', rim: END_RIM, focusRim: END_RIM, focusBody: END_RIM.dark },
+    { id: 'no', label: 'No', rim: GREY_RIM, focusRim: GREY_RIM, focusBody: GREY_RIM.dark },
+  ];
+  const POCKET_HEADER_ART_WIDTH = 130; // 390 px: "Destroy Items in Pocket?" fits inside the ball's inner circle
   const STAGE_WIDTH = 1920,
     STAGE_HEIGHT = 1080;
   const BUTTONS = [
@@ -61,6 +72,8 @@ G.PauseMenu = (() => {
   const focus = signal(0); // index into BUTTONS
   const answerFocus = signal(1); // index into ANSWERS while asking (No first)
   const asking = signal(false);
+  const pocketAsking = signal(false), // the Temporary Pocket prompt (#90)
+    pocketFocus = signal(1); // index into POCKET_ANSWERS while it asks (No first)
   let settingsSide = 1; // the side Settings leaves by while asking (+1 right, -1 left), picked at random each time
   let level = 0, // how many opening steps are applied (0 closed, STEPS fully open)
     target = 0,
@@ -158,8 +171,42 @@ G.PauseMenu = (() => {
     </button>`;
   }
 
+  function PocketAsk() {
+    const isAsking = pocketAsking.value;
+    return html`<div class="pm-pocket-ask">
+      <div class="pm-pocket-header" style=${{ width: POCKET_HEADER_ART_WIDTH * BUTTON_ART_PIXEL + 'px' }}>
+        <${PixelShape}
+          artWidth=${POCKET_HEADER_ART_WIDTH}
+          artRows=${BUTTON_ART_ROWS}
+          artPixel=${BUTTON_ART_PIXEL}
+          paintRow=${(row) => moveSlotRow(row, POCKET_HEADER_ART_WIDTH, BUTTON_ART_ROWS, REST_RIM, PALETTE.body)}
+        />
+        <span class="hud-text">Destroy Items in Pocket?</span>
+      </div>
+      <div class="pm-pocket-ask-row">
+        ${POCKET_ANSWERS.map(
+          (answer, index) =>
+            html`<${SlotButton}
+              key=${answer.id}
+              id=${'pocket-' + answer.id}
+              label=${answer.label}
+              rim=${answer.rim}
+              focusRim=${answer.focusRim}
+              focusBody=${answer.focusBody}
+              artWidth=${ANSWER_ART_WIDTH}
+              focused=${isAsking && pocketFocus.value === index}
+              onEnter=${() => {
+                if (pocketAsking.value) pocketFocus.value = index;
+              }}
+              onPress=${() => pressPocketAnswer(index)}
+            />`
+        )}
+      </div>
+    </div>`;
+  }
+
   function Buttons() {
-    const isAsking = asking.value;
+    const isAsking = asking.value || pocketAsking.value;
     return html`<div class="pm-buttons">
       ${BUTTONS.map(
         (button, index) =>
@@ -171,7 +218,7 @@ G.PauseMenu = (() => {
             artWidth=${BUTTON_ART_WIDTH}
             focused=${!isAsking && focus.value === index}
             onEnter=${() => {
-              if (!asking.value) focus.value = index;
+              if (!asking.value && !pocketAsking.value) focus.value = index;
             }}
             onPress=${() => press(index)}
           />`
@@ -195,19 +242,23 @@ G.PauseMenu = (() => {
             />`
         )}
       </div>
+      <${PocketAsk} />
     </div>`;
   }
 
-  // The four panels at their mockup places. The detail and team panels are js/ui/pause-pokemon.js (#89); Run Info and
-  // the Run Inventory come in #91 and #90.
+  // The four panels at their mockup places. The detail and team panels are js/ui/pause-pokemon.js (#89), the Run
+  // Inventory js/ui/pause-inventory.js (#90); Run Info comes in #91.
   const pokemon = G.PausePokemon && G.PausePokemon.ready ? G.PausePokemon : null;
+  const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null;
   function Panels() {
     return html`<div class="pm-panel pm-panel-info" data-panel="runInfo"></div>
       <div class="pm-panel pm-panel-detail" data-panel="detail">
         ${pokemon ? html`<${pokemon.DetailPanel} />` : null}
       </div>
       <div class="pm-panel pm-panel-team" data-panel="team">${pokemon ? html`<${pokemon.TeamPanel} />` : null}</div>
-      <div class="pm-panel pm-panel-inventory" data-panel="inventory"></div>`;
+      <div class="pm-panel pm-panel-inventory" data-panel="inventory">
+        ${inventory ? html`<${inventory.InventoryPanel} />` : null}
+      </div>`;
   }
 
   function Menu() {
@@ -215,7 +266,8 @@ G.PauseMenu = (() => {
       <div class="pm-stage">
         <div class="pm-centre"><${BallBack} /><${Buttons} /><${BallCaps} /></div>
         <${Panels} />
-      </div>`;
+      </div>
+      ${inventory ? html`<${inventory.CarryGhost} />` : null}`;
   }
 
   const root = document.createElement('div');
@@ -267,6 +319,7 @@ G.PauseMenu = (() => {
       if (root.contains(document.activeElement)) document.activeElement.blur();
       resetAsking();
       if (pokemon) pokemon.read();
+      if (inventory) inventory.read();
       fitStage();
       root.classList.remove('pm-hidden');
       document.body.classList.add('pm-open');
@@ -291,6 +344,7 @@ G.PauseMenu = (() => {
     whenClosed = null;
     applyLevel();
     resetAsking();
+    if (inventory) inventory.read(); // drops anything picked up
     root.classList.add('pm-hidden');
     document.body.classList.remove('pm-open');
   }
@@ -327,17 +381,70 @@ G.PauseMenu = (() => {
   }
   function resetAsking() {
     asking.value = false;
+    pocketAsking.value = false;
+    root.classList.remove('pm-pocket-asking');
     const layer = buttonsLayer();
     layer.classList.add('pm-no-slide');
-    layer.classList.remove('pm-asking');
+    layer.classList.remove('pm-asking', 'pm-asking-pocket');
     void layer.offsetWidth;
     layer.classList.remove('pm-no-slide');
   }
-  /** Esc or the pause key while End Run is asking: answer No. True when it did (G.Game then keeps the menu open). */
+  /** Esc or the pause key while End Run or the pocket prompt is asking: answer No. True when it did (G.Game then keeps
+   *  the menu open). */
   function answerNo() {
-    if (!stopAsking()) return false;
+    if (!stopAsking() && !stopPocketAsking()) return false;
     G.Audio.sfx('back');
     return true;
+  }
+
+  // ---------- the Temporary Pocket prompt, asked inside the ball (#90) ----------
+  function startPocketAsking() {
+    if (pocketAsking.value || asking.value) return;
+    const layer = buttonsLayer(),
+      side = Math.random() < 0.5 ? -1 : 1; // the side the buttons leave by; presentation only, not the run's seeded random
+    layer.classList.add('pm-no-slide');
+    layer.classList.toggle('pm-pocket-left', side < 0);
+    layer.classList.toggle('pm-pocket-right', side > 0);
+    void layer.offsetWidth;
+    layer.classList.remove('pm-no-slide');
+    pocketFocus.value = 1; // No
+    pocketAsking.value = true;
+    layer.classList.add('pm-asking-pocket');
+    root.classList.add('pm-pocket-asking');
+  }
+  function stopPocketAsking() {
+    if (!pocketAsking.value) return false;
+    pocketAsking.value = false;
+    buttonsLayer().classList.remove('pm-asking-pocket');
+    root.classList.remove('pm-pocket-asking');
+    focus.value = 0; // Resume
+    return true;
+  }
+  function pressPocketAnswer(index) {
+    if (!pocketAsking.value || target !== STEPS) return;
+    if (POCKET_ANSWERS[index].id === 'no') {
+      answerNo();
+      return;
+    }
+    G.Audio.sfx('confirm');
+    if (inventory) inventory.destroyPocket();
+    pocketAsking.value = false; // the menu closes from here: no slide back
+    root.classList.remove('pm-pocket-asking');
+    if (actions.resume) actions.resume();
+  }
+  /**
+   * G.Game asks before every resume (Resume, Esc, P). True keeps the menu open: an item picked up goes back first, then
+   * items in the Temporary Pocket ask inside the ball.
+   */
+  function blockResume() {
+    if (!isOpen() || target !== STEPS) return false;
+    if (inventory && inventory.cancelCarry()) return true;
+    if (pocketAsking.value) return true;
+    if (inventory && inventory.pocketCount() > 0) {
+      startPocketAsking();
+      return true;
+    }
+    return false;
   }
   function pressAnswer(index) {
     if (!asking.value || target !== STEPS) return;
@@ -351,7 +458,7 @@ G.PauseMenu = (() => {
 
   // ---------- buttons and keys ----------
   function press(index) {
-    if (target !== STEPS || asking.value) return; // closing, or End Run is asking
+    if (target !== STEPS || asking.value || pocketAsking.value) return; // closing, or End Run or the pocket is asking
     focus.value = index;
     G.Audio.sfx('confirm');
     const id = BUTTONS[index].id;
@@ -363,6 +470,15 @@ G.PauseMenu = (() => {
    *  Not while a dialog or Settings is on top. */
   function keys() {
     if (!isOpen() || target !== STEPS || G.UI.isOpen('scr-ask') || G.SettingsUI.isOpen) return;
+    if (pocketAsking.value) {
+      const answerStep = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
+      if (answerStep) {
+        pocketFocus.value = Math.max(0, Math.min(POCKET_ANSWERS.length - 1, pocketFocus.value + answerStep));
+        G.Audio.sfx('hover');
+      }
+      if (enterTapped()) pressPocketAnswer(pocketFocus.value);
+      return;
+    }
     if (asking.value) {
       const step = (G.Input.action('move_right') ? 1 : 0) - (G.Input.action('move_left') ? 1 : 0);
       if (step) {
@@ -386,7 +502,7 @@ G.PauseMenu = (() => {
     actions = handlers || {};
   }
 
-  const isAsking = () => asking.value;
+  const isAsking = () => asking.value || pocketAsking.value;
   const askedSide = () => settingsSide;
 
   return {
@@ -400,6 +516,7 @@ G.PauseMenu = (() => {
     isAsking,
     askedSide,
     answerNo,
+    blockResume,
     keys,
     wire,
     OPEN_MS,
