@@ -22,6 +22,12 @@ G.CHANGELOG = [
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
       ],
     ],
+    fix: [
+      [
+        "The pause menu's grids (the pockets and the team cards) show again.",
+        "The pause menu's grids (the pockets and the team cards) show again.",
+      ],
+    ],
   },
   {
     d: '2026-11-11',

@@ -40,6 +40,9 @@
   width: 0;
   height: 0;
   overflow: hidden;
+  /* the shared grid patterns live here and the pause menu uses them: a pattern takes its visibility from where it is
+   * defined, so they stay visible when the pause menu hides the HUD layer (F2 fix, 2026-11-12). 0 x 0, paints nothing. */
+  visibility: visible;
 }
 .hud-pixels {
   display: block;

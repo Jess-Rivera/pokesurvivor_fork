@@ -1,6 +1,9 @@
 PERF F2: freeze behind the pause menu (2026-11-12, Quick)  [Approved, BUILT]
 Jess's calls: D1 freeze, D2 both (resize + any setting), D3 FPS counter freeze is a separate issue (TODO.md).
 Not run here (no node): Jess runs node tools/smoke-pause-menu.js and node tools/check.js.
+FOLLOW-UP FIX (same day): hiding the HUD layer also hid the shared SVG grid patterns (.hud-defs) the pause menu
+borrows, so pockets and team cards lost their grid. css/hud-overlay.css keeps .hud-defs visible; smoke checks it.
+LESSON: anything that hides .hud-overlay must leave .hud-defs visible (patterns inherit visibility from their defs).
 =====================================================================
 Why: Firefox laptop, pause menu swings 22..74 fps. While paused the game
 still redraws the whole world, ticks FX at 1/4 speed, and runs the HTML

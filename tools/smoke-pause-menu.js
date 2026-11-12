@@ -187,6 +187,12 @@ async function main() {
   let drawn = await countFor(300);
   ok(drawn.world === 0 && drawn.hud === 0, 'fully open: no world redraw, no HUD read (' + JSON.stringify(drawn) + ')');
   ok((await hudVisibility()) === 'hidden', 'fully open: the run HUD is hidden, not only see-through');
+  // the menu's grids use the HUD's shared patterns: they must stay visible while the HUD layer is hidden
+  const patternVisibility = await page.evaluate(() => {
+    const square = document.querySelector('#hud-slot-grid rect');
+    return square ? getComputedStyle(square).visibility : 'missing';
+  });
+  ok(patternVisibility === 'visible', 'fully open: the shared grid patterns stay visible (' + patternVisibility + ')');
   await page.evaluate(() => (window.__drawn = { world: 0, hud: 0 }));
   await page.setViewportSize({ width: 1600, height: 900 });
   await sleep(200);
