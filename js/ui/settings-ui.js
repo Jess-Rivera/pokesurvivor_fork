@@ -265,6 +265,13 @@ G.SettingsUI = (() => {
         'Vibes Only'
       ) +
       boolRow('calm', 'Shake & Flash', 'Calm tones down the camera shake and the bright flashes.', 'Calm', 'Not Calm') +
+      boolRow(
+        'vignette',
+        'Vignette',
+        "Darkens the screen's edges. Off keeps the edges clear and runs faster on slower machines.",
+        'On',
+        'Off'
+      ) +
       boolRow('fps', 'Show FPS', 'Frames per second, in the bottom corner during a run.', 'Yes', 'No') +
       boolRow(
         'showDpsPanel',

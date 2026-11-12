@@ -1249,7 +1249,7 @@ G.Game = (() => {
     ctx.restore();
 
     G.Weather.draw(ctx, w, h, frameDt);
-    G.World.drawVignette(ctx, w, h);
+    if (G.Settings.get('vignette')) G.World.drawVignette(ctx, w, h); // Graphics setting, default off (2026-11-12)
     // Fog: the vignette closes in a bit (without covering the center).
     const fog = G.Weather.vignette;
     if (fog > 0) {
@@ -1381,7 +1381,7 @@ G.Game = (() => {
       G.Camera.apply(ctx);
       drawScene(G.Camera, wanderers);
       ctx.restore();
-      G.World.drawVignette(ctx, w, h);
+      if (G.Settings.get('vignette')) G.World.drawVignette(ctx, w, h); // same Graphics setting as the run
     }
 
     /** On returning from a run, it restores the menu world. */
