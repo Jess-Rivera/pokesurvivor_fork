@@ -107,6 +107,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Taken and Healed (Jess, 2026-11-12, TK1 and H1): Taken is HP lost to hits and damage over time from
   others; self costs (move recoil, Life Orb) do not count. Healed is every HP a Pokemon gets back (heals, berries, Shell
   Bell, Regeneration, the HP Regen card on the bench, springs); a revive is not a heal and neither is a max HP gain.
+  A badge's full-HP refill on members still standing rides with the revive package and is not Healed (Jess, 2026-11-12).
 - Built in 91-1 (2026-11-12): every move hands burn and poison the same strength today, so in practice the first
   inflicter keeps the credit until the status ends. Shell Bell still ignores burn and poison ticks, as before.
 

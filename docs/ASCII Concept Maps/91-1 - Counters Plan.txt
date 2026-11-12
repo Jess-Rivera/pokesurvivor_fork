@@ -144,7 +144,7 @@ AS BUILT (2026-11-12)
    still use 10-space indents from before payKill existed (Leader AI slice 2): STALE already. Left as is (TODO).
  Lesson: two edits to one file in parallel raced and one was lost (caught by the harness). One file, one edit
    at a time.
- Not counted, flag for Jess: the badge's "every member back to full HP" for members still standing
-   (game.js reviveTeam) sets HP directly, so it is not in Healed (it rides with the revive package).
+ Not counted, by Jess's call (2026-11-12): the badge's "every member back to full HP" for members still standing
+   (game.js reviveTeam) sets HP directly and stays out of Healed (it rides with the revive package).
  Jess runs: node tools/check.js, node docs/proposals/run-stats-mutate.js, node docs/proposals/team-cards-mutate.js,
    node docs/proposals/gym-leader-mutate.js (the two re-pointed ones).
