@@ -95,6 +95,15 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   rework is a separate issue.
 - [Approved] Per Pokemon Run Stats panel holds the per-Pokemon numbers (kills, time on field, damage dealt, best hit,
   times fainted). It grows down into the Cards Taken area (they split that column vertically) or scrolls.
+- [Approved] Run Stats box (Jess, 2026-11-12, map docs/ASCII Concept Maps/91d - Run Stats Box (detail panel).txt):
+  grows to 360 px, Cards Taken shrinks to 240 px and scrolls. Rows: Kills, Field, Damage, Share, Best hit, Super
+  eff., Taken, Healed, Faints, Down, Statuses (one total, per kind on hover), DoT dmg. Numbers past 9,999 read
+  compact (41.2k, 1.3M).
+- [Approved] Kill credit (Jess, 2026-11-12): the Pokemon whose hit finished the enemy gets the kill; a burn or poison
+  tick that finishes it credits whoever inflicted it. The team kill count is unchanged.
+- [Approved] Damage over time on enemies (Jess, 2026-11-12): burn, poison and toxic ticks are credited to the
+  Pokemon that inflicted them and join its Damage and the team's DPS (the DPS panel reads higher for status-heavy
+  teams). A status already on keeps one inflicter: a stronger source takes it over, a tie keeps the first.
 
 ## 5. Team panel (bottom)
 - [Approved] All 6 Pokemon in 3 columns by 2 rows, clickable, picking what the detail panel shows. Uses the same
@@ -107,6 +116,25 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 ## 6. Run Info panel (left)
 - [Approved] Same design as the DPS-Upgrades panel, different content. Not affected by that panel's opacity or
   on/off setting.
+- [Approved] Scope (Jess, 2026-11-12): everything about the run, or team wide / run wide. Anything about one Pokemon
+  goes to the detail panel; a per-Pokemon stat shows here only as its team total.
+- [Approved] Layout (Jess, 2026-11-12): sections Progress, Combat, Faints, Statuses Inflicted, Loot, EVs Earned,
+  Region Best, as in docs/ASCII Concept Maps/91c - Run Info Panel (left).txt. 24 px text, 36 px rows; the panel
+  scrolls. Faints shows the team total, Most Faints and time fainted, tracked per Pokemon for the Run Stats box.
+  Statuses Inflicted aggregates the per-Pokemon counts per kind, plus damage over time.
+- [Approved] Counting rules (Jess, 2026-11-12):
+  - A faint is every time a team member reaches 0 HP: on the field, on the bench from DoT, and the final wipe.
+    A Focus Sash save is not a faint. Most Faints ties show the lower team slot; with no faints its lines hide.
+  - Time fainted is run time from the faint until that member is revived (badge revive, Re-Do) or the run ends.
+  - A status counts as inflicted only when it newly lands: a refresh, an immune, a blocked major or a reapply
+    window does not count. Only kinds landed this run are listed ("None yet" when empty). Damage over time is
+    the status ticks the team deals to enemies (burn, poison, toxic, trap).
+  - The run name and time stay pinned while the rest scrolls; the scroll bar is slate.
+- [Approved] Region Best (Jess, 2026-11-12): a new save field, per region, absent from old saves (read as "No record
+  yet"). Checked when a run ends (faint or End Run). Better = higher loop, then more gyms beaten, then the faster time
+  on a tie. A run flagged by the debug tools (the flag that keeps it off the ranking) never sets a record. Until the
+  loop counter and the Elite Four exist, a real run's record is in practice gyms beaten plus time. Dev verification
+  goes through the debug tools in the 91c map (guest saves under ?dev are in memory only).
 - [Approved] Contents: total run kills, the best record on this region (two values: run time, and the highest gym or
   Elite Four member beaten on the highest loop). The record is the furthest run (highest loop, then highest gym or
   Elite Four member beaten) and that run's time; ties go to the faster time. A new save field, absent from old saves. loop number, elites killed, items picked

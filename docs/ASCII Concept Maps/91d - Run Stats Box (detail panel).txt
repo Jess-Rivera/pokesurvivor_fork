@@ -1,0 +1,91 @@
+#91d: RUN STATS BOX, per Pokemon, in the detail panel (2026-11-12, Quick)  [Approved]
+Jess, 2026-11-12: D1 (a) the finishing hit's Pokemon gets the kill, a DoT tick kill goes to its inflicter;
+P5 (a) enemy DoT is credited to its inflicter and joins that Pokemon's Damage and the team's DPS (visible
+change to the DPS panel); P1 to P4 and P6 as recommended.
+=====================================================================================
+Scope: everything about ONE Pokemon this run. Run Info (91c) shows only the team totals of these.
+Changes with the shown Pokemon (prev / next arrows, Move_Left / Move_Right, team card clicks).
+
+WHERE IT SITS (detail panel, left column, x 16, 200 px wide)
+-------------------------------------------------------------------------------------
+ today                              proposed (P1a)
+ 124  portrait                      124  portrait
+ 256  held item                     256  held item
+ 320 +-----------+                  320 +-----------+
+     | Run Stats |  200 px              | Run Stats |  360 px  (11 rows x 28 + title)
+ 520 +-----------+                      |           |
+ 536 +-----------+                  680 +-----------+
+     |Cards Taken|  400 px          696 +-----------+
+     |  (scrolls)|                      |Cards Taken|  240 px, still scrolls (#83)
+ 936 +-----------+                  936 +-----------+
+
+MOCK (200 px wide, ~16 characters a row, so short labels and compact numbers, P4)
+-------------------------------------------------------------------------------------
+ +- Run Stats ----------+
+ | Kills          312   |  new   D1 credit rule
+ | Field         6:40   |  have  DPS record (seconds it ended a second on the field)
+ | Damage       41.2k   |  have  DPS record (per member)
+ | Share          38%   |  new   its damage / team damage (P2)
+ | Best hit     2,450   |  new   max single hit (no move name: column too narrow; Run Info names it)
+ | Super eff.     44%   |  new   share of its damage that was super effective
+ | Taken         3.1k   |  new   HP it lost (field and bench)
+ | Healed        1.8k   |  new   HP it got back (berries, Shell Bell, springs, drain, regen)
+ | Faints           6   |  new   approved F1 rule
+ | Down          1:12   |  new   time fainted, approved F2 rule
+ | Statuses        23   |  new   approved S1 rule; hover = per kind (P3)
+ | DoT dmg       5.4k   |  new   P5
+ +----------------------+
+ Hover "Statuses": tooltip "Burn 12, Paralysis 8, Sleep 3", the hex's tooltip style, on top.
+
+WHERE THE NUMBERS COME FROM (found in code, 2026-11-12)
+-------------------------------------------------------------------------------------
+ a hit on a wild enemy or elite   move-effects.js damage() and flat(): they know the CASTER, the move id,
+                                  the crit roll and the type multiplier, then call the caster's onDealt.
+                                  -> onDealt gains (move id, crit, type mult); the enemy remembers its
+                                     last hitter. This unblocks A1 (per-move damage) and B2 (crits) later.
+ a hit on a gym leader            move-effects.js hurtPlayer(): same, the owner is known.
+ a kill                           enemy.js payKill(): reads the enemy's last hitter (D1a).
+ a wild enemy's burn / poison     enemy.js applyBurn / applyPoison take NO source today, and takeDot
+                                  credits nobody. -> they gain an "inflicted by" (the caster), kept while
+                                  the state lasts (the strongest source already wins today; P6).
+
+DECISIONS  (D1, P5 are RULES: they change what gets counted; flagged on their own)
+-------------------------------------------------------------------------------------
+ D1 RULE  per-Pokemon kill credit
+          (a) the Pokemon whose hit finished it, a DoT tick finishing it counts for the inflicter <- rec
+              (matches the damage rule: a move still flying after a swap credits its caster)
+          (b) whoever is on the field when it dies
+          The TEAM kill count does not change either way.
+ P5 RULE  DoT damage on enemies (burn, poison, toxic)
+          today it is counted NOWHERE: not in Damage, not in the DPS panel, not in the team's damage.
+          (a) credit it to the inflicter: it joins that Pokemon's Damage and the team's DPS <- rec
+              VISIBLE CHANGE: the DPS panel's number and line go up for status-heavy teams.
+          (b) count it only on its own "DoT dmg" row, Damage and DPS unchanged
+ P1 layout   (a) Run Stats grows to 360 px, Cards Taken shrinks to 240 and scrolls <- rec (spec allows the
+                 split)   (b) keep 200 px, Run Stats scrolls too
+ P2 rows     the 12 above <- rec. Drop candidates if it feels busy: Share, DoT dmg, Down.
+ P3 statuses (a) one total row, per kind on hover <- rec   (b) one row per kind landed (box gets taller)
+ P4 numbers  (a) compact past 9,999: 41.2k, 1.3M (Vampire Survivors' results do the same with SI
+                 prefixes) <- rec   (b) full numbers, smaller text
+ P6 who inflicted a status that is already on: the source with the strongest mul takes it over (it already
+             wins the damage); a tie keeps the first <- rec. Not a rule change: only who gets the credit.
+
+TESTS (added to the #91 plan's files; named here so nothing is a surprise)
+-------------------------------------------------------------------------------------
+ docs/proposals/run-stats-harness.js  (new, from the #91 plan) gains:
+   kill credit per D1 (a swap mid-flight still credits the caster; a burn tick kill credits the burner);
+   share sums to 100% over the team; super eff. share uses the hit's type multiplier; taken counts field and
+   bench; healed counts each heal source once; a DoT tick credits its inflicter (P5) and the strongest-source
+   takeover (P6); the box's numbers equal the Run Info totals when summed.
+ docs/proposals/run-stats-mutate.js  (new) gains ~6 mutants: kill to the field mon; DoT credited to nobody
+   (if P5a) or to the field mon; share over living members only; super eff. counts resisted hits; healed
+   counts a revive as a heal; takeover keeps the weaker source.
+ EXISTING harness changed: docs/proposals/dps-history-harness.js, only if P5a (DoT now enters the record;
+   one new check that a burn tick lands in the inflicter's second, not the field mon's).
+ EXISTING mutants: move-effects.js damage() / flat() / hurtPlayer() and enemy.js applyBurn / applyPoison /
+   takeDot are touched, so every *-mutate.js pattern against them gets the STALE scan after the build
+   (move-sim, move-riders, hit-parity, status-slice ones are the likely ones).
+ smoke-pause-menu.js: with G.Debug.runinfo('full') (91c tools, they seed per Pokemon too), the box shows
+   the shown Pokemon's numbers, changes on prev / next and a card click, Statuses hover lists the kinds,
+   compact numbers read 41.2k.
+ Debug set: G.Debug.runinfo('full') then pause and flip through the team.
