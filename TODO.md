@@ -6,14 +6,14 @@ the issue holds the detail, this file never copies it. Live backlog: `gh issue l
 
 ## Getting up to date in Amazon Quick (work machine), from the 2026-11-12 home session
 Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE.md "Git and GitHub").
-1. Before leaving home: `git push origin feature/pause-menu-rework` (the last commit there is the session end commit).
+1. Before leaving home: `git push origin feature/pause-menu-rework`.
 2. At work, `git status` must be clean. If it is not, commit what is there first (never edit on a dirty tree).
 3. `git fetch origin`
 4. `git checkout feature/pause-menu-rework`. If the branch does not exist on this machine yet:
    `git checkout -b feature/pause-menu-rework origin/feature/pause-menu-rework` (skip step 5).
 5. `git pull --ff-only`. If it refuses, the two machines diverged: stop and tell the agent, do not merge or force.
-6. Check: `git log --oneline -3` shows the "Session end: STATE, TODO, DEVLOG, decision for #90 pocket kinds, #94, #98"
-   commit on top. `git log --oneline feature/pause-menu-rework..origin/main` should print nothing (main has not moved).
+6. Check: `git log --oneline -3` shows the "TODO: steps for Amazon Quick" commits on top, with "Session end: STATE,
+   TODO, DEVLOG, decision for #90 pocket kinds, #94, #98" just below. `git log --oneline feature/pause-menu-rework..origin/main` should print nothing (main has not moved).
 7. `node tools/check.js`: expect "check: FAILED (2 harness)", only gym-harness and leader-stats-harness (red until #30).
    Any other failure is new: tell the agent.
 8. Open dev.html?dev from disk and start a run: pause it, check the Run Inventory and that a berry or run item can be
