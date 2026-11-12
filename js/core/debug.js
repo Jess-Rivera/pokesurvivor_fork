@@ -15,6 +15,7 @@
  *   G.Debug.silver(n)  set this run's Silver to n (no arg: logs it). In a run only, not saved (Silver is run-only). For the Move Shop.
  *   G.Debug.tickets(n, m) set your Pokeballs (x1 tickets) to n and, if given, your Master Balls (x10 tickets) to m (no arg: logs both). Saved.
  *   G.Debug.runslots(n) set how many run-item slots this save has unlocked (1 to 4; no arg: logs the current count). Saved.
+ *   G.Debug.berryslots(n) set how many berry slots this save has (1 to 4; no arg: logs the current count). Saved.
  *   G.Debug.runitem(id[, force]) give a run-tier item through the real pickup path, chooser included (force=true equips on the team directly, ignoring slot limits; no id: logs every run-tier id; e.g. 'snowballbadge', 'redo', 'firestone', 'sharpscissors')
  *   G.Game.debugLevelUp()  queue a level-up now (already exists)
  *   G.Debug.elite()    spawn an overworld elite now (watch the HP bar, enrage timer and the [Elite] TTK line in the console)
@@ -318,6 +319,28 @@ G.Debug = (() => {
     G.DB.commit();
     console.log('[Debug] run slots set to ' + s.runSlots);
     return s.runSlots;
+  }
+
+  /** Set `n` berry slots (1 to 4) on this save, or log the current count. ?dev only. Saved (save.berrySlots, absent in old saves = 1). */
+  function berryslots(n) {
+    if (!on) {
+      console.warn('[Debug] add ?dev to the URL to enable debug tools.');
+      return false;
+    }
+    const s = G.DB && G.DB.save;
+    if (!s) {
+      console.warn('[Debug] no save loaded.');
+      return false;
+    }
+    if (n == null) {
+      const current = G.Grounds.berrySlots(s);
+      console.log('[Debug] berry slots: ' + current);
+      return current;
+    }
+    s.berrySlots = Math.max(G.Grounds.BERRY_SLOTS_DEFAULT, Math.min(G.Grounds.BERRY_SLOTS_MAX, Math.floor(+n) || 1));
+    G.DB.commit();
+    console.log('[Debug] berry slots set to ' + s.berrySlots);
+    return s.berrySlots;
   }
 
   /** Unlock a team item (or 'all') on this save for the pre-run loadout. ?dev only. */
@@ -1440,6 +1463,7 @@ G.Debug = (() => {
     item,
     runitem,
     runslots,
+    berryslots,
     coins,
     silver,
     tickets,

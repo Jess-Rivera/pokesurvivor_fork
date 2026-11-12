@@ -229,6 +229,22 @@ G.Grounds = (() => {
     const n = (save && save.berrySlots) | 0;
     return Math.max(BERRY_SLOTS_DEFAULT, Math.min(BERRY_SLOTS_MAX, n || BERRY_SLOTS_DEFAULT));
   }
+  /** Price of owning the Nth berry slot: the team item slot prices (G.Items.slotPrice), one table for both (#96, Jess 2026-11-11). */
+  const berrySlotPrice = (slotNumber) => G.Items.slotPrice(slotNumber);
+  /**
+   * Buy the NEXT berry slot with PokeCoins (slots go in order, temporary Shop purchase, #96):
+   * -> { ok:true, slots } or { ok:false, error:'unknown'|'max'|'poor' }.
+   */
+  function buyBerrySlot(save) {
+    if (!save) return { ok: false, error: 'unknown' };
+    const owned = berrySlots(save);
+    if (owned >= BERRY_SLOTS_MAX) return { ok: false, error: 'max' };
+    const price = berrySlotPrice(owned + 1);
+    if (!price || !(save.coins >= price)) return { ok: false, error: 'poor' };
+    save.coins -= price;
+    save.berrySlots = owned + 1;
+    return { ok: true, slots: owned + 1 };
+  }
   function store(pl, id) {
     pl.berries.push(id);
     say(pl, BY[id].name + ' stored', '#9fe8ff');
@@ -325,6 +341,10 @@ G.Grounds = (() => {
     canTake,
     berryGuard,
     berrySlots,
+    BERRY_SLOTS_DEFAULT,
+    BERRY_SLOTS_MAX,
+    berrySlotPrice,
+    buyBerrySlot,
     chip,
   };
 })();
