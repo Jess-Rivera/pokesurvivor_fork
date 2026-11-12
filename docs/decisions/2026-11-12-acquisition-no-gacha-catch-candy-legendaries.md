@@ -33,6 +33,15 @@ Direction: the gacha goes. Luck should not hand out an end-game mon and make sta
 - T6: evolution happens in the Team Menu.
 - T4: in-run requirements are a true/false flag on the copy; the main menu shows a "ready to evolve" popup.
 - T2: time of day comes from a new day/night cycle on run time, each run starting at a random point; the day/night flag needs the mon to be the active Pokemon. Day/night is parked for its own design.
-Still open: LC1 to LC4 (Link Cable details), T3 and T3b (known moves; 9 of the 14 required moves are not in the game), T5, T7, the day/night design, L3, the hover filter, EV4, N2 (flee values), the odds ceiling, A1, A3, A7 to A9, A13 to A15, B5, C2 (banked tickets in saves), ball tier unlocks, the UberElite time limit. Not built. The region type maps are parked and feed tier 1 later.
+- LC1: trade evolutions that need a held item need the Link Cable and the held item.
+- T3b: the 8 moves that move-gated evolutions need and the game lacks (Mimic, Double Hit, Rollout, Taunt, Barb Barrage, Twin Beam, Hyper Drill, Dragon Cheer) get added. That is a move import with its own build plan.
+- T5: friendship is minutes on the roster within one run.
+- T5b: friendship minutes are set per species (values deferred).
+- T5c: being one of the team members for the run counts (not active-only).
+- EI: evolution stones drop from gyms; trade held items are bought in the Shop.
+- T3: "knows a move" means the move is in that copy's run moveset (an in-run flag).
+- LC2: Karrablast evolves to Escavalier with the Link Cable alone; Accelgor waits until Shelmet is in the game.
+- T7: the agent's one-off proposals for Shedinja, Kingambit, Alcremie and Gholdengo are accepted, with four rule details open (R1 to R4 in the map; R3: the Kingambit rule cannot happen as written because elites never repeat a species in a run).
+Still open: R1 to R4, T5b values, EI2 (Metal Coat and Razor Claw already exist as items), LC3, LC4 (Shop tab, prices), the day/night design, L3, the hover filter, EV4, N2 (flee values), the odds ceiling, A1, A3, A7 to A9, A13 to A15, B5, C2 (banked tickets in saves), ball tier unlocks, the UberElite time limit. Not built. The region type maps are parked and feed tier 1 later.
 
 Canonical: docs/ASCII Concept Maps/Acquisition v1 - Catch, Candy, Legendaries.txt

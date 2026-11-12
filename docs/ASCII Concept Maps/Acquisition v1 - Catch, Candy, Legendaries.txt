@@ -654,3 +654,134 @@ T3 CHECK: "KNOWS A MOVE" EVOLUTIONS vs THE GAME'S MOVES (js/data/learnsets.js, 1
     T5  friendship (18 lines, e.g. Pichu, Munchlax, Riolu, Eevee, Golbat, Togepi): minutes on the
         roster in one run | cumulative across runs
     T7  one-offs (Gholdengo, Kingambit, Shedinja, Alcremie)
+
+RESOLVED, ROUND 14 (Jess, 2026-11-12)
+-------------------------------------
+  LC1  trade + held item (17) needs the Link Cable AND the held item (mainline rule).
+       e.g. Onix > Steelix = Link Cable + Metal Coat; Seadra > Kingdra = Link Cable + Dragon Scale.
+  T3b  ADD the 9 missing moves to the game: Mimic, Double Hit, Rollout, Taunt, Barb Barrage,
+       Twin Beam, Hyper Drill, Dragon Cheer (Mimic covers 2 lines). 8 distinct moves.
+  T5   friendship = MINUTES ON THE ROSTER IN ONE RUN (the flag is set inside a single run).
+
+  T3b IS A MOVE IMPORT (a game-data change, its own build plan, propose and approve)
+    pipeline today:
+      docs/move_rework_holding/move-conversions-described.json  (the live move list, 178)
+          └─ node tools/export_learnsets.js ──> js/data/learnsets.js (generated, do not hand-edit)
+    each new move needs a described.json entry in the move schema, then a learnsets rebake.
+    The plan must name its tests (harness / mutation / intent scenarios / debug set) before approval.
+    Several are odd fits for an auto-attacker: Mimic (copies the last move), Taunt (blocks status
+    moves), Dragon Cheer (an ally crit buff). Each needs a bullet-heaven reading.
+
+  HELD ITEMS THE TRADE LINES NEED (check against js/data/items.js before the build)
+    Metal Coat, Dragon Scale, King's Rock, Up-Grade, Dubious Disc, Prism Scale, Deep Sea Tooth,
+    Deep Sea Scale, Protector, Electirizer, Magmarizer, Reaper Cloth, Whipped Dream,
+    Strawberry Sweet, Razor Claw, Razor Fang, Oval Stone
+    -> each needs a source (gym drop like stones?) unless it already drops.
+
+  STILL OPEN
+    T5b  friendship minutes (one run)
+    T5c  "on the roster" = on the team for the run | must be the active mon (like day/night)
+    LC2  Escavalier / Accelgor: Link Cable + own both Karrablast and Shelmet | Link Cable alone
+    LC3  Shop tab for the Link Cable    LC4  its coin price
+    EI   evolution items (stones + trade held items): all gym drops | some in the Shop
+    T7   one-offs (Gholdengo, Kingambit, Shedinja, Alcremie)
+
+RESOLVED, ROUND 15 (Jess, 2026-11-12)
+-------------------------------------
+  T5b  friendship minutes will be PER POKEMON (per species). Values deferred, not settled now.
+  T5c  "on the roster" = being one of the team members for the run is enough (not active-only).
+       Note: day/night stays active-only (round 12); friendship does not.
+  EI   evolution stones DROP FROM GYMS; trade held items are BOUGHT IN THE SHOP (with the Link Cable).
+
+  T5b HOOK: pokemon_species.csv has base_happiness (mainline starting friendship)
+    70 for 667 species | 50: 172 | 0: 79 | 35: 73 | 100: 15 | 140: 11 | 90: 5 | 20: 3
+    friendship lines: Cleffa 140, Chansey 140 (fast) | Snom 50 | Buneary 0 (slowest) | the rest 70
+    -> usable as a per-species dial, but it barely varies across the 18 lines.
+
+  EI CHECK vs js/data/items.js (read 2026-11-12)
+    ALREADY EXIST as items:  Metal Coat, Razor Claw
+      -> they already have a game role; selling them in the Shop as evolution items may change
+         how they are obtained today. Needs a look at their current source before the build.
+    NEW (15): Dragon Scale, King's Rock, Up-Grade, Dubious Disc, Prism Scale, Deep Sea Tooth,
+      Deep Sea Scale, Protector, Electirizer, Magmarizer, Reaper Cloth, Whipped Dream,
+      Strawberry Sweet, Razor Fang, Oval Stone; plus the Link Cable
+    Oval Stone (Happiny > Chansey) and Razor Claw / Razor Fang (Weavile, Gliscor) are hold-and-level,
+      not trade; they fall under "trade items in the Shop" as written.
+
+  STILL OPEN
+    T5b  per-species friendship minutes (deferred)
+    EI2  Metal Coat / Razor Claw: keep their current source too | Shop only
+    LC2  Escavalier / Accelgor    LC3  Shop tab    LC4  prices (Link Cable, trade items)
+    T3   knows a move: in the run moveset | ever learned on that copy
+    T7   one-offs (Gholdengo, Kingambit, Shedinja, Alcremie)
+
+FINAL EVOLUTION QUESTIONS: FACTS (read 2026-11-12)
+--------------------------------------------------
+  T3  copies.js stores NO moveset per copy: only v = a starting move override. Moves are run-scoped
+      (Move Trainer / TM Mart buy them mid-run). So:
+        "in the run moveset"  -> a flag set in the run, same model as T4 feats (no new storage)
+        "ever learned"        -> needs a new per-copy learned-moves list (new save field)
+
+  LC2 Escavalier / Accelgor (Karrablast and Shelmet trade for each other in mainline)
+      Karrablast is in G.DEX. SHELMET IS NOT IN THE GAME, so Accelgor cannot be reached at all
+      and "own both" is impossible today.
+
+  T7 one-offs, proposed bullet-heaven readings (agent proposal)
+    species      mainline                                 in G.DEX?            proposal
+    Shedinja     free when Nincada evolves (empty slot     Nincada, Ninjask,    evolving Nincada also
+                 + a Poke Ball in the bag)                 Shedinja: yes        makes a Shedinja copy
+                                                                                if the box has room
+    Kingambit    Bisharp beats 3 Bisharp holding a         Pawniard, Bisharp,   in-run feat flag: Bisharp
+                 Leader's Crest                            Kingambit: yes       on the team when 3 Bisharp
+                                                                                (elites) are defeated
+    Alcremie     Milcery + a Sweet, then spin              Milcery, Alcremie:   in-run feat flag: the
+                                                           yes                  active mon circles for N s
+                                                                                + Strawberry Sweet (Shop)
+    Gholdengo    Gimmighoul + 999 Gimmighoul Coins         GIMMIGHOUL NOT in    Gholdengo becomes a
+                                                           the game             Stage 1 (catch / rescue),
+                                                                                or a prize of the existing
+                                                                                Gholdengo treasure imp
+
+  LC3 Shop tab: removing the gacha frees the Shop > Pokemon tab. Candidate: it becomes an
+      "Evolution" tab (Link Cable + the 17 trade items).
+  LC4 prices: BALANCE.md, set when the economy is tuned (coins, after the gacha goes).
+
+RESOLVED, ROUND 16 (Jess, 2026-11-12)
+-------------------------------------
+  T3   "knows a move" = the move is in that copy's RUN MOVESET; a flag set in the run (T4 model).
+  LC2  Karrablast > Escavalier = Link Cable alone. Accelgor stays unreachable until Shelmet is
+       added to the game (Shelmet is not in G.DEX).
+  LC2b (Jess, same day) SHELMET HAS NO SPRITES (SpriteCollab), so it cannot be added. Accelgor
+       (which IS in G.DEX with sprites) needs another route. Options:
+         a  Karrablast + Link Cable = a 2-way split, the player picks Escavalier or Accelgor
+            (mirrors the mainline swap: one trade makes both)
+         b  Accelgor becomes a catchable Stage 1 (never evolves; BST 495 = 4 star band)
+         c  Accelgor needs a different item on Karrablast (e.g. Link Cable + a Shop item)
+       Nothing about Accelgor's own data changes; only the route to it.
+  T7   the agent's one-off proposals accepted:
+         Shedinja   evolving Nincada also makes a Shedinja copy, if the box has room
+         Kingambit  feat flag: Bisharp on the team when 3 Bisharp elites are defeated
+         Alcremie   feat flag: the active mon circles for N s, plus a Strawberry Sweet (Shop)
+         Gholdengo  a Stage 1 you can catch, OR a prize of the Gholdengo treasure imp (pick one)
+
+  RULE CHANGES INSIDE T7 (each changes current behavior; flagged for explicit approval)
+    R1  Shedinja: one evolution makes TWO copies. New Pokebox rule; a full box skips Shedinja.
+    R2  Gholdengo: the proposal had two options, still to pick. The treasure imp's x10 ticket
+        prize is retired (A2), so the imp needs a new prize either way.
+    R3  Kingambit as written CANNOT happen: js/data/enemies.js eliteDef takes a `used` set and never
+        repeats a species as an elite in one run, so 3 Bisharp elites in one run is impossible.
+        Options: 3 Bisharp defeated, wild or elite, in one run (needs Bisharp in the run's cast)
+                 | 3 Bisharp elites across runs (a persistent counter on the copy)
+                 | one Bisharp elite defeated while Bisharp is on the team
+    R4  Alcremie: "circle for N s" is a new movement-tracking check on the active mon. N to set.
+
+  EVOLUTION REQUIREMENTS: SUMMARY OF THE MODEL (rounds 11 to 16)
+    candy level (all) + any of:
+      stone ............ gym drop                 trade ........ Link Cable (Shop) or real trade
+      trade + item ..... Cable + item (Shop)      friendship ... minutes on the team in one run (per species)
+      day / night ...... active mon in that phase knows move ... in its run moveset
+      gender, nature, Atk vs Def ... the copy's own data     party ... a teammate in the run
+      feats ............ in-run flags (#91-1 counters)       one-offs ... T7 above
+    flags are saved on the copy; the main menu shows "ready to evolve"; evolving is in the Team Menu
+    blocked today: Accelgor (no Shelmet), Gholdengo by evolution (no Gimmighoul),
+                   the 9 move lines until the 8-move import lands
