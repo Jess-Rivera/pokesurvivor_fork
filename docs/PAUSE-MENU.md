@@ -42,7 +42,11 @@ Three partitions, each a 2x2 grid of 4 square slots (Jess, 2026-11-11):
 - [Approved] No labels anywhere in the inventory: every item's name and effect is in its hover tooltip.
 - [Approved] Left: the Berry Pocket. Slots not yet unlocked show dimmed.
 - [Approved] Centre: the run items (team items), locked slots dimmed, with clear padding from the Berry Pocket.
-- [Approved] Right: the Temporary Pocket, 4 slots, always open. It holds held items taken off a Pokemon.
+- [Approved] Right: the Temporary Pocket, 4 slots, always open. It holds held items taken off a Pokemon, and berries
+  and run items set aside to destroy (Jess, 2026-11-12, #90 feel test). Berries and run items move by click or drag
+  between their own bought slots and the pocket only, never onto a Pokemon or the other grid; dropped on a filled slot
+  of the same kind they swap. A run item set aside stops working for the whole team until it goes back; the one Stone
+  at a time rule still holds (a Stone goes back only onto the carried Stone, swapping them).
 - [Approved] Resuming (Resume, Esc or P) with an item in the Temporary Pocket asks inside the ball, like End Run
   (Jess, 2026-11-11, replacing the dialog with "Give to a Pokemon"): the three buttons slide out to one side, left or
   right at random, chased by a three-box column of move slots, "Destroy Items in Pocket?" on top, then a red
@@ -75,11 +79,12 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   and run effects add (the bonus combat uses). The edge (Jess, 2026-11-11, replacing "50, then the next 100 up") is
   300 when the highest drawn stat is 300 or less, 600 up to 600, else 1000; every value is drawn between 10% and 100%
   of the radius, so a level 1 stat is never a dot and a value past 1000 sits on the rim. The edge number sits in a
-  break of the outer line between HP and Atk, turned along it, in blue. Each corner shows the stat name (with the
-  yellow "+X%" when run effects add some) over the final stat: HP as the game has it (after HP_SCALAR, the HP bar's
+  break of the outer line between HP and Atk, turned along it, in blue. Each corner shows the stat name over the final
+  stat, with the yellow "+X%" when run effects add some: beside the name at HP and Spe, on its own line under the
+  number at the four side corners (Jess, 2026-11-11, #98). The final stat is HP as the game has it (after HP_SCALAR, the HP bar's
   number) though the shape draws it at mainline size, the others with nature, level and run effects. Hovering a corner
   shows the copy's make-up: "Base: N, IV: N, EV: N", always on top of the other corners. The hex is as big as its box
-  allows with room for the widest labels (a 4 digit stat under "SpA +100%").
+  allows with room for the widest labels (a 4 digit stat with "+100%" under it).
 - [Approved] The per-Pokemon stats, Cards Taken, Move List and IV hex panels take b2-lower AA16-AD18 as inspiration,
   like the run screen's team roster slots but without the grid pattern. Borders use the first type's colour.
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.

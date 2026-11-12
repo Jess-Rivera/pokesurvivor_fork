@@ -10,7 +10,9 @@
 //   prompt in, the pocket pulsing); No brings the buttons back; click then click gives from the pocket to a teammate who
 //   holds an item (the two swap, effects exact); Esc while carrying returns the item and does not ask; a drag from the
 //   pocket onto the held slot gives; pocket slots reorder; Destroy empties the pocket and resumes; an empty pocket
-//   resumes at once.
+//   resumes at once. Berries and run items (Jess, 2026-11-12) go into the pocket and back to their own bought slots
+//   only (never onto a Pokemon or the other store), a run item's effect turns off and on exactly, Destroy takes all
+//   three kinds, and the Stone rule (one at a time) holds through the pocket.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -80,10 +82,11 @@ async function main() {
       second = G.Game.roster.find((member) => member.teamSlot === 1);
     window.__lead = lead;
     window.__second = second;
-    const plain = { leadPhys: lead.physMul, secondCd: second.cdMul, secondPhys: second.physMul };
+    const plain = { leadPhys: lead.physMul, secondCd: second.cdMul, secondPhys: second.physMul, coinMul: lead.coinMul };
     lead.equip('choiceband');
     second.equip('quickclaw');
     lead.berries.push('cheri');
+    for (const member of G.Game.roster) G.Items.BY.amuletcoin.on(member); // equipped as a pickup would
     lead.runItems.push('amuletcoin');
     return plain;
   });
@@ -145,6 +148,9 @@ async function main() {
         asking: layer.classList.contains('pm-asking-pocket'),
         pulsing: document.querySelector('.pause-menu').classList.contains('pm-pocket-asking'),
         carrying: G.PauseInventory.isCarrying(),
+        berries: team.berries.join(),
+        runItems: team.runItems.join(),
+        coinMuls: G.Game.roster.map((member) => member.coinMul),
       };
     });
   const shot = async (name) => {
@@ -369,6 +375,60 @@ async function main() {
   now = await state();
   ok(now.pocket.join() === ',quickclaw,,' && now.leadItem === null, 'a drag between pocket slots moves it');
 
+  // ---- berries and run items go into the pocket and back (#90 feel test, Jess 2026-11-12) ----
+  const berrySlot = (n) => '.pm-inv-berries .hud-grid-slot:nth-child(' + n + ')',
+    runSlot = (n) => '.pm-inv-run-items .hud-grid-slot:nth-child(' + n + ')',
+    pocketSlot = (n) => '.pm-inv-pocket .hud-grid-slot:nth-child(' + n + ')';
+  const coinsAre = (values, mul) => values.every((value) => Math.abs(value - base.coinMul * mul) < 1e-9);
+  ok(coinsAre((await state()).coinMuls, 1.5), 'setup: Amulet Coin is on for every member');
+  await drag(berrySlot(1), pocketSlot(1));
+  now = await state();
+  ok(now.berries === '' && now.pocket[0] === 'cheri', 'drag a berry into the pocket: the bag gives it up');
+  await drag(pocketSlot(1), '.pm-team-card[data-drop="team:1"]');
+  await drag(pocketSlot(1), '.pm-detail-held .hud-grid-slot');
+  await drag(pocketSlot(1), runSlot(2));
+  now = await state();
+  ok(
+    now.pocket[0] === 'cheri' &&
+      now.secondItem === 'choiceband' &&
+      now.leadItem === null &&
+      now.runItems === 'amuletcoin',
+    'a berry never goes on a Pokemon, the held slot or the run items'
+  );
+  await drag(pocketSlot(1), berrySlot(2));
+  now = await state();
+  ok(now.berries === 'cheri' && now.pocket[0] === null, 'drag it back to a bought berry slot: the bag holds it again');
+  await drag(pocketSlot(1 + 1), berrySlot(1));
+  now = await state();
+  ok(now.pocket[1] === 'quickclaw' && now.berries === 'cheri', 'a held item never goes into the berry bag');
+  await drag(berrySlot(1), berrySlot(3));
+  now = await state();
+  ok(now.berries === 'cheri', 'a locked berry slot takes nothing');
+
+  await clickAt(runSlot(1));
+  await clickAt(pocketSlot(4));
+  now = await state();
+  ok(
+    now.runItems === '' && now.pocket[3] === 'amuletcoin' && coinsAre(now.coinMuls, 1),
+    'click a run item into the pocket: it leaves the run items and its effect ends for every member'
+  );
+  await drag(pocketSlot(4), berrySlot(2));
+  now = await state();
+  ok(now.pocket[3] === 'amuletcoin' && now.berries === 'cheri', 'a run item never goes into the berry bag');
+  await drag(pocketSlot(4), runSlot(2));
+  now = await state();
+  ok(
+    now.runItems === 'amuletcoin' && now.pocket[3] === null && coinsAre(now.coinMuls, 1.5),
+    'drag it back to a run slot: carried again, its effect back on exactly'
+  );
+
+  // set both aside for the Destroy below
+  await drag(berrySlot(1), pocketSlot(1));
+  await drag(runSlot(1), pocketSlot(4));
+  now = await state();
+  ok(now.pocket.join() === 'cheri,quickclaw,,amuletcoin', 'berry, held item and run item share the pocket');
+  await shot('inventory-pocket-kinds.png');
+
   // ---- Destroy empties the pocket and resumes ----
   await page.click('.pm-button[data-action="resume"]');
   await sleep(SLIDE_MS);
@@ -376,8 +436,13 @@ async function main() {
   await sleep(FULL_MS);
   now = await state();
   ok(
-    now.pocket.every((id) => id === null) && !now.open && now.game === 'playing',
-    'Destroy empties the pocket and resumes (' + now.game + ')'
+    now.pocket.every((id) => id === null) &&
+      now.berries === '' &&
+      now.runItems === '' &&
+      coinsAre(now.coinMuls, 1) &&
+      !now.open &&
+      now.game === 'playing',
+    'Destroy empties the pocket (berry, held and run item gone, effects off) and resumes (' + now.game + ')'
   );
 
   // ---- an empty pocket resumes at once ----
@@ -385,6 +450,31 @@ async function main() {
   await key('Escape', FULL_MS);
   now = await state();
   ok(!now.open && now.game === 'playing', 'with an empty pocket Esc resumes as before');
+
+  // ---- the Stone rule holds through the pocket (one of a group at once), checked on the Team directly ----
+  const stones = await page.evaluate(() => {
+    const team = window.__lead.team,
+      on = (id) => G.Game.roster.forEach((member) => G.Items.BY[id].on(member));
+    on('firestone');
+    team.runItems.push('firestone');
+    team.pocket[0] = { kind: 'run', id: 'waterstone' };
+    const intoEmpty = team.pocketToStore('run', 0, 1, 2),
+      ontoStone = team.pocketToStore('run', 0, 0, 2);
+    const result = {
+      intoEmpty,
+      ontoStone,
+      runItems: team.runItems.join(),
+      pocket: team.pocket[0] && team.pocket[0].id,
+    };
+    team.storeToPocket('run', 0, 1);
+    team.emptyPocket();
+    return result;
+  });
+  ok(!stones.intoEmpty, 'a second Stone cannot go into an empty run slot while one is carried');
+  ok(
+    stones.ontoStone && stones.runItems === 'waterstone' && stones.pocket === 'firestone',
+    'dropped onto the carried Stone, the two swap'
+  );
 
   await page.evaluate(() => clearInterval(window.__keep));
   ok(errs.length === 0, 'no page or console errors' + (errs.length ? ': ' + errs.slice(0, 5).join(' | ') : ''));

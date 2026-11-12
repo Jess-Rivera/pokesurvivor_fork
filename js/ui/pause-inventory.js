@@ -4,8 +4,9 @@
  * slot and team cards as places an item can go.
  *
  * The Run Inventory: three of the kit's tight 2x2 grids in a row, no frame and no labels (every item's name and effect is
- * in its hover tooltip): the Berry Pocket (slots not bought dimmed), the run items (team item slots not bought dimmed,
- * display only) and the Temporary Pocket (4 slots, always open).
+ * in its hover tooltip): the Berry Pocket (slots not bought dimmed), the run items (team item slots not bought dimmed)
+ * and the Temporary Pocket (4 slots, always open). Berries and run items move only between their own grid and the
+ * pocket (to set them aside and destroy them on resume, Jess 2026-11-12); places "berry:<index>", "run:<index>".
  *
  * Moving held items (Jess, 2026-11-11): click, or drag and drop, between the detail panel's held slot, the Temporary
  * Pocket and the team cards. A click picks the item up and a second click puts it down; a drag puts it down where the
@@ -40,6 +41,20 @@ G.PauseInventory = (() => {
     const item = G.Items.BY[id];
     return item ? item.icon || id : null;
   };
+  const berryTip = (id) => {
+    const berry = G.Grounds.BY[id];
+    return berry ? { name: berry.name, desc: berry.desc } : null;
+  };
+  const berryIcon = (id) => {
+    const berry = G.Grounds.BY[id];
+    return berry ? 'ps:' + berry.icon : null;
+  };
+  // Held items and run items are both G.Items entries; berries are ground items.
+  const iconOf = (kind, id) => (kind === 'berry' ? berryIcon(id) : heldIcon(id));
+  const tipOf = (kind, id) => (kind === 'berry' ? berryTip(id) : heldTip(id));
+  /** How many store slots of a kind are bought (the berry bag or the run items). */
+  const boughtSlots = (kind) =>
+    !save() ? 0 : kind === 'berry' ? G.Grounds.berrySlots(save()) : kind === 'run' ? G.Items.runSlots(save()) : 0;
 
   /** What sits at a place key: { icon } for an item that can be picked up, or null. Team cards only take items (a
    *  press on one picks which Pokemon the detail panel shows). */
@@ -49,7 +64,11 @@ G.PauseInventory = (() => {
     if (kind === 'team') return null;
     if (kind === 'pocket') {
       const entry = team() && team().pocket[index];
-      return entry ? { icon: heldIcon(entry.id) } : null;
+      return entry ? { icon: iconOf(entry.kind, entry.id) } : null;
+    }
+    if (kind === 'berry' || kind === 'run') {
+      const id = team() && team().storeOf(kind)[index];
+      return id ? { icon: iconOf(kind, id) } : null;
     }
     const member = memberIn(index);
     return member && member.item ? { icon: heldIcon(member.item) } : null;
@@ -63,6 +82,11 @@ G.PauseInventory = (() => {
       [toKind, toNumber] = to.split(':');
     const owner = team();
     if (!owner) return false;
+    const isStore = (kind) => kind === 'berry' || kind === 'run';
+    // berries and run items: only between their own store and the pocket (Team checks kinds, copies and groups)
+    if (isStore(fromKind)) return toKind === 'pocket' && owner.storeToPocket(fromKind, +fromNumber, +toNumber);
+    if (isStore(toKind))
+      return fromKind === 'pocket' && owner.pocketToStore(toKind, +fromNumber, +toNumber, boughtSlots(toKind));
     if (fromKind === 'pocket') {
       if (toKind === 'pocket') return owner.swapPocketSlots(+fromNumber, +toNumber);
       const receiver = memberIn(+toNumber);
@@ -193,30 +217,35 @@ G.PauseInventory = (() => {
       runSlots = [],
       pocketSlots = [];
     for (let index = 0; index < 4; index++) {
-      const berry = owner.berries[index] && G.Grounds.BY[owner.berries[index]];
+      // bought berry and run item slots are places too (#90 feel test, Jess 2026-11-12: set them aside to destroy)
+      const berry = owner.berries[index];
       berrySlots.push(
         slotOf({
           key: 'berry' + index,
-          icon: berry ? 'ps:' + berry.icon : null,
+          icon: berry ? berryIcon(berry) : null,
           locked: index >= berryCount,
-          tip: berry ? { name: berry.name, desc: berry.desc } : null,
+          tip: berry ? berryTip(berry) : null,
+          place: index < berryCount ? 'berry:' + index : null,
+          className: 'pm-store-slot',
         })
       );
-      const runItem = owner.runItems[index] && G.Items.BY[owner.runItems[index]];
+      const runItem = owner.runItems[index];
       runSlots.push(
         slotOf({
           key: 'run' + index,
-          icon: runItem ? runItem.icon || owner.runItems[index] : null,
+          icon: runItem ? heldIcon(runItem) : null,
           locked: index >= runCount,
-          tip: runItem ? { name: runItem.name, desc: runItem.desc } : null,
+          tip: runItem ? heldTip(runItem) : null,
+          place: index < runCount ? 'run:' + index : null,
+          className: 'pm-store-slot',
         })
       );
       const entry = owner.pocket[index];
       pocketSlots.push(
         slotOf({
           key: 'pocket' + index,
-          icon: entry ? heldIcon(entry.id) : null,
-          tip: entry ? heldTip(entry.id) : null,
+          icon: entry ? iconOf(entry.kind, entry.id) : null,
+          tip: entry ? tipOf(entry.kind, entry.id) : null,
           place: 'pocket:' + index,
           className: 'pm-pocket-slot',
         })

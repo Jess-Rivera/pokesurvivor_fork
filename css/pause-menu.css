@@ -344,7 +344,8 @@ body.pm-open .hud-overlay {
 
 /* ---------- moving held items (#90, js/ui/pause-inventory.js): click or drag, the ghost follows the pointer ---------- */
 .pm-pocket-slot.is-filled,
-.pm-held-slot.is-filled {
+.pm-held-slot.is-filled,
+.pm-store-slot.is-filled {
   cursor: grab;
 }
 .hud-grid-slot.is-lifted .hud-item-icon {
@@ -500,6 +501,11 @@ body.pm-open .hud-overlay {
 }
 .pm-hex-bonus {
   color: #ffd23f;
+}
+/* the side corners' +X% on its own line under the number (#98) */
+.pm-hex-bonus-line {
+  height: 20px; /* HEX.bonusLine in js/ui/pause-pokemon.js */
+  line-height: 20px;
 }
 /* the edge's number, in a break of the outer line between HP and Atk (Jess, 2026-11-11: blue, along the line) */
 .pm-hex-edge {

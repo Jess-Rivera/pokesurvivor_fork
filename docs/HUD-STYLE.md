@@ -513,8 +513,9 @@ Jess set these on 2026-11-10 (the #63 plan review). Everything is drawn at 2 px 
   middle, then one pixel in for every three rows out), corner bumps, the same rim order as the roster rows, in the Lv
   yellow ramp (`#f3b200` Light, `#9a6110` Base, `#6d5000` corner shade). The white patch (`#e7e7e7`, its top and right
   edges `#848484`) runs from the box's flat middle down to its bottom outline, and holds the item's icon at 1x.
-  - The item's name sits above the box, left-aligned, at 30 px.
-  - Right of the patch: the live tracker in the EXP blue when the item has one, otherwise its short description in
+  - The item's name sits inside the box, in the band above the patch: top and left aligned (lined up with the patch,
+    clear of the slanted end), 20 px, running across the band and squeezed sideways when longer (Jess, 2026-11-11, #94).
+  - Right of the patch, from the patch's top down (16 px lines): the live tracker in the EXP blue when the item has one, otherwise its short description in
     white, at most two lines with an ellipsis.
   - Only unlocked slots show, slot 1 at the bottom. An empty slot shows the box with an empty patch and no name.
 
@@ -804,7 +805,7 @@ items from the right edge.
 | Held item square  | about 32 px, right of the row   | 48 px (24 art), 8 px right of the row, centred on it                           |
 | Berry bag         | 2x2, 40 px squares              | 40 px squares, columns 128 px apart, rows 72 px apart, 12 px above the roster  |
 | Run item box      | 142 x 48, 39 px from the right  | 280 x 64 (140 x 32 art), 24 px from the right, slot 1 42 px up                 |
-| Run item name     | inside the box                  | 30 px, above the box, 2 px gap; slots 104 px apart                             |
+| Run item name     | inside the box                  | 20 px, inside the top band (art rows 4 to 12), x 12; slots 72 px apart (#94)   |
 | Run item patch    | (none)                          | 22 art wide, from art row 13 to the bottom outline; icon 32 px                 |
 
 ### DPS-Upgrades panel (#66)

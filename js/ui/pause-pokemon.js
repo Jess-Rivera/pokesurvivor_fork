@@ -53,7 +53,7 @@ G.PausePokemon = (() => {
     BOX_PAD = 16, // inside a box, clear of its rim
     // radius: as big as the box allows with room for the widest labels, a 4 digit stat under "SpA +100%" (Jess,
     // 2026-11-11); pad: the hex uses the box out to its rim
-    HEX = { radius: 110, labelGap: 12, pad: 8 },
+    HEX = { radius: 110, labelGap: 12, pad: 8, bonusLine: 20 }, // bonusLine: the side corners' own +X% line (#98)
     EDGE_LABEL = { charWidth: 10, pad: 10 }, // the edge number's gap in the outer line: 20 px text, a little air
     ARROW = { size: 13, artPixel: 3, top: 960, prevLeft: 30, nextLeft: 98 };
   const TEAM = { columns: 3, cardArtWidth: 84, gap: 9, padLeft: 13, padTop: 12, rowGap: 8 };
@@ -260,30 +260,42 @@ G.PausePokemon = (() => {
     const labels = HEX_AXES.map(([statIndex, label], axis) => {
       const [x, y] = corner(axis, 1),
         side = Math.abs(x - centreX) < 4 ? 'middle' : x > centreX ? 'right' : 'left';
+      const percent = Math.round(numbers.bonus[statIndex] * 100),
+        bonusBelow = side !== 'middle' && percent > 0; // #98: the side corners carry the +X% on a line of its own
+      // the side corners centre their block on the corner: name and number, plus the +X% line when there is one
+      const sideTop = y - 22 - (bonusBelow ? HEX.bonusLine / 2 : 0);
       const style =
         side === 'middle'
           ? { left: x + 'px', top: (y < centreY ? y - HEX.labelGap - 44 : y + HEX.labelGap) + 'px' }
           : side === 'right'
-            ? { left: x + HEX.labelGap + 'px', top: y - 22 + 'px' }
-            : { right: width - x + HEX.labelGap + 'px', top: y - 22 + 'px' };
+            ? { left: x + HEX.labelGap + 'px', top: sideTop + 'px' }
+            : { right: width - x + HEX.labelGap + 'px', top: sideTop + 'px' };
       // the room a value line has before it squeezes: the whole width in the middle, else out to the box's edge
       const room = side === 'middle' ? width : side === 'right' ? width - x - HEX.labelGap : x - HEX.labelGap;
-      const percent = Math.round(numbers.bonus[statIndex] * 100),
-        baseStat = ((member.mon && member.mon.stats) || [])[statIndex] || 0;
+      const sideOrigin = side === 'left' ? '100% 50%' : side === 'middle' ? '50% 50%' : '0 50%';
+      const baseStat = ((member.mon && member.mon.stats) || [])[statIndex] || 0;
       // The corner shows the final stat (Jess, 2026-11-11): HP as the game has it (after HP_SCALAR, the HP bar's number)
       // though the shape draws it at mainline size; the others with nature, level and run effects. The yellow "+X%"
-      // rides on the name line. Hover: the copy's make-up.
+      // rides on the name line at HP and Spe, and sits under the number on the side corners (#98, Jess 2026-11-11).
+      // Hover: the copy's make-up.
       const finalStat = statIndex === 0 ? Math.round(member.maxHp) : Math.round(numbers.withRun[statIndex]);
       return html`<div key=${label} class=${'pm-hex-label is-' + side} data-stat=${label} style=${style}>
         <div class="hud-text pm-hex-name">
-          ${label}${percent > 0 ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
+          ${label}${percent > 0 && !bonusBelow ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
         </div>
-        <${FitText}
-          text=${String(finalStat)}
-          room=${room}
-          className="hud-text pm-hex-value"
-          origin=${side === 'left' ? '100% 50%' : side === 'middle' ? '50% 50%' : '0 50%'}
-        />
+        <${FitText} text=${String(finalStat)} room=${room} className="hud-text pm-hex-value" origin=${sideOrigin} />
+        ${
+          bonusBelow
+            ? html`<div class="pm-hex-bonus-line">
+                <${FitText}
+                  text=${'+' + percent + '%'}
+                  room=${room}
+                  className="hud-text pm-hex-bonus"
+                  origin=${sideOrigin}
+                />
+              </div>`
+            : null
+        }
         <div class="hud-text pm-hex-tip">
           ${'Base: ' + baseStat + ', IV: ' + member.statIv(statIndex) + ', EV: ' + member.statEv(statIndex)}
         </div>

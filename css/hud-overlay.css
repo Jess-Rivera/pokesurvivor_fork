@@ -646,7 +646,18 @@
   height: 32px;
   image-rendering: pixelated;
 }
+/* the name inside the box's top band (#94): left aligned, squeezed sideways from its left edge when wider */
+.hud-run-name {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+.hud-run-name span {
+  display: inline-block;
+  transform-origin: 0 50%;
+}
 .hud-run-text {
+  line-height: 16px; /* two lines fit beside the patch under the name band */
   display: flex;
   align-items: center;
   white-space: normal;

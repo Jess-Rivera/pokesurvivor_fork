@@ -411,7 +411,7 @@ async function main() {
     await page.evaluate(() => {
       const box = document.querySelector('.pm-box-hex').getBoundingClientRect();
       return [...document.querySelectorAll('.pm-hex-label')].every((label) =>
-        [...label.querySelectorAll('.pm-hex-name, .pm-hex-value')].every((line) => {
+        [...label.querySelectorAll('.pm-hex-name, .pm-hex-value, .pm-hex-bonus')].every((line) => {
           const r = line.getBoundingClientRect();
           return r.left >= box.left + 4 && r.right <= box.right - 4 && r.top >= box.top && r.bottom <= box.bottom;
         })
@@ -419,6 +419,25 @@ async function main() {
     }),
     'with 9999 HP and +100% on Atk and SpA every hex label stays inside its box'
   );
+  // #98: on the side corners the +X% is its own line under the number; HP and Spe keep it on the name line
+  const bonusPlaces = await page.evaluate(() => {
+    const place = (stat) => {
+      const label = document.querySelector('.pm-hex-label[data-stat="' + stat + '"]'),
+        bonus = label.querySelector('.pm-hex-bonus'),
+        value = label.querySelector('.pm-hex-value').getBoundingClientRect();
+      if (!bonus) return 'none';
+      const r = bonus.getBoundingClientRect();
+      if (label.querySelector('.pm-hex-name').contains(bonus)) return 'name';
+      return r.top >= value.bottom - 1 ? 'under' : 'elsewhere';
+    };
+    return { hp: place('HP'), atk: place('Atk'), spa: place('SpA'), def: place('Def') };
+  });
+  ok(
+    bonusPlaces.atk === 'under' && bonusPlaces.spa === 'under' && bonusPlaces.def === 'none',
+    'side corners: the +X% sits under the number (' + JSON.stringify(bonusPlaces) + ')'
+  );
+  await shot('pause-menu-hex-bonus.png');
+  ok(bonusPlaces.hp === 'name', 'HP (9999, a run bonus) keeps its +X% beside the name (' + bonusPlaces.hp + ')');
   await page.evaluate((saved) => {
     const member = G.Game.player;
     member.maxHp = saved.maxHp;
