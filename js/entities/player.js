@@ -685,7 +685,7 @@ G.PlayerEntity = class PlayerEntity {
     this.hurt(amount, null, true, color ? { color } : null);
     this.dot = false;
     if (!this.dead) this.invuln = inv;
-    if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), this, 1, true);
+    if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), { target: this, dot: true });
   }
 
   /**
@@ -998,16 +998,17 @@ G.PlayerEntity = class PlayerEntity {
   }
 
   /** After every hit this Pokemon lands: the Shell Bell heal (a little health for the damage you do, cap 4/s), and the
-   *  team's damage record (#66; your run team only, leaders have none). #91: target and typeMult, when the caller has them,
-   *  mark the target's last hitter (kill credit) and feed the run's record (best hit, super effective share). dot: a burn or
-   *  poison tick this Pokemon inflicted (enemy.js dot, statusDot); it is damage and DPS, but no hit, and Shell Bell keeps
-   *  ignoring it as before. */
-  onDealt(dmg, target = null, typeMult = 1, dot = false) {
+   *  team's damage record (#66; your run team only, leaders have none). The rest is named and optional (an old caller
+   *  passes the damage alone): target and typeMult (#91) mark the target's last hitter (kill credit) and feed the run's
+   *  record (best hit, super effective share); dot (#91): a burn or poison tick this Pokemon inflicted (enemy.js dot,
+   *  statusDot), damage and DPS but no hit, and Shell Bell keeps ignoring it; moveId (#91-2): the move that dealt a
+   *  hit, so the run's biggest hit can name it (a tick has none). */
+  onDealt(dmg, { target = null, typeMult = 1, dot = false, moveId = null } = {}) {
     if (!dot && this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
     if (target && dmg > 0) target.lastHitBy = this;
     const team = this.team;
     if (team && team.dpsHistory) G.DpsHistory.record(team.dpsHistory, this, dmg);
-    if (team && team.runStats) G.RunStats.dealt(team.runStats, this, dmg, typeMult, dot);
+    if (team && team.runStats) G.RunStats.dealt(team.runStats, this, dmg, { typeMult, dot, moveId });
   }
 
   /** #91: a status this Pokemon newly landed on a foe (move-effects.js ailment, ailPlayer), for the run's record. */

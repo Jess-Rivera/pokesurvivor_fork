@@ -1,4 +1,4 @@
-#91e: BUILD SLICES for #91 (2026-11-12, Quick)  [Proposed]
+#91e: BUILD SLICES for #91 (2026-11-12, Quick)  [Approved] (91-1 built 2026-11-12; 91-2 plan: map 91-2)
 =====================================================================================
 Design is settled in 91c (Run Info) and 91d (Run Stats box). This only orders the build so each slice
 lands with its own tests green and something Jess can feel-test.

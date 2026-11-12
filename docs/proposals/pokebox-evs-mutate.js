@@ -29,7 +29,7 @@ const M = [
   ["the 252 cap is ignored", "copies", [["Math.min(Math.floor(+n) || 0, EV_MAX - e[k], EV_TOTAL - total)", "Math.min(Math.floor(+n) || 0, EV_TOTAL - total)"]]],
   ["the 510 cap is ignored", "copies", [["Math.min(Math.floor(+n) || 0, EV_MAX - e[k], EV_TOTAL - total)", "Math.min(Math.floor(+n) || 0, EV_MAX - e[k])"]]],
   ["clean() lets EVs pass 510", "copies", [["const v = Math.min(left, whole(Array.isArray(c.e) ? c.e[k] : 0, EV_MAX));", "const v = whole(Array.isArray(c.e) ? c.e[k] : 0, EV_MAX);"]]],
-  ["a kill is not banked", "enemy", [["          G.Game.evKill(e); // pokebox step 5: the run's EV banks\n", ""]]],
+  ["a kill is not banked", "enemy", [["      G.Game.evKill(e); // pokebox step 5: the run's EV banks\n", ""]]],
   ["evKill ignores the kill", "game", [["for (let k = 0; k < 6; k++) evBank[k] += add[k];", "for (let k = 0; k < 6; k++) evBank[k] += 0;"]]],
   ["co-op allocates", "game", [["const evs = coop ? null : { bank", "const evs = { bank"]]],
   ["buildFighter drops the copy", "game", [["    f.copyUid = uid || null;", "    f.copyUid = null;"]]],

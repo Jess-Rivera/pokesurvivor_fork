@@ -1,0 +1,172 @@
+#91-2: RUN INFO PANEL, build plan (2026-11-12, Quick)  [Approved, all rules settled]
+PROGRESS: A and B BUILT (Quick, 2026-11-12): hits carry their move id (biggestHit.moveId, bestHitMoveId), G.Silver
+  earned / spent. run-stats-harness 77/77, silver-harness 37/37 and all 13 new or re-pointed mutants caught (Quick
+  sandbox bundle, not real node). Also fixed: TODO item 7 (silver-mutate, pokebox-evs-mutate 6-space re-point). Next: C.
+  Cleanups (Jess, 2026-11-12): G.Silver.kill works its pay out once; the move list's scroll bar is now the shared kit
+  ScrollBox (hud-overlay.js, css/hud-overlay.css .hud-scroll-*), so D and 91-3 Cards Taken reuse it. It has no drag
+  (wheel only), as the move list never had; 91c's "or drag the bar" is open for D.
+  onDealt(dmg, { target, typeMult, dot, moveId }) and RunStats.dealt(record, member, amount, { typeMult, dot, moveId }):
+  named optional fields instead of positional (Jess, 2026-11-12). 5 call sites, harness and 9 mutants re-pointed, +2
+  mutants (a tick that drops dot: true counts as a hit). 77/77; all 38 bundled run-stats mutants caught (Quick sandbox).
+Rules (Jess, 2026-11-12): DS1, DR2, DH1, DK1 approved as recommended. DR1 reworked to a pace delta (below); DR3 new.
+DR1 approved (Jess, 2026-11-12) WITH the growing (live) gap: the delta grows once the best run already beat your next gym.
+DR3 approved (Jess, 2026-11-12), REPLACING the "time the furthest gym fell" rec: distance first (loop, then gym), and
+a tie at the same place splits by HOW the run ended there (see DR3 below). Distance always beats time.
+Times always mm:ss (Jess, 2026-11-12): minutes keep counting past 59 (82:30, never 1:22:30).
+DR4 and DR5 approved as recommended (Jess, 2026-11-12): a gym fight outranks the gym cleared before it; two wordings.
+Design: 91c (approved). Order: 91e. Jess, 2026-11-12: biggest hit carries the move name in 91-2; Silver gets
+spent / earned counters in 91-2. Gap check: shinies caught is already counted per run (game.js `caught`, the
+shinies obtained this run), so that row needs no new counter.
+=====================================================================================================
+
+PARTS (A to F build in this order; each lists files, spot, change)
+-----------------------------------------------------------------------------------------------------
+ A  HIT CARRIES ITS MOVE  (the risky part: the hit path)
+    move-effects.js   damage() L161, flat() L279, hurtPlayer() L355: hand the move's id to onDealt
+    player.js         onDealt L1005: take the move id, pass it on to G.RunStats.dealt
+    run-stats.js      dealt(): the run's biggest hit keeps { slot, amount, move }; each member's best hit
+                      keeps its move too (91-3 shows it; costs nothing now)
+    unchanged         enemy.js L294 and player.js L688 (DoT ticks): no move, and a tick is never a hit
+ B  SILVER COUNTERS
+    silver.js         two run totals beside the balance: earned (what kills paid) and spent (what a
+                      successful spend took). reset() zeroes both. See decision DS1 for what counts.
+ C  REGION BEST  (new save field + one compare)
+    db.js             save.regionBest: per region id (G.Enemies.region)
+                      { loop, gyms, fighting, reachedAt, endTime, milestones }: gyms = gyms cleared on that loop,
+                      fighting = it died inside the next gym's fight, reachedAt = when that fight began,
+                      endTime = run end; milestones = every gym it beat, in order: [{ loop, gym, time }].
+                      Absent on old saves: every read null-checks and defaults, nothing migrates.
+    run-stats.js      one pure compare: the DR3 / DR4 ladder below.
+                      The same function serves endRun and G.Debug.recordcheck (no debug copy).
+                      One pure pace function: this run's milestones + now vs the record's (DR1).
+    game.js           endRun L545: solo, clean() true (not tampered) -> compare -> write if better,
+                      before the existing G.DB.commit('run') so it rides the same save.
+                      Also: a read-only getter for this run's shinies caught count.
+    gym.js            splits (L26) also keep the loop each badge was won on, so a milestone is (loop, gym);
+                      and the run time the current gym fight began (DR3 "reached it sooner")
+ D  THE PANEL
+    NEW js/ui/pause-run-info.js   G.PauseRunInfo, a Preact view in the existing empty
+                      pm-panel-info slot (pause-menu.js L254). Sections in 91c order. Reads the
+                      counters ONCE per open (the menu holds the world still, F2), never per frame.
+    pause-menu.js     L254: mount it in the slot, as the detail and team panels are (L251 pattern)
+    css/pause-menu.css   .pm-panel-info L308: pinned header, scroll body, slate bar (reuses the
+                      .pm-scroll-track / .pm-scroll-thumb look), 24 px text / 36 px rows
+    dev.html + main.js NEED   the new file, after pause-pokemon.js
+ E  DEBUG TOOLS  (?dev only, approved in 91c T1 T2)
+    debug.js          runinfo('full' | 'empty' | 'tie' | none), regionbest(arg), recordcheck('write'),
+                      listed in the header comment with the others
+ F  NOTES
+    changelog.js      today: new Run Info panel, Region Best, Silver totals
+    docs              PAUSE-MENU 6 (Silver row, move name), STATE, DEVLOG at the end
+
+PANEL ROW -> SOURCE  (every row backed after this slice)
+-----------------------------------------------------------------------------------------------------
+ header      region name + run time ............ G.Enemies.region, G.Game.st.time
+ Progress    Loop / Badges (names + count) / Gym splits ... G.Gym.loop, badges, splits
+ Combat      Kills, Kills/min, Elites, Biggest hit (who, MOVE, n), Super eff. %, Taken / Healed
+             ......................................... RunStats totals + biggestHit; super % = superDamage
+                                                       over the DPS record's team damage
+ Faints      Faints / Most faints / Time fainted ...... RunStats totals, mostFaints, downTime
+ Statuses    per kind landed + DoT damage ........... RunStats totals.statuses, dotDamage
+ Loot        Coins / Silver spent / earned / Items / Shinies seen, caught
+             ......................................... pl.coins, G.Silver (B), RunStats, game.js caught
+ EVs         one 6-column row ...................... the run's EV banks
+ Region Best Furthest / This run ahead or behind ..... save.regionBest (C), G.Gym.splits
+
+NEW DEFAULTS AND RULES  (each needs your OK on its own)
+-----------------------------------------------------------------------------------------------------
+ DS1 RULE  Silver "earned" = what kills paid this run. The starting 100 is NOT earned; G.Debug.silver(n)
+           counts as neither earned nor spent. "Spent" = successful spends only. <- rec
+           (b) earned includes the starting 100
+ DR1 RULE  REGION BEST reads as a pace delta, speedrun style (LiveSplit's "delta").  [reworked per Jess]
+           A milestone = a gym beaten, in order (loop 1 gym 1, gym 2 ... then loop 2 gym 1 ...).
+
+           |  REGION BEST                                                       |
+           |  Best             Loop 3, Gym 3 cleared, lasted 85:10  (DR5)       |
+           |  Next             Loop 1, Gym 3  (best got there at 14:20)         |
+           |  Pace             You're ahead by 1:12                (green)      |
+
+           How Pace is worked out at the moment you pause (now = run time):
+             k = the last milestone this run beat (none yet = 0)
+             live  : now is past the record's time for milestone k+1 and you have not beaten it
+                     -> "You're behind by (now - best[k+1])"   (grows the longer you take)
+             split : otherwise, your time at k vs the record's at k
+                     -> mine < best: "You're ahead by", mine > best: "You're behind by", equal: "Even"
+             no k yet and not live -> "On pace" (nothing to compare yet)
+
+           TIMELINE (record: G1 4:52, G2 9:10, G3 14:20)
+             run time  0 ........ 4:30 G1 ....... 9:50 G2 ........ 14:20 ..... 15:05 (paused)
+             you        G1 at 4:30 -> ahead 0:22    G2 at 9:50 -> behind 0:40
+             at 15:05, G3 not beaten, best had it at 14:20 -> live: "You're behind by 0:45"
+
+           Edges: no record -> "No record yet", Next and Pace hide.
+                  past the record's last milestone -> Pace: "New best pace" (gold), Next hides.
+                  the record ran on Loop 3 but loops are dev-set today: in practice Loop 1 gyms only.
+           Colours: ahead green, behind red, even / on pace white. Times always mm:ss, minutes past 59 (82:30).
+           <- rec   (b) split only, never live (the delta only moves when you beat a gym)
+
+ DR3 RULE  [Approved, Jess 2026-11-12] same furthest place, the tie splits by how the run ended there:
+             both CLEARED the same gym, then died in the field -> the later run end wins (survived longer)
+               best cleared L3 G3, ended 85:10   you cleared L3 G3, ended 85:13   -> you are the new best
+             both DIED IN the same gym's fight                -> the sooner arrival at that fight wins
+               best died fighting L3 G3, fight began 82:30   you, began 80:05  -> you are the new best
+             exact tie -> the old record stays.
+
+ DR4 RULE  [Approved, Jess 2026-11-12] Does dying INSIDE a gym fight rank above clearing the gym before it and dying in the field?
+             ladder (rec):  ... < cleared L3 G2 < died fighting L3 G3 < cleared L3 G3 < died fighting L3 G4 ...
+             you cleared L3 G2 and died in the field at 95:00; best died fighting L3 G3 at 82:30
+               rec (a): best stays (reaching the fight is further)    (b): field vs fight do not matter,
+               only gyms cleared count, so these tie on "2 cleared" and fall to DR3, which has no rule for
+               a cleared-vs-fight mix  <- (a) recommended
+
+ DR5 RULE  [Approved, Jess 2026-11-12] Best row wording, since its time now means two things:
+             cleared:   "Loop 3, Gym 3 cleared, lasted 85:10"
+             in fight:  "Died at Loop 3, Gym 4, reached it 82:30"  <- rec
+             (b) one short form for both: "Loop 3, Gym 3  85:10" 
+ DR2 RULE  Region Best is set by SOLO runs only (co-op is deferred; a co-op run never writes it). <- rec
+ DH1       Biggest hit tie: the first hit keeps it (as built in 91-1). <- rec   (b) the later one
+ DK1       Kills per minute under 1 minute of run time: shown as "--" until 1:00. <- rec
+           (b) project from the seconds played (reads wild early: 12 kills in 5 s = 144/min)
+
+TESTS
+-----------------------------------------------------------------------------------------------------
+ HARNESS (extend)  docs/proposals/run-stats-harness.js
+   checks:  damage(), flat() and hurtPlayer() hits carry their move id into the biggest hit and the
+            member's best hit; a DoT tick carries none and never sets them; a tie keeps the first (DH1);
+            the compare: higher loop wins, then more gyms, then faster time; an absent save field reads
+            as no record; a flagged run is refused; recordcheck's verdict equals endRun's for the same run
+            pace (DR1): the timeline above as cases: ahead at a split, behind at a split, even, live
+            behind past best[k+1], on pace before the first gym, new best pace past the record's end,
+            no record; DR3: cleared same gym -> later run end wins; died in same fight -> sooner arrival
+            wins; exact tie keeps the old record; DR4 ladder: a gym fight outranks the gym cleared before it
+   why:     the hit-path change and the compare are pure logic with no other harness on them
+ HARNESS (extend)  docs/proposals/silver-harness.js
+   checks:  kills add to earned and the balance; the start 100 and set() are not earned (DS1); a
+            successful spend adds to spent, a refused one does not; reset() zeroes both
+   why:     Silver already has its own harness; new totals belong beside the balance checks
+ MUTANTS (extend)  docs/proposals/run-stats-mutate.js  (+6)
+   drop the move id at damage(); a DoT tick sets the biggest hit; a tie takes the later hit; the
+   compare ignores loop; the compare prefers the slower time; a flagged run writes a record
+   (+5) pace: ahead / behind sign flipped; live delta off (split only); DR3: a cleared tie prefers the
+   shorter run; an in-fight tie prefers the later arrival; DR4: the field outranks the fight
+   why: proves the harness catches each break, not only that it passes
+ MUTANTS (extend)  docs/proposals/silver-mutate.js  (+3)
+   count the start 100 as earned; a refused spend counts as spent; reset keeps earned
+ SMOKE (extend)    tools/smoke-pause-menu.js  (91c list, seeded through the debug calls)
+   runinfo('empty'): Faints 0 with sub-lines hidden, "None yet", "No record yet"; runinfo('full'): every
+   row, the move name on Biggest hit, the panel scrolls with the wheel, header stays, reopens at the top;
+   runinfo('tie'): lower slot on Most faints; regionbest({..}) shows it; regionbest('clear') and ('old')
+   show "No record yet" with no page error; recordcheck() writes nothing; recordcheck('write') carries
+   into a new run
+ INTENT SCENARIOS  none: no move's behavior changes (the move id is a label on the record only)
+ DEBUG SET (feel)  the 7-step session in 91c, plus: step 2 shows a move name on Biggest hit and Silver
+   spent / earned moving after a Move Shop buy
+ check.js          no change (it finds the harnesses already)
+ STALE SCAN        every mutant pointing at move-effects.js L161 / L279 / L355, player.js onDealt,
+                   silver.js kill() / spend(), game.js endRun: run-stats, silver, boss-owner, dps-history
+
+RISKS
+-----------------------------------------------------------------------------------------------------
+ R-a  A (the hit path): the onDealt lines are mutant targets; keep each edit inside 120 columns, rescan.
+ R-b  C (the save): one new field, null-checked everywhere; no save wipe needed for any test.
+ R-c  Under ?dev the save is a guest in memory: Region Best checks live in one session, no reload (91c).

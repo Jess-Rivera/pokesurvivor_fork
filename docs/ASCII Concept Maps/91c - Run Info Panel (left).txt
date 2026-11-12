@@ -91,7 +91,7 @@ ADDED SECTIONS (go after COMBAT, before LOOT)
 |  Confusion        5        Trap             4                      |
 |  Daze             1        Drowsy           0 (hidden)             |
 |  Damage over time                                    5,400         |  new  burn/poison/toxic/trap
-|--------------------------------------------------------------------|     ticks on enemies (S3)
+|--------------------------------------------------------------------|     ticks on enemies (S3; trap deals no damage, see PAUSE-MENU 6)
  10 status kinds today (G.Status CONTROL: paralysis, freeze, sleep, confusion, trap, daze, drowsy; plus the DoT
  majors burn, poison, toxic). 2 columns keeps it to 5 rows + the DoT row.
 

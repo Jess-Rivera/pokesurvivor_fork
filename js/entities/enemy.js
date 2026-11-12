@@ -291,7 +291,7 @@
       this.hurt(amount, color);
       if (G.Log.on) G.Log.dot(this, kind, amount, hp0, Math.max(0, this.hp));
       const by = kind === 'burn' ? this.burnBy : this.poisonBy;
-      if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), this, 1, true);
+      if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), { target: this, dot: true });
     }
 
     /** What is SEEN when taking a hit. */

@@ -137,8 +137,15 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
     the status ticks the team deals to enemies (burn, poison, toxic; a trap deals no damage, checked 2026-11-12).
   - The run name and time stay pinned while the rest scrolls; the scroll bar is slate.
 - [Approved] Region Best (Jess, 2026-11-12): a new save field, per region, absent from old saves (read as "No record
-  yet"). Checked when a run ends (faint or End Run). Better = higher loop, then more gyms beaten, then the faster time
-  on a tie. A run flagged by the debug tools (the flag that keeps it off the ranking) never sets a record. Until the
+  yet"). Checked when a run ends (faint or End Run). Better = higher loop, then more gyms beaten, then the tie rule:
+  same furthest place, two runs that cleared the same gym compare run end (the longer survival wins), two runs that
+  died in the same gym's fight compare when that fight began (the sooner wins); an exact tie keeps the old record (DR3,
+  Jess 2026-11-12). Distance always beats time: a run that dies one gym short is never a new best however fast.
+  Dying inside a gym's fight ranks above clearing the gym before it (DR4). The Best row reads "Loop 3, Gym 3
+  cleared, lasted 85:10" or "Died at Loop 3, Gym 4, reached it 82:30" (DR5). Times read mm:ss always,
+  minutes past 59 (82:30). Only solo runs set it.
+  It shows as a pace delta against the record's gym times, growing once the record had already beaten your next gym
+  (DR1, Jess 2026-11-12, map 91-2). A run flagged by the debug tools (the flag that keeps it off the ranking) never sets a record. Until the
   loop counter and the Elite Four exist, a real run's record is in practice gyms beaten plus time. Dev verification
   goes through the debug tools in the 91c map (guest saves under ?dev are in memory only).
 - [Approved] Contents: total run kills, the best record on this region (two values: run time, and the highest gym or

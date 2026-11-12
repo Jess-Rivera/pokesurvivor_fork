@@ -160,20 +160,29 @@ const rng = () => 0;
   const z = RS.member(r, 4);
   ok(z.kills === 0 && z.faints === 0 && z.bestHit === 0 && RS.downTime(r, 4, 99) === 0, 'fresh: every counter is 0');
   ok(RS.mostFaints(r) === null, 'fresh: no most faints');
-  RS.dealt(r, a, 30, 2);
-  RS.dealt(r, a, 50, 1);
-  RS.dealt(r, a, 20, 0.5);
+  RS.dealt(r, a, 30, { typeMult: 2 });
+  RS.dealt(r, a, 50);
+  RS.dealt(r, a, 20, { typeMult: 0.5 });
   ok(RS.member(r, 0).bestHit === 50, 'best hit is the biggest hit, not a sum (' + RS.member(r, 0).bestHit + ')');
   ok(RS.member(r, 0).superDamage === 30, 'super effective damage counts only hits above x1 (' + RS.member(r, 0).superDamage + ')');
-  RS.dealt(r, b, 70, 1);
+  RS.dealt(r, b, 70);
   ok(r.biggestHit.slot === 2 && r.biggestHit.amount === 70, 'the team biggest hit follows the bigger one, with its slot');
-  RS.dealt(r, a, 500, 4, true);
+  RS.dealt(r, a, 500, { typeMult: 4, dot: true });
   ok(RS.member(r, 0).dotDamage === 500 && RS.member(r, 0).bestHit === 50 && RS.member(r, 0).superDamage === 30,
     'a DoT tick is DoT damage only: no best hit, no super effective share');
   ok(r.biggestHit.amount === 70, 'a DoT tick is never the biggest hit');
-  RS.dealt(r, a, 0, 2);
-  RS.dealt(r, a, -5, 2);
+  RS.dealt(r, a, 0, { typeMult: 2 });
+  RS.dealt(r, a, -5, { typeMult: 2 });
   ok(RS.member(r, 0).superDamage === 30, 'zero and negative amounts are skipped');
+  ok(RS.create().biggestHit.moveId === null && RS.member(r, 5).bestHitMoveId === null, 'fresh: no move on any best hit (91-2)');
+  RS.dealt(r, a, 60, { moveId: 'ember' });
+  ok(RS.member(r, 0).bestHit === 60 && RS.member(r, 0).bestHitMoveId === 'ember', "a member's best hit keeps its move (91-2)");
+  RS.dealt(r, b, 90, { moveId: 'flamethrower' });
+  ok(r.biggestHit.slot === 2 && r.biggestHit.amount === 90 && r.biggestHit.moveId === 'flamethrower',
+    'the team biggest hit keeps its move (91-2)');
+  RS.dealt(r, a, 90, { moveId: 'surf' });
+  ok(r.biggestHit.slot === 2 && r.biggestHit.moveId === 'flamethrower', 'a biggest hit tie keeps the first (DH1)');
+  ok(RS.member(r, 0).bestHitMoveId === 'surf', "a member's new best hit takes the new move");
   RS.faint(r, a, 10);
   RS.faint(r, b, 12);
   RS.revive(r, b, 15);
@@ -219,15 +228,20 @@ const rng = () => 0;
     e = wild();
   A.onDealt(5);
   ok(ownDamage(t, 0) === 5 && !e.lastHitBy, 'an old caller (damage only) still records damage and marks nobody');
-  A.onDealt(40, e, 2);
+  A.onDealt(40, { target: e, typeMult: 2 });
   ok(e.lastHitBy === A && RS.member(t.runStats, 0).superDamage === 40, 'a hit marks its target and feeds super effective damage');
-  B.onDealt(0, e, 1);
+  B.onDealt(0, { target: e });
   ok(e.lastHitBy === A, 'a 0 damage hit (immune) does not take the last hit');
   A.item = 'shellbell';
-  A.onDealt(100, e, 1, true);
+  A.onDealt(100, { target: e, dot: true });
   ok(A.bellHeal === 0, 'Shell Bell ignores a DoT tick, as before');
-  A.onDealt(100, e, 1);
+  A.onDealt(100, { target: e });
   ok(near(A.bellHeal, 4), 'Shell Bell still hears a hit');
+  A.onDealt(300, { target: e, moveId: 'hyper-beam' });
+  ok(RS.member(t.runStats, 0).bestHitMoveId === 'hyper-beam' && t.runStats.biggestHit.moveId === 'hyper-beam',
+    'onDealt hands the move to the record (91-2)');
+  A.onDealt(400, { target: e, dot: true, moveId: 'ember' });
+  ok(t.runStats.biggestHit.amount === 300 && t.runStats.biggestHit.moveId === 'hyper-beam', 'a tick never takes the biggest hit');
 }
 
 // 3. kill credit (enemy.js payKill, D1)
@@ -241,7 +255,7 @@ const rng = () => 0;
     e3 = wild({ lastHitBy: other }),
     e4 = wild({ elite: { tier: 1 } }),
     e5 = wild({ boss: true });
-  A.onDealt(30, e1, 1); // A hits, then B is on the field when it dies (a move still flying after a swap)
+  A.onDealt(30, { target: e1 }); // A hits, then B is on the field when it dies (a move still flying after a swap)
   G.EnemyMgr.payKill(e1, B);
   G.EnemyMgr.payKill(e2, B); // never hit: the field Pokemon
   G.EnemyMgr.payKill(e3, B); // last hit by someone not on your team
@@ -302,7 +316,7 @@ const rng = () => 0;
   L.statusDot('burn', 10, null);
   ok(ownDamage(t, 0) === 10 && RS.member(t.runStats, 0).dotDamage === 10, "the leader's burn tick is the burner's damage");
   ok(L.lastHitBy === A, 'and its last hit');
-  L.onDealt(10, A, 1);
+  L.onDealt(10, { target: A });
   L.onFaint();
   ok(true, 'a leader with no record: its hooks are no-ops (no throw)');
 }
@@ -357,9 +371,12 @@ const rng = () => 0;
 // 8. call sites read as text
 {
   const fx = text('js/systems/move-effects.js');
-  ok(fx.includes('o.onDealt(dmg, e, hit.typeMult)'), 'a damage hit hands its target and type multiplier to onDealt');
-  ok(fx.includes('o.onDealt(dmg, e, 1)'), 'flat damage hands its target, never super effective');
-  ok(fx.includes('b.owner.onDealt(hit.dealt, pl, hit.typeMult)'), 'a hit on a Player entity hands its target and type multiplier');
+  ok(fx.includes('o.onDealt(dmg, { target: e, typeMult: hit.typeMult, moveId: def.id })'),
+    'a damage hit hands its target, type multiplier and move');
+  ok(fx.includes('o.onDealt(dmg, { target: e, moveId: def.id })'),
+    'flat damage hands its target and move, no type multiplier');
+  ok(fx.includes('b.owner.onDealt(hit.dealt, { target: pl, typeMult: hit.typeMult, moveId: def.id })'),
+    'a hit on a Player entity hands its target, type multiplier and move');
   const sp = text('js/systems/spawner.js');
   ok((sp.match(/\bshinySeen\(\);/g) || []).length === 2 && sp.includes('G.RunStats.shiny('), 'both shiny rolls (wild and elite) count a shiny seen');
   const gm = text('js/game.js');

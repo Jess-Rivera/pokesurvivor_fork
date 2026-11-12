@@ -158,7 +158,7 @@ G.MoveEffects = (() => {
     const kn = knockOf(inst, e, kfx);
     e.hurt(dmg, col, kn[0], kn[1], kn[2], b.crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg, e, hit.typeMult); // #91: the target (kill credit) and the type multiplier (super effective share)
+    if (o.onDealt) o.onDealt(dmg, { target: e, typeMult: hit.typeMult, moveId: def.id }); // #91: the run record
     hit.dmg = dmg;
     hit.crit = b.crit;
     hit.dealt = Math.max(0, hp0 - Math.max(0, e.hp)) + Math.max(0, sh0 - (e.shield || 0)); // D34: shield counted, overkill excluded
@@ -276,7 +276,7 @@ G.MoveEffects = (() => {
     if (e.takeFlat) e.takeFlat(dmg, col, kn[0], kn[1], kn[2]);
     else e.hurt(dmg, col, kn[0], kn[1], kn[2], null); // hosts without takeFlat (older test hosts)
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg, e, 1); // #91: flat damage skips the type chart, so it is never super effective
+    if (o.onDealt) o.onDealt(dmg, { target: e, moveId: def.id }); // #91: flat damage, never super effective
     hit.dmg = dmg;
     hit.crit = false;
     hit.typeMult = 1;
@@ -352,7 +352,7 @@ G.MoveEffects = (() => {
     hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
     b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt; // slice 5: your damage on a gym leader counts, Shell Bell included
-    if (b.owner.onDealt) b.owner.onDealt(hit.dealt, pl, hit.typeMult); // #91: target and type multiplier, as on a wild hit
+    if (b.owner.onDealt) b.owner.onDealt(hit.dealt, { target: pl, typeMult: hit.typeMult, moveId: def.id }); // #91
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
   /** #91: as ailment, on a Player entity (a gym leader's mon, or you): G.Status answers 'ok' only for a status that newly lands,

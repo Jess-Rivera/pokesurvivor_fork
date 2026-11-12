@@ -14,7 +14,8 @@
  *   game.js onCollect   item and ground pickups;   spawner.js   shinies seen
  *
  *   create()                                           a fresh record
- *   dealt(record, member, amount, typeMult, dot)       a hit (typeMult above 1 is super effective) or a DoT tick (dot true)
+ *   dealt(record, member, amount, { typeMult, dot, moveId })   a hit (typeMult > 1 is super effective) or a DoT tick
+ *                                                    (dot true); the named part is optional
  *   kill(record, member, elite)   inflicted(record, member, kind)   taken / healed(record, member, amount)
  *   faint(record, member, time)   revive(record, member, time)      item(record)   shiny(record)
  *   member(record, slot)          that slot's counters (zeros for a slot with none yet)
@@ -24,13 +25,14 @@
  */
 G.RunStats = (() => {
   function create() {
-    return { members: [], elites: 0, items: 0, shinies: 0, biggestHit: { slot: null, amount: 0 } };
+    return { members: [], elites: 0, items: 0, shinies: 0, biggestHit: { slot: null, amount: 0, moveId: null } };
   }
 
   function blank() {
     return {
       kills: 0,
       bestHit: 0,
+      bestHitMoveId: null, // the move of that best hit (91-2; the Run Stats box shows it in 91-3)
       superDamage: 0, // damage of its hits that were super effective (the share is read against its DPS record damage)
       dotDamage: 0,
       taken: 0,
@@ -49,7 +51,7 @@ G.RunStats = (() => {
     return record.members[slot] || (record.members[slot] = blank());
   }
 
-  function dealt(record, member, amount, typeMult = 1, dot = false) {
+  function dealt(record, member, amount, { typeMult = 1, dot = false, moveId = null } = {}) {
     const counters = amount > 0 ? own(record, member) : null;
     if (!counters) return;
     if (dot) {
@@ -57,8 +59,11 @@ G.RunStats = (() => {
       return;
     }
     if (typeMult > 1) counters.superDamage += amount;
-    if (amount > counters.bestHit) counters.bestHit = amount;
-    if (amount > record.biggestHit.amount) record.biggestHit = { slot: member.teamSlot, amount };
+    if (amount > counters.bestHit) {
+      counters.bestHit = amount;
+      counters.bestHitMoveId = moveId;
+    }
+    if (amount > record.biggestHit.amount) record.biggestHit = { slot: member.teamSlot, amount, moveId }; // ties: first
   }
 
   function kill(record, member, elite = false) {
