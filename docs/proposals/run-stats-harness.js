@@ -392,5 +392,76 @@ const rng = () => 0;
   ok(/'DpsHistory',\s*'RunStats',/.test(text('js/main.js')), 'the NEED array lists RunStats');
 }
 
+// 9. Region Best (#91-2 part C, map docs/ASCII Concept Maps/91-2C; DR1, DR3, DR4, RC1, Jess 2026-11-12). Expected values are
+// hand-derived from the approved rules and the map's timeline (best: gym 1 at 4:52, gym 2 at 9:10, gym 3 at 14:20).
+{
+  const entry = (o) => RS.regionEntry(Object.assign({ loop: 1, splits: [], fightStartedAt: null, endTime: 0 }, o));
+  const better = (mine, best) => RS.compareRegion(mine, best).better;
+  const cleared3 = entry({ splits: [292, 550, 860], endTime: 1203 });
+  ok(cleared3.loop === 1 && cleared3.gyms === 3 && !cleared3.fighting && cleared3.reachedAt === null && cleared3.endTime === 1203,
+    'regionEntry: gyms cleared are the splits; a death in the field is not in a fight');
+  const inFight = entry({ splits: [292, 550], fightStartedAt: 800, endTime: 845 });
+  ok(inFight.gyms === 2 && inFight.fighting && inFight.reachedAt === 800, 'regionEntry: ended inside a gym fight (RC1)');
+  const live = [1];
+  const copied = entry({ splits: live });
+  live.push(2);
+  ok(copied.splits.length === 1, 'regionEntry keeps its own copy of the splits');
+  ok(better(cleared3, null) && RS.compareRegion(cleared3, null).reason.length > 0, 'no record yet: the first run is the record');
+  const many = [1, 2, 3, 4, 5, 6, 7, 8];
+  ok(better(entry({ loop: 2 }), entry({ splits: many })) && !better(entry({ splits: many }), entry({ loop: 2 })),
+    'a higher loop beats more gyms on a lower loop');
+  ok(better(entry({ splits: [1, 2, 3], endTime: 10 }), entry({ splits: [1, 2], endTime: 9999 })), 'more gyms beat a longer run');
+  ok(!better(entry({ loop: 3, splits: [1, 2], endTime: 3615 }), entry({ loop: 3, splits: [1, 2, 3], endTime: 4950 })),
+    "Jess's example: dying after loop 3 gym 2 at 60:15 never beats loop 3 gym 3 at 82:30");
+  const fight3 = entry({ splits: [1, 2], fightStartedAt: 900, endTime: 950 });
+  ok(better(fight3, entry({ splits: [1, 2], endTime: 5000 })), 'dying in the gym 3 fight outranks clearing gym 2 (DR4)');
+  ok(!better(entry({ splits: [1, 2], endTime: 5000 }), fight3), 'and clearing gym 2 never beats the gym 3 fight');
+  ok(better(entry({ splits: [1, 2, 3], endTime: 960 }), fight3), 'clearing gym 3 outranks dying in its fight');
+  ok(better(entry({ splits: [1, 2, 3], endTime: 5113 }), entry({ splits: [1, 2, 3], endTime: 5110 })),
+    'both cleared gym 3: the later run end wins (85:13 over 85:10, DR3)');
+  ok(!better(entry({ splits: [1, 2, 3], endTime: 5107 }), entry({ splits: [1, 2, 3], endTime: 5110 })),
+    'both cleared gym 3: the earlier run end does not win');
+  const bestFight = entry({ splits: [1, 2], fightStartedAt: 4950, endTime: 5000 });
+  ok(better(entry({ splits: [1, 2], fightStartedAt: 4805, endTime: 4900 }), bestFight),
+    'both died in the gym 3 fight: the sooner arrival wins (80:05 over 82:30, DR3)');
+  ok(!better(entry({ splits: [1, 2], fightStartedAt: 4960, endTime: 9000 }), bestFight),
+    'a later arrival at the same fight loses, however long it lasted');
+  ok(!better(entry({ splits: [1, 2, 3], endTime: 5110 }), entry({ splits: [1, 2, 3], endTime: 5110 })),
+    'an exact tie keeps the old record');
+  ok(better(entry({ splits: [1] }), {}), 'a record missing its fields reads as loop 1 with no gyms (old or hand-edited save)');
+  const best = cleared3;
+  const pace = (mine, now) => RS.pace(mine, now, best);
+  ok(RS.pace([], 100, null).kind === 'none', 'pace with no record: none');
+  let p = pace([], 100);
+  ok(p.kind === 'onPace' && p.next.gym === 1 && p.next.at === 292, 'no gym yet, before 4:52: on pace, next gym 1 at 4:52');
+  p = pace([], 300);
+  ok(p.kind === 'behind' && near(p.delta, 8), 'no gym yet at 5:00, the record had gym 1 at 4:52: behind by 0:08');
+  p = pace([270], 280);
+  ok(p.kind === 'ahead' && near(p.delta, 22) && p.next.gym === 2 && p.next.at === 550, 'gym 1 at 4:30: ahead by 0:22');
+  p = pace([270], 545);
+  ok(p.kind === 'ahead', 'still ahead at 9:05: the record had not beaten gym 2 yet');
+  p = pace([270, 590], 600);
+  ok(p.kind === 'behind' && near(p.delta, 40), 'gym 2 at 9:50: behind by 0:40');
+  p = pace([270, 590], 905);
+  ok(p.kind === 'behind' && near(p.delta, 45), 'paused at 15:05 without gym 3 (the record had it at 14:20): behind by 0:45');
+  p = pace([292], 300);
+  ok(p.kind === 'even' && p.delta === 0, 'gym 1 at exactly 4:52: even');
+  p = pace([270, 540, 850], 900);
+  ok(p.kind === 'newBest' && p.next === null, "past the record's last gym: new best pace, no next gym");
+  const gm = text('js/game.js');
+  const end = gm.slice(gm.indexOf('  function endRun('));
+  const writeAt = end.indexOf('regionRecord({ write: ok && !coop });'),
+    commitAt = end.indexOf("G.DB.commit('run');");
+  ok(writeAt > 0 && writeAt < commitAt, 'endRun keeps a better record for solo, clean runs only, before the run is saved');
+  ok((end.slice(0, end.indexOf('\n  }\n')).match(/\bclean\(\);/g) || []).length === 1, 'endRun calls clean() once');
+  ok(/if \(written\) \{/.test(gm) && /const written = !!\(write && verdict\.better\);/.test(gm),
+    'regionRecord writes only when asked and only a better run');
+  ok(/G\.RunStats\.compareRegion\(entry, best\)/.test(gm) && /\n    regionRecord,\n/.test(gm),
+    'regionRecord uses the one compare and is on G.Game (for G.Debug.recordcheck)');
+  ok(/G\.Enemies\.region == null \? 'all' : String\(G\.Enemies\.region\)/.test(gm), "All regions keeps its own key, 'all' (RC2)");
+  ok(/get fightStartedAt\(\) \{\s*return fight \? fight\.t0 : null;/.test(text('js/systems/gym.js')),
+    'G.Gym.fightStartedAt reads the fight readout start');
+}
+
 console.log(fail ? 'run-stats-harness: ' + fail + ' of ' + n + ' FAILED' : 'run-stats-harness: all ' + n + ' passed');
 process.exit(fail ? 1 : 0);

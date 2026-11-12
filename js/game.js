@@ -542,6 +542,38 @@ G.Game = (() => {
   const fullBoxLine = (name, coins) =>
     `Your boxes are full: ${name} was sold for ${coins.toLocaleString('en-US')} PokéCoins.`;
 
+  /** #91-2 part C: the Region Best key (map 91-2C, RC2): the region's gen, or 'all' with no region picked. */
+  function regionKey() {
+    return G.Enemies.region == null ? 'all' : String(G.Enemies.region);
+  }
+
+  /** #91-2: this region's record on the save, or null (an old save, or no record yet). */
+  function regionBest() {
+    const save = G.DB.save;
+    return (save && save.regionBest && save.regionBest[regionKey()]) || null;
+  }
+
+  /** #91-2 part C: this run against the region's record, as if it ended now. write: keep it when it is better
+   *  (endRun passes solo and clean; G.Debug.recordcheck('write') passes true). One compare for both. */
+  function regionRecord({ write = false } = {}) {
+    const save = G.DB.save;
+    if (!save || !pl) return null;
+    const best = regionBest();
+    const entry = G.RunStats.regionEntry({
+      loop: G.Gym.loop,
+      splits: G.Gym.splits,
+      fightStartedAt: G.Gym.fightStartedAt,
+      endTime: time,
+    });
+    const verdict = G.RunStats.compareRegion(entry, best);
+    const written = !!(write && verdict.better);
+    if (written) {
+      if (!save.regionBest || typeof save.regionBest !== 'object') save.regionBest = {};
+      save.regionBest[regionKey()] = entry;
+    }
+    return { entry, best, better: verdict.better, reason: verdict.reason, written };
+  }
+
   function endRun(dead = true) {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid; // only group games give it a uid
@@ -574,6 +606,9 @@ G.Game = (() => {
     save.stats.coinsEarned += coins;
     G.Progress.event('runEnd', { time, level: pl.level, coins: pl.coins, types: pl.mon.types, group: coop });
     G.Progress.checkAch();
+    // If the game was tampered with (see clean()), it does not go to the ranking (silently) or set a Region Best.
+    const ok = clean();
+    regionRecord({ write: ok && !coop }); // #91-2: solo and clean only (DR2, D5), saved with the commit below
     // To the cloud on finishing the game (at most every 30 min); if the record enters
     // a top (today, week or month), right away (below, after submitting it to the ranking).
     G.DB.commit('run');
@@ -581,8 +616,6 @@ G.Game = (() => {
 
     // Ranking: solo everyone their own; in a group the host submits it.
     const mark = { t: Math.floor(time), lv: pl.level, kills: pl.kills };
-    // If the game was tampered with (see clean()), it does not go to the ranking (silently); everything else does.
-    const ok = clean();
     const sent =
       ok && !coop
         ? G.Ranking.submitSolo(Object.assign(mark, { dex: pl.dex, shiny: pl.shiny }))
@@ -1494,6 +1527,11 @@ G.Game = (() => {
     get runStats() {
       return runTeam ? runTeam.runStats : null;
     },
+    /** #91-2: this region's Region Best entry, or null. */
+    get regionBest() {
+      return regionBest();
+    },
+    regionRecord,
     st,
     // team (Phase A)
     get roster() {

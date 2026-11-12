@@ -29,7 +29,7 @@ const M = [
   ['Silver leaks into the end-of-run PokeCoins', 'game', [['recogidas: pl.coins,', 'recogidas: pl.coins + G.Silver.whole,']]],
   ['a kill pays nothing', 'enemy', [['      G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy\n', '']]],
   ['a thief that escapes pays', 'enemy', [["G.Spawner.say('¡' + e.name + ' se ha escapado!', 2.4);", "G.Spawner.say('¡' + e.name + ' se ha escapado!', 2.4);\n          G.Silver.kill(G.Game.st.time);"]]],
-  ['the counter shows in co-op', 'hud', [['if (!G.Coop.active) {\n      const sa = touch', 'if (true) {\n      const sa = touch']]],
+  ['the counter shows in co-op', 'hud', [['if (!G.Coop.active && !overlayDrawsPlayer) {\n      const sa = touch', 'if (!overlayDrawsPlayer) {\n      const sa = touch']]],
   ['the script tag is missing', 'dev', [['    <script defer src="js/systems/silver.js"></script>\n', '']]],
   ['the NEED array misses Silver', 'main', [["    'Silver',\n", '']]],
 ];

@@ -1,0 +1,114 @@
+#91-2 PART C: REGION BEST, build plan (2026-11-12, Quick)  [Approved, BUILT]
+RC1, RC2 approved as recommended (Jess, 2026-11-12). Built 2026-11-12 (Quick): run-stats-harness 108/108,
+items-f3d2-harness clean, all 15 new mutants caught (Quick sandbox bundle, not real node).
+Build notes: the db.js checks went into items-f3d2-harness.js (it already loads the real newSave / migrate), not
+run-stats-harness; one extra mutant each for a record missing its fields, a fight run counted as cleared, and
+regionRecord keeping a worse run.
+Rules already approved: DR1 (pace, growing gap), DR2 (solo only), DR3 (same place: cleared -> later run end wins,
+died in the same fight -> sooner arrival wins, exact tie keeps the old), DR4 (a fight outranks the gym before it),
+DR5 (two wordings), mm:ss always. Map 91-2 holds the rules; this map holds the build.
+=====================================================================================================
+
+WHAT ALREADY EXISTS (reuse, do not rebuild)
+-----------------------------------------------------------------------------------------------------
+ need                               already there                                use it as
+ a default for old saves            db.js migrate() L142 copies every missing    add regionBest: {} to newSave()
+                                      top-level field from newSave()             -> old saves get {} for free
+ "is this run clean"                game.js clean() L641 (debug flag, tamper)    the D5 gate, same as the ranking
+ when a gym fight began             gym.js fight.t0 L105 (set on the first        one getter, no new stamp
+                                      arena frame; cleared at onWin L210)
+ died inside a gym fight            fight is non-null at run end only then       same getter (null = not in a fight)
+ gym times this run                 gym.js splits L26 (91-1)                     the record's milestones, as is
+ the region                         G.Enemies.region (null = All, else gen)      the record's key
+ mm:ss                              G.U.mmss (util.js L63)                       part D formatting (82:30 ok)
+ test hook for newSave / migrate    items-f3d2-harness.js L21 pattern            same hook in run-stats-harness
+
+PLAN CHANGE FROM MAP 91-2 (simpler, same behavior)
+-----------------------------------------------------------------------------------------------------
+ map 91-2 said: gym.js splits also keep the loop.  NOT NEEDED: pace compares milestones by ORDER
+ (your 3rd gym vs the best's 3rd gym), and the loop is constant within a run today (dev-set).
+ The record keeps the run's loop once. gym.js splits stay untouched.
+ Deferred hook (one line in TODO when #loop-counter lands): if the loop can change mid-run, "gyms" must
+ become gyms cleared on the final loop, not splits.length.
+
+FILES (4 game files, smallest change each)
+-----------------------------------------------------------------------------------------------------
+ js/core/db.js       newSave(): one field, regionBest: {} (key -> entry). Nothing else: migrate() fills it.
+ js/systems/gym.js   one read-only getter: fightStartedAt = fight ? fight.t0 : null.
+ js/systems/run-stats.js   three PURE functions (no G.Game, no save, no clock; all inputs passed in):
+     regionEntry({ loop, splits, fightStartedAt, endTime })  -> { loop, gyms, fighting, reachedAt, endTime, splits }
+     compareRegion(entry, best)  -> { better, reason }   the DR3/DR4 ladder, reason in English for recordcheck
+     pace(splits, now, best)     -> { kind, delta, next } DR1 (kinds: none, onPace, ahead, behind, even, newBest)
+ js/game.js          one small function regionRecord({ write }) = build entry, compare, write if asked.
+                       endRun calls it with write = solo && clean(); G.Debug.recordcheck (part E) calls the SAME
+                       function (dry run or 'write'). Exposed on G.Game for that. Plus one getter for part D:
+                       regionBest (this region's entry or null).
+                     endRun: the existing `const ok = clean();` (L585) moves up above G.DB.commit('run') (L579)
+                       so the record rides the same save commit. The ranking lines below keep using `ok`.
+
+THE LADDER (compareRegion)                                   higher place wins; same place -> tie rule
+-----------------------------------------------------------------------------------------------------
+ place = (loop, gyms cleared, fighting)        fighting = died inside gym (gyms+1)'s fight
+   ... < L1 cleared G2 < L1 died fighting G3 < L1 cleared G3 < L1 died fighting G4 < ... < L2 ...
+ same place, both cleared   -> later endTime wins        (survived longer, DR3)
+ same place, both fighting  -> earlier reachedAt wins    (got there sooner, DR3)
+ exact tie                  -> old record stays
+ no old record              -> better, reason "first record for this region"
+
+PACE (pace, read by part D at pause)             k = your gyms this run, B = best.splits
+-----------------------------------------------------------------------------------------------------
+ no best                              -> none          ("No record yet")
+ k >= B.length and k > 0              -> newBest       ("New best pace")
+ now > B[k] (best had gym k+1 by now) -> behind, delta = now - B[k]           (the growing gap)
+ k > 0                                -> mine[k-1] vs B[k-1]: ahead / behind / even
+ k = 0                                -> onPace
+ next = { gym: k + 1, at: B[k] } when B[k] exists (the "Next" row)
+
+SAVE SHAPE (one entry per region key; key = String(G.Enemies.region) or 'all' for null, see RC2)
+-----------------------------------------------------------------------------------------------------
+ save.regionBest['1'] = { loop: 1, gyms: 3, fighting: false, reachedAt: null, endTime: 1203.4,
+                          splits: [292.1, 550.0, 860.2] }
+ Readers null-check everything (the 'old' debug call deletes the field mid-session, bypassing migrate).
+
+NEW RULES TO APPROVE (each changes what counts)
+-----------------------------------------------------------------------------------------------------
+ RC1  End Run pressed DURING a gym fight counts as "died in that fight" (reached = fight start). <- rec
+      (b) End Run in a fight counts as "cleared the gym before it"
+ RC2  "All regions" (no region picked) keeps its own record, separate from each gen. <- rec
+      (b) no record for All regions
+
+TESTS
+-----------------------------------------------------------------------------------------------------
+ HARNESS (extend)  docs/proposals/run-stats-harness.js, new section 9 "Region Best"
+   compareRegion: higher loop wins over more gyms; more gyms wins over a longer run; a fight outranks the
+     gym before it (DR4); cleared tie -> later end wins; fight tie -> sooner arrival wins; exact tie keeps
+     the old; no old record -> better; each verdict carries a reason
+   regionEntry: gyms = splits.length; fighting and reachedAt from fightStartedAt; endTime kept
+   pace: every row of the PACE table, with the timeline from map 91-2 (G1 4:52 / G2 9:10 / G3 14:20)
+   db.js (via the items-f3d2 newSave/migrate hook): a new save has regionBest {}; an old save without it
+     gets {} from migrate; nothing else in the save changes
+   game.js, read as text: endRun writes only when solo and clean (DR2, D5); recordcheck and endRun share
+     regionRecord (one compare); gym.js has the fightStartedAt getter
+   why: all of C is pure logic or wiring, which this harness already covers for #91
+ MUTANTS (extend)  docs/proposals/run-stats-mutate.js  (+8)
+   the loop is ignored; gyms beat loop; the fight ranks below the gym before it; a cleared tie prefers
+   the shorter run; a fight tie prefers the later arrival; an exact tie replaces the record; the growing
+   gap is off; ahead / behind flipped
+   (+2 wiring) endRun writes a co-op run; endRun writes a flagged (not clean) run
+   why: each is a one-word slip that would still look plausible on screen
+ SMOKE             none in C (no UI yet); part D and E add the panel and debug-call smoke
+ INTENT SCENARIOS  none (no move changes)
+ DEBUG SET (feel)  none in C; the console check below stands in until E
+ check.js          no change
+ STALE SCAN        mutants on game.js endRun (silver "endRun never reads Silver"), db.js newSave (items-f3d2)
+
+FEEL / CONSOLE CHECK AFTER C (dev.html?dev is a guest save in memory, and debug calls flag the run, so a
+ dev run never writes; this is why part E's recordcheck('write') exists)
+   G.Game.regionRecord({ write: false })   -> a verdict and its reason, nothing written
+
+RISKS
+-----------------------------------------------------------------------------------------------------
+ R1 moving `const ok = clean()` up two blocks: clean() only reads state, so calling it earlier is safe.
+ R2 fight.t0 is a tuning readout reused as game data: if someone resets `fight` elsewhere later, the
+    record loses "reached at". The harness text check on the getter guards it.
+ R3 one new save field; migrate fills it; no save wipe for any test.

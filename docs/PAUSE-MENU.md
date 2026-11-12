@@ -143,7 +143,8 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   Jess 2026-11-12). Distance always beats time: a run that dies one gym short is never a new best however fast.
   Dying inside a gym's fight ranks above clearing the gym before it (DR4). The Best row reads "Loop 3, Gym 3
   cleared, lasted 85:10" or "Died at Loop 3, Gym 4, reached it 82:30" (DR5). Times read mm:ss always,
-  minutes past 59 (82:30). Only solo runs set it.
+  minutes past 59 (82:30). Only solo runs set it. End Run pressed during a gym fight counts as dying in that fight
+  (RC1). All regions keeps its own record, separate from each region (RC2, Jess 2026-11-12).
   It shows as a pace delta against the record's gym times, growing once the record had already beaten your next gym
   (DR1, Jess 2026-11-12, map 91-2). A run flagged by the debug tools (the flag that keeps it off the ranking) never sets a record. Until the
   loop counter and the Elite Four exist, a real run's record is in practice gyms beaten plus time. Dev verification

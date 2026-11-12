@@ -22,6 +22,15 @@
  *   downTime(record, slot, now)   seconds that slot spent fainted, an open faint counted up to now
  *   mostFaints(record)            { slot, faints }: the most faints, the lower slot on a tie; null with no faint
  *   totals(record, now)           the team's sums of every per-member counter
+ *
+ * Region Best (#91-2 part C, map docs/ASCII Concept Maps/91-2C; rules DR1, DR3, DR4, RC1). Pure: everything comes in as
+ * arguments, nothing is read from the game or the save, so the end of a run and G.Debug.recordcheck share them.
+ *   regionEntry({ loop, splits, fightStartedAt, endTime })   this run's place: gyms cleared, and whether it ended
+ *                                 inside the next gym's fight (reachedAt = when that fight began)
+ *   compareRegion(entry, best)    { better, reason }: higher loop, then more gyms, then a gym fight over the gym before
+ *                                 it; same place: cleared -> the later run end wins, in a fight -> the sooner arrival
+ *                                 wins; an exact tie keeps the old record
+ *   pace(splits, now, best)       { kind, delta, next } for the Run Info Pace and Next rows (kinds below)
  */
 G.RunStats = (() => {
   function create() {
@@ -142,6 +151,56 @@ G.RunStats = (() => {
     return sum;
   }
 
+  // ---------- Region Best (#91-2 part C) ----------
+
+  function regionEntry({ loop = 1, splits = [], fightStartedAt = null, endTime = 0 } = {}) {
+    const fighting = fightStartedAt != null;
+    const reachedAt = fighting ? fightStartedAt : null;
+    return { loop, gyms: splits.length, fighting, reachedAt, endTime, splits: splits.slice() };
+  }
+
+  /** A saved record read safely: an old or hand-edited entry may miss any field. */
+  function readEntry(entry) {
+    return {
+      loop: entry.loop || 1,
+      gyms: entry.gyms || 0,
+      fighting: !!entry.fighting,
+      reachedAt: entry.reachedAt != null ? entry.reachedAt : Infinity,
+      endTime: entry.endTime || 0,
+      splits: Array.isArray(entry.splits) ? entry.splits : [],
+    };
+  }
+
+  function compareRegion(entry, best) {
+    if (!best) return { better: true, reason: 'first record for this region' };
+    const mine = readEntry(entry),
+      theirs = readEntry(best);
+    if (mine.loop !== theirs.loop) return { better: mine.loop > theirs.loop, reason: 'a different loop (loop first)' };
+    if (mine.gyms !== theirs.gyms) return { better: mine.gyms > theirs.gyms, reason: 'a different gym count' };
+    if (mine.fighting !== theirs.fighting)
+      return { better: mine.fighting, reason: 'one run reached the next gym fight (it ranks above clearing the gym)' };
+    if (mine.fighting && mine.reachedAt !== theirs.reachedAt)
+      return { better: mine.reachedAt < theirs.reachedAt, reason: 'same gym fight: the sooner arrival wins' };
+    if (!mine.fighting && mine.endTime !== theirs.endTime)
+      return { better: mine.endTime > theirs.endTime, reason: 'both cleared the same gym: the later run end wins' };
+    return { better: false, reason: 'an exact tie: the record stays' };
+  }
+
+  /** kind: 'none' (no record), 'onPace' (no gym yet, nothing to compare), 'ahead' / 'behind' / 'even' (delta in
+   *  seconds), 'newBest' (past the record's last gym). Behind also when the record had already beaten your next gym by
+   *  now, the gap growing until you beat it (DR1). next: { gym, at } = your next gym and when the record beat it. */
+  function pace(splits, now, best) {
+    if (!best) return { kind: 'none', delta: 0, next: null };
+    const record = readEntry(best).splits,
+      done = splits.length;
+    const next = done < record.length ? { gym: done + 1, at: record[done] } : null;
+    if (done > 0 && done >= record.length) return { kind: 'newBest', delta: 0, next: null };
+    if (next && now > next.at) return { kind: 'behind', delta: now - next.at, next };
+    if (done === 0) return { kind: 'onPace', delta: 0, next };
+    const gap = splits[done - 1] - record[done - 1];
+    return { kind: gap < 0 ? 'ahead' : gap > 0 ? 'behind' : 'even', delta: Math.abs(gap), next };
+  }
+
   return {
     create,
     dealt,
@@ -157,5 +216,8 @@ G.RunStats = (() => {
     downTime,
     mostFaints,
     totals,
+    regionEntry,
+    compareRegion,
+    pace,
   };
 })();

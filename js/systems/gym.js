@@ -286,5 +286,10 @@ G.Gym = (() => {
     get splits() {
       return splits;
     },
+    /** #91-2: run time the current gym fight began (its readout's t0), or null outside a fight. A run that ends while
+     *  this is set ended inside that fight (Region Best, map 91-2C, RC1). */
+    get fightStartedAt() {
+      return fight ? fight.t0 : null;
+    },
   };
 })();
