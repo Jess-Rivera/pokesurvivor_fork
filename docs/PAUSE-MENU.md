@@ -104,6 +104,11 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Damage over time on enemies (Jess, 2026-11-12): burn, poison and toxic ticks are credited to the
   Pokemon that inflicted them and join its Damage and the team's DPS (the DPS panel reads higher for status-heavy
   teams). A status already on keeps one inflicter: a stronger source takes it over, a tie keeps the first.
+- [Approved] Taken and Healed (Jess, 2026-11-12, TK1 and H1): Taken is HP lost to hits and damage over time from
+  others; self costs (move recoil, Life Orb) do not count. Healed is every HP a Pokemon gets back (heals, berries, Shell
+  Bell, Regeneration, the HP Regen card on the bench, springs); a revive is not a heal and neither is a max HP gain.
+- Built in 91-1 (2026-11-12): every move hands burn and poison the same strength today, so in practice the first
+  inflicter keeps the credit until the status ends. Shell Bell still ignores burn and poison ticks, as before.
 
 ## 5. Team panel (bottom)
 - [Approved] All 6 Pokemon in 3 columns by 2 rows, clickable, picking what the detail panel shows. Uses the same
@@ -128,7 +133,7 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
   - Time fainted is run time from the faint until that member is revived (badge revive, Re-Do) or the run ends.
   - A status counts as inflicted only when it newly lands: a refresh, an immune, a blocked major or a reapply
     window does not count. Only kinds landed this run are listed ("None yet" when empty). Damage over time is
-    the status ticks the team deals to enemies (burn, poison, toxic, trap).
+    the status ticks the team deals to enemies (burn, poison, toxic; a trap deals no damage, checked 2026-11-12).
   - The run name and time stay pinned while the rest scrolls; the scroll bar is slate.
 - [Approved] Region Best (Jess, 2026-11-12): a new save field, per region, absent from old saves (read as "No record
   yet"). Checked when a run ends (faint or End Run). Better = higher loop, then more gyms beaten, then the faster time

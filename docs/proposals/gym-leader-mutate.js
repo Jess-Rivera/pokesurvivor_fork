@@ -42,7 +42,7 @@ const M = [
   ['flat moves do nothing on a leader', FX, 'if (pl.isRival && FLAT[fx.handler]) return special(inst, pl, rng, fx, hop, hit);', ''],
   ['a leader flat move hits you', FX, 'if (pl.isRival && FLAT[fx.handler]) return', 'if (FLAT[fx.handler]) return'],
   ['your damage is not counted', FX, 'b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt;', ''],
-  ['Shell Bell hears nothing', FX, 'if (b.owner.onDealt) b.owner.onDealt(hit.dealt);', ''],
+  ['Shell Bell hears nothing', FX, 'if (b.owner.onDealt) b.owner.onDealt(hit.dealt, pl, hit.typeMult);', ''], // re-pointed #91-1
   ['takeFlat reads the color as a type', PL, 'return this.hurt(amount, null, true, color ? { color } : null);', 'return this.hurt(amount, color, false);'],
   ['the wild flat entry drops the amount', 'js/entities/enemy.js', 'this.hurt(amount, color, dirX, dirY, knock, null);', ''],
   ['the leader shows the player number', LD, "show = atk && atk.crit ? '#ff9a3c' : eff === 'super' ? '#ffe14d' : eff === 'weak' ? '#a3abb8' : col;", "show = '#ff6b7a';"],

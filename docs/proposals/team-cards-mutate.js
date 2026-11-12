@@ -60,7 +60,8 @@ const M = [
   ['team raises skip the cards', 'fx', [["else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0, gm), dur);", "else if (teamOf(fx, o)) G.Stages.trackTeam(o, k, fx.stages, src, G.Stages.gateOf(fx.stages < 0));"]]],
   ['a fizzled pure buff ignores the Gate card', 'sim', [['slot.t = G.Stages.gateOf(false, G.MoveEffects.gateMulOf(o));', 'slot.t = G.Stages.gateOf(false);']]],
   // ---- part D: HP Regen and Vitamins ----
-  ['regen ignores the max HP cap', 'player', [['this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);', 'this.hp = this.hp + rg * this.maxHp * dt;']]],
+  // re-pointed #91-1: bench regen now heals through restoreHp, which holds the cap for every heal
+  ['regen ignores the max HP cap', 'player', [['this.hp = Math.min(this.maxHp, this.hp + amount);', 'this.hp = this.hp + amount;']]],
   ['regen heals the fainted', 'player', [['    if (this.dead) return;\n    this.benched = true;', '    this.benched = true;'], ['if (rg > 0 && !this.dead && this.hp < this.maxHp)', 'if (rg > 0 && this.hp < this.maxHp)']]],
   ['regen heals the active member too', 'player', [['  tickShield(dt) {\n', '  tickShield(dt) {\n    if (this.teamCards) this.hp += G.TeamCards.regen(this.teamCards) * this.maxHp * dt;\n']]],
   ['incOf ignores Vitamins', 'player', [[' +\n      (this.teamCards ? G.TeamCards.vit(this.teamCards, k) : 0)\n    );', '\n    );']]],

@@ -32,11 +32,11 @@ G.PlayerEntity.SimPass = {
     G.Stages.tick(e, dt);
   },
 
-  /** Heal and damage over time. */
+  /** Heal and damage over time. Heals go through restoreHp (#91: they count as Healed). */
   overTime(e, dt) {
     if (e.bellHeal > 0) {
       const h = Math.min(e.bellHeal, 4 * dt);
-      e.hp = Math.min(e.maxHp, e.hp + h);
+      e.restoreHp(h);
       e.bellHeal -= h;
     }
     if (e.power && (e.power.t -= dt) <= 0) {
@@ -44,7 +44,7 @@ G.PlayerEntity.SimPass = {
       e.power = null;
     }
     e.tickShield(dt);
-    if (e.regen > 0) e.hp = Math.min(e.maxHp, e.hp + e.regen * dt);
+    if (e.regen > 0) e.restoreHp(e.regen * dt);
     // Black Sludge on a non-Poison holder: small chip, never lethal (F3b).
     if (e.sludgeHurt && !e.dead) e.hp = Math.max(1, e.hp - e.maxHp * 0.01 * dt);
   },

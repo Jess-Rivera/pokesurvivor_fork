@@ -35,6 +35,9 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 6. New issue to file (Quick, 2026-11-12, from F2): the canvas FPS counter freezes while the pause menu holds the world
    still. Fix later, its own issue. Map: docs/ASCII Concept Maps/Perf F2 - Freeze Behind the Pause Menu.txt (D3).
    Also possible: F3, lighter HUD paint (static pixel SVGs baked to images), only if a new profile still shows it.
+7. Chore (Quick, 2026-11-12, found in the 91-1 STALE scan): silver-mutate "a kill pays nothing" and pokebox-evs-mutate's
+   evKill pattern still carry 10-space indents from before payKill existed, so both are STALE (older than #91). Re-point
+   to the 6-space lines in enemy.js payKill and re-run both mutate scripts.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh)

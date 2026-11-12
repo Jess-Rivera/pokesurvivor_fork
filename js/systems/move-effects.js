@@ -158,21 +158,30 @@ G.MoveEffects = (() => {
     const kn = knockOf(inst, e, kfx);
     e.hurt(dmg, col, kn[0], kn[1], kn[2], b.crit ? 'crit' : G.Types.label(hit.typeMult)); // D33
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg);
+    if (o.onDealt) o.onDealt(dmg, e, hit.typeMult); // #91: the target (kill credit) and the type multiplier (super effective share)
     hit.dmg = dmg;
     hit.crit = b.crit;
     hit.dealt = Math.max(0, hp0 - Math.max(0, e.hp)) + Math.max(0, sh0 - (e.shield || 0)); // D34: shield counted, overkill excluded
   }
 
-  /** D32: burn and poison through their Enemy entry points, control statuses through G.Status (immunity, 'blocked' and windows live there). */
+  /** D32: burn and poison through their Enemy entry points, control statuses through G.Status (immunity, 'blocked' and windows live there).
+   *  #91 (PAUSE-MENU 4 and 6): a status that newly lands is the caster's (onInflicted); a burn or poison also remembers its caster,
+   *  whose ticks it then is. A refresh, an immune, a blocked major or a window lands nothing. */
   function ailment(inst, e, rng, fx, hop) {
     if (fx.side !== 'foe' || !foe(e) || !rolls(fx, hop, rng)) return;
+    const o = inst.cast ? inst.cast.owner : null;
+    let landed;
     if (fx.id === 'burn') {
       const B = fx.duration != null && G.Enemies.STATUS.burn; // a stated length becomes the turn multiplier
-      e.applyBurn(1, false, 1, B ? fx.duration / (B.turns * B.turn) : 1);
-    } else if (fx.id === 'poison')
-      e.applyPoison(1, 1); // applyPoison takes no length; no move states a poison duration
-    else G.Status.apply(e, fx.id, 1, 1, fx.duration);
+      const was = e.burn > 0;
+      e.applyBurn(1, false, 1, B ? fx.duration / (B.turns * B.turn) : 1, o);
+      landed = !was && e.burn > 0;
+    } else if (fx.id === 'poison') {
+      const was = e.poison > 0;
+      e.applyPoison(1, 1, o); // applyPoison takes no length; no move states a poison duration
+      landed = !was && e.poison > 0;
+    } else landed = G.Status.apply(e, fx.id, 1, 1, fx.duration) === 'ok';
+    if (landed && o && o.onInflicted) o.onInflicted(fx.id);
   }
 
   function flinch(inst, e, rng, fx, hop) {
@@ -267,7 +276,7 @@ G.MoveEffects = (() => {
     if (e.takeFlat) e.takeFlat(dmg, col, kn[0], kn[1], kn[2]);
     else e.hurt(dmg, col, kn[0], kn[1], kn[2], null); // hosts without takeFlat (older test hosts)
     o.dmgDealt = (o.dmgDealt || 0) + dmg;
-    if (o.onDealt) o.onDealt(dmg);
+    if (o.onDealt) o.onDealt(dmg, e, 1); // #91: flat damage skips the type chart, so it is never super effective
     hit.dmg = dmg;
     hit.crit = false;
     hit.typeMult = 1;
@@ -343,15 +352,21 @@ G.MoveEffects = (() => {
     hit.crit = b.crit;
     hit.dmg = hit.dealt = Math.max(0, hp0 - Math.max(0, pl.hp));
     b.owner.dmgDealt = (b.owner.dmgDealt || 0) + hit.dealt; // slice 5: your damage on a gym leader counts, Shell Bell included
-    if (b.owner.onDealt) b.owner.onDealt(hit.dealt);
+    if (b.owner.onDealt) b.owner.onDealt(hit.dealt, pl, hit.typeMult); // #91: target and type multiplier, as on a wild hit
   }
   const DOT = new Set(['burn', 'poison', 'toxic']);
+  /** #91: as ailment, on a Player entity (a gym leader's mon, or you): G.Status answers 'ok' only for a status that newly lands,
+   *  and a burn or poison keeps its caster on the state (stDot.by), so statusDot credits the ticks and the record goes with it. */
   function ailPlayer(inst, pl, rng, fx, hop) {
     if (fx.side !== 'foe' || !foe(pl) || !rolls(fx, hop, rng)) return;
+    const o = inst.cast ? inst.cast.owner : null;
+    let landed;
     if (DOT.has(fx.id)) {
       const S = fx.duration != null && G.Enemies.STATUS[fx.id]; // a stated length becomes the turn multiplier, as on an enemy
-      G.Status.applyDot(pl, fx.id, 1, S ? fx.duration / (S.turns * S.turn) : 1);
-    } else G.Status.apply(pl, fx.id, 1, 1, fx.duration);
+      landed = G.Status.applyDot(pl, fx.id, 1, S ? fx.duration / (S.turns * S.turn) : 1) === 'ok';
+      if (landed) pl.stDot.by = o;
+    } else landed = G.Status.apply(pl, fx.id, 1, 1, fx.duration) === 'ok';
+    if (landed && o && o.onInflicted) o.onInflicted(fx.id);
   }
   function flinchPlayer(inst, pl, rng, fx, hop) {
     if (!foe(pl) || !pl.applyFlinch) return;

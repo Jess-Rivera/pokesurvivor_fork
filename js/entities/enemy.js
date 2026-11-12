@@ -108,6 +108,8 @@
       this.poisonTick = 0;
       this.poisonN = 0;
       this.poisonMul = 1; // *Mul = DoT strength of the source move
+      this.burnBy = null; // #91: the Pokemon whose move put this burn / poison on (its ticks are that Pokemon's damage), or null
+      this.poisonBy = null;
       this.stFl = null;
       this.fsp = 0;
       this.fdx = 0;
@@ -282,11 +284,14 @@
       this.hurt(amount, color, dirX, dirY, knock, null);
     }
 
-    /** Damage over time (burn/poison): a normal hit plus a dev-log line. */
+    /** Damage over time (burn/poison): a normal hit plus a dev-log line. #91 (PAUSE-MENU 4): the HP it took is credited to
+     *  whoever inflicted it (its damage and DPS, and the kill when the tick finishes the enemy). */
     dot(kind, amount, color) {
       const hp0 = this.hp;
       this.hurt(amount, color);
       if (G.Log.on) G.Log.dot(this, kind, amount, hp0, Math.max(0, this.hp));
+      const by = kind === 'burn' ? this.burnBy : this.poisonBy;
+      if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), this, 1, true);
     }
 
     /** What is SEEN when taking a hit. */
@@ -323,8 +328,9 @@
     }
 
     /** Burn: one state; a re-hit refreshes the duration and leaves the tick timer alone (constant re-hits cannot stall it).
-     *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked. */
-    applyBurn(lv = 1, ignoreImmune = false, mul = 1, durMul = 1) {
+     *  ignoreImmune: Fire Spin's trap damage rides on the burn flag until the trap status exists, and a trap is not type-blocked.
+     *  by (#91): the caster, kept for the whole state (the first one keeps it; a refresh does not change it). */
+    applyBurn(lv = 1, ignoreImmune = false, mul = 1, durMul = 1, by = null) {
       if (!ignoreImmune && this.statusImmune('burn')) {
         this.immuneText();
         return;
@@ -339,11 +345,13 @@
         this.burn = 1;
         this.burnTick = S.turn;
         this.burnMul = mul;
+        this.burnBy = by;
       } else if (mul > this.burnMul) this.burnMul = mul; // the strongest source wins while the state lasts
       this.burnLeft = Math.max(this.burnLeft, Math.max(1, Math.round(S.turns * durMul))); // durMul 0.5 = Fire Spin's half-length burn
     }
-    /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades. */
-    applyPoison(lv = 1, mul = 1) {
+    /** Poison: lv 1 = poisoned (1/8 per turn), lv 2 or more = badly poisoned (Toxic, N/16 per turn). Badly poisoned never downgrades.
+     *  by (#91): as applyBurn. */
+    applyPoison(lv = 1, mul = 1, by = null) {
       const bad = lv >= 2,
         S = G.Enemies.STATUS[bad ? 'toxic' : 'poison'];
       if (this.statusImmune(bad ? 'toxic' : 'poison')) {
@@ -359,6 +367,7 @@
       if (was <= 0) {
         this.poisonTick = S.turn;
         this.poisonMul = mul;
+        this.poisonBy = by;
       } else if (mul > this.poisonMul) this.poisonMul = mul;
       if (bad && was !== 2) {
         this.poison = 2;
@@ -1797,6 +1806,11 @@
       G.Progress.kill(e);
       G.Game.evKill(e); // pokebox step 5: the run's EV banks
       G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy
+      // #91 (PAUSE-MENU 4): the kill is its last hitter's when that is on your team (a move still flying after a swap, a burn
+      // tick), else the Pokemon on the field. The team count above is unchanged.
+      const stats = pl.team && pl.team.runStats,
+        killer = e.lastHitBy && e.lastHitBy.team === pl.team ? e.lastHitBy : pl;
+      if (stats) G.RunStats.kill(stats, killer, !!e.elite);
     }
 
     function update(dt, players) {

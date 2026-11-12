@@ -54,6 +54,7 @@
     'MoveDefs',
     'TeamCards',
     'DpsHistory',
+    'RunStats',
     'MoveGeom',
     'MoveSim',
     'MoveEffects',

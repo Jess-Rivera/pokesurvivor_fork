@@ -25,6 +25,10 @@ G.CHANGELOG = [
         "The pause menu's team panel is just the six cards now, with no box behind them.",
         "The pause menu's team panel is just the six cards now, with no box behind them.",
       ],
+      [
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+        'Burn and poison damage on enemies now counts for the Pokemon that inflicted it: it shows in the DPS panel and in your team damage, so status teams read higher than before.',
+      ],
     ],
     fix: [
       [

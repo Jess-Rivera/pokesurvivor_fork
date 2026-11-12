@@ -209,6 +209,7 @@ G.Game = (() => {
     runTeam = G.Team.create(roster, carryRun);
     pl = runTeam.active;
     runTeam.dpsHistory = G.DpsHistory.create(); // #66: the run's damage per second, for the HUD's DPS-Upgrades panel
+    runTeam.runStats = G.RunStats.create(); // #91: the run's other counters (kills, faints, statuses...), for the pause menu
     // F3d-2 pre-run loadout (Inventory screen): equip the team items you chose, in slot order, through the same path as a pickup.
     for (const id of G.Items.cleanLoadout(save)) if (id) equipRun(id);
     banked = { t1: 0, t10: 0 };
@@ -892,6 +893,7 @@ G.Game = (() => {
     }
     if (G.Coop.active) G.Coop.collected(p, who);
     if (mine || p.kind === 'bomb') G.Audio.sfx(PICK_SFX[p.kind]);
+    if (mine && (p.kind === 'item' || p.kind === 'ground')) G.RunStats.item(runTeam.runStats); // #91 D4: items picked up
     if (p.kind === 'xp' || p.kind === 'xpBig') {
       const before = pl.level;
       const coopK = G.Coop.active ? G.Coop.xpFactor() : 1;
@@ -1487,6 +1489,10 @@ G.Game = (() => {
     },
     get player() {
       return pl;
+    },
+    /** #91: this run's counters (G.RunStats), or the last run's after it ends; null before the first run. */
+    get runStats() {
+      return runTeam ? runTeam.runStats : null;
     },
     st,
     // team (Phase A)

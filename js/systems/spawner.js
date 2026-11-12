@@ -96,6 +96,12 @@ G.Spawner = (() => {
     return G.Sprites.hovers(def.dex);
   }
 
+  /** #91: a shiny spawned, for the run's record (Run Info "Shinies seen"). */
+  function shinySeen() {
+    const stats = G.Game && G.Game.runStats;
+    if (stats) G.RunStats.shiny(stats);
+  }
+
   function rollShiny(dex) {
     if (!G.Sprites.hasShiny(dex)) return false;
     if (forceShiny > 0) {
@@ -139,6 +145,7 @@ G.Spawner = (() => {
     if (G.Events.golden) e.makeGolden();
     G.EnemyMgr.add(e);
     if (shiny) {
+      shinySeen();
       say('A shiny ' + e.name + ' is nearby!', 3.4); // English in code, no lang-en entry (Jess, 2026-11-11)
       G.Audio.sfx('shiny');
     }
@@ -152,7 +159,10 @@ G.Spawner = (() => {
     for (let i = 0; i < 6 && !pt; i++) pt = freePoint(pl, Math.random() * 6.2832, isFlyer(def));
     if (!pt) pt = ringPoint(pl, Math.random() * 6.2832);
     const e = new G.Elite(def, pt[0], pt[1], G.Enemies.scale(t));
-    if (rollShiny(def.dex)) e.makeShiny();
+    if (rollShiny(def.dex)) {
+      e.makeShiny();
+      shinySeen();
+    }
     G.EnemyMgr.add(e);
     say('An elite ' + e.name + ' appeared!', 3.2); // English in code (#85, Jess 2026-11-11)
     G.Camera.kick(0.8);

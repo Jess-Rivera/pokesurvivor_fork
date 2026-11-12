@@ -1,0 +1,150 @@
+#91-1: RUN COUNTERS, sim side only (2026-11-12, Quick)  [Approved, BUILT]
+Jess, 2026-11-12: TK1 (a) hits and DoT from others only; H1 (a) route the direct heals through one reporting method.
+=====================================================================================
+Goal: record every number 91c (Run Info) and 91d (Run Stats box) need. No UI in this slice.
+Jess's brief: good practice, reuse modules, minimum change.
+
+PRINCIPLES APPLIED
+-------------------------------------------------------------------------------------
+ 1 REUSE the DPS record. G.DpsHistory already has each member's damage and time on field, so
+   Damage, Share and Field are READ from it, never counted twice. Super eff. % uses its damage as
+   the denominator, so the two can never disagree.
+ 2 ONE new module, shaped like dps-history.js: pure counters, created per run, hung on the Team
+   beside the DPS record (runTeam.runStats). Leaders have no record, so every hook is a no-op for them,
+   the same guard dps-history uses.
+ 3 HOOK EXISTING CHOKE POINTS, add no new paths:
+     every damage hit already ends in Player.onDealt   -> widen it, do not add a second hook
+     every faint already calls Player.onFaint (empty)  -> fill it (leaders override it, so they skip)
+     every revive already goes through Player.revive   -> close the "down" clock there
+ 4 NO NEW PARAMETERS ON SHARED SYSTEMS: G.Status and status.js are not touched. The inflicter is
+   stored where the status already lives (the enemy's burn / poison fields, a leader's stDot).
+ 5 NOTHING BUILT FOR LATER: no move id or crit on the hit (per-move damage and crits are not in
+   #91). The hit carries only what an approved row needs: the target and the type multiplier.
+
+THE NEW MODULE
+-------------------------------------------------------------------------------------
+ NEW js/systems/run-stats.js  (G.RunStats)
+   per member: kills, best hit, super-effective damage, taken, healed, faints, down time (open since),
+               statuses landed per kind, DoT damage
+   per team:   elites, items picked up, shinies seen, biggest hit (who + amount)
+   reads:      most faints (lower slot on a tie), down time up to "now", team totals
+   Pure: no game globals, so node harnesses test it alone. About 120 lines.
+ dev.html: one script line right after dps-history.js.   js/main.js NEED: one entry after 'DpsHistory'.
+ (hard reload needed after pulling)
+
+WHAT CHANGES WHERE  (each line = one spot)
+-------------------------------------------------------------------------------------
+ js/entities/player.js
+   onDealt(dmg)        gains two optional inputs: the target and the type multiplier. It marks the target
+                       "last hit by me", then hands the hit to G.RunStats (best hit, super-eff damage).
+                       Existing callers that pass nothing keep working (Shell Bell, DPS record untouched).
+   onInflicted(kind)   NEW 3-line sibling of onDealt: a status this Pokemon newly landed.
+   onFaint()           the base one is empty today: it records the faint and opens the down clock.
+   revive()            closes the down clock.
+   hurt()              right where HP drops: adds to Taken (TK1 below).
+   statusDot()         a leader's burn / poison tick credits its stored inflicter (P5).
+   heal()              adds what was actually healed (H1 below).
+
+ js/systems/move-effects.js
+   damage(), flat()    the existing onDealt call passes the enemy and the type multiplier (flat: neutral).
+   hurtPlayer()        same, for your hits on a gym leader.
+   ailment()           on a status that NEWLY lands on a wild enemy: tell the caster (onInflicted), and
+                       for burn / poison store the caster on the enemy. "Newly" = the state was off and is
+                       now on, or G.Status answered 'ok' (S1). Refresh, immune, blocked, window: nothing.
+   ailPlayer()         same, on a leader (G.Status already answers 'ok' / 'refresh' there).
+
+ js/entities/enemy.js
+   payKill()           credits the kill to the enemy's last hitter when it is on your team, else the field
+                       Pokemon (D1); counts an elite. The team kill count line is unchanged.
+   dot()               after the tick: the HP it actually took is handed to the stored inflicter's onDealt
+                       (P5). That one call also feeds the DPS record and marks the last hitter, so a DoT
+                       kill credits the burner with no extra code.
+
+ js/systems/spawner.js   both shiny rolls (wild and elite): count a shiny seen.
+ js/systems/gym.js       onWin: stamp the run time beside the existing badges list; reset() clears it;
+                         a getter like "badges". Splits live with the badges they belong to.
+ js/game.js              startRun: create the record beside the DPS record. onCollect: count item and
+                         ground pickups (D4). One getter so spawner reaches the record.
+ js/data/changelog.js    chg: burn and poison damage now count in the DPS panel and your team's damage.
+
+ P6, as built: every move hands burn / poison the same strength today, so "stronger takes over" never
+ fires: the FIRST inflicter keeps the credit until the status ends. Matches the approved rule.
+
+TOUCHED FILES: 1 new + 8 edited (player, move-effects, enemy, spawner, gym, game, dev.html, main.js)
+ + changelog. Not touched: status.js, dps-history.js, team.js, gym-leader.js, any UI file.
+
+DECISIONS  (both are counting RULES, so flagged on their own)
+-------------------------------------------------------------------------------------
+ TK1 RULE what counts as Taken
+     (a) HP lost to hits and DoT from others; self-costs (move recoil, Life Orb's 1% per attack) do not
+         count <- rec
+     (b) every HP loss, self-costs included
+     (Correction 2026-11-12: Shake Off costs no HP. status.js shake() only cuts the status timer.)
+ H1  RULE what counts as Healed (found: several heals skip heal() and set HP directly: bench regen,
+     springs, regeneration, and one in the sim pass)
+     (a) route those direct heals through one Player method that reports, each a one-line swap <- rec
+         (about 4 sites, confirmed at build; maxHp growth that keeps HP is NOT a heal and stays as is)
+     (b) count heal() only: berries and items; regen and springs are missed, so "Healed" undercounts
+     (c) drop the Healed row
+     A revive is not a heal in any option.
+
+TESTS
+-------------------------------------------------------------------------------------
+ NEW docs/proposals/run-stats-harness.js
+   Why: all new logic; dps-history-harness only covers damage and field time.
+   Module alone: fresh record all zero; best hit is a max (member and team, "who" follows); super-eff damage
+     only when the multiplier is above 1; faint counts once, down clock opens, a revive closes it, an open
+     clock reads up to "now"; most faints picks the max, lower slot on a tie, none when no faints; statuses
+     per kind; items and shinies count; team totals equal the member sums.
+   Wiring (stub hosts, as the other entity harnesses do): a swap mid-flight still credits the caster's kill;
+     a burn tick that kills credits the burner; a burn tick lands in the burner's DPS second; a refresh,
+     immune or blocked status counts nothing; a Focus Sash save is not a faint; a bench DoT faint counts;
+     a leader's onFaint records nothing (team only); Taken skips recoil (TK1a); Healed counts regen and
+     springs (H1a) and not a revive; onDealt with no target still works (old callers).
+ NEW docs/proposals/run-stats-mutate.js  (12 mutants, each must turn the harness red)
+   best hit sums instead of max; kill credited to the field Pokemon; DoT credited to nobody; DoT credited
+   to the field Pokemon; a refresh counts as inflicted; down clock keeps running after a revive; Sash save
+   counts as a faint; tie picks the higher slot; super-eff counts neutral hits; recoil counts as Taken;
+   a revive counts as Healed; elites read from the bosses count.
+ CHANGED docs/proposals/dps-history-harness.js
+   one check: a burn tick on an enemy adds to the burner's second (P5 now feeds the record).
+ STALE SCAN after the build (existing mutants that point at touched lines; each pattern re-checked):
+   likely: move-sim, move-riders, hit-parity, player-entity, team, status-slice harness mutants, gym-*,
+   elite-class. Any STALE one is re-pointed, listed in the DEVLOG.
+ check.js: no change (it finds every *harness*.js under docs/ by itself).
+ Intent scenarios: none (no move behaviour changes).   Debug sets: none in 91-1 (91-2 adds runinfo).
+ Not run here (no node): Jess runs node tools/check.js, then the mutate runner.
+
+FEEL TEST (about a minute)
+-------------------------------------------------------------------------------------
+ Bring a burner (Charmander with Ember): the DPS panel number reads a bit higher than before, the line has
+ no odd spikes. Everything else plays and looks the same. Optional console check in dev.html?dev:
+ G.Game.runStats shows the counters filling.
+
+AS BUILT (2026-11-12)
+-------------------------------------------------------------------------------------
+ Files: NEW js/systems/run-stats.js; player.js, player-sim-pass.js, interact.js, move-effects.js, enemy.js,
+   spawner.js, gym.js, game.js, dev.html, main.js; changelog chg line. NEW run-stats-harness.js (70 checks),
+   run-stats-mutate.js (36 mutants).
+ Differs from the plan:
+   - dps-history-harness.js NOT changed: dps-history.js is untouched, so the "a burn tick lands in the burner's
+     second" check lives in run-stats-harness.js, which loads both.
+   - Trap deals no damage anywhere (status.js), so DoT = burn, poison, toxic. PAUSE-MENU 6 corrected.
+   - Shell Bell still ignores DoT ticks (they never reached it before): onDealt skips it for a tick.
+   - Two lines over 120 columns rewritten (run-stats mostFaints, enemy.js payKill), so a Prettier pass leaves
+     the mutation patterns valid.
+ Verified here (bundled into the Quick sandbox, not real node):
+   run-stats-harness 70/70; all 36 run-stats mutants caught; existing harnesses on the edited code:
+   items-f1, team, player-entity, status-sliceE2b, stat-stage, move-riders, hit-parity all pass; team-cards
+   passed sections 1 to 8 (HP Regen included) before needing a file not copied. pokebox-evs and silver
+   source regexes on payKill still match.
+ STALE scan: re-pointed gym-leader-mutate "Shell Bell hears nothing" (hurtPlayer's onDealt now has 3 args) and
+   team-cards-mutate "regen ignores the max HP cap" (the cap now lives in restoreHp).
+   Found, NOT from this slice: silver-mutate "a kill pays nothing" and pokebox-evs-mutate's evKill pattern
+   still use 10-space indents from before payKill existed (Leader AI slice 2): STALE already. Left as is (TODO).
+ Lesson: two edits to one file in parallel raced and one was lost (caught by the harness). One file, one edit
+   at a time.
+ Not counted, flag for Jess: the badge's "every member back to full HP" for members still standing
+   (game.js reviveTeam) sets HP directly, so it is not in Healed (it rides with the revive package).
+ Jess runs: node tools/check.js, node docs/proposals/run-stats-mutate.js, node docs/proposals/team-cards-mutate.js,
+   node docs/proposals/gym-leader-mutate.js (the two re-pointed ones).

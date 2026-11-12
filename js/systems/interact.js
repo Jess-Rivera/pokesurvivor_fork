@@ -109,7 +109,7 @@ G.Interact = (() => {
     if (p.charge < 1) p.charge = Math.min(1, p.charge + dt / 45);
     if (pl.dead || d2 > 26 * 26 || p.charge <= 0.02 || pl.hp >= pl.maxHp) return;
     const before = pl.hp;
-    pl.hp = Math.min(pl.maxHp, pl.hp + pl.maxHp * 0.14 * dt);
+    pl.restoreHp(pl.maxHp * 0.14 * dt); // #91: counts as Healed
     healAcc += pl.hp - before;
     p.charge = Math.max(0, p.charge - dt * 0.09);
     if (Math.random() < dt * 14)

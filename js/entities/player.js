@@ -676,12 +676,16 @@ G.PlayerEntity = class PlayerEntity {
 
   statusDot(kind, amount, color) {
     if (this.dead) return;
+    // #91 (PAUSE-MENU 4): who inflicted this burn or poison (move-effects.js ailPlayer), read before a faint wipes it
+    const by = this.stDot && this.stDot.by,
+      hp0 = this.hp;
     const inv = this.invuln;
     this.invuln = 0;
     this.dot = true; // status damage still lands in the air (Fly)
     this.hurt(amount, null, true, color ? { color } : null);
     this.dot = false;
     if (!this.dead) this.invuln = inv;
+    if (by && by.onDealt) by.onDealt(Math.max(0, hp0 - Math.max(0, this.hp)), this, 1, true);
   }
 
   /**
@@ -703,8 +707,12 @@ G.PlayerEntity = class PlayerEntity {
     );
     G.FX.burst(this.x, this.y - this.bodyH * 0.5, '#ff5f6d', 6, 90);
   }
-  /** Called once when hurt() faints this entity, after its effects are wiped. A gym leader pays its drops here (slice 5). */
-  onFaint() {}
+  /** Called once when hurt() faints this entity, after its effects are wiped. A gym leader pays its drops here (slice 5).
+   *  #91: a run team member's faint goes in the run's record (the count, and its down clock starts). */
+  onFaint() {
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.faint(stats, this, G.Game.st.time);
+  }
   /** Seconds of invulnerability a hit leaves (slice 5: a gym leader has none, COMBAT-RULES "Host model"). */
   get hitIframes() {
     return 0.45;
@@ -814,6 +822,9 @@ G.PlayerEntity = class PlayerEntity {
       G.FX.dmgText(this.x, this.y - this.bodyH - 16, 'Focus Sash!', '#ff9a3d', true);
       G.FX.ring(this.x, this.y, 6, 70, '#ff9a3d', 0.5, 4);
     }
+    // #91: HP lost to hits and DoT from others (recoil and Life Orb take HP outside hurt, so they never count)
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.taken(stats, this, hp0 - Math.max(0, this.hp));
     if (this.hp <= 0) {
       this.hp = 0;
       this.dead = true;
@@ -877,7 +888,7 @@ G.PlayerEntity = class PlayerEntity {
     G.Stages.tick(this, dt);
     // Slice 5b HP Regen card: benched members only (a reason to swap); no floating number on the bench (Jess, 2026-10-31)
     const rg = this.teamCards ? G.TeamCards.regen(this.teamCards) : 0;
-    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + rg * this.maxHp * dt);
+    if (rg > 0 && !this.dead && this.hp < this.maxHp) this.restoreHp(rg * this.maxHp * dt);
     this.benched = false;
   }
 
@@ -911,10 +922,20 @@ G.PlayerEntity = class PlayerEntity {
 
   heal(amount) {
     const before = this.hp;
-    this.hp = Math.min(this.maxHp, this.hp + amount);
+    this.restoreHp(amount);
     const got = Math.round(this.hp - before);
     if (G.Log.on && !this.isRival) G.Log.heal(amount, this.hp - before, this.hp, this.maxHp);
     if (got >= 1) G.FX.dmgText(this.x, this.y - this.bodyH - 6, '+' + got, '#5fe08a');
+  }
+
+  /** HP back, up to the max, with no number shown (heal() shows one; the per-frame heals never did: bench regen, Shell Bell,
+   *  Regeneration, springs). #91: what it actually added goes in the run's record (Healed). A revive or a max HP gain is no
+   *  heal and does not come through here. */
+  restoreHp(amount) {
+    const before = this.hp;
+    this.hp = Math.min(this.maxHp, this.hp + amount);
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.healed(stats, this, this.hp - before);
   }
 
   addMaxHp(amount) {
@@ -977,10 +998,22 @@ G.PlayerEntity = class PlayerEntity {
   }
 
   /** After every hit this Pokemon lands: the Shell Bell heal (a little health for the damage you do, cap 4/s), and the
-   *  team's damage record (#66; your run team only, leaders have none). */
-  onDealt(dmg) {
-    if (this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
-    if (this.team && this.team.dpsHistory) G.DpsHistory.record(this.team.dpsHistory, this, dmg);
+   *  team's damage record (#66; your run team only, leaders have none). #91: target and typeMult, when the caller has them,
+   *  mark the target's last hitter (kill credit) and feed the run's record (best hit, super effective share). dot: a burn or
+   *  poison tick this Pokemon inflicted (enemy.js dot, statusDot); it is damage and DPS, but no hit, and Shell Bell keeps
+   *  ignoring it as before. */
+  onDealt(dmg, target = null, typeMult = 1, dot = false) {
+    if (!dot && this.hasItem('shellbell')) this.bellHeal = Math.min(4, this.bellHeal + dmg * 0.04);
+    if (target && dmg > 0) target.lastHitBy = this;
+    const team = this.team;
+    if (team && team.dpsHistory) G.DpsHistory.record(team.dpsHistory, this, dmg);
+    if (team && team.runStats) G.RunStats.dealt(team.runStats, this, dmg, typeMult, dot);
+  }
+
+  /** #91: a status this Pokemon newly landed on a foe (move-effects.js ailment, ailPlayer), for the run's record. */
+  onInflicted(kind) {
+    const stats = this.team && this.team.runStats;
+    if (stats) G.RunStats.inflicted(stats, this, kind);
   }
 
   /** An altar's power (see systems/interact.js): it applies and removes itself. */
@@ -1042,6 +1075,9 @@ G.PlayerEntity = class PlayerEntity {
 
   /** Gets back up (revived by a teammate in co-op). */
   revive(frac = 0.5) {
+    // #91: a run team member's down clock stops (badge revive, Re-Do)
+    const stats = this.dead && this.team && this.team.runStats;
+    if (stats) G.RunStats.revive(stats, this, G.Game.st.time);
     this.clearEffects(); // slice E2b: a revive starts clean
     this.dead = false;
     this.hp = Math.max(1, this.maxHp * frac);
