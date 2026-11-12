@@ -557,14 +557,7 @@ body.pm-open .hud-overlay {
   left: 50%;
   transform: translateX(-50%);
 }
-/* the move list: bonded groups framed in the bond pink, a type coloured scroll bar */
-.pm-move-scroll {
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.pm-move-scroll::-webkit-scrollbar {
-  display: none;
-}
+/* the move list: bonded groups framed in the bond pink, a type coloured scroll bar (css/hud-overlay.css .hud-scroll-*) */
 .pm-move-group {
   margin-bottom: 8px;
 }
@@ -608,16 +601,6 @@ body.pm-open .hud-overlay {
 }
 .pm-empty-note {
   color: #7f7f7f;
-}
-.pm-scroll-track {
-  position: absolute;
-  width: 8px;
-}
-.pm-scroll-thumb {
-  position: absolute;
-  left: -2px;
-  width: 8px;
-  border: 2px solid;
 }
 /* the move's full numbers on hover: left of the detail panel, level with the row */
 .pm-move-tooltip {

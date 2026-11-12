@@ -13,17 +13,21 @@ const M = [
   // ---- pay ----
   ['the minimum of 1 is gone', 'silver', [['return Math.max(1, G.Stats.levelForTime(t) / 10);', 'return G.Stats.levelForTime(t) / 10;']]],
   ['pay reads the gym level, not the run level', 'silver', [['Math.max(1, G.Stats.levelForTime(t) / 10)', 'Math.max(1, (G.Stats.levelForTime(t) + G.Gyms.LEVEL_OFFSET) / 10)']]],
-  ['each kill is rounded instead of keeping the fraction', 'silver', [['amount += payFor(t);', 'amount += Math.round(payFor(t));']]],
+  ['each kill is rounded instead of keeping the fraction', 'silver', [['amount += pay;', 'amount += Math.round(pay);']]],
   ['the count rounds instead of rounding down', 'silver', [['return Math.floor(amount + 1e-9);', 'return Math.round(amount);']]],
   // ---- balance ----
   ['a run starts at 0', 'silver', [['const START = 100;', 'const START = 0;']]],
   ['a spend can overdraw', 'silver', [['if (!(n >= 0) || n > this.whole) return false;', 'if (!(n >= 0)) return false;']]],
   ['the balance can go negative', 'silver', [['amount = Math.max(0, +n || 0);', 'amount = +n || 0;']]],
-  ['Silver is written to the save', 'silver', [['amount += payFor(t);', 'amount += payFor(t);\n      if (G.DB) G.DB.save.silver = amount;']]],
+  ['Silver is written to the save', 'silver', [['amount += pay;', 'amount += pay;\n      if (G.DB) G.DB.save.silver = amount;']]],
+  // ---- #91-2 run totals (DS1) ----
+  ['the starting 100 counts as earned', 'silver', [['      earned = 0;\n      spent = 0;', '      earned = START;\n      spent = 0;']]],
+  ['reset keeps what was earned', 'silver', [['      earned = 0;\n      spent = 0;', '      spent = 0;']]],
+  ['a refused spend counts as spent', 'silver', [['      if (!(n >= 0) || n > this.whole) return false;\n      amount -= n;\n      spent += n;', '      spent += n;\n      if (!(n >= 0) || n > this.whole) return false;\n      amount -= n;']]],
   // ---- wiring ----
   ['the run start does not reset Silver', 'game', [['    G.Silver.reset(); // Move Shop step 2: every run starts with 100 Silver, nothing carries over\n', '']]],
   ['Silver leaks into the end-of-run PokeCoins', 'game', [['recogidas: pl.coins,', 'recogidas: pl.coins + G.Silver.whole,']]],
-  ['a kill pays nothing', 'enemy', [['          G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy\n', '']]],
+  ['a kill pays nothing', 'enemy', [['      G.Silver.kill(G.Game.st.time); // Move Shop step 2: every kill pays Silver, the same for every enemy\n', '']]],
   ['a thief that escapes pays', 'enemy', [["G.Spawner.say('¡' + e.name + ' se ha escapado!', 2.4);", "G.Spawner.say('¡' + e.name + ' se ha escapado!', 2.4);\n          G.Silver.kill(G.Game.st.time);"]]],
   ['the counter shows in co-op', 'hud', [['if (!G.Coop.active) {\n      const sa = touch', 'if (true) {\n      const sa = touch']]],
   ['the script tag is missing', 'dev', [['    <script defer src="js/systems/silver.js"></script>\n', '']]],

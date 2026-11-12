@@ -900,3 +900,23 @@
 .hud-dps-card-count {
   color: #8cfff7; /* Secondary text */
 }
+
+/* ---------- the shared scroll box (kit ScrollBox, #91-2): the page's bar hidden, a thin 8 px bar drawn beside it ---------- */
+.hud-scroll-box {
+  position: absolute;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.hud-scroll-box::-webkit-scrollbar {
+  display: none;
+}
+.hud-scroll-track {
+  position: absolute;
+  width: 8px;
+}
+.hud-scroll-thumb {
+  position: absolute;
+  left: -2px;
+  width: 8px;
+  border: 2px solid;
+}

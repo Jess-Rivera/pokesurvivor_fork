@@ -221,6 +221,70 @@ G.HudOverlay = (() => {
     </div>`;
   }
 
+  /**
+   * A scrolling box with the pause menu's thin scroll bar (dex-buttons AF2-AF20). Made for the move list in #89,
+   * shared in #91-2 so Run Info and Cards Taken use the same one. The page's own bar is hidden; the thumb follows
+   * the scroll, at least 24 px tall, and hides when the content fits. No drag yet: the wheel scrolls it.
+   * box: { left, top, width, height } in px, the scrolling area; trackRight: the bar's gap to the parent's right edge;
+   * colours: { track, thumb, thumbRim }; resetOn: values that send it back to the top when one changes (fixed length);
+   * onScroll: called on every scroll, before the thumb moves (the move list drops its hover tooltip there).
+   */
+  function ScrollBox({ box, trackRight, colours, resetOn = [], onScroll, children }) {
+    const scrollRef = preactHooks.useRef(null),
+      thumbState = preactHooks.useRef({ top: 0, height: 0 }); // the thumb, in px
+    const [, redraw] = preactHooks.useState(0);
+    const measure = () => {
+      const element = scrollRef.current;
+      if (!element) return;
+      const ratio = element.clientHeight / Math.max(1, element.scrollHeight);
+      const next =
+        ratio >= 1
+          ? { top: 0, height: 0 }
+          : {
+              top: (element.scrollTop / element.scrollHeight) * element.clientHeight,
+              height: Math.max(24, ratio * element.clientHeight),
+            };
+      if (next.top !== thumbState.current.top || next.height !== thumbState.current.height) {
+        thumbState.current = next;
+        redraw((count) => count + 1);
+      }
+    };
+    preactHooks.useLayoutEffect(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = 0;
+      measure();
+    }, resetOn);
+    const thumbNow = thumbState.current;
+    return html`<div
+        class="hud-scroll-box"
+        ref=${scrollRef}
+        onScroll=${() => {
+          if (onScroll) onScroll();
+          measure();
+        }}
+        style=${{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }}
+      >
+        ${children}
+      </div>
+      <div
+        class="hud-scroll-track"
+        style=${{ right: trackRight + 'px', top: box.top + 'px', height: box.height + 'px', background: colours.track }}
+      >
+        ${
+          thumbNow.height
+            ? html`<div
+                class="hud-scroll-thumb"
+                style=${{
+                  top: thumbNow.top + 'px',
+                  height: thumbNow.height + 'px',
+                  background: colours.thumb,
+                  borderColor: colours.thumbRim,
+                }}
+              ></div>`
+            : null
+        }
+      </div>`;
+  }
+
   // ---------- the B2 selection cursor (b2-lower Z2 to AC3): four yellow corner brackets with an outline ----------
   function CursorCorner({ corner }) {
     const size = 7;
@@ -950,6 +1014,7 @@ G.HudOverlay = (() => {
     IconCanvas,
     ItemSquare,
     ItemGrid,
+    ScrollBox,
     Cursor,
     RosterCard,
     ROSTER_ART_PIXEL,

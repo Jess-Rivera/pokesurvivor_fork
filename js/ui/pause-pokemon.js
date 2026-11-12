@@ -32,7 +32,7 @@ G.PausePokemon = (() => {
   if (!overlay || !overlay.ready) return { ready: false };
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
-  const { createLifeBar, portraitSource, portraitFallback, ItemGrid } = overlay.kit;
+  const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox } = overlay.kit;
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
   // ---------- sizes and places (1080p pixels inside each panel) ----------
@@ -345,32 +345,9 @@ G.PausePokemon = (() => {
 
   /** The move list: every move grouped by bond, each with its summary line; hover shows the full numbers. */
   function MoveList({ member, rim }) {
-    const scrollRef = hooks.useRef(null),
-      thumbState = hooks.useRef({ top: 0, height: 0 }); // the scroll bar's thumb, in px
-    const [, redraw] = hooks.useState(0);
     const groups = member.slots.length ? member.slots : member.moves.map((move) => [move]);
     const width = COLUMN_RIGHT.width - 2 * BOX_PAD - 14,
       height = MOVES_BOX.height - 2 * BOX_PAD;
-    const measure = () => {
-      const element = scrollRef.current;
-      if (!element) return;
-      const ratio = element.clientHeight / Math.max(1, element.scrollHeight);
-      const next =
-        ratio >= 1
-          ? { top: 0, height: 0 }
-          : {
-              top: (element.scrollTop / element.scrollHeight) * element.clientHeight,
-              height: Math.max(24, ratio * element.clientHeight),
-            };
-      if (next.top !== thumbState.current.top || next.height !== thumbState.current.height) {
-        thumbState.current = next;
-        redraw((count) => count + 1);
-      }
-    };
-    hooks.useLayoutEffect(() => {
-      if (scrollRef.current) scrollRef.current.scrollTop = 0;
-      measure();
-    }, [member, readCount.value]);
     const showDetail = (move, event) => {
       const lines = G.Sheet.detailOf(member, move),
         list = [lines.raw, lines.ail, lines.hit].filter(Boolean);
@@ -411,31 +388,15 @@ G.PausePokemon = (() => {
         )}
       </div>`;
     });
-    const thumbNow = thumbState.current;
-    return html`<div
-        class="pm-move-scroll"
-        ref=${scrollRef}
-        onScroll=${() => {
-          hoveredMove.value = null;
-          measure();
-        }}
-        style=${{ left: BOX_PAD + 'px', top: BOX_PAD + 'px', width: width + 'px', height: height + 'px' }}
-      >
-        ${rows.length ? rows : html`<div class="hud-text pm-empty-note">No moves yet.</div>`}
-      </div>
-      <div
-        class="pm-scroll-track"
-        style=${{ right: BOX_PAD + 'px', top: BOX_PAD + 'px', height: height + 'px', background: rim.dark }}
-      >
-        ${
-          thumbNow.height
-            ? html`<div
-                class="pm-scroll-thumb"
-                style=${{ top: thumbNow.top + 'px', height: thumbNow.height + 'px', background: rim.base, borderColor: rim.light }}
-              ></div>`
-            : null
-        }
-      </div>`;
+    return html`<${ScrollBox}
+      box=${{ left: BOX_PAD, top: BOX_PAD, width, height }}
+      trackRight=${BOX_PAD}
+      colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
+      resetOn=${[member, readCount.value]}
+      onScroll=${() => (hoveredMove.value = null)}
+    >
+      ${rows.length ? rows : html`<div class="hud-text pm-empty-note">No moves yet.</div>`}
+    </${ScrollBox}>`;
   }
 
   function MoveTooltip() {
