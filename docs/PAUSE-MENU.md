@@ -90,7 +90,15 @@ cards taken; move list (bonded groups shown); prev and next arrows in the bottom
 - [Approved] Cards Taken and Move List scroll, with a scroll bar inspired by dex-buttons AF2-AF20, type coloured.
 - [Approved] Prev and next arrows inspired by b2-lower AC8-AD8 (dimmed at rest, brightened on hover). The
   Move_Left and Move_Right keybinds also do prev and next.
-- [Approved] Cards Taken lists the cards that apply to this Pokemon (this absorbs #83).
+- [Approved] Cards Taken lists the cards that apply to this Pokemon (this absorbs #83). Settled (Jess, 2026-11-12,
+  docs/decisions/2026-11-12-83-cards-taken-counts-and-move-tooltip-changes.md): the DPS panel's rows, name and pick
+  count (Vitamins by the vitamin's name), same order, 26 px rows minimum in the shared scroll box, a long name wraps.
+  A move card or type Damage card shows when one of this Pokemon's moves can take it (on the move's own data); Stat
+  Climb Speed and Stat Change Duration when one of its moves changes a stat; Bench Regeneration with a team of 2 or
+  more; Vitamins always. Those three team-only cards show their real number on hover. Empty: "No cards yet."
+- [Approved] The move tooltip's "Cards:" line (Jess, 2026-11-12): each field the team's cards changed on that move,
+  the move's own value then the one combat uses ("cd 1.2 s to 0.92 s", "burn 10% to 100% (max)"), "(max)" where a
+  cap, floor or pick limit stopped it; a field two cards share is one entry. No line when no card touches the move.
 - [Approved] Move list rows: today's per-move numbers plus the hit damage against a typical enemy. The move tooltip
   rework is a separate issue.
 - [Approved] Per Pokemon Run Stats panel holds the per-Pokemon numbers (kills, time on field, damage dealt, best hit,

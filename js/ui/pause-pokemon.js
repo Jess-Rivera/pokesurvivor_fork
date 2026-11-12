@@ -6,7 +6,10 @@
  * level box (deeper than the name band, a diagonal step down to it) and the HP bar under the name; the bottom bar in the
  * second type's colour (the first for a single type) has a raised tab on the left with the previous and next arrows.
  * Left column: the portrait with the EXP ring, the held item, then the Run Stats (#91-3: twelve 26 px rows that scroll
- * in the box, Jess 2026-11-12) and Cards Taken (#83) boxes.
+ * in the box, Jess 2026-11-12) and Cards Taken (#83) boxes. Cards Taken (Jess, 2026-11-12) is the DPS panel's list:
+ * each card's name and pick count, only the cards that touch this Pokemon (G.TeamCards.takenBy). What a card does to a
+ * move is in that move's tooltip ("Cards: cd 1.2 s to 0.92 s"); the three team-only cards show their real number on
+ * hover.
  * Right column: the stat hex, then the move list (bonded groups framed together, a type coloured scroll bar). The boxes
  * are the roster card's box with a flat body, rimmed in the first type.
  *
@@ -407,7 +410,7 @@ G.PausePokemon = (() => {
       height = MOVES_BOX.height - 2 * BOX_PAD;
     const showDetail = (move, event) => {
       const lines = G.Sheet.detailOf(member, move);
-      showTip(event, move.name, [lines.raw, lines.ail, lines.hit].filter(Boolean));
+      showTip(event, move.name, [lines.raw, lines.ail, lines.hit, lines.cards].filter(Boolean));
     };
     const rows = groups.map((group, groupIndex) => {
       const bonded = group.length > 1;
@@ -478,6 +481,40 @@ G.PausePokemon = (() => {
               <span class="hud-text pm-stats-value">${row.value}</span>
             </div>`
         )}
+      </${ScrollBox}>`;
+  }
+
+  /** The Cards Taken box (#83): the cards that touch the shown Pokemon, name and pick count in the DPS panel's order.
+   *  A long name wraps to a second line rather than squeezing. Stat Climb Speed, Stat Change Duration and Bench
+   *  Regeneration show their real number on hover, since no move's tooltip shows it. */
+  function CardsTakenBox({ member, rim }) {
+    const moveIds = (member.moves || []).map((move) => move.id);
+    const rows = G.TeamCards.takenBy(member.teamCards, moveIds, team().length);
+    const width = COLUMN_LEFT.width - 2 * BOX_PAD - 14,
+      height = CARDS_BOX.height - RUN_STATS.top - BOX_PAD;
+    const list = rows.map(
+      (row) =>
+        html`<div
+          key=${row.id}
+          class=${'pm-card-row' + (row.tip ? ' has-tip' : '')}
+          data-card=${row.id}
+          style=${{ minHeight: RUN_STATS.rowHeight + 'px' }}
+          onMouseEnter=${row.tip ? (event) => showTip(event, row.label, [row.tip]) : null}
+          onMouseLeave=${row.tip ? () => (hoveredMove.value = null) : null}
+        >
+          <span class="hud-text pm-card-label">${row.label}</span>
+          <span class="hud-text pm-stats-value pm-card-picks">x${row.picks}</span>
+        </div>`
+    );
+    return html`<div class="hud-text pm-box-title">Cards Taken</div>
+      <${ScrollBox}
+        box=${{ left: BOX_PAD, top: RUN_STATS.top, width, height }}
+        trackRight=${BOX_PAD}
+        colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
+        resetOn=${[member, readCount.value]}
+        onScroll=${() => (hoveredMove.value = null)}
+      >
+        ${list.length ? list : html`<div class="hud-text pm-empty-note">No cards yet.</div>`}
       </${ScrollBox}>`;
   }
 
@@ -572,7 +609,7 @@ G.PausePokemon = (() => {
       })}
       ${box(COLUMN_LEFT, CARDS_BOX, {
         className: 'pm-box-cards',
-        children: html`<div class="hud-text pm-box-title">Cards Taken</div>`,
+        children: html`<${CardsTakenBox} member=${member} rim=${rim} />`,
       })}
       ${box(COLUMN_RIGHT, HEX_BOX, { className: 'pm-box-hex', children: html`<${Hex} member=${member} />` })}
       ${box(COLUMN_RIGHT, MOVES_BOX, {

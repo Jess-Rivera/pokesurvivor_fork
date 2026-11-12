@@ -763,3 +763,20 @@ body.pm-open .hud-overlay {
 .pm-stats-value {
   color: #b9cbf0;
 }
+
+/* the Cards Taken box (#83, js/ui/pause-pokemon.js CardsTakenBox): the card's name left, "xN" right, rows at least
+   26 px; a long name wraps to a second line instead of squeezing (Jess, 2026-11-12) */
+.pm-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.pm-card-label {
+  white-space: normal;
+  line-height: 22px;
+}
+.pm-card-picks {
+  flex: none;
+  white-space: nowrap;
+}

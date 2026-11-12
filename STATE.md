@@ -4,9 +4,11 @@ Keep under 3 KB. Rewrite each session (not append). History goes to DEVLOG.md.
 Last updated: 2026-11-12, Quick (work machine). Branch: feature/pause-menu-rework (off feature/gym-leader-ai).
 
 ## START HERE (next session, either tool)
-1. #91 is fully built (91-1, 91-2 A to E, 91-3). Owed: Jess's feel test of the whole thing (91c 7-step debug session,
-   then runinfo('full') and flip the team for the Run Stats box). Then comment on #91, card to Needs Playtest / close.
-2. Next slice: #83 (fill Cards Taken on the detail panel, 400 px box, scrolls). Then #92. Merge back into
+1. #91 DONE: Jess's feel test passed (2026-11-12, Quick). Owed: comment on #91 and close it (Quick has no gh, Jess runs it).
+2. #83 BUILT (Quick, 2026-11-12, decision 2026-11-12-83-cards-taken-counts-and-move-tooltip-changes): Cards Taken is
+   the DPS panel's count list for the cards that touch this Pokemon (G.TeamCards.takenBy); the move tooltip's "Cards:"
+   line shows before and after (G.TeamCards.changes). team-cards harness 183/183 in a sandbox bundle. Owed: Jess runs
+   check.js and smoke-pause-menu (new #83 block), feel test, then #83 comment and close. Then #92. Merge back into
    feature/gym-leader-ai when #82 is done.
 3. Triage still waiting (TODO.md "Next" item 3).
 

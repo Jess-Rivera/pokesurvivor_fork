@@ -102,9 +102,16 @@ G.Sheet = (() => {
     return routed(m) ? defSummary(pl, folded(pl, m)) : 'Support move';
   }
 
+  /** What the team's cards changed on this move (#83): "Cards: power 40 to 56 · cd 1.2 s to 0.92 s", the move's own
+   *  value then the one combat uses, "(max)" where a cap or floor stopped it. Empty when no card touches it. */
+  function cardsLine(pl, m) {
+    const changed = routed(m) ? G.TeamCards.changes(pl, m.id) : [];
+    return changed.length ? 'Cards: ' + changed.map((change) => change.text).join(' · ') : '';
+  }
+
   /** Detail rows for the hover/tap panel: every stat, with base (with item) on the fields a held item changes. */
   function detailOf(pl, m) {
-    if (!routed(m)) return { raw: '', ail: '', hit: '' };
+    if (!routed(m)) return { raw: '', ail: '', hit: '', cards: '' };
     const d = folded(pl, m),
       h = defHit(pl, d),
       am = pl ? (pl.atkMul || 1) * G.Stats.itemCatMul(pl, d.category) : 1,
@@ -115,6 +122,7 @@ G.Sheet = (() => {
         .join(' · '),
       ail: defAil(d),
       hit: h == null ? '' : am !== 1 ? 'Hits for about ' + r1d(base) + ' (' + r1d(h) + ')' : 'Hits for about ' + r1d(h),
+      cards: cardsLine(pl, m),
     };
   }
 
@@ -173,6 +181,7 @@ G.Sheet = (() => {
                 (det.raw ? `<div class="ds">${E(det.raw)}</div>` : '') +
                 (det.ail ? `<div class="ail">${E(det.ail)}</div>` : '') +
                 (det.hit ? `<div class="hit">${E(det.hit)}</div>` : '') +
+                (det.cards ? `<div class="ds">${E(det.cards)}</div>` : '') +
                 `</div>`;
               return `<div class="sh-move" data-mi="${order.indexOf(m)}" tabindex="0">
           <div class="ico" style="background:${col}33">${G.Icons.html('move:' + m.id, 32)}</div>

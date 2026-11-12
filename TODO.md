@@ -23,9 +23,10 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 10. Before leaving work: commit and `git push origin feature/pause-menu-rework`, so home starts from the same tree.
 
 ## Next (from the 2026-11-12 Quick session that built all of #91)
-1. #91 BUILT (91-1, 91-2 A to E, 91-3; maps 91-2, 91-2C, 91-2D, 91-3). Owed: Jess's feel test (91c 7-step debug
-   session, then runinfo('full') and flip the team), re-run smoke-pause-menu, then comment on #91 and close it.
-   Then #83 (Cards Taken), then #92 (children of #82); merge back into feature/gym-leader-ai when #82 is done.
+1. #91 feel test PASSED (Jess, 2026-11-12). Comment on #91 and close it. #83 (Cards Taken) BUILT: run check.js and
+   smoke-pause-menu, feel test, then edit #83's done-condition, comment and close. Then #92 (children of #82; it also
+   retires the team sheet's Run Cards totals, still the old ones); merge back into feature/gym-leader-ai when #82 is
+   done.
 2. Owner decisions that block or shape work: #97 (permanent upgrade rework, blocks #95), #86 (gym leaders round down?),
    #99 (menu font), #93 (tooltip scope).
 3. Triage: #97 and #99 new in Triage; #93 and #75 carry needs-triage; #72, #79 (deferred) and #74 sit in Triage; #86 is
@@ -43,6 +44,10 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
    2026-11-12-region-type-maps-fill-rules). Design only; D4 to D9 open in docs/ASCII Concept Maps/Region Type Maps - Biomes v1.txt.
    Related finding: Kanto T6 rolls no hordes (hordeTypes empty, events.js swaps in gold); Kanto T6 has 7 wild species.
    Tool gap: tools/make_seo_pages.py is missing, so the publish command's last step fails.
+10. New issues to file (Quick, 2026-11-12): (a) acquisition rework, gacha out, catch + candy + legendaries
+   (decision 2026-11-12-acquisition-no-gacha-catch-candy-legendaries, map Acquisition v1). Design only.
+   (b) day/night cycle on run time, random start point, may affect visuals, evolution flags and spawns.
+   Parked for its own design dive. Trade evolutions wait on multiplayer (deferred).
 10. Chore (Quick, 2026-11-12, found in the 91-3 STALE scan): debug-movechecker-mutate.js has about 8 debug.js patterns
    written before a Prettier pass ("spawn(0);     // movechecker start" with wide spacing), so they no longer match.
    Older than #91. Re-point them to the current debug.js lines and re-run the script.

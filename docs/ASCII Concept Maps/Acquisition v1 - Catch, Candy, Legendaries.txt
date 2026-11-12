@@ -175,3 +175,482 @@ PROPOSAL (Jess, 2026-11-12, after A11): new accounts start with a 6-ball belt; m
   B3  Flee meter: fixed throws before a flee (e.g. 3) | rises by species (capture_rate) | rises by time
   B4  Meta progression on: belt size | ball quality (Great 1.5x, Ultra 2x, mainline) | Flee capacity
   B5  Currency for belts: coins (gacha gone, coins already buy upgrades) | gym drops
+
+RESOLVED, ROUND 2 (Jess, 2026-11-12)  supersedes the A11 ruling above
+--------------------------------------------------------------------
+  BELT   new accounts start with a 6-ball belt. Balls are CONSUMED per throw and restocked
+         between runs. A miss does not end the event; the Flee meter does.
+  B4     meta progression upgrades BELT SIZE and BALL QUALITY (not Flee capacity).
+  A12    mainline capture_rate formula, with TIME LEFT on the UberElite clock as the HP term.
+
+  ECONOMY LOOP
+    run ──> coins / ball sources ──> menu: restock balls (up to belt size)
+                                     buy belt size + / ball quality +
+    run ──> UberElite event ──kill time sets odds──> throw ──hit──> catch (new Stage 1 copy)
+                                                       └─miss─> Flee meter + ──full──> it flees
+
+  A12 MAPPING (provisional, a tuning knob):  hp term = 1 - 0.99 x (time left / X)
+    killed at the buzzer = full HP odds; killed instantly = ~1 HP odds. The HP term tops out at 3x.
+    Single-throw %, Poke / Great / Ultra:
+      time left   Snorlax(25)   rate 45       median (180)   Pidgey (255)
+        0%         3 / 5 / 7     6 / 9 / 12   24 / 35 / 47   33 / 50 / 67
+       25%         5 / 7 /10     9 /13 / 18   35 / 53 / 70   50 / 75 /100
+       50%         7 /10 /13    12 /18 / 23   47 / 70 / 94   66 / 99 /100
+       75%         8 /12 /16    15 /22 / 29   58 / 88 /100   83 /100 /100
+    Throws for an 80% catch at 50% time left:
+      Snorlax 24 / 16 / 12    rate 45 13 / 9 / 7    median 3 / 2 / 1    Pidgey 2 / 1 / 1
+    425 Stage 1s, 6 throws, 50% time left: species under 50% catch:  Poke 25 | Great 10 | Ultra 1
+
+  WHAT THIS MEANS
+    * Common Stage 1s are a near-sure catch with 6 balls; the belt mostly matters for rate-45 species.
+    * Rate 45 (Bulbasaur, Dratini, Eevee, Lapras, Scyther, UBs) needs 7 to 13 throws even at half
+      time left: MORE than a starting belt. They are an Ultra-Ball / bigger-belt goal. That is the
+      gate A5 wanted, but it also gates every starter and pseudo-legend base the same way.
+    * Ball quality moves rare-species odds most (rate 45: 12% -> 23%). Belt size buys more tries.
+    * Restocking is a coin sink, which the economy needs once the gacha is gone.
+    * The Flee meter (B3) now decides whether 6 balls can ever be used: a flee after 3 misses
+      caps rate-45 species at about 3 throws.
+
+  STILL OPEN
+    B3  Flee meter: fixed throws (e.g. 3) | scales with capture_rate | scales with time
+    B5  Ball / belt currency: coins | gym drops | the current ticket sources
+    A2  Tickets: become the balls (rename; sources already exist: kills, chests, missions) | retire
+    BALL TIERS  Great / Ultra unlock: meta purchase | regional (Ultra from region N) | gym rewards
+    X   UberElite time limit (seconds), and whether X scales with loop or region
+
+RESOLVED, ROUND 3 (Jess, 2026-11-12)
+------------------------------------
+  B3  Flee meter scales with capture_rate (rarer species flee sooner).
+  A2  Tickets (x1 "Pokeball", x10 "Master Ball") are RETIRED.
+  Starters / pseudo-legend bases at rate 45: skipped, still open.
+
+  B3 CURVE (provisional, a tuning knob): misses before flee = round(1 + 5 x rate / 255), clamp 1..6
+    Event catch %, 6-ball belt, Poke / Great / Ultra:
+      species       tries   25% time left    50% time left
+      Snorlax (25)    1       5 /  7 / 10      7 / 10 / 13
+      rate 45         2      17 / 25 / 32     22 / 32 / 41
+      rate 90         3      44 / 60 / 73     55 / 73 / 85
+      median (180)    5      89 / 98 /100     96 /100 /100
+      Pidgey (255)    6      98 /100 /100    100 /100 /100
+    425 Stage 1s, 50% time left: under 50% catch:  Poke 153 | Great 153 | Ultra 132
+    Gentler floor (min 2 misses): rate 45 = 31 / 44 / 55, Snorlax 13 / 19 / 24
+
+  FINDING 3: B3 + capture_rate odds = a DOUBLE gate on rare species (lower odds AND fewer tries).
+    Rate 45 (Bulbasaur, Dratini, Eevee, Lapras, UBs) tops out near 41% even with an Ultra Ball.
+  FINDING 4: belt size stops mattering PER EVENT. Expected balls used per event is 1 to 2.4
+    (Poke, 50% time left), because the flee cap (1 to 6) ends events first. Belt size now only
+    pays off across several events in one run. Ball quality is the dial that moves rare odds.
+    -> B4 "belt size" is a weak upgrade unless events per run go up.
+
+  A2 FALLOUT: everything that hands out tickets today needs a new payout
+    source                         gives today            needs
+    wild kills (pickup.js TICKET_RATE)  x1 tickets         coins? balls? nothing?
+    locked chests                   1-3 x1, 15% an x10     same
+    Lost Pokemon event prize        a ticket               same (or becomes the catch event)
+    Gholdengo treasure imp (1 in 4) an x10 ticket          same
+    daily / weekly missions         tickets + coins        same
+    achievements                    x10 tickets            same
+    icons / HUD / summary screen    ticket counts          remove
+    save fields ticket, ticket10    banked counts          migrate (convert, or drop)
+
+  STILL OPEN
+    C1  Ticket payouts become: coins | Poke Balls directly (restock without the shop) | candy
+    C2  Banked tickets in existing saves: convert to coins | convert to balls | drop
+    C3  B3 floor: 1 miss (Snorlax gets 1 throw) | 2 misses minimum
+    C4  Belt size upgrade: keep (multi-event runs) | swap for Flee capacity | more events per run
+    Starters / pseudo-legend bases at rate 45: leave | per-species catch boost
+
+RESOLVED, ROUND 4 (Jess, 2026-11-12)
+------------------------------------
+  C1  Former ticket payouts give COINS. Coins pay for restocking balls.
+  C3  Flee floor = 1 miss (the hardest species get a single throw).
+  C4  Belt size stays an upgrade. Catch events: MORE THAN ONE per run, scaling with run time.
+  A12 REOPENED: replace the mainline formula with our own catch equation (below).
+
+CATCH EQUATION, CANDIDATES (replaces mainline; numbers are a first cut)
+-----------------------------------------------------------------------
+  The problem with mainline: capture_rate puts Bulbasaur, Dratini, Eevee at 45, the same as
+  Lapras, Scyther, Nihilego. It does not measure "how strong is what I get right now".
+  Idea: key difficulty to the BST AT CATCH. Candy already gates how strong a line gets later
+  (Dratini -> Dragonite = 21 L candies), so the catch only has to gate immediate power.
+
+  E1 BST LADDER   base = 75% at BST 200, sliding to 5% at BST 570 (linear, clamped)
+  E2 STAR TIERS   base by the existing rarity field (gacha data, free once the gacha goes):
+                    1 star 60% (BST <=319) | 2 40% (320-405) | 3 25% (410-490) | 4 12% (495-570)
+  both:           P = min(95%, base x ball x (1 + time left))     ball 1 / 1.5 / 2
+
+  Single throw, 50% time left, Poke / Great / Ultra
+    species     BST   mainline     E1 ladder    E2 stars
+    Pidgey      251   66/ 99/100   95/95/95     90/95/95
+    Bulbasaur   318   12/ 18/ 23   79/95/95     90/95/95
+    Dratini     300   12/ 18/ 23   84/95/95     90/95/95
+    Eevee       325   12/ 18/ 23   77/95/95     60/90/95
+    Scyther     500   12/ 18/ 23   27/41/55     18/27/36
+    Lapras      535   12/ 18/ 23   17/26/35     18/27/36
+    Snorlax     540    7/ 10/ 13   16/24/32     18/27/36
+    Nihilego    570   12/ 18/ 23    8/11/15     18/27/36
+    Stage 1s BST < 350, avg:   mainline 47%   E1 85%   E2 83%
+    Stage 1s BST >= 500, avg:  mainline 13%   E1 16%   E2 18%
+
+  READ
+    * Both fix Finding 1: starters and pseudo-legend bases become easy, strong never-evolvers stay hard.
+    * E1 is smooth (every BST point counts). E2 is readable (4 tiers, can show as stars on the event toast).
+    * With a 95% cap, Great / Ultra only matter for BST ~400 and up. That is where ball
+      quality SHOULD matter, but the upgrade does nothing for most of the dex.
+    * B3 (flee) is still keyed to capture_rate, so Bulbasaur would get 2 tries at 79%.
+      If the equation moves to BST, the flee meter should move to the same scale.
+
+  STILL OPEN
+    E   equation: E1 ladder | E2 stars | other
+    E-flee  flee meter keyed to: the new difficulty (same scale) | capture_rate as decided
+    E-cap   ceiling: 95% | lower (e.g. 85%) so balls keep mattering on commons
+    EV  catch event cadence: every N minutes | per gym cleared | per loop | random with a minimum
+
+RESOLVED, ROUND 5 (Jess, 2026-11-12)
+------------------------------------
+  E      catch odds = BST ladder COMBINED with the star tier (E3 below).
+  FLEE   the Flee meter is keyed to the rescued mon's NATURE, not capture_rate.
+         Supersedes B3. Easy-sounding natures (Bold, Calm, Lax ...) = more misses allowed,
+         hard-sounding (Timid, Careful ...) = fewer, everything else = default.
+  A5     follows: strong never-evolvers are gated by the catch equation (4 star band), not capture_rate.
+
+E3: STEPPED LADDER (first cut)
+------------------------------
+  For Stage 1s the stars ARE BST bands, no overlap:
+    1 star 175-319 | 2 star 320-405 | 3 star 410-490 | 4 star 495-570
+  base slides linearly INSIDE each star band, with a visible drop between bands:
+    star   base at band bottom -> band top
+     1        80% -> 60%
+     2        55% -> 40%
+     3        35% -> 22%
+     4        18% ->  6%
+  P = min(90%, base x ball x (1 + time left))       ball 1 / 1.5 / 2
+
+FLEE BY NATURE (Jess named the 5 in caps; the other 20 placed by the agent, a proposal)
+---------------------------------------------------------------------------------------
+  bucket    misses before flee   natures
+  easy            5              BOLD, CALM, LAX, Relaxed, Docile, Gentle, Mild, Quiet        (8)
+  default         3              Hardy, Lonely, Brave, Adamant, Impish, Serious, Modest,
+                                 Bashful, Sassy, Quirky                                        (10)
+  hard            1              TIMID, CAREFUL, Hasty, Jolly, Naive, Rash, Naughty            (7)
+  The nature is rolled when the rescue mon is generated, and the caught copy KEEPS it
+  (Pokebox 4: natures apply to stats).
+
+RESULT, 6-ball belt, 50% time left
+----------------------------------
+  species     BST star base   single throw P/G/U   event catch easy/default/hard
+                                                    Poke            Ultra
+  Caterpie    195   1   77%    90/90/90            100/100/ 90     100/100/ 90
+  Dratini     300   1   63%    90/90/90            100/100/ 90     100/100/ 90
+  Bulbasaur   318   1   60%    90/90/90            100/100/ 90     100/100/ 90
+  Eevee       325   2   54%    81/90/90            100/ 99/ 81     100/100/ 90
+  Scyther     500   4   17%    26/39/52             78/ 59/ 26      97/ 89/ 52
+  Lapras      535   4   12%    17/26/35             62/ 44/ 17      88/ 72/ 35
+  Snorlax     540   4   11%    16/24/32             59/ 41/ 16      86/ 69/ 32
+  Nihilego    570   4    6%     9/14/18             38/ 25/  9      63/ 45/ 18
+  Average over a random nature:   1 star 97% | 2 star 92% (Poke) | 3 star 72% -> 94% Ultra
+                                  4 star 39% Poke -> 61% Ultra
+
+  READ
+    * The UberElite fight is the real gate for 1 and 2 star mons; the throw is close to a formality.
+    * Ball quality only matters from 3 star up (the 90% cap). That is where the upgrade pays.
+    * The hard bucket holds 4 of the 5 +Speed natures (Timid, Hasty, Jolly, Naive), so Speed natures
+      become the hardest to obtain. Check docs/SPEED-IVEV-SLICE.md for whether natures move Speed
+      in this game (Speed is species identity, decision 2026-10-17). If they do, that is a prize; if
+      not, the bucket is flavor only.
+
+  STILL OPEN
+    N1  nature bucket lists (the 20 the agent placed)
+    N2  bucket values 5 / 3 / 1
+    N3  show the nature on the event toast ("A Timid Dratini needs help!") | hidden until caught
+    E-cap  90% ceiling | lower
+    EV  catch event cadence (still open from round 4)
+
+RESOLVED, ROUND 6 (Jess, 2026-11-12)
+------------------------------------
+  N1  the nature buckets above stand for now.
+  SPEED  confirmed in code: js/core/stats.js speedToPx(baseSpe, iv, nature, ev) takes the nature, so a
+         +Speed nature moves ~10% faster. Jess wants this: movement speed is a big early-game edge in a
+         hordelike, so the hard bucket (4 of 5 +Speed natures) is the prize bucket on purpose.
+  N3  the nature shows on the toast: "A Timid Dratini needs help!"
+  EV  cadence: every minute the game rolls for a rescue event; a failed roll adds a little to the next.
+
+  CADENCE MODEL (simulated, 40,000 runs each; resets to the base chance after an event)
+    base  +per fail | events per run 10 / 20 / 30 min | no event by 10 min | median first event
+     5%     +5%     |      1.6 / 3.5 / 5.4          |       3.3%        |     min 5
+    10%     +5%     |      2.0 / 4.2 / 6.4          |       1.6%        |     min 4
+    10%    +10%     |      2.5 / 5.2 / 7.9          |       0.0%        |     min 4
+    15%     +5%     |      2.4 / 4.9 / 7.5          |       0.7%        |     min 4
+    guaranteed by: 10% +5% = roll 19 after an event | 10% +10% = roll 11
+
+  READ
+    * About 2 events per 10 minutes. With 1 to 2.4 balls used per event, a 6-ball belt runs dry at
+      around event 3 to 5, so belt size (C4) now pays off in 20 to 30 minute runs.
+    * Each event is an UberElite fight: 5 to 8 per 30 minutes is a lot of DPS checks on top of gyms
+      and elites. Watch for the "boss tests your build" pitfall and for mid-run fatigue.
+    * 1 and 2 star catches are ~95%+, so a long run can bring home several copies.
+      Pokebox space and the full-box auto-sell will see real traffic.
+
+  STILL OPEN
+    EV1  base chance and step (table above)
+    EV2  the roll pauses during gym fights, elite fights, other events | keeps rolling
+    EV3  the rescue event vs the existing Lost Pokemon event (events.js): replaces it | both exist
+    EV4  a hard cap of events per run | none (belt and Flee already limit catches)
+    EV5  the roll stops when the belt is empty | keeps rolling (no balls = fight for nothing)
+    E-cap  90% ceiling | lower
+    UberElite time limit X (seconds), and whether it scales with loop or region
+
+RESOLVED, ROUND 7 (Jess, 2026-11-12)
+------------------------------------
+  EV1  slower: target 1.3 to 1.5 rescue events per 10 minutes.
+  EV2  the roll keeps going during everything (gyms, elites, other events). Miss it and it is gone.
+  EV3  KEEP BOTH: the rescue event (UberElite + catch) AND the Lost Pokemon event (events.js) are
+       ways to recruit a Pokemon. Lost Pokemon gains a recruit payout (changes current behavior).
+
+  CADENCE CANDIDATES (40,000 simulated runs each; chance resets after an event)
+    base  +per fail | per run 10 / 20 / 30 min | no event in first 10 min | guaranteed by roll
+     4%     +4%     |   1.38 / 3.06 / 4.74     |          7.7%           |        25
+     5%     +4%     |   1.46 / 3.20 / 4.94     |          6.8%           |        25
+     6%     +3%     |   1.37 / 3.01 / 4.65     |         10.9%           |        33
+     8%    +2.5%    |   1.43 / 3.11 / 4.80     |         11.4%           |        38
+    Same average, different feel: a low base with a big step = steadier (fewer dry runs);
+    a high base with a small step = streakier. Median first event: minute 5 to 6.
+
+  READ
+    * Belt: 1 to 2.4 balls per event, so a 6-ball belt runs dry around event 3 to 5, which is
+      minute ~25 to 35. Belt size upgrades only pay off in long runs, which fits it as a later buy.
+    * EV2 means a gym fight can eat an event. That is the intended cost of "miss it, it is gone",
+      but it needs an expiry clock to be real (the Lost Pokemon event uses LOST_TIME = 120 s).
+    * The rescue roll and the existing event picker (horde / gold / lost, events.js) are separate
+      systems; with both recruiting, a run's recruit chances = rescue rolls + Lost Pokemon draws.
+
+  STILL OPEN
+    EV1b  which curve (table above)
+    EV6   rescue expiry: how long the toast and arrow stay up before it leaves (Lost uses 120 s)
+    L1    Lost Pokemon recruit payout: free recruit on delivery (no ball, no UberElite)
+          | a catch attempt at the mark (uses belt balls) | a chance to recruit
+    L2    Lost Pokemon species: any species as today | Stage 1 only (matches tier 1 rules)
+    L3    Lost Pokemon nature on its toast, and whether nature matters (no flee meter there)
+    EV4   cap on events per run (none needed at this rate?) | EV5 empty belt behavior
+
+RESOLVED, ROUND 8 (Jess, 2026-11-12)
+------------------------------------
+  EV1b  cadence curve: 4% base, +4% per failed minute roll, resets after an event.
+        1.38 / 3.06 / 4.74 events at 10 / 20 / 30 min, 7.7% of runs see none in 10 min,
+        guaranteed by roll 25.
+  EV6   a rescue stays up 60 s (toast + arrow), then it is gone. Lost Pokemon keeps 120 s.
+  L1    delivering a Lost Pokemon gives a CHANCE to recruit.
+
+LOST POKEMON TODAY (js/systems/events.js, read 2026-11-12)
+---------------------------------------------------------
+  L1 is ALREADY BUILT: grant = Math.random() < 0.2  ->  1 in 5 deliveries joins (G.onRescue).
+  cadence  an event every 240-300 s, one of horde / gold / lost, never the same twice in a row
+           ~0.74 / 1.48 / 2.22 Lost events at 10 / 20 / 30 min
+           ~0.15 / 0.30 / 0.44 recruits per run at 20%, IF every one is delivered
+  prize    heal 50% HP, coins, a ticket (retired by A2 -> coins by C1), 20% recruit
+  species  pool = rarity <= 3, not legendary, has a sprite, does not hover
+           652 species: 386 Stage 1, 266 EVOLVED (Ivysaur, Charmeleon, Pidgeot, Beedrill ...)
+           NOT region-filtered: a Kanto run can hand out a Gen 9 mon
+  CONFLICT 1  Tier 2 says evolution is the only way past Stage 1. Lost recruits evolved mons today.
+  CONFLICT 2  the run's region (G.Enemies.regionOK) is ignored.
+  CONFLICT 3  the copy it makes: check G.onRescue for whether it rolls IVs / nature like a pull did.
+
+RECRUIT ROUTES PER RUN (approximate, 30 min)
+  rescue (UberElite + belt)   ~4.7 events, 1-2 star ~95%, 4 star ~39% Poke
+  Lost Pokemon                ~2.2 events x delivery x 20%  = ~0.4
+  -> rescue is the main route; Lost is the occasional bonus.
+
+  READ
+    * 60 s + rolls running during gyms: a rescue that fires mid-gym-fight is almost always lost.
+      That is the "miss it, it is gone" cost; with ~1 gym per run segment, expect ~1 in 5 rescues
+      to be eaten (estimate, depends on gym fight length).
+
+  STILL OPEN
+    L2  Lost Pokemon pool: Stage 1 only + run region (matches tier 1) | as today
+    L1b recruit chance: keep 20% | the E3 ladder (star tier) | 20% x a star multiplier
+    L3  Lost Pokemon nature: shown on its toast (like rescues) | hidden; nature has no flee role there
+    EV4 cap on events per run | EV5 empty belt: rescues still fire (fight for coins) | stop rolling
+
+RESOLVED, ROUND 9 (Jess, 2026-11-12)
+------------------------------------
+  L2  Lost Pokemon pool = Stage 1 species THAT HAVE AN EVOLUTION, from ANY region (not run-filtered,
+      on purpose: "a fun little thing"). Fixes Conflict 1 (no evolved recruits). Conflict 2 is accepted.
+  EV5 rescues keep firing with an empty belt.
+
+  LOST POOL, sized (current filters kept: rarity <= 3, not legendary, does not hover)
+                         total   Kant Joht Hoen Sinn Unov Kalo Alol Gala Pald
+    babies skipped        257     54   29   39   21   40   19   16   19   20
+    babies count          267     49   35   40   28   40   19   16   20   20
+    today's pool          564 (includes evolved and never-evolving species)
+    stars: 169 one star | 79 two star | 9 three star
+    rarity <= 3 drops: Scyther, Duraludon (and Magmar if babies are skipped)
+    the hover filter drops floating Stage 1s, e.g. Beldum, Dreepy
+    in the pool: 29 starters, 8 pseudo-legend bases (Dratini, Larvitar, Bagon, Gible, Deino,
+      Goomy, Jangmo-o, Frigibax). Candy is their real gate (Dratini -> Dragonite 21 L).
+
+  CHANGES TO CURRENT CODE (events.js spawnLost, not built)
+    pool filter  + Stage 1 (no pre-evolution, per A4) + has an evolution in G.DEX
+    prize        ticket -> coins (C1); keep heal 50% + coins; recruit stays 20% unless L1b changes it
+
+  STILL OPEN
+    L1b recruit chance on delivery: keep 20% | x star multiplier
+    A4  babies: count as Stage 1 (Pichu, Cleffa recruitable) | skipped (Pikachu, Clefairy) -- now
+        decides BOTH the rescue pool and the Lost pool (257 vs 267)
+    EV5b empty-belt rescue reward: UberElite drops only (coins, items) | a consolation prize
+    L3  Lost Pokemon nature on its toast | hidden
+    the hover filter: keep (escort pathing) | allow floating Stage 1s
+
+RESOLVED, ROUND 10 (Jess, 2026-11-12)
+-------------------------------------
+  A4   BABIES COUNT as Stage 1 (raw chain: no evolves_from = Stage 1). Pichu, Cleffa, Igglybuff,
+       Munchlax, Riolu ... are recruitable; Pikachu, Clefairy, Jigglypuff, Snorlax, Lucario are
+       Stage 2 and come only by evolving. Lost pool = 267 (182 one star, 78 two, 7 three).
+  L1b  Lost recruit chance = 20% x a star multiplier.
+  EV5b skipped, still open.
+
+  THE 19 BABIES AND HOW THEY EVOLVE (pokemon_evolution.csv)
+    friendship (8)  Pichu>Pikachu  Cleffa>Clefairy  Igglybuff>Jigglypuff  Togepi>Togetic
+                    Azurill>Marill  Budew>Roselia  Chingling>Chimecho  Munchlax>Snorlax
+                    Riolu>Lucario
+    special (4)     Bonsly>Sudowoodo  Mime Jr.>Mr. Mime  Happiny>Chansey  Mantyke>Mantine (hovers)
+    level (6)       Tyrogue 20 (3-way split)  Wynaut 15  Smoochum 30  Elekid 30  Magby 30  Toxel 30
+    -> 13 of 19 baby lines have NO level. Candy cannot evolve them until A6 is decided.
+       A6 (non-level evolutions) is now load-bearing.
+    -> Munchlax (2 star) is the new door to Snorlax: the 4 star catch gate becomes a candy gate.
+
+  L1b MULTIPLIER CANDIDATES (Lost pool of 267, ~2.2 Lost events per 30 min if all delivered)
+    1 / 2 / 3 star        recruit %          pool average   recruits per 30 min
+    1 / 0.75 / 0.5      20 / 15  / 10           18.3%             0.40
+    1 / 0.6  / 0.3      20 / 12  /  6           17.3%             0.38
+    1 / 0.5  / 0.25     20 / 10  /  5           16.7%             0.37
+    The pool is 68% one star, so any multiplier moves the average under 4 points.
+    It is a flavor lever (rare mons feel rare), not a pacing one.
+
+  STILL OPEN
+    L1c  star multiplier values (table above)
+    A6   non-level evolutions (now covers 13 baby lines): give each a candy level
+         | stones as gym drops | ignore requirements (like gym rosters)
+    EV5b empty-belt rescue reward
+
+RESOLVED, ROUND 11 (Jess, 2026-11-12)
+-------------------------------------
+  L1c  Lost recruit chance by star: 1 star 20% | 2 star 12% | 3 star 6%.
+  EV5b winning a rescue with an empty belt gives the UberElite's drops only (no catch, no consolation).
+  A6   direction: every evolution keeps its mainline requirement ON TOP of candy, adapted to the game.
+       Jess's mappings so far:
+         stones      -> drop from gyms
+         friendship  -> time the mon spends on your roster in a run
+         trade       -> no multiplayer (deferred); may stay a limitation
+
+EVOLUTION REQUIREMENTS IN THE DATA (pokemon_evolution.csv, one row per in-game evolved species,
+legendaries excluded; one species can need two things, e.g. Espeon = friendship + day)
+-----------------------------------------------------------------------------------------------
+  requirement              n    examples                                   in this game
+  plain level            297    Ivysaur, Charizard, Dragonite              candy only
+  stone / use item        56    Raichu, Arcanine, Vaporeon, Togekiss       gym drop (Jess)
+  trade                   26    Alakazam, Machamp, Golem, Gengar           Linking Cord? (see below)
+    of those, + held item 17    Scizor (Metal Coat), Kingdra (Dragon Scale), Steelix, Porygon2
+    of those, for a species  2  Escavalier <-> Accelgor (Karrablast + Shelmet)
+  friendship              18    Pikachu, Snorlax, Crobat, Lucario, Togetic roster time in run (Jess)
+  time of day             18    Espeon (day), Umbreon (night), Lycanroc    NO day/night cycle found in js/
+  knows a move            14    Mr. Mime (Mimic), Tangrowth, Mamoswine     learnsets.js exists
+  gender                   9    Gallade (male), Froslass (female), Vespiquen  copies.js already rolls gender
+  hold item + level        3    Chansey (Oval Stone), Weavile, Gliscor     item drop
+  Atk vs Def               3    Tyrogue -> Hitmonlee / Hitmonchan / Hitmontop  copy's real stats (IVs, nature)
+  random at evolve         4    Wurmple -> Silcoon / Cascoon, Maushold, Dudunsparce  roll at evolve
+  party member             2    Mantine (Remoraid on team), Pangoro (a Dark type on team)  run roster
+  nature                   1    Toxtricity (form by nature)                natures exist
+  IN-RUN FEATS             6    Runerigus (take damage), Basculegion (recoil), Wyrdeer, Annihilape
+                                (use a move N times), Pawmot (walk N steps), Maushold (level in battle)
+                                -> the #91-1 run counters (BUILT) already track damage taken, kills ...
+  COLLECTION / ONE-OFF     4    Gholdengo (999 Gimmighoul Coins), Kingambit (beat 3 Bisharp with a
+                                Leader's Crest), Shedinja (free when Nincada evolves), Alcremie (spin)
+  regional forms / location: forms are not in the game, ignore
+
+  TRADE WITHOUT MULTIPLAYER: mainline precedent
+    Pokemon Legends: Arceus replaced every trade evolution with the LINKING CORD, a single-player
+    item. Trade + held item there = Linking Cord + that item. That fits "stones drop from gyms".
+    Escavalier / Accelgor (trade FOR a species) = Linking Cord + own both Karrablast and Shelmet.
+
+  THINGS THE GAME ALREADY HAS FOR FREE
+    gender (copies.js rollGender), natures and IVs (Pokebox 4), learnsets (learnsets.js),
+    run counters (#91-1), weather (systems/weather), the Gholdengo treasure imp (events.js),
+    elites (Bisharp with a Crest could be an elite variant)
+
+  STILL OPEN
+    T1  trade: Linking Cord item (gym drop / shop) | stays a limitation (26 species locked)
+    T2  time of day: run clock (first / second half of a run) | weather | drop the requirement
+    T3  knows a move: has it in the run moveset | ever learned it on that copy
+    T4  in-run feats: count per copy across runs (persistent counters) | must happen in one run
+    T5  friendship: roster time is per run or cumulative across runs; how many minutes
+    T6  where evolution happens: main menu (candy + requirements met) | mid-run when the conditions hit
+    T7  one-offs (Gholdengo, Kingambit, Shedinja, Alcremie): hand-authored each | simplify
+
+RESOLVED, ROUND 12 (Jess, 2026-11-12)
+-------------------------------------
+  T1  TRADE STAYS A LIMITATION until multiplayer (deferred). No Linking Cord.
+      26 species are unobtainable for now, among them Alakazam, Machamp, Golem, Gengar, Politoed,
+      Slowking, Steelix, Scizor, Kingdra, Porygon2, Escavalier, Accelgor. Their pre-evolutions stay
+      catchable and evolvable up to the trade step (Kadabra, Machoke, Graveler, Haunter ...).
+      Gym rosters are unaffected (they ignore evolution requirements already).
+  T6  evolution happens in the TEAM MENU.
+  T4  in-run requirements are a TRUE/FALSE FLAG on the copy, set during the run; back at the main
+      menu a toast / popup says the mon is ready ("Runerigus is ready to evolve!").
+  T2  time of day -> a new DAY/NIGHT CYCLE (new feature, parked for its own full design dive).
+
+  ONE MODEL FOR EVERY NON-LEVEL REQUIREMENT
+    in run  ──condition met──> flag on that copy (saved with the copy)
+    menu    ──popup "ready to evolve"──> Team Menu: Evolve
+            needs: candy level reached + every flag the species needs + any item (stone)
+    friendship    flag: N minutes on the roster in one run (T5 still open)
+    day / night   flag: was the ACTIVE Pokemon while it was night (or day)
+    feats         flag: took N damage, used a move N times, walked N steps ...
+    move          flag: had the move in its run moveset (T3 still open)
+    party         flag: ran alongside a Remoraid / a Dark type
+
+  DAY / NIGHT CYCLE (parked, direction only)
+    clock    run time; each run STARTS AT A RANDOM POINT in the cycle
+    affects  probably all three: visuals (tint), evolution flags, spawns. Full dive later.
+
+  SAVE SAFETY (applies when built)
+    every new flag on a copy defaults to false when an old save loads; no save wipe needed.
+
+  STILL OPEN
+    T3  knows a move: in the run moveset | ever learned on that copy
+    T5  friendship: per run or cumulative; minutes
+    T7  one-offs (Gholdengo, Kingambit, Shedinja, Alcremie)
+    DN  day/night: cycle length, how night looks, which spawns change (its own design dive)
+
+RESOLVED, ROUND 13 (Jess, 2026-11-12)  supersedes the round 12 T1 ruling
+-----------------------------------------------------------------------
+  T1  trade evolutions are possible two ways:
+        LINK CABLE   a one-time-use item, bought in the main menu Shop, used in the Team Menu
+        TRADE        real multiplayer trade, once multiplayer exists (deferred)
+      The 26 trade species are reachable again (Alakazam, Machamp, Golem, Gengar, Scizor ...).
+
+  OPEN FROM T1
+    LC1  trade + held item (17: Scizor Metal Coat, Kingdra Dragon Scale, Steelix, Porygon2,
+         Politoed, Slowking, Milotic ...): Link Cable AND the held item | the Link Cable alone
+    LC2  Escavalier / Accelgor (traded for each other): Link Cable + own both Karrablast and
+         Shelmet | Link Cable alone
+    LC3  Shop tab: Team Items (exists) | a new tab replacing the Pokemon (gacha) tab
+    LC4  price in coins (BALANCE.md once set). Save: a new item count, defaults to 0 on old saves.
+
+T3 CHECK: "KNOWS A MOVE" EVOLUTIONS vs THE GAME'S MOVES (js/data/learnsets.js, 178 live moves)
+---------------------------------------------------------------------------------------------
+  move exists AND the pre-evolution can learn it (5):
+    Tangela > Tangrowth, Yanma > Yanmega, Piloswine > Mamoswine (all Ancient Power)
+    Steenee > Tsareena (Stomp), Poipole > Naganadel (Dragon Pulse)
+  move is NOT in the game (9):
+    Mime Jr. > Mr. Mime, Bonsly > Sudowoodo (Mimic)    Aipom > Ambipom (Double Hit)
+    Lickitung > Lickilicky (Rollout)                   Clobbopus > Grapploct (Taunt)
+    Qwilfish > Overqwil (Barb Barrage)                 Girafarig > Farigiraf (Twin Beam)
+    Dunsparce > Dudunsparce (Hyper Drill)              Dipplin > Hydrapple (Dragon Cheer)
+  -> 9 lines are blocked until those moves are added (or the requirement is swapped).
+
+  STILL OPEN
+    T3  knows a move: in the run moveset (flag) | ever learned on that copy
+    T3b the 9 missing moves: add them to the move set | swap in a move the game has | candy only
+    T5  friendship (18 lines, e.g. Pichu, Munchlax, Riolu, Eevee, Golbat, Togepi): minutes on the
+        roster in one run | cumulative across runs
+    T7  one-offs (Gholdengo, Kingambit, Shedinja, Alcremie)

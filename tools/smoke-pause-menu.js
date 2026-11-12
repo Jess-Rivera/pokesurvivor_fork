@@ -19,6 +19,8 @@
 //   at the top, Region Best's Best / Next / Pace, clear and old, a dry and a written recordcheck.
 //   #91-3: the Run Stats box: its twelve rows, the shown Pokemon's numbers on next and a card click, a compact
 //   Damage, no row overflowing, the box scrolling at 200 px, the Statuses hover.
+//   #83: Cards Taken, seeded through G.Debug.cards: its 400 px box, takenBy's rows (Vitamins by name), no row
+//   overflowing, the move tooltip's "Cards:" line, the Gate and Bench Regeneration hovers.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -803,6 +805,79 @@ async function main() {
     tip.name === 'Statuses' && /^\w+ \d+(, \w+ \d+)*$/.test(tip.lines),
     'hovering Statuses lists the kinds (' + tip.name + ': ' + tip.lines + ')'
   );
+
+  // ---- #83: Cards Taken (the cards that touch the shown Pokemon) and the move tooltip's cards line ----
+  const cardsBox = () =>
+    page.evaluate(() => {
+      const box = document.querySelector('.pm-box-cards');
+      const rows = [...box.querySelectorAll('.pm-card-row')].map((row) => ({
+        id: row.dataset.card,
+        label: row.querySelector('.pm-card-label').textContent.trim(),
+        picks: row.querySelector('.pm-card-picks').textContent.trim(),
+      }));
+      const slot = +document.querySelector('.pm-detail').dataset.slot;
+      const member = G.Game.roster.find((each) => each.teamSlot === slot);
+      const want = G.TeamCards.takenBy(member.teamCards, member.moves.map((move) => move.id), G.Game.roster.length);
+      const scale = document.querySelector('.pm-detail').getBoundingClientRect().height / 1028;
+      return {
+        got: rows.map((row) => row.id + ' ' + row.label + ' ' + row.picks).join('|'),
+        want: want.map((row) => row.id + ' ' + row.label + ' x' + row.picks).join('|'),
+        rows: rows.length,
+        empty: !!box.querySelector('.pm-empty-note'),
+        height: Math.round(box.getBoundingClientRect().height / scale),
+        overflow: [...box.querySelectorAll('.pm-card-row')].some((row) => row.scrollWidth > row.clientWidth + 1),
+        changed: member.moves
+          .map((move) => ({ id: move.id, texts: G.TeamCards.changes(member, move.id).map((change) => change.text) }))
+          .filter((move) => move.texts.length),
+      };
+    });
+  let taken = await cardsBox();
+  ok(taken.height === 400, 'Cards Taken keeps its 400 px box (' + taken.height + ')');
+  ok(taken.rows > 0 || taken.empty, 'Cards Taken: rows, or "No cards yet." with none');
+  await page.evaluate(() => {
+    for (const [id, picks] of [['damage', 2], ['cooldown', 2], ['ailment', 3], ['vitamins:atk', 2], ['gate', 2], ['regen', 1], ['chain', 1]])
+      G.Debug.cards(id, picks);
+  });
+  await reopen();
+  taken = await cardsBox();
+  ok(taken.rows > 0 && taken.got === taken.want, 'Cards Taken lists takenBy\'s rows (' + taken.got + ')');
+  ok(taken.got.includes('vitamins:atk Protein x2'), 'Cards Taken: Vitamins by the vitamin\'s name, with its pick count');
+  ok(!taken.overflow, 'no Cards Taken row overflows the column (long names wrap)');
+  ok(taken.changed.length > 0, 'the cards change at least one of the shown Pokemon\'s moves');
+  if (taken.changed.length) {
+    const target = taken.changed[0];
+    await page.evaluate((id) => document.querySelector('.pm-move[data-move="' + id + '"]').scrollIntoView({ block: 'nearest' }), target.id);
+    await page.hover('.pm-move[data-move="' + target.id + '"]');
+    await sleep(100);
+    const moveTip = await page.evaluate(() =>
+      [...document.querySelectorAll('.pm-move-tooltip .pm-tooltip-line')].map((line) => line.textContent.trim())
+    );
+    const cardsLine = moveTip.find((line) => line.startsWith('Cards: ')) || '';
+    ok(target.texts.every((text) => cardsLine.includes(text)), 'the move tooltip\'s cards line shows every change (' + cardsLine + ')');
+  }
+  for (const id of ['gate', 'regen']) {
+    const has = await page.evaluate((card) => !!document.querySelector('.pm-card-row[data-card="' + card + '"]'), id);
+    if (!has) continue; // gate only with a stat move, regen only with a team of 2 or more
+    await page.evaluate((card) => document.querySelector('.pm-card-row[data-card="' + card + '"]').scrollIntoView({ block: 'nearest' }), id);
+    await page.hover('.pm-card-row[data-card="' + id + '"]');
+    await sleep(100);
+    const cardTip = await page.evaluate((card) => {
+      const shown = document.querySelector('.pm-move-tooltip');
+      const slot = +document.querySelector('.pm-detail').dataset.slot;
+      const member = G.Game.roster.find((each) => each.teamSlot === slot);
+      const rows = G.TeamCards.takenBy(member.teamCards, member.moves.map((move) => move.id), G.Game.roster.length);
+      return {
+        shown: shown ? [...shown.querySelectorAll('.pm-tooltip-line')].map((line) => line.textContent.trim()).join(' | ') : '',
+        want: (rows.find((row) => row.id === card) || {}).tip,
+      };
+    }, id);
+    ok(
+      !!cardTip.want && cardTip.shown === cardTip.want &&
+        (id === 'gate' ? /^Stat stage Gate 6\.0 s to \d/.test(cardTip.shown) : /^Benched Pokemon regain /.test(cardTip.shown)),
+      'hovering ' + id + ' in Cards Taken shows its real number (' + cardTip.shown + ')'
+    );
+  }
+  await page.mouse.move(5, 5);
 
   // ---- End Run asks inside the ball ----
   // where each button sits, relative to the ball's centre, and whether the ball's clip leaves any of it showing
