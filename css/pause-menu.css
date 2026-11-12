@@ -346,11 +346,6 @@ body.pm-open .hud-overlay {
   display: flex;
   gap: 60px;
 }
-/* near the screen's top: the tooltips open below the squares */
-.pm-inventory .hud-grid-tip {
-  bottom: auto;
-  top: calc(100% + 8px);
-}
 
 /* ---------- moving held items (#90, js/ui/pause-inventory.js): click or drag, the ghost follows the pointer ---------- */
 .pm-pocket-slot.is-filled,
@@ -442,10 +437,6 @@ body.pm-open .hud-overlay {
   top: 108px;
   color: #fb3041;
 }
-/* the held item slot: the square only, name and effect in its tooltip (#90) */
-.pm-detail-held .hud-grid-tip {
-  z-index: 20;
-}
 /* boxes: the roster card's box with a flat body, rimmed in the first type */
 .pm-box > svg {
   position: absolute;
@@ -527,36 +518,8 @@ body.pm-open .hud-overlay {
 .pm-hex-label {
   cursor: default;
 }
-/* the hovered corner rises above the others, so its tooltip is always on top */
-.pm-hex-label:hover {
-  z-index: 5;
-}
-.pm-hex-tip {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-  z-index: 2;
-  padding: 8px 10px;
-  font-family: var(--font); /* the shared tooltip look (css/hud-overlay.css .hud-grid-tip) */
-  background: #181818;
-  border: 2px solid #f3b200;
-  box-shadow: 0 0 0 2px #101010;
-  pointer-events: none;
-}
-.pm-hex-label:hover .pm-hex-tip {
-  display: block;
-}
-/* the side corners' tips grow toward the hex's middle, so they stay inside the panel */
-.pm-hex-label.is-right .pm-hex-tip {
-  right: 0;
-}
-.pm-hex-label.is-left .pm-hex-tip {
-  left: 0;
-}
-.pm-hex-label.is-middle .pm-hex-tip {
-  left: 50%;
-  transform: translateX(-50%);
-}
+/* its tooltip opens below it in the shared tooltip layer (css/hud-overlay.css .hud-tip); the side corners' tips
+   grow toward the hex's middle (js/ui/pause-pokemon.js Hex) */
 /* the move list: bonded groups framed in the bond pink, a type coloured scroll bar (css/hud-overlay.css .hud-scroll-*) */
 .pm-move-group {
   margin-bottom: 8px;
@@ -602,24 +565,8 @@ body.pm-open .hud-overlay {
 .pm-empty-note {
   color: #7f7f7f;
 }
-/* the move's full numbers on hover: left of the detail panel, level with the row */
-.pm-move-tooltip {
-  right: calc(100% + 16px);
-  width: 380px;
-  padding: 12px 14px;
-  font-family: var(--font); /* the shared tooltip look (css/hud-overlay.css .hud-grid-tip) */
-  background: #181818;
-  border: 2px solid #f3b200;
-  box-shadow: 0 0 0 2px #101010;
-  pointer-events: none;
-}
-.pm-move-tooltip .hud-text {
-  white-space: normal;
-  line-height: 26px;
-}
-.pm-tooltip-name {
-  color: #ffd23f;
-}
+/* the detail panel's hover tooltips (moves, Run Stats, Cards Taken) are drawn in the shared tooltip layer:
+   css/hud-overlay.css .hud-tip.is-detail */
 /* previous and next: dimmed at rest, bright on hover */
 .pm-arrow {
   padding: 0;

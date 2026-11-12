@@ -35,6 +35,10 @@ G.CHANGELOG = [
       ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
       ["The pause menu's scroll bars can now be dragged.", "The pause menu's scroll bars can now be dragged."],
       [
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+        "The pause menu's move tooltip is wider, so long lines wrap less.",
+      ],
+      [
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
         'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
       ],
@@ -51,6 +55,10 @@ G.CHANGELOG = [
       [
         "The pause menu's grids (the pockets and the team cards) show again.",
         "The pause menu's grids (the pockets and the team cards) show again.",
+      ],
+      [
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
+        'Pause menu tooltips are always on top now: a move near the bottom of the list no longer shows its tooltip under the team cards.',
       ],
     ],
   },

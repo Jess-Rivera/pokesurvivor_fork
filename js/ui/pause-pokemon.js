@@ -21,6 +21,9 @@
  * value is drawn between 10% and 100% of the radius. Each corner shows the final stat (HP as the game has it) with the
  * yellow "+X%"; hovering it shows the copy's make-up, "Base: N, IV: N, EV: N".
  *
+ * Every hover tooltip here is drawn in the menu's shared tooltip layer (the kit's TooltipLayer, the stage's last
+ * child), so nothing on the menu covers it (Jess, 2026-11-12).
+ *
  * Team panel (548 x 160): the six team slots in 3 columns by 2 rows, in slot order, as the run screen's roster cards
  * narrowed to fit (no status chips). A missing member is an empty frame. Clicking a card shows it on the detail panel;
  * the shown one's portrait gets a green stroke and a shimmer. The Pokemon on the field wears the selection cursor.
@@ -82,6 +85,7 @@ G.PausePokemon = (() => {
   const { html, signal, hooks, PALETTE, FAINTED_RIM, PixelShape, typeColours, hpBand } = overlay.kit;
   const { IconCanvas, Cursor, RosterCard, rosterBoxGrid, rosterColours, letterRows, rosterFill } = overlay.kit;
   const { createLifeBar, portraitSource, portraitFallback, ItemGrid, ScrollBox } = overlay.kit;
+  const { tooltipHandlers, hideTooltip } = overlay.kit; // every tooltip is drawn in the menu's shared layer
   const inventory = G.PauseInventory && G.PauseInventory.ready ? G.PauseInventory : null; // held item moves (#90)
 
   // ---------- sizes and places (1080p pixels inside each panel) ----------
@@ -125,8 +129,7 @@ G.PausePokemon = (() => {
 
   // ---------- state ----------
   const shownSlot = signal(0), // the team slot the detail panel shows
-    readCount = signal(0), // bumped on each read, so the panels redraw from the team as it is now
-    hoveredMove = signal(null); // { lines, top } for the move tooltip, or null
+    readCount = signal(0); // bumped on each read, so the panels redraw from the team as it is now
   const life = createLifeBar({ artPixel: 2, artWidth: signal(LIFE.artWidth), labelTop: LIFE.labelTop });
 
   const team = () => (G.Game && G.Game.roster) || [];
@@ -327,9 +330,18 @@ G.PausePokemon = (() => {
       // The corner shows the final stat (Jess, 2026-11-11): HP as the game has it (after HP_SCALAR, the HP bar's number)
       // though the shape draws it at mainline size; the others with nature, level and run effects. The yellow "+X%"
       // rides on the name line at HP and Spe, and sits under the number on the side corners (#98, Jess 2026-11-11).
-      // Hover: the copy's make-up.
       const finalStat = statIndex === 0 ? Math.round(member.maxHp) : Math.round(numbers.withRun[statIndex]);
-      return html`<div key=${label} class=${'pm-hex-label is-' + side} data-stat=${label} style=${style}>
+      // hover: the copy's make-up, below the corner; the side corners' tips grow toward the hex's middle
+      const makeUp = 'Base: ' + baseStat + ', IV: ' + member.statIv(statIndex) + ', EV: ' + member.statEv(statIndex);
+      const tipAlign = side === 'right' ? 'end' : side === 'left' ? 'start' : 'centre',
+        tipPlace = { side: 'below', align: tipAlign, gap: 6 };
+      return html`<div
+        key=${label}
+        class=${'pm-hex-label is-' + side}
+        data-stat=${label}
+        style=${style}
+        ...${tooltipHandlers({ lines: [makeUp], variant: 'plain' }, tipPlace)}
+      >
         <div class="hud-text pm-hex-name">
           ${label}${percent > 0 && !bonusBelow ? html`<span class="pm-hex-bonus"> +${percent}%</span>` : null}
         </div>
@@ -346,9 +358,6 @@ G.PausePokemon = (() => {
               </div>`
             : null
         }
-        <div class="hud-text pm-hex-tip">
-          ${'Base: ' + baseStat + ', IV: ' + member.statIv(statIndex) + ', EV: ' + member.statEv(statIndex)}
-        </div>
       </div>`;
     });
     // The edge's number sits in a break of the outer line between HP and Atk, turned to run along it (Jess, 2026-11-11).
@@ -393,25 +402,21 @@ G.PausePokemon = (() => {
     </div>`;
   }
 
-  /** The detail panel's hover tooltip (MoveTooltip), level with the hovered row; nothing with no lines. The move list
-   *  and the Run Stats box share it, since a tooltip inside a scrolling box would be clipped by it. */
-  function showTip(event, name, lines) {
-    const panel = event.currentTarget.closest('.pm-detail');
-    const rowBox = event.currentTarget.getBoundingClientRect(),
-      panelBox = panel.getBoundingClientRect(),
-      scale = panelBox.height / DETAIL.height;
-    hoveredMove.value = lines.length ? { name, lines, top: (rowBox.top - panelBox.top) / scale } : null;
-  }
+  /** The detail panel's hover tooltip (moves, Run Stats, Cards Taken): 16 px left of the panel, level with the
+   *  hovered row, drawn in the menu's shared tooltip layer (Jess, 2026-11-12: every tooltip is the topmost layer). */
+  const DETAIL_TIP = { side: 'leftOf', beside: '.pm-detail', gap: 16 };
+  const detailTip = (name, lines) => tooltipHandlers({ name, lines, variant: 'detail' }, DETAIL_TIP);
 
   /** The move list: every move grouped by bond, each with its summary line; hover shows the full numbers. */
   function MoveList({ member, rim }) {
     const groups = member.slots.length ? member.slots : member.moves.map((move) => [move]);
     const width = COLUMN_RIGHT.width - 2 * BOX_PAD - 14,
       height = MOVES_BOX.height - 2 * BOX_PAD;
-    const showDetail = (move, event) => {
-      const lines = G.Sheet.detailOf(member, move);
-      showTip(event, move.name, [lines.raw, lines.ail, lines.hit, lines.cards].filter(Boolean));
-    };
+    const moveTip = (move) =>
+      tooltipHandlers(() => {
+        const lines = G.Sheet.detailOf(member, move);
+        return { name: move.name, lines: [lines.raw, lines.ail, lines.hit, lines.cards], variant: 'detail' };
+      }, DETAIL_TIP);
     const rows = groups.map((group, groupIndex) => {
       const bonded = group.length > 1;
       return html`<div key=${groupIndex} class=${'pm-move-group' + (bonded ? ' is-bonded' : '')}>
@@ -422,8 +427,7 @@ G.PausePokemon = (() => {
               key=${move.id}
               class="pm-move"
               data-move=${move.id}
-              onMouseEnter=${(event) => showDetail(move, event)}
-              onMouseLeave=${() => (hoveredMove.value = null)}
+              ...${moveTip(move)}
             >
               <${IconCanvas} icon=${'move:' + move.id} size=${32} className="pm-move-icon" />
               <div class="pm-move-text">
@@ -446,7 +450,7 @@ G.PausePokemon = (() => {
       trackRight=${BOX_PAD}
       colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
       resetOn=${[member, readCount.value]}
-      onScroll=${() => (hoveredMove.value = null)}
+      onScroll=${hideTooltip}
     >
       ${rows.length ? rows : html`<div class="hud-text pm-empty-note">No moves yet.</div>`}
     </${ScrollBox}>`;
@@ -466,7 +470,7 @@ G.PausePokemon = (() => {
         trackRight=${BOX_PAD}
         colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
         resetOn=${[member, readCount.value]}
-        onScroll=${() => (hoveredMove.value = null)}
+        onScroll=${hideTooltip}
       >
         ${rows.map(
           (row) =>
@@ -474,8 +478,7 @@ G.PausePokemon = (() => {
               key=${row.label}
               class="pm-stats-row"
               style=${{ height: RUN_STATS.rowHeight + 'px', lineHeight: RUN_STATS.rowHeight + 'px' }}
-              onMouseEnter=${row.tip ? (event) => showTip(event, row.label, [row.tip]) : null}
-              onMouseLeave=${row.tip ? () => (hoveredMove.value = null) : null}
+              ...${row.tip ? detailTip(row.label, [row.tip]) : {}}
             >
               <span class="hud-text pm-stats-label">${row.label}</span>
               <span class="hud-text pm-stats-value">${row.value}</span>
@@ -499,8 +502,7 @@ G.PausePokemon = (() => {
           class=${'pm-card-row' + (row.tip ? ' has-tip' : '')}
           data-card=${row.id}
           style=${{ minHeight: RUN_STATS.rowHeight + 'px' }}
-          onMouseEnter=${row.tip ? (event) => showTip(event, row.label, [row.tip]) : null}
-          onMouseLeave=${row.tip ? () => (hoveredMove.value = null) : null}
+          ...${row.tip ? detailTip(row.label, [row.tip]) : {}}
         >
           <span class="hud-text pm-card-label">${row.label}</span>
           <span class="hud-text pm-stats-value pm-card-picks">x${row.picks}</span>
@@ -512,19 +514,10 @@ G.PausePokemon = (() => {
         trackRight=${BOX_PAD}
         colours=${{ track: rim.dark, thumb: rim.base, thumbRim: rim.light }}
         resetOn=${[member, readCount.value]}
-        onScroll=${() => (hoveredMove.value = null)}
+        onScroll=${hideTooltip}
       >
         ${list.length ? list : html`<div class="hud-text pm-empty-note">No cards yet.</div>`}
       </${ScrollBox}>`;
-  }
-
-  function MoveTooltip() {
-    const hovered = hoveredMove.value;
-    if (!hovered) return null;
-    return html`<div class="pm-move-tooltip" style=${{ top: hovered.top + 'px' }}>
-      <div class="hud-text pm-tooltip-name">${hovered.name}</div>
-      ${hovered.lines.map((line, index) => html`<div key=${index} class="hud-text pm-tooltip-line">${line}</div>`)}
-    </div>`;
   }
 
   /** The held item slot (#90): the square only, its name and effect in the tooltip, a place items can be moved to and
@@ -616,7 +609,6 @@ G.PausePokemon = (() => {
         className: 'pm-box-moves',
         children: html`<${MoveList} member=${member} rim=${rim} />`,
       })}
-      <${MoveTooltip} />
       <${Arrow} direction=${-1} left=${ARROW.prevLeft} />
       <${Arrow} direction=${1} left=${ARROW.nextLeft} />
     </div>`;
@@ -680,7 +672,7 @@ G.PausePokemon = (() => {
     const active = G.Game && G.Game.player;
     const slots = filledSlots();
     shownSlot.value = active && active.teamSlot != null ? active.teamSlot : slots.length ? slots[0] : 0;
-    hoveredMove.value = null;
+    hideTooltip();
     life.reset();
     refreshLife();
     readCount.value = readCount.value + 1;
@@ -688,7 +680,7 @@ G.PausePokemon = (() => {
   function select(slot) {
     if (!memberIn(slot) || slot === shownSlot.value) return;
     shownSlot.value = slot;
-    hoveredMove.value = null;
+    hideTooltip();
     refreshLife();
     G.Audio.sfx('select');
   }
@@ -702,6 +694,7 @@ G.PausePokemon = (() => {
 
   /** Redraw from the team as it is now (a held item moved, js/ui/pause-inventory.js). */
   function refresh() {
+    hideTooltip(); // a pointer move over the same row shows it again with the new numbers
     readCount.value = readCount.value + 1;
   }
 

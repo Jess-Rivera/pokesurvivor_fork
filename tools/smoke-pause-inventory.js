@@ -163,6 +163,34 @@ async function main() {
   ok(now.open && now.game === 'paused', 'the menu is open');
   await shot('inventory-open.png');
 
+  // The shown tooltip, from the menu's shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost
+  // layer): its text, font, whether the layer is the stage's last child, and the sample points across its box that
+  // something else covers (0 = on top everywhere).
+  const tipNow = () =>
+    page.evaluate(() => {
+      const tip = document.querySelector('.hud-tip-layer .hud-tip');
+      if (!tip) return null;
+      const box = tip.getBoundingClientRect();
+      tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
+      let covered = 0,
+        sampled = 0;
+      for (let x = box.left + 4; x < box.right - 4; x += 20)
+        for (let y = box.top + 4; y < box.bottom - 4; y += 12) {
+          if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+          sampled++;
+          if (!tip.contains(document.elementFromPoint(x, y))) covered++;
+        }
+      tip.style.pointerEvents = '';
+      return {
+        text: tip.textContent,
+        font: getComputedStyle(tip).fontFamily,
+        last: document.querySelector('.pm-stage').lastElementChild === tip.parentElement,
+        covered,
+        sampled,
+      };
+    });
+  const onTop = (tip) => !!tip && tip.last && tip.sampled > 0 && tip.covered === 0;
+
   // ---- the inventory: three grids, no frame, no labels, locked slots dimmed ----
   const inventory = await page.evaluate(() => {
     const panel = document.querySelector('.pm-panel-inventory');
@@ -174,12 +202,8 @@ async function main() {
         locked: slots.map((slot) => slot.classList.contains('is-locked')),
       };
     });
-    const tipsHidden = [...panel.querySelectorAll('.hud-grid-tip')].every(
-      (tip) => getComputedStyle(tip).display === 'none'
-    );
-    const visibleText = [...panel.querySelectorAll('.hud-text')].filter(
-      (text) => !text.closest('.hud-grid-tip')
-    ).length;
+    const tipsHidden = !document.querySelector('.hud-tip-layer .hud-tip'); // nothing hovered: no tooltip
+    const visibleText = panel.querySelectorAll('.hud-text').length;
     return {
       grids,
       background: getComputedStyle(panel).backgroundColor,
@@ -196,7 +220,7 @@ async function main() {
     inventory.background === 'rgba(0, 0, 0, 0)' && inventory.border === '0px',
     'no panel frame (' + inventory.background + ', ' + inventory.border + ')'
   );
-  ok(inventory.visibleText === 0 && inventory.tipsHidden, 'no labels: only hidden tooltips carry text');
+  ok(inventory.visibleText === 0 && inventory.tipsHidden, 'no labels, and no tooltip until a hover');
   ok(
     inventory.grids[0].filled.join() === 'true,false,false,false' &&
       inventory.grids[0].locked.join() === 'false,false,true,true',
@@ -215,19 +239,17 @@ async function main() {
   // tooltips
   await page.hover('.pm-inv-berries .hud-grid-slot.is-filled');
   await sleep(60);
-  const berryTip = await page.$eval('.pm-inv-berries .hud-grid-slot.is-filled .hud-grid-tip', (tip) => ({
-    shown: getComputedStyle(tip).display !== 'none',
-    text: tip.textContent,
-  }));
-  ok(berryTip.shown && berryTip.text.includes('Cheri Berry'), 'berry tooltip shows its name on hover');
+  const berryTip = await tipNow();
+  ok(!!berryTip && berryTip.text.includes('Cheri Berry'), 'berry tooltip shows its name on hover');
+  ok(onTop(berryTip), 'the berry tooltip is on top (' + (berryTip && berryTip.covered) + ' points covered)');
   await page.hover('.pm-inv-run-items .hud-grid-slot.is-filled');
   await sleep(60);
-  ok(
-    (await page.$eval('.pm-inv-run-items .hud-grid-slot.is-filled .hud-grid-tip', (tip) => tip.textContent)).includes(
-      'Amulet Coin'
-    ),
-    'run item tooltip shows its name'
-  );
+  const runTip = await tipNow();
+  ok(!!runTip && runTip.text.includes('Amulet Coin'), 'run item tooltip shows its name');
+  ok(onTop(runTip), 'the run item tooltip is on top');
+  await page.mouse.move(5, 5);
+  await sleep(60);
+  ok((await tipNow()) === null, 'leaving a square hides its tooltip');
 
   // the held slot: the square only, a tooltip
   const held = await page.evaluate(() => ({
@@ -238,10 +260,9 @@ async function main() {
   ok(held.filled && held.names === 0 && held.buttons === 0, 'held slot: the square only, no name, no buttons');
   await page.hover('.pm-detail-held .hud-grid-slot');
   await sleep(60);
-  ok(
-    (await page.$eval('.pm-detail-held .hud-grid-tip', (tip) => tip.textContent)).includes('Choice Band'),
-    'held item tooltip shows its name'
-  );
+  const heldTip = await tipNow();
+  ok(!!heldTip && heldTip.text.includes('Choice Band'), 'held item tooltip shows its name');
+  ok(onTop(heldTip), 'the held item tooltip is on top');
 
   // ---- drag the held item into the pocket: it comes off ----
   await drag('.pm-detail-held .hud-grid-slot', '.pm-inv-pocket .hud-grid-slot:nth-child(1)');
@@ -305,19 +326,9 @@ async function main() {
   // the next slot), and every tooltip uses the game's UI font
   await page.hover('.pm-inv-pocket .hud-grid-slot.is-filled');
   await sleep(80);
-  const tipOnTop = await page.evaluate(() => {
-    const tip = document.querySelector('.pm-inv-pocket .hud-grid-slot.is-filled .hud-grid-tip'),
-      r = tip.getBoundingClientRect();
-    tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
-    const points = [];
-    for (let x = r.left + 4; x < r.right - 4; x += 20)
-      for (let y = r.top + 4; y < r.bottom - 4; y += 12) points.push([x, y]);
-    const covered = points.filter(([x, y]) => !tip.contains(document.elementFromPoint(x, y))).length;
-    tip.style.pointerEvents = '';
-    return { covered, font: getComputedStyle(tip).fontFamily };
-  });
+  const tipOnTop = (await tipNow()) || { covered: -1, font: '' };
   ok(
-    tipOnTop.covered === 0,
+    onTop(tipOnTop),
     'the pocket tooltip is on top while the prompt asks (' + tipOnTop.covered + ' points covered)'
   );
   ok(/GameFont/.test(tipOnTop.font), 'tooltips use the game UI font (' + tipOnTop.font + ')');

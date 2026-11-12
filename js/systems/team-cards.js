@@ -29,9 +29,10 @@
  *   hasStat(def), selfOnly(def)   part E: a Gate / Duration taker; the new-path buff test for the 2-buff limit (every effect on its own side)
  *   stepText(card), hintText(card), summary(store)   parts E and F: card text, its plain explanation (#84), and the team
  *                            sheet's "Run Cards" rows { id, label, family, stacks, total }
- *   changes(o, id)           #83: what the team's cards changed on move `id`, one entry per field, read from the real fold
- *                            (caps and floors included): { path, text, from, to, capped }, text "cd 1.2 s to 0.92 s"
- *   takenBy(store, moveIds, teamSize)   #83: the pause menu's Cards Taken rows for one Pokemon { id, label, picks, tip }
+ *   changes(o, id)           #83: what the team's cards changed on move `id`, one entry per field, from the real
+ *                            fold (caps and floors included): { path, text, from, to, capped }, "cd 1.2 s to 0.92 s"
+ *   takenBy(store, moveIds, teamSize)   #83: the pause menu's Cards Taken rows for one Pokemon
+ *                            { id, label, picks, tip }
  */
 G.TeamCards = (() => {
   const TAU = 6.2832,
@@ -631,7 +632,9 @@ G.TeamCards = (() => {
           : { label: 'growth speed', unit: '', scale: 1 };
       case 'max':
         if (path.includes('grow'))
-          return arcGrowth ? { label: 'max arc', unit: '°', scale: DEGREES } : { label: 'max size', unit: '', scale: 1 };
+          return arcGrowth
+            ? { label: 'max arc', unit: '°', scale: DEGREES }
+            : { label: 'max size', unit: '', scale: 1 };
         return { label: 'shield max', unit: '', scale: 1 };
       case 'count':
         return { label: 'projectiles', unit: '', scale: 1 };
@@ -664,7 +667,7 @@ G.TeamCards = (() => {
     if (words.unit === '%') return Math.round(shown * 10) / 10 + '%';
     return plain(shown);
   };
-  /** Every object in a def mapped to its key path, so a field found on the frozen def can be read on the folded copy. */
+  /** Every object in a def mapped to its key path, so a field found on the frozen def is read on the folded copy. */
   function pathsOf(root) {
     const where = new Map();
     (function walkPaths(value, path) {
@@ -677,7 +680,8 @@ G.TeamCards = (() => {
   const readPath = (root, path) => path.reduce((value, key) => (value == null ? value : value[key]), root);
   /** What the owner's team cards changed on move `id`: one entry per field, the move's own value and the value combat
    *  uses now (the same fold, so caps and floors are exact). Fields two cards share (All Damage Up and a type Damage
-   *  card on power) are one entry. capped: a cap, a floor or the card's pick limit stopped it. Empty when nothing changed. */
+   *  card on power) are one entry. capped: a cap, a floor or the card's pick limit stopped it. Empty when nothing
+   *  changed. */
   function changes(o, id) {
     const base = G.MoveDefs[id],
       s = o && o.teamCards;
@@ -710,7 +714,8 @@ G.TeamCards = (() => {
           (opt && opt.max != null && to >= opt.max - 0.01) ||
           (opt && opt.floor != null && to <= from * opt.floor + EPS) ||
           (!!c.cap && picks >= c.cap);
-        const text = words.label + ' ' + valueText(from, words) + ' to ' + valueText(to, words) + (capped ? ' (max)' : '');
+        const text =
+          words.label + ' ' + valueText(from, words) + ' to ' + valueText(to, words) + (capped ? ' (max)' : '');
         if (!out.some((entry) => entry.text === text)) out.push({ path, from, to, capped, text });
       }
     }
@@ -733,12 +738,13 @@ G.TeamCards = (() => {
       else if (row.id === 'regen') {
         const perSecond = regen(s);
         shown = teamSize >= 2;
-        tip =
-          'Benched Pokemon regain ' + Math.round(perSecond * 1000) / 10 + '% of max HP per second (empty to full in ' +
-          Math.round(1 / perSecond) + ' s)';
+        const percent = Math.round(perSecond * 1000) / 10;
+        tip = 'Benched Pokemon regain ' + percent + '% of max HP per second (empty to full in ';
+        tip += Math.round(1 / perSecond) + ' s)';
       } else if (row.id === 'gate') {
         shown = defs.some(hasStat);
-        tip = 'Stat stage Gate ' + seconds(G.Stages.GATE) + ' s to ' + seconds(G.Stages.GATE * gateMul({ teamCards: s })) + ' s';
+        const gate = G.Stages.GATE * gateMul({ teamCards: s });
+        tip = 'Stat stage Gate ' + seconds(G.Stages.GATE) + ' s to ' + seconds(gate) + ' s';
       } else if (row.id === 'duration') {
         shown = defs.some(hasStat);
         tip = 'Stat stage Duration ' + seconds(G.Stages.DURATION) + ' s to ' + seconds(durOf({ teamCards: s })) + ' s';

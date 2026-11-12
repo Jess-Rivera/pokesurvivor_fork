@@ -186,9 +186,10 @@ G.HudOverlay = (() => {
    * The tight 2x2 item grid (#90, HUD-STYLE "Berry bag"): item squares in two columns, half a square between them, filling
    * row by row. Used by the run screen's berry bag and the pause menu's Run Inventory.
    * slots: [{ key, icon, locked, tip: { name, desc }, className, attrs }]: icon null = empty; locked = dimmed (not bought);
-   * tip = the hover tooltip (none on the run screen); attrs = extra attributes for the slot's element (data-*, handlers).
+   * tip = the hover tooltip (none on the run screen), drawn in the screen's TooltipLayer; attrs = extra attributes for
+   * the slot's element (data-*, handlers). tipPlace: where the tooltip opens (showTooltip's place; above by default).
    */
-  function ItemGrid({ slots, artSize = 20, className }) {
+  function ItemGrid({ slots, artSize = 20, className, tipPlace }) {
     const size = artSize * 2,
       gap = size / 2;
     return html`<div
@@ -205,19 +206,104 @@ G.HudOverlay = (() => {
               (slot.locked ? ' is-locked' : '') +
               (slot.className ? ' ' + slot.className : '')
             }
+            ...${slot.tip && slot.icon ? itemTipHandlers(slot.tip, tipPlace) : {}}
             ...${slot.attrs || {}}
           >
             <${ItemSquare} icon=${slot.icon || null} artSize=${artSize} />
-            ${
-              slot.tip
-                ? html`<div class="hud-grid-tip">
-                    <div class="hud-text hud-grid-tip-name">${slot.tip.name}</div>
-                    ${slot.tip.desc ? html`<div class="hud-text hud-grid-tip-desc">${slot.tip.desc}</div>` : null}
-                  </div>`
-                : null
-            }
           </div>`
       )}
+    </div>`;
+  }
+  const itemTipHandlers = (tip, place) =>
+    tooltipHandlers({ name: tip.name, lines: tip.desc ? [tip.desc] : [], variant: 'item' }, place);
+
+  // ---------- the shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost layer) ----------
+  /**
+   * One tooltip at a time, drawn by TooltipLayer, which a screen mounts as the LAST child of its stage (the pause
+   * menu's 1920 x 1080 stage), above everything else on it. No tooltip lives inside its panel any more: there it was
+   * trapped under later panels (the team cards over the move list's tooltip) and clipped by scroll boxes.
+   * showTooltip(anchor, content, place): content { name, lines, variant } (variant 'item': name and a 300 px
+   *   description; 'detail': the detail panel's 558 px box; 'plain': one line, no name); nothing to show hides it.
+   *   place { side: 'above' (default) | 'below' | 'leftOf', align: 'centre' (default) | 'start' | 'end', gap (px,
+   *   default 8), beside: for 'leftOf', the element or a selector (closest to the anchor) whose left edge it is off }.
+   * hideTooltip(): gone (a scroll, a redraw, a pick-up, the menu closing).
+   * tooltipHandlers(content, place): an anchor's hover handlers; content may be a function read on each show. A
+   *   pointer move re-shows it after a redraw under a still pointer (an item put down, the next Pokemon by key).
+   */
+  const tooltipState = signal(null); // { anchor, name, lines, variant, x, y, shift } in stage pixels
+  let tooltipLayer = null; // the mounted layer's element
+  function hideTooltip() {
+    if (tooltipState.value) tooltipState.value = null;
+  }
+  function showTooltip(anchor, content, place = {}) {
+    const layer = tooltipLayer;
+    const lines = (content && content.lines ? content.lines : []).filter(Boolean);
+    if (!layer || !anchor || !content || !(content.name || lines.length)) return hideTooltip();
+    const layerBox = layer.getBoundingClientRect(),
+      anchorBox = anchor.getBoundingClientRect(),
+      scale = layerBox.width / (layer.offsetWidth || layerBox.width || 1); // the stage is scaled to fit the window
+    const toStageX = (x) => (x - layerBox.left) / scale,
+      toStageY = (y) => (y - layerBox.top) / scale;
+    const side = place.side || 'above',
+      align = place.align || 'centre',
+      gap = place.gap != null ? place.gap : 8;
+    let x, y, shift;
+    if (side === 'leftOf') {
+      const beside = (typeof place.beside === 'string' ? anchor.closest(place.beside) : place.beside) || anchor;
+      x = toStageX(beside.getBoundingClientRect().left) - gap;
+      y = toStageY(anchorBox.top);
+      shift = 'translate(-100%, 0)';
+    } else {
+      const edge =
+        align === 'start'
+          ? anchorBox.left
+          : align === 'end'
+            ? anchorBox.right
+            : (anchorBox.left + anchorBox.right) / 2;
+      x = toStageX(edge);
+      y = side === 'below' ? toStageY(anchorBox.bottom) + gap : toStageY(anchorBox.top) - gap;
+      const shiftX = align === 'start' ? '0' : align === 'end' ? '-100%' : '-50%';
+      shift = 'translate(' + shiftX + ', ' + (side === 'below' ? '0' : '-100%') + ')';
+    }
+    tooltipState.value = { anchor, name: content.name || '', lines, variant: content.variant || 'item', x, y, shift };
+  }
+  function tooltipHandlers(content, place) {
+    const contentNow = () => (typeof content === 'function' ? content() : content);
+    const show = (event) => showTooltip(event.currentTarget, contentNow(), place);
+    return {
+      onMouseEnter: show,
+      onMouseMove: (event) => {
+        const shown = tooltipState.value;
+        if (!shown || shown.anchor !== event.currentTarget) show(event);
+      },
+      onMouseLeave: (event) => {
+        const shown = tooltipState.value;
+        if (shown && shown.anchor === event.currentTarget) hideTooltip();
+      },
+    };
+  }
+  /** The layer itself: mount it as the stage's last child. It never catches the pointer. */
+  function TooltipLayer() {
+    const ref = preactHooks.useRef(null);
+    preactHooks.useLayoutEffect(() => {
+      tooltipLayer = ref.current;
+      return () => {
+        if (tooltipLayer === ref.current) tooltipLayer = null;
+      };
+    }, []);
+    const shown = tooltipState.value;
+    return html`<div class="hud-tip-layer" ref=${ref}>
+      ${
+        shown
+          ? html`<div
+              class=${'hud-tip is-' + shown.variant}
+              style=${{ left: shown.x + 'px', top: shown.y + 'px', transform: shown.shift }}
+            >
+              ${shown.name ? html`<div class="hud-text hud-tip-name">${shown.name}</div>` : null}
+              ${shown.lines.map((line, index) => html`<div key=${index} class="hud-text hud-tip-line">${line}</div>`)}
+            </div>`
+          : null
+      }
     </div>`;
   }
 
@@ -1036,6 +1122,10 @@ G.HudOverlay = (() => {
     ItemSquare,
     ItemGrid,
     ScrollBox,
+    TooltipLayer,
+    showTooltip,
+    hideTooltip,
+    tooltipHandlers,
     Cursor,
     RosterCard,
     ROSTER_ART_PIXEL,

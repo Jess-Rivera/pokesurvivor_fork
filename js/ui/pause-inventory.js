@@ -18,7 +18,8 @@
 G.PauseInventory = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, ItemGrid, IconCanvas } = overlay.kit;
+  const { html, signal, ItemGrid, IconCanvas, hideTooltip } = overlay.kit;
+  const BELOW = { side: 'below' }; // near the screen's top: the tooltips open below the squares
 
   const GRID_ART_SIZE = 20, // the berry bag's squares (40 px), Jess 2026-11-11: the same grid object
     DRAG_START_DISTANCE = 6; // px the pointer moves before a press becomes a drag
@@ -162,6 +163,7 @@ G.PauseInventory = (() => {
       if (distance >= DRAG_START_DISTANCE) {
         carried.value = { from: pressed.from, icon: pressed.icon, mode: 'drag' };
         pressed = null;
+        hideTooltip(); // no tooltip while an item is carried
         G.Audio.sfx('select');
       }
     }
@@ -176,6 +178,7 @@ G.PauseInventory = (() => {
       // a click: the item is picked up until the next press
       carried.value = { from: pressed.from, icon: pressed.icon, mode: 'click' };
       ghostAt.value = { x: event.clientX, y: event.clientY };
+      hideTooltip(); // no tooltip while an item is carried
       G.Audio.sfx('select');
     }
     pressed = null;
@@ -252,9 +255,9 @@ G.PauseInventory = (() => {
       );
     }
     return html`<div class="pm-inventory">
-      <${ItemGrid} slots=${berrySlots} artSize=${GRID_ART_SIZE} className="pm-inv-berries" />
-      <${ItemGrid} slots=${runSlots} artSize=${GRID_ART_SIZE} className="pm-inv-run-items" />
-      <${ItemGrid} slots=${pocketSlots} artSize=${GRID_ART_SIZE} className="pm-inv-pocket" />
+      <${ItemGrid} slots=${berrySlots} artSize=${GRID_ART_SIZE} className="pm-inv-berries" tipPlace=${BELOW} />
+      <${ItemGrid} slots=${runSlots} artSize=${GRID_ART_SIZE} className="pm-inv-run-items" tipPlace=${BELOW} />
+      <${ItemGrid} slots=${pocketSlots} artSize=${GRID_ART_SIZE} className="pm-inv-pocket" tipPlace=${BELOW} />
     </div>`;
   }
 
@@ -272,6 +275,7 @@ G.PauseInventory = (() => {
   function read() {
     pressed = null;
     carried.value = null;
+    hideTooltip();
     changed();
   }
 

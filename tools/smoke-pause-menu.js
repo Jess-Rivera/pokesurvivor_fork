@@ -21,6 +21,9 @@
 //   Damage, no row overflowing, the box scrolling at 200 px, the Statuses hover.
 //   #83: Cards Taken, seeded through G.Debug.cards: its 400 px box, takenBy's rows (Vitamins by name), no row
 //   overflowing, the move tooltip's "Cards:" line, the Gate and Bench Regeneration hovers.
+//   Tooltips (Jess, 2026-11-12: every hover tooltip is the topmost layer): each is read from the stage's shared
+//   tooltip layer and must be the top element across its box: every hex corner, Statuses, Cards Taken's Gate and
+//   Bench Regeneration, the last move (over the team cards, 16 px clear of both side panels); leaving or scrolling hides.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -90,6 +93,38 @@ async function main() {
     await page.keyboard.up(name);
     if (wait) await sleep(wait);
   };
+  // The shown tooltip, read from the menu's shared tooltip layer (Jess, 2026-11-12: every hover tooltip is the topmost
+  // layer): its name and lines, whether the layer is the stage's last child, and how many sample points across the
+  // tooltip's box are covered by something else (0 = on top everywhere). Points off the window are not sampled.
+  const tipNow = () =>
+    page.evaluate(() => {
+      const tip = document.querySelector('.hud-tip-layer .hud-tip');
+      if (!tip) return null;
+      const box = tip.getBoundingClientRect();
+      tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
+      let covered = 0,
+        sampled = 0;
+      for (let across = 0.02; across < 1; across += 0.08)
+        for (let down = 0.1; down < 1; down += 0.2) {
+          const x = box.left + box.width * across,
+            y = box.top + box.height * down;
+          if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+          sampled++;
+          if (!tip.contains(document.elementFromPoint(x, y))) covered++;
+        }
+      tip.style.pointerEvents = '';
+      const name = tip.querySelector('.hud-tip-name');
+      return {
+        name: name ? name.textContent.trim() : '',
+        lines: [...tip.querySelectorAll('.hud-tip-line')].map((line) => line.textContent.trim()),
+        covered,
+        sampled,
+        last: document.querySelector('.pm-stage').lastElementChild === tip.parentElement,
+        left: box.left,
+        right: box.right,
+      };
+    });
+  const onTop = (tip) => !!tip && tip.last && tip.sampled > 0 && tip.covered === 0;
   const look = () =>
     page.evaluate(() => {
       const layer = document.querySelector('.pause-menu');
@@ -395,9 +430,9 @@ async function main() {
         edgeLabel = hexBox.querySelector('.pm-hex-edge');
       return {
         texts: [...detail.querySelectorAll('.pm-hex-label')].map((label) => ({
+          stat: label.dataset.stat,
           shown: label.querySelector('.pm-hex-value').textContent.trim(),
           expected: String(finalOf(order[label.dataset.stat])),
-          tip: label.querySelector('.pm-hex-tip').textContent.trim(),
           expectedTip:
             'Base: ' +
             member.mon.stats[order[label.dataset.stat]] +
@@ -426,38 +461,22 @@ async function main() {
     hex.texts.every((text) => text.shown === text.expected),
     'stat hex corners show the final stats (HP the game number): ' + hex.texts.map((text) => text.shown).join(', ')
   );
+  // each corner's hover: the copy's make-up, in the shared layer, on top (HP's opens down over Atk and SpA)
+  const cornerTips = [];
+  for (const text of hex.texts) {
+    await page.hover('.pm-hex-label[data-stat="' + text.stat + '"]');
+    await sleep(60);
+    const shown = await tipNow();
+    cornerTips.push({ stat: text.stat, line: shown ? shown.lines.join(' | ') : '', want: text.expectedTip, top: onTop(shown) });
+  }
+  ok(cornerTips.every((corner) => corner.line === corner.want), 'each corner hover reads ' + cornerTips[0].line);
   ok(
-    hex.texts.every((text) => text.tip === text.expectedTip),
-    'each corner hover reads ' + hex.texts[0].tip
-  );
-  await page.hover('.pm-hex-label[data-stat="Atk"]');
-  await sleep(80);
-  ok(
-    await page.evaluate(
-      () => getComputedStyle(document.querySelector('.pm-hex-label[data-stat="Atk"] .pm-hex-tip')).display !== 'none'
-    ),
-    'hovering a corner shows its tooltip'
-  );
-  // the HP tooltip opens down over the Atk and SpA corners: it must be the top element across its whole width
-  await page.hover('.pm-hex-label[data-stat="HP"]');
-  await sleep(80);
-  ok(
-    await page.evaluate(() => {
-      const tip = document.querySelector('.pm-hex-label[data-stat="HP"] .pm-hex-tip'),
-        box = tip.getBoundingClientRect();
-      tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
-      // a grid over the whole tooltip: it overlaps Atk and SpA only near its lower corners
-      const onTop = [0.03, 0.25, 0.5, 0.75, 0.97].every((across) =>
-        [0.1, 0.5, 0.9].every((down) =>
-          tip.contains(document.elementFromPoint(box.left + box.width * across, box.top + box.height * down))
-        )
-      );
-      tip.style.pointerEvents = '';
-      return onTop;
-    }),
-    'the HP tooltip is on top of the other corners'
+    cornerTips.every((corner) => corner.top),
+    'every corner tooltip is on top (' + cornerTips.filter((corner) => !corner.top).map((corner) => corner.stat).join(', ') + ')'
   );
   await page.mouse.move(5, 5);
+  await sleep(60);
+  ok((await tipNow()) === null, 'leaving a corner hides its tooltip');
   // sized for the widest labels: a 4 digit stat and "+100%" on the side corners stay inside the hex box
   const savedForFit = await page.evaluate(() => {
     const member = G.Game.player,
@@ -794,17 +813,12 @@ async function main() {
   await sleep(100);
   await page.hover('.pm-stats-row >> text=Statuses');
   await sleep(100);
-  // the tooltip's title and lines are separate divs: read them apart (textContent runs them together)
-  const tip = await page.evaluate(() => {
-    const shown = document.querySelector('.pm-move-tooltip');
-    if (!shown) return { name: '', lines: '' };
-    const lines = [...shown.querySelectorAll('.pm-tooltip-line')].map((line) => line.textContent.trim());
-    return { name: shown.querySelector('.pm-tooltip-name').textContent.trim(), lines: lines.join(' | ') };
-  });
+  const statusesTip = (await tipNow()) || { name: '', lines: [] };
   ok(
-    tip.name === 'Statuses' && /^\w+ \d+(, \w+ \d+)*$/.test(tip.lines),
-    'hovering Statuses lists the kinds (' + tip.name + ': ' + tip.lines + ')'
+    statusesTip.name === 'Statuses' && /^\w+ \d+(, \w+ \d+)*$/.test(statusesTip.lines.join(' | ')),
+    'hovering Statuses lists the kinds (' + statusesTip.name + ': ' + statusesTip.lines.join(' | ') + ')'
   );
+  ok(onTop(statusesTip), 'the Statuses tooltip is on top (' + statusesTip.covered + ' points covered)');
 
   // ---- #83: Cards Taken (the cards that touch the shown Pokemon) and the move tooltip's cards line ----
   const cardsBox = () =>
@@ -849,9 +863,7 @@ async function main() {
     await page.evaluate((id) => document.querySelector('.pm-move[data-move="' + id + '"]').scrollIntoView({ block: 'nearest' }), target.id);
     await page.hover('.pm-move[data-move="' + target.id + '"]');
     await sleep(100);
-    const moveTip = await page.evaluate(() =>
-      [...document.querySelectorAll('.pm-move-tooltip .pm-tooltip-line')].map((line) => line.textContent.trim())
-    );
+    const moveTip = ((await tipNow()) || { lines: [] }).lines;
     const cardsLine = moveTip.find((line) => line.startsWith('Cards: ')) || '';
     ok(target.texts.every((text) => cardsLine.includes(text)), 'the move tooltip\'s cards line shows every change (' + cardsLine + ')');
   }
@@ -861,22 +873,56 @@ async function main() {
     await page.evaluate((card) => document.querySelector('.pm-card-row[data-card="' + card + '"]').scrollIntoView({ block: 'nearest' }), id);
     await page.hover('.pm-card-row[data-card="' + id + '"]');
     await sleep(100);
+    const shownTip = await tipNow();
     const cardTip = await page.evaluate((card) => {
-      const shown = document.querySelector('.pm-move-tooltip');
       const slot = +document.querySelector('.pm-detail').dataset.slot;
       const member = G.Game.roster.find((each) => each.teamSlot === slot);
       const rows = G.TeamCards.takenBy(member.teamCards, member.moves.map((move) => move.id), G.Game.roster.length);
-      return {
-        shown: shown ? [...shown.querySelectorAll('.pm-tooltip-line')].map((line) => line.textContent.trim()).join(' | ') : '',
-        want: (rows.find((row) => row.id === card) || {}).tip,
-      };
+      return { want: (rows.find((row) => row.id === card) || {}).tip };
     }, id);
+    cardTip.shown = shownTip ? shownTip.lines.join(' | ') : '';
+    ok(onTop(shownTip), 'the ' + id + ' tooltip in Cards Taken is on top');
     ok(
       !!cardTip.want && cardTip.shown === cardTip.want &&
         (id === 'gate' ? /^Stat stage Gate 6\.0 s to \d/.test(cardTip.shown) : /^Benched Pokemon regain /.test(cardTip.shown)),
       'hovering ' + id + ' in Cards Taken shows its real number (' + cardTip.shown + ')'
     );
   }
+  await page.mouse.move(5, 5);
+
+  // ---- every hover tooltip is the topmost layer (Jess, 2026-11-12): the move list's last move, whose tooltip reaches
+  // down over the team cards, and its place 16 px clear of both side panels ----
+  await page.evaluate(() => {
+    const moves = document.querySelectorAll('.pm-move');
+    moves[moves.length - 1].scrollIntoView({ block: 'nearest' });
+  });
+  await sleep(100);
+  await page.hover('.pm-move >> nth=-1');
+  await sleep(100);
+  const lastMoveTip = await tipNow();
+  const panelEdges = await page.evaluate(() => ({
+    info: document.querySelector('.pm-panel-info').getBoundingClientRect().right,
+    detail: document.querySelector('.pm-detail').getBoundingClientRect().left,
+    lastName: [...document.querySelectorAll('.pm-move .pm-move-name')].pop().textContent.trim(),
+  }));
+  ok(
+    !!lastMoveTip && lastMoveTip.name === panelEdges.lastName,
+    'the last move\'s tooltip shows (' + (lastMoveTip && lastMoveTip.name) + ')'
+  );
+  ok(onTop(lastMoveTip), 'the last move\'s tooltip is on top, the team cards under it (' + (lastMoveTip && lastMoveTip.covered) + ' covered)');
+  ok(
+    !!lastMoveTip && Math.abs(lastMoveTip.left - panelEdges.info - 16) <= 1 && Math.abs(panelEdges.detail - lastMoveTip.right - 16) <= 1,
+    'the move tooltip sits 16 px clear of Run Info and of the detail panel (' +
+      (lastMoveTip && Math.round(lastMoveTip.left - panelEdges.info)) + ', ' + (lastMoveTip && Math.round(panelEdges.detail - lastMoveTip.right)) + ')'
+  );
+  const scrolled = await page.evaluate(() => {
+    const box = document.querySelector('.pm-move').closest('.hud-scroll-box');
+    if (box.scrollHeight <= box.clientHeight + 1) return false; // the list fits: nothing to scroll
+    box.scrollTop = box.scrollTop > 0 ? 0 : 40;
+    return true;
+  });
+  await sleep(100);
+  if (scrolled) ok((await tipNow()) === null, 'scrolling the move list hides its tooltip');
   await page.mouse.move(5, 5);
 
   // ---- End Run asks inside the ball ----

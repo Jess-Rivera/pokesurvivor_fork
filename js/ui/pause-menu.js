@@ -34,7 +34,7 @@
 G.PauseMenu = (() => {
   const overlay = G.HudOverlay;
   if (!overlay || !overlay.ready) return { ready: false };
-  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow } = overlay.kit;
+  const { html, signal, preact, PALETTE, PixelShape, moveSlotRow, TooltipLayer, hideTooltip } = overlay.kit;
 
   // Step lengths in ms: dim and closed ball in, then ball opens with the panels sliding in. Open is about 0.23 s (Jess,
   // 2026-11-11, third feel test: halfway between the 0.31 s open and the close) and close about 0.16 s. Each matches a
@@ -269,6 +269,7 @@ G.PauseMenu = (() => {
       <div class="pm-stage">
         <div class="pm-centre"><${BallBack} /><${Buttons} /><${BallCaps} /></div>
         <${Panels} />
+        <${TooltipLayer} />
       </div>
       ${inventory ? html`<${inventory.CarryGhost} />` : null}`;
   }
@@ -317,6 +318,7 @@ G.PauseMenu = (() => {
   /** Show the menu and play the opening (or turn a closing around). */
   function open() {
     whenClosed = null;
+    hideTooltip();
     if (root.classList.contains('pm-hidden')) {
       focus.value = 0;
       if (root.contains(document.activeElement)) document.activeElement.blur();
@@ -338,10 +340,12 @@ G.PauseMenu = (() => {
       return;
     }
     whenClosed = onClosed || null;
+    hideTooltip();
     aim(0);
   }
   /** Gone at once, no animation, no callback (the run ended, or a new one starts). */
   function hideNow() {
+    hideTooltip();
     if (stepTimer) clearTimeout(stepTimer);
     stepTimer = null;
     level = target = 0;
