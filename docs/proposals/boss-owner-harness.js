@@ -250,7 +250,7 @@ ok(JSON.stringify(Gy.cardsFor(BROCK, 1)) === JSON.stringify({ damage: 6, count: 
   { fresh(); const e = boss(['body-slam']); hitWith(e, 'body-slam', 0.99); ok(pl.hurts.length === 1 && !pl.stMajor, 'Body Slam, roll 0.99: damage, no paralysis');
     hitWith(e, 'body-slam', 0); ok(pl.stMajor && pl.stMajor.k === 'paralysis', 'Body Slam, roll 0: paralysis on the player');
     hitWith(e, 'sludge', 0); ok(!pl.stDot, 'Sludge cannot poison a paralyzed player (one major at a time)'); }
-  { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4, 'Sludge poisons through the damage over time: 4 turns: ' + JSON.stringify(pl.stDot));
+  { fresh(); const e = boss(['sludge']); hitWith(e, 'sludge', 0); ok(pl.stDot && pl.stDot.k === 'poison' && pl.stDot.left === 4 && pl.stDot.by === e, 'Sludge poisons through the damage over time: 4 turns, the caster kept on the state (#91): ' + JSON.stringify(pl.stDot && { k: pl.stDot.k, left: pl.stDot.left, byCaster: pl.stDot.by === e }));
     fresh(); pl.mon.types = ['poison']; hitWith(e, 'sludge', 0); ok(!pl.stDot, 'a Poison-type player is immune'); pl.mon.types = ['typeless'];
     fresh(); hitWith(e, 'ember', 0); ok(pl.stDot && pl.stDot.k === 'burn', 'Ember burns');
     fresh(); hitWith(e, 'powder-snow', 0); ok(pl.stMajor && pl.stMajor.k === 'freeze' && G.Status.stunned(pl), 'Powder Snow freezes');

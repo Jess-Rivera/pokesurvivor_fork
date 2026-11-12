@@ -61,7 +61,7 @@ const M = [
   ['the strike spot never reaches the sim', 'sim', [['castSlot(o, slot, def, now, target ? { aim, target, point: { x: target.x, y: target.y } } : { aim, target });', 'castSlot(o, slot, def, now, { aim, target: null });']]],
   ['chain hops search the enemy grid', 'sim', [['eachFoe(o, prev.x, prev.y, R, (e) => {', 'G.EnemyMgr.queryCircleEach(prev.x, prev.y, R, (e) => {']]],
   ['homing ignores the caster foes', 'sim', [['inst.steer = nearest(inst.cast.owner,', 'inst.steer = nearest(null,']]],
-  ['Brock loop 1 cards changed', 'gyms', [['cards: { 1: { damage: 3, count: 2, velocity: 3, area: 2 } }', 'cards: { 1: { damage: 3, count: 2, velocity: 1, area: 2 } }']]],
+  ['Brock loop 1 cards changed', 'gyms', [['cards: { 1: { damage: 6, count: 2, velocity: 3, area: 2 } }', 'cards: { 1: { damage: 6, count: 2, velocity: 1, area: 2 } }']]],
   ['the card pool does not accumulate across loops', 'gyms', [['if (Number(k) > want) continue;', 'if (Number(k) !== want) continue;']]],
   ['the card cap ignores earlier loops', 'gyms', [['total[id] = (total[id] || 0) + n;', 'total[id] = n;']]],
   ['freshness ignores the cooldown', 'brain', [['/ Math.max(0.05, d.cd * this.e.cdMul)', '/ 1']]],
