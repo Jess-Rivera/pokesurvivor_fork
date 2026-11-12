@@ -15,7 +15,13 @@ G.CHANGELOG = [
         'New Graphics setting: Vignette (on or off). It darkens the screen edges in a run and on the menu. It now starts off, which keeps the edges clear and can raise the frame rate on slower machines. Fog still dims the edges either way.',
       ],
     ],
-    chg: [['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.']],
+    chg: [
+      ['The vignette is cheaper to draw when it is on.', 'The vignette is cheaper to draw when it is on.'],
+      [
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+        'The pause menu now holds the game still behind it, so it stays smooth on slower machines.',
+      ],
+    ],
   },
   {
     d: '2026-11-11',

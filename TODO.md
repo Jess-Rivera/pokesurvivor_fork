@@ -32,6 +32,9 @@ Jess runs these in a terminal at the repo root; the Quick agent does not (CLAUDE
 4. Leader AI when ready: #53, then #39; planner gaps #57, #58; #30 before gym-leader-ai merges to main.
 5. Chore for Jess: delete merged branches (chore/docs-cleanup, feature/entity-model, feature/gym-upgrade-authoring,
    feature/item-rework-v2, feature/leader-roster-ui, feature/pokeboxes, fix/onboarding-flow, fix/playtest-round-1, fix/ui-upgrade).
+6. New issue to file (Quick, 2026-11-12, from F2): the canvas FPS counter freezes while the pause menu holds the world
+   still. Fix later, its own issue. Map: docs/ASCII Concept Maps/Perf F2 - Freeze Behind the Pause Menu.txt (D3).
+   Also possible: F3, lighter HUD paint (static pixel SVGs baked to images), only if a new profile still shows it.
 The two red harnesses (gym-harness, leader-stats-harness) are expected red until #30.
 
 ## Open issues by area (numbers only, titles via gh)

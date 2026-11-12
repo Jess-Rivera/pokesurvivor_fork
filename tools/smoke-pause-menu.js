@@ -12,6 +12,8 @@
 //   #89: either Enter key presses the green button once, even after a click; the detail panel shows the shown
 //   Pokemon's name, level, HP numbers and fill, type coloured bars, the hex layers and every move; the arrows,
 //   Move_Left / Move_Right and team card clicks change it; missing members are empty frames.
+//   F2 (2026-11-12): fully open, the world is held still and the HUD is hidden and unread; a resize or a setting
+//   change redraws one frame; after closing both run again.
 // Fails on any page error, console error or failed local request (file:// font noise is a note, as in smoke-gym.js).
 const path = require('path'),
   url = require('url'),
@@ -159,6 +161,51 @@ async function main() {
     'all four panels slid in: ' + s.panels.join(', ')
   );
   ok(s.hudOpacity === 0, 'the run HUD steps aside (opacity ' + s.hudOpacity + ')');
+
+  // ---- F2: the world held still behind the fully open menu (2026-11-12) ----
+  // counts world frames (G.Projectiles.draw runs once per render) and HUD reads (G.HudOverlay.sync)
+  await page.evaluate(() => {
+    window.__drawn = { world: 0, hud: 0 };
+    const draw = G.Projectiles.draw,
+      sync = G.HudOverlay.sync;
+    G.Projectiles.draw = function () {
+      window.__drawn.world++;
+      return draw.apply(this, arguments);
+    };
+    G.HudOverlay.sync = function () {
+      window.__drawn.hud++;
+      return sync.apply(this, arguments);
+    };
+  });
+  const countFor = async (ms) => {
+    await page.evaluate(() => (window.__drawn = { world: 0, hud: 0 }));
+    await sleep(ms);
+    return page.evaluate(() => window.__drawn);
+  };
+  const hudVisibility = () => page.evaluate(() => getComputedStyle(document.querySelector('.hud-overlay')).visibility);
+  await sleep(150); // the HUD hides once its 75 ms fade ends
+  let drawn = await countFor(300);
+  ok(drawn.world === 0 && drawn.hud === 0, 'fully open: no world redraw, no HUD read (' + JSON.stringify(drawn) + ')');
+  ok((await hudVisibility()) === 'hidden', 'fully open: the run HUD is hidden, not only see-through');
+  await page.evaluate(() => (window.__drawn = { world: 0, hud: 0 }));
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await sleep(200);
+  drawn = await page.evaluate(() => window.__drawn);
+  ok(drawn.world >= 1 && drawn.hud === 0, 'a resize while open redraws the world (' + drawn.world + '), no HUD read');
+  drawn = await countFor(300);
+  ok(drawn.world === 0, 'then the world is held still again (' + drawn.world + ')');
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await sleep(200);
+  await page.evaluate(() => {
+    window.__drawn = { world: 0, hud: 0 };
+    const vignette = G.Settings.get('vignette');
+    G.Settings.set('vignette', !vignette);
+    G.Settings.set('vignette', vignette); // back as it was
+  });
+  await sleep(150);
+  drawn = await page.evaluate(() => window.__drawn);
+  ok(drawn.world >= 1, 'a setting changed while open redraws the world (' + drawn.world + ')');
+
   ok(s.focus === 'Resume', 'Resume has the focus first');
   ok(
     s.focusRim.includes('#38d030') && !s.otherRim.includes('#38d030') && s.otherRim.includes('#e7e7e7'),
@@ -195,6 +242,9 @@ async function main() {
   ok(s.state === 'playing' && !s.open, 'once the menu is gone, play resumes');
   ok(await clockMoves(), 'the run clock runs again');
   ok(s.hudOpacity === 1 || (await sleep(300), (await look()).hudOpacity === 1), 'the run HUD is back');
+  drawn = await countFor(300);
+  ok(drawn.world > 0 && drawn.hud > 0, 'after closing: the world draws and the HUD reads again (' + JSON.stringify(drawn) + ')');
+  ok((await hudVisibility()) === 'visible', 'after closing: the run HUD is visible');
 
   await key('Escape', FULL_MS);
   await key('Escape', 20); // the closing lasts about 0.16 s: turn it around early

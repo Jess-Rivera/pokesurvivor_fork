@@ -47,6 +47,8 @@ G.Game = (() => {
     ctx = cv.getContext('2d');
     resize();
     addEventListener('resize', resize);
+    // F2 (2026-11-12): a setting changed while the pause menu holds the world still redraws one frame (Vignette)
+    G.Settings.on(() => (frozenRedraw = true));
     G.Touch.init(cv);
     // On mobile: switching apps or turning it portrait pauses the game.
     document.addEventListener('visibilitychange', () => {
@@ -71,6 +73,7 @@ G.Game = (() => {
     h = cv.clientHeight;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
+    frozenRedraw = true; // resizing blanks the canvas: a world held still behind the pause menu draws once more
     G.Camera.resize(w, h, dpr);
     checkOrientation();
   }
@@ -1021,6 +1024,10 @@ G.Game = (() => {
   let fpsShown = 60,
     fpsAcc = 0,
     fpsN = 0;
+  // F2 (2026-11-12): while the pause menu is fully open the world is held still. The canvas keeps its last frame and
+  // the HTML HUD (hidden by pause-menu.css) is not read; frozenRedraw asks for one more frame (a resize, a setting).
+  let frozenRedraw = false;
+  const heldByPauseMenu = () => state === 'paused' && !!pl && G.PauseMenu.ready && G.PauseMenu.isFullyOpen();
   // The next frame is requested BEFORE anything else: if something fails midway, the
   // game continues (before it would freeze forever and you had to reload;
   // that is how a huge game was lost once).
@@ -1065,17 +1072,21 @@ G.Game = (() => {
 
     handleKeys();
 
+    const held = heldByPauseMenu();
     if (state === 'playing') update(dt);
-    else if (pl && state !== 'ui') {
+    else if (pl && state !== 'ui' && !held) {
       G.FX.update(dt * 0.25);
       pl.anim.update(dt * 0.25);
     }
     // The network is always serviced (even with the level cards open).
     if (G.Coop.active && pl && state !== 'ui' && state !== 'over') G.Coop.tick(dt);
 
-    if (pl && state !== 'ui') render();
+    if (held) {
+      if (frozenRedraw) render();
+    } else if (pl && state !== 'ui') render();
     else Backdrop.render(ctx, w, h, dpr, dt);
-    G.HudOverlay.sync(!!pl && state !== 'ui'); // #64: the HTML HUD reads the frame just drawn
+    frozenRedraw = false;
+    if (!held) G.HudOverlay.sync(!!pl && state !== 'ui'); // #64: the HTML HUD reads the frame just drawn
     G.UI.tick(dt);
 
     G.Input.endFrame();

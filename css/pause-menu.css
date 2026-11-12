@@ -20,12 +20,20 @@
 .pause-menu.pm-hidden {
   display: none;
 }
-/* The run HUD steps aside while the menu is up (the menu's panels take its places). */
+/* The run HUD steps aside while the menu is up (the menu's panels take its places). Once its fade ends it is also
+ * hidden, so the browser stops painting it and its looping animations stop (F2, 2026-11-12: on a Firefox laptop the
+ * HUD's paint was the pause menu's frame drops). On close it is visible at once and fades back in. */
 .hud-overlay {
-  transition: opacity 0.075s linear;
+  transition:
+    opacity 0.075s linear,
+    visibility 0s linear 0s;
 }
 body.pm-open .hud-overlay {
   opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.075s linear,
+    visibility 0s linear 0.075s;
 }
 
 /* ---------- step 1: dim and the closed ball (open 55 ms, close 38 ms) ---------- */
