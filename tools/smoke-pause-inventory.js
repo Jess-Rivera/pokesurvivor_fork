@@ -277,9 +277,12 @@ async function main() {
       noIn: near('[data-action="pocket-no"]'),
       mainOut,
       focus: focused ? focused.textContent.trim() : null,
-      pulse: getComputedStyle(document.querySelector('.pm-inv-pocket .hud-grid-slot.is-filled')).animationName,
-      emptyPulse: getComputedStyle(document.querySelector('.pm-inv-pocket .hud-grid-slot:not(.is-filled)'))
+      // the glow is on the square, not the slot (a filter on the slot traps its tooltip under the next slot)
+      pulse: getComputedStyle(document.querySelector('.pm-inv-pocket .hud-grid-slot.is-filled .hud-item-square'))
         .animationName,
+      emptyPulse: getComputedStyle(
+        document.querySelector('.pm-inv-pocket .hud-grid-slot:not(.is-filled) .hud-item-square')
+      ).animationName,
     };
   });
   ok(prompt.header === 'Destroy Items in Pocket?' && prompt.headerIn, 'the header chases into the ball');
@@ -291,6 +294,28 @@ async function main() {
     'only the filled pocket slots pulse (' + prompt.pulse + ', ' + prompt.emptyPulse + ')'
   );
   await shot('inventory-prompt.png');
+
+  // while it asks, a pocket item's tooltip is the top element across its whole box (Jess, 2026-11-11: it was under
+  // the next slot), and every tooltip uses the game's UI font
+  await page.hover('.pm-inv-pocket .hud-grid-slot.is-filled');
+  await sleep(80);
+  const tipOnTop = await page.evaluate(() => {
+    const tip = document.querySelector('.pm-inv-pocket .hud-grid-slot.is-filled .hud-grid-tip'),
+      r = tip.getBoundingClientRect();
+    tip.style.pointerEvents = 'auto'; // elementFromPoint skips pointer-events: none
+    const points = [];
+    for (let x = r.left + 4; x < r.right - 4; x += 20)
+      for (let y = r.top + 4; y < r.bottom - 4; y += 12) points.push([x, y]);
+    const covered = points.filter(([x, y]) => !tip.contains(document.elementFromPoint(x, y))).length;
+    tip.style.pointerEvents = '';
+    return { covered, font: getComputedStyle(tip).fontFamily };
+  });
+  ok(
+    tipOnTop.covered === 0,
+    'the pocket tooltip is on top while the prompt asks (' + tipOnTop.covered + ' points covered)'
+  );
+  ok(/GameFont/.test(tipOnTop.font), 'tooltips use the game UI font (' + tipOnTop.font + ')');
+  await page.mouse.move(5, 5);
 
   // No brings the buttons back
   await page.click('[data-action="pocket-no"]');

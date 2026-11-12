@@ -112,6 +112,11 @@ The wireframe's fonts and colours are Excalidraw limitations, not choices.
   in the HUD as `HudModule`. Smooth, so the crisp-size and hard-outline rules do not apply to it; it takes a soft dark
   shadow instead. Its digits are not fixed width.
 
+- `[Approved]` **Tooltips use the game's UI font** (Jess, 2026-11-11, #90): GameFont (`var(--font)`, Silver-game) at
+  20 px, more readable than Truth And Ideals for sentences. Every pause menu tooltip (items, the stat hex corners, the
+  move rows) shares one look: `#181818` body, a 2 px `#f3b200` frame, the name in `#ffd23f`, white text with the hard
+  outline. A hovered tooltip is always on top of its neighbours.
+
 - `[Approved]` **No PokeBW in the HUD.** It has only 81 characters (no plus, minus, accented capitals, female or male
   signs).
 

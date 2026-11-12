@@ -586,11 +586,18 @@
 .hud-grid-slot {
   position: relative;
 }
+/* the hovered slot rises above its neighbours, so its tooltip is always on top */
+.hud-grid-slot:hover {
+  z-index: 10;
+}
 .hud-grid-slot.is-locked {
   opacity: 0.3;
 }
-/* the hover tooltip: name and effect, above the square, on top of everything near it */
+/* the hover tooltip: name and effect, above the square, on top of everything near it. The look every pause menu
+   tooltip shares (Jess, 2026-11-11): the game's UI font (GameFont, more readable than the pixel HUD font at this size),
+   a yellow frame, the name in yellow. */
 .hud-grid-tip {
+  font-family: var(--font);
   position: absolute;
   left: 50%;
   bottom: calc(100% + 8px);

@@ -359,7 +359,8 @@ body.pm-open .hud-overlay {
   z-index: 30;
 }
 /* while the in-ball prompt asks, the pocket slots holding items pulse white */
-.pm-pocket-asking .pm-pocket-slot.is-filled {
+/* on the square only: a filter on the whole slot would trap its tooltip under the next slot */
+.pm-pocket-asking .pm-pocket-slot.is-filled .hud-item-square {
   animation: pm-pocket-pulse 0.8s ease-in-out infinite alternate;
 }
 @keyframes pm-pocket-pulse {
@@ -520,8 +521,9 @@ body.pm-open .hud-overlay {
   top: calc(100% + 6px);
   z-index: 2;
   padding: 8px 10px;
+  font-family: var(--font); /* the shared tooltip look (css/hud-overlay.css .hud-grid-tip) */
   background: #181818;
-  border: 2px solid #495151;
+  border: 2px solid #f3b200;
   box-shadow: 0 0 0 2px #101010;
   pointer-events: none;
 }
@@ -606,8 +608,9 @@ body.pm-open .hud-overlay {
   right: calc(100% + 16px);
   width: 380px;
   padding: 12px 14px;
+  font-family: var(--font); /* the shared tooltip look (css/hud-overlay.css .hud-grid-tip) */
   background: #181818;
-  border: 2px solid #495151;
+  border: 2px solid #f3b200;
   box-shadow: 0 0 0 2px #101010;
   pointer-events: none;
 }
@@ -616,7 +619,7 @@ body.pm-open .hud-overlay {
   line-height: 26px;
 }
 .pm-tooltip-name {
-  color: #f3b200;
+  color: #ffd23f;
 }
 /* previous and next: dimmed at rest, bright on hover */
 .pm-arrow {
